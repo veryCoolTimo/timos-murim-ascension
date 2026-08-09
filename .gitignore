@@ -34,3 +34,6 @@ local.properties
 # Пакет истины об API (декомпилят MC/NeoForge) — не коммитить
 reference/
 CLAUDE.local.md
+
+# Книги для отдельного RAG — не в репозиторий (объём и авторские права)
+docs/books/
