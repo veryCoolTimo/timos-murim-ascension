@@ -1,0 +1,32 @@
+# macOS
+.DS_Store
+.AppleDouble
+
+# Gradle / build
+.gradle/
+build/
+out/
+bin/
+*.log
+
+# NeoForge dev runtime (runClient/runServer/runData)
+run/
+runs/
+logs/
+crash-reports/
+saves/
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.settings/
+.classpath
+.project
+.eclipse/
+
+# Локальные секреты и настройки
+*.local
+local.properties
