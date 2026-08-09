@@ -30,3 +30,7 @@ saves/
 # Локальные секреты и настройки
 *.local
 local.properties
+
+# Пакет истины об API (декомпилят MC/NeoForge) — не коммитить
+reference/
+CLAUDE.local.md
