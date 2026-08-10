@@ -22,6 +22,9 @@ import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 public class MurimModClient {
     public MurimModClient(ModContainer container) {
         container.registerExtensionPoint(IConfigScreenFactory.class, ConfigurationScreen::new);
+        // Качество эффектов и доступность принадлежат клиенту: на сервер они не уезжают
+        // и в сейве не хранятся.
+        container.registerConfig(net.neoforged.fml.config.ModConfig.Type.CLIENT, ClientConfig.SPEC);
     }
 
     @SubscribeEvent

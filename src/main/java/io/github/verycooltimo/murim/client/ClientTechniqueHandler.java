@@ -57,6 +57,7 @@ public final class ClientTechniqueHandler {
                 // соседа — это гриферство с обычного клиента, а не эффект.
                 if (isLocalPlayer(payload.sourceId())) {
                     HitStopHandler.request(payload.hitStopTicks());
+                    CameraShakeHandler.request(1.0F);
                 }
             }
             case CANCELLED -> {

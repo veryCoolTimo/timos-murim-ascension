@@ -63,6 +63,16 @@ public final class DevSetupEvents {
         // Полдень: в сумерках лента выглядит ярче, чем есть, и оценка получится завышенной.
         serverLevel.setDayTime(6000L);
         event.getEntity().teleportTo(STAGE_X + 0.5D, STAGE_Y, STAGE_Z + 0.5D);
+
+        // Мишени перед игроком. Без цели техника не наносит урона, событие попадания
+        // не приходит, и ни hit stop, ни тряска камеры на кадрах не проявятся —
+        // проверить их было бы нечем.
+        for (int i = -1; i <= 1; i++) {
+            net.minecraft.world.entity.decoration.ArmorStand target =
+                    new net.minecraft.world.entity.decoration.ArmorStand(
+                            serverLevel, STAGE_X + 0.5D + i, STAGE_Y, STAGE_Z + 2.5D);
+            serverLevel.addFreshEntity(target);
+        }
         MurimMod.LOGGER.info("Съёмка: меч выдан, игрок на площадке {} {} {}", STAGE_X, STAGE_Y, STAGE_Z);
     }
 
