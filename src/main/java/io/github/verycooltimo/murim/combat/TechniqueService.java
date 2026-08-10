@@ -53,6 +53,15 @@ public final class TechniqueService {
         player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
                 net.minecraft.sounds.SoundEvents.TRIDENT_THROW.value(),
                 net.minecraft.sounds.SoundSource.PLAYERS, 0.45F, 0.55F);
+
+        // Замедление, а не обездвиживание — прямое пожелание автора по боевой системе.
+        // Три секунды концентрации со свободной беготнёй читались бы как отсутствие цены.
+        int slowTicks = technique.ticksOf(TechniquePhase.RITUAL) + technique.ticksOf(TechniquePhase.WINDUP);
+        if (slowTicks > 0) {
+            player.addEffect(new net.minecraft.world.effect.MobEffectInstance(
+                    net.minecraft.world.effect.MobEffects.MOVEMENT_SLOWDOWN,
+                    slowTicks, 2, false, false, false));
+        }
         return true;
     }
 

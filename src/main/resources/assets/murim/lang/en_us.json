@@ -3,7 +3,6 @@
   "murim.configuration.section.murim.common.toml": "Common",
   "murim.configuration.section.murim.common.toml.title": "Common Settings",
   "murim.configuration.debugLogging": "Debug Logging",
-
   "murim.configuration.section.murim.client.toml": "Client",
   "murim.configuration.section.murim.client.toml.title": "Client Settings",
   "murim.configuration.accessibility": "Accessibility",
@@ -20,7 +19,7 @@
   "murim.configuration.vfx.title": "Effect Quality",
   "murim.configuration.quality": "Effect Quality",
   "murim.configuration.quality.tooltip": "Detail level of blade trails and particle density.",
-
   "key.categories.murim": "Timos Murim",
-  "key.murim.technique": "Use Technique"
+  "key.murim.technique": "Use Technique",
+  "technique.murim.ceremonial_draw": "Ceremonial Draw"
 }

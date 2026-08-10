@@ -3,6 +3,8 @@ package io.github.verycooltimo.murim.client;
 import io.github.verycooltimo.murim.MurimMod;
 import io.github.verycooltimo.murim.client.vfx.BladeTrailRenderer;
 import io.github.verycooltimo.murim.client.vfx.ImpactScreenLayer;
+import io.github.verycooltimo.murim.client.vfx.TechniqueNameLayer;
+import io.github.verycooltimo.murim.combat.TechniquePhase;
 import io.github.verycooltimo.murim.combat.Techniques;
 import io.github.verycooltimo.murim.network.StartTechniquePayload;
 import io.github.verycooltimo.murim.network.TechniqueEventPayload;
@@ -35,6 +37,8 @@ public final class ClientTechniqueHandler {
         // consumeClick вычитывает накопленные нажатия. Вычерпываем очередь полностью, но
         // отправляем не более одного запроса за тик: иначе при лагах уходит пачка пакетов,
         // из которых сервер всё равно примет первый — остальные упрутся в кулдаун.
+        tickPending();
+
         boolean pressed = false;
         while (ModKeyMappings.TECHNIQUE.consumeClick()) {
             pressed = true;
@@ -50,8 +54,20 @@ public final class ClientTechniqueHandler {
     public static void onTechniqueEvent(TechniqueEventPayload payload) {
         switch (payload.event()) {
             case STARTED -> {
-                playAnimation(payload);
+                scheduleAnimation(payload);
                 BladeTrailRenderer.start(payload.sourceId());
+                // Название объявляет только тот, кто применяет: чужие имена техник поверх
+                // своего экрана — это шум, а не постановка.
+                if (isLocalPlayer(payload.sourceId())) {
+                    // Имя вспыхивает к концу ритуала, а не в его начале: на пике, как
+                    // в раскадровке. Задержка берётся из данных техники, а не зашита числом.
+                    int ritual = Techniques.CEREMONIAL_DRAW.ticksOf(
+                            io.github.verycooltimo.murim.combat.TechniquePhase.RITUAL);
+                    TechniqueNameLayer.show(net.minecraft.network.chat.Component.translatable(
+                            "technique." + payload.techniqueId().getNamespace()
+                                    + "." + payload.techniqueId().getPath()),
+                            Math.max(0, ritual - 12));
+                }
             }
             case HIT -> {
                 // Hit stop только тому, кто ударил. Заморозка чужого экрана из-за попадания
@@ -63,11 +79,60 @@ public final class ClientTechniqueHandler {
                 }
             }
             case CANCELLED -> {
-                // Прерванная техника не должна оставлять после себя висящий след.
+                // Прерванная техника не должна оставлять после себя ни висящий след,
+                // ни отложенный взмах, который выстрелит уже после отмены.
+                PENDING.remove(payload.sourceId());
                 BladeTrailRenderer.cancel(payload.sourceId());
                 MurimMod.LOGGER.debug("Техника {} прервана", payload.techniqueId());
             }
             case FINISHED -> MurimMod.LOGGER.debug("Техника {} завершена", payload.techniqueId());
+        }
+    }
+
+    /**
+     * Отложенные запуски анимации: идентификатор сущности и сколько тиков ждать.
+     *
+     * <p>Анимация тела обязана начинаться на замахе, а не на старте техники. Событие
+     * {@code STARTED} приходит в первый тик, но перед замахом идут три секунды ритуала,
+     * и запуск по событию проигрывал взмах во время концентрации, задолго до удара.
+     * Поймано на кадрах 2026-08-10: на пятом тике персонаж уже махал мечом.
+     */
+    private static final java.util.Map<Integer, Integer> PENDING = new java.util.HashMap<>();
+
+    /** Снимает отложенные запуски: смена мира не должна выстрелить анимацией в новом. */
+    public static void reset() {
+        PENDING.clear();
+    }
+
+    private static void scheduleAnimation(TechniqueEventPayload payload) {
+        // Задержка берётся из данных техники, а не зашита числом: правится длина ритуала —
+        // анимация едет следом.
+        int delay = Techniques.CEREMONIAL_DRAW.startTickOf(TechniquePhase.WINDUP);
+        if (delay <= 0) {
+            playAnimation(payload);
+            return;
+        }
+        PENDING.put(payload.sourceId(), delay);
+    }
+
+    private static void tickPending() {
+        if (PENDING.isEmpty()) {
+            return;
+        }
+        ClientLevel level = Minecraft.getInstance().level;
+        var iterator = PENDING.entrySet().iterator();
+        while (iterator.hasNext()) {
+            var entry = iterator.next();
+            int left = entry.getValue() - 1;
+            if (left > 0) {
+                entry.setValue(left);
+                continue;
+            }
+            iterator.remove();
+            if (level != null
+                    && level.getEntity(entry.getKey()) instanceof AbstractClientPlayer player) {
+                MurimPlayerAnimations.play(player, MurimPlayerAnimations.CEREMONIAL_DRAW);
+            }
         }
     }
 

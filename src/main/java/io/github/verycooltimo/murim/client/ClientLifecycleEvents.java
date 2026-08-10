@@ -3,6 +3,7 @@ package io.github.verycooltimo.murim.client;
 import io.github.verycooltimo.murim.MurimMod;
 import io.github.verycooltimo.murim.client.vfx.BladeTrailRenderer;
 import io.github.verycooltimo.murim.client.vfx.ImpactScreenLayer;
+import io.github.verycooltimo.murim.client.vfx.TechniqueNameLayer;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -37,6 +38,8 @@ public final class ClientLifecycleEvents {
         BladeTrailRenderer.clear();
         CameraShakeHandler.reset();
         ImpactScreenLayer.reset();
+        TechniqueNameLayer.reset();
+        ClientTechniqueHandler.reset();
         HitStopHandler.reset();
         DevCaptureHandler.reset();
     }

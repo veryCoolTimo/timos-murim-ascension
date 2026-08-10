@@ -3,6 +3,8 @@ package io.github.verycooltimo.murim.client.vfx;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import io.github.verycooltimo.murim.MurimMod;
+import io.github.verycooltimo.murim.combat.TechniquePhase;
+import io.github.verycooltimo.murim.combat.Techniques;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -35,21 +37,38 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class BladeTrailRenderer {
 
     /**
-     * Окно взмаха в тиках техники. Границы согласованы с ключевыми кадрами анимации:
-     * клинок идёт от верхней позы к нижней между 0.70 и 0.84 секунды, то есть тики 14–17.
-     * Растянутое окно даёт видимое отставание следа от меча (поймано на кадрах 2026-08-10).
+     * Тайминги слоёв выводятся из данных техники, а не зашиты числами.
+     *
+     * <p>Раньше они были константами, и добавление фазы ритуала сдвинуло бы удар на три
+     * секунды, оставив все эффекты на прежних тиках. Привязка к {@code startTickOf} делает
+     * шкалу единственным источником истины: правится длительность фазы — эффекты едут следом.
+     *
+     * <p>Поправка на тик: лента запускается по пакету от сервера, который приходит на тик
+     * позже начала техники, поэтому возраст ленты равен номеру тика минус один.
      */
-    private static final float SWEEP_START_TICK = 13.0F;
+    private static final float IMPACT_AGE =
+            Techniques.CEREMONIAL_DRAW.startTickOf(TechniquePhase.IMPACT) - 1.0F;
 
-    // Окно на тик короче номинального: лента стартует по пакету от сервера, то есть на тик
-    // позже начала техники, и без поправки след тянется за клинком с видимым отставанием.
-    private static final float SWEEP_END_TICK = 16.0F;
+    private static final float WINDUP_AGE =
+            Techniques.CEREMONIAL_DRAW.startTickOf(TechniquePhase.WINDUP) - 1.0F;
+
+    private static final float RITUAL_LENGTH =
+            Techniques.CEREMONIAL_DRAW.ticksOf(TechniquePhase.RITUAL);
+
+    /** Начало прохода дуги — совпадает с моментом резолва урона. */
+    private static final float SWEEP_START_TICK = IMPACT_AGE;
+
+    /** Дуга пройдена целиком через три тика после начала удара. */
+    private static final float SWEEP_END_TICK = IMPACT_AGE + 3.0F;
 
     /**
      * Затухание после взмаха. Короткое намеренно: правило 04 требует отношения удара
      * к рассеиванию не хуже 1:3, но долгий шлейф превращает след в висящее пятно.
      */
     private static final float FADE_TICKS = 5.0F;
+
+    /** Сегментов вдоль дуги при высшем качестве. Больше — глаже кромка, дороже буфер. */
+    private static final int MAX_SEGMENTS = 28;
 
     /**
      * Длина светящегося хвоста в долях дуги. Хвост короче самой дуги: иначе лента
@@ -58,10 +77,16 @@ public final class BladeTrailRenderer {
     private static final double TAIL_LENGTH = 0.72D;
 
     /**
+     * Полная ширина ленты в блоках. Ширина в целый блок превращает след в веер:
+     * лента должна быть заметно длиннее, чем шире, иначе не читается как след клинка.
+     */
+    private static final double RIBBON_WIDTH = 0.46D;
+
+    /**
      * Серп — второй слой удара. Стартует на тик позже ленты: правило 04 требует разносить
      * старты слоёв минимум на 16 мс, иначе три слоя сливаются в один и эффект читается плоско.
      */
-    private static final float CRESCENT_START_TICK = 14.0F;
+    private static final float CRESCENT_START_TICK = IMPACT_AGE + 1.0F;
 
     /** Живёт 3 тика — 150 мс. Дольше держать нельзя: серп начинает читаться как висящее пятно. */
     private static final float CRESCENT_LIFE = 3.0F;
@@ -69,10 +94,9 @@ public final class BladeTrailRenderer {
     /**
      * Пиковая непрозрачность серпа.
      *
-     * <p>Низкая намеренно. Слой аддитивный, и при альфе около единицы он мгновенно уходит
-     * в насыщение: три слоя сливаются в сплошное белое пятно, в котором не видно ни формы
-     * серпа, ни ленты под ним. Поймано на кадрах 2026-08-10 — первая версия с альфой 1.0
-     * читалась как приклеенный к голове факел.
+     * <p>Заметно ниже единицы намеренно. Слой аддитивный, и при альфе около единицы он
+     * мгновенно уходит в насыщение: три слоя сливаются в сплошное белое пятно, в котором
+     * не видно ни формы серпа, ни ленты под ним. Поймано на кадрах 2026-08-10.
      */
     private static final float CRESCENT_PEAK_ALPHA = 0.48F;
 
@@ -80,40 +104,31 @@ public final class BladeTrailRenderer {
     private static final double CRESCENT_HALF_WIDTH = 0.21D;
 
     /** Вспышка ядра — третий слой, ещё на полтика позже серпа. */
-    private static final float CORE_START_TICK = 14.5F;
+    private static final float CORE_START_TICK = IMPACT_AGE + 1.5F;
 
     private static final float CORE_LIFE = 3.0F;
 
     /** Пиковая непрозрачность ядра — по той же причине, что и у серпа. */
     private static final float CORE_PEAK_ALPHA = 0.58F;
 
-    /** Доля дуги, где вспыхивает ядро: середина взмаха, то есть точка контакта. */
     // Не середина дуги: там точка приходится игроку на голову, и вспышка читается как
     // светящееся лицо. Ближе к концу взмаха — это уже вынесенный вперёд клинок.
     private static final double CORE_ARC_POSITION = 0.74D;
 
     /**
-     * Замах — самая длинная фаза техники и до сих пор полностью пустая: почти секунда,
-     * за которую не происходило ничего. Именно из-за неё техника читалась как «мало эффектов»,
-     * хотя сам удар насыщен. Свечение у клинка и сбор энергии заполняют эту паузу
-     * и превращают её из ожидания в подготовку.
+     * Замах — самая длинная фаза после ритуала, и до сих пор он был полностью пуст.
+     * Свечение у клинка и сбор энергии превращают паузу перед ударом в подготовку.
      */
-    private static final float WINDUP_START_TICK = 3.0F;
+    private static final float WINDUP_START_TICK = WINDUP_AGE + 3.0F;
 
     /** Конец накопления совпадает с началом взмаха: энергия срывается вместе с клинком. */
-    private static final float WINDUP_END_TICK = 13.0F;
+    private static final float WINDUP_END_TICK = IMPACT_AGE;
 
     /** Сколько искр сходится к лезвию. Немного: важна читаемость, а не густота. */
     private static final int MOTE_COUNT = 7;
 
-    /**
-     * Полная ширина ленты в блоках. Ширина в целый блок превращает след в веер:
-     * лента должна быть заметно длиннее, чем шире, иначе не читается как след клинка.
-     */
-    private static final double RIBBON_WIDTH = 0.46D;
-
-    /** Сегментов вдоль дуги при высшем качестве. Больше — глаже кромка, дороже буфер. */
-    private static final int MAX_SEGMENTS = 28;
+    /** Искры ритуала. Больше, чем на замахе: три секунды пустого круга выглядели бы бедно. */
+    private static final int RITUAL_MOTES = 12;
 
     private static final Map<Integer, Trail> ACTIVE = new ConcurrentHashMap<>();
 
@@ -222,6 +237,7 @@ public final class BladeTrailRenderer {
      */
     private static void renderLayers(PoseStack poseStack, MultiBufferSource.BufferSource buffers,
                                      Camera camera, Entity entity, float age, float partialTick) {
+        renderRitual(poseStack, buffers, camera, entity, age, partialTick);
         renderWindup(poseStack, buffers.getBuffer(MurimRenderTypes.impactCore()), camera,
                      entity, age, partialTick);
         renderTrail(poseStack, buffers.getBuffer(MurimRenderTypes.bladeTrail()), camera,
@@ -230,6 +246,97 @@ public final class BladeTrailRenderer {
                        entity, age, partialTick);
         renderCore(poseStack, buffers.getBuffer(MurimRenderTypes.impactCore()), camera,
                    entity, age, partialTick);
+    }
+
+    /**
+     * Ритуал перед техникой: круги энергии у ног, восходящие искры и свечение даньтяня.
+     *
+     * <p>Художественный прототип, а не система: настоящий ритуал даньтяня появится этапом
+     * позже, а здесь проверяется постановка. Игрок с первой минуты видит, чем мод обещает
+     * быть, и при этом проверяется всё тот же боевой пайплайн.
+     *
+     * <p>Три составляющих намеренно живут в разном темпе: круги вращаются медленно и ровно,
+     * искры поднимаются рывками, свечение нарастает монотонно. Одинаковый темп читался бы
+     * как один анимированный объект вместо сходящейся к телу силы.
+     */
+    private static void renderRitual(PoseStack poseStack, MultiBufferSource.BufferSource buffers,
+                                     Camera camera, Entity entity, float age, float partialTick) {
+        if (RITUAL_LENGTH <= 0.0F) {
+            return;
+        }
+        float progress = age / RITUAL_LENGTH;
+        if (progress < 0.0F || progress > 1.0F) {
+            return;
+        }
+        // Плавный вход и такой же выход: резкое появление кругов выглядит как ошибка отрисовки,
+        // а резкий обрыв в конце — как потеря кадра.
+        float envelope = Mth.clamp(progress / 0.15F, 0.0F, 1.0F)
+                * Mth.clamp((1.0F - progress) / 0.12F, 0.0F, 1.0F);
+        if (envelope <= 0.0F) {
+            return;
+        }
+
+        Frame frame = frame(entity, camera, partialTick);
+        poseStack.pushPose();
+        try {
+            applyFrame(poseStack, frame);
+            com.mojang.blaze3d.vertex.PoseStack.Pose pose = poseStack.last();
+
+            VertexConsumer rings = buffers.getBuffer(MurimRenderTypes.bladeCrescent());
+            // Два кольца навстречу друг другу: одинаковое вращение читается как один диск.
+            // Заметнее, чем у слоёв удара: в этой фазе кольца ничем не перекрываются
+            // и не складываются с другими аддитивными слоями, риска пересвета нет.
+            ring(rings, pose, 1.75D - 0.45D * progress, 0.075D, age * 0.035F,
+                 0.34F * envelope);
+            ring(rings, pose, 1.15D - 0.35D * progress, 0.045D, -age * 0.055F,
+                 0.44F * envelope);
+
+            VertexConsumer motes = buffers.getBuffer(MurimRenderTypes.impactCore());
+            for (int i = 0; i < RITUAL_MOTES; i++) {
+                // Каждая искра идёт по своему циклу подъёма, сдвинутому по фазе.
+                float cycle = ((age * 0.045F) + i / (float) RITUAL_MOTES) % 1.0F;
+                double angle = i * (Math.PI * 2.0D / RITUAL_MOTES) + age * 0.02D;
+                double radius = (1.5D - 1.25D * cycle) * (1.0D - 0.35D * progress);
+                double height = 0.05D + 1.35D * cycle;
+                Vec3 point = new Vec3(Math.cos(angle) * radius, height, Math.sin(angle) * radius);
+                // Гаснут к верхней точке: искра втягивается в тело, а не улетает.
+                float alpha = envelope * (1.0F - cycle) * 1.05F;
+                billboard(motes, pose, point, frame.cameraLocal.subtract(point).normalize(),
+                          0.055D + 0.04D * (1.0F - cycle), alpha);
+            }
+
+            // Даньтянь: центр тяжести всей сцены, поэтому нарастает монотонно до самого конца.
+            Vec3 dantian = new Vec3(0.0D, 1.02D, 0.0D);
+            billboard(motes, pose, dantian, frame.cameraLocal.subtract(dantian).normalize(),
+                      0.16D + 0.26D * progress, envelope * (0.18F + 0.42F * progress));
+        } finally {
+            poseStack.popPose();
+        }
+    }
+
+    /** Плоское кольцо в горизонтальной плоскости у ног игрока. */
+    private static void ring(VertexConsumer consumer, com.mojang.blaze3d.vertex.PoseStack.Pose pose,
+                             double radius, double halfWidth, float rotation, float alpha) {
+        if (alpha <= 0.0F) {
+            return;
+        }
+        final int segments = 32;
+        Vec3 up = new Vec3(0.0D, 1.0D, 0.0D);
+        for (int i = 0; i < segments; i++) {
+            double a0 = rotation + i * (Math.PI * 2.0D / segments);
+            double a1 = rotation + (i + 1) * (Math.PI * 2.0D / segments);
+            double y = 0.03D;
+            Vec3 inner0 = new Vec3(Math.cos(a0) * (radius - halfWidth), y, Math.sin(a0) * (radius - halfWidth));
+            Vec3 outer0 = new Vec3(Math.cos(a0) * (radius + halfWidth), y, Math.sin(a0) * (radius + halfWidth));
+            Vec3 outer1 = new Vec3(Math.cos(a1) * (radius + halfWidth), y, Math.sin(a1) * (radius + halfWidth));
+            Vec3 inner1 = new Vec3(Math.cos(a1) * (radius - halfWidth), y, Math.sin(a1) * (radius - halfWidth));
+            float u0 = i / (float) segments;
+            float u1 = (i + 1) / (float) segments;
+            vertex(consumer, pose, inner0, up, u0, 0.0F, alpha);
+            vertex(consumer, pose, outer0, up, u0, 1.0F, alpha);
+            vertex(consumer, pose, outer1, up, u1, 1.0F, alpha);
+            vertex(consumer, pose, inner1, up, u1, 0.0F, alpha);
+        }
     }
 
     /**

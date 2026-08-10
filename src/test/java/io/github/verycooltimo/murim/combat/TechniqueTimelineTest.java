@@ -43,16 +43,18 @@ class TechniqueTimelineTest {
     @Test
     @DisplayName("Церемониальный выхват: длительности и границы фаз совпадают с задуманными")
     void ceremonialDrawHasExpectedShape() {
+        assertEquals(60, DRAW.ticksOf(TechniquePhase.RITUAL));
         assertEquals(14, DRAW.ticksOf(TechniquePhase.WINDUP));
         assertEquals(2, DRAW.ticksOf(TechniquePhase.IMPACT));
         assertEquals(6, DRAW.ticksOf(TechniquePhase.RECOVERY));
         assertEquals(10, DRAW.ticksOf(TechniquePhase.DISSIPATION));
-        assertEquals(32, DRAW.totalTicks());
+        assertEquals(92, DRAW.totalTicks());
 
-        assertEquals(0, DRAW.startTickOf(TechniquePhase.WINDUP));
-        assertEquals(14, DRAW.startTickOf(TechniquePhase.IMPACT));
-        assertEquals(16, DRAW.startTickOf(TechniquePhase.RECOVERY));
-        assertEquals(22, DRAW.startTickOf(TechniquePhase.DISSIPATION));
+        assertEquals(0, DRAW.startTickOf(TechniquePhase.RITUAL));
+        assertEquals(60, DRAW.startTickOf(TechniquePhase.WINDUP));
+        assertEquals(74, DRAW.startTickOf(TechniquePhase.IMPACT));
+        assertEquals(76, DRAW.startTickOf(TechniquePhase.RECOVERY));
+        assertEquals(82, DRAW.startTickOf(TechniquePhase.DISSIPATION));
     }
 
     @Test
@@ -70,16 +72,18 @@ class TechniqueTimelineTest {
     @Test
     @DisplayName("Граница фазы: последний тик — старая фаза, следующий — уже новая")
     void phaseBoundaryIsExclusive() {
-        assertEquals(TechniquePhase.WINDUP, DRAW.phaseAt(13));
-        assertEquals(TechniquePhase.IMPACT, DRAW.phaseAt(14));
-        assertEquals(TechniquePhase.IMPACT, DRAW.phaseAt(15));
-        assertEquals(TechniquePhase.RECOVERY, DRAW.phaseAt(16));
+        assertEquals(TechniquePhase.RITUAL, DRAW.phaseAt(59));
+        assertEquals(TechniquePhase.WINDUP, DRAW.phaseAt(60));
+        assertEquals(TechniquePhase.WINDUP, DRAW.phaseAt(73));
+        assertEquals(TechniquePhase.IMPACT, DRAW.phaseAt(74));
+        assertEquals(TechniquePhase.IMPACT, DRAW.phaseAt(75));
+        assertEquals(TechniquePhase.RECOVERY, DRAW.phaseAt(76));
     }
 
     @Test
     @DisplayName("За пределами техники фазы нет — по этому признаку сервер её и завершает")
     void afterEndThereIsNoPhase() {
-        assertNull(DRAW.phaseAt(32));
+        assertNull(DRAW.phaseAt(92));
         assertNull(DRAW.phaseAt(1000));
         assertNull(DRAW.phaseAt(-1));
     }

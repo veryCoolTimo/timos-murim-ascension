@@ -53,8 +53,8 @@ public final class DevCaptureHandler {
      */
     private static final int FRAME_INTERVAL_TICKS = 1;
 
-    /** Сколько кадров снять. 40 кадров по тику перекрывают технику в 32 тика с запасом. */
-    private static final int FRAME_COUNT = 40;
+    /** Сколько кадров снять. 100 кадров по тику перекрывают технику в 92 тика вместе с ритуалом. */
+    private static final int FRAME_COUNT = 100;
 
     private static boolean armed = Boolean.getBoolean(ENABLE_PROPERTY);
     private static int warmup;
