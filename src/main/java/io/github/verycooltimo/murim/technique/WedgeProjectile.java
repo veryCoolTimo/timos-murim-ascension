@@ -42,6 +42,16 @@ public class WedgeProjectile extends Projectile {
     public void tick() {
         super.tick();
 
+        // Клиент только двигает снаряд. Раньше здесь на обеих сторонах шли рейкаст, onHit
+        // и уменьшение времени жизни — а на клиенте lifetime равен нулю, потому что
+        // заполняется лишь в серверном конструкторе. Снаряд самоуничтожался на первом же
+        // клиентском тике, и веер был НЕВИДИМ. Поймано ревью после того, как на кадрах
+        // вместо пяти клиньев был виден только след техники.
+        if (level().isClientSide) {
+            setPos(position().add(getDeltaMovement()));
+            return;
+        }
+
         // Столкновение проверяется по вектору перемещения, а не по конечной точке:
         // при скорости выше размера хитбокса снаряд иначе проскакивает цель насквозь.
         HitResult hit = ProjectileUtil.getHitResultOnMoveVector(this, this::canHitEntity);
@@ -54,7 +64,10 @@ public class WedgeProjectile extends Projectile {
 
         setPos(position().add(getDeltaMovement()));
 
-        if (--lifetime <= 0) {
+        // Считаем по tickCount, а не по собственному счётчику: он инкрементируется ванилью
+        // и переживает сохранение, поэтому застрявший в выгруженном чанке снаряд не оживёт
+        // с полным запасом времени.
+        if (lifetime <= 0 || tickCount >= lifetime) {
             discard();
         }
     }
@@ -67,16 +80,26 @@ public class WedgeProjectile extends Projectile {
         }
         Entity target = result.getEntity();
         Entity owner = getOwner();
-        target.hurt(owner instanceof net.minecraft.server.level.ServerPlayer shooter
-                        ? shooter.damageSources().playerAttack(shooter)
-                        : damageSources().generic(),
-                damage);
-        discard();
+        // Источник снарядный, а не ближний: иначе щит блокирует клин как удар в упор
+        // с любой дистанции, а защита от снарядов не работает вовсе.
+        net.minecraft.world.damagesource.DamageSource source =
+                damageSources().mobProjectile(this, owner instanceof net.minecraft.world.entity.LivingEntity living
+                        ? living : null);
+        boolean landed = target.hurt(source, damage);
+        // Исчезаем только при реальном попадании. Прежде клин пропадал безусловно, и весь
+        // веер по одной цели давал урон ровно одного клина: остальные приходили в кадрах
+        // неуязвимости, получали false и всё равно удалялись.
+        if (landed || !(target instanceof net.minecraft.world.entity.LivingEntity)) {
+            discard();
+        }
     }
 
     @Override
     protected void onHitBlock(net.minecraft.world.phys.BlockHitResult result) {
         super.onHitBlock(result);
+        if (level().isClientSide) {
+            return;
+        }
         // Клин не застревает и не ломает блоки: он рассеивается о препятствие.
         discard();
     }
@@ -105,10 +128,22 @@ public class WedgeProjectile extends Projectile {
     protected void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
         damage = tag.getFloat("Damage");
-        lifetime = tag.getInt("Lifetime");
+        // Санитайз: нулевое время жизни из порченого сейва означало бы мгновенное удаление.
+        lifetime = Math.max(1, tag.getInt("Lifetime"));
     }
 
     /** Направление полёта для рендера: клин разворачивается по вектору движения. */
+    /**
+     * Расширенный бокс для отсечения по фрустуму.
+     *
+     * <p>Геометрия клина длиннее его хитбокса, и без запаса рендер отсекался раньше,
+     * чем снаряд уходил с экрана, — у краёв кадра он мигал.
+     */
+    @Override
+    public net.minecraft.world.phys.AABB getBoundingBoxForCulling() {
+        return getBoundingBox().inflate(0.9D);
+    }
+
     public Vec3 travelDirection() {
         Vec3 movement = getDeltaMovement();
         return movement.lengthSqr() < 1.0E-8D ? new Vec3(0.0D, 0.0D, 1.0D) : movement.normalize();

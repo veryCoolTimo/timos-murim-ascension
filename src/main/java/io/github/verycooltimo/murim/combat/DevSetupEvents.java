@@ -97,7 +97,30 @@ public final class DevSetupEvents {
             target.addTag(TARGET_TAG);
             serverLevel.addFreshEntity(target);
         }
-        MurimMod.LOGGER.info("Съёмка: меч выдан, игрок на площадке {} {} {}", STAGE_X, STAGE_Y, STAGE_Z);
+        // Техники теперь стоят ци и требуют сформированного центра. Без этого съёмочный
+        // стенд молча перестал бы запускать техники, и это выглядело бы как поломка визуала.
+        io.github.verycooltimo.murim.profile.DantianProfile awakened =
+                io.github.verycooltimo.murim.profile.DantianProfile.INITIAL
+                        .withTags("clear", "debug")
+                        .withAxes(60.0D, 0.8D, 0.8D);
+        event.getEntity().setData(io.github.verycooltimo.murim.registry.ModAttachments.PROFILE,
+                awakened.withPool(500.0D).withCirculating(awakened.maxCirculating()));
+        if (event.getEntity() instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+            io.github.verycooltimo.murim.profile.ProfileNetwork.sync(serverPlayer);
+        }
+
+        // Манекен для проверки боевого цикла.
+        io.github.verycooltimo.murim.entity.TrainingDummy dummy =
+                new io.github.verycooltimo.murim.entity.TrainingDummy(
+                        io.github.verycooltimo.murim.registry.ModEntities.DUMMY.get(), serverLevel);
+        // Смещён вбок: при контрольном ракурсе камера стоит перед игроком ровно там, где
+        // манекен, и упиралась ему в лицо. Отклонение около 20 градусов оставляет манекен
+        // внутри конуса поражения ладони (полуугол 35), но убирает его из кадра.
+        dummy.setPos(STAGE_X + 1.7D, STAGE_Y, STAGE_Z + 3.2D);
+        serverLevel.addFreshEntity(dummy);
+
+        MurimMod.LOGGER.info("Съёмка: меч выдан, профиль пробуждён, игрок на площадке {} {} {}",
+                STAGE_X, STAGE_Y, STAGE_Z);
     }
 
     private DevSetupEvents() {

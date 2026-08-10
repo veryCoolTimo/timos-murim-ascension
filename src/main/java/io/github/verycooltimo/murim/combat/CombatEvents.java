@@ -15,6 +15,25 @@ import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 public final class CombatEvents {
 
     /**
+     * После смерти техника не должна «продолжаться», но кулдаун обязан сохраниться.
+     *
+     * <p>Состояние копируется целиком механизмом вложений, поэтому здесь гасится только
+     * активная часть: иначе игрок возрождался бы посреди чужого взмаха.
+     */
+    @SubscribeEvent
+    static void onClone(net.neoforged.neoforge.event.entity.player.PlayerEvent.Clone event) {
+        if (!(event.getEntity() instanceof net.minecraft.server.level.ServerPlayer player)) {
+            return;
+        }
+        io.github.verycooltimo.murim.combat.TechniqueState state =
+                player.getData(io.github.verycooltimo.murim.registry.ModAttachments.TECHNIQUE_STATE);
+        if (state.isActive()) {
+            player.setData(io.github.verycooltimo.murim.registry.ModAttachments.TECHNIQUE_STATE,
+                    state.finished());
+        }
+    }
+
+    /**
      * Полученный урон сбивает технику, если это разрешено её описанием.
      *
      * <p>Решение по правилам прерывания: до фазы удара технику можно сбить, с удара она

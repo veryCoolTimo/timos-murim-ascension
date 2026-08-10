@@ -36,12 +36,14 @@ public final class ClientLifecycleEvents {
 
     private static void resetAll() {
         BladeTrailRenderer.clear();
+        io.github.verycooltimo.murim.client.vfx.PalmVfxRenderer.clear();
         CameraShakeHandler.reset();
         ImpactScreenLayer.reset();
         TechniqueNameLayer.reset();
         ClientTechniqueHandler.reset();
         HitStopHandler.reset();
         DevCaptureHandler.reset();
+        ClientProfileState.reset();
     }
 
     private ClientLifecycleEvents() {

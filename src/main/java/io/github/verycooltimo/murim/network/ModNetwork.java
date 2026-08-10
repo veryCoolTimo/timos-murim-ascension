@@ -45,6 +45,16 @@ public final class ModNetwork {
                 SyncTechniquesPayload.TYPE,
                 SyncTechniquesPayload.STREAM_CODEC,
                 (payload, context) -> ClientPayloadBridge.handleSyncTechniques(payload));
+
+        registrar.playToClient(
+                SyncProfilePayload.TYPE,
+                SyncProfilePayload.STREAM_CODEC,
+                (payload, context) -> ClientPayloadBridge.handleSyncProfile(payload));
+
+        registrar.playToClient(
+                SyncRitualPayload.TYPE,
+                SyncRitualPayload.STREAM_CODEC,
+                (payload, context) -> ClientPayloadBridge.handleSyncRitual(payload));
     }
 
     private ModNetwork() {

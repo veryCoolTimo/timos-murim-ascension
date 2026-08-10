@@ -29,6 +29,15 @@ public final class MurimRenderTypes {
     private static final ResourceLocation CRESCENT_TEXTURE =
             ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/vfx/blade_crescent.png");
 
+    private static final ResourceLocation STRAND_TEXTURE =
+            ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/vfx/strand.png");
+
+    private static final ResourceLocation SHARD_TEXTURE =
+            ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/vfx/shard.png");
+
+    private static final ResourceLocation DRIP_TEXTURE =
+            ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/vfx/drip.png");
+
     private static final ResourceLocation CORE_TEXTURE =
             ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/vfx/impact_core.png");
 
@@ -82,6 +91,46 @@ public final class MurimRenderTypes {
                         .setOverlayState(RenderStateShard.NO_OVERLAY)
                         .setWriteMaskState(RenderStateShard.COLOR_WRITE)
                         .createCompositeState(false));
+    }
+
+    /** Тонкая светящаяся прядь. Из пучка таких собирается фактура смазанного движения. */
+    private static final RenderType STRAND = additive("strand", STRAND_TEXTURE);
+
+    /** Стекающая субстанция с каплей. */
+    private static final RenderType DRIP = additive("drip", DRIP_TEXTURE);
+
+    /**
+     * Тёмные осколки.
+     *
+     * <p>Единственный НЕаддитивный слой мода, и это принципиально: аддитивное смешивание
+     * складывает яркость, поэтому чёрное на нём просто невидимо. Тёмные элементы требуют
+     * обычной полупрозрачности, иначе их на экране не будет вовсе.
+     */
+    private static final RenderType SHARD = RenderType.create(
+            MurimMod.MODID + ":shard",
+            DefaultVertexFormat.NEW_ENTITY,
+            VertexFormat.Mode.QUADS,
+            4096,
+            RenderType.CompositeState.builder()
+                    .setShaderState(RenderStateShard.RENDERTYPE_ENTITY_TRANSLUCENT_SHADER)
+                    .setTextureState(new RenderStateShard.TextureStateShard(SHARD_TEXTURE, false, false))
+                    .setTransparencyState(RenderStateShard.TRANSLUCENT_TRANSPARENCY)
+                    .setCullState(RenderStateShard.NO_CULL)
+                    .setLightmapState(RenderStateShard.NO_LIGHTMAP)
+                    .setOverlayState(RenderStateShard.NO_OVERLAY)
+                    .setWriteMaskState(RenderStateShard.COLOR_WRITE)
+                    .createCompositeState(false));
+
+    public static RenderType strand() {
+        return STRAND;
+    }
+
+    public static RenderType drip() {
+        return DRIP;
+    }
+
+    public static RenderType shard() {
+        return SHARD;
     }
 
     public static RenderType bladeTrail() {

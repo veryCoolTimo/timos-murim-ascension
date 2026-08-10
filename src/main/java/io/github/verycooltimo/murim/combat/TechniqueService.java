@@ -45,6 +45,24 @@ public final class TechniqueService {
             return false;
         }
 
+        // Техника стоит ци и требует сформированного центра. Проверка здесь, а не в команде:
+        // любой путь запуска обязан платить одинаково.
+        io.github.verycooltimo.murim.profile.DantianProfile profile =
+                player.getData(ModAttachments.PROFILE);
+        if (!profile.isAwakened()) {
+            player.displayClientMessage(
+                    net.minecraft.network.chat.Component.translatable("murim.technique.not_awakened"), true);
+            return false;
+        }
+        double cost = techniqueCost(technique);
+        if (profile.circulating() < cost) {
+            player.displayClientMessage(
+                    net.minecraft.network.chat.Component.translatable("murim.technique.no_qi"), true);
+            return false;
+        }
+        player.setData(ModAttachments.PROFILE, profile.withCirculating(profile.circulating() - cost));
+        io.github.verycooltimo.murim.profile.ProfileNetwork.sync(player);
+
         player.setData(ModAttachments.TECHNIQUE_STATE, TechniqueState.started(technique.id(), now));
         PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
                 new TechniqueEventPayload(TechniqueEventPayload.Event.STARTED, technique.id(), player.getId(), 0));
@@ -227,6 +245,17 @@ public final class TechniqueService {
      * <p>Зритель проверяется отдельно от живости: без этого режим наблюдателя давал
      * бесплатный урон по миру.
      */
+    /**
+     * Стоимость техники в циркулирующей ци.
+     *
+     * <p>Считается от длительности, а не задаётся отдельным полем: длинная техника с ритуалом
+     * объективно дороже короткого рывка, и держать это ещё одним числом в JSON значило бы
+     * дать возможность их рассогласовать.
+     */
+    private static double techniqueCost(TechniqueDefinition technique) {
+        return 1.0D + technique.totalTicks() * 0.05D;
+    }
+
     private static boolean canAct(ServerPlayer player) {
         return player.isAlive() && !player.isRemoved() && !player.isSpectator();
     }

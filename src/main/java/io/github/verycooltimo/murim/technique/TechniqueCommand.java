@@ -67,6 +67,46 @@ public final class TechniqueCommand {
                             return 1;
                         })));
 
+        root.then(Commands.literal("dummy").executes(context -> {
+            ServerPlayer player = context.getSource().getPlayerOrException();
+            io.github.verycooltimo.murim.entity.TrainingDummy dummy =
+                    new io.github.verycooltimo.murim.entity.TrainingDummy(
+                            io.github.verycooltimo.murim.registry.ModEntities.DUMMY.get(), player.level());
+            net.minecraft.world.phys.Vec3 spot = player.position()
+                    .add(player.getLookAngle().scale(3.0D));
+            dummy.setPos(spot.x, player.getY(), spot.z);
+            player.level().addFreshEntity(dummy);
+            context.getSource().sendSuccess(() -> Component.literal("Манекен поставлен"), false);
+            return 1;
+        }));
+
+        root.then(Commands.literal("awaken").executes(context -> {
+            // Отладочное пробуждение: без него техники недоступны до первого ритуала,
+            // и проверять боевую часть было бы нечем.
+            ServerPlayer player = context.getSource().getPlayerOrException();
+            io.github.verycooltimo.murim.profile.DantianProfile profile =
+                    io.github.verycooltimo.murim.profile.DantianProfile.INITIAL
+                            .withTags("clear", "debug")
+                            .withAxes(60.0D, 0.8D, 0.8D);
+            player.setData(io.github.verycooltimo.murim.registry.ModAttachments.PROFILE,
+                    profile.withPool(500.0D).withCirculating(profile.maxCirculating()));
+            io.github.verycooltimo.murim.profile.ProfileNetwork.sync(player);
+            context.getSource().sendSuccess(() -> Component.literal("Даньтянь пробуждён"), false);
+            return 1;
+        }));
+
+        root.then(Commands.literal("profile").executes(context -> {
+            ServerPlayer player = context.getSource().getPlayerOrException();
+            io.github.verycooltimo.murim.profile.DantianProfile p =
+                    player.getData(io.github.verycooltimo.murim.registry.ModAttachments.PROFILE);
+            context.getSource().sendSuccess(() -> Component.literal(String.format(
+                    java.util.Locale.ROOT,
+                    "ёмкость %.1f · чистота %.2f · каналы %.2f · ци %.1f/%.1f · запас %.1f · фундамент %.2f · %s/%s",
+                    p.capacity(), p.purity(), p.meridians(), p.circulating(), p.maxCirculating(),
+                    p.pool(), p.foundation(), p.nature(), p.imprint())), false);
+            return 1;
+        }));
+
         event.getDispatcher().register(root);
     }
 

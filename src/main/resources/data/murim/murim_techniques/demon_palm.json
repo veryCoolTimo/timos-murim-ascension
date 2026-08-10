@@ -1,0 +1,45 @@
+{
+  "id": "murim:demon_palm",
+  "form": "open_palm",
+  "intent": "destruction",
+  "breath": "venom_breath",
+  "phases": {
+    "ritual": 0,
+    "windup": 40,
+    "impact": 2,
+    "recovery": 26,
+    "dissipation": 14
+  },
+  "behavior": {
+    "type": "murim:palm_blast",
+    "reach": 4.5,
+    "arc_degrees": 70.0,
+    "damage": 7.0,
+    "poison_seconds": 6,
+    "stun_ticks": 40
+  },
+  "animation": "murim:demon_palm",
+  "vfx": {
+    "pivot": [-0.2, 1.2, 0.0],
+    "basis_a": [-0.6, 0.75, -0.2],
+    "basis_b": [0.3, -0.2, 0.93],
+    "inner_radius": 0.1,
+    "outer_radius": 0.9,
+    "start_angle": 0.0,
+    "end_angle": 90.0,
+    "colour": { "r": 0.45, "g": 1.0, "b": 0.6 },
+    "trail": { "enabled": false, "alpha": 0.0, "size": 0.1, "life_ticks": 1.0 },
+    "crescent": { "enabled": false, "alpha": 0.0, "size": 0.1, "life_ticks": 1.0 },
+    "core": { "enabled": false, "alpha": 0.0, "size": 0.1, "life_ticks": 1.0 },
+    "windup_motes": 0,
+    "ritual_motes": 0
+  },
+  "interruption": {
+    "cancellable_until": "windup",
+    "break_on_damage": true,
+    "damage_threshold": 5.0
+  },
+  "weakness": "technique.murim.demon_palm.weakness",
+  "hit_stop_ticks": 4,
+  "cooldown_ticks": 100
+}

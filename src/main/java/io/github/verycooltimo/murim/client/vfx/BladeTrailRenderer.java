@@ -274,6 +274,9 @@ public final class BladeTrailRenderer {
             applyFrame(poseStack, frame);
             com.mojang.blaze3d.vertex.PoseStack.Pose pose = poseStack.last();
 
+            // Строго по одному типу за раз: общий источник буферов строит только один,
+            // и запрос второго закрывает первый. Запись в удержанную ссылку после этого
+            // падает с «Not building!» — поймано на ладони 2026-08-10.
             VertexConsumer rings = buffers.getBuffer(MurimRenderTypes.bladeCrescent());
             // Два кольца навстречу друг другу: одинаковое вращение читается как один диск.
             // Заметнее, чем у слоёв удара: в этой фазе кольца ничем не перекрываются
@@ -282,6 +285,8 @@ public final class BladeTrailRenderer {
                  0.34F * envelope, timing.vfx().colour());
             ring(rings, pose, 1.15D - 0.35D * progress, 0.045D, -age * 0.055F,
                  0.44F * envelope, timing.vfx().colour());
+
+            buffers.endBatch(MurimRenderTypes.bladeCrescent());
 
             VertexConsumer motes = buffers.getBuffer(MurimRenderTypes.impactCore());
             for (int i = 0; i < timing.vfx().ritualMotes(); i++) {
@@ -302,6 +307,7 @@ public final class BladeTrailRenderer {
             billboard(motes, pose, dantian, frame.cameraLocal.subtract(dantian).normalize(),
                       0.16D + 0.26D * progress, envelope * (0.18F + 0.42F * progress),
                       timing.vfx().colour());
+            buffers.endBatch(MurimRenderTypes.impactCore());
         } finally {
             poseStack.popPose();
         }

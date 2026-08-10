@@ -42,6 +42,9 @@ public final class BehaviorExecutor {
         if (behavior instanceof TechniqueBehavior.Dash dash) {
             return dash(player, dash);
         }
+        if (behavior instanceof TechniqueBehavior.PalmBlast palm) {
+            return palmBlast(player, palm);
+        }
         MurimMod.LOGGER.error("Тип поведения {} не реализован у техники {}",
                 behavior.type(), definition.id());
         return false;
@@ -115,6 +118,52 @@ public final class BehaviorExecutor {
             }
             if (target.hurt(player.damageSources().playerAttack(player), dash.damage())) {
                 anyHit = true;
+            }
+        }
+        return anyHit;
+    }
+
+    /**
+     * Ладонный выброс: конус вблизи, отравление и обездвиживание.
+     *
+     * <p>Стан реализован эффектами замедления и слабости, а не запретом ввода: отнимать
+     * у игрока управление — тяжёлое решение, и для моба оно достигается дешевле.
+     * Цель остаётся на месте, но продолжает существовать как участник боя.
+     */
+    private static boolean palmBlast(ServerPlayer player, TechniqueBehavior.PalmBlast palm) {
+        Vec3 eye = player.getEyePosition();
+        Vec3 look = player.getLookAngle();
+        double cosLimit = Math.cos(Math.toRadians(palm.arcDegrees() / 2.0D));
+        AABB search = new AABB(eye, eye).inflate(palm.reach());
+
+        boolean anyHit = false;
+        int processed = 0;
+        for (LivingEntity target : candidates(player, search)) {
+            if (++processed > MAX_TARGETS) {
+                break;
+            }
+            if (!inArc(eye, look, target.getBoundingBox(), palm.reach(), cosLimit)) {
+                continue;
+            }
+            if (!target.hurt(player.damageSources().playerAttack(player), palm.damage())) {
+                continue;
+            }
+            anyHit = true;
+            if (palm.poisonSeconds() > 0) {
+                target.addEffect(new net.minecraft.world.effect.MobEffectInstance(
+                        net.minecraft.world.effect.MobEffects.POISON,
+                        palm.poisonSeconds() * 20, 1, false, true, true));
+            }
+            if (palm.stunTicks() > 0) {
+                target.addEffect(new net.minecraft.world.effect.MobEffectInstance(
+                        net.minecraft.world.effect.MobEffects.MOVEMENT_SLOWDOWN,
+                        palm.stunTicks(), 6, false, true, true));
+                target.addEffect(new net.minecraft.world.effect.MobEffectInstance(
+                        net.minecraft.world.effect.MobEffects.WEAKNESS,
+                        palm.stunTicks(), 2, false, true, true));
+                // Гасим текущее движение, иначе цель по инерции продолжает уезжать.
+                target.setDeltaMovement(0.0D, target.getDeltaMovement().y, 0.0D);
+                target.hurtMarked = true;
             }
         }
         return anyHit;

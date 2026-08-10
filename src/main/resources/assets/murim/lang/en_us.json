@@ -28,5 +28,21 @@
   "technique.murim.wedge_fan.weakness": "Wedges scatter on any obstacle.",
   "technique.murim.shadow_step.weakness": "Leaves the flank open on landing.",
   "technique.murim.crescent_sweep": "Crescent Sweep",
-  "technique.murim.crescent_sweep.weakness": "Wide arc leaves the guard low."
+  "technique.murim.crescent_sweep.weakness": "Wide arc leaves the guard low.",
+  "item.murim.manual": "Manual of Foundations",
+  "item.murim.manual.hint": "Use to begin circulation. Use again to stop and keep what you gathered.",
+  "entity.murim.training_dummy": "Training Dummy",
+  "entity.murim.wedge": "Qi Wedge",
+  "murim.ritual.begin": "You settle and begin to circulate.",
+  "murim.ritual.end": "Gathered %s qi over %s cycles.",
+  "murim.ritual.broken.moved": "The circulation breaks — you moved.",
+  "murim.ritual.backlash": "The flow turns back on you. Something inside gives way.",
+  "murim.ritual.awakened.clear": "Your dantian forms — clear and slow.",
+  "murim.ritual.awakened.turbid": "Your dantian forms — turbid and eager.",
+  "murim.hud.ritual": "Cycle %s · qi %s/%s",
+  "murim.hud.ritual.risk": "STRAINED",
+  "murim.technique.no_qi": "Not enough circulating qi.",
+  "murim.technique.not_awakened": "Your dantian is not formed yet.",
+  "technique.murim.demon_palm": "Palm of Demon Destruction",
+  "technique.murim.demon_palm.weakness": "Must be gathered at arm's length — no reach."
 }

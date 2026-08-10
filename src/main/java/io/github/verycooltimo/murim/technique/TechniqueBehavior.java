@@ -20,11 +20,13 @@ import java.util.Map;
  * <p>Значения валидируются в компактных конструкторах: из датапака приходят любые числа.
  */
 public sealed interface TechniqueBehavior
-        permits TechniqueBehavior.MeleeArc, TechniqueBehavior.ProjectileFan, TechniqueBehavior.Dash {
+        permits TechniqueBehavior.MeleeArc, TechniqueBehavior.ProjectileFan, TechniqueBehavior.Dash,
+                TechniqueBehavior.PalmBlast {
 
     ResourceLocation MELEE_ARC = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "melee_arc");
     ResourceLocation PROJECTILE_FAN = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "projectile_fan");
     ResourceLocation DASH = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "dash");
+    ResourceLocation PALM_BLAST = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "palm_blast");
 
     ResourceLocation type();
 
@@ -138,10 +140,55 @@ public sealed interface TechniqueBehavior
         }
     }
 
+    /**
+     * Ладонный выброс вблизи: конус перед собой, отравление и обездвиживание цели.
+     *
+     * @param reach         дальность конуса; техника контактная, а не дистанционная
+     * @param arcDegrees    ширина конуса
+     * @param poisonSeconds сколько секунд держится отравление
+     * @param stunTicks     на сколько цель теряет возможность уйти
+     */
+    record PalmBlast(double reach, double arcDegrees, float damage, int poisonSeconds,
+                     int stunTicks) implements TechniqueBehavior {
+        public static final MapCodec<PalmBlast> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
+                Codec.DOUBLE.fieldOf("reach").forGetter(PalmBlast::reach),
+                Codec.DOUBLE.fieldOf("arc_degrees").forGetter(PalmBlast::arcDegrees),
+                Codec.FLOAT.fieldOf("damage").forGetter(PalmBlast::damage),
+                Codec.INT.fieldOf("poison_seconds").forGetter(PalmBlast::poisonSeconds),
+                Codec.INT.fieldOf("stun_ticks").forGetter(PalmBlast::stunTicks)
+        ).apply(i, PalmBlast::new));
+
+        public PalmBlast {
+            if (!(reach > 0.0D) || !(reach <= 8.0D)) {
+                throw new IllegalArgumentException("Дальность ладони вне 0..8: " + reach);
+            }
+            if (!(arcDegrees > 0.0D) || !(arcDegrees <= 360.0D)) {
+                throw new IllegalArgumentException("Конус вне 0..360: " + arcDegrees);
+            }
+            if (!(damage >= 0.0F)) {
+                throw new IllegalArgumentException("Отрицательный или нечисловой урон");
+            }
+            if (poisonSeconds < 0 || poisonSeconds > 60) {
+                throw new IllegalArgumentException("Отравление вне 0..60 секунд: " + poisonSeconds);
+            }
+            // Потолок стана — вопрос честности, а не баланса: обездвиживание дольше трёх
+            // секунд превращает бой в казнь.
+            if (stunTicks < 0 || stunTicks > 60) {
+                throw new IllegalArgumentException("Стан вне 0..60 тиков: " + stunTicks);
+            }
+        }
+
+        @Override
+        public ResourceLocation type() {
+            return PALM_BLAST;
+        }
+    }
+
     Map<ResourceLocation, MapCodec<? extends TechniqueBehavior>> TYPES = Map.of(
             MELEE_ARC, MeleeArc.CODEC,
             PROJECTILE_FAN, ProjectileFan.CODEC,
-            DASH, Dash.CODEC);
+            DASH, Dash.CODEC,
+            PALM_BLAST, PalmBlast.CODEC);
 
     Codec<TechniqueBehavior> CODEC = ResourceLocation.CODEC
             .dispatch("type", TechniqueBehavior::type, type -> {

@@ -27,6 +27,22 @@ public record TechniqueState(
 ) {
 
     /** Игрок свободен и никогда ничего не применял. Безопасно разделять: запись неизменяема. */
+    /**
+     * Кодек нужен, чтобы кулдаун переживал смерть: без сохранения гибель обнуляла время
+     * последнего запуска и становилась способом мгновенно перезарядить технику.
+     */
+    public static final com.mojang.serialization.Codec<TechniqueState> CODEC =
+            com.mojang.serialization.codecs.RecordCodecBuilder.create(i -> i.group(
+                    net.minecraft.resources.ResourceLocation.CODEC.optionalFieldOf("technique")
+                            .forGetter(state -> java.util.Optional.ofNullable(state.techniqueId())),
+                    com.mojang.serialization.Codec.INT.fieldOf("tick").forGetter(TechniqueState::tick),
+                    com.mojang.serialization.Codec.BOOL.fieldOf("impact_done")
+                            .forGetter(TechniqueState::impactDone),
+                    com.mojang.serialization.Codec.LONG.fieldOf("last_start")
+                            .forGetter(TechniqueState::lastStartGameTime)
+            ).apply(i, (id, tick, done, last) ->
+                    new TechniqueState(id.orElse(null), tick, done, last)));
+
     public static final TechniqueState IDLE = new TechniqueState(null, 0, false, Long.MIN_VALUE);
 
     public boolean isActive() {

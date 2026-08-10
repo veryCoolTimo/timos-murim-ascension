@@ -68,8 +68,14 @@ public final class ClientTechniqueHandler {
         switch (payload.event()) {
             case STARTED -> {
                 scheduleAnimation(payload);
-                BladeTrailRenderer.start(payload.sourceId(),
-                        io.github.verycooltimo.murim.technique.TechniqueLoader.get(payload.techniqueId()));
+                TechniqueDefinition started = TechniqueLoader.get(payload.techniqueId());
+                BladeTrailRenderer.start(payload.sourceId(), started);
+                // У ладони собственный набор слоёв: общая схема дуги её не описывает.
+                if (started != null && started.behavior().type().equals(
+                        io.github.verycooltimo.murim.technique.TechniqueBehavior.PALM_BLAST)) {
+                    io.github.verycooltimo.murim.client.vfx.PalmVfxRenderer.start(
+                            payload.sourceId(), started);
+                }
                 // Название объявляет только тот, кто применяет: чужие имена техник поверх
                 // своего экрана — это шум, а не постановка.
                 if (isLocalPlayer(payload.sourceId())) {
@@ -97,6 +103,7 @@ public final class ClientTechniqueHandler {
                 // ни отложенный взмах, который выстрелит уже после отмены.
                 PENDING.remove(payload.sourceId());
                 BladeTrailRenderer.cancel(payload.sourceId());
+                io.github.verycooltimo.murim.client.vfx.PalmVfxRenderer.cancel(payload.sourceId());
                 MurimMod.LOGGER.debug("Техника {} прервана", payload.techniqueId());
             }
             case FINISHED -> MurimMod.LOGGER.debug("Техника {} завершена", payload.techniqueId());
@@ -111,7 +118,16 @@ public final class ClientTechniqueHandler {
      * и запуск по событию проигрывал взмах во время концентрации, задолго до удара.
      * Поймано на кадрах 2026-08-10: на пятом тике персонаж уже махал мечом.
      */
-    private static final java.util.Map<Integer, Integer> PENDING = new java.util.HashMap<>();
+    private static final java.util.Map<Integer, Pending> PENDING = new java.util.HashMap<>();
+
+    /**
+     * Отложенный запуск анимации.
+     *
+     * <p>Хранится идентификатор анимации, а не только задержка: техник стало несколько,
+     * и раньше здесь была зашита анимация выхвата — ладонь махала бы мечом.
+     */
+    private record Pending(int ticksLeft, net.minecraft.resources.ResourceLocation animation) {
+    }
 
     /** Снимает отложенные запуски: смена мира не должна выстрелить анимацией в новом. */
     public static void reset() {
@@ -122,12 +138,15 @@ public final class ClientTechniqueHandler {
         // Задержка берётся из данных техники, а не зашита числом: правится длина ритуала —
         // анимация едет следом.
         TechniqueDefinition definition = TechniqueLoader.get(payload.techniqueId());
-        int delay = definition == null ? 0 : definition.startTickOf(TechniquePhase.WINDUP);
-        if (delay <= 0) {
-            playAnimation(payload);
+        if (definition == null) {
             return;
         }
-        PENDING.put(payload.sourceId(), delay);
+        int delay = definition.startTickOf(TechniquePhase.WINDUP);
+        if (delay <= 0) {
+            playAnimation(payload, definition.animation());
+            return;
+        }
+        PENDING.put(payload.sourceId(), new Pending(delay, definition.animation()));
     }
 
     private static void tickPending() {
@@ -138,15 +157,16 @@ public final class ClientTechniqueHandler {
         var iterator = PENDING.entrySet().iterator();
         while (iterator.hasNext()) {
             var entry = iterator.next();
-            int left = entry.getValue() - 1;
+            Pending pending = entry.getValue();
+            int left = pending.ticksLeft() - 1;
             if (left > 0) {
-                entry.setValue(left);
+                entry.setValue(new Pending(left, pending.animation()));
                 continue;
             }
             iterator.remove();
             if (level != null
                     && level.getEntity(entry.getKey()) instanceof AbstractClientPlayer player) {
-                MurimPlayerAnimations.play(player, MurimPlayerAnimations.CEREMONIAL_DRAW);
+                MurimPlayerAnimations.play(player, pending.animation());
             }
         }
     }
@@ -155,13 +175,14 @@ public final class ClientTechniqueHandler {
      * Запускает анимацию у того, кто применил технику. Пакет приходит и наблюдателям, поэтому
      * анимация проигрывается у чужих игроков тоже — иначе техника была бы видна только себе.
      */
-    private static void playAnimation(TechniqueEventPayload payload) {
+    private static void playAnimation(TechniqueEventPayload payload,
+                                      net.minecraft.resources.ResourceLocation animation) {
         ClientLevel level = Minecraft.getInstance().level;
         if (level == null) {
             return;
         }
         if (level.getEntity(payload.sourceId()) instanceof AbstractClientPlayer player) {
-            MurimPlayerAnimations.play(player, MurimPlayerAnimations.CEREMONIAL_DRAW);
+            MurimPlayerAnimations.play(player, animation);
         }
     }
 

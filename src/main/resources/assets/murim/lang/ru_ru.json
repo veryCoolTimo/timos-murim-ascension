@@ -8,5 +8,21 @@
   "technique.murim.wedge_fan.weakness": "Клинья рассыпаются о любую преграду.",
   "technique.murim.shadow_step.weakness": "На выходе открывает бок.",
   "technique.murim.crescent_sweep": "Серповидный смах",
-  "technique.murim.crescent_sweep.weakness": "Широкая дуга опускает защиту."
+  "technique.murim.crescent_sweep.weakness": "Широкая дуга опускает защиту.",
+  "item.murim.manual": "Мануал основ",
+  "item.murim.manual.hint": "Применить — начать циркуляцию. Ещё раз — остановиться и забрать набранное.",
+  "entity.murim.training_dummy": "Тренировочный манекен",
+  "entity.murim.wedge": "Клин ци",
+  "murim.ritual.begin": "Вы садитесь и начинаете циркуляцию.",
+  "murim.ritual.end": "Набрано %s ци за %s кругов.",
+  "murim.ritual.broken.moved": "Циркуляция сбита — вы двинулись.",
+  "murim.ritual.backlash": "Поток разворачивается. Внутри что-то поддаётся.",
+  "murim.ritual.awakened.clear": "Даньтянь формируется — чистый и медленный.",
+  "murim.ritual.awakened.turbid": "Даньтянь формируется — мутный и жадный.",
+  "murim.hud.ritual": "Круг %s · ци %s/%s",
+  "murim.hud.ritual.risk": "НАПРЯЖЕНИЕ",
+  "murim.technique.no_qi": "Не хватает циркулирующей ци.",
+  "murim.technique.not_awakened": "Даньтянь ещё не сформирован.",
+  "technique.murim.demon_palm": "Ладонь разрушения демонов",
+  "technique.murim.demon_palm.weakness": "Собирается на расстоянии руки — достать издали нечем."
 }

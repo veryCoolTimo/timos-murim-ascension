@@ -30,6 +30,16 @@ final class ClientPayloadBridge {
         io.github.verycooltimo.murim.technique.TechniqueLoader.replaceAll(payload.definitions());
     }
 
+    /** Профиль владельца — для интерфейса. */
+    public static void handleSyncProfile(SyncProfilePayload payload) {
+        io.github.verycooltimo.murim.client.ClientProfileState.setProfile(payload.profile());
+    }
+
+    /** Ход ритуала — для полосы круга и напряжения. */
+    public static void handleSyncRitual(SyncRitualPayload payload) {
+        io.github.verycooltimo.murim.client.ClientProfileState.setRitual(payload);
+    }
+
     private ClientPayloadBridge() {
     }
 }

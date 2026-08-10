@@ -33,6 +33,10 @@ public final class MurimPlayerAnimations {
     public static final ResourceLocation CEREMONIAL_DRAW =
             ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "ceremonial_draw");
 
+    /** Анимация берётся из описания техники; эта константа осталась запасным вариантом. */
+    public static final ResourceLocation DEMON_PALM =
+            ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "demon_palm");
+
     /**
      * Регистрирует фабрику слоя. Вызывается один раз при инициализации клиента: PAL сам создаст
      * контроллер для каждого игрока, включая чужих, — техника видна и со стороны.
