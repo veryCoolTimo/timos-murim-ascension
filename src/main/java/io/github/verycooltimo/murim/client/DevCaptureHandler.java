@@ -1,7 +1,7 @@
 package io.github.verycooltimo.murim.client;
 
 import io.github.verycooltimo.murim.MurimMod;
-import io.github.verycooltimo.murim.combat.Techniques;
+
 import io.github.verycooltimo.murim.network.StartTechniquePayload;
 import net.minecraft.client.CameraType;
 import net.minecraft.client.Minecraft;
@@ -42,6 +42,9 @@ public final class DevCaptureHandler {
      * контрольный — «правильна ли дуга вообще». Нужны оба.
      */
     private static final String CAMERA_PROPERTY = "murim.capture.camera";
+
+    /** Какую технику снимать: {@code -Pmurim.technique=wedge_fan}. По умолчанию первая. */
+    private static final String TECHNIQUE_PROPERTY = "murim.capture.technique";
 
     /** Сколько тиков ждать после входа в мир, прежде чем применять технику. */
     private static final int WARMUP_TICKS = 60;
@@ -103,7 +106,9 @@ public final class DevCaptureHandler {
         }
 
         if (warmup > 0 && --warmup == 0) {
-            PacketDistributor.sendToServer(new StartTechniquePayload(Techniques.CEREMONIAL_DRAW.id()));
+            PacketDistributor.sendToServer(new StartTechniquePayload(
+                    net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(
+                            MurimMod.MODID, System.getProperty(TECHNIQUE_PROPERTY, "ceremonial_draw"))));
             startCapture();
         }
 

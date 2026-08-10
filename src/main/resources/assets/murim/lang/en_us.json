@@ -21,5 +21,12 @@
   "murim.configuration.quality.tooltip": "Detail level of blade trails and particle density.",
   "key.categories.murim": "Timos Murim",
   "key.murim.technique": "Use Technique",
-  "technique.murim.ceremonial_draw": "Ceremonial Draw"
+  "technique.murim.ceremonial_draw": "Ceremonial Draw",
+  "technique.murim.wedge_fan": "Wedge Fan",
+  "technique.murim.shadow_step": "Shadow Step",
+  "technique.murim.ceremonial_draw.weakness": "Cannot be turned aside once begun.",
+  "technique.murim.wedge_fan.weakness": "Wedges scatter on any obstacle.",
+  "technique.murim.shadow_step.weakness": "Leaves the flank open on landing.",
+  "technique.murim.crescent_sweep": "Crescent Sweep",
+  "technique.murim.crescent_sweep.weakness": "Wide arc leaves the guard low."
 }

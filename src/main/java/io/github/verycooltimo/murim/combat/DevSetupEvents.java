@@ -36,7 +36,7 @@ public final class DevSetupEvents {
     private static final int STAGE_X = 8;
     private static final int STAGE_Y = 120;
     private static final int STAGE_Z = 8;
-    private static final int PLATFORM_RADIUS = 4;
+    private static final int PLATFORM_RADIUS = 12;
 
     /** Метка мишеней съёмки: по ней они снимаются перед следующим прогоном. */
     private static final String TARGET_TAG = "murim_capture_target";
@@ -88,10 +88,12 @@ public final class DevSetupEvents {
         }
         // Мишени разведены по сторонам, центр оставлен пустым: при контрольном ракурсе
         // камера стоит спереди, и стенд по центру полностью закрывал персонажа.
-        for (double dx : new double[] {-1.4D, 1.4D}) {
+        // Мишени отнесены на шесть блоков: при двух блоках снаряды долетали за пару тиков
+        // и на кадрах их было не разглядеть — сцена скрывала работающую механику.
+        for (double dx : new double[] {-1.6D, 1.6D}) {
             net.minecraft.world.entity.decoration.ArmorStand target =
                     new net.minecraft.world.entity.decoration.ArmorStand(
-                            serverLevel, STAGE_X + 0.5D + dx, STAGE_Y, STAGE_Z + 2.2D);
+                            serverLevel, STAGE_X + 0.5D + dx, STAGE_Y, STAGE_Z + 6.0D);
             target.addTag(TARGET_TAG);
             serverLevel.addFreshEntity(target);
         }

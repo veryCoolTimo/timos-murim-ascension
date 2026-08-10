@@ -38,6 +38,13 @@ public final class ModNetwork {
                 TechniqueEventPayload.TYPE,
                 TechniqueEventPayload.STREAM_CODEC,
                 ClientPayloadBridge::handleTechniqueEvent);
+
+        // Описания техник: клиенту нужна форма дуги, цвета и тайминги, а датапак живёт
+        // на сервере. Рассылается при входе и после /reload — см. TechniqueEvents.
+        registrar.playToClient(
+                SyncTechniquesPayload.TYPE,
+                SyncTechniquesPayload.STREAM_CODEC,
+                (payload, context) -> ClientPayloadBridge.handleSyncTechniques(payload));
     }
 
     private ModNetwork() {

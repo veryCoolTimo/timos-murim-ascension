@@ -7,7 +7,7 @@ package io.github.verycooltimo.murim.combat;
  * анимация на клиенте подстраивается под него, а не наоборот. Клиентский кадр не может решать,
  * когда наносится урон — см. правило 03 и ADR-73.
  */
-public enum TechniquePhase {
+public enum TechniquePhase implements net.minecraft.util.StringRepresentable {
     /**
      * Внутренняя концентрация перед техникой: сбор ци, круги энергии, замедление шага.
      *
@@ -22,5 +22,14 @@ public enum TechniquePhase {
     /** Восстановление: игрок уязвим, техника уже не бьёт. */
     RECOVERY,
     /** Рассеивание: механики нет, доигрывают только эффекты. По референсам — самая длинная фаза. */
-    DISSIPATION
+    DISSIPATION;
+
+    /** Имя фазы в JSON — строчными буквами, как принято в датапаках Minecraft. */
+    public static final com.mojang.serialization.Codec<TechniquePhase> CODEC =
+            net.minecraft.util.StringRepresentable.fromEnum(TechniquePhase::values);
+
+    @Override
+    public String getSerializedName() {
+        return name().toLowerCase(java.util.Locale.ROOT);
+    }
 }

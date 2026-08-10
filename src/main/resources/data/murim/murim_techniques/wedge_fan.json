@@ -1,0 +1,45 @@
+{
+  "id": "murim:wedge_fan",
+  "form": "horizontal_sweep",
+  "intent": "suppression",
+  "breath": "scattering_wind",
+  "phases": {
+    "ritual": 20,
+    "windup": 10,
+    "impact": 2,
+    "recovery": 8,
+    "dissipation": 10
+  },
+  "behavior": {
+    "type": "murim:projectile_fan",
+    "count": 5,
+    "spread_degrees": 52.0,
+    "speed": 1.15,
+    "lifetime_ticks": 40,
+    "damage": 3.5
+  },
+  "animation": "murim:ceremonial_draw",
+  "vfx": {
+    "pivot": [-0.18, 1.18, 0.0],
+    "basis_a": [-0.9, 0.35, -0.1],
+    "basis_b": [0.25, -0.1, 0.96],
+    "inner_radius": 0.12,
+    "outer_radius": 1.35,
+    "start_angle": -60.0,
+    "end_angle": 70.0,
+    "colour": { "r": 0.72, "g": 0.98, "b": 0.86 },
+    "trail": { "alpha": 0.85, "size": 0.34, "life_ticks": 4.0 },
+    "crescent": { "alpha": 0.4, "size": 0.16, "life_ticks": 3.0 },
+    "core": { "enabled": false, "alpha": 0.0, "size": 0.1, "life_ticks": 1.0 },
+    "windup_motes": 5,
+    "ritual_motes": 6
+  },
+  "interruption": {
+    "cancellable_until": "windup",
+    "break_on_damage": true,
+    "damage_threshold": 2.0
+  },
+  "weakness": "technique.murim.wedge_fan.weakness",
+  "hit_stop_ticks": 0,
+  "cooldown_ticks": 60
+}

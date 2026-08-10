@@ -4,7 +4,8 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import io.github.verycooltimo.murim.MurimMod;
 import io.github.verycooltimo.murim.combat.TechniquePhase;
-import io.github.verycooltimo.murim.combat.Techniques;
+import io.github.verycooltimo.murim.technique.TechniqueDefinition;
+import io.github.verycooltimo.murim.technique.TechniqueVfx;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -37,98 +38,74 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class BladeTrailRenderer {
 
     /**
-     * Тайминги слоёв выводятся из данных техники, а не зашиты числами.
+     * Шкала и геометрия одного применения техники, вычисленные из её описания.
      *
-     * <p>Раньше они были константами, и добавление фазы ритуала сдвинуло бы удар на три
-     * секунды, оставив все эффекты на прежних тиках. Привязка к {@code startTickOf} делает
-     * шкалу единственным источником истины: правится длительность фазы — эффекты едут следом.
+     * <p>Раньше это были статические константы, посчитанные из единственной зашитой техники.
+     * Для этапа 1 так нельзя: описания приходят из датапака в рантайме, и у каждой техники
+     * своя длина фаз и своя дуга. Контекст создаётся один раз на запуск и живёт с лентой.
      *
      * <p>Поправка на тик: лента запускается по пакету от сервера, который приходит на тик
      * позже начала техники, поэтому возраст ленты равен номеру тика минус один.
      */
-    private static final float IMPACT_AGE =
-            Techniques.CEREMONIAL_DRAW.startTickOf(TechniquePhase.IMPACT) - 1.0F;
+    private record Timing(TechniqueDefinition definition, BladeArc arc,
+                          float impactAge, float windupAge, float ritualLength) {
 
-    private static final float WINDUP_AGE =
-            Techniques.CEREMONIAL_DRAW.startTickOf(TechniquePhase.WINDUP) - 1.0F;
+        static Timing of(TechniqueDefinition definition) {
+            TechniqueVfx vfx = definition.vfx();
+            BladeArc arc = new BladeArc(vfx.pivot(), vfx.basisA(), vfx.basisB(),
+                    vfx.innerRadius(), vfx.outerRadius(), vfx.startAngleDeg(), vfx.endAngleDeg());
+            return new Timing(definition, arc,
+                    definition.startTickOf(TechniquePhase.IMPACT) - 1.0F,
+                    definition.startTickOf(TechniquePhase.WINDUP) - 1.0F,
+                    definition.ticksOf(TechniquePhase.RITUAL));
+        }
 
-    private static final float RITUAL_LENGTH =
-            Techniques.CEREMONIAL_DRAW.ticksOf(TechniquePhase.RITUAL);
+        TechniqueVfx vfx() {
+            return definition.vfx();
+        }
 
-    /** Начало прохода дуги — совпадает с моментом резолва урона. */
-    private static final float SWEEP_START_TICK = IMPACT_AGE;
+        float sweepStart() {
+            return impactAge;
+        }
 
-    /** Дуга пройдена целиком через три тика после начала удара. */
-    private static final float SWEEP_END_TICK = IMPACT_AGE + 3.0F;
+        /** Дуга проходится за три тика — столько же длится сам удар вместе с восстановлением. */
+        float sweepEnd() {
+            return impactAge + 3.0F;
+        }
+
+        float crescentStart() {
+            return impactAge + 1.0F;
+        }
+
+        float coreStart() {
+            return impactAge + 1.5F;
+        }
+
+        float windupStart() {
+            return windupAge + 3.0F;
+        }
+
+        float windupEnd() {
+            return impactAge;
+        }
+
+        /** Максимальный возраст, после которого лента снимается. */
+        float maxAge() {
+            return sweepEnd() + vfx().trail().lifeTicks();
+        }
+    }
 
     /**
-     * Затухание после взмаха. Короткое намеренно: правило 04 требует отношения удара
-     * к рассеиванию не хуже 1:3, но долгий шлейф превращает след в висящее пятно.
-     */
-    private static final float FADE_TICKS = 5.0F;
-
-    /** Сегментов вдоль дуги при высшем качестве. Больше — глаже кромка, дороже буфер. */
-    private static final int MAX_SEGMENTS = 28;
-
-    /**
-     * Длина светящегося хвоста в долях дуги. Хвост короче самой дуги: иначе лента
-     * висит целиком и превращается в статичную полосу вместо следа.
+     * Длина светящегося хвоста в долях дуги. Остаётся константой: это свойство приёма
+     * «след клинка», а не конкретной техники, и выносить его в данные пока незачем.
      */
     private static final double TAIL_LENGTH = 0.72D;
 
-    /**
-     * Полная ширина ленты в блоках. Ширина в целый блок превращает след в веер:
-     * лента должна быть заметно длиннее, чем шире, иначе не читается как след клинка.
-     */
-    private static final double RIBBON_WIDTH = 0.46D;
-
-    /**
-     * Серп — второй слой удара. Стартует на тик позже ленты: правило 04 требует разносить
-     * старты слоёв минимум на 16 мс, иначе три слоя сливаются в один и эффект читается плоско.
-     */
-    private static final float CRESCENT_START_TICK = IMPACT_AGE + 1.0F;
-
-    /** Живёт 3 тика — 150 мс. Дольше держать нельзя: серп начинает читаться как висящее пятно. */
-    private static final float CRESCENT_LIFE = 3.0F;
-
-    /**
-     * Пиковая непрозрачность серпа.
-     *
-     * <p>Заметно ниже единицы намеренно. Слой аддитивный, и при альфе около единицы он
-     * мгновенно уходит в насыщение: три слоя сливаются в сплошное белое пятно, в котором
-     * не видно ни формы серпа, ни ленты под ним. Поймано на кадрах 2026-08-10.
-     */
-    private static final float CRESCENT_PEAK_ALPHA = 0.48F;
-
-    /** Максимальная полуширина серпа в блоках. Заметно шире ленты: это тело удара. */
-    private static final double CRESCENT_HALF_WIDTH = 0.21D;
-
-    /** Вспышка ядра — третий слой, ещё на полтика позже серпа. */
-    private static final float CORE_START_TICK = IMPACT_AGE + 1.5F;
-
-    private static final float CORE_LIFE = 3.0F;
-
-    /** Пиковая непрозрачность ядра — по той же причине, что и у серпа. */
-    private static final float CORE_PEAK_ALPHA = 0.58F;
-
-    // Не середина дуги: там точка приходится игроку на голову, и вспышка читается как
-    // светящееся лицо. Ближе к концу взмаха — это уже вынесенный вперёд клинок.
+    /** Доля дуги, где вспыхивает ядро. Ближе к концу взмаха — там вынесенный вперёд клинок. */
     private static final double CORE_ARC_POSITION = 0.74D;
 
-    /**
-     * Замах — самая длинная фаза после ритуала, и до сих пор он был полностью пуст.
-     * Свечение у клинка и сбор энергии превращают паузу перед ударом в подготовку.
-     */
-    private static final float WINDUP_START_TICK = WINDUP_AGE + 3.0F;
-
-    /** Конец накопления совпадает с началом взмаха: энергия срывается вместе с клинком. */
-    private static final float WINDUP_END_TICK = IMPACT_AGE;
-
-    /** Сколько искр сходится к лезвию. Немного: важна читаемость, а не густота. */
-    private static final int MOTE_COUNT = 7;
-
-    /** Искры ритуала. Больше, чем на замахе: три секунды пустого круга выглядели бы бедно. */
-    private static final int RITUAL_MOTES = 12;
+    /** Сегментов вдоль дуги при высшем качестве. Больше — глаже кромка, дороже буфер. */
+    private static final int MAX_SEGMENTS = 28;
 
     private static final Map<Integer, Trail> ACTIVE = new ConcurrentHashMap<>();
 
@@ -145,9 +122,11 @@ public final class BladeTrailRenderer {
      */
     private static final class Trail {
         private final int startTick;
+        private final Timing timing;
 
-        private Trail(int startTick) {
+        private Trail(int startTick, Timing timing) {
             this.startTick = startTick;
+            this.timing = timing;
         }
 
         private float ageAt(float partialTick) {
@@ -175,8 +154,13 @@ public final class BladeTrailRenderer {
     }
 
     /** Запускает ленту у игрока. Вызывается по серверному событию начала техники. */
-    public static void start(int entityId) {
-        ACTIVE.put(entityId, new Trail(clientTicks));
+    public static void start(int entityId, TechniqueDefinition definition) {
+        if (definition == null) {
+            // Описание не доехало синхронизацией — рисовать нечего, но и падать незачем.
+            MurimMod.LOGGER.warn("Техника без описания на клиенте: эффекты пропущены");
+            return;
+        }
+        ACTIVE.put(entityId, new Trail(clientTicks, Timing.of(definition)));
     }
 
     /** Снимает ленту досрочно — например, когда технику прервали. */
@@ -206,8 +190,9 @@ public final class BladeTrailRenderer {
         PoseStack poseStack = event.getPoseStack();
 
         ACTIVE.entrySet().removeIf(entry -> {
-            float age = entry.getValue().ageAt(partialTick);
-            if (age > SWEEP_END_TICK + FADE_TICKS) {
+            Trail trail = entry.getValue();
+            float age = trail.ageAt(partialTick);
+            if (age > trail.timing.maxAge()) {
                 return true;
             }
             Entity entity = minecraft.level.getEntity(entry.getKey());
@@ -220,7 +205,7 @@ public final class BladeTrailRenderer {
             if (entity == minecraft.player && minecraft.options.getCameraType().isFirstPerson()) {
                 return false;
             }
-            renderLayers(poseStack, buffers, camera, entity, age, partialTick);
+            renderLayers(poseStack, buffers, camera, entity, trail.timing, age, partialTick);
             return false;
         });
 
@@ -236,16 +221,23 @@ public final class BladeTrailRenderer {
      * матрицы вынесена сюда, чтобы не повторять поворот и перенос трижды за кадр.
      */
     private static void renderLayers(PoseStack poseStack, MultiBufferSource.BufferSource buffers,
-                                     Camera camera, Entity entity, float age, float partialTick) {
-        renderRitual(poseStack, buffers, camera, entity, age, partialTick);
+                                     Camera camera, Entity entity, Timing timing,
+                                     float age, float partialTick) {
+        renderRitual(poseStack, buffers, camera, entity, timing, age, partialTick);
         renderWindup(poseStack, buffers.getBuffer(MurimRenderTypes.impactCore()), camera,
-                     entity, age, partialTick);
-        renderTrail(poseStack, buffers.getBuffer(MurimRenderTypes.bladeTrail()), camera,
-                    entity, age, partialTick);
-        renderCrescent(poseStack, buffers.getBuffer(MurimRenderTypes.bladeCrescent()), camera,
-                       entity, age, partialTick);
-        renderCore(poseStack, buffers.getBuffer(MurimRenderTypes.impactCore()), camera,
-                   entity, age, partialTick);
+                     entity, timing, age, partialTick);
+        if (timing.vfx().trail().enabled()) {
+            renderTrail(poseStack, buffers.getBuffer(MurimRenderTypes.bladeTrail()), camera,
+                        entity, timing, age, partialTick);
+        }
+        if (timing.vfx().crescent().enabled()) {
+            renderCrescent(poseStack, buffers.getBuffer(MurimRenderTypes.bladeCrescent()), camera,
+                           entity, timing, age, partialTick);
+        }
+        if (timing.vfx().core().enabled()) {
+            renderCore(poseStack, buffers.getBuffer(MurimRenderTypes.impactCore()), camera,
+                       entity, timing, age, partialTick);
+        }
     }
 
     /**
@@ -260,11 +252,11 @@ public final class BladeTrailRenderer {
      * как один анимированный объект вместо сходящейся к телу силы.
      */
     private static void renderRitual(PoseStack poseStack, MultiBufferSource.BufferSource buffers,
-                                     Camera camera, Entity entity, float age, float partialTick) {
-        if (RITUAL_LENGTH <= 0.0F) {
+                                     Camera camera, Entity entity, Timing timing, float age, float partialTick) {
+        if (timing.ritualLength() <= 0.0F) {
             return;
         }
-        float progress = age / RITUAL_LENGTH;
+        float progress = age / timing.ritualLength();
         if (progress < 0.0F || progress > 1.0F) {
             return;
         }
@@ -287,28 +279,29 @@ public final class BladeTrailRenderer {
             // Заметнее, чем у слоёв удара: в этой фазе кольца ничем не перекрываются
             // и не складываются с другими аддитивными слоями, риска пересвета нет.
             ring(rings, pose, 1.75D - 0.45D * progress, 0.075D, age * 0.035F,
-                 0.34F * envelope);
+                 0.34F * envelope, timing.vfx().colour());
             ring(rings, pose, 1.15D - 0.35D * progress, 0.045D, -age * 0.055F,
-                 0.44F * envelope);
+                 0.44F * envelope, timing.vfx().colour());
 
             VertexConsumer motes = buffers.getBuffer(MurimRenderTypes.impactCore());
-            for (int i = 0; i < RITUAL_MOTES; i++) {
+            for (int i = 0; i < timing.vfx().ritualMotes(); i++) {
                 // Каждая искра идёт по своему циклу подъёма, сдвинутому по фазе.
-                float cycle = ((age * 0.045F) + i / (float) RITUAL_MOTES) % 1.0F;
-                double angle = i * (Math.PI * 2.0D / RITUAL_MOTES) + age * 0.02D;
+                float cycle = ((age * 0.045F) + i / (float) timing.vfx().ritualMotes()) % 1.0F;
+                double angle = i * (Math.PI * 2.0D / timing.vfx().ritualMotes()) + age * 0.02D;
                 double radius = (1.5D - 1.25D * cycle) * (1.0D - 0.35D * progress);
                 double height = 0.05D + 1.35D * cycle;
                 Vec3 point = new Vec3(Math.cos(angle) * radius, height, Math.sin(angle) * radius);
                 // Гаснут к верхней точке: искра втягивается в тело, а не улетает.
                 float alpha = envelope * (1.0F - cycle) * 1.05F;
                 billboard(motes, pose, point, frame.cameraLocal.subtract(point).normalize(),
-                          0.055D + 0.04D * (1.0F - cycle), alpha);
+                          0.055D + 0.04D * (1.0F - cycle), alpha, timing.vfx().colour());
             }
 
             // Даньтянь: центр тяжести всей сцены, поэтому нарастает монотонно до самого конца.
             Vec3 dantian = new Vec3(0.0D, 1.02D, 0.0D);
             billboard(motes, pose, dantian, frame.cameraLocal.subtract(dantian).normalize(),
-                      0.16D + 0.26D * progress, envelope * (0.18F + 0.42F * progress));
+                      0.16D + 0.26D * progress, envelope * (0.18F + 0.42F * progress),
+                      timing.vfx().colour());
         } finally {
             poseStack.popPose();
         }
@@ -316,7 +309,8 @@ public final class BladeTrailRenderer {
 
     /** Плоское кольцо в горизонтальной плоскости у ног игрока. */
     private static void ring(VertexConsumer consumer, com.mojang.blaze3d.vertex.PoseStack.Pose pose,
-                             double radius, double halfWidth, float rotation, float alpha) {
+                             double radius, double halfWidth, float rotation, float alpha,
+                             TechniqueVfx.Colour colour) {
         if (alpha <= 0.0F) {
             return;
         }
@@ -332,10 +326,10 @@ public final class BladeTrailRenderer {
             Vec3 inner1 = new Vec3(Math.cos(a1) * (radius - halfWidth), y, Math.sin(a1) * (radius - halfWidth));
             float u0 = i / (float) segments;
             float u1 = (i + 1) / (float) segments;
-            vertex(consumer, pose, inner0, up, u0, 0.0F, alpha);
-            vertex(consumer, pose, outer0, up, u0, 1.0F, alpha);
-            vertex(consumer, pose, outer1, up, u1, 1.0F, alpha);
-            vertex(consumer, pose, inner1, up, u1, 0.0F, alpha);
+            vertex(consumer, pose, inner0, up, u0, 0.0F, alpha, colour);
+            vertex(consumer, pose, outer0, up, u0, 1.0F, alpha, colour);
+            vertex(consumer, pose, outer1, up, u1, 1.0F, alpha, colour);
+            vertex(consumer, pose, inner1, up, u1, 0.0F, alpha, colour);
         }
     }
 
@@ -346,15 +340,15 @@ public final class BladeTrailRenderer {
      * набирается, иначе пауза перед ударом читается как задержка, а не как подготовка.
      */
     private static void renderWindup(PoseStack poseStack, VertexConsumer consumer, Camera camera,
-                                     Entity entity, float age, float partialTick) {
-        float charge = (age - WINDUP_START_TICK) / (WINDUP_END_TICK - WINDUP_START_TICK);
+                                     Entity entity, Timing timing, float age, float partialTick) {
+        float charge = (age - timing.windupStart()) / (timing.windupEnd() - timing.windupStart());
         if (charge < 0.0F || charge > 1.0F) {
             return;
         }
         // Кубический рост: почти незаметно в начале, заметный всплеск перед самым срывом.
         float intensity = charge * charge * charge;
 
-        BladeArc arc = BladeArc.CEREMONIAL_DRAW;
+        BladeArc arc = timing.arc();
         Frame frame = frame(entity, camera, partialTick);
         // Точка у лезвия в занесённом положении — это начало будущей дуги.
         Vec3 blade = arc.tipAt(0.0D).add(arc.pivot()).scale(0.5D);
@@ -367,19 +361,21 @@ public final class BladeTrailRenderer {
 
             // Свечение у самого клинка.
             billboard(consumer, pose, blade, toBlade,
-                      0.18D + 0.34D * intensity, 0.15F + 0.45F * intensity);
+                      0.18D + 0.34D * intensity, 0.15F + 0.45F * intensity,
+                      timing.vfx().colour());
 
             // Искры сходятся по спирали: радиус падает, вращение продолжается.
             double radius = 1.5D * (1.0D - charge) + 0.12D;
             float spin = age * 0.28F;
-            for (int i = 0; i < MOTE_COUNT; i++) {
-                double angle = spin + i * (Math.PI * 2.0D / MOTE_COUNT);
+            for (int i = 0; i < timing.vfx().windupMotes(); i++) {
+                double angle = spin + i * (Math.PI * 2.0D / Math.max(1, timing.vfx().windupMotes()));
                 // Разная высота у искр: плоское кольцо читается как декорация, а не как сбор силы.
                 double lift = Math.sin(angle * 1.7D + i) * 0.35D * (1.0D - charge);
                 Vec3 offset = new Vec3(Math.cos(angle) * radius, lift, Math.sin(angle) * radius);
                 Vec3 point = blade.add(offset);
                 billboard(consumer, pose, point, frame.cameraLocal.subtract(point).normalize(),
-                          0.05D + 0.07D * intensity, 0.20F + 0.55F * intensity);
+                          0.05D + 0.07D * intensity, 0.20F + 0.55F * intensity,
+                          timing.vfx().colour());
             }
         } finally {
             poseStack.popPose();
@@ -388,7 +384,8 @@ public final class BladeTrailRenderer {
 
     /** Квад, развёрнутый к камере. Общая заготовка для точечных вспышек. */
     private static void billboard(VertexConsumer consumer, com.mojang.blaze3d.vertex.PoseStack.Pose pose,
-                                  Vec3 centre, Vec3 forward, double size, float alpha) {
+                                  Vec3 centre, Vec3 forward, double size, float alpha,
+                                  TechniqueVfx.Colour colour) {
         if (alpha <= 0.0F || size <= 0.0D) {
             return;
         }
@@ -397,21 +394,22 @@ public final class BladeTrailRenderer {
         Vec3 right = forward.cross(reference).normalize().scale(size);
         Vec3 up = right.normalize().cross(forward).normalize().scale(size);
 
-        vertex(consumer, pose, centre.subtract(right).subtract(up), forward, 0.0F, 0.0F, alpha);
-        vertex(consumer, pose, centre.subtract(right).add(up), forward, 0.0F, 1.0F, alpha);
-        vertex(consumer, pose, centre.add(right).add(up), forward, 1.0F, 1.0F, alpha);
-        vertex(consumer, pose, centre.add(right).subtract(up), forward, 1.0F, 0.0F, alpha);
+        vertex(consumer, pose, centre.subtract(right).subtract(up), forward, 0.0F, 0.0F, alpha, colour);
+        vertex(consumer, pose, centre.subtract(right).add(up), forward, 0.0F, 1.0F, alpha, colour);
+        vertex(consumer, pose, centre.add(right).add(up), forward, 1.0F, 1.0F, alpha, colour);
+        vertex(consumer, pose, centre.add(right).subtract(up), forward, 1.0F, 0.0F, alpha, colour);
     }
 
     private static void renderTrail(PoseStack poseStack, VertexConsumer consumer, Camera camera,
-                                    Entity entity, float age, float partialTick) {
-        float head = Mth.clamp((age - SWEEP_START_TICK) / (SWEEP_END_TICK - SWEEP_START_TICK), 0.0F, 1.0F);
+                                    Entity entity, Timing timing, float age, float partialTick) {
+        float head = Mth.clamp((age - timing.sweepStart()) / (timing.sweepEnd() - timing.sweepStart()), 0.0F, 1.0F);
         if (head <= 0.0F) {
             return;
         }
-        float fade = age <= SWEEP_END_TICK
+        float fade = age <= timing.sweepEnd()
                 ? 1.0F
-                : Mth.clamp(1.0F - (age - SWEEP_END_TICK) / FADE_TICKS, 0.0F, 1.0F);
+                : Mth.clamp(1.0F - (age - timing.sweepEnd()) / timing.vfx().trail().lifeTicks(),
+                            0.0F, 1.0F);
         if (fade <= 0.0F) {
             return;
         }
@@ -437,7 +435,7 @@ public final class BladeTrailRenderer {
             // Рысканье игрока: локальная дуга описана для взгляда на юг, как у ванильной модели.
             poseStack.mulPose(com.mojang.math.Axis.YP.rotationDegrees(-bodyYaw));
 
-            BladeArc arc = BladeArc.CEREMONIAL_DRAW;
+            BladeArc arc = timing.arc();
             com.mojang.blaze3d.vertex.PoseStack.Pose pose = poseStack.last();
 
             // Камера в системе координат игрока. Нужна, чтобы развернуть ленту шириной к зрителю:
@@ -452,7 +450,7 @@ public final class BladeTrailRenderer {
             double tailStart = Math.max(0.0D, head - TAIL_LENGTH);
             // Ширина берётся константой, а не из радиусов дуги: радиусы задают траекторию
             // острия, а толщина следа — вопрос читаемости, и связывать их незачем.
-            double width = RIBBON_WIDTH;
+            double width = timing.vfx().trail().size();
 
             Vec3 fallbackSide = arc.planeNormal();
             Vec3 prevLeft = null;
@@ -488,11 +486,12 @@ public final class BladeTrailRenderer {
                 // Настоящая нормаль билборда. Ванильный шейдер её игнорирует, но Iris пишет
                 // нормаль в G-буфер, и захардкоженная «вверх» дала бы неверное затенение.
                 Vec3 faceNormal = unitSide.cross(tangent).normalize();
-                float alpha = fade * (0.30F + 0.70F * along * along);
+                float alpha = fade * timing.vfx().trail().alpha() * (0.30F + 0.70F * along * along);
 
                 if (prevLeft != null) {
                     quad(consumer, pose, prevRight, prevLeft, left, right,
-                         prevNormal, faceNormal, prevAlpha, alpha, prevU, along);
+                         prevNormal, faceNormal, prevAlpha, alpha, prevU, along,
+                         timing.vfx().colour());
                 }
                 prevLeft = left;
                 prevRight = right;
@@ -513,8 +512,8 @@ public final class BladeTrailRenderer {
      * а не полосы одинаковой толщины.
      */
     private static void renderCrescent(PoseStack poseStack, VertexConsumer consumer, Camera camera,
-                                       Entity entity, float age, float partialTick) {
-        float life = (age - CRESCENT_START_TICK) / CRESCENT_LIFE;
+                                       Entity entity, Timing timing, float age, float partialTick) {
+        float life = (age - timing.crescentStart()) / timing.vfx().crescent().lifeTicks();
         if (life < 0.0F || life > 1.0F) {
             return;
         }
@@ -522,12 +521,12 @@ public final class BladeTrailRenderer {
         float alpha = life < 0.12F
                 ? Mth.clamp(life / 0.12F, 0.0F, 1.0F)
                 : (1.0F - (life - 0.12F) / 0.88F);
-        alpha = Mth.clamp(alpha, 0.0F, 1.0F) * CRESCENT_PEAK_ALPHA;
+        alpha = Mth.clamp(alpha, 0.0F, 1.0F) * timing.vfx().crescent().alpha();
         if (alpha <= 0.0F) {
             return;
         }
 
-        BladeArc arc = BladeArc.CEREMONIAL_DRAW;
+        BladeArc arc = timing.arc();
         Frame frame = frame(entity, camera, partialTick);
         int segments = Math.min(MAX_SEGMENTS,
                 io.github.verycooltimo.murim.client.ClientConfig.trailSegments());
@@ -558,7 +557,7 @@ public final class BladeTrailRenderer {
                 Vec3 unitSide = side.normalize();
                 // Синус даёт сходящиеся острия на концах; степень меньше единицы удерживает
                 // середину широкой, иначе серп выглядит вялым веретеном.
-                double halfWidth = CRESCENT_HALF_WIDTH * Math.pow(Math.sin(Math.PI * along), 0.55D);
+                double halfWidth = timing.vfx().crescent().size() * Math.pow(Math.sin(Math.PI * along), 0.55D);
                 Vec3 offset = unitSide.scale(halfWidth);
 
                 Vec3 left = point.add(offset);
@@ -567,7 +566,8 @@ public final class BladeTrailRenderer {
 
                 if (prevLeft != null) {
                     quad(consumer, pose, prevRight, prevLeft, left, right,
-                         prevNormal, faceNormal, prevAlpha, alpha, prevU, along);
+                         prevNormal, faceNormal, prevAlpha, alpha, prevU, along,
+                         timing.vfx().colour());
                 }
                 prevLeft = left;
                 prevRight = right;
@@ -587,21 +587,21 @@ public final class BladeTrailRenderer {
      * дальше только гаснет: отношение удара к рассеиванию держится не хуже 1:3.
      */
     private static void renderCore(PoseStack poseStack, VertexConsumer consumer, Camera camera,
-                                   Entity entity, float age, float partialTick) {
-        float life = (age - CORE_START_TICK) / CORE_LIFE;
+                                   Entity entity, Timing timing, float age, float partialTick) {
+        float life = (age - timing.coreStart()) / timing.vfx().core().lifeTicks();
         if (life < 0.0F || life > 1.0F) {
             return;
         }
         float rise = Mth.clamp(life / 0.10F, 0.0F, 1.0F);
         float fall = 1.0F - Mth.clamp((life - 0.10F) / 0.90F, 0.0F, 1.0F);
-        float alpha = rise * fall * fall * CORE_PEAK_ALPHA;
+        float alpha = rise * fall * fall * timing.vfx().core().alpha();
         if (alpha <= 0.0F) {
             return;
         }
-        double size = 0.28D + 0.45D * life;
+        double size = timing.vfx().core().size() * (1.0D + 1.6D * life);
 
         Frame frame = frame(entity, camera, partialTick);
-        Vec3 centre = BladeArc.CEREMONIAL_DRAW.tipAt(CORE_ARC_POSITION);
+        Vec3 centre = timing.arc().tipAt(CORE_ARC_POSITION);
 
         poseStack.pushPose();
         try {
@@ -621,10 +621,10 @@ public final class BladeTrailRenderer {
             Vec3 c = centre.add(right).add(up);
             Vec3 d = centre.add(right).subtract(up);
 
-            vertex(consumer, pose, a, forward, 0.0F, 0.0F, alpha);
-            vertex(consumer, pose, b, forward, 0.0F, 1.0F, alpha);
-            vertex(consumer, pose, c, forward, 1.0F, 1.0F, alpha);
-            vertex(consumer, pose, d, forward, 1.0F, 0.0F, alpha);
+            vertex(consumer, pose, a, forward, 0.0F, 0.0F, alpha, timing.vfx().colour());
+            vertex(consumer, pose, b, forward, 0.0F, 1.0F, alpha, timing.vfx().colour());
+            vertex(consumer, pose, c, forward, 1.0F, 1.0F, alpha, timing.vfx().colour());
+            vertex(consumer, pose, d, forward, 1.0F, 0.0F, alpha, timing.vfx().colour());
         } finally {
             poseStack.popPose();
         }
@@ -667,20 +667,22 @@ public final class BladeTrailRenderer {
     private static void quad(VertexConsumer consumer, com.mojang.blaze3d.vertex.PoseStack.Pose pose,
                              Vec3 innerA, Vec3 outerA, Vec3 outerB, Vec3 innerB,
                              Vec3 normalA, Vec3 normalB,
-                             float alphaA, float alphaB, float uA, float uB) {
-        vertex(consumer, pose, innerA, normalA, uA, 0.0F, alphaA);
-        vertex(consumer, pose, outerA, normalA, uA, 1.0F, alphaA);
-        vertex(consumer, pose, outerB, normalB, uB, 1.0F, alphaB);
-        vertex(consumer, pose, innerB, normalB, uB, 0.0F, alphaB);
+                             float alphaA, float alphaB, float uA, float uB,
+                             TechniqueVfx.Colour colour) {
+        vertex(consumer, pose, innerA, normalA, uA, 0.0F, alphaA, colour);
+        vertex(consumer, pose, outerA, normalA, uA, 1.0F, alphaA, colour);
+        vertex(consumer, pose, outerB, normalB, uB, 1.0F, alphaB, colour);
+        vertex(consumer, pose, innerB, normalB, uB, 0.0F, alphaB, colour);
     }
 
     private static void vertex(VertexConsumer consumer, com.mojang.blaze3d.vertex.PoseStack.Pose pose,
-                               Vec3 position, Vec3 normal, float u, float v, float alpha) {
+                               Vec3 position, Vec3 normal, float u, float v, float alpha,
+                               TechniqueVfx.Colour colour) {
         // Формат NEW_ENTITY требует все элементы: цвет, uv, overlay, свет и нормаль.
         // Пропуск любого даёт исключение при завершении вершины, а не ошибку компиляции.
         // Свет выставлен в максимум формально: слой идёт с NO_LIGHTMAP и шейдером без Sampler2.
         consumer.addVertex(pose.pose(), (float) position.x, (float) position.y, (float) position.z)
-                .setColor(0.86F, 0.94F, 1.0F, alpha)
+                .setColor(colour.red(), colour.green(), colour.blue(), alpha)
                 .setUv(u, v)
                 .setOverlay(net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY)
                 .setLight(0x00F000F0)

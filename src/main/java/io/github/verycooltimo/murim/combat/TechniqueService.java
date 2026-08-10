@@ -1,6 +1,9 @@
 package io.github.verycooltimo.murim.combat;
 
 import io.github.verycooltimo.murim.MurimMod;
+import io.github.verycooltimo.murim.technique.BehaviorExecutor;
+import io.github.verycooltimo.murim.technique.TechniqueDefinition;
+import io.github.verycooltimo.murim.technique.TechniqueLoader;
 import io.github.verycooltimo.murim.network.TechniqueEventPayload;
 import io.github.verycooltimo.murim.registry.ModAttachments;
 import net.minecraft.ReportedException;
@@ -27,7 +30,7 @@ public final class TechniqueService {
         if (!canAct(player)) {
             return false;
         }
-        Technique technique = resolve(techniqueId);
+        TechniqueDefinition technique = resolve(techniqueId);
         if (technique == null) {
             return false;
         }
@@ -112,7 +115,7 @@ public final class TechniqueService {
             return;
         }
 
-        Technique technique = resolve(state.techniqueId());
+        TechniqueDefinition technique = resolve(state.techniqueId());
         if (technique == null) {
             // Техника исчезла из реестра — это возможно после перезагрузки данных на этапе 1.
             forceIdle(player, TechniqueEventPayload.Event.CANCELLED);
@@ -166,33 +169,18 @@ public final class TechniqueService {
      * <p>Проверки прямой видимости нет — техника бьёт сквозь стены; это осознанный долг,
      * зафиксированный в docs/design/09-mvp-plan.md.
      */
-    private static void resolveImpact(ServerPlayer player, Technique technique) {
-        Vec3 eye = player.getEyePosition();
-        Vec3 look = player.getLookAngle();
-        double reach = technique.reach();
-        double cosLimit = Math.cos(Math.toRadians(technique.arcDegrees() / 2.0D));
-        AABB search = new AABB(eye, eye).inflate(reach);
-
-        // isAttackable() у LivingEntity всегда true и ничего не фильтрует, а трёхаргументный
-        // getEntitiesOfClass не применяет ванильный фильтр зрителей — отсеиваем их сами.
-        List<LivingEntity> candidates = player.serverLevel().getEntitiesOfClass(LivingEntity.class, search,
-                candidate -> candidate != player && candidate.isAlive() && !candidate.isSpectator());
-
-        // Свист клинка звучит на самом ударе независимо от попадания: промах тоже должен
-        // быть слышен, иначе игрок не понимает, что техника вообще сработала.
+    /**
+     * Момент воздействия. Что именно происходит, решают данные техники: взмах по дуге,
+     * веер снарядов или рывок. Сервис знает только когда, но не что.
+     */
+    private static void resolveImpact(ServerPlayer player, TechniqueDefinition technique) {
+        // Свист клинка звучит на ударе независимо от попадания: промах тоже должен быть
+        // слышен, иначе игрок не понимает, сработала ли техника.
         player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
                 net.minecraft.sounds.SoundEvents.PLAYER_ATTACK_SWEEP,
                 net.minecraft.sounds.SoundSource.PLAYERS, 1.0F, 0.72F);
 
-        boolean anyHit = false;
-        for (LivingEntity target : candidates) {
-            if (!inArc(eye, look, target.getBoundingBox(), reach, cosLimit)) {
-                continue;
-            }
-            if (target.hurt(player.damageSources().playerAttack(player), technique.damage())) {
-                anyHit = true;
-            }
-        }
+        boolean anyHit = BehaviorExecutor.execute(player, technique);
 
         if (anyHit) {
             player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
@@ -207,39 +195,46 @@ public final class TechniqueService {
     }
 
     /**
-     * Попадает ли хитбокс цели в конус поражения.
+     * Реакция на полученный урон: сбивает ли он текущую технику.
      *
-     * <p>Считается по <b>ближайшей точке хитбокса</b>, а не по его центру. Разница принципиальна
-     * для крупных целей: у дракона или равагера центр может быть дальше дальности или вне дуги,
-     * пока тело стоит вплотную к игроку — по центру такая цель молча не получала бы урона.
-     *
-     * <p>Вынесено в чистую функцию без зависимости от мира, чтобы покрывалось тестами.
+     * <p>Фаза удара и всё после неё неприкосновенны. Иначе техника с длинным ритуалом
+     * никогда бы не доходила до удара в реальном бою, а игрок терял бы вложенное время
+     * от случайной стрелы.
      */
-    static boolean inArc(Vec3 eye, Vec3 look, AABB target, double reach, double cosLimit) {
-        if (target.distanceToSqr(eye) > reach * reach) {
-            return false;
+    public static void onDamaged(ServerPlayer player, float amount) {
+        TechniqueState state = player.getData(ModAttachments.TECHNIQUE_STATE);
+        if (!state.isActive()) {
+            return;
         }
-        Vec3 closest = new Vec3(
-                Mth.clamp(eye.x, target.minX, target.maxX),
-                Mth.clamp(eye.y, target.minY, target.maxY),
-                Mth.clamp(eye.z, target.minZ, target.maxZ));
-        Vec3 direction = closest.subtract(eye);
-        double length = direction.length();
-        // Нулевая длина означает, что глаза внутри хитбокса цели: это попадание, а не промах.
-        if (length < 1.0E-4D) {
-            return true;
+        TechniqueDefinition technique = resolve(state.techniqueId());
+        if (technique == null) {
+            return;
         }
-        return look.dot(direction.scale(1.0D / length)) >= cosLimit;
+        TechniqueDefinition.Interruption rules = technique.interruption();
+        if (!rules.breakOnDamage() || amount < rules.damageThreshold()) {
+            return;
+        }
+        TechniquePhase phase = technique.phaseAt(state.tick());
+        if (phase == null || phase.ordinal() >= TechniquePhase.IMPACT.ordinal()) {
+            return;
+        }
+        forceIdle(player, TechniqueEventPayload.Event.CANCELLED);
     }
 
-    /** Может ли игрок применять техники прямо сейчас. */
+    /**
+     * Может ли игрок начать или продолжать технику.
+     *
+     * <p>Зритель проверяется отдельно от живости: без этого режим наблюдателя давал
+     * бесплатный урон по миру.
+     */
     private static boolean canAct(ServerPlayer player) {
         return player.isAlive() && !player.isRemoved() && !player.isSpectator();
     }
 
-    /** На этапе 0 техника одна; на этапе 1 здесь будет поиск по датапак-реестру. */
-    private static Technique resolve(ResourceLocation id) {
-        return Techniques.CEREMONIAL_DRAW.id().equals(id) ? Techniques.CEREMONIAL_DRAW : null;
+    private static TechniqueDefinition resolve(ResourceLocation id) {
+        // Источник истины — датапак. Зашитых техник в коде больше нет: описание,
+        // которого нет в данных, не существует и для сервера.
+        return id == null ? null : TechniqueLoader.get(id);
     }
 
     private TechniqueService() {

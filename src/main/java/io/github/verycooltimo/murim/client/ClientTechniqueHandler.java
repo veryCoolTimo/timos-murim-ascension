@@ -5,7 +5,8 @@ import io.github.verycooltimo.murim.client.vfx.BladeTrailRenderer;
 import io.github.verycooltimo.murim.client.vfx.ImpactScreenLayer;
 import io.github.verycooltimo.murim.client.vfx.TechniqueNameLayer;
 import io.github.verycooltimo.murim.combat.TechniquePhase;
-import io.github.verycooltimo.murim.combat.Techniques;
+import io.github.verycooltimo.murim.technique.TechniqueDefinition;
+import io.github.verycooltimo.murim.technique.TechniqueLoader;
 import io.github.verycooltimo.murim.network.StartTechniquePayload;
 import io.github.verycooltimo.murim.network.TechniqueEventPayload;
 import net.minecraft.client.Minecraft;
@@ -27,6 +28,18 @@ import net.neoforged.neoforge.network.PacketDistributor;
 @EventBusSubscriber(modid = MurimMod.MODID, value = Dist.CLIENT)
 public final class ClientTechniqueHandler {
 
+    /**
+     * Техника, привязанная к клавише на этапе 1.
+     *
+     * <p>Временно и осознанно: единый язык управления для десятков техник — отдельное
+     * решение (ADR-80), и до него клавиша запускает одну технику по идентификатору,
+     * а не по зашитому описанию. Идентификатор строкой, потому что описание живёт в датапаке
+     * и на клиенте появляется только после синхронизации.
+     */
+    private static final net.minecraft.resources.ResourceLocation DEFAULT_TECHNIQUE =
+            net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(
+                    io.github.verycooltimo.murim.MurimMod.MODID, "ceremonial_draw");
+
     @SubscribeEvent
     static void onClientTick(ClientTickEvent.Post event) {
         Minecraft minecraft = Minecraft.getInstance();
@@ -44,7 +57,7 @@ public final class ClientTechniqueHandler {
             pressed = true;
         }
         if (pressed) {
-            PacketDistributor.sendToServer(new StartTechniquePayload(Techniques.CEREMONIAL_DRAW.id()));
+            PacketDistributor.sendToServer(new StartTechniquePayload(DEFAULT_TECHNIQUE));
         }
     }
 
@@ -55,14 +68,15 @@ public final class ClientTechniqueHandler {
         switch (payload.event()) {
             case STARTED -> {
                 scheduleAnimation(payload);
-                BladeTrailRenderer.start(payload.sourceId());
+                BladeTrailRenderer.start(payload.sourceId(),
+                        io.github.verycooltimo.murim.technique.TechniqueLoader.get(payload.techniqueId()));
                 // Название объявляет только тот, кто применяет: чужие имена техник поверх
                 // своего экрана — это шум, а не постановка.
                 if (isLocalPlayer(payload.sourceId())) {
                     // Имя вспыхивает к концу ритуала, а не в его начале: на пике, как
                     // в раскадровке. Задержка берётся из данных техники, а не зашита числом.
-                    int ritual = Techniques.CEREMONIAL_DRAW.ticksOf(
-                            io.github.verycooltimo.murim.combat.TechniquePhase.RITUAL);
+                    TechniqueDefinition definition = TechniqueLoader.get(payload.techniqueId());
+                    int ritual = definition == null ? 0 : definition.ticksOf(TechniquePhase.RITUAL);
                     TechniqueNameLayer.show(net.minecraft.network.chat.Component.translatable(
                             "technique." + payload.techniqueId().getNamespace()
                                     + "." + payload.techniqueId().getPath()),
@@ -107,7 +121,8 @@ public final class ClientTechniqueHandler {
     private static void scheduleAnimation(TechniqueEventPayload payload) {
         // Задержка берётся из данных техники, а не зашита числом: правится длина ритуала —
         // анимация едет следом.
-        int delay = Techniques.CEREMONIAL_DRAW.startTickOf(TechniquePhase.WINDUP);
+        TechniqueDefinition definition = TechniqueLoader.get(payload.techniqueId());
+        int delay = definition == null ? 0 : definition.startTickOf(TechniquePhase.WINDUP);
         if (delay <= 0) {
             playAnimation(payload);
             return;

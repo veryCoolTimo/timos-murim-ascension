@@ -1,5 +1,12 @@
 {
   "technique.murim.ceremonial_draw": "Церемониальный выхват",
   "key.categories.murim": "Тимо Мурим",
-  "key.murim.technique": "Применить технику"
+  "key.murim.technique": "Применить технику",
+  "technique.murim.wedge_fan": "Веер клиньев",
+  "technique.murim.shadow_step": "Теневой шаг",
+  "technique.murim.ceremonial_draw.weakness": "Начатый выхват уже не свернуть.",
+  "technique.murim.wedge_fan.weakness": "Клинья рассыпаются о любую преграду.",
+  "technique.murim.shadow_step.weakness": "На выходе открывает бок.",
+  "technique.murim.crescent_sweep": "Серповидный смах",
+  "technique.murim.crescent_sweep.weakness": "Широкая дуга опускает защиту."
 }

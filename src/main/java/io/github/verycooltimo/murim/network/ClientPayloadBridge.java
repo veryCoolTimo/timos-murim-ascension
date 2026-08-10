@@ -21,6 +21,15 @@ final class ClientPayloadBridge {
         io.github.verycooltimo.murim.client.ClientTechniqueHandler.onTechniqueEvent(payload);
     }
 
+    /**
+     * Принимает описания техник от сервера. На клиенте они кладутся в тот же реестр,
+     * что на сервере наполняет загрузчик датапака, — рендер не должен знать,
+     * откуда данные пришли.
+     */
+    public static void handleSyncTechniques(SyncTechniquesPayload payload) {
+        io.github.verycooltimo.murim.technique.TechniqueLoader.replaceAll(payload.definitions());
+    }
+
     private ClientPayloadBridge() {
     }
 }

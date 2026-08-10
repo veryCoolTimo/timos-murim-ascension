@@ -14,6 +14,22 @@ import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 @EventBusSubscriber(modid = MurimMod.MODID)
 public final class CombatEvents {
 
+    /**
+     * Полученный урон сбивает технику, если это разрешено её описанием.
+     *
+     * <p>Решение по правилам прерывания: до фазы удара технику можно сбить, с удара она
+     * обязана доиграться, рассеивание не сбивается вовсе — это уже послесвечение, а не
+     * действие. Порог урона задаётся данными: слабый тычок не должен ломать трёхсекундный
+     * ритуал, иначе любая техника становится неприменимой в бою.
+     */
+    @SubscribeEvent
+    static void onIncomingDamage(net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent event) {
+        if (!(event.getEntity() instanceof net.minecraft.server.level.ServerPlayer player)) {
+            return;
+        }
+        TechniqueService.onDamaged(player, event.getAmount());
+    }
+
     @SubscribeEvent
     static void onPlayerTick(PlayerTickEvent.Post event) {
         if (event.getEntity() instanceof ServerPlayer serverPlayer) {

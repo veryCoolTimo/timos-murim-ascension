@@ -1,0 +1,43 @@
+{
+  "id": "murim:ceremonial_draw",
+  "form": "vertical_draw",
+  "intent": "ceremony",
+  "breath": "still_water",
+  "phases": {
+    "ritual": 60,
+    "windup": 14,
+    "impact": 2,
+    "recovery": 6,
+    "dissipation": 10
+  },
+  "behavior": {
+    "type": "murim:melee_arc",
+    "reach": 4.0,
+    "arc_degrees": 140.0,
+    "damage": 6.0
+  },
+  "animation": "murim:ceremonial_draw",
+  "vfx": {
+    "pivot": [-0.22, 1.24, 0.0],
+    "basis_a": [-0.55, 0.83, -0.1],
+    "basis_b": [0.35, -0.15, 0.92],
+    "inner_radius": 0.15,
+    "outer_radius": 1.15,
+    "start_angle": -18.0,
+    "end_angle": 152.0,
+    "colour": { "r": 0.86, "g": 0.94, "b": 1.0 },
+    "trail": { "alpha": 1.0, "size": 0.46, "life_ticks": 5.0 },
+    "crescent": { "alpha": 0.48, "size": 0.21, "life_ticks": 3.0 },
+    "core": { "alpha": 0.58, "size": 0.28, "life_ticks": 3.0 },
+    "windup_motes": 7,
+    "ritual_motes": 12
+  },
+  "interruption": {
+    "cancellable_until": "windup",
+    "break_on_damage": true,
+    "damage_threshold": 4.0
+  },
+  "weakness": "technique.murim.ceremonial_draw.weakness",
+  "hit_stop_ticks": 3,
+  "cooldown_ticks": 110
+}

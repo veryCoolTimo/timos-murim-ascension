@@ -1,5 +1,6 @@
 package io.github.verycooltimo.murim.combat;
 
+import io.github.verycooltimo.murim.technique.BehaviorExecutor;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.junit.jupiter.api.DisplayName;
@@ -31,7 +32,7 @@ class TechniqueTargetingTest {
     }
 
     private static boolean hits(AABB target) {
-        return TechniqueService.inArc(EYE, LOOK, target, REACH, COS_LIMIT);
+        return BehaviorExecutor.inArc(EYE, LOOK, target, REACH, COS_LIMIT);
     }
 
     @Test
@@ -88,8 +89,8 @@ class TechniqueTargetingTest {
         AABB side = box(1.0D, 0.0D, 2.0D, 0.3D);
         double narrow = Math.cos(Math.toRadians(30.0D / 2.0D));
 
-        assertTrue(TechniqueService.inArc(EYE, LOOK, side, REACH, COS_LIMIT), "дуга 140° достаёт");
-        assertFalse(TechniqueService.inArc(EYE, LOOK, side, REACH, narrow), "дуга 30° не достаёт");
+        assertTrue(BehaviorExecutor.inArc(EYE, LOOK, side, REACH, COS_LIMIT), "дуга 140° достаёт");
+        assertFalse(BehaviorExecutor.inArc(EYE, LOOK, side, REACH, narrow), "дуга 30° не достаёт");
     }
 
     @Test

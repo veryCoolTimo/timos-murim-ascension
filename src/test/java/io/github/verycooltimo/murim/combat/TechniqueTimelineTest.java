@@ -1,6 +1,10 @@
 package io.github.verycooltimo.murim.combat;
 
+import io.github.verycooltimo.murim.technique.TechniqueBehavior;
+import io.github.verycooltimo.murim.technique.TechniqueDefinition;
+import io.github.verycooltimo.murim.technique.TechniqueVfx;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.phys.Vec3;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -25,20 +29,41 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 class TechniqueTimelineTest {
 
-    private static final Technique DRAW = Techniques.CEREMONIAL_DRAW;
+    /**
+     * Шкала церемониального выхвата — та же, что в датапаке. Дублируется здесь намеренно:
+     * юнит-тест не поднимает загрузчик ресурсов, а проверять арифметику фаз надо. Расхождение
+     * с JSON ловится отдельным тестом, читающим сам файл.
+     */
+    private static final TechniqueDefinition DRAW = technique(60, 14, 2, 6, 10, 110);
 
     private static ResourceLocation id(String path) {
         return ResourceLocation.fromNamespaceAndPath("murim", path);
     }
 
-    private static Technique technique(int windup, int impact, int recovery, int dissipation) {
+    private static TechniqueDefinition technique(int ritual, int windup, int impact,
+                                                 int recovery, int dissipation, int cooldown) {
         Map<TechniquePhase, Integer> map = new EnumMap<>(TechniquePhase.class);
+        map.put(TechniquePhase.RITUAL, ritual);
         map.put(TechniquePhase.WINDUP, windup);
         map.put(TechniquePhase.IMPACT, impact);
         map.put(TechniquePhase.RECOVERY, recovery);
         map.put(TechniquePhase.DISSIPATION, dissipation);
-        return new Technique(id("test"), map, 4.0D, 90.0D, 1.0F, 1, 1);
+        return new TechniqueDefinition(id("test"), map, "f", "i", "b",
+                new TechniqueBehavior.MeleeArc(4.0D, 90.0D, 1.0F),
+                VFX, id("anim"),
+                new TechniqueDefinition.Interruption(null, false, 0.0F, 0, java.util.List.of()),
+                "", 1, cooldown);
     }
+
+    /** Минимально допустимый визуал: тесты шкалы к нему не обращаются, но схема его требует. */
+    private static final TechniqueVfx VFX = new TechniqueVfx(
+            Vec3.ZERO, new Vec3(1.0D, 0.0D, 0.0D), new Vec3(0.0D, 1.0D, 0.0D),
+            0.1D, 1.0D, 0.0D, 90.0D,
+            new TechniqueVfx.Colour(1.0F, 1.0F, 1.0F),
+            new TechniqueVfx.Layer(true, 1.0F, 0.4D, 5.0F),
+            new TechniqueVfx.Layer(true, 0.5F, 0.2D, 3.0F),
+            new TechniqueVfx.Layer(true, 0.5F, 0.2D, 3.0F),
+            4, 6);
 
     @Test
     @DisplayName("Церемониальный выхват: длительности и границы фаз совпадают с задуманными")
@@ -91,7 +116,7 @@ class TechniqueTimelineTest {
     @Test
     @DisplayName("Фаза нулевой длины пропускается, а не съедает тик")
     void zeroLengthPhaseIsSkipped() {
-        Technique noImpact = technique(3, 0, 2, 0);
+        TechniqueDefinition noImpact = technique(0, 3, 0, 2, 0, 5);
 
         assertEquals(5, noImpact.totalTicks());
         // Удар и восстановление начинаются в одной точке: удара просто нет.
@@ -105,11 +130,19 @@ class TechniqueTimelineTest {
     }
 
     @Test
-    @DisplayName("Техника из одних нулей завершается сразу и ни разу не бьёт")
-    void emptyTechniqueEndsImmediately() {
-        Technique empty = technique(0, 0, 0, 0);
-        assertEquals(0, empty.totalTicks());
-        assertNull(empty.phaseAt(0), "иначе сервер запустит технику, которая никогда не кончится");
+    @DisplayName("Техника без единой фазы отвергается при создании, а не запускается пустой")
+    void emptyTechniqueRejected() {
+        // Раньше такая техника создавалась и просто завершалась на нулевом тике. Теперь схема
+        // отвергает её сразу: пустое описание в датапаке — это ошибка автора, и она должна
+        // быть видна при загрузке, а не проявляться молчаливым бездействием в бою.
+        assertThrows(IllegalArgumentException.class, () -> technique(0, 0, 0, 0, 0, 10));
+    }
+
+    @Test
+    @DisplayName("Кулдаун короче самой техники отвергается")
+    void shortCooldownRejected() {
+        // Иначе второй запуск затирает состояние первого: состояние одно на игрока.
+        assertThrows(IllegalArgumentException.class, () -> technique(0, 10, 2, 2, 2, 5));
     }
 
     @Test
@@ -120,42 +153,46 @@ class TechniqueTimelineTest {
     }
 
     @Test
-    @DisplayName("Конструктор отвергает значения, которые пришли бы из кривого датапака")
-    void constructorRejectsBadValues() {
-        Map<TechniquePhase, Integer> ok = new EnumMap<>(TechniquePhase.class);
-        ok.put(TechniquePhase.IMPACT, 2);
-
+    @DisplayName("Схема отвергает значения, которые пришли бы из кривого датапака")
+    void schemaRejectsBadValues() {
         Map<TechniquePhase, Integer> negative = new EnumMap<>(TechniquePhase.class);
         negative.put(TechniquePhase.WINDUP, -1);
         assertThrows(IllegalArgumentException.class,
-                () -> new Technique(id("t"), negative, 4.0D, 90.0D, 1.0F, 1, 1),
+                () -> new TechniqueDefinition(id("t"), negative, "f", "i", "b",
+                        new TechniqueBehavior.MeleeArc(4.0D, 90.0D, 1.0F), VFX, id("a"),
+                        new TechniqueDefinition.Interruption(null, false, 0.0F, 0, java.util.List.of()),
+                        "", 1, 10),
                 "отрицательная длительность фазы");
 
+        // Параметры воздействия теперь валидируются самим типом поведения — там же,
+        // где они и объявлены, а не в общем описании техники.
         assertThrows(IllegalArgumentException.class,
-                () -> new Technique(id("t"), ok, 0.0D, 90.0D, 1.0F, 1, 1), "нулевая дальность");
+                () -> new TechniqueBehavior.MeleeArc(0.0D, 90.0D, 1.0F), "нулевая дальность");
         assertThrows(IllegalArgumentException.class,
-                () -> new Technique(id("t"), ok, 4.0D, 400.0D, 1.0F, 1, 1), "дуга больше полного круга");
+                () -> new TechniqueBehavior.MeleeArc(4.0D, 400.0D, 1.0F), "дуга больше полного круга");
         assertThrows(IllegalArgumentException.class,
-                () -> new Technique(id("t"), ok, 4.0D, 90.0D, -1.0F, 1, 1),
+                () -> new TechniqueBehavior.MeleeArc(4.0D, 90.0D, -1.0F),
                 "отрицательный урон у мобов не клампится и вылечил бы цель");
         assertThrows(IllegalArgumentException.class,
-                () -> new Technique(id("t"), ok, 4.0D, 90.0D, 1.0F, -1, 1), "отрицательный hit stop");
+                () -> new TechniqueBehavior.ProjectileFan(9, 40.0D, 1.0D, 40, 1.0F),
+                "число снарядов сверх бюджета");
+        assertThrows(IllegalArgumentException.class,
+                () -> new TechniqueBehavior.Dash(0.0D, 1.0D, 1.0F), "нулевой рывок");
     }
 
     @Test
     @DisplayName("NaN не проскакивает мимо валидации")
     void constructorRejectsNaN() {
-        Map<TechniquePhase, Integer> ok = new EnumMap<>(TechniquePhase.class);
-        ok.put(TechniquePhase.IMPACT, 2);
-
         // NaN даёт false в любом сравнении, поэтому прямая проверка «меньше нуля» его пропускает.
         // NaN в дуге отключил бы угловой фильтр целиком: техника била бы на все 360 градусов.
         assertThrows(IllegalArgumentException.class,
-                () -> new Technique(id("t"), ok, Double.NaN, 90.0D, 1.0F, 1, 1), "NaN в дальности");
+                () -> new TechniqueBehavior.MeleeArc(Double.NaN, 90.0D, 1.0F), "NaN в дальности");
         assertThrows(IllegalArgumentException.class,
-                () -> new Technique(id("t"), ok, 4.0D, Double.NaN, 1.0F, 1, 1), "NaN в дуге");
+                () -> new TechniqueBehavior.MeleeArc(4.0D, Double.NaN, 1.0F), "NaN в дуге");
         assertThrows(IllegalArgumentException.class,
-                () -> new Technique(id("t"), ok, 4.0D, 90.0D, Float.NaN, 1, 1), "NaN в уроне");
+                () -> new TechniqueBehavior.MeleeArc(4.0D, 90.0D, Float.NaN), "NaN в уроне");
+        assertThrows(IllegalArgumentException.class,
+                () -> new TechniqueBehavior.Dash(Double.NaN, 1.0D, 1.0F), "NaN в дальности рывка");
     }
 
     @Test

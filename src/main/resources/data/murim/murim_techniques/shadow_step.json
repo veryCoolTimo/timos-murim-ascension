@@ -1,0 +1,42 @@
+{
+  "id": "murim:shadow_step",
+  "form": "step",
+  "intent": "evasion",
+  "breath": "hollow_breath",
+  "phases": {
+    "ritual": 0,
+    "windup": 4,
+    "impact": 2,
+    "recovery": 6,
+    "dissipation": 8
+  },
+  "behavior": {
+    "type": "murim:dash",
+    "distance": 7.0,
+    "radius": 1.4,
+    "damage": 4.0
+  },
+  "animation": "murim:ceremonial_draw",
+  "vfx": {
+    "pivot": [0.0, 1.0, 0.0],
+    "basis_a": [0.0, 0.55, -0.84],
+    "basis_b": [0.0, 0.84, 0.55],
+    "inner_radius": 0.1,
+    "outer_radius": 0.95,
+    "start_angle": 0.0,
+    "end_angle": 120.0,
+    "colour": { "r": 0.62, "g": 0.6, "b": 0.95 },
+    "trail": { "alpha": 0.9, "size": 0.55, "life_ticks": 6.0 },
+    "crescent": { "enabled": false, "alpha": 0.0, "size": 0.1, "life_ticks": 1.0 },
+    "core": { "alpha": 0.45, "size": 0.22, "life_ticks": 3.0 },
+    "windup_motes": 3,
+    "ritual_motes": 0
+  },
+  "interruption": {
+    "cancellable_until": "windup",
+    "break_on_damage": false
+  },
+  "weakness": "technique.murim.shadow_step.weakness",
+  "hit_stop_ticks": 2,
+  "cooldown_ticks": 40
+}
