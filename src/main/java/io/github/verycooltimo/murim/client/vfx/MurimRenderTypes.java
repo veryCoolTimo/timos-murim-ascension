@@ -26,6 +26,12 @@ public final class MurimRenderTypes {
     private static final ResourceLocation TRAIL_TEXTURE =
             ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/vfx/blade_trail.png");
 
+    private static final ResourceLocation CRESCENT_TEXTURE =
+            ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/vfx/blade_crescent.png");
+
+    private static final ResourceLocation CORE_TEXTURE =
+            ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/vfx/impact_core.png");
+
     /**
      * Лента следа клинка.
      *
@@ -50,8 +56,44 @@ public final class MurimRenderTypes {
                     .setWriteMaskState(RenderStateShard.COLOR_WRITE)
                     .createCompositeState(false));
 
+    /**
+     * Серп удара — вторым слоем поверх ленты.
+     *
+     * <p>Отдельный тип, а не тот же самый с другой текстурой: {@link RenderType} иммутабелен
+     * и кеширует состояние GPU вместе с привязкой текстуры, подменить её на лету нельзя.
+     */
+    private static final RenderType BLADE_CRESCENT = additive("blade_crescent", CRESCENT_TEXTURE);
+
+    /** Вспышка ядра — третьим слоем в точке контакта. */
+    private static final RenderType IMPACT_CORE = additive("impact_core", CORE_TEXTURE);
+
+    private static RenderType additive(String name, ResourceLocation texture) {
+        return RenderType.create(
+                MurimMod.MODID + ":" + name,
+                DefaultVertexFormat.NEW_ENTITY,
+                VertexFormat.Mode.QUADS,
+                4096,
+                RenderType.CompositeState.builder()
+                        .setShaderState(RenderStateShard.RENDERTYPE_EYES_SHADER)
+                        .setTextureState(new RenderStateShard.TextureStateShard(texture, true, false))
+                        .setTransparencyState(RenderStateShard.LIGHTNING_TRANSPARENCY)
+                        .setCullState(RenderStateShard.NO_CULL)
+                        .setLightmapState(RenderStateShard.NO_LIGHTMAP)
+                        .setOverlayState(RenderStateShard.NO_OVERLAY)
+                        .setWriteMaskState(RenderStateShard.COLOR_WRITE)
+                        .createCompositeState(false));
+    }
+
     public static RenderType bladeTrail() {
         return BLADE_TRAIL;
+    }
+
+    public static RenderType bladeCrescent() {
+        return BLADE_CRESCENT;
+    }
+
+    public static RenderType impactCore() {
+        return IMPACT_CORE;
     }
 
     private MurimRenderTypes() {

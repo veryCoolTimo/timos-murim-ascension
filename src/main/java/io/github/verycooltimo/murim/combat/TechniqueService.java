@@ -45,6 +45,14 @@ public final class TechniqueService {
         player.setData(ModAttachments.TECHNIQUE_STATE, TechniqueState.started(technique.id(), now));
         PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
                 new TechniqueEventPayload(TechniqueEventPayload.Event.STARTED, technique.id(), player.getId(), 0));
+
+        // Звук выхвата — с сервера через playSound(null, ...), как это делает ваниль для атак:
+        // так его слышат все вокруг и позиционно, без отдельного пакета на каждого.
+        // Низкий тон и половинная громкость: замах по раскадровке тихий, весь контраст
+        // строится на том, что удар придёт громче.
+        player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
+                net.minecraft.sounds.SoundEvents.TRIDENT_THROW.value(),
+                net.minecraft.sounds.SoundSource.PLAYERS, 0.45F, 0.55F);
         return true;
     }
 
@@ -161,6 +169,12 @@ public final class TechniqueService {
         List<LivingEntity> candidates = player.serverLevel().getEntitiesOfClass(LivingEntity.class, search,
                 candidate -> candidate != player && candidate.isAlive() && !candidate.isSpectator());
 
+        // Свист клинка звучит на самом ударе независимо от попадания: промах тоже должен
+        // быть слышен, иначе игрок не понимает, что техника вообще сработала.
+        player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
+                net.minecraft.sounds.SoundEvents.PLAYER_ATTACK_SWEEP,
+                net.minecraft.sounds.SoundSource.PLAYERS, 1.0F, 0.72F);
+
         boolean anyHit = false;
         for (LivingEntity target : candidates) {
             if (!inArc(eye, look, target.getBoundingBox(), reach, cosLimit)) {
@@ -172,6 +186,9 @@ public final class TechniqueService {
         }
 
         if (anyHit) {
+            player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
+                    net.minecraft.sounds.SoundEvents.PLAYER_ATTACK_CRIT,
+                    net.minecraft.sounds.SoundSource.PLAYERS, 0.9F, 0.68F);
             // Hit stop адресно применяющему: заморозка экрана у соседей, попавших в радиус
             // трекинга, была бы гриферством с обычного клиента.
             PacketDistributor.sendToPlayer(player,

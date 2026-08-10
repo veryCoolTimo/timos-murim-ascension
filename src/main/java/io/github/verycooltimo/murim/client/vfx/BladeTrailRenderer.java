@@ -58,6 +58,41 @@ public final class BladeTrailRenderer {
     private static final double TAIL_LENGTH = 0.72D;
 
     /**
+     * Серп — второй слой удара. Стартует на тик позже ленты: правило 04 требует разносить
+     * старты слоёв минимум на 16 мс, иначе три слоя сливаются в один и эффект читается плоско.
+     */
+    private static final float CRESCENT_START_TICK = 14.0F;
+
+    /** Живёт 3 тика — 150 мс. Дольше держать нельзя: серп начинает читаться как висящее пятно. */
+    private static final float CRESCENT_LIFE = 3.0F;
+
+    /**
+     * Пиковая непрозрачность серпа.
+     *
+     * <p>Низкая намеренно. Слой аддитивный, и при альфе около единицы он мгновенно уходит
+     * в насыщение: три слоя сливаются в сплошное белое пятно, в котором не видно ни формы
+     * серпа, ни ленты под ним. Поймано на кадрах 2026-08-10 — первая версия с альфой 1.0
+     * читалась как приклеенный к голове факел.
+     */
+    private static final float CRESCENT_PEAK_ALPHA = 0.30F;
+
+    /** Максимальная полуширина серпа в блоках. Заметно шире ленты: это тело удара. */
+    private static final double CRESCENT_HALF_WIDTH = 0.15D;
+
+    /** Вспышка ядра — третий слой, ещё на полтика позже серпа. */
+    private static final float CORE_START_TICK = 14.5F;
+
+    private static final float CORE_LIFE = 3.0F;
+
+    /** Пиковая непрозрачность ядра — по той же причине, что и у серпа. */
+    private static final float CORE_PEAK_ALPHA = 0.40F;
+
+    /** Доля дуги, где вспыхивает ядро: середина взмаха, то есть точка контакта. */
+    // Не середина дуги: там точка приходится игроку на голову, и вспышка читается как
+    // светящееся лицо. Ближе к концу взмаха — это уже вынесенный вперёд клинок.
+    private static final double CORE_ARC_POSITION = 0.74D;
+
+    /**
      * Полная ширина ленты в блоках. Ширина в целый блок превращает след в веер:
      * лента должна быть заметно длиннее, чем шире, иначе не читается как след клинка.
      */
@@ -139,7 +174,6 @@ public final class BladeTrailRenderer {
         float partialTick = event.getPartialTick().getGameTimeDeltaPartialTick(false);
         Camera camera = event.getCamera();
         MultiBufferSource.BufferSource buffers = minecraft.renderBuffers().bufferSource();
-        VertexConsumer consumer = buffers.getBuffer(MurimRenderTypes.bladeTrail());
         PoseStack poseStack = event.getPoseStack();
 
         ACTIVE.entrySet().removeIf(entry -> {
@@ -157,12 +191,29 @@ public final class BladeTrailRenderer {
             if (entity == minecraft.player && minecraft.options.getCameraType().isFirstPerson()) {
                 return false;
             }
-            renderTrail(poseStack, consumer, camera, entity, age, partialTick);
+            renderLayers(poseStack, buffers, camera, entity, age, partialTick);
             return false;
         });
 
-        // Буфер сбрасывается сразу: эффект живёт один кадр, накопление здесь не нужно.
+        // Буферы сбрасываются сразу: эффект живёт один кадр, накопление здесь не нужно.
+        // Порядок сброса задаёт порядок отрисовки слоёв — ядро поверх серпа, серп поверх ленты.
         buffers.endBatch(MurimRenderTypes.bladeTrail());
+        buffers.endBatch(MurimRenderTypes.bladeCrescent());
+        buffers.endBatch(MurimRenderTypes.impactCore());
+    }
+
+    /**
+     * Три слоя одного удара: тянущаяся лента, серп и вспышка ядра. Общая для них подготовка
+     * матрицы вынесена сюда, чтобы не повторять поворот и перенос трижды за кадр.
+     */
+    private static void renderLayers(PoseStack poseStack, MultiBufferSource.BufferSource buffers,
+                                     Camera camera, Entity entity, float age, float partialTick) {
+        renderTrail(poseStack, buffers.getBuffer(MurimRenderTypes.bladeTrail()), camera,
+                    entity, age, partialTick);
+        renderCrescent(poseStack, buffers.getBuffer(MurimRenderTypes.bladeCrescent()), camera,
+                       entity, age, partialTick);
+        renderCore(poseStack, buffers.getBuffer(MurimRenderTypes.impactCore()), camera,
+                   entity, age, partialTick);
     }
 
     private static void renderTrail(PoseStack poseStack, VertexConsumer consumer, Camera camera,
@@ -265,6 +316,154 @@ public final class BladeTrailRenderer {
         } finally {
             poseStack.popPose();
         }
+    }
+
+    /**
+     * Серп удара: тело взмаха, а не его след.
+     *
+     * <p>В отличие от ленты не тянется за клинком, а вспыхивает целиком на всю дугу
+     * и сразу гаснет. Ширина сходит к нулю на обоих концах — это и даёт форму серпа,
+     * а не полосы одинаковой толщины.
+     */
+    private static void renderCrescent(PoseStack poseStack, VertexConsumer consumer, Camera camera,
+                                       Entity entity, float age, float partialTick) {
+        float life = (age - CRESCENT_START_TICK) / CRESCENT_LIFE;
+        if (life < 0.0F || life > 1.0F) {
+            return;
+        }
+        // Пик в первые проценты жизни, дальше только спад — требование правила 04.
+        float alpha = life < 0.12F
+                ? Mth.clamp(life / 0.12F, 0.0F, 1.0F)
+                : (1.0F - (life - 0.12F) / 0.88F);
+        alpha = Mth.clamp(alpha, 0.0F, 1.0F) * CRESCENT_PEAK_ALPHA;
+        if (alpha <= 0.0F) {
+            return;
+        }
+
+        BladeArc arc = BladeArc.CEREMONIAL_DRAW;
+        Frame frame = frame(entity, camera, partialTick);
+        int segments = Math.min(MAX_SEGMENTS,
+                io.github.verycooltimo.murim.client.ClientConfig.trailSegments());
+
+        poseStack.pushPose();
+        try {
+            applyFrame(poseStack, frame);
+            com.mojang.blaze3d.vertex.PoseStack.Pose pose = poseStack.last();
+            Vec3 fallbackSide = arc.planeNormal();
+
+            Vec3 prevLeft = null;
+            Vec3 prevRight = null;
+            Vec3 prevNormal = null;
+            float prevAlpha = 0.0F;
+            float prevU = 0.0F;
+
+            for (int i = 0; i <= segments; i++) {
+                float along = (float) i / segments;
+                double t = 0.04D + 0.92D * along;
+                Vec3 point = arc.tipAt(t);
+                Vec3 tangent = arc.tangentAt(t).normalize();
+                Vec3 toCamera = frame.cameraLocal.subtract(point).normalize();
+
+                Vec3 side = tangent.cross(toCamera);
+                if (side.lengthSqr() < 1.0E-4D) {
+                    side = fallbackSide;
+                }
+                Vec3 unitSide = side.normalize();
+                // Синус даёт сходящиеся острия на концах; степень меньше единицы удерживает
+                // середину широкой, иначе серп выглядит вялым веретеном.
+                double halfWidth = CRESCENT_HALF_WIDTH * Math.pow(Math.sin(Math.PI * along), 0.55D);
+                Vec3 offset = unitSide.scale(halfWidth);
+
+                Vec3 left = point.add(offset);
+                Vec3 right = point.subtract(offset);
+                Vec3 faceNormal = unitSide.cross(tangent).normalize();
+
+                if (prevLeft != null) {
+                    quad(consumer, pose, prevRight, prevLeft, left, right,
+                         prevNormal, faceNormal, prevAlpha, alpha, prevU, along);
+                }
+                prevLeft = left;
+                prevRight = right;
+                prevNormal = faceNormal;
+                prevAlpha = alpha;
+                prevU = along;
+            }
+        } finally {
+            poseStack.popPose();
+        }
+    }
+
+    /**
+     * Вспышка ядра в точке контакта — квад, развёрнутый к камере.
+     *
+     * <p>Самый короткий из трёх слоёв и самый яркий. Растёт рывком в первые проценты жизни,
+     * дальше только гаснет: отношение удара к рассеиванию держится не хуже 1:3.
+     */
+    private static void renderCore(PoseStack poseStack, VertexConsumer consumer, Camera camera,
+                                   Entity entity, float age, float partialTick) {
+        float life = (age - CORE_START_TICK) / CORE_LIFE;
+        if (life < 0.0F || life > 1.0F) {
+            return;
+        }
+        float rise = Mth.clamp(life / 0.10F, 0.0F, 1.0F);
+        float fall = 1.0F - Mth.clamp((life - 0.10F) / 0.90F, 0.0F, 1.0F);
+        float alpha = rise * fall * fall * CORE_PEAK_ALPHA;
+        if (alpha <= 0.0F) {
+            return;
+        }
+        double size = 0.28D + 0.45D * life;
+
+        Frame frame = frame(entity, camera, partialTick);
+        Vec3 centre = BladeArc.CEREMONIAL_DRAW.tipAt(CORE_ARC_POSITION);
+
+        poseStack.pushPose();
+        try {
+            applyFrame(poseStack, frame);
+            com.mojang.blaze3d.vertex.PoseStack.Pose pose = poseStack.last();
+
+            Vec3 forward = frame.cameraLocal.subtract(centre).normalize();
+            // Опорный вектор выбирается не параллельным взгляду, иначе базис вырождается
+            // при взгляде строго сверху.
+            Vec3 reference = Math.abs(forward.y) > 0.95D ? new Vec3(1.0D, 0.0D, 0.0D)
+                                                         : new Vec3(0.0D, 1.0D, 0.0D);
+            Vec3 right = forward.cross(reference).normalize().scale(size);
+            Vec3 up = right.normalize().cross(forward).normalize().scale(size);
+
+            Vec3 a = centre.subtract(right).subtract(up);
+            Vec3 b = centre.subtract(right).add(up);
+            Vec3 c = centre.add(right).add(up);
+            Vec3 d = centre.add(right).subtract(up);
+
+            vertex(consumer, pose, a, forward, 0.0F, 0.0F, alpha);
+            vertex(consumer, pose, b, forward, 0.0F, 1.0F, alpha);
+            vertex(consumer, pose, c, forward, 1.0F, 1.0F, alpha);
+            vertex(consumer, pose, d, forward, 1.0F, 0.0F, alpha);
+        } finally {
+            poseStack.popPose();
+        }
+    }
+
+    /** Положение и разворот игрока на текущем кадре — общая подготовка для всех трёх слоёв. */
+    private record Frame(Vec3 feet, Vec3 cameraPos, Vec3 cameraLocal, float bodyYaw) {
+    }
+
+    private static Frame frame(Entity entity, Camera camera, float partialTick) {
+        Vec3 feet = new Vec3(
+                Mth.lerp(partialTick, entity.xOld, entity.getX()),
+                Mth.lerp(partialTick, entity.yOld, entity.getY()),
+                Mth.lerp(partialTick, entity.zOld, entity.getZ()));
+        float bodyYaw = entity instanceof net.minecraft.world.entity.LivingEntity living
+                ? Mth.rotLerp(partialTick, living.yBodyRotO, living.yBodyRot)
+                : Mth.rotLerp(partialTick, entity.yRotO, entity.getYRot());
+        Vec3 cameraPos = camera.getPosition();
+        return new Frame(feet, cameraPos, toLocal(cameraPos.subtract(feet), bodyYaw), bodyYaw);
+    }
+
+    private static void applyFrame(PoseStack poseStack, Frame frame) {
+        poseStack.translate(frame.feet.x - frame.cameraPos.x,
+                            frame.feet.y - frame.cameraPos.y,
+                            frame.feet.z - frame.cameraPos.z);
+        poseStack.mulPose(com.mojang.math.Axis.YP.rotationDegrees(-frame.bodyYaw));
     }
 
     /**
