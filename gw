@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+# Обёртка над ./gradlew: находит JDK 21 и запускает Gradle с ним.
+#
+# Зачем: gradlew стартует на том java, что есть в PATH, а на Linux-сервере java в PATH нет
+# (JDK лежит в $HOME, sudo недоступен). Неинтерактивные оболочки не читают ~/.bashrc,
+# поэтому «настроить один раз в профиле» не работает для агентских вызовов.
+# Эта обёртка одинаково работает на Linux-сервере и на macOS.
+#
+#   ./gw build
+#   ./gw runData
+#   ./gw runGameTestServer
+#
+set -euo pipefail
+
+is_jdk21() {
+    [ -x "$1/bin/javac" ] || return 1
+    "$1/bin/java" -version 2>&1 | head -1 | grep -qE '"21[.\"]'
+}
+
+find_jdk21() {
+    if [ -n "${JAVA_HOME:-}" ] && is_jdk21 "$JAVA_HOME"; then
+        printf '%s' "$JAVA_HOME"
+        return 0
+    fi
+    for candidate in \
+        "$HOME"/.jdks/jdk-21* \
+        "$HOME"/.sdkman/candidates/java/21* \
+        /opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home \
+        /opt/homebrew/opt/openjdk@21 \
+        /usr/lib/jvm/*21* \
+        /Library/Java/JavaVirtualMachines/*21*/Contents/Home
+    do
+        if [ -d "$candidate" ] && is_jdk21 "$candidate"; then
+            printf '%s' "$candidate"
+            return 0
+        fi
+    done
+    return 1
+}
+
+if ! JDK="$(find_jdk21)"; then
+    echo "JDK 21 не найден." >&2
+    echo "Проверены: \$JAVA_HOME, ~/.jdks, ~/.sdkman, /opt/homebrew/opt/openjdk@21, /usr/lib/jvm, /Library/Java." >&2
+    echo "Linux без sudo — распакуй Temurin 21 в ~/.jdks:" >&2
+    echo "  mkdir -p ~/.jdks && curl -sL 'https://api.adoptium.net/v3/binary/latest/21/ga/linux/x64/jdk/hotspot/normal/eclipse' | tar xz -C ~/.jdks" >&2
+    echo "macOS: brew install openjdk@21" >&2
+    exit 1
+fi
+
+export JAVA_HOME="$JDK"
+export PATH="$JAVA_HOME/bin:$PATH"
+exec "$(dirname "$0")/gradlew" "$@"

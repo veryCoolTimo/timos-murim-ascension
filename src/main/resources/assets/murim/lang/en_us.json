@@ -1,0 +1,6 @@
+{
+  "murim.configuration.title": "Timos Murim",
+  "murim.configuration.section.murim.common.toml": "Common",
+  "murim.configuration.section.murim.common.toml.title": "Common Settings",
+  "murim.configuration.debugLogging": "Debug Logging"
+}

@@ -7,7 +7,15 @@
 build/
 out/
 bin/
+repo/
 *.log
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/**/build/
+!**/src/**/out/
+!**/src/**/bin/
+
+# Кэш датагена: сами ресурсы коммитятся, кэш — нет
+**/src/generated/**/.cache/
 
 # NeoForge dev runtime (runClient/runServer/runData)
 run/
@@ -26,6 +34,11 @@ saves/
 .classpath
 .project
 .eclipse/
+.run/
+.apt_generated
+.factorypath
+.springBeans
+.sts4-cache
 
 # Локальные секреты и настройки
 *.local
