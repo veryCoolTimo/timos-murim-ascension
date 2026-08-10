@@ -74,10 +74,10 @@ public final class BladeTrailRenderer {
      * серпа, ни ленты под ним. Поймано на кадрах 2026-08-10 — первая версия с альфой 1.0
      * читалась как приклеенный к голове факел.
      */
-    private static final float CRESCENT_PEAK_ALPHA = 0.30F;
+    private static final float CRESCENT_PEAK_ALPHA = 0.48F;
 
     /** Максимальная полуширина серпа в блоках. Заметно шире ленты: это тело удара. */
-    private static final double CRESCENT_HALF_WIDTH = 0.15D;
+    private static final double CRESCENT_HALF_WIDTH = 0.21D;
 
     /** Вспышка ядра — третий слой, ещё на полтика позже серпа. */
     private static final float CORE_START_TICK = 14.5F;
@@ -85,12 +85,26 @@ public final class BladeTrailRenderer {
     private static final float CORE_LIFE = 3.0F;
 
     /** Пиковая непрозрачность ядра — по той же причине, что и у серпа. */
-    private static final float CORE_PEAK_ALPHA = 0.40F;
+    private static final float CORE_PEAK_ALPHA = 0.58F;
 
     /** Доля дуги, где вспыхивает ядро: середина взмаха, то есть точка контакта. */
     // Не середина дуги: там точка приходится игроку на голову, и вспышка читается как
     // светящееся лицо. Ближе к концу взмаха — это уже вынесенный вперёд клинок.
     private static final double CORE_ARC_POSITION = 0.74D;
+
+    /**
+     * Замах — самая длинная фаза техники и до сих пор полностью пустая: почти секунда,
+     * за которую не происходило ничего. Именно из-за неё техника читалась как «мало эффектов»,
+     * хотя сам удар насыщен. Свечение у клинка и сбор энергии заполняют эту паузу
+     * и превращают её из ожидания в подготовку.
+     */
+    private static final float WINDUP_START_TICK = 3.0F;
+
+    /** Конец накопления совпадает с началом взмаха: энергия срывается вместе с клинком. */
+    private static final float WINDUP_END_TICK = 13.0F;
+
+    /** Сколько искр сходится к лезвию. Немного: важна читаемость, а не густота. */
+    private static final int MOTE_COUNT = 7;
 
     /**
      * Полная ширина ленты в блоках. Ширина в целый блок превращает след в веер:
@@ -208,12 +222,78 @@ public final class BladeTrailRenderer {
      */
     private static void renderLayers(PoseStack poseStack, MultiBufferSource.BufferSource buffers,
                                      Camera camera, Entity entity, float age, float partialTick) {
+        renderWindup(poseStack, buffers.getBuffer(MurimRenderTypes.impactCore()), camera,
+                     entity, age, partialTick);
         renderTrail(poseStack, buffers.getBuffer(MurimRenderTypes.bladeTrail()), camera,
                     entity, age, partialTick);
         renderCrescent(poseStack, buffers.getBuffer(MurimRenderTypes.bladeCrescent()), camera,
                        entity, age, partialTick);
         renderCore(poseStack, buffers.getBuffer(MurimRenderTypes.impactCore()), camera,
                    entity, age, partialTick);
+    }
+
+    /**
+     * Накопление энергии на замахе: свечение у лезвия и сходящиеся к нему искры.
+     *
+     * <p>Растёт к концу замаха, а не держится ровно: зритель должен видеть, что сила
+     * набирается, иначе пауза перед ударом читается как задержка, а не как подготовка.
+     */
+    private static void renderWindup(PoseStack poseStack, VertexConsumer consumer, Camera camera,
+                                     Entity entity, float age, float partialTick) {
+        float charge = (age - WINDUP_START_TICK) / (WINDUP_END_TICK - WINDUP_START_TICK);
+        if (charge < 0.0F || charge > 1.0F) {
+            return;
+        }
+        // Кубический рост: почти незаметно в начале, заметный всплеск перед самым срывом.
+        float intensity = charge * charge * charge;
+
+        BladeArc arc = BladeArc.CEREMONIAL_DRAW;
+        Frame frame = frame(entity, camera, partialTick);
+        // Точка у лезвия в занесённом положении — это начало будущей дуги.
+        Vec3 blade = arc.tipAt(0.0D).add(arc.pivot()).scale(0.5D);
+
+        poseStack.pushPose();
+        try {
+            applyFrame(poseStack, frame);
+            com.mojang.blaze3d.vertex.PoseStack.Pose pose = poseStack.last();
+            Vec3 toBlade = frame.cameraLocal.subtract(blade).normalize();
+
+            // Свечение у самого клинка.
+            billboard(consumer, pose, blade, toBlade,
+                      0.18D + 0.34D * intensity, 0.15F + 0.45F * intensity);
+
+            // Искры сходятся по спирали: радиус падает, вращение продолжается.
+            double radius = 1.5D * (1.0D - charge) + 0.12D;
+            float spin = age * 0.28F;
+            for (int i = 0; i < MOTE_COUNT; i++) {
+                double angle = spin + i * (Math.PI * 2.0D / MOTE_COUNT);
+                // Разная высота у искр: плоское кольцо читается как декорация, а не как сбор силы.
+                double lift = Math.sin(angle * 1.7D + i) * 0.35D * (1.0D - charge);
+                Vec3 offset = new Vec3(Math.cos(angle) * radius, lift, Math.sin(angle) * radius);
+                Vec3 point = blade.add(offset);
+                billboard(consumer, pose, point, frame.cameraLocal.subtract(point).normalize(),
+                          0.05D + 0.07D * intensity, 0.20F + 0.55F * intensity);
+            }
+        } finally {
+            poseStack.popPose();
+        }
+    }
+
+    /** Квад, развёрнутый к камере. Общая заготовка для точечных вспышек. */
+    private static void billboard(VertexConsumer consumer, com.mojang.blaze3d.vertex.PoseStack.Pose pose,
+                                  Vec3 centre, Vec3 forward, double size, float alpha) {
+        if (alpha <= 0.0F || size <= 0.0D) {
+            return;
+        }
+        Vec3 reference = Math.abs(forward.y) > 0.95D ? new Vec3(1.0D, 0.0D, 0.0D)
+                                                     : new Vec3(0.0D, 1.0D, 0.0D);
+        Vec3 right = forward.cross(reference).normalize().scale(size);
+        Vec3 up = right.normalize().cross(forward).normalize().scale(size);
+
+        vertex(consumer, pose, centre.subtract(right).subtract(up), forward, 0.0F, 0.0F, alpha);
+        vertex(consumer, pose, centre.subtract(right).add(up), forward, 0.0F, 1.0F, alpha);
+        vertex(consumer, pose, centre.add(right).add(up), forward, 1.0F, 1.0F, alpha);
+        vertex(consumer, pose, centre.add(right).subtract(up), forward, 1.0F, 0.0F, alpha);
     }
 
     private static void renderTrail(PoseStack poseStack, VertexConsumer consumer, Camera camera,
