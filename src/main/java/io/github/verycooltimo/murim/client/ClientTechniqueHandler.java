@@ -2,6 +2,7 @@ package io.github.verycooltimo.murim.client;
 
 import io.github.verycooltimo.murim.MurimMod;
 import io.github.verycooltimo.murim.client.vfx.BladeTrailRenderer;
+import io.github.verycooltimo.murim.client.vfx.ImpactScreenLayer;
 import io.github.verycooltimo.murim.combat.Techniques;
 import io.github.verycooltimo.murim.network.StartTechniquePayload;
 import io.github.verycooltimo.murim.network.TechniqueEventPayload;
@@ -58,6 +59,7 @@ public final class ClientTechniqueHandler {
                 if (isLocalPlayer(payload.sourceId())) {
                     HitStopHandler.request(payload.hitStopTicks());
                     CameraShakeHandler.request(1.0F);
+                    ImpactScreenLayer.trigger();
                 }
             }
             case CANCELLED -> {
