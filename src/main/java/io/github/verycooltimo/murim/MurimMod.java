@@ -1,6 +1,7 @@
 package io.github.verycooltimo.murim;
 
 import com.mojang.logging.LogUtils;
+import io.github.verycooltimo.murim.registry.ModAttachments;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
@@ -26,8 +27,7 @@ public class MurimMod {
     public MurimMod(IEventBus modEventBus, ModContainer modContainer) {
         modEventBus.addListener(this::commonSetup);
 
-        // Сюда добавляются DeferredRegister-холдеры из пакета registry:
-        // ModItems.ITEMS.register(modEventBus); и так далее.
+        ModAttachments.ATTACHMENT_TYPES.register(modEventBus);
 
         modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
     }

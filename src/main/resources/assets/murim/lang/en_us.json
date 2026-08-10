@@ -2,5 +2,8 @@
   "murim.configuration.title": "Timos Murim",
   "murim.configuration.section.murim.common.toml": "Common",
   "murim.configuration.section.murim.common.toml.title": "Common Settings",
-  "murim.configuration.debugLogging": "Debug Logging"
+  "murim.configuration.debugLogging": "Debug Logging",
+
+  "key.categories.murim": "Timos Murim",
+  "key.murim.technique": "Use Technique"
 }
