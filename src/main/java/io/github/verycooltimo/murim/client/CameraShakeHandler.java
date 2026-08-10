@@ -35,7 +35,14 @@ public final class CameraShakeHandler {
 
     private static float remaining;
     private static float strength;
-    private static float elapsed;
+
+    /**
+     * Тики с начала текущей тряски, а не с загрузки игры. Счётчик от загрузки терял точность:
+     * {@code float} перестаёт различать единицу выше 2^24, и через несколько суток аптайма
+     * тряска выродилась бы в постоянное смещение. Отсчёт от нуля попутно чинит и фазу —
+     * иначе первый кадр начинался со случайного значения синуса, то есть со скачка.
+     */
+    private static int elapsed;
 
     /**
      * Запрашивает тряску.
@@ -48,8 +55,13 @@ public final class CameraShakeHandler {
         if (clamped <= 0.0F) {
             return;
         }
-        strength = Math.max(strength, clamped);
+        // Сравнивается не исторический максимум, а то, что осталось от предыдущей тряски:
+        // иначе один сильный удар задаёт амплитуду всем последующим слабым, и при частых
+        // попаданиях камера навсегда остаётся на максимуме.
+        float current = strength * decay(remaining, 0.0F);
+        strength = Math.max(current, clamped);
         remaining = DURATION_TICKS;
+        elapsed = 0;
     }
 
     /** Мгновенно останавливает тряску: смена мира не должна тащить за собой качающуюся камеру. */
@@ -58,12 +70,20 @@ public final class CameraShakeHandler {
         strength = 0.0F;
     }
 
+    /** Квадратичное затухание: удар должен ощущаться резким, а успокоение — быстрым. */
+    private static float decay(float left, float partial) {
+        float linear = Mth.clamp((left - partial) / DURATION_TICKS, 0.0F, 1.0F);
+        return linear * linear;
+    }
+
     @SubscribeEvent
     static void onClientTick(ClientTickEvent.Post event) {
+        if (remaining <= 0.0F) {
+            return;
+        }
         elapsed++;
-        if (remaining > 0.0F && --remaining <= 0.0F) {
-            remaining = 0.0F;
-            strength = 0.0F;
+        if (--remaining <= 0.0F) {
+            reset();
         }
     }
 
@@ -79,9 +99,7 @@ public final class CameraShakeHandler {
 
         float partial = (float) event.getPartialTick();
         float time = elapsed + partial;
-        // Квадратичное затухание: удар должен ощущаться резким, а успокоение — быстрым.
-        float decay = Mth.clamp((remaining - partial) / DURATION_TICKS, 0.0F, 1.0F);
-        float amplitude = (float) (strength * setting * decay * decay);
+        float amplitude = (float) (strength * setting * decay(remaining, partial));
 
         event.setYaw(event.getYaw() + Mth.sin(time * 2.7F) * MAX_YAW * amplitude);
         event.setPitch(event.getPitch() + Mth.sin(time * 3.9F + 1.3F) * MAX_PITCH * amplitude);

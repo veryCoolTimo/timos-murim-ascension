@@ -36,10 +36,13 @@ public final class MurimRenderTypes {
             MurimMod.MODID + ":blade_trail",
             DefaultVertexFormat.NEW_ENTITY,
             VertexFormat.Mode.QUADS,
-            256,
+            // Ленте нужно 28 квадов по 4 вершины формата NEW_ENTITY (36 байт) — около 4 КБ.
+            4096,
             RenderType.CompositeState.builder()
-                    .setShaderState(RenderStateShard.RENDERTYPE_ENERGY_SWIRL_SHADER)
-                    .setTextureState(new RenderStateShard.TextureStateShard(TRAIL_TEXTURE, false, false))
+                    .setShaderState(RenderStateShard.RENDERTYPE_EYES_SHADER)
+                    .setTextureState(// blur = true: текстура 64x16 растягивается на дугу длиной около двух блоков,
+                            // при ближайшем соседе кромка идёт лесенкой
+                            new RenderStateShard.TextureStateShard(TRAIL_TEXTURE, true, false))
                     .setTransparencyState(RenderStateShard.LIGHTNING_TRANSPARENCY)
                     .setCullState(RenderStateShard.NO_CULL)
                     .setLightmapState(RenderStateShard.NO_LIGHTMAP)

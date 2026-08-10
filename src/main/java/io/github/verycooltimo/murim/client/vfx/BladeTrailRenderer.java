@@ -63,8 +63,8 @@ public final class BladeTrailRenderer {
      */
     private static final double RIBBON_WIDTH = 0.46D;
 
-    /** Сегментов вдоль дуги. Больше — глаже кромка, дороже буфер. */
-    private static final int SEGMENTS = 28;
+    /** Сегментов вдоль дуги при высшем качестве. Больше — глаже кромка, дороже буфер. */
+    private static final int MAX_SEGMENTS = 28;
 
     private static final Map<Integer, Trail> ACTIVE = new ConcurrentHashMap<>();
 
@@ -151,6 +151,12 @@ public final class BladeTrailRenderer {
             if (entity == null) {
                 return true;
             }
+            // Дуга проходит через точку глаза (1.62 блока), поэтому в первом лице лента
+            // размазывается по экрану крупными пятнами. Съёмка этого не показывала:
+            // DevCaptureHandler принудительно ставит третье лицо.
+            if (entity == minecraft.player && minecraft.options.getCameraType().isFirstPerson()) {
+                return false;
+            }
             renderTrail(poseStack, consumer, camera, entity, age, partialTick);
             return false;
         });
@@ -172,12 +178,20 @@ public final class BladeTrailRenderer {
             return;
         }
 
+        // xOld, а не xo: в штатном тике они совпадают, но при коррекции позиции сервером
+        // правится только одно из полей, и лента на кадр уезжает от модели. Ванильные
+        // рендереры интерполируют именно по xOld.
         Vec3 feet = new Vec3(
-                Mth.lerp(partialTick, entity.xo, entity.getX()),
-                Mth.lerp(partialTick, entity.yo, entity.getY()),
-                Mth.lerp(partialTick, entity.zo, entity.getZ()));
+                Mth.lerp(partialTick, entity.xOld, entity.getX()),
+                Mth.lerp(partialTick, entity.yOld, entity.getY()),
+                Mth.lerp(partialTick, entity.zOld, entity.getZ()));
         Vec3 cameraPos = camera.getPosition();
-        float bodyYaw = Mth.rotLerp(partialTick, entity.yRotO, entity.getYRot());
+        // Рысканье КОРПУСА, а не головы: модель игрока рисуется по yBodyRot, который догоняет
+        // взгляд с задержкой. По getYRot лента отрывалась от клинка на десятки градусов
+        // при резком повороте мыши.
+        float bodyYaw = entity instanceof net.minecraft.world.entity.LivingEntity living
+                ? Mth.rotLerp(partialTick, living.yBodyRotO, living.yBodyRot)
+                : Mth.rotLerp(partialTick, entity.yRotO, entity.getYRot());
 
         poseStack.pushPose();
         try {
@@ -186,8 +200,7 @@ public final class BladeTrailRenderer {
             poseStack.mulPose(com.mojang.math.Axis.YP.rotationDegrees(-bodyYaw));
 
             BladeArc arc = BladeArc.CEREMONIAL_DRAW;
-            org.joml.Matrix4f pose = poseStack.last().pose();
-            org.joml.Matrix3f normal = poseStack.last().normal();
+            com.mojang.blaze3d.vertex.PoseStack.Pose pose = poseStack.last();
 
             // Камера в системе координат игрока. Нужна, чтобы развернуть ленту шириной к зрителю:
             // плоскость рубящего взмаха содержит направление «вперёд», и при виде спереди или
@@ -196,48 +209,56 @@ public final class BladeTrailRenderer {
             // вдоль траектории острия, а не по двум радиусам дуги.
             Vec3 toCameraLocal = toLocal(cameraPos.subtract(feet), bodyYaw);
 
+            int segments = Math.min(MAX_SEGMENTS,
+                    io.github.verycooltimo.murim.client.ClientConfig.trailSegments());
             double tailStart = Math.max(0.0D, head - TAIL_LENGTH);
             // Ширина берётся константой, а не из радиусов дуги: радиусы задают траекторию
             // острия, а толщина следа — вопрос читаемости, и связывать их незачем.
             double width = RIBBON_WIDTH;
 
+            Vec3 fallbackSide = arc.planeNormal();
             Vec3 prevLeft = null;
             Vec3 prevRight = null;
+            Vec3 prevNormal = null;
             float prevAlpha = 0.0F;
             float prevU = 0.0F;
 
-            for (int i = 0; i <= SEGMENTS; i++) {
-                float along = (float) i / SEGMENTS;
+            for (int i = 0; i <= segments; i++) {
+                float along = (float) i / segments;
                 double t = tailStart + (head - tailStart) * along;
                 Vec3 point = arc.tipAt(t);
+                Vec3 tangent = arc.tangentAt(t).normalize();
+                Vec3 toCamera = toCameraLocal.subtract(point).normalize();
 
-                // Касательная берётся по соседним точкам дуги: на краях — односторонняя разность.
-                double step = 1.0D / (SEGMENTS * 2.0D);
-                Vec3 tangent = arc.tipAt(Math.min(1.0D, t + step))
-                        .subtract(arc.tipAt(Math.max(0.0D, t - step)));
-                if (tangent.lengthSqr() < 1.0E-12D) {
-                    continue;
-                }
-
-                Vec3 toCamera = toCameraLocal.subtract(point);
+                // Оба вектора нормализованы, поэтому длина произведения — это синус угла между
+                // ними, и порог означает ровно «камера смотрит почти вдоль касательной».
+                // На ненормализованных векторах прежний порог 1e-12 не достигался никогда,
+                // а направление ширины при этом скачком переворачивалось между кадрами.
                 Vec3 side = tangent.cross(toCamera);
-                if (side.lengthSqr() < 1.0E-12D) {
-                    continue;
+                if (side.lengthSqr() < 1.0E-4D) {
+                    // Не пропускаем сегмент: пропуск оставляет прежние кромки и следующий
+                    // квад растягивается через дыру. Берём устойчивую опору — нормаль плоскости.
+                    side = fallbackSide;
                 }
                 // Хвост сужается: постоянная ширина читается как лента ткани, а не как след клинка.
                 double halfWidth = width * 0.5D * (0.15D + 0.85D * along);
-                side = side.normalize().scale(halfWidth);
+                Vec3 unitSide = side.normalize();
+                Vec3 offset = unitSide.scale(halfWidth);
 
-                Vec3 left = point.add(side);
-                Vec3 right = point.subtract(side);
+                Vec3 left = point.add(offset);
+                Vec3 right = point.subtract(offset);
+                // Настоящая нормаль билборда. Ванильный шейдер её игнорирует, но Iris пишет
+                // нормаль в G-буфер, и захардкоженная «вверх» дала бы неверное затенение.
+                Vec3 faceNormal = unitSide.cross(tangent).normalize();
                 float alpha = fade * (0.30F + 0.70F * along * along);
 
                 if (prevLeft != null) {
-                    quad(consumer, pose, normal, prevRight, prevLeft, left, right,
-                         prevAlpha, alpha, prevU, along);
+                    quad(consumer, pose, prevRight, prevLeft, left, right,
+                         prevNormal, faceNormal, prevAlpha, alpha, prevU, along);
                 }
                 prevLeft = left;
                 prevRight = right;
+                prevNormal = faceNormal;
                 prevAlpha = alpha;
                 prevU = along;
             }
@@ -257,25 +278,27 @@ public final class BladeTrailRenderer {
         return new Vec3(delta.x * cos + delta.z * sin, delta.y, -delta.x * sin + delta.z * cos);
     }
 
-    private static void quad(VertexConsumer consumer, org.joml.Matrix4f pose, org.joml.Matrix3f normal,
+    private static void quad(VertexConsumer consumer, com.mojang.blaze3d.vertex.PoseStack.Pose pose,
                              Vec3 innerA, Vec3 outerA, Vec3 outerB, Vec3 innerB,
+                             Vec3 normalA, Vec3 normalB,
                              float alphaA, float alphaB, float uA, float uB) {
-        vertex(consumer, pose, normal, innerA, uA, 0.0F, alphaA);
-        vertex(consumer, pose, normal, outerA, uA, 1.0F, alphaA);
-        vertex(consumer, pose, normal, outerB, uB, 1.0F, alphaB);
-        vertex(consumer, pose, normal, innerB, uB, 0.0F, alphaB);
+        vertex(consumer, pose, innerA, normalA, uA, 0.0F, alphaA);
+        vertex(consumer, pose, outerA, normalA, uA, 1.0F, alphaA);
+        vertex(consumer, pose, outerB, normalB, uB, 1.0F, alphaB);
+        vertex(consumer, pose, innerB, normalB, uB, 0.0F, alphaB);
     }
 
-    private static void vertex(VertexConsumer consumer, org.joml.Matrix4f pose, org.joml.Matrix3f normal,
-                               Vec3 position, float u, float v, float alpha) {
+    private static void vertex(VertexConsumer consumer, com.mojang.blaze3d.vertex.PoseStack.Pose pose,
+                               Vec3 position, Vec3 normal, float u, float v, float alpha) {
         // Формат NEW_ENTITY требует все элементы: цвет, uv, overlay, свет и нормаль.
-        // Пропуск любого из них даёт мусор в буфере, а не ошибку компиляции.
-        consumer.addVertex(pose, (float) position.x, (float) position.y, (float) position.z)
+        // Пропуск любого даёт исключение при завершении вершины, а не ошибку компиляции.
+        // Свет выставлен в максимум формально: слой идёт с NO_LIGHTMAP и шейдером без Sampler2.
+        consumer.addVertex(pose.pose(), (float) position.x, (float) position.y, (float) position.z)
                 .setColor(0.86F, 0.94F, 1.0F, alpha)
                 .setUv(u, v)
                 .setOverlay(net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY)
                 .setLight(0x00F000F0)
-                .setNormal(0.0F, 1.0F, 0.0F);
+                .setNormal(pose, (float) normal.x, (float) normal.y, (float) normal.z);
     }
 
     private BladeTrailRenderer() {

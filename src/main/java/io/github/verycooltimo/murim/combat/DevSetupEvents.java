@@ -38,9 +38,16 @@ public final class DevSetupEvents {
     private static final int STAGE_Z = 8;
     private static final int PLATFORM_RADIUS = 4;
 
+    /** Метка мишеней съёмки: по ней они снимаются перед следующим прогоном. */
+    private static final String TARGET_TAG = "murim_capture_target";
+
     @SubscribeEvent
     static void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
-        if (!Boolean.getBoolean(CAPTURE_PROPERTY)) {
+        // Два барьера, а не один. Системного свойства мало: класс уезжает в релизный jar,
+        // и сервер, запущенный со скопированным набором JVM-аргументов, стирал бы предмет
+        // в руке и перестраивал мир каждому входящему игроку.
+        if (net.neoforged.fml.loading.FMLEnvironment.production
+                || !Boolean.getBoolean(CAPTURE_PROPERTY)) {
             return;
         }
         event.getEntity().setItemInHand(InteractionHand.MAIN_HAND,
@@ -67,10 +74,25 @@ public final class DevSetupEvents {
         // Мишени перед игроком. Без цели техника не наносит урона, событие попадания
         // не приходит, и ни hit stop, ни тряска камеры на кадрах не проявятся —
         // проверить их было бы нечем.
-        for (int i = -1; i <= 1; i++) {
+        // Обработчик срабатывает на каждый вход, поэтому старые мишени снимаются перед
+        // спавном новых. Иначе второй прогон съёмки давал шесть стендов в трёх точках,
+        // третий — девять, и результат попадания менялся от прогона к прогону.
+        net.minecraft.world.phys.AABB area = new net.minecraft.world.phys.AABB(
+                STAGE_X - 8.0D, STAGE_Y - 4.0D, STAGE_Z - 8.0D,
+                STAGE_X + 8.0D, STAGE_Y + 4.0D, STAGE_Z + 8.0D);
+        for (net.minecraft.world.entity.decoration.ArmorStand old
+                : serverLevel.getEntitiesOfClass(
+                        net.minecraft.world.entity.decoration.ArmorStand.class, area,
+                        stand -> stand.getTags().contains(TARGET_TAG))) {
+            old.discard();
+        }
+        // Мишени разведены по сторонам, центр оставлен пустым: при контрольном ракурсе
+        // камера стоит спереди, и стенд по центру полностью закрывал персонажа.
+        for (double dx : new double[] {-1.4D, 1.4D}) {
             net.minecraft.world.entity.decoration.ArmorStand target =
                     new net.minecraft.world.entity.decoration.ArmorStand(
-                            serverLevel, STAGE_X + 0.5D + i, STAGE_Y, STAGE_Z + 2.5D);
+                            serverLevel, STAGE_X + 0.5D + dx, STAGE_Y, STAGE_Z + 2.2D);
+            target.addTag(TARGET_TAG);
             serverLevel.addFreshEntity(target);
         }
         MurimMod.LOGGER.info("Съёмка: меч выдан, игрок на площадке {} {} {}", STAGE_X, STAGE_Y, STAGE_Z);

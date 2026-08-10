@@ -4,6 +4,23 @@
   "murim.configuration.section.murim.common.toml.title": "Common Settings",
   "murim.configuration.debugLogging": "Debug Logging",
 
+  "murim.configuration.section.murim.client.toml": "Client",
+  "murim.configuration.section.murim.client.toml.title": "Client Settings",
+  "murim.configuration.accessibility": "Accessibility",
+  "murim.configuration.accessibility.title": "Accessibility",
+  "murim.configuration.cameraShakePercent": "Camera Shake",
+  "murim.configuration.cameraShakePercent.tooltip": "Strength of camera shake on impact. Set to 0 to disable camera shake completely.",
+  "murim.configuration.hitStopPercent": "Impact Freeze",
+  "murim.configuration.hitStopPercent.tooltip": "Strength of the brief freeze on impact. Set to 0 to disable it completely.",
+  "murim.configuration.screenFlashes": "Screen Flashes",
+  "murim.configuration.screenFlashes.tooltip": "Edge darkening shown at the moment of impact.",
+  "murim.configuration.distortionEffects": "Screen Streaks",
+  "murim.configuration.distortionEffects.tooltip": "Directional streaks shown at the moment of impact. Techniques stay readable without them.",
+  "murim.configuration.vfx": "Effects",
+  "murim.configuration.vfx.title": "Effect Quality",
+  "murim.configuration.quality": "Effect Quality",
+  "murim.configuration.quality.tooltip": "Detail level of blade trails and particle density.",
+
   "key.categories.murim": "Timos Murim",
   "key.murim.technique": "Use Technique"
 }

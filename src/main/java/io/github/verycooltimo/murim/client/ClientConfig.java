@@ -25,9 +25,21 @@ public final class ClientConfig {
 
     private static final ModConfigSpec.Builder BUILDER = new ModConfigSpec.Builder();
 
-    public static final ModConfigSpec.DoubleValue CAMERA_SHAKE_INTENSITY = BUILDER
-            .comment("Сила тряски камеры. 0.0 — тряска полностью отключена.")
-            .defineInRange("accessibility.cameraShakeIntensity", 1.0D, 0.0D, 1.0D);
+    /**
+     * Сила тряски в процентах, а не долей единицы.
+     *
+     * <p>Тип целочисленный намеренно: экран настроек NeoForge рисует ползунок только
+     * для {@code IntValue} с заданным диапазоном, а {@code DoubleValue} превращается
+     * в поле ввода числа. Правило 04 требует именно ползунок вплоть до нуля.
+     */
+    public static final ModConfigSpec.IntValue CAMERA_SHAKE_PERCENT = BUILDER
+            .comment("Сила тряски камеры в процентах. 0 — тряска полностью отключена.")
+            .defineInRange("accessibility.cameraShakePercent", 100, 0, 100);
+
+    /** Доля силы hit stop в процентах. 0 — замирание кадра полностью отключено. */
+    public static final ModConfigSpec.IntValue HIT_STOP_PERCENT = BUILDER
+            .comment("Сила замирания кадра при попадании, в процентах. 0 — отключено.")
+            .defineInRange("accessibility.hitStopPercent", 100, 0, 100);
 
     public static final ModConfigSpec.BooleanValue SCREEN_FLASHES = BUILDER
             .comment("Экранные вспышки при ударах техник.")
@@ -38,14 +50,32 @@ public final class ClientConfig {
             .define("accessibility.distortionEffects", true);
 
     public static final ModConfigSpec.EnumValue<VfxQuality> VFX_QUALITY = BUILDER
-            .comment("Качество эффектов. Умножается на ванильную настройку частиц.")
+            .comment("Качество эффектов: детализация лент и плотность частиц.")
             .defineEnum("vfx.quality", VfxQuality.HIGH);
 
     public static final ModConfigSpec SPEC = BUILDER.build();
 
-    /** Сила тряски с учётом настройки. Ноль означает ноль. */
+    /** Сила тряски долей единицы. Ноль означает ноль. */
     public static double cameraShake() {
-        return CAMERA_SHAKE_INTENSITY.get();
+        return CAMERA_SHAKE_PERCENT.get() / 100.0D;
+    }
+
+    /** Сила замирания кадра долей единицы. Ноль означает полное отключение. */
+    public static double hitStop() {
+        return HIT_STOP_PERCENT.get() / 100.0D;
+    }
+
+    /**
+     * Число сегментов ленты для текущего качества. Настройка обязана на что-то влиять:
+     * опция в меню, которую код не читает, вводит игрока в заблуждение сильнее,
+     * чем её отсутствие.
+     */
+    public static int trailSegments() {
+        return switch (VFX_QUALITY.get()) {
+            case LOW -> 10;
+            case MEDIUM -> 18;
+            case HIGH -> 28;
+        };
     }
 
     private ClientConfig() {

@@ -66,6 +66,19 @@ public final class DevCaptureHandler {
      * Начинает съёмку немедленно. Вызывается автозапуском и может быть вызвана вручную,
      * если понадобится снять что-то другое.
      */
+    /**
+     * Сбрасывает состояние съёмки при выходе из мира. Без этого повторный вход досчитывает
+     * прогрев и отправляет пакет техники без действия игрока, а нумерация кадров продолжается
+     * с прежнего места и затирает уже снятое.
+     */
+    public static void reset() {
+        armed = Boolean.getBoolean(ENABLE_PROPERTY);
+        warmup = 0;
+        framesLeft = 0;
+        tickCounter = 0;
+        frameIndex = 0;
+    }
+
     public static void startCapture() {
         framesLeft = FRAME_COUNT;
         tickCounter = 0;

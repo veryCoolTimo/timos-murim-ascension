@@ -40,9 +40,28 @@ public record BladeArc(Vec3 pivot, Vec3 basisA, Vec3 basisB,
             new Vec3(0.35D, -0.15D, 0.92D),
             0.15D, 1.15D,
             -18.0D, 152.0D);
-    // Радиус 1.05 от плеча, а не «на глаз побольше»: рука игрока около 0.75 блока, клинок
+    // Радиус 1.15 от плеча, а не «на глаз побольше»: рука игрока около 0.75 блока, клинок
     // примерно столько же, и остриё физически не уходит дальше. При 1.85 лента висела
     // на высоте 2.5 блока — заметно выше самого меча (поймано на кадрах 2026-08-10).
+
+    /**
+     * Ортонормированный базис плоскости взмаха, посчитанный один раз.
+     *
+     * <p>Раньше Грам — Шмидт выполнялся внутри {@code pointAt}, то есть два корня и три
+     * временных вектора на каждую точку дуги, а точек за кадр — под сотню. Для горячего пути
+     * рендера это чистые потери: базис зависит только от полей record-а и не меняется.
+     */
+    private static final class Basis {
+        private final Vec3 a;
+        private final Vec3 b;
+
+        private Basis(Vec3 rawA, Vec3 rawB) {
+            this.a = rawA.normalize();
+            this.b = rawB.subtract(this.a.scale(rawB.dot(this.a))).normalize();
+        }
+    }
+
+    private static final java.util.Map<BladeArc, Basis> BASIS_CACHE = new java.util.concurrent.ConcurrentHashMap<>();
 
     public BladeArc {
         if (!(outerRadius > innerRadius)) {
@@ -56,6 +75,33 @@ public record BladeArc(Vec3 pivot, Vec3 basisA, Vec3 basisB,
         if (!(Math.abs(endAngleDeg - startAngleDeg) > 1.0E-3D)) {
             throw new IllegalArgumentException("дуга нулевой длины");
         }
+        // Коллинеарный базис Грам — Шмидт превращает в нулевой вектор, а Vec3.normalize
+        // молча возвращает ZERO — дуга схлопнулась бы в отрезок без единой ошибки.
+        Vec3 unitA = basisA.normalize();
+        if (!(basisB.subtract(unitA.scale(basisB.dot(unitA))).lengthSqr() > 1.0E-6D)) {
+            throw new IllegalArgumentException("базис вырожден: векторы коллинеарны");
+        }
+    }
+
+    private Basis basis() {
+        return BASIS_CACHE.computeIfAbsent(this, key -> new Basis(key.basisA, key.basisB));
+    }
+
+    /** Нормаль плоскости взмаха. Нужна как запасная опора, когда билборд вырождается. */
+    public Vec3 planeNormal() {
+        Basis basis = basis();
+        return basis.a.cross(basis.b).normalize();
+    }
+
+    /**
+     * Касательная к дуге — аналитическая производная, а не разность соседних точек.
+     * Точная и не требует двух лишних вычислений точки на каждый сегмент.
+     */
+    public Vec3 tangentAt(double progress) {
+        Basis basis = basis();
+        double t = Mth.clamp(progress, 0.0D, 1.0D);
+        double angle = Math.toRadians(startAngleDeg + (endAngleDeg - startAngleDeg) * t);
+        return basis.a.scale(-Math.sin(angle)).add(basis.b.scale(Math.cos(angle)));
     }
 
     /**
@@ -69,14 +115,12 @@ public record BladeArc(Vec3 pivot, Vec3 basisA, Vec3 basisB,
         double t = Mth.clamp(progress, 0.0D, 1.0D);
         double angle = Math.toRadians(startAngleDeg + (endAngleDeg - startAngleDeg) * t);
 
-        Vec3 a = basisA.normalize();
-        // Ортогонализация по Граму — Шмидту: базис задаётся на глаз, и без неё дуга
-        // получается не круговой, а скошенной, причём тем сильнее, чем менее
-        // перпендикулярны исходные векторы.
-        Vec3 b = basisB.subtract(a.scale(basisB.dot(a))).normalize();
-
-        return pivot.add(a.scale(Math.cos(angle) * radius))
-                    .add(b.scale(Math.sin(angle) * radius));
+        // Базис ортогонализован по Граму — Шмидту заранее: без ортогонализации дуга
+        // получается не круговой, а скошенной, тем сильнее, чем менее перпендикулярны
+        // исходные векторы.
+        Basis basis = basis();
+        return pivot.add(basis.a.scale(Math.cos(angle) * radius))
+                    .add(basis.b.scale(Math.sin(angle) * radius));
     }
 
     /** Внешняя кромка ленты — след самого острия. */

@@ -58,6 +58,16 @@ public final class HitStopHandler {
      * например, оператором через штатную команду. Чужую заморозку снимать нельзя.
      */
     public static void request(int ticks) {
+        // Замирание кадра — такой же принудительный рывок темпа, как тряска, и должно
+        // отключаться отдельно: до трети времени непрерывного боя мир стоит.
+        double scale = ClientConfig.hitStop();
+        if (scale <= 0.0D) {
+            return;
+        }
+        ticks = (int) Math.round(ticks * scale);
+        if (ticks <= 0) {
+            return;
+        }
         if (ticks <= 0 || frozenByUs) {
             return;
         }
@@ -104,6 +114,22 @@ public final class HitStopHandler {
             frozenByUs = false;
             frozenLevel = null;
         }
+    }
+
+    /**
+     * Снимает заморозку и забывает о ней при выходе из мира.
+     *
+     * <p>Размораживать сам уровень здесь не пытаемся: к моменту выхода менеджер тиков уже
+     * принадлежит выгруженному миру, и трогать его незачем. Достаточно сбросить флаг, иначе
+     * следующий мир унаследует уверенность, будто заморозка наша.
+     */
+    public static void reset() {
+        ClientLevel level = frozenLevel == null ? null : frozenLevel.get();
+        if (frozenByUs && level != null && Minecraft.getInstance().level == level) {
+            level.tickRateManager().setFrozen(false);
+        }
+        frozenByUs = false;
+        frozenLevel = null;
     }
 
     private HitStopHandler() {

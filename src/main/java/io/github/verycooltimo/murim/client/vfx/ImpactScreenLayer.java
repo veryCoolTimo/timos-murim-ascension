@@ -45,11 +45,26 @@ public final class ImpactScreenLayer {
     /** Ширина полоски виньетки в пикселях. Два — незаметный шаг при вменяемом числе вызовов. */
     private static final int STRIP = 2;
 
+    /** Минимум между вспышками: семь тиков — это 2.9 раза в секунду, ниже порога правила 04. */
+    private static final int MIN_INTERVAL_TICKS = 7;
+
     private static float remaining;
+
+    /**
+     * Тик последнего запуска. Клиентский лимитер обязателен: соблюдение «не чаще трёх раз
+     * в секунду» иначе держится только на серверном кулдауне техники, а клиент не должен
+     * доверять серверу в вопросе собственной доступности.
+     */
+    private static int lastTrigger = Integer.MIN_VALUE;
+
     private static int ticks;
 
     /** Запускает акцент. Вызывается по событию попадания. */
     public static void trigger() {
+        if (ticks - lastTrigger < MIN_INTERVAL_TICKS) {
+            return;
+        }
+        lastTrigger = ticks;
         remaining = DURATION_TICKS;
     }
 
@@ -73,7 +88,16 @@ public final class ImpactScreenLayer {
     }
 
     private static void render(GuiGraphics graphics, DeltaTracker delta) {
-        if (remaining <= 0.0F || !ClientConfig.SCREEN_FLASHES.get()) {
+        net.minecraft.client.Minecraft minecraft = net.minecraft.client.Minecraft.getInstance();
+        // Слои, добавленные через RegisterGuiLayersEvent, обёрткой hideGui не накрываются:
+        // GuiLayerManager вешает её только на ванильные слои. Без этой проверки виньетка
+        // остаётся на экране при съёмке с F1.
+        if (minecraft.options.hideGui || remaining <= 0.0F) {
+            return;
+        }
+        boolean flashes = ClientConfig.SCREEN_FLASHES.get();
+        boolean streaks = ClientConfig.DISTORTION_EFFECTS.get();
+        if (!flashes && !streaks) {
             return;
         }
         float age = remaining - delta.getGameTimeDeltaPartialTick(false);
@@ -82,7 +106,12 @@ public final class ImpactScreenLayer {
             return;
         }
         // Кубическое затухание: удар обязан гаснуть быстрее, чем нарастал.
-        float alpha = progress * progress * progress;
+        // Ванильная настройка силы экранных эффектов уважается, как требует правило 04.
+        float alpha = progress * progress * progress
+                * (float) (double) minecraft.options.screenEffectScale().get();
+        if (alpha <= 0.0F) {
+            return;
+        }
 
         int width = graphics.guiWidth();
         int height = graphics.guiHeight();
@@ -93,7 +122,7 @@ public final class ImpactScreenLayer {
         // строго по вертикали (colorFrom на верхней кромке, colorTo на нижней — проверено
         // по исходнику GuiGraphics), поэтому боковые стороны выходили прямоугольными
         // пятнами с жёсткой границей вместо мягкого затемнения. Поймано на кадрах 2026-08-10.
-        for (int i = 0; i < band; i += STRIP) {
+        for (int i = 0; flashes && i < band; i += STRIP) {
             // Квадратичный спад от края к центру: линейный даёт заметную кромку.
             float t = 1.0F - (float) i / band;
             int a = (int) (peak * t * t);
@@ -107,12 +136,18 @@ public final class ImpactScreenLayer {
             graphics.fill(width - i - STRIP, 0, width - i, height, colour);
         }
 
-        if (!ClientConfig.DISTORTION_EFFECTS.get()) {
+        // Тумблеры независимы: проверка лучей не вложена в ветку вспышек, иначе выключение
+        // вспышек молча гасило бы и то, что игрок оставил включённым.
+        if (!streaks) {
             return;
         }
         // Лучи к центру. Идут по диагонали удара — сверху справа вниз налево,
         // тем же направлением, что и клинок, иначе акцент спорит с движением.
-        int streak = (int) (200 * alpha) << 24 | 0x00DCE8FF;
+        int streakAlpha = (int) (200 * alpha);
+        if (streakAlpha <= 0) {
+            return;
+        }
+        int streak = streakAlpha << 24 | 0x00DCE8FF;
         int length = (int) (band * (0.55F + 0.45F * alpha));
         for (int i = 1; i <= 3; i++) {
             int offset = band / 2 + i * band / 5;
