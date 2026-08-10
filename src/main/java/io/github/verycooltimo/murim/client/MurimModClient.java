@@ -27,5 +27,7 @@ public class MurimModClient {
     @SubscribeEvent
     static void onClientSetup(FMLClientSetupEvent event) {
         MurimMod.LOGGER.info("Murim: client setup");
+        // Слой анимаций регистрируется один раз; PAL сам создаст контроллер каждому игроку.
+        MurimPlayerAnimations.register();
     }
 }

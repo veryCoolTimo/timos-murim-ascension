@@ -5,6 +5,8 @@ import io.github.verycooltimo.murim.combat.Techniques;
 import io.github.verycooltimo.murim.network.StartTechniquePayload;
 import io.github.verycooltimo.murim.network.TechniqueEventPayload;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.player.LocalPlayer;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -45,8 +47,7 @@ public final class ClientTechniqueHandler {
      */
     public static void onTechniqueEvent(TechniqueEventPayload payload) {
         switch (payload.event()) {
-            case STARTED -> MurimMod.LOGGER.debug("Техника {} начата у сущности {}",
-                    payload.techniqueId(), payload.sourceId());
+            case STARTED -> playAnimation(payload);
             case HIT -> {
                 // Hit stop только тому, кто ударил. Заморозка чужого экрана из-за попадания
                 // соседа — это гриферство с обычного клиента, а не эффект.
@@ -56,6 +57,20 @@ public final class ClientTechniqueHandler {
             }
             case CANCELLED -> MurimMod.LOGGER.debug("Техника {} прервана", payload.techniqueId());
             case FINISHED -> MurimMod.LOGGER.debug("Техника {} завершена", payload.techniqueId());
+        }
+    }
+
+    /**
+     * Запускает анимацию у того, кто применил технику. Пакет приходит и наблюдателям, поэтому
+     * анимация проигрывается у чужих игроков тоже — иначе техника была бы видна только себе.
+     */
+    private static void playAnimation(TechniqueEventPayload payload) {
+        ClientLevel level = Minecraft.getInstance().level;
+        if (level == null) {
+            return;
+        }
+        if (level.getEntity(payload.sourceId()) instanceof AbstractClientPlayer player) {
+            MurimPlayerAnimations.play(player, MurimPlayerAnimations.CEREMONIAL_DRAW);
         }
     }
 

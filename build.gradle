@@ -28,7 +28,20 @@ sourceSets.main.resources {
 }
 
 repositories {
-    // Add here additional repositories if required by some of the dependencies below.
+    // PAL (Player Animation Library) — единственная живая библиотека анимации тела игрока
+    // под NeoForge 1.21.1. Координаты проверены скачиванием артефакта, лицензия MIT.
+    // Обоснование выбора — docs/design/research/r1-player-animation.md, ADR-24.
+    // javassist (транзитивная зависимость PAL) живёт на Central.
+    mavenCentral()
+
+    maven {
+        name = "RedLance"
+        url = "https://repo.redlance.org/public"
+        content {
+            includeGroup "com.zigythebird.playeranim"
+            includeGroup "com.zigythebird"
+        }
+    }
 }
 
 base {
@@ -123,6 +136,18 @@ configurations {
 }
 
 dependencies {
+    // Анимация тела игрока. Без неё своя анимация не встраивается в принципе: событие до
+    // отрисовки затирается ванильным кодом, событие после — уже поздно, а точки подмены
+    // рендерера игрока не существует. PAL решает это инъекцией внутри себя.
+    implementation("com.zigythebird.playeranim:PlayerAnimationLibNeo:${pal_version}") {
+        // gson, slf4j, fastutil и netty Minecraft поставляет сам. Вторая копия тех же библиотек
+        // в classpath мода — источник конфликтов версий на ровном месте.
+        exclude group: "com.google.code.gson"
+        exclude group: "org.slf4j"
+        exclude group: "it.unimi.dsi"
+        exclude group: "io.netty"
+    }
+
     // JUnit 5 для unit-тестов чистой логики (см. neoForge.unitTest выше).
     testImplementation platform("org.junit:junit-bom:5.11.4")
     testImplementation "org.junit.jupiter:junit-jupiter"
