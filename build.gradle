@@ -78,6 +78,8 @@ neoForge {
         clientCapture {
             client()
             systemProperty 'murim.capture', 'true'
+            // Ракурс задаётся снаружи: ./gw runClientCapture -Pmurim.camera=front
+            systemProperty 'murim.capture.camera', project.findProperty('murim.camera') ?: 'back'
             programArguments.addAll '--quickPlaySingleplayer', 'devtest'
         }
 

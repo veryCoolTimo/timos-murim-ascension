@@ -1,6 +1,7 @@
 package io.github.verycooltimo.murim.client;
 
 import io.github.verycooltimo.murim.MurimMod;
+import io.github.verycooltimo.murim.client.vfx.BladeTrailRenderer;
 import io.github.verycooltimo.murim.combat.Techniques;
 import io.github.verycooltimo.murim.network.StartTechniquePayload;
 import io.github.verycooltimo.murim.network.TechniqueEventPayload;
@@ -47,7 +48,10 @@ public final class ClientTechniqueHandler {
      */
     public static void onTechniqueEvent(TechniqueEventPayload payload) {
         switch (payload.event()) {
-            case STARTED -> playAnimation(payload);
+            case STARTED -> {
+                playAnimation(payload);
+                BladeTrailRenderer.start(payload.sourceId());
+            }
             case HIT -> {
                 // Hit stop только тому, кто ударил. Заморозка чужого экрана из-за попадания
                 // соседа — это гриферство с обычного клиента, а не эффект.
@@ -55,7 +59,11 @@ public final class ClientTechniqueHandler {
                     HitStopHandler.request(payload.hitStopTicks());
                 }
             }
-            case CANCELLED -> MurimMod.LOGGER.debug("Техника {} прервана", payload.techniqueId());
+            case CANCELLED -> {
+                // Прерванная техника не должна оставлять после себя висящий след.
+                BladeTrailRenderer.cancel(payload.sourceId());
+                MurimMod.LOGGER.debug("Техника {} прервана", payload.techniqueId());
+            }
             case FINISHED -> MurimMod.LOGGER.debug("Техника {} завершена", payload.techniqueId());
         }
     }

@@ -33,6 +33,16 @@ public final class DevCaptureHandler {
     /** Включает автосъёмку: {@code ./gw runClient -Dmurim.capture=true}. */
     private static final String ENABLE_PROPERTY = "murim.capture";
 
+    /**
+     * Ракурс съёмки: {@code back} — игровой, из-за спины; {@code front} — контрольный.
+     *
+     * <p>Одного ракурса мало. Рубящий удар проходит перед корпусом, и при виде из-за спины
+     * вторую половину дуги закрывает сам игрок — по таким кадрам нельзя отличить неверную
+     * геометрию от честного перекрытия. Игровой ракурс отвечает на вопрос «что увидит игрок»,
+     * контрольный — «правильна ли дуга вообще». Нужны оба.
+     */
+    private static final String CAMERA_PROPERTY = "murim.capture.camera";
+
     /** Сколько тиков ждать после входа в мир, прежде чем применять технику. */
     private static final int WARMUP_TICKS = 60;
 
@@ -73,7 +83,9 @@ public final class DevCaptureHandler {
             armed = false;
             warmup = WARMUP_TICKS;
             // Анимация тела видна только от третьего лица: в первом лице снимать нечего.
-            minecraft.options.setCameraType(CameraType.THIRD_PERSON_BACK);
+            boolean front = "front".equalsIgnoreCase(System.getProperty(CAMERA_PROPERTY, "back"));
+            minecraft.options.setCameraType(
+                    front ? CameraType.THIRD_PERSON_FRONT : CameraType.THIRD_PERSON_BACK);
             MurimMod.LOGGER.info("Автосъёмка: техника через {} тиков", WARMUP_TICKS);
         }
 
@@ -92,7 +104,9 @@ public final class DevCaptureHandler {
     private static void grabFrame(Minecraft minecraft) {
         // Номер кадра в имени — с ведущими нулями, иначе сортировка перепутает 2 и 10,
         // а по серии кадров важен именно порядок.
-        String name = String.format("murim_%03d.png", frameIndex++);
+        String prefix = "front".equalsIgnoreCase(System.getProperty(CAMERA_PROPERTY, "back"))
+                ? "front" : "back";
+        String name = String.format("murim_%s_%03d.png", prefix, frameIndex++);
         Screenshot.grab(minecraft.gameDirectory, name, minecraft.getMainRenderTarget(), message -> {
         });
     }
