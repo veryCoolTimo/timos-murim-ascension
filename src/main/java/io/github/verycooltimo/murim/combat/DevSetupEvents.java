@@ -109,6 +109,17 @@ public final class DevSetupEvents {
             io.github.verycooltimo.murim.profile.ProfileNetwork.sync(serverPlayer);
         }
 
+        // Манекены тоже убираются перед спавном. Раньше чистились только стойки-мишени,
+        // и манекен накапливался от прогона к прогону — та же ошибка идемпотентности,
+        // уже однажды исправленная для стоек. Поймано на кадрах: их стало двое.
+        for (io.github.verycooltimo.murim.entity.TrainingDummy old
+                : serverLevel.getEntitiesOfClass(io.github.verycooltimo.murim.entity.TrainingDummy.class,
+                        new net.minecraft.world.phys.AABB(
+                                STAGE_X - 24.0D, STAGE_Y - 6.0D, STAGE_Z - 24.0D,
+                                STAGE_X + 24.0D, STAGE_Y + 6.0D, STAGE_Z + 24.0D))) {
+            old.discard();
+        }
+
         // Манекен для проверки боевого цикла.
         io.github.verycooltimo.murim.entity.TrainingDummy dummy =
                 new io.github.verycooltimo.murim.entity.TrainingDummy(

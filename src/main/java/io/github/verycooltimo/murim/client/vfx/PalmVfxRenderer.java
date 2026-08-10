@@ -38,19 +38,34 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class PalmVfxRenderer {
 
     /** Зелёных прядей немного — четыре-восемь, как на референсах. Не десятки. */
-    private static final int STRANDS = 6;
+    private static final int STRANDS = 7;
 
     /** Тёмных штрихов больше, чем светящихся прядей: они и создают фактуру движения. */
-    private static final int DARK_STRANDS = 10;
+    private static final int DARK_STRANDS = 14;
 
     /** Белой пыли много и она мелкая. */
-    private static final int DUST = 34;
+    private static final int DUST = 56;
 
     /** Осколков немного, но они крупные и жёсткие. */
-    private static final int SHARDS = 9;
+    private static final int SHARDS = 12;
 
     /** Шипов короны вокруг ладони. */
-    private static final int CORONA_SPIKES = 14;
+    private static final int CORONA_SPIKES = 16;
+
+    /** Ленты, стекающие с ладони на сборе. Главный элемент первой панели референса. */
+    private static final int GATHER_RIBBONS = 7;
+
+    /**
+     * Крупные ленты — «большая форма» эффекта.
+     *
+     * <p>Плотность добирается слоями РАЗНОГО масштаба, а не количеством одинаковых точек:
+     * две-три крупные ленты, несколько средних дуг, десятки мелких искр и мягкий туман.
+     * Полсотни одинаковых белых точек дают шум, а не насыщенность.
+     */
+    private static final int BIG_RIBBONS = 3;
+
+    /** Клубы мягкого зелёного тумана вокруг эффекта. */
+    private static final int FOG_PUFFS = 5;
 
     private static final Map<Integer, State> ACTIVE = new ConcurrentHashMap<>();
 
@@ -172,8 +187,24 @@ public final class PalmVfxRenderer {
 
         // Холодное ядро в ладони. Растёт кубически: сила должна набираться заметным всплеском.
         float core = charge * charge * charge;
-        billboard(glow, pose, palm, cameraLocal, 0.10D + 0.26D * core,
-                  0.25F + 0.6F * core, 0.82F, 0.97F, 1.0F);
+        // Соотношение цветов перевёрнуто относительно первой версии. На референсе зелёное
+        // занимает почти всю площадь, а холодное — только маленькое ядро в центре. У меня
+        // было наоборот: белая вспышка на весь кадр и почти без зелени.
+        // Мягкий зелёный туман: самая широкая и самая прозрачная масса. Она и создаёт
+        // ощущение плотности, не засвечивая силуэт.
+        for (int i = 0; i < FOG_PUFFS; i++) {
+            double angle = i * 2.399D + age * 0.02D;
+            double drift = 0.18D + 0.12D * Math.sin(age * 0.05D + i);
+            Vec3 puff = palm.add(new Vec3(Math.cos(angle) * drift, Math.sin(angle) * drift * 0.7D,
+                    Math.sin(angle * 1.3D) * drift));
+            billboard(glow, pose, puff, cameraLocal, 0.60D + 0.95D * core,
+                      (0.07F + 0.11F * core), 0.26F, 0.95F, 0.42F);
+        }
+        billboard(glow, pose, palm, cameraLocal, 0.26D + 0.46D * core,
+                  0.22F + 0.40F * core, 0.36F, 1.0F, 0.52F);
+        // Белое ТОЛЬКО ядром и небольшое: у референса холодного мало, оно плотное и в центре.
+        billboard(glow, pose, palm, cameraLocal, 0.055D + 0.10D * core,
+                  0.35F + 0.55F * core, 0.88F, 0.99F, 1.0F);
 
         // Частицы СТЯГИВАЮТСЯ к ладони по спирали — направление читается с первой панели.
         for (int i = 0; i < DUST; i++) {
@@ -183,12 +214,56 @@ public final class PalmVfxRenderer {
             double lift = Math.sin(angle * 1.3D + i) * 0.5D * (1.0D - cycle);
             Vec3 point = palm.add(new Vec3(Math.cos(angle) * radius, lift, Math.sin(angle) * radius));
             float alpha = charge * cycle * 0.9F;
-            billboard(glow, pose, point, cameraLocal, 0.018D + 0.014D * cycle, alpha,
-                      0.88F, 1.0F, 0.94F);
+            // Крупнее и с чередованием холодных и зелёных: на референсе частицы разного
+            // размера и не все белые.
+            // Холодной остаётся лишь треть искр. Прежде было наоборот, и белая масса
+            // забивала зелёную — тот самый перекос, который назвали и я, и codex.
+            boolean cold = (i % 3) == 0;
+            billboard(glow, pose, point, cameraLocal, 0.030D + 0.030D * cycle, alpha,
+                      cold ? 0.88F : 0.42F, 1.0F, cold ? 0.94F : 0.55F);
         }
         buffers.endBatch(MurimRenderTypes.impactCore());
 
         VertexConsumer strands = buffers.getBuffer(MurimRenderTypes.strand());
+
+        // Длинные ленты, стекающие вниз от ладони. На референсе именно они занимают панель,
+        // а не точки: без них сбор читается как искра, а не как поток силы.
+        for (int i = 0; i < GATHER_RIBBONS; i++) {
+            double sway = Math.sin(age * 0.06D + i * 1.7D);
+            double side = (i - (GATHER_RIBBONS - 1) / 2.0D) * 0.16D;
+            Vec3 top = palm.add(new Vec3(side * 0.4D, 0.10D, side * 0.3D));
+            int segments = 5;
+            Vec3 previous = top;
+            for (int seg = 1; seg <= segments; seg++) {
+                double t = seg / (double) segments;
+                Vec3 point = top.add(new Vec3(
+                        side + sway * 0.18D * t,
+                        -(0.35D + 1.45D * charge) * t,
+                        sway * 0.12D * t));
+                strandQuad(strands, pose, previous, point, cameraLocal,
+                           0.075D * (1.0D - 0.55D * t),
+                           charge * 0.75F * (1.0F - 0.5F * (float) t), 0.34F, 1.0F, 0.5F);
+                previous = point;
+            }
+        }
+
+        // Крупные ленты — большая форма, которой не хватало сильнее всего.
+        for (int b = 0; b < BIG_RIBBONS; b++) {
+            double base = b * (Math.PI * 2.0D / BIG_RIBBONS) + age * 0.018D;
+            Vec3 previous = palm;
+            for (int seg = 1; seg <= 7; seg++) {
+                double t = seg / 7.0D;
+                double angle = base + t * Math.PI * 1.1D;
+                double radius = (0.30D + 0.85D * charge) * Math.sin(Math.PI * t * 0.85D);
+                Vec3 point = palm.add(new Vec3(Math.cos(angle) * radius,
+                        0.30D * charge * Math.sin(Math.PI * t) - 0.25D * t,
+                        Math.sin(angle) * radius * 0.7D));
+                strandQuad(strands, pose, previous, point, cameraLocal,
+                           0.15D * (1.0D - 0.4D * t), charge * 0.6F, 0.30F, 1.0F, 0.46F);
+                previous = point;
+            }
+        }
+
         for (int i = 0; i < CORONA_SPIKES; i++) {
             double angle = i * (Math.PI * 2.0D / CORONA_SPIKES) + age * 0.03D;
             double jitter = 0.55D + 0.45D * Math.abs(Math.sin(i * 2.399D));
@@ -196,18 +271,18 @@ public final class PalmVfxRenderer {
             Vec3 tip = palm.add(new Vec3(Math.cos(angle) * radius, Math.sin(angle) * radius * 0.8D,
                     Math.sin(angle * 1.7D) * radius * 0.35D));
             strandQuad(strands, pose, palm, tip, cameraLocal, 0.022D,
-                       0.35F * core, 0.55F, 1.0F, 0.72F);
+                       0.28F * core, 0.40F, 1.0F, 0.58F);
         }
         buffers.endBatch(MurimRenderTypes.strand());
 
         VertexConsumer drips = buffers.getBuffer(MurimRenderTypes.drip());
         // Потёки с каплей: стекают с ладони вниз. На панели сбора они есть, на панели удара нет.
-        for (int i = 0; i < 3; i++) {
-            double phase = (age * 0.03F + i * 0.37D) % 1.0D;
-            Vec3 top = palm.add(new Vec3(-0.05D + 0.05D * i, -0.06D, 0.02D * i));
-            Vec3 bottom = top.add(new Vec3(0.0D, -0.35D - 0.5D * phase, 0.0D));
-            strandQuad(drips, pose, top, bottom, cameraLocal, 0.05D,
-                       (float) (charge * (1.0D - phase) * 0.8D), 0.72F, 1.0F, 0.78F);
+        for (int i = 0; i < 5; i++) {
+            double phase = (age * 0.03F + i * 0.21D) % 1.0D;
+            Vec3 top = palm.add(new Vec3(-0.08D + 0.05D * i, -0.05D, -0.04D + 0.03D * i));
+            Vec3 bottom = top.add(new Vec3(0.0D, -0.45D - 0.65D * phase, 0.0D));
+            strandQuad(drips, pose, top, bottom, cameraLocal, 0.075D,
+                       (float) (charge * (1.0D - phase) * 1.0D), 0.72F, 1.0F, 0.78F);
         }
         buffers.endBatch(MurimRenderTypes.drip());
 
@@ -242,9 +317,17 @@ public final class PalmVfxRenderer {
             double t = i / (double) steps;
             double wobble = Math.sin(t * 5.0D + since * 0.35D) * 0.16D * t;
             Vec3 point = palm.add(forward.scale(reach * t)).add(new Vec3(wobble, wobble * 0.6D, 0.0D));
-            strandQuad(glow, pose, previous, point, cameraLocal, 0.20D * (1.0D - 0.5D * t),
-                       fade * 0.85F, 0.85F, 0.98F, 1.0F);
+            strandQuad(glow, pose, previous, point, cameraLocal, 0.26D * (1.0D - 0.45D * t),
+                       fade * 0.9F, 0.85F, 0.98F, 1.0F);
             previous = point;
+        }
+
+        // Туман вдоль канала: собирает отдельные линии в один плотный импульс.
+        for (int i = 0; i < FOG_PUFFS + 3; i++) {
+            double t = (i + 0.5D) / (FOG_PUFFS + 3);
+            Vec3 puff = palm.add(forward.scale(reach * t));
+            billboard(glow, pose, puff, cameraLocal, 0.42D + 0.30D * Math.sin(Math.PI * t),
+                      fade * 0.13F, 0.24F, 0.95F, 0.40F);
         }
 
         // Белая пыль по всей зоне: мелкая, резкая, холодная.
@@ -254,7 +337,7 @@ public final class PalmVfxRenderer {
             double radius = 0.15D + 0.7D * Math.sin(Math.PI * t) * (0.4D + 0.6D * ((i % 5) / 4.0D));
             Vec3 point = palm.add(forward.scale(reach * t))
                     .add(new Vec3(Math.cos(angle) * radius, Math.sin(angle) * radius, 0.0D));
-            billboard(glow, pose, point, cameraLocal, 0.012D + 0.016D * ((i % 3) / 2.0D),
+            billboard(glow, pose, point, cameraLocal, 0.020D + 0.026D * ((i % 3) / 2.0D),
                       fade * 0.95F, 0.94F, 1.0F, 0.98F);
         }
         buffers.endBatch(MurimRenderTypes.impactCore());
@@ -269,8 +352,8 @@ public final class PalmVfxRenderer {
                 double radius = 0.34D * Math.sin(Math.PI * t) + 0.05D;
                 Vec3 point = palm.add(forward.scale(reach * t))
                         .add(new Vec3(Math.cos(angle) * radius, Math.sin(angle) * radius, 0.0D));
-                strandQuad(strands, pose, prev, point, cameraLocal, 0.035D,
-                           fade * 0.8F, 0.42F, 1.0F, 0.55F);
+                strandQuad(strands, pose, prev, point, cameraLocal, 0.055D,
+                           fade * 0.9F, 0.38F, 1.0F, 0.52F);
                 prev = point;
             }
         }
@@ -284,8 +367,10 @@ public final class PalmVfxRenderer {
             double radius = 0.28D + 0.55D * Math.abs(Math.sin(i * 1.7D));
             Vec3 point = palm.add(forward.scale(reach * t))
                     .add(new Vec3(Math.cos(angle) * radius, Math.sin(angle) * radius * 0.8D, 0.0D));
-            billboard(dark, pose, point, cameraLocal, 0.07D + 0.06D * ((i % 4) / 3.0D),
-                      fade * 0.85F, 0.05F, 0.08F, 0.06F);
+            // Осколки крупнее и непрозрачнее: в первой версии они терялись на фоне
+            // свечения и на кадрах их не было видно вовсе.
+            billboard(dark, pose, point, cameraLocal, 0.13D + 0.11D * ((i % 4) / 3.0D),
+                      fade * 0.95F, 0.04F, 0.07F, 0.05F);
         }
 
         // Тёмные штрихи поверх свечения.
