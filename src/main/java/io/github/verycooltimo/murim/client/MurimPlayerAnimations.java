@@ -61,6 +61,7 @@ public final class MurimPlayerAnimations {
             MurimMod.LOGGER.warn("Слой анимаций {} не зарегистрирован у игрока", LAYER);
             return false;
         }
+        MurimMod.LOGGER.debug("Запуск анимации {} у сущности {}", animation, player.getId());
         if (!controller.triggerAnimation(animation)) {
             MurimMod.LOGGER.warn("Анимация {} не найдена: проверь assets/{}/player_animations/",
                     animation, animation.getNamespace());

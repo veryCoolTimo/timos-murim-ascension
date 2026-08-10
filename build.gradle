@@ -72,6 +72,15 @@ neoForge {
             systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
         }
 
+        // Автосъёмка кадров техники для отладки визуала: клиент сам заходит в мир,
+        // применяет технику и снимает серию скриншотов. Работает под Xvfb на сервере,
+        // человек в цикле не нужен. Мир devtest должен существовать в run/saves.
+        clientCapture {
+            client()
+            systemProperty 'murim.capture', 'true'
+            programArguments.addAll '--quickPlaySingleplayer', 'devtest'
+        }
+
         server {
             server()
             programArgument '--nogui'
