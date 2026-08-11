@@ -69,12 +69,20 @@ public final class ClientTechniqueHandler {
             case STARTED -> {
                 scheduleAnimation(payload);
                 TechniqueDefinition started = TechniqueLoader.get(payload.techniqueId());
-                BladeTrailRenderer.start(payload.sourceId(), started);
                 // У ладони собственный набор слоёв: общая схема дуги её не описывает.
-                if (started != null && started.behavior().type().equals(
-                        io.github.verycooltimo.murim.technique.TechniqueBehavior.PALM_BLAST)) {
+                //
+                // Рендереры ВЗАИМОИСКЛЮЧАЮЩИЕ. Раньше общая дуга запускалась и для ладони
+                // тоже — вопреки этому самому комментарию, — и размашистый веер накладывался
+                // поверх сбора в ладони. Отсюда и «эффекты вышли за орбиты», и «ураган в
+                // руке»: две разные постановки в одном кадре. Заодно это делало правки
+                // ладони невидимыми для измерения — большую часть энергии давала дуга.
+                boolean palm = started != null && started.behavior().type().equals(
+                        io.github.verycooltimo.murim.technique.TechniqueBehavior.PALM_BLAST);
+                if (palm) {
                     io.github.verycooltimo.murim.client.vfx.PalmVfxRenderer.start(
                             payload.sourceId(), started);
+                } else {
+                    BladeTrailRenderer.start(payload.sourceId(), started);
                 }
                 // Название объявляет только тот, кто применяет: чужие имена техник поверх
                 // своего экрана — это шум, а не постановка.

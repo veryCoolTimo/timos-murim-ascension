@@ -10,6 +10,7 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 /**
@@ -77,6 +78,17 @@ public final class DevCaptureHandler {
     private static int frameIndex;
 
     /**
+     * Кадр запрошен тиком и будет снят ДВАЖДЫ за один проход рендера.
+     *
+     * <p>Эффект рисуется на стадии {@code AFTER_PARTICLES}. Снимок до неё и снимок после
+     * отличаются ровно на эффект, причём поза тела в них совпадает побитово — это и есть
+     * единственный способ отделить VFX от анимации. Два отдельных прогона так выровнять
+     * нельзя: доля тика произвольна, а корпус в анимации поворачивается примерно на 21°
+     * за тик, и промах в полтика оставляет остаток больше самого эффекта.
+     */
+    private static boolean framePending;
+
+    /**
      * Начинает съёмку немедленно. Вызывается автозапуском и может быть вызвана вручную,
      * если понадобится снять что-то другое.
      */
@@ -93,6 +105,9 @@ public final class DevCaptureHandler {
         armed = Boolean.getBoolean(ENABLE_PROPERTY);
         warmup = 0;
         framesLeft = 0;
+        // Иначе запрошенный, но не снятый кадр «выстрелит» при следующем входе в мир
+        // и запишет пару снимков с телеметрией, когда съёмка не запущена.
+        framePending = false;
         tickCounter = 0;
         frameIndex = 0;
     }
@@ -136,9 +151,12 @@ public final class DevCaptureHandler {
 
         if (framesLeft > 0 && tickCounter++ % FRAME_INTERVAL_TICKS == 0) {
             MurimMod.LOGGER.debug("Кадр {} на клиентском тике {}", frameIndex, tickCounter - 1);
-            writeTelemetry(minecraft, frameIndex);
-            grabFrame(minecraft);
-            framesLeft--;
+            // Сам снимок делается в проходе рендера, а не здесь: нужны две точки внутри
+            // ОДНОГО кадра, до и после стадии эффектов. Счётчик уменьшается ТАМ ЖЕ,
+            // когда кадр действительно снят: под Xvfb с программным OpenGL частота
+            // кадров ниже двадцати в секунду, и списание по тику молча теряло бы
+            // половину серии, оставляя в отчёте разрежённую и неравномерную выборку.
+            framePending = true;
         }
     }
 
@@ -170,15 +188,41 @@ public final class DevCaptureHandler {
                     ? io.github.verycooltimo.murim.client.vfx.BoneAnchorLayer.position(
                             client, io.github.verycooltimo.murim.client.vfx.BoneAnchorLayer.Bone.RIGHT_HAND)
                     : null;
-            if (hand == null) {
+            // Подмена кости позицией игрока помечается ЯВНО. Молча подставлять ступни
+            // нельзя: метрика привязки и справка «центр эффекта в N px от кости» тогда
+            // считаются от ступней, и об этом никто не узнаёт.
+            boolean boneMissing = hand == null;
+            if (boneMissing) {
                 hand = player.position();
             }
+            // Поле зрения в телеметрии берётся из НАСТРОЙКИ, а настоящее поле зрения
+            // рендера домножается на модификатор: спринт, эффект скорости, натянутый
+            // лук, погружение в жидкость. Прочитать его нельзя — GameRenderer#getFov
+            // приватный, а access transformer в проекте требует отдельного согласования.
+            // Поэтому пишутся сами состояния, и анализатор отказывается считать, если
+            // хоть одно из них возникло: ошибка масштаба радиальна от центра кадра и
+            // точкой на оси камеры не ловится.
+            boolean fovDisturbed = player.isSprinting() || player.isInWater()
+                    || player.isInLava() || player.isUsingItem()
+                    || player.hasEffect(net.minecraft.world.effect.MobEffects.MOVEMENT_SPEED);
+            // Возраст техники, а не номер кадра. Съёмка стартует в тик отправки запроса
+            // на сервер, эффект — после ответа; задержка плавает, поэтому «тик 40» в разных
+            // прогонах попадал в разные фазы, и метрики фаз сравнивали несравнимое.
+            float[] phase = io.github.verycooltimo.murim.client.vfx.PalmVfxRenderer
+                    .captureAgeOf(player.getId());
+            // Куда эффект РЕАЛЬНО поставил ладонь. Сравнение с позицией кости отделяет
+            // ошибку привязки от ошибки измерения — снаружи они выглядят одинаково.
+            net.minecraft.world.phys.Vec3 drawn =
+                    io.github.verycooltimo.murim.client.vfx.PalmVfxRenderer.drawnPalm(player.getId());
             telemetry.printf(java.util.Locale.ROOT,
                     "{\"frame\":%d,\"tick\":%d,\"px\":%.4f,\"py\":%.4f,\"pz\":%.4f,"
                             + "\"eye\":%.4f,\"yaw\":%.3f,\"bodyYaw\":%.3f,"
                             + "\"cx\":%.4f,\"cy\":%.4f,\"cz\":%.4f,"
                             + "\"cyaw\":%.3f,\"cpitch\":%.3f,\"fov\":%.3f,"
                             + "\"hx\":%.4f,\"hy\":%.4f,\"hz\":%.4f,"
+                            + "\"age\":%.2f,\"impactAge\":%.2f,"
+                            + "\"rx\":%.4f,\"ry\":%.4f,\"rz\":%.4f,"
+                            + "\"boneMissing\":%b,\"fovDisturbed\":%b,"
                             + "\"w\":%d,\"h\":%d}%n",
                     frame, tickCounter - 1,
                     player.getX(), player.getY(), player.getZ(), player.getEyeHeight(),
@@ -187,6 +231,10 @@ public final class DevCaptureHandler {
                     camera.getYRot(), camera.getXRot(),
                     minecraft.options.fov().get().doubleValue(),
                     hand.x, hand.y, hand.z,
+                    phase == null ? -1.0F : phase[0], phase == null ? -1.0F : phase[1],
+                    drawn == null ? 0.0D : drawn.x, drawn == null ? 0.0D : drawn.y,
+                    drawn == null ? 0.0D : drawn.z,
+                    boneMissing, fovDisturbed,
                     minecraft.getWindow().getWidth(), minecraft.getWindow().getHeight());
         } catch (java.io.IOException exception) {
             MurimMod.LOGGER.warn("Телеметрия не пишется: {}", exception.getMessage());
@@ -200,10 +248,39 @@ public final class DevCaptureHandler {
         return camera + "_" + yaw.replace("-", "m");
     }
 
-    private static void grabFrame(Minecraft minecraft) {
-        // Номер кадра в имени — с ведущими нулями, иначе сортировка перепутает 2 и 10,
-        // а по серии кадров важен именно порядок.
-        String name = String.format("murim_%s_%03d.png", anglePrefix(), frameIndex++);
+    /**
+     * Две точки съёмки внутри одного кадра.
+     *
+     * <p>{@code AFTER_TRIPWIRE_BLOCKS} — последняя стадия перед {@code AFTER_PARTICLES},
+     * на которой рисуются наши эффекты. Снимок здесь содержит сцену и позу игрока, но не
+     * эффект. Второй снимок берётся на {@code AFTER_PARTICLES} с НАИНИЗШИМ приоритетом,
+     * то есть после всех обработчиков этой стадии, включая наши рендереры.
+     *
+     * <p>Раньше второй снимок делался на {@code AFTER_LEVEL}, а между стадиями рисуются
+     * ещё облака, погода, граница мира и отладочный слой. Всё это попадало в разницу и
+     * засчитывалось как «энергия эффекта»: облака над сценой ползут каждый кадр.
+     */
+    @SubscribeEvent(priority = net.neoforged.bus.api.EventPriority.LOWEST)
+    static void onRenderStage(RenderLevelStageEvent event) {
+        if (!framePending) {
+            return;
+        }
+        Minecraft minecraft = Minecraft.getInstance();
+        if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_TRIPWIRE_BLOCKS) {
+            grab(minecraft, String.format("clean_%s_%03d.png", anglePrefix(), frameIndex));
+        } else if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_PARTICLES) {
+            // Телеметрия пишется здесь же: возраст техники должен относиться именно к тому
+            // кадру, который снят, а не к моменту тика.
+            writeTelemetry(minecraft, frameIndex);
+            grab(minecraft, String.format("murim_%s_%03d.png", anglePrefix(), frameIndex));
+            frameIndex++;
+            framesLeft--;
+            framePending = false;
+        }
+    }
+
+    /** Номер кадра — с ведущими нулями: иначе сортировка ставит 10 перед 2. */
+    private static void grab(Minecraft minecraft, String name) {
         Screenshot.grab(minecraft.gameDirectory, name, minecraft.getMainRenderTarget(), message -> {
         });
     }

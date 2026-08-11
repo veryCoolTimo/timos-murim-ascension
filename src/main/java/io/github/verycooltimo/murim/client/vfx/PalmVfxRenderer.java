@@ -12,6 +12,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
+import org.joml.Vector4f;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -52,6 +53,13 @@ public final class PalmVfxRenderer {
     /** Шипов короны вокруг ладони. */
     private static final int CORONA_SPIKES = 16;
 
+    /**
+     * Семя беспорядка техники. Постоянное, а не случайное: эффект должен выглядеть
+     * одинаково при каждом применении, иначе игрок не запомнит его силуэт, а отладка
+     * по кадрам станет невоспроизводимой.
+     */
+    private static final long SEED = 0x5EED0FA1L;
+
     /** Ленты, стекающие с ладони на сборе. Главный элемент первой панели референса. */
     private static final int GATHER_RIBBONS = 7;
 
@@ -67,7 +75,41 @@ public final class PalmVfxRenderer {
     /** Клубы мягкого зелёного тумана вокруг эффекта. */
     private static final int FOG_PUFFS = 5;
 
+    /**
+     * Куда «смотрит» веер прядей выброса.
+     *
+     * <p>Постоянная, а не случайная: силуэт техники должен запоминаться. Значение выбрано
+     * так, чтобы веер уходил вниз-вбок от ладони, как на второй панели референса.
+     *
+     * <p>Раствор веера намеренно широкий. Узкий сектор (раствор около 200°) поднял
+     * радиальную неравномерность с 0.78 до 0.86 при пределе 0.62: метрика штрафует
+     * сжатие энергии в клин, а не симметрию. Нужен перекос, а не конус.
+     */
+    private static final float SECTOR_CENTRE = -0.7F;
+
     private static final Map<Integer, State> ACTIVE = new ConcurrentHashMap<>();
+
+    /**
+     * Возраст, С КОТОРЫМ КАДР БЫЛ РЕАЛЬНО НАРИСОВАН, включая дробную часть тика.
+     *
+     * <p>Телеметрия пишется в обработчике тика, а снимок берёт последний отрисованный кадр —
+     * его дробная доля тика произвольна. Из-за этого два прогона одного билда расходились
+     * ровно на тик, и метрики по одному кадру мерили дрожание выборки, а не эффект.
+     */
+    private static final Map<Integer, Float> DRAWN_AGE = new ConcurrentHashMap<>();
+
+    /**
+     * МИРОВАЯ точка, в которой эффект реально поставил ладонь в этом кадре.
+     *
+     * <p>Пишется в телеметрию рядом с позицией кости. Без этого нельзя отличить ошибку
+     * привязки от ошибки измерения: обе выглядят как «эффект не там, где кость».
+     */
+    private static final Map<Integer, Vec3> DRAWN_PALM = new ConcurrentHashMap<>();
+
+    /** Где эффект поставил ладонь, или {@code null}. */
+    public static Vec3 drawnPalm(int entityId) {
+        return DRAWN_PALM.get(entityId);
+    }
 
     private static int clientTicks;
 
@@ -86,10 +128,46 @@ public final class PalmVfxRenderer {
 
     public static void cancel(int entityId) {
         ACTIVE.remove(entityId);
+        forget(entityId);
+    }
+
+    /**
+     * Забыть отладочные следы техники.
+     *
+     * <p>Вызывается на КАЖДОМ пути завершения, включая штатное истечение. Иначе записи
+     * переживают выход из мира: в новом мире тот же идентификатор принадлежит другому
+     * существу, и телеметрия получает координаты из прошлой сессии как «где эффект
+     * нарисовал ладонь сейчас».
+     */
+    private static void forget(int entityId) {
+        DRAWN_AGE.remove(entityId);
+        DRAWN_PALM.remove(entityId);
+    }
+
+    /**
+     * Возраст техники в тиках и тик удара — для отладочной съёмки.
+     *
+     * <p>Нужно потому, что кадр съёмки и возраст эффекта НЕ совпадают: съёмка стартует в тот
+     * тик, когда запрос уходит на сервер, а эффект начинается только после ответа. Задержка
+     * плавает между прогонами, и привязка метрик к номеру кадра сравнивала разные фазы.
+     *
+     * @return {@code {возраст, тик удара}} или {@code null}, если техника не активна
+     */
+    public static float[] captureAgeOf(int entityId) {
+        State state = ACTIVE.get(entityId);
+        if (state == null) {
+            return null;
+        }
+        return new float[] {
+                DRAWN_AGE.getOrDefault(entityId, (float) (clientTicks - state.startTick())),
+                state.definition().startTickOf(TechniquePhase.IMPACT) - 1.0F
+        };
     }
 
     public static void clear() {
         ACTIVE.clear();
+        DRAWN_AGE.clear();
+        DRAWN_PALM.clear();
     }
 
     @SubscribeEvent
@@ -115,16 +193,19 @@ public final class PalmVfxRenderer {
             State state = entry.getValue();
             float age = state.ageAt(partial);
             if (age > state.definition.totalTicks()) {
+                forget(entry.getKey());
                 return true;
             }
             Entity entity = minecraft.level.getEntity(entry.getKey());
             if (entity == null) {
+                forget(entry.getKey());
                 return true;
             }
             if (entity == minecraft.player && minecraft.options.getCameraType().isFirstPerson()) {
                 return false;
             }
             render(poseStack, buffers, camera, entity, state.definition, age, partial);
+            DRAWN_AGE.put(entry.getKey(), age);
             return false;
         });
 
@@ -156,6 +237,15 @@ public final class PalmVfxRenderer {
             if (palm == null) {
                 return;
             }
+            // Точка берётся из ТОЙ ЖЕ матрицы, которой рисуется геометрия, а не обратным
+            // преобразованием моих же функций. Прежний вариант считал
+            // toWorld(toLocal(кость)) и по построению всегда возвращал ровно кость —
+            // проверка не могла разойтись и не доказывала ничего.
+            Vector4f drawn = pose.pose().transform(
+                    new Vector4f((float) palm.x, (float) palm.y, (float) palm.z, 1.0F));
+            DRAWN_PALM.put(entity.getId(), new Vec3(drawn.x() + cameraPos.x,
+                                                    drawn.y() + cameraPos.y,
+                                                    drawn.z() + cameraPos.z));
             if (age < impactAge) {
                 gather(buffers, pose, cameraLocal, palm, age, windupAge, impactAge);
             } else {
@@ -198,12 +288,31 @@ public final class PalmVfxRenderer {
         if (charge <= 0.0F) {
             return;
         }
+        // Сжатие перед ударом: последние тики сбора всё ГАСНЕТ и стягивается к ладони.
+        // Без паузы кульминация не читается как кульминация — нечему контрастировать.
+        // Совет из разбора: на импакте должны расти все параметры сразу, а до него —
+        // падать. Раньше сбор разгорался до самого удара и был ярче самого удара.
+        float squash = charge > 0.86F ? Mth.clamp((1.0F - charge) / 0.14F, 0.0F, 1.0F) : 1.0F;
+        charge *= squash;
+        if (charge <= 0.01F) {
+            return;
+        }
 
         // ВАЖНО: слои рисуются строго по одному. Общий источник буферов строит только один
         // тип за раз, и запрос второго молча закрывает первый — запись в удержанную ссылку
         // после этого падает с «Not building!». Поймано на первом же прогоне ладони.
         VertexConsumer glow = buffers.getBuffer(MurimRenderTypes.impactCore());
 
+        // ВСЕ яркости сбора умножаются на заряд, без постоянного слагаемого.
+        //
+        // Раньше у тумана, зелёного и холодного ядра был пол (0.045, 0.144 и 0.35), не
+        // зависящий от заряда: эффект вспыхивал на полную с первого тика и сорок тиков
+        // стоял ровно. Измерение показало 74% энергии уже на четвёртом тике при заряде
+        // 0.125 — то есть фазы у эффекта не было вовсе. Это прямой стоп-сигнал «дешёвого»
+        // эффекта из правила 04, и он же был причиной, по которой кульминация оказывалась
+        // слабее подготовки: сбор набирал всю энергию мгновенно и держал её до удара.
+        //
+        // Яркость на пике сохранена прежней, изменилось только начало.
         // Холодное ядро в ладони. Растёт кубически: сила должна набираться заметным всплеском.
         float core = charge * charge * charge;
         // Соотношение цветов перевёрнуто относительно первой версии. На референсе зелёное
@@ -219,19 +328,19 @@ public final class PalmVfxRenderer {
             // Радиусы поджаты к ладони. Прежние полтора блока растаскивали центр свечения
             // на полкорпуса от руки: якорь был верным, а геометрия вокруг него — нет.
             billboard(glow, pose, puff, cameraLocal, 0.26D + 0.34D * core,
-                      (0.07F + 0.11F * core), 0.26F, 0.95F, 0.42F);
+                      (charge * 0.075F + 0.063F * core), 0.26F, 0.95F, 0.42F);
         }
         billboard(glow, pose, palm, cameraLocal, 0.15D + 0.24D * core,
-                  0.22F + 0.40F * core, 0.36F, 1.0F, 0.52F);
+                  charge * 0.240F + 0.234F * core, 0.36F, 1.0F, 0.52F);
         // Белое ТОЛЬКО ядром и небольшое: у референса холодного мало, оно плотное и в центре.
         billboard(glow, pose, palm, cameraLocal, 0.055D + 0.10D * core,
-                  0.35F + 0.55F * core, 0.88F, 0.99F, 1.0F);
+                  charge * 0.50F + 0.55F * core, 0.88F, 0.99F, 1.0F);
 
         // Частицы СТЯГИВАЮТСЯ к ладони по спирали — направление читается с первой панели.
         for (int i = 0; i < DUST; i++) {
             float cycle = ((age * 0.05F) + i / (float) DUST) % 1.0F;
             double angle = i * 2.399D + age * 0.06D;
-            double radius = (0.55D - 0.48D * cycle) * (1.0D - 0.25D * charge);
+            double radius = (0.40D - 0.34D * cycle) * (1.0D - 0.25D * charge);
             double lift = Math.sin(angle * 1.3D + i) * 0.22D * (1.0D - cycle);
             Vec3 point = palm.add(new Vec3(Math.cos(angle) * radius, lift, Math.sin(angle) * radius));
             float alpha = charge * cycle * 0.9F;
@@ -263,7 +372,7 @@ public final class PalmVfxRenderer {
                         sway * 0.12D * t));
                 strandQuad(strands, pose, previous, point, cameraLocal,
                            0.075D * (1.0D - 0.55D * t),
-                           charge * 0.75F * (1.0F - 0.5F * (float) t), 0.34F, 1.0F, 0.5F);
+                           charge * 0.675F * (1.0F - 0.5F * (float) t), 0.34F, 1.0F, 0.5F);
                 previous = point;
             }
         }
@@ -326,7 +435,30 @@ public final class PalmVfxRenderer {
             return;
         }
         Vec3 forward = new Vec3(0.0D, 0.0D, 1.0D);
-        double reach = 1.2D + 3.4D * Math.min(1.0F, since / 5.0F);
+        // Вынос НАЧИНАЕТСЯ У ЛАДОНИ и разгоняется, а не появляется сразу в метре впереди.
+        // Прежняя формула давала на нулевом тике вынос 1.2 блока: центр эффекта прыгал
+        // на 48 px за кадр, и удар читался как отдельная вспышка, оторванная от сбора.
+        // Показатель степени <1 держит рывок быстрым, но непрерывным.
+        // РАЗГОН, а не телепорт. Показатель 0.55 давал на первом же тике вынос с 0.15
+        // до 2.0 блока — почти два блока за кадр. Сзади это движение идёт вдоль оси
+        // взгляда и незаметно, сбоку выглядит скачком: замер с поворотом 90° показал
+        // 377 px/тик при медиане 6. Сглаживающая кривая стартует медленно и ускоряется,
+        // при этом полный вынос достигается за те же пять тиков.
+        double launch = Math.min(1.0F, since / 5.0F);
+        double ramp = launch * launch * (3.0D - 2.0D * launch);
+        double reach = 0.15D + 4.45D * ramp;
+
+        // Вспышка контакта: живёт три тика, но в них самая высокая яркость всей техники.
+        // Именно она делает удар пиком, а не продолжением сбора.
+        if (since < 3.5F) {
+            float flash = 1.0F - since / 3.5F;
+            VertexConsumer burst = buffers.getBuffer(MurimRenderTypes.impactCore());
+            billboard(burst, pose, palm.add(forward.scale(0.45D)), cameraLocal,
+                      0.30D + 0.85D * (1.0F - flash), flash * 1.6F, 0.92F, 1.0F, 0.98F);
+            billboard(burst, pose, palm.add(forward.scale(0.45D)), cameraLocal,
+                      0.55D + 1.30D * (1.0F - flash), flash * 0.7F, 0.40F, 1.0F, 0.55F);
+            buffers.endBatch(MurimRenderTypes.impactCore());
+        }
 
         VertexConsumer glow = buffers.getBuffer(MurimRenderTypes.impactCore());
 
@@ -337,8 +469,8 @@ public final class PalmVfxRenderer {
             double t = i / (double) steps;
             double wobble = Math.sin(t * 5.0D + since * 0.35D) * 0.16D * t;
             Vec3 point = palm.add(forward.scale(reach * t)).add(new Vec3(wobble, wobble * 0.6D, 0.0D));
-            strandQuad(glow, pose, previous, point, cameraLocal, 0.26D * (1.0D - 0.45D * t),
-                       fade * 0.9F, 0.85F, 0.98F, 1.0F);
+            strandQuad(glow, pose, previous, point, cameraLocal, 0.34D * (1.0D - 0.45D * t),
+                       fade * 1.42F, 0.85F, 0.98F, 1.0F);
             previous = point;
         }
 
@@ -346,8 +478,8 @@ public final class PalmVfxRenderer {
         for (int i = 0; i < FOG_PUFFS + 3; i++) {
             double t = (i + 0.5D) / (FOG_PUFFS + 3);
             Vec3 puff = palm.add(forward.scale(reach * t));
-            billboard(glow, pose, puff, cameraLocal, 0.42D + 0.30D * Math.sin(Math.PI * t),
-                      fade * 0.13F, 0.24F, 0.95F, 0.40F);
+            billboard(glow, pose, puff, cameraLocal, 0.52D + 0.40D * Math.sin(Math.PI * t),
+                      fade * 0.22F, 0.24F, 0.95F, 0.40F);
         }
 
         // Белая пыль по всей зоне: мелкая, резкая, холодная.
@@ -363,19 +495,41 @@ public final class PalmVfxRenderer {
         buffers.endBatch(MurimRenderTypes.impactCore());
 
         VertexConsumer strands = buffers.getBuffer(MurimRenderTypes.strand());
-        for (int s2 = 0; s2 < STRANDS; s2++) {
-            double phase = s2 * (Math.PI * 2.0D / STRANDS);
-            Vec3 prev = palm;
-            for (int i = 1; i <= steps; i++) {
-                double t = i / (double) steps;
-                double angle = phase + t * Math.PI * 1.8D + since * 0.12D;
-                double radius = 0.34D * Math.sin(Math.PI * t) + 0.05D;
-                Vec3 point = palm.add(forward.scale(reach * t))
+        // Пряди строятся хаосом, а не равномерным углом. Прежняя раскладка
+        // phase = s * 2π / N по построению давала правильный многоугольник — тот самый
+        // «ураган в руке». Теперь у каждой пряди своя фаза из хеша, своё направление
+        // закрутки и свой асимметричный профиль ширины.
+        long seed = SEED;
+        for (int strand = 0; strand < STRANDS; strand++) {
+            // Пряди занимают СЕКТОР, а не полный круг. Равномерное кольцо в лоб читается
+            // ровным диском: замер спереди дал радиальную равномерность 0.78 при пределе
+            // 0.62, и это ровно то, что названо «ураганом в руке». Сектор около 200°
+            // оставляет разброс, но даёт направление.
+            float phase = SECTOR_CENTRE
+                    + (Chaos.unit(strand, seed) - 0.5F) * (float) (Math.PI * 1.75D);
+            float spin = Chaos.spin(strand, seed, 0.3F);
+            // Плотность растёт к ладони: пряди, тяготеющие к средоточию, идут по меньшему
+            // радиусу и держатся ближе к руке — как на референсе.
+            float bias = Chaos.densityBias(strand, STRANDS, seed);
+            float turns = Chaos.range(strand, seed ^ 0x1F, 1.2F, 2.4F);
+            float peak = Chaos.range(strand, seed ^ 0x2F, 0.68F, 0.9F);
+            double maxRadius = 0.10D + 0.34D * bias;
+            double length = reach * (0.55D + 0.45D * bias);
+
+            Vec3[] points = new Vec3[steps + 1];
+            double[] widths = new double[steps + 1];
+            float[] alphas = new float[steps + 1];
+            for (int i = 0; i <= steps; i++) {
+                float t = i / (float) steps;
+                double angle = phase + spin * t * Math.PI * turns;
+                double radius = maxRadius * Math.sin(Math.PI * Math.pow(t, 0.7D));
+                points[i] = palm.add(forward.scale(length * t))
                         .add(new Vec3(Math.cos(angle) * radius, Math.sin(angle) * radius, 0.0D));
-                strandQuad(strands, pose, prev, point, cameraLocal, 0.055D,
-                           fade * 0.9F, 0.38F, 1.0F, 0.52F);
-                prev = point;
+                widths[i] = 0.105D * Chaos.widthProfile(t, peak);
+                alphas[i] = fade * 1.36F * Chaos.widthProfile(t, peak);
             }
+            RibbonMesher.draw(strands, pose, points, widths, alphas, cameraLocal,
+                              0.38F, 1.0F, 0.52F);
         }
         buffers.endBatch(MurimRenderTypes.strand());
 
@@ -396,7 +550,8 @@ public final class PalmVfxRenderer {
         // Тёмные штрихи поверх свечения.
         for (int i = 0; i < DARK_STRANDS; i++) {
             double t0 = ((i * 0.09D) + since * 0.04D) % 0.9D;
-            double angle = i * 2.1D;
+            // Тёмные штрихи держатся того же сектора, иначе они возвращают кольцо.
+            double angle = SECTOR_CENTRE + (Chaos.unit(i, SEED ^ 0x7AD) - 0.5F) * Math.PI * 1.9D;
             double radius = 0.2D + 0.45D * Math.abs(Math.cos(i * 1.3D));
             Vec3 a = palm.add(forward.scale(reach * t0))
                     .add(new Vec3(Math.cos(angle) * radius, Math.sin(angle) * radius, 0.0D));
@@ -453,8 +608,18 @@ public final class PalmVfxRenderer {
     private static void vertex(VertexConsumer consumer, PoseStack.Pose pose, Vec3 position,
                                Vec3 normal, float u, float v, float alpha,
                                float red, float green, float blue) {
+        // Альфа ОБЯЗАНА быть ограничена здесь.
+        //
+        // setColor(float…) в 1.21.1 делает (int)(a * 255) без всякого ограничения
+        // (проверено дизассемблером: fmul, f2i), а дальше значение пишется байтом.
+        // Значит alpha = 1.6 даёт 408 и после усечения 152, то есть 0.60 — ярче единицы
+        // не становится, а СКАЧКОМ ТЕМНЕЕТ. Вспышка контакта была из-за этого
+        // перевёрнута: самый яркий кадр техники оказывался тусклым, а пик приходился
+        // на середину затухания.
+        // API: com.mojang.blaze3d.vertex.VertexConsumer#setColor(float,float,float,float)
         consumer.addVertex(pose.pose(), (float) position.x, (float) position.y, (float) position.z)
-                .setColor(red, green, blue, alpha)
+                .setColor(Mth.clamp(red, 0.0F, 1.0F), Mth.clamp(green, 0.0F, 1.0F),
+                          Mth.clamp(blue, 0.0F, 1.0F), Mth.clamp(alpha, 0.0F, 1.0F))
                 .setUv(u, v)
                 .setOverlay(net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY)
                 .setLight(0x00F000F0)
