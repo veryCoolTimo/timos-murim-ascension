@@ -46,6 +46,17 @@ public final class DevCaptureHandler {
     /** Какую технику снимать: {@code -Pmurim.technique=wedge_fan}. По умолчанию первая. */
     private static final String TECHNIQUE_PROPERTY = "murim.capture.technique";
 
+    /**
+     * За сколько тиков до запуска техники снимается ОПОРНЫЙ кадр.
+     *
+     * <p>Без него нельзя отделить эффект от сцены: маска эффекта получается вычитанием
+     * опорного кадра из каждого последующего. Всё измерение построено на этом.
+     */
+    private static final int BASELINE_BEFORE_TICKS = 3;
+
+    /** Файл телеметрии рядом с кадрами: по нему python считает проекции и метрики. */
+    private static java.io.PrintWriter telemetry;
+
     /** Сколько тиков ждать после входа в мир, прежде чем применять технику. */
     private static final int WARMUP_TICKS = 60;
 
@@ -75,6 +86,10 @@ public final class DevCaptureHandler {
      * с прежнего места и затирает уже снятое.
      */
     public static void reset() {
+        if (telemetry != null) {
+            telemetry.close();
+            telemetry = null;
+        }
         armed = Boolean.getBoolean(ENABLE_PROPERTY);
         warmup = 0;
         framesLeft = 0;
@@ -105,6 +120,13 @@ public final class DevCaptureHandler {
             MurimMod.LOGGER.info("Автосъёмка: техника через {} тиков", WARMUP_TICKS);
         }
 
+        // Опорный кадр: сцена в той же позе и с той же камерой, но БЕЗ эффекта.
+        if (warmup == BASELINE_BEFORE_TICKS) {
+            Screenshot.grab(minecraft.gameDirectory, "baseline_" + anglePrefix() + ".png",
+                    minecraft.getMainRenderTarget(), message -> {
+                    });
+        }
+
         if (warmup > 0 && --warmup == 0) {
             PacketDistributor.sendToServer(new StartTechniquePayload(
                     net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(
@@ -114,17 +136,62 @@ public final class DevCaptureHandler {
 
         if (framesLeft > 0 && tickCounter++ % FRAME_INTERVAL_TICKS == 0) {
             MurimMod.LOGGER.debug("Кадр {} на клиентском тике {}", frameIndex, tickCounter - 1);
+            writeTelemetry(minecraft, frameIndex);
             grabFrame(minecraft);
             framesLeft--;
         }
     }
 
+    /**
+     * Телеметрия кадра.
+     *
+     * <p>Позиции пишутся в МИРОВЫХ координатах вместе с параметрами камеры, а проекцию
+     * на экран считает анализатор. Так проще: не надо доставать матрицы проекции из игры,
+     * и та же телеметрия годится для любых будущих метрик.
+     */
+    private static void writeTelemetry(Minecraft minecraft, int frame) {
+        try {
+            if (telemetry == null) {
+                java.io.File file = new java.io.File(minecraft.gameDirectory,
+                        "screenshots/telemetry_" + anglePrefix() + ".jsonl");
+                file.getParentFile().mkdirs();
+                telemetry = new java.io.PrintWriter(new java.io.FileWriter(file, false), true);
+            }
+            net.minecraft.client.Camera camera = minecraft.gameRenderer.getMainCamera();
+            net.minecraft.world.entity.player.Player player = minecraft.player;
+            if (player == null) {
+                return;
+            }
+            net.minecraft.world.phys.Vec3 cam = camera.getPosition();
+            telemetry.printf(java.util.Locale.ROOT,
+                    "{\"frame\":%d,\"tick\":%d,\"px\":%.4f,\"py\":%.4f,\"pz\":%.4f,"
+                            + "\"eye\":%.4f,\"yaw\":%.3f,\"bodyYaw\":%.3f,"
+                            + "\"cx\":%.4f,\"cy\":%.4f,\"cz\":%.4f,"
+                            + "\"cyaw\":%.3f,\"cpitch\":%.3f,\"fov\":%.3f,"
+                            + "\"w\":%d,\"h\":%d}%n",
+                    frame, tickCounter - 1,
+                    player.getX(), player.getY(), player.getZ(), player.getEyeHeight(),
+                    player.getYRot(), player.yBodyRot,
+                    cam.x, cam.y, cam.z,
+                    camera.getYRot(), camera.getXRot(),
+                    minecraft.options.fov().get().doubleValue(),
+                    minecraft.getWindow().getWidth(), minecraft.getWindow().getHeight());
+        } catch (java.io.IOException exception) {
+            MurimMod.LOGGER.warn("Телеметрия не пишется: {}", exception.getMessage());
+        }
+    }
+
+    /** Метка ракурса в именах файлов: back, front или угол поворота игрока. */
+    private static String anglePrefix() {
+        String camera = System.getProperty(CAMERA_PROPERTY, "back");
+        String yaw = System.getProperty("murim.capture.yaw", "0");
+        return camera + "_" + yaw.replace("-", "m");
+    }
+
     private static void grabFrame(Minecraft minecraft) {
         // Номер кадра в имени — с ведущими нулями, иначе сортировка перепутает 2 и 10,
         // а по серии кадров важен именно порядок.
-        String prefix = "front".equalsIgnoreCase(System.getProperty(CAMERA_PROPERTY, "back"))
-                ? "front" : "back";
-        String name = String.format("murim_%s_%03d.png", prefix, frameIndex++);
+        String name = String.format("murim_%s_%03d.png", anglePrefix(), frameIndex++);
         Screenshot.grab(minecraft.gameDirectory, name, minecraft.getMainRenderTarget(), message -> {
         });
     }

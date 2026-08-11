@@ -69,7 +69,21 @@ public final class DevSetupEvents {
         }
         // Полдень: в сумерках лента выглядит ярче, чем есть, и оценка получится завышенной.
         serverLevel.setDayTime(6000L);
+        // Ракурс задаётся поворотом ИГРОКА, а не камеры: камера в Minecraft жёстко привязана
+        // к взгляду, а эффект строится в системе тела. Поворот игрока при неподвижной камере
+        // показывает тот же эффект с другой стороны и стоит одну строку вместо своей камеры.
+        float yaw = 0.0F;
+        try {
+            yaw = Float.parseFloat(System.getProperty("murim.capture.yaw", "0"));
+        } catch (NumberFormatException ignored) {
+            // Мусор в свойстве не должен ронять стенд: снимаем с нулевого угла.
+        }
         event.getEntity().teleportTo(STAGE_X + 0.5D, STAGE_Y, STAGE_Z + 0.5D);
+        event.getEntity().setYRot(yaw);
+        event.getEntity().setYHeadRot(yaw);
+        if (event.getEntity() instanceof net.minecraft.server.level.ServerPlayer turned) {
+            turned.connection.teleport(STAGE_X + 0.5D, STAGE_Y, STAGE_Z + 0.5D, yaw, 0.0F);
+        }
 
         // Мишени перед игроком. Без цели техника не наносит урона, событие попадания
         // не приходит, и ни hit stop, ни тряска камеры на кадрах не проявятся —
