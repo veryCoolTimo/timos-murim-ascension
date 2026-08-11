@@ -2,7 +2,6 @@ package io.github.verycooltimo.murim.client.vfx;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.world.phys.Vec3;
 
 /**
@@ -115,21 +114,10 @@ public final class RibbonMesher {
                              Vec3 a, Vec3 b, Vec3 c, Vec3 d,
                              Vec3 normalA, Vec3 normalB, float alphaA, float alphaB,
                              float u0, float u1, float red, float green, float blue) {
-        vertex(consumer, pose, a, normalA, u0, 0.0F, alphaA, red, green, blue);
-        vertex(consumer, pose, b, normalA, u0, 1.0F, alphaA, red, green, blue);
-        vertex(consumer, pose, c, normalB, u1, 1.0F, alphaB, red, green, blue);
-        vertex(consumer, pose, d, normalB, u1, 0.0F, alphaB, red, green, blue);
-    }
-
-    private static void vertex(VertexConsumer consumer, PoseStack.Pose pose, Vec3 position,
-                               Vec3 normal, float u, float v, float alpha,
-                               float red, float green, float blue) {
-        consumer.addVertex(pose.pose(), (float) position.x, (float) position.y, (float) position.z)
-                .setColor(red, green, blue, alpha)
-                .setUv(u, v)
-                .setOverlay(OverlayTexture.NO_OVERLAY)
-                .setLight(0x00F000F0)
-                .setNormal(pose, (float) normal.x, (float) normal.y, (float) normal.z);
+        VfxDraw.vertex(consumer, pose, a, normalA, u0, 0.0F, alphaA, red, green, blue);
+        VfxDraw.vertex(consumer, pose, b, normalA, u0, 1.0F, alphaA, red, green, blue);
+        VfxDraw.vertex(consumer, pose, c, normalB, u1, 1.0F, alphaB, red, green, blue);
+        VfxDraw.vertex(consumer, pose, d, normalB, u1, 0.0F, alphaB, red, green, blue);
     }
 
     private RibbonMesher() {

@@ -72,8 +72,21 @@ public final class PalmVfxRenderer {
      */
     private static final int BIG_RIBBONS = 3;
 
-    /** Клубы мягкого зелёного тумана вокруг эффекта. */
-    private static final int FOG_PUFFS = 5;
+    /** Радиус свечения у ладони. Поджат: полтора блока растаскивали центр от руки. */
+    private static final double GLOW_RADIUS = 0.26D;
+
+    /** Радиус кольца искр вокруг ладони до сжатия зарядом. */
+    private static final double DUST_RADIUS = 0.40D;
+
+    /** Клубов тумана вдоль канала выброса: они собирают линии в один импульс. */
+    private static final int CHANNEL_PUFFS = 8;
+
+    /** Сколько тиков живёт вспышка контакта. */
+    private static final float FLASH_TICKS = 3.5F;
+
+    private static final VfxColour DUST_WARM = new VfxColour(0.42F, 1.0F, 0.55F);
+    private static final VfxColour DUST_COLD = new VfxColour(0.88F, 1.0F, 0.94F);
+    private static final VfxColour FLASH_CORE = new VfxColour(0.92F, 1.0F, 0.98F);
 
     /**
      * Куда «смотрит» веер прядей выброса.
@@ -320,38 +333,16 @@ public final class PalmVfxRenderer {
         // было наоборот: белая вспышка на весь кадр и почти без зелени.
         // Мягкий зелёный туман: самая широкая и самая прозрачная масса. Она и создаёт
         // ощущение плотности, не засвечивая силуэт.
-        for (int i = 0; i < FOG_PUFFS; i++) {
-            double angle = i * 2.399D + age * 0.02D;
-            double drift = 0.09D + 0.06D * Math.sin(age * 0.05D + i);
-            Vec3 puff = palm.add(new Vec3(Math.cos(angle) * drift, Math.sin(angle) * drift * 0.7D,
-                    Math.sin(angle * 1.3D) * drift));
-            // Радиусы поджаты к ладони. Прежние полтора блока растаскивали центр свечения
-            // на полкорпуса от руки: якорь был верным, а геометрия вокруг него — нет.
-            billboard(glow, pose, puff, cameraLocal, 0.26D + 0.34D * core,
-                      (charge * 0.075F + 0.063F * core), 0.26F, 0.95F, 0.42F);
-        }
-        billboard(glow, pose, palm, cameraLocal, 0.15D + 0.24D * core,
-                  charge * 0.240F + 0.234F * core, 0.36F, 1.0F, 0.52F);
-        // Белое ТОЛЬКО ядром и небольшое: у референса холодного мало, оно плотное и в центре.
-        billboard(glow, pose, palm, cameraLocal, 0.055D + 0.10D * core,
-                  charge * 0.50F + 0.55F * core, 0.88F, 0.99F, 1.0F);
+        // Радиус поджат к ладони. Прежние полтора блока растаскивали центр свечения
+        // на полкорпуса от руки: якорь был верным, а геометрия вокруг него — нет.
+        CoreGlow.draw(glow, pose, palm, cameraLocal, age, GLOW_RADIUS, charge,
+                      VfxColour.VENOM_DEEP, VfxColour.COLD_CORE);
 
-        // Частицы СТЯГИВАЮТСЯ к ладони по спирали — направление читается с первой панели.
-        for (int i = 0; i < DUST; i++) {
-            float cycle = ((age * 0.05F) + i / (float) DUST) % 1.0F;
-            double angle = i * 2.399D + age * 0.06D;
-            double radius = (0.40D - 0.34D * cycle) * (1.0D - 0.25D * charge);
-            double lift = Math.sin(angle * 1.3D + i) * 0.22D * (1.0D - cycle);
-            Vec3 point = palm.add(new Vec3(Math.cos(angle) * radius, lift, Math.sin(angle) * radius));
-            float alpha = charge * cycle * 0.9F;
-            // Крупнее и с чередованием холодных и зелёных: на референсе частицы разного
-            // размера и не все белые.
-            // Холодной остаётся лишь треть искр. Прежде было наоборот, и белая масса
-            // забивала зелёную — тот самый перекос, который назвали и я, и codex.
-            boolean cold = (i % 3) == 0;
-            billboard(glow, pose, point, cameraLocal, 0.030D + 0.030D * cycle, alpha,
-                      cold ? 0.88F : 0.42F, 1.0F, cold ? 0.94F : 0.55F);
-        }
+        // Искры СТЯГИВАЮТСЯ к ладони по спирали — направление читается с первой панели.
+        // Кольцо ещё и сжимается по мере набора силы, поэтому радиус зависит от заряда.
+        BillboardBurst.inward(glow, pose, palm, cameraLocal, DUST, age,
+                              DUST_RADIUS * (1.0D - 0.25D * charge), charge,
+                              DUST_WARM, DUST_COLD);
         buffers.endBatch(MurimRenderTypes.impactCore());
 
         VertexConsumer strands = buffers.getBuffer(MurimRenderTypes.strand());
@@ -370,7 +361,7 @@ public final class PalmVfxRenderer {
                         side + sway * 0.18D * t,
                         -(0.16D + 0.52D * charge) * t,
                         sway * 0.12D * t));
-                strandQuad(strands, pose, previous, point, cameraLocal,
+                VfxDraw.segment(strands, pose, previous, point, cameraLocal,
                            0.075D * (1.0D - 0.55D * t),
                            charge * 0.675F * (1.0F - 0.5F * (float) t), 0.34F, 1.0F, 0.5F);
                 previous = point;
@@ -388,7 +379,7 @@ public final class PalmVfxRenderer {
                 Vec3 point = palm.add(new Vec3(Math.cos(angle) * radius,
                         0.30D * charge * Math.sin(Math.PI * t) - 0.25D * t,
                         Math.sin(angle) * radius * 0.7D));
-                strandQuad(strands, pose, previous, point, cameraLocal,
+                VfxDraw.segment(strands, pose, previous, point, cameraLocal,
                            0.15D * (1.0D - 0.4D * t), charge * 0.6F, 0.30F, 1.0F, 0.46F);
                 previous = point;
             }
@@ -400,7 +391,7 @@ public final class PalmVfxRenderer {
             double radius = (0.22D + 0.30D * core) * jitter;
             Vec3 tip = palm.add(new Vec3(Math.cos(angle) * radius, Math.sin(angle) * radius * 0.8D,
                     Math.sin(angle * 1.7D) * radius * 0.35D));
-            strandQuad(strands, pose, palm, tip, cameraLocal, 0.022D,
+            VfxDraw.segment(strands, pose, palm, tip, cameraLocal, 0.022D,
                        0.28F * core, 0.40F, 1.0F, 0.58F);
         }
         buffers.endBatch(MurimRenderTypes.strand());
@@ -411,7 +402,7 @@ public final class PalmVfxRenderer {
             double phase = (age * 0.03F + i * 0.21D) % 1.0D;
             Vec3 top = palm.add(new Vec3(-0.08D + 0.05D * i, -0.05D, -0.04D + 0.03D * i));
             Vec3 bottom = top.add(new Vec3(0.0D, -0.20D - 0.28D * phase, 0.0D));
-            strandQuad(drips, pose, top, bottom, cameraLocal, 0.075D,
+            VfxDraw.segment(drips, pose, top, bottom, cameraLocal, 0.075D,
                        (float) (charge * (1.0D - phase) * 1.0D), 0.72F, 1.0F, 0.78F);
         }
         buffers.endBatch(MurimRenderTypes.drip());
@@ -422,7 +413,7 @@ public final class PalmVfxRenderer {
             double angle = i * 1.7D + age * 0.02D;
             Vec3 a = palm.add(new Vec3(Math.cos(angle) * 0.5D, 0.25D * Math.sin(angle), Math.sin(angle) * 0.5D));
             Vec3 b = a.add(new Vec3(Math.cos(angle + 0.6D) * 0.45D, -0.12D, Math.sin(angle + 0.6D) * 0.45D));
-            strandQuad(dark, pose, a, b, cameraLocal, 0.03D, 0.5F * charge, 0.06F, 0.09F, 0.07F);
+            VfxDraw.segment(dark, pose, a, b, cameraLocal, 0.03D, 0.5F * charge, 0.06F, 0.09F, 0.07F);
         }
         buffers.endBatch(MurimRenderTypes.shard());
     }
@@ -450,13 +441,11 @@ public final class PalmVfxRenderer {
 
         // Вспышка контакта: живёт три тика, но в них самая высокая яркость всей техники.
         // Именно она делает удар пиком, а не продолжением сбора.
-        if (since < 3.5F) {
-            float flash = 1.0F - since / 3.5F;
+        if (since < FLASH_TICKS) {
             VertexConsumer burst = buffers.getBuffer(MurimRenderTypes.impactCore());
-            billboard(burst, pose, palm.add(forward.scale(0.45D)), cameraLocal,
-                      0.30D + 0.85D * (1.0F - flash), flash * 1.6F, 0.92F, 1.0F, 0.98F);
-            billboard(burst, pose, palm.add(forward.scale(0.45D)), cameraLocal,
-                      0.55D + 1.30D * (1.0F - flash), flash * 0.7F, 0.40F, 1.0F, 0.55F);
+            ImpactFlash.draw(burst, pose, palm.add(forward.scale(0.45D)), cameraLocal,
+                             since / FLASH_TICKS, 0.30D,
+                             FLASH_CORE, VfxColour.VENOM);
             buffers.endBatch(MurimRenderTypes.impactCore());
         }
 
@@ -469,16 +458,16 @@ public final class PalmVfxRenderer {
             double t = i / (double) steps;
             double wobble = Math.sin(t * 5.0D + since * 0.35D) * 0.16D * t;
             Vec3 point = palm.add(forward.scale(reach * t)).add(new Vec3(wobble, wobble * 0.6D, 0.0D));
-            strandQuad(glow, pose, previous, point, cameraLocal, 0.34D * (1.0D - 0.45D * t),
+            VfxDraw.segment(glow, pose, previous, point, cameraLocal, 0.34D * (1.0D - 0.45D * t),
                        fade * 1.42F, 0.85F, 0.98F, 1.0F);
             previous = point;
         }
 
         // Туман вдоль канала: собирает отдельные линии в один плотный импульс.
-        for (int i = 0; i < FOG_PUFFS + 3; i++) {
-            double t = (i + 0.5D) / (FOG_PUFFS + 3);
+        for (int i = 0; i < CHANNEL_PUFFS; i++) {
+            double t = (i + 0.5D) / CHANNEL_PUFFS;
             Vec3 puff = palm.add(forward.scale(reach * t));
-            billboard(glow, pose, puff, cameraLocal, 0.52D + 0.40D * Math.sin(Math.PI * t),
+            VfxDraw.billboard(glow, pose, puff, cameraLocal, 0.52D + 0.40D * Math.sin(Math.PI * t),
                       fade * 0.22F, 0.24F, 0.95F, 0.40F);
         }
 
@@ -489,7 +478,7 @@ public final class PalmVfxRenderer {
             double radius = 0.15D + 0.7D * Math.sin(Math.PI * t) * (0.4D + 0.6D * ((i % 5) / 4.0D));
             Vec3 point = palm.add(forward.scale(reach * t))
                     .add(new Vec3(Math.cos(angle) * radius, Math.sin(angle) * radius, 0.0D));
-            billboard(glow, pose, point, cameraLocal, 0.020D + 0.026D * ((i % 3) / 2.0D),
+            VfxDraw.billboard(glow, pose, point, cameraLocal, 0.020D + 0.026D * ((i % 3) / 2.0D),
                       fade * 0.95F, 0.94F, 1.0F, 0.98F);
         }
         buffers.endBatch(MurimRenderTypes.impactCore());
@@ -500,37 +489,16 @@ public final class PalmVfxRenderer {
         // «ураган в руке». Теперь у каждой пряди своя фаза из хеша, своё направление
         // закрутки и свой асимметричный профиль ширины.
         long seed = SEED;
-        for (int strand = 0; strand < STRANDS; strand++) {
-            // Пряди занимают СЕКТОР, а не полный круг. Равномерное кольцо в лоб читается
-            // ровным диском: замер спереди дал радиальную равномерность 0.78 при пределе
-            // 0.62, и это ровно то, что названо «ураганом в руке». Сектор около 200°
-            // оставляет разброс, но даёт направление.
-            float phase = SECTOR_CENTRE
-                    + (Chaos.unit(strand, seed) - 0.5F) * (float) (Math.PI * 1.75D);
-            float spin = Chaos.spin(strand, seed, 0.3F);
-            // Плотность растёт к ладони: пряди, тяготеющие к средоточию, идут по меньшему
-            // радиусу и держатся ближе к руке — как на референсе.
-            float bias = Chaos.densityBias(strand, STRANDS, seed);
-            float turns = Chaos.range(strand, seed ^ 0x1F, 1.2F, 2.4F);
-            float peak = Chaos.range(strand, seed ^ 0x2F, 0.68F, 0.9F);
-            double maxRadius = 0.10D + 0.34D * bias;
-            double length = reach * (0.55D + 0.45D * bias);
-
-            Vec3[] points = new Vec3[steps + 1];
-            double[] widths = new double[steps + 1];
-            float[] alphas = new float[steps + 1];
-            for (int i = 0; i <= steps; i++) {
-                float t = i / (float) steps;
-                double angle = phase + spin * t * Math.PI * turns;
-                double radius = maxRadius * Math.sin(Math.PI * Math.pow(t, 0.7D));
-                points[i] = palm.add(forward.scale(length * t))
-                        .add(new Vec3(Math.cos(angle) * radius, Math.sin(angle) * radius, 0.0D));
-                widths[i] = 0.105D * Chaos.widthProfile(t, peak);
-                alphas[i] = fade * 1.36F * Chaos.widthProfile(t, peak);
-            }
-            RibbonMesher.draw(strands, pose, points, widths, alphas, cameraLocal,
-                              0.38F, 1.0F, 0.52F);
-        }
+        // Пряди занимают СЕКТОР, а не полный круг. Полный круг в лоб читается ровным
+        // кольцом — тем самым «ураганом в руке»; узкий сектор, наоборот, сжимает энергию
+        // в клин и валит проверку равномерности. Нужен широкий, но смещённый веер.
+        //
+        // Непрозрачность ровно единица, без запаса «на яркость». Значения выше единицы
+        // переполняются при записи цвета и дают провал вместо роста; раньше здесь стояло
+        // 1.36, и верхняя четверть профиля ленты молча срезалась в плоскость.
+        RibbonTrail.draw(strands, pose, palm, forward, cameraLocal, STRANDS, reach,
+                         0.105D, fade, (float) (Math.PI * 1.75D), SECTOR_CENTRE,
+                         seed, VfxColour.VENOM);
         buffers.endBatch(MurimRenderTypes.strand());
 
         VertexConsumer dark = buffers.getBuffer(MurimRenderTypes.shard());
@@ -543,7 +511,7 @@ public final class PalmVfxRenderer {
                     .add(new Vec3(Math.cos(angle) * radius, Math.sin(angle) * radius * 0.8D, 0.0D));
             // Осколки крупнее и непрозрачнее: в первой версии они терялись на фоне
             // свечения и на кадрах их не было видно вовсе.
-            billboard(dark, pose, point, cameraLocal, 0.13D + 0.11D * ((i % 4) / 3.0D),
+            VfxDraw.billboard(dark, pose, point, cameraLocal, 0.13D + 0.11D * ((i % 4) / 3.0D),
                       fade * 0.95F, 0.04F, 0.07F, 0.05F);
         }
 
@@ -556,74 +524,9 @@ public final class PalmVfxRenderer {
             Vec3 a = palm.add(forward.scale(reach * t0))
                     .add(new Vec3(Math.cos(angle) * radius, Math.sin(angle) * radius, 0.0D));
             Vec3 b = a.add(forward.scale(reach * 0.22D)).add(new Vec3(0.05D, -0.04D, 0.0D));
-            strandQuad(dark, pose, a, b, cameraLocal, 0.025D, fade * 0.6F, 0.05F, 0.08F, 0.06F);
+            VfxDraw.segment(dark, pose, a, b, cameraLocal, 0.025D, fade * 0.6F, 0.05F, 0.08F, 0.06F);
         }
         buffers.endBatch(MurimRenderTypes.shard());
-    }
-
-    /** Четырёхугольник вдоль отрезка, развёрнутый шириной к камере. */
-    private static void strandQuad(VertexConsumer consumer, PoseStack.Pose pose, Vec3 from, Vec3 to,
-                                   Vec3 cameraLocal, double halfWidth, float alpha,
-                                   float red, float green, float blue) {
-        if (alpha <= 0.0F) {
-            return;
-        }
-        Vec3 axis = to.subtract(from);
-        if (axis.lengthSqr() < 1.0E-9D) {
-            return;
-        }
-        Vec3 mid = from.add(to).scale(0.5D);
-        Vec3 toCamera = cameraLocal.subtract(mid).normalize();
-        Vec3 side = axis.normalize().cross(toCamera);
-        if (side.lengthSqr() < 1.0E-6D) {
-            return;
-        }
-        Vec3 offset = side.normalize().scale(halfWidth);
-        Vec3 normal = toCamera;
-
-        vertex(consumer, pose, from.subtract(offset), normal, 0.0F, 0.0F, alpha, red, green, blue);
-        vertex(consumer, pose, to.subtract(offset), normal, 1.0F, 0.0F, alpha, red, green, blue);
-        vertex(consumer, pose, to.add(offset), normal, 1.0F, 1.0F, alpha, red, green, blue);
-        vertex(consumer, pose, from.add(offset), normal, 0.0F, 1.0F, alpha, red, green, blue);
-    }
-
-    private static void billboard(VertexConsumer consumer, PoseStack.Pose pose, Vec3 centre,
-                                  Vec3 cameraLocal, double size, float alpha,
-                                  float red, float green, float blue) {
-        if (alpha <= 0.0F || size <= 0.0D) {
-            return;
-        }
-        Vec3 forward = cameraLocal.subtract(centre).normalize();
-        Vec3 reference = Math.abs(forward.y) > 0.95D ? new Vec3(1.0D, 0.0D, 0.0D)
-                                                     : new Vec3(0.0D, 1.0D, 0.0D);
-        Vec3 right = forward.cross(reference).normalize().scale(size);
-        Vec3 up = right.normalize().cross(forward).normalize().scale(size);
-
-        vertex(consumer, pose, centre.subtract(right).subtract(up), forward, 0.0F, 0.0F, alpha, red, green, blue);
-        vertex(consumer, pose, centre.subtract(right).add(up), forward, 0.0F, 1.0F, alpha, red, green, blue);
-        vertex(consumer, pose, centre.add(right).add(up), forward, 1.0F, 1.0F, alpha, red, green, blue);
-        vertex(consumer, pose, centre.add(right).subtract(up), forward, 1.0F, 0.0F, alpha, red, green, blue);
-    }
-
-    private static void vertex(VertexConsumer consumer, PoseStack.Pose pose, Vec3 position,
-                               Vec3 normal, float u, float v, float alpha,
-                               float red, float green, float blue) {
-        // Альфа ОБЯЗАНА быть ограничена здесь.
-        //
-        // setColor(float…) в 1.21.1 делает (int)(a * 255) без всякого ограничения
-        // (проверено дизассемблером: fmul, f2i), а дальше значение пишется байтом.
-        // Значит alpha = 1.6 даёт 408 и после усечения 152, то есть 0.60 — ярче единицы
-        // не становится, а СКАЧКОМ ТЕМНЕЕТ. Вспышка контакта была из-за этого
-        // перевёрнута: самый яркий кадр техники оказывался тусклым, а пик приходился
-        // на середину затухания.
-        // API: com.mojang.blaze3d.vertex.VertexConsumer#setColor(float,float,float,float)
-        consumer.addVertex(pose.pose(), (float) position.x, (float) position.y, (float) position.z)
-                .setColor(Mth.clamp(red, 0.0F, 1.0F), Mth.clamp(green, 0.0F, 1.0F),
-                          Mth.clamp(blue, 0.0F, 1.0F), Mth.clamp(alpha, 0.0F, 1.0F))
-                .setUv(u, v)
-                .setOverlay(net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY)
-                .setLight(0x00F000F0)
-                .setNormal(pose, (float) normal.x, (float) normal.y, (float) normal.z);
     }
 
     private static Vec3 toLocal(Vec3 delta, float bodyYaw) {
