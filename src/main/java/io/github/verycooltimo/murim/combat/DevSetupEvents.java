@@ -41,6 +41,12 @@ public final class DevSetupEvents {
     /** Метка мишеней съёмки: по ней они снимаются перед следующим прогоном. */
     private static final String TARGET_TAG = "murim_capture_target";
 
+    /** Через сколько тиков после входа доводить сцену. Хватает на загрузку чанков. */
+    private static final int SETUP_DELAY_TICKS = 20;
+
+    /** Обратный отсчёт до отложенной доводки сцены; ноль означает «делать нечего». */
+    private static int pendingSetup;
+
     @SubscribeEvent
     static void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
         // Два барьера, а не один. Системного свойства мало: класс уезжает в релизный jar,
@@ -123,29 +129,61 @@ public final class DevSetupEvents {
             io.github.verycooltimo.murim.profile.ProfileNetwork.sync(serverPlayer);
         }
 
-        // Манекены тоже убираются перед спавном. Раньше чистились только стойки-мишени,
-        // и манекен накапливался от прогона к прогону — та же ошибка идемпотентности,
-        // уже однажды исправленная для стоек. Поймано на кадрах: их стало двое.
-        for (io.github.verycooltimo.murim.entity.TrainingDummy old
-                : serverLevel.getEntitiesOfClass(io.github.verycooltimo.murim.entity.TrainingDummy.class,
-                        new net.minecraft.world.phys.AABB(
-                                STAGE_X - 24.0D, STAGE_Y - 6.0D, STAGE_Z - 24.0D,
-                                STAGE_X + 24.0D, STAGE_Y + 6.0D, STAGE_Z + 24.0D))) {
-            old.discard();
-        }
+        // При контрольном ракурсе манекен не ставится вовсе: камера спереди оказывается
+        // ровно в его голове и закрывает кадр целиком. Проверять геометрию эффекта важнее,
+        // чем иметь мишень, — попадания проверяются с игрового ракурса.
+        boolean frontCamera = "front".equalsIgnoreCase(
+                System.getProperty("murim.capture.camera", "back"));
 
-        // Манекен для проверки боевого цикла.
-        io.github.verycooltimo.murim.entity.TrainingDummy dummy =
-                new io.github.verycooltimo.murim.entity.TrainingDummy(
-                        io.github.verycooltimo.murim.registry.ModEntities.DUMMY.get(), serverLevel);
-        // Смещён вбок: при контрольном ракурсе камера стоит перед игроком ровно там, где
-        // манекен, и упиралась ему в лицо. Отклонение около 20 градусов оставляет манекен
-        // внутри конуса поражения ладони (полуугол 35), но убирает его из кадра.
-        dummy.setPos(STAGE_X + 1.7D, STAGE_Y, STAGE_Z + 3.2D);
-        serverLevel.addFreshEntity(dummy);
+        // Уборка и спавн манекена отложены: при входе игрока сущности чанка ещё
+        // не подгружены, и убирать нечего — старые манекены появляются позже и лезут
+        // в кадр. Три попытки починить это на входе не сработали именно поэтому.
+        pendingSetup = SETUP_DELAY_TICKS;
 
         MurimMod.LOGGER.info("Съёмка: меч выдан, профиль пробуждён, игрок на площадке {} {} {}",
                 STAGE_X, STAGE_Y, STAGE_Z);
+    }
+
+    /**
+     * Отложенная доводка сцены: убрать чужие манекены и поставить свой.
+     *
+     * <p>Выполняется через два десятка тиков после входа, когда чанки вокруг площадки
+     * уже загружены и сохранённые сущности прошлых прогонов существуют в мире.
+     */
+    @SubscribeEvent
+    static void onServerTick(net.neoforged.neoforge.event.tick.ServerTickEvent.Post event) {
+        if (pendingSetup <= 0 || --pendingSetup > 0) {
+            return;
+        }
+        net.minecraft.server.level.ServerLevel level =
+                event.getServer().getLevel(net.minecraft.world.level.Level.OVERWORLD);
+        if (level == null) {
+            return;
+        }
+        net.minecraft.world.phys.AABB area = new net.minecraft.world.phys.AABB(
+                STAGE_X - 32.0D, STAGE_Y - 8.0D, STAGE_Z - 32.0D,
+                STAGE_X + 32.0D, STAGE_Y + 8.0D, STAGE_Z + 32.0D);
+        int removed = 0;
+        for (io.github.verycooltimo.murim.entity.TrainingDummy old
+                : level.getEntitiesOfClass(io.github.verycooltimo.murim.entity.TrainingDummy.class, area)) {
+            old.discard();
+            removed++;
+        }
+
+        boolean frontCamera = "front".equalsIgnoreCase(
+                System.getProperty("murim.capture.camera", "back"));
+        if (frontCamera) {
+            MurimMod.LOGGER.info("Съёмка: контрольный ракурс, манекенов убрано {}, новый не ставится",
+                    removed);
+            return;
+        }
+
+        io.github.verycooltimo.murim.entity.TrainingDummy dummy =
+                new io.github.verycooltimo.murim.entity.TrainingDummy(
+                        io.github.verycooltimo.murim.registry.ModEntities.DUMMY.get(), level);
+        dummy.setPos(STAGE_X + 1.7D, STAGE_Y, STAGE_Z + 3.2D);
+        level.addFreshEntity(dummy);
+        MurimMod.LOGGER.info("Съёмка: манекенов убрано {}, поставлен новый", removed);
     }
 
     private DevSetupEvents() {

@@ -163,11 +163,22 @@ public final class DevCaptureHandler {
                 return;
             }
             net.minecraft.world.phys.Vec3 cam = camera.getPosition();
+            // Позиция кости руки — точка отсчёта для метрики привязки. Сравнивать эффект
+            // с центром торса неверно: у техники ладони эффект И ДОЛЖЕН быть в стороне
+            // от торса, и метрика штрафовала правильное поведение.
+            net.minecraft.world.phys.Vec3 hand = player instanceof net.minecraft.client.player.AbstractClientPlayer client
+                    ? io.github.verycooltimo.murim.client.vfx.BoneAnchorLayer.position(
+                            client, io.github.verycooltimo.murim.client.vfx.BoneAnchorLayer.Bone.RIGHT_HAND)
+                    : null;
+            if (hand == null) {
+                hand = player.position();
+            }
             telemetry.printf(java.util.Locale.ROOT,
                     "{\"frame\":%d,\"tick\":%d,\"px\":%.4f,\"py\":%.4f,\"pz\":%.4f,"
                             + "\"eye\":%.4f,\"yaw\":%.3f,\"bodyYaw\":%.3f,"
                             + "\"cx\":%.4f,\"cy\":%.4f,\"cz\":%.4f,"
                             + "\"cyaw\":%.3f,\"cpitch\":%.3f,\"fov\":%.3f,"
+                            + "\"hx\":%.4f,\"hy\":%.4f,\"hz\":%.4f,"
                             + "\"w\":%d,\"h\":%d}%n",
                     frame, tickCounter - 1,
                     player.getX(), player.getY(), player.getZ(), player.getEyeHeight(),
@@ -175,6 +186,7 @@ public final class DevCaptureHandler {
                     cam.x, cam.y, cam.z,
                     camera.getYRot(), camera.getXRot(),
                     minecraft.options.fov().get().doubleValue(),
+                    hand.x, hand.y, hand.z,
                     minecraft.getWindow().getWidth(), minecraft.getWindow().getHeight());
         } catch (java.io.IOException exception) {
             MurimMod.LOGGER.warn("Телеметрия не пишется: {}", exception.getMessage());

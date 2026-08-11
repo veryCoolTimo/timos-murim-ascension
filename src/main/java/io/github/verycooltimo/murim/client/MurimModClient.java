@@ -27,6 +27,23 @@ public class MurimModClient {
         container.registerConfig(net.neoforged.fml.config.ModConfig.Type.CLIENT, ClientConfig.SPEC);
     }
 
+    /**
+     * Слой привязки к костям вешается на оба варианта модели игрока: тонкие и обычные руки.
+     * Пропустить один значит потерять привязку у половины скинов.
+     */
+    @SubscribeEvent
+    static void onAddLayers(net.neoforged.neoforge.client.event.EntityRenderersEvent.AddLayers event) {
+        for (net.minecraft.client.resources.PlayerSkin.Model skin : event.getSkins()) {
+            net.minecraft.client.renderer.entity.LivingEntityRenderer<
+                    net.minecraft.client.player.AbstractClientPlayer,
+                    net.minecraft.client.model.PlayerModel<net.minecraft.client.player.AbstractClientPlayer>>
+                    renderer = event.getSkin(skin);
+            if (renderer != null) {
+                renderer.addLayer(new io.github.verycooltimo.murim.client.vfx.BoneAnchorLayer(renderer));
+            }
+        }
+    }
+
     @SubscribeEvent
     static void onClientSetup(FMLClientSetupEvent event) {
         MurimMod.LOGGER.info("Murim: client setup");

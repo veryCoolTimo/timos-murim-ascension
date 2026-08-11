@@ -152,33 +152,52 @@ public final class PalmVfxRenderer {
             poseStack.mulPose(com.mojang.math.Axis.YP.rotationDegrees(-bodyYaw));
             PoseStack.Pose pose = poseStack.last();
 
+            Vec3 palm = palmLocal(entity, feet, bodyYaw);
+            if (palm == null) {
+                return;
+            }
             if (age < impactAge) {
-                gather(buffers, pose, cameraLocal, age, windupAge, impactAge);
+                gather(buffers, pose, cameraLocal, palm, age, windupAge, impactAge);
             } else {
-                release(buffers, pose, cameraLocal, age - impactAge);
+                release(buffers, pose, cameraLocal, palm, age - impactAge);
             }
         } finally {
             poseStack.popPose();
         }
     }
 
-    /** Точка ладони в системе игрока: отведена назад и вниз, как на первой панели. */
-    private static Vec3 palmGathering(float charge) {
-        return new Vec3(-0.55D - 0.15D * charge, 1.15D - 0.1D * charge, -0.45D - 0.25D * charge);
-    }
-
-    /** Точка ладони на выбросе: вынесена вперёд. */
-    private static Vec3 palmReleased() {
-        return new Vec3(-0.15D, 1.25D, 0.75D);
+    /**
+     * Точка ладони — из КОСТИ РУКИ, а не из чисел в коде.
+     *
+     * <p>Раньше здесь стояли литералы в системе «ступни плюс поворот корпуса». Такая точка
+     * не следует за анимацией, приседанием и покачиванием, поэтому эффект отрывался от руки.
+     * Измерение показало смещение 66 пикселей при пределе 18.
+     *
+     * <p>Позиция приходит из {@link BoneAnchorLayer}, который читает её внутри слоя рендера
+     * игрока, где кости уже позированы анимацией — включая правки Player Animation Library.
+     *
+     * @return точка в СИСТЕМЕ ИГРОКА или {@code null}, если кость в этом кадре недоступна
+     */
+    private static Vec3 palmLocal(Entity entity, Vec3 feet, float bodyYaw) {
+        if (!(entity instanceof net.minecraft.client.player.AbstractClientPlayer player)) {
+            return null;
+        }
+        Vec3 world = BoneAnchorLayer.position(player, BoneAnchorLayer.Bone.RIGHT_HAND);
+        if (world == null) {
+            // Игрок не рисовался в этом кадре: вне поля зрения, невидим, первое лицо.
+            // Рисовать эффект вслепую нельзя — он окажется не там.
+            return null;
+        }
+        return toLocal(world.subtract(feet), bodyYaw);
     }
 
     private static void gather(MultiBufferSource.BufferSource buffers, PoseStack.Pose pose,
-                               Vec3 cameraLocal, float age, float windupAge, float impactAge) {
+                               Vec3 cameraLocal, Vec3 palm, float age, float windupAge,
+                               float impactAge) {
         float charge = Mth.clamp((age - windupAge) / Math.max(1.0F, impactAge - windupAge), 0.0F, 1.0F);
         if (charge <= 0.0F) {
             return;
         }
-        Vec3 palm = palmGathering(charge);
 
         // ВАЖНО: слои рисуются строго по одному. Общий источник буферов строит только один
         // тип за раз, и запрос второго молча закрывает первый — запись в удержанную ссылку
@@ -194,13 +213,15 @@ public final class PalmVfxRenderer {
         // ощущение плотности, не засвечивая силуэт.
         for (int i = 0; i < FOG_PUFFS; i++) {
             double angle = i * 2.399D + age * 0.02D;
-            double drift = 0.18D + 0.12D * Math.sin(age * 0.05D + i);
+            double drift = 0.09D + 0.06D * Math.sin(age * 0.05D + i);
             Vec3 puff = palm.add(new Vec3(Math.cos(angle) * drift, Math.sin(angle) * drift * 0.7D,
                     Math.sin(angle * 1.3D) * drift));
-            billboard(glow, pose, puff, cameraLocal, 0.60D + 0.95D * core,
+            // Радиусы поджаты к ладони. Прежние полтора блока растаскивали центр свечения
+            // на полкорпуса от руки: якорь был верным, а геометрия вокруг него — нет.
+            billboard(glow, pose, puff, cameraLocal, 0.26D + 0.34D * core,
                       (0.07F + 0.11F * core), 0.26F, 0.95F, 0.42F);
         }
-        billboard(glow, pose, palm, cameraLocal, 0.26D + 0.46D * core,
+        billboard(glow, pose, palm, cameraLocal, 0.15D + 0.24D * core,
                   0.22F + 0.40F * core, 0.36F, 1.0F, 0.52F);
         // Белое ТОЛЬКО ядром и небольшое: у референса холодного мало, оно плотное и в центре.
         billboard(glow, pose, palm, cameraLocal, 0.055D + 0.10D * core,
@@ -210,8 +231,8 @@ public final class PalmVfxRenderer {
         for (int i = 0; i < DUST; i++) {
             float cycle = ((age * 0.05F) + i / (float) DUST) % 1.0F;
             double angle = i * 2.399D + age * 0.06D;
-            double radius = (1.5D - 1.35D * cycle) * (1.0D - 0.25D * charge);
-            double lift = Math.sin(angle * 1.3D + i) * 0.5D * (1.0D - cycle);
+            double radius = (0.55D - 0.48D * cycle) * (1.0D - 0.25D * charge);
+            double lift = Math.sin(angle * 1.3D + i) * 0.22D * (1.0D - cycle);
             Vec3 point = palm.add(new Vec3(Math.cos(angle) * radius, lift, Math.sin(angle) * radius));
             float alpha = charge * cycle * 0.9F;
             // Крупнее и с чередованием холодных и зелёных: на референсе частицы разного
@@ -238,7 +259,7 @@ public final class PalmVfxRenderer {
                 double t = seg / (double) segments;
                 Vec3 point = top.add(new Vec3(
                         side + sway * 0.18D * t,
-                        -(0.35D + 1.45D * charge) * t,
+                        -(0.16D + 0.52D * charge) * t,
                         sway * 0.12D * t));
                 strandQuad(strands, pose, previous, point, cameraLocal,
                            0.075D * (1.0D - 0.55D * t),
@@ -254,7 +275,7 @@ public final class PalmVfxRenderer {
             for (int seg = 1; seg <= 7; seg++) {
                 double t = seg / 7.0D;
                 double angle = base + t * Math.PI * 1.1D;
-                double radius = (0.30D + 0.85D * charge) * Math.sin(Math.PI * t * 0.85D);
+                double radius = (0.14D + 0.34D * charge) * Math.sin(Math.PI * t * 0.85D);
                 Vec3 point = palm.add(new Vec3(Math.cos(angle) * radius,
                         0.30D * charge * Math.sin(Math.PI * t) - 0.25D * t,
                         Math.sin(angle) * radius * 0.7D));
@@ -280,7 +301,7 @@ public final class PalmVfxRenderer {
         for (int i = 0; i < 5; i++) {
             double phase = (age * 0.03F + i * 0.21D) % 1.0D;
             Vec3 top = palm.add(new Vec3(-0.08D + 0.05D * i, -0.05D, -0.04D + 0.03D * i));
-            Vec3 bottom = top.add(new Vec3(0.0D, -0.45D - 0.65D * phase, 0.0D));
+            Vec3 bottom = top.add(new Vec3(0.0D, -0.20D - 0.28D * phase, 0.0D));
             strandQuad(drips, pose, top, bottom, cameraLocal, 0.075D,
                        (float) (charge * (1.0D - phase) * 1.0D), 0.72F, 1.0F, 0.78F);
         }
@@ -298,13 +319,12 @@ public final class PalmVfxRenderer {
     }
 
     private static void release(MultiBufferSource.BufferSource buffers, PoseStack.Pose pose,
-                                Vec3 cameraLocal, float since) {
+                                Vec3 cameraLocal, Vec3 palm, float since) {
         float life = Mth.clamp(since / 26.0F, 0.0F, 1.0F);
         float fade = 1.0F - life;
         if (fade <= 0.0F) {
             return;
         }
-        Vec3 palm = palmReleased();
         Vec3 forward = new Vec3(0.0D, 0.0D, 1.0D);
         double reach = 1.2D + 3.4D * Math.min(1.0F, since / 5.0F);
 

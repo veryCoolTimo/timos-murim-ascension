@@ -82,6 +82,7 @@ neoForge {
             systemProperty 'murim.capture.camera', project.findProperty('murim.camera') ?: 'back'
             systemProperty 'murim.capture.technique', project.findProperty('murim.technique') ?: 'ceremonial_draw'
             systemProperty 'murim.capture.yaw', project.findProperty('murim.yaw') ?: '0'
+            systemProperty 'murim.debug.bones', project.findProperty('murim.bones') ?: 'false'
             programArguments.addAll '--quickPlaySingleplayer', 'devtest'
         }
 
