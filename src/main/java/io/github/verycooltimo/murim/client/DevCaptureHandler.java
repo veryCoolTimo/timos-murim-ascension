@@ -69,7 +69,11 @@ public final class DevCaptureHandler {
     private static final int FRAME_INTERVAL_TICKS = 1;
 
     /** Сколько кадров снять. 100 кадров по тику перекрывают технику в 92 тика вместе с ритуалом. */
-    private static final int FRAME_COUNT = 100;
+    private static final int FRAME_COUNT =
+            "awakening".equals(System.getProperty("murim.capture.technique"))
+                    // Церемония длиннее техники: 50 + 80 + 60 тиков до выбора, плюс сам
+                    // выбор и печать. Ста кадров не хватает даже до фазы выбора.
+                    ? 230 : 100;
 
     private static boolean armed = Boolean.getBoolean(ENABLE_PROPERTY);
     private static int warmup;
@@ -87,6 +91,12 @@ public final class DevCaptureHandler {
      * за тик, и промах в полтика оставляет остаток больше самого эффекта.
      */
     private static boolean framePending;
+
+    /** Сколько тиков подержать фазу выбора на экране до автовыбора при съёмке. */
+    private static final int CHOICE_DELAY_TICKS = 30;
+
+    /** Автовыбор отправляется один раз за прогон. */
+    private static boolean choiceSent;
 
     /**
      * Начинает съёмку немедленно. Вызывается автозапуском и может быть вызвана вручную,
@@ -108,6 +118,7 @@ public final class DevCaptureHandler {
         // Иначе запрошенный, но не снятый кадр «выстрелит» при следующем входе в мир
         // и запишет пару снимков с телеметрией, когда съёмка не запущена.
         framePending = false;
+        choiceSent = false;
         tickCounter = 0;
         frameIndex = 0;
     }
@@ -143,10 +154,29 @@ public final class DevCaptureHandler {
         }
 
         if (warmup > 0 && --warmup == 0) {
-            PacketDistributor.sendToServer(new StartTechniquePayload(
-                    net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(
-                            MurimMod.MODID, System.getProperty(TECHNIQUE_PROPERTY, "ceremonial_draw"))));
+            // Снимать можно не только технику, но и сцену создания даньтяня: у неё те же
+            // требования к проверке — привязка к телу, фазы, отсутствие пересвета.
+            String subject = System.getProperty(TECHNIQUE_PROPERTY, "ceremonial_draw");
+            if ("awakening".equals(subject)) {
+                PacketDistributor.sendToServer(
+                        io.github.verycooltimo.murim.network.StartAwakeningPayload.INSTANCE);
+            } else {
+                PacketDistributor.sendToServer(new StartTechniquePayload(
+                        net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(
+                                MurimMod.MODID, subject)));
+            }
             startCapture();
+        }
+
+        // Фаза выбора ждёт игрока бесконечно, а при автосъёмке нажимать некому: без
+        // этого печать в кадры не попадёт вовсе. Выбор фиксированный, чтобы съёмка
+        // оставалась воспроизводимой.
+        if (framesLeft > 0 && AwakeningSceneHandler.awaitingChoice()
+                && AwakeningSceneHandler.tick() >= CHOICE_DELAY_TICKS && !choiceSent) {
+            choiceSent = true;
+            PacketDistributor.sendToServer(
+                    new io.github.verycooltimo.murim.network.ChooseFoundationPayload(
+                            System.getProperty("murim.capture.foundation", "void")));
         }
 
         if (framesLeft > 0 && tickCounter++ % FRAME_INTERVAL_TICKS == 0) {
@@ -210,6 +240,29 @@ public final class DevCaptureHandler {
             // прогонах попадал в разные фазы, и метрики фаз сравнивали несравнимое.
             float[] phase = io.github.verycooltimo.murim.client.vfx.PalmVfxRenderer
                     .captureAgeOf(player.getId());
+            // Фаза церемонии пишется рядом: по номеру кадра сцену не разметить, а
+            // длительности фаз меняются вместе с постановкой.
+            String scenePhase = AwakeningSceneHandler.active()
+                    ? AwakeningSceneHandler.phase() : "";
+            // Сколько костей конечностей доступно в этом кадре. Ноль означает, что жилам
+            // просто неоткуда расти, и это НЕ дефект рендерера — отличить одно от другого
+            // по картинке невозможно.
+            int limbs = 0;
+            if (player instanceof net.minecraft.client.player.AbstractClientPlayer client) {
+                for (io.github.verycooltimo.murim.client.vfx.BoneAnchorLayer.Bone bone
+                        : new io.github.verycooltimo.murim.client.vfx.BoneAnchorLayer.Bone[] {
+                        io.github.verycooltimo.murim.client.vfx.BoneAnchorLayer.Bone.RIGHT_HAND,
+                        io.github.verycooltimo.murim.client.vfx.BoneAnchorLayer.Bone.LEFT_HAND,
+                        io.github.verycooltimo.murim.client.vfx.BoneAnchorLayer.Bone.RIGHT_FOOT,
+                        io.github.verycooltimo.murim.client.vfx.BoneAnchorLayer.Bone.LEFT_FOOT,
+                        io.github.verycooltimo.murim.client.vfx.BoneAnchorLayer.Bone.HEAD}) {
+                    if (io.github.verycooltimo.murim.client.vfx.BoneAnchorLayer
+                            .position(client, bone) != null) {
+                        limbs++;
+                    }
+                }
+            }
+            int sceneTick = AwakeningSceneHandler.active() ? AwakeningSceneHandler.tick() : -1;
             // Куда эффект РЕАЛЬНО поставил ладонь. Сравнение с позицией кости отделяет
             // ошибку привязки от ошибки измерения — снаружи они выглядят одинаково.
             net.minecraft.world.phys.Vec3 drawn =
@@ -223,6 +276,7 @@ public final class DevCaptureHandler {
                             + "\"age\":%.2f,\"impactAge\":%.2f,"
                             + "\"rx\":%.4f,\"ry\":%.4f,\"rz\":%.4f,"
                             + "\"boneMissing\":%b,\"fovDisturbed\":%b,"
+                            + "\"scenePhase\":\"%s\",\"sceneTick\":%d,\"limbs\":%d,"
                             + "\"w\":%d,\"h\":%d}%n",
                     frame, tickCounter - 1,
                     player.getX(), player.getY(), player.getZ(), player.getEyeHeight(),
@@ -234,7 +288,7 @@ public final class DevCaptureHandler {
                     phase == null ? -1.0F : phase[0], phase == null ? -1.0F : phase[1],
                     drawn == null ? 0.0D : drawn.x, drawn == null ? 0.0D : drawn.y,
                     drawn == null ? 0.0D : drawn.z,
-                    boneMissing, fovDisturbed,
+                    boneMissing, fovDisturbed, scenePhase, sceneTick, limbs,
                     minecraft.getWindow().getWidth(), minecraft.getWindow().getHeight());
         } catch (java.io.IOException exception) {
             MurimMod.LOGGER.warn("Телеметрия не пишется: {}", exception.getMessage());

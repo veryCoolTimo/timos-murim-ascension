@@ -44,6 +44,9 @@ public final class ClientLifecycleEvents {
         HitStopHandler.reset();
         DevCaptureHandler.reset();
         ClientProfileState.reset();
+        // Иначе камера остаётся фронтальной после выхода посреди церемонии: состояние
+        // сцены переживает смену мира, а сервер уже ничего не пришлёт.
+        AwakeningSceneHandler.reset();
     }
 
     private ClientLifecycleEvents() {

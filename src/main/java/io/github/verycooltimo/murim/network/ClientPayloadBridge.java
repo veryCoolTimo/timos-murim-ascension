@@ -40,6 +40,11 @@ final class ClientPayloadBridge {
         io.github.verycooltimo.murim.client.ClientProfileState.setRitual(payload);
     }
 
+    /** Состояние церемонии создания даньтяня: сцена рисуется целиком по нему. */
+    public static void handleSyncAwakening(SyncAwakeningPayload payload) {
+        io.github.verycooltimo.murim.client.AwakeningSceneHandler.accept(payload);
+    }
+
     private ClientPayloadBridge() {
     }
 }

@@ -43,7 +43,12 @@ public class BoneAnchorLayer extends RenderLayer<AbstractClientPlayer, PlayerMod
         RIGHT_HAND,
         LEFT_HAND,
         CHEST,
-        DANTIAN
+        DANTIAN,
+        // Концы конечностей и голова нужны сцене создания даньтяня: жилы растут ОТ них
+        // к средоточию, и без них поток некуда было бы вести.
+        RIGHT_FOOT,
+        LEFT_FOOT,
+        HEAD
     }
 
     /**
@@ -87,6 +92,10 @@ public class BoneAnchorLayer extends RenderLayer<AbstractClientPlayer, PlayerMod
         bones.put(Bone.CHEST, pointOf(poseStack, model.body, 0.0F, 2.0F, 0.0F));
         // Даньтянь — под пупком, ниже центра корпуса.
         bones.put(Bone.DANTIAN, pointOf(poseStack, model.body, 0.0F, 9.0F, -1.0F));
+        // Ступни — нижний конец ноги длиной 12 единиц; голова — её центр.
+        bones.put(Bone.RIGHT_FOOT, pointOf(poseStack, model.rightLeg, 0.0F, 11.0F, 0.0F));
+        bones.put(Bone.LEFT_FOOT, pointOf(poseStack, model.leftLeg, 0.0F, 11.0F, 0.0F));
+        bones.put(Bone.HEAD, pointOf(poseStack, model.head, 0.0F, -4.0F, 0.0F));
     }
 
     /**

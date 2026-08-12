@@ -76,6 +76,36 @@ public final class MurimRenderTypes {
     /** Вспышка ядра — третьим слоем в точке контакта. */
     private static final RenderType IMPACT_CORE = additive("impact_core", CORE_TEXTURE);
 
+    /**
+     * Свечение ПОВЕРХ тела, без проверки глубины.
+     *
+     * <p>Меридианы идут внутри тела, и с обычной проверкой глубины модель игрока их
+     * съедает: измерение показало два видимых пикселя на всю сцену. Жилы должны читаться
+     * как свечение, проступающее сквозь кожу, а для этого геометрия внутри модели обязана
+     * рисоваться поверх неё.
+     *
+     * <p>Цена решения: такое свечение видно и сквозь стены. Для церемонии, которая идёт
+     * вокруг самого игрока и длится секунды, это приемлемо; для боевых эффектов — нет,
+     * поэтому слой отдельный, а не общий.
+     */
+    private static RenderType overlayGlow(String name, ResourceLocation texture) {
+        return RenderType.create(
+                MurimMod.MODID + ":" + name,
+                DefaultVertexFormat.NEW_ENTITY,
+                VertexFormat.Mode.QUADS,
+                4096,
+                RenderType.CompositeState.builder()
+                        .setShaderState(RenderStateShard.RENDERTYPE_EYES_SHADER)
+                        .setTextureState(new RenderStateShard.TextureStateShard(texture, true, false))
+                        .setTransparencyState(RenderStateShard.LIGHTNING_TRANSPARENCY)
+                        .setCullState(RenderStateShard.NO_CULL)
+                        .setLightmapState(RenderStateShard.NO_LIGHTMAP)
+                        .setOverlayState(RenderStateShard.NO_OVERLAY)
+                        .setDepthTestState(RenderStateShard.NO_DEPTH_TEST)
+                        .setWriteMaskState(RenderStateShard.COLOR_WRITE)
+                        .createCompositeState(false));
+    }
+
     private static RenderType additive(String name, ResourceLocation texture) {
         return RenderType.create(
                 MurimMod.MODID + ":" + name,
@@ -95,6 +125,9 @@ public final class MurimRenderTypes {
 
     /** Тонкая светящаяся прядь. Из пучка таких собирается фактура смазанного движения. */
     private static final RenderType STRAND = additive("strand", STRAND_TEXTURE);
+
+    /** Жилы по телу: рисуются поверх модели, см. {@link #overlayGlow}. */
+    private static final RenderType BODY_GLOW = overlayGlow("body_glow", STRAND_TEXTURE);
 
     /** Стекающая субстанция с каплей. */
     private static final RenderType DRIP = additive("drip", DRIP_TEXTURE);
@@ -123,6 +156,10 @@ public final class MurimRenderTypes {
 
     public static RenderType strand() {
         return STRAND;
+    }
+
+    public static RenderType bodyGlow() {
+        return BODY_GLOW;
     }
 
     public static RenderType drip() {

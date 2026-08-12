@@ -56,8 +56,11 @@ public final class DevSetupEvents {
                 || !Boolean.getBoolean(CAPTURE_PROPERTY)) {
             return;
         }
+        // Меч нужен для съёмки техник, но в церемонии он торчит из сложенных рук и
+        // перекрывает то самое тело, ради которого сцена и снимается.
+        boolean ceremony = "awakening".equals(System.getProperty("murim.capture.technique"));
         event.getEntity().setItemInHand(InteractionHand.MAIN_HAND,
-                new ItemStack(Items.NETHERITE_SWORD));
+                ceremony ? ItemStack.EMPTY : new ItemStack(Items.NETHERITE_SWORD));
 
         // Площадка над лесом. Оценивать светящуюся ленту на фоне листвы невозможно: контраст
         // низкий, а ветки перекрывают силуэт. Чистое небо даёт однозначный фон, на котором
@@ -116,6 +119,18 @@ public final class DevSetupEvents {
                             serverLevel, STAGE_X + 0.5D + dx, STAGE_Y, STAGE_Z + 6.0D);
             target.addTag(TARGET_TAG);
             serverLevel.addFreshEntity(target);
+        }
+        // Съёмка САМОЙ церемонии требует обратного: даньтянь должен быть НЕ создан,
+        // иначе церемония откажется начинаться, и в кадры попадёт неподвижный игрок.
+        // Молчаливый отказ выглядел бы как поломка визуала, поэтому режим разделён явно.
+        if ("awakening".equals(System.getProperty("murim.capture.technique"))) {
+            event.getEntity().setData(
+                    io.github.verycooltimo.murim.registry.ModAttachments.PROFILE,
+                    io.github.verycooltimo.murim.profile.DantianProfile.INITIAL);
+            if (event.getEntity() instanceof net.minecraft.server.level.ServerPlayer fresh) {
+                io.github.verycooltimo.murim.profile.ProfileNetwork.sync(fresh);
+            }
+            return;
         }
         // Техники теперь стоят ци и требуют сформированного центра. Без этого съёмочный
         // стенд молча перестал бы запускать техники, и это выглядело бы как поломка визуала.

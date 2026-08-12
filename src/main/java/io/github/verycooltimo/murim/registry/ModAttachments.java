@@ -42,6 +42,18 @@ public final class ModAttachments {
                     () -> AttachmentType.<io.github.verycooltimo.murim.profile.RitualState>builder(
                             () -> io.github.verycooltimo.murim.profile.RitualState.IDLE).build());
 
+    /**
+     * Церемония создания даньтяня.
+     *
+     * <p>НЕ сохраняется намеренно, как и циркуляция: сцена длится секунды и требует
+     * неподвижности, а продолжать её после перезахода означало бы обходить риск срыва.
+     * Сам созданный даньтянь сохраняется — он живёт в профиле.
+     */
+    public static final Supplier<AttachmentType<io.github.verycooltimo.murim.profile.AwakeningState>> AWAKENING =
+            ATTACHMENT_TYPES.register("awakening_state",
+                    () -> AttachmentType.<io.github.verycooltimo.murim.profile.AwakeningState>builder(
+                            () -> io.github.verycooltimo.murim.profile.AwakeningState.IDLE).build());
+
     /** Серия обычных ударов. Не сохраняется: связка живёт секунды и через сейв не тянется. */
     public static final Supplier<AttachmentType<io.github.verycooltimo.murim.combat.SchoolStyle.ComboState>> COMBO =
             ATTACHMENT_TYPES.register("combo_state",

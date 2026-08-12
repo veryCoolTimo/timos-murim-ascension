@@ -26,6 +26,18 @@ public final class ProfileEvents {
         if (!(event.getEntity() instanceof ServerPlayer player)) {
             return;
         }
+        // Церемония создания даньтяня тикает ПЕРЕД циркуляцией и исключает её: две сцены
+        // одновременно не бывает, а её собственный tick сам решает, когда закончиться.
+        if (player.getData(ModAttachments.AWAKENING).active()) {
+            try {
+                AwakeningService.tick(player);
+            } catch (RuntimeException exception) {
+                MurimMod.LOGGER.error("Ошибка в тике церемонии у {}, церемония прервана",
+                        player.getGameProfile().getName(), exception);
+                AwakeningService.interrupt(player, "murim.awakening.broken.error");
+            }
+            return;
+        }
         RitualState state = player.getData(ModAttachments.RITUAL);
         if (!state.active()) {
             return;
@@ -60,6 +72,10 @@ public final class ProfileEvents {
             return;
         }
         if (!(event.getEntity() instanceof ServerPlayer player)) {
+            return;
+        }
+        if (player.getData(ModAttachments.AWAKENING).active()) {
+            AwakeningService.onDamage(player, event.getAmount());
             return;
         }
         if (player.getData(ModAttachments.RITUAL).active()) {

@@ -55,6 +55,34 @@ public final class ModNetwork {
                 SyncRitualPayload.TYPE,
                 SyncRitualPayload.STREAM_CODEC,
                 (payload, context) -> ClientPayloadBridge.handleSyncRitual(payload));
+
+        registrar.playToClient(
+                SyncAwakeningPayload.TYPE,
+                SyncAwakeningPayload.STREAM_CODEC,
+                (payload, context) -> ClientPayloadBridge.handleSyncAwakening(payload));
+
+        registrar.playToServer(
+                StartAwakeningPayload.TYPE,
+                StartAwakeningPayload.STREAM_CODEC,
+                (payload, context) -> {
+                    if (context.player() instanceof ServerPlayer serverPlayer) {
+                        io.github.verycooltimo.murim.profile.AwakeningService.start(serverPlayer);
+                    }
+                });
+
+        // Выбор основания приходит от клиента как НАМЕРЕНИЕ: фазу церемонии и то, что
+        // даньтянь ещё не создан, проверяет сервер.
+        registrar.playToServer(
+                ChooseFoundationPayload.TYPE,
+                ChooseFoundationPayload.STREAM_CODEC,
+                (payload, context) -> {
+                    if (context.player() instanceof ServerPlayer serverPlayer) {
+                        io.github.verycooltimo.murim.profile.AwakeningService.choose(
+                                serverPlayer,
+                                io.github.verycooltimo.murim.profile.Foundation.byId(
+                                        payload.foundation()));
+                    }
+                });
     }
 
     private ModNetwork() {

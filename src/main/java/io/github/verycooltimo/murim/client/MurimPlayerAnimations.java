@@ -33,6 +33,15 @@ public final class MurimPlayerAnimations {
     public static final ResourceLocation CEREMONIAL_DRAW =
             ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "ceremonial_draw");
 
+    /**
+     * Поза лотоса для церемонии создания даньтяня.
+     *
+     * <p>Зациклена: церемония длится дольше анимации и ждёт выбора игрока неопределённое
+     * время. Незацикленная поза «отпустила» бы тело посреди сцены.
+     */
+    public static final ResourceLocation LOTUS =
+            ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "lotus");
+
     /** Анимация берётся из описания техники; эта константа осталась запасным вариантом. */
     public static final ResourceLocation DEMON_PALM =
             ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "demon_palm");
