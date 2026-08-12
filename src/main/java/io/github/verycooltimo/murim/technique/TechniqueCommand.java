@@ -67,6 +67,20 @@ public final class TechniqueCommand {
                             return 1;
                         })));
 
+        // Сброс профиля: даньтянь создаётся ОДИН раз за персонажа, и без этой команды
+        // церемонию нельзя посмотреть второй раз иначе как новым миром.
+        root.then(Commands.literal("reset").executes(context -> {
+            ServerPlayer player = context.getSource().getPlayerOrException();
+            player.setData(io.github.verycooltimo.murim.registry.ModAttachments.PROFILE,
+                    io.github.verycooltimo.murim.profile.DantianProfile.INITIAL);
+            player.setData(io.github.verycooltimo.murim.registry.ModAttachments.AWAKENING,
+                    io.github.verycooltimo.murim.profile.AwakeningState.IDLE);
+            io.github.verycooltimo.murim.profile.ProfileNetwork.sync(player);
+            context.getSource().sendSuccess(
+                    () -> Component.literal("Профиль сброшен: даньтянь не создан"), false);
+            return 1;
+        }));
+
         root.then(Commands.literal("dummy").executes(context -> {
             ServerPlayer player = context.getSource().getPlayerOrException();
             io.github.verycooltimo.murim.entity.TrainingDummy dummy =
