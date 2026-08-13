@@ -91,48 +91,77 @@ public final class AwakeningVfxRenderer {
     }
 
     /**
-     * Жилы от конечностей и головы к средоточию.
+     * Меридианы: поток снизу вверх по телу через узлы.
      *
-     * <p>Рост идёт ОТ конечностей внутрь: сначала проступают концы, поток стекается вниз.
+     * <p>Порядок ветвей задан руками: ступни → колени → средоточие → грудь → плечи →
+     * кисти, и отдельной ветвью грудь → голова. Автор прямо указал, что каналы должны
+     * идти ПО ТЕЛУ через точки, а не сходиться спицами к центру.
      */
     private static void drawVeins(Minecraft minecraft, AbstractClientPlayer player,
                                   PoseStack.Pose pose, Vec3 cameraLocal, Vec3 core,
                                   String phase, float age, float glow) {
-        float grown = switch (phase) {
+        float front = switch (phase) {
             case "SETTLE" -> 0.0F;
             case "VEINS" -> Mth.clamp(age / 80.0F, 0.0F, 1.0F);
-            default -> 1.0F;
+            // Дойдя до верха, каналы ГАСНУТ, и только потом собирается ядро.
+            // Это ритм сцены: сначала тело наполняется, затем отдаёт.
+            default -> 0.0F;
         };
-        if (grown <= 0.0F) {
+        if (front <= 0.0F) {
             return;
         }
-        VertexConsumer consumer = minecraft.renderBuffers().bufferSource()
+        Vec3 rightFoot = bone(player, BoneAnchorLayer.Bone.RIGHT_FOOT);
+        Vec3 leftFoot = bone(player, BoneAnchorLayer.Bone.LEFT_FOOT);
+        Vec3 rightKnee = bone(player, BoneAnchorLayer.Bone.RIGHT_KNEE);
+        Vec3 leftKnee = bone(player, BoneAnchorLayer.Bone.LEFT_KNEE);
+        Vec3 chest = bone(player, BoneAnchorLayer.Bone.CHEST);
+        Vec3 rightShoulder = bone(player, BoneAnchorLayer.Bone.RIGHT_SHOULDER);
+        Vec3 leftShoulder = bone(player, BoneAnchorLayer.Bone.LEFT_SHOULDER);
+        Vec3 rightHand = bone(player, BoneAnchorLayer.Bone.RIGHT_HAND);
+        Vec3 leftHand = bone(player, BoneAnchorLayer.Bone.LEFT_HAND);
+        Vec3 head = bone(player, BoneAnchorLayer.Bone.HEAD);
+
+        java.util.List<Vec3[]> spine = java.util.List.of(
+                new Vec3[] {rightFoot, rightKnee},
+                new Vec3[] {rightKnee, core},
+                new Vec3[] {core, chest},
+                new Vec3[] {chest, head});
+        java.util.List<Vec3[]> left = java.util.List.of(
+                new Vec3[] {leftFoot, leftKnee},
+                new Vec3[] {leftKnee, core});
+        java.util.List<Vec3[]> arms = java.util.List.of(
+                new Vec3[] {chest, rightShoulder},
+                new Vec3[] {rightShoulder, rightHand},
+                new Vec3[] {chest, leftShoulder},
+                new Vec3[] {leftShoulder, leftHand});
+
+        VertexConsumer channel = minecraft.renderBuffers().bufferSource()
                 .getBuffer(MurimRenderTypes.bodyGlow());
-        BoneAnchorLayer.Bone[] limbs = {
-                BoneAnchorLayer.Bone.RIGHT_HAND, BoneAnchorLayer.Bone.LEFT_HAND,
-                BoneAnchorLayer.Bone.RIGHT_FOOT, BoneAnchorLayer.Bone.LEFT_FOOT,
-                BoneAnchorLayer.Bone.HEAD
-        };
-        for (int i = 0; i < limbs.length; i++) {
-            Vec3 from = BoneAnchorLayer.position(player, limbs[i]);
-            if (from == null) {
-                continue;
-            }
-            // Конечности прорастают не одновременно: смещение по индексу даёт волну
-            // от рук к ногам, а не одновременную вспышку всего тела.
-            float offset = i * 0.09F;
-            // Яркость жил НЕ привязана к общей кривой сцены: в собственной фазе они —
-            // предмет показа, а общая кривая там ещё только разгорается (0.12..0.70).
-            // На кадрах фаза «жилы» выглядела пустой при работающей геометрии.
-            float veinAlpha = "VEINS".equals(phase) ? 0.55F + 0.45F * grown : glow * 0.85F;
-            BodyVeins.draw(consumer, pose, from, core, cameraLocal, VEINS_PER_LIMB,
-                           grown - offset, 0.055D, veinAlpha, SEED + i * 31L,
-                           i % 2 == 0 ? VEIN : VEIN_DEEP);
-        }
+        // Ветви идут не одновременно: ноги наполняются первыми, руки и голова следом.
+        MeridianFlow.draw(channel, channel, pose, cameraLocal, spine, front,
+                          0.030D, 0.95F, VEIN, CORE);
+        MeridianFlow.draw(channel, channel, pose, cameraLocal, left, front * 1.15F,
+                          0.030D, 0.95F, VEIN_DEEP, CORE);
+        MeridianFlow.draw(channel, channel, pose, cameraLocal, arms,
+                          (front - 0.45F) / 0.55F, 0.026D, 0.90F, VEIN, CORE);
         minecraft.renderBuffers().bufferSource().endBatch(MurimRenderTypes.bodyGlow());
     }
 
-    /** Средоточие: ядро собирается по мере того, как потоки стекаются вниз. */
+    /** Кость или {@code null}: сцена не рисуется по несуществующей точке. */
+    private static Vec3 bone(AbstractClientPlayer player, BoneAnchorLayer.Bone which) {
+        return BoneAnchorLayer.position(player, which);
+    }
+
+    /**
+     * Средоточие СОБИРАЕТСЯ на глазах.
+     *
+     * <p>Замечание автора: «не видно, что что-то формируется — просто частицы бегают,
+     * взрываются, и всё». Прежняя версия и правда только сыпала искры в точку.
+     *
+     * <p>Теперь у ядра есть <b>оболочка</b>: широкое кольцо стягивается к центру и
+     * уплотняется в шар с видимой границей. Радиус падает, яркость и плотность растут —
+     * зритель видит объект, а не поток частиц. Искры остались, но они уже не главные.
+     */
     private static void drawCore(Minecraft minecraft, PoseStack.Pose pose, Vec3 cameraLocal,
                                  Vec3 core, String phase, float age, float glow) {
         float density = switch (phase) {
@@ -145,20 +174,33 @@ public final class AwakeningVfxRenderer {
         }
         VertexConsumer consumer = minecraft.renderBuffers().bufferSource()
                 .getBuffer(MurimRenderTypes.impactCore());
-        // Ядро приподнято над точкой кости: на кадре свечение упиралось в пол и
-        // заливало его аддитивным светом, из-за чего сцена читалась как струя вниз.
+        // Ядро приподнято над точкой кости: на кадре свечение упиралось в пол.
         Vec3 lifted = core.add(0.0D, 0.12D, 0.0D);
-        CoreGlow.draw(consumer, pose, lifted, cameraLocal, age, 0.17D, density * glow,
-                      VEIN_DEEP, CORE);
-        // Искры стекаются В ядро: направление читается и говорит «собирается», а не
-        // «взрывается». Наружу они пойдут только на печати.
-        boolean sealing = "SEAL".equals(phase);
-        if (sealing) {
+
+        // ОБОЛОЧКА: кольцо стягивается от полуметра к пяти сантиметрам. Именно её
+        // сжатие читается как «собирается объект».
+        int shell = 18;
+        double radius = 0.52D * (1.0D - density) + 0.06D;
+        for (int i = 0; i < shell; i++) {
+            double angle = i * (Math.PI * 2.0D / shell) + age * 0.05D;
+            double tilt = Math.sin(i * 2.3D + age * 0.03D) * radius * 0.55D;
+            Vec3 point = lifted.add(Math.cos(angle) * radius, tilt, Math.sin(angle) * radius);
+            // Чем плотнее ядро, тем крупнее и ярче его куски: граница уплотняется.
+            VfxDraw.billboard(consumer, pose, point, cameraLocal,
+                              0.020D + 0.055D * density, (0.25F + 0.75F * density) * glow,
+                              VEIN.red(), VEIN.green(), VEIN.blue());
+        }
+
+        CoreGlow.draw(consumer, pose, lifted, cameraLocal, age,
+                      0.06D + 0.13D * density, density * glow, VEIN_DEEP, CORE);
+
+        // Искры втягиваются в ядро и разлетаются только на печати.
+        if ("SEAL".equals(phase)) {
             BillboardBurst.outward(consumer, pose, lifted, cameraLocal, 40, age, 0.48D,
                                    glow, VEIN, CORE);
         } else {
-            BillboardBurst.inward(consumer, pose, lifted, cameraLocal, 40, age, 0.48D,
-                                  density * glow, VEIN, CORE);
+            BillboardBurst.inward(consumer, pose, lifted, cameraLocal, 28, age, 0.42D,
+                                  density * glow * 0.7F, VEIN, CORE);
         }
         minecraft.renderBuffers().bufferSource().endBatch(MurimRenderTypes.impactCore());
     }

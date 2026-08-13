@@ -1,5 +1,6 @@
 package io.github.verycooltimo.murim.technique;
 
+import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import io.github.verycooltimo.murim.MurimMod;
@@ -66,6 +67,62 @@ public final class TechniqueCommand {
                             }
                             return 1;
                         })));
+
+        // Мгновенное создание даньтяня с нужным основанием: пробовать техники, каждый раз
+        // проходя церемонию, — трата времени автора, а не проверка.
+        root.then(Commands.literal("awaken")
+                .then(Commands.argument("foundation", StringArgumentType.word())
+                        .suggests((context, builder) -> {
+                            for (io.github.verycooltimo.murim.profile.Foundation f
+                                    : io.github.verycooltimo.murim.profile.Foundation.values()) {
+                                builder.suggest(f.id());
+                            }
+                            return builder.buildFuture();
+                        })
+                        .executes(context -> {
+                            ServerPlayer player = context.getSource().getPlayerOrException();
+                            io.github.verycooltimo.murim.profile.Foundation foundation =
+                                    io.github.verycooltimo.murim.profile.Foundation.byId(
+                                            StringArgumentType.getString(context, "foundation"));
+                            if (foundation == null) {
+                                context.getSource().sendFailure(
+                                        Component.literal("Основание не найдено: blood, void, mountain"));
+                                return 0;
+                            }
+                            io.github.verycooltimo.murim.profile.DantianProfile profile =
+                                    foundation.apply(player.getData(
+                                            io.github.verycooltimo.murim.registry.ModAttachments.PROFILE));
+                            player.setData(io.github.verycooltimo.murim.registry.ModAttachments.PROFILE,
+                                    profile.withPool(profile.capacity())
+                                            .withCirculating(profile.maxCirculating()));
+                            io.github.verycooltimo.murim.profile.ProfileNetwork.sync(player);
+                            context.getSource().sendSuccess(
+                                    () -> Component.literal("Даньтянь создан: " + foundation.id()
+                                            + ", ци полная"), false);
+                            return 1;
+                        })));
+
+        // Долить ци: без этого каждую пробу техники приходится ждать, накапливая запас.
+        root.then(Commands.literal("qi").executes(context -> {
+            ServerPlayer player = context.getSource().getPlayerOrException();
+            io.github.verycooltimo.murim.profile.DantianProfile profile =
+                    player.getData(io.github.verycooltimo.murim.registry.ModAttachments.PROFILE);
+            player.setData(io.github.verycooltimo.murim.registry.ModAttachments.PROFILE,
+                    profile.withPool(profile.capacity())
+                            .withCirculating(profile.maxCirculating()));
+            io.github.verycooltimo.murim.profile.ProfileNetwork.sync(player);
+            context.getSource().sendSuccess(() -> Component.literal("Ци пополнена"), false);
+            return 1;
+        }));
+
+        // Сброс кулдауна: подряд смотреть одну и ту же технику иначе нельзя.
+        root.then(Commands.literal("cooldown").executes(context -> {
+            ServerPlayer player = context.getSource().getPlayerOrException();
+            player.setData(io.github.verycooltimo.murim.registry.ModAttachments.TECHNIQUE_STATE,
+                    io.github.verycooltimo.murim.combat.TechniqueState.IDLE);
+            context.getSource().sendSuccess(() -> Component.literal("Кулдаун сброшен"), false);
+            return 1;
+        }));
 
         // Сброс профиля: даньтянь создаётся ОДИН раз за персонажа, и без этой команды
         // церемонию нельзя посмотреть второй раз иначе как новым миром.

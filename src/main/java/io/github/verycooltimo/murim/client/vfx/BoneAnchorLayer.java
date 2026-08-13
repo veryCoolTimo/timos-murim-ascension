@@ -48,7 +48,14 @@ public class BoneAnchorLayer extends RenderLayer<AbstractClientPlayer, PlayerMod
         // к средоточию, и без них поток некуда было бы вести.
         RIGHT_FOOT,
         LEFT_FOOT,
-        HEAD
+        HEAD,
+        // Колени и плечи — узлы меридианов. Поток идёт снизу вверх через точки на теле,
+        // а не по прямой от конечности к центру: прямая читается как спица, а не как
+        // канал, проложенный по телу.
+        RIGHT_KNEE,
+        LEFT_KNEE,
+        RIGHT_SHOULDER,
+        LEFT_SHOULDER
     }
 
     /**
@@ -96,6 +103,11 @@ public class BoneAnchorLayer extends RenderLayer<AbstractClientPlayer, PlayerMod
         bones.put(Bone.RIGHT_FOOT, pointOf(poseStack, model.rightLeg, 0.0F, 11.0F, 0.0F));
         bones.put(Bone.LEFT_FOOT, pointOf(poseStack, model.leftLeg, 0.0F, 11.0F, 0.0F));
         bones.put(Bone.HEAD, pointOf(poseStack, model.head, 0.0F, -4.0F, 0.0F));
+        // Колено — середина ноги, плечо — верх руки.
+        bones.put(Bone.RIGHT_KNEE, pointOf(poseStack, model.rightLeg, 0.0F, 6.0F, 0.0F));
+        bones.put(Bone.LEFT_KNEE, pointOf(poseStack, model.leftLeg, 0.0F, 6.0F, 0.0F));
+        bones.put(Bone.RIGHT_SHOULDER, pointOf(poseStack, model.rightArm, 0.0F, 1.0F, 0.0F));
+        bones.put(Bone.LEFT_SHOULDER, pointOf(poseStack, model.leftArm, 0.0F, 1.0F, 0.0F));
     }
 
     /**
