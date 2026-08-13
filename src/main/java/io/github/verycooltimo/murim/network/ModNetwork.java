@@ -56,6 +56,12 @@ public final class ModNetwork {
                 SyncRitualPayload.STREAM_CODEC,
                 (payload, context) -> ClientPayloadBridge.handleSyncRitual(payload));
 
+        // Попадание: без него клиент рисовал брызги всегда, даже когда удар прошёл мимо.
+        registrar.playToClient(
+                TechniqueHitPayload.TYPE,
+                TechniqueHitPayload.STREAM_CODEC,
+                (payload, context) -> ClientPayloadBridge.handleTechniqueHit(payload));
+
         registrar.playToClient(
                 SyncAwakeningPayload.TYPE,
                 SyncAwakeningPayload.STREAM_CODEC,

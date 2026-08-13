@@ -40,6 +40,12 @@ final class ClientPayloadBridge {
         io.github.verycooltimo.murim.client.ClientProfileState.setRitual(payload);
     }
 
+    /** Попадание техники: брызги возникают в точке контакта, а не из воздуха. */
+    public static void handleTechniqueHit(TechniqueHitPayload payload) {
+        io.github.verycooltimo.murim.client.vfx.PalmVfxRenderer.recordHit(
+                payload.sourceId(), payload.x(), payload.y(), payload.z(), payload.height());
+    }
+
     /** Состояние церемонии создания даньтяня: сцена рисуется целиком по нему. */
     public static void handleSyncAwakening(SyncAwakeningPayload payload) {
         io.github.verycooltimo.murim.client.AwakeningSceneHandler.accept(payload);

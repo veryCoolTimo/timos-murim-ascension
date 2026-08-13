@@ -149,6 +149,15 @@ public final class BehaviorExecutor {
                 continue;
             }
             anyHit = true;
+            // Точка контакта уходит на клиент: брызги яда рисуются ТАМ, где удар
+            // состоялся. Без этого выброс возникал из воздуха независимо от попадания —
+            // прямое замечание автора по кадрам.
+            net.neoforged.neoforge.network.PacketDistributor.sendToPlayersTrackingEntityAndSelf(
+                    player,
+                    new io.github.verycooltimo.murim.network.TechniqueHitPayload(
+                            player.getId(),
+                            target.getX(), target.getY() + target.getBbHeight() * 0.55D,
+                            target.getZ(), target.getBbHeight()));
             if (palm.poisonSeconds() > 0) {
                 target.addEffect(new net.minecraft.world.effect.MobEffectInstance(
                         net.minecraft.world.effect.MobEffects.POISON,

@@ -204,7 +204,22 @@ public final class DevSetupEvents {
         io.github.verycooltimo.murim.entity.TrainingDummy dummy =
                 new io.github.verycooltimo.murim.entity.TrainingDummy(
                         io.github.verycooltimo.murim.registry.ModEntities.DUMMY.get(), level);
-        dummy.setPos(STAGE_X + 1.7D, STAGE_Y, STAGE_Z + 3.2D);
+        // Манекен ставится ПО НАПРАВЛЕНИЮ ВЗГЛЯДА и в пределах удара.
+        //
+        // Две ошибки стенда сразу: прежние 2.95 блока превышали дальность ладони после
+        // её сокращения до 2.2, а фиксированные координаты не учитывали поворот игрока
+        // при съёмке — на ракурсе с поворотом 90° цель оказывалась сбоку от конуса.
+        // В обоих случаях техника промахивалась, брызг по цели не было, и на кадрах это
+        // читалось как «эффект не работает».
+        double yaw = Math.toRadians(Double.parseDouble(
+                System.getProperty("murim.capture.yaw", "0")));
+        // Цель смещена на 28° вбок от оси взгляда: конус удара 70°, то есть она
+        // остаётся поражаемой, но перестаёт прятаться ЗА игроком от камеры со спины.
+        // Строго по оси её не видно вовсе, и брызги по телу оценить нельзя.
+        double aim = yaw + Math.toRadians(28.0D);
+        double lookX = -Math.sin(aim);
+        double lookZ = Math.cos(aim);
+        dummy.setPos(STAGE_X + 0.5D + lookX * 1.7D, STAGE_Y, STAGE_Z + 0.5D + lookZ * 1.7D);
         level.addFreshEntity(dummy);
         MurimMod.LOGGER.info("Съёмка: манекенов убрано {}, поставлен новый", removed);
     }
