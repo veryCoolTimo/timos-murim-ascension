@@ -91,40 +91,81 @@ public final class BodyMeridians {
 
             for (int i = 0; i < part.lines(); i++) {
                 long lineSeed = seed + partIndex * 7919L + i * 131L;
-                // Полоска стоит на своей доле ширины. Крайние прижаты к краю части,
-                // но не за него: смещение считается в долях полуширины.
-                float across = part.lines() == 1 ? 0.0F
-                        : (i / (float) (part.lines() - 1)) * 2.0F - 1.0F;
-                across *= 0.92F;
+                // Положение полоски по ширине — СЛУЧАЙНОЕ, а не по равной сетке.
+                // Равномерная раскладка давала частые параллельные полосы, которые
+                // второе мнение назвало шумом и «светящимся нагрудником»: силуэт
+                // тела в них пропадал.
+                float across = (Chaos.unit(i, lineSeed ^ 0x4DL) - 0.5F) * 1.7F;
                 float wobbleSeed = Chaos.unit(i, lineSeed) - 0.5F;
-                // Разброс яркости между полосками сильнее: одинаковые линии читаются
-                // как растр, разные — как живая сеть.
-                float bright = 0.35F + 0.65F * Chaos.unit(i, lineSeed ^ 0x9AL);
+                // Полоска идёт НАИСКОСОК: чистая вертикаль читается как штриховка.
+                float drift = (Chaos.unit(i, lineSeed ^ 0x71L) - 0.5F) * 0.9F;
+                float bright = 0.30F + 0.70F * Chaos.unit(i, lineSeed ^ 0x9AL);
+                // Толщина у каждой полоски своя: одинаковые линии читаются как штриховка.
+                double own = thickness * Chaos.range(i, lineSeed ^ 0xE9L, 0.6F, 1.5F);
+                // Ветвь: у части линий есть развилка в верхней половине.
+                boolean forks = Chaos.unit(i, lineSeed ^ 0xB3L) > 0.45F;
+                float forkAt = Chaos.range(i, lineSeed ^ 0xC5L, 0.45F, 0.7F);
+                float forkAway = (Chaos.unit(i, lineSeed ^ 0xD7L) - 0.5F) * 1.6F;
 
-                for (int step = 0; step < STEPS; step++) {
-                    double t = (step + 0.5D) / STEPS;
-                    Vec3 at = part.from().add(axis.scale(t));
-                    // Лёгкое виляние вдоль оси: прямые полоски читаются как штрихкод.
-                    double wave = Math.sin(t * Math.PI * 2.6D + wobbleSeed * 6.0D) * 0.22D;
-                    double lateral = (across + wave * 0.35D) * part.halfWidth();
-                    at = at.add(side.scale(lateral)).add(depth.scale(part.halfDepth()));
-
-                    if (at.y > level) {
-                        continue;
-                    }
-                    // Разгорание по мере подъёма фронта над точкой.
-                    float lit = (float) Mth.clamp((level - at.y) / 0.18D, 0.0D, 1.0D);
-                    float glow = alpha * lit * bright;
-                    if (glow <= 0.02F) {
-                        continue;
-                    }
-                    VfxDraw.billboard(consumer, pose, at, cameraLocal, thickness * 2.4D,
-                                      glow * 0.30F, line.red(), line.green(), line.blue());
-                    VfxDraw.billboard(consumer, pose, at, cameraLocal, thickness,
-                                      glow, hot.red(), hot.green(), hot.blue());
+                strip(consumer, pose, cameraLocal, part, axis, side, depth, level,
+                      across, drift, wobbleSeed, bright, 0.0F, 1.0F,
+                      thickness, alpha, line, hot);
+                if (forks) {
+                    // Развилка уходит вбок от родителя и живёт до конца части:
+                    // именно Y-образные ветви к ключицам и плечам отличают сеть
+                    // меридианов от штриховки.
+                    strip(consumer, pose, cameraLocal, part, axis, side, depth, level,
+                          across + forkAway, drift + forkAway * 0.6F, wobbleSeed + 0.4F,
+                          bright * 0.75F, forkAt, 1.0F,
+                          own * 0.7D, alpha, line, hot);
                 }
             }
             partIndex++;
+        }
+    }
+
+    /**
+     * Одна полоска на части тела.
+     *
+     * <p>Яркость падает от центра части к её краю: второе мнение прямо указало, что в
+     * референсе центральный поток ярче боковых, а равномерная яркость превращает тело
+     * в светящийся прямоугольник.
+     *
+     * @param from доля длины части, с которой полоска начинается
+     */
+    private static void strip(VertexConsumer consumer, PoseStack.Pose pose, Vec3 cameraLocal,
+                              Part part, Vec3 axis, Vec3 side, Vec3 depth, double level,
+                              float across, float drift, float wobbleSeed, float bright,
+                              float from, float to, double thickness, float alpha,
+                              VfxColour line, VfxColour hot) {
+        for (int step = 0; step < STEPS; step++) {
+            double t = from + (to - from) * ((step + 0.5D) / STEPS);
+            Vec3 at = part.from().add(axis.scale(t));
+            double wave = Math.sin(t * Math.PI * 2.2D + wobbleSeed * 6.0D) * 0.18D;
+            // Наклон копится вдоль полоски, поэтому она идёт по диагонали.
+            double lateral = (across + drift * t + wave) * part.halfWidth();
+            lateral = Mth.clamp(lateral, -part.halfWidth(), part.halfWidth());
+            at = at.add(side.scale(lateral)).add(depth.scale(part.halfDepth()));
+
+            if (at.y > level) {
+                continue;
+            }
+            float lit = (float) Mth.clamp((level - at.y) / 0.18D, 0.0D, 1.0D);
+            // Концы полоски РАСТВОРЯЮТСЯ. Второе мнение: «линии обрываются слишком
+            // резко, мало растворения в свечении» — обрубленный конец читается как
+            // нарисованный штрих, а не как канал под кожей.
+            float ends = Mth.clamp((float) Math.min(t - from, to - t) / 0.18F, 0.0F, 1.0F);
+            // Спад к краю части: центр ярче, бока слабее.
+            float middle = 1.0F - 0.55F * Math.min(1.0F, Math.abs((float) lateral)
+                    / (float) Math.max(1.0E-4D, part.halfWidth()));
+            float glow = alpha * lit * bright * middle * ends;
+            if (glow <= 0.02F) {
+                continue;
+            }
+            VfxDraw.billboard(consumer, pose, at, cameraLocal, thickness * 3.0D,
+                              glow * 0.22F, line.red(), line.green(), line.blue());
+            VfxDraw.billboard(consumer, pose, at, cameraLocal, thickness,
+                              glow * 0.85F, hot.red(), hot.green(), hot.blue());
         }
     }
 

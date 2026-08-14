@@ -35,9 +35,11 @@ public final class AwakeningVfxRenderer {
     private static final long SEED = 0x0DA07A19L;
 
     /** Холодная палитра сцены. */
-    private static final VfxColour VEIN = new VfxColour(0.42F, 0.78F, 1.0F);
-    private static final VfxColour VEIN_DEEP = new VfxColour(0.24F, 0.52F, 0.95F);
-    private static final VfxColour CORE = new VfxColour(0.86F, 0.96F, 1.0F);
+    // Ореол — глубокий синий, ядро линии — циан, а не белый. Второе мнение:
+    // «цвет слишком бело-бирюзовый, местами выглядит сплошной белой текстурой».
+    private static final VfxColour VEIN = new VfxColour(0.16F, 0.42F, 0.95F);
+    private static final VfxColour VEIN_DEEP = new VfxColour(0.12F, 0.30F, 0.85F);
+    private static final VfxColour CORE = new VfxColour(0.45F, 0.88F, 1.0F);
 
     /** Цвета трёх оснований: их видно ДО выбора, и они не похожи друг на друга. */
     private static final VfxColour BLOOD = new VfxColour(1.0F, 0.28F, 0.30F);
@@ -125,14 +127,14 @@ public final class AwakeningVfxRenderer {
         // Торс несёт больше всего полосок: на референсе именно грудь и живот покрыты
         // сетью гуще всего, и именно туда сходится поток.
         java.util.List<BodyMeridians.Part> parts = new java.util.ArrayList<>();
-        parts.add(new BodyMeridians.Part(core, chest, 0.235D, 0.12D, 20));
-        parts.add(new BodyMeridians.Part(chest, head, 0.115D, 0.11D, 8));
-        parts.add(new BodyMeridians.Part(rightShoulder, rightHand, 0.055D, 0.055D, 6));
-        parts.add(new BodyMeridians.Part(leftShoulder, leftHand, 0.055D, 0.055D, 6));
-        parts.add(new BodyMeridians.Part(core, rightKnee, 0.06D, 0.06D, 6));
-        parts.add(new BodyMeridians.Part(core, leftKnee, 0.06D, 0.06D, 6));
-        parts.add(new BodyMeridians.Part(rightKnee, rightFoot, 0.055D, 0.055D, 5));
-        parts.add(new BodyMeridians.Part(leftKnee, leftFoot, 0.055D, 0.055D, 5));
+        parts.add(new BodyMeridians.Part(core, chest, 0.235D, 0.12D, 7));
+        parts.add(new BodyMeridians.Part(chest, head, 0.115D, 0.11D, 4));
+        parts.add(new BodyMeridians.Part(rightShoulder, rightHand, 0.055D, 0.055D, 3));
+        parts.add(new BodyMeridians.Part(leftShoulder, leftHand, 0.055D, 0.055D, 3));
+        parts.add(new BodyMeridians.Part(core, rightKnee, 0.06D, 0.06D, 3));
+        parts.add(new BodyMeridians.Part(core, leftKnee, 0.06D, 0.06D, 3));
+        parts.add(new BodyMeridians.Part(rightKnee, rightFoot, 0.055D, 0.055D, 3));
+        parts.add(new BodyMeridians.Part(leftKnee, leftFoot, 0.055D, 0.055D, 3));
 
         double lowest = core.y;
         double highest = core.y + 1.0D;
@@ -147,6 +149,26 @@ public final class AwakeningVfxRenderer {
 
         VertexConsumer channel = minecraft.renderBuffers().bufferSource()
                 .getBuffer(MurimRenderTypes.bodyGlow());
+
+        // МЯГКОЕ СВЕЧЕНИЕ ВОКРУГ ТЕЛА и сильный источник в средоточии.
+        //
+        // Второе мнение по кадру: «эффект выглядит как рисунок поверх одежды, а не как
+        // энергия внутри тела; нет сильного центрального источника». Отдельные линии,
+        // сколько их ни правь, остаются штрихами, пока под ними нет объёма.
+        if (chest != null) {
+            Vec3 middle = core.add(chest.subtract(core).scale(0.45D));
+            for (int i = 0; i < 3; i++) {
+                double size = 0.34D + 0.20D * i;
+                VfxDraw.billboard(channel, pose, middle, cameraLocal, size,
+                                  front * (0.16F - 0.04F * i),
+                                  VEIN.red(), VEIN.green(), VEIN.blue());
+            }
+            // Источник: плотное ядро у самого даньтяня, от него и идёт поток вверх.
+            VfxDraw.billboard(channel, pose, core.add(0.0D, 0.06D, 0.0D), cameraLocal,
+                              0.10D + 0.09D * front, front * 0.85F,
+                              CORE.red(), CORE.green(), CORE.blue());
+        }
+
         BodyMeridians.draw(channel, pose, cameraLocal, parts, lowest, highest, front,
                            0.011D, 1.0F, SEED, VEIN, CORE);
         minecraft.renderBuffers().bufferSource().endBatch(MurimRenderTypes.bodyGlow());
