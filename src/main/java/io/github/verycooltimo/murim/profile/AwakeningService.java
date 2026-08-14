@@ -74,10 +74,19 @@ public final class AwakeningService {
 
         AwakeningState advanced = state.advanced();
         AwakeningState.Phase phase = advanced.phase();
+
+        // ПЕРЕЛИВ. Поток поднимается сам, но остановить его обязан игрок. Дотянул до
+        // верха и не остановил — церемония срывается: это и есть цена жадности.
+        // Раньше фаза кончалась по таймеру, результат не зависел ни от чего, и автор
+        // справедливо спросил, где здесь геймплей.
+        if (phase == AwakeningState.Phase.VEINS && advanced.tick() >= phase.ticks()) {
+            interrupt(player, "murim.awakening.broken.overflow");
+            return false;
+        }
+
         if (!phase.waitsForPlayer() && advanced.tick() >= phase.ticks()) {
             AwakeningState.Phase next = switch (phase) {
                 case SETTLE -> AwakeningState.Phase.VEINS;
-                case VEINS -> AwakeningState.Phase.CORE;
                 case CORE -> AwakeningState.Phase.CHOICE;
                 case SEAL -> null;
                 default -> null;
@@ -109,6 +118,27 @@ public final class AwakeningService {
         player.displayClientMessage(foundation.title(), true);
     }
 
+    /**
+     * Игрок останавливает поток. Высота остановки решает силу даньтяня.
+     *
+     * <p>Проверка фазы обязательна: остановить можно только пока поток идёт. Пакет,
+     * присланный в другой момент, игнорируется — иначе силу можно было бы выставить
+     * в любой точке церемонии.
+     */
+    public static void hold(ServerPlayer player) {
+        AwakeningState state = player.getData(ModAttachments.AWAKENING);
+        if (!state.active() || state.phase() != AwakeningState.Phase.VEINS) {
+            return;
+        }
+        float where = state.tick() / (float) AwakeningState.Phase.VEINS.ticks();
+        AwakeningState stopped = state.stoppedAt(where)
+                .withPhase(AwakeningState.Phase.CORE);
+        set(player, stopped);
+        onPhaseStart(player, AwakeningState.Phase.CORE);
+        player.displayClientMessage(Component.translatable(
+                "murim.awakening.held", Math.round(where * 100.0F)), true);
+    }
+
     /** Срыв церемонии: даньтянь не создан, ничего не сохраняется. */
     public static void interrupt(ServerPlayer player, String reason) {
         if (!player.getData(ModAttachments.AWAKENING).active()) {
@@ -137,7 +167,10 @@ public final class AwakeningService {
             return;
         }
         DantianProfile profile = player.getData(ModAttachments.PROFILE);
-        player.setData(ModAttachments.PROFILE, foundation.apply(profile));
+        // Высота остановки умножает силу основания: выбор игрока влияет на РЕЗУЛЬТАТ,
+        // а не только на природу центра.
+        player.setData(ModAttachments.PROFILE,
+                foundation.apply(profile, state.strength()));
         set(player, AwakeningState.IDLE);
         ProfileNetwork.sync(player);
         player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
@@ -148,7 +181,13 @@ public final class AwakeningService {
 
     private static void onPhaseStart(ServerPlayer player, AwakeningState.Phase phase) {
         switch (phase) {
-            case VEINS -> play(player, SoundEvents.AMETHYST_BLOCK_CHIME, 0.6F, 0.8F);
+            case VEINS -> {
+                play(player, SoundEvents.AMETHYST_BLOCK_CHIME, 0.6F, 0.8F);
+                // Подсказка обязательна: игрок не может догадаться, что поток нужно
+                // остановить, а цена ошибки — вся церемония.
+                player.displayClientMessage(
+                        Component.translatable("murim.awakening.hint"), false);
+            }
             case CORE -> play(player, SoundEvents.AMETHYST_BLOCK_RESONATE, 0.7F, 0.6F);
             case CHOICE -> {
                 play(player, SoundEvents.BEACON_AMBIENT, 0.7F, 1.0F);

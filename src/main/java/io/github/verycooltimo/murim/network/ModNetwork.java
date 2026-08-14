@@ -76,6 +76,15 @@ public final class ModNetwork {
                     }
                 });
 
+        registrar.playToServer(
+                HoldFlowPayload.TYPE,
+                HoldFlowPayload.STREAM_CODEC,
+                (payload, context) -> {
+                    if (context.player() instanceof ServerPlayer serverPlayer) {
+                        io.github.verycooltimo.murim.profile.AwakeningService.hold(serverPlayer);
+                    }
+                });
+
         // Выбор основания приходит от клиента как НАМЕРЕНИЕ: фазу церемонии и то, что
         // даньтянь ещё не создан, проверяет сервер.
         registrar.playToServer(

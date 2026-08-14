@@ -98,6 +98,12 @@ public final class DevCaptureHandler {
     /** Автовыбор отправляется один раз за прогон. */
     private static boolean choiceSent;
 
+    /** На каком тике фазы подъёма стенд останавливает поток. Ближе к верху, но без перелива. */
+    private static final int HOLD_AT_TICK = 68;
+
+    /** Остановка отправляется один раз за прогон. */
+    private static boolean holdSent;
+
     /**
      * Начинает съёмку немедленно. Вызывается автозапуском и может быть вызвана вручную,
      * если понадобится снять что-то другое.
@@ -119,6 +125,7 @@ public final class DevCaptureHandler {
         // и запишет пару снимков с телеметрией, когда съёмка не запущена.
         framePending = false;
         choiceSent = false;
+        holdSent = false;
         tickCounter = 0;
         frameIndex = 0;
     }
@@ -166,6 +173,16 @@ public final class DevCaptureHandler {
                                 MurimMod.MODID, subject)));
             }
             startCapture();
+        }
+
+        // Поток теперь останавливает ИГРОК, а при автосъёмке нажимать некому: без
+        // этого церемония всегда заканчивалась бы переливом и в кадры не попали бы
+        // ни сбор ядра, ни выбор, ни печать.
+        if (framesLeft > 0 && "VEINS".equals(AwakeningSceneHandler.phase())
+                && AwakeningSceneHandler.tick() >= HOLD_AT_TICK && !holdSent) {
+            holdSent = true;
+            PacketDistributor.sendToServer(
+                    io.github.verycooltimo.murim.network.HoldFlowPayload.INSTANCE);
         }
 
         // Фаза выбора ждёт игрока бесконечно, а при автосъёмке нажимать некому: без

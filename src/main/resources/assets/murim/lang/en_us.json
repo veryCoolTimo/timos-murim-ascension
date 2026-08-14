@@ -62,5 +62,8 @@
   "murim.awakening.broken.damage": "The ceremony was broken by a blow.",
   "murim.awakening.broken.no_choice": "The ceremony broke: no foundation was chosen.",
   "murim.awakening.broken.error": "The ceremony was interrupted by an error.",
-  "murim.awakening.done": "Dantian formed. Foundation: %s"
+  "murim.awakening.done": "Dantian formed. Foundation: %s",
+  "murim.awakening.broken.overflow": "The flow overflowed. No dantian was formed.",
+  "murim.awakening.held": "Flow held at %s%%",
+  "murim.awakening.hint": "Press G to hold the flow. Higher is stronger, but an overflow ruins everything."
 }

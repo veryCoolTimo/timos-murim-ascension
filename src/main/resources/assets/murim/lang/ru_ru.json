@@ -42,5 +42,8 @@
   "murim.awakening.broken.damage": "Церемония сорвана ударом.",
   "murim.awakening.broken.no_choice": "Церемония сорвана: основание не выбрано.",
   "murim.awakening.broken.error": "Церемония прервана из-за ошибки.",
-  "murim.awakening.done": "Даньтянь создан. Основание: %s"
+  "murim.awakening.done": "Даньтянь создан. Основание: %s",
+  "murim.awakening.broken.overflow": "Поток перелился через край. Даньтянь не создан.",
+  "murim.awakening.held": "Поток остановлен на %s%%",
+  "murim.awakening.hint": "Нажмите G, чтобы остановить поток. Выше — сильнее, но перелив всё погубит."
 }

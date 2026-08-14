@@ -75,8 +75,17 @@ public enum Foundation {
      * и его исходная форма определяется целиком этим выбором. Прибавление дало бы разным
      * основаниям одинаковую базу и стёрло бы разницу между ними.
      */
+    public DantianProfile apply(DantianProfile base, float strength) {
+        // Чистота множителем НЕ трогается: она свойство природы, а не количества силы.
+        // Иначе жадная остановка давала бы и объём, и чистоту разом, и выбор основания
+        // перестал бы значить что-либо.
+        return base.withAxes(capacity * strength, purity, meridians * strength)
+                .withTags(nature, "awakening_" + id);
+    }
+
+    /** Прежняя форма без множителя — для команд отладки. */
     public DantianProfile apply(DantianProfile base) {
-        return base.withAxes(capacity, purity, meridians).withTags(nature, "awakening_" + id);
+        return apply(base, 1.0F);
     }
 
     /** Разбор идентификатора; {@code null}, если такого основания нет. */

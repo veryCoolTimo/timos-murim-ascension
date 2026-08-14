@@ -42,11 +42,20 @@ public final class ImpactFlash {
         float fade = 1.0F - life;
         double spread = 1.0D + 2.8D * life;
 
+        // Непрозрачность НИЖЕ единицы намеренно.
+        //
+        // При аддитивном смешивании яркое пятно выбивает середину в чистый белый, а
+        // вокруг остаётся цветной ободок — на кадрах удар читался зелёным кольцом,
+        // почти порталом. Текстура тут ни при чём: у неё правильный спад от центра,
+        // это пересвет. Ядро держится ниже насыщения, объём набирается слоями.
         VfxDraw.billboard(consumer, pose, centre, cameraLocal,
-                          size * spread, fade,
+                          size * spread, fade * 0.60F,
                           core.red(), core.green(), core.blue());
         VfxDraw.billboard(consumer, pose, centre, cameraLocal,
-                          size * 1.8D * spread, fade * 0.44F,
+                          size * 1.45D * spread, fade * 0.32F,
+                          halo.red(), halo.green(), halo.blue());
+        VfxDraw.billboard(consumer, pose, centre, cameraLocal,
+                          size * 2.3D * spread, fade * 0.16F,
                           halo.red(), halo.green(), halo.blue());
     }
 

@@ -127,14 +127,23 @@ public final class AwakeningVfxRenderer {
         // Торс несёт больше всего полосок: на референсе именно грудь и живот покрыты
         // сетью гуще всего, и именно туда сходится поток.
         java.util.List<BodyMeridians.Part> parts = new java.util.ArrayList<>();
+        // Второе мнение по кадру: «руки почти без меридианов, ноги почти не светятся,
+        // лицо не участвует; эффект сосредоточен на передней части торса». Конечности
+        // и голова получают свои полоски, а шея и лицо — отдельную короткую ветвь.
         parts.add(new BodyMeridians.Part(core, chest, 0.235D, 0.12D, 7));
-        parts.add(new BodyMeridians.Part(chest, head, 0.115D, 0.11D, 4));
-        parts.add(new BodyMeridians.Part(rightShoulder, rightHand, 0.055D, 0.055D, 3));
-        parts.add(new BodyMeridians.Part(leftShoulder, leftHand, 0.055D, 0.055D, 3));
-        parts.add(new BodyMeridians.Part(core, rightKnee, 0.06D, 0.06D, 3));
-        parts.add(new BodyMeridians.Part(core, leftKnee, 0.06D, 0.06D, 3));
-        parts.add(new BodyMeridians.Part(rightKnee, rightFoot, 0.055D, 0.055D, 3));
-        parts.add(new BodyMeridians.Part(leftKnee, leftFoot, 0.055D, 0.055D, 3));
+        parts.add(new BodyMeridians.Part(chest, head, 0.115D, 0.11D, 5));
+        // Лицо: короткий отрезок вверх от головы, узкий и слабый — акцент на лбу,
+        // а не роспись по лицу.
+        parts.add(new BodyMeridians.Part(head, head == null ? null : head.add(0.0D, 0.22D, 0.0D),
+                                         0.12D, 0.12D, 4));
+        parts.add(new BodyMeridians.Part(rightShoulder, rightHand, 0.06D, 0.06D, 5));
+        parts.add(new BodyMeridians.Part(leftShoulder, leftHand, 0.06D, 0.06D, 5));
+        parts.add(new BodyMeridians.Part(chest, rightShoulder, 0.07D, 0.07D, 3));
+        parts.add(new BodyMeridians.Part(chest, leftShoulder, 0.07D, 0.07D, 3));
+        parts.add(new BodyMeridians.Part(core, rightKnee, 0.065D, 0.065D, 5));
+        parts.add(new BodyMeridians.Part(core, leftKnee, 0.065D, 0.065D, 5));
+        parts.add(new BodyMeridians.Part(rightKnee, rightFoot, 0.06D, 0.06D, 4));
+        parts.add(new BodyMeridians.Part(leftKnee, leftFoot, 0.06D, 0.06D, 4));
 
         double lowest = core.y;
         double highest = core.y + 1.0D;

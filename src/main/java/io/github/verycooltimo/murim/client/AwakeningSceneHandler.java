@@ -107,10 +107,17 @@ public final class AwakeningSceneHandler {
         if (minecraft.player == null || minecraft.screen != null) {
             return;
         }
-        // Начало церемонии: клавиша шлёт намерение, решает сервер.
+        // Та же клавиша: пока церемония не идёт — начинает её, во время подъёма
+        // потока — ОСТАНАВЛИВАЕТ его. Отдельная клавиша здесь была бы лишней:
+        // действие одно и то же по смыслу — «взяться за поток».
         while (ModKeyMappings.AWAKENING.consumeClick()) {
-            PacketDistributor.sendToServer(
-                    io.github.verycooltimo.murim.network.StartAwakeningPayload.INSTANCE);
+            if ("VEINS".equals(phase)) {
+                PacketDistributor.sendToServer(
+                        io.github.verycooltimo.murim.network.HoldFlowPayload.INSTANCE);
+            } else if (!active()) {
+                PacketDistributor.sendToServer(
+                        io.github.verycooltimo.murim.network.StartAwakeningPayload.INSTANCE);
+            }
         }
         if (!awaitingChoice()) {
             return;

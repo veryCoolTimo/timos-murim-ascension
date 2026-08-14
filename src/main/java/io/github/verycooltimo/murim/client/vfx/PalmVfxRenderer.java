@@ -61,7 +61,7 @@ public final class PalmVfxRenderer {
     private static final long SEED = 0x5EED0FA1L;
 
     /** Ленты, стекающие с ладони на сборе. Главный элемент первой панели референса. */
-    private static final int GATHER_RIBBONS = 7;
+    private static final int GATHER_RIBBONS = 12;
 
     /**
      * Крупные ленты — «большая форма» эффекта.
@@ -82,7 +82,7 @@ public final class PalmVfxRenderer {
     private static final int CHANNEL_PUFFS = 8;
 
     /** Откуда яд стягивается к ладони на сборе: примерно локоть от кисти. */
-    private static final double GATHER_REACH = 0.55D;
+    private static final double GATHER_REACH = 0.85D;
 
     /** Вынос выброса: длина вытянутой руки, а не дистанция снаряда. */
     private static final double PALM_REACH = 1.05D;
@@ -407,9 +407,11 @@ public final class PalmVfxRenderer {
                                                lift * far * (1.0D - t),
                                                Math.sin(twist) * radius * 0.8D));
                 // Яркость растёт К ЛАДОНИ: видно, куда течёт, а не откуда.
+                // Ярче и толще к ладони: на кадрах сбор читался усиками у бедра,
+                // а должен читаться как стягивающийся из воздуха яд.
                 VfxDraw.segment(strands, pose, previous, point, cameraLocal,
-                           0.045D + 0.055D * t,
-                           charge * (0.30F + 0.60F * (float) t), 0.34F, 1.0F, 0.5F);
+                           0.055D + 0.085D * t,
+                           charge * (0.45F + 0.80F * (float) t), 0.34F, 1.0F, 0.5F);
                 previous = point;
             }
         }
@@ -495,15 +497,21 @@ public final class PalmVfxRenderer {
 
         if (since < FLASH_TICKS) {
             VertexConsumer burst = buffers.getBuffer(MurimRenderTypes.impactCore());
+            // Ореол сжат к ядру: широкий ореол вокруг плотного центра и есть кольцо.
             ImpactFlash.draw(burst, pose, palm.add(forward.scale(0.25D)), cameraLocal,
-                             since / FLASH_TICKS, 0.22D, FLASH_CORE, VfxColour.VENOM);
+                             since / FLASH_TICKS, 0.17D, FLASH_CORE, VfxColour.VENOM);
             buffers.endBatch(MurimRenderTypes.impactCore());
         }
 
-        // Пряди срываются с ладони вперёд, но коротко: это выхлоп удара, а не снаряд.
+        // Пряди срываются с ладони ВЕЕРОМ ПАЛЬЦЕВ, а не кольцом вокруг оси.
+        //
+        // Прежний раствор в 1.75π — это почти полный круг, и с торца, то есть ровно
+        // из-под фронтальной камеры, он читался зелёным бубликом, почти порталом.
+        // Тот же дефект, что автор назвал «ураганом», просто увиденный с другой стороны.
+        // Узкий вертикальный веер даёт направление и с фронта, и сбоку.
         VertexConsumer strands = buffers.getBuffer(MurimRenderTypes.strand());
         RibbonTrail.draw(strands, pose, palm, forward, cameraLocal, STRANDS, reach,
-                         0.085D, fade * 0.9F, (float) (Math.PI * 1.75D), SECTOR_CENTRE,
+                         0.085D, fade * 0.9F, (float) (Math.PI * 0.55D), SECTOR_CENTRE,
                          SEED, VfxColour.VENOM);
         buffers.endBatch(MurimRenderTypes.strand());
 

@@ -2,6 +2,7 @@ package io.github.verycooltimo.murim.profile;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.util.Mth;
 
 /**
  * Создание даньтяня: единственная церемония, после которой игроку доступны техники.
@@ -17,8 +18,9 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
  * @param phase      текущая фаза
  * @param tick       тик от начала ФАЗЫ, а не от начала церемонии
  * @param foundation выбранное основание или {@code null}, пока выбор не сделан
+ * @param depth      на какой высоте игрок остановил поток, от 0 до 1
  */
-public record AwakeningState(Phase phase, int tick, Foundation foundation) {
+public record AwakeningState(Phase phase, int tick, Foundation foundation, float depth) {
 
     /**
      * Фазы церемонии.
@@ -56,7 +58,7 @@ public record AwakeningState(Phase phase, int tick, Foundation foundation) {
         }
     }
 
-    public static final AwakeningState IDLE = new AwakeningState(Phase.IDLE, 0, null);
+    public static final AwakeningState IDLE = new AwakeningState(Phase.IDLE, 0, null, 0.0F);
 
     public static final Codec<AwakeningState> CODEC = RecordCodecBuilder.create(i -> i.group(
             Codec.STRING.fieldOf("phase").forGetter(state -> state.phase.name()),
@@ -64,9 +66,10 @@ public record AwakeningState(Phase phase, int tick, Foundation foundation) {
             // Пустая строка вместо отсутствующего поля: Codec.optionalFieldOf на enum-е
             // разворачивается в куда более шумную схему ради одного значения.
             Codec.STRING.fieldOf("foundation")
-                    .forGetter(state -> state.foundation == null ? "" : state.foundation.id())
-    ).apply(i, (phase, tick, foundation) ->
-            new AwakeningState(Phase.valueOf(phase), tick, Foundation.byId(foundation))));
+                    .forGetter(state -> state.foundation == null ? "" : state.foundation.id()),
+            Codec.FLOAT.fieldOf("depth").forGetter(AwakeningState::depth)
+    ).apply(i, (phase, tick, foundation, depth) ->
+            new AwakeningState(Phase.valueOf(phase), tick, Foundation.byId(foundation), depth)));
 
     public AwakeningState {
         if (tick < 0) {
@@ -87,15 +90,37 @@ public record AwakeningState(Phase phase, int tick, Foundation foundation) {
     }
 
     public AwakeningState advanced() {
-        return new AwakeningState(phase, tick + 1, foundation);
+        return new AwakeningState(phase, tick + 1, foundation, depth);
     }
 
     public AwakeningState withPhase(Phase next) {
-        return new AwakeningState(next, 0, foundation);
+        return new AwakeningState(next, 0, foundation, depth);
     }
 
     public AwakeningState withFoundation(Foundation chosen) {
-        return new AwakeningState(phase, tick, chosen);
+        return new AwakeningState(phase, tick, chosen, depth);
+    }
+
+    /**
+     * Игрок остановил поток на этой доле пути.
+     *
+     * <p>Это единственное место, где игрок влияет на СИЛУ даньтяня, а не только на его
+     * природу. Раньше сцена шла сама и результат не зависел ни от чего — автор про это:
+     * «ты просто смотришь, как создаётся даньтянь на рандом, где тут геймплей».
+     */
+    public AwakeningState stoppedAt(float where) {
+        return new AwakeningState(phase, tick, foundation, Mth.clamp(where, 0.0F, 1.0F));
+    }
+
+    /**
+     * Множитель силы основания по высоте остановки.
+     *
+     * <p>Остановишь рано — даньтянь слабый, но целый. Дотянешь до верха — сильный.
+     * Прозеваешь — поток переливается, и церемония срывается совсем. Риск и награда
+     * растут вместе, и решение принимает игрок, а не таймер.
+     */
+    public float strength() {
+        return 0.55F + 0.75F * depth;
     }
 
     /**
