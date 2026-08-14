@@ -55,9 +55,13 @@ class MeridianFlowTest {
                 new Vec3[] {new Vec3(0.2D, 0.0D, 0.0D), new Vec3(0.15D, 0.35D, 0.0D)},
                 new Vec3[] {new Vec3(0.15D, 0.35D, 0.0D), new Vec3(0.0D, 0.75D, 0.0D)},
                 new Vec3[] {new Vec3(0.0D, 0.75D, 0.0D), new Vec3(0.0D, 1.25D, 0.0D)});
-        MeridianFlow.draw(counter, counter, new com.mojang.blaze3d.vertex.PoseStack().last(),
-                          new Vec3(0.0D, 1.0D, -4.0D), chain, progress,
-                          0.030D, 0.95F, VfxColour.VENOM, VfxColour.COLD_CORE);
+        // Сеть строится от опорных пар, выносится на кожу от вертикальной оси и
+        // заполняется снизу вверх — сигнатура повторяет вызов из сцены.
+        MeridianFlow.draw(counter, new com.mojang.blaze3d.vertex.PoseStack().last(),
+                          new Vec3(0.0D, 1.0D, -4.0D), chain,
+                          new Vec3(0.0D, 0.75D, 0.0D), 0.12D,
+                          0.0D, 1.25D, progress,
+                          0.030D, 0.95F, 42L, VfxColour.VENOM, VfxColour.COLD_CORE);
         return counter.visible;
     }
 
