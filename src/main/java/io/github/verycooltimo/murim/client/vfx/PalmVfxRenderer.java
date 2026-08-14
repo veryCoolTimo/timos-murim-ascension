@@ -81,6 +81,9 @@ public final class PalmVfxRenderer {
     /** Клубов тумана вдоль канала выброса: они собирают линии в один импульс. */
     private static final int CHANNEL_PUFFS = 8;
 
+    /** Откуда яд стягивается к ладони на сборе: примерно локоть от кисти. */
+    private static final double GATHER_REACH = 0.55D;
+
     /** Вынос выброса: длина вытянутой руки, а не дистанция снаряда. */
     private static final double PALM_REACH = 1.05D;
 
@@ -379,23 +382,34 @@ public final class PalmVfxRenderer {
 
         VertexConsumer strands = buffers.getBuffer(MurimRenderTypes.strand());
 
-        // Длинные ленты, стекающие вниз от ладони. На референсе именно они занимают панель,
-        // а не точки: без них сбор читается как искра, а не как поток силы.
+        // Ленты СТЯГИВАЮТСЯ ИЗ ВОЗДУХА В ЛАДОНЬ, а не стекают вниз.
+        //
+        // Прямое замечание автора по кадру: «эффекты идут вниз, а не к руке». Прежняя
+        // версия вела ленты от ладони вниз на полблока, и сбор читался как утечка,
+        // а не как набор силы. По референсу яд собирается ИЗ ВОЗДУХА к отведённой кисти.
         for (int i = 0; i < GATHER_RIBBONS; i++) {
-            double sway = Math.sin(age * 0.06D + i * 1.7D);
-            double side = (i - (GATHER_RIBBONS - 1) / 2.0D) * 0.16D;
-            Vec3 top = palm.add(new Vec3(side * 0.4D, 0.10D, side * 0.3D));
-            int segments = 5;
-            Vec3 previous = top;
+            float pick = Chaos.unit(i, SEED ^ 0x6A7L);
+            double around = i * (Math.PI * 2.0D / GATHER_RIBBONS) + age * 0.05D;
+            double lift = (pick - 0.35D) * 0.9D;
+            // Дальний конец ленты: чем больше заряд, тем ближе он подтянут к ладони.
+            double far = GATHER_REACH * (1.0D - 0.45D * charge);
+            Vec3 outer = palm.add(new Vec3(Math.cos(around) * far,
+                                           lift * far,
+                                           Math.sin(around) * far * 0.8D));
+            int segments = 6;
+            Vec3 previous = outer;
             for (int seg = 1; seg <= segments; seg++) {
                 double t = seg / (double) segments;
-                Vec3 point = top.add(new Vec3(
-                        side + sway * 0.18D * t,
-                        -(0.16D + 0.52D * charge) * t,
-                        sway * 0.12D * t));
+                // Лента идёт К ладони, слегка закручиваясь по пути.
+                double twist = around + t * Math.PI * 0.55D * (i % 2 == 0 ? 1.0D : -1.0D);
+                double radius = far * (1.0D - t) * 0.75D;
+                Vec3 point = palm.add(new Vec3(Math.cos(twist) * radius,
+                                               lift * far * (1.0D - t),
+                                               Math.sin(twist) * radius * 0.8D));
+                // Яркость растёт К ЛАДОНИ: видно, куда течёт, а не откуда.
                 VfxDraw.segment(strands, pose, previous, point, cameraLocal,
-                           0.075D * (1.0D - 0.55D * t),
-                           charge * 0.675F * (1.0F - 0.5F * (float) t), 0.34F, 1.0F, 0.5F);
+                           0.045D + 0.055D * t,
+                           charge * (0.30F + 0.60F * (float) t), 0.34F, 1.0F, 0.5F);
                 previous = point;
             }
         }
@@ -403,16 +417,20 @@ public final class PalmVfxRenderer {
         // Крупные ленты — большая форма, которой не хватало сильнее всего.
         for (int b = 0; b < BIG_RIBBONS; b++) {
             double base = b * (Math.PI * 2.0D / BIG_RIBBONS) + age * 0.018D;
-            Vec3 previous = palm;
+            // Крупные ленты тоже идут ИЗВНЕ ВНУТРЬ: спираль сходится к ладони.
+            double start = GATHER_REACH * 0.85D * (1.0D - 0.35D * charge);
+            Vec3 previous = palm.add(new Vec3(Math.cos(base) * start, 0.12D * start,
+                                              Math.sin(base) * start * 0.7D));
             for (int seg = 1; seg <= 7; seg++) {
                 double t = seg / 7.0D;
-                double angle = base + t * Math.PI * 1.1D;
-                double radius = (0.14D + 0.34D * charge) * Math.sin(Math.PI * t * 0.85D);
+                double angle = base + t * Math.PI * 1.3D;
+                double radius = start * (1.0D - t);
                 Vec3 point = palm.add(new Vec3(Math.cos(angle) * radius,
-                        0.30D * charge * Math.sin(Math.PI * t) - 0.25D * t,
+                        0.12D * start * (1.0D - t) + 0.10D * charge * Math.sin(Math.PI * t),
                         Math.sin(angle) * radius * 0.7D));
                 VfxDraw.segment(strands, pose, previous, point, cameraLocal,
-                           0.15D * (1.0D - 0.4D * t), charge * 0.6F, 0.30F, 1.0F, 0.46F);
+                           0.09D + 0.07D * t, charge * (0.35F + 0.45F * (float) t),
+                           0.30F, 1.0F, 0.46F);
                 previous = point;
             }
         }

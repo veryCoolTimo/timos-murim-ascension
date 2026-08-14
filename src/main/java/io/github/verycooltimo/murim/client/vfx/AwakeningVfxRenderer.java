@@ -91,11 +91,13 @@ public final class AwakeningVfxRenderer {
     }
 
     /**
-     * Меридианы: сеть по ВСЕМУ телу, сходящаяся к ядру.
+     * Меридианы: много тонких полосок по поверхности частей тела.
      *
-     * <p>Опорные ветви — ствол ядро → грудь → голова, руки через плечи, ноги через колени.
-     * От каждой отходят отростки, поэтому сеть покрывает тело, а не идёт одной линией.
-     * Поток при этом поднимается снизу вверх по высоте.
+     * <p>Полуразмеры взяты из модели игрока: торс 8×4 единицы, конечности 4×4, голова 8×8.
+     * В блоках это 0.25×0.125 и так далее. Смещение полосок считается В ДОЛЯХ этих
+     * размеров, поэтому ни одна не может выйти за габарит части — прежняя версия
+     * выносила линии на постоянные 0.16 блока при полуглубине торса 0.125 и потому
+     * гарантированно вылезала за силуэт.
      */
     private static void drawVeins(Minecraft minecraft, AbstractClientPlayer player,
                                   PoseStack.Pose pose, Vec3 cameraLocal, Vec3 core,
@@ -109,36 +111,33 @@ public final class AwakeningVfxRenderer {
         if (front <= 0.0F) {
             return;
         }
-        Vec3 rightFoot = bone(player, BoneAnchorLayer.Bone.RIGHT_FOOT);
-        Vec3 leftFoot = bone(player, BoneAnchorLayer.Bone.LEFT_FOOT);
-        Vec3 rightKnee = bone(player, BoneAnchorLayer.Bone.RIGHT_KNEE);
-        Vec3 leftKnee = bone(player, BoneAnchorLayer.Bone.LEFT_KNEE);
         Vec3 chest = bone(player, BoneAnchorLayer.Bone.CHEST);
+        Vec3 head = bone(player, BoneAnchorLayer.Bone.HEAD);
         Vec3 rightShoulder = bone(player, BoneAnchorLayer.Bone.RIGHT_SHOULDER);
         Vec3 leftShoulder = bone(player, BoneAnchorLayer.Bone.LEFT_SHOULDER);
         Vec3 rightHand = bone(player, BoneAnchorLayer.Bone.RIGHT_HAND);
         Vec3 leftHand = bone(player, BoneAnchorLayer.Bone.LEFT_HAND);
-        Vec3 head = bone(player, BoneAnchorLayer.Bone.HEAD);
+        Vec3 rightKnee = bone(player, BoneAnchorLayer.Bone.RIGHT_KNEE);
+        Vec3 leftKnee = bone(player, BoneAnchorLayer.Bone.LEFT_KNEE);
+        Vec3 rightFoot = bone(player, BoneAnchorLayer.Bone.RIGHT_FOOT);
+        Vec3 leftFoot = bone(player, BoneAnchorLayer.Bone.LEFT_FOOT);
 
-        // Все ветви разом: сеть по телу, а не одна цепочка. Ствол идёт через ядро —
-        // именно к нему сходятся линии на референсе.
-        java.util.List<Vec3[]> anchors = java.util.List.of(
-                new Vec3[] {core, chest},
-                new Vec3[] {chest, head},
-                new Vec3[] {core, rightKnee},
-                new Vec3[] {rightKnee, rightFoot},
-                new Vec3[] {core, leftKnee},
-                new Vec3[] {leftKnee, leftFoot},
-                new Vec3[] {chest, rightShoulder},
-                new Vec3[] {rightShoulder, rightHand},
-                new Vec3[] {chest, leftShoulder},
-                new Vec3[] {leftShoulder, leftHand});
+        // Торс несёт больше всего полосок: на референсе именно грудь и живот покрыты
+        // сетью гуще всего, и именно туда сходится поток.
+        java.util.List<BodyMeridians.Part> parts = new java.util.ArrayList<>();
+        parts.add(new BodyMeridians.Part(core, chest, 0.235D, 0.12D, 20));
+        parts.add(new BodyMeridians.Part(chest, head, 0.115D, 0.11D, 8));
+        parts.add(new BodyMeridians.Part(rightShoulder, rightHand, 0.055D, 0.055D, 6));
+        parts.add(new BodyMeridians.Part(leftShoulder, leftHand, 0.055D, 0.055D, 6));
+        parts.add(new BodyMeridians.Part(core, rightKnee, 0.06D, 0.06D, 6));
+        parts.add(new BodyMeridians.Part(core, leftKnee, 0.06D, 0.06D, 6));
+        parts.add(new BodyMeridians.Part(rightKnee, rightFoot, 0.055D, 0.055D, 5));
+        parts.add(new BodyMeridians.Part(leftKnee, leftFoot, 0.055D, 0.055D, 5));
 
-        // Границы потока по высоте: от самой низкой опорной точки до головы.
         double lowest = core.y;
         double highest = core.y + 1.0D;
-        for (Vec3[] pair : anchors) {
-            for (Vec3 point : pair) {
+        for (BodyMeridians.Part part : parts) {
+            for (Vec3 point : new Vec3[] {part.from(), part.to()}) {
                 if (point != null) {
                     lowest = Math.min(lowest, point.y);
                     highest = Math.max(highest, point.y);
@@ -148,9 +147,8 @@ public final class AwakeningVfxRenderer {
 
         VertexConsumer channel = minecraft.renderBuffers().bufferSource()
                 .getBuffer(MurimRenderTypes.bodyGlow());
-        // Ось тела — вертикаль через ядро; по ней жилы выносятся на кожу.
-        MeridianFlow.draw(channel, pose, cameraLocal, anchors, core, 0.16D,
-                          lowest, highest, front, 0.045D, 1.0F, SEED, VEIN, CORE);
+        BodyMeridians.draw(channel, pose, cameraLocal, parts, lowest, highest, front,
+                           0.011D, 1.0F, SEED, VEIN, CORE);
         minecraft.renderBuffers().bufferSource().endBatch(MurimRenderTypes.bodyGlow());
     }
 
