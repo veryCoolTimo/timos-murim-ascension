@@ -91,11 +91,11 @@ public final class AwakeningVfxRenderer {
     }
 
     /**
-     * Меридианы: поток снизу вверх по телу через узлы.
+     * Меридианы: сеть по ВСЕМУ телу, сходящаяся к ядру.
      *
-     * <p>Порядок ветвей задан руками: ступни → колени → средоточие → грудь → плечи →
-     * кисти, и отдельной ветвью грудь → голова. Автор прямо указал, что каналы должны
-     * идти ПО ТЕЛУ через точки, а не сходиться спицами к центру.
+     * <p>Опорные ветви — ствол ядро → грудь → голова, руки через плечи, ноги через колени.
+     * От каждой отходят отростки, поэтому сеть покрывает тело, а не идёт одной линией.
+     * Поток при этом поднимается снизу вверх по высоте.
      */
     private static void drawVeins(Minecraft minecraft, AbstractClientPlayer player,
                                   PoseStack.Pose pose, Vec3 cameraLocal, Vec3 core,
@@ -103,8 +103,7 @@ public final class AwakeningVfxRenderer {
         float front = switch (phase) {
             case "SETTLE" -> 0.0F;
             case "VEINS" -> Mth.clamp(age / 80.0F, 0.0F, 1.0F);
-            // Дойдя до верха, каналы ГАСНУТ, и только потом собирается ядро.
-            // Это ритм сцены: сначала тело наполняется, затем отдаёт.
+            // Дойдя до верха, сеть ГАСНЕТ, и только потом собирается ядро.
             default -> 0.0F;
         };
         if (front <= 0.0F) {
@@ -121,29 +120,37 @@ public final class AwakeningVfxRenderer {
         Vec3 leftHand = bone(player, BoneAnchorLayer.Bone.LEFT_HAND);
         Vec3 head = bone(player, BoneAnchorLayer.Bone.HEAD);
 
-        java.util.List<Vec3[]> spine = java.util.List.of(
-                new Vec3[] {rightFoot, rightKnee},
-                new Vec3[] {rightKnee, core},
+        // Все ветви разом: сеть по телу, а не одна цепочка. Ствол идёт через ядро —
+        // именно к нему сходятся линии на референсе.
+        java.util.List<Vec3[]> anchors = java.util.List.of(
                 new Vec3[] {core, chest},
-                new Vec3[] {chest, head});
-        java.util.List<Vec3[]> left = java.util.List.of(
-                new Vec3[] {leftFoot, leftKnee},
-                new Vec3[] {leftKnee, core});
-        java.util.List<Vec3[]> arms = java.util.List.of(
+                new Vec3[] {chest, head},
+                new Vec3[] {core, rightKnee},
+                new Vec3[] {rightKnee, rightFoot},
+                new Vec3[] {core, leftKnee},
+                new Vec3[] {leftKnee, leftFoot},
                 new Vec3[] {chest, rightShoulder},
                 new Vec3[] {rightShoulder, rightHand},
                 new Vec3[] {chest, leftShoulder},
                 new Vec3[] {leftShoulder, leftHand});
 
+        // Границы потока по высоте: от самой низкой опорной точки до головы.
+        double lowest = core.y;
+        double highest = core.y + 1.0D;
+        for (Vec3[] pair : anchors) {
+            for (Vec3 point : pair) {
+                if (point != null) {
+                    lowest = Math.min(lowest, point.y);
+                    highest = Math.max(highest, point.y);
+                }
+            }
+        }
+
         VertexConsumer channel = minecraft.renderBuffers().bufferSource()
                 .getBuffer(MurimRenderTypes.bodyGlow());
-        // Ветви идут не одновременно: ноги наполняются первыми, руки и голова следом.
-        MeridianFlow.draw(channel, channel, pose, cameraLocal, spine, front,
-                          0.030D, 0.95F, VEIN, CORE);
-        MeridianFlow.draw(channel, channel, pose, cameraLocal, left, front * 1.15F,
-                          0.030D, 0.95F, VEIN_DEEP, CORE);
-        MeridianFlow.draw(channel, channel, pose, cameraLocal, arms,
-                          (front - 0.45F) / 0.55F, 0.026D, 0.90F, VEIN, CORE);
+        // Ось тела — вертикаль через ядро; по ней жилы выносятся на кожу.
+        MeridianFlow.draw(channel, pose, cameraLocal, anchors, core, 0.16D,
+                          lowest, highest, front, 0.045D, 1.0F, SEED, VEIN, CORE);
         minecraft.renderBuffers().bufferSource().endBatch(MurimRenderTypes.bodyGlow());
     }
 
