@@ -19,6 +19,9 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -30,28 +33,15 @@ import java.util.concurrent.ConcurrentHashMap;
  * означало бы получить схему, которая плохо описывает оба случая. Если появится вторая техника
  * такого рода, слои имеет смысл обобщить — до тех пор обобщение преждевременно.
  *
- * <p><b>Слои, найденные на референсах</b> (docs/design/reference/palm-1.png и palm-2.png):
- * холодное бело-голубое ядро, немного зелёных прядей, тёмные штрихи поверх свечения,
- * россыпь мелкой белой пыли, чёрные угловатые осколки на ударе, стекающие потёки с каплей
- * на сборе, и корона из неровных шипов вокруг ладони.
+ * <p><b>Что рисуется</b> — по описанию автора, docs/design/techniques/demon-palm.md.
+ * Сбор: мягкие дуги-эссенции ({@link EssenceArc}) закручиваются к светящейся кисти, вокруг
+ * белые точки. Удар: всплеск яда во все стороны от точки контакта и шлейф над ладонью.
  */
 @EventBusSubscriber(modid = MurimMod.MODID, value = Dist.CLIENT)
 public final class PalmVfxRenderer {
 
-    /** Зелёных прядей немного — четыре-восемь, как на референсах. Не десятки. */
-    private static final int STRANDS = 7;
-
-    /** Тёмных штрихов больше, чем светящихся прядей: они и создают фактуру движения. */
-    private static final int DARK_STRANDS = 14;
-
-    /** Белой пыли много и она мелкая. */
-    private static final int DUST = 56;
-
-    /** Осколков немного, но они крупные и жёсткие. */
-    private static final int SHARDS = 12;
-
-    /** Шипов короны вокруг ладони. */
-    private static final int CORONA_SPIKES = 16;
+    /** Белых точек вокруг дуг. */
+    private static final int DUST = 40;
 
     /**
      * Семя беспорядка техники. Постоянное, а не случайное: эффект должен выглядеть
@@ -60,60 +50,47 @@ public final class PalmVfxRenderer {
      */
     private static final long SEED = 0x5EED0FA1L;
 
-    /** Ленты, стекающие с ладони на сборе. Главный элемент первой панели референса. */
-    private static final int GATHER_RIBBONS = 12;
+    /** Дуг-эссенций на сборе: автор насчитал на референсе шесть. */
+    private static final int ESSENCE_ARCS = 6;
+
+    /** Тиков между появлением соседних дуг: «по одной, но быстро». */
+    private static final float ARC_STAGGER_TICKS = 1.6F;
+
+    /** За сколько тиков дуга дорастает до кисти. */
+    private static final float ARC_GROW_TICKS = 3.0F;
+
+    /** Светлое ядро дуги: бледно-зелёное, почти белое. */
+    private static final VfxColour ESSENCE_CORE = new VfxColour(0.80F, 1.0F, 0.86F);
 
     /**
-     * Крупные ленты — «большая форма» эффекта.
-     *
-     * <p>Плотность добирается слоями РАЗНОГО масштаба, а не количеством одинаковых точек:
-     * две-три крупные ленты, несколько средних дуг, десятки мелких искр и мягкий туман.
-     * Полсотни одинаковых белых точек дают шум, а не насыщенность.
+     * Разновидность дуг. Пока автор не выбрал, её можно задать переменной окружения
+     * {@code MURIM_ARC_STYLE} (a, b, c) — съёмочный стенд снимает все три подряд.
      */
-    private static final int BIG_RIBBONS = 3;
+    private static final EssenceArc.Style ARC_STYLE =
+            EssenceArc.Style.byName(System.getenv("MURIM_ARC_STYLE"));
 
-    /** Радиус свечения у ладони. Поджат: полтора блока растаскивали центр от руки. */
-    private static final double GLOW_RADIUS = 0.26D;
+    /** Радиус облака белых точек вокруг ладони до сжатия зарядом. */
+    private static final double DUST_RADIUS = 0.85D;
 
-    /** Радиус кольца искр вокруг ладони до сжатия зарядом. */
-    private static final double DUST_RADIUS = 0.40D;
+    /** Сколько тиков живёт шлейф после удара. */
+    private static final float TRAIL_TICKS = 10.0F;
 
-    /** Клубов тумана вдоль канала выброса: они собирают линии в один импульс. */
-    private static final int CHANNEL_PUFFS = 8;
+    /** Нитей в шлейфе: как у дуг варианта C, основная и спутницы. */
+    private static final int TRAIL_STRANDS = 3;
 
-    /** Откуда яд стягивается к ладони на сборе: примерно локоть от кисти. */
-    private static final double GATHER_REACH = 0.85D;
+    /** За сколько тиков истории строится шлейф. */
+    private static final float TRAIL_HISTORY_TICKS = 8.0F;
 
-    /** Вынос выброса: длина вытянутой руки, а не дистанция снаряда. */
-    private static final double PALM_REACH = 1.05D;
+    /** Ближе этого кисть считается у цели, и всплеск идёт прямо из неё. */
+    private static final double PALM_TOUCH = 0.9D;
 
-    /** Волн, расходящихся по телу цели. На референсе они считаются по одной. */
-    private static final int SPLASH_WAVES = 5;
+    /** Квадрат наименьшего шага между узлами шлейфа: 0.04 блока. */
+    private static final double TRAIL_MIN_STEP_SQR = 0.04D * 0.04D;
 
-    /** Капель зелёного всплеска под ладонью. */
-    private static final int SPLASH_DROPS = 26;
+    /** Полуширина цели: всплеск ставится на её поверхность. */
+    private static final double TARGET_HALF_WIDTH = 0.3D;
 
-    /** Чёрных брызг. */
-    private static final int SPLASH_SHARDS = 10;
-
-    /** Сколько тиков живёт вспышка контакта. */
-    private static final float FLASH_TICKS = 3.5F;
-
-    private static final VfxColour DUST_WARM = new VfxColour(0.42F, 1.0F, 0.55F);
     private static final VfxColour DUST_COLD = new VfxColour(0.88F, 1.0F, 0.94F);
-    private static final VfxColour FLASH_CORE = new VfxColour(0.92F, 1.0F, 0.98F);
-
-    /**
-     * Куда «смотрит» веер прядей выброса.
-     *
-     * <p>Постоянная, а не случайная: силуэт техники должен запоминаться. Значение выбрано
-     * так, чтобы веер уходил вниз-вбок от ладони, как на второй панели референса.
-     *
-     * <p>Раствор веера намеренно широкий. Узкий сектор (раствор около 200°) поднял
-     * радиальную неравномерность с 0.78 до 0.86 при пределе 0.62: метрика штрафует
-     * сжатие энергии в клин, а не симметрию. Нужен перекос, а не конус.
-     */
-    private static final float SECTOR_CENTRE = -0.7F;
 
     private static final Map<Integer, State> ACTIVE = new ConcurrentHashMap<>();
 
@@ -145,6 +122,16 @@ public final class PalmVfxRenderer {
     }
 
     private static final Map<Integer, Hit> HITS = new ConcurrentHashMap<>();
+
+    /** Точка кисти в мире в один момент: из истории строится шлейф удара. */
+    private record Sample(float age, Vec3 world) {
+    }
+
+    /** История кисти за последние тики, от старой к новой. */
+    private static final Map<Integer, ArrayDeque<Sample>> PALM_PATH = new ConcurrentHashMap<>();
+
+    /** Мировая точка всплеска, выбранная в первый кадр после попадания. */
+    private static final Map<Integer, Vec3> SPLASH_ORIGIN = new ConcurrentHashMap<>();
 
     /** Принимает точку контакта с сервера. */
     public static void recordHit(int sourceId, double x, double y, double z, float height) {
@@ -188,6 +175,8 @@ public final class PalmVfxRenderer {
         DRAWN_AGE.remove(entityId);
         DRAWN_PALM.remove(entityId);
         HITS.remove(entityId);
+        PALM_PATH.remove(entityId);
+        SPLASH_ORIGIN.remove(entityId);
     }
 
     /**
@@ -215,6 +204,8 @@ public final class PalmVfxRenderer {
         DRAWN_AGE.clear();
         DRAWN_PALM.clear();
         HITS.clear();
+        PALM_PATH.clear();
+        SPLASH_ORIGIN.clear();
     }
 
     @SubscribeEvent
@@ -248,7 +239,9 @@ public final class PalmVfxRenderer {
                 forget(entry.getKey());
                 return true;
             }
-            if (entity == minecraft.player && minecraft.options.getCameraType().isFirstPerson()) {
+            // Не рисуем только тогда, когда смотрим ГЛАЗАМИ этой сущности: при съёмке сбоку
+            // камера стоит у другой сущности, и первое лицо не значит, что игрока не видно.
+            if (entity == minecraft.getCameraEntity() && minecraft.options.getCameraType().isFirstPerson()) {
                 return false;
             }
             render(poseStack, buffers, camera, entity, state.definition, age, partial);
@@ -290,18 +283,73 @@ public final class PalmVfxRenderer {
             // проверка не могла разойтись и не доказывала ничего.
             Vector4f drawn = pose.pose().transform(
                     new Vector4f((float) palm.x, (float) palm.y, (float) palm.z, 1.0F));
-            DRAWN_PALM.put(entity.getId(), new Vec3(drawn.x() + cameraPos.x,
-                                                    drawn.y() + cameraPos.y,
-                                                    drawn.z() + cameraPos.z));
+            Vec3 palmWorld = new Vec3(drawn.x() + cameraPos.x,
+                                      drawn.y() + cameraPos.y,
+                                      drawn.z() + cameraPos.z);
+            DRAWN_PALM.put(entity.getId(), palmWorld);
+            List<Vec3> trail = remember(entity.getId(), age, palmWorld, feet, bodyYaw);
+            // Время всплеска считается от ПРИХОДА попадания, а не от расчётного тика удара:
+            // пакет с сервера приходит на пару тиков позже, и всплеск появлялся уже
+            // наполовину отыгранным, без вспышки контакта.
+            Hit hit = HITS.get(entity.getId());
+            Vec3 splashAt = null;
+            Vec3 away = new Vec3(0.0D, 0.0D, -1.0D);
+            float hitSince = -1.0F;
+            if (hit != null) {
+                hitSince = clientTicks - hit.tick() + partial;
+                Vec3 origin = SPLASH_ORIGIN.computeIfAbsent(entity.getId(),
+                        id -> splashOrigin(hit, palmWorld));
+                splashAt = toLocal(origin.subtract(feet), bodyYaw);
+                // Наружу от поверхности цели — туда жидкость и выплёскивается.
+                Vec3 target = toLocal(hit.at().subtract(feet), bodyYaw);
+                Vec3 out = new Vec3(splashAt.x - target.x, 0.0D, splashAt.z - target.z);
+                if (out.lengthSqr() > 1.0E-6D) {
+                    away = out.normalize();
+                }
+            }
             if (age < impactAge) {
                 gather(buffers, pose, cameraLocal, palm, age, windupAge, impactAge);
             } else {
-                release(buffers, pose, cameraLocal, palm, age - impactAge,
-                        HITS.get(entity.getId()), feet, bodyYaw);
+                release(buffers, pose, cameraLocal, age - impactAge, splashAt, away, hitSince, trail);
             }
         } finally {
             poseStack.popPose();
         }
+    }
+
+    /**
+     * Запоминает кисть и возвращает путь за последние тики в системе игрока.
+     *
+     * <p>Храним МИРОВЫЕ точки и переводим их в систему игрока на каждом кадре: корпус
+     * поворачивается во время удара, и путь в старой системе уехал бы вместе с ним.
+     */
+    private static List<Vec3> remember(int entityId, float age, Vec3 world, Vec3 feet,
+                                       float bodyYaw) {
+        ArrayDeque<Sample> path = PALM_PATH.computeIfAbsent(entityId, id -> new ArrayDeque<>());
+        Sample last = path.peekLast();
+        if (last == null || age - last.age() >= 0.2F) {
+            path.addLast(new Sample(age, world));
+        }
+        while (!path.isEmpty() && age - path.peekFirst().age() > TRAIL_HISTORY_TICKS) {
+            path.removeFirst();
+        }
+        // Прореживание по РАССТОЯНИЮ: пока кисть стоит на сборе, в одну точку набиваются
+        // десятки совпадающих узлов, их квады складываются в яркое пятно позади игрока,
+        // а касательная между ними не определена.
+        List<Vec3> local = new ArrayList<>(path.size() + 1);
+        Vec3 now = toLocal(world.subtract(feet), bodyYaw);
+        for (Sample sample : path) {
+            Vec3 point = toLocal(sample.world().subtract(feet), bodyYaw);
+            if (local.isEmpty() || point.distanceToSqr(local.get(local.size() - 1)) > TRAIL_MIN_STEP_SQR) {
+                local.add(point);
+            }
+        }
+        if (local.isEmpty() || now.distanceToSqr(local.get(local.size() - 1)) > TRAIL_MIN_STEP_SQR) {
+            local.add(now);
+        } else {
+            local.set(local.size() - 1, now);
+        }
+        return local;
     }
 
     /**
@@ -332,277 +380,82 @@ public final class PalmVfxRenderer {
     private static void gather(MultiBufferSource.BufferSource buffers, PoseStack.Pose pose,
                                Vec3 cameraLocal, Vec3 palm, float age, float windupAge,
                                float impactAge) {
-        float charge = Mth.clamp((age - windupAge) / Math.max(1.0F, impactAge - windupAge), 0.0F, 1.0F);
-        if (charge <= 0.0F) {
+        float span = Math.max(1.0F, impactAge - windupAge);
+        float since = age - windupAge;
+        float charge = Mth.clamp(since / span, 0.0F, 1.0F);
+        if (since <= 0.0F) {
             return;
         }
-        // Сжатие перед ударом: последние тики сбора всё ГАСНЕТ и стягивается к ладони.
-        // Без паузы кульминация не читается как кульминация — нечему контрастировать.
-        // Совет из разбора: на импакте должны расти все параметры сразу, а до него —
-        // падать. Раньше сбор разгорался до самого удара и был ярче самого удара.
-        float squash = charge > 0.86F ? Mth.clamp((1.0F - charge) / 0.14F, 0.0F, 1.0F) : 1.0F;
-        charge *= squash;
-        if (charge <= 0.01F) {
-            return;
-        }
-
+        // Сбор по описанию автора (docs/design/techniques/demon-palm.md): мягкие дуги-эссенции
+        // закручиваются к кисти, появляются по одной, но быстро; вокруг белые точки; кисть
+        // светится. Прежние слои — корона шипов, потёки, тёмные штрихи, зелёный туман —
+        // убраны: в описании их нет, а туман автор прямо назвал лишним.
+        //
         // ВАЖНО: слои рисуются строго по одному. Общий источник буферов строит только один
         // тип за раз, и запрос второго молча закрывает первый — запись в удержанную ссылку
-        // после этого падает с «Not building!». Поймано на первом же прогоне ладони.
-        VertexConsumer glow = buffers.getBuffer(MurimRenderTypes.impactCore());
+        // после этого падает с «Not building!».
+        VertexConsumer essence = buffers.getBuffer(MurimRenderTypes.essence());
+        EssenceArc.gather(essence, pose, palm, cameraLocal, ARC_STYLE, ESSENCE_ARCS, since,
+                          charge, ARC_STAGGER_TICKS, ARC_GROW_TICKS, 1.0F, SEED,
+                          VfxColour.VENOM, ESSENCE_CORE);
+        buffers.endBatch(MurimRenderTypes.essence());
 
-        // ВСЕ яркости сбора умножаются на заряд, без постоянного слагаемого.
-        //
-        // Раньше у тумана, зелёного и холодного ядра был пол (0.045, 0.144 и 0.35), не
-        // зависящий от заряда: эффект вспыхивал на полную с первого тика и сорок тиков
-        // стоял ровно. Измерение показало 74% энергии уже на четвёртом тике при заряде
-        // 0.125 — то есть фазы у эффекта не было вовсе. Это прямой стоп-сигнал «дешёвого»
-        // эффекта из правила 04, и он же был причиной, по которой кульминация оказывалась
-        // слабее подготовки: сбор набирал всю энергию мгновенно и держал её до удара.
-        //
-        // Яркость на пике сохранена прежней, изменилось только начало.
-        // Холодное ядро в ладони. Растёт кубически: сила должна набираться заметным всплеском.
-        float core = charge * charge * charge;
-        // Соотношение цветов перевёрнуто относительно первой версии. На референсе зелёное
-        // занимает почти всю площадь, а холодное — только маленькое ядро в центре. У меня
-        // было наоборот: белая вспышка на весь кадр и почти без зелени.
-        // Мягкий зелёный туман: самая широкая и самая прозрачная масса. Она и создаёт
-        // ощущение плотности, не засвечивая силуэт.
-        // Радиус поджат к ладони. Прежние полтора блока растаскивали центр свечения
-        // на полкорпуса от руки: якорь был верным, а геометрия вокруг него — нет.
-        CoreGlow.draw(glow, pose, palm, cameraLocal, age, GLOW_RADIUS, charge,
-                      VfxColour.VENOM_DEEP, VfxColour.COLD_CORE);
-
-        // Искры СТЯГИВАЮТСЯ к ладони по спирали — направление читается с первой панели.
-        // Кольцо ещё и сжимается по мере набора силы, поэтому радиус зависит от заряда.
+        VertexConsumer glow = buffers.getBuffer(MurimRenderTypes.mote());
+        // Кисть светится и разгорается к удару.
+        float hand = charge * charge;
+        VfxDraw.billboard(glow, pose, palm, cameraLocal, 0.10D + 0.14D * hand, 0.25F + 0.45F * hand,
+                          VfxColour.VENOM.red(), VfxColour.VENOM.green(), VfxColour.VENOM.blue());
+        VfxDraw.billboard(glow, pose, palm, cameraLocal, 0.05D + 0.06D * hand, 0.35F + 0.6F * hand,
+                          ESSENCE_CORE.red(), ESSENCE_CORE.green(), ESSENCE_CORE.blue());
+        // Белые точки вокруг дуг, втягиваются к кисти вместе с потоком.
         BillboardBurst.inward(glow, pose, palm, cameraLocal, DUST, age,
-                              DUST_RADIUS * (1.0D - 0.25D * charge), charge,
-                              DUST_WARM, DUST_COLD);
-        buffers.endBatch(MurimRenderTypes.impactCore());
-
-        VertexConsumer strands = buffers.getBuffer(MurimRenderTypes.strand());
-
-        // Ленты СТЯГИВАЮТСЯ ИЗ ВОЗДУХА В ЛАДОНЬ, а не стекают вниз.
-        //
-        // Прямое замечание автора по кадру: «эффекты идут вниз, а не к руке». Прежняя
-        // версия вела ленты от ладони вниз на полблока, и сбор читался как утечка,
-        // а не как набор силы. По референсу яд собирается ИЗ ВОЗДУХА к отведённой кисти.
-        for (int i = 0; i < GATHER_RIBBONS; i++) {
-            float pick = Chaos.unit(i, SEED ^ 0x6A7L);
-            double around = i * (Math.PI * 2.0D / GATHER_RIBBONS) + age * 0.05D;
-            double lift = (pick - 0.35D) * 0.9D;
-            // Дальний конец ленты: чем больше заряд, тем ближе он подтянут к ладони.
-            double far = GATHER_REACH * (1.0D - 0.45D * charge);
-            Vec3 outer = palm.add(new Vec3(Math.cos(around) * far,
-                                           lift * far,
-                                           Math.sin(around) * far * 0.8D));
-            int segments = 6;
-            Vec3 previous = outer;
-            for (int seg = 1; seg <= segments; seg++) {
-                double t = seg / (double) segments;
-                // Лента идёт К ладони, слегка закручиваясь по пути.
-                double twist = around + t * Math.PI * 0.55D * (i % 2 == 0 ? 1.0D : -1.0D);
-                double radius = far * (1.0D - t) * 0.75D;
-                Vec3 point = palm.add(new Vec3(Math.cos(twist) * radius,
-                                               lift * far * (1.0D - t),
-                                               Math.sin(twist) * radius * 0.8D));
-                // Яркость растёт К ЛАДОНИ: видно, куда течёт, а не откуда.
-                // Ярче и толще к ладони: на кадрах сбор читался усиками у бедра,
-                // а должен читаться как стягивающийся из воздуха яд.
-                VfxDraw.segment(strands, pose, previous, point, cameraLocal,
-                           0.055D + 0.085D * t,
-                           charge * (0.45F + 0.80F * (float) t), 0.34F, 1.0F, 0.5F);
-                previous = point;
-            }
-        }
-
-        // Крупные ленты — большая форма, которой не хватало сильнее всего.
-        for (int b = 0; b < BIG_RIBBONS; b++) {
-            double base = b * (Math.PI * 2.0D / BIG_RIBBONS) + age * 0.018D;
-            // Крупные ленты тоже идут ИЗВНЕ ВНУТРЬ: спираль сходится к ладони.
-            double start = GATHER_REACH * 0.85D * (1.0D - 0.35D * charge);
-            Vec3 previous = palm.add(new Vec3(Math.cos(base) * start, 0.12D * start,
-                                              Math.sin(base) * start * 0.7D));
-            for (int seg = 1; seg <= 7; seg++) {
-                double t = seg / 7.0D;
-                double angle = base + t * Math.PI * 1.3D;
-                double radius = start * (1.0D - t);
-                Vec3 point = palm.add(new Vec3(Math.cos(angle) * radius,
-                        0.12D * start * (1.0D - t) + 0.10D * charge * Math.sin(Math.PI * t),
-                        Math.sin(angle) * radius * 0.7D));
-                VfxDraw.segment(strands, pose, previous, point, cameraLocal,
-                           0.09D + 0.07D * t, charge * (0.35F + 0.45F * (float) t),
-                           0.30F, 1.0F, 0.46F);
-                previous = point;
-            }
-        }
-
-        for (int i = 0; i < CORONA_SPIKES; i++) {
-            double angle = i * (Math.PI * 2.0D / CORONA_SPIKES) + age * 0.03D;
-            double jitter = 0.55D + 0.45D * Math.abs(Math.sin(i * 2.399D));
-            double radius = (0.22D + 0.30D * core) * jitter;
-            Vec3 tip = palm.add(new Vec3(Math.cos(angle) * radius, Math.sin(angle) * radius * 0.8D,
-                    Math.sin(angle * 1.7D) * radius * 0.35D));
-            VfxDraw.segment(strands, pose, palm, tip, cameraLocal, 0.022D,
-                       0.28F * core, 0.40F, 1.0F, 0.58F);
-        }
-        buffers.endBatch(MurimRenderTypes.strand());
-
-        VertexConsumer drips = buffers.getBuffer(MurimRenderTypes.drip());
-        // Потёки с каплей: стекают с ладони вниз. На панели сбора они есть, на панели удара нет.
-        for (int i = 0; i < 5; i++) {
-            double phase = (age * 0.03F + i * 0.21D) % 1.0D;
-            Vec3 top = palm.add(new Vec3(-0.08D + 0.05D * i, -0.05D, -0.04D + 0.03D * i));
-            Vec3 bottom = top.add(new Vec3(0.0D, -0.20D - 0.28D * phase, 0.0D));
-            VfxDraw.segment(drips, pose, top, bottom, cameraLocal, 0.075D,
-                       (float) (charge * (1.0D - phase) * 1.0D), 0.72F, 1.0F, 0.78F);
-        }
-        buffers.endBatch(MurimRenderTypes.drip());
-
-        // Тёмные штрихи поверх свечения — именно они дают фактуру смазанного движения.
-        VertexConsumer dark = buffers.getBuffer(MurimRenderTypes.shard());
-        for (int i = 0; i < DARK_STRANDS / 2; i++) {
-            double angle = i * 1.7D + age * 0.02D;
-            Vec3 a = palm.add(new Vec3(Math.cos(angle) * 0.5D, 0.25D * Math.sin(angle), Math.sin(angle) * 0.5D));
-            Vec3 b = a.add(new Vec3(Math.cos(angle + 0.6D) * 0.45D, -0.12D, Math.sin(angle + 0.6D) * 0.45D));
-            VfxDraw.segment(dark, pose, a, b, cameraLocal, 0.03D, 0.5F * charge, 0.06F, 0.09F, 0.07F);
-        }
-        buffers.endBatch(MurimRenderTypes.shard());
+                              DUST_RADIUS * (1.0D - 0.25D * charge),
+                              Mth.clamp(since / 4.0F, 0.0F, 1.0F),
+                              DUST_COLD, VfxColour.COLD_CORE);
+        buffers.endBatch(MurimRenderTypes.mote());
     }
 
     /**
-     * Удар: короткий выброс У ЛАДОНИ и брызги ПО ЦЕЛИ.
+     * Удар по описанию автора (docs/design/techniques/demon-palm.md).
      *
-     * <p>Переписано по разбору кадров автором. Прежняя версия гнала волну на четыре с
-     * половиной блока вперёд независимо от попадания — «ходукен», возникающий из воздуха.
-     * По референсу и по описанию должно быть иначе: яд срывается с ладони на расстояние
-     * вытянутой руки, а на контакте расплёскивается по телу цели отдельными волнами,
-     * зелёным всплеском под ладонью и чёрными брызгами.
+     * <p>Дуги сбора не летят в цель: ладонь бьёт сама, над ней тянется шлейф из тех же
+     * дуг, а из-под ладони во все стороны выплёскивается яд — светлый и тёмно-зелёный,
+     * ниже чёрные капли. Дыма нет. Прежние слои — веер прядей вперёд, волны по телу цели,
+     * большая белая вспышка — убраны: в описании их нет.
      *
      * @param hit точка контакта или {@code null}, если удар прошёл мимо
      */
     private static void release(MultiBufferSource.BufferSource buffers, PoseStack.Pose pose,
-                                Vec3 cameraLocal, Vec3 palm, float since,
-                                Hit hit, Vec3 feet, float bodyYaw) {
-        // Жизнь выброса укорочена до длины анимации: раньше эффект доигрывал тридцать
-        // тиков над уже опущенной рукой.
-        float life = Mth.clamp(since / 14.0F, 0.0F, 1.0F);
-        float fade = 1.0F - life;
-        if (fade <= 0.0F) {
-            return;
+                                Vec3 cameraLocal, float since, Vec3 splashAt, Vec3 away,
+                                float hitSince, List<Vec3> trail) {
+        float fade = 1.0F - Mth.clamp(since / TRAIL_TICKS, 0.0F, 1.0F);
+        if (fade > 0.0F) {
+            VertexConsumer essence = buffers.getBuffer(MurimRenderTypes.essence());
+            EssenceTrail.draw(essence, pose, trail, cameraLocal, TRAIL_STRANDS, 0.20D,
+                              fade, since, SEED, VfxColour.VENOM, ESSENCE_CORE);
+            buffers.endBatch(MurimRenderTypes.essence());
         }
-        Vec3 forward = new Vec3(0.0D, 0.0D, 1.0D);
-        // Вынос — на длину вытянутой руки, а не через полполя.
-        double reach = PALM_REACH * (0.35D + 0.65D * Mth.clamp(since / 3.0F, 0.0F, 1.0F));
-
-        if (since < FLASH_TICKS) {
-            VertexConsumer burst = buffers.getBuffer(MurimRenderTypes.impactCore());
-            // Ореол сжат к ядру: широкий ореол вокруг плотного центра и есть кольцо.
-            ImpactFlash.draw(burst, pose, palm.add(forward.scale(0.25D)), cameraLocal,
-                             since / FLASH_TICKS, 0.17D, FLASH_CORE, VfxColour.VENOM);
-            buffers.endBatch(MurimRenderTypes.impactCore());
-        }
-
-        // Пряди срываются с ладони ВЕЕРОМ ПАЛЬЦЕВ, а не кольцом вокруг оси.
-        //
-        // Прежний раствор в 1.75π — это почти полный круг, и с торца, то есть ровно
-        // из-под фронтальной камеры, он читался зелёным бубликом, почти порталом.
-        // Тот же дефект, что автор назвал «ураганом», просто увиденный с другой стороны.
-        // Узкий вертикальный веер даёт направление и с фронта, и сбоку.
-        VertexConsumer strands = buffers.getBuffer(MurimRenderTypes.strand());
-        RibbonTrail.draw(strands, pose, palm, forward, cameraLocal, STRANDS, reach,
-                         0.085D, fade * 0.9F, (float) (Math.PI * 0.55D), SECTOR_CENTRE,
-                         SEED, VfxColour.VENOM);
-        buffers.endBatch(MurimRenderTypes.strand());
-
-        if (hit != null) {
-            splash(buffers, pose, cameraLocal, hit, feet, bodyYaw, since, fade);
+        if (splashAt != null) {
+            FlipbookSplash.draw(buffers, pose, splashAt, away, cameraLocal, hitSince);
         }
     }
 
     /**
-     * Брызги по цели: волны, всплеск и чёрные капли.
+     * Откуда бьёт всплеск — «из-под ладони».
      *
-     * <p>Точка контакта приходит с сервера в мировых координатах, а рисуем мы в системе
-     * игрока — поэтому её надо перевести. Рисовать брызги в мировой системе поверх
-     * повёрнутого стека нельзя: они уедут вместе с поворотом корпуса.
+     * <p>Берётся кисть в момент прихода попадания, если она у цели. Если кисть не дотянулась
+     * (дальность удара больше длины руки), — поверхность цели со стороны кисти, а не центр:
+     * из центра тела всплеск наполовину прятался в модели. Точка запоминается один раз:
+     * после удара рука уходит назад, а всплеск остаётся там, где был контакт.
      */
-    private static void splash(MultiBufferSource.BufferSource buffers, PoseStack.Pose pose,
-                               Vec3 cameraLocal, Hit hit, Vec3 feet, float bodyYaw,
-                               float since, float fade) {
-        Vec3 at = toLocal(hit.at().subtract(feet), bodyYaw);
-        float spread = Mth.clamp(since / 5.0F, 0.0F, 1.0F);
-        double body = Math.max(0.6D, hit.height());
-
-        // ВОЛНЫ: пять отдельных дуг, расходящихся по телу цели сверху вниз.
-        // Их считанное число — не украшение: на референсе они читаются по одной.
-        VertexConsumer strands = buffers.getBuffer(MurimRenderTypes.strand());
-        for (int wave = 0; wave < SPLASH_WAVES; wave++) {
-            float phase = Chaos.unit(wave, SEED ^ 0x5A11L);
-            float delay = wave * 0.12F;
-            float grown = Mth.clamp((spread - delay) / (1.0F - delay), 0.0F, 1.0F);
-            if (grown <= 0.0F) {
-                continue;
-            }
-            int steps = 10;
-            Vec3[] path = new Vec3[steps + 1];
-            double[] widths = new double[steps + 1];
-            float[] alphas = new float[steps + 1];
-            for (int i = 0; i <= steps; i++) {
-                float t = (i / (float) steps) * grown;
-                double angle = (phase - 0.5F) * Math.PI * 1.4D + t * Math.PI * 0.9D
-                        * (wave % 2 == 0 ? 1.0D : -1.0D);
-                // Волна обтекает тело: расходится вбок и стекает вниз.
-                double side = Math.sin(angle) * body * 0.42D * t;
-                double drop = -body * 0.62D * t * t;
-                double out = Math.cos(angle) * body * 0.18D;
-                path[i] = at.add(side, drop, out);
-                float profile = Chaos.widthProfile(t, 0.35F);
-                widths[i] = 0.055D * profile;
-                alphas[i] = fade * profile;
-            }
-            RibbonMesher.draw(strands, pose, path, widths, alphas, cameraLocal,
-                              VfxColour.VENOM.red(), VfxColour.VENOM.green(),
-                              VfxColour.VENOM.blue());
+    private static Vec3 splashOrigin(Hit hit, Vec3 palmWorld) {
+        Vec3 toPalm = new Vec3(palmWorld.x - hit.at().x, 0.0D, palmWorld.z - hit.at().z);
+        if (toPalm.lengthSqr() < 1.0E-6D) {
+            return hit.at();
         }
-        buffers.endBatch(MurimRenderTypes.strand());
-
-        // ВСПЛЕСК под ладонью: густая масса, растекающаяся как вылитая вода.
-        VertexConsumer glow = buffers.getBuffer(MurimRenderTypes.impactCore());
-        for (int i = 0; i < SPLASH_DROPS; i++) {
-            float u = Chaos.unit(i, SEED ^ 0x0DD5L);
-            double angle = i * 2.399D;
-            double run = body * 0.55D * spread * (0.35D + 0.65D * u);
-            Vec3 point = at.add(Math.cos(angle) * run * 0.6D,
-                                -body * 0.5D * spread * (0.4D + 0.6D * u),
-                                Math.sin(angle) * run * 0.35D);
-            VfxDraw.billboard(glow, pose, point, cameraLocal,
-                              0.035D + 0.05D * (1.0F - spread), fade * (0.5F + 0.5F * u),
-                              VfxColour.VENOM.red(), VfxColour.VENOM.green(),
-                              VfxColour.VENOM.blue());
-        }
-        VfxDraw.billboard(glow, pose, at, cameraLocal, 0.16D + 0.30D * spread,
-                          fade * 0.85F, FLASH_CORE.red(), FLASH_CORE.green(), FLASH_CORE.blue());
-        buffers.endBatch(MurimRenderTypes.impactCore());
-
-        // ЧЁРНЫЕ БРЫЗГИ. Их автор назвал верными и нужными; на программном рендере
-        // моего стенда этот слой не рисуется вовсе, поэтому судить о нём я могу
-        // только по кадрам автора.
-        VertexConsumer dark = buffers.getBuffer(MurimRenderTypes.shard());
-        for (int i = 0; i < SPLASH_SHARDS; i++) {
-            float u = Chaos.unit(i, SEED ^ 0x51A5L);
-            double angle = i * 1.94D;
-            double run = body * 0.6D * spread * (0.3D + 0.7D * u);
-            Vec3 point = at.add(Math.cos(angle) * run * 0.7D,
-                                -body * 0.45D * spread * u,
-                                Math.sin(angle) * run * 0.4D);
-            VfxDraw.billboard(dark, pose, point, cameraLocal, 0.05D + 0.06D * u,
-                              fade * 0.9F, VfxColour.SOOT.red(), VfxColour.SOOT.green(),
-                              VfxColour.SOOT.blue());
-        }
-        buffers.endBatch(MurimRenderTypes.shard());
+        Vec3 surface = hit.at().add(toPalm.normalize().scale(TARGET_HALF_WIDTH));
+        return palmWorld.distanceTo(surface) < PALM_TOUCH ? palmWorld : surface;
     }
-
 
     private static Vec3 toLocal(Vec3 delta, float bodyYaw) {
         double radians = Math.toRadians(bodyYaw);

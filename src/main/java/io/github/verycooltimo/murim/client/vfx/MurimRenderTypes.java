@@ -38,6 +38,21 @@ public final class MurimRenderTypes {
     private static final ResourceLocation DRIP_TEXTURE =
             ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/vfx/drip.png");
 
+    private static final ResourceLocation ESSENCE_TEXTURE =
+            ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/vfx/essence.png");
+
+    private static final ResourceLocation MOTE_TEXTURE =
+            ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/vfx/mote.png");
+
+    private static final ResourceLocation SPLASH_LIGHT_TEXTURE =
+            ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/vfx/splash_light.png");
+
+    private static final ResourceLocation SPLASH_DARK_TEXTURE =
+            ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/vfx/splash_dark.png");
+
+    private static final ResourceLocation SPLASH_BLACK_TEXTURE =
+            ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/vfx/splash_black.png");
+
     private static final ResourceLocation CORE_TEXTURE =
             ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/vfx/impact_core.png");
 
@@ -126,6 +141,22 @@ public final class MurimRenderTypes {
     /** Тонкая светящаяся прядь. Из пучка таких собирается фактура смазанного движения. */
     private static final RenderType STRAND = additive("strand", STRAND_TEXTURE);
 
+    /**
+     * Дуга-эссенция: мягкая светящаяся лента без жёсткой кромки.
+     *
+     * <p>Текстура белая, цвет задаёт вершина. Поперёк ленты два гаусса разного масштаба:
+     * узкое ядро и широкий спад, поэтому край читается размытым, а не отрезанным.
+     * У {@code strand.png} профиль в восемь пикселей и зелёный оттенок в самой текстуре,
+     * отсюда и «линии» вместо эссенции.
+     */
+    private static final RenderType ESSENCE = additive("essence", ESSENCE_TEXTURE);
+
+    /**
+     * Мягкая круглая точка без лучей. У {@code impact_core.png} лучи вспышки, и белые
+     * точки сбора на кадрах читались колючими звёздочками.
+     */
+    private static final RenderType MOTE = additive("mote", MOTE_TEXTURE);
+
     /** Жилы по телу: рисуются поверх модели, см. {@link #overlayGlow}. */
     private static final RenderType BODY_GLOW = overlayGlow("body_glow", STRAND_TEXTURE);
 
@@ -149,7 +180,7 @@ public final class MurimRenderTypes {
                     .setTextureState(new RenderStateShard.TextureStateShard(SHARD_TEXTURE, false, false))
                     .setTransparencyState(RenderStateShard.TRANSLUCENT_TRANSPARENCY)
                     .setCullState(RenderStateShard.NO_CULL)
-                    .setLightmapState(RenderStateShard.NO_LIGHTMAP)
+                    .setLightmapState(RenderStateShard.LIGHTMAP)
                     .setOverlayState(RenderStateShard.NO_OVERLAY)
                     .setWriteMaskState(RenderStateShard.COLOR_WRITE)
                     .createCompositeState(false));
@@ -158,12 +189,61 @@ public final class MurimRenderTypes {
         return STRAND;
     }
 
+    public static RenderType essence() {
+        return ESSENCE;
+    }
+
+    public static RenderType mote() {
+        return MOTE;
+    }
+
     public static RenderType bodyGlow() {
         return BODY_GLOW;
     }
 
     public static RenderType drip() {
         return DRIP;
+    }
+
+    /**
+     * Слои флипбука всплеска ({@link FlipbookSplash}): кадры уже окрашены, цвет вершины белый.
+     *
+     * <p>Светлый слой — аддитивный: он светится. Тёмный и чёрный — обычная полупрозрачность
+     * через шейдер «глаз»: он не читает ни лайтмап, ни нормали, и цвет выходит ровно тем,
+     * что нарисован. С шейдером полупрозрачных сущностей тёмная жидкость проходила через
+     * освещение и ночью становилась мутной дымкой.
+     */
+    private static final RenderType SPLASH_LIGHT = additive("splash_light", SPLASH_LIGHT_TEXTURE);
+    private static final RenderType SPLASH_DARK = flatTranslucent("splash_dark", SPLASH_DARK_TEXTURE);
+    private static final RenderType SPLASH_BLACK = flatTranslucent("splash_black", SPLASH_BLACK_TEXTURE);
+
+    private static RenderType flatTranslucent(String name, ResourceLocation texture) {
+        return RenderType.create(
+                MurimMod.MODID + ":" + name,
+                DefaultVertexFormat.NEW_ENTITY,
+                VertexFormat.Mode.QUADS,
+                4096,
+                RenderType.CompositeState.builder()
+                        .setShaderState(RenderStateShard.RENDERTYPE_EYES_SHADER)
+                        .setTextureState(new RenderStateShard.TextureStateShard(texture, true, false))
+                        .setTransparencyState(RenderStateShard.TRANSLUCENT_TRANSPARENCY)
+                        .setCullState(RenderStateShard.NO_CULL)
+                        .setLightmapState(RenderStateShard.NO_LIGHTMAP)
+                        .setOverlayState(RenderStateShard.NO_OVERLAY)
+                        .setWriteMaskState(RenderStateShard.COLOR_WRITE)
+                        .createCompositeState(false));
+    }
+
+    public static RenderType splashLight() {
+        return SPLASH_LIGHT;
+    }
+
+    public static RenderType splashDark() {
+        return SPLASH_DARK;
+    }
+
+    public static RenderType splashBlack() {
+        return SPLASH_BLACK;
     }
 
     public static RenderType shard() {
