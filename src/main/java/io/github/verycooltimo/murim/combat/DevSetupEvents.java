@@ -34,6 +34,9 @@ public final class DevSetupEvents {
 
     /** Съёмочная площадка: над кронами, чтобы в кадр не лезли ветки. */
     private static final int STAGE_X = 8;
+
+    /** Имя невидимой стойки, глазами которой снимает камера «сбоку». */
+    public static final String CAMERA_STAND_NAME = "murim_camera";
     private static final int STAGE_Y = 120;
     private static final int STAGE_Z = 8;
     private static final int PLATFORM_RADIUS = 12;
@@ -192,9 +195,19 @@ public final class DevSetupEvents {
             old.discard();
             removed++;
         }
+        for (net.minecraft.world.entity.decoration.ArmorStand old
+                : level.getEntitiesOfClass(net.minecraft.world.entity.decoration.ArmorStand.class, area,
+                        stand -> stand.getCustomName() != null
+                                && CAMERA_STAND_NAME.equals(stand.getCustomName().getString()))) {
+            old.discard();
+        }
 
+        // Спереди манекен по умолчанию не ставится (см. выше), но для съёмки удара он нужен:
+        // со спины корпус закрывает и кисть, и шлейф. Смещённый на 28° манекен камеру
+        // не перекрывает, поэтому его можно включить явно: MURIM_CAPTURE_DUMMY=1.
         boolean frontCamera = "front".equalsIgnoreCase(
-                System.getProperty("murim.capture.camera", "back"));
+                System.getProperty("murim.capture.camera", "back"))
+                && !"1".equals(System.getenv("MURIM_CAPTURE_DUMMY"));
         if (frontCamera) {
             MurimMod.LOGGER.info("Съёмка: контрольный ракурс, манекенов убрано {}, новый не ставится",
                     removed);
@@ -219,8 +232,36 @@ public final class DevSetupEvents {
         double aim = yaw + Math.toRadians(28.0D);
         double lookX = -Math.sin(aim);
         double lookZ = Math.cos(aim);
-        dummy.setPos(STAGE_X + 0.5D + lookX * 1.7D, STAGE_Y, STAGE_Z + 0.5D + lookZ * 1.7D);
+        // Сбоку манекен стоит на вытянутую руку: иначе ладонь до него не достаёт, и всплеск
+        // «под ладонью» висит в воздухе в метре от кисти (кадры 2026-09-24).
+        double dummyDistance = "side".equalsIgnoreCase(
+                System.getProperty("murim.capture.camera", "back")) ? 1.15D : 1.7D;
+        dummy.setPos(STAGE_X + 0.5D + lookX * dummyDistance, STAGE_Y,
+                     STAGE_Z + 0.5D + lookZ * dummyDistance);
         level.addFreshEntity(dummy);
+
+        // Камера сбоку для съёмки удара: со спины кисть и шлейф закрывает корпус, спереди
+        // манекен встаёт перед камерой. Клиент смотрит глазами этой стойки
+        // (DevCaptureHandler), сама она невидима и висит без гравитации.
+        if ("side".equalsIgnoreCase(System.getProperty("murim.capture.camera", "back"))) {
+            double midX = STAGE_X + 0.5D + lookX * dummyDistance * 0.5D;
+            double midZ = STAGE_Z + 0.5D + lookZ * dummyDistance * 0.5D;
+            // Правая сторона игрока: при взгляде (−sin, cos) правая рука смотрит в (−cos, −sin).
+            double rightX = -Math.cos(yaw);
+            double rightZ = -Math.sin(yaw);
+            double camX = midX + rightX * 3.2D;
+            double camZ = midZ + rightZ * 3.2D;
+            net.minecraft.world.entity.decoration.ArmorStand stand =
+                    new net.minecraft.world.entity.decoration.ArmorStand(level, camX, STAGE_Y - 0.45D, camZ);
+            stand.setInvisible(true);
+            stand.setNoGravity(true);
+            stand.setCustomName(net.minecraft.network.chat.Component.literal(CAMERA_STAND_NAME));
+            float standYaw = (float) Math.toDegrees(Math.atan2(-(midX - camX), midZ - camZ));
+            stand.setYRot(standYaw);
+            stand.setYHeadRot(standYaw);
+            stand.setXRot(6.0F);
+            level.addFreshEntity(stand);
+        }
         MurimMod.LOGGER.info("Съёмка: манекенов убрано {}, поставлен новый", removed);
     }
 

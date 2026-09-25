@@ -6,6 +6,7 @@ import io.github.verycooltimo.murim.network.StartTechniquePayload;
 import net.minecraft.client.CameraType;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Screenshot;
+import net.minecraft.util.Mth;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -148,9 +149,40 @@ public final class DevCaptureHandler {
             warmup = WARMUP_TICKS;
             // Анимация тела видна только от третьего лица: в первом лице снимать нечего.
             boolean front = "front".equalsIgnoreCase(System.getProperty(CAMERA_PROPERTY, "back"));
-            minecraft.options.setCameraType(
-                    front ? CameraType.THIRD_PERSON_FRONT : CameraType.THIRD_PERSON_BACK);
-            MurimMod.LOGGER.info("Автосъёмка: техника через {} тиков", WARMUP_TICKS);
+            boolean side = "side".equalsIgnoreCase(System.getProperty(CAMERA_PROPERTY, "back"));
+            minecraft.options.setCameraType(side ? CameraType.FIRST_PERSON
+                    : front ? CameraType.THIRD_PERSON_FRONT : CameraType.THIRD_PERSON_BACK);
+            // Сбоку снимаем глазами чужой сущности в первом лице: без скрытого интерфейса
+            // в кадр лезут рука игрока и прицел.
+            if (side) {
+                minecraft.options.hideGui = true;
+            }
+            // Приближение кадра без правки build.gradle: переменная окружения доходит до
+            // клиента через демон Gradle. Камера третьего лица стоит в четырёх блоках, и при
+            // обычных 70° кисть занимает на кадре 854x480 десяток пикселей — дуги не разобрать.
+            // API: reference/minecraft-src/net/minecraft/client/Options.java#fov (IntRange 30..110)
+            String fov = System.getenv("MURIM_CAPTURE_FOV");
+            if (fov != null) {
+                minecraft.options.fov().set(Mth.clamp(Integer.parseInt(fov.trim()), 30, 110));
+            }
+            MurimMod.LOGGER.info("Автосъёмка: техника через {} тиков, FOV {}, стиль дуг {}",
+                    WARMUP_TICKS, System.getenv("MURIM_CAPTURE_FOV"), System.getenv("MURIM_ARC_STYLE"));
+        }
+
+        // Камера «сбоку»: стойку ставит сервер с задержкой, поэтому ищем её каждый тик
+        // прогрева, пока не найдём. Опорный кадр снимается уже с неё.
+        if (warmup > 0 && minecraft.getCameraEntity() == minecraft.player
+                && "side".equalsIgnoreCase(System.getProperty(CAMERA_PROPERTY, "back"))) {
+            for (net.minecraft.world.entity.Entity entity : minecraft.level.entitiesForRendering()) {
+                if (entity instanceof net.minecraft.world.entity.decoration.ArmorStand
+                        && entity.getCustomName() != null
+                        && io.github.verycooltimo.murim.combat.DevSetupEvents.CAMERA_STAND_NAME
+                                .equals(entity.getCustomName().getString())) {
+                    minecraft.setCameraEntity(entity);
+                    MurimMod.LOGGER.info("Автосъёмка: камера сбоку на {}", entity.position());
+                    break;
+                }
+            }
         }
 
         // Опорный кадр: сцена в той же позе и с той же камерой, но БЕЗ эффекта.
