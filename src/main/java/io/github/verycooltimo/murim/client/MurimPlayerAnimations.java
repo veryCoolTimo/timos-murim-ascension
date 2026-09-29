@@ -83,6 +83,20 @@ public final class MurimPlayerAnimations {
         return true;
     }
 
+    /**
+     * Останавливает текущую анимацию слоя у игрока — например, позу лотоса, когда
+     * медитация закончилась.
+     *
+     * <p>API: com.zigythebird.playeranimcore.animation.AnimationController#stop()
+     * (javap по jar PAL 1.1.x; у PlayerAnimationController своего метода нет, он наследуется).
+     */
+    public static void stop(AbstractClientPlayer player) {
+        IAnimation layer = PlayerAnimationAccess.getPlayerAnimationLayer(player, LAYER);
+        if (layer instanceof PlayerAnimationController controller) {
+            controller.stop();
+        }
+    }
+
     private MurimPlayerAnimations() {
     }
 }

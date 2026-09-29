@@ -12,8 +12,8 @@ import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 /**
  * Жизненный цикл профиля и ритуала на сервере.
  *
- * <p>Восстановление циркулирующей ци идёт ТОЛЬКО в ритуале. Пассивная регенерация свела бы
- * всю систему к ожиданию: зачем садиться, если и так натечёт.
+ * <p>Восстановление циркулирующей ци: пассивное (как мана) плюс ускоренное в медитации —
+ * решение автора 2026-09-28, docs/design/19 §2. Прежнее «только в ритуале» отменено.
  */
 @EventBusSubscriber(modid = MurimMod.MODID)
 public final class ProfileEvents {
@@ -38,6 +38,18 @@ public final class ProfileEvents {
             }
             return;
         }
+        // Новая медитация (docs/design/19): тикает и исключает старый ритуал.
+        if (player.getData(ModAttachments.MEDITATION).active()) {
+            try {
+                io.github.verycooltimo.murim.cultivation.MeditationService.tick(player);
+            } catch (RuntimeException exception) {
+                MurimMod.LOGGER.error("Ошибка в тике медитации у {}, медитация прервана",
+                        player.getGameProfile().getName(), exception);
+                io.github.verycooltimo.murim.cultivation.MeditationService.stop(player, null);
+            }
+            return;
+        }
+        passiveCirculation(player);
         RitualState state = player.getData(ModAttachments.RITUAL);
         if (!state.active()) {
             return;
@@ -78,11 +90,45 @@ public final class ProfileEvents {
             AwakeningService.onDamage(player, event.getAmount());
             return;
         }
+        if (player.getData(ModAttachments.MEDITATION).active()) {
+            io.github.verycooltimo.murim.cultivation.MeditationService.stop(player,
+                    "murim.meditation.broken.hurt");
+        }
         if (player.getData(ModAttachments.RITUAL).active()) {
             RitualService.stop(player, false);
             ProfileNetwork.syncRitual(player);
         }
     }
+
+    /**
+     * Пассивное восстановление циркулирующей ци из запаса.
+     *
+     * <p>Решение автора 2026-09-28 (docs/design/19 §2): боевая ци восстанавливается сама,
+     * как мана, от пустой до полной примерно за 40–60 секунд; медитация и клавиша сбора
+     * быстрее. Прежнее правило «только в ритуале» отменено.
+     */
+    private static void passiveCirculation(ServerPlayer player) {
+        if (player.tickCount % PASSIVE_EVERY_TICKS != 0) {
+            return;
+        }
+        DantianProfile profile = player.getData(ModAttachments.PROFILE);
+        if (!profile.isAwakened() || profile.circulating() >= profile.maxCirculating()) {
+            return;
+        }
+        DantianProfile updated = profile.circulateOnce();
+        if (updated != profile) {
+            player.setData(ModAttachments.PROFILE, updated);
+            if (player.tickCount % SYNC_PASSIVE_TICKS == 0 || updated.circulating() >= updated.maxCirculating()) {
+                ProfileNetwork.sync(player);
+            }
+        }
+    }
+
+    /** Пассивный перелив раз в два тика: при скорости каналов ~0,06 за шаг полный центр ~40–60 с. */
+    private static final int PASSIVE_EVERY_TICKS = 2;
+
+    /** Как часто пассивный прирост уезжает на клиент. */
+    private static final int SYNC_PASSIVE_TICKS = 20;
 
     /**
      * Смена измерения: клиент пересоздаёт игрока и сбрасывает своё зеркало профиля,

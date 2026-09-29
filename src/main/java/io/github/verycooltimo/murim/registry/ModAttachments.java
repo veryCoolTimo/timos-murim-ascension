@@ -67,6 +67,12 @@ public final class ModAttachments {
                             .copyOnDeath()
                             .build());
 
+    /** Идущая сессия медитации. Не сохраняется: сессия требует неподвижности здесь и сейчас. */
+    public static final Supplier<AttachmentType<io.github.verycooltimo.murim.cultivation.MeditationState>> MEDITATION =
+            ATTACHMENT_TYPES.register("meditation_state",
+                    () -> AttachmentType.<io.github.verycooltimo.murim.cultivation.MeditationState>builder(
+                            () -> io.github.verycooltimo.murim.cultivation.MeditationState.IDLE).build());
+
     /** Серия обычных ударов. Не сохраняется: связка живёт секунды и через сейв не тянется. */
     public static final Supplier<AttachmentType<io.github.verycooltimo.murim.combat.SchoolStyle.ComboState>> COMBO =
             ATTACHMENT_TYPES.register("combo_state",

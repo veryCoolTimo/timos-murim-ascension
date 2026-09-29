@@ -40,6 +40,18 @@ public final class ModKeyMappings {
             "key." + MurimMod.MODID + ".awakening",
             KeyConflictContext.IN_GAME,
             InputConstants.Type.KEYSYM,
+            // Старая церемония уходит (docs/design/19): клавиша G отдана медитации.
+            GLFW.GLFW_KEY_UNKNOWN,
+            CATEGORY);
+
+    /**
+     * Медитация: сесть или встать. На корточках — «брать всё», без отсева примесей
+     * (docs/design/19 §3: выбор делается один раз, перед тем как сесть).
+     */
+    public static final KeyMapping MEDITATION = new KeyMapping(
+            "key." + MurimMod.MODID + ".meditation",
+            KeyConflictContext.IN_GAME,
+            InputConstants.Type.KEYSYM,
             GLFW.GLFW_KEY_G,
             CATEGORY);
 
@@ -62,6 +74,7 @@ public final class ModKeyMappings {
     static void register(RegisterKeyMappingsEvent event) {
         event.register(TECHNIQUE);
         event.register(AWAKENING);
+        event.register(MEDITATION);
         event.register(FOUNDATION_BLOOD);
         event.register(FOUNDATION_VOID);
         event.register(FOUNDATION_MOUNTAIN);

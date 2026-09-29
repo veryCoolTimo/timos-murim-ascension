@@ -68,5 +68,20 @@
   "method.murim.holy_fire_breath": "Дыхание Святого Огня",
   "method.murim.holy_fire_breath.cost": "Метод культа. Быстро и сильно, путь демона. Природа: демоническая.",
   "method.murim.reverse_breathing": "Обратное дыхание",
-  "method.murim.reverse_breathing.cost": "Запретный лист. Только ночью, ци мёртвых. Природа: мёртвая."
+  "method.murim.reverse_breathing.cost": "Запретный лист. Только ночью, ци мёртвых. Природа: мёртвая.",
+  "key.murim.meditation": "Медитация (на корточках — без отсева)",
+  "murim.meditation.no_method": "Нечего практиковать: сначала нужен метод культивации.",
+  "murim.meditation.night_only": "Этот метод практикуют только ночью.",
+  "murim.meditation.begin_seeded": "Вы погружаетесь в медитацию.",
+  "murim.meditation.begin.0": "Вы садитесь и ищете дыхание метода…",
+  "murim.meditation.begin.1": "Тепло снова собирается внизу живота. Удержите кольцо, когда оно появится.",
+  "murim.meditation.begin.2": "Кольцо сжимается в точку. Не двигайтесь.",
+  "murim.meditation.stopped": "Вы встаёте.",
+  "murim.meditation.broken.moved": "Медитация прервана: вы сдвинулись.",
+  "murim.meditation.broken.hurt": "Медитация прервана ударом.",
+  "murim.meditation.first_feeling": "Под пупком появилось тепло — и рассеялось. Ци не на что опереться. Нужно попробовать снова.",
+  "murim.meditation.held": "Кольцо ци удержалось у пупка. Ещё одна сессия — и оно станет семенем.",
+  "murim.meditation.slipped": "Кольцо рассыпалось. Попробуйте ещё раз и держите дольше.",
+  "murim.meditation.seed": "Кольцо сжалось в точку. В вас родилось семя даньтяня.",
+  "murim.meditation.hud.hold": "Держите %s — удерживайте кольцо"
 }

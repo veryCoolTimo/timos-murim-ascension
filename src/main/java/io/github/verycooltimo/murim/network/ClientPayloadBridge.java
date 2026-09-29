@@ -51,6 +51,11 @@ final class ClientPayloadBridge {
         io.github.verycooltimo.murim.client.AwakeningSceneHandler.accept(payload);
     }
 
+    /** Медитация: поза, подсказка удержания, момент рождения семени. */
+    public static void handleSyncMeditation(SyncMeditationPayload payload) {
+        io.github.verycooltimo.murim.client.ClientMeditationState.accept(payload);
+    }
+
     private ClientPayloadBridge() {
     }
 }

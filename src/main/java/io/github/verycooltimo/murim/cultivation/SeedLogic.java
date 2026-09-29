@@ -68,8 +68,11 @@ public final class SeedLogic {
                                              double filteredShare) {
         double filtered = Mth.clamp(filteredShare, 0.0D, 1.0D);
         double purity = method.purity() - method.impurity() * (1.0D - filtered) * PURITY_LOSS;
+        // Стартовый запас равен ёмкости: без него пассивное восстановление после семени
+        // было бы нечем наполнять, и первая же техника оставляла бы игрока пустым.
         return base.withAxes(method.capacity(), purity, base.meridians())
                 .withTags(method.nature(), method.id().toString())
+                .withPool(method.capacity())
                 .withCirculating(0.0D);
     }
 

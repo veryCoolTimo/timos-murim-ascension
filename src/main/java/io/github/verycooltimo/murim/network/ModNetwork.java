@@ -85,6 +85,28 @@ public final class ModNetwork {
                     }
                 });
 
+        // Медитация: клиент присылает только нажатия, время и окна считает сервер.
+        registrar.playToServer(
+                MeditationInputPayload.TYPE,
+                MeditationInputPayload.STREAM_CODEC,
+                (payload, context) -> {
+                    if (context.player() instanceof ServerPlayer serverPlayer) {
+                        switch (payload.action()) {
+                            case TOGGLE -> io.github.verycooltimo.murim.cultivation.MeditationService
+                                    .toggle(serverPlayer, payload.filter());
+                            case HOLD_ON -> io.github.verycooltimo.murim.cultivation.MeditationService
+                                    .setHolding(serverPlayer, true);
+                            case HOLD_OFF -> io.github.verycooltimo.murim.cultivation.MeditationService
+                                    .setHolding(serverPlayer, false);
+                        }
+                    }
+                });
+
+        registrar.playToClient(
+                SyncMeditationPayload.TYPE,
+                SyncMeditationPayload.STREAM_CODEC,
+                (payload, context) -> ClientPayloadBridge.handleSyncMeditation(payload));
+
         // Выбор основания приходит от клиента как НАМЕРЕНИЕ: фазу церемонии и то, что
         // даньтянь ещё не создан, проверяет сервер.
         registrar.playToServer(

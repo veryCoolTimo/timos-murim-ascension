@@ -88,5 +88,20 @@
   "method.murim.holy_fire_breath": "Holy Fire Breath",
   "method.murim.holy_fire_breath.cost": "Cult method. Fast and strong, the demon's path. Nature: demonic.",
   "method.murim.reverse_breathing": "Reverse Breathing",
-  "method.murim.reverse_breathing.cost": "Forbidden page. Night only, qi of the dead. Nature: dead."
+  "method.murim.reverse_breathing.cost": "Forbidden page. Night only, qi of the dead. Nature: dead.",
+  "key.murim.meditation": "Meditate (sneak — no filtering)",
+  "murim.meditation.no_method": "Nothing to practise: you need a cultivation method first.",
+  "murim.meditation.night_only": "This method is practised only at night.",
+  "murim.meditation.begin_seeded": "You sink into meditation.",
+  "murim.meditation.begin.0": "You sit down and seek the method's breath…",
+  "murim.meditation.begin.1": "Warmth gathers below the navel again. Hold the ring when it appears.",
+  "murim.meditation.begin.2": "The ring contracts into a point. Stay still.",
+  "murim.meditation.stopped": "You stand up.",
+  "murim.meditation.broken.moved": "Meditation broken: you moved.",
+  "murim.meditation.broken.hurt": "Meditation broken by a blow.",
+  "murim.meditation.first_feeling": "Warmth rose below the navel — and scattered. The qi has nothing to rest on. Try again.",
+  "murim.meditation.held": "The ring of qi held at the navel. One more session and it becomes a seed.",
+  "murim.meditation.slipped": "The ring fell apart. Try again and hold longer.",
+  "murim.meditation.seed": "The ring contracted into a point. A dantian seed is born within you.",
+  "murim.meditation.hud.hold": "Hold %s — keep the ring"
 }
