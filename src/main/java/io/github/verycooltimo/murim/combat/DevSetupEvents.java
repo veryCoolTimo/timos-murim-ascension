@@ -61,7 +61,8 @@ public final class DevSetupEvents {
         }
         // Меч нужен для съёмки техник, но в церемонии он торчит из сложенных рук и
         // перекрывает то самое тело, ради которого сцена и снимается.
-        boolean ceremony = "awakening".equals(System.getProperty("murim.capture.technique"));
+        boolean ceremony = "awakening".equals(System.getProperty("murim.capture.technique"))
+                || "meditation".equals(System.getProperty("murim.capture.technique"));
         event.getEntity().setItemInHand(InteractionHand.MAIN_HAND,
                 ceremony ? ItemStack.EMPTY : new ItemStack(Items.NETHERITE_SWORD));
 
@@ -130,6 +131,25 @@ public final class DevSetupEvents {
                             serverLevel, STAGE_X + 0.5D + dx, STAGE_Y, STAGE_Z + 6.0D);
             target.addTag(TARGET_TAG);
             serverLevel.addFreshEntity(target);
+        }
+        // Съёмка медитации: метод выучен, даньтяня нет. С какого такта начинать — снаружи
+        // (MURIM_CAPTURE_BEATS), по умолчанию со второго: там окно удержания и следом семя.
+        if ("meditation".equals(System.getProperty("murim.capture.technique"))
+                && event.getEntity() instanceof net.minecraft.server.level.ServerPlayer meditating) {
+            int beats = 1;
+            String raw = System.getenv("MURIM_CAPTURE_BEATS");
+            if (raw != null) {
+                beats = Integer.parseInt(raw.trim());
+            }
+            meditating.setData(io.github.verycooltimo.murim.registry.ModAttachments.PROFILE,
+                    io.github.verycooltimo.murim.profile.DantianProfile.INITIAL);
+            meditating.setData(io.github.verycooltimo.murim.registry.ModAttachments.CULTIVATION,
+                    io.github.verycooltimo.murim.cultivation.CultivationState.NONE
+                            .withMethod(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(
+                                    io.github.verycooltimo.murim.MurimMod.MODID, "six_harmonies"))
+                            .withBeats(beats));
+            io.github.verycooltimo.murim.profile.ProfileNetwork.sync(meditating);
+            return;
         }
         // Съёмка САМОЙ церемонии требует обратного: даньтянь должен быть НЕ создан,
         // иначе церемония откажется начинаться, и в кадры попадёт неподвижный игрок.

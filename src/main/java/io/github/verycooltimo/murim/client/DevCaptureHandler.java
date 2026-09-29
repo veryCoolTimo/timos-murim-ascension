@@ -127,6 +127,8 @@ public final class DevCaptureHandler {
         framePending = false;
         choiceSent = false;
         holdSent = false;
+        meditationTicks = 0;
+        meditationIdle = 0;
         tickCounter = 0;
         frameIndex = 0;
     }
@@ -196,6 +198,11 @@ public final class DevCaptureHandler {
             // Снимать можно не только технику, но и сцену создания даньтяня: у неё те же
             // требования к проверке — привязка к телу, фазы, отсутствие пересвета.
             String subject = System.getProperty(TECHNIQUE_PROPERTY, "ceremonial_draw");
+            if (MEDITATION.equals(subject)) {
+                sitDown();
+                meditationTicks = MEDITATION_CAPTURE_TICKS;
+                return;
+            }
             if ("awakening".equals(subject)) {
                 PacketDistributor.sendToServer(
                         io.github.verycooltimo.murim.network.StartAwakeningPayload.INSTANCE);
@@ -205,6 +212,10 @@ public final class DevCaptureHandler {
                                 MurimMod.MODID, subject)));
             }
             startCapture();
+        }
+
+        if (meditationTicks > 0) {
+            tickMeditation(minecraft);
         }
 
         // Поток теперь останавливает ИГРОК, а при автосъёмке нажимать некому: без
@@ -341,6 +352,50 @@ public final class DevCaptureHandler {
                     minecraft.getWindow().getWidth(), minecraft.getWindow().getHeight());
         } catch (java.io.IOException exception) {
             MurimMod.LOGGER.warn("Телеметрия не пишется: {}", exception.getMessage());
+        }
+    }
+
+    private static final String MEDITATION = "meditation";
+
+    /** Две сессии по 30 с плюс вспышка семени и запас на пересадку. */
+    private static final int MEDITATION_CAPTURE_TICKS = 1600;
+
+    /** Медитация медленная: полный кадр раз в полсекунды, вместе с интерфейсом. */
+    private static final int MEDITATION_FRAME_TICKS = 10;
+
+    private static int meditationTicks;
+    private static int meditationIdle;
+
+    private static void sitDown() {
+        PacketDistributor.sendToServer(new io.github.verycooltimo.murim.network.MeditationInputPayload(
+                io.github.verycooltimo.murim.network.MeditationInputPayload.Action.TOGGLE, true));
+    }
+
+    /**
+     * Сценарий медитации: удержание кольца идёт через ту же клавишу прыжка, что у игрока,
+     * чтобы съёмка проверяла настоящий путь ввода, а не обходной пакет.
+     */
+    private static void tickMeditation(Minecraft minecraft) {
+        meditationTicks--;
+        var state = ClientMeditationState.state();
+        minecraft.options.keyJump.setDown(ClientMeditationState.ringWindowOpen());
+        // Сессия закончилась, а семени ещё нет — садимся снова через секунду.
+        if (!state.active() && state.beats() < 3) {
+            if (++meditationIdle == 20) {
+                sitDown();
+            }
+        } else {
+            meditationIdle = 0;
+        }
+        if (meditationTicks % MEDITATION_FRAME_TICKS == 0) {
+            // Снимок в тике берёт последний отрисованный кадр целиком, с интерфейсом:
+            // HUD медитации — часть того, что проверяется.
+            grab(minecraft, String.format("murim_%s_%03d.png", anglePrefix(), frameIndex));
+            grab(minecraft, String.format("clean_%s_%03d.png", anglePrefix(), frameIndex));
+            frameIndex++;
+        }
+        if (meditationTicks == 0) {
+            minecraft.options.keyJump.setDown(false);
         }
     }
 
