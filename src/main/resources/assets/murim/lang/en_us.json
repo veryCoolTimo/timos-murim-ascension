@@ -99,9 +99,10 @@
   "murim.meditation.stopped": "You stand up.",
   "murim.meditation.broken.moved": "Meditation broken: you moved.",
   "murim.meditation.broken.hurt": "Meditation broken by a blow.",
-  "murim.meditation.first_feeling": "Warmth rose below the navel — and scattered. The qi has nothing to rest on. Try again.",
-  "murim.meditation.held": "The ring of qi held at the navel. One more session and it becomes a seed.",
-  "murim.meditation.slipped": "The ring fell apart. Try again and hold longer.",
-  "murim.meditation.seed": "The ring contracted into a point. A dantian seed is born within you.",
-  "murim.meditation.hud.hold": "Hold %s — keep the ring"
+  "murim.meditation.first_feeling": "The warmth below the navel scattered: qi has nothing to rest on. Try again.",
+  "murim.meditation.held": "The ring held. One more session and it becomes a seed.",
+  "murim.meditation.slipped": "The ring fell apart. Hold longer.",
+  "murim.meditation.seed": "A seed is born in your dantian.",
+  "murim.meditation.hud.hold": "hold the ring",
+  "murim.meditation.hud.ready": "the ring is forming…"
 }

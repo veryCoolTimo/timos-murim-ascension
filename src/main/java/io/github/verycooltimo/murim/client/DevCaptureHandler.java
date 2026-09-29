@@ -13,6 +13,7 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
+import io.github.verycooltimo.murim.cultivation.MeditationService;
 
 /**
  * Съёмка серии кадров техники для отладки визуала.
@@ -378,7 +379,10 @@ public final class DevCaptureHandler {
     private static void tickMeditation(Minecraft minecraft) {
         meditationTicks--;
         var state = ClientMeditationState.state();
-        minecraft.options.keyJump.setDown(ClientMeditationState.ringWindowOpen());
+        // Первые полторы секунды окна клавиша отпущена: в кадры должно попасть и
+        // неудержанное кольцо. Оставшихся 170 тиков хватает на засчёт (нужно 150).
+        minecraft.options.keyJump.setDown(ClientMeditationState.ringWindowOpen()
+                && ClientMeditationState.sessionTicks() >= MeditationService.RING_FROM + 30);
         // Сессия закончилась, а семени ещё нет — садимся снова через секунду.
         if (!state.active() && state.beats() < 3) {
             if (++meditationIdle == 20) {

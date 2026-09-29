@@ -79,9 +79,10 @@
   "murim.meditation.stopped": "Вы встаёте.",
   "murim.meditation.broken.moved": "Медитация прервана: вы сдвинулись.",
   "murim.meditation.broken.hurt": "Медитация прервана ударом.",
-  "murim.meditation.first_feeling": "Под пупком появилось тепло — и рассеялось. Ци не на что опереться. Нужно попробовать снова.",
-  "murim.meditation.held": "Кольцо ци удержалось у пупка. Ещё одна сессия — и оно станет семенем.",
-  "murim.meditation.slipped": "Кольцо рассыпалось. Попробуйте ещё раз и держите дольше.",
-  "murim.meditation.seed": "Кольцо сжалось в точку. В вас родилось семя даньтяня.",
-  "murim.meditation.hud.hold": "Держите %s — удерживайте кольцо"
+  "murim.meditation.first_feeling": "Тепло под пупком рассеялось: ци не на что опереться. Попробуйте снова.",
+  "murim.meditation.held": "Кольцо удержалось. Ещё одна сессия — и оно станет семенем.",
+  "murim.meditation.slipped": "Кольцо рассыпалось. Держите дольше.",
+  "murim.meditation.seed": "В даньтяне родилось семя.",
+  "murim.meditation.hud.hold": "удерживайте кольцо",
+  "murim.meditation.hud.ready": "кольцо собирается…"
 }

@@ -3,6 +3,7 @@ package io.github.verycooltimo.murim.client;
 import io.github.verycooltimo.murim.cultivation.MeditationService;
 import io.github.verycooltimo.murim.network.MeditationInputPayload;
 import io.github.verycooltimo.murim.network.SyncMeditationPayload;
+import net.minecraft.client.CameraType;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.neoforged.api.distmarker.Dist;
@@ -13,69 +14,195 @@ import net.neoforged.neoforge.client.event.MovementInputUpdateEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 /**
- * Клиентская сторона медитации: клавиши, поза лотоса, блокировка движения.
+ * Клиентская сторона медитации: клавиши, поза лотоса, блокировка движения, ход сцены.
  *
  * <p>Клиент присылает только нажатия; время, окно удержания и засчитанные тики считает
- * сервер (docs/design/19 §3а). Здесь живёт последнее присланное состояние — для позы
- * и подсказок {@link MeditationHud}.
+ * сервер (docs/design/19 §3а). Здесь живёт последнее присланное состояние и то, что
+ * нужно только для картинки: локальный счёт тиков между пакетами, послесвечение
+ * законченной сессии и сцена рождения семени.
  */
 @EventBusSubscriber(modid = io.github.verycooltimo.murim.MurimMod.MODID, value = Dist.CLIENT)
 public final class ClientMeditationState {
 
-    private static SyncMeditationPayload state =
+    /** Чем закончилась последняя сессия — для короткого послесвечения в мире. */
+    public enum Aftermath {
+        NONE,
+        /** Ци рассеялась: первый такт или кольцо не удержано. */
+        SCATTER,
+        /** Кольцо удержано и осело внизу живота. */
+        SETTLE
+    }
+
+    /** Сцена «внутреннего взгляда» при рождении семени: 12 секунд (автор: 10–15). */
+    public static final int SEED_SCENE_TICKS = 240;
+
+    /** Сколько длится послесвечение законченной сессии. */
+    public static final int AFTERMATH_TICKS = 40;
+
+    private static final SyncMeditationPayload IDLE =
             new SyncMeditationPayload(false, 0, 0, 0, SyncMeditationPayload.Event.NONE);
+
+    private static SyncMeditationPayload state = IDLE;
+
+    /** Тики сессии, досчитанные локально: сервер шлёт состояние раз в пять тиков. */
+    private static int localTicks;
 
     /** Последнее, что клиент сообщил серверу про клавишу удержания. */
     private static boolean holdSent;
 
-    /** Сколько тиков ещё показывать «внутренний взгляд» после рождения семени. */
-    private static int seedFlashTicks;
+    private static Aftermath aftermath = Aftermath.NONE;
+    private static int aftermathTicks;
+    /** Такт, на котором шла закончившаяся сессия: послесвечение зависит от него. */
+    private static int aftermathBeats;
+    /** Послесвечение идёт, пока игрок ещё сидит (естественный конец сессии). */
+    private static boolean seatedAftermath;
+
+    private static int seedSceneTicks;
+    private static CameraType restoreCamera;
+    /** Был ли интерфейс скрыт игроком до сцены: возвращаем как было. */
+    private static Boolean restoreHideGui;
 
     public static SyncMeditationPayload state() {
         return state;
     }
 
-    public static int seedFlashTicks() {
-        return seedFlashTicks;
+    /** Тик сессии для картинки: между пакетами сервера досчитывается локально. */
+    public static int sessionTicks() {
+        return localTicks;
+    }
+
+    public static boolean holding() {
+        return holdSent;
+    }
+
+    public static Aftermath aftermath() {
+        return aftermath;
+    }
+
+    public static int aftermathTicks() {
+        return aftermathTicks;
+    }
+
+    public static int aftermathBeats() {
+        return aftermathBeats;
+    }
+
+    /** Сколько тиков сцены семени уже прошло, или -1, если сцены нет. */
+    public static int seedSceneAge() {
+        return seedSceneTicks > 0 ? SEED_SCENE_TICKS - seedSceneTicks : -1;
+    }
+
+    /** Тело неподвижно: идёт сессия или сцена семени. */
+    public static boolean still() {
+        return state.active() || seedSceneTicks > 0 || (seatedAftermath && aftermathTicks > 0);
     }
 
     public static void accept(SyncMeditationPayload payload) {
-        boolean wasActive = state.active();
+        SyncMeditationPayload previous = state;
         state = payload;
-        LocalPlayer player = Minecraft.getInstance().player;
-        if (player != null) {
-            if (payload.active() && !wasActive) {
+        Minecraft minecraft = Minecraft.getInstance();
+        LocalPlayer player = minecraft.player;
+
+        if (payload.active() && !previous.active()) {
+            localTicks = payload.ticks();
+            aftermath = Aftermath.NONE;
+            if (player != null && seedSceneTicks <= 0) {
                 MurimPlayerAnimations.play(player, MurimPlayerAnimations.LOTUS);
-            } else if (!payload.active() && wasActive) {
-                MurimPlayerAnimations.stop(player);
             }
+        } else if (payload.active()) {
+            // Сервер главнее: локальный счёт только заполняет промежутки между пакетами.
+            localTicks = Math.max(localTicks, payload.ticks());
         }
-        if (!payload.active()) {
+
+        if (!payload.active() && previous.active()) {
             holdSent = false;
-        }
-        if (payload.event() == SyncMeditationPayload.Event.SEED) {
-            seedFlashTicks = SEED_FLASH_TICKS;
+            if (payload.event() == SyncMeditationPayload.Event.SEED) {
+                startSeedScene(minecraft);
+            } else {
+                // Такт вырос — кольцо осело; иначе ци рассеялась (первый такт по замыслу,
+                // не удержанное кольцо или прерванная сессия).
+                boolean settled = previous.beats() == 1 && payload.beats() == 2;
+                aftermath = settled ? Aftermath.SETTLE : Aftermath.SCATTER;
+                aftermathBeats = previous.beats();
+                aftermathTicks = AFTERMATH_TICKS;
+                // Сессия до семени, дошедшая до конца: игрок встаёт ПОСЛЕ послесвечения —
+                // вставание посреди распада читалось как обрыв анимации. Встал сам или
+                // сдвинулся — отпускаем сразу, держать его сидящим нельзя.
+                seatedAftermath = previous.beats() < 3
+                        && localTicks >= MeditationService.SESSION_TICKS - 10;
+                if (!seatedAftermath && player != null) {
+                    MurimPlayerAnimations.stop(player);
+                }
+            }
         }
     }
 
-    /** «Внутренний взгляд» при рождении семени: 12 секунд (автор: 10–15). */
-    public static final int SEED_FLASH_TICKS = 240;
+    private static void startSeedScene(Minecraft minecraft) {
+        seedSceneTicks = SEED_SCENE_TICKS;
+        // Камера уходит вперёд: семя рождается внизу живота, со спины его не видно
+        // (так же поставлена сцена церемонии по замечанию автора).
+        if (restoreCamera == null) {
+            restoreCamera = minecraft.options.getCameraType();
+        }
+        minecraft.options.setCameraType(CameraType.THIRD_PERSON_FRONT);
+        // Интерфейс на время сцены прячется: сердца и хотбар ложились на живот,
+        // где рождается семя. Приближение камеры пробовали — камера смотрит в голову,
+        // и при зуме живот уходил за нижний край кадра.
+        if (restoreHideGui == null) {
+            restoreHideGui = minecraft.options.hideGui;
+        }
+        minecraft.options.hideGui = true;
+    }
+
+    private static void endSeedScene(Minecraft minecraft) {
+        seedSceneTicks = 0;
+        if (restoreHideGui != null) {
+            minecraft.options.hideGui = restoreHideGui;
+            restoreHideGui = null;
+        }
+        if (restoreCamera != null) {
+            minecraft.options.setCameraType(restoreCamera);
+            restoreCamera = null;
+        }
+        if (minecraft.player != null && !state.active()) {
+            MurimPlayerAnimations.stop(minecraft.player);
+        }
+    }
 
     /** Окно удержания открыто сейчас: второй такт и нужная секунда сессии. */
     public static boolean ringWindowOpen() {
-        return state.active() && state.beats() == 1 && MeditationService.isRingWindow(state.ticks());
+        return state.active() && state.beats() == 1 && MeditationService.isRingWindow(localTicks);
     }
 
     @SubscribeEvent
     static void onClientTick(ClientTickEvent.Post event) {
         Minecraft minecraft = Minecraft.getInstance();
-        if (seedFlashTicks > 0) {
-            seedFlashTicks--;
+        if (minecraft.player == null) {
+            return;
         }
-        if (minecraft.player == null || minecraft.screen != null) {
+        if (minecraft.isPaused()) {
+            return;
+        }
+        if (state.active()) {
+            localTicks++;
+        }
+        if (aftermathTicks > 0 && --aftermathTicks == 0) {
+            aftermath = Aftermath.NONE;
+            if (seatedAftermath && !state.active() && seedSceneTicks <= 0) {
+                MurimPlayerAnimations.stop(minecraft.player);
+            }
+            seatedAftermath = false;
+        }
+        if (seedSceneTicks > 0 && --seedSceneTicks == 0) {
+            endSeedScene(minecraft);
+        }
+        if (minecraft.screen != null) {
             return;
         }
         while (ModKeyMappings.MEDITATION.consumeClick()) {
+            if (seedSceneTicks > 0) {
+                continue;
+            }
             // На корточках — «брать всё»: быстрее, но мутнее.
             boolean filter = !minecraft.player.isShiftKeyDown();
             PacketDistributor.sendToServer(new MeditationInputPayload(
@@ -90,10 +217,10 @@ public final class ClientMeditationState {
         }
     }
 
-    /** Во время медитации тело неподвижно: ввод движения гасится до того, как уйдёт серверу. */
+    /** Во время медитации и сцены семени тело неподвижно: ввод гасится до отправки серверу. */
     @SubscribeEvent
     static void onMovementInput(MovementInputUpdateEvent event) {
-        if (!state.active()) {
+        if (!still()) {
             return;
         }
         var input = event.getInput();
@@ -109,9 +236,22 @@ public final class ClientMeditationState {
 
     /** Сброс при выходе из мира: иначе в новом мире тело осталось бы «сидящим». */
     public static void reset() {
-        state = new SyncMeditationPayload(false, 0, 0, 0, SyncMeditationPayload.Event.NONE);
+        Minecraft minecraft = Minecraft.getInstance();
+        if (restoreHideGui != null) {
+            minecraft.options.hideGui = restoreHideGui;
+            restoreHideGui = null;
+        }
+        if (restoreCamera != null) {
+            minecraft.options.setCameraType(restoreCamera);
+            restoreCamera = null;
+        }
+        state = IDLE;
+        localTicks = 0;
         holdSent = false;
-        seedFlashTicks = 0;
+        aftermath = Aftermath.NONE;
+        aftermathTicks = 0;
+        seatedAftermath = false;
+        seedSceneTicks = 0;
     }
 
     private ClientMeditationState() {
