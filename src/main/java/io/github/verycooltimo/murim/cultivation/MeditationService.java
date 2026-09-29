@@ -20,6 +20,10 @@ import net.neoforged.neoforge.network.PacketDistributor;
  * удержания, третий — рождается семя. После семени длину выбирает игрок: встал в любой
  * момент — получил пропорционально, первая минута самая выгодная, дальше отдача падает.
  *
+ * <p>До семени сессии идут ПОДРЯД, пока игрок сидит: закончился такт — сразу начинается
+ * следующий. Раньше каждая сессия завершала медитацию, и поза лотоса перезапускалась
+ * между тактами — персонаж вставал и садился заново (замечание автора 29.09).
+ *
  * <p>Правила тактов — в {@link SeedLogic}; здесь только время, прерывания и сообщения.
  */
 public final class MeditationService {
@@ -145,8 +149,12 @@ public final class MeditationService {
         SeedLogic.SessionResult result = SeedLogic.finishSession(cultivation,
                 state.holdTicks() >= HOLD_REQUIRED);
         player.setData(ModAttachments.CULTIVATION, result.state());
-        player.setData(ModAttachments.MEDITATION, MeditationState.IDLE);
-        SyncMeditationPayload.Event event = SyncMeditationPayload.Event.NONE;
+        // Следующий такт начинается сразу, без вставания. Семя — конец сидения: дальше
+        // идёт сцена «внутреннего взгляда», и медитация с семенем начинается отдельно.
+        player.setData(ModAttachments.MEDITATION, result.outcome() == SeedLogic.Outcome.SEED
+                ? MeditationState.IDLE : MeditationState.started(state.filter()));
+        SyncMeditationPayload.Event event = result.outcome() == SeedLogic.Outcome.HELD
+                ? SyncMeditationPayload.Event.SETTLE : SyncMeditationPayload.Event.SCATTER;
 
         switch (result.outcome()) {
             case FIRST_FEELING -> player.displayClientMessage(
@@ -161,6 +169,8 @@ public final class MeditationService {
                     MurimMod.LOGGER.error("Семя у {} без загруженного метода — такт откатан",
                             player.getGameProfile().getName());
                     player.setData(ModAttachments.CULTIVATION, cultivation);
+                    player.setData(ModAttachments.MEDITATION, MeditationState.IDLE);
+                    event = SyncMeditationPayload.Event.NONE;
                     break;
                 }
                 DantianProfile seeded = SeedLogic.seedProfile(player.getData(ModAttachments.PROFILE),
@@ -175,6 +185,11 @@ public final class MeditationService {
             }
             default -> {
             }
+        }
+        if (player.getData(ModAttachments.MEDITATION).active()) {
+            // Подсказка следующего такта: раньше она приходила только при посадке.
+            player.displayClientMessage(Component.translatable(
+                    "murim.meditation.begin." + result.state().beats()), true);
         }
         sync(player, event);
     }

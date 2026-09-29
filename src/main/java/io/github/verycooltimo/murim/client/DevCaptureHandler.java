@@ -391,7 +391,10 @@ public final class DevCaptureHandler {
         } else {
             meditationIdle = 0;
         }
-        if (meditationTicks % MEDITATION_FRAME_TICKS == 0) {
+        // Сцена семени снимается чаще: вспышка длится полсекунды и между кадрами
+        // по десять тиков пропадала целиком.
+        int step = ClientMeditationState.seedSceneAge() >= 0 ? 2 : MEDITATION_FRAME_TICKS;
+        if (meditationTicks % step == 0) {
             // Снимок в тике берёт последний отрисованный кадр целиком, с интерфейсом:
             // HUD медитации — часть того, что проверяется.
             grab(minecraft, String.format("murim_%s_%03d.png", anglePrefix(), frameIndex));

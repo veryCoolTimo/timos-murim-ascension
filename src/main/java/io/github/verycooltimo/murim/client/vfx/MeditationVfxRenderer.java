@@ -46,6 +46,19 @@ public final class MeditationVfxRenderer {
     private static final VfxColour FRAYED = new VfxColour(0.42F, 0.50F, 0.78F);
 
     private static final int RING_POINTS = 56;
+
+    /**
+     * Положение семени на экране в долях ширины и высоты, или {@code null}.
+     *
+     * <p>Нужно интерфейсу: в сцене семени экран затемняется целиком, и затемнение гасит
+     * мировое свечение вместе с остальным. Поэтому семя дорисовывается поверх затемнения
+     * в интерфейсе — ровно в той точке, где оно стоит в мире.
+     */
+    private static float[] seedOnScreen;
+
+    public static float[] seedOnScreen() {
+        return seedOnScreen;
+    }
     private static final long SEED = 0x5EEDDA17L;
 
     @SubscribeEvent
@@ -88,9 +101,18 @@ public final class MeditationVfxRenderer {
                     .add(toCamera.lengthSqr() > 1.0E-6D ? toCamera.normalize().scale(0.2D) : Vec3.ZERO);
             Scene scene = new Scene(minecraft, player, pose, cameraPos, axis, core);
 
+            seedOnScreen = null;
             if (sceneAge >= 0) {
+                seedOnScreen = project(core, cameraPos, event.getModelViewMatrix(), event.getProjectionMatrix());
                 seedScene(scene, sceneAge + partial);
             } else if (state.active()) {
+                // Итог прошлого такта доигрывается поверх начала следующего: сидение
+                // непрерывно, и послесвечению больше некуда деваться.
+                if (aftermath != ClientMeditationState.Aftermath.NONE) {
+                    float age = ClientMeditationState.AFTERMATH_TICKS
+                            - ClientMeditationState.aftermathTicks() + partial;
+                    afterSession(scene, aftermath, ClientMeditationState.aftermathBeats(), age);
+                }
                 float t = ClientMeditationState.sessionTicks() + partial;
                 switch (Math.min(state.beats(), 3)) {
                     case 0 -> firstFeeling(scene, t);
@@ -106,6 +128,24 @@ public final class MeditationVfxRenderer {
         } finally {
             poseStack.popPose();
         }
+    }
+
+    /**
+     * Мировая точка в доли экрана.
+     * API: reference/neoforge-src/net/neoforged/neoforge/client/event/RenderLevelStageEvent.java
+     * #getModelViewMatrix / #getProjectionMatrix
+     */
+    private static float[] project(Vec3 point, Vec3 camera, org.joml.Matrix4f view, org.joml.Matrix4f projection) {
+        org.joml.Vector4f v = new org.joml.Vector4f((float) (point.x - camera.x),
+                (float) (point.y - camera.y), (float) (point.z - camera.z), 1.0F);
+        view.transform(v);
+        projection.transform(v);
+        if (v.w() <= 1.0E-4F) {
+            return null;
+        }
+        float x = v.x() / v.w() * 0.5F + 0.5F;
+        float y = 1.0F - (v.y() / v.w() * 0.5F + 0.5F);
+        return new float[] {x, y};
     }
 
     /** Всё, что нужно для рисования одного кадра. */

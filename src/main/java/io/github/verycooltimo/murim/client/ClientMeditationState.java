@@ -54,8 +54,6 @@ public final class ClientMeditationState {
     private static int aftermathTicks;
     /** Такт, на котором шла закончившаяся сессия: послесвечение зависит от него. */
     private static int aftermathBeats;
-    /** Послесвечение идёт, пока игрок ещё сидит (естественный конец сессии). */
-    private static boolean seatedAftermath;
 
     private static int seedSceneTicks;
     private static CameraType restoreCamera;
@@ -94,7 +92,7 @@ public final class ClientMeditationState {
 
     /** Тело неподвижно: идёт сессия или сцена семени. */
     public static boolean still() {
-        return state.active() || seedSceneTicks > 0 || (seatedAftermath && aftermathTicks > 0);
+        return state.active() || seedSceneTicks > 0;
     }
 
     public static void accept(SyncMeditationPayload payload) {
@@ -103,7 +101,16 @@ public final class ClientMeditationState {
         Minecraft minecraft = Minecraft.getInstance();
         LocalPlayer player = minecraft.player;
 
-        if (payload.active() && !previous.active()) {
+        // Итог такта при продолжающемся сидении: новая сессия началась без вставания.
+        if (payload.active() && previous.active()
+                && (payload.event() == SyncMeditationPayload.Event.SCATTER
+                    || payload.event() == SyncMeditationPayload.Event.SETTLE)) {
+            aftermath = payload.event() == SyncMeditationPayload.Event.SETTLE
+                    ? Aftermath.SETTLE : Aftermath.SCATTER;
+            aftermathBeats = previous.beats();
+            aftermathTicks = AFTERMATH_TICKS;
+            localTicks = payload.ticks();
+        } else if (payload.active() && !previous.active()) {
             localTicks = payload.ticks();
             aftermath = Aftermath.NONE;
             if (player != null && seedSceneTicks <= 0) {
@@ -125,12 +132,8 @@ public final class ClientMeditationState {
                 aftermath = settled ? Aftermath.SETTLE : Aftermath.SCATTER;
                 aftermathBeats = previous.beats();
                 aftermathTicks = AFTERMATH_TICKS;
-                // Сессия до семени, дошедшая до конца: игрок встаёт ПОСЛЕ послесвечения —
-                // вставание посреди распада читалось как обрыв анимации. Встал сам или
-                // сдвинулся — отпускаем сразу, держать его сидящим нельзя.
-                seatedAftermath = previous.beats() < 3
-                        && localTicks >= MeditationService.SESSION_TICKS - 10;
-                if (!seatedAftermath && player != null) {
+                // Встал сам, сдвинулся или получил удар — ци рассеивается.
+                if (player != null) {
                     MurimPlayerAnimations.stop(player);
                 }
             }
@@ -145,6 +148,8 @@ public final class ClientMeditationState {
             restoreCamera = minecraft.options.getCameraType();
         }
         minecraft.options.setCameraType(CameraType.THIRD_PERSON_FRONT);
+        // Взрыв семени отдаётся в камеру коротким толчком (сила — из настроек игрока).
+        CameraShakeHandler.request(0.45F);
         // Интерфейс на время сцены прячется: сердца и хотбар ложились на живот,
         // где рождается семя. Приближение камеры пробовали — камера смотрит в голову,
         // и при зуме живот уходил за нижний край кадра.
@@ -188,10 +193,6 @@ public final class ClientMeditationState {
         }
         if (aftermathTicks > 0 && --aftermathTicks == 0) {
             aftermath = Aftermath.NONE;
-            if (seatedAftermath && !state.active() && seedSceneTicks <= 0) {
-                MurimPlayerAnimations.stop(minecraft.player);
-            }
-            seatedAftermath = false;
         }
         if (seedSceneTicks > 0 && --seedSceneTicks == 0) {
             endSeedScene(minecraft);
@@ -250,7 +251,6 @@ public final class ClientMeditationState {
         holdSent = false;
         aftermath = Aftermath.NONE;
         aftermathTicks = 0;
-        seatedAftermath = false;
         seedSceneTicks = 0;
     }
 

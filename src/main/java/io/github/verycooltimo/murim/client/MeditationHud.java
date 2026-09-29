@@ -53,7 +53,9 @@ public final class MeditationHud {
         }
         int sceneAge = ClientMeditationState.seedSceneAge();
         if (sceneAge >= 0) {
-            vignette(graphics, sceneAge + delta.getGameTimeDeltaPartialTick(false));
+            float age = sceneAge + delta.getGameTimeDeltaPartialTick(false);
+            vignette(graphics, age);
+            seedScene(graphics, minecraft, age);
         }
         if (minecraft.options.hideGui) {
             return;
@@ -145,6 +147,89 @@ public final class MeditationHud {
         RenderSystem.enableDepthTest();
         RenderSystem.defaultBlendFunc();
         RenderSystem.disableBlend();
+    }
+
+    /** Мягкая круглая текстура свечения — та же, что у ядра удара в мире. */
+    private static final ResourceLocation GLOW =
+            ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/vfx/impact_core.png");
+
+    /**
+     * Взрыв рождения семени (замечание автора 29.09: «затемнить всё, нет текста,
+     * вспышку белее, экспозицию сильнее, чуть тряски»).
+     *
+     * <p>Порядок слоёв: затемнение всего экрана → семя поверх темноты (иначе затемнение
+     * гасит и его) → белая вспышка-передержка → титр. Вспышка одна за сцену и
+     * отключается настройкой экранных вспышек (правило 04).
+     */
+    private static void seedScene(GuiGraphics graphics, Minecraft minecraft, float age) {
+        int w = graphics.guiWidth();
+        int h = graphics.guiHeight();
+        float total = ClientMeditationState.SEED_SCENE_TICKS;
+        float out = Mth.clamp((total - age) / 40.0F, 0.0F, 1.0F);
+
+        // Затемнение: весь мир уходит в тёмную синеву, пока идёт «взгляд внутрь».
+        // Не до черноты: силуэт тела и жилы должны угадываться.
+        float dark = Mth.clamp((age - 2.0F) / 10.0F, 0.0F, 1.0F) * out;
+        if (dark > 0.0F) {
+            int a = (int) (dark * 0xA8);
+            graphics.fill(0, 0, w, h, (a << 24) | 0x03060F);
+        }
+
+        // Семя пробивает темноту: дорисовывается по своей экранной точке.
+        float[] seed = io.github.verycooltimo.murim.client.vfx.MeditationVfxRenderer.seedOnScreen();
+        if (seed != null && dark > 0.0F) {
+            float beat = (age % 30.0F) / 30.0F;
+            float pulse = (float) (Math.exp(-beat * 18.0D) + 0.6D * Math.exp(-Math.abs(beat - 0.22D) * 18.0D));
+            int cx = (int) (seed[0] * w);
+            int cy = (int) (seed[1] * h);
+            RenderSystem.enableBlend();
+            RenderSystem.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE);
+            glow(graphics, cx, cy, (int) (h * (0.55F + 0.08F * pulse)), 0.16F, 0.42F, 0.95F, 0.55F * dark);
+            glow(graphics, cx, cy, (int) (h * (0.22F + 0.05F * pulse)), 0.45F, 0.88F, 1.0F, 0.8F * dark);
+            glow(graphics, cx, cy, (int) (h * (0.07F + 0.03F * pulse)), 0.9F, 0.98F, 1.0F, dark);
+            graphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
+            RenderSystem.defaultBlendFunc();
+            RenderSystem.disableBlend();
+        }
+
+        // Вспышка: резкая передержка в белое за два тика и спад за полсекунды.
+        if (ClientConfig.SCREEN_FLASHES.get()) {
+            // Спад кубический: удар белым, без долгой серой дымки после него.
+            float flash = age < 2.0F ? age / 2.0F : Mth.clamp(1.0F - (age - 2.0F) / 9.0F, 0.0F, 1.0F);
+            if (flash > 0.0F) {
+                graphics.fill(0, 0, w, h, ((int) (flash * flash * flash * 0xFA) << 24) | 0xF4FBFF);
+            }
+        }
+
+        // Титр: появляется, когда вспышка отгорела, и гаснет до конца сцены.
+        float title = Mth.clamp((age - 24.0F) / 16.0F, 0.0F, 1.0F) * Mth.clamp((total - 30.0F - age) / 30.0F, 0.0F, 1.0F);
+        if (title > 0.02F) {
+            int alpha = Math.max(4, (int) (title * 255)) << 24;
+            Font font = minecraft.font;
+            Component name = Component.translatable("murim.meditation.seed_title");
+            graphics.pose().pushPose();
+            graphics.pose().translate(w / 2.0F, h * 0.24F, 0.0F);
+            graphics.pose().scale(2.0F, 2.0F, 1.0F);
+            graphics.drawString(font, name, -font.width(name) / 2, 0, alpha | 0xCFEFFF, true);
+            graphics.pose().popPose();
+            String imprint = ClientProfileState.profile().imprint();
+            if (imprint != null && imprint.contains(":")) {
+                ResourceLocation id = ResourceLocation.tryParse(imprint);
+                if (id != null) {
+                    Component method = Component.translatable("method." + id.getNamespace() + "." + id.getPath());
+                    graphics.drawString(font, method, (w - font.width(method)) / 2, (int) (h * 0.24F) + 24,
+                            alpha | 0x8FB8E8, true);
+                }
+            }
+        }
+    }
+
+    private static void glow(GuiGraphics graphics, int cx, int cy, int size, float r, float g, float b, float a) {
+        if (size <= 0 || a <= 0.0F) {
+            return;
+        }
+        graphics.setColor(r, g, b, Mth.clamp(a, 0.0F, 1.0F));
+        graphics.blit(GLOW, cx - size / 2, cy - size / 2, 0.0F, 0.0F, size, size, size, size);
     }
 
     private MeditationHud() {

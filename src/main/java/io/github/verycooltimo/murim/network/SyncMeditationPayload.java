@@ -15,12 +15,16 @@ import net.minecraft.resources.ResourceLocation;
  * @param beats     пройденные такты создания даньтяня (3 — семя уже есть)
  * @param ticks     длительность сессии
  * @param holdTicks сколько кольцо удерживалось
- * @param event     разовое событие: {@code SEED} — только что родилось семя
+ * @param event     разовое событие: итог такта или рождение семени
  */
 public record SyncMeditationPayload(boolean active, int beats, int ticks, int holdTicks, Event event)
         implements CustomPacketPayload {
 
-    public enum Event { NONE, SEED }
+    /**
+     * Разовое событие. {@code SCATTER} и {@code SETTLE} — итог такта до семени: сессии
+     * идут подряд, пока игрок сидит, и клиент узнаёт о смене такта только из события.
+     */
+    public enum Event { NONE, SEED, SCATTER, SETTLE }
 
     public static final Type<SyncMeditationPayload> TYPE = new Type<>(
             ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "sync_meditation"));
