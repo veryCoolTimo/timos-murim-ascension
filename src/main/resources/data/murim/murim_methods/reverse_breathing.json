@@ -1,0 +1,9 @@
+{
+  "id": "murim:reverse_breathing",
+  "nature": "dead",
+  "purity": 0.6,
+  "capacity": 34.0,
+  "impurity": 0.4,
+  "route": "reverse_down",
+  "night_only": true
+}

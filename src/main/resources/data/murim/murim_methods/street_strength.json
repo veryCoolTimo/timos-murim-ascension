@@ -1,0 +1,8 @@
+{
+  "id": "murim:street_strength",
+  "nature": "pure",
+  "purity": 0.55,
+  "capacity": 36.0,
+  "impurity": 0.7,
+  "route": "straight_line"
+}

@@ -21,6 +21,13 @@ public final class ModItems {
     public static final DeferredHolder<Item, Item> MANUAL = ITEMS.register("manual",
             () -> new ManualItem(new Item.Properties().stacksTo(1)));
 
+    /**
+     * Свиток метода культивации. Один предмет на все методы: какой метод записан —
+     * компонент {@link ModDataComponents#METHOD}.
+     */
+    public static final DeferredHolder<Item, Item> METHOD_SCROLL = ITEMS.register("method_scroll",
+            () -> new io.github.verycooltimo.murim.item.MethodScrollItem(new Item.Properties().stacksTo(1)));
+
     public static void register(IEventBus modBus) {
         ITEMS.register(modBus);
     }

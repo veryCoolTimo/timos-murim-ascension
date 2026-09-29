@@ -54,6 +54,19 @@ public final class ModAttachments {
                     () -> AttachmentType.<io.github.verycooltimo.murim.profile.AwakeningState>builder(
                             () -> io.github.verycooltimo.murim.profile.AwakeningState.IDLE).build());
 
+    /**
+     * Путь до даньтяня: выученный метод и пройденные такты создания.
+     *
+     * <p>Сохраняется и переживает смерть: метод и практика — результат игры
+     * (docs/design/19-dantian-qi-meditation.md).
+     */
+    public static final Supplier<AttachmentType<io.github.verycooltimo.murim.cultivation.CultivationState>> CULTIVATION =
+            ATTACHMENT_TYPES.register("cultivation_state",
+                    () -> AttachmentType.builder(() -> io.github.verycooltimo.murim.cultivation.CultivationState.NONE)
+                            .serialize(io.github.verycooltimo.murim.cultivation.CultivationState.CODEC)
+                            .copyOnDeath()
+                            .build());
+
     /** Серия обычных ударов. Не сохраняется: связка живёт секунды и через сейв не тянется. */
     public static final Supplier<AttachmentType<io.github.verycooltimo.murim.combat.SchoolStyle.ComboState>> COMBO =
             ATTACHMENT_TYPES.register("combo_state",

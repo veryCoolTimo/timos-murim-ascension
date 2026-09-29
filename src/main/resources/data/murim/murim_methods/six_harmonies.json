@@ -1,0 +1,8 @@
+{
+  "id": "murim:six_harmonies",
+  "nature": "pure",
+  "purity": 0.9,
+  "capacity": 30.0,
+  "impurity": 0.1,
+  "route": "six_point_loop"
+}

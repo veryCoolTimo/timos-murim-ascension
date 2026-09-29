@@ -24,6 +24,7 @@ public final class TechniqueEvents {
     @SubscribeEvent
     static void onAddReloadListener(AddReloadListenerEvent event) {
         event.addListener(new TechniqueLoader());
+        event.addListener(new io.github.verycooltimo.murim.cultivation.MethodLoader());
     }
 
     @SubscribeEvent

@@ -1,0 +1,8 @@
+{
+  "id": "murim:tang_poison_breath",
+  "nature": "poison",
+  "purity": 0.7,
+  "capacity": 32.0,
+  "impurity": 0.4,
+  "route": "coiled_meridians"
+}
