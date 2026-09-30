@@ -181,6 +181,9 @@ public final class DevCaptureHandler {
             // требования к проверке — привязка к телу, фазы, отсутствие пересвета.
             String subject = System.getProperty(TECHNIQUE_PROPERTY, "ceremonial_draw");
             if (MEDITATION.equals(subject)) {
+                // «Пережитое» для двойника медитации после семени.
+                MeditationEcho.remember(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "crescent_sweep"));
+                MeditationEcho.remember(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "demon_palm"));
                 sitDown();
                 meditationTicks = MEDITATION_CAPTURE_TICKS;
                 return;

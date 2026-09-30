@@ -68,6 +68,11 @@ public final class ClientTechniqueHandler {
         switch (payload.event()) {
             case STARTED -> {
                 scheduleAnimation(payload);
+                // Свой приём тело запоминает: потом он всплывает в медитации двойником.
+                if (Minecraft.getInstance().player != null
+                        && payload.sourceId() == Minecraft.getInstance().player.getId()) {
+                    MeditationEcho.remember(payload.techniqueId());
+                }
                 TechniqueDefinition started = TechniqueLoader.get(payload.techniqueId());
                 // У ладони собственный набор слоёв: общая схема дуги её не описывает.
                 //
