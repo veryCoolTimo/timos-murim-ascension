@@ -30,21 +30,6 @@ public final class ModKeyMappings {
             CATEGORY);
 
     /**
-     * Начать создание даньтяня.
-     *
-     * <p>Своя клавиша, а не предмет. Автор прямо забраковал запуск по свитку: церемония —
-     * это действие персонажа, а не применение вещи, и привязка к предмету заставляла
-     * искать его в инвентаре ради одного раза за игру.
-     */
-    public static final KeyMapping AWAKENING = new KeyMapping(
-            "key." + MurimMod.MODID + ".awakening",
-            KeyConflictContext.IN_GAME,
-            InputConstants.Type.KEYSYM,
-            // Старая церемония уходит (docs/design/19): клавиша G отдана медитации.
-            GLFW.GLFW_KEY_UNKNOWN,
-            CATEGORY);
-
-    /**
      * Медитация: сесть или встать. На корточках — «брать всё», без отсева примесей
      * (docs/design/19 §3: выбор делается один раз, перед тем как сесть).
      */
@@ -55,29 +40,10 @@ public final class ModKeyMappings {
             GLFW.GLFW_KEY_G,
             CATEGORY);
 
-    /**
-     * Три клавиши выбора основания.
-     *
-     * <p>Клавиши, а не меню: сцена намеренно без интерфейса, полоски и окна превращают
-     * её в мини-игру (план MVP 2). Названия и цена оснований показываются в сцене.
-     */
-    public static final KeyMapping FOUNDATION_BLOOD = foundationKey("blood", GLFW.GLFW_KEY_1);
-    public static final KeyMapping FOUNDATION_VOID = foundationKey("void", GLFW.GLFW_KEY_2);
-    public static final KeyMapping FOUNDATION_MOUNTAIN = foundationKey("mountain", GLFW.GLFW_KEY_3);
-
-    private static KeyMapping foundationKey(String id, int code) {
-        return new KeyMapping("key." + MurimMod.MODID + ".foundation." + id,
-                KeyConflictContext.IN_GAME, InputConstants.Type.KEYSYM, code, CATEGORY);
-    }
-
     @SubscribeEvent
     static void register(RegisterKeyMappingsEvent event) {
         event.register(TECHNIQUE);
-        event.register(AWAKENING);
         event.register(MEDITATION);
-        event.register(FOUNDATION_BLOOD);
-        event.register(FOUNDATION_VOID);
-        event.register(FOUNDATION_MOUNTAIN);
     }
 
     private ModKeyMappings() {

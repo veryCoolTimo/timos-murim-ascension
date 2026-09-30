@@ -68,37 +68,33 @@ public final class TechniqueCommand {
                             return 1;
                         })));
 
-        // Мгновенное создание даньтяня с нужным основанием: пробовать техники, каждый раз
-        // проходя церемонию, — трата времени автора, а не проверка.
-        root.then(Commands.literal("awaken")
-                .then(Commands.argument("foundation", StringArgumentType.word())
-                        .suggests((context, builder) -> {
-                            for (io.github.verycooltimo.murim.profile.Foundation f
-                                    : io.github.verycooltimo.murim.profile.Foundation.values()) {
-                                builder.suggest(f.id());
-                            }
-                            return builder.buildFuture();
-                        })
+        // Мгновенное семя по методу: пробовать техники, каждый раз проходя медитацию,
+        // — трата времени автора, а не проверка.
+        root.then(Commands.literal("seed")
+                .then(Commands.argument("method", net.minecraft.commands.arguments.ResourceLocationArgument.id())
+                        .suggests((context, builder) -> net.minecraft.commands.SharedSuggestionProvider.suggestResource(
+                                io.github.verycooltimo.murim.cultivation.MethodLoader.all().keySet().stream(), builder))
                         .executes(context -> {
                             ServerPlayer player = context.getSource().getPlayerOrException();
-                            io.github.verycooltimo.murim.profile.Foundation foundation =
-                                    io.github.verycooltimo.murim.profile.Foundation.byId(
-                                            StringArgumentType.getString(context, "foundation"));
-                            if (foundation == null) {
-                                context.getSource().sendFailure(
-                                        Component.literal("Основание не найдено: blood, void, mountain"));
+                            net.minecraft.resources.ResourceLocation id =
+                                    net.minecraft.commands.arguments.ResourceLocationArgument.getId(context, "method");
+                            io.github.verycooltimo.murim.cultivation.CultivationMethod method =
+                                    io.github.verycooltimo.murim.cultivation.MethodLoader.get(id);
+                            if (method == null) {
+                                context.getSource().sendFailure(Component.literal("Метод не найден: " + id));
                                 return 0;
                             }
                             io.github.verycooltimo.murim.profile.DantianProfile profile =
-                                    foundation.apply(player.getData(
-                                            io.github.verycooltimo.murim.registry.ModAttachments.PROFILE));
+                                    io.github.verycooltimo.murim.cultivation.SeedLogic.seedProfile(
+                                            io.github.verycooltimo.murim.profile.DantianProfile.INITIAL, method, 1.0D);
                             player.setData(io.github.verycooltimo.murim.registry.ModAttachments.PROFILE,
-                                    profile.withPool(profile.capacity())
-                                            .withCirculating(profile.maxCirculating()));
+                                    profile.withCirculating(profile.maxCirculating()));
+                            player.setData(io.github.verycooltimo.murim.registry.ModAttachments.CULTIVATION,
+                                    io.github.verycooltimo.murim.cultivation.CultivationState.NONE
+                                            .withMethod(id).withBeats(io.github.verycooltimo.murim.cultivation.CultivationState.SEEDED));
                             io.github.verycooltimo.murim.profile.ProfileNetwork.sync(player);
                             context.getSource().sendSuccess(
-                                    () -> Component.literal("Даньтянь создан: " + foundation.id()
-                                            + ", ци полная"), false);
+                                    () -> Component.literal("Семя даньтяня: " + id + ", ци полная"), false);
                             return 1;
                         })));
 
@@ -124,14 +120,16 @@ public final class TechniqueCommand {
             return 1;
         }));
 
-        // Сброс профиля: даньтянь создаётся ОДИН раз за персонажа, и без этой команды
-        // церемонию нельзя посмотреть второй раз иначе как новым миром.
+        // Сброс профиля и пути: даньтянь создаётся ОДИН раз за персонажа, и без этой
+        // команды создание нельзя пройти второй раз иначе как новым миром.
         root.then(Commands.literal("reset").executes(context -> {
             ServerPlayer player = context.getSource().getPlayerOrException();
             player.setData(io.github.verycooltimo.murim.registry.ModAttachments.PROFILE,
                     io.github.verycooltimo.murim.profile.DantianProfile.INITIAL);
-            player.setData(io.github.verycooltimo.murim.registry.ModAttachments.AWAKENING,
-                    io.github.verycooltimo.murim.profile.AwakeningState.IDLE);
+            player.setData(io.github.verycooltimo.murim.registry.ModAttachments.CULTIVATION,
+                    io.github.verycooltimo.murim.cultivation.CultivationState.NONE);
+            player.setData(io.github.verycooltimo.murim.registry.ModAttachments.MEDITATION,
+                    io.github.verycooltimo.murim.cultivation.MeditationState.IDLE);
             io.github.verycooltimo.murim.profile.ProfileNetwork.sync(player);
             context.getSource().sendSuccess(
                     () -> Component.literal("Профиль сброшен: даньтянь не создан"), false);

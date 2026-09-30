@@ -10,35 +10,21 @@ import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 
 /**
- * Жизненный цикл профиля и ритуала на сервере.
+ * Жизненный цикл профиля и медитации на сервере.
  *
  * <p>Восстановление циркулирующей ци: пассивное (как мана) плюс ускоренное в медитации —
- * решение автора 2026-09-28, docs/design/19 §2. Прежнее «только в ритуале» отменено.
+ * решение автора 2026-09-28, docs/design/19 §2.
  */
 @EventBusSubscriber(modid = MurimMod.MODID)
 public final class ProfileEvents {
-
-    /** Как часто состояние ритуала уезжает на клиент. Каждый тик — избыточно для полосы. */
-    private static final int SYNC_EVERY_TICKS = 4;
 
     @SubscribeEvent
     static void onPlayerTick(PlayerTickEvent.Post event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) {
             return;
         }
-        // Церемония создания даньтяня тикает ПЕРЕД циркуляцией и исключает её: две сцены
-        // одновременно не бывает, а её собственный tick сам решает, когда закончиться.
-        if (player.getData(ModAttachments.AWAKENING).active()) {
-            try {
-                AwakeningService.tick(player);
-            } catch (RuntimeException exception) {
-                MurimMod.LOGGER.error("Ошибка в тике церемонии у {}, церемония прервана",
-                        player.getGameProfile().getName(), exception);
-                AwakeningService.interrupt(player, "murim.awakening.broken.error");
-            }
-            return;
-        }
-        // Новая медитация (docs/design/19): тикает и исключает старый ритуал.
+        // Медитация (docs/design/19) исключает пассивное восстановление: у неё своё, быстрее.
+        // Ошибка в её тике прерывает медитацию, а не роняет мир краш-репортом.
         if (player.getData(ModAttachments.MEDITATION).active()) {
             try {
                 io.github.verycooltimo.murim.cultivation.MeditationService.tick(player);
@@ -50,32 +36,13 @@ public final class ProfileEvents {
             return;
         }
         passiveCirculation(player);
-        RitualState state = player.getData(ModAttachments.RITUAL);
-        if (!state.active()) {
-            return;
-        }
-        // Исключение в тике летит из Player#tick внутри guardEntityTick и превращается
-        // в краш-репорт сервера. Порченый профиль из старого сейва или ошибка в формуле
-        // должны прерывать медитацию, а не ронять мир.
-        boolean alive;
-        try {
-            alive = RitualService.tick(player);
-        } catch (RuntimeException exception) {
-            MurimMod.LOGGER.error("Ошибка в тике ритуала у {}, медитация прервана",
-                    player.getGameProfile().getName(), exception);
-            player.setData(ModAttachments.RITUAL, RitualState.IDLE);
-            alive = false;
-        }
-        if (!alive || player.tickCount % SYNC_EVERY_TICKS == 0) {
-            ProfileNetwork.syncRitual(player);
-        }
     }
 
     /**
      * Урон срывает медитацию — но только настоящий.
      *
      * <p>Приоритет низший и проверка отмены обязательны: событие приходит ДО щита, до кадров
-     * неуязвимости и до брони. Без них ритуал срывался бы от полностью заблокированного удара,
+     * неуязвимости и до брони. Без них медитация срывалась бы от полностью заблокированного удара,
      * от урона в кадрах неуязвимости и даже от снежка с нулевым уроном.
      */
     @SubscribeEvent(priority = net.neoforged.bus.api.EventPriority.LOWEST)
@@ -86,17 +53,9 @@ public final class ProfileEvents {
         if (!(event.getEntity() instanceof ServerPlayer player)) {
             return;
         }
-        if (player.getData(ModAttachments.AWAKENING).active()) {
-            AwakeningService.onDamage(player, event.getAmount());
-            return;
-        }
         if (player.getData(ModAttachments.MEDITATION).active()) {
             io.github.verycooltimo.murim.cultivation.MeditationService.stop(player,
                     "murim.meditation.broken.hurt");
-        }
-        if (player.getData(ModAttachments.RITUAL).active()) {
-            RitualService.stop(player, false);
-            ProfileNetwork.syncRitual(player);
         }
     }
 
@@ -138,7 +97,8 @@ public final class ProfileEvents {
     static void onChangedDimension(PlayerEvent.PlayerChangedDimensionEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
             ProfileNetwork.sync(player);
-            ProfileNetwork.syncRitual(player);
+            io.github.verycooltimo.murim.cultivation.MeditationService.sync(player,
+                    io.github.verycooltimo.murim.network.SyncMeditationPayload.Event.NONE);
         }
     }
 

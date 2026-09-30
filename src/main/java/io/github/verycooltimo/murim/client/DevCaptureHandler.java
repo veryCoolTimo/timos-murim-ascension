@@ -69,12 +69,8 @@ public final class DevCaptureHandler {
      */
     private static final int FRAME_INTERVAL_TICKS = 1;
 
-    /** Сколько кадров снять. 100 кадров по тику перекрывают технику в 92 тика вместе с ритуалом. */
-    private static final int FRAME_COUNT =
-            "awakening".equals(System.getProperty("murim.capture.technique"))
-                    // Церемония длиннее техники: 50 + 80 + 60 тиков до выбора, плюс сам
-                    // выбор и печать. Ста кадров не хватает даже до фазы выбора.
-                    ? 230 : 100;
+    /** Сколько кадров снять. 100 кадров по тику перекрывают технику в 92 тика. */
+    private static final int FRAME_COUNT = 100;
 
     private static boolean armed = Boolean.getBoolean(ENABLE_PROPERTY);
     private static int warmup;
@@ -92,18 +88,6 @@ public final class DevCaptureHandler {
      * за тик, и промах в полтика оставляет остаток больше самого эффекта.
      */
     private static boolean framePending;
-
-    /** Сколько тиков подержать фазу выбора на экране до автовыбора при съёмке. */
-    private static final int CHOICE_DELAY_TICKS = 30;
-
-    /** Автовыбор отправляется один раз за прогон. */
-    private static boolean choiceSent;
-
-    /** На каком тике фазы подъёма стенд останавливает поток. Ближе к верху, но без перелива. */
-    private static final int HOLD_AT_TICK = 68;
-
-    /** Остановка отправляется один раз за прогон. */
-    private static boolean holdSent;
 
     /**
      * Начинает съёмку немедленно. Вызывается автозапуском и может быть вызвана вручную,
@@ -125,8 +109,6 @@ public final class DevCaptureHandler {
         // Иначе запрошенный, но не снятый кадр «выстрелит» при следующем входе в мир
         // и запишет пару снимков с телеметрией, когда съёмка не запущена.
         framePending = false;
-        choiceSent = false;
-        holdSent = false;
         meditationTicks = 0;
         meditationIdle = 0;
         tickCounter = 0;
@@ -203,40 +185,14 @@ public final class DevCaptureHandler {
                 meditationTicks = MEDITATION_CAPTURE_TICKS;
                 return;
             }
-            if ("awakening".equals(subject)) {
-                PacketDistributor.sendToServer(
-                        io.github.verycooltimo.murim.network.StartAwakeningPayload.INSTANCE);
-            } else {
-                PacketDistributor.sendToServer(new StartTechniquePayload(
-                        net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(
-                                MurimMod.MODID, subject)));
-            }
+            PacketDistributor.sendToServer(new StartTechniquePayload(
+                    net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(
+                            MurimMod.MODID, subject)));
             startCapture();
         }
 
         if (meditationTicks > 0) {
             tickMeditation(minecraft);
-        }
-
-        // Поток теперь останавливает ИГРОК, а при автосъёмке нажимать некому: без
-        // этого церемония всегда заканчивалась бы переливом и в кадры не попали бы
-        // ни сбор ядра, ни выбор, ни печать.
-        if (framesLeft > 0 && "VEINS".equals(AwakeningSceneHandler.phase())
-                && AwakeningSceneHandler.tick() >= HOLD_AT_TICK && !holdSent) {
-            holdSent = true;
-            PacketDistributor.sendToServer(
-                    io.github.verycooltimo.murim.network.HoldFlowPayload.INSTANCE);
-        }
-
-        // Фаза выбора ждёт игрока бесконечно, а при автосъёмке нажимать некому: без
-        // этого печать в кадры не попадёт вовсе. Выбор фиксированный, чтобы съёмка
-        // оставалась воспроизводимой.
-        if (framesLeft > 0 && AwakeningSceneHandler.awaitingChoice()
-                && AwakeningSceneHandler.tick() >= CHOICE_DELAY_TICKS && !choiceSent) {
-            choiceSent = true;
-            PacketDistributor.sendToServer(
-                    new io.github.verycooltimo.murim.network.ChooseFoundationPayload(
-                            System.getProperty("murim.capture.foundation", "void")));
         }
 
         if (framesLeft > 0 && tickCounter++ % FRAME_INTERVAL_TICKS == 0) {
@@ -300,10 +256,9 @@ public final class DevCaptureHandler {
             // прогонах попадал в разные фазы, и метрики фаз сравнивали несравнимое.
             float[] phase = io.github.verycooltimo.murim.client.vfx.PalmVfxRenderer
                     .captureAgeOf(player.getId());
-            // Фаза церемонии пишется рядом: по номеру кадра сцену не разметить, а
-            // длительности фаз меняются вместе с постановкой.
-            String scenePhase = AwakeningSceneHandler.active()
-                    ? AwakeningSceneHandler.phase() : "";
+            // Фаза сцены медитации: по номеру кадра её не разметить.
+            String scenePhase = ClientMeditationState.state().active()
+                    ? "beat" + ClientMeditationState.state().beats() : "";
             // Сколько костей конечностей доступно в этом кадре. Ноль означает, что жилам
             // просто неоткуда расти, и это НЕ дефект рендерера — отличить одно от другого
             // по картинке невозможно.
@@ -322,7 +277,7 @@ public final class DevCaptureHandler {
                     }
                 }
             }
-            int sceneTick = AwakeningSceneHandler.active() ? AwakeningSceneHandler.tick() : -1;
+            int sceneTick = ClientMeditationState.state().active() ? ClientMeditationState.sessionTicks() : -1;
             // Куда эффект РЕАЛЬНО поставил ладонь. Сравнение с позицией кости отделяет
             // ошибку привязки от ошибки измерения — снаружи они выглядят одинаково.
             net.minecraft.world.phys.Vec3 drawn =

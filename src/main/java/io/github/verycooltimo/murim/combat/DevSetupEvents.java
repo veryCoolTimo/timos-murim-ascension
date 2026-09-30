@@ -61,8 +61,7 @@ public final class DevSetupEvents {
         }
         // Меч нужен для съёмки техник, но в церемонии он торчит из сложенных рук и
         // перекрывает то самое тело, ради которого сцена и снимается.
-        boolean ceremony = "awakening".equals(System.getProperty("murim.capture.technique"))
-                || "meditation".equals(System.getProperty("murim.capture.technique"));
+        boolean ceremony = "meditation".equals(System.getProperty("murim.capture.technique"));
         event.getEntity().setItemInHand(InteractionHand.MAIN_HAND,
                 ceremony ? ItemStack.EMPTY : new ItemStack(Items.NETHERITE_SWORD));
 
@@ -153,18 +152,6 @@ public final class DevSetupEvents {
             meditating.removeAllEffects();
             meditating.setHealth(meditating.getMaxHealth());
             meditating.getFoodData().setFoodLevel(20);
-            return;
-        }
-        // Съёмка САМОЙ церемонии требует обратного: даньтянь должен быть НЕ создан,
-        // иначе церемония откажется начинаться, и в кадры попадёт неподвижный игрок.
-        // Молчаливый отказ выглядел бы как поломка визуала, поэтому режим разделён явно.
-        if ("awakening".equals(System.getProperty("murim.capture.technique"))) {
-            event.getEntity().setData(
-                    io.github.verycooltimo.murim.registry.ModAttachments.PROFILE,
-                    io.github.verycooltimo.murim.profile.DantianProfile.INITIAL);
-            if (event.getEntity() instanceof net.minecraft.server.level.ServerPlayer fresh) {
-                io.github.verycooltimo.murim.profile.ProfileNetwork.sync(fresh);
-            }
             return;
         }
         // Техники теперь стоят ци и требуют сформированного центра. Без этого съёмочный

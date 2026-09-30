@@ -34,27 +34,6 @@ public final class ModAttachments {
                             .build());
 
     /**
-     * Ритуал НЕ сохраняется и не переживает смерть: медитация прерывается любым выходом
-     * из мира, и продолжать её после перезахода было бы способом обойти риск.
-     */
-    public static final Supplier<AttachmentType<io.github.verycooltimo.murim.profile.RitualState>> RITUAL =
-            ATTACHMENT_TYPES.register("ritual_state",
-                    () -> AttachmentType.<io.github.verycooltimo.murim.profile.RitualState>builder(
-                            () -> io.github.verycooltimo.murim.profile.RitualState.IDLE).build());
-
-    /**
-     * Церемония создания даньтяня.
-     *
-     * <p>НЕ сохраняется намеренно, как и циркуляция: сцена длится секунды и требует
-     * неподвижности, а продолжать её после перезахода означало бы обходить риск срыва.
-     * Сам созданный даньтянь сохраняется — он живёт в профиле.
-     */
-    public static final Supplier<AttachmentType<io.github.verycooltimo.murim.profile.AwakeningState>> AWAKENING =
-            ATTACHMENT_TYPES.register("awakening_state",
-                    () -> AttachmentType.<io.github.verycooltimo.murim.profile.AwakeningState>builder(
-                            () -> io.github.verycooltimo.murim.profile.AwakeningState.IDLE).build());
-
-    /**
      * Путь до даньтяня: выученный метод и пройденные такты создания.
      *
      * <p>Сохраняется и переживает смерть: метод и практика — результат игры

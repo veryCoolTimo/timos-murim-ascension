@@ -51,39 +51,11 @@ public final class ModNetwork {
                 SyncProfilePayload.STREAM_CODEC,
                 (payload, context) -> ClientPayloadBridge.handleSyncProfile(payload));
 
-        registrar.playToClient(
-                SyncRitualPayload.TYPE,
-                SyncRitualPayload.STREAM_CODEC,
-                (payload, context) -> ClientPayloadBridge.handleSyncRitual(payload));
-
         // Попадание: без него клиент рисовал брызги всегда, даже когда удар прошёл мимо.
         registrar.playToClient(
                 TechniqueHitPayload.TYPE,
                 TechniqueHitPayload.STREAM_CODEC,
                 (payload, context) -> ClientPayloadBridge.handleTechniqueHit(payload));
-
-        registrar.playToClient(
-                SyncAwakeningPayload.TYPE,
-                SyncAwakeningPayload.STREAM_CODEC,
-                (payload, context) -> ClientPayloadBridge.handleSyncAwakening(payload));
-
-        registrar.playToServer(
-                StartAwakeningPayload.TYPE,
-                StartAwakeningPayload.STREAM_CODEC,
-                (payload, context) -> {
-                    if (context.player() instanceof ServerPlayer serverPlayer) {
-                        io.github.verycooltimo.murim.profile.AwakeningService.start(serverPlayer);
-                    }
-                });
-
-        registrar.playToServer(
-                HoldFlowPayload.TYPE,
-                HoldFlowPayload.STREAM_CODEC,
-                (payload, context) -> {
-                    if (context.player() instanceof ServerPlayer serverPlayer) {
-                        io.github.verycooltimo.murim.profile.AwakeningService.hold(serverPlayer);
-                    }
-                });
 
         // Медитация: клиент присылает только нажатия, время и окна считает сервер.
         registrar.playToServer(
@@ -106,20 +78,6 @@ public final class ModNetwork {
                 SyncMeditationPayload.TYPE,
                 SyncMeditationPayload.STREAM_CODEC,
                 (payload, context) -> ClientPayloadBridge.handleSyncMeditation(payload));
-
-        // Выбор основания приходит от клиента как НАМЕРЕНИЕ: фазу церемонии и то, что
-        // даньтянь ещё не создан, проверяет сервер.
-        registrar.playToServer(
-                ChooseFoundationPayload.TYPE,
-                ChooseFoundationPayload.STREAM_CODEC,
-                (payload, context) -> {
-                    if (context.player() instanceof ServerPlayer serverPlayer) {
-                        io.github.verycooltimo.murim.profile.AwakeningService.choose(
-                                serverPlayer,
-                                io.github.verycooltimo.murim.profile.Foundation.byId(
-                                        payload.foundation()));
-                    }
-                });
     }
 
     private ModNetwork() {

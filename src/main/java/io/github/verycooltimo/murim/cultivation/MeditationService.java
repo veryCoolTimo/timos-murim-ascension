@@ -117,7 +117,7 @@ public final class MeditationService {
             return;
         }
         // Неподвижность — по смещению позиции, а не по скорости: сервер двигает игрока
-        // по пакетам клиента и deltaMovement при ходьбе не выставляет (урок RitualService).
+        // по пакетам клиента и deltaMovement при ходьбе не выставляет (урок старого ритуала).
         double dx = player.getX() - player.xOld;
         double dz = player.getZ() - player.zOld;
         if (dx * dx + dz * dz > 1.0E-6D || !player.onGround()) {
