@@ -22,8 +22,7 @@ import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
  * сама; накопленная — запас, растёт медитацией. Требование автора 30.09: минималистично
  * и красиво — главное на экране персонаж.
  *
- * <p>Три варианта на выбор автора ({@code MURIM_QI_STYLE}: line, orbs, arc); после выбора
- * останется один.
+ * <p>Из трёх показанных вариантов (линия, шарики, дуга у прицела) автор выбрал линию.
  */
 @EventBusSubscriber(modid = MurimMod.MODID, value = Dist.CLIENT)
 public final class QiHud {
@@ -36,13 +35,9 @@ public final class QiHud {
     private static final int CYAN = 0x8FE8F4;
     private static final int DEEP = 0x2E6BD8;
 
-    private static final String STYLE = System.getenv().getOrDefault("MURIM_QI_STYLE", "line");
-
     /** Сглаженное значение: шкала течёт, а не прыгает раз в секунду по пакету сервера. */
     private static float shownCirc = -1.0F;
     private static float shownPool = -1.0F;
-    /** Для дуги: сколько тиков шкала не менялась и полна — после этого она гаснет. */
-    private static int idleTicks;
 
     @SubscribeEvent
     static void onRegisterLayers(RegisterGuiLayersEvent event) {
@@ -58,10 +53,8 @@ public final class QiHud {
             shownCirc = circ;
             shownPool = pool;
         }
-        boolean still = Math.abs(circ - shownCirc) < 0.002F && circ >= 0.999F;
         shownCirc += (circ - shownCirc) * 0.25F;
         shownPool += (pool - shownPool) * 0.25F;
-        idleTicks = still ? idleTicks + 1 : 0;
     }
 
     private static float circ(DantianProfile p) {
@@ -81,11 +74,7 @@ public final class QiHud {
         float circ = Mth.clamp(shownCirc, 0.0F, 1.0F);
         float pool = Mth.clamp(shownPool, 0.0F, 1.0F);
         float time = minecraft.player.tickCount + delta.getGameTimeDeltaPartialTick(false);
-        switch (STYLE) {
-            case "orbs" -> orbs(graphics, minecraft, circ, pool, time);
-            case "arc" -> arc(graphics, circ, pool, time);
-            default -> line(graphics, minecraft, circ, pool, time);
-        }
+        line(graphics, minecraft, circ, pool, time);
         graphics.flush();
     }
 
@@ -98,7 +87,7 @@ public final class QiHud {
         return y;
     }
 
-    /** A. Тонкая светящаяся линия без фона: градиент к яркому краю, запас — нить под ней. */
+    /** Тонкая светящаяся линия без фона: градиент к яркому краю, запас — нить под ней. */
     private static void line(GuiGraphics graphics, Minecraft minecraft, float circ, float pool, float time) {
         int right = graphics.guiWidth() / 2 + 91;
         int left = right - WIDTH;
@@ -118,43 +107,6 @@ public final class QiHud {
             GuiShapes.ring(graphics, right - filled, y, 0.0F, 1.2F, 0xFFF4FCFF);
         }
         graphics.fill(right - (int) (WIDTH * pool), y + 2, right, y + 3, 0x90000000 | DEEP);
-    }
-
-    /** B. Десять шариков ци над голодом — ванильный ритм, но светящиеся. */
-    private static void orbs(GuiGraphics graphics, Minecraft minecraft, float circ, float pool, float time) {
-        int right = graphics.guiWidth() / 2 + 91;
-        int y = rowY(minecraft, graphics) + 4;
-        for (int i = 0; i < 10; i++) {
-            float cx = right - 4.5F - i * 8;
-            float share = Mth.clamp(circ * 10.0F - i, 0.0F, 1.0F);
-            GuiShapes.ring(graphics, cx, y, 2.6F, 3.4F, 0x70BFD8F0);
-            if (share > 0.0F) {
-                GuiShapes.glow(graphics, cx, y, 4.5F, CYAN, (int) (90 * share));
-                GuiShapes.ring(graphics, cx, y, 0.0F, 2.6F * (float) Math.sqrt(share), 0xF0000000 | lerpRgb(DEEP, CYAN, share));
-            }
-            float stock = Mth.clamp(pool * 10.0F - i, 0.0F, 1.0F);
-            if (stock > 0.0F) {
-                GuiShapes.ring(graphics, cx, y + 5.0F, 0.0F, 0.9F, ((int) (200 * stock) << 24) | DEEP);
-            }
-        }
-    }
-
-    /** C. Дуга справа от прицела; полная и неизменная — гаснет. */
-    private static void arc(GuiGraphics graphics, float circ, float pool, float time) {
-        float fade = 1.0F - Mth.clamp((idleTicks - 40) / 20.0F, 0.0F, 1.0F);
-        if (fade <= 0.0F) {
-            return;
-        }
-        float cx = graphics.guiWidth() / 2.0F;
-        float cy = graphics.guiHeight() / 2.0F;
-        double from = -Math.PI / 3.0D;
-        double to = Math.PI / 3.0D;
-        int a = (int) (fade * 255);
-        // Дуга растёт снизу вверх; пустая часть — тонкий след.
-        GuiShapes.arc(graphics, cx, cy, 13.0F, 14.0F, from, to, ((int) (fade * 60) << 24) | 0xFFFFFF);
-        double top = to - (to - from) * circ;
-        GuiShapes.arc(graphics, cx, cy, 12.5F, 14.5F, top, to, (a << 24) | CYAN);
-        GuiShapes.arc(graphics, cx, cy, 16.0F, 16.8F, to - (to - from) * pool, to, ((int) (fade * 170) << 24) | DEEP);
     }
 
     private static int lerpRgb(int from, int to, float k) {
