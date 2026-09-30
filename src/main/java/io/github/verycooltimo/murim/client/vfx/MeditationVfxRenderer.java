@@ -305,15 +305,14 @@ public final class MeditationVfxRenderer {
     private static void seedScene(Scene s, float age) {
         float total = ClientMeditationState.SEED_SCENE_TICKS;
         float flash = Mth.clamp(1.0F - age / 16.0F, 0.0F, 1.0F);
-        // Жилы вспыхивают разом и горят всю сцену: гаснут только в последние две секунды.
-        // Раньше они гасли уже с шестой секунды и на живой игре их почти не было видно.
-        float veins = Math.min(Mth.clamp(age / 20.0F, 0.0F, 1.0F), Mth.clamp((total - age) / 40.0F, 0.0F, 1.0F));
+        // Жилы вспыхивают разом и медленно гаснут к концу сцены.
+        float veins = age < 20.0F ? age / 20.0F : Mth.clamp(1.0F - (age - 120.0F) / 100.0F, 0.0F, 1.0F);
         float fadeOut = Mth.clamp((total - age) / 50.0F, 0.0F, 1.0F);
         // Пульс сердца: двойной удар раз в полторы секунды.
         float beat = (age % 30.0F) / 30.0F;
         float pulse = (float) (Math.exp(-beat * 18.0D) + 0.6D * Math.exp(-Math.abs(beat - 0.22D) * 18.0D));
 
-        drawVeins(s, 1.0F, veins, 0.009D);
+        drawVeins(s, 1.0F, veins * 0.7F);
         drawStreams(s, age, veins);
 
         VertexConsumer glow = s.buffers().getBuffer(MurimRenderTypes.impactCore());
@@ -463,10 +462,6 @@ public final class MeditationVfxRenderer {
      * @param reach доля пути, пройденная светом от средоточия наружу
      */
     private static void drawVeins(Scene s, float reach, float alpha) {
-        drawVeins(s, reach, alpha, 0.006D);
-    }
-
-    private static void drawVeins(Scene s, float reach, float alpha, double thickness) {
         if (reach <= 0.0F || alpha <= 0.0F) {
             return;
         }
@@ -495,7 +490,7 @@ public final class MeditationVfxRenderer {
         double highest = head == null ? core.y + 1.0D : head.y + 0.2D;
         VertexConsumer channel = s.buffers().getBuffer(MurimRenderTypes.bodyGlow());
         BodyMeridians.draw(channel, s.pose(), s.camera(), parts, lowest, highest, reach,
-                           thickness, alpha, SEED, HALO, CORE, s.facing());
+                           0.006D, alpha, SEED, HALO, CORE, s.facing());
         s.buffers().endBatch(MurimRenderTypes.bodyGlow());
     }
 
