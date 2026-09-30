@@ -163,6 +163,21 @@ public final class MasteryRules {
         return List.copyOf(missing);
     }
 
+    /**
+     * Во сколько раз дороже по ци техника на этом слое. Слой 0 — «коряво»: ×1.5;
+     * полное освоение — ×0.8. Между ними — линейно (docs/design/19 §3г).
+     */
+    public static double costFactor(int layer, int layers) {
+        double k = layers <= 0 ? 1.0D : Math.min(1.0D, layer / (double) layers);
+        return 1.5D - 0.7D * k;
+    }
+
+    /** Сила техники на этом слое: слой 0 — ×0.6, полное освоение — ×1.25. */
+    public static double powerFactor(int layer, int layers) {
+        double k = layers <= 0 ? 1.0D : Math.min(1.0D, layer / (double) layers);
+        return 0.6D + 0.65D * k;
+    }
+
     private MasteryRules() {
     }
 }

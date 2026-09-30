@@ -98,4 +98,12 @@ class MasteryRulesTest {
         double wise = MasteryRules.experience(fresh(5), MasteryRules.Source.FIGHT, 4.0D, 10.0D, 0L).progress().progress();
         assertTrue(wise > plain);
     }
+
+    @Test
+    @DisplayName("Корявая техника дороже и слабее, обжитая — дешевле и сильнее")
+    void layerChangesCostAndPower() {
+        assertTrue(MasteryRules.costFactor(0, 5) > 1.0D && MasteryRules.powerFactor(0, 5) < 1.0D);
+        assertTrue(MasteryRules.costFactor(5, 5) < 1.0D && MasteryRules.powerFactor(5, 5) > 1.0D);
+        assertTrue(MasteryRules.powerFactor(2, 5) > MasteryRules.powerFactor(1, 5));
+    }
 }

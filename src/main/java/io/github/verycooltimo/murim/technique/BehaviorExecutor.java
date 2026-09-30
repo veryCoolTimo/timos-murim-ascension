@@ -33,17 +33,21 @@ public final class BehaviorExecutor {
     /** @return true, если хоть одна цель получила урон */
     public static boolean execute(ServerPlayer player, TechniqueDefinition definition) {
         TechniqueBehavior behavior = definition.behavior();
+        // Слой освоения меняет силу: корявая техника слабее, обжитая — сильнее (§3г).
+        float power = (float) io.github.verycooltimo.murim.mastery.MasteryRules.powerFactor(
+                Math.max(0, io.github.verycooltimo.murim.mastery.MasteryService.layer(player, definition.id())),
+                definition.layers());
         if (behavior instanceof TechniqueBehavior.MeleeArc melee) {
-            return meleeArc(player, melee, definition.id());
+            return meleeArc(player, melee, definition.id(), power);
         }
         if (behavior instanceof TechniqueBehavior.ProjectileFan fan) {
-            return projectileFan(player, fan, definition.id());
+            return projectileFan(player, fan, definition.id(), power);
         }
         if (behavior instanceof TechniqueBehavior.Dash dash) {
-            return dash(player, dash, definition.id());
+            return dash(player, dash, definition.id(), power);
         }
         if (behavior instanceof TechniqueBehavior.PalmBlast palm) {
-            return palmBlast(player, palm, definition.id());
+            return palmBlast(player, palm, definition.id(), power);
         }
         MurimMod.LOGGER.error("Тип поведения {} не реализован у техники {}",
                 behavior.type(), definition.id());
@@ -51,7 +55,7 @@ public final class BehaviorExecutor {
     }
 
     private static boolean meleeArc(ServerPlayer player, TechniqueBehavior.MeleeArc melee,
-                                    net.minecraft.resources.ResourceLocation id) {
+                                    net.minecraft.resources.ResourceLocation id, float power) {
         Vec3 eye = player.getEyePosition();
         Vec3 look = player.getLookAngle();
         double cosLimit = Math.cos(Math.toRadians(melee.arcDegrees() / 2.0D));
@@ -66,7 +70,7 @@ public final class BehaviorExecutor {
             if (!inArc(eye, look, target.getBoundingBox(), melee.reach(), cosLimit)) {
                 continue;
             }
-            if (target.hurt(player.damageSources().playerAttack(player), melee.damage())) {
+            if (target.hurt(player.damageSources().playerAttack(player), melee.damage() * power)) {
                 anyHit = true;
                 // Пережитое для освоения (docs/design/19 §3г).
                 io.github.verycooltimo.murim.mastery.MasteryService.onHit(player, id, target);
@@ -76,7 +80,7 @@ public final class BehaviorExecutor {
     }
 
     private static boolean projectileFan(ServerPlayer player, TechniqueBehavior.ProjectileFan fan,
-                                         net.minecraft.resources.ResourceLocation id) {
+                                         net.minecraft.resources.ResourceLocation id, float power) {
         Vec3 look = player.getLookAngle();
         Vec3 origin = player.getEyePosition().subtract(0.0D, 0.15D, 0.0D);
         boolean spawned = false;
@@ -87,7 +91,7 @@ public final class BehaviorExecutor {
             Vec3 direction = rotateAroundY(look, yaw).normalize();
 
             WedgeProjectile wedge = new WedgeProjectile(player.level(), player,
-                    fan.damage(), fan.lifetimeTicks());
+                    fan.damage() * power, fan.lifetimeTicks());
             wedge.technique = id;
             wedge.setPos(origin.x, origin.y, origin.z);
             wedge.setDeltaMovement(direction.scale(fan.speed()));
@@ -99,7 +103,7 @@ public final class BehaviorExecutor {
     }
 
     private static boolean dash(ServerPlayer player, TechniqueBehavior.Dash dash,
-                                net.minecraft.resources.ResourceLocation id) {
+                                net.minecraft.resources.ResourceLocation id, float power) {
         Vec3 start = player.position();
         // По горизонтали: рывок вверх по взгляду превращался бы в полёт.
         Vec3 look = player.getLookAngle();
@@ -122,7 +126,7 @@ public final class BehaviorExecutor {
             if (++processed > MAX_TARGETS) {
                 break;
             }
-            if (target.hurt(player.damageSources().playerAttack(player), dash.damage())) {
+            if (target.hurt(player.damageSources().playerAttack(player), dash.damage() * power)) {
                 anyHit = true;
                 io.github.verycooltimo.murim.mastery.MasteryService.onHit(player, id, target);
             }
@@ -138,7 +142,7 @@ public final class BehaviorExecutor {
      * Цель остаётся на месте, но продолжает существовать как участник боя.
      */
     private static boolean palmBlast(ServerPlayer player, TechniqueBehavior.PalmBlast palm,
-                                     net.minecraft.resources.ResourceLocation id) {
+                                     net.minecraft.resources.ResourceLocation id, float power) {
         Vec3 eye = player.getEyePosition();
         Vec3 look = player.getLookAngle();
         double cosLimit = Math.cos(Math.toRadians(palm.arcDegrees() / 2.0D));
@@ -153,7 +157,7 @@ public final class BehaviorExecutor {
             if (!inArc(eye, look, target.getBoundingBox(), palm.reach(), cosLimit)) {
                 continue;
             }
-            if (!target.hurt(player.damageSources().playerAttack(player), palm.damage())) {
+            if (!target.hurt(player.damageSources().playerAttack(player), palm.damage() * power)) {
                 continue;
             }
             anyHit = true;

@@ -61,7 +61,10 @@ public final class TechniqueService {
                     net.minecraft.network.chat.Component.translatable("murim.technique.not_awakened"), true);
             return false;
         }
-        double cost = techniqueCost(technique);
+        // Слой освоения меняет цену: корявая техника дороже, обжитая — дешевле (§3г).
+        double cost = techniqueCost(technique) * io.github.verycooltimo.murim.mastery.MasteryRules.costFactor(
+                Math.max(0, io.github.verycooltimo.murim.mastery.MasteryService.layer(player, technique.id())),
+                technique.layers());
         if (profile.circulating() < cost) {
             player.displayClientMessage(
                     net.minecraft.network.chat.Component.translatable("murim.technique.no_qi"), true);
