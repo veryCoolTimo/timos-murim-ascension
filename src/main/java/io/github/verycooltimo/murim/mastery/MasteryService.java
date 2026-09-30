@@ -43,6 +43,7 @@ public final class MasteryService {
                 player.setData(ModAttachments.MASTERY, state.with(id, new TechniqueProgress(current.layer(),
                         current.progress(), current.unprocessed(), current.day(), cap)));
                 message(player, "murim.mastery.deeper", ChatFormatting.GRAY, name(id));
+                sync(player);
                 return Learn.LEARNED;
             }
             return Learn.ALREADY;
@@ -60,6 +61,7 @@ public final class MasteryService {
         player.setData(ModAttachments.MASTERY, next);
         message(player, start > 0 ? "murim.mastery.learned_skipped" : "murim.mastery.learned",
                 ChatFormatting.GRAY, name(id), start);
+        sync(player);
         return Learn.LEARNED;
     }
 
@@ -95,6 +97,7 @@ public final class MasteryService {
         }
         MasteryRules.Gain gain = MasteryRules.experience(progress, source, amount, state.wisdom(), day(player));
         apply(player, id, gain, false);
+        sync(player);
     }
 
     /**
@@ -134,12 +137,29 @@ public final class MasteryService {
         player.setData(ModAttachments.MASTERY, state);
     }
 
-    /** Озарение: новый слой. Визуал в бою и в медитации — следующим шагом (§3г, п. 4). */
+    /** Озарение: новый слой. Клиент показывает его вспышкой в бою или двойником в медитации. */
     private static void insight(ServerPlayer player, ResourceLocation id, int layer, boolean meditating) {
+        io.github.verycooltimo.murim.MurimMod.LOGGER.info("Озарение у {}: {} — слой {}{}",
+                player.getGameProfile().getName(), id, layer, meditating ? " (медитация)" : "");
         player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
                 SoundEvents.AMETHYST_BLOCK_RESONATE, SoundSource.PLAYERS, 1.0F, 1.4F);
-        player.displayClientMessage(Component.translatable("murim.mastery.layer", name(id), layer)
-                .withStyle(ChatFormatting.AQUA), true);
+        net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(player,
+                new io.github.verycooltimo.murim.network.InsightPayload(id, layer, meditating));
+    }
+
+    /** Освоение уходит владельцу: слои, доля к следующему и что ждёт осмысления. */
+    public static void sync(ServerPlayer player) {
+        MasteryState state = player.getData(ModAttachments.MASTERY);
+        long day = day(player);
+        List<io.github.verycooltimo.murim.network.SyncMasteryPayload.Entry> entries = new java.util.ArrayList<>();
+        state.techniques().forEach((id, raw) -> {
+            TechniqueProgress p = MasteryRules.cool(raw, day);
+            float share = p.atCap() ? 1.0F : (float) Math.min(1.0D, p.progress() / MasteryRules.need(p.layer()));
+            entries.add(new io.github.verycooltimo.murim.network.SyncMasteryPayload.Entry(
+                    id, p.layer(), p.cap(), share, (float) p.unprocessed()));
+        });
+        net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(player,
+                new io.github.verycooltimo.murim.network.SyncMasteryPayload(List.copyOf(entries)));
     }
 
     private static long day(ServerPlayer player) {

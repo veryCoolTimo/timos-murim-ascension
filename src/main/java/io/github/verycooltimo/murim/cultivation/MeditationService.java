@@ -84,8 +84,10 @@ public final class MeditationService {
         player.setData(ModAttachments.MEDITATION, MeditationState.started(filter, cultivation.beats()));
         player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
                 SoundEvents.BEACON_ACTIVATE, SoundSource.PLAYERS, 0.3F, 1.5F);
-        player.displayClientMessage(Component.translatable(cultivation.seeded()
-                ? "murim.meditation.begin_seeded" : "murim.meditation.begin." + cultivation.beats()), true);
+        // После даньтяня строка не нужна: виджет у хотбара сам показывает, что идёт.
+        if (!cultivation.seeded()) {
+            player.displayClientMessage(Component.translatable("murim.meditation.begin." + cultivation.beats()), true);
+        }
         sync(player, SyncMeditationPayload.Event.NONE);
         return true;
     }
@@ -241,6 +243,7 @@ public final class MeditationService {
         // Осмысление пережитого (docs/design/19 §3г): неосмысленное становится освоением.
         io.github.verycooltimo.murim.mastery.MasteryService.meditate(player);
         if (next.ticks() % 20 == 0) {
+            io.github.verycooltimo.murim.mastery.MasteryService.sync(player);
             ProfileNetwork.sync(player);
             sync(player, SyncMeditationPayload.Event.NONE);
         }

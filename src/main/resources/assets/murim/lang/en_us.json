@@ -91,7 +91,9 @@
   "murim.mastery.deeper": "The continuation of “%s” opens new layers.",
   "murim.mastery.missing": "The words make no sense: you lack the basics — “%s”, layer %s.",
   "murim.mastery.already": "“%s” is already learned.",
-  "murim.mastery.layer": "Insight: “%s” — layer %s",
   "murim.mastery.comprehended": "You grasped the essence of “%s”. Your understanding of martial arts deepened.",
-  "murim.technique.unknown": "You do not know “%s”."
+  "murim.technique.unknown": "You do not know “%s”.",
+  "murim.mastery.insight": "Insight",
+  "murim.mastery.insight.layer": "“%s” — layer %s",
+  "murim.meditation.seeded.pondering": "pondering: “%s”"
 }

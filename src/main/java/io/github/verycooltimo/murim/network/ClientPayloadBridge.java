@@ -41,6 +41,16 @@ final class ClientPayloadBridge {
                 payload.sourceId(), payload.x(), payload.y(), payload.z(), payload.height());
     }
 
+    /** Освоение техник — для двойника медитации и будущего списка техник. */
+    public static void handleSyncMastery(SyncMasteryPayload payload) {
+        io.github.verycooltimo.murim.client.ClientMasteryState.accept(payload);
+    }
+
+    /** Озарение: вспышка в бою или чистый приём двойника в медитации. */
+    public static void handleInsight(InsightPayload payload) {
+        io.github.verycooltimo.murim.client.InsightEffects.onInsight(payload);
+    }
+
     /** Медитация: поза, подсказка удержания, момент рождения семени. */
     public static void handleSyncMeditation(SyncMeditationPayload payload) {
         io.github.verycooltimo.murim.client.ClientMeditationState.accept(payload);

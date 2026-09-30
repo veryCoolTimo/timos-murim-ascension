@@ -230,9 +230,17 @@ public final class MeditationHud {
                         String.format(java.util.Locale.ROOT, "%.1f", gain));
         int ty = cy - GAME_RADIUS - 11;
         small(graphics, font, rate, cx, ty, tired || fill >= 1.0F ? 0xC0A0A8B8 : 0xE0BFE6FF);
+        // Что осмысливается — то же, что показывает двойник (§3г).
+        java.util.List<net.minecraft.resources.ResourceLocation> pending = ClientMasteryState.pending();
+        int line = ty - 8;
+        if (!pending.isEmpty()) {
+            small(graphics, font, Component.translatable("murim.meditation.seeded.pondering",
+                    io.github.verycooltimo.murim.mastery.MasteryService.name(pending.get(0))), cx, line, 0xE0CFEFFF);
+            line -= 8;
+        }
         if (ClientMeditationState.sessionTicks() < 80) {
             small(graphics, font, Component.translatable("murim.meditation.seeded.leave",
-                    minecraft.options.keyShift.getTranslatedKeyMessage()), cx, ty - 8, 0xB0C8DCEC);
+                    minecraft.options.keyShift.getTranslatedKeyMessage()), cx, line, 0xB0C8DCEC);
         }
     }
 

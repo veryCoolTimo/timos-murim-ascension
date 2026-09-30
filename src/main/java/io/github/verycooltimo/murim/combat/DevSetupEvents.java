@@ -160,6 +160,10 @@ public final class DevSetupEvents {
             io.github.verycooltimo.murim.profile.ProfileNetwork.sync(meditating);
             // Искажение ци из прошлого прогона не должно попадать в кадры следующего.
             learnAll(meditating);
+            // Пережитое для двойника и озарения в медитации: «Лунный взмах» у границы слоя.
+            long day = meditating.level().getDayTime() / 24000L;
+            primeInsight(meditating, "crescent_sweep", 1, 0.85D, 8.0D, day);
+            primeInsight(meditating, "demon_palm", 2, 0.1D, 6.0D, day);
             meditating.removeAllEffects();
             meditating.setHealth(meditating.getMaxHealth());
             meditating.getFoodData().setFoodLevel(20);
@@ -179,6 +183,12 @@ public final class DevSetupEvents {
 
         // Стенд применяет техники — значит, должен их знать (docs/design/19 §3г).
         learnAll(event.getEntity());
+        // MURIM_CAPTURE_INSIGHT=1 — снимаемая техника у самой границы слоя: первое попадание
+        // даёт озарение в бою.
+        if ("1".equals(System.getenv("MURIM_CAPTURE_INSIGHT"))) {
+            primeInsight(event.getEntity(), System.getProperty("murim.capture.technique", "ceremonial_draw"),
+                    1, 0.995D, 0.0D, event.getEntity().level().getDayTime() / 24000L);
+        }
 
         // При контрольном ракурсе манекен не ставится вовсе: камера спереди оказывается
         // ровно в его голове и закрывает кадр целиком. Проверять геометрию эффекта важнее,
@@ -302,5 +312,29 @@ public final class DevSetupEvents {
                     definition.layers(), definition.layers()));
         }
         player.setData(io.github.verycooltimo.murim.registry.ModAttachments.MASTERY, state);
+        if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+            io.github.verycooltimo.murim.mastery.MasteryService.sync(serverPlayer);
+        }
+    }
+
+    /** Техника на слое {@code layer}, прошедшая долю {@code share} пути к следующему. */
+    private static void primeInsight(net.minecraft.world.entity.player.Player player, String path, int layer,
+                                     double share, double unprocessed, long day) {
+        net.minecraft.resources.ResourceLocation id =
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(io.github.verycooltimo.murim.MurimMod.MODID, path);
+        io.github.verycooltimo.murim.technique.TechniqueDefinition definition =
+                io.github.verycooltimo.murim.technique.TechniqueLoader.get(id);
+        if (definition == null) {
+            return;
+        }
+        io.github.verycooltimo.murim.mastery.MasteryState state =
+                player.getData(io.github.verycooltimo.murim.registry.ModAttachments.MASTERY);
+        player.setData(io.github.verycooltimo.murim.registry.ModAttachments.MASTERY, state.with(id,
+                new io.github.verycooltimo.murim.mastery.TechniqueProgress(layer,
+                        io.github.verycooltimo.murim.mastery.MasteryRules.need(layer) * share,
+                        unprocessed, day, definition.layers())));
+        if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+            io.github.verycooltimo.murim.mastery.MasteryService.sync(serverPlayer);
+        }
     }
 }

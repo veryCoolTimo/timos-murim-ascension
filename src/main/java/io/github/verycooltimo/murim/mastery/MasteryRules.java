@@ -35,7 +35,7 @@ public final class MasteryRules {
     static final double MEDITATION_GAIN = 3.5D;
 
     /** Сколько неосмысленного медитация перерабатывает за тик. */
-    static final double MEDITATION_RATE = 0.05D;
+    static final double MEDITATION_RATE = 0.02D;
 
     /** Сколько пережитого нужно на первый слой; каждый следующий дороже. */
     static final double FIRST_LAYER = 12.0D;

@@ -26,8 +26,6 @@ import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import net.neoforged.neoforge.client.event.RenderNameTagEvent;
 import net.neoforged.neoforge.common.util.TriState;
 
-import java.util.ArrayDeque;
-import java.util.Deque;
 import java.util.UUID;
 
 /**
@@ -58,7 +56,9 @@ public final class MeditationEcho {
     private static final double DISTANCE = 2.6D;
     private static final double SIDE = 1.2D;
 
-    private static final Deque<ResourceLocation> recent = new ArrayDeque<>();
+    /** Приём озарения, который двойник покажет немедленно. */
+    private static ResourceLocation forced;
+    private static int insightTicks;
 
     private static Echo echo;
     private static ResourceLocation playing;
@@ -66,13 +66,14 @@ public final class MeditationEcho {
     private static int memoryIndex;
     private static boolean broken;
 
-    /** Клиент запомнил свой приём: из таких и складывается «пережитое». */
-    public static void remember(ResourceLocation technique) {
-        recent.remove(technique);
-        recent.addFirst(technique);
-        while (recent.size() > MEMORY) {
-            recent.removeLast();
-        }
+    /**
+     * Озарение в медитации: двойник сразу и ярко выполняет этот приём.
+     */
+    public static void insight(ResourceLocation technique) {
+        forced = technique;
+        insightTicks = InsightEffects.TICKS;
+        cycleTick = 0;
+        playing = null;
     }
 
     /** Двойник есть и виден — для съёмки и отладки. */
@@ -101,7 +102,13 @@ public final class MeditationEcho {
             return;
         }
         SyncMeditationPayload state = ClientMeditationState.state();
-        boolean wanted = !broken && state.active() && state.beats() >= 3 && !recent.isEmpty()
+        // Двойник показывает то, что сервер реально осмысливает (§3г), и приём озарения.
+        java.util.List<ResourceLocation> pending = ClientMasteryState.pending();
+        if (insightTicks > 0) {
+            insightTicks--;
+        }
+        boolean wanted = !broken && state.active() && state.beats() >= 3
+                && (!pending.isEmpty() || insightTicks > 0 || playing != null && cycleTick > 0)
                 && ClientMeditationState.sessionTicks() > 30;
         if (!wanted) {
             echo = null;
@@ -128,9 +135,17 @@ public final class MeditationEcho {
         TechniqueDefinition definition = playing == null ? null : TechniqueLoader.get(playing);
         int length = definition == null ? 0 : definition.totalTicks();
         if (playing == null || ++cycleTick >= length + PAUSE_TICKS) {
-            // Приёмы идут по кругу: тело перебирает пережитое.
-            ResourceLocation[] memory = recent.toArray(ResourceLocation[]::new);
-            playing = memory[memoryIndex++ % memory.length];
+            // Приёмы идут по кругу: тело перебирает пережитое; озарение — вне очереди.
+            if (forced != null) {
+                playing = forced;
+                forced = null;
+            } else if (!pending.isEmpty()) {
+                playing = pending.get(memoryIndex++ % pending.size());
+            } else {
+                echo = null;
+                playing = null;
+                return;
+            }
             cycleTick = 0;
             TechniqueDefinition next = TechniqueLoader.get(playing);
             if (next != null) {
@@ -179,7 +194,8 @@ public final class MeditationEcho {
         // API: reference/minecraft-src/net/minecraft/client/renderer/RenderType.java#eyes
         net.minecraft.client.renderer.RenderType ghost =
                 net.minecraft.client.renderer.RenderType.eyes(echo.getSkin().texture());
-        float strength = presence * 0.85F;
+        // В озарении образ вспыхивает ярче: приём выполнен чисто.
+        float strength = presence * (insightTicks > 0 ? 1.4F : 0.85F);
         MultiBufferSource tinted = type -> new Tint(source.getBuffer(ghost), strength);
         PoseStack poseStack = event.getPoseStack();
         poseStack.pushPose();
@@ -241,7 +257,8 @@ public final class MeditationEcho {
     public static void reset() {
         echo = null;
         playing = null;
-        recent.clear();
+        forced = null;
+        insightTicks = 0;
         broken = false;
         memoryIndex = 0;
     }
@@ -289,7 +306,9 @@ public final class MeditationEcho {
         public VertexConsumer setColor(int red, int green, int blue, int ignored) {
             // При аддитивном смешении яркость — это и есть прозрачность: цвет вершины
             // задаёт холодный ци-тон и силу проявления образа.
-            inner.setColor((int) (70 * strength), (int) (170 * strength), (int) (255 * strength), 255);
+            // Каналы ограничены: при усилении в озарении синий переполнялся и образ зеленел.
+            inner.setColor(Math.min(255, (int) (70 * strength)), Math.min(255, (int) (170 * strength)),
+                    Math.min(255, (int) (255 * strength)), 255);
             return this;
         }
 

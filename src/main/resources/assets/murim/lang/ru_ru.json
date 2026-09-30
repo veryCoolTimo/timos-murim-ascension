@@ -71,7 +71,9 @@
   "murim.mastery.deeper": "Продолжение манускрипта «%s» открывает новые слои.",
   "murim.mastery.missing": "Слова не складываются в смысл: не хватает основ — «%s», %s-й слой.",
   "murim.mastery.already": "«%s» уже выучена.",
-  "murim.mastery.layer": "Озарение: «%s» — %s-й слой",
   "murim.mastery.comprehended": "Вы постигли суть «%s». Понимание боевых искусств углубилось.",
-  "murim.technique.unknown": "Вы не знаете техники «%s»."
+  "murim.technique.unknown": "Вы не знаете техники «%s».",
+  "murim.mastery.insight": "Озарение",
+  "murim.mastery.insight.layer": "«%s» — %s-й слой",
+  "murim.meditation.seeded.pondering": "осмысление: «%s»"
 }

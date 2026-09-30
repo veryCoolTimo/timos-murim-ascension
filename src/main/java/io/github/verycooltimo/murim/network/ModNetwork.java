@@ -75,6 +75,16 @@ public final class ModNetwork {
                 });
 
         registrar.playToClient(
+                SyncMasteryPayload.TYPE,
+                SyncMasteryPayload.STREAM_CODEC,
+                (payload, context) -> ClientPayloadBridge.handleSyncMastery(payload));
+
+        registrar.playToClient(
+                InsightPayload.TYPE,
+                InsightPayload.STREAM_CODEC,
+                (payload, context) -> ClientPayloadBridge.handleInsight(payload));
+
+        registrar.playToClient(
                 SyncMeditationPayload.TYPE,
                 SyncMeditationPayload.STREAM_CODEC,
                 (payload, context) -> ClientPayloadBridge.handleSyncMeditation(payload));

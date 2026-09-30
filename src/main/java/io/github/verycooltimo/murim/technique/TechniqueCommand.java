@@ -156,6 +156,7 @@ public final class TechniqueCommand {
                     io.github.verycooltimo.murim.cultivation.MeditationState.IDLE);
             player.setData(io.github.verycooltimo.murim.registry.ModAttachments.MASTERY,
                     io.github.verycooltimo.murim.mastery.MasteryState.EMPTY);
+            io.github.verycooltimo.murim.mastery.MasteryService.sync(player);
             io.github.verycooltimo.murim.profile.ProfileNetwork.sync(player);
             context.getSource().sendSuccess(
                     () -> Component.literal("Профиль сброшен: даньтянь не создан"), false);
@@ -220,6 +221,7 @@ public final class TechniqueCommand {
                 player.getData(io.github.verycooltimo.murim.registry.ModAttachments.MASTERY);
         player.setData(io.github.verycooltimo.murim.registry.ModAttachments.MASTERY, state.with(id,
                 io.github.verycooltimo.murim.mastery.TechniqueProgress.learned(layer, definition.layers())));
+        io.github.verycooltimo.murim.mastery.MasteryService.sync(player);
         context.getSource().sendSuccess(() -> Component.literal("Выучено: " + id + ", слой "
                 + Math.min(layer, definition.layers())), false);
         return 1;

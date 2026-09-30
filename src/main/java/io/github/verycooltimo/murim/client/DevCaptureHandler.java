@@ -181,9 +181,6 @@ public final class DevCaptureHandler {
             // требования к проверке — привязка к телу, фазы, отсутствие пересвета.
             String subject = System.getProperty(TECHNIQUE_PROPERTY, "ceremonial_draw");
             if (MEDITATION.equals(subject)) {
-                // «Пережитое» для двойника медитации после семени.
-                MeditationEcho.remember(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "crescent_sweep"));
-                MeditationEcho.remember(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "demon_palm"));
                 sitDown();
                 meditationTicks = MEDITATION_CAPTURE_TICKS;
                 return;
@@ -205,7 +202,15 @@ public final class DevCaptureHandler {
             // когда кадр действительно снят: под Xvfb с программным OpenGL частота
             // кадров ниже двадцати в секунду, и списание по тику молча теряло бы
             // половину серии, оставляя в отчёте разрежённую и неравномерную выборку.
-            framePending = true;
+            if ("1".equals(System.getenv("MURIM_CAPTURE_GUI"))) {
+                // Полный кадр с интерфейсом: титры и экранные вспышки видны только так.
+                grab(minecraft, String.format("murim_%s_%03d.png", anglePrefix(), frameIndex));
+                grab(minecraft, String.format("clean_%s_%03d.png", anglePrefix(), frameIndex));
+                frameIndex++;
+                framesLeft--;
+            } else {
+                framePending = true;
+            }
         }
     }
 

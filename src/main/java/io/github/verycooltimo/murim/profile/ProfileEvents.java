@@ -106,6 +106,7 @@ public final class ProfileEvents {
     static void onLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
             ProfileNetwork.sync(player);
+            io.github.verycooltimo.murim.mastery.MasteryService.sync(player);
         }
     }
 
@@ -114,6 +115,7 @@ public final class ProfileEvents {
         if (event.getEntity() instanceof ServerPlayer player) {
             // Профиль переживает смерть, но клиент после респавна о нём не знает.
             ProfileNetwork.sync(player);
+            io.github.verycooltimo.murim.mastery.MasteryService.sync(player);
         }
     }
 
