@@ -39,7 +39,9 @@ class SeedLogicTest {
         assertEquals(SeedLogic.Outcome.FIRST_FEELING, first.outcome());
         SeedLogic.SessionResult second = SeedLogic.finishSession(first.state(), true);
         assertEquals(SeedLogic.Outcome.HELD, second.outcome());
-        SeedLogic.SessionResult third = SeedLogic.finishSession(second.state(), false);
+        assertEquals(SeedLogic.Outcome.SLIPPED, SeedLogic.finishSession(second.state(), false).outcome(),
+                "без выигранного сжатия семя не рождается");
+        SeedLogic.SessionResult third = SeedLogic.finishSession(second.state(), true);
         assertEquals(SeedLogic.Outcome.SEED, third.outcome());
         assertTrue(third.state().seeded());
         assertEquals(SeedLogic.Outcome.ALREADY_SEEDED,

@@ -114,15 +114,17 @@ public final class MeditationVfxRenderer {
                     afterSession(scene, aftermath, ClientMeditationState.aftermathBeats(), age);
                 }
                 float t = ClientMeditationState.sessionTicks() + partial;
-                switch (Math.min(state.beats(), 3)) {
-                    case 0 -> firstFeeling(scene, t);
-                    case 1 -> ringBeat(scene, t, state.holdTicks());
-                    case 2 -> contraction(scene, t);
-                    default -> seededBreath(scene, t);
+                if (ClientMeditationState.minigame()) {
+                    minigameRing(scene, t, state.beats(), ClientMeditationState.ring(partial));
+                } else if (state.beats() == 0) {
+                    firstFeeling(scene, t);
+                } else if (state.beats() >= 3) {
+                    seededBreath(scene, t);
                 }
             } else {
-                float age = ClientMeditationState.AFTERMATH_TICKS
-                        - ClientMeditationState.aftermathTicks() + partial;
+                float length = aftermath == ClientMeditationState.Aftermath.BACKLASH
+                        ? ClientMeditationState.BACKLASH_TICKS : ClientMeditationState.AFTERMATH_TICKS;
+                float age = length - ClientMeditationState.aftermathTicks() + partial;
                 afterSession(scene, aftermath, ClientMeditationState.aftermathBeats(), age);
             }
         } finally {
@@ -164,9 +166,9 @@ public final class MeditationVfxRenderer {
      * Неудача по замыслу — игрок должен увидеть, что ци есть, но держаться ей не на чем.
      */
     private static void firstFeeling(Scene s, float t) {
-        float grow = Mth.clamp(t / 360.0F, 0.0F, 1.0F);
-        // С двадцатой секунды тепло «не держится»: мерцает всё сильнее.
-        float unrest = Mth.clamp((t - 400.0F) / 200.0F, 0.0F, 1.0F);
+        float grow = Mth.clamp(t / 180.0F, 0.0F, 1.0F);
+        // С десятой секунды тепло «не держится»: мерцает всё сильнее.
+        float unrest = Mth.clamp((t - 200.0F) / 100.0F, 0.0F, 1.0F);
         float flicker = 1.0F - unrest * (0.5F + 0.5F * Mth.sin(t * 0.9F) * Mth.sin(t * 0.37F));
         float intensity = (0.25F + 0.55F * grow) * flicker;
 
@@ -186,68 +188,47 @@ public final class MeditationVfxRenderer {
         s.buffers().endBatch(MurimRenderTypes.impactCore());
     }
 
-    // ------------------------------------------------------------------ такт 2
+    // ------------------------------------------------------------------ такты 2 и 3
+
+    /** Сорвавшееся кольцо: красный, как на круге мини-игры. */
+    private static final VfxColour STRAIN = new VfxColour(1.0F, 0.26F, 0.18F);
 
     /**
-     * Кольцо: собирается до окна, в окне зависит от удержания, после окна — итог.
-     *
-     * @param held сколько тиков удержания уже засчитал сервер
+     * Кольцо на теле повторяет кольцо мини-игры: тот же радиус, та же дрожь, тот же
+     * красный при промахе. На такте сжатия к нему добавляются жилы и потоки к семени —
+     * их сила растёт с устойчивостью.
      */
-    private static void ringBeat(Scene s, float t, int held) {
-        float gather = Mth.clamp(t / MeditationService.RING_FROM, 0.0F, 1.0F);
-        boolean window = MeditationService.isRingWindow((int) t);
-        boolean after = t >= MeditationService.RING_TO;
-        boolean passed = held >= MeditationService.HOLD_REQUIRED;
-        boolean holding = ClientMeditationState.holding();
+    private static void minigameRing(Scene s, float t, int beat, SyncMeditationPayload.Ring ring) {
+        float miss = ring.miss();
+        boolean off = miss != 0.0F;
+        double radius = 0.07D + 0.40D * ring.radius();
+        float wobble = off && miss > 0.0F ? 0.8F : 0.0F;
+        float breaks = off ? (miss < 0.0F ? 0.35F : 0.25F) : 0.0F;
+        float alpha = off ? 0.75F : 1.0F;
+        VfxColour line = off ? STRAIN : HALO;
+        float stability = Mth.clamp(ring.stability(), 0.0F, 1.0F);
+        drawRing(s, t, radius, wobble, alpha, breaks, line, stability);
 
-        float wobble;
-        float alpha;
-        float breaks;
-        double radius;
-        VfxColour line = HALO;
-        if (!window && !after) {
-            // Сборка: кольцо проступает из тумана, ещё рыхлое.
-            radius = 0.46D - 0.10D * gather;
-            wobble = 0.35F;
-            alpha = 0.15F + 0.45F * gather;
-            breaks = 0.5F * (1.0F - gather);
-        } else if (window) {
-            // Окно: удержание ощущается сразу, без ожидания пакета сервера.
-            radius = holding ? 0.33D : 0.40D;
-            wobble = holding ? 0.0F : 0.8F;
-            alpha = holding ? 1.0F : 0.6F;
-            breaks = holding ? 0.0F : 0.4F;
-            line = holding ? HALO : FRAYED;
-        } else if (passed) {
-            radius = 0.32D;
-            wobble = 0.03F;
-            alpha = 0.85F;
-            breaks = 0.0F;
-        } else {
-            // Не удержал: кольцо распадается до конца сессии.
-            float decay = Mth.clamp((t - MeditationService.RING_TO) / 120.0F, 0.0F, 1.0F);
-            radius = 0.38D + 0.12D * decay;
-            wobble = 0.5F + 0.5F * decay;
-            alpha = 0.45F * (1.0F - decay);
-            breaks = 0.25F + 0.75F * decay;
-            line = FRAYED;
+        if (beat >= 2) {
+            drawVeins(s, stability, 0.5F * stability);
+            drawStreams(s, t, stability);
         }
-
-        // Прогресс удержания виден на самом кольце: засчитанная доля горит ярче.
-        float progress = Mth.clamp(held / (float) MeditationService.HOLD_REQUIRED, 0.0F, 1.0F);
-        drawRing(s, t, radius, wobble, alpha, breaks, line, progress);
-
         VertexConsumer glow = s.buffers().getBuffer(MurimRenderTypes.impactCore());
-        CoreGlow.draw(glow, s.pose(), s.core(), s.camera(), t, 0.06D + (window && holding ? 0.03D : 0.0D),
-                      0.35F + 0.35F * alpha, DEEP, CORE);
-        // Удержание отдаётся в семя: от кольца к пупку тянутся искры. Без этой связи
-        // кольцо читалось «поясным щитом», отдельной механикой.
-        if (window && holding || after && passed) {
-            BillboardBurst.inward(glow, s.pose(), s.core(), s.camera(), 16, t, radius,
-                                  0.7F, HALO, CORE);
+        // Чем туже кольцо и выше устойчивость, тем плотнее ядро.
+        float dense = (float) (1.0D - ring.radius()) * 0.5F + stability * 0.5F;
+        CoreGlow.draw(glow, s.pose(), s.core(), s.camera(), t, 0.05D + 0.06D * dense,
+                      0.4F + 0.5F * dense, DEEP, CORE);
+        if (!off) {
+            // В полосе ци стекает из кольца в пупок.
+            BillboardBurst.inward(glow, s.pose(), s.core(), s.camera(), 14, t, radius, 0.6F, HALO, CORE);
+        } else {
+            // Вне полосы кольцо теряет искры наружу.
+            BillboardBurst.outward(glow, s.pose(), s.axis(), s.camera(), 10, t, radius + 0.1D,
+                                   0.5F + 0.5F * ring.strain(), STRAIN, CORE);
         }
         s.buffers().endBatch(MurimRenderTypes.impactCore());
     }
+
 
     /**
      * Кольцо из точек вокруг оси корпуса.
@@ -311,25 +292,6 @@ public final class MeditationVfxRenderer {
         s.buffers().endBatch(MurimRenderTypes.impactCore());
     }
 
-    // ------------------------------------------------------------------ такт 3
-
-    /** Кольцо стягивается в точку, к ней по телу сходятся жилы. */
-    private static void contraction(Scene s, float t) {
-        float k = Mth.clamp(t / MeditationService.SESSION_TICKS, 0.0F, 1.0F);
-        // Сжатие ускоряется к концу: последние секунды — самые плотные.
-        float squeeze = k * k;
-        drawRing(s, t, 0.33D - 0.29D * squeeze, 0.03F, 0.85F, 0.0F, HALO, 1.0F);
-        drawVeins(s, Mth.clamp((k - 0.25F) / 0.75F, 0.0F, 1.0F), 0.5F);
-        drawStreams(s, t, Mth.clamp((k - 0.15F) / 0.5F, 0.0F, 1.0F));
-
-        VertexConsumer glow = s.buffers().getBuffer(MurimRenderTypes.impactCore());
-        CoreGlow.draw(glow, s.pose(), s.core(), s.camera(), t, 0.06D + 0.06D * squeeze,
-                      0.6F + 0.4F * squeeze, DEEP, CORE);
-        BillboardBurst.inward(glow, s.pose(), s.core(), s.camera(), 18, t, 0.45D,
-                              0.5F * k, HALO, CORE);
-        s.buffers().endBatch(MurimRenderTypes.impactCore());
-    }
-
     // ------------------------------------------------------------------ семя
 
     /**
@@ -389,7 +351,14 @@ public final class MeditationVfxRenderer {
     private static void afterSession(Scene s, ClientMeditationState.Aftermath kind, int beats, float age) {
         float k = Mth.clamp(age / ClientMeditationState.AFTERMATH_TICKS, 0.0F, 1.0F);
         VertexConsumer glow = s.buffers().getBuffer(MurimRenderTypes.impactCore());
-        if (kind == ClientMeditationState.Aftermath.SETTLE) {
+        if (kind == ClientMeditationState.Aftermath.BACKLASH) {
+            // Искажение ци: кольцо лопается красными осколками.
+            float b = Mth.clamp(age / ClientMeditationState.BACKLASH_TICKS, 0.0F, 1.0F);
+            BillboardBurst.outward(glow, s.pose(), s.axis(), s.camera(), 40, age, 0.9D,
+                                   1.0F - b, STRAIN, CORE);
+            CoreGlow.draw(glow, s.pose(), s.core(), s.camera(), age, 0.12D,
+                          (1.0F - b) * (1.0F - b), STRAIN, CORE);
+        } else if (kind == ClientMeditationState.Aftermath.SETTLE) {
             s.buffers().endBatch(MurimRenderTypes.impactCore());
             drawRing(s, age, 0.32D - 0.24D * k, 0.03F, 0.85F * (1.0F - k), 0.0F, HALO, 1.0F);
             glow = s.buffers().getBuffer(MurimRenderTypes.impactCore());

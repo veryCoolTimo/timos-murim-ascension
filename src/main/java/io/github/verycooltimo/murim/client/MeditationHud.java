@@ -51,11 +51,15 @@ public final class MeditationHud {
         if (minecraft.player == null) {
             return;
         }
+        float partial = delta.getGameTimeDeltaPartialTick(false);
         int sceneAge = ClientMeditationState.seedSceneAge();
         if (sceneAge >= 0) {
-            float age = sceneAge + delta.getGameTimeDeltaPartialTick(false);
+            float age = sceneAge + partial;
             vignette(graphics, age);
             seedScene(graphics, minecraft, age);
+        }
+        if (ClientMeditationState.aftermath() == ClientMeditationState.Aftermath.BACKLASH) {
+            backlash(graphics, ClientMeditationState.BACKLASH_TICKS - ClientMeditationState.aftermathTicks() + partial);
         }
         if (minecraft.options.hideGui) {
             return;
@@ -64,56 +68,154 @@ public final class MeditationHud {
         if (!state.active() || state.beats() >= 3) {
             return;
         }
-        int width = graphics.guiWidth();
-        int x = (width - LINE_WIDTH) / 2;
-        int ticks = ClientMeditationState.sessionTicks();
-
-        // Ход сессии — тонкая линия, чтобы было видно, сколько сидеть.
-        float progress = Mth.clamp(ticks / (float) MeditationService.SESSION_TICKS, 0.0F, 1.0F);
-        graphics.fill(x, TOP, x + LINE_WIDTH, TOP + 1, 0x60FFFFFF);
-        graphics.fill(x, TOP, x + (int) (LINE_WIDTH * progress), TOP + 1, 0xE0A8E4FF);
-
-        if (state.beats() != 1) {
+        if (ClientMeditationState.minigame()) {
+            minigame(graphics, minecraft, state.beats(), ClientMeditationState.ring(partial));
             return;
         }
-        // Окно удержания — отрезок на линии, заметный заранее.
-        int from = x + LINE_WIDTH * MeditationService.RING_FROM / MeditationService.SESSION_TICKS;
-        int to = x + LINE_WIDTH * MeditationService.RING_TO / MeditationService.SESSION_TICKS;
-        graphics.fill(from, TOP - 1, to, TOP + 2, 0x90E0C060);
+        // Первый такт: играть нечего, только ход времени тонкой линией.
+        int width = graphics.guiWidth();
+        int x = (width - LINE_WIDTH) / 2;
+        float progress = Mth.clamp(ClientMeditationState.sessionTicks()
+                / (float) MeditationService.FIRST_FEELING_TICKS, 0.0F, 1.0F);
+        graphics.fill(x, TOP, x + LINE_WIDTH, TOP + 1, 0x60FFFFFF);
+        graphics.fill(x, TOP, x + (int) (LINE_WIDTH * progress), TOP + 1, 0xE0A8E4FF);
+    }
 
-        boolean open = ClientMeditationState.ringWindowOpen();
-        boolean soon = !open && ticks >= MeditationService.RING_FROM - 40 && ticks < MeditationService.RING_FROM;
-        if (open || soon) {
-            prompt(graphics, minecraft.font, minecraft, width, open, state.holdTicks());
+    /** Радиус круга мини-игры в пикселях интерфейса: радиус кольца 1 — край круга. */
+    private static final int GAME_RADIUS = 34;
+
+    /**
+     * Мини-игра «давление кольца» (решение автора 30.09): тёмный круг, светлая полоса —
+     * куда держать кольцо, само кольцо ци, шкала устойчивости. Промах — кольцо краснеет;
+     * перетянутое дрожит мелкой дрожью, отпущенное — плывёт волной. Напряжение окрашивает
+     * края экрана в красный.
+     */
+    private static void minigame(GuiGraphics graphics, Minecraft minecraft, int beat,
+                                 SyncMeditationPayload.Ring ring) {
+        int w = graphics.guiWidth();
+        int h = graphics.guiHeight();
+        int cx = w / 2;
+        int cy = TOP + 10 + GAME_RADIUS;
+        float miss = ring.miss();
+        boolean off = miss != 0.0F;
+        long time = minecraft.level == null ? 0L : minecraft.level.getGameTime();
+
+        // Напряжение — красные края экрана, растут вместе с ним.
+        if (ring.strain() > 0.05F) {
+            int a = (int) (Mth.clamp(ring.strain(), 0.0F, 1.0F) * 0x70);
+            int edge = Math.max(8, h / 6);
+            graphics.fillGradient(0, 0, w, edge, (a << 24) | 0xB01010, 0x00B01010);
+            graphics.fillGradient(0, h - edge, w, h, 0x00B01010, (a << 24) | 0xB01010);
+        }
+
+        // Круг-подложка и светлая полоса-цель.
+        annulus(graphics, cx, cy, 0.0F, GAME_RADIUS + 6.0F, 0x0, 0xA0060A14);
+        float bandIn = Math.max(0.0F, (ring.centre() - ring.halfWidth()) * GAME_RADIUS);
+        float bandOut = (ring.centre() + ring.halfWidth()) * GAME_RADIUS;
+        annulus(graphics, cx, cy, bandIn, bandOut, 0x0, off ? 0x40FFFFFF : 0x60CFF4FF);
+        annulus(graphics, cx, cy, bandIn - 0.5F, bandIn + 0.5F, 0x0, 0x90FFFFFF);
+        annulus(graphics, cx, cy, bandOut - 0.5F, bandOut + 0.5F, 0x0, 0x90FFFFFF);
+        // Внешний обод краснеет с напряжением: «загорается красным».
+        int rim = off ? 0xFFE04030 : 0xFF3A5A88;
+        annulus(graphics, cx, cy, GAME_RADIUS + 5.0F, GAME_RADIUS + 6.5F, 0x0,
+                blend(rim, 0xFFFF2020, ring.strain()));
+        if (beat >= 2) {
+            // Семя-цель в центре: туда и надо дожать.
+            annulus(graphics, cx, cy, 0.0F, 2.0F, 0x0, 0xFFE8FBFF);
+        }
+
+        // Кольцо ци. Перетянуто — мелкая дрожь (трещит), отпущено — волна (рассыпается).
+        float r = ring.radius() * GAME_RADIUS;
+        int colour = off ? 0xFFFF5040 : 0xFF8FE4FF;
+        float jitter = 0.0F;
+        if (off && miss < 0.0F) {
+            jitter = ((time * 7919L) % 5L - 2L) * 0.5F;
+        } else if (off) {
+            jitter = (float) Math.sin(time * 0.9D) * 1.5F;
+        }
+        annulus(graphics, cx, cy, r - 2.5F + jitter, r + 2.5F + jitter, 0x0, (colour & 0x00FFFFFF) | 0x50000000);
+        annulus(graphics, cx, cy, r - 1.0F + jitter, r + 1.0F + jitter, 0x0, colour);
+        // Светлая сердцевина: иначе кольцо в полосе сливалось с ней по цвету.
+        annulus(graphics, cx, cy, r - 0.4F + jitter, r + 0.4F + jitter, 0x0, off ? 0xFFFFC8C0 : 0xFFF0FCFF);
+        graphics.flush();
+
+        Font font = minecraft.font;
+        Component title = Component.translatable(beat >= 2 ? "murim.meditation.game.seed" : "murim.meditation.game.hold");
+        graphics.drawString(font, title, cx - font.width(title) / 2, TOP - 2, 0xFFE6F4FF, true);
+
+        // Устойчивость — полоса под кругом.
+        int by = cy + GAME_RADIUS + 12;
+        int bx = cx - LINE_WIDTH / 2;
+        graphics.fill(bx - 1, by - 1, bx + LINE_WIDTH + 1, by + 4, 0xA0000000);
+        graphics.fill(bx, by, bx + (int) (LINE_WIDTH * Mth.clamp(ring.stability(), 0.0F, 1.0F)), by + 3,
+                off ? 0xFFB05A50 : 0xFF7FE0C8);
+        Component key = minecraft.options.keyJump.getTranslatedKeyMessage();
+        Component hint = off
+                ? Component.translatable(miss < 0.0F ? "murim.meditation.game.tight" : "murim.meditation.game.loose")
+                : Component.translatable("murim.meditation.game.key", key);
+        graphics.drawString(font, hint, cx - font.width(hint) / 2, by + 7, off ? 0xFFFF7060 : 0xFFA8C8E0, true);
+    }
+
+    /** Смешение двух цветов ARGB. */
+    private static int blend(int from, int to, float k) {
+        float t = Mth.clamp(k, 0.0F, 1.0F);
+        int a = (int) Mth.lerp(t, from >>> 24, to >>> 24);
+        int r = (int) Mth.lerp(t, from >> 16 & 0xFF, to >> 16 & 0xFF);
+        int g = (int) Mth.lerp(t, from >> 8 & 0xFF, to >> 8 & 0xFF);
+        int b = (int) Mth.lerp(t, from & 0xFF, to & 0xFF);
+        return a << 24 | r << 16 | g << 8 | b;
+    }
+
+    /**
+     * Кольцо (или круг при нулевом внутреннем радиусе) четырёхугольниками через тот же
+     * {@code RenderType.gui()}, что и ванильный {@code fill}.
+     * API: reference/minecraft-src/net/minecraft/client/gui/GuiGraphics.java#fill
+     *
+     * <p>Обход вершин выравнивается под обход {@code fill}: у типа интерфейса включено
+     * отсечение задних граней, и сегмент с обратным обходом просто не рисуется.
+     */
+    private static void annulus(GuiGraphics graphics, float cx, float cy, float inner, float outer,
+                                int unused, int colour) {
+        if (outer <= 0.0F || outer <= inner) {
+            return;
+        }
+        float in = Math.max(0.0F, inner);
+        var matrix = graphics.pose().last().pose();
+        var consumer = graphics.bufferSource().getBuffer(net.minecraft.client.renderer.RenderType.gui());
+        int segments = 72;
+        for (int i = 0; i < segments; i++) {
+            double a0 = i * Math.PI * 2.0D / segments;
+            double a1 = (i + 1) * Math.PI * 2.0D / segments;
+            float[] xs = {cx + (float) Math.cos(a0) * in, cx + (float) Math.cos(a1) * in,
+                          cx + (float) Math.cos(a1) * outer, cx + (float) Math.cos(a0) * outer};
+            float[] ys = {cy + (float) Math.sin(a0) * in, cy + (float) Math.sin(a1) * in,
+                          cy + (float) Math.sin(a1) * outer, cy + (float) Math.sin(a0) * outer};
+            float area = 0.0F;
+            for (int k = 0; k < 4; k++) {
+                int n = (k + 1) % 4;
+                area += xs[k] * ys[n] - xs[n] * ys[k];
+            }
+            // У fill площадь по формуле шнурка отрицательна — держим тот же знак.
+            if (area > 0.0F) {
+                for (int k = 3; k >= 0; k--) {
+                    consumer.addVertex(matrix, xs[k], ys[k], 0.0F).setColor(colour);
+                }
+            } else {
+                for (int k = 0; k < 4; k++) {
+                    consumer.addVertex(matrix, xs[k], ys[k], 0.0F).setColor(colour);
+                }
+            }
         }
     }
 
-    /** Подсказка «[Пробел] удерживайте кольцо» с клавишей в рамке и шкалой удержания. */
-    private static void prompt(GuiGraphics graphics, Font font, Minecraft minecraft, int width,
-                               boolean open, int held) {
-        Component key = minecraft.options.keyJump.getTranslatedKeyMessage();
-        Component text = Component.translatable(open
-                ? "murim.meditation.hud.hold" : "murim.meditation.hud.ready");
-        int keyWidth = font.width(key) + 8;
-        int total = keyWidth + 6 + font.width(text);
-        int left = (width - total) / 2;
-        int y = TOP + 8;
-        boolean holding = ClientMeditationState.holding();
-        int keyColour = holding ? 0xFF7FE0A0 : 0xFFE0C060;
-        int alpha = open ? 0xFF : 0x90;
-
-        graphics.fill(left - 4, y - 3, left + total + 4, y + 12, (alpha / 2) << 24);
-        graphics.fill(left, y - 1, left + keyWidth, y + 10, keyColour & 0x00FFFFFF | (alpha << 24));
-        graphics.fill(left + 1, y, left + keyWidth - 1, y + 9, 0xFF101418 & 0x00FFFFFF | (alpha << 24));
-        graphics.drawString(font, key, left + 4, y + 1, keyColour & 0x00FFFFFF | (alpha << 24), false);
-        graphics.drawString(font, text, left + keyWidth + 6, y + 1, 0xFFFFFF | (alpha << 24), true);
-
-        if (open) {
-            float share = Mth.clamp(held / (float) MeditationService.HOLD_REQUIRED, 0.0F, 1.0F);
-            int bar = left + (int) (total * share);
-            graphics.fill(left, y + 14, left + total, y + 16, 0x80000000);
-            graphics.fill(left, y + 14, bar, y + 16, share >= 1.0F ? 0xFF7FE0A0 : 0xFFE0C060);
+    /** Искажение ци: красная вспышка по экрану, гаснет за две с половиной секунды. */
+    private static void backlash(GuiGraphics graphics, float age) {
+        float k = Mth.clamp(1.0F - age / ClientMeditationState.BACKLASH_TICKS, 0.0F, 1.0F);
+        if (k <= 0.0F) {
+            return;
         }
+        float flash = ClientConfig.SCREEN_FLASHES.get() ? k * k : k * k * 0.4F;
+        graphics.fill(0, 0, graphics.guiWidth(), graphics.guiHeight(), ((int) (flash * 0x90) << 24) | 0xA00808);
     }
 
     /**

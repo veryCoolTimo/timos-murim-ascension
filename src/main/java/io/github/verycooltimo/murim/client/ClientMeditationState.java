@@ -1,6 +1,5 @@
 package io.github.verycooltimo.murim.client;
 
-import io.github.verycooltimo.murim.cultivation.MeditationService;
 import io.github.verycooltimo.murim.network.MeditationInputPayload;
 import io.github.verycooltimo.murim.network.SyncMeditationPayload;
 import net.minecraft.client.CameraType;
@@ -30,7 +29,9 @@ public final class ClientMeditationState {
         /** Ци рассеялась: первый такт или кольцо не удержано. */
         SCATTER,
         /** Кольцо удержано и осело внизу живота. */
-        SETTLE
+        SETTLE,
+        /** Искажение ци: кольцо лопнуло, всё вспыхивает красным. */
+        BACKLASH
     }
 
     /** Сцена «внутреннего взгляда» при рождении семени: 12 секунд (автор: 10–15). */
@@ -39,8 +40,15 @@ public final class ClientMeditationState {
     /** Сколько длится послесвечение законченной сессии. */
     public static final int AFTERMATH_TICKS = 40;
 
+    /** Искажение ци: красная вспышка и осколки кольца. */
+    public static final int BACKLASH_TICKS = 50;
+
     private static final SyncMeditationPayload IDLE =
-            new SyncMeditationPayload(false, 0, 0, 0, SyncMeditationPayload.Event.NONE);
+            new SyncMeditationPayload(false, 0, 0, SyncMeditationPayload.Event.NONE,
+                    SyncMeditationPayload.Ring.NONE);
+
+    /** Прошлый снимок кольца: между пакетами сервера кольцо интерполируется. */
+    private static SyncMeditationPayload.Ring previousRing = SyncMeditationPayload.Ring.NONE;
 
     private static SyncMeditationPayload state = IDLE;
 
@@ -62,6 +70,23 @@ public final class ClientMeditationState {
 
     public static SyncMeditationPayload state() {
         return state;
+    }
+
+    /** Мини-игра идёт прямо сейчас. */
+    public static boolean minigame() {
+        return state.active() && state.ring().active();
+    }
+
+    /** Кольцо, сглаженное между тиками сервера. */
+    public static SyncMeditationPayload.Ring ring(float partial) {
+        SyncMeditationPayload.Ring now = state.ring();
+        SyncMeditationPayload.Ring was = previousRing.active() ? previousRing : now;
+        float k = net.minecraft.util.Mth.clamp(partial, 0.0F, 1.0F);
+        return new SyncMeditationPayload.Ring(now.active(),
+                net.minecraft.util.Mth.lerp(k, was.radius(), now.radius()),
+                net.minecraft.util.Mth.lerp(k, was.centre(), now.centre()),
+                net.minecraft.util.Mth.lerp(k, was.halfWidth(), now.halfWidth()),
+                now.stability(), now.strain());
     }
 
     /** Тик сессии для картинки: между пакетами сервера досчитывается локально. */
@@ -97,6 +122,7 @@ public final class ClientMeditationState {
 
     public static void accept(SyncMeditationPayload payload) {
         SyncMeditationPayload previous = state;
+        previousRing = previous.ring();
         state = payload;
         Minecraft minecraft = Minecraft.getInstance();
         LocalPlayer player = minecraft.player;
@@ -125,6 +151,14 @@ public final class ClientMeditationState {
             holdSent = false;
             if (payload.event() == SyncMeditationPayload.Event.SEED) {
                 startSeedScene(minecraft);
+            } else if (payload.event() == SyncMeditationPayload.Event.BACKLASH) {
+                aftermath = Aftermath.BACKLASH;
+                aftermathBeats = previous.beats();
+                aftermathTicks = BACKLASH_TICKS;
+                CameraShakeHandler.request(0.8F);
+                if (player != null) {
+                    MurimPlayerAnimations.stop(player);
+                }
             } else {
                 // Такт вырос — кольцо осело; иначе ци рассеялась (первый такт по замыслу,
                 // не удержанное кольцо или прерванная сессия).
@@ -172,11 +206,6 @@ public final class ClientMeditationState {
         if (minecraft.player != null && !state.active()) {
             MurimPlayerAnimations.stop(minecraft.player);
         }
-    }
-
-    /** Окно удержания открыто сейчас: второй такт и нужная секунда сессии. */
-    public static boolean ringWindowOpen() {
-        return state.active() && state.beats() == 1 && MeditationService.isRingWindow(localTicks);
     }
 
     @SubscribeEvent
@@ -247,6 +276,7 @@ public final class ClientMeditationState {
             restoreCamera = null;
         }
         state = IDLE;
+        previousRing = SyncMeditationPayload.Ring.NONE;
         localTicks = 0;
         holdSent = false;
         aftermath = Aftermath.NONE;

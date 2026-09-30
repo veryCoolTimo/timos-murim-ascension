@@ -13,7 +13,6 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
-import io.github.verycooltimo.murim.cultivation.MeditationService;
 
 /**
  * Съёмка серии кадров техники для отладки визуала.
@@ -379,12 +378,19 @@ public final class DevCaptureHandler {
     private static void tickMeditation(Minecraft minecraft) {
         meditationTicks--;
         var state = ClientMeditationState.state();
-        // Первые полторы секунды окна клавиша отпущена: в кадры должно попасть и
-        // неудержанное кольцо. Оставшихся 170 тиков хватает на засчёт (нужно 150).
-        minecraft.options.keyJump.setDown(ClientMeditationState.ringWindowOpen()
-                && ClientMeditationState.sessionTicks() >= MeditationService.RING_FROM + 30);
-        // Сессия закончилась, а семени ещё нет — садимся снова через секунду.
-        if (!state.active() && state.beats() < 3) {
+        // Бот мини-игры: держит, когда кольцо шире центра полосы. С 4-й по 6-ю секунду
+        // каждой игры он нарочно перетягивает — в кадры должно попасть красное состояние.
+        // MURIM_CAPTURE_FAIL=1 — не жмёт вовсе, чтобы снять искажение ци.
+        boolean fail = "1".equals(System.getenv("MURIM_CAPTURE_FAIL"));
+        boolean hold = false;
+        if (ClientMeditationState.minigame() && !fail) {
+            var ring = ClientMeditationState.ring(1.0F);
+            int t = ClientMeditationState.sessionTicks();
+            hold = (t >= 80 && t < 120) || ring.radius() > ring.centre();
+        }
+        minecraft.options.keyJump.setDown(hold);
+        // Сессия прервалась, а семени ещё нет — садимся снова через секунду.
+        if (!state.active() && state.beats() < 3 && !fail) {
             if (++meditationIdle == 20) {
                 sitDown();
             }

@@ -13,7 +13,8 @@ import net.minecraft.util.Mth;
  * <ol>
  *   <li>первое ощущение — неудача по замыслу: ци рассеивается, так показывается препятствие;</li>
  *   <li>удержание — кольцо у пупка нужно удержать; не удержал — такт не засчитан;</li>
- *   <li>рождение семени — профиль даньтяня получает природу, чистоту и ёмкость метода.</li>
+ *   <li>сжатие в семя — кольцо надо дожать до точки; тогда профиль даньтяня получает
+ *       природу, чистоту и ёмкость метода.</li>
  * </ol>
  */
 public final class SeedLogic {
@@ -40,7 +41,7 @@ public final class SeedLogic {
     /**
      * Итог одной сессии медитации до семени.
      *
-     * @param ringHeld удержал ли игрок кольцо (имеет смысл только на втором такте)
+     * @param ringHeld выиграна ли мини-игра кольца (имеет смысл на втором и третьем такте)
      */
     public static SessionResult finishSession(CultivationState state, boolean ringHeld) {
         if (state.method().isEmpty()) {
@@ -51,7 +52,10 @@ public final class SeedLogic {
             case 1 -> ringHeld
                     ? new SessionResult(Outcome.HELD, state.withBeats(2))
                     : new SessionResult(Outcome.SLIPPED, state);
-            case 2 -> new SessionResult(Outcome.SEED, state.withBeats(CultivationState.SEEDED));
+            // Семя рождается только из выигранного сжатия (мини-игра, решение автора 30.09).
+            case 2 -> ringHeld
+                    ? new SessionResult(Outcome.SEED, state.withBeats(CultivationState.SEEDED))
+                    : new SessionResult(Outcome.SLIPPED, state);
             default -> new SessionResult(Outcome.ALREADY_SEEDED, state);
         };
     }
