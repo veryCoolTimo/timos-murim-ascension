@@ -31,6 +31,21 @@ public final class ModDataComponents {
                     .persistent(ResourceLocation.CODEC)
                     .networkSynchronized(ResourceLocation.STREAM_CODEC));
 
+    /** Какая техника записана в манускрипте. Один предмет на все техники, как у свитка метода. */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<ResourceLocation>> TECHNIQUE =
+            COMPONENTS.registerComponentType("technique", builder -> builder
+                    .persistent(ResourceLocation.CODEC)
+                    .networkSynchronized(ResourceLocation.STREAM_CODEC));
+
+    /**
+     * До какого слоя учит манускрипт; нет компонента — полный. Рваный учит не всему
+     * (docs/design/19 §3г), продолжение ищется отдельно.
+     */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> MANUAL_DEPTH =
+            COMPONENTS.registerComponentType("manual_depth", builder -> builder
+                    .persistent(com.mojang.serialization.Codec.INT)
+                    .networkSynchronized(net.minecraft.network.codec.ByteBufCodecs.VAR_INT));
+
     public static void register(IEventBus modBus) {
         COMPONENTS.register(modBus);
     }

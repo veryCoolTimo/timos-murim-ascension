@@ -238,6 +238,8 @@ public final class MeditationService {
             updated = updated.circulateOnce();
         }
         player.setData(ModAttachments.PROFILE, updated);
+        // Осмысление пережитого (docs/design/19 §3г): неосмысленное становится освоением.
+        io.github.verycooltimo.murim.mastery.MasteryService.meditate(player);
         if (next.ticks() % 20 == 0) {
             ProfileNetwork.sync(player);
             sync(player, SyncMeditationPayload.Event.NONE);

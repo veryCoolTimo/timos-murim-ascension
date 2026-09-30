@@ -159,6 +159,7 @@ public final class DevSetupEvents {
                             .withBeats(beats));
             io.github.verycooltimo.murim.profile.ProfileNetwork.sync(meditating);
             // Искажение ци из прошлого прогона не должно попадать в кадры следующего.
+            learnAll(meditating);
             meditating.removeAllEffects();
             meditating.setHealth(meditating.getMaxHealth());
             meditating.getFoodData().setFoodLevel(20);
@@ -175,6 +176,9 @@ public final class DevSetupEvents {
         if (event.getEntity() instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
             io.github.verycooltimo.murim.profile.ProfileNetwork.sync(serverPlayer);
         }
+
+        // Стенд применяет техники — значит, должен их знать (docs/design/19 §3г).
+        learnAll(event.getEntity());
 
         // При контрольном ракурсе манекен не ставится вовсе: камера спереди оказывается
         // ровно в его голове и закрывает кадр целиком. Проверять геометрию эффекта важнее,
@@ -287,5 +291,16 @@ public final class DevSetupEvents {
     }
 
     private DevSetupEvents() {
+    }
+
+    /** Все техники на полном освоении: стенду нужны приёмы, а не прогресс. */
+    private static void learnAll(net.minecraft.world.entity.player.Player player) {
+        io.github.verycooltimo.murim.mastery.MasteryState state = io.github.verycooltimo.murim.mastery.MasteryState.EMPTY;
+        for (io.github.verycooltimo.murim.technique.TechniqueDefinition definition
+                : io.github.verycooltimo.murim.technique.TechniqueLoader.all().values()) {
+            state = state.with(definition.id(), io.github.verycooltimo.murim.mastery.TechniqueProgress.learned(
+                    definition.layers(), definition.layers()));
+        }
+        player.setData(io.github.verycooltimo.murim.registry.ModAttachments.MASTERY, state);
     }
 }

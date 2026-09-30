@@ -98,6 +98,30 @@ public final class TechniqueCommand {
                             return 1;
                         })));
 
+        // Выучить технику без манускрипта, сразу на нужном слое: проверять слои, каждый раз
+        // проходя бой и медитацию, — трата времени автора. Порог основ здесь НЕ проверяется.
+        root.then(Commands.literal("learn")
+                .then(Commands.argument("technique", net.minecraft.commands.arguments.ResourceLocationArgument.id())
+                        .suggests((context, builder) -> net.minecraft.commands.SharedSuggestionProvider.suggestResource(
+                                io.github.verycooltimo.murim.technique.TechniqueLoader.all().keySet().stream(), builder))
+                        .executes(context -> learnCommand(context, 0))
+                        .then(Commands.argument("layer", com.mojang.brigadier.arguments.IntegerArgumentType.integer(0, 12))
+                                .executes(context -> learnCommand(context,
+                                        com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(context, "layer"))))));
+
+        // Освоение техник и мудрость — числами, для отладки (игроку мудрость не показывается).
+        root.then(Commands.literal("mastery").executes(context -> {
+            ServerPlayer player = context.getSource().getPlayerOrException();
+            io.github.verycooltimo.murim.mastery.MasteryState m =
+                    player.getData(io.github.verycooltimo.murim.registry.ModAttachments.MASTERY);
+            StringBuilder text = new StringBuilder(String.format(java.util.Locale.ROOT, "мудрость %.1f", m.wisdom()));
+            m.techniques().forEach((id, p) -> text.append(String.format(java.util.Locale.ROOT,
+                    "%n%s: слой %d/%d · %.1f/%.1f · неосмысленное %.1f", id, p.layer(), p.cap(), p.progress(),
+                    io.github.verycooltimo.murim.mastery.MasteryRules.need(p.layer()), p.unprocessed())));
+            context.getSource().sendSuccess(() -> Component.literal(text.toString()), false);
+            return 1;
+        }));
+
         // Долить ци: без этого каждую пробу техники приходится ждать, накапливая запас.
         root.then(Commands.literal("qi").executes(context -> {
             ServerPlayer player = context.getSource().getPlayerOrException();
@@ -130,6 +154,8 @@ public final class TechniqueCommand {
                     io.github.verycooltimo.murim.cultivation.CultivationState.NONE);
             player.setData(io.github.verycooltimo.murim.registry.ModAttachments.MEDITATION,
                     io.github.verycooltimo.murim.cultivation.MeditationState.IDLE);
+            player.setData(io.github.verycooltimo.murim.registry.ModAttachments.MASTERY,
+                    io.github.verycooltimo.murim.mastery.MasteryState.EMPTY);
             io.github.verycooltimo.murim.profile.ProfileNetwork.sync(player);
             context.getSource().sendSuccess(
                     () -> Component.literal("Профиль сброшен: даньтянь не создан"), false);
@@ -177,6 +203,26 @@ public final class TechniqueCommand {
         }));
 
         event.getDispatcher().register(root);
+    }
+
+    private static int learnCommand(com.mojang.brigadier.context.CommandContext<net.minecraft.commands.CommandSourceStack> context,
+                                    int layer) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+        ServerPlayer player = context.getSource().getPlayerOrException();
+        net.minecraft.resources.ResourceLocation id =
+                net.minecraft.commands.arguments.ResourceLocationArgument.getId(context, "technique");
+        io.github.verycooltimo.murim.technique.TechniqueDefinition definition =
+                io.github.verycooltimo.murim.technique.TechniqueLoader.get(id);
+        if (definition == null) {
+            context.getSource().sendFailure(Component.literal("Техника не найдена: " + id));
+            return 0;
+        }
+        io.github.verycooltimo.murim.mastery.MasteryState state =
+                player.getData(io.github.verycooltimo.murim.registry.ModAttachments.MASTERY);
+        player.setData(io.github.verycooltimo.murim.registry.ModAttachments.MASTERY, state.with(id,
+                io.github.verycooltimo.murim.mastery.TechniqueProgress.learned(layer, definition.layers())));
+        context.getSource().sendSuccess(() -> Component.literal("Выучено: " + id + ", слой "
+                + Math.min(layer, definition.layers())), false);
+        return 1;
     }
 
     private TechniqueCommand() {

@@ -80,5 +80,18 @@
   "murim.meditation.seeded.rate": "+%s qi/s",
   "murim.meditation.seeded.tired": "+%s qi/s — the mind tires",
   "murim.meditation.seeded.full": "the dantian is full",
-  "murim.meditation.seeded.leave": "[%s] — stand up"
+  "murim.meditation.seeded.leave": "[%s] — stand up",
+  "item.murim.technique_manual": "Technique Manual",
+  "item.murim.technique_manual.named": "Manual: %s",
+  "item.murim.technique_manual.full": "Complete manual",
+  "item.murim.technique_manual.torn": "Incomplete: teaches up to layer %s",
+  "item.murim.technique_manual.requires": "Requires basics: “%s” — layer %s",
+  "murim.mastery.learned": "You learned “%s”. The form is familiar but clumsy — it has to be lived in.",
+  "murim.mastery.learned_skipped": "You learned “%s” and already hold it at layer %s.",
+  "murim.mastery.deeper": "The continuation of “%s” opens new layers.",
+  "murim.mastery.missing": "The words make no sense: you lack the basics — “%s”, layer %s.",
+  "murim.mastery.already": "“%s” is already learned.",
+  "murim.mastery.layer": "Insight: “%s” — layer %s",
+  "murim.mastery.comprehended": "You grasped the essence of “%s”. Your understanding of martial arts deepened.",
+  "murim.technique.unknown": "You do not know “%s”."
 }

@@ -17,6 +17,10 @@ public final class ModItems {
      * Свиток метода культивации. Один предмет на все методы: какой метод записан —
      * компонент {@link ModDataComponents#METHOD}.
      */
+    /** Манускрипт техники: какая техника — компонент {@link ModDataComponents#TECHNIQUE}. */
+    public static final DeferredHolder<Item, Item> TECHNIQUE_MANUAL = ITEMS.register("technique_manual",
+            () -> new io.github.verycooltimo.murim.item.TechniqueManualItem(new Item.Properties().stacksTo(1)));
+
     public static final DeferredHolder<Item, Item> METHOD_SCROLL = ITEMS.register("method_scroll",
             () -> new io.github.verycooltimo.murim.item.MethodScrollItem(new Item.Properties().stacksTo(1)));
 

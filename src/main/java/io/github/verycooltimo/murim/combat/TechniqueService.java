@@ -40,6 +40,13 @@ public final class TechniqueService {
             return false;
         }
 
+        // Применять можно только выученное (docs/design/19 §3г): техника приходит из манускрипта.
+        if (!io.github.verycooltimo.murim.mastery.MasteryService.knows(player, technique.id())) {
+            player.displayClientMessage(net.minecraft.network.chat.Component.translatable(
+                    "murim.technique.unknown", io.github.verycooltimo.murim.mastery.MasteryService.name(technique.id())), true);
+            return false;
+        }
+
         long now = player.serverLevel().getGameTime();
         if (!offCooldown(now, state.lastStartGameTime(), technique.cooldownTicks())) {
             return false;
@@ -199,6 +206,10 @@ public final class TechniqueService {
                 net.minecraft.sounds.SoundSource.PLAYERS, 1.0F, 0.72F);
 
         boolean anyHit = BehaviorExecutor.execute(player, technique);
+        // Промах — тоже тренировка формы, слабее попадания. У снарядов попадание придёт позже.
+        if (!anyHit && !(technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.ProjectileFan)) {
+            io.github.verycooltimo.murim.mastery.MasteryService.onMiss(player, technique.id());
+        }
 
         if (anyHit) {
             player.level().playSound(null, player.getX(), player.getY(), player.getZ(),

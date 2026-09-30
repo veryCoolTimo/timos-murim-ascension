@@ -34,23 +34,24 @@ public final class BehaviorExecutor {
     public static boolean execute(ServerPlayer player, TechniqueDefinition definition) {
         TechniqueBehavior behavior = definition.behavior();
         if (behavior instanceof TechniqueBehavior.MeleeArc melee) {
-            return meleeArc(player, melee);
+            return meleeArc(player, melee, definition.id());
         }
         if (behavior instanceof TechniqueBehavior.ProjectileFan fan) {
-            return projectileFan(player, fan);
+            return projectileFan(player, fan, definition.id());
         }
         if (behavior instanceof TechniqueBehavior.Dash dash) {
-            return dash(player, dash);
+            return dash(player, dash, definition.id());
         }
         if (behavior instanceof TechniqueBehavior.PalmBlast palm) {
-            return palmBlast(player, palm);
+            return palmBlast(player, palm, definition.id());
         }
         MurimMod.LOGGER.error("Тип поведения {} не реализован у техники {}",
                 behavior.type(), definition.id());
         return false;
     }
 
-    private static boolean meleeArc(ServerPlayer player, TechniqueBehavior.MeleeArc melee) {
+    private static boolean meleeArc(ServerPlayer player, TechniqueBehavior.MeleeArc melee,
+                                    net.minecraft.resources.ResourceLocation id) {
         Vec3 eye = player.getEyePosition();
         Vec3 look = player.getLookAngle();
         double cosLimit = Math.cos(Math.toRadians(melee.arcDegrees() / 2.0D));
@@ -67,12 +68,15 @@ public final class BehaviorExecutor {
             }
             if (target.hurt(player.damageSources().playerAttack(player), melee.damage())) {
                 anyHit = true;
+                // Пережитое для освоения (docs/design/19 §3г).
+                io.github.verycooltimo.murim.mastery.MasteryService.onHit(player, id, target);
             }
         }
         return anyHit;
     }
 
-    private static boolean projectileFan(ServerPlayer player, TechniqueBehavior.ProjectileFan fan) {
+    private static boolean projectileFan(ServerPlayer player, TechniqueBehavior.ProjectileFan fan,
+                                         net.minecraft.resources.ResourceLocation id) {
         Vec3 look = player.getLookAngle();
         Vec3 origin = player.getEyePosition().subtract(0.0D, 0.15D, 0.0D);
         boolean spawned = false;
@@ -84,6 +88,7 @@ public final class BehaviorExecutor {
 
             WedgeProjectile wedge = new WedgeProjectile(player.level(), player,
                     fan.damage(), fan.lifetimeTicks());
+            wedge.technique = id;
             wedge.setPos(origin.x, origin.y, origin.z);
             wedge.setDeltaMovement(direction.scale(fan.speed()));
             spawned |= player.level().addFreshEntity(wedge);
@@ -93,7 +98,8 @@ public final class BehaviorExecutor {
         return false;
     }
 
-    private static boolean dash(ServerPlayer player, TechniqueBehavior.Dash dash) {
+    private static boolean dash(ServerPlayer player, TechniqueBehavior.Dash dash,
+                                net.minecraft.resources.ResourceLocation id) {
         Vec3 start = player.position();
         // По горизонтали: рывок вверх по взгляду превращался бы в полёт.
         Vec3 look = player.getLookAngle();
@@ -118,6 +124,7 @@ public final class BehaviorExecutor {
             }
             if (target.hurt(player.damageSources().playerAttack(player), dash.damage())) {
                 anyHit = true;
+                io.github.verycooltimo.murim.mastery.MasteryService.onHit(player, id, target);
             }
         }
         return anyHit;
@@ -130,7 +137,8 @@ public final class BehaviorExecutor {
      * у игрока управление — тяжёлое решение, и для моба оно достигается дешевле.
      * Цель остаётся на месте, но продолжает существовать как участник боя.
      */
-    private static boolean palmBlast(ServerPlayer player, TechniqueBehavior.PalmBlast palm) {
+    private static boolean palmBlast(ServerPlayer player, TechniqueBehavior.PalmBlast palm,
+                                     net.minecraft.resources.ResourceLocation id) {
         Vec3 eye = player.getEyePosition();
         Vec3 look = player.getLookAngle();
         double cosLimit = Math.cos(Math.toRadians(palm.arcDegrees() / 2.0D));
@@ -149,6 +157,7 @@ public final class BehaviorExecutor {
                 continue;
             }
             anyHit = true;
+            io.github.verycooltimo.murim.mastery.MasteryService.onHit(player, id, target);
             // Точка контакта уходит на клиент: брызги яда рисуются ТАМ, где удар
             // состоялся. Без этого выброс возникал из воздуха независимо от попадания —
             // прямое замечание автора по кадрам.

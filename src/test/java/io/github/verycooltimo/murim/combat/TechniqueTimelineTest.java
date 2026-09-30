@@ -52,7 +52,7 @@ class TechniqueTimelineTest {
                 new TechniqueBehavior.MeleeArc(4.0D, 90.0D, 1.0F),
                 VFX, id("anim"),
                 new TechniqueDefinition.Interruption(null, false, 0.0F, 0, java.util.List.of()),
-                "", 1, cooldown);
+                "", 1, cooldown, 3, io.github.verycooltimo.murim.mastery.TechniqueTier.BASIC, java.util.List.of());
     }
 
     /** Минимально допустимый визуал: тесты шкалы к нему не обращаются, но схема его требует. */
@@ -161,7 +161,7 @@ class TechniqueTimelineTest {
                 () -> new TechniqueDefinition(id("t"), negative, "f", "i", "b",
                         new TechniqueBehavior.MeleeArc(4.0D, 90.0D, 1.0F), VFX, id("a"),
                         new TechniqueDefinition.Interruption(null, false, 0.0F, 0, java.util.List.of()),
-                        "", 1, 10),
+                        "", 1, 10, 3, io.github.verycooltimo.murim.mastery.TechniqueTier.BASIC, java.util.List.of()),
                 "отрицательная длительность фазы");
 
         // Параметры воздействия теперь валидируются самим типом поведения — там же,

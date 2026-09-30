@@ -46,6 +46,17 @@ public final class ModAttachments {
                             .copyOnDeath()
                             .build());
 
+    /**
+     * Выученные техники, их освоение и мудрость (docs/design/19 §3г). Сохраняется и
+     * переживает смерть: выученное — результат игры.
+     */
+    public static final Supplier<AttachmentType<io.github.verycooltimo.murim.mastery.MasteryState>> MASTERY =
+            ATTACHMENT_TYPES.register("mastery",
+                    () -> AttachmentType.builder(() -> io.github.verycooltimo.murim.mastery.MasteryState.EMPTY)
+                            .serialize(io.github.verycooltimo.murim.mastery.MasteryState.CODEC)
+                            .copyOnDeath()
+                            .build());
+
     /** Идущая сессия медитации. Не сохраняется: сессия требует неподвижности здесь и сейчас. */
     public static final Supplier<AttachmentType<io.github.verycooltimo.murim.cultivation.MeditationState>> MEDITATION =
             ATTACHMENT_TYPES.register("meditation_state",

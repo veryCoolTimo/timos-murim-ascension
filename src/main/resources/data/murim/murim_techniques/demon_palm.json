@@ -72,5 +72,8 @@
   },
   "weakness": "technique.murim.demon_palm.weakness",
   "hit_stop_ticks": 4,
-  "cooldown_ticks": 100
+  "cooldown_ticks": 100,
+  "layers": 8,
+  "tier": "secret",
+  "requires": [{"technique": "murim:crescent_sweep", "layer": 3}]
 }
