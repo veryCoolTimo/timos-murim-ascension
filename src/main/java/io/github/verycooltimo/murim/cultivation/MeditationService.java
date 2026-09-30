@@ -43,7 +43,7 @@ public final class MeditationService {
     static final double GAIN_DECAY_TICKS = 1200.0D;
 
     /** Запас после семени ограничен ёмкостью с этим множителем, пока нет рангов. */
-    static final double POOL_CAP = 4.0D;
+    public static final double POOL_CAP = 4.0D;
 
     /** Во время медитации циркулирующая ци наполняется быстрее пассивной. */
     static final int MEDITATION_CIRCULATION_STEPS = 3;
@@ -245,7 +245,7 @@ public final class MeditationService {
     }
 
     /** Прирост запаса за тик на данной секунде медитации: первая минута самая выгодная. */
-    static double gainAt(int ticks) {
+    public static double gainAt(int ticks) {
         return GAIN_START * Math.exp(-ticks / GAIN_DECAY_TICKS);
     }
 

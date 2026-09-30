@@ -55,6 +55,11 @@ public final class ClientMeditationState {
     /** Тики сессии, досчитанные локально: сервер шлёт состояние раз в пять тиков. */
     private static int localTicks;
 
+    /** Просьба встать уже отправлена: повтор до ответа сервера сел бы обратно. */
+    private static boolean standSent;
+    /** Клавиши выхода были отпущены после посадки — следующее нажатие поднимает. */
+    private static boolean exitArmed;
+
     /** Последнее, что клиент сообщил серверу про клавишу удержания. */
     private static boolean holdSent;
 
@@ -278,8 +283,32 @@ public final class ClientMeditationState {
      * поднимает камеру по орбите, а не просто опускает взгляд. Спереди знак наклона
      * инвертируется ванилью, отсюда минус.
      */
+    /** Поворот тела, зафиксированный при посадке: во время ритуала мышь его не крутит. */
+    private static Float lockedYaw;
+
     @SubscribeEvent
     static void onCameraAngles(net.neoforged.neoforge.client.event.ViewportEvent.ComputeCameraAngles event) {
+        // Мышь поворачивает игрока прямо перед отрисовкой кадра (Minecraft#runTick:
+        // handleAccumulatedMovement, затем gameRenderer.render), поэтому поворот здесь
+        // возвращается каждый кадр без дрожания. Замечание автора 30.09: персонаж
+        // крутился, а жилы оставались на месте.
+        LocalPlayer me = Minecraft.getInstance().player;
+        if (cinematic() && me != null) {
+            if (lockedYaw == null) {
+                lockedYaw = me.getYRot();
+            }
+            float yaw = lockedYaw;
+            me.setYRot(yaw);
+            me.yRotO = yaw;
+            me.yBodyRot = me.yBodyRotO = yaw;
+            me.yHeadRot = me.yHeadRotO = yaw;
+            me.setXRot(0.0F);
+            me.xRotO = 0.0F;
+            // Спереди ваниль разворачивает камеру на 180°, так что угол — как у игрока.
+            event.setYaw(yaw);
+        } else {
+            lockedYaw = null;
+        }
         float k = closeness(event.getPartialTick());
         if (k > 0.0F) {
             event.setPitch(net.minecraft.util.Mth.lerp(k, event.getPitch(), -CLOSE_PITCH));
@@ -316,6 +345,24 @@ public final class ClientMeditationState {
             boolean filter = !minecraft.player.isShiftKeyDown();
             PacketDistributor.sendToServer(new MeditationInputPayload(
                     MeditationInputPayload.Action.TOGGLE, filter));
+        }
+        // Встать можно не только на G: Shift и клавиши ходьбы — привычный жест «слезть»
+        // (замечание автора 30.09: «не можешь выйти на шифт»). Ввод движения при этом
+        // погашен ниже, поэтому смотрим на сами клавиши, а не на движение.
+        // Нужно именно НОВОЕ нажатие: садятся и на корточках (Shift + G — «брать всё»),
+        // и зажатый при посадке Shift не должен тут же поднимать.
+        boolean exitKeys = minecraft.options.keyShift.isDown() || minecraft.options.keyUp.isDown()
+                || minecraft.options.keyDown.isDown() || minecraft.options.keyLeft.isDown()
+                || minecraft.options.keyRight.isDown();
+        if (!state.active()) {
+            standSent = false;
+            exitArmed = false;
+        } else if (!exitKeys) {
+            exitArmed = true;
+        } else if (exitArmed && !standSent) {
+            standSent = true;
+            PacketDistributor.sendToServer(new MeditationInputPayload(
+                    MeditationInputPayload.Action.TOGGLE, true));
         }
         // Кольцо держится клавишей прыжка: во время медитации она всё равно заблокирована.
         boolean holding = state.active() && minecraft.options.keyJump.isDown();
@@ -355,6 +402,7 @@ public final class ClientMeditationState {
             restoreCamera = null;
         }
         seatedEye = false;
+        lockedYaw = null;
         state = IDLE;
         previousRing = SyncMeditationPayload.Ring.NONE;
         localTicks = 0;

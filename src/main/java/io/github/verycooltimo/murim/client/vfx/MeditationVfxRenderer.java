@@ -99,7 +99,11 @@ public final class MeditationVfxRenderer {
             Vec3 toCamera = cameraPos.subtract(dantian);
             Vec3 core = dantian.add(0.0D, 0.03D, 0.0D)
                     .add(toCamera.lengthSqr() > 1.0E-6D ? toCamera.normalize().scale(0.2D) : Vec3.ZERO);
-            Scene scene = new Scene(minecraft, player, pose, cameraPos, axis, core);
+            // «Вперёд» тела — по повороту корпуса: жилы и потоки кладутся на его переднюю
+            // поверхность и поворачиваются вместе с телом, а не с камерой.
+            float bodyYaw = Mth.rotLerp(partial, player.yBodyRotO, player.yBodyRot);
+            Vec3 facing = Vec3.directionFromRotation(0.0F, bodyYaw);
+            Scene scene = new Scene(minecraft, player, pose, cameraPos, axis, core, facing);
 
             seedOnScreen = null;
             if (sceneAge >= 0) {
@@ -152,7 +156,7 @@ public final class MeditationVfxRenderer {
 
     /** Всё, что нужно для рисования одного кадра. */
     private record Scene(Minecraft minecraft, AbstractClientPlayer player, PoseStack.Pose pose,
-                         Vec3 camera, Vec3 axis, Vec3 core) {
+                         Vec3 camera, Vec3 axis, Vec3 core, Vec3 facing) {
 
         MultiBufferSource.BufferSource buffers() {
             return minecraft.renderBuffers().bufferSource();
@@ -397,6 +401,17 @@ public final class MeditationVfxRenderer {
         Vec3 rk = BoneAnchorLayer.position(p, BoneAnchorLayer.Bone.RIGHT_KNEE);
         Vec3 lk = BoneAnchorLayer.position(p, BoneAnchorLayer.Bone.LEFT_KNEE);
         Vec3 core = s.core();
+        // Кости лежат на оси частей тела — внутри модели, и потоки по ним закрывал корпус.
+        // Выносим точки на переднюю поверхность: торс толщиной ~0.25, конечности ~0.25.
+        Vec3 skin = s.facing().scale(0.17D);
+        chest = chest == null ? null : chest.add(skin);
+        head = head == null ? null : head.add(s.facing().scale(0.27D));
+        rs = rs == null ? null : rs.add(skin);
+        ls = ls == null ? null : ls.add(skin);
+        rh = rh == null ? null : rh.add(skin);
+        lh = lh == null ? null : lh.add(skin);
+        rk = rk == null ? null : rk.add(skin);
+        lk = lk == null ? null : lk.add(skin);
         List<Vec3[]> paths = new ArrayList<>();
         if (rh != null && rs != null && chest != null) paths.add(new Vec3[] {rh, rs, chest, core});
         if (lh != null && ls != null && chest != null) paths.add(new Vec3[] {lh, ls, chest, core});
@@ -475,7 +490,7 @@ public final class MeditationVfxRenderer {
         double highest = head == null ? core.y + 1.0D : head.y + 0.2D;
         VertexConsumer channel = s.buffers().getBuffer(MurimRenderTypes.bodyGlow());
         BodyMeridians.draw(channel, s.pose(), s.camera(), parts, lowest, highest, reach,
-                           0.006D, alpha, SEED, HALO, CORE);
+                           0.006D, alpha, SEED, HALO, CORE, s.facing());
         s.buffers().endBatch(MurimRenderTypes.bodyGlow());
     }
 

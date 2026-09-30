@@ -140,8 +140,18 @@ public final class DevSetupEvents {
             if (raw != null) {
                 beats = Integer.parseInt(raw.trim());
             }
+            // С семенем стенд ставит и сам даньтянь: иначе интерфейс ци честно молчит.
+            io.github.verycooltimo.murim.cultivation.CultivationMethod method =
+                    io.github.verycooltimo.murim.cultivation.MethodLoader.get(
+                            net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(
+                                    io.github.verycooltimo.murim.MurimMod.MODID, "six_harmonies"));
+            io.github.verycooltimo.murim.profile.DantianProfile base =
+                    io.github.verycooltimo.murim.profile.DantianProfile.INITIAL;
             meditating.setData(io.github.verycooltimo.murim.registry.ModAttachments.PROFILE,
-                    io.github.verycooltimo.murim.profile.DantianProfile.INITIAL);
+                    beats >= io.github.verycooltimo.murim.cultivation.CultivationState.SEEDED && method != null
+                            ? io.github.verycooltimo.murim.cultivation.SeedLogic.seedProfile(base, method, 1.0D)
+                                    .withPool(method.capacity() * 1.5D).withCirculating(0.0D)
+                            : base);
             meditating.setData(io.github.verycooltimo.murim.registry.ModAttachments.CULTIVATION,
                     io.github.verycooltimo.murim.cultivation.CultivationState.NONE
                             .withMethod(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(

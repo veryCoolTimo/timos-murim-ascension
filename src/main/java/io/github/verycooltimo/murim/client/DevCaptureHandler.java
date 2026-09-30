@@ -347,6 +347,14 @@ public final class DevCaptureHandler {
             hold = (t >= 80 && t < 120) || ring.radius() > ring.centre();
         }
         minecraft.options.keyJump.setDown(hold);
+        // MURIM_CAPTURE_TURN=1 — «крутить мышью» во время ритуала: тело обязано стоять.
+        if ("1".equals(System.getenv("MURIM_CAPTURE_TURN")) && state.active()) {
+            minecraft.player.turn(8.0D, 0.0D);
+        }
+        // MURIM_CAPTURE_LEAVE=1 — на десятой секунде нажать Shift: проверка выхода.
+        if ("1".equals(System.getenv("MURIM_CAPTURE_LEAVE"))) {
+            minecraft.options.keyShift.setDown(state.active() && ClientMeditationState.sessionTicks() >= 200);
+        }
         // Сессия прервалась, а семени ещё нет — садимся снова через секунду.
         if (!state.active() && state.beats() < 3 && !fail) {
             if (++meditationIdle == 20) {

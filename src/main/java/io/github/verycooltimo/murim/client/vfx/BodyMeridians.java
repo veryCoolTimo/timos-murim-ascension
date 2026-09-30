@@ -61,6 +61,21 @@ public final class BodyMeridians {
                             List<Part> parts, double lowest, double height, float front,
                             double thickness, float alpha, long seed,
                             VfxColour line, VfxColour hot) {
+        draw(consumer, pose, cameraLocal, parts, lowest, height, front, thickness, alpha, seed,
+             line, hot, null);
+    }
+
+    /**
+     * То же, но полоски лежат на ПЕРЕДНЕЙ поверхности тела, а не на стороне, обращённой к
+     * камере. Раскладка по камере не приклеена к телу: персонаж поворачивался, а жилы
+     * оставались развёрнутыми к зрителю (замечание автора 30.09).
+     *
+     * @param facing направление «вперёд» тела; {@code null} — раскладка по камере
+     */
+    public static void draw(VertexConsumer consumer, PoseStack.Pose pose, Vec3 cameraLocal,
+                            List<Part> parts, double lowest, double height, float front,
+                            double thickness, float alpha, long seed,
+                            VfxColour line, VfxColour hot, Vec3 facing) {
         float reached = Mth.clamp(front, 0.0F, 1.0F);
         if (reached <= 0.0F || alpha <= 0.0F) {
             return;
@@ -81,7 +96,8 @@ public final class BodyMeridians {
             Vec3 along = axis.scale(1.0D / length);
             // Поперечная пара для КОНКРЕТНОЙ части: полоски раскладываются по её ширине
             // и прижимаются к её передней поверхности, а не к общей оси тела.
-            Vec3 toCamera = cameraLocal.subtract(part.from().add(axis.scale(0.5D)));
+            Vec3 toCamera = facing != null ? facing
+                    : cameraLocal.subtract(part.from().add(axis.scale(0.5D)));
             Vec3 depth = toCamera.subtract(along.scale(toCamera.dot(along)));
             if (depth.lengthSqr() < 1.0E-8D) {
                 continue;

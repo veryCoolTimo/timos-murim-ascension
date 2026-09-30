@@ -76,5 +76,9 @@
   "murim.meditation.seed": "A seed is born in your dantian.",
   "murim.meditation.seed_title": "Dantian Seed",
   "murim.meditation.game.key": "[%s] — tighten",
-  "murim.meditation.backlash": "Your qi runs wild — qi deviation. Your body barely holds."
+  "murim.meditation.backlash": "Your qi runs wild — qi deviation. Your body barely holds.",
+  "murim.meditation.seeded.rate": "+%s qi/s",
+  "murim.meditation.seeded.tired": "+%s qi/s — the mind tires",
+  "murim.meditation.seeded.full": "the dantian is full",
+  "murim.meditation.seeded.leave": "[%s] — stand up"
 }

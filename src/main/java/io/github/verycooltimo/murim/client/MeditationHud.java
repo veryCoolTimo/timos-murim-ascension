@@ -67,7 +67,11 @@ public final class MeditationHud {
             return;
         }
         SyncMeditationPayload state = ClientMeditationState.state();
-        if (!state.active() || state.beats() >= 3) {
+        if (!state.active()) {
+            return;
+        }
+        if (state.beats() >= 3) {
+            seeded(graphics, minecraft, partial);
             return;
         }
         if (ClientMeditationState.minigame()) {
@@ -179,6 +183,63 @@ public final class MeditationHud {
      * <p>Обход вершин выравнивается под обход {@code fill}: у типа интерфейса включено
      * отсечение задних граней, и сегмент с обратным обходом просто не рисуется.
      */
+    /**
+     * Медитация после семени (замечание автора 30.09: «непонятно, что ты делаешь — просто
+     * сидишь»). Тот же маленький круг сверху: даньтянь наполняется запасом ци, под ним —
+     * циркулирующая, ниже — скорость накопления; когда отдача падает, «ум устаёт».
+     */
+    private static void seeded(GuiGraphics graphics, Minecraft minecraft, float partial) {
+        io.github.verycooltimo.murim.profile.DantianProfile profile = ClientProfileState.profile();
+        if (!profile.isAwakened()) {
+            return;
+        }
+        int w = graphics.guiWidth();
+        int cx = w / 2;
+        int cy = 12 + GAME_RADIUS;
+        float ticks = ClientMeditationState.sessionTicks() + partial;
+        double cap = Math.max(1.0D, profile.capacity() * MeditationService.POOL_CAP);
+        float fill = (float) Mth.clamp(profile.pool() / cap, 0.0D, 1.0D);
+        float breath = 0.5F + 0.5F * Mth.sin(ticks * 0.08F);
+
+        annulus(graphics, cx, cy, 0.0F, GAME_RADIUS + 3.0F, 0x0, 0x70060A14);
+        annulus(graphics, cx, cy, GAME_RADIUS + 2.5F, GAME_RADIUS + 3.5F, 0x0, 0xFF3A5A88);
+        // Запас — площадь круга: радиус по корню, чтобы половина запаса выглядела половиной.
+        float r = (float) Math.sqrt(fill) * GAME_RADIUS;
+        annulus(graphics, cx, cy, 0.0F, r, 0x0, 0xC03C78D8);
+        annulus(graphics, cx, cy, Math.max(0.0F, r - 1.2F), r, 0x0, 0xFF9FD8FF);
+        // Семя в центре дышит в такт медитации.
+        annulus(graphics, cx, cy, 0.0F, 1.2F + breath * 0.8F, 0x0, 0xFFE8FBFF);
+        graphics.flush();
+
+        int by = cy + GAME_RADIUS + 6;
+        int half = GAME_RADIUS + 3;
+        float circ = (float) Mth.clamp(profile.circulating() / Math.max(1.0E-6D, profile.maxCirculating()), 0.0D, 1.0D);
+        graphics.fill(cx - half, by, cx + half, by + 1, 0x60FFFFFF);
+        graphics.fill(cx - half, by, cx - half + (int) (2 * half * circ), by + 1, 0xFF9FF0DC);
+
+        // Скорость накопления в секунду и её спад.
+        double gain = MeditationService.gainAt((int) ticks) * profile.efficiency() * 20.0D;
+        boolean tired = MeditationService.gainAt((int) ticks) < MeditationService.gainAt(0) * 0.4D;
+        Font font = minecraft.font;
+        Component rate = fill >= 1.0F
+                ? Component.translatable("murim.meditation.seeded.full")
+                : Component.translatable(tired ? "murim.meditation.seeded.tired" : "murim.meditation.seeded.rate",
+                        String.format(java.util.Locale.ROOT, "%.1f", gain));
+        small(graphics, font, rate, cx, by + 5, tired || fill >= 1.0F ? 0xC0A0A8B8 : 0xE0BFE6FF);
+        if (ClientMeditationState.sessionTicks() < 80) {
+            small(graphics, font, Component.translatable("murim.meditation.seeded.leave",
+                    minecraft.options.keyShift.getTranslatedKeyMessage()), cx, by + 13, 0xB0C8DCEC);
+        }
+    }
+
+    private static void small(GuiGraphics graphics, Font font, Component text, int cx, int y, int colour) {
+        graphics.pose().pushPose();
+        graphics.pose().translate(cx, y, 0.0F);
+        graphics.pose().scale(0.75F, 0.75F, 1.0F);
+        graphics.drawString(font, text, -font.width(text) / 2, 0, colour, true);
+        graphics.pose().popPose();
+    }
+
     private static void annulus(GuiGraphics graphics, float cx, float cy, float inner, float outer,
                                 int unused, int colour) {
         if (outer <= 0.0F || outer <= inner) {

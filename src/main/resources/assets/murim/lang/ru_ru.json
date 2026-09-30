@@ -56,5 +56,9 @@
   "murim.meditation.seed": "В даньтяне родилось семя.",
   "murim.meditation.seed_title": "Семя даньтяня",
   "murim.meditation.game.key": "[%s] — сжать",
-  "murim.meditation.backlash": "Ци пошла вразнос — искажение ци. Тело едва держится."
+  "murim.meditation.backlash": "Ци пошла вразнос — искажение ци. Тело едва держится.",
+  "murim.meditation.seeded.rate": "+%s ци/с",
+  "murim.meditation.seeded.tired": "+%s ци/с — ум устаёт",
+  "murim.meditation.seeded.full": "даньтянь полон",
+  "murim.meditation.seeded.leave": "[%s] — встать"
 }
