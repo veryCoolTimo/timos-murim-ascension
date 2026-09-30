@@ -338,9 +338,30 @@ public final class MeditationHud {
         // Затемнение: весь мир уходит в тёмную синеву, пока идёт «взгляд внутрь».
         // Не до черноты: силуэт тела и жилы должны угадываться.
         float dark = Mth.clamp((age - 2.0F) / 10.0F, 0.0F, 1.0F) * out;
+        float[] focus = io.github.verycooltimo.murim.client.vfx.MeditationVfxRenderer.seedOnScreen();
         if (dark > 0.0F) {
-            int a = (int) (dark * 0xA8);
-            graphics.fill(0, 0, w, h, (a << 24) | 0x03060F);
+            int a = (int) (dark * 0xB8);
+            if (focus == null) {
+                graphics.fill(0, 0, w, h, (a << 24) | 0x03060F);
+            } else {
+                // Затемнение КРУГОВОЕ: тело с жилами остаётся в светлом круге. Сплошная
+                // заливка гасила жилы вместе с миром (кадр автора 30.09 на живой игре).
+                float fx = focus[0] * w;
+                float fy = focus[1] * h;
+                float clear = h * 0.24F;
+                float edge = h * 0.52F;
+                int steps = 10;
+                for (int i = 0; i < steps; i++) {
+                    float r0 = clear + (edge - clear) * i / steps;
+                    float r1 = clear + (edge - clear) * (i + 1) / steps;
+                    int step = a * (i + 1) / steps;
+                    GuiShapes.ring(graphics, fx, fy, r0, r1, (step << 24) | 0x03060F);
+                }
+                GuiShapes.ring(graphics, fx, fy, edge, (float) Math.hypot(w, h) * 1.2F, (a << 24) | 0x03060F);
+                // Внутри круга мир тоже чуть темнее, чтобы свет жил был главным.
+                GuiShapes.ring(graphics, fx, fy, 0.0F, clear, ((a / 4) << 24) | 0x03060F);
+                graphics.flush();
+            }
         }
 
         // Семя пробивает темноту: дорисовывается по своей экранной точке.
