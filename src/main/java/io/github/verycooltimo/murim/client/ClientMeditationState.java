@@ -176,35 +176,113 @@ public final class ClientMeditationState {
 
     private static void startSeedScene(Minecraft minecraft) {
         seedSceneTicks = SEED_SCENE_TICKS;
-        // Камера уходит вперёд: семя рождается внизу живота, со спины его не видно
-        // (так же поставлена сцена церемонии по замечанию автора).
-        if (restoreCamera == null) {
-            restoreCamera = minecraft.options.getCameraType();
-        }
-        minecraft.options.setCameraType(CameraType.THIRD_PERSON_FRONT);
         // Взрыв семени отдаётся в камеру коротким толчком (сила — из настроек игрока).
         CameraShakeHandler.request(0.45F);
-        // Интерфейс на время сцены прячется: сердца и хотбар ложились на живот,
-        // где рождается семя. Приближение камеры пробовали — камера смотрит в голову,
-        // и при зуме живот уходил за нижний край кадра.
-        if (restoreHideGui == null) {
-            restoreHideGui = minecraft.options.hideGui;
-        }
-        minecraft.options.hideGui = true;
     }
 
     private static void endSeedScene(Minecraft minecraft) {
         seedSceneTicks = 0;
-        if (restoreHideGui != null) {
-            minecraft.options.hideGui = restoreHideGui;
-            restoreHideGui = null;
-        }
-        if (restoreCamera != null) {
-            minecraft.options.setCameraType(restoreCamera);
-            restoreCamera = null;
-        }
         if (minecraft.player != null && !state.active()) {
             MurimPlayerAnimations.stop(minecraft.player);
+        }
+    }
+
+    /**
+     * Создание даньтяня снимается крупным планом (замечание автора 30.09: «главное, что
+     * должен видеть игрок крупным планом, — его персонаж»): все три такта и сцена семени.
+     * Камера спереди — кольцо, жилы и семя на животе со спины не видны.
+     */
+    public static boolean cinematic() {
+        return (state.active() && state.beats() < 3) || seedSceneTicks > 0;
+    }
+
+    /** Насколько камера уже подошла: плавный заход и выход за секунду. */
+    private static int cinematicTicks;
+
+    /** Дистанция камеры крупного плана вместо ванильных четырёх блоков. */
+    private static final float CLOSE_DISTANCE = 1.6F;
+
+    /**
+     * Наклон камеры вниз, градусы. Камера по построению смотрит в глаза персонажа, и
+     * при пологом угле тело уходило к низу кадра под хотбар (кадры 30.09). Крутой угол
+     * с близкой дистанцией подтягивает тело к центру.
+     */
+    private static final float CLOSE_PITCH = 18.0F;
+
+    /**
+     * Высота глаз сидящего в лотосе, блоки. Камера нацелена в точку глаз, а она
+     * считалась для стоящего игрока — на 0.7 блока выше головы сидящей модели, и центр
+     * кадра смотрел в пустоту над головой (кадры 30.09).
+     */
+    private static final float SEATED_EYE = 0.95F;
+
+    /**
+     * Точка глаз опускается только у ЛОКАЛЬНОГО игрока на клиенте: серверный хитбокс
+     * и чужие клиенты не затрагиваются, а неподвижному телу клиентская коробка не важна.
+     * API: reference/neoforge-src/net/neoforged/neoforge/event/entity/EntityEvent.java#Size
+     */
+    @SubscribeEvent
+    static void onEntitySize(net.neoforged.neoforge.event.entity.EntityEvent.Size event) {
+        if (seatedEye && event.getEntity() == Minecraft.getInstance().player) {
+            event.setNewSize(event.getNewSize().withEyeHeight(SEATED_EYE));
+        }
+    }
+
+    private static boolean seatedEye;
+
+    private static void updateCamera(Minecraft minecraft) {
+        boolean wanted = cinematic();
+        if (wanted != seatedEye && minecraft.player != null) {
+            seatedEye = wanted;
+            minecraft.player.refreshDimensions();
+        }
+        if (wanted && restoreCamera == null) {
+            restoreCamera = minecraft.options.getCameraType();
+            minecraft.options.setCameraType(CameraType.THIRD_PERSON_FRONT);
+            // Ванильный интерфейс прячется на всё создание даньтяня: хотбар и сердца
+            // ложились на живот, где кольцо. Свой слой мода при этом рисуется.
+            restoreHideGui = minecraft.options.hideGui;
+            minecraft.options.hideGui = true;
+        } else if (!wanted && restoreCamera != null) {
+            minecraft.options.setCameraType(restoreCamera);
+            restoreCamera = null;
+            if (restoreHideGui != null) {
+                minecraft.options.hideGui = restoreHideGui;
+                restoreHideGui = null;
+            }
+        }
+        cinematicTicks = wanted ? Math.min(20, cinematicTicks + 1) : 0;
+    }
+
+    private static float closeness(double partial) {
+        if (restoreCamera == null) {
+            return 0.0F;
+        }
+        float k = net.minecraft.util.Mth.clamp((cinematicTicks + (float) partial) / 20.0F, 0.0F, 1.0F);
+        return k * k * (3.0F - 2.0F * k);
+    }
+
+    /** API: reference/neoforge-src/.../client/event/CalculateDetachedCameraDistanceEvent.java */
+    @SubscribeEvent
+    static void onCameraDistance(net.neoforged.neoforge.client.event.CalculateDetachedCameraDistanceEvent event) {
+        float k = closeness(Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(false));
+        if (k > 0.0F) {
+            event.setDistance(net.minecraft.util.Mth.lerp(k, event.getDistance(),
+                    Math.min(event.getDistance(), CLOSE_DISTANCE)));
+        }
+    }
+
+    /**
+     * Наклон ставится ДО того, как камера отодвигается вдоль взгляда
+     * (reference/minecraft-src/net/minecraft/client/Camera.java#setup), поэтому он
+     * поднимает камеру по орбите, а не просто опускает взгляд. Спереди знак наклона
+     * инвертируется ванилью, отсюда минус.
+     */
+    @SubscribeEvent
+    static void onCameraAngles(net.neoforged.neoforge.client.event.ViewportEvent.ComputeCameraAngles event) {
+        float k = closeness(event.getPartialTick());
+        if (k > 0.0F) {
+            event.setPitch(net.minecraft.util.Mth.lerp(k, event.getPitch(), -CLOSE_PITCH));
         }
     }
 
@@ -214,6 +292,7 @@ public final class ClientMeditationState {
         if (minecraft.player == null) {
             return;
         }
+        updateCamera(minecraft);
         if (minecraft.isPaused()) {
             return;
         }
@@ -275,6 +354,7 @@ public final class ClientMeditationState {
             minecraft.options.setCameraType(restoreCamera);
             restoreCamera = null;
         }
+        seatedEye = false;
         state = IDLE;
         previousRing = SyncMeditationPayload.Ring.NONE;
         localTicks = 0;

@@ -84,10 +84,6 @@
   "murim.meditation.slipped": "Кольцо рассыпалось.",
   "murim.meditation.seed": "В даньтяне родилось семя.",
   "murim.meditation.seed_title": "Семя даньтяня",
-  "murim.meditation.game.hold": "Удержите кольцо в светлой полосе",
-  "murim.meditation.game.seed": "Сожмите кольцо в семя",
-  "murim.meditation.game.key": "[%s] — сжать, отпустить — ослабить",
-  "murim.meditation.game.tight": "Слишком туго — кольцо трещит",
-  "murim.meditation.game.loose": "Слишком слабо — кольцо рассыпается",
+  "murim.meditation.game.key": "[%s] — сжать",
   "murim.meditation.backlash": "Ци пошла вразнос — искажение ци. Тело едва держится."
 }

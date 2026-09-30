@@ -104,10 +104,6 @@
   "murim.meditation.slipped": "The ring fell apart.",
   "murim.meditation.seed": "A seed is born in your dantian.",
   "murim.meditation.seed_title": "Dantian Seed",
-  "murim.meditation.game.hold": "Keep the ring inside the light band",
-  "murim.meditation.game.seed": "Compress the ring into a seed",
-  "murim.meditation.game.key": "[%s] — tighten, release — loosen",
-  "murim.meditation.game.tight": "Too tight — the ring cracks",
-  "murim.meditation.game.loose": "Too loose — the ring falls apart",
+  "murim.meditation.game.key": "[%s] — tighten",
   "murim.meditation.backlash": "Your qi runs wild — qi deviation. Your body barely holds."
 }

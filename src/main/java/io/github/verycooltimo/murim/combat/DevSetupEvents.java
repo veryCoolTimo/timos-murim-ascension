@@ -149,6 +149,10 @@ public final class DevSetupEvents {
                                     io.github.verycooltimo.murim.MurimMod.MODID, "six_harmonies"))
                             .withBeats(beats));
             io.github.verycooltimo.murim.profile.ProfileNetwork.sync(meditating);
+            // Искажение ци из прошлого прогона не должно попадать в кадры следующего.
+            meditating.removeAllEffects();
+            meditating.setHealth(meditating.getMaxHealth());
+            meditating.getFoodData().setFoodLevel(20);
             return;
         }
         // Съёмка САМОЙ церемонии требует обратного: даньтянь должен быть НЕ создан,

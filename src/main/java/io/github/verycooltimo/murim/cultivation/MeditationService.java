@@ -193,10 +193,6 @@ public final class MeditationService {
             default -> {
             }
         }
-        if (player.getData(ModAttachments.MEDITATION).active()) {
-            player.displayClientMessage(Component.translatable(
-                    "murim.meditation.begin." + result.state().beats()), true);
-        }
         sync(player, event);
     }
 

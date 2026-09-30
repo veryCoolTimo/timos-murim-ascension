@@ -61,7 +61,9 @@ public final class MeditationHud {
         if (ClientMeditationState.aftermath() == ClientMeditationState.Aftermath.BACKLASH) {
             backlash(graphics, ClientMeditationState.BACKLASH_TICKS - ClientMeditationState.aftermathTicks() + partial);
         }
-        if (minecraft.options.hideGui) {
+        // Скрытый интерфейс не прячет мини-игру, если его скрыли МЫ на время создания
+        // даньтяня; скрытый самим игроком (F1) — прячет.
+        if (minecraft.options.hideGui && !ClientMeditationState.cinematic()) {
             return;
         }
         SyncMeditationPayload state = ClientMeditationState.state();
@@ -82,7 +84,7 @@ public final class MeditationHud {
     }
 
     /** Радиус круга мини-игры в пикселях интерфейса: радиус кольца 1 — край круга. */
-    private static final int GAME_RADIUS = 34;
+    private static final int GAME_RADIUS = 15;
 
     /**
      * Мини-игра «давление кольца» (решение автора 30.09): тёмный круг, светлая полоса —
@@ -95,7 +97,9 @@ public final class MeditationHud {
         int w = graphics.guiWidth();
         int h = graphics.guiHeight();
         int cx = w / 2;
-        int cy = TOP + 10 + GAME_RADIUS;
+        // Маленький круг у верхнего края: крупным планом — персонаж, интерфейс только
+        // подсказывает (замечание автора 30.09).
+        int cy = 12 + GAME_RADIUS;
         float miss = ring.miss();
         boolean off = miss != 0.0F;
         long time = minecraft.level == null ? 0L : minecraft.level.getGameTime();
@@ -103,25 +107,24 @@ public final class MeditationHud {
         // Напряжение — красные края экрана, растут вместе с ним.
         if (ring.strain() > 0.05F) {
             int a = (int) (Mth.clamp(ring.strain(), 0.0F, 1.0F) * 0x70);
-            int edge = Math.max(8, h / 6);
+            int edge = Math.max(6, h / 10);
             graphics.fillGradient(0, 0, w, edge, (a << 24) | 0xB01010, 0x00B01010);
             graphics.fillGradient(0, h - edge, w, h, 0x00B01010, (a << 24) | 0xB01010);
         }
 
         // Круг-подложка и светлая полоса-цель.
-        annulus(graphics, cx, cy, 0.0F, GAME_RADIUS + 6.0F, 0x0, 0xA0060A14);
+        annulus(graphics, cx, cy, 0.0F, GAME_RADIUS + 3.0F, 0x0, 0x70060A14);
         float bandIn = Math.max(0.0F, (ring.centre() - ring.halfWidth()) * GAME_RADIUS);
         float bandOut = (ring.centre() + ring.halfWidth()) * GAME_RADIUS;
         annulus(graphics, cx, cy, bandIn, bandOut, 0x0, off ? 0x40FFFFFF : 0x60CFF4FF);
-        annulus(graphics, cx, cy, bandIn - 0.5F, bandIn + 0.5F, 0x0, 0x90FFFFFF);
-        annulus(graphics, cx, cy, bandOut - 0.5F, bandOut + 0.5F, 0x0, 0x90FFFFFF);
+
         // Внешний обод краснеет с напряжением: «загорается красным».
         int rim = off ? 0xFFE04030 : 0xFF3A5A88;
-        annulus(graphics, cx, cy, GAME_RADIUS + 5.0F, GAME_RADIUS + 6.5F, 0x0,
+        annulus(graphics, cx, cy, GAME_RADIUS + 2.5F, GAME_RADIUS + 3.5F, 0x0,
                 blend(rim, 0xFFFF2020, ring.strain()));
         if (beat >= 2) {
             // Семя-цель в центре: туда и надо дожать.
-            annulus(graphics, cx, cy, 0.0F, 2.0F, 0x0, 0xFFE8FBFF);
+            annulus(graphics, cx, cy, 0.0F, 1.2F, 0x0, 0xFFE8FBFF);
         }
 
         // Кольцо ци. Перетянуто — мелкая дрожь (трещит), отпущено — волна (рассыпается).
@@ -129,31 +132,33 @@ public final class MeditationHud {
         int colour = off ? 0xFFFF5040 : 0xFF8FE4FF;
         float jitter = 0.0F;
         if (off && miss < 0.0F) {
-            jitter = ((time * 7919L) % 5L - 2L) * 0.5F;
+            jitter = ((time * 7919L) % 3L - 1L) * 0.4F;
         } else if (off) {
-            jitter = (float) Math.sin(time * 0.9D) * 1.5F;
+            jitter = (float) Math.sin(time * 0.9D) * 0.8F;
         }
-        annulus(graphics, cx, cy, r - 2.5F + jitter, r + 2.5F + jitter, 0x0, (colour & 0x00FFFFFF) | 0x50000000);
-        annulus(graphics, cx, cy, r - 1.0F + jitter, r + 1.0F + jitter, 0x0, colour);
+        annulus(graphics, cx, cy, r - 1.6F + jitter, r + 1.6F + jitter, 0x0, (colour & 0x00FFFFFF) | 0x50000000);
+        annulus(graphics, cx, cy, r - 0.7F + jitter, r + 0.7F + jitter, 0x0, colour);
         // Светлая сердцевина: иначе кольцо в полосе сливалось с ней по цвету.
         annulus(graphics, cx, cy, r - 0.4F + jitter, r + 0.4F + jitter, 0x0, off ? 0xFFFFC8C0 : 0xFFF0FCFF);
         graphics.flush();
 
-        Font font = minecraft.font;
-        Component title = Component.translatable(beat >= 2 ? "murim.meditation.game.seed" : "murim.meditation.game.hold");
-        graphics.drawString(font, title, cx - font.width(title) / 2, TOP - 2, 0xFFE6F4FF, true);
-
-        // Устойчивость — полоса под кругом.
-        int by = cy + GAME_RADIUS + 12;
-        int bx = cx - LINE_WIDTH / 2;
-        graphics.fill(bx - 1, by - 1, bx + LINE_WIDTH + 1, by + 4, 0xA0000000);
-        graphics.fill(bx, by, bx + (int) (LINE_WIDTH * Mth.clamp(ring.stability(), 0.0F, 1.0F)), by + 3,
-                off ? 0xFFB05A50 : 0xFF7FE0C8);
-        Component key = minecraft.options.keyJump.getTranslatedKeyMessage();
-        Component hint = off
-                ? Component.translatable(miss < 0.0F ? "murim.meditation.game.tight" : "murim.meditation.game.loose")
-                : Component.translatable("murim.meditation.game.key", key);
-        graphics.drawString(font, hint, cx - font.width(hint) / 2, by + 7, off ? 0xFFFF7060 : 0xFFA8C8E0, true);
+        // Устойчивость — тонкая линия под кругом. Текста нет: промах показывают цвет
+        // и дрожь кольца; подсказка клавиши — только в первые четыре секунды игры.
+        int by = cy + GAME_RADIUS + 6;
+        int half = GAME_RADIUS + 3;
+        graphics.fill(cx - half, by, cx + half, by + 1, 0x60FFFFFF);
+        graphics.fill(cx - half, by, cx - half + (int) (2 * half * Mth.clamp(ring.stability(), 0.0F, 1.0F)), by + 1,
+                off ? 0xFFFF7060 : 0xFF9FF0DC);
+        if (ClientMeditationState.sessionTicks() < 80) {
+            Font font = minecraft.font;
+            Component hint = Component.translatable("murim.meditation.game.key",
+                    minecraft.options.keyJump.getTranslatedKeyMessage());
+            graphics.pose().pushPose();
+            graphics.pose().translate(cx, by + 5, 0.0F);
+            graphics.pose().scale(0.75F, 0.75F, 1.0F);
+            graphics.drawString(font, hint, -font.width(hint) / 2, 0, 0xC0C8DCEC, true);
+            graphics.pose().popPose();
+        }
     }
 
     /** Смешение двух цветов ARGB. */
