@@ -237,8 +237,11 @@ public final class ClientMeditationState {
 
     private static void updateCamera(Minecraft minecraft) {
         boolean wanted = cinematic();
-        if (wanted != seatedEye && minecraft.player != null) {
-            seatedEye = wanted;
+        // Сидящий взгляд — во всей медитации, и после даньтяня тоже (замечание автора
+        // 30.09: «игрок должен сидеть, а не стоять»), а не только в крупном плане.
+        boolean seated = state.active() || seedSceneTicks > 0;
+        if (seated != seatedEye && minecraft.player != null) {
+            seatedEye = seated;
             minecraft.player.refreshDimensions();
         }
         if (wanted && restoreCamera == null) {

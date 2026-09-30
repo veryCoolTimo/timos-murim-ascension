@@ -194,8 +194,11 @@ public final class MeditationHud {
             return;
         }
         int w = graphics.guiWidth();
-        int cx = w / 2;
-        int cy = 12 + GAME_RADIUS;
+        int h = graphics.guiHeight();
+        // Слева от хотбара (замечание автора 30.09), а не сверху: после даньтяня виден
+        // ванильный интерфейс, и круг встаёт рядом с ним, как ещё одна ячейка.
+        int cx = w / 2 - 91 - 8 - (GAME_RADIUS + 3);
+        int cy = h - 13 - (GAME_RADIUS + 3);
         float ticks = ClientMeditationState.sessionTicks() + partial;
         double cap = Math.max(1.0D, profile.capacity() * MeditationService.POOL_CAP);
         float fill = (float) Mth.clamp(profile.pool() / cap, 0.0D, 1.0D);
@@ -225,10 +228,11 @@ public final class MeditationHud {
                 ? Component.translatable("murim.meditation.seeded.full")
                 : Component.translatable(tired ? "murim.meditation.seeded.tired" : "murim.meditation.seeded.rate",
                         String.format(java.util.Locale.ROOT, "%.1f", gain));
-        small(graphics, font, rate, cx, by + 5, tired || fill >= 1.0F ? 0xC0A0A8B8 : 0xE0BFE6FF);
+        int ty = cy - GAME_RADIUS - 11;
+        small(graphics, font, rate, cx, ty, tired || fill >= 1.0F ? 0xC0A0A8B8 : 0xE0BFE6FF);
         if (ClientMeditationState.sessionTicks() < 80) {
             small(graphics, font, Component.translatable("murim.meditation.seeded.leave",
-                    minecraft.options.keyShift.getTranslatedKeyMessage()), cx, by + 13, 0xB0C8DCEC);
+                    minecraft.options.keyShift.getTranslatedKeyMessage()), cx, ty - 8, 0xB0C8DCEC);
         }
     }
 

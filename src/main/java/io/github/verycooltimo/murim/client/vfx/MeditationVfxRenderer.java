@@ -9,6 +9,7 @@ import io.github.verycooltimo.murim.network.SyncMeditationPayload;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
@@ -46,6 +47,13 @@ public final class MeditationVfxRenderer {
     private static final VfxColour FRAYED = new VfxColour(0.42F, 0.50F, 0.78F);
 
     private static final int RING_POINTS = 56;
+
+    private static final boolean DEPTH_DEBUG = "1".equals(System.getenv("MURIM_VEIN_DEPTH"));
+
+    /** Насколько жилы вынесены от оси части тела: полутолщина модели 0.125 плюс зазор. */
+    private static final double SKIN_TORSO = 0.16D;
+    private static final double SKIN_LIMB = 0.16D;
+    private static final double SKIN_HEAD = 0.28D;
 
     /**
      * Положение семени на экране в долях ширины и высоты, или {@code null}.
@@ -476,22 +484,29 @@ public final class MeditationVfxRenderer {
         Vec3 lk = BoneAnchorLayer.position(p, BoneAnchorLayer.Bone.LEFT_KNEE);
         Vec3 core = s.core();
 
+        // Глубина — НАД кожей, а не на ней. Полутолщина торса и конечностей модели 0.125:
+        // прежние 0.05 у рук и ног клали линии внутрь конечности, 0.12 у торса — вровень
+        // с поверхностью, и на живой игре тело их закрывало (замечание автора 30.09).
+        // На стенде этого не было видно: там слой рисуется поверх тела без глубины.
         List<BodyMeridians.Part> parts = new ArrayList<>();
-        parts.add(new BodyMeridians.Part(core, chest, 0.2D, 0.12D, 5));
-        parts.add(new BodyMeridians.Part(chest, head, 0.08D, 0.08D, 2));
-        parts.add(new BodyMeridians.Part(chest, rs, 0.06D, 0.06D, 3));
-        parts.add(new BodyMeridians.Part(chest, ls, 0.06D, 0.06D, 3));
-        parts.add(new BodyMeridians.Part(rs, rh, 0.05D, 0.05D, 4));
-        parts.add(new BodyMeridians.Part(ls, lh, 0.05D, 0.05D, 4));
-        parts.add(new BodyMeridians.Part(core, rk, 0.05D, 0.05D, 2));
-        parts.add(new BodyMeridians.Part(core, lk, 0.05D, 0.05D, 2));
+        parts.add(new BodyMeridians.Part(core, chest, 0.2D, SKIN_TORSO, 5));
+        parts.add(new BodyMeridians.Part(chest, head, 0.08D, SKIN_HEAD, 2));
+        parts.add(new BodyMeridians.Part(chest, rs, 0.06D, SKIN_TORSO, 3));
+        parts.add(new BodyMeridians.Part(chest, ls, 0.06D, SKIN_TORSO, 3));
+        parts.add(new BodyMeridians.Part(rs, rh, 0.05D, SKIN_LIMB, 4));
+        parts.add(new BodyMeridians.Part(ls, lh, 0.05D, SKIN_LIMB, 4));
+        parts.add(new BodyMeridians.Part(core, rk, 0.05D, SKIN_LIMB, 2));
+        parts.add(new BodyMeridians.Part(core, lk, 0.05D, SKIN_LIMB, 2));
 
         double lowest = core.y - 0.3D;
         double highest = head == null ? core.y + 1.0D : head.y + 0.2D;
-        VertexConsumer channel = s.buffers().getBuffer(MurimRenderTypes.bodyGlow());
+        // MURIM_VEIN_DEPTH=1 — отладка: жилы С проверкой глубины, чтобы на стенде увидеть,
+        // закрывает ли их тело (у автора на живой игре закрывало, на стенде — нет).
+        RenderType veinType = DEPTH_DEBUG ? MurimRenderTypes.mote() : MurimRenderTypes.bodyGlow();
+        VertexConsumer channel = s.buffers().getBuffer(veinType);
         BodyMeridians.draw(channel, s.pose(), s.camera(), parts, lowest, highest, reach,
                            0.006D, alpha, SEED, HALO, CORE, s.facing());
-        s.buffers().endBatch(MurimRenderTypes.bodyGlow());
+        s.buffers().endBatch(veinType);
     }
 
     private MeditationVfxRenderer() {
