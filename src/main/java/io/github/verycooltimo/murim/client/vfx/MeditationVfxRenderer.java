@@ -439,32 +439,126 @@ public final class MeditationVfxRenderer {
         s.buffers().endBatch(MurimRenderTypes.impactCore());
     }
 
+    /**
+     * Гладкая линия по точкам текстурой ленты, с общими боковыми векторами на стыках (урок
+     * Пика: отрезки с круглой текстурой давали пунктир, отдельные повороты — «гребёнку»).
+     * Свечение шире и слабее, ядро узкое; {@code taper} — сужение к обоим концам.
+     *
+     * @param upTo доля пути, уже прорисованная (рост от начала к концу)
+     */
+    private static void smoothLine(VertexConsumer c, Scene s, Vec3[] pts, float upTo, double glowW, double coreW,
+                                   float alpha, VfxColour glow, VfxColour core, boolean taper) {
+        int n = pts.length - 1;
+        if (n < 1 || upTo <= 0.0F || alpha <= 0.0F) {
+            return;
+        }
+        Vec3[] sides = new Vec3[n + 1];
+        for (int i = 0; i <= n; i++) {
+            Vec3 tan = pts[Math.min(n, i + 1)].subtract(pts[Math.max(0, i - 1)]);
+            Vec3 sd = tan.cross(s.camera().subtract(pts[i]));
+            sides[i] = sd.lengthSqr() < 1.0E-12D ? new Vec3(0.0D, 1.0D, 0.0D) : sd.normalize();
+        }
+        float total = n * Math.min(1.0F, upTo);
+        for (int i = 0; i < n && i < total; i++) {
+            float f = Math.min(1.0F, total - i);
+            Vec3 a = pts[i];
+            Vec3 b = a.lerp(pts[i + 1], f);
+            double ua = i / (double) n, ub = (i + f) / (double) n;
+            double ta = taper ? Math.pow(Math.sin(Math.PI * ua), 0.7D) : 1.0D;
+            double tb = taper ? Math.pow(Math.sin(Math.PI * ub), 0.7D) : 1.0D;
+            ribbonQuad(c, s, a, b, sides[i], sides[i + 1], glowW * ta, glowW * tb, 0.4F * alpha, 0.4F * alpha, glow, glow);
+            ribbonQuad(c, s, a, b, sides[i], sides[i + 1], coreW * ta, coreW * tb, alpha, alpha, core, core);
+        }
+    }
+
+    /** Точки окружности/эллипса в плоскости (u, v) вокруг центра. */
+    private static Vec3[] loop(Vec3 centre, Vec3 u, Vec3 v, double ru, double rv, double from, double span, int n) {
+        Vec3[] pts = new Vec3[n + 1];
+        for (int i = 0; i <= n; i++) {
+            double a = from + span * i / n;
+            pts[i] = centre.add(u.scale(Math.cos(a) * ru)).add(v.scale(Math.sin(a) * rv));
+        }
+        return pts;
+    }
+
+    /** Квадратные искры, отходящие от тела наружу с подъёмом. */
+    private static void outwardSparks(Scene s, float age, float strength, int count, double reach, VfxColour a, VfxColour b, long salt) {
+        if (strength <= 0.0F) {
+            return;
+        }
+        VertexConsumer c = s.buffers().getBuffer(MurimRenderTypes.impactCore());
+        for (int i = 0; i < count; i++) {
+            java.util.Random r = rng(salt, i);
+            float life = 16.0F + r.nextFloat() * 14.0F;
+            float t = ((age + r.nextFloat() * life) % life) / life;
+            double ang = r.nextDouble() * Math.PI * 2.0D;
+            double h = 0.2D + r.nextDouble() * 1.1D;
+            Vec3 at = new Vec3(s.axis().x + Math.cos(ang) * (0.2D + reach * t), ground(s) + h + 0.3D * t, s.axis().z + Math.sin(ang) * (0.2D + reach * t));
+            VfxColour col = r.nextBoolean() ? a : b;
+            VfxDraw.billboard(c, s.pose(), at, s.camera(), 0.015D + r.nextDouble() * 0.03D,
+                              (float) Math.sin(t * Math.PI) * strength, col.red(), col.green(), col.blue());
+        }
+        s.buffers().endBatch(MurimRenderTypes.impactCore());
+    }
+
     // --------------------------------------------------- третий ранг: очищение
 
+    private static final VfxColour VEIN_CORE = hex(0xD8FAFF);
+    private static final VfxColour VEIN_LINE = hex(0x56CFFF);
+    private static final VfxColour VEIN_HALO = hex(0x287BFF);
+
     /**
-     * Очищение (Хуашань гл. 41–42): «по телу начал сочиться густой тёмный пот»; меридианы
-     * «из тонкого ручья — в реку, впадающую в океан». Жилы сначала тонкие и тусклые, из кожи
-     * выступают тёмные капли и пар, капли падают пятнами; затем жилы расширяются и по ним
-     * проходит волна.
+     * Очищение (Хуашань гл. 41–42) — по разбору codex кадров и концепта 01.10. Фазы:
+     * 0–35 тонкая сеть и центр; 35–100 тёмный пот и нарастающий пар; 100–165 каналы
+     * расширяются, импульсы ускоряются, искры наружу; 165–200 выброс — кольца по полу,
+     * перекрёстный луч, радиальные ленты; 200–240 гаснет, остаются пар и пятна.
      */
     private static void purificationScene(Scene s, float age) {
-        float gather = Mth.clamp(age / 40.0F, 0.0F, 1.0F);
-        float sweat = Mth.clamp((age - 45.0F) / 20.0F, 0.0F, 1.0F);
-        float widen = Mth.clamp((age - 120.0F) / 60.0F, 0.0F, 1.0F);
-        float wave = (float) Math.exp(-Math.pow((age - 150.0D) / 18.0D, 2.0D));
-        drawVeins(s, gather, (0.2F + 0.45F * widen + 0.5F * wave) * gather, 0.005D + 0.012D * widen, HALO, CORE);
-        drawStreams(s, age, gather * (0.3F + 1.2F * wave + 0.5F * widen), HALO, CORE);
+        float net = Mth.clamp(age / 35.0F, 0.0F, 1.0F);
+        float sweat = Mth.clamp((age - 15.0F) / 20.0F, 0.0F, 1.0F) * (1.0F - Mth.clamp((age - 165.0F) / 30.0F, 0.0F, 1.0F));
+        float widen = Mth.clamp((age - 100.0F) / 65.0F, 0.0F, 1.0F);
+        float fade = 1.0F - Mth.clamp((age - 200.0F) / 35.0F, 0.0F, 1.0F);
+        float pulse = 0.5F + 0.5F * Mth.sin(age * 0.25F);
+        drawVeins(s, net, (0.25F + 0.45F * widen + 0.15F * pulse * widen) * fade, 0.006D + 0.014D * widen, VEIN_HALO, VEIN_LINE);
+        drawStreams(s, age * (1.0F + 0.8F * widen), (0.4F + 0.8F * widen) * net * fade, VEIN_LINE, VEIN_CORE);
         drawSweat(s, age, sweat);
-        drawSteam(s, age, sweat * (1.0F - widen * 0.7F));
-        drawMist(s, age, gather, HALO);
-        // Пятна копятся на полу по мере того, как стекают капли, и остаются после сцены.
-        float stains = Mth.clamp((age - 80.0F) / 140.0F, 0.0F, 1.0F);
+        drawSteam(s, age, Mth.clamp((age - 25.0F) / 40.0F, 0.0F, 1.0F) * (1.0F - 0.6F * Mth.clamp((age - 135.0F) / 85.0F, 0.0F, 1.0F)));
+        drawMist(s, age, net * 0.7F, HALO);
+        outwardSparks(s, age, Mth.clamp((age - 100.0F) / 20.0F, 0.0F, 1.0F) * (1.0F - Mth.clamp((age - 190.0F) / 20.0F, 0.0F, 1.0F)),
+                      18, 0.55D, hex(0xA0EAFF), hex(0x448FFF), 301);
+        float stains = Mth.clamp((age - 55.0F) / 115.0F, 0.0F, 1.0F);
         if (stains > 0.0F) {
             VertexConsumer dark = s.buffers().getBuffer(MurimRenderTypes.impurity());
             stainSet(dark, s.pose(), new Vec3(s.axis().x, ground(s) + 0.01D, s.axis().z), 0.85F, stains);
             s.buffers().endBatch(MurimRenderTypes.impurity());
         }
+        // Выброс 165–200: кольца по полу, перекрёстный луч, радиальные ленты.
+        float burst = Mth.clamp((age - 165.0F) / 25.0F, 0.0F, 1.0F);
+        if (age >= 165.0F && age <= 205.0F) {
+            Vec3 floor = new Vec3(s.axis().x, ground(s) + 0.04D, s.axis().z);
+            Vec3 side = s.facing().cross(new Vec3(0.0D, 1.0D, 0.0D)).normalize();
+            float br = (float) Math.sin(Math.min(1.0D, burst) * Math.PI) ;
+            VertexConsumer c = s.buffers().getBuffer(MurimRenderTypes.ribbon());
+            for (int k = 0; k < 3; k++) {
+                double rr = 0.35D + (1.5D + 0.2D * k) * Math.sqrt(Mth.clamp(burst - k * 0.12F, 0.0F, 1.0F));
+                smoothLine(c, s, loop(floor.add(0.0D, 0.01D * k, 0.0D), side, s.facing(), rr, rr, 0.0D, Math.PI * 2.0D, 40),
+                           1.0F, 0.08D, 0.02D, 0.8F * br, hex(0x409CFF), hex(0xC7F7FF), false);
+            }
+            float beam = Mth.clamp((age - 165.0F) / 5.0F, 0.0F, 1.0F) * (1.0F - Mth.clamp((age - 182.0F) / 16.0F, 0.0F, 1.0F));
+            Vec3 b0 = floor, b1 = floor.add(0.0D, 3.2D, 0.0D);
+            smoothLine(c, s, new Vec3[] {b0, b0.lerp(b1, 0.5D), b1}, 1.0F, 0.3D, 0.1D, beam, hex(0x409CFF), hex(0xC7F7FF), true);
+            for (int k = 0; k < 10; k++) {
+                java.util.Random r = rng(307, k);
+                double a = r.nextDouble() * Math.PI * 2.0D;
+                Vec3 dir = new Vec3(Math.cos(a), 0.15D + r.nextDouble() * 0.5D, Math.sin(a)).normalize();
+                Vec3 from = s.core().add(dir.scale(0.3D + 0.5D * burst));
+                Vec3 to = from.add(dir.scale(0.6D));
+                smoothLine(c, s, new Vec3[] {from, from.lerp(to, 0.5D), to}, 1.0F, 0.05D, 0.015D, br, hex(0x448FFF), hex(0xC7F7FF), true);
+            }
+            s.buffers().endBatch(MurimRenderTypes.ribbon());
+        }
     }
+
 
     /**
      * Лёгкая дымка вокруг тела во всех сценах прорыва (автор 01.10: «как от пота, менее
@@ -591,121 +685,146 @@ public final class MeditationVfxRenderer {
         s.buffers().endBatch(MurimRenderTypes.impuritySkin());
     }
 
-    /** Пар: серые клубы поднимаются от плеч и головы и тают. */
+    /** Пар от пота: 22 клуба от предплечий, плеч и висков, растут и поднимаются, светлые серо-голубые. */
     private static void drawSteam(Scene s, float age, float strength) {
         if (strength <= 0.0F) {
             return;
         }
         Vec3[] anchors = skinAnchors(s);
+        int[] from = {0, 2, 3, 4, 5, 6};
         VertexConsumer puff = s.buffers().getBuffer(MurimRenderTypes.impactCore());
-        for (int i = 0; i < 18; i++) {
+        for (int i = 0; i < 22; i++) {
             java.util.Random r = rng(29, i);
-            Vec3 base = anchors[new int[] {0, 2, 3, 6}[r.nextInt(4)]];
+            Vec3 base = anchors[from[r.nextInt(from.length)]];
             if (base == null) {
                 continue;
             }
-            float t = ((age + r.nextFloat() * 60.0F) % 60.0F) / 60.0F;
-            Vec3 at = base.add((r.nextDouble() - 0.5D) * 0.3D, 0.1D + 0.7D * t, (r.nextDouble() - 0.5D) * 0.3D);
-            VfxDraw.billboard(puff, s.pose(), at, s.camera(), 0.12D + 0.28D * t,
-                              0.1F * strength * (1.0F - t), 0.78F, 0.83F, 0.9F);
+            float life = 30.0F + r.nextFloat() * 15.0F;
+            float t = ((age + r.nextFloat() * life) % life) / life;
+            Vec3 at = base.add((r.nextDouble() - 0.5D) * 0.25D, 0.05D + 0.55D * t, (r.nextDouble() - 0.5D) * 0.25D);
+            VfxDraw.billboard(puff, s.pose(), at, s.camera(), 0.12D + 0.3D * t, 0.13F * strength * (float) Math.sin(t * Math.PI),
+                              0.69F, 0.73F, 0.8F);
         }
         s.buffers().endBatch(MurimRenderTypes.impactCore());
     }
 
+
     // ------------------------------------------ второй ранг: малый небесный круг
 
     /**
-     * Малый небесный круг (Absolute Regression гл. 119): ци идёт вниз к копчику, вверх по
-     * позвоночнику, через точку Байхуэй на макушке и возвращается к губам; «самое опасное —
-     * пробить макушку». Myst гл. 165: точки вздуваются и трещат, идёт пар, закрытые меридианы
-     * раскрываются разом.
+     * Малый небесный круг (Absolute Regression гл. 119; Myst гл. 165) — по разбору codex 01.10.
+     * 0–39 сбор в даньтяне и кольцо на поясе; 40–99 спираль вокруг корпуса и импульс вверх
+     * по позвоночнику; 100–118 прорыв макушки — звезда и радиальные лучи; 118–140 спуск по
+     * передней линии, точки раскрываются, ветвление по рукам и ногам; 140–209 устойчивый
+     * круг и дуга за головой с бегущим ярким участком; 210–240 угасание.
      */
     private static void circuitScene(Scene s, float age) {
-        drawMist(s, age, Mth.clamp(age / 40.0F, 0.0F, 1.0F), GOLD);
         AbstractClientPlayer p = s.player();
         Vec3 chest = BoneAnchorLayer.position(p, BoneAnchorLayer.Bone.CHEST);
         Vec3 head = BoneAnchorLayer.position(p, BoneAnchorLayer.Bone.HEAD);
         if (chest == null || head == null) {
             return;
         }
-        Vec3 back = s.facing().scale(-0.15D);
-        Vec3 front = s.facing().scale(0.17D);
+        drawMist(s, age, Mth.clamp(age / 40.0F, 0.0F, 1.0F) * 0.7F, GOLD);
+        Vec3 side = s.facing().cross(new Vec3(0.0D, 1.0D, 0.0D)).normalize();
+        Vec3 up = new Vec3(0.0D, 1.0D, 0.0D);
+        Vec3 back = s.facing().scale(-0.15D), front = s.facing().scale(0.17D);
         Vec3 core = s.core();
         Vec3 sacrum = new Vec3(s.axis().x, s.axis().y - 0.2D, s.axis().z).add(back);
-        Vec3 backChest = chest.add(back);
-        Vec3 neck = chest.lerp(head, 0.35D).add(back);
-        Vec3 crown = head.add(0.0D, 0.3D, 0.0D);
+        Vec3 crown = head.add(0.0D, 0.32D, 0.0D);
         Vec3 brow = head.add(s.facing().scale(0.27D)).add(0.0D, 0.06D, 0.0D);
         Vec3 throat = chest.lerp(head, 0.3D).add(front);
         Vec3 chestFront = chest.add(front);
-        Vec3[] up = {core, sacrum, backChest, neck, crown};
-        Vec3[] down = {crown, brow, throat, chestFront, core};
+        Vec3[] upPath = {core, sacrum, chest.add(back), chest.lerp(head, 0.35D).add(back), head.add(back).add(0.0D, 0.1D, 0.0D), crown};
+        Vec3[] downPath = {crown, brow, throat, chestFront, core};
+        float end = 1.0F - Mth.clamp((age - 210.0F) / 30.0F, 0.0F, 1.0F);
+        float ascent = Mth.clamp((age - 40.0F) / 55.0F, 0.0F, 1.0F);
+        float descent = Mth.clamp((age - 118.0F) / 22.0F, 0.0F, 1.0F);
+        float steady = Mth.clamp((age - 140.0F) / 20.0F, 0.0F, 1.0F);
+        VfxColour gl = hex(0xFFC13A), gc = hex(0xFFF1B0);
 
-        float gather = Mth.clamp(age / 30.0F, 0.0F, 1.0F);
-        float ascent = Mth.clamp((age - 30.0F) / 90.0F, 0.0F, 1.0F);
-        float descent = Mth.clamp((age - 135.0F) / 60.0F, 0.0F, 1.0F);
-        float loop = Mth.clamp((age - 195.0F) / 15.0F, 0.0F, 1.0F);
+        // Каналы по телу: ветвление после прорыва — грудь, руки, ноги.
+        float branch = Mth.clamp((age - 112.0F) / 38.0F, 0.0F, 1.0F);
+        drawVeins(s, branch, (0.2F + 0.5F * branch) * end, 0.006D + 0.01D * branch, GOLD, GOLD_CORE);
 
-        drawVeins(s, gather, (0.15F + 0.6F * loop) * gather, 0.005D + 0.012D * loop, GOLD, GOLD_CORE);
-        // Тёмная подложка: путь по центру тела ложится на белую рубашку и лицо, и аддитивное
-        // золото на белом пропадало (кадры стенда 01.10). Тень под линией даёт контраст.
-        VertexConsumer under = s.buffers().getBuffer(MurimRenderTypes.impurity());
-        shadowTrail(under, s, up, ascent);
-        shadowTrail(under, s, down, descent);
-        if (ascent > 0.0F && ascent < 1.0F) {
-            VfxDraw.billboard(under, s.pose(), along(up, ascent), s.camera(), 0.2D, 0.55F, 0.05F, 0.03F, 0.02F);
+        VertexConsumer c = s.buffers().getBuffer(MurimRenderTypes.ribbon());
+        // Кольцо на поясе (16–59) и спираль вокруг корпуса (40–99).
+        float ring = Mth.clamp((age - 16.0F) / 43.0F, 0.0F, 1.0F) * (1.0F - 0.6F * steady) * end;
+        smoothLine(c, s, loop(core, side, s.facing(), 0.24D, 0.24D, age * 0.18D, Math.PI * 2.0D * ring, 36), 1.0F,
+                   0.06D, 0.016D, 0.8F * Math.min(1.0F, ring * 3.0F), gl, gc, false);
+        float spiral = Mth.clamp((age - 40.0F) / 59.0F, 0.0F, 1.0F) * (1.0F - Mth.clamp((age - 110.0F) / 30.0F, 0.0F, 1.0F));
+        if (spiral > 0.0F) {
+            Vec3[] sp = new Vec3[49];
+            for (int i = 0; i <= 48; i++) {
+                double u = i / 48.0D;
+                double a = age * 0.17D + u * Math.PI * 2.0D * 1.75D;
+                sp[i] = core.add(side.scale(Math.cos(a) * 0.3D)).add(s.facing().scale(Math.sin(a) * 0.3D)).add(0.0D, 0.75D * u, 0.0D);
+            }
+            smoothLine(c, s, sp, spiral, 0.06D, 0.016D, 0.75F, gl, gc, true);
         }
-        if (descent > 0.0F && descent < 1.0F) {
-            VfxDraw.billboard(under, s.pose(), along(down, descent), s.camera(), 0.2D, 0.55F, 0.05F, 0.03F, 0.02F);
-        }
-        s.buffers().endBatch(MurimRenderTypes.impurity());
-        VertexConsumer line = s.buffers().getBuffer(MurimRenderTypes.bodyGlow());
-        trail(line, s, up, ascent, 1.0F);
-        trail(line, s, down, descent, 1.0F);
-        s.buffers().endBatch(MurimRenderTypes.bodyGlow());
+        // Канал вверх по позвоночнику и вниз по передней линии.
+        smoothLine(c, s, upPath, ascent, 0.05D, 0.016D, end, gl, gc, false);
+        smoothLine(c, s, upPath, ascent, 0.012D, 0.006D, end, gc, hex(0xFFFFFF), false);
+        smoothLine(c, s, downPath, descent, 0.05D, 0.016D, end, gl, gc, false);
+        // Дуга-эллипс за головой и плечами (140–209) с бегущим ярким участком.
+        Vec3 ellC = chest.lerp(head, 0.6D).add(s.facing().scale(-0.3D));
+        float ell = Mth.clamp((age - 140.0F) / 20.0F, 0.0F, 1.0F) * end;
+        smoothLine(c, s, loop(ellC, side, up, 0.42D, 0.62D, 0.0D, Math.PI * 2.0D, 48), ell, 0.05D, 0.016D, 0.7F * ell, gl, hex(0xFFC744), false);
+        s.buffers().endBatch(MurimRenderTypes.ribbon());
 
         VertexConsumer glow = s.buffers().getBuffer(MurimRenderTypes.impactCore());
+        // Бегущие импульсы по каналу: светлые узлы с шагом ~0,08 блока за фронтом.
+        for (int k = 0; k < 14; k++) {
+            float u = ascent - k * 0.035F;
+            if (u > 0.0F && ascent < 1.0F) {
+                Vec3 at = along(upPath, u);
+                float a = 1.0F - k / 14.0F;
+                VfxDraw.billboard(glow, s.pose(), at, s.camera(), 0.035D, 0.9F * a, gc.red(), gc.green(), gc.blue());
+            }
+        }
         if (ascent > 0.0F && ascent < 1.0F) {
-            bead(glow, s, along(up, ascent));
+            bead(glow, s, along(upPath, ascent));
         }
         if (descent > 0.0F && descent < 1.0F) {
-            bead(glow, s, along(down, descent));
+            bead(glow, s, along(downPath, descent));
         }
-        // Макушка пробита: звезда-вспышка с лучами.
-        float burst = Mth.clamp(1.0F - Math.abs(age - 125.0F) / 12.0F, 0.0F, 1.0F);
-        if (burst > 0.0F) {
-            star(glow, s, crown, 0.5D * burst + 0.1D, burst);
-            VfxDraw.billboard(glow, s.pose(), crown, s.camera(), 0.5D * burst, burst, 1.0F, 0.97F, 0.85F);
+        if (ell > 0.0F) {
+            Vec3[] e = loop(ellC, side, up, 0.42D, 0.62D, 0.0D, Math.PI * 2.0D, 48);
+            Vec3 run = along(e, (age % 54.0F) / 54.0F);
+            VfxDraw.billboard(glow, s.pose(), run, s.camera(), 0.1D, 0.9F * ell, 1.0F, 0.95F, 0.75F);
         }
-        // Точки по передней линии раскрываются по мере прохода бусины.
-        Vec3[] points = {brow, throat, chestFront, core};
-        for (int i = 0; i < points.length; i++) {
-            float opened = (age - (135.0F + 60.0F * (i + 1) / 4.0F)) ;
-            if (opened >= 0.0F) {
-                float flash = (float) Math.exp(-opened / 6.0F);
-                star(glow, s, points[i], 0.06D + 0.18D * flash, 0.5F + 0.5F * flash);
+        // Звёзды на узлах: живот, грудь, лоб, макушка.
+        Vec3[] nodes = {core, chestFront, brow, crown};
+        float[] opens = {20.0F, 126.0F, 120.0F, 100.0F};
+        for (int i = 0; i < nodes.length; i++) {
+            float t = age - opens[i];
+            if (t >= 0.0F) {
+                float flash = (float) Math.exp(-t / 8.0F);
+                star(glow, s, nodes[i], 0.07D + 0.1D * flash, (0.55F + 0.45F * flash) * end);
             }
+        }
+        // Прорыв макушки 100–118: звезда растёт и радиальные лучи.
+        float cb = age >= 100.0F && age <= 118.0F ? (age < 105.0F ? (age - 100.0F) / 5.0F : 1.0F - (age - 105.0F) / 13.0F) : 0.0F;
+        if (cb > 0.0F) {
+            star(glow, s, crown, 0.08D + 0.27D * cb, cb);
         }
         s.buffers().endBatch(MurimRenderTypes.impactCore());
-        // Пар из раскрытых точек.
-        VertexConsumer puff = s.buffers().getBuffer(MurimRenderTypes.impurity());
-        for (int i = 0; i < points.length; i++) {
-            float opened = age - (135.0F + 60.0F * (i + 1) / 4.0F);
-            if (opened >= 0.0F && opened < 40.0F) {
-                float t = opened / 40.0F;
-                VfxDraw.billboard(puff, s.pose(), points[i].add(s.facing().scale(0.1D)).add(0.0D, 0.3D * t, 0.0D),
-                                  s.camera(), 0.08D + 0.2D * t, 0.3F * (1.0F - t), 0.85F, 0.86F, 0.88F);
+        if (cb > 0.0F) {
+            VertexConsumer rays = s.buffers().getBuffer(MurimRenderTypes.ribbon());
+            for (int k = 0; k < 16; k++) {
+                java.util.Random r = rng(311, k);
+                double a = r.nextDouble() * Math.PI * 2.0D;
+                Vec3 dir = side.scale(Math.cos(a)).add(up.scale(Math.sin(a) * 0.9D + 0.1D)).normalize();
+                Vec3 to = crown.add(dir.scale(0.15D + 0.3D * r.nextDouble() + 0.2D * (1.0F - cb)));
+                smoothLine(rays, s, new Vec3[] {crown, crown.lerp(to, 0.5D), to}, 1.0F, 0.03D, 0.01D, cb, hex(0xFFAA28), hex(0xFFFBE5), true);
             }
+            s.buffers().endBatch(MurimRenderTypes.ribbon());
         }
-        s.buffers().endBatch(MurimRenderTypes.impurity());
-        // Круг замкнут: весь путь горит ровно.
-        if (loop > 0.0F) {
-            VertexConsumer ring = s.buffers().getBuffer(MurimRenderTypes.bodyGlow());
-            trail(ring, s, up, 1.0F, 0.6F * loop + 0.4F);
-            trail(ring, s, down, 1.0F, 0.6F * loop + 0.4F);
-            s.buffers().endBatch(MurimRenderTypes.bodyGlow());
-        }
+        // Квадратные золотые искры: мало в начале, больше на прорыве и в финале.
+        float sparkK = 0.35F + 0.65F * Mth.clamp((age - 95.0F) / 20.0F, 0.0F, 1.0F);
+        outwardSparks(s, age, sparkK * end, 24, 0.6D, hex(0xFFD36B), hex(0xFFB43B), 313);
     }
+
 
     private static void shadowTrail(VertexConsumer c, Scene s, Vec3[] path, float upTo) {
         if (upTo <= 0.0F) {
@@ -755,54 +874,124 @@ public final class MeditationVfxRenderer {
     // ------------------------------------------ первый ранг: ци держит форму
 
     /**
-     * Ци держит форму (вики Myst, First Rate: «начинают придавать ци форму»; Хуашань гл. 112:
-     * меч Хуашань «заставляет сливу цвести»). Аура-туман, затем из-за спины вырастает
-     * светящееся сливовое дерево, лепестки кружат; в конце дерево складывается в тело.
+     * Ци держит форму (вики Myst, First Rate) — абстрактная фигура ци, как понравилось автору
+     * («непонятно что, дерево, просто прикольно»), но по урокам Пика: гладкие связные ветви
+     * растут от основания к концам, голубая спиральная аура в начале, пространственная орбита,
+     * свободные лепестки, в конце — схождение лентами в грудь с пиком 202–210.
      */
     private static void formScene(Scene s, float age) {
-        drawMist(s, age, Mth.clamp(age / 40.0F, 0.0F, 1.0F), PINK);
-        float mist = Mth.clamp(age / 50.0F, 0.0F, 1.0F) * (1.0F - Mth.clamp((age - 120.0F) / 60.0F, 0.0F, 1.0F) * 0.6F);
-        float grow = Mth.clamp((age - 55.0F) / 70.0F, 0.0F, 1.0F);
-        float fold = Mth.clamp((age - 195.0F) / 35.0F, 0.0F, 1.0F);
+        drawMist(s, age, Mth.clamp(age / 40.0F, 0.0F, 1.0F) * 0.7F, PINK);
+        Vec3 side = s.facing().cross(new Vec3(0.0D, 1.0D, 0.0D)).normalize();
+        Vec3 chest = BoneAnchorLayer.position(s.player(), BoneAnchorLayer.Bone.CHEST);
+        Vec3 heart = chest == null ? s.core() : chest.add(s.facing().scale(0.15D));
+        double feet = ground(s);
+        // Голубая спиральная аура: 0–45 раскрытие, 45–170 фон, 190–230 снова у ног и плеч.
+        float aura = Mth.clamp(age / 45.0F, 0.0F, 1.0F) * (age < 170.0F ? 1.0F - 0.65F * Mth.clamp((age - 45.0F) / 40.0F, 0.0F, 1.0F) : 0.35F + 0.5F * Mth.clamp((age - 190.0F) / 20.0F, 0.0F, 1.0F));
+        VertexConsumer c = s.buffers().getBuffer(MurimRenderTypes.ribbon());
+        for (int k = 0; k < 3; k++) {
+            Vec3[] sp = new Vec3[49];
+            for (int i = 0; i <= 48; i++) {
+                double u = i / 48.0D;
+                double a = age * (Math.PI * 2.0D / (55.0D + 10.0D * k)) + k * 2.1D + u * Math.PI * 2.2D;
+                double rad = 0.65D + 0.3D * Math.sin(u * Math.PI + k);
+                sp[i] = new Vec3(s.axis().x + Math.cos(a) * rad, feet + 2.0D * u, s.axis().z + Math.sin(a) * rad);
+            }
+            smoothLine(c, s, sp, 1.0F, 0.16D, 0.03D, 0.35F * aura, hex(0x83CFFF), hex(0xC2F0FF), true);
+        }
+        // Абстрактное дерево ци: растёт 40–100, держится до 170, 170–205 сходится в грудь.
+        float grow = Mth.clamp((age - 40.0F) / 60.0F, 0.0F, 1.0F);
+        float fold = Mth.clamp((age - 170.0F) / 35.0F, 0.0F, 1.0F);
+        List<Vec3> tips = new ArrayList<>();
+        if (grow > 0.0F) {
+            Vec3 root = new Vec3(s.axis().x, feet + 0.15D, s.axis().z).add(s.facing().scale(-0.32D));
+            treeBranch(c, s, root, new Vec3(0.0D, 1.0D, 0.0D).add(s.facing().scale(-0.08D)).normalize(), 0.9D, 0, grow, fold, heart, tips, side, 1L);
+        }
+        // Орбита 105–125 замыкается, вращается; наклон ~12°.
+        float orb = Mth.clamp((age - 105.0F) / 20.0F, 0.0F, 1.0F) * (1.0F - fold);
+        Vec3 tilt = new Vec3(0.0D, Math.sin(Math.toRadians(12.0D)), 0.0D).add(s.facing().scale(Math.cos(Math.toRadians(12.0D)))).normalize();
+        Vec3 orbC = new Vec3(s.axis().x, s.core().y + 0.1D, s.axis().z);
+        Vec3[] ring = loop(orbC, side, tilt, 1.45D, 1.45D, age * (Math.PI * 2.0D / 75.0D), Math.PI * 2.0D, 64);
+        smoothLine(c, s, ring, orb, 0.07D, 0.02D, 0.7F * orb, hex(0xFFADD9), hex(0xFFE0F3), false);
+        // Схождение 170–205: ленты от кончиков кроны дугой в грудь.
+        if (fold > 0.0F && fold < 1.0F) {
+            for (int k = 0; k < Math.min(8, tips.size()); k++) {
+                Vec3 t0 = tips.get(k * Math.max(1, tips.size() / 8));
+                Vec3 mid = t0.lerp(heart, 0.5D).add(0.0D, 0.4D, 0.0D);
+                Vec3[] arc = {t0, t0.lerp(mid, 0.5D), mid, mid.lerp(heart, 0.5D), heart};
+                smoothLine(c, s, arc, fold * 1.2F, 0.08D, 0.025D, 0.8F * (1.0F - fold), hex(0xFFB1DD), hex(0xFFF0FA), true);
+            }
+        }
+        s.buffers().endBatch(MurimRenderTypes.ribbon());
         VertexConsumer glow = s.buffers().getBuffer(MurimRenderTypes.impactCore());
-        // Туман-аура кольцом вокруг тела.
-        for (int i = 0; i < 14; i++) {
-            double a = i / 14.0D * Math.PI * 2.0D + age * 0.01D;
-            Vec3 at = s.axis().add(Math.cos(a) * 0.75D, -0.2D + 0.5D * Math.sin(a * 2.0D + age * 0.03D) * 0.3D + 0.3D, Math.sin(a) * 0.75D);
-            VfxDraw.billboard(glow, s.pose(), at, s.camera(), 0.45D, 0.12F * mist, 0.62F, 0.78F, 1.0F);
+        // Свечение на концах ветвей — абстрактные розовые огни, не цветы.
+        float bloom = Mth.clamp((grow - 0.6F) / 0.4F, 0.0F, 1.0F) * (1.0F - fold);
+        for (Vec3 tip : tips) {
+            VfxDraw.billboard(glow, s.pose(), tip, s.camera(), 0.14D * bloom, 0.75F * bloom, PINK.red(), PINK.green(), PINK.blue());
+            VfxDraw.billboard(glow, s.pose(), tip, s.camera(), 0.045D * bloom, bloom, 1.0F, 0.95F, 0.97F);
+        }
+        // Огни на орбите.
+        for (int k = 0; k < 16 && orb > 0.0F; k++) {
+            Vec3 at = ring[(k * 4) % ring.length];
+            VfxDraw.billboard(glow, s.pose(), at, s.camera(), 0.1D, 0.7F * orb, PINK.red(), PINK.green(), PINK.blue());
+        }
+        // Свободные лепестки 85–210: медленно вокруг, к концу часть ускоряется к груди.
+        float petals = Mth.clamp((age - 85.0F) / 25.0F, 0.0F, 1.0F) * (1.0F - Mth.clamp((age - 215.0F) / 25.0F, 0.0F, 1.0F));
+        for (int i = 0; i < 34 && petals > 0.0F; i++) {
+            java.util.Random r = rng(331, i);
+            double a = r.nextDouble() * Math.PI * 2.0D + age * (0.01D + 0.015D * r.nextDouble());
+            double rad = 0.8D + r.nextDouble() * 1.2D;
+            Vec3 at = new Vec3(s.axis().x + Math.cos(a) * rad, feet + 0.3D + r.nextDouble() * 2.6D, s.axis().z + Math.sin(a) * rad);
+            if (i % 2 == 0) {
+                at = at.lerp(heart, fold);
+            }
+            VfxColour col = r.nextBoolean() ? hex(0xFF8FC8) : hex(0xFFC0E1);
+            VfxDraw.billboard(glow, s.pose(), at, s.camera(), i < 5 ? 0.18D : 0.08D, 0.8F * petals, col.red(), col.green(), col.blue());
+        }
+        // Пик схождения в груди 202–210.
+        float hp = Mth.clamp(1.0F - Math.abs(age - 206.0F) / 12.0F, 0.0F, 1.0F);
+        if (hp > 0.0F) {
+            VfxDraw.billboard(glow, s.pose(), heart, s.camera(), 0.42D * hp, 0.7F * hp, 1.0F, 0.69F, 0.87F);
+            VfxDraw.billboard(glow, s.pose(), heart, s.camera(), 0.13D, hp, 1.0F, 0.94F, 0.98F);
         }
         s.buffers().endBatch(MurimRenderTypes.impactCore());
-        if (grow > 0.0F) {
-            // Корень за спиной на уровне груди: ствол выходит над плечами, крона — над головой
-            // и по бокам (на первых кадрах дерево пряталось за телом и торчало веером над головой).
-            Vec3 root = s.axis().add(s.facing().scale(-0.4D)).add(0.0D, 0.25D, 0.0D);
-            VertexConsumer branch = s.buffers().getBuffer(MurimRenderTypes.impactCore());
-            List<Vec3> tips = new ArrayList<>();
-            growBranch(branch, s, root, new Vec3(0.0D, 1.0D, 0.0D).add(s.facing().scale(-0.1D)).normalize(),
-                       1.0D, 0, grow, fold, tips, 1L);
-            s.buffers().endBatch(MurimRenderTypes.impactCore());
-            float bloom = Mth.clamp((grow - 0.7F) / 0.3F, 0.0F, 1.0F) * (1.0F - fold);
-            VertexConsumer flower = s.buffers().getBuffer(MurimRenderTypes.impactCore());
-            for (Vec3 tip : tips) {
-                Vec3 at = tip.lerp(s.core(), fold);
-                VfxDraw.billboard(flower, s.pose(), at, s.camera(), 0.17D * bloom, 0.85F * bloom, PINK.red(), PINK.green(), PINK.blue());
-                VfxDraw.billboard(flower, s.pose(), at, s.camera(), 0.05D * bloom, bloom, 1.0F, 0.95F, 0.97F);
-            }
-            s.buffers().endBatch(MurimRenderTypes.impactCore());
+    }
+
+    /** Ветвь абстрактного дерева ци: гладкая, растёт от основания, дети — после родителя. */
+    private static void treeBranch(VertexConsumer c, Scene s, Vec3 from, Vec3 dir, double length, int depth, float grow,
+                                   float fold, Vec3 heart, List<Vec3> tips, Vec3 side, long seed) {
+        float reveal = Mth.clamp(grow * 4.5F - depth, 0.0F, 1.0F);
+        if (reveal <= 0.0F) {
+            return;
         }
-        // Лепестки кружат вокруг тела, к концу стягиваются в центр.
-        float petals = Mth.clamp((age - 110.0F) / 30.0F, 0.0F, 1.0F);
-        if (petals > 0.0F) {
-            VertexConsumer pet = s.buffers().getBuffer(MurimRenderTypes.impactCore());
-            for (int i = 0; i < 28; i++) {
-                double a = i / 28.0D * Math.PI * 2.0D + age * 0.05D;
-                double rad = (1.1D + 0.15D * Math.sin(i * 1.7D)) * (1.0D - fold);
-                Vec3 at = s.axis().add(Math.cos(a) * rad, 0.1D + 0.25D * Math.sin(a * 3.0D + i), Math.sin(a) * rad);
-                VfxDraw.billboard(pet, s.pose(), at, s.camera(), 0.09D, 0.85F * petals, PINK.red(), PINK.green(), PINK.blue());
+        java.util.Random r = rng(337, seed * 13L + depth);
+        Vec3 bend = side.scale((r.nextDouble() - 0.5D) * 0.25D * length);
+        Vec3 to = from.add(dir.scale(length));
+        Vec3 mid = from.lerp(to, 0.5D).add(bend);
+        Vec3[] pts = {from, from.lerp(mid, 0.5D), mid, mid.lerp(to, 0.5D), to};
+        if (fold > 0.0F) {
+            for (int i = 0; i < pts.length; i++) {
+                pts[i] = pts[i].lerp(heart, fold * fold);
             }
-            s.buffers().endBatch(MurimRenderTypes.impactCore());
+        }
+        double w = depth == 0 ? 0.1D : depth == 1 ? 0.055D : depth == 2 ? 0.032D : 0.018D;
+        float bright = depth == 0 ? 1.0F : 0.75F;
+        smoothLine(c, s, pts, reveal, w * 3.0D, w, bright * (1.0F - 0.5F * fold), hex(0xFFB0DF), hex(0xFFF1FC), depth >= 2);
+        if (reveal < 1.0F) {
+            return;
+        }
+        if (depth >= 3) {
+            tips.add(pts[4]);
+            return;
+        }
+        int kids = depth == 0 ? 3 : 3;
+        for (int k = 0; k < kids; k++) {
+            // Крона шире, чем выше: ветви в стороны, чтобы дерево умещалось в кадр крупного плана.
+            double spread = (k - (kids - 1) / 2.0D) * (depth == 0 ? 1.9D : 1.25D) + (r.nextDouble() - 0.5D) * 0.4D;
+            Vec3 nd = dir.add(side.scale(spread)).add(0.0D, depth == 0 ? 0.0D : 0.15D, 0.0D).add(s.facing().scale(-0.06D)).normalize();
+            treeBranch(c, s, to, nd, length * (0.78D + r.nextDouble() * 0.12D), depth + 1, grow, fold, heart, tips, side, seed * 31L + k);
         }
     }
+
 
     /** Ветвь дерева ци: растёт по уровням, на концах — цветы. */
     private static void growBranch(VertexConsumer c, Scene s, Vec3 from, Vec3 dir, double length, int depth,
@@ -1396,6 +1585,15 @@ public final class MeditationVfxRenderer {
         }
         s.buffers().endBatch(MurimRenderTypes.impactCore());
     }
+    /** Цвета финального взрыва по рангу: третий — голубые, второй — золото, первый — розовые. */
+    private static VfxColour[] burstPalette(int rank) {
+        return switch (rank) {
+            case 2 -> new VfxColour[] {hex(0xFFD36B), hex(0xFFB43B), hex(0xFFF1B0), hex(0xFFAA28)};
+            case 3 -> new VfxColour[] {hex(0xFF8FC8), hex(0xFFC0E1), hex(0xFFADD9), hex(0x83CFFF)};
+            default -> new VfxColour[] {hex(0xA0EAFF), hex(0x448FFF), hex(0xD8FAFF), hex(0x56CFFF)};
+        };
+    }
+
     /** Радуга референса: розовый → красно-оранжевый → золотой → зелёный → бирюзовый → циан. */
     private static VfxColour rainbow(double t) {
         int[] hex = {0xFF5FB7, 0xFF5A2E, 0xFFD35A, 0x34F36F, 0x40F0C8, 0x55EAFF};
@@ -1846,9 +2044,20 @@ public final class MeditationVfxRenderer {
         float fade = (1.0F - k) * (1.0F - k);
         VertexConsumer glow = s.buffers().getBuffer(MurimRenderTypes.impactCore());
         boolean peakRank = ClientMeditationState.rankUpRank() == io.github.verycooltimo.murim.cultivation.Realm.PEAK;
-        if (age < 25.0F && !peakRank) {
-            BillboardBurst.outward(glow, s.pose(), s.core(), s.camera(), 64, age, 2.6D,
-                                   1.0F - age / 25.0F, AURA, CORE);
+        // Взрыв в палитре сцены (урок Пика): цветные частицы разлетаются во все стороны.
+        if (!peakRank && age < 36.0F) {
+            float life = 1.0F - age / 36.0F;
+            VfxColour[] cols = burstPalette(ClientMeditationState.rankUpRank());
+            for (int i = 0; i < 110; i++) {
+                java.util.Random r = rng(283, i);
+                Vec3 dir = new Vec3(r.nextDouble() - 0.5D, r.nextDouble() * 0.9D - 0.2D, r.nextDouble() - 0.5D).normalize();
+                double dist = (0.3D + r.nextDouble() * 2.8D) * (1.0D - Math.pow(1.0D - Math.min(1.0D, age / 22.0D), 3.0D));
+                Vec3 at = s.core().add(dir.scale(dist)).add(0.0D, -0.35D * Math.pow(age / 36.0D, 2.0D), 0.0D);
+                VfxColour col = cols[r.nextInt(cols.length)];
+                double size = r.nextFloat() < 0.8F ? 0.045D : 0.1D;
+                VfxDraw.billboard(glow, s.pose(), at, s.camera(), size, 0.85F * life, col.red(), col.green(), col.blue());
+                VfxDraw.billboard(glow, s.pose(), at, s.camera(), size * 0.3D, life, 1.0F, 1.0F, 1.0F);
+            }
         }
         // Пик: взрыв теми же радужными частицами, что и в сцене (замечание автора 01.10).
         if (peakRank && age < 40.0F) {
@@ -1866,8 +2075,8 @@ public final class MeditationVfxRenderer {
         }
         // Пересвет силуэта в первые тики — пик выброса.
         float peak = Mth.clamp(1.0F - age / 8.0F, 0.0F, 1.0F);
-        VfxDraw.billboard(glow, s.pose(), s.core().add(0.0D, 0.3D, 0.0D), s.camera(), 1.1D * peak + 0.01D,
-                          0.9F * peak, 0.85F, 0.95F, 1.0F);
+        VfxDraw.billboard(glow, s.pose(), s.core().add(0.0D, 0.3D, 0.0D), s.camera(), 0.8D * peak + 0.01D,
+                          0.55F * peak, 0.85F, 0.95F, 1.0F);
         CoreGlow.draw(glow, s.pose(), s.core(), s.camera(), age, 0.35D * fade + 0.06D, fade, AURA, CORE);
         // Столб: от ног вверх, быстро гаснет.
         AbstractClientPlayer p = s.player();

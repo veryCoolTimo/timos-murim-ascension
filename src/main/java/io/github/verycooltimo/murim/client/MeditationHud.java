@@ -447,11 +447,16 @@ public final class MeditationHud {
         if (ClientConfig.SCREEN_FLASHES.get()) {
             float flash = age < 2.0F ? age / 2.0F : Mth.clamp(1.0F - (age - 2.0F) / 8.0F, 0.0F, 1.0F);
             if (flash > 0.0F) {
-                graphics.fill(0, 0, w, h, ((int) (flash * flash * 0xB0) << 24) | 0xE8F6FF);
+                // Вспышка слабее и в цвете ранга: серо-белая заливка на 0xB0 съедала фигуру
+                // на кадре выхода ауры (второе мнение codex 01.10).
+                int tint = switch (ClientMeditationState.rankUpRank()) {
+                    case 2 -> 0xFFE6A8; case 3 -> 0xFFD8EE; case 4 -> 0xF2F0FF; default -> 0xD8F4FF; };
+                graphics.fill(0, 0, w, h, ((int) (flash * flash * 0x58) << 24) | tint);
             }
         }
         // Титр — после пика выброса, не вместе с ним (второе мнение по кадрам 01.10).
-        float title = Mth.clamp((age - 18.0F) / 10.0F, 0.0F, 1.0F) * Mth.clamp((total - age) / 15.0F, 0.0F, 1.0F);
+        // Титр — после кадра затухающей ауры, а не сразу за вспышкой.
+        float title = Mth.clamp((age - 26.0F) / 10.0F, 0.0F, 1.0F) * Mth.clamp((total - age) / 15.0F, 0.0F, 1.0F);
         if (title > 0.02F) {
             int alpha = Math.max(4, (int) (title * 255)) << 24;
             Font font = minecraft.font;
