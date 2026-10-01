@@ -944,7 +944,7 @@ public final class MeditationVfxRenderer {
         if (age < 28.0F || close >= 1.0F) {
             return;
         }
-        VertexConsumer c = s.buffers().getBuffer(MurimRenderTypes.impactCore());
+        VertexConsumer c = s.buffers().getBuffer(MurimRenderTypes.ribbon());
         for (Crack cr : net) {
             float grow = Mth.clamp((age - cr.start()) / 14.0F, 0.0F, 1.0F);
             if (grow <= 0.0F) {
@@ -961,7 +961,7 @@ public final class MeditationVfxRenderer {
                 VfxDraw.segment(c, s.pose(), a, b, s.camera(), core, alpha, SEAM_CORE.red(), SEAM_CORE.green(), SEAM_CORE.blue());
             }
         }
-        s.buffers().endBatch(MurimRenderTypes.impactCore());
+        s.buffers().endBatch(MurimRenderTypes.ribbon());
     }
 
     /**
