@@ -182,6 +182,10 @@ public final class DevCaptureHandler {
             // Снимать можно не только технику, но и сцену создания даньтяня: у неё те же
             // требования к проверке — привязка к телу, фазы, отсутствие пересвета.
             String subject = System.getProperty(TECHNIQUE_PROPERTY, "ceremonial_draw");
+            if (FOUNDATION.equals(subject)) {
+                foundationTicks = FOUNDATION_CAPTURE_TICKS;
+                return;
+            }
             if (AURA.equals(subject)) {
                 auraTicks = AURA_CAPTURE_TICKS;
                 return;
@@ -203,6 +207,26 @@ public final class DevCaptureHandler {
 
         if (meditationTicks > 0) {
             tickMeditation(minecraft);
+        }
+        if (foundationTicks > 0) {
+            int t = FOUNDATION_CAPTURE_TICKS - foundationTicks--;
+            // Удар формой каждые 14 тиков — чуть дольше перезарядки меча: цепочка идёт по
+            // формам, как при размеренных кликах. Цель — ближайший манекен в досягаемости.
+            if (t % 14 == 2 && minecraft.player != null && minecraft.gameMode != null) {
+                FoundationClient.swing(minecraft, true);
+                net.minecraft.world.entity.LivingEntity target = minecraft.level.getEntitiesOfClass(
+                                net.minecraft.world.entity.LivingEntity.class, minecraft.player.getBoundingBox().inflate(3.5D),
+                                e -> e != minecraft.player && !(e instanceof net.minecraft.world.entity.decoration.ArmorStand))
+                        .stream().min(java.util.Comparator.comparingDouble(minecraft.player::distanceToSqr)).orElse(null);
+                if (target != null) {
+                    minecraft.gameMode.attack(minecraft.player, target);
+                }
+                minecraft.player.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
+            }
+            if (t % 2 == 0) {
+                grab(minecraft, String.format("murim_%s_%03d.png", anglePrefix(), frameIndex));
+                frameIndex++;
+            }
         }
         if (auraTicks > 0) {
             int t = AURA_CAPTURE_TICKS - auraTicks--;
@@ -337,6 +361,11 @@ public final class DevCaptureHandler {
             MurimMod.LOGGER.warn("Телеметрия не пишется: {}", exception.getMessage());
         }
     }
+
+    /** Основа меча: удары ЛКМ формами по очереди, кадр каждые два тика. */
+    private static final String FOUNDATION = "foundation";
+    private static final int FOUNDATION_CAPTURE_TICKS = 150;
+    private static int foundationTicks;
 
     /** Давление ауры: игрок стоит перед противником, кадр каждые три тика. */
     private static final String AURA = "aura";

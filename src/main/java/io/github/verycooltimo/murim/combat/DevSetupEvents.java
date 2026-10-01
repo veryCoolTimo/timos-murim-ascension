@@ -202,6 +202,14 @@ public final class DevSetupEvents {
 
         // Стенд применяет техники — значит, должен их знать (docs/design/19 §3г).
         learnAll(event.getEntity());
+        // Съёмка основы меча: Шесть Равновесий в ячейке основы, удары — обычной атакой.
+        if ("foundation".equals(System.getProperty("murim.capture.technique"))
+                && event.getEntity() instanceof net.minecraft.server.level.ServerPlayer fp) {
+            fp.setData(io.github.verycooltimo.murim.registry.ModAttachments.LOADOUT,
+                    fp.getData(io.github.verycooltimo.murim.registry.ModAttachments.LOADOUT).withFoundation(java.util.Optional.of(
+                            net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(io.github.verycooltimo.murim.MurimMod.MODID, "six_harmonies"))));
+            io.github.verycooltimo.murim.mastery.LoadoutService.sync(fp);
+        }
         // Съёмка интерфейсов техник: шесть открытых слотов, пять техник, часть освоена наполовину.
         if ("ui".equals(System.getProperty("murim.capture.technique"))
                 && event.getEntity() instanceof net.minecraft.server.level.ServerPlayer uiPlayer) {

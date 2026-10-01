@@ -13,7 +13,7 @@ import java.util.Optional;
 /** Пакеты раскладки техник по слотам (решение автора 01.10). */
 public final class LoadoutPayloads {
 
-    /** Клиент → сервер: положить технику в слот или очистить его. Проверяет сервер. */
+    /** Клиент → сервер: положить технику в слот или очистить его; слот −1 — ячейка основы меча. */
     public record SetSlot(int slot, Optional<ResourceLocation> technique) implements CustomPacketPayload {
         public static final Type<SetSlot> TYPE = new Type<>(
                 ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "loadout_set"));
@@ -46,13 +46,15 @@ public final class LoadoutPayloads {
      *
      * @param open сколько слотов доступно сейчас (растёт с прогрессией)
      */
-    public record Sync(List<Optional<ResourceLocation>> slots, int active, int open) implements CustomPacketPayload {
+    public record Sync(List<Optional<ResourceLocation>> slots, int active, int open,
+                       Optional<ResourceLocation> foundation) implements CustomPacketPayload {
         public static final Type<Sync> TYPE = new Type<>(
                 ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "loadout_sync"));
         public static final StreamCodec<RegistryFriendlyByteBuf, Sync> STREAM_CODEC = StreamCodec.composite(
                 ByteBufCodecs.optional(ResourceLocation.STREAM_CODEC).apply(ByteBufCodecs.list()), Sync::slots,
                 ByteBufCodecs.VAR_INT, Sync::active,
                 ByteBufCodecs.VAR_INT, Sync::open,
+                ByteBufCodecs.optional(ResourceLocation.STREAM_CODEC), Sync::foundation,
                 Sync::new);
 
         @Override

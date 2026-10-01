@@ -14,18 +14,20 @@ import java.util.Optional;
  *
  * @param slots  техники по слотам; пустой слот — {@code Optional.empty()}
  * @param active выбранный слот — его техника применяется клавишей техники
+ * @param foundation основа меча — стиль обычной атаки (Меч Шести Равновесий); пусто — ЛКМ ванильная
  */
-public record Loadout(List<Optional<ResourceLocation>> slots, int active) {
+public record Loadout(List<Optional<ResourceLocation>> slots, int active, Optional<ResourceLocation> foundation) {
 
     /** Слотов не бывает больше этого — кольцо с восемью секторами ещё читается. */
     public static final int MAX_SLOTS = 8;
 
-    public static final Loadout EMPTY = new Loadout(List.of(), 0);
+    public static final Loadout EMPTY = new Loadout(List.of(), 0, Optional.empty());
 
     public static final Codec<Loadout> CODEC = RecordCodecBuilder.create(i -> i.group(
             ResourceLocation.CODEC.optionalFieldOf("technique").codec().listOf()
                     .optionalFieldOf("slots", List.of()).forGetter(Loadout::slots),
-            Codec.INT.optionalFieldOf("active", 0).forGetter(Loadout::active)
+            Codec.INT.optionalFieldOf("active", 0).forGetter(Loadout::active),
+            ResourceLocation.CODEC.optionalFieldOf("foundation").forGetter(Loadout::foundation)
     ).apply(i, Loadout::new));
 
     public Loadout {
@@ -59,10 +61,14 @@ public record Loadout(List<Optional<ResourceLocation>> slots, int active) {
             }
         });
         next.set(slot, technique);
-        return new Loadout(next, active);
+        return new Loadout(next, active, foundation);
     }
 
     public Loadout select(int slot) {
-        return new Loadout(slots, slot);
+        return new Loadout(slots, slot, foundation);
+    }
+
+    public Loadout withFoundation(Optional<ResourceLocation> technique) {
+        return new Loadout(slots, active, technique);
     }
 }

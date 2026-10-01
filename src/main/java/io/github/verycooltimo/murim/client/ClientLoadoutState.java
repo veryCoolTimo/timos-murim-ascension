@@ -9,7 +9,7 @@ import java.util.Optional;
 /** Зеркало раскладки техник — для кольца, слотов боя и экрана раскладки. */
 public final class ClientLoadoutState {
 
-    private static volatile LoadoutPayloads.Sync state = new LoadoutPayloads.Sync(List.of(), 0, 2);
+    private static volatile LoadoutPayloads.Sync state = new LoadoutPayloads.Sync(List.of(), 0, 2, Optional.empty());
 
     public static void accept(LoadoutPayloads.Sync payload) {
         state = payload;
@@ -34,8 +34,13 @@ public final class ClientLoadoutState {
         return active >= 0 && active < slots.size() ? slots.get(active) : Optional.empty();
     }
 
+    /** Основа меча — стиль обычной атаки; пусто — ЛКМ ванильная. */
+    public static Optional<ResourceLocation> foundation() {
+        return state.foundation();
+    }
+
     public static void reset() {
-        state = new LoadoutPayloads.Sync(List.of(), 0, 2);
+        state = new LoadoutPayloads.Sync(List.of(), 0, 2, Optional.empty());
     }
 
     private ClientLoadoutState() {

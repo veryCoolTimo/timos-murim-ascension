@@ -184,23 +184,6 @@ public final class TechniqueService {
             }
         }
 
-        // Форма меча: удары серии после первого — через равные промежутки после удара.
-        if (technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.SwordForm form) {
-            int layer = Math.max(0, io.github.verycooltimo.murim.mastery.MasteryService.layer(player, technique.id()));
-            int since = state.tick() - technique.startTickOf(TechniquePhase.IMPACT);
-            int gap = io.github.verycooltimo.murim.technique.SwordFormRules.SERIES_GAP;
-            if (since > 0 && since % gap == 0 && since / gap < io.github.verycooltimo.murim.technique.SwordFormRules.strikes(layer)) {
-                float power = (float) io.github.verycooltimo.murim.mastery.MasteryRules.powerFactor(layer, technique.layers());
-                player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
-                        net.minecraft.sounds.SoundEvents.PLAYER_ATTACK_SWEEP,
-                        net.minecraft.sounds.SoundSource.PLAYERS, 1.0F, 0.8F + 0.1F * (since / gap));
-                if (io.github.verycooltimo.murim.technique.BehaviorExecutor.swordForm(player, form, technique.id(), power, since / gap)) {
-                    PacketDistributor.sendToPlayer(player, new TechniqueEventPayload(TechniqueEventPayload.Event.HIT,
-                            technique.id(), player.getId(), technique.hitStopTicks(), layer));
-                }
-            }
-        }
-
         player.setData(ModAttachments.TECHNIQUE_STATE, state.advanced());
     }
 

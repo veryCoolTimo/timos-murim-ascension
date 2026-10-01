@@ -48,6 +48,9 @@ public final class LoadoutScreen extends Screen {
     private static final int SLOT_COLUMNS = 2;
     private static final int SLOT_STEP = 25;
 
+    /** Ячейка основы меча — правее слотов техник (автор 01.10: основа живёт на ЛКМ). */
+    private static final int FOUNDATION_X = SLOTS_X + SLOT_COLUMNS * SLOT_STEP + 8;
+
     private static final float NAME_SCALE = 0.85F;
 
     private static final int INK = 0xFF2B2622;
@@ -165,6 +168,16 @@ public final class LoadoutScreen extends Screen {
             technique.ifPresent(id -> icon(graphics, id, sx + 2, sy + 2, 20, 1.0F));
         }
 
+        // Основа меча — отдельная ячейка.
+        int fx = x0 + FOUNDATION_X;
+        int fy = y0 + TOP;
+        small(graphics, Component.translatable("murim.loadout.foundation"), fx, fy - 10, INK_GREY);
+        graphics.blit(SLOT, fx, fy, 0, 0.0F, 0.0F, SLOT_SIZE, SLOT_SIZE, SLOT_SIZE, SLOT_SIZE);
+        if (inside(mouseX, mouseY, fx, fy, SLOT_SIZE, SLOT_SIZE)) {
+            graphics.fill(fx + 2, fy + 2, fx + SLOT_SIZE - 2, fy + SLOT_SIZE - 2, 0x28A79D8C);
+        }
+        ClientLoadoutState.foundation().ifPresent(id -> icon(graphics, id, fx + 2, fy + 2, 20, 1.0F));
+
         // Подсказка внизу — бледной тушью.
         Component hint = Component.translatable("murim.loadout.hint");
         small(graphics, hint, x0 + (W - (int) (font.width(hint) * 0.75F)) / 2, y0 + H - 20, INK_GREY);
@@ -183,6 +196,16 @@ public final class LoadoutScreen extends Screen {
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (inside(mouseX, mouseY, left() + FOUNDATION_X, top() + TOP, SLOT_SIZE, SLOT_SIZE)) {
+            // Сервер сам проверит, что это основа и она выучена.
+            if (button == 1) {
+                PacketDistributor.sendToServer(new LoadoutPayloads.SetSlot(-1, Optional.empty()));
+            } else if (picked != null) {
+                PacketDistributor.sendToServer(new LoadoutPayloads.SetSlot(-1, Optional.of(picked)));
+                picked = null;
+            }
+            return true;
+        }
         int open = ClientLoadoutState.open();
         for (int i = 0; i < open; i++) {
             if (inside(mouseX, mouseY, slotX(i), slotY(i), SLOT_SIZE, SLOT_SIZE)) {

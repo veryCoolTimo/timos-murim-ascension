@@ -36,7 +36,8 @@ public record TechniqueDefinition(
         int cooldownTicks,
         int layers,
         io.github.verycooltimo.murim.mastery.TechniqueTier tier,
-        List<io.github.verycooltimo.murim.mastery.TechniqueRequirement> requires
+        List<io.github.verycooltimo.murim.mastery.TechniqueRequirement> requires,
+        boolean foundation
 ) {
 
     /**
@@ -98,7 +99,10 @@ public record TechniqueDefinition(
                     .optionalFieldOf("tier", io.github.verycooltimo.murim.mastery.TechniqueTier.BASIC)
                     .forGetter(TechniqueDefinition::tier),
             io.github.verycooltimo.murim.mastery.TechniqueRequirement.CODEC.listOf()
-                    .optionalFieldOf("requires", List.of()).forGetter(TechniqueDefinition::requires)
+                    .optionalFieldOf("requires", List.of()).forGetter(TechniqueDefinition::requires),
+            // Основа меча (автор 01.10): не техника на клавише, а то, КАК персонаж бьёт обычной
+            // атакой. Кладётся в отдельную ячейку раскладки, в слоты техник — нет.
+            Codec.BOOL.optionalFieldOf("foundation", false).forGetter(TechniqueDefinition::foundation)
     ).apply(i, TechniqueDefinition::new));
 
     public TechniqueDefinition {

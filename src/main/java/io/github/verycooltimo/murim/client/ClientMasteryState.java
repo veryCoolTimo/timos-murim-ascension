@@ -31,6 +31,16 @@ public final class ClientMasteryState {
                 .toList();
     }
 
+    /** Слой освоения техники или −1, если она не выучена. */
+    public static int layer(ResourceLocation id) {
+        for (SyncMasteryPayload.Entry e : entries()) {
+            if (e.technique().equals(id)) {
+                return e.layer();
+            }
+        }
+        return -1;
+    }
+
     public static void reset() {
         entries = List.of();
     }

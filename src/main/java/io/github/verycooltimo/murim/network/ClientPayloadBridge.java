@@ -35,6 +35,10 @@ final class ClientPayloadBridge {
         io.github.verycooltimo.murim.client.ClientProfileState.setProfile(payload.profile());
     }
 
+    public static void handleFoundationForm(FoundationPayloads.Form payload) {
+        io.github.verycooltimo.murim.client.FoundationClient.onRemoteForm(payload);
+    }
+
     public static void handleAuraGust(AuraGustPayload payload) {
         io.github.verycooltimo.murim.client.ClientAuraState.gust(payload.sourceId(), payload.victimId(),
                 payload.strength(), payload.pull());

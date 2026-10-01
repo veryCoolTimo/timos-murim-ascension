@@ -19,7 +19,7 @@ import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 public final class ModNetwork {
 
     /** Версия протокола. Поднимать при любом несовместимом изменении пакетов. */
-    private static final String VERSION = "2";
+    private static final String VERSION = "3";
 
     @SubscribeEvent
     static void register(RegisterPayloadHandlersEvent event) {
@@ -56,6 +56,20 @@ public final class ModNetwork {
                 SyncAuraPayload.TYPE,
                 SyncAuraPayload.STREAM_CODEC,
                 (payload, context) -> ClientPayloadBridge.handleSyncAura(payload));
+
+        // Основа меча: клиент сообщает о взмахе формой, сервер раздаёт его наблюдателям.
+        registrar.playToServer(
+                FoundationPayloads.Swing.TYPE,
+                FoundationPayloads.Swing.STREAM_CODEC,
+                (payload, context) -> {
+                    if (context.player() instanceof ServerPlayer serverPlayer) {
+                        io.github.verycooltimo.murim.combat.FoundationService.onSwing(serverPlayer, payload.form());
+                    }
+                });
+        registrar.playToClient(
+                FoundationPayloads.Form.TYPE,
+                FoundationPayloads.Form.STREAM_CODEC,
+                (payload, context) -> ClientPayloadBridge.handleFoundationForm(payload));
 
         // Порыв давления: тряска, волна и наклон пламени в момент толчка.
         registrar.playToClient(

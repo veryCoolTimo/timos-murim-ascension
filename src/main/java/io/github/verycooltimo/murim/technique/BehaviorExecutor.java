@@ -49,66 +49,9 @@ public final class BehaviorExecutor {
         if (behavior instanceof TechniqueBehavior.PalmBlast palm) {
             return palmBlast(player, palm, definition.id(), power);
         }
-        if (behavior instanceof TechniqueBehavior.SwordForm form) {
-            return swordForm(player, form, definition.id(), power, 0);
-        }
         MurimMod.LOGGER.error("Тип поведения {} не реализован у техники {}",
                 behavior.type(), definition.id());
         return false;
-    }
-
-    /**
-     * Удар формы меча с номером {@code index}: обычный — по дуге перед собой; последний на
-     * старших слоях — широкий разрез; на высшем слое последний удар ещё и раскалывает землю
-     * вперёд по прямой.
-     */
-    public static boolean swordForm(ServerPlayer player, TechniqueBehavior.SwordForm form,
-                                    net.minecraft.resources.ResourceLocation id, float power, int index) {
-        int layer = Math.max(0, io.github.verycooltimo.murim.mastery.MasteryService.layer(player, id));
-        float damage = form.damage() * power * SwordFormRules.damageFactor(layer, index);
-        boolean last = index == SwordFormRules.strikes(layer) - 1;
-        boolean wide = last && SwordFormRules.wideFinish(layer);
-        double reach = wide ? form.wideReach() : form.reach();
-        double arc = wide ? 200.0D : form.arcDegrees();
-        boolean anyHit = meleeArc(player, new TechniqueBehavior.MeleeArc(reach, arc, damage), id, 1.0F);
-        if (last && SwordFormRules.unity(layer) && form.crackLength() > 0.0D) {
-            anyHit |= crack(player, form, id, damage);
-        }
-        return anyHit;
-    }
-
-    /** Раскол земли: полоса шириной 1,4 блока вперёд по взгляду; задетых подбрасывает. */
-    private static boolean crack(ServerPlayer player, TechniqueBehavior.SwordForm form,
-                                 net.minecraft.resources.ResourceLocation id, float damage) {
-        Vec3 look = player.getLookAngle();
-        Vec3 dir = new Vec3(look.x, 0.0D, look.z);
-        if (dir.lengthSqr() < 1.0E-6D) {
-            return false;
-        }
-        dir = dir.normalize();
-        Vec3 from = player.position();
-        Vec3 to = from.add(dir.scale(form.crackLength()));
-        AABB path = new AABB(from, to).inflate(1.0D, 2.0D, 1.0D);
-        boolean anyHit = false;
-        int processed = 0;
-        for (LivingEntity target : candidates(player, path)) {
-            if (++processed > MAX_TARGETS) {
-                break;
-            }
-            Vec3 rel = target.position().subtract(from);
-            double along = rel.dot(dir);
-            double side = rel.subtract(dir.scale(along)).horizontalDistance();
-            if (along < 0.0D || along > form.crackLength() || side > 0.7D + target.getBbWidth() * 0.5D) {
-                continue;
-            }
-            if (target.hurt(player.damageSources().playerAttack(player), damage)) {
-                anyHit = true;
-                target.push(0.0D, 0.45D, 0.0D);
-                target.hurtMarked = true;
-                io.github.verycooltimo.murim.mastery.MasteryService.onHit(player, id, target);
-            }
-        }
-        return anyHit;
     }
 
     private static boolean meleeArc(ServerPlayer player, TechniqueBehavior.MeleeArc melee,

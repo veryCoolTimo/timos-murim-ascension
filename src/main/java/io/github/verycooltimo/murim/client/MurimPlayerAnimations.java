@@ -50,9 +50,38 @@ public final class MurimPlayerAnimations {
      * Регистрирует фабрику слоя. Вызывается один раз при инициализации клиента: PAL сам создаст
      * контроллер для каждого игрока, включая чужих, — техника видна и со стороны.
      */
+    /**
+     * Отдельный слой для форм основы меча (ЛКМ): у него модификатор скорости — анимация формы
+     * растягивается под перезарядку оружия и никогда не медленнее ванильного удара.
+     */
+    private static final ResourceLocation FOUNDATION_LAYER =
+            ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "foundation_layer");
+
     public static void register() {
         PlayerAnimationFactory.ANIMATION_DATA_FACTORY.registerFactory(LAYER, PRIORITY,
                 MurimPlayerAnimations::createController);
+        PlayerAnimationFactory.ANIMATION_DATA_FACTORY.registerFactory(FOUNDATION_LAYER, PRIORITY - 1,
+                player -> {
+                    PlayerAnimationController controller =
+                            new PlayerAnimationController(player, (c, data, setter) -> PlayState.STOP);
+                    // API: com.zigythebird.playeranimcore.animation.layered.modifier.SpeedModifier (javap, PAL 1.1.5)
+                    controller.addModifierLast(new com.zigythebird.playeranimcore.animation.layered.modifier.SpeedModifier(1.0F));
+                    return controller;
+                });
+    }
+
+    /** Форма основы меча с заданной скоростью воспроизведения. */
+    public static boolean playForm(AbstractClientPlayer player, ResourceLocation animation, float speed) {
+        IAnimation layer = PlayerAnimationAccess.getPlayerAnimationLayer(player, FOUNDATION_LAYER);
+        if (!(layer instanceof PlayerAnimationController controller)) {
+            return false;
+        }
+        for (var modifier : controller.getModifiers()) {
+            if (modifier instanceof com.zigythebird.playeranimcore.animation.layered.modifier.SpeedModifier speedModifier) {
+                speedModifier.speed = speed;
+            }
+        }
+        return controller.triggerAnimation(animation);
     }
 
     private static IAnimation createController(AbstractClientPlayer player) {

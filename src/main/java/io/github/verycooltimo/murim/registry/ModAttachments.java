@@ -94,6 +94,11 @@ public final class ModAttachments {
             ATTACHMENT_TYPES.register("aura_gust",
                     () -> AttachmentType.<int[]>builder(() -> new int[] {0, -1, -1}).build());
 
+    /** Последний взмах основы меча: {форма, тик}. Не сохраняется — живёт тики. */
+    public static final Supplier<AttachmentType<int[]>> FOUNDATION_SWING =
+            ATTACHMENT_TYPES.register("foundation_swing",
+                    () -> AttachmentType.<int[]>builder(() -> new int[] {0, -1}).build());
+
     /** Серия обычных ударов. Не сохраняется: связка живёт секунды и через сейв не тянется. */
     public static final Supplier<AttachmentType<io.github.verycooltimo.murim.combat.SchoolStyle.ComboState>> COMBO =
             ATTACHMENT_TYPES.register("combo_state",

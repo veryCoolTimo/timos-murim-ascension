@@ -18,7 +18,18 @@ public final class LoadoutService {
         return Loadout.slotsFor(player.getData(ModAttachments.MASTERY).wisdom());
     }
 
+    /** Номер «слота» в пакете, означающий ячейку основы меча. */
+    public static final int FOUNDATION_SLOT = -1;
+
     public static void setSlot(ServerPlayer player, int slot, Optional<ResourceLocation> technique) {
+        if (slot == FOUNDATION_SLOT) {
+            setFoundation(player, technique);
+            return;
+        }
+        // Основу в слот техники не кладём: у неё нет своей клавиши, она живёт на ЛКМ.
+        if (technique.isPresent() && isFoundation(technique.get())) {
+            return;
+        }
         if (slot < 0 || slot >= openSlots(player)) {
             return;
         }
@@ -27,6 +38,19 @@ public final class LoadoutService {
         }
         player.setData(ModAttachments.LOADOUT, player.getData(ModAttachments.LOADOUT).with(slot, technique));
         sync(player);
+    }
+
+    public static void setFoundation(ServerPlayer player, Optional<ResourceLocation> technique) {
+        if (technique.isPresent() && (!isFoundation(technique.get()) || !MasteryService.knows(player, technique.get()))) {
+            return;
+        }
+        player.setData(ModAttachments.LOADOUT, player.getData(ModAttachments.LOADOUT).withFoundation(technique));
+        sync(player);
+    }
+
+    public static boolean isFoundation(ResourceLocation id) {
+        io.github.verycooltimo.murim.technique.TechniqueDefinition d = io.github.verycooltimo.murim.technique.TechniqueLoader.get(id);
+        return d != null && d.foundation();
     }
 
     public static void select(ServerPlayer player, int slot) {
@@ -40,6 +64,13 @@ public final class LoadoutService {
     /** Только что выученная техника встаёт в первый свободный открытый слот — меньше возни. */
     public static void placeLearned(ServerPlayer player, ResourceLocation technique) {
         Loadout loadout = player.getData(ModAttachments.LOADOUT);
+        // Выученная основа сразу встаёт в ячейку основы, если та пуста.
+        if (isFoundation(technique)) {
+            if (loadout.foundation().isEmpty()) {
+                player.setData(ModAttachments.LOADOUT, loadout.withFoundation(Optional.of(technique)));
+            }
+            return;
+        }
         int open = openSlots(player);
         for (int i = 0; i < open; i++) {
             if (loadout.at(i).equals(Optional.of(technique))) {
@@ -62,7 +93,7 @@ public final class LoadoutService {
             slots.add(loadout.at(i));
         }
         PacketDistributor.sendToPlayer(player, new LoadoutPayloads.Sync(slots,
-                Math.min(loadout.active(), Math.max(0, open - 1)), open));
+                Math.min(loadout.active(), Math.max(0, open - 1)), open, loadout.foundation()));
     }
 
     private LoadoutService() {
