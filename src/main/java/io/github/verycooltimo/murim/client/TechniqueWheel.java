@@ -36,7 +36,7 @@ public final class TechniqueWheel {
 
     // Размеры и рисунок — по референсу docs/design/reference/ui/technique-wheel-ref.png:
     // крупные иконки на весь сектор, тонкая светлая обводка секторов, центр — отдельный круг.
-    private static final float INNER = 30.0F;
+    private static final float INNER = 36.0F;
     private static final float OUTER = 78.0F;
     /** Пикселей курсора на градус поворота мыши. */
     private static final float SENSITIVITY = 2.2F;
@@ -145,46 +145,51 @@ public final class TechniqueWheel {
         double span = Math.PI * 2.0D / count;
         int bgA = (int) (appear * 0x90);
 
-        // Полупрозрачная подложка и секторы.
-        GuiShapes.ring(graphics, cx, cy, 0.0F, OUTER + 6.0F, (bgA << 24) | 0x05080F);
+        // Секторы залиты текстурой туши (референс автора 01.10 — «дымка» в секторах:
+        // docs/design/reference/ui/wheel-author-pick.png), зазоры постоянной ширины,
+        // тонкие светлые обводки; выбранный сектор — голубой со светлым ободом.
+        float gap = 2.0F;
+        float texSpan = OUTER * 2.0F;
         for (int i = 0; i < count; i++) {
-            double from = -Math.PI / 2.0D - span / 2.0D + i * span + 0.03D;
-            double to = from + span - 0.06D;
+            double from = -Math.PI / 2.0D - span(count) / 2.0D + i * span(count);
+            double to = from + span(count);
             boolean hot = i == selected;
-            boolean current = i == ClientLoadoutState.active();
-            int colour = hot ? 0x5FA8E0 : current ? 0x2A4F86 : 0x16223A;
-            int a = (int) (appear * (hot ? 0xD0 : 0xA0));
-            GuiShapes.arc(graphics, cx, cy, INNER, OUTER, from, to, (a << 24) | colour);
-            // Тонкая светлая обводка сектора: внешняя и внутренняя дуги.
-            int edge = ((int) (appear * (hot ? 0xE0 : 0x55)) << 24) | 0xBFD8F0;
-            GuiShapes.arc(graphics, cx, cy, OUTER - 0.8F, OUTER, from, to, edge);
-            GuiShapes.arc(graphics, cx, cy, INNER, INNER + 0.8F, from, to, edge);
+            int fill = hot ? argb(appear * 0.97F, 0.62F, 1.0F, 1.0F) : argb(appear * 0.94F, 0.62F, 0.66F, 0.74F);
+            GuiShapes.texturedSector(graphics, MIST, cx, cy, INNER, OUTER, from, to, gap, texSpan, fill);
+            int edge = hot ? argb(appear, 0.75F, 0.95F, 1.0F) : argb(appear * 0.30F, 0.80F, 0.86F, 0.95F);
             if (hot) {
-                GuiShapes.arc(graphics, cx, cy, OUTER, OUTER + 2.5F, from, to, ((int) (appear * 255) << 24) | 0xBFF0FF);
+                // Выбранный сектор светится изнутри голубым поверх тумана.
+                GuiShapes.sectorFill(graphics, cx, cy, INNER, OUTER, from, to, gap,
+                        argb(appear * 0.24F, 0.45F, 0.82F, 0.95F));
+                // Свечение края: широкая бледная обводка под тонкой яркой.
+                GuiShapes.sectorOutline(graphics, cx, cy, INNER, OUTER, from, to, gap, 3.5F,
+                        argb(appear * 0.30F, 0.45F, 0.85F, 1.0F));
             }
+            GuiShapes.sectorOutline(graphics, cx, cy, INNER, OUTER, from, to, gap, hot ? 1.2F : 0.6F, edge);
         }
         // Центр — отдельный тёмный круг с ободком.
-        GuiShapes.ring(graphics, cx, cy, 0.0F, INNER - 3.0F, ((int) (appear * 0xC0) << 24) | 0x070B16);
-        GuiShapes.ring(graphics, cx, cy, INNER - 3.8F, INNER - 3.0F, ((int) (appear * 0x70) << 24) | 0xBFD8F0);
+        GuiShapes.ring(graphics, cx, cy, 0.0F, INNER - 3.0F, argb(appear * 0.98F, 0.02F, 0.035F, 0.07F));
+        GuiShapes.ring(graphics, cx, cy, INNER - 4.0F, INNER - 3.0F, argb(appear * 0.6F, 0.80F, 0.86F, 0.95F));
         graphics.flush();
 
         // Иконки в серединах секторов.
         for (int i = 0; i < count; i++) {
             double mid = -Math.PI / 2.0D + i * span;
             float r = (INNER + OUTER) / 2.0F;
-            int ix = (int) (cx + Math.cos(mid) * r) - 14;
-            int iy = (int) (cy + Math.sin(mid) * r) - 14;
+            // Пиксельные иконки — строго 32×32: при нецелом масштабе пиксели выходят неровными.
+            int ix = (int) (cx + Math.cos(mid) * r) - 16;
+            int iy = (int) (cy + Math.sin(mid) * r) - 16;
             Optional<ResourceLocation> technique = i < slots.size() ? slots.get(i) : Optional.empty();
             if (technique.isPresent()) {
                 graphics.setColor(1.0F, 1.0F, 1.0F, appear * (i == selected ? 1.0F : 0.75F));
                 com.mojang.blaze3d.systems.RenderSystem.enableBlend();
-                int size = i == selected ? 32 : 28;
-                int off = (size - 28) / 2;
+                int size = 32;
+                int off = 0;
                 graphics.blit(TechniqueIcons.of(technique.get()), ix - off, iy - off, size, size,
-                        0.0F, 0.0F, 64, 64, 64, 64);
+                        0.0F, 0.0F, 32, 32, 32, 32);
                 graphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
             } else {
-                GuiShapes.ring(graphics, ix + 14, iy + 14, 0.0F, 2.0F, ((int) (appear * 0x80) << 24) | 0xC8DCEC);
+                GuiShapes.ring(graphics, ix + 16, iy + 16, 0.0F, 2.0F, ((int) (appear * 0x80) << 24) | 0xC8DCEC);
             }
         }
 
@@ -196,7 +201,7 @@ public final class TechniqueWheel {
         if (technique.isPresent()) {
             Component name = io.github.verycooltimo.murim.mastery.MasteryService.name(technique.get());
             SyncMasteryPayload.Entry entry = TechniqueSlotsHud.mastery(technique.get());
-            small(graphics, font, name, (int) cx, (int) cy - 6, textA | 0xE6F4FF);
+            graphics.drawString(font, name, (int) cx - font.width(name) / 2, (int) cy - 9, textA | 0xE6F4FF, true);
             if (entry != null) {
                 small(graphics, font, Component.translatable("murim.loadout.layer", entry.layer(), entry.cap()),
                         (int) cx, (int) cy + 2, textA | 0x8FB8E0);
@@ -207,6 +212,16 @@ public final class TechniqueWheel {
         }
         GuiShapes.ring(graphics, cx + cursorX, cy + cursorY, 0.0F, 1.6F, ((int) (appear * 0xC0) << 24) | 0xFFFFFF);
         graphics.flush();
+    }
+
+    private static final ResourceLocation MIST = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/gui/wheel_mist.png");
+
+    private static double span(int count) {
+        return Math.PI * 2.0D / count;
+    }
+
+    private static int argb(float a, float r, float g, float b) {
+        return (int) (Mth.clamp(a, 0.0F, 1.0F) * 255) << 24 | (int) (r * 255) << 16 | (int) (g * 255) << 8 | (int) (b * 255);
     }
 
     private static void small(GuiGraphics graphics, Font font, Component text, int cx, int y, int colour) {
