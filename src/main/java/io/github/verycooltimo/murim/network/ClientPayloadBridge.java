@@ -35,6 +35,10 @@ final class ClientPayloadBridge {
         io.github.verycooltimo.murim.client.ClientProfileState.setProfile(payload.profile());
     }
 
+    public static void handleSyncAura(SyncAuraPayload payload) {
+        io.github.verycooltimo.murim.client.ClientAuraState.set(payload.entityId(), payload.aura());
+    }
+
     /** Попадание техники: брызги возникают в точке контакта, а не из воздуха. */
     public static void handleTechniqueHit(TechniqueHitPayload payload) {
         io.github.verycooltimo.murim.client.vfx.PalmVfxRenderer.recordHit(

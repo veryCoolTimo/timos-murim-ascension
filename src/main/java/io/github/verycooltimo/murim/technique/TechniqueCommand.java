@@ -164,6 +164,21 @@ public final class TechniqueCommand {
                             return 1;
                         })));
 
+        // Аура противника для проверки давления (docs/design/19 §3ж): на то, куда смотришь,
+        // а без цели — на ближайшее существо. 0 — снять. Ранги 5–6 — выше Пика.
+        root.then(Commands.literal("aura")
+                .then(Commands.argument("rank", com.mojang.brigadier.arguments.IntegerArgumentType.integer(
+                        0, io.github.verycooltimo.murim.combat.AuraState.MAX_RANK))
+                        .executes(context -> aura(context, false))
+                        .then(Commands.literal("demonic").executes(context -> aura(context, true)))));
+
+        // Противник для проверки давления: зомби без ИИ в четырёх блоках перед игроком.
+        root.then(Commands.literal("enemy")
+                .then(Commands.argument("rank", com.mojang.brigadier.arguments.IntegerArgumentType.integer(
+                        1, io.github.verycooltimo.murim.combat.AuraState.MAX_RANK))
+                        .executes(context -> enemy(context, false))
+                        .then(Commands.literal("demonic").executes(context -> enemy(context, true)))));
+
         // Сброс кулдауна: подряд смотреть одну и ту же технику иначе нельзя.
         root.then(Commands.literal("cooldown").executes(context -> {
             ServerPlayer player = context.getSource().getPlayerOrException();
@@ -254,6 +269,59 @@ public final class TechniqueCommand {
         context.getSource().sendSuccess(() -> Component.literal("Выучено: " + id + ", слой "
                 + Math.min(layer, definition.layers())), false);
         return 1;
+    }
+
+    private static int aura(com.mojang.brigadier.context.CommandContext<net.minecraft.commands.CommandSourceStack> context,
+                            boolean demonic) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+        ServerPlayer player = context.getSource().getPlayerOrException();
+        int rank = com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(context, "rank");
+        net.minecraft.world.entity.LivingEntity target = lookedAt(player);
+        if (target == null) {
+            context.getSource().sendFailure(Component.literal("Нет цели рядом"));
+            return 0;
+        }
+        io.github.verycooltimo.murim.combat.AuraService.set(target,
+                new io.github.verycooltimo.murim.combat.AuraState(rank, demonic));
+        context.getSource().sendSuccess(() -> Component.translatable("murim.aura.set",
+                Component.translatable("murim.rank." + rank),
+                demonic ? Component.translatable("murim.aura.demonic") : Component.empty()), false);
+        return 1;
+    }
+
+    private static int enemy(com.mojang.brigadier.context.CommandContext<net.minecraft.commands.CommandSourceStack> context,
+                             boolean demonic) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+        ServerPlayer player = context.getSource().getPlayerOrException();
+        int rank = com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(context, "rank");
+        net.minecraft.world.entity.monster.Zombie zombie =
+                new net.minecraft.world.entity.monster.Zombie(net.minecraft.world.entity.EntityType.ZOMBIE, player.serverLevel());
+        net.minecraft.world.phys.Vec3 look = player.getLookAngle().multiply(1.0D, 0.0D, 1.0D).normalize();
+        zombie.moveTo(player.getX() + look.x * 4.0D, player.getY(), player.getZ() + look.z * 4.0D,
+                player.getYRot() + 180.0F, 0.0F);
+        zombie.setYHeadRot(player.getYRot() + 180.0F);
+        zombie.setYBodyRot(player.getYRot() + 180.0F);
+        zombie.setNoAi(true);
+        zombie.setPersistenceRequired();
+        zombie.setItemSlot(net.minecraft.world.entity.EquipmentSlot.HEAD,
+                new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.LEATHER_HELMET));
+        player.serverLevel().addFreshEntity(zombie);
+        io.github.verycooltimo.murim.combat.AuraService.set(zombie,
+                new io.github.verycooltimo.murim.combat.AuraState(rank, demonic));
+        return 1;
+    }
+
+    /** Существо под прицелом в 24 блоках, иначе ближайшее в восьми. */
+    private static net.minecraft.world.entity.LivingEntity lookedAt(ServerPlayer player) {
+        net.minecraft.world.phys.Vec3 eye = player.getEyePosition();
+        net.minecraft.world.phys.Vec3 end = eye.add(player.getLookAngle().scale(24.0D));
+        net.minecraft.world.phys.EntityHitResult hit = net.minecraft.world.entity.projectile.ProjectileUtil.getEntityHitResult(
+                player, eye, end, player.getBoundingBox().expandTowards(player.getLookAngle().scale(24.0D)).inflate(1.0D),
+                e -> e instanceof net.minecraft.world.entity.LivingEntity && e != player, 576.0D);
+        if (hit != null && hit.getEntity() instanceof net.minecraft.world.entity.LivingEntity living) {
+            return living;
+        }
+        return player.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.LivingEntity.class,
+                        player.getBoundingBox().inflate(8.0D), e -> e != player && !(e instanceof net.minecraft.world.entity.player.Player))
+                .stream().min(java.util.Comparator.comparingDouble(player::distanceToSqr)).orElse(null);
     }
 
     private TechniqueCommand() {

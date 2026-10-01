@@ -134,7 +134,8 @@ public final class DevCaptureHandler {
             warmup = WARMUP_TICKS;
             // Анимация тела видна только от третьего лица: в первом лице снимать нечего.
             boolean front = "front".equalsIgnoreCase(System.getProperty(CAMERA_PROPERTY, "back"));
-            boolean side = "side".equalsIgnoreCase(System.getProperty(CAMERA_PROPERTY, "back"));
+            boolean side = "side".equalsIgnoreCase(System.getProperty(CAMERA_PROPERTY, "back"))
+                    || "fp".equalsIgnoreCase(System.getProperty(CAMERA_PROPERTY, "back"));
             minecraft.options.setCameraType(side ? CameraType.FIRST_PERSON
                     : front ? CameraType.THIRD_PERSON_FRONT : CameraType.THIRD_PERSON_BACK);
             // Сбоку снимаем глазами чужой сущности в первом лице: без скрытого интерфейса
@@ -181,6 +182,10 @@ public final class DevCaptureHandler {
             // Снимать можно не только технику, но и сцену создания даньтяня: у неё те же
             // требования к проверке — привязка к телу, фазы, отсутствие пересвета.
             String subject = System.getProperty(TECHNIQUE_PROPERTY, "ceremonial_draw");
+            if (AURA.equals(subject)) {
+                auraTicks = AURA_CAPTURE_TICKS;
+                return;
+            }
             if ("ui".equals(subject)) {
                 uiTicks = UI_CAPTURE_TICKS;
                 return;
@@ -198,6 +203,13 @@ public final class DevCaptureHandler {
 
         if (meditationTicks > 0) {
             tickMeditation(minecraft);
+        }
+        if (auraTicks > 0) {
+            int t = AURA_CAPTURE_TICKS - auraTicks--;
+            if (t % 3 == 0) {
+                grab(minecraft, String.format("murim_%s_%03d.png", anglePrefix(), frameIndex));
+                frameIndex++;
+            }
         }
         if (uiTicks > 0) {
             tickUi(minecraft);
@@ -325,6 +337,11 @@ public final class DevCaptureHandler {
             MurimMod.LOGGER.warn("Телеметрия не пишется: {}", exception.getMessage());
         }
     }
+
+    /** Давление ауры: игрок стоит перед противником, кадр каждые три тика. */
+    private static final String AURA = "aura";
+    private static final int AURA_CAPTURE_TICKS = 150;
+    private static int auraTicks;
 
     /** Сценарий интерфейсов техник: слоты боя → кольцо → экран раскладки. */
     private static final int UI_CAPTURE_TICKS = 200;

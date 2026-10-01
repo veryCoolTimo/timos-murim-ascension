@@ -47,6 +47,14 @@ public final class TechniqueService {
             return false;
         }
 
+        // Под давлением сильного ци не слушается (docs/design/19 §3ж): ходить и отступать
+        // можно, а приём не складывается.
+        if (AuraService.pressure(player) >= AuraPressure.TECHNIQUE_LOCK) {
+            player.displayClientMessage(
+                    net.minecraft.network.chat.Component.translatable("murim.technique.pressure"), true);
+            return false;
+        }
+
         long now = player.serverLevel().getGameTime();
         if (!offCooldown(now, state.lastStartGameTime(), technique.cooldownTicks())) {
             return false;

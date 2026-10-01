@@ -43,6 +43,8 @@ public final class MurimRenderTypes {
 
     private static final ResourceLocation RIBBON_TEXTURE =
             ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/vfx/ribbon.png");
+    private static final ResourceLocation INK_TEXTURE =
+            ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/vfx/ink_stroke.png");
     private static final ResourceLocation MOTE_TEXTURE =
             ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/vfx/mote.png");
 
@@ -293,6 +295,16 @@ public final class MurimRenderTypes {
         // смешиванием не давал тёмного на кадрах Mac 01.10 (пятна вызывались — лог, — но не
         // рисовались). API: reference/minecraft-src/.../RenderType.java#entityTranslucent
         return RenderType.entityTranslucent(MOTE_TEXTURE);
+    }
+
+    /** Мазок туши для чёрного пламени ауры: тёмный, затемняет — тип как у {@link #impurity()}. */
+    public static RenderType ink() {
+        return RenderType.entityTranslucent(INK_TEXTURE);
+    }
+
+    /** Сплошные тёмные квадраты: обломки и угли. */
+    public static RenderType solid() {
+        return RenderType.entityTranslucent(ResourceLocation.withDefaultNamespace("textures/misc/white.png"));
     }
 
     public static RenderType ribbon() {

@@ -296,7 +296,9 @@ public final class DevSetupEvents {
         // Цель смещена на 28° вбок от оси взгляда: конус удара 70°, то есть она
         // остаётся поражаемой, но перестаёт прятаться ЗА игроком от камеры со спины.
         // Строго по оси её не видно вовсе, и брызги по телу оценить нельзя.
-        double aim = yaw + Math.toRadians(28.0D);
+        // От первого лица (давление ауры) цель — строго по оси взгляда.
+        boolean fpCamera = "fp".equalsIgnoreCase(System.getProperty("murim.capture.camera", "back"));
+        double aim = fpCamera ? yaw : yaw + Math.toRadians(28.0D);
         double lookX = -Math.sin(aim);
         double lookZ = Math.cos(aim);
         // Сбоку манекен стоит на вытянутую руку: иначе ладонь до него не достаёт, и всплеск
@@ -308,9 +310,40 @@ public final class DevSetupEvents {
         if (dist != null) {
             dummyDistance = Double.parseDouble(dist.trim());
         }
-        dummy.setPos(STAGE_X + 0.5D + lookX * dummyDistance, STAGE_Y,
-                     STAGE_Z + 0.5D + lookZ * dummyDistance);
-        level.addFreshEntity(dummy);
+        if (fpCamera && dist == null) {
+            dummyDistance = 4.0D;
+        }
+        // MURIM_CAPTURE_ENEMY=zombie — вместо манекена зомби без ИИ, лицом к игроку:
+        // давление ауры проверяется на живом противнике (docs/design/19 §3ж).
+        net.minecraft.world.entity.LivingEntity target = dummy;
+        if ("zombie".equals(System.getenv("MURIM_CAPTURE_ENEMY"))) {
+            for (net.minecraft.world.entity.monster.Zombie old
+                    : level.getEntitiesOfClass(net.minecraft.world.entity.monster.Zombie.class, area)) {
+                old.discard();
+            }
+            net.minecraft.world.entity.monster.Zombie zombie =
+                    new net.minecraft.world.entity.monster.Zombie(net.minecraft.world.entity.EntityType.ZOMBIE, level);
+            zombie.setNoAi(true);
+            zombie.setPersistenceRequired();
+            zombie.setItemSlot(net.minecraft.world.entity.EquipmentSlot.HEAD,
+                    new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.LEATHER_HELMET));
+            float face = (float) Math.toDegrees(aim) + 180.0F;
+            zombie.setYRot(face);
+            zombie.setYHeadRot(face);
+            zombie.setYBodyRot(face);
+            target = zombie;
+        }
+        target.setPos(STAGE_X + 0.5D + lookX * dummyDistance, STAGE_Y,
+                      STAGE_Z + 0.5D + lookZ * dummyDistance);
+        level.addFreshEntity(target);
+        // MURIM_CAPTURE_AURA=4 или 4d (демоническая) — аура цели для съёмки давления.
+        String aura = System.getenv("MURIM_CAPTURE_AURA");
+        if (aura != null && !aura.isBlank()) {
+            String value = aura.trim();
+            boolean demonic = value.endsWith("d");
+            AuraService.set(target, new AuraState(
+                    Integer.parseInt(demonic ? value.substring(0, value.length() - 1) : value), demonic));
+        }
 
         // Камера сбоку для съёмки удара: со спины кисть и шлейф закрывает корпус, спереди
         // манекен встаёт перед камерой. Клиент смотрит глазами этой стойки
@@ -321,8 +354,11 @@ public final class DevSetupEvents {
             // Правая сторона игрока: при взгляде (−sin, cos) правая рука смотрит в (−cos, −sin).
             double rightX = -Math.cos(yaw);
             double rightZ = -Math.sin(yaw);
-            double camX = midX + rightX * 3.2D;
-            double camZ = midZ + rightZ * 3.2D;
+            // MURIM_CAPTURE_CAM_DIST — отвести камеру: аура выше головы не влезала в кадр.
+            double camDist = System.getenv("MURIM_CAPTURE_CAM_DIST") == null ? 3.2D
+                    : Double.parseDouble(System.getenv("MURIM_CAPTURE_CAM_DIST").trim());
+            double camX = midX + rightX * camDist;
+            double camZ = midZ + rightZ * camDist;
             net.minecraft.world.entity.decoration.ArmorStand stand =
                     new net.minecraft.world.entity.decoration.ArmorStand(level, camX, STAGE_Y - 0.45D, camZ);
             stand.setInvisible(true);

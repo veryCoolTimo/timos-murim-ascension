@@ -71,6 +71,21 @@ public final class ModAttachments {
                     () -> AttachmentType.<io.github.verycooltimo.murim.cultivation.MeditationState>builder(
                             () -> io.github.verycooltimo.murim.cultivation.MeditationState.IDLE).build());
 
+    /**
+     * Аура существа для давления (docs/design/19 §3ж). Сохраняется: манекен или моб с аурой
+     * не должен терять её при перезаходе. Живёт на любом {@code LivingEntity}.
+     */
+    public static final Supplier<AttachmentType<io.github.verycooltimo.murim.combat.AuraState>> AURA =
+            ATTACHMENT_TYPES.register("aura",
+                    () -> AttachmentType.builder(() -> io.github.verycooltimo.murim.combat.AuraState.NONE)
+                            .serialize(io.github.verycooltimo.murim.combat.AuraState.CODEC)
+                            .build());
+
+    /** Давление ауры на игрока сейчас, 0..1. Не сохраняется: считается каждые два тика. */
+    public static final Supplier<AttachmentType<Float>> PRESSURE =
+            ATTACHMENT_TYPES.register("aura_pressure",
+                    () -> AttachmentType.<Float>builder(() -> 0.0F).build());
+
     /** Серия обычных ударов. Не сохраняется: связка живёт секунды и через сейв не тянется. */
     public static final Supplier<AttachmentType<io.github.verycooltimo.murim.combat.SchoolStyle.ComboState>> COMBO =
             ATTACHMENT_TYPES.register("combo_state",

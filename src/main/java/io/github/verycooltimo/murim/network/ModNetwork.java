@@ -51,6 +51,12 @@ public final class ModNetwork {
                 SyncProfilePayload.STREAM_CODEC,
                 (payload, context) -> ClientPayloadBridge.handleSyncProfile(payload));
 
+        // Аура существ: рисуется на клиенте и задаёт экранное давление.
+        registrar.playToClient(
+                SyncAuraPayload.TYPE,
+                SyncAuraPayload.STREAM_CODEC,
+                (payload, context) -> ClientPayloadBridge.handleSyncAura(payload));
+
         // Попадание: без него клиент рисовал брызги всегда, даже когда удар прошёл мимо.
         registrar.playToClient(
                 TechniqueHitPayload.TYPE,

@@ -13,6 +13,9 @@
   "entity.murim.wedge": "Клин ци",
   "murim.hud.ritual": "Круг %s · ци %s/%s",
   "murim.hud.ritual.risk": "НАПРЯЖЕНИЕ",
+  "murim.technique.pressure": "Чужая аура давит — ци не складывается в приём.",
+  "murim.aura.set": "Аура: %s%s",
+  "murim.aura.demonic": " (демоническая)",
   "murim.technique.no_qi": "Не хватает циркулирующей ци.",
   "murim.technique.not_awakened": "Даньтянь ещё не сформирован.",
   "technique.murim.demon_palm": "Ладонь разрушения демонов",
@@ -97,5 +100,7 @@
   "murim.rank.wall.max": "Ци упёрлась в стену. Дальше пути пока нет",
   "murim.rank.breakthrough.title": "Прорыв",
   "murim.rank.breakthrough.held": "Прорыв отложен: ци осела",
-  "murim.rank.4": "Пик"
+  "murim.rank.4": "Пик",
+  "murim.rank.5": "Безграничный",
+  "murim.rank.6": "Мистический"
 }

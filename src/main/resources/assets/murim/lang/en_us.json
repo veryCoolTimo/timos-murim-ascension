@@ -33,6 +33,9 @@
   "entity.murim.wedge": "Qi Wedge",
   "murim.hud.ritual": "Cycle %s · qi %s/%s",
   "murim.hud.ritual.risk": "STRAINED",
+  "murim.technique.pressure": "The enemy's aura presses down — your qi will not gather.",
+  "murim.aura.set": "Aura: %s%s",
+  "murim.aura.demonic": " (demonic)",
   "murim.technique.no_qi": "Not enough circulating qi.",
   "murim.technique.not_awakened": "Your dantian is not formed yet.",
   "technique.murim.demon_palm": "Palm of Demon Destruction",
@@ -117,5 +120,7 @@
   "murim.rank.wall.max": "Your qi has hit the wall. There is no path further yet",
   "murim.rank.breakthrough.title": "Breakthrough",
   "murim.rank.breakthrough.held": "Breakthrough postponed: your qi settles",
-  "murim.rank.4": "Peak"
+  "murim.rank.4": "Peak",
+  "murim.rank.5": "Unrestrained",
+  "murim.rank.6": "Profound"
 }
