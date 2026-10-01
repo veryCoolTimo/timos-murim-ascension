@@ -951,18 +951,33 @@ public final class MeditationVfxRenderer {
                 continue;
             }
             List<Vec3> pts = cr.points();
-            float total = (pts.size() - 1) * grow;
-            double core = Mth.lerp(open, 0.004D, 0.016D) * (1.0D - close);
+            int n = pts.size() - 1;
+            float total = n * grow;
+            double core = Mth.lerp(open, 0.006D, 0.02D) * (1.0D - close);
             float alpha = (0.75F + 0.25F * open) * (1.0F - close);
-            for (int k = 0; k + 1 < pts.size() && k < total; k++) {
+            // Трещина сужается к концам (замечание автора 01.10: широкая ровная линия —
+            // «шрам», а не трещина): ширина по длине — sin, у кончиков ноль.
+            Vec3[] sides = new Vec3[n + 1];
+            for (int k = 0; k <= n; k++) {
+                Vec3 tan = pts.get(Math.min(n, k + 1)).subtract(pts.get(Math.max(0, k - 1)));
+                Vec3 sd = tan.cross(s.camera().subtract(pts.get(k)));
+                sides[k] = sd.lengthSqr() < 1.0E-12D ? new Vec3(0.0D, 1.0D, 0.0D) : sd.normalize();
+            }
+            for (int k = 0; k < n && k < total; k++) {
                 Vec3 a = pts.get(k);
-                Vec3 b = k + 1 <= total ? pts.get(k + 1) : a.lerp(pts.get(k + 1), total - k);
-                VfxDraw.segment(c, s.pose(), a, b, s.camera(), core * 3.5D, 0.35F * alpha, SEAM_EDGE.red(), SEAM_EDGE.green(), SEAM_EDGE.blue());
-                VfxDraw.segment(c, s.pose(), a, b, s.camera(), core, alpha, SEAM_CORE.red(), SEAM_CORE.green(), SEAM_CORE.blue());
+                float f1 = Math.min(1.0F, total - k);
+                Vec3 b = a.lerp(pts.get(k + 1), f1);
+                double ua = k / (double) n, ub = (k + f1) / (double) n;
+                double ta = Math.pow(Math.sin(Math.PI * ua), 0.8D), tb = Math.pow(Math.sin(Math.PI * ub), 0.8D);
+                ribbonQuad(c, s, a, b, sides[k], sides[k + 1], core * 3.5D * ta, core * 3.5D * tb,
+                           0.35F * alpha, 0.35F * alpha, SEAM_EDGE, SEAM_EDGE);
+                ribbonQuad(c, s, a, b, sides[k], sides[k + 1], core * ta, core * tb,
+                           alpha, alpha, SEAM_CORE, SEAM_CORE);
             }
         }
         s.buffers().endBatch(MurimRenderTypes.ribbon());
     }
+
 
     /**
      * Пластины коры: отходят от поверхности у трещин, приподнимаются со светом под краем
@@ -976,6 +991,8 @@ public final class MeditationVfxRenderer {
         List<Vec3[]> glowEdges = new ArrayList<>();
         List<double[]> glowSpots = new ArrayList<>();
         List<Vec3> spotPos = new ArrayList<>();
+        List<Vec3[]> holes = new ArrayList<>();
+        List<Float> holeAlpha = new ArrayList<>();
         int idx = 0;
         for (Crack cr : net) {
             for (int k = 1; k < cr.points().size(); k += 2, idx++) {
@@ -1008,6 +1025,18 @@ public final class MeditationVfxRenderer {
                     poly[v] = centre.add(ax.scale(Math.cos(ang) * rr)).add(ay.scale(Math.sin(ang) * rr * 0.8D));
                 }
                 dark.add(poly);
+                // Дыра на месте скола: та же форма на коже, светится ярче всего сразу после
+                // отрыва и гаснет за ~2 с — «там кожа сильнее светится» (автор 01.10).
+                float since = age - t0 - 10.0F;
+                float hole = since < 0.0F ? 0.5F * lift : Mth.clamp(1.0F - since / 40.0F, 0.0F, 1.0F);
+                if (hole > 0.0F) {
+                    Vec3[] spot = new Vec3[verts];
+                    for (int v = 0; v < verts; v++) {
+                        spot[v] = poly[v].subtract(centre).add(base).add(s.facing().scale(0.004D));
+                    }
+                    holes.add(spot);
+                    holeAlpha.add(hole);
+                }
                 float edge = (1.0F - fly) * (0.4F + 0.6F * lift);
                 // Светится только линия облома — одна сторона, обращённая к телу, тонко.
                 glowEdges.add(new Vec3[] {poly[0], poly[1]});
@@ -1035,6 +1064,20 @@ public final class MeditationVfxRenderer {
             float a = (float) glowSpots.get(i / 2)[1];
             Vec3[] e = glowEdges.get(i);
             VfxDraw.segment(g, s.pose(), e[0], e[1], s.camera(), 0.006D, 0.55F * a, 0.8F, 0.96F, 1.0F);
+        }
+        for (int h = 0; h < holes.size(); h++) {
+            Vec3[] q = holes.get(h);
+            float ha = holeAlpha.get(h);
+            Vec3 c0 = q[0];
+            for (int v = 1; v + 1 < q.length; v++) {
+                // UV в центр мягкой текстуры — заливка ровная, без пятна.
+                VfxDraw.vertex(g, s.pose(), c0, n, 0.5F, 0.5F, 0.85F * ha, 0.75F, 0.95F, 1.0F);
+                VfxDraw.vertex(g, s.pose(), q[v], n, 0.5F, 0.5F, 0.85F * ha, 0.75F, 0.95F, 1.0F);
+                VfxDraw.vertex(g, s.pose(), q[v + 1], n, 0.5F, 0.5F, 0.85F * ha, 0.75F, 0.95F, 1.0F);
+                VfxDraw.vertex(g, s.pose(), q[v + 1], n, 0.5F, 0.5F, 0.85F * ha, 0.75F, 0.95F, 1.0F);
+            }
+            Vec3 mid = q[0].lerp(q[q.length / 2], 0.5D);
+            VfxDraw.billboard(g, s.pose(), mid, s.camera(), 0.12D, 0.5F * ha, 0.4F, 0.85F, 1.0F);
         }
         // Просвет под отошедшей пластиной: держится 4–8 тиков после отлёта и гаснет.
         for (int i = 0; i < spotPos.size(); i++) {
