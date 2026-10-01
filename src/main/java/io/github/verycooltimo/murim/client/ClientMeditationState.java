@@ -74,7 +74,7 @@ public final class ClientMeditationState {
     private static int breakthroughTicks = -1;
 
     /** Выход ауры после прорыва: 3 секунды, титр нового ранга. */
-    public static final int RANK_UP_TICKS = 60;
+    public static final int RANK_UP_TICKS = 80;
     private static int rankUpTicks;
     private static int rankUpRank;
     private static CameraType restoreCamera;

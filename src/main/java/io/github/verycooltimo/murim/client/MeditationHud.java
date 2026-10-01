@@ -433,7 +433,8 @@ public final class MeditationHud {
                 graphics.fill(0, 0, w, h, ((int) (flash * flash * 0xB0) << 24) | 0xE8F6FF);
             }
         }
-        float title = Mth.clamp((age - 6.0F) / 10.0F, 0.0F, 1.0F) * Mth.clamp((total - age) / 15.0F, 0.0F, 1.0F);
+        // Титр — после пика выброса, не вместе с ним (второе мнение по кадрам 01.10).
+        float title = Mth.clamp((age - 18.0F) / 10.0F, 0.0F, 1.0F) * Mth.clamp((total - age) / 15.0F, 0.0F, 1.0F);
         if (title > 0.02F) {
             int alpha = Math.max(4, (int) (title * 255)) << 24;
             Font font = minecraft.font;

@@ -356,8 +356,8 @@ public final class MeditationVfxRenderer {
     // ------------------------------------------------------------------ прорыв
 
     /** Кости: тёплый белый, как раскалённое; ядро почти белое. */
-    private static final VfxColour BONE = new VfxColour(1.0F, 0.86F, 0.55F);
-    private static final VfxColour BONE_CORE = new VfxColour(1.0F, 0.98F, 0.9F);
+    private static final VfxColour BONE = new VfxColour(1.0F, 0.72F, 0.3F);
+    private static final VfxColour BONE_CORE = new VfxColour(1.0F, 0.93F, 0.72F);
     /** Аура после прорыва — светлее и холоднее ци семени. */
     private static final VfxColour AURA = new VfxColour(0.6F, 0.88F, 1.0F);
 
@@ -376,8 +376,12 @@ public final class MeditationVfxRenderer {
         float bones = Mth.clamp((age - 40.0F) / 30.0F, 0.0F, 1.0F) * (1.0F - 0.6F * squeeze);
         float impurity = Mth.clamp((age - 70.0F) / 20.0F, 0.0F, 1.0F);
 
-        drawVeins(s, gather, 0.55F * gather * (1.0F - 0.5F * squeeze));
-        drawStreams(s, age, gather);
+        // Очищение меридиан — процессом (второе мнение по кадрам 01.10): сначала каналы
+        // тусклые и забитые, затем по ним проходит яркая волна, после неё они чистые и ровные.
+        float cleanse = Mth.clamp((age - 90.0F) / 60.0F, 0.0F, 1.0F);
+        float wave = (float) Math.exp(-Math.pow((age - 120.0F) / 18.0F, 2.0D));
+        drawVeins(s, gather, (0.22F + 0.45F * cleanse + 0.5F * wave) * gather * (1.0F - 0.5F * squeeze));
+        drawStreams(s, age, gather * (0.4F + 1.2F * wave + 0.4F * cleanse));
         drawSkeleton(s, age, bones);
         drawImpurities(s, age, impurity);
 
@@ -385,7 +389,7 @@ public final class MeditationVfxRenderer {
         float breath = 0.5F + 0.5F * Mth.sin(age * 0.25F);
         VertexConsumer glow = s.buffers().getBuffer(MurimRenderTypes.impactCore());
         CoreGlow.draw(glow, s.pose(), s.core(), s.camera(), age,
-                      0.08D + 0.05D * gather + 0.18D * squeeze + 0.02D * breath,
+                      0.08D + 0.05D * gather + 0.32D * squeeze * squeeze + 0.02D * breath,
                       Math.min(1.0F, 0.5F * gather + 0.5F * squeeze + 0.15F * breath), DEEP, CORE);
         BillboardBurst.inward(glow, s.pose(), s.core(), s.camera(), 20, age, 0.7D,
                               0.4F * gather + 0.4F * squeeze, HALO, CORE);
@@ -419,11 +423,11 @@ public final class MeditationVfxRenderer {
         }
         // Таз — на оси тела, а не на передней поверхности живота, где лежит кость даньтяня.
         Vec3 hip = new Vec3(chest.x, pelvis.y, chest.z);
+        // Позвоночник кончается шеей: кость головы стоит в центре головы, и линия до неё
+        // шла прямо через лицо (кадры стенда 01.10).
+        Vec3 neck = head != null ? chest.lerp(head, 0.12D) : chest.add(0.0D, 0.12D, 0.0D);
         List<Vec3[]> segments = new ArrayList<>();
-        segments.add(new Vec3[] {hip, chest});
-        if (head != null) {
-            segments.add(new Vec3[] {chest, head});
-        }
+        segments.add(new Vec3[] {hip, neck});
         for (Vec3[] limb : new Vec3[][] {{chest, rs, rh}, {chest, ls, lh}, {hip, rk, rf}, {hip, lk, lf}}) {
             for (int i = 0; i + 1 < limb.length; i++) {
                 if (limb[i] != null && limb[i + 1] != null) {
@@ -431,16 +435,24 @@ public final class MeditationVfxRenderer {
                 }
             }
         }
-        // Рёбра: три пары дуг вокруг грудины, к бокам корпуса.
+        // Рёбра: четыре пары ДУГ от грудины вбок и назад — дуга читается как ребро,
+        // прямой отрезок — как прожилка (второе мнение по кадрам 01.10).
         Vec3 side = s.facing().cross(new Vec3(0.0D, 1.0D, 0.0D));
         if (side.lengthSqr() > 1.0E-6D) {
             side = side.normalize();
-            for (int i = 0; i < 3; i++) {
-                Vec3 sternum = chest.add(0.0D, -0.06D - 0.07D * i, 0.0D);
-                double reach = 0.17D - 0.015D * i;
+            for (int i = 0; i < 4; i++) {
+                Vec3 sternum = chest.add(0.0D, -0.04D - 0.065D * i, 0.0D).add(s.facing().scale(0.06D));
+                double reach = 0.19D - 0.012D * i;
                 for (int sign = -1; sign <= 1; sign += 2) {
-                    Vec3 end = sternum.add(side.scale(sign * reach)).add(0.0D, -0.04D, 0.0D);
-                    segments.add(new Vec3[] {sternum, end});
+                    Vec3 prev = sternum;
+                    for (int k = 1; k <= 4; k++) {
+                        double a = k / 4.0D * Math.PI * 0.5D;
+                        Vec3 next = sternum.add(side.scale(sign * reach * Math.sin(a)))
+                                .add(s.facing().scale(-0.12D * (1.0D - Math.cos(a))))
+                                .add(0.0D, -0.035D * k / 4.0D, 0.0D);
+                        segments.add(new Vec3[] {prev, next});
+                        prev = next;
+                    }
                 }
             }
         }
@@ -450,10 +462,16 @@ public final class MeditationVfxRenderer {
         float lit = strength * (0.75F + 0.25F * crack);
         VertexConsumer bone = s.buffers().getBuffer(MurimRenderTypes.bodyGlow());
         for (Vec3[] seg : segments) {
-            VfxDraw.segment(bone, s.pose(), seg[0], seg[1], s.camera(), 0.055D, 0.35F * lit,
+            VfxDraw.segment(bone, s.pose(), seg[0], seg[1], s.camera(), 0.075D, 0.4F * lit,
                             BONE.red(), BONE.green(), BONE.blue());
-            VfxDraw.segment(bone, s.pose(), seg[0], seg[1], s.camera(), 0.018D, 0.95F * lit,
+            VfxDraw.segment(bone, s.pose(), seg[0], seg[1], s.camera(), 0.03D, 0.95F * lit,
                             BONE_CORE.red(), BONE_CORE.green(), BONE_CORE.blue());
+        }
+        // Позвонки — цепочка узлов по позвоночнику: вертикальная ось читается костью, а не лучом.
+        for (int i = 0; i <= 9; i++) {
+            Vec3 v = hip.lerp(neck, i / 9.0D);
+            VfxDraw.billboard(bone, s.pose(), v, s.camera(), 0.045D, 0.85F * lit,
+                              BONE_CORE.red(), BONE_CORE.green(), BONE_CORE.blue());
         }
         // Суставы и череп — светлые узлы.
         for (Vec3 joint : new Vec3[] {hip, chest, rs, ls, rk, lk}) {
@@ -546,20 +564,28 @@ public final class MeditationVfxRenderer {
         float fade = (1.0F - k) * (1.0F - k);
         VertexConsumer glow = s.buffers().getBuffer(MurimRenderTypes.impactCore());
         if (age < 25.0F) {
-            BillboardBurst.outward(glow, s.pose(), s.core(), s.camera(), 48, age, 1.6D,
+            BillboardBurst.outward(glow, s.pose(), s.core(), s.camera(), 64, age, 2.6D,
                                    1.0F - age / 25.0F, AURA, CORE);
         }
+        // Пересвет силуэта в первые тики — пик выброса.
+        float peak = Mth.clamp(1.0F - age / 8.0F, 0.0F, 1.0F);
+        VfxDraw.billboard(glow, s.pose(), s.core().add(0.0D, 0.3D, 0.0D), s.camera(), 1.1D * peak + 0.01D,
+                          0.9F * peak, 0.85F, 0.95F, 1.0F);
         CoreGlow.draw(glow, s.pose(), s.core(), s.camera(), age, 0.35D * fade + 0.06D, fade, AURA, CORE);
         // Столб: от ног вверх, быстро гаснет.
         AbstractClientPlayer p = s.player();
         double feet = Mth.lerp(s.minecraft().getTimer().getGameTimeDeltaPartialTick(false), p.yOld, p.getY());
         Vec3 base = new Vec3(s.axis().x, feet, s.axis().z);
         float pillar = Mth.clamp(1.0F - age / 18.0F, 0.0F, 1.0F);
-        VfxDraw.segment(glow, s.pose(), base, base.add(0.0D, 3.5D, 0.0D), s.camera(), 0.35D * pillar + 0.05D,
-                        0.7F * pillar, AURA.red(), AURA.green(), AURA.blue());
+        // Столб — через тело: от земли сквозь позвоночник и макушку вверх, канал прорыва.
+        VfxDraw.segment(glow, s.pose(), base, base.add(0.0D, 6.0D, 0.0D), s.camera(), 0.45D * pillar + 0.05D,
+                        0.8F * pillar, AURA.red(), AURA.green(), AURA.blue());
+        VfxDraw.segment(glow, s.pose(), base, base.add(0.0D, 6.0D, 0.0D), s.camera(), 0.12D * pillar + 0.02D,
+                        pillar, CORE.red(), CORE.green(), CORE.blue());
         s.buffers().endBatch(MurimRenderTypes.impactCore());
         // Кольцо по земле расходится на четыре блока.
-        double radius = 0.4D + 3.6D * Math.sqrt(k);
+        // Ударная волна: за полсекунды до семи блоков — резко, а не спокойным кругом.
+        double radius = 0.4D + 6.6D * Math.min(1.0D, Math.sqrt(age / 10.0D));
         drawGroundRing(s, base.add(0.0D, 0.05D, 0.0D), radius, 0.12D + 0.2D * k, 0.8F * fade);
     }
 
