@@ -85,5 +85,15 @@
   "murim.loadout.locked_hint": "Слоты растут с пониманием",
   "murim.loadout.hint": "ЛКМ — взять/положить · ПКМ — убрать",
   "murim.loadout.empty_slot": "пустой слот",
-  "murim.loadout.empty": "Слот пуст — разложите техники: [%s]"
+  "murim.loadout.empty": "Слот пуст — разложите техники: [%s]",
+  "murim.rank.0": "Без ранга",
+  "murim.rank.1": "Третий ранг",
+  "murim.rank.2": "Второй ранг",
+  "murim.rank.3": "Первый ранг",
+  "murim.rank.breakthrough.begin": "Стена ранга. Прорыв: %s",
+  "murim.rank.breakthrough.done": "Прорыв завершён: %s",
+  "murim.rank.breakthrough.broken": "Прорыв прерван: меридианы повреждены, часть ци потеряна",
+  "murim.rank.wall.technique": "Ци упёрлась в стену. Для прорыва освой технику до %s-го слоя",
+  "murim.rank.wall.max": "Ци упёрлась в стену. Дальше пути пока нет",
+  "murim.rank.breakthrough.title": "Прорыв"
 }

@@ -76,8 +76,10 @@ public final class MeditationVfxRenderer {
         }
         SyncMeditationPayload state = ClientMeditationState.state();
         int sceneAge = ClientMeditationState.seedSceneAge();
+        int rankUpAge = ClientMeditationState.rankUpAge();
         ClientMeditationState.Aftermath aftermath = ClientMeditationState.aftermath();
-        if (!state.active() && sceneAge < 0 && aftermath == ClientMeditationState.Aftermath.NONE) {
+        if (!state.active() && sceneAge < 0 && rankUpAge < 0
+                && aftermath == ClientMeditationState.Aftermath.NONE) {
             return;
         }
         Minecraft minecraft = Minecraft.getInstance();
@@ -114,7 +116,13 @@ public final class MeditationVfxRenderer {
             Scene scene = new Scene(minecraft, player, pose, cameraPos, axis, core, facing);
 
             seedOnScreen = null;
-            if (sceneAge >= 0) {
+            int breakAge = ClientMeditationState.breakthroughAge();
+            if (rankUpAge >= 0) {
+                rankUp(scene, rankUpAge + partial);
+            }
+            if (breakAge >= 0) {
+                breakthrough(scene, breakAge + partial);
+            } else if (sceneAge >= 0) {
                 seedOnScreen = project(core, cameraPos, event.getModelViewMatrix(), event.getProjectionMatrix());
                 seedScene(scene, sceneAge + partial);
             } else if (state.active()) {
@@ -341,6 +349,238 @@ public final class MeditationVfxRenderer {
         } else {
             BillboardBurst.inward(glow, s.pose(), s.core(), s.camera(), 12, age, 0.3D,
                                   0.35F * fadeOut, HALO, CORE);
+        }
+        s.buffers().endBatch(MurimRenderTypes.impactCore());
+    }
+
+    // ------------------------------------------------------------------ прорыв
+
+    /** Кости: тёплый белый, как раскалённое; ядро почти белое. */
+    private static final VfxColour BONE = new VfxColour(1.0F, 0.86F, 0.55F);
+    private static final VfxColour BONE_CORE = new VfxColour(1.0F, 0.98F, 0.9F);
+    /** Аура после прорыва — светлее и холоднее ци семени. */
+    private static final VfxColour AURA = new VfxColour(0.6F, 0.88F, 1.0F);
+
+    /**
+     * Прорыв в ранг (docs/design/19 §3е, решение автора 01.10): ци собирается к центру,
+     * кости светятся сквозь тело, по меридианам идёт волна, тёмные сгустки примесей выходят
+     * наружу и падают пятнами. Выход ауры в конце — {@link #rankUp}.
+     *
+     * <p>Фазы по 12 секундам сцены: 0–2 с — сбор; 2–10 с — кости и волна; 3,5–10 с — примеси;
+     * 10–12 с — всё стягивается в центр перед выходом ауры.
+     */
+    private static void breakthrough(Scene s, float age) {
+        float total = io.github.verycooltimo.murim.cultivation.Realm.BREAKTHROUGH_TICKS;
+        float gather = Mth.clamp(age / 40.0F, 0.0F, 1.0F);
+        float squeeze = Mth.clamp((age - (total - 40.0F)) / 40.0F, 0.0F, 1.0F);
+        float bones = Mth.clamp((age - 40.0F) / 30.0F, 0.0F, 1.0F) * (1.0F - 0.6F * squeeze);
+        float impurity = Mth.clamp((age - 70.0F) / 20.0F, 0.0F, 1.0F);
+
+        drawVeins(s, gather, 0.55F * gather * (1.0F - 0.5F * squeeze));
+        drawStreams(s, age, gather);
+        drawSkeleton(s, age, bones);
+        drawImpurities(s, age, impurity);
+
+        // Центр копит свет к концу: стягивание перед выходом ауры.
+        float breath = 0.5F + 0.5F * Mth.sin(age * 0.25F);
+        VertexConsumer glow = s.buffers().getBuffer(MurimRenderTypes.impactCore());
+        CoreGlow.draw(glow, s.pose(), s.core(), s.camera(), age,
+                      0.08D + 0.05D * gather + 0.18D * squeeze + 0.02D * breath,
+                      Math.min(1.0F, 0.5F * gather + 0.5F * squeeze + 0.15F * breath), DEEP, CORE);
+        BillboardBurst.inward(glow, s.pose(), s.core(), s.camera(), 20, age, 0.7D,
+                              0.4F * gather + 0.4F * squeeze, HALO, CORE);
+        s.buffers().endBatch(MurimRenderTypes.impactCore());
+    }
+
+    /**
+     * Светящийся каркас: позвоночник, ключицы, руки, ноги, рёбра и череп. Кости лежат
+     * внутри тела, поэтому рисуются слоем без проверки глубины — как рентген сквозь кожу.
+     * Свет идёт от таза наружу; каждые полторы секунды каркас вспыхивает трещиной:
+     * «кости ломаются и срастаются».
+     */
+    private static void drawSkeleton(Scene s, float age, float strength) {
+        if (strength <= 0.0F) {
+            return;
+        }
+        AbstractClientPlayer p = s.player();
+        Vec3 pelvis = BoneAnchorLayer.position(p, BoneAnchorLayer.Bone.DANTIAN);
+        Vec3 chest = BoneAnchorLayer.position(p, BoneAnchorLayer.Bone.CHEST);
+        Vec3 head = BoneAnchorLayer.position(p, BoneAnchorLayer.Bone.HEAD);
+        Vec3 rs = BoneAnchorLayer.position(p, BoneAnchorLayer.Bone.RIGHT_SHOULDER);
+        Vec3 ls = BoneAnchorLayer.position(p, BoneAnchorLayer.Bone.LEFT_SHOULDER);
+        Vec3 rh = BoneAnchorLayer.position(p, BoneAnchorLayer.Bone.RIGHT_HAND);
+        Vec3 lh = BoneAnchorLayer.position(p, BoneAnchorLayer.Bone.LEFT_HAND);
+        Vec3 rk = BoneAnchorLayer.position(p, BoneAnchorLayer.Bone.RIGHT_KNEE);
+        Vec3 lk = BoneAnchorLayer.position(p, BoneAnchorLayer.Bone.LEFT_KNEE);
+        Vec3 rf = BoneAnchorLayer.position(p, BoneAnchorLayer.Bone.RIGHT_FOOT);
+        Vec3 lf = BoneAnchorLayer.position(p, BoneAnchorLayer.Bone.LEFT_FOOT);
+        if (pelvis == null || chest == null) {
+            return;
+        }
+        // Таз — на оси тела, а не на передней поверхности живота, где лежит кость даньтяня.
+        Vec3 hip = new Vec3(chest.x, pelvis.y, chest.z);
+        List<Vec3[]> segments = new ArrayList<>();
+        segments.add(new Vec3[] {hip, chest});
+        if (head != null) {
+            segments.add(new Vec3[] {chest, head});
+        }
+        for (Vec3[] limb : new Vec3[][] {{chest, rs, rh}, {chest, ls, lh}, {hip, rk, rf}, {hip, lk, lf}}) {
+            for (int i = 0; i + 1 < limb.length; i++) {
+                if (limb[i] != null && limb[i + 1] != null) {
+                    segments.add(new Vec3[] {limb[i], limb[i + 1]});
+                }
+            }
+        }
+        // Рёбра: три пары дуг вокруг грудины, к бокам корпуса.
+        Vec3 side = s.facing().cross(new Vec3(0.0D, 1.0D, 0.0D));
+        if (side.lengthSqr() > 1.0E-6D) {
+            side = side.normalize();
+            for (int i = 0; i < 3; i++) {
+                Vec3 sternum = chest.add(0.0D, -0.06D - 0.07D * i, 0.0D);
+                double reach = 0.17D - 0.015D * i;
+                for (int sign = -1; sign <= 1; sign += 2) {
+                    Vec3 end = sternum.add(side.scale(sign * reach)).add(0.0D, -0.04D, 0.0D);
+                    segments.add(new Vec3[] {sternum, end});
+                }
+            }
+        }
+
+        // Трещина: короткая яркая вспышка каждые 30 тиков, затухающая за 8.
+        float crack = (float) Math.exp(-(age % 30.0F) / 4.0F);
+        float lit = strength * (0.75F + 0.25F * crack);
+        VertexConsumer bone = s.buffers().getBuffer(MurimRenderTypes.bodyGlow());
+        for (Vec3[] seg : segments) {
+            VfxDraw.segment(bone, s.pose(), seg[0], seg[1], s.camera(), 0.055D, 0.35F * lit,
+                            BONE.red(), BONE.green(), BONE.blue());
+            VfxDraw.segment(bone, s.pose(), seg[0], seg[1], s.camera(), 0.018D, 0.95F * lit,
+                            BONE_CORE.red(), BONE_CORE.green(), BONE_CORE.blue());
+        }
+        // Суставы и череп — светлые узлы.
+        for (Vec3 joint : new Vec3[] {hip, chest, rs, ls, rk, lk}) {
+            if (joint != null) {
+                VfxDraw.billboard(bone, s.pose(), joint, s.camera(), 0.05D, 0.8F * lit,
+                                  BONE_CORE.red(), BONE_CORE.green(), BONE_CORE.blue());
+            }
+        }
+        if (head != null) {
+            VfxDraw.billboard(bone, s.pose(), head.add(0.0D, 0.08D, 0.0D), s.camera(), 0.13D, 0.5F * lit,
+                              BONE.red(), BONE.green(), BONE.blue());
+        }
+        s.buffers().endBatch(MurimRenderTypes.bodyGlow());
+    }
+
+    /**
+     * Примеси: тёмные сгустки выступают из тела, отрываются и падают, оставляя пятна у ног.
+     * Положения считаются из номера сгустка, а не хранятся: сцена воспроизводима кадр в кадр.
+     */
+    private static void drawImpurities(Scene s, float age, float strength) {
+        if (strength <= 0.0F) {
+            return;
+        }
+        AbstractClientPlayer p = s.player();
+        Vec3 chest = BoneAnchorLayer.position(p, BoneAnchorLayer.Bone.CHEST);
+        Vec3[] anchors = {
+            chest, s.core(),
+            BoneAnchorLayer.position(p, BoneAnchorLayer.Bone.RIGHT_SHOULDER),
+            BoneAnchorLayer.position(p, BoneAnchorLayer.Bone.LEFT_SHOULDER),
+            BoneAnchorLayer.position(p, BoneAnchorLayer.Bone.RIGHT_HAND),
+            BoneAnchorLayer.position(p, BoneAnchorLayer.Bone.LEFT_HAND),
+            BoneAnchorLayer.position(p, BoneAnchorLayer.Bone.RIGHT_KNEE),
+            BoneAnchorLayer.position(p, BoneAnchorLayer.Bone.LEFT_KNEE)};
+        double ground = Mth.lerp(s.minecraft().getTimer().getGameTimeDeltaPartialTick(false), p.yOld, p.getY()) + 0.02D;
+        VertexConsumer dark = s.buffers().getBuffer(MurimRenderTypes.impurity());
+        int count = 26;
+        for (int i = 0; i < count; i++) {
+            java.util.Random r = new java.util.Random(SEED * 31L + i);
+            Vec3 from = anchors[r.nextInt(anchors.length)];
+            if (from == null) {
+                continue;
+            }
+            float born = 70.0F + r.nextFloat() * 120.0F;
+            float t = (age - born) / 40.0F;
+            if (t < 0.0F) {
+                continue;
+            }
+            // Наружу от оси тела — сгусток выступает из кожи, а не висит внутри.
+            Vec3 out = new Vec3(from.x - s.axis().x, 0.0D, from.z - s.axis().z);
+            out = out.lengthSqr() > 1.0E-6D ? out.normalize() : s.facing();
+            out = out.add((r.nextDouble() - 0.5D) * 0.6D, 0.0D, (r.nextDouble() - 0.5D) * 0.6D).normalize();
+            double size = 0.05D + r.nextDouble() * 0.05D;
+            float a = 0.85F * strength;
+            if (t < 1.0F) {
+                // Выступает на 0,15 блока и падает с ускорением.
+                double push = 0.15D * Math.min(1.0D, t * 3.0D);
+                double fall = Math.max(0.0D, t - 0.3D);
+                Vec3 at = from.add(out.scale(0.12D + push)).add(0.0D, -1.4D * fall * fall, 0.0D);
+                if (at.y < ground) {
+                    at = new Vec3(at.x, ground + size, at.z);
+                }
+                VfxDraw.billboard(dark, s.pose(), at, s.camera(), size * (1.0D + 0.6D * t), a,
+                                  0.07F, 0.04F, 0.06F);
+            }
+            // Пятно у ног: появляется при падении и держится до конца сцены.
+            if (t > 0.6F) {
+                Vec3 spot = new Vec3(from.x + out.x * 0.35D, ground, from.z + out.z * 0.35D);
+                double rad = size * 1.8D * Math.min(1.0D, (t - 0.6D) * 2.5D);
+                flatSpot(dark, s.pose(), spot, rad, 0.7F * strength);
+            }
+        }
+        s.buffers().endBatch(MurimRenderTypes.impurity());
+    }
+
+    /** Горизонтальное пятно на земле. */
+    private static void flatSpot(VertexConsumer c, PoseStack.Pose pose, Vec3 at, double r, float alpha) {
+        Vec3 up = new Vec3(0.0D, 1.0D, 0.0D);
+        VfxDraw.vertex(c, pose, at.add(-r, 0.0D, -r), up, 0.0F, 0.0F, alpha, 0.06F, 0.04F, 0.05F);
+        VfxDraw.vertex(c, pose, at.add(-r, 0.0D, r), up, 0.0F, 1.0F, alpha, 0.06F, 0.04F, 0.05F);
+        VfxDraw.vertex(c, pose, at.add(r, 0.0D, r), up, 1.0F, 1.0F, alpha, 0.06F, 0.04F, 0.05F);
+        VfxDraw.vertex(c, pose, at.add(r, 0.0D, -r), up, 1.0F, 0.0F, alpha, 0.06F, 0.04F, 0.05F);
+    }
+
+    /**
+     * Выход ауры после прорыва: вспышка из центра, кольцо по земле и столб света.
+     * Тот же язык, что у давления сильного противника (§3д), — только наружу от себя.
+     */
+    private static void rankUp(Scene s, float age) {
+        float k = Mth.clamp(age / ClientMeditationState.RANK_UP_TICKS, 0.0F, 1.0F);
+        float fade = (1.0F - k) * (1.0F - k);
+        VertexConsumer glow = s.buffers().getBuffer(MurimRenderTypes.impactCore());
+        if (age < 25.0F) {
+            BillboardBurst.outward(glow, s.pose(), s.core(), s.camera(), 48, age, 1.6D,
+                                   1.0F - age / 25.0F, AURA, CORE);
+        }
+        CoreGlow.draw(glow, s.pose(), s.core(), s.camera(), age, 0.35D * fade + 0.06D, fade, AURA, CORE);
+        // Столб: от ног вверх, быстро гаснет.
+        AbstractClientPlayer p = s.player();
+        double feet = Mth.lerp(s.minecraft().getTimer().getGameTimeDeltaPartialTick(false), p.yOld, p.getY());
+        Vec3 base = new Vec3(s.axis().x, feet, s.axis().z);
+        float pillar = Mth.clamp(1.0F - age / 18.0F, 0.0F, 1.0F);
+        VfxDraw.segment(glow, s.pose(), base, base.add(0.0D, 3.5D, 0.0D), s.camera(), 0.35D * pillar + 0.05D,
+                        0.7F * pillar, AURA.red(), AURA.green(), AURA.blue());
+        s.buffers().endBatch(MurimRenderTypes.impactCore());
+        // Кольцо по земле расходится на четыре блока.
+        double radius = 0.4D + 3.6D * Math.sqrt(k);
+        drawGroundRing(s, base.add(0.0D, 0.05D, 0.0D), radius, 0.12D + 0.2D * k, 0.8F * fade);
+    }
+
+    private static void drawGroundRing(Scene s, Vec3 centre, double radius, double width, float alpha) {
+        if (alpha <= 0.0F) {
+            return;
+        }
+        VertexConsumer c = s.buffers().getBuffer(MurimRenderTypes.impactCore());
+        Vec3 up = new Vec3(0.0D, 1.0D, 0.0D);
+        int n = 48;
+        for (int i = 0; i < n; i++) {
+            double a0 = Math.PI * 2.0D * i / n;
+            double a1 = Math.PI * 2.0D * (i + 1) / n;
+            Vec3 i0 = centre.add(Math.cos(a0) * (radius - width), 0.0D, Math.sin(a0) * (radius - width));
+            Vec3 o0 = centre.add(Math.cos(a0) * radius, 0.0D, Math.sin(a0) * radius);
+            Vec3 o1 = centre.add(Math.cos(a1) * radius, 0.0D, Math.sin(a1) * radius);
+            Vec3 i1 = centre.add(Math.cos(a1) * (radius - width), 0.0D, Math.sin(a1) * (radius - width));
+            VfxDraw.vertex(c, s.pose(), i0, up, 0.5F, 0.5F, alpha * 0.2F, AURA.red(), AURA.green(), AURA.blue());
+            VfxDraw.vertex(c, s.pose(), o0, up, 0.5F, 0.0F, alpha, AURA.red(), AURA.green(), AURA.blue());
+            VfxDraw.vertex(c, s.pose(), o1, up, 0.5F, 0.0F, alpha, AURA.red(), AURA.green(), AURA.blue());
+            VfxDraw.vertex(c, s.pose(), i1, up, 0.5F, 0.5F, alpha * 0.2F, AURA.red(), AURA.green(), AURA.blue());
         }
         s.buffers().endBatch(MurimRenderTypes.impactCore());
     }

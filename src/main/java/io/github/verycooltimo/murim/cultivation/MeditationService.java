@@ -94,7 +94,12 @@ public final class MeditationService {
 
     /** Прерывает сессию. До семени незаконченный такт не засчитывается. */
     public static void stop(ServerPlayer player, String messageKey) {
-        if (!player.getData(ModAttachments.MEDITATION).active()) {
+        MeditationState was = player.getData(ModAttachments.MEDITATION);
+        if (!was.active()) {
+            return;
+        }
+        if (was.breakingThrough()) {
+            breakthroughBroken(player);
             return;
         }
         player.setData(ModAttachments.MEDITATION, MeditationState.IDLE);
@@ -230,6 +235,10 @@ public final class MeditationService {
 
     /** После семени: запас растёт с падающей отдачей, циркулирующая наполняется быстрее. */
     private static void tickSeeded(ServerPlayer player, MeditationState state) {
+        if (state.breakingThrough()) {
+            tickBreakthrough(player, state);
+            return;
+        }
         MeditationState next = state.tick(null);
         player.setData(ModAttachments.MEDITATION, next);
         DantianProfile profile = player.getData(ModAttachments.PROFILE);
@@ -242,11 +251,92 @@ public final class MeditationService {
         player.setData(ModAttachments.PROFILE, updated);
         // Осмысление пережитого (docs/design/19 §3г): неосмысленное становится освоением.
         io.github.verycooltimo.murim.mastery.MasteryService.meditate(player);
+        if (checkWall(player, updated, next)) {
+            return;
+        }
         if (next.ticks() % 20 == 0) {
             io.github.verycooltimo.murim.mastery.MasteryService.sync(player);
             ProfileNetwork.sync(player);
             sync(player, SyncMeditationPayload.Event.NONE);
         }
+    }
+
+    /** Как часто напоминать, что стена есть, а прорыва нет: раз в 20 секунд. */
+    static final int WALL_HINT_TICKS = 400;
+
+    /**
+     * Запас упёрся в стену: всё готово — начинается прорыв; не хватает техники — подсказка.
+     *
+     * @return {@code true}, если прорыв начался
+     */
+    private static boolean checkWall(ServerPlayer player, DantianProfile profile, MeditationState state) {
+        Realm.Blocker blocker = Realm.check(profile,
+                player.getData(ModAttachments.MASTERY).layers());
+        if (blocker == Realm.Blocker.NONE) {
+            player.setData(ModAttachments.MEDITATION, state.withBreakthrough(0));
+            player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
+                    SoundEvents.BEACON_POWER_SELECT, SoundSource.PLAYERS, 0.7F, 0.6F);
+            player.displayClientMessage(Component.translatable("murim.rank.breakthrough.begin",
+                    Component.translatable(Realm.nameKey(profile.rank() + 1))).withStyle(ChatFormatting.AQUA), true);
+            sync(player, SyncMeditationPayload.Event.BREAKTHROUGH);
+            return true;
+        }
+        if (Realm.atWall(profile) && state.ticks() % WALL_HINT_TICKS == 0) {
+            String key = blocker == Realm.Blocker.NO_TECHNIQUE ? "murim.rank.wall.technique" : "murim.rank.wall.max";
+            player.displayClientMessage(Component.translatable(key, Realm.layerNeed(profile.rank() + 1))
+                    .withStyle(ChatFormatting.GRAY), true);
+        }
+        return false;
+    }
+
+    /**
+     * Сцена прорыва идёт сама: игроку остаётся сидеть. Удар по телу прерывает её
+     * (docs/design/19 §3б: «тело уязвимо»).
+     */
+    private static void tickBreakthrough(ServerPlayer player, MeditationState state) {
+        // hurtTime выставляется при любом полученном уроне — так прерывание ловится без
+        // отдельной подписки на событие урона.
+        if (player.hurtTime > 0) {
+            breakthroughBroken(player);
+            return;
+        }
+        MeditationState next = state.tick(null);
+        player.setData(ModAttachments.MEDITATION, next);
+        if (next.breakthrough() < Realm.BREAKTHROUGH_TICKS) {
+            if (next.breakthrough() % 5 == 0) {
+                sync(player, SyncMeditationPayload.Event.NONE);
+            }
+            return;
+        }
+        DantianProfile risen = Realm.advance(player.getData(ModAttachments.PROFILE));
+        player.setData(ModAttachments.PROFILE, risen);
+        // После прорыва глаза открываются: сессия кончается. Иначе следом сразу шло
+        // осмысление, и его титр ложился поверх титра ранга (кадры стенда 01.10).
+        player.setData(ModAttachments.MEDITATION, MeditationState.IDLE);
+        RankEffects.apply(player);
+        player.setHealth(player.getMaxHealth());
+        ProfileNetwork.sync(player);
+        player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
+                SoundEvents.TOTEM_USE, SoundSource.PLAYERS, 0.6F, 0.8F);
+        player.displayClientMessage(Component.translatable("murim.rank.breakthrough.done",
+                Component.translatable(Realm.nameKey(risen.rank()))).withStyle(ChatFormatting.GOLD), false);
+        sync(player, SyncMeditationPayload.Event.RANK_UP);
+    }
+
+    /** Прорыв прерван: травма меридиан — треть запаса и слабость, ранг прежний. */
+    private static void breakthroughBroken(ServerPlayer player) {
+        player.setData(ModAttachments.MEDITATION, MeditationState.IDLE);
+        player.setData(ModAttachments.PROFILE, Realm.injure(player.getData(ModAttachments.PROFILE)));
+        if (!player.isCreative()) {
+            player.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, BACKLASH_TICKS, 1));
+            player.addEffect(new MobEffectInstance(MobEffects.CONFUSION, 160, 0));
+        }
+        ProfileNetwork.sync(player);
+        player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
+                SoundEvents.PLAYER_HURT, SoundSource.PLAYERS, 1.0F, 0.5F);
+        player.displayClientMessage(Component.translatable("murim.rank.breakthrough.broken")
+                .withStyle(ChatFormatting.DARK_RED), false);
+        sync(player, SyncMeditationPayload.Event.BROKEN);
     }
 
     /** Прирост запаса за тик на данной секунде медитации: первая минута самая выгодная. */
@@ -267,7 +357,8 @@ public final class MeditationService {
                     (float) game.stability(), (float) game.strain());
         }
         PacketDistributor.sendToPlayer(player, new SyncMeditationPayload(state.active(),
-                cultivation.beats(), state.ticks(), event, ring));
+                cultivation.beats(), state.ticks(), event, ring,
+                state.active() ? state.breakthrough() : -1, player.getData(ModAttachments.PROFILE).rank()));
     }
 
     private MeditationService() {

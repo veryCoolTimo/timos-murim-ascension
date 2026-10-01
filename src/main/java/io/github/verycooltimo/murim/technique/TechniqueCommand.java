@@ -135,6 +135,35 @@ public final class TechniqueCommand {
             return 1;
         }));
 
+        // Запас до стены ранга: прорыв начнётся при следующей медитации, если есть техника 2-го слоя.
+        root.then(Commands.literal("wall").executes(context -> {
+            ServerPlayer player = context.getSource().getPlayerOrException();
+            io.github.verycooltimo.murim.profile.DantianProfile profile =
+                    player.getData(io.github.verycooltimo.murim.registry.ModAttachments.PROFILE);
+            player.setData(io.github.verycooltimo.murim.registry.ModAttachments.PROFILE,
+                    profile.withPool(io.github.verycooltimo.murim.cultivation.Realm.wall(profile)));
+            io.github.verycooltimo.murim.profile.ProfileNetwork.sync(player);
+            context.getSource().sendSuccess(() -> Component.literal("Запас у стены ранга"), false);
+            return 1;
+        }));
+
+        // Выставить ранг без прорыва: проверять, что даёт ранг, не проходя сцену.
+        root.then(Commands.literal("rank")
+                .then(Commands.argument("rank", com.mojang.brigadier.arguments.IntegerArgumentType.integer(
+                        0, io.github.verycooltimo.murim.cultivation.Realm.MAX))
+                        .executes(context -> {
+                            ServerPlayer player = context.getSource().getPlayerOrException();
+                            int rank = com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(context, "rank");
+                            player.setData(io.github.verycooltimo.murim.registry.ModAttachments.PROFILE,
+                                    player.getData(io.github.verycooltimo.murim.registry.ModAttachments.PROFILE)
+                                            .withRank(rank));
+                            io.github.verycooltimo.murim.cultivation.RankEffects.apply(player);
+                            io.github.verycooltimo.murim.profile.ProfileNetwork.sync(player);
+                            context.getSource().sendSuccess(() -> Component.translatable(
+                                    io.github.verycooltimo.murim.cultivation.Realm.nameKey(rank)), false);
+                            return 1;
+                        })));
+
         // Сброс кулдауна: подряд смотреть одну и ту же технику иначе нельзя.
         root.then(Commands.literal("cooldown").executes(context -> {
             ServerPlayer player = context.getSource().getPlayerOrException();

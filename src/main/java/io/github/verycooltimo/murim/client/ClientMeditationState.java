@@ -45,7 +45,7 @@ public final class ClientMeditationState {
 
     private static final SyncMeditationPayload IDLE =
             new SyncMeditationPayload(false, 0, 0, SyncMeditationPayload.Event.NONE,
-                    SyncMeditationPayload.Ring.NONE);
+                    SyncMeditationPayload.Ring.NONE, -1, 0);
 
     /** Прошлый снимок кольца: между пакетами сервера кольцо интерполируется. */
     private static SyncMeditationPayload.Ring previousRing = SyncMeditationPayload.Ring.NONE;
@@ -69,6 +69,14 @@ public final class ClientMeditationState {
     private static int aftermathBeats;
 
     private static int seedSceneTicks;
+
+    /** Тики сцены прорыва, досчитанные локально; {@code -1} — прорыва нет. */
+    private static int breakthroughTicks = -1;
+
+    /** Выход ауры после прорыва: 3 секунды, титр нового ранга. */
+    public static final int RANK_UP_TICKS = 60;
+    private static int rankUpTicks;
+    private static int rankUpRank;
     private static CameraType restoreCamera;
     /** Был ли интерфейс скрыт игроком до сцены: возвращаем как было. */
     private static Boolean restoreHideGui;
@@ -120,9 +128,23 @@ public final class ClientMeditationState {
         return seedSceneTicks > 0 ? SEED_SCENE_TICKS - seedSceneTicks : -1;
     }
 
+    /** Сколько тиков сцены прорыва прошло, или -1. */
+    public static int breakthroughAge() {
+        return breakthroughTicks;
+    }
+
+    /** Сколько тиков выхода ауры прошло после прорыва, или -1. */
+    public static int rankUpAge() {
+        return rankUpTicks > 0 ? RANK_UP_TICKS - rankUpTicks : -1;
+    }
+
+    public static int rankUpRank() {
+        return rankUpRank;
+    }
+
     /** Тело неподвижно: идёт сессия или сцена семени. */
     public static boolean still() {
-        return state.active() || seedSceneTicks > 0;
+        return state.active() || seedSceneTicks > 0 || rankUpTicks > 0;
     }
 
     public static void accept(SyncMeditationPayload payload) {
@@ -152,11 +174,31 @@ public final class ClientMeditationState {
             localTicks = Math.max(localTicks, payload.ticks());
         }
 
+        // Прорыв идёт внутри сидения: сцена живёт, пока сервер присылает её тики.
+        if (payload.active() && payload.breakthrough() >= 0) {
+            if (breakthroughTicks < 0) {
+                CameraShakeHandler.request(0.25F);
+            }
+            breakthroughTicks = Math.max(breakthroughTicks, payload.breakthrough());
+        } else {
+            breakthroughTicks = -1;
+        }
+        if (payload.event() == SyncMeditationPayload.Event.RANK_UP) {
+            rankUpTicks = RANK_UP_TICKS;
+            rankUpRank = payload.rank();
+            // Выход ауры — главный удар сцены: толчок сильнее, чем у семени.
+            CameraShakeHandler.request(0.7F);
+        }
+
         if (!payload.active() && previous.active()) {
             holdSent = false;
             if (payload.event() == SyncMeditationPayload.Event.SEED) {
                 startSeedScene(minecraft);
-            } else if (payload.event() == SyncMeditationPayload.Event.BACKLASH) {
+            } else if (payload.event() == SyncMeditationPayload.Event.RANK_UP) {
+                // Поза держится до конца выхода ауры — её снимает тик клиента.
+                aftermath = Aftermath.NONE;
+            } else if (payload.event() == SyncMeditationPayload.Event.BACKLASH
+                    || payload.event() == SyncMeditationPayload.Event.BROKEN) {
                 aftermath = Aftermath.BACKLASH;
                 aftermathBeats = previous.beats();
                 aftermathTicks = BACKLASH_TICKS;
@@ -198,7 +240,8 @@ public final class ClientMeditationState {
      * Камера спереди — кольцо, жилы и семя на животе со спины не видны.
      */
     public static boolean cinematic() {
-        return (state.active() && state.beats() < 3) || seedSceneTicks > 0;
+        return (state.active() && state.beats() < 3) || seedSceneTicks > 0
+                || breakthroughTicks >= 0 || rankUpTicks > 0;
     }
 
     /** Насколько камера уже подошла: плавный заход и выход за секунду. */
@@ -239,7 +282,7 @@ public final class ClientMeditationState {
         boolean wanted = cinematic();
         // Сидящий взгляд — во всей медитации, и после даньтяня тоже (замечание автора
         // 30.09: «игрок должен сидеть, а не стоять»), а не только в крупном плане.
-        boolean seated = state.active() || seedSceneTicks > 0;
+        boolean seated = state.active() || seedSceneTicks > 0 || rankUpTicks > 0;
         if (seated != seatedEye && minecraft.player != null) {
             seatedEye = seated;
             minecraft.player.refreshDimensions();
@@ -337,6 +380,12 @@ public final class ClientMeditationState {
         if (seedSceneTicks > 0 && --seedSceneTicks == 0) {
             endSeedScene(minecraft);
         }
+        if (breakthroughTicks >= 0 && state.active()) {
+            breakthroughTicks++;
+        }
+        if (rankUpTicks > 0 && --rankUpTicks == 0 && !state.active()) {
+            MurimPlayerAnimations.stop(minecraft.player);
+        }
         if (minecraft.screen != null) {
             return;
         }
@@ -416,6 +465,8 @@ public final class ClientMeditationState {
         aftermath = Aftermath.NONE;
         aftermathTicks = 0;
         seedSceneTicks = 0;
+        breakthroughTicks = -1;
+        rankUpTicks = 0;
     }
 
     private ClientMeditationState() {

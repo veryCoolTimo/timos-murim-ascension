@@ -408,7 +408,9 @@ public final class DevCaptureHandler {
         }
         // Сцена семени снимается чаще: вспышка длится полсекунды и между кадрами
         // по десять тиков пропадала целиком.
-        int step = ClientMeditationState.seedSceneAge() >= 0 ? 2 : MEDITATION_FRAME_TICKS;
+        // Прорыв — чаще, выход ауры — как вспышка семени: иначе короткие фазы между кадрами пропадают.
+        int step = ClientMeditationState.seedSceneAge() >= 0 || ClientMeditationState.rankUpAge() >= 0 ? 2
+                : ClientMeditationState.breakthroughAge() >= 0 ? 5 : MEDITATION_FRAME_TICKS;
         if (meditationTicks % step == 0) {
             // Снимок в тике берёт последний отрисованный кадр целиком, с интерфейсом:
             // HUD медитации — часть того, что проверяется.

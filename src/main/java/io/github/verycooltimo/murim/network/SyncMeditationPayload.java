@@ -16,15 +16,20 @@ import net.minecraft.resources.ResourceLocation;
  * @param ticks  длительность сессии
  * @param event  разовое событие: итог такта, рождение семени или искажение ци
  * @param ring   мини-игра кольца; {@link Ring#NONE}, если такт её не играет
+ * @param breakthrough тики сцены прорыва, {@code -1} — прорыва нет
+ * @param rank   ранг после события (для титра «Третий ранг»)
  */
-public record SyncMeditationPayload(boolean active, int beats, int ticks, Event event, Ring ring)
+public record SyncMeditationPayload(boolean active, int beats, int ticks, Event event, Ring ring,
+                                    int breakthrough, int rank)
         implements CustomPacketPayload {
 
     /**
      * {@code SCATTER}/{@code SETTLE} — итог такта при продолжающемся сидении;
-     * {@code BACKLASH} — искажение ци, мини-игра проиграна полностью.
+     * {@code BACKLASH} — искажение ци, мини-игра проиграна полностью;
+     * {@code BREAKTHROUGH} — началась сцена прорыва, {@code RANK_UP} — прорыв завершён,
+     * {@code BROKEN} — прорыв прерван (травма меридиан).
      */
-    public enum Event { NONE, SEED, SCATTER, SETTLE, BACKLASH }
+    public enum Event { NONE, SEED, SCATTER, SETTLE, BACKLASH, BREAKTHROUGH, RANK_UP, BROKEN }
 
     /**
      * Снимок мини-игры: всё в долях радиуса, 0 — точка, 1 — широкое кольцо.
@@ -65,14 +70,26 @@ public record SyncMeditationPayload(boolean active, int beats, int ticks, Event 
     private static final StreamCodec<ByteBuf, Event> EVENT_CODEC =
             ByteBufCodecs.idMapper(i -> Event.values()[i], Event::ordinal);
 
+    // Полей семь, а StreamCodec.composite в 1.21.1 принимает не больше шести —
+    // поэтому кодек собран вручную. API: reference/minecraft-src/net/minecraft/network/codec/StreamCodec.java#of
     public static final StreamCodec<RegistryFriendlyByteBuf, SyncMeditationPayload> STREAM_CODEC =
-            StreamCodec.composite(
-                    ByteBufCodecs.BOOL, SyncMeditationPayload::active,
-                    ByteBufCodecs.VAR_INT, SyncMeditationPayload::beats,
-                    ByteBufCodecs.VAR_INT, SyncMeditationPayload::ticks,
-                    EVENT_CODEC, SyncMeditationPayload::event,
-                    Ring.STREAM_CODEC.cast(), SyncMeditationPayload::ring,
-                    SyncMeditationPayload::new);
+            StreamCodec.of((buf, p) -> {
+                ByteBufCodecs.BOOL.encode(buf, p.active());
+                ByteBufCodecs.VAR_INT.encode(buf, p.beats());
+                ByteBufCodecs.VAR_INT.encode(buf, p.ticks());
+                EVENT_CODEC.encode(buf, p.event());
+                Ring.STREAM_CODEC.encode(buf, p.ring());
+                // Сдвиг на единицу: VAR_INT не любит −1, а «нет прорыва» — это −1.
+                ByteBufCodecs.VAR_INT.encode(buf, p.breakthrough() + 1);
+                ByteBufCodecs.VAR_INT.encode(buf, p.rank());
+            }, buf -> new SyncMeditationPayload(
+                    ByteBufCodecs.BOOL.decode(buf),
+                    ByteBufCodecs.VAR_INT.decode(buf),
+                    ByteBufCodecs.VAR_INT.decode(buf),
+                    EVENT_CODEC.decode(buf),
+                    Ring.STREAM_CODEC.decode(buf),
+                    ByteBufCodecs.VAR_INT.decode(buf) - 1,
+                    ByteBufCodecs.VAR_INT.decode(buf)));
 
     @Override
     public Type<? extends CustomPacketPayload> type() {

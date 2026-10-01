@@ -107,6 +107,8 @@ public final class ProfileEvents {
         if (event.getEntity() instanceof ServerPlayer player) {
             ProfileNetwork.sync(player);
             io.github.verycooltimo.murim.mastery.MasteryService.sync(player);
+            // Сердца ранга — временный модификатор: ставится заново при каждом входе.
+            io.github.verycooltimo.murim.cultivation.RankEffects.apply(player);
         }
     }
 
@@ -116,6 +118,8 @@ public final class ProfileEvents {
             // Профиль переживает смерть, но клиент после респавна о нём не знает.
             ProfileNetwork.sync(player);
             io.github.verycooltimo.murim.mastery.MasteryService.sync(player);
+            io.github.verycooltimo.murim.cultivation.RankEffects.apply(player);
+            player.setHealth(player.getMaxHealth());
         }
     }
 

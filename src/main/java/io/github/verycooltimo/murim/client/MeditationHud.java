@@ -58,6 +58,15 @@ public final class MeditationHud {
             vignette(graphics, age);
             seedScene(graphics, minecraft, age);
         }
+        // Прорыв: только виньетка — полная заливка спрятала бы светящийся каркас тела.
+        int breakAge = ClientMeditationState.breakthroughAge();
+        if (breakAge >= 0) {
+            vignette(graphics, breakAge + partial, io.github.verycooltimo.murim.cultivation.Realm.BREAKTHROUGH_TICKS);
+        }
+        int rankAge = ClientMeditationState.rankUpAge();
+        if (rankAge >= 0) {
+            rankUp(graphics, minecraft, rankAge + partial);
+        }
         if (ClientMeditationState.aftermath() == ClientMeditationState.Aftermath.BACKLASH) {
             backlash(graphics, ClientMeditationState.BACKLASH_TICKS - ClientMeditationState.aftermathTicks() + partial);
         }
@@ -71,7 +80,10 @@ public final class MeditationHud {
             return;
         }
         if (state.beats() >= 3) {
-            seeded(graphics, minecraft, partial);
+            // Во время прорыва виджет ци не нужен: идёт сцена, игроку нечего нажимать.
+            if (breakAge < 0 && rankAge < 0) {
+                seeded(graphics, minecraft, partial);
+            }
             return;
         }
         if (ClientMeditationState.minigame()) {
@@ -302,7 +314,10 @@ public final class MeditationHud {
      * Синий гасится слабее красного, поэтому края уходят в глубокую синеву, а не в серость.
      */
     private static void vignette(GuiGraphics graphics, float age) {
-        float total = ClientMeditationState.SEED_SCENE_TICKS;
+        vignette(graphics, age, ClientMeditationState.SEED_SCENE_TICKS);
+    }
+
+    private static void vignette(GuiGraphics graphics, float age, float total) {
         float in = Mth.clamp(age / 20.0F, 0.0F, 1.0F);
         float out = Mth.clamp((total - age) / 40.0F, 0.0F, 1.0F);
         float k = in * out;
@@ -401,6 +416,36 @@ public final class MeditationHud {
                             alpha | 0x8FB8E8, true);
                 }
             }
+        }
+    }
+
+    /**
+     * Выход ауры после прорыва: короткая вспышка (отключается настройкой экранных вспышек)
+     * и титр нового ранга.
+     */
+    private static void rankUp(GuiGraphics graphics, Minecraft minecraft, float age) {
+        int w = graphics.guiWidth();
+        int h = graphics.guiHeight();
+        float total = ClientMeditationState.RANK_UP_TICKS;
+        if (ClientConfig.SCREEN_FLASHES.get()) {
+            float flash = age < 2.0F ? age / 2.0F : Mth.clamp(1.0F - (age - 2.0F) / 8.0F, 0.0F, 1.0F);
+            if (flash > 0.0F) {
+                graphics.fill(0, 0, w, h, ((int) (flash * flash * 0xB0) << 24) | 0xE8F6FF);
+            }
+        }
+        float title = Mth.clamp((age - 6.0F) / 10.0F, 0.0F, 1.0F) * Mth.clamp((total - age) / 15.0F, 0.0F, 1.0F);
+        if (title > 0.02F) {
+            int alpha = Math.max(4, (int) (title * 255)) << 24;
+            Font font = minecraft.font;
+            Component name = Component.translatable(
+                    io.github.verycooltimo.murim.cultivation.Realm.nameKey(ClientMeditationState.rankUpRank()));
+            graphics.pose().pushPose();
+            graphics.pose().translate(w / 2.0F, h * 0.22F, 0.0F);
+            graphics.pose().scale(2.5F, 2.5F, 1.0F);
+            graphics.drawString(font, name, -font.width(name) / 2, 0, alpha | 0xF3E6C4, true);
+            graphics.pose().popPose();
+            Component sub = Component.translatable("murim.rank.breakthrough.title");
+            graphics.drawString(font, sub, (w - font.width(sub)) / 2, (int) (h * 0.22F) + 28, alpha | 0x9FC8EE, true);
         }
     }
 

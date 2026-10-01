@@ -91,6 +91,9 @@ public final class MurimRenderTypes {
     /** Вспышка ядра — третьим слоем в точке контакта. */
     private static final RenderType IMPACT_CORE = additive("impact_core", CORE_TEXTURE);
 
+    /** Примеси, выходящие из тела при прорыве: тёмные, затемняют, а не светятся. */
+    private static final RenderType IMPURITY = flatTranslucent("impurity", MOTE_TEXTURE);
+
     /**
      * Свечение ПОВЕРХ тела, без проверки глубины.
      *
@@ -256,6 +259,10 @@ public final class MurimRenderTypes {
 
     public static RenderType bladeCrescent() {
         return BLADE_CRESCENT;
+    }
+
+    public static RenderType impurity() {
+        return IMPURITY;
     }
 
     public static RenderType impactCore() {

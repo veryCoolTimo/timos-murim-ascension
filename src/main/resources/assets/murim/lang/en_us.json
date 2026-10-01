@@ -105,5 +105,15 @@
   "murim.loadout.locked_hint": "Slots grow with understanding",
   "murim.loadout.hint": "LMB — pick/place · RMB — clear",
   "murim.loadout.empty_slot": "empty slot",
-  "murim.loadout.empty": "Slot is empty — set up techniques: [%s]"
+  "murim.loadout.empty": "Slot is empty — set up techniques: [%s]",
+  "murim.rank.0": "Unranked",
+  "murim.rank.1": "Third Rate",
+  "murim.rank.2": "Second Rate",
+  "murim.rank.3": "First Rate",
+  "murim.rank.breakthrough.begin": "The wall of your realm. Breakthrough: %s",
+  "murim.rank.breakthrough.done": "Breakthrough complete: %s",
+  "murim.rank.breakthrough.broken": "Breakthrough interrupted: meridians damaged, some qi lost",
+  "murim.rank.wall.technique": "Your qi has hit the wall. Master a technique to layer %s to break through",
+  "murim.rank.wall.max": "Your qi has hit the wall. There is no path further yet",
+  "murim.rank.breakthrough.title": "Breakthrough"
 }

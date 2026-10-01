@@ -164,6 +164,18 @@ public final class DevSetupEvents {
             long day = meditating.level().getDayTime() / 24000L;
             primeInsight(meditating, "crescent_sweep", 1, 0.85D, 8.0D, day);
             primeInsight(meditating, "demon_palm", 2, 0.1D, 6.0D, day);
+            // MURIM_CAPTURE_WALL=1 — запас у стены ранга и циркулирующая полна (иначе медитация
+            // переливает запас в неё и стена отодвигается): прорыв начнётся с первого тика
+            // медитации (у «Ладони» уже второй слой — условие прорыва в третий ранг).
+            if ("1".equals(System.getenv("MURIM_CAPTURE_WALL"))) {
+                io.github.verycooltimo.murim.profile.DantianProfile p =
+                        meditating.getData(io.github.verycooltimo.murim.registry.ModAttachments.PROFILE);
+                meditating.setData(io.github.verycooltimo.murim.registry.ModAttachments.PROFILE,
+                        p.withRank(0).withPool(io.github.verycooltimo.murim.cultivation.Realm.wall(p))
+                                .withCirculating(p.maxCirculating()));
+                io.github.verycooltimo.murim.profile.ProfileNetwork.sync(meditating);
+            }
+            io.github.verycooltimo.murim.cultivation.RankEffects.apply(meditating);
             meditating.removeAllEffects();
             meditating.setHealth(meditating.getMaxHealth());
             meditating.getFoodData().setFoodLevel(20);
