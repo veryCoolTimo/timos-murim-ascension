@@ -63,6 +63,10 @@ public final class MeditationHud {
         if (breakAge >= 0) {
             vignette(graphics, breakAge + partial, io.github.verycooltimo.murim.cultivation.Realm.BREAKTHROUGH_TICKS);
         }
+        int warnAge = ClientMeditationState.warningAge();
+        if (warnAge >= 0) {
+            heartbeat(graphics, warnAge + partial);
+        }
         int rankAge = ClientMeditationState.rankUpAge();
         if (rankAge >= 0) {
             rankUp(graphics, minecraft, rankAge + partial);
@@ -81,7 +85,7 @@ public final class MeditationHud {
         }
         if (state.beats() >= 3) {
             // Во время прорыва виджет ци не нужен: идёт сцена, игроку нечего нажимать.
-            if (breakAge < 0 && rankAge < 0) {
+            if (breakAge < 0 && rankAge < 0 && warnAge < 0) {
                 seeded(graphics, minecraft, partial);
             }
             return;
@@ -417,6 +421,19 @@ public final class MeditationHud {
                 }
             }
         }
+    }
+
+    /**
+     * Предупреждение перед прорывом: края экрана бьются вместе со стуком сердца, всё
+     * темнее к концу — мир уходит, начинается взгляд внутрь.
+     */
+    private static void heartbeat(GuiGraphics graphics, float age) {
+        float total = io.github.verycooltimo.murim.cultivation.Realm.WARNING_TICKS;
+        float period = age < total / 2.0F ? 20.0F : 12.0F;
+        float beat = (age % period) / period;
+        float pulse = (float) Math.exp(-beat * 10.0D);
+        float rise = Mth.clamp(age / total, 0.0F, 1.0F);
+        vignette(graphics, Math.max(1.0F, 20.0F * (0.35F * rise + 0.45F * pulse)), 1.0E6F);
     }
 
     /**

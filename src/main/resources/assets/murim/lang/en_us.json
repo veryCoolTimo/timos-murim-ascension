@@ -110,10 +110,11 @@
   "murim.rank.1": "Third Rate",
   "murim.rank.2": "Second Rate",
   "murim.rank.3": "First Rate",
-  "murim.rank.breakthrough.begin": "The wall of your realm. Breakthrough: %s",
+  "murim.rank.breakthrough.begin": "Your qi has hit the wall. Stay still — breakthrough: %s",
   "murim.rank.breakthrough.done": "Breakthrough complete: %s",
   "murim.rank.breakthrough.broken": "Breakthrough interrupted: meridians damaged, some qi lost",
   "murim.rank.wall.technique": "Your qi has hit the wall. Master a technique to layer %s to break through",
   "murim.rank.wall.max": "Your qi has hit the wall. There is no path further yet",
-  "murim.rank.breakthrough.title": "Breakthrough"
+  "murim.rank.breakthrough.title": "Breakthrough",
+  "murim.rank.breakthrough.held": "Breakthrough postponed: your qi settles"
 }

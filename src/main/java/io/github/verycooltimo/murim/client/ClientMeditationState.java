@@ -128,9 +128,25 @@ public final class ClientMeditationState {
         return seedSceneTicks > 0 ? SEED_SCENE_TICKS - seedSceneTicks : -1;
     }
 
-    /** Сколько тиков сцены прорыва прошло, или -1. */
+    /**
+     * Сколько тиков самой сцены прорыва прошло, или -1. Предупреждение перед ней
+     * ({@link #warningAge}) сюда не входит.
+     */
     public static int breakthroughAge() {
-        return breakthroughTicks;
+        return breakthroughTicks >= io.github.verycooltimo.murim.cultivation.Realm.WARNING_TICKS ? breakthroughTicks - io.github.verycooltimo.murim.cultivation.Realm.WARNING_TICKS : -1;
+    }
+
+    /** Сколько тиков предупреждения перед прорывом прошло, или -1. */
+    public static int warningAge() {
+        return breakthroughTicks >= 0 && breakthroughTicks < io.github.verycooltimo.murim.cultivation.Realm.WARNING_TICKS ? breakthroughTicks : -1;
+    }
+
+    /**
+     * Камера прорыва: резкая склейка на крупный план спереди в момент начала сцены
+     * (решение автора 01.10: «не плавная камера, а резкая»), после предупреждения.
+     */
+    private static boolean orbit() {
+        return breakthroughTicks >= io.github.verycooltimo.murim.cultivation.Realm.WARNING_TICKS || rankUpTicks > 0;
     }
 
     /** Сколько тиков выхода ауры прошло после прорыва, или -1. */
@@ -176,9 +192,6 @@ public final class ClientMeditationState {
 
         // Прорыв идёт внутри сидения: сцена живёт, пока сервер присылает её тики.
         if (payload.active() && payload.breakthrough() >= 0) {
-            if (breakthroughTicks < 0) {
-                CameraShakeHandler.request(0.25F);
-            }
             breakthroughTicks = Math.max(breakthroughTicks, payload.breakthrough());
         } else {
             breakthroughTicks = -1;
@@ -240,8 +253,7 @@ public final class ClientMeditationState {
      * Камера спереди — кольцо, жилы и семя на животе со спины не видны.
      */
     public static boolean cinematic() {
-        return (state.active() && state.beats() < 3) || seedSceneTicks > 0
-                || breakthroughTicks >= 0 || rankUpTicks > 0;
+        return (state.active() && state.beats() < 3) || seedSceneTicks > 0 || orbit();
     }
 
     /** Насколько камера уже подошла: плавный заход и выход за секунду. */
@@ -303,6 +315,10 @@ public final class ClientMeditationState {
             }
         }
         cinematicTicks = wanted ? Math.min(20, cinematicTicks + 1) : 0;
+        // Прорыв — склейкой: крупный план сразу, без наезда.
+        if (wanted && orbit()) {
+            cinematicTicks = 20;
+        }
     }
 
     private static float closeness(double partial) {
@@ -382,6 +398,14 @@ public final class ClientMeditationState {
         }
         if (breakthroughTicks >= 0 && state.active()) {
             breakthroughTicks++;
+            int w = io.github.verycooltimo.murim.cultivation.Realm.WARNING_TICKS;
+            // Предупреждение: стук сердца, чаще к концу.
+            if (breakthroughTicks < w && breakthroughTicks % (breakthroughTicks < w / 2 ? 20 : 12) == 1) {
+                minecraft.player.playSound(net.minecraft.sounds.SoundEvents.WARDEN_HEARTBEAT, 1.0F, 0.9F);
+            }
+            if (breakthroughTicks == w) {
+                CameraShakeHandler.request(0.25F);
+            }
         }
         if (rankUpTicks > 0 && --rankUpTicks == 0 && !state.active()) {
             MurimPlayerAnimations.stop(minecraft.player);

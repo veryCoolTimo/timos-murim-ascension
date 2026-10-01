@@ -117,6 +117,17 @@ public final class MeditationVfxRenderer {
 
             seedOnScreen = null;
             int breakAge = ClientMeditationState.breakthroughAge();
+            int warnAge = ClientMeditationState.warningAge();
+            if (warnAge >= 0) {
+                // Предупреждение: ядро бьётся вместе со стуком сердца.
+                float wa = warnAge + partial;
+                float period = wa < io.github.verycooltimo.murim.cultivation.Realm.WARNING_TICKS / 2.0F ? 20.0F : 12.0F;
+                float pulse = (float) Math.exp(-((wa % period) / period) * 10.0D);
+                VertexConsumer glow = scene.buffers().getBuffer(MurimRenderTypes.impactCore());
+                CoreGlow.draw(glow, scene.pose(), scene.core(), scene.camera(), wa, 0.06D + 0.06D * pulse,
+                              0.5F + 0.5F * pulse, DEEP, CORE);
+                scene.buffers().endBatch(MurimRenderTypes.impactCore());
+            }
             if (rankUpAge >= 0) {
                 rankUp(scene, rankUpAge + partial);
             }

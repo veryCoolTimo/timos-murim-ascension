@@ -42,6 +42,12 @@ public final class Realm {
     /** Для прорыва в третий ранг хотя бы одна техника должна быть освоена до этого слоя. */
     public static final int THIRD_LAYER_NEED = 2;
 
+    /**
+     * Предупреждение перед сценой: 2,5 секунды стука сердца (решение автора 01.10).
+     * В это время можно встать без последствий — прорыв просто отложится.
+     */
+    public static final int WARNING_TICKS = 50;
+
     /** Длина сцены прорыва: 12 секунд. */
     public static final int BREAKTHROUGH_TICKS = 240;
 

@@ -99,8 +99,12 @@ public final class MeditationService {
             return;
         }
         if (was.breakingThrough()) {
-            breakthroughBroken(player);
-            return;
+            if (was.breakthrough() >= Realm.WARNING_TICKS) {
+                breakthroughBroken(player);
+                return;
+            }
+            // Встал во время предупреждения — прорыв отложен, без травмы.
+            messageKey = "murim.rank.breakthrough.held";
         }
         player.setData(ModAttachments.MEDITATION, MeditationState.IDLE);
         if (messageKey != null) {
@@ -274,10 +278,7 @@ public final class MeditationService {
                 player.getData(ModAttachments.MASTERY).layers());
         if (blocker == Realm.Blocker.NONE) {
             player.setData(ModAttachments.MEDITATION, state.withBreakthrough(0));
-            player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
-                    SoundEvents.BEACON_POWER_SELECT, SoundSource.PLAYERS, 0.7F, 0.6F);
-            player.displayClientMessage(Component.translatable("murim.rank.breakthrough.begin",
-                    Component.translatable(Realm.nameKey(profile.rank() + 1))).withStyle(ChatFormatting.AQUA), true);
+            // Без текста (решение автора 01.10): о стене говорят стук сердца и пульс экрана.
             sync(player, SyncMeditationPayload.Event.BREAKTHROUGH);
             return true;
         }
@@ -297,12 +298,20 @@ public final class MeditationService {
         // hurtTime выставляется при любом полученном уроне — так прерывание ловится без
         // отдельной подписки на событие урона.
         if (player.hurtTime > 0) {
-            breakthroughBroken(player);
+            if (state.breakthrough() >= Realm.WARNING_TICKS) {
+                breakthroughBroken(player);
+            } else {
+                stop(player, "murim.rank.breakthrough.held");
+            }
             return;
         }
         MeditationState next = state.tick(null);
         player.setData(ModAttachments.MEDITATION, next);
-        if (next.breakthrough() < Realm.BREAKTHROUGH_TICKS) {
+        if (next.breakthrough() == Realm.WARNING_TICKS) {
+            player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
+                    SoundEvents.BEACON_POWER_SELECT, SoundSource.PLAYERS, 0.7F, 0.6F);
+        }
+        if (next.breakthrough() < Realm.WARNING_TICKS + Realm.BREAKTHROUGH_TICKS) {
             if (next.breakthrough() % 5 == 0) {
                 sync(player, SyncMeditationPayload.Event.NONE);
             }
