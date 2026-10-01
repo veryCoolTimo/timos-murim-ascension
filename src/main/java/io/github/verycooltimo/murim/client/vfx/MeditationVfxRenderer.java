@@ -477,7 +477,7 @@ public final class MeditationVfxRenderer {
         double feet = ground(s);
         VertexConsumer c = s.buffers().getBuffer(MurimRenderTypes.impactCore());
         for (int i = 0; i < 22; i++) {
-            java.util.Random r = new java.util.Random(SEED * 89L + i);
+            java.util.Random r = rng(89, i);
             float t = ((age * 0.6F + r.nextFloat() * 120.0F) % 120.0F) / 120.0F;
             double a = r.nextDouble() * Math.PI * 2.0D;
             double rad = 0.25D + r.nextDouble() * 0.55D + 0.3D * t;
@@ -501,7 +501,7 @@ public final class MeditationVfxRenderer {
     /** Набор клякс: кольцом вокруг тела, крупные и мелкие брызги; {@code grow} — доля проявления. */
     private static void stainSet(VertexConsumer dark, PoseStack.Pose pose, Vec3 centre, float alpha, float grow) {
         for (int i = 0; i < 16; i++) {
-            java.util.Random r = new java.util.Random(SEED * 97L + i);
+            java.util.Random r = rng(97, i);
             double a = r.nextDouble() * Math.PI * 2.0D;
             double rad = 0.35D + r.nextDouble() * 0.5D;
             Vec3 at = centre.add(Math.cos(a) * rad, 0.0D, Math.sin(a) * rad);
@@ -552,7 +552,7 @@ public final class MeditationVfxRenderer {
         double ground = ground(s);
         VertexConsumer dark = s.buffers().getBuffer(MurimRenderTypes.impuritySkin());
         for (int i = 0; i < 70; i++) {
-            java.util.Random r = new java.util.Random(SEED * 17L + i);
+            java.util.Random r = rng(17, i);
             Vec3 base = anchors[r.nextInt(anchors.length)];
             if (base == null) {
                 continue;
@@ -595,7 +595,7 @@ public final class MeditationVfxRenderer {
         Vec3[] anchors = skinAnchors(s);
         VertexConsumer puff = s.buffers().getBuffer(MurimRenderTypes.impurity());
         for (int i = 0; i < 18; i++) {
-            java.util.Random r = new java.util.Random(SEED * 29L + i);
+            java.util.Random r = rng(29, i);
             Vec3 base = anchors[new int[] {0, 2, 3, 6}[r.nextInt(4)]];
             if (base == null) {
                 continue;
@@ -881,7 +881,7 @@ public final class MeditationVfxRenderer {
         for (int pi = 0; pi < parts.size(); pi++) {
             Part part = parts.get(pi);
             for (int c = 0; c < part.cracks(); c++, n++) {
-                java.util.Random r = new java.util.Random(SEED * 131L + n);
+                java.util.Random r = rng(131, n);
                 Vec3 at = part.centre().add(side.scale((r.nextDouble() - 0.5D) * 2.0D * part.halfW() * 0.8D))
                         .add(up.scale((r.nextDouble() - 0.5D) * 2.0D * part.halfH() * 0.8D));
                 double len = part.minLen() + r.nextDouble() * (part.maxLen() - part.minLen());
@@ -975,7 +975,7 @@ public final class MeditationVfxRenderer {
         int idx = 0;
         for (Crack cr : net) {
             for (int k = 1; k < cr.points().size(); k += 2, idx++) {
-                java.util.Random r = new java.util.Random(SEED * 151L + idx);
+                java.util.Random r = rng(151, idx);
                 float t0 = 80.0F + cr.part() * 8.0F + r.nextFloat() * 40.0F;
                 float lift = Mth.clamp((age - t0) / 10.0F, 0.0F, 1.0F);
                 float fly = Mth.clamp((age - t0 - 10.0F) / 26.0F, 0.0F, 1.0F);
@@ -1095,6 +1095,18 @@ public final class MeditationVfxRenderer {
         s.buffers().endBatch(MurimRenderTypes.impactCore());
     }
 
+    /**
+     * Генератор для i-го элемента эффекта. У java.util.Random соседние сиды дают почти
+     * одинаковые первые числа — все пятна и капли ложились в одну кляксу (кадры Mac 01.10).
+     * Сид перемешивается (SplitMix64), чтобы элементы расходились равномерно.
+     */
+    private static java.util.Random rng(long salt, long i) {
+        long z = SEED + salt * 0x632BE59BD9B4E019L + i * 0x9E3779B97F4A7C15L;
+        z = (z ^ (z >>> 30)) * 0xBF58476D1CE4E5B9L;
+        z = (z ^ (z >>> 27)) * 0x94D049BB133111EBL;
+        return new java.util.Random(z ^ (z >>> 31));
+    }
+
     /** Точка на передней грани головы: лицо модели — на 0,26 блока от центра головы. */
     private static Vec3 face(Scene s) {
         Vec3 head = BoneAnchorLayer.position(s.player(), BoneAnchorLayer.Bone.HEAD);
@@ -1116,7 +1128,7 @@ public final class MeditationVfxRenderer {
         int count = (int) (70 * strength);
         List<Vec3[]> lines = new ArrayList<>();
         for (int i = 0; i < count; i++) {
-            java.util.Random r = new java.util.Random(SEED * 61L + i);
+            java.util.Random r = rng(61, i);
             boolean onFace = faceAt != null && i % 3 == 0;
             Vec3 base = onFace ? faceAt : anchors[r.nextInt(anchors.length)];
             if (base == null) {
@@ -1241,7 +1253,7 @@ public final class MeditationVfxRenderer {
         VertexConsumer c = s.buffers().getBuffer(MurimRenderTypes.impactCore());
         int count = (int) (36 * strength);
         for (int i = 0; i < count; i++) {
-            java.util.Random r = new java.util.Random(SEED * 53L + i);
+            java.util.Random r = rng(53, i);
             Vec3 base = anchors[r.nextInt(anchors.length)];
             if (base == null) {
                 continue;
@@ -1280,7 +1292,7 @@ public final class MeditationVfxRenderer {
         Vec3 side = s.facing().cross(new Vec3(0.0D, 1.0D, 0.0D)).normalize();
         double ground = ground(s);
         for (int i = 0; i < 40; i++) {
-            java.util.Random r = new java.util.Random(SEED * 71L + i);
+            java.util.Random r = rng(71, i);
             Vec3 base = anchors[r.nextInt(anchors.length)];
             if (base == null) {
                 continue;
@@ -1440,7 +1452,7 @@ public final class MeditationVfxRenderer {
         VertexConsumer dark = s.buffers().getBuffer(MurimRenderTypes.impurity());
         int count = 26;
         for (int i = 0; i < count; i++) {
-            java.util.Random r = new java.util.Random(SEED * 31L + i);
+            java.util.Random r = rng(31, i);
             Vec3 from = anchors[r.nextInt(anchors.length)];
             if (from == null) {
                 continue;
