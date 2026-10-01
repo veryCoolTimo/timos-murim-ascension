@@ -328,10 +328,6 @@ public final class MurimRenderTypes {
         return AURA_STROKES;
     }
 
-    public static RenderType auraGround() {
-        return AURA_GROUND;
-    }
-
     /** Сплошные тёмные квадраты: обломки и угли. */
     public static RenderType solid() {
         return RenderType.entityTranslucent(ResourceLocation.withDefaultNamespace("textures/misc/white.png"));
