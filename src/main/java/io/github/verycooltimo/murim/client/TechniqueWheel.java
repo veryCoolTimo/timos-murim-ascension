@@ -36,8 +36,10 @@ public final class TechniqueWheel {
 
     // Размеры и рисунок — по референсу docs/design/reference/ui/technique-wheel-ref.png:
     // крупные иконки на весь сектор, тонкая светлая обводка секторов, центр — отдельный круг.
-    private static final float INNER = 36.0F;
-    private static final float OUTER = 78.0F;
+    // Кольцо уменьшено по замечанию автора 01.10 («занимает слишком много места»): полоса
+    // ровно под иконку 32×32 — пиксельные иконки рисуются без нецелого масштаба.
+    private static final float INNER = 24.0F;
+    private static final float OUTER = 58.0F;
     /** Пикселей курсора на градус поворота мыши. */
     private static final float SENSITIVITY = 2.2F;
     /** Мёртвая зона в центре: без неё дрожь руки перебирала бы секторы. */
@@ -154,8 +156,12 @@ public final class TechniqueWheel {
             double from = -Math.PI / 2.0D - span(count) / 2.0D + i * span(count);
             double to = from + span(count);
             boolean hot = i == selected;
-            int fill = hot ? argb(appear * 0.97F, 0.62F, 1.0F, 1.0F) : argb(appear * 0.94F, 0.62F, 0.66F, 0.74F);
+            // Кольцо полупрозрачное (автор 01.10): видно, что за ним; непрозрачны только контуры и иконки.
+            int fill = hot ? argb(appear * 0.62F, 0.62F, 1.0F, 1.0F) : argb(appear * 0.62F, 0.85F, 0.9F, 1.0F);
             GuiShapes.texturedSector(graphics, MIST, cx, cy, INNER, OUTER, from, to, gap, texSpan, fill);
+            // Середина сектора темнее, туман остаётся только у краёв (автор 01.10, как в референсе).
+            GuiShapes.polarSector(graphics, VIGNETTE, cx, cy, INNER, OUTER, from, to, gap,
+                    argb(appear * (hot ? 0.45F : 0.75F), 1.0F, 1.0F, 1.0F));
             int edge = hot ? argb(appear, 0.75F, 0.95F, 1.0F) : argb(appear * 0.30F, 0.80F, 0.86F, 0.95F);
             if (hot) {
                 // Выбранный сектор светится изнутри голубым поверх тумана.
@@ -168,7 +174,7 @@ public final class TechniqueWheel {
             GuiShapes.sectorOutline(graphics, cx, cy, INNER, OUTER, from, to, gap, hot ? 1.2F : 0.6F, edge);
         }
         // Центр — отдельный тёмный круг с ободком.
-        GuiShapes.ring(graphics, cx, cy, 0.0F, INNER - 3.0F, argb(appear * 0.98F, 0.02F, 0.035F, 0.07F));
+        GuiShapes.ring(graphics, cx, cy, 0.0F, INNER - 3.0F, argb(appear * 0.55F, 0.02F, 0.035F, 0.07F));
         GuiShapes.ring(graphics, cx, cy, INNER - 4.0F, INNER - 3.0F, argb(appear * 0.6F, 0.80F, 0.86F, 0.95F));
         graphics.flush();
 
@@ -186,14 +192,14 @@ public final class TechniqueWheel {
                 int size = 32;
                 int off = 0;
                 graphics.blit(TechniqueIcons.of(technique.get()), ix - off, iy - off, size, size,
-                        0.0F, 0.0F, 32, 32, 32, 32);
+                        0.0F, 0.0F, 64, 64, 64, 64);
                 graphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
             } else {
                 GuiShapes.ring(graphics, ix + 16, iy + 16, 0.0F, 2.0F, ((int) (appear * 0x80) << 24) | 0xC8DCEC);
             }
         }
 
-        // Центр: что выбрано — название и слой; курсор — маленькая точка.
+        // Название и слой — над кольцом: в уменьшенный центр не помещаются, а снизу налезали на шкалу ци.
         Font font = minecraft.font;
         int show = selected >= 0 ? selected : ClientLoadoutState.active();
         Optional<ResourceLocation> technique = show < slots.size() ? slots.get(show) : Optional.empty();
@@ -201,18 +207,22 @@ public final class TechniqueWheel {
         if (technique.isPresent()) {
             Component name = io.github.verycooltimo.murim.mastery.MasteryService.name(technique.get());
             SyncMasteryPayload.Entry entry = TechniqueSlotsHud.mastery(technique.get());
-            graphics.drawString(font, name, (int) cx - font.width(name) / 2, (int) cy - 9, textA | 0xE6F4FF, true);
+            int ty = (int) (cy - OUTER - 22);
+            graphics.drawString(font, name, (int) cx - font.width(name) / 2, ty, textA | 0xE6F4FF, true);
             if (entry != null) {
                 small(graphics, font, Component.translatable("murim.loadout.layer", entry.layer(), entry.cap()),
-                        (int) cx, (int) cy + 2, textA | 0x8FB8E0);
+                        (int) cx, ty + 11, textA | 0x8FD3E8);
             }
         } else {
-            small(graphics, font, Component.translatable("murim.loadout.empty_slot"), (int) cx, (int) cy - 3,
+            small(graphics, font, Component.translatable("murim.loadout.empty_slot"), (int) cx, (int) (cy - OUTER - 12),
                     textA | 0x8090A8);
         }
         GuiShapes.ring(graphics, cx + cursorX, cy + cursorY, 0.0F, 1.6F, ((int) (appear * 0xC0) << 24) | 0xFFFFFF);
         graphics.flush();
     }
+
+    private static final ResourceLocation VIGNETTE =
+            ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/gui/wheel_sector_vignette.png");
 
     private static final ResourceLocation MIST = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/gui/wheel_mist.png");
 

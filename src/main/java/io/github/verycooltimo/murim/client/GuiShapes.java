@@ -120,6 +120,44 @@ public final class GuiShapes {
         com.mojang.blaze3d.systems.RenderSystem.disableBlend();
     }
 
+    /**
+     * Сектор с текстурой в ЛОКАЛЬНЫХ координатах: u — вдоль дуги, v — от внутреннего края к
+     * внешнему. Так маска (например, затемнение середины) ложится ровно в каждый сектор при
+     * любом их числе.
+     */
+    public static void polarSector(GuiGraphics graphics, net.minecraft.resources.ResourceLocation texture,
+                                   float cx, float cy, float inner, float outer, double from, double to,
+                                   float gap, int argb) {
+        int steps = 24;
+        float[][] pts = sector(cx, cy, inner, outer, from, to, gap, steps);
+        var matrix = graphics.pose().last().pose();
+        com.mojang.blaze3d.systems.RenderSystem.setShader(net.minecraft.client.renderer.GameRenderer::getPositionTexColorShader);
+        com.mojang.blaze3d.systems.RenderSystem.setShaderTexture(0, texture);
+        com.mojang.blaze3d.systems.RenderSystem.enableBlend();
+        com.mojang.blaze3d.systems.RenderSystem.defaultBlendFunc();
+        var builder = com.mojang.blaze3d.vertex.Tesselator.getInstance().begin(
+                com.mojang.blaze3d.vertex.VertexFormat.Mode.QUADS,
+                com.mojang.blaze3d.vertex.DefaultVertexFormat.POSITION_TEX_COLOR);
+        for (int i = 0; i < steps; i++) {
+            float u0 = i / (float) steps;
+            float u1 = (i + 1) / (float) steps;
+            float[][] quad = {pts[i * 2], pts[i * 2 + 2], pts[i * 2 + 3], pts[i * 2 + 1]};
+            float[][] uv = {{u0, 0.0F}, {u1, 0.0F}, {u1, 1.0F}, {u0, 1.0F}};
+            float area = 0.0F;
+            for (int k = 0; k < 4; k++) {
+                int n = (k + 1) % 4;
+                area += quad[k][0] * quad[n][1] - quad[n][0] * quad[k][1];
+            }
+            for (int k = 0; k < 4; k++) {
+                int idx = area > 0.0F ? 3 - k : k;
+                builder.addVertex(matrix, quad[idx][0], quad[idx][1], 0.0F)
+                        .setUv(uv[idx][0], uv[idx][1]).setColor(argb);
+            }
+        }
+        com.mojang.blaze3d.vertex.BufferUploader.drawWithShader(builder.buildOrThrow());
+        com.mojang.blaze3d.systems.RenderSystem.disableBlend();
+    }
+
     /** Сплошная заливка сектора с теми же зазорами — для подсветки выбранного. */
     public static void sectorFill(GuiGraphics graphics, float cx, float cy, float inner, float outer,
                                   double from, double to, float gap, int colour) {
