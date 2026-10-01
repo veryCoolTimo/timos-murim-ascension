@@ -69,6 +69,6 @@ class RealmTest {
     void health() {
         assertEquals(0.0D, Realm.bonusHealth(0), 1.0E-9);
         assertEquals(4.0D, Realm.bonusHealth(Realm.THIRD), 1.0E-9);
-        assertEquals(12.0D, Realm.bonusHealth(99), 1.0E-9);
+        assertEquals(16.0D, Realm.bonusHealth(99), 1.0E-9);
     }
 }

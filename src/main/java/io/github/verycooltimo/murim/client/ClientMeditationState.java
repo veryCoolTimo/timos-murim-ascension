@@ -158,6 +158,11 @@ public final class ClientMeditationState {
         return rankUpRank;
     }
 
+    /** В какой ранг идёт прорыв: от него зависит сцена (docs/design/19 §3е). */
+    public static int breakthroughTarget() {
+        return breakthroughTicks >= 0 ? state.rank() + 1 : rankUpRank;
+    }
+
     /** Тело неподвижно: идёт сессия или сцена семени. */
     public static boolean still() {
         return state.active() || seedSceneTicks > 0 || rankUpTicks > 0;

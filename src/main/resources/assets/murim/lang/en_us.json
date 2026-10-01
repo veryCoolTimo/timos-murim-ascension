@@ -116,5 +116,6 @@
   "murim.rank.wall.technique": "Your qi has hit the wall. Master a technique to layer %s to break through",
   "murim.rank.wall.max": "Your qi has hit the wall. There is no path further yet",
   "murim.rank.breakthrough.title": "Breakthrough",
-  "murim.rank.breakthrough.held": "Breakthrough postponed: your qi settles"
+  "murim.rank.breakthrough.held": "Breakthrough postponed: your qi settles",
+  "murim.rank.4": "Peak"
 }

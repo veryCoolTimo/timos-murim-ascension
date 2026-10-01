@@ -380,32 +380,489 @@ public final class MeditationVfxRenderer {
      * <p>Фазы по 12 секундам сцены: 0–2 с — сбор; 2–10 с — кости и волна; 3,5–10 с — примеси;
      * 10–12 с — всё стягивается в центр перед выходом ауры.
      */
+    private static final VfxColour GOLD = new VfxColour(1.0F, 0.62F, 0.18F);
+    private static final VfxColour GOLD_CORE = new VfxColour(1.0F, 0.95F, 0.75F);
+    private static final VfxColour PINK = new VfxColour(0.95F, 0.42F, 0.62F);
+    private static final VfxColour PINK_CORE = new VfxColour(1.0F, 0.88F, 0.94F);
+
+    /** Цвета ранга: третий — синий, второй — золото, первый — слива, Пик — белое золото. */
+    private static VfxColour[] palette(int rank) {
+        return switch (rank) {
+            case 2 -> new VfxColour[] {GOLD, GOLD_CORE};
+            case 3 -> new VfxColour[] {PINK, PINK_CORE};
+            case 4 -> new VfxColour[] {BONE, BONE_CORE};
+            default -> new VfxColour[] {HALO, CORE};
+        };
+    }
+
+    /**
+     * Прорыв: у каждого ранга своя сцена (решение автора 01.10, концепты —
+     * docs/design/reference/breakthrough-concepts/). Общее — стягивание в центр в последние
+     * две секунды, затем выход ауры ({@link #rankUp}).
+     */
     private static void breakthrough(Scene s, float age) {
+        int target = ClientMeditationState.breakthroughTarget();
+        switch (target) {
+            case 2 -> circuitScene(s, age);
+            case 3 -> formScene(s, age);
+            case 4 -> rebirthScene(s, age);
+            default -> purificationScene(s, age);
+        }
         float total = io.github.verycooltimo.murim.cultivation.Realm.BREAKTHROUGH_TICKS;
         float gather = Mth.clamp(age / 40.0F, 0.0F, 1.0F);
         float squeeze = Mth.clamp((age - (total - 40.0F)) / 40.0F, 0.0F, 1.0F);
-        float bones = Mth.clamp((age - 40.0F) / 30.0F, 0.0F, 1.0F) * (1.0F - 0.6F * squeeze);
-        float impurity = Mth.clamp((age - 70.0F) / 20.0F, 0.0F, 1.0F);
-
-        // Очищение меридиан — процессом (второе мнение по кадрам 01.10): сначала каналы
-        // тусклые и забитые, затем по ним проходит яркая волна, после неё они чистые и ровные.
-        float cleanse = Mth.clamp((age - 90.0F) / 60.0F, 0.0F, 1.0F);
-        float wave = (float) Math.exp(-Math.pow((age - 120.0F) / 18.0F, 2.0D));
-        drawVeins(s, gather, (0.22F + 0.45F * cleanse + 0.5F * wave) * gather * (1.0F - 0.5F * squeeze));
-        drawStreams(s, age, gather * (0.4F + 1.2F * wave + 0.4F * cleanse));
-        drawSkeleton(s, age, bones);
-        drawImpurities(s, age, impurity);
-
-        // Центр копит свет к концу: стягивание перед выходом ауры.
+        VfxColour[] pal = palette(target);
         float breath = 0.5F + 0.5F * Mth.sin(age * 0.25F);
         VertexConsumer glow = s.buffers().getBuffer(MurimRenderTypes.impactCore());
         CoreGlow.draw(glow, s.pose(), s.core(), s.camera(), age,
-                      0.08D + 0.05D * gather + 0.32D * squeeze * squeeze + 0.02D * breath,
-                      Math.min(1.0F, 0.5F * gather + 0.5F * squeeze + 0.15F * breath), DEEP, CORE);
+                      0.07D + 0.04D * gather + 0.32D * squeeze * squeeze + 0.02D * breath,
+                      Math.min(1.0F, 0.45F * gather + 0.55F * squeeze + 0.12F * breath), pal[0], pal[1]);
         BillboardBurst.inward(glow, s.pose(), s.core(), s.camera(), 20, age, 0.7D,
-                              0.4F * gather + 0.4F * squeeze, HALO, CORE);
+                              0.3F * gather + 0.5F * squeeze, pal[0], pal[1]);
         s.buffers().endBatch(MurimRenderTypes.impactCore());
     }
+
+    // --------------------------------------------------- третий ранг: очищение
+
+    /**
+     * Очищение (Хуашань гл. 41–42): «по телу начал сочиться густой тёмный пот»; меридианы
+     * «из тонкого ручья — в реку, впадающую в океан». Жилы сначала тонкие и тусклые, из кожи
+     * выступают тёмные капли и пар, капли падают пятнами; затем жилы расширяются и по ним
+     * проходит волна.
+     */
+    private static void purificationScene(Scene s, float age) {
+        float gather = Mth.clamp(age / 40.0F, 0.0F, 1.0F);
+        float sweat = Mth.clamp((age - 45.0F) / 20.0F, 0.0F, 1.0F);
+        float widen = Mth.clamp((age - 120.0F) / 60.0F, 0.0F, 1.0F);
+        float wave = (float) Math.exp(-Math.pow((age - 150.0D) / 18.0D, 2.0D));
+        drawVeins(s, gather, (0.2F + 0.45F * widen + 0.5F * wave) * gather, 0.005D + 0.012D * widen, HALO, CORE);
+        drawStreams(s, age, gather * (0.3F + 1.2F * wave + 0.5F * widen), HALO, CORE);
+        drawSweat(s, age, sweat);
+        drawSteam(s, age, sweat * (1.0F - widen * 0.7F));
+    }
+
+    /** Точка на коже спереди: кости лежат на оси, кожа — на 0,17 блока ближе к зрителю. */
+    private static Vec3 skin(Scene s, Vec3 bone, double depth) {
+        return bone == null ? null : bone.add(s.facing().scale(depth));
+    }
+
+    private static Vec3[] skinAnchors(Scene s) {
+        AbstractClientPlayer p = s.player();
+        Vec3 head = BoneAnchorLayer.position(p, BoneAnchorLayer.Bone.HEAD);
+        return new Vec3[] {
+            skin(s, BoneAnchorLayer.position(p, BoneAnchorLayer.Bone.CHEST), 0.17D),
+            skin(s, s.axis(), 0.17D),
+            skin(s, BoneAnchorLayer.position(p, BoneAnchorLayer.Bone.RIGHT_SHOULDER), 0.15D),
+            skin(s, BoneAnchorLayer.position(p, BoneAnchorLayer.Bone.LEFT_SHOULDER), 0.15D),
+            skin(s, BoneAnchorLayer.position(p, BoneAnchorLayer.Bone.RIGHT_HAND), 0.15D),
+            skin(s, BoneAnchorLayer.position(p, BoneAnchorLayer.Bone.LEFT_HAND), 0.15D),
+            head == null ? null : head.add(s.facing().scale(0.27D)).add(0.0D, -0.05D, 0.0D),
+            skin(s, BoneAnchorLayer.position(p, BoneAnchorLayer.Bone.RIGHT_KNEE), 0.15D),
+            skin(s, BoneAnchorLayer.position(p, BoneAnchorLayer.Bone.LEFT_KNEE), 0.15D)};
+    }
+
+    private static double ground(Scene s) {
+        AbstractClientPlayer p = s.player();
+        return Mth.lerp(s.minecraft().getTimer().getGameTimeDeltaPartialTick(false), p.yOld, p.getY()) + 0.02D;
+    }
+
+    /** Тёмные капли пота: выступают на коже, сползают, срываются и оставляют пятна на полу. */
+    private static void drawSweat(Scene s, float age, float strength) {
+        if (strength <= 0.0F) {
+            return;
+        }
+        Vec3[] anchors = skinAnchors(s);
+        Vec3 side = s.facing().cross(new Vec3(0.0D, 1.0D, 0.0D)).normalize();
+        double ground = ground(s);
+        VertexConsumer dark = s.buffers().getBuffer(MurimRenderTypes.impurity());
+        for (int i = 0; i < 70; i++) {
+            java.util.Random r = new java.util.Random(SEED * 17L + i);
+            Vec3 base = anchors[r.nextInt(anchors.length)];
+            if (base == null) {
+                continue;
+            }
+            Vec3 at0 = base.add(side.scale((r.nextDouble() - 0.5D) * 0.24D)).add(0.0D, (r.nextDouble() - 0.5D) * 0.18D, 0.0D);
+            float born = 45.0F + r.nextFloat() * 120.0F;
+            float t = (age - born) / 55.0F;
+            if (t < 0.0F) {
+                continue;
+            }
+            double size = 0.035D + r.nextDouble() * 0.03D;
+            if (t < 1.0F) {
+                // Выступает (растёт), медленно сползает, к концу срывается вниз.
+                double grow = Math.min(1.0D, t * 4.0D);
+                double slide = 0.12D * t * t;
+                double fall = Math.max(0.0D, t - 0.75D) * 4.0D;
+                Vec3 at = at0.add(0.0D, -slide - 1.2D * fall * fall, 0.0D);
+                if (at.y < ground) {
+                    at = new Vec3(at.x, ground + size, at.z);
+                }
+                VfxDraw.billboard(dark, s.pose(), at, s.camera(), size * grow, 0.95F * strength,
+                                  0.16F, 0.09F, 0.1F);
+                // Блик мокрой капли.
+                VfxDraw.billboard(dark, s.pose(), at.add(0.0D, size * 0.3D, 0.0D).add(s.facing().scale(0.01D)),
+                                  s.camera(), size * 0.25D * grow, 0.7F * strength, 0.75F, 0.7F, 0.72F);
+                // Вытянутый след капли по коже.
+                VfxDraw.segment(dark, s.pose(), at0, at, s.camera(), size * 0.35D * grow, 0.5F * strength,
+                                0.12F, 0.07F, 0.08F);
+            }
+            if (t > 0.85F) {
+                Vec3 spot = new Vec3(at0.x + s.facing().x * 0.25D, ground, at0.z + s.facing().z * 0.25D);
+                flatSpot(dark, s.pose(), spot, size * 2.2D * Math.min(1.0D, (t - 0.85D) * 5.0D), 0.75F);
+            }
+        }
+        s.buffers().endBatch(MurimRenderTypes.impurity());
+    }
+
+    /** Пар: серые клубы поднимаются от плеч и головы и тают. */
+    private static void drawSteam(Scene s, float age, float strength) {
+        if (strength <= 0.0F) {
+            return;
+        }
+        Vec3[] anchors = skinAnchors(s);
+        VertexConsumer puff = s.buffers().getBuffer(MurimRenderTypes.impurity());
+        for (int i = 0; i < 18; i++) {
+            java.util.Random r = new java.util.Random(SEED * 29L + i);
+            Vec3 base = anchors[new int[] {0, 2, 3, 6}[r.nextInt(4)]];
+            if (base == null) {
+                continue;
+            }
+            float t = ((age + r.nextFloat() * 60.0F) % 60.0F) / 60.0F;
+            Vec3 at = base.add((r.nextDouble() - 0.5D) * 0.3D, 0.1D + 0.7D * t, (r.nextDouble() - 0.5D) * 0.3D);
+            VfxDraw.billboard(puff, s.pose(), at, s.camera(), 0.12D + 0.28D * t,
+                              0.28F * strength * (1.0F - t), 0.78F, 0.81F, 0.84F);
+        }
+        s.buffers().endBatch(MurimRenderTypes.impurity());
+    }
+
+    // ------------------------------------------ второй ранг: малый небесный круг
+
+    /**
+     * Малый небесный круг (Absolute Regression гл. 119): ци идёт вниз к копчику, вверх по
+     * позвоночнику, через точку Байхуэй на макушке и возвращается к губам; «самое опасное —
+     * пробить макушку». Myst гл. 165: точки вздуваются и трещат, идёт пар, закрытые меридианы
+     * раскрываются разом.
+     */
+    private static void circuitScene(Scene s, float age) {
+        AbstractClientPlayer p = s.player();
+        Vec3 chest = BoneAnchorLayer.position(p, BoneAnchorLayer.Bone.CHEST);
+        Vec3 head = BoneAnchorLayer.position(p, BoneAnchorLayer.Bone.HEAD);
+        if (chest == null || head == null) {
+            return;
+        }
+        Vec3 back = s.facing().scale(-0.15D);
+        Vec3 front = s.facing().scale(0.17D);
+        Vec3 core = s.core();
+        Vec3 sacrum = new Vec3(s.axis().x, s.axis().y - 0.2D, s.axis().z).add(back);
+        Vec3 backChest = chest.add(back);
+        Vec3 neck = chest.lerp(head, 0.35D).add(back);
+        Vec3 crown = head.add(0.0D, 0.3D, 0.0D);
+        Vec3 brow = head.add(s.facing().scale(0.27D)).add(0.0D, 0.06D, 0.0D);
+        Vec3 throat = chest.lerp(head, 0.3D).add(front);
+        Vec3 chestFront = chest.add(front);
+        Vec3[] up = {core, sacrum, backChest, neck, crown};
+        Vec3[] down = {crown, brow, throat, chestFront, core};
+
+        float gather = Mth.clamp(age / 30.0F, 0.0F, 1.0F);
+        float ascent = Mth.clamp((age - 30.0F) / 90.0F, 0.0F, 1.0F);
+        float descent = Mth.clamp((age - 135.0F) / 60.0F, 0.0F, 1.0F);
+        float loop = Mth.clamp((age - 195.0F) / 15.0F, 0.0F, 1.0F);
+
+        drawVeins(s, gather, (0.15F + 0.6F * loop) * gather, 0.005D + 0.012D * loop, GOLD, GOLD_CORE);
+        // Тёмная подложка: путь по центру тела ложится на белую рубашку и лицо, и аддитивное
+        // золото на белом пропадало (кадры стенда 01.10). Тень под линией даёт контраст.
+        VertexConsumer under = s.buffers().getBuffer(MurimRenderTypes.impurity());
+        shadowTrail(under, s, up, ascent);
+        shadowTrail(under, s, down, descent);
+        if (ascent > 0.0F && ascent < 1.0F) {
+            VfxDraw.billboard(under, s.pose(), along(up, ascent), s.camera(), 0.2D, 0.55F, 0.05F, 0.03F, 0.02F);
+        }
+        if (descent > 0.0F && descent < 1.0F) {
+            VfxDraw.billboard(under, s.pose(), along(down, descent), s.camera(), 0.2D, 0.55F, 0.05F, 0.03F, 0.02F);
+        }
+        s.buffers().endBatch(MurimRenderTypes.impurity());
+        VertexConsumer line = s.buffers().getBuffer(MurimRenderTypes.bodyGlow());
+        trail(line, s, up, ascent, 1.0F);
+        trail(line, s, down, descent, 1.0F);
+        s.buffers().endBatch(MurimRenderTypes.bodyGlow());
+
+        VertexConsumer glow = s.buffers().getBuffer(MurimRenderTypes.impactCore());
+        if (ascent > 0.0F && ascent < 1.0F) {
+            bead(glow, s, along(up, ascent));
+        }
+        if (descent > 0.0F && descent < 1.0F) {
+            bead(glow, s, along(down, descent));
+        }
+        // Макушка пробита: звезда-вспышка с лучами.
+        float burst = Mth.clamp(1.0F - Math.abs(age - 125.0F) / 12.0F, 0.0F, 1.0F);
+        if (burst > 0.0F) {
+            star(glow, s, crown, 0.5D * burst + 0.1D, burst);
+            VfxDraw.billboard(glow, s.pose(), crown, s.camera(), 0.5D * burst, burst, 1.0F, 0.97F, 0.85F);
+        }
+        // Точки по передней линии раскрываются по мере прохода бусины.
+        Vec3[] points = {brow, throat, chestFront, core};
+        for (int i = 0; i < points.length; i++) {
+            float opened = (age - (135.0F + 60.0F * (i + 1) / 4.0F)) ;
+            if (opened >= 0.0F) {
+                float flash = (float) Math.exp(-opened / 6.0F);
+                star(glow, s, points[i], 0.06D + 0.18D * flash, 0.5F + 0.5F * flash);
+            }
+        }
+        s.buffers().endBatch(MurimRenderTypes.impactCore());
+        // Пар из раскрытых точек.
+        VertexConsumer puff = s.buffers().getBuffer(MurimRenderTypes.impurity());
+        for (int i = 0; i < points.length; i++) {
+            float opened = age - (135.0F + 60.0F * (i + 1) / 4.0F);
+            if (opened >= 0.0F && opened < 40.0F) {
+                float t = opened / 40.0F;
+                VfxDraw.billboard(puff, s.pose(), points[i].add(s.facing().scale(0.1D)).add(0.0D, 0.3D * t, 0.0D),
+                                  s.camera(), 0.08D + 0.2D * t, 0.3F * (1.0F - t), 0.85F, 0.86F, 0.88F);
+            }
+        }
+        s.buffers().endBatch(MurimRenderTypes.impurity());
+        // Круг замкнут: весь путь горит ровно.
+        if (loop > 0.0F) {
+            VertexConsumer ring = s.buffers().getBuffer(MurimRenderTypes.bodyGlow());
+            trail(ring, s, up, 1.0F, 0.6F * loop + 0.4F);
+            trail(ring, s, down, 1.0F, 0.6F * loop + 0.4F);
+            s.buffers().endBatch(MurimRenderTypes.bodyGlow());
+        }
+    }
+
+    private static void shadowTrail(VertexConsumer c, Scene s, Vec3[] path, float upTo) {
+        if (upTo <= 0.0F) {
+            return;
+        }
+        int n = 24;
+        Vec3 prev = path[0];
+        for (int i = 1; i <= n; i++) {
+            Vec3 at = along(path, upTo * i / n);
+            VfxDraw.segment(c, s.pose(), prev, at, s.camera(), 0.07D, 0.45F, 0.06F, 0.04F, 0.03F);
+            prev = at;
+        }
+    }
+
+    /** Пройденная часть пути — золотая лента с белым ядром. */
+    private static void trail(VertexConsumer c, Scene s, Vec3[] path, float upTo, float alpha) {
+        if (upTo <= 0.0F) {
+            return;
+        }
+        int n = 24;
+        Vec3 prev = path[0];
+        for (int i = 1; i <= n; i++) {
+            float u = upTo * i / n;
+            Vec3 at = along(path, u);
+            VfxDraw.segment(c, s.pose(), prev, at, s.camera(), 0.05D, 0.6F * alpha, GOLD.red(), GOLD.green(), GOLD.blue());
+            VfxDraw.segment(c, s.pose(), prev, at, s.camera(), 0.02D, alpha, GOLD_CORE.red(), GOLD_CORE.green(), GOLD_CORE.blue());
+            prev = at;
+        }
+    }
+
+    private static void bead(VertexConsumer c, Scene s, Vec3 at) {
+        VfxDraw.billboard(c, s.pose(), at, s.camera(), 0.16D, 0.7F, GOLD.red(), GOLD.green(), GOLD.blue());
+        VfxDraw.billboard(c, s.pose(), at, s.camera(), 0.06D, 1.0F, 1.0F, 0.98F, 0.9F);
+    }
+
+    /** Четырёхлучевая звезда: два скрещённых луча. */
+    private static void star(VertexConsumer c, Scene s, Vec3 at, double size, float alpha) {
+        Vec3 side = s.facing().cross(new Vec3(0.0D, 1.0D, 0.0D)).normalize();
+        Vec3 upv = new Vec3(0.0D, 1.0D, 0.0D);
+        VfxDraw.segment(c, s.pose(), at.subtract(upv.scale(size)), at.add(upv.scale(size)), s.camera(), size * 0.12D,
+                        alpha, GOLD_CORE.red(), GOLD_CORE.green(), GOLD_CORE.blue());
+        VfxDraw.segment(c, s.pose(), at.subtract(side.scale(size)), at.add(side.scale(size)), s.camera(), size * 0.12D,
+                        alpha, GOLD_CORE.red(), GOLD_CORE.green(), GOLD_CORE.blue());
+        VfxDraw.billboard(c, s.pose(), at, s.camera(), size * 0.5D, alpha * 0.6F, GOLD.red(), GOLD.green(), GOLD.blue());
+    }
+
+    // ------------------------------------------ первый ранг: ци держит форму
+
+    /**
+     * Ци держит форму (вики Myst, First Rate: «начинают придавать ци форму»; Хуашань гл. 112:
+     * меч Хуашань «заставляет сливу цвести»). Аура-туман, затем из-за спины вырастает
+     * светящееся сливовое дерево, лепестки кружат; в конце дерево складывается в тело.
+     */
+    private static void formScene(Scene s, float age) {
+        float mist = Mth.clamp(age / 50.0F, 0.0F, 1.0F) * (1.0F - Mth.clamp((age - 120.0F) / 60.0F, 0.0F, 1.0F) * 0.6F);
+        float grow = Mth.clamp((age - 55.0F) / 70.0F, 0.0F, 1.0F);
+        float fold = Mth.clamp((age - 195.0F) / 35.0F, 0.0F, 1.0F);
+        VertexConsumer glow = s.buffers().getBuffer(MurimRenderTypes.impactCore());
+        // Туман-аура кольцом вокруг тела.
+        for (int i = 0; i < 14; i++) {
+            double a = i / 14.0D * Math.PI * 2.0D + age * 0.01D;
+            Vec3 at = s.axis().add(Math.cos(a) * 0.75D, -0.2D + 0.5D * Math.sin(a * 2.0D + age * 0.03D) * 0.3D + 0.3D, Math.sin(a) * 0.75D);
+            VfxDraw.billboard(glow, s.pose(), at, s.camera(), 0.45D, 0.12F * mist, 0.62F, 0.78F, 1.0F);
+        }
+        s.buffers().endBatch(MurimRenderTypes.impactCore());
+        if (grow > 0.0F) {
+            // Корень за спиной на уровне груди: ствол выходит над плечами, крона — над головой
+            // и по бокам (на первых кадрах дерево пряталось за телом и торчало веером над головой).
+            Vec3 root = s.axis().add(s.facing().scale(-0.4D)).add(0.0D, 0.25D, 0.0D);
+            VertexConsumer branch = s.buffers().getBuffer(MurimRenderTypes.impactCore());
+            List<Vec3> tips = new ArrayList<>();
+            growBranch(branch, s, root, new Vec3(0.0D, 1.0D, 0.0D).add(s.facing().scale(-0.1D)).normalize(),
+                       1.0D, 0, grow, fold, tips, 1L);
+            s.buffers().endBatch(MurimRenderTypes.impactCore());
+            float bloom = Mth.clamp((grow - 0.7F) / 0.3F, 0.0F, 1.0F) * (1.0F - fold);
+            VertexConsumer flower = s.buffers().getBuffer(MurimRenderTypes.impactCore());
+            for (Vec3 tip : tips) {
+                Vec3 at = tip.lerp(s.core(), fold);
+                VfxDraw.billboard(flower, s.pose(), at, s.camera(), 0.17D * bloom, 0.85F * bloom, PINK.red(), PINK.green(), PINK.blue());
+                VfxDraw.billboard(flower, s.pose(), at, s.camera(), 0.05D * bloom, bloom, 1.0F, 0.95F, 0.97F);
+            }
+            s.buffers().endBatch(MurimRenderTypes.impactCore());
+        }
+        // Лепестки кружат вокруг тела, к концу стягиваются в центр.
+        float petals = Mth.clamp((age - 110.0F) / 30.0F, 0.0F, 1.0F);
+        if (petals > 0.0F) {
+            VertexConsumer pet = s.buffers().getBuffer(MurimRenderTypes.impactCore());
+            for (int i = 0; i < 28; i++) {
+                double a = i / 28.0D * Math.PI * 2.0D + age * 0.05D;
+                double rad = (1.1D + 0.15D * Math.sin(i * 1.7D)) * (1.0D - fold);
+                Vec3 at = s.axis().add(Math.cos(a) * rad, 0.1D + 0.25D * Math.sin(a * 3.0D + i), Math.sin(a) * rad);
+                VfxDraw.billboard(pet, s.pose(), at, s.camera(), 0.09D, 0.85F * petals, PINK.red(), PINK.green(), PINK.blue());
+            }
+            s.buffers().endBatch(MurimRenderTypes.impactCore());
+        }
+    }
+
+    /** Ветвь дерева ци: растёт по уровням, на концах — цветы. */
+    private static void growBranch(VertexConsumer c, Scene s, Vec3 from, Vec3 dir, double length, int depth,
+                                   float grow, float fold, List<Vec3> tips, long seed) {
+        float reveal = Mth.clamp(grow * 5.0F - depth, 0.0F, 1.0F);
+        if (reveal <= 0.0F) {
+            return;
+        }
+        Vec3 to = from.add(dir.scale(length * reveal));
+        Vec3 a = from.lerp(s.core(), fold);
+        Vec3 b = to.lerp(s.core(), fold);
+        double width = 0.08D * Math.pow(0.62D, depth);
+        VfxDraw.segment(c, s.pose(), a, b, s.camera(), width * 2.2D, 0.35F, PINK.red(), PINK.green(), PINK.blue());
+        VfxDraw.segment(c, s.pose(), a, b, s.camera(), width, 0.9F, PINK_CORE.red(), PINK_CORE.green(), PINK_CORE.blue());
+        if (depth >= 4 || reveal < 1.0F) {
+            if (depth >= 3) {
+                tips.add(to);
+            }
+            return;
+        }
+        java.util.Random r = new java.util.Random(seed * 7919L + depth);
+        Vec3 side = s.facing().cross(new Vec3(0.0D, 1.0D, 0.0D)).normalize();
+        int kids = depth == 0 ? 3 : 2;
+        for (int k = 0; k < kids; k++) {
+            double spread = (k - (kids - 1) / 2.0D) * (depth == 0 ? 1.3D : 0.95D) + (r.nextDouble() - 0.5D) * 0.4D;
+            Vec3 nd = dir.add(side.scale(spread)).add(0.0D, depth == 0 ? 0.05D : 0.25D, 0.0D).add(s.facing().scale(-0.08D)).normalize();
+            growBranch(c, s, to, nd, length * (0.66D + r.nextDouble() * 0.12D), depth + 1, grow, fold, tips, seed * 31L + k);
+        }
+    }
+
+    // ------------------------------------------------ Пик: перестройка тела
+
+    /**
+     * Перестройка тела, 환골탈태 (вики Nano Machine: тело испускает яркий свет, кости и мышцы
+     * ломаются и собираются заново; «кожа трескается, как скорлупа, и осыпается пылью»;
+     * Myst гл. 108: тело «рассыпается, как кора», под ним новая блестящая кожа).
+     */
+    private static void rebirthScene(Scene s, float age) {
+        float bones = Mth.clamp(age / 30.0F, 0.0F, 1.0F) * (1.0F - Mth.clamp((age - 190.0F) / 30.0F, 0.0F, 1.0F));
+        // Тёплые жилы под костями: кости — каркас, жилы — кровь ци вокруг него.
+        drawVeins(s, bones, 0.35F * bones, 0.008D, GOLD, GOLD_CORE);
+        // Поток ци к ядру ПЕРЕД костями обязателен: без пакета другого типа перед ними кости
+        // типа bodyGlow не появлялись на кадрах вовсе (стенд 01.10, рендер llvmpipe).
+        // [НЕПРОВЕРЕНО: причина; логика MultiBufferSource.BufferSource чистая — проверить на Mac]
+        drawStreams(s, age, 0.5F * bones, GOLD, GOLD_CORE);
+        drawSkeleton(s, age, bones);
+        float cracks = Mth.clamp((age - 70.0F) / 70.0F, 0.0F, 1.0F) * (1.0F - Mth.clamp((age - 175.0F) / 20.0F, 0.0F, 1.0F));
+        drawCracks(s, age, cracks);
+        drawShell(s, age);
+        // Обновлённое тело: мягкое золотое сияние вокруг.
+        float glowK = Mth.clamp((age - 190.0F) / 25.0F, 0.0F, 1.0F);
+        if (glowK > 0.0F) {
+            VertexConsumer glow = s.buffers().getBuffer(MurimRenderTypes.impactCore());
+            for (Vec3 a : skinAnchors(s)) {
+                if (a != null) {
+                    VfxDraw.billboard(glow, s.pose(), a, s.camera(), 0.3D, 0.18F * glowK, BONE.red(), BONE.green(), BONE.blue());
+                }
+            }
+            s.buffers().endBatch(MurimRenderTypes.impactCore());
+        }
+    }
+
+    /** Светящиеся трещины по коже: свет просачивается изнутри. */
+    private static void drawCracks(Scene s, float age, float strength) {
+        if (strength <= 0.0F) {
+            return;
+        }
+        Vec3[] anchors = skinAnchors(s);
+        Vec3 side = s.facing().cross(new Vec3(0.0D, 1.0D, 0.0D)).normalize();
+        VertexConsumer c = s.buffers().getBuffer(MurimRenderTypes.impactCore());
+        int count = (int) (36 * strength);
+        for (int i = 0; i < count; i++) {
+            java.util.Random r = new java.util.Random(SEED * 53L + i);
+            Vec3 base = anchors[r.nextInt(anchors.length)];
+            if (base == null) {
+                continue;
+            }
+            Vec3 at = base.add(side.scale((r.nextDouble() - 0.5D) * 0.26D)).add(0.0D, (r.nextDouble() - 0.5D) * 0.24D, 0.0D)
+                    .add(s.facing().scale(0.01D));
+            Vec3 prev = at;
+            for (int k = 0; k < 3; k++) {
+                Vec3 next = prev.add(side.scale((r.nextDouble() - 0.5D) * 0.09D)).add(0.0D, (r.nextDouble() - 0.5D) * 0.09D, 0.0D);
+                float flicker = 0.7F + 0.3F * Mth.sin(age * 0.6F + i);
+                VfxDraw.segment(c, s.pose(), prev, next, s.camera(), 0.012D, strength * flicker, 1.0F, 0.97F, 0.86F);
+                prev = next;
+            }
+        }
+        s.buffers().endBatch(MurimRenderTypes.impactCore());
+    }
+
+    /** Скорлупа: кожа трескается хлопьями, они отрываются, разлетаются и рассыпаются пылью. */
+    private static void drawShell(Scene s, float age) {
+        float start = 150.0F;
+        if (age < start) {
+            return;
+        }
+        // Два прохода: хлопья (тёмный слой) и швы (свет). Немедленный буфер закрывает первый
+        // тип, когда запрашивают второй, и запись в оба сразу падала «Not building!».
+        VertexConsumer flakes = s.buffers().getBuffer(MurimRenderTypes.impurity());
+        shellPass(s, age, start, flakes, false);
+        s.buffers().endBatch(MurimRenderTypes.impurity());
+        VertexConsumer seams = s.buffers().getBuffer(MurimRenderTypes.impactCore());
+        shellPass(s, age, start, seams, true);
+        s.buffers().endBatch(MurimRenderTypes.impactCore());
+    }
+
+    private static void shellPass(Scene s, float age, float start, VertexConsumer c, boolean light) {
+        Vec3[] anchors = skinAnchors(s);
+        Vec3 side = s.facing().cross(new Vec3(0.0D, 1.0D, 0.0D)).normalize();
+        double ground = ground(s);
+        for (int i = 0; i < 40; i++) {
+            java.util.Random r = new java.util.Random(SEED * 71L + i);
+            Vec3 base = anchors[r.nextInt(anchors.length)];
+            if (base == null) {
+                continue;
+            }
+            Vec3 at0 = base.add(side.scale((r.nextDouble() - 0.5D) * 0.26D)).add(0.0D, (r.nextDouble() - 0.5D) * 0.22D, 0.0D);
+            float t = (age - start - r.nextFloat() * 40.0F) / 45.0F;
+            if (t < 0.0F || t > 1.0F) {
+                continue;
+            }
+            Vec3 out = s.facing().add(side.scale((r.nextDouble() - 0.5D) * 1.6D)).normalize();
+            Vec3 at = at0.add(out.scale(0.7D * t)).add(0.0D, 0.25D * t - 0.9D * t * t, 0.0D);
+            if (at.y < ground) {
+                at = new Vec3(at.x, ground + 0.02D, at.z);
+            }
+            double size = (0.05D + r.nextDouble() * 0.04D) * (1.0D - 0.7D * t);
+            if (light) {
+                VfxDraw.billboard(c, s.pose(), at, s.camera(), size * 0.6D, 0.6F * (1.0F - t), 1.0F, 0.9F, 0.65F);
+            } else {
+                VfxDraw.billboard(c, s.pose(), at, s.camera(), size, 0.9F * (1.0F - t * t), 0.43F, 0.35F, 0.29F);
+                for (int d = 0; d < 3; d++) {
+                    Vec3 dust = at.add((r.nextDouble() - 0.5D) * 0.3D * t, -0.1D * t * d, (r.nextDouble() - 0.5D) * 0.3D * t);
+                    VfxDraw.billboard(c, s.pose(), dust, s.camera(), 0.015D, 0.6F * t * (1.0F - t), 0.55F, 0.48F, 0.42F);
+                }
+            }
+        }
+    }
+
 
     /**
      * Светящийся каркас: позвоночник, ключицы, руки, ноги, рёбра и череп. Кости лежат
@@ -589,6 +1046,8 @@ public final class MeditationVfxRenderer {
      * Тот же язык, что у давления сильного противника (§3д), — только наружу от себя.
      */
     private static void rankUp(Scene s, float age) {
+        VfxColour[] pal = palette(ClientMeditationState.rankUpRank());
+        VfxColour AURA = pal[1];
         float k = Mth.clamp(age / ClientMeditationState.RANK_UP_TICKS, 0.0F, 1.0F);
         float fade = (1.0F - k) * (1.0F - k);
         VertexConsumer glow = s.buffers().getBuffer(MurimRenderTypes.impactCore());
@@ -615,10 +1074,10 @@ public final class MeditationVfxRenderer {
         // Кольцо по земле расходится на четыре блока.
         // Ударная волна: за полсекунды до семи блоков — резко, а не спокойным кругом.
         double radius = 0.4D + 6.6D * Math.min(1.0D, Math.sqrt(age / 10.0D));
-        drawGroundRing(s, base.add(0.0D, 0.05D, 0.0D), radius, 0.12D + 0.2D * k, 0.8F * fade);
+        drawGroundRing(s, base.add(0.0D, 0.05D, 0.0D), radius, 0.12D + 0.2D * k, 0.8F * fade, AURA);
     }
 
-    private static void drawGroundRing(Scene s, Vec3 centre, double radius, double width, float alpha) {
+    private static void drawGroundRing(Scene s, Vec3 centre, double radius, double width, float alpha, VfxColour AURA) {
         if (alpha <= 0.0F) {
             return;
         }
@@ -691,6 +1150,10 @@ public final class MeditationVfxRenderer {
      * только в движении, поэтому потоку нужны бегущие сгустки, разгорающиеся у пупка.
      */
     private static void drawStreams(Scene s, float t, float strength) {
+        drawStreams(s, t, strength, HALO, CORE);
+    }
+
+    private static void drawStreams(Scene s, float t, float strength, VfxColour halo, VfxColour coreColour) {
         if (strength <= 0.0F) {
             return;
         }
@@ -732,9 +1195,9 @@ public final class MeditationVfxRenderer {
                 // Разгорается к семени: у кисти еле видно, у пупка ярко.
                 float a = strength * (0.25F + 0.75F * u * u);
                 VfxDraw.billboard(glow, s.pose(), at, s.camera(), 0.03D + 0.02D * u, a,
-                                  CORE.red(), CORE.green(), CORE.blue());
+                                  coreColour.red(), coreColour.green(), coreColour.blue());
                 VfxDraw.billboard(glow, s.pose(), at, s.camera(), 0.08D, a * 0.3F,
-                                  HALO.red(), HALO.green(), HALO.blue());
+                                  halo.red(), halo.green(), halo.blue());
             }
         }
         s.buffers().endBatch(MurimRenderTypes.impactCore());
@@ -765,6 +1228,14 @@ public final class MeditationVfxRenderer {
      * @param reach доля пути, пройденная светом от средоточия наружу
      */
     private static void drawVeins(Scene s, float reach, float alpha) {
+        drawVeins(s, reach, alpha, 0.006D, HALO, CORE);
+    }
+
+    /**
+     * @param width полуширина жилы: очищение меридиан показывается их расширением
+     *              («из тонкого ручья — в реку», Хуашань гл. 42)
+     */
+    private static void drawVeins(Scene s, float reach, float alpha, double width, VfxColour halo, VfxColour coreColour) {
         if (reach <= 0.0F || alpha <= 0.0F) {
             return;
         }
@@ -800,7 +1271,7 @@ public final class MeditationVfxRenderer {
         RenderType veinType = DEPTH_DEBUG ? MurimRenderTypes.mote() : MurimRenderTypes.bodyGlow();
         VertexConsumer channel = s.buffers().getBuffer(veinType);
         BodyMeridians.draw(channel, s.pose(), s.camera(), parts, lowest, highest, reach,
-                           0.006D, alpha, SEED, HALO, CORE, s.facing());
+                           width, alpha, SEED, halo, coreColour, s.facing());
         s.buffers().endBatch(veinType);
     }
 

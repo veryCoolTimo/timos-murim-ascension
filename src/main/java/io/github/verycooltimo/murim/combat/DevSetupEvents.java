@@ -171,7 +171,9 @@ public final class DevSetupEvents {
                 io.github.verycooltimo.murim.profile.DantianProfile p =
                         meditating.getData(io.github.verycooltimo.murim.registry.ModAttachments.PROFILE);
                 meditating.setData(io.github.verycooltimo.murim.registry.ModAttachments.PROFILE,
-                        p.withRank(0).withPool(io.github.verycooltimo.murim.cultivation.Realm.wall(p))
+                        p.withRank(System.getenv("MURIM_CAPTURE_RANK") == null ? 0
+                                : Integer.parseInt(System.getenv("MURIM_CAPTURE_RANK").trim()))
+                                .withPool(io.github.verycooltimo.murim.cultivation.Realm.wall(p))
                                 .withCirculating(p.maxCirculating()));
                 io.github.verycooltimo.murim.profile.ProfileNetwork.sync(meditating);
             }

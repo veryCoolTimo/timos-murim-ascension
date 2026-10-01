@@ -24,8 +24,13 @@ public final class Realm {
     public static final int SECOND = 2;
     public static final int FIRST = 3;
 
-    /** Последний ранг MVP: дальше Пик с подстадиями, его пока нет. */
-    public static final int MAX = FIRST;
+    /**
+     * Пик — заготовка без подстадий: нужен, чтобы сцена «перестройки тела» существовала в игре
+     * (автор 01.10: «пытайся воссоздать все»). Подстадии с Пика — после MVP.
+     */
+    public static final int PEAK = 4;
+
+    public static final int MAX = PEAK;
 
     /** Во сколько раз прорыв поднимает ёмкость. Множителей к урону нет — запрет документа 05. */
     public static final double CAPACITY_GROWTH = 1.8D;

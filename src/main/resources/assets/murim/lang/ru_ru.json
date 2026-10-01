@@ -96,5 +96,6 @@
   "murim.rank.wall.technique": "Ци упёрлась в стену. Для прорыва освой технику до %s-го слоя",
   "murim.rank.wall.max": "Ци упёрлась в стену. Дальше пути пока нет",
   "murim.rank.breakthrough.title": "Прорыв",
-  "murim.rank.breakthrough.held": "Прорыв отложен: ци осела"
+  "murim.rank.breakthrough.held": "Прорыв отложен: ци осела",
+  "murim.rank.4": "Пик"
 }
