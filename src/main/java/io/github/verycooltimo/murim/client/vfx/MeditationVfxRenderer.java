@@ -597,7 +597,7 @@ public final class MeditationVfxRenderer {
             return;
         }
         Vec3[] anchors = skinAnchors(s);
-        VertexConsumer puff = s.buffers().getBuffer(MurimRenderTypes.impurity());
+        VertexConsumer puff = s.buffers().getBuffer(MurimRenderTypes.impactCore());
         for (int i = 0; i < 18; i++) {
             java.util.Random r = rng(29, i);
             Vec3 base = anchors[new int[] {0, 2, 3, 6}[r.nextInt(4)]];
@@ -607,9 +607,9 @@ public final class MeditationVfxRenderer {
             float t = ((age + r.nextFloat() * 60.0F) % 60.0F) / 60.0F;
             Vec3 at = base.add((r.nextDouble() - 0.5D) * 0.3D, 0.1D + 0.7D * t, (r.nextDouble() - 0.5D) * 0.3D);
             VfxDraw.billboard(puff, s.pose(), at, s.camera(), 0.12D + 0.28D * t,
-                              0.28F * strength * (1.0F - t), 0.78F, 0.81F, 0.84F);
+                              0.1F * strength * (1.0F - t), 0.78F, 0.83F, 0.9F);
         }
-        s.buffers().endBatch(MurimRenderTypes.impurity());
+        s.buffers().endBatch(MurimRenderTypes.impactCore());
     }
 
     // ------------------------------------------ второй ранг: малый небесный круг
