@@ -929,6 +929,7 @@ public final class MeditationVfxRenderer {
         drawPlates(s, age, net);
         drawZonePulses(s, age);
         drawBodyAura(s, age);
+        drawRainbowSparks(s, age);
         drawSpirals(s, age);
         // Один короткий удар волной по полу на пике, без постоянного кольца.
         float ring = Mth.clamp((age - 142.0F) / 10.0F, 0.0F, 1.0F);
@@ -993,6 +994,7 @@ public final class MeditationVfxRenderer {
         List<double[]> glowSpots = new ArrayList<>();
         List<Vec3> spotPos = new ArrayList<>();
         List<Vec3[]> holes = new ArrayList<>();
+        List<Float> edgeAlpha = new ArrayList<>();
         List<Float> holeAlpha = new ArrayList<>();
         int idx = 0;
         for (Crack cr : net) {
@@ -1039,9 +1041,18 @@ public final class MeditationVfxRenderer {
                     holeAlpha.add(hole);
                 }
                 float edge = (1.0F - fly) * (0.4F + 0.6F * lift);
-                // Светится только линия облома — одна сторона, обращённая к телу, тонко.
-                glowEdges.add(new Vec3[] {poly[0], poly[1]});
-                glowEdges.add(new Vec3[] {poly[1], poly[2]});
+                // Чёрный скол, светится щель вокруг — тонкий контур по всем краям, пока скол
+                // у кожи; при отлёте гаснет (автор 01.10: «сколы чёрные, светится то, что между ними»).
+                // Ободок шире скола и чуть позади него (к телу): иначе скол в той же плоскости
+                // закрывал свет, и контура не было видно (кадры стенда 01.10).
+                Vec3[] rim = new Vec3[verts];
+                for (int v = 0; v < verts; v++) {
+                    rim[v] = centre.add(poly[v].subtract(centre).scale(1.18D)).subtract(s.facing().scale(0.006D));
+                }
+                for (int v = 0; v < verts; v++) {
+                    glowEdges.add(new Vec3[] {rim[v], rim[(v + 1) % verts]});
+                    edgeAlpha.add(Mth.clamp(1.2F - fly, 0.0F, 1.0F) * (0.6F + 0.4F * lift));
+                }
                 glowSpots.add(new double[] {size * 1.1D, edge});
                 spotPos.add(base.add(s.facing().scale(0.005D)));
             }
@@ -1062,9 +1073,10 @@ public final class MeditationVfxRenderer {
         s.buffers().endBatch(MurimRenderTypes.impurity());
         VertexConsumer g = s.buffers().getBuffer(MurimRenderTypes.impactCore());
         for (int i = 0; i < glowEdges.size(); i++) {
-            float a = (float) glowSpots.get(i / 2)[1];
+            float a = edgeAlpha.get(i);
             Vec3[] e = glowEdges.get(i);
-            VfxDraw.segment(g, s.pose(), e[0], e[1], s.camera(), 0.006D, 0.55F * a, 0.8F, 0.96F, 1.0F);
+            VfxDraw.segment(g, s.pose(), e[0], e[1], s.camera(), 0.02D, 0.4F * a, 0.4F, 0.87F, 1.0F);
+            VfxDraw.segment(g, s.pose(), e[0], e[1], s.camera(), 0.009D, a, 0.93F, 1.0F, 1.0F);
         }
         for (int h = 0; h < holes.size(); h++) {
             Vec3[] q = holes.get(h);
@@ -1076,6 +1088,9 @@ public final class MeditationVfxRenderer {
                 VfxDraw.vertex(g, s.pose(), q[v], n, 0.5F, 0.5F, 0.85F * ha, 0.75F, 0.95F, 1.0F);
                 VfxDraw.vertex(g, s.pose(), q[v + 1], n, 0.5F, 0.5F, 0.85F * ha, 0.75F, 0.95F, 1.0F);
                 VfxDraw.vertex(g, s.pose(), q[v + 1], n, 0.5F, 0.5F, 0.85F * ha, 0.75F, 0.95F, 1.0F);
+            }
+            for (int v = 0; v < q.length; v++) {
+                VfxDraw.segment(g, s.pose(), q[v], q[(v + 1) % q.length], s.camera(), 0.006D, 0.9F * ha, 0.93F, 1.0F, 1.0F);
             }
             Vec3 mid = q[0].lerp(q[q.length / 2], 0.5D);
             VfxDraw.billboard(g, s.pose(), mid, s.camera(), 0.12D, 0.5F * ha, 0.4F, 0.85F, 1.0F);
@@ -1227,6 +1242,32 @@ public final class MeditationVfxRenderer {
                 float a = (float) Math.sin(cycle * Math.PI) * strength * peak;
                 VfxDraw.billboard(c, s.pose(), pos, s.camera(), 0.32D + 0.28D * cycle, 0.4F * a, col.red(), col.green(), col.blue());
             }
+        }
+        s.buffers().endBatch(MurimRenderTypes.impactCore());
+    }
+
+    /** Радужные искры: мелкие яркие частицы поднимаются от тела и разлетаются наружу. */
+    private static void drawRainbowSparks(Scene s, float age) {
+        float strength = Mth.clamp((age - 56.0F) / 40.0F, 0.0F, 1.0F) * (1.0F - Mth.clamp((age - 205.0F) / 30.0F, 0.0F, 1.0F));
+        if (strength <= 0.0F) {
+            return;
+        }
+        double feet = ground(s);
+        Vec3 head = BoneAnchorLayer.position(s.player(), BoneAnchorLayer.Bone.HEAD);
+        double top = head == null ? feet + 1.2D : head.y + 0.2D;
+        VertexConsumer c = s.buffers().getBuffer(MurimRenderTypes.impactCore());
+        for (int i = 0; i < 60; i++) {
+            java.util.Random r = rng(233, i);
+            float life = 30.0F + r.nextFloat() * 30.0F;
+            float t = ((age + r.nextFloat() * life) % life) / life;
+            double a = r.nextDouble() * Math.PI * 2.0D + age * 0.01D;
+            double rad = 0.2D + r.nextDouble() * 0.3D + 0.9D * t;
+            double y = feet + 0.2D + r.nextDouble() * (top - feet) + 0.8D * t;
+            Vec3 at = new Vec3(s.axis().x + Math.cos(a) * rad, y, s.axis().z + Math.sin(a) * rad);
+            VfxColour col = rainbow(r.nextDouble() + age * 0.01D);
+            float fade = (float) Math.sin(t * Math.PI) * strength;
+            VfxDraw.billboard(c, s.pose(), at, s.camera(), 0.05D, 0.8F * fade, col.red(), col.green(), col.blue());
+            VfxDraw.billboard(c, s.pose(), at, s.camera(), 0.016D, fade, 1.0F, 1.0F, 1.0F);
         }
         s.buffers().endBatch(MurimRenderTypes.impactCore());
     }
