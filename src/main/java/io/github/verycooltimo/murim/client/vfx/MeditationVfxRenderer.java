@@ -761,29 +761,162 @@ public final class MeditationVfxRenderer {
      * ломаются и собираются заново; «кожа трескается, как скорлупа, и осыпается пылью»;
      * Myst гл. 108: тело «рассыпается, как кора», под ним новая блестящая кожа).
      */
+    private static final VfxColour CRACK_LIGHT = new VfxColour(0.82F, 0.94F, 1.0F);
+    private static final VfxColour CRACK_BLUE = new VfxColour(0.35F, 0.7F, 1.0F);
+
+    /**
+     * Перестройка тела по главному референсу автора — Мок Кён Ун (Myst гл. 107–108, папка
+     * body-reconstruction-mok): тёмная сеть трещин с бело-голубым светом в швах, радужные
+     * потоки ци поднимаются от тела, холодная дуга у пола; кульминация — вертикальный выброс,
+     * лицо светится сквозь трещины, пластины оболочки отлетают; в конце — целая кожа и редкие
+     * хлопья. Скелет — короткий проблеск в начале (кости «ломаются и срастаются»), чёрная кровь у рта.
+     */
     private static void rebirthScene(Scene s, float age) {
-        float bones = Mth.clamp(age / 30.0F, 0.0F, 1.0F) * (1.0F - Mth.clamp((age - 190.0F) / 30.0F, 0.0F, 1.0F));
-        // Тёплые жилы под костями: кости — каркас, жилы — кровь ци вокруг него.
-        drawVeins(s, bones, 0.35F * bones, 0.008D, GOLD, GOLD_CORE);
-        // Поток ци к ядру ПЕРЕД костями обязателен: без пакета другого типа перед ними кости
-        // типа bodyGlow не появлялись на кадрах вовсе (стенд 01.10, рендер llvmpipe).
-        // [НЕПРОВЕРЕНО: причина; логика MultiBufferSource.BufferSource чистая — проверить на Mac]
-        drawStreams(s, age, 0.5F * bones, GOLD, GOLD_CORE);
+        float bones = Mth.clamp(age / 15.0F, 0.0F, 1.0F) * (1.0F - Mth.clamp((age - 35.0F) / 25.0F, 0.0F, 1.0F));
+        drawStreams(s, age, 0.6F * bones + 0.3F * Mth.clamp((age - 60.0F) / 40.0F, 0.0F, 1.0F), CRACK_BLUE, CRACK_LIGHT);
         drawSkeleton(s, age, bones);
-        float cracks = Mth.clamp((age - 70.0F) / 70.0F, 0.0F, 1.0F) * (1.0F - Mth.clamp((age - 175.0F) / 20.0F, 0.0F, 1.0F));
-        drawCracks(s, age, cracks);
+        float cracks = Mth.clamp((age - 20.0F) / 90.0F, 0.0F, 1.0F) * (1.0F - Mth.clamp((age - 205.0F) / 20.0F, 0.0F, 1.0F));
+        float climax = (float) Math.exp(-Math.pow((age - 175.0D) / 22.0D, 2.0D));
+        drawCrackNet(s, age, cracks, climax);
+        drawRainbow(s, age, Mth.clamp((age - 60.0F) / 40.0F, 0.0F, 1.0F) * (1.0F - Mth.clamp((age - 215.0F) / 25.0F, 0.0F, 1.0F)), climax);
         drawShell(s, age);
-        // Обновлённое тело: мягкое золотое сияние вокруг.
-        float glowK = Mth.clamp((age - 190.0F) / 25.0F, 0.0F, 1.0F);
-        if (glowK > 0.0F) {
-            VertexConsumer glow = s.buffers().getBuffer(MurimRenderTypes.impactCore());
-            for (Vec3 a : skinAnchors(s)) {
-                if (a != null) {
-                    VfxDraw.billboard(glow, s.pose(), a, s.camera(), 0.3D, 0.18F * glowK, BONE.red(), BONE.green(), BONE.blue());
-                }
+        drawBlood(s, age, Mth.clamp((age - 90.0F) / 30.0F, 0.0F, 1.0F) * (1.0F - Mth.clamp((age - 215.0F) / 20.0F, 0.0F, 1.0F)));
+    }
+
+    /** Точка на передней грани головы: лицо модели — на 0,26 блока от центра головы. */
+    private static Vec3 face(Scene s) {
+        Vec3 head = BoneAnchorLayer.position(s.player(), BoneAnchorLayer.Bone.HEAD);
+        return head == null ? null : head.add(s.facing().scale(0.27D));
+    }
+
+    /**
+     * Сеть трещин: тёмные линии (затемнение) с бело-голубым светом в швах. На голове гуще —
+     * на референсах трещины прежде всего идут по лицу, свет бьёт из глаз.
+     */
+    private static void drawCrackNet(Scene s, float age, float strength, float climax) {
+        if (strength <= 0.0F) {
+            return;
+        }
+        Vec3[] anchors = skinAnchors(s);
+        Vec3 faceAt = face(s);
+        Vec3 side = s.facing().cross(new Vec3(0.0D, 1.0D, 0.0D)).normalize();
+        Vec3 up = new Vec3(0.0D, 1.0D, 0.0D);
+        int count = (int) (70 * strength);
+        List<Vec3[]> lines = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            java.util.Random r = new java.util.Random(SEED * 61L + i);
+            boolean onFace = faceAt != null && i % 3 == 0;
+            Vec3 base = onFace ? faceAt : anchors[r.nextInt(anchors.length)];
+            if (base == null) {
+                continue;
             }
+            double spread = onFace ? 0.24D : 0.26D;
+            Vec3 prev = base.add(side.scale((r.nextDouble() - 0.5D) * spread)).add(up.scale((r.nextDouble() - 0.5D) * spread))
+                    .add(s.facing().scale(0.012D));
+            for (int k = 0; k < 4; k++) {
+                Vec3 next = prev.add(side.scale((r.nextDouble() - 0.5D) * 0.1D)).add(up.scale((r.nextDouble() - 0.5D) * 0.1D));
+                lines.add(new Vec3[] {prev, next});
+                prev = next;
+            }
+        }
+        VertexConsumer dark = s.buffers().getBuffer(MurimRenderTypes.impurity());
+        for (Vec3[] l : lines) {
+            VfxDraw.segment(dark, s.pose(), l[0], l[1], s.camera(), 0.016D, 0.85F * strength, 0.08F, 0.07F, 0.09F);
+        }
+        s.buffers().endBatch(MurimRenderTypes.impurity());
+        float flicker = 0.55F + 0.45F * Mth.sin(age * 0.5F);
+        float lit = strength * (0.35F + 0.25F * flicker + 0.6F * climax);
+        VertexConsumer glow = s.buffers().getBuffer(MurimRenderTypes.impactCore());
+        for (Vec3[] l : lines) {
+            VfxDraw.segment(glow, s.pose(), l[0], l[1], s.camera(), 0.006D + 0.006D * climax, lit,
+                            CRACK_LIGHT.red(), CRACK_LIGHT.green(), CRACK_LIGHT.blue());
+        }
+        // Глаза: свет бьёт из глазниц, к кульминации — всё лицо бело-голубое.
+        if (faceAt != null) {
+            Vec3 eyes = faceAt.add(0.0D, 0.03D, 0.0D);
+            for (int sgn = -1; sgn <= 1; sgn += 2) {
+                Vec3 eye = eyes.add(side.scale(sgn * 0.07D));
+                VfxDraw.billboard(glow, s.pose(), eye, s.camera(), 0.05D + 0.08D * climax, strength * (0.6F + 0.4F * climax),
+                                  CRACK_LIGHT.red(), CRACK_LIGHT.green(), CRACK_LIGHT.blue());
+            }
+            VfxDraw.billboard(glow, s.pose(), faceAt, s.camera(), 0.35D * climax, 0.55F * climax,
+                              CRACK_BLUE.red(), CRACK_BLUE.green(), CRACK_BLUE.blue());
+        }
+        s.buffers().endBatch(MurimRenderTypes.impactCore());
+    }
+
+    /** Цвет радуги по доле 0..1: красный → оранжевый → жёлтый → зелёный → голубой → фиолетовый. */
+    private static VfxColour hue(double h) {
+        double x = (h % 1.0D + 1.0D) % 1.0D * 6.0D;
+        double f = x - Math.floor(x);
+        float r, g, b;
+        switch ((int) Math.floor(x)) {
+            case 0 -> { r = 1.0F; g = (float) f; b = 0.0F; }
+            case 1 -> { r = (float) (1.0D - f); g = 1.0F; b = 0.0F; }
+            case 2 -> { r = 0.0F; g = 1.0F; b = (float) f; }
+            case 3 -> { r = 0.0F; g = (float) (1.0D - f); b = 1.0F; }
+            case 4 -> { r = (float) f; g = 0.0F; b = 1.0F; }
+            default -> { r = 1.0F; g = 0.0F; b = (float) (1.0D - f); }
+        }
+        // Пастельнее: на референсах ленты светлые, с белым ядром.
+        return new VfxColour(0.45F + 0.55F * r, 0.45F + 0.55F * g, 0.45F + 0.55F * b);
+    }
+
+    /**
+     * Радужные потоки ци: ленты поднимаются от тела, извиваясь; холодная дуга у пола;
+     * в кульминацию — вертикальный выброс сквозь тело.
+     */
+    private static void drawRainbow(Scene s, float age, float strength, float climax) {
+        if (strength <= 0.0F) {
+            return;
+        }
+        double feet = ground(s);
+        Vec3 base = new Vec3(s.axis().x, feet, s.axis().z);
+        VertexConsumer c = s.buffers().getBuffer(MurimRenderTypes.impactCore());
+        int ribbons = 7;
+        for (int k = 0; k < ribbons; k++) {
+            double a0 = k / (double) ribbons * Math.PI * 2.0D + age * 0.02D;
+            VfxColour col = hue(k / (double) ribbons + age * 0.004D);
+            Vec3 prev = null;
+            for (int i = 0; i <= 14; i++) {
+                double u = i / 14.0D;
+                double rise = 0.1D + 3.2D * u * (0.6D + 0.4D * strength);
+                double rad = (0.55D - 0.35D * u) + 0.08D * Math.sin(age * 0.12D + k + u * 6.0D);
+                double a = a0 + u * 2.4D;
+                Vec3 at = base.add(Math.cos(a) * rad, rise, Math.sin(a) * rad);
+                if (prev != null) {
+                    float fade = (float) (Math.sin(u * Math.PI)) * strength;
+                    VfxDraw.segment(c, s.pose(), prev, at, s.camera(), 0.07D, 0.35F * fade, col.red(), col.green(), col.blue());
+                    VfxDraw.segment(c, s.pose(), prev, at, s.camera(), 0.018D, 0.8F * fade, 1.0F, 1.0F, 1.0F);
+                }
+                prev = at;
+            }
+        }
+        // Холодная дуга у пола.
+        s.buffers().endBatch(MurimRenderTypes.impactCore());
+        drawGroundRing(s, base.add(0.0D, 0.04D, 0.0D), 0.9D + 0.3D * climax, 0.18D, 0.55F * strength, CRACK_BLUE);
+        // Вертикальный выброс сквозь тело.
+        if (climax > 0.02F) {
+            VertexConsumer p = s.buffers().getBuffer(MurimRenderTypes.impactCore());
+            VfxDraw.segment(p, s.pose(), base, base.add(0.0D, 7.0D, 0.0D), s.camera(), 0.5D * climax, 0.6F * climax,
+                            CRACK_BLUE.red(), CRACK_BLUE.green(), CRACK_BLUE.blue());
+            VfxDraw.segment(p, s.pose(), base, base.add(0.0D, 7.0D, 0.0D), s.camera(), 0.15D * climax, climax, 1.0F, 1.0F, 1.0F);
             s.buffers().endBatch(MurimRenderTypes.impactCore());
         }
+    }
+
+    /** Чёрная кровь у рта: стекает по подбородку (Myst гл. 107). */
+    private static void drawBlood(Scene s, float age, float strength) {
+        Vec3 faceAt = face(s);
+        if (strength <= 0.0F || faceAt == null) {
+            return;
+        }
+        Vec3 mouth = faceAt.add(0.0D, -0.1D, 0.0D).add(s.facing().scale(0.01D));
+        float run = Mth.clamp((age - 90.0F) / 50.0F, 0.0F, 1.0F);
+        VertexConsumer dark = s.buffers().getBuffer(MurimRenderTypes.impurity());
+        VfxDraw.segment(dark, s.pose(), mouth, mouth.add(0.0D, -0.22D * run, 0.0D), s.camera(), 0.02D, 0.95F * strength, 0.05F, 0.02F, 0.03F);
+        VfxDraw.billboard(dark, s.pose(), mouth.add(0.0D, -0.22D * run, 0.0D), s.camera(), 0.025D, 0.9F * strength, 0.05F, 0.02F, 0.03F);
+        s.buffers().endBatch(MurimRenderTypes.impurity());
     }
 
     /** Светящиеся трещины по коже: свет просачивается изнутри. */
