@@ -500,19 +500,23 @@ public final class MeditationVfxRenderer {
 
     /** Набор клякс: кольцом вокруг тела, крупные и мелкие брызги; {@code grow} — доля проявления. */
     private static void stainSet(VertexConsumer dark, PoseStack.Pose pose, Vec3 centre, float alpha, float grow) {
-        for (int i = 0; i < 16; i++) {
+        for (int i = 0; i < 22; i++) {
             java.util.Random r = rng(97, i);
             double a = r.nextDouble() * Math.PI * 2.0D;
-            double rad = 0.35D + r.nextDouble() * 0.5D;
+            double rad = 0.3D + r.nextDouble() * 0.6D;
             Vec3 at = centre.add(Math.cos(a) * rad, 0.0D, Math.sin(a) * rad);
-            float own = Mth.clamp(grow * 16.0F - i, 0.0F, 1.0F);
+            float own = Mth.clamp(grow * 22.0F - i, 0.0F, 1.0F);
             if (own <= 0.0F) {
                 continue;
             }
-            flatSpot(dark, pose, at, (0.08D + r.nextDouble() * 0.12D) * own, alpha);
-            for (int k = 0; k < 3; k++) {
+            // Клякса — два наложенных пятна: мягкий край текстуры съедает половину радиуса.
+            double big = (0.16D + r.nextDouble() * 0.18D) * own;
+            flatSpot(dark, pose, at, big, alpha);
+            flatSpot(dark, pose, at.add(0.0D, 0.001D, 0.0D), big * 0.6D, alpha);
+            for (int k = 0; k < 4; k++) {
                 double b = r.nextDouble() * Math.PI * 2.0D;
-                flatSpot(dark, pose, at.add(Math.cos(b) * 0.16D, 0.001D, Math.sin(b) * 0.16D), 0.03D * own, alpha * 0.8F);
+                double d = big * (1.1D + r.nextDouble());
+                flatSpot(dark, pose, at.add(Math.cos(b) * d, 0.002D, Math.sin(b) * d), 0.05D * own, alpha);
             }
         }
     }
@@ -563,7 +567,7 @@ public final class MeditationVfxRenderer {
             if (t < 0.0F) {
                 continue;
             }
-            double size = 0.035D + r.nextDouble() * 0.03D;
+            double size = 0.06D + r.nextDouble() * 0.05D;
             if (t < 1.0F) {
                 // Выступает (растёт), медленно сползает, к концу срывается вниз.
                 double grow = Math.min(1.0D, t * 4.0D);
