@@ -347,7 +347,7 @@ public final class MeditationVfxRenderer {
         float total = ClientMeditationState.SEED_SCENE_TICKS;
         float flash = Mth.clamp(1.0F - age / 16.0F, 0.0F, 1.0F);
         // Жилы вспыхивают разом и медленно гаснут к концу сцены.
-        float veins = age < 20.0F ? age / 20.0F : Mth.clamp(1.0F - (age - 120.0F) / 100.0F, 0.0F, 1.0F);
+        float veins = age < 20.0F ? age / 20.0F : Mth.clamp(1.0F - (age - (total - 80.0F)) / 70.0F, 0.0F, 1.0F);
         float fadeOut = Mth.clamp((total - age) / 50.0F, 0.0F, 1.0F);
         // Пульс сердца: двойной удар раз в полторы секунды.
         float beat = (age % 30.0F) / 30.0F;

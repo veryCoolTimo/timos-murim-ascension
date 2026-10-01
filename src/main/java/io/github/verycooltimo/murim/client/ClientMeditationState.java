@@ -34,8 +34,12 @@ public final class ClientMeditationState {
         BACKLASH
     }
 
-    /** Сцена «внутреннего взгляда» при рождении семени: 12 секунд (автор: 10–15). */
-    public static final int SEED_SCENE_TICKS = 240;
+    /**
+     * Сцена «внутреннего взгляда» при рождении семени: 7 секунд. Было 12 — автор 01.10:
+     * «слишком долго персонаж в конце сидит без анимации, где текст». Вспышка и титр те же,
+     * укорочен хвост после титра.
+     */
+    public static final int SEED_SCENE_TICKS = 140;
 
     /** Сколько длится послесвечение законченной сессии. */
     public static final int AFTERMATH_TICKS = 40;
