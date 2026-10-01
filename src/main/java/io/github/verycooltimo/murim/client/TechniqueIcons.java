@@ -8,7 +8,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Иконки техник: {@code assets/<ns>/textures/gui/technique/<path>.png}, 32×32. Нет файла —
+ * Иконки техник: {@code assets/<ns>/textures/gui/technique/<path>.png}, 64×64 (нарезка из листа gpt-image-2,
+ * docs/design/reference/ui/). Нет файла —
  * общая заглушка: новая техника из датапака не должна ломать интерфейс.
  */
 public final class TechniqueIcons {

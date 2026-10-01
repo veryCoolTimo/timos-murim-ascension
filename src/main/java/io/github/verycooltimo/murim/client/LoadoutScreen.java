@@ -210,7 +210,7 @@ public final class LoadoutScreen extends Screen {
     private static void icon(GuiGraphics g, ResourceLocation technique, int x, int y, int size, float alpha) {
         g.setColor(1.0F, 1.0F, 1.0F, alpha);
         com.mojang.blaze3d.systems.RenderSystem.enableBlend();
-        g.blit(TechniqueIcons.of(technique), x, y, size, size, 0.0F, 0.0F, 32, 32, 32, 32);
+        g.blit(TechniqueIcons.of(technique), x, y, size, size, 0.0F, 0.0F, 64, 64, 64, 64);
         g.setColor(1.0F, 1.0F, 1.0F, 1.0F);
     }
 

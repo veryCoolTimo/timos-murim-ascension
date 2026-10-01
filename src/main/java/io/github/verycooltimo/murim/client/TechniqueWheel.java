@@ -172,7 +172,7 @@ public final class TechniqueWheel {
                 int size = i == selected ? 22 : 18;
                 int off = (size - 18) / 2;
                 graphics.blit(TechniqueIcons.of(technique.get()), ix - off, iy - off, size, size,
-                        0.0F, 0.0F, 32, 32, 32, 32);
+                        0.0F, 0.0F, 64, 64, 64, 64);
                 graphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
             } else {
                 GuiShapes.ring(graphics, ix + 9, iy + 9, 3.0F, 4.0F, ((int) (appear * 0x60) << 24) | 0xC8DCEC);
