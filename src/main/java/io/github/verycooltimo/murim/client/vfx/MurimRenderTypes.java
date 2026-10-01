@@ -302,6 +302,52 @@ public final class MurimRenderTypes {
         return RenderType.entityTranslucent(INK_TEXTURE);
     }
 
+    /**
+     * Крупные маски ауры (docs/design/19 §3ж, разбор astra 01.10): обычное смешивание, без записи
+     * глубины — огромные полупрозрачные карточки иначе закрывали бы всё, что рисуется после.
+     * Шейдер полупрозрачных сущностей, как у {@link #shard()}: на нём тёмное видно и на llvmpipe.
+     */
+    private static RenderType auraLayer(String name, String texture) {
+        return RenderType.create(MurimMod.MODID + ":" + name, DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.QUADS, 4096,
+                RenderType.CompositeState.builder()
+                        .setShaderState(RenderStateShard.RENDERTYPE_ENTITY_TRANSLUCENT_SHADER)
+                        .setTextureState(new RenderStateShard.TextureStateShard(
+                                ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, texture), true, false))
+                        .setTransparencyState(RenderStateShard.TRANSLUCENT_TRANSPARENCY)
+                        .setCullState(RenderStateShard.NO_CULL)
+                        .setLightmapState(RenderStateShard.LIGHTMAP)
+                        .setOverlayState(RenderStateShard.NO_OVERLAY)
+                        .setWriteMaskState(RenderStateShard.COLOR_WRITE)
+                        .createCompositeState(false));
+    }
+
+    private static final RenderType AURA_MASS = auraLayer("aura_mass", "textures/vfx/aura_mass.png");
+    private static final RenderType AURA_MASS_GLOW = additive("aura_mass_glow",
+            ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/vfx/aura_mass.png"));
+    private static final RenderType AURA_FAN = auraLayer("aura_fan", "textures/vfx/aura_fan.png");
+    private static final RenderType AURA_STROKES = auraLayer("aura_strokes", "textures/vfx/aura_strokes.png");
+    private static final RenderType AURA_GROUND = auraLayer("aura_ground", "textures/vfx/aura_ground.png");
+
+    public static RenderType auraMass() {
+        return AURA_MASS;
+    }
+
+    public static RenderType auraMassGlow() {
+        return AURA_MASS_GLOW;
+    }
+
+    public static RenderType auraFan() {
+        return AURA_FAN;
+    }
+
+    public static RenderType auraStrokes() {
+        return AURA_STROKES;
+    }
+
+    public static RenderType auraGround() {
+        return AURA_GROUND;
+    }
+
     /** Сплошные тёмные квадраты: обломки и угли. */
     public static RenderType solid() {
         return RenderType.entityTranslucent(ResourceLocation.withDefaultNamespace("textures/misc/white.png"));

@@ -32,6 +32,8 @@ import net.neoforged.neoforge.client.event.ViewportEvent;
 public final class ClientAuraState {
 
     private static final Int2ObjectMap<AuraState> AURAS = new Int2ObjectOpenHashMap<>();
+    /** Тик, когда аура существа появилась или сменила ранг: от него идёт раскрытие. */
+    private static final it.unimi.dsi.fastutil.ints.Int2IntMap SINCE = new it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap();
 
     private static float target;
     private static float shown;
@@ -42,20 +44,30 @@ public final class ClientAuraState {
     private static int ticks;
     /** Тики до следующего удара сердца. */
     private static int beatIn;
-    /** Тиков с последнего удара: толчок камеры затухает от него. */
-    private static int sinceBeat = 100;
+    /** Тик последнего фронта давления. */
+    private static int frontTick = -1;
+    private static int lastTier;
 
     public static void set(int entityId, AuraState aura) {
         if (aura.present()) {
-            AURAS.put(entityId, aura);
+            AuraState before = AURAS.put(entityId, aura);
+            if (!aura.equals(before)) {
+                SINCE.put(entityId, ticks);
+            }
         } else {
             AURAS.remove(entityId);
+            SINCE.remove(entityId);
         }
     }
 
     public static AuraState of(Entity entity) {
         AuraState aura = AURAS.get(entity.getId());
         return aura == null ? AuraState.NONE : aura;
+    }
+
+    /** Сколько тиков аура существа уже раскрыта. */
+    public static float ageOf(int entityId, float partial) {
+        return ticks - SINCE.getOrDefault(entityId, ticks) + partial;
     }
 
     public static Int2ObjectMap<AuraState> all() {
@@ -73,11 +85,6 @@ public final class ClientAuraState {
 
     public static boolean sourceDemonic() {
         return sourceDemonic;
-    }
-
-    /** Возраст текущего удара сердца в тиках: экран вздрагивает вместе с ним. */
-    public static float beatAge(float partial) {
-        return sinceBeat + partial;
     }
 
     @SubscribeEvent
@@ -105,6 +112,7 @@ public final class ClientAuraState {
             Entity entity = minecraft.level.getEntity(entry.getIntKey());
             if (entity == null) {
                 // Ушла из видимости или умерла: при новом появлении сервер пришлёт ауру снова.
+                SINCE.remove(entry.getIntKey());
                 it.remove();
                 continue;
             }
@@ -132,25 +140,41 @@ public final class ClientAuraState {
             sourceId = -1;
         }
 
-        // Сердце: чем тяжелее, тем чаще и громче. Удар — и звук, и толчок камеры.
-        sinceBeat++;
-        if (shown > 0.08F) {
+        // Ступень давления выросла — один фронт: толчок камеры, волна марева, вход мазков.
+        int tier = tier(shown);
+        if (tier > lastTier) {
+            frontTick = ticks;
+        }
+        lastTier = tier;
+
+        // Сердце — только с сильного давления, 60–75 ударов в минуту, тихо: не глушит шаги.
+        // Свет и камера удары не повторяют (разбор astra 01.10).
+        if (shown >= 0.5F) {
             if (--beatIn <= 0) {
-                beatIn = Math.round(Mth.lerp(shown, 30.0F, 11.0F));
-                sinceBeat = 0;
+                beatIn = Math.round(Mth.lerp((shown - 0.5F) / 0.5F, 20.0F, 16.0F));
                 minecraft.player.level().playLocalSound(minecraft.player.getX(), minecraft.player.getY(),
                         minecraft.player.getZ(), SoundEvents.WARDEN_HEARTBEAT, SoundSource.PLAYERS,
-                        0.35F + 0.75F * shown, 0.8F - 0.15F * shown, false);
-                if (shown > 0.6F && ticks % 3 == 0) {
-                    // Низкий гул: воздух сам стал тяжёлым.
-                    minecraft.player.level().playLocalSound(minecraft.player.getX(), minecraft.player.getY(),
-                            minecraft.player.getZ(), SoundEvents.WARDEN_AMBIENT, SoundSource.HOSTILE,
-                            0.25F * shown, 0.5F, false);
-                }
+                        0.25F + 0.35F * shown, 0.75F, false);
             }
         } else {
             beatIn = 0;
         }
+        // Гул и тяжёлый выдох пространства — на фронте.
+        if (frontTick == ticks && tier > 0) {
+            minecraft.player.level().playLocalSound(minecraft.player.getX(), minecraft.player.getY(),
+                    minecraft.player.getZ(), SoundEvents.WARDEN_SONIC_CHARGE, SoundSource.HOSTILE,
+                    0.15F + 0.12F * tier, 0.5F, false);
+        }
+    }
+
+    /** Р0..Р3 по силе давления. */
+    public static int tier(float p) {
+        return p >= 0.8F ? 3 : p >= 0.5F ? 2 : p >= 0.2F ? 1 : 0;
+    }
+
+    /** Возраст последнего фронта в тиках; большой — фронта не было. */
+    public static float frontAge(float partial) {
+        return frontTick < 0 ? 1000.0F : ticks - frontTick + partial;
     }
 
     @SubscribeEvent
@@ -161,26 +185,24 @@ public final class ClientAuraState {
             return;
         }
         double setting = ClientConfig.cameraShake();
-        float t = ticks + partial;
-        // Давит вниз: взгляд опускается, голову клонит набок — медленно, как под тяжестью.
-        float lean = (float) (p * (3.0D + 1.2D * Math.sin(t * 0.07D)));
-        event.setPitch(event.getPitch() + 4.0F * p * p);
-        event.setRoll(event.getRoll() + lean * (float) Math.max(setting, 0.3D));
-        // Толчок на удар сердца.
-        float kick = (float) Math.exp(-beatAge(partial) / 2.5D) * p * (float) setting;
+        // Один затухающий толчок на фронте: 0,1° / 0,25° / 0,4°, около 0,35 с. Постоянного
+        // крена больше нет — он мешал целиться и читался как укачивание.
+        float age = frontAge(partial);
+        float[] kickByTier = {0.0F, 0.1F, 0.25F, 0.4F};
+        float kick = kickByTier[lastTier] * (float) Math.exp(-age / 2.5D) * (float) setting;
         if (kick > 0.001F) {
-            event.setYaw(event.getYaw() + Mth.sin(t * 2.9F) * 1.2F * kick);
-            event.setPitch(event.getPitch() + Mth.sin(t * 3.7F + 1.1F) * 1.0F * kick);
-            event.setRoll(event.getRoll() + Mth.sin(t * 3.3F + 2.2F) * 1.6F * kick);
+            float t = ticks + partial;
+            event.setPitch(event.getPitch() + Mth.sin(t * 3.7F) * kick * 2.0F);
+            event.setRoll(event.getRoll() + Mth.sin(t * 3.1F + 1.3F) * kick * 2.0F);
         }
     }
 
     @SubscribeEvent
     static void onFov(ViewportEvent.ComputeFov event) {
         float p = pressure((float) event.getPartialTick());
-        if (p > 0.0F && event.usedConfiguredFov()) {
-            // Поле зрения сужается к противнику.
-            event.setFOV(event.getFOV() * (1.0D - 0.1D * p));
+        if (p > 0.5F && event.usedConfiguredFov() && ClientConfig.cameraShake() > 0.0D) {
+            // Сужение 1,5° на Р2 и 2,5° на Р3, плавно.
+            event.setFOV(event.getFOV() - Mth.lerp((p - 0.5F) / 0.5F, 0.0F, 2.5F));
         }
     }
 
