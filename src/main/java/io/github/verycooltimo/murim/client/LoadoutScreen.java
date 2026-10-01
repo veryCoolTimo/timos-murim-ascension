@@ -37,14 +37,16 @@ public final class LoadoutScreen extends Screen {
     private static final int H = 180;
 
     /** Спокойная середина свитка: по краям нарисованы горы, сосна и бамбук. */
-    private static final int LIST_X = 50;
-    private static final int LIST_W = 132;
+    // Список правее монастыря на скале, слоты — левее сосны: пейзаж по краям остаётся открытым.
+    private static final int LIST_X = 74;
+    private static final int LIST_W = 120;
     private static final int TOP = 36;
     private static final int ROW = 22;
     private static final int VISIBLE = 5;
     private static final int SLOT_SIZE = 24;
-    private static final int SLOTS_X = 192;
-    private static final int SLOT_STEP = 26;
+    private static final int SLOTS_X = 202;
+    private static final int SLOT_COLUMNS = 2;
+    private static final int SLOT_STEP = 25;
 
     private static final float NAME_SCALE = 0.85F;
 
@@ -172,11 +174,11 @@ public final class LoadoutScreen extends Screen {
     }
 
     private int slotX(int i) {
-        return left() + SLOTS_X + (i % 3) * SLOT_STEP;
+        return left() + SLOTS_X + (i % SLOT_COLUMNS) * SLOT_STEP;
     }
 
     private int slotY(int i) {
-        return top() + TOP + (i / 3) * SLOT_STEP;
+        return top() + TOP + (i / SLOT_COLUMNS) * SLOT_STEP;
     }
 
     @Override
