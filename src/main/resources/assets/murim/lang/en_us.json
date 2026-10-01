@@ -95,5 +95,15 @@
   "murim.technique.unknown": "You do not know “%s”.",
   "murim.mastery.insight": "Insight",
   "murim.mastery.insight.layer": "“%s” — layer %s",
-  "murim.meditation.seeded.pondering": "pondering: “%s”"
+  "murim.meditation.seeded.pondering": "pondering: “%s”",
+  "key.murim.wheel": "Technique wheel (hold)",
+  "key.murim.loadout": "Technique loadout",
+  "murim.loadout.title": "Techniques",
+  "murim.loadout.none": "No techniques learned yet.",
+  "murim.loadout.layer": "layer %s/%s",
+  "murim.loadout.slots": "Slots: %s",
+  "murim.loadout.locked_hint": "Slots grow with understanding",
+  "murim.loadout.hint": "LMB a technique, then a slot — place · RMB a slot — clear",
+  "murim.loadout.empty_slot": "empty slot",
+  "murim.loadout.empty": "Slot is empty — set up techniques: [%s]"
 }

@@ -57,6 +57,14 @@ public final class ModAttachments {
                             .copyOnDeath()
                             .build());
 
+    /** Техники по слотам и выбранная (решение автора 01.10). Сохраняется и переживает смерть. */
+    public static final Supplier<AttachmentType<io.github.verycooltimo.murim.mastery.Loadout>> LOADOUT =
+            ATTACHMENT_TYPES.register("loadout",
+                    () -> AttachmentType.builder(() -> io.github.verycooltimo.murim.mastery.Loadout.EMPTY)
+                            .serialize(io.github.verycooltimo.murim.mastery.Loadout.CODEC)
+                            .copyOnDeath()
+                            .build());
+
     /** Идущая сессия медитации. Не сохраняется: сессия требует неподвижности здесь и сейчас. */
     public static final Supplier<AttachmentType<io.github.verycooltimo.murim.cultivation.MeditationState>> MEDITATION =
             ATTACHMENT_TYPES.register("meditation_state",

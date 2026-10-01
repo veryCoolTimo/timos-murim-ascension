@@ -36,9 +36,6 @@ public final class ClientTechniqueHandler {
      * а не по зашитому описанию. Идентификатор строкой, потому что описание живёт в датапаке
      * и на клиенте появляется только после синхронизации.
      */
-    private static final net.minecraft.resources.ResourceLocation DEFAULT_TECHNIQUE =
-            net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(
-                    io.github.verycooltimo.murim.MurimMod.MODID, "ceremonial_draw");
 
     @SubscribeEvent
     static void onClientTick(ClientTickEvent.Post event) {
@@ -57,7 +54,16 @@ public final class ClientTechniqueHandler {
             pressed = true;
         }
         if (pressed) {
-            PacketDistributor.sendToServer(new StartTechniquePayload(DEFAULT_TECHNIQUE));
+            // Применяется техника выбранного слота (кольцо выбора, автор 01.10). Пустой слот —
+            // подсказка, где разложить техники, а не тишина.
+            java.util.Optional<net.minecraft.resources.ResourceLocation> active = ClientLoadoutState.activeTechnique();
+            if (active.isPresent()) {
+                PacketDistributor.sendToServer(new StartTechniquePayload(active.get()));
+                CombatMode.engage();
+            } else if (Minecraft.getInstance().player != null) {
+                Minecraft.getInstance().player.displayClientMessage(net.minecraft.network.chat.Component.translatable(
+                        "murim.loadout.empty", ModKeyMappings.LOADOUT.getTranslatedKeyMessage()), true);
+            }
         }
     }
 

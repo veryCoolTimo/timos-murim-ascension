@@ -111,6 +111,7 @@ public final class DevCaptureHandler {
         framePending = false;
         meditationTicks = 0;
         meditationIdle = 0;
+        uiTicks = 0;
         tickCounter = 0;
         frameIndex = 0;
     }
@@ -180,6 +181,10 @@ public final class DevCaptureHandler {
             // Снимать можно не только технику, но и сцену создания даньтяня: у неё те же
             // требования к проверке — привязка к телу, фазы, отсутствие пересвета.
             String subject = System.getProperty(TECHNIQUE_PROPERTY, "ceremonial_draw");
+            if ("ui".equals(subject)) {
+                uiTicks = UI_CAPTURE_TICKS;
+                return;
+            }
             if (MEDITATION.equals(subject)) {
                 sitDown();
                 meditationTicks = MEDITATION_CAPTURE_TICKS;
@@ -193,6 +198,9 @@ public final class DevCaptureHandler {
 
         if (meditationTicks > 0) {
             tickMeditation(minecraft);
+        }
+        if (uiTicks > 0) {
+            tickUi(minecraft);
         }
 
         if (framesLeft > 0 && tickCounter++ % FRAME_INTERVAL_TICKS == 0) {
@@ -315,6 +323,36 @@ public final class DevCaptureHandler {
                     minecraft.getWindow().getWidth(), minecraft.getWindow().getHeight());
         } catch (java.io.IOException exception) {
             MurimMod.LOGGER.warn("Телеметрия не пишется: {}", exception.getMessage());
+        }
+    }
+
+    /** Сценарий интерфейсов техник: слоты боя → кольцо → экран раскладки. */
+    private static final int UI_CAPTURE_TICKS = 200;
+    private static int uiTicks;
+
+    private static void tickUi(Minecraft minecraft) {
+        int t = UI_CAPTURE_TICKS - uiTicks--;
+        if (t < 60) {
+            CombatMode.engage();
+        }
+        // Кольцо: зажать клавишу, повести курсор к третьему сектору, отпустить.
+        ModKeyMappings.WHEEL.setDown(t >= 60 && t < 110);
+        if (t >= 70 && t < 110) {
+            float k = Math.min(1.0F, (t - 70) / 15.0F);
+            TechniqueWheel.setCursor(44.0F * k, 22.0F * k);
+        }
+        if (t == 130) {
+            LoadoutScreen screen = new LoadoutScreen();
+            minecraft.setScreen(screen);
+            screen.pickForCapture(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "wedge_fan"));
+        }
+        if (t % 5 == 0) {
+            grab(minecraft, String.format("murim_%s_%03d.png", anglePrefix(), frameIndex));
+            grab(minecraft, String.format("clean_%s_%03d.png", anglePrefix(), frameIndex));
+            frameIndex++;
+        }
+        if (uiTicks == 0) {
+            minecraft.setScreen(null);
         }
     }
 

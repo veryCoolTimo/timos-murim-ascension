@@ -40,10 +40,28 @@ public final class ModKeyMappings {
             GLFW.GLFW_KEY_G,
             CATEGORY);
 
+    /** Кольцо выбора техник: зажал — кольцо, повёл мышь — выбрал, отпустил (автор 01.10). */
+    public static final KeyMapping WHEEL = new KeyMapping(
+            "key." + MurimMod.MODID + ".wheel",
+            KeyConflictContext.IN_GAME,
+            InputConstants.Type.KEYSYM,
+            GLFW.GLFW_KEY_V,
+            CATEGORY);
+
+    /** Экран раскладки техник по слотам. */
+    public static final KeyMapping LOADOUT = new KeyMapping(
+            "key." + MurimMod.MODID + ".loadout",
+            KeyConflictContext.IN_GAME,
+            InputConstants.Type.KEYSYM,
+            GLFW.GLFW_KEY_K,
+            CATEGORY);
+
     @SubscribeEvent
     static void register(RegisterKeyMappingsEvent event) {
         event.register(TECHNIQUE);
         event.register(MEDITATION);
+        event.register(WHEEL);
+        event.register(LOADOUT);
     }
 
     private ModKeyMappings() {

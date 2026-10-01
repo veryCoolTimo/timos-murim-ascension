@@ -74,6 +74,29 @@ public final class ModNetwork {
                     }
                 });
 
+        // Раскладка техник: клиент присылает намерение, сервер проверяет и рассылает итог.
+        registrar.playToServer(
+                LoadoutPayloads.SetSlot.TYPE,
+                LoadoutPayloads.SetSlot.STREAM_CODEC,
+                (payload, context) -> {
+                    if (context.player() instanceof ServerPlayer serverPlayer) {
+                        io.github.verycooltimo.murim.mastery.LoadoutService.setSlot(
+                                serverPlayer, payload.slot(), payload.technique());
+                    }
+                });
+        registrar.playToServer(
+                LoadoutPayloads.Select.TYPE,
+                LoadoutPayloads.Select.STREAM_CODEC,
+                (payload, context) -> {
+                    if (context.player() instanceof ServerPlayer serverPlayer) {
+                        io.github.verycooltimo.murim.mastery.LoadoutService.select(serverPlayer, payload.slot());
+                    }
+                });
+        registrar.playToClient(
+                LoadoutPayloads.Sync.TYPE,
+                LoadoutPayloads.Sync.STREAM_CODEC,
+                (payload, context) -> ClientPayloadBridge.handleLoadout(payload));
+
         registrar.playToClient(
                 SyncMasteryPayload.TYPE,
                 SyncMasteryPayload.STREAM_CODEC,

@@ -41,6 +41,11 @@ final class ClientPayloadBridge {
                 payload.sourceId(), payload.x(), payload.y(), payload.z(), payload.height());
     }
 
+    /** Раскладка техник по слотам — для кольца, слотов боя и экрана раскладки. */
+    public static void handleLoadout(LoadoutPayloads.Sync payload) {
+        io.github.verycooltimo.murim.client.ClientLoadoutState.accept(payload);
+    }
+
     /** Освоение техник — для двойника медитации и будущего списка техник. */
     public static void handleSyncMastery(SyncMasteryPayload payload) {
         io.github.verycooltimo.murim.client.ClientMasteryState.accept(payload);

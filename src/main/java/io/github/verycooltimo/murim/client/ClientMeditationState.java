@@ -340,6 +340,9 @@ public final class ClientMeditationState {
         if (minecraft.screen != null) {
             return;
         }
+        while (ModKeyMappings.LOADOUT.consumeClick()) {
+            minecraft.setScreen(new LoadoutScreen());
+        }
         while (ModKeyMappings.MEDITATION.consumeClick()) {
             if (seedSceneTicks > 0) {
                 continue;

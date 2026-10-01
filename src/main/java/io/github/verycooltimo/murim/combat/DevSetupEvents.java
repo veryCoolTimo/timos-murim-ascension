@@ -183,6 +183,24 @@ public final class DevSetupEvents {
 
         // Стенд применяет техники — значит, должен их знать (docs/design/19 §3г).
         learnAll(event.getEntity());
+        // Съёмка интерфейсов техник: шесть открытых слотов, пять техник, часть освоена наполовину.
+        if ("ui".equals(System.getProperty("murim.capture.technique"))
+                && event.getEntity() instanceof net.minecraft.server.level.ServerPlayer uiPlayer) {
+            long day = uiPlayer.level().getDayTime() / 24000L;
+            primeInsight(uiPlayer, "crescent_sweep", 2, 0.6D, 0.0D, day);
+            primeInsight(uiPlayer, "demon_palm", 1, 0.3D, 0.0D, day);
+            primeInsight(uiPlayer, "shadow_step", 3, 0.8D, 0.0D, day);
+            uiPlayer.setData(io.github.verycooltimo.murim.registry.ModAttachments.MASTERY,
+                    uiPlayer.getData(io.github.verycooltimo.murim.registry.ModAttachments.MASTERY).withWisdom(16.0D));
+            io.github.verycooltimo.murim.mastery.Loadout loadout = io.github.verycooltimo.murim.mastery.Loadout.EMPTY;
+            String[] order = {"crescent_sweep", "demon_palm", "wedge_fan", "shadow_step"};
+            for (int i = 0; i < order.length; i++) {
+                loadout = loadout.with(i, java.util.Optional.of(net.minecraft.resources.ResourceLocation
+                        .fromNamespaceAndPath(io.github.verycooltimo.murim.MurimMod.MODID, order[i])));
+            }
+            uiPlayer.setData(io.github.verycooltimo.murim.registry.ModAttachments.LOADOUT, loadout);
+            io.github.verycooltimo.murim.mastery.MasteryService.sync(uiPlayer);
+        }
         // MURIM_CAPTURE_INSIGHT=1 — снимаемая техника у самой границы слоя: первое попадание
         // даёт озарение в бою.
         if ("1".equals(System.getenv("MURIM_CAPTURE_INSIGHT"))) {

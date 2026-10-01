@@ -75,5 +75,15 @@
   "murim.technique.unknown": "Вы не знаете техники «%s».",
   "murim.mastery.insight": "Озарение",
   "murim.mastery.insight.layer": "«%s» — %s-й слой",
-  "murim.meditation.seeded.pondering": "осмысление: «%s»"
+  "murim.meditation.seeded.pondering": "осмысление: «%s»",
+  "key.murim.wheel": "Кольцо техник (зажать)",
+  "key.murim.loadout": "Раскладка техник",
+  "murim.loadout.title": "Техники",
+  "murim.loadout.none": "Ни одной техники ещё не выучено.",
+  "murim.loadout.layer": "слой %s/%s",
+  "murim.loadout.slots": "Слоты: %s",
+  "murim.loadout.locked_hint": "Слоты растут с пониманием",
+  "murim.loadout.hint": "ЛКМ по технике, затем по слоту — положить · ПКМ по слоту — убрать",
+  "murim.loadout.empty_slot": "пустой слот",
+  "murim.loadout.empty": "Слот пуст — разложите техники: [%s]"
 }

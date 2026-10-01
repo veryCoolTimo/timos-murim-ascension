@@ -61,6 +61,7 @@ public final class MasteryService {
         player.setData(ModAttachments.MASTERY, next);
         message(player, start > 0 ? "murim.mastery.learned_skipped" : "murim.mastery.learned",
                 ChatFormatting.GRAY, name(id), start);
+        LoadoutService.placeLearned(player, id);
         sync(player);
         return Learn.LEARNED;
     }
@@ -160,6 +161,8 @@ public final class MasteryService {
         });
         net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(player,
                 new io.github.verycooltimo.murim.network.SyncMasteryPayload(List.copyOf(entries)));
+        // Мудрость меняет число открытых слотов — раскладка уходит вместе с освоением.
+        LoadoutService.sync(player);
     }
 
     private static long day(ServerPlayer player) {
