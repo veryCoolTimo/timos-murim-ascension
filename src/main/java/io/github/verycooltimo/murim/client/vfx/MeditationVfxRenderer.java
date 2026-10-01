@@ -986,7 +986,10 @@ public final class MeditationVfxRenderer {
                 if (lift <= 0.0F || fly >= 1.0F) {
                     continue;
                 }
-                double size = cr.part() == 1 ? 0.1D + r.nextDouble() * 0.11D : 0.06D + r.nextDouble() * 0.08D;
+                if (r.nextFloat() < 0.4F) {
+                    continue;
+                }
+                double size = cr.part() == 1 ? 0.06D + r.nextDouble() * 0.06D : 0.04D + r.nextDouble() * 0.04D;
                 Vec3 base = cr.points().get(k);
                 Vec3 out = s.facing().add(side.scale((r.nextDouble() - 0.5D) * 1.4D)).add(0.0D, 0.15D + r.nextDouble() * 0.3D, 0.0D).normalize();
                 double dist = 0.035D * lift + (0.25D + r.nextDouble() * 0.6D) * fly * fly;
@@ -1008,10 +1011,10 @@ public final class MeditationVfxRenderer {
         VertexConsumer d = s.buffers().getBuffer(MurimRenderTypes.impurity());
         Vec3 n = s.facing();
         for (Vec3[] q : dark) {
-            VfxDraw.vertex(d, s.pose(), q[0], n, 0.0F, 0.0F, 0.95F, 0.36F, 0.28F, 0.24F);
-            VfxDraw.vertex(d, s.pose(), q[1], n, 1.0F, 0.0F, 0.95F, 0.36F, 0.28F, 0.24F);
-            VfxDraw.vertex(d, s.pose(), q[2], n, 1.0F, 1.0F, 0.95F, 0.36F, 0.28F, 0.24F);
-            VfxDraw.vertex(d, s.pose(), q[3], n, 0.0F, 1.0F, 0.95F, 0.36F, 0.28F, 0.24F);
+            VfxDraw.vertex(d, s.pose(), q[0], n, 0.0F, 0.0F, 0.95F, 0.16F, 0.12F, 0.11F);
+            VfxDraw.vertex(d, s.pose(), q[1], n, 1.0F, 0.0F, 0.95F, 0.16F, 0.12F, 0.11F);
+            VfxDraw.vertex(d, s.pose(), q[2], n, 1.0F, 1.0F, 0.95F, 0.16F, 0.12F, 0.11F);
+            VfxDraw.vertex(d, s.pose(), q[3], n, 0.0F, 1.0F, 0.95F, 0.16F, 0.12F, 0.11F);
         }
         s.buffers().endBatch(MurimRenderTypes.impurity());
         VertexConsumer g = s.buffers().getBuffer(MurimRenderTypes.impactCore());
@@ -1059,45 +1062,105 @@ public final class MeditationVfxRenderer {
         s.buffers().endBatch(MurimRenderTypes.impactCore());
     }
 
-    /** Три основных и два тонких спиральных потока вокруг тела, непрерывные, разной скорости. */
+    /**
+     * Потоки ци — широкие мягкие ленты, как на референсе (замечание автора 01.10: «полосы
+     * тонкие, симметрия ненужная, цвета не те»). Две основные и одна тонкая, несимметрично:
+     * выходят с одного бока снизу и закручиваются вверх вокруг головы; толще в середине,
+     * тоньше к концам; белое ядро и переливающийся край (голубой → сиреневый → тёплый).
+     */
     private static void drawSpirals(Scene s, float age) {
         float strength = Mth.clamp((age - 52.0F) / 40.0F, 0.0F, 1.0F) * (1.0F - Mth.clamp((age - 204.0F) / 30.0F, 0.0F, 1.0F));
         if (strength <= 0.0F) {
             return;
         }
-        float peak = 1.0F + 0.6F * (float) Math.exp(-Math.pow((age - 136.0D) / 24.0D, 2.0D));
+        float peak = 1.0F + 0.5F * (float) Math.exp(-Math.pow((age - 136.0D) / 24.0D, 2.0D));
         Vec3 head = BoneAnchorLayer.position(s.player(), BoneAnchorLayer.Bone.HEAD);
         double feet = ground(s);
-        double top = (head == null ? feet + 1.0D : head.y) + 0.75D;
-        VfxColour[] cols = {new VfxColour(0.32F, 0.87F, 1.0F), new VfxColour(0.95F, 0.47F, 0.86F), new VfxColour(1.0F, 0.64F, 0.29F),
-            new VfxColour(0.45F, 0.96F, 0.74F), new VfxColour(0.8F, 0.9F, 1.0F)};
-        double[] radius = {0.75D, 0.62D, 0.85D, 0.5D, 0.7D};
-        double[] period = {62.0D, 74.0D, 56.0D, 80.0D, 68.0D};
-        VertexConsumer c = s.buffers().getBuffer(MurimRenderTypes.impactCore());
-        for (int k = 0; k < 5; k++) {
-            boolean main = k < 3;
-            Vec3 prev = null;
-            int n = 40;
+        double top = (head == null ? feet + 1.0D : head.y) + 1.1D;
+        // Параметры лент: стартовый угол, радиус, ширина, сдвиг фазы, скорость; разные — без симметрии.
+        // Одна большая S-лента через всё тело и три второстепенные на разной высоте и с разным
+        // ходом (второе мнение codex 01.10: «не делать парные крылья»). Столбцы: угол старта,
+        // радиус, ширина, фаза, скорость, доля высоты начала, доля высоты конца, закрутка.
+        double[][] ribbons = {
+            {-2.3D, 0.8D, 0.75D, 0.0D, 1.0D, 0.0D, 1.0D, 3.6D},
+            {0.6D, 0.55D, 0.42D, 1.7D, 1.4D, 0.25D, 0.85D, -2.4D},
+            {2.7D, 0.95D, 0.3D, 3.1D, 0.8D, 0.05D, 0.55D, 2.0D},
+            {-0.9D, 0.45D, 0.22D, 4.4D, 1.7D, 0.5D, 1.15D, -3.0D}};
+        Vec3 side = s.facing().cross(new Vec3(0.0D, 1.0D, 0.0D)).normalize();
+        double base = Math.atan2(side.z, side.x);
+        VertexConsumer c = s.buffers().getBuffer(MurimRenderTypes.ribbon());
+        for (double[] rb : ribbons) {
+            int n = 36;
+            Vec3[] pts = new Vec3[n + 1];
             for (int i = 0; i <= n; i++) {
                 double u = i / (double) n;
-                double a = (age / period[k]) * Math.PI * 2.0D + k * 2.1D + u * Math.PI * 2.6D;
-                double rad = radius[k] * (1.0D - 0.25D * u);
-                Vec3 at = new Vec3(s.axis().x + Math.cos(a) * rad, feet + 0.15D + (top - feet) * u, s.axis().z + Math.sin(a) * rad);
-                if (prev != null) {
-                    // Перед лицом тоньше и слабее: поток не закрывает голову.
-                    Vec3 toCam = s.camera().subtract(at).normalize();
-                    double front = Math.max(0.0D, toCam.dot(at.subtract(s.axis().x == at.x ? at : new Vec3(s.axis().x, at.y, s.axis().z)).normalize()));
-                    float fade = (float) (Math.sin(u * Math.PI) * (1.0D - 0.5D * front)) * strength;
-                    VfxColour col = cols[k];
-                    VfxDraw.segment(c, s.pose(), prev, at, s.camera(), (main ? 0.08D : 0.04D) * peak, 0.22F * fade, col.red(), col.green(), col.blue());
-                    VfxDraw.segment(c, s.pose(), prev, at, s.camera(), (main ? 0.02D : 0.01D) * peak, 0.75F * fade,
-                                    0.6F + 0.4F * col.red(), 0.6F + 0.4F * col.green(), 0.6F + 0.4F * col.blue());
-                }
-                prev = at;
+                double wob = 0.12D * Math.sin(age * 0.07D * rb[4] + rb[3] + u * 5.0D);
+                double a = base + rb[0] + u * rb[7] + age * 0.012D * rb[4] + 0.4D * Math.sin(u * 3.0D + rb[3]);
+                double rad = rb[1] * (1.0D - 0.35D * u) + wob;
+                double h = Mth.lerp(u, rb[5], rb[6]);
+                pts[i] = new Vec3(s.axis().x + Math.cos(a) * rad, feet + 0.1D + (top - feet) * h, s.axis().z + Math.sin(a) * rad);
+            }
+            // Боковой вектор считается в каждой точке по соседям и общий для стыкующихся
+            // кусков: иначе на стыках щели и нахлёсты давали тёмную «гребёнку» по краю.
+            Vec3[] sides = new Vec3[n + 1];
+            for (int i = 0; i <= n; i++) {
+                Vec3 tan = pts[Math.min(n, i + 1)].subtract(pts[Math.max(0, i - 1)]);
+                Vec3 toCam = s.camera().subtract(pts[i]);
+                Vec3 sd = tan.cross(toCam);
+                sides[i] = sd.lengthSqr() < 1.0E-10D ? new Vec3(0.0D, 1.0D, 0.0D) : sd.normalize();
+            }
+            for (int i = 0; i < n; i++) {
+                double u0 = i / (double) n, u1 = (i + 1) / (double) n;
+                double w0 = rb[2] * peak * Math.sin(Math.PI * Math.min(1.0D, u0 * 1.15D)), w1 = rb[2] * peak * Math.sin(Math.PI * Math.min(1.0D, u1 * 1.15D));
+                float a0 = (float) Math.sin(Math.PI * u0) * strength, a1 = (float) Math.sin(Math.PI * u1) * strength;
+                // Край — перелив по длине ленты; ядро — почти белое, уже вдвое.
+                // Насыщенная радуга вдоль ленты (автор: «на референсе тоже радуга, просто она
+                // цветастая, у нас тусклая»): широкий цветной слой дважды — для плотности
+                // цвета — и узкое светлое ядро того же оттенка, а не чисто белое.
+                VfxColour e0 = rainbow(u0 * 1.3D + rb[3] * 0.17D + age * 0.006D), e1 = rainbow(u1 * 1.3D + rb[3] * 0.17D + age * 0.006D);
+                ribbonQuad(c, s, pts[i], pts[i + 1], sides[i], sides[i + 1], w0, w1, 0.55F * a0, 0.55F * a1, e0, e1);
+                ribbonQuad(c, s, pts[i], pts[i + 1], sides[i], sides[i + 1], w0 * 0.6D, w1 * 0.6D, 0.75F * a0, 0.75F * a1, e0, e1);
+                ribbonQuad(c, s, pts[i], pts[i + 1], sides[i], sides[i + 1], w0 * 0.18D, w1 * 0.18D, 0.8F * a0, 0.8F * a1, light(e0), light(e1));
             }
         }
-        s.buffers().endBatch(MurimRenderTypes.impactCore());
+        s.buffers().endBatch(MurimRenderTypes.ribbon());
     }
+
+    /** Радуга референса: розовый → красно-оранжевый → золотой → зелёный → бирюзовый → циан. */
+    private static VfxColour rainbow(double t) {
+        int[] hex = {0xFF5FB7, 0xFF5A2E, 0xFFD35A, 0x34F36F, 0x40F0C8, 0x55EAFF};
+        double x = ((t % 1.0D) + 1.0D) % 1.0D * hex.length;
+        int a = (int) Math.floor(x) % hex.length, b = (a + 1) % hex.length;
+        float f = (float) (x - Math.floor(x));
+        return new VfxColour(Mth.lerp(f, (hex[a] >> 16 & 255) / 255.0F, (hex[b] >> 16 & 255) / 255.0F),
+                             Mth.lerp(f, (hex[a] >> 8 & 255) / 255.0F, (hex[b] >> 8 & 255) / 255.0F),
+                             Mth.lerp(f, (hex[a] & 255) / 255.0F, (hex[b] & 255) / 255.0F));
+    }
+
+    private static VfxColour light(VfxColour c) {
+        return new VfxColour(0.55F + 0.45F * c.red(), 0.55F + 0.45F * c.green(), 0.55F + 0.45F * c.blue());
+    }
+
+    /** Перелив края ленты: голубой → сиреневый → тёплый персиковый → голубой. */
+    private static VfxColour shimmer(double t) {
+        double x = ((t % 1.0D) + 1.0D) % 1.0D * 3.0D;
+        VfxColour[] k = {new VfxColour(0.45F, 0.85F, 1.0F), new VfxColour(0.86F, 0.55F, 1.0F), new VfxColour(1.0F, 0.72F, 0.5F)};
+        int a = (int) Math.floor(x) % 3;
+        int b = (a + 1) % 3;
+        float f = (float) (x - Math.floor(x));
+        return new VfxColour(Mth.lerp(f, k[a].red(), k[b].red()), Mth.lerp(f, k[a].green(), k[b].green()), Mth.lerp(f, k[a].blue(), k[b].blue()));
+    }
+
+    /** Четырёхугольник ленты с разной шириной и цветом на концах, развёрнутый к камере. */
+    private static void ribbonQuad(VertexConsumer c, Scene s, Vec3 a, Vec3 b, Vec3 sa, Vec3 sb, double wa, double wb,
+                                   float alphaA, float alphaB, VfxColour ca, VfxColour cb) {
+        Vec3 n = s.camera().subtract(a.add(b).scale(0.5D)).normalize();
+        VfxDraw.vertex(c, s.pose(), a.subtract(sa.scale(wa)), n, 0.0F, 0.0F, alphaA, ca.red(), ca.green(), ca.blue());
+        VfxDraw.vertex(c, s.pose(), b.subtract(sb.scale(wb)), n, 1.0F, 0.0F, alphaB, cb.red(), cb.green(), cb.blue());
+        VfxDraw.vertex(c, s.pose(), b.add(sb.scale(wb)), n, 1.0F, 1.0F, alphaB, cb.red(), cb.green(), cb.blue());
+        VfxDraw.vertex(c, s.pose(), a.add(sa.scale(wa)), n, 0.0F, 1.0F, alphaA, ca.red(), ca.green(), ca.blue());
+    }
+
 
     /**
      * Генератор для i-го элемента эффекта. У java.util.Random соседние сиды дают почти

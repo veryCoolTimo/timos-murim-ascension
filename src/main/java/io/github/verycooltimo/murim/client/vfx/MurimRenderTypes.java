@@ -41,6 +41,8 @@ public final class MurimRenderTypes {
     private static final ResourceLocation ESSENCE_TEXTURE =
             ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/vfx/essence.png");
 
+    private static final ResourceLocation RIBBON_TEXTURE =
+            ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/vfx/ribbon.png");
     private static final ResourceLocation MOTE_TEXTURE =
             ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/vfx/mote.png");
 
@@ -90,6 +92,9 @@ public final class MurimRenderTypes {
 
     /** Вспышка ядра — третьим слоем в точке контакта. */
     private static final RenderType IMPACT_CORE = additive("impact_core", CORE_TEXTURE);
+
+    /** Широкая мягкая лента: мягкая поперёк, ровная вдоль — без «бусин» на стыках отрезков. */
+    private static final RenderType RIBBON = additive("ribbon", RIBBON_TEXTURE);
 
     /** Примеси, выходящие из тела при прорыве: тёмные, затемняют, а не светятся. */
     private static final RenderType IMPURITY = flatTranslucent("impurity", MOTE_TEXTURE);
@@ -288,6 +293,10 @@ public final class MurimRenderTypes {
         // смешиванием не давал тёмного на кадрах Mac 01.10 (пятна вызывались — лог, — но не
         // рисовались). API: reference/minecraft-src/.../RenderType.java#entityTranslucent
         return RenderType.entityTranslucent(MOTE_TEXTURE);
+    }
+
+    public static RenderType ribbon() {
+        return RIBBON;
     }
 
     public static RenderType impactCore() {
