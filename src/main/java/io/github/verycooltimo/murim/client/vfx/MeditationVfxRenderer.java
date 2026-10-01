@@ -928,6 +928,7 @@ public final class MeditationVfxRenderer {
         drawSeams(s, age, net);
         drawPlates(s, age, net);
         drawZonePulses(s, age);
+        drawBodyAura(s, age);
         drawSpirals(s, age);
         // Один короткий удар волной по полу на пике, без постоянного кольца.
         float ring = Mth.clamp((age - 142.0F) / 10.0F, 0.0F, 1.0F);
@@ -1144,10 +1145,17 @@ public final class MeditationVfxRenderer {
             {0.6D, 0.55D, 0.42D, 1.7D, 1.4D, 0.25D, 0.85D, -2.4D},
             {2.7D, 0.95D, 0.3D, 3.1D, 0.8D, 0.05D, 0.55D, 2.0D},
             {-0.9D, 0.45D, 0.22D, 4.4D, 1.7D, 0.5D, 1.15D, -3.0D}};
+        // Ленты появляются по очереди и вырастают снизу вверх (автор 01.10: «не одновременно»).
+        float[] starts = {52.0F, 74.0F, 96.0F, 118.0F};
         Vec3 side = s.facing().cross(new Vec3(0.0D, 1.0D, 0.0D)).normalize();
         double base = Math.atan2(side.z, side.x);
         VertexConsumer c = s.buffers().getBuffer(MurimRenderTypes.ribbon());
-        for (double[] rb : ribbons) {
+        for (int ri = 0; ri < ribbons.length; ri++) {
+            double[] rb = ribbons[ri];
+            float reveal = Mth.clamp((age - starts[ri]) / 26.0F, 0.0F, 1.0F);
+            if (reveal <= 0.0F) {
+                continue;
+            }
             int n = 36;
             Vec3[] pts = new Vec3[n + 1];
             for (int i = 0; i <= n; i++) {
@@ -1169,6 +1177,9 @@ public final class MeditationVfxRenderer {
             }
             for (int i = 0; i < n; i++) {
                 double u0 = i / (double) n, u1 = (i + 1) / (double) n;
+                if (u0 > reveal) {
+                    break;
+                }
                 double w0 = rb[2] * peak * Math.sin(Math.PI * Math.min(1.0D, u0 * 1.15D)), w1 = rb[2] * peak * Math.sin(Math.PI * Math.min(1.0D, u1 * 1.15D));
                 float a0 = (float) Math.sin(Math.PI * u0) * strength, a1 = (float) Math.sin(Math.PI * u1) * strength;
                 // Край — перелив по длине ленты; ядро — почти белое, уже вдвое.
@@ -1182,6 +1193,42 @@ public final class MeditationVfxRenderer {
             }
         }
         s.buffers().endBatch(MurimRenderTypes.ribbon());
+    }
+
+    /**
+     * Радужное свечение от самого тела (автор 01.10): мягкий переливающийся ореол по силуэту —
+     * плечи, голова, руки, колени, — пульсирует, отходит наружу, к кульминации ярче.
+     */
+    private static void drawBodyAura(Scene s, float age) {
+        float strength = Mth.clamp((age - 60.0F) / 50.0F, 0.0F, 1.0F) * (1.0F - Mth.clamp((age - 200.0F) / 35.0F, 0.0F, 1.0F));
+        if (strength <= 0.0F) {
+            return;
+        }
+        float peak = 0.6F + 0.6F * (float) Math.exp(-Math.pow((age - 140.0D) / 30.0D, 2.0D));
+        AbstractClientPlayer p = s.player();
+        BoneAnchorLayer.Bone[] bones = {BoneAnchorLayer.Bone.HEAD, BoneAnchorLayer.Bone.CHEST, BoneAnchorLayer.Bone.RIGHT_SHOULDER,
+            BoneAnchorLayer.Bone.LEFT_SHOULDER, BoneAnchorLayer.Bone.RIGHT_HAND, BoneAnchorLayer.Bone.LEFT_HAND,
+            BoneAnchorLayer.Bone.RIGHT_KNEE, BoneAnchorLayer.Bone.LEFT_KNEE};
+        VertexConsumer c = s.buffers().getBuffer(MurimRenderTypes.impactCore());
+        for (int b = 0; b < bones.length; b++) {
+            Vec3 at = BoneAnchorLayer.position(p, bones[b]);
+            if (at == null) {
+                continue;
+            }
+            for (int k = 0; k < 3; k++) {
+                java.util.Random r = rng(211, b * 7L + k);
+                float cycle = ((age * (0.8F + 0.4F * r.nextFloat()) + r.nextFloat() * 50.0F) % 50.0F) / 50.0F;
+                Vec3 out = at.subtract(s.axis().x, at.y, s.axis().z);
+                out = new Vec3(out.x, 0.0D, out.z);
+                out = out.lengthSqr() < 1.0E-6D ? s.facing() : out.normalize();
+                Vec3 pos = at.add(out.scale(0.1D + 0.35D * cycle)).add(0.0D, 0.25D * cycle, 0.0D)
+                        .add(s.facing().scale(-0.05D));
+                VfxColour col = rainbow(b / 8.0D + k * 0.13D + age * 0.005D);
+                float a = (float) Math.sin(cycle * Math.PI) * strength * peak;
+                VfxDraw.billboard(c, s.pose(), pos, s.camera(), 0.32D + 0.28D * cycle, 0.4F * a, col.red(), col.green(), col.blue());
+            }
+        }
+        s.buffers().endBatch(MurimRenderTypes.impactCore());
     }
 
     /** Радуга референса: розовый → красно-оранжевый → золотой → зелёный → бирюзовый → циан. */
