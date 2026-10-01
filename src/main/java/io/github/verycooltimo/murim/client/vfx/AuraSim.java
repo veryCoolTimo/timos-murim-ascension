@@ -45,19 +45,19 @@ import java.util.Random;
 @EventBusSubscriber(modid = MurimMod.MODID, value = Dist.CLIENT)
 public final class AuraSim {
 
-    public enum Kind { FLAME, INK, SPARK, FLOW, DEBRIS }
+    public enum Kind { FLAME, INK, SPARK, FLOW, DEBRIS, DUST }
 
     public static final int TRAIL = 8;
 
     /** Предел частиц на одно существо: страховка от толпы сильных противников. */
-    private static final int CAP = 520;
+    private static final int CAP = 900;
 
     /** Сила ауры по рангу. */
     static final float[] INTENSITY = {0.0F, 0.35F, 0.6F, 0.82F, 1.0F, 1.18F, 1.35F};
     /** Доля чёрных языков по рангу. */
     static final float[] INK_SHARE = {0.0F, 0.0F, 0.0F, 0.3F, 0.6F, 0.72F, 0.8F};
     /** Языков в тик по рангу. */
-    private static final float[] FLAME_RATE = {0.0F, 0.0F, 3.0F, 5.0F, 8.0F, 10.0F, 13.0F};
+    private static final float[] FLAME_RATE = {0.0F, 0.0F, 5.0F, 9.0F, 14.0F, 18.0F, 22.0F};
 
     public static final class Particle {
         public final Kind kind;
@@ -112,6 +112,12 @@ public final class AuraSim {
         float debrisDebt;
         int lastSeen;
         final Random random;
+        /**
+         * Очаги рождения: {угол, высота 0..1, тиков жизни}. Пламя рождается сгустками у 6–10
+         * блуждающих очагов, а не равномерно — появляются крупные массы и просветы
+         * (разбор codex 01.10).
+         */
+        final double[][] hotspots = new double[8][3];
 
         Emitter(int id) {
             this.random = new Random(id * 0x9E3779B97F4A7C15L);
@@ -170,19 +176,38 @@ public final class AuraSim {
         double radius = entity.getBbWidth() * 0.5D + 0.05D;
         Vec3 feet = entity.position();
 
-        // Языки: рождаются на поверхности тела, гуще у плеч и головы.
+        // Очаги: живут 0,3–0,8 с, потом перескакивают. 40 % — у ног и таза, 35 % — корпус,
+        // 25 % — плечи; на сторону камеры очаг ставится реже — масса держится по краям и сзади.
+        Vec3 cam = minecraft.gameRenderer.getMainCamera().getPosition();
+        double camAngle = Math.atan2(cam.z - feet.z, cam.x - feet.x);
+        for (double[] spot : e.hotspots) {
+            if (--spot[2] <= 0) {
+                double angle = r.nextDouble() * Math.PI * 2.0D;
+                if (Math.cos(angle - camAngle) > 0.3D && r.nextFloat() < 0.6F) {
+                    angle += Math.PI;
+                }
+                double band = r.nextDouble();
+                spot[0] = angle;
+                spot[1] = band < 0.4D ? 0.45D * r.nextDouble() : band < 0.75D ? 0.45D + 0.3D * r.nextDouble() : 0.75D + 0.25D * r.nextDouble();
+                spot[2] = 6 + r.nextInt(11);
+            }
+        }
         e.flameDebt += FLAME_RATE[rank];
+        double sc = h / 2.0D;
         while (e.flameDebt >= 1.0F) {
             e.flameDebt -= 1.0F;
             boolean ink = r.nextFloat() < (aura.demonic() ? Math.max(0.4F, INK_SHARE[rank]) : INK_SHARE[rank]);
-            double angle = r.nextDouble() * Math.PI * 2.0D;
-            double rr = radius * (0.7D + 0.5D * r.nextDouble());
-            double y = h * Math.pow(r.nextDouble(), 0.7D);
+            double[] spot = e.hotspots[r.nextInt(e.hotspots.length)];
+            double angle = spot[0] + (r.nextDouble() - 0.5D) * 0.8D;
+            double rr = (0.3D + 0.4D * r.nextDouble()) * sc;
+            double y = h * Math.max(0.0D, Math.min(1.0D, spot[1] + (r.nextDouble() - 0.5D) * 0.15D));
             double ox = Math.cos(angle), oz = Math.sin(angle);
-            double up = (0.05D + 0.05D * r.nextDouble()) * (0.7D + 0.5D * intensity) * (ink ? 0.75D : 1.0D);
-            double out = (0.012D + 0.02D * r.nextDouble()) * intensity;
-            int life = (int) ((ink ? 18 : 13) + r.nextInt(ink ? 12 : 9) + 6 * intensity);
-            float size = (float) ((ink ? 0.16D : 0.12D) + 0.08D * r.nextDouble()) * (0.6F + 0.5F * intensity) * (float) (h / 2.0D);
+            double up = (0.03D + 0.035D * r.nextDouble()) * (0.7D + 0.5D * intensity) * (ink ? 0.8D : 1.0D);
+            double out = (0.02D + 0.03D * r.nextDouble()) * intensity * (y < h * 0.5D ? 1.6D : 1.0D);
+            boolean longLived = r.nextFloat() < 0.12F;
+            int life = longLived ? 22 + r.nextInt(10) : 11 + r.nextInt(11);
+            float size = (float) ((ink ? 0.24D : 0.17D) + 0.14D * r.nextDouble()) * (0.7F + 0.45F * intensity) * (float) sc
+                    * (r.nextFloat() < 0.1F ? 1.6F : 1.0F);
             e.particles.add(new Particle(ink ? Kind.INK : Kind.FLAME, feet.x + ox * rr, feet.y + y, feet.z + oz * rr,
                     ox * out, up, oz * out, life, size, r.nextFloat()));
         }
@@ -258,10 +283,17 @@ public final class AuraSim {
             double tz = Math.sin(p.x * 1.9D - t * 0.13D + s) + Math.sin(p.y * 1.5D + t * 0.05D);
             switch (p.kind) {
                 case FLAME, INK -> {
-                    double k = p.kind == Kind.INK ? 0.006D : 0.008D;
+                    double k = p.kind == Kind.INK ? 0.007D : 0.009D;
                     p.vx = p.vx * 0.9D + tx * k;
-                    p.vy = p.vy * 0.93D + 0.009D + ty * 0.002D;
+                    p.vy = p.vy * 0.92D + 0.006D + ty * 0.002D;
                     p.vz = p.vz * 0.9D + tz * k;
+                    // Нижняя половина растекается в стороны: масса у ног, а не только факел вверх.
+                    if (!Double.isNaN(cx) && p.y < top - entity.getBbHeight() * 0.5D) {
+                        double ax = p.x - cx, az = p.z - cz;
+                        double al = Math.sqrt(ax * ax + az * az) + 1.0E-4D;
+                        p.vx += ax / al * 0.005D;
+                        p.vz += az / al * 0.005D;
+                    }
                     // Над головой колонна сужается: частицы стягиваются к оси.
                     if (!Double.isNaN(cx) && p.y > top - 0.2D) {
                         p.vx -= (p.x - cx) * 0.02D;
@@ -278,6 +310,16 @@ public final class AuraSim {
                     p.vy += ty * 0.006D;
                     p.vz += tz * 0.012D;
                 }
+                case DUST -> {
+                    // Пыль порыва: стелется по земле, тормозит, оседает.
+                    p.vx *= 0.9D;
+                    p.vz *= 0.9D;
+                    p.vy = p.vy * 0.85D - 0.002D;
+                    if (!Double.isNaN(cx) && p.y < entity.getY() + 0.05D) {
+                        p.y = entity.getY() + 0.05D;
+                        p.vy = 0.0D;
+                    }
+                }
                 case DEBRIS -> {
                     p.vx *= 0.97D;
                     p.vz *= 0.97D;
@@ -293,6 +335,58 @@ public final class AuraSim {
             p.y += p.vy;
             p.z += p.vz;
             p.pushTrail();
+        }
+    }
+
+    /**
+     * Порыв: пламя источника наклоняется в сторону жертвы (или к источнику при обратной тяге),
+     * по земле бежит пыль, с Пика — летят обломки. Если швырнуло своего игрока, обломки
+     * летят прямо ему в лицо.
+     */
+    public static void gust(Entity source, Entity victim, float strength, boolean pull) {
+        Emitter e = EMITTERS.get(source.getId());
+        if (e == null) {
+            return;
+        }
+        Vec3 dir = victim.position().subtract(source.position());
+        dir = new Vec3(dir.x, 0.0D, dir.z);
+        if (dir.lengthSqr() < 1.0E-4D) {
+            return;
+        }
+        dir = dir.normalize().scale(pull ? -1.0D : 1.0D);
+        double push = (pull ? 0.05D : 0.14D) * (0.5D + strength);
+        for (Particle p : e.particles) {
+            if (p.kind == Kind.FLAME || p.kind == Kind.INK || p.kind == Kind.SPARK) {
+                p.vx += dir.x * push;
+                p.vz += dir.z * push;
+            }
+        }
+        if (pull) {
+            return;
+        }
+        Random r = e.random;
+        Vec3 feet = source.position();
+        int dust = 10 + Math.round(24 * strength);
+        for (int i = 0; i < dust; i++) {
+            double spread = (r.nextDouble() - 0.5D) * 2.2D;
+            Vec3 d = new Vec3(dir.x * Math.cos(spread) - dir.z * Math.sin(spread), 0.0D, dir.x * Math.sin(spread) + dir.z * Math.cos(spread));
+            double speed = 0.15D + 0.25D * r.nextDouble() * (0.5D + strength);
+            Vec3 at = feet.add(d.scale(0.3D + 0.4D * r.nextDouble()));
+            e.particles.add(new Particle(Kind.DUST, at.x, at.y + 0.05D + 0.2D * r.nextDouble(), at.z, d.x * speed, 0.02D * r.nextDouble(),
+                    d.z * speed, 16 + r.nextInt(14), 0.25F + 0.35F * r.nextFloat(), r.nextFloat()));
+        }
+        int rocks = Math.round(6 * strength);
+        Minecraft minecraft = Minecraft.getInstance();
+        boolean atMe = victim == minecraft.player;
+        Vec3 target = victim.position().add(0.0D, victim.getBbHeight() * (atMe ? 0.85D : 0.5D), 0.0D);
+        for (int i = 0; i < rocks; i++) {
+            Vec3 from = feet.add((r.nextDouble() - 0.5D) * 1.5D, 0.1D + 0.4D * r.nextDouble(), (r.nextDouble() - 0.5D) * 1.5D);
+            Vec3 v = target.add((r.nextDouble() - 0.5D) * 1.6D, (r.nextDouble() - 0.3D) * 1.0D, (r.nextDouble() - 0.5D) * 1.6D)
+                    .subtract(from);
+            double flight = 6.0D + 4.0D * r.nextDouble();
+            v = v.scale(1.0D / flight).add(0.0D, 0.012D * flight / 2.0D, 0.0D);
+            e.particles.add(new Particle(Kind.DEBRIS, from.x, from.y, from.z, v.x, v.y, v.z, (int) flight + 10,
+                    0.04F + 0.08F * r.nextFloat(), r.nextFloat()));
         }
     }
 

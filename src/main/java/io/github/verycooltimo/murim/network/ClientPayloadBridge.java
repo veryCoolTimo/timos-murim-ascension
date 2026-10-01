@@ -35,6 +35,11 @@ final class ClientPayloadBridge {
         io.github.verycooltimo.murim.client.ClientProfileState.setProfile(payload.profile());
     }
 
+    public static void handleAuraGust(AuraGustPayload payload) {
+        io.github.verycooltimo.murim.client.ClientAuraState.gust(payload.sourceId(), payload.victimId(),
+                payload.strength(), payload.pull());
+    }
+
     public static void handleSyncAura(SyncAuraPayload payload) {
         io.github.verycooltimo.murim.client.ClientAuraState.set(payload.entityId(), payload.aura());
     }

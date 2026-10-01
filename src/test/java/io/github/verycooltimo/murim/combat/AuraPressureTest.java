@@ -42,4 +42,12 @@ class AuraPressureTest {
     void neverFreezes() {
         assertTrue(1.0D + AuraPressure.speedPenalty(1.0F) > 0.1D);
     }
+
+    @Test
+    @DisplayName("Порывы: чаще и сильнее под тяжёлым давлением, обратная тяга слабее толчка")
+    void gusts() {
+        assertTrue(AuraPressure.gustInterval(1.0F) < AuraPressure.gustInterval(AuraPressure.GUST_FROM));
+        assertTrue(AuraPressure.gustPush(1.0F) > AuraPressure.gustPush(AuraPressure.GUST_FROM));
+        assertTrue(AuraPressure.PULL_RATIO < 1.0D && AuraPressure.PULL_RATIO > 0.5D);
+    }
 }

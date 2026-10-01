@@ -381,6 +381,21 @@ public final class AuraRenderer {
         }
         b.buffers().endBatch(inkType);
 
+        // Пыль порыва — серая, по земле.
+        RenderType dustType = MurimRenderTypes.impurity();
+        VertexConsumer dust = b.buffers().getBuffer(dustType);
+        for (AuraSim.Particle p : emitter.particles) {
+            if (p.kind != AuraSim.Kind.DUST) {
+                continue;
+            }
+            float t = p.progress(partial);
+            float a = 0.4F * (float) Math.sin(Math.PI * t);
+            float grow = 0.6F + 0.8F * t;
+            VfxColour col = demonic ? RED_DEEP.scaled(0.5F) : INK_GREY;
+            VfxDraw.billboard(dust, b.pose(), p.head(partial), b.camera(), p.size * grow, a, col.red(), col.green(), col.blue());
+        }
+        b.buffers().endBatch(dustType);
+
         RenderType solid = MurimRenderTypes.solid();
         VertexConsumer rock = b.buffers().getBuffer(solid);
         for (AuraSim.Particle p : emitter.particles) {
@@ -388,6 +403,9 @@ public final class AuraRenderer {
                 continue;
             }
             float a = Math.min(1.0F, (1.0F - p.progress(partial)) * 5.0F);
+            // У самой камеры обломок гаснет: летящий в лицо серый квадрат читался заплаткой.
+            double near = p.head(partial).distanceTo(b.camera());
+            a *= (float) Mth.clamp((near - 0.8D) / 1.2D, 0.0D, 1.0D);
             float shade = 0.08F + 0.12F * p.seed;
             VfxDraw.billboard(rock, b.pose(), p.head(partial), b.camera(), p.size, a,
                     shade, shade * (demonic ? 0.7F : 1.05F), shade * (demonic ? 0.7F : 1.2F));

@@ -57,6 +57,12 @@ public final class ModNetwork {
                 SyncAuraPayload.STREAM_CODEC,
                 (payload, context) -> ClientPayloadBridge.handleSyncAura(payload));
 
+        // Порыв давления: тряска, волна и наклон пламени в момент толчка.
+        registrar.playToClient(
+                AuraGustPayload.TYPE,
+                AuraGustPayload.STREAM_CODEC,
+                (payload, context) -> ClientPayloadBridge.handleAuraGust(payload));
+
         // Попадание: без него клиент рисовал брызги всегда, даже когда удар прошёл мимо.
         registrar.playToClient(
                 TechniqueHitPayload.TYPE,

@@ -44,6 +44,11 @@ public final class ClientAuraState {
     private static int beatIn;
     /** Тиков с последнего удара: толчок камеры затухает от него. */
     private static int sinceBeat = 100;
+    private static int gustTick = -1;
+    private static int frontTick = -1;
+    private static float gustForward;
+    private static float gustSide;
+    private static float gustStrength;
 
     public static void set(int entityId, AuraState aura) {
         if (aura.present()) {
@@ -153,25 +158,101 @@ public final class ClientAuraState {
         }
     }
 
+    /**
+     * Порыв давления пришёл с сервера. Если швырнуло своего игрока — запоминается направление
+     * для тряски; пламя источника наклоняется и выбрасывает пыль в любом случае.
+     */
+    public static void gust(int sourceId, int victimId, float strength, boolean pull) {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.level == null) {
+            return;
+        }
+        Entity source = minecraft.level.getEntity(sourceId);
+        Entity victim = minecraft.level.getEntity(victimId);
+        if (source == null || victim == null) {
+            return;
+        }
+        io.github.verycooltimo.murim.client.vfx.AuraSim.gust(source, victim, strength, pull);
+        if (victim != minecraft.player) {
+            return;
+        }
+        // Порыв слышно: тугой удар воздуха, тяга обратно — тише и выше.
+        minecraft.player.level().playLocalSound(victim.getX(), victim.getY(), victim.getZ(),
+                pull ? SoundEvents.BREEZE_WHIRL : SoundEvents.WIND_CHARGE_BURST.value(), SoundSource.HOSTILE,
+                pull ? 0.35F : 0.5F + 0.4F * strength, pull ? 1.2F : 0.55F, false);
+        // Направление порыва в осях взгляда: «вперёд» — куда смотрит игрок, «вбок» — вправо.
+        double dx = victim.getX() - source.getX();
+        double dz = victim.getZ() - source.getZ();
+        double len = Math.sqrt(dx * dx + dz * dz);
+        if (len < 1.0E-4D) {
+            return;
+        }
+        dx /= len;
+        dz /= len;
+        if (pull) {
+            dx = -dx;
+            dz = -dz;
+        }
+        float yaw = minecraft.player.getYRot() * Mth.DEG_TO_RAD;
+        double fx = -Mth.sin(yaw), fz = Mth.cos(yaw);
+        gustForward = (float) (dx * fx + dz * fz);
+        gustSide = (float) (dx * -fz + dz * fx);
+        gustStrength = (pull ? 0.4F : 1.0F) * (0.45F + 0.55F * strength);
+        gustTick = ticks;
+        frontTick = ticks;
+    }
+
+    /** Возраст последнего порыва в тиках. */
+    public static float gustAge(float partial) {
+        return gustTick < 0 ? 1000.0F : ticks - gustTick + partial;
+    }
+
+    public static float gustStrength() {
+        return gustStrength;
+    }
+
+    /** Тиков с последнего фронта: шейдер пускает по нему волну. */
+    public static float frontAge(float partial) {
+        return frontTick < 0 ? 1000.0F : ticks - frontTick + partial;
+    }
+
+    /**
+     * Тряска. Главное — порыв: голову отбрасывает по направлению толчка (толкнули в спину —
+     * клонит вперёд, в грудь — запрокидывает, сбоку — валит набок), дальше затухающее качание
+     * назад-вперёд и мелкая дрожь первые полсекунды. Под постоянным давлением — тяжёлый крен
+     * и едва заметное дрожание, на удар сердца — короткий толчок.
+     */
     @SubscribeEvent
     static void onCameraAngles(ViewportEvent.ComputeCameraAngles event) {
         float partial = (float) event.getPartialTick();
         float p = pressure(partial);
-        if (p <= 0.0F) {
+        double setting = ClientConfig.cameraShake();
+        if (setting <= 0.0D) {
             return;
         }
-        double setting = ClientConfig.cameraShake();
         float t = ticks + partial;
-        // Давит вниз: взгляд опускается, голову клонит набок — медленно, как под тяжестью.
-        float lean = (float) (p * (3.0D + 1.2D * Math.sin(t * 0.07D)));
-        event.setPitch(event.getPitch() + 4.0F * p * p);
-        event.setRoll(event.getRoll() + lean * (float) Math.max(setting, 0.3D));
-        // Толчок на удар сердца.
-        float kick = (float) Math.exp(-beatAge(partial) / 2.5D) * p * (float) setting;
-        if (kick > 0.001F) {
-            event.setYaw(event.getYaw() + Mth.sin(t * 2.9F) * 1.2F * kick);
-            event.setPitch(event.getPitch() + Mth.sin(t * 3.7F + 1.1F) * 1.0F * kick);
-            event.setRoll(event.getRoll() + Mth.sin(t * 3.3F + 2.2F) * 1.6F * kick);
+        if (p > 0.0F) {
+            float lean = (float) (p * (2.0D + 1.0D * Math.sin(t * 0.07D)));
+            event.setPitch(event.getPitch() + 3.0F * p * p);
+            event.setRoll(event.getRoll() + lean * (float) setting);
+            // Постоянная мелкая дрожь при сильном давлении: тело напряжено.
+            float tremble = Math.max(0.0F, p - 0.5F) * 0.5F * (float) setting;
+            event.setYaw(event.getYaw() + (Mth.sin(t * 5.3F) + Mth.sin(t * 8.1F + 1.0F)) * 0.25F * tremble);
+            event.setPitch(event.getPitch() + (Mth.sin(t * 6.7F + 2.0F) + Mth.sin(t * 9.4F)) * 0.25F * tremble);
+            float kick = (float) Math.exp(-beatAge(partial) / 2.5D) * p * 0.6F * (float) setting;
+            if (kick > 0.001F) {
+                event.setPitch(event.getPitch() + Mth.sin(t * 3.7F + 1.1F) * kick);
+            }
+        }
+        float age = gustAge(partial);
+        if (age < 30.0F && gustStrength > 0.0F) {
+            // Пружина: бросок, затухающий за ~1 с, с отскоком.
+            float spring = (float) (Math.exp(-age / 6.0D) * Math.cos(age * 0.55D));
+            float shiver = (float) (Math.exp(-age / 3.0D) * (Math.sin(age * 4.3D) + Math.sin(age * 6.9D + 0.7D)) * 0.5D);
+            float a = gustStrength * (float) setting;
+            event.setPitch(event.getPitch() - gustForward * 5.0F * a * spring + shiver * 1.2F * a);
+            event.setRoll(event.getRoll() + gustSide * 7.0F * a * spring + shiver * 1.6F * a);
+            event.setYaw(event.getYaw() + gustSide * 2.0F * a * spring + shiver * 0.8F * a);
         }
     }
 

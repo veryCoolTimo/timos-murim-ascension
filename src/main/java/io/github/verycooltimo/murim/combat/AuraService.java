@@ -61,7 +61,11 @@ public final class AuraService {
 
     @SubscribeEvent
     static void onPlayerTick(PlayerTickEvent.Post event) {
-        if (!(event.getEntity() instanceof ServerPlayer player) || player.tickCount % 2 != 0) {
+        if (!(event.getEntity() instanceof ServerPlayer player)) {
+            return;
+        }
+        gusts(player);
+        if (player.tickCount % 2 != 0) {
             return;
         }
         float pressure = player.isSpectator() || player.isCreative() && !"true".equals(System.getProperty("murim.capture"))
@@ -82,15 +86,64 @@ public final class AuraService {
     static float measure(ServerPlayer player) {
         int rank = player.getData(ModAttachments.PROFILE).rank();
         float strongest = 0.0F;
+        int sourceId = -1;
         for (LivingEntity other : player.level().getEntitiesOfClass(LivingEntity.class,
                 player.getBoundingBox().inflate(SEARCH), e -> e != player && e.isAlive())) {
             AuraState aura = other.getData(ModAttachments.AURA);
             if (!aura.present()) {
                 continue;
             }
-            strongest = Math.max(strongest, AuraPressure.of(aura.rank(), rank, player.distanceTo(other)));
+            float p = AuraPressure.of(aura.rank(), rank, player.distanceTo(other));
+            if (p > strongest) {
+                strongest = p;
+                sourceId = other.getId();
+            }
         }
+        // Сильнейший источник — от него дует порыв.
+        player.getData(ModAttachments.AURA_GUST)[2] = sourceId;
         return strongest;
+    }
+
+    /**
+     * Порывы давления (автор 01.10: «ветер волнами туда-сюда, чтобы швыряло»). Каждые 0,7–1,2 с
+     * толчок от источника, через треть секунды — обратная тяга (75 % толчка): качает туда-сюда. Управление не
+     * отнимается: между порывами можно идти и отступать (docs/design/01).
+     */
+    private static void gusts(ServerPlayer player) {
+        float pressure = player.getData(ModAttachments.PRESSURE);
+        int[] state = player.getData(ModAttachments.AURA_GUST);
+        if (pressure < AuraPressure.GUST_FROM) {
+            state[0] = AuraPressure.gustInterval(AuraPressure.GUST_FROM) / 2;
+            state[1] = -1;
+            return;
+        }
+        net.minecraft.world.entity.Entity source = state[2] < 0 ? null : player.level().getEntity(state[2]);
+        if (source == null) {
+            return;
+        }
+        if (--state[0] <= 0) {
+            state[0] = AuraPressure.gustInterval(pressure) + player.getRandom().nextInt(5) - 2;
+            state[1] = AuraPressure.PULL_DELAY;
+            push(player, source, AuraPressure.gustPush(pressure), pressure, false);
+        } else if (state[1] > 0 && --state[1] == 0) {
+            push(player, source, -AuraPressure.gustPush(pressure) * AuraPressure.PULL_RATIO, pressure, true);
+        }
+    }
+
+    private static void push(ServerPlayer player, net.minecraft.world.entity.Entity source, double speed, float pressure, boolean pull) {
+        net.minecraft.world.phys.Vec3 away = player.position().subtract(source.position());
+        away = new net.minecraft.world.phys.Vec3(away.x, 0.0D, away.z);
+        if (away.lengthSqr() < 1.0E-4D) {
+            return;
+        }
+        away = away.normalize();
+        // API: reference/minecraft-src/net/minecraft/world/entity/Entity.java#push, #hurtMarked
+        // Почти без подъёма: в воздухе нет трения, и толчок уносил игрока за радиус, а обратная
+        // тяга на земле гасилась (кадры 01.10).
+        player.push(away.x * speed, pull ? 0.0D : 0.015D, away.z * speed);
+        player.hurtMarked = true;
+        PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
+                new io.github.verycooltimo.murim.network.AuraGustPayload(source.getId(), player.getId(), pressure, pull));
     }
 
     private static void apply(ServerPlayer player, Holder<Attribute> attribute, ResourceLocation id, double amount) {

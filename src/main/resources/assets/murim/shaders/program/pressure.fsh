@@ -11,6 +11,8 @@ uniform float Clock;
 uniform float CenterX;
 uniform float CenterY;
 uniform float Demonic;
+uniform float Gust;
+uniform float GustStrength;
 
 in vec2 texCoord;
 out vec4 fragColor;
@@ -34,7 +36,7 @@ void main() {
     vec2 offset = (dir * wave * 0.0025 + haze * 0.0012) * p * edge;
     offset.x /= aspect;
 
-    vec2 ca = dir * 0.0045 * p * p;
+    vec2 ca = dir * (0.0045 * p * p + 0.006 * band * GustStrength);
     ca.x /= aspect;
     vec3 col;
     col.r = texture(DiffuseSampler, uv + offset + ca).r;

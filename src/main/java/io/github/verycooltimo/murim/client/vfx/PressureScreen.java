@@ -134,6 +134,8 @@ public final class PressureScreen {
         chain.setUniform("CenterX", centerVisible ? centerX : 0.5F);
         chain.setUniform("CenterY", centerVisible ? centerY : 0.5F);
         chain.setUniform("Demonic", ClientAuraState.sourceDemonic() ? 1.0F : 0.0F);
+        chain.setUniform("Gust", ClientAuraState.gustAge(event.getPartialTick().getGameTimeDeltaPartialTick(false)) / 20.0F);
+        chain.setUniform("GustStrength", ClientAuraState.gustStrength() * (float) (double) minecraft.options.screenEffectScale().get());
         RenderSystem.disableBlend();
         RenderSystem.disableDepthTest();
         RenderSystem.resetTextureMatrix();
@@ -202,6 +204,9 @@ public final class PressureScreen {
         // умеренном давлении и на 25–35 % при полном. Центр у противника остаётся открытым.
         int wide = 12 + Math.round(6 * strength);
         int thin = 20 + Math.round(10 * strength);
+        // Порыв: мазки рывком заходят глубже, толстеют и тут же отступают.
+        float gust = (float) Math.exp(-ClientAuraState.gustAge(0.0F) / 4.0D) * ClientAuraState.gustStrength();
+        float surge = 1.0F + 0.8F * gust;
         float minSide = Math.min(width, height);
         for (int i = 0; i < wide + thin; i++) {
             boolean big = i < wide;
@@ -218,12 +223,12 @@ public final class PressureScreen {
             float ty = dy > 0 ? (height - cy) / dy : dy < 0 ? -cy / dy : 1.0E6F;
             float edge = Math.min(Math.abs(tx), Math.abs(ty)) * 1.04F;
             float depth = minSide * (0.08F + 0.24F * strength) * (0.6F + 0.4F * ((h >>> 40 & 0xFF) / 255.0F));
-            float reach = big ? depth * 1.2F : depth * 0.7F;
+            float reach = (big ? depth * 1.2F : depth * 0.7F) * surge;
             // Широкие стоят и дышат, тонкие ползут внутрь.
             float head = big ? edge - reach * (0.85F + 0.15F * Mth.sin(time * 0.1F + i))
-                             : edge - depth * (0.3F + 0.9F * phase);
+                             : edge - depth * surge * (0.3F + 0.9F * phase);
             float tail = big ? edge + 4.0F : head + reach;
-            float halfWidth = big ? (10.0F + 16.0F * ((h >>> 48 & 0xFF) / 255.0F)) * (0.7F + 0.5F * strength)
+            float halfWidth = big ? (10.0F + 16.0F * ((h >>> 48 & 0xFF) / 255.0F)) * (0.7F + 0.5F * strength) * (0.8F + 0.4F * surge)
                                   : 1.5F + 2.5F * ((h >>> 48 & 0xFF) / 255.0F);
             float alpha = big ? 0.35F + 0.45F * strength : (float) Math.sin(phase * Math.PI) * (0.35F + 0.35F * strength);
             // Плотные участки — чёрные, разрывы между ними — полупрозрачный серый #353D4C.

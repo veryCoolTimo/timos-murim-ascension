@@ -82,6 +82,27 @@ public final class AuraPressure {
         return -0.55D * pressure;
     }
 
+    /** С какой силы давления начинаются порывы. */
+    public static final float GUST_FROM = 0.3F;
+
+    /** Через сколько тиков следующий порыв: чем тяжелее, тем чаще (1,2 → 0,7 с). */
+    public static int gustInterval(float pressure) {
+        return Math.round(24.0F - 10.0F * Math.min(1.0F, Math.max(0.0F, (pressure - GUST_FROM) / (1.0F - GUST_FROM))));
+    }
+
+    /**
+     * Скорость толчка в блоках за тик: от 0,1 до 0,35. Обратная тяга — 90 % толчка: игрока
+     * качает на месте, а не выносит за радиус за три порыва (кадры 01.10).
+     */
+    public static double gustPush(float pressure) {
+        return 0.1D + 0.25D * Math.min(1.0F, Math.max(0.0F, (pressure - GUST_FROM) / (1.0F - GUST_FROM)));
+    }
+
+    public static final double PULL_RATIO = 0.9D;
+
+    /** Через сколько тиков после толчка тянет обратно: «швыряет туда-сюда». */
+    public static final int PULL_DELAY = 7;
+
     private AuraPressure() {
     }
 }

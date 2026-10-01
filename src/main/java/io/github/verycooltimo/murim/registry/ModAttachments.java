@@ -86,6 +86,14 @@ public final class ModAttachments {
             ATTACHMENT_TYPES.register("aura_pressure",
                     () -> AttachmentType.<Float>builder(() -> 0.0F).build());
 
+    /**
+     * Порывы давления: {тиков до толчка, тиков до обратной тяги, id источника}. Не сохраняется:
+     * живёт только пока рядом сильный.
+     */
+    public static final Supplier<AttachmentType<int[]>> AURA_GUST =
+            ATTACHMENT_TYPES.register("aura_gust",
+                    () -> AttachmentType.<int[]>builder(() -> new int[] {0, -1, -1}).build());
+
     /** Серия обычных ударов. Не сохраняется: связка живёт секунды и через сейв не тянется. */
     public static final Supplier<AttachmentType<io.github.verycooltimo.murim.combat.SchoolStyle.ComboState>> COMBO =
             ATTACHMENT_TYPES.register("combo_state",
