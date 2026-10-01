@@ -323,6 +323,11 @@ public final class MurimRenderTypes {
 
     private static final RenderType AURA_STROKES = auraLayer("aura_strokes", "textures/vfx/aura_strokes.png");
 
+    /** Клубы пыли в манере манхвы: белые с контуром тушью, атлас 4×4. */
+    public static RenderType dustPuffs() {
+        return RenderType.entityTranslucent(ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/vfx/dust_puffs.png"));
+    }
+
     /** Атлас из восьми мазков туши: экранные штрихи давления и широкие потоки. */
     public static RenderType auraStrokes() {
         return AURA_STROKES;

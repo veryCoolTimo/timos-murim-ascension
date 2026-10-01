@@ -28,59 +28,64 @@ import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Эффекты формы меча — Меч Шести Равновесий (концепт 01.10, референсы «huashan basic sword»).
+ * Эффекты формы меча — Меч Шести Равновесий (референсы «huashan basic sword»).
  *
- * <ul>
- *   <li><b>След клинка</b> — сухая белая лента по НАСТОЯЩЕМУ движению меча: каждый кадр снимаются
- *       середина и кончик клинка с анимированной модели, лента натягивается между ними по
- *       времени. Белое ядро {@code #F2F4F7}, рваные серые края — текстура сухой кисти;
- *       без свечения и лепестков (на референсах мастер бьёт «сухо»).</li>
- *   <li><b>Пыль</b> — частицы: на каждом ударе у передней ступни взлетает кольцо белой пыли,
- *       расползается, тормозит и оседает.</li>
- *   <li><b>Широкий разрез</b> (слой 3+) — последний удар серии: плоский серп через всю площадь
- *       и низкая волна пыли по плитам.</li>
- *   <li><b>Единение с мечом</b> (слой 4) — холодный синий столб из клинка в небо, прямой
- *       раскол земли вперёд со светом в шве, поднятые обломки, клубы пыли у основания.</li>
- * </ul>
+ * <p><b>Эффекты растут со слоем освоения</b> (автор 01.10: «когда 0 слоёв — эффектов нет»):
+ * <ol start="0">
+ *   <li>только движение тела, без эффектов;</li>
+ *   <li>резкие белые линии следа клинка — несколько тонких штрихов с расщеплёнными концами,
+ *       как белая полоса скорости на референсах;</li>
+ *   <li>+ клубы пыли у передней ноги и в точке удара — спрайты в манере манхвы: белое
+ *       с контуром тушью, без размытия;</li>
+ *   <li>+ широкий разрез: три тонкие дуги эллипсом вокруг бойца и волна низких клубов по плитам;</li>
+ *   <li>+ прямая тёмная борозда в плитах по линии удара с раскрошенными краями, стена клубов
+ *       по её бокам и обломки (кадр 8 «единения с мечом»).</li>
+ * </ol>
  *
- * <p>След виден только со стороны: в первом лице модели игрока нет, и снимать клинок не с чего.
- * Пыль, разрез, столб и раскол видны и от первого лица.
+ * <p>Синего света нет: на референсах мастер бьёт «сухо», цвет — белый, серый и тушь.
+ * Первая версия со столбом и светящимся расколом отклонена автором.
  */
 @EventBusSubscriber(modid = MurimMod.MODID, value = Dist.CLIENT)
 public final class SwordFormRenderer {
 
-    private static final VfxColour WHITE = hex(0xF2F4F7);
-    private static final VfxColour GREY = hex(0xA9AEAA);
-    private static final VfxColour DUST = hex(0xE9EAE4);
-    private static final VfxColour BLUE = hex(0x6FA8FF);
-    private static final VfxColour BLUE_CORE = hex(0xF0FFFF);
+    private static final VfxColour WHITE = hex(0xF4F5F2);
+    private static final VfxColour GROOVE = hex(0x1E2026);
+    private static final VfxColour GROOVE_EDGE = hex(0x6B6E76);
     private static final VfxColour STONE = hex(0x50535C);
 
-    /** Сколько тиков живёт кусок следа. */
-    // Дуги серии держатся дольше и накладываются друг на друга (разбор codex 01.10).
-    private static final float TRAIL_LIFE = 6.0F;
+    /** Сколько тиков держится штрих следа. */
+    private static final float TRAIL_LIFE = 5.0F;
+
+    /**
+     * Штрихи следа: доля длины клинка от кисти, толщина, доля жизни. Внешние — тоньше и
+     * короче, отсюда «расщеплённый» конец полосы.
+     */
+    private static final double[][] STREAKS = {{1.1D, 0.022D, 0.7D}, {1.35D, 0.04D, 1.0D}, {1.5D, 0.03D, 0.9D},
+            {1.62D, 0.018D, 0.75D}, {1.75D, 0.012D, 0.6D}, {1.88D, 0.008D, 0.45D}};
 
     private static final Map<Integer, Form> ACTIVE = new ConcurrentHashMap<>();
     private static int clientTicks;
 
-    private record Sample(float age, Vec3 mid, Vec3 tip) {
+    private record Sample(float age, Vec3 hand, Vec3 dir) {
     }
 
-    private static final class Mote {
+    private static final class Puff {
         Vec3 pos;
         Vec3 prev;
         Vec3 vel;
         int age;
         final int life;
         final float size;
+        final int cell;
         final boolean stone;
 
-        Mote(Vec3 pos, Vec3 vel, int life, float size, boolean stone) {
+        Puff(Vec3 pos, Vec3 vel, int life, float size, int cell, boolean stone) {
             this.pos = pos;
             this.prev = pos;
             this.vel = vel;
             this.life = life;
             this.size = size;
+            this.cell = cell;
             this.stone = stone;
         }
     }
@@ -93,29 +98,15 @@ public final class SwordFormRenderer {
         final double wideReach;
         final double crackLength;
         final List<Sample> samples = new ArrayList<>();
-        final List<Mote> motes = new ArrayList<>();
+        final List<Puff> puffs = new ArrayList<>();
         final Random random;
         int strikesFired;
-        /** Возраст широкого разреза, столба и раскола (−1 — ещё не было). */
         float wideAt = -1.0F;
-        float unityAt = -1.0F;
-        Vec3 unityOrigin;
-        Vec3 unityDir;
-        Vec3 pillarAt;
+        float grooveAt = -1.0F;
+        Vec3 grooveFrom;
+        Vec3 grooveDir;
         Vec3 wideCentre;
         float wideYaw;
-
-        /** Копия для сглаженного следа: те же параметры, пустой список замеров. */
-        Form(Form other) {
-            this.sourceId = other.sourceId;
-            this.startTick = other.startTick;
-            this.layer = other.layer;
-            this.impactAge = other.impactAge;
-            this.wideReach = other.wideReach;
-            this.crackLength = other.crackLength;
-            this.random = other.random;
-            this.strikesFired = other.strikesFired;
-        }
 
         Form(int sourceId, TechniqueDefinition definition, int layer) {
             this.sourceId = sourceId;
@@ -137,12 +128,17 @@ public final class SwordFormRenderer {
         }
 
         boolean done() {
-            return age(0) > strikeAge(SwordFormRules.strikes(layer) - 1) + 40.0F && motes.isEmpty();
+            return age(0) > strikeAge(SwordFormRules.strikes(layer) - 1) + 100.0F && puffs.isEmpty();
         }
     }
 
     public static void start(int sourceId, TechniqueDefinition definition, int layer) {
         if (definition == null || !(definition.behavior() instanceof TechniqueBehavior.SwordForm)) {
+            return;
+        }
+        // Нулевой слой — без эффектов: корявая техника не оставляет следа и не поднимает пыль.
+        if (layer <= 0) {
+            ACTIVE.remove(sourceId);
             return;
         }
         ACTIVE.put(sourceId, new Form(sourceId, definition, layer));
@@ -177,7 +173,6 @@ public final class SwordFormRenderer {
         }
     }
 
-    /** Наступил момент удара — пыль, разрез, столб и раскол. */
     private static void fire(Form f, Entity e) {
         float age = f.age(0);
         int strikes = SwordFormRules.strikes(f.layer);
@@ -185,84 +180,74 @@ public final class SwordFormRenderer {
             int index = f.strikesFired++;
             boolean last = index == strikes - 1;
             Vec3 look = Vec3.directionFromRotation(0.0F, e.getYRot());
-            Vec3 foot = e.position().add(look.scale(0.45D));
-            dustRing(f, foot, last && SwordFormRules.wideFinish(f.layer) ? 1.6D : 1.0D);
-            // Пыль и в точке удара — там, куда клинок доходит до земли (разбор codex).
-            dustRing(f, e.position().add(look.scale(2.0D)), 0.8D);
+            if (f.layer >= 2) {
+                puffs(f, e.position().add(look.scale(0.45D)), 3 + f.random.nextInt(2), 0.35D);
+                puffs(f, e.position().add(look.scale(2.0D)), 2 + f.random.nextInt(2), 0.3D);
+            }
             if (last && SwordFormRules.wideFinish(f.layer)) {
                 f.wideAt = age;
                 f.wideCentre = e.position().add(0.0D, 1.05D, 0.0D);
                 f.wideYaw = e.getYRot();
-                dustWave(f, e.position(), look);
+                groundWave(f, e.position(), look);
             }
             if (last && SwordFormRules.unity(f.layer)) {
-                f.unityAt = age;
-                f.unityOrigin = e.position().add(look.scale(0.8D));
-                f.unityDir = look;
-                // Столб — впереди по взгляду: в момент удара кончик ещё над головой, и столб
-                // от него вставал за спиной (кадры 01.10).
-                f.pillarAt = e.position().add(look.scale(1.3D));
-                crackDebris(f);
+                f.grooveAt = age;
+                f.grooveDir = look;
+                // Борозда — от точки удара дальше по линии клинка, как на кадре 8.
+                f.grooveFrom = e.position().add(look.scale(1.4D));
+                grooveDebris(f);
             }
         }
     }
 
-    private static void dustRing(Form f, Vec3 at, double scale) {
+    /** Клубы пыли: спрайты строк 1–2 атласа, разлетаются от точки, тормозят и тают. */
+    private static void puffs(Form f, Vec3 at, int count, double spread) {
         Random r = f.random;
-        int n = (int) (24 * scale);
-        for (int i = 0; i < n; i++) {
+        for (int i = 0; i < count; i++) {
             double a = r.nextDouble() * Math.PI * 2.0D;
-            double speed = (0.05D + 0.07D * r.nextDouble()) * scale;
             Vec3 dir = new Vec3(Math.cos(a), 0.0D, Math.sin(a));
-            f.motes.add(new Mote(at.add(dir.scale(0.2D)).add(0.0D, 0.18D, 0.0D),
-                    dir.scale(speed).add(0.0D, 0.015D + 0.025D * r.nextDouble(), 0.0D),
-                    16 + r.nextInt(12), (float) (0.22D + 0.16D * r.nextDouble()), false));
+            f.puffs.add(new Puff(at.add(dir.scale(spread * r.nextDouble())).add(0.0D, 0.25D, 0.0D),
+                    dir.scale(0.04D + 0.05D * r.nextDouble()).add(0.0D, 0.012D, 0.0D),
+                    12 + r.nextInt(8), (float) (0.35D + 0.2D * r.nextDouble()), r.nextInt(8), false));
         }
     }
 
-    /** Низкая волна пыли по плитам вперёд от широкого разреза. */
-    private static void dustWave(Form f, Vec3 feet, Vec3 look) {
+    /** Волна низких клубов (строка 3 атласа) по плитам вперёд и в стороны. */
+    private static void groundWave(Form f, Vec3 feet, Vec3 look) {
         Random r = f.random;
-        for (int i = 0; i < 46; i++) {
-            double a = (r.nextDouble() - 0.5D) * Math.toRadians(220.0D);
+        for (int i = 0; i < 14; i++) {
+            double a = (r.nextDouble() - 0.5D) * Math.toRadians(240.0D);
             Vec3 dir = new Vec3(look.x * Math.cos(a) - look.z * Math.sin(a), 0.0D, look.x * Math.sin(a) + look.z * Math.cos(a));
-            f.motes.add(new Mote(feet.add(dir.scale(0.6D)).add(0.0D, 0.08D, 0.0D),
-                    dir.scale(0.2D + 0.18D * r.nextDouble()).add(0.0D, 0.01D, 0.0D),
-                    18 + r.nextInt(14), (float) (0.18D + 0.14D * r.nextDouble()), false));
+            f.puffs.add(new Puff(feet.add(dir.scale(0.8D)).add(0.0D, 0.3D, 0.0D),
+                    dir.scale(0.16D + 0.1D * r.nextDouble()), 16 + r.nextInt(8),
+                    (float) (0.5D + 0.25D * r.nextDouble()), 8 + r.nextInt(4), false));
         }
     }
 
-    /** Раскол: обломки камня вдоль линии вверх и клубы пыли у основания столба. */
-    private static void crackDebris(Form f) {
+    /** Борозда: обломки плит вверх и стена клубов по обе стороны. */
+    private static void grooveDebris(Form f) {
         Random r = f.random;
-        for (int i = 0; i < 30; i++) {
+        Vec3 side = new Vec3(-f.grooveDir.z, 0.0D, f.grooveDir.x);
+        for (int i = 0; i < 26; i++) {
             double along = r.nextDouble() * f.crackLength;
-            Vec3 at = f.unityOrigin.add(f.unityDir.scale(along)).add((r.nextDouble() - 0.5D) * 0.6D, 0.05D,
-                    (r.nextDouble() - 0.5D) * 0.6D);
-            f.motes.add(new Mote(at, new Vec3((r.nextDouble() - 0.5D) * 0.06D, 0.18D + 0.2D * r.nextDouble(),
-                    (r.nextDouble() - 0.5D) * 0.06D), 26 + r.nextInt(14), (float) (0.06D + 0.14D * r.nextDouble()), true));
+            Vec3 at = f.grooveFrom.add(f.grooveDir.scale(along)).add(side.scale((r.nextDouble() - 0.5D) * 0.6D)).add(0.0D, 0.05D, 0.0D);
+            f.puffs.add(new Puff(at, new Vec3((r.nextDouble() - 0.5D) * 0.05D, 0.14D + 0.16D * r.nextDouble(),
+                    (r.nextDouble() - 0.5D) * 0.05D), 22 + r.nextInt(12), (float) (0.05D + 0.1D * r.nextDouble()), 0, true));
         }
-        // Стена пыли вдоль всего раскола.
-        for (int i = 0; i < 50; i++) {
+        for (int i = 0; i < 22; i++) {
             double along = r.nextDouble() * f.crackLength;
-            Vec3 at = f.unityOrigin.add(f.unityDir.scale(along)).add(0.0D, 0.15D, 0.0D);
-            Vec3 side = new Vec3(-f.unityDir.z, 0.0D, f.unityDir.x).scale(r.nextBoolean() ? 1.0D : -1.0D);
-            f.motes.add(new Mote(at, side.scale(0.06D + 0.08D * r.nextDouble()).add(0.0D, 0.03D + 0.03D * r.nextDouble(), 0.0D),
-                    24 + r.nextInt(18), (float) (0.3D + 0.3D * r.nextDouble()), false));
-        }
-        for (int i = 0; i < 40; i++) {
-            double a = r.nextDouble() * Math.PI * 2.0D;
-            Vec3 dir = new Vec3(Math.cos(a), 0.0D, Math.sin(a));
-            f.motes.add(new Mote(f.pillarAt.add(dir.scale(0.4D)).add(0.0D, 0.1D, 0.0D),
-                    dir.scale(0.08D + 0.12D * r.nextDouble()).add(0.0D, 0.02D, 0.0D),
-                    26 + r.nextInt(20), (float) (0.3D + 0.25D * r.nextDouble()), false));
+            double s = r.nextBoolean() ? 1.0D : -1.0D;
+            Vec3 at = f.grooveFrom.add(f.grooveDir.scale(along)).add(side.scale(s * 0.4D)).add(0.0D, 0.35D, 0.0D);
+            int cell = r.nextFloat() < 0.6F ? 8 + r.nextInt(4) : r.nextInt(8);
+            f.puffs.add(new Puff(at, side.scale(s * (0.06D + 0.06D * r.nextDouble())).add(0.0D, 0.015D, 0.0D),
+                    22 + r.nextInt(14), (float) (0.6D + 0.35D * r.nextDouble()), cell, false));
         }
     }
 
     private static void step(Form f) {
-        Iterator<Mote> it = f.motes.iterator();
+        Iterator<Puff> it = f.puffs.iterator();
         while (it.hasNext()) {
-            Mote m = it.next();
+            Puff m = it.next();
             m.prev = m.pos;
             if (++m.age >= m.life) {
                 it.remove();
@@ -271,8 +256,7 @@ public final class SwordFormRenderer {
             if (m.stone) {
                 m.vel = new Vec3(m.vel.x * 0.98D, m.vel.y - 0.03D, m.vel.z * 0.98D);
             } else {
-                // Пыль: тормозит, чуть всплывает и оседает.
-                m.vel = new Vec3(m.vel.x * 0.88D, m.vel.y * 0.9D - 0.001D, m.vel.z * 0.88D);
+                m.vel = new Vec3(m.vel.x * 0.86D, m.vel.y * 0.9D, m.vel.z * 0.86D);
             }
             m.pos = m.pos.add(m.vel);
         }
@@ -301,27 +285,25 @@ public final class SwordFormRenderer {
                 if (e instanceof AbstractClientPlayer player) {
                     sample(f, player, age);
                 }
-                trail(f, pose, camera, buffers, age);
+                if (f.grooveAt >= 0.0F) {
+                    groove(f, pose, buffers, age - f.grooveAt);
+                }
+                streaks(f, pose, camera, buffers, age);
                 if (f.wideAt >= 0.0F) {
                     wide(f, pose, camera, buffers, age - f.wideAt);
                 }
-                if (f.unityAt >= 0.0F) {
-                    unity(f, pose, camera, buffers, age - f.unityAt);
-                }
-                motes(f, pose, camera, buffers, partial);
+                renderPuffs(f, pose, camera, buffers, partial);
             }
         } finally {
             poseStack.popPose();
         }
     }
 
-    /** Снимает клинок в окнах ударов: чуть до кадра попадания и чуть после. */
+    /** Снимает кисть и направление клинка в окнах ударов. */
     private static void sample(Form f, AbstractClientPlayer player, float age) {
         boolean window = false;
         for (int i = 0; i < SwordFormRules.strikes(f.layer); i++) {
             float s = f.strikeAge(i);
-            // Анимация приходит на тик позже события и доводит клинок вниз за ~2 тика после кадра
-            // попадания — окно до +4, иначе след обрывался над головой (кадры 01.10).
             if (age >= s - 3.0F && age <= s + 4.0F) {
                 window = true;
                 break;
@@ -329,19 +311,14 @@ public final class SwordFormRenderer {
         }
         if (window) {
             Vec3 hand = BoneAnchorLayer.position(player, BoneAnchorLayer.Bone.RIGHT_HAND);
-            Vec3 bladeTip = BoneAnchorLayer.position(player, BoneAnchorLayer.Bone.BLADE_TIP);
-            // Лента от середины клинка до кончика, вынесенного на 40 %: настоящий меч короткий,
-            // и след по нему читался серой складкой, а не серпом (кадры 01.10).
-            Vec3 mid = hand == null || bladeTip == null ? null : hand.lerp(bladeTip, 0.5D);
-            Vec3 tip = hand == null || bladeTip == null ? null : hand.add(bladeTip.subtract(hand).scale(2.2D));
-            if (mid != null && tip != null) {
+            Vec3 tip = BoneAnchorLayer.position(player, BoneAnchorLayer.Bone.BLADE_TIP);
+            if (hand != null && tip != null) {
                 Sample last = f.samples.isEmpty() ? null : f.samples.get(f.samples.size() - 1);
                 if (last == null || age - last.age > 0.05F) {
-                    // Разрыв между окнами — новый мазок, а не перемычка через полэкрана.
                     if (last != null && age - last.age > 1.5F) {
-                        f.samples.add(new Sample(-1.0F, mid, tip));
+                        f.samples.add(new Sample(-1.0F, hand, tip.subtract(hand)));
                     }
-                    f.samples.add(new Sample(age, mid, tip));
+                    f.samples.add(new Sample(age, hand, tip.subtract(hand)));
                 }
             }
         }
@@ -349,94 +326,64 @@ public final class SwordFormRenderer {
     }
 
     /**
-     * Лента следа: между соседними замерами — четырёхугольник от середины к кончику клинка.
-     * U вдоль времени (свежий край — плотный), V поперёк — от середины к кончику.
+     * Штрихи следа: пять тонких резких полос на разном расстоянии вдоль клинка, каждая —
+     * лента вдоль сглаженного пути. Сплошной белый, без свечения и размытия; к хвосту полоса
+     * сужается в нить, внешние полосы короче — расщеплённый конец.
      */
-    private static void trail(Form f, PoseStack.Pose pose, Vec3 camera, MultiBufferSource.BufferSource buffers, float age) {
+    private static void streaks(Form f, PoseStack.Pose pose, Vec3 camera, MultiBufferSource.BufferSource buffers, float age) {
         if (f.samples.size() < 2) {
             return;
         }
-        f = smoothed(f);
-        boolean blue = SwordFormRules.unity(f.layer) && f.strikesFired >= SwordFormRules.strikes(f.layer);
-        VfxColour core = blue ? BLUE_CORE : WHITE;
-        VfxColour edge = blue ? BLUE : GREY;
-        RenderType ink = MurimRenderTypes.ink();
-        VertexConsumer c = buffers.getBuffer(ink);
-        for (int i = 1; i < f.samples.size(); i++) {
-            Sample a = f.samples.get(i - 1);
-            Sample b = f.samples.get(i);
-            if (a.age < 0.0F || b.age < 0.0F) {
-                continue;
-            }
-            float ua = Mth.clamp((age - a.age) / TRAIL_LIFE, 0.0F, 1.0F);
-            float ub = Mth.clamp((age - b.age) / TRAIL_LIFE, 0.0F, 1.0F);
-            float aa = (1.0F - ua) * (1.0F - ua) * 0.95F;
-            float ab = (1.0F - ub) * (1.0F - ub) * 0.95F;
-            Vec3 n = camera.subtract(b.tip).normalize();
-            // Сухой край со стороны рукояти — серый, ядро к кончику — белое.
-            VfxDraw.vertex(c, pose, a.mid, n, ua, 0.0F, aa * 0.6F, edge.red(), edge.green(), edge.blue());
-            VfxDraw.vertex(c, pose, b.mid, n, ub, 0.0F, ab * 0.6F, edge.red(), edge.green(), edge.blue());
-            VfxDraw.vertex(c, pose, b.tip, n, ub, 1.0F, ab, core.red(), core.green(), core.blue());
-            VfxDraw.vertex(c, pose, a.tip, n, ua, 1.0F, aa, core.red(), core.green(), core.blue());
-        }
-        buffers.endBatch(ink);
-        // Лёгкий светлый подслой: ночью сухая серо-белая лента иначе тонет (кадры 01.10).
-        VertexConsumer sheen = buffers.getBuffer(MurimRenderTypes.ribbon());
-        for (int i = 1; i < f.samples.size(); i++) {
-            Sample a = f.samples.get(i - 1);
-            Sample b = f.samples.get(i);
-            if (a.age < 0.0F || b.age < 0.0F) {
-                continue;
-            }
-            float ua = Mth.clamp((age - a.age) / TRAIL_LIFE, 0.0F, 1.0F);
-            float ub = Mth.clamp((age - b.age) / TRAIL_LIFE, 0.0F, 1.0F);
-            Vec3 n = camera.subtract(b.tip).normalize();
-            VfxDraw.vertex(sheen, pose, a.mid, n, 0.0F, 0.0F, 0.0F, core.red(), core.green(), core.blue());
-            VfxDraw.vertex(sheen, pose, b.mid, n, 1.0F, 0.0F, 0.0F, core.red(), core.green(), core.blue());
-            VfxDraw.vertex(sheen, pose, b.tip, n, 1.0F, 1.0F, 0.55F * (1.0F - ub), core.red(), core.green(), core.blue());
-            VfxDraw.vertex(sheen, pose, a.tip, n, 0.0F, 1.0F, 0.55F * (1.0F - ua), core.red(), core.green(), core.blue());
-        }
-        buffers.endBatch(MurimRenderTypes.ribbon());
-        if (blue) {
-            VertexConsumer g = buffers.getBuffer(MurimRenderTypes.ribbon());
-            for (int i = 1; i < f.samples.size(); i++) {
-                Sample a = f.samples.get(i - 1);
-                Sample b = f.samples.get(i);
-                if (a.age < 0.0F || b.age < 0.0F) {
+        RenderType solid = MurimRenderTypes.solid();
+        VertexConsumer c = buffers.getBuffer(solid);
+        for (double[] streak : STREAKS) {
+            List<Vec3> pts = new ArrayList<>();
+            List<Float> ages = new ArrayList<>();
+            smoothPath(f.samples, streak[0], pts, ages);
+            float life = (float) (TRAIL_LIFE * streak[2]);
+            for (int i = 1; i < pts.size(); i++) {
+                if (ages.get(i - 1) < 0.0F || ages.get(i) < 0.0F) {
                     continue;
                 }
-                float ua = Mth.clamp((age - a.age) / TRAIL_LIFE, 0.0F, 1.0F);
-                VfxDraw.segment(g, pose, a.tip, b.tip, camera, 0.12D, 0.6F * (1.0F - ua), BLUE.red(), BLUE.green(), BLUE.blue());
+                float u0 = Mth.clamp((age - ages.get(i - 1)) / life, 0.0F, 1.0F);
+                float u1 = Mth.clamp((age - ages.get(i)) / life, 0.0F, 1.0F);
+                if (u0 >= 1.0F && u1 >= 1.0F) {
+                    continue;
+                }
+                // Хвост гаснет быстрее, чем сужается: иначе от него оставались «уголки» (кадры 01.10).
+                line(c, pose, camera, pts.get(i - 1), pts.get(i), streak[1] * (1.0F - u0), streak[1] * (1.0F - u1),
+                        (1.0F - u0) * (1.0F - u0), (1.0F - u1) * (1.0F - u1));
             }
-            buffers.endBatch(MurimRenderTypes.ribbon());
         }
+        buffers.endBatch(solid);
     }
 
-    /**
-     * Сглаживание следа: во взмахе всего 2–3 замера клинка за кадр, и лента выходила
-     * ломаной — «сложенным листом» (кадры 01.10). Между замерами — по 5 точек сплайна
-     * Катмулла — Рома на обеих направляющих (середина и кончик).
-     */
-    private static Form smoothed(Form f) {
-        Form copy = new Form(f);
-        List<Sample> in = f.samples;
-        for (int i = 0; i < in.size() - 1; i++) {
-            Sample p1 = in.get(i);
-            Sample p2 = in.get(i + 1);
-            if (p1.age < 0.0F || p2.age < 0.0F) {
-                copy.samples.add(p1);
+    /** Путь точки клинка на доле {@code k} от кисти, сглаженный сплайном (5 точек на отрезок). */
+    private static void smoothPath(List<Sample> samples, double k, List<Vec3> out, List<Float> ages) {
+        int n = samples.size();
+        for (int i = 0; i < n - 1; i++) {
+            Sample s1 = samples.get(i);
+            Sample s2 = samples.get(i + 1);
+            if (s1.age < 0.0F || s2.age < 0.0F) {
+                out.add(Vec3.ZERO);
+                ages.add(-1.0F);
                 continue;
             }
-            Sample p0 = i > 0 && in.get(i - 1).age >= 0.0F ? in.get(i - 1) : p1;
-            Sample p3 = i + 2 < in.size() && in.get(i + 2).age >= 0.0F ? in.get(i + 2) : p2;
-            for (int k = 0; k < 5; k++) {
-                double t = k / 5.0D;
-                copy.samples.add(new Sample(Mth.lerp((float) t, p1.age, p2.age),
-                        catmull(p0.mid, p1.mid, p2.mid, p3.mid, t), catmull(p0.tip, p1.tip, p2.tip, p3.tip, t)));
+            Sample s0 = i > 0 && samples.get(i - 1).age >= 0.0F ? samples.get(i - 1) : s1;
+            Sample s3 = i + 2 < n && samples.get(i + 2).age >= 0.0F ? samples.get(i + 2) : s2;
+            for (int j = 0; j < 5; j++) {
+                double t = j / 5.0D;
+                out.add(catmull(point(s0, k), point(s1, k), point(s2, k), point(s3, k), t));
+                ages.add(Mth.lerp((float) t, s1.age, s2.age));
             }
         }
-        copy.samples.add(in.get(in.size() - 1));
-        return copy;
+        Sample last = samples.get(n - 1);
+        out.add(last.age < 0.0F ? Vec3.ZERO : point(last, k));
+        ages.add(last.age);
+    }
+
+    private static Vec3 point(Sample s, double k) {
+        return s.hand.add(s.dir.scale(k));
     }
 
     private static Vec3 catmull(Vec3 p0, Vec3 p1, Vec3 p2, Vec3 p3, double t) {
@@ -445,9 +392,28 @@ public final class SwordFormRenderer {
                 .add(p1.scale(3.0D).subtract(p0).subtract(p2.scale(3.0D)).add(p3).scale(t3)).scale(0.5D);
     }
 
+    /** Отрезок полосы, развёрнутый к камере, с разной толщиной и непрозрачностью на концах. */
+    private static void line(VertexConsumer c, PoseStack.Pose pose, Vec3 camera, Vec3 a, Vec3 b,
+                             double wa, double wb, float aa, float ab) {
+        Vec3 axis = b.subtract(a);
+        if (axis.lengthSqr() < 1.0E-8D) {
+            return;
+        }
+        Vec3 side = axis.cross(camera.subtract(a.add(b).scale(0.5D)));
+        if (side.lengthSqr() < 1.0E-9D) {
+            return;
+        }
+        side = side.normalize();
+        Vec3 n = new Vec3(0.0D, 1.0D, 0.0D);
+        VfxDraw.vertex(c, pose, a.subtract(side.scale(wa)), n, 0.0F, 0.0F, aa, WHITE.red(), WHITE.green(), WHITE.blue());
+        VfxDraw.vertex(c, pose, b.subtract(side.scale(wb)), n, 1.0F, 0.0F, ab, WHITE.red(), WHITE.green(), WHITE.blue());
+        VfxDraw.vertex(c, pose, b.add(side.scale(wb)), n, 1.0F, 1.0F, ab, WHITE.red(), WHITE.green(), WHITE.blue());
+        VfxDraw.vertex(c, pose, a.add(side.scale(wa)), n, 0.0F, 1.0F, aa, WHITE.red(), WHITE.green(), WHITE.blue());
+    }
+
     /**
-     * Широкий разрез «начальной формы»: плоский серп на уровне груди, раскрывается за три тика
-     * на 200° и гаснет за полсекунды. Внутренний край рваный (сухая кисть), внешний — белый.
+     * Широкий разрез: три тонкие резкие дуги эллипсом на 320° вокруг бойца, наклон ~12°,
+     * раскрываются за три тика и гаснут за полсекунды.
      */
     private static void wide(Form f, PoseStack.Pose pose, Vec3 camera, MultiBufferSource.BufferSource buffers, float t) {
         if (t > 12.0F) {
@@ -455,159 +421,107 @@ public final class SwordFormRenderer {
         }
         float sweep = Mth.clamp(t / 3.0F, 0.0F, 1.0F);
         float alpha = t < 3.0F ? 1.0F : (float) Math.pow(1.0F - (t - 3.0F) / 9.0F, 1.5D);
-        double outer = f.wideReach;
-        double inner = outer * 0.55D;
         double yaw = Math.toRadians(f.wideYaw);
-        int seg = 28;
         double span = Math.toRadians(320.0D) * sweep;
         double start = -span / 2.0D;
-        RenderType ink = MurimRenderTypes.ink();
-        VertexConsumer c = buffers.getBuffer(ink);
-        Vec3 up = new Vec3(0.0D, 1.0D, 0.0D);
-        for (int i = 0; i < seg; i++) {
-            double a0 = start + span * i / seg;
-            double a1 = start + span * (i + 1) / seg;
-            // Толщина серпа: тоньше на концах.
-            double w0 = Math.sin(Math.PI * i / seg);
-            double w1 = Math.sin(Math.PI * (i + 1) / seg);
-            Vec3 d0 = dir(yaw, a0);
-            Vec3 d1 = dir(yaw, a1);
-            // Плоскость разреза наклонена на ~12°: сбоку плоский серп иначе виден ребром —
-            // тонкой линией (кадры 01.10).
-            double tilt0 = Math.sin(a0) * 0.22D;
-            double tilt1 = Math.sin(a1) * 0.22D;
-            Vec3 i0 = f.wideCentre.add(d0.scale(outer - (outer - inner) * w0)).add(0.0D, tilt0 * (outer - (outer - inner) * w0), 0.0D);
-            Vec3 i1 = f.wideCentre.add(d1.scale(outer - (outer - inner) * w1)).add(0.0D, tilt1 * (outer - (outer - inner) * w1), 0.0D);
-            Vec3 o0 = f.wideCentre.add(d0.scale(outer)).add(0.0D, tilt0 * outer, 0.0D);
-            Vec3 o1 = f.wideCentre.add(d1.scale(outer)).add(0.0D, tilt1 * outer, 0.0D);
-            float u0 = (float) i / seg;
-            float u1 = (float) (i + 1) / seg;
-            VfxDraw.vertex(c, pose, i0, up, u0, 0.0F, alpha * 0.4F, GREY.red(), GREY.green(), GREY.blue());
-            VfxDraw.vertex(c, pose, i1, up, u1, 0.0F, alpha * 0.4F, GREY.red(), GREY.green(), GREY.blue());
-            VfxDraw.vertex(c, pose, o1, up, u1, 1.0F, alpha, WHITE.red(), WHITE.green(), WHITE.blue());
-            VfxDraw.vertex(c, pose, o0, up, u0, 1.0F, alpha, WHITE.red(), WHITE.green(), WHITE.blue());
-        }
-        buffers.endBatch(ink);
-        // Тонкие параллельные следы снаружи и внутри серпа.
-        VertexConsumer g = buffers.getBuffer(MurimRenderTypes.ribbon());
-        for (double k : new double[] {1.12D, 0.48D}) {
+        int seg = 40;
+        RenderType solid = MurimRenderTypes.solid();
+        VertexConsumer c = buffers.getBuffer(solid);
+        double[][] arcs = {{1.0D, 0.06D}, {0.86D, 0.03D}, {1.12D, 0.02D}};
+        for (double[] arc : arcs) {
+            double r = f.wideReach * arc[0];
             for (int i = 0; i < seg; i++) {
                 double a0 = start + span * i / seg;
                 double a1 = start + span * (i + 1) / seg;
-                Vec3 p0 = f.wideCentre.add(dir(yaw, a0).scale(outer * k)).add(0.0D, Math.sin(a0) * 0.22D * outer * k, 0.0D);
-                Vec3 p1 = f.wideCentre.add(dir(yaw, a1).scale(outer * k)).add(0.0D, Math.sin(a1) * 0.22D * outer * k, 0.0D);
-                VfxDraw.segment(g, pose, p0, p1, camera, 0.03D, 0.5F * alpha * (float) Math.sin(Math.PI * i / seg), WHITE.red(), WHITE.green(), WHITE.blue());
+                Vec3 p0 = f.wideCentre.add(dir(yaw, a0).scale(r)).add(0.0D, Math.sin(a0) * 0.22D * r, 0.0D);
+                Vec3 p1 = f.wideCentre.add(dir(yaw, a1).scale(r)).add(0.0D, Math.sin(a1) * 0.22D * r, 0.0D);
+                line(c, pose, camera, p0, p1, arc[1] * Math.sin(Math.PI * i / seg),
+                        arc[1] * Math.sin(Math.PI * (i + 1) / seg), alpha, alpha);
             }
-        }
-        buffers.endBatch(MurimRenderTypes.ribbon());
-    }
-
-    private static Vec3 dir(double yaw, double a) {
-        // Вперёд по взгляду — направление (−sin yaw, cos yaw); угол a отсчитывается от него.
-        double ang = yaw + a;
-        return new Vec3(-Math.sin(ang), 0.0D, Math.cos(ang));
-    }
-
-    /** Синий столб из клинка в небо и раскол земли вперёд со светом в шве. */
-    private static void unity(Form f, PoseStack.Pose pose, Vec3 camera, MultiBufferSource.BufferSource buffers, float t) {
-        if (t > 36.0F) {
-            return;
-        }
-        VertexConsumer g = buffers.getBuffer(MurimRenderTypes.ribbon());
-        // Столб: вырастает за 2 тика, держится, гаснет к 30.
-        float rise = Mth.clamp(t / 2.0F, 0.0F, 1.0F);
-        float fade = t < 12.0F ? 1.0F : Mth.clamp(1.0F - (t - 12.0F) / 18.0F, 0.0F, 1.0F);
-        double height = 14.0D * rise;
-        Vec3 base = f.pillarAt;
-        Vec3 top = base.add(0.0D, height, 0.0D);
-        float flicker = 0.9F + 0.1F * Mth.sin(t * 2.3F);
-        // Толще в 2,5 раза, с неоднородной оболочкой: три полосы с разной фазой мерцания.
-        VfxDraw.segment(g, pose, base, top, camera, 2.6D, 0.25F * fade * flicker, BLUE.red(), BLUE.green(), BLUE.blue());
-        VfxDraw.segment(g, pose, base.add(0.15D * Mth.sin(t * 1.7F), 0.0D, 0.0D), top, camera, 1.3D, 0.45F * fade, BLUE.red() * 1.2F, BLUE.green() * 1.1F, 1.0F);
-        VfxDraw.segment(g, pose, base, top, camera, 0.4D, 0.95F * fade, BLUE_CORE.red(), BLUE_CORE.green(), BLUE_CORE.blue());
-        flatDisc(g, pose, base.add(0.0D, 0.03D, 0.0D), 2.2D * rise, 0.5F * fade, BLUE);
-        // Раскол: открывается за 5 тиков по прямой, зубчатый, свет в шве.
-        float open = Mth.clamp(t / 5.0F, 0.0F, 1.0F);
-        float crackFade = Mth.clamp(1.0F - (t - 18.0F) / 18.0F, 0.0F, 1.0F);
-        buffers.endBatch(MurimRenderTypes.ribbon());
-        Random r = new Random(f.sourceId * 7L + f.startTick);
-        Vec3 side = new Vec3(-f.unityDir.z, 0.0D, f.unityDir.x);
-        // Тёмный разлом под светом: раскол — дыра в плитах, а не линия на целой поверхности.
-        {
-            Random rd = new Random(f.sourceId * 7L + f.startTick);
-            RenderType dark = MurimRenderTypes.solid();
-            VertexConsumer dc = buffers.getBuffer(dark);
-            Vec3 p = f.unityOrigin.add(0.0D, 0.025D, 0.0D);
-            for (int i = 0; i < 16 && (float) i / 16 < Mth.clamp(t / 5.0F, 0.0F, 1.0F); i++) {
-                Vec3 q = f.unityOrigin.add(f.unityDir.scale(f.crackLength * (i + 1) / 16))
-                        .add(side.scale((rd.nextDouble() - 0.5D) * 0.35D)).add(0.0D, 0.025D, 0.0D);
-                flat(dc, pose, p, q, 0.42D * (1.0F - i / 16.0F * 0.5F), 0.85F * Mth.clamp(1.0F - (t - 18.0F) / 18.0F, 0.0F, 1.0F),
-                        new VfxColour(0.04F, 0.05F, 0.08F));
-                p = q;
-            }
-            buffers.endBatch(dark);
-        }
-        g = buffers.getBuffer(MurimRenderTypes.ribbon());
-        Vec3 at = f.unityOrigin.add(0.0D, 0.03D, 0.0D);
-        int segs = 16;
-        for (int i = 0; i < segs && (float) i / segs < open; i++) {
-            Vec3 next = f.unityOrigin.add(f.unityDir.scale(f.crackLength * (i + 1) / segs))
-                    .add(side.scale((r.nextDouble() - 0.5D) * 0.35D)).add(0.0D, 0.03D, 0.0D);
-            float w = 1.0F - (float) i / segs * 0.6F;
-            flat(g, pose, at, next, 0.32D * w, 0.45F * crackFade, BLUE);
-            flat(g, pose, at, next, 0.09D * w, 1.0F * crackFade, BLUE_CORE);
-            at = next;
-        }
-        buffers.endBatch(MurimRenderTypes.ribbon());
-    }
-
-    private static void motes(Form f, PoseStack.Pose pose, Vec3 camera, MultiBufferSource.BufferSource buffers, float partial) {
-        if (f.motes.isEmpty()) {
-            return;
-        }
-        RenderType dustType = MurimRenderTypes.impurity();
-        VertexConsumer d = buffers.getBuffer(dustType);
-        for (Mote m : f.motes) {
-            if (m.stone) {
-                continue;
-            }
-            float t = (m.age + partial) / m.life;
-            Vec3 at = m.prev.lerp(m.pos, partial);
-            float a = 0.8F * (float) Math.sin(Math.PI * Math.min(1.0F, t * 1.2F + 0.05F)) * (1.0F - t);
-            VfxDraw.billboard(d, pose, at, camera, m.size * (0.6F + 1.2F * t), a, DUST.red(), DUST.green(), DUST.blue());
-        }
-        buffers.endBatch(dustType);
-        RenderType solid = MurimRenderTypes.solid();
-        VertexConsumer s = buffers.getBuffer(solid);
-        for (Mote m : f.motes) {
-            if (!m.stone) {
-                continue;
-            }
-            float t = (m.age + partial) / m.life;
-            Vec3 at = m.prev.lerp(m.pos, partial);
-            VfxDraw.billboard(s, pose, at, camera, m.size, Mth.clamp((1.0F - t) * 4.0F, 0.0F, 1.0F),
-                    STONE.red(), STONE.green(), STONE.blue());
         }
         buffers.endBatch(solid);
     }
 
-    /** Круглое пятно света на полу. */
-    private static void flatDisc(VertexConsumer c, PoseStack.Pose pose, Vec3 centre, double r, float alpha, VfxColour col) {
-        Vec3 n = new Vec3(0.0D, 1.0D, 0.0D);
-        int seg = 20;
-        for (int i = 0; i < seg; i++) {
-            double a0 = Math.PI * 2.0D * i / seg;
-            double a1 = Math.PI * 2.0D * (i + 1) / seg;
-            Vec3 p0 = centre.add(Math.cos(a0) * r, 0.0D, Math.sin(a0) * r);
-            Vec3 p1 = centre.add(Math.cos(a1) * r, 0.0D, Math.sin(a1) * r);
-            VfxDraw.vertex(c, pose, centre, n, 0.5F, 0.5F, alpha, col.red(), col.green(), col.blue());
-            VfxDraw.vertex(c, pose, centre, n, 0.5F, 0.5F, alpha, col.red(), col.green(), col.blue());
-            VfxDraw.vertex(c, pose, p1, n, 0.5F, 0.0F, 0.0F, col.red(), col.green(), col.blue());
-            VfxDraw.vertex(c, pose, p0, n, 0.5F, 0.0F, 0.0F, col.red(), col.green(), col.blue());
-        }
+    private static Vec3 dir(double yaw, double a) {
+        double ang = yaw + a;
+        return new Vec3(-Math.sin(ang), 0.0D, Math.cos(ang));
     }
 
-    /** Отрезок, лежащий на полу. */
+    /**
+     * Борозда в плитах: тёмная полоса с рваными краями, прорезается вперёд за 4 тика и держится
+     * несколько секунд; по краям — светло-серая крошка. Без свечения.
+     */
+    private static void groove(Form f, PoseStack.Pose pose, MultiBufferSource.BufferSource buffers, float t) {
+        if (t > 100.0F) {
+            return;
+        }
+        float open = Mth.clamp(t / 4.0F, 0.0F, 1.0F);
+        float fade = Mth.clamp(1.0F - (t - 70.0F) / 30.0F, 0.0F, 1.0F);
+        Random r = new Random(f.sourceId * 7L + f.startTick);
+        Vec3 side = new Vec3(-f.grooveDir.z, 0.0D, f.grooveDir.x);
+        RenderType solid = MurimRenderTypes.solid();
+        VertexConsumer c = buffers.getBuffer(solid);
+        int segs = 18;
+        Vec3 at = f.grooveFrom.add(0.0D, 0.02D, 0.0D);
+        for (int i = 0; i < segs && (float) i / segs < open; i++) {
+            Vec3 next = f.grooveFrom.add(f.grooveDir.scale(f.crackLength * (i + 1) / segs))
+                    .add(side.scale((r.nextDouble() - 0.5D) * 0.08D)).add(0.0D, 0.02D, 0.0D);
+            double w = 0.28D * (1.0D - 0.4D * i / segs) * (0.85D + 0.3D * r.nextDouble());
+            flat(c, pose, at, next, w + 0.07D, 0.8F * fade, GROOVE_EDGE);
+            flat(c, pose, at.add(0.0D, 0.004D, 0.0D), next.add(0.0D, 0.004D, 0.0D), w, 0.95F * fade, GROOVE);
+            at = next;
+        }
+        buffers.endBatch(solid);
+    }
+
+    private static void renderPuffs(Form f, PoseStack.Pose pose, Vec3 camera, MultiBufferSource.BufferSource buffers, float partial) {
+        if (f.puffs.isEmpty()) {
+            return;
+        }
+        RenderType dust = MurimRenderTypes.dustPuffs();
+        VertexConsumer d = buffers.getBuffer(dust);
+        for (Puff m : f.puffs) {
+            if (m.stone) {
+                continue;
+            }
+            float t = (m.age + partial) / m.life;
+            // Клуб вырастает и тает только в последней трети: резкий спрайт, а не размытое пятно.
+            float alpha = t < 0.65F ? 1.0F : Mth.clamp(1.0F - (t - 0.65F) / 0.35F, 0.0F, 1.0F);
+            sprite(d, pose, camera, m.prev.lerp(m.pos, partial), m.size * (0.7F + 0.6F * t), m.cell, alpha);
+        }
+        buffers.endBatch(dust);
+        RenderType solid = MurimRenderTypes.solid();
+        VertexConsumer s = buffers.getBuffer(solid);
+        for (Puff m : f.puffs) {
+            if (!m.stone) {
+                continue;
+            }
+            float t = (m.age + partial) / m.life;
+            VfxDraw.billboard(s, pose, m.prev.lerp(m.pos, partial), camera, m.size,
+                    Mth.clamp((1.0F - t) * 4.0F, 0.0F, 1.0F), STONE.red(), STONE.green(), STONE.blue());
+        }
+        buffers.endBatch(solid);
+    }
+
+    /** Квадрат к камере с ячейкой атласа 4×4. */
+    private static void sprite(VertexConsumer c, PoseStack.Pose pose, Vec3 camera, Vec3 centre, double size, int cell, float alpha) {
+        Vec3 forward = camera.subtract(centre);
+        if (forward.lengthSqr() < 1.0E-6D) {
+            return;
+        }
+        forward = forward.normalize();
+        Vec3 reference = Math.abs(forward.y) > 0.95D ? new Vec3(1.0D, 0.0D, 0.0D) : new Vec3(0.0D, 1.0D, 0.0D);
+        Vec3 right = forward.cross(reference).normalize().scale(size);
+        Vec3 up = right.normalize().cross(forward).normalize().scale(size);
+        float u0 = (cell % 4) / 4.0F, u1 = u0 + 0.25F;
+        float v0 = (cell / 4) / 4.0F, v1 = v0 + 0.25F;
+        Vec3 n = new Vec3(0.0D, 1.0D, 0.0D);
+        VfxDraw.vertex(c, pose, centre.subtract(right).subtract(up), n, u0, v1, alpha, 1.0F, 1.0F, 1.0F);
+        VfxDraw.vertex(c, pose, centre.add(right).subtract(up), n, u1, v1, alpha, 1.0F, 1.0F, 1.0F);
+        VfxDraw.vertex(c, pose, centre.add(right).add(up), n, u1, v0, alpha, 1.0F, 1.0F, 1.0F);
+        VfxDraw.vertex(c, pose, centre.subtract(right).add(up), n, u0, v0, alpha, 1.0F, 1.0F, 1.0F);
+    }
+
     private static void flat(VertexConsumer c, PoseStack.Pose pose, Vec3 a, Vec3 z, double width, float alpha, VfxColour col) {
         Vec3 d = z.subtract(a);
         Vec3 s = new Vec3(-d.z, 0.0D, d.x);
