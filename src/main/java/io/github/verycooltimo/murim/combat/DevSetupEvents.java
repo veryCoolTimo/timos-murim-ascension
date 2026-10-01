@@ -189,6 +189,11 @@ public final class DevSetupEvents {
                 io.github.verycooltimo.murim.profile.DantianProfile.INITIAL
                         .withTags("clear", "debug")
                         .withAxes(60.0D, 0.8D, 0.8D);
+        // MURIM_CAPTURE_PLAYER_RANK — ранг снимающего: от него зависят давление и чтение ранга.
+        String playerRank = System.getenv("MURIM_CAPTURE_PLAYER_RANK");
+        if (playerRank != null && !playerRank.isBlank()) {
+            awakened = awakened.withRank(Integer.parseInt(playerRank.trim()));
+        }
         event.getEntity().setData(io.github.verycooltimo.murim.registry.ModAttachments.PROFILE,
                 awakened.withPool(500.0D).withCirculating(awakened.maxCirculating()));
         if (event.getEntity() instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
