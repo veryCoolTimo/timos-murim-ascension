@@ -421,14 +421,34 @@ public final class MeditationVfxRenderer {
         if (pelvis == null || chest == null) {
             return;
         }
-        // Таз — на оси тела, а не на передней поверхности живота, где лежит кость даньтяня.
-        Vec3 hip = new Vec3(chest.x, pelvis.y, chest.z);
+        // Крестец — на оси тела и НИЖЕ пупка, у сиденья: кость даньтяня лежит на животе, и
+        // ноги, выросшие из неё, шли палками от пупка к коленям через скрещённые ноги
+        // (замечание автора 01.10: «всё, что ниже рёбер, — бред»).
+        Vec3 hip = new Vec3(chest.x, pelvis.y - 0.2D, chest.z);
+        Vec3 side = s.facing().cross(new Vec3(0.0D, 1.0D, 0.0D));
+        side = side.lengthSqr() > 1.0E-6D ? side.normalize() : new Vec3(1.0D, 0.0D, 0.0D);
+        // Тазобедренные суставы по бокам крестца; каждое колено берёт ближайший сустав,
+        // а не общий центр, — так бедро идёт от своего бока.
+        Vec3 hipA = hip.add(side.scale(0.13D)).add(0.0D, 0.03D, 0.0D);
+        Vec3 hipB = hip.add(side.scale(-0.13D)).add(0.0D, 0.03D, 0.0D);
+        Vec3 rHip = rk == null || rk.distanceToSqr(hipA) <= rk.distanceToSqr(hipB) ? hipA : hipB;
+        Vec3 lHip = rHip == hipA ? hipB : hipA;
         // Позвоночник кончается шеей: кость головы стоит в центре головы, и линия до неё
         // шла прямо через лицо (кадры стенда 01.10).
         Vec3 neck = head != null ? chest.lerp(head, 0.12D) : chest.add(0.0D, 0.12D, 0.0D);
         List<Vec3[]> segments = new ArrayList<>();
         segments.add(new Vec3[] {hip, neck});
-        for (Vec3[] limb : new Vec3[][] {{chest, rs, rh}, {chest, ls, lh}, {hip, rk, rf}, {hip, lk, lf}}) {
+        // Таз: крестец к суставам и гребни подвздошных костей — дуга вверх и в стороны.
+        segments.add(new Vec3[] {hip, hipA});
+        segments.add(new Vec3[] {hip, hipB});
+        for (Vec3 joint : new Vec3[] {hipA, hipB}) {
+            Vec3 out = joint.subtract(hip).normalize();
+            Vec3 crestMid = joint.add(out.scale(0.05D)).add(0.0D, 0.09D, 0.0D);
+            Vec3 crestTop = hip.add(out.scale(0.08D)).add(0.0D, 0.16D, 0.0D);
+            segments.add(new Vec3[] {joint, crestMid});
+            segments.add(new Vec3[] {crestMid, crestTop});
+        }
+        for (Vec3[] limb : new Vec3[][] {{chest, rs, rh}, {chest, ls, lh}, {rHip, rk, rf}, {lHip, lk, lf}}) {
             for (int i = 0; i + 1 < limb.length; i++) {
                 if (limb[i] != null && limb[i + 1] != null) {
                     segments.add(new Vec3[] {limb[i], limb[i + 1]});
@@ -437,9 +457,7 @@ public final class MeditationVfxRenderer {
         }
         // Рёбра: четыре пары ДУГ от грудины вбок и назад — дуга читается как ребро,
         // прямой отрезок — как прожилка (второе мнение по кадрам 01.10).
-        Vec3 side = s.facing().cross(new Vec3(0.0D, 1.0D, 0.0D));
-        if (side.lengthSqr() > 1.0E-6D) {
-            side = side.normalize();
+        {
             for (int i = 0; i < 4; i++) {
                 Vec3 sternum = chest.add(0.0D, -0.04D - 0.065D * i, 0.0D).add(s.facing().scale(0.06D));
                 double reach = 0.19D - 0.012D * i;
@@ -474,7 +492,7 @@ public final class MeditationVfxRenderer {
                               BONE_CORE.red(), BONE_CORE.green(), BONE_CORE.blue());
         }
         // Суставы и череп — светлые узлы.
-        for (Vec3 joint : new Vec3[] {hip, chest, rs, ls, rk, lk}) {
+        for (Vec3 joint : new Vec3[] {hipA, hipB, chest, rs, ls, rk, lk}) {
             if (joint != null) {
                 VfxDraw.billboard(bone, s.pose(), joint, s.camera(), 0.05D, 0.8F * lit,
                                   BONE_CORE.red(), BONE_CORE.green(), BONE_CORE.blue());
