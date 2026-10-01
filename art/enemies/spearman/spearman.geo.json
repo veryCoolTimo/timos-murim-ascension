@@ -1,0 +1,413 @@
+{
+  "format_version": "1.12.0",
+  "minecraft:geometry": [
+    {
+      "description": {
+        "identifier": "geometry.spearman",
+        "texture_width": 128,
+        "texture_height": 64,
+        "visible_bounds_width": 3,
+        "visible_bounds_height": 3.5,
+        "visible_bounds_offset": [
+          0,
+          1.25,
+          0
+        ]
+      },
+      "bones": [
+        {
+          "name": "root",
+          "pivot": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "waist",
+          "pivot": [
+            0,
+            12,
+            0
+          ],
+          "parent": "root"
+        },
+        {
+          "name": "torso",
+          "pivot": [
+            0,
+            12,
+            0
+          ],
+          "parent": "waist",
+          "cubes": [
+            {
+              "origin": [
+                -4,
+                12,
+                -2
+              ],
+              "size": [
+                8,
+                12,
+                4
+              ],
+              "uv": [
+                16,
+                16
+              ]
+            },
+            {
+              "origin": [
+                -4,
+                12,
+                -2
+              ],
+              "size": [
+                8,
+                12,
+                4
+              ],
+              "uv": [
+                16,
+                32
+              ],
+              "inflate": 0.3
+            },
+            {
+              "origin": [
+                -4,
+                15,
+                -2
+              ],
+              "size": [
+                8,
+                8,
+                4
+              ],
+              "uv": [
+                88,
+                48
+              ],
+              "inflate": 0.55
+            }
+          ]
+        },
+        {
+          "name": "head",
+          "pivot": [
+            0,
+            24,
+            0
+          ],
+          "parent": "torso",
+          "cubes": [
+            {
+              "origin": [
+                -4,
+                24,
+                -4
+              ],
+              "size": [
+                8,
+                8,
+                8
+              ],
+              "uv": [
+                0,
+                0
+              ]
+            },
+            {
+              "origin": [
+                -6,
+                32,
+                -6
+              ],
+              "size": [
+                12,
+                0,
+                12
+              ],
+              "uv": [
+                64,
+                32
+              ]
+            },
+            {
+              "origin": [
+                -3,
+                32,
+                -3
+              ],
+              "size": [
+                6,
+                2,
+                6
+              ],
+              "uv": [
+                64,
+                48
+              ]
+            }
+          ]
+        },
+        {
+          "name": "arm_r",
+          "pivot": [
+            -5,
+            22,
+            0
+          ],
+          "parent": "torso",
+          "cubes": [
+            {
+              "origin": [
+                -8,
+                12,
+                -2
+              ],
+              "size": [
+                4,
+                12,
+                4
+              ],
+              "uv": [
+                40,
+                16
+              ]
+            },
+            {
+              "origin": [
+                -8,
+                12,
+                -2
+              ],
+              "size": [
+                4,
+                12,
+                4
+              ],
+              "uv": [
+                40,
+                32
+              ],
+              "inflate": 0.25
+            }
+          ]
+        },
+        {
+          "name": "arm_l",
+          "pivot": [
+            5,
+            22,
+            0
+          ],
+          "parent": "torso",
+          "cubes": [
+            {
+              "origin": [
+                4,
+                12,
+                -2
+              ],
+              "size": [
+                4,
+                12,
+                4
+              ],
+              "uv": [
+                32,
+                48
+              ]
+            },
+            {
+              "origin": [
+                4,
+                12,
+                -2
+              ],
+              "size": [
+                4,
+                12,
+                4
+              ],
+              "uv": [
+                48,
+                48
+              ],
+              "inflate": 0.25
+            }
+          ]
+        },
+        {
+          "name": "leg_r",
+          "pivot": [
+            -1.9,
+            12,
+            0
+          ],
+          "parent": "waist",
+          "cubes": [
+            {
+              "origin": [
+                -3.9,
+                0,
+                -2
+              ],
+              "size": [
+                4,
+                12,
+                4
+              ],
+              "uv": [
+                0,
+                16
+              ]
+            }
+          ]
+        },
+        {
+          "name": "leg_l",
+          "pivot": [
+            1.9,
+            12,
+            0
+          ],
+          "parent": "waist",
+          "cubes": [
+            {
+              "origin": [
+                -0.1,
+                0,
+                -2
+              ],
+              "size": [
+                4,
+                12,
+                4
+              ],
+              "uv": [
+                16,
+                48
+              ]
+            }
+          ]
+        },
+        {
+          "name": "skirt_front",
+          "pivot": [
+            0,
+            12,
+            -2.4
+          ],
+          "parent": "waist",
+          "cubes": [
+            {
+              "origin": [
+                -4,
+                5,
+                -2.4
+              ],
+              "size": [
+                8,
+                7,
+                0
+              ],
+              "uv": [
+                0,
+                32
+              ]
+            }
+          ]
+        },
+        {
+          "name": "skirt_back",
+          "pivot": [
+            0,
+            12,
+            2.4
+          ],
+          "parent": "waist",
+          "cubes": [
+            {
+              "origin": [
+                -4,
+                5,
+                2.4
+              ],
+              "size": [
+                8,
+                7,
+                0
+              ],
+              "uv": [
+                0,
+                48
+              ]
+            }
+          ]
+        },
+        {
+          "name": "weapon",
+          "pivot": [
+            -6,
+            12,
+            0
+          ],
+          "parent": "arm_r",
+          "cubes": [
+            {
+              "origin": [
+                -6.5,
+                -14,
+                -0.5
+              ],
+              "size": [
+                1,
+                28,
+                1
+              ],
+              "uv": [
+                112,
+                0
+              ]
+            },
+            {
+              "origin": [
+                -6.5,
+                -19,
+                -1
+              ],
+              "size": [
+                1,
+                5,
+                2
+              ],
+              "uv": [
+                120,
+                0
+              ]
+            },
+            {
+              "origin": [
+                -7,
+                -15,
+                -1
+              ],
+              "size": [
+                2,
+                2,
+                2
+              ],
+              "uv": [
+                120,
+                8
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
