@@ -34,8 +34,10 @@ public final class TechniqueWheel {
 
     private static final ResourceLocation LAYER = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "technique_wheel");
 
+    // Размеры и рисунок — по референсу docs/design/reference/ui/technique-wheel-ref.png:
+    // крупные иконки на весь сектор, тонкая светлая обводка секторов, центр — отдельный круг.
     private static final float INNER = 30.0F;
-    private static final float OUTER = 64.0F;
+    private static final float OUTER = 78.0F;
     /** Пикселей курсора на градус поворота мыши. */
     private static final float SENSITIVITY = 2.2F;
     /** Мёртвая зона в центре: без неё дрожь руки перебирала бы секторы. */
@@ -153,29 +155,36 @@ public final class TechniqueWheel {
             int colour = hot ? 0x5FA8E0 : current ? 0x2A4F86 : 0x16223A;
             int a = (int) (appear * (hot ? 0xD0 : 0xA0));
             GuiShapes.arc(graphics, cx, cy, INNER, OUTER, from, to, (a << 24) | colour);
+            // Тонкая светлая обводка сектора: внешняя и внутренняя дуги.
+            int edge = ((int) (appear * (hot ? 0xE0 : 0x55)) << 24) | 0xBFD8F0;
+            GuiShapes.arc(graphics, cx, cy, OUTER - 0.8F, OUTER, from, to, edge);
+            GuiShapes.arc(graphics, cx, cy, INNER, INNER + 0.8F, from, to, edge);
             if (hot) {
                 GuiShapes.arc(graphics, cx, cy, OUTER, OUTER + 2.5F, from, to, ((int) (appear * 255) << 24) | 0xBFF0FF);
             }
         }
+        // Центр — отдельный тёмный круг с ободком.
+        GuiShapes.ring(graphics, cx, cy, 0.0F, INNER - 3.0F, ((int) (appear * 0xC0) << 24) | 0x070B16);
+        GuiShapes.ring(graphics, cx, cy, INNER - 3.8F, INNER - 3.0F, ((int) (appear * 0x70) << 24) | 0xBFD8F0);
         graphics.flush();
 
         // Иконки в серединах секторов.
         for (int i = 0; i < count; i++) {
             double mid = -Math.PI / 2.0D + i * span;
             float r = (INNER + OUTER) / 2.0F;
-            int ix = (int) (cx + Math.cos(mid) * r) - 9;
-            int iy = (int) (cy + Math.sin(mid) * r) - 9;
+            int ix = (int) (cx + Math.cos(mid) * r) - 14;
+            int iy = (int) (cy + Math.sin(mid) * r) - 14;
             Optional<ResourceLocation> technique = i < slots.size() ? slots.get(i) : Optional.empty();
             if (technique.isPresent()) {
                 graphics.setColor(1.0F, 1.0F, 1.0F, appear * (i == selected ? 1.0F : 0.75F));
                 com.mojang.blaze3d.systems.RenderSystem.enableBlend();
-                int size = i == selected ? 22 : 18;
-                int off = (size - 18) / 2;
+                int size = i == selected ? 32 : 28;
+                int off = (size - 28) / 2;
                 graphics.blit(TechniqueIcons.of(technique.get()), ix - off, iy - off, size, size,
                         0.0F, 0.0F, 64, 64, 64, 64);
                 graphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
             } else {
-                GuiShapes.ring(graphics, ix + 9, iy + 9, 3.0F, 4.0F, ((int) (appear * 0x60) << 24) | 0xC8DCEC);
+                GuiShapes.ring(graphics, ix + 14, iy + 14, 0.0F, 2.0F, ((int) (appear * 0x80) << 24) | 0xC8DCEC);
             }
         }
 
