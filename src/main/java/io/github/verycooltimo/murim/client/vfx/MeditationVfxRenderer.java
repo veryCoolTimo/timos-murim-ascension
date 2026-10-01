@@ -526,15 +526,15 @@ public final class MeditationVfxRenderer {
         AbstractClientPlayer p = s.player();
         Vec3 head = BoneAnchorLayer.position(p, BoneAnchorLayer.Bone.HEAD);
         return new Vec3[] {
-            skin(s, BoneAnchorLayer.position(p, BoneAnchorLayer.Bone.CHEST), 0.17D),
-            skin(s, s.axis(), 0.17D),
-            skin(s, BoneAnchorLayer.position(p, BoneAnchorLayer.Bone.RIGHT_SHOULDER), 0.15D),
-            skin(s, BoneAnchorLayer.position(p, BoneAnchorLayer.Bone.LEFT_SHOULDER), 0.15D),
-            skin(s, BoneAnchorLayer.position(p, BoneAnchorLayer.Bone.RIGHT_HAND), 0.15D),
-            skin(s, BoneAnchorLayer.position(p, BoneAnchorLayer.Bone.LEFT_HAND), 0.15D),
-            head == null ? null : head.add(s.facing().scale(0.27D)).add(0.0D, -0.05D, 0.0D),
-            skin(s, BoneAnchorLayer.position(p, BoneAnchorLayer.Bone.RIGHT_KNEE), 0.15D),
-            skin(s, BoneAnchorLayer.position(p, BoneAnchorLayer.Bone.LEFT_KNEE), 0.15D)};
+            skin(s, BoneAnchorLayer.position(p, BoneAnchorLayer.Bone.CHEST), 0.2D),
+            skin(s, s.axis(), 0.2D),
+            skin(s, BoneAnchorLayer.position(p, BoneAnchorLayer.Bone.RIGHT_SHOULDER), 0.19D),
+            skin(s, BoneAnchorLayer.position(p, BoneAnchorLayer.Bone.LEFT_SHOULDER), 0.19D),
+            skin(s, BoneAnchorLayer.position(p, BoneAnchorLayer.Bone.RIGHT_HAND), 0.19D),
+            skin(s, BoneAnchorLayer.position(p, BoneAnchorLayer.Bone.LEFT_HAND), 0.19D),
+            head == null ? null : head.add(s.facing().scale(0.29D)).add(0.0D, -0.05D, 0.0D),
+            skin(s, BoneAnchorLayer.position(p, BoneAnchorLayer.Bone.RIGHT_KNEE), 0.19D),
+            skin(s, BoneAnchorLayer.position(p, BoneAnchorLayer.Bone.LEFT_KNEE), 0.19D)};
     }
 
     private static double ground(Scene s) {

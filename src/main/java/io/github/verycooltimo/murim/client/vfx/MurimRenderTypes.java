@@ -280,11 +280,14 @@ public final class MurimRenderTypes {
     }
 
     public static RenderType impuritySkin() {
-        return IMPURITY_SKIN;
+        return RenderType.entityTranslucent(MOTE_TEXTURE);
     }
 
     public static RenderType impurity() {
-        return IMPURITY;
+        // Ванильный полупрозрачный тип сущностей: свой тип на шейдере «глаз» с обычным
+        // смешиванием не давал тёмного на кадрах Mac 01.10 (пятна вызывались — лог, — но не
+        // рисовались). API: reference/minecraft-src/.../RenderType.java#entityTranslucent
+        return RenderType.entityTranslucent(MOTE_TEXTURE);
     }
 
     public static RenderType impactCore() {
