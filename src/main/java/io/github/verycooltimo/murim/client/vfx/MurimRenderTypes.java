@@ -95,6 +95,24 @@ public final class MurimRenderTypes {
     private static final RenderType IMPURITY = flatTranslucent("impurity", MOTE_TEXTURE);
 
     /**
+     * Тёмное поверх тела без проверки глубины: капли пота и трещины лежат на коже, а точки
+     * костей, от которых они считаются, — внутри модели, и тело закрывало их целиком
+     * (кадры Mac 01.10: на настоящем GPU капель не было).
+     */
+    private static final RenderType IMPURITY_SKIN = RenderType.create(MurimMod.MODID + ":impurity_skin",
+            DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.QUADS, 4096,
+            RenderType.CompositeState.builder()
+                    .setShaderState(RenderStateShard.RENDERTYPE_EYES_SHADER)
+                    .setTextureState(new RenderStateShard.TextureStateShard(MOTE_TEXTURE, true, false))
+                    .setTransparencyState(RenderStateShard.TRANSLUCENT_TRANSPARENCY)
+                    .setCullState(RenderStateShard.NO_CULL)
+                    .setLightmapState(RenderStateShard.NO_LIGHTMAP)
+                    .setOverlayState(RenderStateShard.NO_OVERLAY)
+                    .setDepthTestState(RenderStateShard.NO_DEPTH_TEST)
+                    .setWriteMaskState(RenderStateShard.COLOR_WRITE)
+                    .createCompositeState(false));
+
+    /**
      * Свечение ПОВЕРХ тела, без проверки глубины.
      *
      * <p>Меридианы идут внутри тела, и с обычной проверкой глубины модель игрока их
@@ -259,6 +277,10 @@ public final class MurimRenderTypes {
 
     public static RenderType bladeCrescent() {
         return BLADE_CRESCENT;
+    }
+
+    public static RenderType impuritySkin() {
+        return IMPURITY_SKIN;
     }
 
     public static RenderType impurity() {

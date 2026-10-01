@@ -422,6 +422,9 @@ public final class MeditationVfxRenderer {
             case 4 -> rebirthScene(s, age);
             default -> purificationScene(s, age);
         }
+        if (target == 4) {
+            return;
+        }
         float total = io.github.verycooltimo.murim.cultivation.Realm.BREAKTHROUGH_TICKS;
         float gather = Mth.clamp(age / 40.0F, 0.0F, 1.0F);
         float squeeze = Mth.clamp((age - (total - 40.0F)) / 40.0F, 0.0F, 1.0F);
@@ -458,7 +461,7 @@ public final class MeditationVfxRenderer {
         float stains = Mth.clamp((age - 80.0F) / 140.0F, 0.0F, 1.0F);
         if (stains > 0.0F) {
             VertexConsumer dark = s.buffers().getBuffer(MurimRenderTypes.impurity());
-            stainSet(dark, s.pose(), new Vec3(s.axis().x, ground(s) - 0.005D, s.axis().z), 0.8F, stains);
+            stainSet(dark, s.pose(), new Vec3(s.axis().x, ground(s) + 0.01D, s.axis().z), 0.85F, stains);
             s.buffers().endBatch(MurimRenderTypes.impurity());
         }
     }
@@ -490,7 +493,8 @@ public final class MeditationVfxRenderer {
     private static void drawStains(MultiBufferSource.BufferSource buffers, PoseStack.Pose pose, Vec3 origin, float age) {
         float fade = Mth.clamp((ClientMeditationState.STAIN_TICKS - age) / 120.0F, 0.0F, 1.0F);
         VertexConsumer dark = buffers.getBuffer(MurimRenderTypes.impurity());
-        stainSet(dark, pose, origin.add(0.0D, 0.015D, 0.0D), 0.8F * fade, 1.0F);
+        stainSet(dark, pose, origin.add(0.0D, 0.03D, 0.0D), 0.85F * fade, 1.0F);
+        if (((int) age) % 100 == 0) MurimMod.LOGGER.info("DEBUG пятна: возраст {} центр {}", age, origin);
         buffers.endBatch(MurimRenderTypes.impurity());
     }
 
@@ -546,7 +550,7 @@ public final class MeditationVfxRenderer {
         Vec3[] anchors = skinAnchors(s);
         Vec3 side = s.facing().cross(new Vec3(0.0D, 1.0D, 0.0D)).normalize();
         double ground = ground(s);
-        VertexConsumer dark = s.buffers().getBuffer(MurimRenderTypes.impurity());
+        VertexConsumer dark = s.buffers().getBuffer(MurimRenderTypes.impuritySkin());
         for (int i = 0; i < 70; i++) {
             java.util.Random r = new java.util.Random(SEED * 17L + i);
             Vec3 base = anchors[r.nextInt(anchors.length)];
@@ -578,12 +582,9 @@ public final class MeditationVfxRenderer {
                 VfxDraw.segment(dark, s.pose(), at0, at, s.camera(), size * 0.35D * grow, 0.5F * strength,
                                 0.12F, 0.07F, 0.08F);
             }
-            if (t > 0.85F) {
-                Vec3 spot = new Vec3(at0.x + s.facing().x * 0.25D, ground, at0.z + s.facing().z * 0.25D);
-                flatSpot(dark, s.pose(), spot, size * 2.2D * Math.min(1.0D, (t - 0.85D) * 5.0D), 0.75F);
-            }
+
         }
-        s.buffers().endBatch(MurimRenderTypes.impurity());
+        s.buffers().endBatch(MurimRenderTypes.impuritySkin());
     }
 
     /** Пар: серые клубы поднимаются от плеч и головы и тают. */
@@ -838,24 +839,260 @@ public final class MeditationVfxRenderer {
     private static final VfxColour CRACK_LIGHT = new VfxColour(0.82F, 0.94F, 1.0F);
     private static final VfxColour CRACK_BLUE = new VfxColour(0.35F, 0.7F, 1.0F);
 
+    private static final VfxColour SEAM_CORE = new VfxColour(0.93F, 1.0F, 1.0F);
+    private static final VfxColour SEAM_EDGE = new VfxColour(0.4F, 0.87F, 1.0F);
+    private static final VfxColour BONE_GOLD = new VfxColour(1.0F, 0.72F, 0.29F);
+    private static final VfxColour BONE_PALE = new VfxColour(1.0F, 0.94F, 0.74F);
+
+    /** Часть тела для трещин: центр передней грани, полуразмеры по горизонтали и вертикали. */
+    private record Part(Vec3 centre, double halfW, double halfH, int cracks, double minLen, double maxLen) {
+    }
+
+    private static List<Part> crackParts(Scene s) {
+        AbstractClientPlayer p = s.player();
+        List<Part> parts = new ArrayList<>();
+        Vec3 head = BoneAnchorLayer.position(p, BoneAnchorLayer.Bone.HEAD);
+        Vec3 chest = BoneAnchorLayer.position(p, BoneAnchorLayer.Bone.CHEST);
+        if (head != null) parts.add(new Part(head.add(s.facing().scale(0.255D)), 0.22D, 0.22D, 5, 0.18D, 0.38D));
+        if (chest != null) parts.add(new Part(chest.add(s.facing().scale(0.13D)).add(0.0D, -0.12D, 0.0D), 0.22D, 0.26D, 6, 0.25D, 0.5D));
+        for (BoneAnchorLayer.Bone b : new BoneAnchorLayer.Bone[] {BoneAnchorLayer.Bone.RIGHT_SHOULDER, BoneAnchorLayer.Bone.LEFT_SHOULDER}) {
+            Vec3 sh = BoneAnchorLayer.position(p, b);
+            Vec3 hand = BoneAnchorLayer.position(p, b == BoneAnchorLayer.Bone.RIGHT_SHOULDER
+                    ? BoneAnchorLayer.Bone.RIGHT_HAND : BoneAnchorLayer.Bone.LEFT_HAND);
+            if (sh != null && hand != null) parts.add(new Part(sh.lerp(hand, 0.5D).add(s.facing().scale(0.13D)), 0.1D, 0.3D, 3, 0.18D, 0.36D));
+        }
+        for (BoneAnchorLayer.Bone b : new BoneAnchorLayer.Bone[] {BoneAnchorLayer.Bone.RIGHT_KNEE, BoneAnchorLayer.Bone.LEFT_KNEE}) {
+            Vec3 k = BoneAnchorLayer.position(p, b);
+            if (k != null) parts.add(new Part(k.add(s.facing().scale(0.13D)), 0.2D, 0.1D, 2, 0.18D, 0.32D));
+        }
+        return parts;
+    }
+
+    /** Сеть трещин: постоянная (от сида), растёт от начала к концу каждой трещины. */
+    private record Crack(List<Vec3> points, float start, int part) {
+    }
+
+    private static List<Crack> crackNet(Scene s) {
+        Vec3 side = s.facing().cross(new Vec3(0.0D, 1.0D, 0.0D)).normalize();
+        Vec3 up = new Vec3(0.0D, 1.0D, 0.0D);
+        List<Crack> net = new ArrayList<>();
+        List<Part> parts = crackParts(s);
+        int n = 0;
+        for (int pi = 0; pi < parts.size(); pi++) {
+            Part part = parts.get(pi);
+            for (int c = 0; c < part.cracks(); c++, n++) {
+                java.util.Random r = new java.util.Random(SEED * 131L + n);
+                Vec3 at = part.centre().add(side.scale((r.nextDouble() - 0.5D) * 2.0D * part.halfW() * 0.8D))
+                        .add(up.scale((r.nextDouble() - 0.5D) * 2.0D * part.halfH() * 0.8D));
+                double len = part.minLen() + r.nextDouble() * (part.maxLen() - part.minLen());
+                double angle = r.nextDouble() * Math.PI;
+                List<Vec3> pts = new ArrayList<>();
+                pts.add(at);
+                int steps = 5;
+                for (int k = 0; k < steps; k++) {
+                    angle += (r.nextDouble() - 0.5D) * 1.1D;
+                    Vec3 step = side.scale(Math.cos(angle)).add(up.scale(Math.sin(angle))).scale(len / steps);
+                    Vec3 next = at.add(step);
+                    // Не выходить за грань части тела.
+                    Vec3 rel = next.subtract(part.centre());
+                    double sx = Mth.clamp(rel.dot(side), -part.halfW(), part.halfW());
+                    double sy = Mth.clamp(rel.y, -part.halfH(), part.halfH());
+                    next = part.centre().add(side.scale(sx)).add(0.0D, sy, 0.0D);
+                    pts.add(next);
+                    at = next;
+                }
+                // Голова и грудь трескаются первыми, руки и ноги — позже.
+                float start = 28.0F + (pi * 11.0F) + r.nextFloat() * 30.0F;
+                net.add(new Crack(pts, Math.min(start, 104.0F), pi));
+            }
+        }
+        return net;
+    }
+
     /**
-     * Перестройка тела по главному референсу автора — Мок Кён Ун (Myst гл. 107–108, папка
-     * body-reconstruction-mok): тёмная сеть трещин с бело-голубым светом в швах, радужные
-     * потоки ци поднимаются от тела, холодная дуга у пола; кульминация — вертикальный выброс,
-     * лицо светится сквозь трещины, пластины оболочки отлетают; в конце — целая кожа и редкие
-     * хлопья. Скелет — короткий проблеск в начале (кости «ломаются и срастаются»), чёрная кровь у рта.
+     * Перестройка тела — по главному референсу автора (Мок Кён Ун, Myst гл. 107–108) и разбору
+     * codex по кадрам 01.10: не частицы вокруг тела, а разрушение старой оболочки. Контрольные
+     * состояния: тик 40 — свет внутри (золотой скелет), 90 — тело расколото сетью трещин,
+     * 140 — пластины коры отходят и меняют силуэт, 190 — швы закрываются, 230 — цельное тело.
      */
     private static void rebirthScene(Scene s, float age) {
-        drawMist(s, age, Mth.clamp(age / 40.0F, 0.0F, 1.0F), CRACK_BLUE);
-        float bones = Mth.clamp(age / 15.0F, 0.0F, 1.0F) * (1.0F - Mth.clamp((age - 35.0F) / 25.0F, 0.0F, 1.0F));
-        drawStreams(s, age, 0.6F * bones + 0.3F * Mth.clamp((age - 60.0F) / 40.0F, 0.0F, 1.0F), CRACK_BLUE, CRACK_LIGHT);
+        drawMist(s, age, Mth.clamp(age / 40.0F, 0.0F, 1.0F), SEAM_EDGE);
+        float bones = Mth.clamp(age / 24.0F, 0.0F, 1.0F) * (1.0F - Mth.clamp((age - 44.0F) / 32.0F, 0.0F, 1.0F));
+        drawStreams(s, age, 0.4F * bones, BONE_GOLD, BONE_PALE);
         drawSkeleton(s, age, bones);
-        float cracks = Mth.clamp((age - 20.0F) / 90.0F, 0.0F, 1.0F) * (1.0F - Mth.clamp((age - 205.0F) / 20.0F, 0.0F, 1.0F));
-        float climax = (float) Math.exp(-Math.pow((age - 175.0D) / 22.0D, 2.0D));
-        drawCrackNet(s, age, cracks, climax);
-        drawRainbow(s, age, Mth.clamp((age - 60.0F) / 40.0F, 0.0F, 1.0F) * (1.0F - Mth.clamp((age - 215.0F) / 25.0F, 0.0F, 1.0F)), climax);
-        drawShell(s, age);
-        drawBlood(s, age, Mth.clamp((age - 90.0F) / 30.0F, 0.0F, 1.0F) * (1.0F - Mth.clamp((age - 215.0F) / 20.0F, 0.0F, 1.0F)));
+        List<Crack> net = crackNet(s);
+        drawSeams(s, age, net);
+        drawPlates(s, age, net);
+        drawZonePulses(s, age);
+        drawSpirals(s, age);
+        // Один короткий удар волной по полу на пике, без постоянного кольца.
+        float ring = Mth.clamp((age - 142.0F) / 10.0F, 0.0F, 1.0F);
+        if (ring > 0.0F && ring < 1.0F) {
+            drawGroundRing(s, new Vec3(s.axis().x, ground(s) + 0.03D, s.axis().z), 0.35D + 0.8D * ring, 0.025D,
+                           0.7F * (1.0F - ring), new VfxColour(0.7F, 0.93F, 1.0F));
+        }
+    }
+
+    /** Швы трещин: ядро #EEFFFF, кайма #65DFFF; растут 10–18 тиков, раскрываются к 160, закрываются к 204. */
+    private static void drawSeams(Scene s, float age, List<Crack> net) {
+        float open = Mth.clamp((age - 104.0F) / 56.0F, 0.0F, 1.0F);
+        float close = Mth.clamp((age - 180.0F) / 24.0F, 0.0F, 1.0F);
+        if (age < 28.0F || close >= 1.0F) {
+            return;
+        }
+        VertexConsumer c = s.buffers().getBuffer(MurimRenderTypes.impactCore());
+        for (Crack cr : net) {
+            float grow = Mth.clamp((age - cr.start()) / 14.0F, 0.0F, 1.0F);
+            if (grow <= 0.0F) {
+                continue;
+            }
+            List<Vec3> pts = cr.points();
+            float total = (pts.size() - 1) * grow;
+            double core = Mth.lerp(open, 0.004D, 0.016D) * (1.0D - close);
+            float alpha = (0.75F + 0.25F * open) * (1.0F - close);
+            for (int k = 0; k + 1 < pts.size() && k < total; k++) {
+                Vec3 a = pts.get(k);
+                Vec3 b = k + 1 <= total ? pts.get(k + 1) : a.lerp(pts.get(k + 1), total - k);
+                VfxDraw.segment(c, s.pose(), a, b, s.camera(), core * 3.5D, 0.35F * alpha, SEAM_EDGE.red(), SEAM_EDGE.green(), SEAM_EDGE.blue());
+                VfxDraw.segment(c, s.pose(), a, b, s.camera(), core, alpha, SEAM_CORE.red(), SEAM_CORE.green(), SEAM_CORE.blue());
+            }
+        }
+        s.buffers().endBatch(MurimRenderTypes.impactCore());
+    }
+
+    /**
+     * Пластины коры: отходят от поверхности у трещин, приподнимаются со светом под краем
+     * и отлетают наружу, вращаясь. Тёмная пластина — неаддитивный слой; светящийся край и
+     * просвет под ней — аддитивные, их видно и на программном стенде.
+     */
+    private static void drawPlates(Scene s, float age, List<Crack> net) {
+        Vec3 side = s.facing().cross(new Vec3(0.0D, 1.0D, 0.0D)).normalize();
+        Vec3 up = new Vec3(0.0D, 1.0D, 0.0D);
+        List<Vec3[]> dark = new ArrayList<>();
+        List<Vec3[]> glowEdges = new ArrayList<>();
+        List<double[]> glowSpots = new ArrayList<>();
+        List<Vec3> spotPos = new ArrayList<>();
+        int idx = 0;
+        for (Crack cr : net) {
+            for (int k = 1; k < cr.points().size(); k += 2, idx++) {
+                java.util.Random r = new java.util.Random(SEED * 151L + idx);
+                float t0 = 80.0F + cr.part() * 8.0F + r.nextFloat() * 40.0F;
+                float lift = Mth.clamp((age - t0) / 10.0F, 0.0F, 1.0F);
+                float fly = Mth.clamp((age - t0 - 10.0F) / 26.0F, 0.0F, 1.0F);
+                if (lift <= 0.0F || fly >= 1.0F) {
+                    continue;
+                }
+                double size = cr.part() == 1 ? 0.1D + r.nextDouble() * 0.11D : 0.06D + r.nextDouble() * 0.08D;
+                Vec3 base = cr.points().get(k);
+                Vec3 out = s.facing().add(side.scale((r.nextDouble() - 0.5D) * 1.4D)).add(0.0D, 0.15D + r.nextDouble() * 0.3D, 0.0D).normalize();
+                double dist = 0.035D * lift + (0.25D + r.nextDouble() * 0.6D) * fly * fly;
+                Vec3 centre = base.add(out.scale(dist)).add(0.0D, -0.4D * fly * fly * fly, 0.0D);
+                double rot = Math.toRadians(15.0D * lift + (30.0D + r.nextDouble() * 70.0D) * fly) * (r.nextBoolean() ? 1 : -1);
+                Vec3 ax = side.scale(Math.cos(rot)).add(up.scale(Math.sin(rot))).scale(size);
+                Vec3 ay = up.scale(Math.cos(rot)).subtract(side.scale(Math.sin(rot))).scale(size * 0.8D);
+                Vec3 p0 = centre.subtract(ax).subtract(ay), p1 = centre.add(ax).subtract(ay), p2 = centre.add(ax).add(ay), p3 = centre.subtract(ax).add(ay);
+                dark.add(new Vec3[] {p0, p1, p2, p3});
+                float edge = (1.0F - fly) * (0.5F + 0.5F * lift);
+                glowEdges.add(new Vec3[] {p0, p1});
+                glowEdges.add(new Vec3[] {p1, p2});
+                glowEdges.add(new Vec3[] {p2, p3});
+                glowEdges.add(new Vec3[] {p3, p0});
+                glowSpots.add(new double[] {size * 1.4D, edge});
+                spotPos.add(base.add(s.facing().scale(0.005D)));
+            }
+        }
+        VertexConsumer d = s.buffers().getBuffer(MurimRenderTypes.impurity());
+        Vec3 n = s.facing();
+        for (Vec3[] q : dark) {
+            VfxDraw.vertex(d, s.pose(), q[0], n, 0.0F, 0.0F, 0.95F, 0.36F, 0.28F, 0.24F);
+            VfxDraw.vertex(d, s.pose(), q[1], n, 1.0F, 0.0F, 0.95F, 0.36F, 0.28F, 0.24F);
+            VfxDraw.vertex(d, s.pose(), q[2], n, 1.0F, 1.0F, 0.95F, 0.36F, 0.28F, 0.24F);
+            VfxDraw.vertex(d, s.pose(), q[3], n, 0.0F, 1.0F, 0.95F, 0.36F, 0.28F, 0.24F);
+        }
+        s.buffers().endBatch(MurimRenderTypes.impurity());
+        VertexConsumer g = s.buffers().getBuffer(MurimRenderTypes.impactCore());
+        for (int i = 0; i < glowEdges.size(); i++) {
+            float a = (float) glowSpots.get(i / 4)[1];
+            Vec3[] e = glowEdges.get(i);
+            VfxDraw.segment(g, s.pose(), e[0], e[1], s.camera(), 0.012D, 0.8F * a, 0.88F, 1.0F, 1.0F);
+        }
+        // Просвет под отошедшей пластиной: держится 4–8 тиков после отлёта и гаснет.
+        for (int i = 0; i < spotPos.size(); i++) {
+            double[] gs = glowSpots.get(i);
+            VfxDraw.billboard(g, s.pose(), spotPos.get(i), s.camera(), gs[0], (float) (0.7D * gs[1]),
+                              SEAM_EDGE.red(), SEAM_EDGE.green(), SEAM_EDGE.blue());
+        }
+        s.buffers().endBatch(MurimRenderTypes.impactCore());
+    }
+
+    /** Кульминация по зонам тела: грудь → плечи и голова → руки → ноги, импульсы по 8 тиков. */
+    private static void drawZonePulses(Scene s, float age) {
+        if (age < 112.0F || age > 172.0F) {
+            return;
+        }
+        AbstractClientPlayer p = s.player();
+        BoneAnchorLayer.Bone[] order = {BoneAnchorLayer.Bone.CHEST, BoneAnchorLayer.Bone.RIGHT_SHOULDER, BoneAnchorLayer.Bone.LEFT_SHOULDER,
+            BoneAnchorLayer.Bone.HEAD, BoneAnchorLayer.Bone.RIGHT_HAND, BoneAnchorLayer.Bone.LEFT_HAND,
+            BoneAnchorLayer.Bone.RIGHT_KNEE, BoneAnchorLayer.Bone.LEFT_KNEE};
+        VertexConsumer g = s.buffers().getBuffer(MurimRenderTypes.impactCore());
+        for (int i = 0; i < order.length; i++) {
+            Vec3 at = BoneAnchorLayer.position(p, order[i]);
+            if (at == null) {
+                continue;
+            }
+            at = at.add(s.facing().scale(order[i] == BoneAnchorLayer.Bone.HEAD ? 0.28D : 0.15D));
+            for (int pulse = 0; pulse < 3; pulse++) {
+                float t = (age - (112.0F + i * 3.0F + pulse * 16.0F)) / 8.0F;
+                if (t < 0.0F || t > 1.0F) {
+                    continue;
+                }
+                float k = (float) Math.sin(t * Math.PI);
+                double size = order[i] == BoneAnchorLayer.Bone.HEAD ? 0.12D : 0.14D + 0.1D * k;
+                VfxDraw.billboard(g, s.pose(), at, s.camera(), size, 0.65F * k, 0.38F, 0.85F, 1.0F);
+                VfxDraw.billboard(g, s.pose(), at, s.camera(), size * 0.35D, 0.9F * k, 0.95F, 1.0F, 1.0F);
+            }
+        }
+        s.buffers().endBatch(MurimRenderTypes.impactCore());
+    }
+
+    /** Три основных и два тонких спиральных потока вокруг тела, непрерывные, разной скорости. */
+    private static void drawSpirals(Scene s, float age) {
+        float strength = Mth.clamp((age - 52.0F) / 40.0F, 0.0F, 1.0F) * (1.0F - Mth.clamp((age - 204.0F) / 30.0F, 0.0F, 1.0F));
+        if (strength <= 0.0F) {
+            return;
+        }
+        float peak = 1.0F + 0.6F * (float) Math.exp(-Math.pow((age - 136.0D) / 24.0D, 2.0D));
+        Vec3 head = BoneAnchorLayer.position(s.player(), BoneAnchorLayer.Bone.HEAD);
+        double feet = ground(s);
+        double top = (head == null ? feet + 1.0D : head.y) + 0.75D;
+        VfxColour[] cols = {new VfxColour(0.32F, 0.87F, 1.0F), new VfxColour(0.95F, 0.47F, 0.86F), new VfxColour(1.0F, 0.64F, 0.29F),
+            new VfxColour(0.45F, 0.96F, 0.74F), new VfxColour(0.8F, 0.9F, 1.0F)};
+        double[] radius = {0.75D, 0.62D, 0.85D, 0.5D, 0.7D};
+        double[] period = {62.0D, 74.0D, 56.0D, 80.0D, 68.0D};
+        VertexConsumer c = s.buffers().getBuffer(MurimRenderTypes.impactCore());
+        for (int k = 0; k < 5; k++) {
+            boolean main = k < 3;
+            Vec3 prev = null;
+            int n = 40;
+            for (int i = 0; i <= n; i++) {
+                double u = i / (double) n;
+                double a = (age / period[k]) * Math.PI * 2.0D + k * 2.1D + u * Math.PI * 2.6D;
+                double rad = radius[k] * (1.0D - 0.25D * u);
+                Vec3 at = new Vec3(s.axis().x + Math.cos(a) * rad, feet + 0.15D + (top - feet) * u, s.axis().z + Math.sin(a) * rad);
+                if (prev != null) {
+                    // Перед лицом тоньше и слабее: поток не закрывает голову.
+                    Vec3 toCam = s.camera().subtract(at).normalize();
+                    double front = Math.max(0.0D, toCam.dot(at.subtract(s.axis().x == at.x ? at : new Vec3(s.axis().x, at.y, s.axis().z)).normalize()));
+                    float fade = (float) (Math.sin(u * Math.PI) * (1.0D - 0.5D * front)) * strength;
+                    VfxColour col = cols[k];
+                    VfxDraw.segment(c, s.pose(), prev, at, s.camera(), (main ? 0.08D : 0.04D) * peak, 0.22F * fade, col.red(), col.green(), col.blue());
+                    VfxDraw.segment(c, s.pose(), prev, at, s.camera(), (main ? 0.02D : 0.01D) * peak, 0.75F * fade,
+                                    0.6F + 0.4F * col.red(), 0.6F + 0.4F * col.green(), 0.6F + 0.4F * col.blue());
+                }
+                prev = at;
+            }
+        }
+        s.buffers().endBatch(MurimRenderTypes.impactCore());
     }
 
     /** Точка на передней грани головы: лицо модели — на 0,26 блока от центра головы. */
