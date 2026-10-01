@@ -154,6 +154,22 @@ public final class ClientMeditationState {
         return rankUpTicks > 0 ? RANK_UP_TICKS - rankUpTicks : -1;
     }
 
+    /**
+     * Пятна примесей на полу после очищения (замечание автора 01.10: «нету никаких пятен
+     * после этого»): остаются там, где сидел игрок, полминуты и медленно тают.
+     */
+    public static final int STAIN_TICKS = 600;
+    private static int stainTicks;
+    private static net.minecraft.world.phys.Vec3 stainOrigin;
+
+    public static int stainAge() {
+        return stainTicks > 0 ? STAIN_TICKS - stainTicks : -1;
+    }
+
+    public static net.minecraft.world.phys.Vec3 stainOrigin() {
+        return stainOrigin;
+    }
+
     public static int rankUpRank() {
         return rankUpRank;
     }
@@ -204,6 +220,11 @@ public final class ClientMeditationState {
         if (payload.event() == SyncMeditationPayload.Event.RANK_UP) {
             rankUpTicks = RANK_UP_TICKS;
             rankUpRank = payload.rank();
+            // Пятна — только после очищения (третий ранг): примеси выходят именно там.
+            if (player != null && payload.rank() == 1) {
+                stainOrigin = player.position();
+                stainTicks = STAIN_TICKS;
+            }
             // Выход ауры — главный удар сцены: толчок сильнее, чем у семени.
             CameraShakeHandler.request(0.7F);
         }
@@ -412,6 +433,9 @@ public final class ClientMeditationState {
                 CameraShakeHandler.request(0.25F);
             }
         }
+        if (stainTicks > 0) {
+            stainTicks--;
+        }
         if (rankUpTicks > 0 && --rankUpTicks == 0 && !state.active()) {
             MurimPlayerAnimations.stop(minecraft.player);
         }
@@ -496,6 +520,7 @@ public final class ClientMeditationState {
         seedSceneTicks = 0;
         breakthroughTicks = -1;
         rankUpTicks = 0;
+        stainTicks = 0;
     }
 
     private ClientMeditationState() {

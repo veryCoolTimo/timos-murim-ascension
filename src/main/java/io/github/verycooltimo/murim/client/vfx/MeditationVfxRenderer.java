@@ -78,6 +78,20 @@ public final class MeditationVfxRenderer {
         int sceneAge = ClientMeditationState.seedSceneAge();
         int rankUpAge = ClientMeditationState.rankUpAge();
         ClientMeditationState.Aftermath aftermath = ClientMeditationState.aftermath();
+        int stainAge = ClientMeditationState.stainAge();
+        if (stainAge >= 0 && ClientMeditationState.stainOrigin() != null) {
+            float pt = event.getPartialTick().getGameTimeDeltaPartialTick(false);
+            Vec3 cam = event.getCamera().getPosition();
+            PoseStack ps = event.getPoseStack();
+            ps.pushPose();
+            try {
+                ps.translate(-cam.x, -cam.y, -cam.z);
+                drawStains(Minecraft.getInstance().renderBuffers().bufferSource(), ps.last(),
+                           ClientMeditationState.stainOrigin(), stainAge + pt);
+            } finally {
+                ps.popPose();
+            }
+        }
         if (!state.active() && sceneAge < 0 && rankUpAge < 0
                 && aftermath == ClientMeditationState.Aftermath.NONE) {
             return;
@@ -439,6 +453,64 @@ public final class MeditationVfxRenderer {
         drawStreams(s, age, gather * (0.3F + 1.2F * wave + 0.5F * widen), HALO, CORE);
         drawSweat(s, age, sweat);
         drawSteam(s, age, sweat * (1.0F - widen * 0.7F));
+        drawMist(s, age, gather, HALO);
+        // Пятна копятся на полу по мере того, как стекают капли, и остаются после сцены.
+        float stains = Mth.clamp((age - 80.0F) / 140.0F, 0.0F, 1.0F);
+        if (stains > 0.0F) {
+            VertexConsumer dark = s.buffers().getBuffer(MurimRenderTypes.impurity());
+            stainSet(dark, s.pose(), new Vec3(s.axis().x, ground(s) - 0.005D, s.axis().z), 0.8F, stains);
+            s.buffers().endBatch(MurimRenderTypes.impurity());
+        }
+    }
+
+    /**
+     * Лёгкая дымка вокруг тела во всех сценах прорыва (автор 01.10: «как от пота, менее
+     * заметно, как туман»): крупные бледные клубы медленно поднимаются и тают.
+     */
+    private static void drawMist(Scene s, float age, float strength, VfxColour tint) {
+        if (strength <= 0.0F) {
+            return;
+        }
+        double feet = ground(s);
+        VertexConsumer c = s.buffers().getBuffer(MurimRenderTypes.impactCore());
+        for (int i = 0; i < 22; i++) {
+            java.util.Random r = new java.util.Random(SEED * 89L + i);
+            float t = ((age * 0.6F + r.nextFloat() * 120.0F) % 120.0F) / 120.0F;
+            double a = r.nextDouble() * Math.PI * 2.0D;
+            double rad = 0.25D + r.nextDouble() * 0.55D + 0.3D * t;
+            Vec3 at = new Vec3(s.axis().x + Math.cos(a) * rad, feet + 0.2D + 1.6D * t, s.axis().z + Math.sin(a) * rad);
+            float fade = (float) Math.sin(t * Math.PI);
+            VfxDraw.billboard(c, s.pose(), at, s.camera(), 0.35D + 0.4D * t, 0.07F * strength * fade,
+                              0.6F + 0.4F * tint.red(), 0.6F + 0.4F * tint.green(), 0.6F + 0.4F * tint.blue());
+        }
+        s.buffers().endBatch(MurimRenderTypes.impactCore());
+    }
+
+    /** Пятна примесей на полу после очищения: тёмные кляксы вокруг места, где сидел игрок. */
+    private static void drawStains(MultiBufferSource.BufferSource buffers, PoseStack.Pose pose, Vec3 origin, float age) {
+        float fade = Mth.clamp((ClientMeditationState.STAIN_TICKS - age) / 120.0F, 0.0F, 1.0F);
+        VertexConsumer dark = buffers.getBuffer(MurimRenderTypes.impurity());
+        stainSet(dark, pose, origin.add(0.0D, 0.015D, 0.0D), 0.8F * fade, 1.0F);
+        buffers.endBatch(MurimRenderTypes.impurity());
+    }
+
+    /** Набор клякс: кольцом вокруг тела, крупные и мелкие брызги; {@code grow} — доля проявления. */
+    private static void stainSet(VertexConsumer dark, PoseStack.Pose pose, Vec3 centre, float alpha, float grow) {
+        for (int i = 0; i < 16; i++) {
+            java.util.Random r = new java.util.Random(SEED * 97L + i);
+            double a = r.nextDouble() * Math.PI * 2.0D;
+            double rad = 0.35D + r.nextDouble() * 0.5D;
+            Vec3 at = centre.add(Math.cos(a) * rad, 0.0D, Math.sin(a) * rad);
+            float own = Mth.clamp(grow * 16.0F - i, 0.0F, 1.0F);
+            if (own <= 0.0F) {
+                continue;
+            }
+            flatSpot(dark, pose, at, (0.08D + r.nextDouble() * 0.12D) * own, alpha);
+            for (int k = 0; k < 3; k++) {
+                double b = r.nextDouble() * Math.PI * 2.0D;
+                flatSpot(dark, pose, at.add(Math.cos(b) * 0.16D, 0.001D, Math.sin(b) * 0.16D), 0.03D * own, alpha * 0.8F);
+            }
+        }
     }
 
     /** Точка на коже спереди: кости лежат на оси, кожа — на 0,17 блока ближе к зрителю. */
@@ -544,6 +616,7 @@ public final class MeditationVfxRenderer {
      * раскрываются разом.
      */
     private static void circuitScene(Scene s, float age) {
+        drawMist(s, age, Mth.clamp(age / 40.0F, 0.0F, 1.0F), GOLD);
         AbstractClientPlayer p = s.player();
         Vec3 chest = BoneAnchorLayer.position(p, BoneAnchorLayer.Bone.CHEST);
         Vec3 head = BoneAnchorLayer.position(p, BoneAnchorLayer.Bone.HEAD);
@@ -682,6 +755,7 @@ public final class MeditationVfxRenderer {
      * светящееся сливовое дерево, лепестки кружат; в конце дерево складывается в тело.
      */
     private static void formScene(Scene s, float age) {
+        drawMist(s, age, Mth.clamp(age / 40.0F, 0.0F, 1.0F), PINK);
         float mist = Mth.clamp(age / 50.0F, 0.0F, 1.0F) * (1.0F - Mth.clamp((age - 120.0F) / 60.0F, 0.0F, 1.0F) * 0.6F);
         float grow = Mth.clamp((age - 55.0F) / 70.0F, 0.0F, 1.0F);
         float fold = Mth.clamp((age - 195.0F) / 35.0F, 0.0F, 1.0F);
@@ -772,6 +846,7 @@ public final class MeditationVfxRenderer {
      * хлопья. Скелет — короткий проблеск в начале (кости «ломаются и срастаются»), чёрная кровь у рта.
      */
     private static void rebirthScene(Scene s, float age) {
+        drawMist(s, age, Mth.clamp(age / 40.0F, 0.0F, 1.0F), CRACK_BLUE);
         float bones = Mth.clamp(age / 15.0F, 0.0F, 1.0F) * (1.0F - Mth.clamp((age - 35.0F) / 25.0F, 0.0F, 1.0F));
         drawStreams(s, age, 0.6F * bones + 0.3F * Mth.clamp((age - 60.0F) / 40.0F, 0.0F, 1.0F), CRACK_BLUE, CRACK_LIGHT);
         drawSkeleton(s, age, bones);
