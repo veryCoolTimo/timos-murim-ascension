@@ -76,6 +76,10 @@ public final class TechniqueService {
         player.setData(ModAttachments.TECHNIQUE_STATE, TechniqueState.started(technique.id(), now));
         PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
                 new TechniqueEventPayload(TechniqueEventPayload.Event.STARTED, technique.id(), player.getId(), 0));
+        // Ладонь в начале захватывает цель и делает рывок к ней (автор 01.10).
+        if (technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.PalmBlast palm) {
+            io.github.verycooltimo.murim.technique.BehaviorExecutor.palmLunge(player, palm, technique.totalTicks());
+        }
 
         // Звук выхвата — с сервера через playSound(null, ...), как это делает ваниль для атак:
         // так его слышат все вокруг и позиционно, без отдельного пакета на каждого.

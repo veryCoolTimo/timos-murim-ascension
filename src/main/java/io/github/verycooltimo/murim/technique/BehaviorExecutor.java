@@ -141,6 +141,55 @@ public final class BehaviorExecutor {
      * у игрока управление — тяжёлое решение, и для моба оно достигается дешевле.
      * Цель остаётся на месте, но продолжает существовать как участник боя.
      */
+    /**
+     * Захват ладони в начале техники (автор 01.10): ближайшая цель в конусе не дальше
+     * {@code reach} — игрок делает рывок к ней, а цель сразу замедлена на всё время
+     * техники и не может выйти из удара. Дальше {@code reach} рывка нет.
+     *
+     * <p>Рывок — один толчок: на земле скорость за тик умножается на 0.546 (трение блока
+     * 0.6 × сопротивление 0.91), и весь путь равен v / (1 − 0.546). Так игрок к удару стоит
+     * вплотную к цели, а не бьёт её с двух блоков по воздуху.
+     *
+     * @param techniqueTicks длительность техники — столько цель удерживается
+     */
+    public static void palmLunge(ServerPlayer player, TechniqueBehavior.PalmBlast palm, int techniqueTicks) {
+        Vec3 eye = player.getEyePosition();
+        Vec3 look = player.getLookAngle();
+        double cosLimit = Math.cos(Math.toRadians(palm.arcDegrees() / 2.0D));
+        AABB search = new AABB(eye, eye).inflate(palm.reach());
+        LivingEntity target = null;
+        double best = Double.MAX_VALUE;
+        for (LivingEntity candidate : candidates(player, search)) {
+            if (!inArc(eye, look, candidate.getBoundingBox(), palm.reach(), cosLimit)) {
+                continue;
+            }
+            double d = candidate.distanceToSqr(player);
+            if (d < best) {
+                best = d;
+                target = candidate;
+            }
+        }
+        if (target == null) {
+            return;
+        }
+        // Цель удержана: сильное замедление на всё время техники, инерция погашена.
+        target.addEffect(new net.minecraft.world.effect.MobEffectInstance(
+                net.minecraft.world.effect.MobEffects.MOVEMENT_SLOWDOWN, techniqueTicks, 6, false, true, true));
+        target.setDeltaMovement(0.0D, target.getDeltaMovement().y, 0.0D);
+        target.hurtMarked = true;
+
+        Vec3 toTarget = new Vec3(target.getX() - player.getX(), 0.0D, target.getZ() - player.getZ());
+        double gap = toTarget.length() - (target.getBbWidth() / 2.0D + player.getBbWidth() / 2.0D) - 0.25D;
+        if (gap <= 0.1D || toTarget.lengthSqr() < 1.0E-6D) {
+            return;
+        }
+        double speed = gap * (1.0D - 0.546D);
+        Vec3 push = toTarget.normalize().scale(speed);
+        player.setDeltaMovement(push.x, player.getDeltaMovement().y, push.z);
+        // Сервер двигает игрока только через пакет движения клиенту.
+        player.hurtMarked = true;
+    }
+
     private static boolean palmBlast(ServerPlayer player, TechniqueBehavior.PalmBlast palm,
                                      net.minecraft.resources.ResourceLocation id, float power) {
         Vec3 eye = player.getEyePosition();

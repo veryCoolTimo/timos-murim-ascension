@@ -289,6 +289,11 @@ public final class DevSetupEvents {
         // «под ладонью» висит в воздухе в метре от кисти (кадры 2026-09-24).
         double dummyDistance = "side".equalsIgnoreCase(
                 System.getProperty("murim.capture.camera", "back")) ? 1.15D : 1.7D;
+        // MURIM_CAPTURE_DUMMY_DIST — поставить цель дальше вытянутой руки: проверка рывка ладони.
+        String dist = System.getenv("MURIM_CAPTURE_DUMMY_DIST");
+        if (dist != null) {
+            dummyDistance = Double.parseDouble(dist.trim());
+        }
         dummy.setPos(STAGE_X + 0.5D + lookX * dummyDistance, STAGE_Y,
                      STAGE_Z + 0.5D + lookZ * dummyDistance);
         level.addFreshEntity(dummy);
