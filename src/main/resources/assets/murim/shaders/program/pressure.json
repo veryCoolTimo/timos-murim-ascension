@@ -1,124 +1,17 @@
 {
-    "blend": {
-        "func": "add",
-        "srcrgb": "one",
-        "dstrgb": "zero"
-    },
+    "blend": { "func": "add", "srcrgb": "one", "dstrgb": "zero" },
     "vertex": "sobel",
     "fragment": "murim:pressure",
-    "attributes": [
-        "Position"
-    ],
-    "samplers": [
-        {
-            "name": "DiffuseSampler"
-        }
-    ],
+    "attributes": [ "Position" ],
+    "samplers": [ { "name": "DiffuseSampler" } ],
     "uniforms": [
-        {
-            "name": "ProjMat",
-            "type": "matrix4x4",
-            "count": 16,
-            "values": [
-                1.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                1.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                1.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                1.0
-            ]
-        },
-        {
-            "name": "InSize",
-            "type": "float",
-            "count": 2,
-            "values": [
-                1.0,
-                1.0
-            ]
-        },
-        {
-            "name": "OutSize",
-            "type": "float",
-            "count": 2,
-            "values": [
-                1.0,
-                1.0
-            ]
-        },
-        {
-            "name": "Pressure",
-            "type": "float",
-            "count": 1,
-            "values": [
-                0.0
-            ]
-        },
-        {
-            "name": "Clock",
-            "type": "float",
-            "count": 1,
-            "values": [
-                0.0
-            ]
-        },
-        {
-            "name": "CenterX",
-            "type": "float",
-            "count": 1,
-            "values": [
-                0.5
-            ]
-        },
-        {
-            "name": "CenterY",
-            "type": "float",
-            "count": 1,
-            "values": [
-                0.5
-            ]
-        },
-        {
-            "name": "Demonic",
-            "type": "float",
-            "count": 1,
-            "values": [
-                0.0
-            ]
-        },
-        {
-            "name": "Front",
-            "type": "float",
-            "count": 1,
-            "values": [
-                100.0
-            ]
-        },
-        {
-            "name": "Window",
-            "type": "float",
-            "count": 1,
-            "values": [
-                0.2
-            ]
-        },
-        {
-            "name": "Visible",
-            "type": "float",
-            "count": 1,
-            "values": [
-                1.0
-            ]
-        }
+        { "name": "ProjMat",  "type": "matrix4x4", "count": 16, "values": [ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0 ] },
+        { "name": "InSize",   "type": "float", "count": 2, "values": [ 1.0, 1.0 ] },
+        { "name": "OutSize",  "type": "float", "count": 2, "values": [ 1.0, 1.0 ] },
+        { "name": "Pressure", "type": "float", "count": 1, "values": [ 0.0 ] },
+        { "name": "Clock",    "type": "float", "count": 1, "values": [ 0.0 ] },
+        { "name": "CenterX",  "type": "float", "count": 1, "values": [ 0.5 ] },
+        { "name": "CenterY",  "type": "float", "count": 1, "values": [ 0.5 ] },
+        { "name": "Demonic",  "type": "float", "count": 1, "values": [ 0.0 ] }
     ]
 }

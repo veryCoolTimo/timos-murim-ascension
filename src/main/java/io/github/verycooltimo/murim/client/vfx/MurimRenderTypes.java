@@ -321,25 +321,9 @@ public final class MurimRenderTypes {
                         .createCompositeState(false));
     }
 
-    private static final RenderType AURA_MASS = auraLayer("aura_mass", "textures/vfx/aura_mass.png");
-    private static final RenderType AURA_MASS_GLOW = additive("aura_mass_glow",
-            ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/vfx/aura_mass.png"));
-    private static final RenderType AURA_FAN = auraLayer("aura_fan", "textures/vfx/aura_fan.png");
     private static final RenderType AURA_STROKES = auraLayer("aura_strokes", "textures/vfx/aura_strokes.png");
-    private static final RenderType AURA_GROUND = auraLayer("aura_ground", "textures/vfx/aura_ground.png");
 
-    public static RenderType auraMass() {
-        return AURA_MASS;
-    }
-
-    public static RenderType auraMassGlow() {
-        return AURA_MASS_GLOW;
-    }
-
-    public static RenderType auraFan() {
-        return AURA_FAN;
-    }
-
+    /** Атлас из восьми мазков туши: экранные штрихи давления и широкие потоки. */
     public static RenderType auraStrokes() {
         return AURA_STROKES;
     }
