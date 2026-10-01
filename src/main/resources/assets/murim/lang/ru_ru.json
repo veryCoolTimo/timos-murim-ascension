@@ -121,5 +121,7 @@
   "murim.read.rank.3": "Около первого ранга",
   "murim.read.rank.4": "Пик",
   "murim.read.rank.5": "Безграничный",
-  "murim.read.rank.6": "Мистический"
+  "murim.read.rank.6": "Мистический",
+  "technique.murim.six_harmonies": "Меч Шести Равновесий",
+  "technique.murim.six_harmonies.weakness": "Прямой удар сверху читается по плечам."
 }

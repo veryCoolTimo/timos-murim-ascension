@@ -21,12 +21,13 @@ import java.util.Map;
  */
 public sealed interface TechniqueBehavior
         permits TechniqueBehavior.MeleeArc, TechniqueBehavior.ProjectileFan, TechniqueBehavior.Dash,
-                TechniqueBehavior.PalmBlast {
+                TechniqueBehavior.PalmBlast, TechniqueBehavior.SwordForm {
 
     ResourceLocation MELEE_ARC = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "melee_arc");
     ResourceLocation PROJECTILE_FAN = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "projectile_fan");
     ResourceLocation DASH = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "dash");
     ResourceLocation PALM_BLAST = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "palm_blast");
+    ResourceLocation SWORD_FORM = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "sword_form");
 
     ResourceLocation type();
 
@@ -184,11 +185,54 @@ public sealed interface TechniqueBehavior
         }
     }
 
+    /**
+     * Форма меча со слоями освоения (Меч Шести Равновесий, docs/design/techniques/huashan-swords.md).
+     * Слой выбирает вариант: 0 — один удар сверху; 1–2 — серия из трёх ударов; с 3 — последний
+     * удар серии превращается в широкий разрез; 4 — ещё и раскол земли вперёд. Что именно
+     * происходит на каком слое — {@link io.github.verycooltimo.murim.technique.SwordFormRules}.
+     *
+     * @param reach       дальность обычного удара
+     * @param arcDegrees  угол обычного удара
+     * @param wideReach   дальность широкого разреза
+     * @param crackLength длина раскола земли
+     */
+    record SwordForm(double reach, double arcDegrees, float damage, double wideReach, double crackLength)
+            implements TechniqueBehavior {
+        public static final MapCodec<SwordForm> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
+                Codec.DOUBLE.fieldOf("reach").forGetter(SwordForm::reach),
+                Codec.DOUBLE.fieldOf("arc_degrees").forGetter(SwordForm::arcDegrees),
+                Codec.FLOAT.fieldOf("damage").forGetter(SwordForm::damage),
+                Codec.DOUBLE.optionalFieldOf("wide_reach", 5.5D).forGetter(SwordForm::wideReach),
+                Codec.DOUBLE.optionalFieldOf("crack_length", 8.0D).forGetter(SwordForm::crackLength)
+        ).apply(i, SwordForm::new));
+
+        public SwordForm {
+            if (!(reach > 0.0D) || !(reach <= 16.0D) || !(wideReach > 0.0D) || !(wideReach <= 16.0D)) {
+                throw new IllegalArgumentException("Дальность формы меча вне 0..16");
+            }
+            if (!(arcDegrees > 0.0D) || !(arcDegrees <= 360.0D)) {
+                throw new IllegalArgumentException("Дуга вне 0..360: " + arcDegrees);
+            }
+            if (!(damage >= 0.0F)) {
+                throw new IllegalArgumentException("Отрицательный или нечисловой урон");
+            }
+            if (!(crackLength >= 0.0D) || !(crackLength <= 24.0D)) {
+                throw new IllegalArgumentException("Раскол вне 0..24: " + crackLength);
+            }
+        }
+
+        @Override
+        public ResourceLocation type() {
+            return SWORD_FORM;
+        }
+    }
+
     Map<ResourceLocation, MapCodec<? extends TechniqueBehavior>> TYPES = Map.of(
             MELEE_ARC, MeleeArc.CODEC,
             PROJECTILE_FAN, ProjectileFan.CODEC,
             DASH, Dash.CODEC,
-            PALM_BLAST, PalmBlast.CODEC);
+            PALM_BLAST, PalmBlast.CODEC,
+            SWORD_FORM, SwordForm.CODEC);
 
     Codec<TechniqueBehavior> CODEC = ResourceLocation.CODEC
             .dispatch("type", TechniqueBehavior::type, type -> {

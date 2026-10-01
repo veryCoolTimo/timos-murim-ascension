@@ -1,0 +1,47 @@
+{
+  "id": "murim:six_harmonies",
+  "form": "vertical_strike",
+  "intent": "foundation",
+  "breath": "short_exhale",
+  "phases": {
+    "ritual": 0,
+    "windup": 6,
+    "impact": 2,
+    "recovery": 12,
+    "dissipation": 6
+  },
+  "behavior": {
+    "type": "murim:sword_form",
+    "reach": 3.2,
+    "arc_degrees": 90.0,
+    "damage": 5.0,
+    "wide_reach": 5.5,
+    "crack_length": 8.0
+  },
+  "animation": "murim:six_harmonies",
+  "vfx": {
+    "pivot": [0.0, 1.15, 0.0],
+    "basis_a": [0.0, 1.0, 0.0],
+    "basis_b": [0.0, 0.0, 1.0],
+    "inner_radius": 0.3,
+    "outer_radius": 1.5,
+    "start_angle": 80.0,
+    "end_angle": -20.0,
+    "colour": { "r": 0.95, "g": 0.96, "b": 0.97 },
+    "trail": { "alpha": 0.0, "size": 0.3, "life_ticks": 4.0 },
+    "crescent": { "enabled": false, "alpha": 0.0, "size": 0.2, "life_ticks": 3.0 },
+    "core": { "enabled": false, "alpha": 0.0, "size": 0.2, "life_ticks": 3.0 },
+    "windup_motes": 0,
+    "ritual_motes": 0
+  },
+  "interruption": {
+    "cancellable_until": "windup",
+    "break_on_damage": true,
+    "damage_threshold": 3.0
+  },
+  "weakness": "technique.murim.six_harmonies.weakness",
+  "hit_stop_ticks": 2,
+  "cooldown_ticks": 30,
+  "layers": 5,
+  "tier": "basic"
+}

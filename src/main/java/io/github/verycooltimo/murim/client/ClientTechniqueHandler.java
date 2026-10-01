@@ -84,7 +84,12 @@ public final class ClientTechniqueHandler {
                 // ладони невидимыми для измерения — большую часть энергии давала дуга.
                 boolean palm = started != null && started.behavior().type().equals(
                         io.github.verycooltimo.murim.technique.TechniqueBehavior.PALM_BLAST);
-                if (palm) {
+                boolean form = started != null && started.behavior().type().equals(
+                        io.github.verycooltimo.murim.technique.TechniqueBehavior.SWORD_FORM);
+                if (form) {
+                    io.github.verycooltimo.murim.client.vfx.SwordFormRenderer.start(
+                            payload.sourceId(), started, payload.layer());
+                } else if (palm) {
                     io.github.verycooltimo.murim.client.vfx.PalmVfxRenderer.start(
                             payload.sourceId(), started);
                 } else {
@@ -117,6 +122,7 @@ public final class ClientTechniqueHandler {
                 // ни отложенный взмах, который выстрелит уже после отмены.
                 PENDING.remove(payload.sourceId());
                 BladeTrailRenderer.cancel(payload.sourceId());
+                io.github.verycooltimo.murim.client.vfx.SwordFormRenderer.cancel(payload.sourceId());
                 io.github.verycooltimo.murim.client.vfx.PalmVfxRenderer.cancel(payload.sourceId());
                 MurimMod.LOGGER.debug("Техника {} прервана", payload.techniqueId());
             }
@@ -156,11 +162,17 @@ public final class ClientTechniqueHandler {
             return;
         }
         int delay = definition.startTickOf(TechniquePhase.WINDUP);
+        net.minecraft.resources.ResourceLocation animation = definition.animation();
+        // Форма меча: у каждого слоя своя анимация — одиночный удар, серия, единение с мечом.
+        if (definition.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.SwordForm) {
+            animation = animation.withSuffix(
+                    io.github.verycooltimo.murim.technique.SwordFormRules.animationSuffix(payload.layer()));
+        }
         if (delay <= 0) {
-            playAnimation(payload, definition.animation());
+            playAnimation(payload, animation);
             return;
         }
-        PENDING.put(payload.sourceId(), new Pending(delay, definition.animation()));
+        PENDING.put(payload.sourceId(), new Pending(delay, animation));
     }
 
     private static void tickPending() {

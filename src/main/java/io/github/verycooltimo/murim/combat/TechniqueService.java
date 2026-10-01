@@ -83,7 +83,8 @@ public final class TechniqueService {
 
         player.setData(ModAttachments.TECHNIQUE_STATE, TechniqueState.started(technique.id(), now));
         PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
-                new TechniqueEventPayload(TechniqueEventPayload.Event.STARTED, technique.id(), player.getId(), 0));
+                new TechniqueEventPayload(TechniqueEventPayload.Event.STARTED, technique.id(), player.getId(), 0,
+                        Math.max(0, io.github.verycooltimo.murim.mastery.MasteryService.layer(player, technique.id()))));
         // Ладонь в начале захватывает цель и делает рывок к ней (автор 01.10).
         if (technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.PalmBlast palm) {
             io.github.verycooltimo.murim.technique.BehaviorExecutor.palmLunge(player, palm, technique.totalTicks());
@@ -183,6 +184,23 @@ public final class TechniqueService {
             }
         }
 
+        // Форма меча: удары серии после первого — через равные промежутки после удара.
+        if (technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.SwordForm form) {
+            int layer = Math.max(0, io.github.verycooltimo.murim.mastery.MasteryService.layer(player, technique.id()));
+            int since = state.tick() - technique.startTickOf(TechniquePhase.IMPACT);
+            int gap = io.github.verycooltimo.murim.technique.SwordFormRules.SERIES_GAP;
+            if (since > 0 && since % gap == 0 && since / gap < io.github.verycooltimo.murim.technique.SwordFormRules.strikes(layer)) {
+                float power = (float) io.github.verycooltimo.murim.mastery.MasteryRules.powerFactor(layer, technique.layers());
+                player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
+                        net.minecraft.sounds.SoundEvents.PLAYER_ATTACK_SWEEP,
+                        net.minecraft.sounds.SoundSource.PLAYERS, 1.0F, 0.8F + 0.1F * (since / gap));
+                if (io.github.verycooltimo.murim.technique.BehaviorExecutor.swordForm(player, form, technique.id(), power, since / gap)) {
+                    PacketDistributor.sendToPlayer(player, new TechniqueEventPayload(TechniqueEventPayload.Event.HIT,
+                            technique.id(), player.getId(), technique.hitStopTicks(), layer));
+                }
+            }
+        }
+
         player.setData(ModAttachments.TECHNIQUE_STATE, state.advanced());
     }
 
@@ -199,7 +217,7 @@ public final class TechniqueService {
         player.setData(ModAttachments.TECHNIQUE_STATE, state.finished());
         if (id != null) {
             PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
-                    new TechniqueEventPayload(event, id, player.getId(), 0));
+                    new TechniqueEventPayload(event, id, player.getId(), 0, 0));
         }
     }
 
@@ -234,7 +252,7 @@ public final class TechniqueService {
             // трекинга, была бы гриферством с обычного клиента.
             PacketDistributor.sendToPlayer(player,
                     new TechniqueEventPayload(TechniqueEventPayload.Event.HIT, technique.id(),
-                            player.getId(), technique.hitStopTicks()));
+                            player.getId(), technique.hitStopTicks(), 0));
         }
     }
 

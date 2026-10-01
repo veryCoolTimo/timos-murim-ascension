@@ -386,8 +386,11 @@ public final class DevSetupEvents {
         io.github.verycooltimo.murim.mastery.MasteryState state = io.github.verycooltimo.murim.mastery.MasteryState.EMPTY;
         for (io.github.verycooltimo.murim.technique.TechniqueDefinition definition
                 : io.github.verycooltimo.murim.technique.TechniqueLoader.all().values()) {
+            // MURIM_CAPTURE_LAYER — слой освоения для съёмки слоёв формы (иначе — высший).
+            String layer = System.getenv("MURIM_CAPTURE_LAYER");
+            int start = layer == null || layer.isBlank() ? definition.layers() : Integer.parseInt(layer.trim());
             state = state.with(definition.id(), io.github.verycooltimo.murim.mastery.TechniqueProgress.learned(
-                    definition.layers(), definition.layers()));
+                    start, definition.layers()));
         }
         player.setData(io.github.verycooltimo.murim.registry.ModAttachments.MASTERY, state);
         if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {

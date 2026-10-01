@@ -55,7 +55,12 @@ public class BoneAnchorLayer extends RenderLayer<AbstractClientPlayer, PlayerMod
         RIGHT_KNEE,
         LEFT_KNEE,
         RIGHT_SHOULDER,
-        LEFT_SHOULDER
+        LEFT_SHOULDER,
+        // Середина и кончик меча в правой руке: след формы меча идёт по настоящему движению
+        // клинка из анимации, а не по заданной дуге. Смещение — по виду держания меча
+        // в третьем лице: клинок выходит из кулака вперёд и чуть вверх.
+        BLADE_MID,
+        BLADE_TIP
     }
 
     /**
@@ -108,6 +113,9 @@ public class BoneAnchorLayer extends RenderLayer<AbstractClientPlayer, PlayerMod
         bones.put(Bone.LEFT_KNEE, pointOf(poseStack, model.leftLeg, 0.0F, 6.0F, 0.0F));
         bones.put(Bone.RIGHT_SHOULDER, pointOf(poseStack, model.rightArm, 0.0F, 1.0F, 0.0F));
         bones.put(Bone.LEFT_SHOULDER, pointOf(poseStack, model.leftArm, 0.0F, 1.0F, 0.0F));
+        // [НЕПРОВЕРЕНО: точное положение клинка зависит от модели предмета; подобрано по кадрам]
+        bones.put(Bone.BLADE_MID, pointOf(poseStack, model.rightArm, -1.0F, 9.0F, -4.0F));
+        bones.put(Bone.BLADE_TIP, pointOf(poseStack, model.rightArm, -1.0F, 5.0F, -15.0F));
     }
 
     /**
