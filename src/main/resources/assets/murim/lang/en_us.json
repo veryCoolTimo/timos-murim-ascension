@@ -103,7 +103,7 @@
   "murim.loadout.layer": "layer %s/%s",
   "murim.loadout.slots": "Slots: %s",
   "murim.loadout.locked_hint": "Slots grow with understanding",
-  "murim.loadout.hint": "LMB a technique, then a slot — place · RMB a slot — clear",
+  "murim.loadout.hint": "LMB — pick/place · RMB — clear",
   "murim.loadout.empty_slot": "empty slot",
   "murim.loadout.empty": "Slot is empty — set up techniques: [%s]"
 }

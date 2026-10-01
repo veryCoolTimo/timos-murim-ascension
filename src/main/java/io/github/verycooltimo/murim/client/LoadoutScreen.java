@@ -1,10 +1,10 @@
 package io.github.verycooltimo.murim.client;
 
+import io.github.verycooltimo.murim.MurimMod;
 import io.github.verycooltimo.murim.mastery.Loadout;
 import io.github.verycooltimo.murim.mastery.MasteryService;
 import io.github.verycooltimo.murim.network.LoadoutPayloads;
 import io.github.verycooltimo.murim.network.SyncMasteryPayload;
-import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
@@ -16,18 +16,42 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Экран раскладки техник (автор 01.10: «экран, где ты задаёшь техники»). Слева — выученные
- * техники со слоем, справа — слоты; их число растёт с прогрессией, закрытые видны замком.
+ * Экран раскладки техник — развёрнутый свиток (автор 01.10: «задумка со скроллом, китайской
+ * картиной; внутренний интерфейс упростить»). Свиток и слоты — текстуры, сгенерированные
+ * пиксель-артом (docs/design/reference/ui); всё внутри пишется тушью прямо по бумаге,
+ * без рамок и досок.
  *
- * <p>ЛКМ по технике, затем по слоту — положить; ЛКМ по занятому слоту без выбранной
- * техники — взять оттуда; ПКМ по слоту — убрать.
+ * <p>Слева выученные техники со слоем и освоением, справа слоты; их число растёт с
+ * прогрессией, закрытые — с печатью-замком. ЛКМ по технике, затем по слоту — положить;
+ * ЛКМ по занятому слоту — взять оттуда; ПКМ по слоту — убрать.
  */
 public final class LoadoutScreen extends Screen {
 
-    private static final int PANEL_W = 300;
-    private static final int PANEL_H = 176;
+    private static final ResourceLocation SCROLL = tex("technique_scroll");
+    private static final ResourceLocation SLOT = tex("technique_slot");
+    private static final ResourceLocation SLOT_ACTIVE = tex("technique_slot_active");
+    private static final ResourceLocation SLOT_LOCKED = tex("technique_slot_locked");
+
+    /** Свиток рисуется 1:1 к своей пиксельной сетке. */
+    private static final int W = 320;
+    private static final int H = 180;
+
+    /** Спокойная середина свитка: по краям нарисованы горы, сосна и бамбук. */
+    private static final int LIST_X = 50;
+    private static final int LIST_W = 132;
+    private static final int TOP = 36;
     private static final int ROW = 22;
-    private static final int SLOT = 26;
+    private static final int VISIBLE = 5;
+    private static final int SLOT_SIZE = 24;
+    private static final int SLOTS_X = 192;
+    private static final int SLOT_STEP = 26;
+
+    private static final float NAME_SCALE = 0.85F;
+
+    private static final int INK = 0xFF2B2622;
+    private static final int INK_GREY = 0xFF6E665B;
+    private static final int INK_FAINT = 0xFFA79D8C;
+    private static final int JADE = 0xFF5E9A7A;
 
     private ResourceLocation picked;
     private int scroll;
@@ -36,17 +60,21 @@ public final class LoadoutScreen extends Screen {
         super(Component.translatable("murim.loadout.title"));
     }
 
+    private static ResourceLocation tex(String name) {
+        return ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/gui/" + name + ".png");
+    }
+
     @Override
     public boolean isPauseScreen() {
         return false;
     }
 
     private int left() {
-        return (width - PANEL_W) / 2;
+        return (width - W) / 2;
     }
 
     private int top() {
-        return (height - PANEL_H) / 2;
+        return (height - H) / 2;
     }
 
     private List<SyncMasteryPayload.Entry> techniques() {
@@ -60,96 +88,102 @@ public final class LoadoutScreen extends Screen {
         super.render(graphics, mouseX, mouseY, partial);
         int x0 = left();
         int y0 = top();
-        Font font = this.font;
+        com.mojang.blaze3d.systems.RenderSystem.enableBlend();
+        graphics.blit(SCROLL, x0, y0, 0, 0.0F, 0.0F, W, H, W, H);
 
-        // Панель: тёмное стекло с тонким холодным ободом.
-        graphics.fill(x0, y0, x0 + PANEL_W, y0 + PANEL_H, 0xD0080C18);
-        frame(graphics, x0, y0, PANEL_W, PANEL_H, 0xFF2E4C7A);
-        graphics.drawString(font, title, x0 + 10, y0 + 8, 0xFFE6F4FF, false);
-        graphics.fill(x0 + 10, y0 + 19, x0 + PANEL_W - 10, y0 + 20, 0x402E4C7A);
+        // Заголовок тушью.
+        graphics.pose().pushPose();
+        graphics.pose().translate(x0 + LIST_X, y0 + 14, 0.0F);
+        graphics.pose().scale(1.5F, 1.5F, 1.0F);
+        graphics.drawString(font, title, 0, 0, INK, false);
+        graphics.pose().popPose();
 
         // Слева — выученные техники.
         List<SyncMasteryPayload.Entry> list = techniques();
-        int listX = x0 + 10;
-        int listY = y0 + 26;
-        int listW = 160;
-        int visible = 5;
-        scroll = Mth.clamp(scroll, 0, Math.max(0, list.size() - visible));
+        scroll = Mth.clamp(scroll, 0, Math.max(0, list.size() - VISIBLE));
+        int lx = x0 + LIST_X;
         if (list.isEmpty()) {
-            graphics.drawString(font, Component.translatable("murim.loadout.none"), listX, listY + 4, 0xFF8090A8, false);
+            small(graphics, Component.translatable("murim.loadout.none"), lx, y0 + TOP + 4, INK_GREY);
         }
-        for (int i = 0; i < Math.min(visible, list.size() - scroll); i++) {
+        for (int i = 0; i < Math.min(VISIBLE, list.size() - scroll); i++) {
             SyncMasteryPayload.Entry e = list.get(i + scroll);
-            int ry = listY + i * ROW;
-            boolean hover = inside(mouseX, mouseY, listX, ry, listW, ROW - 2);
-            boolean isPicked = e.technique().equals(picked);
-            int bg = isPicked ? 0x603C78D8 : hover ? 0x40203858 : 0x20101828;
-            graphics.fill(listX, ry, listX + listW, ry + ROW - 2, bg);
-            icon(graphics, e.technique(), listX + 2, ry + 1, 18, 1.0F);
-            // Длинное название обрезается многоточием: иначе оно залезает на слоты.
+            int ry = y0 + TOP + i * ROW;
+            boolean hover = inside(mouseX, mouseY, lx - 2, ry - 1, LIST_W + 4, ROW - 1);
+            if (e.technique().equals(picked)) {
+                // Взятая техника — бледная нефритовая размывка, как акварель по бумаге.
+                graphics.fill(lx - 2, ry - 1, lx + LIST_W + 2, ry + ROW - 2, 0x60BFD6C2);
+            } else if (hover) {
+                graphics.fill(lx - 2, ry - 1, lx + LIST_W + 2, ry + ROW - 2, 0x30A79D8C);
+            }
+            icon(graphics, e.technique(), lx, ry, 20, 1.0F);
+            // Название чуть мельче обычного шрифта: длинные имена техник иначе не помещаются.
             String name = MasteryService.name(e.technique()).getString();
-            int room = listW - 28;
+            int room = (int) ((LIST_W - 26) / NAME_SCALE);
             if (font.width(name) > room) {
                 name = font.plainSubstrByWidth(name, room - font.width("…")) + "…";
             }
-            graphics.drawString(font, name, listX + 24, ry + 2, 0xFFDCEBFA, false);
+            graphics.pose().pushPose();
+            graphics.pose().translate(lx + 24, ry + 2, 0.0F);
+            graphics.pose().scale(NAME_SCALE, NAME_SCALE, 1.0F);
+            graphics.drawString(font, name, 0, 0, INK, false);
+            graphics.pose().popPose();
             Component layer = Component.translatable("murim.loadout.layer", e.layer(), e.cap());
-            smallText(graphics, layer, listX + 24, ry + 12, 0xFF8FB8E0);
-            // Освоение текущего слоя.
-            int barX = listX + 24 + (int) (font.width(layer) * 0.75F) + 6;
-            int barW = listX + listW - 6 - barX;
+            small(graphics, layer, lx + 24, ry + 11, INK_GREY);
+            // Освоение текущего слоя — тонкий штрих кисти.
+            int barX = lx + 24 + (int) (font.width(layer) * 0.75F) + 4;
+            int barW = lx + LIST_W - barX;
             if (barW > 6 && e.layer() < e.cap()) {
-                graphics.fill(barX, ry + 14, barX + barW, ry + 15, 0x40FFFFFF);
-                graphics.fill(barX, ry + 14, barX + (int) (barW * Mth.clamp(e.progress(), 0.0F, 1.0F)), ry + 15, 0xFF7FE0C8);
+                graphics.fill(barX, ry + 14, barX + barW, ry + 15, 0x60A79D8C);
+                graphics.fill(barX, ry + 14, barX + (int) (barW * Mth.clamp(e.progress(), 0.0F, 1.0F)), ry + 15, JADE);
             }
         }
-        if (list.size() > visible) {
-            smallText(graphics, Component.literal((scroll + 1) + "–" + Math.min(list.size(), scroll + visible) + " / " + list.size()),
-                    listX, listY + visible * ROW, 0xFF6E7F98);
+        if (list.size() > VISIBLE) {
+            small(graphics, Component.literal((scroll + 1) + "–" + Math.min(list.size(), scroll + VISIBLE) + " / " + list.size()),
+                    lx, y0 + TOP + VISIBLE * ROW, INK_FAINT);
         }
 
-        // Справа — слоты: открытые и закрытые (замок).
+        // Справа — слоты.
         int open = ClientLoadoutState.open();
         List<Optional<ResourceLocation>> slots = ClientLoadoutState.slots();
-        smallText(graphics, Component.translatable("murim.loadout.slots", open), slotX(0), listY - 2, 0xFF8FB8E0);
+        small(graphics, Component.translatable("murim.loadout.slots", open), x0 + SLOTS_X, y0 + TOP - 10, INK_GREY);
         for (int i = 0; i < Loadout.MAX_SLOTS; i++) {
             int sx = slotX(i);
             int sy = slotY(i);
             boolean unlocked = i < open;
-            boolean hover = unlocked && inside(mouseX, mouseY, sx, sy, SLOT, SLOT);
-            graphics.fill(sx, sy, sx + SLOT, sy + SLOT, unlocked ? (hover ? 0x60203858 : 0x50101828) : 0x30060A12);
-            frame(graphics, sx, sy, SLOT, SLOT, !unlocked ? 0x40384868
-                    : i == ClientLoadoutState.active() ? 0xFF9FE8FF : 0xFF2E4C7A);
+            ResourceLocation frame = !unlocked ? SLOT_LOCKED
+                    : (i == ClientLoadoutState.active() ? SLOT_ACTIVE : SLOT);
+            graphics.blit(frame, sx, sy, 0, 0.0F, 0.0F, SLOT_SIZE, SLOT_SIZE, SLOT_SIZE, SLOT_SIZE);
             if (!unlocked) {
-                lock(graphics, sx + SLOT / 2, sy + SLOT / 2);
                 continue;
             }
+            if (inside(mouseX, mouseY, sx, sy, SLOT_SIZE, SLOT_SIZE)) {
+                graphics.fill(sx + 2, sy + 2, sx + SLOT_SIZE - 2, sy + SLOT_SIZE - 2, 0x28A79D8C);
+            }
             Optional<ResourceLocation> technique = i < slots.size() ? slots.get(i) : Optional.empty();
-            technique.ifPresent(id -> icon(graphics, id, sx + 3, sy + 3, SLOT - 6, 1.0F));
-            smallText(graphics, Component.literal(String.valueOf(i + 1)), sx + 2, sy + 2, 0xA0C8DCEC);
+            technique.ifPresent(id -> icon(graphics, id, sx + 2, sy + 2, 20, 1.0F));
         }
-        smallText(graphics, Component.translatable("murim.loadout.locked_hint"), slotX(0), slotY(7) + SLOT + 4, 0xFF6E7F98);
 
-        // Подсказка внизу и выбранная техника под курсором.
-        smallText(graphics, Component.translatable("murim.loadout.hint"), x0 + 10, y0 + PANEL_H - 11, 0xFF6E7F98);
+        // Подсказка внизу — бледной тушью.
+        Component hint = Component.translatable("murim.loadout.hint");
+        small(graphics, hint, x0 + (W - (int) (font.width(hint) * 0.75F)) / 2, y0 + H - 20, INK_GREY);
         if (picked != null) {
-            icon(graphics, picked, mouseX - 9, mouseY - 9, 18, 0.85F);
+            icon(graphics, picked, mouseX - 10, mouseY - 10, 20, 0.85F);
         }
     }
 
     private int slotX(int i) {
-        return left() + 186 + (i % 3) * (SLOT + 6);
+        return left() + SLOTS_X + (i % 3) * SLOT_STEP;
     }
 
     private int slotY(int i) {
-        return top() + 32 + (i / 3) * (SLOT + 6);
+        return top() + TOP + (i / 3) * SLOT_STEP;
     }
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         int open = ClientLoadoutState.open();
         for (int i = 0; i < open; i++) {
-            if (inside(mouseX, mouseY, slotX(i), slotY(i), SLOT, SLOT)) {
+            if (inside(mouseX, mouseY, slotX(i), slotY(i), SLOT_SIZE, SLOT_SIZE)) {
                 if (button == 1) {
                     PacketDistributor.sendToServer(new LoadoutPayloads.SetSlot(i, Optional.empty()));
                 } else if (picked != null) {
@@ -165,8 +199,8 @@ public final class LoadoutScreen extends Screen {
             }
         }
         List<SyncMasteryPayload.Entry> list = techniques();
-        for (int i = 0; i < Math.min(5, list.size() - scroll); i++) {
-            if (inside(mouseX, mouseY, left() + 10, top() + 26 + i * ROW, 160, ROW - 2)) {
+        for (int i = 0; i < Math.min(VISIBLE, list.size() - scroll); i++) {
+            if (inside(mouseX, mouseY, left() + LIST_X - 2, top() + TOP + i * ROW - 1, LIST_W + 4, ROW - 1)) {
                 ResourceLocation id = list.get(i + scroll).technique();
                 picked = id.equals(picked) ? null : id;
                 return true;
@@ -191,20 +225,13 @@ public final class LoadoutScreen extends Screen {
         return super.keyPressed(keyCode, scanCode, modifiers);
     }
 
-    /** Выбрать техники для стенда съёмки: «взять» технику, чтобы показать перенос. */
+    /** Взять технику для стенда съёмки — показать перенос в слот. */
     public void pickForCapture(ResourceLocation technique) {
         picked = technique;
     }
 
     private static boolean inside(double mx, double my, int x, int y, int w, int h) {
         return mx >= x && mx < x + w && my >= y && my < y + h;
-    }
-
-    private static void frame(GuiGraphics g, int x, int y, int w, int h, int colour) {
-        g.fill(x, y, x + w, y + 1, colour);
-        g.fill(x, y + h - 1, x + w, y + h, colour);
-        g.fill(x, y, x + 1, y + h, colour);
-        g.fill(x + w - 1, y, x + w, y + h, colour);
     }
 
     private static void icon(GuiGraphics g, ResourceLocation technique, int x, int y, int size, float alpha) {
@@ -214,14 +241,7 @@ public final class LoadoutScreen extends Screen {
         g.setColor(1.0F, 1.0F, 1.0F, 1.0F);
     }
 
-    /** Замок закрытого слота: дужка и корпус, без текстуры. */
-    private static void lock(GuiGraphics g, int cx, int cy) {
-        GuiShapes.arc(g, cx, cy - 1, 2.5F, 3.6F, Math.PI, Math.PI * 2.0D, 0x80586880);
-        g.fill(cx - 4, cy - 1, cx + 4, cy + 5, 0x80586880);
-        g.flush();
-    }
-
-    private void smallText(GuiGraphics g, Component text, int x, int y, int colour) {
+    private void small(GuiGraphics g, Component text, int x, int y, int colour) {
         g.pose().pushPose();
         g.pose().translate(x, y, 0.0F);
         g.pose().scale(0.75F, 0.75F, 1.0F);

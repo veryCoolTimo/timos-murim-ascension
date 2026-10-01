@@ -83,7 +83,7 @@
   "murim.loadout.layer": "слой %s/%s",
   "murim.loadout.slots": "Слоты: %s",
   "murim.loadout.locked_hint": "Слоты растут с пониманием",
-  "murim.loadout.hint": "ЛКМ по технике, затем по слоту — положить · ПКМ по слоту — убрать",
+  "murim.loadout.hint": "ЛКМ — взять/положить · ПКМ — убрать",
   "murim.loadout.empty_slot": "пустой слот",
   "murim.loadout.empty": "Слот пуст — разложите техники: [%s]"
 }
