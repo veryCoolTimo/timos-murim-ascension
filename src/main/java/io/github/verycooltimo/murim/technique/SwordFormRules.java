@@ -11,8 +11,11 @@ package io.github.verycooltimo.murim.technique;
  */
 public final class SwordFormRules {
 
-    /** Тиков между ударами серии. */
-    public static final int SERIES_GAP = 4;
+    /**
+     * Тиков между ударами серии. Восемь, а не четыре: серия — последовательность отдельных
+     * движений с остановкой в позе после каждого удара, а не непрерывный поток (автор 01.10).
+     */
+    public static final int SERIES_GAP = 8;
 
     /** Сколько ударов: на нулевом слое — один, дальше — серия из трёх. */
     public static int strikes(int layer) {

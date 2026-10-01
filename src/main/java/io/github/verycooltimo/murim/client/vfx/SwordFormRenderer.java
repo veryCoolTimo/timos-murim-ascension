@@ -33,8 +33,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * <p><b>Эффекты растут со слоем освоения</b> (автор 01.10: «когда 0 слоёв — эффектов нет»):
  * <ol start="0">
  *   <li>только движение тела, без эффектов;</li>
- *   <li>резкие белые линии следа клинка — несколько тонких штрихов с расщеплёнными концами,
- *       как белая полоса скорости на референсах;</li>
+ *   <li>след клинка — один сплошной белый серп с острым хвостом;</li>
  *   <li>+ клубы пыли у передней ноги и в точке удара — спрайты в манере манхвы: белое
  *       с контуром тушью, без размытия;</li>
  *   <li>+ широкий разрез: три тонкие дуги эллипсом вокруг бойца и волна низких клубов по плитам;</li>
@@ -56,12 +55,6 @@ public final class SwordFormRenderer {
     /** Сколько тиков держится штрих следа. */
     private static final float TRAIL_LIFE = 5.0F;
 
-    /**
-     * Штрихи следа: доля длины клинка от кисти, толщина, доля жизни. Внешние — тоньше и
-     * короче, отсюда «расщеплённый» конец полосы.
-     */
-    private static final double[][] STREAKS = {{1.1D, 0.022D, 0.7D}, {1.35D, 0.04D, 1.0D}, {1.5D, 0.03D, 0.9D},
-            {1.62D, 0.018D, 0.75D}, {1.75D, 0.012D, 0.6D}, {1.88D, 0.008D, 0.45D}};
 
     private static final Map<Integer, Form> ACTIVE = new ConcurrentHashMap<>();
     private static int clientTicks;
@@ -326,34 +319,42 @@ public final class SwordFormRenderer {
     }
 
     /**
-     * Штрихи следа: пять тонких резких полос на разном расстоянии вдоль клинка, каждая —
-     * лента вдоль сглаженного пути. Сплошной белый, без свечения и размытия; к хвосту полоса
-     * сужается в нить, внешние полосы короче — расщеплённый конец.
+     * След клинка — ОДИН сплошной белый серп (автор 01.10: «нравилось, когда разрез был одним
+     * шейпом»). Внешний край — вынесенный кончик клинка, внутренний — его середина; к хвосту
+     * внутренний край подтягивается к внешнему, и серп сходится в острие. Края резкие,
+     * сплошной цвет, без размытия; хвост гаснет быстрее, чем сужается.
      */
     private static void streaks(Form f, PoseStack.Pose pose, Vec3 camera, MultiBufferSource.BufferSource buffers, float age) {
         if (f.samples.size() < 2) {
             return;
         }
+        List<Vec3> outer = new ArrayList<>();
+        List<Vec3> inner = new ArrayList<>();
+        List<Float> ages = new ArrayList<>();
+        smoothPath(f.samples, 1.9D, outer, ages);
+        smoothPath(f.samples, 0.6D, inner, new ArrayList<>());
         RenderType solid = MurimRenderTypes.solid();
         VertexConsumer c = buffers.getBuffer(solid);
-        for (double[] streak : STREAKS) {
-            List<Vec3> pts = new ArrayList<>();
-            List<Float> ages = new ArrayList<>();
-            smoothPath(f.samples, streak[0], pts, ages);
-            float life = (float) (TRAIL_LIFE * streak[2]);
-            for (int i = 1; i < pts.size(); i++) {
-                if (ages.get(i - 1) < 0.0F || ages.get(i) < 0.0F) {
-                    continue;
-                }
-                float u0 = Mth.clamp((age - ages.get(i - 1)) / life, 0.0F, 1.0F);
-                float u1 = Mth.clamp((age - ages.get(i)) / life, 0.0F, 1.0F);
-                if (u0 >= 1.0F && u1 >= 1.0F) {
-                    continue;
-                }
-                // Хвост гаснет быстрее, чем сужается: иначе от него оставались «уголки» (кадры 01.10).
-                line(c, pose, camera, pts.get(i - 1), pts.get(i), streak[1] * (1.0F - u0), streak[1] * (1.0F - u1),
-                        (1.0F - u0) * (1.0F - u0), (1.0F - u1) * (1.0F - u1));
+        for (int i = 1; i < outer.size(); i++) {
+            if (ages.get(i - 1) < 0.0F || ages.get(i) < 0.0F) {
+                continue;
             }
+            float u0 = Mth.clamp((age - ages.get(i - 1)) / TRAIL_LIFE, 0.0F, 1.0F);
+            float u1 = Mth.clamp((age - ages.get(i)) / TRAIL_LIFE, 0.0F, 1.0F);
+            if (u0 >= 1.0F && u1 >= 1.0F) {
+                continue;
+            }
+            // Серп: внутренний край тянется к внешнему с возрастом — острый хвост.
+            Vec3 o0 = outer.get(i - 1), o1 = outer.get(i);
+            Vec3 i0 = inner.get(i - 1).lerp(o0, Math.pow(u0, 0.6D));
+            Vec3 i1 = inner.get(i).lerp(o1, Math.pow(u1, 0.6D));
+            float a0 = 1.0F - u0 * u0 * u0;
+            float a1 = 1.0F - u1 * u1 * u1;
+            Vec3 n = new Vec3(0.0D, 1.0D, 0.0D);
+            VfxDraw.vertex(c, pose, i0, n, 0.0F, 0.0F, a0, WHITE.red(), WHITE.green(), WHITE.blue());
+            VfxDraw.vertex(c, pose, i1, n, 1.0F, 0.0F, a1, WHITE.red(), WHITE.green(), WHITE.blue());
+            VfxDraw.vertex(c, pose, o1, n, 1.0F, 1.0F, a1, WHITE.red(), WHITE.green(), WHITE.blue());
+            VfxDraw.vertex(c, pose, o0, n, 0.0F, 1.0F, a0, WHITE.red(), WHITE.green(), WHITE.blue());
         }
         buffers.endBatch(solid);
     }
