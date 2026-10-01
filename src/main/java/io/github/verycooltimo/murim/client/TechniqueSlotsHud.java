@@ -92,7 +92,7 @@ public final class TechniqueSlotsHud {
             graphics.setColor(1.0F, 1.0F, 1.0F, presence);
             com.mojang.blaze3d.systems.RenderSystem.enableBlend();
             graphics.blit(TechniqueIcons.of(technique.get()), x + 2, y + 2, SIZE - 4, SIZE - 4,
-                    0.0F, 0.0F, 64, 64, 64, 64);
+                    0.0F, 0.0F, 48, 48, 48, 48);
             graphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
             // Освоение текущего слоя — тонкая полоса по низу слота.
             SyncMasteryPayload.Entry entry = mastery(technique.get());
