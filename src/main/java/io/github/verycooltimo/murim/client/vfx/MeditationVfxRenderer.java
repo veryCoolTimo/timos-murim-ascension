@@ -995,38 +995,51 @@ public final class MeditationVfxRenderer {
                 double dist = 0.035D * lift + (0.25D + r.nextDouble() * 0.6D) * fly * fly;
                 Vec3 centre = base.add(out.scale(dist)).add(0.0D, -0.4D * fly * fly * fly, 0.0D);
                 double rot = Math.toRadians(15.0D * lift + (30.0D + r.nextDouble() * 70.0D) * fly) * (r.nextBoolean() ? 1 : -1);
-                Vec3 ax = side.scale(Math.cos(rot)).add(up.scale(Math.sin(rot))).scale(size);
-                Vec3 ay = up.scale(Math.cos(rot)).subtract(side.scale(Math.sin(rot))).scale(size * 0.8D);
-                Vec3 p0 = centre.subtract(ax).subtract(ay), p1 = centre.add(ax).subtract(ay), p2 = centre.add(ax).add(ay), p3 = centre.subtract(ax).add(ay);
-                dark.add(new Vec3[] {p0, p1, p2, p3});
-                float edge = (1.0F - fly) * (0.5F + 0.5F * lift);
-                glowEdges.add(new Vec3[] {p0, p1});
-                glowEdges.add(new Vec3[] {p1, p2});
-                glowEdges.add(new Vec3[] {p2, p3});
-                glowEdges.add(new Vec3[] {p3, p0});
-                glowSpots.add(new double[] {size * 1.4D, edge});
+                    Vec3 ax = side.scale(Math.cos(rot)).add(up.scale(Math.sin(rot)));
+                Vec3 ay = up.scale(Math.cos(rot)).subtract(side.scale(Math.sin(rot)));
+                // Скол — неровный угловатый многоугольник (5–6 вершин), а не квадрат с рамкой
+                // (замечание автора 01.10: «контур светящийся странный, не похоже на сколы»).
+                int verts = 5 + r.nextInt(2);
+                Vec3[] poly = new Vec3[verts];
+                double turn = r.nextDouble() * Math.PI * 2.0D;
+                for (int v = 0; v < verts; v++) {
+                    double ang = turn + (v + (r.nextDouble() - 0.5D) * 0.6D) / verts * Math.PI * 2.0D;
+                    double rr = size * (0.55D + 0.5D * r.nextDouble());
+                    poly[v] = centre.add(ax.scale(Math.cos(ang) * rr)).add(ay.scale(Math.sin(ang) * rr * 0.8D));
+                }
+                dark.add(poly);
+                float edge = (1.0F - fly) * (0.4F + 0.6F * lift);
+                // Светится только линия облома — одна сторона, обращённая к телу, тонко.
+                glowEdges.add(new Vec3[] {poly[0], poly[1]});
+                glowEdges.add(new Vec3[] {poly[1], poly[2]});
+                glowSpots.add(new double[] {size * 1.1D, edge});
                 spotPos.add(base.add(s.facing().scale(0.005D)));
             }
         }
         VertexConsumer d = s.buffers().getBuffer(MurimRenderTypes.impurity());
         Vec3 n = s.facing();
         for (Vec3[] q : dark) {
-            VfxDraw.vertex(d, s.pose(), q[0], n, 0.0F, 0.0F, 0.95F, 0.16F, 0.12F, 0.11F);
-            VfxDraw.vertex(d, s.pose(), q[1], n, 1.0F, 0.0F, 0.95F, 0.16F, 0.12F, 0.11F);
-            VfxDraw.vertex(d, s.pose(), q[2], n, 1.0F, 1.0F, 0.95F, 0.16F, 0.12F, 0.11F);
-            VfxDraw.vertex(d, s.pose(), q[3], n, 0.0F, 1.0F, 0.95F, 0.16F, 0.12F, 0.11F);
+            // Заливка веером из четырёхугольников (последняя вершина повторяется) — UV в
+            // центр текстуры, где она непрозрачна: края скола жёсткие, а не размытые.
+            Vec3 c0 = q[0];
+            for (int v = 1; v + 1 < q.length; v++) {
+                VfxDraw.vertex(d, s.pose(), c0, n, 0.5F, 0.5F, 0.97F, 0.2F, 0.15F, 0.13F);
+                VfxDraw.vertex(d, s.pose(), q[v], n, 0.5F, 0.5F, 0.97F, 0.24F, 0.18F, 0.15F);
+                VfxDraw.vertex(d, s.pose(), q[v + 1], n, 0.5F, 0.5F, 0.97F, 0.17F, 0.13F, 0.11F);
+                VfxDraw.vertex(d, s.pose(), q[v + 1], n, 0.5F, 0.5F, 0.97F, 0.17F, 0.13F, 0.11F);
+            }
         }
         s.buffers().endBatch(MurimRenderTypes.impurity());
         VertexConsumer g = s.buffers().getBuffer(MurimRenderTypes.impactCore());
         for (int i = 0; i < glowEdges.size(); i++) {
-            float a = (float) glowSpots.get(i / 4)[1];
+            float a = (float) glowSpots.get(i / 2)[1];
             Vec3[] e = glowEdges.get(i);
-            VfxDraw.segment(g, s.pose(), e[0], e[1], s.camera(), 0.012D, 0.8F * a, 0.88F, 1.0F, 1.0F);
+            VfxDraw.segment(g, s.pose(), e[0], e[1], s.camera(), 0.006D, 0.55F * a, 0.8F, 0.96F, 1.0F);
         }
         // Просвет под отошедшей пластиной: держится 4–8 тиков после отлёта и гаснет.
         for (int i = 0; i < spotPos.size(); i++) {
             double[] gs = glowSpots.get(i);
-            VfxDraw.billboard(g, s.pose(), spotPos.get(i), s.camera(), gs[0], (float) (0.7D * gs[1]),
+            VfxDraw.billboard(g, s.pose(), spotPos.get(i), s.camera(), gs[0], (float) (0.45D * gs[1]),
                               SEAM_EDGE.red(), SEAM_EDGE.green(), SEAM_EDGE.blue());
         }
         s.buffers().endBatch(MurimRenderTypes.impactCore());
@@ -1038,8 +1051,10 @@ public final class MeditationVfxRenderer {
             return;
         }
         AbstractClientPlayer p = s.player();
+        // Без головы: подсветка лица ложилась на глаза, а у каждого скина глаза на своём месте
+        // (замечание автора 01.10).
         BoneAnchorLayer.Bone[] order = {BoneAnchorLayer.Bone.CHEST, BoneAnchorLayer.Bone.RIGHT_SHOULDER, BoneAnchorLayer.Bone.LEFT_SHOULDER,
-            BoneAnchorLayer.Bone.HEAD, BoneAnchorLayer.Bone.RIGHT_HAND, BoneAnchorLayer.Bone.LEFT_HAND,
+            BoneAnchorLayer.Bone.RIGHT_HAND, BoneAnchorLayer.Bone.LEFT_HAND,
             BoneAnchorLayer.Bone.RIGHT_KNEE, BoneAnchorLayer.Bone.LEFT_KNEE};
         VertexConsumer g = s.buffers().getBuffer(MurimRenderTypes.impactCore());
         for (int i = 0; i < order.length; i++) {
