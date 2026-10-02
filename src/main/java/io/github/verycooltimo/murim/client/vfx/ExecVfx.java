@@ -127,7 +127,8 @@ public final class ExecVfx {
         Cast c = new Cast(payload.sourceId(), payload.layer());
         CASTS.add(c);
         if (c.layer >= 3) {
-            ClientAuraState.techniqueAura(c.entityId, 2 + Math.min(3, c.layer), 0, 52);
+            // Слабая аура и гаснет к 42-му тику: перед выходом клонов — настоящая пауза (codex 02.10).
+            ClientAuraState.techniqueAura(c.entityId, 2, 0, PREP_TO);
         }
     }
 
@@ -144,6 +145,11 @@ public final class ExecVfx {
                 c.hitAt = p.centre();
                 Minecraft mc = Minecraft.getInstance();
                 if (mc.player != null && mc.player.getId() == c.entityId) {
+                    // Надпись — по читаемому попаданию (codex 02.10), не раньше.
+                    if (c.layer >= 3) {
+                        TechniqueCaption.show(Component.translatable("technique.murim.seven_plum_blossoms.school"),
+                                Component.translatable("technique.murim.seven_plum_blossoms.execution"), 34);
+                    }
                     ImpactFrames.trigger(p.centre());
                     SpeedLines.radial(0.5F, 0.5F, 1.0F, 7, SpeedLines.WHITE);
                 }
@@ -258,9 +264,11 @@ public final class ExecVfx {
                     if (s > ct + ExecRules.PASS_TICKS && s <= ct + ExecRules.PASS_TICKS + ExecRules.DISSOLVE && c.layer >= 3) {
                         Vec3 next = ExecRules.clone(c.origin, c.centre, c.base, i, s + 1);
                         Vec3 vel = next.subtract(p).scale(0.8D);
-                        for (int k = 0; k < 4; k++) {
-                            Vec3 body = p.add((c.random.nextDouble() - 0.5D) * 0.6D, 0.2D + 1.6D * c.random.nextDouble(),
-                                    (c.random.nextDouble() - 0.5D) * 0.6D);
+                        for (int k = 0; k < 9; k++) {
+                            // Точки тела: корпус вытянут вдоль полёта — разброс вдоль скорости больше.
+                            Vec3 fwd = vel.lengthSqr() > 1.0E-6D ? vel.normalize() : Vec3.ZERO;
+                            Vec3 body = p.add(fwd.scale((c.random.nextDouble() - 0.5D) * 1.2D))
+                                    .add((c.random.nextDouble() - 0.5D) * 0.4D, 0.3D + 1.2D * c.random.nextDouble(), (c.random.nextDouble() - 0.5D) * 0.4D);
                             petal(c, body, vel.add(c.random.nextGaussian() * 0.04D, 0.02D + c.random.nextDouble() * 0.04D,
                                     c.random.nextGaussian() * 0.04D));
                         }
@@ -269,10 +277,7 @@ public final class ExecVfx {
                 if (ExecRules.finale(c.layer) && s >= ExecRules.DASH && s <= ExecRules.DASH + ExecRules.DASH_TICKS && e != null) {
                     c.dash.add(e.position().add(0.0D, 1.1D, 0.0D));
                 }
-                if (s == ExecRules.FINAL && mc.player != null && mc.player.getId() == c.entityId && c.layer >= 3) {
-                    TechniqueCaption.show(Component.translatable("technique.murim.seven_plum_blossoms.school"),
-                            Component.translatable("technique.murim.seven_plum_blossoms.execution"), 34);
-                }
+
             }
             for (Mote m : c.petals) {
                 m.prev = m.pos;
@@ -436,41 +441,49 @@ public final class ExecVfx {
     /** Поза клона: бег → замах (6 тиков до контакта) → удар → пролёт. Возвращает наклон корпуса (°). */
     private static float clonePose(PlayerModel<?> m, int i, float s, int ct) {
         float lean;
-        if (s < ct - 6) {
+        int side = i % 2 == 0 ? 1 : -1;
+        if (s < ExecRules.SPREAD) {
+            // Выход и огибание: бег.
             float ph = s * 0.9F + i;
             m.rightLeg.xRot = Mth.sin(ph) * 0.9F;
             m.leftLeg.xRot = -Mth.sin(ph) * 0.9F;
             m.leftArm.xRot = Mth.sin(ph) * 0.7F;
             m.rightArm.xRot = -0.6F - Mth.sin(ph) * 0.3F;
-            lean = 18.0F;
-        } else if (s < ct) {
-            float k = (s - (ct - 6)) / 6.0F;
-            int side = i % 2 == 0 ? 1 : -1;
-            m.rightArm.xRot = -0.6F - 2.2F * k;
-            m.rightArm.zRot = 0.4F * side * k;
-            m.leftArm.xRot = -0.4F * k;
-            m.rightLeg.xRot = -0.5F * k;
-            m.leftLeg.xRot = 0.6F * k;
-            lean = 18.0F - 10.0F * k;
-        } else if (s < ct + 3) {
-            float k = (s - ct) / 3.0F;
-            int side = i % 2 == 0 ? 1 : -1;
-            m.rightArm.xRot = -2.8F + 2.3F * k;
-            m.rightArm.yRot = 0.7F * side * k;
-            m.body.yRot = 0.5F * side * k;
-            m.leftArm.xRot = 0.6F * k;
-            m.rightLeg.xRot = -0.6F;
-            m.leftLeg.xRot = 0.7F;
-            lean = 22.0F;
-        } else {
-            m.rightArm.xRot = -1.3F;
-            m.rightArm.zRot = 0.6F;
+            lean = 15.0F;
+        } else if (s < ct - 3) {
+            // Пролёт к цели: тело вытянуто вдоль скорости, рука с мечом вперёд, ноги назад (e4–e5).
+            m.rightArm.xRot = -1.55F;
+            m.rightArm.yRot = -0.15F * side;
             m.leftArm.xRot = 0.9F;
-            m.leftArm.zRot = -0.5F;
-            // Клон 6 — высоко поднятое колено (e7).
-            m.rightLeg.xRot = i == 5 ? -1.6F : -0.4F;
-            m.leftLeg.xRot = 0.5F;
-            lean = 25.0F;
+            m.leftArm.zRot = -0.4F;
+            m.rightLeg.xRot = 0.7F;
+            m.leftLeg.xRot = 1.0F;
+            lean = 42.0F;
+        } else if (s < ct) {
+            float k = (s - (ct - 3)) / 3.0F;
+            m.rightArm.xRot = -1.55F - 1.3F * k;
+            m.rightArm.zRot = 0.4F * side * k;
+            m.leftArm.xRot = 0.9F - 0.6F * k;
+            m.rightLeg.xRot = 0.7F - 0.9F * k;
+            m.leftLeg.xRot = 1.0F;
+            lean = 42.0F - 12.0F * k;
+        } else if (s < ct + 2) {
+            float k = (s - ct) / 2.0F;
+            m.rightArm.xRot = -2.85F + 2.4F * k;
+            m.rightArm.yRot = 0.8F * side * k;
+            m.body.yRot = 0.5F * side * k;
+            m.leftArm.xRot = 0.6F;
+            m.rightLeg.xRot = -0.3F;
+            m.leftLeg.xRot = 0.9F;
+            lean = 32.0F;
+        } else {
+            m.rightArm.xRot = -0.4F;
+            m.rightArm.zRot = 0.9F * side;
+            m.leftArm.xRot = 1.0F;
+            m.leftArm.zRot = -0.6F;
+            m.rightLeg.xRot = i == 5 ? -1.6F : 0.5F;
+            m.leftLeg.xRot = 0.9F;
+            lean = 38.0F;
         }
         m.hat.copyFrom(m.head);
         m.jacket.copyFrom(m.body);
@@ -545,7 +558,7 @@ public final class ExecVfx {
         for (int k = 0; k <= n; k++) {
             double u = (k / (double) n) * drawn;
             p[k] = mid.add(axis.scale(len * (u * 2.0D - 1.0D))).add(dir.scale(-0.25D * Math.sin(Math.PI * u)));
-            w[k] = 0.08D * scale * Math.sin(Math.PI * Math.min(1.0D, u / Math.max(0.05D, drawn) * 1.02D + 0.01D));
+            w[k] = 0.08D * Math.sqrt(scale) * Math.sin(Math.PI * Math.min(1.0D, u / Math.max(0.05D, drawn) * 1.02D + 0.01D));
         }
         PlumVfx.strip(v, pose, camera, p, PlumVfx.scale(w, 3.0D), 0.14F * alpha, PINK);
         PlumVfx.strip(v, pose, camera, p, w, 0.6F * alpha, PINK);
@@ -576,9 +589,10 @@ public final class ExecVfx {
         if (t < 0.0F || t > 12.0F) {
             return;
         }
-        float a = (float) PlumVfx.curve(t, 0.0, 1.0, 3.0, 1.0, 12.0, 0.0);
+        // Короткий яркий пик и быстрое затухание; шесть тонких линий сходятся в корпусе цели.
+        float a = (float) PlumVfx.curve(t, 0.0, 1.0, 2.0, 1.0, 8.0, 0.0);
         for (int i = 0; i < 6; i++) {
-            slashLine(c, pose, camera, v, i, a, Mth.clamp(t / 1.5F, 0.0F, 1.0F), 1.8D);
+            slashLine(c, pose, camera, v, i, a, Mth.clamp(t / 1.0F, 0.0F, 1.0F), 1.6D);
         }
     }
 

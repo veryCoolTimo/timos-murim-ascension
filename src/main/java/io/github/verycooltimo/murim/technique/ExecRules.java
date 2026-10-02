@@ -16,7 +16,7 @@ public final class ExecRules {
     public static final int FIRST_CONTACT = 24;
     public static final int CONTACT_GAP = 3;
     public static final int PASS_TICKS = 6;
-    public static final int DISSOLVE = 14;
+    public static final int DISSOLVE = 6;
     public static final int DASH = 46;
     public static final int DASH_TICKS = 12;
     public static final int FINAL = 64;
