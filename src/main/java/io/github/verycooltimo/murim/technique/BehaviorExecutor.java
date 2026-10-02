@@ -49,6 +49,9 @@ public final class BehaviorExecutor {
         if (behavior instanceof TechniqueBehavior.PalmBlast palm) {
             return palmBlast(player, palm, definition.id(), power);
         }
+        if (behavior instanceof TechniqueBehavior.PlumSlash) {
+            return plumSlash(player, definition.id());
+        }
         if (behavior instanceof TechniqueBehavior.Traverse) {
             io.github.verycooltimo.murim.combat.TraverseService.toggle(player, definition.id());
             return false;
@@ -116,6 +119,70 @@ public final class BehaviorExecutor {
                 io.github.verycooltimo.murim.mastery.MasteryService.onHit(player, id, target);
             }
         }
+        return anyHit;
+    }
+
+    /**
+     * «Разрез» Семи Цветков Сливы. Слой 0 — учебный удар в ближнем секторе. Со слоя 1 —
+     * коридор вперёд: длина обрезается первой стеной на высоте груди, цель задевается, если её
+     * хитбокс пересекает коридор; каждая — один раз. Урон — базовый урон в руке × коэффициент.
+     */
+    private static boolean plumSlash(ServerPlayer player, net.minecraft.resources.ResourceLocation id) {
+        int layer = Math.max(0, io.github.verycooltimo.murim.mastery.MasteryService.layer(player, id));
+        double base = player.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE);
+        float damage = (float) (base * PlumRules.coefficient(layer));
+        Vec3 origin = player.position();
+        Vec3 look = player.getLookAngle();
+        Vec3 forward = new Vec3(look.x, 0.0D, look.z);
+        forward = forward.lengthSqr() < 1.0E-6D ? new Vec3(0.0D, 0.0D, 1.0D) : forward.normalize();
+        Vec3 right = new Vec3(-forward.z, 0.0D, forward.x);
+        double length = PlumRules.length(layer);
+        if (layer > 0) {
+            Vec3 chest = origin.add(0.0D, 1.2D, 0.0D);
+            net.minecraft.world.phys.BlockHitResult wall = player.level().clip(new net.minecraft.world.level.ClipContext(
+                    chest, chest.add(forward.scale(0.4D + length)), net.minecraft.world.level.ClipContext.Block.COLLIDER,
+                    net.minecraft.world.level.ClipContext.Fluid.NONE, player));
+            if (wall.getType() == net.minecraft.world.phys.HitResult.Type.BLOCK) {
+                length = Math.max(0.5D, wall.getLocation().distanceTo(chest) - 0.4D);
+            }
+        }
+        double reach = layer > 0 ? 0.4D + length : PlumRules.TRAINING_REACH;
+        AABB search = new AABB(origin, origin).inflate(reach + 1.0D, PlumRules.height(layer) + 1.0D, reach + 1.0D);
+        double cosLimit = Math.cos(Math.toRadians(PlumRules.TRAINING_ARC / 2.0D));
+        boolean anyHit = false;
+        int hits = 0;
+        for (LivingEntity target : candidates(player, search)) {
+            if (hits >= 6) {
+                break;
+            }
+            AABB box = target.getBoundingBox();
+            boolean inside;
+            if (layer <= 0) {
+                inside = inArc(player.getEyePosition(), look, box, PlumRules.TRAINING_REACH, cosLimit);
+            } else {
+                Vec3 c = box.getCenter().subtract(origin);
+                double half = Math.max(box.getXsize(), box.getZsize()) / 2.0D;
+                double s = c.dot(forward);
+                double r = c.dot(right);
+                inside = s >= 0.4D - half && s <= 0.4D + length + half
+                        && Math.abs(r) <= PlumRules.width(layer) / 2.0D + half
+                        && box.maxY >= origin.y && box.minY <= origin.y + PlumRules.height(layer);
+            }
+            if (!inside) {
+                continue;
+            }
+            if (target.hurt(player.damageSources().playerAttack(player), damage)) {
+                hits++;
+                anyHit = true;
+                // Толчок вперёд по коридору, не подброс в воздух (спецификация §2.4).
+                target.push(forward.x * 0.2D, 0.06D, forward.z * 0.2D);
+                target.hurtMarked = true;
+                io.github.verycooltimo.murim.mastery.MasteryService.onHit(player, id, target);
+            }
+        }
+        net.neoforged.neoforge.network.PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
+                new io.github.verycooltimo.murim.network.PlumSlashPayload(player.getId(), origin,
+                        player.getYRot(), layer, (float) length));
         return anyHit;
     }
 

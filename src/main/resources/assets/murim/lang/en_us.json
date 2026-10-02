@@ -148,5 +148,7 @@
   "technique.murim.dark_fragrance_step": "Invisible Scent Stride",
   "technique.murim.dark_fragrance_step.weakness": "After the dash you need a moment to settle into stance.",
   "technique.murim.wind_god_lightning_step": "Lightning Step (Four Wind God Steps)",
-  "technique.murim.wind_god_lightning_step.weakness": "Any hit breaks the run; useless in water or in the saddle."
+  "technique.murim.wind_god_lightning_step.weakness": "Any hit breaks the run; useless in water or in the saddle.",
+  "technique.murim.seven_plum_blossoms": "Seven Plum Blossoms Sword",
+  "technique.murim.seven_plum_blossoms.weakness": "Half a second of stance: anyone who reads it can step off the line."
 }

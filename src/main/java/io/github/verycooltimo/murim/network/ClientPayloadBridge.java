@@ -19,6 +19,7 @@ final class ClientPayloadBridge {
             return;
         }
         io.github.verycooltimo.murim.client.ClientTechniqueHandler.onTechniqueEvent(payload);
+        io.github.verycooltimo.murim.client.vfx.PlumVfx.onTechniqueEvent(payload);
     }
 
     /**
@@ -33,6 +34,10 @@ final class ClientPayloadBridge {
     /** Профиль владельца — для интерфейса. */
     public static void handleSyncProfile(SyncProfilePayload payload) {
         io.github.verycooltimo.murim.client.ClientProfileState.setProfile(payload.profile());
+    }
+
+    public static void handlePlumSlash(PlumSlashPayload payload) {
+        io.github.verycooltimo.murim.client.vfx.PlumVfx.onSlash(payload);
     }
 
     public static void handleTraverse(TraversePayloads.Event payload) {

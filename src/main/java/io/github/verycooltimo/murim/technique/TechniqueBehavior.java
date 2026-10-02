@@ -21,7 +21,8 @@ import java.util.Map;
  */
 public sealed interface TechniqueBehavior
         permits TechniqueBehavior.MeleeArc, TechniqueBehavior.ProjectileFan, TechniqueBehavior.Dash,
-                TechniqueBehavior.PalmBlast, TechniqueBehavior.Step, TechniqueBehavior.Traverse {
+                TechniqueBehavior.PalmBlast, TechniqueBehavior.Step, TechniqueBehavior.Traverse,
+                TechniqueBehavior.PlumSlash {
 
     ResourceLocation MELEE_ARC = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "melee_arc");
     ResourceLocation PROJECTILE_FAN = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "projectile_fan");
@@ -29,6 +30,7 @@ public sealed interface TechniqueBehavior
     ResourceLocation PALM_BLAST = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "palm_blast");
     ResourceLocation STEP = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "step");
     ResourceLocation TRAVERSE = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "traverse");
+    ResourceLocation PLUM_SLASH = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "plum_slash");
 
     ResourceLocation type();
 
@@ -219,13 +221,32 @@ public sealed interface TechniqueBehavior
         }
     }
 
+    /**
+     * Меч Семи Цветков Сливы, «Разрез»: коридор и урон по слою, см.
+     * {@link io.github.verycooltimo.murim.technique.PlumRules}.
+     */
+    record PlumSlash() implements TechniqueBehavior {
+        public static final MapCodec<PlumSlash> CODEC = MapCodec.unit(PlumSlash::new);
+
+        @Override
+        public float damage() {
+            return 0.0F;
+        }
+
+        @Override
+        public ResourceLocation type() {
+            return PLUM_SLASH;
+        }
+    }
+
     Map<ResourceLocation, MapCodec<? extends TechniqueBehavior>> TYPES = Map.of(
             MELEE_ARC, MeleeArc.CODEC,
             PROJECTILE_FAN, ProjectileFan.CODEC,
             DASH, Dash.CODEC,
             PALM_BLAST, PalmBlast.CODEC,
             STEP, Step.CODEC,
-            TRAVERSE, Traverse.CODEC);
+            TRAVERSE, Traverse.CODEC,
+            PLUM_SLASH, PlumSlash.CODEC);
 
     Codec<TechniqueBehavior> CODEC = ResourceLocation.CODEC
             .dispatch("type", TechniqueBehavior::type, type -> {
