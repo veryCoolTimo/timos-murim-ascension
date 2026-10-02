@@ -9,21 +9,49 @@ public final class WhirlRules {
 
     /** Тик техники, на котором идёт Разрез вверх (конец windup). */
     public static final int SLASH = 28;
-    /** Три взмаха — столпы и стены, тики после Разреза. */
-    public static final int[] WALL_STROKES = {16, 24, 32};
-    public static final int TENSION = 32;
-    public static final int CONVERGE = 44;
-    public static final int SHATTER = 58;
-    public static final int WHIRL = 68;
-    public static final int WHIRL_END = 122;
-    public static final int ARMS = 112;
-    public static final int QUIET = 132;
-    public static final int PASS = 144;
-    public static final int PASS_TICKS = 12;
-    public static final int EXIT = 156;
-    public static final int END = 168;
-    /** Импульсы урона вихря. */
-    public static final int[] PULSES = {70, 77, 84, 91, 98, 105, 112, 119};
+    /**
+     * Шкала после Разреза (автор 02.10: «слишком быстро и симметрично; вихрь — вокруг игрока, а не
+     * в противнике; сначала основная закрутка, потом медленно два мини-урагана, они проходят по
+     * противнику, потом мы»).
+     */
+    public static final int[] WALL_STROKES = {16, 26, 36};
+    public static final int TENSION = 38;
+    public static final int CONVERGE = 52;
+    public static final int SHATTER = 68;
+    public static final int WHIRL = 78;
+    public static final int WHIRL_END = 140;
+    /** Два мини-урагана: медленно отделяются от вихря, идут к цели и сквозь неё. */
+    public static final int TORNADO_FORM = 112;
+    public static final int TORNADO_GO = 136;
+    public static final int TORNADO_END = 176;
+    public static final int ARMS = TORNADO_FORM;
+    public static final int QUIET = 176;
+    public static final int PASS = 188;
+    public static final int PASS_TICKS = 10;
+    public static final int EXIT = 198;
+    public static final int END = 210;
+    /** Импульсы урона основного вихря (вокруг мастера). */
+    public static final int[] PULSES = {80, 90, 100, 110, 120, 130};
+    /** Импульс мини-урагана — раз в столько тиков, пока он в пути. */
+    public static final int TORNADO_PULSE = 6;
+
+    /** Положение мини-урагана {@code which} (−1/+1) в тик {@code since}: от края вихря к цели и на 2 блока за неё. */
+    public static net.minecraft.world.phys.Vec3 tornado(net.minecraft.world.phys.Vec3 centre, net.minecraft.world.phys.Vec3 target,
+                                                       double radius, int which, double since) {
+        net.minecraft.world.phys.Vec3 to = target.subtract(centre);
+        net.minecraft.world.phys.Vec3 dir = new net.minecraft.world.phys.Vec3(to.x, 0.0D, to.z);
+        double dist = Math.max(0.5D, dir.length());
+        dir = dir.scale(1.0D / dist);
+        net.minecraft.world.phys.Vec3 side = new net.minecraft.world.phys.Vec3(-dir.z, 0.0D, dir.x);
+        net.minecraft.world.phys.Vec3 start = centre.add(dir.scale(radius * 0.7D)).add(side.scale(which * radius * 0.55D));
+        net.minecraft.world.phys.Vec3 end = target.add(dir.scale(2.2D)).add(side.scale(which * 0.4D));
+        double k = Math.max(0.0D, Math.min(1.0D, (since - TORNADO_GO) / (double) (TORNADO_END - TORNADO_GO)));
+        // Разгон медленный, к цели — быстрее; пути выгнуты наружу и сходятся на цели.
+        double e = k * k * (3.0D - 2.0D * k);
+        net.minecraft.world.phys.Vec3 p = start.lerp(end, e);
+        double bow = Math.sin(Math.PI * e) * radius * 0.35D * which * (which > 0 ? 1.0D : 0.8D);
+        return p.add(side.scale(bow));
+    }
 
     public static final double DMG_SLASH = 0.8D;
     public static final double DMG_WALL = 0.25D;
@@ -34,15 +62,16 @@ public final class WhirlRules {
     public static final double MAX_PULL = 0.16D;
 
     /** Радиус зоны по слою (блоки). */
+    /** Радиус вихря вокруг мастера по слою (блоки). */
     public static double radius(int layer) {
         return switch (Math.max(0, Math.min(7, layer))) {
-            case 0, 1 -> 2.0D;
-            case 2 -> 2.5D;
-            case 3 -> 3.0D;
-            case 4 -> 3.5D;
-            case 5 -> 4.0D;
-            case 6 -> 4.5D;
-            default -> 5.0D;
+            case 0, 1 -> 1.6D;
+            case 2 -> 2.0D;
+            case 3 -> 2.4D;
+            case 4 -> 2.8D;
+            case 5 -> 3.1D;
+            case 6 -> 3.4D;
+            default -> 3.7D;
         };
     }
 

@@ -55,7 +55,7 @@ public final class WhirlVfx {
     private static int clientTicks;
 
     /** Столп: угол вокруг центра, высота, наклон, тик рождения (после Разреза). */
-    private record Pillar(double angle, double height, double lean, int born) {
+    private record Pillar(double angle, double height, double lean, int born, double reach) {
     }
 
     /** Частица на ленте ветра или лепесток: свободный полёт, потом подхват вихрем. */
@@ -71,6 +71,12 @@ public final class WhirlVfx {
         final double size;
         final Vec3[] trail;
         int count;
+        /** Розовая лента (материал стен), а не белый ветер. */
+        boolean pink;
+        /** Не подчиняется полю основного вихря (лепестки мини-ураганов). */
+        boolean free;
+        /** Наклон орбиты: вихрь — спирали, а не плоские кольца (codex 02.10). */
+        double tilt;
 
         Mote(Vec3 pos, Vec3 vel, int life, boolean petal, int cell, float spin, double size, int trail) {
             this.pos = pos;
@@ -122,6 +128,7 @@ public final class WhirlVfx {
         final Random random;
         int slashTick = -1;
         Vec3 centre;
+        Vec3 target;
         Vec3 forward;
         Vec3 right;
         final List<Pillar> pillars = new ArrayList<>();
@@ -193,6 +200,7 @@ public final class WhirlVfx {
         c.forward = new Vec3(f.x, 0.0D, f.z).normalize();
         c.right = new Vec3(-c.forward.z, 0.0D, c.forward.x);
         c.centre = p.centre();
+        c.target = p.target();
         c.slashTick = clientTicks;
         buildPillars(c);
         Minecraft mc = Minecraft.getInstance();
@@ -206,7 +214,12 @@ public final class WhirlVfx {
             }
             SpeedLines.radial(0.5F, 0.6F, 0.8F, 7, SpeedLines.WHITE);
         }
-        burst(c, c.centre.add(0.0D, 0.4D, 0.0D), 10, 0.25D, true);
+        burst(c, slashBase(c).add(0.0D, 0.4D, 0.0D), 10, 0.25D, true);
+    }
+
+    /** Разрез вверх (w5) — столп из пола перед мастером. */
+    private static Vec3 slashBase(Cast c) {
+        return c.centre.add(c.forward.scale(1.5D));
     }
 
     private static Component school() {
@@ -222,10 +235,11 @@ public final class WhirlVfx {
         int n = WhirlRules.pillars(c.layer);
         double h = WhirlRules.height(c.layer);
         for (int i = 0; i < n; i++) {
-            double a = Math.PI * 2.0D * i / n + (c.random.nextDouble() - 0.5D) * 0.25D;
+            // Неровно (автор 02.10: «слишком симметрично»): углы, радиус, высота, наклон — вразнобой.
+            double a = Math.PI * 2.0D * i / n + (c.random.nextDouble() - 0.5D) * 0.7D;
             int stroke = WhirlRules.WALL_STROKES[i % 3];
-            c.pillars.add(new Pillar(a, h * (0.7D + 0.3D * c.random.nextDouble()), (c.random.nextDouble() - 0.5D) * 0.5D,
-                    stroke + (i / 3) % 2));
+            c.pillars.add(new Pillar(a, h * (0.55D + 0.45D * c.random.nextDouble()), (c.random.nextDouble() - 0.5D) * 0.9D,
+                    stroke + c.random.nextInt(4), 0.8D + 0.35D * c.random.nextDouble()));
         }
     }
 
@@ -286,6 +300,26 @@ public final class WhirlVfx {
             }
         }
         // Распад стен в пыль (w9): с каждой точки стен и столпов — фрагмент с инерцией внутрь.
+        if (s >= WhirlRules.SHATTER && s < WhirlRules.SHATTER + 6 && WhirlRules.whirl(c.layer)) {
+            // Стены дробятся от пересечений: фрагменты рождаются прямо на лентах стен,
+            // розовые, с инерцией внутрь — и тот же материал подхватывает вихрь.
+            int n = c.pillars.size();
+            for (int i = 0; i < n; i++) {
+                Vec3 pa = pillarPoint(c, c.pillars.get(i), 0.2D + 0.6D * c.random.nextDouble(), s);
+                Vec3 pb = pillarPoint(c, c.pillars.get((i + 1) % n), 0.2D + 0.6D * c.random.nextDouble(), s);
+                for (int k = 0; k < 2; k++) {
+                    Vec3 at = pa.lerp(pb, c.random.nextDouble());
+                    Vec3 in = c.centre.subtract(at);
+                    in = new Vec3(in.x, 0.0D, in.z).normalize();
+                    Vec3 tan = new Vec3(in.z, 0.0D, -in.x);
+                    Mote m = new Mote(at, in.scale(0.14D).add(tan.scale(0.1D)), 40 + c.random.nextInt(20), false, 0, 0.0F,
+                            0.1D + 0.08D * c.random.nextDouble(), 14);
+                    m.pink = c.layer >= 3;
+                    m.tilt = (c.random.nextDouble() - 0.5D) * 0.8D;
+                    c.motes.add(m);
+                }
+            }
+        }
         if (s == WhirlRules.SHATTER && WhirlRules.whirl(c.layer)) {
             for (Pillar p : c.pillars) {
                 for (double u = 0.1D; u <= 1.0D; u += 0.15D) {
@@ -313,7 +347,10 @@ public final class WhirlVfx {
                 double a = c.random.nextDouble() * Math.PI * 2.0D;
                 double rr = 1.2D + (r - 1.2D) * c.random.nextDouble();
                 Vec3 at = c.centre.add(Math.cos(a) * rr, 0.3D + c.random.nextDouble() * h * 0.8D, Math.sin(a) * rr);
-                c.motes.add(new Mote(at, Vec3.ZERO, 26 + c.random.nextInt(14), false, 0, 0.0F, 0.18D + 0.2D * c.random.nextDouble(), 16));
+                Mote m = new Mote(at, Vec3.ZERO, 26 + c.random.nextInt(14), false, 0, 0.0F, 0.14D + 0.16D * c.random.nextDouble(), 16);
+                m.tilt = (c.random.nextDouble() - 0.5D) * 1.2D;
+                m.pink = c.layer >= 3 && c.random.nextInt(3) == 0;
+                c.motes.add(m);
             }
             if (c.layer >= 3) {
                 for (int i = 0; i < 3; i++) {
@@ -331,17 +368,43 @@ public final class WhirlVfx {
                 CameraShakeHandler.quake(0.35F, 14);
             }
         }
-        // Рукава и надпись (w12–w13).
-        if (s == WhirlRules.ARMS && WhirlRules.finale(c.layer) && own) {
-            TechniqueCaption.show(school(), form("whirlwind"), 40);
-            SpeedLines.radial(0.5F, 0.5F, 0.7F, 10, SpeedLines.WHITE);
+        // Два мини-урагана (автор 02.10): медленно отделяются от вихря, идут к цели и сквозь неё.
+        if (s == WhirlRules.TORNADO_FORM && WhirlRules.finale(c.layer) && own) {
+            TechniqueCaption.show(school(), form("whirlwind"), 44);
+        }
+        if (s == WhirlRules.TORNADO_GO && own) {
+            SpeedLines.radial(0.5F, 0.5F, 0.6F, 8, SpeedLines.WHITE);
+        }
+        if (WhirlRules.finale(c.layer) && c.target != null && s >= WhirlRules.TORNADO_FORM && s < WhirlRules.TORNADO_END) {
+            double grow = Mth.clamp((s - WhirlRules.TORNADO_FORM) / (double) (WhirlRules.TORNADO_GO - WhirlRules.TORNADO_FORM), 0.0D, 1.0D);
+            for (int which = -1; which <= 1; which += 2) {
+                Vec3 at = WhirlRules.tornado(c.centre, c.target, r, which, s);
+                for (int i = 0; i < 2; i++) {
+                    double a = c.random.nextDouble() * Math.PI * 2.0D;
+                    double y = c.random.nextDouble() * 3.0D * grow;
+                    double rad = 0.3D + 0.5D * (y / 3.0D);
+                    Vec3 pos = at.add(Math.cos(a) * rad, y, Math.sin(a) * rad);
+                    Vec3 tan = new Vec3(-Math.sin(a), 0.06D, Math.cos(a)).scale(0.22D * which);
+                    Mote m = new Mote(pos, tan, 18 + c.random.nextInt(10), c.layer >= 3 && i == 0, c.random.nextInt(4),
+                            (float) (c.random.nextDouble() - 0.5D), i == 0 ? 0.09D : 0.08D, i == 0 ? 0 : 10);
+                    m.free = true;
+                    m.pink = c.layer >= 3;
+                    c.motes.add(m);
+                }
+                // Проход сквозь цель: выброс лепестков и пыли.
+                if (s == (WhirlRules.TORNADO_GO + WhirlRules.TORNADO_END) / 2 + 4) {
+                    burst(c, c.target.add(0.0D, 1.0D, 0.0D), 14, 0.3D, c.layer >= 3);
+                    dust(c, c.target, 5);
+                }
+            }
         }
         // Тихая пауза (w14–w15): один медленный лепесток плывёт к цели.
         if (s == WhirlRules.QUIET && WhirlRules.finale(c.layer)) {
-            c.slowPetal = c.centre.add(c.right.scale(0.8D)).add(c.forward.scale(0.6D)).add(0.0D, 2.4D, 0.0D);
+            Vec3 tp = c.target != null ? c.target : c.centre;
+            c.slowPetal = tp.add(c.right.scale(0.8D)).add(c.forward.scale(-0.4D)).add(0.0D, 2.4D, 0.0D);
         }
         if (c.slowPetal != null && s < WhirlRules.PASS + 4) {
-            Vec3 goal = c.centre.add(0.0D, 1.6D, 0.0D);
+            Vec3 goal = (c.target != null ? c.target : c.centre).add(0.0D, 1.6D, 0.0D);
             c.slowPetal = c.slowPetal.add(goal.subtract(c.slowPetal).scale(0.06D));
         }
         // Финальный проход: записываем путь мастера — по нему тянется тонкий след разреза.
@@ -356,8 +419,9 @@ public final class WhirlVfx {
             }
         }
         // Выход: вал дыма по зоне → облако.
-        if (s == WhirlRules.WHIRL_END && WhirlRules.whirl(c.layer)) {
-            smoke(c, c.centre, r, 18 + 3 * Math.min(4, c.layer));
+        // Дым — только после финала, у земли и следов (codex: пауза не должна выглядеть затуханием взрыва).
+        if (s == WhirlRules.EXIT && WhirlRules.whirl(c.layer)) {
+            smoke(c, c.centre, r * 0.8D, 8 + 2 * Math.min(4, c.layer));
         }
     }
 
@@ -474,15 +538,20 @@ public final class WhirlVfx {
             m.prev = m.pos;
             m.age++;
             Vec3 v = m.vel;
-            if (field) {
+            if (field && !m.free) {
                 // Поле вихря: касательная скорость растёт к краю потока, лёгкое втягивание, подъём.
                 Vec3 rel = m.pos.subtract(c.centre);
                 Vec3 flat = new Vec3(rel.x, 0.0D, rel.z);
                 double d = Math.max(0.3D, flat.length());
                 Vec3 in = flat.scale(-1.0D / d);
                 Vec3 tan = new Vec3(-in.z, 0.0D, in.x).scale(-1.0D);
-                double swirl = (m.petal ? 0.32D : 0.42D) * Math.min(1.0D, d / 1.5D) * Math.min(1.0D, (s - WhirlRules.SHATTER) / 10.0D);
-                Vec3 target = tan.scale(swirl).add(in.scale(d > r * 0.9D ? 0.05D : -0.01D)).add(0.0D, 0.012D, 0.0D);
+                double ang0 = Math.atan2(rel.z, rel.x);
+                // Неравномерный поток: сила вращения гуляет по углу и во времени.
+                double gust = 1.0D + 0.4D * Math.sin(ang0 * 2.0D + s * 0.07D) + 0.2D * Math.sin(ang0 * 5.0D - s * 0.13D);
+                double swirl = (m.petal ? 0.26D : 0.34D) * gust * Math.min(1.0D, d / 1.5D) * Math.min(1.0D, (s - WhirlRules.SHATTER) / 14.0D);
+                double ang = Math.atan2(rel.z, rel.x);
+                Vec3 target = tan.scale(swirl).add(in.scale(d > r * 0.9D ? 0.05D : -0.01D))
+                        .add(0.0D, 0.012D + m.tilt * swirl * Math.cos(ang), 0.0D);
                 v = v.add(target.subtract(v).scale(m.petal ? 0.12D : 0.2D));
             } else {
                 v = new Vec3(v.x * 0.93D, v.y * 0.93D - (m.petal ? 0.0025D : 0.0D), v.z * 0.93D);
@@ -517,7 +586,7 @@ public final class WhirlVfx {
     }
 
     private static Vec3 pillarBase(Cast c, Pillar p, float s) {
-        double rr = shell(c, s);
+        double rr = shell(c, s) * p.reach();
         return c.centre.add(Math.cos(p.angle()) * rr, 0.02D, Math.sin(p.angle()) * rr);
     }
 
@@ -561,7 +630,7 @@ public final class WhirlVfx {
                 if (c.centre != null && s >= 0.0F) {
                     slashPillar(c, pose, camera, air, s);
                     pillarsAndWalls(c, pose, camera, air, s);
-                    arms(c, pose, camera, air, s);
+                    tornadoes(c, pose, camera, air, s);
                     passTrail(c, pose, camera, air, s);
                     cuts(c, pose, air, s);
                 }
@@ -581,8 +650,9 @@ public final class WhirlVfx {
                     }
                     float life = (m.age + partial) / m.life;
                     float a = (float) PlumVfx.curve(life, 0.0, 0.0, 0.15, 1.0, 0.6, 0.8, 1.0, 0.0);
-                    PlumVfx.strip(air, pose, camera, p, PlumVfx.scale(w, 2.0D), 0.12F * a, COLD);
-                    PlumVfx.strip(air, pose, camera, p, w, 0.38F * a, COLD);
+                    VfxColour col = m.pink ? PINK : COLD;
+                    PlumVfx.strip(air, pose, camera, p, PlumVfx.scale(w, 2.0D), 0.12F * a, col);
+                    PlumVfx.strip(air, pose, camera, p, w, 0.38F * a, col);
                     PlumVfx.strip(air, pose, camera, p, PlumVfx.scale(w, 0.25D), 0.9F * a, EDGE);
                 }
                 buffers.endBatch(MurimRenderTypes.airBand());
@@ -615,7 +685,7 @@ public final class WhirlVfx {
                     RenderType petals = MurimRenderTypes.plumPetals();
                     VertexConsumer pc = buffers.getBuffer(petals);
                     for (Mote m : c.motes) {
-                        if (!m.petal) {
+                        if (!m.petal || m.pos.distanceToSqr(camera) < 1.6D) {
                             continue;
                         }
                         float a = Mth.clamp((m.life - m.age - partial) / 12.0F, 0.0F, 1.0F);
@@ -629,7 +699,7 @@ public final class WhirlVfx {
                     RenderType glowType = MurimRenderTypes.mote();
                     VertexConsumer g = buffers.getBuffer(glowType);
                     for (Mote m : c.motes) {
-                        if (m.petal) {
+                        if (m.petal && m.pos.distanceToSqr(camera) > 1.6D) {
                             float a = Mth.clamp((m.life - m.age - partial) / 12.0F, 0.0F, 1.0F);
                             PlumVfx.glow(g, pose, camera, m.prev.lerp(m.pos, partial), m.size * 2.0D, 0.35F * a, PINK);
                         }
@@ -660,7 +730,7 @@ public final class WhirlVfx {
         float[] a = new float[n + 1];
         for (int i = 0; i <= n; i++) {
             double u = i / (double) n * grow;
-            p[i] = c.centre.add(c.right.scale(0.25D * Math.sin(Math.PI * u) - 0.1D * u)).add(0.0D, h * u, 0.0D);
+            p[i] = slashBase(c).add(c.right.scale(0.25D * Math.sin(Math.PI * u) - 0.1D * u)).add(0.0D, h * u, 0.0D);
             double beat = Math.max(0.0D, Math.sin(Math.PI * 2.0D * (s / 12.0D - u)));
             w[i] = 0.28D * (1.0D - 0.85D * u) * (1.0D + 0.4D * beat * beat);
             a[i] = fade;
@@ -676,7 +746,7 @@ public final class WhirlVfx {
             double[] qw = new double[m + 1];
             for (int i = 0; i <= m; i++) {
                 double th = Math.PI * (0.15D + 0.7D * i / m);
-                q[i] = c.centre.add(c.right.scale(1.5D * Math.cos(th))).add(c.forward.scale(-0.6D * Math.sin(th))).add(0.0D, 0.05D, 0.0D);
+                q[i] = slashBase(c).add(c.right.scale(1.5D * Math.cos(th))).add(c.forward.scale(-0.6D * Math.sin(th))).add(0.0D, 0.05D, 0.0D);
                 qw[i] = 0.07D * Math.sin(Math.PI * i / m);
             }
             float fa = (float) PlumVfx.curve(s, 0.0, 0.9, 4.0, 0.0);
@@ -724,6 +794,25 @@ public final class WhirlVfx {
             return;
         }
         int n = c.pillars.size();
+        // Поверхность стены (w6): широкая полупрозрачная плоскость между соседними столпами.
+        for (int i = 0; i < n; i++) {
+            Pillar a = c.pillars.get(i);
+            Pillar b = c.pillars.get((i + 1) % n);
+            float t = s - Math.max(a.born(), b.born()) - 2.0F;
+            if (t < 0.0F) {
+                continue;
+            }
+            float sa = fade * (float) Mth.clamp(t / 4.0D, 0.0D, 1.0D);
+            int m = 6;
+            Vec3[] q = new Vec3[m + 1];
+            double[] w = new double[m + 1];
+            for (int j = 0; j <= m; j++) {
+                double u = j / (double) m;
+                q[j] = pillarPoint(c, a, 0.5D, s).lerp(pillarPoint(c, b, 0.5D, s), u);
+                w[j] = Math.min(a.height(), b.height()) * 0.38D * (0.85D + 0.15D * Math.sin(Math.PI * u));
+            }
+            PlumVfx.strip(v, pose, camera, q, w, 0.07F * sa * (float) (1.0D + conv), pink ? PINK : COLD);
+        }
         for (int i = 0; i < n; i++) {
             Pillar a = c.pillars.get(i);
             Pillar b = c.pillars.get((i + 1) % n);
@@ -747,7 +836,7 @@ public final class WhirlVfx {
                     out = new Vec3(out.x, 0.0D, out.z).normalize().scale(0.35D);
                     // Разрез выгнут наружу, как след взмаха; пересечения дают узлы.
                     q[j] = pa.lerp(pb, u).add(out.scale(Math.sin(Math.PI * u)));
-                    w[j] = 0.08D * Math.sin(Math.PI * Math.min(1.0D, u / Math.max(0.05D, shown) * 1.02D + 0.01D));
+                    w[j] = 0.16D * Math.sin(Math.PI * Math.min(1.0D, u / Math.max(0.05D, shown) * 1.02D + 0.01D));
                 }
                 PlumVfx.strip(v, pose, camera, q, PlumVfx.scale(w, 3.2D), 0.09F * wa, pink ? PINK : COLD);
                 PlumVfx.strip(v, pose, camera, q, w, 0.5F * wa, pink ? PINK : COLD);
@@ -770,41 +859,34 @@ public final class WhirlVfx {
         }
     }
 
-    /** Два вихревых рукава по сторонам мастера к цели (w13): спирали вокруг осей коридора. */
-    private static void arms(Cast c, PoseStack.Pose pose, Vec3 camera, VertexConsumer v, float s) {
-        if (!WhirlRules.finale(c.layer) || s < WhirlRules.ARMS || s > WhirlRules.QUIET + 8) {
+    /**
+     * Мини-ураганы: столбы из трёх закрученных лент вокруг движущейся оси (шире вверху), белое
+     * ядро; растут на краю вихря, идут к цели и рассыпаются за ней.
+     */
+    private static void tornadoes(Cast c, PoseStack.Pose pose, Vec3 camera, VertexConsumer v, float s) {
+        if (!WhirlRules.finale(c.layer) || c.target == null || s < WhirlRules.TORNADO_FORM || s > WhirlRules.TORNADO_END + 10) {
             return;
         }
-        Minecraft mc = Minecraft.getInstance();
-        Entity e = mc.level.getEntity(c.entityId);
-        if (e == null) {
-            return;
-        }
-        Vec3 from = e.position().add(0.0D, 1.0D, 0.0D);
-        Vec3 to = c.centre.add(c.forward.scale(1.5D)).add(0.0D, 1.0D, 0.0D);
-        Vec3 axis = to.subtract(from);
-        double len = axis.length();
-        if (len < 1.0D) {
-            return;
-        }
-        Vec3 dir = axis.scale(1.0D / len);
-        Vec3 side = new Vec3(-dir.z, 0.0D, dir.x);
-        float in = (float) Mth.clamp((s - WhirlRules.ARMS) / 6.0D, 0.0D, 1.0D);
-        float out = (float) Mth.clamp((WhirlRules.QUIET + 8 - s) / 8.0D, 0.0D, 1.0D);
-        for (int arm = -1; arm <= 1; arm += 2) {
+        double r = WhirlRules.radius(c.layer);
+        float grow = (float) Mth.clamp((s - WhirlRules.TORNADO_FORM) / (double) (WhirlRules.TORNADO_GO - WhirlRules.TORNADO_FORM), 0.0D, 1.0D);
+        float out = (float) Mth.clamp((WhirlRules.TORNADO_END + 10 - s) / 10.0D, 0.0D, 1.0D);
+        double h = 3.2D * grow;
+        for (int which = -1; which <= 1; which += 2) {
+            Vec3 at = WhirlRules.tornado(c.centre, c.target, r, which, s);
             for (int strand = 0; strand < 3; strand++) {
-                int n = 40;
+                int n = 28;
                 Vec3[] q = new Vec3[n + 1];
                 double[] w = new double[n + 1];
                 for (int i = 0; i <= n; i++) {
-                    double u = i / (double) n * in;
-                    double ph = u * Math.PI * 6.0D - s * 0.6D + strand * 2.1D;
-                    double rad = 0.9D * (0.4D + 0.6D * Math.sin(Math.PI * Math.min(1.0D, u * 1.1D)));
-                    Vec3 centre = from.add(dir.scale(len * u)).add(side.scale(arm * 1.4D));
-                    q[i] = centre.add(side.scale(Math.cos(ph) * rad)).add(0.0D, Math.sin(ph) * rad, 0.0D);
-                    w[i] = 0.1D * Math.sin(Math.PI * Math.min(1.0D, u + 0.02D));
+                    double u = i / (double) n;
+                    double ph = u * Math.PI * 5.0D - s * 0.5D * which + strand * 2.1D;
+                    double rad = (0.25D + 0.7D * u) * (0.9D + 0.1D * Math.sin(s * 0.3D + strand));
+                    // Ось чуть гнётся от движения.
+                    Vec3 axis = at.add(0.0D, h * u, 0.0D).add(c.forward.scale(-0.3D * u * u));
+                    q[i] = axis.add(Math.cos(ph) * rad, 0.0D, Math.sin(ph) * rad);
+                    w[i] = 0.07D * Math.sin(Math.PI * Math.min(1.0D, u + 0.03D));
                 }
-                PlumVfx.strip(v, pose, camera, q, PlumVfx.scale(w, 2.5D), 0.12F * out, PINK);
+                PlumVfx.strip(v, pose, camera, q, PlumVfx.scale(w, 2.6D), 0.12F * out, PINK);
                 PlumVfx.strip(v, pose, camera, q, w, 0.5F * out, PINK);
                 PlumVfx.strip(v, pose, camera, q, PlumVfx.scale(w, 0.35D), 0.9F * out, EDGE);
             }

@@ -120,11 +120,11 @@ public final class ModAttachments {
 
     /**
      * Вихрь Цветущей Сливы в работе: {центр x, y, z, yaw, слой, первое попадание 0/1, финал
-     * попал 0/1, id цели или −1}. Не сохраняется — живёт одну технику.
+     * попал 0/1, id цели или −1, точка цели x, y, z}. Не сохраняется — живёт одну технику.
      */
     public static final Supplier<AttachmentType<double[]>> WHIRL =
             ATTACHMENT_TYPES.register("plum_whirl",
-                    () -> AttachmentType.<double[]>builder(() -> new double[] {0, 0, 0, 0, 0, 0, 0, -1}).build());
+                    () -> AttachmentType.<double[]>builder(() -> new double[] {0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0}).build());
 
     /** Последний взмах основы меча: {форма, тик}. Не сохраняется — живёт тики. */
     public static final Supplier<AttachmentType<int[]>> FOUNDATION_SWING =

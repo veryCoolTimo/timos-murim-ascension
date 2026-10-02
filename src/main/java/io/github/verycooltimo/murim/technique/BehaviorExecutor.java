@@ -484,14 +484,16 @@ public final class BehaviorExecutor {
             }
             return hit;
         }
+        // Цель — по взгляду до 9 блоков; вихрь строится ВОКРУГ МАСТЕРА (автор 02.10), к цели потом
+        // идут два мини-урагана.
         LivingEntity target = null;
         double best = Double.MAX_VALUE;
         double cone = Math.cos(Math.toRadians(30.0D));
-        for (LivingEntity t : candidates(player, player.getBoundingBox().inflate(6.5D))) {
+        for (LivingEntity t : candidates(player, player.getBoundingBox().inflate(9.5D))) {
             Vec3 to = t.position().subtract(origin);
             Vec3 flat = new Vec3(to.x, 0.0D, to.z);
             double d = flat.length();
-            if (d < 0.5D || d > 6.0D || flat.normalize().dot(forward) < cone || !player.hasLineOfSight(t)) {
+            if (d < 0.5D || d > 9.0D || flat.normalize().dot(forward) < cone || !player.hasLineOfSight(t)) {
                 continue;
             }
             if (d < best) {
@@ -499,16 +501,17 @@ public final class BehaviorExecutor {
                 target = t;
             }
         }
-        Vec3 centre = target != null ? new Vec3(target.getX(), origin.y, target.getZ()) : origin.add(forward.scale(4.0D));
+        Vec3 aim = target != null ? new Vec3(target.getX(), origin.y, target.getZ()) : origin.add(forward.scale(6.0D));
         player.setData(io.github.verycooltimo.murim.registry.ModAttachments.WHIRL, new double[] {
-                centre.x, centre.y, centre.z, player.getYRot(), layer, 0, 0, target == null ? -1 : target.getId()});
-        // Разрез вверх: столп из пола у центра — задевает стоящих рядом с ним.
+                origin.x, origin.y, origin.z, player.getYRot(), layer, 0, 0, target == null ? -1 : target.getId(),
+                aim.x, aim.y, aim.z});
+        // Разрез вверх (w5): столп из пола перед мастером.
         boolean hit = false;
-        for (LivingEntity t : whirlInside(player, centre, 1.4D, layer)) {
+        for (LivingEntity t : whirlInside(player, origin.add(forward.scale(1.5D)), 1.4D, layer)) {
             hit |= whirlHurt(player, id, t, base * WhirlRules.DMG_SLASH);
         }
         net.neoforged.neoforge.network.PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
-                new io.github.verycooltimo.murim.network.WhirlPayload(player.getId(), centre, player.getYRot(), layer, 0));
+                new io.github.verycooltimo.murim.network.WhirlPayload(player.getId(), origin, aim, player.getYRot(), layer, 0));
         return hit;
     }
 
@@ -516,65 +519,27 @@ public final class BehaviorExecutor {
     public static void whirlTick(ServerPlayer player, net.minecraft.resources.ResourceLocation id, int since) {
         double[] w = player.getData(io.github.verycooltimo.murim.registry.ModAttachments.WHIRL);
         int layer = (int) w[4];
-        if (layer <= 0) {
+        if (layer <= 0 || w.length < 11) {
             return;
         }
         Vec3 centre = new Vec3(w[0], w[1], w[2]);
+        Vec3 aim = new Vec3(w[8], w[9], w[10]);
         double r = WhirlRules.radius(layer);
         double base = player.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE);
-        // Столпы: касание кольца столпов на 1-м и 3-м взмахе.
+        // Столпы и стены — вокруг мастера: задевают тех, кто подошёл вплотную.
         if (WhirlRules.pillars(layer) > 0 && (since == WhirlRules.WALL_STROKES[0] || since == WhirlRules.WALL_STROKES[2])) {
             for (LivingEntity t : whirlInside(player, centre, r + 1.2D, layer)) {
-                double d = flatDistance(t.position(), centre);
-                if (Math.abs(d - r) < 1.2D) {
+                if (Math.abs(flatDistance(t.position(), centre) - r) < 1.2D) {
                     whirlHurt(player, id, t, base * WhirlRules.DMG_WALL);
                 }
             }
         }
-        // Стены держат: изнутри наружу не выйти, пока стоят (32–58), — мягкий толчок внутрь.
-        if (WhirlRules.walls(layer) && since >= WhirlRules.WALL_STROKES[2] && since < WhirlRules.SHATTER) {
-            double shell = since < WhirlRules.CONVERGE ? r
-                    : r * (1.0D - 0.45D * Math.min(1.0D, (since - WhirlRules.CONVERGE) / 10.0D));
-            for (LivingEntity t : whirlInside(player, centre, shell + 1.0D, layer)) {
-                double d = flatDistance(t.position(), centre);
-                if (d > shell - 0.6D && d < shell + 1.0D) {
-                    Vec3 in = centre.subtract(t.position());
-                    in = new Vec3(in.x, 0.0D, in.z).normalize().scale(0.18D);
-                    t.setDeltaMovement(t.getDeltaMovement().multiply(0.3D, 1.0D, 0.3D).add(in));
-                    t.hurtMarked = true;
-                }
-            }
-            if (since == WhirlRules.CONVERGE + 10) {
-                for (LivingEntity t : whirlInside(player, centre, r, layer)) {
-                    whirlHurt(player, id, t, base * WhirlRules.DMG_CONVERGE);
-                }
+        if (WhirlRules.walls(layer) && since == WhirlRules.CONVERGE + 12) {
+            for (LivingEntity t : whirlInside(player, centre, r, layer)) {
+                whirlHurt(player, id, t, base * WhirlRules.DMG_CONVERGE);
             }
         }
-        // Вихрь: притяжение к центру и восемь импульсов урона.
-        if (WhirlRules.whirl(layer) && since >= WhirlRules.SHATTER && since < WhirlRules.WHIRL_END + 6) {
-            double ramp = Math.min(1.0D, (since - WhirlRules.SHATTER) / 10.0D)
-                    * Math.min(1.0D, (WhirlRules.WHIRL_END + 6 - since) / 6.0D);
-            for (LivingEntity t : whirlInside(player, centre, r + 1.0D, layer)) {
-                Vec3 to = centre.subtract(t.position());
-                Vec3 flat = new Vec3(to.x, 0.0D, to.z);
-                double d = flat.length();
-                if (d < 1.2D) {
-                    continue;
-                }
-                boolean boss = t.getType().is(net.neoforged.neoforge.common.Tags.EntityTypes.BOSSES);
-                double k = (t instanceof net.minecraft.world.entity.player.Player ? 0.6D : boss ? 0.2D : 1.0D) * ramp
-                        * Math.min(1.0D, (d - 1.2D) / 1.0D);
-                Vec3 in = flat.normalize();
-                Vec3 tangent = new Vec3(-in.z, 0.0D, in.x);
-                Vec3 add = in.scale(0.025D * k).add(tangent.scale(0.012D * k));
-                Vec3 v = t.getDeltaMovement().add(add);
-                double hv = Math.sqrt(v.x * v.x + v.z * v.z);
-                if (hv > WhirlRules.MAX_PULL) {
-                    v = new Vec3(v.x / hv * WhirlRules.MAX_PULL, v.y, v.z / hv * WhirlRules.MAX_PULL);
-                }
-                t.setDeltaMovement(v);
-                t.hurtMarked = true;
-            }
+        if (WhirlRules.whirl(layer)) {
             for (int p : WhirlRules.PULSES) {
                 if (p == since) {
                     for (LivingEntity t : whirlInside(player, centre, r, layer)) {
@@ -586,27 +551,41 @@ public final class BehaviorExecutor {
                 whirlCuts(player, centre, r, layer);
             }
         }
-        // Финал: плавный проход сбоку цели за спину (рывок без телепорта), урон по факту.
+        // Два мини-урагана: идут к цели и сквозь неё; кто внутри — получает удар и его крутит.
+        if (WhirlRules.finale(layer) && since >= WhirlRules.TORNADO_GO && since <= WhirlRules.TORNADO_END) {
+            for (int which = -1; which <= 1; which += 2) {
+                Vec3 at = WhirlRules.tornado(centre, aim, r, which, since);
+                for (LivingEntity t : whirlInside(player, at, 1.4D, layer)) {
+                    Vec3 in = at.subtract(t.position());
+                    Vec3 tan = new Vec3(-in.z, 0.0D, in.x).normalize().scale(0.08D * which);
+                    t.setDeltaMovement(t.getDeltaMovement().multiply(0.6D, 1.0D, 0.6D)
+                            .add(new Vec3(in.x, 0.0D, in.z).scale(0.15D)).add(tan).add(0.0D, 0.02D, 0.0D));
+                    t.hurtMarked = true;
+                    if (since % WhirlRules.TORNADO_PULSE == 0) {
+                        whirlHurt(player, id, t, base * WhirlRules.DMG_PULSE);
+                    }
+                }
+            }
+        }
+        // Финал: мастер проходит мимо цели и встаёт чуть за ней (≈1,5 блока), без телепорта.
         if (WhirlRules.finale(layer) && since == WhirlRules.PASS) {
-            LivingEntity target = w[7] >= 0 && player.level().getEntity((int) w[7]) instanceof LivingEntity le && le.isAlive()
-                    && flatDistance(le.position(), centre) < r + 2.0D ? le : null;
-            Vec3 aim = target != null ? target.position() : centre;
-            Vec3 to = aim.subtract(player.position());
+            LivingEntity target = w[7] >= 0 && player.level().getEntity((int) w[7]) instanceof LivingEntity le && le.isAlive() ? le : null;
+            Vec3 goal = target != null ? target.position() : aim;
+            Vec3 to = goal.subtract(player.position());
             Vec3 flat = new Vec3(to.x, 0.0D, to.z);
-            if (flat.lengthSqr() > 1.0E-4D) {
+            if (flat.lengthSqr() > 1.0E-4D && flat.length() < 12.0D) {
                 Vec3 dir = flat.normalize();
                 Vec3 side = new Vec3(-dir.z, 0.0D, dir.x);
-                Vec3 dest = aim.add(dir.scale(2.0D)).add(side.scale(1.0D));
+                Vec3 dest = goal.add(dir.scale(1.5D)).add(side.scale(0.45D));
                 Vec3 path = dest.subtract(player.position());
                 Vec3 pathFlat = new Vec3(path.x, 0.0D, path.z);
-                double reach = Math.min(8.0D, pathFlat.length());
+                double reach = pathFlat.length();
                 io.github.verycooltimo.murim.combat.FootworkService.sendDash(player, pathFlat.normalize(), reach, WhirlRules.PASS_TICKS);
                 w[0] = player.getX();
                 w[2] = player.getZ();
                 w[1] = pathFlat.normalize().x;
                 w[3] = pathFlat.normalize().z;
                 w[6] = reach;
-                // Старт и направление прохода хранятся до проверки попадания; центр больше не нужен.
                 player.setData(io.github.verycooltimo.murim.registry.ModAttachments.WHIRL, w);
             }
         }
@@ -617,13 +596,11 @@ public final class BehaviorExecutor {
                 Vec3 rel = t.position().subtract(start);
                 double along = rel.x * dir.x + rel.z * dir.z;
                 double off = Math.abs(rel.x * dir.z - rel.z * dir.x);
-                if (along >= 0.0D && along <= w[6] && off < 1.8D) {
-                    if (whirlHurt(player, id, t, base * WhirlRules.DMG_PASS)) {
-                        t.push(dir.x * 0.4D, 0.1D, dir.z * 0.4D);
-                        net.neoforged.neoforge.network.PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
-                                new io.github.verycooltimo.murim.network.WhirlPayload(player.getId(),
-                                        t.position().add(0.0D, t.getBbHeight() * 0.6D, 0.0D), player.getYRot(), layer, 1));
-                    }
+                if (along >= 0.0D && along <= w[6] && off < 1.6D && whirlHurt(player, id, t, base * WhirlRules.DMG_PASS)) {
+                    t.push(dir.x * 0.3D, 0.08D, dir.z * 0.3D);
+                    net.neoforged.neoforge.network.PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
+                            new io.github.verycooltimo.murim.network.WhirlPayload(player.getId(),
+                                    t.position().add(0.0D, t.getBbHeight() * 0.6D, 0.0D), aim, player.getYRot(), layer, 1));
                 }
             }
             w[6] = 0.0D;
