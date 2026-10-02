@@ -146,6 +146,11 @@ public final class PlumVfx {
         cast.length = p.length();
         cast.slashTick = clientTicks;
         spawnGround(cast);
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player != null && mc.player.getId() == p.entityId() && cast.layer >= 2) {
+            // Выпуск — виньетка к точке удара (чуть выше центра: дуга уходит вверх).
+            SpeedLines.radial(0.5F, 0.45F, Math.min(1.0F, 0.45F + 0.12F * cast.layer), 7, SpeedLines.WHITE);
+        }
         if (PlumRules.blossoms(cast.layer)) {
             // Лепестки цветка уходят в поток разреза, остальные рождаются вдоль него.
             int total = cast.layer >= 4 ? 8 : 5;
@@ -175,13 +180,16 @@ public final class PlumVfx {
         }
         Random r = c.random;
         Vec3 root = arcEdge(c, 0.0D, 1.0D);
-        int puffs = c.layer >= 4 ? 8 : c.layer == 3 ? 6 : c.layer == 2 ? 4 : 3;
+        int puffs = c.layer >= 4 ? 5 : c.layer == 3 ? 4 : 3;
         for (int i = 0; i < puffs; i++) {
             // Только от корня и наружу, вдоль земли (ref7): перед ногами комом не копится.
             double a = (r.nextDouble() - 0.5D) * Math.PI * 1.3D;
             Vec3 out = c.forward.scale(Math.cos(a)).add(c.right.scale(Math.sin(a)));
             Vec3 at = root.add(out.scale(0.3D + 0.3D * r.nextDouble())).add(0.0D, 0.12D, 0.0D);
-            Vec3 vel = out.scale(0.2D + 0.2D * r.nextDouble()).add(0.0D, 0.01D + 0.025D * r.nextDouble(), 0.0D);
+            // Пыль вытянута по касательной вихря у стоп, а не разлетается шаром.
+            Vec3 tangent = new Vec3(-out.z, 0.0D, out.x);
+            Vec3 vel = out.scale(0.12D + 0.1D * r.nextDouble()).add(tangent.scale(0.12D + 0.08D * r.nextDouble()))
+                    .add(0.0D, 0.01D + 0.02D * r.nextDouble(), 0.0D);
             c.puffs.add(new Puff(at, vel, 12 + r.nextInt(10), r.nextInt(16), 0.22D + 0.15D * r.nextDouble() + 0.03D * c.layer));
         }
         // Ветер — одна-две широкие закрученные приземные дуги (whirl5), не россыпь нитей.
@@ -256,7 +264,10 @@ public final class PlumVfx {
                 float t = clientTicks - c.start + partial;
                 Entity entity = minecraft.level.getEntity(c.entityId);
                 VertexConsumer air = buffers.getBuffer(MurimRenderTypes.airBand());
-                if (entity != null) {
+                // От первого лица дуги подготовки и цветок висели бы у самых глаз и закрывали
+                // пол-экрана: свои — только с видом со стороны, чужие — всегда.
+                boolean ownFirstPerson = entity == minecraft.getCameraEntity() && minecraft.options.getCameraType().isFirstPerson();
+                if (entity != null && !ownFirstPerson) {
                     preparation(c, entity, pose, camera, air, t, partial);
                 }
                 if (c.slashTick >= 0) {
@@ -277,7 +288,7 @@ public final class PlumVfx {
                 }
                 RenderType petals = MurimRenderTypes.plumPetals();
                 VertexConsumer pc = buffers.getBuffer(petals);
-                if (entity != null && PlumRules.blossoms(c.layer) && c.slashTick < 0) {
+                if (entity != null && !ownFirstPerson && PlumRules.blossoms(c.layer) && c.slashTick < 0) {
                     blossom(c, entity, pose, camera, pc, t, partial);
                 }
                 for (Petal p : c.petals) {
@@ -362,19 +373,34 @@ public final class PlumVfx {
         double th = Math.toRadians(-75.0D + 90.0D * u);
         double cf = 0.55D - r * Math.cos(Math.toRadians(75.0D));
         double cu = r * Math.sin(Math.toRadians(75.0D));
-        return c.origin.add(c.forward.scale(cf + r * Math.cos(th))).add(0.0D, cu + r * Math.sin(th), 0.0D);
+        return c.origin.add(c.forward.scale(0.55D)).add(arcForward(c).scale(cf - 0.55D + r * Math.cos(th)))
+                .add(0.0D, cu + r * Math.sin(th), 0.0D);
+    }
+
+    /**
+     * Плоскость дуги повёрнута вокруг вертикали на 30° вправо от взгляда: со спины (ref4, whirl5)
+     * полотно читается полосой, а не ребром (разбор codex 02.10).
+     */
+    private static Vec3 arcForward(Cast c) {
+        double a = Math.toRadians(30.0D);
+        return c.forward.scale(Math.cos(a)).add(c.right.scale(Math.sin(a)));
     }
 
     /** Нормаль дуги наружу (в плоскости F–U) — от неё внутрь отсчитывается ширина полотна. */
     private static Vec3 arcNormal(Cast c, double u) {
         double th = Math.toRadians(-75.0D + 90.0D * u);
-        return c.forward.scale(Math.cos(th)).add(0.0D, Math.sin(th), 0.0D);
+        return arcForward(c).scale(Math.cos(th)).add(0.0D, Math.sin(th), 0.0D);
     }
 
     /** Точка полотна: v=0 — внешняя кромка, v=1 — внутренняя (отстающая) сторона. */
     private static Vec3 arcPoint(Cast c, double u, double v, double scale) {
-        double w = PlumRules.width(c.layer) * scale * Math.pow(1.0D - u, 1.15D);
+        double w = PlumRules.width(c.layer) * scale * sabreProfile(u);
         return arcEdge(c, u, scale).subtract(arcNormal(c, u).scale(v * w));
+    }
+
+    /** Ширина вдоль дуги: широко снизу, плавно уже, резко сходит к острию в верхней четверти. */
+    private static double sabreProfile(double u) {
+        return curve(u, 0.0, 1.0, 0.5, 0.82, 0.75, 0.62, 0.9, 0.3, 1.0, 0.0);
     }
 
     /**
@@ -395,6 +421,19 @@ public final class PlumVfx {
         }
         if (c.layer >= 4) {
             sabre(c, pose, camera, v, age - 1.6F, 0.66D, 0.25F, pink);
+        }
+        // Вспышка у корня: короткие лучи вверх и наружу, ~60 мс.
+        if (age < 1.5F) {
+            Vec3 base = arcEdge(c, 0.0D, 1.0D).add(0.0D, 0.1D, 0.0D);
+            float fa = (float) curve(age, 0.0, 1.0, 1.5, 0.0);
+            for (int i = 0; i < 9; i++) {
+                double ang = Math.PI * (0.08D + 0.84D * i / 8.0D);
+                Vec3 dir = c.right.scale(Math.cos(ang)).add(0.0D, Math.sin(ang), 0.0D);
+                double len = (i % 2 == 0 ? 1.1D : 0.7D) * (0.6D + 0.4D * Math.min(1.0D, age));
+                Vec3[] rp = {base, base.add(dir.scale(len * 0.5D)), base.add(dir.scale(len))};
+                double[] rw = {0.07D, 0.04D, 0.0D};
+                strip(v, pose, camera, rp, rw, 0.9F * fa, EDGE);
+            }
         }
         // Вспышка у корня на 2 тика.
         if (age < 2.0F) {
@@ -461,14 +500,14 @@ public final class PlumVfx {
         double wBase = PlumRules.width(c.layer) * scale;
         for (int k = 0; k < m; k++) {
             double u = idx.get(k) / (double) n;
-            double w = wBase * Math.pow(1.0D - u, 1.15D);
+            double w = wBase * sabreProfile(u);
             body[k] = arcPoint(c, u, 0.5D, scale);
             core[k] = arcPoint(c, u, 0.42D, scale);
             rim[k] = arcPoint(c, u, 0.03D, scale);
             inner[k] = arcPoint(c, u, 0.88D, scale);
             wBody[k] = 0.5D * w;
             wGlow[k] = 0.62D * w;
-            wCore[k] = 0.375D * w;
+            wCore[k] = 0.33D * w;
             wRim[k] = 0.03D * w + 0.004D;
             wInner[k] = 0.12D * w;
             // Гаснет от основания к острию: α = clamp((10 + 4u − t)/4).
@@ -485,53 +524,34 @@ public final class PlumVfx {
     }
 
     /**
-     * Ветер: ленты у земли расходятся от корня дуги по кругу, закручиваясь (как порывы давления
-     * ауры), за ~10 тиков уходят на 2,5–4 блока и гаснут с хвоста; у корня — два восходящих вихря.
+     * Вихрь у стоп (whirl5 со спины): холодная лента на 1,25 оборота вокруг опоры, раскрывается
+     * с ⌀ ~2,2 до ~3,2 блока за 5 тиков и крутится; на 4-м слое и выше — второй, бледнее, со
+     * сдвигом фазы. Гаснет к 10-му тику.
      */
     private static void gusts(Cast c, PoseStack.Pose pose, Vec3 camera, VertexConsumer v, float age) {
-        Vec3 root = arcEdge(c, 0.0D, 1.0D).add(0.0D, 0.05D, 0.0D);
-        for (Gust g : c.gusts) {
-            float t = age - g.delay();
-            if (t < 0.0F || t > 12.0F) {
-                continue;
-            }
-            double reach = g.reach() * (1.0D - Math.exp(-t / 3.5D));
-            float alpha = (float) curve(t, 0.0, 0.0, 0.8, 0.85, 6.0, 0.6, 12.0, 0.0);
-            int m = 10;
+        if (age > 10.0F) {
+            return;
+        }
+        Vec3 centre = c.origin.add(c.forward.scale(0.3D)).add(0.0D, 0.08D, 0.0D);
+        int swirls = c.layer >= 4 ? 2 : 1;
+        for (int k = 0; k < swirls; k++) {
+            double open = Mth.clamp(age / 5.0D, 0.0D, 1.0D);
+            double radius = 1.1D + 0.5D * (1.0D - (1.0D - open) * (1.0D - open)) + 0.25D * k;
+            float alpha = (float) curve(age, 0.0, 0.0, 0.8, 0.8, 5.0, 0.6, 10.0, 0.0) * (k == 0 ? 1.0F : 0.55F);
+            int m = 28;
             Vec3[] p = new Vec3[m + 1];
             double[] w = new double[m + 1];
             for (int i = 0; i <= m; i++) {
                 double u = i / (double) m;
-                // Голова впереди, хвост отстаёт по радиусу и закручен по дуге.
-                double rad = Math.max(0.3D, reach - 1.6D * u);
-                double ang = g.angle() + g.sweep() * u;
-                Vec3 dir = c.forward.scale(Math.cos(ang)).add(c.right.scale(Math.sin(ang)));
-                p[i] = root.add(dir.scale(rad)).add(0.0D, g.height() * (1.0D - u) + 0.05D, 0.0D);
-                w[i] = g.width() * Math.sin(Math.PI * Math.min(1.0D, u * 1.3D + 0.05D)) * (1.0D - 0.3D * t / 12.0D);
+                double ang = Math.PI * 2.0D * 1.25D * u + age * 0.35D + k * Math.PI;
+                // Хвост ближе к стопам и ниже, голова раскрыта и чуть выше.
+                double rad = radius * (0.7D + 0.3D * u);
+                p[i] = centre.add(c.forward.scale(Math.cos(ang) * rad)).add(c.right.scale(Math.sin(ang) * rad))
+                        .add(0.0D, 0.05D + 0.35D * u, 0.0D);
+                w[i] = (0.07D + 0.05D * u) * Math.sin(Math.PI * Math.min(1.0D, u * 1.15D + 0.03D));
             }
-            strip(v, pose, camera, p, w, 0.22F * alpha, COLD);
-            strip(v, pose, camera, p, scale(w, 0.55D), 0.3F * alpha, COLD);
-            strip(v, pose, camera, p, scale(w, 0.15D), 0.75F * alpha, EDGE);
-        }
-        // Восходящие вихри у корня: вверх по спирали вокруг основания дуги (L2+).
-        if (c.layer >= 5 && age < 9.0F) {
-            for (int k = 0; k < 2; k++) {
-                int m = 14;
-                Vec3[] p = new Vec3[m + 1];
-                double[] w = new double[m + 1];
-                double rise = Math.min(1.0D, age / 4.0D);
-                for (int i = 0; i <= m; i++) {
-                    double u = i / (double) m;
-                    double ang = Math.PI * k + u * Math.PI * 1.6D + age * 0.25D;
-                    double rad = 0.45D + 0.35D * u;
-                    p[i] = root.add(c.forward.scale(Math.cos(ang) * rad)).add(c.right.scale(Math.sin(ang) * rad))
-                            .add(0.0D, u * (0.6D + 1.6D * rise), 0.0D);
-                    w[i] = 0.06D * Math.sin(Math.PI * u);
-                }
-                float a = (float) curve(age, 0.0, 0.0, 1.0, 0.7, 9.0, 0.0);
-                strip(v, pose, camera, p, w, 0.35F * a, COLD);
-                strip(v, pose, camera, p, scale(w, 0.3D), 0.8F * a, EDGE);
-            }
+            strip(v, pose, camera, p, w, 0.35F * alpha, COLD);
+            strip(v, pose, camera, p, scale(w, 0.35D), 0.85F * alpha, EDGE);
         }
     }
 

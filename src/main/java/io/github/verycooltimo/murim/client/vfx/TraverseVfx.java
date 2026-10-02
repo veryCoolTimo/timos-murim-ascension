@@ -92,6 +92,7 @@ public final class TraverseVfx {
             case 5 -> {
                 if (entity != null) {
                     evade(entity, e.layer(), new Vec3(e.dirX(), 0.0D, e.dirZ()));
+                    ownLines(minecraft, entity, new Vec3(e.dirX(), 0.0D, e.dirZ()), 0.55F);
                 }
             }
             case 6 -> SHADOWS.put(e.entityId(), e.layer());
@@ -99,6 +100,7 @@ public final class TraverseVfx {
             case 8 -> {
                 if (entity != null) {
                     death(entity, new Vec3(e.dirX(), 0.0D, e.dirZ()));
+                    ownLines(minecraft, entity, new Vec3(e.dirX(), 0.0D, e.dirZ()), 0.9F);
                 }
             }
             default -> {
@@ -146,6 +148,9 @@ public final class TraverseVfx {
             Vec3 pos = entity.position();
             Vec3 d = new Vec3(pos.x - run.last.x, 0.0D, pos.z - run.last.z);
             run.last = pos;
+            if (entity == minecraft.player && run.layer >= 3 && d.length() > 0.45D && clientTicks % 8 == 0) {
+                SpeedLines.radial(0.5F, 0.5F, 0.2F, 10, SpeedLines.WHITE);
+            }
             if (run.layer < 1 || !entity.onGround() || d.lengthSqr() < 1.0E-4D) {
                 continue;
             }
@@ -237,6 +242,27 @@ public final class TraverseVfx {
         if (layer >= 2) {
             STREAKS.add(streak(end.subtract(dir.scale(0.6D)).add(side.scale(0.2D)).add(0.0D, 0.9D, 0.0D), dir.scale(-1.0D),
                     len * 0.6D, 0.05D, 0.15D, 3.0F, 0.7F));
+        }
+    }
+
+    /**
+     * Линии скорости своему игроку: рывок вперёд — виньетка к центру, вбок или назад — прямые
+     * линии против движения на экране.
+     */
+    static void ownLines(Minecraft minecraft, Entity entity, Vec3 move, float strength) {
+        if (minecraft.player == null || entity != minecraft.player || move.lengthSqr() < 1.0E-4D) {
+            return;
+        }
+        Vec3 look = Vec3.directionFromRotation(0.0F, minecraft.gameRenderer.getMainCamera().getYRot());
+        Vec3 dir = move.normalize();
+        double fwd = dir.dot(look);
+        double side = dir.x * -look.z + dir.z * look.x;
+        if (fwd > 0.7D) {
+            SpeedLines.radial(0.5F, 0.5F, strength, 6, SpeedLines.WHITE);
+        } else {
+            // Мир на экране уезжает против движения: уход вправо — линии справа налево.
+            float angle = (float) Math.toDegrees(Math.atan2(-fwd * 0.3D, side > 0 ? -1.0D : 1.0D));
+            SpeedLines.directional(angle, strength, 6, SpeedLines.WHITE);
         }
     }
 

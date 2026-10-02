@@ -290,6 +290,8 @@ public final class StepVfx {
             step.skin = player.getSkin().texture();
         }
         ACTIVE.add(step);
+        TraverseVfx.ownLines(minecraft, minecraft.level == null ? null : minecraft.level.getEntity(payload.entityId()),
+                payload.to().subtract(payload.from()), 0.45F + 0.1F * Math.min(4, payload.layer()));
     }
 
     private static ModelPart[] parts(PlayerModel<?> m) {
