@@ -126,7 +126,7 @@ public final class ClientTechniqueHandler {
                 // Название объявляет только тот, кто применяет: чужие имена техник поверх
                 // своего экрана — это шум, а не постановка.
                 // Семь Цветков Сливы объявляют себя надписью манхвы (TechniqueCaption) в момент удара.
-                if (isLocalPlayer(payload.sourceId()) && !"seven_plum_blossoms".equals(payload.techniqueId().getPath())) {
+                if (isLocalPlayer(payload.sourceId()) && !payload.techniqueId().getPath().startsWith("seven_plum_")) {
                     // Имя вспыхивает к концу ритуала, а не в его начале: на пике, как
                     // в раскадровке. Задержка берётся из данных техники, а не зашита числом.
                     TechniqueDefinition definition = TechniqueLoader.get(payload.techniqueId());

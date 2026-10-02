@@ -190,6 +190,14 @@ public final class TechniqueService {
             io.github.verycooltimo.murim.technique.BehaviorExecutor.plumFall(player, technique.id());
         }
 
+        // Вихрь Цветущей Сливы: вся шкала после Разреза — стены, схождение, вихрь, проход.
+        if (technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.PlumWhirlwind) {
+            int since = state.tick() - technique.startTickOf(TechniquePhase.IMPACT);
+            if (since > 0) {
+                io.github.verycooltimo.murim.technique.BehaviorExecutor.whirlTick(player, technique.id(), since);
+            }
+        }
+
         // Шаг на высшем слое: ещё два рывка через равные промежутки.
         if (technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.Step) {
             int layer = Math.max(0, io.github.verycooltimo.murim.mastery.MasteryService.layer(player, technique.id()));

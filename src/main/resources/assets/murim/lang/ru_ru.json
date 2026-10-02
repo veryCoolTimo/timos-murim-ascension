@@ -138,5 +138,8 @@
   "murim.footwork.run": "Бег",
   "technique.murim.seven_plum_blossoms.school": "Высшая техника Меча Семи Цветков Сливы",
   "technique.murim.seven_plum_blossoms.slash": "Разрез Цветущей Сливы",
-  "technique.murim.seven_plum_blossoms.barricade": "Частокол Цветущей Сливы"
+  "technique.murim.seven_plum_blossoms.barricade": "Частокол Цветущей Сливы",
+  "technique.murim.seven_plum_whirlwind": "Меч Семи Цветков Сливы: Вихрь",
+  "technique.murim.seven_plum_whirlwind.weakness": "Долгий приём: успей выйти из кольца столпов, пока стены не сомкнулись.",
+  "technique.murim.seven_plum_blossoms.whirlwind": "Вихрь Цветущей Сливы"
 }

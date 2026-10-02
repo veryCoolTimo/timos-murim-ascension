@@ -58,16 +58,16 @@ public final class PlumVfx {
         return net.minecraft.network.chat.Component.translatable("technique.murim.seven_plum_blossoms." + name);
     }
 
-    private static final VfxColour COLD = new VfxColour(0xC9 / 255.0F, 0xE7 / 255.0F, 0xF4 / 255.0F);
-    private static final VfxColour PINK = new VfxColour(0xF1 / 255.0F, 0x9B / 255.0F, 0xC5 / 255.0F);
-    private static final VfxColour EDGE = new VfxColour(0xFA / 255.0F, 0xFF / 255.0F, 1.0F);
-    private static final VfxColour RIM = new VfxColour(0xED / 255.0F, 0x60 / 255.0F, 0x9B / 255.0F);
+    static final VfxColour COLD = new VfxColour(0xC9 / 255.0F, 0xE7 / 255.0F, 0xF4 / 255.0F);
+    static final VfxColour PINK = new VfxColour(0xF1 / 255.0F, 0x9B / 255.0F, 0xC5 / 255.0F);
+    static final VfxColour EDGE = new VfxColour(0xFA / 255.0F, 0xFF / 255.0F, 1.0F);
+    static final VfxColour RIM = new VfxColour(0xED / 255.0F, 0x60 / 255.0F, 0x9B / 255.0F);
     /** Остывший след: тёмно-красный жар. */
     /** Прутики кроны: бледно-розовый штрих. */
-    private static final VfxColour BLUSH = new VfxColour(0xFF / 255.0F, 0xD3 / 255.0F, 0xE6 / 255.0F);
+    static final VfxColour BLUSH = new VfxColour(0xFF / 255.0F, 0xD3 / 255.0F, 0xE6 / 255.0F);
     /** Раскалённая кромка следа: киноварь. */
-    private static final VfxColour CINNABAR = new VfxColour(0xF0 / 255.0F, 0x5A / 255.0F, 0x3C / 255.0F);
-    private static final VfxColour EMBER = new VfxColour(0x6A / 255.0F, 0x14 / 255.0F, 0x1E / 255.0F);
+    static final VfxColour CINNABAR = new VfxColour(0xF0 / 255.0F, 0x5A / 255.0F, 0x3C / 255.0F);
+    static final VfxColour EMBER = new VfxColour(0x6A / 255.0F, 0x14 / 255.0F, 0x1E / 255.0F);
 
     private static final List<Cast> CASTS = new ArrayList<>();
     private static int clientTicks;
@@ -1017,13 +1017,13 @@ public final class PlumVfx {
         }
     }
 
-    private static VfxColour lerp(VfxColour a, VfxColour b, float t) {
+    static VfxColour lerp(VfxColour a, VfxColour b, float t) {
         return new VfxColour(a.red() + (b.red() - a.red()) * t, a.green() + (b.green() - a.green()) * t,
                 a.blue() + (b.blue() - a.blue()) * t);
     }
 
     /** Плоская полоса по земле вдоль точек. */
-    private static void flatStrip(VertexConsumer c, PoseStack.Pose pose, Vec3[] p, double[] w, float alpha, VfxColour col) {
+    static void flatStrip(VertexConsumer c, PoseStack.Pose pose, Vec3[] p, double[] w, float alpha, VfxColour col) {
         Vec3 n = new Vec3(0.0D, 1.0D, 0.0D);
         for (int i = 0; i + 1 < p.length; i++) {
             if (Double.isNaN(p[i].y) || Double.isNaN(p[i + 1].y)) {
@@ -1199,7 +1199,7 @@ public final class PlumVfx {
         }
     }
 
-    private static float[] filled(int n, float value) {
+    static float[] filled(int n, float value) {
         float[] a = new float[n];
         java.util.Arrays.fill(a, value);
         return a;
@@ -1400,7 +1400,7 @@ public final class PlumVfx {
         }
     }
 
-    private static void puff(VertexConsumer c, PoseStack.Pose pose, Vec3 camera, Vec3 centre, double size, int cell, float alpha, float gray) {
+    static void puff(VertexConsumer c, PoseStack.Pose pose, Vec3 camera, Vec3 centre, double size, int cell, float alpha, float gray) {
         if (alpha <= 0.0F) {
             return;
         }
@@ -1423,7 +1423,7 @@ public final class PlumVfx {
     }
 
     /** Клуб дыма: квадрат, повёрнутый в плоскости экрана на {@code angle}. */
-    private static void smokePuff(VertexConsumer c, PoseStack.Pose pose, Vec3 camera, Vec3 centre, double size, int cell, float alpha,
+    static void smokePuff(VertexConsumer c, PoseStack.Pose pose, Vec3 camera, Vec3 centre, double size, int cell, float alpha,
                                   float gray, float angle) {
         if (alpha <= 0.0F) {
             return;
@@ -1450,7 +1450,7 @@ public final class PlumVfx {
     }
 
     /** Мягкое светящееся пятно (additive, как свечение ауры): лепестки и крона. */
-    private static void glow(VertexConsumer c, PoseStack.Pose pose, Vec3 camera, Vec3 centre, double size, float alpha, VfxColour col) {
+    static void glow(VertexConsumer c, PoseStack.Pose pose, Vec3 camera, Vec3 centre, double size, float alpha, VfxColour col) {
         if (alpha <= 0.01F) {
             return;
         }
@@ -1469,7 +1469,7 @@ public final class PlumVfx {
         VfxDraw.vertex(c, pose, centre.subtract(right).add(up), n, 0.0F, 0.0F, alpha, col.red(), col.green(), col.blue());
     }
 
-    private static float[] scaled(float[] a, float k) {
+    static float[] scaled(float[] a, float k) {
         float[] r = new float[a.length];
         for (int i = 0; i < a.length; i++) {
             r[i] = a[i] * k;
@@ -1477,7 +1477,7 @@ public final class PlumVfx {
         return r;
     }
 
-    private static double curve(double x, double... xy) {
+    static double curve(double x, double... xy) {
         if (x <= xy[0]) {
             return xy[1];
         }
@@ -1490,7 +1490,7 @@ public final class PlumVfx {
         return xy[xy.length - 1];
     }
 
-    private static double[] scale(double[] v, double k) {
+    static double[] scale(double[] v, double k) {
         double[] r = new double[v.length];
         for (int i = 0; i < v.length; i++) {
             r[i] = v[i] * k;
@@ -1498,14 +1498,14 @@ public final class PlumVfx {
         return r;
     }
 
-    private static void strip(VertexConsumer c, PoseStack.Pose pose, Vec3 camera, Vec3[] p, double[] w, float alpha, VfxColour col) {
+    static void strip(VertexConsumer c, PoseStack.Pose pose, Vec3 camera, Vec3[] p, double[] w, float alpha, VfxColour col) {
         float[] a = new float[p.length];
         java.util.Arrays.fill(a, alpha);
         stripVar(c, pose, camera, p, w, a, col);
     }
 
     /** Полоса к камере с шириной и альфой в каждой точке; поперечная ось без переворотов. */
-    private static void stripVar(VertexConsumer c, PoseStack.Pose pose, Vec3 camera, Vec3[] p, double[] w, float[] a, VfxColour col) {
+    static void stripVar(VertexConsumer c, PoseStack.Pose pose, Vec3 camera, Vec3[] p, double[] w, float[] a, VfxColour col) {
         Vec3 last = null;
         Vec3[] side = new Vec3[p.length];
         for (int i = 0; i < p.length; i++) {
@@ -1534,7 +1534,7 @@ public final class PlumVfx {
         }
     }
 
-    private static void petal(VertexConsumer c, PoseStack.Pose pose, Vec3 camera, Vec3 centre, double size, int cell,
+    static void petal(VertexConsumer c, PoseStack.Pose pose, Vec3 camera, Vec3 centre, double size, int cell,
                               float spin, float alpha, float red, float green, float blue) {
         if (alpha <= 0.0F) {
             return;

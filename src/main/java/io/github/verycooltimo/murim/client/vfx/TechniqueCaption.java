@@ -100,7 +100,7 @@ public final class TechniqueCaption {
     }
 
     /**
-     * Шрифт надписи — Reggae One (OFL, assets/murim/font/caption-OFL.txt): кисть с засечками,
+     * Шрифт надписи — Reggae One (OFL, assets/murim/font/caption-ofl.txt): кисть с засечками,
      * латиница и кириллица одного характера. Выбор автора 02.10 из шести вариантов.
      */
     private static final ResourceLocation FONT = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "caption");

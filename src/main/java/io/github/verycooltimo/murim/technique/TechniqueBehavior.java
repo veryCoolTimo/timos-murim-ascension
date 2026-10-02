@@ -22,7 +22,7 @@ import java.util.Map;
 public sealed interface TechniqueBehavior
         permits TechniqueBehavior.MeleeArc, TechniqueBehavior.ProjectileFan, TechniqueBehavior.Dash,
                 TechniqueBehavior.PalmBlast, TechniqueBehavior.Step, TechniqueBehavior.Footwork,
-                TechniqueBehavior.PlumSlash {
+                TechniqueBehavior.PlumSlash, TechniqueBehavior.PlumWhirlwind {
 
     ResourceLocation MELEE_ARC = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "melee_arc");
     ResourceLocation PROJECTILE_FAN = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "projectile_fan");
@@ -31,6 +31,7 @@ public sealed interface TechniqueBehavior
     ResourceLocation STEP = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "step");
     ResourceLocation FOOTWORK = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "footwork");
     ResourceLocation PLUM_SLASH = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "plum_slash");
+    ResourceLocation PLUM_WHIRLWIND = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "plum_whirlwind");
 
     ResourceLocation type();
 
@@ -241,6 +242,24 @@ public sealed interface TechniqueBehavior
         }
     }
 
+    /**
+     * Меч Семи Цветков Сливы, «Вихрь»: разрез → столпы и стены → схождение → пыль → вихрь →
+     * финальный проход, см. {@link io.github.verycooltimo.murim.technique.WhirlRules}.
+     */
+    record PlumWhirlwind() implements TechniqueBehavior {
+        public static final MapCodec<PlumWhirlwind> CODEC = MapCodec.unit(PlumWhirlwind::new);
+
+        @Override
+        public float damage() {
+            return 0.0F;
+        }
+
+        @Override
+        public ResourceLocation type() {
+            return PLUM_WHIRLWIND;
+        }
+    }
+
     Map<ResourceLocation, MapCodec<? extends TechniqueBehavior>> TYPES = Map.of(
             MELEE_ARC, MeleeArc.CODEC,
             PROJECTILE_FAN, ProjectileFan.CODEC,
@@ -248,7 +267,8 @@ public sealed interface TechniqueBehavior
             PALM_BLAST, PalmBlast.CODEC,
             STEP, Step.CODEC,
             FOOTWORK, Footwork.CODEC,
-            PLUM_SLASH, PlumSlash.CODEC);
+            PLUM_SLASH, PlumSlash.CODEC,
+            PLUM_WHIRLWIND, PlumWhirlwind.CODEC);
 
     Codec<TechniqueBehavior> CODEC = ResourceLocation.CODEC
             .dispatch("type", TechniqueBehavior::type, type -> {

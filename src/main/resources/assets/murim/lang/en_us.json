@@ -158,5 +158,8 @@
   "murim.footwork.run": "Run",
   "technique.murim.seven_plum_blossoms.school": "Ultimate Seven Plum Blossoms Sword Technique",
   "technique.murim.seven_plum_blossoms.slash": "Plum Blossom Slash",
-  "technique.murim.seven_plum_blossoms.barricade": "Plum Blossoms Barricade"
+  "technique.murim.seven_plum_blossoms.barricade": "Plum Blossoms Barricade",
+  "technique.murim.seven_plum_whirlwind": "Seven Plum Blossoms Sword: Whirlwind",
+  "technique.murim.seven_plum_whirlwind.weakness": "A long cast: leave the ring of pillars before the walls close.",
+  "technique.murim.seven_plum_blossoms.whirlwind": "Plum Blossom Whirlwind"
 }

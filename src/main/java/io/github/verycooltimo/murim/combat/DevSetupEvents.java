@@ -207,6 +207,10 @@ public final class DevSetupEvents {
 
         // Стенд применяет техники — значит, должен их знать (docs/design/19 §3г).
         learnAll(event.getEntity());
+        // Перезарядка общая на все техники и хранится в мире стенда между прогонами: долгий
+        // кулдаун (Вихрь, 600 тиков) молча отклонял запуск после прошлой съёмки. Сбрасываем.
+        event.getEntity().setData(io.github.verycooltimo.murim.registry.ModAttachments.TECHNIQUE_STATE,
+                io.github.verycooltimo.murim.combat.TechniqueState.IDLE);
         // Съёмка основы меча: Шесть Равновесий в ячейке основы, удары — обычной атакой.
         if ("foundation".equals(System.getProperty("murim.capture.technique"))
                 && event.getEntity() instanceof net.minecraft.server.level.ServerPlayer fp) {
@@ -343,6 +347,14 @@ public final class DevSetupEvents {
                     new net.minecraft.world.entity.monster.Zombie(net.minecraft.world.entity.EntityType.ZOMBIE, level);
             zombie.setNoAi(true);
             zombie.setPersistenceRequired();
+            // MURIM_CAPTURE_ENEMY_HP — запас здоровья цели: долгая техника (Вихрь) убивала зомби
+            // раньше финала, и финальный проход было не по кому снять.
+            String hp = System.getenv("MURIM_CAPTURE_ENEMY_HP");
+            if (hp != null && !hp.isBlank()) {
+                java.util.Objects.requireNonNull(zombie.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH))
+                        .setBaseValue(Double.parseDouble(hp.trim()));
+                zombie.setHealth(zombie.getMaxHealth());
+            }
             zombie.setItemSlot(net.minecraft.world.entity.EquipmentSlot.HEAD,
                     new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.LEATHER_HELMET));
             float face = (float) Math.toDegrees(aim) + 180.0F;

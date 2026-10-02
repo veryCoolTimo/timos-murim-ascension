@@ -52,6 +52,9 @@ public final class BehaviorExecutor {
         if (behavior instanceof TechniqueBehavior.PlumSlash) {
             return plumSlash(player, definition.id());
         }
+        if (behavior instanceof TechniqueBehavior.PlumWhirlwind) {
+            return whirlStart(player, definition.id());
+        }
         if (behavior instanceof TechniqueBehavior.Footwork) {
             io.github.verycooltimo.murim.combat.FootworkService.windEvade(player, definition.id());
             return false;
@@ -455,6 +458,240 @@ public final class BehaviorExecutor {
             }
         }
         return anyHit;
+    }
+
+    // ------------------------------------------------------------------ Вихрь Цветущей Сливы
+
+    /**
+     * Разрез вверх Вихря: центр зоны — цель по взгляду до 6 блоков (иначе 4 вперёд), фиксируется
+     * здесь и дальше не преследует. Слой 0 — учебный удар в ближнем секторе.
+     */
+    private static boolean whirlStart(ServerPlayer player, net.minecraft.resources.ResourceLocation id) {
+        int layer = Math.max(0, io.github.verycooltimo.murim.mastery.MasteryService.layer(player, id));
+        double base = player.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE);
+        Vec3 origin = player.position();
+        Vec3 look = player.getLookAngle();
+        Vec3 forward = new Vec3(look.x, 0.0D, look.z);
+        forward = forward.lengthSqr() < 1.0E-6D ? new Vec3(0.0D, 0.0D, 1.0D) : forward.normalize();
+        if (layer <= 0) {
+            boolean hit = false;
+            double cos = Math.cos(Math.toRadians(PlumRules.TRAINING_ARC / 2.0D));
+            for (LivingEntity t : candidates(player, player.getBoundingBox().inflate(PlumRules.TRAINING_REACH + 1.0D))) {
+                if (inArc(player.getEyePosition(), look, t.getBoundingBox(), PlumRules.TRAINING_REACH, cos)
+                        && t.hurt(player.damageSources().playerAttack(player), (float) base)) {
+                    hit = true;
+                }
+            }
+            return hit;
+        }
+        LivingEntity target = null;
+        double best = Double.MAX_VALUE;
+        double cone = Math.cos(Math.toRadians(30.0D));
+        for (LivingEntity t : candidates(player, player.getBoundingBox().inflate(6.5D))) {
+            Vec3 to = t.position().subtract(origin);
+            Vec3 flat = new Vec3(to.x, 0.0D, to.z);
+            double d = flat.length();
+            if (d < 0.5D || d > 6.0D || flat.normalize().dot(forward) < cone || !player.hasLineOfSight(t)) {
+                continue;
+            }
+            if (d < best) {
+                best = d;
+                target = t;
+            }
+        }
+        Vec3 centre = target != null ? new Vec3(target.getX(), origin.y, target.getZ()) : origin.add(forward.scale(4.0D));
+        player.setData(io.github.verycooltimo.murim.registry.ModAttachments.WHIRL, new double[] {
+                centre.x, centre.y, centre.z, player.getYRot(), layer, 0, 0, target == null ? -1 : target.getId()});
+        // Разрез вверх: столп из пола у центра — задевает стоящих рядом с ним.
+        boolean hit = false;
+        for (LivingEntity t : whirlInside(player, centre, 1.4D, layer)) {
+            hit |= whirlHurt(player, id, t, base * WhirlRules.DMG_SLASH);
+        }
+        net.neoforged.neoforge.network.PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
+                new io.github.verycooltimo.murim.network.WhirlPayload(player.getId(), centre, player.getYRot(), layer, 0));
+        return hit;
+    }
+
+    /** Шкала Вихря после Разреза (тики {@code since}), см. WhirlRules. */
+    public static void whirlTick(ServerPlayer player, net.minecraft.resources.ResourceLocation id, int since) {
+        double[] w = player.getData(io.github.verycooltimo.murim.registry.ModAttachments.WHIRL);
+        int layer = (int) w[4];
+        if (layer <= 0) {
+            return;
+        }
+        Vec3 centre = new Vec3(w[0], w[1], w[2]);
+        double r = WhirlRules.radius(layer);
+        double base = player.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE);
+        // Столпы: касание кольца столпов на 1-м и 3-м взмахе.
+        if (WhirlRules.pillars(layer) > 0 && (since == WhirlRules.WALL_STROKES[0] || since == WhirlRules.WALL_STROKES[2])) {
+            for (LivingEntity t : whirlInside(player, centre, r + 1.2D, layer)) {
+                double d = flatDistance(t.position(), centre);
+                if (Math.abs(d - r) < 1.2D) {
+                    whirlHurt(player, id, t, base * WhirlRules.DMG_WALL);
+                }
+            }
+        }
+        // Стены держат: изнутри наружу не выйти, пока стоят (32–58), — мягкий толчок внутрь.
+        if (WhirlRules.walls(layer) && since >= WhirlRules.WALL_STROKES[2] && since < WhirlRules.SHATTER) {
+            double shell = since < WhirlRules.CONVERGE ? r
+                    : r * (1.0D - 0.45D * Math.min(1.0D, (since - WhirlRules.CONVERGE) / 10.0D));
+            for (LivingEntity t : whirlInside(player, centre, shell + 1.0D, layer)) {
+                double d = flatDistance(t.position(), centre);
+                if (d > shell - 0.6D && d < shell + 1.0D) {
+                    Vec3 in = centre.subtract(t.position());
+                    in = new Vec3(in.x, 0.0D, in.z).normalize().scale(0.18D);
+                    t.setDeltaMovement(t.getDeltaMovement().multiply(0.3D, 1.0D, 0.3D).add(in));
+                    t.hurtMarked = true;
+                }
+            }
+            if (since == WhirlRules.CONVERGE + 10) {
+                for (LivingEntity t : whirlInside(player, centre, r, layer)) {
+                    whirlHurt(player, id, t, base * WhirlRules.DMG_CONVERGE);
+                }
+            }
+        }
+        // Вихрь: притяжение к центру и восемь импульсов урона.
+        if (WhirlRules.whirl(layer) && since >= WhirlRules.SHATTER && since < WhirlRules.WHIRL_END + 6) {
+            double ramp = Math.min(1.0D, (since - WhirlRules.SHATTER) / 10.0D)
+                    * Math.min(1.0D, (WhirlRules.WHIRL_END + 6 - since) / 6.0D);
+            for (LivingEntity t : whirlInside(player, centre, r + 1.0D, layer)) {
+                Vec3 to = centre.subtract(t.position());
+                Vec3 flat = new Vec3(to.x, 0.0D, to.z);
+                double d = flat.length();
+                if (d < 1.2D) {
+                    continue;
+                }
+                boolean boss = t.getType().is(net.neoforged.neoforge.common.Tags.EntityTypes.BOSSES);
+                double k = (t instanceof net.minecraft.world.entity.player.Player ? 0.6D : boss ? 0.2D : 1.0D) * ramp
+                        * Math.min(1.0D, (d - 1.2D) / 1.0D);
+                Vec3 in = flat.normalize();
+                Vec3 tangent = new Vec3(-in.z, 0.0D, in.x);
+                Vec3 add = in.scale(0.025D * k).add(tangent.scale(0.012D * k));
+                Vec3 v = t.getDeltaMovement().add(add);
+                double hv = Math.sqrt(v.x * v.x + v.z * v.z);
+                if (hv > WhirlRules.MAX_PULL) {
+                    v = new Vec3(v.x / hv * WhirlRules.MAX_PULL, v.y, v.z / hv * WhirlRules.MAX_PULL);
+                }
+                t.setDeltaMovement(v);
+                t.hurtMarked = true;
+            }
+            for (int p : WhirlRules.PULSES) {
+                if (p == since) {
+                    for (LivingEntity t : whirlInside(player, centre, r, layer)) {
+                        whirlHurt(player, id, t, base * WhirlRules.DMG_PULSE);
+                    }
+                }
+            }
+            if (since == WhirlRules.WHIRL + 12) {
+                whirlCuts(player, centre, r, layer);
+            }
+        }
+        // Финал: плавный проход сбоку цели за спину (рывок без телепорта), урон по факту.
+        if (WhirlRules.finale(layer) && since == WhirlRules.PASS) {
+            LivingEntity target = w[7] >= 0 && player.level().getEntity((int) w[7]) instanceof LivingEntity le && le.isAlive()
+                    && flatDistance(le.position(), centre) < r + 2.0D ? le : null;
+            Vec3 aim = target != null ? target.position() : centre;
+            Vec3 to = aim.subtract(player.position());
+            Vec3 flat = new Vec3(to.x, 0.0D, to.z);
+            if (flat.lengthSqr() > 1.0E-4D) {
+                Vec3 dir = flat.normalize();
+                Vec3 side = new Vec3(-dir.z, 0.0D, dir.x);
+                Vec3 dest = aim.add(dir.scale(2.0D)).add(side.scale(1.0D));
+                Vec3 path = dest.subtract(player.position());
+                Vec3 pathFlat = new Vec3(path.x, 0.0D, path.z);
+                double reach = Math.min(8.0D, pathFlat.length());
+                io.github.verycooltimo.murim.combat.FootworkService.sendDash(player, pathFlat.normalize(), reach, WhirlRules.PASS_TICKS);
+                w[0] = player.getX();
+                w[2] = player.getZ();
+                w[1] = pathFlat.normalize().x;
+                w[3] = pathFlat.normalize().z;
+                w[6] = reach;
+                // Старт и направление прохода хранятся до проверки попадания; центр больше не нужен.
+                player.setData(io.github.verycooltimo.murim.registry.ModAttachments.WHIRL, w);
+            }
+        }
+        if (WhirlRules.finale(layer) && since == WhirlRules.PASS + WhirlRules.PASS_TICKS / 2 && w[6] > 0.0D) {
+            Vec3 start = new Vec3(w[0], player.getY(), w[2]);
+            Vec3 dir = new Vec3(w[1], 0.0D, w[3]);
+            for (LivingEntity t : candidates(player, new AABB(start, start).inflate(w[6] + 2.0D, 3.0D, w[6] + 2.0D))) {
+                Vec3 rel = t.position().subtract(start);
+                double along = rel.x * dir.x + rel.z * dir.z;
+                double off = Math.abs(rel.x * dir.z - rel.z * dir.x);
+                if (along >= 0.0D && along <= w[6] && off < 1.8D) {
+                    if (whirlHurt(player, id, t, base * WhirlRules.DMG_PASS)) {
+                        t.push(dir.x * 0.4D, 0.1D, dir.z * 0.4D);
+                        net.neoforged.neoforge.network.PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
+                                new io.github.verycooltimo.murim.network.WhirlPayload(player.getId(),
+                                        t.position().add(0.0D, t.getBbHeight() * 0.6D, 0.0D), player.getYRot(), layer, 1));
+                    }
+                }
+            }
+            w[6] = 0.0D;
+            player.setData(io.github.verycooltimo.murim.registry.ModAttachments.WHIRL, w);
+        }
+    }
+
+    private static List<LivingEntity> whirlInside(ServerPlayer player, Vec3 centre, double radius, int layer) {
+        double h = WhirlRules.height(layer);
+        return player.serverLevel().getEntitiesOfClass(LivingEntity.class,
+                new AABB(centre.x - radius, centre.y - 1.0D, centre.z - radius, centre.x + radius, centre.y + h, centre.z + radius),
+                t -> t != player && t.isAlive() && !t.isSpectator() && flatDistance(t.position(), centre) <= radius);
+    }
+
+    private static double flatDistance(Vec3 a, Vec3 b) {
+        double dx = a.x - b.x;
+        double dz = a.z - b.z;
+        return Math.sqrt(dx * dx + dz * dz);
+    }
+
+    /**
+     * Урон Вихря: частые импульсы — своя защита от повторного урона (ванильные полсекунды
+     * неуязвимости съели бы половину ударов). Первое попадание оглушает.
+     */
+    private static boolean whirlHurt(ServerPlayer player, net.minecraft.resources.ResourceLocation id, LivingEntity t, double amount) {
+        t.invulnerableTime = 0;
+        if (!t.hurt(player.damageSources().playerAttack(player), (float) amount)) {
+            return false;
+        }
+        double[] w = player.getData(io.github.verycooltimo.murim.registry.ModAttachments.WHIRL);
+        if (w[5] < 0.5D) {
+            w[5] = 1.0D;
+            player.setData(io.github.verycooltimo.murim.registry.ModAttachments.WHIRL, w);
+            whirlStagger(t);
+        }
+        io.github.verycooltimo.murim.mastery.MasteryService.onHit(player, id, t);
+        return true;
+    }
+
+    private static void whirlStagger(LivingEntity t) {
+        boolean boss = t.getType().is(net.neoforged.neoforge.common.Tags.EntityTypes.BOSSES);
+        int ticks = t instanceof net.minecraft.world.entity.player.Player ? 12 : boss ? 10 : WhirlRules.END;
+        t.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.MOVEMENT_SLOWDOWN, ticks, 3, false, false, false));
+        t.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.WEAKNESS, ticks, 9, false, false, false));
+    }
+
+    /** Глубокие разрезы вихря по земле: ≤14 природных блоков, по касательным дугам внутри зоны. */
+    private static void whirlCuts(ServerPlayer player, Vec3 centre, double r, int layer) {
+        if (layer < 4 || !io.github.verycooltimo.murim.Config.TECHNIQUE_TERRAIN.get()) {
+            return;
+        }
+        net.minecraft.server.level.ServerLevel level = player.serverLevel();
+        java.util.Random rnd = new java.util.Random(player.getId() * 131L + level.getGameTime());
+        int budget = Math.min(14, 2 * layer);
+        int broken = 0;
+        for (int tries = 0; tries < 60 && broken < budget; tries++) {
+            double a = rnd.nextDouble() * Math.PI * 2.0D;
+            double rr = r * (0.35D + 0.6D * rnd.nextDouble());
+            net.minecraft.core.BlockPos pos = net.minecraft.core.BlockPos.containing(centre.x + Math.cos(a) * rr, centre.y - 0.5D, centre.z + Math.sin(a) * rr);
+            net.minecraft.world.level.block.state.BlockState state = level.getBlockState(pos);
+            // Под мастером и под живыми не ломаем: на стенде мастер проваливался сквозь пол.
+            boolean underSomeone = !level.getEntitiesOfClass(LivingEntity.class,
+                    new AABB(pos.above()).inflate(0.6D, 0.0D, 0.6D), LivingEntity::isAlive).isEmpty();
+            if (!underSomeone && !state.isAir() && level.getBlockState(pos.above()).isAir() && natural(state) && level.mayInteract(player, pos)) {
+                level.destroyBlock(pos, false, player);
+                broken++;
+            }
+        }
     }
 
     private static List<LivingEntity> candidates(ServerPlayer player, AABB box) {
