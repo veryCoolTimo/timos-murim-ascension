@@ -279,7 +279,9 @@ public final class PlumVfx {
      */
     private static Vec3 slashPoint(Cast c, double u, double q, double rOffset) {
         double h = PlumRules.height(c.layer);
-        double s = 0.4D + c.length * q + h * Math.tan(Math.toRadians(10.0D)) * u * (1.0D - q);
+        // Основание уходит от клинка вперёд не дальше ~2,5 блока: дальше эффект отрывался от
+        // самого взмаха (автор 02.10). Урон по коридору остаётся прежним.
+        double s = 0.4D + Math.min(2.4D, 0.5D * c.length) * q + h * Math.tan(Math.toRadians(10.0D)) * u * (1.0D - q);
         double y = 0.03D + (h - 0.03D) * u;
         return c.origin.add(c.forward.scale(s)).add(c.right.scale(rOffset)).add(0.0D, y, 0.0D);
     }
@@ -325,6 +327,24 @@ public final class PlumVfx {
         blade(c, pose, camera, v, age, q, 0.0D, 0.0D, 1.0D, w, 0.0F, 1.0F, pink);
         for (double[] f : fan(c.layer)) {
             blade(c, pose, camera, v, age, q, f[0] * w, f[1] * w, f[2], f[3] * w, (float) f[4], 0.45F, pink);
+        }
+        // Борозда от стопы до основания: удар и столп читаются одним движением.
+        if (age < 4.0F) {
+            int m = 12;
+            Vec3 from = c.origin.add(c.forward.scale(0.3D)).add(0.0D, 0.04D, 0.0D);
+            Vec3 to = slashPoint(c, 0.0D, q, 0.0D).add(0.0D, 0.04D, 0.0D);
+            Vec3[] gp = new Vec3[m + 1];
+            double[] gw = new double[m + 1];
+            float[] ga = new float[m + 1];
+            for (int i = 0; i <= m; i++) {
+                double u = i / (double) m;
+                gp[i] = from.lerp(to, u);
+                gw[i] = 0.05D + 0.12D * u * u;
+                // Гаснет от стопы к столпу: хвост раньше головы.
+                ga[i] = (float) (0.85D * Mth.clamp(1.0D - (age - 1.5D * u) / 2.5D, 0.0D, 1.0D) * Mth.clamp(age / 0.3D, 0.0D, 1.0D));
+            }
+            stripVar(v, pose, camera, gp, gw, ga, pink ? PINK : COLD);
+            stripVar(v, pose, camera, gp, scale(gw, 0.35D), ga, EDGE);
         }
         // Контакт с полом: белая вспышка у основания шириной ~1,7 основания на 2 тика.
         if (age < 2.0F) {
