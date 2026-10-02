@@ -45,6 +45,9 @@ public final class MurimRenderTypes {
             ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/vfx/ribbon.png");
     private static final ResourceLocation INK_TEXTURE =
             ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/vfx/ink_stroke.png");
+    /** Сплошная полоса с тонким сглаживанием краёв: чёткие ленты воздуха без мягкого гаусса ribbon.png. */
+    private static final ResourceLocation AIR_BAND_TEXTURE =
+            ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/vfx/air_band.png");
     private static final ResourceLocation MOTE_TEXTURE =
             ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/vfx/mote.png");
 
@@ -97,6 +100,13 @@ public final class MurimRenderTypes {
 
     /** Широкая мягкая лента: мягкая поперёк, ровная вдоль — без «бусин» на стыках отрезков. */
     private static final RenderType RIBBON = additive("ribbon", RIBBON_TEXTURE);
+
+    /**
+     * Ленты воздуха с альфа-смешением: полупрозрачная поверхность и светлая кромка остаются
+     * различимы, а на светлом фоне форма не пропадает, как у чистого additive
+     * (docs/03-vfx/11-what-looks-good.md, Ц4).
+     */
+    private static final RenderType AIR_BAND = flatTranslucent("air_band", AIR_BAND_TEXTURE);
 
     /** Примеси, выходящие из тела при прорыве: тёмные, затемняют, а не светятся. */
     private static final RenderType IMPURITY = flatTranslucent("impurity", MOTE_TEXTURE);
@@ -341,6 +351,10 @@ public final class MurimRenderTypes {
     /** Сплошные тёмные квадраты: обломки и угли. */
     public static RenderType solid() {
         return RenderType.entityTranslucent(ResourceLocation.withDefaultNamespace("textures/misc/white.png"));
+    }
+
+    public static RenderType airBand() {
+        return AIR_BAND;
     }
 
     public static RenderType ribbon() {
