@@ -40,6 +40,8 @@ public final class PlumRules {
      */
     public static final int SWING_START = 18;
     public static final int SWING_GAP = 6;
+    /** Левая рука отводится к груди — дерево гнётся внутрь, к мастеру (автор 02.10). */
+    public static final int BEND_START = 54;
     public static final int PUSH = 66;
     public static final int FALL_START = 67;
     public static final int LAND = 79;

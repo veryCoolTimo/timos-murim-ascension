@@ -72,10 +72,20 @@ public final class DevCaptureHandler {
      * в два тика начало движения выпадает из выборки, и анимация выглядит незапустившейся.
      * Ошибочный вывод на этой почве пойман 2026-08-10, см. docs/agent-log.md.
      */
-    private static final int FRAME_INTERVAL_TICKS = 1;
+    /** Кадр раз в N тиков (env MURIM_CAPTURE_EVERY): длинные техники снимаются реже, но целиком. */
+    private static final int FRAME_INTERVAL_TICKS = envInt("MURIM_CAPTURE_EVERY", 1);
 
     /** Сколько кадров снять. 100 кадров по тику перекрывают технику в 92 тика. */
-    private static final int FRAME_COUNT = 100;
+    private static final int FRAME_COUNT = envInt("MURIM_CAPTURE_FRAMES", 100);
+
+    private static int envInt(String name, int fallback) {
+        String raw = System.getenv(name);
+        try {
+            return raw == null ? fallback : Integer.parseInt(raw.trim());
+        } catch (NumberFormatException e) {
+            return fallback;
+        }
+    }
 
     private static boolean armed = Boolean.getBoolean(ENABLE_PROPERTY);
     private static int warmup;
@@ -152,6 +162,9 @@ public final class DevCaptureHandler {
             // клиента через демон Gradle. Камера третьего лица стоит в четырёх блоках, и при
             // обычных 70° кисть занимает на кадре 854x480 десяток пикселей — дуги не разобрать.
             // API: reference/minecraft-src/net/minecraft/client/Options.java#fov (IntRange 30..110)
+            // Площадка стенда на высоте облаков: ночью они тёмными плитами ложатся поверх
+            // высоких эффектов (дерево Сливы в 12 блоков) — в съёмке их нет.
+            minecraft.options.cloudStatus().set(net.minecraft.client.CloudStatus.OFF);
             String fov = System.getenv("MURIM_CAPTURE_FOV");
             if (fov != null) {
                 minecraft.options.fov().set(Mth.clamp(Integer.parseInt(fov.trim()), 30, 110));

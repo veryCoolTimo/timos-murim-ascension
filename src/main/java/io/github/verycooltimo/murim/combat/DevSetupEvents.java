@@ -76,7 +76,10 @@ public final class DevSetupEvents {
             for (int dz = -PLATFORM_RADIUS; dz <= PLATFORM_RADIUS; dz++) {
                 serverLevel.setBlockAndUpdate(
                         new BlockPos(STAGE_X + dx, STAGE_Y - 1, STAGE_Z + dz),
-                        Blocks.SMOOTH_STONE.defaultBlockState());
+                        // Природный пол (env MURIM_CAPTURE_FLOOR=grass): на нём видно, как
+                        // техника ломает землю; гладкий камень техники не трогают.
+                        "grass".equals(System.getenv("MURIM_CAPTURE_FLOOR"))
+                                ? Blocks.GRASS_BLOCK.defaultBlockState() : Blocks.SMOOTH_STONE.defaultBlockState());
             }
         }
         // Полдень: в сумерках лента выглядит ярче, чем есть, и оценка получится завышенной.
@@ -362,8 +365,12 @@ public final class DevSetupEvents {
         // манекен встаёт перед камерой. Клиент смотрит глазами этой стойки
         // (DevCaptureHandler), сама она невидима и висит без гравитации.
         if ("side".equalsIgnoreCase(System.getProperty("murim.capture.camera", "back"))) {
-            double midX = STAGE_X + 0.5D + lookX * dummyDistance * 0.5D;
-            double midZ = STAGE_Z + 0.5D + lookZ * dummyDistance * 0.5D;
+            // MURIM_CAPTURE_CAM_FWD — сдвинуть точку съёмки вперёд по взгляду (падающее дерево
+            // и след лежат на 3–15 блоков впереди), MURIM_CAPTURE_CAM_Y и _PITCH — поднять камеру
+            // и наклонить вниз: след на земле сбоку на уровне глаз не виден.
+            double fwd = envDouble("MURIM_CAPTURE_CAM_FWD", dummyDistance * 0.5D);
+            double midX = STAGE_X + 0.5D + lookX * fwd;
+            double midZ = STAGE_Z + 0.5D + lookZ * fwd;
             // Правая сторона игрока: при взгляде (−sin, cos) правая рука смотрит в (−cos, −sin).
             double rightX = -Math.cos(yaw);
             double rightZ = -Math.sin(yaw);
@@ -373,20 +380,29 @@ public final class DevSetupEvents {
             double camX = midX + rightX * camDist;
             double camZ = midZ + rightZ * camDist;
             net.minecraft.world.entity.decoration.ArmorStand stand =
-                    new net.minecraft.world.entity.decoration.ArmorStand(level, camX, STAGE_Y - 0.45D, camZ);
+                    new net.minecraft.world.entity.decoration.ArmorStand(level, camX, STAGE_Y - 0.45D + envDouble("MURIM_CAPTURE_CAM_Y", 0.0D), camZ);
             stand.setInvisible(true);
             stand.setNoGravity(true);
             stand.setCustomName(net.minecraft.network.chat.Component.literal(CAMERA_STAND_NAME));
             float standYaw = (float) Math.toDegrees(Math.atan2(-(midX - camX), midZ - camZ));
             stand.setYRot(standYaw);
             stand.setYHeadRot(standYaw);
-            stand.setXRot(6.0F);
+            stand.setXRot((float) envDouble("MURIM_CAPTURE_CAM_PITCH", 6.0D));
             level.addFreshEntity(stand);
         }
         MurimMod.LOGGER.info("Съёмка: манекенов убрано {}, поставлен новый", removed);
     }
 
     private DevSetupEvents() {
+    }
+
+    private static double envDouble(String name, double fallback) {
+        String raw = System.getenv(name);
+        try {
+            return raw == null || raw.isBlank() ? fallback : Double.parseDouble(raw.trim());
+        } catch (NumberFormatException e) {
+            return fallback;
+        }
     }
 
     /** Все техники на полном освоении: стенду нужны приёмы, а не прогресс. */

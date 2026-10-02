@@ -155,5 +155,8 @@
   "murim.footwork.next_build": "%s — coming in the next build",
   "murim.footwork.air_turn": "Air Turn",
   "murim.footwork.shadow": "Shadow Step",
-  "murim.footwork.run": "Run"
+  "murim.footwork.run": "Run",
+  "technique.murim.seven_plum_blossoms.school": "Ultimate Seven Plum Blossoms Sword Technique",
+  "technique.murim.seven_plum_blossoms.slash": "Plum Blossom Slash",
+  "technique.murim.seven_plum_blossoms.barricade": "Plum Blossoms Barricade"
 }
