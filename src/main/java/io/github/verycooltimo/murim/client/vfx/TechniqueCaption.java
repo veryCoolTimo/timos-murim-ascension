@@ -100,8 +100,8 @@ public final class TechniqueCaption {
     }
 
     /**
-     * Шрифт надписи — Rubik Marker Hatch (OFL, assets/murim/font/caption-OFL.txt): жирная
-     * наклонная кисть с рваным краем, ближайший к ref4 из шрифтов с кириллицей (выбор codex 02.10).
+     * Шрифт надписи — Reggae One (OFL, assets/murim/font/caption-OFL.txt): кисть с засечками,
+     * латиница и кириллица одного характера. Выбор автора 02.10 из шести вариантов.
      */
     private static final ResourceLocation FONT = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "caption");
 
