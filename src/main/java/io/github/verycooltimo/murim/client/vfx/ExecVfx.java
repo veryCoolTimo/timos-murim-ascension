@@ -290,7 +290,7 @@ public final class ExecVfx {
                     // Распад: лепестки рвутся с тела, наследуя направление полёта.
                     if (s > ExecRules.FINAL + ExecRules.DISSOLVE_DELAY && s <= ExecRules.FINAL + ExecRules.DISSOLVE_DELAY + ExecRules.DISSOLVE && c.layer >= 3) {
                         Vec3 vel = new Vec3(p.x - c.centre.x, 0.0D, p.z - c.centre.z).normalize().scale(0.12D);
-                        for (int k = 0; k < 9; k++) {
+                        for (int k = 0; k < 5; k++) {
                             // Точки тела: корпус вытянут вдоль полёта — разброс вдоль скорости больше.
                             Vec3 fwd = vel.lengthSqr() > 1.0E-6D ? vel.normalize() : Vec3.ZERO;
                             Vec3 body = p.add(fwd.scale((c.random.nextDouble() - 0.5D) * 1.2D))
@@ -386,7 +386,7 @@ public final class ExecVfx {
                     RenderType petals = MurimRenderTypes.plumPetals();
                     VertexConsumer pc = buffers.getBuffer(petals);
                     for (Mote m : c.petals) {
-                        if (m.pos.distanceToSqr(camera) < 1.6D) {
+                        if (m.pos.distanceToSqr(camera) < 9.0D) {
                             continue;
                         }
                         float a = Mth.clamp((m.life - m.age - partial) / 10.0F, 0.0F, 1.0F);
@@ -407,7 +407,7 @@ public final class ExecVfx {
                         }
                     }
                     for (Mote m : c.petals) {
-                        if (m.pos.distanceToSqr(camera) > 1.6D) {
+                        if (m.pos.distanceToSqr(camera) > 9.0D) {
                             float a = Mth.clamp((m.life - m.age - partial) / 10.0F, 0.0F, 1.0F);
                             PlumVfx.glow(g, pose, camera, m.prev.lerp(m.pos, partial), m.size * 2.0D, 0.35F * a, PINK);
                         }
@@ -465,7 +465,7 @@ public final class ExecVfx {
                             : (float) Math.toDegrees(Math.atan2(-(p.x - c.centre.x), p.z - c.centre.z));
                     // После своего удара копия притухает: яркость — у того, кто сейчас бьёт.
                     float spent = s > ct + ExecRules.PASS_TICKS ? 0.55F : 1.0F;
-                    float alpha = 0.72F * spent * (1.0F - dissolve) * (float) Mth.clamp(s / 3.0D, 0.0D, 1.0D);
+                    float alpha = 0.5F * spent * (1.0F - dissolve) * (float) Mth.clamp(s / 3.0D, 0.0D, 1.0D);
                     // Смазанное движение: три бледные копии позади по тому же маршруту.
                     boolean moving = s < ct + ExecRules.PASS_TICKS + 3;
                     for (int g = 3; g >= 0; g--) {
@@ -622,10 +622,10 @@ public final class ExecVfx {
             if (t > 6.0F && s < ExecRules.FINAL && ExecRules.finale(c.layer)) {
                 slashLine(c, pose, camera, v, i, 0.35F, 1.0F, 0.9D);
             }
-            if (t < 0.0F || t > 8.0F) {
+            if (t < 0.0F || t > 5.0F) {
                 continue;
             }
-            slashLine(c, pose, camera, v, i, (float) PlumVfx.curve(t, 0.0, 1.0, 2.0, 0.9, 8.0, 0.0), Mth.clamp(t / 2.0F, 0.0F, 1.0F), 1.0D);
+            slashLine(c, pose, camera, v, i, (float) PlumVfx.curve(t, 0.0, 1.0, 1.5, 0.9, 5.0, 0.0), Mth.clamp(t / 1.5F, 0.0F, 1.0F), 1.0D);
         }
     }
 
@@ -675,11 +675,12 @@ public final class ExecVfx {
         if (t < 0.0F || t > 12.0F) {
             return;
         }
-        // Короткий яркий пик и быстрое затухание; шесть тонких линий сходятся в корпусе цели.
-        float a = (float) PlumVfx.curve(t, 0.0, 1.0, 2.0, 1.0, 8.0, 0.0);
+        // Главный образ (codex 02.10): шесть протяжённых плоскостей разреза сходятся на цели
+        // одной звездой, как на иконке; короткий яркий пик и быстрое затухание.
+        float a = (float) PlumVfx.curve(t, 0.0, 1.0, 2.5, 1.0, 9.0, 0.0);
         for (int i = 0; i < 6; i++) {
-            // Шесть огромных разрезов, 8–10 блоков, белое ядро.
-            slashLine(c, pose, camera, v, i, a, Mth.clamp(t / 0.8F, 0.0F, 1.0F), 3.2D);
+            slashLine(c, pose, camera, v, i, a, Mth.clamp(t / 0.8F, 0.0F, 1.0F), 4.4D);
+            slashLine(c, pose, camera, v, i, a * 0.35F, Mth.clamp(t / 0.8F, 0.0F, 1.0F), 6.0D);
         }
     }
 

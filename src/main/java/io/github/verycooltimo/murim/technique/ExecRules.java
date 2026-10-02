@@ -17,8 +17,8 @@ public final class ExecRules {
     public static final int CONTACT_GAP = 3;
     public static final int PASS_TICKS = 6;
     public static final int DISSOLVE = 6;
-    /** Клоны рассыпаются через 2 тика после раскрытия разрезов. */
-    public static final int DISSOLVE_DELAY = 2;
+    /** Клоны рассыпаются ДО казни (за 10 тиков), чтобы не заслонять её (codex 02.10). */
+    public static final int DISSOLVE_DELAY = -10;
     public static final int DASH = 46;
     public static final int DASH_TICKS = 12;
     public static final int FINAL = 64;
