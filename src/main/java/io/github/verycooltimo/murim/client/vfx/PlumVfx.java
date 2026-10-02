@@ -47,6 +47,7 @@ public final class PlumVfx {
     private static final VfxColour COLD = new VfxColour(0xC9 / 255.0F, 0xE7 / 255.0F, 0xF4 / 255.0F);
     private static final VfxColour PINK = new VfxColour(0xF1 / 255.0F, 0x9B / 255.0F, 0xC5 / 255.0F);
     private static final VfxColour EDGE = new VfxColour(0xFA / 255.0F, 0xFF / 255.0F, 1.0F);
+    private static final VfxColour RIM = new VfxColour(0xED / 255.0F, 0x60 / 255.0F, 0x9B / 255.0F);
 
     private static final List<Cast> CASTS = new ArrayList<>();
     private static int clientTicks;
@@ -122,13 +123,14 @@ public final class PlumVfx {
             // Лепестки цветка уходят в поток разреза, остальные рождаются вдоль него.
             int total = cast.layer >= 4 ? 12 : 8;
             for (int i = 0; i < total; i++) {
-                double u = i < 5 ? 0.05D * i : 0.25D + 0.7D * cast.random.nextDouble();
-                Vec3 at = slashPoint(cast, u).add(cast.right.scale((cast.random.nextDouble() - 0.5D) * 0.6D));
-                Vec3 vel = cast.forward.scale(0.08D + 0.08D * cast.random.nextDouble())
-                        .add(0.0D, 0.03D + 0.05D * cast.random.nextDouble(), 0.0D)
-                        .add(cast.right.scale((cast.random.nextDouble() - 0.5D) * 0.08D));
+                // 5 — лепестки цветка, 5 — из нижней пятой части столпа, остальные выше.
+                double u = i < 5 ? 0.02D * i : i < 10 ? 0.2D * cast.random.nextDouble() : 0.3D + 0.4D * cast.random.nextDouble();
+                Vec3 at = slashPoint(cast, u, 0.3D, (cast.random.nextDouble() - 0.5D) * PlumRules.width(cast.layer) * 0.8D);
+                Vec3 vel = new Vec3(0.0D, 0.08D + 0.06D * cast.random.nextDouble(), 0.0D)
+                        .add(cast.forward.scale(0.03D + 0.04D * cast.random.nextDouble()))
+                        .add(cast.right.scale((cast.random.nextDouble() - 0.5D) * 0.06D));
                 cast.petals.add(new Petal(at, vel, cast.random.nextInt(4),
-                        (float) ((cast.random.nextDouble() - 0.5D) * 0.5D), 0.07D + 0.05D * cast.random.nextDouble()));
+                        (float) ((cast.random.nextDouble() - 0.5D) * 0.5D), 0.06D + 0.05D * cast.random.nextDouble()));
             }
         }
     }
@@ -157,15 +159,6 @@ public final class PlumVfx {
                 it.remove();
             }
         }
-    }
-
-    /** Точка главной полосы разреза: u=0 — основание у стоп, u=1 — верх-вперёд (голова). */
-    private static Vec3 slashPoint(Cast c, double u) {
-        double h = PlumRules.height(c.layer);
-        // Восходящая дуга: почти вертикаль (ref4, whirl5; отклонение ~12°), изгиб от взмаха.
-        double s = 0.4D + 0.25D * c.length * (1.0D - Math.pow(1.0D - u, 1.6D));
-        double y = 0.15D + h * Math.pow(u, 0.85D);
-        return c.origin.add(c.forward.scale(s)).add(c.right.scale(0.15D + 0.15D * Math.sin(Math.PI * u))).add(0.0D, y, 0.0D);
     }
 
     /** Приблизительный сокет острия: правая рука с мечом перед телом. */
@@ -280,75 +273,56 @@ public final class PlumVfx {
     }
 
     /**
-     * Разрез-столп. Фронт доходит до 65 % за первый тик, до вершины — ко второму. Участок,
-     * рождённый в {@code b(u)}, раскрывается за полтика, держит пик до 1,5, затем теряет кромку
-     * и ширину; старый хвост срезается с 2-го тика, к 6-му остаётся только тонкий верх.
+     * Точка главного столпа: u=0 — широкое основание у земли, u=1 — остриё. {@code q} — проход
+     * основания по коридору (0 → 0,65 → 1 за два тика после выпуска); в начале столп наклонён
+     * вперёд на 10°, к концу прохода выпрямляется (решение codex 02.10 по ref4/ref7/ref9).
+     */
+    private static Vec3 slashPoint(Cast c, double u, double q, double rOffset) {
+        double h = PlumRules.height(c.layer);
+        double s = 0.4D + c.length * q + h * Math.tan(Math.toRadians(10.0D)) * u * (1.0D - q);
+        double y = 0.03D + (h - 0.03D) * u;
+        return c.origin.add(c.forward.scale(s)).add(c.right.scale(rOffset)).add(0.0D, y, 0.0D);
+    }
+
+    private static Vec3 slashPoint(Cast c, double u) {
+        return slashPoint(c, u, 0.0D, 0.0D);
+    }
+
+    /** Ширина столпа вдоль высоты: широко у земли, к острию сходит на нет (автор 02.10). */
+    private static double profile(double u) {
+        return curve(u, 0.0, 1.0, 0.08, 0.96, 0.20, 0.84, 0.40, 0.63, 0.60, 0.42, 0.78, 0.23, 0.90, 0.10, 1.0, 0.0);
+    }
+
+    /** Вторичные лезвия веера из общего основания: {r/W у основания, r/W у острия, высота/H, ширина/W, задержка}. */
+    private static double[][] fan(int layer) {
+        double[] a = {-0.28, -0.42, 0.72, 0.24, 0.25};
+        double[] b = {0.31, 0.40, 0.56, 0.20, 0.50};
+        double[] d = {0.12, 0.22, 0.84, 0.14, 0.65};
+        if (layer >= 6) {
+            return new double[][] {a, b, d};
+        }
+        if (layer >= 4) {
+            return new double[][] {a, b};
+        }
+        return layer >= 2 ? new double[][] {a} : new double[0][];
+    }
+
+    /**
+     * Разрез-столп: растёт от широкого основания вверх (видимая высота 0 → 0,65 → 1 к полутора
+     * тикам), основание проходит коридор вперёд за два тика. Белое ядро — у земли (70 % ширины)
+     * и сужается к острию (10 %), выше розовое; узкие внешние края насыщеннее. С 2-го тика ядро
+     * гаснет, тело сужается, верх исчезает на полтика позже низа.
      */
     private static void slash(Cast c, PoseStack.Pose pose, Vec3 camera, VertexConsumer v, float age) {
-        if (age > 8.0F) {
+        if (age > 6.5F) {
             return;
         }
-        double maxWidth = PlumRules.width(c.layer);
+        double q = curve(age, 0.0, 0.0, 1.0, 0.65, 2.0, 1.0);
+        double w = PlumRules.width(c.layer);
         boolean pink = PlumRules.blossoms(c.layer);
-        float bodyAlpha = c.layer >= 4 ? 0.65F : c.layer == 3 ? 0.58F : c.layer == 2 ? 0.45F : 0.38F;
-        double cut = curve(age, 2.0, 0.0, 4.0, 0.45, 6.0, 0.85, 8.0, 1.0);
-        int n = 28;
-        List<Vec3> pts = new ArrayList<>();
-        List<Double> half = new ArrayList<>();
-        List<Float> alpha = new ArrayList<>();
-        List<Float> edgeA = new ArrayList<>();
-        List<Float> pinkA = new ArrayList<>();
-        for (int i = 0; i <= n; i++) {
-            double u = i / (double) n;
-            double born = u <= 0.65D ? u / 0.65D : 1.0D + (u - 0.65D) / 0.35D;
-            double seg = age - born;
-            if (seg < 0.0D) {
-                break;
-            }
-            if (u < cut - 0.1D) {
-                continue;
-            }
-            double tailCut = Mth.clamp((u - cut) / 0.1D, 0.0D, 1.0D);
-            double open = curve(seg, 0.0, 0.0, 0.5, 0.8, 1.5, 1.0, 3.0, 0.6, 6.0, 0.25);
-            double prof = curve(u, 0.0, 0.0, 0.12, 0.30, 0.45, 1.0, 0.75, 0.6, 0.9, 0.3, 1.0, 0.0);
-            pts.add(slashPoint(c, u));
-            half.add(0.5D * maxWidth * prof * open * tailCut);
-            alpha.add(bodyAlpha * (float) Mth.clamp(seg / 0.3D, 0.0D, 1.0D));
-            edgeA.add((float) curve(seg, 0.0, 0.0, 0.3, 0.95, 1.5, 0.95, 3.0, 0.0));
-            // Цвет цветка бежит от основания к острию за 2 тика.
-            pinkA.add(pink ? (float) Mth.clamp((age - u * 2.0D) / 0.8D, 0.0D, 1.0D) : 0.0F);
-        }
-        if (pts.size() < 2) {
-            return;
-        }
-        Vec3[] p = pts.toArray(new Vec3[0]);
-        double[] w = new double[p.length];
-        float[] a = new float[p.length];
-        float[] e = new float[p.length];
-        float[] pk = new float[p.length];
-        for (int i = 0; i < p.length; i++) {
-            w[i] = half.get(i);
-            a[i] = alpha.get(i);
-            e[i] = edgeA.get(i);
-            pk[i] = pinkA.get(i) * a[i];
-            a[i] *= 1.0F - pinkA.get(i);
-        }
-        stripVar(v, pose, camera, p, w, a, COLD);
-        if (pink) {
-            stripVar(v, pose, camera, p, w, pk, PINK);
-        }
-        // Светлая кромка — по переднему (верхнему) краю, узкая.
-        double[] ew = new double[p.length];
-        for (int i = 0; i < p.length; i++) {
-            ew[i] = w[i] * 0.22D;
-        }
-        stripVar(v, pose, camera, p, ew, e, EDGE);
-        // Отрывы от тела разреза, на тик позже: L2–L3 один, L4+ два (0,8 и 1,2 блока).
-        if (c.layer >= 2 && age > 1.0F) {
-            branch(c, pose, camera, v, age - 1.0F, 0.5D, 1.0D, 0.8D, 0.10D, pink);
-            if (c.layer >= 4) {
-                branch(c, pose, camera, v, age - 1.3F, 0.3D, -1.0D, 1.2D, 0.14D, pink);
-            }
+        blade(c, pose, camera, v, age, q, 0.0D, 0.0D, 1.0D, w, 0.0F, 1.0F, pink);
+        for (double[] f : fan(c.layer)) {
+            blade(c, pose, camera, v, age, q, f[0] * w, f[1] * w, f[2], f[3] * w, (float) f[4], 0.45F, pink);
         }
         // Опора: холодная дуга у стопы (ref1, whirl1), гаснет к +3.
         if (age < 3.0F) {
@@ -368,27 +342,85 @@ public final class PlumVfx {
         }
     }
 
-    /** Отрыв: из точки {@code at} главной полосы вбок-вверх; длина и ширина в блоках. */
-    private static void branch(Cast c, PoseStack.Pose pose, Vec3 camera, VertexConsumer v, float age, double at,
-                               double sideSign, double length, double width, boolean pink) {
-        if (age < 0.0F || age > 4.0F) {
+    /** Одно лезвие столпа: основание со смещением r0, остриё уходит к r1; высота и ширина — доли. */
+    private static void blade(Cast c, PoseStack.Pose pose, Vec3 camera, VertexConsumer v, float age, double q,
+                              double r0, double r1, double heightFrac, double baseWidth, float delay, float bright,
+                              boolean pink) {
+        float a = age - delay;
+        if (a < 0.0F) {
             return;
         }
-        Vec3 from = slashPoint(c, at);
-        Vec3 dir = c.forward.scale(0.5D).add(c.right.scale(0.55D * sideSign)).add(0.0D, 0.7D, 0.0D).normalize();
-        int m = 8;
-        Vec3[] bp = new Vec3[m + 1];
-        double[] bw = new double[m + 1];
-        double grow = Math.min(1.0D, age / 0.6D);
-        for (int i = 0; i <= m; i++) {
-            double u = i / (double) m * grow;
-            bp[i] = from.add(dir.scale(length * u)).add(c.forward.scale(0.15D * u * u));
-            bw[i] = 0.5D * width * Math.sin(Math.PI * Math.min(1.0D, (i / (double) m) * 1.1D + 0.04D))
-                    * curve(age, 0.0, 0.4, 1.0, 1.0, 4.0, 0.0);
+        double grow = curve(a, 0.0, 0.0, 0.5, 0.65, 1.0, 1.0);
+        double widthAll = curve(a, 0.0, 0.0, 0.25, 0.85, 0.5, 1.0, 2.0, 1.0, 3.5, 0.55, 6.0, 0.0);
+        float core = (float) curve(a, 0.0, 0.0, 0.3, 0.95, 2.0, 0.95, 3.0, 0.0);
+        int n = 24;
+        List<Vec3> pts = new ArrayList<>();
+        List<Double> half = new ArrayList<>();
+        List<Float> body = new ArrayList<>();
+        List<Double> coreW = new ArrayList<>();
+        for (int i = 0; i <= n; i++) {
+            double u = i / (double) n;
+            // Растёт от основания вверх: выше уже прорисованной высоты не рисуем.
+            if (u > grow + 1.0E-6D) {
+                break;
+            }
+            // Верх исчезает на полтика позже низа.
+            double vanish = curve(a - 0.5D * u, 3.5, 1.0, 6.0, 0.0);
+            double uh = u * heightFrac;
+            Vec3 p = slashPoint(c, uh, q, r0 + (r1 - r0) * u);
+            pts.add(p);
+            double hw = 0.5D * baseWidth * profile(u) * widthAll;
+            half.add(hw);
+            body.add((float) vanish * bright);
+            coreW.add(hw * curve(u, 0.0, 0.7, 0.4, 0.5, 0.8, 0.25, 1.0, 0.1));
         }
-        float ba = (float) curve(age, 0.0, 0.0, 0.4, 1.0, 4.0, 0.0);
-        strip(v, pose, camera, bp, bw, 0.55F * ba, pink ? PINK : COLD);
-        strip(v, pose, camera, bp, scale(bw, 0.22D), 0.85F * ba, EDGE);
+        if (pts.size() < 2) {
+            return;
+        }
+        int m = pts.size();
+        Vec3[] p = pts.toArray(new Vec3[0]);
+        double[] hw = new double[m];
+        double[] cw = new double[m];
+        double[] rim = new double[m];
+        float[] ba = new float[m];
+        float[] ca = new float[m];
+        float[] ra = new float[m];
+        float bodyAlpha = pink ? 0.60F : c.layer >= 2 ? 0.45F : 0.38F;
+        for (int i = 0; i < m; i++) {
+            hw[i] = half.get(i);
+            cw[i] = coreW.get(i);
+            rim[i] = hw[i] * 0.1D;
+            ba[i] = bodyAlpha * body.get(i);
+            ca[i] = 0.95F * core * body.get(i);
+            ra[i] = pink ? 0.5F * body.get(i) : 0.0F;
+        }
+        stripVar(v, pose, camera, p, hw, ba, pink ? PINK : COLD);
+        if (pink) {
+            // Насыщенные внешние края — по 10 % ширины с каждой стороны.
+            stripOffset(v, pose, camera, p, rim, hw, 0.9D, ra, RIM);
+            stripOffset(v, pose, camera, p, rim, hw, -0.9D, ra, RIM);
+        }
+        stripVar(v, pose, camera, p, cw, ca, EDGE);
+    }
+
+    /** Полоса, сдвинутая от оси на долю {@code k} полуширины {@code base} (для краёв). */
+    private static void stripOffset(VertexConsumer c, PoseStack.Pose pose, Vec3 camera, Vec3[] p, double[] w, double[] base,
+                                    double k, float[] a, VfxColour col) {
+        Vec3[] q = new Vec3[p.length];
+        Vec3 last = null;
+        for (int i = 0; i < p.length; i++) {
+            Vec3 t = p[Math.min(p.length - 1, i + 1)].subtract(p[Math.max(0, i - 1)]);
+            Vec3 sd = t.cross(camera.subtract(p[i]));
+            if (sd.lengthSqr() > 1.0E-10D) {
+                sd = sd.normalize();
+                if (last != null && sd.dot(last) < 0.0D) {
+                    sd = sd.scale(-1.0D);
+                }
+                last = sd;
+            }
+            q[i] = last == null ? p[i] : p[i].add(last.scale(k * base[i]));
+        }
+        stripVar(c, pose, camera, q, w, a, col);
     }
 
     private static double curve(double x, double... xy) {
