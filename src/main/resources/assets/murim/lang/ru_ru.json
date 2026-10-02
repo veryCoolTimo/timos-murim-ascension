@@ -124,5 +124,7 @@
   "murim.read.rank.6": "Мистический",
   "technique.murim.six_harmonies": "Меч Шести Равновесий",
   "technique.murim.six_harmonies.weakness": "Прямой удар сверху читается по плечам.",
-  "murim.loadout.foundation": "Основа меча"
+  "murim.loadout.foundation": "Основа меча",
+  "technique.murim.dark_fragrance_step": "Шаг Невидимого Аромата",
+  "technique.murim.dark_fragrance_step.weakness": "После рывка нужна секунда, чтобы снова встать в стойку."
 }

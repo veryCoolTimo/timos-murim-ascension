@@ -144,5 +144,7 @@
   "murim.read.rank.6": "Profound",
   "technique.murim.six_harmonies": "Six Harmonies Sword",
   "technique.murim.six_harmonies.weakness": "The straight overhead strike shows in the shoulders.",
-  "murim.loadout.foundation": "Sword foundation"
+  "murim.loadout.foundation": "Sword foundation",
+  "technique.murim.dark_fragrance_step": "Invisible Scent Stride",
+  "technique.murim.dark_fragrance_step.weakness": "After the dash you need a moment to settle into stance."
 }

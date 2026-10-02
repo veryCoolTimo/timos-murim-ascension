@@ -184,6 +184,16 @@ public final class TechniqueService {
             }
         }
 
+        // Шаг на высшем слое: ещё два рывка через равные промежутки.
+        if (technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.Step) {
+            int layer = Math.max(0, io.github.verycooltimo.murim.mastery.MasteryService.layer(player, technique.id()));
+            int since = state.tick() - technique.startTickOf(TechniquePhase.IMPACT);
+            int gap = io.github.verycooltimo.murim.technique.StepRules.CHAIN_GAP;
+            if (since > 0 && since % gap == 0 && since / gap < io.github.verycooltimo.murim.technique.StepRules.dashes(layer)) {
+                io.github.verycooltimo.murim.technique.BehaviorExecutor.step(player, technique.id());
+            }
+        }
+
         player.setData(ModAttachments.TECHNIQUE_STATE, state.advanced());
     }
 

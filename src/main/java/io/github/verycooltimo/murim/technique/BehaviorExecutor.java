@@ -49,9 +49,45 @@ public final class BehaviorExecutor {
         if (behavior instanceof TechniqueBehavior.PalmBlast palm) {
             return palmBlast(player, palm, definition.id(), power);
         }
+        if (behavior instanceof TechniqueBehavior.Step) {
+            step(player, definition.id());
+            return false;
+        }
         MurimMod.LOGGER.error("Тип поведения {} не реализован у техники {}",
                 behavior.type(), definition.id());
         return false;
+    }
+
+    /**
+     * Шаг: рывок по горизонтали взгляда до первой стены (луч по блокам — старый рывок
+     * телепортировал сквозь стены), неуязвимость на высоких слоях, пакет для эффекта.
+     */
+    public static void step(ServerPlayer player, net.minecraft.resources.ResourceLocation id) {
+        int layer = Math.max(0, io.github.verycooltimo.murim.mastery.MasteryService.layer(player, id));
+        Vec3 look = player.getLookAngle();
+        Vec3 flat = new Vec3(look.x, 0.0D, look.z);
+        if (flat.lengthSqr() < 1.0E-6D) {
+            return;
+        }
+        Vec3 dir = flat.normalize();
+        Vec3 start = player.position();
+        double distance = StepRules.distance(layer);
+        // Луч на уровне пояса: упираемся в стену, а не проходим сквозь неё.
+        Vec3 from = start.add(0.0D, 0.9D, 0.0D);
+        net.minecraft.world.phys.BlockHitResult wall = player.level().clip(new net.minecraft.world.level.ClipContext(
+                from, from.add(dir.scale(distance)), net.minecraft.world.level.ClipContext.Block.COLLIDER,
+                net.minecraft.world.level.ClipContext.Fluid.NONE, player));
+        double reach = wall.getType() == net.minecraft.world.phys.HitResult.Type.MISS
+                ? distance : Math.max(0.0D, wall.getLocation().distanceTo(from) - 0.5D);
+        Vec3 end = start.add(dir.scale(reach));
+        player.teleportTo(end.x, end.y, end.z);
+        int iframes = StepRules.invulnerableTicks(layer);
+        if (iframes > 0) {
+            player.invulnerableTime = Math.max(player.invulnerableTime, iframes);
+        }
+        io.github.verycooltimo.murim.mastery.MasteryService.onMiss(player, id);
+        net.neoforged.neoforge.network.PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
+                new io.github.verycooltimo.murim.network.StepPayload(player.getId(), start, player.position(), player.getYRot(), layer));
     }
 
     private static boolean meleeArc(ServerPlayer player, TechniqueBehavior.MeleeArc melee,

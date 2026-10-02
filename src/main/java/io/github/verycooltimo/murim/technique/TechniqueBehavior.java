@@ -21,12 +21,13 @@ import java.util.Map;
  */
 public sealed interface TechniqueBehavior
         permits TechniqueBehavior.MeleeArc, TechniqueBehavior.ProjectileFan, TechniqueBehavior.Dash,
-                TechniqueBehavior.PalmBlast {
+                TechniqueBehavior.PalmBlast, TechniqueBehavior.Step {
 
     ResourceLocation MELEE_ARC = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "melee_arc");
     ResourceLocation PROJECTILE_FAN = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "projectile_fan");
     ResourceLocation DASH = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "dash");
     ResourceLocation PALM_BLAST = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "palm_blast");
+    ResourceLocation STEP = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "step");
 
     ResourceLocation type();
 
@@ -184,11 +185,27 @@ public sealed interface TechniqueBehavior
         }
     }
 
+    /**
+     * Шаг-уход без урона (Шаг Невидимого Аромата). Дальность, неуязвимость и число рывков —
+     * по слою освоения, см. {@link io.github.verycooltimo.murim.technique.StepRules}.
+     */
+    record Step(float damage) implements TechniqueBehavior {
+        public static final MapCodec<Step> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
+                Codec.FLOAT.optionalFieldOf("damage", 0.0F).forGetter(Step::damage)
+        ).apply(i, Step::new));
+
+        @Override
+        public ResourceLocation type() {
+            return STEP;
+        }
+    }
+
     Map<ResourceLocation, MapCodec<? extends TechniqueBehavior>> TYPES = Map.of(
             MELEE_ARC, MeleeArc.CODEC,
             PROJECTILE_FAN, ProjectileFan.CODEC,
             DASH, Dash.CODEC,
-            PALM_BLAST, PalmBlast.CODEC);
+            PALM_BLAST, PalmBlast.CODEC,
+            STEP, Step.CODEC);
 
     Codec<TechniqueBehavior> CODEC = ResourceLocation.CODEC
             .dispatch("type", TechniqueBehavior::type, type -> {
