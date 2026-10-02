@@ -14,9 +14,9 @@ import net.neoforged.neoforge.client.event.RenderGuiEvent;
 
 /**
  * Импакт-кадры по разбору rimuru.dev (docs/03-vfx/13-rimuru-impact-frames.md): удар показан
- * сменой способа изображения — классический чёрно-белый. Последовательность по тикам:
- * белый разрыв → почти чёрный кадр с белыми контурами → графическая версия (бумага, тушь,
- * растр, радиальные штрихи; 2 тика) → смена полярности → обычный мир. ~0,25 с.
+ * сменой способа изображения — классический чёрно-белый. Автор 02.10 из трёх фаз оставил одну:
+ * ОДИН кадр графики манхвы (бумага, тушь, растр, штрихи к точке удара, белый разрыв). Режимы
+ * 0/1/3 шейдера (разрыв, тёмные контуры, полярность) остаются в шейдере, но не используются.
  *
  * <p>Шейдер {@code murim:impact} поверх мира и руки, до интерфейса — как давление ауры
  * ({@link PressureScreen}): та же схема PostChain. Без «экранных вспышек» остаётся только
@@ -26,8 +26,8 @@ import net.neoforged.neoforge.client.event.RenderGuiEvent;
 public final class ImpactFrames {
 
     private static final ResourceLocation CHAIN = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "shaders/post/impact.json");
-    /** Режим шейдера по тику: вспышка, тьма с контурами, графика ×2, полярность. */
-    private static final int[] SEQUENCE = {0, 1, 2, 2, 3};
+    /** Режим шейдера по тику: один кадр графики. */
+    private static final int[] SEQUENCE = {2};
 
     private static PostChain chain;
     private static boolean chainFailed;
@@ -38,6 +38,12 @@ public final class ImpactFrames {
     private static float centerX = 0.5F;
     private static float centerY = 0.5F;
     private static float seed;
+    /**
+     * Кадр нарисован хотя бы раз. Импакт длится один тик, а при fps ниже 20 (слабый ПК, стенд)
+     * на этот тик может не прийтись ни одной отрисовки — тогда кадр показывается на первой
+     * отрисовке после него (в пределах 3 тиков).
+     */
+    private static boolean shown = true;
 
     /** Запустить импакт-кадры своему экрану; центр штрихов — точка экрана (0..1, Y снизу). */
     public static void trigger(float screenX, float screenY) {
@@ -45,6 +51,7 @@ public final class ImpactFrames {
             return;
         }
         born = ticks;
+        shown = false;
         centerX = screenX;
         centerY = screenY;
         seed = (ticks % 97) * 0.37F;
@@ -91,10 +98,11 @@ public final class ImpactFrames {
     @SubscribeEvent
     static void onRenderGuiPre(RenderGuiEvent.Pre event) {
         int age = ticks - born;
-        if (age < 0 || age >= SEQUENCE.length || chainFailed) {
+        if (age < 0 || chainFailed || age >= SEQUENCE.length && (shown || age >= 3)) {
             return;
         }
-        int mode = SEQUENCE[age];
+        int mode = SEQUENCE[Math.min(age, SEQUENCE.length - 1)];
+        shown = true;
         if (!ClientConfig.SCREEN_FLASHES.get() && mode != 2) {
             return;
         }

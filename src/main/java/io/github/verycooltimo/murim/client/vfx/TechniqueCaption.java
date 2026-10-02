@@ -99,8 +99,15 @@ public final class TechniqueCaption {
         }
     }
 
+    /**
+     * Шрифт надписи — Rubik Marker Hatch (OFL, assets/murim/font/caption-OFL.txt): жирная
+     * наклонная кисть с рваным краем, ближайший к ref4 из шрифтов с кириллицей (выбор codex 02.10).
+     */
+    private static final ResourceLocation FONT = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "caption");
+
     /** Строка белым в чёрной обводке (8 смещений на 1 пиксель шрифта). */
-    private static void text(GuiGraphics g, Font font, String s, float x, float y, float scale, float alpha) {
+    private static void text(GuiGraphics g, Font font, String raw, float x, float y, float scale, float alpha) {
+        Component s = Component.literal(raw).withStyle(st -> st.withFont(FONT));
         PoseStack pose = g.pose();
         pose.pushPose();
         try {
