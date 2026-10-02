@@ -159,6 +159,7 @@ public final class PlumVfx {
         final List<Gust> gusts = new ArrayList<>();
         final List<Branch> branches = new ArrayList<>();
         final List<Vec3[]> scar = new ArrayList<>();
+        final List<Double> scarWidth = new ArrayList<>();
         int landTick = -1;
         final Random random;
 
@@ -295,7 +296,7 @@ public final class PlumVfx {
             for (Puff p : c.puffs) {
                 p.prev = p.pos;
                 p.age++;
-                p.vel = new Vec3(p.vel.x * 0.86D, p.vel.y * 0.9D, p.vel.z * 0.86D);
+                p.vel = new Vec3(p.vel.x * 0.9D, p.vel.y * 0.93D, p.vel.z * 0.9D);
                 p.pos = p.pos.add(p.vel);
             }
             c.puffs.removeIf(p -> p.age >= p.life);
@@ -337,6 +338,9 @@ public final class PlumVfx {
                 }
                 if (since == PlumRules.LAND) {
                     landing(c);
+                }
+                if (since == PlumRules.LAND + 4) {
+                    settleScar(c);
                 }
             }
             if (clientTicks - c.start > COMMIT + PlumRules.LAND + SCAR_LIFE + 20) {
@@ -411,7 +415,7 @@ public final class PlumVfx {
                 }
                 for (Petal p : c.petals) {
                     float a = Mth.clamp((PETAL_LIFE - p.age - partial) / 12.0F, 0.0F, 1.0F);
-                    petal(pc, pose, camera, p.prev.lerp(p.pos, partial), p.size, p.cell, (p.age + partial) * p.spin, a,
+                    petal(pc, pose, camera, p.prev.lerp(p.pos, partial), p.size * 1.7D, p.cell, (p.age + partial) * p.spin, a,
                             1.0F, 0.75F, 0.8F);
                 }
                 buffers.endBatch(petals);
@@ -456,6 +460,9 @@ public final class PlumVfx {
                             int k = 0;
                             for (Vec3[] crack : c.scar) {
                                 for (int i = 1; i < crack.length; i += 3) {
+                                    if (Double.isNaN(crack[i].y)) {
+                                        continue;
+                                    }
                                     float flick = 0.5F + 0.5F * Mth.sin(la * 0.6F + k * 2.3F);
                                     glow(g, pose, camera, crack[i].add(0.0D, 0.08D, 0.0D), 0.18D + 0.1D * flick, 0.7F * warm * flick, CINNABAR);
                                     k++;
@@ -466,7 +473,7 @@ public final class PlumVfx {
                     // Каждый лепесток светится, как искры ауры.
                     for (Petal p : c.petals) {
                         float a = Mth.clamp((PETAL_LIFE - p.age - partial) / 12.0F, 0.0F, 1.0F);
-                        glow(g, pose, camera, p.prev.lerp(p.pos, partial), p.size * 3.2D, 0.45F * a, PINK);
+                        glow(g, pose, camera, p.prev.lerp(p.pos, partial), p.size * 2.0D, 0.35F * a, PINK);
                     }
                     buffers.endBatch(glowType);
                 }
@@ -597,7 +604,7 @@ public final class PlumVfx {
                     .add(c.forward.scale(0.2D * k)), top.add(0.0D, -h * 0.15D, 0.0D).add(c.right.scale(0.25D * k)),
                     0.09D * wScale, 0.3F, 2.6F, 0));
         }
-        int[] counts = {0, 0, 4, 6, 10, 12, 14, 16};
+        int[] counts = {0, 0, 4, 6, 14, 16, 18, 20};
         int count = counts[Math.max(0, Math.min(7, c.layer))];
         for (int i = 0; i < count; i++) {
             double at = 0.22D + 0.62D * (i + 0.5D) / count + (r.nextDouble() - 0.5D) * 0.06D;
@@ -695,7 +702,7 @@ public final class PlumVfx {
         // толчок — оно распрямляется и с ускорением валится вперёд до ~85°.
         double hFrac = Mth.clamp(d.y / Math.max(1.0D, PlumRules.treeHeight(c.layer)), 0.0D, 1.0D);
         double pull = Mth.clamp(t0 / (double) (PlumRules.PUSH - PlumRules.BEND_START), 0.0D, 1.0D);
-        double back = -Math.toRadians(22.0D) * pull * pull * (3.0D - 2.0D * pull) * Math.pow(hFrac, 1.5D);
+        double back = -Math.toRadians(30.0D) * pull * pull * (3.0D - 2.0D * pull) * Math.pow(hFrac, 1.5D);
         double drop = Mth.clamp((age - PlumRules.FALL_START) / (double) (PlumRules.LAND - PlumRules.FALL_START), 0.0D, 1.0D);
         double th = back * (1.0D - drop) + Math.toRadians(85.0D) * drop * drop;
         double f = d.dot(c.forward);
@@ -744,7 +751,7 @@ public final class PlumVfx {
                 out = c.right;
             }
             c.winds.add(new Wind(at, out.scale(0.35D + 0.2D * r.nextDouble()).add(0.0D, 0.05D, 0.0D), 16 + r.nextInt(10),
-                    (r.nextBoolean() ? 1 : -1) * (0.1D + 0.08D * r.nextDouble()), 0.22D + 0.18D * r.nextDouble()));
+                    (r.nextBoolean() ? 1 : -1) * (0.03D + 0.05D * r.nextDouble()), 0.22D + 0.18D * r.nextDouble()));
         }
     }
 
@@ -766,7 +773,7 @@ public final class PlumVfx {
             for (int i = 0; i < 16; i++) {
                 Vec3 back = c.forward.scale(-(0.3D + 0.2D * r.nextDouble())).add(c.right.scale((r.nextDouble() - 0.5D) * 0.5D));
                 c.puffs.add(new Puff(c.origin.add(c.right.scale((r.nextDouble() - 0.5D) * 0.8D)).add(0.0D, 0.12D, 0.0D),
-                        back.add(0.0D, 0.02D, 0.0D), 16 + r.nextInt(8), r.nextInt(16), 0.25D + 0.15D * r.nextDouble()));
+                        back.add(0.0D, 0.02D, 0.0D), 22 + r.nextInt(10), r.nextInt(16), 0.45D + 0.25D * r.nextDouble()));
             }
             // Полоса пыли по земле к дереву: воздух прошёл низом.
             for (int i = 0; i < 6; i++) {
@@ -792,13 +799,13 @@ public final class PlumVfx {
         double h = PlumRules.treeHeight(c.layer);
         Minecraft mc = Minecraft.getInstance();
         if (mc.level != null && !mc.level.getBlockState(net.minecraft.core.BlockPos.containing(base.add(0.0D, -0.2D, 0.0D))).isAir()) {
-            int n = 4 + 2 * Math.min(4, c.layer);
+            int n = 10 + 4 * Math.min(4, c.layer);
             for (int i = 0; i < n; i++) {
                 Vec3 at = base.add(c.forward.scale(h * (0.25D + 0.7D * r.nextDouble()))).add(c.right.scale((r.nextDouble() - 0.5D) * 2.4D))
                         .add(0.0D, 0.15D, 0.0D);
                 Vec3 side = c.right.scale(r.nextBoolean() ? 1.0D : -1.0D);
                 Vec3 vel = side.scale(0.1D + 0.1D * r.nextDouble()).add(c.forward.scale(0.05D)).add(0.0D, 0.03D, 0.0D);
-                c.puffs.add(new Puff(at, vel, 12 + r.nextInt(8), r.nextInt(16), 0.3D + 0.15D * r.nextDouble()));
+                c.puffs.add(new Puff(at, vel, 20 + r.nextInt(10), r.nextInt(16), 0.6D + 0.3D * r.nextDouble()));
             }
         }
         for (int i = 0; i < 18 && c.winds.size() < MAX_WINDS; i++) {
@@ -818,20 +825,47 @@ public final class PlumVfx {
         }
         if (mc.player != null && mc.player.getId() == c.entityId) {
             SpeedLines.radial(0.5F, 0.55F, 1.0F, 7, SpeedLines.WHITE);
+            // Импакт-кадры rimuru (автор 02.10): вспышка → негатив → киноварь, ~0,25 с.
+            if (c.layer >= 3) {
+                ImpactFrames.trigger();
+            }
         }
         // Земля дрожит: толчок камеры всем рядом (тот же пружинный удар, что у порывов ауры).
         if (mc.player != null && mc.player.position().distanceTo(base) < 16.0D) {
-            float strength = (float) (1.0D - mc.player.position().distanceTo(base) / 16.0D) * (0.5F + 0.12F * Math.min(4, c.layer));
-            io.github.verycooltimo.murim.client.ClientAuraState.gust(c.entityId, mc.player.getId(), strength, false);
+            double d = mc.player.position().distanceTo(base.add(c.forward.scale(h * 0.4D)));
+            float strength = (float) Mth.clamp(1.0D - d / 26.0D, 0.0D, 1.0D) * (0.5F + 0.125F * Math.min(4, c.layer));
+            if (mc.player.getId() == c.entityId) {
+                strength = Math.max(strength, 0.2F * Math.min(4, c.layer));
+            }
+            // Дрожь земли и мастеру тоже (порыв ауры от себя к себе вырождался в ноль).
+            io.github.verycooltimo.murim.client.CameraShakeHandler.quake(strength, 16 + 3 * Math.min(4, c.layer));
+            if (mc.player.getId() != c.entityId) {
+                io.github.verycooltimo.murim.client.ClientAuraState.gust(c.entityId, mc.player.getId(), strength, false);
+            }
+            mc.player.level().playLocalSound(base.x, base.y, base.z, net.minecraft.sounds.SoundEvents.GENERIC_EXPLODE.value(),
+                    net.minecraft.sounds.SoundSource.PLAYERS, 0.6F + 0.4F * strength, 0.55F, false);
         }
         // Волна пыли от удара: кольцом наружу радиусом до ~8 блоков.
         if (mc.level != null && !mc.level.getBlockState(net.minecraft.core.BlockPos.containing(base.add(0.0D, -0.2D, 0.0D))).isAir()) {
             Vec3 mid = base.add(c.forward.scale(h * 0.45D));
-            for (int i = 0; i < 10 + 2 * Math.min(4, c.layer); i++) {
-                double a = Math.PI * 2.0D * i / (10 + 2 * Math.min(4, c.layer)) + r.nextDouble() * 0.3D;
+            int ring = 18 + 4 * Math.min(4, c.layer);
+            for (int i = 0; i < ring; i++) {
+                double a = Math.PI * 2.0D * i / ring + r.nextDouble() * 0.3D;
                 Vec3 out = c.forward.scale(Math.cos(a)).add(c.right.scale(Math.sin(a)));
-                c.puffs.add(new Puff(mid.add(out.scale(1.0D)).add(0.0D, 0.2D, 0.0D), out.scale(0.35D + 0.15D * r.nextDouble()).add(0.0D, 0.03D, 0.0D),
-                        18 + r.nextInt(10), r.nextInt(16), 0.45D + 0.2D * r.nextDouble()));
+                c.puffs.add(new Puff(mid.add(out.scale(1.0D + r.nextDouble())).add(0.0D, 0.2D, 0.0D),
+                        out.scale(0.4D + 0.25D * r.nextDouble()).add(0.0D, 0.03D, 0.0D),
+                        28 + r.nextInt(14), r.nextInt(16), 0.9D + 0.5D * r.nextDouble()));
+            }
+            // Стена дыма по всей полосе падения: крупные медленные клубы поднимаются и
+            // расползаются в стороны.
+            for (int i = 0; i < 16 + 4 * Math.min(4, c.layer); i++) {
+                double sAt = h * r.nextDouble();
+                Vec3 at = base.add(c.forward.scale(sAt)).add(c.right.scale((r.nextDouble() - 0.5D) * 3.0D)).add(0.0D, 0.3D, 0.0D);
+                Vec3 vel = c.right.scale((r.nextDouble() - 0.5D) * 0.25D).add(c.forward.scale((r.nextDouble() - 0.3D) * 0.12D))
+                        .add(0.0D, 0.05D + 0.06D * r.nextDouble(), 0.0D);
+                Puff big = new Puff(at, vel, 36 + r.nextInt(20), r.nextInt(16), 1.1D + 0.7D * r.nextDouble());
+                big.gray = 0.6F + 0.12F * r.nextFloat();
+                c.puffs.add(big);
             }
         }
         c.landTick = clientTicks;
@@ -844,20 +878,48 @@ public final class PlumVfx {
      * красные и гаснут за {@link #SCAR_LIFE} тиков.
      */
     private static void buildScar(Cast c) {
+        // Отпечаток упавшего дерева (автор 02.10: «след углями — в виде дерева, а не случайные
+        // линии»): каждая ветвь в позе после падения проецируется на землю и становится трещиной
+        // с рваным краем; прутики — тонкими.
         Random r = c.random;
         Vec3 base = trunkBase(c);
-        double h = PlumRules.treeHeight(c.layer);
-        int cracks = 5 + Math.min(4, c.layer) * 2;
-        for (int k = 0; k < cracks; k++) {
-            List<Vec3> pts = new ArrayList<>();
-            double w0 = (r.nextDouble() - 0.5D) * 3.6D;
-            double s0 = h * 0.05D + r.nextDouble() * h * 0.3D;
-            double len = h * (0.3D + 0.55D * r.nextDouble());
-            for (double s = 0.0D; s <= len; s += 0.45D) {
-                double w = w0 + (r.nextDouble() - 0.5D) * 0.35D + Math.sin(s * 1.3D + k) * 0.2D;
-                pts.add(base.add(c.forward.scale(s0 + s)).add(c.right.scale(w)).add(0.0D, 0.03D, 0.0D));
+        float landed = PlumRules.LAND;
+        for (Branch b : c.branches) {
+            if (b.depth() >= 4 && r.nextDouble() < 0.5D) {
+                continue;
             }
-            c.scar.add(pts.toArray(new Vec3[0]));
+            int n = b.depth() == 0 ? 18 : b.depth() == 1 ? 10 : 6;
+            Vec3[] pts = new Vec3[n + 1];
+            for (int i = 0; i <= n; i++) {
+                Vec3 p = topple(c, bezier(b.start(), b.ctrl(), b.end(), i / (double) n), landed);
+                double jit = (r.nextDouble() - 0.5D) * 0.12D;
+                pts[i] = new Vec3(p.x, base.y + 0.03D, p.z).add(c.forward.scale(jit)).add(c.right.scale(-jit));
+            }
+            c.scar.add(pts);
+            c.scarWidth.add(b.depth() == 0 ? 0.28D : b.depth() == 1 ? 0.13D : b.depth() == 2 ? 0.08D : 0.05D);
+        }
+    }
+
+    /**
+     * Блоки под деревом сервер ломает в тот же тик: через несколько тиков трещины садятся на
+     * фактическую землю — в ямах ниже, на целой траве — по верху.
+     */
+    private static void settleScar(Cast c) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.level == null) {
+            return;
+        }
+        for (Vec3[] crack : c.scar) {
+            for (int i = 0; i < crack.length; i++) {
+                Vec3 p = crack[i];
+                net.minecraft.core.BlockPos below = net.minecraft.core.BlockPos.containing(p.x, p.y - 0.5D, p.z);
+                int drop = 0;
+                while (drop < 3 && mc.level.getBlockState(below.below(drop)).isAir()) {
+                    drop++;
+                }
+                // Под точкой нет земли (обрыв) — этот кусок отпечатка не рисуется.
+                crack[i] = drop >= 3 ? new Vec3(p.x, Double.NaN, p.z) : new Vec3(p.x, below.below(drop).getY() + 1.03D, p.z);
+            }
         }
     }
 
@@ -885,10 +947,13 @@ public final class PlumVfx {
             flatStrip(v, pose, line, lw, 0.5F * fa, PINK);
             flatStrip(v, pose, line, scale(lw, 0.35D), 0.8F * fa, EDGE);
         }
-        for (Vec3[] crack : c.scar) {
+        for (int ci = 0; ci < c.scar.size(); ci++) {
+            Vec3[] crack = c.scar.get(ci);
+            double base = c.scarWidth.get(ci);
             double[] w = new double[crack.length];
             for (int i = 0; i < crack.length; i++) {
-                w[i] = (0.06D + 0.05D * warm) * Math.sin(Math.PI * (i + 0.5D) / crack.length);
+                // Сужается к концу ветви, как сам отпечаток.
+                w[i] = base * (0.7D + 0.3D * warm) * Math.pow(1.0D - i / (double) crack.length, 0.7D) + 0.015D;
             }
             if (warm > 0.05F) {
                 flatStrip(v, pose, crack, scale(w, 4.0D), 0.18F * warm * fade, PINK);
@@ -909,6 +974,9 @@ public final class PlumVfx {
     private static void flatStrip(VertexConsumer c, PoseStack.Pose pose, Vec3[] p, double[] w, float alpha, VfxColour col) {
         Vec3 n = new Vec3(0.0D, 1.0D, 0.0D);
         for (int i = 0; i + 1 < p.length; i++) {
+            if (Double.isNaN(p[i].y) || Double.isNaN(p[i + 1].y)) {
+                continue;
+            }
             Vec3 d = p[i + 1].subtract(p[i]);
             Vec3 sd = new Vec3(-d.z, 0.0D, d.x);
             if (sd.lengthSqr() < 1.0E-9D) {
@@ -1114,6 +1182,14 @@ public final class PlumVfx {
             w[i] *= 1.0D + 0.6D * beat;
             a[i] *= (float) (0.7D + 0.3D * beat);
         }
+        if (b.depth() == 0) {
+            // От первого лица ствол в 3 блоках — не стена: вблизи камеры он тоньше и прозрачнее.
+            for (int i = 0; i < p.length; i++) {
+                double near = Mth.clamp((p[i].distanceTo(camera) - 2.5D) / 6.0D, 0.0D, 1.0D);
+                a[i] *= (float) (0.4D + 0.6D * near);
+                w[i] *= 0.55D + 0.45D * near;
+            }
+        }
         if (pink && b.depth() <= 2) {
             // Широкое бледное свечение каждой ветви сливается в общую розовую крону (ref8).
             stripVar(v, pose, camera, p, scale(w, b.depth() == 0 ? 1.5D : b.depth() == 2 ? 3.5D : 4.5D), scaled(a, 0.1F), PINK);
@@ -1177,7 +1253,7 @@ public final class PlumVfx {
             for (int i = 0; i < 5; i++) {
                 Vec3 out = c.right.scale(-side * 0.6D).add(c.forward.scale(-0.6D + (r.nextDouble() - 0.5D) * 0.8D)).normalize();
                 c.puffs.add(new Puff(c.origin.add(out.scale(0.4D)).add(0.0D, 0.1D, 0.0D), out.scale(0.14D + 0.08D * r.nextDouble()),
-                        12 + r.nextInt(6), r.nextInt(16), 0.22D + 0.1D * r.nextDouble()));
+                        18 + r.nextInt(8), r.nextInt(16), 0.35D + 0.2D * r.nextDouble()));
             }
         }
     }
@@ -1257,9 +1333,18 @@ public final class PlumVfx {
             }
             float life = (w.age + partial) / w.life;
             float alpha = (float) curve(life, 0.0, 0.0, 0.15, 1.0, 0.6, 0.8, 1.0, 0.0);
-            strip(v, pose, camera, p, scale(wd, 2.2D), 0.16F * alpha, COLD);
-            strip(v, pose, camera, p, wd, 0.5F * alpha, COLD);
-            strip(v, pose, camera, p, scale(wd, 0.3D), 0.9F * alpha, EDGE);
+            strip(v, pose, camera, p, scale(wd, 2.2D), 0.14F * alpha, COLD);
+            strip(v, pose, camera, p, wd, 0.4F * alpha, COLD);
+            strip(v, pose, camera, p, scale(wd, 0.25D), 0.9F * alpha, EDGE);
+            // Внутренние тонкие штрихи потока — лента читается воздухом, а не лезвием.
+            Vec3 side = c.right.scale(w.width * 0.9D).add(0.0D, w.width * 0.5D, 0.0D);
+            for (int k = -1; k <= 1; k += 2) {
+                Vec3[] q = new Vec3[p.length];
+                for (int i = 0; i < p.length; i++) {
+                    q[i] = p[i].add(side.scale(k * Math.sin(Math.PI * i / (double) n)));
+                }
+                strip(v, pose, camera, q, scale(wd, 0.12D), 0.6F * alpha, EDGE);
+            }
         }
     }
 
