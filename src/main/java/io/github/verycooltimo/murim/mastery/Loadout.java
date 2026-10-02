@@ -53,15 +53,48 @@ public record Loadout(List<Optional<ResourceLocation>> slots, int active, Option
         while (next.size() <= slot) {
             next.add(Optional.empty());
         }
+        // Одна техника — один слот; стиль (все его формы) — тоже один слот.
         technique.ifPresent(id -> {
             for (int i = 0; i < next.size(); i++) {
-                if (next.get(i).equals(Optional.of(id))) {
+                Optional<ResourceLocation> other = next.get(i);
+                if (other.isPresent() && (other.get().equals(id)
+                        || io.github.verycooltimo.murim.technique.Styles.sameStyle(other.get(), id))) {
                     next.set(i, Optional.empty());
                 }
             }
         });
         next.set(slot, technique);
         return new Loadout(next, active, foundation);
+    }
+
+    /**
+     * Нормализация старых раскладок (формы стиля в разных слотах — до введения стилей): форма
+     * стиля остаётся в одном слоте — активном, если он из этого стиля, иначе в самом левом.
+     * Идемпотентна.
+     */
+    public Loadout normalized() {
+        List<Optional<ResourceLocation>> next = new ArrayList<>(slots);
+        boolean changed = false;
+        for (int i = 0; i < next.size(); i++) {
+            Optional<ResourceLocation> a = next.get(i);
+            if (a.isEmpty() || io.github.verycooltimo.murim.technique.Styles.of(a.get()).isEmpty()) {
+                continue;
+            }
+            for (int j = i + 1; j < next.size(); j++) {
+                Optional<ResourceLocation> b = next.get(j);
+                if (b.isPresent() && io.github.verycooltimo.murim.technique.Styles.sameStyle(a.get(), b.get())) {
+                    if (j == active) {
+                        next.set(i, Optional.empty());
+                        a = b;
+                        changed = true;
+                        break;
+                    }
+                    next.set(j, Optional.empty());
+                    changed = true;
+                }
+            }
+        }
+        return changed ? new Loadout(next, active, foundation) : this;
     }
 
     public Loadout select(int slot) {

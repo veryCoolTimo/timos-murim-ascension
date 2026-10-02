@@ -82,10 +82,36 @@ public final class LoadoutScreen extends Screen {
         return (height - H) / 2;
     }
 
+    /** Выученное: стиль — одной строкой (первая выученная форма как представитель). */
     private List<SyncMasteryPayload.Entry> techniques() {
-        return ClientMasteryState.entries().stream()
-                .sorted(java.util.Comparator.comparing(e -> e.technique().toString()))
-                .toList();
+        java.util.Set<ResourceLocation> seenStyles = new java.util.HashSet<>();
+        List<SyncMasteryPayload.Entry> out = new java.util.ArrayList<>();
+        for (SyncMasteryPayload.Entry e : ClientMasteryState.entries().stream()
+                .sorted(java.util.Comparator.comparing(e -> e.technique().toString())).toList()) {
+            Optional<io.github.verycooltimo.murim.technique.Styles.Style> style = io.github.verycooltimo.murim.technique.Styles.of(e.technique());
+            if (style.isPresent()) {
+                if (!seenStyles.add(style.get().id())) {
+                    continue;
+                }
+                ResourceLocation first = style.get().forms().stream()
+                        .filter(f -> TechniqueSlotsHud.mastery(f) != null).findFirst().orElse(e.technique());
+                SyncMasteryPayload.Entry rep = TechniqueSlotsHud.mastery(first);
+                out.add(rep != null ? rep : e);
+                continue;
+            }
+            out.add(e);
+        }
+        return out;
+    }
+
+    private static int knownForms(io.github.verycooltimo.murim.technique.Styles.Style style) {
+        int n = 0;
+        for (ResourceLocation f : style.forms()) {
+            if (TechniqueSlotsHud.mastery(f) != null) {
+                n++;
+            }
+        }
+        return n;
     }
 
     @Override
@@ -122,7 +148,9 @@ public final class LoadoutScreen extends Screen {
             }
             icon(graphics, e.technique(), lx, ry, 20, 1.0F);
             // Название чуть мельче обычного шрифта: длинные имена техник иначе не помещаются.
-            String name = MasteryService.name(e.technique()).getString();
+            Optional<io.github.verycooltimo.murim.technique.Styles.Style> rowStyle = io.github.verycooltimo.murim.technique.Styles.of(e.technique());
+            String name = rowStyle.isPresent() ? Component.translatable(rowStyle.get().nameKey()).getString()
+                    : MasteryService.name(e.technique()).getString();
             int room = (int) ((LIST_W - 26) / NAME_SCALE);
             if (font.width(name) > room) {
                 name = font.plainSubstrByWidth(name, room - font.width("…")) + "…";
@@ -132,7 +160,9 @@ public final class LoadoutScreen extends Screen {
             graphics.pose().scale(NAME_SCALE, NAME_SCALE, 1.0F);
             graphics.drawString(font, name, 0, 0, INK, false);
             graphics.pose().popPose();
-            Component layer = Component.translatable("murim.loadout.layer", e.layer(), e.cap());
+            Component layer = rowStyle.isPresent()
+                    ? Component.translatable("murim.loadout.forms", knownForms(rowStyle.get()), rowStyle.get().forms().size())
+                    : Component.translatable("murim.loadout.layer", e.layer(), e.cap());
             small(graphics, layer, lx + 24, ry + 11, INK_GREY);
             // Освоение текущего слоя — тонкий штрих кисти.
             int barX = lx + 24 + (int) (font.width(layer) * 0.75F) + 4;

@@ -147,5 +147,11 @@
   "technique.murim.seven_plum_blossoms.execution": "Казнь Цветущей Сливы",
   "technique.murim.seven_plum_rush": "Меч Семи Цветков Сливы: Натиск",
   "technique.murim.seven_plum_rush.weakness": "Долгая концентрация и прямая линия: сойди с пути урагана.",
-  "technique.murim.seven_plum_blossoms.rush": "Натиск Цветущей Сливы"
+  "technique.murim.seven_plum_blossoms.rush": "Натиск Цветущей Сливы",
+  "style.murim.seven_plum": "Меч Семи Цветков Сливы",
+  "form.murim.seven_plum_blossoms": "Разрез · Частокол",
+  "form.murim.seven_plum_whirlwind": "Вихрь",
+  "form.murim.seven_plum_execution": "Казнь",
+  "form.murim.seven_plum_rush": "Натиск",
+  "murim.loadout.forms": "форм %s/%s"
 }

@@ -52,6 +52,56 @@ public final class TechniqueWheel {
     private static float cursorY;
     private static int selected = -1;
     private static int age;
+    /**
+     * Страница кольца — слот раскладки (решение codex 02.10): секторы — формы стиля этого слота
+     * (или одна техника). Колёсико при зажатой V листает непустые слоты; отпустил V — выбрана
+     * форма, и слот становится активным.
+     */
+    private static int page;
+    private static List<ResourceLocation> entries = List.of();
+
+    private static List<ResourceLocation> entriesOf(int slot) {
+        List<Optional<ResourceLocation>> slots = ClientLoadoutState.slots();
+        if (slot < 0 || slot >= slots.size() || slots.get(slot).isEmpty()) {
+            return List.of();
+        }
+        ResourceLocation t = slots.get(slot).get();
+        Optional<io.github.verycooltimo.murim.technique.Styles.Style> style = io.github.verycooltimo.murim.technique.Styles.of(t);
+        if (style.isEmpty()) {
+            return List.of(t);
+        }
+        List<ResourceLocation> known = new java.util.ArrayList<>();
+        for (ResourceLocation f : style.get().forms()) {
+            if (f.equals(t) || TechniqueSlotsHud.mastery(f) != null) {
+                known.add(f);
+            }
+        }
+        return known;
+    }
+
+    /** Следующий непустой слот в сторону {@code dir}; если других нет — тот же. */
+    private static int nextPage(int from, int dir) {
+        int n = Math.max(1, ClientLoadoutState.open());
+        for (int k = 1; k <= n; k++) {
+            int i = Math.floorMod(from + dir * k, n);
+            if (!entriesOf(i).isEmpty()) {
+                return i;
+            }
+        }
+        return from;
+    }
+
+    @SubscribeEvent
+    static void onScroll(net.neoforged.neoforge.client.event.InputEvent.MouseScrollingEvent event) {
+        if (!open || event.getScrollDeltaY() == 0.0D) {
+            return;
+        }
+        // API: reference/neoforge-src/net/neoforged/neoforge/client/event/InputEvent.java#MouseScrollingEvent (ICancellableEvent)
+        event.setCanceled(true);
+        page = nextPage(page, event.getScrollDeltaY() > 0.0D ? -1 : 1);
+        entries = entriesOf(page);
+        selected = sectorAt(cursorX, cursorY, entries.size());
+    }
 
     public static boolean open() {
         return open;
@@ -61,7 +111,7 @@ public final class TechniqueWheel {
     public static void setCursor(float x, float y) {
         cursorX = x;
         cursorY = y;
-        selected = sectorAt(cursorX, cursorY, ClientLoadoutState.open());
+        selected = sectorAt(cursorX, cursorY, entries.size());
     }
 
     @SubscribeEvent
@@ -78,10 +128,17 @@ public final class TechniqueWheel {
             cursorX = 0.0F;
             cursorY = 0.0F;
             selected = -1;
+            page = entriesOf(ClientLoadoutState.active()).isEmpty() ? nextPage(ClientLoadoutState.active(), 1) : ClientLoadoutState.active();
+            entries = entriesOf(page);
         } else if (!wanted && open) {
             open = false;
-            if (selected >= 0) {
-                PacketDistributor.sendToServer(new LoadoutPayloads.Select(selected));
+            if (selected >= 0 && selected < entries.size()) {
+                ResourceLocation form = entries.get(selected);
+                List<Optional<ResourceLocation>> slots = ClientLoadoutState.slots();
+                if (page >= slots.size() || !slots.get(page).equals(Optional.of(form))) {
+                    PacketDistributor.sendToServer(new LoadoutPayloads.SetSlot(page, Optional.of(form)));
+                }
+                PacketDistributor.sendToServer(new LoadoutPayloads.Select(page));
             }
         }
         if (open) {
@@ -108,7 +165,7 @@ public final class TechniqueWheel {
                 cursorX *= OUTER / length;
                 cursorY *= OUTER / length;
             }
-            selected = sectorAt(cursorX, cursorY, ClientLoadoutState.open());
+            selected = sectorAt(cursorX, cursorY, entries.size());
         }
         me.setYRot(baseYaw);
         me.yRotO = baseYaw;
@@ -142,8 +199,7 @@ public final class TechniqueWheel {
         float appear = Mth.clamp((age + delta.getGameTimeDeltaPartialTick(false)) / 4.0F, 0.0F, 1.0F);
         float cx = graphics.guiWidth() / 2.0F;
         float cy = graphics.guiHeight() / 2.0F;
-        List<Optional<ResourceLocation>> slots = ClientLoadoutState.slots();
-        int count = Math.max(1, ClientLoadoutState.open());
+        int count = Math.max(1, entries.size());
         double span = Math.PI * 2.0D / count;
         int bgA = (int) (appear * 0x90);
 
@@ -185,7 +241,7 @@ public final class TechniqueWheel {
             // Пиксельные иконки — строго 32×32: при нецелом масштабе пиксели выходят неровными.
             int ix = (int) (cx + Math.cos(mid) * r) - 16;
             int iy = (int) (cy + Math.sin(mid) * r) - 16;
-            Optional<ResourceLocation> technique = i < slots.size() ? slots.get(i) : Optional.empty();
+            Optional<ResourceLocation> technique = i < entries.size() ? Optional.of(entries.get(i)) : Optional.empty();
             if (technique.isPresent()) {
                 graphics.setColor(1.0F, 1.0F, 1.0F, appear * (i == selected ? 1.0F : 0.75F));
                 com.mojang.blaze3d.systems.RenderSystem.enableBlend();
@@ -201,11 +257,34 @@ public final class TechniqueWheel {
 
         // Название и слой — над кольцом: в уменьшенный центр не помещаются, а снизу налезали на шкалу ци.
         Font font = minecraft.font;
-        int show = selected >= 0 ? selected : ClientLoadoutState.active();
-        Optional<ResourceLocation> technique = show < slots.size() ? slots.get(show) : Optional.empty();
+        List<Optional<ResourceLocation>> slots = ClientLoadoutState.slots();
+        Optional<ResourceLocation> current = page < slots.size() ? slots.get(page) : Optional.empty();
+        Optional<ResourceLocation> technique = selected >= 0 && selected < entries.size() ? Optional.of(entries.get(selected)) : current;
         int textA = Math.max(4, (int) (appear * 255)) << 24;
+        // Страницы: стиль слота сверху, «‹ 2/3 ›» снизу — колёсиком листаются слоты.
+        int pages = 0;
+        int index = 0;
+        for (int i = 0; i < ClientLoadoutState.open(); i++) {
+            if (!entriesOf(i).isEmpty()) {
+                pages++;
+                if (i == page) {
+                    index = pages;
+                }
+            }
+        }
+        if (pages > 1) {
+            small(graphics, font, Component.literal("\u2039 " + index + "/" + pages + " \u203A"), (int) cx, (int) (cy + OUTER + 6), textA | 0x8FD3E8);
+        }
         if (technique.isPresent()) {
-            Component name = io.github.verycooltimo.murim.mastery.MasteryService.name(technique.get());
+            Optional<io.github.verycooltimo.murim.technique.Styles.Style> style = io.github.verycooltimo.murim.technique.Styles.of(technique.get());
+            if (style.isPresent()) {
+                small(graphics, font, Component.translatable(style.get().nameKey()), (int) cx, (int) (cy - OUTER - 33), textA | 0xF1A9CB);
+            }
+            // Форма стиля — короткое имя («Вихрь»): название стиля уже стоит строкой выше.
+            String formKey = "form." + technique.get().getNamespace() + "." + technique.get().getPath();
+            Component name = style.isPresent() && net.minecraft.client.resources.language.I18n.exists(formKey)
+                    ? Component.translatable(formKey)
+                    : io.github.verycooltimo.murim.mastery.MasteryService.name(technique.get());
             SyncMasteryPayload.Entry entry = TechniqueSlotsHud.mastery(technique.get());
             int ty = (int) (cy - OUTER - 22);
             graphics.drawString(font, name, (int) cx - font.width(name) / 2, ty, textA | 0xE6F4FF, true);

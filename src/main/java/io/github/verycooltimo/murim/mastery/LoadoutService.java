@@ -73,7 +73,9 @@ public final class LoadoutService {
         }
         int open = openSlots(player);
         for (int i = 0; i < open; i++) {
-            if (loadout.at(i).equals(Optional.of(technique))) {
+            // Форма стиля, чей слот уже занят другой формой, своего слота не получает.
+            if (loadout.at(i).equals(Optional.of(technique)) || loadout.at(i).isPresent()
+                    && io.github.verycooltimo.murim.technique.Styles.sameStyle(loadout.at(i).get(), technique)) {
                 return;
             }
         }
@@ -87,6 +89,11 @@ public final class LoadoutService {
 
     public static void sync(ServerPlayer player) {
         Loadout loadout = player.getData(ModAttachments.LOADOUT);
+        Loadout normal = loadout.normalized();
+        if (normal != loadout) {
+            player.setData(ModAttachments.LOADOUT, normal);
+            loadout = normal;
+        }
         int open = openSlots(player);
         java.util.List<Optional<ResourceLocation>> slots = new java.util.ArrayList<>();
         for (int i = 0; i < open; i++) {

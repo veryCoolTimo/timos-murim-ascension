@@ -167,5 +167,11 @@
   "technique.murim.seven_plum_blossoms.execution": "Plum Blossom Execution",
   "technique.murim.seven_plum_rush": "Seven Plum Blossoms Sword: Rush",
   "technique.murim.seven_plum_rush.weakness": "A long stance and a straight line: step out of the hurricane's path.",
-  "technique.murim.seven_plum_blossoms.rush": "Plum Blossom Rush"
+  "technique.murim.seven_plum_blossoms.rush": "Plum Blossom Rush",
+  "style.murim.seven_plum": "Seven Plum Blossoms Sword",
+  "form.murim.seven_plum_blossoms": "Cut · Barricade",
+  "form.murim.seven_plum_whirlwind": "Whirlwind",
+  "form.murim.seven_plum_execution": "Execution",
+  "form.murim.seven_plum_rush": "Rush",
+  "murim.loadout.forms": "forms %s/%s"
 }

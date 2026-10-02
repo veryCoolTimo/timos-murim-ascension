@@ -62,6 +62,14 @@ public final class MasteryService {
         message(player, start > 0 ? "murim.mastery.learned_skipped" : "murim.mastery.learned",
                 ChatFormatting.GRAY, name(id), start);
         LoadoutService.placeLearned(player, id);
+        // Манускрипт стиля учит все его формы (решение codex 02.10): каждая — со своими слоями.
+        io.github.verycooltimo.murim.technique.Styles.of(id).ifPresent(style -> {
+            for (ResourceLocation form : style.forms()) {
+                if (!player.getData(ModAttachments.MASTERY).knows(form)) {
+                    learn(player, form, depth);
+                }
+            }
+        });
         sync(player);
         return Learn.LEARNED;
     }

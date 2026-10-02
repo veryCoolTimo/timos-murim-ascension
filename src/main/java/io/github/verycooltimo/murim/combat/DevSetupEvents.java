@@ -229,7 +229,10 @@ public final class DevSetupEvents {
             uiPlayer.setData(io.github.verycooltimo.murim.registry.ModAttachments.MASTERY,
                     uiPlayer.getData(io.github.verycooltimo.murim.registry.ModAttachments.MASTERY).withWisdom(16.0D));
             io.github.verycooltimo.murim.mastery.Loadout loadout = io.github.verycooltimo.murim.mastery.Loadout.EMPTY;
-            String[] order = {"crescent_sweep", "demon_palm", "wedge_fan", "shadow_step"};
+            // MURIM_CAPTURE_UI_STYLE=1 — в первом слоте стиль Семи Цветков: кольцо показывает его формы.
+            String[] order = "1".equals(System.getenv("MURIM_CAPTURE_UI_STYLE"))
+                    ? new String[] {"seven_plum_whirlwind", "demon_palm", "wind_god_steps"}
+                    : new String[] {"crescent_sweep", "demon_palm", "wedge_fan", "shadow_step"};
             for (int i = 0; i < order.length; i++) {
                 loadout = loadout.with(i, java.util.Optional.of(net.minecraft.resources.ResourceLocation
                         .fromNamespaceAndPath(io.github.verycooltimo.murim.MurimMod.MODID, order[i])));
