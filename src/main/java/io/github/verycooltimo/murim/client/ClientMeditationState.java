@@ -209,6 +209,7 @@ public final class ClientMeditationState {
             aftermath = Aftermath.NONE;
             if (player != null && seedSceneTicks <= 0) {
                 MurimPlayerAnimations.play(player, MurimPlayerAnimations.LOTUS);
+                breathDelay = BREATH_AFTER_TICKS;
             }
         } else if (payload.active()) {
             // Сервер главнее: локальный счёт только заполняет промежутки между пакетами.
@@ -407,6 +408,10 @@ public final class ClientMeditationState {
         }
     }
 
+    /** Лотос садится за 0,3 с; после этого включается цикл дыхания. */
+    private static final int BREATH_AFTER_TICKS = 8;
+    private static int breathDelay;
+
     @SubscribeEvent
     static void onClientTick(ClientTickEvent.Post event) {
         Minecraft minecraft = Minecraft.getInstance();
@@ -419,6 +424,12 @@ public final class ClientMeditationState {
         }
         if (state.active()) {
             localTicks++;
+            // Сел в лотос — дальше тело дышит циклом (автор 02.10: «не просто сидит, а дышит»).
+            if (breathDelay > 0 && --breathDelay == 0) {
+                MurimPlayerAnimations.play(minecraft.player, MurimPlayerAnimations.MEDITATION_BREATH);
+            }
+        } else {
+            breathDelay = 0;
         }
         if (aftermathTicks > 0 && --aftermathTicks == 0) {
             aftermath = Aftermath.NONE;

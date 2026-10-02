@@ -41,6 +41,9 @@ public final class MurimPlayerAnimations {
      */
     public static final ResourceLocation LOTUS =
             ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "lotus");
+    /** Цикл дыхания в лотосе (4 с): после того как лотос сел. */
+    public static final ResourceLocation MEDITATION_BREATH =
+            ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "meditation_breath");
 
     /** Анимация берётся из описания техники; эта константа осталась запасным вариантом. */
     public static final ResourceLocation DEMON_PALM =
