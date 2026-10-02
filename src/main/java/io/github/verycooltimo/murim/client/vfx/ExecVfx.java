@@ -256,6 +256,11 @@ public final class ExecVfx {
                     } else if (!tr.isEmpty()) {
                         tr.remove(0);
                     }
+                    // Копия из лепестков: на лету с неё постоянно срываются лепестки.
+                    if (c.layer >= 3 && s > ExecRules.EXIT && s < ExecRules.FINAL && c.random.nextInt(2) == 0) {
+                        petal(c, p.add((c.random.nextDouble() - 0.5D) * 0.5D, 0.4D + 1.2D * c.random.nextDouble(),
+                                (c.random.nextDouble() - 0.5D) * 0.5D), new Vec3(c.random.nextGaussian() * 0.02D, 0.01D, c.random.nextGaussian() * 0.02D));
+                    }
                     // Пыль из-под ног бегущей копии.
                     if (s > ExecRules.SPREAD && s < ct && s % 3 == i % 3) {
                         dustAt(c, p);
@@ -364,6 +369,16 @@ public final class ExecVfx {
                     buffers.endBatch(petals);
                     RenderType glowType = MurimRenderTypes.mote();
                     VertexConsumer g = buffers.getBuffer(glowType);
+                    // Внутреннее свечение копий: мягкое розовое пятно в груди.
+                    if (s >= 0.0F && c.centre != null) {
+                        for (int i = 0; i < ExecRules.clones(c.layer); i++) {
+                            float dz = (float) Mth.clamp((s - ExecRules.FINAL) / ExecRules.DISSOLVE, 0.0D, 1.0D);
+                            if (dz < 1.0F) {
+                                Vec3 cp = ExecRules.clone(c.origin, c.centre, c.base, i, s).add(0.0D, 1.1D, 0.0D);
+                                PlumVfx.glow(g, pose, camera, cp, 0.9D, 0.18F * (1.0F - dz), PINK);
+                            }
+                        }
+                    }
                     for (Mote m : c.petals) {
                         if (m.pos.distanceToSqr(camera) > 1.6D) {
                             float a = Mth.clamp((m.life - m.age - partial) / 10.0F, 0.0F, 1.0F);
@@ -421,10 +436,24 @@ public final class ExecVfx {
                     // Приземлившись, клон смотрит дальше по ходу пролёта — спиной к жертве.
                     float yaw = d.lengthSqr() > 1.0E-6D ? (float) Math.toDegrees(Math.atan2(-d.x, d.z))
                             : (float) Math.toDegrees(Math.atan2(-(p.x - c.centre.x), p.z - c.centre.z));
-                    load(parts, c.basePose);
-                    float lean = clonePose(model, i, s, ct);
                     float alpha = 0.72F * (1.0F - dissolve) * (float) Mth.clamp(s / 3.0D, 0.0D, 1.0D);
-                    draw(model, ps, buffers.getBuffer(type), p, yaw, lean, alpha, dissolve > 0.0F ? 0xFFD9EA : 0xF4F0FF);
+                    // Смазанное движение: три бледные копии позади по тому же маршруту.
+                    boolean moving = s < ct + ExecRules.PASS_TICKS + 3;
+                    for (int g = 3; g >= 0; g--) {
+                        if (g > 0 && !moving) {
+                            continue;
+                        }
+                        float sg = s - g * 1.3F;
+                        Vec3 pg = ExecRules.clone(c.origin, c.centre, c.base, i, sg);
+                        Vec3 ng = ExecRules.clone(c.origin, c.centre, c.base, i, sg + 0.5D);
+                        Vec3 dg = new Vec3(ng.x - pg.x, 0.0D, ng.z - pg.z);
+                        float yg = dg.lengthSqr() > 1.0E-6D ? (float) Math.toDegrees(Math.atan2(-dg.x, dg.z)) : yaw;
+                        load(parts, c.basePose);
+                        float[] lr = clonePose(model, i, sg, ct);
+                        float ag = g == 0 ? alpha : alpha * (0.28F - 0.07F * g);
+                        draw(model, ps, buffers.getBuffer(type), pg, yg, lr[0], lr[1], ag,
+                                g == 0 ? (dissolve > 0.0F ? 0xFFD9EA : 0xFBEFFA) : 0xF3B9D6);
+                    }
                 }
             }
             buffers.endBatch(type);
@@ -439,61 +468,64 @@ public final class ExecVfx {
         }
     }
 
-    /** Поза клона: бег → замах (6 тиков до контакта) → удар → пролёт. Возвращает наклон корпуса (°). */
-    private static float clonePose(PlayerModel<?> m, int i, float s, int ct) {
-        float lean;
+    /**
+     * Ключевые позы клона (автор 02.10: «слишком деревянно»): {тик от контакта, наклон°, крен°,
+     * правая рука x/y/z, левая рука x/z, правая нога x, левая нога x, поворот корпуса y}. Между
+     * ключами — плавная интерполяция, позы перетекают, а не переключаются.
+     */
+    private static final float[][] KEYS = {
+            {-24.0F, 5.0F, 0.0F, -0.4F, 0.0F, 0.1F, 0.3F, -0.2F, 0.0F, 0.0F, 0.0F},    // выход: собран
+            {-22.0F, 25.0F, 0.0F, -0.2F, 0.0F, 0.2F, 0.6F, -0.3F, -0.9F, 0.6F, 0.0F},   // присед перед прыжком
+            {-19.0F, 30.0F, 0.0F, -1.2F, -0.2F, 0.3F, 0.8F, -0.5F, -1.4F, -1.2F, 0.2F}, // прыжок: ноги поджаты
+            {-12.0F, 45.0F, 10.0F, -1.6F, -0.15F, 0.0F, 0.9F, -0.4F, 0.6F, 1.0F, 0.0F}, // полёт вытянувшись
+            {-4.0F, 40.0F, -6.0F, -1.6F, -0.1F, 0.0F, 0.8F, -0.5F, 0.7F, 1.1F, 0.0F},   // разгон к цели
+            {-2.0F, 30.0F, 0.0F, -2.9F, 0.0F, 0.45F, 0.3F, -0.2F, -0.3F, 1.0F, -0.4F},  // замах
+            {0.0F, 34.0F, 0.0F, -1.6F, 0.6F, 0.2F, 0.6F, -0.3F, -0.4F, 0.9F, 0.2F},     // удар
+            {2.0F, 32.0F, 25.0F, -0.4F, 0.8F, 0.9F, 1.0F, -0.6F, -0.2F, 1.0F, 0.6F},    // проход сквозь, разворот
+            {5.0F, 20.0F, 10.0F, -0.4F, 0.4F, 0.8F, 0.9F, -0.7F, -1.1F, -0.6F, 0.3F},   // в воздухе за целью
+            {8.0F, 18.0F, 0.0F, -0.5F, 0.2F, 0.7F, 0.6F, -0.7F, -0.7F, 0.6F, 0.0F},     // приземление, присед
+            {12.0F, 10.0F, 0.0F, -0.5F, 0.2F, 0.7F, 0.6F, -0.7F, -0.6F, 0.5F, 0.0F},    // низкая стойка
+    };
+
+    /** Поза клона по тику: плавно между ключами. Возвращает {наклон, крен}. */
+    private static float[] clonePose(PlayerModel<?> m, int i, float s, int ct) {
+        // Выход и прыжок у всех одновременно (по тику s), разгон и удар — от своего контакта.
+        float t = s < ExecRules.SPREAD ? -24.0F + s * 12.0F / ExecRules.SPREAD
+                : s < ct ? -12.0F + (s - ExecRules.SPREAD) * 12.0F / Math.max(1.0F, ct - ExecRules.SPREAD) : s - ct;
+        float[] a = KEYS[0];
+        float[] b = KEYS[KEYS.length - 1];
+        float k = 1.0F;
+        for (int j = 0; j + 1 < KEYS.length; j++) {
+            if (t <= KEYS[j + 1][0]) {
+                a = KEYS[j];
+                b = KEYS[j + 1];
+                k = Mth.clamp((t - a[0]) / Math.max(0.01F, b[0] - a[0]), 0.0F, 1.0F);
+                break;
+            }
+        }
+        if (t < KEYS[0][0]) {
+            b = a;
+            k = 0.0F;
+        }
+        float e = k * k * (3.0F - 2.0F * k);
+        float[] v = new float[a.length];
+        for (int j = 1; j < a.length; j++) {
+            v[j] = a[j] + (b[j] - a[j]) * e;
+        }
         int side = i % 2 == 0 ? 1 : -1;
-        if (s < ExecRules.SPREAD) {
-            // Выход и огибание: бег.
-            float ph = s * 0.9F + i;
-            m.rightLeg.xRot = Mth.sin(ph) * 0.9F;
-            m.leftLeg.xRot = -Mth.sin(ph) * 0.9F;
-            m.leftArm.xRot = Mth.sin(ph) * 0.7F;
-            m.rightArm.xRot = -0.6F - Mth.sin(ph) * 0.3F;
-            lean = 15.0F;
-        } else if (s < ct - 3) {
-            // Пролёт к цели: тело вытянуто вдоль скорости, рука с мечом вперёд, ноги назад (e4–e5).
-            m.rightArm.xRot = -1.55F;
-            m.rightArm.yRot = -0.15F * side;
-            m.leftArm.xRot = 0.9F;
-            m.leftArm.zRot = -0.4F;
-            m.rightLeg.xRot = 0.7F;
-            m.leftLeg.xRot = 1.0F;
-            lean = 42.0F;
-        } else if (s < ct) {
-            float k = (s - (ct - 3)) / 3.0F;
-            m.rightArm.xRot = -1.55F - 1.3F * k;
-            m.rightArm.zRot = 0.4F * side * k;
-            m.leftArm.xRot = 0.9F - 0.6F * k;
-            m.rightLeg.xRot = 0.7F - 0.9F * k;
-            m.leftLeg.xRot = 1.0F;
-            lean = 42.0F - 12.0F * k;
-        } else if (s < ct + 2) {
-            float k = (s - ct) / 2.0F;
-            m.rightArm.xRot = -2.85F + 2.4F * k;
-            m.rightArm.yRot = 0.8F * side * k;
-            m.body.yRot = 0.5F * side * k;
-            m.leftArm.xRot = 0.6F;
-            m.rightLeg.xRot = -0.3F;
-            m.leftLeg.xRot = 0.9F;
-            lean = 32.0F;
-        } else if (s > ct + ExecRules.PASS_TICKS + 2) {
-            // Приземлился за спиной жертвы: низкая стойка, меч вниз-в-сторону (e8).
-            m.rightArm.xRot = -0.5F;
-            m.rightArm.zRot = 0.7F * side;
-            m.leftArm.xRot = 0.6F;
-            m.leftArm.zRot = -0.7F;
-            m.rightLeg.xRot = -0.6F;
-            m.leftLeg.xRot = 0.5F;
-            lean = 12.0F;
-        } else {
-            m.rightArm.xRot = -0.4F;
-            m.rightArm.zRot = 0.9F * side;
-            m.leftArm.xRot = 1.0F;
-            m.leftArm.zRot = -0.6F;
-            m.rightLeg.xRot = i == 5 ? -1.6F : 0.5F;
-            m.leftLeg.xRot = 0.9F;
-            lean = 38.0F;
+        // Живость: лёгкое покачивание конечностей, свой ритм у каждой копии.
+        float sway = Mth.sin(s * 0.7F + i * 1.3F) * 0.08F;
+        m.rightArm.xRot = v[3] + sway;
+        m.rightArm.yRot = v[4] * side;
+        m.rightArm.zRot = v[5] * side;
+        m.leftArm.xRot = v[6] - sway;
+        m.leftArm.zRot = v[7];
+        m.rightLeg.xRot = v[8] + sway;
+        m.leftLeg.xRot = v[9] - sway;
+        m.body.yRot = v[10] * side;
+        m.head.yRot = -v[10] * side * 0.5F;
+        if (i == 5 && t > 2.0F && t < 6.0F) {
+            m.rightLeg.xRot = -1.6F;
         }
         m.hat.copyFrom(m.head);
         m.jacket.copyFrom(m.body);
@@ -501,11 +533,15 @@ public final class ExecVfx {
         m.leftSleeve.copyFrom(m.leftArm);
         m.rightPants.copyFrom(m.rightLeg);
         m.leftPants.copyFrom(m.leftLeg);
-        return lean;
+        return new float[] {v[1], v[2] * side};
     }
 
     /** Как LivingEntityRenderer: поворот корпуса, отражение осей, масштаб игрока, подъём на 1,501. */
     private static void draw(PlayerModel<?> model, PoseStack ps, VertexConsumer v, Vec3 at, float yaw, float lean, float alpha, int rgb) {
+        draw(model, ps, v, at, yaw, lean, 0.0F, alpha, rgb);
+    }
+
+    private static void draw(PlayerModel<?> model, PoseStack ps, VertexConsumer v, Vec3 at, float yaw, float lean, float roll, float alpha, int rgb) {
         if (alpha <= 0.01F) {
             return;
         }
@@ -514,7 +550,11 @@ public final class ExecVfx {
             // API: reference/minecraft-src/net/minecraft/client/renderer/entity/LivingEntityRenderer.java#render
             ps.translate(at.x, at.y, at.z);
             ps.mulPose(Axis.YP.rotationDegrees(180.0F - yaw));
+            // Наклон и крен вокруг середины тела, а не стоп: фигура летит, а не падает.
+            ps.translate(0.0F, 0.9F, 0.0F);
+            ps.mulPose(Axis.ZP.rotationDegrees(roll));
             ps.mulPose(Axis.XP.rotationDegrees(-lean));
+            ps.translate(0.0F, -0.9F, 0.0F);
             ps.scale(-1.0F, -1.0F, 1.0F);
             ps.scale(0.9375F, 0.9375F, 0.9375F);
             ps.translate(0.0F, -1.501F, 0.0F);
