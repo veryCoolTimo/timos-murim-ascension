@@ -19,7 +19,7 @@ import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 public final class ModNetwork {
 
     /** Версия протокола. Поднимать при любом несовместимом изменении пакетов. */
-    private static final String VERSION = "4";
+    private static final String VERSION = "5";
 
     @SubscribeEvent
     static void register(RegisterPayloadHandlersEvent event) {
@@ -71,6 +71,15 @@ public final class ModNetwork {
                 FoundationPayloads.Form.STREAM_CODEC,
                 (payload, context) -> ClientPayloadBridge.handleFoundationForm(payload));
 
+        // Цингун: клиент шлёт только нажатие прыжка, толчок выбирает и проверяет сервер.
+        registrar.playToServer(TraversePayloads.Jump.TYPE, TraversePayloads.Jump.STREAM_CODEC,
+                (payload, context) -> {
+                    if (context.player() instanceof ServerPlayer serverPlayer) {
+                        io.github.verycooltimo.murim.combat.TraverseService.jump(serverPlayer);
+                    }
+                });
+        registrar.playToClient(TraversePayloads.Event.TYPE, TraversePayloads.Event.STREAM_CODEC,
+                (payload, context) -> ClientPayloadBridge.handleTraverse(payload));
         registrar.playToClient(StepPayload.TYPE, StepPayload.STREAM_CODEC,
                 (payload, context) -> ClientPayloadBridge.handleStep(payload));
 

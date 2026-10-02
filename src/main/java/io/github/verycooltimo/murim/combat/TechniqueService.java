@@ -35,6 +35,13 @@ public final class TechniqueService {
             return false;
         }
 
+        // Повторный R во время цингуна — выключить бег, без цены и кулдауна.
+        if (technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.Traverse
+                && TraverseService.isActive(player)) {
+            TraverseService.stop(player);
+            return false;
+        }
+
         TechniqueState state = player.getData(ModAttachments.TECHNIQUE_STATE);
         if (state.isActive()) {
             return false;

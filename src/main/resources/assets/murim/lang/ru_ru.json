@@ -126,5 +126,7 @@
   "technique.murim.six_harmonies.weakness": "Прямой удар сверху читается по плечам.",
   "murim.loadout.foundation": "Основа меча",
   "technique.murim.dark_fragrance_step": "Шаг Невидимого Аромата",
-  "technique.murim.dark_fragrance_step.weakness": "После рывка нужна секунда, чтобы снова встать в стойку."
+  "technique.murim.dark_fragrance_step.weakness": "После рывка нужна секунда, чтобы снова встать в стойку.",
+  "technique.murim.wind_god_lightning_step": "Шаг Молнии (Четыре Шага Бога Ветров)",
+  "technique.murim.wind_god_lightning_step.weakness": "Бег сбивает любой удар; в воде и в седле не работает."
 }

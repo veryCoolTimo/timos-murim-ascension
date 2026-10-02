@@ -94,6 +94,15 @@ public final class ModAttachments {
             ATTACHMENT_TYPES.register("aura_gust",
                     () -> AttachmentType.<int[]>builder(() -> new int[] {0, -1, -1}).build());
 
+    /**
+     * Цингун (Шаг Молнии): {активен 0/1, слой, тиков осталось, отталкиваний осталось, тик последнего
+     * длинного прыжка, воздушная коррекция использована 0/1, id техники в списке не храним}.
+     * Не сохраняется: режим живёт секунды.
+     */
+    public static final Supplier<AttachmentType<int[]>> TRAVERSE =
+            ATTACHMENT_TYPES.register("traverse",
+                    () -> AttachmentType.<int[]>builder(() -> new int[] {0, 0, 0, 0, Integer.MIN_VALUE / 2, 0}).build());
+
     /** Последний взмах основы меча: {форма, тик}. Не сохраняется — живёт тики. */
     public static final Supplier<AttachmentType<int[]>> FOUNDATION_SWING =
             ATTACHMENT_TYPES.register("foundation_swing",

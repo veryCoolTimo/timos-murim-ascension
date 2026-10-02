@@ -45,6 +45,10 @@ public final class DevCaptureHandler {
      */
     private static final String CAMERA_PROPERTY = "murim.capture.camera";
 
+    /** Сколько тиков стенд бежит цингуном (Шаг Молнии). */
+    private static final int TRAVEL_CAPTURE_TICKS = 70;
+    private static int travelTicks;
+
     /** Какую технику снимать: {@code -Pmurim.technique=wedge_fan}. По умолчанию первая. */
     private static final String TECHNIQUE_PROPERTY = "murim.capture.technique";
 
@@ -202,7 +206,19 @@ public final class DevCaptureHandler {
             PacketDistributor.sendToServer(new StartTechniquePayload(
                     net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(
                             MurimMod.MODID, subject)));
+            if ("wind_god_lightning_step".equals(subject)) {
+                // Цингун снимается в беге: стенд держит «вперёд» со спринтом и дважды прыгает.
+                travelTicks = TRAVEL_CAPTURE_TICKS;
+            }
             startCapture();
+        }
+
+        if (travelTicks > 0) {
+            int t = TRAVEL_CAPTURE_TICKS - travelTicks--;
+            boolean run = travelTicks > 0;
+            minecraft.options.keyUp.setDown(run);
+            minecraft.options.keySprint.setDown(run);
+            minecraft.options.keyJump.setDown(run && (t == 16 || t == 17 || t == 46 || t == 47));
         }
 
         if (meditationTicks > 0) {

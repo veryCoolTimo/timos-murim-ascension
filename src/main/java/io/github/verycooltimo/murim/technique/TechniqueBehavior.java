@@ -21,13 +21,14 @@ import java.util.Map;
  */
 public sealed interface TechniqueBehavior
         permits TechniqueBehavior.MeleeArc, TechniqueBehavior.ProjectileFan, TechniqueBehavior.Dash,
-                TechniqueBehavior.PalmBlast, TechniqueBehavior.Step {
+                TechniqueBehavior.PalmBlast, TechniqueBehavior.Step, TechniqueBehavior.Traverse {
 
     ResourceLocation MELEE_ARC = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "melee_arc");
     ResourceLocation PROJECTILE_FAN = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "projectile_fan");
     ResourceLocation DASH = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "dash");
     ResourceLocation PALM_BLAST = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "palm_blast");
     ResourceLocation STEP = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "step");
+    ResourceLocation TRAVERSE = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "traverse");
 
     ResourceLocation type();
 
@@ -200,12 +201,31 @@ public sealed interface TechniqueBehavior
         }
     }
 
+    /**
+     * Цингун по миру (Шаг Молнии): включает бег, длинный прыжок и отталкивания по слою, см.
+     * {@link io.github.verycooltimo.murim.technique.TraverseRules}. Без цели и без урона.
+     */
+    record Traverse() implements TechniqueBehavior {
+        public static final MapCodec<Traverse> CODEC = MapCodec.unit(Traverse::new);
+
+        @Override
+        public float damage() {
+            return 0.0F;
+        }
+
+        @Override
+        public ResourceLocation type() {
+            return TRAVERSE;
+        }
+    }
+
     Map<ResourceLocation, MapCodec<? extends TechniqueBehavior>> TYPES = Map.of(
             MELEE_ARC, MeleeArc.CODEC,
             PROJECTILE_FAN, ProjectileFan.CODEC,
             DASH, Dash.CODEC,
             PALM_BLAST, PalmBlast.CODEC,
-            STEP, Step.CODEC);
+            STEP, Step.CODEC,
+            TRAVERSE, Traverse.CODEC);
 
     Codec<TechniqueBehavior> CODEC = ResourceLocation.CODEC
             .dispatch("type", TechniqueBehavior::type, type -> {

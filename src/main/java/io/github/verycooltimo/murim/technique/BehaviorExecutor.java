@@ -49,6 +49,10 @@ public final class BehaviorExecutor {
         if (behavior instanceof TechniqueBehavior.PalmBlast palm) {
             return palmBlast(player, palm, definition.id(), power);
         }
+        if (behavior instanceof TechniqueBehavior.Traverse) {
+            io.github.verycooltimo.murim.combat.TraverseService.toggle(player, definition.id());
+            return false;
+        }
         if (behavior instanceof TechniqueBehavior.Step) {
             step(player, definition.id());
             return false;

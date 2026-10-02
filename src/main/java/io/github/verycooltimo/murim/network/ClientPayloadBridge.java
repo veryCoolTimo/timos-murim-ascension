@@ -35,6 +35,10 @@ final class ClientPayloadBridge {
         io.github.verycooltimo.murim.client.ClientProfileState.setProfile(payload.profile());
     }
 
+    public static void handleTraverse(TraversePayloads.Event payload) {
+        io.github.verycooltimo.murim.client.vfx.TraverseVfx.onEvent(payload);
+    }
+
     public static void handleStep(StepPayload payload) {
         io.github.verycooltimo.murim.client.vfx.StepVfx.start(payload);
     }
