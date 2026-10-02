@@ -48,6 +48,7 @@ public final class DevCaptureHandler {
     /** Сколько тиков стенд бежит цингуном (Шаг Молнии). */
     private static final int TRAVEL_CAPTURE_TICKS = 70;
     private static int travelTicks;
+    private static int sneakTicks;
 
     /** Какую технику снимать: {@code -Pmurim.technique=wedge_fan}. По умолчанию первая. */
     private static final String TECHNIQUE_PROPERTY = "murim.capture.technique";
@@ -214,11 +215,17 @@ public final class DevCaptureHandler {
                             | io.github.verycooltimo.murim.combat.FootworkService.FORWARD;
                     case "left" -> io.github.verycooltimo.murim.combat.FootworkService.LEFT;
                     case "back" -> io.github.verycooltimo.murim.combat.FootworkService.BACK;
+                    case "shadow" -> io.github.verycooltimo.murim.combat.FootworkService.SNEAK;
+                    case "pass" -> io.github.verycooltimo.murim.combat.FootworkService.FORWARD;
                     default -> 0;
                 };
                 PacketDistributor.sendToServer(new io.github.verycooltimo.murim.network.TraversePayloads.Request(subjectId, input));
                 if ("run".equals(mode)) {
                     travelTicks = TRAVEL_CAPTURE_TICKS;
+                }
+                if ("shadow".equals(mode)) {
+                    // Тень держится приседом: стенд крадётся вперёд мимо зомби.
+                    sneakTicks = TRAVEL_CAPTURE_TICKS;
                 }
             } else {
                 PacketDistributor.sendToServer(new StartTechniquePayload(subjectId));
@@ -226,6 +233,12 @@ public final class DevCaptureHandler {
             startCapture();
         }
 
+        if (sneakTicks > 0) {
+            sneakTicks--;
+            boolean on = sneakTicks > 0;
+            minecraft.options.keyShift.setDown(on);
+            minecraft.options.keyUp.setDown(on);
+        }
         if (travelTicks > 0) {
             int t = TRAVEL_CAPTURE_TICKS - travelTicks--;
             boolean run = travelTicks > 0;

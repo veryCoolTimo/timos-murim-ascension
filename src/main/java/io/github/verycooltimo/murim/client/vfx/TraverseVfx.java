@@ -65,8 +65,16 @@ public final class TraverseVfx {
     }
 
     /** Росчерк: точки в мире, ширина, высота подъёма к концу, момент рождения и жизнь. */
-    private record Streak(Vec3[] points, double width, int born, float life, float alpha) {
+    private record Streak(Vec3[] points, double width, int born, float life, float alpha, VfxColour colour) {
+        Streak(Vec3[] points, double width, int born, float life, float alpha) {
+            this(points, width, born, life, alpha, SURFACE);
+        }
     }
+
+    /** Дымка Тени: холодно-серая, низкой непрозрачности (ref wind god steps, кадр 5). */
+    private static final VfxColour HAZE = new VfxColour(0xB8 / 255.0F, 0xC4 / 255.0F, 0xD0 / 255.0F);
+    /** Игроки в Тени: id → слой. */
+    private static final Map<Integer, Integer> SHADOWS = new HashMap<>();
 
     public static void onEvent(TraversePayloads.Event e) {
         Minecraft minecraft = Minecraft.getInstance();
@@ -84,6 +92,13 @@ public final class TraverseVfx {
             case 5 -> {
                 if (entity != null) {
                     evade(entity, e.layer(), new Vec3(e.dirX(), 0.0D, e.dirZ()));
+                }
+            }
+            case 6 -> SHADOWS.put(e.entityId(), e.layer());
+            case 7 -> SHADOWS.remove(e.entityId());
+            case 8 -> {
+                if (entity != null) {
+                    death(entity, new Vec3(e.dirX(), 0.0D, e.dirZ()));
                 }
             }
             default -> {
@@ -105,6 +120,7 @@ public final class TraverseVfx {
         if (minecraft.level == null) {
             RUNS.clear();
             STREAKS.clear();
+            SHADOWS.clear();
             return;
         }
         if (minecraft.isPaused()) {
@@ -146,6 +162,24 @@ public final class TraverseVfx {
                     STREAKS.add(streak(pos.add(side.scale(-1.5D)).add(dir.scale(-0.3D)).add(0.0D, 0.45D, 0.0D),
                             dir.scale(-1.0D), 0.6D, 0.035D, 0.12D, 2.5F, 0.6F));
                 }
+            }
+        }
+        // Тень: раз в 3 тика у ног — короткий низкий клок дымки, не длиннее 0,6 блока и не ярче 0,3:
+        // направление скрытного хода длинным хвостом не выдаётся.
+        Iterator<Map.Entry<Integer, Integer>> sh = SHADOWS.entrySet().iterator();
+        while (sh.hasNext()) {
+            Map.Entry<Integer, Integer> en = sh.next();
+            Entity entity = minecraft.level.getEntity(en.getKey());
+            if (entity == null || !entity.isAlive()) {
+                sh.remove();
+                continue;
+            }
+            if (clientTicks % 3 == 0) {
+                double a = (clientTicks * 2.39D) % (Math.PI * 2.0D);
+                Vec3 at = entity.position().add(Math.cos(a) * 0.3D, 0.05D + 0.1D * (clientTicks % 2), Math.sin(a) * 0.3D);
+                Vec3 back = new Vec3(-Math.sin(a), 0.0D, Math.cos(a));
+                Streak st = streak(at, back, 0.55D, 0.07D, 0.12D, 6.0F, 0.3F);
+                STREAKS.add(new Streak(st.points(), st.width(), st.born(), st.life(), st.alpha(), HAZE));
             }
         }
         STREAKS.removeIf(s -> clientTicks - s.born > s.life + 1);
@@ -206,6 +240,18 @@ public final class TraverseVfx {
         }
     }
 
+    /** Шаг Смерти: узкая сильная бело-голубая полоса на высоте груди по пройденному пути. */
+    private static void death(Entity entity, Vec3 offset) {
+        if (offset.lengthSqr() < 1.0E-4D) {
+            return;
+        }
+        Vec3 dir = offset.normalize();
+        Vec3 end = entity.position().add(0.0D, 1.0D, 0.0D);
+        STREAKS.add(streak(end.subtract(dir.scale(0.2D)), dir.scale(-1.0D), Math.min(offset.length(), 6.0D), 0.07D, 0.0D, 3.0F, 1.0F));
+        STREAKS.add(streak(end.subtract(dir.scale(0.4D)).add(0.0D, -0.85D, 0.0D), dir.scale(-1.0D),
+                Math.min(offset.length(), 6.0D) * 0.7D, 0.05D, 0.05D, 3.0F, 0.7F));
+    }
+
     private static Streak streak(Vec3 start, Vec3 back, double length, double width, double rise, float life, float alpha) {
         Vec3[] pts = new Vec3[9];
         for (int i = 0; i < pts.length; i++) {
@@ -249,8 +295,10 @@ public final class TraverseVfx {
                     // Острые оба конца, самое широкое — в первой трети.
                     double w0 = s.width * profile(u0) * thin;
                     double w1 = s.width * profile(u1) * thin;
-                    band(c, pose, camera, s.points[i], s.points[i + 1], w0, w1, 0.4F * alpha, SURFACE);
-                    band(c, pose, camera, s.points[i], s.points[i + 1], w0 * 0.25D, w1 * 0.25D, 0.9F * alpha, EDGE);
+                    band(c, pose, camera, s.points[i], s.points[i + 1], w0, w1, 0.4F * alpha, s.colour);
+                    if (s.colour == SURFACE) {
+                        band(c, pose, camera, s.points[i], s.points[i + 1], w0 * 0.25D, w1 * 0.25D, 0.9F * alpha, EDGE);
+                    }
                 }
             }
             buffers.endBatch(MurimRenderTypes.airBand());
