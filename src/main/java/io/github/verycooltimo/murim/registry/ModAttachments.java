@@ -126,6 +126,14 @@ public final class ModAttachments {
             ATTACHMENT_TYPES.register("plum_whirl",
                     () -> AttachmentType.<double[]>builder(() -> new double[] {0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0}).build());
 
+    /**
+     * Казнь Цветущей Сливы: {центр x, y, z, угол «цель → оригинал», слой, первое попадание 0/1,
+     * id цели, меток (попавших клонов), исходная точка x, z}. Не сохраняется.
+     */
+    public static final Supplier<AttachmentType<double[]>> EXEC =
+            ATTACHMENT_TYPES.register("plum_exec",
+                    () -> AttachmentType.<double[]>builder(() -> new double[] {0, 0, 0, 0, 0, 0, -1, 0, 0, 0}).build());
+
     /** Последний взмах основы меча: {форма, тик}. Не сохраняется — живёт тики. */
     public static final Supplier<AttachmentType<int[]>> FOUNDATION_SWING =
             ATTACHMENT_TYPES.register("foundation_swing",

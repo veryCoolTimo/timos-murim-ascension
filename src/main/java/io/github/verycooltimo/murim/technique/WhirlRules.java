@@ -46,8 +46,19 @@ public final class WhirlRules {
         net.minecraft.world.phys.Vec3 start = centre.add(dir.scale(radius * 0.7D)).add(side.scale(which * radius * 0.55D));
         net.minecraft.world.phys.Vec3 end = target.add(dir.scale(2.2D)).add(side.scale(which * 0.4D));
         double k = Math.max(0.0D, Math.min(1.0D, (since - TORNADO_GO) / (double) (TORNADO_END - TORNADO_GO)));
-        // Разгон медленный, к цели — быстрее; пути выгнуты наружу и сходятся на цели.
-        double e = k * k * (3.0D - 2.0D * k);
+        return along(centre, target, radius, which, k * k * (3.0D - 2.0D * k));
+    }
+
+    /** Точка пути рукава на доле {@code e} (0 — край вихря, 1 — за целью). */
+    public static net.minecraft.world.phys.Vec3 along(net.minecraft.world.phys.Vec3 centre, net.minecraft.world.phys.Vec3 target,
+                                                     double radius, int which, double e) {
+        net.minecraft.world.phys.Vec3 to = target.subtract(centre);
+        net.minecraft.world.phys.Vec3 dir = new net.minecraft.world.phys.Vec3(to.x, 0.0D, to.z);
+        double dist = Math.max(0.5D, dir.length());
+        dir = dir.scale(1.0D / dist);
+        net.minecraft.world.phys.Vec3 side = new net.minecraft.world.phys.Vec3(-dir.z, 0.0D, dir.x);
+        net.minecraft.world.phys.Vec3 start = centre.add(dir.scale(radius * 0.7D)).add(side.scale(which * radius * 0.55D));
+        net.minecraft.world.phys.Vec3 end = target.add(dir.scale(2.2D)).add(side.scale(which * 0.4D));
         net.minecraft.world.phys.Vec3 p = start.lerp(end, e);
         double bow = Math.sin(Math.PI * e) * radius * 0.35D * which * (which > 0 ? 1.0D : 0.8D);
         return p.add(side.scale(bow));

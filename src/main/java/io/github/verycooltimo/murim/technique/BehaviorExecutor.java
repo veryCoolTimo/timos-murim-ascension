@@ -55,6 +55,9 @@ public final class BehaviorExecutor {
         if (behavior instanceof TechniqueBehavior.PlumWhirlwind) {
             return whirlStart(player, definition.id());
         }
+        if (behavior instanceof TechniqueBehavior.PlumExecution) {
+            return execStart(player, definition.id());
+        }
         if (behavior instanceof TechniqueBehavior.Footwork) {
             io.github.verycooltimo.murim.combat.FootworkService.windEvade(player, definition.id());
             return false;
@@ -606,6 +609,116 @@ public final class BehaviorExecutor {
             w[6] = 0.0D;
             player.setData(io.github.verycooltimo.murim.registry.ModAttachments.WHIRL, w);
         }
+    }
+
+    // ------------------------------------------------------------------ Казнь Цветущей Сливы
+
+    /** Выход клонов: цель по взгляду до 6 блоков фиксируется вместе с точкой у её стоп. */
+    private static boolean execStart(ServerPlayer player, net.minecraft.resources.ResourceLocation id) {
+        int layer = Math.max(0, io.github.verycooltimo.murim.mastery.MasteryService.layer(player, id));
+        double base = player.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE);
+        Vec3 origin = player.position();
+        Vec3 look = player.getLookAngle();
+        Vec3 forward = new Vec3(look.x, 0.0D, look.z);
+        forward = forward.lengthSqr() < 1.0E-6D ? new Vec3(0.0D, 0.0D, 1.0D) : forward.normalize();
+        if (layer <= 0) {
+            boolean hit = false;
+            double cos = Math.cos(Math.toRadians(PlumRules.TRAINING_ARC / 2.0D));
+            for (LivingEntity t : candidates(player, player.getBoundingBox().inflate(PlumRules.TRAINING_REACH + 1.0D))) {
+                if (inArc(player.getEyePosition(), look, t.getBoundingBox(), PlumRules.TRAINING_REACH, cos)
+                        && t.hurt(player.damageSources().playerAttack(player), (float) base)) {
+                    hit = true;
+                }
+            }
+            return hit;
+        }
+        LivingEntity target = null;
+        double best = Double.MAX_VALUE;
+        double cone = Math.cos(Math.toRadians(30.0D));
+        for (LivingEntity t : candidates(player, player.getBoundingBox().inflate(6.5D))) {
+            Vec3 to = t.position().subtract(origin);
+            Vec3 flat = new Vec3(to.x, 0.0D, to.z);
+            double d = flat.length();
+            if (d < 0.5D || d > 6.0D || flat.normalize().dot(forward) < cone || !player.hasLineOfSight(t)) {
+                continue;
+            }
+            if (d < best) {
+                best = d;
+                target = t;
+            }
+        }
+        Vec3 centre = target != null ? new Vec3(target.getX(), origin.y, target.getZ()) : origin.add(forward.scale(4.0D));
+        double baseAngle = Math.atan2(origin.z - centre.z, origin.x - centre.x);
+        player.setData(io.github.verycooltimo.murim.registry.ModAttachments.EXEC, new double[] {
+                centre.x, centre.y, centre.z, baseAngle, layer, 0, target == null ? -1 : target.getId(), 0, origin.x, origin.z});
+        net.neoforged.neoforge.network.PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
+                new io.github.verycooltimo.murim.network.ExecPayload(player.getId(), origin, centre, (float) baseAngle, layer, 0));
+        return false;
+    }
+
+    /** Шкала Казни после выхода клонов, см. ExecRules. */
+    public static void execTick(ServerPlayer player, net.minecraft.resources.ResourceLocation id, int since) {
+        double[] e = player.getData(io.github.verycooltimo.murim.registry.ModAttachments.EXEC);
+        int layer = (int) e[4];
+        if (layer <= 0) {
+            return;
+        }
+        Vec3 centre = new Vec3(e[0], e[1], e[2]);
+        double base = player.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE);
+        LivingEntity target = e[6] >= 0 && player.level().getEntity((int) e[6]) instanceof LivingEntity le && le.isAlive() ? le : null;
+        // Контакт каждого клона: цель у точки сбора — удар (без отбрасывания), метка на финал.
+        for (int i = 0; i < ExecRules.clones(layer); i++) {
+            if (since == ExecRules.contact(i) && target != null && flatDistance(target.position(), centre) < 1.6D) {
+                if (execHurt(player, id, target, base * ExecRules.DMG_CLONE)) {
+                    e[7] += 1.0D;
+                }
+            }
+        }
+        // Оригинал плавно проходит сбоку цели и встаёт за её спиной.
+        if (ExecRules.finale(layer) && since == ExecRules.DASH) {
+            Vec3 aim = target != null ? target.position() : centre;
+            Vec3 from = new Vec3(e[8], player.getY(), e[9]);
+            Vec3 dir = new Vec3(aim.x - from.x, 0.0D, aim.z - from.z);
+            if (dir.lengthSqr() > 1.0E-4D) {
+                dir = dir.normalize();
+                Vec3 dest = aim.add(dir.scale(2.0D)).add(new Vec3(-dir.z, 0.0D, dir.x).scale(0.5D));
+                Vec3 path = new Vec3(dest.x - player.getX(), 0.0D, dest.z - player.getZ());
+                io.github.verycooltimo.murim.combat.FootworkService.sendDash(player, path.normalize(), path.length(), ExecRules.DASH_TICKS);
+            }
+        }
+        // Казнь: шесть разрезов разом — одним событием урона по числу попавших клонов.
+        if (since == ExecRules.FINAL) {
+            int marks = (int) e[7];
+            if (ExecRules.finale(layer) && target != null && marks > 0 && flatDistance(target.position(), centre) < 1.8D) {
+                if (execHurt(player, id, target, base * ExecRules.DMG_FINAL * marks)) {
+                    net.neoforged.neoforge.network.PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
+                            new io.github.verycooltimo.murim.network.ExecPayload(player.getId(), player.position(),
+                                    target.position().add(0.0D, target.getBbHeight() * 0.6D, 0.0D), (float) e[3], layer, 1));
+                }
+            }
+            e[7] = 0.0D;
+        }
+        player.setData(io.github.verycooltimo.murim.registry.ModAttachments.EXEC, e);
+    }
+
+    private static boolean execHurt(ServerPlayer player, net.minecraft.resources.ResourceLocation id, LivingEntity t, double amount) {
+        t.invulnerableTime = 0;
+        if (!t.hurt(player.damageSources().playerAttack(player), (float) amount)) {
+            return false;
+        }
+        t.setDeltaMovement(t.getDeltaMovement().multiply(0.2D, 1.0D, 0.2D));
+        t.hurtMarked = true;
+        double[] e = player.getData(io.github.verycooltimo.murim.registry.ModAttachments.EXEC);
+        if (e[5] < 0.5D) {
+            e[5] = 1.0D;
+            player.setData(io.github.verycooltimo.murim.registry.ModAttachments.EXEC, e);
+            boolean boss = t.getType().is(net.neoforged.neoforge.common.Tags.EntityTypes.BOSSES);
+            int ticks = t instanceof net.minecraft.world.entity.player.Player ? 12 : boss ? 10 : ExecRules.END;
+            t.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.MOVEMENT_SLOWDOWN, ticks, 9, false, false, false));
+            t.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.WEAKNESS, ticks, 9, false, false, false));
+        }
+        io.github.verycooltimo.murim.mastery.MasteryService.onHit(player, id, t);
+        return true;
     }
 
     private static List<LivingEntity> whirlInside(ServerPlayer player, Vec3 centre, double radius, int layer) {

@@ -21,6 +21,7 @@ final class ClientPayloadBridge {
         io.github.verycooltimo.murim.client.ClientTechniqueHandler.onTechniqueEvent(payload);
         io.github.verycooltimo.murim.client.vfx.PlumVfx.onTechniqueEvent(payload);
         io.github.verycooltimo.murim.client.vfx.WhirlVfx.onTechniqueEvent(payload);
+        io.github.verycooltimo.murim.client.vfx.ExecVfx.onTechniqueEvent(payload);
     }
 
     /**
@@ -39,6 +40,10 @@ final class ClientPayloadBridge {
 
     public static void handlePlumSlash(PlumSlashPayload payload) {
         io.github.verycooltimo.murim.client.vfx.PlumVfx.onSlash(payload);
+    }
+
+    public static void handleExec(ExecPayload payload) {
+        io.github.verycooltimo.murim.client.vfx.ExecVfx.onExec(payload);
     }
 
     public static void handleWhirl(WhirlPayload payload) {

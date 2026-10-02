@@ -378,13 +378,12 @@ public final class WhirlVfx {
         if (WhirlRules.finale(c.layer) && c.target != null && s >= WhirlRules.TORNADO_FORM && s < WhirlRules.TORNADO_END) {
             double grow = Mth.clamp((s - WhirlRules.TORNADO_FORM) / (double) (WhirlRules.TORNADO_GO - WhirlRules.TORNADO_FORM), 0.0D, 1.0D);
             for (int which = -1; which <= 1; which += 2) {
-                Vec3 at = WhirlRules.tornado(c.centre, c.target, r, which, s);
+                Vec3 at = WhirlRules.tornado(c.centre, c.target, r, which, s).add(0.0D, 1.1D, 0.0D);
                 for (int i = 0; i < 2; i++) {
                     double a = c.random.nextDouble() * Math.PI * 2.0D;
-                    double y = c.random.nextDouble() * 3.0D * grow;
-                    double rad = 0.3D + 0.5D * (y / 3.0D);
-                    Vec3 pos = at.add(Math.cos(a) * rad, y, Math.sin(a) * rad);
-                    Vec3 tan = new Vec3(-Math.sin(a), 0.06D, Math.cos(a)).scale(0.22D * which);
+                    double rad = (0.5D + 0.6D * c.random.nextDouble()) * (0.5D + 0.5D * grow);
+                    Vec3 pos = at.add(c.right.scale(Math.cos(a) * rad)).add(0.0D, Math.sin(a) * rad, 0.0D);
+                    Vec3 tan = c.right.scale(-Math.sin(a)).add(0.0D, Math.cos(a), 0.0D).scale(0.2D * which).add(c.forward.scale(0.12D));
                     Mote m = new Mote(pos, tan, 18 + c.random.nextInt(10), c.layer >= 3 && i == 0, c.random.nextInt(4),
                             (float) (c.random.nextDouble() - 0.5D), i == 0 ? 0.09D : 0.08D, i == 0 ? 0 : 10);
                     m.free = true;
@@ -439,7 +438,7 @@ public final class WhirlVfx {
                     net.minecraft.sounds.SoundSource.PLAYERS, 1.0F, 0.6F, false);
         }
         burst(c, at, 30, 0.35D, c.layer >= 3);
-        smoke(c, new Vec3(at.x, c.centre == null ? at.y - 1.0D : c.centre.y, at.z), 2.0D, 12);
+        smoke(c, new Vec3(at.x, c.centre == null ? at.y - 1.0D : c.centre.y, at.z), 2.6D, 7);
     }
 
     private static void burst(Cast c, Vec3 at, int n, double speed, boolean petals) {
@@ -860,34 +859,42 @@ public final class WhirlVfx {
     }
 
     /**
-     * Мини-ураганы: столбы из трёх закрученных лент вокруг движущейся оси (шире вверху), белое
-     * ядро; растут на краю вихря, идут к цели и рассыпаются за ней.
+     * Два вихревых рукава (w13, автор 02.10: «та форма, что на рефах», не вертикальные смерчи):
+     * горизонтальные закрученные трубы вдоль пути от края вихря к цели. Голова летит к цели и
+     * сквозь неё, хвост тянется следом; вокруг оси — три спиральные ленты, шире у головы.
      */
     private static void tornadoes(Cast c, PoseStack.Pose pose, Vec3 camera, VertexConsumer v, float s) {
         if (!WhirlRules.finale(c.layer) || c.target == null || s < WhirlRules.TORNADO_FORM || s > WhirlRules.TORNADO_END + 10) {
             return;
         }
         double r = WhirlRules.radius(c.layer);
-        float grow = (float) Mth.clamp((s - WhirlRules.TORNADO_FORM) / (double) (WhirlRules.TORNADO_GO - WhirlRules.TORNADO_FORM), 0.0D, 1.0D);
+        double grow = Mth.clamp((s - WhirlRules.TORNADO_FORM) / (double) (WhirlRules.TORNADO_GO - WhirlRules.TORNADO_FORM), 0.0D, 1.0D);
+        double k = Mth.clamp((s - WhirlRules.TORNADO_GO) / (double) (WhirlRules.TORNADO_END - WhirlRules.TORNADO_GO), 0.0D, 1.0D);
+        double head = 0.12D * grow + 0.88D * k * k * (3.0D - 2.0D * k);
+        double tail = Math.max(0.0D, head - 0.75D);
         float out = (float) Mth.clamp((WhirlRules.TORNADO_END + 10 - s) / 10.0D, 0.0D, 1.0D);
-        double h = 3.2D * grow;
         for (int which = -1; which <= 1; which += 2) {
-            Vec3 at = WhirlRules.tornado(c.centre, c.target, r, which, s);
             for (int strand = 0; strand < 3; strand++) {
-                int n = 28;
+                int n = 36;
                 Vec3[] q = new Vec3[n + 1];
                 double[] w = new double[n + 1];
                 for (int i = 0; i <= n; i++) {
                     double u = i / (double) n;
-                    double ph = u * Math.PI * 5.0D - s * 0.5D * which + strand * 2.1D;
-                    double rad = (0.25D + 0.7D * u) * (0.9D + 0.1D * Math.sin(s * 0.3D + strand));
-                    // Ось чуть гнётся от движения.
-                    Vec3 axis = at.add(0.0D, h * u, 0.0D).add(c.forward.scale(-0.3D * u * u));
-                    q[i] = axis.add(Math.cos(ph) * rad, 0.0D, Math.sin(ph) * rad);
-                    w[i] = 0.07D * Math.sin(Math.PI * Math.min(1.0D, u + 0.03D));
+                    double e = tail + (head - tail) * u;
+                    Vec3 axis = WhirlRules.along(c.centre, c.target, r, which, e).add(0.0D, 1.4D, 0.0D);
+                    Vec3 ahead = WhirlRules.along(c.centre, c.target, r, which, Math.min(1.0D, e + 0.02D)).add(0.0D, 1.4D, 0.0D);
+                    Vec3 t = ahead.subtract(axis);
+                    t = t.lengthSqr() < 1.0E-6D ? c.forward : t.normalize();
+                    Vec3 sideV = new Vec3(-t.z, 0.0D, t.x).normalize();
+                    Vec3 upV = t.cross(sideV).normalize();
+                    double ph = u * Math.PI * 7.0D - s * 0.55D * which + strand * 2.1D;
+                    // Рукав крупный, как на w13: диаметр до ~2,4 блока у головы.
+                    double rad = (0.55D + 0.7D * u) * (0.75D + 0.25D * grow) * (0.9D + 0.1D * Math.sin(s * 0.3D + strand));
+                    q[i] = axis.add(sideV.scale(Math.cos(ph) * rad)).add(upV.scale(Math.sin(ph) * rad));
+                    w[i] = 0.12D * Math.sin(Math.PI * Math.min(1.0D, u * 1.02D + 0.02D));
                 }
                 PlumVfx.strip(v, pose, camera, q, PlumVfx.scale(w, 2.6D), 0.12F * out, PINK);
-                PlumVfx.strip(v, pose, camera, q, w, 0.5F * out, PINK);
+                PlumVfx.strip(v, pose, camera, q, w, 0.52F * out, PINK);
                 PlumVfx.strip(v, pose, camera, q, PlumVfx.scale(w, 0.35D), 0.9F * out, EDGE);
             }
         }
