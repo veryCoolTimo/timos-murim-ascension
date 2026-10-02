@@ -32,8 +32,8 @@ public final class PlumRules {
     public static final double TRAINING_REACH = 2.4D;
     public static final double TRAINING_ARC = 55.0D;
 
-    /** Через сколько тиков после первого удара рука уходит вперёд и дерево падает (анимация 1,45 с). */
-    public static final int FALL_TICK = 17;
+    /** Через сколько тиков после первого удара дерево падает: рука уходит вперёд к 1,45 с, жест держится 3 тика. */
+    public static final int FALL_TICK = 20;
 
     /** Коэффициент удара падающего дерева: слой 1 — один ствол, дальше крона тяжелее. */
     public static double fallCoefficient(int layer) {

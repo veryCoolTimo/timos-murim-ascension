@@ -279,6 +279,9 @@ public final class PlumVfx {
                 if (entity != null && !ownFirstPerson) {
                     preparation(c, entity, pose, camera, air, t, partial);
                 }
+                if (entity != null && c.layer >= 1) {
+                    charge(c, entity, pose, camera, air, t, partial);
+                }
                 if (c.slashTick >= 0) {
                     float sa = clientTicks - c.slashTick + partial;
                     slash(c, pose, camera, air, sa);
@@ -330,6 +333,41 @@ public final class PlumVfx {
         }
         if (c.layer >= 3) {
             arc(v, pose, camera, e.getPosition(partial).add(r.scale(0.3D)).add(0.0D, 1.35D, 0.0D), r, f, 0.4D, 150.0D, 90.0D, 0.13D, t - 2.0F, fade * 0.8F);
+        }
+    }
+
+    /**
+     * Заряд за 6 тиков до удара вверх: кольцо на полу сходится к стопам, вокруг тела
+     * поднимаются три струи (холодные; на 3-м слое и выше — розовеют).
+     */
+    private static void charge(Cast c, Entity e, PoseStack.Pose pose, Vec3 camera, VertexConsumer v, float t, float partial) {
+        float k = (t - (COMMIT - 6)) / 6.0F;
+        if (k < 0.0F || k > 1.0F || c.slashTick >= 0) {
+            return;
+        }
+        VfxColour col = PlumRules.blossoms(c.layer) && k > 0.5F ? PINK : COLD;
+        Vec3 feet = e.getPosition(partial).add(0.0D, 0.05D, 0.0D);
+        double rad = 1.8D - 1.2D * k * k;
+        int n = 24;
+        Vec3[] ring = new Vec3[n + 1];
+        double[] rw = new double[n + 1];
+        for (int i = 0; i <= n; i++) {
+            double ang = Math.PI * 2.0D * i / n * 0.85D + k * 2.0D;
+            ring[i] = feet.add(Math.cos(ang) * rad, 0.0D, Math.sin(ang) * rad);
+            rw[i] = 0.05D * Math.sin(Math.PI * i / n);
+        }
+        strip(v, pose, camera, ring, rw, 0.5F * k, col);
+        strip(v, pose, camera, ring, scale(rw, 0.3D), 0.9F * k, EDGE);
+        for (int j = 0; j < 3; j++) {
+            Vec3[] p = new Vec3[9];
+            double[] w = new double[9];
+            for (int i = 0; i <= 8; i++) {
+                double u = i / 8.0D;
+                double ang = Math.PI * 2.0D * j / 3.0D + u * 1.5D + t * 0.4D;
+                p[i] = feet.add(Math.cos(ang) * 0.55D, u * (0.6D + 1.4D * k), Math.sin(ang) * 0.55D);
+                w[i] = 0.05D * Math.sin(Math.PI * u);
+            }
+            strip(v, pose, camera, p, w, 0.4F * k, col);
         }
     }
 
@@ -487,9 +525,16 @@ public final class PlumVfx {
             return;
         }
         boolean pink = PlumRules.blossoms(c.layer);
+        if (pink) {
+            crown(c, pose, camera, v, age);
+        }
         for (Branch b : c.branches) {
             branch(c, pose, camera, v, age, b, pink);
         }
+        if (c.layer >= 2) {
+            swings(c, pose, camera, v, age, pink);
+        }
+        handWave(c, pose, camera, v, age);
         Vec3 base = trunkBase(c);
         // Борозда от стопы к основанию ствола: удар и дерево — одно движение.
         if (age < 4.0F) {
@@ -535,6 +580,85 @@ public final class PlumVfx {
             strip(v, pose, camera, fp, fw, 0.45F * fa, COLD);
             strip(v, pose, camera, fp, scale(fw, 0.3D), 0.9F * fa, EDGE);
         }
+    }
+
+    /**
+     * Боковые удары: на каждом из шести быстрых взмахов поперёк ствола проносится полумесяц
+     * (≈140°, радиус 1,2–1,8) — видимый удар, пересекающий ствол (ref6); живёт 2 тика.
+     */
+    private static void swings(Cast c, PoseStack.Pose pose, Vec3 camera, VertexConsumer v, float age, boolean pink) {
+        Vec3 base = trunkBase(c);
+        double h = PlumRules.height(c.layer);
+        for (int k = 0; k < 6; k++) {
+            float t = age - (1.2F + 1.5F * k);
+            if (t < 0.0F || t > 2.0F) {
+                continue;
+            }
+            int side = k % 2 == 0 ? 1 : -1;
+            double y = h * (0.3D + 0.1D * k);
+            double rad = 1.2D + 0.12D * k;
+            double sweep = Mth.clamp(t / 0.6D, 0.0D, 1.0D);
+            int n = 14;
+            Vec3[] p = new Vec3[n + 1];
+            double[] w = new double[n + 1];
+            for (int i = 0; i <= n; i++) {
+                double u = i / (double) n * sweep;
+                double ang = Math.toRadians(-70.0D + 140.0D * u) * side;
+                p[i] = fall(c, base.add(c.right.scale(side * -rad * 0.4D + rad * Math.sin(ang)))
+                        .add(0.0D, y + 0.5D * rad * (Math.cos(ang) - 0.6D), 0.0D), age);
+                w[i] = 0.11D * Math.sin(Math.PI * Math.min(1.0D, u / Math.max(0.05D, sweep) * 1.05D + 0.02D));
+            }
+            float a = (float) curve(t, 0.0, 0.0, 0.3, 1.0, 2.0, 0.0);
+            stripVar(v, pose, camera, p, scale(w, 2.5D), filled(n + 1, 0.2F * a), pink ? PINK : COLD);
+            stripVar(v, pose, camera, p, w, filled(n + 1, 0.95F * a), EDGE);
+        }
+    }
+
+    /** Розовая масса кроны между ветвями (ref8): клинья от ствола к концам ветвей, вместе ~40 % кроны. */
+    private static void crown(Cast c, PoseStack.Pose pose, Vec3 camera, VertexConsumer v, float age) {
+        for (Branch b : c.branches) {
+            if (b.depth() != 1) {
+                continue;
+            }
+            float t = age - b.born() - b.draw();
+            if (t < 0.0F) {
+                continue;
+            }
+            float a = (float) Mth.clamp(t / 1.5D, 0.0D, 1.0D)
+                    * (float) Mth.clamp((PlumRules.FALL_TICK + 9.0D - age) / 3.0D, 0.0D, 1.0D);
+            double len = b.end().distanceTo(b.start());
+            Vec3[] p = {fall(c, b.start(), age), fall(c, bezier(b.start(), b.ctrl(), b.end(), 0.6D), age), fall(c, b.end(), age)};
+            double[] w = {0.05D, 0.3D * len, 0.18D * len};
+            stripVar(v, pose, camera, p, w, filled(3, 0.12F * a), PINK);
+        }
+    }
+
+    /** Жест рукой вперёд (1,3–1,45 с): короткая холодная волна от ладони к дереву. */
+    private static void handWave(Cast c, PoseStack.Pose pose, Vec3 camera, VertexConsumer v, float age) {
+        float t = age - (PlumRules.FALL_TICK - 5.0F);
+        if (t < 0.0F || t > 5.0F) {
+            return;
+        }
+        Vec3 palm = c.origin.add(c.forward.scale(0.7D)).add(c.right.scale(-0.3D)).add(0.0D, 1.35D, 0.0D);
+        double reach = 0.4D + 1.4D * Math.min(1.0D, t / 3.0D);
+        int n = 12;
+        Vec3[] p = new Vec3[n + 1];
+        double[] w = new double[n + 1];
+        for (int i = 0; i <= n; i++) {
+            double u = i / (double) n;
+            double ang = Math.toRadians(-60.0D + 120.0D * u);
+            p[i] = palm.add(c.forward.scale(reach)).add(c.right.scale(0.55D * Math.sin(ang))).add(0.0D, 0.55D * Math.cos(ang) - 0.4D, 0.0D);
+            w[i] = 0.06D * Math.sin(Math.PI * u);
+        }
+        float a = (float) curve(t, 0.0, 0.0, 0.8, 0.85, 5.0, 0.0);
+        strip(v, pose, camera, p, w, 0.45F * a, COLD);
+        strip(v, pose, camera, p, scale(w, 0.3D), 0.9F * a, EDGE);
+    }
+
+    private static float[] filled(int n, float value) {
+        float[] a = new float[n];
+        java.util.Arrays.fill(a, value);
+        return a;
     }
 
     /** Одна часть дерева: от основания к острию за {@code draw} тиков, сужается к концу. */
