@@ -100,6 +100,7 @@ public final class ExecVfx {
         final List<List<Vec3>> trails = new ArrayList<>();
         final List<Vec3> dash = new ArrayList<>();
         int finalHit = -1;
+        int targetId = -1;
         Vec3 hitAt;
 
         Cast(int entityId, int layer) {
@@ -172,6 +173,7 @@ public final class ExecVfx {
         c.centre = p.centre();
         c.base = p.base();
         c.exitTick = clientTicks;
+        c.targetId = findTarget(c.entityId, p.centre());
         Minecraft mc = Minecraft.getInstance();
         if (mc.level != null && mc.level.getEntity(c.entityId) instanceof AbstractClientPlayer player
                 && mc.getEntityRenderDispatcher().getRenderer(player) instanceof PlayerRenderer renderer) {
@@ -205,6 +207,26 @@ public final class ExecVfx {
             c.petals.add(new Mote(at, vel, 30 + c.random.nextInt(20), c.random.nextInt(4), (float) (c.random.nextDouble() - 0.5D),
                     0.08D + 0.05D * c.random.nextDouble()));
         }
+    }
+
+
+    /** Цель на клиенте — живое существо у точки, присланной сервером (кроме самого мастера). */
+    private static int findTarget(int casterId, Vec3 at) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.level == null) {
+            return -1;
+        }
+        int best = -1;
+        double bd = 2.25D;
+        for (net.minecraft.world.entity.LivingEntity e : mc.level.getEntitiesOfClass(net.minecraft.world.entity.LivingEntity.class,
+                new net.minecraft.world.phys.AABB(at, at).inflate(1.5D, 3.0D, 1.5D))) {
+            double d = (e.getX() - at.x) * (e.getX() - at.x) + (e.getZ() - at.z) * (e.getZ() - at.z);
+            if (e.getId() != casterId && e.isAlive() && d < bd && !(e instanceof net.minecraft.world.entity.decoration.ArmorStand)) {
+                bd = d;
+                best = e.getId();
+            }
+        }
+        return best;
     }
 
     // ------------------------------------------------------------------ тик
@@ -242,6 +264,11 @@ public final class ExecVfx {
                 }
             }
             c.ghosts.removeIf(g -> clientTicks - g.born() > 9);
+            // Клоны летят к живой цели: подошла или отошла — точка сбора за ней.
+            if (c.targetId >= 0 && c.centre != null && mc.level.getEntity(c.targetId) instanceof net.minecraft.world.entity.LivingEntity t
+                    && t.isAlive()) {
+                c.centre = new Vec3(t.getX(), c.centre.y, t.getZ());
+            }
             int s = c.since();
             if (s >= 0 && c.centre != null) {
                 for (int i = 0; i < ExecRules.clones(c.layer); i++) {

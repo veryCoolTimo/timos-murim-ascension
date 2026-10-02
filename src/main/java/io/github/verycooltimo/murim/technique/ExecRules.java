@@ -56,11 +56,14 @@ public final class ExecRules {
      */
     public static Vec3 clone(Vec3 origin, Vec3 centre, double base, int i, double s) {
         Vec3 dir = sector(base, i);
-        Vec3 approach = centre.add(dir.scale(APPROACH));
+        // Заход подстраивается под дистанцию: близко — тесный веер, далеко — широкий.
+        double dist = Math.sqrt((origin.x - centre.x) * (origin.x - centre.x) + (origin.z - centre.z) * (origin.z - centre.z));
+        double reach = Math.max(1.6D, Math.min(APPROACH, dist * 0.6D));
+        Vec3 approach = centre.add(dir.scale(reach));
         Vec3 out = new Vec3(approach.x - origin.x, 0.0D, approach.z - origin.z);
         out = out.lengthSqr() < 1.0E-6D ? dir : out.normalize();
         Vec3 exitP = origin.add(out.scale(1.0D));
-        Vec3 behind = centre.subtract(dir.scale(3.0D));
+        Vec3 behind = centre.subtract(dir.scale(Math.min(3.0D, reach + 0.5D)));
         int c = contact(i);
         if (s <= EXIT) {
             double k = Math.max(0.0D, s) / EXIT;

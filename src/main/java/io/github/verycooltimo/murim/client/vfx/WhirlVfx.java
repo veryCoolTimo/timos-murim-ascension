@@ -130,6 +130,7 @@ public final class WhirlVfx {
         int slashTick = -1;
         Vec3 centre;
         Vec3 target;
+        int targetId = -1;
         double base;
         Vec3 forward;
         Vec3 right;
@@ -203,6 +204,7 @@ public final class WhirlVfx {
         c.right = new Vec3(-c.forward.z, 0.0D, c.forward.x);
         c.centre = p.centre();
         c.target = p.target();
+        c.targetId = findTarget(c.entityId, p.target());
         c.base = Math.atan2(p.target().z - p.centre().z, p.target().x - p.centre().x) + 0.6D;
         c.slashTick = clientTicks;
         buildPillars(c);
@@ -248,6 +250,26 @@ public final class WhirlVfx {
         }
     }
 
+
+    /** Цель на клиенте — живое существо у точки, присланной сервером (кроме самого мастера). */
+    private static int findTarget(int casterId, Vec3 at) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.level == null) {
+            return -1;
+        }
+        int best = -1;
+        double bd = 2.25D;
+        for (net.minecraft.world.entity.LivingEntity e : mc.level.getEntitiesOfClass(net.minecraft.world.entity.LivingEntity.class,
+                new net.minecraft.world.phys.AABB(at, at).inflate(1.5D, 3.0D, 1.5D))) {
+            double d = (e.getX() - at.x) * (e.getX() - at.x) + (e.getZ() - at.z) * (e.getZ() - at.z);
+            if (e.getId() != casterId && e.isAlive() && d < bd && !(e instanceof net.minecraft.world.entity.decoration.ArmorStand)) {
+                bd = d;
+                best = e.getId();
+            }
+        }
+        return best;
+    }
+
     // ------------------------------------------------------------------ тик
 
     @SubscribeEvent
@@ -265,6 +287,10 @@ public final class WhirlVfx {
         while (it.hasNext()) {
             Cast c = it.next();
             int s = c.since();
+            if (c.targetId >= 0 && c.target != null && s < WhirlRules.PASS
+                    && mc.level.getEntity(c.targetId) instanceof net.minecraft.world.entity.LivingEntity t && t.isAlive()) {
+                c.target = new Vec3(t.getX(), c.target.y, t.getZ());
+            }
             tickParticles(c, s);
             if (s >= 0) {
                 events(c, s, mc);

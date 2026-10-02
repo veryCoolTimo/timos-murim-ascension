@@ -492,11 +492,13 @@ public final class BehaviorExecutor {
         LivingEntity target = null;
         double best = Double.MAX_VALUE;
         double cone = Math.cos(Math.toRadians(30.0D));
-        for (LivingEntity t : candidates(player, player.getBoundingBox().inflate(9.5D))) {
+        for (LivingEntity t : candidates(player, player.getBoundingBox().inflate(12.5D))) {
             Vec3 to = t.position().subtract(origin);
             Vec3 flat = new Vec3(to.x, 0.0D, to.z);
             double d = flat.length();
-            if (d < 0.5D || d > 9.0D || flat.normalize().dot(forward) < cone || !player.hasLineOfSight(t)) {
+            // Стойки для брони — не противники (на стенде они ближе цели и перехватывали выбор).
+            if (t instanceof net.minecraft.world.entity.decoration.ArmorStand
+                    || d < 0.5D || d > 12.0D || flat.normalize().dot(forward) < cone || !player.hasLineOfSight(t)) {
                 continue;
             }
             if (d < best) {
@@ -526,6 +528,12 @@ public final class BehaviorExecutor {
             return;
         }
         Vec3 centre = new Vec3(w[0], w[1], w[2]);
+        // Рукава и финал идут за живой целью, а не в точку старта.
+        if (w[7] >= 0 && player.level().getEntity((int) w[7]) instanceof LivingEntity live && live.isAlive()
+                && since < WhirlRules.PASS && flatDistance(live.position(), centre) < 16.0D) {
+            w[8] = live.getX();
+            w[10] = live.getZ();
+        }
         Vec3 aim = new Vec3(w[8], w[9], w[10]);
         double r = WhirlRules.radius(layer);
         double base = player.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE);
@@ -633,11 +641,14 @@ public final class BehaviorExecutor {
         LivingEntity target = null;
         double best = Double.MAX_VALUE;
         double cone = Math.cos(Math.toRadians(30.0D));
-        for (LivingEntity t : candidates(player, player.getBoundingBox().inflate(6.5D))) {
+        // Любая дистанция до 12 блоков (автор 02.10: «враг дальше, ближе — тоже работать»).
+        for (LivingEntity t : candidates(player, player.getBoundingBox().inflate(12.5D))) {
             Vec3 to = t.position().subtract(origin);
             Vec3 flat = new Vec3(to.x, 0.0D, to.z);
             double d = flat.length();
-            if (d < 0.5D || d > 6.0D || flat.normalize().dot(forward) < cone || !player.hasLineOfSight(t)) {
+            // Стойки для брони — не противники (на стенде они ближе цели и перехватывали выбор).
+            if (t instanceof net.minecraft.world.entity.decoration.ArmorStand
+                    || d < 0.5D || d > 12.0D || flat.normalize().dot(forward) < cone || !player.hasLineOfSight(t)) {
                 continue;
             }
             if (d < best) {
@@ -661,12 +672,17 @@ public final class BehaviorExecutor {
         if (layer <= 0) {
             return;
         }
-        Vec3 centre = new Vec3(e[0], e[1], e[2]);
         double base = player.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE);
         LivingEntity target = e[6] >= 0 && player.level().getEntity((int) e[6]) instanceof LivingEntity le && le.isAlive() ? le : null;
+        // Клоны ведут живую позицию цели: отошла или подошла — заход идёт за ней.
+        if (target != null && flatDistance(target.position(), player.position()) < 16.0D) {
+            e[0] = target.getX();
+            e[2] = target.getZ();
+        }
+        Vec3 centre = new Vec3(e[0], e[1], e[2]);
         // Контакт каждого клона: цель у точки сбора — удар (без отбрасывания), метка на финал.
         for (int i = 0; i < ExecRules.clones(layer); i++) {
-            if (since == ExecRules.contact(i) && target != null && flatDistance(target.position(), centre) < 1.6D) {
+            if (since == ExecRules.contact(i) && target != null) {
                 if (execHurt(player, id, target, base * ExecRules.DMG_CLONE)) {
                     e[7] += 1.0D;
                 }
@@ -687,7 +703,7 @@ public final class BehaviorExecutor {
         // Казнь: шесть разрезов разом — одним событием урона по числу попавших клонов.
         if (since == ExecRules.FINAL) {
             int marks = (int) e[7];
-            if (ExecRules.finale(layer) && target != null && marks > 0 && flatDistance(target.position(), centre) < 1.8D) {
+            if (ExecRules.finale(layer) && target != null && marks > 0) {
                 if (execHurt(player, id, target, base * ExecRules.DMG_FINAL * marks)) {
                     net.neoforged.neoforge.network.PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
                             new io.github.verycooltimo.murim.network.ExecPayload(player.getId(), player.position(),
