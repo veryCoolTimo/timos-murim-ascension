@@ -39,7 +39,9 @@ public final class DevSetupEvents {
     public static final String CAMERA_STAND_NAME = "murim_camera";
     private static final int STAGE_Y = 120;
     private static final int STAGE_Z = 8;
-    private static final int PLATFORM_RADIUS = 12;
+    /** Площадка 25×25; env MURIM_CAPTURE_PLATFORM — шире (дерево Сливы падает на 15 блоков). */
+    private static final int PLATFORM_RADIUS = System.getenv("MURIM_CAPTURE_PLATFORM") == null ? 12
+            : Integer.parseInt(System.getenv("MURIM_CAPTURE_PLATFORM").trim());
 
     /** Метка мишеней съёмки: по ней они снимаются перед следующим прогоном. */
     private static final String TARGET_TAG = "murim_capture_target";

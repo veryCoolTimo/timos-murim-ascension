@@ -39,8 +39,8 @@ public final class ImpactFrames {
 
     /** Тики фаз: вспышка, негатив, киноварь. */
     private static final int FLASH = 1;
-    private static final int NEGATIVE = 2;
-    private static final int RED = 2;
+    private static final int NEGATIVE = 1;
+    private static final int RED = 1;
 
     private static int ticks;
     private static int born = -100;

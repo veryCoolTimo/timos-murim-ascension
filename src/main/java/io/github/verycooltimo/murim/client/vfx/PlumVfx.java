@@ -896,7 +896,14 @@ public final class PlumVfx {
                 pts[i] = new Vec3(p.x, base.y + 0.03D, p.z).add(c.forward.scale(jit)).add(c.right.scale(-jit));
             }
             c.scar.add(pts);
-            c.scarWidth.add(b.depth() == 0 ? 0.28D : b.depth() == 1 ? 0.13D : b.depth() == 2 ? 0.08D : 0.05D);
+            c.scarWidth.add(b.depth() == 0 ? 0.55D : b.depth() == 1 ? 0.24D : b.depth() == 2 ? 0.12D : 0.06D);
+            // Обугленные пятна кроны: на концах сучьев — короткий широкий ожог.
+            if (b.depth() == 2) {
+                Vec3 e = pts[n];
+                Vec3 d = pts[n].subtract(pts[n - 1]).normalize().scale(0.35D + 0.3D * r.nextDouble());
+                c.scar.add(new Vec3[] {e.subtract(d), e, e.add(d)});
+                c.scarWidth.add(0.3D + 0.15D * r.nextDouble());
+            }
         }
     }
 
