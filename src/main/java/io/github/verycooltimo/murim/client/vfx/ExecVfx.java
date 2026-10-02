@@ -261,9 +261,8 @@ public final class ExecVfx {
                         dustAt(c, p);
                     }
                     // Распад: лепестки рвутся с тела, наследуя направление полёта.
-                    if (s > ct + ExecRules.PASS_TICKS && s <= ct + ExecRules.PASS_TICKS + ExecRules.DISSOLVE && c.layer >= 3) {
-                        Vec3 next = ExecRules.clone(c.origin, c.centre, c.base, i, s + 1);
-                        Vec3 vel = next.subtract(p).scale(0.8D);
+                    if (s > ExecRules.FINAL && s <= ExecRules.FINAL + ExecRules.DISSOLVE && c.layer >= 3) {
+                        Vec3 vel = new Vec3(p.x - c.centre.x, 0.0D, p.z - c.centre.z).normalize().scale(0.12D);
                         for (int k = 0; k < 9; k++) {
                             // Точки тела: корпус вытянут вдоль полёта — разброс вдоль скорости больше.
                             Vec3 fwd = vel.lengthSqr() > 1.0E-6D ? vel.normalize() : Vec3.ZERO;
@@ -411,15 +410,17 @@ public final class ExecVfx {
             if (s >= 0.0F && c.centre != null && c.basePose != null) {
                 for (int i = 0; i < ExecRules.clones(c.layer); i++) {
                     int ct = ExecRules.contact(i);
-                    float dissolve = (float) Mth.clamp((s - ct - ExecRules.PASS_TICKS) / ExecRules.DISSOLVE, 0.0D, 1.0D);
+                    // Клоны стоят за спиной жертвы до финала и рассыпаются вместе с шестью разрезами.
+                    float dissolve = (float) Mth.clamp((s - ExecRules.FINAL) / ExecRules.DISSOLVE, 0.0D, 1.0D);
                     if (dissolve >= 1.0F) {
                         continue;
                     }
                     Vec3 p = ExecRules.clone(c.origin, c.centre, c.base, i, s);
                     Vec3 next = ExecRules.clone(c.origin, c.centre, c.base, i, s + 0.5D);
-                    Vec3 d = next.subtract(p);
+                    Vec3 d = new Vec3(next.x - p.x, 0.0D, next.z - p.z);
+                    // Приземлившись, клон смотрит дальше по ходу пролёта — спиной к жертве.
                     float yaw = d.lengthSqr() > 1.0E-6D ? (float) Math.toDegrees(Math.atan2(-d.x, d.z))
-                            : (float) Math.toDegrees(Math.atan2(-(c.centre.x - p.x), c.centre.z - p.z));
+                            : (float) Math.toDegrees(Math.atan2(-(p.x - c.centre.x), p.z - c.centre.z));
                     load(parts, c.basePose);
                     float lean = clonePose(model, i, s, ct);
                     float alpha = 0.72F * (1.0F - dissolve) * (float) Mth.clamp(s / 3.0D, 0.0D, 1.0D);
@@ -476,6 +477,15 @@ public final class ExecVfx {
             m.rightLeg.xRot = -0.3F;
             m.leftLeg.xRot = 0.9F;
             lean = 32.0F;
+        } else if (s > ct + ExecRules.PASS_TICKS + 2) {
+            // Приземлился за спиной жертвы: низкая стойка, меч вниз-в-сторону (e8).
+            m.rightArm.xRot = -0.5F;
+            m.rightArm.zRot = 0.7F * side;
+            m.leftArm.xRot = 0.6F;
+            m.leftArm.zRot = -0.7F;
+            m.rightLeg.xRot = -0.6F;
+            m.leftLeg.xRot = 0.5F;
+            lean = 12.0F;
         } else {
             m.rightArm.xRot = -0.4F;
             m.rightArm.zRot = 0.9F * side;
@@ -558,7 +568,7 @@ public final class ExecVfx {
         for (int k = 0; k <= n; k++) {
             double u = (k / (double) n) * drawn;
             p[k] = mid.add(axis.scale(len * (u * 2.0D - 1.0D))).add(dir.scale(-0.25D * Math.sin(Math.PI * u)));
-            w[k] = 0.08D * Math.sqrt(scale) * Math.sin(Math.PI * Math.min(1.0D, u / Math.max(0.05D, drawn) * 1.02D + 0.01D));
+            w[k] = 0.1D * Math.sqrt(scale) * Math.sin(Math.PI * Math.min(1.0D, u / Math.max(0.05D, drawn) * 1.02D + 0.01D));
         }
         PlumVfx.strip(v, pose, camera, p, PlumVfx.scale(w, 3.0D), 0.14F * alpha, PINK);
         PlumVfx.strip(v, pose, camera, p, w, 0.6F * alpha, PINK);
@@ -592,7 +602,7 @@ public final class ExecVfx {
         // Короткий яркий пик и быстрое затухание; шесть тонких линий сходятся в корпусе цели.
         float a = (float) PlumVfx.curve(t, 0.0, 1.0, 2.0, 1.0, 8.0, 0.0);
         for (int i = 0; i < 6; i++) {
-            slashLine(c, pose, camera, v, i, a, Mth.clamp(t / 1.0F, 0.0F, 1.0F), 1.6D);
+            slashLine(c, pose, camera, v, i, a, Mth.clamp(t / 1.0F, 0.0F, 1.0F), 2.8D);
         }
     }
 

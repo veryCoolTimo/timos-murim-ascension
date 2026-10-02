@@ -21,8 +21,11 @@ public final class ExecRules {
     public static final int DASH_TICKS = 12;
     public static final int FINAL = 64;
     public static final int END = 76;
-    /** Порядок секторов захода: чередование противоположных сторон, градусы от направления «цель → оригинал». */
-    public static final double[] SECTORS = {0.0D, 180.0D, 60.0D, 240.0D, 120.0D, 300.0D};
+    /**
+     * Секторы захода — веером на стороне оригинала (автор 02.10: клоны выпрыгивают и летят к цели,
+     * а в итоге все оказываются за спиной жертвы, по разным сторонам). Градусы от «цель → оригинал».
+     */
+    public static final double[] SECTORS = {-20.0D, 20.0D, -60.0D, 60.0D, -100.0D, 100.0D};
     public static final double APPROACH = 3.5D;
 
     public static final double DMG_CLONE = 0.2D;
@@ -47,35 +50,35 @@ public final class ExecRules {
     }
 
     /**
-     * Положение клона {@code i} в тик {@code s}: выход из оригинала → огибание к точке захода →
-     * бег к цели → пролёт сквозь неё на 2,5 блока → тормозит, рассыпаясь.
+     * Положение клона {@code i} в тик {@code s}: прыжок из оригинала → полёт дугой к своей точке
+     * захода → прыжок-удар сквозь цель → приземление за её спиной (зеркально точке захода) → стоит
+     * там до финала. Полосы веером — копии не пересекаются.
      */
     public static Vec3 clone(Vec3 origin, Vec3 centre, double base, int i, double s) {
         Vec3 dir = sector(base, i);
-        Vec3 approach = centre.add(dir.scale(APPROACH)).add(new Vec3(-dir.z, 0.0D, dir.x).scale(0.35D * ((i % 2) * 2 - 1)));
-        double exitA = base + Math.PI + Math.toRadians(60.0D * i - 150.0D);
-        Vec3 exitP = origin.add(Math.cos(exitA) * 1.2D, 0.0D, Math.sin(exitA) * 1.2D);
+        Vec3 approach = centre.add(dir.scale(APPROACH));
+        Vec3 out = new Vec3(approach.x - origin.x, 0.0D, approach.z - origin.z);
+        out = out.lengthSqr() < 1.0E-6D ? dir : out.normalize();
+        Vec3 exitP = origin.add(out.scale(1.0D));
+        Vec3 behind = centre.subtract(dir.scale(3.0D));
         int c = contact(i);
         if (s <= EXIT) {
-            return origin.lerp(exitP, Math.max(0.0D, s) / EXIT);
+            double k = Math.max(0.0D, s) / EXIT;
+            return origin.lerp(exitP, k).add(0.0D, 1.0D * Math.sin(Math.PI * 0.5D * k), 0.0D);
         }
         if (s <= SPREAD) {
             double k = (s - EXIT) / (double) (SPREAD - EXIT);
-            Vec3 ctrl = exitP.lerp(approach, 0.5D).add(approach.subtract(centre).normalize().scale(1.8D));
-            double q = 1.0D - k;
-            return exitP.scale(q * q).add(ctrl.scale(2.0D * q * k)).add(approach.scale(k * k));
+            return exitP.lerp(approach, k).add(0.0D, 1.0D + 0.6D * Math.sin(Math.PI * k), 0.0D);
         }
         if (s <= c) {
             double k = (s - SPREAD) / (double) (c - SPREAD);
-            return approach.lerp(centre, k * k);
+            return approach.lerp(centre, k * k).add(0.0D, 1.0D * (1.0D - k) + 0.5D * Math.sin(Math.PI * k), 0.0D);
         }
-        Vec3 through = centre.subtract(approach);
-        through = new Vec3(through.x, 0.0D, through.z).normalize();
         if (s <= c + PASS_TICKS) {
-            return centre.add(through.scale(2.5D * (s - c) / PASS_TICKS));
+            double k = (s - c) / (double) PASS_TICKS;
+            return centre.lerp(behind, k).add(0.0D, 0.6D * Math.sin(Math.PI * k), 0.0D);
         }
-        double k = Math.min(1.0D, (s - c - PASS_TICKS) / (double) DISSOLVE);
-        return centre.add(through.scale(2.5D + 0.8D * (1.0D - (1.0D - k) * (1.0D - k))));
+        return behind;
     }
 
     private ExecRules() {

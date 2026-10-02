@@ -50,6 +50,7 @@ public final class WhirlVfx {
     /** Холодная глубина разреза (codex: #17131E). */
     private static final VfxColour DEPTH = new VfxColour(0x17 / 255.0F, 0x13 / 255.0F, 0x1E / 255.0F);
     private static final int CUT_LIFE = 400;
+    private static final VfxColour BLUSH_W = new VfxColour(1.0F, 0.86F, 0.93F);
 
     private static final List<Cast> CASTS = new ArrayList<>();
     private static int clientTicks;
@@ -379,13 +380,13 @@ public final class WhirlVfx {
             double grow = Mth.clamp((s - WhirlRules.TORNADO_FORM) / (double) (WhirlRules.TORNADO_GO - WhirlRules.TORNADO_FORM), 0.0D, 1.0D);
             for (int which = -1; which <= 1; which += 2) {
                 Vec3 at = WhirlRules.tornado(c.centre, c.target, r, which, s).add(0.0D, 1.1D, 0.0D);
-                for (int i = 0; i < 2; i++) {
+                for (int i = 0; i < 5; i++) {
                     double a = c.random.nextDouble() * Math.PI * 2.0D;
-                    double rad = (0.5D + 0.6D * c.random.nextDouble()) * (0.5D + 0.5D * grow);
+                    double rad = (0.5D + 0.9D * c.random.nextDouble()) * (0.5D + 0.5D * grow);
                     Vec3 pos = at.add(c.right.scale(Math.cos(a) * rad)).add(0.0D, Math.sin(a) * rad, 0.0D);
                     Vec3 tan = c.right.scale(-Math.sin(a)).add(0.0D, Math.cos(a), 0.0D).scale(0.2D * which).add(c.forward.scale(0.12D));
-                    Mote m = new Mote(pos, tan, 18 + c.random.nextInt(10), c.layer >= 3 && i == 0, c.random.nextInt(4),
-                            (float) (c.random.nextDouble() - 0.5D), i == 0 ? 0.09D : 0.08D, i == 0 ? 0 : 10);
+                    Mote m = new Mote(pos, tan, 18 + c.random.nextInt(10), c.layer >= 3 && i < 3, c.random.nextInt(4),
+                            (float) (c.random.nextDouble() - 0.5D), i < 3 ? 0.09D : 0.1D, i < 3 ? 0 : 10);
                     m.free = true;
                     m.pink = c.layer >= 3;
                     c.motes.add(m);
@@ -874,7 +875,19 @@ public final class WhirlVfx {
         double tail = Math.max(0.0D, head - 0.75D);
         float out = (float) Mth.clamp((WhirlRules.TORNADO_END + 10 - s) / 10.0D, 0.0D, 1.0D);
         for (int which = -1; which <= 1; which += 2) {
-            for (int strand = 0; strand < 3; strand++) {
+            // Тело рукава: широкая полупрозрачная розовая масса вдоль оси (w13 — поток, а не пружина).
+            int nb = 24;
+            Vec3[] body = new Vec3[nb + 1];
+            double[] bw = new double[nb + 1];
+            for (int i = 0; i <= nb; i++) {
+                double u = i / (double) nb;
+                double e = tail + (head - tail) * u;
+                body[i] = WhirlRules.along(c.centre, c.target, r, which, e).add(0.0D, 1.4D, 0.0D);
+                bw[i] = (0.55D + 0.7D * u) * (0.75D + 0.25D * grow) * 1.15D * Math.sin(Math.PI * Math.min(1.0D, u * 1.05D + 0.02D));
+            }
+            PlumVfx.strip(v, pose, camera, body, bw, 0.13F * out, PINK);
+            PlumVfx.strip(v, pose, camera, body, PlumVfx.scale(bw, 0.45D), 0.12F * out, BLUSH_W);
+            for (int strand = 0; strand < 5; strand++) {
                 int n = 36;
                 Vec3[] q = new Vec3[n + 1];
                 double[] w = new double[n + 1];
@@ -887,7 +900,7 @@ public final class WhirlVfx {
                     t = t.lengthSqr() < 1.0E-6D ? c.forward : t.normalize();
                     Vec3 sideV = new Vec3(-t.z, 0.0D, t.x).normalize();
                     Vec3 upV = t.cross(sideV).normalize();
-                    double ph = u * Math.PI * 7.0D - s * 0.55D * which + strand * 2.1D;
+                    double ph = u * Math.PI * 7.0D - s * 0.55D * which + strand * 1.26D;
                     // Рукав крупный, как на w13: диаметр до ~2,4 блока у головы.
                     double rad = (0.55D + 0.7D * u) * (0.75D + 0.25D * grow) * (0.9D + 0.1D * Math.sin(s * 0.3D + strand));
                     q[i] = axis.add(sideV.scale(Math.cos(ph) * rad)).add(upV.scale(Math.sin(ph) * rad));
