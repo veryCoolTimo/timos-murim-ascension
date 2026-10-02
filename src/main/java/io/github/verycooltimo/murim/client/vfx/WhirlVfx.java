@@ -56,7 +56,7 @@ public final class WhirlVfx {
     private static int clientTicks;
 
     /** Столп: угол вокруг центра, высота, наклон, тик рождения (после Разреза). */
-    private record Pillar(double angle, double height, double lean, int born, double reach) {
+    private record Pillar(double angle, double height, double lean, int born, double reach, double delay, double dur, double fin) {
     }
 
     /** Частица на ленте ветра или лепесток: свободный полёт, потом подхват вихрем. */
@@ -130,6 +130,7 @@ public final class WhirlVfx {
         int slashTick = -1;
         Vec3 centre;
         Vec3 target;
+        double base;
         Vec3 forward;
         Vec3 right;
         final List<Pillar> pillars = new ArrayList<>();
@@ -202,6 +203,7 @@ public final class WhirlVfx {
         c.right = new Vec3(-c.forward.z, 0.0D, c.forward.x);
         c.centre = p.centre();
         c.target = p.target();
+        c.base = Math.atan2(p.target().z - p.centre().z, p.target().x - p.centre().x) + 0.6D;
         c.slashTick = clientTicks;
         buildPillars(c);
         Minecraft mc = Minecraft.getInstance();
@@ -239,8 +241,10 @@ public final class WhirlVfx {
             // Неровно (автор 02.10: «слишком симметрично»): углы, радиус, высота, наклон — вразнобой.
             double a = Math.PI * 2.0D * i / n + (c.random.nextDouble() - 0.5D) * 0.7D;
             int stroke = WhirlRules.WALL_STROKES[i % 3];
+            // Схождение тоже вразнобой: своя задержка, длительность и конечный радиус у каждого столпа.
             c.pillars.add(new Pillar(a, h * (0.55D + 0.45D * c.random.nextDouble()), (c.random.nextDouble() - 0.5D) * 0.9D,
-                    stroke + c.random.nextInt(4), 0.8D + 0.35D * c.random.nextDouble()));
+                    stroke + c.random.nextInt(4), 0.75D + 0.45D * c.random.nextDouble(),
+                    c.random.nextDouble() * 8.0D, 7.0D + 9.0D * c.random.nextDouble(), 0.35D + 0.35D * c.random.nextDouble()));
         }
     }
 
@@ -586,7 +590,11 @@ public final class WhirlVfx {
     }
 
     private static Vec3 pillarBase(Cast c, Pillar p, float s) {
-        double rr = shell(c, s) * p.reach();
+        double r = WhirlRules.radius(c.layer);
+        double k = WhirlRules.walls(c.layer) ? Mth.clamp((s - WhirlRules.CONVERGE - p.delay()) / p.dur(), 0.0D, 1.0D) : 0.0D;
+        // Эллипс с наклоном, разный радиус и разное сжатие — круг больше не идеальный.
+        double ellipse = 1.0D + 0.22D * Math.cos(2.0D * (p.angle() - c.base));
+        double rr = r * p.reach() * ellipse * (1.0D - (1.0D - p.fin()) * k * k);
         return c.centre.add(Math.cos(p.angle()) * rr, 0.02D, Math.sin(p.angle()) * rr);
     }
 
@@ -872,7 +880,8 @@ public final class WhirlVfx {
         double grow = Mth.clamp((s - WhirlRules.TORNADO_FORM) / (double) (WhirlRules.TORNADO_GO - WhirlRules.TORNADO_FORM), 0.0D, 1.0D);
         double k = Mth.clamp((s - WhirlRules.TORNADO_GO) / (double) (WhirlRules.TORNADO_END - WhirlRules.TORNADO_GO), 0.0D, 1.0D);
         double head = 0.12D * grow + 0.88D * k * k * (3.0D - 2.0D * k);
-        double tail = Math.max(0.0D, head - 0.75D);
+        // Хвост держится за край вихря: рукав — продолжение потока, а не отдельная труба.
+        double tail = 0.0D;
         float out = (float) Mth.clamp((WhirlRules.TORNADO_END + 10 - s) / 10.0D, 0.0D, 1.0D);
         for (int which = -1; which <= 1; which += 2) {
             // Тело рукава: широкая полупрозрачная розовая масса вдоль оси (w13 — поток, а не пружина).
@@ -906,8 +915,10 @@ public final class WhirlVfx {
                     q[i] = axis.add(sideV.scale(Math.cos(ph) * rad)).add(upV.scale(Math.sin(ph) * rad));
                     w[i] = 0.12D * Math.sin(Math.PI * Math.min(1.0D, u * 1.02D + 0.02D));
                 }
-                PlumVfx.strip(v, pose, camera, q, PlumVfx.scale(w, 2.6D), 0.12F * out, PINK);
-                PlumVfx.strip(v, pose, camera, q, w, 0.52F * out, PINK);
+                // Те же ленты, что у вихря: белые с холодной каймой и розовые вперемешку.
+                VfxColour col = strand % 2 == 0 ? COLD : PINK;
+                PlumVfx.strip(v, pose, camera, q, PlumVfx.scale(w, 2.6D), 0.12F * out, col);
+                PlumVfx.strip(v, pose, camera, q, w, 0.45F * out, col);
                 PlumVfx.strip(v, pose, camera, q, PlumVfx.scale(w, 0.35D), 0.9F * out, EDGE);
             }
         }

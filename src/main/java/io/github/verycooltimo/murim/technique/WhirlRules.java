@@ -19,7 +19,8 @@ public final class WhirlRules {
     public static final int CONVERGE = 52;
     public static final int SHATTER = 68;
     public static final int WHIRL = 78;
-    public static final int WHIRL_END = 140;
+    /** Вихрь не гаснет, пока рукава в пути: они — его продолжение. */
+    public static final int WHIRL_END = 166;
     /** Два мини-урагана: медленно отделяются от вихря, идут к цели и сквозь неё. */
     public static final int TORNADO_FORM = 112;
     public static final int TORNADO_GO = 136;
@@ -43,7 +44,9 @@ public final class WhirlRules {
         double dist = Math.max(0.5D, dir.length());
         dir = dir.scale(1.0D / dist);
         net.minecraft.world.phys.Vec3 side = new net.minecraft.world.phys.Vec3(-dir.z, 0.0D, dir.x);
-        net.minecraft.world.phys.Vec3 start = centre.add(dir.scale(radius * 0.7D)).add(side.scale(which * radius * 0.55D));
+        // Рукав растёт из края вихря по касательной (автор 02.10: «одно целое с вихрем»).
+        double ang = Math.atan2(dir.z, dir.x) + which * Math.toRadians(62.0D);
+        net.minecraft.world.phys.Vec3 start = centre.add(Math.cos(ang) * radius, 0.0D, Math.sin(ang) * radius);
         net.minecraft.world.phys.Vec3 end = target.add(dir.scale(2.2D)).add(side.scale(which * 0.4D));
         double k = Math.max(0.0D, Math.min(1.0D, (since - TORNADO_GO) / (double) (TORNADO_END - TORNADO_GO)));
         return along(centre, target, radius, which, k * k * (3.0D - 2.0D * k));
@@ -57,7 +60,9 @@ public final class WhirlRules {
         double dist = Math.max(0.5D, dir.length());
         dir = dir.scale(1.0D / dist);
         net.minecraft.world.phys.Vec3 side = new net.minecraft.world.phys.Vec3(-dir.z, 0.0D, dir.x);
-        net.minecraft.world.phys.Vec3 start = centre.add(dir.scale(radius * 0.7D)).add(side.scale(which * radius * 0.55D));
+        // Рукав растёт из края вихря по касательной (автор 02.10: «одно целое с вихрем»).
+        double ang = Math.atan2(dir.z, dir.x) + which * Math.toRadians(62.0D);
+        net.minecraft.world.phys.Vec3 start = centre.add(Math.cos(ang) * radius, 0.0D, Math.sin(ang) * radius);
         net.minecraft.world.phys.Vec3 end = target.add(dir.scale(2.2D)).add(side.scale(which * 0.4D));
         net.minecraft.world.phys.Vec3 p = start.lerp(end, e);
         double bow = Math.sin(Math.PI * e) * radius * 0.35D * which * (which > 0 ? 1.0D : 0.8D);

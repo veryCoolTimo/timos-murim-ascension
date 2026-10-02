@@ -570,40 +570,38 @@ public final class BehaviorExecutor {
                 }
             }
         }
-        // Финал: мастер проходит мимо цели и встаёт чуть за ней (≈1,5 блока), без телепорта.
+        // Финал (автор 02.10: «чётко к противнику и за спину чётко»): рывок прямо на противника
+        // с остановкой в метре перед ним, затем точный перенос за его спину и удар.
         if (WhirlRules.finale(layer) && since == WhirlRules.PASS) {
             LivingEntity target = w[7] >= 0 && player.level().getEntity((int) w[7]) instanceof LivingEntity le && le.isAlive() ? le : null;
             Vec3 goal = target != null ? target.position() : aim;
-            Vec3 to = goal.subtract(player.position());
-            Vec3 flat = new Vec3(to.x, 0.0D, to.z);
-            if (flat.lengthSqr() > 1.0E-4D && flat.length() < 12.0D) {
+            Vec3 flat = new Vec3(goal.x - player.getX(), 0.0D, goal.z - player.getZ());
+            if (flat.lengthSqr() > 1.0E-4D && flat.length() < 14.0D) {
                 Vec3 dir = flat.normalize();
-                Vec3 side = new Vec3(-dir.z, 0.0D, dir.x);
-                Vec3 dest = goal.add(dir.scale(1.5D)).add(side.scale(0.45D));
-                Vec3 path = dest.subtract(player.position());
-                Vec3 pathFlat = new Vec3(path.x, 0.0D, path.z);
-                double reach = pathFlat.length();
-                io.github.verycooltimo.murim.combat.FootworkService.sendDash(player, pathFlat.normalize(), reach, WhirlRules.PASS_TICKS);
-                w[0] = player.getX();
-                w[2] = player.getZ();
-                w[1] = pathFlat.normalize().x;
-                w[3] = pathFlat.normalize().z;
-                w[6] = reach;
+                double reach = Math.max(0.0D, flat.length() - 1.1D);
+                io.github.verycooltimo.murim.combat.FootworkService.sendDash(player, dir, reach, WhirlRules.PASS_TICKS - 2);
+                w[1] = dir.x;
+                w[3] = dir.z;
+                w[6] = 1.0D;
                 player.setData(io.github.verycooltimo.murim.registry.ModAttachments.WHIRL, w);
             }
         }
-        if (WhirlRules.finale(layer) && since == WhirlRules.PASS + WhirlRules.PASS_TICKS / 2 && w[6] > 0.0D) {
-            Vec3 start = new Vec3(w[0], player.getY(), w[2]);
+        if (WhirlRules.finale(layer) && since == WhirlRules.PASS + WhirlRules.PASS_TICKS - 1 && w[6] > 0.0D) {
+            LivingEntity target = w[7] >= 0 && player.level().getEntity((int) w[7]) instanceof LivingEntity le && le.isAlive() ? le : null;
             Vec3 dir = new Vec3(w[1], 0.0D, w[3]);
-            for (LivingEntity t : candidates(player, new AABB(start, start).inflate(w[6] + 2.0D, 3.0D, w[6] + 2.0D))) {
-                Vec3 rel = t.position().subtract(start);
-                double along = rel.x * dir.x + rel.z * dir.z;
-                double off = Math.abs(rel.x * dir.z - rel.z * dir.x);
-                if (along >= 0.0D && along <= w[6] && off < 1.6D && whirlHurt(player, id, t, base * WhirlRules.DMG_PASS)) {
-                    t.push(dir.x * 0.3D, 0.08D, dir.z * 0.3D);
+            if (target != null && flatDistance(target.position(), player.position()) < 4.0D) {
+                Vec3 behind = target.position().add(dir.scale(1.6D + target.getBbWidth() * 0.5D));
+                float yaw = (float) Math.toDegrees(Math.atan2(-dir.x, dir.z));
+                AABB box = player.getBoundingBox().move(behind.subtract(player.position()));
+                if (player.serverLevel().noCollision(player, box)) {
+                    // API: reference/minecraft-src/net/minecraft/server/level/ServerPlayer.java#teleportTo(ServerLevel,double,double,double,float,float)
+                    player.teleportTo(player.serverLevel(), behind.x, target.getY(), behind.z, yaw, player.getXRot());
+                }
+                if (whirlHurt(player, id, target, base * WhirlRules.DMG_PASS)) {
+                    target.push(-dir.x * 0.25D, 0.08D, -dir.z * 0.25D);
                     net.neoforged.neoforge.network.PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
                             new io.github.verycooltimo.murim.network.WhirlPayload(player.getId(),
-                                    t.position().add(0.0D, t.getBbHeight() * 0.6D, 0.0D), aim, player.getYRot(), layer, 1));
+                                    target.position().add(0.0D, target.getBbHeight() * 0.6D, 0.0D), aim, player.getYRot(), layer, 1));
                 }
             }
             w[6] = 0.0D;
