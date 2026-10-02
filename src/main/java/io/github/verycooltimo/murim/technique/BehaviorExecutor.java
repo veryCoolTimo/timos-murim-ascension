@@ -61,6 +61,9 @@ public final class BehaviorExecutor {
         if (behavior instanceof TechniqueBehavior.PlumRush) {
             return rushStart(player, definition.id());
         }
+        if (behavior instanceof TechniqueBehavior.PlumRainfall) {
+            return RainExecutor.start(player, definition.id());
+        }
         if (behavior instanceof TechniqueBehavior.Footwork) {
             io.github.verycooltimo.murim.combat.FootworkService.windEvade(player, definition.id());
             return false;

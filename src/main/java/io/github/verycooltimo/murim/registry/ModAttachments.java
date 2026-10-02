@@ -142,6 +142,14 @@ public final class ModAttachments {
             ATTACHMENT_TYPES.register("plum_rush",
                     () -> AttachmentType.<double[]>builder(() -> new double[] {0, 0, 0, 0, 0, 0, -1, -1, 0, 0, 0, 0, 0}).build());
 
+    /**
+     * Ливень Цветущей Сливы: {старт x, y, z, направление x, z, слой, id цели или −1, метка 0/1,
+     * первое попадание 0/1, точка остановки x, y, z}. Не сохраняется — живёт одну технику.
+     */
+    public static final Supplier<AttachmentType<double[]>> RAIN =
+            ATTACHMENT_TYPES.register("plum_rain",
+                    () -> AttachmentType.<double[]>builder(() -> new double[] {0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0}).build());
+
     /** Последний взмах основы меча: {форма, тик}. Не сохраняется — живёт тики. */
     public static final Supplier<AttachmentType<int[]>> FOUNDATION_SWING =
             ATTACHMENT_TYPES.register("foundation_swing",

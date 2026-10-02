@@ -167,5 +167,9 @@
   "technique.murim.seven_plum_blossoms.execution": "Plum Blossom Execution",
   "technique.murim.seven_plum_rush": "Seven Plum Blossoms Sword: Rush",
   "technique.murim.seven_plum_rush.weakness": "A long stance and a straight line: step out of the hurricane's path.",
-  "technique.murim.seven_plum_blossoms.rush": "Plum Blossom Rush"
+  "technique.murim.seven_plum_blossoms.rush": "Plum Blossom Rush",
+  "technique.murim.twenty_four_plum_rainfall": "24-Movement Plum Blossom Sword: Rainfall",
+  "technique.murim.twenty_four_plum_rainfall.weakness": "The rain falls from the sky: under a roof the petals cannot reach. Run far enough and the illusion breaks.",
+  "technique.murim.twenty_four_plum.school": "24-Movement Plum Blossom Sword Technique",
+  "technique.murim.twenty_four_plum.rainfall": "The Rainfall of Plum Blossom"
 }

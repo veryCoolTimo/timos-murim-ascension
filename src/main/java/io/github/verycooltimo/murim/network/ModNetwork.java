@@ -96,6 +96,8 @@ public final class ModNetwork {
                 (payload, context) -> ClientPayloadBridge.handleExec(payload));
         registrar.playToClient(RushPayload.TYPE, RushPayload.STREAM_CODEC,
                 (payload, context) -> ClientPayloadBridge.handleRush(payload));
+        registrar.playToClient(RainPayload.TYPE, RainPayload.STREAM_CODEC,
+                (payload, context) -> ClientPayloadBridge.handleRain(payload));
         registrar.playToClient(StepPayload.TYPE, StepPayload.STREAM_CODEC,
                 (payload, context) -> ClientPayloadBridge.handleStep(payload));
 
