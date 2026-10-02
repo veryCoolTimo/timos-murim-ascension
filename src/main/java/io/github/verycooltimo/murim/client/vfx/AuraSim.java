@@ -196,7 +196,8 @@ public final class AuraSim {
         double sc = h / 2.0D;
         while (e.flameDebt >= 1.0F) {
             e.flameDebt -= 1.0F;
-            boolean ink = r.nextFloat() < (aura.demonic() ? Math.max(0.4F, INK_SHARE[rank]) : INK_SHARE[rank]);
+            boolean ink = io.github.verycooltimo.murim.client.ClientAuraState.techniquePalette(entity.getId()) < 0
+                    && r.nextFloat() < (aura.demonic() ? Math.max(0.4F, INK_SHARE[rank]) : INK_SHARE[rank]);
             double[] spot = e.hotspots[r.nextInt(e.hotspots.length)];
             double angle = spot[0] + (r.nextDouble() - 0.5D) * 0.8D;
             double rr = (0.3D + 0.4D * r.nextDouble()) * sc;

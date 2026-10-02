@@ -32,17 +32,47 @@ public final class PlumRules {
     public static final double TRAINING_REACH = 2.4D;
     public static final double TRAINING_ARC = 55.0D;
 
-    /** Через сколько тиков после первого удара дерево падает: рука уходит вперёд к 1,45 с, жест держится 3 тика. */
-    public static final int FALL_TICK = 20;
+    /**
+     * Шкала «Разреза» (автор 02.10: «всё быстровато, нужно держать»; ритм — codex по ref1–9),
+     * в тиках после первого удара вверх (он сам — на 16-м тике техники, 0,8 с):
+     * пауза до {@link #SWING_START}, шесть методичных взмахов через {@link #SWING_GAP},
+     * толчок ладонью на {@link #PUSH}, изгиб и падение до {@link #LAND}.
+     */
+    public static final int SWING_START = 18;
+    public static final int SWING_GAP = 6;
+    public static final int PUSH = 66;
+    public static final int FALL_START = 67;
+    public static final int LAND = 79;
+    /** Старое имя момента удара дерева — для сервера. */
+    public static final int FALL_TICK = LAND;
+
+    /** Высота дерева по слоям: на 4-м — 12 блоков (ref7–9: многократно выше человека). */
+    public static double treeHeight(int layer) {
+        return switch (Math.max(0, Math.min(7, layer))) {
+            case 0 -> 0.0D;
+            case 1 -> 5.0D;
+            case 2 -> 7.0D;
+            case 3 -> 9.5D;
+            case 4 -> 12.0D;
+            case 5 -> 13.0D;
+            case 6 -> 14.0D;
+            default -> 15.0D;
+        };
+    }
+
+    /** Оглушение после первого удара: до падения дерева (обычные мобы). */
+    public static final int STAGGER_TICKS = LAND + 4;
+    public static final int STAGGER_PVP_TICKS = 12;
+    public static final int STAGGER_BOSS_TICKS = 10;
 
     /** Коэффициент удара падающего дерева: слой 1 — один ствол, дальше крона тяжелее. */
     public static double fallCoefficient(int layer) {
-        return layer <= 0 ? 0.0D : layer == 1 ? 0.4D : layer <= 3 ? 0.6D : 0.8D;
+        return layer <= 0 ? 0.0D : layer == 1 ? 0.8D : layer <= 3 ? 1.6D : 2.0D;
     }
 
     /** Основание ствола: от стоп вперёд, не дальше ~2,4 блока (где бьёт и клиентский ствол). */
     public static double trunkOffset(double length) {
-        return 0.4D + Math.min(2.4D, 0.5D * length);
+        return length <= 0.0D ? 0.4D : 3.0D;
     }
 
     /** Розовое цветение начинается с третьего слоя (до этого разрез холодный). */

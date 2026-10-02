@@ -18,6 +18,14 @@ public final class Config {
             .comment("Подробное логирование этапов загрузки мода. По умолчанию выключено.")
             .define("debugLogging", false);
 
+    /**
+     * Техники ломают землю (падение дерева Семи Цветков Сливы и т. п.): только природные блоки
+     * — земля, песок, гравий, камень; руды, контейнеры и механизмы не трогаются.
+     */
+    public static final ModConfigSpec.BooleanValue TECHNIQUE_TERRAIN = BUILDER
+            .comment("Техники разрушают природные блоки (земля, песок, гравий, камень). Сундуки, руды и механизмы не трогаются.")
+            .define("techniqueTerrainDamage", true);
+
     public static final ModConfigSpec SPEC = BUILDER.build();
 
     private Config() {

@@ -64,7 +64,34 @@ public final class ClientAuraState {
     }
 
     public static Int2ObjectMap<AuraState> all() {
-        return AURAS;
+        if (TECH.isEmpty()) {
+            return AURAS;
+        }
+        // Аура техники поверх ранговой: горит, пока идёт приём (Семь Цветков Сливы — синяя
+        // в стойке, розовая после выпуска). Отдельная копия, чтобы не трогать настоящую.
+        Int2ObjectMap<AuraState> merged = new it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap<>(AURAS);
+        for (Int2ObjectMap.Entry<int[]> e : TECH.int2ObjectEntrySet()) {
+            merged.put(e.getIntKey(), new AuraState(Math.max(2, e.getValue()[0]), false));
+        }
+        return merged;
+    }
+
+    /** Аура техники: {ранг-интенсивность, палитра (0 — синяя, 1 — розовая), тик окончания}. */
+    private static final Int2ObjectMap<int[]> TECH = new it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap<>();
+
+    /** Зажечь ауру техники на {@code ticks} тиков: {@code palette} 0 — холодная синяя, 1 — розовая. */
+    public static void techniqueAura(int entityId, int intensity, int palette, int ticks) {
+        TECH.put(entityId, new int[] {Math.max(2, Math.min(AuraState.MAX_RANK, intensity)), palette, ticks + ticks()});
+    }
+
+    /** Палитра ауры техники у сущности или −1, если её нет. */
+    public static int techniquePalette(int entityId) {
+        int[] t = TECH.get(entityId);
+        return t == null ? -1 : t[1];
+    }
+
+    private static int ticks() {
+        return ticks;
     }
 
     /** Давление на экране, 0..1, сглаженное между тиками. */
@@ -88,6 +115,7 @@ public final class ClientAuraState {
     @SubscribeEvent
     static void onLogout(ClientPlayerNetworkEvent.LoggingOut event) {
         AURAS.clear();
+        TECH.clear();
         target = shown = shownBefore = 0.0F;
         sourceId = -1;
     }
@@ -96,6 +124,7 @@ public final class ClientAuraState {
     static void onClientTick(ClientTickEvent.Post event) {
         Minecraft minecraft = Minecraft.getInstance();
         ticks++;
+        TECH.int2ObjectEntrySet().removeIf(e -> e.getValue()[2] <= ticks);
         shownBefore = shown;
         if (minecraft.level == null || minecraft.player == null || minecraft.isPaused()) {
             return;

@@ -180,6 +180,10 @@ public final class BehaviorExecutor {
                 // Толчок вперёд по коридору, не подброс в воздух (спецификация §2.4).
                 target.push(forward.x * 0.2D, 0.06D, forward.z * 0.2D);
                 target.hurtMarked = true;
+                // Попал первый удар — противник оглушён до падения дерева (автор 02.10).
+                if (layer >= 1) {
+                    stagger(target);
+                }
                 io.github.verycooltimo.murim.mastery.MasteryService.onHit(player, id, target);
             }
         }
@@ -187,6 +191,21 @@ public final class BehaviorExecutor {
                 new io.github.verycooltimo.murim.network.PlumSlashPayload(player.getId(), origin,
                         player.getYRot(), layer, (float) length));
         return anyHit;
+    }
+
+    /**
+     * Оглушение: стоит и не бьёт (замедление до неподвижности, слабость — без урона). Обычный
+     * моб — до падения дерева, игрок — 0,6 с, босс — полсекунды.
+     */
+    private static void stagger(LivingEntity target) {
+        boolean boss = target.getType().is(net.neoforged.neoforge.common.Tags.EntityTypes.BOSSES);
+        int ticks = target instanceof net.minecraft.world.entity.player.Player ? PlumRules.STAGGER_PVP_TICKS
+                : boss ? PlumRules.STAGGER_BOSS_TICKS : PlumRules.STAGGER_TICKS;
+        target.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.MOVEMENT_SLOWDOWN, ticks, 9, false, false, false));
+        target.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.WEAKNESS, ticks, 9, false, false, false));
+        if (target instanceof net.minecraft.world.entity.Mob mob && !boss) {
+            mob.getNavigation().stop();
+        }
     }
 
     /**
@@ -206,7 +225,7 @@ public final class BehaviorExecutor {
         forward = forward.lengthSqr() < 1.0E-6D ? new Vec3(0.0D, 0.0D, 1.0D) : forward.normalize();
         Vec3 right = new Vec3(-forward.z, 0.0D, forward.x);
         double base = PlumRules.trunkOffset(PlumRules.length(layer));
-        double reach = base + PlumRules.height(layer) * 0.9D;
+        double reach = base + PlumRules.treeHeight(layer) * 0.9D;
         AABB search = new AABB(origin, origin).inflate(reach + 1.0D, 3.0D, reach + 1.0D);
         int hits = 0;
         for (LivingEntity target : candidates(player, search)) {
@@ -217,17 +236,63 @@ public final class BehaviorExecutor {
             Vec3 c = box.getCenter().subtract(origin);
             double half = Math.max(box.getXsize(), box.getZsize()) / 2.0D;
             double s = c.dot(forward);
-            if (s < base - 0.8D - half || s > reach + half || Math.abs(c.dot(right)) > 1.8D + half
+            if (s < base - 0.8D - half || s > reach + half || Math.abs(c.dot(right)) > 2.2D + half
                     || box.minY > origin.y + 2.5D) {
                 continue;
             }
             if (target.hurt(player.damageSources().playerAttack(player), damage)) {
                 hits++;
-                target.push(forward.x * 0.15D, -0.05D, forward.z * 0.15D);
+                // Отбрасывает до ~2 блоков вперёд по линии падения.
+                target.push(forward.x * 0.6D, 0.25D, forward.z * 0.6D);
                 target.hurtMarked = true;
                 io.github.verycooltimo.murim.mastery.MasteryService.onHit(player, id, target);
             }
         }
+        scorch(player, origin, forward, right, base, reach, layer);
+    }
+
+    /**
+     * Борозда от упавшего дерева: по полосе падения (ширина ~4) ломаются верхние природные
+     * блоки — земля, песок, гравий, камень, до 48 штук, без дропа. Руды, контейнеры и всё
+     * остальное не трогаются; выключается настройкой {@code techniqueTerrainDamage}.
+     */
+    private static void scorch(ServerPlayer player, Vec3 origin, Vec3 forward, Vec3 right, double from, double to, int layer) {
+        if (layer < 2 || !io.github.verycooltimo.murim.Config.TECHNIQUE_TERRAIN.get()) {
+            return;
+        }
+        net.minecraft.server.level.ServerLevel level = player.serverLevel();
+        java.util.Random r = new java.util.Random(player.getId() * 31L + level.getGameTime());
+        int broken = 0;
+        int budget = Math.min(48, 12 * layer);
+        for (double s = from; s <= to && broken < budget; s += 0.7D) {
+            for (double w = -2.0D; w <= 2.0D && broken < budget; w += 0.7D) {
+                // Середина полосы ломается чаще краёв.
+                if (r.nextDouble() > 0.75D - 0.25D * Math.abs(w) / 2.0D) {
+                    continue;
+                }
+                Vec3 at = origin.add(forward.scale(s)).add(right.scale(w + (r.nextDouble() - 0.5D) * 0.4D));
+                net.minecraft.core.BlockPos pos = net.minecraft.core.BlockPos.containing(at.x, origin.y - 0.5D, at.z);
+                for (int dy = 1; dy >= -1; dy--) {
+                    net.minecraft.core.BlockPos p = pos.above(dy);
+                    net.minecraft.world.level.block.state.BlockState state = level.getBlockState(p);
+                    if (state.isAir() || !level.getBlockState(p.above()).isAir()) {
+                        continue;
+                    }
+                    if (natural(state) && level.mayInteract(player, p)) {
+                        level.destroyBlock(p, false, player);
+                        broken++;
+                    }
+                    break;
+                }
+            }
+        }
+    }
+
+    private static boolean natural(net.minecraft.world.level.block.state.BlockState state) {
+        return state.is(net.minecraft.tags.BlockTags.DIRT) || state.is(net.minecraft.tags.BlockTags.SAND)
+                || state.is(net.minecraft.world.level.block.Blocks.GRAVEL) || state.is(net.minecraft.tags.BlockTags.BASE_STONE_OVERWORLD)
+                || state.is(net.minecraft.world.level.block.Blocks.SNOW) || state.is(net.minecraft.world.level.block.Blocks.SHORT_GRASS)
+                || state.is(net.minecraft.world.level.block.Blocks.TALL_GRASS);
     }
 
     private static boolean projectileFan(ServerPlayer player, TechniqueBehavior.ProjectileFan fan,

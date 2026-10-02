@@ -41,13 +41,17 @@ public final class PlumVfx {
 
     private static final net.minecraft.resources.ResourceLocation TECHNIQUE =
             net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "seven_plum_blossoms");
-    /** Первый удар вверх — через 12 тиков после начала: сперва стойка и сбор ци (автор 02.10). */
-    private static final int COMMIT = 12;
+    /** Первый удар вверх — через 16 тиков (0,8 с): сперва стойка, пыль и синяя ци (автор 02.10). */
+    private static final int COMMIT = 16;
+    /** Сколько горячий след остывает после удара дерева о землю, тиков. */
+    private static final int SCAR_LIFE = 400;
 
     private static final VfxColour COLD = new VfxColour(0xC9 / 255.0F, 0xE7 / 255.0F, 0xF4 / 255.0F);
     private static final VfxColour PINK = new VfxColour(0xF1 / 255.0F, 0x9B / 255.0F, 0xC5 / 255.0F);
     private static final VfxColour EDGE = new VfxColour(0xFA / 255.0F, 0xFF / 255.0F, 1.0F);
     private static final VfxColour RIM = new VfxColour(0xED / 255.0F, 0x60 / 255.0F, 0x9B / 255.0F);
+    /** Остывший след: тёмно-красный жар. */
+    private static final VfxColour EMBER = new VfxColour(0x6A / 255.0F, 0x14 / 255.0F, 0x1E / 255.0F);
 
     private static final List<Cast> CASTS = new ArrayList<>();
     private static int clientTicks;
@@ -112,6 +116,8 @@ public final class PlumVfx {
         final List<Puff> puffs = new ArrayList<>();
         final List<Gust> gusts = new ArrayList<>();
         final List<Branch> branches = new ArrayList<>();
+        final List<Vec3[]> scar = new ArrayList<>();
+        int landTick = -1;
         final Random random;
 
         Cast(int entityId, int layer) {
@@ -127,7 +133,21 @@ public final class PlumVfx {
                 || payload.layer() <= 0) {
             return;
         }
-        CASTS.add(new Cast(payload.sourceId(), payload.layer()));
+        Cast cast = new Cast(payload.sourceId(), payload.layer());
+        CASTS.add(cast);
+        // Стойка: тело загорается холодной синей ци (ref3), из-под ног — пыль (ref1).
+        io.github.verycooltimo.murim.client.ClientAuraState.techniqueAura(payload.sourceId(), 2 + Math.min(3, payload.layer()), 0, COMMIT + 6);
+        Minecraft mc = Minecraft.getInstance();
+        Entity e = mc.level == null ? null : mc.level.getEntity(payload.sourceId());
+        if (e != null && !mc.level.getBlockState(net.minecraft.core.BlockPos.containing(e.position().add(0.0D, -0.2D, 0.0D))).isAir()) {
+            for (int i = 0; i < 4 + payload.layer(); i++) {
+                double a = cast.random.nextDouble() * Math.PI * 2.0D;
+                Vec3 out = new Vec3(Math.cos(a), 0.0D, Math.sin(a));
+                cast.puffs.add(new Puff(e.position().add(out.scale(0.35D)).add(0.0D, 0.1D, 0.0D),
+                        out.scale(0.1D + 0.08D * cast.random.nextDouble()).add(0.0D, 0.015D, 0.0D),
+                        14 + cast.random.nextInt(8), cast.random.nextInt(16), 0.22D + 0.1D * cast.random.nextDouble()));
+            }
+        }
     }
 
     public static void onSlash(PlumSlashPayload p) {
@@ -150,6 +170,9 @@ public final class PlumVfx {
         cast.right = new Vec3(-cast.forward.z, 0.0D, cast.forward.x);
         cast.length = p.length();
         cast.slashTick = clientTicks;
+        // После выпуска ци розовеет (с 3-го слоя), горит до падения дерева.
+        io.github.verycooltimo.murim.client.ClientAuraState.techniqueAura(p.entityId(), 2 + Math.min(3, cast.layer),
+                PlumRules.blossoms(cast.layer) ? 1 : 0, PlumRules.LAND);
         buildTree(cast);
         spawnGround(cast);
         Minecraft mc = Minecraft.getInstance();
@@ -234,10 +257,17 @@ public final class PlumVfx {
                 p.vel = new Vec3(p.vel.x * 0.88D, p.vel.y * 0.88D - 0.004D, p.vel.z * 0.88D);
                 p.pos = p.pos.add(p.vel);
             }
-            if (c.slashTick >= 0 && clientTicks - c.slashTick == PlumRules.FALL_TICK + 6) {
-                landing(c);
+            if (c.slashTick >= 0) {
+                int since = clientTicks - c.slashTick;
+                int k = (since - PlumRules.SWING_START) / PlumRules.SWING_GAP;
+                if (since >= PlumRules.SWING_START && (since - PlumRules.SWING_START) % PlumRules.SWING_GAP == 0 && k < 6 && c.layer >= 2) {
+                    swingBurst(c, k);
+                }
+                if (since == PlumRules.LAND) {
+                    landing(c);
+                }
             }
-            if (clientTicks - c.start > 70) {
+            if (clientTicks - c.start > COMMIT + PlumRules.LAND + SCAR_LIFE + 20) {
                 it.remove();
             }
         }
@@ -286,6 +316,9 @@ public final class PlumVfx {
                     float sa = clientTicks - c.slashTick + partial;
                     slash(c, pose, camera, air, sa);
                     gusts(c, pose, camera, air, sa);
+                    if (c.landTick >= 0) {
+                        scar(c, pose, camera, air, clientTicks - c.landTick + partial);
+                    }
                 }
                 buffers.endBatch(MurimRenderTypes.airBand());
                 if (!c.puffs.isEmpty()) {
@@ -422,8 +455,9 @@ public final class PlumVfx {
      */
     private static void buildTree(Cast c) {
         Random r = c.random;
-        double h = PlumRules.height(c.layer);
-        double wScale = PlumRules.width(c.layer) / 1.4D;
+        double h = PlumRules.treeHeight(c.layer);
+        // Ширина растёт с деревом: на 4-м слое крона ~10 блоков.
+        double wScale = PlumRules.width(c.layer) / 1.4D * (h / 7.0D);
         Vec3 base = trunkBase(c);
         Vec3 top = base.add(0.0D, h, 0.0D).add(c.forward.scale(0.15D));
         // Ствол — от самого пола, в 2–3 раза толще ветвей (разбор codex 02.10).
@@ -438,17 +472,21 @@ public final class PlumVfx {
             boolean cross = i % 3 == 2;
             // Крона раскинута шире ствола (ref8): ветви пологие, выше — круче.
             double el = Math.toRadians(12.0D + 28.0D * r.nextDouble() + 20.0D * at);
-            double len = (2.1D + 1.4D * r.nextDouble()) * (1.0D - 0.3D * at) * (h / 4.8D);
+            double len = (2.1D + 1.4D * r.nextDouble()) * (1.0D - 0.3D * at) * (h / 6.0D);
             Vec3 start = bezier(base, base.lerp(top, 0.5D).add(c.right.scale(0.08D)), top, at);
+            // Крона объёмная: ветви расходятся и вглубь (±0,45 по взгляду).
             Vec3 dir = c.right.scale(side * Math.cos(el)).add(0.0D, Math.sin(el), 0.0D)
-                    .add(c.forward.scale((r.nextDouble() - 0.5D) * 0.35D)).normalize();
+                    .add(c.forward.scale((r.nextDouble() - 0.5D) * 0.9D)).normalize();
             Vec3 end = start.add(dir.scale(len));
-            // Дуга-удар выгибается вверх, как серп взмаха.
-            Vec3 ctrl = start.add(dir.scale(len * 0.5D)).add(0.0D, len * 0.2D, 0.0D);
-            // Быстрые боковые взмахи (анимация 0,7–1,15 с): ветвь на каждый.
-            float born = 2.0F + 9.0F * i / Math.max(1, count);
-            double width = (0.17D + 0.05D * r.nextDouble()) * (1.0D - 0.4D * at) * wScale;
-            c.branches.add(new Branch(start, ctrl, end, width, born, 0.6F, 1));
+            // Дуга-удар выгибается вверх, как серп взмаха; каждая третья загибается через ствол.
+            Vec3 ctrl = start.add(dir.scale(len * 0.5D)).add(0.0D, len * 0.4D, 0.0D)
+                    .add(c.right.scale(cross ? -side * len * 0.5D : 0.0D));
+            // Ветви рождаются на методичных боковых взмахах (пауза после ствола, потом шесть
+            // ударов через 0,3 с): каждая — след своего удара, «пером по холсту».
+            int swing = (int) Math.floor(i * 6.0D / Math.max(1, count));
+            float born = PlumRules.SWING_START + PlumRules.SWING_GAP * swing + 0.35F * (i % 2);
+            double width = (0.12D + 0.04D * r.nextDouble()) * (1.0D - 0.35D * at) * wScale;
+            c.branches.add(new Branch(start, ctrl, end, width, born, 1.2F, 1));
             if (c.layer >= 4) {
                 // Под-ветвь от середины дуги — круче вверх, вдвое короче.
                 Vec3 s2 = bezier(start, ctrl, end, 0.55D);
@@ -457,7 +495,7 @@ public final class PlumVfx {
                 double l2 = len * (0.45D + 0.15D * r.nextDouble());
                 Vec3 e2 = s2.add(d2.scale(l2));
                 c.branches.add(new Branch(s2, s2.add(d2.scale(l2 * 0.5D)).add(0.0D, l2 * 0.15D, 0.0D), e2,
-                        width * 0.55D, born + 0.45F, 0.45F, 2));
+                        width * 0.55D, born + 0.8F, 0.8F, 2));
             }
         }
     }
@@ -467,13 +505,17 @@ public final class PlumVfx {
      * разгоняясь, как под тяжестью, до ~85° за 7 тиков.
      */
     private static Vec3 fall(Cast c, Vec3 p, float age) {
-        double k = Mth.clamp((age - PlumRules.FALL_TICK) / 7.0D, 0.0D, 1.0D);
-        if (k <= 0.0D) {
+        float t = age - PlumRules.FALL_START;
+        if (t <= 0.0F) {
             return p;
         }
-        double th = Math.toRadians(85.0D) * k * k;
         Vec3 base = trunkBase(c);
         Vec3 d = p.subtract(base);
+        // Сначала дерево изгибается (верх отстаёт, 4 тика), потом с ускорением валится до ~85°.
+        double hFrac = Mth.clamp(d.y / Math.max(1.0D, PlumRules.treeHeight(c.layer)), 0.0D, 1.0D);
+        double bend = Math.toRadians(14.0D) * Mth.clamp(t / 4.0D, 0.0D, 1.0D) * Math.pow(hFrac, 1.2D);
+        double drop = Mth.clamp((t - 4.0D) / (PlumRules.LAND - PlumRules.FALL_START - 4.0D), 0.0D, 1.0D);
+        double th = bend + (Math.toRadians(85.0D) - bend) * drop * drop;
         double f = d.dot(c.forward);
         double up = d.y;
         double f2 = f * Math.cos(th) + up * Math.sin(th);
@@ -485,7 +527,7 @@ public final class PlumVfx {
     private static void landing(Cast c) {
         Random r = c.random;
         Vec3 base = trunkBase(c);
-        double h = PlumRules.height(c.layer);
+        double h = PlumRules.treeHeight(c.layer);
         Minecraft mc = Minecraft.getInstance();
         if (mc.level != null && !mc.level.getBlockState(net.minecraft.core.BlockPos.containing(base.add(0.0D, -0.2D, 0.0D))).isAir()) {
             int n = 4 + 2 * Math.min(4, c.layer);
@@ -506,7 +548,88 @@ public final class PlumVfx {
             }
         }
         if (mc.player != null && mc.player.getId() == c.entityId) {
-            SpeedLines.radial(0.5F, 0.55F, 0.6F, 5, SpeedLines.WHITE);
+            SpeedLines.radial(0.5F, 0.55F, 0.8F, 6, SpeedLines.WHITE);
+        }
+        // Земля дрожит: толчок камеры всем рядом (тот же пружинный удар, что у порывов ауры).
+        if (mc.player != null && mc.player.position().distanceTo(base) < 16.0D) {
+            float strength = (float) (1.0D - mc.player.position().distanceTo(base) / 16.0D) * (0.5F + 0.12F * Math.min(4, c.layer));
+            io.github.verycooltimo.murim.client.ClientAuraState.gust(c.entityId, mc.player.getId(), strength, false);
+        }
+        // Волна пыли от удара: кольцом наружу радиусом до ~8 блоков.
+        if (mc.level != null && !mc.level.getBlockState(net.minecraft.core.BlockPos.containing(base.add(0.0D, -0.2D, 0.0D))).isAir()) {
+            Vec3 mid = base.add(c.forward.scale(h * 0.45D));
+            for (int i = 0; i < 10 + 2 * Math.min(4, c.layer); i++) {
+                double a = Math.PI * 2.0D * i / (10 + 2 * Math.min(4, c.layer)) + r.nextDouble() * 0.3D;
+                Vec3 out = c.forward.scale(Math.cos(a)).add(c.right.scale(Math.sin(a)));
+                c.puffs.add(new Puff(mid.add(out.scale(1.0D)).add(0.0D, 0.2D, 0.0D), out.scale(0.35D + 0.15D * r.nextDouble()).add(0.0D, 0.03D, 0.0D),
+                        18 + r.nextInt(10), r.nextInt(16), 0.45D + 0.2D * r.nextDouble()));
+            }
+        }
+        c.landTick = clientTicks;
+        buildScar(c);
+    }
+
+    /**
+     * Горячий след упавшего дерева (как пятна после первого прорыва — не рисунок дерева, а
+     * раскалённая борозда): рваные трещины по полосе падения, розово-белые, остывают в тёмно-
+     * красные и гаснут за {@link #SCAR_LIFE} тиков.
+     */
+    private static void buildScar(Cast c) {
+        Random r = c.random;
+        Vec3 base = trunkBase(c);
+        double h = PlumRules.treeHeight(c.layer);
+        int cracks = 5 + Math.min(4, c.layer) * 2;
+        for (int k = 0; k < cracks; k++) {
+            List<Vec3> pts = new ArrayList<>();
+            double w0 = (r.nextDouble() - 0.5D) * 3.6D;
+            double s0 = h * 0.05D + r.nextDouble() * h * 0.3D;
+            double len = h * (0.3D + 0.55D * r.nextDouble());
+            for (double s = 0.0D; s <= len; s += 0.45D) {
+                double w = w0 + (r.nextDouble() - 0.5D) * 0.35D + Math.sin(s * 1.3D + k) * 0.2D;
+                pts.add(base.add(c.forward.scale(s0 + s)).add(c.right.scale(w)).add(0.0D, 0.03D, 0.0D));
+            }
+            c.scar.add(pts.toArray(new Vec3[0]));
+        }
+    }
+
+    private static void scar(Cast c, PoseStack.Pose pose, Vec3 camera, VertexConsumer v, float age) {
+        if (c.landTick < 0 || c.scar.isEmpty() || age > SCAR_LIFE) {
+            return;
+        }
+        float heat = (float) Mth.clamp(1.0D - age / 120.0D, 0.0D, 1.0D);
+        float fade = (float) Mth.clamp((SCAR_LIFE - age) / 120.0D, 0.0D, 1.0D);
+        VfxColour hot = lerp(EMBER, PINK, heat);
+        for (Vec3[] crack : c.scar) {
+            double[] w = new double[crack.length];
+            for (int i = 0; i < crack.length; i++) {
+                w[i] = (0.05D + 0.05D * heat) * Math.sin(Math.PI * (i + 0.5D) / crack.length);
+            }
+            flatStrip(v, pose, crack, w, 0.8F * fade, hot);
+            if (heat > 0.05F) {
+                flatStrip(v, pose, crack, scale(w, 0.35D), 0.9F * heat, EDGE);
+            }
+        }
+    }
+
+    private static VfxColour lerp(VfxColour a, VfxColour b, float t) {
+        return new VfxColour(a.red() + (b.red() - a.red()) * t, a.green() + (b.green() - a.green()) * t,
+                a.blue() + (b.blue() - a.blue()) * t);
+    }
+
+    /** Плоская полоса по земле вдоль точек. */
+    private static void flatStrip(VertexConsumer c, PoseStack.Pose pose, Vec3[] p, double[] w, float alpha, VfxColour col) {
+        Vec3 n = new Vec3(0.0D, 1.0D, 0.0D);
+        for (int i = 0; i + 1 < p.length; i++) {
+            Vec3 d = p[i + 1].subtract(p[i]);
+            Vec3 sd = new Vec3(-d.z, 0.0D, d.x);
+            if (sd.lengthSqr() < 1.0E-9D) {
+                continue;
+            }
+            sd = sd.normalize();
+            VfxDraw.vertex(c, pose, p[i].subtract(sd.scale(w[i])), n, 0.0F, 0.0F, alpha, col.red(), col.green(), col.blue());
+            VfxDraw.vertex(c, pose, p[i + 1].subtract(sd.scale(w[i + 1])), n, 1.0F, 0.0F, alpha, col.red(), col.green(), col.blue());
+            VfxDraw.vertex(c, pose, p[i + 1].add(sd.scale(w[i + 1])), n, 1.0F, 1.0F, alpha, col.red(), col.green(), col.blue());
+            VfxDraw.vertex(c, pose, p[i].add(sd.scale(w[i])), n, 0.0F, 1.0F, alpha, col.red(), col.green(), col.blue());
         }
     }
 
@@ -588,15 +711,15 @@ public final class PlumVfx {
      */
     private static void swings(Cast c, PoseStack.Pose pose, Vec3 camera, VertexConsumer v, float age, boolean pink) {
         Vec3 base = trunkBase(c);
-        double h = PlumRules.height(c.layer);
+        double h = PlumRules.treeHeight(c.layer);
         for (int k = 0; k < 6; k++) {
-            float t = age - (1.2F + 1.5F * k);
-            if (t < 0.0F || t > 2.0F) {
+            float t = age - (PlumRules.SWING_START + PlumRules.SWING_GAP * k);
+            if (t < 0.0F || t > 3.0F) {
                 continue;
             }
             int side = k % 2 == 0 ? 1 : -1;
-            double y = h * (0.3D + 0.1D * k);
-            double rad = 1.2D + 0.12D * k;
+            double y = h * (0.25D + 0.1D * k);
+            double rad = h * (0.16D + 0.02D * k);
             double sweep = Mth.clamp(t / 0.6D, 0.0D, 1.0D);
             int n = 14;
             Vec3[] p = new Vec3[n + 1];
@@ -608,7 +731,7 @@ public final class PlumVfx {
                         .add(0.0D, y + 0.5D * rad * (Math.cos(ang) - 0.6D), 0.0D), age);
                 w[i] = 0.11D * Math.sin(Math.PI * Math.min(1.0D, u / Math.max(0.05D, sweep) * 1.05D + 0.02D));
             }
-            float a = (float) curve(t, 0.0, 0.0, 0.3, 1.0, 2.0, 0.0);
+            float a = (float) curve(t, 0.0, 0.0, 0.3, 1.0, 3.0, 0.0);
             stripVar(v, pose, camera, p, scale(w, 2.5D), filled(n + 1, 0.2F * a), pink ? PINK : COLD);
             stripVar(v, pose, camera, p, w, filled(n + 1, 0.95F * a), EDGE);
         }
@@ -628,8 +751,8 @@ public final class PlumVfx {
                     * (float) Mth.clamp((PlumRules.FALL_TICK + 9.0D - age) / 3.0D, 0.0D, 1.0D);
             double len = b.end().distanceTo(b.start());
             Vec3[] p = {fall(c, b.start(), age), fall(c, bezier(b.start(), b.ctrl(), b.end(), 0.6D), age), fall(c, b.end(), age)};
-            double[] w = {0.05D, 0.3D * len, 0.18D * len};
-            stripVar(v, pose, camera, p, w, filled(3, 0.12F * a), PINK);
+            double[] w = {0.05D, 0.16D * len, 0.07D * len};
+            stripVar(v, pose, camera, p, w, filled(3, 0.08F * a), PINK);
         }
     }
 
@@ -695,11 +818,66 @@ public final class PlumVfx {
     }
 
     /**
+     * Каждый боковой взмах — порыв ветра от меча (как порывы давления ауры) и, с 3-го слоя,
+     * лепестки, срывающиеся с удара (ref5: «flowers» — лепестки исходят от каждого удара).
+     */
+    private static void swingBurst(Cast c, int k) {
+        Random r = c.random;
+        int side = k % 2 == 0 ? 1 : -1;
+        c.gusts.add(new Gust(side > 0 ? Math.PI * 0.5D : -Math.PI * 0.5D, Math.toRadians(70.0D) * side,
+                0.2D + 0.15D * r.nextDouble(), 0.3D + 0.08D * r.nextDouble(),
+                PlumRules.SWING_START + PlumRules.SWING_GAP * k, 3.5D + 0.4D * Math.min(4, c.layer)));
+        if (PlumRules.blossoms(c.layer)) {
+            double h = PlumRules.treeHeight(c.layer);
+            Vec3 at = trunkBase(c).add(0.0D, h * (0.25D + 0.1D * k), 0.0D);
+            for (int i = 0; i < 4; i++) {
+                Vec3 vel = c.right.scale(side * (0.08D + 0.08D * r.nextDouble())).add(0.0D, 0.04D + 0.05D * r.nextDouble(), 0.0D)
+                        .add(c.forward.scale((r.nextDouble() - 0.5D) * 0.08D));
+                c.petals.add(new Petal(at.add(c.right.scale(side * h * 0.1D)), vel, r.nextInt(4),
+                        (float) ((r.nextDouble() - 0.5D) * 0.5D), 0.07D + 0.05D * r.nextDouble()));
+            }
+        }
+        // Пыль из-под ног на каждом взмахе — немного, по направлению удара.
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.level != null && !mc.level.getBlockState(net.minecraft.core.BlockPos.containing(c.origin.add(0.0D, -0.2D, 0.0D))).isAir()) {
+            for (int i = 0; i < 2; i++) {
+                Vec3 out = c.right.scale(side).add(c.forward.scale((r.nextDouble() - 0.5D) * 0.8D)).normalize();
+                c.puffs.add(new Puff(c.origin.add(out.scale(0.4D)).add(0.0D, 0.1D, 0.0D), out.scale(0.14D + 0.08D * r.nextDouble()),
+                        12 + r.nextInt(6), r.nextInt(16), 0.22D + 0.1D * r.nextDouble()));
+            }
+        }
+    }
+
+    /**
      * Вихрь у стоп (whirl5 со спины): холодная лента на 1,25 оборота вокруг опоры, раскрывается
      * с ⌀ ~2,2 до ~3,2 блока за 5 тиков и крутится; на 4-м слое и выше — второй, бледнее, со
      * сдвигом фазы. Гаснет к 10-му тику.
      */
     private static void gusts(Cast c, PoseStack.Pose pose, Vec3 camera, VertexConsumer v, float age) {
+        // Порывы взмахов: широкая полупрозрачная лента у земли уходит от игрока в сторону удара.
+        Vec3 feet = c.origin.add(0.0D, 0.06D, 0.0D);
+        for (Gust g : c.gusts) {
+            float t = age - g.delay();
+            if (t < 0.0F || t > 9.0F) {
+                continue;
+            }
+            double reach = g.reach() * (1.0D - Math.exp(-t / 3.0D));
+            float alpha = (float) curve(t, 0.0, 0.0, 0.6, 0.85, 4.0, 0.55, 9.0, 0.0);
+            int m = 12;
+            Vec3[] p = new Vec3[m + 1];
+            double[] w = new double[m + 1];
+            for (int i = 0; i <= m; i++) {
+                double u = i / (double) m;
+                double rad = Math.max(0.4D, reach - 1.8D * u);
+                double ang = g.angle() + g.sweep() * (u - 0.5D);
+                Vec3 dir = c.forward.scale(Math.cos(ang)).add(c.right.scale(Math.sin(ang)));
+                p[i] = feet.add(dir.scale(rad)).add(0.0D, g.height() * (1.0D - u), 0.0D);
+                w[i] = g.width() * Math.sin(Math.PI * Math.min(1.0D, u * 1.2D + 0.05D));
+            }
+            strip(v, pose, camera, p, w, 0.2F * alpha, COLD);
+            strip(v, pose, camera, p, scale(w, 0.5D), 0.28F * alpha, COLD);
+            strip(v, pose, camera, p, scale(w, 0.14D), 0.75F * alpha, EDGE);
+        }
         if (age > 10.0F) {
             return;
         }

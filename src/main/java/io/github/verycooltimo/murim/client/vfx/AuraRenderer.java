@@ -115,6 +115,13 @@ public final class AuraRenderer {
         }
     }
 
+    private static final VfxColour TECH_BLUE_OUTER = new VfxColour(0x3E / 255.0F, 0x7B / 255.0F, 0xD8 / 255.0F);
+    private static final VfxColour TECH_BLUE_MID = new VfxColour(0x9C / 255.0F, 0xC8 / 255.0F, 1.0F);
+    private static final VfxColour TECH_BLUE_CORE = new VfxColour(0xF4 / 255.0F, 0xF8 / 255.0F, 1.0F);
+    private static final VfxColour TECH_PINK_OUTER = new VfxColour(0xC2 / 255.0F, 0x40 / 255.0F, 0x7E / 255.0F);
+    private static final VfxColour TECH_PINK_MID = new VfxColour(0xF1 / 255.0F, 0x9B / 255.0F, 0xC5 / 255.0F);
+    private static final VfxColour TECH_PINK_CORE = new VfxColour(1.0F, 0xF0 / 255.0F, 0xF6 / 255.0F);
+
     private record Body(LivingEntity entity, Vec3 feet, double width, double height, AuraState aura,
                         PoseStack.Pose pose, Vec3 camera, MultiBufferSource.BufferSource buffers, float time,
                         float partial) {
@@ -131,6 +138,11 @@ public final class AuraRenderer {
     private static void draw(Body b, Minecraft minecraft) {
         int rank = b.aura().rank();
         boolean demonic = b.aura().demonic();
+        // Аура техники — только живое пламя симуляции своей палитры, без ранговых слоёв.
+        if (ClientAuraState.techniquePalette(b.entity().getId()) >= 0) {
+            simulated(b, rank, false, minecraft);
+            return;
+        }
         if (rank == 1) {
             haze(b, demonic);
             return;
@@ -320,11 +332,24 @@ public final class AuraRenderer {
         VfxColour outer = demonic ? RED_DEEP : OUTER;
         VfxColour mid = demonic ? RED : MID;
         VfxColour core = demonic ? RED_HOT : CORE;
+        int palette = ClientAuraState.techniquePalette(b.entity().getId());
+        if (palette == 0) {
+            // Холодная синяя ци стойки (Семь Цветков Сливы, ref3, whirl2–3).
+            outer = TECH_BLUE_OUTER;
+            mid = TECH_BLUE_MID;
+            core = TECH_BLUE_CORE;
+        } else if (palette == 1) {
+            outer = TECH_PINK_OUTER;
+            mid = TECH_PINK_MID;
+            core = TECH_PINK_CORE;
+        }
         boolean ownEyes = minecraft.getCameraEntity() == minecraft.player && minecraft.options.getCameraType().isFirstPerson();
 
         VertexConsumer glow = b.buffers().getBuffer(MurimRenderTypes.ribbon());
+        // Аура техники — чистое пламя: без туши, обломков и тёмных мазков ранга.
+        boolean techOnly = palette >= 0;
         for (AuraSim.Particle p : emitter.particles) {
-            if (p.kind != AuraSim.Kind.FLAME && p.kind != AuraSim.Kind.INK) {
+            if (p.kind != AuraSim.Kind.FLAME && p.kind != AuraSim.Kind.INK || techOnly && p.kind == AuraSim.Kind.INK) {
                 continue;
             }
             Vec3[] pts = trail(p, partial);
@@ -360,7 +385,7 @@ public final class AuraRenderer {
         RenderType inkType = MurimRenderTypes.ink();
         VertexConsumer dark = b.buffers().getBuffer(inkType);
         for (AuraSim.Particle p : emitter.particles) {
-            if (p.kind != AuraSim.Kind.INK && p.kind != AuraSim.Kind.FLOW) {
+            if (p.kind != AuraSim.Kind.INK && p.kind != AuraSim.Kind.FLOW || techOnly && p.kind == AuraSim.Kind.INK) {
                 continue;
             }
             // Со своих глаз тушь потока в камеру не летит — её заменяют мазки на экране.
@@ -399,7 +424,7 @@ public final class AuraRenderer {
         RenderType solid = MurimRenderTypes.solid();
         VertexConsumer rock = b.buffers().getBuffer(solid);
         for (AuraSim.Particle p : emitter.particles) {
-            if (p.kind != AuraSim.Kind.DEBRIS) {
+            if (p.kind != AuraSim.Kind.DEBRIS || techOnly) {
                 continue;
             }
             float a = Math.min(1.0F, (1.0F - p.progress(partial)) * 5.0F);
