@@ -95,13 +95,25 @@ public final class ModAttachments {
                     () -> AttachmentType.<int[]>builder(() -> new int[] {0, -1, -1}).build());
 
     /**
-     * Цингун (Шаг Молнии): {активен 0/1, слой, тиков осталось, отталкиваний осталось, тик последнего
-     * длинного прыжка, воздушная коррекция использована 0/1, id техники в списке не храним}.
+     * Шаги (docs/design/21-footwork-families.md): {бег активен 0/1, слой, тиков бега осталось,
+     * отталкиваний потрачено, тик последнего перелёта, поворот в воздухе потрачен 0/1, семейство
+     * (ordinal), тик последней опоры, тиков без спринта подряд, оплаченных тиков бега, тиков на
+     * опоре подряд}.
      * Не сохраняется: режим живёт секунды.
      */
     public static final Supplier<AttachmentType<int[]>> TRAVERSE =
             ATTACHMENT_TYPES.register("traverse",
-                    () -> AttachmentType.<int[]>builder(() -> new int[] {0, 0, 0, 0, Integer.MIN_VALUE / 2, 0}).build());
+                    () -> AttachmentType.<int[]>builder(() -> new int[] {0, 0, 0, 0, Integer.MIN_VALUE / 2, 0, 0,
+                            Integer.MIN_VALUE / 2, 0, 0, 0}).build());
+
+    /** Техника шага, которая держит бег: туда идёт освоение за пробежку. Не сохраняется. */
+    public static final Supplier<AttachmentType<String>> FOOTWORK_TECH =
+            ATTACHMENT_TYPES.register("footwork_tech", () -> AttachmentType.builder(() -> "").build());
+
+    /** Направление следующего рывка шага, заданное контекстом ввода: {dx, dz, задано 0/1}. */
+    public static final Supplier<AttachmentType<float[]>> FOOTWORK_DIR =
+            ATTACHMENT_TYPES.register("footwork_dir",
+                    () -> AttachmentType.<float[]>builder(() -> new float[] {0.0F, 0.0F, 0.0F}).build());
 
     /** Последний взмах основы меча: {форма, тик}. Не сохраняется — живёт тики. */
     public static final Supplier<AttachmentType<int[]>> FOUNDATION_SWING =

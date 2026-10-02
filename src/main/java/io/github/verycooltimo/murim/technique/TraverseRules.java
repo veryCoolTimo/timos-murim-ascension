@@ -1,12 +1,10 @@
 package io.github.verycooltimo.murim.technique;
 
 /**
- * Шаг Молнии (Четыре Шага Бога Ветров, Absolute Regression гл. 21: четвёртый шаг — быстрый бег)
- * по слоям освоения. Цингун по миру без цели-врага: решение docs/design/20-movement-qinggong.md.
- *
- * <p>Слой 0 — просто быстрый бег; 1 — ступень в блок и длинный прыжок; 2 — + отталкивание от
- * стены; 3 — дольше и дальше; 4 — два отталкивания и одна воздушная коррекция направления.
- * Числа — стартовые балансные значения [предложение], не числа из манхвы.
+ * Таблица бега шагов по ступени T0–4 — общая для семейств (Шаг Молнии Бога Ветров, лёгкий бег
+ * Хуашань). Аргумент методов — ступень T, не слой: слой семейства переводит в T
+ * {@link FootworkFamily#tier(int)} (docs/design/21-footwork-families.md §2). Что открыто
+ * (перелёт, стена, поворот) решает семейство, а не эта таблица. Числа — стартовые балансные.
  */
 public final class TraverseRules {
 
@@ -83,11 +81,6 @@ public final class TraverseRules {
     /** Толчок от стены: наружу и вверх, блоков за тик. */
     public static final double WALL_KICK_OUT = 0.35D;
     public static final double WALL_KICK_UP = 0.5D;
-
-    /** Воздушная коррекция направления (только слой 4): одна за отрыв от земли. */
-    public static boolean airCorrection(int layer) {
-        return layer >= 4;
-    }
 
     public static final double AIR_CORRECTION_QI = 0.3D;
     /** Скорость после коррекции, блоков за тик (8 блоков в секунду). */

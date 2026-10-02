@@ -1,7 +1,7 @@
 {
   "format_version": "1.8.0",
   "animations": {
-    "wind_god_lightning_step": {
+    "wind_god_steps": {
       "loop": false,
       "animation_length": 0.25,
       "bones": {

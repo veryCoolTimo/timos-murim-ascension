@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Шаг Молнии — цингун Бога Ветров (ref «wind god steps»: бело-голубые ленты ветра вдоль голени,
+ * Шаги — бег, толчки и Шаг Мига (Бог Ветров), бег и перелёт Хуашань (ref «wind god steps»: бело-голубые ленты ветра вдоль голени,
  * короткая вспышка под стопой, кольцевой поток у ног). Язык — воздух от ног, не электричество.
  *
  * <ol start="0">
@@ -81,6 +81,11 @@ public final class TraverseVfx {
                     RUNS.put(e.entityId(), new Run(e.layer(), entity.position()));
                 }
             }
+            case 5 -> {
+                if (entity != null) {
+                    evade(entity, e.layer(), new Vec3(e.dirX(), 0.0D, e.dirZ()));
+                }
+            }
             default -> {
                 if (entity != null && e.layer() >= 1) {
                     burst(entity, e.kind(), e.layer(), new Vec3(e.dirX(), 0.0D, e.dirZ()));
@@ -109,7 +114,7 @@ public final class TraverseVfx {
         // Ввод: фронт нажатия прыжка во время своего бега.
         boolean jumpDown = minecraft.options.keyJump.isDown();
         if (jumpDown && !jumpWasDown && ownRunActive() && minecraft.screen == null) {
-            PacketDistributor.sendToServer(new TraversePayloads.Jump());
+            PacketDistributor.sendToServer(new TraversePayloads.Jump(minecraft.player.onGround()));
         }
         jumpWasDown = jumpDown;
 
@@ -179,6 +184,25 @@ public final class TraverseVfx {
             }
             default -> {
             }
+        }
+    }
+
+    /**
+     * Шаг Мига: короткий срыв воздуха вдоль пройденного пути — низкий росчерк у стоп и, со 2-го
+     * слоя, второй выше; без цветов (ref «wind god steps», кадр защиты). Слой 0 — без эффекта.
+     */
+    private static void evade(Entity entity, int layer, Vec3 offset) {
+        if (layer < 1 || offset.lengthSqr() < 1.0E-4D) {
+            return;
+        }
+        Vec3 end = entity.position();
+        Vec3 dir = offset.normalize();
+        double len = Math.min(offset.length(), 3.5D);
+        Vec3 side = new Vec3(-dir.z, 0.0D, dir.x);
+        STREAKS.add(streak(end.subtract(dir.scale(0.3D)).add(0.0D, 0.15D, 0.0D), dir.scale(-1.0D), len, 0.08D, 0.1D, 3.5F, 1.0F));
+        if (layer >= 2) {
+            STREAKS.add(streak(end.subtract(dir.scale(0.6D)).add(side.scale(0.2D)).add(0.0D, 0.9D, 0.0D), dir.scale(-1.0D),
+                    len * 0.6D, 0.05D, 0.15D, 3.0F, 0.7F));
         }
     }
 

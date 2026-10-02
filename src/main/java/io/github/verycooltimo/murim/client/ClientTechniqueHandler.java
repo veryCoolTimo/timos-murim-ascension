@@ -58,13 +58,46 @@ public final class ClientTechniqueHandler {
             // подсказка, где разложить техники, а не тишина.
             java.util.Optional<net.minecraft.resources.ResourceLocation> active = ClientLoadoutState.activeTechnique();
             if (active.isPresent()) {
-                PacketDistributor.sendToServer(new StartTechniquePayload(active.get()));
+                // Техника шага — семейство подтехник: вместе с R уходит контекст ввода,
+                // подтехнику выбирает сервер (docs/design/21-footwork-families.md).
+                if (io.github.verycooltimo.murim.combat.FootworkService.family(
+                        io.github.verycooltimo.murim.technique.TechniqueLoader.get(active.get())) != null) {
+                    PacketDistributor.sendToServer(new io.github.verycooltimo.murim.network.TraversePayloads.Request(
+                            active.get(), footworkInput(minecraft)));
+                } else {
+                    PacketDistributor.sendToServer(new StartTechniquePayload(active.get()));
+                }
                 CombatMode.engage();
             } else if (Minecraft.getInstance().player != null) {
                 Minecraft.getInstance().player.displayClientMessage(net.minecraft.network.chat.Component.translatable(
                         "murim.loadout.empty", ModKeyMappings.LOADOUT.getTranslatedKeyMessage()), true);
             }
         }
+    }
+
+    /** Биты контекста ввода для шагов: спринт, присед, направления (по действиям, не клавишам). */
+    public static int footworkInput(Minecraft minecraft) {
+        net.minecraft.client.Options o = minecraft.options;
+        int input = 0;
+        if (o.keySprint.isDown() || minecraft.player != null && minecraft.player.isSprinting()) {
+            input |= io.github.verycooltimo.murim.combat.FootworkService.SPRINT;
+        }
+        if (o.keyShift.isDown()) {
+            input |= io.github.verycooltimo.murim.combat.FootworkService.SNEAK;
+        }
+        if (o.keyUp.isDown()) {
+            input |= io.github.verycooltimo.murim.combat.FootworkService.FORWARD;
+        }
+        if (o.keyDown.isDown()) {
+            input |= io.github.verycooltimo.murim.combat.FootworkService.BACK;
+        }
+        if (o.keyLeft.isDown()) {
+            input |= io.github.verycooltimo.murim.combat.FootworkService.LEFT;
+        }
+        if (o.keyRight.isDown()) {
+            input |= io.github.verycooltimo.murim.combat.FootworkService.RIGHT;
+        }
+        return input;
     }
 
     /**

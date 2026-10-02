@@ -203,12 +203,25 @@ public final class DevCaptureHandler {
                 meditationTicks = MEDITATION_CAPTURE_TICKS;
                 return;
             }
-            PacketDistributor.sendToServer(new StartTechniquePayload(
-                    net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(
-                            MurimMod.MODID, subject)));
-            if ("wind_god_lightning_step".equals(subject)) {
-                // Цингун снимается в беге: стенд держит «вперёд» со спринтом и дважды прыгает.
-                travelTicks = TRAVEL_CAPTURE_TICKS;
+            net.minecraft.resources.ResourceLocation subjectId = net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(
+                    MurimMod.MODID, subject);
+            String mode = System.getenv().getOrDefault("MURIM_CAPTURE_FOOTWORK", "");
+            if (!mode.isEmpty()) {
+                // Шаги: стенд жмёт R с контекстом — run (спринт+вперёд, бежит и дважды прыгает),
+                // left/back (уклонение в сторону), plain (простой R).
+                int input = switch (mode) {
+                    case "run" -> io.github.verycooltimo.murim.combat.FootworkService.SPRINT
+                            | io.github.verycooltimo.murim.combat.FootworkService.FORWARD;
+                    case "left" -> io.github.verycooltimo.murim.combat.FootworkService.LEFT;
+                    case "back" -> io.github.verycooltimo.murim.combat.FootworkService.BACK;
+                    default -> 0;
+                };
+                PacketDistributor.sendToServer(new io.github.verycooltimo.murim.network.TraversePayloads.Request(subjectId, input));
+                if ("run".equals(mode)) {
+                    travelTicks = TRAVEL_CAPTURE_TICKS;
+                }
+            } else {
+                PacketDistributor.sendToServer(new StartTechniquePayload(subjectId));
             }
             startCapture();
         }

@@ -3,7 +3,6 @@ package io.github.verycooltimo.murim.technique;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class TraverseRulesTest {
@@ -23,8 +22,6 @@ class TraverseRulesTest {
         assertEquals(0.0D, TraverseRules.leapHorizontal(0));
         assertEquals(0, TraverseRules.wallKicks(0));
         assertEquals(0.6D, TraverseRules.stepHeight(0));
-        assertFalse(TraverseRules.airCorrection(3));
-        assertTrue(TraverseRules.airCorrection(4));
     }
 
     @Test

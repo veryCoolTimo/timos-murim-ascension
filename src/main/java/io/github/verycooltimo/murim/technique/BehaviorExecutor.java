@@ -52,8 +52,8 @@ public final class BehaviorExecutor {
         if (behavior instanceof TechniqueBehavior.PlumSlash) {
             return plumSlash(player, definition.id());
         }
-        if (behavior instanceof TechniqueBehavior.Traverse) {
-            io.github.verycooltimo.murim.combat.TraverseService.toggle(player, definition.id());
+        if (behavior instanceof TechniqueBehavior.Footwork) {
+            io.github.verycooltimo.murim.combat.FootworkService.windEvade(player, definition.id());
             return false;
         }
         if (behavior instanceof TechniqueBehavior.Step) {
@@ -71,7 +71,9 @@ public final class BehaviorExecutor {
      */
     public static void step(ServerPlayer player, net.minecraft.resources.ResourceLocation id) {
         int layer = Math.max(0, io.github.verycooltimo.murim.mastery.MasteryService.layer(player, id));
-        Vec3 look = player.getLookAngle();
+        // Направление задаёт контекст ввода (уклонение влево/вправо/назад), иначе — взгляд.
+        Vec3 context = io.github.verycooltimo.murim.combat.FootworkService.dashDirection(player);
+        Vec3 look = context != null ? context : player.getLookAngle();
         Vec3 flat = new Vec3(look.x, 0.0D, look.z);
         if (flat.lengthSqr() < 1.0E-6D) {
             return;

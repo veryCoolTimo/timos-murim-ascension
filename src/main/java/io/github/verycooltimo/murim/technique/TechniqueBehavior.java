@@ -21,7 +21,7 @@ import java.util.Map;
  */
 public sealed interface TechniqueBehavior
         permits TechniqueBehavior.MeleeArc, TechniqueBehavior.ProjectileFan, TechniqueBehavior.Dash,
-                TechniqueBehavior.PalmBlast, TechniqueBehavior.Step, TechniqueBehavior.Traverse,
+                TechniqueBehavior.PalmBlast, TechniqueBehavior.Step, TechniqueBehavior.Footwork,
                 TechniqueBehavior.PlumSlash {
 
     ResourceLocation MELEE_ARC = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "melee_arc");
@@ -29,7 +29,7 @@ public sealed interface TechniqueBehavior
     ResourceLocation DASH = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "dash");
     ResourceLocation PALM_BLAST = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "palm_blast");
     ResourceLocation STEP = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "step");
-    ResourceLocation TRAVERSE = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "traverse");
+    ResourceLocation FOOTWORK = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "footwork");
     ResourceLocation PLUM_SLASH = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "plum_slash");
 
     ResourceLocation type();
@@ -204,11 +204,13 @@ public sealed interface TechniqueBehavior
     }
 
     /**
-     * Цингун по миру (Шаг Молнии): включает бег, длинный прыжок и отталкивания по слою, см.
-     * {@link io.github.verycooltimo.murim.technique.TraverseRules}. Без цели и без урона.
+     * Семейство шагов (Шаги Бога Ветров): одна техника, подтехники по контексту ввода и слою —
+     * см. {@link io.github.verycooltimo.murim.technique.FootworkFamily}. На фазе удара — Шаг Мига.
      */
-    record Traverse() implements TechniqueBehavior {
-        public static final MapCodec<Traverse> CODEC = MapCodec.unit(Traverse::new);
+    record Footwork(String family) implements TechniqueBehavior {
+        public static final MapCodec<Footwork> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
+                Codec.STRING.optionalFieldOf("family", "wind_god").forGetter(Footwork::family)
+        ).apply(i, Footwork::new));
 
         @Override
         public float damage() {
@@ -217,7 +219,7 @@ public sealed interface TechniqueBehavior
 
         @Override
         public ResourceLocation type() {
-            return TRAVERSE;
+            return FOOTWORK;
         }
     }
 
@@ -245,7 +247,7 @@ public sealed interface TechniqueBehavior
             DASH, Dash.CODEC,
             PALM_BLAST, PalmBlast.CODEC,
             STEP, Step.CODEC,
-            TRAVERSE, Traverse.CODEC,
+            FOOTWORK, Footwork.CODEC,
             PLUM_SLASH, PlumSlash.CODEC);
 
     Codec<TechniqueBehavior> CODEC = ResourceLocation.CODEC

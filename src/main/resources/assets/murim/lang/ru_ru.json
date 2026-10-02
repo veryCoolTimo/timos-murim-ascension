@@ -127,8 +127,13 @@
   "murim.loadout.foundation": "Основа меча",
   "technique.murim.dark_fragrance_step": "Шаг Невидимого Аромата",
   "technique.murim.dark_fragrance_step.weakness": "После рывка нужна секунда, чтобы снова встать в стойку.",
-  "technique.murim.wind_god_lightning_step": "Шаг Молнии (Четыре Шага Бога Ветров)",
-  "technique.murim.wind_god_lightning_step.weakness": "Бег сбивает любой удар; в воде и в седле не работает.",
   "technique.murim.seven_plum_blossoms": "Меч Семи Цветков Сливы",
-  "technique.murim.seven_plum_blossoms.weakness": "Пол-секунды подготовки на месте: тот, кто видит стойку, успевает уйти с линии."
+  "technique.murim.seven_plum_blossoms.weakness": "Пол-секунды подготовки на месте: тот, кто видит стойку, успевает уйти с линии.",
+  "technique.murim.wind_god_steps": "Шаги Бога Ветров",
+  "technique.murim.wind_god_steps.weakness": "Бег сбивает любой удар; Миг — короткий, после него нужна секунда.",
+  "murim.footwork.locked": "%s — нужен следующий слой",
+  "murim.footwork.next_build": "%s — в следующей сборке",
+  "murim.footwork.air_turn": "Поворот в воздухе",
+  "murim.footwork.shadow": "Шаг Тени",
+  "murim.footwork.run": "Бег"
 }
