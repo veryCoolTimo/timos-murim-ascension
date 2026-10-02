@@ -237,8 +237,7 @@ public final class FootworkService {
                 net.minecraft.world.level.ClipContext.Fluid.NONE, player));
         double reach = wall.getType() == net.minecraft.world.phys.HitResult.Type.MISS
                 ? distance : Math.max(0.0D, wall.getLocation().distanceTo(from) - 0.5D);
-        Vec3 end = start.add(dir.scale(reach));
-        player.teleportTo(end.x, end.y, end.z);
+        sendDash(player, dir, reach, death ? 6 : 5);
         // Смерть — проход для атаки, без окна уклонения; Миг — уклонение.
         int iframes = death ? 0 : FootworkFamily.evadeInvulnerable(tier);
         if (iframes > 0) {
@@ -246,6 +245,17 @@ public final class FootworkService {
         }
         MasteryService.onMiss(player, id);
         send(player, death ? 8 : 5, layer, dir.scale(reach));
+    }
+
+    /**
+     * Рывок шага: не телепорт, а движение самого игрока за {@code ticks} тиков — клиент проходит
+     * путь своей физикой (коллизии, камера), сервер лишь заранее обрезал путь первой стеной.
+     */
+    public static void sendDash(ServerPlayer player, Vec3 dir, double reach, int ticks) {
+        if (reach < 0.05D) {
+            return;
+        }
+        PacketDistributor.sendToPlayer(player, new TraversePayloads.Dash((float) dir.x, (float) dir.z, (float) reach, ticks));
     }
 
     /**

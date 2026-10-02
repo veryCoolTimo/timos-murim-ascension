@@ -89,14 +89,15 @@ public final class BehaviorExecutor {
         double reach = wall.getType() == net.minecraft.world.phys.HitResult.Type.MISS
                 ? distance : Math.max(0.0D, wall.getLocation().distanceTo(from) - 0.5D);
         Vec3 end = start.add(dir.scale(reach));
-        player.teleportTo(end.x, end.y, end.z);
+        // Не телепорт: игрок сам проносится за 5 тиков (FootworkMotion на клиенте).
+        io.github.verycooltimo.murim.combat.FootworkService.sendDash(player, dir, reach, 5);
         int iframes = StepRules.invulnerableTicks(layer);
         if (iframes > 0) {
             player.invulnerableTime = Math.max(player.invulnerableTime, iframes);
         }
         io.github.verycooltimo.murim.mastery.MasteryService.onMiss(player, id);
         net.neoforged.neoforge.network.PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
-                new io.github.verycooltimo.murim.network.StepPayload(player.getId(), start, player.position(), player.getYRot(), layer));
+                new io.github.verycooltimo.murim.network.StepPayload(player.getId(), start, end, player.getYRot(), layer));
     }
 
     private static boolean meleeArc(ServerPlayer player, TechniqueBehavior.MeleeArc melee,

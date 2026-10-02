@@ -40,6 +40,10 @@ final class ClientPayloadBridge {
         io.github.verycooltimo.murim.client.vfx.PlumVfx.onSlash(payload);
     }
 
+    public static void handleDash(TraversePayloads.Dash payload) {
+        io.github.verycooltimo.murim.client.FootworkMotion.start(payload);
+    }
+
     public static void handleTraverse(TraversePayloads.Event payload) {
         io.github.verycooltimo.murim.client.vfx.TraverseVfx.onEvent(payload);
     }

@@ -19,7 +19,7 @@ import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 public final class ModNetwork {
 
     /** Версия протокола. Поднимать при любом несовместимом изменении пакетов. */
-    private static final String VERSION = "7";
+    private static final String VERSION = "8";
 
     @SubscribeEvent
     static void register(RegisterPayloadHandlersEvent event) {
@@ -84,6 +84,8 @@ public final class ModNetwork {
                         io.github.verycooltimo.murim.combat.FootworkService.request(serverPlayer, payload.technique(), payload.input());
                     }
                 });
+        registrar.playToClient(TraversePayloads.Dash.TYPE, TraversePayloads.Dash.STREAM_CODEC,
+                (payload, context) -> ClientPayloadBridge.handleDash(payload));
         registrar.playToClient(TraversePayloads.Event.TYPE, TraversePayloads.Event.STREAM_CODEC,
                 (payload, context) -> ClientPayloadBridge.handleTraverse(payload));
         registrar.playToClient(PlumSlashPayload.TYPE, PlumSlashPayload.STREAM_CODEC,

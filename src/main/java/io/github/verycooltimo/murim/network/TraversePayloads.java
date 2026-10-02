@@ -44,6 +44,26 @@ public final class TraversePayloads {
     }
 
     /**
+     * Сервер → самому игроку: рывок шага — пройти {@code distance} блоков по (dx, dz) за
+     * {@code ticks} тиков. Двигает клиент своей физикой: камера проходит путь, а не прыгает
+     * (автор 02.10: «от первого лица это телепорт — должно быть, что ты быстро промчался»).
+     */
+    public record Dash(float dx, float dz, float distance, int ticks) implements CustomPacketPayload {
+        public static final Type<Dash> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "footwork_dash"));
+        public static final StreamCodec<RegistryFriendlyByteBuf, Dash> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.FLOAT, Dash::dx,
+                ByteBufCodecs.FLOAT, Dash::dz,
+                ByteBufCodecs.FLOAT, Dash::distance,
+                ByteBufCodecs.VAR_INT, Dash::ticks,
+                Dash::new);
+
+        @Override
+        public Type<? extends CustomPacketPayload> type() {
+            return TYPE;
+        }
+    }
+
+    /**
      * Сервер → наблюдателям: состояние бега игрока {@code entityId} или толчок.
      *
      * @param kind 0 — бег выключен, 1 — бег включён (dirX — семейство), 2 — перелёт, 3 — от стены,

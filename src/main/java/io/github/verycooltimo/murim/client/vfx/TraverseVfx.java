@@ -234,14 +234,15 @@ public final class TraverseVfx {
         if (layer < 1 || offset.lengthSqr() < 1.0E-4D) {
             return;
         }
-        Vec3 end = entity.position();
+        // Событие приходит в начале рывка: конец пути — впереди, след рождается, когда тело там.
+        Vec3 end = entity.position().add(offset);
         Vec3 dir = offset.normalize();
         double len = Math.min(offset.length(), 3.5D);
         Vec3 side = new Vec3(-dir.z, 0.0D, dir.x);
-        STREAKS.add(streak(end.subtract(dir.scale(0.3D)).add(0.0D, 0.15D, 0.0D), dir.scale(-1.0D), len, 0.08D, 0.1D, 3.5F, 1.0F));
+        STREAKS.add(later(streak(end.subtract(dir.scale(0.3D)).add(0.0D, 0.15D, 0.0D), dir.scale(-1.0D), len, 0.08D, 0.1D, 3.5F, 1.0F), 3));
         if (layer >= 2) {
-            STREAKS.add(streak(end.subtract(dir.scale(0.6D)).add(side.scale(0.2D)).add(0.0D, 0.9D, 0.0D), dir.scale(-1.0D),
-                    len * 0.6D, 0.05D, 0.15D, 3.0F, 0.7F));
+            STREAKS.add(later(streak(end.subtract(dir.scale(0.6D)).add(side.scale(0.2D)).add(0.0D, 0.9D, 0.0D), dir.scale(-1.0D),
+                    len * 0.6D, 0.05D, 0.15D, 3.0F, 0.7F), 3));
         }
     }
 
@@ -272,10 +273,15 @@ public final class TraverseVfx {
             return;
         }
         Vec3 dir = offset.normalize();
-        Vec3 end = entity.position().add(0.0D, 1.0D, 0.0D);
-        STREAKS.add(streak(end.subtract(dir.scale(0.2D)), dir.scale(-1.0D), Math.min(offset.length(), 6.0D), 0.07D, 0.0D, 3.0F, 1.0F));
-        STREAKS.add(streak(end.subtract(dir.scale(0.4D)).add(0.0D, -0.85D, 0.0D), dir.scale(-1.0D),
-                Math.min(offset.length(), 6.0D) * 0.7D, 0.05D, 0.05D, 3.0F, 0.7F));
+        Vec3 end = entity.position().add(offset).add(0.0D, 1.0D, 0.0D);
+        STREAKS.add(later(streak(end.subtract(dir.scale(0.2D)), dir.scale(-1.0D), Math.min(offset.length(), 6.0D), 0.07D, 0.0D, 3.0F, 1.0F), 4));
+        STREAKS.add(later(streak(end.subtract(dir.scale(0.4D)).add(0.0D, -0.85D, 0.0D), dir.scale(-1.0D),
+                Math.min(offset.length(), 6.0D) * 0.7D, 0.05D, 0.05D, 3.0F, 0.7F), 4));
+    }
+
+    /** Тот же след, но рождается позже — когда тело долетит. */
+    private static Streak later(Streak s, int ticks) {
+        return new Streak(s.points(), s.width(), s.born() + ticks, s.life(), s.alpha(), s.colour());
     }
 
     private static Streak streak(Vec3 start, Vec3 back, double length, double width, double rise, float life, float alpha) {

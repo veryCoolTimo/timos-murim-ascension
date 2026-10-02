@@ -121,6 +121,9 @@ public final class StepVfx {
         return new Band(true, offset, length, born, 0.3F, a, b, top, turn, phase, width, NO_PINK, false, 0.65F);
     }
 
+    /** Рывок длится 5 тиков ({@code FootworkMotion}): эффекты прибытия ждут тело. */
+    private static final float ARRIVAL_DELAY = 4.0F;
+
     private static final List<Step> ACTIVE = new ArrayList<>();
     private static int clientTicks;
 
@@ -188,7 +191,9 @@ public final class StepVfx {
                 double jitter = 0.9D + 0.2D * r.nextDouble();
                 double len = Math.min(1.0D, b.length / distance);
                 double s0 = b.arrival ? 1.0D - b.offset / distance - len : b.offset / distance;
-                bands.add(new Band(b.arrival, b.offset, b.length, b.born, b.draw, b.a * jitter, b.b * jitter, b.top,
+                // Прибытие — когда тело долетело (рывок теперь идёт 5 тиков, а не телепортом).
+                float born = b.arrival ? b.born + ARRIVAL_DELAY : b.born;
+                bands.add(new Band(b.arrival, b.offset, b.length, born, b.draw, b.a * jitter, b.b * jitter, b.top,
                         b.turn, b.phase + (r.nextDouble() - 0.5D) * 20.0D, b.width, b.pink, b.low, b.bright));
                 spans.add(new double[]{s0, len});
             }
@@ -266,7 +271,7 @@ public final class StepVfx {
                     double len = big ? 0.18D : 0.10D + 0.06D * r.nextDouble();
                     double wid = big ? 0.09D : len * (0.5D + 0.1D * r.nextDouble());
                     float spin = (float) Math.toRadians(5.0D + 7.0D * r.nextDouble()) * (r.nextBoolean() ? 1 : -1);
-                    petals.add(new Petal(time + r.nextFloat() * 0.3F, at, vel, r.nextInt(4), spin, len, wid));
+                    petals.add(new Petal(time + ARRIVAL_DELAY + r.nextFloat() * 0.3F, at, vel, r.nextInt(4), spin, len, wid));
                 }
             }
         }
@@ -377,7 +382,7 @@ public final class StepVfx {
                     p.pos = p.pos.add(p.vel);
                 }
             }
-            if (age > 10.0F) {
+            if (age > 10.0F + ARRIVAL_DELAY) {
                 it.remove();
             }
         }
