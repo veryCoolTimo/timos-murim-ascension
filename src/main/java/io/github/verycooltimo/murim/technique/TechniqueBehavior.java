@@ -22,7 +22,7 @@ import java.util.Map;
 public sealed interface TechniqueBehavior
         permits TechniqueBehavior.MeleeArc, TechniqueBehavior.ProjectileFan, TechniqueBehavior.Dash,
                 TechniqueBehavior.PalmBlast, TechniqueBehavior.Step, TechniqueBehavior.Footwork,
-                TechniqueBehavior.PlumSlash, TechniqueBehavior.PlumWhirlwind, TechniqueBehavior.PlumExecution {
+                TechniqueBehavior.PlumSlash, TechniqueBehavior.PlumWhirlwind, TechniqueBehavior.PlumExecution, TechniqueBehavior.PlumRush {
 
     ResourceLocation MELEE_ARC = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "melee_arc");
     ResourceLocation PROJECTILE_FAN = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "projectile_fan");
@@ -33,6 +33,7 @@ public sealed interface TechniqueBehavior
     ResourceLocation PLUM_SLASH = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "plum_slash");
     ResourceLocation PLUM_WHIRLWIND = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "plum_whirlwind");
     ResourceLocation PLUM_EXECUTION = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "plum_execution");
+    ResourceLocation PLUM_RUSH = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "plum_rush");
 
     ResourceLocation type();
 
@@ -276,6 +277,21 @@ public sealed interface TechniqueBehavior
         }
     }
 
+    /** Меч Семи Цветков Сливы, «Натиск»: дальний ураган и укол, см. RushRules. */
+    record PlumRush() implements TechniqueBehavior {
+        public static final MapCodec<PlumRush> CODEC = MapCodec.unit(PlumRush::new);
+
+        @Override
+        public float damage() {
+            return 0.0F;
+        }
+
+        @Override
+        public ResourceLocation type() {
+            return PLUM_RUSH;
+        }
+    }
+
     Map<ResourceLocation, MapCodec<? extends TechniqueBehavior>> TYPES = Map.of(
             MELEE_ARC, MeleeArc.CODEC,
             PROJECTILE_FAN, ProjectileFan.CODEC,
@@ -285,7 +301,8 @@ public sealed interface TechniqueBehavior
             FOOTWORK, Footwork.CODEC,
             PLUM_SLASH, PlumSlash.CODEC,
             PLUM_WHIRLWIND, PlumWhirlwind.CODEC,
-            PLUM_EXECUTION, PlumExecution.CODEC);
+            PLUM_EXECUTION, PlumExecution.CODEC,
+            PLUM_RUSH, PlumRush.CODEC);
 
     Codec<TechniqueBehavior> CODEC = ResourceLocation.CODEC
             .dispatch("type", TechniqueBehavior::type, type -> {

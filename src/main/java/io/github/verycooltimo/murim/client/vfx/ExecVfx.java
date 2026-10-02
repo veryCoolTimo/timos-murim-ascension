@@ -146,16 +146,11 @@ public final class ExecVfx {
                 c.hitAt = p.centre();
                 Minecraft mc = Minecraft.getInstance();
                 if (mc.player != null && mc.player.getId() == c.entityId) {
-                    // Надпись — по читаемому попаданию (codex 02.10), не раньше.
-                    if (c.layer >= 3) {
-                        TechniqueCaption.show(Component.translatable("technique.murim.seven_plum_blossoms.school"),
-                                Component.translatable("technique.murim.seven_plum_blossoms.execution"), 34);
-                    }
                     ImpactFrames.trigger(p.centre());
                     SpeedLines.radial(0.5F, 0.5F, 1.0F, 7, SpeedLines.WHITE);
                 }
                 if (mc.player != null && mc.player.position().distanceTo(p.centre()) < 16.0D) {
-                    CameraShakeHandler.quake(mc.player.getId() == c.entityId ? 0.6F : 0.4F, 14);
+                    CameraShakeHandler.quake(mc.player.getId() == c.entityId ? 0.85F : 0.5F, 16);
                     mc.player.level().playLocalSound(p.centre().x, p.centre().y, p.centre().z,
                             net.minecraft.sounds.SoundEvents.PLAYER_ATTACK_SWEEP, net.minecraft.sounds.SoundSource.PLAYERS, 1.0F, 0.7F, false);
                 }
@@ -277,7 +272,7 @@ public final class ExecVfx {
                     int ct = ExecRules.contact(i);
                     if (s <= ct + ExecRules.PASS_TICKS) {
                         tr.add(p.add(0.0D, 1.1D, 0.0D));
-                        if (tr.size() > 10) {
+                        if (tr.size() > 18) {
                             tr.remove(0);
                         }
                     } else if (!tr.isEmpty()) {
@@ -293,7 +288,7 @@ public final class ExecVfx {
                         dustAt(c, p);
                     }
                     // Распад: лепестки рвутся с тела, наследуя направление полёта.
-                    if (s > ExecRules.FINAL && s <= ExecRules.FINAL + ExecRules.DISSOLVE && c.layer >= 3) {
+                    if (s > ExecRules.FINAL + ExecRules.DISSOLVE_DELAY && s <= ExecRules.FINAL + ExecRules.DISSOLVE_DELAY + ExecRules.DISSOLVE && c.layer >= 3) {
                         Vec3 vel = new Vec3(p.x - c.centre.x, 0.0D, p.z - c.centre.z).normalize().scale(0.12D);
                         for (int k = 0; k < 9; k++) {
                             // Точки тела: корпус вытянут вдоль полёта — разброс вдоль скорости больше.
@@ -304,6 +299,11 @@ public final class ExecVfx {
                                     c.random.nextGaussian() * 0.04D));
                         }
                     }
+                }
+                // Надпись — в паузе перед казнью (codex 02.10), центр свободен.
+                if (s == ExecRules.FINAL - 6 && ExecRules.finale(c.layer) && c.layer >= 3 && mc.player != null && mc.player.getId() == c.entityId) {
+                    TechniqueCaption.show(Component.translatable("technique.murim.seven_plum_blossoms.school"),
+                            Component.translatable("technique.murim.seven_plum_blossoms.execution"), 30);
                 }
                 if (ExecRules.finale(c.layer) && s >= ExecRules.DASH && s <= ExecRules.DASH + ExecRules.DASH_TICKS && e != null) {
                     c.dash.add(e.position().add(0.0D, 1.1D, 0.0D));
@@ -399,7 +399,7 @@ public final class ExecVfx {
                     // Внутреннее свечение копий: мягкое розовое пятно в груди.
                     if (s >= 0.0F && c.centre != null) {
                         for (int i = 0; i < ExecRules.clones(c.layer); i++) {
-                            float dz = (float) Mth.clamp((s - ExecRules.FINAL) / ExecRules.DISSOLVE, 0.0D, 1.0D);
+                            float dz = (float) Mth.clamp((s - ExecRules.FINAL - ExecRules.DISSOLVE_DELAY) / ExecRules.DISSOLVE, 0.0D, 1.0D);
                             if (dz < 1.0F) {
                                 Vec3 cp = ExecRules.clone(c.origin, c.centre, c.base, i, s).add(0.0D, 1.1D, 0.0D);
                                 PlumVfx.glow(g, pose, camera, cp, 0.9D, 0.18F * (1.0F - dz), PINK);
@@ -453,7 +453,7 @@ public final class ExecVfx {
                 for (int i = 0; i < ExecRules.clones(c.layer); i++) {
                     int ct = ExecRules.contact(i);
                     // Клоны стоят за спиной жертвы до финала и рассыпаются вместе с шестью разрезами.
-                    float dissolve = (float) Mth.clamp((s - ExecRules.FINAL) / ExecRules.DISSOLVE, 0.0D, 1.0D);
+                    float dissolve = (float) Mth.clamp((s - ExecRules.FINAL - ExecRules.DISSOLVE_DELAY) / ExecRules.DISSOLVE, 0.0D, 1.0D);
                     if (dissolve >= 1.0F) {
                         continue;
                     }
@@ -463,7 +463,9 @@ public final class ExecVfx {
                     // Приземлившись, клон смотрит дальше по ходу пролёта — спиной к жертве.
                     float yaw = d.lengthSqr() > 1.0E-6D ? (float) Math.toDegrees(Math.atan2(-d.x, d.z))
                             : (float) Math.toDegrees(Math.atan2(-(p.x - c.centre.x), p.z - c.centre.z));
-                    float alpha = 0.72F * (1.0F - dissolve) * (float) Mth.clamp(s / 3.0D, 0.0D, 1.0D);
+                    // После своего удара копия притухает: яркость — у того, кто сейчас бьёт.
+                    float spent = s > ct + ExecRules.PASS_TICKS ? 0.55F : 1.0F;
+                    float alpha = 0.72F * spent * (1.0F - dissolve) * (float) Mth.clamp(s / 3.0D, 0.0D, 1.0D);
                     // Смазанное движение: три бледные копии позади по тому же маршруту.
                     boolean moving = s < ct + ExecRules.PASS_TICKS + 3;
                     for (int g = 3; g >= 0; g--) {
@@ -478,6 +480,9 @@ public final class ExecVfx {
                         load(parts, c.basePose);
                         float[] lr = clonePose(model, i, sg, ct);
                         float ag = g == 0 ? alpha : alpha * (0.28F - 0.07F * g);
+                        // Вблизи камеры копия тает: приземлившийся клон не закрывает экран.
+                        double cd = pg.add(0.0D, 1.0D, 0.0D).distanceTo(mc.gameRenderer.getMainCamera().getPosition());
+                        ag *= (float) Mth.clamp((cd - 1.5D) / 2.0D, 0.0D, 1.0D);
                         draw(model, ps, buffers.getBuffer(type), pg, yg, lr[0], lr[1], ag,
                                 g == 0 ? (dissolve > 0.0F ? 0xFFD9EA : 0xFBEFFA) : 0xF3B9D6);
                     }
@@ -601,7 +606,7 @@ public final class ExecVfx {
             Vec3[] p = tr.toArray(new Vec3[0]);
             double[] w = new double[p.length];
             for (int i = 0; i < p.length; i++) {
-                w[i] = 0.18D * i / (p.length - 1.0D);
+                w[i] = 0.2D * i / (p.length - 1.0D);
             }
             PlumVfx.strip(v, pose, camera, p, PlumVfx.scale(w, 2.0D), 0.1F, COLD);
             PlumVfx.strip(v, pose, camera, p, w, 0.32F, COLD);
@@ -613,6 +618,10 @@ public final class ExecVfx {
     private static void slashes(Cast c, PoseStack.Pose pose, Vec3 camera, VertexConsumer v, float s) {
         for (int i = 0; i < ExecRules.clones(c.layer); i++) {
             float t = s - ExecRules.contact(i);
+            // Метка будущего разреза висит на цели до казни.
+            if (t > 6.0F && s < ExecRules.FINAL && ExecRules.finale(c.layer)) {
+                slashLine(c, pose, camera, v, i, 0.35F, 1.0F, 0.9D);
+            }
             if (t < 0.0F || t > 8.0F) {
                 continue;
             }
@@ -669,7 +678,8 @@ public final class ExecVfx {
         // Короткий яркий пик и быстрое затухание; шесть тонких линий сходятся в корпусе цели.
         float a = (float) PlumVfx.curve(t, 0.0, 1.0, 2.0, 1.0, 8.0, 0.0);
         for (int i = 0; i < 6; i++) {
-            slashLine(c, pose, camera, v, i, a, Mth.clamp(t / 1.0F, 0.0F, 1.0F), 2.8D);
+            // Шесть огромных разрезов, 8–10 блоков, белое ядро.
+            slashLine(c, pose, camera, v, i, a, Mth.clamp(t / 0.8F, 0.0F, 1.0F), 3.2D);
         }
     }
 

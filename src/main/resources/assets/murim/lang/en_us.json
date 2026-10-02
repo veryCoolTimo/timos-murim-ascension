@@ -164,5 +164,8 @@
   "technique.murim.seven_plum_blossoms.whirlwind": "Plum Blossom Whirlwind",
   "technique.murim.seven_plum_execution": "Seven Plum Blossoms Sword: Execution",
   "technique.murim.seven_plum_execution.weakness": "The clones strike where you stood: step off the gathering point before they arrive.",
-  "technique.murim.seven_plum_blossoms.execution": "Plum Blossom Execution"
+  "technique.murim.seven_plum_blossoms.execution": "Plum Blossom Execution",
+  "technique.murim.seven_plum_rush": "Seven Plum Blossoms Sword: Rush",
+  "technique.murim.seven_plum_rush.weakness": "A long stance and a straight line: step out of the hurricane's path.",
+  "technique.murim.seven_plum_blossoms.rush": "Plum Blossom Rush"
 }

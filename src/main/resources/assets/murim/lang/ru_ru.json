@@ -144,5 +144,8 @@
   "technique.murim.seven_plum_blossoms.whirlwind": "Вихрь Цветущей Сливы",
   "technique.murim.seven_plum_execution": "Меч Семи Цветков Сливы: Казнь",
   "technique.murim.seven_plum_execution.weakness": "Клоны бьют туда, где ты стоял: сойди с точки сбора, пока они не добежали.",
-  "technique.murim.seven_plum_blossoms.execution": "Казнь Цветущей Сливы"
+  "technique.murim.seven_plum_blossoms.execution": "Казнь Цветущей Сливы",
+  "technique.murim.seven_plum_rush": "Меч Семи Цветков Сливы: Натиск",
+  "technique.murim.seven_plum_rush.weakness": "Долгая концентрация и прямая линия: сойди с пути урагана.",
+  "technique.murim.seven_plum_blossoms.rush": "Натиск Цветущей Сливы"
 }

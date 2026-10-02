@@ -17,6 +17,8 @@ public final class ExecRules {
     public static final int CONTACT_GAP = 3;
     public static final int PASS_TICKS = 6;
     public static final int DISSOLVE = 6;
+    /** Клоны рассыпаются через 2 тика после раскрытия разрезов. */
+    public static final int DISSOLVE_DELAY = 2;
     public static final int DASH = 46;
     public static final int DASH_TICKS = 12;
     public static final int FINAL = 64;
@@ -27,6 +29,9 @@ public final class ExecRules {
      */
     public static final double[] SECTORS = {-20.0D, 20.0D, -60.0D, 60.0D, -100.0D, 100.0D};
     public static final double APPROACH = 3.5D;
+    /** Разные высоты дуг и боковые выносы: шесть маршрутов читаются отдельно (codex 02.10). */
+    private static final double[] ARC = {0.5D, 1.9D, 1.0D, 2.4D, 0.3D, 1.5D};
+    private static final double[] BOW = {-0.6D, 0.6D, -1.2D, 1.2D, -1.8D, 1.8D};
 
     public static final double DMG_CLONE = 0.2D;
     public static final double DMG_FINAL = 0.4D;
@@ -63,7 +68,10 @@ public final class ExecRules {
         Vec3 out = new Vec3(approach.x - origin.x, 0.0D, approach.z - origin.z);
         out = out.lengthSqr() < 1.0E-6D ? dir : out.normalize();
         Vec3 exitP = origin.add(out.scale(1.0D));
-        Vec3 behind = centre.subtract(dir.scale(Math.min(3.0D, reach + 0.5D)));
+        // Клоны садятся близко за жертвой; оригинал уходит дальше них (автор 02.10).
+        Vec3 behind = centre.subtract(dir.scale(Math.min(2.2D, reach * 0.7D)));
+        Vec3 sideV = new Vec3(-dir.z, 0.0D, dir.x);
+        double arc = ARC[i];
         int c = contact(i);
         if (s <= EXIT) {
             double k = Math.max(0.0D, s) / EXIT;
@@ -71,11 +79,12 @@ public final class ExecRules {
         }
         if (s <= SPREAD) {
             double k = (s - EXIT) / (double) (SPREAD - EXIT);
-            return exitP.lerp(approach, k).add(0.0D, 1.0D + 0.6D * Math.sin(Math.PI * k), 0.0D);
+            return exitP.lerp(approach, k).add(sideV.scale(BOW[i] * Math.sin(Math.PI * k)))
+                    .add(0.0D, 1.0D + arc * Math.sin(Math.PI * k), 0.0D);
         }
         if (s <= c) {
             double k = (s - SPREAD) / (double) (c - SPREAD);
-            return approach.lerp(centre, k * k).add(0.0D, 1.0D * (1.0D - k) + 0.5D * Math.sin(Math.PI * k), 0.0D);
+            return approach.lerp(centre, k * k).add(0.0D, 1.0D * (1.0D - k) + 0.4D * arc * Math.sin(Math.PI * k), 0.0D);
         }
         if (s <= c + PASS_TICKS) {
             double k = (s - c) / (double) PASS_TICKS;

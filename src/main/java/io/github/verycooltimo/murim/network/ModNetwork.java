@@ -19,7 +19,7 @@ import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 public final class ModNetwork {
 
     /** Версия протокола. Поднимать при любом несовместимом изменении пакетов. */
-    private static final String VERSION = "10";
+    private static final String VERSION = "11";
 
     @SubscribeEvent
     static void register(RegisterPayloadHandlersEvent event) {
@@ -94,6 +94,8 @@ public final class ModNetwork {
                 (payload, context) -> ClientPayloadBridge.handleWhirl(payload));
         registrar.playToClient(ExecPayload.TYPE, ExecPayload.STREAM_CODEC,
                 (payload, context) -> ClientPayloadBridge.handleExec(payload));
+        registrar.playToClient(RushPayload.TYPE, RushPayload.STREAM_CODEC,
+                (payload, context) -> ClientPayloadBridge.handleRush(payload));
         registrar.playToClient(StepPayload.TYPE, StepPayload.STREAM_CODEC,
                 (payload, context) -> ClientPayloadBridge.handleStep(payload));
 

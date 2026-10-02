@@ -58,6 +58,9 @@ public final class BehaviorExecutor {
         if (behavior instanceof TechniqueBehavior.PlumExecution) {
             return execStart(player, definition.id());
         }
+        if (behavior instanceof TechniqueBehavior.PlumRush) {
+            return rushStart(player, definition.id());
+        }
         if (behavior instanceof TechniqueBehavior.Footwork) {
             io.github.verycooltimo.murim.combat.FootworkService.windEvade(player, definition.id());
             return false;
@@ -617,6 +620,146 @@ public final class BehaviorExecutor {
         }
     }
 
+    // ------------------------------------------------------------------ Натиск Цветущей Сливы
+
+    /** Выпуск урагана: направление по взгляду фиксируется здесь; цель — первая на пути. */
+    private static boolean rushStart(ServerPlayer player, net.minecraft.resources.ResourceLocation id) {
+        int layer = Math.max(0, io.github.verycooltimo.murim.mastery.MasteryService.layer(player, id));
+        double base = player.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE);
+        Vec3 look = player.getLookAngle();
+        Vec3 f = new Vec3(look.x, 0.0D, look.z);
+        f = f.lengthSqr() < 1.0E-6D ? new Vec3(0.0D, 0.0D, 1.0D) : f.normalize();
+        if (layer <= 0) {
+            boolean hit = false;
+            double cos = Math.cos(Math.toRadians(PlumRules.TRAINING_ARC / 2.0D));
+            for (LivingEntity t : candidates(player, player.getBoundingBox().inflate(PlumRules.TRAINING_REACH + 1.0D))) {
+                if (inArc(player.getEyePosition(), look, t.getBoundingBox(), PlumRules.TRAINING_REACH, cos)
+                        && t.hurt(player.damageSources().playerAttack(player), (float) base)) {
+                    hit = true;
+                }
+            }
+            return hit;
+        }
+        Vec3 o = player.position();
+        // Наводка: ближайший противник в конусе 30° до 16 блоков — ураган летит на него.
+        double best = Double.MAX_VALUE;
+        double cone = Math.cos(Math.toRadians(30.0D));
+        Vec3 aimF = f;
+        for (LivingEntity t : candidates(player, player.getBoundingBox().inflate(RushRules.RANGE + 0.5D))) {
+            Vec3 to = new Vec3(t.getX() - o.x, 0.0D, t.getZ() - o.z);
+            double d = to.length();
+            if (t instanceof net.minecraft.world.entity.decoration.ArmorStand || d < 1.0D || d > RushRules.RANGE
+                    || to.normalize().dot(f) < cone || !player.hasLineOfSight(t)) {
+                continue;
+            }
+            if (d < best) {
+                best = d;
+                aimF = to.normalize();
+            }
+        }
+        f = aimF;
+        player.setData(io.github.verycooltimo.murim.registry.ModAttachments.RUSH,
+                new double[] {o.x, o.y, o.z, f.x, f.z, layer, -1, -1, 0, 0, 0, 0, 0});
+        net.neoforged.neoforge.network.PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
+                new io.github.verycooltimo.murim.network.RushPayload(player.getId(), o, o, (float) Math.toDegrees(Math.atan2(-f.x, f.z)), layer, 0));
+        return false;
+    }
+
+    /** Полёт урагана, обволакивание, рывок и укол, см. RushRules. */
+    public static void rushTick(ServerPlayer player, net.minecraft.resources.ResourceLocation id, int since) {
+        double[] r = player.getData(io.github.verycooltimo.murim.registry.ModAttachments.RUSH);
+        int layer = (int) r[5];
+        if (layer <= 0) {
+            return;
+        }
+        double base = player.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE)
+                * RushRules.power(layer);
+        Vec3 o = new Vec3(r[0], r[1], r[2]);
+        Vec3 f = new Vec3(r[3], 0.0D, r[4]);
+        if (r[6] < 0.0D) {
+            // Полёт: передний край проверяется непрерывно, между прошлым и текущим тиком.
+            double from = RushRules.head(since - 1) - 0.4D;
+            double to = RushRules.head(since);
+            Vec3 mid = o.add(f.scale((from + to) * 0.5D));
+            LivingEntity hit = null;
+            double best = Double.MAX_VALUE;
+            for (LivingEntity t : candidates(player, new AABB(mid, mid).inflate(RushRules.HALF_WIDTH + 1.5D, 3.0D, RushRules.HALF_WIDTH + 1.5D))) {
+                if (t instanceof net.minecraft.world.entity.decoration.ArmorStand) {
+                    continue;
+                }
+                Vec3 rel = t.position().subtract(o);
+                double along = rel.x * f.x + rel.z * f.z;
+                double off = Math.abs(rel.x * f.z - rel.z * f.x);
+                if (along >= from - 0.5D && along <= to + 0.5D && off <= RushRules.HALF_WIDTH + t.getBbWidth() * 0.5D && along < best) {
+                    best = along;
+                    hit = t;
+                }
+            }
+            if (hit != null) {
+                r[6] = since;
+                r[7] = hit.getId();
+                r[8] = hit.getX();
+                r[9] = hit.getY();
+                r[10] = hit.getZ();
+                player.setData(io.github.verycooltimo.murim.registry.ModAttachments.RUSH, r);
+                rushHurt(player, id, hit, base * RushRules.DMG_FIRST, r);
+                net.neoforged.neoforge.network.PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
+                        new io.github.verycooltimo.murim.network.RushPayload(player.getId(), o, hit.position(), 0.0F, layer, 1));
+            }
+            return;
+        }
+        int t = since - (int) r[6];
+        LivingEntity target = r[7] >= 0 && player.level().getEntity((int) r[7]) instanceof LivingEntity le && le.isAlive() ? le : null;
+        Vec3 c = new Vec3(r[8], r[9], r[10]);
+        // Обволакивание: держит у точки, два новых удара.
+        if (target != null && t < RushRules.WRAP && flatDistance(target.position(), c) < 2.5D) {
+            Vec3 pull = c.subtract(target.position());
+            target.setDeltaMovement(target.getDeltaMovement().multiply(0.4D, 1.0D, 0.4D).add(pull.x * 0.15D, 0.0D, pull.z * 0.15D));
+            target.hurtMarked = true;
+            if (t == RushRules.PULSES[1] || t == RushRules.PULSES[2]) {
+                rushHurt(player, id, target, base * RushRules.DMG_PULSE, r);
+            }
+        }
+        // Рывок издалека: прямо к цели, с боковым смещением, и за неё на 1,3 блока.
+        if (t == RushRules.DASH && target != null) {
+            Vec3 aim = target.position();
+            Vec3 dir = new Vec3(aim.x - player.getX(), 0.0D, aim.z - player.getZ());
+            if (dir.lengthSqr() > 1.0E-4D && dir.length() < RushRules.RANGE + 6.0D) {
+                dir = dir.normalize();
+                Vec3 dest = aim.add(dir.scale(target.getBbWidth() * 0.5D + 1.3D)).add(new Vec3(-dir.z, 0.0D, dir.x).scale(0.6D));
+                Vec3 path = new Vec3(dest.x - player.getX(), 0.0D, dest.z - player.getZ());
+                io.github.verycooltimo.murim.combat.FootworkService.sendDash(player, path.normalize(), path.length(), RushRules.DASH_TICKS);
+            }
+        }
+        // Окно укола: позиция игрока на сервере отстаёт от плавного рывка на пару тиков.
+        if (t >= RushRules.THRUST - 2 && t <= RushRules.THRUST + 6 && r.length > 12 && r[12] < 0.5D && target != null
+                && flatDistance(target.position(), player.position()) < 3.0D) {
+            r[12] = 1.0D;
+            if (rushHurt(player, id, target, base * RushRules.DMG_THRUST, r)) {
+                net.neoforged.neoforge.network.PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
+                        new io.github.verycooltimo.murim.network.RushPayload(player.getId(), o,
+                                target.position().add(0.0D, target.getBbHeight() * 0.6D, 0.0D), 0.0F, layer, 2));
+            }
+        }
+    }
+
+    private static boolean rushHurt(ServerPlayer player, net.minecraft.resources.ResourceLocation id, LivingEntity t, double amount, double[] r) {
+        t.invulnerableTime = 0;
+        if (!t.hurt(player.damageSources().playerAttack(player), (float) amount)) {
+            return false;
+        }
+        if (r[11] < 0.5D) {
+            r[11] = 1.0D;
+            player.setData(io.github.verycooltimo.murim.registry.ModAttachments.RUSH, r);
+            boolean boss = t.getType().is(net.neoforged.neoforge.common.Tags.EntityTypes.BOSSES);
+            int ticks = t instanceof net.minecraft.world.entity.player.Player ? 12 : boss ? 10 : RushRules.END;
+            t.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.MOVEMENT_SLOWDOWN, ticks, 9, false, false, false));
+            t.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.WEAKNESS, ticks, 9, false, false, false));
+        }
+        io.github.verycooltimo.murim.mastery.MasteryService.onHit(player, id, t);
+        return true;
+    }
+
     // ------------------------------------------------------------------ Казнь Цветущей Сливы
 
     /** Выход клонов: цель по взгляду до 6 блоков фиксируется вместе с точкой у её стоп. */
@@ -695,7 +838,8 @@ public final class BehaviorExecutor {
             Vec3 dir = new Vec3(aim.x - from.x, 0.0D, aim.z - from.z);
             if (dir.lengthSqr() > 1.0E-4D) {
                 dir = dir.normalize();
-                Vec3 dest = aim.add(dir.scale(2.0D)).add(new Vec3(-dir.z, 0.0D, dir.x).scale(0.5D));
+                // Дальше клонов: те садятся в ≤2,2 блока, оригинал — в 4,5.
+                Vec3 dest = aim.add(dir.scale(4.5D));
                 Vec3 path = new Vec3(dest.x - player.getX(), 0.0D, dest.z - player.getZ());
                 io.github.verycooltimo.murim.combat.FootworkService.sendDash(player, path.normalize(), path.length(), ExecRules.DASH_TICKS);
             }
