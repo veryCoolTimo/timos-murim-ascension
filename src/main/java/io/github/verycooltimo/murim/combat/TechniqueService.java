@@ -184,6 +184,12 @@ public final class TechniqueService {
             }
         }
 
+        // Семь Цветков Сливы: рука вперёд — выросшее дерево разрезов падает на цель.
+        if (technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.PlumSlash
+                && state.tick() - technique.startTickOf(TechniquePhase.IMPACT) == io.github.verycooltimo.murim.technique.PlumRules.FALL_TICK) {
+            io.github.verycooltimo.murim.technique.BehaviorExecutor.plumFall(player, technique.id());
+        }
+
         // Шаг на высшем слое: ещё два рывка через равные промежутки.
         if (technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.Step) {
             int layer = Math.max(0, io.github.verycooltimo.murim.mastery.MasteryService.layer(player, technique.id()));

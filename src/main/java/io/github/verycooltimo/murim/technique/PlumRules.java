@@ -32,6 +32,19 @@ public final class PlumRules {
     public static final double TRAINING_REACH = 2.4D;
     public static final double TRAINING_ARC = 55.0D;
 
+    /** Через сколько тиков после первого удара рука уходит вперёд и дерево падает (анимация 1,45 с). */
+    public static final int FALL_TICK = 17;
+
+    /** Коэффициент удара падающего дерева: слой 1 — один ствол, дальше крона тяжелее. */
+    public static double fallCoefficient(int layer) {
+        return layer <= 0 ? 0.0D : layer == 1 ? 0.4D : layer <= 3 ? 0.6D : 0.8D;
+    }
+
+    /** Основание ствола: от стоп вперёд, не дальше ~2,4 блока (где бьёт и клиентский ствол). */
+    public static double trunkOffset(double length) {
+        return 0.4D + Math.min(2.4D, 0.5D * length);
+    }
+
     /** Розовое цветение начинается с третьего слоя (до этого разрез холодный). */
     public static boolean blossoms(int layer) {
         return layer >= 3;

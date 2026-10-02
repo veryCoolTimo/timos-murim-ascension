@@ -188,6 +188,47 @@ public final class BehaviorExecutor {
         return anyHit;
     }
 
+    /**
+     * Падение дерева: полоса за основанием ствола вперёд на высоту дерева, шириной ~3,6 блока;
+     * урон — урон в руке × коэффициент падения, по одному разу на цель.
+     */
+    public static void plumFall(ServerPlayer player, net.minecraft.resources.ResourceLocation id) {
+        int layer = Math.max(0, io.github.verycooltimo.murim.mastery.MasteryService.layer(player, id));
+        double coefficient = PlumRules.fallCoefficient(layer);
+        if (coefficient <= 0.0D) {
+            return;
+        }
+        float damage = (float) (player.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE) * coefficient);
+        Vec3 origin = player.position();
+        Vec3 look = player.getLookAngle();
+        Vec3 forward = new Vec3(look.x, 0.0D, look.z);
+        forward = forward.lengthSqr() < 1.0E-6D ? new Vec3(0.0D, 0.0D, 1.0D) : forward.normalize();
+        Vec3 right = new Vec3(-forward.z, 0.0D, forward.x);
+        double base = PlumRules.trunkOffset(PlumRules.length(layer));
+        double reach = base + PlumRules.height(layer) * 0.9D;
+        AABB search = new AABB(origin, origin).inflate(reach + 1.0D, 3.0D, reach + 1.0D);
+        int hits = 0;
+        for (LivingEntity target : candidates(player, search)) {
+            if (hits >= 8) {
+                break;
+            }
+            AABB box = target.getBoundingBox();
+            Vec3 c = box.getCenter().subtract(origin);
+            double half = Math.max(box.getXsize(), box.getZsize()) / 2.0D;
+            double s = c.dot(forward);
+            if (s < base - 0.8D - half || s > reach + half || Math.abs(c.dot(right)) > 1.8D + half
+                    || box.minY > origin.y + 2.5D) {
+                continue;
+            }
+            if (target.hurt(player.damageSources().playerAttack(player), damage)) {
+                hits++;
+                target.push(forward.x * 0.15D, -0.05D, forward.z * 0.15D);
+                target.hurtMarked = true;
+                io.github.verycooltimo.murim.mastery.MasteryService.onHit(player, id, target);
+            }
+        }
+    }
+
     private static boolean projectileFan(ServerPlayer player, TechniqueBehavior.ProjectileFan fan,
                                          net.minecraft.resources.ResourceLocation id, float power) {
         Vec3 look = player.getLookAngle();

@@ -41,8 +41,8 @@ public final class PlumVfx {
 
     private static final net.minecraft.resources.ResourceLocation TECHNIQUE =
             net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "seven_plum_blossoms");
-    /** Выпуск через 8 тиков после начала (windup спецификации). */
-    private static final int COMMIT = 8;
+    /** Первый удар вверх — через 12 тиков после начала: сперва стойка и сбор ци (автор 02.10). */
+    private static final int COMMIT = 12;
 
     private static final VfxColour COLD = new VfxColour(0xC9 / 255.0F, 0xE7 / 255.0F, 0xF4 / 255.0F);
     private static final VfxColour PINK = new VfxColour(0xF1 / 255.0F, 0x9B / 255.0F, 0xC5 / 255.0F);
@@ -234,7 +234,10 @@ public final class PlumVfx {
                 p.vel = new Vec3(p.vel.x * 0.88D, p.vel.y * 0.88D - 0.004D, p.vel.z * 0.88D);
                 p.pos = p.pos.add(p.vel);
             }
-            if (clientTicks - c.start > 40) {
+            if (c.slashTick >= 0 && clientTicks - c.slashTick == PlumRules.FALL_TICK + 6) {
+                landing(c);
+            }
+            if (clientTicks - c.start > 70) {
                 it.remove();
             }
         }
@@ -371,7 +374,7 @@ public final class PlumVfx {
      * коридоре не дальше ~2,4 блока.
      */
     private static Vec3 trunkBase(Cast c) {
-        return c.origin.add(c.forward.scale(0.4D + Math.min(2.4D, 0.5D * c.length))).add(0.0D, 0.02D, 0.0D);
+        return c.origin.add(c.forward.scale(PlumRules.trunkOffset(c.length))).add(0.0D, 0.02D, 0.0D);
     }
 
     /**
@@ -385,11 +388,16 @@ public final class PlumVfx {
         double wScale = PlumRules.width(c.layer) / 1.4D;
         Vec3 base = trunkBase(c);
         Vec3 top = base.add(0.0D, h, 0.0D).add(c.forward.scale(0.15D));
-        c.branches.add(new Branch(base, base.lerp(top, 0.5D).add(c.right.scale(0.08D)), top, 0.42D * wScale, 0.0F, 1.5F, 0));
-        int count = c.layer <= 1 ? 0 : Math.min(12, 2 * (c.layer - 1));
+        // Ствол — от самого пола, в 2–3 раза толще ветвей (разбор codex 02.10).
+        c.branches.add(new Branch(base.add(0.0D, -0.02D, 0.0D), base.lerp(top, 0.5D).add(c.right.scale(0.08D)), top,
+                0.55D * wScale, 0.0F, 2.4F, 0));
+        int[] counts = {0, 0, 4, 6, 10, 12, 14, 16};
+        int count = counts[Math.max(0, Math.min(7, c.layer))];
         for (int i = 0; i < count; i++) {
             double at = 0.22D + 0.62D * (i + 0.5D) / count + (r.nextDouble() - 0.5D) * 0.06D;
             int side = i % 2 == 0 ? 1 : -1;
+            // Каждая третья ветвь загибается через ствол: появляются пересечения ударов (ref6).
+            boolean cross = i % 3 == 2;
             // Крона раскинута шире ствола (ref8): ветви пологие, выше — круче.
             double el = Math.toRadians(12.0D + 28.0D * r.nextDouble() + 20.0D * at);
             double len = (2.1D + 1.4D * r.nextDouble()) * (1.0D - 0.3D * at) * (h / 4.8D);
@@ -399,7 +407,8 @@ public final class PlumVfx {
             Vec3 end = start.add(dir.scale(len));
             // Дуга-удар выгибается вверх, как серп взмаха.
             Vec3 ctrl = start.add(dir.scale(len * 0.5D)).add(0.0D, len * 0.2D, 0.0D);
-            float born = 1.4F + 0.65F * i;
+            // Быстрые боковые взмахи (анимация 0,7–1,15 с): ветвь на каждый.
+            float born = 2.0F + 9.0F * i / Math.max(1, count);
             double width = (0.17D + 0.05D * r.nextDouble()) * (1.0D - 0.4D * at) * wScale;
             c.branches.add(new Branch(start, ctrl, end, width, born, 0.6F, 1));
             if (c.layer >= 4) {
@@ -415,6 +424,54 @@ public final class PlumVfx {
         }
     }
 
+    /**
+     * Падение дерева: рука вперёд (1,45 с) — дерево валится вперёд вокруг основания ствола,
+     * разгоняясь, как под тяжестью, до ~85° за 7 тиков.
+     */
+    private static Vec3 fall(Cast c, Vec3 p, float age) {
+        double k = Mth.clamp((age - PlumRules.FALL_TICK) / 7.0D, 0.0D, 1.0D);
+        if (k <= 0.0D) {
+            return p;
+        }
+        double th = Math.toRadians(85.0D) * k * k;
+        Vec3 base = trunkBase(c);
+        Vec3 d = p.subtract(base);
+        double f = d.dot(c.forward);
+        double up = d.y;
+        double f2 = f * Math.cos(th) + up * Math.sin(th);
+        double up2 = up * Math.cos(th) - f * Math.sin(th);
+        return p.add(c.forward.scale(f2 - f)).add(0.0D, up2 - up, 0.0D);
+    }
+
+    /** Удар упавшего дерева о землю: пыль по линии падения, лепестки, виньетка своему игроку. */
+    private static void landing(Cast c) {
+        Random r = c.random;
+        Vec3 base = trunkBase(c);
+        double h = PlumRules.height(c.layer);
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.level != null && !mc.level.getBlockState(net.minecraft.core.BlockPos.containing(base.add(0.0D, -0.2D, 0.0D))).isAir()) {
+            int n = 4 + 2 * Math.min(4, c.layer);
+            for (int i = 0; i < n; i++) {
+                Vec3 at = base.add(c.forward.scale(h * (0.25D + 0.7D * r.nextDouble()))).add(c.right.scale((r.nextDouble() - 0.5D) * 2.4D))
+                        .add(0.0D, 0.15D, 0.0D);
+                Vec3 side = c.right.scale(r.nextBoolean() ? 1.0D : -1.0D);
+                Vec3 vel = side.scale(0.1D + 0.1D * r.nextDouble()).add(c.forward.scale(0.05D)).add(0.0D, 0.03D, 0.0D);
+                c.puffs.add(new Puff(at, vel, 12 + r.nextInt(8), r.nextInt(16), 0.3D + 0.15D * r.nextDouble()));
+            }
+        }
+        if (PlumRules.blossoms(c.layer)) {
+            for (int i = 0; i < 10; i++) {
+                Vec3 at = base.add(c.forward.scale(h * (0.3D + 0.7D * r.nextDouble()))).add(c.right.scale((r.nextDouble() - 0.5D) * 2.4D))
+                        .add(0.0D, 0.3D + 0.6D * r.nextDouble(), 0.0D);
+                c.petals.add(new Petal(at, new Vec3((r.nextDouble() - 0.5D) * 0.12D, 0.06D + 0.06D * r.nextDouble(), (r.nextDouble() - 0.5D) * 0.12D),
+                        r.nextInt(4), (float) ((r.nextDouble() - 0.5D) * 0.5D), 0.07D + 0.05D * r.nextDouble()));
+            }
+        }
+        if (mc.player != null && mc.player.getId() == c.entityId) {
+            SpeedLines.radial(0.5F, 0.55F, 0.6F, 5, SpeedLines.WHITE);
+        }
+    }
+
     private static Vec3 bezier(Vec3 a, Vec3 b, Vec3 z, double t) {
         double k = 1.0D - t;
         return a.scale(k * k).add(b.scale(2.0D * k * t)).add(z.scale(t * t));
@@ -426,7 +483,7 @@ public final class PlumVfx {
      * Белое ядро, ветви и ствол — в розовом свечении кроны (L3+); слои 1–2 холодные.
      */
     private static void slash(Cast c, PoseStack.Pose pose, Vec3 camera, VertexConsumer v, float age) {
-        if (age > 16.0F) {
+        if (age > PlumRules.FALL_TICK + 14.0F) {
             return;
         }
         boolean pink = PlumRules.blossoms(c.layer);
@@ -498,14 +555,16 @@ public final class PlumVfx {
         float[] a = new float[m + 1];
         for (int i = 0; i <= m; i++) {
             double u = Math.min(shown, i / (double) n);
-            p[i] = bezier(b.start(), b.ctrl(), b.end(), u);
+            p[i] = fall(c, bezier(b.start(), b.ctrl(), b.end(), u), age);
             // Открытый (растущий) конец тоже острый.
             double head = Mth.clamp((shown - u) / 0.12D, 0.0D, 1.0D);
             w[i] = b.width() * Math.pow(1.0D - u, 0.9D) * (shown >= 1.0D ? 1.0D : head);
-            a[i] = (float) Mth.clamp((12.0D + 2.0D * u - age) / 3.0D, 0.0D, 1.0D);
+            // Держится до падения, после удара о землю гаснет за ~4 тика.
+            a[i] = (float) Mth.clamp((PlumRules.FALL_TICK + 9.0D + 2.0D * u - age) / 3.0D, 0.0D, 1.0D);
         }
         if (pink) {
-            stripVar(v, pose, camera, p, scale(w, 3.2D), scaled(a, 0.16F), PINK);
+            // Широкое бледное свечение каждой ветви сливается в общую розовую крону (ref8).
+            stripVar(v, pose, camera, p, scale(w, 5.0D), scaled(a, 0.11F), PINK);
         }
         stripVar(v, pose, camera, p, w, scaled(a, pink ? 0.6F : 0.45F), pink ? PINK : COLD);
         stripVar(v, pose, camera, p, scale(w, 0.45D), scaled(a, 0.95F), EDGE);
