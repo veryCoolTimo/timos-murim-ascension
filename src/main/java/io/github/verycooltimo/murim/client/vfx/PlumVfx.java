@@ -125,7 +125,7 @@ public final class PlumVfx {
             for (int i = 0; i < total; i++) {
                 // 5 — лепестки цветка, 5 — из нижней пятой части столпа, остальные выше.
                 double u = i < 5 ? 0.02D * i : i < 10 ? 0.2D * cast.random.nextDouble() : 0.3D + 0.4D * cast.random.nextDouble();
-                Vec3 at = slashPoint(cast, u, 0.3D, (cast.random.nextDouble() - 0.5D) * PlumRules.width(cast.layer) * 0.8D);
+                Vec3 at = slashPoint(cast, u, 1.0D, (cast.random.nextDouble() - 0.5D) * PlumRules.width(cast.layer) * 0.8D);
                 Vec3 vel = new Vec3(0.0D, 0.08D + 0.06D * cast.random.nextDouble(), 0.0D)
                         .add(cast.forward.scale(0.03D + 0.04D * cast.random.nextDouble()))
                         .add(cast.right.scale((cast.random.nextDouble() - 0.5D) * 0.06D));
@@ -295,16 +295,18 @@ public final class PlumVfx {
 
     /** Вторичные лезвия веера из общего основания: {r/W у основания, r/W у острия, высота/H, ширина/W, задержка}. */
     private static double[][] fan(int layer) {
-        double[] a = {-0.28, -0.42, 0.72, 0.24, 0.25};
-        double[] b = {0.31, 0.40, 0.56, 0.20, 0.50};
-        double[] d = {0.12, 0.22, 0.84, 0.14, 0.65};
+        // Рваные ленты разной высоты (разброс 15–25 %), крайние отклонены на 10–20° (codex 02.10).
+        double[] a = {-0.22, -1.05, 0.78, 0.26, 0.20};
+        double[] b = {0.26, 0.95, 0.66, 0.22, 0.40};
+        double[] d = {-0.08, -0.45, 0.90, 0.18, 0.55};
+        double[] e = {0.12, 0.50, 0.84, 0.16, 0.70};
         if (layer >= 6) {
-            return new double[][] {a, b, d};
+            return new double[][] {a, b, d, e};
         }
         if (layer >= 4) {
-            return new double[][] {a, b};
+            return new double[][] {a, b, d};
         }
-        return layer >= 2 ? new double[][] {a} : new double[0][];
+        return layer >= 2 ? new double[][] {a, b} : new double[][] {a};
     }
 
     /**
@@ -323,6 +325,21 @@ public final class PlumVfx {
         blade(c, pose, camera, v, age, q, 0.0D, 0.0D, 1.0D, w, 0.0F, 1.0F, pink);
         for (double[] f : fan(c.layer)) {
             blade(c, pose, camera, v, age, q, f[0] * w, f[1] * w, f[2], f[3] * w, (float) f[4], 0.45F, pink);
+        }
+        // Контакт с полом: белая вспышка у основания шириной ~1,7 основания на 2 тика.
+        if (age < 2.0F) {
+            double fq = curve(age, 0.0, 0.0, 1.0, 0.65, 2.0, 1.0);
+            Vec3 base = slashPoint(c, 0.0D, fq, 0.0D).add(0.0D, 0.12D, 0.0D);
+            int m = 10;
+            Vec3[] bp = new Vec3[m + 1];
+            double[] bw = new double[m + 1];
+            for (int i = 0; i <= m; i++) {
+                double u = i / (double) m;
+                bp[i] = base.add(c.right.scale((u - 0.5D) * 1.7D * w));
+                bw[i] = 0.16D * Math.pow(Math.sin(Math.PI * u), 0.7D);
+            }
+            float fa = (float) curve(age, 0.0, 1.0, 0.6, 0.9, 2.0, 0.0);
+            strip(v, pose, camera, bp, bw, 0.9F * fa, EDGE);
         }
         // Опора: холодная дуга у стопы (ref1, whirl1), гаснет к +3.
         if (age < 3.0F) {
@@ -385,7 +402,7 @@ public final class PlumVfx {
         float[] ba = new float[m];
         float[] ca = new float[m];
         float[] ra = new float[m];
-        float bodyAlpha = pink ? 0.60F : c.layer >= 2 ? 0.45F : 0.38F;
+        float bodyAlpha = pink ? 0.42F : c.layer >= 2 ? 0.40F : 0.35F;
         for (int i = 0; i < m; i++) {
             hw[i] = half.get(i);
             cw[i] = coreW.get(i);
