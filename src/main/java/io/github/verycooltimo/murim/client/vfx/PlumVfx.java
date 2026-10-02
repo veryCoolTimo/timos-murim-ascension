@@ -91,6 +91,10 @@ public final class PlumVfx {
         }
     }
 
+    /** Часть дерева разреза: квадратичная кривая, ширина у основания, момент и время прорисовки, глубина. */
+    private record Branch(Vec3 start, Vec3 ctrl, Vec3 end, double width, float born, float draw, int depth) {
+    }
+
     /** Порыв ветра от удара: изогнутая лента у земли, уходящая от корня по кругу наружу. */
     private record Gust(double angle, double sweep, double height, double width, float delay, double reach) {
     }
@@ -107,6 +111,7 @@ public final class PlumVfx {
         final List<Petal> petals = new ArrayList<>();
         final List<Puff> puffs = new ArrayList<>();
         final List<Gust> gusts = new ArrayList<>();
+        final List<Branch> branches = new ArrayList<>();
         final Random random;
 
         Cast(int entityId, int layer) {
@@ -145,6 +150,7 @@ public final class PlumVfx {
         cast.right = new Vec3(-cast.forward.z, 0.0D, cast.forward.x);
         cast.length = p.length();
         cast.slashTick = clientTicks;
+        buildTree(cast);
         spawnGround(cast);
         Minecraft mc = Minecraft.getInstance();
         if (mc.player != null && mc.player.getId() == p.entityId() && cast.layer >= 2) {
@@ -157,7 +163,7 @@ public final class PlumVfx {
             for (int i = 0; i < total; i++) {
                 // 5 — лепестки цветка, 5 — из нижней пятой части столпа, остальные выше.
                 double u = i < 5 ? 0.02D * i : i < 10 ? 0.2D * cast.random.nextDouble() : 0.3D + 0.4D * cast.random.nextDouble();
-                Vec3 at = arcPoint(cast, u, cast.random.nextDouble(), 1.0D).add(cast.right.scale((cast.random.nextDouble() - 0.5D) * 0.3D));
+                Vec3 at = trunkBase(cast).add(0.0D, PlumRules.height(cast.layer) * u, 0.0D).add(cast.right.scale((cast.random.nextDouble() - 0.5D) * 1.6D * u));
                 Vec3 vel = new Vec3(0.0D, 0.08D + 0.06D * cast.random.nextDouble(), 0.0D)
                         .add(cast.forward.scale(0.03D + 0.04D * cast.random.nextDouble()))
                         .add(cast.right.scale((cast.random.nextDouble() - 0.5D) * 0.06D));
@@ -179,7 +185,7 @@ public final class PlumVfx {
             return;
         }
         Random r = c.random;
-        Vec3 root = arcEdge(c, 0.0D, 1.0D);
+        Vec3 root = trunkBase(c);
         int puffs = c.layer >= 4 ? 5 : c.layer == 3 ? 4 : 3;
         for (int i = 0; i < puffs; i++) {
             // Только от корня и наружу, вдоль земли (ref7): перед ногами комом не копится.
@@ -361,96 +367,102 @@ public final class PlumVfx {
     }
 
     /**
-     * Внешняя (режущая) кромка саблевидной дуги разреза в вертикальной плоскости взмаха F–U
-     * (решение codex 02.10 по ref4–7, whirl5: «должен быть изогнутым», «широко снизу»).
-     * θ = −75° + 90°·u; корень у стопы впереди (O + 0,55F), выпуклость вперёд, остриё на высоте H
-     * слегка загибается назад. {@code scale} — для слабых соседних штрихов (меньший радиус).
+     * Основание ствола: из пола впереди, у цели (не от меча — автор 02.10), на пройденном
+     * коридоре не дальше ~2,4 блока.
      */
-    private static Vec3 arcEdge(Cast c, double u, double scale) {
-        // Визуально на 40 % выше коридора урона: в ref4/whirl5 удар сильно вытянут вверх.
-        double h = PlumRules.height(c.layer) * scale * 1.4D;
-        double r = h / (Math.sin(Math.toRadians(15.0D)) + Math.sin(Math.toRadians(75.0D)));
-        double th = Math.toRadians(-75.0D + 90.0D * u);
-        double cf = 0.55D - r * Math.cos(Math.toRadians(75.0D));
-        double cu = r * Math.sin(Math.toRadians(75.0D));
-        return c.origin.add(c.forward.scale(0.55D)).add(arcForward(c).scale(cf - 0.55D + r * Math.cos(th)))
-                .add(0.0D, cu + r * Math.sin(th), 0.0D);
+    private static Vec3 trunkBase(Cast c) {
+        return c.origin.add(c.forward.scale(0.4D + Math.min(2.4D, 0.5D * c.length))).add(0.0D, 0.02D, 0.0D);
     }
 
     /**
-     * Плоскость дуги повёрнута вокруг вертикали на 30° вправо от взгляда: со спины (ref4, whirl5)
-     * полотно читается полосой, а не ребром (разбор codex 02.10).
+     * Дерево разреза (ref8, ref7, ref4): сначала ствол — прямая линия вверх из пола, потом по
+     * очереди боковые дуги-удары влево-вправо, на старших слоях — с под-ветвями. Плоскость дерева
+     * поперёк взгляда: со спины (как в референсах) видно целиком.
      */
-    private static Vec3 arcForward(Cast c) {
-        double a = Math.toRadians(30.0D);
-        return c.forward.scale(Math.cos(a)).add(c.right.scale(Math.sin(a)));
+    private static void buildTree(Cast c) {
+        Random r = c.random;
+        double h = PlumRules.height(c.layer);
+        double wScale = PlumRules.width(c.layer) / 1.4D;
+        Vec3 base = trunkBase(c);
+        Vec3 top = base.add(0.0D, h, 0.0D).add(c.forward.scale(0.15D));
+        c.branches.add(new Branch(base, base.lerp(top, 0.5D).add(c.right.scale(0.08D)), top, 0.42D * wScale, 0.0F, 1.5F, 0));
+        int count = c.layer <= 1 ? 0 : Math.min(12, 2 * (c.layer - 1));
+        for (int i = 0; i < count; i++) {
+            double at = 0.22D + 0.62D * (i + 0.5D) / count + (r.nextDouble() - 0.5D) * 0.06D;
+            int side = i % 2 == 0 ? 1 : -1;
+            // Крона раскинута шире ствола (ref8): ветви пологие, выше — круче.
+            double el = Math.toRadians(12.0D + 28.0D * r.nextDouble() + 20.0D * at);
+            double len = (2.1D + 1.4D * r.nextDouble()) * (1.0D - 0.3D * at) * (h / 4.8D);
+            Vec3 start = bezier(base, base.lerp(top, 0.5D).add(c.right.scale(0.08D)), top, at);
+            Vec3 dir = c.right.scale(side * Math.cos(el)).add(0.0D, Math.sin(el), 0.0D)
+                    .add(c.forward.scale((r.nextDouble() - 0.5D) * 0.35D)).normalize();
+            Vec3 end = start.add(dir.scale(len));
+            // Дуга-удар выгибается вверх, как серп взмаха.
+            Vec3 ctrl = start.add(dir.scale(len * 0.5D)).add(0.0D, len * 0.2D, 0.0D);
+            float born = 1.4F + 0.65F * i;
+            double width = (0.17D + 0.05D * r.nextDouble()) * (1.0D - 0.4D * at) * wScale;
+            c.branches.add(new Branch(start, ctrl, end, width, born, 0.6F, 1));
+            if (c.layer >= 4) {
+                // Под-ветвь от середины дуги — круче вверх, вдвое короче.
+                Vec3 s2 = bezier(start, ctrl, end, 0.55D);
+                double el2 = el + Math.toRadians(25.0D + 15.0D * r.nextDouble());
+                Vec3 d2 = c.right.scale(side * Math.cos(el2)).add(0.0D, Math.sin(el2), 0.0D).normalize();
+                double l2 = len * (0.45D + 0.15D * r.nextDouble());
+                Vec3 e2 = s2.add(d2.scale(l2));
+                c.branches.add(new Branch(s2, s2.add(d2.scale(l2 * 0.5D)).add(0.0D, l2 * 0.15D, 0.0D), e2,
+                        width * 0.55D, born + 0.45F, 0.45F, 2));
+            }
+        }
     }
 
-    /** Нормаль дуги наружу (в плоскости F–U) — от неё внутрь отсчитывается ширина полотна. */
-    private static Vec3 arcNormal(Cast c, double u) {
-        double th = Math.toRadians(-75.0D + 90.0D * u);
-        return arcForward(c).scale(Math.cos(th)).add(0.0D, Math.sin(th), 0.0D);
-    }
-
-    /** Точка полотна: v=0 — внешняя кромка, v=1 — внутренняя (отстающая) сторона. */
-    private static Vec3 arcPoint(Cast c, double u, double v, double scale) {
-        double w = PlumRules.width(c.layer) * scale * sabreProfile(u);
-        return arcEdge(c, u, scale).subtract(arcNormal(c, u).scale(v * w));
-    }
-
-    /** Ширина вдоль дуги: широко снизу, плавно уже, резко сходит к острию в верхней четверти. */
-    private static double sabreProfile(double u) {
-        return curve(u, 0.0, 1.0, 0.5, 0.82, 0.75, 0.62, 0.9, 0.3, 1.0, 0.0);
+    private static Vec3 bezier(Vec3 a, Vec3 b, Vec3 z, double t) {
+        double k = 1.0D - t;
+        return a.scale(k * k).add(b.scale(2.0D * k * t)).add(z.scale(t * t));
     }
 
     /**
-     * Разрез: саблевидное полотно прорисовывается от корня к острию за 5 тиков вслед за мечом;
-     * уже появившиеся участки стоят на месте. Гаснет от основания к острию к 14-му тику.
-     * Белое ядро ~75 % ширины, тонкая розовая кайма по выпуклой кромке, шире — по внутренней,
-     * слабое розовое свечение вокруг. Слои 1–2 — холодные.
+     * Разрез: дерево растёт по очереди (ствол за 1,5 тика, затем ветви через ~0,65 тика),
+     * каждая часть прорисовывается от основания к острию; гаснет с 9-го тика от основания.
+     * Белое ядро, ветви и ствол — в розовом свечении кроны (L3+); слои 1–2 холодные.
      */
     private static void slash(Cast c, PoseStack.Pose pose, Vec3 camera, VertexConsumer v, float age) {
-        if (age > 14.5F) {
+        if (age > 16.0F) {
             return;
         }
         boolean pink = PlumRules.blossoms(c.layer);
-        sabre(c, pose, camera, v, age, 1.0D, 1.0F, pink);
-        // Слабые соседние штрихи: L2–3 — один, L4+ — два, тоньше и позже на тик.
-        if (c.layer >= 2) {
-            sabre(c, pose, camera, v, age - 1.0F, 0.82D, 0.35F, pink);
+        for (Branch b : c.branches) {
+            branch(c, pose, camera, v, age, b, pink);
         }
-        if (c.layer >= 4) {
-            sabre(c, pose, camera, v, age - 1.6F, 0.66D, 0.25F, pink);
+        Vec3 base = trunkBase(c);
+        // Борозда от стопы к основанию ствола: удар и дерево — одно движение.
+        if (age < 4.0F) {
+            int m = 12;
+            Vec3 from = c.origin.add(c.forward.scale(0.3D)).add(0.0D, 0.04D, 0.0D);
+            Vec3[] gp = new Vec3[m + 1];
+            double[] gw = new double[m + 1];
+            float[] ga = new float[m + 1];
+            for (int i = 0; i <= m; i++) {
+                double u = i / (double) m;
+                gp[i] = from.lerp(base.add(0.0D, 0.02D, 0.0D), u);
+                gw[i] = 0.05D + 0.1D * u * u;
+                ga[i] = (float) (0.85D * Mth.clamp(1.0D - (age - 1.5D * u) / 2.5D, 0.0D, 1.0D) * Mth.clamp(age / 0.3D, 0.0D, 1.0D));
+            }
+            stripVar(v, pose, camera, gp, gw, ga, pink ? PINK : COLD);
+            stripVar(v, pose, camera, gp, scale(gw, 0.35D), ga, EDGE);
         }
-        // Вспышка у корня: короткие лучи вверх и наружу, ~60 мс.
+        // Вспышка у основания ствола: короткие лучи вверх и наружу.
         if (age < 1.5F) {
-            Vec3 base = arcEdge(c, 0.0D, 1.0D).add(0.0D, 0.1D, 0.0D);
             float fa = (float) curve(age, 0.0, 1.0, 1.5, 0.0);
             for (int i = 0; i < 9; i++) {
                 double ang = Math.PI * (0.08D + 0.84D * i / 8.0D);
                 Vec3 dir = c.right.scale(Math.cos(ang)).add(0.0D, Math.sin(ang), 0.0D);
                 double len = (i % 2 == 0 ? 1.1D : 0.7D) * (0.6D + 0.4D * Math.min(1.0D, age));
-                Vec3[] rp = {base, base.add(dir.scale(len * 0.5D)), base.add(dir.scale(len))};
-                double[] rw = {0.07D, 0.04D, 0.0D};
-                strip(v, pose, camera, rp, rw, 0.9F * fa, EDGE);
+                Vec3[] rp = {base.add(0.0D, 0.1D, 0.0D), base.add(0.0D, 0.1D, 0.0D).add(dir.scale(len * 0.5D)),
+                        base.add(0.0D, 0.1D, 0.0D).add(dir.scale(len))};
+                strip(v, pose, camera, rp, new double[] {0.07D, 0.04D, 0.0D}, 0.9F * fa, EDGE);
             }
         }
-        // Вспышка у корня на 2 тика.
-        if (age < 2.0F) {
-            Vec3 base = arcEdge(c, 0.0D, 1.0D).add(0.0D, 0.15D, 0.0D);
-            Vec3 side = c.right;
-            int m = 8;
-            Vec3[] bp = new Vec3[m + 1];
-            double[] bw = new double[m + 1];
-            for (int i = 0; i <= m; i++) {
-                double u = i / (double) m;
-                bp[i] = base.add(side.scale((u - 0.5D) * 2.0D * PlumRules.width(c.layer)));
-                bw[i] = 0.14D * Math.pow(Math.sin(Math.PI * u), 0.7D);
-            }
-            float fa = (float) curve(age, 0.0, 1.0, 0.6, 0.9, 2.0, 0.0);
-            strip(v, pose, camera, bp, bw, 0.85F * fa, EDGE);
-        }
-        // Короткая холодная дуга по траектории меча у стопы (ref1, whirl1, whirl5), гаснет к +3.
+        // Холодная дуга у опорной стопы (ref1, whirl1), гаснет к +3.
         if (age < 3.0F) {
             Vec3 foot = c.origin.add(c.forward.scale(0.3D)).add(0.0D, 0.05D, 0.0D);
             int m = 10;
@@ -468,59 +480,35 @@ public final class PlumVfx {
         }
     }
 
-    /** Одно саблевидное полотно; полосы — вдоль дуги, к камере, центр каждой — на своей доле ширины. */
-    private static void sabre(Cast c, PoseStack.Pose pose, Vec3 camera, VertexConsumer v, float age, double scale,
-                              float bright, boolean pink) {
-        if (age < 0.0F) {
+    /** Одна часть дерева: от основания к острию за {@code draw} тиков, сужается к концу. */
+    private static void branch(Cast c, PoseStack.Pose pose, Vec3 camera, VertexConsumer v, float age, Branch b, boolean pink) {
+        float t = age - b.born();
+        if (t < 0.0F) {
             return;
         }
-        double t = Mth.clamp(age / 5.0D, 0.0D, 1.0D);
-        double shown = t * t * (3.0D - 2.0D * t);
-        int n = 28;
-        List<Integer> idx = new ArrayList<>();
-        for (int i = 0; i <= n; i++) {
-            if (i / (double) n <= shown + 1.0E-6D) {
-                idx.add(i);
-            }
-        }
-        if (idx.size() < 2) {
+        double shown = Mth.clamp(t / b.draw(), 0.0D, 1.0D);
+        shown = 1.0D - (1.0D - shown) * (1.0D - shown);
+        int n = b.depth() == 0 ? 16 : 10;
+        int m = (int) Math.ceil(n * shown);
+        if (m < 1) {
             return;
         }
-        int m = idx.size();
-        Vec3[] body = new Vec3[m];
-        Vec3[] core = new Vec3[m];
-        Vec3[] rim = new Vec3[m];
-        Vec3[] inner = new Vec3[m];
-        double[] wBody = new double[m];
-        double[] wGlow = new double[m];
-        double[] wCore = new double[m];
-        double[] wRim = new double[m];
-        double[] wInner = new double[m];
-        float[] a = new float[m];
-        double wBase = PlumRules.width(c.layer) * scale;
-        for (int k = 0; k < m; k++) {
-            double u = idx.get(k) / (double) n;
-            double w = wBase * sabreProfile(u);
-            body[k] = arcPoint(c, u, 0.5D, scale);
-            core[k] = arcPoint(c, u, 0.42D, scale);
-            rim[k] = arcPoint(c, u, 0.03D, scale);
-            inner[k] = arcPoint(c, u, 0.88D, scale);
-            wBody[k] = 0.5D * w;
-            wGlow[k] = 0.62D * w;
-            wCore[k] = 0.33D * w;
-            wRim[k] = 0.03D * w + 0.004D;
-            wInner[k] = 0.12D * w;
-            // Гаснет от основания к острию: α = clamp((10 + 4u − t)/4).
-            a[k] = bright * (float) Mth.clamp((10.0D + 4.0D * u - age) / 4.0D, 0.0D, 1.0D);
+        Vec3[] p = new Vec3[m + 1];
+        double[] w = new double[m + 1];
+        float[] a = new float[m + 1];
+        for (int i = 0; i <= m; i++) {
+            double u = Math.min(shown, i / (double) n);
+            p[i] = bezier(b.start(), b.ctrl(), b.end(), u);
+            // Открытый (растущий) конец тоже острый.
+            double head = Mth.clamp((shown - u) / 0.12D, 0.0D, 1.0D);
+            w[i] = b.width() * Math.pow(1.0D - u, 0.9D) * (shown >= 1.0D ? 1.0D : head);
+            a[i] = (float) Mth.clamp((12.0D + 2.0D * u - age) / 3.0D, 0.0D, 1.0D);
         }
-        VfxColour body0 = pink ? PINK : COLD;
-        stripVar(v, pose, camera, body, wGlow, scaled(a, 0.18F), body0);
-        stripVar(v, pose, camera, body, wBody, scaled(a, pink ? 0.5F : 0.42F), body0);
         if (pink) {
-            stripVar(v, pose, camera, inner, wInner, scaled(a, 0.55F), RIM);
-            stripVar(v, pose, camera, rim, wRim, scaled(a, 0.6F), RIM);
+            stripVar(v, pose, camera, p, scale(w, 3.2D), scaled(a, 0.16F), PINK);
         }
-        stripVar(v, pose, camera, core, wCore, scaled(a, 0.9F), EDGE);
+        stripVar(v, pose, camera, p, w, scaled(a, pink ? 0.6F : 0.45F), pink ? PINK : COLD);
+        stripVar(v, pose, camera, p, scale(w, 0.45D), scaled(a, 0.95F), EDGE);
     }
 
     /**
