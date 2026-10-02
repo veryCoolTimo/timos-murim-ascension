@@ -102,6 +102,11 @@ public final class PlumVfx {
         final double size;
         /** Серая пыль от движения (ref9): светлее фона ночью, не белая. */
         float gray = 0.68F;
+        /** Объёмный клуб дыма (атлас smoke_cel), а не завиток пыли. */
+        boolean smoke;
+        /** Поворот клуба в плоскости экрана и задержка появления (тики). */
+        float spin;
+        int delay;
 
         Puff(Vec3 pos, Vec3 vel, int life, int cell, double size) {
             this.pos = pos;
@@ -294,9 +299,14 @@ public final class PlumVfx {
         while (it.hasNext()) {
             Cast c = it.next();
             for (Puff p : c.puffs) {
+                if (p.delay > 0) {
+                    p.delay--;
+                    continue;
+                }
                 p.prev = p.pos;
                 p.age++;
-                p.vel = new Vec3(p.vel.x * 0.9D, p.vel.y * 0.93D, p.vel.z * 0.9D);
+                p.vel = p.smoke ? new Vec3(p.vel.x * 0.93D, p.vel.y * 0.97D, p.vel.z * 0.93D)
+                        : new Vec3(p.vel.x * 0.9D, p.vel.y * 0.93D, p.vel.z * 0.9D);
                 p.pos = p.pos.add(p.vel);
             }
             c.puffs.removeIf(p -> p.age >= p.life);
@@ -402,11 +412,28 @@ public final class PlumVfx {
                     RenderType dust = MurimRenderTypes.dustPuffs();
                     VertexConsumer d = buffers.getBuffer(dust);
                     for (Puff p : c.puffs) {
+                        if (p.smoke) {
+                            continue;
+                        }
                         float pt = (p.age + partial) / p.life;
                         float alpha = pt < 0.5F ? 1.0F : Mth.clamp(1.0F - (pt - 0.5F) / 0.5F, 0.0F, 1.0F);
                         puff(d, pose, camera, p.prev.lerp(p.pos, partial), p.size * (0.7D + 0.8D * pt), p.cell, alpha, p.gray);
                     }
                     buffers.endBatch(dust);
+                    RenderType smokeType = MurimRenderTypes.smokeCel();
+                    VertexConsumer sm = buffers.getBuffer(smokeType);
+                    for (Puff p : c.puffs) {
+                        if (!p.smoke || p.delay > 0) {
+                            continue;
+                        }
+                        float pt = (p.age + partial) / p.life;
+                        // Клуб плотный почти всю жизнь; уходит расширением и распадом (codex 02.10):
+                        // в последней четверти резко разбухает и тает.
+                        float alpha = Mth.clamp(pt / 0.06F, 0.0F, 1.0F) * (pt < 0.75F ? 1.0F : Mth.clamp(1.0F - (pt - 0.75F) / 0.25F, 0.0F, 1.0F));
+                        double grow = 0.55D + 0.8D * Math.sqrt(pt) + (pt > 0.75F ? 1.2D * (pt - 0.75D) : 0.0D);
+                        smokePuff(sm, pose, camera, p.prev.lerp(p.pos, partial), p.size * grow, p.cell, alpha, p.gray, p.spin + p.age * 0.004F);
+                    }
+                    buffers.endBatch(smokeType);
                 }
                 RenderType petals = MurimRenderTypes.plumPetals();
                 VertexConsumer pc = buffers.getBuffer(petals);
@@ -827,7 +854,7 @@ public final class PlumVfx {
             SpeedLines.radial(0.5F, 0.55F, 1.0F, 7, SpeedLines.WHITE);
             // Импакт-кадры rimuru (автор 02.10): вспышка → негатив → киноварь, ~0,25 с.
             if (c.layer >= 3) {
-                ImpactFrames.trigger();
+                ImpactFrames.trigger(base.add(c.forward.scale(h * 0.35D)).add(0.0D, 0.3D, 0.0D));
             }
         }
         // Земля дрожит: толчок камеры всем рядом (тот же пружинный удар, что у порывов ауры).
@@ -856,16 +883,34 @@ public final class PlumVfx {
                         out.scale(0.4D + 0.25D * r.nextDouble()).add(0.0D, 0.03D, 0.0D),
                         28 + r.nextInt(14), r.nextInt(16), 0.9D + 0.5D * r.nextDouble()));
             }
-            // Стена дыма по всей полосе падения: крупные медленные клубы поднимаются и
-            // расползаются в стороны.
-            for (int i = 0; i < 16 + 4 * Math.min(4, c.layer); i++) {
+            // Вал (codex 02.10): низкие клубы разного размера катятся от полосы в стороны — сразу.
+            for (int i = 0; i < 24 + 4 * Math.min(4, c.layer); i++) {
                 double sAt = h * r.nextDouble();
-                Vec3 at = base.add(c.forward.scale(sAt)).add(c.right.scale((r.nextDouble() - 0.5D) * 3.0D)).add(0.0D, 0.3D, 0.0D);
-                Vec3 vel = c.right.scale((r.nextDouble() - 0.5D) * 0.25D).add(c.forward.scale((r.nextDouble() - 0.3D) * 0.12D))
-                        .add(0.0D, 0.05D + 0.06D * r.nextDouble(), 0.0D);
-                Puff big = new Puff(at, vel, 36 + r.nextInt(20), r.nextInt(16), 1.1D + 0.7D * r.nextDouble());
-                big.gray = 0.6F + 0.12F * r.nextFloat();
-                c.puffs.add(big);
+                double side = r.nextBoolean() ? 1.0D : -1.0D;
+                double size = 0.6D + 1.4D * r.nextDouble() * r.nextDouble();
+                // Одна масса: клубы плотно перекрываются, каждый третий — тёмный «провал» внутри вала.
+                boolean hollow = i % 3 == 0;
+                Vec3 at = base.add(c.forward.scale(sAt)).add(c.right.scale(side * (hollow ? 0.2D : 0.4D + 0.5D * r.nextDouble())))
+                        .add(0.0D, size * 0.45D, 0.0D);
+                Vec3 vel = c.right.scale(side * (0.2D + 0.2D * r.nextDouble())).add(c.forward.scale((r.nextDouble() - 0.4D) * 0.1D));
+                Puff roll = new Puff(at, vel, 34 + r.nextInt(18), r.nextInt(16), hollow ? size * 1.3D : size);
+                roll.smoke = true;
+                roll.gray = hollow ? 0.55F + 0.08F * r.nextFloat() : 0.82F + 0.14F * r.nextFloat();
+                roll.spin = (float) (r.nextDouble() * Math.PI * 2.0D);
+                c.puffs.add(roll);
+            }
+            // Облако: встаёт позже (через 0,3–0,8 с), над осью падения, клубы сливаются в массу.
+            for (int i = 0; i < 12 + 2 * Math.min(4, c.layer); i++) {
+                double sAt = h * (0.15D + 0.75D * r.nextDouble());
+                double size = 1.0D + 1.6D * r.nextDouble();
+                Vec3 at = base.add(c.forward.scale(sAt)).add(c.right.scale((r.nextDouble() - 0.5D) * 1.2D)).add(0.0D, 0.6D, 0.0D);
+                Vec3 vel = c.right.scale((r.nextDouble() - 0.5D) * 0.06D).add(0.0D, 0.05D + 0.05D * r.nextDouble(), 0.0D);
+                Puff rise = new Puff(at, vel, 60 + r.nextInt(30), r.nextInt(16), size);
+                rise.smoke = true;
+                rise.delay = 6 + r.nextInt(10);
+                rise.gray = 0.74F + 0.14F * r.nextFloat();
+                rise.spin = (float) (r.nextDouble() * Math.PI * 2.0D);
+                c.puffs.add(rise);
             }
         }
         c.landTick = clientTicks;
@@ -1375,6 +1420,33 @@ public final class PlumVfx {
         VfxDraw.vertex(c, pose, centre.add(right).subtract(up), n, u1, v1, alpha, gray, gray, b);
         VfxDraw.vertex(c, pose, centre.add(right).add(up), n, u1, v0, alpha, gray, gray, b);
         VfxDraw.vertex(c, pose, centre.subtract(right).add(up), n, u0, v0, alpha, gray, gray, b);
+    }
+
+    /** Клуб дыма: квадрат, повёрнутый в плоскости экрана на {@code angle}. */
+    private static void smokePuff(VertexConsumer c, PoseStack.Pose pose, Vec3 camera, Vec3 centre, double size, int cell, float alpha,
+                                  float gray, float angle) {
+        if (alpha <= 0.0F) {
+            return;
+        }
+        Vec3 forward = camera.subtract(centre);
+        if (forward.lengthSqr() < 1.0E-6D) {
+            return;
+        }
+        forward = forward.normalize();
+        Vec3 reference = Math.abs(forward.y) > 0.95D ? new Vec3(1.0D, 0.0D, 0.0D) : new Vec3(0.0D, 1.0D, 0.0D);
+        Vec3 r0 = forward.cross(reference).normalize();
+        Vec3 u0 = r0.cross(forward).normalize();
+        double cs = Math.cos(angle);
+        double sn = Math.sin(angle);
+        Vec3 right = r0.scale(cs).add(u0.scale(sn)).scale(size);
+        Vec3 up = u0.scale(cs).subtract(r0.scale(sn)).scale(size);
+        float u1 = (cell % 4) / 4.0F, u2 = u1 + 0.25F;
+        float v1 = (cell / 4) / 4.0F, v2 = v1 + 0.25F;
+        Vec3 n = new Vec3(0.0D, 1.0D, 0.0D);
+        VfxDraw.vertex(c, pose, centre.subtract(right).subtract(up), n, u1, v2, alpha, gray, gray, gray * 1.03F);
+        VfxDraw.vertex(c, pose, centre.add(right).subtract(up), n, u2, v2, alpha, gray, gray, gray * 1.03F);
+        VfxDraw.vertex(c, pose, centre.add(right).add(up), n, u2, v1, alpha, gray, gray, gray * 1.03F);
+        VfxDraw.vertex(c, pose, centre.subtract(right).add(up), n, u1, v1, alpha, gray, gray, gray * 1.03F);
     }
 
     /** Мягкое светящееся пятно (additive, как свечение ауры): лепестки и крона. */

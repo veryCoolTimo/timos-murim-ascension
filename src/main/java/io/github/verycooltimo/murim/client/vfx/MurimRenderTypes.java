@@ -339,6 +339,11 @@ public final class MurimRenderTypes {
     }
 
     /** Клубы пыли в манере манхвы: белые с контуром тушью, атлас 4×4. */
+    /** Клубы дыма манхвы (4×4): чёткий край, три тона серого, тёмная кайма — без размытия. */
+    public static RenderType smokeCel() {
+        return RenderType.entityTranslucent(ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/vfx/smoke_cel.png"));
+    }
+
     public static RenderType dustPuffs() {
         return RenderType.entityTranslucent(ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/vfx/dust_puffs.png"));
     }

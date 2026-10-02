@@ -263,11 +263,12 @@ public final class BehaviorExecutor {
         net.minecraft.server.level.ServerLevel level = player.serverLevel();
         java.util.Random r = new java.util.Random(player.getId() * 31L + level.getGameTime());
         int broken = 0;
-        int budget = Math.min(48, 12 * layer);
-        for (double s = from; s <= to && broken < budget; s += 0.7D) {
-            for (double w = -2.0D; w <= 2.0D && broken < budget; w += 0.7D) {
-                // Середина полосы ломается чаще краёв.
-                if (r.nextDouble() > 0.75D - 0.25D * Math.abs(w) / 2.0D) {
+        // Автор 02.10: «слишком много блоков взрывается» — борозда только под стволом,
+        // рваная, до 14 блоков на 4-м слое.
+        int budget = Math.min(16, 3 * layer + 2);
+        for (double s = from; s <= to && broken < budget; s += 0.9D) {
+            for (double w = -0.6D; w <= 0.6D && broken < budget; w += 0.6D) {
+                if (r.nextDouble() > 0.45D - 0.15D * Math.abs(w)) {
                     continue;
                 }
                 Vec3 at = origin.add(forward.scale(s)).add(right.scale(w + (r.nextDouble() - 0.5D) * 0.4D));

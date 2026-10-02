@@ -1,61 +1,84 @@
 package io.github.verycooltimo.murim.client.vfx;
 
-import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.BufferBuilder;
-import com.mojang.blaze3d.vertex.BufferUploader;
-import com.mojang.blaze3d.vertex.DefaultVertexFormat;
-import com.mojang.blaze3d.vertex.Tesselator;
-import com.mojang.blaze3d.vertex.VertexFormat;
 import io.github.verycooltimo.murim.MurimMod;
 import io.github.verycooltimo.murim.client.ClientConfig;
-import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.renderer.PostChain;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
-import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
-import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
-import org.joml.Matrix4f;
+import net.neoforged.neoforge.client.event.RenderGuiEvent;
 
 /**
- * Импакт-кадры по разбору rimuru.dev (docs/03-vfx/13-rimuru-impact-frames.md, «Падение дерева»):
- * удар показывается сменой способа изображения — белая вспышка → негатив (светлое становится
- * тушью: ствол и ветви — чёрные массы на бумаге) → киноварь с чёрным → обычный мир.
- * Без шейдеров: негатив — белый квадрат со смешиванием {@code 1 − dst}, перекраска —
- * умножение ({@code dst × цвет}).
+ * Импакт-кадры по разбору rimuru.dev (docs/03-vfx/13-rimuru-impact-frames.md): удар показан
+ * сменой способа изображения — классический чёрно-белый. Последовательность по тикам:
+ * белый разрыв → почти чёрный кадр с белыми контурами → графическая версия (бумага, тушь,
+ * растр, радиальные штрихи; 2 тика) → смена полярности → обычный мир. ~0,25 с.
  *
- * <p>Уважает «экранные вспышки» ({@link ClientConfig#SCREEN_FLASHES}): без них — только
- * киноварная фаза приглушённо. Один импакт — одна вспышка, серии не копятся.
+ * <p>Шейдер {@code murim:impact} поверх мира и руки, до интерфейса — как давление ауры
+ * ({@link PressureScreen}): та же схема PostChain. Без «экранных вспышек» остаётся только
+ * графическая версия, без белого разрыва и смены полярности.
  */
 @EventBusSubscriber(modid = MurimMod.MODID, value = Dist.CLIENT)
 public final class ImpactFrames {
 
-    private static final ResourceLocation LAYER = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "impact_frames");
+    private static final ResourceLocation CHAIN = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "shaders/post/impact.json");
+    /** Режим шейдера по тику: вспышка, тьма с контурами, графика ×2, полярность. */
+    private static final int[] SEQUENCE = {0, 1, 2, 2, 3};
 
-    /** Тики фаз: вспышка, негатив, киноварь. */
-    private static final int FLASH = 1;
-    private static final int NEGATIVE = 1;
-    private static final int RED = 1;
-
+    private static PostChain chain;
+    private static boolean chainFailed;
+    private static int chainWidth = -1;
+    private static int chainHeight = -1;
     private static int ticks;
     private static int born = -100;
+    private static float centerX = 0.5F;
+    private static float centerY = 0.5F;
+    private static float seed;
 
-    /** Запустить импакт-кадры (только своему экрану). */
-    public static void trigger() {
-        if (ticks - born < FLASH + NEGATIVE + RED + 6) {
+    /** Запустить импакт-кадры своему экрану; центр штрихов — точка экрана (0..1, Y снизу). */
+    public static void trigger(float screenX, float screenY) {
+        if (ticks - born < SEQUENCE.length + 6) {
             return;
         }
         born = ticks;
+        centerX = screenX;
+        centerY = screenY;
+        seed = (ticks % 97) * 0.37F;
+    }
+
+    public static void trigger() {
+        trigger(0.5F, 0.45F);
+    }
+
+    /** Точка удара в мире: центр штрихов пересчитывается в экран при отрисовке мира. */
+    private static net.minecraft.world.phys.Vec3 contact;
+
+    public static void trigger(net.minecraft.world.phys.Vec3 worldContact) {
+        int before = born;
+        trigger(0.5F, 0.45F);
+        if (born != before) {
+            contact = worldContact;
+        }
     }
 
     @SubscribeEvent
-    static void onRegisterLayers(RegisterGuiLayersEvent event) {
-        event.registerBelow(VanillaGuiLayers.CROSSHAIR, LAYER, ImpactFrames::render);
+    static void onRenderStage(net.neoforged.neoforge.client.event.RenderLevelStageEvent event) {
+        if (event.getStage() != net.neoforged.neoforge.client.event.RenderLevelStageEvent.Stage.AFTER_PARTICLES
+                || contact == null || ticks - born >= SEQUENCE.length) {
+            return;
+        }
+        // API: как PressureScreen#onRenderStage — проекция × вид, деление на w.
+        net.minecraft.world.phys.Vec3 at = contact.subtract(event.getCamera().getPosition());
+        org.joml.Vector4f clip = new org.joml.Vector4f((float) at.x, (float) at.y, (float) at.z, 1.0F);
+        new org.joml.Matrix4f(event.getProjectionMatrix()).mul(event.getModelViewMatrix()).transform(clip);
+        if (clip.w > 0.05F) {
+            centerX = net.minecraft.util.Mth.clamp(clip.x / clip.w * 0.5F + 0.5F, 0.05F, 0.95F);
+            centerY = net.minecraft.util.Mth.clamp(clip.y / clip.w * 0.5F + 0.5F, 0.05F, 0.95F);
+        }
     }
 
     @SubscribeEvent
@@ -65,52 +88,47 @@ public final class ImpactFrames {
         }
     }
 
-    private static void render(GuiGraphics graphics, DeltaTracker delta) {
+    @SubscribeEvent
+    static void onRenderGuiPre(RenderGuiEvent.Pre event) {
         int age = ticks - born;
-        if (age < 0 || age >= FLASH + NEGATIVE + RED) {
+        if (age < 0 || age >= SEQUENCE.length || chainFailed) {
             return;
         }
-        boolean flashes = ClientConfig.SCREEN_FLASHES.get();
-        float w = graphics.guiWidth();
-        float h = graphics.guiHeight();
-        Matrix4f m = graphics.pose().last().pose();
-        RenderSystem.enableBlend();
-        RenderSystem.disableDepthTest();
-        RenderSystem.setShader(GameRenderer::getPositionColorShader);
-        if (age < FLASH) {
-            if (flashes) {
-                RenderSystem.defaultBlendFunc();
-                quad(m, w, h, 1.0F, 1.0F, 1.0F, 0.92F);
-            }
-        } else if (age < FLASH + NEGATIVE) {
-            if (flashes) {
-                // Негатив: светлое → тушь. Затем тёплая бумага умножением.
-                RenderSystem.blendFunc(GlStateManager.SourceFactor.ONE_MINUS_DST_COLOR, GlStateManager.DestFactor.ZERO);
-                quad(m, w, h, 1.0F, 1.0F, 1.0F, 1.0F);
-                RenderSystem.blendFunc(GlStateManager.SourceFactor.DST_COLOR, GlStateManager.DestFactor.ZERO);
-                quad(m, w, h, 1.0F, 0.86F, 0.8F, 1.0F);
-            }
-        } else {
-            // Киноварь с чёрным: негатив, умноженный на #F05A3C (без вспышек — только лёгкий тон).
-            if (flashes) {
-                RenderSystem.blendFunc(GlStateManager.SourceFactor.ONE_MINUS_DST_COLOR, GlStateManager.DestFactor.ZERO);
-                quad(m, w, h, 1.0F, 1.0F, 1.0F, 1.0F);
-            }
-            RenderSystem.blendFunc(GlStateManager.SourceFactor.DST_COLOR, GlStateManager.DestFactor.ZERO);
-            quad(m, w, h, 0xF0 / 255.0F, flashes ? 0x5A / 255.0F : 0.7F, flashes ? 0x3C / 255.0F : 0.65F, 1.0F);
+        int mode = SEQUENCE[age];
+        if (!ClientConfig.SCREEN_FLASHES.get() && mode != 2) {
+            return;
         }
-        RenderSystem.defaultBlendFunc();
-        RenderSystem.enableDepthTest();
+        Minecraft minecraft = Minecraft.getInstance();
+        int w = minecraft.getWindow().getWidth();
+        int h = minecraft.getWindow().getHeight();
+        if (chain == null) {
+            try {
+                chain = new PostChain(minecraft.getTextureManager(), minecraft.getResourceManager(),
+                        minecraft.getMainRenderTarget(), CHAIN);
+            } catch (Exception e) {
+                chainFailed = true;
+                MurimMod.LOGGER.warn("Шейдер импакт-кадров не загрузился", e);
+                return;
+            }
+            chainWidth = -1;
+        }
+        if (w != chainWidth || h != chainHeight) {
+            chain.resize(w, h);
+            chainWidth = w;
+            chainHeight = h;
+        }
+        chain.setUniform("Mode", mode);
+        chain.setUniform("CenterX", centerX);
+        chain.setUniform("CenterY", centerY);
+        chain.setUniform("Seed", seed + (mode == 2 ? age : 0));
+        // Ночная сцена тёмная: поднимаем экспозицию, чтобы растр не съел всё.
+        chain.setUniform("Exposure", 1.8F);
         RenderSystem.disableBlend();
-    }
-
-    private static void quad(Matrix4f m, float w, float h, float r, float g, float b, float a) {
-        BufferBuilder buf = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
-        buf.addVertex(m, 0.0F, h, 0.0F).setColor(r, g, b, a);
-        buf.addVertex(m, w, h, 0.0F).setColor(r, g, b, a);
-        buf.addVertex(m, w, 0.0F, 0.0F).setColor(r, g, b, a);
-        buf.addVertex(m, 0.0F, 0.0F, 0.0F).setColor(r, g, b, a);
-        BufferUploader.drawWithShader(buf.buildOrThrow());
+        RenderSystem.disableDepthTest();
+        RenderSystem.resetTextureMatrix();
+        chain.process(event.getPartialTick().getGameTimeDeltaTicks());
+        minecraft.getMainRenderTarget().bindWrite(true);
+        RenderSystem.enableDepthTest();
     }
 
     private ImpactFrames() {
