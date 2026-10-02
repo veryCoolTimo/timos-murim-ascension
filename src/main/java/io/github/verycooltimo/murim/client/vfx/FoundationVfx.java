@@ -40,7 +40,10 @@ import java.util.Random;
 @EventBusSubscriber(modid = MurimMod.MODID, value = Dist.CLIENT)
 public final class FoundationVfx {
 
-    private static final VfxColour WHITE = hex(0xF4F5F2);
+    private static final VfxColour WHITE_SIX = hex(0xF4F5F2);
+    /** Серп основы Семи Цветков: бело-розовый. */
+    private static final VfxColour PLUM = hex(0xFFC9DE);
+    private static VfxColour WHITE = WHITE_SIX;
     private static final VfxColour GROOVE = hex(0x1E2026);
     private static final VfxColour GROOVE_EDGE = hex(0x6B6E76);
 
@@ -107,6 +110,9 @@ public final class FoundationVfx {
             return duration * HIT_FRACTION;
         }
 
+        boolean plum;
+        final List<Vec3[]> petals = new ArrayList<>();
+
         boolean unity() {
             return layer >= 4 && form == FoundationForms.Form.OVERHEAD;
         }
@@ -118,10 +124,17 @@ public final class FoundationVfx {
 
     /** Начать эффект формы. Нулевой слой — ничего. */
     public static void start(int entityId, FoundationForms.Form form, int layer, float duration, Vec3 hit) {
+        start(entityId, form, layer, duration, hit, false);
+    }
+
+    /** {@code plum} — основа Семи Цветков: розовый серп, с 3-го слоя лепестки на ударе. */
+    public static void start(int entityId, FoundationForms.Form form, int layer, float duration, Vec3 hit, boolean plum) {
         if (layer <= 0) {
             return;
         }
-        ACTIVE.add(new Swing(entityId, form, layer, duration, hit));
+        Swing s = new Swing(entityId, form, layer, duration, hit);
+        s.plum = plum;
+        ACTIVE.add(s);
     }
 
     @SubscribeEvent
@@ -154,7 +167,13 @@ public final class FoundationVfx {
                 double drag = Math.pow(0.86D, p.age);
                 p.pos = p.pos.add(p.vel.scale(drag));
             }
-            if (s.done()) {
+            for (Vec3[] pt : s.petals) {
+                pt[1] = new Vec3(pt[1].x * 0.92D, pt[1].y * 0.92D - 0.003D, pt[1].z * 0.92D);
+                pt[0] = pt[0].add(pt[1]);
+                pt[2] = pt[2].add(0.0D, 0.0D, 1.0D);
+            }
+            s.petals.removeIf(pt -> pt[2].z > 30.0D);
+            if (s.done() && s.petals.isEmpty()) {
                 it.remove();
             }
         }
@@ -173,6 +192,14 @@ public final class FoundationVfx {
                 Vec3 d = new Vec3(Math.cos(a), 0.0D, Math.sin(a));
                 s.puffs.add(new Puff(foot.add(d.scale(0.15D)).add(0.0D, 0.12D, 0.0D), d.scale(0.025D).add(0.0D, 0.006D, 0.0D),
                         10 + r.nextInt(4), (float) (0.13D + 0.06D * r.nextDouble()), r.nextInt(4)));
+            }
+        }
+        if (s.plum && s.layer >= 3) {
+            // Лепестки срываются с удара во все стороны: {позиция, скорость}.
+            Vec3 at = s.hit != null ? s.hit : s.feet.add(s.look.scale(1.4D)).add(0.0D, 1.2D, 0.0D);
+            for (int i = 0; i < 6 + s.layer; i++) {
+                Vec3 v = new Vec3(r.nextGaussian(), 0.4D + r.nextDouble(), r.nextGaussian()).normalize().scale(0.08D + 0.08D * r.nextDouble());
+                s.petals.add(new Vec3[] {at, v, new Vec3(0, r.nextInt(4), 0)});
             }
         }
         if (s.unity()) {
@@ -216,6 +243,7 @@ public final class FoundationVfx {
                     buffers.endBatch(solid);
                 }
                 VertexConsumer c = buffers.getBuffer(solid);
+                WHITE = s.plum ? PLUM : WHITE_SIX;
                 crescent(s, pose, c, age);
                 if (s.fired && s.layer >= 2) {
                     shinAir(s, pose, camera, c, age - s.hitAge());
@@ -225,6 +253,15 @@ public final class FoundationVfx {
                 }
                 buffers.endBatch(solid);
                 puffs(s, pose, camera, buffers, partial);
+                if (!s.petals.isEmpty()) {
+                    RenderType pt = MurimRenderTypes.plumPetals();
+                    VertexConsumer pc = buffers.getBuffer(pt);
+                    for (Vec3[] p : s.petals) {
+                        float a = Mth.clamp((30.0F - (float) p[2].z) / 10.0F, 0.0F, 1.0F);
+                        PlumVfx.petal(pc, pose, camera, p[0], 0.13D, (int) p[2].y, (float) p[2].z * 0.3F, a, 1.0F, 0.75F, 0.8F);
+                    }
+                    buffers.endBatch(pt);
+                }
             }
         } finally {
             poseStack.popPose();

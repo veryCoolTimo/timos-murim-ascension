@@ -83,7 +83,8 @@ public final class FoundationClient {
         FoundationForms.Form form = FoundationForms.at(step, layer);
         step++;
         lastSwing = ticks;
-        play(player, form, layer, FoundationForms.speed(cooldown), cooldown, target(minecraft));
+        play(player, form, layer, FoundationForms.speed(cooldown), cooldown, target(minecraft),
+                foundation.get().getPath().equals("seven_plum_basic"));
         PacketDistributor.sendToServer(new FoundationPayloads.Swing(form.ordinal()));
         return true;
     }
@@ -108,14 +109,14 @@ public final class FoundationClient {
         }
         if (minecraft.level.getEntity(payload.entityId()) instanceof AbstractClientPlayer other) {
             float cooldown = FoundationForms.NOMINAL_TICKS / Math.max(0.1F, payload.speed());
-            play(other, FoundationForms.Form.values()[payload.form()], payload.layer(), payload.speed(), cooldown, null);
+            play(other, FoundationForms.Form.values()[payload.form()], payload.layer(), payload.speed(), cooldown, null, false);
         }
     }
 
     private static void play(AbstractClientPlayer player, FoundationForms.Form form, int layer, float speed,
-                             float cooldown, Vec3 hit) {
+                             float cooldown, Vec3 hit, boolean plum) {
         MurimPlayerAnimations.playForm(player, ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, form.animation()), speed);
-        FoundationVfx.start(player.getId(), form, layer, cooldown, hit);
+        FoundationVfx.start(player.getId(), form, layer, cooldown, hit, plum);
     }
 
     private FoundationClient() {

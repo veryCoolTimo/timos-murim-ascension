@@ -69,6 +69,7 @@ public final class MasteryService {
                     learn(player, form, depth);
                 }
             }
+            style.basic().filter(b -> !player.getData(ModAttachments.MASTERY).knows(b)).ifPresent(b -> learn(player, b, depth));
         });
         sync(player);
         return Learn.LEARNED;

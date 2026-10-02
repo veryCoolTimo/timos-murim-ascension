@@ -173,5 +173,7 @@
   "form.murim.seven_plum_whirlwind": "Whirlwind",
   "form.murim.seven_plum_execution": "Execution",
   "form.murim.seven_plum_rush": "Rush",
-  "murim.loadout.forms": "forms %s/%s"
+  "murim.loadout.forms": "forms %s/%s",
+  "technique.murim.seven_plum_basic": "Seven Plum Blossoms: basic strikes",
+  "technique.murim.seven_plum_basic.weakness": "Plain strikes of the style: no reach beyond the blade."
 }

@@ -153,5 +153,7 @@
   "form.murim.seven_plum_whirlwind": "Вихрь",
   "form.murim.seven_plum_execution": "Казнь",
   "form.murim.seven_plum_rush": "Натиск",
-  "murim.loadout.forms": "форм %s/%s"
+  "murim.loadout.forms": "форм %s/%s",
+  "technique.murim.seven_plum_basic": "Семь Цветков Сливы: основа",
+  "technique.murim.seven_plum_basic.weakness": "Обычные удары стиля: дальше клинка не достают."
 }

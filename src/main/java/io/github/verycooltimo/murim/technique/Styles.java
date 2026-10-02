@@ -13,7 +13,8 @@ import java.util.Optional;
  */
 public final class Styles {
 
-    public record Style(ResourceLocation id, List<ResourceLocation> forms) {
+    /** {@code basic} — основа стиля на ЛКМ (серия обычных ударов), пусто — у стиля её нет. */
+    public record Style(ResourceLocation id, List<ResourceLocation> forms, Optional<ResourceLocation> basic) {
         public String nameKey() {
             return "style." + id.getNamespace() + "." + id.getPath();
         }
@@ -25,7 +26,8 @@ public final class Styles {
 
     /** Меч Семи Цветков Сливы: Разрез·Частокол → Вихрь → Казнь → Натиск (порядок канона). */
     public static final Style SEVEN_PLUM = new Style(id("seven_plum"), List.of(
-            id("seven_plum_blossoms"), id("seven_plum_whirlwind"), id("seven_plum_execution"), id("seven_plum_rush")));
+            id("seven_plum_blossoms"), id("seven_plum_whirlwind"), id("seven_plum_execution"), id("seven_plum_rush")),
+            Optional.of(id("seven_plum_basic")));
 
     public static final List<Style> ALL = List.of(SEVEN_PLUM);
 

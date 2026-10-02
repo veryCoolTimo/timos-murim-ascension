@@ -57,7 +57,18 @@ public final class LoadoutService {
         if (slot < 0 || slot >= openSlots(player)) {
             return;
         }
-        player.setData(ModAttachments.LOADOUT, player.getData(ModAttachments.LOADOUT).select(slot));
+        Loadout next = player.getData(ModAttachments.LOADOUT).select(slot);
+        // Выбрал слот стиля — ЛКМ переходит на основу этого стиля (если выучена); шаг или
+        // ладонь стойку не меняют (решение codex 02.10).
+        Optional<ResourceLocation> chosen = next.at(slot);
+        if (chosen.isPresent()) {
+            Optional<ResourceLocation> basic = io.github.verycooltimo.murim.technique.Styles.of(chosen.get())
+                    .flatMap(io.github.verycooltimo.murim.technique.Styles.Style::basic);
+            if (basic.isPresent() && MasteryService.knows(player, basic.get())) {
+                next = next.withFoundation(basic);
+            }
+        }
+        player.setData(ModAttachments.LOADOUT, next);
         sync(player);
     }
 

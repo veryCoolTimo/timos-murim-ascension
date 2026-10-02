@@ -216,7 +216,8 @@ public final class DevSetupEvents {
                 && event.getEntity() instanceof net.minecraft.server.level.ServerPlayer fp) {
             fp.setData(io.github.verycooltimo.murim.registry.ModAttachments.LOADOUT,
                     fp.getData(io.github.verycooltimo.murim.registry.ModAttachments.LOADOUT).withFoundation(java.util.Optional.of(
-                            net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(io.github.verycooltimo.murim.MurimMod.MODID, "six_harmonies"))));
+                            net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(io.github.verycooltimo.murim.MurimMod.MODID,
+                                    System.getenv().getOrDefault("MURIM_CAPTURE_FOUNDATION_ID", "six_harmonies")))));
             io.github.verycooltimo.murim.mastery.LoadoutService.sync(fp);
         }
         // Съёмка интерфейсов техник: шесть открытых слотов, пять техник, часть освоена наполовину.
