@@ -98,15 +98,28 @@ public final class StepVfx {
     private static final Band[][] BANDS = {
             {},
             {wisp(0.12)},
-            {new Band(true, -0.35, 2.8, 0.2F, 0.5F, 0.80, 0.60, 0.85, 170, 0, 0.16, NO_PINK, false, 1.0F), wisp(0.14)},
-            {new Band(true, -0.35, 2.8, 0.2F, 0.5F, 0.90, 0.68, 0.90, 190, -10, 0.24, LEAD_PINK, false, 1.0F),
+            {new Band(true, -0.15, 2.8, 0.2F, 0.5F, 0.80, 0.60, 0.85, 200, 0, 0.20, NO_PINK, false, 1.0F), wisp(0.14)},
+            {new Band(true, -0.15, 2.8, 0.2F, 0.5F, 0.90, 0.68, 0.90, 220, -10, 0.24, LEAD_PINK, false, 1.0F),
              new Band(true, 0.60, 0.75, 0.5F, 0.25F, 0.40, 0.30, 1.00, -100, 120, 0.144, NO_PINK, false, 0.6F),
+             strand(0.15, 1.7, 0.35F, 1.15, 0.95, 1.00, 160, 30, 0.05),
              wisp(0.14)},
-            {new Band(true, -0.35, 2.8, 0.2F, 0.5F, 0.97, 0.82, 0.95, 210, 0, 0.32, LEAD_PINK, false, 1.0F),
+            {new Band(true, -0.15, 2.8, 0.2F, 0.5F, 0.97, 0.82, 0.95, 230, 0, 0.32, LEAD_PINK, false, 1.0F),
              new Band(true, 0.60, 0.8, 0.5F, 0.25F, 0.50, 0.38, 1.05, -110, 120, 0.19, SECOND_PINK, false, 0.6F),
              new Band(true, 0.10, 0.9, 0.9F, 0.3F, 0.32, 0.26, 0.55, 80, -30, 0.105, NO_PINK, false, 0.8F),
+             strand(0.15, 1.8, 0.35F, 1.25, 1.05, 1.05, 160, 30, 0.055),
+             strand(1.00, 1.3, 0.6F, 0.75, 0.50, 0.55, -135, 200, 0.04),
+             strand(-0.55, 1.0, 0.8F, 0.55, 0.60, 1.20, 115, 95, 0.035),
              wisp(0.14)},
     };
+
+    /**
+     * Тонкая прядь воздуха (референс: кроме крупных лопастей — узкие продолжения разной
+     * ширины). Своя ось, радиус и запаздывание, чтобы пряди не шли параллельно ведущей ленте.
+     */
+    private static Band strand(double offset, double length, float born, double a, double b, double top,
+                               double turn, double phase, double width) {
+        return new Band(true, offset, length, born, 0.3F, a, b, top, turn, phase, width, NO_PINK, false, 0.65F);
+    }
 
     private static final List<Step> ACTIVE = new ArrayList<>();
     private static int clientTicks;
