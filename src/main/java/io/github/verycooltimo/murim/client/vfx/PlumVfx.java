@@ -175,26 +175,21 @@ public final class PlumVfx {
         }
         Random r = c.random;
         Vec3 root = arcEdge(c, 0.0D, 1.0D);
-        int puffs = c.layer >= 4 ? 16 : c.layer == 3 ? 12 : c.layer == 2 ? 8 : 5;
+        int puffs = c.layer >= 4 ? 8 : c.layer == 3 ? 6 : c.layer == 2 ? 4 : 3;
         for (int i = 0; i < puffs; i++) {
-            // Две трети — у корня, треть — вдоль взмаха от стопы.
-            boolean atRoot = i % 3 != 2;
-            Vec3 at = atRoot ? root : c.origin.add(c.forward.scale(0.4D * r.nextDouble()));
-            double a = r.nextDouble() * Math.PI * 2.0D;
+            // Только от корня и наружу, вдоль земли (ref7): перед ногами комом не копится.
+            double a = (r.nextDouble() - 0.5D) * Math.PI * 1.3D;
             Vec3 out = c.forward.scale(Math.cos(a)).add(c.right.scale(Math.sin(a)));
-            if (out.dot(c.forward) < -0.3D) {
-                out = out.add(c.forward.scale(0.6D)).normalize();
-            }
-            at = at.add(out.scale(0.2D + 0.3D * r.nextDouble())).add(0.0D, 0.15D, 0.0D);
-            Vec3 vel = out.scale(0.12D + 0.14D * r.nextDouble()).add(0.0D, 0.02D + 0.05D * r.nextDouble(), 0.0D);
-            c.puffs.add(new Puff(at, vel, 12 + r.nextInt(10), r.nextInt(16), 0.25D + 0.2D * r.nextDouble() + 0.04D * c.layer));
+            Vec3 at = root.add(out.scale(0.3D + 0.3D * r.nextDouble())).add(0.0D, 0.12D, 0.0D);
+            Vec3 vel = out.scale(0.2D + 0.2D * r.nextDouble()).add(0.0D, 0.01D + 0.025D * r.nextDouble(), 0.0D);
+            c.puffs.add(new Puff(at, vel, 12 + r.nextInt(10), r.nextInt(16), 0.22D + 0.15D * r.nextDouble() + 0.03D * c.layer));
         }
-        int gusts = c.layer >= 4 ? 7 : c.layer == 3 ? 5 : c.layer == 2 ? 4 : 2;
+        // Ветер — одна-две широкие закрученные приземные дуги (whirl5), не россыпь нитей.
+        int gusts = c.layer >= 2 ? 2 : 1;
         for (int i = 0; i < gusts; i++) {
-            double a = -Math.PI * 0.75D + Math.PI * 1.5D * (i + r.nextDouble() * 0.7D) / gusts;
-            c.gusts.add(new Gust(a, Math.toRadians(35.0D + 30.0D * r.nextDouble()) * (r.nextBoolean() ? 1 : -1),
-                    0.08D + 0.5D * r.nextDouble() * r.nextDouble(), 0.05D + 0.05D * r.nextDouble(),
-                    r.nextFloat() * 1.5F, 2.4D + 1.4D * r.nextDouble() + 0.3D * c.layer));
+            double a = (i == 0 ? -0.6D : 0.7D) + (r.nextDouble() - 0.5D) * 0.4D;
+            c.gusts.add(new Gust(a, Math.toRadians(110.0D) * (i == 0 ? 1 : -1), 0.25D + 0.15D * r.nextDouble(),
+                    0.26D + 0.08D * r.nextDouble(), 0.5F * i, 2.6D + 0.25D * c.layer));
         }
     }
 
@@ -361,7 +356,8 @@ public final class PlumVfx {
      * слегка загибается назад. {@code scale} — для слабых соседних штрихов (меньший радиус).
      */
     private static Vec3 arcEdge(Cast c, double u, double scale) {
-        double h = PlumRules.height(c.layer) * scale;
+        // Визуально на 40 % выше коридора урона: в ref4/whirl5 удар сильно вытянут вверх.
+        double h = PlumRules.height(c.layer) * scale * 1.4D;
         double r = h / (Math.sin(Math.toRadians(15.0D)) + Math.sin(Math.toRadians(75.0D)));
         double th = Math.toRadians(-75.0D + 90.0D * u);
         double cf = 0.55D - r * Math.cos(Math.toRadians(75.0D));
@@ -507,17 +503,18 @@ public final class PlumVfx {
             for (int i = 0; i <= m; i++) {
                 double u = i / (double) m;
                 // Голова впереди, хвост отстаёт по радиусу и закручен по дуге.
-                double rad = Math.max(0.2D, reach - 1.1D * u);
+                double rad = Math.max(0.3D, reach - 1.6D * u);
                 double ang = g.angle() + g.sweep() * u;
                 Vec3 dir = c.forward.scale(Math.cos(ang)).add(c.right.scale(Math.sin(ang)));
                 p[i] = root.add(dir.scale(rad)).add(0.0D, g.height() * (1.0D - u) + 0.05D, 0.0D);
                 w[i] = g.width() * Math.sin(Math.PI * Math.min(1.0D, u * 1.3D + 0.05D)) * (1.0D - 0.3D * t / 12.0D);
             }
-            strip(v, pose, camera, p, w, 0.4F * alpha, COLD);
-            strip(v, pose, camera, p, scale(w, 0.3D), 0.85F * alpha, EDGE);
+            strip(v, pose, camera, p, w, 0.22F * alpha, COLD);
+            strip(v, pose, camera, p, scale(w, 0.55D), 0.3F * alpha, COLD);
+            strip(v, pose, camera, p, scale(w, 0.15D), 0.75F * alpha, EDGE);
         }
         // Восходящие вихри у корня: вверх по спирали вокруг основания дуги (L2+).
-        if (c.layer >= 2 && age < 9.0F) {
+        if (c.layer >= 5 && age < 9.0F) {
             for (int k = 0; k < 2; k++) {
                 int m = 14;
                 Vec3[] p = new Vec3[m + 1];
