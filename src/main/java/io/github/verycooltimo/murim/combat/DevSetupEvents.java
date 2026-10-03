@@ -77,6 +77,11 @@ public final class DevSetupEvents {
             event.getEntity().setItemInHand(InteractionHand.MAIN_HAND,
                     new ItemStack(io.github.verycooltimo.murim.registry.ModItems.TANG_DAGGER.get(), 12));
         }
+        // MURIM_CAPTURE_HAND=huashan_sword — Меч Хуашань (модель автора, 03.10).
+        if ("huashan_sword".equals(System.getenv("MURIM_CAPTURE_HAND"))) {
+            event.getEntity().setItemInHand(InteractionHand.MAIN_HAND,
+                    new ItemStack(io.github.verycooltimo.murim.registry.ModItems.HUASHAN_SWORD.get()));
+        }
 
         // Площадка над лесом. Оценивать светящуюся ленту на фоне листвы невозможно: контраст
         // низкий, а ветки перекрывают силуэт. Чистое небо даёт однозначный фон, на котором

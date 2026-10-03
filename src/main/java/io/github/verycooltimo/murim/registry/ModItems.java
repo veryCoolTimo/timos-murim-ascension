@@ -41,6 +41,49 @@ public final class ModItems {
     public static final DeferredHolder<Item, Item> TANG_DAGGER = ITEMS.register("tang_dagger",
             () -> new Item(new Item.Properties().stacksTo(12)));
 
+    /**
+     * Меч Хуашань (модель автора art/items/huashan_sword, 03.10): настоящий меч уровня алмазного — урон 7,
+     * скорость меча, прочность 1200, зачаровывается как меч (тег minecraft:swords → murim:swords и enchantable/*).
+     */
+    public static final DeferredHolder<Item, Item> HUASHAN_SWORD = ITEMS.register("huashan_sword",
+            () -> new net.minecraft.world.item.SwordItem(HuashanTier.INSTANCE, new Item.Properties()
+                    .attributes(net.minecraft.world.item.SwordItem.createAttributes(HuashanTier.INSTANCE, 3, -2.4F))));
+
+    /** Уровень Меча Хуашань: как алмаз, но прочность 1200. API: reference/minecraft-src/net/minecraft/world/item/Tier.java. */
+    private enum HuashanTier implements net.minecraft.world.item.Tier {
+        INSTANCE;
+
+        @Override
+        public int getUses() {
+            return 1200;
+        }
+
+        @Override
+        public float getSpeed() {
+            return 8.0F;
+        }
+
+        @Override
+        public float getAttackDamageBonus() {
+            return 3.0F;
+        }
+
+        @Override
+        public net.minecraft.tags.TagKey<net.minecraft.world.level.block.Block> getIncorrectBlocksForDrops() {
+            return net.minecraft.tags.BlockTags.INCORRECT_FOR_DIAMOND_TOOL;
+        }
+
+        @Override
+        public int getEnchantmentValue() {
+            return 12;
+        }
+
+        @Override
+        public net.minecraft.world.item.crafting.Ingredient getRepairIngredient() {
+            return net.minecraft.world.item.crafting.Ingredient.of(net.minecraft.world.item.Items.IRON_INGOT);
+        }
+    }
+
     /** Пилюли (docs/design/19b §1). */
     public static final DeferredHolder<Item, Item> PILL_SNOW_PLUM = pill(io.github.verycooltimo.murim.cultivation.PillKind.SNOW_PLUM, 16);
     public static final DeferredHolder<Item, Item> PILL_ORIGIN_ENERGY = pill(io.github.verycooltimo.murim.cultivation.PillKind.ORIGIN_ENERGY, 4);
