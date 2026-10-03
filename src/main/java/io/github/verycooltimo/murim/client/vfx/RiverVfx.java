@@ -857,7 +857,7 @@ public final class RiverVfx {
         if (c.own() && RiverRules.caption(c.layer)) {
             c.caption = true;
             TechniqueCaption.showSecret(Component.translatable("technique.murim.twenty_four_plum.school"),
-                    Component.translatable("technique.murim.twenty_four_plum.river"), RiverRules.BURST + 12 - (c.t()));
+                    Component.translatable("technique.murim.twenty_four_plum.river"), RiverRules.BURST + 36 - (c.t()));
         }
         float distance = mc.player == null ? 99.0F : (float) mc.player.position().distanceTo(at);
         if (mc.player != null && distance < 20.0F) {
