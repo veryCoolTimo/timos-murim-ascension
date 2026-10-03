@@ -24,6 +24,7 @@ public sealed interface TechniqueBehavior
                 TechniqueBehavior.PalmBlast, TechniqueBehavior.Step, TechniqueBehavior.Footwork,
                 TechniqueBehavior.PlumSlash, TechniqueBehavior.PlumWhirlwind, TechniqueBehavior.PlumExecution, TechniqueBehavior.PlumRush,
                 TechniqueBehavior.PlumRainfall,
+                TechniqueBehavior.PlumDome,
                 TechniqueBehavior.FallingPetal {
 
     ResourceLocation MELEE_ARC = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "melee_arc");
@@ -37,6 +38,7 @@ public sealed interface TechniqueBehavior
     ResourceLocation PLUM_EXECUTION = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "plum_execution");
     ResourceLocation PLUM_RUSH = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "plum_rush");
     ResourceLocation PLUM_RAINFALL = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "plum_rainfall");
+    ResourceLocation PLUM_DOME = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "plum_dome");
     ResourceLocation FALLING_PETAL = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "falling_petal");
 
     ResourceLocation type();
@@ -316,6 +318,21 @@ public sealed interface TechniqueBehavior
         }
     }
 
+    /** Меч 24 Движений Цветущей Сливы, «Купол»: стволы-барьер спереди гасят удары, см. DomeRules. */
+    record PlumDome() implements TechniqueBehavior {
+        public static final MapCodec<PlumDome> CODEC = MapCodec.unit(PlumDome::new);
+
+        @Override
+        public float damage() {
+            return 0.0F;
+        }
+
+        @Override
+        public ResourceLocation type() {
+            return PLUM_DOME;
+        }
+    }
+
     /** Меч Падающего Цветка: натиск из пяти ударов вокруг цели, см. FallingPetalRules. */
     record FallingPetal() implements TechniqueBehavior {
         public static final MapCodec<FallingPetal> CODEC = MapCodec.unit(FallingPetal::new);
@@ -344,6 +361,7 @@ public sealed interface TechniqueBehavior
             Map.entry(PLUM_EXECUTION, PlumExecution.CODEC),
             Map.entry(PLUM_RUSH, PlumRush.CODEC),
             Map.entry(PLUM_RAINFALL, PlumRainfall.CODEC),
+            Map.entry(PLUM_DOME, PlumDome.CODEC),
             Map.entry(FALLING_PETAL, FallingPetal.CODEC));
 
     Codec<TechniqueBehavior> CODEC = ResourceLocation.CODEC

@@ -161,6 +161,10 @@ public final class ModAttachments {
     public static final Supplier<AttachmentType<double[]>> FALLING_PETAL =
             ATTACHMENT_TYPES.register("falling_petal",
                     () -> AttachmentType.<double[]>builder(() -> new double[] {0, 0, 0, 0, 1, 0, -1, 0, 0, 1, 0, 0, 1}).build());
+    /** Купол Цветущей Сливы: см. DomeExecutor. Не сохраняется — живёт одну технику. */
+    public static final Supplier<AttachmentType<double[]>> DOME =
+            ATTACHMENT_TYPES.register("plum_dome",
+                    () -> AttachmentType.<double[]>builder(() -> new double[] {0, 0, 0, 0, 1, 0, 0, 0, 0, 1}).build());
 
     /** Последний взмах основы меча: {форма, тик}. Не сохраняется — живёт тики. */
     public static final Supplier<AttachmentType<int[]>> FOUNDATION_SWING =
