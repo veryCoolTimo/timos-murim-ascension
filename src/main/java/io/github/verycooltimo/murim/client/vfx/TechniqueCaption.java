@@ -58,7 +58,8 @@ public final class TechniqueCaption {
      * (Семь Цветков и др.) по-прежнему идут через {@link #show}.
      */
     public static void showSecret(Component schoolName, Component formName, int lifeTicks) {
-        show(schoolName, formName, lifeTicks);
+        // Автор 03.10: «чтобы успеть прочитать» — на экране не меньше ~3 с (60 тиков) плюс уход.
+        show(schoolName, formName, Math.max(lifeTicks, 66));
         secret = true;
         SecretCaption.reset();
     }

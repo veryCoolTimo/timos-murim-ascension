@@ -156,11 +156,11 @@ final class SecretCaption {
         }
         y += 7.0F * small;
         // Автор 03.10: сначала вся школа разом, потом приём по слову («Ливень» → «Цветущей» → «Сливы»).
-        float wordAt = 4.0F;
+        float wordAt = 3.0F;
         for (String s : form.getString().toUpperCase(Locale.ROOT).split(" ")) {
             float wd = width(font, s) * big * SQUEEZE;
             lines.add(new Line(s, 0.0F, y, big, wd, wordAt, 0.01F, erase));
-            wordAt += 3.0F;
+            // Автор 03.10: двумя кусками — школа, затем название приёма целиком.
             erase += 0.5F;
             y += LINE_BIG * big;
         }
