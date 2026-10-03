@@ -258,7 +258,7 @@ public final class MountHuaShape {
         double n2 = flute.noise((u + wy) / 38.0, (v + wx) / 38.0, 12.5);
         double dome2 = Math.pow(clamp(Math.abs(n2) / 0.28, 0, 1), 0.45);
         double depth1 = 0.72 * smooth(30, 120, r) * calm;
-        double depth2 = 0.22 * calm;
+        double depth2 = 0.12 * calm;
         double h = env * (1 - depth1 * (1 - dome1)) * (1 - depth2 * (1 - dome2));
         h = Math.max(h, c * 12);
         h = smax(h, fangs(u, v), 8);
@@ -278,7 +278,7 @@ public final class MountHuaShape {
             h = gorge(gorge, u, v, h);
         }
         // Micro relief: broken granite.
-        h += 1.6 * (relief.ridged(u / 17.0, v / 17.0, 2) - 0.5) * c;
+        h += 0.8 * (relief.ridged(u / 23.0, v / 23.0, 2) - 0.5) * c;
         return h;
     }
 
@@ -439,7 +439,7 @@ public final class MountHuaShape {
                 double cu = (i + 0.2 + 0.6 * rnd(hsh, 3)) * CELL;
                 double cv = (j + 0.2 + 0.6 * rnd(hsh, 4)) * CELL;
                 double mc = massif(cu, cv);
-                if (mc < 0.12 || rnd(hsh, 8) < 0.65) {
+                if (mc < 0.12 || rnd(hsh, 8) < 0.72 || Math.hypot(cu, cv - 40) < 260) {
                     continue;
                 }
                 double top = mc * envelope(cu, cv) * (0.92 + 0.22 * r2);
@@ -555,7 +555,7 @@ public final class MountHuaShape {
                 continue;
             }
             // Crest bumps (towers and notches along the crest).
-            crest += 14 * relief.noise(px / 34.0, py / 34.0, 9.9) + 4 * relief.noise(px / 9.0, py / 9.0, 4.1);
+            crest += 8 * relief.noise(px / 34.0, py / 34.0, 9.9) + 2 * relief.noise(px / 9.0, py / 9.0, 4.1);
             double s = ridge.steep() * (1 + 0.35 * flute.noise(u / 13.0, v / 13.0, 4.4));
             double h = crest - s * Math.pow(d, 1.12);
             best = Math.max(best, h);

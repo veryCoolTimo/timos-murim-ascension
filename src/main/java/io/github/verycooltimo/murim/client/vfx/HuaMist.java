@@ -41,7 +41,7 @@ import org.joml.Vector3f;
 @EventBusSubscriber(modid = MurimMod.MODID, value = Dist.CLIENT)
 public final class HuaMist {
 
-    private static final int MAX_PUFFS = 110;
+    private static final int MAX_PUFFS = 140;
     private static final double SPAWN_MIN = 24;
     private static final double SPAWN_MAX = 300;
     private static final double ACTIVE_RADIUS = 1100;
@@ -152,23 +152,24 @@ public final class HuaMist {
         }
         double y;
         // More valley mist, fewer high puffs (codex r2: puffs on the summits looked stuck on).
-        boolean sea = RANDOM.nextFloat() < 0.35F;
+        boolean sea = RANDOM.nextFloat() < 0.2F;
         if (sea) {
             y = site.worldY(90 + RANDOM.nextDouble() * 35);
             if (g > y - 15) {
                 return;
             }
         } else {
-            if (g > site.worldY(150)) {
+            // Broad layers lying in the valleys of the lower slopes and the foothills.
+            if (g > site.worldY(70)) {
                 return;
             }
-            y = g + 3 + RANDOM.nextDouble() * 8;
+            y = g + 2 + RANDOM.nextDouble() * 5;
         }
         Puff p = new Puff();
         p.x = x;
         p.y = y;
         p.z = z;
-        p.size = sea ? 18 + RANDOM.nextDouble() * 22 : 8 + RANDOM.nextDouble() * 5;
+        p.size = sea ? 18 + RANDOM.nextDouble() * 22 : 16 + RANDOM.nextDouble() * 14;
         p.life = 600 + RANDOM.nextInt(600);
         p.phase = RANDOM.nextFloat() * 6.28F;
         p.flipU = RANDOM.nextBoolean();
@@ -212,14 +213,14 @@ public final class HuaMist {
                 // Thin out close to the eye (it must not wall off the view) and at the far edge.
                 float near = (float) Math.min(1.0, Math.max(0.0, (dist - p.size * 0.6) / (p.size * 1.2)));
                 float far = (float) Math.min(1.0, Math.max(0.0, (SPAWN_MAX + 40 - dist) / 80.0));
-                float alpha = 0.45F * env * near * far;
+                float alpha = 0.36F * env * near * far;
                 if (alpha <= 0.01F) {
                     continue;
                 }
                 float c = sky * p.bright;
                 // Three overlapping lobes per puff: a wide flat body and two smaller tops.
                 // Cloud-sea puffs are flat (a layer, ref 04); valley mist a little rounder.
-                double flat = p.size > 13 ? 0.32 : 0.5;
+                double flat = 0.3;
                 quad(vc, pose, px, py, pz, p.size, p.size * flat, left, up, alpha, c, p.flipU);
                 quad(vc, pose, px + p.size * 0.22, py + p.size * 0.12, pz, p.size * 0.6, p.size * 0.42,
                         left, up, alpha * 0.8F, c, !p.flipU);
