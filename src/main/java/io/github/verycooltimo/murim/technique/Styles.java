@@ -26,7 +26,7 @@ public final class Styles {
 
     /** Меч Семи Цветков Сливы: Разрез·Частокол → Вихрь → Казнь → Натиск (порядок канона). */
     public static final Style SEVEN_PLUM = new Style(id("seven_plum"), List.of(
-            id("seven_plum_blossoms"), id("seven_plum_whirlwind"), id("seven_plum_execution"), id("seven_plum_rush")),
+            id("seven_plum_blossoms"), id("seven_plum_whirlwind"), id("seven_plum_execution"), id("seven_plum_rush"), id("seven_plum_explosion")),
             Optional.of(id("seven_plum_basic")));
 
     /**

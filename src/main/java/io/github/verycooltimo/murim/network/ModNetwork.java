@@ -114,6 +114,8 @@ public final class ModNetwork {
                 (payload, context) -> ClientPayloadBridge.handleRush(payload));
         registrar.playToClient(RainPayload.TYPE, RainPayload.STREAM_CODEC,
                 (payload, context) -> ClientPayloadBridge.handleRain(payload));
+        registrar.playToClient(ExplosionPayload.TYPE, ExplosionPayload.STREAM_CODEC,
+                (payload, context) -> ClientPayloadBridge.handleExplosion(payload));
         registrar.playToClient(RiverPayload.TYPE, RiverPayload.STREAM_CODEC,
                 (payload, context) -> ClientPayloadBridge.handleRiver(payload));
         registrar.playToClient(ScatterPayload.TYPE, ScatterPayload.STREAM_CODEC,
