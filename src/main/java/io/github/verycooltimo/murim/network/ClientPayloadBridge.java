@@ -28,7 +28,8 @@ final class ClientPayloadBridge {
     }
 
     public static void handleManual(ManualPayloads.Open payload) {
-        net.minecraft.client.Minecraft.getInstance().setScreen(new io.github.verycooltimo.murim.client.ManualScreen(payload));
+        // Только статический вызов: new ManualScreen здесь заставил бы сервер грузить клиентский Screen.
+        io.github.verycooltimo.murim.client.ManualScreen.open(payload);
     }
 
     public static void handleRain(RainPayload payload) {

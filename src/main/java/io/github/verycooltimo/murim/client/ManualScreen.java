@@ -35,6 +35,10 @@ public final class ManualScreen extends Screen {
     private int by;
     private float k;
 
+    public static void open(ManualPayloads.Open open) {
+        net.minecraft.client.Minecraft.getInstance().setScreen(new ManualScreen(open));
+    }
+
     public ManualScreen(ManualPayloads.Open open) {
         super(io.github.verycooltimo.murim.mastery.MasteryService.name(open.technique()));
         this.open = open;
