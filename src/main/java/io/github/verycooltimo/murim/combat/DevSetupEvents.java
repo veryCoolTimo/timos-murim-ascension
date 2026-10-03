@@ -213,6 +213,9 @@ public final class DevSetupEvents {
         // кулдаун (Вихрь, 600 тиков) молча отклонял запуск после прошлой съёмки. Сбрасываем.
         event.getEntity().setData(io.github.verycooltimo.murim.registry.ModAttachments.TECHNIQUE_STATE,
                 io.github.verycooltimo.murim.combat.TechniqueState.IDLE);
+        // Перезарядки тоже: прогон, упавший с исключением рендера, сохраняет мир вместе с ними,
+        // и следующий прогон молча не запускал технику (03.10, ци-меч).
+        event.getEntity().setData(io.github.verycooltimo.murim.registry.ModAttachments.COOLDOWNS, new java.util.HashMap<>());
         // Съёмка основы меча: Шесть Равновесий в ячейке основы, удары — обычной атакой.
         if ("foundation".equals(System.getProperty("murim.capture.technique"))
                 && event.getEntity() instanceof net.minecraft.server.level.ServerPlayer fp) {

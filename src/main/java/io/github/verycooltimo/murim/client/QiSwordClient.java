@@ -4,11 +4,9 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import io.github.verycooltimo.murim.MurimMod;
 import io.github.verycooltimo.murim.combat.QiSword;
-import io.github.verycooltimo.murim.registry.ModItems;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.PlayerModel;
 import net.minecraft.client.player.AbstractClientPlayer;
-import net.minecraft.client.renderer.ItemInHandRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.RenderLayerParent;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
@@ -17,8 +15,6 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemDisplayContext;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -33,34 +29,22 @@ import java.util.Map;
  * Ци-меч на клиенте (03.10): светящийся клинок в пустой руке пробуждённого, пока тот бьёт
  * мечевыми формами. Появляется сам — на старт мечевой техники (TechniqueEvent STARTED) и на взмах
  * основы ЛКМ, гаснет через {@link QiSword#HOLD_TICKS} тиков без мечевых действий; предмет в руке
- * гасит его сразу. Рисуется предметом {@code murim:qi_sword} с полным светом: от третьего лица —
- * слоем модели игрока (как ванильный ItemInHandLayer), от первого — подменой пустой руки в
+ * гасит его сразу. Рисуется симуляцией {@link io.github.verycooltimo.murim.client.vfx.QiBladeRenderer}
+ * (реф «Keen Qi»): от третьего лица — слоем модели игрока у кулака, от первого — поверх пустой руки в
  * {@link RenderHandEvent}.
  */
 @EventBusSubscriber(modid = MurimMod.MODID, value = Dist.CLIENT)
 public final class QiSwordClient {
 
-    /** Полный свет: клинок из ци светится сам и ночью не темнеет. */
-    private static final int FULL_BRIGHT = 0xF000F0;
-
-    private static final Vector3f QI_BLUE = new Vector3f(0.45F, 0.80F, 1.0F);
+    private static final Vector3f QI_BLUE = new Vector3f(0.62F, 0.32F, 1.0F);
 
     /** Игровое время последнего мечевого действия по id сущности (кэш клиента, не игровое состояние). */
     private static final Map<Integer, Long> MARKS = new HashMap<>();
 
-    private static ItemStack stack;
-
-    private static ItemStack stack() {
-        if (stack == null) {
-            stack = new ItemStack(ModItems.QI_SWORD.get());
-        }
-        return stack;
-    }
-
     /** Есть ли у своего игрока чем бить основой: меч или пустая рука пробуждённого. */
     public static boolean hasBlade(Player player) {
         return QiSword.holdsSword(player.getMainHandItem())
-                || (player.getMainHandItem().isEmpty() && ClientProfileState.profile().isAwakened());
+                || (player.getMainHandItem().isEmpty() && QiSword.available(ClientProfileState.profile()));
     }
 
     /** Мечевое действие: если рука пуста — ци-меч появляется (с выбросом ци, если его не было). */
@@ -140,7 +124,8 @@ public final class QiSwordClient {
         if (event.getHand() != InteractionHand.MAIN_HAND || mc.player == null || !event.getItemStack().isEmpty() || !visible(mc.player)) {
             return;
         }
-        event.setCanceled(true);
+        // Рука остаётся ванильной (пустая ладонь), клинок растёт из кулака: те же смещения,
+        // что ваниль даёт предмету в руке (кулак), и тот же взмах.
         PoseStack pose = event.getPoseStack();
         float swing = event.getSwingProgress();
         float equip = event.getEquipProgress();
@@ -156,20 +141,19 @@ public final class QiSwordClient {
         pose.mulPose(Axis.ZP.rotationDegrees(i * f1 * -20.0F));
         pose.mulPose(Axis.XP.rotationDegrees(f1 * -80.0F));
         pose.mulPose(Axis.YP.rotationDegrees(i * -45.0F));
-        mc.getEntityRenderDispatcher().getItemInHandRenderer().renderItem(mc.player, stack(),
-                right ? ItemDisplayContext.FIRST_PERSON_RIGHT_HAND : ItemDisplayContext.FIRST_PERSON_LEFT_HAND,
-                !right, pose, event.getMultiBufferSource(), FULL_BRIGHT);
+        float time = mc.player.tickCount + event.getPartialTick();
+        io.github.verycooltimo.murim.client.vfx.QiBladeRenderer.draw(pose, event.getMultiBufferSource(),
+                new Vec3(i * 0.02D, 0.06D, -0.02D), new Vec3(i * -0.18D, 0.86D, -0.48D).normalize(),
+                new Vec3(i * 0.2D, -0.7D, 0.7D).normalize(), 1.5D, time,
+                mc.player.getId(), 0.75F);
         pose.popPose();
     }
 
     /** Слой модели игрока: клинок в правой руке от третьего лица (как ванильный ItemInHandLayer). */
     public static final class Layer extends RenderLayer<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> {
 
-        private final ItemInHandRenderer items;
-
-        public Layer(RenderLayerParent<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> parent, ItemInHandRenderer items) {
+        public Layer(RenderLayerParent<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> parent) {
             super(parent);
-            this.items = items;
         }
 
         // API: reference/minecraft-src/net/minecraft/client/renderer/entity/layers/ItemInHandLayer.java#renderArmWithItem
@@ -183,11 +167,12 @@ public final class QiSwordClient {
             boolean left = arm == HumanoidArm.LEFT;
             pose.pushPose();
             getParentModel().translateToHand(arm, pose);
-            pose.mulPose(Axis.XP.rotationDegrees(-90.0F));
-            pose.mulPose(Axis.YP.rotationDegrees(180.0F));
-            pose.translate((left ? -1 : 1) / 16.0F, 0.125F, -0.625F);
-            items.renderItem(player, stack(), left ? ItemDisplayContext.THIRD_PERSON_LEFT_HAND : ItemDisplayContext.THIRD_PERSON_RIGHT_HAND,
-                    left, pose, buffers, FULL_BRIGHT);
+            // В системе руки: кулак у нижнего конца руки, клинок вперёд и чуть вниз от кулака
+            // (рука опущена — лезвие к земле, как на рефе; рука вперёд — лезвие на противника).
+            float time = player.tickCount + partial;
+            io.github.verycooltimo.murim.client.vfx.QiBladeRenderer.draw(pose, buffers,
+                    new Vec3(left ? 0.0625D : -0.0625D, 0.66D, -0.02D), new Vec3(0.0D, 0.42D, -1.0D).normalize(), new Vec3(0.0D, -1.0D, 0.0D), 2.0D, time,
+                    player.getId(), 1.0F);
             pose.popPose();
         }
     }
