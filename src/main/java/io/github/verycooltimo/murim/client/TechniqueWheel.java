@@ -38,19 +38,20 @@ public final class TechniqueWheel {
     // крупные иконки на весь сектор, тонкая светлая обводка секторов, центр — отдельный круг.
     // Кольцо уменьшено по замечанию автора 01.10 («занимает слишком много места»): полоса
     // ровно под иконку 32×32 — пиксельные иконки рисуются без нецелого масштаба.
-    private static final float INNER = 24.0F;
-    private static final float OUTER = 58.0F;
+    // Автор 03.10: «кольцо хорошо, но надо меньше всё вместе» — 92 → 66 px наружу.
+    private static final float INNER = 16.0F;
+    private static final float OUTER = 42.0F;
     /**
      * Двойное кольцо (автор 03.10, «кольцо супер»): внутри — формы показанного стиля, снаружи —
      * все открытые слоты раскладки. Наведение на слот снаружи показывает внутри его формы;
      * отпустил V на слоте — выбран слот с его последней формой, на форме — эта форма.
      */
-    private static final float SLOT_INNER = OUTER + 4.0F;
-    private static final float SLOT_OUTER = OUTER + 34.0F;
+    private static final float SLOT_INNER = OUTER + 3.0F;
+    private static final float SLOT_OUTER = OUTER + 24.0F;
     /** Пикселей курсора на градус поворота мыши. */
     private static final float SENSITIVITY = 2.2F;
     /** Мёртвая зона в центре: без неё дрожь руки перебирала бы секторы. */
-    private static final float DEAD_ZONE = 10.0F;
+    private static final float DEAD_ZONE = 8.0F;
 
     private static boolean open;
     private static float baseYaw;
@@ -280,29 +281,29 @@ public final class TechniqueWheel {
         for (int i = 0; i < count; i++) {
             double mid = -Math.PI / 2.0D + i * span;
             float r = (INNER + OUTER) / 2.0F;
-            // Пиксельные иконки — строго 32×32: при нецелом масштабе пиксели выходят неровными.
-            int ix = (int) (cx + Math.cos(mid) * r) - 16;
-            int iy = (int) (cy + Math.sin(mid) * r) - 16;
+            // Пиксельные иконки — 24×24 (половина 48): при нецелом масштабе пиксели выходят неровными.
+            int ix = (int) (cx + Math.cos(mid) * r) - 12;
+            int iy = (int) (cy + Math.sin(mid) * r) - 12;
             Optional<ResourceLocation> technique = i < entries.size() ? Optional.of(entries.get(i)) : Optional.empty();
             if (technique.isPresent()) {
                 graphics.setColor(1.0F, 1.0F, 1.0F, appear * (i == selected ? 1.0F : 0.75F));
                 com.mojang.blaze3d.systems.RenderSystem.enableBlend();
-                int size = 32;
+                int size = 24;
                 int off = 0;
                 graphics.blit(TechniqueIcons.of(technique.get()), ix - off, iy - off, size, size,
                         0.0F, 0.0F, 48, 48, 48, 48);
                 graphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
             } else {
-                GuiShapes.ring(graphics, ix + 16, iy + 16, 0.0F, 2.0F, ((int) (appear * 0x80) << 24) | 0xC8DCEC);
+                GuiShapes.ring(graphics, ix + 12, iy + 12, 0.0F, 2.0F, ((int) (appear * 0x80) << 24) | 0xC8DCEC);
             }
         }
 
-        // Иконки слотов 24×24 (половина 48 — без неровных пикселей).
+        // Иконки слотов 16×16, форм 24×24 (доли 48 — без неровных пикселей).
         for (int i = 0; i < slotsN; i++) {
             double mid = -Math.PI / 2.0D + i * span(slotsN);
             float r = (SLOT_INNER + SLOT_OUTER) / 2.0F;
-            int ix = (int) (cx + Math.cos(mid) * r) - 12;
-            int iy = (int) (cy + Math.sin(mid) * r) - 12;
+            int ix = (int) (cx + Math.cos(mid) * r) - 8;
+            int iy = (int) (cy + Math.sin(mid) * r) - 8;
             Optional<ResourceLocation> t = i < slotList.size() ? slotList.get(i) : Optional.empty();
             if (t.isPresent()) {
                 graphics.setColor(1.0F, 1.0F, 1.0F, appear * (i == slotHover || i == page ? 1.0F : 0.55F));
@@ -310,11 +311,11 @@ public final class TechniqueWheel {
                 Optional<io.github.verycooltimo.murim.technique.Styles.Style> st = io.github.verycooltimo.murim.technique.Styles.of(t.get());
                 // Слот стиля — иконка первой формы (знак стиля), отдельная техника — своя.
                 ResourceLocation iconOf = st.map(x -> x.forms().get(0)).orElse(t.get());
-                graphics.blit(TechniqueIcons.of(iconOf), ix, iy, 24, 24, 0.0F, 0.0F, 48, 48, 48, 48);
+                graphics.blit(TechniqueIcons.of(iconOf), ix, iy, 16, 16, 0.0F, 0.0F, 48, 48, 48, 48);
                 graphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
             }
             if (i == ClientLoadoutState.active()) {
-                GuiShapes.ring(graphics, ix + 12, iy - 3, 0.0F, 1.6F, ((int) (appear * 0xE0) << 24) | 0xF1A9CB);
+                GuiShapes.ring(graphics, ix + 8, iy - 2, 0.0F, 1.4F, ((int) (appear * 0xE0) << 24) | 0xF1A9CB);
             }
         }
 
