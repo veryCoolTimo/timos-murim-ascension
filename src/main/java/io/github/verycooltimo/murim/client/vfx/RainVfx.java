@@ -954,8 +954,14 @@ public final class RainVfx {
             }
         }
         if (t == RainRules.CAPTION && c.own() && c.layer >= 3) {
-            TechniqueCaption.show(Component.translatable("technique.murim.twenty_four_plum.school"),
-                    Component.translatable("technique.murim.twenty_four_plum.rainfall"), 24);
+            TechniqueCaption.showSecret(Component.translatable("technique.murim.twenty_four_plum.school"),
+                    Component.translatable("technique.murim.twenty_four_plum.rainfall"), RainRules.contact(2) + 14 - RainRules.CAPTION);
+        }
+        // Касания волн ливня толкают надпись: морось слабее, обрушение сильнее.
+        for (int k = 0; k < RainRules.COHORTS.length; k++) {
+            if (t == RainRules.contact(k) && c.own()) {
+                TechniqueCaption.impact(k == 2 ? 1.0F : 0.5F);
+            }
         }
         // Ливень: три волны срываются вниз; вертикальные ленты — столб света.
         for (int k = 0; k < RainRules.COHORTS.length; k++) {

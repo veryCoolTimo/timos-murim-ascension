@@ -37,6 +37,7 @@ public final class TechniqueCaption {
     private static int born = -1;
     private static int life;
     private static int ticks;
+    private static boolean secret;
 
     /** Большая надпись на экране: мелкое имя техники в это время не рисуется, чтобы не налезать. */
     public static boolean active() {
@@ -48,6 +49,25 @@ public final class TechniqueCaption {
         form = formName;
         life = lifeTicks;
         born = ticks;
+        secret = false;
+    }
+
+    /**
+     * Надпись секретной техники (Меч 24 Движений): розово-белая фактура в тёмной обводке,
+     * проявление мазком, лепестки с краёв букв — см. {@link SecretCaption}. Обычные формы
+     * (Семь Цветков и др.) по-прежнему идут через {@link #show}.
+     */
+    public static void showSecret(Component schoolName, Component formName, int lifeTicks) {
+        show(schoolName, formName, lifeTicks);
+        secret = true;
+        SecretCaption.reset();
+    }
+
+    /** Удар под надписью (касание ливня): толчок, вспышка фактуры, лепестки. Только для секретной. */
+    public static void impact(float power) {
+        if (secret && active()) {
+            SecretCaption.impact(power);
+        }
     }
 
     @SubscribeEvent
@@ -70,6 +90,10 @@ public final class TechniqueCaption {
         float age = ticks - born + delta.getGameTimeDeltaPartialTick(false);
         if (age > life) {
             born = -1;
+            return;
+        }
+        if (secret) {
+            SecretCaption.render(graphics, mc.font, school, form, age, life);
             return;
         }
         float alpha = Mth.clamp(age / 1.5F, 0.0F, 1.0F) * Mth.clamp((life - age) / 8.0F, 0.0F, 1.0F);
