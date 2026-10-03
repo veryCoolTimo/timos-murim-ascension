@@ -267,5 +267,11 @@
   "form.murim.seven_plum_shower": "Shower",
   "book.murim.seven_plum_shower": "Coil like a bowstring, push off from afar and pierce the enemy from above: you yourself become the point, and a rain of cuts pours after you.",
   "book.murim.seven_plum_shower.full": "Plum Blossom Shower is a thrust in which the whole body becomes the sword. Coil in the stance until light gathers at the hand, and hold it; do not release it early. Push off from afar, rise above the enemy and fall on him at a slant, point first: pass through him, do not stick in him. A shower of parallel cuts pours after you, and below a white flash breaks. A target caught by your gaze freezes even in the sky. The form's weakness is the long coiling and the straight path: it is easier to strike the master in his stance or step off the line of the dive than to withstand the blow.",
-  "book.murim.style.seven_plum": "The Seven Plum Blossoms Sword is the root of the Mount Hua sword. The blossom does not strike with force: it opens where the enemy does not expect it, and its seven petals are seven ways to open. First learn the style itself: the steps, the grip and the three strikes from which every form grows. Only when the hand stops thinking about the sword will the first form open, and after it the next, each harder than the last. Do not hurry: a blossom opened before its time withers."
+  "book.murim.style.seven_plum": "The Seven Plum Blossoms Sword is the root of the Mount Hua sword. The blossom does not strike with force: it opens where the enemy does not expect it, and its seven petals are seven ways to open. First learn the style itself: the steps, the grip and the three strikes from which every form grows. Only when the hand stops thinking about the sword will the first form open, and after it the next, each harder than the last. Do not hurry: a blossom opened before its time withers.",
+  "entity.murim.bandit_swordsman": "Bandit Swordsman",
+  "entity.murim.bandit_archer": "Bandit Archer",
+  "item.murim.bandit_swordsman_spawn_egg": "Bandit Swordsman Spawn Egg",
+  "item.murim.bandit_archer_spawn_egg": "Bandit Archer Spawn Egg",
+  "item.murim.qi_sword": "Qi Sword",
+  "murim.technique.need_sword": "This form needs a sword: take one, or free your hand for the qi sword."
 }

@@ -1,0 +1,18 @@
+{
+  "type": "neoforge:add_spawns",
+  "biomes": "#minecraft:is_forest",
+  "spawners": [
+    {
+      "type": "murim:bandit_swordsman",
+      "weight": 6,
+      "minCount": 1,
+      "maxCount": 3
+    },
+    {
+      "type": "murim:bandit_archer",
+      "weight": 3,
+      "minCount": 1,
+      "maxCount": 1
+    }
+  ]
+}

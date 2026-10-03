@@ -24,6 +24,20 @@ public final class ModItems {
     public static final DeferredHolder<Item, Item> METHOD_SCROLL = ITEMS.register("method_scroll",
             () -> new io.github.verycooltimo.murim.item.MethodScrollItem(new Item.Properties().stacksTo(1)));
 
+    /** Яйца призыва бандитов — во вкладке «Мурим». Цвета: халат и повязка. */
+    public static final DeferredHolder<Item, Item> BANDIT_SWORDSMAN_SPAWN_EGG = ITEMS.register("bandit_swordsman_spawn_egg",
+            () -> new net.neoforged.neoforge.common.DeferredSpawnEggItem(ModEntities.BANDIT_SWORDSMAN, 0x58483A, 0x962620, new Item.Properties()));
+
+    public static final DeferredHolder<Item, Item> BANDIT_ARCHER_SPAWN_EGG = ITEMS.register("bandit_archer_spawn_egg",
+            () -> new net.neoforged.neoforge.common.DeferredSpawnEggItem(ModEntities.BANDIT_ARCHER, 0x3E4A34, 0xB89A5A, new Item.Properties()));
+
+    /**
+     * Ци-меч: не выдаётся и не лежит во вкладке. Это только модель светящегося клинка, которую
+     * клиент рисует в пустой руке пробуждённого, когда тот бьёт мечевой техникой (QiSword).
+     */
+    public static final DeferredHolder<Item, Item> QI_SWORD = ITEMS.register("qi_sword",
+            () -> new Item(new Item.Properties().stacksTo(1)));
+
     public static void register(IEventBus modBus) {
         ITEMS.register(modBus);
     }

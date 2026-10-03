@@ -82,6 +82,9 @@ public final class PlumRules {
         return layer >= 3;
     }
 
+    /** Насколько ниже ног разрез ещё задевает цель (враг в яме, на склоне), блоков. */
+    public static final double BELOW = 3.0D;
+
     private PlumRules() {
     }
 }

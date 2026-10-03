@@ -155,7 +155,11 @@ public final class DevCaptureHandler {
                     : front ? CameraType.THIRD_PERSON_FRONT : CameraType.THIRD_PERSON_BACK);
             // Сбоку снимаем глазами чужой сущности в первом лице: без скрытого интерфейса
             // в кадр лезут рука игрока и прицел.
-            if (side) {
+            // От первого лица с MURIM_CAPTURE_HAND (empty — ци-меч, sword — меч для сравнения) снимается рука,
+            // поэтому интерфейс (а с ним и рука) не прячется.
+            boolean handShot = "fp".equalsIgnoreCase(System.getProperty(CAMERA_PROPERTY, "back"))
+                    && System.getenv("MURIM_CAPTURE_HAND") != null;
+            if (side && !handShot) {
                 minecraft.options.hideGui = true;
             }
             // Приближение кадра без правки build.gradle: переменная окружения доходит до
