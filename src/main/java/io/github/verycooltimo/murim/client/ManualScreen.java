@@ -28,12 +28,6 @@ public final class ManualScreen extends Screen {
     private static final int PAGE_W = TEX_W / 2;
     private static final ResourceLocation BASIC = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/gui/book/basic_huashan.png");
     private static final ResourceLocation PLUM = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/gui/book/seven_plum.png");
-    /** Готовые кадры открытия (tools/art/book_flip.py): обложка с перспективой и пять листов. */
-    private static final ResourceLocation OPEN_BASIC = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/gui/book/open_basic.png");
-    private static final ResourceLocation OPEN_PLUM = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/gui/book/open_plum.png");
-    private static final int FRAMES = 19;
-    /** Тиков на кадр открытия. */
-    private static final float FRAME_TICKS = 1.2F;
     private static final int INK = 0xFF1B1612;
     private static final int FADED = 0xFF4A3F35;
     private static final int SEAL = 0xFFB3262C;
@@ -90,13 +84,6 @@ public final class ManualScreen extends Screen {
     @Override
     public void tick() {
         ticks++;
-        // Шелест: раскрытие обложки (кадр 2) и каждый лист (кадры 8, 10, … 16).
-        int f = (int) (ticks / FRAME_TICKS);
-        int fp = (int) ((ticks - 1) / FRAME_TICKS);
-        if (f != fp && (f == 2 || f >= 8 && f <= 16 && f % 2 == 0) && minecraft != null) {
-            minecraft.getSoundManager().play(net.minecraft.client.resources.sounds.SimpleSoundInstance.forUI(
-                    net.minecraft.sounds.SoundEvents.BOOK_PAGE_TURN, 0.9F + 0.1F * (f % 3), 0.6F));
-        }
     }
 
     @Override
@@ -104,8 +91,9 @@ public final class ManualScreen extends Screen {
         return false;
     }
 
+    /** Автор 03.10: без анимации открытия — книга сразу открыта на развороте. */
     private boolean opened(float t) {
-        return t >= FRAMES * FRAME_TICKS;
+        return true;
     }
 
     @Override
@@ -128,14 +116,7 @@ public final class ManualScreen extends Screen {
         g.pose().pushPose();
         g.pose().translate(bx, by, 0.0F);
         g.pose().scale(k, k, 1.0F);
-        if (!opened(t)) {
-            // Открытие — готовые кадры, без расчёта на лету (автор 03.10: «гиф-анимацию»).
-            int frame = Mth.clamp((int) (t / FRAME_TICKS), 0, FRAMES - 1);
-            com.mojang.blaze3d.systems.RenderSystem.enableBlend();
-            g.blit(illustrated && page == 0 ? OPEN_PLUM : OPEN_BASIC, 0, 0, 0.0F, frame * TEX_H, TEX_W, TEX_H, TEX_W, TEX_H * FRAMES);
-        } else {
-            spread(g, 2, true, true, mouseX, mouseY);
-        }
+        spread(g, 2, true, true, mouseX, mouseY);
         g.pose().popPose();
     }
 
@@ -196,11 +177,6 @@ public final class ManualScreen extends Screen {
         if (button == 0 && overSeal(mouseX, mouseY)) {
             PacketDistributor.sendToServer(new ManualPayloads.Learn(open.mainHand()));
             onClose();
-            return true;
-        }
-        if (button == 0 && !opened(ticks)) {
-            // Нетерпеливый клик — сразу раскрыть.
-            ticks = (int) Math.ceil(FRAMES * FRAME_TICKS);
             return true;
         }
         return super.mouseClicked(mouseX, mouseY, button);
