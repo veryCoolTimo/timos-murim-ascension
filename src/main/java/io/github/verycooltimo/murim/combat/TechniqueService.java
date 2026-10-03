@@ -224,6 +224,12 @@ public final class TechniqueService {
                 io.github.verycooltimo.murim.technique.RainExecutor.tick(player, technique.id(), since);
             }
         }
+        if (technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.PlumRiver) {
+            int since = state.tick() - technique.startTickOf(TechniquePhase.IMPACT);
+            if (since > 0) {
+                io.github.verycooltimo.murim.technique.RiverExecutor.tick(player, technique.id(), since);
+            }
+        }
 
         // Шаг на высшем слое: ещё два рывка через равные промежутки.
         if (technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.Step) {
