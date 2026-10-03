@@ -168,6 +168,10 @@ public final class ModAttachments {
     public static final Supplier<AttachmentType<double[]>> RIVER =
             ATTACHMENT_TYPES.register("plum_river",
                     () -> AttachmentType.<double[]>builder(() -> new double[] {0, 0, 0, 0, 0, 0, 0, -1, -1, -1, 0, 0, 0}).build());
+    /** Взрыв Цветущей Сливы: см. ExplosionExecutor. Не сохраняется — живёт одну технику. */
+    public static final Supplier<AttachmentType<double[]>> EXPLOSION =
+            ATTACHMENT_TYPES.register("plum_explosion",
+                    () -> AttachmentType.<double[]>builder(() -> new double[40]).build());
     /** Рассеяние Цветущей Сливы: см. ScatterExecutor. Не сохраняется — живёт одну технику. */
     public static final Supplier<AttachmentType<double[]>> SCATTER =
             ATTACHMENT_TYPES.register("plum_scatter",

@@ -90,6 +90,10 @@ public final class TechniqueService {
         if (technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.PalmBlast palm) {
             io.github.verycooltimo.murim.technique.BehaviorExecutor.palmLunge(player, palm, technique.totalTicks());
         }
+        // Взрыв закладывает стену кольев в мир в начале каста: колья вырастают ещё в замахе.
+        if (technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.PlumExplosion) {
+            io.github.verycooltimo.murim.technique.ExplosionExecutor.begin(player, technique.id());
+        }
         // Купол сажает барьер в мир в начале каста: стволы растут ещё в замахе.
         if (technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.PlumDome) {
             io.github.verycooltimo.murim.technique.DomeExecutor.begin(player, technique.id());
@@ -227,6 +231,9 @@ public final class TechniqueService {
             if (since > 0) {
                 io.github.verycooltimo.murim.technique.RainExecutor.tick(player, technique.id(), since);
             }
+        }
+        if (technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.PlumExplosion) {
+            io.github.verycooltimo.murim.technique.ExplosionExecutor.tick(player, technique.id(), state.tick());
         }
         if (technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.PlumRiver) {
             int since = state.tick() - technique.startTickOf(TechniquePhase.IMPACT);

@@ -24,6 +24,7 @@ public sealed interface TechniqueBehavior
                 TechniqueBehavior.PalmBlast, TechniqueBehavior.Step, TechniqueBehavior.Footwork,
                 TechniqueBehavior.PlumSlash, TechniqueBehavior.PlumWhirlwind, TechniqueBehavior.PlumExecution, TechniqueBehavior.PlumRush,
                 TechniqueBehavior.PlumRainfall,
+                TechniqueBehavior.PlumExplosion,
                 TechniqueBehavior.PlumRiver,
                 TechniqueBehavior.PlumScatter,
                 TechniqueBehavior.PlumDome,
@@ -40,6 +41,7 @@ public sealed interface TechniqueBehavior
     ResourceLocation PLUM_EXECUTION = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "plum_execution");
     ResourceLocation PLUM_RUSH = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "plum_rush");
     ResourceLocation PLUM_RAINFALL = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "plum_rainfall");
+    ResourceLocation PLUM_EXPLOSION = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "plum_explosion");
     ResourceLocation PLUM_RIVER = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "plum_river");
     ResourceLocation PLUM_SCATTER = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "plum_scatter");
     ResourceLocation PLUM_DOME = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "plum_dome");
@@ -322,6 +324,21 @@ public sealed interface TechniqueBehavior
         }
     }
 
+    /** Меч Семи Цветков Сливы, «Взрыв»: стена цветущих кольев и направленный выброс, см. ExplosionRules. */
+    record PlumExplosion() implements TechniqueBehavior {
+        public static final MapCodec<PlumExplosion> CODEC = MapCodec.unit(PlumExplosion::new);
+
+        @Override
+        public float damage() {
+            return 0.0F;
+        }
+
+        @Override
+        public ResourceLocation type() {
+            return PLUM_EXPLOSION;
+        }
+    }
+
     /** Меч 24 Движений Цветущей Сливы, «Опадающие Лепестки, Перекрывающие Реку», см. RiverRules. */
     record PlumRiver() implements TechniqueBehavior {
         public static final MapCodec<PlumRiver> CODEC = MapCodec.unit(PlumRiver::new);
@@ -395,6 +412,7 @@ public sealed interface TechniqueBehavior
             Map.entry(PLUM_EXECUTION, PlumExecution.CODEC),
             Map.entry(PLUM_RUSH, PlumRush.CODEC),
             Map.entry(PLUM_RAINFALL, PlumRainfall.CODEC),
+            Map.entry(PLUM_EXPLOSION, PlumExplosion.CODEC),
             Map.entry(PLUM_RIVER, PlumRiver.CODEC),
             Map.entry(PLUM_SCATTER, PlumScatter.CODEC),
             Map.entry(PLUM_DOME, PlumDome.CODEC),

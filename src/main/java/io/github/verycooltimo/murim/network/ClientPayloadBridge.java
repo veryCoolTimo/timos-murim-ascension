@@ -28,6 +28,11 @@ final class ClientPayloadBridge {
         io.github.verycooltimo.murim.client.vfx.ScatterVfx.onTechniqueEvent(payload);
         io.github.verycooltimo.murim.client.vfx.DomeVfx.onTechniqueEvent(payload);
         io.github.verycooltimo.murim.client.vfx.FallingPetalVfx.onTechniqueEvent(payload);
+        io.github.verycooltimo.murim.client.vfx.ExplosionVfx.onTechniqueEvent(payload);
+    }
+
+    public static void handleExplosion(ExplosionPayload payload) {
+        io.github.verycooltimo.murim.client.vfx.ExplosionVfx.onExplosion(payload);
     }
 
     public static void handleManual(ManualPayloads.Open payload) {

@@ -64,6 +64,9 @@ public final class BehaviorExecutor {
         if (behavior instanceof TechniqueBehavior.PlumRainfall) {
             return RainExecutor.start(player, definition.id());
         }
+        if (behavior instanceof TechniqueBehavior.PlumExplosion) {
+            return ExplosionExecutor.strike(player, definition.id());
+        }
         if (behavior instanceof TechniqueBehavior.PlumRiver) {
             return RiverExecutor.start(player, definition.id());
         }
