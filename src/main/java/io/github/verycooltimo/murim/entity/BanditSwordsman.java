@@ -250,7 +250,7 @@ public class BanditSwordsman extends Bandit {
             setState(WINDUP, m);
             playSound(m == BanditMove.QI_DASH ? io.github.verycooltimo.murim.registry.ModSounds.QI_CHARGE.get()
                     : io.github.verycooltimo.murim.registry.ModSounds.BANDIT_WINDUP.get(),
-                    m == BanditMove.QI_DASH ? 0.7F : 1.0F, 0.93F + 0.14F * getRandom().nextFloat());
+                    m == BanditMove.QI_DASH ? 0.45F : 0.5F, 0.93F + 0.14F * getRandom().nextFloat());
         }
 
         private void windup(LivingEntity t) {
@@ -266,7 +266,7 @@ public class BanditSwordsman extends Bandit {
                     Vec3 to = t == null ? Vec3.directionFromRotation(0.0F, yBodyRot)
                             : new Vec3(t.getX() - getX(), 0.0D, t.getZ() - getZ());
                     dashDir = to.lengthSqr() < 1.0E-4D ? Vec3.directionFromRotation(0.0F, yBodyRot) : to.normalize();
-                    playSound(io.github.verycooltimo.murim.registry.ModSounds.SWORD_SWING_HEAVY.get(), 1.0F, 1.05F + 0.1F * getRandom().nextFloat());
+                    playSound(io.github.verycooltimo.murim.registry.ModSounds.SWORD_SWING_HEAVY.get(), 0.6F, 1.05F + 0.1F * getRandom().nextFloat());
                 }
             }
         }
@@ -287,7 +287,7 @@ public class BanditSwordsman extends Bandit {
             } else {
                 getNavigation().stop();
                 if (stateTick == m.hitTick()) {
-                    playSound(io.github.verycooltimo.murim.registry.ModSounds.SWORD_SWING_HEAVY.get(), 0.9F, 0.9F + 0.1F * getRandom().nextFloat());
+                    playSound(io.github.verycooltimo.murim.registry.ModSounds.SWORD_SWING_HEAVY.get(), 0.55F, 0.9F + 0.1F * getRandom().nextFloat());
                     if (t != null && m.reaches(t.getX() - getX(), t.getY() - getY(), t.getZ() - getZ(), yBodyRot)
                             && getSensing().hasLineOfSight(t)) {
                         hit(t, m);

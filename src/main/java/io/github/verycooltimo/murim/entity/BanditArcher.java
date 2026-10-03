@@ -83,7 +83,7 @@ public class BanditArcher extends Bandit implements RangedAttackMob {
         double dz = target.getZ() - getZ();
         double flat = Math.sqrt(dx * dx + dz * dz);
         arrow.shoot(dx, dy + flat * 0.2D, dz, 1.6F, (float) (14 - level().getDifficulty().getId() * 4));
-        playSound(io.github.verycooltimo.murim.registry.ModSounds.BOW_SHOT.get(), 1.0F, 0.93F + 0.14F * getRandom().nextFloat());
+        playSound(io.github.verycooltimo.murim.registry.ModSounds.BOW_SHOT.get(), 0.6F, 0.93F + 0.14F * getRandom().nextFloat());
         level().addFreshEntity(arrow);
         log("выстрел по {}", target.getName().getString());
     }
