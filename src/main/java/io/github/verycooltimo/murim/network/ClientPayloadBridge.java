@@ -33,6 +33,10 @@ final class ClientPayloadBridge {
         io.github.verycooltimo.murim.client.vfx.ExplosionVfx.onTechniqueEvent(payload);
     }
 
+    public static void handleMountHua(MountHuaSitePayload payload) {
+        io.github.verycooltimo.murim.client.vfx.HuaMist.onSite(payload);
+    }
+
     public static void handleExplosion(ExplosionPayload payload) {
         io.github.verycooltimo.murim.client.vfx.ExplosionVfx.onExplosion(payload);
     }

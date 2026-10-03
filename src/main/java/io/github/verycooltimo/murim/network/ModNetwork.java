@@ -197,6 +197,11 @@ public final class ModNetwork {
                 SyncMeditationPayload.TYPE,
                 SyncMeditationPayload.STREAM_CODEC,
                 (payload, context) -> ClientPayloadBridge.handleSyncMeditation(payload));
+
+        registrar.playToClient(
+                MountHuaSitePayload.TYPE,
+                MountHuaSitePayload.STREAM_CODEC,
+                (payload, context) -> ClientPayloadBridge.handleMountHua(payload));
     }
 
     private ModNetwork() {

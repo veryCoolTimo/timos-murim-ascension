@@ -344,5 +344,20 @@
   "subtitles.murim.bandit_windup": "Bandit winds up",
   "subtitles.murim.bow_shot": "Bow fires",
   "subtitles.murim.qi_sword_summon": "Qi sword forms",
-  "subtitles.murim.qi_sword_hum": "Qi sword hums"
+  "subtitles.murim.qi_sword_hum": "Qi sword hums",
+  "command.murim.mounthua.none": "Mount Hua has no site yet (the server has not started).",
+  "command.murim.mounthua.info": "Mount Hua: centre %s, %s; foot of the trail (gate terrace) %s, %s; South Peak summit y=%s",
+  "command.murim.mounthua.places": "Teleport:",
+  "command.murim.mounthua.unknown": "Unknown place: %s",
+  "command.murim.mounthua.teleported": "Mount Hua, %s: %s %s %s",
+  "command.murim.mounthua.pregen": "Generating Mount Hua: %s chunks (in the background)",
+  "command.murim.mounthua.pregen_done": "Mount Hua generated: %s chunks",
+  "sign.murim.hua.gate": "Gate terrace",
+  "sign.murim.hua.main": "Main terrace",
+  "sign.murim.hua.upper": "Temple, residence",
+  "sign.murim.hua.vault": "Secret vault",
+  "sign.murim.hua.poles": "Plum poles",
+  "sign.murim.hua.grove": "Plum grove",
+  "sign.murim.hua.penance": "Penance cave",
+  "sign.murim.hua.placeholder": "(building site)"
 }

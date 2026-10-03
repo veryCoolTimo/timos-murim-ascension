@@ -324,5 +324,20 @@
   "subtitles.murim.bandit_windup": "Бандит замахивается",
   "subtitles.murim.bow_shot": "Выстрел из лука",
   "subtitles.murim.qi_sword_summon": "Появляется ци-меч",
-  "subtitles.murim.qi_sword_hum": "Гул ци-меча"
+  "subtitles.murim.qi_sword_hum": "Гул ци-меча",
+  "command.murim.mounthua.none": "У горы Хуа ещё нет места (сервер не запущен).",
+  "command.murim.mounthua.info": "Гора Хуа: центр %s, %s; начало тропы (терраса ворот) %s, %s; вершина Южного пика y=%s",
+  "command.murim.mounthua.places": "Телепорт:",
+  "command.murim.mounthua.unknown": "Неизвестное место: %s",
+  "command.murim.mounthua.teleported": "Гора Хуа, %s: %s %s %s",
+  "command.murim.mounthua.pregen": "Генерирую гору Хуа: %s чанков (в фоне)",
+  "command.murim.mounthua.pregen_done": "Гора Хуа сгенерирована: %s чанков",
+  "sign.murim.hua.gate": "Терраса ворот",
+  "sign.murim.hua.main": "Главная терраса",
+  "sign.murim.hua.upper": "Храм, резиденция",
+  "sign.murim.hua.vault": "Тайник",
+  "sign.murim.hua.poles": "Столбы сливы",
+  "sign.murim.hua.grove": "Сливовая роща",
+  "sign.murim.hua.penance": "Пещера покаяния",
+  "sign.murim.hua.placeholder": "(место стройки)"
 }
