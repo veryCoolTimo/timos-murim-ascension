@@ -7,8 +7,8 @@
     "ritual": 0,
     "windup": 28,
     "impact": 2,
-    "recovery": 44,
-    "dissipation": 6
+    "recovery": 16,
+    "dissipation": 4
   },
   "behavior": {
     "type": "murim:plum_explosion"

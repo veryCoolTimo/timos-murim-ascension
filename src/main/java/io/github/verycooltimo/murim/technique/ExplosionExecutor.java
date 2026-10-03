@@ -12,20 +12,20 @@ import net.neoforged.neoforge.network.PacketDistributor;
 
 /**
  * Сервер Взрыва Цветущей Сливы (см. {@link ExplosionRules}). Состояние — вложение
- * {@code EXPLOSION}: {ступни x, y, z, центр стены x, y, z, слой, id цели или −1, точка удара x, y, z,
- * ось x, y, z, взорвана 0/1, число задетых, id задетых ×24}.
+ * {@code EXPLOSION}: {ступни x, y, z, направление удара x, y, z, слой, id цели или −1, точка удара
+ * x, y, z, ось x, y, z, взорвана 0/1, число задетых, id задетых ×24}.
  *
- * <p>Стена закладывается в начале каста ({@link #begin}) поперёк линии на цель: захваченная цель,
- * иначе ближайший противник под взглядом (в том числе в небе), иначе взгляд. На IMPACT мастер
- * прыгает к стене ({@link #strike}); через {@link ExplosionRules#LUNGE_TICKS} меч входит в неё —
- * выброс летит фронтом к цели. Урон — только тем, кого фронт реально накрыл и до кого нет стены
- * блоков; отброс по оси выброса, через {@link ExplosionRules#STUN_DELAY} тиков — оглушение
- * (замедление ≥ 4 гасит ИИ, см. {@link TargetLock}); лепестковая буря дорезает дважды.
+ * <p>На IMPACT ({@link #strike}) выбирается цель: захваченная, иначе ближайший противник под
+ * взглядом (в том числе в небе), иначе взгляд; мастер делает полушаг, точка удара — 1,5 блока
+ * перед ним. Через {@link ExplosionRules#LUNGE_TICKS} клинок доходит до неё — выброс летит
+ * фронтом к цели. Урон — только тем, кого фронт реально накрыл и до кого нет стены блоков;
+ * отброс по оси, через {@link ExplosionRules#STUN_DELAY} тиков — оглушение (замедление ≥ 4 гасит
+ * ИИ, см. {@link TargetLock}); лепестковая буря дорезает дважды.
  */
 public final class ExplosionExecutor {
 
     private static final int FEET = 0;
-    private static final int WALL = 3;
+    private static final int AIM = 3;
     private static final int LAYER = 6;
     private static final int TARGET = 7;
     private static final int STRIKE = 8;
@@ -35,33 +35,12 @@ public final class ExplosionExecutor {
     private static final int HIT_IDS = 16;
     private static final int MAX_HITS = 24;
 
-    /** Начало каста: стена в мир, пакет клиентам — колья растут ещё в замахе. */
+    /** Начало каста: сброс состояния (слой, цели ещё нет — она выбирается на ударе). */
     public static void begin(ServerPlayer player, ResourceLocation id) {
-        int layer = Math.max(0, io.github.verycooltimo.murim.mastery.MasteryService.layer(player, id));
         double[] r = new double[HIT_IDS + MAX_HITS];
-        r[LAYER] = layer;
+        r[LAYER] = Math.max(0, io.github.verycooltimo.murim.mastery.MasteryService.layer(player, id));
         r[TARGET] = -1;
-        if (layer <= 0) {
-            player.setData(ModAttachments.EXPLOSION, r);
-            return;
-        }
-        Vec3 feet = player.position();
-        Vec3 chest = feet.add(0.0D, 1.3D, 0.0D);
-        LivingEntity target = aim(player, ExplosionRules.range(layer) + 2.0D);
-        Vec3 aim = target != null ? TargetLock.centre(target).subtract(chest) : player.getLookAngle();
-        Vec3 wall = ExplosionRules.wallCentre(feet, aim);
-        r[FEET] = feet.x;
-        r[FEET + 1] = feet.y;
-        r[FEET + 2] = feet.z;
-        r[WALL] = wall.x;
-        r[WALL + 1] = wall.y;
-        r[WALL + 2] = wall.z;
-        r[TARGET] = target == null ? -1 : target.getId();
         player.setData(ModAttachments.EXPLOSION, r);
-        Vec3 n = ExplosionRules.flat(aim);
-        float yaw = (float) Math.toDegrees(Math.atan2(-n.x, n.z));
-        PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
-                new ExplosionPayload(player.getId(), feet, wall, yaw, layer, ExplosionPayload.WALL, target == null ? -1 : target.getId()));
     }
 
     /** Захваченная цель, иначе ближайший противник в конусе 35° взгляда (3D), видимый. */
@@ -106,18 +85,30 @@ public final class ExplosionExecutor {
             }
             return hit;
         }
-        Vec3 wall = new Vec3(r[WALL], r[WALL + 1], r[WALL + 2]);
-        Vec3 normal = ExplosionRules.flat(wall.subtract(new Vec3(r[FEET], r[FEET + 1], r[FEET + 2])));
-        Vec3 o = player.position();
-        // Останавливается за полтора блока до стены, по её нормали.
-        Vec3 dest = wall.subtract(normal.scale(ExplosionRules.WALL_DIST - ExplosionRules.LUNGE_REACH));
-        Vec3 path = new Vec3(dest.x - o.x, 0.0D, dest.z - o.z);
-        double reach = Math.min(3.0D, path.length());
-        if (reach > 0.05D) {
-            io.github.verycooltimo.murim.combat.FootworkService.sendDash(player, path.normalize(), reach, ExplosionRules.LUNGE_TICKS);
+        Vec3 feet = player.position();
+        Vec3 chest = feet.add(0.0D, 1.3D, 0.0D);
+        LivingEntity target = aim(player, ExplosionRules.range(layer) + 2.0D);
+        Vec3 aim = (target != null ? TargetLock.centre(target).subtract(chest) : player.getLookAngle()).normalize();
+        Vec3 strike = ExplosionRules.strikePoint(feet, aim);
+        Vec3 f = ExplosionRules.flat(aim);
+        r[FEET] = feet.x;
+        r[FEET + 1] = feet.y;
+        r[FEET + 2] = feet.z;
+        r[AIM] = aim.x;
+        r[AIM + 1] = aim.y;
+        r[AIM + 2] = aim.z;
+        r[STRIKE] = strike.x;
+        r[STRIKE + 1] = strike.y;
+        r[STRIKE + 2] = strike.z;
+        r[TARGET] = target == null ? -1 : target.getId();
+        player.setData(ModAttachments.EXPLOSION, r);
+        // Полушаг в удар; стена блоков на пути — шага нет.
+        if (clear(player, feet.add(0.0D, 0.9D, 0.0D), feet.add(f.scale(ExplosionRules.STEP + 0.4D)).add(0.0D, 0.9D, 0.0D))) {
+            io.github.verycooltimo.murim.combat.FootworkService.sendDash(player, f, ExplosionRules.STEP, ExplosionRules.LUNGE_TICKS);
         }
+        float yaw = (float) Math.toDegrees(Math.atan2(-f.x, f.z));
         PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
-                new ExplosionPayload(player.getId(), o, o.add(path.normalize().scale(reach)), 0.0F, layer, ExplosionPayload.LUNGE, (int) r[TARGET]));
+                new ExplosionPayload(player.getId(), feet, strike, yaw, layer, ExplosionPayload.LUNGE, (int) r[TARGET]));
         return false;
     }
 
@@ -164,21 +155,16 @@ public final class ExplosionExecutor {
         }
     }
 
-    /** Меч вошёл в стену: ось выброса — к цели (в небо тоже), но не дальше 55° от нормали стены. */
+    /** Клинок дошёл до точки удара: ось выброса — к цели (в небо тоже), не дальше 55° от удара. */
     private static void blast(ServerPlayer player, double[] r, int layer) {
-        Vec3 feet = new Vec3(r[FEET], r[FEET + 1], r[FEET + 2]);
-        Vec3 wall = new Vec3(r[WALL], r[WALL + 1], r[WALL + 2]);
-        Vec3 normal = ExplosionRules.flat(wall.subtract(feet));
-        Vec3 strike = wall.add(0.0D, ExplosionRules.STRIKE_Y, 0.0D);
+        Vec3 strike = new Vec3(r[STRIKE], r[STRIKE + 1], r[STRIKE + 2]);
+        Vec3 aimDir = new Vec3(r[AIM], r[AIM + 1], r[AIM + 2]);
         LivingEntity target = r[TARGET] >= 0 && player.level().getEntity((int) r[TARGET]) instanceof LivingEntity le && le.isAlive()
                 && le.distanceTo(player) < ExplosionRules.range(layer) + 6.0D ? le : null;
         if (target == null) {
             target = TargetLock.locked(player, ExplosionRules.range(layer) + 4.0D);
         }
-        Vec3 axis = ExplosionRules.axis(strike, normal, target == null ? null : TargetLock.centre(target));
-        r[STRIKE] = strike.x;
-        r[STRIKE + 1] = strike.y;
-        r[STRIKE + 2] = strike.z;
+        Vec3 axis = ExplosionRules.axis(strike, aimDir, target == null ? null : TargetLock.centre(target));
         r[AXIS] = axis.x;
         r[AXIS + 1] = axis.y;
         r[AXIS + 2] = axis.z;
@@ -196,7 +182,7 @@ public final class ExplosionExecutor {
                               double base) {
         double range = ExplosionRules.range(layer);
         Vec3 mid = strike.add(axis.scale(front * 0.5D));
-        AABB box = new AABB(mid, mid).inflate(front * 0.5D + ExplosionRules.halfWidth(layer) + range * ExplosionRules.SPREAD_H + 2.0D);
+        AABB box = new AABB(mid, mid).inflate(front * 0.5D + ExplosionRules.HALF_W0 + range * ExplosionRules.SPREAD_H + 2.0D);
         for (LivingEntity e : candidates(player, box)) {
             if (r[HITS] >= MAX_HITS || e instanceof net.minecraft.world.entity.decoration.ArmorStand || already(r, e.getId())) {
                 continue;
@@ -226,11 +212,11 @@ public final class ExplosionExecutor {
         }
     }
 
-    /** Оглушение после отброса: мобы до конца техники, игрок 0,6 с, босс 0,5 с. */
+    /** Оглушение после отброса: мобы 2 с, игрок 0,6 с, босс 0,5 с. */
     private static void stun(LivingEntity t) {
         boolean boss = t.getType().is(net.neoforged.neoforge.common.Tags.EntityTypes.BOSSES);
         int ticks = t instanceof net.minecraft.world.entity.player.Player ? 12 : boss ? 10
-                : ExplosionRules.END - ExplosionRules.CONTACT - ExplosionRules.STUN_DELAY + 10;
+                : ExplosionRules.STUN_MOB;
         t.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.MOVEMENT_SLOWDOWN, ticks, 9, false, false, false));
         t.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.WEAKNESS, ticks, 9, false, false, false));
         if (t instanceof net.minecraft.world.entity.Mob mob && !boss) {

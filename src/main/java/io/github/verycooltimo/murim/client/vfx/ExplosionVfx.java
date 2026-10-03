@@ -29,7 +29,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 
-import static io.github.verycooltimo.murim.client.vfx.PlumVfx.BLUSH;
 import static io.github.verycooltimo.murim.client.vfx.PlumVfx.COLD;
 import static io.github.verycooltimo.murim.client.vfx.PlumVfx.EDGE;
 import static io.github.verycooltimo.murim.client.vfx.PlumVfx.PINK;
@@ -37,16 +36,13 @@ import static io.github.verycooltimo.murim.client.vfx.PlumVfx.PINK;
 /**
  * Взрыв Цветущей Сливы (рефы «7 plum blossoms sword/explosion» 01–03, шкала — {@link ExplosionRules}).
  *
- * <p>Стойка (синяя ци, пыль) → пять быстрых взмахов, каждый вырезает из земли колья — цветущие
- * деревца-разрезы, как Частокол: белое ядро ветви в розовом свечении, сучья до прутиков, цветы
- * на концах; кроны смыкаются в одну стену поперёк линии на цель → удержание: стена дышит, сыплет
- * лепестки, мастер заводит меч → прыжок-удар, голубо-белый след клинка (ref2) → контакт: белое
- * ядро и рваные лучи (ref3), по стене от середины к краям бежит вспышка, и каждый кол распадается:
- * ветви — на короткие световые штрихи, кроны — на сотни лепестков, всё летит веером с перевесом
- * к цели (в небо — тоже) → торможение, турбулентность, остаток быстро редеет; на месте стены —
- * пустой промежуток и отпечатки кольев. Урон, импакт-кадр, сильная тряска и дым — только по
- * пакету попадания. Всё — симуляция: ветви прорисовываются кривыми, лепестки, штрихи и ветер —
- * частицы со скоростью, сопротивлением, турбулентностью и следом.
+ * <p>Автор 03.10: «Он короткий: просто долгий замах справа вверх, и на ударе — взрыв лепестков».
+ * Стойка (синяя ци, пыль) → долгий медленный замах: острие идёт снизу справа вверх и за плечо,
+ * за ним тянется холодный след, вокруг закручиваются и стягиваются к клинку розовые лепестки
+ * и ветер → короткая пауза наверху, клинок дрожит → быстрый удар вниз-вперёд, голубо-белая
+ * косая дуга (ref2) → в точке удара белое ядро и взрыв лепестков конусом к цели (ref3; в небо —
+ * тоже): лучи, рваные розовые шлейфы, слитная масса, три полосы скорости, турбулентность растёт.
+ * Импакт-кадр, сильная тряска и дым — только по пакету попадания. Всё — симуляция частиц.
  */
 @EventBusSubscriber(modid = MurimMod.MODID, value = Dist.CLIENT)
 public final class ExplosionVfx {
@@ -154,25 +150,6 @@ public final class ExplosionVfx {
         }
     }
 
-    /** Часть кола: квадратичная кривая, ширина у основания, момент и время прорисовки, глубина, номер кола. */
-    private record Branch(Vec3 start, Vec3 ctrl, Vec3 end, double width, float born, float draw, int depth, int stake) {
-    }
-
-    /** Кол стены: основание, высота, тик взмаха, который его вырезал, тик вспышки-распада. */
-    private static final class Stake {
-        final Vec3 base;
-        final double height;
-        final float born;
-        float ignite = -1.0F;
-        boolean burst;
-
-        Stake(Vec3 base, double height, float born) {
-            this.base = base;
-            this.height = height;
-            this.born = born;
-        }
-    }
-
     /** Луч взрыва (ref3): из ядра наружу, растёт за 2 тика, гаснет к 8-му. */
     private record Ray(Vec3 from, Vec3 dir, double len, double width, int born, boolean white) {
     }
@@ -184,11 +161,9 @@ public final class ExplosionVfx {
         final Random random;
         final double density;
         Vec3 feet;
-        Vec3 wall;
         Vec3 normal = new Vec3(0.0D, 0.0D, 1.0D);
         Vec3 side = new Vec3(-1.0D, 0.0D, 0.0D);
         int targetId = -1;
-        boolean built;
         int lungeTick = -1;
         Vec3 lungeFrom;
         Vec3 lungeTo;
@@ -197,8 +172,8 @@ public final class ExplosionVfx {
         Vec3 axis;
         boolean caption;
         boolean impactShown;
-        final List<Stake> stakes = new ArrayList<>();
-        final List<Branch> branches = new ArrayList<>();
+        /** Острие в замахе (тик за тиком): холодный след набора силы. */
+        final List<Vec3> charge = new ArrayList<>();
         final List<Mote> motes = new ArrayList<>();
         final List<Puff> puffs = new ArrayList<>();
         final List<Ray> rays = new ArrayList<>();
@@ -244,12 +219,20 @@ public final class ExplosionVfx {
         Cast c = new Cast(payload.sourceId(), payload.layer());
         CASTS.add(c);
         // Стойка: тело горит холодной синей ци до прыжка.
-        ClientAuraState.techniqueAura(c.entityId, 2 + Math.min(3, c.layer / 2), 0, ExplosionRules.LUNGE + 2);
+        // codex 03.10: аура тела тише — главное в замахе след клинка.
+        ClientAuraState.techniqueAura(c.entityId, 1, 0, ExplosionRules.LUNGE + 2);
         Minecraft mc = Minecraft.getInstance();
         Entity e = mc.level == null ? null : mc.level.getEntity(c.entityId);
         if (e != null) {
             dust(c, e.position(), 4 + c.layer, 0.12D);
+            facing(c, e.getYRot());
         }
+    }
+
+    private static void facing(Cast c, float yaw) {
+        Vec3 f = Vec3.directionFromRotation(0.0F, yaw);
+        c.normal = new Vec3(f.x, 0.0D, f.z).normalize();
+        c.side = new Vec3(-c.normal.z, 0.0D, c.normal.x);
     }
 
     public static void onExplosion(ExplosionPayload p) {
@@ -260,21 +243,6 @@ public final class ExplosionVfx {
             }
         }
         Minecraft mc = Minecraft.getInstance();
-        if (p.stage() == ExplosionPayload.WALL) {
-            if (c == null) {
-                c = new Cast(p.entityId(), p.layer());
-                CASTS.add(c);
-            }
-            c.start = clientTicks;
-            c.feet = p.origin();
-            c.wall = p.centre();
-            Vec3 f = Vec3.directionFromRotation(0.0F, p.yaw());
-            c.normal = new Vec3(f.x, 0.0D, f.z).normalize();
-            c.side = new Vec3(-c.normal.z, 0.0D, c.normal.x);
-            c.targetId = p.targetId();
-            buildWall(c);
-            return;
-        }
         if (c == null) {
             return;
         }
@@ -283,6 +251,9 @@ public final class ExplosionVfx {
             c.lungeTick = clientTicks;
             c.lungeFrom = p.origin();
             c.lungeTo = p.centre();
+            c.feet = p.origin();
+            c.targetId = p.targetId();
+            facing(c, p.yaw());
             dust(c, p.origin(), c.n(10) + 4, 0.2D);
             if (c.own()) {
                 SpeedLines.radial(0.5F, 0.5F, 0.7F, 6, SpeedLines.WHITE);
@@ -307,165 +278,13 @@ public final class ExplosionVfx {
         }
     }
 
-    // ------------------------------------------------------------------ стена
-
     /**
-     * Стена кольев: нечётное число, середина выше краёв, основание — по дуге, выгнутой к цели;
-     * каждый кол — деревце-разрез Частокола (ствол, 4–6 боковых ветвей, сучья, прутья). Середина
-     * встаёт на первом взмахе, края — на последнем.
-     */
-    private static void buildWall(Cast c) {
-        c.stakes.clear();
-        c.branches.clear();
-        Random r = c.random;
-        int n = ExplosionRules.stakes(c.layer);
-        double hMax = ExplosionRules.height(c.layer);
-        int mid = n / 2;
-        for (int i = 0; i < n; i++) {
-            int d = Math.abs(i - mid);
-            double x = (i - mid) * ExplosionRules.STAKE_GAP + (r.nextDouble() - 0.5D) * 0.18D;
-            double bow = 0.06D * x * x;
-            Vec3 base = c.wall.add(c.side.scale(x)).subtract(c.normal.scale(bow)).add(0.0D, 0.02D, 0.0D);
-            double h = hMax * (1.0D - 0.32D * Math.pow(d / Math.max(1.0D, mid), 1.4D)) * (0.88D + 0.2D * r.nextDouble());
-            int stroke = Math.min(ExplosionRules.STROKES - 1, (int) Math.floor(d * ExplosionRules.STROKES / (double) (mid + 1)));
-            float born = ExplosionRules.STANCE + ExplosionRules.STROKE_GAP * stroke + 0.4F * (i % 2);
-            c.stakes.add(new Stake(base, h, born));
-            growStake(c, i, base, h, born);
-        }
-        c.built = true;
-    }
-
-    private static void growStake(Cast c, int index, Vec3 base, double h, float born) {
-        Random r = c.random;
-        // Колья чуть наклонены к цели и вразнобой в стороны — частокол, а не забор.
-        Vec3 lean = c.normal.scale(0.12D + 0.08D * r.nextDouble()).add(c.side.scale((r.nextDouble() - 0.5D) * 0.22D));
-        Vec3 top = base.add(lean.scale(h)).add(0.0D, h, 0.0D);
-        Vec3 ctrl = base.lerp(top, 0.5D).add(c.side.scale((r.nextDouble() - 0.5D) * 0.3D));
-        double wScale = 0.75D + 0.08D * Math.min(7, c.layer);
-        c.branches.add(new Branch(base.add(0.0D, -0.02D, 0.0D), ctrl, top, 0.13D * wScale, born, 1.4F, 0, index));
-        int count = c.layer >= 6 ? 6 : c.layer >= 3 ? 5 : 3;
-        for (int j = 0; j < count; j++) {
-            // Ветви от самого низа (codex 03.10: нижние две трети не должны быть голыми).
-            double at = 0.12D + 0.78D * (j + 0.5D) / count + (r.nextDouble() - 0.5D) * 0.06D;
-            int sgn = (j + index) % 2 == 0 ? 1 : -1;
-            Vec3 s0 = bezier(base, ctrl, top, at);
-            double el = Math.toRadians(25.0D + 35.0D * r.nextDouble() + 15.0D * at);
-            Vec3 dir = c.side.scale(sgn * Math.cos(el)).add(0.0D, Math.sin(el), 0.0D)
-                    .add(c.normal.scale((r.nextDouble() - 0.4D) * 0.7D)).normalize();
-            // Ветви длиннее промежутка: кроны соседей сплетаются в одну стену (codex 03.10).
-            double len = (0.7D + 0.6D * r.nextDouble()) * (1.0D - 0.35D * at) * (h / 4.5D);
-            Vec3 e = s0.add(dir.scale(len));
-            Vec3 c2 = s0.add(dir.scale(len * 0.5D)).add(0.0D, len * 0.35D, 0.0D);
-            float b = born + 1.0F + 0.25F * j;
-            double w = (0.06D + 0.02D * r.nextDouble()) * wScale;
-            c.branches.add(new Branch(s0, c2, e, w, b, 0.8F, 1, index));
-            twigs(c, index, s0, c2, e, dir, len, w, b + 0.6F, 2, c.layer >= 4 ? 3 : 2);
-        }
-    }
-
-    private static void twigs(Cast c, int index, Vec3 s, Vec3 ctrl, Vec3 e, Vec3 dir, double len, double width, float born, int depth, int max) {
-        if (depth > max) {
-            return;
-        }
-        Random r = c.random;
-        int kids = depth == 3 ? 2 : 3;
-        for (int k = 0; k < kids; k++) {
-            double at = Math.min(0.97D, 0.35D + 0.6D * (k + 0.5D) / kids + (r.nextDouble() - 0.5D) * 0.1D);
-            Vec3 s2 = bezier(s, ctrl, e, at);
-            double turn = Math.toRadians(20.0D + 40.0D * r.nextDouble()) * (r.nextBoolean() ? 1 : -1);
-            Vec3 d2 = rotate(dir, c.normal, turn).add(0.0D, 0.3D, 0.0D).add(c.normal.scale((r.nextDouble() - 0.5D) * 0.6D)).normalize();
-            double l2 = len * (0.35D + 0.3D * r.nextDouble());
-            Vec3 e2 = s2.add(d2.scale(l2));
-            Vec3 c2 = s2.add(d2.scale(l2 * 0.5D)).add(0.0D, l2 * 0.2D, 0.0D);
-            float b2 = born + (float) (at * 0.6D) + 0.2F * k;
-            double w2 = Math.max(0.02D, width * 0.55D);
-            c.branches.add(new Branch(s2, c2, e2, w2, b2, depth == 2 ? 0.6F : 0.45F, depth, index));
-            twigs(c, index, s2, c2, e2, d2, l2, w2, b2 + 0.4F, depth + 1, max);
-        }
-    }
-
-    private static Vec3 rotate(Vec3 v, Vec3 axis, double th) {
-        double cs = Math.cos(th);
-        double sn = Math.sin(th);
-        return v.scale(cs).add(axis.cross(v).scale(sn)).add(axis.scale(axis.dot(v) * (1.0D - cs)));
-    }
-
-    private static Vec3 bezier(Vec3 a, Vec3 b, Vec3 z, double t) {
-        double k = 1.0D - t;
-        return a.scale(k * k).add(b.scale(2.0D * k * t)).add(z.scale(t * t));
-    }
-
-    /** Стена живая: верх кольев покачивается; удар меча — вся стена вздрагивает от середины. */
-    private static Vec3 sway(Cast c, Stake s, Vec3 p, float t) {
-        double hf = Mth.clamp((p.y - s.base.y) / Math.max(1.0D, s.height), 0.0D, 1.0D);
-        double k = 0.04D * s.height * hf * hf;
-        double phase = t * 0.24D + s.base.x * 0.7D + s.base.z * 0.5D;
-        Vec3 out = p.add(c.side.scale(k * Math.sin(phase))).add(c.normal.scale(0.6D * k * Math.sin(phase * 0.7D + 1.3D)));
-        // Натяжение перед ударом: стена чуть подаётся к мастеру, будто вдыхает (T22–32).
-        double pull = Mth.clamp((t - ExplosionRules.HOLD) / (double) (ExplosionRules.CONTACT - ExplosionRules.HOLD), 0.0D, 1.0D);
-        return out.subtract(c.normal.scale(0.25D * s.height * hf * hf * pull * pull));
-    }
-
-    /** Пульс жизни: волна свечения от корня к верху раз в 0,6 с. */
-    private static double pulse(Stake s, Vec3 p, float t) {
-        double hf = Mth.clamp((p.y - s.base.y) / Math.max(1.0D, s.height), 0.0D, 1.0D);
-        double wave = Math.max(0.0D, Math.sin(Math.PI * 2.0D * (t / 12.0D - hf * 0.8D)));
-        return wave * wave * wave;
-    }
-
-    // ------------------------------------------------------------------ фазы
-
-    /** Взмах-разрез: колья встают из земли, пыль от оснований, ветер в сторону взмаха, лепестки. */
-    private static void stroke(Cast c, int k, Entity e) {
-        Random r = c.random;
-        int sgn = k % 2 == 0 ? 1 : -1;
-        float t0 = ExplosionRules.STANCE + ExplosionRules.STROKE_GAP * k;
-        Minecraft mc = Minecraft.getInstance();
-        for (Stake s : c.stakes) {
-            if (s.born < t0 || s.born >= t0 + ExplosionRules.STROKE_GAP) {
-                continue;
-            }
-            groundDust(c, s.base, 3, 0.12D);
-            if (ExplosionRules.petals(c.layer)) {
-                for (int i = 0; i < c.n(6); i++) {
-                    Vec3 v = new Vec3(r.nextGaussian() * 0.08D, 0.12D + 0.1D * r.nextDouble(), r.nextGaussian() * 0.08D);
-                    c.motes.add(petal(c, s.base.add(0.0D, 0.3D + r.nextDouble() * s.height * 0.5D, 0.0D), v, 24 + r.nextInt(14)));
-                }
-            }
-        }
-        // Ветер от взмаха: ленты уходят вдоль стены в сторону удара и закручиваются.
-        Vec3 mid = c.wall.add(0.0D, 1.0D + 0.6D * k, 0.0D);
-        for (int i = 0; i < 3; i++) {
-            Vec3 v = c.side.scale(sgn * (0.4D + 0.2D * r.nextDouble())).add(c.normal.scale((r.nextDouble() - 0.3D) * 0.2D))
-                    .add(0.0D, 0.03D, 0.0D);
-            wind(c, mid.add(0.0D, r.nextDouble() - 0.5D, 0.0D).subtract(c.normal.scale(0.6D)), v, 14 + r.nextInt(6), 0.12D);
-        }
-        if (e != null) {
-            dust(c, e.position(), 3, 0.12D);
-        }
-        if (c.own()) {
-            SpeedLines.directional(sgn > 0 ? 0.0F : 180.0F, 0.35F, 3, SpeedLines.WHITE);
-        }
-        if (mc.player != null && e != null) {
-            mc.player.level().playLocalSound(e.getX(), e.getY(), e.getZ(), net.minecraft.sounds.SoundEvents.PLAYER_ATTACK_SWEEP,
-                    net.minecraft.sounds.SoundSource.PLAYERS, 0.55F, 1.5F + 0.1F * k, false);
-        }
-    }
-
-    /**
-     * Контакт: белое ядро и рваные лучи (ref3), вспышка бежит по стене от середины к краям —
-     * каждый кол вспыхивает и распадается ({@link #burst}); кольцо удара и пыль по земле.
+     * Контакт: белое ядро, рваные лучи и розовые шлейфы (ref3), взрыв лепестков из точки удара
+     * ({@link #burst}); кольцо пыли по земле под ударом, ветер наружу.
      */
     private static void blast(Cast c, Minecraft mc) {
-        if (!c.built) {
-            return;
-        }
         Random r = c.random;
-        int mid = c.stakes.size() / 2;
-        for (int i = 0; i < c.stakes.size(); i++) {
-            // Цепная вспышка: 2 кола в тик в каждую сторону (codex 03.10: «свечение пробегает по стене»).
-            c.stakes.get(i).ignite = ExplosionRules.CONTACT + Math.abs(i - mid) * 0.2F;
-        }
+        burst(c);
         // Лучи: длинные и тонкие, перевес к цели, но и поперёк удара — взрыв распирает пространство.
         // codex 03.10: игл на 70 % меньше и вдвое короче — иначе залп снарядов, а не взрыв.
         int rays = 2 + c.n(3);
@@ -484,16 +303,16 @@ public final class ExplosionVfx {
             double len = (fwd ? 2.0D + 2.5D * r.nextDouble() : 1.0D + 1.2D * r.nextDouble()) * (0.55D + 0.45D * c.density);
             c.rays.add(new Ray(c.strike.add(d.scale(0.3D)), d, len, (fwd ? 0.14D : 0.09D) * (0.7D + 0.6D * r.nextDouble()), clientTicks, i % 3 == 0));
         }
-        // Розовые массы (ref3): широкие полупрозрачные клинья от ядра сквозь стену, к цели и вбок.
-        for (int i = 0; i < 4 + c.n(2); i++) {
+        // Розовые массы (ref3): широкие полупрозрачные клинья от ядра к цели.
+        for (int i = 0; i < 5 + c.n(2); i++) {
             double ang = r.nextDouble() * Math.PI * 2.0D;
-            double spread = 0.1D + 0.3D * r.nextDouble();
+            double spread = 0.15D + 0.45D * r.nextDouble();
             Vec3 d = c.axis.add(c.side.scale(Math.cos(ang) * spread)).add(up.scale(Math.sin(ang) * spread * 0.7D)).normalize();
             c.rays.add(new Ray(c.strike, d, (3.5D + 3.0D * r.nextDouble()) * (0.6D + 0.4D * c.density),
                     1.0D + 0.8D * r.nextDouble(), clientTicks, false));
         }
-        // Ударная волна: кольцо пыли от основания стены и ветер наружу.
-        groundDust(c, c.wall, 10 + c.n(14), 0.32D);
+        // Ударная волна: кольцо пыли под точкой удара и ветер наружу.
+        groundDust(c, c.strike.subtract(0.0D, ExplosionRules.STRIKE_Y, 0.0D), 10 + c.n(14), 0.32D);
         for (int i = 0; i < 6 + c.n(10); i++) {
             double a = Math.PI * 2.0D * i / (6 + c.n(10)) + r.nextDouble() * 0.3D;
             Vec3 out = c.side.scale(Math.cos(a)).add(c.normal.scale(Math.sin(a) * 0.6D + 0.4D)).normalize();
@@ -509,7 +328,7 @@ public final class ExplosionVfx {
         if (mc.player != null) {
             double dist = mc.player.position().distanceTo(at);
             if (dist < 20.0D) {
-                // Удар клинка о стену — короткий толчок; сильная тряска — только по попаданию.
+                // Взрыв у клинка — короткий толчок; сильная тряска — только по попаданию.
                 CameraShakeHandler.quake((float) Math.max(c.own() ? 0.4D : 0.0D, 0.4D * (1.0D - dist / 20.0D)), 8);
             }
             mc.player.level().playLocalSound(at.x, at.y, at.z, net.minecraft.sounds.SoundEvents.PLAYER_ATTACK_STRONG,
@@ -518,45 +337,33 @@ public final class ExplosionVfx {
     }
 
     /**
-     * Распад кола: ветви — короткие световые штрихи (обломки), летят веером с перевесом к цели;
-     * кроны — лепестки трёх полос скорости (ближний плотный слой и дальние одиночки).
+     * Взрыв из точки удара: лепестки трёх полос скорости (ближний плотный слой и дальние
+     * одиночки) и немного световых штрихов — всё веером с перевесом к цели.
      */
-    private static void burst(Cast c, int index) {
+    private static void burst(Cast c) {
         Random r = c.random;
-        Stake s = c.stakes.get(index);
-        s.burst = true;
         double speedK = 0.8D + 0.25D * c.density;
-        for (Branch b : c.branches) {
-            // codex 03.10: обломков на 70 % меньше — материал выброса лепестки, а не щепа.
-            if (b.stake() != index || b.depth() >= 2) {
-                continue;
-            }
-            int pieces = b.depth() == 0 ? 1 : 0;
-            for (int i = 0; i < pieces; i++) {
-                if (r.nextDouble() > (0.35D + 0.65D * c.density) * (b.depth() == 0 ? 1.0D : 0.45D)) {
-                    continue;
-                }
-                Vec3 p = bezier(b.start(), b.ctrl(), b.end(), (i + r.nextDouble()) / pieces);
-                Vec3 v = fan(c, p, r).scale((0.7D + 0.9D * r.nextDouble()) * speedK);
-                Mote m = new Mote(p, v, 9 + r.nextInt(6), Mote.SHARD, 0, 0.0F, (b.depth() == 0 ? 0.09D : 0.06D) * (0.7D + 0.6D * r.nextDouble()), 5);
-                m.drag = 0.84D;
-                m.gravity = 0.01D;
-                c.motes.add(m);
-            }
+        for (int i = 0; i < 4 + c.n(12); i++) {
+            Vec3 p = c.strike.add(r.nextGaussian() * 0.35D, r.nextGaussian() * 0.3D, r.nextGaussian() * 0.35D);
+            Vec3 v = fan(c, p, r).scale((0.8D + 0.9D * r.nextDouble()) * speedK);
+            Mote m = new Mote(p, v, 9 + r.nextInt(6), Mote.SHARD, 0, 0.0F, 0.07D * (0.7D + 0.6D * r.nextDouble()), 5);
+            m.drag = 0.84D;
+            m.gravity = 0.01D;
+            c.motes.add(m);
         }
         if (!ExplosionRules.petals(c.layer)) {
             return;
         }
-        // Лепестков втрое больше (codex 03.10): стена превращается в облако лепестков.
-        int n = c.n(80);
+        int n = c.n(760);
         for (int i = 0; i < n; i++) {
-            double hf = 0.08D + 0.92D * r.nextDouble();
-            Vec3 p = s.base.add(c.side.scale((r.nextDouble() - 0.5D) * 1.4D)).add(0.0D, s.height * hf, 0.0D)
-                    .add(c.normal.scale((r.nextDouble() - 0.5D) * 0.6D));
+            // Облако лепестков в момент удара: шар ~1 блок вокруг точки, чуть вытянут вдоль клинка.
+            Vec3 p = c.strike.add(c.side.scale(r.nextGaussian() * 0.45D)).add(r.nextGaussian() * 0.25D, r.nextGaussian() * 0.4D,
+                    r.nextGaussian() * 0.25D);
             double band = r.nextDouble();
             double speed = band < 0.35D ? 1.1D + 0.6D * r.nextDouble() : band < 0.75D ? 0.55D + 0.35D * r.nextDouble() : 0.2D + 0.25D * r.nextDouble();
             // Короткий остаток (codex 03.10): лепестки редеют за ~1,3 с, не висят конфетти.
             Mote m = petal(c, p, fan(c, p, r).scale(speed * speedK), 18 + r.nextInt(22));
+            m.delay = r.nextInt(2);
             m.drag = band < 0.35D ? 0.88D : 0.9D;
             m.gravity = band < 0.35D ? 0.0015D : 0.003D;
             m.turbulence = 0.004D;
@@ -572,7 +379,7 @@ public final class ExplosionVfx {
         }
     }
 
-    /** Направление выброса из точки стены: к цели с раскрытием от удара, плюс шум. */
+    /** Направление выброса: к цели с раскрытием от удара, плюс шум. */
     private static Vec3 fan(Cast c, Vec3 p, Random r) {
         Vec3 out = p.subtract(c.strike);
         Vec3 lat = out.subtract(c.axis.scale(out.dot(c.axis)));
@@ -646,7 +453,8 @@ public final class ExplosionVfx {
             double size = (0.5D + 0.9D * Math.pow(r.nextDouble(), 1.5D)) * (hollow ? 1.25D : 1.0D) * (0.7D + 0.3D * c.density);
             Puff bank = new Puff(p.add(0.0D, ground ? size * 0.45D : 0.0D, 0.0D), out.scale(0.1D + 0.2D * r.nextDouble()),
                     30 + r.nextInt(16), r.nextInt(16), size, true, hollow ? 0.56F : 0.84F + 0.12F * r.nextFloat(), (float) (r.nextDouble() * 6.28D));
-            bank.delay = 2 + r.nextInt(4);
+            // Дым — после пика взрыва (codex 03.10).
+            bank.delay = 4 + r.nextInt(4);
             c.puffs.add(bank);
         }
         for (int i = 0; i < n / 2; i++) {
@@ -714,19 +522,8 @@ public final class ExplosionVfx {
             Cast c = it.next();
             int t = c.t();
             Entity e = mc.level.getEntity(c.entityId);
-            if (c.built) {
-                for (int k = 0; k < ExplosionRules.STROKES; k++) {
-                    if (t == ExplosionRules.STANCE + ExplosionRules.STROKE_GAP * k) {
-                        stroke(c, k, e);
-                    }
-                }
-                breathe(c, t);
-                for (int i = 0; i < c.stakes.size(); i++) {
-                    Stake s = c.stakes.get(i);
-                    if (!s.burst && s.ignite >= 0.0F && t >= s.ignite + 1.0F) {
-                        burst(c, i);
-                    }
-                }
+            if (e != null && c.lungeTick < 0 && t >= ExplosionRules.STANCE && t < ExplosionRules.LUNGE) {
+                windup(c, e, t, mc);
             }
             if (t == ExplosionRules.CAPTION && c.own() && !c.caption) {
                 c.caption = true;
@@ -736,7 +533,7 @@ public final class ExplosionVfx {
             if (t > 0 && t < ExplosionRules.LUNGE && t % 6 == 0 && e != null) {
                 dust(c, e.position(), 2, 0.08D);
             }
-            // Острие во взмахе удара: из-за плеча вперёд и вниз, в середину стены.
+            // Острие в ударе: из-за правого плеча вниз-вперёд, к точке удара.
             if (c.lungeTick >= 0 && t >= ExplosionRules.LUNGE && t <= ExplosionRules.CONTACT + 1 && e != null) {
                 double k = Mth.clamp((t - ExplosionRules.LUNGE) / (double) ExplosionRules.LUNGE_TICKS, 0.0D, 1.0D);
                 for (int sub = 0; sub < 3; sub++) {
@@ -749,7 +546,11 @@ public final class ExplosionVfx {
                     Vec3 radial = c.normal.scale(Math.sin(a)).add(0.0D, Math.cos(a) * 0.8D, 0.0D).add(c.side.scale(Math.cos(a) * 0.75D));
                     // От первого лица дуга дальше и впереди: видна сбоку от цели, а не тает у глаз.
                     boolean fp = c.own() && mc.options.getCameraType().isFirstPerson() && mc.getCameraEntity() == e;
-                    c.blade.add(shoulder.add(radial.scale(fp ? 2.6D : 1.8D)).add(c.normal.scale(fp ? 0.9D : 0.0D)));
+                    Vec3 arc = shoulder.add(radial.scale(fp ? 2.6D : 1.8D)).add(c.normal.scale(fp ? 0.9D : 0.0D));
+                    // Конец дуги — ровно в точке удара, где родится взрыв (codex 03.10: одна точка).
+                    double land = Mth.clamp((kk - 0.45D) / 0.55D, 0.0D, 1.0D);
+                    land = land * land * (3.0D - 2.0D * land);
+                    c.blade.add(c.lungeTo == null ? arc : arc.lerp(c.lungeTo, land));
                 }
             }
             tickMotes(c);
@@ -759,30 +560,60 @@ public final class ExplosionVfx {
         }
     }
 
-    /** Пока стена стоит: с цветов срываются лепестки, от крон уходит ветер. */
-    private static void breathe(Cast c, int t) {
-        if (c.blastTick >= 0 || t < ExplosionRules.STANCE + 2) {
-            return;
-        }
+    /** Острие в замахе: k 0 — снизу справа впереди, 1 — высоко за правым плечом. */
+    private static Vec3 windTip(Cast c, Entity e, double k) {
+        double a = Math.toRadians(150.0D - 190.0D * k);
+        Vec3 shoulder = e.position().add(0.0D, 1.45D, 0.0D).add(c.side.scale(0.3D));
+        // Дуга в косой плоскости: вверх, назад и чуть наружу вправо.
+        // Снизу далеко справа → вверх к центру за плечом: со спины дуга читается «справа вверх»,
+        // а не столбом (кадры 03.10).
+        Vec3 radial = c.normal.scale(Math.sin(a) * 0.85D).add(0.0D, Math.cos(a), 0.0D).add(c.side.scale(0.2D + 1.0D * (1.0D - k)));
+        return shoulder.add(radial.normalize().scale(1.7D));
+    }
+
+    /**
+     * Долгий замах (автор: «долгий замах справа вверх»): острие медленно идёт по дуге, за ним
+     * холодный след; ци и лепестки закручиваются вокруг мастера и стягиваются к клинку,
+     * ветер втягивается; наверху клинок дрожит. С 3-го слоя лепестки.
+     */
+    private static void windup(Cast c, Entity e, int t, Minecraft mc) {
         Random r = c.random;
-        if (ExplosionRules.petals(c.layer) && t % 2 == 0) {
-            for (int i = 0; i < Math.max(1, c.n(3)); i++) {
-                Branch b = c.branches.get(r.nextInt(c.branches.size()));
-                if (b.depth() < 2 || t < b.born() + b.draw()) {
-                    continue;
-                }
-                Vec3 v = c.normal.scale(-0.02D + 0.05D * r.nextDouble()).add(c.side.scale((r.nextDouble() - 0.5D) * 0.06D))
-                        .add(0.0D, 0.01D + 0.02D * r.nextDouble(), 0.0D);
-                Mote m = petal(c, b.end(), v, 30 + r.nextInt(16));
-                m.turbulence = 0.004D;
+        double raw = Mth.clamp((t - ExplosionRules.STANCE) / (double) (ExplosionRules.WINDUP_END - ExplosionRules.STANCE), 0.0D, 1.0D);
+        double k = raw * raw * (3.0D - 2.0D * raw);
+        Vec3 tip = windTip(c, e, k);
+        if (t >= ExplosionRules.WINDUP_END) {
+            // Пауза наверху: мелкая дрожь клинка — сила на пределе.
+            tip = tip.add(r.nextGaussian() * 0.03D, r.nextGaussian() * 0.03D, r.nextGaussian() * 0.03D);
+        }
+        // Весь путь острия остаётся следом: одна непрерывная дуга снизу справа за плечо.
+        c.charge.add(tip);
+        if (ExplosionRules.petals(c.layer)) {
+            for (int i = 0; i < (t % 2 == 0 ? Math.max(1, c.n(1.5D)) : 0); i++) {
+                // Лепесток рождается на кольце вокруг мастера и по спирали летит к клинку.
+                double ang = r.nextDouble() * Math.PI * 2.0D;
+                double rad = 2.5D + 1.5D * r.nextDouble();
+                Vec3 at = e.position().add(Math.cos(ang) * rad, 0.3D + 2.2D * r.nextDouble(), Math.sin(ang) * rad);
+                Vec3 to = tip.subtract(at);
+                Vec3 swirl = new Vec3(-to.z, 0.0D, to.x).normalize().scale(0.12D);
+                Mote m = petal(c, at, to.scale(0.09D).add(swirl), 12 + r.nextInt(6));
+                m.drag = 0.96D;
+                m.gravity = 0.0D;
+                m.tone = r.nextInt(5) == 0 ? 0 : 1;
                 c.motes.add(m);
             }
         }
-        if (t % 5 == 0 && t > ExplosionRules.HOLD - 4) {
-            Stake s = c.stakes.get(r.nextInt(c.stakes.size()));
-            Vec3 at = s.base.add(0.0D, s.height * (0.6D + 0.3D * r.nextDouble()), 0.0D);
-            Vec3 v = c.side.scale((r.nextBoolean() ? 1 : -1) * (0.25D + 0.15D * r.nextDouble())).add(0.0D, 0.04D, 0.0D);
-            wind(c, at, v, 14 + r.nextInt(6), 0.1D);
+        if (t % 3 == 0) {
+            double ang = r.nextDouble() * Math.PI * 2.0D;
+            Vec3 at = e.position().add(Math.cos(ang) * 3.2D, 0.4D + r.nextDouble() * 1.6D, Math.sin(ang) * 3.2D);
+            Vec3 in = e.position().add(0.0D, 1.2D, 0.0D).subtract(at).normalize();
+            wind(c, at, in.scale(0.32D).add(new Vec3(-in.z, 0.0D, in.x).scale(0.18D)), 12 + r.nextInt(5), 0.1D);
+        }
+        if (t == ExplosionRules.STANCE || t == ExplosionRules.WINDUP_END) {
+            dust(c, e.position(), 3 + c.n(4), 0.14D);
+        }
+        if (t == ExplosionRules.STANCE && mc.player != null) {
+            mc.player.level().playLocalSound(e.getX(), e.getY(), e.getZ(), net.minecraft.sounds.SoundEvents.PLAYER_ATTACK_SWEEP,
+                    net.minecraft.sounds.SoundSource.PLAYERS, 0.4F, 0.6F, false);
         }
     }
 
@@ -852,10 +683,7 @@ public final class ExplosionVfx {
             for (Cast c : CASTS) {
                 float t = c.t() + partial;
                 VertexConsumer air = buffers.getBuffer(MurimRenderTypes.airBand());
-                if (c.built) {
-                    wall(c, pose, camera, air, t);
-                    marks(c, pose, air, t);
-                }
+                chargeTrail(c, pose, camera, air, t);
                 bladeTrail(c, pose, camera, air, t);
                 rays(c, pose, camera, air, partial);
                 ribbons(c, pose, camera, air, partial);
@@ -870,98 +698,26 @@ public final class ExplosionVfx {
     }
 
     /**
-     * Стена: каждая часть кола прорисовывается от основания к острию; свечение бежит от корня
-     * вверх; при вспышке-распаде ветвь на тик белеет и исчезает (её место занимают штрихи).
+     * След замаха: тонкая холодная лента за острием (последние 14 тиков), голубая кромка,
+     * белое ядро; ярче к острию. Гаснет за 3 тика после удара.
      */
-    private static void wall(Cast c, PoseStack.Pose pose, Vec3 camera, VertexConsumer v, float t) {
-        boolean pink = ExplosionRules.petals(c.layer);
-        // Розовая масса крон между кольями (codex 03.10: одна плотная цветущая стена).
-        if (pink) {
-            for (int i = 0; i + 1 < c.stakes.size(); i++) {
-                Stake a = c.stakes.get(i);
-                Stake b = c.stakes.get(i + 1);
-                float in = (float) Mth.clamp((t - Math.max(a.born, b.born) - 2.0F) / 3.0D, 0.0D, 1.0D) * keep(a, t) * keep(b, t);
-                if (in <= 0.0F) {
-                    continue;
-                }
-                double h = Math.min(a.height, b.height);
-                for (double band : new double[] {0.3D, 0.7D}) {
-                    Vec3 pa = sway(c, a, a.base.add(0.0D, a.height * band, 0.0D), t);
-                    Vec3 pb = sway(c, b, b.base.add(0.0D, b.height * band, 0.0D), t);
-                    Vec3[] p = {pa, pa.lerp(pb, 0.5D).add(0.0D, 0.2D, 0.0D), pb};
-                    fstrip(v, pose, camera, p, new double[] {0.2D * h, 0.26D * h, 0.2D * h}, 0.06F * in, PINK);
-                }
-            }
+    private static void chargeTrail(Cast c, PoseStack.Pose pose, Vec3 camera, VertexConsumer v, float t) {
+        if (c.charge.size() < 2) {
+            return;
         }
-        for (Branch b : c.branches) {
-            Stake s = c.stakes.get(b.stake());
-            float k = keep(s, t);
-            if (k <= 0.0F) {
-                continue;
-            }
-            float age = t - b.born();
-            if (age < 0.0F) {
-                continue;
-            }
-            double shown = Mth.clamp(age / b.draw(), 0.0D, 1.0D);
-            shown = 1.0D - (1.0D - shown) * (1.0D - shown);
-            int n = b.depth() == 0 ? 14 : b.depth() >= 3 ? 4 : b.depth() == 2 ? 6 : 9;
-            int m = (int) Math.ceil(n * shown);
-            if (m < 1) {
-                continue;
-            }
-            // Вспышка перед распадом: ветвь белеет и толстеет (тик ignite → ignite+1).
-            float flash = s.ignite >= 0.0F ? (float) Mth.clamp(1.0D - Math.abs(t - s.ignite - 0.5D) / 0.8D, 0.0D, 1.0D) : 0.0F;
-            Vec3[] p = new Vec3[m + 1];
-            double[] w = new double[m + 1];
-            float[] a = new float[m + 1];
-            for (int i = 0; i <= m; i++) {
-                double u = Math.min(shown, i / (double) n);
-                p[i] = sway(c, s, bezier(b.start(), b.ctrl(), b.end(), u), t);
-                double head = Mth.clamp((shown - u) / 0.12D, 0.0D, 1.0D);
-                w[i] = b.width() * Math.pow(1.0D - u, 0.85D) * (shown >= 1.0D ? 1.0D : head) * (1.0D + 0.3D * flash);
-                double beat = pulse(s, p[i], t);
-                w[i] *= 1.0D + 0.5D * beat;
-                a[i] = k * (float) (0.7D + 0.3D * beat);
-            }
-            // Стена тусклее пика взрыва (codex 03.10: запас яркости — для контакта).
-            if (pink && b.depth() <= 2) {
-                fstrip(v, pose, camera, p, PlumVfx.scale(w, b.depth() == 0 ? 2.0D : 3.5D), PlumVfx.scaled(a, 0.08F), PINK);
-            }
-            if (b.depth() >= 3) {
-                fstrip(v, pose, camera, p, PlumVfx.scale(w, 0.8D), PlumVfx.scaled(a, 0.8F), pink ? BLUSH : COLD);
-                continue;
-            }
-            fstrip(v, pose, camera, p, w, PlumVfx.scaled(a, pink ? 0.5F : 0.42F), flash > 0.3F ? BLOOM : pink ? PINK : COLD);
-            fstrip(v, pose, camera, p, PlumVfx.scale(w, 0.25D), PlumVfx.scaled(a, 0.42F), EDGE);
+        float a = (float) Mth.clamp((ExplosionRules.LUNGE + 3.0D - t) / 3.0D, 0.0D, 1.0D);
+        if (a <= 0.0F) {
+            return;
         }
-    }
-
-    /** Кол виден до своей вспышки; через 1,5 тика после неё — пустое место. */
-    private static float keep(Stake s, float t) {
-        if (s.ignite < 0.0F) {
-            return 1.0F;
+        Vec3[] p = c.charge.toArray(new Vec3[0]);
+        double[] w = new double[p.length];
+        for (int i = 0; i < p.length; i++) {
+            double u = (i + 1.0D) / p.length;
+            w[i] = 0.14D * Math.pow(u, 1.5D);
         }
-        return (float) Mth.clamp((s.ignite + 0.7F - t) / 0.6D, 0.0D, 1.0D);
-    }
-
-    /** Отпечатки кольев на земле после взрыва: белое → розовое → гаснет (пустой промежуток). */
-    private static void marks(Cast c, PoseStack.Pose pose, VertexConsumer v, float t) {
-        for (Stake s : c.stakes) {
-            if (s.ignite < 0.0F) {
-                continue;
-            }
-            float age = t - s.ignite;
-            if (age < 0.0F || age > 50.0F) {
-                continue;
-            }
-            float a = (float) PlumVfx.curve(age, 0.0, 1.0, 4.0, 0.8, 50.0, 0.0);
-            VfxColour col = age < 4.0F ? WHITE : HOT;
-            Vec3 g = s.base.add(0.0D, 0.04D, 0.0D);
-            Vec3 d = c.axis == null ? c.normal : ExplosionRules.flat(c.axis);
-            Vec3[] p = {g.subtract(d.scale(0.2D)), g.add(d.scale(0.4D)), g.add(d.scale(1.1D))};
-            PlumVfx.flatStrip(v, pose, p, new double[] {0.16D, 0.1D, 0.0D}, 0.6F * a, col);
-        }
+        fstrip(v, pose, camera, p, PlumVfx.scale(w, 1.8D), 0.22F * a, BLADE_RIM);
+        fstrip(v, pose, camera, p, w, 0.5F * a, BLADE_EDGE);
+        fstrip(v, pose, camera, p, PlumVfx.scale(w, 0.35D), 0.9F * a, BLADE_CORE);
     }
 
     /** След клинка (ref2): широкая сегментированная лента — белое ядро, голубой край, синий контур. */
@@ -1123,7 +879,7 @@ public final class ExplosionVfx {
         buffers.endBatch(smokeType);
     }
 
-    /** Лепестки (атлас) и их свечение; цветы на концах прутьев стены; свечение крон. */
+    /** Лепестки (атлас) и их свечение; ядро и слитная масса взрыва. */
     private static void petals(Cast c, PoseStack.Pose pose, Vec3 camera, MultiBufferSource.BufferSource buffers, float partial, float t) {
         if (!ExplosionRules.petals(c.layer)) {
             return;
@@ -1139,42 +895,6 @@ public final class ExplosionVfx {
             float[] tint = tint(m.tone);
             PlumVfx.petal(pc, pose, camera, at, m.size * 1.6D, m.cell, (m.age + partial) * m.spin, a, tint[0], tint[1], tint[2]);
         }
-        // Цветы стены: на конце каждого прутика — раскрытый цветок из двух лепестков.
-        if (c.built) {
-            for (Branch b : c.branches) {
-                if (b.depth() < 2) {
-                    // Цветы и по стволу и сучьям — снизу доверху (codex 03.10: низ не голый).
-                    Stake s = c.stakes.get(b.stake());
-                    float k = keep(s, t) * (float) Mth.clamp((t - b.born() - b.draw()) / 2.0D, 0.0D, 1.0D);
-                    if (k <= 0.0F) {
-                        continue;
-                    }
-                    int m = b.depth() == 0 ? 8 : 2;
-                    for (int i = 0; i < m; i++) {
-                        double u = b.depth() == 0 ? 0.08D + 0.075D * i : 0.3D + 0.35D * i;
-                        int seed = (int) (b.start().x * 29.0D + b.start().z * 13.0D) + i * 7;
-                        Vec3 at = sway(c, s, bezier(b.start(), b.ctrl(), b.end(), u), t).add(c.side.scale(((seed & 1) == 0 ? 0.12D : -0.12D)));
-                        float a = k * near(at, camera);
-                        PlumVfx.petal(pc, pose, camera, at, 0.15D, seed & 3, seed * 0.9F, a, 1.0F, 0.72F, 0.8F);
-                    }
-                    continue;
-                }
-                Stake s = c.stakes.get(b.stake());
-                float k = keep(s, t) * (float) Mth.clamp((t - b.born() - b.draw()) / 2.0D, 0.0D, 1.0D);
-                if (k <= 0.0F) {
-                    continue;
-                }
-                int seed = (int) (b.end().x * 31.0D + b.end().z * 17.0D + b.end().y * 7.0D);
-                // Наверху цветов вдвое меньше: основная масса — в нижних двух третях (codex 03.10).
-                if ((seed & 4) != 0 && b.end().y - s.base.y > s.height * 0.66D) {
-                    continue;
-                }
-                Vec3 at = sway(c, s, b.end(), t);
-                float a = k * near(at, camera);
-                PlumVfx.petal(pc, pose, camera, at, 0.16D, seed & 3, seed * 0.7F, a, 1.0F, 0.72F, 0.8F);
-                PlumVfx.petal(pc, pose, camera, at, 0.13D, (seed + 1) & 3, seed * 0.7F + 1.6F, a, 1.0F, 0.85F, 0.9F);
-            }
-        }
         buffers.endBatch(pt);
         RenderType gt = MurimRenderTypes.mote();
         VertexConsumer g = buffers.getBuffer(gt);
@@ -1186,23 +906,7 @@ public final class ExplosionVfx {
             float a = Mth.clamp((m.life - m.age - partial) / 10.0F, 0.0F, 1.0F) * near(at, camera);
             PlumVfx.glow(g, pose, camera, at, m.size * 2.0D, 0.32F * a, PINK);
         }
-        if (c.built) {
-            // Кроны светятся и бьются пульсом; гаснут со вспышкой кола.
-            for (Branch b : c.branches) {
-                if (b.depth() != 1) {
-                    continue;
-                }
-                Stake s = c.stakes.get(b.stake());
-                float in = keep(s, t) * (float) Mth.clamp((t - b.born() - b.draw()) / 3.0D, 0.0D, 1.0D);
-                if (in <= 0.0F) {
-                    continue;
-                }
-                Vec3 at = sway(c, s, b.end(), t);
-                double beat = pulse(s, at, t);
-                float flash = s.ignite >= 0.0F ? (float) Mth.clamp(1.0D - Math.abs(t - s.ignite - 0.5D) / 0.8D, 0.0D, 1.0D) : 0.0F;
-                PlumVfx.glow(g, pose, camera, at, 0.9D * (1.0D + 0.3D * beat), (0.12F + 0.1F * (float) beat + 0.15F * flash) * in
-                        * near(at, camera), flash > 0.2F ? BLOOM : PINK);
-            }
+        {
             // Ядро взрыва — мягкое бело-розовое свечение на 4 тика.
             if (c.blastTick >= 0) {
                 float age = clientTicks - c.blastTick + partial;
