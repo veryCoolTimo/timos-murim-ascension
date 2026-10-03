@@ -122,6 +122,8 @@ public final class ModNetwork {
                 (payload, context) -> ClientPayloadBridge.handleDome(payload));
         registrar.playToClient(FallingPetalPayload.TYPE, FallingPetalPayload.STREAM_CODEC,
                 (payload, context) -> ClientPayloadBridge.handleFallingPetal(payload));
+        registrar.playToClient(ShowerPayload.TYPE, ShowerPayload.STREAM_CODEC,
+                (payload, context) -> ClientPayloadBridge.handleShower(payload));
         registrar.playToClient(StepPayload.TYPE, StepPayload.STREAM_CODEC,
                 (payload, context) -> ClientPayloadBridge.handleStep(payload));
 

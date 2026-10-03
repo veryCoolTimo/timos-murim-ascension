@@ -28,11 +28,16 @@ final class ClientPayloadBridge {
         io.github.verycooltimo.murim.client.vfx.ScatterVfx.onTechniqueEvent(payload);
         io.github.verycooltimo.murim.client.vfx.DomeVfx.onTechniqueEvent(payload);
         io.github.verycooltimo.murim.client.vfx.FallingPetalVfx.onTechniqueEvent(payload);
+        io.github.verycooltimo.murim.client.vfx.ShowerVfx.onTechniqueEvent(payload);
     }
 
     public static void handleManual(ManualPayloads.Open payload) {
         // Только статический вызов: new ManualScreen здесь заставил бы сервер грузить клиентский Screen.
         io.github.verycooltimo.murim.client.ManualScreen.open(payload);
+    }
+
+    public static void handleShower(ShowerPayload payload) {
+        io.github.verycooltimo.murim.client.vfx.ShowerVfx.onShower(payload);
     }
 
     public static void handleRain(RainPayload payload) {

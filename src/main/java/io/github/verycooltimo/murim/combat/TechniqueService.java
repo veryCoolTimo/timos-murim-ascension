@@ -241,6 +241,12 @@ public final class TechniqueService {
             }
         }
 
+        if (technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.PlumShower) {
+            int since = state.tick() - technique.startTickOf(TechniquePhase.IMPACT);
+            if (since > 0) {
+                io.github.verycooltimo.murim.technique.ShowerExecutor.tick(player, technique.id(), since);
+            }
+        }
         if (technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.PlumDome) {
             io.github.verycooltimo.murim.technique.DomeExecutor.tick(player, technique.id(), state.tick());
         }

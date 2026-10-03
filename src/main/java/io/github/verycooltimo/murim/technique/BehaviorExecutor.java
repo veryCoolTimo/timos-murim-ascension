@@ -73,6 +73,9 @@ public final class BehaviorExecutor {
         if (behavior instanceof TechniqueBehavior.PlumDome) {
             return DomeExecutor.raise(player);
         }
+        if (behavior instanceof TechniqueBehavior.PlumShower) {
+            return ShowerExecutor.start(player, definition.id());
+        }
         if (behavior instanceof TechniqueBehavior.FallingPetal) {
             return FallingPetalExecutor.start(player, definition.id());
         }
