@@ -109,7 +109,7 @@ final class ClientPayloadBridge {
     }
 
     public static void handleStep(StepPayload payload) {
-        io.github.verycooltimo.murim.client.vfx.StepVfx.start(payload);
+        io.github.verycooltimo.murim.client.vfx.FootworkVfx.petalStep(payload);
     }
 
     public static void handleFoundationForm(FoundationPayloads.Form payload) {

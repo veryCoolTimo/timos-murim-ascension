@@ -80,6 +80,12 @@ public final class TechniqueService {
         double cost = techniqueCost(technique) * io.github.verycooltimo.murim.mastery.MasteryRules.costFactor(
                 Math.max(0, io.github.verycooltimo.murim.mastery.MasteryService.layer(player, technique.id())),
                 technique.layers());
+        // Мечевая форма — только с мечом в руке или ци-мечом (пустая рука пробуждённого), 03.10.
+        if (QiSword.needsSword(technique) && !QiSword.hasBlade(player)) {
+            player.displayClientMessage(
+                    net.minecraft.network.chat.Component.translatable("murim.technique.need_sword"), true);
+            return false;
+        }
         if (profile.circulating() < cost) {
             player.displayClientMessage(
                     net.minecraft.network.chat.Component.translatable("murim.technique.no_qi"), true);
@@ -89,6 +95,9 @@ public final class TechniqueService {
         io.github.verycooltimo.murim.profile.ProfileNetwork.sync(player);
 
         player.setData(ModAttachments.TECHNIQUE_STATE, TechniqueState.started(technique.id(), now));
+        if (QiSword.needsSword(technique)) {
+            QiSword.draw(player);
+        }
         java.util.Map<net.minecraft.resources.ResourceLocation, Long> cds = new java.util.HashMap<>(player.getData(ModAttachments.COOLDOWNS));
         cds.put(technique.id(), now);
         player.setData(ModAttachments.COOLDOWNS, cds);
@@ -210,6 +219,10 @@ public final class TechniqueService {
         if (phase == null) {
             forceIdle(player, TechniqueEventPayload.Event.FINISHED);
             return;
+        }
+        // Ци-меч не гаснет посреди долгой мечевой формы (Вихрь длиннее его 10 с).
+        if (QiSword.needsSword(technique) && state.tick() % 20 == 0) {
+            QiSword.draw(player);
         }
 
         if (phase == TechniquePhase.IMPACT && !state.impactDone()) {
@@ -374,11 +387,15 @@ public final class TechniqueService {
             return;
         }
         TechniqueDefinition.Interruption rules = technique.interruption();
-        if (!rules.breakOnDamage() || amount < rules.damageThreshold()) {
-            return;
-        }
         TechniquePhase phase = technique.phaseAt(state.tick());
-        if (phase == null || phase.ordinal() >= TechniquePhase.IMPACT.ordinal()) {
+        boolean breaks = rules.breakOnDamage() && amount >= rules.damageThreshold()
+                && phase != null && phase.ordinal() < TechniquePhase.IMPACT.ordinal();
+        // Стенд: журнал срыва — по нему проверяется регрессия «удар бандита срывает только по порогу».
+        if (Boolean.getBoolean("murim.capture")) {
+            MurimMod.LOGGER.info("Техника {}: урон {} на тике {} ({}), порог {} — {}", technique.id(), amount, state.tick(),
+                    phase, rules.damageThreshold(), breaks ? "СОРВАНА" : "держится");
+        }
+        if (!breaks) {
             return;
         }
         forceIdle(player, TechniqueEventPayload.Event.CANCELLED);

@@ -238,6 +238,11 @@ public final class ClientTechniqueHandler {
                 }
                 scheduleAnimation(payload);
                 TechniqueDefinition started = TechniqueLoader.get(payload.techniqueId());
+                // Мечевая форма с пустой рукой — в руке появляется ци-меч (03.10).
+                if (io.github.verycooltimo.murim.combat.QiSword.needsSword(started) && Minecraft.getInstance().level != null
+                        && Minecraft.getInstance().level.getEntity(payload.sourceId()) instanceof net.minecraft.world.entity.player.Player caster) {
+                    QiSwordClient.mark(caster);
+                }
                 // У ладони собственный набор слоёв: общая схема дуги её не описывает.
                 //
                 // Рендереры ВЗАИМОИСКЛЮЧАЮЩИЕ. Раньше общая дуга запускалась и для ладони

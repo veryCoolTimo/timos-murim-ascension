@@ -66,8 +66,10 @@ public final class DevSetupEvents {
         boolean ceremony = "meditation".equals(System.getProperty("murim.capture.technique"));
         // Кинжалы Тан — из рукавов, рука пустая (меч им не нужен).
         boolean tang = System.getProperty("murim.capture.technique", "").startsWith("tang_");
+        // MURIM_CAPTURE_HAND=empty — пустая рука: съёмка ци-меча (03.10).
+        boolean emptyHand = "empty".equals(System.getenv("MURIM_CAPTURE_HAND"));
         event.getEntity().setItemInHand(InteractionHand.MAIN_HAND,
-                ceremony || tang ? ItemStack.EMPTY : new ItemStack(Items.NETHERITE_SWORD));
+                ceremony || tang || emptyHand ? ItemStack.EMPTY : new ItemStack(Items.NETHERITE_SWORD));
 
         // Площадка над лесом. Оценивать светящуюся ленту на фоне листвы невозможно: контраст
         // низкий, а ветки перекрывают силуэт. Чистое небо даёт однозначный фон, на котором
@@ -241,6 +243,16 @@ public final class DevSetupEvents {
             book.set(io.github.verycooltimo.murim.registry.ModDataComponents.TECHNIQUE.get(), net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(
                     io.github.verycooltimo.murim.MurimMod.MODID, System.getenv().getOrDefault("MURIM_CAPTURE_MANUAL", "six_harmonies")));
             mp.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, book);
+            // MURIM_CAPTURE_MANUAL_FRESH=1 — книга ещё не изучена (видна печать «Изучить»).
+            if ("1".equals(System.getenv("MURIM_CAPTURE_MANUAL_FRESH"))) {
+                mp.setData(io.github.verycooltimo.murim.registry.ModAttachments.MASTERY, io.github.verycooltimo.murim.mastery.MasteryState.EMPTY);
+                io.github.verycooltimo.murim.mastery.MasteryService.sync(mp);
+            }
+            // MURIM_CAPTURE_NO_DANTIAN=1 — игрок без даньтяня: книга читается, но не учит.
+            if ("1".equals(System.getenv("MURIM_CAPTURE_NO_DANTIAN"))) {
+                mp.setData(io.github.verycooltimo.murim.registry.ModAttachments.PROFILE, io.github.verycooltimo.murim.profile.DantianProfile.INITIAL);
+                io.github.verycooltimo.murim.profile.ProfileNetwork.sync(mp);
+            }
         }
         // Съёмка интерфейсов техник: шесть открытых слотов, пять техник, часть освоена наполовину.
         if ("ui".equals(System.getProperty("murim.capture.technique"))
@@ -374,6 +386,49 @@ public final class DevSetupEvents {
         // MURIM_CAPTURE_ENEMY=zombie — вместо манекена зомби без ИИ, лицом к игроку:
         // давление ауры проверяется на живом противнике (docs/design/19 §3ж).
         net.minecraft.world.entity.LivingEntity target = dummy;
+        // MURIM_CAPTURE_ENEMY=bandit | bandit_elite | bandit_archer — живой бандит этапа M1
+        // (MURIM_CAPTURE_ENEMY_AI=0 — без ИИ). Сложность «Нормально»: на «Лёгкой» урон бандита
+        // делится пополам и ни один его удар не дотягивает до порога срыва техник (6).
+        String enemyKind = System.getenv().getOrDefault("MURIM_CAPTURE_ENEMY", "");
+        if (enemyKind.startsWith("bandit")) {
+            for (io.github.verycooltimo.murim.entity.Bandit old
+                    : level.getEntitiesOfClass(io.github.verycooltimo.murim.entity.Bandit.class, area)) {
+                old.discard();
+            }
+            if (level.getServer() != null) {
+                level.getServer().setDifficulty(net.minecraft.world.Difficulty.NORMAL, true);
+                // Ночью на траве площадки сами появлялись зомби: захват цели брал их, а не бандита,
+                // и один прогон «промахнулся» (03.10). На стенде с бандитом — только бандит.
+                level.getGameRules().getRule(net.minecraft.world.level.GameRules.RULE_DOMOBSPAWNING).set(false, level.getServer());
+                for (net.minecraft.world.entity.monster.Monster m : level.getEntitiesOfClass(net.minecraft.world.entity.monster.Monster.class, area.inflate(32.0D))) {
+                    m.discard();
+                }
+            }
+            io.github.verycooltimo.murim.entity.Bandit bandit = "bandit_archer".equals(enemyKind)
+                    ? new io.github.verycooltimo.murim.entity.BanditArcher(io.github.verycooltimo.murim.registry.ModEntities.BANDIT_ARCHER.get(), level)
+                    : new io.github.verycooltimo.murim.entity.BanditSwordsman(io.github.verycooltimo.murim.registry.ModEntities.BANDIT_SWORDSMAN.get(), level);
+            if ("bandit_elite".equals(enemyKind) && bandit instanceof io.github.verycooltimo.murim.entity.BanditSwordsman sw) {
+                sw.makeElite();
+            }
+            bandit.setNoAi("0".equals(System.getenv("MURIM_CAPTURE_ENEMY_AI")));
+            // MURIM_CAPTURE_BANDIT_DELAY — тиков до первого удара: подогнать удар под замах техники.
+            String delay = System.getenv("MURIM_CAPTURE_BANDIT_DELAY");
+            if (delay != null && !delay.isBlank() && bandit instanceof io.github.verycooltimo.murim.entity.BanditSwordsman sd) {
+                sd.delayFirstAttack(Integer.parseInt(delay.trim()));
+            }
+            bandit.setPersistenceRequired();
+            String hp = System.getenv("MURIM_CAPTURE_ENEMY_HP");
+            if (hp != null && !hp.isBlank()) {
+                java.util.Objects.requireNonNull(bandit.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH))
+                        .setBaseValue(Double.parseDouble(hp.trim()));
+                bandit.setHealth(bandit.getMaxHealth());
+            }
+            float face = (float) Math.toDegrees(aim) + 180.0F;
+            bandit.setYRot(face);
+            bandit.setYHeadRot(face);
+            bandit.setYBodyRot(face);
+            target = bandit;
+        }
         if ("zombie".equals(System.getenv("MURIM_CAPTURE_ENEMY"))) {
             for (net.minecraft.world.entity.monster.Zombie old
                     : level.getEntitiesOfClass(net.minecraft.world.entity.monster.Zombie.class, area)) {
@@ -402,12 +457,38 @@ public final class DevSetupEvents {
         }
         // MURIM_CAPTURE_ENEMY_Y — цель висит в воздухе на этой высоте (приёмы по врагу в небе, 03.10).
         double lift = Double.parseDouble(System.getenv().getOrDefault("MURIM_CAPTURE_ENEMY_Y", "0"));
-        if (lift > 0.0D) {
+        if (lift != 0.0D) {
+            // Отрицательная высота — цель НИЖЕ площадки (под ней воздух): проверка «бьёт вниз».
             target.setNoGravity(true);
         }
         target.setPos(STAGE_X + 0.5D + lookX * dummyDistance, STAGE_Y + lift,
                       STAGE_Z + 0.5D + lookZ * dummyDistance);
         level.addFreshEntity(target);
+        // Цель ниже площадки: прорезать над ней яму, иначе пол закрывает её целиком и честная
+        // проверка «бьёт вниз» невозможна (техники с прямой видимостью её не видят — и правильно).
+        if (lift < 0.0D) {
+            for (int dx = -2; dx <= 2; dx++) {
+                for (int dz = -2; dz <= 2; dz++) {
+                    level.setBlockAndUpdate(net.minecraft.core.BlockPos.containing(target.getX() + dx, STAGE_Y - 1, target.getZ() + dz),
+                            net.minecraft.world.level.block.Blocks.AIR.defaultBlockState());
+                }
+            }
+        }
+        // MURIM_CAPTURE_EXTRA=n — ещё n зомби на пути к цели (Натиск волочит встречных, 03.10).
+        int extra = (int) envDouble("MURIM_CAPTURE_EXTRA", 0.0D);
+        for (int i = 0; i < extra; i++) {
+            net.minecraft.world.entity.monster.Zombie z =
+                    new net.minecraft.world.entity.monster.Zombie(net.minecraft.world.entity.EntityType.ZOMBIE, level);
+            // Без ИИ моб не двигается вовсе (LivingEntity.travel только при isEffectiveAi) —
+            // волочение и отброс видны лишь на живых: MURIM_CAPTURE_ENEMY_AI=1.
+            z.setNoAi(!"1".equals(System.getenv("MURIM_CAPTURE_ENEMY_AI")));
+            z.setPersistenceRequired();
+            double k = dummyDistance * (i + 1) / (extra + 1.0D);
+            // Снаружи от оси взгляда: захват (по углу к прицелу) берёт главную цель, а не встречных.
+            double sideK = 0.9D;
+            z.setPos(STAGE_X + 0.5D + lookX * k - lookZ * sideK, STAGE_Y, STAGE_Z + 0.5D + lookZ * k + lookX * sideK);
+            level.addFreshEntity(z);
+        }
         // MURIM_CAPTURE_AURA=4 или 4d (демоническая) — аура цели для съёмки давления.
         String aura = System.getenv("MURIM_CAPTURE_AURA");
         if (aura != null && !aura.isBlank()) {

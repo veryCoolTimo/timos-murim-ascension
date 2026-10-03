@@ -69,7 +69,8 @@ public final class TraversePayloads {
      * Сервер → наблюдателям: состояние бега игрока {@code entityId} или толчок.
      *
      * @param kind 0 — бег выключен, 1 — бег включён (dirX — семейство), 2 — перелёт, 3 — от стены,
-     *             4 — поворот в воздухе, 5 — Шаг Мига (dir — смещение рывка)
+     *             4 — поворот в воздухе, 5 — Шаг Мига (dir — смещение рывка),
+     *             6/7 — Тень вкл/выкл, 8 — Шаг Смерти, 9 — рывок Хуашань (Аромат за спиной)
      */
     public record Event(int entityId, int kind, int layer, float dirX, float dirZ) implements CustomPacketPayload {
         public static final Type<Event> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "traverse_event"));

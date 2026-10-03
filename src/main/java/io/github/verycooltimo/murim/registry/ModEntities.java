@@ -69,6 +69,29 @@ public final class ModEntities {
                     .noSave()
                     .build("training_dummy"));
 
+    /**
+     * Бандит-мечник (этап M1). MONSTER: спавнится ночью в лесах (biome_modifier murim:bandits),
+     * размер игрока — модель того же роста.
+     */
+    public static final DeferredHolder<EntityType<?>, EntityType<io.github.verycooltimo.murim.entity.BanditSwordsman>> BANDIT_SWORDSMAN =
+            ENTITIES.register("bandit_swordsman", () -> EntityType.Builder
+                    .<io.github.verycooltimo.murim.entity.BanditSwordsman>of(
+                            io.github.verycooltimo.murim.entity.BanditSwordsman::new, MobCategory.MONSTER)
+                    .sized(0.6F, 1.95F)
+                    .eyeHeight(1.62F)
+                    .clientTrackingRange(8)
+                    .build("bandit_swordsman"));
+
+    /** Бандит-лучник (этап M1): поведение ванильного скелета. */
+    public static final DeferredHolder<EntityType<?>, EntityType<io.github.verycooltimo.murim.entity.BanditArcher>> BANDIT_ARCHER =
+            ENTITIES.register("bandit_archer", () -> EntityType.Builder
+                    .<io.github.verycooltimo.murim.entity.BanditArcher>of(
+                            io.github.verycooltimo.murim.entity.BanditArcher::new, MobCategory.MONSTER)
+                    .sized(0.6F, 1.95F)
+                    .eyeHeight(1.62F)
+                    .clientTrackingRange(8)
+                    .build("bandit_archer"));
+
     public static void register(IEventBus modBus) {
         ENTITIES.register(modBus);
     }
