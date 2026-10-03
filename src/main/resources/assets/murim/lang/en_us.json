@@ -216,5 +216,8 @@
   "technique.murim.twenty_four_plum_scatter": "24-Movement Plum Blossom Sword: Scatter",
   "technique.murim.twenty_four_plum_scatter.weakness": "For three and a half seconds he stands in blue fire gathering petals: strike him then and the technique breaks. The clones cut where the target stood.",
   "technique.murim.twenty_four_plum.scatter": "Plum Blossom Scatter",
-  "form.murim.twenty_four_plum_scatter": "Scatter"
+  "form.murim.twenty_four_plum_scatter": "Scatter",
+  "itemGroup.murim": "Murim",
+  "murim.manual.learned": "Learned",
+  "murim.manual.locked": "First: %s, layer %s"
 }

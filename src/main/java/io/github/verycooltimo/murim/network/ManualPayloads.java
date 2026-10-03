@@ -27,10 +27,11 @@ public final class ManualPayloads {
     }
 
     /** Клиент → сервер: «Изучить» книгу в руке. */
-    public record Learn(boolean mainHand) implements CustomPacketPayload {
+    /** Клиент → сервер: «Изучить» форму {@code technique} из книги в руке. */
+    public record Learn(boolean mainHand, ResourceLocation technique) implements CustomPacketPayload {
         public static final Type<Learn> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "manual_learn"));
         public static final StreamCodec<RegistryFriendlyByteBuf, Learn> STREAM_CODEC = StreamCodec.composite(
-                ByteBufCodecs.BOOL, Learn::mainHand, Learn::new);
+                ByteBufCodecs.BOOL, Learn::mainHand, ResourceLocation.STREAM_CODEC, Learn::technique, Learn::new);
 
         @Override
         public Type<? extends CustomPacketPayload> type() {

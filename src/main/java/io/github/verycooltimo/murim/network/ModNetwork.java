@@ -19,7 +19,7 @@ import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 public final class ModNetwork {
 
     /** Версия протокола. Поднимать при любом несовместимом изменении пакетов. */
-    private static final String VERSION = "15";
+    private static final String VERSION = "16";
 
     @SubscribeEvent
     static void register(RegisterPayloadHandlersEvent event) {
@@ -76,7 +76,8 @@ public final class ModNetwork {
                 (payload, context) -> {
                     if (context.player() instanceof ServerPlayer serverPlayer) {
                         io.github.verycooltimo.murim.item.TechniqueManualItem.learnFromHand(serverPlayer,
-                                payload.mainHand() ? net.minecraft.world.InteractionHand.MAIN_HAND : net.minecraft.world.InteractionHand.OFF_HAND);
+                                payload.mainHand() ? net.minecraft.world.InteractionHand.MAIN_HAND : net.minecraft.world.InteractionHand.OFF_HAND,
+                                payload.technique());
                     }
                 });
         registrar.playToClient(ManualPayloads.Open.TYPE, ManualPayloads.Open.STREAM_CODEC,

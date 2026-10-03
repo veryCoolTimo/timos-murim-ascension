@@ -60,6 +60,36 @@ public final class Styles {
         return s == WIND_GOD ? Optional.of(id("wind_god_shadow")) : Optional.empty();
     }
 
+    /**
+     * Стили-книги с формами по очереди (автор 03.10: «все в одной книге, каждую надо по очереди
+     * изучать, и каждая сложнее прошлой»): Семь Цветков и 24 Движения. Шаги учатся целиком.
+     */
+    public static boolean sequential(Style s) {
+        return s == SEVEN_PLUM || s == TWENTY_FOUR_PLUM;
+    }
+
+    /** Слой предыдущей формы, нужный, чтобы изучить следующую. */
+    public static final int NEXT_FORM_LAYER = 3;
+
+    /** Скорость освоения формы: каждая следующая медленнее — 1, 0,71, 0,56, 0,45… */
+    public static double difficulty(ResourceLocation technique) {
+        Optional<Style> s = of(technique);
+        if (s.isEmpty() || !sequential(s.get())) {
+            return 1.0D;
+        }
+        return 1.0D / (1.0D + 0.4D * s.get().forms().indexOf(technique));
+    }
+
+    /** Предыдущая форма в стиле-книге или пусто. */
+    public static Optional<ResourceLocation> previous(ResourceLocation technique) {
+        Optional<Style> s = of(technique);
+        if (s.isEmpty() || !sequential(s.get())) {
+            return Optional.empty();
+        }
+        int i = s.get().forms().indexOf(technique);
+        return i > 0 ? Optional.of(s.get().forms().get(i - 1)) : Optional.empty();
+    }
+
     /** Стили шагов: их первая форма — мгновенное уклонение. */
     public static final List<Style> FOOTWORK = List.of(DARK_FRAGRANCE, WIND_GOD);
 

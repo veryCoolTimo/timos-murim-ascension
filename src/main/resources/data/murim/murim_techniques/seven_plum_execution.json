@@ -68,5 +68,11 @@
   "hit_stop_ticks": 2,
   "cooldown_ticks": 600,
   "layers": 8,
-  "tier": "advanced"
+  "tier": "advanced",
+  "requires": [
+    {
+      "technique": "murim:seven_plum_whirlwind",
+      "layer": 3
+    }
+  ]
 }

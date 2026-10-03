@@ -49,5 +49,22 @@ public class MurimModClient {
         MurimMod.LOGGER.info("Murim: client setup");
         // Слой анимаций регистрируется один раз; PAL сам создаст контроллер каждому игроку.
         MurimPlayerAnimations.register();
+        // Книга-предмет по уровню техники: 0 — обычная, 0.5 — форма стиля (слива), 1 — секретная.
+        // API: build/moddev/artifacts/neoforge-21.1.248.jar#ItemProperties.register (public в NeoForge).
+        event.enqueueWork(() -> net.minecraft.client.renderer.item.ItemProperties.register(
+                io.github.verycooltimo.murim.registry.ModItems.TECHNIQUE_MANUAL.get(),
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "book_tier"),
+                (stack, level, entity, seed) -> {
+                    net.minecraft.resources.ResourceLocation id = stack.get(io.github.verycooltimo.murim.registry.ModDataComponents.TECHNIQUE.get());
+                    io.github.verycooltimo.murim.technique.TechniqueDefinition d = id == null ? null
+                            : io.github.verycooltimo.murim.technique.TechniqueLoader.get(id);
+                    if (d == null) {
+                        return 0.0F;
+                    }
+                    if (d.tier() == io.github.verycooltimo.murim.mastery.TechniqueTier.SECRET || id.getPath().startsWith("twenty_four_plum")) {
+                        return 1.0F;
+                    }
+                    return io.github.verycooltimo.murim.technique.Styles.of(id).isPresent() ? 0.5F : 0.0F;
+                }));
     }
 }

@@ -43,6 +43,11 @@ public final class ManualScreen extends Screen {
     private final ManualPayloads.Open open;
     private final boolean illustrated;
     private final int pages;
+    /**
+     * Книга стиля (автор 03.10): страница 0 — титул-иллюстрация, дальше по форме на страницу,
+     * изучаются по очереди. У обычной техники — одна форма, она же сама техника.
+     */
+    private final List<ResourceLocation> forms;
     private int page;
     private int ticks;
     private net.minecraft.client.gui.screens.inventory.PageButton prev;
@@ -51,6 +56,30 @@ public final class ManualScreen extends Screen {
     private int by;
     private float k;
 
+    private Component styleTitle;
+
+    private void setTitleFromStyle(io.github.verycooltimo.murim.technique.Styles.Style s) {
+        styleTitle = Component.translatable(s.nameKey());
+    }
+
+    /** Форма текущей страницы-текста (у книги стиля — страница 1 = первая форма). */
+    private ResourceLocation form() {
+        return illustrated ? forms.get(Math.max(0, page - 1)) : forms.get(0);
+    }
+
+    /** Состояние формы: 2 — изучена, 1 — можно изучить, 0 — закрыта (нужна предыдущая). */
+    private int state(ResourceLocation f) {
+        if (io.github.verycooltimo.murim.client.TechniqueSlotsHud.mastery(f) != null) {
+            return 2;
+        }
+        java.util.Optional<ResourceLocation> prevForm = io.github.verycooltimo.murim.technique.Styles.previous(f);
+        if (prevForm.isEmpty()) {
+            return 1;
+        }
+        io.github.verycooltimo.murim.network.SyncMasteryPayload.Entry e = io.github.verycooltimo.murim.client.TechniqueSlotsHud.mastery(prevForm.get());
+        return e != null && e.layer() >= io.github.verycooltimo.murim.technique.Styles.NEXT_FORM_LAYER ? 1 : 0;
+    }
+
     public static void open(ManualPayloads.Open open) {
         net.minecraft.client.Minecraft.getInstance().setScreen(new ManualScreen(open));
     }
@@ -58,9 +87,15 @@ public final class ManualScreen extends Screen {
     public ManualScreen(ManualPayloads.Open open) {
         super(io.github.verycooltimo.murim.mastery.MasteryService.name(open.technique()));
         this.open = open;
-        String path = open.technique().getPath();
-        this.illustrated = path.startsWith("seven_plum") && !path.equals("seven_plum_basic") || path.startsWith("twenty_four_plum");
-        this.pages = illustrated ? 2 : 1;
+        java.util.Optional<io.github.verycooltimo.murim.technique.Styles.Style> style =
+                io.github.verycooltimo.murim.technique.Styles.of(open.technique());
+        boolean book = style.isPresent() && io.github.verycooltimo.murim.technique.Styles.sequential(style.get());
+        this.forms = book ? style.get().forms() : List.of(open.technique());
+        this.illustrated = book;
+        this.pages = illustrated ? 1 + forms.size() : 1;
+        if (book) {
+            setTitleFromStyle(style.get());
+        }
     }
 
     @Override
@@ -124,7 +159,7 @@ public final class ManualScreen extends Screen {
      * Текущий разворот: {@code which} 0 — только левая страница, 1 — только правая, 2 — обе.
      */
     private void spread(GuiGraphics g, int which, boolean left, boolean right, int mouseX, int mouseY) {
-        boolean textPage = !illustrated || page == 1;
+        boolean textPage = !illustrated || page >= 1;
         ResourceLocation tex = textPage ? BASIC : PLUM;
         if (left) {
             g.blit(tex, 0, 0, 0.0F, 0.0F, PAGE_W, TEX_H, TEX_W, TEX_H);
@@ -138,7 +173,7 @@ public final class ManualScreen extends Screen {
                 g.pose().pushPose();
                 g.pose().translate(214, 236, 0.0F);
                 g.pose().scale(0.6F, 0.6F, 1.0F);
-                g.drawString(font, title, 0, 0, INK, false);
+                g.drawString(font, styleTitle != null ? styleTitle : title, 0, 0, INK, false);
                 g.pose().popPose();
             }
         }
@@ -146,6 +181,24 @@ public final class ManualScreen extends Screen {
 
     /** Красная печать «Изучить»: при наведении темнее и «вдавлена» на пиксель. */
     private void seal(GuiGraphics g, int mouseX, int mouseY) {
+        int st = state(form());
+        if (st != 1) {
+            // Изучено — бледный оттиск; закрыто — подпись, что нужно сначала.
+            Component note = st == 2 ? Component.translatable("murim.manual.learned")
+                    : Component.translatable("murim.manual.locked",
+                            io.github.verycooltimo.murim.mastery.MasteryService.name(io.github.verycooltimo.murim.technique.Styles.previous(form()).orElse(form())),
+                            io.github.verycooltimo.murim.technique.Styles.NEXT_FORM_LAYER);
+            g.pose().pushPose();
+            g.pose().translate(214, SEAL_Y + 4, 0.0F);
+            g.pose().scale(0.6F, 0.6F, 1.0F);
+            int ly = 0;
+            for (FormattedCharSequence line : font.split(note, (int) (140 / 0.6F))) {
+                g.drawString(font, line, 0, ly, st == 2 ? 0xFF8A7C6A : SEAL_DARK, false);
+                ly += font.lineHeight + 1;
+            }
+            g.pose().popPose();
+            return;
+        }
         boolean hot = overSeal(mouseX, mouseY);
         int x = SEAL_X + (hot ? 1 : 0);
         int y = SEAL_Y + (hot ? 1 : 0);
@@ -168,14 +221,14 @@ public final class ManualScreen extends Screen {
     private boolean overSeal(double mouseX, double mouseY) {
         double tx = (mouseX - bx) / k;
         double ty = (mouseY - by) / k;
-        return opened(ticks) && (!illustrated || page == 1)
+        return opened(ticks) && (!illustrated || page >= 1) && state(form()) == 1
                 && tx >= SEAL_X && tx <= SEAL_X + SEAL_W && ty >= SEAL_Y && ty <= SEAL_Y + SEAL_H;
     }
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (button == 0 && overSeal(mouseX, mouseY)) {
-            PacketDistributor.sendToServer(new ManualPayloads.Learn(open.mainHand()));
+            PacketDistributor.sendToServer(new ManualPayloads.Learn(open.mainHand(), form()));
             onClose();
             return true;
         }
@@ -204,7 +257,7 @@ public final class ManualScreen extends Screen {
 
     /** Название и текст техники в прямоугольнике страницы (координаты текстуры 384×256). */
     private void text(GuiGraphics g, int x, int y, int w, int h, float scale) {
-        String path = open.technique().getPath();
+        String path = form().getPath();
         // У иллюстрированных форм на странице текста — полный трактат (.full), подпись — на иллюстрации.
         String key = I18n.exists("book.murim." + path + ".full") ? "book.murim." + path + ".full" : "book.murim." + path;
         String body = I18n.exists(key) ? I18n.get(key)
@@ -214,7 +267,7 @@ public final class ManualScreen extends Screen {
         g.pose().scale(scale, scale, 1.0F);
         int lw = (int) (w / scale);
         int cy = 0;
-        for (FormattedCharSequence line : font.split(title, lw)) {
+        for (FormattedCharSequence line : font.split(io.github.verycooltimo.murim.mastery.MasteryService.name(form()), lw)) {
             g.drawString(font, line, 0, cy, INK, false);
             cy += font.lineHeight + 1;
         }

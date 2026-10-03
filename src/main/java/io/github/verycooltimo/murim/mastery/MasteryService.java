@@ -35,6 +35,9 @@ public final class MasteryService {
      */
     public static void completeStyles(ServerPlayer player) {
         for (io.github.verycooltimo.murim.technique.Styles.Style style : io.github.verycooltimo.murim.technique.Styles.ALL) {
+            if (io.github.verycooltimo.murim.technique.Styles.sequential(style)) {
+                continue;
+            }
             MasteryState state = player.getData(ModAttachments.MASTERY);
             int cap = -1;
             for (ResourceLocation f : style.forms()) {
@@ -86,11 +89,14 @@ public final class MasteryService {
         message(player, start > 0 ? "murim.mastery.learned_skipped" : "murim.mastery.learned",
                 ChatFormatting.GRAY, name(id), start);
         LoadoutService.placeLearned(player, id);
-        // Манускрипт стиля учит все его формы (решение codex 02.10): каждая — со своими слоями.
+        // Стиль шагов учится целиком; стили-книги (Семь Цветков, 24 Движения) — по форме за раз,
+        // вместе с первой формой — основа ЛКМ стиля (автор 03.10).
         io.github.verycooltimo.murim.technique.Styles.of(id).ifPresent(style -> {
-            for (ResourceLocation form : style.forms()) {
-                if (!player.getData(ModAttachments.MASTERY).knows(form)) {
-                    learn(player, form, depth);
+            if (!io.github.verycooltimo.murim.technique.Styles.sequential(style)) {
+                for (ResourceLocation form : style.forms()) {
+                    if (!player.getData(ModAttachments.MASTERY).knows(form)) {
+                        learn(player, form, depth);
+                    }
                 }
             }
             style.basic().filter(b -> !player.getData(ModAttachments.MASTERY).knows(b)).ifPresent(b -> learn(player, b, depth));
@@ -129,7 +135,9 @@ public final class MasteryService {
         if (progress == null) {
             return;
         }
-        MasteryRules.Gain gain = MasteryRules.experience(progress, source, amount, state.wisdom(), day(player));
+        // Поздние формы стиля-книги осваиваются медленнее (автор 03.10: «каждая сложнее прошлой»).
+        MasteryRules.Gain gain = MasteryRules.experience(progress, source,
+                amount * io.github.verycooltimo.murim.technique.Styles.difficulty(id), state.wisdom(), day(player));
         apply(player, id, gain, false);
         sync(player);
     }

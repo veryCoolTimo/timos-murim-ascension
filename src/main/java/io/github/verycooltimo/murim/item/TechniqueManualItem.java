@@ -52,15 +52,17 @@ public class TechniqueManualItem extends Item {
     }
 
     /** «Изучить» из книги: книга с этой техникой должна быть в руке. */
-    public static void learnFromHand(ServerPlayer serverPlayer, InteractionHand hand) {
+    public static void learnFromHand(ServerPlayer serverPlayer, InteractionHand hand, ResourceLocation wanted) {
         ItemStack stack = serverPlayer.getItemInHand(hand);
         if (!(stack.getItem() instanceof TechniqueManualItem item) || serverPlayer.getCooldowns().isOnCooldown(item)) {
             return;
         }
-        ResourceLocation id = stack.get(ModDataComponents.TECHNIQUE.get());
-        if (id == null) {
+        ResourceLocation book = stack.get(ModDataComponents.TECHNIQUE.get());
+        if (book == null) {
             return;
         }
+        // Книга стиля учит любую свою форму (по очереди — через requires в данных формы).
+        ResourceLocation id = wanted.equals(book) || io.github.verycooltimo.murim.technique.Styles.sameStyle(book, wanted) ? wanted : book;
         Integer depth = stack.get(ModDataComponents.MANUAL_DEPTH.get());
         MasteryService.Learn result = MasteryService.learn(serverPlayer, id, depth == null ? 0 : depth);
         if (result == MasteryService.Learn.ALREADY) {
@@ -78,6 +80,11 @@ public class TechniqueManualItem extends Item {
         ResourceLocation id = stack.get(ModDataComponents.TECHNIQUE.get());
         if (id == null) {
             return super.getName(stack);
+        }
+        // Книга стиля называется стилем, а не первой формой.
+        java.util.Optional<io.github.verycooltimo.murim.technique.Styles.Style> style = io.github.verycooltimo.murim.technique.Styles.of(id);
+        if (style.isPresent() && io.github.verycooltimo.murim.technique.Styles.sequential(style.get())) {
+            return Component.translatable("item.murim.technique_manual.named", Component.translatable(style.get().nameKey()));
         }
         return Component.translatable("item.murim.technique_manual.named", MasteryService.name(id));
     }
