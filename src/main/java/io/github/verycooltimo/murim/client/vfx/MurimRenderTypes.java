@@ -308,6 +308,14 @@ public final class MurimRenderTypes {
     }
 
     /** Мазок туши для чёрного пламени ауры: тёмный, затемняет — тип как у {@link #impurity()}. */
+    /**
+     * Тёмная сплошная лента (чёрные волны клинка ци высшей ступени): шейдер полупрозрачных
+     * сущностей — тёмное на нём видно и на llvmpipe, в отличие от аддитивных слоёв.
+     */
+    public static RenderType darkBand() {
+        return RenderType.entityTranslucent(AIR_BAND_TEXTURE);
+    }
+
     public static RenderType ink() {
         return RenderType.entityTranslucent(INK_TEXTURE);
     }

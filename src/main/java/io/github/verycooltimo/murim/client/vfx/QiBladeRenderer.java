@@ -54,12 +54,17 @@ public final class QiBladeRenderer {
      */
     public static void draw(PoseStack pose, MultiBufferSource buffers, Vec3 base, Vec3 dir, double length,
                             float time, long seed, float scale) {
-        draw(pose, buffers, base, dir, null, length, time, seed, scale);
+        draw(pose, buffers, base, dir, null, length, time, seed, scale, false);
     }
 
-    /** @param armDir направление от кулака к локтю: ци охватывает и предплечье (реф, codex 03.10); null — без. */
+    /**
+     * @param armDir  направление от кулака к локтю: ци охватывает и предплечье (реф, codex 03.10); null — без
+     * @param evolved клинок высшей ступени (автор 03.10: «аура-меч для высшего реалма — больше
+     *                эффектов и чёрные волны, как на третьем рефе»): вдвое больше вихря и завитков,
+     *                по клинку бегут чёрные рваные волны
+     */
     public static void draw(PoseStack pose, MultiBufferSource buffers, Vec3 base, Vec3 dir, Vec3 armDir, double length,
-                            float time, long seed, float scale) {
+                            float time, long seed, float scale, boolean evolved) {
         PoseStack.Pose last = pose.last();
         Vec3 cam = cameraLocal(last.pose());
         Vec3 a = perpendicular(dir);
@@ -145,7 +150,7 @@ public final class QiBladeRenderer {
         // Реф, кадр 4: от лезвия вверх, вдоль руки и выше, поднимаются длинные завитки пламени ци —
         // тонкие, сужающиеся, закрученные; каждый живёт 12–22 тика, рождается на клинке, всплывает
         // вверх и тает. Это и есть «пульсирует как огонь»: силуэт всё время рвётся и обновляется.
-        for (int n = 0; n < 10; n++) {
+        for (int n = 0; n < (evolved ? 18 : 10); n++) {
             double lifeT = 12.0D + 10.0D * hash(seed + 71, n);
             double age = (time + hash(seed + 73, n) * 60.0D) / lifeT;
             int gen = (int) Math.floor(age);
@@ -217,6 +222,49 @@ public final class QiBladeRenderer {
             }
         }
 
+        // Аура вокруг клинка закручивается (автор 03.10: «больше ауры, которая вокруг него
+        // закручивается»): ленты-витки обвивают лезвие от кисти к острию, расходятся наружу и
+        // вращаются; каждый виток сужается и тает к острию. У высшей ступени их вдвое больше.
+        int spirals = evolved ? 6 : 3;
+        for (int n = 0; n < spirals; n++) {
+            double phase0 = n * (Math.PI * 2.0D / spirals) + time * (0.22D + 0.04D * n);
+            double pitch = 5.5D + 1.5D * hash(seed + 101, n);
+            Vec3 prev = null;
+            double prevW = 0.0D;
+            for (int i = 0; i <= SEGMENTS; i++) {
+                double k = i / (double) SEGMENTS;
+                double ph = phase0 + k * pitch;
+                // Радиус: у кисти плотно, к середине раскрывается, у острия снова сходится.
+                double r = (0.10D + 0.30D * Math.sin(Math.PI * Math.min(1.0D, k * 1.15D))) * scale * (evolved ? 1.35D : 1.0D)
+                        * (1.0D + 0.15D * Mth.sin(time * 0.8F + (float) n));
+                Vec3 p = pts[i].add(a.scale(Math.cos(ph) * r)).add(b.scale(Math.sin(ph) * r));
+                double ww = 0.09D * scale * (1.0D - 0.75D * k);
+                if (prev != null) {
+                    float[] col = grad(MID, TIP, (float) k);
+                    float al = (float) (0.8D * (1.0D - 0.7D * k) * (0.6D + 0.4D * Math.sin(ph * 0.5D)));
+                    VfxDraw.segment(glow, last, prev, p, cam, 0.5D * (ww + prevW), al, col[0], col[1], col[2]);
+                }
+                prev = p;
+                prevW = ww;
+            }
+        }
+        if (evolved) {
+            // Высшая ступень: широкое вращающееся кольцо-вихрь у кисти и второй ряд завитков.
+            for (int n = 0; n < 2; n++) {
+                Vec3 prev = null;
+                for (int j = 0; j <= 16; j++) {
+                    double ang = j / 16.0D * Math.PI * 1.6D + time * 0.35D * (n == 0 ? 1 : -1) + n;
+                    double r = (0.32D + 0.06D * n) * scale;
+                    Vec3 c = pts[2 + n * 3];
+                    Vec3 p = c.add(a.scale(Math.cos(ang) * r)).add(b.scale(Math.sin(ang) * r)).add(dir.scale(0.05D * Math.sin(ang * 2.0D)));
+                    if (prev != null) {
+                        VfxDraw.segment(glow, last, prev, p, cam, 0.03D * scale * (1.0D - j / 16.0D), 0.7F * (1.0F - j / 16.0F), HOT[0], HOT[1], HOT[2]);
+                    }
+                    prev = p;
+                }
+            }
+        }
+
         // Раскалённая сердцевина и сердцевины дуг: узкие, чёткие.
         VertexConsumer core = buffers.getBuffer(MurimRenderTypes.airBand());
         for (int i = 0; i < SEGMENTS - 1; i++) {
@@ -235,6 +283,38 @@ public final class QiBladeRenderer {
         VertexConsumer mote = buffers.getBuffer(MurimRenderTypes.mote());
         VfxDraw.billboard(mote, last, base, cam, 0.34D * scale * pulse, 0.6F, FLAME[0], FLAME[1], FLAME[2]);
         VfxDraw.billboard(mote, last, base, cam, 0.13D * scale * pulse, 1.0F, CORE[0], CORE[1], CORE[2]);
+
+        if (evolved) {
+            // Чёрные волны (реф, третья панель): рваные почти чёрные полосы обтекают лезвие по бокам
+            // и бегут волной от кисти к острию; с кромок отрываются чёрные клочья. Обычное
+            // смешивание (не аддитивное), иначе чёрное не видно.
+            VertexConsumer ink = buffers.getBuffer(MurimRenderTypes.darkBand());
+            for (int n = 0; n < 4; n++) {
+                double side = n % 2 == 0 ? 1.0D : -1.0D;
+                double off = (0.12D + 0.06D * (n / 2)) * scale;
+                for (int i = 0; i < SEGMENTS - 1; i++) {
+                    double k0 = i / (double) SEGMENTS, k1 = (i + 1) / (double) SEGMENTS;
+                    double wave0 = Math.sin(k0 * 10.0D - time * 0.6D + n * 1.7D);
+                    double wave1 = Math.sin(k1 * 10.0D - time * 0.6D + n * 1.7D);
+                    Vec3 q0 = pts[i].add(a.scale(side * (off * w[i] + 0.05D * scale * wave0))).add(b.scale(0.04D * scale * wave0));
+                    Vec3 q1 = pts[i + 1].add(a.scale(side * (off * w[i + 1] + 0.05D * scale * wave1))).add(b.scale(0.04D * scale * wave1));
+                    float al = (float) (0.85D * (0.55D + 0.45D * wave0) * (1.0D - 0.6D * k0));
+                    VfxDraw.segment(ink, last, q0, q1, cam, 0.05D * scale * w[i] * (0.7D + 0.3D * wave0), al, 0.07F, 0.04F, 0.12F);
+                }
+            }
+            for (int f = 0; f < 6; f++) {
+                double lifeT = 8.0D + 6.0D * hash(seed + 131, f);
+                double age = (time + hash(seed + 137, f) * 30.0D) / lifeT;
+                int gen = (int) Math.floor(age);
+                double life = age - gen;
+                int at = 1 + (int) (hash(seed + 139, f * 977 + gen) * (SEGMENTS - 3));
+                double ang = hash(seed + 149, f * 977 + gen) * Math.PI * 2.0D;
+                Vec3 out = a.scale(Math.cos(ang)).add(b.scale(Math.sin(ang)));
+                Vec3 from = pts[at].add(out.scale((0.15D + 0.35D * life) * scale));
+                Vec3 to = from.add(out.scale(0.08D * scale)).add(dir.scale(-0.12D * scale));
+                VfxDraw.segment(ink, last, from, to, cam, 0.025D * scale * (1.0D - life), (float) (0.9D * (1.0D - life)), 0.06F, 0.03F, 0.1F);
+            }
+        }
     }
 
     /** Камера в локальных координатах: позы рендера сущностей и руки — относительно камеры. */

@@ -128,6 +128,12 @@ public final class QiSwordClient {
         }
     }
 
+    /** Клинок высшей ступени: ранг владельца ≥ {@link QiSword#EVOLVED_RANK} (свой — из профиля, чужой — по ауре). */
+    static boolean evolved(Player p) {
+        int rank = p == Minecraft.getInstance().player ? ClientProfileState.profile().rank() : ClientAuraState.of(p).rank();
+        return rank >= QiSword.EVOLVED_RANK;
+    }
+
     public static void reset() {
         MARKS.clear();
     }
@@ -164,7 +170,7 @@ public final class QiSwordClient {
         io.github.verycooltimo.murim.client.vfx.QiBladeRenderer.draw(pose, event.getMultiBufferSource(),
                 new Vec3(i * 0.02D, 0.06D, -0.02D), new Vec3(i * -0.18D, 0.86D, -0.48D).normalize(),
                 new Vec3(i * 0.45D, -0.6D, 0.65D).normalize(), 1.5D, time,
-                mc.player.getId(), 0.75F);
+                mc.player.getId(), 0.75F, evolved(mc.player));
         pose.popPose();
     }
 
@@ -191,7 +197,7 @@ public final class QiSwordClient {
             float time = player.tickCount + partial;
             io.github.verycooltimo.murim.client.vfx.QiBladeRenderer.draw(pose, buffers,
                     new Vec3(left ? 0.0625D : -0.0625D, 0.66D, -0.02D), new Vec3(0.0D, 0.6D, -1.0D).normalize(), new Vec3(0.0D, -1.0D, 0.0D), 2.0D, time,
-                    player.getId(), 1.0F);
+                    player.getId(), 1.0F, evolved(player));
             pose.popPose();
         }
     }

@@ -67,6 +67,13 @@ public final class QiSword {
      */
     public static final int MIN_RANK = 0;
 
+    /**
+     * С какого ранга ци-меч — высшей ступени (автор 03.10: «аура-меч для evolutionary realm»):
+     * больше вихря, завитков и чёрные волны. Ранг 5 — «Безграничный», следующий за Пиком.
+     * [НЕПРОВЕРЕНО: какую ступень автор называет «evolutionary realm» — уточнить; одна константа.]
+     */
+    public static final int EVOLVED_RANK = 5;
+
     /** Может ли ци-меч появиться: рука пуста, даньтянь сформирован, ранг не ниже {@link #MIN_RANK}. */
     public static boolean qiAvailable(Player player) {
         return player.getMainHandItem().isEmpty() && available(player.getData(ModAttachments.PROFILE));
