@@ -221,6 +221,14 @@ public final class ModAttachments {
                             .copyOnDeath()
                             .build());
 
+    /** Каст кинжалов Тан (TangExecutor): форма, слой, тик от IMPACT, цель, цепь, счёт попаданий. Не сохраняется. */
+    public static final Supplier<AttachmentType<double[]>> TANG =
+            ATTACHMENT_TYPES.register("tang_cast", () -> AttachmentType.<double[]>builder(() -> new double[] {-1, 0, -1}).build());
+
+    /** Яд кромок кинжалов Тан на цели: {импульсов, id мастера, урон, до импульса}. Не сохраняется. */
+    public static final Supplier<AttachmentType<double[]>> TANG_POISON =
+            ATTACHMENT_TYPES.register("tang_poison", () -> AttachmentType.<double[]>builder(() -> new double[] {0, -1, 0, 0}).build());
+
     public static final Supplier<AttachmentType<TechniqueState>> TECHNIQUE_STATE =
             ATTACHMENT_TYPES.register("technique_state",
                     () -> AttachmentType.<TechniqueState>builder(() -> TechniqueState.IDLE)

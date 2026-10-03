@@ -34,6 +34,10 @@ public final class TechniqueService {
         if (technique == null) {
             return false;
         }
+        // Кинжалы Тан: повторное R, пока живы кинжалы формы, — команда (удар звёзд, отзыв), не запуск.
+        if (io.github.verycooltimo.murim.technique.TangExecutor.command(player, technique.id())) {
+            return false;
+        }
 
         TechniqueState state = player.getData(ModAttachments.TECHNIQUE_STATE);
         if (state.isActive()) {

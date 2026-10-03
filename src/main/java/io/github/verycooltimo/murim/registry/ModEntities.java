@@ -38,6 +38,17 @@ public final class ModEntities {
                     .noSave()
                     .build("wedge"));
 
+    /** Метательный кинжал клана Тан: снаряд техники, живёт секунды (docs/design/techniques/tang-daggers-spec.md). */
+    public static final DeferredHolder<EntityType<?>, EntityType<io.github.verycooltimo.murim.technique.TangDagger>> TANG_DAGGER =
+            ENTITIES.register("tang_dagger", () -> EntityType.Builder
+                    .<io.github.verycooltimo.murim.technique.TangDagger>of(io.github.verycooltimo.murim.technique.TangDagger::new, MobCategory.MISC)
+                    .sized(0.3F, 0.3F)
+                    .clientTrackingRange(8)
+                    .updateInterval(1)
+                    .noSummon()
+                    .noSave()
+                    .build("tang_dagger"));
+
     /**
      * Тренировочный манекен. Категория MISC: это отладочный противник этапа 2, а не житель
      * мира. Призыв командой намеренно разрешён — им и ставят мишень для проверки.

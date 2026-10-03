@@ -122,6 +122,8 @@ public final class ModNetwork {
                 (payload, context) -> ClientPayloadBridge.handleScatter(payload));
         registrar.playToClient(DomePayload.TYPE, DomePayload.STREAM_CODEC,
                 (payload, context) -> ClientPayloadBridge.handleDome(payload));
+        registrar.playToClient(TangPayload.TYPE, TangPayload.STREAM_CODEC,
+                (payload, context) -> ClientPayloadBridge.handleTang(payload));
         registrar.playToClient(FallingPetalPayload.TYPE, FallingPetalPayload.STREAM_CODEC,
                 (payload, context) -> ClientPayloadBridge.handleFallingPetal(payload));
         registrar.playToClient(ShowerPayload.TYPE, ShowerPayload.STREAM_CODEC,

@@ -79,6 +79,9 @@ public final class BehaviorExecutor {
         if (behavior instanceof TechniqueBehavior.PlumShower) {
             return ShowerExecutor.start(player, definition.id());
         }
+        if (behavior instanceof TechniqueBehavior.TangDaggers) {
+            return TangExecutor.start(player, definition.id());
+        }
         if (behavior instanceof TechniqueBehavior.FallingPetal) {
             return FallingPetalExecutor.start(player, definition.id());
         }
