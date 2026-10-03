@@ -419,7 +419,7 @@ public final class DevSetupEvents {
         }
         net.minecraft.world.phys.AABB area = new net.minecraft.world.phys.AABB(
                 STAGE_X - 32.0D, STAGE_Y - 8.0D, STAGE_Z - 32.0D,
-                STAGE_X + 32.0D, STAGE_Y + 8.0D, STAGE_Z + 32.0D);
+                STAGE_X + 32.0D, STAGE_Y + 24.0D, STAGE_Z + 32.0D);
         int removed = 0;
         for (io.github.verycooltimo.murim.entity.TrainingDummy old
                 : level.getEntitiesOfClass(io.github.verycooltimo.murim.entity.TrainingDummy.class, area)) {
@@ -585,6 +585,22 @@ public final class DevSetupEvents {
         int stuck = (int) envDouble("MURIM_CAPTURE_TANG_STUCK", 0.0D);
         if (stuck > 0 && !level.players().isEmpty()) {
             io.github.verycooltimo.murim.technique.TangExecutor.spawnStuckForCapture(level.players().get(0), target.position(), stuck);
+        }
+        // MURIM_CAPTURE_DROP=tang_dagger|huashan_sword — предмет лежит на земле перед игроком (съёмка
+        // модели автора в виде выброшенного предмета, 03.10). Не подбирается и не исчезает.
+        String drop = System.getenv("MURIM_CAPTURE_DROP");
+        if (drop != null && !drop.isBlank() && !level.players().isEmpty()) {
+            net.minecraft.world.entity.player.Player p0 = level.players().get(0);
+            net.minecraft.world.item.Item item = "huashan_sword".equals(drop.trim())
+                    ? io.github.verycooltimo.murim.registry.ModItems.HUASHAN_SWORD.get()
+                    : io.github.verycooltimo.murim.registry.ModItems.TANG_DAGGER.get();
+            double ahead = envDouble("MURIM_CAPTURE_DROP_DIST", 1.6D);
+            net.minecraft.world.entity.item.ItemEntity dropped = new net.minecraft.world.entity.item.ItemEntity(level,
+                    p0.getX() + lookX * ahead, STAGE_Y, p0.getZ() + lookZ * ahead, new ItemStack(item));
+            dropped.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
+            dropped.setNeverPickUp();
+            dropped.setUnlimitedLifetime();
+            level.addFreshEntity(dropped);
         }
         if (disciple != null && !level.players().isEmpty()) {
             level.players().get(0).setHealth(level.players().get(0).getMaxHealth());

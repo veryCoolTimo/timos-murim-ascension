@@ -13,7 +13,8 @@ import org.joml.Quaternionf;
  * кинжалов в руках мастера (розетка, ладонь). Чтение geo — общий {@link BedrockItemMesh}.
  *
  * <p>Остриё по +Y модели, гарда на y≈8 единиц; клинок лежит плашмя в плоскости YZ. Натуральная длина ~12
- * единиц = 0,76 блока; в полёте рисуется в масштабе {@link #FLIGHT} (≈0,5 блока, автор 03.10: «слишком большая»).
+ * единиц = 0,76 блока; в полёте — натуральный размер из файла автора (автор 03.10: «в файлах должны быть правильные
+ * размеры»).
  */
 public final class TangDaggerMesh {
 
@@ -21,8 +22,8 @@ public final class TangDaggerMesh {
             ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/item/tang_dagger.png"));
     /** Гарда — точка хвата (единицы модели по Y). */
     public static final float GUARD_Y = 8.0F;
-    /** Масштаб летящего кинжала: длина ≈ 0,5 блока. */
-    public static final float FLIGHT = 0.68F;
+    /** Масштаб летящего кинжала: 1 — как в файле автора (16 единиц = блок). */
+    public static final float FLIGHT = 1.0F;
 
     public static RenderType renderType() {
         return MESH.renderType();

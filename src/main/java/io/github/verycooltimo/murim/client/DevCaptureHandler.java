@@ -186,18 +186,24 @@ public final class DevCaptureHandler {
         }
 
         // Камера «сбоку»: стойку ставит сервер с задержкой, поэтому ищем её каждый тик
-        // прогрева, пока не найдём. Опорный кадр снимается уже с неё.
-        if (warmup > 0 && minecraft.getCameraEntity() == minecraft.player
-                && "side".equalsIgnoreCase(System.getProperty(CAMERA_PROPERTY, "back"))) {
+        // прогрева. В сохранённом мире может остаться стойка прошлой съёмки (клиент гасят без
+        // сохранения, и её удаление не записывается) — берём самую новую (наибольший id) и
+        // переключаемся на неё, пока идёт прогрев. Опорный кадр снимается уже с неё.
+        if (warmup > 0 && "side".equalsIgnoreCase(System.getProperty(CAMERA_PROPERTY, "back"))) {
+            net.minecraft.world.entity.Entity newest = null;
             for (net.minecraft.world.entity.Entity entity : minecraft.level.entitiesForRendering()) {
                 if (entity instanceof net.minecraft.world.entity.decoration.ArmorStand
+                        && entity.isAlive()
                         && entity.getCustomName() != null
                         && io.github.verycooltimo.murim.combat.DevSetupEvents.CAMERA_STAND_NAME
-                                .equals(entity.getCustomName().getString())) {
-                    minecraft.setCameraEntity(entity);
-                    MurimMod.LOGGER.info("Автосъёмка: камера сбоку на {}", entity.position());
-                    break;
+                                .equals(entity.getCustomName().getString())
+                        && (newest == null || entity.getId() > newest.getId())) {
+                    newest = entity;
                 }
+            }
+            if (newest != null && minecraft.getCameraEntity() != newest) {
+                minecraft.setCameraEntity(newest);
+                MurimMod.LOGGER.info("Автосъёмка: камера сбоку на {}", newest.position());
             }
         }
 

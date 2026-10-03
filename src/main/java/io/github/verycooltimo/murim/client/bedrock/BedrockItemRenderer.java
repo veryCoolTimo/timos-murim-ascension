@@ -24,20 +24,17 @@ import java.util.Map;
 /**
  * Один рендер на все предметы с моделями автора из Blockbench ({@link BedrockItemMesh}): кинжал Тан, Меч Хуашань.
  *
- * <p>Модель предмета — {@code builtin/entity} с трансформами ванильного {@code item/handheld}. Здесь модель
- * кладётся в куб 0..1 так, как лежит спрайт ванильного меча: навершие у (0,12; 0,12), остриё по диагонали
- * (+X, +Y), плоскость клинка — к зрителю (XY). Поэтому в руке держится как меч, в инвентаре стоит наискосок.
- * API: reference/minecraft-src/net/minecraft/client/renderer/BlockEntityWithoutLevelRenderer.java#renderByItem;
+ * <p>Размеры — как в файлах автора (автор 03.10: «в файлах должны быть правильные размеры»): 16 единиц geo = 1 блок,
+ * никакой нормировки длины. Начало координат Bedrock-модели (низ-центр) — точка (8, 0, 8) Java-модели, как в режиме
+ * Display у Blockbench; трансформы рук/GUI/земли — в JSON модели предмета ({@code builtin/entity}), у меча — ровно
+ * из .bbmodel автора. API: reference/minecraft-src/net/minecraft/client/renderer/BlockEntityWithoutLevelRenderer.java#renderByItem;
  * reference/neoforge-src/net/neoforged/neoforge/client/extensions/common/RegisterClientExtensionsEvent.java#registerItem.
  */
 @EventBusSubscriber(modid = MurimMod.MODID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.MOD)
 public final class BedrockItemRenderer extends BlockEntityWithoutLevelRenderer {
 
-    /**
-     * {@code length} — длина модели в кубе предмета (спрайт ванильного меча ≈ 1,1); {@code roll} — докрутка вокруг
-     * клинка, чтобы плоскость клинка легла в XY.
-     */
-    private record Spec(BedrockItemMesh mesh, float length, float roll) {
+    /** {@code yaw} — поворот вокруг вертикали, чтобы плоскость клинка легла в XY, как у меча (градусы). */
+    private record Spec(BedrockItemMesh mesh, float yaw) {
     }
 
     public static final BedrockItemMesh HUASHAN_SWORD = new BedrockItemMesh("/assets/murim/bedrock/huashan_sword.geo.json",
@@ -52,9 +49,9 @@ public final class BedrockItemRenderer extends BlockEntityWithoutLevelRenderer {
 
     @SubscribeEvent
     static void onRegister(RegisterClientExtensionsEvent event) {
-        // Кинжал короче меча: ~0,7 против ~1,15; клинок кинжала в модели лежит в YZ — докрутка на 90°.
-        SPECS.put(ModItems.TANG_DAGGER.get(), new Spec(TangDaggerMesh.MESH, 0.72F, (float) (Math.PI / 2.0D)));
-        SPECS.put(ModItems.HUASHAN_SWORD.get(), new Spec(HUASHAN_SWORD, 1.15F, 0.0F));
+        // Клинок кинжала в модели лежит в YZ, у меча — в XY: кинжал докручен на 90°, чтобы делить трансформы меча.
+        SPECS.put(ModItems.TANG_DAGGER.get(), new Spec(TangDaggerMesh.MESH, 90.0F));
+        SPECS.put(ModItems.HUASHAN_SWORD.get(), new Spec(HUASHAN_SWORD, 0.0F));
         IClientItemExtensions ext = new IClientItemExtensions() {
             @Override
             public BlockEntityWithoutLevelRenderer getCustomRenderer() {
@@ -74,16 +71,11 @@ public final class BedrockItemRenderer extends BlockEntityWithoutLevelRenderer {
             return;
         }
         BedrockItemMesh mesh = spec.mesh();
-        float span = Math.max(1.0E-3F, mesh.maxY() - mesh.minY());
-        float scale = spec.length() * 16.0F / span;
-        float k = (float) Math.sqrt(0.5D);
-        float start = (1.0F - spec.length() * k) * 0.5F;
         ps.pushPose();
         try {
-            ps.translate(start, start, 0.5F);
-            ps.mulPose(new Quaternionf().rotationTo(0.0F, 1.0F, 0.0F, k, k, 0.0F));
-            ps.mulPose(new Quaternionf().rotationY(spec.roll()));
-            mesh.render(ps, buffers.getBuffer(mesh.renderType()), light, scale, mesh.minY(), 1.0F, 1.0F, 1.0F, 1.0F);
+            ps.translate(0.5F, 0.0F, 0.5F);
+            ps.mulPose(new Quaternionf().rotationY((float) Math.toRadians(spec.yaw())));
+            mesh.render(ps, buffers.getBuffer(mesh.renderType()), light, 1.0F, 0.0F, 1.0F, 1.0F, 1.0F, 1.0F);
         } finally {
             ps.popPose();
         }
