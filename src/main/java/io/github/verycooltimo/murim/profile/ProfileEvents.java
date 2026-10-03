@@ -106,6 +106,7 @@ public final class ProfileEvents {
     static void onLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
             ProfileNetwork.sync(player);
+            io.github.verycooltimo.murim.mastery.MasteryService.completeStyles(player);
             io.github.verycooltimo.murim.mastery.MasteryService.sync(player);
             // Сердца ранга — временный модификатор: ставится заново при каждом входе.
             io.github.verycooltimo.murim.cultivation.RankEffects.apply(player);

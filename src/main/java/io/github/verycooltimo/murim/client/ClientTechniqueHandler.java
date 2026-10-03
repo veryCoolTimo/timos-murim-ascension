@@ -48,6 +48,7 @@ public final class ClientTechniqueHandler {
         // отправляем не более одного запроса за тик: иначе при лагах уходит пачка пакетов,
         // из которых сервер всё равно примет первый — остальные упрутся в кулдаун.
         tickPending();
+        tickDodge(minecraft);
 
         boolean pressed = false;
         while (ModKeyMappings.TECHNIQUE.consumeClick()) {
@@ -73,6 +74,61 @@ public final class ClientTechniqueHandler {
                         "murim.loadout.empty", ModKeyMappings.LOADOUT.getTranslatedKeyMessage()), true);
             }
         }
+    }
+
+    /** Последнее нажатие влево/вправо/назад (клиентские тики) и было ли нажато в прошлом тике. */
+    private static final long[] DODGE_LAST = {-100, -100, -100};
+    private static final boolean[] DODGE_WAS = new boolean[3];
+    private static long dodgeTicks;
+    /** Окно двойного нажатия, тиков (как двойное W для бега в ванилле). */
+    private static final int DODGE_WINDOW = 5;
+
+    /**
+     * Мгновенное уклонение (03.10): двойное нажатие A, D или S вызывает первую форму стиля шагов
+     * из раскладки — даже когда выбран меч; слот, форма меча и R не меняются.
+     */
+    private static void tickDodge(Minecraft minecraft) {
+        dodgeTicks++;
+        net.minecraft.client.Options o = minecraft.options;
+        boolean[] now = {o.keyLeft.isDown(), o.keyRight.isDown(), o.keyDown.isDown()};
+        boolean blocked = minecraft.player == null || minecraft.screen != null || TechniqueWheel.open()
+                || ClientMeditationState.state().active();
+        for (int i = 0; i < 3; i++) {
+            boolean edge = now[i] && !DODGE_WAS[i];
+            DODGE_WAS[i] = now[i];
+            if (!edge || blocked) {
+                continue;
+            }
+            if (dodgeTicks - DODGE_LAST[i] <= DODGE_WINDOW) {
+                DODGE_LAST[i] = -100;
+                java.util.Optional<net.minecraft.resources.ResourceLocation> evade = footworkEvade();
+                if (evade.isPresent()) {
+                    PacketDistributor.sendToServer(new io.github.verycooltimo.murim.network.TraversePayloads.Request(
+                            evade.get(), footworkInput(minecraft)));
+                    CombatMode.engage();
+                }
+            } else {
+                DODGE_LAST[i] = dodgeTicks;
+            }
+        }
+    }
+
+    /** Уклонение стиля шагов, стоящего в раскладке (первая его форма), если он выучен. */
+    private static java.util.Optional<net.minecraft.resources.ResourceLocation> footworkEvade() {
+        for (java.util.Optional<net.minecraft.resources.ResourceLocation> slot : ClientLoadoutState.slots()) {
+            if (slot.isEmpty()) {
+                continue;
+            }
+            for (io.github.verycooltimo.murim.technique.Styles.Style style : io.github.verycooltimo.murim.technique.Styles.FOOTWORK) {
+                if (style.forms().contains(slot.get())) {
+                    net.minecraft.resources.ResourceLocation evade = style.forms().get(0);
+                    if (TechniqueSlotsHud.mastery(evade) != null) {
+                        return java.util.Optional.of(evade);
+                    }
+                }
+            }
+        }
+        return java.util.Optional.empty();
     }
 
     /** Биты контекста ввода для шагов: спринт, присед, направления (по действиям, не клавишам). */

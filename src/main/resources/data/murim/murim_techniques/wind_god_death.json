@@ -1,5 +1,5 @@
 {
-  "id": "murim:wind_god_steps",
+  "id": "murim:wind_god_death",
   "form": "step",
   "intent": "evasion",
   "breath": "hollow_breath",
@@ -13,7 +13,7 @@
   "behavior": {
     "type": "murim:footwork",
     "family": "wind_god",
-    "mode": "evade"
+    "mode": "death"
   },
   "animation": "murim:wind_god_steps",
   "vfx": {
@@ -66,9 +66,9 @@
     "cancellable_until": "windup",
     "break_on_damage": false
   },
-  "weakness": "technique.murim.wind_god_steps.weakness",
+  "weakness": "technique.murim.wind_god_death.weakness",
   "hit_stop_ticks": 0,
-  "cooldown_ticks": 60,
+  "cooldown_ticks": 120,
   "layers": 8,
   "tier": "advanced"
 }

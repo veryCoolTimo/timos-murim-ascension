@@ -214,9 +214,14 @@ public sealed interface TechniqueBehavior
      * Семейство шагов (Шаги Бога Ветров): одна техника, подтехники по контексту ввода и слою —
      * см. {@link io.github.verycooltimo.murim.technique.FootworkFamily}. На фазе удара — Шаг Мига.
      */
-    record Footwork(String family) implements TechniqueBehavior {
+    /**
+     * Шаг. {@code mode} — форма стиля шагов (решение 03.10: шаги — стиль форм на кольце):
+     * evade, run, shadow, death, behind; пусто — прежний выбор подтехники по контексту ввода.
+     */
+    record Footwork(String family, String mode) implements TechniqueBehavior {
         public static final MapCodec<Footwork> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
-                Codec.STRING.optionalFieldOf("family", "wind_god").forGetter(Footwork::family)
+                Codec.STRING.optionalFieldOf("family", "wind_god").forGetter(Footwork::family),
+                Codec.STRING.optionalFieldOf("mode", "").forGetter(Footwork::mode)
         ).apply(i, Footwork::new));
 
         @Override

@@ -1,5 +1,5 @@
 {
-  "id": "murim:wind_god_steps",
+  "id": "murim:dark_fragrance_trail",
   "form": "step",
   "intent": "evasion",
   "breath": "hollow_breath",
@@ -12,8 +12,8 @@
   },
   "behavior": {
     "type": "murim:footwork",
-    "family": "wind_god",
-    "mode": "evade"
+    "family": "huashan",
+    "mode": "run"
   },
   "animation": "murim:wind_god_steps",
   "vfx": {
@@ -66,9 +66,9 @@
     "cancellable_until": "windup",
     "break_on_damage": false
   },
-  "weakness": "technique.murim.wind_god_steps.weakness",
+  "weakness": "technique.murim.dark_fragrance_trail.weakness",
   "hit_stop_ticks": 0,
-  "cooldown_ticks": 60,
-  "layers": 8,
-  "tier": "advanced"
+  "cooldown_ticks": 120,
+  "layers": 5,
+  "tier": "basic"
 }

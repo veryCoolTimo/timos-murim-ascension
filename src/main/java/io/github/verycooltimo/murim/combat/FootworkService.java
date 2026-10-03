@@ -142,6 +142,12 @@ public final class FootworkService {
         long now = player.serverLevel().getGameTime();
         int[] s = player.getData(ModAttachments.TRAVERSE);
         boolean inAir = !player.onGround() && now - s[LAST_GROUND] > 2;
+        String mode = def.behavior() instanceof TechniqueBehavior.Footwork f ? f.mode()
+                : def.behavior() instanceof TechniqueBehavior.Step ? "evade" : "";
+        if (!mode.isEmpty() && !inAir) {
+            runForm(player, techniqueId, family, layer, mode, input, forward, move, sideOrBack);
+            return;
+        }
 
         if (inAir) {
             if (family.canAirTurn(layer)) {
@@ -202,6 +208,67 @@ public final class FootworkService {
             return;
         }
         dash(player, techniqueId, (input & FORWARD) != 0 ? forward : forward.scale(-1.0D));
+    }
+
+    /**
+     * Форма стиля шагов, выбранная на кольце: R делает именно её, направление и цель лишь
+     * задают путь (03.10). Бег и тень — переключатели: повторное R выключает.
+     */
+    private static void runForm(ServerPlayer player, ResourceLocation id, FootworkFamily family, int layer, String mode,
+                                int input, Vec3 forward, Vec3 move, boolean sideOrBack) {
+        switch (mode) {
+            case "run" -> {
+                if (isRunning(player)) {
+                    stop(player);
+                } else {
+                    if (inShadow(player)) {
+                        stop(player);
+                    }
+                    startRun(player, id, family, Math.max(layer, family == FootworkFamily.HUASHAN ? 1 : 0));
+                }
+            }
+            case "shadow" -> {
+                if (inShadow(player)) {
+                    stop(player);
+                } else {
+                    if (isRunning(player)) {
+                        stop(player);
+                    }
+                    startShadow(player, id, Math.max(1, layer));
+                }
+            }
+            case "death", "behind" -> {
+                net.minecraft.world.entity.LivingEntity target = softTarget(player);
+                if (target == null) {
+                    dash(player, id, sideOrBack ? move.normalize() : forward);
+                    return;
+                }
+                Vec3 to = target.position().subtract(player.position());
+                Vec3 dir = horizontal(to);
+                double flat = Math.sqrt(to.x * to.x + to.z * to.z);
+                double half = target.getBbWidth() / 2.0D + player.getBbWidth() / 2.0D;
+                double reach;
+                if ("behind".equals(mode)) {
+                    // Аромат за спиной: дугой обойти цель и выйти сбоку-сзади в 1,5–2 блоках;
+                    // сторону обхода задаёт A/D (по умолчанию — слева).
+                    Vec3 side = new Vec3(-dir.z, 0.0D, dir.x).scale((input & RIGHT) != 0 ? 1.0D : -1.0D);
+                    Vec3 end = target.position().add(dir.scale(half + 0.8D)).add(side.scale(1.4D));
+                    Vec3 path = end.subtract(player.position());
+                    dir = horizontal(path);
+                    reach = Math.min(6.0D, Math.sqrt(path.x * path.x + path.z * path.z));
+                } else {
+                    reach = Math.min(io.github.verycooltimo.murim.technique.ShadowRules.deathDistance(Math.max(3, layer)), flat + half + 1.2D);
+                }
+                player.setData(ModAttachments.FOOTWORK_DIR, new float[] {(float) dir.x, (float) dir.z, 1.0F, (float) Math.max(0.5D, reach)});
+                TechniqueService.tryStart(player, id);
+            }
+            default -> {
+                if (isRunning(player) || inShadow(player)) {
+                    stop(player);
+                }
+                dash(player, id, sideOrBack ? move.normalize() : forward.scale(-1.0D));
+            }
+        }
     }
 
     /** Рывок техники в заданном направлении: направление запоминается до конца её серии. */
@@ -489,9 +556,9 @@ public final class FootworkService {
         boolean contact = !player.level().getEntitiesOfClass(net.minecraft.world.entity.Mob.class,
                 player.getBoundingBox().inflate(io.github.verycooltimo.murim.technique.ShadowRules.CONTACT),
                 FootworkService::supported).isEmpty();
-        // Отпущенный присед гасит Тень с запасом в 3 тика: пакет приседа может прийти позже R.
-        r[NO_SPRINT] = player.isShiftKeyDown() ? 0 : r[NO_SPRINT] + 1;
-        if (r[RUN_LEFT] <= 0 || r[NO_SPRINT] > 3 || player.isSprinting() || now - r[LAST_GROUND] > 2
+        // Тень — форма на кольце (03.10): держится своё время, приседать не нужно; гаснет по
+        // времени, повторным R, бегом, контактом или когда кончилась ци.
+        if (r[RUN_LEFT] <= 0 || player.isSprinting() || now - r[LAST_GROUND] > 2
                 || profile.circulating() < cost || contact || !player.isAlive() || player.isPassenger()) {
             player.setData(ModAttachments.TRAVERSE, r);
             stop(player);

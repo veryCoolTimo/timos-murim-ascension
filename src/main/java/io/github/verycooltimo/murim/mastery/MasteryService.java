@@ -29,6 +29,30 @@ public final class MasteryService {
      *
      * @param depth до какого слоя учит манускрипт; {@code <= 0} — полный
      */
+    /**
+     * Стиль, у которого игрок знает хоть одну форму, учится целиком (формы добавились позже —
+     * например, шаги стали стилями 03.10): недостающие формы — до того же предела.
+     */
+    public static void completeStyles(ServerPlayer player) {
+        for (io.github.verycooltimo.murim.technique.Styles.Style style : io.github.verycooltimo.murim.technique.Styles.ALL) {
+            MasteryState state = player.getData(ModAttachments.MASTERY);
+            int cap = -1;
+            for (ResourceLocation f : style.forms()) {
+                if (state.knows(f)) {
+                    cap = Math.max(cap, state.techniques().get(f).cap());
+                }
+            }
+            if (cap < 0) {
+                continue;
+            }
+            for (ResourceLocation f : style.forms()) {
+                if (!player.getData(ModAttachments.MASTERY).knows(f)) {
+                    learn(player, f, cap);
+                }
+            }
+        }
+    }
+
     public static Learn learn(ServerPlayer player, ResourceLocation id, int depth) {
         TechniqueDefinition definition = TechniqueLoader.get(id);
         if (definition == null) {

@@ -36,7 +36,21 @@ public final class Styles {
     public static final Style TWENTY_FOUR_PLUM = new Style(id("twenty_four_plum"), List.of(
             id("twenty_four_plum_rainfall")), Optional.empty());
 
-    public static final List<Style> ALL = List.of(SEVEN_PLUM, TWENTY_FOUR_PLUM);
+    /**
+     * Шаги — тоже стили форм (автор 03.10: «техника шагов — то же, что 7 цветков: как ты
+     * шагаешь»), docs/design/techniques/footwork-styles.md. Первая форма — уклонение: его же
+     * вызывает мгновенное двойное нажатие A/D/S. Основы ЛКМ у шагов нет — стойка меча остаётся.
+     */
+    public static final Style DARK_FRAGRANCE = new Style(id("dark_fragrance"), List.of(
+            id("dark_fragrance_step"), id("dark_fragrance_trail"), id("dark_fragrance_behind")), Optional.empty());
+
+    public static final Style WIND_GOD = new Style(id("wind_god"), List.of(
+            id("wind_god_steps"), id("wind_god_shadow"), id("wind_god_death"), id("wind_god_lightning")), Optional.empty());
+
+    public static final List<Style> ALL = List.of(SEVEN_PLUM, TWENTY_FOUR_PLUM, DARK_FRAGRANCE, WIND_GOD);
+
+    /** Стили шагов: их первая форма — мгновенное уклонение. */
+    public static final List<Style> FOOTWORK = List.of(DARK_FRAGRANCE, WIND_GOD);
 
     /** Стиль, которому принадлежит форма; техника вне стилей — пусто. */
     public static Optional<Style> of(ResourceLocation technique) {
