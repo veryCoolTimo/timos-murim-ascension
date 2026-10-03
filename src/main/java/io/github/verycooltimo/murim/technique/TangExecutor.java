@@ -332,7 +332,6 @@ public final class TangExecutor {
             d.base = palm;
             d.carpDir = dir;
             d.setDeltaMovement(dir.scale(TangRules.CARP_SPEED));
-            d.setFlag(2, TangRules.doubled(layer));
             if (t != null && !t.onGround()) {
                 TargetLock.freeze(t, TangRules.CARP_TICKS + 14);
             }
@@ -421,7 +420,7 @@ public final class TangExecutor {
                 if (d.mode() == TangDagger.HANG || d.mode() == TangDagger.FALL) {
                     return false;
                 }
-                if (layer <= 0) {
+                if (layer <= 0 || d.index() == 1) {
                     hurt(player, d, t, d.damage);
                     send(player, form, TangPayload.HIT, layer, point, dir, t.getId(), 0);
                     return true;
@@ -437,7 +436,7 @@ public final class TangExecutor {
             return;
         }
         Vec3 dir = d.getDeltaMovement().lengthSqr() < 1.0E-6D ? Vec3.ZERO : d.getDeltaMovement().normalize();
-        if (d.form() == TangRules.BURST && d.layer() > 0 && (d.mode() == TangDagger.BURST || d.mode() == TangDagger.CARP)) {
+        if (d.form() == TangRules.BURST && d.layer() > 0 && d.index() == 0 && (d.mode() == TangDagger.BURST || d.mode() == TangDagger.CARP)) {
             explode(player, d, hit.getLocation(), null, d.mode() == TangDagger.CARP ? 0.6D : 1.0D);
             return;
         }
@@ -507,6 +506,26 @@ public final class TangExecutor {
         }
         boolean any = false;
         for (TangDagger d : mine) {
+            if (d.mode() == TangDagger.CARP && TangRules.doubled(d.layer()) && d.boostAt == Long.MAX_VALUE && !d.doubled()) {
+                // Второй кинжал вдогонку первому (гл. 196): долетит — рывок вдвое быстрее.
+                Vec3 hand = hand(player, true);
+                Vec3 to = d.position().add(d.getDeltaMovement().scale(2.0D));
+                Vec3 dir = to.subtract(hand).normalize();
+                int ticks = Math.max(1, (int) Math.ceil(to.distanceTo(hand) / TangRules.SECOND_SPEED));
+                TangDagger second = new TangDagger(player.level(), player, TangRules.BURST, d.layer(), 1);
+                second.setPos(hand);
+                second.setMode(TangDagger.STRAIGHT);
+                second.speed = TangRules.SECOND_SPEED;
+                second.setDeltaMovement(dir.scale(TangRules.SECOND_SPEED));
+                second.damage = d.damage * 0.3D;
+                second.life = ticks;
+                face(second, dir);
+                player.level().addFreshEntity(second);
+                d.boostAt = player.level().getGameTime() + ticks;
+                send(player, form, TangPayload.SHOT, d.layer(), hand, dir, 1, 2);
+                any = true;
+                continue;
+            }
             if (d.mode() == TangDagger.HANG && TangRules.recall(d.layer())) {
                 d.recall();
                 send(player, form, TangPayload.RECALL, d.layer(), d.position(), Vec3.ZERO, d.getId(), 0);

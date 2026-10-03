@@ -66,6 +66,8 @@ public class TangDagger extends Projectile {
     Vec3 starOffset = Vec3.ZERO;
     Vec3 back = new Vec3(0.0D, 0.0D, 1.0D);
     long strikeAt = Long.MAX_VALUE;
+    /** Тёмный Взрыв: игровое время, когда второй кинжал ударит в этот (удвоение рывка). */
+    long boostAt = Long.MAX_VALUE;
     double damage;
     int life = 60;
     boolean air;
@@ -243,7 +245,12 @@ public class TangDagger extends Projectile {
                 Vec3 side = carpDir.cross(new Vec3(0.0D, 1.0D, 0.0D));
                 side = side.lengthSqr() < 1.0E-6D ? new Vec3(1.0D, 0.0D, 0.0D) : side.normalize();
                 Vec3 wave = side.scale(TangRules.carpAmplitude(modeAge) * Math.sin(TangRules.carpPhase(modeAge)));
-                if (modeAge >= TangRules.CARP_TICKS || modeAge >= TangRules.CARP_MIN && aim.distanceTo(base) < TangRules.BURST_DIST) {
+                boolean boosted = level().getGameTime() >= boostAt;
+                if (boosted) {
+                    setFlag(2, true);
+                    boostAt = Long.MAX_VALUE;
+                }
+                if (boosted || modeAge >= TangRules.CARP_TICKS || modeAge >= TangRules.CARP_MIN && aim.distanceTo(base) < TangRules.BURST_DIST) {
                     setMode(BURST);
                     aim = t != null ? throat(t) : aim;
                     Vec3 dir = aim.subtract(from);

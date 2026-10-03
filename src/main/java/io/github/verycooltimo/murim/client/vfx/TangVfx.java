@@ -211,7 +211,7 @@ public final class TangVfx {
         if (c.layer >= 3) {
             // Холодная синяя аура в стойке (рефы s01, d4-01: синие языки у плеч и головы).
             // У Пяти Громов аура — только у руки по смыслу: короче и слабее, чтобы не глушить выпуски (codex 03.10).
-            ClientAuraState.techniqueAura(c.entityId, form == TangRules.FIVE || form == TangRules.TWELVE ? 2 : 2 + Math.min(1, c.layer / 4), 0,
+            ClientAuraState.techniqueAura(c.entityId, form == TangRules.STARS ? 2 + Math.min(1, c.layer / 4) : 2, 0,
                     TangRules.windup(form) + (form == TangRules.FIVE ? 0 : 24));
         }
         Minecraft mc = Minecraft.getInstance();
@@ -236,11 +236,17 @@ public final class TangVfx {
             case TangPayload.EXPLODE -> explode(p, own, mc);
             case TangPayload.BURST -> {
                 sound(p.pos(), SoundEvents.TRIDENT_RIPTIDE_1.value(), 1.0F, 0.7F);
+                if (p.b() == 1) {
+                    // Удвоение: удар кинжала в кинжал — звон «до лопнувших перепонок» и белая звезда.
+                    sound(p.pos(), SoundEvents.ANVIL_LAND, 0.5F, 1.9F);
+                    FX.bursts.add(new Burst(p.pos(), clientTicks, 8, 1.1D, 5, RANDOM.nextLong(), false, false));
+                }
                 if (layer >= 6) {
                     // Кольца рвутся назад туннелем (s10).
-                    for (int i = 0; i < 5; i++) {
-                        FX.rings.add(new Ring(p.pos().subtract(p.dir().scale(0.6D * i)), p.dir(), clientTicks + i, 0.3D, 0.9D + 0.25D * i,
-                                9, 0.05D, i % 2 == 0 ? WHITE : PALE, 0.25D));
+                    // Туннель s10: 6 колец через 0,9 блока по ходу рывка, живут 4 тика.
+                    for (int i = 0; i < 6; i++) {
+                        FX.rings.add(new Ring(p.pos().add(p.dir().scale(0.9D * i)), p.dir(), clientTicks + i / 2, 0.25D, 0.7D + 0.12D * i,
+                                4, 0.045D, i % 2 == 0 ? WHITE : PALE, 0.3D));
                     }
                 }
                 if (layer >= 1) {
@@ -250,7 +256,7 @@ public final class TangVfx {
                     }
                 }
                 if (own) {
-                    SpeedLines.directional(0.0F, 0.35F, 4, SpeedLines.WHITE);
+                    SpeedLines.directional(0.0F, 0.18F, 3, SpeedLines.WHITE);
                 }
             }
             case TangPayload.STAR -> {
@@ -378,6 +384,14 @@ public final class TangVfx {
                 }
             }
             default -> {
+                if (p.b() == 2) {
+                    // Второй кинжал вдогонку: короткий хлёсткий выброс.
+                    sound(at, SoundEvents.TRIDENT_THROW.value(), 1.0F, 1.4F);
+                    if (layer >= 1) {
+                        wind(at, dir.scale(0.4D), 6, 0.05D);
+                    }
+                    return;
+                }
                 sound(at, SoundEvents.BREEZE_WIND_CHARGE_BURST.value(), 0.5F, 0.5F);
             }
         }
@@ -464,7 +478,8 @@ public final class TangVfx {
         double k = TangRules.density(p.layer()) * 0.6D + 0.4D;
         sound(at, SoundEvents.GENERIC_EXPLODE.value(), 1.0F, 1.2F);
         sound(at, SoundEvents.PLAYER_ATTACK_STRONG, 1.0F, 0.6F);
-        FX.bursts.add(new Burst(at, clientTicks, 12, 3.2D * k, 9, RANDOM.nextLong(), false, true));
+        // 6–8 белых клиньев, вытянутых вперёд по ходу рывка (codex 03.10).
+        FX.bursts.add(new Burst(at.add(p.dir().scale(0.01D)), clientTicks, 7, 3.0D * k, 9, RANDOM.nextLong() ^ 0x5DEECE66DL, false, true));
         FX.rings.add(new Ring(at, camAxis(at), clientTicks, 0.4D, 3.0D * k, 10, 0.1D, WHITE, 0.3D));
         FX.rings.add(new Ring(at, camAxis(at), clientTicks + 2, 0.4D, 4.2D * k, 12, 0.05D, GREY, 0.45D));
         for (int i = 0; i < 26; i++) {
@@ -476,7 +491,7 @@ public final class TangVfx {
             m.colour = i % 3 == 0 ? CYAN : i % 3 == 1 ? WHITE : GREY;
             FX.motes.add(m);
         }
-        smoke(at, 1.1D * k, 2);
+        smoke(at, 1.1D * k, 3);
         BlockPos below = BlockPos.containing(at.add(0.0D, -1.5D, 0.0D));
         if (mc.level != null && !mc.level.getBlockState(below).isAir()) {
             FX.scars.add(new Scar(new Vec3(at.x, below.getY() + 1.02D, at.z), clientTicks, RANDOM.nextLong()));
@@ -722,12 +737,17 @@ public final class TangVfx {
                         break;
                     }
                 }
-                if (ground != null && d.tickCount % 2 == 0) {
-                    Vec3 c = new Vec3(d.getX(), ground.getY() + 1.1D, d.getZ());
-                    double a = RANDOM.nextDouble() * Math.PI * 2.0D;
-                    Mote m = new Mote(c.add(Math.cos(a) * 1.1D, 0.0D, Math.sin(a) * 1.1D), Vec3.ZERO, 18, Mote.DUST_SWIRL, 0.18D, 1);
-                    m.centre = c;
-                    FX.motes.add(m);
+                if (ground != null) {
+                    // Приземный вихрь: отстаёт от кинжала на полблока, к рывку гуще.
+                    Vec3 back = d.getDeltaMovement().lengthSqr() > 1.0E-6D ? d.getDeltaMovement().normalize().scale(-0.5D) : Vec3.ZERO;
+                    Vec3 c = new Vec3(d.getX() + back.x, ground.getY() + 1.05D, d.getZ() + back.z);
+                    int n = d.tickCount > TangRules.CARP_TICKS - 6 ? 3 : 2;
+                    for (int i = 0; i < n; i++) {
+                        double a = RANDOM.nextDouble() * Math.PI * 2.0D;
+                        Mote m = new Mote(c.add(Math.cos(a) * 0.5D, 0.0D, Math.sin(a) * 0.5D), Vec3.ZERO, 10, Mote.DUST_SWIRL, 0.14D, 1);
+                        m.centre = c;
+                        FX.motes.add(m);
+                    }
                 }
             }
             if (mode == TangDagger.BURST && layer >= 2 && d.tickCount % 1 == 0) {
@@ -1004,11 +1024,12 @@ public final class TangVfx {
             Vec3 f = TangDaggerRenderer.forward(d, partial);
             float age = d.tickCount + partial;
             double grow = Mth.clamp(age / (double) TangRules.CARP_TICKS, 0.15D, 1.0D);
-            int rings = d.layer() >= 7 ? 4 : 3;
+            // Конус s09 (codex 03.10): 4–5 колец на 1,6 блока, радиус от 0,12 у острия до 0,6 сзади.
+            int rings = d.layer() >= 7 ? 5 : 4;
             for (int i = 0; i < rings; i++) {
-                Vec3 c = at.subtract(f.scale(0.15D + 0.28D * i));
-                double r = (0.18D + 0.16D * i) * (0.6D + 0.8D * grow);
-                ring(v, pose, camera, c, f, r, 0.02D + 0.008D * i, age * (0.5D - 0.1D * i) + i * 1.7D, 0.3D, 0.8F - 0.15F * i,
+                Vec3 c = at.subtract(f.scale(0.1D + 0.38D * i));
+                double r = (0.12D + 0.12D * i) * (0.7D + 0.5D * grow);
+                ring(v, pose, camera, c, f, r, 0.022D + 0.006D * i, age * (0.28D - 0.03D * i) + i * 1.7D, 0.42D, 0.85F - 0.12F * i,
                         i == 0 ? WHITE : PALE);
             }
         }
@@ -1035,8 +1056,8 @@ public final class TangVfx {
             for (int i = 0; i <= n; i++) {
                 double u = i / (double) n;
                 p[i] = from.lerp(at, u).add(0.0D, -sag * Math.sin(Math.PI * u) + 0.03D * Math.sin(u * 20.0D + d.tickCount * 0.5D), 0.0D);
-                w[i] = 0.012D;
-                a[i] = 0.3F * near(p[i], camera);
+                w[i] = hang ? 0.025D : 0.012D;
+                a[i] = (hang ? 0.45F : 0.3F) * near(p[i], camera);
             }
             PlumVfx.stripVar(v, pose, camera, p, w, a, hang ? STEEL : PALE);
         }

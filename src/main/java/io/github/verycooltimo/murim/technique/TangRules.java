@@ -238,7 +238,7 @@ public final class TangRules {
     public static final double SPLASH_RADIUS = 2.8D;
     /** Отзыв пронзает всех на линии, но слабее прямого попадания со взрывом (2,4H). */
     public static final double RECALL_DMG = 1.4D;
-    public static final double RECALL_SPEED = 1.8D;
+    public static final double RECALL_SPEED = 2.6D;
     public static final int HANG_TICKS = 60;
     public static final double BURST_RANGE = 24.0D;
 
@@ -257,10 +257,15 @@ public final class TangRules {
         return layer >= 5;
     }
 
-    /** Второй кинжал бьёт в первый на рывке (гл. 196) — слой 8. */
+    /**
+     * Второй кинжал в первый (гл. 196, попытка 10: «импульс удвоился»): повторное R в медленной фазе
+     * бросает второй кинжал вдогонку, он бьёт в первый — рывок сразу и вдвое быстрее. С 6-го слоя.
+     */
     public static boolean doubled(int layer) {
-        return layer >= 8;
+        return layer >= 6;
     }
+
+    public static final double SECOND_SPEED = 3.0D;
 
     private TangRules() {
     }
