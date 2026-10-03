@@ -37,6 +37,19 @@ public final class MasteryRules {
         return profile != null && profile.isAwakened();
     }
 
+    /**
+     * С какого ранга учится техника этого уровня. Сокровенные (24 Движения) — только с Пика
+     * (автор 03.10, этап M2): ниже него книга читается, но не учит. Остальные — с любого ранга.
+     */
+    public static int rankNeed(TechniqueTier tier) {
+        return tier == TechniqueTier.SECRET ? io.github.verycooltimo.murim.cultivation.Realm.PEAK : 0;
+    }
+
+    /** Хватает ли ранга, чтобы изучать технику этого уровня. */
+    public static boolean rankAllows(io.github.verycooltimo.murim.profile.DantianProfile profile, TechniqueTier tier) {
+        return profile != null && profile.rank() >= rankNeed(tier);
+    }
+
     /** Доля пережитого, сразу идущая в освоение: «через бой тоже качать». */
     static final double DIRECT_SHARE = 0.5D;
 

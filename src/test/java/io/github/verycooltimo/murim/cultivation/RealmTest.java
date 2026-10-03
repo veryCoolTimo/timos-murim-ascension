@@ -30,12 +30,59 @@ class RealmTest {
     }
 
     @Test
-    @DisplayName("Без техники второго слоя в третий ранг не прорваться")
+    @DisplayName("Прорыв 1 — освоить любую технику: прочитанная (слой 0) не считается, освоенная (слой 1) — да")
     void needsTechnique() {
-        assertEquals(Realm.Blocker.NO_TECHNIQUE, Realm.check(awakened(120.0D, 0), Map.of(SWEEP, 1)));
-        assertEquals(Realm.Blocker.NONE, Realm.check(awakened(120.0D, 0), Map.of(SWEEP, 2)));
-        // Во второй ранг нужен уже третий слой.
+        assertEquals(Realm.Blocker.NO_TECHNIQUE, Realm.check(awakened(120.0D, 0), Map.of()));
+        assertEquals(Realm.Blocker.NO_TECHNIQUE, Realm.check(awakened(120.0D, 0), Map.of(SWEEP, 0)));
+        assertEquals(Realm.Blocker.NONE, Realm.check(awakened(120.0D, 0), Map.of(SWEEP, 1)));
+        // Во второй ранг (пока вместо босса) нужен уже третий слой.
         assertEquals(Realm.Blocker.NO_TECHNIQUE, Realm.check(awakened(120.0D, 1), Map.of(SWEEP, 2)));
+        assertEquals(Realm.Blocker.NONE, Realm.check(awakened(120.0D, 1), Map.of(SWEEP, 3)));
+    }
+
+    @Test
+    @DisplayName("Условия прорывов: 1 — освоить любую, 2 — босс (M4), 3 и Пик — слой формы")
+    void conditions() {
+        assertEquals(Realm.Condition.MASTER_ANY, Realm.condition(Realm.THIRD));
+        assertEquals(Realm.Condition.DEFEAT_BOSS, Realm.condition(Realm.SECOND));
+        assertEquals(Realm.Condition.FORM_LAYER, Realm.condition(Realm.FIRST));
+        assertEquals(Realm.Condition.FORM_LAYER, Realm.condition(Realm.PEAK));
+        assertEquals(1, Realm.layerNeed(Realm.THIRD));
+        assertEquals(3, Realm.layerNeed(Realm.SECOND));
+        assertEquals(4, Realm.layerNeed(Realm.FIRST));
+        assertEquals(5, Realm.layerNeed(Realm.PEAK));
+    }
+
+    @Test
+    @DisplayName("Множитель силы техник — таблица автора 03.10")
+    void powerTable() {
+        double[] expected = {0.8D, 1.0D, 1.25D, 1.5D, 1.75D, 2.2D, 2.5D, 2.8D, 3.1D, 3.4D, 3.7D};
+        for (int rank = 0; rank <= Realm.TOP; rank++) {
+            assertEquals(expected[rank], Realm.power(rank), 1.0E-9, "ранг " + rank);
+        }
+        // Подступени Пика: начальная ×1,75, утвердившаяся ×1,85, вершина ×1,95.
+        assertEquals(1.85D, Realm.power(Realm.PEAK, 1), 1.0E-9);
+        assertEquals(1.95D, Realm.power(Realm.PEAK, 2), 1.0E-9);
+        assertEquals(1.95D, Realm.power(Realm.PEAK, 9), 1.0E-9);
+        // Ниже Пика подступеней нет.
+        assertEquals(1.5D, Realm.power(Realm.FIRST, 2), 1.0E-9);
+        // За пределами лестницы — края.
+        assertEquals(0.8D, Realm.power(-3), 1.0E-9);
+        assertEquals(3.7D, Realm.power(99), 1.0E-9);
+        // Растёт строго и остаётся маленьким: вершина лестницы меньше ×4.
+        for (int rank = 1; rank <= Realm.TOP; rank++) {
+            assertTrue(Realm.power(rank) > Realm.power(rank - 1));
+        }
+        assertTrue(Realm.power(Realm.TOP, 2) < 4.0D);
+    }
+
+    @Test
+    @DisplayName("Скорость: +3 % за ранг, Пик — +12 %")
+    void speed() {
+        assertEquals(0.0D, Realm.bonusSpeed(Realm.NONE), 1.0E-9);
+        assertEquals(0.09D, Realm.bonusSpeed(Realm.FIRST), 1.0E-9);
+        assertEquals(0.12D, Realm.bonusSpeed(Realm.PEAK), 1.0E-9);
+        assertEquals(0.30D, Realm.bonusSpeed(99), 1.0E-9);
     }
 
     @Test
@@ -65,10 +112,11 @@ class RealmTest {
     }
 
     @Test
-    @DisplayName("Здоровье: по два сердца за ранг, не выше последнего ранга")
+    @DisplayName("Здоровье: по два сердца за ранг, не выше вершины лестницы")
     void health() {
         assertEquals(0.0D, Realm.bonusHealth(0), 1.0E-9);
         assertEquals(4.0D, Realm.bonusHealth(Realm.THIRD), 1.0E-9);
-        assertEquals(16.0D, Realm.bonusHealth(99), 1.0E-9);
+        assertEquals(16.0D, Realm.bonusHealth(Realm.PEAK), 1.0E-9);
+        assertEquals(40.0D, Realm.bonusHealth(99), 1.0E-9);
     }
 }

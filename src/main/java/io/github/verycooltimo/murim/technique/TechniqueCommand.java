@@ -147,10 +147,10 @@ public final class TechniqueCommand {
             return 1;
         }));
 
-        // Выставить ранг без прорыва: проверять, что даёт ранг, не проходя сцену.
+        // Выставить ранг без прорыва: проверять, что даёт ранг, не проходя сцену. Выше Пика (5–10) — данные на будущее.
         root.then(Commands.literal("rank")
                 .then(Commands.argument("rank", com.mojang.brigadier.arguments.IntegerArgumentType.integer(
-                        0, io.github.verycooltimo.murim.cultivation.Realm.MAX))
+                        0, io.github.verycooltimo.murim.cultivation.Realm.TOP))
                         .executes(context -> {
                             ServerPlayer player = context.getSource().getPlayerOrException();
                             int rank = com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(context, "rank");
