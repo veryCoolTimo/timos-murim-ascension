@@ -285,39 +285,11 @@ public final class ExplosionVfx {
     private static void blast(Cast c, Minecraft mc) {
         Random r = c.random;
         burst(c);
-        // Лучи: длинные и тонкие, перевес к цели, но и поперёк удара — взрыв распирает пространство.
-        // codex 03.10: игл на 70 % меньше и вдвое короче — иначе залп снарядов, а не взрыв.
-        int rays = 2 + c.n(3);
+        // Автор 03.10: «убери этот типо ветер от взрыва линиями» — тонких лучей, ветряных лент
+        // и следов-осколков у лепестков больше нет; остаются ядро, розовые массы и лепестки.
         Vec3 up = c.side.cross(c.axis).normalize();
-        for (int i = 0; i < rays; i++) {
-            boolean fwd = i % 4 != 0;
-            Vec3 d;
-            if (fwd) {
-                double a = r.nextDouble() * Math.PI * 2.0D;
-                double spread = 0.25D + 0.7D * r.nextDouble();
-                d = c.axis.add(c.side.scale(Math.cos(a) * spread)).add(up.scale(Math.sin(a) * spread * 0.8D)).normalize();
-            } else {
-                double a = r.nextDouble() * Math.PI * 2.0D;
-                d = c.side.scale(Math.cos(a)).add(up.scale(Math.sin(a))).add(c.axis.scale((r.nextDouble() - 0.6D) * 0.6D)).normalize();
-            }
-            double len = (fwd ? 2.0D + 2.5D * r.nextDouble() : 1.0D + 1.2D * r.nextDouble()) * (0.55D + 0.45D * c.density);
-            c.rays.add(new Ray(c.strike.add(d.scale(0.3D)), d, len, (fwd ? 0.14D : 0.09D) * (0.7D + 0.6D * r.nextDouble()), clientTicks, i % 3 == 0));
-        }
-        // Розовые массы (ref3): широкие полупрозрачные клинья от ядра к цели.
-        for (int i = 0; i < 5 + c.n(2); i++) {
-            double ang = r.nextDouble() * Math.PI * 2.0D;
-            double spread = 0.15D + 0.45D * r.nextDouble();
-            Vec3 d = c.axis.add(c.side.scale(Math.cos(ang) * spread)).add(up.scale(Math.sin(ang) * spread * 0.7D)).normalize();
-            c.rays.add(new Ray(c.strike, d, (3.5D + 3.0D * r.nextDouble()) * (0.6D + 0.4D * c.density),
-                    1.0D + 0.8D * r.nextDouble(), clientTicks, false));
-        }
-        // Ударная волна: кольцо пыли под точкой удара и ветер наружу.
+        // Ударная волна: кольцо пыли под точкой удара.
         groundDust(c, c.strike.subtract(0.0D, ExplosionRules.STRIKE_Y, 0.0D), 10 + c.n(14), 0.32D);
-        for (int i = 0; i < 6 + c.n(10); i++) {
-            double a = Math.PI * 2.0D * i / (6 + c.n(10)) + r.nextDouble() * 0.3D;
-            Vec3 out = c.side.scale(Math.cos(a)).add(c.normal.scale(Math.sin(a) * 0.6D + 0.4D)).normalize();
-            wind(c, c.strike.add(out.scale(0.6D)), out.scale(0.7D + 0.3D * r.nextDouble()).add(0.0D, 0.04D, 0.0D), 12 + r.nextInt(6), 0.16D);
-        }
         if (c.layer >= 3) {
             ClientAuraState.techniqueAura(c.entityId, 2, 1, 24);
         }
@@ -338,19 +310,11 @@ public final class ExplosionVfx {
 
     /**
      * Взрыв из точки удара: лепестки трёх полос скорости (ближний плотный слой и дальние
-     * одиночки) и немного световых штрихов — всё веером с перевесом к цели.
+     * одиночки) — веером с перевесом к цели. Световых штрихов нет (автор 03.10).
      */
     private static void burst(Cast c) {
         Random r = c.random;
         double speedK = 0.8D + 0.25D * c.density;
-        for (int i = 0; i < 4 + c.n(12); i++) {
-            Vec3 p = c.strike.add(r.nextGaussian() * 0.35D, r.nextGaussian() * 0.3D, r.nextGaussian() * 0.35D);
-            Vec3 v = fan(c, p, r).scale((0.8D + 0.9D * r.nextDouble()) * speedK);
-            Mote m = new Mote(p, v, 9 + r.nextInt(6), Mote.SHARD, 0, 0.0F, 0.07D * (0.7D + 0.6D * r.nextDouble()), 5);
-            m.drag = 0.84D;
-            m.gravity = 0.01D;
-            c.motes.add(m);
-        }
         if (!ExplosionRules.petals(c.layer)) {
             return;
         }
@@ -369,12 +333,6 @@ public final class ExplosionVfx {
             m.turbulence = 0.004D;
             m.turbulenceGrow = 0.0007D;
             m.tone = r.nextInt(6) == 0 ? 0 : r.nextInt(4) == 0 ? 2 : 1;
-            // Быстрые лепестки — с коротким следом, он укорачивается при торможении.
-            if (band < 0.35D && r.nextDouble() < 0.15D) {
-                Mote streak = new Mote(p, m.vel, 7 + r.nextInt(4), Mote.SHARD, 1, 0.0F, 0.035D, 4);
-                streak.drag = m.drag;
-                c.motes.add(streak);
-            }
             c.motes.add(m);
         }
     }
