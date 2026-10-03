@@ -47,7 +47,15 @@ public final class Styles {
     public static final Style WIND_GOD = new Style(id("wind_god"), List.of(
             id("wind_god_steps"), id("wind_god_shadow"), id("wind_god_death"), id("wind_god_lightning")), Optional.empty());
 
-    public static final List<Style> ALL = List.of(SEVEN_PLUM, TWENTY_FOUR_PLUM, DARK_FRAGRANCE, WIND_GOD);
+    /**
+     * Скрытое Оружие Клана Тан (docs/design/techniques/tang-daggers-spec.md): первая не-хуашаньская школа,
+     * метательные кинжалы без меча. Формы по очереди: Пять Молний → Семь Звёзд → Тёмный Взрыв → Двенадцать
+     * (автор 03.10: Двенадцать — финальная, самая сложная форма, обсуждается отдельно).
+     */
+    public static final Style TANG_DAGGERS = new Style(id("tang_daggers"), List.of(
+            id("tang_five_thunders"), id("tang_seven_stars"), id("tang_dark_burst"), id("tang_twelve_daggers")), Optional.empty());
+
+    public static final List<Style> ALL = List.of(SEVEN_PLUM, TWENTY_FOUR_PLUM, DARK_FRAGRANCE, WIND_GOD, TANG_DAGGERS);
 
     /** Форма бега стиля шагов — её включает автобег (спринт 0,5 с), 03.10. */
     public static Optional<ResourceLocation> footworkRun(Style s) {
@@ -65,7 +73,7 @@ public final class Styles {
      * изучать, и каждая сложнее прошлой»): Семь Цветков и 24 Движения. Шаги учатся целиком.
      */
     public static boolean sequential(Style s) {
-        return s == SEVEN_PLUM || s == TWENTY_FOUR_PLUM;
+        return s == SEVEN_PLUM || s == TWENTY_FOUR_PLUM || s == TANG_DAGGERS;
     }
 
     /** Слой предыдущей формы, нужный, чтобы изучить следующую. */

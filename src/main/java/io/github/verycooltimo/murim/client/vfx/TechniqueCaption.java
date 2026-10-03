@@ -38,6 +38,8 @@ public final class TechniqueCaption {
     private static int life;
     private static int ticks;
     private static boolean secret;
+    /** Масштаб надписи: 1 — обычный, меньше — сдержанная подпись (кинжалы Тан, автор 03.10: «текст слишком большой»). */
+    private static float size = 1.0F;
 
     /** Большая надпись на экране: мелкое имя техники в это время не рисуется, чтобы не налезать. */
     public static boolean active() {
@@ -45,11 +47,18 @@ public final class TechniqueCaption {
     }
 
     public static void show(Component schoolName, Component formName, int lifeTicks) {
+        size = 1.0F;
         school = schoolName;
         form = formName;
         life = lifeTicks;
         born = ticks;
         secret = false;
+    }
+
+    /** Надпись уменьшенного размера ({@code scale} от обычной). */
+    public static void showScaled(Component schoolName, Component formName, int lifeTicks, float scale) {
+        show(schoolName, formName, lifeTicks);
+        size = scale;
     }
 
     /**
@@ -101,7 +110,7 @@ public final class TechniqueCaption {
         if (alpha <= 0.02F) {
             return;
         }
-        float slam = 1.0F + 0.5F * Math.max(0.0F, 1.0F - age / 3.0F);
+        float slam = (1.0F + 0.5F * Math.max(0.0F, 1.0F - age / 3.0F)) * size;
         Font font = mc.font;
         int w = graphics.guiWidth();
         int h = graphics.guiHeight();

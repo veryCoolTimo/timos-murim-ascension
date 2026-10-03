@@ -29,7 +29,8 @@ public sealed interface TechniqueBehavior
                 TechniqueBehavior.PlumScatter,
                 TechniqueBehavior.PlumDome,
                 TechniqueBehavior.PlumShower,
-                TechniqueBehavior.FallingPetal {
+                TechniqueBehavior.FallingPetal,
+                TechniqueBehavior.TangDaggers {
 
     ResourceLocation MELEE_ARC = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "melee_arc");
     ResourceLocation PROJECTILE_FAN = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "projectile_fan");
@@ -48,6 +49,7 @@ public sealed interface TechniqueBehavior
     ResourceLocation PLUM_DOME = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "plum_dome");
     ResourceLocation FALLING_PETAL = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "falling_petal");
     ResourceLocation PLUM_SHOWER = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "plum_shower");
+    ResourceLocation TANG_DAGGERS = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "tang_daggers");
 
     ResourceLocation type();
 
@@ -386,6 +388,21 @@ public sealed interface TechniqueBehavior
         }
     }
 
+    /** Скрытое Оружие Клана Тан: метательные кинжалы, форма — по id техники, см. TangRules. */
+    record TangDaggers() implements TechniqueBehavior {
+        public static final MapCodec<TangDaggers> CODEC = MapCodec.unit(TangDaggers::new);
+
+        @Override
+        public float damage() {
+            return 0.0F;
+        }
+
+        @Override
+        public ResourceLocation type() {
+            return TANG_DAGGERS;
+        }
+    }
+
     /** Меч Падающего Цветка: натиск из пяти ударов вокруг цели, см. FallingPetalRules. */
     record FallingPetal() implements TechniqueBehavior {
         public static final MapCodec<FallingPetal> CODEC = MapCodec.unit(FallingPetal::new);
@@ -434,7 +451,8 @@ public sealed interface TechniqueBehavior
             Map.entry(PLUM_SCATTER, PlumScatter.CODEC),
             Map.entry(PLUM_DOME, PlumDome.CODEC),
             Map.entry(PLUM_SHOWER, PlumShower.CODEC),
-            Map.entry(FALLING_PETAL, FallingPetal.CODEC));
+            Map.entry(FALLING_PETAL, FallingPetal.CODEC),
+            Map.entry(TANG_DAGGERS, TangDaggers.CODEC));
 
     Codec<TechniqueBehavior> CODEC = ResourceLocation.CODEC
             .dispatch("type", TechniqueBehavior::type, type -> {

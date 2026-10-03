@@ -79,6 +79,8 @@ public final class DevCaptureHandler {
 
     /** Сколько кадров снять. 100 кадров по тику перекрывают технику в 92 тика. */
     private static final int FRAME_COUNT = envInt("MURIM_CAPTURE_FRAMES", 100);
+    private static int secondPressTicks;
+    private static net.minecraft.resources.ResourceLocation secondPressId;
 
     private static int envInt(String name, int fallback) {
         String raw = System.getenv(name);
@@ -276,10 +278,16 @@ public final class DevCaptureHandler {
                 }
             } else {
                 PacketDistributor.sendToServer(new StartTechniquePayload(subjectId));
+                // MURIM_CAPTURE_SECOND=<тики> — повторное R той же формы (кинжалы Тан: удар звёзд, отзыв).
+                secondPressTicks = envInt("MURIM_CAPTURE_SECOND", 0);
+                secondPressId = subjectId;
             }
             startCapture();
         }
 
+        if (secondPressTicks > 0 && --secondPressTicks == 0 && secondPressId != null) {
+            PacketDistributor.sendToServer(new StartTechniquePayload(secondPressId));
+        }
         if (manualTicks > 0) {
             int t = 72 - manualTicks--;
             if (t == 4 && minecraft.player != null && minecraft.gameMode != null) {
