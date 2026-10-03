@@ -41,8 +41,8 @@ public final class RainRules {
     public static final double SIDE = 0.7D;
     /** Метка замаха: проверка, что мастер прошёл у цели. */
     public static final int MARK = RELEASE + DASH_TICKS - 1;
-    public static final int TRAIL_HOLD = 76;
-    public static final int TRAIL_GONE = 87;
+    public static final int TRAIL_HOLD = 72;
+    public static final int TRAIL_GONE = 81;
     /** Иллюзия раскрывается. */
     public static final int BLOOM = 84;
     public static final int BLOOM_FULL = 104;
@@ -53,7 +53,7 @@ public final class RainRules {
     /** Надпись — в паузе перед ливнем. */
     public static final int CAPTION = 118;
     /** Три волны ливня: выпуск и касание через {@link #FALL} тика. */
-    public static final int[] COHORTS = {128, 132, 136};
+    public static final int[] COHORTS = {128, 133, 138};
     public static final int FALL = 4;
     public static final int AFTER = 144;
     public static final int END = 200;

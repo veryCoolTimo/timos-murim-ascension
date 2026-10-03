@@ -303,6 +303,12 @@ public final class RainVfx {
             Minecraft mc = Minecraft.getInstance();
             return mc.player != null && mc.player.getId() == entityId;
         }
+
+        /** Камера — глаза самого мастера (не просто вид от первого лица чужой камеры). */
+        boolean eyes() {
+            Minecraft mc = Minecraft.getInstance();
+            return own() && mc.options.getCameraType().isFirstPerson() && mc.getCameraEntity() == mc.player;
+        }
     }
 
     // ------------------------------------------------------------------ события
@@ -317,7 +323,7 @@ public final class RainVfx {
         CASTS.add(c);
         if (c.layer >= 3) {
             // Стойка и уколы — холодная синяя аура; розовая — с замаха.
-            ClientAuraState.techniqueAura(c.entityId, 2, 0, RainRules.RELEASE);
+            ClientAuraState.techniqueAura(c.entityId, 2, 0, RainRules.FLURRY + 8);
         }
     }
 
@@ -382,7 +388,7 @@ public final class RainVfx {
     /** Замах (r04): белая зубчатая вспышка у рук, розовая аура, дым из-под ног, линии скорости. */
     private static void release(Cast c, Minecraft mc) {
         if (c.layer >= 3) {
-            ClientAuraState.techniqueAura(c.entityId, 2 + Math.min(3, c.layer / 2), 1, RainRules.AFTER - RainRules.RELEASE);
+            ClientAuraState.techniqueAura(c.entityId, 2 + Math.min(2, c.layer / 3), 1, RainRules.BLOOM - 6 - RainRules.RELEASE);
         }
         dust(c, c.origin, c.n(10) + 3, 0.18D);
         if (c.own()) {
@@ -443,20 +449,31 @@ public final class RainVfx {
      * Раскрывается из бутона (доли сложены к оси) и дышит.
      */
     private static void bloom(Cast c) {
-        int perLobe = Math.max(16, (int) Math.ceil(80 * Math.min(1.25D, c.density + 0.15D)));
+        int perLobe = Math.max(16, (int) Math.ceil(110 * Math.min(1.25D, c.density + 0.15D)));
         int total = 0;
         for (int k = 0; k < 5; k++) {
             for (int i = 0; i < perLobe; i++) {
                 // Плотнее к краю доли: край читается, середина светится сквозь.
-                double sPos = 0.12D + 0.88D * Math.sqrt(c.random.nextDouble());
+                // Половина — у кромки (край читается), половина — по всей доле (заполненная середина).
+                double sPos = i % 3 == 0 ? 0.12D + 0.88D * Math.pow(c.random.nextDouble(), 0.3D) : 0.08D + 0.9D * Math.sqrt(c.random.nextDouble());
                 double l = (c.random.nextDouble() * 2.0D - 1.0D);
-                l = Math.signum(l) * Math.pow(Math.abs(l), 0.6D);
+                l = i % 3 == 0 ? Math.signum(l) * Math.pow(Math.abs(l), 0.6D) : l;
                 int tone = c.random.nextDouble() < 0.12D ? 2 : sPos < 0.45D && c.random.nextBoolean() ? 0 : 1;
+                if (i % 3 == 2) {
+                    // Третий слой — светлые лепестки в глубине чаши: доля светится изнутри.
+                    tone = 3;
+                }
                 c.sky.add(new SkyPetal(k, sPos, l, c.random.nextDouble() * Math.PI * 2.0D, 0.09D + 0.13D * c.random.nextDouble(),
-                        c.random.nextInt(4), (float) ((c.random.nextDouble() - 0.5D) * 0.6D), tone, c.random.nextInt(3), -1,
+                        c.random.nextInt(4), (float) ((c.random.nextDouble() - 0.5D) * 0.6D), tone, wave(c), -1,
                         c.random.nextDouble() * 10.0D + sPos * 6.0D, 0.0D, 0.0D));
                 total++;
             }
+        }
+        // Венчик у белого сердца: острые светлые лепестки внахлёст вокруг ядра.
+        for (int i = 0; i < Math.max(8, c.n(36)); i++) {
+            c.sky.add(new SkyPetal(i % 5, 0.02D + 0.12D * c.random.nextDouble(), c.random.nextDouble() * 2.0D - 1.0D,
+                    c.random.nextDouble() * Math.PI * 2.0D, 0.14D + 0.08D * c.random.nextDouble(), c.random.nextInt(4),
+                    (float) ((c.random.nextDouble() - 0.5D) * 0.5D), 0, wave(c), -1, c.random.nextDouble() * 4.0D, 0.0D, 0.0D));
         }
         // Сердцевина: глоу на своих мелких орбитах.
         for (int i = 0; i < c.n(48); i++) {
@@ -470,8 +487,8 @@ public final class RainVfx {
     /** Наклон плоскости цветка: лицом вниз к цели и на 40° к мастеру — виден со спины цели. */
     private static Vec3[] flowerBasis(Cast c, double t) {
         double tilt = Math.toRadians(40.0D);
-        Vec3 n = new Vec3(0.0D, -Math.cos(tilt), 0.0D).add(c.dir.scale(Math.sin(tilt))).normalize();
-        Vec3 e1 = c.side;
+        Vec3 n = new Vec3(0.0D, -Math.cos(tilt), 0.0D).add(c.dir.scale(Math.sin(tilt) * 0.8D)).add(c.side.scale(Math.sin(tilt) * 0.65D)).normalize();
+        Vec3 e1 = n.cross(new Vec3(0.0D, 1.0D, 0.0D)).normalize();
         Vec3 e2 = n.cross(e1).normalize();
         // Медленное вращение всего цветка: 0,35°/тик.
         double r = Math.toRadians(0.35D * (t - RainRules.BLOOM));
@@ -495,7 +512,7 @@ public final class RainVfx {
         Vec3[] f = flowerBasis(c, t);
         double op = open(t);
         double breath = 1.0D + 0.04D * Math.sin(t * Math.PI * 2.0D / 28.0D + k * 1.3D);
-        double rMax = 4.5D * c.scale * LOBE_LEN[k] * breath;
+        double rMax = 5.0D * c.scale * LOBE_LEN[k] * breath;
         double rc = 0.9D * c.scale;
         double ang = Math.toRadians(LOBE_ANGLE[k] + 3.0D * Math.sin(t * 0.07D + k * 2.0D));
         Vec3 axis = f[1].scale(Math.cos(ang)).add(f[2].scale(Math.sin(ang)));
@@ -517,16 +534,16 @@ public final class RainVfx {
         if (!RainRules.petals(c.layer)) {
             return;
         }
-        int[] counts = {60, 40, 26};
-        int streams = c.layer >= 7 ? 3 : c.layer >= 5 ? 2 : 1;
+        int[] counts = {64, 46, 0};
+        int streams = c.layer >= 5 ? 2 : 1;
         for (int k = 0; k < streams; k++) {
             int n = Math.max(8, c.n(counts[k]));
             for (int i = 0; i < n; i++) {
                 int tone = c.random.nextDouble() < 0.12D ? 2 : c.random.nextDouble() < 0.35D ? 0 : 1;
                 // Первые выходят раньше: нить вытягивается из ядра, голова идёт к цели.
                 c.sky.add(new SkyPetal(-1, 0.0D, 0.0D, 0.0D, 0.1D + 0.12D * c.random.nextDouble(), c.random.nextInt(4),
-                        (float) ((c.random.nextDouble() - 0.5D) * 0.7D), tone, c.random.nextInt(3), k,
-                        k * 2.0D + 14.0D * i / (double) n, (c.random.nextDouble() - 0.5D) * (0.35D + 0.1D * k),
+                        (float) ((c.random.nextDouble() - 0.5D) * 0.7D), tone, wave(c), k,
+                        k * 3.0D + 11.0D * i / (double) n, (c.random.nextDouble() - 0.5D) * 0.4D,
                         0.055D + 0.01D * c.random.nextDouble()));
             }
         }
@@ -536,16 +553,16 @@ public final class RainVfx {
     private static void hit(Cast c, Vec3 at, int k, Minecraft mc) {
         Vec3 ground = new Vec3(at.x, c.target != null ? c.target.y : at.y - 1.0D, at.z);
         boolean last = k == 2;
-        int cross = last ? 24 : 8;
+        int cross = last ? 28 : 8;
         for (int i = 0; i < cross; i++) {
             Vec3 d = new Vec3(c.random.nextGaussian(), c.random.nextGaussian() * 0.7D + (last ? 0.6D : 0.3D), c.random.nextGaussian()).normalize();
-            double r = (last ? 0.9D : 0.5D) * (0.6D + 0.6D * c.random.nextDouble()) * (0.7D + 0.3D * c.scale);
+            double r = (last ? 2.6D : 0.5D) * (0.5D + 0.6D * c.random.nextDouble()) * (0.7D + 0.3D * c.scale);
             c.cores.add(new Vec3[] {at.subtract(d.scale(r)), at, at.add(d.scale(r)), new Vec3(clientTicks, last ? 1 : 0, 0)});
         }
         int shards = last ? c.n(72) : c.n(20);
         for (int i = 0; i < shards; i++) {
             double a = c.random.nextDouble() * Math.PI * 2.0D;
-            double el = c.random.nextDouble() * (last ? 0.9D : 0.6D);
+            double el = c.random.nextDouble() * 0.25D;
             Vec3 v = new Vec3(Math.cos(a) * Math.cos(el), Math.sin(el), Math.sin(a) * Math.cos(el))
                     .scale((0.35D + 0.4D * c.random.nextDouble()) * (last ? 1.0D : 0.7D));
             Mote m = new Mote(ground.add(0.0D, 0.3D, 0.0D), v, 10 + c.random.nextInt(5), Mote.SHARD, 0, 0.0F,
@@ -555,6 +572,20 @@ public final class RainVfx {
             c.motes.add(m);
         }
         c.rings.add(new Ring(ground.add(0.0D, 0.05D, 0.0D), clientTicks, (last ? 5.0D : 2.6D) * c.scale, last ? 14 : 10, last ? 0.32D : 0.18D));
+        if (last) {
+            // Рваные лучи удара по земле: 24–36 разной длины, несимметрично.
+            int cuts = Math.max(6, c.n(12));
+            double base = c.random.nextDouble() * Math.PI * 2.0D;
+            for (int i = 0; i < cuts; i++) {
+                // Три пучка по сторонам удара, а не ровная звезда.
+                double a = base + (i % 3) * 2.2D + (c.random.nextDouble() - 0.5D) * 0.6D;
+                double len = (1.5D + 1.5D * c.random.nextDouble()) * c.scale;
+                Vec3 d = new Vec3(Math.cos(a), 0.0D, Math.sin(a));
+                Vec3 g0 = ground.add(0.0D, 0.04D, 0.0D);
+                c.cores.add(new Vec3[] {g0.add(d.scale(0.3D)), g0.add(d.scale(len * 0.5D)), g0.add(d.scale(len)), new Vec3(clientTicks, 2, 0)});
+            }
+            c.rings.add(new Ring(ground.add(0.0D, 0.06D, 0.0D), clientTicks + 1, 6.0D * c.scale, 8, 0.12D));
+        }
         for (int i = 0; i < (last ? c.n(14) : c.n(5)); i++) {
             double a = c.random.nextDouble() * Math.PI * 2.0D;
             double r = RainRules.RAIN_RADIUS * Math.sqrt(c.random.nextDouble()) * c.scale;
@@ -577,7 +608,7 @@ public final class RainVfx {
             c.hitAt = at;
             if (c.own()) {
                 ImpactFrames.trigger(at);
-                SpeedLines.radial(0.5F, 0.5F, 1.0F, 8, SpeedLines.WHITE);
+                SpeedLines.radial(0.5F, 0.5F, 0.6F, 6, SpeedLines.WHITE);
             }
             if (mc.player != null && distance < 24.0F) {
                 float q = distance < 8.0F ? 1.0F : 1.0F - (distance - 8.0F) / 16.0F;
@@ -613,10 +644,13 @@ public final class RainVfx {
                 continue;
             }
             boolean hollow = i % 3 == 0;
-            double size = (0.6D + 0.8D * c.random.nextDouble()) * (hollow ? 1.25D : 1.0D) * c.scale;
-            c.puffs.add(new Puff(at.add(0.0D, size * 0.45D, 0.0D), out.scale(0.16D + 0.16D * c.random.nextDouble()),
-                    32 + c.random.nextInt(12), c.random.nextInt(16), size, true,
-                    hollow ? 0.56F : 0.84F + 0.12F * c.random.nextFloat(), (float) (c.random.nextDouble() * 6.28D)));
+            double size = (0.5D + 1.0D * Math.pow(c.random.nextDouble(), 1.5D)) * (hollow ? 1.25D : 1.0D) * c.scale;
+            Puff bank = new Puff(at.add(0.0D, size * 0.45D, 0.0D), out.scale(0.12D + 0.24D * c.random.nextDouble())
+                    .add(0.0D, 0.01D * c.random.nextDouble(), 0.0D),
+                    32 + c.random.nextInt(16), c.random.nextInt(16), size, true,
+                    hollow ? 0.56F : 0.84F + 0.12F * c.random.nextFloat(), (float) (c.random.nextDouble() * 6.28D));
+            bank.delay = 2 + (i % 4 == 0 ? 0 : c.random.nextInt(i % 4 * 4));
+            c.puffs.add(bank);
         }
         for (int i = 0; i < n / 2; i++) {
             double a = c.random.nextDouble() * Math.PI * 2.0D;
@@ -630,6 +664,12 @@ public final class RainVfx {
             rise.delay = 6 + c.random.nextInt(8);
             c.puffs.add(rise);
         }
+    }
+
+    /** Волна ливня лепестка: 20 % / 30 % / 50 % — морось, морось, обрушение. */
+    private static int wave(Cast c) {
+        double r = c.random.nextDouble();
+        return r < 0.2D ? 0 : r < 0.5D ? 1 : 2;
     }
 
     private static Mote petalMote(Cast c, Vec3 at, Vec3 vel, int life) {
@@ -748,8 +788,15 @@ public final class RainVfx {
         // Уколы в шесть сторон (r02): на каждом пике — копия руки, след клинка, ветер из кисти.
         while (c.nextPeak < RainRules.PEAKS.length && t >= RainRules.PEAKS[c.nextPeak]) {
             int k = c.nextPeak++;
-            Vec3 d = RainRules.thrust(yaw, k);
-            Vec3 hand = shoulder(e, yaw).add(d.scale(0.62D));
+            Vec3 d = RainRules.thrust(c.eyes() ? e.getYRot() : yaw, k);
+            if (c.eyes()) {
+                // От первого лица веер уже (половина угла): иначе все уколы уходят за край кадра.
+                double[] dd = RainRules.DIRS[RainRules.ORDER[k % RainRules.ORDER.length]];
+                d = Vec3.directionFromRotation((float) (-dd[1] * 0.55D), e.getYRot() + (float) (dd[0] * 0.5D));
+            }
+            // От первого лица след укола начинается дальше от глаз: иначе он целиком тает у камеры.
+            boolean fpOwn = c.eyes();
+            Vec3 hand = fpOwn ? e.getEyePosition().add(0.0D, -0.35D, 0.0D).add(d.scale(2.2D)) : shoulder(e, yaw).add(d.scale(0.62D));
             c.thrusts.add(new Thrust(hand, d, clientTicks));
             if (RainRules.afterimages(c.layer) && e instanceof AbstractClientPlayer player
                     && mc.getEntityRenderDispatcher().getRenderer(player) instanceof PlayerRenderer renderer) {
@@ -764,8 +811,9 @@ public final class RainVfx {
                     pose[j] = PartPose.offsetAndRotation(o.x, o.y, o.z, (float) Math.toRadians(-90.0D - dd[1]),
                             (float) Math.toRadians(dd[0]), 0.0F);
                 }
-                c.ghosts.add(new Ghost(player.position(), yaw, clientTicks, 8, pose, true, 0xF2F6FA, 0.6F));
-                c.ghosts.add(new Ghost(player.position(), yaw, clientTicks + 2, 8, pose, true, 0xC9DDEA, 0.3F));
+                c.ghosts.add(new Ghost(player.position(), yaw, clientTicks, 6, pose, true, 0xF2F6FA, 0.6F));
+                c.ghosts.add(new Ghost(player.position(), yaw, clientTicks + 1, 6, pose, true, 0xDCE8F2, 0.42F));
+                c.ghosts.add(new Ghost(player.position(), yaw, clientTicks + 2, 6, pose, true, 0xC9DDEA, 0.18F));
             }
             int winds = t >= RainRules.WIND_RISE ? 3 : 2;
             for (int i = 0; i < winds; i++) {
@@ -785,22 +833,29 @@ public final class RainVfx {
                     c.motes.add(m);
                 }
             }
-            if (c.own() && k % 6 == 0) {
+            if (c.eyes()) {
+                // От первого лица укол читается линиями скорости: точка схождения прыгает туда,
+                // куда колет клинок, — шесть сторон видны на экране (r02).
+                double[] dd = RainRules.DIRS[RainRules.ORDER[k % RainRules.ORDER.length]];
+                float cx = (float) (0.5D + 0.42D * Math.sin(Math.toRadians(dd[0])));
+                float cy = (float) (0.5D - 0.6D * Math.sin(Math.toRadians(dd[1])));
+                SpeedLines.radial(cx, cy, 0.3F + 0.05F * (k / 6), 3, SpeedLines.WHITE);
+            } else if (c.own() && k % 6 == 0) {
                 SpeedLines.radial(0.5F, 0.5F, 0.35F + 0.1F * (k / 6), 5, SpeedLines.WHITE);
             }
         }
         // Ветер поднимается от рук (r03): семь неравных восходящих лент, потом две широкие дуги.
-        int[] windAt = {32, 35, 37, 41, 44, 47, 50};
+        int[] windAt = {40, 44, 47, 50, 53};
         for (int i = 0; i < windAt.length; i++) {
             if (t == windAt[i] && i < Math.max(2, c.n(7))) {
                 double a0 = Math.toRadians(yaw + 90.0D) + i * 2.3D + c.random.nextDouble() * 0.6D;
-                c.winds.add(new WindArc(feet, clientTicks, a0, i % 3 == 1 ? -1 : 1, (1.6D + 2.4D * c.random.nextDouble()) * c.scale,
-                        1.1D, 1.1D + 2.3D * c.scale, (c.random.nextDouble() - 0.5D) * 0.35D, 18, 0.09D + 0.05D * c.scale, 0.45D + 0.2D * c.random.nextDouble()));
+                c.winds.add(new WindArc(feet, clientTicks, a0, i % 3 == 1 ? -1 : 1, (1.2D + 1.6D * c.random.nextDouble()) * c.scale,
+                        1.2D, 1.2D + 2.6D * c.scale, (c.random.nextDouble() - 0.5D) * 0.35D, 18, 0.09D + 0.05D * c.scale, 0.45D + 0.2D * c.random.nextDouble()));
             }
         }
-        if ((t == 46 || t == 52) && c.layer >= 2) {
-            double a0 = Math.toRadians(yaw + (t == 46 ? 40.0D : 200.0D));
-            c.winds.add(new WindArc(feet, clientTicks, a0, t == 46 ? 1 : -1, 3.2D * c.scale, 0.5D, 1.6D, 0.12D, 16, 0.28D * c.scale, 0.55D));
+        if ((t == 50 || t == 55) && c.layer >= 2) {
+            double a0 = Math.toRadians(yaw + (t == 50 ? 40.0D : 200.0D));
+            c.winds.add(new WindArc(feet, clientTicks, a0, t == 50 ? 1 : -1, 3.2D * c.scale, 0.5D, 1.6D, 0.12D, 16, 0.28D * c.scale, 0.55D));
         }
         if ((t == 36 || t == 44 || t == 52) && c.layer >= 1) {
             dust(c, feet, c.n(8) + 1, 0.16D);
@@ -830,7 +885,7 @@ public final class RainVfx {
             windRibbon(c, shoulder(e, yaw).add(f.scale(0.5D)), f.scale(0.18D).add(0.0D, -0.05D, 0.0D), 12, 0.06D);
         }
         c.ghosts.removeIf(g -> clientTicks - g.born() > g.life());
-        c.thrusts.removeIf(th -> clientTicks - th.born() > 9);
+        c.thrusts.removeIf(th -> clientTicks - th.born() > 4);
     }
 
     /** После замаха: проход, метка, иллюзия, ливень, последствия. */
@@ -843,7 +898,7 @@ public final class RainVfx {
             }
             dust(c, e.position(), 2, 0.2D);
             Vec3 back = c.dir.scale(-1.0D);
-            for (int i = 0; i < 2; i++) {
+            for (int i = 0; i < 1; i++) {
                 Vec3 at = e.position().add(c.side.scale((c.random.nextDouble() - 0.5D) * 1.6D)).add(0.0D, 0.2D + 0.9D * c.random.nextDouble(), 0.0D);
                 windRibbon(c, at, back.scale(0.35D).add(c.side.scale(c.random.nextGaussian() * 0.12D)), 14, 0.08D + 0.06D * c.scale);
             }
@@ -884,7 +939,7 @@ public final class RainVfx {
             streams(c);
         }
         // Медленные лепестки вокруг цели всё время иллюзии (r07).
-        if (RainRules.petals(c.layer) && t > RainRules.BLOOM && t < RainRules.COHORTS[0] && t % 2 == 0) {
+        if (RainRules.petals(c.layer) && t > RainRules.BLOOM && t < RainRules.COHORTS[0] && t % 5 == 0) {
             for (int i = 0; i < Math.max(1, c.n(2)); i++) {
                 double a = c.random.nextDouble() * Math.PI * 2.0D;
                 double r = 0.5D + 3.0D * c.random.nextDouble();
@@ -898,7 +953,7 @@ public final class RainVfx {
         }
         if (t == RainRules.CAPTION && c.own() && c.layer >= 3) {
             TechniqueCaption.show(Component.translatable("technique.murim.twenty_four_plum.school"),
-                    Component.translatable("technique.murim.twenty_four_plum.rainfall"), 26);
+                    Component.translatable("technique.murim.twenty_four_plum.rainfall"), 24);
         }
         // Ливень: три волны срываются вниз; вертикальные ленты — столб света.
         for (int k = 0; k < RainRules.COHORTS.length; k++) {
@@ -912,7 +967,7 @@ public final class RainVfx {
                         s.fallTo = c.target.add(Math.cos(a) * r, 0.2D + 1.5D * c.random.nextDouble(), Math.sin(a) * r);
                     }
                 }
-                int beams = Math.max(4, c.n(k == 0 ? 10 : k == 1 ? 16 : 22));
+                int beams = Math.max(3, c.n(k == 0 ? 6 : k == 1 ? 10 : 14));
                 for (int i = 0; i < beams; i++) {
                     double a = c.random.nextDouble() * Math.PI * 2.0D;
                     double r = RainRules.RAIN_RADIUS * c.scale * Math.sqrt(c.random.nextDouble());
@@ -932,7 +987,7 @@ public final class RainVfx {
             }
         }
         // Камера мастера: после прохода плавно оглядывается на цель и поднимает взгляд к ядру.
-        if (c.own() && mc.player != null && t >= RainRules.RELEASE + RainRules.DASH_TICKS + 2 && t <= RainRules.AFTER + 10) {
+        if (c.own() && mc.player != null && t >= RainRules.RELEASE + RainRules.DASH_TICKS && t <= RainRules.AFTER + 10) {
             Vec3 eye = mc.player.getEyePosition();
             Vec3 to = c.target.subtract(eye);
             float wantYaw = (float) Math.toDegrees(Math.atan2(-to.x, to.z));
@@ -983,10 +1038,10 @@ public final class RainVfx {
         }
         c.puffs.removeIf(p -> p.age >= p.life);
         c.winds.removeIf(w -> clientTicks - w.born() > w.life() + 10);
-        c.beams.removeIf(b -> clientTicks - b.born() > 8);
+        c.beams.removeIf(b -> clientTicks - b.born() > 5);
         c.rings.removeIf(r -> clientTicks - r.born() > r.life());
         c.marks.removeIf(m -> clientTicks - m.born() > 64);
-        c.cores.removeIf(x -> clientTicks - x[3].x > 5);
+        c.cores.removeIf(x -> clientTicks - x[3].x > (x[3].y > 1.5D ? 13 : 6));
     }
 
     /** Лепестки ядра: орбиты (дыхание, качание), нити к цели, падение. */
@@ -1043,7 +1098,8 @@ public final class RainVfx {
         // Лепесток живёт внутри своей доли: медленно колышется по s и l, чуть выходит из плоскости.
         double sPos = Mth.clamp(s.a + 0.04D * Math.sin(t * 0.09D + s.w), 0.05D, 1.0D);
         double l = Mth.clamp(s.e + 0.08D * Math.sin(t * 0.11D + s.w * 1.7D), -1.0D, 1.0D);
-        double depth = 0.25D * Math.sin(s.w * 3.0D) + 0.08D * Math.sin(t * 0.13D + s.w);
+        // Объём: лепестки расходятся в толщину чаши до ±0,9 блока у сердца, тоньше к краю.
+        double depth = (0.9D - 0.6D * s.a) * Math.sin(s.w * 3.0D) + 0.08D * Math.sin(t * 0.13D + s.w);
         return lobePoint(c, s.shell, sPos, l, t, depth * c.scale);
     }
 
@@ -1051,7 +1107,8 @@ public final class RainVfx {
     private static Vec3 streamPoint(Cast c, SkyPetal s, double t) {
         double moving = Math.min(t, RainRules.STILL) - RainRules.STREAM - s.delay;
         // Голова доходит до 0,85 к t120, дальше нить сжимается и почти стоит.
-        double u = moving <= 0.0D ? 0.0D : Math.min(0.9D - 0.04D * (s.delay / 16.0D), moving * s.uSpeed);
+        // Голова доходит до груди к t120; следующие подтягиваются и висят плотной нитью.
+        double u = moving <= 0.0D ? 0.0D : Math.min(1.0D - 0.5D * (s.delay / 16.0D) * (s.delay / 16.0D), moving * s.uSpeed);
         s.u = u;
         return streamAt(c, s.stream, u, t).add(streamSide(c, s.stream).scale(s.lane))
                 .add(0.0D, 0.06D * Math.sin(t * 0.21D + s.lane * 11.0D), 0.0D);
@@ -1067,7 +1124,7 @@ public final class RainVfx {
         Vec3 from = lobePoint(c, new int[] {0, 2, 4}[k], 0.15D, 0.0D, t, 0.0D);
         Vec3 to = c.target.add(0.0D, 1.5D, 0.0D);
         Vec3 b = streamSide(c, k);
-        double[] off = {0.0D, 2.8D, -2.0D, 1.2D, 0.0D};
+        double[] off = {0.0D, 1.1D, 0.2D, -0.9D, 0.0D};
         double scale = k == 0 ? 1.0D : k == 1 ? 0.8D : 0.6D;
         double x = u * 4.0D;
         int i = Math.min(3, (int) x);
@@ -1130,10 +1187,8 @@ public final class RainVfx {
         if (c.ghosts.isEmpty() || !(mc.level.getEntity(c.entityId) instanceof AbstractClientPlayer player)) {
             return;
         }
-        // От первого лица свои копии не рисуются: они закрывали бы экран.
-        if (c.own() && mc.options.getCameraType().isFirstPerson()) {
-            return;
-        }
+        // От первого лица — только копии руки (r02: веер рук перед глазами); копии тела закрывали бы экран.
+        boolean fpOwn = c.eyes();
         EntityRenderer<? super AbstractClientPlayer> r = mc.getEntityRenderDispatcher().getRenderer(player);
         if (!(r instanceof PlayerRenderer renderer)) {
             return;
@@ -1151,7 +1206,7 @@ public final class RainVfx {
         try {
             for (Ghost g : c.ghosts) {
                 float k = (clientTicks - g.born() + partial) / g.life();
-                if (k < 0.0F || k > 1.0F) {
+                if (k < 0.0F || k > 1.0F || fpOwn && !g.armOnly()) {
                     continue;
                 }
                 for (int i = 0; i < parts.length; i++) {
@@ -1194,11 +1249,11 @@ public final class RainVfx {
     private static void thrusts(Cast c, PoseStack.Pose pose, Vec3 camera, VertexConsumer v, float partial) {
         for (Thrust th : c.thrusts) {
             float age = clientTicks - th.born() + partial;
-            float a = (float) PlumVfx.curve(age, 0.0, 1.0, 1.5, 0.9, 9.0, 0.0);
+            float a = (float) PlumVfx.curve(age, 0.0, 1.0, 1.0, 0.95, 4.0, 0.0);
             if (a <= 0.0F) {
                 continue;
             }
-            double reach = 2.0D + 0.9D * Mth.clamp(age / 2.0D, 0.0D, 1.0D);
+            double reach = 2.4D + 1.3D * Mth.clamp(age / 1.5D, 0.0D, 1.0D);
             // Точка прокола: короткая белая звёздочка на острие.
             if (age < 3.0F) {
                 Vec3 tip = th.hand().add(th.dir().scale(reach));
@@ -1213,7 +1268,7 @@ public final class RainVfx {
             }
             Vec3 tail = th.hand().subtract(th.dir().scale(0.15D));
             Vec3[] p = {tail, th.hand().add(th.dir().scale(reach * 0.45D)), th.hand().add(th.dir().scale(reach))};
-            double[] w = {0.0D, 0.1D, 0.0D};
+            double[] w = {0.0D, 0.06D, 0.0D};
             fstrip(v, pose, camera, p, PlumVfx.scale(w, 2.6D), 0.14F * a, COLD);
             fstrip(v, pose, camera, p, w, 0.55F * a, WIND);
             fstrip(v, pose, camera, p, PlumVfx.scale(w, 0.3D), 0.95F * a, EDGE);
@@ -1314,6 +1369,26 @@ public final class RainVfx {
         PlumVfx.stripVar(v, pose, camera, p, PlumVfx.scale(w, 1.8D), PlumVfx.scaled(a, 0.35F), rim);
         PlumVfx.stripVar(v, pose, camera, p, w, PlumVfx.scaled(a, 0.85F), body);
         PlumVfx.stripVar(v, pose, camera, p, PlumVfx.scale(w, 0.28D), a, TRAIL_CORE);
+        // Резкий замах (r04): острый розовый полумесяц 4,5 блока по диагонали, живёт 3 тика.
+        if (s < 3.0F && c.origin != null) {
+            float ca = (float) PlumVfx.curve(s, 0.0, 1.0, 1.0, 1.0, 3.0, 0.0);
+            Vec3 o = c.origin.add(0.0D, 1.3D, 0.0D).add(c.dir.scale(0.6D));
+            Vec3 up = new Vec3(0.0D, 0.8D, 0.0D).add(c.side.scale(0.6D));
+            int cn = 18;
+            Vec3[] q = new Vec3[cn + 1];
+            double[] qw = new double[cn + 1];
+            double sweep = Mth.clamp(s / 1.2D, 0.15D, 1.0D);
+            for (int i = 0; i <= cn; i++) {
+                double u = i / (double) cn * sweep;
+                double ang = Math.toRadians(125.0D - 160.0D * u);
+                q[i] = o.add(up.scale(Math.sin(ang) * 1.6D)).add(c.dir.scale(Math.cos(ang) * 1.6D + 0.4D))
+                        .add(c.side.scale(-0.9D * Math.cos(ang)));
+                qw[i] = 0.4D * Math.pow(Math.sin(Math.PI * i / cn), 1.6D);
+            }
+            fstrip(v, pose, camera, q, PlumVfx.scale(qw, 1.6D), 0.18F * ca, TRAIL_RIM);
+            fstrip(v, pose, camera, q, qw, 0.7F * ca, TRAIL_BODY);
+            fstrip(v, pose, camera, q, PlumVfx.scale(qw, 0.25D), 0.95F * ca, TRAIL_CORE);
+        }
         // Белая зубчатая вспышка в момент резкой смены движения (r04).
         if (s < 3.5F) {
             Vec3 at = c.swing[Math.max(0, Math.min(n, (int) (n * 0.12D)))];
@@ -1426,7 +1501,7 @@ public final class RainVfx {
             Vec3 head = fall(s, u);
             Vec3 tail = fall(s, tailU);
             Vec3 d = tail.subtract(head);
-            double len = Math.min(0.4D + 1.0D * u, d.length());
+            double len = Math.min(0.8D + 1.2D * u, d.length());
             tail = d.lengthSqr() < 1.0E-6D ? head.add(0.0D, 0.3D, 0.0D) : head.add(d.normalize().scale(len));
             Vec3[] p = {tail, tail.lerp(head, 0.5D), head};
             double wd = 0.025D + 0.045D * s.size / 0.22D;
@@ -1444,7 +1519,7 @@ public final class RainVfx {
             double headY = floor + b.top() - (b.top() + 0.5D) * Mth.clamp(age / 3.0D, 0.0D, 1.0D);
             double tailY = Math.min(floor + b.top() + 1.0D, headY + b.len());
             headY = Math.max(floor, headY);
-            float a = (float) PlumVfx.curve(age, 0.0, 0.6, 1.0, 1.0, 4.0, 0.8, 7.0, 0.0);
+            float a = (float) PlumVfx.curve(age, 0.0, 0.6, 1.0, 1.0, 3.0, 0.8, 4.5, 0.0);
             if (tailY - headY < 0.2D || a <= 0.0F) {
                 continue;
             }
@@ -1463,6 +1538,14 @@ public final class RainVfx {
         for (Vec3[] x : c.cores) {
             float age = (float) (clientTicks - x[3].x + partial);
             float a = (float) PlumVfx.curve(age, 0.0, 1.0, 1.5, 1.0, 5.0, 0.0);
+            if (x[3].y > 1.5D) {
+                double grow = Mth.clamp(age / 2.0D, 0.0D, 1.0D);
+                Vec3[] p = {x[0], x[0].lerp(x[1], grow), x[0].lerp(x[2], grow)};
+                a = (float) PlumVfx.curve(age, 0.0, 1.0, 2.0, 1.0, 12.0, 0.0);
+                PlumVfx.flatStrip(v, pose, p, new double[] {0.16D, 0.1D, 0.0D}, 0.3F * a, RAIN_PINK);
+                PlumVfx.flatStrip(v, pose, p, new double[] {0.05D, 0.03D, 0.0D}, 0.95F * a, SKY_WHITE);
+                continue;
+            }
             double w0 = x[3].y > 0.5D ? 0.11D : 0.06D;
             Vec3[] p = {x[0], x[1], x[2]};
             double[] w = {0.0D, w0, 0.0D};
@@ -1516,6 +1599,9 @@ public final class RainVfx {
             PlumVfx.puff(d, pose, camera, p.prev.lerp(p.pos, partial), p.size * (0.7D + 0.8D * pt), p.cell, alpha, p.gray);
         }
         buffers.endBatch(dust);
+        Minecraft mc = Minecraft.getInstance();
+        boolean fp = c.eyes();
+        org.joml.Vector3f look = mc.gameRenderer.getMainCamera().getLookVector();
         RenderType smokeType = MurimRenderTypes.smokeCel();
         VertexConsumer sm = buffers.getBuffer(smokeType);
         for (Puff p : c.puffs) {
@@ -1527,6 +1613,12 @@ public final class RainVfx {
             double grow = 0.55D + 0.8D * Math.sqrt(pt) + (pt > 0.75F ? 1.2D * (pt - 0.75D) : 0.0D);
             Vec3 at = p.prev.lerp(p.pos, partial);
             float cam = (float) Mth.clamp((at.distanceTo(camera) - p.size * grow - 0.6D) / 1.5D, 0.0D, 1.0D);
+            // От первого лица дым в центре взгляда (на цели) прозрачнее: удар читается сквозь вал.
+            if (fp) {
+                Vec3 to = at.subtract(camera).normalize();
+                double cos = to.x * look.x() + to.y * look.y() + to.z * look.z();
+                cam *= (float) Mth.clamp(0.25D + (0.985D - cos) / 0.03D, 0.25D, 1.0D);
+            }
             PlumVfx.smokePuff(sm, pose, camera, at, p.size * grow, p.cell, alpha * cam, p.gray, p.spin);
         }
         buffers.endBatch(smokeType);
@@ -1591,12 +1683,29 @@ public final class RainVfx {
             PlumVfx.glow(g, pose, camera, at, s.size * 2.2D, 0.26F * a, s.tone == 2 ? BLOOD : s.stream < 0 && s.a > 0.6D ? LOBE_OUT : SKY_MILK);
             PlumVfx.glow(g, pose, camera, at, s.size * 0.7D, 0.55F * a, SKY_WHITE);
         }
+        // Ливень: яркая голова падающего лепестка — видно, что всё летит ВНИЗ.
+        for (SkyPetal s : c.sky) {
+            if (s.fallTick < 0 || clientTicks < s.fallTick || s.dead) {
+                continue;
+            }
+            double u = Mth.clamp((clientTicks - s.fallTick + partial) / RainRules.FALL, 0.0D, 1.0D);
+            Vec3 head = fall(s, u);
+            PlumVfx.glow(g, pose, camera, head, 0.16D, 0.9F * near(head, camera), SKY_WHITE);
+            PlumVfx.glow(g, pose, camera, head, 0.34D, 0.3F * near(head, camera), s.tone == 2 ? BLOOD : RAIN_PINK);
+        }
         // Сердцевина ядра: десятки мелких глоу на своих орбитах (каждый ≤0,24 — чёткость).
         if (c.core != null && c.coreBorn >= 0) {
             Vec3 core = c.corePrev == null ? c.core : c.corePrev.lerp(c.core, partial);
             float grow = (float) Mth.clamp((clientTicks - c.coreBorn + partial) / 20.0D, 0.0D, 1.0D);
             float out = (float) Mth.clamp(1.0D - (t - RainRules.COHORTS[1]) / 8.0D, 0.0D, 1.0D)
                     * (c.lostTick >= 0 ? Mth.clamp(1.0F - (clientTicks - c.lostTick + partial) / 12.0F, 0.0F, 1.0F) : 1.0F);
+            for (int k = 0; k < 5; k++) {
+                for (double sp : new double[] {0.25D, 0.5D, 0.75D}) {
+                    Vec3 lp = lobePoint(c, k, sp, 0.0D, t, 0.0D);
+                    double hw = 5.0D * c.scale * LOBE_LEN[k] * 0.32D * Math.sin(Math.PI * sp);
+                    PlumVfx.glow(g, pose, camera, lp, hw, 0.1F * grow * out, sp < 0.4D ? SKY_MILK : LOBE_IN);
+                }
+            }
             Vec3[] fb = flowerBasis(c, t);
             int st = Math.max(6, c.n(22));
             double op = open(t);
@@ -1615,8 +1724,11 @@ public final class RainVfx {
                 PlumVfx.glow(g, pose, camera, p, 0.08D + 0.16D * ((q[1] * 7.0D) % 1.0D), 0.6F * grow * out, SKY_WHITE);
             }
             // Белое сердце 1,4 блока (r08) и широкая засветка неба: ступени, без размытия кадра.
-            PlumVfx.glow(g, pose, camera, core, 0.8D * c.scale, 0.95F * grow * out, HEART);
-            PlumVfx.glow(g, pose, camera, core, 1.5D * c.scale, 0.6F * grow * out, HEART);
+            PlumVfx.glow(g, pose, camera, core, 0.6D * c.scale, 1.0F * grow * out, HEART);
+            PlumVfx.glow(g, pose, camera, core, 1.1D * c.scale, 0.9F * grow * out, HEART);
+            PlumVfx.glow(g, pose, camera, core, 2.2D * c.scale, 0.32F * grow * out, hex(0xFFD2E8));
+            PlumVfx.glow(g, pose, camera, core, 0.9D * c.scale, 0.95F * grow * out, HEART);
+            PlumVfx.glow(g, pose, camera, core, 1.8D * c.scale, 0.65F * grow * out, HEART);
             PlumVfx.glow(g, pose, camera, core, 3.2D * c.scale, 0.2F * grow * out, SKY_MILK);
             PlumVfx.glow(g, pose, camera, core, 7.5D * c.scale, 0.08F * grow * out, SKY_LILAC);
         }
@@ -1651,6 +1763,7 @@ public final class RainVfx {
     private static float[] tint(int tone) {
         return switch (tone) {
             case 0 -> new float[] {1.0F, 0.96F, 0.98F};
+            case 3 -> new float[] {1.0F, 0.88F, 0.94F};
             case 2 -> new float[] {1.0F, 0.42F, 0.6F};
             default -> new float[] {1.0F, 0.8F, 0.88F};
         };
