@@ -691,8 +691,12 @@ public final class BehaviorExecutor {
                 f3 = to.normalize();
             }
         }
-        player.setData(io.github.verycooltimo.murim.registry.ModAttachments.RUSH,
-                new double[] {o.x, o.y, o.z, f3.x, f3.z, layer, -1, -1, 0, 0, 0, 0, 0, f3.y});
+        // 14 — id наводки (встречные до неё волочатся ураганом), 15 — тик укола, 16 — число
+        // захваченных встречных, 17… — их id.
+        double[] rd = new double[17 + RUSH_CATCH_MAX];
+        double[] head = {o.x, o.y, o.z, f3.x, f3.z, layer, -1, -1, 0, 0, 0, 0, 0, f3.y, aim == null ? -1 : aim.getId(), -1, 0};
+        System.arraycopy(head, 0, rd, 0, head.length);
+        player.setData(io.github.verycooltimo.murim.registry.ModAttachments.RUSH, rd);
         // Направление урагана — точка {@code o + f} во втором векторе пакета (клиент берёт разность).
         net.neoforged.neoforge.network.PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
                 new io.github.verycooltimo.murim.network.RushPayload(player.getId(), o, o.add(f3), (float) Math.toDegrees(Math.atan2(-f3.x, f3.z)), layer, 0));
@@ -728,10 +732,15 @@ public final class BehaviorExecutor {
                 double along = rel.dot(f);
                 double off = rel.subtract(f.scale(along)).length();
                 if (along >= from - 0.5D && along <= to + 0.5D && off <= RushRules.HALF_WIDTH + Math.max(t.getBbWidth(), t.getBbHeight()) * 0.5D && along < best) {
+                    // Наводка есть — встречные до неё не останавливают ураган, а волочатся им.
+                    if (r.length > 16 && r[14] >= 0.0D && t.getId() != (int) r[14]) {
+                        continue;
+                    }
                     best = along;
                     hit = t;
                 }
             }
+            rushDrag(player, id, r, axis0, f, to, base, hit);
             if (hit != null) {
                 r[6] = since;
                 r[7] = hit.getId();
@@ -740,7 +749,8 @@ public final class BehaviorExecutor {
                 r[10] = hit.getZ();
                 player.setData(io.github.verycooltimo.murim.registry.ModAttachments.RUSH, r);
                 // Цель висит, пока ураган держит её и мастер не уколол (в воздухе — без падения).
-                io.github.verycooltimo.murim.combat.TargetLock.freeze(hit, RushRules.THRUST + 8);
+                io.github.verycooltimo.murim.combat.TargetLock.freeze(hit, RushRules.thrust((int) r[6]) + 2);
+                rushFling(r, f, player);
                 rushHurt(player, id, hit, base * RushRules.DMG_FIRST, r);
                 net.neoforged.neoforge.network.PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
                         new io.github.verycooltimo.murim.network.RushPayload(player.getId(), o, hit.position(), 0.0F, layer, 1));
@@ -759,8 +769,9 @@ public final class BehaviorExecutor {
                 rushHurt(player, id, target, base * RushRules.DMG_PULSE, r);
             }
         }
+        int wrapSince = (int) r[6];
         // Рывок издалека: прямо к цели, с боковым смещением, и за неё на 1,3 блока.
-        if (t == RushRules.DASH && target != null) {
+        if (t == RushRules.dash(wrapSince) && target != null) {
             // Рывок в 3D: к цели и за неё, на её высоте (в воздухе — взлетает, потом падает).
             Vec3 aim = target.position();
             Vec3 dir = aim.subtract(player.position());
@@ -774,15 +785,114 @@ public final class BehaviorExecutor {
             }
         }
         // Окно укола: позиция игрока на сервере отстаёт от плавного рывка на пару тиков.
-        if (t >= RushRules.THRUST - 2 && t <= RushRules.THRUST + 6 && r.length > 12 && r[12] < 0.5D && target != null
+        // Отброшенный уколом моб снова оглушён, когда приземлился (в воздухе стан подвесил бы его:
+        // без ИИ моб не двигается), — до конца техники, не меньше 0,5 с.
+        if (target != null && r.length > 15 && r[15] >= 0.0D && t >= (int) r[15] + 4 && t <= (int) r[15] + 30
+                && target.onGround() && !target.hasEffect(net.minecraft.world.effect.MobEffects.MOVEMENT_SLOWDOWN)
+                && !(target instanceof net.minecraft.world.entity.player.Player)
+                && !target.getType().is(net.neoforged.neoforge.common.Tags.EntityTypes.BOSSES)) {
+            int left = Math.max(10, RushRules.end(wrapSince) - t);
+            r[15] = -100.0D;
+            player.setData(io.github.verycooltimo.murim.registry.ModAttachments.RUSH, r);
+            target.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.MOVEMENT_SLOWDOWN, left, 9, false, false, false));
+        }
+        int thrust = RushRules.thrust(wrapSince);
+        if (t >= thrust - 2 && t <= thrust + 6 && r.length > 12 && r[12] < 0.5D && target != null
                 && target.position().distanceTo(player.position()) < 3.2D) {
             r[12] = 1.0D;
             if (rushHurt(player, id, target, base * RushRules.DMG_THRUST, r)) {
+                rushKnock(player, target, r, t);
                 net.neoforged.neoforge.network.PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
                         new io.github.verycooltimo.murim.network.RushPayload(player.getId(), o,
                                 target.position().add(0.0D, target.getBbHeight() * 0.6D, 0.0D), 0.0F, layer, 2));
             }
         }
+    }
+
+    private static final int RUSH_CATCH_MAX = 8;
+
+    /**
+     * Ураган волочит встречных (автор 03.10: «жёстче»): каждый, кого накрыл рукав до наводки,
+     * один раз получает скользящий удар и дальше тащится головой урагана вперёд и по кругу.
+     * Без оглушения — иначе стан гасит скорость (TargetLock.stunTick); стан даётся при сбросе.
+     */
+    private static void rushDrag(ServerPlayer player, net.minecraft.resources.ResourceLocation id, double[] r, Vec3 axis0, Vec3 f,
+                                 double head, double base, LivingEntity stop) {
+        if (r.length <= 16 + RUSH_CATCH_MAX) {
+            return;
+        }
+        Vec3 tip = axis0.add(f.scale(head));
+        for (LivingEntity t : candidates(player, new AABB(tip, tip).inflate(RushRules.CATCH_WIDTH + 1.0D, RushRules.CATCH_WIDTH + 1.5D, RushRules.CATCH_WIDTH + 1.0D))) {
+            if (t == stop || t instanceof net.minecraft.world.entity.decoration.ArmorStand || (r[14] >= 0.0D && t.getId() == (int) r[14])) {
+                continue;
+            }
+            Vec3 rel = io.github.verycooltimo.murim.combat.TargetLock.centre(t).subtract(axis0);
+            double along = rel.dot(f);
+            Vec3 radial = rel.subtract(f.scale(along));
+            if (along < head - 3.0D || along > head + 0.8D || radial.length() > RushRules.CATCH_WIDTH + t.getBbWidth() * 0.5D) {
+                continue;
+            }
+            boolean known = false;
+            for (int i = 0; i < (int) r[16]; i++) {
+                known |= (int) r[17 + i] == t.getId();
+            }
+            if (!known) {
+                if ((int) r[16] >= RUSH_CATCH_MAX) {
+                    continue;
+                }
+                r[17 + (int) r[16]] = t.getId();
+                r[16] += 1.0D;
+                player.setData(io.github.verycooltimo.murim.registry.ModAttachments.RUSH, r);
+                t.invulnerableTime = 0;
+                if (t.hurt(player.damageSources().playerAttack(player), (float) (base * RushRules.DMG_GRAZE))) {
+                    io.github.verycooltimo.murim.mastery.MasteryService.onHit(player, id, t);
+                }
+            }
+            // Тащит вперёд со скоростью головы и закручивает вокруг оси (боковая составляющая).
+            Vec3 spin = f.cross(radial.lengthSqr() < 1.0E-4D ? new Vec3(0.0D, 1.0D, 0.0D) : radial.normalize()).scale(0.25D);
+            Vec3 toAxis = radial.scale(-0.12D);
+            t.setDeltaMovement(f.scale(RushRules.SPEED * 0.95D).add(spin).add(toAxis).add(0.0D, 0.08D, 0.0D));
+            t.hurtMarked = true;
+            t.fallDistance = 0.0F;
+        }
+    }
+
+    /** Ураган ударил в наводку: волочёных раскидывает в стороны и оглушает. */
+    private static void rushFling(double[] r, Vec3 f, ServerPlayer player) {
+        if (r.length <= 16 + RUSH_CATCH_MAX) {
+            return;
+        }
+        Vec3 side = new Vec3(-f.z, 0.0D, f.x);
+        for (int i = 0; i < (int) r[16]; i++) {
+            if (player.level().getEntity((int) r[17 + i]) instanceof LivingEntity t && t.isAlive()) {
+                double sgn = (i % 2 == 0) ? 1.0D : -1.0D;
+                t.setDeltaMovement(f.scale(0.5D).add(side.scale(0.9D * sgn)).add(0.0D, 0.45D, 0.0D));
+                t.hurtMarked = true;
+                boolean boss = t.getType().is(net.neoforged.neoforge.common.Tags.EntityTypes.BOSSES);
+                if (!boss && !(t instanceof net.minecraft.world.entity.player.Player)) {
+                    t.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.WEAKNESS, 30, 9, false, false, false));
+                }
+            }
+        }
+    }
+
+    /**
+     * Отброс уколом: цель срывается с заморозки и улетает по ходу рывка с подбросом; оглушение
+     * снимается на полёт (stunTick гасит скорость) и возвращается через 7 тиков (см. rushTick).
+     */
+    private static void rushKnock(ServerPlayer player, LivingEntity target, double[] r, int t) {
+        Vec3 dir = target.position().subtract(new Vec3(r[0], r[1], r[2]));
+        dir = new Vec3(dir.x, 0.0D, dir.z);
+        dir = dir.lengthSqr() < 1.0E-4D ? new Vec3(r[3], 0.0D, r[4]) : dir.normalize();
+        boolean boss = target.getType().is(net.neoforged.neoforge.common.Tags.EntityTypes.BOSSES);
+        double k = boss ? 0.3D : 1.0D;
+        target.setData(io.github.verycooltimo.murim.registry.ModAttachments.FROZEN, new long[] {target.level().getGameTime(),
+                target.getData(io.github.verycooltimo.murim.registry.ModAttachments.FROZEN)[1]});
+        target.removeEffect(net.minecraft.world.effect.MobEffects.MOVEMENT_SLOWDOWN);
+        target.setDeltaMovement(dir.scale(RushRules.KNOCK * k).add(0.0D, RushRules.LIFT * k, 0.0D));
+        target.hurtMarked = true;
+        r[15] = t;
+        player.setData(io.github.verycooltimo.murim.registry.ModAttachments.RUSH, r);
     }
 
     private static boolean rushHurt(ServerPlayer player, net.minecraft.resources.ResourceLocation id, LivingEntity t, double amount, double[] r) {
@@ -794,7 +904,7 @@ public final class BehaviorExecutor {
             r[11] = 1.0D;
             player.setData(io.github.verycooltimo.murim.registry.ModAttachments.RUSH, r);
             boolean boss = t.getType().is(net.neoforged.neoforge.common.Tags.EntityTypes.BOSSES);
-            int ticks = t instanceof net.minecraft.world.entity.player.Player ? 12 : boss ? 10 : RushRules.END;
+            int ticks = t instanceof net.minecraft.world.entity.player.Player ? 12 : boss ? 10 : RushRules.end(r[6] < 0.0D ? 0 : (int) r[6]);
             t.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.MOVEMENT_SLOWDOWN, ticks, 9, false, false, false));
             t.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.WEAKNESS, ticks, 9, false, false, false));
         }
