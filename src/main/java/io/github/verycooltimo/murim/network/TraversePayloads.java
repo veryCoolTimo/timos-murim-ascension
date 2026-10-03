@@ -48,10 +48,12 @@ public final class TraversePayloads {
      * {@code ticks} тиков. Двигает клиент своей физикой: камера проходит путь, а не прыгает
      * (автор 02.10: «от первого лица это телепорт — должно быть, что ты быстро промчался»).
      */
-    public record Dash(float dx, float dz, float distance, int ticks) implements CustomPacketPayload {
+    /** {@code dy} ≠ 0 — рывок в воздух к цели (03.10: приёмы по врагу в небе), потом обычное падение. */
+    public record Dash(float dx, float dy, float dz, float distance, int ticks) implements CustomPacketPayload {
         public static final Type<Dash> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "footwork_dash"));
         public static final StreamCodec<RegistryFriendlyByteBuf, Dash> STREAM_CODEC = StreamCodec.composite(
                 ByteBufCodecs.FLOAT, Dash::dx,
+                ByteBufCodecs.FLOAT, Dash::dy,
                 ByteBufCodecs.FLOAT, Dash::dz,
                 ByteBufCodecs.FLOAT, Dash::distance,
                 ByteBufCodecs.VAR_INT, Dash::ticks,

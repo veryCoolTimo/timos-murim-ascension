@@ -56,8 +56,17 @@ public final class ModKeyMappings {
             GLFW.GLFW_KEY_K,
             CATEGORY);
 
+    /** Захват цели как в Devil May Cry (автор 03.10): нажал — захват, ещё раз — снять. */
+    public static final KeyMapping LOCK = new KeyMapping(
+            "key." + MurimMod.MODID + ".lock",
+            KeyConflictContext.IN_GAME,
+            InputConstants.Type.KEYSYM,
+            GLFW.GLFW_KEY_Z,
+            CATEGORY);
+
     @SubscribeEvent
     static void register(RegisterKeyMappingsEvent event) {
+        event.register(LOCK);
         event.register(TECHNIQUE);
         event.register(MEDITATION);
         event.register(WHEEL);

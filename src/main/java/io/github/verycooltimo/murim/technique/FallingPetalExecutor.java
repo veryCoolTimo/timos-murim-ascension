@@ -204,6 +204,10 @@ public final class FallingPetalExecutor {
 
     /** Ближайший живой противник в конусе 35° до 16 блоков при прямой видимости; стойки брони — нет. */
     private static LivingEntity pick(ServerPlayer player, Vec3 o, Vec3 f) {
+        LivingEntity locked = io.github.verycooltimo.murim.combat.TargetLock.locked(player, FallingPetalRules.RANGE + 2.0D);
+        if (locked != null) {
+            return locked;
+        }
         double cone = Math.cos(Math.toRadians(35.0D));
         LivingEntity best = null;
         double bestD = Double.MAX_VALUE;

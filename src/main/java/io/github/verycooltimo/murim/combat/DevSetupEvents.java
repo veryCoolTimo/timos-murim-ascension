@@ -389,7 +389,12 @@ public final class DevSetupEvents {
             zombie.setYBodyRot(face);
             target = zombie;
         }
-        target.setPos(STAGE_X + 0.5D + lookX * dummyDistance, STAGE_Y,
+        // MURIM_CAPTURE_ENEMY_Y — цель висит в воздухе на этой высоте (приёмы по врагу в небе, 03.10).
+        double lift = Double.parseDouble(System.getenv().getOrDefault("MURIM_CAPTURE_ENEMY_Y", "0"));
+        if (lift > 0.0D) {
+            target.setNoGravity(true);
+        }
+        target.setPos(STAGE_X + 0.5D + lookX * dummyDistance, STAGE_Y + lift,
                       STAGE_Z + 0.5D + lookZ * dummyDistance);
         level.addFreshEntity(target);
         // MURIM_CAPTURE_AURA=4 или 4d (демоническая) — аура цели для съёмки давления.

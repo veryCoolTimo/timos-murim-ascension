@@ -80,6 +80,9 @@ public final class RushVfx {
         Vec3 origin;
         Vec3 f;
         Vec3 side;
+        /** Горизонтальная проекция оси и «вверх» поперёк наклонной оси урагана. */
+        Vec3 fFlat = new Vec3(0.0D, 0.0D, 1.0D);
+        Vec3 up = new Vec3(0.0D, 1.0D, 0.0D);
         int wrapTick = -1;
         Vec3 wrapAt;
         int hitTick = -1;
@@ -137,8 +140,13 @@ public final class RushVfx {
             c.release = clientTicks;
             c.origin = p.origin();
             Vec3 fv = Vec3.directionFromRotation(0.0F, p.yaw());
-            c.f = new Vec3(fv.x, 0.0D, fv.z).normalize();
-            c.side = new Vec3(-c.f.z, 0.0D, c.f.x);
+            Vec3 d3 = p.centre().subtract(p.origin());
+            // 03.10: ураган в любом направлении — ось наклонена к цели (вверх или вниз).
+            c.f = d3.lengthSqr() > 0.25D ? d3.normalize() : new Vec3(fv.x, 0.0D, fv.z).normalize();
+            Vec3 flat = new Vec3(c.f.x, 0.0D, c.f.z);
+            c.fFlat = flat.lengthSqr() < 1.0E-6D ? new Vec3(fv.x, 0.0D, fv.z).normalize() : flat.normalize();
+            c.side = new Vec3(-c.fFlat.z, 0.0D, c.fFlat.x);
+            c.up = c.side.cross(c.f).normalize();
             if (own) {
                 SpeedLines.directional(0.0F, 0.5F, 6, SpeedLines.WHITE);
             }
@@ -307,7 +315,7 @@ public final class RushVfx {
         double pitch = strand == 0 ? 4.6D : strand == 1 ? 3.9D : strand == 2 ? 5.4D : 3.4D;
         double ph = d / pitch * Math.PI * 2.0D - s * (Math.PI * 2.0D / 16.0D) + strand * 2.1D + u * 0.6D;
         Vec3 axis = RushRules.axis(c.origin, c.f, d).add(c.side.scale(0.2D * Math.sin(d * 0.7D + s * 0.2D)));
-        return axis.add(c.side.scale(Math.cos(ph) * r)).add(0.0D, Math.sin(ph) * r * 0.85D, 0.0D);
+        return axis.add(c.side.scale(Math.cos(ph) * r)).add(c.up.scale(Math.sin(ph) * r * 0.85D));
     }
 
     // ------------------------------------------------------------------ рендер
@@ -515,7 +523,7 @@ public final class RushVfx {
             for (int i = 0; i <= n; i++) {
                 double u = i / (double) n;
                 double a = u * Math.PI * 1.75D + t * 0.5D * (k % 2 == 0 ? 1 : -1) + k * 1.9D;
-                Vec3 ring = c.side.scale(Math.cos(a) * r).add(c.f.scale(Math.sin(a) * r));
+                Vec3 ring = c.side.scale(Math.cos(a) * r).add(c.fFlat.scale(Math.sin(a) * r));
                 p[i] = feet.add(0.0D, heights[k] + Math.sin(a) * r * Math.sin(tilt), 0.0D).add(ring);
                 w[i] = (k == 0 ? 0.5D : 0.32D) * Math.sin(Math.PI * u);
             }

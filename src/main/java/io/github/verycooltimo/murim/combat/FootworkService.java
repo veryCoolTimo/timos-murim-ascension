@@ -337,7 +337,7 @@ public final class FootworkService {
         if (reach < 0.05D) {
             return;
         }
-        PacketDistributor.sendToPlayer(player, new TraversePayloads.Dash((float) dir.x, (float) dir.z, (float) reach, ticks));
+        PacketDistributor.sendToPlayer(player, new TraversePayloads.Dash((float) dir.x, (float) dir.y, (float) dir.z, (float) reach, ticks));
     }
 
     /**
@@ -345,6 +345,10 @@ public final class FootworkService {
      * взгляда и в прямой видимости. Мирное животное целью не считается.
      */
     private static net.minecraft.world.entity.LivingEntity softTarget(ServerPlayer player) {
+        net.minecraft.world.entity.LivingEntity locked = TargetLock.locked(player, 10.0D);
+        if (locked != null) {
+            return locked;
+        }
         Vec3 look = horizontal(player.getLookAngle());
         double cos = Math.cos(Math.toRadians(30.0D));
         net.minecraft.world.entity.LivingEntity best = null;

@@ -40,10 +40,10 @@ public final class RainExecutor {
             }
             return hit;
         }
-        LivingEntity target = null;
+        LivingEntity target = io.github.verycooltimo.murim.combat.TargetLock.locked(player, RainRules.RANGE + 2.0D);
         double best = Double.MAX_VALUE;
         double cone = Math.cos(Math.toRadians(35.0D));
-        for (LivingEntity t : candidates(player, player.getBoundingBox().inflate(RainRules.RANGE + 0.5D))) {
+        for (LivingEntity t : target != null ? java.util.List.<LivingEntity>of() : candidates(player, player.getBoundingBox().inflate(RainRules.RANGE + 0.5D))) {
             Vec3 to = new Vec3(t.getX() - o.x, 0.0D, t.getZ() - o.z);
             double d = to.length();
             // Стойки для брони — не противники.

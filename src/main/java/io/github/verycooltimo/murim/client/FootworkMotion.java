@@ -25,7 +25,7 @@ public final class FootworkMotion {
     private static int elapsed = -1;
 
     public static void start(TraversePayloads.Dash dash) {
-        Vec3 d = new Vec3(dash.dx(), 0.0D, dash.dz());
+        Vec3 d = new Vec3(dash.dx(), dash.dy(), dash.dz());
         if (d.lengthSqr() < 1.0E-6D || dash.ticks() <= 0) {
             return;
         }
@@ -55,12 +55,13 @@ public final class FootworkMotion {
         if (elapsed >= ticks || player.isPassenger()) {
             // Последний тик: гасим остаток скорости, чтобы не скользить дальше точки.
             Vec3 v = player.getDeltaMovement();
-            player.setDeltaMovement(v.x * 0.2D, v.y, v.z * 0.2D);
+            player.setDeltaMovement(v.x * 0.2D, Math.abs(dir.y) > 0.02D ? 0.0D : v.y, v.z * 0.2D);
             elapsed = -1;
             return;
         }
         double step = distance * (progress((elapsed + 1) / (double) ticks) - progress(elapsed / (double) ticks));
-        double vy = player.onGround() ? 0.0D : player.getDeltaMovement().y;
+        // Рывок в воздух ведёт и высоту; горизонтальный оставляет падение как есть.
+        double vy = Math.abs(dir.y) > 0.02D ? dir.y * step + 0.08D : player.onGround() ? 0.0D : player.getDeltaMovement().y;
         player.setDeltaMovement(dir.x * step, vy, dir.z * step);
         elapsed++;
     }

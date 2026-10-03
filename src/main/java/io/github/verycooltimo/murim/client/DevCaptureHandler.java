@@ -229,6 +229,10 @@ public final class DevCaptureHandler {
             }
             net.minecraft.resources.ResourceLocation subjectId = net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(
                     MurimMod.MODID, subject);
+            // MURIM_CAPTURE_LOCK=1 — перед приёмом захватить цель (как клавиша Z).
+            if ("1".equals(System.getenv("MURIM_CAPTURE_LOCK"))) {
+                io.github.verycooltimo.murim.client.vfx.LockOn.lockNow();
+            }
             String mode = System.getenv().getOrDefault("MURIM_CAPTURE_FOOTWORK", "");
             if ("autorun".equals(mode) || "autoshadow".equals(mode)) {
                 // Автоматика шагов (03.10): стенд ничего не шлёт, только держит спринт или присед.

@@ -19,7 +19,7 @@ import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 public final class ModNetwork {
 
     /** Версия протокола. Поднимать при любом несовместимом изменении пакетов. */
-    private static final String VERSION = "12";
+    private static final String VERSION = "13";
 
     @SubscribeEvent
     static void register(RegisterPayloadHandlersEvent event) {
@@ -72,6 +72,12 @@ public final class ModNetwork {
                 (payload, context) -> ClientPayloadBridge.handleFoundationForm(payload));
 
         // Шаги: клиент шлёт только нажатия с контекстом ввода, подтехнику выбирает сервер.
+        registrar.playToServer(LockPayload.TYPE, LockPayload.STREAM_CODEC,
+                (payload, context) -> {
+                    if (context.player() instanceof ServerPlayer serverPlayer) {
+                        io.github.verycooltimo.murim.combat.TargetLock.set(serverPlayer, payload.entityId());
+                    }
+                });
         registrar.playToServer(TraversePayloads.Jump.TYPE, TraversePayloads.Jump.STREAM_CODEC,
                 (payload, context) -> {
                     if (context.player() instanceof ServerPlayer serverPlayer) {

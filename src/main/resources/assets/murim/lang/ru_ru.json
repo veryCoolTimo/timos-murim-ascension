@@ -185,5 +185,6 @@
   "technique.murim.wind_god_shadow.weakness": "Не снимает погоню, которая уже началась; удар или рана выдают.",
   "technique.murim.wind_god_death.weakness": "Прорыв без урона: даёт место для удара, не сам удар.",
   "technique.murim.wind_god_lightning.weakness": "На скорости трудно повернуть; стена обрывает бег.",
-  "murim.dodge.hint": "Двойное A/D/S — уклонение стиля шагов"
+  "murim.dodge.hint": "Двойное A/D/S — уклонение стиля шагов",
+  "key.murim.lock": "Захват цели"
 }

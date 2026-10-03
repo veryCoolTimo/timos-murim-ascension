@@ -205,5 +205,6 @@
   "technique.murim.wind_god_shadow.weakness": "Does not shake off a chase already started; striking or being hurt reveals you.",
   "technique.murim.wind_god_death.weakness": "A breach without damage: room for a strike, not the strike.",
   "technique.murim.wind_god_lightning.weakness": "Hard to turn at speed; a wall ends the run.",
-  "murim.dodge.hint": "Double-tap A/D/S — footwork dodge"
+  "murim.dodge.hint": "Double-tap A/D/S — footwork dodge",
+  "key.murim.lock": "Lock on target"
 }

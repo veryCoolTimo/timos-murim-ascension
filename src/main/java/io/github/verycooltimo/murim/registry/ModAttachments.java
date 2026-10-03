@@ -101,6 +101,14 @@ public final class ModAttachments {
      * опоре подряд, тик готовности Тени}. «Активен»: 1 — бег, 2 — Шаг Тени.
      * Не сохраняется: режим живёт секунды.
      */
+    /** Захваченная цель игрока (id сущности, −1 — нет), 03.10. Не сохраняется. */
+    public static final Supplier<AttachmentType<int[]>> LOCK =
+            ATTACHMENT_TYPES.register("lock_on", () -> AttachmentType.<int[]>builder(() -> new int[] {-1}).build());
+
+    /** Цель, замороженная в воздухе приёмом: {игровое время конца, 1 — гравитацию выключили мы}. */
+    public static final Supplier<AttachmentType<long[]>> FROZEN =
+            ATTACHMENT_TYPES.register("frozen", () -> AttachmentType.<long[]>builder(() -> new long[] {0L, 0L}).build());
+
     public static final Supplier<AttachmentType<int[]>> TRAVERSE =
             ATTACHMENT_TYPES.register("traverse",
                     () -> AttachmentType.<int[]>builder(() -> new int[] {0, 0, 0, 0, Integer.MIN_VALUE / 2, 0, 0,
@@ -140,7 +148,7 @@ public final class ModAttachments {
      */
     public static final Supplier<AttachmentType<double[]>> RUSH =
             ATTACHMENT_TYPES.register("plum_rush",
-                    () -> AttachmentType.<double[]>builder(() -> new double[] {0, 0, 0, 0, 0, 0, -1, -1, 0, 0, 0, 0, 0}).build());
+                    () -> AttachmentType.<double[]>builder(() -> new double[] {0, 0, 0, 0, 0, 0, -1, -1, 0, 0, 0, 0, 0, 0}).build());
 
     /**
      * Ливень Цветущей Сливы: {старт x, y, z, направление x, z, слой, id цели или −1, метка 0/1,

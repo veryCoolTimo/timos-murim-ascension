@@ -647,27 +647,38 @@ public final class BehaviorExecutor {
             return hit;
         }
         Vec3 o = player.position();
-        // Наводка: ближайший противник в конусе 30° до 16 блоков — ураган летит на него.
-        double best = Double.MAX_VALUE;
-        double cone = Math.cos(Math.toRadians(30.0D));
-        Vec3 aimF = f;
-        for (LivingEntity t : candidates(player, player.getBoundingBox().inflate(RushRules.RANGE + 0.5D))) {
-            Vec3 to = new Vec3(t.getX() - o.x, 0.0D, t.getZ() - o.z);
-            double d = to.length();
-            if (t instanceof net.minecraft.world.entity.decoration.ArmorStand || d < 1.0D || d > RushRules.RANGE
-                    || to.normalize().dot(f) < cone || !player.hasLineOfSight(t)) {
-                continue;
-            }
-            if (d < best) {
-                best = d;
-                aimF = to.normalize();
+        Vec3 axis0 = o.add(0.0D, 1.2D, 0.0D);
+        // Наводка (03.10 — в любом направлении): захваченная цель, иначе ближайший противник в
+        // конусе 30° взгляда до 16 блоков, в том числе выше или ниже — ураган летит прямо на него.
+        LivingEntity aim = io.github.verycooltimo.murim.combat.TargetLock.locked(player, RushRules.RANGE + 4.0D);
+        if (aim == null) {
+            double best = Double.MAX_VALUE;
+            double cone = Math.cos(Math.toRadians(30.0D));
+            for (LivingEntity t : candidates(player, player.getBoundingBox().inflate(RushRules.RANGE + 0.5D))) {
+                Vec3 to = io.github.verycooltimo.murim.combat.TargetLock.centre(t).subtract(player.getEyePosition());
+                double d = to.length();
+                if (t instanceof net.minecraft.world.entity.decoration.ArmorStand || d < 1.0D || d > RushRules.RANGE
+                        || to.normalize().dot(look) < cone || !player.hasLineOfSight(t)) {
+                    continue;
+                }
+                if (d < best) {
+                    best = d;
+                    aim = t;
+                }
             }
         }
-        f = aimF;
+        Vec3 f3 = f;
+        if (aim != null) {
+            Vec3 to = io.github.verycooltimo.murim.combat.TargetLock.centre(aim).subtract(axis0);
+            if (to.lengthSqr() > 1.0E-4D) {
+                f3 = to.normalize();
+            }
+        }
         player.setData(io.github.verycooltimo.murim.registry.ModAttachments.RUSH,
-                new double[] {o.x, o.y, o.z, f.x, f.z, layer, -1, -1, 0, 0, 0, 0, 0});
+                new double[] {o.x, o.y, o.z, f3.x, f3.z, layer, -1, -1, 0, 0, 0, 0, 0, f3.y});
+        // Направление урагана — точка {@code o + f} во втором векторе пакета (клиент берёт разность).
         net.neoforged.neoforge.network.PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
-                new io.github.verycooltimo.murim.network.RushPayload(player.getId(), o, o, (float) Math.toDegrees(Math.atan2(-f.x, f.z)), layer, 0));
+                new io.github.verycooltimo.murim.network.RushPayload(player.getId(), o, o.add(f3), (float) Math.toDegrees(Math.atan2(-f3.x, f3.z)), layer, 0));
         return false;
     }
 
@@ -681,22 +692,25 @@ public final class BehaviorExecutor {
         double base = player.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE)
                 * RushRules.power(layer);
         Vec3 o = new Vec3(r[0], r[1], r[2]);
-        Vec3 f = new Vec3(r[3], 0.0D, r[4]);
+        Vec3 f = new Vec3(r[3], r.length > 13 ? r[13] : 0.0D, r[4]);
+        f = f.lengthSqr() < 1.0E-6D ? new Vec3(0.0D, 0.0D, 1.0D) : f.normalize();
+        Vec3 axis0 = o.add(0.0D, 1.2D, 0.0D);
         if (r[6] < 0.0D) {
             // Полёт: передний край проверяется непрерывно, между прошлым и текущим тиком.
             double from = RushRules.head(since - 1) - 0.4D;
             double to = RushRules.head(since);
-            Vec3 mid = o.add(f.scale((from + to) * 0.5D));
+            Vec3 mid = axis0.add(f.scale((from + to) * 0.5D));
             LivingEntity hit = null;
             double best = Double.MAX_VALUE;
-            for (LivingEntity t : candidates(player, new AABB(mid, mid).inflate(RushRules.HALF_WIDTH + 1.5D, 3.0D, RushRules.HALF_WIDTH + 1.5D))) {
+            for (LivingEntity t : candidates(player, new AABB(mid, mid).inflate(RushRules.HALF_WIDTH + 1.5D, RushRules.HALF_WIDTH + 2.5D, RushRules.HALF_WIDTH + 1.5D))) {
                 if (t instanceof net.minecraft.world.entity.decoration.ArmorStand) {
                     continue;
                 }
-                Vec3 rel = t.position().subtract(o);
-                double along = rel.x * f.x + rel.z * f.z;
-                double off = Math.abs(rel.x * f.z - rel.z * f.x);
-                if (along >= from - 0.5D && along <= to + 0.5D && off <= RushRules.HALF_WIDTH + t.getBbWidth() * 0.5D && along < best) {
+                // 3D: расстояние от оси урагана до центра цели (03.10 — цель может быть в небе).
+                Vec3 rel = io.github.verycooltimo.murim.combat.TargetLock.centre(t).subtract(axis0);
+                double along = rel.dot(f);
+                double off = rel.subtract(f.scale(along)).length();
+                if (along >= from - 0.5D && along <= to + 0.5D && off <= RushRules.HALF_WIDTH + Math.max(t.getBbWidth(), t.getBbHeight()) * 0.5D && along < best) {
                     best = along;
                     hit = t;
                 }
@@ -708,6 +722,8 @@ public final class BehaviorExecutor {
                 r[9] = hit.getY();
                 r[10] = hit.getZ();
                 player.setData(io.github.verycooltimo.murim.registry.ModAttachments.RUSH, r);
+                // Цель висит, пока ураган держит её и мастер не уколол (в воздухе — без падения).
+                io.github.verycooltimo.murim.combat.TargetLock.freeze(hit, RushRules.THRUST + 8);
                 rushHurt(player, id, hit, base * RushRules.DMG_FIRST, r);
                 net.neoforged.neoforge.network.PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
                         new io.github.verycooltimo.murim.network.RushPayload(player.getId(), o, hit.position(), 0.0F, layer, 1));
@@ -718,7 +734,7 @@ public final class BehaviorExecutor {
         LivingEntity target = r[7] >= 0 && player.level().getEntity((int) r[7]) instanceof LivingEntity le && le.isAlive() ? le : null;
         Vec3 c = new Vec3(r[8], r[9], r[10]);
         // Обволакивание: держит у точки, два новых удара.
-        if (target != null && t < RushRules.WRAP && flatDistance(target.position(), c) < 2.5D) {
+        if (target != null && t < RushRules.WRAP && target.position().distanceTo(c) < 2.5D) {
             Vec3 pull = c.subtract(target.position());
             target.setDeltaMovement(target.getDeltaMovement().multiply(0.4D, 1.0D, 0.4D).add(pull.x * 0.15D, 0.0D, pull.z * 0.15D));
             target.hurtMarked = true;
@@ -728,18 +744,21 @@ public final class BehaviorExecutor {
         }
         // Рывок издалека: прямо к цели, с боковым смещением, и за неё на 1,3 блока.
         if (t == RushRules.DASH && target != null) {
+            // Рывок в 3D: к цели и за неё, на её высоте (в воздухе — взлетает, потом падает).
             Vec3 aim = target.position();
-            Vec3 dir = new Vec3(aim.x - player.getX(), 0.0D, aim.z - player.getZ());
+            Vec3 dir = aim.subtract(player.position());
             if (dir.lengthSqr() > 1.0E-4D && dir.length() < RushRules.RANGE + 6.0D) {
                 dir = dir.normalize();
-                Vec3 dest = aim.add(dir.scale(target.getBbWidth() * 0.5D + 1.3D)).add(new Vec3(-dir.z, 0.0D, dir.x).scale(0.6D));
-                Vec3 path = new Vec3(dest.x - player.getX(), 0.0D, dest.z - player.getZ());
+                Vec3 flatDir = new Vec3(dir.x, 0.0D, dir.z);
+                flatDir = flatDir.lengthSqr() < 1.0E-6D ? new Vec3(0.0D, 0.0D, 1.0D) : flatDir.normalize();
+                Vec3 dest = aim.add(flatDir.scale(target.getBbWidth() * 0.5D + 1.3D)).add(new Vec3(-flatDir.z, 0.0D, flatDir.x).scale(0.6D));
+                Vec3 path = dest.subtract(player.position());
                 io.github.verycooltimo.murim.combat.FootworkService.sendDash(player, path.normalize(), path.length(), RushRules.DASH_TICKS);
             }
         }
         // Окно укола: позиция игрока на сервере отстаёт от плавного рывка на пару тиков.
         if (t >= RushRules.THRUST - 2 && t <= RushRules.THRUST + 6 && r.length > 12 && r[12] < 0.5D && target != null
-                && flatDistance(target.position(), player.position()) < 3.0D) {
+                && target.position().distanceTo(player.position()) < 3.2D) {
             r[12] = 1.0D;
             if (rushHurt(player, id, target, base * RushRules.DMG_THRUST, r)) {
                 net.neoforged.neoforge.network.PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
@@ -787,25 +806,30 @@ public final class BehaviorExecutor {
             }
             return hit;
         }
-        LivingEntity target = null;
-        double best = Double.MAX_VALUE;
-        double cone = Math.cos(Math.toRadians(30.0D));
-        // Любая дистанция до 12 блоков (автор 02.10: «враг дальше, ближе — тоже работать»).
-        for (LivingEntity t : candidates(player, player.getBoundingBox().inflate(12.5D))) {
-            Vec3 to = t.position().subtract(origin);
-            Vec3 flat = new Vec3(to.x, 0.0D, to.z);
-            double d = flat.length();
-            // Стойки для брони — не противники (на стенде они ближе цели и перехватывали выбор).
-            if (t instanceof net.minecraft.world.entity.decoration.ArmorStand
-                    || d < 0.5D || d > 12.0D || flat.normalize().dot(forward) < cone || !player.hasLineOfSight(t)) {
-                continue;
-            }
-            if (d < best) {
-                best = d;
-                target = t;
+        // Захваченная цель (03.10), иначе ближайшая в конусе 30° взгляда до 12 блоков — в том
+        // числе выше или ниже: в небе она замирает, и клоны идут к ней на её высоту.
+        LivingEntity target = io.github.verycooltimo.murim.combat.TargetLock.locked(player, 16.0D);
+        if (target == null) {
+            double best = Double.MAX_VALUE;
+            double cone = Math.cos(Math.toRadians(30.0D));
+            for (LivingEntity t : candidates(player, player.getBoundingBox().inflate(12.5D))) {
+                Vec3 to = io.github.verycooltimo.murim.combat.TargetLock.centre(t).subtract(player.getEyePosition());
+                double d = to.length();
+                // Стойки для брони — не противники (на стенде они ближе цели и перехватывали выбор).
+                if (t instanceof net.minecraft.world.entity.decoration.ArmorStand
+                        || d < 0.5D || d > 12.0D || to.normalize().dot(look) < cone || !player.hasLineOfSight(t)) {
+                    continue;
+                }
+                if (d < best) {
+                    best = d;
+                    target = t;
+                }
             }
         }
-        Vec3 centre = target != null ? new Vec3(target.getX(), origin.y, target.getZ()) : origin.add(forward.scale(4.0D));
+        if (target != null) {
+            io.github.verycooltimo.murim.combat.TargetLock.freeze(target, ExecRules.FINAL + 12);
+        }
+        Vec3 centre = target != null ? target.position() : origin.add(forward.scale(4.0D));
         double baseAngle = Math.atan2(origin.z - centre.z, origin.x - centre.x);
         player.setData(io.github.verycooltimo.murim.registry.ModAttachments.EXEC, new double[] {
                 centre.x, centre.y, centre.z, baseAngle, layer, 0, target == null ? -1 : target.getId(), 0, origin.x, origin.z});
@@ -824,8 +848,9 @@ public final class BehaviorExecutor {
         double base = player.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE);
         LivingEntity target = e[6] >= 0 && player.level().getEntity((int) e[6]) instanceof LivingEntity le && le.isAlive() ? le : null;
         // Клоны ведут живую позицию цели: отошла или подошла — заход идёт за ней.
-        if (target != null && flatDistance(target.position(), player.position()) < 16.0D) {
+        if (target != null && target.position().distanceTo(player.position()) < 18.0D) {
             e[0] = target.getX();
+            e[1] = target.getY();
             e[2] = target.getZ();
         }
         Vec3 centre = new Vec3(e[0], e[1], e[2]);
@@ -844,9 +869,10 @@ public final class BehaviorExecutor {
             Vec3 dir = new Vec3(aim.x - from.x, 0.0D, aim.z - from.z);
             if (dir.lengthSqr() > 1.0E-4D) {
                 dir = dir.normalize();
-                // Дальше клонов: те садятся в ≤2,2 блока, оригинал — в 4,5.
+                // Дальше клонов: те садятся в ≤2,2 блока, оригинал — в 4,5; на высоте цели
+                // (в небе — взлетает к ней и после падает).
                 Vec3 dest = aim.add(dir.scale(4.5D));
-                Vec3 path = new Vec3(dest.x - player.getX(), 0.0D, dest.z - player.getZ());
+                Vec3 path = dest.subtract(player.position());
                 io.github.verycooltimo.murim.combat.FootworkService.sendDash(player, path.normalize(), path.length(), ExecRules.DASH_TICKS);
             }
         }
