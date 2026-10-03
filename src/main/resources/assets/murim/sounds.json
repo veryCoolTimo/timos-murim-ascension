@@ -321,19 +321,6 @@
       }
     ]
   },
-  "wheel_select": {
-    "subtitle": "subtitles.murim.wheel_select",
-    "sounds": [
-      {
-        "name": "murim:wheel_select_a",
-        "attenuation_distance": 8
-      },
-      {
-        "name": "murim:wheel_select_b",
-        "attenuation_distance": 8
-      }
-    ]
-  },
   "bandit_windup": {
     "subtitle": "subtitles.murim.bandit_windup",
     "sounds": [

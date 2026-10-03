@@ -61,7 +61,6 @@ public final class ModSounds {
 
     // Интерфейс.
     public static final DeferredHolder<SoundEvent, SoundEvent> LOCK_ON = sound("lock_on");
-    public static final DeferredHolder<SoundEvent, SoundEvent> WHEEL_SELECT = sound("wheel_select");
 
     // Бандиты и ци-меч.
     public static final DeferredHolder<SoundEvent, SoundEvent> BANDIT_WINDUP = sound("bandit_windup");

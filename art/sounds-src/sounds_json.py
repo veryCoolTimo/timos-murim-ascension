@@ -39,7 +39,6 @@ SUB = {  # id: (ru, en)
     'breakthrough': ('Прорыв на новый ранг', 'Realm breakthrough'),
     'aura_gust': ('Давление ауры', 'Aura pressure'),
     'lock_on': ('Цель захвачена', 'Target locked'),
-    'wheel_select': ('Техника выбрана', 'Technique selected'),
     'bandit_windup': ('Бандит замахивается', 'Bandit winds up'),
     'bow_shot': ('Выстрел из лука', 'Bow fires'),
     'qi_sword_summon': ('Появляется ци-меч', 'Qi sword forms'),

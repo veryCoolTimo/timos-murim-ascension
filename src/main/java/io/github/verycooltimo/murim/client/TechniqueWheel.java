@@ -161,9 +161,6 @@ public final class TechniqueWheel {
             entries = entriesOf(page);
         } else if (!wanted && open) {
             open = false;
-            if (slotHover >= 0 || selected >= 0) {
-                io.github.verycooltimo.murim.client.Sfx.ui(io.github.verycooltimo.murim.registry.ModSounds.WHEEL_SELECT, 0.8F, 1.0F);
-            }
             if (slotHover >= 0 && !entriesOf(slotHover).isEmpty()) {
                 // Слот снаружи: стиль с его последней формой (или отдельная техника, шаг).
                 PacketDistributor.sendToServer(new LoadoutPayloads.Select(slotHover));
