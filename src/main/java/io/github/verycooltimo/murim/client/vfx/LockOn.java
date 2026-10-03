@@ -114,13 +114,13 @@ public final class LockOn {
             set(-1);
             return;
         }
-        // Мягкий доворот камеры: мышь по-прежнему работает, захват лишь тянет взгляд к цели.
+        // Доворот жёстче, ближе к DMC (автор 03.10): за 3–4 тика взгляд на цели; мышь работает, но захват перевешивает.
         if (mc.screen == null && !TechniqueWheel.open()) {
             Vec3 to = t.position().add(0.0D, t.getBbHeight() * 0.6D, 0.0D).subtract(me.getEyePosition());
             float wantYaw = (float) Math.toDegrees(Math.atan2(-to.x, to.z));
             float wantPitch = (float) -Math.toDegrees(Math.atan2(to.y, Math.sqrt(to.x * to.x + to.z * to.z)));
-            me.setYRot(me.getYRot() + Mth.wrapDegrees(wantYaw - me.getYRot()) * 0.18F);
-            me.setXRot(Mth.clamp(me.getXRot() + (wantPitch - me.getXRot()) * 0.12F, -90.0F, 90.0F));
+            me.setYRot(me.getYRot() + Mth.wrapDegrees(wantYaw - me.getYRot()) * 0.5F);
+            me.setXRot(Mth.clamp(me.getXRot() + (wantPitch - me.getXRot()) * 0.35F, -90.0F, 90.0F));
         }
     }
 
