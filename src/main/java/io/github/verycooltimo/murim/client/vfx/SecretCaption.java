@@ -62,14 +62,14 @@ final class SecretCaption {
     private static final float Z_GLYPH = 50.0F;
 
     /** Буквы уже и почти прямые, как леттеринг рефа (наклон отдельных штрихов, блок вертикален). */
-    private static final float SQUEEZE = 0.84F;
-    private static final float SHEAR = -0.07F;
+    private static final float SQUEEZE = 0.94F;
+    private static final float SHEAR = -0.035F;
 
     /** Межбуквенный шаг от родного (Reggae One разрежен для такой узкой надписи). */
-    private static final float TRACK = 0.86F;
+    private static final float TRACK = 0.96F;
     /** Шаг строк в единицах шрифта: глифы Reggae One выше lineHeight=9, иначе строки налезают. */
-    private static final float LINE_SMALL = 10.6F;
-    private static final float LINE_BIG = 10.6F;
+    private static final float LINE_SMALL = 12.6F;
+    private static final float LINE_BIG = 13.2F;
     /** Видимая высота глифа (с выносными) в единицах шрифта — для ножниц и квада фактуры. */
     private static final float GLYPH_H = 11.0F;
 
@@ -82,6 +82,7 @@ final class SecretCaption {
 
     /** Длительность ухода строки, тиков. */
     private static final float ERASE = 4.0F;
+    private static final float[] POP = {0.5F, 1.1F, 1.08F, 1.05F, 1.03F, 1.0F};
     /** Состояние текущей строки для {@link #glyphs}: прогресс ухода и сила удара. */
     private static float eraseNow;
     private static float hitNow;
@@ -128,8 +129,8 @@ final class SecretCaption {
 
         // Раскладка по макету автора 03.10: слева сверху школа мелко в три строки, под ней приём
         // по слову в строку, заметно меньше прежнего (буквы школы ~2 %, приёма ~6 % высоты экрана).
-        float small = Math.max(0.55F, h * 0.021F / GLYPH_H);
-        float big = Math.max(1.2F, h * 0.062F / GLYPH_H);
+        float small = Math.max(0.9F, h * 0.03F / GLYPH_H);
+        float big = Math.max(1.6F, h * 0.085F / GLYPH_H);
         float lh = font.lineHeight;
         float ox = w * 0.065F;
         float oy = h * 0.08F;
@@ -153,10 +154,11 @@ final class SecretCaption {
         }
         float blockH = y;
 
-        // Появление (автор 03.10, «как в AE»): три кадра скачком — масштаб 30 → 110 → 100 %,
+        // Появление (автор 03.10, «как в AE»): кадрами скачком по POP,
         // прозрачность вместе с ним; без плавных переходов.
+        // 03.10 автор: 50 → 110 → 108 → 105 → 103 → 100 % — плавнее возвращается.
         int frame = (int) age;
-        float pop = frame <= 0 ? 0.3F : frame == 1 ? 1.1F : 1.0F;
+        float pop = frame < POP.length ? POP[Math.max(0, frame)] : 1.0F;
         float alpha = frame <= 0 ? 0.45F : 1.0F;
         g.pose().pushPose();
         g.pose().translate(ox, oy + blockH * 0.5F, 0.0F);
