@@ -1576,7 +1576,7 @@ public final class FootworkVfx {
                 buffers.endBatch(pt);
             }
             // Силуэты — последними: они пишут глубину и иначе закрыли бы ленты, проходящие сквозь них.
-            if (!GHOSTS.isEmpty() || !SHADOWS.isEmpty()) {
+            if (!GHOSTS.isEmpty() || !SHADOWS.isEmpty() || !RUNS.isEmpty()) {
                 ghosts(mc, poseStack, buffers, now, partial);
             }
         } finally {
@@ -1836,6 +1836,24 @@ public final class FootworkVfx {
                 float yaw = Mth.rotLerp(partial, p.yBodyRotO, p.yBodyRot);
                 float pulse = 0.18F + 0.04F * Mth.sin(now * 0.35F) + 0.006F * en.getValue().layer;
                 drawModel(model, poseStack, buffers, null, at, yaw, p.isCrouching(), 1.02F, pulse, hex(0xCFE6DD));
+            }
+            // Шаг молнии: тело светится голубым — плотная оболочка и мягкий второй слой «глоу»
+            // (автор 03.10: «добавь свечение самого персонажа и чуть-чуть глоу»).
+            for (Map.Entry<Integer, RunTrail> en : RUNS.entrySet()) {
+                RunTrail r = en.getValue();
+                if (r.family == HUASHAN || r.layer < 2 || !(mc.level.getEntity(en.getKey()) instanceof AbstractClientPlayer p)) {
+                    continue;
+                }
+                if (p == mc.getCameraEntity() && mc.options.getCameraType().isFirstPerson()) {
+                    continue;
+                }
+                Vec3 at = new Vec3(Mth.lerp(partial, p.xo, p.getX()), Mth.lerp(partial, p.yo, p.getY()), Mth.lerp(partial, p.zo, p.getZ()));
+                float yaw = Mth.rotLerp(partial, p.yBodyRotO, p.yBodyRot);
+                float ramp = Mth.clamp((now - r.startTick) / 10.0F, 0.0F, 1.0F);
+                float flick = 0.85F + 0.15F * Mth.sin(now * 1.7F);
+                drawModel(model, poseStack, buffers, null, at, yaw, p.isCrouching(), 1.03F, 0.28F * ramp * flick, RUN_BLUE);
+                drawModel(model, poseStack, buffers, null, at, yaw, p.isCrouching(), 1.1F, 0.12F * ramp * flick, hex(0xA9E4FF));
+                drawModel(model, poseStack, buffers, null, at, yaw, p.isCrouching(), 1.2F, 0.05F * ramp, hex(0xA9E4FF));
             }
             for (Ghost g : GHOSTS) {
                 float t = (now - g.born()) / g.life();
