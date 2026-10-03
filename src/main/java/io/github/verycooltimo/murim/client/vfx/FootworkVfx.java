@@ -207,6 +207,9 @@ public final class FootworkVfx {
         final float spin;
         float angle;
         int age = -1;
+        float[] rgb = INK;
+        /** Хлопья испарения: без тяжести, поднимаются и вьются. */
+        boolean vapor;
 
         Shard(Vec3 pos, Vec3 vel, float born, float life, double size) {
             this.pos = pos;
@@ -218,6 +221,12 @@ public final class FootworkVfx {
             this.spin = (RNG.nextFloat() - 0.5F) * 0.9F;
             this.angle = RNG.nextFloat() * 6.28F;
         }
+
+        Shard vapor(VfxColour c) {
+            this.vapor = true;
+            this.rgb = new float[]{c.red(), c.green(), c.blue()};
+            return this;
+        }
     }
 
     /**
@@ -225,7 +234,7 @@ public final class FootworkVfx {
      * шага); null — плоский бело-нефритовый силуэт (Бог Ветров).
      */
     private record Ghost(int entityId, PartPose[] pose, ResourceLocation skin, Vec3 pos, float yaw, boolean crouch,
-                         float born, float life, float alpha, VfxColour colour) {
+                         float born, float life, float alpha, VfxColour colour, float vapor, Vec3 drift) {
     }
 
     /** Звёздная вспышка: острые неравные лучи из точки, длиннее по направлению {@code dir}, без ореола. */
@@ -443,15 +452,40 @@ public final class FootworkVfx {
         Vec3 d = offset.normalize();
         Vec3 side = new Vec3(-d.z, 0.0D, d.x);
         double len = Math.min(1.8D, offset.length());
-        // Срез — одной чертой через прежнее место по диагонали: от плеча к колену, вдоль ухода.
         // Срез — по пути центра корпуса, чуть наклонён к прибытию: уход тела, а не выпад клинка.
         Vec3 a = from.subtract(d.scale(0.4D)).add(0.0D, 1.1D, 0.0D);
         Vec3 b = from.add(d.scale(len)).add(0.0D, 0.85D, 0.0D);
         RIBBONS.add(new Ribbon(line(a, b, 14, Vec3.ZERO), now, 0.3F, 0.7F, 1.2F, 0.035D + 0.002D * layer, hex(0xF2FAF7), WHITE,
                 false, 1.0F, Vec3.ZERO));
         dust(from, d.scale(-1.0D), 3 + layer / 4, now, 0.5D);
-        if (layer >= 2 && entity instanceof AbstractClientPlayer player) {
-            ghost(player, from, 0.0F, 4.0F, 0.26F + 0.01F * layer, JADE, false);
+        // Миг: тело на старте рассыпается — силуэт испаряется хлопьями, которые сдувает вслед уходу
+        // (автор 03.10: «нужен VFX»; 03_wind — исчезновение с остаточным силуэтом).
+        if (entity instanceof AbstractClientPlayer player) {
+            float rate = 2.0F + 0.6F * layer;
+            ghost(player, from, player.yBodyRot, 0.0F, 6.0F, 0.3F + 0.01F * layer, JADE, false, layer >= 2 ? rate : 0.0F,
+                    d.scale(0.05D));
+            if (layer >= 6) {
+                ghost(player, from.add(offset.scale(0.5D)), player.yBodyRot, 1.0F, 4.0F, 0.18F, WHITE, false, rate * 0.5F,
+                        d.scale(0.04D));
+            }
+        }
+        // Мгновенный выброс хлопьев из корпуса — «исчез».
+        for (int i = 0; i < 6 + 2 * layer; i++) {
+            Vec3 at = from.add((RNG.nextDouble() - 0.5D) * 0.5D, 0.2D + 1.6D * RNG.nextDouble(), (RNG.nextDouble() - 0.5D) * 0.5D);
+            Vec3 v = at.subtract(from.add(0.0D, 1.0D, 0.0D)).normalize().scale(0.03D + 0.04D * RNG.nextDouble()).add(d.scale(0.08D));
+            SHARDS.add(new Shard(at, v, now, 8.0F + RNG.nextFloat() * 6.0F, 0.03D + 0.03D * RNG.nextDouble())
+                    .vapor(RNG.nextBoolean() ? JADE : WHITE));
+        }
+        if (layer >= 3) {
+            // Кольцо ветра на месте прибытия: короткие штрихи по окружности, закручены.
+            Vec3 end = from.add(offset);
+            for (int i = 0; i < 4 + layer / 2; i++) {
+                double th = i * Math.PI * 2.0D / (4 + layer / 2) + RNG.nextDouble() * 0.3D;
+                Vec3 o = new Vec3(Math.cos(th), 0.0D, Math.sin(th));
+                SPARKS.add(new Spark(end.add(o.scale(0.5D)).add(0.0D, 0.15D + 0.6D * RNG.nextDouble(), 0.0D),
+                        new Vec3(-o.z, 0.0D, o.x).scale(0.14D).add(o.scale(0.03D)), now + 3.0F, 5.0F, 0.45D, 0.018D,
+                        RNG.nextBoolean() ? WHITE : JADE));
+            }
         }
         if (layer >= 5) {
             // Кольцо сорванного воздуха у стоп (01_wind): серые клубы расходятся по кругу.
@@ -535,8 +569,29 @@ public final class FootworkVfx {
                 }
             }
         }
-        if (layer >= 5 && entity instanceof AbstractClientPlayer player) {
-            ghost(player, from, 0.0F, 3.0F, 0.2F, WHITE, false);
+        // Испарение и остаточный образ (автор 03.10): на старте белый силуэт рассыпается тёмными и
+        // светлыми хлопьями, которые сдувает по ходу прорыва; с 3-го слоя ещё два образа по пути —
+        // рождаются, когда тело их проходит, и сгорают за 5 тиков (03_wind: копии вдоль маршрута).
+        if (entity instanceof AbstractClientPlayer player) {
+            float rate = 3.0F + 0.8F * layer;
+            ghost(player, from, player.yBodyRot, 0.0F, 8.0F, 0.32F, WHITE, false, rate, d.scale(0.07D));
+            if (layer >= 3) {
+                for (double sAt : new double[]{0.35D, 0.7D}) {
+                    float when = now + (float) (draw * timeOf(sAt));
+                    ghost(player, from.add(offset.scale(sAt)), player.yBodyRot, when - now, 5.0F, 0.2F, JADE, false,
+                            rate * 0.6F, d.scale(0.06D));
+                }
+            }
+        }
+        // Тело само «испаряется» на ходу: тёмные и светлые хлопья срываются там, где оно проходит.
+        for (int i = 0; i < 10 + 3 * layer; i++) {
+            double u = RNG.nextDouble();
+            float at = now + (float) (draw * timeOf(u));
+            Vec3 p = from.lerp(from.add(offset.scale(0.92D)), u).add((RNG.nextDouble() - 0.5D) * 0.5D, 0.2D + 1.5D * RNG.nextDouble(),
+                    (RNG.nextDouble() - 0.5D) * 0.5D);
+            Vec3 v = d.scale(-0.03D - 0.03D * RNG.nextDouble()).add(0.0D, 0.015D, 0.0D);
+            SHARDS.add(new Shard(p, v, at, 10.0F + RNG.nextFloat() * 6.0F, 0.03D + 0.04D * RNG.nextDouble())
+                    .vapor(RNG.nextFloat() < 0.55F ? hex(0x2B2F33) : WHITE));
         }
     }
 
@@ -722,7 +777,12 @@ public final class FootworkVfx {
             }
             s.prev = s.pos;
             s.age++;
-            s.vel = s.vel.scale(0.9D).add(0.0D, -0.012D, 0.0D);
+            if (s.vapor) {
+                double t = s.age * 0.35D + s.spin * 7.0D;
+                s.vel = s.vel.scale(0.9D).add(Math.sin(t) * 0.004D, 0.0035D, Math.cos(t * 1.2D) * 0.004D);
+            } else {
+                s.vel = s.vel.scale(0.9D).add(0.0D, -0.012D, 0.0D);
+            }
             s.pos = s.pos.add(s.vel);
             s.angle += s.spin;
         }
@@ -738,6 +798,21 @@ public final class FootworkVfx {
         }
         SPARKS.removeIf(k -> k.age > k.life);
         GHOSTS.removeIf(g -> now > g.born + g.life + 1.0F);
+        for (Ghost g : GHOSTS) {
+            float t = (now - g.born()) / g.life();
+            if (g.vapor() <= 0.0F || t < 0.0F || t > 1.0F) {
+                continue;
+            }
+            // Испарение копии: хлопья отрываются по всему силуэту, всё реже к концу.
+            float rate = g.vapor() * (1.0F - t * 0.7F);
+            int k = (int) rate + (RNG.nextFloat() < rate - (int) rate ? 1 : 0);
+            for (int i = 0; i < k; i++) {
+                Vec3 at = g.pos().add((RNG.nextDouble() - 0.5D) * 0.55D, 0.1D + 1.7D * RNG.nextDouble(), (RNG.nextDouble() - 0.5D) * 0.55D);
+                SHARDS.add(new Shard(at, g.drift().add((RNG.nextDouble() - 0.5D) * 0.02D, 0.01D + 0.015D * RNG.nextDouble(),
+                        (RNG.nextDouble() - 0.5D) * 0.02D), now, 9.0F + RNG.nextFloat() * 6.0F, 0.025D + 0.03D * RNG.nextDouble())
+                        .vapor(RNG.nextFloat() < 0.6F ? g.colour() : WHITE));
+            }
+        }
         FLASHES.removeIf(f -> now > f.born + f.life + 1.0F);
         tickRuns(mc);
         tickShadows(mc);
@@ -818,7 +893,7 @@ public final class FootworkVfx {
                 }
                 // Вытягивается с разгоном: 3 блока на старте → до 12 через секунду.
                 double ramp = Mth.clamp((now - r.startTick) / 20.0D, 0.0D, 1.0D);
-                double maxLen = (3.0D + (4.0D + r.layer * 0.7D) * ramp) * Mth.clamp(speed / 0.45D, 0.5D, 1.3D);
+                double maxLen = (3.0D + (4.0D + r.layer * 0.7D) * ramp) * Mth.clamp(speed / 0.45D, 0.5D, 1.9D);
                 trimLength(r.corridor, maxLen);
                 trim(r.corridor, 30);
                 int age = now - r.startTick;
@@ -883,6 +958,26 @@ public final class FootworkVfx {
                             8.0F + RNG.nextFloat() * 3.0F, 0.045D + 0.002D * s.layer, 0.48F, 0.5F, true));
                 }
             }
+            // Тело испаряется: каждый тик с силуэта срываются бледные хлопья и уходят вверх-назад
+            // (автор 03.10: «ты должен прям испаряться красиво»).
+            Vec3 backDrift = step.lengthSqr() > 1.0E-4D ? step.normalize().scale(-0.04D) : Vec3.ZERO;
+            for (int i = 0; i < 1 + s.layer / 3; i++) {
+                Vec3 at = pos.add((RNG.nextDouble() - 0.5D) * 0.55D, 0.1D + 1.7D * RNG.nextDouble(), (RNG.nextDouble() - 0.5D) * 0.55D);
+                SHARDS.add(new Shard(at, backDrift.add(0.0D, 0.012D, 0.0D), now, 10.0F + RNG.nextFloat() * 6.0F,
+                        0.025D + 0.03D * RNG.nextDouble()).vapor(RNG.nextFloat() < 0.5F ? hex(0xCFE6DD) : hex(0x9AA6A8)));
+            }
+            // «Ты одновременно повсюду»: с 3-го слоя вокруг возникают копии в разных местах и позах,
+            // стоят миг и испаряются (11_wind — множество положений одной фигуры).
+            int every = s.layer >= 5 ? 5 : 8;
+            long clones = GHOSTS.stream().filter(g -> g.entityId() == e.getId() && g.vapor() > 0.0F
+                    && clientTicks - g.born() < g.life()).count();
+            if (s.layer >= 3 && now % every == 0 && clones < 2 + s.layer / 3 && e instanceof AbstractClientPlayer clonePlayer) {
+                double th = RNG.nextDouble() * Math.PI * 2.0D;
+                double rr = 1.5D + 2.0D * RNG.nextDouble();
+                Vec3 at = pos.add(Math.cos(th) * rr, 0.0D, Math.sin(th) * rr);
+                ghost(clonePlayer, at, RNG.nextFloat() * 360.0F, 0.0F, 12.0F, 0.3F, hex(0xCFE6DD), false, 3.0F,
+                        new Vec3(0.0D, 0.01D, 0.0D));
+            }
             // Силуэт «дымится»: мелкие частицы обтекают тело и уходят вверх-назад.
             if (s.layer >= 2 && now % 4 == 0) {
                 double th = RNG.nextDouble() * Math.PI * 2.0D;
@@ -901,7 +996,8 @@ public final class FootworkVfx {
             if (s.layer >= 3 && s.dirs.size() == 7 && dir.dot(s.dirs.peekFirst()) < Math.cos(Math.toRadians(20.0D))
                     && now - s.lastGhost >= 6 && alive < 2 && e instanceof AbstractClientPlayer player) {
                 // Копия стоит на 0,25 блока позади по прежнему ходу — поза задержалась на старом месте.
-                ghost(player, pos.subtract(s.dirs.peekFirst().scale(0.25D)), 0.0F, 6.0F, 0.2F, hex(0xA4B5B5), false);
+                ghost(player, pos.subtract(s.dirs.peekFirst().scale(0.25D)), player.yBodyRot, 0.0F, 8.0F, 0.24F, hex(0xA4B5B5), false,
+                        2.5F, new Vec3(0.0D, 0.01D, 0.0D));
                 s.lastGhost = now;
             }
         }
@@ -963,6 +1059,15 @@ public final class FootworkVfx {
     /** Застывшая копия текущей позы игрока. */
     private static void ghost(AbstractClientPlayer player, Vec3 pos, float delay, float life, float alpha, VfxColour colour,
                               boolean skin) {
+        ghost(player, pos, player.yBodyRot, delay, life, alpha, colour, skin, 0.0F, Vec3.ZERO);
+    }
+
+    /**
+     * Копия позы, которая испаряется: каждый тик из её объёма отрываются {@code vapor} хлопьев
+     * (меньше по мере угасания) и уходят по {@code drift} вверх — «испаряешься» (автор 03.10).
+     */
+    private static void ghost(AbstractClientPlayer player, Vec3 pos, float yaw, float delay, float life, float alpha, VfxColour colour,
+                              boolean skin, float vapor, Vec3 drift) {
         Minecraft mc = Minecraft.getInstance();
         if (!(mc.getEntityRenderDispatcher().getRenderer(player) instanceof PlayerRenderer renderer)) {
             return;
@@ -972,8 +1077,8 @@ public final class FootworkVfx {
         for (int i = 0; i < parts.length; i++) {
             pose[i] = parts[i].storePose();
         }
-        GHOSTS.add(new Ghost(player.getId(), pose, skin ? player.getSkin().texture() : null, pos, player.yBodyRot,
-                player.isCrouching(), clientTicks + delay, life, alpha, colour == null ? H_SURFACE : colour));
+        GHOSTS.add(new Ghost(player.getId(), pose, skin ? player.getSkin().texture() : null, pos, yaw,
+                player.isCrouching(), clientTicks + delay, life, alpha, colour == null ? H_SURFACE : colour, vapor, drift));
     }
 
     private static ModelPart[] parts(PlayerModel<?> m) {
@@ -1042,7 +1147,7 @@ public final class FootworkVfx {
                     }
                     float pt = (s.age + partial) / s.life;
                     shard(c, pose, camera, s.prev.lerp(s.pos, partial), s.size * (1.0D - 0.4D * pt), s.angle + s.spin * partial,
-                            0.95F * Mth.clamp((1.0F - pt) / 0.35F, 0.0F, 1.0F));
+                            (s.vapor ? 0.8F : 0.95F) * Mth.clamp((1.0F - pt) / 0.35F, 0.0F, 1.0F), s.rgb);
                 }
                 buffers.endBatch(sh);
             }
@@ -1306,7 +1411,9 @@ public final class FootworkVfx {
                     parts[i].loadPose(g.pose()[i]);
                 }
                 // Держится чётким до середины жизни и гаснет — силуэт, не туман.
-                float a = g.alpha() * (t < 0.4F ? 1.0F : (float) Math.pow((1.0F - t) / 0.6F, 1.3D));
+                float a = g.alpha() * (t < 0.4F ? 1.0F : (float) Math.pow((1.0F - t) / 0.6F, 1.3D))
+                        // Копия у самой камеры гаснет — не закрывает экран.
+                        * (float) Mth.clamp((g.pos().add(0.0D, 1.0D, 0.0D).distanceTo(mc.gameRenderer.getMainCamera().getPosition()) - 1.5D) / 2.0D, 0.0D, 1.0D);
                 drawModel(model, poseStack, buffers, g.skin(), g.pos(), g.yaw(), g.crouch(), 1.0F, a, g.colour());
                 for (int i = 0; i < parts.length; i++) {
                     parts[i].loadPose(saved[i]);
@@ -1438,7 +1545,8 @@ public final class FootworkVfx {
     }
 
     /** Тёмный обрывок: ромб-осколок к камере, вытянутый вдвое. */
-    private static void shard(VertexConsumer c, PoseStack.Pose pose, Vec3 camera, Vec3 centre, double size, float angle, float alpha) {
+    private static void shard(VertexConsumer c, PoseStack.Pose pose, Vec3 camera, Vec3 centre, double size, float angle, float alpha,
+                              float[] rgb) {
         if (alpha <= 0.0F) {
             return;
         }
@@ -1456,10 +1564,10 @@ public final class FootworkVfx {
         Vec3 b = centre.add(across.scale(size * 0.45D));
         Vec3 d = centre.subtract(along.scale(size * 0.9D));
         Vec3 e = centre.subtract(across.scale(size * 0.35D));
-        VfxDraw.vertex(c, pose, a, f, 0.0F, 0.0F, alpha, INK[0], INK[1], INK[2]);
-        VfxDraw.vertex(c, pose, b, f, 1.0F, 0.0F, alpha, INK[0], INK[1], INK[2]);
-        VfxDraw.vertex(c, pose, d, f, 1.0F, 1.0F, alpha, INK[0], INK[1], INK[2]);
-        VfxDraw.vertex(c, pose, e, f, 0.0F, 1.0F, alpha, INK[0], INK[1], INK[2]);
+        VfxDraw.vertex(c, pose, a, f, 0.0F, 0.0F, alpha, rgb[0], rgb[1], rgb[2]);
+        VfxDraw.vertex(c, pose, b, f, 1.0F, 0.0F, alpha, rgb[0], rgb[1], rgb[2]);
+        VfxDraw.vertex(c, pose, d, f, 1.0F, 1.0F, alpha, rgb[0], rgb[1], rgb[2]);
+        VfxDraw.vertex(c, pose, e, f, 0.0F, 1.0F, alpha, rgb[0], rgb[1], rgb[2]);
     }
 
     private static VfxColour hex(int c) {

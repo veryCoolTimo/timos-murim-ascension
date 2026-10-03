@@ -87,6 +87,10 @@ public final class FootworkService {
 
     private static final ResourceLocation SNEAK_SPEED = id("shadow_sneak");
 
+    /** Шаг Молнии: разгон до {@code WIND_TOP} × крейсерская за {@code WIND_RAMP} тиков. */
+    private static final double WIND_TOP = 1.6D;
+    private static final int WIND_RAMP = 20;
+
     /** Тиков без спринта на земле подряд, после которых бег гаснет. */
     private static final int GRACE = 6;
     /** Тиков подряд на настоящей опоре, после которых возвращаются стена и поворот в воздухе. */
@@ -222,7 +226,8 @@ public final class FootworkService {
                                 int input, Vec3 forward, Vec3 move, boolean sideOrBack) {
         switch (mode) {
             case "run" -> {
-                if ((input & PASSIVE) != 0 && isRunning(player)) {
+                // Автобег по спринту не гасит Тень: в Тени бегают (автор 03.10: «не надо приседать, ты бегать должен»).
+                if ((input & PASSIVE) != 0 && (isRunning(player) || inShadow(player))) {
                     return;
                 }
                 if (isRunning(player)) {
@@ -551,6 +556,12 @@ public final class FootworkService {
             player.setData(ModAttachments.PROFILE, profile.withCirculating(profile.circulating() - cost));
             r[RUN_LEFT]--;
             r[PAID]++;
+            if (r[FAMILY] == FootworkFamily.WIND_GOD.ordinal() && r[PAID] <= WIND_RAMP) {
+                // Шаг Молнии разгоняется за секунду до ×1,6 крейсерской (автор 03.10: «нужно быстрее»).
+                double k = 1.0D + (WIND_TOP - 1.0D) * r[PAID] / (double) WIND_RAMP;
+                modify(player, Attributes.MOVEMENT_SPEED, SPEED, TraverseRules.speed(tier) * k / TraverseRules.VANILLA_SPRINT - 1.0D,
+                        AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+            }
             if (r[PAID] % 20 == 0) {
                 // Освоение: одно событие практики на секунду реального бега.
                 ProfileNetwork.sync(player);
@@ -567,7 +578,7 @@ public final class FootworkService {
     }
 
     /**
-     * Тень держится, пока игрок приседает на земле, не спринтует, есть ци и время; касание
+     * Тень держится своё время (бег разрешён с 03.10), пока есть ци; автотень — пока зажат присед; касание
      * поддерживаемого моба ближе 1,5 блока раскрывает.
      */
     private static void shadowTick(ServerPlayer player, int[] n, long now) {
@@ -579,7 +590,8 @@ public final class FootworkService {
                 FootworkService::supported).isEmpty();
         // Тень — форма на кольце (03.10): держится своё время, приседать не нужно; гаснет по
         // времени, повторным R, бегом, контактом или когда кончилась ци.
-        if (r[RUN_LEFT] <= 0 || r[SNEAK_BOUND] == 1 && !player.isShiftKeyDown() || player.isSprinting() || now - r[LAST_GROUND] > 2
+        // Спринт Тень не снимает: с 03.10 в Тени бегают, а не крадутся.
+        if (r[RUN_LEFT] <= 0 || r[SNEAK_BOUND] == 1 && !player.isShiftKeyDown() || now - r[LAST_GROUND] > 2
                 || profile.circulating() < cost || contact || !player.isAlive() || player.isPassenger()) {
             player.setData(ModAttachments.TRAVERSE, r);
             stop(player);
