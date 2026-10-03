@@ -72,7 +72,7 @@
   "tier": "secret",
   "requires": [
     {
-      "technique": "murim:twenty_four_plum_rainfall",
+      "technique": "murim:twenty_four_plum_scatter",
       "layer": 3
     }
   ]
