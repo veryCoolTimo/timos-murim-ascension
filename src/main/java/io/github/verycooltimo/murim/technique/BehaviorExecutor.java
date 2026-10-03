@@ -666,8 +666,8 @@ public final class BehaviorExecutor {
             for (LivingEntity t : candidates(player, player.getBoundingBox().inflate(RushRules.RANGE + 0.5D))) {
                 Vec3 to = io.github.verycooltimo.murim.combat.TargetLock.centre(t).subtract(player.getEyePosition());
                 double d = to.length();
-                if (t instanceof net.minecraft.world.entity.decoration.ArmorStand || d < 1.0D || d > RushRules.RANGE
-                        || to.normalize().dot(look) < cone || !player.hasLineOfSight(t)) {
+                if (t instanceof net.minecraft.world.entity.decoration.ArmorStand || d > RushRules.RANGE
+                        || !io.github.verycooltimo.murim.combat.TargetLock.inCone(player, t, 30.0D) || !player.hasLineOfSight(t)) {
                     continue;
                 }
                 if (d < best) {
@@ -826,7 +826,7 @@ public final class BehaviorExecutor {
                 double d = to.length();
                 // Стойки для брони — не противники (на стенде они ближе цели и перехватывали выбор).
                 if (t instanceof net.minecraft.world.entity.decoration.ArmorStand
-                        || d < 0.5D || d > 12.0D || to.normalize().dot(look) < cone || !player.hasLineOfSight(t)) {
+                        || d > 12.0D || !io.github.verycooltimo.murim.combat.TargetLock.inCone(player, t, 30.0D) || !player.hasLineOfSight(t)) {
                     continue;
                 }
                 if (d < best) {
