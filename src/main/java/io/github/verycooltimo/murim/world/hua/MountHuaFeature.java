@@ -27,8 +27,12 @@ import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConf
  */
 public final class MountHuaFeature extends Feature<NoneFeatureConfiguration> {
 
-    public MountHuaFeature(Codec<NoneFeatureConfiguration> codec) {
+    /** False: the terrain pass (raw_generation). True: the cleanup pass (top_layer_modification). */
+    private final boolean cleanup;
+
+    public MountHuaFeature(Codec<NoneFeatureConfiguration> codec, boolean cleanup) {
         super(codec);
+        this.cleanup = cleanup;
     }
 
     @Override
@@ -45,6 +49,10 @@ public final class MountHuaFeature extends Feature<NoneFeatureConfiguration> {
         ChunkPos chunkPos = new ChunkPos(context.origin());
         if (!site.touchesChunk(chunkPos.x, chunkPos.z)) {
             return false;
+        }
+        if (cleanup) {
+            MountHuaChunkWriter.cleanup(level, level.getChunk(chunkPos.x, chunkPos.z), site);
+            return true;
         }
         long start = System.nanoTime();
         boolean wrote = new MountHuaChunkWriter(level, level.getChunk(chunkPos.x, chunkPos.z), site).write();

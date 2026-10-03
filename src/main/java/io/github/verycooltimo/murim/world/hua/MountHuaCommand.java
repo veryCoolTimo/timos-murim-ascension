@@ -40,7 +40,7 @@ import net.neoforged.neoforge.event.tick.ServerTickEvent;
 public final class MountHuaCommand {
 
     /** Places that {@code tp} knows besides the zones: local (u, v) and an extra height. */
-    private static final List<String> PLACES = List.of("view", "view_ne", "view_east", "view_west",
+    private static final List<String> PLACES = List.of("view", "aerial", "aerial_ne", "aerial_sw", "view_ne", "view_east", "view_west",
             "summit", "north_peak", "golden_lock", "ridge", "gorge");
 
     private MountHuaCommand() {
@@ -60,6 +60,10 @@ public final class MountHuaCommand {
                                 .then(Commands.argument("place", StringArgumentType.word())
                                         .suggests((c, b) -> SharedSuggestionProvider.suggest(names, b))
                                         .executes(c -> teleport(c, StringArgumentType.getString(c, "place")))))
+                        .then(Commands.literal("probe")
+                                .then(Commands.argument("place", StringArgumentType.word())
+                                        .suggests((c, b) -> SharedSuggestionProvider.suggest(names, b))
+                                        .executes(c -> probe(c, StringArgumentType.getString(c, "place")))))
                         .then(Commands.literal("pregen").executes(c -> pregen(c, 0))
                                 .then(Commands.argument("margin", IntegerArgumentType.integer(0, 1024))
                                         .executes(c -> pregen(c, IntegerArgumentType.getInteger(c, "margin")))))));
@@ -94,6 +98,42 @@ public final class MountHuaCommand {
                             Component.literal("/murim mounthua tp " + place)))));
         }
         context.getSource().sendSuccess(() -> line, false);
+        return 1;
+    }
+
+    /** Dev check: planned vs actual ground height around a place (the column surface heightmap). */
+    private static int probe(CommandContext<CommandSourceStack> context, String place) {
+        MountHuaSite site = site(context);
+        if (site == null) {
+            return 0;
+        }
+        double[] t = viewpoint(site, place);
+        if (t == null) {
+            return 0;
+        }
+        ServerLevel level = context.getSource().getServer().overworld();
+        StringBuilder out = new StringBuilder(place + ":");
+        for (int dz = -8; dz <= 8; dz += 4) {
+            for (int dx = -8; dx <= 8; dx += 4) {
+                int x = (int) Math.floor(t[0]) + dx;
+                int z = (int) Math.floor(t[2]) + dz;
+                level.getChunk(x >> 4, z >> 4);
+                int ground = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING, x, z) - 1;
+                double plan = site.worldY(site.shape().height(site.localU(x + 0.5, z + 0.5), site.localV(x + 0.5, z + 0.5)));
+                out.append(String.format(" [%d,%d g%d p%.0f %s]", x, z, ground, plan,
+                        level.getBlockState(new net.minecraft.core.BlockPos(x, ground, z)).getBlock().getName().getString()));
+            }
+        }
+        int cx = (int) Math.floor(t[0]);
+        int cz = (int) Math.floor(t[2]);
+        out.append(String.format(" | blend %.2f column:", site.shape().blend(site.localU(cx + 0.5, cz + 0.5),
+                site.localV(cx + 0.5, cz + 0.5))));
+        for (int y = 60; y < 120; y++) {
+            String n = level.getBlockState(new net.minecraft.core.BlockPos(cx, y, cz)).getBlock().getDescriptionId();
+            out.append(' ').append(y).append('=').append(n.substring(n.lastIndexOf('.') + 1));
+        }
+        MurimMod.LOGGER.info("Mount Hua probe {}", out);
+        context.getSource().sendSuccess(() -> Component.literal(out.toString()), false);
         return 1;
     }
 
@@ -139,24 +179,29 @@ public final class MountHuaCommand {
             return new double[] {zone[0] + 0.5, zone[1], zone[2] + 0.5, yawTowards(site, 0, 1), 0};
         }
         return switch (place) {
-            // Views from the ground (the client builds terrain around a flying spectator poorly).
-            case "view" -> surface(site, -30, -480, 0.05, 1, -12);
-            case "view_ne" -> surface(site, 330, -420, -0.8, 1, -10);
-            case "view_east" -> ground(site, 175, 60, -1, 0.1);
-            case "view_west" -> ground(site, -175, 85, 1, 0);
-            case "summit" -> ground(site, 5, 125, 0, -1);
-            case "north_peak" -> ground(site, -10, -335, 0, 1);
-            case "golden_lock" -> ground(site, 22, -80, 0, 1);
-            case "ridge" -> ground(site, 8, -262, -0.2, 1);
-            case "gorge" -> ground(site, -108, -400, 0.15, 1);
+            // Views from the ground (the client builds terrain around a flying spectator poorly);
+            // height = top of the ground or canopy there + offset, resolved on teleport.
+            case "view" -> surface(site, -30, -480, 0.05, 1, -12, 14);
+            case "aerial" -> surface(site, -30, -500, 0.05, 1, 4, 70);
+            case "aerial_ne" -> surface(site, 330, -300, -0.8, 1, 2, 80);
+            case "aerial_sw" -> surface(site, -300, 330, 0.7, -1, 2, 80);
+            case "view_ne" -> surface(site, 330, -420, -0.8, 1, -8, 24);
+            case "view_east" -> surface(site, 175, 60, -1, 0.1, 6, 4);
+            case "view_west" -> surface(site, -175, 85, 1, 0, 6, 4);
+            case "summit" -> surface(site, 5, 125, 0, -1, 14, 4);
+            case "north_peak" -> surface(site, -10, -335, 0, 1, 2, 4);
+            case "golden_lock" -> surface(site, 22, -80, 0, 1, 0, 2);
+            case "ridge" -> surface(site, 8, -262, -0.2, 1, -4, 2);
+            case "gorge" -> surface(site, -108, -400, 0.15, 1, -10, 2);
             default -> null;
         };
     }
 
-    /** On the real ground (vanilla terrain outside the massif): y is resolved on teleport. */
-    private static double[] surface(MountHuaSite site, double u, double v, double lu, double lv, double pitch) {
+    /** On the ground or canopy (+ offset); y is resolved on teleport from the loaded chunk. */
+    private static double[] surface(MountHuaSite site, double u, double v, double lu, double lv, double pitch,
+            double offset) {
         int[] w = site.toWorld(u, v);
-        return new double[] {w[0] + 0.5, Double.NaN, w[1] + 0.5, yawTowards(site, lu, lv), pitch};
+        return new double[] {w[0] + 0.5, Double.NaN, w[1] + 0.5, yawTowards(site, lu, lv), pitch, offset};
     }
 
     private static double[] ground(MountHuaSite site, double u, double v, double lu, double lv) {
@@ -165,11 +210,14 @@ public final class MountHuaCommand {
         return new double[] {w[0] + 0.5, y, w[1] + 0.5, yawTowards(site, lu, lv), 0};
     }
 
-    /** Fills a NaN height with the ground height there (+2): loads the chunk if needed. */
+    /** Fills a NaN height with the ground/canopy height there plus the offset; loads the chunk. */
     public static void resolveSurface(ServerLevel level, double[] target) {
         if (Double.isNaN(target[1])) {
-            target[1] = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING,
-                    (int) Math.floor(target[0]), (int) Math.floor(target[2])) + 2;
+            int x = (int) Math.floor(target[0]);
+            int z = (int) Math.floor(target[2]);
+            level.getChunk(x >> 4, z >> 4);
+            double offset = target.length > 5 ? target[5] : 2;
+            target[1] = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING, x, z) + offset;
         }
     }
 

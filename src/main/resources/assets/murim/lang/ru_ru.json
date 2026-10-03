@@ -394,5 +394,8 @@
   "sign.murim.hua.poles": "Столбы сливы",
   "sign.murim.hua.grove": "Сливовая роща",
   "sign.murim.hua.penance": "Пещера покаяния",
-  "sign.murim.hua.placeholder": "(место стройки)"
+  "sign.murim.hua.placeholder": "(место стройки)",
+  "block.murim.plum_blossom": "Цвет сливы",
+  "block.murim.plum_blossom_pale": "Белый цвет сливы",
+  "block.murim.plum_blossom_red": "Красный цвет сливы"
 }
