@@ -202,9 +202,20 @@ public final class ClientPillState {
         if (finale > 0) {
             finale--;
             // Взрыв как от ТНТ в миг выброса — сильный толчок камеры.
-            if (finaleStorm && finaleRare && FINALE_TICKS - finale == BURST_AGE) {
-                // Сам взрыв (блоки, частицы, звук) делает сервер; здесь — только толчок камеры.
-                CameraShakeHandler.request(1.0F);
+            int fAge = FINALE_TICKS - finale;
+            if (finaleRare) {
+                // Тряска (автор 03.10: «не хватает тряски»): гул земли нарастает при подъёме и входе
+                // энергии, на выбросе — сильный удар; у урагана со взрывом — максимум и дольше.
+                // Ползунок тряски в настройках действует (CameraShakeHandler).
+                if (fAge >= 4 && fAge < BURST_AGE && fAge % 8 == 4) {
+                    float grow = (fAge - 4) / (float) (BURST_AGE - 4);
+                    CameraShakeHandler.quake((finaleStorm ? 0.25F : 0.12F) + (finaleStorm ? 0.35F : 0.2F) * grow, 14);
+                }
+                if (fAge == BURST_AGE) {
+                    // Сам взрыв (блоки, частицы, звук) делает сервер; здесь — удар камеры.
+                    CameraShakeHandler.request(finaleStorm ? 1.0F : 0.6F);
+                    CameraShakeHandler.quake(finaleStorm ? 1.0F : 0.55F, finaleStorm ? 45 : 25);
+                }
             }
         }
         if (flash > 0) {
