@@ -39,7 +39,10 @@ public final class ManualScreen extends Screen {
     private static final float COVER_IN = 5.0F;
     private static final float HOLD = 9.0F;
     private static final float OPEN = 8.0F;
-    private static final float TURN = 5.0F;
+    private static final float TURN = 6.0F;
+    /** После раскрытия обложки быстро пролистываются листы (автор 03.10: «4–5 страниц»). */
+    private static final int RIFFLE = 5;
+    private static final float RIFFLE_EACH = 2.2F;
     /** Печать «Изучить» на правой странице (координаты текстуры 384×256). */
     private static final int SEAL_X = 284;
     private static final int SEAL_Y = 206;
@@ -52,6 +55,7 @@ public final class ManualScreen extends Screen {
     private int page;
     private int ticks;
     private float turnAt = -100.0F;
+    private int turnFrom;
     private int bx;
     private int by;
     private float k;
@@ -81,6 +85,14 @@ public final class ManualScreen extends Screen {
     @Override
     public void tick() {
         ticks++;
+        // Шелест на каждый лист при открытии и на раскрытие обложки.
+        float r = (ticks - COVER_IN - HOLD - OPEN) / RIFFLE_EACH;
+        float rPrev = (ticks - 1 - COVER_IN - HOLD - OPEN) / RIFFLE_EACH;
+        boolean leaf = r >= 0.0F && r < RIFFLE && (int) Math.floor(r) != (int) Math.floor(rPrev);
+        if ((leaf || ticks == (int) (COVER_IN + HOLD)) && minecraft != null) {
+            minecraft.getSoundManager().play(net.minecraft.client.resources.sounds.SimpleSoundInstance.forUI(
+                    net.minecraft.sounds.SoundEvents.BOOK_PAGE_TURN, 0.9F + 0.2F * (ticks % 3) / 2.0F, 0.6F));
+        }
     }
 
     @Override
@@ -89,6 +101,10 @@ public final class ManualScreen extends Screen {
     }
 
     private boolean opened(float t) {
+        return t >= COVER_IN + HOLD + OPEN + RIFFLE * RIFFLE_EACH;
+    }
+
+    private boolean coverDone(float t) {
         return t >= COVER_IN + HOLD + OPEN;
     }
 
@@ -113,7 +129,7 @@ public final class ManualScreen extends Screen {
             g.blit(COVER, (int) spine, 0, 0.0F, 0.0F, PAGE_W, TEX_H, PAGE_W, TEX_H);
             g.setColor(1.0F, 1.0F, 1.0F, 1.0F);
             g.pose().popPose();
-        } else if (!opened(t)) {
+        } else if (!coverDone(t)) {
             // Раскрытие: правая страница видна сразу, обложка «ложится» к корешку, из-за него
             // разворачивается левая страница (сжатие по X вокруг корешка — 2D-поворот).
             float u = Mth.clamp((t - COVER_IN - HOLD) / OPEN, 0.0F, 1.0F);
@@ -136,12 +152,31 @@ public final class ManualScreen extends Screen {
                 spread(g, 0, true, false, mouseX, mouseY);
                 g.pose().popPose();
             }
-        } else {
-            // Перелистывание: новая страница проявляется за TURN тиков.
+        } else if (!opened(t)) {
+            // Пролистывание после раскрытия: листы один за другим срываются справа налево.
             spread(g, 2, true, true, mouseX, mouseY);
+            float r = (t - COVER_IN - HOLD - OPEN) / RIFFLE_EACH;
+            int i = (int) r;
+            leaf(g, r - i, true, -1, mouseX, mouseY);
+        } else {
             float since = t - turnAt;
             if (since >= 0.0F && since < TURN) {
-                g.fill(0, 0, TEX_W, TEX_H, ((int) ((1.0F - since / TURN) * 0xB0) << 24) | 0xE9DDC4);
+                // Перелистывание листом: старая страница гнётся к корешку, новая разворачивается.
+                int now = page;
+                boolean forward = now > turnFrom;
+                float u = since / TURN;
+                u = u * u * (3.0F - 2.0F * u);
+                page = forward ? now : turnFrom;
+                spreadSide(g, forward ? turnFrom : now, true, mouseX, mouseY);
+                spreadSide(g, forward ? now : turnFrom, false, mouseX, mouseY);
+                page = now;
+                if (forward) {
+                    leaf(g, u, false, turnFrom, mouseX, mouseY);
+                } else {
+                    leafBack(g, u, mouseX, mouseY);
+                }
+            } else {
+                spread(g, 2, true, true, mouseX, mouseY);
             }
         }
         g.pose().popPose();
@@ -171,6 +206,81 @@ public final class ManualScreen extends Screen {
             if (pages > 1 && which == 2) {
                 corners(g, mouseX, mouseY);
             }
+        }
+    }
+
+    /** Одна сторона разворота страницы {@code p}: левая (true) или правая. */
+    private void spreadSide(GuiGraphics g, int p, boolean left, int mouseX, int mouseY) {
+        int keep = page;
+        page = p;
+        spread(g, 0, left, !left, mouseX, mouseY);
+        page = keep;
+    }
+
+    /**
+     * Лист вперёд: {@code u} 0…1 — первая половина: правая страница (листа {@code fromPage}, или
+     * чистая бумага при пролистывании) сжимается к корешку и темнеет; вторая — оборот листа
+     * разворачивается слева.
+     */
+    private void leaf(GuiGraphics g, float u, boolean blank, int fromPage, int mouseX, int mouseY) {
+        float spine = PAGE_W;
+        g.pose().pushPose();
+        g.pose().translate(spine, 0.0F, 0.0F);
+        if (u < 0.5F) {
+            float sx = 1.0F - u * 2.0F;
+            g.pose().scale(sx, 1.0F, 1.0F);
+            g.pose().translate(-spine, 0.0F, 0.0F);
+            if (blank) {
+                paper(g, (int) spine, 0.0F);
+            } else {
+                spreadSide(g, fromPage, false, mouseX, mouseY);
+            }
+            shade(g, (int) spine, u * 2.0F);
+        } else {
+            float sx = (u - 0.5F) * 2.0F;
+            g.pose().scale(-sx, 1.0F, 1.0F);
+            g.pose().translate(-spine, 0.0F, 0.0F);
+            paper(g, (int) spine, 0.0F);
+            shade(g, (int) spine, 1.0F - sx);
+        }
+        g.pose().popPose();
+    }
+
+    /** Лист назад: левая страница гнётся к корешку, оборот разворачивается справа. */
+    private void leafBack(GuiGraphics g, float u, int mouseX, int mouseY) {
+        float spine = PAGE_W;
+        g.pose().pushPose();
+        g.pose().translate(spine, 0.0F, 0.0F);
+        if (u < 0.5F) {
+            float sx = 1.0F - u * 2.0F;
+            g.pose().scale(sx, 1.0F, 1.0F);
+            g.pose().translate(-spine, 0.0F, 0.0F);
+            spreadSide(g, turnFrom, true, mouseX, mouseY);
+            shade(g, 0, u * 2.0F);
+        } else {
+            float sx = (u - 0.5F) * 2.0F;
+            g.pose().scale(-sx, 1.0F, 1.0F);
+            g.pose().translate(-spine, 0.0F, 0.0F);
+            paper(g, 0, 0.0F);
+            shade(g, 0, 1.0F - sx);
+        }
+        g.pose().popPose();
+    }
+
+    /** Чистый лист бумаги размером со страницу (пиксельная кромка). */
+    private void paper(GuiGraphics g, int x, float unused) {
+        g.fill(x, 2, x + PAGE_W - 2, TEX_H - 2, 0xFFE9DDC4);
+        g.fill(x, 2, x + PAGE_W - 2, 4, 0xFFDDCDAE);
+        g.fill(x, TEX_H - 4, x + PAGE_W - 2, TEX_H - 2, 0xFFC9B48E);
+        g.fill(x + PAGE_W - 4, 2, x + PAGE_W - 2, TEX_H - 2, 0xFFC9B48E);
+    }
+
+    /** Тень изгиба: чем ближе лист к корешку, тем темнее (ступенями, без размытия). */
+    private void shade(GuiGraphics g, int x, float amount) {
+        int a = (int) (Mth.clamp(amount, 0.0F, 1.0F) * 0x70);
+        a = a / 0x18 * 0x18;
+        if (a > 0) {
+            g.fill(x, 0, x + PAGE_W, TEX_H, a << 24 | 0x2A1E14);
         }
     }
 
@@ -247,7 +357,7 @@ public final class ManualScreen extends Screen {
         }
         if (button == 0 && !opened(ticks)) {
             // Нетерпеливый клик — сразу раскрыть.
-            ticks = (int) (COVER_IN + HOLD + OPEN);
+            ticks = (int) (COVER_IN + HOLD + OPEN + RIFFLE * RIFFLE_EACH);
             return true;
         }
         return super.mouseClicked(mouseX, mouseY, button);
@@ -265,6 +375,7 @@ public final class ManualScreen extends Screen {
     private void turn(int dir) {
         int next = Mth.clamp(page + dir, 0, pages - 1);
         if (next != page) {
+            turnFrom = page;
             page = next;
             turnAt = ticks;
             if (minecraft != null) {
