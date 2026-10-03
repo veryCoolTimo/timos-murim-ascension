@@ -23,6 +23,11 @@ final class ClientPayloadBridge {
         io.github.verycooltimo.murim.client.vfx.WhirlVfx.onTechniqueEvent(payload);
         io.github.verycooltimo.murim.client.vfx.ExecVfx.onTechniqueEvent(payload);
         io.github.verycooltimo.murim.client.vfx.RushVfx.onTechniqueEvent(payload);
+        io.github.verycooltimo.murim.client.vfx.RainVfx.onTechniqueEvent(payload);
+    }
+
+    public static void handleRain(RainPayload payload) {
+        io.github.verycooltimo.murim.client.vfx.RainVfx.onRain(payload);
     }
 
     /**

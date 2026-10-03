@@ -155,5 +155,9 @@
   "form.murim.seven_plum_rush": "Натиск",
   "murim.loadout.forms": "форм %s/%s",
   "technique.murim.seven_plum_basic": "Семь Цветков Сливы: основа",
-  "technique.murim.seven_plum_basic.weakness": "Обычные удары стиля: дальше клинка не достают."
+  "technique.murim.seven_plum_basic.weakness": "Обычные удары стиля: дальше клинка не достают.",
+  "technique.murim.twenty_four_plum_rainfall": "Меч 24 Движений Цветущей Сливы: Ливень",
+  "technique.murim.twenty_four_plum_rainfall.weakness": "Ливень падает с неба: под крышей лепестки не достают. Уйди далеко — иллюзия рассыплется.",
+  "technique.murim.twenty_four_plum.school": "Меч 24 Движений Цветущей Сливы",
+  "technique.murim.twenty_four_plum.rainfall": "Ливень Цветущей Сливы"
 }
