@@ -452,6 +452,29 @@ public final class DevSetupEvents {
             bandit.setYBodyRot(face);
             target = bandit;
         }
+        // MURIM_CAPTURE_ENEMY=disciple — старший ученик Хуашань вызывает игрока на спарринг (секта С0):
+        // MURIM_CAPTURE_SPAR=six,slash,rush — очередь приёмов, MURIM_CAPTURE_SPAR_DELAY — тиков до поклона.
+        io.github.verycooltimo.murim.entity.SectDisciple disciple = null;
+        if ("disciple".equals(enemyKind)) {
+            for (io.github.verycooltimo.murim.entity.SectDisciple old
+                    : level.getEntitiesOfClass(io.github.verycooltimo.murim.entity.SectDisciple.class, area)) {
+                old.discard();
+            }
+            if (level.getServer() != null) {
+                level.getServer().setDifficulty(net.minecraft.world.Difficulty.NORMAL, true);
+                level.getGameRules().getRule(net.minecraft.world.level.GameRules.RULE_DOMOBSPAWNING).set(false, level.getServer());
+                for (net.minecraft.world.entity.monster.Monster m : level.getEntitiesOfClass(net.minecraft.world.entity.monster.Monster.class, area.inflate(32.0D))) {
+                    m.discard();
+                }
+            }
+            disciple = new io.github.verycooltimo.murim.entity.SectDisciple(
+                    io.github.verycooltimo.murim.registry.ModEntities.SECT_DISCIPLE.get(), level);
+            float face = (float) Math.toDegrees(aim) + 180.0F;
+            disciple.setYRot(face);
+            disciple.setYHeadRot(face);
+            disciple.setYBodyRot(face);
+            target = disciple;
+        }
         if ("zombie".equals(System.getenv("MURIM_CAPTURE_ENEMY"))) {
             for (net.minecraft.world.entity.monster.Zombie old
                     : level.getEntitiesOfClass(net.minecraft.world.entity.monster.Zombie.class, area)) {
@@ -487,6 +510,10 @@ public final class DevSetupEvents {
         target.setPos(STAGE_X + 0.5D + lookX * dummyDistance, STAGE_Y + lift,
                       STAGE_Z + 0.5D + lookZ * dummyDistance);
         level.addFreshEntity(target);
+        if (disciple != null && !level.players().isEmpty()) {
+            level.players().get(0).setHealth(level.players().get(0).getMaxHealth());
+            disciple.startSpar(level.players().get(0), (int) envDouble("MURIM_CAPTURE_SPAR_DELAY", 40.0D));
+        }
         // Цель ниже площадки: прорезать над ней яму, иначе пол закрывает её целиком и честная
         // проверка «бьёт вниз» невозможна (техники с прямой видимостью её не видят — и правильно).
         if (lift < 0.0D) {

@@ -45,6 +45,7 @@ public final class ModCreativeTabs {
                 // Враги этапа M1 (автор 03.10: «яйцо призыва во вкладке Мурим»).
                 out.accept(new ItemStack(ModItems.BANDIT_SWORDSMAN_SPAWN_EGG.get()));
                 out.accept(new ItemStack(ModItems.BANDIT_ARCHER_SPAWN_EGG.get()));
+                out.accept(new ItemStack(ModItems.SECT_DISCIPLE_SPAWN_EGG.get()));
             })
             .build());
 

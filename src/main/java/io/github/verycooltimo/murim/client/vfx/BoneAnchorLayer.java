@@ -81,9 +81,14 @@ public class BoneAnchorLayer extends RenderLayer<AbstractClientPlayer, PlayerMod
      * <p>Отсутствие позиции — штатная ситуация: игрок вне поля зрения, в первом лице,
      * невидим. Вызывающий обязан это учитывать и не рисовать эффект вслепую.
      */
-    public static Vec3 position(AbstractClientPlayer player, Bone bone) {
-        Map<Bone, Vec3> bones = POSITIONS.get(player.getUUID());
+    public static Vec3 position(net.minecraft.world.entity.Entity entity, Bone bone) {
+        Map<Bone, Vec3> bones = POSITIONS.get(entity.getUUID());
         return bones == null ? null : bones.get(bone);
+    }
+
+    /** Запись точки кости не-игрока (NPC секты на модели бандита: client/sect/DiscipleRenderer). */
+    public static void put(UUID entity, Bone bone, Vec3 at) {
+        POSITIONS.computeIfAbsent(entity, key -> new HashMap<>()).put(bone, at);
     }
 
     public static void clear() {
