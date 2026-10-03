@@ -96,6 +96,25 @@ public final class QiSwordClient {
                 continue;
             }
             boolean self = p == mc.player && mc.options.getCameraType().isFirstPerson();
+            // Касание земли (реф, кадры 4 и 6): опущенный клинок упирается в пол — всплеск и
+            // разбегающиеся по земле розовые разряды. Только когда рука опущена (нет взмаха).
+            if (!self && p.onGround() && p.getAttackAnim(0.0F) == 0.0F && p.tickCount % 2 == 0) {
+                double yaw = Math.toRadians(p.yBodyRot);
+                double fx = -Math.sin(yaw), fz = Math.cos(yaw);
+                double rx = -Math.cos(yaw), rz = -Math.sin(yaw);
+                Vec3 hit = new Vec3(p.getX() + rx * 0.37D + fx * 1.15D, p.getY() + 0.02D, p.getZ() + rz * 0.37D + fz * 1.15D);
+                net.minecraft.core.BlockPos below = net.minecraft.core.BlockPos.containing(hit.x, hit.y - 0.1D, hit.z);
+                if (!p.level().getBlockState(below).isAir()) {
+                    for (int i = 0; i < 3; i++) {
+                        double ang = p.getRandom().nextDouble() * Math.PI * 2.0D;
+                        p.level().addParticle(new DustParticleOptions(new Vector3f(1.0F, 0.62F, 0.98F), 0.6F),
+                                hit.x, hit.y + 0.05D, hit.z, Math.cos(ang) * 0.12D, 0.01D, Math.sin(ang) * 0.12D);
+                    }
+                    if (p.tickCount % 6 == 0) {
+                        p.level().addParticle(net.minecraft.core.particles.ParticleTypes.ELECTRIC_SPARK, hit.x, hit.y + 0.1D, hit.z, 0.0D, 0.05D, 0.0D);
+                    }
+                }
+            }
             if (p.tickCount % (self ? 7 : 3) != 0) {
                 continue;
             }
@@ -171,7 +190,7 @@ public final class QiSwordClient {
             // (рука опущена — лезвие к земле, как на рефе; рука вперёд — лезвие на противника).
             float time = player.tickCount + partial;
             io.github.verycooltimo.murim.client.vfx.QiBladeRenderer.draw(pose, buffers,
-                    new Vec3(left ? 0.0625D : -0.0625D, 0.66D, -0.02D), new Vec3(0.0D, 0.42D, -1.0D).normalize(), new Vec3(0.0D, -1.0D, 0.0D), 2.0D, time,
+                    new Vec3(left ? 0.0625D : -0.0625D, 0.66D, -0.02D), new Vec3(0.0D, 0.6D, -1.0D).normalize(), new Vec3(0.0D, -1.0D, 0.0D), 2.0D, time,
                     player.getId(), 1.0F);
             pose.popPose();
         }

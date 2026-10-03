@@ -24,11 +24,13 @@ public final class QiBladeRenderer {
     /** Сегментов вдоль клинка. */
     private static final int SEGMENTS = 14;
 
-    // Цвета рефа: сердцевина почти белая, середина сиренево-розовая, пламя фиолетовое (#9A4DFF).
-    private static final float[] CORE = {1.0F, 0.96F, 1.0F};
-    private static final float[] MID = {0.78F, 0.52F, 1.0F};
-    private static final float[] FLAME = {0.60F, 0.30F, 1.0F};
-    private static final float[] DEEP = {0.42F, 0.16F, 0.95F};
+    // Цвета рефа (DESCRIPTIONS.md, кадры 4–5): белое ядро #FFF0FF, циановый край #88FFFF,
+    // розовая оболочка #FA76FF, розово-лиловый ореол #CF55EC и фиолетовое поле #9A32E5.
+    private static final float[] CORE = {1.0F, 0.95F, 1.0F};
+    private static final float[] CYAN = {0.53F, 1.0F, 1.0F};
+    private static final float[] MID = {0.98F, 0.46F, 1.0F};
+    private static final float[] FLAME = {0.81F, 0.33F, 0.93F};
+    private static final float[] DEEP = {0.60F, 0.20F, 0.90F};
 
     /**
      * Рисует клинок в текущей системе координат {@code pose}.
@@ -67,7 +69,11 @@ public final class QiBladeRenderer {
             double sway2 = 0.025D * k * Mth.cos(time * 0.38F - (float) k * 4.0F + 1.0F);
             pts[i] = base.add(dir.scale(len * k)).add(a.scale(sway)).add(b.scale(sway2));
             // Сужение к острию, языки пламени: шум по сегменту, бегущий от кулака.
-            double taper = k < 0.08D ? 0.55D + k * 5.6D : 1.0D - 0.78D * Math.pow((k - 0.08D) / 0.92D, 1.4D);
+            double taper = k < 0.06D ? 0.7D + k * 5.0D : 1.0D - 0.65D * Math.pow((k - 0.06D) / 0.94D, 1.6D);
+            // Остриё: последние 20 % сходятся в точку (codex 03.10).
+            if (k > 0.8D) {
+                taper *= Math.max(0.08D, (1.0D - k) / 0.2D);
+            }
             // Плотные и прозрачные зоны бегут от кулака к острию; шум интерполируется между тиками.
             float tt = time * 1.2F;
             int t0 = Mth.floor(tt);
@@ -80,19 +86,19 @@ public final class QiBladeRenderer {
         // Ци обнимает кисть и предплечье: мягкая фиолетовая оболочка на 0,35 блока.
         if (armDir != null) {
             Vec3 elbow = base.add(armDir.scale(0.35D));
-            VfxDraw.segment(glow, last, base, elbow, cam, 0.13D * scale * pulse, 0.5F, FLAME[0], FLAME[1], FLAME[2]);
-            VfxDraw.segment(glow, last, base, base.add(armDir.scale(0.18D)), cam, 0.08D * scale, 0.45F, MID[0], MID[1], MID[2]);
+            VfxDraw.segment(glow, last, base, elbow, cam, 0.2D * scale * pulse, 0.55F, FLAME[0], FLAME[1], FLAME[2]);
+            VfxDraw.segment(glow, last, base, base.add(armDir.scale(0.18D)), cam, 0.12D * scale, 0.5F, MID[0], MID[1], MID[2]);
         }
         // Широкое пламя и средний слой.
         for (int i = 0; i < SEGMENTS; i++) {
             double hw = 0.5D * (w[i] + w[i + 1]);
             float fade = i > SEGMENTS - 3 ? 0.6F : 1.0F;
-            VfxDraw.segment(glow, last, pts[i], pts[i + 1], cam, 0.46D * hw * scale, 0.35F * fade, DEEP[0], DEEP[1], DEEP[2]);
-            VfxDraw.segment(glow, last, pts[i], pts[i + 1], cam, 0.27D * hw * scale, 0.8F * fade, FLAME[0], FLAME[1], FLAME[2]);
-            VfxDraw.segment(glow, last, pts[i], pts[i + 1], cam, 0.11D * hw * scale, 0.7F, MID[0], MID[1], MID[2]);
+            VfxDraw.segment(glow, last, pts[i], pts[i + 1], cam, 0.95D * hw * scale, 0.30F * fade, DEEP[0], DEEP[1], DEEP[2]);
+            VfxDraw.segment(glow, last, pts[i], pts[i + 1], cam, 0.55D * hw * scale, 0.65F * fade, FLAME[0], FLAME[1], FLAME[2]);
+            VfxDraw.segment(glow, last, pts[i], pts[i + 1], cam, 0.30D * hw * scale, 0.85F, MID[0], MID[1], MID[2]);
         }
         // Языки пламени срываются с кромок и уходят назад-вверх по клинку.
-        for (int f = 0; f < 8; f++) {
+        for (int f = 0; f < 12; f++) {
             // Время жизни 3–7 тиков (0,15–0,35 с), фазы независимые; рождение — на новом месте.
             double lifeTicks = 3.0D + 4.0D * hash(seed + 3, f);
             double age = (time + hash(seed, f) * 40.0D) / lifeTicks;
@@ -101,11 +107,12 @@ public final class QiBladeRenderer {
             int at = 1 + (int) (hash(seed + 7, f * 1000 + gen) * (SEGMENTS - 3));
             double ang = hash(seed + 11, f * 1000 + gen) * Math.PI * 2.0D;
             Vec3 out = a.scale(Math.cos(ang)).add(b.scale(Math.sin(ang)));
-            Vec3 from = pts[at].add(out.scale(0.06D * w[at] * scale));
-            double reach = (0.12D + 0.18D * hash(seed + 13, f * 1000 + gen)) * scale;
-            Vec3 to = from.add(out.scale(reach * (0.4D + life))).add(dir.scale(reach * (0.6D + 0.8D * life)));
+            Vec3 from = pts[at].add(out.scale(0.16D * w[at] * scale));
+            double reach = (0.2D + 0.3D * hash(seed + 13, f * 1000 + gen)) * scale;
+            // Языки тянутся ВДОЛЬ клинка (не поперёк): масса читается единой.
+            Vec3 to = from.add(out.scale(reach * 0.25D * (0.5D + life))).add(dir.scale(reach * (1.2D + 1.6D * life)));
             float al = 0.75F * (1.0F - life) * Math.min(1.0F, life * 4.0F);
-            VfxDraw.segment(glow, last, from, to, cam, 0.05D * scale * (1.0D - life * 0.6D), al, FLAME[0], FLAME[1], FLAME[2]);
+            VfxDraw.segment(glow, last, from, to, cam, 0.09D * scale * (1.0D - life * 0.6D), al, FLAME[0], FLAME[1], FLAME[2]);
         }
 
         // Трескучие дуги: ломаные вокруг клинка, новый рисунок каждые 2 тика. Сначала точки —
@@ -113,7 +120,7 @@ public final class QiBladeRenderer {
         int frame = (int) (time / 3.0F);
         java.util.List<Vec3[]> arcs = new java.util.ArrayList<>();
         for (int n = 0; n < 3; n++) {
-            if (hash(seed + 31, frame * 3 + n) < 0.25D) {
+            if (n > 1 || hash(seed + 31, frame * 3 + n) < 0.35D) {
                 continue;
             }
             double start = hash(seed + 41, frame * 3 + n) * 0.6D;
@@ -122,7 +129,7 @@ public final class QiBladeRenderer {
             for (int j = 0; j <= 6; j++) {
                 double k = Math.min(1.0D, start + span * j / 6.0D);
                 double ang = hash(seed + 53, frame * 97 + n * 13 + j) * Math.PI * 2.0D;
-                double r = (0.05D + 0.11D * hash(seed + 59, frame * 89 + n * 7 + j)) * scale;
+                double r = (0.06D + 0.12D * hash(seed + 59, frame * 89 + n * 7 + j)) * scale;
                 int si = (int) Math.min(SEGMENTS, Math.round(k * SEGMENTS));
                 line[j] = pts[si].add(a.scale(Math.cos(ang) * r)).add(b.scale(Math.sin(ang) * r));
             }
@@ -130,25 +137,28 @@ public final class QiBladeRenderer {
         }
         for (Vec3[] line : arcs) {
             for (int j = 1; j < line.length; j++) {
-                VfxDraw.segment(glow, last, line[j - 1], line[j], cam, 0.014D * scale, 0.45F, FLAME[0], FLAME[1], FLAME[2]);
+                VfxDraw.segment(glow, last, line[j - 1], line[j], cam, 0.022D * scale, 0.6F, FLAME[0], FLAME[1], FLAME[2]);
             }
         }
 
         // Раскалённая сердцевина и сердцевины дуг: узкие, чёткие.
         VertexConsumer core = buffers.getBuffer(MurimRenderTypes.airBand());
         for (int i = 0; i < SEGMENTS - 1; i++) {
-            VfxDraw.segment(core, last, pts[i], pts[i + 1], cam, 0.016D * scale * (1.0D - i / (double) SEGMENTS * 0.6D), 1.0F, CORE[0], CORE[1], CORE[2]);
+            VfxDraw.segment(core, last, pts[i], pts[i + 1], cam, 0.075D * scale * w[i], 1.0F, CORE[0], CORE[1], CORE[2]);
+            // Тонкий циановый край вдоль ядра (кадр 5).
+            if (noise(seed + 17, i - (int) (time * 0.7F), 0) > 0.1D)
+            VfxDraw.segment(core, last, pts[i].add(a.scale(0.09D * scale * w[i])), pts[i + 1].add(a.scale(0.09D * scale * w[i + 1])), cam, 0.012D * scale, 0.8F, CYAN[0], CYAN[1], CYAN[2]);
         }
         for (Vec3[] line : arcs) {
             for (int j = 1; j < line.length; j++) {
-                VfxDraw.segment(core, last, line[j - 1], line[j], cam, 0.005D * scale, 0.8F, CORE[0], CORE[1], CORE[2]);
+                VfxDraw.segment(core, last, line[j - 1], line[j], cam, 0.008D * scale, 0.9F, CORE[0], CORE[1], CORE[2]);
             }
         }
 
         // Сгусток в кулаке: из него клинок и растёт.
         VertexConsumer mote = buffers.getBuffer(MurimRenderTypes.mote());
-        VfxDraw.billboard(mote, last, base, cam, 0.22D * scale * pulse, 0.6F, FLAME[0], FLAME[1], FLAME[2]);
-        VfxDraw.billboard(mote, last, base, cam, 0.07D * scale * pulse, 1.0F, CORE[0], CORE[1], CORE[2]);
+        VfxDraw.billboard(mote, last, base, cam, 0.34D * scale * pulse, 0.6F, FLAME[0], FLAME[1], FLAME[2]);
+        VfxDraw.billboard(mote, last, base, cam, 0.13D * scale * pulse, 1.0F, CORE[0], CORE[1], CORE[2]);
     }
 
     /** Камера в локальных координатах: позы рендера сущностей и руки — относительно камеры. */
