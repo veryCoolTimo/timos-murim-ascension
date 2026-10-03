@@ -49,6 +49,8 @@ public final class DevCaptureHandler {
     private static final int TRAVEL_CAPTURE_TICKS = 70;
     private static int travelTicks;
     private static int sneakTicks;
+    /** Бег без прыжков (Тень с 03.10 — бегом): спринт вперёд весь отрезок. */
+    private static int dashRunTicks;
 
     /** Какую технику снимать: {@code -Pmurim.technique=wedge_fan}. По умолчанию первая. */
     private static final String TECHNIQUE_PROPERTY = "murim.capture.technique";
@@ -265,6 +267,9 @@ public final class DevCaptureHandler {
                 if ("run".equals(mode)) {
                     travelTicks = TRAVEL_CAPTURE_TICKS;
                 }
+                if ("shadowrun".equals(mode)) {
+                    dashRunTicks = TRAVEL_CAPTURE_TICKS;
+                }
                 if ("shadow".equals(mode)) {
                     // Тень держится приседом: стенд крадётся вперёд мимо зомби.
                     sneakTicks = TRAVEL_CAPTURE_TICKS;
@@ -295,6 +300,29 @@ public final class DevCaptureHandler {
         if (stillSneakTicks > 0) {
             stillSneakTicks--;
             minecraft.options.keyShift.setDown(stillSneakTicks > 0);
+        }
+        // MURIM_CAPTURE_STEER=<градусы за тик> — рулить на ходу (бег, тень): повороты для лент шагов.
+        if ((sneakTicks > 0 || travelTicks > 0 || dashRunTicks > 0) && minecraft.player != null && System.getenv("MURIM_CAPTURE_STEER") != null) {
+            int t = TRAVEL_CAPTURE_TICKS - Math.max(Math.max(sneakTicks, travelTicks), dashRunTicks);
+            float steer = Float.parseFloat(System.getenv("MURIM_CAPTURE_STEER").trim());
+            // Змейка: 12 тиков прямо, 10 тиков поворот, смена стороны.
+            int phase = t % 44;
+            float turn = phase >= 12 && phase < 22 ? steer : phase >= 34 ? -steer : 0.0F;
+            minecraft.player.setYRot(minecraft.player.getYRot() + turn);
+        }
+        // Камера на стойке: LocalPlayer не переносит ввод в xxa/zza, пока сам не камера
+        // (LocalPlayer#serverAiStep → isControlledCamera) — бег и тень сбоку стояли бы на месте.
+        // API: reference/minecraft-src/net/minecraft/client/player/LocalPlayer.java#serverAiStep
+        if (dashRunTicks > 0) {
+            dashRunTicks--;
+            boolean on = dashRunTicks > 0;
+            minecraft.options.keyUp.setDown(on);
+            minecraft.options.keySprint.setDown(on);
+        }
+        if ((sneakTicks > 0 || travelTicks > 0 || dashRunTicks > 0) && minecraft.player != null && minecraft.getCameraEntity() != minecraft.player) {
+            minecraft.player.zza = minecraft.player.input.forwardImpulse;
+            minecraft.player.xxa = minecraft.player.input.leftImpulse;
+            minecraft.player.setJumping(minecraft.player.input.jumping);
         }
         if (sneakTicks > 0) {
             sneakTicks--;
