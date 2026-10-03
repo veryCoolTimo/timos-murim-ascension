@@ -55,7 +55,7 @@ public final class RiverExecutor {
             for (LivingEntity t : candidates(player, player.getBoundingBox().inflate(RiverRules.RANGE + 0.5D))) {
                 Vec3 to = TargetLock.centre(t).subtract(player.getEyePosition());
                 double d = to.length();
-                if (d < 0.5D || d > RiverRules.RANGE || to.normalize().dot(look) < cone || !player.hasLineOfSight(t)) {
+                if (d > RiverRules.RANGE || !io.github.verycooltimo.murim.combat.TargetLock.inCone(player, t, RiverRules.CONE) || !player.hasLineOfSight(t)) {
                     continue;
                 }
                 if (d < best) {

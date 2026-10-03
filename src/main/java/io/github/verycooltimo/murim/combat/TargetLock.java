@@ -33,6 +33,26 @@ public final class TargetLock {
         player.setData(ModAttachments.LOCK, new int[] {entityId});
     }
 
+    /**
+     * Цель в конусе взгляда: по горизонтали — {@code halfAngleDeg}, по вертикали — до 70°
+     * (03.10: 3D-конус по центру тела не видел врага вплотную — он ниже линии глаз).
+     */
+    public static boolean inCone(ServerPlayer player, LivingEntity t, double halfAngleDeg) {
+        Vec3 to = centre(t).subtract(player.getEyePosition());
+        Vec3 look = player.getLookAngle();
+        double fx = to.x, fz = to.z, flat = Math.sqrt(fx * fx + fz * fz);
+        if (flat < 0.8D) {
+            return true;
+        }
+        double lx = look.x, lz = look.z, ll = Math.sqrt(lx * lx + lz * lz);
+        if (ll < 1.0E-4D) {
+            return true;
+        }
+        double cos = (fx * lx + fz * lz) / (flat * ll);
+        double vertical = Math.toDegrees(Math.atan2(Math.abs(to.y), flat));
+        return cos >= Math.cos(Math.toRadians(halfAngleDeg)) && vertical <= 70.0D;
+    }
+
     /** Центр корпуса цели — туда целятся приёмы в 3D. */
     public static Vec3 centre(LivingEntity t) {
         return t.position().add(0.0D, t.getBbHeight() * 0.5D, 0.0D);

@@ -62,7 +62,9 @@ public class TechniqueManualItem extends Item {
             return;
         }
         // Книга стиля учит любую свою форму (по очереди — через requires в данных формы).
-        ResourceLocation id = wanted.equals(book) || io.github.verycooltimo.murim.technique.Styles.sameStyle(book, wanted) ? wanted : book;
+        boolean styleBasic = io.github.verycooltimo.murim.technique.Styles.ofBasic(wanted)
+                .equals(io.github.verycooltimo.murim.technique.Styles.of(book)) && io.github.verycooltimo.murim.technique.Styles.of(book).isPresent();
+        ResourceLocation id = wanted.equals(book) || styleBasic || io.github.verycooltimo.murim.technique.Styles.sameStyle(book, wanted) ? wanted : book;
         Integer depth = stack.get(ModDataComponents.MANUAL_DEPTH.get());
         MasteryService.Learn result = MasteryService.learn(serverPlayer, id, depth == null ? 0 : depth);
         if (result == MasteryService.Learn.ALREADY) {

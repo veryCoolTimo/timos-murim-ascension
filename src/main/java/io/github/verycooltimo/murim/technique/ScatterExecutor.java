@@ -50,7 +50,7 @@ public final class ScatterExecutor {
                 Vec3 to = io.github.verycooltimo.murim.combat.TargetLock.centre(t).subtract(player.getEyePosition());
                 double d = to.length();
                 if (t instanceof net.minecraft.world.entity.decoration.ArmorStand || d < 0.5D || d > ScatterRules.RANGE
-                        || to.normalize().dot(look) < cone || !player.hasLineOfSight(t)) {
+                        || !io.github.verycooltimo.murim.combat.TargetLock.inCone(player, t, 35.0D) || !player.hasLineOfSight(t)) {
                     continue;
                 }
                 if (d < best) {

@@ -114,14 +114,39 @@ public final class LockOn {
             set(-1);
             return;
         }
-        // Доворот жёстче, ближе к DMC (автор 03.10): за 3–4 тика взгляд на цели; мышь работает, но захват перевешивает.
-        if (mc.screen == null && !TechniqueWheel.open()) {
-            Vec3 to = t.position().add(0.0D, t.getBbHeight() * 0.6D, 0.0D).subtract(me.getEyePosition());
-            float wantYaw = (float) Math.toDegrees(Math.atan2(-to.x, to.z));
-            float wantPitch = (float) -Math.toDegrees(Math.atan2(to.y, Math.sqrt(to.x * to.x + to.z * to.z)));
-            me.setYRot(me.getYRot() + Mth.wrapDegrees(wantYaw - me.getYRot()) * 0.5F);
-            me.setXRot(Mth.clamp(me.getXRot() + (wantPitch - me.getXRot()) * 0.35F, -90.0F, 90.0F));
+    }
+
+    private static long lastFrameNs;
+
+    /**
+     * Доворот камеры на цель — каждый кадр, плавно (автор 03.10: «Z рваное, глаза болят»):
+     * экспоненциальное сближение по реальному времени кадра, без ступенек по тикам.
+     * API: build/moddev/artifacts/neoforge-21.1.248.jar#RenderFrameEvent.Pre
+     */
+    @SubscribeEvent
+    static void onFrame(net.neoforged.neoforge.client.event.RenderFrameEvent.Pre event) {
+        long now = System.nanoTime();
+        float dt = lastFrameNs == 0L ? 0.0F : Math.min(0.1F, (now - lastFrameNs) / 1.0E9F);
+        lastFrameNs = now;
+        Minecraft mc = Minecraft.getInstance();
+        LocalPlayer me = mc.player;
+        LivingEntity t = entity();
+        if (me == null || t == null || mc.screen != null || TechniqueWheel.open() || mc.isPaused()) {
+            return;
         }
+        float partial = event.getPartialTick().getGameTimeDeltaPartialTick(false);
+        Vec3 to = t.getPosition(partial).add(0.0D, t.getBbHeight() * 0.6D, 0.0D).subtract(me.getEyePosition(partial));
+        float wantYaw = (float) Math.toDegrees(Math.atan2(-to.x, to.z));
+        float wantPitch = (float) -Math.toDegrees(Math.atan2(to.y, Math.sqrt(to.x * to.x + to.z * to.z)));
+        // Полузатухание ~0,07 с по горизонтали, ~0,1 с по вертикали — жёстко, но гладко.
+        float ky = 1.0F - (float) Math.exp(-dt * 10.0F);
+        float kp = 1.0F - (float) Math.exp(-dt * 7.0F);
+        float dy = Mth.wrapDegrees(wantYaw - me.getYRot()) * ky;
+        float dp = (wantPitch - me.getXRot()) * kp;
+        me.setYRot(me.getYRot() + dy);
+        me.yRotO += dy;
+        me.setXRot(Mth.clamp(me.getXRot() + dp, -90.0F, 90.0F));
+        me.xRotO = Mth.clamp(me.xRotO + dp, -90.0F, 90.0F);
     }
 
     /** Метка захвата: розовый ромб над целью, медленно вращается и пульсирует. */

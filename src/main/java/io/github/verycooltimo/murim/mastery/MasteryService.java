@@ -99,7 +99,9 @@ public final class MasteryService {
                     }
                 }
             }
-            style.basic().filter(b -> !player.getData(ModAttachments.MASTERY).knows(b)).ifPresent(b -> learn(player, b, depth));
+            if (!io.github.verycooltimo.murim.technique.Styles.sequential(style)) {
+                style.basic().filter(b -> !player.getData(ModAttachments.MASTERY).knows(b)).ifPresent(b -> learn(player, b, depth));
+            }
         });
         sync(player);
         return Learn.LEARNED;

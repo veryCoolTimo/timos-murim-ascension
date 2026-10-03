@@ -19,7 +19,7 @@ import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 public final class ModNetwork {
 
     /** Версия протокола. Поднимать при любом несовместимом изменении пакетов. */
-    private static final String VERSION = "17";
+    private static final String VERSION = "19";
 
     @SubscribeEvent
     static void register(RegisterPayloadHandlersEvent event) {
@@ -114,6 +114,8 @@ public final class ModNetwork {
                 (payload, context) -> ClientPayloadBridge.handleRush(payload));
         registrar.playToClient(RainPayload.TYPE, RainPayload.STREAM_CODEC,
                 (payload, context) -> ClientPayloadBridge.handleRain(payload));
+        registrar.playToClient(ExplosionPayload.TYPE, ExplosionPayload.STREAM_CODEC,
+                (payload, context) -> ClientPayloadBridge.handleExplosion(payload));
         registrar.playToClient(RiverPayload.TYPE, RiverPayload.STREAM_CODEC,
                 (payload, context) -> ClientPayloadBridge.handleRiver(payload));
         registrar.playToClient(ScatterPayload.TYPE, ScatterPayload.STREAM_CODEC,
@@ -122,6 +124,8 @@ public final class ModNetwork {
                 (payload, context) -> ClientPayloadBridge.handleDome(payload));
         registrar.playToClient(FallingPetalPayload.TYPE, FallingPetalPayload.STREAM_CODEC,
                 (payload, context) -> ClientPayloadBridge.handleFallingPetal(payload));
+        registrar.playToClient(ShowerPayload.TYPE, ShowerPayload.STREAM_CODEC,
+                (payload, context) -> ClientPayloadBridge.handleShower(payload));
         registrar.playToClient(StepPayload.TYPE, StepPayload.STREAM_CODEC,
                 (payload, context) -> ClientPayloadBridge.handleStep(payload));
 

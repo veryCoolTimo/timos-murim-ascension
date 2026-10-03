@@ -1,19 +1,19 @@
 {
-  "id": "murim:twenty_four_plum_scatter",
+  "id": "murim:seven_plum_explosion",
   "form": "slash",
   "intent": "strike",
   "breath": "hollow_breath",
   "phases": {
     "ritual": 0,
-    "windup": 72,
+    "windup": 28,
     "impact": 2,
-    "recovery": 76,
-    "dissipation": 30
+    "recovery": 16,
+    "dissipation": 4
   },
   "behavior": {
-    "type": "murim:plum_scatter"
+    "type": "murim:plum_explosion"
   },
-  "animation": "murim:twenty_four_plum_scatter",
+  "animation": "murim:seven_plum_explosion",
   "vfx": {
     "pivot": [
       0.0,
@@ -65,14 +65,14 @@
     "break_on_damage": true,
     "damage_threshold": 8.0
   },
-  "weakness": "technique.murim.twenty_four_plum_scatter.weakness",
+  "weakness": "technique.murim.seven_plum_explosion.weakness",
   "hit_stop_ticks": 2,
-  "cooldown_ticks": 900,
+  "cooldown_ticks": 1000,
   "layers": 8,
-  "tier": "secret",
+  "tier": "advanced",
   "requires": [
     {
-      "technique": "murim:twenty_four_plum_dome",
+      "technique": "murim:seven_plum_shower",
       "layer": 3
     }
   ]

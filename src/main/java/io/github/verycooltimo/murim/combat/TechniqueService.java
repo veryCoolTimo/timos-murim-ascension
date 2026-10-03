@@ -56,7 +56,10 @@ public final class TechniqueService {
         }
 
         long now = player.serverLevel().getGameTime();
-        if (!offCooldown(now, state.lastStartGameTime(), technique.cooldownTicks())) {
+        // Своя перезарядка у каждой техники + короткая общая пауза между приёмами.
+        Long own = player.getData(ModAttachments.COOLDOWNS).get(technique.id());
+        if (!offCooldown(now, own == null ? Long.MIN_VALUE : own, technique.cooldownTicks())
+                || !offCooldown(now, state.lastStartGameTime(), gapAfter(player.getData(ModAttachments.COOLDOWNS), state.lastStartGameTime()))) {
             return false;
         }
 
@@ -82,6 +85,9 @@ public final class TechniqueService {
         io.github.verycooltimo.murim.profile.ProfileNetwork.sync(player);
 
         player.setData(ModAttachments.TECHNIQUE_STATE, TechniqueState.started(technique.id(), now));
+        java.util.Map<net.minecraft.resources.ResourceLocation, Long> cds = new java.util.HashMap<>(player.getData(ModAttachments.COOLDOWNS));
+        cds.put(technique.id(), now);
+        player.setData(ModAttachments.COOLDOWNS, cds);
         io.github.verycooltimo.murim.mastery.LoadoutService.returnToStance(player, technique.id());
         PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
                 new TechniqueEventPayload(TechniqueEventPayload.Event.STARTED, technique.id(), player.getId(), 0,
@@ -89,6 +95,10 @@ public final class TechniqueService {
         // Ладонь в начале захватывает цель и делает рывок к ней (автор 01.10).
         if (technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.PalmBlast palm) {
             io.github.verycooltimo.murim.technique.BehaviorExecutor.palmLunge(player, palm, technique.totalTicks());
+        }
+        // Взрыв закладывает стену кольев в мир в начале каста: колья вырастают ещё в замахе.
+        if (technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.PlumExplosion) {
+            io.github.verycooltimo.murim.technique.ExplosionExecutor.begin(player, technique.id());
         }
         // Купол сажает барьер в мир в начале каста: стволы растут ещё в замахе.
         if (technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.PlumDome) {
@@ -120,6 +130,30 @@ public final class TechniqueService {
      *
      * @param lastStart {@link Long#MIN_VALUE}, если техника ещё ни разу не применялась
      */
+    /** Общая пауза между любыми двумя техниками, тиков. */
+    public static final int GLOBAL_GAP_TICKS = 10;
+
+    /**
+     * Пауза до следующей (другой) техники по уровню последней (автор 03.10: после секретной —
+     * около 5 с, «чтобы связать следующую форму, но не спамить»): секретная 100, продвинутая 40,
+     * обычная 10 тиков.
+     */
+    public static int gapAfter(java.util.Map<net.minecraft.resources.ResourceLocation, Long> cds, long lastStart) {
+        for (java.util.Map.Entry<net.minecraft.resources.ResourceLocation, Long> e : cds.entrySet()) {
+            if (e.getValue() == lastStart) {
+                TechniqueDefinition d = resolve(e.getKey());
+                if (d != null) {
+                    return switch (d.tier()) {
+                        case SECRET -> 100;
+                        case ADVANCED -> 40;
+                        default -> GLOBAL_GAP_TICKS;
+                    };
+                }
+            }
+        }
+        return GLOBAL_GAP_TICKS;
+    }
+
     static boolean offCooldown(long now, long lastStart, int cooldownTicks) {
         if (lastStart == Long.MIN_VALUE) {
             return true;
@@ -228,6 +262,9 @@ public final class TechniqueService {
                 io.github.verycooltimo.murim.technique.RainExecutor.tick(player, technique.id(), since);
             }
         }
+        if (technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.PlumExplosion) {
+            io.github.verycooltimo.murim.technique.ExplosionExecutor.tick(player, technique.id(), state.tick());
+        }
         if (technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.PlumRiver) {
             int since = state.tick() - technique.startTickOf(TechniquePhase.IMPACT);
             if (since > 0) {
@@ -241,6 +278,12 @@ public final class TechniqueService {
             }
         }
 
+        if (technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.PlumShower) {
+            int since = state.tick() - technique.startTickOf(TechniquePhase.IMPACT);
+            if (since > 0) {
+                io.github.verycooltimo.murim.technique.ShowerExecutor.tick(player, technique.id(), since);
+            }
+        }
         if (technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.PlumDome) {
             io.github.verycooltimo.murim.technique.DomeExecutor.tick(player, technique.id(), state.tick());
         }

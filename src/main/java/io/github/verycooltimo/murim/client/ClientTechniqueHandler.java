@@ -234,7 +234,7 @@ public final class ClientTechniqueHandler {
         switch (payload.event()) {
             case STARTED -> {
                 if (Minecraft.getInstance().player != null && payload.sourceId() == Minecraft.getInstance().player.getId()) {
-                    ClientCooldowns.started();
+                    ClientCooldowns.started(payload.techniqueId());
                 }
                 scheduleAnimation(payload);
                 TechniqueDefinition started = TechniqueLoader.get(payload.techniqueId());

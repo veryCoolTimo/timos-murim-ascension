@@ -168,6 +168,15 @@ public final class ModAttachments {
     public static final Supplier<AttachmentType<double[]>> RIVER =
             ATTACHMENT_TYPES.register("plum_river",
                     () -> AttachmentType.<double[]>builder(() -> new double[] {0, 0, 0, 0, 0, 0, 0, -1, -1, -1, 0, 0, 0}).build());
+    /** Взрыв Цветущей Сливы: см. ExplosionExecutor. Не сохраняется — живёт одну технику. */
+    public static final Supplier<AttachmentType<double[]>> EXPLOSION =
+            ATTACHMENT_TYPES.register("plum_explosion",
+                    () -> AttachmentType.<double[]>builder(() -> new double[40]).build());
+
+    /** Ливень Цветов (Семь Цветков Сливы): см. ShowerExecutor. Не сохраняется — живёт одну технику. */
+    public static final Supplier<AttachmentType<double[]>> SHOWER =
+            ATTACHMENT_TYPES.register("plum_shower",
+                    () -> AttachmentType.<double[]>builder(() -> new double[] {0, 0, 0, 0, 0, 0, 0, -1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}).build());
     /** Рассеяние Цветущей Сливы: см. ScatterExecutor. Не сохраняется — живёт одну технику. */
     public static final Supplier<AttachmentType<double[]>> SCATTER =
             ATTACHMENT_TYPES.register("plum_scatter",
@@ -201,6 +210,17 @@ public final class ModAttachments {
      * Решение — сериализовать состояние, но обнулять активную часть при клоне игрока
      * (см. {@code CombatEvents}).
      */
+    /**
+     * Время последнего запуска каждой техники (автор 03.10: «кулдаун одной техники влияет на
+     * все»): перезарядка теперь своя у каждой. Переживает смерть, как и состояние техники.
+     */
+    public static final Supplier<AttachmentType<java.util.Map<net.minecraft.resources.ResourceLocation, Long>>> COOLDOWNS =
+            ATTACHMENT_TYPES.register("cooldowns",
+                    () -> AttachmentType.<java.util.Map<net.minecraft.resources.ResourceLocation, Long>>builder(() -> java.util.Map.of())
+                            .serialize(com.mojang.serialization.Codec.unboundedMap(net.minecraft.resources.ResourceLocation.CODEC, com.mojang.serialization.Codec.LONG))
+                            .copyOnDeath()
+                            .build());
+
     public static final Supplier<AttachmentType<TechniqueState>> TECHNIQUE_STATE =
             ATTACHMENT_TYPES.register("technique_state",
                     () -> AttachmentType.<TechniqueState>builder(() -> TechniqueState.IDLE)
