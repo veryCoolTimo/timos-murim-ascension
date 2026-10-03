@@ -283,25 +283,60 @@ public final class PlaceAuraRenderer implements BlockEntityRenderer<SpiritVeinBl
         if (stunned) {
             return;
         }
-        // Непрерывный изогнутый шлейф от камня к животу, по нему бегут сгустки, у пупка — яркая точка входа.
+        // Поток к животу — не «светящаяся верёвка» (автор 03.10: «красивее и мягче»): несколько тонких
+        // полупрозрачных прядей, каждая колышется своим шумом и сужается к концам; по ним текут
+        // отдельные волокна-отрезки, вокруг — редкие пылинки, отлетающие в стороны.
         Vec3 mid = from.lerp(target, 0.5D).add(0, 0.35D, 0);
-        int n = 20;
-        Vec3 prev = null;
-        for (int i = 0; i <= n; i++) {
-            double k = i / (double) n;
-            Vec3 p = from.scale((1 - k) * (1 - k)).add(mid.scale(2 * k * (1 - k))).add(target.scale(k * k));
-            if (prev != null) {
-                seg(pose, prev, p, camLocal, 0.09D, 0.55F, col.red(), col.green(), col.blue());
-                seg(pose, prev, p, camLocal, 0.025D, 0.7F, 1.0F, 1.0F, 1.0F);
+        Vec3 along = target.subtract(from);
+        Vec3 side = along.cross(new Vec3(0, 1, 0));
+        side = side.lengthSqr() < 1.0E-6D ? new Vec3(1, 0, 0) : side.normalize();
+        int n = 24;
+        for (int s = 0; s < 5; s++) {
+            double ph = s * 1.9D;
+            double amp = 0.05D + 0.03D * s;
+            Vec3 prev = null;
+            for (int i = 0; i <= n; i++) {
+                double k = i / (double) n;
+                Vec3 p = from.scale((1 - k) * (1 - k)).add(mid.scale(2 * k * (1 - k))).add(target.scale(k * k));
+                double env = Math.sin(Math.PI * k);
+                p = p.add(side.scale(Math.sin(k * 7.0D + t * 0.09D + ph) * amp * env))
+                        .add(0, Math.cos(k * 5.0D - t * 0.07D + ph) * amp * 0.7D * env, 0);
+                if (prev != null) {
+                    float a = (float) (0.16D * Math.pow(env, 0.6D));
+                    seg(pose, prev, p, camLocal, 0.045D * (0.4D + 0.6D * env), a, col.red(), col.green(), col.blue());
+                }
+                prev = p;
             }
-            prev = p;
         }
-        for (int i = 0; i < 10; i++) {
-            float k = ((t * 0.035F + i / 10.0F) % 1.0F);
+        // Волокна: короткие светлые отрезки, бегущие по случайной пряди.
+        for (int i = 0; i < 14; i++) {
+            java.util.Random r = new java.util.Random(i * 104_729L + 3L);
+            double ph = r.nextInt(5) * 1.9D;
+            double amp = 0.05D + 0.03D * r.nextInt(5);
+            float k0 = (float) ((t * (0.02D + 0.015D * r.nextDouble()) + r.nextDouble()) % 1.0D);
+            Vec3 prev = null;
+            for (int j = 0; j <= 3; j++) {
+                double k = Math.min(1.0D, k0 + j * 0.025D);
+                Vec3 p = from.scale((1 - k) * (1 - k)).add(mid.scale(2 * k * (1 - k))).add(target.scale(k * k));
+                double env = Math.sin(Math.PI * k);
+                p = p.add(side.scale(Math.sin(k * 7.0D + t * 0.09D + ph) * amp * env))
+                        .add(0, Math.cos(k * 5.0D - t * 0.07D + ph) * amp * 0.7D * env, 0);
+                if (prev != null) {
+                    seg(pose, prev, p, camLocal, 0.018D, (float) (0.55D * env), 0.9F, 1.0F, 1.0F);
+                }
+                prev = p;
+            }
+        }
+        // Пылинки: сходят с потока и медленно отлетают, гаснут.
+        for (int i = 0; i < 12; i++) {
+            java.util.Random r = new java.util.Random(i * 7_919L + 17L);
+            float life = 30.0F + r.nextFloat() * 20.0F;
+            float age = ((t + r.nextFloat() * life) % life) / life;
+            double k = r.nextDouble();
             Vec3 p = from.scale((1 - k) * (1 - k)).add(mid.scale(2 * k * (1 - k))).add(target.scale(k * k));
-            dot(pose, p, camLocal, 0.07D, 0.9F, col.red(), col.green(), col.blue());
-            dot(pose, p, camLocal, 0.03D, 1.0F, 1.0F, 1.0F, 1.0F);
+            p = p.add(side.scale((r.nextDouble() - 0.5D) * 0.4D * age)).add(0, 0.25D * age, 0);
+            dot(pose, p, camLocal, 0.022D, (float) Math.sin(Math.PI * age) * 0.7F, col.red(), col.green(), col.blue());
         }
-        glow(pose, target, camLocal, t, 0.07D, 0.8F, col, new VfxColour(1.0F, 1.0F, 1.0F));
+        glow(pose, target, camLocal, t, 0.05D, 0.5F, col, new VfxColour(1.0F, 1.0F, 1.0F));
     }
 }

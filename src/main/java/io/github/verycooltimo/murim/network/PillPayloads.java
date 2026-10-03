@@ -40,10 +40,11 @@ public final class PillPayloads {
      * @param outcome      исход развилки на этом тике ({@code AbsorbGame.Outcome} ordinal)
      * @param event        разовое событие
      * @param fullFive     канонический состав: полный пятицветный свет
+     * @param storm        полный успех с сильной пилюлей: ураган и взрыв (автор 03.10)
      */
     public record Sync(int[] pending, int windowLeft, boolean active, int[] clots, int clot, int fork, int phase,
                        int phaseTicks, int choice, int shortSide, boolean tookShort, int temper, float strain,
-                       int outcome, Event event, boolean fullFive) implements CustomPacketPayload {
+                       int outcome, Event event, boolean fullFive, boolean storm) implements CustomPacketPayload {
 
         public static final Type<Sync> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "pill_sync"));
 
@@ -79,6 +80,7 @@ public final class PillPayloads {
             ByteBufCodecs.VAR_INT.encode(buf, p.outcome());
             ByteBufCodecs.VAR_INT.encode(buf, p.event().ordinal());
             ByteBufCodecs.BOOL.encode(buf, p.fullFive());
+            ByteBufCodecs.BOOL.encode(buf, p.storm());
         }, buf -> new Sync(
                 INTS.decode(buf),
                 ByteBufCodecs.VAR_INT.decode(buf),
@@ -95,6 +97,7 @@ public final class PillPayloads {
                 ByteBufCodecs.FLOAT.decode(buf),
                 ByteBufCodecs.VAR_INT.decode(buf),
                 Event.values()[Math.min(Event.values().length - 1, ByteBufCodecs.VAR_INT.decode(buf))],
+                ByteBufCodecs.BOOL.decode(buf),
                 ByteBufCodecs.BOOL.decode(buf)));
 
         @Override

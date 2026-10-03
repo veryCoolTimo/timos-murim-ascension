@@ -507,6 +507,31 @@ public final class PillVfx {
             bands.add(new Band(band, alpha, col));
         }
 
+        // Ураган (автор 03.10: полный успех с сильной пилюлей — «как ураган»): воронка пыли и воздуха
+        // вокруг, расширяется кверху, крутится всё быстрее до взрыва; комья земли поднимает и бросает.
+        if (ClientPillState.finaleStorm()) {
+            float storm = Mth.clamp((age - 8.0F) / 14.0F, 0.0F, 1.0F) * (1.0F - Mth.clamp((age - 70.0F) / 22.0F, 0.0F, 1.0F));
+            float spin = 0.08F + 0.12F * Mth.clamp((age - 8.0F) / 57.0F, 0.0F, 1.0F);
+            for (int i = 0; i < 90; i++) {
+                Random r = new Random(271828L + i * 6151L);
+                double h = r.nextDouble() * 6.0D;
+                double rad = 0.9D + h * 0.45D + 0.3D * r.nextDouble();
+                double a0 = r.nextDouble() * Math.PI * 2 + age * spin * (1.4D - h * 0.08D);
+                Vec3 prev = null;
+                for (int tr = 0; tr < 5; tr++) {
+                    double a = a0 - tr * 0.09D;
+                    Vec3 p = new Vec3(axis.x + Math.cos(a) * rad, ground + h + tr * 0.02D, axis.z + Math.sin(a) * rad);
+                    if (prev != null) {
+                        boolean dust = (i % 3) == 0;
+                        float alpha = storm * (dust ? 0.5F : 0.35F) * (1.0F - tr / 5.0F);
+                        VfxDraw.segment(c, b.pose(), prev, p, b.camera(), dust ? 0.035D : 0.012D, alpha,
+                                dust ? 0.7F : 0.86F, dust ? 0.64F : 0.92F, dust ? 0.54F : 1.0F);
+                    }
+                    prev = p;
+                }
+            }
+        }
+
         // Энергия входит (автор 03.10): со всех сторон сгустки пяти цветов по сходящимся спиралям
         // втекают в живот, у пупка — вспышки входа; сгущается к выбросу.
         float inflow = Mth.clamp((age - 18.0F) / 8.0F, 0.0F, 1.0F) * (1.0F - Mth.clamp((age - 64.0F) / 4.0F, 0.0F, 1.0F));

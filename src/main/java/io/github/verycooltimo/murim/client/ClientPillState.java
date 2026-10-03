@@ -27,7 +27,7 @@ import net.neoforged.neoforge.network.PacketDistributor;
 public final class ClientPillState {
 
     private static final PillPayloads.Sync IDLE = new PillPayloads.Sync(new int[0], 0, false, new int[0], 0, 0, 0, 0,
-            0, 0, false, 0, 0.0F, 0, PillPayloads.Event.NONE, false);
+            0, 0, false, 0, 0.0F, 0, PillPayloads.Event.NONE, false, false);
 
     /** Финал поглощения: пятицветный выброс 3 с, у простой пилюли — короткая вспышка. */
     /**
@@ -54,6 +54,11 @@ public final class ClientPillState {
     private static int finale;
     private static boolean finaleRare;
     private static boolean finaleFull;
+    /** Полный успех с сильной пилюлей: ураган и взрыв (автор 03.10: «как ураган и взрыв от ТНТ»). */
+    private static boolean finaleStorm;
+
+    /** Тик выброса внутри финала. */
+    public static final int BURST_AGE = 65;
     private static int[] finaleClots = new int[0];
     /** Вспышка осевшей порции и удара: тики до конца и вид. */
     private static int flash;
@@ -96,6 +101,10 @@ public final class ClientPillState {
 
     public static boolean finaleRare() {
         return finaleRare;
+    }
+
+    public static boolean finaleStorm() {
+        return finaleStorm;
     }
 
     public static boolean finaleFull() {
@@ -160,6 +169,7 @@ public final class ClientPillState {
                     finaleRare |= PillKind.byId(c).rare();
                 }
                 finaleFull = payload.fullFive();
+                finaleStorm = payload.storm();
                 finale = finaleRare ? FINALE_TICKS : FLASH_TICKS;
                 // Огонь ауры (автор 03.10: «добавить огня, как у ауры»): та же симуляция пламени,
                 // что у давления ауры, — голубая аура техники на время финала.
@@ -191,6 +201,20 @@ public final class ClientPillState {
         }
         if (finale > 0) {
             finale--;
+            // Взрыв как от ТНТ в миг выброса: ванильные вспышки взрыва, звук, сильный толчок камеры.
+            // API: reference/minecraft-src/net/minecraft/core/particles/ParticleTypes.java#EXPLOSION_EMITTER
+            if (finaleStorm && finaleRare && FINALE_TICKS - finale == BURST_AGE) {
+                var p = mc.player.position().add(0, 0.8D, 0);
+                mc.level.addParticle(net.minecraft.core.particles.ParticleTypes.EXPLOSION_EMITTER, p.x, p.y, p.z, 1.0D, 0.0D, 0.0D);
+                for (int i = 0; i < 8; i++) {
+                    double a = i * Math.PI / 4;
+                    mc.level.addParticle(net.minecraft.core.particles.ParticleTypes.EXPLOSION, p.x + Math.cos(a) * 2.2D,
+                            p.y - 0.4D, p.z + Math.sin(a) * 2.2D, 1.0D, 0.0D, 0.0D);
+                }
+                mc.level.playLocalSound(p.x, p.y, p.z, net.minecraft.sounds.SoundEvents.GENERIC_EXPLODE.value(),
+                        net.minecraft.sounds.SoundSource.PLAYERS, 1.0F, 0.9F, false);
+                CameraShakeHandler.request(1.0F);
+            }
         }
         if (flash > 0) {
             flash--;
@@ -198,7 +222,7 @@ public final class ClientPillState {
         if (state.windowLeft() > 0 && !state.active()) {
             state = new PillPayloads.Sync(state.pending(), state.windowLeft() - 1, false, state.clots(), state.clot(),
                     state.fork(), state.phase(), state.phaseTicks(), state.choice(), state.shortSide(), state.tookShort(),
-                    state.temper(), state.strain(), 0, PillPayloads.Event.NONE, state.fullFive());
+                    state.temper(), state.strain(), 0, PillPayloads.Event.NONE, state.fullFive(), false);
         }
     }
 

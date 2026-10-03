@@ -44,6 +44,8 @@ public final class PillService {
         int lastChoice;
         /** Камень жилы рядом с медитирующим (docs/design/19b §3); {@code null} — места силы нет. */
         public io.github.verycooltimo.murim.world.Place place;
+        /** Тик взрыва урагана после полного успеха; 0 — нет. */
+        long stormAt;
     }
 
     /** Травма после искажения ци: слабость 2 минуты. */
@@ -229,6 +231,9 @@ public final class PillService {
         player.displayClientMessage(Component.translatable(rare ? "murim.pill.done.rare" : "murim.pill.done")
                 .withStyle(ChatFormatting.AQUA), true);
         sync(player, PillPayloads.Event.FINISH, game);
+        if (storm(game)) {
+            slot.stormAt = player.level().getGameTime() + STORM_DELAY;
+        }
         // Медитация продолжается: если запас упёрся в стену и условия ранга выполнены,
         // MeditationService сам переведёт сидение в принятую сцену прорыва.
     }
@@ -358,6 +363,11 @@ public final class PillService {
         if (!(event.getEntity() instanceof ServerPlayer player)) {
             return;
         }
+        Slot slot = player.getData(ModAttachments.ABSORB);
+        if (slot.stormAt > 0 && player.level().getGameTime() >= slot.stormAt) {
+            slot.stormAt = 0;
+            stormBlast(player);
+        }
         PillState pills = player.getData(ModAttachments.PILLS);
         if (pills.pending().isEmpty()) {
             return;
@@ -418,6 +428,41 @@ public final class PillService {
         player.addEffect(new MobEffectInstance(MobEffects.POISON, e.getDuration() / 2 | 1, e.getAmplifier()));
     }
 
+    /** Взрыв — в миг выброса финала (тик 65 из 110). */
+    static final int STORM_DELAY = 65;
+    /** Средняя осевшая доля для «полного успеха». */
+    static final double STORM_QUALITY = 0.85D;
+
+    /**
+     * Полный успех с сильной пилюлей (автор 03.10: «если прям полный успех вместе с очень хорошей
+     * пилюлей — как ураган и взрыв от ТНТ»): в составе Слеза Красоты или канонический состав,
+     * осело в среднем не меньше 85 %.
+     */
+    static boolean storm(AbsorbGame game) {
+        boolean strong = game.clots().contains(PillKind.BEAUTY_TEAR) || PillRules.canonTriple(game.clots());
+        if (!strong || game.result() != AbsorbGame.Result.FINISHED) {
+            return false;
+        }
+        double sum = 0.0D;
+        for (int i = 0; i < game.clots().size(); i++) {
+            sum += Math.min(1.0D, game.settled(i));
+        }
+        return sum / game.clots().size() >= STORM_QUALITY;
+    }
+
+    /** Ударная волна взрыва: отбрасывает и ранит существ вокруг, блоки не трогает. */
+    private static void stormBlast(ServerPlayer player) {
+        var level = player.serverLevel();
+        for (var e : level.getEntitiesOfClass(net.minecraft.world.entity.LivingEntity.class,
+                player.getBoundingBox().inflate(7.0D), e -> e != player && e.isAlive())) {
+            var d = e.position().subtract(player.position());
+            double dist = Math.max(0.5D, d.length());
+            double k = 1.0D - dist / 8.0D;
+            e.knockback(1.6D * k, -d.x / dist, -d.z / dist);
+            e.hurt(level.damageSources().explosion(player, player), (float) (8.0D * k));
+        }
+    }
+
     /** Звуковой хук: звуки подбирает отдельная задача; пока — тихие ванильные заглушки. */
     static void sound(ServerPlayer player, String hook) {
         var sound = switch (hook) {
@@ -447,14 +492,14 @@ public final class PillService {
         PillPayloads.Sync payload;
         if (game == null) {
             payload = new PillPayloads.Sync(pending, left, false, new int[0], 0, 0, 0, 0, 0, 0, false, 0, 0.0F,
-                    0, event, false);
+                    0, event, false, false);
         } else {
             int temper = game.showsTemper() || game.phase() == AbsorbGame.Phase.BRANCH ? (game.wildNow() ? 2 : 1) : 0;
             payload = new PillPayloads.Sync(pending, left, active,
                     game.clots().stream().mapToInt(Enum::ordinal).toArray(), game.clot(), game.fork(),
                     game.phase().ordinal(), game.phaseTicks(), game.choice(), game.currentFork().shortSide(),
                     game.tookShort(), temper, (float) game.strain(), game.lastOutcome().ordinal(), event,
-                    PillRules.canonTriple(game.clots()));
+                    PillRules.canonTriple(game.clots()), event == PillPayloads.Event.FINISH && storm(game));
         }
         PacketDistributor.sendToPlayer(player, payload);
     }

@@ -642,7 +642,9 @@ public final class DevCaptureHandler {
             return;
         }
         botFork = key;
-        boolean greedy = "1".equals(System.getenv("MURIM_CAPTURE_GREEDY"));
+        String mode = System.getenv().getOrDefault("MURIM_CAPTURE_GREEDY", "0");
+        // 1 — всегда коротко; 2 — расчётливый риск: бурный коротко, пока напряжение ниже 40 %.
+        boolean greedy = "1".equals(mode) || "2".equals(mode) && s.strain() < 0.4F;
         int side = s.temper() == 2 && !greedy ? -s.shortSide() : s.shortSide();
         minecraft.player.turn(side * 60.0D, 0.0D);
     }
