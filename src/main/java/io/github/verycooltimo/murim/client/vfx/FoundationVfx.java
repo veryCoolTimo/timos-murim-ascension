@@ -234,8 +234,8 @@ public final class FoundationVfx {
             RenderType solid = MurimRenderTypes.solid();
             for (Swing s : ACTIVE) {
                 float age = s.age(partial);
-                if (minecraft.level.getEntity(s.entityId) instanceof AbstractClientPlayer player) {
-                    sample(s, player, age);
+                if (minecraft.level.getEntity(s.entityId) instanceof net.minecraft.world.entity.LivingEntity caster) {
+                    sample(s, caster, age);
                 }
                 if (s.grooveFrom != null) {
                     VertexConsumer c = buffers.getBuffer(solid);
@@ -269,7 +269,7 @@ public final class FoundationVfx {
     }
 
     /** Снимает кисть и клинок от начала взмаха до ранней фиксации. */
-    private static void sample(Swing s, AbstractClientPlayer player, float age) {
+    private static void sample(Swing s, net.minecraft.world.entity.LivingEntity player, float age) {
         if (age > s.duration * 0.42F) {
             return;
         }

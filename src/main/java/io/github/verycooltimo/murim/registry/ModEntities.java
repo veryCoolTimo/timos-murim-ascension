@@ -92,6 +92,18 @@ public final class ModEntities {
                     .clientTrackingRange(8)
                     .build("bandit_archer"));
 
+    /** Старший ученик Хуашань (секта, этап С0): NPC с техниками игрока, спарринг. */
+    public static final DeferredHolder<EntityType<?>, EntityType<io.github.verycooltimo.murim.entity.SectDisciple>> SECT_DISCIPLE =
+            ENTITIES.register("sect_disciple", () -> EntityType.Builder
+                    .<io.github.verycooltimo.murim.entity.SectDisciple>of(
+                            io.github.verycooltimo.murim.entity.SectDisciple::new, MobCategory.MISC)
+                    .sized(0.6F, 1.95F)
+                    .eyeHeight(1.62F)
+                    .clientTrackingRange(10)
+                    // Рывок Натиска идёт сервером: позиция каждый тик, иначе на клиенте он скачет.
+                    .updateInterval(1)
+                    .build("sect_disciple"));
+
     public static void register(IEventBus modBus) {
         ENTITIES.register(modBus);
     }
