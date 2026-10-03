@@ -163,5 +163,7 @@
   "technique.murim.falling_petal_sword": "Меч Падающего Цветка",
   "technique.murim.falling_petal_sword.weakness": "Натиск идёт по кругу слева за спину: на паузе после разворота отступи в другую сторону.",
   "technique.murim.falling_petal_sword.school": "Искусство меча горы Хуа",
-  "technique.murim.falling_petal_sword.form": "Меч Падающего Цветка"
+  "technique.murim.falling_petal_sword.form": "Меч Падающего Цветка",
+  "style.murim.twenty_four_plum": "Меч 24 Движений Цветущей Сливы",
+  "form.murim.twenty_four_plum_rainfall": "Ливень"
 }

@@ -29,7 +29,14 @@ public final class Styles {
             id("seven_plum_blossoms"), id("seven_plum_whirlwind"), id("seven_plum_execution"), id("seven_plum_rush")),
             Optional.of(id("seven_plum_basic")));
 
-    public static final List<Style> ALL = List.of(SEVEN_PLUM);
+    /**
+     * Меч 24 Движений Цветущей Сливы: пока одна секретная форма — Ливень. Обычные движения
+     * стиля добавятся формами сюда же, своей основы ЛКМ у стиля пока нет.
+     */
+    public static final Style TWENTY_FOUR_PLUM = new Style(id("twenty_four_plum"), List.of(
+            id("twenty_four_plum_rainfall")), Optional.empty());
+
+    public static final List<Style> ALL = List.of(SEVEN_PLUM, TWENTY_FOUR_PLUM);
 
     /** Стиль, которому принадлежит форма; техника вне стилей — пусто. */
     public static Optional<Style> of(ResourceLocation technique) {

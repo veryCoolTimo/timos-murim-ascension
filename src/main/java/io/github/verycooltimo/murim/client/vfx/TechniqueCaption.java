@@ -38,6 +38,11 @@ public final class TechniqueCaption {
     private static int life;
     private static int ticks;
 
+    /** Большая надпись на экране: мелкое имя техники в это время не рисуется, чтобы не налезать. */
+    public static boolean active() {
+        return born >= 0 && ticks - born < life;
+    }
+
     public static void show(Component schoolName, Component formName, int lifeTicks) {
         school = schoolName;
         form = formName;
