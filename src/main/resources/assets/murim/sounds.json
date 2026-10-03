@@ -246,9 +246,6 @@
     "subtitle": "subtitles.murim.qi_charge",
     "sounds": [
       {
-        "name": "murim:qi_charge_a"
-      },
-      {
         "name": "murim:qi_charge_b"
       }
     ]

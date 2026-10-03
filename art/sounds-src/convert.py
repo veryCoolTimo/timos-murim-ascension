@@ -20,6 +20,8 @@ SOFT = (-28.0, -11.0)
 UI = (-26.0, -9.0)
 LOOP = (-33.0, -15.0)
 CAT = {
+    # Ци/прорыв/давление — тише (автор 03.10: «чтобы уши не взрывать»).
+    'qi_charge': SOFT, 'breakthrough': SOFT, 'aura_gust': SOFT,
     'step_soft': SOFT, 'qi_chime': SOFT, 'meditation_cycle': SOFT, 'blossom_open': SOFT, 'sword_draw': SOFT,
     'lock_on': UI, 'wheel_open': UI, 'wheel_select': UI,
     'run_wind': LOOP, 'aura_charge': LOOP, 'meditation_loop': LOOP, 'qi_sword_hum': LOOP,
