@@ -189,6 +189,16 @@ public final class DevCaptureHandler {
             }
         }
 
+        // Камера на стойке: LocalPlayer шлёт позицию серверу только когда сам — камера
+        // (LocalPlayer#sendPosition → isControlledCamera), и сервер видел игрока на старте
+        // весь рывок: удары по дистанции не проходили. Шлём позицию сами.
+        // API: reference/minecraft-src/net/minecraft/client/player/LocalPlayer.java#sendPosition
+        if (minecraft.getCameraEntity() != minecraft.player && minecraft.getConnection() != null) {
+            net.minecraft.client.player.LocalPlayer p = minecraft.player;
+            minecraft.getConnection().send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.PosRot(
+                    p.getX(), p.getY(), p.getZ(), p.getYRot(), p.getXRot(), p.onGround()));
+        }
+
         // Опорный кадр: сцена в той же позе и с той же камерой, но БЕЗ эффекта.
         if (warmup == BASELINE_BEFORE_TICKS) {
             Screenshot.grab(minecraft.gameDirectory, "baseline_" + anglePrefix() + ".png",

@@ -149,6 +149,10 @@ public final class ModAttachments {
     public static final Supplier<AttachmentType<double[]>> RAIN =
             ATTACHMENT_TYPES.register("plum_rain",
                     () -> AttachmentType.<double[]>builder(() -> new double[] {0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0}).build());
+    /** Меч Падающего Цветка: см. FallingPetalExecutor. Не сохраняется — живёт одну технику. */
+    public static final Supplier<AttachmentType<double[]>> FALLING_PETAL =
+            ATTACHMENT_TYPES.register("falling_petal",
+                    () -> AttachmentType.<double[]>builder(() -> new double[] {0, 0, 0, 0, 1, 0, -1, 0, 0, 1, 0, 0, 1}).build());
 
     /** Последний взмах основы меча: {форма, тик}. Не сохраняется — живёт тики. */
     public static final Supplier<AttachmentType<int[]>> FOUNDATION_SWING =

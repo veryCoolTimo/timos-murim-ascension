@@ -23,7 +23,8 @@ public sealed interface TechniqueBehavior
         permits TechniqueBehavior.MeleeArc, TechniqueBehavior.ProjectileFan, TechniqueBehavior.Dash,
                 TechniqueBehavior.PalmBlast, TechniqueBehavior.Step, TechniqueBehavior.Footwork,
                 TechniqueBehavior.PlumSlash, TechniqueBehavior.PlumWhirlwind, TechniqueBehavior.PlumExecution, TechniqueBehavior.PlumRush,
-                TechniqueBehavior.PlumRainfall {
+                TechniqueBehavior.PlumRainfall,
+                TechniqueBehavior.FallingPetal {
 
     ResourceLocation MELEE_ARC = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "melee_arc");
     ResourceLocation PROJECTILE_FAN = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "projectile_fan");
@@ -36,6 +37,7 @@ public sealed interface TechniqueBehavior
     ResourceLocation PLUM_EXECUTION = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "plum_execution");
     ResourceLocation PLUM_RUSH = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "plum_rush");
     ResourceLocation PLUM_RAINFALL = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "plum_rainfall");
+    ResourceLocation FALLING_PETAL = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "falling_petal");
 
     ResourceLocation type();
 
@@ -309,7 +311,22 @@ public sealed interface TechniqueBehavior
         }
     }
 
-    // Map.of держит не больше десяти пар — поэтому ofEntries.
+    /** Меч Падающего Цветка: натиск из пяти ударов вокруг цели, см. FallingPetalRules. */
+    record FallingPetal() implements TechniqueBehavior {
+        public static final MapCodec<FallingPetal> CODEC = MapCodec.unit(FallingPetal::new);
+
+        @Override
+        public float damage() {
+            return 0.0F;
+        }
+
+        @Override
+        public ResourceLocation type() {
+            return FALLING_PETAL;
+        }
+    }
+
+    // Map.of держит не больше 10 пар — дальше Map.ofEntries.
     Map<ResourceLocation, MapCodec<? extends TechniqueBehavior>> TYPES = Map.ofEntries(
             Map.entry(MELEE_ARC, MeleeArc.CODEC),
             Map.entry(PROJECTILE_FAN, ProjectileFan.CODEC),
@@ -321,7 +338,8 @@ public sealed interface TechniqueBehavior
             Map.entry(PLUM_WHIRLWIND, PlumWhirlwind.CODEC),
             Map.entry(PLUM_EXECUTION, PlumExecution.CODEC),
             Map.entry(PLUM_RUSH, PlumRush.CODEC),
-            Map.entry(PLUM_RAINFALL, PlumRainfall.CODEC));
+            Map.entry(PLUM_RAINFALL, PlumRainfall.CODEC),
+            Map.entry(FALLING_PETAL, FallingPetal.CODEC));
 
     Codec<TechniqueBehavior> CODEC = ResourceLocation.CODEC
             .dispatch("type", TechniqueBehavior::type, type -> {

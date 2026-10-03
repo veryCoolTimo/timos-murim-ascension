@@ -204,6 +204,12 @@ public final class TechniqueService {
                 io.github.verycooltimo.murim.technique.BehaviorExecutor.rushTick(player, technique.id(), since);
             }
         }
+        if (technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.FallingPetal) {
+            int since = state.tick() - technique.startTickOf(TechniquePhase.IMPACT);
+            if (since > 0) {
+                io.github.verycooltimo.murim.technique.FallingPetalExecutor.tick(player, technique.id(), since);
+            }
+        }
         if (technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.PlumExecution) {
             int since = state.tick() - technique.startTickOf(TechniquePhase.IMPACT);
             if (since > 0) {
