@@ -72,6 +72,15 @@ public final class ModNetwork {
                 (payload, context) -> ClientPayloadBridge.handleFoundationForm(payload));
 
         // Шаги: клиент шлёт только нажатия с контекстом ввода, подтехнику выбирает сервер.
+        registrar.playToServer(ManualPayloads.Learn.TYPE, ManualPayloads.Learn.STREAM_CODEC,
+                (payload, context) -> {
+                    if (context.player() instanceof ServerPlayer serverPlayer) {
+                        io.github.verycooltimo.murim.item.TechniqueManualItem.learnFromHand(serverPlayer,
+                                payload.mainHand() ? net.minecraft.world.InteractionHand.MAIN_HAND : net.minecraft.world.InteractionHand.OFF_HAND);
+                    }
+                });
+        registrar.playToClient(ManualPayloads.Open.TYPE, ManualPayloads.Open.STREAM_CODEC,
+                (payload, context) -> ClientPayloadBridge.handleManual(payload));
         registrar.playToServer(LockPayload.TYPE, LockPayload.STREAM_CODEC,
                 (payload, context) -> {
                     if (context.player() instanceof ServerPlayer serverPlayer) {

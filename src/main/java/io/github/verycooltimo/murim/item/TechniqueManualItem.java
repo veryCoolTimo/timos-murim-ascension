@@ -42,6 +42,25 @@ public class TechniqueManualItem extends Item {
         if (id == null) {
             return InteractionResultHolder.consume(stack);
         }
+        // 03.10 автор: книга открывается и читается, учит кнопка «Изучить» (ManualPayloads.Learn).
+        Integer depth = stack.get(ModDataComponents.MANUAL_DEPTH.get());
+        TechniqueDefinition definition = TechniqueLoader.get(id);
+        net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(serverPlayer, new io.github.verycooltimo.murim.network.ManualPayloads.Open(
+                id, depth == null ? 0 : depth, definition == null ? "basic" : definition.tier().toString().toLowerCase(java.util.Locale.ROOT),
+                hand == InteractionHand.MAIN_HAND));
+        return InteractionResultHolder.consume(stack);
+    }
+
+    /** «Изучить» из книги: книга с этой техникой должна быть в руке. */
+    public static void learnFromHand(ServerPlayer serverPlayer, InteractionHand hand) {
+        ItemStack stack = serverPlayer.getItemInHand(hand);
+        if (!(stack.getItem() instanceof TechniqueManualItem item) || serverPlayer.getCooldowns().isOnCooldown(item)) {
+            return;
+        }
+        ResourceLocation id = stack.get(ModDataComponents.TECHNIQUE.get());
+        if (id == null) {
+            return;
+        }
         Integer depth = stack.get(ModDataComponents.MANUAL_DEPTH.get());
         MasteryService.Learn result = MasteryService.learn(serverPlayer, id, depth == null ? 0 : depth);
         if (result == MasteryService.Learn.ALREADY) {
@@ -51,8 +70,7 @@ public class TechniqueManualItem extends Item {
             serverPlayer.displayClientMessage(Component.translatable("murim.method.unreadable")
                     .withStyle(ChatFormatting.GRAY), true);
         }
-        serverPlayer.getCooldowns().addCooldown(this, 20);
-        return InteractionResultHolder.consume(stack);
+        serverPlayer.getCooldowns().addCooldown(item, 20);
     }
 
     @Override

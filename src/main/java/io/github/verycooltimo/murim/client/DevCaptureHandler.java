@@ -222,6 +222,10 @@ public final class DevCaptureHandler {
                 uiTicks = UI_CAPTURE_TICKS;
                 return;
             }
+            if ("manual".equals(subject)) {
+                manualTicks = 40;
+                return;
+            }
             if (MEDITATION.equals(subject)) {
                 sitDown();
                 meditationTicks = MEDITATION_CAPTURE_TICKS;
@@ -267,6 +271,20 @@ public final class DevCaptureHandler {
             startCapture();
         }
 
+        if (manualTicks > 0) {
+            int t = 40 - manualTicks--;
+            if (t == 4 && minecraft.player != null && minecraft.gameMode != null) {
+                minecraft.gameMode.useItem(minecraft.player, net.minecraft.world.InteractionHand.MAIN_HAND);
+            }
+            if (t >= 10 && t % 6 == 0) {
+                grab(minecraft, String.format("murim_%s_%03d.png", anglePrefix(), frameIndex));
+                grab(minecraft, String.format("clean_%s_%03d.png", anglePrefix(), frameIndex));
+                frameIndex++;
+            }
+            if (manualTicks == 0) {
+                minecraft.setScreen(null);
+            }
+        }
         if (stillSneakTicks > 0) {
             stillSneakTicks--;
             minecraft.options.keyShift.setDown(stillSneakTicks > 0);
@@ -456,6 +474,7 @@ public final class DevCaptureHandler {
     private static final int UI_CAPTURE_TICKS = 200;
     private static int uiTicks;
     private static int stillSneakTicks;
+    private static int manualTicks;
 
     private static void tickUi(Minecraft minecraft) {
         int t = UI_CAPTURE_TICKS - uiTicks--;

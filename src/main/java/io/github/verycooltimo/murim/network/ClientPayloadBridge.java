@@ -27,6 +27,10 @@ final class ClientPayloadBridge {
         io.github.verycooltimo.murim.client.vfx.FallingPetalVfx.onTechniqueEvent(payload);
     }
 
+    public static void handleManual(ManualPayloads.Open payload) {
+        net.minecraft.client.Minecraft.getInstance().setScreen(new io.github.verycooltimo.murim.client.ManualScreen(payload));
+    }
+
     public static void handleRain(RainPayload payload) {
         io.github.verycooltimo.murim.client.vfx.RainVfx.onRain(payload);
     }

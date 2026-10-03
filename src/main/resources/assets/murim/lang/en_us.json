@@ -206,5 +206,7 @@
   "technique.murim.wind_god_death.weakness": "A breach without damage: room for a strike, not the strike.",
   "technique.murim.wind_god_lightning.weakness": "Hard to turn at speed; a wall ends the run.",
   "murim.dodge.hint": "Double-tap A/D/S — footwork dodge",
-  "key.murim.lock": "Lock on target"
+  "key.murim.lock": "Lock on target",
+  "murim.manual.learn": "Learn",
+  "murim.manual.torn": "Torn: up to layer %s"
 }

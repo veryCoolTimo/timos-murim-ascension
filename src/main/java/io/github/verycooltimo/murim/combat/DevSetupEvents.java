@@ -232,6 +232,14 @@ public final class DevSetupEvents {
             io.github.verycooltimo.murim.mastery.LoadoutService.sync(ap);
             io.github.verycooltimo.murim.mastery.MasteryService.sync(ap);
         }
+        // Съёмка книги-манускрипта (03.10): в руке манускрипт техники MURIM_CAPTURE_MANUAL.
+        if ("manual".equals(System.getProperty("murim.capture.technique"))
+                && event.getEntity() instanceof net.minecraft.server.level.ServerPlayer mp) {
+            net.minecraft.world.item.ItemStack book = new net.minecraft.world.item.ItemStack(io.github.verycooltimo.murim.registry.ModItems.TECHNIQUE_MANUAL.get());
+            book.set(io.github.verycooltimo.murim.registry.ModDataComponents.TECHNIQUE.get(), net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(
+                    io.github.verycooltimo.murim.MurimMod.MODID, System.getenv().getOrDefault("MURIM_CAPTURE_MANUAL", "six_harmonies")));
+            mp.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, book);
+        }
         // Съёмка интерфейсов техник: шесть открытых слотов, пять техник, часть освоена наполовину.
         if ("ui".equals(System.getProperty("murim.capture.technique"))
                 && event.getEntity() instanceof net.minecraft.server.level.ServerPlayer uiPlayer) {
