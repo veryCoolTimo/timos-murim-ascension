@@ -406,6 +406,21 @@ public final class DevSetupEvents {
         target.setPos(STAGE_X + 0.5D + lookX * dummyDistance, STAGE_Y + lift,
                       STAGE_Z + 0.5D + lookZ * dummyDistance);
         level.addFreshEntity(target);
+        // MURIM_CAPTURE_EXTRA=n — ещё n зомби на пути к цели (Натиск волочит встречных, 03.10).
+        int extra = (int) envDouble("MURIM_CAPTURE_EXTRA", 0.0D);
+        for (int i = 0; i < extra; i++) {
+            net.minecraft.world.entity.monster.Zombie z =
+                    new net.minecraft.world.entity.monster.Zombie(net.minecraft.world.entity.EntityType.ZOMBIE, level);
+            // Без ИИ моб не двигается вовсе (LivingEntity.travel только при isEffectiveAi) —
+            // волочение и отброс видны лишь на живых: MURIM_CAPTURE_ENEMY_AI=1.
+            z.setNoAi(!"1".equals(System.getenv("MURIM_CAPTURE_ENEMY_AI")));
+            z.setPersistenceRequired();
+            double k = dummyDistance * (i + 1) / (extra + 1.0D);
+            // Снаружи от оси взгляда: захват (по углу к прицелу) берёт главную цель, а не встречных.
+            double sideK = 0.9D;
+            z.setPos(STAGE_X + 0.5D + lookX * k - lookZ * sideK, STAGE_Y, STAGE_Z + 0.5D + lookZ * k + lookX * sideK);
+            level.addFreshEntity(z);
+        }
         // MURIM_CAPTURE_AURA=4 или 4d (демоническая) — аура цели для съёмки давления.
         String aura = System.getenv("MURIM_CAPTURE_AURA");
         if (aura != null && !aura.isBlank()) {
