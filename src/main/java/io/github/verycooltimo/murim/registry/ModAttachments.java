@@ -172,6 +172,11 @@ public final class ModAttachments {
     public static final Supplier<AttachmentType<double[]>> EXPLOSION =
             ATTACHMENT_TYPES.register("plum_explosion",
                     () -> AttachmentType.<double[]>builder(() -> new double[40]).build());
+
+    /** Ливень Цветов (Семь Цветков Сливы): см. ShowerExecutor. Не сохраняется — живёт одну технику. */
+    public static final Supplier<AttachmentType<double[]>> SHOWER =
+            ATTACHMENT_TYPES.register("plum_shower",
+                    () -> AttachmentType.<double[]>builder(() -> new double[] {0, 0, 0, 0, 0, 0, 0, -1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}).build());
     /** Рассеяние Цветущей Сливы: см. ScatterExecutor. Не сохраняется — живёт одну технику. */
     public static final Supplier<AttachmentType<double[]>> SCATTER =
             ATTACHMENT_TYPES.register("plum_scatter",

@@ -28,6 +28,7 @@ public sealed interface TechniqueBehavior
                 TechniqueBehavior.PlumRiver,
                 TechniqueBehavior.PlumScatter,
                 TechniqueBehavior.PlumDome,
+                TechniqueBehavior.PlumShower,
                 TechniqueBehavior.FallingPetal {
 
     ResourceLocation MELEE_ARC = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "melee_arc");
@@ -46,6 +47,7 @@ public sealed interface TechniqueBehavior
     ResourceLocation PLUM_SCATTER = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "plum_scatter");
     ResourceLocation PLUM_DOME = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "plum_dome");
     ResourceLocation FALLING_PETAL = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "falling_petal");
+    ResourceLocation PLUM_SHOWER = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "plum_shower");
 
     ResourceLocation type();
 
@@ -399,6 +401,21 @@ public sealed interface TechniqueBehavior
         }
     }
 
+    /** Меч Семи Цветков Сливы, «Ливень Цветов»: дальний огромный тычок-пикирование сквозь цель, см. ShowerRules. */
+    record PlumShower() implements TechniqueBehavior {
+        public static final MapCodec<PlumShower> CODEC = MapCodec.unit(PlumShower::new);
+
+        @Override
+        public float damage() {
+            return 0.0F;
+        }
+
+        @Override
+        public ResourceLocation type() {
+            return PLUM_SHOWER;
+        }
+    }
+
     // Map.of держит не больше 10 пар — дальше Map.ofEntries.
     Map<ResourceLocation, MapCodec<? extends TechniqueBehavior>> TYPES = Map.ofEntries(
             Map.entry(MELEE_ARC, MeleeArc.CODEC),
@@ -416,6 +433,7 @@ public sealed interface TechniqueBehavior
             Map.entry(PLUM_RIVER, PlumRiver.CODEC),
             Map.entry(PLUM_SCATTER, PlumScatter.CODEC),
             Map.entry(PLUM_DOME, PlumDome.CODEC),
+            Map.entry(PLUM_SHOWER, PlumShower.CODEC),
             Map.entry(FALLING_PETAL, FallingPetal.CODEC));
 
     Codec<TechniqueBehavior> CODEC = ResourceLocation.CODEC
