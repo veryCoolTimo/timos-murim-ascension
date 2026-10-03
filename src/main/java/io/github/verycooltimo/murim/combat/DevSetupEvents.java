@@ -231,7 +231,17 @@ public final class DevSetupEvents {
                     uiPlayer.getData(io.github.verycooltimo.murim.registry.ModAttachments.MASTERY).withWisdom(16.0D));
             io.github.verycooltimo.murim.mastery.Loadout loadout = io.github.verycooltimo.murim.mastery.Loadout.EMPTY;
             // MURIM_CAPTURE_UI_STYLE=1 — в первом слоте стиль Семи Цветков: кольцо показывает его формы.
-            String[] order = "1".equals(System.getenv("MURIM_CAPTURE_UI_STYLE"))
+            // MURIM_CAPTURE_UI_STYLE=2 — двойное кольцо (03.10): два стиля, отдельные техники и шаг.
+            String uiStyle = System.getenv().getOrDefault("MURIM_CAPTURE_UI_STYLE", "");
+            if ("2".equals(uiStyle)) {
+                for (String f : new String[] {"seven_plum_blossoms", "seven_plum_whirlwind", "seven_plum_execution", "seven_plum_rush",
+                        "twenty_four_plum_rainfall", "falling_petal_sword", "wind_god_steps"}) {
+                    primeInsight(uiPlayer, f, 3, 0.5D, 0.0D, day);
+                }
+            }
+            String[] order = "2".equals(uiStyle)
+                    ? new String[] {"seven_plum_whirlwind", "twenty_four_plum_rainfall", "falling_petal_sword", "demon_palm", "wind_god_steps"}
+                    : "1".equals(uiStyle)
                     ? new String[] {"seven_plum_whirlwind", "demon_palm", "wind_god_steps"}
                     : new String[] {"crescent_sweep", "demon_palm", "wedge_fan", "shadow_step"};
             for (int i = 0; i < order.length; i++) {

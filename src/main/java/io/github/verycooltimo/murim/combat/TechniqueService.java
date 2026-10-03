@@ -82,6 +82,7 @@ public final class TechniqueService {
         io.github.verycooltimo.murim.profile.ProfileNetwork.sync(player);
 
         player.setData(ModAttachments.TECHNIQUE_STATE, TechniqueState.started(technique.id(), now));
+        io.github.verycooltimo.murim.mastery.LoadoutService.returnToStance(player, technique.id());
         PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
                 new TechniqueEventPayload(TechniqueEventPayload.Event.STARTED, technique.id(), player.getId(), 0,
                         Math.max(0, io.github.verycooltimo.murim.mastery.MasteryService.layer(player, technique.id()))));

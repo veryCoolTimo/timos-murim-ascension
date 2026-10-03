@@ -40,6 +40,13 @@ public final class TechniqueWheel {
     // ровно под иконку 32×32 — пиксельные иконки рисуются без нецелого масштаба.
     private static final float INNER = 24.0F;
     private static final float OUTER = 58.0F;
+    /**
+     * Двойное кольцо (автор 03.10, «кольцо супер»): внутри — формы показанного стиля, снаружи —
+     * все открытые слоты раскладки. Наведение на слот снаружи показывает внутри его формы;
+     * отпустил V на слоте — выбран слот с его последней формой, на форме — эта форма.
+     */
+    private static final float SLOT_INNER = OUTER + 4.0F;
+    private static final float SLOT_OUTER = OUTER + 34.0F;
     /** Пикселей курсора на градус поворота мыши. */
     private static final float SENSITIVITY = 2.2F;
     /** Мёртвая зона в центре: без неё дрожь руки перебирала бы секторы. */
@@ -51,6 +58,8 @@ public final class TechniqueWheel {
     private static float cursorX;
     private static float cursorY;
     private static int selected = -1;
+    /** Слот под курсором во внешнем кольце, −1 — курсор не там. */
+    private static int slotHover = -1;
     private static int age;
     /**
      * Страница кольца — слот раскладки (решение codex 02.10): секторы — формы стиля этого слота
@@ -111,7 +120,7 @@ public final class TechniqueWheel {
     public static void setCursor(float x, float y) {
         cursorX = x;
         cursorY = y;
-        selected = sectorAt(cursorX, cursorY, entries.size());
+        pick();
     }
 
     @SubscribeEvent
@@ -128,11 +137,15 @@ public final class TechniqueWheel {
             cursorX = 0.0F;
             cursorY = 0.0F;
             selected = -1;
+            slotHover = -1;
             page = entriesOf(ClientLoadoutState.active()).isEmpty() ? nextPage(ClientLoadoutState.active(), 1) : ClientLoadoutState.active();
             entries = entriesOf(page);
         } else if (!wanted && open) {
             open = false;
-            if (selected >= 0 && selected < entries.size()) {
+            if (slotHover >= 0 && !entriesOf(slotHover).isEmpty()) {
+                // Слот снаружи: стиль с его последней формой (или отдельная техника, шаг).
+                PacketDistributor.sendToServer(new LoadoutPayloads.Select(slotHover));
+            } else if (selected >= 0 && selected < entries.size()) {
                 ResourceLocation form = entries.get(selected);
                 List<Optional<ResourceLocation>> slots = ClientLoadoutState.slots();
                 if (page >= slots.size() || !slots.get(page).equals(Optional.of(form))) {
@@ -161,11 +174,11 @@ public final class TechniqueWheel {
             cursorX += dx * SENSITIVITY;
             cursorY += dy * SENSITIVITY;
             float length = Mth.sqrt(cursorX * cursorX + cursorY * cursorY);
-            if (length > OUTER) {
-                cursorX *= OUTER / length;
-                cursorY *= OUTER / length;
+            if (length > SLOT_OUTER) {
+                cursorX *= SLOT_OUTER / length;
+                cursorY *= SLOT_OUTER / length;
             }
-            selected = sectorAt(cursorX, cursorY, entries.size());
+            pick();
         }
         me.setYRot(baseYaw);
         me.yRotO = baseYaw;
@@ -173,6 +186,22 @@ public final class TechniqueWheel {
         me.xRotO = basePitch;
         event.setYaw(baseYaw);
         event.setPitch(basePitch);
+    }
+
+    /** Что под курсором: форма во внутреннем кольце или слот во внешнем (он же меняет страницу). */
+    private static void pick() {
+        float r = Mth.sqrt(cursorX * cursorX + cursorY * cursorY);
+        if (r > OUTER + 2.0F) {
+            slotHover = sectorAt(cursorX, cursorY, ClientLoadoutState.open());
+            selected = -1;
+            if (slotHover >= 0 && slotHover != page && !entriesOf(slotHover).isEmpty()) {
+                page = slotHover;
+                entries = entriesOf(page);
+            }
+        } else {
+            slotHover = -1;
+            selected = sectorAt(cursorX, cursorY, entries.size());
+        }
     }
 
     /** Сектор под курсором: первый — сверху, дальше по часовой. */
@@ -229,6 +258,19 @@ public final class TechniqueWheel {
             }
             GuiShapes.sectorOutline(graphics, cx, cy, INNER, OUTER, from, to, gap, hot ? 1.2F : 0.6F, edge);
         }
+        // Внешнее кольцо — слоты раскладки: иконка слота, активный помечен точкой.
+        int slotsN = ClientLoadoutState.open();
+        List<Optional<ResourceLocation>> slotList = ClientLoadoutState.slots();
+        for (int i = 0; i < slotsN; i++) {
+            double from = -Math.PI / 2.0D - span(slotsN) / 2.0D + i * span(slotsN);
+            double to = from + span(slotsN);
+            boolean hot = i == slotHover;
+            boolean shown = i == page;
+            GuiShapes.sectorFill(graphics, cx, cy, SLOT_INNER, SLOT_OUTER, from, to, gap,
+                    hot ? argb(appear * 0.55F, 0.45F, 0.82F, 0.95F) : argb(appear * (shown ? 0.42F : 0.30F), 0.06F, 0.08F, 0.12F));
+            GuiShapes.sectorOutline(graphics, cx, cy, SLOT_INNER, SLOT_OUTER, from, to, gap, hot ? 1.2F : 0.6F,
+                    hot ? argb(appear, 0.75F, 0.95F, 1.0F) : argb(appear * (shown ? 0.55F : 0.25F), 0.80F, 0.86F, 0.95F));
+        }
         // Центр — отдельный тёмный круг с ободком.
         GuiShapes.ring(graphics, cx, cy, 0.0F, INNER - 3.0F, argb(appear * 0.55F, 0.02F, 0.035F, 0.07F));
         GuiShapes.ring(graphics, cx, cy, INNER - 4.0F, INNER - 3.0F, argb(appear * 0.6F, 0.80F, 0.86F, 0.95F));
@@ -255,30 +297,39 @@ public final class TechniqueWheel {
             }
         }
 
+        // Иконки слотов 24×24 (половина 48 — без неровных пикселей).
+        for (int i = 0; i < slotsN; i++) {
+            double mid = -Math.PI / 2.0D + i * span(slotsN);
+            float r = (SLOT_INNER + SLOT_OUTER) / 2.0F;
+            int ix = (int) (cx + Math.cos(mid) * r) - 12;
+            int iy = (int) (cy + Math.sin(mid) * r) - 12;
+            Optional<ResourceLocation> t = i < slotList.size() ? slotList.get(i) : Optional.empty();
+            if (t.isPresent()) {
+                graphics.setColor(1.0F, 1.0F, 1.0F, appear * (i == slotHover || i == page ? 1.0F : 0.55F));
+                com.mojang.blaze3d.systems.RenderSystem.enableBlend();
+                Optional<io.github.verycooltimo.murim.technique.Styles.Style> st = io.github.verycooltimo.murim.technique.Styles.of(t.get());
+                // Слот стиля — иконка первой формы (знак стиля), отдельная техника — своя.
+                ResourceLocation iconOf = st.map(x -> x.forms().get(0)).orElse(t.get());
+                graphics.blit(TechniqueIcons.of(iconOf), ix, iy, 24, 24, 0.0F, 0.0F, 48, 48, 48, 48);
+                graphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
+            }
+            if (i == ClientLoadoutState.active()) {
+                GuiShapes.ring(graphics, ix + 12, iy - 3, 0.0F, 1.6F, ((int) (appear * 0xE0) << 24) | 0xF1A9CB);
+            }
+        }
+
         // Название и слой — над кольцом: в уменьшенный центр не помещаются, а снизу налезали на шкалу ци.
         Font font = minecraft.font;
         List<Optional<ResourceLocation>> slots = ClientLoadoutState.slots();
         Optional<ResourceLocation> current = page < slots.size() ? slots.get(page) : Optional.empty();
-        Optional<ResourceLocation> technique = selected >= 0 && selected < entries.size() ? Optional.of(entries.get(selected)) : current;
+        Optional<ResourceLocation> technique = selected >= 0 && selected < entries.size() ? Optional.of(entries.get(selected))
+                : slotHover >= 0 && slotHover < slots.size() ? slots.get(slotHover) : current;
         int textA = Math.max(4, (int) (appear * 255)) << 24;
-        // Страницы: стиль слота сверху, «‹ 2/3 ›» снизу — колёсиком листаются слоты.
-        int pages = 0;
-        int index = 0;
-        for (int i = 0; i < ClientLoadoutState.open(); i++) {
-            if (!entriesOf(i).isEmpty()) {
-                pages++;
-                if (i == page) {
-                    index = pages;
-                }
-            }
-        }
-        if (pages > 1) {
-            small(graphics, font, Component.literal("\u2039 " + index + "/" + pages + " \u203A"), (int) cx, (int) (cy + OUTER + 6), textA | 0x8FD3E8);
-        }
+        // Страницы листаются и колёсиком (запасной путь), но слоты теперь видны снаружи.
         if (technique.isPresent()) {
             Optional<io.github.verycooltimo.murim.technique.Styles.Style> style = io.github.verycooltimo.murim.technique.Styles.of(technique.get());
             if (style.isPresent()) {
-                small(graphics, font, Component.translatable(style.get().nameKey()), (int) cx, (int) (cy - OUTER - 33), textA | 0xF1A9CB);
+                small(graphics, font, Component.translatable(style.get().nameKey()), (int) cx, titleY() - 11, textA | 0xF1A9CB);
             }
             // Форма стиля — короткое имя («Вихрь»): название стиля уже стоит строкой выше.
             String formKey = "form." + technique.get().getNamespace() + "." + technique.get().getPath();
@@ -286,14 +337,14 @@ public final class TechniqueWheel {
                     ? Component.translatable(formKey)
                     : io.github.verycooltimo.murim.mastery.MasteryService.name(technique.get());
             SyncMasteryPayload.Entry entry = TechniqueSlotsHud.mastery(technique.get());
-            int ty = (int) (cy - OUTER - 22);
+            int ty = titleY();
             graphics.drawString(font, name, (int) cx - font.width(name) / 2, ty, textA | 0xE6F4FF, true);
             if (entry != null) {
                 small(graphics, font, Component.translatable("murim.loadout.layer", entry.layer(), entry.cap()),
                         (int) cx, ty + 11, textA | 0x8FD3E8);
             }
         } else {
-            small(graphics, font, Component.translatable("murim.loadout.empty_slot"), (int) cx, (int) (cy - OUTER - 12),
+            small(graphics, font, Component.translatable("murim.loadout.empty_slot"), (int) cx, titleY(),
                     textA | 0x8090A8);
         }
         GuiShapes.ring(graphics, cx + cursorX, cy + cursorY, 0.0F, 1.6F, ((int) (appear * 0xC0) << 24) | 0xFFFFFF);
@@ -304,6 +355,13 @@ public final class TechniqueWheel {
             ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/gui/wheel_sector_vignette.png");
 
     private static final ResourceLocation MIST = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/gui/wheel_mist.png");
+
+    /** Строка названия над кольцом; на маленьком экране прижимается к верху, а не уходит за край. */
+    private static int titleY() {
+        Minecraft mc = Minecraft.getInstance();
+        int cy = mc.getWindow().getGuiScaledHeight() / 2;
+        return Math.max(13, (int) (cy - SLOT_OUTER - 22));
+    }
 
     private static double span(int count) {
         return Math.PI * 2.0D / count;
@@ -324,6 +382,7 @@ public final class TechniqueWheel {
     public static void reset() {
         open = false;
         selected = -1;
+        slotHover = -1;
     }
 
     private TechniqueWheel() {

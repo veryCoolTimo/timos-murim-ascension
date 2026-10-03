@@ -446,18 +446,33 @@ public final class DevCaptureHandler {
         if (t < 60) {
             CombatMode.engage();
         }
-        // Кольцо: зажать клавишу, повести курсор к третьему сектору, отпустить.
-        ModKeyMappings.WHEEL.setDown(t >= 60 && t < 110);
-        if (t >= 70 && t < 110) {
-            float k = Math.min(1.0F, (t - 70) / 15.0F);
-            TechniqueWheel.setCursor(44.0F * k, 22.0F * k);
+        boolean ring2 = "2".equals(System.getenv("MURIM_CAPTURE_UI_STYLE"));
+        if (ring2) {
+            // Двойное кольцо: форма Казнь → наружу на слот «24 Движения» (внутри его Ливень) →
+            // обратно внутрь на Ливень → отпустить.
+            ModKeyMappings.WHEEL.setDown(t >= 60 && t < 124);
+            float[][] path = {{0, 0}, {32, 22}, {32, 22}, {58, -60}, {58, -60}, {0, -40}, {0, -40}};
+            int[] at = {66, 76, 88, 96, 104, 112, 124};
+            for (int i = 0; i + 1 < at.length; i++) {
+                if (t >= at[i] && t < at[i + 1]) {
+                    float k = (t - at[i]) / (float) (at[i + 1] - at[i]);
+                    TechniqueWheel.setCursor(Mth.lerp(k, path[i][0], path[i + 1][0]), Mth.lerp(k, path[i][1], path[i + 1][1]));
+                }
+            }
+        } else {
+            // Кольцо: зажать клавишу, повести курсор к третьему сектору, отпустить.
+            ModKeyMappings.WHEEL.setDown(t >= 60 && t < 110);
+            if (t >= 70 && t < 110) {
+                float k = Math.min(1.0F, (t - 70) / 15.0F);
+                TechniqueWheel.setCursor(44.0F * k, 22.0F * k);
+            }
         }
-        if (t == 130) {
+        if (t == 130 && !ring2) {
             LoadoutScreen screen = new LoadoutScreen();
             minecraft.setScreen(screen);
             screen.pickForCapture(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "wedge_fan"));
         }
-        if (t % 5 == 0) {
+        if (ring2 ? t >= 56 && t < 140 && t % 2 == 0 : t % 5 == 0) {
             grab(minecraft, String.format("murim_%s_%03d.png", anglePrefix(), frameIndex));
             grab(minecraft, String.format("clean_%s_%03d.png", anglePrefix(), frameIndex));
             frameIndex++;

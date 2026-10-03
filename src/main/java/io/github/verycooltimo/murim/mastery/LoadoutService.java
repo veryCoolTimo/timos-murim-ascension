@@ -72,6 +72,32 @@ public final class LoadoutService {
         sync(player);
     }
 
+    /**
+     * Отдельная техника (ладонь, Падающий Цветок) занимает R на одно применение: после
+     * успешного старта активным снова становится слот стиля, чья основа стоит на ЛКМ
+     * (двойное кольцо, автор 03.10). Формы стилей и шаги ничего не возвращают.
+     */
+    public static void returnToStance(ServerPlayer player, ResourceLocation cast) {
+        if (io.github.verycooltimo.murim.technique.Styles.of(cast).isPresent()
+                || io.github.verycooltimo.murim.combat.FootworkService.family(
+                        io.github.verycooltimo.murim.technique.TechniqueLoader.get(cast)) != null) {
+            return;
+        }
+        Loadout loadout = player.getData(ModAttachments.LOADOUT);
+        if (loadout.foundation().isEmpty()) {
+            return;
+        }
+        for (int i = 0; i < openSlots(player); i++) {
+            Optional<ResourceLocation> t = loadout.at(i);
+            if (i != loadout.active() && t.isPresent() && io.github.verycooltimo.murim.technique.Styles.of(t.get())
+                    .flatMap(io.github.verycooltimo.murim.technique.Styles.Style::basic).equals(loadout.foundation())) {
+                player.setData(ModAttachments.LOADOUT, loadout.select(i));
+                sync(player);
+                return;
+            }
+        }
+    }
+
     /** Только что выученная техника встаёт в первый свободный открытый слот — меньше возни. */
     public static void placeLearned(ServerPlayer player, ResourceLocation technique) {
         Loadout loadout = player.getData(ModAttachments.LOADOUT);
