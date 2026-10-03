@@ -1,0 +1,6 @@
+{
+  "type": "neoforge:add_features",
+  "biomes": "#minecraft:is_overworld",
+  "features": "murim:qi_node",
+  "step": "top_layer_modification"
+}

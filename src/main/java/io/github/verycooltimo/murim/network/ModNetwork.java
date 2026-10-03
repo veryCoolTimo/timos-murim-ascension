@@ -19,7 +19,7 @@ import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 public final class ModNetwork {
 
     /** Версия протокола. Поднимать при любом несовместимом изменении пакетов. */
-    private static final String VERSION = "22";
+    private static final String VERSION = "23";
 
     @SubscribeEvent
     static void register(RegisterPayloadHandlersEvent event) {
@@ -82,6 +82,15 @@ public final class ModNetwork {
                 });
         registrar.playToClient(ManualPayloads.Open.TYPE, ManualPayloads.Open.STREAM_CODEC,
                 (payload, context) -> ClientPayloadBridge.handleManual(payload));
+        // Пилюли (docs/design/19b): клиент шлёт только сторону выбора, остальное считает сервер.
+        registrar.playToClient(PillPayloads.Sync.TYPE, PillPayloads.Sync.STREAM_CODEC,
+                (payload, context) -> ClientPayloadBridge.handlePill(payload));
+        registrar.playToServer(PillPayloads.Choice.TYPE, PillPayloads.Choice.STREAM_CODEC,
+                (payload, context) -> {
+                    if (context.player() instanceof ServerPlayer serverPlayer) {
+                        io.github.verycooltimo.murim.cultivation.PillService.choose(serverPlayer, payload.side());
+                    }
+                });
         registrar.playToServer(LockPayload.TYPE, LockPayload.STREAM_CODEC,
                 (payload, context) -> {
                     if (context.player() instanceof ServerPlayer serverPlayer) {

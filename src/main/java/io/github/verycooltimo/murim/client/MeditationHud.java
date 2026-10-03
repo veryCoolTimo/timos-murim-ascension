@@ -85,7 +85,7 @@ public final class MeditationHud {
         }
         if (state.beats() >= 3) {
             // Во время прорыва виджет ци не нужен: идёт сцена, игроку нечего нажимать.
-            if (breakAge < 0 && rankAge < 0 && warnAge < 0) {
+            if (breakAge < 0 && rankAge < 0 && warnAge < 0 && !ClientPillState.absorbing()) {
                 seeded(graphics, minecraft, partial);
             }
             return;
@@ -216,17 +216,22 @@ public final class MeditationHud {
         int cx = w / 2 - 91 - 8 - (GAME_RADIUS + 3);
         int cy = h - 13 - (GAME_RADIUS + 3);
         float ticks = ClientMeditationState.sessionTicks() + partial;
-        double cap = Math.max(1.0D, profile.capacity() * MeditationService.POOL_CAP);
-        float fill = (float) Mth.clamp(profile.pool() / cap, 0.0D, 1.0D);
+        // Сколько добавилось — видно; сколько до прорыва — нет (автор 01.10). Круг больше не шкала
+        // запаса до стены: ядро дышит, и яркость дыхания — скорость притока (docs/design/19b §4).
+        boolean full = io.github.verycooltimo.murim.cultivation.Realm.atWall(profile);
+        boolean stunned = ClientPlaceState.stunned();
+        double base = MeditationService.gainAt((int) ticks);
+        boolean tired = base < MeditationService.gainAt(0) * 0.4D;
+        double place = ClientPlaceState.place() != null && !stunned ? ClientPlaceState.place().gain() : 1.0D;
+        float rate = full || stunned ? 0.0F : (float) Mth.clamp(base / MeditationService.gainAt(0) * place / 2.0D, 0.0D, 1.0D);
         float breath = 0.5F + 0.5F * Mth.sin(ticks * 0.08F);
 
         annulus(graphics, cx, cy, 0.0F, GAME_RADIUS + 3.0F, 0x0, 0x70060A14);
         annulus(graphics, cx, cy, GAME_RADIUS + 2.5F, GAME_RADIUS + 3.5F, 0x0, 0xFF3A5A88);
-        // Запас — площадь круга: радиус по корню, чтобы половина запаса выглядела половиной.
-        float r = (float) Math.sqrt(fill) * GAME_RADIUS;
-        annulus(graphics, cx, cy, 0.0F, r, 0x0, 0xC03C78D8);
+        float r = GAME_RADIUS * (0.35F + 0.25F * rate + 0.12F * breath * (0.3F + rate));
+        int alpha = (int) (0x50 + 0x90 * (0.3F + 0.7F * rate));
+        annulus(graphics, cx, cy, 0.0F, r, 0x0, (alpha << 24) | 0x3C78D8);
         annulus(graphics, cx, cy, Math.max(0.0F, r - 1.2F), r, 0x0, 0xFF9FD8FF);
-        // Семя в центре дышит в такт медитации.
         annulus(graphics, cx, cy, 0.0F, 1.2F + breath * 0.8F, 0x0, 0xFFE8FBFF);
         graphics.flush();
 
@@ -236,19 +241,39 @@ public final class MeditationHud {
         graphics.fill(cx - half, by, cx + half, by + 1, 0x60FFFFFF);
         graphics.fill(cx - half, by, cx - half + (int) (2 * half * circ), by + 1, 0xFF9FF0DC);
 
-        // Скорость накопления в секунду и её спад.
-        double gain = MeditationService.gainAt((int) ticks) * profile.efficiency() * 20.0D;
-        boolean tired = MeditationService.gainAt((int) ticks) < MeditationService.gainAt(0) * 0.4D;
+        // «За сессию: +N ци» — одна обновляемая строка вместо скорости в секунду.
+        double total = profile.pool() + profile.circulating();
+        if (Double.isNaN(sessionStart)) {
+            sessionStart = total;
+        }
+        sessionGain = Math.max(0.0D, total - sessionStart);
         Font font = minecraft.font;
-        Component rate = fill >= 1.0F
-                ? Component.translatable("murim.meditation.seeded.full")
-                : Component.translatable(tired ? "murim.meditation.seeded.tired" : "murim.meditation.seeded.rate",
-                        String.format(java.util.Locale.ROOT, "%.1f", gain));
         int ty = cy - GAME_RADIUS - 11;
-        small(graphics, font, rate, cx, ty, tired || fill >= 1.0F ? 0xC0A0A8B8 : 0xE0BFE6FF);
+        small(graphics, font, Component.translatable("murim.meditation.session",
+                String.format(java.util.Locale.ROOT, "%.1f", sessionGain)), cx, ty, 0xE0BFE6FF);
+        // Сколько всего ци (автор 03.10: «хотелось бы знать, сколько всего у тебя ци»): запас и боевая,
+        // числами — но без доли до стены.
+        small(graphics, font, Component.translatable("murim.meditation.total",
+                String.format(java.util.Locale.ROOT, "%.1f", profile.pool()),
+                String.format(java.util.Locale.ROOT, "%.1f", profile.circulating())), cx, ty - 8, 0xF0E8F6FF);
+        int line = ty - 16;
+        // Почему рост стоит — одна причина, короткая подпись.
+        String reason = full ? "murim.meditation.reason.full" : stunned ? "murim.meditation.reason.stunned"
+                : tired ? "murim.meditation.reason.tired" : null;
+        if (reason != null) {
+            small(graphics, font, Component.translatable(reason), cx, line, 0xC0A0A8B8);
+            line -= 8;
+        }
+        if (ClientPlaceState.node() != null) {
+            float warn = ClientPlaceState.warning();
+            small(graphics, font, warn > 0.0F ? Component.translatable("murim.place.warning")
+                            : Component.translatable("murim.place.near_kind", Component.translatable(
+                                    "murim.place.kind." + ClientPlaceState.place().kind().getSerializedName())),
+                    cx, line, warn > 0.0F ? 0xF0FFB070 : 0xE0A8F0D0);
+            line -= 8;
+        }
         // Что осмысливается — то же, что показывает двойник (§3г).
         java.util.List<net.minecraft.resources.ResourceLocation> pending = ClientMasteryState.pending();
-        int line = ty - 8;
         if (!pending.isEmpty()) {
             small(graphics, font, Component.translatable("murim.meditation.seeded.pondering",
                     io.github.verycooltimo.murim.mastery.MasteryService.name(pending.get(0))), cx, line, 0xE0CFEFFF);
@@ -258,6 +283,22 @@ public final class MeditationHud {
             small(graphics, font, Component.translatable("murim.meditation.seeded.leave",
                     minecraft.options.keyShift.getTranslatedKeyMessage()), cx, line, 0xB0C8DCEC);
         }
+    }
+
+    /** Запас + циркулирующая на начале сессии: от него считается «за сессию». */
+    private static double sessionStart = Double.NaN;
+    private static double sessionGain;
+
+    /** Начало сессии: вызывается при посадке, до поглощения пилюли — её прибавка тоже «за сессию». */
+    static void markSessionStart() {
+        io.github.verycooltimo.murim.profile.DantianProfile p = ClientProfileState.profile();
+        sessionStart = p.pool() + p.circulating();
+        sessionGain = 0.0D;
+    }
+
+    /** Сколько накоплено за последнюю сессию — для итога при вставании. */
+    public static double sessionGain() {
+        return sessionGain;
     }
 
     private static void small(GuiGraphics graphics, Font font, Component text, int cx, int y, int colour) {

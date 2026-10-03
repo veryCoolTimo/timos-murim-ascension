@@ -210,6 +210,7 @@ public final class ClientMeditationState {
             }
         } else if (payload.active() && !previous.active()) {
             localTicks = payload.ticks();
+            MeditationHud.markSessionStart();
             aftermath = Aftermath.NONE;
             if (player != null && seedSceneTicks <= 0) {
                 MurimPlayerAnimations.play(player, MurimPlayerAnimations.LOTUS);
@@ -244,6 +245,13 @@ public final class ClientMeditationState {
 
         if (!payload.active() && previous.active()) {
             holdSent = false;
+            // Итог сессии одной строкой (docs/design/19b §4): сколько накоплено.
+            if (previous.beats() >= 3 && payload.event() == SyncMeditationPayload.Event.NONE
+                    && MeditationHud.sessionGain() >= 0.05D) {
+                minecraft.gui.setOverlayMessage(net.minecraft.network.chat.Component.translatable(
+                        "murim.meditation.session_done", String.format(java.util.Locale.ROOT, "%.1f",
+                                MeditationHud.sessionGain())), false);
+            }
             if (payload.event() == SyncMeditationPayload.Event.SEED) {
                 startSeedScene(minecraft);
             } else if (payload.event() == SyncMeditationPayload.Event.RANK_UP) {
@@ -292,7 +300,8 @@ public final class ClientMeditationState {
      * Камера спереди — кольцо, жилы и семя на животе со спины не видны.
      */
     public static boolean cinematic() {
-        return (state.active() && state.beats() < 3) || seedSceneTicks > 0 || orbit();
+        return (state.active() && state.beats() < 3) || seedSceneTicks > 0 || orbit()
+                || ClientPillState.absorbing() || ClientPillState.finaleAge() >= 0 && ClientPillState.finaleRare();
     }
 
     /** Насколько камера уже подошла: плавный заход и выход за секунду. */
