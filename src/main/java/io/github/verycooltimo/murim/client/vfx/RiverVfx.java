@@ -590,8 +590,8 @@ public final class RiverVfx {
                 }
             }
             if (t == RiverRules.RESONANCE && mc.player != null) {
-                mc.player.level().playLocalSound(feet.x, feet.y + 1.0D, feet.z, net.minecraft.sounds.SoundEvents.AMETHYST_BLOCK_RESONATE,
-                        net.minecraft.sounds.SoundSource.PLAYERS, 1.0F, 1.6F, false);
+                io.github.verycooltimo.murim.client.Sfx.play(feet.x, feet.y + 1.0D, feet.z, io.github.verycooltimo.murim.registry.ModSounds.QI_CHIME.get(),
+                        net.minecraft.sounds.SoundSource.PLAYERS, 0.8F, 1.2F, false);
             }
         }
         // r08–r09: в каждом месте, где прошла вибрация, рождается лепесток.
@@ -611,8 +611,8 @@ public final class RiverVfx {
             gatherStart(c);
             dust(c, feet, c.n(4) + 1, 0.08D);
             if (mc.player != null) {
-                mc.player.level().playLocalSound(feet.x, feet.y + 1.0D, feet.z, net.minecraft.sounds.SoundEvents.AMETHYST_BLOCK_CHIME,
-                        net.minecraft.sounds.SoundSource.PLAYERS, 1.0F, 0.7F, false);
+                io.github.verycooltimo.murim.client.Sfx.play(feet.x, feet.y + 1.0D, feet.z, io.github.verycooltimo.murim.registry.ModSounds.QI_CHIME.get(),
+                        net.minecraft.sounds.SoundSource.PLAYERS, 0.7F, 0.75F, false);
             }
         }
         // Сбор (r10): ветер втягивается в вихрь.
@@ -666,8 +666,8 @@ public final class RiverVfx {
                     c.stars.add(new Star(at, clientTicks, 0.42D, c.random.nextDouble()));
                 }
                 if (mc.player != null) {
-                    mc.player.level().playLocalSound(at.x, at.y, at.z, net.minecraft.sounds.SoundEvents.AMETHYST_BLOCK_CHIME,
-                            net.minecraft.sounds.SoundSource.PLAYERS, 0.6F, 1.6F + 0.15F * c.lone, false);
+                    io.github.verycooltimo.murim.client.Sfx.play(at.x, at.y, at.z, io.github.verycooltimo.murim.registry.ModSounds.QI_CHIME.get(),
+                            net.minecraft.sounds.SoundSource.PLAYERS, 0.5F, 1.3F + 0.1F * c.lone, false);
                 }
             }
             return;
@@ -817,10 +817,10 @@ public final class RiverVfx {
         }
         if (mc.player != null) {
             Vec3 o = e.position();
-            mc.player.level().playLocalSound(o.x, o.y + 1.0D, o.z, net.minecraft.sounds.SoundEvents.PLAYER_ATTACK_SWEEP,
-                    net.minecraft.sounds.SoundSource.PLAYERS, 1.0F, 0.8F, false);
-            mc.player.level().playLocalSound(o.x, o.y + 1.0D, o.z, net.minecraft.sounds.SoundEvents.TRIDENT_RIPTIDE_3.value(),
-                    net.minecraft.sounds.SoundSource.PLAYERS, 0.7F, 1.3F, false);
+            io.github.verycooltimo.murim.client.Sfx.play(o.x, o.y + 1.0D, o.z, io.github.verycooltimo.murim.registry.ModSounds.SWORD_SWING_HEAVY.get(),
+                    net.minecraft.sounds.SoundSource.PLAYERS, 1.0F, 1.0F, false);
+            io.github.verycooltimo.murim.client.Sfx.play(o.x, o.y + 1.0D, o.z, io.github.verycooltimo.murim.registry.ModSounds.RIVER_FLOW.get(),
+                    net.minecraft.sounds.SoundSource.PLAYERS, 0.9F, 1.0F, false);
         }
         MurimMod.LOGGER.debug("Река: выпуск, лепестков {}, струй {}", i, strands);
     }
@@ -862,10 +862,10 @@ public final class RiverVfx {
         float distance = mc.player == null ? 99.0F : (float) mc.player.position().distanceTo(at);
         if (mc.player != null && distance < 20.0F) {
             CameraShakeHandler.quake(0.2F, 5);
-            mc.player.level().playLocalSound(at.x, at.y, at.z, net.minecraft.sounds.SoundEvents.AMETHYST_BLOCK_RESONATE,
-                    net.minecraft.sounds.SoundSource.PLAYERS, 1.2F, 0.6F, false);
-            mc.player.level().playLocalSound(at.x, at.y, at.z, net.minecraft.sounds.SoundEvents.BEACON_POWER_SELECT,
-                    net.minecraft.sounds.SoundSource.PLAYERS, 0.8F, 1.8F, false);
+            io.github.verycooltimo.murim.client.Sfx.play(at.x, at.y, at.z, io.github.verycooltimo.murim.registry.ModSounds.SWORD_HIT.get(),
+                    net.minecraft.sounds.SoundSource.PLAYERS, 1.0F, 0.9F, false);
+            io.github.verycooltimo.murim.client.Sfx.play(at.x, at.y, at.z, io.github.verycooltimo.murim.registry.ModSounds.QI_CHIME.get(),
+                    net.minecraft.sounds.SoundSource.PLAYERS, 0.7F, 1.4F, false);
         }
     }
 
@@ -965,10 +965,10 @@ public final class RiverVfx {
         if (mc.player != null && distance < 24.0F) {
             float q = distance < 8.0F ? 1.0F : 1.0F - (distance - 8.0F) / 16.0F;
             CameraShakeHandler.quake(Math.max(q, c.own() ? 0.9F : 0.0F), 16);
-            mc.player.level().playLocalSound(at.x, at.y, at.z, net.minecraft.sounds.SoundEvents.GENERIC_EXPLODE.value(),
-                    net.minecraft.sounds.SoundSource.PLAYERS, 0.8F, 1.3F, false);
-            mc.player.level().playLocalSound(at.x, at.y, at.z, net.minecraft.sounds.SoundEvents.AMETHYST_BLOCK_CHIME,
-                    net.minecraft.sounds.SoundSource.PLAYERS, 1.0F, 0.5F, false);
+            io.github.verycooltimo.murim.client.Sfx.play(at.x, at.y, at.z, io.github.verycooltimo.murim.registry.ModSounds.IMPACT_HEAVY.get(),
+                    net.minecraft.sounds.SoundSource.PLAYERS, 0.8F, 1.0F, false);
+            io.github.verycooltimo.murim.client.Sfx.play(at.x, at.y, at.z, io.github.verycooltimo.murim.registry.ModSounds.PETAL_BURST.get(),
+                    net.minecraft.sounds.SoundSource.PLAYERS, 0.9F, 1.0F, false);
         }
     }
 

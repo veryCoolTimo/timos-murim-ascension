@@ -213,6 +213,9 @@ public final class DevSetupEvents {
         // кулдаун (Вихрь, 600 тиков) молча отклонял запуск после прошлой съёмки. Сбрасываем.
         event.getEntity().setData(io.github.verycooltimo.murim.registry.ModAttachments.TECHNIQUE_STATE,
                 io.github.verycooltimo.murim.combat.TechniqueState.IDLE);
+        // Перезарядки тоже: прогон, упавший с исключением рендера, сохраняет мир вместе с ними,
+        // и следующий прогон молча не запускал технику (03.10, ци-меч).
+        event.getEntity().setData(io.github.verycooltimo.murim.registry.ModAttachments.COOLDOWNS, new java.util.HashMap<>());
         // Съёмка основы меча: Шесть Равновесий в ячейке основы, удары — обычной атакой.
         if ("foundation".equals(System.getProperty("murim.capture.technique"))
                 && event.getEntity() instanceof net.minecraft.server.level.ServerPlayer fp) {
@@ -241,6 +244,16 @@ public final class DevSetupEvents {
             book.set(io.github.verycooltimo.murim.registry.ModDataComponents.TECHNIQUE.get(), net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(
                     io.github.verycooltimo.murim.MurimMod.MODID, System.getenv().getOrDefault("MURIM_CAPTURE_MANUAL", "six_harmonies")));
             mp.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, book);
+            // MURIM_CAPTURE_MANUAL_FRESH=1 — книга ещё не изучена (видна печать «Изучить»).
+            if ("1".equals(System.getenv("MURIM_CAPTURE_MANUAL_FRESH"))) {
+                mp.setData(io.github.verycooltimo.murim.registry.ModAttachments.MASTERY, io.github.verycooltimo.murim.mastery.MasteryState.EMPTY);
+                io.github.verycooltimo.murim.mastery.MasteryService.sync(mp);
+            }
+            // MURIM_CAPTURE_NO_DANTIAN=1 — игрок без даньтяня: книга читается, но не учит.
+            if ("1".equals(System.getenv("MURIM_CAPTURE_NO_DANTIAN"))) {
+                mp.setData(io.github.verycooltimo.murim.registry.ModAttachments.PROFILE, io.github.verycooltimo.murim.profile.DantianProfile.INITIAL);
+                io.github.verycooltimo.murim.profile.ProfileNetwork.sync(mp);
+            }
         }
         // Съёмка интерфейсов техник: шесть открытых слотов, пять техник, часть освоена наполовину.
         if ("ui".equals(System.getProperty("murim.capture.technique"))
@@ -461,6 +474,21 @@ public final class DevSetupEvents {
                             net.minecraft.world.level.block.Blocks.AIR.defaultBlockState());
                 }
             }
+        }
+        // MURIM_CAPTURE_EXTRA=n — ещё n зомби на пути к цели (Натиск волочит встречных, 03.10).
+        int extra = (int) envDouble("MURIM_CAPTURE_EXTRA", 0.0D);
+        for (int i = 0; i < extra; i++) {
+            net.minecraft.world.entity.monster.Zombie z =
+                    new net.minecraft.world.entity.monster.Zombie(net.minecraft.world.entity.EntityType.ZOMBIE, level);
+            // Без ИИ моб не двигается вовсе (LivingEntity.travel только при isEffectiveAi) —
+            // волочение и отброс видны лишь на живых: MURIM_CAPTURE_ENEMY_AI=1.
+            z.setNoAi(!"1".equals(System.getenv("MURIM_CAPTURE_ENEMY_AI")));
+            z.setPersistenceRequired();
+            double k = dummyDistance * (i + 1) / (extra + 1.0D);
+            // Снаружи от оси взгляда: захват (по углу к прицелу) берёт главную цель, а не встречных.
+            double sideK = 0.9D;
+            z.setPos(STAGE_X + 0.5D + lookX * k - lookZ * sideK, STAGE_Y, STAGE_Z + 0.5D + lookZ * k + lookX * sideK);
+            level.addFreshEntity(z);
         }
         // MURIM_CAPTURE_AURA=4 или 4d (демоническая) — аура цели для съёмки давления.
         String aura = System.getenv("MURIM_CAPTURE_AURA");

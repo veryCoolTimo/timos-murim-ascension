@@ -400,8 +400,8 @@ public final class RainVfx {
             c.dashPose = capture(renderer.getModel());
         }
         if (mc.player != null) {
-            mc.player.level().playLocalSound(c.origin.x, c.origin.y, c.origin.z, net.minecraft.sounds.SoundEvents.PLAYER_ATTACK_SWEEP,
-                    net.minecraft.sounds.SoundSource.PLAYERS, 1.0F, 1.35F, false);
+            io.github.verycooltimo.murim.client.Sfx.play(c.origin.x, c.origin.y, c.origin.z, io.github.verycooltimo.murim.registry.ModSounds.SWORD_SWING.get(),
+                    net.minecraft.sounds.SoundSource.PLAYERS, 1.0F, 1.05F, false);
         }
     }
 
@@ -615,16 +615,16 @@ public final class RainVfx {
             if (mc.player != null && distance < 24.0F) {
                 float q = distance < 8.0F ? 1.0F : 1.0F - (distance - 8.0F) / 16.0F;
                 CameraShakeHandler.quake(Math.max(q, c.own() ? 0.85F : 0.0F), 16);
-                mc.player.level().playLocalSound(at.x, at.y, at.z, net.minecraft.sounds.SoundEvents.GENERIC_EXPLODE.value(),
-                        net.minecraft.sounds.SoundSource.PLAYERS, 0.7F, 1.4F, false);
-                mc.player.level().playLocalSound(at.x, at.y, at.z, net.minecraft.sounds.SoundEvents.PLAYER_ATTACK_SWEEP,
-                        net.minecraft.sounds.SoundSource.PLAYERS, 1.0F, 0.55F, false);
+                io.github.verycooltimo.murim.client.Sfx.play(at.x, at.y, at.z, io.github.verycooltimo.murim.registry.ModSounds.IMPACT_HEAVY.get(),
+                        net.minecraft.sounds.SoundSource.PLAYERS, 0.8F, 1.0F, false);
+                io.github.verycooltimo.murim.client.Sfx.play(at.x, at.y, at.z, io.github.verycooltimo.murim.registry.ModSounds.PETAL_BURST.get(),
+                        net.minecraft.sounds.SoundSource.PLAYERS, 0.8F, 1.0F, false);
             }
             smoke(c, ground);
         } else if (mc.player != null && distance < 16.0F) {
             CameraShakeHandler.quake(0.25F, 5);
-            mc.player.level().playLocalSound(at.x, at.y, at.z, net.minecraft.sounds.SoundEvents.PLAYER_ATTACK_SWEEP,
-                    net.minecraft.sounds.SoundSource.PLAYERS, 0.6F, 1.5F, false);
+            io.github.verycooltimo.murim.client.Sfx.play(at.x, at.y, at.z, io.github.verycooltimo.murim.registry.ModSounds.SWORD_SWING.get(),
+                    net.minecraft.sounds.SoundSource.PLAYERS, 0.6F, 1.15F, false);
         }
     }
 

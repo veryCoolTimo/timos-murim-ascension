@@ -1,0 +1,34 @@
+sword_swing	0.6	0.5	-	Fast clean sword whoosh, thin steel blade cutting through air, crisp short swish, no impact, dry, no music
+sword_swing_heavy	1.0	0.5	-	Heavy powerful sword slash whoosh, deep low air tear with a sharp steel edge, wuxia martial arts, dry, no impact, no music
+sword_hit	0.7	0.5	-	Sharp sword slash connecting with a target, crisp blade cut with short metallic ring, punchy, dry, no music
+impact_heavy	1.5	0.5	-	Massive anime impact hit, deep punchy thump with a cracking shockwave and short air blast, manhwa martial arts strike, short tail, no music
+petal_burst	1.2	0.4	-	Magical burst of flower petals, soft airy whoosh explosion with fluttering paper-like rustle and a faint bright shimmer, no music
+blossom_open	1.2	0.4	-	Plum blossoms blooming from sword energy, soft rising crystalline shimmer with gentle airy bloom, delicate, no music
+qi_charge	1.5	0.45	-	Martial arts energy charging up, rising low hum with swirling wind and a faint electric sizzle, building tension, no music
+whirlwind	2.5	0.45	-	Violent whirlwind of sword energy, spinning tornado wind roar with fast repeated blade whooshes, fierce, no music
+dive_whoosh	1.2	0.45	-	Fast diving descent from the sky, rising-pitch rushing wind whoosh ending abruptly, cinematic, no music
+ground_slam	1.5	0.5	-	Sword strike slamming into the ground from above, heavy earth impact with cracking stone and dust burst, short tail, no music
+barrier_hit	0.8	0.5	-	Blade strikes a glowing energy barrier and bounces off, bright crystalline clang with a short shimmering ring, no music
+barrier_break	1.5	0.5	-	Magical energy shield shatters, glass-like crystalline break with a deep thump and scattering shards, no music
+river_flow	2.0	0.45	-	Flowing stream of sword energy and petals sweeping forward, smooth rushing wind like water, rising then fading, no music
+qi_chime	1.0	0.4	-	Single soft crystalline chime of martial energy, clean bell-like ping with gentle shimmer, short decay, no music
+palm_charge	1.5	0.45	-	Dark demonic energy gathering in a palm, deep ominous rumble with crackling dark power, building up, no music
+palm_release	1.2	0.5	-	Explosive palm strike releasing dark energy, deep concussive air blast with a heavy thud, short tail, no music
+dash	0.6	0.5	-	Very fast martial arts dash, short sharp air whoosh with fabric flap, dry, no music
+step_soft	0.5	0.5	-	Light stealthy footstep with a soft robe flutter, quiet, dry, no music
+blink	0.6	0.5	-	Instant vanishing shadow step teleport, quick air snap with a short whoosh pull, dry, no music
+burst_step	0.8	0.5	-	Explosive takeoff step, sharp air shockwave pop with dust kick, dry, no music
+run_wind	2.0	0.4	loop	Steady wind rushing past while sprinting at high speed, smooth airy whoosh, seamless loop, no music
+aura_charge	3.0	0.4	loop	Swirling martial arts qi aura around a body, steady low energy hum with soft wind turbulence, seamless loop, no music
+meditation_loop	4.0	0.35	loop	Calm meditation energy, very soft low drone with gentle airy breath of wind, peaceful, seamless loop, no music, no voice
+meditation_cycle	1.5	0.4	-	Gentle resonant energy pulse completing a meditation cycle, soft warm low bell-like tone, short decay, no music
+breakthrough	3.0	0.45	-	Martial artist breaking through to a new realm, powerful rising energy surge exploding into a bright shockwave, ending with a short ring, no music
+aura_gust	1.0	0.45	-	Overwhelming aura pressure pushing outward, heavy low air push with a deep pressure thump, no music
+lock_on	0.5	0.5	-	Short sharp target lock click, subtle metallic tick with a tiny steel ring, UI, dry, no music
+wheel_open	0.5	0.45	-	Soft quick UI whoosh, light paper fan opening, subtle, dry, no music
+wheel_select	0.5	0.5	-	Short clean UI select, small sword hilt click with a faint bright ring, dry, no music
+bandit_windup	0.8	0.5	-	Rough bandit raising a heavy sword, cloth rustle and metal scrape before attack, dry, no music, no voice
+bow_shot	0.6	0.5	-	Wooden bow string release twang with an arrow whoosh, dry, no music
+qi_sword_summon	1.0	0.45	-	Energy sword materializing, bright rising shing of a blade forming from light with a soft hum, no music
+qi_sword_hum	3.0	0.4	loop	Steady humming of a glowing energy sword, soft resonant electric hum, seamless loop, no music
+sword_draw	0.8	0.5	-	Quick sword unsheathing, steel blade sliding out of a scabbard with a clean short ring, dry, no music

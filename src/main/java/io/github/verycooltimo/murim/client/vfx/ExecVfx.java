@@ -151,8 +151,8 @@ public final class ExecVfx {
                 }
                 if (mc.player != null && mc.player.position().distanceTo(p.centre()) < 16.0D) {
                     CameraShakeHandler.quake(mc.player.getId() == c.entityId ? 0.85F : 0.5F, 16);
-                    mc.player.level().playLocalSound(p.centre().x, p.centre().y, p.centre().z,
-                            net.minecraft.sounds.SoundEvents.PLAYER_ATTACK_SWEEP, net.minecraft.sounds.SoundSource.PLAYERS, 1.0F, 0.7F, false);
+                    io.github.verycooltimo.murim.client.Sfx.play(p.centre().x, p.centre().y, p.centre().z,
+                            io.github.verycooltimo.murim.registry.ModSounds.IMPACT_HEAVY.get(), net.minecraft.sounds.SoundSource.PLAYERS, 1.0F, 1.0F, false);
                 }
                 for (int i = 0; i < 40; i++) {
                     petal(c, p.centre(), new Vec3(c.random.nextGaussian(), c.random.nextDouble() * 1.2D, c.random.nextGaussian()).scale(0.22D));

@@ -81,7 +81,15 @@ public final class ClientAuraState {
 
     /** Зажечь ауру техники на {@code ticks} тиков: {@code palette} 0 — холодная синяя, 1 — розовая. */
     public static void techniqueAura(int entityId, int intensity, int palette, int ticks) {
+        boolean fresh = !TECH.containsKey(entityId);
         TECH.put(entityId, new int[] {Math.max(2, Math.min(AuraState.MAX_RANK, intensity)), palette, ticks + ticks()});
+        // Ци вспыхивает — слышно нарастание; пока аура техники горит, держится тихий гул.
+        Minecraft minecraft = Minecraft.getInstance();
+        Entity e = minecraft.level == null ? null : minecraft.level.getEntity(entityId);
+        if (fresh && e != null) {
+            io.github.verycooltimo.murim.client.Sfx.play(e, io.github.verycooltimo.murim.registry.ModSounds.QI_CHARGE, 0.45F + 0.05F * Math.min(5, intensity), 1.0F);
+            io.github.verycooltimo.murim.client.Sfx.loop("aura:" + entityId, e, io.github.verycooltimo.murim.registry.ModSounds.AURA_CHARGE, () -> 0.5F, 1.0F, () -> TECH.containsKey(entityId), 6);
+        }
     }
 
     /** Палитра ауры техники у сущности или −1, если её нет. */
@@ -178,8 +186,8 @@ public final class ClientAuraState {
                 if (shown > 0.6F && ticks % 3 == 0) {
                     // Низкий гул: воздух сам стал тяжёлым.
                     minecraft.player.level().playLocalSound(minecraft.player.getX(), minecraft.player.getY(),
-                            minecraft.player.getZ(), SoundEvents.WARDEN_AMBIENT, SoundSource.HOSTILE,
-                            0.25F * shown, 0.5F, false);
+                            minecraft.player.getZ(), io.github.verycooltimo.murim.registry.ModSounds.AURA_GUST.get(), SoundSource.HOSTILE,
+                            0.3F * shown, 0.6F, false);
                 }
             }
         } else {
@@ -206,9 +214,9 @@ public final class ClientAuraState {
             return;
         }
         // Порыв слышно: тугой удар воздуха, тяга обратно — тише и выше.
-        minecraft.player.level().playLocalSound(victim.getX(), victim.getY(), victim.getZ(),
-                pull ? SoundEvents.BREEZE_WHIRL : SoundEvents.WIND_CHARGE_BURST.value(), SoundSource.HOSTILE,
-                pull ? 0.35F : 0.5F + 0.4F * strength, pull ? 1.2F : 0.55F, false);
+        io.github.verycooltimo.murim.client.Sfx.play(victim.getX(), victim.getY(), victim.getZ(),
+                pull ? SoundEvents.BREEZE_WHIRL : io.github.verycooltimo.murim.registry.ModSounds.AURA_GUST.get(), SoundSource.HOSTILE,
+                pull ? 0.35F : 0.5F + 0.4F * strength, pull ? 1.2F : 1.0F, false);
         // Направление порыва в осях взгляда: «вперёд» — куда смотрит игрок, «вбок» — вправо.
         double dx = victim.getX() - source.getX();
         double dz = victim.getZ() - source.getZ();

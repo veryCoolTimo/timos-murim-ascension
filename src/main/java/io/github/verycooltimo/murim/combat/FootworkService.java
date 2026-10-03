@@ -90,6 +90,8 @@ public final class FootworkService {
     /** Шаг Молнии: разгон до {@code WIND_TOP} × крейсерская за {@code WIND_RAMP} тиков. */
     private static final double WIND_TOP = 1.6D;
     private static final int WIND_RAMP = 20;
+    /** Тропа аромата: множитель крейсерской скорости. */
+    private static final double HUASHAN_FAST = 1.4D;
 
     /** Тиков без спринта на земле подряд, после которых бег гаснет. */
     private static final int GRACE = 6;
@@ -467,7 +469,10 @@ public final class FootworkService {
         s[PAID] = 0;
         player.setData(ModAttachments.TRAVERSE, s);
         player.setData(ModAttachments.FOOTWORK_TECH, technique.toString());
-        modify(player, Attributes.MOVEMENT_SPEED, SPEED, TraverseRules.speedBonus(tier), AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+        // Тропа аромата быстрее таблицы на 40 % (автор 03.10: «быстрее бег»); Молния разгоняется в onTick.
+        double fast = family == FootworkFamily.HUASHAN ? HUASHAN_FAST : 1.0D;
+        modify(player, Attributes.MOVEMENT_SPEED, SPEED, TraverseRules.speed(tier) * fast / TraverseRules.VANILLA_SPRINT - 1.0D,
+                AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
         double step = TraverseRules.stepHeight(tier) - 0.6D;
         if (step > 0.0D) {
             modify(player, Attributes.STEP_HEIGHT, STEP, step, AttributeModifier.Operation.ADD_VALUE);

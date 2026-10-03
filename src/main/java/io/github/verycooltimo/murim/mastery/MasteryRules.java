@@ -28,6 +28,15 @@ public final class MasteryRules {
         }
     }
 
+    /**
+     * Можно ли вообще изучать технику: без сформированного даньтяня ци не удержать
+     * (автор 03.10: «изучить техники, не имея даже даньтяня» — баг). Путь к даньтяню —
+     * свиток метода и медитация до семени; сам свиток метода учится без даньтяня.
+     */
+    public static boolean canLearn(io.github.verycooltimo.murim.profile.DantianProfile profile) {
+        return profile != null && profile.isAwakened();
+    }
+
     /** Доля пережитого, сразу идущая в освоение: «через бой тоже качать». */
     static final double DIRECT_SHARE = 0.5D;
 

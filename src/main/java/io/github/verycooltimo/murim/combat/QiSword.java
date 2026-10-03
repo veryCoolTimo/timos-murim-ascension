@@ -60,9 +60,28 @@ public final class QiSword {
         return stack.is(ItemTags.SWORDS) || stack.is(SWORDS);
     }
 
-    /** Может ли ци-меч появиться: рука пуста, даньтянь сформирован. */
+    /**
+     * Ранг, с которого доступен ци-меч. Канон (Absolute Regression, «Keen Qi»): «его не натренировать,
+     * только постичь; без устойчивого Пика не достичь» — Пик у нас ранг 4. Пока автор решил
+     * (03.10) дать его всем пробуждённым, поэтому 0; включить канон — поставить {@code 4}.
+     */
+    public static final int MIN_RANK = 0;
+
+    /**
+     * С какого ранга ци-меч — высшей ступени (автор 03.10: «аура-меч для evolutionary realm»):
+     * больше вихря, завитков и чёрные волны. Ранг 5 — «Безграничный», следующий за Пиком.
+     * [НЕПРОВЕРЕНО: какую ступень автор называет «evolutionary realm» — уточнить; одна константа.]
+     */
+    public static final int EVOLVED_RANK = 5;
+
+    /** Может ли ци-меч появиться: рука пуста, даньтянь сформирован, ранг не ниже {@link #MIN_RANK}. */
     public static boolean qiAvailable(Player player) {
-        return player.getMainHandItem().isEmpty() && player.getData(ModAttachments.PROFILE).isAwakened();
+        return player.getMainHandItem().isEmpty() && available(player.getData(ModAttachments.PROFILE));
+    }
+
+    /** Общая для сервера и клиента проверка профиля. */
+    public static boolean available(io.github.verycooltimo.murim.profile.DantianProfile profile) {
+        return profile.isAwakened() && profile.rank() >= MIN_RANK;
     }
 
     /** Есть ли чем бить мечевой техникой: меч в руке или ци-меч. */

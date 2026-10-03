@@ -579,8 +579,8 @@ public final class DomeVfx {
             }
         }
         if (mc.player != null && dist < 24.0F) {
-            mc.player.level().playLocalSound(at.x, at.y, at.z, net.minecraft.sounds.SoundEvents.AMETHYST_BLOCK_HIT,
-                    net.minecraft.sounds.SoundSource.PLAYERS, 1.0F, 1.6F, false);
+            io.github.verycooltimo.murim.client.Sfx.play(at.x, at.y, at.z, io.github.verycooltimo.murim.registry.ModSounds.BARRIER_HIT.get(),
+                    net.minecraft.sounds.SoundSource.PLAYERS, 1.0F, 1.0F, false);
         }
     }
 
@@ -612,8 +612,8 @@ public final class DomeVfx {
             SpeedLines.radial(0.5F, 0.5F, 0.6F, 5, SpeedLines.WHITE);
         }
         if (mc.player != null) {
-            mc.player.level().playLocalSound(at.x, at.y, at.z, net.minecraft.sounds.SoundEvents.GLASS_BREAK,
-                    net.minecraft.sounds.SoundSource.PLAYERS, 1.0F, 0.8F, false);
+            io.github.verycooltimo.murim.client.Sfx.play(at.x, at.y, at.z, io.github.verycooltimo.murim.registry.ModSounds.BARRIER_BREAK.get(),
+                    net.minecraft.sounds.SoundSource.PLAYERS, 1.0F, 1.0F, false);
         }
         // Дым по факту разрыва: низкий клуб у корней ближайших стволов.
         Vec3 ground = new Vec3(at.x, c.frame.pivot().y, at.z);
@@ -752,8 +752,8 @@ public final class DomeVfx {
             SpeedLines.radial(0.5F, 0.55F, 0.25F + 0.05F * s, 3, SpeedLines.WHITE);
         }
         if (mc.player != null) {
-            mc.player.level().playLocalSound(hand.x, hand.y, hand.z, net.minecraft.sounds.SoundEvents.PLAYER_ATTACK_SWEEP,
-                    net.minecraft.sounds.SoundSource.PLAYERS, 0.6F, 1.3F + 0.08F * s, false);
+            io.github.verycooltimo.murim.client.Sfx.play(hand.x, hand.y, hand.z, io.github.verycooltimo.murim.registry.ModSounds.SWORD_SWING.get(),
+                    net.minecraft.sounds.SoundSource.PLAYERS, 0.6F, 1.0F + 0.06F * s, false);
         }
     }
 
@@ -784,8 +784,8 @@ public final class DomeVfx {
             }
             if (mc.player != null) {
                 Vec3 at = c.frame.world(0.0D, 1.5D, DomeRules.RADIUS);
-                mc.player.level().playLocalSound(at.x, at.y, at.z, net.minecraft.sounds.SoundEvents.AMETHYST_BLOCK_RESONATE,
-                        net.minecraft.sounds.SoundSource.PLAYERS, 1.0F, 1.2F, false);
+                io.github.verycooltimo.murim.client.Sfx.play(at.x, at.y, at.z, io.github.verycooltimo.murim.registry.ModSounds.QI_CHIME.get(),
+                        net.minecraft.sounds.SoundSource.PLAYERS, 0.9F, 0.8F, false);
             }
         }
         // Подпитка (d11): от острия к корням бегут лепестки и поднимаются по стволам.

@@ -170,8 +170,8 @@ public final class ExplosionExecutor {
         r[AXIS + 2] = axis.z;
         r[BLASTED] = 1.0D;
         player.setData(ModAttachments.EXPLOSION, r);
-        player.level().playSound(null, strike.x, strike.y, strike.z, net.minecraft.sounds.SoundEvents.GENERIC_EXPLODE.value(),
-                net.minecraft.sounds.SoundSource.PLAYERS, 0.9F, 1.25F);
+        // Звук взрыва играет клиент (ExplosionVfx#blast: petal_burst, по попаданию — impact_heavy) всем,
+        // кто получил пакет; на слое 0 эффектов нет — только свист клинка из TechniqueService.
         PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
                 new ExplosionPayload(player.getId(), strike, strike.add(axis), 0.0F, layer, ExplosionPayload.BLAST,
                         target == null ? -1 : target.getId()));

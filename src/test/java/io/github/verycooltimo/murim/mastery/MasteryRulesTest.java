@@ -106,4 +106,14 @@ class MasteryRulesTest {
         assertTrue(MasteryRules.costFactor(5, 5) < 1.0D && MasteryRules.powerFactor(5, 5) > 1.0D);
         assertTrue(MasteryRules.powerFactor(2, 5) > MasteryRules.powerFactor(1, 5));
     }
+
+    @Test
+    @DisplayName("Без даньтяня техника не учится; после семени — учится (автор 03.10)")
+    void noDantianNoLearning() {
+        io.github.verycooltimo.murim.profile.DantianProfile none = io.github.verycooltimo.murim.profile.DantianProfile.INITIAL;
+        assertTrue(!MasteryRules.canLearn(none), "новичок без даньтяня выучил технику из книги");
+        assertTrue(!MasteryRules.canLearn(null), "нет профиля — нет изучения");
+        assertTrue(MasteryRules.canLearn(none.withTags("orthodox", "murim:test_method")),
+                "после семени техника должна учиться");
+    }
 }

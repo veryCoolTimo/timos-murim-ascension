@@ -105,6 +105,10 @@ public final class ManualScreen extends Screen {
         if (io.github.verycooltimo.murim.client.TechniqueSlotsHud.mastery(f) != null) {
             return 2;
         }
+        // Без даньтяня книга читается, но не учит (автор 03.10): вместо печати — подсказка.
+        if (!ClientProfileState.profile().isAwakened()) {
+            return 3;
+        }
         java.util.Optional<ResourceLocation> prevForm = io.github.verycooltimo.murim.technique.Styles.previous(f);
         if (prevForm.isEmpty()) {
             return 1;
@@ -280,8 +284,9 @@ public final class ManualScreen extends Screen {
     private void seal(GuiGraphics g, int mouseX, int mouseY) {
         int st = state(form());
         if (st != 1) {
-            // Изучено — бледный оттиск; закрыто — подпись, что нужно сначала.
+            // Изучено или нет даньтяня — бледная подпись; закрыто — подпись, что нужно сначала.
             Component note = st == 2 ? Component.translatable("murim.manual.learned")
+                    : st == 3 ? Component.translatable("murim.manual.no_dantian")
                     : Component.translatable("murim.manual.locked",
                             io.github.verycooltimo.murim.mastery.MasteryService.name(io.github.verycooltimo.murim.technique.Styles.previous(form()).orElse(form())),
                             io.github.verycooltimo.murim.technique.Styles.NEXT_FORM_LAYER);
@@ -290,7 +295,7 @@ public final class ManualScreen extends Screen {
             g.pose().scale(0.6F, 0.6F, 1.0F);
             int ly = 0;
             for (FormattedCharSequence line : font.split(note, (int) (140 / 0.6F))) {
-                g.drawString(font, line, 0, ly, st == 2 ? 0xFF8A7C6A : SEAL_DARK, false);
+                g.drawString(font, line, 0, ly, st == 0 ? SEAL_DARK : 0xFF8A7C6A, false);
                 ly += font.lineHeight + 1;
             }
             g.pose().popPose();

@@ -136,6 +136,7 @@ public final class PalmVfxRenderer {
     /** Принимает точку контакта с сервера. */
     public static void recordHit(int sourceId, double x, double y, double z, float height) {
         HITS.put(sourceId, new Hit(new Vec3(x, y, z), height, clientTicks));
+        io.github.verycooltimo.murim.client.Sfx.play(new Vec3(x, y + height * 0.5D, z), io.github.verycooltimo.murim.registry.ModSounds.IMPACT_HEAVY, 0.9F, 0.9F);
     }
 
     /** Где эффект поставил ладонь, или {@code null}. */
@@ -156,6 +157,11 @@ public final class PalmVfxRenderer {
             return;
         }
         ACTIVE.put(entityId, new State(clientTicks, definition));
+        Entity e = net.minecraft.client.Minecraft.getInstance().level == null ? null
+                : net.minecraft.client.Minecraft.getInstance().level.getEntity(entityId);
+        if (e != null) {
+            io.github.verycooltimo.murim.client.Sfx.play(e, io.github.verycooltimo.murim.registry.ModSounds.PALM_CHARGE, 0.8F, 1.0F);
+        }
     }
 
     public static void cancel(int entityId) {
@@ -211,6 +217,18 @@ public final class PalmVfxRenderer {
     @SubscribeEvent
     static void onClientTick(ClientTickEvent.Post event) {
         clientTicks++;
+        // Выпуск ладони — на тике удара по таймингу техники (тот же, что у отрисовки).
+        var level = net.minecraft.client.Minecraft.getInstance().level;
+        if (level != null) {
+            ACTIVE.forEach((id, s) -> {
+                if (clientTicks - s.startTick() == s.definition().startTickOf(TechniquePhase.IMPACT) - 1) {
+                    Entity e = level.getEntity(id);
+                    if (e != null) {
+                        io.github.verycooltimo.murim.client.Sfx.play(e, io.github.verycooltimo.murim.registry.ModSounds.PALM_RELEASE, 1.0F, 1.0F);
+                    }
+                }
+            });
+        }
     }
 
     @SubscribeEvent

@@ -1,6 +1,5 @@
 package io.github.verycooltimo.murim.entity;
 
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.DifficultyInstance;
@@ -41,6 +40,11 @@ public class BanditSwordsman extends Bandit {
     private boolean dashHit;
     private Vec3 dashDir = Vec3.ZERO;
     private BanditMove planned;
+    /** Тиков уклонения вбок (читает замах техники игрока), сервер. */
+    private int dodgeTicks;
+    private int dodgeDir = 1;
+    /** Связка: после попадания — второй удар без паузы (раз за цикл). */
+    private boolean comboReady;
 
     public BanditSwordsman(EntityType<? extends Monster> type, Level level) {
         super(type, level);
@@ -178,7 +182,9 @@ public class BanditSwordsman extends Bandit {
                     getNavigation().stop();
                     if (stateTick >= move().recover()) {
                         setState(IDLE, null);
-                        attackCooldown = 14 + random.nextInt(18);
+                        // Попал — давит связкой (короткая пауза), промахнулся — отходит и кружит.
+                        attackCooldown = comboReady ? 4 : 14 + random.nextInt(18);
+                        comboReady = false;
                     }
                 }
                 case STAGGER -> {
@@ -207,6 +213,21 @@ public class BanditSwordsman extends Bandit {
             }
             BanditMove force = forced();
             boolean sees = getSensing().hasLineOfSight(t);
+            // ИИ (автор 03.10: «поработай над ИИ»): бандит читает замах техники игрока вблизи и
+            // уходит вбок-назад, а не стоит под ударом. Не каждый раз — примерно в половине случаев.
+            if (dodgeTicks > 0) {
+                dodgeTicks--;
+                getNavigation().stop();
+                getMoveControl().strafe(-0.6F, 0.9F * dodgeDir);
+                faceTowards(t, 30.0F);
+                return;
+            }
+            if (force == null && t instanceof Player p && d < 6.0D && techniqueWindup(p) && random.nextFloat() < 0.06F) {
+                dodgeTicks = 10 + random.nextInt(6);
+                dodgeDir = random.nextBoolean() ? 1 : -1;
+                log("уклон от замаха техники");
+                return;
+            }
             // Техника ци: с дистанции, если видит цель.
             if (isElite() && dashCooldown == 0 && attackCooldown == 0 && sees && (force == null || force == BanditMove.QI_DASH)
                     && d >= BanditMove.DASH_MIN && d <= BanditMove.DASH_MAX && Math.abs(t.getY() - getY()) < 1.5D) {
@@ -249,8 +270,9 @@ public class BanditSwordsman extends Bandit {
         private void startWindup(BanditMove m) {
             getNavigation().stop();
             setState(WINDUP, m);
-            playSound(m == BanditMove.QI_DASH ? SoundEvents.TRIDENT_RIPTIDE_1.value() : SoundEvents.ARMOR_EQUIP_IRON.value(),
-                    m == BanditMove.QI_DASH ? 0.7F : 1.0F, m == BanditMove.QI_DASH ? 1.4F : 0.8F);
+            playSound(m == BanditMove.QI_DASH ? io.github.verycooltimo.murim.registry.ModSounds.QI_CHARGE.get()
+                    : io.github.verycooltimo.murim.registry.ModSounds.BANDIT_WINDUP.get(),
+                    m == BanditMove.QI_DASH ? 0.8F : 0.9F, 0.93F + 0.14F * getRandom().nextFloat());
         }
 
         private void windup(LivingEntity t) {
@@ -266,7 +288,7 @@ public class BanditSwordsman extends Bandit {
                     Vec3 to = t == null ? Vec3.directionFromRotation(0.0F, yBodyRot)
                             : new Vec3(t.getX() - getX(), 0.0D, t.getZ() - getZ());
                     dashDir = to.lengthSqr() < 1.0E-4D ? Vec3.directionFromRotation(0.0F, yBodyRot) : to.normalize();
-                    playSound(SoundEvents.PLAYER_ATTACK_SWEEP, 1.0F, 1.3F);
+                    playSound(io.github.verycooltimo.murim.registry.ModSounds.SWORD_SWING_HEAVY.get(), 1.0F, 1.05F + 0.1F * getRandom().nextFloat());
                 }
             }
         }
@@ -287,7 +309,7 @@ public class BanditSwordsman extends Bandit {
             } else {
                 getNavigation().stop();
                 if (stateTick == m.hitTick()) {
-                    playSound(SoundEvents.PLAYER_ATTACK_SWEEP, 0.9F, 0.85F);
+                    playSound(io.github.verycooltimo.murim.registry.ModSounds.SWORD_SWING_HEAVY.get(), 0.95F, 0.9F + 0.1F * getRandom().nextFloat());
                     if (t != null && m.reaches(t.getX() - getX(), t.getY() - getY(), t.getZ() - getZ(), yBodyRot)
                             && getSensing().hasLineOfSight(t)) {
                         hit(t, m);
@@ -311,9 +333,19 @@ public class BanditSwordsman extends Bandit {
             log("удар {} по {}: {} (урон {})", m.clip().isEmpty() ? "_chop" : m.clip(), t.getName().getString(), done ? "попал" : "погашен", m.damage());
             if (done) {
                 setLastHurtMob(t);
+                comboReady = random.nextFloat() < 0.4F;
                 double kx = t.getX() - getX(), kz = t.getZ() - getZ();
                 t.knockback(m == BanditMove.CHOP ? 0.3D : 0.45D, -kx, -kz);
             }
+        }
+
+        private boolean techniqueWindup(Player p) {
+            io.github.verycooltimo.murim.combat.TechniqueState st = p.getData(io.github.verycooltimo.murim.registry.ModAttachments.TECHNIQUE_STATE);
+            if (!st.isActive()) {
+                return false;
+            }
+            io.github.verycooltimo.murim.technique.TechniqueDefinition d = io.github.verycooltimo.murim.technique.TechniqueLoader.get(st.techniqueId());
+            return d != null && st.tick() < d.startTickOf(io.github.verycooltimo.murim.combat.TechniquePhase.IMPACT);
         }
 
         private void faceTowards(LivingEntity t, float maxStep) {

@@ -229,6 +229,8 @@ public final class PlumVfx {
                 PlumRules.blossoms(cast.layer) ? 1 : 0, PlumRules.LAND);
         buildTree(cast);
         spawnGround(cast);
+        // Выпуск: тяжёлый взмах, из которого растёт дерево ци.
+        io.github.verycooltimo.murim.client.Sfx.play(cast.origin, io.github.verycooltimo.murim.registry.ModSounds.SWORD_SWING_HEAVY, 1.0F, 1.0F);
         Minecraft mc = Minecraft.getInstance();
         if (mc.player != null && mc.player.getId() == p.entityId() && cast.layer >= 2) {
             // Выпуск — виньетка к точке удара (чуть выше центра: дуга уходит вверх).
@@ -869,8 +871,12 @@ public final class PlumVfx {
             if (mc.player.getId() != c.entityId) {
                 io.github.verycooltimo.murim.client.ClientAuraState.gust(c.entityId, mc.player.getId(), strength, false);
             }
-            mc.player.level().playLocalSound(base.x, base.y, base.z, net.minecraft.sounds.SoundEvents.GENERIC_EXPLODE.value(),
-                    net.minecraft.sounds.SoundSource.PLAYERS, 0.6F + 0.4F * strength, 0.55F, false);
+            io.github.verycooltimo.murim.client.Sfx.play(base.x, base.y, base.z, io.github.verycooltimo.murim.registry.ModSounds.IMPACT_HEAVY.get(),
+                    net.minecraft.sounds.SoundSource.PLAYERS, 0.6F + 0.4F * strength, 1.0F, false);
+            if (PlumRules.blossoms(c.layer)) {
+                // Цветы срываются с упавшего дерева — взрыв лепестков поверх удара.
+                io.github.verycooltimo.murim.client.Sfx.play(base.add(c.forward.scale(h * 0.45D)), io.github.verycooltimo.murim.registry.ModSounds.PETAL_BURST, 0.6F + 0.4F * strength, 1.0F);
+            }
         }
         // Волна пыли от удара: кольцом наружу радиусом до ~8 блоков.
         if (mc.level != null && !mc.level.getBlockState(net.minecraft.core.BlockPos.containing(base.add(0.0D, -0.2D, 0.0D))).isAir()) {
@@ -1261,6 +1267,12 @@ public final class PlumVfx {
      */
     private static void swingBurst(Cast c, int k) {
         Random r = c.random;
+        // Каждый из шести взмахов слышен; с цветами — ещё и раскрытие бутонов (выше с каждым взмахом).
+        Vec3 swingAt = trunkBase(c).add(0.0D, 1.2D, 0.0D);
+        io.github.verycooltimo.murim.client.Sfx.play(swingAt, io.github.verycooltimo.murim.registry.ModSounds.SWORD_SWING, 0.7F, 1.0F + 0.04F * k);
+        if (PlumRules.blossoms(c.layer)) {
+            io.github.verycooltimo.murim.client.Sfx.play(swingAt.add(c.forward.scale(PlumRules.treeHeight(c.layer) * 0.5D)), io.github.verycooltimo.murim.registry.ModSounds.BLOSSOM_OPEN, 0.5F, 0.9F + 0.06F * k);
+        }
         int side = k % 2 == 0 ? 1 : -1;
         c.gusts.add(new Gust(side > 0 ? Math.PI * 0.5D : -Math.PI * 0.5D, Math.toRadians(70.0D) * side,
                 0.2D + 0.15D * r.nextDouble(), 0.3D + 0.08D * r.nextDouble(),
