@@ -147,5 +147,9 @@
   "technique.murim.seven_plum_blossoms.execution": "Казнь Цветущей Сливы",
   "technique.murim.seven_plum_rush": "Меч Семи Цветков Сливы: Натиск",
   "technique.murim.seven_plum_rush.weakness": "Долгая концентрация и прямая линия: сойди с пути урагана.",
-  "technique.murim.seven_plum_blossoms.rush": "Натиск Цветущей Сливы"
+  "technique.murim.seven_plum_blossoms.rush": "Натиск Цветущей Сливы",
+  "technique.murim.falling_petal_sword": "Меч Падающего Цветка",
+  "technique.murim.falling_petal_sword.weakness": "Натиск идёт по кругу слева за спину: на паузе после разворота отступи в другую сторону.",
+  "technique.murim.falling_petal_sword.school": "Искусство меча горы Хуа",
+  "technique.murim.falling_petal_sword.form": "Меч Падающего Цветка"
 }
