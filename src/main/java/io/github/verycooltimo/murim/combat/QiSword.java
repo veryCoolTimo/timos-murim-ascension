@@ -31,8 +31,9 @@ import net.neoforged.neoforge.event.tick.PlayerTickEvent;
  * через {@link #HOLD_TICKS} без мечевых действий. Ладонь и шаги меча не требуют.
  *
  * <p>Ци-меч бьёт как железный меч: пока он «вынут», на пустую руку действует временный
- * модификатор урона +5 и скорости атаки −2,4 (итог 6 и 1,6 — как у железного меча). Ранговые
- * ограничения — потом (этап M2).
+ * модификатор урона +5 и скорости атаки −2,4 (итог 6 и 1,6 — как у железного меча). Ци-меч есть
+ * только с устоявшегося Пика ({@link #MIN_RANK}, {@link #MIN_STAGE}); ниже мечевые формы с пустой
+ * рукой не работают, как без меча.
  *
  * <p>Состояние «вынут» — тик последнего мечевого действия в {@link Player#getPersistentData()}:
  * оно серверное, на клиент не синхронизируется. Клиент рисует клинок сам по тем же событиям
@@ -62,10 +63,12 @@ public final class QiSword {
 
     /**
      * Ранг, с которого доступен ци-меч. Канон (Absolute Regression, «Keen Qi»): «его не натренировать,
-     * только постичь; без устойчивого Пика не достичь» — Пик у нас ранг 4. Пока автор решил
-     * (03.10) дать его всем пробуждённым, поэтому 0; включить канон — поставить {@code 4}.
+     * только постичь; без устойчивого Пика не достичь» — Пик у нас ранг 4, и автор (03.10) включил канон.
      */
-    public static final int MIN_RANK = 0;
+    public static final int MIN_RANK = io.github.verycooltimo.murim.cultivation.Realm.PEAK;
+
+    /** Подступень Пика, с которой есть ци-меч: «устоявшийся Пик» — утвердившаяся (автор 03.10). */
+    public static final int MIN_STAGE = io.github.verycooltimo.murim.cultivation.Realm.STAGE_SETTLED;
 
     /**
      * С какого ранга ци-меч — высшей ступени (автор 03.10: «аура-меч для evolutionary realm»):
@@ -74,14 +77,15 @@ public final class QiSword {
      */
     public static final int EVOLVED_RANK = 5;
 
-    /** Может ли ци-меч появиться: рука пуста, даньтянь сформирован, ранг не ниже {@link #MIN_RANK}. */
+    /** Может ли ци-меч появиться: рука пуста, даньтянь сформирован, Пик устоялся ({@link #available}). */
     public static boolean qiAvailable(Player player) {
         return player.getMainHandItem().isEmpty() && available(player.getData(ModAttachments.PROFILE));
     }
 
     /** Общая для сервера и клиента проверка профиля. */
     public static boolean available(io.github.verycooltimo.murim.profile.DantianProfile profile) {
-        return profile.isAwakened() && profile.rank() >= MIN_RANK;
+        return profile.isAwakened() && (profile.rank() > MIN_RANK
+                || profile.rank() == MIN_RANK && profile.stage() >= MIN_STAGE);
     }
 
     /** Есть ли чем бить мечевой техникой: меч в руке или ци-меч. */

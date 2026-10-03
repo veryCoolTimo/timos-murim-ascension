@@ -119,4 +119,27 @@ class RealmTest {
         assertEquals(16.0D, Realm.bonusHealth(Realm.PEAK), 1.0E-9);
         assertEquals(40.0D, Realm.bonusHealth(99), 1.0E-9);
     }
+
+    @Test
+    @DisplayName("Подступени Пика: стена и техника до слоя 6 / 7, центр ×1,25, сила +0,1")
+    void peakStages() {
+        DantianProfile peak = awakened(120.0D, Realm.PEAK);
+        assertEquals(Realm.Blocker.NOT_AT_WALL, Realm.checkStage(awakened(60.0D, Realm.PEAK), Map.of(SWEEP, 8)));
+        assertEquals(Realm.Blocker.NO_TECHNIQUE, Realm.checkStage(peak, Map.of(SWEEP, 5)));
+        assertEquals(Realm.Blocker.NONE, Realm.checkStage(peak, Map.of(SWEEP, 6)));
+        DantianProfile settled = Realm.settle(peak);
+        assertEquals(Realm.STAGE_SETTLED, settled.stage());
+        assertEquals(37.5D, settled.capacity(), 1.0E-9);
+        assertEquals(Realm.Blocker.NOT_AT_WALL, Realm.checkStage(settled, Map.of(SWEEP, 8)), "новая стена дальше");
+        DantianProfile full = settled.withPool(Realm.wall(settled));
+        assertEquals(Realm.Blocker.NO_TECHNIQUE, Realm.checkStage(full, Map.of(SWEEP, 6)));
+        DantianProfile summit = Realm.settle(full);
+        assertEquals(Realm.STAGE_SUMMIT, summit.stage());
+        assertEquals(Realm.Blocker.MAX_RANK, Realm.checkStage(summit.withPool(Realm.wall(summit)), Map.of(SWEEP, 8)));
+        assertEquals(Realm.Blocker.MAX_RANK, Realm.checkStage(awakened(120.0D, Realm.FIRST), Map.of(SWEEP, 8)),
+                "ниже Пика — прорыв, не подступень");
+        assertEquals(1.75D, Realm.power(peak), 1.0E-9);
+        assertEquals(1.85D, Realm.power(settled), 1.0E-9);
+        assertEquals(1.95D, Realm.power(summit), 1.0E-9);
+    }
 }

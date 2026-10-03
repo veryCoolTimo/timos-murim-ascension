@@ -48,9 +48,19 @@ public final class Realm {
 
     /**
      * Подступени (начальная → утвердившаяся → вершина) — только с Пика (автор 01.10, вики Myst).
-     * Пока не хранятся: прорыв внутри Пика — после MVP (M3+), там же появится поле в профиле.
+     * Хранятся в {@link DantianProfile#stage()} (автор 03.10). Растут без сцены прорыва — «утверждением»:
+     * на Пике запас снова упёрся в стену, и техника освоена до слоя {@link #stageLayerNeed}
+     * (6 — утвердившаяся, 7 — вершина). Так в книгах: внутри большой ступени копят ци и оттачивают
+     * искусство, стены-прорыва нет.
      */
     public static final int STAGES = 3;
+
+    public static final int STAGE_INITIAL = 0;
+    public static final int STAGE_SETTLED = 1;
+    public static final int STAGE_SUMMIT = 2;
+
+    /** Утверждение подступени расширяет центр меньше прорыва: до следующей стены снова копить. */
+    public static final double STAGE_CAPACITY_GROWTH = 1.25D;
 
     /**
      * Множитель силы техник по рангу (автор 03.10, этап M2): маленький, «чтобы Божественный мастер
@@ -158,6 +168,37 @@ public final class Realm {
         return targetRank <= THIRD ? THIRD_LAYER_NEED : targetRank + 1;
     }
 
+    /** Что мешает утвердить следующую подступень Пика прямо сейчас ({@code MAX_RANK} — не Пик или уже вершина). */
+    public static Blocker checkStage(DantianProfile profile, Map<ResourceLocation, Integer> layers) {
+        if (!profile.isAwakened()) {
+            return Blocker.NO_DANTIAN;
+        }
+        if (profile.rank() != PEAK || profile.stage() >= STAGES - 1) {
+            return Blocker.MAX_RANK;
+        }
+        if (!atWall(profile)) {
+            return Blocker.NOT_AT_WALL;
+        }
+        int need = stageLayerNeed(profile.stage() + 1);
+        return layers.values().stream().anyMatch(layer -> layer >= need) ? Blocker.NONE : Blocker.NO_TECHNIQUE;
+    }
+
+    /** Слой техники для подступени Пика: утвердившаяся — 6, вершина — 7 (вход в Пик — 5). */
+    public static int stageLayerNeed(int targetStage) {
+        return layerNeed(PEAK) + Math.max(1, targetStage);
+    }
+
+    /** Профиль после утверждения подступени: на ступень выше внутри Пика, центр чуть шире, запас сохранён. */
+    public static DantianProfile settle(DantianProfile profile) {
+        return profile.withAxes(profile.capacity() * STAGE_CAPACITY_GROWTH, profile.purity(), profile.meridians())
+                .withStage(profile.stage() + 1);
+    }
+
+    /** Ключ названия подступени: {@code murim.rank.stage.0..2}. */
+    public static String stageKey(int stage) {
+        return "murim.rank.stage." + Math.max(0, Math.min(STAGES - 1, stage));
+    }
+
     /** Множитель силы техник на ранге {@code rank}, подступень {@code stage} (0 — начальная; только с Пика). */
     public static double power(int rank, int stage) {
         int r = Math.max(0, Math.min(TOP, rank));
@@ -167,6 +208,10 @@ public final class Realm {
 
     public static double power(int rank) {
         return power(rank, 0);
+    }
+
+    public static double power(DantianProfile profile) {
+        return power(profile.rank(), profile.stage());
     }
 
     /** Прибавка к скорости бега (доля базовой): +3 % за ранг. */

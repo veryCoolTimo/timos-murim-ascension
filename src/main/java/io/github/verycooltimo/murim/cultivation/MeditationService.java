@@ -274,6 +274,9 @@ public final class MeditationService {
      * @return {@code true}, если прорыв начался
      */
     private static boolean checkWall(ServerPlayer player, DantianProfile profile, MeditationState state) {
+        if (profile.rank() == Realm.PEAK) {
+            return checkStage(player, profile, state);
+        }
         Realm.Blocker blocker = Realm.check(profile,
                 player.getData(ModAttachments.MASTERY).layers());
         if (blocker == Realm.Blocker.NONE) {
@@ -288,6 +291,35 @@ public final class MeditationService {
                     ? "murim.rank.wall.master_any" : "murim.rank.wall.technique";
             player.displayClientMessage(Component.translatable(key, Realm.layerNeed(profile.rank() + 1))
                     .withStyle(ChatFormatting.GRAY), true);
+        }
+        return false;
+    }
+
+    /**
+     * Подступень Пика утверждается без сцены прорыва (автор 03.10): стена запаса и техника до слоя
+     * {@link Realm#stageLayerNeed} — глаза открываются, звон, строка в чате. Травмы нет: это не стена ступени.
+     *
+     * @return {@code true}, если подступень утверждена и сессия закончилась
+     */
+    private static boolean checkStage(ServerPlayer player, DantianProfile profile, MeditationState state) {
+        Realm.Blocker blocker = Realm.checkStage(profile, player.getData(ModAttachments.MASTERY).layers());
+        if (blocker == Realm.Blocker.NONE) {
+            DantianProfile settled = Realm.settle(profile);
+            player.setData(ModAttachments.PROFILE, settled);
+            player.setData(ModAttachments.MEDITATION, MeditationState.IDLE);
+            ProfileNetwork.sync(player);
+            player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
+                    io.github.verycooltimo.murim.registry.ModSounds.QI_CHIME.get(), SoundSource.PLAYERS, 0.9F, 0.7F);
+            player.displayClientMessage(Component.translatable("murim.rank.stage.done",
+                    Component.translatable(Realm.nameKey(settled.rank())),
+                    Component.translatable(Realm.stageKey(settled.stage()))).withStyle(ChatFormatting.GOLD), false);
+            sync(player, SyncMeditationPayload.Event.NONE);
+            return true;
+        }
+        if (Realm.atWall(profile) && state.ticks() % WALL_HINT_TICKS == 0) {
+            boolean summit = blocker == Realm.Blocker.MAX_RANK;
+            player.displayClientMessage(Component.translatable(summit ? "murim.rank.wall.max" : "murim.rank.wall.stage",
+                    Realm.stageLayerNeed(profile.stage() + 1)).withStyle(ChatFormatting.GRAY), true);
         }
         return false;
     }

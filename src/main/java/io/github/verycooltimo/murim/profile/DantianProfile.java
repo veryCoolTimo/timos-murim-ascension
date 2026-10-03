@@ -24,6 +24,8 @@ import net.minecraft.util.Mth;
  * @param circulating циркулирующая ци
  * @param foundation  фундамент: его жгут запретные техники, когда циркулирующая кончилась
  * @param rank        ранг мастерства
+ * @param stage       подступень Пика: 0 — начальная, 1 — утвердившаяся, 2 — вершина (автор 03.10);
+ *                    ниже Пика всегда 0. В старых сохранениях поля нет — читается как 0
  */
 public record DantianProfile(
         double capacity,
@@ -34,12 +36,16 @@ public record DantianProfile(
         double pool,
         double circulating,
         double foundation,
-        int rank
+        int rank,
+        int stage
 ) {
+
+    /** Последняя подступень Пика (вершина). Та же граница, что {@code Realm.STAGES - 1}. */
+    public static final int MAX_STAGE = 2;
 
     /** Профиль новичка: центр не сформирован, запас пуст, фундамент цел. */
     public static final DantianProfile INITIAL =
-            new DantianProfile(10.0D, 0.5D, 0.5D, "none", "none", 0.0D, 0.0D, 1.0D, 0);
+            new DantianProfile(10.0D, 0.5D, 0.5D, "none", "none", 0.0D, 0.0D, 1.0D, 0, 0);
 
     public static final Codec<DantianProfile> CODEC = RecordCodecBuilder.create(i -> i.group(
             Codec.DOUBLE.fieldOf("capacity").forGetter(DantianProfile::capacity),
@@ -50,7 +56,9 @@ public record DantianProfile(
             Codec.DOUBLE.fieldOf("pool").forGetter(DantianProfile::pool),
             Codec.DOUBLE.fieldOf("circulating").forGetter(DantianProfile::circulating),
             Codec.DOUBLE.fieldOf("foundation").forGetter(DantianProfile::foundation),
-            Codec.INT.fieldOf("rank").forGetter(DantianProfile::rank)
+            Codec.INT.fieldOf("rank").forGetter(DantianProfile::rank),
+            // Необязательное: сохранения до подступеней (03.10) его не знают — начальная.
+            Codec.INT.optionalFieldOf("stage", 0).forGetter(DantianProfile::stage)
     ).apply(i, DantianProfile::new));
 
     public DantianProfile {
@@ -74,6 +82,9 @@ public record DantianProfile(
         }
         if (rank < 0) {
             throw new IllegalArgumentException("Отрицательный ранг");
+        }
+        if (stage < 0 || stage > MAX_STAGE) {
+            throw new IllegalArgumentException("Подступень вне 0.." + MAX_STAGE + ": " + stage);
         }
         java.util.Objects.requireNonNull(nature, "nature");
         java.util.Objects.requireNonNull(imprint, "imprint");
@@ -115,17 +126,17 @@ public record DantianProfile(
 
     public DantianProfile withCirculating(double value) {
         return new DantianProfile(capacity, purity, meridians, nature, imprint, pool,
-                Mth.clamp(value, 0.0D, maxCirculating()), foundation, rank);
+                Mth.clamp(value, 0.0D, maxCirculating()), foundation, rank, stage);
     }
 
     public DantianProfile withPool(double value) {
         return new DantianProfile(capacity, purity, meridians, nature, imprint,
-                Math.max(0.0D, value), circulating, foundation, rank);
+                Math.max(0.0D, value), circulating, foundation, rank, stage);
     }
 
     public DantianProfile withFoundation(double value) {
         return new DantianProfile(capacity, purity, meridians, nature, imprint, pool, circulating,
-                Mth.clamp(value, 0.0D, 1.0D), rank);
+                Mth.clamp(value, 0.0D, 1.0D), rank, stage);
     }
 
     public DantianProfile withAxes(double newCapacity, double newPurity, double newMeridians) {
@@ -133,20 +144,27 @@ public record DantianProfile(
                 Mth.clamp(newCapacity, 0.1D, MAX_CAPACITY),
                 Mth.clamp(newPurity, 0.0D, 1.0D),
                 Mth.clamp(newMeridians, 0.0D, 1.0D),
-                nature, imprint, pool, circulating, foundation, rank);
+                nature, imprint, pool, circulating, foundation, rank, stage);
         // Пересжатие обязательно: смена осей меняет предел центра, и без этого
         // циркулирующая ци могла навсегда остаться выше собственного максимума.
         return changed.withCirculating(changed.circulating());
     }
 
+    /** Новый ранг. Подступень сохраняется только на том же ранге: новая ступень начинается с начальной. */
     public DantianProfile withRank(int value) {
         return new DantianProfile(capacity, purity, meridians, nature, imprint, pool, circulating,
-                foundation, value);
+                foundation, value, value == rank ? stage : 0);
+    }
+
+    /** Подступень Пика; ниже Пика (ранг 4) её нет — остаётся 0. */
+    public DantianProfile withStage(int value) {
+        return new DantianProfile(capacity, purity, meridians, nature, imprint, pool, circulating,
+                foundation, rank, rank >= 4 ? Mth.clamp(value, 0, MAX_STAGE) : 0);
     }
 
     public DantianProfile withTags(String newNature, String newImprint) {
         return new DantianProfile(capacity, purity, meridians, newNature, newImprint, pool,
-                circulating, foundation, rank);
+                circulating, foundation, rank, stage);
     }
 
     /**
