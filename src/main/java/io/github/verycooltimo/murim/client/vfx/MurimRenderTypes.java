@@ -239,6 +239,13 @@ public final class MurimRenderTypes {
         return BODY_GLOW;
     }
 
+    /** Жилы поглощения пилюли (docs/design/19b): ровная вдоль лента поверх тела, без «бусин» strand.png. */
+    private static final RenderType VEIN_RIBBON = overlayGlow("vein_ribbon", RIBBON_TEXTURE);
+
+    public static RenderType veinRibbon() {
+        return VEIN_RIBBON;
+    }
+
     public static RenderType drip() {
         return DRIP;
     }

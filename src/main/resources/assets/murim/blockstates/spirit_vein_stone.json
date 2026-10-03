@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "kind=peak": {
+      "model": "murim:block/spirit_vein_stone"
+    },
+    "kind=water": {
+      "model": "murim:block/spirit_vein_stone"
+    },
+    "kind=forest": {
+      "model": "murim:block/spirit_vein_stone"
+    },
+    "kind=altar": {
+      "model": "murim:block/spirit_vein_stone"
+    }
+  }
+}

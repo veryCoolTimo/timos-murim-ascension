@@ -229,6 +229,19 @@ public final class ModAttachments {
                             .copyOnDeath()
                             .build());
 
+    /** Пилюли: повторы, стойкость к ядам, окно «сразу» (docs/design/19b §1). Сохраняется, переживает смерть. */
+    public static final Supplier<AttachmentType<io.github.verycooltimo.murim.cultivation.PillState>> PILLS =
+            ATTACHMENT_TYPES.register("pills",
+                    () -> AttachmentType.builder(() -> io.github.verycooltimo.murim.cultivation.PillState.NONE)
+                            .serialize(io.github.verycooltimo.murim.cultivation.PillState.CODEC)
+                            .copyOnDeath()
+                            .build());
+
+    /** Идущая мини-игра поглощения пилюль. Не сохраняется: живёт только в сессии медитации. */
+    public static final Supplier<AttachmentType<io.github.verycooltimo.murim.cultivation.PillService.Slot>> ABSORB =
+            ATTACHMENT_TYPES.register("absorb",
+                    () -> AttachmentType.builder(io.github.verycooltimo.murim.cultivation.PillService.Slot::new).build());
+
     private ModAttachments() {
     }
 }

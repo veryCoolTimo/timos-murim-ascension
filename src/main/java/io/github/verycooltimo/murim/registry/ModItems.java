@@ -38,6 +38,18 @@ public final class ModItems {
     public static final DeferredHolder<Item, Item> QI_SWORD = ITEMS.register("qi_sword",
             () -> new Item(new Item.Properties().stacksTo(1)));
 
+    /** Пилюли (docs/design/19b §1). */
+    public static final DeferredHolder<Item, Item> PILL_SNOW_PLUM = pill(io.github.verycooltimo.murim.cultivation.PillKind.SNOW_PLUM, 16);
+    public static final DeferredHolder<Item, Item> PILL_ORIGIN_ENERGY = pill(io.github.verycooltimo.murim.cultivation.PillKind.ORIGIN_ENERGY, 4);
+    public static final DeferredHolder<Item, Item> PILL_THOUSAND_POISON = pill(io.github.verycooltimo.murim.cultivation.PillKind.THOUSAND_POISON, 4);
+    public static final DeferredHolder<Item, Item> BEAUTY_TEAR = pill(io.github.verycooltimo.murim.cultivation.PillKind.BEAUTY_TEAR, 1);
+
+    private static DeferredHolder<Item, Item> pill(io.github.verycooltimo.murim.cultivation.PillKind kind, int stack) {
+        return ITEMS.register(kind.itemId(), () -> new io.github.verycooltimo.murim.item.PillItem(kind,
+                new Item.Properties().stacksTo(stack).rarity(kind.rare()
+                        ? net.minecraft.world.item.Rarity.RARE : net.minecraft.world.item.Rarity.UNCOMMON)));
+    }
+
     public static void register(IEventBus modBus) {
         ITEMS.register(modBus);
     }

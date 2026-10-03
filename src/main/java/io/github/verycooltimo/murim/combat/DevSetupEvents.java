@@ -188,6 +188,32 @@ public final class DevSetupEvents {
             meditating.removeAllEffects();
             meditating.setHealth(meditating.getMaxHealth());
             meditating.getFoodData().setFoodLevel(20);
+            // MURIM_CAPTURE_PILLS=origin_energy,thousand_poison,beauty_tear — съесть пилюли перед
+            // посадкой: стенд садится в окне «сразу», и начинается поглощение (docs/design/19b).
+            // MURIM_CAPTURE_PLACE=peak|water|forest|altar — камень жилы в 2 блоках сбоку и чуть позади игрока.
+            String place = System.getenv("MURIM_CAPTURE_PLACE");
+            // Камень прошлого прогона остаётся в мире стенда — убрать, чтобы не путал кадры.
+            for (net.minecraft.core.BlockPos p : net.minecraft.core.BlockPos.betweenClosed(
+                    meditating.blockPosition().offset(-4, -1, -4), meditating.blockPosition().offset(4, 2, 4))) {
+                if (meditating.level().getBlockState(p).getBlock() instanceof io.github.verycooltimo.murim.world.SpiritVeinBlock) {
+                    meditating.level().setBlockAndUpdate(p, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState());
+                }
+            }
+            if (place != null && !place.isBlank()) {
+                net.minecraft.core.BlockPos at = meditating.blockPosition().relative(meditating.getDirection().getClockWise(), 2).relative(meditating.getDirection().getOpposite(), 1);
+                meditating.level().setBlockAndUpdate(at, io.github.verycooltimo.murim.world.ModWorld.SPIRIT_VEIN.get()
+                        .defaultBlockState().setValue(io.github.verycooltimo.murim.world.SpiritVeinBlock.KIND,
+                                io.github.verycooltimo.murim.world.PlaceKind.valueOf(place.trim().toUpperCase(java.util.Locale.ROOT))));
+            }
+            String pills = System.getenv("MURIM_CAPTURE_PILLS");
+            meditating.setData(io.github.verycooltimo.murim.registry.ModAttachments.PILLS,
+                    io.github.verycooltimo.murim.cultivation.PillState.NONE);
+            if (pills != null && !pills.isBlank()) {
+                for (String id : pills.split(",")) {
+                    io.github.verycooltimo.murim.cultivation.PillService.eat(meditating,
+                            io.github.verycooltimo.murim.cultivation.PillKind.valueOf(id.trim().toUpperCase(java.util.Locale.ROOT)));
+                }
+            }
             return;
         }
         // Техники теперь стоят ци и требуют сформированного центра. Без этого съёмочный

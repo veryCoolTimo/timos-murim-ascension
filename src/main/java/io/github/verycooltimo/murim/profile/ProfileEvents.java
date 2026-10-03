@@ -53,6 +53,10 @@ public final class ProfileEvents {
         if (!(event.getEntity() instanceof ServerPlayer player)) {
             return;
         }
+        // Волна места силы бьёт по телу, но медитацию не срывает (docs/design/19b §3).
+        if (io.github.verycooltimo.murim.cultivation.PillService.waveHit(player)) {
+            return;
+        }
         if (player.getData(ModAttachments.MEDITATION).active()) {
             io.github.verycooltimo.murim.cultivation.MeditationService.stop(player,
                     "murim.meditation.broken.hurt");
