@@ -212,5 +212,9 @@
   "murim.dodge.hint": "Double-tap A/D/S — footwork dodge",
   "key.murim.lock": "Lock on target",
   "murim.manual.learn": "Learn",
-  "murim.manual.torn": "Torn: up to layer %s"
+  "murim.manual.torn": "Torn: up to layer %s",
+  "technique.murim.twenty_four_plum_scatter": "24-Movement Plum Blossom Sword: Scatter",
+  "technique.murim.twenty_four_plum_scatter.weakness": "For three and a half seconds he stands in blue fire gathering petals: strike him then and the technique breaks. The clones cut where the target stood.",
+  "technique.murim.twenty_four_plum.scatter": "Plum Blossom Scatter",
+  "form.murim.twenty_four_plum_scatter": "Scatter"
 }
