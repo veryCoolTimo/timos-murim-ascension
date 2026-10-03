@@ -157,6 +157,13 @@ public final class ModAttachments {
     public static final Supplier<AttachmentType<double[]>> RAIN =
             ATTACHMENT_TYPES.register("plum_rain",
                     () -> AttachmentType.<double[]>builder(() -> new double[] {0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0}).build());
+    /**
+     * Опадающие Лепестки, Перекрывающие Реку: {кисть x, y, z, прицел x, y, z, слой, id цели или −1,
+     * тик контакта или −1, id цели контакта или −1, урон в руке, взрыв 0/1, дальность}. Не сохраняется.
+     */
+    public static final Supplier<AttachmentType<double[]>> RIVER =
+            ATTACHMENT_TYPES.register("plum_river",
+                    () -> AttachmentType.<double[]>builder(() -> new double[] {0, 0, 0, 0, 0, 0, 0, -1, -1, -1, 0, 0, 0}).build());
     /** Меч Падающего Цветка: см. FallingPetalExecutor. Не сохраняется — живёт одну технику. */
     public static final Supplier<AttachmentType<double[]>> FALLING_PETAL =
             ATTACHMENT_TYPES.register("falling_petal",
