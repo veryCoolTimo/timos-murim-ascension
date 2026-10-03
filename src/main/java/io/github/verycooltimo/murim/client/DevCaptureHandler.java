@@ -510,7 +510,8 @@ public final class DevCaptureHandler {
             minecraft.setScreen(screen);
             screen.pickForCapture(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "wedge_fan"));
         }
-        if (ring2 ? t >= 56 && t < 140 && t % 2 == 0 : t % 5 == 0) {
+        boolean scrollShot = "1".equals(System.getenv("MURIM_CAPTURE_SCROLL"));
+        if (scrollShot ? t >= 128 && t < 150 : ring2 ? t >= 56 && t < 140 && t % 2 == 0 : t % 5 == 0) {
             grab(minecraft, String.format("murim_%s_%03d.png", anglePrefix(), frameIndex));
             grab(minecraft, String.format("clean_%s_%03d.png", anglePrefix(), frameIndex));
             frameIndex++;

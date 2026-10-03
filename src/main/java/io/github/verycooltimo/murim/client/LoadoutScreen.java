@@ -61,6 +61,17 @@ public final class LoadoutScreen extends Screen {
     private ResourceLocation picked;
     private int scroll;
 
+    /** Раскрытие свитка (автор 03.10: «короткую анимацию для свитка»): тики с открытия. */
+    private int openTicks;
+    private static final float UNROLL = 6.0F;
+    private static final int ROD = 14;
+
+    @Override
+    public void tick() {
+        super.tick();
+        openTicks++;
+    }
+
     public LoadoutScreen() {
         super(Component.translatable("murim.loadout.title"));
     }
@@ -116,6 +127,25 @@ public final class LoadoutScreen extends Screen {
 
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partial) {
+        // Свиток разворачивается от центра: видимая полоса растёт, валики едут к краям.
+        float o = Mth.clamp((openTicks + partial) / UNROLL, 0.0F, 1.0F);
+        float e = 1.0F - (1.0F - o) * (1.0F - o) * (1.0F - o);
+        int half = (int) (W / 2.0F * (0.1F + 0.9F * e));
+        int cx = left() + W / 2;
+        boolean unrolling = o < 1.0F;
+        if (unrolling) {
+            graphics.enableScissor(cx - half + ROD, top() - 4, cx + half - ROD, top() + H + 4);
+        }
+        renderContent(graphics, mouseX, mouseY, partial);
+        if (unrolling) {
+            graphics.disableScissor();
+            com.mojang.blaze3d.systems.RenderSystem.enableBlend();
+            graphics.blit(SCROLL, cx - half, top(), 0, 0.0F, 0.0F, ROD, H, W, H);
+            graphics.blit(SCROLL, cx + half - ROD, top(), 0, (float) (W - ROD), 0.0F, ROD, H, W, H);
+        }
+    }
+
+    private void renderContent(GuiGraphics graphics, int mouseX, int mouseY, float partial) {
         super.render(graphics, mouseX, mouseY, partial);
         int x0 = left();
         int y0 = top();
