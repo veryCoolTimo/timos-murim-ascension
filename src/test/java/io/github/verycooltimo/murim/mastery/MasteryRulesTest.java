@@ -116,4 +116,21 @@ class MasteryRulesTest {
         assertTrue(MasteryRules.canLearn(none.withTags("orthodox", "murim:test_method")),
                 "после семени техника должна учиться");
     }
+
+    @Test
+    @DisplayName("Сокровенные (24 Движения) учатся только с Пика; остальные — с любого ранга (автор 03.10)")
+    void secretOnlyFromPeak() {
+        io.github.verycooltimo.murim.profile.DantianProfile awake =
+                io.github.verycooltimo.murim.profile.DantianProfile.INITIAL.withTags("orthodox", "murim:test_method");
+        for (int rank = 0; rank < io.github.verycooltimo.murim.cultivation.Realm.PEAK; rank++) {
+            assertTrue(!MasteryRules.rankAllows(awake.withRank(rank), TechniqueTier.SECRET),
+                    "сокровенная выучилась на ранге " + rank);
+            assertTrue(MasteryRules.rankAllows(awake.withRank(rank), TechniqueTier.ADVANCED));
+            assertTrue(MasteryRules.rankAllows(awake.withRank(rank), TechniqueTier.BASIC));
+        }
+        assertTrue(MasteryRules.rankAllows(awake.withRank(io.github.verycooltimo.murim.cultivation.Realm.PEAK), TechniqueTier.SECRET));
+        assertTrue(MasteryRules.rankAllows(awake.withRank(io.github.verycooltimo.murim.cultivation.Realm.VOID), TechniqueTier.SECRET));
+        assertTrue(!MasteryRules.rankAllows(null, TechniqueTier.BASIC));
+        assertEquals(io.github.verycooltimo.murim.cultivation.Realm.PEAK, MasteryRules.rankNeed(TechniqueTier.SECRET));
+    }
 }

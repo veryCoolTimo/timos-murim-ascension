@@ -158,6 +158,7 @@ public final class LoadoutScreen extends Screen {
         graphics.pose().scale(1.5F, 1.5F, 1.0F);
         graphics.drawString(font, title, 0, 0, INK, false);
         graphics.pose().popPose();
+        rankLine(graphics, x0 + LIST_X, y0 + 14);
 
         // Слева — выученные техники.
         List<SyncMasteryPayload.Entry> list = techniques();
@@ -244,6 +245,38 @@ public final class LoadoutScreen extends Screen {
         if (picked != null) {
             icon(graphics, picked, mouseX - 10, mouseY - 10, 20, 0.85F);
         }
+    }
+
+    /**
+     * Что дал ранг (автор 03.10, этап M2: «игрок должен понять, что ранг дал»): имя ранга рядом
+     * с заголовком, под ним — множитель силы техник и прибавка скорости. Ненавязчиво, бледной тушью.
+     */
+    private void rankLine(GuiGraphics graphics, int x, int y) {
+        io.github.verycooltimo.murim.profile.DantianProfile profile = ClientProfileState.profile();
+        if (!profile.isAwakened()) {
+            return;
+        }
+        int rank = profile.rank();
+        small(graphics, Component.translatable(io.github.verycooltimo.murim.cultivation.Realm.nameKey(rank)),
+                x + (int) (font.width(title) * 1.5F) + 10, y + 5, INK);
+        Component power = Component.translatable("murim.rank.power",
+                number(io.github.verycooltimo.murim.cultivation.Realm.power(rank)));
+        int speed = (int) Math.round(io.github.verycooltimo.murim.cultivation.Realm.bonusSpeed(rank) * 100.0D);
+        Component line = speed <= 0 ? power : power.copy().append(" · ")
+                .append(Component.translatable("murim.rank.speed", speed));
+        // Мельче подписей: строка не должна доходить до «Слоты» справа.
+        graphics.pose().pushPose();
+        graphics.pose().translate(x, y + 13, 0.0F);
+        graphics.pose().scale(0.65F, 0.65F, 1.0F);
+        graphics.drawString(font, line, 0, 0, 0xFF4F4840, false);
+        graphics.pose().popPose();
+    }
+
+    /** «1,25» по-русски и «1.25» по-английски; лишние нули отбрасываются. */
+    private static String number(double value) {
+        String s = java.math.BigDecimal.valueOf(value).setScale(2, java.math.RoundingMode.HALF_UP)
+                .stripTrailingZeros().toPlainString();
+        return s.replace(".", net.minecraft.client.resources.language.I18n.get("murim.rank.decimal"));
     }
 
     private int slotX(int i) {
