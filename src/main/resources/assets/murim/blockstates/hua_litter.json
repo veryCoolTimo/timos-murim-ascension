@@ -1,0 +1,21 @@
+{
+  "variants": {
+    "": [
+      {
+        "model": "murim:block/hua_litter"
+      },
+      {
+        "model": "murim:block/hua_litter",
+        "y": 90
+      },
+      {
+        "model": "murim:block/hua_litter",
+        "y": 180
+      },
+      {
+        "model": "murim:block/hua_litter",
+        "y": 270
+      }
+    ]
+  }
+}

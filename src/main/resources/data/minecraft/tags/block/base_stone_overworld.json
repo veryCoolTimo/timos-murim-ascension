@@ -1,0 +1,11 @@
+{
+  "replace": false,
+  "values": [
+    "murim:hua_granite",
+    "murim:hua_granite_pale",
+    "murim:hua_granite_stained",
+    "murim:hua_granite_cracked",
+    "murim:hua_granite_dark",
+    "murim:hua_granite_mossy"
+  ]
+}

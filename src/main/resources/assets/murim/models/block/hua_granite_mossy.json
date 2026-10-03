@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "top": "murim:block/hua_granite_mossy_top",
+    "side": "murim:block/hua_granite_mossy",
+    "bottom": "murim:block/hua_granite"
+  }
+}

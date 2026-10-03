@@ -1,0 +1,21 @@
+{
+  "variants": {
+    "": [
+      {
+        "model": "murim:block/hua_granite_mossy"
+      },
+      {
+        "model": "murim:block/hua_granite_mossy",
+        "y": 90
+      },
+      {
+        "model": "murim:block/hua_granite_mossy",
+        "y": 180
+      },
+      {
+        "model": "murim:block/hua_granite_mossy",
+        "y": 270
+      }
+    ]
+  }
+}

@@ -21,10 +21,15 @@ import java.util.List;
 public final class MountHuaShape {
 
     /** Local bounding box of everything the mountain touches (apron included). */
-    public static final double MIN_U = -480;
-    public static final double MAX_U = 480;
-    public static final double MIN_V = -560;
-    public static final double MAX_V = 650;
+    public static final double MIN_U = -900;
+    public static final double MAX_U = 900;
+    public static final double MIN_V = -1000;
+    public static final double MAX_V = 1080;
+
+    /** Approach belt (Qinling foothills) around the massif: ellipse half-axes and centre v. */
+    private static final double BELT_U = 790;
+    private static final double BELT_V = 960;
+    private static final double BELT_V0 = 40;
 
     /** Lateral/southern extent of the massif (ellipse half-axes; the north is the scarp line). */
     private static final double SIDE_U = 340;
@@ -59,6 +64,13 @@ public final class MountHuaShape {
         return Math.sqrt(du * du + dv * dv) + 0.08 * warp.fbm(u / 230.0, v / 230.0, 3);
     }
 
+    /** Normalised distance to the outer edge of the foothill belt (1 = vanilla terrain begins). */
+    public double beltDistance(double u, double v) {
+        double du = u / BELT_U;
+        double dv = (v - BELT_V0) / BELT_V;
+        return Math.sqrt(du * du + dv * dv) + 0.06 * warp.fbm(u / 300.0 + 7.0, v / 300.0, 3);
+    }
+
     /** 0 north of the fault scarp, 1 south of it; the step is ~10 blocks wide (a wall). */
     private double scarp(double u, double v, double width) {
         double line = MountHuaPlan.SCARP_V + 24 * warp.noise(u / 60.0, 3.3) + 8 * warp.noise(u / 17.0, 8.1);
@@ -79,8 +91,8 @@ public final class MountHuaShape {
         if (!inBounds(u, v)) {
             return 0;
         }
-        double w = smooth(MountHuaPlan.SCARP_V - 90, MountHuaPlan.SCARP_V - 30, v)
-                * (1 - smooth(1.0, 1.28, sideDistance(u, v)));
+        // The whole foothill belt follows the mountain; its outer 15% lerps into vanilla terrain.
+        double w = 1 - smooth(0.85, 1.0, beltDistance(u, v));
         for (Zone z : MountHuaPlan.ZONES) {
             double dx = Math.max(0, Math.abs(u - z.u()) - z.width() / 2.0);
             double dz = Math.max(0, Math.abs(v - z.v()) - z.depth() / 2.0);
@@ -100,7 +112,7 @@ public final class MountHuaShape {
         if (!inBounds(u, v)) {
             return 0;
         }
-        double h = natural(u, v);
+        double h = ground(u, v);
         h = trail(u, v, h);
         for (Zone zone : MountHuaPlan.ZONES) {
             h = terrace(zone, u, v, h);
@@ -113,6 +125,110 @@ public final class MountHuaShape {
             }
         }
         return Math.max(0, Math.min(MountHuaPlan.SUMMIT + 4, h));
+    }
+
+    /**
+     * Natural ground: the massif, the foothill belt around it (rolling hills, spurs radiating from
+     * the massif, satellite granite peaks) and the main valley that leads to the gate — the
+     * approach of the real Huashan through the Qinling foothills (coordinator/author 03.10:
+     * no flat plain with a mountain dropped on it).
+     */
+    public double ground(double u, double v) {
+        double h = Math.max(natural(u, v), belt(u, v));
+        return valley(u, v, h);
+    }
+
+    /** Foothill belt height (nominal), 0 at the outer edge. */
+    public double belt(double u, double v) {
+        double e = beltDistance(u, v);
+        if (e >= 1.0) {
+            return 0;
+        }
+        double rise = Math.pow(1 - smooth(0.3, 1.0, e), 1.3);
+        double du = u;
+        double dv = v - 20;
+        double r = Math.sqrt(du * du + dv * dv);
+        double th = Math.atan2(dv, du);
+        // Spurs: ridges radiating from the massif, valleys between them.
+        double n = relief.noise(Math.cos(th) * 2.6 + 11.0, Math.sin(th) * 2.6, r / 260.0)
+                + 0.3 * relief.noise(u / 90.0, v / 90.0, 14.0);
+        double spur = Math.pow(1 - Math.min(1, Math.abs(n) / 0.55), 1.6);
+        double rolling = 9 * hillsNoise(u, v);
+        // Branching relief (codex r2: the belt read as a smooth green skirt): unequal spurs plus a
+        // ridged drainage network with steeper valley sides.
+        double drainage = this.hills.ridged(u / 170.0 + 9.0, v / 170.0, 3);
+        double h = rise * (10 + 62 * spur + 26 * drainage) + rolling * (1 - smooth(0.8, 1.0, e));
+        for (Ridge ridge : MountHuaPlan.BELT_RIDGES) {
+            h = smax(h, ridge(ridge, u, v) * rise, 12);
+        }
+        for (Peak p : MountHuaPlan.SATELLITES) {
+            h = smax(h, peak(p, u, v), 10);
+        }
+        h = smax(h, outcrops(u, v, rise), 6);
+        return Math.max(0, h);
+    }
+
+    /** Small granite knobs poking out of the foothill forest (one in ~8 lattice cells). */
+    private double outcrops(double u, double v, double rise) {
+        int ci = (int) Math.floor(u / CELL);
+        int cj = (int) Math.floor(v / CELL);
+        double best = 0;
+        for (int i = ci - 1; i <= ci + 1; i++) {
+            for (int j = cj - 1; j <= cj + 1; j++) {
+                long hsh = hash(i + 7919, j - 104729);
+                if (rnd(hsh, 1) > 0.13) {
+                    continue;
+                }
+                double cu = (i + 0.2 + 0.6 * rnd(hsh, 3)) * CELL;
+                double cv = (j + 0.2 + 0.6 * rnd(hsh, 4)) * CELL;
+                double e = beltDistance(cu, cv);
+                if (e > 0.85 || massif(cu, cv) > 0.05) {
+                    continue;
+                }
+                double top = (1 - smooth(0.3, 0.85, e)) * (28 + 30 * rnd(hsh, 2));
+                double ra = 9 + 8 * rnd(hsh, 5);
+                best = Math.max(best, bullet(u - cu, v - cv, top, ra, ra * (0.6 + 0.3 * rnd(hsh, 6)),
+                        rnd(hsh, 7) * Math.PI, 2.0 + rnd(hsh, 8), hsh & 1023));
+            }
+        }
+        return best;
+    }
+
+    private double hillsNoise(double u, double v) {
+        return hills.fbm(u / 140.0 + 3.0, v / 140.0, 3);
+    }
+
+    /** The main valley from the gate outwards: flat floor, stream bed, gentle sides. */
+    private double valley(double u, double v, double h) {
+        double[] vu = MountHuaPlan.VALLEY_U;
+        double[] vv = MountHuaPlan.VALLEY_V;
+        double[] vf = MountHuaPlan.VALLEY_FLOOR;
+        double best = h;
+        for (int i = 0; i + 1 < vu.length; i++) {
+            double lx = vu[i + 1] - vu[i];
+            double ly = vv[i + 1] - vv[i];
+            double t = clamp(((u - vu[i]) * lx + (v - vv[i]) * ly) / (lx * lx + ly * ly), 0, 1);
+            double d = Math.hypot(u - (vu[i] + lx * t), v - (vv[i] + ly * t));
+            double floor = vf[i] + (vf[i + 1] - vf[i]) * t;
+            double width = 9 + 4 * hills.noise(u / 40.0, v / 40.0, 33.0);
+            double cut = d <= 1.5 ? floor - 1 : floor + 0.45 * Math.max(0, d - width) + 0.02 * Math.max(0, d - width) * Math.max(0, d - width);
+            best = Math.min(best, Math.max(cut, d <= 1.5 ? floor - 1 : floor));
+        }
+        return best;
+    }
+
+    /** Distance to the valley stream line (for the writer: water goes where it is ≤ 1.5). */
+    public double streamDistance(double u, double v) {
+        double[] vu = MountHuaPlan.VALLEY_U;
+        double[] vv = MountHuaPlan.VALLEY_V;
+        double best = Double.MAX_VALUE;
+        for (int i = 0; i + 1 < vu.length; i++) {
+            double lx = vu[i + 1] - vu[i];
+            double ly = vv[i + 1] - vv[i];
+            double t = clamp(((u - vu[i]) * lx + (v - vv[i]) * ly) / (lx * lx + ly * ly), 0, 1);
+            best = Math.min(best, Math.hypot(u - (vu[i] + lx * t), v - (vv[i] + ly * t)));
+        }
+        return best;
     }
 
     /** Height of the rock before the trail and the terraces are cut into it. */
@@ -155,7 +271,7 @@ public final class MountHuaShape {
         // The scarp cuts everything: a straight wall from the plain up to the North Peak.
         h *= scarp(u, v, 4);
         // Talus apron at the foot of the scarp: forested rubble hills, not a wall straight out of a lawn.
-        double apron = (10 + 16 * (0.5 + 0.5 * hills.fbm(u / 45.0, v / 45.0, 3)))
+        double apron = (6 + 34 * Math.pow(0.5 + 0.5 * hills.fbm(u / 60.0, v / 45.0, 3), 1.6))
                 * smooth(MountHuaPlan.SCARP_V - 70, MountHuaPlan.SCARP_V - 4, v) * (1 - smooth(260, 340, Math.abs(u)));
         h = Math.max(h, apron);
         for (Gorge gorge : MountHuaPlan.GORGES) {
@@ -235,7 +351,7 @@ public final class MountHuaShape {
         for (int i = 0; i < n; i++) {
             trailU[i] = samples.get(i)[0];
             trailV[i] = samples.get(i)[1];
-            raw[i] = natural(trailU[i], trailV[i]);
+            raw[i] = ground(trailU[i], trailV[i]);
         }
         // Smooth (window 7) so single towers and notches do not make the stair jump.
         double[] y = new double[n];
@@ -323,11 +439,11 @@ public final class MountHuaShape {
                 double cu = (i + 0.2 + 0.6 * rnd(hsh, 3)) * CELL;
                 double cv = (j + 0.2 + 0.6 * rnd(hsh, 4)) * CELL;
                 double mc = massif(cu, cv);
-                if (mc < 0.12 || rnd(hsh, 8) < 0.55) {
+                if (mc < 0.12 || rnd(hsh, 8) < 0.65) {
                     continue;
                 }
                 double top = mc * envelope(cu, cv) * (0.92 + 0.22 * r2);
-                double ra = 16 + 18 * r1;
+                double ra = 20 + 22 * r1;
                 double rb = ra * (0.6 + 0.35 * rnd(hsh, 5));
                 double ang = rnd(hsh, 6) * Math.PI;
                 double power = 2.2 + 1.6 * rnd(hsh, 7);
@@ -377,7 +493,7 @@ public final class MountHuaShape {
         // bundles of thin columns; the photos show broad slabs cut by occasional grooves).
         double arc = ra / 7.0;
         double groove = 1 - smooth(0.0, 0.08, Math.abs(flute.noise(cx * arc + salt, sy * arc, 4.2 + q * 0.4)));
-        q *= 1 + lobes + 0.05 * groove * smooth(0.55, 0.9, q);
+        q *= 1 + lobes + 0.025 * groove * smooth(0.55, 0.9, q);
         if (q >= 1) {
             return 0;
         }

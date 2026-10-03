@@ -342,5 +342,16 @@
   "sign.murim.hua.placeholder": "(место стройки)",
   "block.murim.plum_blossom": "Цвет сливы",
   "block.murim.plum_blossom_pale": "Белый цвет сливы",
-  "block.murim.plum_blossom_red": "Красный цвет сливы"
+  "block.murim.plum_blossom_red": "Красный цвет сливы",
+  "block.murim.hua_granite": "Гранит Хуашань",
+  "block.murim.hua_granite_pale": "Светлый гранит Хуашань",
+  "block.murim.hua_granite_stained": "Гранит Хуашань с потёками",
+  "block.murim.hua_granite_cracked": "Треснувший гранит Хуашань",
+  "block.murim.hua_granite_dark": "Тёмный гранит Хуашань",
+  "block.murim.hua_granite_mossy": "Замшелый гранит Хуашань",
+  "block.murim.polished_hua_granite": "Полированный гранит Хуашань",
+  "block.murim.polished_hua_granite_stairs": "Ступени из полированного гранита Хуашань",
+  "block.murim.polished_hua_granite_slab": "Плита из полированного гранита Хуашань",
+  "block.murim.polished_hua_granite_wall": "Стена из полированного гранита Хуашань",
+  "block.murim.hua_litter": "Сосновая подстилка"
 }

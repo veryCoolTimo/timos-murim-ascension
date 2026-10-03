@@ -57,16 +57,37 @@ public final class MountHuaPlan {
 
     // Real heights (m): South 2155, East 2096, West 2083, Middle 2038, North 1615 -> nominal.
     public static final List<Peak> PEAKS = List.of(
-            new Peak("south", 5, 125, 236, 62, 48, 10, 3.2),
-            new Peak("east", 130, 15, 228, 50, 40, 70, 3.4),
-            new Peak("west", -125, 35, 226, 58, 34, 75, 3.6),
-            new Peak("middle", 68, 48, 220, 22, 18, 40, 3.0),
-            new Peak("north", -10, -335, 163, 30, 24, 0, 2.8),
+            // Broad masses rather than needles (codex r2): widths vary more than heights.
+            new Peak("south", 5, 125, 236, 80, 60, 10, 2.9),
+            new Peak("east", 130, 15, 228, 66, 48, 70, 3.0),
+            new Peak("west", -125, 35, 226, 74, 44, 75, 3.2),
+            new Peak("middle", 68, 48, 220, 32, 24, 40, 2.6),
+            new Peak("north", -10, -335, 163, 46, 34, 0, 2.2),
             // Subsidiary summits and shoulders (asymmetric masses, not five isolated towers).
-            new Peak("south_shoulder", 70, 140, 205, 40, 28, 140, 3.0),
-            new Peak("west_shoulder", -175, 85, 196, 34, 26, 30, 3.0),
-            new Peak("east_shoulder", 175, 60, 200, 34, 26, 120, 3.0),
+            new Peak("south_shoulder", 70, 140, 205, 52, 34, 140, 2.4),
+            new Peak("west_shoulder", -175, 85, 196, 46, 30, 30, 2.4),
+            new Peak("east_shoulder", 175, 60, 200, 46, 30, 120, 2.4),
             new Peak("vault_hill", -32, 116, 200, 24, 18, 0, 2.6));
+
+    /** Satellite granite peaks in the foothills, long axis pointing at the massif. */
+    public static final List<Peak> SATELLITES = List.of(
+            new Peak("sat_nw", -560, -260, 80, 95, 46, 25, 1.6),
+            // A broad shoulder rather than a separate dome (codex r2).
+            new Peak("sat_e", 560, 150, 92, 150, 62, 15, 1.4),
+            new Peak("sat_sw", -430, 560, 66, 90, 44, -50, 1.6),
+            new Peak("sat_ne", 430, -520, 58, 85, 40, 50, 1.5));
+
+    /** Ridges joining the satellites to the massif (descending towards the satellite saddle). */
+    public static final List<Ridge> BELT_RIDGES = List.of(
+            new Ridge(new double[] {-500, -380, -260}, new double[] {-230, -170, -100}, new double[] {70, 55, 80}, 1.1),
+            new Ridge(new double[] {490, 380, 260}, new double[] {130, 100, 60}, new double[] {85, 60, 90}, 1.1),
+            new Ridge(new double[] {-380, -290, -200}, new double[] {500, 400, 300}, new double[] {60, 50, 75}, 1.1),
+            new Ridge(new double[] {390, 300, 200}, new double[] {-470, -360, -250}, new double[] {50, 45, 70}, 1.1));
+
+    /** Main valley: from the gate terrace out to the edge of the foothills (stream bed along it). */
+    public static final double[] VALLEY_U = {-100, -110, -125, -150, -120, -90};
+    public static final double[] VALLEY_V = {-385, -470, -600, -720, -840, -980};
+    public static final double[] VALLEY_FLOOR = {16, 2.5, 1.5, 1, 0.5, 0};
 
     public static final List<Ridge> RIDGES = List.of(
             // Canglong (Blue Dragon) ridge: knife edge climbing from the North Peak to the Golden Lock.

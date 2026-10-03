@@ -40,7 +40,7 @@ import net.neoforged.neoforge.event.tick.ServerTickEvent;
 public final class MountHuaCommand {
 
     /** Places that {@code tp} knows besides the zones: local (u, v) and an extra height. */
-    private static final List<String> PLACES = List.of("view", "aerial", "aerial_ne", "aerial_sw", "view_ne", "view_east", "view_west",
+    private static final List<String> PLACES = List.of("approach", "approach_ridge", "cliff", "view", "aerial", "aerial_ne", "aerial_sw", "view_ne", "view_east", "view_west",
             "summit", "north_peak", "golden_lock", "ridge", "gorge");
 
     private MountHuaCommand() {
@@ -182,6 +182,10 @@ public final class MountHuaCommand {
             // Views from the ground (the client builds terrain around a flying spectator poorly);
             // height = top of the ground or canopy there + offset, resolved on teleport.
             case "view" -> surface(site, -30, -480, 0.05, 1, -12, 14);
+            // The approach: up the main valley, and from the ridge of the north-west satellite.
+            case "approach" -> surface(site, -135, -730, 0.04, 1, -6, 4);
+            case "approach_ridge" -> surface(site, -470, -215, 1, 0.45, 2, 16);
+            case "cliff" -> surface(site, -45, -300, 1, -0.3, -25, 3);
             case "aerial" -> surface(site, -30, -500, 0.05, 1, 4, 70);
             case "aerial_ne" -> surface(site, 330, -300, -0.8, 1, 2, 80);
             case "aerial_sw" -> surface(site, -300, 330, 0.7, -1, 2, 80);
