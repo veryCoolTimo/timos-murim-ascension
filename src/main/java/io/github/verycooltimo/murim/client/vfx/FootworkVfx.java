@@ -1214,11 +1214,12 @@ public final class FootworkVfx {
                 trimLength(r.right, 3.5D);
             } else {
                 if (r.layer >= 2 && speed > 0.05D) {
-                    r.corridor.add(new Node(pos.add(0.0D, 0.8D, 0.0D), Vec3.ZERO, now, 0.0D));
-                }
-                // Коридор «почти прямой»: узлы тянутся к линии хода — по высоте к телу, вбок к оси.
-                for (Node nd : r.corridor) {
-                    nd.pos = new Vec3(nd.pos.x, nd.pos.y + (pos.y + 0.8D - nd.pos.y) * 0.3D, nd.pos.z);
+                    // Белая линия от тела гнётся так же, как голубые ленты (автор 03.10): узел получает
+                    // плавно меняющийся снос вбок и вверх-вниз и уплывает, хвост изгибается волной.
+                    double ph = now * 0.45D;
+                    Vec3 sway = side.scale(0.035D * Math.sin(ph) + (RNG.nextDouble() - 0.5D) * 0.012D)
+                            .add(0.0D, 0.02D * Math.cos(ph * 1.3D) + 0.004D, 0.0D);
+                    r.corridor.add(new Node(pos.add(0.0D, 0.8D, 0.0D).subtract(dir.scale(0.2D)), sway, now, 0.0D));
                 }
                 // Вытягивается с разгоном: 3 блока на старте → до 12 через секунду.
                 double ramp = Mth.clamp((now - r.startTick) / 20.0D, 0.0D, 1.0D);
