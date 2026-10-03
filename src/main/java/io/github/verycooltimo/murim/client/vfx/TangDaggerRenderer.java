@@ -50,10 +50,14 @@ public class TangDaggerRenderer extends EntityRenderer<TangDagger> {
 
     @Override
     public void render(TangDagger e, float yaw, float partial, PoseStack ps, MultiBufferSource buffers, int light) {
+        if (TangVfx.hidden(e)) {
+            return;
+        }
         Vec3 f = forward(e, partial);
         float age = e.tickCount + partial;
         // Крен: у карпа — S-изгиб корпуса (рыскание вокруг хода), у зависшего — медленное вращение.
-        double roll = e.mode() == TangDagger.HANG ? age * 0.25D : e.mode() == TangDagger.CARP ? Math.sin(age * 0.9D) * 0.6D : age * 0.15D;
+        double roll = e.mode() == TangDagger.STUCK ? e.getId() * 0.7D : e.mode() == TangDagger.HANG ? age * 0.25D
+                : e.mode() == TangDagger.CARP ? Math.sin(age * 0.9D) * 0.6D : age * 0.15D;
         Vec3 up = perpendicular(f, roll);
         if (e.mode() == TangDagger.HANG) {
             // Висит боком и вращается (spec §4): ось — вертикаль.
@@ -65,9 +69,20 @@ public class TangDaggerRenderer extends EntityRenderer<TangDagger> {
             double a = age * 0.6D;
             f = new Vec3(Math.cos(a), Math.sin(a), 0.3D).normalize();
         }
-        VertexConsumer v = buffers.getBuffer(MurimRenderTypes.solid());
-        // Центр модели — середина: остриё впереди на 0,4 длины.
-        draw(v, ps.last(), f.scale(-LENGTH * 0.1D), f, up, 1.0D, 1.0F, e.form() == TangRules.BURST, e.sky());
+        // Модель автора (art/items/tang_dagger, 03.10): гарда чуть позади центра сущности, остриё по ходу.
+        drawModel(ps, buffers.getBuffer(TangDaggerMesh.renderType()), f.scale(-LENGTH * 0.1D), f, roll, e.sky() ? 1.35F : 1.0F, 1.0F);
+    }
+
+    /** Модель кинжала автора: гарда в {@code at} (координаты текущей позы), остриё по {@code f}. */
+    public static void drawModel(PoseStack ps, VertexConsumer v, Vec3 at, Vec3 f, double roll, float scale, float alpha) {
+        ps.pushPose();
+        try {
+            ps.translate(at.x, at.y, at.z);
+            TangDaggerMesh.orient(ps, f.x, f.y, f.z, (float) roll);
+            TangDaggerMesh.render(ps, v, 0x00F000F0, scale, 1.0F, 1.0F, 1.0F, alpha);
+        } finally {
+            ps.popPose();
+        }
     }
 
     /** Направление острия: по повороту сущности (сервер ставит его по ходу или к цели). */

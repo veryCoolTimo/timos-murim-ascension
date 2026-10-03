@@ -49,11 +49,13 @@ public final class Styles {
 
     /**
      * Скрытое Оружие Клана Тан (docs/design/techniques/tang-daggers-spec.md): первая не-хуашаньская школа,
-     * метательные кинжалы без меча. Формы по очереди: Пять Молний → Семь Звёзд → Тёмный Взрыв → Двенадцать
-     * (автор 03.10: Двенадцать — финальная, самая сложная форма, обсуждается отдельно).
+     * метательные кинжалы без меча. Формы по очереди — попытки Тан Гунака, гл. 194–196 (3 → 5 → 6-й → 7 →
+     * возврат → 11-й): Три Мгновения → Пять Молний → Похищение Жизни → Семь Звёзд → Возврат Лезвий →
+     * Тёмный Взрыв → Двенадцать (автор 03.10: финальная, обсуждается отдельно).
      */
     public static final Style TANG_DAGGERS = new Style(id("tang_daggers"), List.of(
-            id("tang_five_thunders"), id("tang_seven_stars"), id("tang_dark_burst"), id("tang_twelve_daggers")), Optional.empty());
+            id("tang_three_instant"), id("tang_five_thunders"), id("tang_flash_life"), id("tang_seven_stars"),
+            id("tang_sleeve_return"), id("tang_dark_burst"), id("tang_twelve_daggers")), Optional.empty());
 
     public static final List<Style> ALL = List.of(SEVEN_PLUM, TWENTY_FOUR_PLUM, DARK_FRAGRANCE, WIND_GOD, TANG_DAGGERS);
 

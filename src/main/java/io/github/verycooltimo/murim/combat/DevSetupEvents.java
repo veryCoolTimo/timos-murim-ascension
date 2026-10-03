@@ -72,6 +72,16 @@ public final class DevSetupEvents {
         boolean emptyHand = "empty".equals(System.getenv("MURIM_CAPTURE_HAND"));
         event.getEntity().setItemInHand(InteractionHand.MAIN_HAND,
                 ceremony || tang || emptyHand ? ItemStack.EMPTY : new ItemStack(Items.NETHERITE_SWORD));
+        // MURIM_CAPTURE_HAND=tang_dagger — в руке кинжал клана Тан (съёмка модели автора, 03.10).
+        if ("tang_dagger".equals(System.getenv("MURIM_CAPTURE_HAND"))) {
+            event.getEntity().setItemInHand(InteractionHand.MAIN_HAND,
+                    new ItemStack(io.github.verycooltimo.murim.registry.ModItems.TANG_DAGGER.get(), 12));
+        }
+        // MURIM_CAPTURE_HAND=huashan_sword — Меч Хуашань (модель автора, 03.10).
+        if ("huashan_sword".equals(System.getenv("MURIM_CAPTURE_HAND"))) {
+            event.getEntity().setItemInHand(InteractionHand.MAIN_HAND,
+                    new ItemStack(io.github.verycooltimo.murim.registry.ModItems.HUASHAN_SWORD.get()));
+        }
 
         // Площадка над лесом. Оценивать светящуюся ленту на фоне листвы невозможно: контраст
         // низкий, а ветки перекрывают силуэт. Чистое небо даёт однозначный фон, на котором
@@ -571,6 +581,11 @@ public final class DevSetupEvents {
         target.setPos(STAGE_X + 0.5D + lookX * dummyDistance, STAGE_Y + lift,
                       STAGE_Z + 0.5D + lookZ * dummyDistance);
         level.addFreshEntity(target);
+        // MURIM_CAPTURE_TANG_STUCK=N — за целью лежат N воткнутых кинжалов игрока (съёмка «Возврата Лезвий»).
+        int stuck = (int) envDouble("MURIM_CAPTURE_TANG_STUCK", 0.0D);
+        if (stuck > 0 && !level.players().isEmpty()) {
+            io.github.verycooltimo.murim.technique.TangExecutor.spawnStuckForCapture(level.players().get(0), target.position(), stuck);
+        }
         if (disciple != null && !level.players().isEmpty()) {
             level.players().get(0).setHealth(level.players().get(0).getMaxHealth());
             disciple.startSpar(level.players().get(0), (int) envDouble("MURIM_CAPTURE_SPAR_DELAY", 40.0D));

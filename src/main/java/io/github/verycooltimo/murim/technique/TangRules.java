@@ -16,11 +16,18 @@ public final class TangRules {
     public static final int TWELVE = 1;
     public static final int STARS = 2;
     public static final int BURST = 3;
+    /** Новые формы по роману (docs/design/techniques/tang-daggers-2-spec.md, одобрено 03.10). */
+    public static final int THREE = 4;
+    public static final int FLASH = 5;
+    public static final int RETURN = 6;
 
     public static final ResourceLocation FIVE_ID = id("tang_five_thunders");
     public static final ResourceLocation TWELVE_ID = id("tang_twelve_daggers");
     public static final ResourceLocation STARS_ID = id("tang_seven_stars");
     public static final ResourceLocation BURST_ID = id("tang_dark_burst");
+    public static final ResourceLocation THREE_ID = id("tang_three_instant");
+    public static final ResourceLocation FLASH_ID = id("tang_flash_life");
+    public static final ResourceLocation RETURN_ID = id("tang_sleeve_return");
 
     private static ResourceLocation id(String path) {
         return ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, path);
@@ -29,7 +36,9 @@ public final class TangRules {
     /** Форма по id техники или −1. */
     public static int form(ResourceLocation technique) {
         return FIVE_ID.equals(technique) ? FIVE : TWELVE_ID.equals(technique) ? TWELVE
-                : STARS_ID.equals(technique) ? STARS : BURST_ID.equals(technique) ? BURST : -1;
+                : STARS_ID.equals(technique) ? STARS : BURST_ID.equals(technique) ? BURST
+                : THREE_ID.equals(technique) ? THREE : FLASH_ID.equals(technique) ? FLASH
+                : RETURN_ID.equals(technique) ? RETURN : -1;
     }
 
     public static ResourceLocation technique(int form) {
@@ -37,6 +46,9 @@ public final class TangRules {
             case FIVE -> FIVE_ID;
             case TWELVE -> TWELVE_ID;
             case STARS -> STARS_ID;
+            case THREE -> THREE_ID;
+            case FLASH -> FLASH_ID;
+            case RETURN -> RETURN_ID;
             default -> BURST_ID;
         };
     }
@@ -47,6 +59,9 @@ public final class TangRules {
             case FIVE -> 12;
             case TWELVE -> 38;
             case STARS -> 14;
+            case THREE -> 10;
+            case FLASH -> 3;
+            case RETURN -> 10;
             default -> 20;
         };
     }
@@ -266,6 +281,89 @@ public final class TangRules {
     }
 
     public static final double SECOND_SPEED = 3.0D;
+
+    // ------------------------------------------------------------ Три Лезвия Одного Мгновения
+
+    /**
+     * Гл. 195, попытка 3: «Один шел прямо на него, а два других вращались к нему по бокам. Скорость тех,
+     * что вращались, была намного выше… все три лезвия достигли Чхон Мёна одновременно».
+     * Время прихода — одно на все три: от дистанции, 6–14 тиков.
+     */
+    public static int threeTicks(double distance) {
+        return (int) Math.max(6, Math.min(14, Math.round(distance / 1.6D)));
+    }
+
+    /** Боковой вынос дуги от прямой — доля дистанции. */
+    public static final double THREE_BOW = 0.45D;
+    public static final double THREE_DMG = 0.6D;
+    public static final double THREE_RANGE = 22.0D;
+    public static final int THREE_STUN = 10;
+
+    public static int threeCount(int layer) {
+        return layer <= 0 ? 1 : layer < 3 ? 2 : 3;
+    }
+
+    /** Излом под прямым углом (гл. 898) у одного бокового лезвия — с 6-го слоя. */
+    public static boolean kink(int layer) {
+        return layer >= 6;
+    }
+
+    /**
+     * Точка лезвия {@code k} (0 — прямое, 1/2 — боковые) на доле пути {@code u}: прямая или квадратичная
+     * дуга с выносом вбок; излом — две прямые через угол на 75 % глубины.
+     */
+    public static Vec3 threePoint(int k, double u, Vec3 from, Vec3 to, Vec3 side, double bow, boolean kinked) {
+        if (k == 0) {
+            return from.lerp(to, u);
+        }
+        double s = k == 1 ? -1.0D : 1.0D;
+        Vec3 off = side.scale(s * bow);
+        if (kinked) {
+            Vec3 corner = from.lerp(to, 0.75D).add(off.scale(1.1D));
+            return u < 0.7D ? from.lerp(corner, u / 0.7D) : corner.lerp(to, (u - 0.7D) / 0.3D);
+        }
+        Vec3 ctrl = from.lerp(to, 0.5D).add(off.scale(2.0D));
+        double a = 1.0D - u;
+        return from.scale(a * a).add(ctrl.scale(2.0D * a * u)).add(to.scale(u * u));
+    }
+
+    // ------------------------------------------------------------ Молниеносное Похищение Жизни
+
+    /** Гл. 195: «не было огромной силы. Это была просто скорость. Кинжал, исчезнувший… появился прямо перед». */
+    public static final double FLASH_SPEED = 4.0D;
+    public static final double FLASH_DMG = 0.35D;
+    public static final double FLASH_RANGE = 24.0D;
+    /** Ближе этого к цели кинжал снова виден. */
+    public static final double FLASH_REVEAL = 2.5D;
+    public static final int FLASH_STUN = 8;
+
+    public static boolean vanish(int layer) {
+        return layer >= 3;
+    }
+
+    /** Срыв замаха врага — с 5-го слоя. */
+    public static boolean interrupt(int layer) {
+        return layer >= 5;
+    }
+
+    /** Второй кинжал «без ци» в тени первого (гл. 196) — 8-й слой. */
+    public static boolean shadowed(int layer) {
+        return layer >= 8;
+    }
+
+    // ------------------------------------------------------------ Возврат Лезвий в Рукав
+
+    /** Промахнувшийся кинжал любой формы лежит воткнутым столько тиков (гл. 195: «брошенные лезвия трудно вернуть»). */
+    public static final int STUCK_TICKS = 300;
+    public static final double RETURN_RANGE = 20.0D;
+    public static final double RETURN_SPEED = 2.4D;
+    public static final double RETURN_DMG = 0.5D;
+    /** С 6-го слоя лезвие на возврате загибает к врагу не дальше этого угла от линии. */
+    public static final double RETURN_BEND = 15.0D;
+
+    public static int returnCount(int layer) {
+        return layer <= 0 ? 1 : layer < 3 ? 4 : 64;
+    }
 
     private TangRules() {
     }
