@@ -34,6 +34,7 @@ public class MurimMod {
         io.github.verycooltimo.murim.world.ModWorld.register(modEventBus);
         io.github.verycooltimo.murim.registry.ModCreativeTabs.register(modEventBus);
         io.github.verycooltimo.murim.registry.ModSounds.register(modEventBus);
+        io.github.verycooltimo.murim.registry.ModFeatures.register(modEventBus);
 
         modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
     }

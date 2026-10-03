@@ -58,7 +58,9 @@ public final class DevSetupEvents {
         // и сервер, запущенный со скопированным набором JVM-аргументов, стирал бы предмет
         // в руке и перестраивал мир каждому входящему игроку.
         if (net.neoforged.fml.loading.FMLEnvironment.production
-                || !Boolean.getBoolean(CAPTURE_PROPERTY)) {
+                || !Boolean.getBoolean(CAPTURE_PROPERTY)
+                // Panorama of Mount Hua: no stage, no dummies (DevPanoramaHandler).
+                || "mounthua".equals(System.getProperty("murim.capture.technique"))) {
             return;
         }
         // Меч нужен для съёмки техник, но в церемонии он торчит из сложенных рук и

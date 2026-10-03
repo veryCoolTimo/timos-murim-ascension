@@ -1,0 +1,127 @@
+package io.github.verycooltimo.murim.world.hua;
+
+import java.util.List;
+
+/**
+ * Fixed plan of Mount Hua in the mountain's local frame: {@code u} grows to the east, {@code v} to
+ * the south, heights are "nominal" blocks above the foot (the South Peak summit is {@link #SUMMIT}).
+ * The world placement rotates the frame by a multiple of 90° (terraces stay grid-aligned) and
+ * scales heights so the South Peak lands at {@link MountHuaSite#SUMMIT_Y}.
+ *
+ * <p>Layout follows the real Huashan (docs/design/reference/mount-hua/DESCRIPTIONS.md, «Что важно
+ * для генератора»): scale ≈ 7.4 m per block both ways (plain 400 m = 0, South Peak 2155 m = 236).
+ * South, East and West peaks stand in a tight horseshoe open to the north, South at its head; the
+ * small Middle Peak sits inside the horseshoe near the East Peak; the Golden Lock pass is the only
+ * gateway into the horseshoe; the knife-edge Canglong ridge runs from it ~270 blocks north to the
+ * low North Peak, which stands on the edge of a straight fault scarp that drops to the flat plain
+ * with no foothills. To the south the massif dissolves into rows of lesser granite fangs.
+ */
+public final class MountHuaPlan {
+
+    private MountHuaPlan() {
+    }
+
+    /** Nominal height of the South Peak summit above the foot. */
+    public static final double SUMMIT = 236.0;
+
+    /** Nominal line of the northern fault scarp (v). */
+    public static final double SCARP_V = -372;
+
+    /**
+     * Granite dome-wedge ("bullet"): h = top·(1 − (d/R)^power), elongated along {@code angle}
+     * (degrees from +u) with half-axes {@code ra} (along) and {@code rb} (across).
+     */
+    public record Peak(String name, double u, double v, double top, double ra, double rb, double angle,
+            double power) {
+    }
+
+    /** Polyline crest; {@code steep} = drop in blocks per block away from the crest line. */
+    public record Ridge(double[] u, double[] v, double[] h, double steep) {
+    }
+
+    /** Polyline gorge cut; floor height along the path, half width of the flat floor. */
+    public record Gorge(double[] u, double[] v, double[] floor, double halfWidth, double wallSlope) {
+    }
+
+    /**
+     * Flat terrace for the author's buildings ({@code cave} = room carved in the rock instead, with a
+     * tunnel towards {@code (exitU, exitV)}). {@code y} is nominal; sizes in blocks.
+     */
+    public record Zone(String id, String title, double u, double v, int width, int depth, double y,
+            boolean cave, double exitU, double exitV) {
+    }
+
+    /** Trail control point (nominal y). */
+    public record TrailPoint(double u, double v, double y) {
+    }
+
+    // Real heights (m): South 2155, East 2096, West 2083, Middle 2038, North 1615 -> nominal.
+    public static final List<Peak> PEAKS = List.of(
+            new Peak("south", 5, 125, 236, 62, 48, 10, 3.2),
+            new Peak("east", 130, 15, 228, 50, 40, 70, 3.4),
+            new Peak("west", -125, 35, 226, 58, 34, 75, 3.6),
+            new Peak("middle", 68, 48, 220, 22, 18, 40, 3.0),
+            new Peak("north", -10, -335, 163, 30, 24, 0, 2.8),
+            // Subsidiary summits and shoulders (asymmetric masses, not five isolated towers).
+            new Peak("south_shoulder", 70, 140, 205, 40, 28, 140, 3.0),
+            new Peak("west_shoulder", -175, 85, 196, 34, 26, 30, 3.0),
+            new Peak("east_shoulder", 175, 60, 200, 34, 26, 120, 3.0),
+            new Peak("vault_hill", -32, 116, 200, 24, 18, 0, 2.6));
+
+    public static final List<Ridge> RIDGES = List.of(
+            // Canglong (Blue Dragon) ridge: knife edge climbing from the North Peak to the Golden Lock.
+            new Ridge(new double[] {-8, 8, -2, 14, 6, 22},
+                    new double[] {-305, -262, -215, -170, -125, -78},
+                    new double[] {140, 144, 150, 156, 163, 170}, 2.8),
+            // Horseshoe saddles: short, high, sagging.
+            new Ridge(new double[] {-110, -55, -10}, new double[] {60, 105, 120},
+                    new double[] {196, 182, 200}, 2.4),
+            new Ridge(new double[] {20, 75, 120}, new double[] {120, 75, 30},
+                    new double[] {200, 184, 196}, 2.4),
+            new Ridge(new double[] {22, 60, 110}, new double[] {-78, -40, 5},
+                    new double[] {178, 182, 192}, 2.6),
+            // Northern rim of the basin: Golden Lock -> West Peak (hides the sect from the north).
+            new Ridge(new double[] {22, -40, -100, -125}, new double[] {-78, -62, -22, 10},
+                    new double[] {178, 184, 192, 205}, 2.6));
+
+    public static final List<Gorge> GORGES = List.of(
+            // Huashan Yu: the gorge of the only trail, cut through the scarp west of the North Peak.
+            new Gorge(new double[] {-110, -100, -82, -66},
+                    new double[] {-430, -372, -330, -296},
+                    new double[] {3, 22, 58, 100}, 5, 4.0));
+
+    public static final List<Zone> ZONES = List.of(
+            new Zone("gate", "Gate terrace", -110, -455, 40, 30, 3, false, 0, 0),
+            new Zone("main", "Main terrace", -20, 20, 100, 70, 160, false, 0, 0),
+            new Zone("upper", "Temple and leader's residence", -30, 74, 60, 28, 168, false, 0, 0),
+            new Zone("vault", "Secret vault", -32, 112, 14, 12, 169, true, -32, 86),
+            new Zone("poles", "Plum blossom poles", -88, 62, 30, 26, 156, false, 0, 0),
+            new Zone("grove", "Plum grove", 38, 90, 36, 26, 166, false, 0, 0),
+            new Zone("penance", "Penance cave", -110, 30, 10, 10, 161, true, -78, 30));
+
+    /** The one trail: gate, gorge, cleft stair, North Peak, Canglong ridge, Golden Lock, sect. */
+    public static final List<TrailPoint> TRAIL = List.of(
+            new TrailPoint(-110, -440, 3),
+            new TrailPoint(-108, -400, 10),
+            new TrailPoint(-100, -365, 26),
+            new TrailPoint(-86, -335, 52),
+            new TrailPoint(-72, -305, 92),
+            // Thousand-foot cleft: steep stair north-east up to the North Peak shoulder.
+            new TrailPoint(-50, -318, 122),
+            new TrailPoint(-28, -322, 148),
+            new TrailPoint(-12, -310, 158),
+            new TrailPoint(0, -282, 154),
+            new TrailPoint(8, -262, 156),
+            new TrailPoint(-2, -215, 160),
+            new TrailPoint(14, -170, 166),
+            new TrailPoint(6, -125, 172),
+            new TrailPoint(22, -80, 178),
+            new TrailPoint(24, -45, 170),
+            new TrailPoint(22, -14, 160));
+
+    /** Plank road along the South Peak's eastern wall (Changkong Zhandao analogue), a side branch. */
+    public static final List<TrailPoint> PLANK_ROAD = List.of(
+            new TrailPoint(58, 112, 212),
+            new TrailPoint(60, 128, 212),
+            new TrailPoint(54, 148, 212));
+}
