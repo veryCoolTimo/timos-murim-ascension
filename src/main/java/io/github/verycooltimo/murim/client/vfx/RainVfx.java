@@ -955,7 +955,7 @@ public final class RainVfx {
         }
         if (t == RainRules.CAPTION && c.own() && c.layer >= 3) {
             TechniqueCaption.showSecret(Component.translatable("technique.murim.twenty_four_plum.school"),
-                    Component.translatable("technique.murim.twenty_four_plum.rainfall"), RainRules.contact(2) + 14 - RainRules.CAPTION);
+                    Component.translatable("technique.murim.twenty_four_plum.rainfall"), RainRules.contact(2) + 34 - RainRules.CAPTION);
         }
         // Касания волн ливня толкают надпись: морось слабее, обрушение сильнее.
         for (int k = 0; k < RainRules.COHORTS.length; k++) {

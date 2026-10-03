@@ -81,7 +81,7 @@ final class SecretCaption {
     private static final int GL_LEQUAL = 515;
 
     /** Длительность ухода строки, тиков. */
-    private static final float ERASE = 7.0F;
+    private static final float ERASE = 4.0F;
     /** Состояние текущей строки для {@link #glyphs}: прогресс ухода и сила удара. */
     private static float eraseNow;
     private static float hitNow;
@@ -126,40 +126,48 @@ final class SecretCaption {
         float sinceImpact = age - impactAge;
         float hit = sinceImpact >= 0.0F && sinceImpact < 5.0F ? impactPower * (1.0F - sinceImpact / 5.0F) : 0.0F;
 
-        // Раскладка: школа — две строки помельче, приём — по слову в строку, крупно.
-        float small = Math.max(1.6F, h / 122.0F);
-        float big = Math.max(2.6F, h / 76.0F);
+        // Раскладка по макету автора 03.10: слева сверху школа мелко в три строки, под ней приём
+        // по слову в строку, заметно меньше прежнего (буквы школы ~2 %, приёма ~6 % высоты экрана).
+        float small = Math.max(0.55F, h * 0.021F / GLYPH_H);
+        float big = Math.max(1.2F, h * 0.062F / GLYPH_H);
         float lh = font.lineHeight;
-        float ox = w * 0.045F;
-        float oy = h * 0.06F;
+        float ox = w * 0.065F;
+        float oy = h * 0.08F;
         List<Line> lines = new ArrayList<>();
         float y = 0.0F;
         float start = 0.0F;
-        float erase = life - 13.0F;
-        for (String s : wrap(school.getString().toUpperCase(Locale.ROOT), 16)) {
+        // Уход — быстрее прежнего: строки рассыпаются почти разом в последние ~6 тиков.
+        float erase = life - 6.0F;
+        for (String s : wrap(school.getString().toUpperCase(Locale.ROOT), 9)) {
             float wd = width(font, s) * small * SQUEEZE;
-            lines.add(new Line(s, 0.0F, y, small, wd, start, 3.5F, erase));
-            start += 1.5F;
-            erase += 1.0F;
+            lines.add(new Line(s, 0.0F, y, small, wd, 0.0F, 0.01F, erase));
+            erase += 0.3F;
             y += LINE_SMALL * small;
         }
-        y += 1.5F * small;
-        start += 1.0F;
+        y += 2.0F * small;
         for (String s : form.getString().toUpperCase(Locale.ROOT).split(" ")) {
             float wd = width(font, s) * big * SQUEEZE;
-            lines.add(new Line(s, small * 3.0F, y, big, wd, start, 3.0F, erase));
-            start += 2.0F;
-            erase += 1.5F;
+            lines.add(new Line(s, 0.0F, y, big, wd, 0.0F, 0.01F, erase));
+            erase += 0.5F;
             y += LINE_BIG * big;
         }
+        float blockH = y;
 
-        float alpha = Mth.clamp(age / 1.0F, 0.0F, 1.0F);
+        // Появление (автор 03.10, «как в AE»): три кадра скачком — масштаб 30 → 110 → 100 %,
+        // прозрачность вместе с ним; без плавных переходов.
+        int frame = (int) age;
+        float pop = frame <= 0 ? 0.3F : frame == 1 ? 1.1F : 1.0F;
+        float alpha = frame <= 0 ? 0.45F : 1.0F;
+        g.pose().pushPose();
+        g.pose().translate(ox, oy + blockH * 0.5F, 0.0F);
+        g.pose().scale(pop, pop, 1.0F);
+        g.pose().translate(-ox, -(oy + blockH * 0.5F), 0.0F);
         // Толчок от удара ливня: дрожь по тикам, без размытия.
         int jt = (int) (age * 2.0F);
         float shake = hit * (float) ClientConfig.cameraShake();
         float jx = shake * (hash(jt * 3 + 1) - 0.5F) * small * 2.6F;
         float jy = shake * (hash(jt * 7 + 5) - 0.5F) * small * 2.0F;
-        float press = 1.0F + 0.035F * hit + 0.06F * Math.max(0.0F, 1.0F - age / 2.5F);
+        float press = 1.0F + 0.035F * hit;
         float tile = big * 38.0F;
         float flowU = age * 0.0045F;
         float flowV = -age * 0.0085F;
@@ -187,7 +195,11 @@ final class SecretCaption {
             int top = Mth.floor(ly - pad);
             int bottom = Mth.ceil(ly + hgt + pad);
 
-            g.enableScissor(Mth.floor(left), top, Mth.ceil(head), bottom);
+            // Обрезка — в экранных координатах: пересчитать на масштаб появления вокруг якоря.
+            float ax = ox;
+            float ay = oy + blockH * 0.5F;
+            g.enableScissor(Mth.floor(ax + (left - ax) * pop) - 1, Mth.floor(ay + (top - ay) * pop) - 1,
+                    Mth.ceil(ax + (head - ax) * pop) + 1, Mth.ceil(ay + (bottom - ay) * pop) + 1);
             eraseNow = e;
             hitNow = hit;
             PoseStack pose = g.pose();
@@ -256,6 +268,7 @@ final class SecretCaption {
                 }
             }
         }
+        g.pose().popPose();
         updateAndDrawPetals(g, dt, alpha);
     }
 
