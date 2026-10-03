@@ -190,6 +190,10 @@ public final class ModAttachments {
     public static final Supplier<AttachmentType<double[]>> DOME =
             ATTACHMENT_TYPES.register("plum_dome",
                     () -> AttachmentType.<double[]>builder(() -> new double[] {0, 0, 0, 0, 1, 0, 0, 0, 0, 1}).build());
+    /** Море Цветущей Сливы: см. SeaExecutor. Не сохраняется — живёт одну технику. */
+    public static final Supplier<AttachmentType<double[]>> SEA =
+            ATTACHMENT_TYPES.register("plum_sea",
+                    () -> AttachmentType.<double[]>builder(() -> new double[0]).build());
 
     /** Последний взмах основы меча: {форма, тик}. Не сохраняется — живёт тики. */
     public static final Supplier<AttachmentType<int[]>> FOUNDATION_SWING =

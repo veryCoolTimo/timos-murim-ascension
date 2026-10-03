@@ -76,6 +76,9 @@ public final class BehaviorExecutor {
         if (behavior instanceof TechniqueBehavior.PlumDome) {
             return DomeExecutor.raise(player);
         }
+        if (behavior instanceof TechniqueBehavior.PlumSea) {
+            return SeaExecutor.release(player);
+        }
         if (behavior instanceof TechniqueBehavior.PlumShower) {
             return ShowerExecutor.start(player, definition.id());
         }
