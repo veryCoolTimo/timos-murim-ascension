@@ -40,10 +40,13 @@ public final class ManualScreen extends Screen {
     private static final int SEAL_W = 56;
     private static final int SEAL_H = 22;
 
-    /** Готовые кадры открытия обложки (tools/art/book_open.py): лист на прозрачном фоне. */
-    private static final ResourceLocation OPEN = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/gui/book/open_cover.png");
-    private static final int OPEN_FRAMES = 9;
-    private static final float FRAME_TICKS = 1.2F;
+    /**
+     * Открытие (автор 03.10: «пока лист переворачивается — страница белая, текст появляется
+     * потом»): рисуется вживую — разворот с текстом уже под обложкой, обложка, а за ней левая
+     * страница сжимаются к корешку по косинусу угла.
+     */
+    private static final ResourceLocation COVER = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/gui/book/cover_huashan.png");
+    private static final float OPEN_TICKS = 9.0F;
 
     /** Разворот: картинка (готовый разворот-иллюстрация) или текст (шаблон секты + текст + печать). */
     private record Spread(boolean picture, ResourceLocation form, ResourceLocation tex) {
@@ -158,7 +161,7 @@ public final class ManualScreen extends Screen {
 
     /** Автор 03.10 (второй раз): анимация открытия нужна — обложка поворачивается вокруг корешка. */
     private boolean opened(float t) {
-        return t >= OPEN_FRAMES * FRAME_TICKS;
+        return t >= OPEN_TICKS;
     }
 
     @Override
@@ -182,14 +185,27 @@ public final class ManualScreen extends Screen {
         g.pose().translate(bx, by, 0.0F);
         g.pose().scale(k, k, 1.0F);
         if (!opened(t)) {
-            int frame = Mth.clamp((int) (t / FRAME_TICKS), 0, OPEN_FRAMES - 1);
-            com.mojang.blaze3d.systems.RenderSystem.enableBlend();
-            if (frame >= 2) {
-                // Под поднимающейся обложкой — правая страница первого разворота.
-                Spread first = spreads.get(0);
-                g.blit(first.tex(), PAGE_W, 0, PAGE_W, 0.0F, PAGE_W, TEX_H, TEX_W, TEX_H);
+            // 0–1,5 тика закрыта, дальше угол 0→180° с замедлением в конце.
+            float p = Mth.clamp((t - 1.5F) / (OPEN_TICKS - 1.5F), 0.0F, 1.0F);
+            float e = 1.0F - (1.0F - p) * (1.0F - p);
+            double angle = Math.PI * e;
+            float c = (float) Math.cos(angle);
+            int w = Math.max(1, Math.round(PAGE_W * Math.abs(c)));
+            if (p > 0.0F) {
+                // Правая страница первого разворота — сразу целиком, с текстом.
+                g.enableScissor(bx + Math.round(PAGE_W * k), by, bx + Math.round(TEX_W * k), by + Math.round(TEX_H * k));
+                spread(g, mouseX, mouseY);
+                g.disableScissor();
             }
-            g.blit(OPEN, 0, 0, 0.0F, frame * TEX_H, TEX_W, TEX_H, TEX_W, TEX_H * OPEN_FRAMES);
+            int shade = (int) (110 * (1.0F - Math.abs(c)));
+            if (c >= 0.0F) {
+                g.blit(COVER, PAGE_W, 0, w, TEX_H, 0.0F, 0.0F, PAGE_W, TEX_H, PAGE_W, TEX_H);
+                g.fill(PAGE_W, 0, PAGE_W + w, TEX_H, shade << 24);
+            } else {
+                Spread first = spreads.get(0);
+                g.blit(first.tex(), PAGE_W - w, 0, w, TEX_H, 0.0F, 0.0F, PAGE_W, TEX_H, TEX_W, TEX_H);
+                g.fill(PAGE_W - w, 0, PAGE_W, TEX_H, shade << 24);
+            }
         } else {
             spread(g, mouseX, mouseY);
         }
@@ -268,7 +284,7 @@ public final class ManualScreen extends Screen {
             return true;
         }
         if (button == 0 && !opened(ticks)) {
-            ticks = (int) Math.ceil(OPEN_FRAMES * FRAME_TICKS);
+            ticks = (int) Math.ceil(OPEN_TICKS);
             return true;
         }
         return super.mouseClicked(mouseX, mouseY, button);
