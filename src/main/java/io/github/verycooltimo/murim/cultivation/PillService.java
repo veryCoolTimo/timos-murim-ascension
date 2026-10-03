@@ -43,7 +43,7 @@ public final class PillService {
         boolean waveHit;
         int lastChoice;
         /** Камень жилы рядом с медитирующим (docs/design/19b §3); {@code null} — места силы нет. */
-        public net.minecraft.core.BlockPos placeNode;
+        public io.github.verycooltimo.murim.world.Place place;
     }
 
     /** Травма после искажения ци: слабость 2 минуты. */

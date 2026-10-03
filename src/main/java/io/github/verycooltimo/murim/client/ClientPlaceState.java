@@ -1,13 +1,10 @@
 package io.github.verycooltimo.murim.client;
 
 import io.github.verycooltimo.murim.MurimMod;
-import io.github.verycooltimo.murim.world.PlaceKind;
 import io.github.verycooltimo.murim.world.PlaceRules;
 import io.github.verycooltimo.murim.world.PlaceService;
-import io.github.verycooltimo.murim.world.SpiritVeinBlock;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
-import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -21,51 +18,47 @@ import net.neoforged.neoforge.client.event.ClientTickEvent;
 @EventBusSubscriber(modid = MurimMod.MODID, value = Dist.CLIENT)
 public final class ClientPlaceState {
 
-    private static BlockPos node;
-    private static PlaceKind kind = PlaceKind.ALTAR;
+    private static io.github.verycooltimo.murim.world.Place place;
 
     private ClientPlaceState() {
     }
 
+    /** Якорь места силы рядом или {@code null}. */
     public static BlockPos node() {
-        return node;
+        return place == null ? null : place.anchor();
     }
 
-    public static PlaceKind kind() {
-        return kind;
+    public static io.github.verycooltimo.murim.world.Place place() {
+        return place;
     }
 
     /** Предупреждение о волне 0..1 (0 — нет узла или далеко до волны). */
     public static float warning() {
         Minecraft mc = Minecraft.getInstance();
-        return node == null || mc.level == null ? 0.0F : PlaceRules.warning(node.asLong(), mc.level.getGameTime());
+        return place == null || mc.level == null ? 0.0F : PlaceRules.warning(place.anchor().asLong(), mc.level.getGameTime());
     }
 
     /** Приток сбит волной. */
     public static boolean stunned() {
         Minecraft mc = Minecraft.getInstance();
-        return node != null && mc.level != null
-                && PlaceRules.sinceWave(node.asLong(), mc.level.getGameTime()) < PlaceRules.STUN;
+        return place != null && mc.level != null
+                && PlaceRules.sinceWave(place.anchor().asLong(), mc.level.getGameTime()) < PlaceRules.STUN;
     }
 
     @SubscribeEvent
     static void onTick(ClientTickEvent.Post event) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) {
-            node = null;
+            place = null;
             return;
         }
         if (mc.player.tickCount % 20 != 0) {
             return;
         }
-        node = PlaceService.findNode(mc.level, mc.player.blockPosition()).orElse(null);
-        if (node != null) {
-            BlockState s = mc.level.getBlockState(node);
-            kind = s.getBlock() instanceof SpiritVeinBlock ? s.getValue(SpiritVeinBlock.KIND) : PlaceKind.ALTAR;
-        }
+        place = PlaceService.findPlace(mc.level, mc.player.blockPosition()).orElse(null);
     }
 
     public static void reset() {
-        node = null;
+        place = null;
     }
 }

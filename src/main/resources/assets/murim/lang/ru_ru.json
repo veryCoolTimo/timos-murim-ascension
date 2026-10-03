@@ -283,13 +283,15 @@
   "block.murim.spirit_vein_stone": "Камень духовной жилы",
   "murim.place.near": "Место силы: ци течёт гуще",
   "murim.place.warning": "Узел ци набирает силу — волна!",
-  "murim.place.kind.peak": "Пик",
-  "murim.place.kind.water": "Водный узел",
-  "murim.place.kind.forest": "Лесной узел",
-  "murim.place.kind.altar": "Руины алтаря",
+  "murim.place.kind.peak": "пик",
+  "murim.place.kind.water": "вода",
+  "murim.place.kind.forest": "старое дерево",
+  "murim.place.kind.altar": "руины алтаря",
   "murim.meditation.session": "За сессию: +%s ци",
   "murim.meditation.reason.full": "даньтянь полон",
   "murim.meditation.reason.tired": "ум устал",
   "murim.meditation.reason.stunned": "помеха — приток сбит",
-  "murim.meditation.session_done": "Медитация: накоплено +%s ци"
+  "murim.meditation.session_done": "Медитация: накоплено +%s ци",
+  "murim.place.near_kind": "Место силы (%s): ци течёт гуще",
+  "murim.meditation.total": "Ци: запас %s · в бою %s"
 }

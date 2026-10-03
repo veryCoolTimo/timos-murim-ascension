@@ -104,25 +104,60 @@ public final class PlaceAuraRenderer implements BlockEntityRenderer<SpiritVeinBl
                        int light, int overlay) {
         lines = buffers.getBuffer(MurimRenderTypes.ribbon());
         dots = null;
-        renderPass(be, partial, poseStack);
+        renderPass(be.getBlockPos(), be.kind(), partial, poseStack);
         lines = null;
         dots = buffers.getBuffer(MurimRenderTypes.impactCore());
-        renderPass(be, partial, poseStack);
+        renderPass(be.getBlockPos(), be.kind(), partial, poseStack);
         dots = null;
     }
 
-    private void renderPass(SpiritVeinBlockEntity be, float partial, PoseStack poseStack) {
+    /**
+     * Природное место силы (пик, вода, старое дерево — автор 03.10): у него нет блок-сущности,
+     * аура рисуется в мировой стадии у якоря, когда игрок рядом.
+     */
+    @SubscribeEvent
+    static void onRenderStage(net.neoforged.neoforge.client.event.RenderLevelStageEvent event) {
+        if (event.getStage() != net.neoforged.neoforge.client.event.RenderLevelStageEvent.Stage.AFTER_PARTICLES) {
+            return;
+        }
+        io.github.verycooltimo.murim.world.Place place = io.github.verycooltimo.murim.client.ClientPlaceState.place();
+        if (place == null || place.stone()) {
+            return;
+        }
+        Minecraft mc = Minecraft.getInstance();
+        Vec3 cam = event.getCamera().getPosition();
+        PoseStack ps = event.getPoseStack();
+        MultiBufferSource.BufferSource buffers = mc.renderBuffers().bufferSource();
+        float partial = event.getPartialTick().getGameTimeDeltaPartialTick(false);
+        ps.pushPose();
+        try {
+            BlockPos a = place.anchor();
+            ps.translate(a.getX() - cam.x, a.getY() - cam.y, a.getZ() - cam.z);
+            lines = buffers.getBuffer(MurimRenderTypes.ribbon());
+            renderPass(a, place.kind(), partial, ps);
+            lines = null;
+            buffers.endBatch(MurimRenderTypes.ribbon());
+            dots = buffers.getBuffer(MurimRenderTypes.impactCore());
+            renderPass(a, place.kind(), partial, ps);
+            dots = null;
+            buffers.endBatch(MurimRenderTypes.impactCore());
+        } finally {
+            lines = null;
+            dots = null;
+            ps.popPose();
+        }
+    }
+
+    private static void renderPass(BlockPos pos, PlaceKind kind, float partial, PoseStack poseStack) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null) {
             return;
         }
-        BlockPos pos = be.getBlockPos();
         long gameTime = mc.level.getGameTime();
         float t = gameTime + partial;
         Vec3 origin = Vec3.atLowerCornerOf(pos);
         Vec3 camLocal = mc.gameRenderer.getMainCamera().getPosition().subtract(origin);
         double dist = camLocal.length();
-        PlaceKind kind = be.kind();
         VfxColour col = colour(kind);
         VfxColour white = new VfxColour(1.0F, 1.0F, 1.0F);
         // С рангом места силы «чувствуются» ярче (docs/design/19 §3д).

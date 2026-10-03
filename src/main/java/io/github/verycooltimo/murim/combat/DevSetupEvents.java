@@ -192,12 +192,40 @@ public final class DevSetupEvents {
             // посадкой: стенд садится в окне «сразу», и начинается поглощение (docs/design/19b).
             // MURIM_CAPTURE_PLACE=peak|water|forest|altar — камень жилы в 2 блоках сбоку и чуть позади игрока.
             String place = System.getenv("MURIM_CAPTURE_PLACE");
+            // Зомби, вызванные волной «зова» лесного узла, переживают прогон — убрать.
+            for (net.minecraft.world.entity.monster.Zombie z : meditating.level().getEntitiesOfClass(
+                    net.minecraft.world.entity.monster.Zombie.class, meditating.getBoundingBox().inflate(32.0D))) {
+                if (!z.getTags().contains(TARGET_TAG)) {
+                    z.discard();
+                }
+            }
             // Камень прошлого прогона остаётся в мире стенда — убрать, чтобы не путал кадры.
             for (net.minecraft.core.BlockPos p : net.minecraft.core.BlockPos.betweenClosed(
-                    meditating.blockPosition().offset(-4, -1, -4), meditating.blockPosition().offset(4, 2, 4))) {
-                if (meditating.level().getBlockState(p).getBlock() instanceof io.github.verycooltimo.murim.world.SpiritVeinBlock) {
+                    meditating.blockPosition().offset(-5, 0, -5), meditating.blockPosition().offset(5, 9, 5))) {
+                var old = meditating.level().getBlockState(p);
+                if (old.getBlock() instanceof io.github.verycooltimo.murim.world.SpiritVeinBlock
+                        || old.is(net.minecraft.world.level.block.Blocks.OAK_LOG) || old.is(net.minecraft.world.level.block.Blocks.OAK_LEAVES)) {
                     meditating.level().setBlockAndUpdate(p, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState());
                 }
+            }
+            // MURIM_CAPTURE_PLACE=tree — старое дерево рядом (природное место силы, без камня).
+            if ("tree".equals(place)) {
+                net.minecraft.core.BlockPos trunk = meditating.blockPosition().relative(meditating.getDirection().getClockWise(), 3)
+                        .relative(meditating.getDirection().getOpposite(), 1);
+                for (int y = 0; y < 6; y++) {
+                    for (int dx = 0; dx < 2; dx++) {
+                        for (int dz = 0; dz < 2; dz++) {
+                            meditating.level().setBlockAndUpdate(trunk.offset(dx, y, dz), net.minecraft.world.level.block.Blocks.OAK_LOG.defaultBlockState());
+                        }
+                    }
+                }
+                for (net.minecraft.core.BlockPos l : net.minecraft.core.BlockPos.betweenClosed(trunk.offset(-2, 5, -2), trunk.offset(3, 8, 3))) {
+                    if (meditating.level().getBlockState(l).isAir()) {
+                        meditating.level().setBlockAndUpdate(l, net.minecraft.world.level.block.Blocks.OAK_LEAVES.defaultBlockState()
+                                .setValue(net.minecraft.world.level.block.LeavesBlock.PERSISTENT, true));
+                    }
+                }
+                place = null;
             }
             if (place != null && !place.isBlank()) {
                 net.minecraft.core.BlockPos at = meditating.blockPosition().relative(meditating.getDirection().getClockWise(), 2).relative(meditating.getDirection().getOpposite(), 1);

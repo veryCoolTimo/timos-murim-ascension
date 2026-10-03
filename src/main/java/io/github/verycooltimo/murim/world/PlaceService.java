@@ -37,6 +37,64 @@ public final class PlaceService {
     private PlaceService() {
     }
 
+    /**
+     * Место силы рядом: сначала камень жилы, иначе природное — пик (высота ≥ 110 и открытое небо),
+     * вода (текущая вода рядом — водопад, стремнина), старое дерево (много брёвен рядом).
+     * Автор 03.10: «также должно работать около деревьев, гор и т. д.».
+     */
+    public static Optional<Place> findPlace(Level level, BlockPos around) {
+        Optional<BlockPos> stone = findNode(level, around);
+        if (stone.isPresent()) {
+            BlockState s = level.getBlockState(stone.get());
+            return Optional.of(new Place(stone.get(), s.getValue(SpiritVeinBlock.KIND), true));
+        }
+        if (around.getY() >= PlaceRules.PEAK_HEIGHT && level.canSeeSky(around.above()) && solidBelow(level, around) >= 4) {
+            // Якорь — сетка 4×4: сидящий не сдвигается, и цикл волн не скачет.
+            return Optional.of(new Place(new BlockPos(around.getX() & ~3, around.getY(), around.getZ() & ~3),
+                    PlaceKind.PEAK, false));
+        }
+        int flowing = 0;
+        int logs = 0;
+        BlockPos water = null;
+        BlockPos log = null;
+        for (BlockPos p : BlockPos.betweenClosed(around.offset(-5, -3, -5), around.offset(5, 8, 5))) {
+            var fluid = level.getFluidState(p);
+            if (fluid.is(net.minecraft.tags.FluidTags.WATER) && !fluid.isSource() && p.getY() <= around.getY() + 3) {
+                flowing++;
+                if (water == null) {
+                    water = p.immutable();
+                }
+            }
+            if (level.getBlockState(p).is(net.minecraft.tags.BlockTags.LOGS)) {
+                logs++;
+                if (log == null) {
+                    log = p.immutable();
+                }
+            }
+        }
+        if (flowing >= PlaceRules.WATER_FLOWING) {
+            return Optional.of(new Place(water, PlaceKind.WATER, false));
+        }
+        if (logs >= PlaceRules.FOREST_LOGS) {
+            return Optional.of(new Place(log, PlaceKind.FOREST, false));
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * Под тобой гора, а не помост: из пяти блоков вниз твёрдые хотя бы четыре. Без этого
+     * съёмочная площадка в небе (y = 120) везде считалась пиком.
+     */
+    static int solidBelow(Level level, BlockPos around) {
+        int solid = 0;
+        for (int dy = 1; dy <= 5; dy++) {
+            if (level.getBlockState(around.below(dy)).isSolid()) {
+                solid++;
+            }
+        }
+        return solid;
+    }
+
     /** Ближайший камень жилы в радиусе (сканирует куб 13×7×13). */
     public static Optional<BlockPos> findNode(Level level, BlockPos around) {
         int r = (int) Math.ceil(PlaceRules.RADIUS);
@@ -55,24 +113,24 @@ public final class PlaceService {
     }
 
     /** Найденный узел у игрока: живёт в слоте сессии ({@link PillService.Slot}), не сохраняется. */
-    private static BlockPos node(ServerPlayer player) {
-        return player.getData(ModAttachments.ABSORB).placeNode;
+    private static Place place(ServerPlayer player) {
+        return player.getData(ModAttachments.ABSORB).place;
     }
 
-    private static void setNode(ServerPlayer player, BlockPos pos) {
-        player.getData(ModAttachments.ABSORB).placeNode = pos;
+    private static void setPlace(ServerPlayer player, Place place) {
+        player.getData(ModAttachments.ABSORB).place = place;
     }
 
-    /** Множитель прироста медитации: ×2 у узла, 0 — сразу после волны (приток сбит). */
+    /** Множитель прироста медитации: ×2 у камня, ×1,5 у природного места, 0 — сразу после волны. */
     public static double gainFactor(ServerPlayer player) {
-        BlockPos node = node(player);
-        if (node == null) {
+        Place place = place(player);
+        if (place == null) {
             return 1.0D;
         }
-        if (PlaceRules.sinceWave(node.asLong(), player.level().getGameTime()) < PlaceRules.STUN) {
+        if (PlaceRules.sinceWave(place.anchor().asLong(), player.level().getGameTime()) < PlaceRules.STUN) {
             return 0.0D;
         }
-        return PlaceRules.GAIN;
+        return place.gain();
     }
 
     @SubscribeEvent
@@ -83,22 +141,17 @@ public final class PlaceService {
         boolean meditating = player.getData(ModAttachments.MEDITATION).active()
                 && player.getData(ModAttachments.CULTIVATION).seeded();
         if (!meditating) {
-            setNode(player, null);
+            setPlace(player, null);
             return;
         }
         if (player.tickCount % 20 == 0) {
-            setNode(player, findNode(player.level(), player.blockPosition()).orElse(null));
+            setPlace(player, findPlace(player.level(), player.blockPosition()).orElse(null));
         }
-        BlockPos node = node(player);
-        if (node == null || !PlaceRules.waveNow(node.asLong(), player.level().getGameTime())) {
+        Place place = place(player);
+        if (place == null || !PlaceRules.waveNow(place.anchor().asLong(), player.level().getGameTime())) {
             return;
         }
-        BlockState state = player.level().getBlockState(node);
-        if (!(state.getBlock() instanceof SpiritVeinBlock)) {
-            setNode(player, null);
-            return;
-        }
-        wave(player, node, state.getValue(SpiritVeinBlock.KIND));
+        wave(player, place.anchor(), place.kind());
     }
 
     /** Волна места силы по сидящему у узла. */

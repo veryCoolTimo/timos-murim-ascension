@@ -15,6 +15,18 @@ public final class PlaceRules {
     /** Прирост запаса у узла (автор 01.10: места силы «только немного ускоряют»). */
     public static final double GAIN = 2.0D;
 
+    /** Природное место (пик, вода, старое дерево) — слабее камня жилы. */
+    public static final double NATURAL_GAIN = 1.5D;
+
+    /** Высота пика: с неё открытое небо — место силы. */
+    public static final int PEAK_HEIGHT = 110;
+
+    /** Сколько текущей (не стоячей) воды рядом делает место водным: водопад, стремнина. */
+    public static final int WATER_FLOWING = 4;
+
+    /** Сколько брёвен рядом — старое большое дерево (у обычного 4–6). */
+    public static final int FOREST_LOGS = 14;
+
     /** Волна раз в 30–45 с — у каждого узла свой период. */
     public static final int PERIOD_MIN = 600;
     public static final int PERIOD_SPREAD = 300;

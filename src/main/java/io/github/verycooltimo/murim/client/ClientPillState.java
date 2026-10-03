@@ -30,7 +30,11 @@ public final class ClientPillState {
             0, 0, false, 0, 0.0F, 0, PillPayloads.Event.NONE, false);
 
     /** Финал поглощения: пятицветный выброс 3 с, у простой пилюли — короткая вспышка. */
-    public static final int FINALE_TICKS = 60;
+    /**
+     * Финал редких: 5,5 с (автор 03.10: «дольше — как ты подлетаешь, в тебя входит энергия»):
+     * 0–30 подъём, 20–65 энергия втекает со всех сторон, 65–78 выброс, 78–110 спуск.
+     */
+    public static final int FINALE_TICKS = 110;
     public static final int FLASH_TICKS = 24;
 
     /** Порог выбора в градусах поворота мыши: мелкое дрожание выбор не меняет. */
@@ -116,8 +120,8 @@ public final class ClientPillState {
             return 0.0F;
         }
         float age = FINALE_TICKS - finale + partial;
-        float up = net.minecraft.util.Mth.clamp(age / 12.0F, 0.0F, 1.0F);
-        float down = net.minecraft.util.Mth.clamp((FINALE_TICKS - age) / 14.0F, 0.0F, 1.0F);
+        float up = net.minecraft.util.Mth.clamp(age / 30.0F, 0.0F, 1.0F);
+        float down = net.minecraft.util.Mth.clamp((FINALE_TICKS - age) / 28.0F, 0.0F, 1.0F);
         float k = Math.min(up, down);
         return 0.6F * k * k * (3.0F - 2.0F * k);
     }
@@ -157,6 +161,12 @@ public final class ClientPillState {
                 }
                 finaleFull = payload.fullFive();
                 finale = finaleRare ? FINALE_TICKS : FLASH_TICKS;
+                // Огонь ауры (автор 03.10: «добавить огня, как у ауры»): та же симуляция пламени,
+                // что у давления ауры, — голубая аура техники на время финала.
+                LocalPlayer me = Minecraft.getInstance().player;
+                if (finaleRare && me != null) {
+                    ClientAuraState.techniqueAura(me.getId(), finaleFull ? 5 : 4, 0, FINALE_TICKS - 8);
+                }
                 if (finaleRare) {
                     CameraShakeHandler.request(finaleFull ? 0.6F : 0.4F);
                 }

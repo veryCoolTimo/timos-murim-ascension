@@ -303,13 +303,15 @@
   "block.murim.spirit_vein_stone": "Spirit Vein Stone",
   "murim.place.near": "Place of power: qi flows thicker",
   "murim.place.warning": "The qi node is gathering force — a wave!",
-  "murim.place.kind.peak": "Peak",
-  "murim.place.kind.water": "Water node",
-  "murim.place.kind.forest": "Forest node",
-  "murim.place.kind.altar": "Altar ruins",
+  "murim.place.kind.peak": "peak",
+  "murim.place.kind.water": "water",
+  "murim.place.kind.forest": "old tree",
+  "murim.place.kind.altar": "altar ruins",
   "murim.meditation.session": "This session: +%s qi",
   "murim.meditation.reason.full": "the dantian is full",
   "murim.meditation.reason.tired": "the mind tires",
   "murim.meditation.reason.stunned": "disturbed — the inflow is broken",
-  "murim.meditation.session_done": "Meditation: gathered +%s qi"
+  "murim.meditation.session_done": "Meditation: gathered +%s qi",
+  "murim.place.near_kind": "Place of power (%s): qi flows thicker",
+  "murim.meditation.total": "Qi: reserve %s · combat %s"
 }

@@ -47,6 +47,9 @@ public final class PillVfx {
     /** Пять цветов рефа pill-03/04: зелёный, жёлтый, розовый, сиреневый, голубой; красный — огонь. */
     private static final VfxColour[] FIVE = {hex(0xC4F2A5), hex(0xF4E4AC), hex(0xEAC4D3), hex(0xC8B8E6), hex(0xB7E7FF)};
     private static final VfxColour FIRE = hex(0xFF7A5A);
+    /** Насыщенные пять стихий для входа энергии: пастель рефа растворялась в белом (codex). */
+    private static final VfxColour[] INFLOW = {hex(0x4FD35A), hex(0xF5C842), hex(0xF05AA0), hex(0x8C6CF0), hex(0x38C8F0),
+            hex(0xFF6040)};
 
     private PillVfx() {
     }
@@ -431,26 +434,30 @@ public final class PillVfx {
             palette[clots.length + 1] = FIVE[3];
         }
         float rise = Mth.clamp(age / 8.0F, 0.0F, 1.0F);
-        float fall = 1.0F - Mth.clamp((age - 44.0F) / 16.0F, 0.0F, 1.0F);
+        // Контраст фаз (codex после отзыва): подъём и вход энергии — приглушённо, пик — только выброс.
+        float peak = Mth.clamp((age - 62.0F) / 4.0F, 0.0F, 1.0F) * (1.0F - Mth.clamp((age - 74.0F) / 12.0F, 0.0F, 1.0F));
+        float glowK = 0.3F + 0.7F * peak;
+        float fall = 1.0F - Mth.clamp((age - 82.0F) / 24.0F, 0.0F, 1.0F);
 
         // Слой 1 (pill-01): голубое сияние ЗА телом — #A7FFFF с почти белым, шире корпуса.
         Vec3 behind = b.chest().subtract(toCam.scale(0.35D));
-        CoreGlow.draw(c, b.pose(), behind, b.camera(), age, 0.85D, 1.0F * rise * fall, HALO, WHITE);
+        CoreGlow.draw(c, b.pose(), behind, b.camera(), age, 0.85D, glowK * rise * fall, HALO, WHITE);
         CoreGlow.draw(c, b.pose(), b.dantian().subtract(toCam.scale(0.35D)).add(0, -0.15D, 0), b.camera(), age + 9,
-                0.6D, 0.8F * rise * fall, HALO, HALO);
-        CoreGlow.draw(c, b.pose(), b.head().subtract(toCam.scale(0.3D)), b.camera(), age + 17, 0.4D, 0.7F * rise * fall,
+                0.6D, 0.8F * glowK * rise * fall, HALO, HALO);
+        CoreGlow.draw(c, b.pose(), b.head().subtract(toCam.scale(0.3D)), b.camera(), age + 17, 0.4D, 0.7F * glowK * rise * fall,
                 HALO, WHITE);
         // Яркая кайма по силуэту: свет обволакивает фигуру (pill-01, pill-03), а не только искры.
         Vec3[] rim = {b.head(), b.lShoulder(), b.rShoulder(), b.lHand(), b.rHand(), b.lKnee(), b.rKnee(), b.chest()};
         for (int i = 0; i < rim.length; i++) {
             Vec3 at = rim[i].subtract(toCam.scale(0.12D));
-            VfxDraw.billboard(c, b.pose(), at, b.camera(), 0.38D, 0.4F * rise * fall, HALO.red(), HALO.green(), HALO.blue());
-            VfxDraw.billboard(c, b.pose(), at, b.camera(), 0.18D, 0.45F * rise * fall, 0.95F, 1.0F, 1.0F);
+            VfxDraw.billboard(c, b.pose(), at, b.camera(), 0.38D, 0.4F * glowK * rise * fall, HALO.red(), HALO.green(), HALO.blue());
+            VfxDraw.billboard(c, b.pose(), at, b.camera(), 0.18D, 0.45F * glowK * rise * fall, 0.95F, 1.0F, 1.0F);
         }
 
         // Слой 2 (pill-01): несколько крупных синих и фиолетовых дуг вокруг корпуса — непрерывной
         // лентой, связаны с центром у живота (начинаются у пояса), вращаются.
-        float arcs = rise * (1.0F - Mth.clamp((age - 28.0F) / 8.0F, 0.0F, 1.0F));
+        float arcs = (0.45F + 0.55F * peak) * Mth.clamp((age - 10.0F) / 12.0F, 0.0F, 1.0F)
+                * (1.0F - Mth.clamp((age - 72.0F) / 10.0F, 0.0F, 1.0F));
         java.util.List<Band> arcBands = new java.util.ArrayList<>();
         for (int k = 0; k < 3; k++) {
             double rad = 0.5D + 0.12D * k;
@@ -467,7 +474,7 @@ public final class PillVfx {
         }
 
         // Слой 3 (pill-03): кайма вокруг тела и цветные пятна у верха корпуса — по одному на цвет.
-        float patches = Mth.clamp((age - 10.0F) / 8.0F, 0.0F, 1.0F) * fall;
+        float patches = Mth.clamp((age - 30.0F) / 10.0F, 0.0F, 1.0F) * fall;
         for (int i = 0; i < palette.length; i++) {
             double a = i * Math.PI * 2 / palette.length + age * 0.04D;
             Vec3 p = b.chest().add(0.0D, 0.15D + 0.1D * Math.sin(age * 0.2D + i), 0.0D)
@@ -477,7 +484,7 @@ public final class PillVfx {
 
         // Слой 4: пять цветов — широкие восходящие шлейфы (ленты по следу частицы), не конфетти;
         // общее белое ядро у живота (codex, раунд 1).
-        float spirals = Mth.clamp((age - 6.0F) / 6.0F, 0.0F, 1.0F) * fall;
+        float spirals = Mth.clamp((age - 66.0F) / 4.0F, 0.0F, 1.0F) * fall;
         java.util.List<Band> bands = new java.util.ArrayList<>();
         CoreGlow.draw(c, b.pose(), b.dantian(), b.camera(), age, 0.1D, 0.9F * spirals, HALO, WHITE);
         for (int i = 0; i < 14; i++) {
@@ -500,10 +507,74 @@ public final class PillVfx {
             bands.add(new Band(band, alpha, col));
         }
 
+        // Энергия входит (автор 03.10): со всех сторон сгустки пяти цветов по сходящимся спиралям
+        // втекают в живот, у пупка — вспышки входа; сгущается к выбросу.
+        float inflow = Mth.clamp((age - 18.0F) / 8.0F, 0.0F, 1.0F) * (1.0F - Mth.clamp((age - 64.0F) / 4.0F, 0.0F, 1.0F));
+        if (inflow > 0.0F) {
+            for (int i = 0; i < 30; i++) {
+                Random r = new Random(31337L + i * 7919L);
+                VfxColour col = INFLOW[i % INFLOW.length];
+                float life = 16.0F + r.nextFloat() * 8.0F;
+                float local = ((age * (1.0F + 0.6F * Mth.clamp((age - 40.0F) / 24.0F, 0.0F, 1.0F)) + r.nextFloat() * life) % life) / life;
+                double base = r.nextDouble() * Math.PI * 2;
+                double h0 = -0.3D + 2.0D * r.nextDouble();
+                double rad0 = 2.2D + 1.3D * r.nextDouble();
+                Vec3 prev = null;
+                for (int tr = 0; tr < 10; tr++) {
+                    float tk = Math.max(0.0F, local - tr * 0.025F);
+                    double rad = rad0 * (1.0D - tk) * (1.0D - tk);
+                    double a = base + tk * 3.0D;
+                    Vec3 p = b.dantian().add(Math.cos(a) * rad, (h0 - 0.0D) * (1.0D - tk), Math.sin(a) * rad);
+                    if (prev != null) {
+                        float alpha = inflow * Math.min(1.0F, 0.4F + tk) * (1.0F - tr / 10.0F);
+                        VfxDraw.segment(c, b.pose(), prev, p, b.camera(), 0.04D * (1.0D - tr / 11.0D), alpha, col.red(), col.green(), col.blue());
+                    }
+                    prev = p;
+                }
+                if (local > 0.92F) {
+                    CoreGlow.draw(c, b.pose(), b.dantian(), b.camera(), age + i, 0.05D, inflow * 0.5F, col, col);
+                }
+            }
+            CoreGlow.draw(c, b.pose(), b.dantian(), b.camera(), age, 0.06D + 0.08D * Mth.clamp((age - 30.0F) / 34.0F, 0.0F, 1.0F),
+                    0.7F * inflow, HALO, WHITE);
+        }
+
+        // Ветер (автор 03.10: «огня, как у ауры, и ветра»): кольца пыли по земле расходятся от
+        // взлёта и выброса, вокруг тела закручиваются тонкие воздушные струи.
+        float wind = Mth.clamp(age / 10.0F, 0.0F, 1.0F) * fall;
+        for (int ring = 0; ring < 3; ring++) {
+            float rAge = (age - ring * 9.0F) % 30.0F;
+            if (rAge < 0) {
+                continue;
+            }
+            float rk = rAge / 30.0F;
+            double rr = 0.6D + 3.2D * rk;
+            int n = 26;
+            for (int i = 0; i < n; i++) {
+                double a = i * Math.PI * 2 / n + ring;
+                Vec3 p = new Vec3(axis.x + Math.cos(a) * rr, ground + 0.05D + 0.08D * Math.sin(i * 1.7D), axis.z + Math.sin(a) * rr);
+                VfxDraw.billboard(c, b.pose(), p, b.camera(), 0.08D + 0.06D * rk, 0.5F * wind * (1.0F - rk), 0.72F, 0.66F, 0.56F);
+            }
+        }
+        for (int s = 0; s < 6; s++) {
+            double rad = 1.0D + 0.18D * s;
+            double from = age * 0.18D + s * 1.1D;
+            Vec3 prev = null;
+            for (int i = 0; i <= 14; i++) {
+                double a = from + i * 0.12D;
+                Vec3 p = axis.add(Math.cos(a) * rad, -0.2D + 0.12D * s + i * 0.05D, Math.sin(a) * rad);
+                if (prev != null) {
+                    VfxDraw.segment(c, b.pose(), prev, p, b.camera(), 0.022D, 0.3F * wind * (float) Math.sin(Math.PI * i / 14.0D),
+                            0.85F, 0.92F, 1.0F);
+                }
+                prev = p;
+            }
+        }
+
         // Слой 5 (pill-04): белый радиальный выброс из нескольких точек вокруг корпуса — длинные
         // лучи из цепочек точек, высокая скорость и быстрое торможение; пастель между белым.
-        if (age >= 26.0F) {
-            float burstAge = age - 26.0F;
+        if (age >= 65.0F) {
+            float burstAge = age - 65.0F;
             float fade = 1.0F - Mth.clamp(burstAge / 12.0F, 0.0F, 1.0F);
             for (int i = 0; i < 20; i++) {
                 Random r = new Random(4242L + i * 977L);
@@ -554,8 +625,8 @@ public final class PillVfx {
 
         // Слой 6 (pill-03): обломки и пыль с земли — тёмные квадраты взлетают и падают.
         // [НЕПРОВЕРЕНО: неаддитивный слой на стенде (llvmpipe) не рисуется — смотреть на Mac.]
-        if (age >= 26.0F) {
-            float dAge = age - 26.0F;
+        if (age >= 65.0F) {
+            float dAge = age - 65.0F;
             VertexConsumer dark = b.buffers().getBuffer(MurimRenderTypes.shard());
             for (int i = 0; i < 24; i++) {
                 Random r = new Random(77L + i * 313L);

@@ -222,7 +222,7 @@ public final class MeditationHud {
         boolean stunned = ClientPlaceState.stunned();
         double base = MeditationService.gainAt((int) ticks);
         boolean tired = base < MeditationService.gainAt(0) * 0.4D;
-        double place = ClientPlaceState.node() != null && !stunned ? io.github.verycooltimo.murim.world.PlaceRules.GAIN : 1.0D;
+        double place = ClientPlaceState.place() != null && !stunned ? ClientPlaceState.place().gain() : 1.0D;
         float rate = full || stunned ? 0.0F : (float) Mth.clamp(base / MeditationService.gainAt(0) * place / 2.0D, 0.0D, 1.0D);
         float breath = 0.5F + 0.5F * Mth.sin(ticks * 0.08F);
 
@@ -251,7 +251,12 @@ public final class MeditationHud {
         int ty = cy - GAME_RADIUS - 11;
         small(graphics, font, Component.translatable("murim.meditation.session",
                 String.format(java.util.Locale.ROOT, "%.1f", sessionGain)), cx, ty, 0xE0BFE6FF);
-        int line = ty - 8;
+        // Сколько всего ци (автор 03.10: «хотелось бы знать, сколько всего у тебя ци»): запас и боевая,
+        // числами — но без доли до стены.
+        small(graphics, font, Component.translatable("murim.meditation.total",
+                String.format(java.util.Locale.ROOT, "%.1f", profile.pool()),
+                String.format(java.util.Locale.ROOT, "%.1f", profile.circulating())), cx, ty - 8, 0xF0E8F6FF);
+        int line = ty - 16;
         // Почему рост стоит — одна причина, короткая подпись.
         String reason = full ? "murim.meditation.reason.full" : stunned ? "murim.meditation.reason.stunned"
                 : tired ? "murim.meditation.reason.tired" : null;
@@ -261,7 +266,9 @@ public final class MeditationHud {
         }
         if (ClientPlaceState.node() != null) {
             float warn = ClientPlaceState.warning();
-            small(graphics, font, Component.translatable(warn > 0.0F ? "murim.place.warning" : "murim.place.near"),
+            small(graphics, font, warn > 0.0F ? Component.translatable("murim.place.warning")
+                            : Component.translatable("murim.place.near_kind", Component.translatable(
+                                    "murim.place.kind." + ClientPlaceState.place().kind().getSerializedName())),
                     cx, line, warn > 0.0F ? 0xF0FFB070 : 0xE0A8F0D0);
             line -= 8;
         }

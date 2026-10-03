@@ -45,8 +45,8 @@ public final class PillHud {
         }
         PillPayloads.Sync s = ClientPillState.state();
         int finale = ClientPillState.finaleAge();
-        if (finale >= 22 && finale < 46 && ClientPillState.finaleRare()) {
-            speedLines(g, finale + delta.getGameTimeDeltaPartialTick(false) - 22.0F);
+        if (finale >= 62 && finale < 86 && ClientPillState.finaleRare()) {
+            speedLines(g, finale + delta.getGameTimeDeltaPartialTick(false) - 62.0F);
         }
         if (s.active()) {
             game(g, mc, s, delta.getGameTimeDeltaPartialTick(false));
