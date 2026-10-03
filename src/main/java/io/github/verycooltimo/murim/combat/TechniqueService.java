@@ -119,6 +119,10 @@ public final class TechniqueService {
         if (technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.PlumDome) {
             io.github.verycooltimo.murim.technique.DomeExecutor.begin(player, technique.id());
         }
+        // Море ставит ось сектора на захваченную цель (или взгляд) в начале каста.
+        if (technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.PlumSea) {
+            io.github.verycooltimo.murim.technique.SeaExecutor.begin(player, technique.id(), cost);
+        }
 
         // Звук выхвата — с сервера через playSound(null, ...), как это делает ваниль для атак:
         // так его слышат все вокруг и позиционно, без отдельного пакета на каждого.
@@ -306,6 +310,12 @@ public final class TechniqueService {
         if (technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.PlumDome) {
             io.github.verycooltimo.murim.technique.DomeExecutor.tick(player, technique.id(), state.tick());
         }
+        if (technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.PlumSea) {
+            // Море может кончиться раньше JSON-шкалы (без продления) — тогда техника уже погашена.
+            if (io.github.verycooltimo.murim.technique.SeaExecutor.tick(player, technique.id(), state.tick())) {
+                return;
+            }
+        }
 
         // Шаг на высшем слое: ещё два рывка через равные промежутки.
         if (technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.Step) {
@@ -324,6 +334,13 @@ public final class TechniqueService {
     public static void cancel(ServerPlayer player) {
         if (player.getData(ModAttachments.TECHNIQUE_STATE).isActive()) {
             forceIdle(player, TechniqueEventPayload.Event.CANCELLED);
+        }
+    }
+
+    /** Досрочное штатное завершение по решению самой техники (Море без продления). */
+    public static void finish(ServerPlayer player) {
+        if (player.getData(ModAttachments.TECHNIQUE_STATE).isActive()) {
+            forceIdle(player, TechniqueEventPayload.Event.FINISHED);
         }
     }
 
