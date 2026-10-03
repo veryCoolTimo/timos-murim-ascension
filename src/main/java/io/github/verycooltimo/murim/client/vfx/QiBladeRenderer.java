@@ -31,6 +31,16 @@ public final class QiBladeRenderer {
     private static final float[] MID = {0.98F, 0.46F, 1.0F};
     private static final float[] FLAME = {0.81F, 0.33F, 0.93F};
     private static final float[] DEEP = {0.60F, 0.20F, 0.90F};
+    // Градиент по длине: у кисти раскалённый розово-белый, к острию фиолетово-синий.
+    private static final float[] HOT = {1.0F, 0.80F, 0.98F};
+    private static final float[] TIP = {0.50F, 0.36F, 1.0F};
+    private static final float[] TIP_LIGHT = {0.70F, 0.72F, 1.0F};
+    private static final float[] DEEP_TIP = {0.26F, 0.22F, 0.95F};
+
+    private static float[] grad(float[] x, float[] y, float t) {
+        t = Mth.clamp(t, 0.0F, 1.0F);
+        return new float[] {Mth.lerp(t, x[0], y[0]), Mth.lerp(t, x[1], y[1]), Mth.lerp(t, x[2], y[2])};
+    }
 
     /**
      * Рисует клинок в текущей системе координат {@code pose}.
@@ -83,19 +93,65 @@ public final class QiBladeRenderer {
         }
 
         VertexConsumer glow = buffers.getBuffer(MurimRenderTypes.essence());
-        // Ци обнимает кисть и предплечье: мягкая фиолетовая оболочка на 0,35 блока.
+        // Автор 03.10: «оно должно заходить на руку — не держит, а идёт прямо из руки». Клинок
+        // начинается у локтя: та же многослойная оболочка обнимает предплечье и без шва
+        // переходит в лезвие у кисти; по руке бегут яркие нити (реф, кадр 3).
         if (armDir != null) {
-            Vec3 elbow = base.add(armDir.scale(0.35D));
-            VfxDraw.segment(glow, last, base, elbow, cam, 0.2D * scale * pulse, 0.55F, FLAME[0], FLAME[1], FLAME[2]);
-            VfxDraw.segment(glow, last, base, base.add(armDir.scale(0.18D)), cam, 0.12D * scale, 0.5F, MID[0], MID[1], MID[2]);
+            int armSeg = 5;
+            Vec3 elbow = base.add(armDir.scale(0.62D));
+            for (int i = 0; i < armSeg; i++) {
+                double k0 = i / (double) armSeg, k1 = (i + 1) / (double) armSeg;
+                Vec3 p0 = elbow.add(base.subtract(elbow).scale(k0));
+                Vec3 p1 = elbow.add(base.subtract(elbow).scale(k1));
+                double flick = 1.0D + 0.25D * Mth.sin(time * 1.1F - (float) i * 1.3F);
+                double hw = (0.45D + 0.55D * k1) * w[0] * flick;
+                float[] deep = grad(DEEP_TIP, DEEP, 0.3F + 0.7F * (float) k1);
+                VfxDraw.segment(glow, last, p0, p1, cam, 1.2D * hw * scale, 0.4F, deep[0], deep[1], deep[2]);
+                VfxDraw.segment(glow, last, p0, p1, cam, 0.75D * hw * scale, 0.7F * (float) (0.5D + 0.5D * k1), FLAME[0], FLAME[1], FLAME[2]);
+                VfxDraw.segment(glow, last, p0, p1, cam, 0.38D * hw * scale, 0.8F * (float) (0.3D + 0.7D * k1), HOT[0], HOT[1], HOT[2]);
+            }
+            // Нити вдоль предплечья к пальцам: две, скользят к кисти.
+            for (int n = 0; n < 2; n++) {
+                Vec3 prev = null;
+                for (int j = 0; j <= 6; j++) {
+                    double k = j / 6.0D;
+                    double ph = k * 6.0D + time * 0.5D + n * Math.PI;
+                    double r = 0.16D * scale * (0.6D + 0.4D * k);
+                    Vec3 p = elbow.add(base.subtract(elbow).scale(k)).add(a.scale(Math.cos(ph) * r)).add(b.scale(Math.sin(ph) * r));
+                    if (prev != null) {
+                        VfxDraw.segment(glow, last, prev, p, cam, 0.03D * scale, 0.9F, HOT[0], HOT[1], HOT[2]);
+                    }
+                    prev = p;
+                }
+            }
         }
-        // Широкое пламя и средний слой.
+        // Слои с градиентом по длине (автор: «не один цвет, а градиенты»): у кисти раскалённый
+        // розово-белый, к середине розовый #FA76FF, к острию фиолетово-синий с циановым отливом.
+        // Градиент медленно течёт к острию.
+        float flow = 0.08F * Mth.sin(time * 0.3F);
         for (int i = 0; i < SEGMENTS; i++) {
             double hw = 0.5D * (w[i] + w[i + 1]);
+            float k = Mth.clamp((i + 0.5F) / SEGMENTS + flow, 0.0F, 1.0F);
             float fade = i > SEGMENTS - 3 ? 0.6F : 1.0F;
-            VfxDraw.segment(glow, last, pts[i], pts[i + 1], cam, 0.95D * hw * scale, 0.30F * fade, DEEP[0], DEEP[1], DEEP[2]);
-            VfxDraw.segment(glow, last, pts[i], pts[i + 1], cam, 0.55D * hw * scale, 0.65F * fade, FLAME[0], FLAME[1], FLAME[2]);
-            VfxDraw.segment(glow, last, pts[i], pts[i + 1], cam, 0.30D * hw * scale, 0.85F, MID[0], MID[1], MID[2]);
+            float[] deep = grad(DEEP, DEEP_TIP, k);
+            float[] flame = k < 0.5F ? grad(FLAME, MID, k * 2.0F) : grad(MID, TIP, (k - 0.5F) * 2.0F);
+            float[] mid = k < 0.4F ? grad(HOT, MID, k / 0.4F) : grad(MID, TIP_LIGHT, (k - 0.4F) / 0.6F);
+            VfxDraw.segment(glow, last, pts[i], pts[i + 1], cam, 0.95D * hw * scale, 0.30F * fade, deep[0], deep[1], deep[2]);
+            VfxDraw.segment(glow, last, pts[i], pts[i + 1], cam, 0.55D * hw * scale, 0.65F * fade, flame[0], flame[1], flame[2]);
+            VfxDraw.segment(glow, last, pts[i], pts[i + 1], cam, 0.30D * hw * scale, 0.85F, mid[0], mid[1], mid[2]);
+        }
+        // «Интересные формы»: две ленты разного цвета винтом обвивают клинок и текут к острию —
+        // циановая и глубоко-фиолетовая, радиус дышит вместе с пламенем.
+        for (int n = 0; n < 2; n++) {
+            float[] col = n == 0 ? CYAN : DEEP_TIP;
+            for (int i = 1; i < SEGMENTS - 2; i++) {
+                double k0 = i / (double) SEGMENTS, k1 = (i + 1) / (double) SEGMENTS;
+                double ph0 = k0 * 9.0D - time * 0.35D + n * Math.PI, ph1 = k1 * 9.0D - time * 0.35D + n * Math.PI;
+                double r0 = 0.2D * w[i] * scale, r1 = 0.2D * w[i + 1] * scale;
+                Vec3 q0 = pts[i].add(a.scale(Math.cos(ph0) * r0)).add(b.scale(Math.sin(ph0) * r0));
+                Vec3 q1 = pts[i + 1].add(a.scale(Math.cos(ph1) * r1)).add(b.scale(Math.sin(ph1) * r1));
+                VfxDraw.segment(glow, last, q0, q1, cam, 0.035D * scale * w[i], n == 0 ? 0.55F : 0.75F, col[0], col[1], col[2]);
+            }
         }
         // Языки пламени срываются с кромок и уходят назад-вверх по клинку.
         for (int f = 0; f < 12; f++) {

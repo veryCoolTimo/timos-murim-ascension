@@ -163,7 +163,7 @@ public final class QiSwordClient {
         float time = mc.player.tickCount + event.getPartialTick();
         io.github.verycooltimo.murim.client.vfx.QiBladeRenderer.draw(pose, event.getMultiBufferSource(),
                 new Vec3(i * 0.02D, 0.06D, -0.02D), new Vec3(i * -0.18D, 0.86D, -0.48D).normalize(),
-                new Vec3(i * 0.2D, -0.7D, 0.7D).normalize(), 1.5D, time,
+                new Vec3(i * 0.45D, -0.6D, 0.65D).normalize(), 1.5D, time,
                 mc.player.getId(), 0.75F);
         pose.popPose();
     }
