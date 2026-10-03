@@ -128,6 +128,25 @@ public final class TangExecutor {
                     stars(player, layer, h, target, since);
                 }
             }
+            case TangRules.THREE -> {
+                if (since == 0) {
+                    three(player, layer, h);
+                }
+            }
+            case TangRules.FLASH -> {
+                if (since == 0) {
+                    flash(player, layer, h, false);
+                }
+                // Слой 8: второй кинжал «без ци» в тени первого (гл. 196).
+                if (since == 2 && TangRules.shadowed(layer)) {
+                    flash(player, layer, h, true);
+                }
+            }
+            case TangRules.RETURN -> {
+                if (since == 0) {
+                    sleeveReturn(player, layer, h);
+                }
+            }
             default -> {
                 if (since == 0) {
                     carp(player, layer, h, target);
@@ -168,6 +187,129 @@ public final class TangExecutor {
         face(d, dir);
         player.level().addFreshEntity(d);
         send(player, TangRules.FIVE, TangPayload.SHOT, layer, hand, dir, k, 0);
+    }
+
+    /**
+     * Три Лезвия Одного Мгновения (гл. 195, попытка 3): прямое и два по бокам, боковые быстрее — все три
+     * приходят в один тик в точку, где цель БУДЕТ (упреждение по её скорости). Ответ — остановиться
+     * или развернуться в момент броска; шаг вбок не спасает: бока закрыты дугами.
+     */
+    private static void three(ServerPlayer player, int layer, double h) {
+        Vec3 hand = hand(player, true);
+        LivingEntity t = TargetLock.locked(player, TangRules.THREE_RANGE);
+        if (t == null) {
+            t = nearestInCone(player, TangRules.THREE_RANGE, 30.0D);
+        }
+        Vec3 to;
+        int ticks;
+        if (t != null) {
+            Vec3 at = TangDagger.throat(t);
+            ticks = TangRules.threeTicks(at.distanceTo(hand));
+            Vec3 v = t.getDeltaMovement();
+            to = at.add(new Vec3(v.x, 0.0D, v.z).scale(ticks));
+        } else {
+            to = lookPoint(player, 12.0D);
+            ticks = TangRules.threeTicks(to.distanceTo(hand));
+        }
+        Vec3 axis = to.subtract(hand);
+        Vec3 side = new Vec3(-axis.z, 0.0D, axis.x);
+        side = side.lengthSqr() < 1.0E-6D ? new Vec3(1.0D, 0.0D, 0.0D) : side.normalize();
+        double bow = TangRules.THREE_BOW * axis.length();
+        int n = TangRules.threeCount(layer);
+        for (int i = 0; i < n; i++) {
+            int k = n == 2 ? i * 2 : i;
+            TangDagger d = new TangDagger(player.level(), player, TangRules.THREE, layer, k);
+            d.setPos(hand);
+            d.setMode(TangDagger.PATH);
+            d.pathFrom = hand;
+            d.pathTo = to;
+            d.pathSide = side;
+            d.pathBow = layer < 3 ? bow * 0.5D : bow;
+            d.pathK = k;
+            d.pathTicks = ticks;
+            d.kinked = k == 2 && TangRules.kink(layer);
+            d.damage = h;
+            d.life = ticks + 20;
+            d.setTarget(t);
+            Vec3 first = TangRules.threePoint(k, 1.0D / ticks, hand, to, side, d.pathBow, d.kinked).subtract(hand);
+            d.setDeltaMovement(first);
+            face(d, first.normalize());
+            player.level().addFreshEntity(d);
+            send(player, TangRules.THREE, TangPayload.SHOT, layer, hand, first.normalize(), k, ticks);
+        }
+    }
+
+    /**
+     * Молниеносное Похищение Жизни (섬전탈명, гл. 195): «не было огромной силы… просто скорость. Кинжал,
+     * исчезнувший после того как его выпустили… появился прямо перед». Перебивает замах врага.
+     */
+    private static void flash(ServerPlayer player, int layer, double h, boolean shadow) {
+        Vec3 hand = hand(player, true);
+        LivingEntity t = TargetLock.locked(player, TangRules.FLASH_RANGE);
+        if (t == null) {
+            t = nearestInCone(player, TangRules.FLASH_RANGE, 20.0D);
+        }
+        Vec3 aim;
+        if (t != null) {
+            Vec3 at = TangDagger.throat(t);
+            double time = at.distanceTo(hand) / TangRules.FLASH_SPEED;
+            Vec3 v = t.getDeltaMovement();
+            aim = at.add(new Vec3(v.x, 0.0D, v.z).scale(time));
+        } else {
+            aim = lookPoint(player, TangRules.FLASH_RANGE);
+        }
+        Vec3 dir = aim.subtract(hand).normalize();
+        TangDagger d = new TangDagger(player.level(), player, TangRules.FLASH, layer, shadow ? 1 : 0);
+        d.setPos(hand);
+        d.setMode(TangDagger.STRAIGHT);
+        d.speed = TangRules.FLASH_SPEED;
+        d.setDeltaMovement(dir.scale(TangRules.FLASH_SPEED));
+        d.setFlag(4, TangRules.vanish(layer));
+        d.aim = aim;
+        d.damage = h;
+        d.life = (int) Math.ceil(TangRules.FLASH_RANGE / TangRules.FLASH_SPEED) + 2;
+        d.setTarget(t);
+        face(d, dir);
+        player.level().addFreshEntity(d);
+        if (!shadow) {
+            send(player, TangRules.FLASH, TangPayload.SHOT, layer, hand, dir, 0, 0);
+        }
+    }
+
+    /**
+     * Возврат Лезвий в Рукав (гл. 195: «Все метательные лезвия, лежавшие на земле, были возвращены в его
+     * рукав»): воткнутые промахи срываются разом и летят по прямым к мастеру, режа всех на линиях.
+     */
+    private static void sleeveReturn(ServerPlayer player, int layer, double h) {
+        List<TangDagger> stuck = new ArrayList<>(player.serverLevel().getEntitiesOfClass(TangDagger.class,
+                player.getBoundingBox().inflate(TangRules.RETURN_RANGE),
+                d -> d.getOwner() == player && d.isAlive() && d.mode() == TangDagger.STUCK
+                        && d.distanceTo(player) <= TangRules.RETURN_RANGE));
+        stuck.sort(Comparator.comparingDouble(d -> d.distanceToSqr(player)));
+        int n = Math.min(stuck.size(), TangRules.returnCount(layer));
+        Vec3 home = player.position().add(0.0D, player.getBbHeight() * 0.6D, 0.0D);
+        for (int i = 0; i < n; i++) {
+            TangDagger d = stuck.get(i);
+            Vec3 via = null;
+            if (layer >= 6) {
+                // Загиб к врагу у линии (не дальше 15°): промах становится вторым броском.
+                Vec3 line = home.subtract(d.position()).normalize();
+                double best = Math.cos(Math.toRadians(TangRules.RETURN_BEND));
+                for (LivingEntity e : candidates(player, TangRules.RETURN_RANGE)) {
+                    Vec3 to = TangDagger.throat(e).subtract(d.position());
+                    double len = to.length();
+                    if (len > 0.5D && len < d.position().distanceTo(home)) {
+                        double c = to.scale(1.0D / len).dot(line);
+                        if (c > best) {
+                            best = c;
+                            via = TangDagger.throat(e);
+                        }
+                    }
+                }
+            }
+            d.returnToSleeve(h, via);
+            send(player, TangRules.RETURN, TangPayload.RECALL, layer, d.position(), Vec3.ZERO, d.getId(), 1);
+        }
     }
 
     /** Двенадцать: веер по дугам на все цели в конусе; захваченной — больше. */
@@ -352,7 +494,40 @@ public final class TangExecutor {
         int layer = d.layer();
         double[] s = player.getData(ModAttachments.TANG);
         Vec3 dir = d.getDeltaMovement().lengthSqr() < 1.0E-6D ? player.getLookAngle() : d.getDeltaMovement().normalize();
+        if (d.mode() == TangDagger.RECALL) {
+            // Отзыв/возврат режет всех на линии и не останавливается.
+            hurt(player, d, t, d.damage * d.recallDmg);
+            send(player, form, TangPayload.HIT, layer, point, dir, t.getId(), 1);
+            return false;
+        }
         switch (form) {
+            case TangRules.THREE -> {
+                // Три в один миг: считаем касания одной цели в пределах одного тика.
+                long now = player.level().getGameTime();
+                int count = 1;
+                if (s.length >= SIZE && (int) s[0] == TangRules.THREE) {
+                    count = s[4] == t.getId() && now - (long) s[6] <= 1 ? (int) s[5] + 1 : 1;
+                    s[4] = t.getId();
+                    s[5] = count;
+                    s[6] = now;
+                }
+                hurt(player, d, t, d.damage * TangRules.THREE_DMG);
+                boolean main = count >= 3;
+                if (main) {
+                    stun(t, TangRules.THREE_STUN);
+                }
+                if (!t.onGround()) {
+                    TargetLock.freeze(t, 10);
+                }
+                send(player, form, TangPayload.HIT, layer, point, dir, t.getId(), main ? 2 : count > 1 ? 1 : 0);
+                return true;
+            }
+            case TangRules.FLASH -> {
+                hurt(player, d, t, d.damage * TangRules.FLASH_DMG);
+                boolean cut = TangRules.interrupt(layer) && interrupt(t);
+                send(player, form, TangPayload.HIT, layer, point, dir, t.getId(), cut ? 2 : 1);
+                return true;
+            }
             case TangRules.FIVE -> {
                 int chain = 1;
                 if (s.length >= SIZE && (int) s[0] == TangRules.FIVE) {
@@ -412,11 +587,6 @@ public final class TangExecutor {
                 return true;
             }
             default -> {
-                if (d.mode() == TangDagger.RECALL) {
-                    hurt(player, d, t, d.damage * TangRules.RECALL_DMG);
-                    send(player, form, TangPayload.HIT, layer, point, dir, t.getId(), 1);
-                    return false;
-                }
                 if (d.mode() == TangDagger.HANG || d.mode() == TangDagger.FALL) {
                     return false;
                 }
@@ -431,16 +601,45 @@ public final class TangExecutor {
         }
     }
 
-    static void onBlock(TangDagger d, BlockHitResult hit) {
+    /** Блок на пути. @return true — кинжал исчезает (взрыв или отзыв о стену), false — втыкается. */
+    static boolean onBlock(TangDagger d, BlockHitResult hit) {
         if (!(d.getOwner() instanceof ServerPlayer player)) {
-            return;
+            return true;
         }
         Vec3 dir = d.getDeltaMovement().lengthSqr() < 1.0E-6D ? Vec3.ZERO : d.getDeltaMovement().normalize();
         if (d.form() == TangRules.BURST && d.layer() > 0 && d.index() == 0 && (d.mode() == TangDagger.BURST || d.mode() == TangDagger.CARP)) {
             explode(player, d, hit.getLocation(), null, d.mode() == TangDagger.CARP ? 0.6D : 1.0D);
-            return;
+            return true;
         }
-        send(player, d.form(), TangPayload.CLANG, d.layer(), hit.getLocation(), dir, hit.getDirection().get3DDataValue(), 0);
+        if (d.mode() != TangDagger.FALL) {
+            send(player, d.form(), TangPayload.CLANG, d.layer(), hit.getLocation(), dir, hit.getDirection().get3DDataValue(), 0);
+        }
+        // Отзыв, упёршийся в стену, падает и тоже втыкается.
+        return false;
+    }
+
+    /**
+     * Срыв замаха (Похищение Жизни, слой 5+): моб теряет атаку — оглушение; игрок — техника в подготовке
+     * гасится. @return true — было что сорвать.
+     */
+    private static boolean interrupt(LivingEntity t) {
+        if (t instanceof ServerPlayer p) {
+            io.github.verycooltimo.murim.combat.TechniqueState st = p.getData(ModAttachments.TECHNIQUE_STATE);
+            if (st.isActive()) {
+                TechniqueDefinition def = TechniqueLoader.get(st.techniqueId());
+                io.github.verycooltimo.murim.combat.TechniquePhase ph = def == null ? null : def.phaseAt(st.tick());
+                if (ph == io.github.verycooltimo.murim.combat.TechniquePhase.RITUAL || ph == io.github.verycooltimo.murim.combat.TechniquePhase.WINDUP) {
+                    io.github.verycooltimo.murim.combat.TechniqueService.cancel(p);
+                    return true;
+                }
+            }
+            return false;
+        }
+        stun(t, TangRules.FLASH_STUN);
+        if (t instanceof net.minecraft.world.entity.Mob mob) {
+            mob.getNavigation().stop();
+        }
+        return true;
     }
 
     static void starPlaced(TangDagger d) {

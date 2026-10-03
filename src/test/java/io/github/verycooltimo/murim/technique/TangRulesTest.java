@@ -27,7 +27,7 @@ class TangRulesTest {
 
     @Test
     void timelinesMatchDataAndAnimations() throws Exception {
-        for (int form = 0; form < 4; form++) {
+        for (int form = 0; form < 7; form++) {
             String id = TangRules.technique(form).getPath();
             TechniqueDefinition def = TechniqueDefinition.CODEC.parse(JsonOps.INSTANCE,
                     json("/data/murim/murim_techniques/" + id + ".json")).getOrThrow(AssertionError::new);

@@ -72,6 +72,7 @@ public final class TangVfx {
     private static final List<Cast> CASTS = new ArrayList<>();
     private static final Fx FX = new Fx();
     private static final Map<Integer, Deque<Vec3>> TRAILS = new HashMap<>();
+    private static final java.util.Set<Integer> REVEALED = new java.util.HashSet<>();
     private static final Random RANDOM = new Random();
     private static int clientTicks;
 
@@ -279,7 +280,7 @@ public final class TangVfx {
                 sound(p.pos(), SoundEvents.TRIDENT_HIT, 0.5F, 1.8F);
             }
             case TangPayload.RECALL -> {
-                sound(p.pos(), SoundEvents.ARROW_SHOOT, 1.0F, 0.6F);
+                sound(p.pos(), SoundEvents.ARROW_SHOOT, p.form() == TangRules.RETURN ? 0.35F : 1.0F, p.form() == TangRules.RETURN ? 1.2F : 0.6F);
                 if (layer >= 1) {
                     FX.rings.add(new Ring(p.pos(), camAxis(p.pos()), clientTicks, 0.15D, 0.9D, 7, 0.05D, WHITE, 0.2D));
                 }
@@ -383,6 +384,31 @@ public final class TangVfx {
                     wind(at, dir.scale(0.3D), 10, 0.07D);
                 }
             }
+            case TangRules.THREE -> {
+                if (p.a() == 0) {
+                    // «Фат!» — один хлёст кисти, три лезвия разом.
+                    sound(at, SoundEvents.ARROW_SHOOT, 1.0F, 1.3F);
+                    if (own) {
+                        SpeedLines.directional(0.0F, 0.15F, 2, SpeedLines.WHITE);
+                    }
+                }
+                if (layer >= 1) {
+                    wind(at, dir.scale(0.3D), 7, 0.045D);
+                }
+                if (layer >= 3 && p.a() == 0) {
+                    FX.rings.add(new Ring(at.add(dir.scale(0.3D)), dir, clientTicks, 0.15D, 0.4D, 3, 0.035D, WHITE, 0.35D));
+                }
+            }
+            case TangRules.FLASH -> {
+                // «Пааа!» — щелчок пальцами; самого лезвия не видно: читается только жест (spec Б).
+                sound(at, SoundEvents.PLAYER_ATTACK_SWEEP, 0.9F, 1.9F);
+                if (layer >= 1) {
+                    FX.bursts.add(new Burst(at.add(dir.scale(0.25D)), clientTicks, 5, 0.35D, 3, RANDOM.nextLong(), false, false));
+                }
+                if (own) {
+                    SpeedLines.directional(0.0F, 0.2F, 2, SpeedLines.WHITE);
+                }
+            }
             default -> {
                 if (p.b() == 2) {
                     // Второй кинжал вдогонку: короткий хлёсткий выброс.
@@ -431,7 +457,7 @@ public final class TangVfx {
         float distance = mc.player == null ? 99.0F : (float) mc.player.position().distanceTo(at);
         if (main) {
             // У Пяти Громов импакт-кадра нет (автор 03.10: «импакт фрейм лишний»): пятый — звезда и тряска.
-            if (own && p.form() != TangRules.FIVE) {
+            if (own && (p.form() == TangRules.STARS || p.form() == TangRules.TWELVE)) {
                 ImpactFrames.trigger(at);
                 SpeedLines.radial(0.5F, 0.5F, 0.5F, 5, SpeedLines.WHITE);
             }
@@ -444,6 +470,17 @@ public final class TangVfx {
                 FX.bursts.add(new Burst(at, clientTicks, 12, 5.0D * (layer >= 8 ? 1.25D : 1.0D), 18, RANDOM.nextLong(), true, false));
                 smoke(at, 1.3D, 4);
                 sound(at, SoundEvents.GENERIC_EXPLODE.value(), 0.6F, 1.5F);
+            } else if (p.form() == TangRules.THREE) {
+                // Три в один миг: тройная звезда «Канг!»×3 в одной точке.
+                for (int i = 0; i < 3; i++) {
+                    FX.bursts.add(new Burst(at, clientTicks + i, 7, 1.0D + 0.4D * i, 6, RANDOM.nextLong(), false, false));
+                }
+                sound(at, SoundEvents.ANVIL_LAND, 0.3F, 1.7F);
+                smoke(at, 0.45D, 2);
+            } else if (p.form() == TangRules.FLASH) {
+                // Сорванный замах: белый разрыв у самого лица и кольцо.
+                FX.rings.add(new Ring(at, camAxis(at), clientTicks, 0.1D, 0.9D, 5, 0.05D, WHITE, 0.2D));
+                sound(at, SoundEvents.SHIELD_BLOCK, 0.6F, 1.6F);
             } else if (p.form() == TangRules.STARS) {
                 // Белые полосы сходятся в точке у горла (d4-05): клинья наружу.
                 FX.bursts.add(new Burst(at, clientTicks, 9, 2.8D, 10, RANDOM.nextLong(), false, false));
@@ -685,6 +722,9 @@ public final class TangVfx {
                             case TangRules.FIVE -> "five";
                             case TangRules.TWELVE -> "twelve";
                             case TangRules.STARS -> "stars";
+                            case TangRules.THREE -> "three";
+                            case TangRules.FLASH -> "flash";
+                            case TangRules.RETURN -> "return";
                             default -> "burst";
                         }), 40, 0.5F);
             }
@@ -731,7 +771,16 @@ public final class TangVfx {
             alive.add(d.getId());
             Deque<Vec3> h = TRAILS.computeIfAbsent(d.getId(), k -> new ArrayDeque<>());
             int mode = d.mode();
-            if (mode == TangDagger.STAR || mode == TangDagger.HANG) {
+            if (d.invisible() && !REVEALED.contains(d.getId()) && !hidden(d)) {
+                // Похищение Жизни: лезвие «появилось прямо перед» — вспышка в точке появления.
+                REVEALED.add(d.getId());
+                if (d.layer() >= 1) {
+                    FX.bursts.add(new Burst(d.position(), clientTicks, 6, 0.6D, 4, RANDOM.nextLong(), false, false));
+                    FX.rings.add(new Ring(d.position(), camAxis(d.position()), clientTicks, 0.1D, 0.5D, 3, 0.03D, WHITE, 0.0D));
+                }
+                sound(d.position(), SoundEvents.TRIDENT_RIPTIDE_1.value(), 0.4F, 2.0F);
+            }
+            if (mode == TangDagger.STAR || mode == TangDagger.HANG || mode == TangDagger.STUCK || hidden(d)) {
                 h.clear();
             } else {
                 h.addFirst(d.position());
@@ -775,6 +824,7 @@ public final class TangVfx {
             }
         }
         TRAILS.keySet().removeIf(id -> !alive.contains(id));
+        REVEALED.removeIf(id -> !alive.contains(id));
     }
 
     private static int trailLength(TangDagger d) {
@@ -782,6 +832,8 @@ public final class TangVfx {
             case TangRules.FIVE -> 8;
             case TangRules.TWELVE -> 3;
             case TangRules.STARS -> 5;
+            case TangRules.THREE -> 7;
+            case TangRules.FLASH -> 4;
             default -> d.mode() == TangDagger.CARP ? 9 : 6;
         };
     }
@@ -883,6 +935,7 @@ public final class TangVfx {
             stars(mc, pose, camera, air, partial);
             carp(mc, pose, camera, air, partial);
             threads(mc, pose, camera, air, partial);
+            returnLines(mc, pose, camera, air, partial);
             rings(pose, camera, air, partial);
             bursts(pose, camera, air, partial);
             motes(pose, camera, air, partial);
@@ -1046,6 +1099,27 @@ public final class TangVfx {
                 double r = (0.08D + 0.09D * i) * (0.7D + 0.5D * grow);
                 ring(v, pose, camera, c, f, r, 0.016D + 0.004D * i, age * (0.28D - 0.03D * i) + i * 1.7D, 0.42D, 0.5F - 0.08F * i,
                         i == 0 ? WHITE : PALE);
+            }
+        }
+    }
+
+    /** Подготовка «Возврата»: тонкие линии от каждого воткнутого лезвия к рукаву — телеграф линий (spec В). */
+    private static void returnLines(Minecraft mc, PoseStack.Pose pose, Vec3 camera, VertexConsumer v, float partial) {
+        for (Cast c : CASTS) {
+            if (c.form != TangRules.RETURN || c.t() > TangRules.windup(TangRules.RETURN) + 2 || c.layer < 1
+                    || !(mc.level.getEntity(c.entityId) instanceof Entity owner)) {
+                continue;
+            }
+            float grow = (float) Mth.clamp((c.t() + partial) / TangRules.windup(TangRules.RETURN), 0.0D, 1.0D);
+            Vec3 hand = hand(owner, true);
+            for (Entity en : mc.level.entitiesForRendering()) {
+                if (!(en instanceof TangDagger d) || d.mode() != TangDagger.STUCK || d.getOwner() != owner
+                        || d.distanceTo(owner) > TangRules.RETURN_RANGE) {
+                    continue;
+                }
+                Vec3[] p = {d.position(), d.position().lerp(hand, 0.5D), hand};
+                float a = 0.45F * grow * near(p[0], camera);
+                PlumVfx.strip(v, pose, camera, p, new double[] {0.02D, 0.012D, 0.004D}, a, PALE);
             }
         }
     }
@@ -1288,7 +1362,13 @@ public final class TangVfx {
             float n = near(at, camera);
             boolean dark = d.form() == TangRules.BURST;
             int mode = d.mode();
-            if (mode == TangDagger.FALL) {
+            if (mode == TangDagger.FALL || hidden(d)) {
+                continue;
+            }
+            if (mode == TangDagger.STUCK) {
+                // Воткнутое лезвие поблёскивает: враг видит, где пройдут линии «Возврата».
+                float pulse = (float) Math.max(0.0D, Math.sin((d.tickCount + partial) * 0.25D + d.getId()));
+                PlumVfx.glow(g, pose, camera, at, 0.07D + 0.05D * pulse, (0.25F + 0.5F * pulse) * n, WHITE);
                 continue;
             }
             if (mode == TangDagger.STAR || mode == TangDagger.TO_STAR) {
@@ -1332,6 +1412,22 @@ public final class TangVfx {
             }
         }
         buffers.endBatch(gt);
+    }
+
+    /**
+     * Похищение Жизни: невидимое лезвие не рисуется, пока до горла цели дальше {@link TangRules#FLASH_REVEAL}
+     * (без цели — первые 4 тика).
+     */
+    static boolean hidden(TangDagger d) {
+        if (!d.invisible() || d.mode() != TangDagger.STRAIGHT) {
+            return false;
+        }
+        Minecraft mc = Minecraft.getInstance();
+        if (d.targetId() >= 0 && mc.level != null && mc.level.getEntity(d.targetId()) instanceof LivingEntity t) {
+            Vec3 throat = t.position().add(0.0D, t.getBbHeight() * 0.72D, 0.0D);
+            return d.position().distanceTo(throat) > TangRules.FLASH_REVEAL;
+        }
+        return d.tickCount < 4;
     }
 
     /** Вблизи камеры тает: от первого лица ничего не закрывает экран. */

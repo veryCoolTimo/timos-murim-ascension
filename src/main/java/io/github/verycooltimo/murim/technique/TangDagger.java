@@ -47,11 +47,15 @@ public class TangDagger extends Projectile {
     public static final int HANG = 7;
     public static final int RECALL = 8;
     public static final int FALL = 9;
+    /** Заданный путь (Три Лезвия): прямая, дуга или излом к точке прихода, общий для всех тик прихода. */
+    public static final int PATH = 10;
+    /** Воткнут в землю или блок после промаха: лежит {@link TangRules#STUCK_TICKS} (форма «Возврат Лезвий»). */
+    public static final int STUCK = 11;
 
     private static final EntityDataAccessor<Byte> MODE = SynchedEntityData.defineId(TangDagger.class, EntityDataSerializers.BYTE);
     private static final EntityDataAccessor<Byte> FORM = SynchedEntityData.defineId(TangDagger.class, EntityDataSerializers.BYTE);
     private static final EntityDataAccessor<Byte> LAYER = SynchedEntityData.defineId(TangDagger.class, EntityDataSerializers.BYTE);
-    /** Бит 0 — двенадцатый с неба, бит 1 — удвоенный рывок. */
+    /** Бит 0 — двенадцатый с неба, бит 1 — удвоенный рывок, бит 2 — невидим в полёте (Похищение Жизни). */
     private static final EntityDataAccessor<Byte> FLAGS = SynchedEntityData.defineId(TangDagger.class, EntityDataSerializers.BYTE);
     private static final EntityDataAccessor<Integer> TARGET = SynchedEntityData.defineId(TangDagger.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Byte> INDEX = SynchedEntityData.defineId(TangDagger.class, EntityDataSerializers.BYTE);
@@ -68,6 +72,18 @@ public class TangDagger extends Projectile {
     long strikeAt = Long.MAX_VALUE;
     /** Тёмный Взрыв: игровое время, когда второй кинжал ударит в этот (удвоение рывка). */
     long boostAt = Long.MAX_VALUE;
+    /** PATH: старт, точка прихода, боковая ось, вынос дуги, номер лезвия, тиков до прихода, излом. */
+    Vec3 pathFrom = Vec3.ZERO;
+    Vec3 pathTo = Vec3.ZERO;
+    Vec3 pathSide = new Vec3(1.0D, 0.0D, 0.0D);
+    double pathBow;
+    int pathK;
+    int pathTicks = 10;
+    boolean kinked;
+    /** Возврат: скорость, доля урона, загиб через врага (точка на пути) или null. */
+    double recallSpeed = TangRules.RECALL_SPEED;
+    double recallDmg = TangRules.RECALL_DMG;
+    Vec3 via;
     double damage;
     int life = 60;
     boolean air;
@@ -121,6 +137,10 @@ public class TangDagger extends Projectile {
         return (entityData.get(FLAGS) & 1) != 0;
     }
 
+    public boolean invisible() {
+        return (entityData.get(FLAGS) & 4) != 0;
+    }
+
     public boolean doubled() {
         return (entityData.get(FLAGS) & 2) != 0;
     }
@@ -160,21 +180,26 @@ public class TangDagger extends Projectile {
         super.tick();
         if (level().isClientSide) {
             // Клиент продолжает ход до поправки сервера: иначе между пакетами кинжал стоит.
-            if (mode() != STAR && mode() != HANG) {
+            if (mode() != STAR && mode() != HANG && mode() != STUCK) {
                 setPos(position().add(getDeltaMovement()));
             }
             return;
         }
         modeAge++;
         if (tickCount > life) {
-            if (mode() == HANG) {
-                // Отзыва не было — кинжал падает и гаснет.
+            int m = mode();
+            if (m == HANG || m == STRAIGHT || m == STEER || m == PATH || m == STRIKE || m == TO_STAR || m == STAR) {
+                // Отзыва не было или лезвие пролетело мимо — падает и втыкается в землю (гл. 195:
+                // «брошенные лезвия трудно вернуть»), его подберёт «Возврат Лезвий в Рукав».
                 setMode(FALL);
-                life = tickCount + 20;
+                life = tickCount + 60;
             } else {
                 discard();
                 return;
             }
+        }
+        if (mode() == STUCK) {
+            return;
         }
         Vec3 from = position();
         Vec3 to = next(from);
@@ -188,6 +213,13 @@ public class TangDagger extends Projectile {
     private Vec3 next(Vec3 from) {
         LivingEntity t = target();
         switch (mode()) {
+            case PATH -> {
+                double u = modeAge / (double) Math.max(1, pathTicks);
+                if (u <= 1.0D) {
+                    return TangRules.threePoint(pathK, u, pathFrom, pathTo, pathSide, pathBow, kinked);
+                }
+                return from.add(getDeltaMovement());
+            }
             case STEER -> {
                 if (t != null) {
                     aim = throat(t);
@@ -229,8 +261,11 @@ public class TangDagger extends Projectile {
                 // Точка горла зафиксирована во вспышке: шагнувший вперёд уходит из схождения.
                 Vec3 v = steer(getDeltaMovement(), aim.subtract(from), 25.0D, TangRules.STAR_SPEED);
                 if (aim.distanceTo(from) < 0.3D && modeAge > 3) {
-                    discard();
-                    return null;
+                    // Схождение пусто — лезвие пролетает дальше и падает.
+                    setMode(FALL);
+                    setDeltaMovement(v.scale(0.5D));
+                    life = tickCount + 60;
+                    return from.add(v.scale(0.5D));
                 }
                 return from.add(v);
             }
@@ -287,13 +322,16 @@ public class TangDagger extends Projectile {
                     return null;
                 }
                 Vec3 home = owner.position().add(0.0D, owner.getBbHeight() * 0.6D, 0.0D);
-                Vec3 d = home.subtract(from);
-                if (d.length() < TangRules.RECALL_SPEED + 0.3D) {
+                if (via != null && via.distanceTo(from) < recallSpeed + 0.4D) {
+                    via = null;
+                }
+                Vec3 d = (via != null ? via : home).subtract(from);
+                if (via == null && d.length() < recallSpeed + 0.3D) {
                     TangExecutor.caught(this);
                     discard();
                     return null;
                 }
-                return from.add(steer(getDeltaMovement(), d, 12.0D, TangRules.RECALL_SPEED));
+                return from.add(steer(getDeltaMovement(), d, via != null ? 20.0D : 12.0D, recallSpeed));
             }
             case FALL -> {
                 Vec3 v = getDeltaMovement().scale(0.9D).add(0.0D, -0.06D, 0.0D);
@@ -398,18 +436,24 @@ public class TangDagger extends Projectile {
                     discard();
                     return;
                 }
-                if (mode == FALL) {
+                if (TangExecutor.onBlock(this, block)) {
                     discard();
                     return;
                 }
-                TangExecutor.onBlock(this, block);
-                discard();
+                // Промах — лезвие втыкается в блок остриём по ходу и ждёт «Возврата».
+                Vec3 dir = end.subtract(from);
+                Vec3 at = dir.lengthSqr() < 1.0E-6D ? end : end.subtract(dir.normalize().scale(0.15D));
+                face(dir);
+                setPos(at);
+                setDeltaMovement(Vec3.ZERO);
+                setMode(STUCK);
+                life = tickCount + TangRules.STUCK_TICKS;
                 return;
             }
         }
         travelled += to.distanceTo(from);
         Vec3 d = to.subtract(from);
-        if (mode != STAR && mode != HANG && mode != CARP) {
+        if (mode != STAR && mode != HANG && mode != CARP && mode != STUCK) {
             setDeltaMovement(d);
         } else if (mode == CARP) {
             setDeltaMovement(d);
@@ -426,6 +470,29 @@ public class TangDagger extends Projectile {
             setXRot((float) (Math.atan2(face.y, h) * 180.0D / Math.PI));
             setYRot((float) (Math.atan2(face.x, face.z) * 180.0D / Math.PI));
         }
+    }
+
+    private void face(Vec3 face) {
+        if (face.lengthSqr() > 1.0E-6D) {
+            double h = face.horizontalDistance();
+            setXRot((float) (Math.atan2(face.y, h) * 180.0D / Math.PI));
+            setYRot((float) (Math.atan2(face.x, face.z) * 180.0D / Math.PI));
+        }
+    }
+
+    /** Сорвать воткнутое лезвие и вернуть в рукав по прямой («Возврат Лезвий»). */
+    void returnToSleeve(double damage, Vec3 bendVia) {
+        setMode(RECALL);
+        struck.clear();
+        this.damage = damage;
+        recallSpeed = TangRules.RETURN_SPEED;
+        recallDmg = TangRules.RETURN_DMG;
+        technique = TangRules.RETURN_ID;
+        via = bendVia;
+        life = tickCount + 80;
+        Vec3 home = getOwner() != null ? getOwner().position().add(0.0D, 1.0D, 0.0D) : position();
+        Vec3 d = (via != null ? via : home).subtract(position());
+        setDeltaMovement(d.lengthSqr() < 1.0E-6D ? Vec3.ZERO : d.normalize().scale(0.4D));
     }
 
     @Override

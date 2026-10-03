@@ -50,10 +50,14 @@ public class TangDaggerRenderer extends EntityRenderer<TangDagger> {
 
     @Override
     public void render(TangDagger e, float yaw, float partial, PoseStack ps, MultiBufferSource buffers, int light) {
+        if (TangVfx.hidden(e)) {
+            return;
+        }
         Vec3 f = forward(e, partial);
         float age = e.tickCount + partial;
         // Крен: у карпа — S-изгиб корпуса (рыскание вокруг хода), у зависшего — медленное вращение.
-        double roll = e.mode() == TangDagger.HANG ? age * 0.25D : e.mode() == TangDagger.CARP ? Math.sin(age * 0.9D) * 0.6D : age * 0.15D;
+        double roll = e.mode() == TangDagger.STUCK ? e.getId() * 0.7D : e.mode() == TangDagger.HANG ? age * 0.25D
+                : e.mode() == TangDagger.CARP ? Math.sin(age * 0.9D) * 0.6D : age * 0.15D;
         Vec3 up = perpendicular(f, roll);
         if (e.mode() == TangDagger.HANG) {
             // Висит боком и вращается (spec §4): ось — вертикаль.
