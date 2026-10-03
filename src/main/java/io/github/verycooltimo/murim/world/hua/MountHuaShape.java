@@ -61,7 +61,7 @@ public final class MountHuaShape {
 
     /** 0 north of the fault scarp, 1 south of it; the step is ~10 blocks wide (a wall). */
     private double scarp(double u, double v, double width) {
-        double line = MountHuaPlan.SCARP_V + 14 * warp.noise(u / 70.0, 3.3) + 5 * warp.noise(u / 17.0, 8.1);
+        double line = MountHuaPlan.SCARP_V + 24 * warp.noise(u / 60.0, 3.3) + 8 * warp.noise(u / 17.0, 8.1);
         return smooth(line - width, line + width, v);
     }
 
@@ -122,6 +122,10 @@ public final class MountHuaShape {
             return 0;
         }
         double env = envelope(u, v) * c;
+        // Near the scarp the massif dips into bays and rises in buttresses, so the north wall is
+        // not one even rampart (stand 03.10).
+        double nearScarp = 1 - smooth(MountHuaPlan.SCARP_V, MountHuaPlan.SCARP_V + 140, v);
+        env *= 1 - 0.5 * nearScarp * (0.5 + 0.5 * hills.noise(u / 38.0, 5.5, 2.0));
         // Dissection: radial gorges (drainage runs outwards from the core) plus smaller clefts.
         // Across an interfluve the height follows |n|^0.35: vertical walls at the gorge, a rounded
         // granite dome on top — the Huashan profile (DESCRIPTIONS.md p.6, p.9).
@@ -319,11 +323,11 @@ public final class MountHuaShape {
                 double cu = (i + 0.2 + 0.6 * rnd(hsh, 3)) * CELL;
                 double cv = (j + 0.2 + 0.6 * rnd(hsh, 4)) * CELL;
                 double mc = massif(cu, cv);
-                if (mc < 0.12 || rnd(hsh, 8) < 0.35) {
+                if (mc < 0.12 || rnd(hsh, 8) < 0.55) {
                     continue;
                 }
-                double top = mc * envelope(cu, cv) * (0.88 + 0.32 * r2);
-                double ra = 13 + 14 * r1;
+                double top = mc * envelope(cu, cv) * (0.92 + 0.22 * r2);
+                double ra = 16 + 18 * r1;
                 double rb = ra * (0.6 + 0.35 * rnd(hsh, 5));
                 double ang = rnd(hsh, 6) * Math.PI;
                 double power = 2.2 + 1.6 * rnd(hsh, 7);
@@ -369,23 +373,30 @@ public final class MountHuaShape {
         double cx = Math.cos(a);
         double sy = Math.sin(a);
         double lobes = 0.16 * warp.noise(cx * 1.4 + salt, sy * 1.4, 21.7) + 0.07 * warp.noise(cx * 3.3, sy * 3.3, salt);
-        double arc = ra / 4.5;
-        double groove = 1 - smooth(0.0, 0.2, Math.abs(flute.noise(cx * arc + salt, sy * arc, 4.2 + q * 0.6)));
-        q *= 1 + lobes + 0.07 * groove * smooth(0.55, 0.9, q);
+        // Sparse grooves: only a few deep ones per face (codex r1: fluting everywhere read as
+        // bundles of thin columns; the photos show broad slabs cut by occasional grooves).
+        double arc = ra / 7.0;
+        double groove = 1 - smooth(0.0, 0.08, Math.abs(flute.noise(cx * arc + salt, sy * arc, 4.2 + q * 0.4)));
+        q *= 1 + lobes + 0.05 * groove * smooth(0.55, 0.9, q);
         if (q >= 1) {
             return 0;
         }
-        double h = top * (1 - Math.pow(q, power));
-        // Ledges: the wall drops in stages — a steep step, then a narrow bench (pines sit there).
-        // Band height varies per rock so neighbouring towers do not share the same benches.
-        double band = 8 + (Math.abs((long) salt) % 7);
-        double f = (h + salt * 0.37) / band;
-        double frac = f - Math.floor(f);
-        h -= band * 0.45 * smooth(0.55, 1.0, frac) * smooth(0.3, 0.6, q);
-        // Clefts: narrow vertical slots that split a tower into columns (photos 05, 10).
-        double slot = Math.abs(flute.noise((x / ra) * 1.6 + salt, (y / rb) * 0.35, 33.3 + salt * 0.01));
-        if (slot < 0.06) {
-            h *= 0.72 + 4.6 * slot;
+        // Asymmetry: one sheer face (towards salt-direction) and a gentler back — Huashan's peaks
+        // are big slabs on one side and wooded shoulders on the other (ref 04).
+        double face = Math.cos(a - salt * 0.61);
+        double pw = power * (1 + 0.45 * face);
+        double h = top * (1 - Math.pow(q, pw));
+        // Ledges on about half of the rocks: a steep step, then a narrow bench (pines sit there).
+        if (((long) salt & 1) == 0) {
+            double band = 9 + (Math.abs((long) salt) % 9);
+            double f = (h + salt * 0.37) / band;
+            double frac = f - Math.floor(f);
+            h -= band * 0.28 * smooth(0.6, 1.0, frac) * smooth(0.35, 0.65, q);
+        }
+        // Clefts: rare narrow slots that split a tower (photos 05, 10).
+        double slot = Math.abs(flute.noise((x / ra) * 1.2 + salt, (y / rb) * 0.3, 33.3 + salt * 0.01));
+        if (slot < 0.04) {
+            h *= 0.75 + 6.0 * slot;
         }
         return h;
     }

@@ -1,0 +1,6 @@
+{
+  "type": "neoforge:add_features",
+  "biomes": "#minecraft:is_overworld",
+  "features": "murim:mount_hua_cleanup",
+  "step": "top_layer_modification"
+}

@@ -23,7 +23,11 @@ public final class ModFeatures {
             DeferredRegister.create(Registries.FEATURE, MurimMod.MODID);
 
     public static final DeferredHolder<Feature<?>, MountHuaFeature> MOUNT_HUA =
-            FEATURES.register("mount_hua", () -> new MountHuaFeature(NoneFeatureConfiguration.CODEC));
+            FEATURES.register("mount_hua", () -> new MountHuaFeature(NoneFeatureConfiguration.CODEC, false));
+
+    /** Removes vanilla trees from the sect terraces and the trail (last decoration step). */
+    public static final DeferredHolder<Feature<?>, MountHuaFeature> MOUNT_HUA_CLEANUP =
+            FEATURES.register("mount_hua_cleanup", () -> new MountHuaFeature(NoneFeatureConfiguration.CODEC, true));
 
     private ModFeatures() {
     }
