@@ -375,8 +375,8 @@ public final class ScatterVfx {
             SpeedLines.directional(0.0F, 0.35F, 5, SpeedLines.WHITE);
         }
         if (mc.player != null) {
-            mc.player.level().playLocalSound(c.origin.x, c.origin.y, c.origin.z, net.minecraft.sounds.SoundEvents.PLAYER_ATTACK_SWEEP,
-                    net.minecraft.sounds.SoundSource.PLAYERS, 1.0F, 1.25F, false);
+            io.github.verycooltimo.murim.client.Sfx.play(c.origin.x, c.origin.y, c.origin.z, io.github.verycooltimo.murim.registry.ModSounds.SWORD_SWING.get(),
+                    net.minecraft.sounds.SoundSource.PLAYERS, 1.0F, 1.05F, false);
         }
     }
 
@@ -432,8 +432,8 @@ public final class ScatterVfx {
         }
         if (mc.player != null && mc.player.position().distanceTo(at) < 16.0D) {
             CameraShakeHandler.quake(c.own() ? 0.22F : 0.15F, 4);
-            mc.player.level().playLocalSound(at.x, at.y, at.z, net.minecraft.sounds.SoundEvents.PLAYER_ATTACK_STRONG,
-                    net.minecraft.sounds.SoundSource.PLAYERS, 0.55F, 1.2F + 0.08F * clone, false);
+            io.github.verycooltimo.murim.client.Sfx.play(at.x, at.y, at.z, io.github.verycooltimo.murim.registry.ModSounds.SWORD_HIT.get(),
+                    net.minecraft.sounds.SoundSource.PLAYERS, 0.55F, 1.05F + 0.05F * clone, false);
         }
     }
 
@@ -462,8 +462,8 @@ public final class ScatterVfx {
         }
         if (mc.player != null && mc.player.position().distanceTo(at) < 20.0D) {
             CameraShakeHandler.quake(c.own() ? 0.5F : 0.35F, 8);
-            mc.player.level().playLocalSound(at.x, at.y, at.z, net.minecraft.sounds.SoundEvents.PLAYER_ATTACK_SWEEP,
-                    net.minecraft.sounds.SoundSource.PLAYERS, 1.0F, 0.75F, false);
+            io.github.verycooltimo.murim.client.Sfx.play(at.x, at.y, at.z, io.github.verycooltimo.murim.registry.ModSounds.SWORD_SWING_HEAVY.get(),
+                    net.minecraft.sounds.SoundSource.PLAYERS, 1.0F, 1.0F, false);
         }
     }
 
@@ -491,10 +491,10 @@ public final class ScatterVfx {
         if (mc.player != null && distance < 24.0F) {
             float q = distance < 8.0F ? 1.0F : 1.0F - (distance - 8.0F) / 16.0F;
             CameraShakeHandler.quake(Math.max(q, c.own() ? 0.85F : 0.0F), 16);
-            mc.player.level().playLocalSound(at.x, at.y, at.z, net.minecraft.sounds.SoundEvents.GENERIC_EXPLODE.value(),
-                    net.minecraft.sounds.SoundSource.PLAYERS, 0.6F, 1.5F, false);
-            mc.player.level().playLocalSound(at.x, at.y, at.z, net.minecraft.sounds.SoundEvents.PLAYER_ATTACK_SWEEP,
-                    net.minecraft.sounds.SoundSource.PLAYERS, 1.0F, 0.55F, false);
+            io.github.verycooltimo.murim.client.Sfx.play(at.x, at.y, at.z, io.github.verycooltimo.murim.registry.ModSounds.IMPACT_HEAVY.get(),
+                    net.minecraft.sounds.SoundSource.PLAYERS, 0.8F, 1.0F, false);
+            io.github.verycooltimo.murim.client.Sfx.play(at.x, at.y, at.z, io.github.verycooltimo.murim.registry.ModSounds.PETAL_BURST.get(),
+                    net.minecraft.sounds.SoundSource.PLAYERS, 0.9F, 1.0F, false);
         }
     }
 
@@ -833,8 +833,8 @@ public final class ScatterVfx {
                     c.arcs.add(new Arc(c.centre, u, w, (3.0D + 1.2D * c.random.nextDouble()) * c.scale, c.random.nextDouble() * Math.PI * 2.0D,
                             Math.toRadians(150.0D + 80.0D * c.random.nextDouble()), clientTicks, 7, 0.05D + 0.03D * c.scale));
                     if (mc.player != null && mc.player.position().distanceTo(p) < 20.0D) {
-                        mc.player.level().playLocalSound(p.x, p.y, p.z, net.minecraft.sounds.SoundEvents.PLAYER_ATTACK_SWEEP,
-                                net.minecraft.sounds.SoundSource.PLAYERS, 0.35F, 1.5F + 0.1F * c.random.nextFloat(), false);
+                        io.github.verycooltimo.murim.client.Sfx.play(p.x, p.y, p.z, io.github.verycooltimo.murim.registry.ModSounds.SWORD_SWING.get(),
+                                net.minecraft.sounds.SoundSource.PLAYERS, 0.35F, 1.15F + 0.1F * c.random.nextFloat(), false);
                     }
                 }
             }
@@ -865,7 +865,7 @@ public final class ScatterVfx {
             Vec3 back = c.dash.size() > 1 ? c.dash.get(0).subtract(c.dash.get(c.dash.size() - 1)).normalize() : Vec3.ZERO;
             wind(c, e.position().add(0.0D, 0.3D + 1.2D * c.random.nextDouble(), 0.0D), back.scale(0.35D), 14, 0.08D + 0.05D * c.scale);
             if (t == ScatterRules.FINAL && mc.player != null) {
-                mc.player.level().playLocalSound(e.getX(), e.getY(), e.getZ(), net.minecraft.sounds.SoundEvents.PLAYER_ATTACK_SWEEP,
+                io.github.verycooltimo.murim.client.Sfx.play(e.getX(), e.getY(), e.getZ(), io.github.verycooltimo.murim.registry.ModSounds.SWORD_SWING_HEAVY.get(),
                         net.minecraft.sounds.SoundSource.PLAYERS, 1.0F, 1.0F, false);
             }
         }
@@ -923,8 +923,8 @@ public final class ScatterVfx {
                 }
             }
             if (mc.player != null && mc.player.position().distanceTo(c.centre) < 24.0D) {
-                mc.player.level().playLocalSound(c.centre.x, c.centre.y, c.centre.z, net.minecraft.sounds.SoundEvents.PLAYER_ATTACK_SWEEP,
-                        net.minecraft.sounds.SoundSource.PLAYERS, 1.0F, 0.85F, false);
+                io.github.verycooltimo.murim.client.Sfx.play(c.centre.x, c.centre.y, c.centre.z, io.github.verycooltimo.murim.registry.ModSounds.WHIRLWIND.get(),
+                        net.minecraft.sounds.SoundSource.PLAYERS, 0.8F, 1.15F, false);
             }
         }
         if (ScatterRules.scatter(c.layer) && t >= ScatterRules.SCATTER && t < ScatterRules.SCATTER + 14 && t % 2 == 0) {

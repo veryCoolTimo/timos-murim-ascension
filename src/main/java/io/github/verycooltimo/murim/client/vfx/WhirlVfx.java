@@ -170,6 +170,8 @@ public final class WhirlVfx {
         Minecraft mc = Minecraft.getInstance();
         Entity e = mc.level == null ? null : mc.level.getEntity(payload.sourceId());
         if (e != null) {
+            // Вихрь клинков слышен с начала стойки.
+            io.github.verycooltimo.murim.client.Sfx.play(e, io.github.verycooltimo.murim.registry.ModSounds.WHIRLWIND, 0.8F, 1.1F);
             // Шаг-втаптывание (w1): серп серой пыли у передней стопы.
             Vec3 f = Vec3.directionFromRotation(0.0F, e.getYRot());
             f = new Vec3(f.x, 0.0D, f.z).normalize();
@@ -465,8 +467,8 @@ public final class WhirlVfx {
         if (mc.player != null && mc.player.position().distanceTo(at) < 16.0D) {
             float k = (float) Mth.clamp(1.0D - mc.player.position().distanceTo(at) / 18.0D, 0.0D, 1.0D);
             CameraShakeHandler.quake(Math.max(k, mc.player.getId() == c.entityId ? 0.7F : 0.0F), 16);
-            mc.player.level().playLocalSound(at.x, at.y, at.z, net.minecraft.sounds.SoundEvents.PLAYER_ATTACK_SWEEP,
-                    net.minecraft.sounds.SoundSource.PLAYERS, 1.0F, 0.6F, false);
+            io.github.verycooltimo.murim.client.Sfx.play(at.x, at.y, at.z, io.github.verycooltimo.murim.registry.ModSounds.IMPACT_HEAVY.get(),
+                    net.minecraft.sounds.SoundSource.PLAYERS, 0.9F, 1.0F, false);
         }
         burst(c, at, 30, 0.35D, c.layer >= 3);
         smoke(c, new Vec3(at.x, c.centre == null ? at.y - 1.0D : c.centre.y, at.z), 2.6D, 7);

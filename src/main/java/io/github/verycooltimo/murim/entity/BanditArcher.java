@@ -1,6 +1,5 @@
 package io.github.verycooltimo.murim.entity;
 
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.entity.EntityType;
@@ -84,7 +83,7 @@ public class BanditArcher extends Bandit implements RangedAttackMob {
         double dz = target.getZ() - getZ();
         double flat = Math.sqrt(dx * dx + dz * dz);
         arrow.shoot(dx, dy + flat * 0.2D, dz, 1.6F, (float) (14 - level().getDifficulty().getId() * 4));
-        playSound(SoundEvents.SKELETON_SHOOT, 1.0F, 1.0F / (getRandom().nextFloat() * 0.4F + 0.8F));
+        playSound(io.github.verycooltimo.murim.registry.ModSounds.BOW_SHOT.get(), 1.0F, 0.93F + 0.14F * getRandom().nextFloat());
         level().addFreshEntity(arrow);
         log("выстрел по {}", target.getName().getString());
     }

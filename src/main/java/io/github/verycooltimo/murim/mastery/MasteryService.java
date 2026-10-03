@@ -200,7 +200,7 @@ public final class MasteryService {
         io.github.verycooltimo.murim.MurimMod.LOGGER.info("Озарение у {}: {} — слой {}{}",
                 player.getGameProfile().getName(), id, layer, meditating ? " (медитация)" : "");
         player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
-                SoundEvents.AMETHYST_BLOCK_RESONATE, SoundSource.PLAYERS, 1.0F, 1.4F);
+                io.github.verycooltimo.murim.registry.ModSounds.QI_CHIME.get(), SoundSource.PLAYERS, 1.0F, 1.0F);
         net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(player,
                 new io.github.verycooltimo.murim.network.InsightPayload(id, layer, meditating));
     }

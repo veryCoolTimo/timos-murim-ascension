@@ -260,8 +260,8 @@ public final class ExplosionVfx {
                 // Экранные линии скорости убраны (автор 03.10: «убери ветер линиями»).
             }
             if (mc.player != null) {
-                mc.player.level().playLocalSound(p.origin().x, p.origin().y, p.origin().z, net.minecraft.sounds.SoundEvents.PLAYER_ATTACK_SWEEP,
-                        net.minecraft.sounds.SoundSource.PLAYERS, 1.0F, 1.3F, false);
+                io.github.verycooltimo.murim.client.Sfx.play(p.origin().x, p.origin().y, p.origin().z, io.github.verycooltimo.murim.registry.ModSounds.SWORD_SWING_HEAVY.get(),
+                        net.minecraft.sounds.SoundSource.PLAYERS, 1.0F, 1.05F, false);
             }
             return;
         }
@@ -304,8 +304,8 @@ public final class ExplosionVfx {
                 // Взрыв у клинка — короткий толчок; сильная тряска — только по попаданию.
                 CameraShakeHandler.quake((float) Math.max(c.own() ? 0.4D : 0.0D, 0.4D * (1.0D - dist / 20.0D)), 8);
             }
-            mc.player.level().playLocalSound(at.x, at.y, at.z, net.minecraft.sounds.SoundEvents.PLAYER_ATTACK_STRONG,
-                    net.minecraft.sounds.SoundSource.PLAYERS, 1.0F, 0.6F, false);
+            io.github.verycooltimo.murim.client.Sfx.play(at.x, at.y, at.z, io.github.verycooltimo.murim.registry.ModSounds.PETAL_BURST.get(),
+                    net.minecraft.sounds.SoundSource.PLAYERS, 1.0F, 0.9F, false);
         }
     }
 
@@ -381,8 +381,8 @@ public final class ExplosionVfx {
         if (mc.player != null && dist < 24.0D) {
             float q = dist < 8.0D ? 1.0F : (float) (1.0D - (dist - 8.0D) / 16.0D);
             CameraShakeHandler.quake(Math.max(q, c.own() ? 0.85F : 0.0F), 18);
-            mc.player.level().playLocalSound(at.x, at.y, at.z, net.minecraft.sounds.SoundEvents.GENERIC_EXPLODE.value(),
-                    net.minecraft.sounds.SoundSource.PLAYERS, 0.8F, 1.1F, false);
+            io.github.verycooltimo.murim.client.Sfx.play(at.x, at.y, at.z, io.github.verycooltimo.murim.registry.ModSounds.IMPACT_HEAVY.get(),
+                    net.minecraft.sounds.SoundSource.PLAYERS, 0.9F, 1.0F, false);
         }
         smoke(c, at);
     }
@@ -565,8 +565,8 @@ public final class ExplosionVfx {
             dust(c, e.position(), 3 + c.n(4), 0.14D);
         }
         if (t == ExplosionRules.STANCE && mc.player != null) {
-            mc.player.level().playLocalSound(e.getX(), e.getY(), e.getZ(), net.minecraft.sounds.SoundEvents.PLAYER_ATTACK_SWEEP,
-                    net.minecraft.sounds.SoundSource.PLAYERS, 0.4F, 0.6F, false);
+            io.github.verycooltimo.murim.client.Sfx.play(e.getX(), e.getY(), e.getZ(), io.github.verycooltimo.murim.registry.ModSounds.SWORD_DRAW.get(),
+                    net.minecraft.sounds.SoundSource.PLAYERS, 0.5F, 1.0F, false);
         }
     }
 

@@ -204,12 +204,20 @@ public final class ClientMeditationState {
             aftermathBeats = previous.beats();
             aftermathTicks = AFTERMATH_TICKS;
             localTicks = payload.ticks();
+            if (payload.event() == SyncMeditationPayload.Event.SETTLE && player != null) {
+                // Цикл ци замкнулся — мягкий низкий тон.
+                io.github.verycooltimo.murim.client.Sfx.play(player, io.github.verycooltimo.murim.registry.ModSounds.MEDITATION_CYCLE, 0.8F, 1.0F);
+            }
         } else if (payload.active() && !previous.active()) {
             localTicks = payload.ticks();
             aftermath = Aftermath.NONE;
             if (player != null && seedSceneTicks <= 0) {
                 MurimPlayerAnimations.play(player, MurimPlayerAnimations.LOTUS);
                 breathDelay = BREATH_AFTER_TICKS;
+            }
+            if (player != null) {
+                // Пока сидит — тихое дыхание ци (петля, гаснет, когда встал).
+                io.github.verycooltimo.murim.client.Sfx.loop("meditation", player, io.github.verycooltimo.murim.registry.ModSounds.MEDITATION_LOOP, () -> 0.6F, 1.0F, () -> state.active(), 20);
             }
         } else if (payload.active()) {
             // Сервер главнее: локальный счёт только заполняет промежутки между пакетами.
@@ -446,6 +454,8 @@ public final class ClientMeditationState {
             }
             if (breakthroughTicks == w) {
                 CameraShakeHandler.request(0.25F);
+                // Сам прорыв: ци рвётся наружу (сервер добавит «прорыв» при подъёме ранга).
+                io.github.verycooltimo.murim.client.Sfx.play(minecraft.player, io.github.verycooltimo.murim.registry.ModSounds.QI_CHARGE, 0.8F, 0.85F);
             }
         }
         if (stainTicks > 0) {

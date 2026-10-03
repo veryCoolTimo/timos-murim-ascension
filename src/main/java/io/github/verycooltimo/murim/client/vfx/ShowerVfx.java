@@ -307,8 +307,8 @@ public final class ShowerVfx {
             }
         }
         if (mc.player != null) {
-            mc.player.level().playLocalSound(c.origin.x, c.origin.y, c.origin.z, net.minecraft.sounds.SoundEvents.PLAYER_ATTACK_SWEEP,
-                    net.minecraft.sounds.SoundSource.PLAYERS, 1.0F, 0.75F, false);
+            io.github.verycooltimo.murim.client.Sfx.play(c.origin.x, c.origin.y, c.origin.z, io.github.verycooltimo.murim.registry.ModSounds.SWORD_SWING_HEAVY.get(),
+                    net.minecraft.sounds.SoundSource.PLAYERS, 1.0F, 1.0F, false);
         }
         if (mc.level != null && mc.level.getEntity(c.entityId) instanceof AbstractClientPlayer player) {
             c.skin = player.getSkin().texture();
@@ -345,8 +345,8 @@ public final class ShowerVfx {
             SpeedLines.radial(0.5F, 0.55F, 0.9F, 9, SpeedLines.WHITE);
         }
         if (mc.player != null) {
-            mc.player.level().playLocalSound(c.from.x, c.from.y, c.from.z, net.minecraft.sounds.SoundEvents.PLAYER_ATTACK_SWEEP,
-                    net.minecraft.sounds.SoundSource.PLAYERS, 1.0F, 1.6F, false);
+            io.github.verycooltimo.murim.client.Sfx.play(c.from.x, c.from.y, c.from.z, io.github.verycooltimo.murim.registry.ModSounds.DIVE_WHOOSH.get(),
+                    net.minecraft.sounds.SoundSource.PLAYERS, 1.0F, 1.0F, false);
         }
     }
 
@@ -392,10 +392,10 @@ public final class ShowerVfx {
         if (mc.player != null && distance < 24.0F) {
             float q = distance < 8.0F ? 0.7F : 0.7F * (1.0F - (distance - 8.0F) / 16.0F);
             CameraShakeHandler.quake(Math.max(q, c.own() ? 0.7F : 0.0F), 12);
-            mc.player.level().playLocalSound(at.x, at.y, at.z, net.minecraft.sounds.SoundEvents.PLAYER_ATTACK_CRIT,
-                    net.minecraft.sounds.SoundSource.PLAYERS, 1.0F, 0.8F, false);
-            mc.player.level().playLocalSound(at.x, at.y, at.z, net.minecraft.sounds.SoundEvents.PLAYER_ATTACK_STRONG,
-                    net.minecraft.sounds.SoundSource.PLAYERS, 1.0F, 0.6F, false);
+            io.github.verycooltimo.murim.client.Sfx.play(at.x, at.y, at.z, io.github.verycooltimo.murim.registry.ModSounds.SWORD_HIT.get(),
+                    net.minecraft.sounds.SoundSource.PLAYERS, 1.0F, 0.9F, false);
+            io.github.verycooltimo.murim.client.Sfx.play(at.x, at.y, at.z, io.github.verycooltimo.murim.registry.ModSounds.IMPACT_HEAVY.get(),
+                    net.minecraft.sounds.SoundSource.PLAYERS, 0.9F, 1.0F, false);
         }
     }
 
@@ -414,8 +414,8 @@ public final class ShowerVfx {
         }
         if (mc.player != null && mc.player.position().distanceTo(at) < 16.0D) {
             CameraShakeHandler.quake(0.2F, 4);
-            mc.player.level().playLocalSound(at.x, at.y, at.z, net.minecraft.sounds.SoundEvents.PLAYER_ATTACK_SWEEP,
-                    net.minecraft.sounds.SoundSource.PLAYERS, 0.6F, 1.7F + 0.1F * k, false);
+            io.github.verycooltimo.murim.client.Sfx.play(at.x, at.y, at.z, io.github.verycooltimo.murim.registry.ModSounds.SWORD_SWING.get(),
+                    net.minecraft.sounds.SoundSource.PLAYERS, 0.6F, 1.1F + 0.06F * k, false);
         }
     }
 
@@ -465,8 +465,8 @@ public final class ShowerVfx {
         if (mc.player != null && distance < 24.0F) {
             float q = distance < 8.0F ? 1.0F : 1.0F - (distance - 8.0F) / 16.0F;
             CameraShakeHandler.quake(Math.max(q, c.own() ? 0.9F : 0.0F), 16);
-            mc.player.level().playLocalSound(feet.x, feet.y, feet.z, net.minecraft.sounds.SoundEvents.GENERIC_EXPLODE.value(),
-                    net.minecraft.sounds.SoundSource.PLAYERS, 0.6F, 1.5F, false);
+            io.github.verycooltimo.murim.client.Sfx.play(feet.x, feet.y, feet.z, io.github.verycooltimo.murim.registry.ModSounds.GROUND_SLAM.get(),
+                    net.minecraft.sounds.SoundSource.PLAYERS, 0.8F, 1.0F, false);
         }
         if (c.own()) {
             SpeedLines.radial(0.5F, 0.7F, 0.6F, 6, SpeedLines.WHITE);

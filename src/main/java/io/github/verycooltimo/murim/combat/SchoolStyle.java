@@ -79,7 +79,7 @@ public final class SchoolStyle {
                     net.minecraft.world.effect.MobEffects.MOVEMENT_SLOWDOWN, 30, 1,
                     false, true, true));
             player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
-                    SoundEvents.PLAYER_ATTACK_STRONG, SoundSource.PLAYERS, 0.8F, 1.25F);
+                    io.github.verycooltimo.murim.registry.ModSounds.SWORD_HIT.get(), SoundSource.PLAYERS, 0.8F, 1.1F + 0.1F * player.getRandom().nextFloat());
             step = 0;
         }
         player.setData(ModAttachments.COMBO, new ComboState(step, now));

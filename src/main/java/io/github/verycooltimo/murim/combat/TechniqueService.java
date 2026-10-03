@@ -119,8 +119,8 @@ public final class TechniqueService {
         // Низкий тон и половинная громкость: замах по раскадровке тихий, весь контраст
         // строится на том, что удар придёт громче.
         player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
-                net.minecraft.sounds.SoundEvents.TRIDENT_THROW.value(),
-                net.minecraft.sounds.SoundSource.PLAYERS, 0.45F, 0.55F);
+                io.github.verycooltimo.murim.registry.ModSounds.SWORD_DRAW.get(),
+                net.minecraft.sounds.SoundSource.PLAYERS, 0.6F, 0.95F + 0.1F * player.getRandom().nextFloat());
 
         // Замедление, а не обездвиживание — прямое пожелание автора по боевой системе.
         // Три секунды концентрации со свободной беготнёй читались бы как отсутствие цены.
@@ -345,8 +345,8 @@ public final class TechniqueService {
         // Свист клинка звучит на ударе независимо от попадания: промах тоже должен быть
         // слышен, иначе игрок не понимает, сработала ли техника.
         player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
-                net.minecraft.sounds.SoundEvents.PLAYER_ATTACK_SWEEP,
-                net.minecraft.sounds.SoundSource.PLAYERS, 1.0F, 0.72F);
+                io.github.verycooltimo.murim.registry.ModSounds.SWORD_SWING.get(),
+                net.minecraft.sounds.SoundSource.PLAYERS, 1.0F, 0.95F + 0.1F * player.getRandom().nextFloat());
 
         boolean anyHit = BehaviorExecutor.execute(player, technique);
         // Промах — тоже тренировка формы, слабее попадания. У снарядов попадание придёт позже.
@@ -356,8 +356,8 @@ public final class TechniqueService {
 
         if (anyHit) {
             player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
-                    net.minecraft.sounds.SoundEvents.PLAYER_ATTACK_CRIT,
-                    net.minecraft.sounds.SoundSource.PLAYERS, 0.9F, 0.68F);
+                    io.github.verycooltimo.murim.registry.ModSounds.SWORD_HIT.get(),
+                    net.minecraft.sounds.SoundSource.PLAYERS, 0.9F, 0.95F + 0.1F * player.getRandom().nextFloat());
             // Hit stop адресно применяющему: заморозка экрана у соседей, попавших в радиус
             // трекинга, была бы гриферством с обычного клиента.
             PacketDistributor.sendToPlayer(player,

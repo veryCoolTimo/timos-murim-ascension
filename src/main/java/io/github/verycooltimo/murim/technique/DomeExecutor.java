@@ -222,8 +222,12 @@ public final class DomeExecutor {
         float share = (float) Math.min(1.0D, cost / Math.max(1.0D, d[POOL_MAX]));
         PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
                 new DomePayload(player.getId(), at, from, share, layer, broke ? DomePayload.BREAK : DomePayload.BLOCK));
-        player.level().playSound(null, at.x, at.y, at.z, net.minecraft.sounds.SoundEvents.SHIELD_BLOCK,
-                net.minecraft.sounds.SoundSource.PLAYERS, 0.7F, broke ? 0.6F : 1.3F);
+        // Со слоя 1 звук удара о барьер и разрыва играет клиент (DomeVfx: barrier_hit/barrier_break)
+        // всем, кто видит пакет; на слое 0 эффектов нет — остаётся простой звук парирования.
+        if (layer <= 0) {
+            player.level().playSound(null, at.x, at.y, at.z, net.minecraft.sounds.SoundEvents.SHIELD_BLOCK,
+                    net.minecraft.sounds.SoundSource.PLAYERS, 0.7F, broke ? 0.6F : 1.3F);
+        }
         return cost - taken;
     }
 
