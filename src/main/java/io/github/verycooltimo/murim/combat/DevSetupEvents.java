@@ -551,6 +551,11 @@ public final class DevSetupEvents {
         target.setPos(STAGE_X + 0.5D + lookX * dummyDistance, STAGE_Y + lift,
                       STAGE_Z + 0.5D + lookZ * dummyDistance);
         level.addFreshEntity(target);
+        // MURIM_CAPTURE_TANG_STUCK=N — за целью лежат N воткнутых кинжалов игрока (съёмка «Возврата Лезвий»).
+        int stuck = (int) envDouble("MURIM_CAPTURE_TANG_STUCK", 0.0D);
+        if (stuck > 0 && !level.players().isEmpty()) {
+            io.github.verycooltimo.murim.technique.TangExecutor.spawnStuckForCapture(level.players().get(0), target.position(), stuck);
+        }
         // Цель ниже площадки: прорезать над ней яму, иначе пол закрывает её целиком и честная
         // проверка «бьёт вниз» невозможна (техники с прямой видимостью её не видят — и правильно).
         if (lift < 0.0D) {

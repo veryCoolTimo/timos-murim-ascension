@@ -312,6 +312,22 @@ public final class TangExecutor {
         }
     }
 
+    /** Только для стенда: воткнуть {@code n} кинжалов игрока веером позади точки {@code centre}. */
+    public static void spawnStuckForCapture(ServerPlayer player, Vec3 centre, int n) {
+        Vec3 back = new Vec3(centre.x - player.getX(), 0.0D, centre.z - player.getZ()).normalize();
+        Vec3 side = new Vec3(-back.z, 0.0D, back.x);
+        for (int i = 0; i < n; i++) {
+            double u = n == 1 ? 0.0D : i / (double) (n - 1) - 0.5D;
+            Vec3 at = centre.add(back.scale(3.0D + 1.5D * Math.abs(u))).add(side.scale(u * 7.0D)).add(0.0D, 0.15D, 0.0D);
+            TangDagger d = new TangDagger(player.level(), player, TangRules.FIVE, 7, i % 5);
+            d.setPos(at);
+            d.setMode(TangDagger.STUCK);
+            d.life = TangRules.STUCK_TICKS;
+            face(d, back.add(0.0D, -1.2D, 0.0D).normalize());
+            player.level().addFreshEntity(d);
+        }
+    }
+
     /** Двенадцать: веер по дугам на все цели в конусе; захваченной — больше. */
     private static void twelve(ServerPlayer player, int layer, double h, LivingEntity locked) {
         int n = TangRules.twelveCount(layer);
