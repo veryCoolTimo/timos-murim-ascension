@@ -71,10 +71,6 @@ public final class TraverseVfx {
         }
     }
 
-    /** Дымка Тени: холодно-серая, низкой непрозрачности (ref wind god steps, кадр 5). */
-    private static final VfxColour HAZE = new VfxColour(0xB8 / 255.0F, 0xC4 / 255.0F, 0xD0 / 255.0F);
-    /** Игроки в Тени: id → слой. */
-    private static final Map<Integer, Integer> SHADOWS = new HashMap<>();
 
     public static void onEvent(TraversePayloads.Event e) {
         Minecraft minecraft = Minecraft.getInstance();
@@ -82,6 +78,9 @@ public final class TraverseVfx {
             return;
         }
         Entity entity = minecraft.level.getEntity(e.entityId());
+        Vec3 dir = new Vec3(e.dirX(), 0.0D, e.dirZ());
+        // Зрелище форм — своё у каждой (FootworkVfx); здесь — ввод бега и толчки прыжка.
+        FootworkVfx.onEvent(entity, e.kind(), e.layer(), dir, e.entityId());
         switch (e.kind()) {
             case 0 -> RUNS.remove(e.entityId());
             case 1 -> {
@@ -89,23 +88,15 @@ public final class TraverseVfx {
                     RUNS.put(e.entityId(), new Run(e.layer(), entity.position()));
                 }
             }
-            case 5 -> {
-                if (entity != null) {
-                    evade(entity, e.layer(), new Vec3(e.dirX(), 0.0D, e.dirZ()));
-                    ownLines(minecraft, entity, new Vec3(e.dirX(), 0.0D, e.dirZ()), 0.55F);
-                }
-            }
-            case 6 -> SHADOWS.put(e.entityId(), e.layer());
-            case 7 -> SHADOWS.remove(e.entityId());
-            case 8 -> {
-                if (entity != null) {
-                    death(entity, new Vec3(e.dirX(), 0.0D, e.dirZ()));
-                    ownLines(minecraft, entity, new Vec3(e.dirX(), 0.0D, e.dirZ()), 0.9F);
-                }
+            // Слой 0 — без эффектов, и экранных линий тоже.
+            case 5 -> ownLines(minecraft, entity, e.layer() >= 1 ? dir : Vec3.ZERO, 0.55F);
+            case 8 -> ownLines(minecraft, entity, e.layer() >= 1 ? dir : Vec3.ZERO, 0.9F);
+            case 9 -> ownLines(minecraft, entity, e.layer() >= 1 ? dir : Vec3.ZERO, 0.6F);
+            case 6, 7 -> {
             }
             default -> {
                 if (entity != null && e.layer() >= 1) {
-                    burst(entity, e.kind(), e.layer(), new Vec3(e.dirX(), 0.0D, e.dirZ()));
+                    burst(entity, e.kind(), e.layer(), dir);
                 }
             }
         }
@@ -122,7 +113,6 @@ public final class TraverseVfx {
         if (minecraft.level == null) {
             RUNS.clear();
             STREAKS.clear();
-            SHADOWS.clear();
             return;
         }
         if (minecraft.isPaused()) {
@@ -150,41 +140,6 @@ public final class TraverseVfx {
             run.last = pos;
             if (entity == minecraft.player && run.layer >= 3 && d.length() > 0.45D && clientTicks % 8 == 0) {
                 SpeedLines.radial(0.5F, 0.5F, 0.2F, 10, SpeedLines.WHITE);
-            }
-            if (run.layer < 1 || !entity.onGround() || d.lengthSqr() < 1.0E-4D) {
-                continue;
-            }
-            run.travelled += d.length();
-            // Раз в ~2 блока — низкий росчерк у стопы; ритм слегка сбит, чтобы след не шёл «рельсами».
-            double every = run.count % 2 == 0 ? 1.8D : 2.3D;
-            if (run.travelled >= every) {
-                run.travelled = 0.0D;
-                run.count++;
-                Vec3 dir = d.normalize();
-                Vec3 side = new Vec3(-dir.z, 0.0D, dir.x).scale(run.count % 2 == 0 ? 0.12D : -0.12D);
-                STREAKS.add(streak(pos.add(side).add(0.0D, 0.08D, 0.0D), dir.scale(-1.0D), 0.9D, 0.06D, 0.05D, 3.0F, 0.9F));
-                if (run.layer >= 3) {
-                    STREAKS.add(streak(pos.add(side.scale(-1.5D)).add(dir.scale(-0.3D)).add(0.0D, 0.45D, 0.0D),
-                            dir.scale(-1.0D), 0.6D, 0.035D, 0.12D, 2.5F, 0.6F));
-                }
-            }
-        }
-        // Тень: раз в 3 тика у ног — короткий низкий клок дымки, не длиннее 0,6 блока и не ярче 0,3:
-        // направление скрытного хода длинным хвостом не выдаётся.
-        Iterator<Map.Entry<Integer, Integer>> sh = SHADOWS.entrySet().iterator();
-        while (sh.hasNext()) {
-            Map.Entry<Integer, Integer> en = sh.next();
-            Entity entity = minecraft.level.getEntity(en.getKey());
-            if (entity == null || !entity.isAlive()) {
-                sh.remove();
-                continue;
-            }
-            if (clientTicks % 3 == 0) {
-                double a = (clientTicks * 2.39D) % (Math.PI * 2.0D);
-                Vec3 at = entity.position().add(Math.cos(a) * 0.3D, 0.05D + 0.1D * (clientTicks % 2), Math.sin(a) * 0.3D);
-                Vec3 back = new Vec3(-Math.sin(a), 0.0D, Math.cos(a));
-                Streak st = streak(at, back, 0.55D, 0.07D, 0.12D, 6.0F, 0.3F);
-                STREAKS.add(new Streak(st.points(), st.width(), st.born(), st.life(), st.alpha(), HAZE));
             }
         }
         STREAKS.removeIf(s -> clientTicks - s.born > s.life + 1);
@@ -227,26 +182,6 @@ public final class TraverseVfx {
     }
 
     /**
-     * Шаг Мига: короткий срыв воздуха вдоль пройденного пути — низкий росчерк у стоп и, со 2-го
-     * слоя, второй выше; без цветов (ref «wind god steps», кадр защиты). Слой 0 — без эффекта.
-     */
-    private static void evade(Entity entity, int layer, Vec3 offset) {
-        if (layer < 1 || offset.lengthSqr() < 1.0E-4D) {
-            return;
-        }
-        // Событие приходит в начале рывка: конец пути — впереди, след рождается, когда тело там.
-        Vec3 end = entity.position().add(offset);
-        Vec3 dir = offset.normalize();
-        double len = Math.min(offset.length(), 3.5D);
-        Vec3 side = new Vec3(-dir.z, 0.0D, dir.x);
-        STREAKS.add(later(streak(end.subtract(dir.scale(0.3D)).add(0.0D, 0.15D, 0.0D), dir.scale(-1.0D), len, 0.08D, 0.1D, 3.5F, 1.0F), 3));
-        if (layer >= 2) {
-            STREAKS.add(later(streak(end.subtract(dir.scale(0.6D)).add(side.scale(0.2D)).add(0.0D, 0.9D, 0.0D), dir.scale(-1.0D),
-                    len * 0.6D, 0.05D, 0.15D, 3.0F, 0.7F), 3));
-        }
-    }
-
-    /**
      * Линии скорости своему игроку: рывок вперёд — виньетка к центру, вбок или назад — прямые
      * линии против движения на экране.
      */
@@ -265,23 +200,6 @@ public final class TraverseVfx {
             float angle = (float) Math.toDegrees(Math.atan2(-fwd * 0.3D, side > 0 ? -1.0D : 1.0D));
             SpeedLines.directional(angle, strength, 6, SpeedLines.WHITE);
         }
-    }
-
-    /** Шаг Смерти: узкая сильная бело-голубая полоса на высоте груди по пройденному пути. */
-    private static void death(Entity entity, Vec3 offset) {
-        if (offset.lengthSqr() < 1.0E-4D) {
-            return;
-        }
-        Vec3 dir = offset.normalize();
-        Vec3 end = entity.position().add(offset).add(0.0D, 1.0D, 0.0D);
-        STREAKS.add(later(streak(end.subtract(dir.scale(0.2D)), dir.scale(-1.0D), Math.min(offset.length(), 6.0D), 0.07D, 0.0D, 3.0F, 1.0F), 4));
-        STREAKS.add(later(streak(end.subtract(dir.scale(0.4D)).add(0.0D, -0.85D, 0.0D), dir.scale(-1.0D),
-                Math.min(offset.length(), 6.0D) * 0.7D, 0.05D, 0.05D, 3.0F, 0.7F), 4));
-    }
-
-    /** Тот же след, но рождается позже — когда тело долетит. */
-    private static Streak later(Streak s, int ticks) {
-        return new Streak(s.points(), s.width(), s.born() + ticks, s.life(), s.alpha(), s.colour());
     }
 
     private static Streak streak(Vec3 start, Vec3 back, double length, double width, double rise, float life, float alpha) {

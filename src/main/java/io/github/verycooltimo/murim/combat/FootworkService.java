@@ -326,7 +326,9 @@ public final class FootworkService {
             player.invulnerableTime = Math.max(player.invulnerableTime, iframes);
         }
         MasteryService.onMiss(player, id);
-        send(player, death ? 8 : 5, layer, dir.scale(reach));
+        // Хуашань (Аромат за спиной) — свой вид события: у формы своё зрелище, не белая линия Смерти.
+        boolean huashan = family(TechniqueLoader.get(id)) == FootworkFamily.HUASHAN;
+        send(player, huashan ? 9 : death ? 8 : 5, layer, dir.scale(reach));
     }
 
     /**

@@ -292,6 +292,23 @@ public final class DevCaptureHandler {
             stillSneakTicks--;
             minecraft.options.keyShift.setDown(stillSneakTicks > 0);
         }
+        // MURIM_CAPTURE_STEER=<градусы за тик> — рулить на ходу (бег, тень): повороты для лент шагов.
+        if ((sneakTicks > 0 || travelTicks > 0) && minecraft.player != null && System.getenv("MURIM_CAPTURE_STEER") != null) {
+            int t = TRAVEL_CAPTURE_TICKS - Math.max(sneakTicks, travelTicks);
+            float steer = Float.parseFloat(System.getenv("MURIM_CAPTURE_STEER").trim());
+            // Змейка: 12 тиков прямо, 10 тиков поворот, смена стороны.
+            int phase = t % 44;
+            float turn = phase >= 12 && phase < 22 ? steer : phase >= 34 ? -steer : 0.0F;
+            minecraft.player.setYRot(minecraft.player.getYRot() + turn);
+        }
+        // Камера на стойке: LocalPlayer не переносит ввод в xxa/zza, пока сам не камера
+        // (LocalPlayer#serverAiStep → isControlledCamera) — бег и тень сбоку стояли бы на месте.
+        // API: reference/minecraft-src/net/minecraft/client/player/LocalPlayer.java#serverAiStep
+        if ((sneakTicks > 0 || travelTicks > 0) && minecraft.player != null && minecraft.getCameraEntity() != minecraft.player) {
+            minecraft.player.zza = minecraft.player.input.forwardImpulse;
+            minecraft.player.xxa = minecraft.player.input.leftImpulse;
+            minecraft.player.setJumping(minecraft.player.input.jumping);
+        }
         if (sneakTicks > 0) {
             sneakTicks--;
             boolean on = sneakTicks > 0;
