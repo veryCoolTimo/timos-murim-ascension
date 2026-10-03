@@ -54,6 +54,19 @@ public final class ClientTechniqueHandler {
         while (ModKeyMappings.TECHNIQUE.consumeClick()) {
             pressed = true;
         }
+        if (pressed && ModKeyMappings.WHEEL.isDown()) {
+            // V+R — закреплённый боевой шаг (или форма слота шагов), меч остаётся активным.
+            java.util.Optional<net.minecraft.resources.ResourceLocation> step = pinnedStep.isPresent() ? pinnedStep
+                    : footworkStyle().flatMap(st -> ClientLoadoutState.slots().stream().flatMap(java.util.Optional::stream)
+                            .filter(st.forms()::contains).findFirst());
+            if (step.isPresent()) {
+                TechniqueWheel.cancel();
+                PacketDistributor.sendToServer(new io.github.verycooltimo.murim.network.TraversePayloads.Request(
+                        step.get(), footworkInput(minecraft)));
+                CombatMode.engage();
+            }
+            pressed = false;
+        }
         if (pressed) {
             // Применяется техника выбранного слота (кольцо выбора, автор 01.10). Пустой слот —
             // подсказка, где разложить техники, а не тишина.
@@ -76,55 +89,109 @@ public final class ClientTechniqueHandler {
         }
     }
 
-    /** Последнее нажатие влево/вправо/назад (клиентские тики) и было ли нажато в прошлом тике. */
-    private static final long[] DODGE_LAST = {-100, -100, -100};
-    private static final boolean[] DODGE_WAS = new boolean[3];
-    private static long dodgeTicks;
-    /** Окно двойного нажатия, тиков (как двойное W для бега в ванилле). */
-    private static final int DODGE_WINDOW = 5;
+    /** Двойное A/D/S: начало и конец последнего короткого нажатия (клиентские тики). */
+    private static final long[] TAP_DOWN = new long[3];
+    private static final long[] TAP_UP = {-100, -100, -100};
+    private static final boolean[] TAP_WAS = new boolean[3];
+    private static long clientTicks;
+    /** Окно между нажатиями и предельная длина первого нажатия (codex 03.10: 0,22 с и 0,15 с). */
+    private static final int TAP_GAP = 5;
+    private static final int TAP_HOLD = 3;
+    private static int sprintTicks;
+    private static boolean runSent;
+    private static int stillSneakTicks;
+    private static boolean shadowSent;
+    /** Закреплённый боевой шаг (выбран на кольце, слот не переключается): V+R. */
+    private static java.util.Optional<net.minecraft.resources.ResourceLocation> pinnedStep = java.util.Optional.empty();
+
+    public static void pinStep(net.minecraft.resources.ResourceLocation form) {
+        pinnedStep = java.util.Optional.of(form);
+    }
+
+    public static java.util.Optional<net.minecraft.resources.ResourceLocation> pinnedStep() {
+        return pinnedStep;
+    }
 
     /**
-     * Мгновенное уклонение (03.10): двойное нажатие A, D или S вызывает первую форму стиля шагов
-     * из раскладки — даже когда выбран меч; слот, форма меча и R не меняются.
+     * Шаги без кольца (автор 03.10: «удобно и используемо», разбор codex):
+     * двойное A/D/S — уклонение; спринт 0,5 с — бег стиля; присед на месте 0,7 с — тень.
+     * Всё — стиля шагов из раскладки, даже когда активен меч.
      */
     private static void tickDodge(Minecraft minecraft) {
-        dodgeTicks++;
+        clientTicks++;
         net.minecraft.client.Options o = minecraft.options;
-        boolean[] now = {o.keyLeft.isDown(), o.keyRight.isDown(), o.keyDown.isDown()};
         boolean blocked = minecraft.player == null || minecraft.screen != null || TechniqueWheel.open()
-                || ClientMeditationState.state().active();
+                || ClientMeditationState.state().active() || minecraft.player.isInWater() || minecraft.player.onClimbable()
+                || minecraft.player.isFallFlying();
+        java.util.Optional<io.github.verycooltimo.murim.technique.Styles.Style> style = footworkStyle();
+        boolean[] now = {o.keyLeft.isDown(), o.keyRight.isDown(), o.keyDown.isDown()};
         for (int i = 0; i < 3; i++) {
-            boolean edge = now[i] && !DODGE_WAS[i];
-            DODGE_WAS[i] = now[i];
-            if (!edge || blocked) {
+            boolean down = now[i] && !TAP_WAS[i];
+            boolean up = !now[i] && TAP_WAS[i];
+            TAP_WAS[i] = now[i];
+            if (up) {
+                // Короткое нажатие запоминается; долгое (обычная ходьба) — нет.
+                TAP_UP[i] = clientTicks - TAP_DOWN[i] <= TAP_HOLD ? clientTicks : -100;
+            }
+            if (!down) {
                 continue;
             }
-            if (dodgeTicks - DODGE_LAST[i] <= DODGE_WINDOW) {
-                DODGE_LAST[i] = -100;
-                java.util.Optional<net.minecraft.resources.ResourceLocation> evade = footworkEvade();
-                if (evade.isPresent()) {
+            TAP_DOWN[i] = clientTicks;
+            if (!blocked && !minecraft.player.isShiftKeyDown() && clientTicks - TAP_UP[i] <= TAP_GAP && style.isPresent()) {
+                TAP_UP[i] = -100;
+                net.minecraft.resources.ResourceLocation evade = style.get().forms().get(0);
+                if (TechniqueSlotsHud.mastery(evade) != null) {
                     PacketDistributor.sendToServer(new io.github.verycooltimo.murim.network.TraversePayloads.Request(
-                            evade.get(), footworkInput(minecraft)));
+                            evade, footworkInput(minecraft)));
                     CombatMode.engage();
                 }
-            } else {
-                DODGE_LAST[i] = dodgeTicks;
             }
+        }
+        if (blocked || style.isEmpty()) {
+            sprintTicks = 0;
+            stillSneakTicks = 0;
+            return;
+        }
+        // Автобег: полсекунды спринта вперёд — бег стиля (Тропа / Молния); спринт кончился — сервер гасит сам.
+        if (minecraft.player.isSprinting() && o.keyUp.isDown()) {
+            if (++sprintTicks >= 10 && !runSent) {
+                runSent = true;
+                io.github.verycooltimo.murim.technique.Styles.footworkRun(style.get())
+                        .filter(f -> TechniqueSlotsHud.mastery(f) != null)
+                        .ifPresent(f -> PacketDistributor.sendToServer(new io.github.verycooltimo.murim.network.TraversePayloads.Request(
+                                f, io.github.verycooltimo.murim.combat.FootworkService.SPRINT | io.github.verycooltimo.murim.combat.FootworkService.FORWARD
+                                        | io.github.verycooltimo.murim.combat.FootworkService.PASSIVE)));
+            }
+        } else {
+            sprintTicks = 0;
+            runSent = false;
+        }
+        // Автотень: присед НА МЕСТЕ 0,7 с; повтор — только после выхода из приседа.
+        net.minecraft.world.phys.Vec3 v = minecraft.player.getDeltaMovement();
+        boolean still = v.x * v.x + v.z * v.z < 1.0E-4D && minecraft.player.onGround();
+        if (minecraft.player.isShiftKeyDown()) {
+            if (still && ++stillSneakTicks >= 14 && !shadowSent) {
+                shadowSent = true;
+                io.github.verycooltimo.murim.technique.Styles.footworkShadow(style.get())
+                        .filter(f -> TechniqueSlotsHud.mastery(f) != null)
+                        .ifPresent(f -> PacketDistributor.sendToServer(new io.github.verycooltimo.murim.network.TraversePayloads.Request(
+                                f, io.github.verycooltimo.murim.combat.FootworkService.SNEAK | io.github.verycooltimo.murim.combat.FootworkService.PASSIVE)));
+            }
+        } else {
+            stillSneakTicks = 0;
+            shadowSent = false;
         }
     }
 
-    /** Уклонение стиля шагов, стоящего в раскладке (первая его форма), если он выучен. */
-    private static java.util.Optional<net.minecraft.resources.ResourceLocation> footworkEvade() {
+    /** Стиль шагов, стоящий в раскладке (первый найденный). */
+    private static java.util.Optional<io.github.verycooltimo.murim.technique.Styles.Style> footworkStyle() {
         for (java.util.Optional<net.minecraft.resources.ResourceLocation> slot : ClientLoadoutState.slots()) {
             if (slot.isEmpty()) {
                 continue;
             }
             for (io.github.verycooltimo.murim.technique.Styles.Style style : io.github.verycooltimo.murim.technique.Styles.FOOTWORK) {
                 if (style.forms().contains(slot.get())) {
-                    net.minecraft.resources.ResourceLocation evade = style.forms().get(0);
-                    if (TechniqueSlotsHud.mastery(evade) != null) {
-                        return java.util.Optional.of(evade);
-                    }
+                    return java.util.Optional.of(style);
                 }
             }
         }

@@ -104,7 +104,7 @@ public final class ModAttachments {
     public static final Supplier<AttachmentType<int[]>> TRAVERSE =
             ATTACHMENT_TYPES.register("traverse",
                     () -> AttachmentType.<int[]>builder(() -> new int[] {0, 0, 0, 0, Integer.MIN_VALUE / 2, 0, 0,
-                            Integer.MIN_VALUE / 2, 0, 0, 0, Integer.MIN_VALUE / 2}).build());
+                            Integer.MIN_VALUE / 2, 0, 0, 0, Integer.MIN_VALUE / 2, 0}).build());
 
     /** Техника шага, которая держит бег: туда идёт освоение за пробежку. Не сохраняется. */
     public static final Supplier<AttachmentType<String>> FOOTWORK_TECH =

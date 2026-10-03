@@ -220,6 +220,18 @@ public final class DevSetupEvents {
                                     System.getenv().getOrDefault("MURIM_CAPTURE_FOUNDATION_ID", "six_harmonies")))));
             io.github.verycooltimo.murim.mastery.LoadoutService.sync(fp);
         }
+        // Автоматика шагов (03.10): снимаемый стиль шагов — в первом слоте, иначе автобег и
+        // автотень не видят стиля в раскладке.
+        if (System.getenv().getOrDefault("MURIM_CAPTURE_FOOTWORK", "").startsWith("auto")
+                && event.getEntity() instanceof net.minecraft.server.level.ServerPlayer ap) {
+            net.minecraft.resources.ResourceLocation subject = net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(
+                    io.github.verycooltimo.murim.MurimMod.MODID, System.getProperty("murim.capture.technique", "wind_god_steps"));
+            io.github.verycooltimo.murim.mastery.MasteryService.completeStyles(ap);
+            ap.setData(io.github.verycooltimo.murim.registry.ModAttachments.LOADOUT,
+                    ap.getData(io.github.verycooltimo.murim.registry.ModAttachments.LOADOUT).with(0, java.util.Optional.of(subject)));
+            io.github.verycooltimo.murim.mastery.LoadoutService.sync(ap);
+            io.github.verycooltimo.murim.mastery.MasteryService.sync(ap);
+        }
         // Съёмка интерфейсов техник: шесть открытых слотов, пять техник, часть освоена наполовину.
         if ("ui".equals(System.getProperty("murim.capture.technique"))
                 && event.getEntity() instanceof net.minecraft.server.level.ServerPlayer uiPlayer) {

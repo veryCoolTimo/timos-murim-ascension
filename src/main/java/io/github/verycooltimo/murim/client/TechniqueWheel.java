@@ -59,6 +59,19 @@ public final class TechniqueWheel {
     private static float cursorX;
     private static float cursorY;
     private static int selected = -1;
+    private static int holdTicks;
+    /** V+R уже применил шаг — это удержание V кольцо не открывает и ничего не выбирает. */
+    private static boolean cancelled;
+
+    public static void cancel() {
+        cancelled = true;
+        if (open) {
+            open = false;
+            selected = -1;
+            slotHover = -1;
+        }
+    }
+
     /** Слот под курсором во внешнем кольце, −1 — курсор не там. */
     private static int slotHover = -1;
     private static int age;
@@ -128,7 +141,12 @@ public final class TechniqueWheel {
     static void onClientTick(ClientTickEvent.Post event) {
         Minecraft minecraft = Minecraft.getInstance();
         LocalPlayer player = minecraft.player;
-        boolean wanted = player != null && minecraft.screen == null && ModKeyMappings.WHEEL.isDown()
+        // Кольцо — после 0,2 с удержания V: быстрое V+R (закреплённый шаг) его не открывает.
+        holdTicks = ModKeyMappings.WHEEL.isDown() ? holdTicks + 1 : 0;
+        if (holdTicks == 0) {
+            cancelled = false;
+        }
+        boolean wanted = player != null && minecraft.screen == null && holdTicks >= 4 && !cancelled
                 && ClientLoadoutState.open() > 0 && !ClientMeditationState.state().active();
         if (wanted && !open) {
             open = true;
@@ -146,6 +164,12 @@ public final class TechniqueWheel {
             if (slotHover >= 0 && !entriesOf(slotHover).isEmpty()) {
                 // Слот снаружи: стиль с его последней формой (или отдельная техника, шаг).
                 PacketDistributor.sendToServer(new LoadoutPayloads.Select(slotHover));
+            } else if (selected >= 0 && selected < entries.size() && isFootwork(entries.get(selected))
+                    && ClientLoadoutState.active() != page) {
+                // Форма шагов закрепляется для V+R, а активным остаётся меч (codex 03.10).
+                ResourceLocation form = entries.get(selected);
+                ClientTechniqueHandler.pinStep(form);
+                PacketDistributor.sendToServer(new LoadoutPayloads.SetSlot(page, Optional.of(form)));
             } else if (selected >= 0 && selected < entries.size()) {
                 ResourceLocation form = entries.get(selected);
                 List<Optional<ResourceLocation>> slots = ClientLoadoutState.slots();
@@ -187,6 +211,10 @@ public final class TechniqueWheel {
         me.xRotO = basePitch;
         event.setYaw(baseYaw);
         event.setPitch(basePitch);
+    }
+
+    private static boolean isFootwork(ResourceLocation form) {
+        return io.github.verycooltimo.murim.technique.Styles.FOOTWORK.stream().anyMatch(st -> st.forms().contains(form));
     }
 
     /** Что под курсором: форма во внутреннем кольце или слот во внешнем (он же меняет страницу). */

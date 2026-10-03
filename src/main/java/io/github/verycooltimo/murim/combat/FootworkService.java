@@ -60,6 +60,8 @@ public final class FootworkService {
     public static final int RIGHT = 32;
     /** Клиент видел опору в момент нажатия прыжка (сервер может отставать на тик). */
     public static final int GROUNDED = 64;
+    /** Пассивный запуск (автобег по спринту, автотень по приседу): только включить, не переключать. */
+    public static final int PASSIVE = 128;
 
     private static final ResourceLocation SPEED = id("traverse_speed");
     private static final ResourceLocation STEP = id("traverse_step");
@@ -77,6 +79,8 @@ public final class FootworkService {
     private static final int PAID = 9;
     private static final int GROUND_STREAK = 10;
     private static final int SHADOW_READY = 11;
+    /** 1 — тень включена приседом и гаснет, когда присед отпущен (автотень, 03.10). */
+    private static final int SNEAK_BOUND = 12;
 
     private static final int RUN = 1;
     private static final int SHADOW = 2;
@@ -218,6 +222,9 @@ public final class FootworkService {
                                 int input, Vec3 forward, Vec3 move, boolean sideOrBack) {
         switch (mode) {
             case "run" -> {
+                if ((input & PASSIVE) != 0 && isRunning(player)) {
+                    return;
+                }
                 if (isRunning(player)) {
                     stop(player);
                 } else {
@@ -228,6 +235,9 @@ public final class FootworkService {
                 }
             }
             case "shadow" -> {
+                if ((input & PASSIVE) != 0 && inShadow(player)) {
+                    return;
+                }
                 if (inShadow(player)) {
                     stop(player);
                 } else {
@@ -235,6 +245,11 @@ public final class FootworkService {
                         stop(player);
                     }
                     startShadow(player, id, Math.max(1, layer));
+                    if (inShadow(player)) {
+                        int[] t = player.getData(ModAttachments.TRAVERSE).clone();
+                        t[SNEAK_BOUND] = (input & PASSIVE) != 0 ? 1 : 0;
+                        player.setData(ModAttachments.TRAVERSE, t);
+                    }
                 }
             }
             case "death", "behind" -> {
@@ -558,7 +573,7 @@ public final class FootworkService {
                 FootworkService::supported).isEmpty();
         // Тень — форма на кольце (03.10): держится своё время, приседать не нужно; гаснет по
         // времени, повторным R, бегом, контактом или когда кончилась ци.
-        if (r[RUN_LEFT] <= 0 || player.isSprinting() || now - r[LAST_GROUND] > 2
+        if (r[RUN_LEFT] <= 0 || r[SNEAK_BOUND] == 1 && !player.isShiftKeyDown() || player.isSprinting() || now - r[LAST_GROUND] > 2
                 || profile.circulating() < cost || contact || !player.isAlive() || player.isPassenger()) {
             player.setData(ModAttachments.TRAVERSE, r);
             stop(player);

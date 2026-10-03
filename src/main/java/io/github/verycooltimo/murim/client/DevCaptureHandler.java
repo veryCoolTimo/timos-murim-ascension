@@ -230,7 +230,14 @@ public final class DevCaptureHandler {
             net.minecraft.resources.ResourceLocation subjectId = net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(
                     MurimMod.MODID, subject);
             String mode = System.getenv().getOrDefault("MURIM_CAPTURE_FOOTWORK", "");
-            if (!mode.isEmpty()) {
+            if ("autorun".equals(mode) || "autoshadow".equals(mode)) {
+                // Автоматика шагов (03.10): стенд ничего не шлёт, только держит спринт или присед.
+                if ("autorun".equals(mode)) {
+                    travelTicks = TRAVEL_CAPTURE_TICKS;
+                } else {
+                    stillSneakTicks = TRAVEL_CAPTURE_TICKS;
+                }
+            } else if (!mode.isEmpty()) {
                 // Шаги: стенд жмёт R с контекстом — run (спринт+вперёд, бежит и дважды прыгает),
                 // left/back (уклонение в сторону), plain (простой R).
                 int input = switch (mode) {
@@ -256,6 +263,10 @@ public final class DevCaptureHandler {
             startCapture();
         }
 
+        if (stillSneakTicks > 0) {
+            stillSneakTicks--;
+            minecraft.options.keyShift.setDown(stillSneakTicks > 0);
+        }
         if (sneakTicks > 0) {
             sneakTicks--;
             boolean on = sneakTicks > 0;
@@ -440,6 +451,7 @@ public final class DevCaptureHandler {
     /** Сценарий интерфейсов техник: слоты боя → кольцо → экран раскладки. */
     private static final int UI_CAPTURE_TICKS = 200;
     private static int uiTicks;
+    private static int stillSneakTicks;
 
     private static void tickUi(Minecraft minecraft) {
         int t = UI_CAPTURE_TICKS - uiTicks--;

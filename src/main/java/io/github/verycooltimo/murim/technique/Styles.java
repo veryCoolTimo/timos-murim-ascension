@@ -49,6 +49,17 @@ public final class Styles {
 
     public static final List<Style> ALL = List.of(SEVEN_PLUM, TWENTY_FOUR_PLUM, DARK_FRAGRANCE, WIND_GOD);
 
+    /** Форма бега стиля шагов — её включает автобег (спринт 0,5 с), 03.10. */
+    public static Optional<ResourceLocation> footworkRun(Style s) {
+        return s == DARK_FRAGRANCE ? Optional.of(id("dark_fragrance_trail"))
+                : s == WIND_GOD ? Optional.of(id("wind_god_lightning")) : Optional.empty();
+    }
+
+    /** Форма тени — её включает автотень (присед на месте 0,7 с); у Хуашань пока нет. */
+    public static Optional<ResourceLocation> footworkShadow(Style s) {
+        return s == WIND_GOD ? Optional.of(id("wind_god_shadow")) : Optional.empty();
+    }
+
     /** Стили шагов: их первая форма — мгновенное уклонение. */
     public static final List<Style> FOOTWORK = List.of(DARK_FRAGRANCE, WIND_GOD);
 
