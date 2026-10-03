@@ -27,6 +27,7 @@ final class ClientPayloadBridge {
         io.github.verycooltimo.murim.client.vfx.RiverVfx.onTechniqueEvent(payload);
         io.github.verycooltimo.murim.client.vfx.ScatterVfx.onTechniqueEvent(payload);
         io.github.verycooltimo.murim.client.vfx.DomeVfx.onTechniqueEvent(payload);
+        io.github.verycooltimo.murim.client.vfx.SeaVfx.onTechniqueEvent(payload);
         io.github.verycooltimo.murim.client.vfx.FallingPetalVfx.onTechniqueEvent(payload);
         io.github.verycooltimo.murim.client.vfx.TangVfx.onTechniqueEvent(payload);
         io.github.verycooltimo.murim.client.vfx.ShowerVfx.onTechniqueEvent(payload);
@@ -60,6 +61,10 @@ final class ClientPayloadBridge {
 
     public static void handleDome(DomePayload payload) {
         io.github.verycooltimo.murim.client.vfx.DomeVfx.onDome(payload);
+    }
+
+    public static void handleSea(SeaPayload payload) {
+        io.github.verycooltimo.murim.client.vfx.SeaVfx.onSea(payload);
     }
 
     /**
