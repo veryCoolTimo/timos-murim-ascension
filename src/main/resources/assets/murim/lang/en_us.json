@@ -344,5 +344,11 @@
   "subtitles.murim.bandit_windup": "Bandit winds up",
   "subtitles.murim.bow_shot": "Bow fires",
   "subtitles.murim.qi_sword_summon": "Qi sword forms",
-  "subtitles.murim.qi_sword_hum": "Qi sword hums"
+  "subtitles.murim.qi_sword_hum": "Qi sword hums",
+  "murim.rank.stage.0": "initial",
+  "murim.rank.stage.1": "settled",
+  "murim.rank.stage.2": "summit",
+  "murim.rank.stage.done": "Your realm has settled: %s · %s",
+  "murim.rank.wall.stage": "Your qi has hit the wall. Master a technique to layer %s to settle your Peak",
+  "murim.qi_sword.need_peak": "This form needs a sword: take one. Your qi cannot yet hold the shape of a blade"
 }

@@ -324,5 +324,11 @@
   "subtitles.murim.bandit_windup": "Бандит замахивается",
   "subtitles.murim.bow_shot": "Выстрел из лука",
   "subtitles.murim.qi_sword_summon": "Появляется ци-меч",
-  "subtitles.murim.qi_sword_hum": "Гул ци-меча"
+  "subtitles.murim.qi_sword_hum": "Гул ци-меча",
+  "murim.rank.stage.0": "начальная",
+  "murim.rank.stage.1": "утвердившаяся",
+  "murim.rank.stage.2": "вершина",
+  "murim.rank.stage.done": "Ступень утвердилась: %s · %s",
+  "murim.rank.wall.stage": "Ци упёрлась в стену. Чтобы утвердить Пик, освой технику до %s-го слоя",
+  "murim.qi_sword.need_peak": "Эта форма — для меча: возьми меч. Твоя ци ещё не держит форму клинка"
 }

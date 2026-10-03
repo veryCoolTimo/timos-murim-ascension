@@ -257,10 +257,15 @@ public final class LoadoutScreen extends Screen {
             return;
         }
         int rank = profile.rank();
-        small(graphics, Component.translatable(io.github.verycooltimo.murim.cultivation.Realm.nameKey(rank)),
-                x + (int) (font.width(title) * 1.5F) + 10, y + 5, INK);
+        // С Пика — и подступень: «Пик · утвердившаяся» (автор 03.10).
+        Component name = Component.translatable(io.github.verycooltimo.murim.cultivation.Realm.nameKey(rank));
+        if (rank == io.github.verycooltimo.murim.cultivation.Realm.PEAK) {
+            name = name.copy().append(" · ").append(Component.translatable(
+                    io.github.verycooltimo.murim.cultivation.Realm.stageKey(profile.stage())));
+        }
+        small(graphics, name, x + (int) (font.width(title) * 1.5F) + 10, y + 5, INK);
         Component power = Component.translatable("murim.rank.power",
-                number(io.github.verycooltimo.murim.cultivation.Realm.power(rank)));
+                number(io.github.verycooltimo.murim.cultivation.Realm.power(profile)));
         int speed = (int) Math.round(io.github.verycooltimo.murim.cultivation.Realm.bonusSpeed(rank) * 100.0D);
         Component line = speed <= 0 ? power : power.copy().append(" · ")
                 .append(Component.translatable("murim.rank.speed", speed));

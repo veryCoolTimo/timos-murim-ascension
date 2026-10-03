@@ -203,6 +203,11 @@ public final class DevSetupEvents {
         if (playerRank != null && !playerRank.isBlank()) {
             awakened = awakened.withRank(Integer.parseInt(playerRank.trim()));
         }
+        // MURIM_CAPTURE_PLAYER_STAGE — подступень Пика (0–2): от неё зависит ци-меч.
+        String playerStage = System.getenv("MURIM_CAPTURE_PLAYER_STAGE");
+        if (playerStage != null && !playerStage.isBlank()) {
+            awakened = awakened.withStage(Integer.parseInt(playerStage.trim()));
+        }
         event.getEntity().setData(io.github.verycooltimo.murim.registry.ModAttachments.PROFILE,
                 awakened.withPool(500.0D).withCirculating(awakened.maxCirculating()));
         if (event.getEntity() instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {

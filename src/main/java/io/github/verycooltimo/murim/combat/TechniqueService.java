@@ -82,8 +82,9 @@ public final class TechniqueService {
                 technique.layers());
         // Мечевая форма — только с мечом в руке или ци-мечом (пустая рука пробуждённого), 03.10.
         if (QiSword.needsSword(technique) && !QiSword.hasBlade(player)) {
-            player.displayClientMessage(
-                    net.minecraft.network.chat.Component.translatable("murim.technique.need_sword"), true);
+            // Ниже устоявшегося Пика ци-меча нет — не звать «освободить руку» (автор 03.10).
+            player.displayClientMessage(net.minecraft.network.chat.Component.translatable(
+                    QiSword.available(profile) ? "murim.technique.need_sword" : "murim.qi_sword.need_peak"), true);
             return false;
         }
         if (profile.circulating() < cost) {

@@ -151,18 +151,12 @@ public final class TechniqueCommand {
         root.then(Commands.literal("rank")
                 .then(Commands.argument("rank", com.mojang.brigadier.arguments.IntegerArgumentType.integer(
                         0, io.github.verycooltimo.murim.cultivation.Realm.TOP))
-                        .executes(context -> {
-                            ServerPlayer player = context.getSource().getPlayerOrException();
-                            int rank = com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(context, "rank");
-                            player.setData(io.github.verycooltimo.murim.registry.ModAttachments.PROFILE,
-                                    player.getData(io.github.verycooltimo.murim.registry.ModAttachments.PROFILE)
-                                            .withRank(rank));
-                            io.github.verycooltimo.murim.cultivation.RankEffects.apply(player);
-                            io.github.verycooltimo.murim.profile.ProfileNetwork.sync(player);
-                            context.getSource().sendSuccess(() -> Component.translatable(
-                                    io.github.verycooltimo.murim.cultivation.Realm.nameKey(rank)), false);
-                            return 1;
-                        })));
+                        .executes(context -> setRank(context, 0))
+                        // Подступень Пика: 0 — начальная, 1 — утвердившаяся, 2 — вершина (ниже Пика не действует).
+                        .then(Commands.argument("stage", com.mojang.brigadier.arguments.IntegerArgumentType.integer(
+                                0, io.github.verycooltimo.murim.cultivation.Realm.STAGES - 1))
+                                .executes(context -> setRank(context,
+                                        com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(context, "stage"))))));
 
         // Аура противника для проверки давления (docs/design/19 §3ж): на то, куда смотришь,
         // а без цели — на ближайшее существо. 0 — снять. Ранги 5–6 — выше Пика.
@@ -268,6 +262,25 @@ public final class TechniqueCommand {
         io.github.verycooltimo.murim.mastery.MasteryService.sync(player);
         context.getSource().sendSuccess(() -> Component.literal("Выучено: " + id + ", слой "
                 + Math.min(layer, definition.layers())), false);
+        return 1;
+    }
+
+    /** {@code /murim rank <ранг> [подступень]}: ранг без прорыва; подступень — только на Пике. */
+    private static int setRank(com.mojang.brigadier.context.CommandContext<net.minecraft.commands.CommandSourceStack> context,
+                               int stage) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+        ServerPlayer player = context.getSource().getPlayerOrException();
+        int rank = com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(context, "rank");
+        io.github.verycooltimo.murim.profile.DantianProfile set =
+                player.getData(io.github.verycooltimo.murim.registry.ModAttachments.PROFILE).withRank(rank).withStage(stage);
+        player.setData(io.github.verycooltimo.murim.registry.ModAttachments.PROFILE, set);
+        io.github.verycooltimo.murim.cultivation.RankEffects.apply(player);
+        io.github.verycooltimo.murim.profile.ProfileNetwork.sync(player);
+        Component name = Component.translatable(io.github.verycooltimo.murim.cultivation.Realm.nameKey(rank));
+        Component shown = rank == io.github.verycooltimo.murim.cultivation.Realm.PEAK
+                ? name.copy().append(" · ").append(Component.translatable(
+                        io.github.verycooltimo.murim.cultivation.Realm.stageKey(set.stage())))
+                : name;
+        context.getSource().sendSuccess(() -> shown, false);
         return 1;
     }
 
