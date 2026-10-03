@@ -5,7 +5,6 @@ import io.github.verycooltimo.murim.network.FoundationPayloads;
 import io.github.verycooltimo.murim.registry.ModAttachments;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.tags.ItemTags;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
@@ -29,7 +28,7 @@ public final class FoundationService {
     public static Optional<ResourceLocation> active(ServerPlayer player) {
         Optional<ResourceLocation> id = player.getData(ModAttachments.LOADOUT).foundation();
         if (id.isEmpty() || !MasteryService.knows(player, id.get())
-                || !player.getMainHandItem().is(ItemTags.SWORDS)) {
+                || !QiSword.hasBlade(player)) {
             return Optional.empty();
         }
         return id;
@@ -50,6 +49,8 @@ public final class FoundationService {
             return;
         }
         player.setData(ModAttachments.FOUNDATION_SWING, new int[] {formIndex, player.tickCount});
+        // Взмах основы пустой рукой — ци-меч появляется сам (03.10).
+        QiSword.draw(player);
         // Каждый правильный взмах — тренировка формы; попадание добавит своё.
         MasteryService.onMiss(player, id.get());
         float speed = FoundationForms.speed(player.getCurrentItemAttackStrengthDelay());

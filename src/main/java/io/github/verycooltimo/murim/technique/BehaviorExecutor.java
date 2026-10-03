@@ -199,7 +199,9 @@ public final class BehaviorExecutor {
                 double r = c.dot(right);
                 inside = s >= 0.4D - half && s <= 0.4D + length + half
                         && Math.abs(r) <= PlumRules.width(layer) / 2.0D + half
-                        && box.maxY >= origin.y && box.minY <= origin.y + PlumRules.height(layer);
+                        // Ниже ног тоже (M1, 03.10: бандит в яме под мастером не задевался вовсе —
+                        // попадало только падающее дерево, без оглушения): до PlumRules.BELOW блоков вниз.
+                        && box.maxY >= origin.y - PlumRules.BELOW && box.minY <= origin.y + PlumRules.height(layer);
             }
             if (!inside) {
                 continue;

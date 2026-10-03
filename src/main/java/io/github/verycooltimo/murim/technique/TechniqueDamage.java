@@ -19,6 +19,10 @@ public final class TechniqueDamage {
     public static double base(ServerPlayer player, ResourceLocation technique) {
         double hand = player.getAttributeValue(Attributes.ATTACK_DAMAGE);
         TechniqueDefinition d = TechniqueLoader.get(technique);
+        // Ци-меч бьёт как железный меч только мечевыми формами; ладонь от него не сильнее.
+        if (!io.github.verycooltimo.murim.combat.QiSword.needsSword(d)) {
+            hand -= io.github.verycooltimo.murim.combat.QiSword.bonus(player);
+        }
         TechniqueTier tier = d == null ? TechniqueTier.BASIC : d.tier();
         return hand * (tier == TechniqueTier.SECRET ? SECRET : tier == TechniqueTier.ADVANCED ? ADVANCED : BASIC);
     }

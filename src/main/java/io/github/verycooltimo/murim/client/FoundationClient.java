@@ -8,7 +8,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.tags.ItemTags;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
@@ -64,7 +63,7 @@ public final class FoundationClient {
             return false;
         }
         Optional<ResourceLocation> foundation = ClientLoadoutState.foundation();
-        if (foundation.isEmpty() || !player.getMainHandItem().is(ItemTags.SWORDS)) {
+        if (foundation.isEmpty() || !QiSwordClient.hasBlade(player)) {
             return false;
         }
         // Копание блока — не удар: форма только по воздуху и по существу.
@@ -86,6 +85,7 @@ public final class FoundationClient {
         play(player, form, layer, FoundationForms.speed(cooldown), cooldown, target(minecraft),
                 foundation.get().getPath().equals("seven_plum_basic"));
         PacketDistributor.sendToServer(new FoundationPayloads.Swing(form.ordinal()));
+        QiSwordClient.mark(player);
         return true;
     }
 
@@ -108,6 +108,7 @@ public final class FoundationClient {
             return;
         }
         if (minecraft.level.getEntity(payload.entityId()) instanceof AbstractClientPlayer other) {
+            QiSwordClient.mark(other);
             float cooldown = FoundationForms.NOMINAL_TICKS / Math.max(0.1F, payload.speed());
             play(other, FoundationForms.Form.values()[payload.form()], payload.layer(), payload.speed(), cooldown, null, false);
         }

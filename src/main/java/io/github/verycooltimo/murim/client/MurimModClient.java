@@ -40,6 +40,8 @@ public class MurimModClient {
                     renderer = event.getSkin(skin);
             if (renderer != null) {
                 renderer.addLayer(new io.github.verycooltimo.murim.client.vfx.BoneAnchorLayer(renderer));
+                // Ци-меч в пустой руке (03.10).
+                renderer.addLayer(new QiSwordClient.Layer(renderer, event.getContext().getItemInHandRenderer()));
             }
         }
     }
