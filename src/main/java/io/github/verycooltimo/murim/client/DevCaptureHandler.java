@@ -223,7 +223,7 @@ public final class DevCaptureHandler {
                 return;
             }
             if ("manual".equals(subject)) {
-                manualTicks = 60;
+                manualTicks = 72;
                 return;
             }
             if (MEDITATION.equals(subject)) {
@@ -272,11 +272,11 @@ public final class DevCaptureHandler {
         }
 
         if (manualTicks > 0) {
-            int t = 60 - manualTicks--;
+            int t = 72 - manualTicks--;
             if (t == 4 && minecraft.player != null && minecraft.gameMode != null) {
                 minecraft.gameMode.useItem(minecraft.player, net.minecraft.world.InteractionHand.MAIN_HAND);
             }
-            if ((t == 22 || t == 40) && minecraft.screen != null) {
+            if ((t == 26 || t == 38 || t == 50 || t == 62) && minecraft.screen != null) {
                 minecraft.screen.mouseScrolled(0, 0, 0, -1);
             }
             if (t >= 6) {
