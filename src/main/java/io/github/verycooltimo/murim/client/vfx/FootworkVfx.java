@@ -425,6 +425,10 @@ public final class FootworkVfx {
         /** Направления хода за последние тики: поворот — расхождение с направлением 4 тика назад. */
         final java.util.ArrayDeque<Vec3> dirs = new java.util.ArrayDeque<>();
         int lastGhost = -100;
+        int lastTurn = -100;
+        int lastClone = -100;
+        /** Тики окончания живых теневых копий. */
+        final List<Integer> clones = new ArrayList<>();
         double moved;
         Vec3 last;
 
@@ -551,7 +555,12 @@ public final class FootworkVfx {
                     shadowEnter(entity, layer);
                 }
             }
-            case 7 -> SHADOWS.remove(entityId);
+            case 7 -> {
+                Shadow was = SHADOWS.remove(entityId);
+                if (entity != null && was != null) {
+                    shadowExit(entity, was.layer);
+                }
+            }
             case 8 -> {
                 if (entity != null) {
                     death(entity, layer, dir);
@@ -607,10 +616,11 @@ public final class FootworkVfx {
     }
 
     /**
-     * Шаг смерти (codex-astra 03.10): один испаряющийся отпечаток на старте и длинная воздушная щель
-     * на 7 блоков, открывающаяся вместе с телом; самое светлое — короткий участок пересечения
-     * цели (узкая полоса + 6 штрихов по ходу); за целью — вторая короткая лента; след гаснет от
-     * старта к финишу; у конца — загнутый хвост и редкие частицы.
+     * Шаг смерти, v5 (автор 03.10: «очень хорошо, но если поднажмёшь — шедевр»). Качество — как у
+     * принятого Мига: тело на старте сдувает в ветер, его обвивают две широкие ленты; по пути
+     * прорыва — щель и две узкие ленты, винтом обвивающие ось прорыва (сверло); у цели — светлый
+     * участок, штрихи и лента, на миг обвившая её корпус; на финише тело СОБИРАЕТСЯ из ветра —
+     * частицы прилетают по следу и садятся в позу, ленты заворачиваются вокруг.
      */
     private static void death(Entity entity, int layer, Vec3 offset) {
         if (layer < 1 || offset.lengthSqr() < 1.0E-4D) {
@@ -634,6 +644,21 @@ public final class FootworkVfx {
         TimedRibbon slit = new TimedRibbon(pts, now, draw, 2.0F, 5.0F, 0.12D + 0.01D * layer, AIR_SHEET, AIR_EDGE);
         slit.sheetAlpha = 0.4F;
         RIBBONS.add(slit);
+        if (layer >= 2) {
+            // Сверло: две узкие ленты винтом вокруг оси прорыва (два оборота), растут вместе с телом.
+            for (int k = 0; k < 2; k++) {
+                Vec3[] hx = new Vec3[40];
+                for (int i = 0; i < hx.length; i++) {
+                    double u = i / (double) (hx.length - 1);
+                    double th = k * Math.PI + 4.0D * Math.PI * u;
+                    double r = 0.38D * Math.sin(Math.PI * Math.min(1.0D, u * 1.15D)) + 0.05D;
+                    hx[i] = pts[(int) Math.round(u * (n - 1))].add(side.scale(r * Math.cos(th))).add(0.0D, r * Math.sin(th), 0.0D);
+                }
+                TimedRibbon h = new TimedRibbon(hx, now + 0.3F * k, draw, 1.0F, 3.0F, 0.06D, k == 0 ? AIR_SHEET : hex(0xA9DDEA), AIR_EDGE);
+                h.sheetAlpha = 0.36F;
+                RIBBONS.add(h);
+            }
+        }
         if (layer >= 3) {
             Minecraft mc = Minecraft.getInstance();
             for (LivingEntity t : mc.level.getEntitiesOfClass(LivingEntity.class,
@@ -655,6 +680,9 @@ public final class FootworkVfx {
                     SPARKS.add(new Spark(at, d.scale(0.12D + 0.08D * RNG.nextDouble()), when, 4.0F, 0.12D + 0.13D * RNG.nextDouble(),
                             0.012D, WHITE));
                 }
+                // Ветер прорыва на миг обвивает корпус цели (обтекание из рефа swift step).
+                RIBBONS.add(sheet(spiral(t.position(), d, t.getBbWidth() / 2.0D + 0.35D, 0.5D, Math.min(1.6D, t.getBbHeight() * 0.8D),
+                        Math.PI, Math.toRadians(220.0D), 14), when, 1.5F, 1.5F, 3.0F, 0.12D, AIR_SHEET, 0.38F, d.scale(0.1D)));
                 // За целью — вторая короткая лента с приподнятым концом.
                 Vec3 behindT = c.add(d.scale(0.6D));
                 Vec3[] tail = new Vec3[10];
@@ -665,18 +693,24 @@ public final class FootworkVfx {
                 RIBBONS.add(sheet(tail, when + 1.0F, 2.0F, 2.0F, 4.0F, 0.11D, AIR_SHEET, 0.36F, d.scale(0.05D)));
             }
         }
-        // Загнутый хвост у конечной позиции и редкие частицы.
-        RIBBONS.add(sheet(spiral(end, d, 0.35D, 0.7D, 1.3D, Math.PI, Math.toRadians(-150.0D), 10), now + draw, 1.5F, 2.0F, 3.0F,
-                0.08D, AIR_SHEET, 0.36F, new Vec3(0.0D, 0.02D, 0.0D)));
-        for (int i = 0; i < 8; i++) {
-            Vec3 at = end.add((RNG.nextDouble() - 0.5D) * 0.6D, 0.4D + RNG.nextDouble(), (RNG.nextDouble() - 0.5D) * 0.6D);
-            MOTES.add(new Mote(at, now + draw + RNG.nextFloat() * 2.0F, 5.0F, d, 0.1D, AIR_BODY, 0.36F, 0.09D));
-        }
+        // Финиш: две ленты заворачиваются вокруг тела, загнутый хвост.
+        RIBBONS.add(sheet(spiral(end, d, 0.5D, 0.3D, 1.5D, Math.PI, Math.toRadians(-240.0D), 16), now + draw - 1.0F, 2.0F, 2.0F, 4.0F,
+                0.15D, AIR_SHEET, 0.38F, new Vec3(0.0D, 0.015D, 0.0D)));
+        RIBBONS.add(sheet(spiral(end, d, 0.4D, 1.4D, 0.8D, 0.0D, Math.toRadians(180.0D), 12), now + draw, 1.5F, 2.0F, 3.0F,
+                0.09D, hex(0xA9DDEA), 0.32F, new Vec3(0.0D, 0.02D, 0.0D)));
         if (layer >= 2 && entity instanceof AbstractClientPlayer player) {
-            // Один отпечаток на старте; лента закрывает его грудь, затем его сдувает в начало щели.
-            RIBBONS.add(sheet(spiral(from, d, 0.45D, 1.15D, 1.3D, Math.PI * 0.3D, Math.toRadians(140.0D), 10), now, 1.0F, 3.0F, 4.0F,
-                    0.17D, AIR_SHEET, 0.38F, d.scale(0.12D)));
+            // Старт: две ленты обвивают отпечаток (как у Мига), его сдувает в начало щели.
+            double start = Math.atan2(0.0D, -1.0D);
+            RIBBONS.add(sheet(spiral(from, d, 0.55D, 0.25D, 1.45D, start, Math.toRadians(250.0D), 18), now, 2.0F, 3.0F, 6.0F,
+                    0.2D, AIR_SHEET, 0.42F, d.scale(0.22D)));
+            RIBBONS.add(sheet(spiral(from, d, 0.5D, 0.85D, 1.15D, start + Math.PI, Math.toRadians(-180.0D), 14), now + 0.5F, 2.0F,
+                    3.0F, 6.0F, 0.12D, hex(0xA9DDEA), 0.32F, d.scale(0.18D)));
             silhouette(player, from, player.yBodyRot, now, d, AIR_BODY, 0.38F, 140 + 15 * layer, 2.0F, 5.0F, 5.0F, false);
+            if (layer >= 3) {
+                // Тело собирается из ветра на финише: частицы летят по следу и садятся в позу к концу рывка.
+                List<Vec3> pose = posePoints(player, end, player.yBodyRot, false);
+                silhouetteMotes(pose, end, now + 3.0F, d, AIR_BODY, 0.34F, 110 + 10 * layer, 0.0F, 3.0F, 1.5F, now + 1.0F);
+            }
         }
     }
 
@@ -797,6 +831,10 @@ public final class FootworkVfx {
         final VfxColour colour;
         final float alpha;
         final double size;
+        /** Сборка: частица летит ИЗ потока в точку тела и садится к {@code release} (тело собирается из ветра). */
+        float gatherFrom = Float.NaN;
+        /** Обычная частица не видна раньше этого тика (копия появляется, когда сборка закончилась). */
+        float visibleFrom = -Float.MAX_VALUE;
 
         Mote(Vec3 origin, float release, float life, Vec3 flow, double amp, VfxColour colour, float alpha, double size) {
             this.origin = origin;
@@ -821,7 +859,16 @@ public final class FootworkVfx {
             return 0.41D + 0.18D * (a - 4.0D);
         }
 
+        boolean gather() {
+            return !Float.isNaN(gatherFrom);
+        }
+
         Vec3 at(float now) {
+            if (gather()) {
+                double b = Math.max(0.0D, release - now);
+                return origin.subtract(flow.scale(travel(b) * 1.3D)).add(side.scale(amp * Math.sin(Math.PI * Math.min(b, 6.0D) / 6.0D)))
+                        .add(-nx * b, -up * b, -nz * b);
+            }
             double a = Math.max(0.0D, now - release);
             return origin.add(flow.scale(travel(a))).add(side.scale(amp * Math.sin(Math.PI * Math.min(a, 6.0D) / 6.0D)))
                     .add(nx * a, up * a, nz * a);
@@ -896,9 +943,19 @@ public final class FootworkVfx {
                 }
             }
         }
+        silhouetteMotes(pts, at, born, flow, colour, alpha, cap, hold, sweep, life, Float.NaN);
+    }
+
+    /**
+     * Частицы силуэта из готовых точек. {@code gatherFrom} не NaN — обратный ход: частицы прилетают
+     * из потока (против {@code flow}) и собираются в позу к {@code born + hold + sweep}.
+     */
+    private static void silhouetteMotes(List<Vec3> pts, Vec3 at, float born, Vec3 flow, VfxColour colour, float alpha, int cap,
+                                        float hold, float sweep, float life, float gatherFrom) {
         if (pts.isEmpty()) {
             return;
         }
+        pts = new ArrayList<>(pts);
         java.util.Collections.shuffle(pts, RNG);
         if (pts.size() > cap) {
             pts = pts.subList(0, cap);
@@ -915,14 +972,34 @@ public final class FootworkVfx {
             double s = (p.subtract(at).dot(flow) - lo) / Math.max(1.0E-3D, hi - lo);
             double h = Mth.clamp((p.y - at.y) / 2.0D, 0.0D, 1.0D);
             float rel = born + hold + sweep * (float) (1.0D - s) * 0.85F + sweep * 0.15F * (float) h + (RNG.nextFloat() - 0.5F) * 0.8F;
-            MOTES.add(new Mote(p, rel, life + RNG.nextFloat() * 2.0F, flow, amp, colour, alpha, 0.088D * 1.08D));
+            Mote m = new Mote(p, rel, life + RNG.nextFloat() * 2.0F, flow, amp, colour, alpha, 0.088D * 1.08D);
+            if (!Float.isNaN(gatherFrom)) {
+                // Сборка: передняя по ходу сторона садится последней — ветер «набегает» на тело.
+                Mote g = new Mote(p, born + hold + sweep * (float) s + (RNG.nextFloat() - 0.5F) * 0.6F, life, flow, amp, colour, alpha,
+                        0.088D * 1.08D);
+                g.gatherFrom = gatherFrom;
+                m = g;
+            }
+            MOTES.add(m);
         }
+    }
+
+    /** Точки силуэта позы игрока (лицевые к камере грани коробок модели), без частиц. */
+    private static List<Vec3> posePoints(AbstractClientPlayer player, Vec3 at, float yaw, boolean outline) {
+        List<Vec3> out = new ArrayList<>();
+        int before = MOTES.size();
+        silhouette(player, at, yaw, 0.0F, new Vec3(1.0D, 0.0D, 0.0D), AIR_BODY, 0.0F, 100000, 0.0F, 0.0F, 0.0F, outline);
+        for (int i = before; i < MOTES.size(); i++) {
+            out.add(MOTES.get(i).origin);
+        }
+        MOTES.subList(before, MOTES.size()).clear();
+        return out;
     }
 
     /** Отрисовка частицы силуэта: квадрат, вытягивающийся вдоль потока и сужающийся поперёк. */
     private static void mote(VertexConsumer c, PoseStack.Pose pose, Vec3 camera, Mote m, float now) {
         float a = now - m.release;
-        if (now > m.release + m.life) {
+        if (now > m.release + m.life || now < m.visibleFrom) {
             return;
         }
         Vec3 p = m.at(now);
@@ -938,10 +1015,17 @@ public final class FootworkVfx {
         }
         along = along.normalize();
         Vec3 across = along.cross(f).normalize();
-        double k = Mth.clamp(a / 3.0D, 0.0D, 1.0D);
+        double k = m.gather() ? Mth.clamp(-a / 3.0D, 0.0D, 1.0D) : Mth.clamp(a / 3.0D, 0.0D, 1.0D);
         double len = m.size * 0.5D * (1.0D + k * 1.0D);
         double wid = m.size * 0.5D * (1.0D - 0.65D * k);
         float alpha = m.alpha * Mth.clamp((m.life - Math.max(0.0F, a)) / 2.0F, 0.0F, 1.0F) * nearFade(p, camera);
+        if (m.gather()) {
+            if (now < m.gatherFrom) {
+                return;
+            }
+            alpha = m.alpha * Mth.clamp((now - m.gatherFrom) / 2.0F, 0.0F, 1.0F) * Mth.clamp((m.life - Math.max(0.0F, a)) / m.life, 0.0F, 1.0F)
+                    * nearFade(p, camera);
+        }
         if (alpha <= 0.0F) {
             return;
         }
@@ -1326,6 +1410,49 @@ public final class FootworkVfx {
             // только после 1,5 блока хода; одна блёклая кромка позы, которую сдувает назад. Строя
             // двойников нет — след возникает во времени.
             s.moved += step.length();
+            float bodyYaw = e instanceof LivingEntity lv ? lv.yBodyRot : e.getYRot();
+            Vec3 dirNow = step.lengthSqr() > 4.0E-4D ? step.normalize() : Vec3.directionFromRotation(0.0F, bodyYaw);
+            s.dirs.addLast(dirNow);
+            if (s.dirs.size() > 7) {
+                s.dirs.removeFirst();
+            }
+            if (s.layer >= 2 && e instanceof AbstractClientPlayer pl) {
+                // Тело «дымится» по кромке: раз в 6 тиков с контура позы срывается редкая горсть
+                // частиц и уходит назад тем же полем, что и при исчезновении (тише, чем вход).
+                if (now % 6 == 0 && step.lengthSqr() > 1.0E-4D) {
+                    silhouette(pl, pos, pl.yBodyRot, now, dirNow.scale(-1.0D), hex(0x9FB8C4), 0.16F, 36, 0.0F, 2.0F, 4.0F, true);
+                }
+                // Теневые копии «повсюду» (автор 03.10): рядом из ветра собирается копия в своей позе,
+                // стоит ~0,4 с и снова рассыпается в ветер — тем же способом, что принятые Миг и Смерть.
+                if (s.layer >= 3 && now - s.lastClone >= (s.layer >= 5 ? 7 : 10) && s.clones.size() < 3) {
+                    s.lastClone = now;
+                    double th = RNG.nextDouble() * Math.PI * 2.0D;
+                    double rr = 1.6D + 2.0D * RNG.nextDouble();
+                    Vec3 at = pos.add(Math.cos(th) * rr, 0.0D, Math.sin(th) * rr);
+                    float cy = RNG.nextFloat() * 360.0F;
+                    Vec3 wind = Vec3.directionFromRotation(0.0F, cy + 90.0F + RNG.nextFloat() * 180.0F);
+                    List<Vec3> pose = posePoints(pl, at, cy, false);
+                    // 0–3: собирается из ветра; 3–11: стоит; 11–16: рассыпается.
+                    silhouetteMotes(pose, at, now, wind, hex(0x9FB8C4), 0.32F, 170, 0.0F, 3.0F, 1.5F, now - 1.0F);
+                    int first = MOTES.size();
+                    silhouetteMotes(pose, at, now + 3.0F, wind, hex(0x9FB8C4), 0.32F, 170, 8.0F, 5.0F, 5.0F, Float.NaN);
+                    for (int i = first; i < MOTES.size(); i++) {
+                        MOTES.get(i).visibleFrom = now + 3.5F;
+                    }
+                    RIBBONS.add(sheet(spiral(at, wind, 0.5D, 0.3D, 1.4D, Math.PI, Math.toRadians(220.0D), 14), now + 10.0F, 2.0F, 2.0F,
+                            5.0F, 0.13D, hex(0x91B5C1), 0.32F, wind.scale(0.14D)));
+                    s.clones.add(now + 17);
+                }
+                s.clones.removeIf(end -> end < now);
+                // Поза остаётся на миг на повороте и сдувается (спецификация формы).
+                if (s.layer >= 3 && s.dirs.size() == 7 && dirNow.dot(s.dirs.peekFirst()) < Math.cos(Math.toRadians(25.0D))
+                        && now - s.lastTurn >= 8) {
+                    s.lastTurn = now;
+                    silhouette(pl, pos, pl.yBodyRot, now, s.dirs.peekFirst().scale(-1.0D), hex(0x7899A8), 0.24F, 160, 3.0F, 5.0F, 5.0F, false);
+                    RIBBONS.add(sheet(spiral(pos, s.dirs.peekFirst(), 0.5D, 0.3D, 1.3D, Math.PI, Math.toRadians(200.0D), 14), now, 2.0F,
+                            2.0F, 5.0F, 0.13D, hex(0x91B5C1), 0.3F, s.dirs.peekFirst().scale(-0.12D)));
+                }
+            }
             if (s.layer >= 2 && now - s.lastGhost >= 20 && s.moved >= 1.5D && step.lengthSqr() > 1.0E-4D
                     && e instanceof AbstractClientPlayer player) {
                 s.moved = 0.0D;
@@ -1354,9 +1481,28 @@ public final class FootworkVfx {
             PUFFS.add(new Puff(pos.add(back.scale(0.4D + 0.4D * i)).add(0.0D, 0.6D + 0.4D * i, 0.0D), back.scale(0.02D), now + 3.0F,
                     8.0F, 0.18D + 0.05D * i, 0.6F, 0.14F, true));
         }
+        // Две ленты обвивают тело на входе (как у принятого Мига), тёмнее — тень, а не вспышка.
+        RIBBONS.add(sheet(spiral(pos, back, 0.55D, 0.2D, 1.5D, 0.0D, Math.toRadians(260.0D), 18), now, 2.0F, 3.0F, 7.0F, 0.19D,
+                hex(0x91B5C1), 0.36F, back.scale(0.16D)));
+        RIBBONS.add(sheet(spiral(pos, back, 0.48D, 1.2D, 0.6D, Math.PI, Math.toRadians(-200.0D), 14), now + 0.5F, 2.0F, 3.0F, 7.0F,
+                0.12D, hex(0x7FA3B2), 0.3F, back.scale(0.13D)));
         if (layer >= 2 && e instanceof AbstractClientPlayer player) {
-            silhouette(player, pos, player.yBodyRot, now, back, hex(0x91B5C1), 0.3F, 200, 3.0F, 8.0F, 5.0F, false);
+            silhouette(player, pos, player.yBodyRot, now, back, hex(0x91B5C1), 0.32F, 220, 3.0F, 8.0F, 5.0F, false);
         }
+    }
+
+    /** Выход из Тени: тело собирается из ветра — частицы прилетают сзади и садятся в позу, лента раскручивается. */
+    private static void shadowExit(Entity e, int layer) {
+        if (layer < 2 || !(e instanceof AbstractClientPlayer player)) {
+            return;
+        }
+        float now = clientTicks;
+        Vec3 pos = e.position();
+        Vec3 look = Vec3.directionFromRotation(0.0F, player.yBodyRot);
+        List<Vec3> pose = posePoints(player, pos, player.yBodyRot, false);
+        silhouetteMotes(pose, pos, now + 2.0F, look, hex(0x9FB8C4), 0.3F, 180, 0.0F, 4.0F, 1.5F, now);
+        RIBBONS.add(sheet(spiral(pos, look, 0.6D, 1.5D, 0.2D, Math.PI, Math.toRadians(-240.0D), 16), now, 2.0F, 2.0F, 5.0F, 0.16D,
+                hex(0x91B5C1), 0.34F, new Vec3(0.0D, 0.01D, 0.0D)));
     }
 
     private static void age(List<Node> nodes) {
