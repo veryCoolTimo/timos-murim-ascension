@@ -9,10 +9,10 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * Взрыв Цветущей Сливы. Стадии: 0 — стена заложена (origin — ступни мастера, centre — центр стены
- * на земле, yaw — нормаль стены), 1 — прыжок-удар (origin — старт, centre — точка остановки),
- * 2 — меч вошёл в стену, взрыв (origin — точка удара, centre — origin + ось выброса), 3 — выброс
- * ПОПАЛ (centre — точка попадания, targetId — задетый).
+ * Взрыв Цветущей Сливы. Стадии: 0 — не используется (была стена кольев, убрана 03.10), 1 — удар
+ * (origin — ступни мастера, centre — точка удара, yaw — направление удара), 2 — клинок дошёл до
+ * точки удара, взрыв (origin — точка удара, centre — origin + ось выброса), 3 — выброс ПОПАЛ
+ * (centre — точка попадания, targetId — задетый; yaw 1 — дорез бурей).
  */
 public record ExplosionPayload(int entityId, Vec3 origin, Vec3 centre, float yaw, int layer, int stage, int targetId)
         implements CustomPacketPayload {
