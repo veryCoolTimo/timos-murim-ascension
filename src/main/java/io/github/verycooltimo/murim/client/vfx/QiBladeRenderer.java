@@ -77,7 +77,9 @@ public final class QiBladeRenderer {
             // Лёгкий изгиб оси: волна бежит к острию.
             double sway = 0.035D * k * Mth.sin(time * 0.45F - (float) k * 5.0F);
             double sway2 = 0.025D * k * Mth.cos(time * 0.38F - (float) k * 4.0F + 1.0F);
-            pts[i] = base.add(dir.scale(len * k)).add(a.scale(sway)).add(b.scale(sway2));
+            // Реф, кадр 4: лезвие слегка изогнуто серпом, как язык пламени.
+            double bow = 0.13D * Math.sin(Math.PI * k) * scale;
+            pts[i] = base.add(dir.scale(len * k)).add(a.scale(sway + bow)).add(b.scale(sway2));
             // Сужение к острию, языки пламени: шум по сегменту, бегущий от кулака.
             double taper = k < 0.06D ? 0.7D + k * 5.0D : 1.0D - 0.65D * Math.pow((k - 0.06D) / 0.94D, 1.6D);
             // Остриё: последние 20 % сходятся в точку (codex 03.10).
@@ -136,21 +138,39 @@ public final class QiBladeRenderer {
             float[] deep = grad(DEEP, DEEP_TIP, k);
             float[] flame = k < 0.5F ? grad(FLAME, MID, k * 2.0F) : grad(MID, TIP, (k - 0.5F) * 2.0F);
             float[] mid = k < 0.4F ? grad(HOT, MID, k / 0.4F) : grad(MID, TIP_LIGHT, (k - 0.4F) / 0.6F);
-            VfxDraw.segment(glow, last, pts[i], pts[i + 1], cam, 0.95D * hw * scale, 0.30F * fade, deep[0], deep[1], deep[2]);
-            VfxDraw.segment(glow, last, pts[i], pts[i + 1], cam, 0.55D * hw * scale, 0.65F * fade, flame[0], flame[1], flame[2]);
-            VfxDraw.segment(glow, last, pts[i], pts[i + 1], cam, 0.30D * hw * scale, 0.85F, mid[0], mid[1], mid[2]);
+            VfxDraw.segment(glow, last, pts[i], pts[i + 1], cam, 0.55D * hw * scale, 0.22F * fade, deep[0], deep[1], deep[2]);
+            VfxDraw.segment(glow, last, pts[i], pts[i + 1], cam, 0.33D * hw * scale, 0.6F * fade, flame[0], flame[1], flame[2]);
+            VfxDraw.segment(glow, last, pts[i], pts[i + 1], cam, 0.20D * hw * scale, 0.95F, mid[0], mid[1], mid[2]);
         }
-        // «Интересные формы»: две ленты разного цвета винтом обвивают клинок и текут к острию —
-        // циановая и глубоко-фиолетовая, радиус дышит вместе с пламенем.
-        for (int n = 0; n < 2; n++) {
-            float[] col = n == 0 ? CYAN : DEEP_TIP;
-            for (int i = 1; i < SEGMENTS - 2; i++) {
-                double k0 = i / (double) SEGMENTS, k1 = (i + 1) / (double) SEGMENTS;
-                double ph0 = k0 * 9.0D - time * 0.35D + n * Math.PI, ph1 = k1 * 9.0D - time * 0.35D + n * Math.PI;
-                double r0 = 0.2D * w[i] * scale, r1 = 0.2D * w[i + 1] * scale;
-                Vec3 q0 = pts[i].add(a.scale(Math.cos(ph0) * r0)).add(b.scale(Math.sin(ph0) * r0));
-                Vec3 q1 = pts[i + 1].add(a.scale(Math.cos(ph1) * r1)).add(b.scale(Math.sin(ph1) * r1));
-                VfxDraw.segment(glow, last, q0, q1, cam, 0.035D * scale * w[i], n == 0 ? 0.55F : 0.75F, col[0], col[1], col[2]);
+        // Реф, кадр 4: от лезвия вверх, вдоль руки и выше, поднимаются длинные завитки пламени ци —
+        // тонкие, сужающиеся, закрученные; каждый живёт 12–22 тика, рождается на клинке, всплывает
+        // вверх и тает. Это и есть «пульсирует как огонь»: силуэт всё время рвётся и обновляется.
+        for (int n = 0; n < 10; n++) {
+            double lifeT = 12.0D + 10.0D * hash(seed + 71, n);
+            double age = (time + hash(seed + 73, n) * 60.0D) / lifeT;
+            int gen = (int) Math.floor(age);
+            double life = age - gen;
+            double k0 = 0.08D + 0.75D * hash(seed + 79, n * 977 + gen);
+            int si = (int) Math.min(SEGMENTS, Math.round(k0 * SEGMENTS));
+            double side = hash(seed + 83, n * 977 + gen) < 0.5D ? -1.0D : 1.0D;
+            double wispLen = (0.7D + 0.8D * hash(seed + 89, n * 977 + gen)) * scale;
+            float alpha = (float) (Math.min(1.0D, life * 5.0D) * (1.0D - life)) * 1.0F;
+            float[] col = grad(HOT, FLAME, (float) (0.3D + 0.7D * k0));
+            Vec3 prev = null;
+            double prevW = 0.0D;
+            for (int j = 0; j <= 8; j++) {
+                double u = j / 8.0D;
+                double curl = Math.sin(u * 4.0D + time * 0.25D + n) * 0.12D * u * scale;
+                Vec3 p = pts[si]
+                        .add(dir.scale(-(wispLen * u + 0.25D * life * scale)))
+                        .add(a.scale(side * (0.05D * scale + 0.18D * u * u * scale) + curl))
+                        .add(b.scale(Math.cos(u * 3.0D + n) * 0.06D * u * scale));
+                double ww = 0.10D * scale * (1.0D - 0.85D * u) * w[si];
+                if (prev != null) {
+                    VfxDraw.segment(glow, last, prev, p, cam, 0.5D * (ww + prevW), alpha * (float) (1.0D - 0.5D * u), col[0], col[1], col[2]);
+                }
+                prev = p;
+                prevW = ww;
             }
         }
         // Языки пламени срываются с кромок и уходят назад-вверх по клинку.
@@ -176,7 +196,7 @@ public final class QiBladeRenderer {
         int frame = (int) (time / 3.0F);
         java.util.List<Vec3[]> arcs = new java.util.ArrayList<>();
         for (int n = 0; n < 3; n++) {
-            if (n > 1 || hash(seed + 31, frame * 3 + n) < 0.35D) {
+            if (n > 0 || hash(seed + 31, frame * 3 + n) < 0.4D) {
                 continue;
             }
             double start = hash(seed + 41, frame * 3 + n) * 0.6D;
@@ -200,7 +220,7 @@ public final class QiBladeRenderer {
         // Раскалённая сердцевина и сердцевины дуг: узкие, чёткие.
         VertexConsumer core = buffers.getBuffer(MurimRenderTypes.airBand());
         for (int i = 0; i < SEGMENTS - 1; i++) {
-            VfxDraw.segment(core, last, pts[i], pts[i + 1], cam, 0.075D * scale * w[i], 1.0F, CORE[0], CORE[1], CORE[2]);
+            VfxDraw.segment(core, last, pts[i], pts[i + 1], cam, 0.05D * scale * w[i], 1.0F, CORE[0], CORE[1], CORE[2]);
             // Тонкий циановый край вдоль ядра (кадр 5).
             if (noise(seed + 17, i - (int) (time * 0.7F), 0) > 0.1D)
             VfxDraw.segment(core, last, pts[i].add(a.scale(0.09D * scale * w[i])), pts[i + 1].add(a.scale(0.09D * scale * w[i + 1])), cam, 0.012D * scale, 0.8F, CYAN[0], CYAN[1], CYAN[2]);
