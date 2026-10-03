@@ -450,16 +450,44 @@ public final class PillService {
         return sum / game.clots().size() >= STORM_QUALITY;
     }
 
-    /** Ударная волна взрыва: отбрасывает и ранит существ вокруг, блоки не трогает. */
+    /** Радиус взрыва (автор 03.10: «буквальный, в радиусе 3–5 блоков, с блоками»). */
+    static final float STORM_RADIUS = 4.0F;
+
+    /**
+     * Взрыв как от ТНТ: ломает блоки в радиусе ~4, ранит и отбрасывает существ. Самого медитирующего
+     * не ранит и не двигает, и блоки под ним (3×3 под ногами) остаются — он сидит на столбе посреди
+     * воронки, медитация не срывается. Частицы и звук взрыва рассылает сам сервер.
+     * API: reference/minecraft-src/net/minecraft/world/level/Level.java#explode,
+     * reference/minecraft-src/net/minecraft/world/level/ExplosionDamageCalculator.java
+     */
     private static void stormBlast(ServerPlayer player) {
         var level = player.serverLevel();
-        for (var e : level.getEntitiesOfClass(net.minecraft.world.entity.LivingEntity.class,
-                player.getBoundingBox().inflate(7.0D), e -> e != player && e.isAlive())) {
-            var d = e.position().subtract(player.position());
-            double dist = Math.max(0.5D, d.length());
-            double k = 1.0D - dist / 8.0D;
-            e.knockback(1.6D * k, -d.x / dist, -d.z / dist);
-            e.hurt(level.damageSources().explosion(player, player), (float) (8.0D * k));
+        net.minecraft.core.BlockPos feet = player.blockPosition();
+        var calc = new net.minecraft.world.level.ExplosionDamageCalculator() {
+            @Override
+            public boolean shouldBlockExplode(net.minecraft.world.level.Explosion explosion, net.minecraft.world.level.BlockGetter reader,
+                                              net.minecraft.core.BlockPos pos, net.minecraft.world.level.block.state.BlockState state, float power) {
+                boolean pedestal = Math.abs(pos.getX() - feet.getX()) <= 1 && Math.abs(pos.getZ() - feet.getZ()) <= 1
+                        && pos.getY() < feet.getY();
+                return !pedestal && super.shouldBlockExplode(explosion, reader, pos, state, power);
+            }
+
+            @Override
+            public boolean shouldDamageEntity(net.minecraft.world.level.Explosion explosion, net.minecraft.world.entity.Entity entity) {
+                return entity != player && super.shouldDamageEntity(explosion, entity);
+            }
+
+            @Override
+            public float getKnockbackMultiplier(net.minecraft.world.entity.Entity entity) {
+                return entity == player ? 0.0F : super.getKnockbackMultiplier(entity);
+            }
+        };
+        setWaveHit(player, true);
+        try {
+            level.explode(player, null, calc, player.getX(), player.getY() + 0.5D, player.getZ(), STORM_RADIUS, false,
+                    net.minecraft.world.level.Level.ExplosionInteraction.TNT);
+        } finally {
+            setWaveHit(player, false);
         }
     }
 

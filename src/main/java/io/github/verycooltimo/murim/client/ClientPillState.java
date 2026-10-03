@@ -201,18 +201,9 @@ public final class ClientPillState {
         }
         if (finale > 0) {
             finale--;
-            // Взрыв как от ТНТ в миг выброса: ванильные вспышки взрыва, звук, сильный толчок камеры.
-            // API: reference/minecraft-src/net/minecraft/core/particles/ParticleTypes.java#EXPLOSION_EMITTER
+            // Взрыв как от ТНТ в миг выброса — сильный толчок камеры.
             if (finaleStorm && finaleRare && FINALE_TICKS - finale == BURST_AGE) {
-                var p = mc.player.position().add(0, 0.8D, 0);
-                mc.level.addParticle(net.minecraft.core.particles.ParticleTypes.EXPLOSION_EMITTER, p.x, p.y, p.z, 1.0D, 0.0D, 0.0D);
-                for (int i = 0; i < 8; i++) {
-                    double a = i * Math.PI / 4;
-                    mc.level.addParticle(net.minecraft.core.particles.ParticleTypes.EXPLOSION, p.x + Math.cos(a) * 2.2D,
-                            p.y - 0.4D, p.z + Math.sin(a) * 2.2D, 1.0D, 0.0D, 0.0D);
-                }
-                mc.level.playLocalSound(p.x, p.y, p.z, net.minecraft.sounds.SoundEvents.GENERIC_EXPLODE.value(),
-                        net.minecraft.sounds.SoundSource.PLAYERS, 1.0F, 0.9F, false);
+                // Сам взрыв (блоки, частицы, звук) делает сервер; здесь — только толчок камеры.
                 CameraShakeHandler.request(1.0F);
             }
         }
