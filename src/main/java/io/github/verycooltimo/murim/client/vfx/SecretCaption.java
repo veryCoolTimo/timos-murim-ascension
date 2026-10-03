@@ -83,6 +83,15 @@ final class SecretCaption {
     /** Длительность ухода строки, тиков. */
     private static final float ERASE = 4.0F;
     private static final float[] POP = {0.5F, 1.1F, 1.08F, 1.05F, 1.03F, 1.0F};
+
+    /** Масштаб появления на дробном возрасте строки: линейно между ключами POP (по кадру на ключ). */
+    private static float popAt(float la) {
+        if (la >= POP.length - 1) {
+            return 1.0F;
+        }
+        int i = (int) la;
+        return Mth.lerp(la - i, POP[i], POP[i + 1]);
+    }
     /** Состояние текущей строки для {@link #glyphs}: прогресс ухода и сила удара. */
     private static float eraseNow;
     private static float hitNow;
@@ -129,7 +138,7 @@ final class SecretCaption {
 
         // Раскладка по макету автора 03.10: слева сверху школа мелко в три строки, под ней приём
         // по слову в строку, заметно меньше прежнего (буквы школы ~2 %, приёма ~6 % высоты экрана).
-        float small = Math.max(0.9F, h * 0.03F / GLYPH_H);
+        float small = Math.max(0.55F, h * 0.021F / GLYPH_H);
         float big = Math.max(1.6F, h * 0.085F / GLYPH_H);
         float lh = font.lineHeight;
         float ox = w * 0.065F;
@@ -145,25 +154,19 @@ final class SecretCaption {
             erase += 0.3F;
             y += LINE_SMALL * small;
         }
-        y += 2.0F * small;
+        y += 7.0F * small;
+        // Автор 03.10: сначала вся школа разом, потом приём по слову («Ливень» → «Цветущей» → «Сливы»).
+        float wordAt = 4.0F;
         for (String s : form.getString().toUpperCase(Locale.ROOT).split(" ")) {
             float wd = width(font, s) * big * SQUEEZE;
-            lines.add(new Line(s, 0.0F, y, big, wd, 0.0F, 0.01F, erase));
+            lines.add(new Line(s, 0.0F, y, big, wd, wordAt, 0.01F, erase));
+            wordAt += 3.0F;
             erase += 0.5F;
             y += LINE_BIG * big;
         }
         float blockH = y;
 
-        // Появление (автор 03.10, «как в AE»): кадрами скачком по POP,
-        // прозрачность вместе с ним; без плавных переходов.
-        // 03.10 автор: 50 → 110 → 108 → 105 → 103 → 100 % — плавнее возвращается.
-        int frame = (int) age;
-        float pop = frame < POP.length ? POP[Math.max(0, frame)] : 1.0F;
-        float alpha = frame <= 0 ? 0.45F : 1.0F;
-        g.pose().pushPose();
-        g.pose().translate(ox, oy + blockH * 0.5F, 0.0F);
-        g.pose().scale(pop, pop, 1.0F);
-        g.pose().translate(-ox, -(oy + blockH * 0.5F), 0.0F);
+        float alpha = 1.0F;
         // Толчок от удара ливня: дрожь по тикам, без размытия.
         int jt = (int) (age * 2.0F);
         float shake = hit * (float) ClientConfig.cameraShake();
@@ -176,10 +179,16 @@ final class SecretCaption {
 
         for (int i = 0; i < lines.size(); i++) {
             Line line = lines.get(i);
-            float p = Mth.clamp((age - line.revealFrom) / line.revealDur, 0.0F, 1.0F);
-            if (p <= 0.0F) {
+            float la = age - line.revealFrom;
+            if (la < 0.0F) {
                 continue;
             }
+            float p = 1.0F;
+            // Появление строки (автор 03.10, «как в AE», плавнее): масштаб по ключам POP —
+            // 50 → 110 → 108 → 105 → 103 → 100 % — с промежуточными значениями между кадрами,
+            // прозрачность догоняет за первый кадр.
+            float pop = popAt(la);
+            float alphaL = Mth.clamp(0.4F + la * 0.6F, 0.0F, 1.0F);
             float e = Mth.clamp((age - line.eraseFrom) / ERASE, 0.0F, 1.0F);
             float ePrev = Mth.clamp((age - dt - line.eraseFrom) / ERASE, 0.0F, 1.0F);
             if (e >= 1.0F) {
@@ -198,8 +207,8 @@ final class SecretCaption {
             int bottom = Mth.ceil(ly + hgt + pad);
 
             // Обрезка — в экранных координатах: пересчитать на масштаб появления вокруг якоря.
-            float ax = ox;
-            float ay = oy + blockH * 0.5F;
+            float ax = lx;
+            float ay = ly + hgt * 0.5F;
             g.enableScissor(Mth.floor(ax + (left - ax) * pop) - 1, Mth.floor(ay + (top - ay) * pop) - 1,
                     Mth.ceil(ax + (head - ax) * pop) + 1, Mth.ceil(ay + (bottom - ay) * pop) + 1);
             eraseNow = e;
@@ -207,20 +216,23 @@ final class SecretCaption {
             PoseStack pose = g.pose();
             pose.pushPose();
             try {
+                pose.translate(ax, ay, 0.0F);
+                pose.scale(pop, pop, 1.0F);
+                pose.translate(-ax, -ay, 0.0F);
                 pose.translate(lx, ly, 0.0F);
                 pose.mulPose(new Matrix4f(1.0F, 0.0F, 0.0F, 0.0F, SHEAR, 1.0F, 0.0F, 0.0F,
                         0.0F, 0.0F, 1.0F, 0.0F, 0.0F, 0.0F, 0.0F, 1.0F));
                 pose.scale(sc * SQUEEZE, sc, 1.0F);
-                drawLayers(g, font, line.text, alpha);
+                drawLayers(g, font, line.text, alphaL);
                 float lineW = line.width / (line.scale * SQUEEZE);
                 // Фактура внутри глифов; UV — от экранного размера, чтобы плитка была одной на всех строках.
                 float u0 = lx / tile + flowU;
                 float v0 = ly / tile + flowV;
                 float su = sc * SQUEEZE / tile;
                 float sv = sc / tile;
-                fill(g, lineW, GLYPH_H, u0, v0, su, sv, 1.0F, 1.0F, 1.0F, alpha, false);
+                fill(g, lineW, GLYPH_H, u0, v0, su, sv, 1.0F, 1.0F, 1.0F, alphaL, false);
                 if (hit > 0.0F && ClientConfig.SCREEN_FLASHES.get()) {
-                    fill(g, lineW, GLYPH_H, u0, v0, su, sv, 1.0F, 1.0F, 1.0F, 0.75F * hit * alpha, true);
+                    fill(g, lineW, GLYPH_H, u0, v0, su, sv, 1.0F, 1.0F, 1.0F, 0.75F * hit * alphaL, true);
                 }
             } finally {
                 pose.popPose();
@@ -270,7 +282,6 @@ final class SecretCaption {
                 }
             }
         }
-        g.pose().popPose();
         updateAndDrawPetals(g, dt, alpha);
     }
 
