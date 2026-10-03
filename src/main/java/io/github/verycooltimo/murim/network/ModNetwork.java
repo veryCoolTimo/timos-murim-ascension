@@ -122,6 +122,15 @@ public final class ModNetwork {
                 (payload, context) -> ClientPayloadBridge.handleScatter(payload));
         registrar.playToClient(DomePayload.TYPE, DomePayload.STREAM_CODEC,
                 (payload, context) -> ClientPayloadBridge.handleDome(payload));
+        registrar.playToClient(SeaPayload.TYPE, SeaPayload.STREAM_CODEC,
+                (payload, context) -> ClientPayloadBridge.handleSea(payload));
+        // Море Цветущей Сливы: R зажат — намерение продлить, решает сервер.
+        registrar.playToServer(SeaHoldPayload.TYPE, SeaHoldPayload.STREAM_CODEC,
+                (payload, context) -> {
+                    if (context.player() instanceof ServerPlayer serverPlayer) {
+                        io.github.verycooltimo.murim.technique.SeaExecutor.hold(serverPlayer, payload.held());
+                    }
+                });
         registrar.playToClient(TangPayload.TYPE, TangPayload.STREAM_CODEC,
                 (payload, context) -> ClientPayloadBridge.handleTang(payload));
         registrar.playToClient(FallingPetalPayload.TYPE, FallingPetalPayload.STREAM_CODEC,
