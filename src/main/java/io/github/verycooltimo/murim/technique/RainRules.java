@@ -48,18 +48,25 @@ public final class RainRules {
     public static final int BLOOM_FULL = 104;
     /** Лепестки идут к цели по трём S-образным нитям. */
     public static final int STREAM = 104;
+    /**
+     * Автор 03.10: все частицы цветка медленно ползут к противнику (но не вплотную), потом
+     * резко вниз. С этого тика лепестки цветка стекают к точке над целью, до первой волны.
+     */
+    public static final int DRIFT = 112;
+    /** Доля пути цветок → точка над целью, которую лепестки проходят к ливню: «не близко». */
+    public static final double DRIFT_SHARE = 0.45D;
     /** Подвешенное ожидание: нити замирают, ядро дышит. */
-    public static final int STILL = 124;
+    public static final int STILL = 140;
     /** Надпись — в паузе перед ливнем. */
-    public static final int CAPTION = 118;
-    /** Три волны ливня: выпуск и касание через {@link #FALL} тика. */
-    public static final int[] COHORTS = {128, 133, 138};
+    public static final int CAPTION = 132;
+    /** Три волны ливня: выпуск и касание через {@link #FALL} тика (сдвинуты на 16 ради медленного сползания; через 3 тика — «резко вниз», автор 03.10). */
+    public static final int[] COHORTS = {144, 147, 150};
     public static final int FALL = 4;
-    public static final int AFTER = 144;
+    public static final int AFTER = 160;
     public static final int END = 200;
 
     /** Высота ядра над ступнями цели и вынос в сторону мастера (виден от первого лица). */
-    public static final double CORE_HEIGHT = 7.2D;
+    public static final double CORE_HEIGHT = 9.0D;
     public static final double CORE_OFFSET = 2.0D;
     /** Радиус пятна ливня. */
     public static final double RAIN_RADIUS = 1.6D;

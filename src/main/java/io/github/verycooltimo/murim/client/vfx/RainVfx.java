@@ -506,14 +506,16 @@ public final class RainVfx {
     /** Ось доли {@code k}: пять неравных углов, одна доля подвёрнута. */
     private static final double[] LOBE_ANGLE = {0.0D, 76.0D, 139.0D, 213.0D, 289.0D};
     private static final double[] LOBE_LEN = {1.0D, 0.9D, 1.06D, 0.84D, 0.96D};
+    private static final double FLOWER_R = 7.0D;
 
     /** Точка доли: s — от сердцевины к краю, l — поперёк (−1…1); доля чашей выгнута к зрителю. */
     private static Vec3 lobePoint(Cast c, int k, double sPos, double l, double t, double depth) {
         Vec3[] f = flowerBasis(c, t);
         double op = open(t);
         double breath = 1.0D + 0.04D * Math.sin(t * Math.PI * 2.0D / 28.0D + k * 1.3D);
-        double rMax = 5.0D * c.scale * LOBE_LEN[k] * breath;
-        double rc = 0.9D * c.scale;
+        // Автор 03.10: «цветок огромный» — доли 7 блоков вместо 5.
+        double rMax = FLOWER_R * c.scale * LOBE_LEN[k] * breath;
+        double rc = 1.2D * c.scale;
         double ang = Math.toRadians(LOBE_ANGLE[k] + 3.0D * Math.sin(t * 0.07D + k * 2.0D));
         Vec3 axis = f[1].scale(Math.cos(ang)).add(f[2].scale(Math.sin(ang)));
         Vec3 across = f[0].cross(axis).normalize();
@@ -523,7 +525,7 @@ public final class RainVfx {
                 * (1.0D - 0.12D * Math.exp(-Math.pow(l * 6.0D, 2.0D)) * Math.max(0.0D, sPos - 0.85D) * 6.0D);
         // Бутон: доли сложены к оси (вдоль нормали), раскрытый — чаша.
         double fold = Math.toRadians(80.0D * (1.0D - op) + (k == 3 ? 22.0D : 0.0D) * op);
-        double cup = 1.4D * c.scale * sPos * sPos;
+        double cup = 1.9D * c.scale * sPos * sPos;
         Vec3 radial = axis.scale(Math.cos(fold)).add(f[0].scale(-Math.sin(fold)));
         return c.core.add(radial.scale(r * Math.max(0.15D, op))).add(across.scale(l * hw * Math.max(0.15D, op)))
                 .add(f[0].scale(-cup * op + depth));
@@ -1100,7 +1102,28 @@ public final class RainVfx {
         double l = Mth.clamp(s.e + 0.08D * Math.sin(t * 0.11D + s.w * 1.7D), -1.0D, 1.0D);
         // Объём: лепестки расходятся в толщину чаши до ±0,9 блока у сердца, тоньше к краю.
         double depth = (0.9D - 0.6D * s.a) * Math.sin(s.w * 3.0D) + 0.08D * Math.sin(t * 0.13D + s.w);
-        return lobePoint(c, s.shell, sPos, l, t, depth * c.scale);
+        Vec3 home = lobePoint(c, s.shell, sPos, l, t, depth * c.scale);
+        double d = drift(t, s.w);
+        if (d <= 0.0D) {
+            return home;
+        }
+        // Каждый лепесток ползёт к своей точке над целью (облако 2–3 блока, 4,5–6 над ногами),
+        // проходит лишь часть пути и висит там до ливня: «не близко и медленно».
+        double ang = s.w * 5.3D;
+        double rr = (1.6D + 1.8D * frac(s.w * 2.9D)) * c.scale;
+        Vec3 aim = c.target.add(Math.cos(ang) * rr, 4.5D + 1.5D * frac(s.w * 4.1D), Math.sin(ang) * rr);
+        return home.lerp(aim, d * RainRules.DRIFT_SHARE * (0.75D + 0.4D * frac(s.w * 1.7D)));
+    }
+
+    /** Сползание цветка к цели: 0 до DRIFT, плавно до 1 к первой волне; у каждого лепестка своя задержка. */
+    private static double drift(double t, double seed) {
+        double lag = 6.0D * frac(seed * 3.7D);
+        double k = Mth.clamp((t - RainRules.DRIFT - lag) / (RainRules.COHORTS[0] - RainRules.DRIFT - 6.0D), 0.0D, 1.0D);
+        return k * k * (3.0D - 2.0D * k);
+    }
+
+    private static double frac(double x) {
+        return x - Math.floor(x);
     }
 
     /** S-нить: из основания своей доли к груди цели, боковые выносы +2,8 → −2,0 → +1,2 → 0. */
@@ -1435,7 +1458,8 @@ public final class RainVfx {
         float grow = (float) Mth.clamp((t - RainRules.BLOOM) / 10.0D, 0.0D, 1.0D);
         float out = (float) Mth.clamp(1.0D - (t - RainRules.COHORTS[1]) / 8.0D, 0.0D, 1.0D)
                 * (c.lostTick >= 0 ? Mth.clamp(1.0F - (clientTicks - c.lostTick) / 12.0F, 0.0F, 1.0F) : 1.0F);
-        float a = grow * out;
+        // Лепестки уходят к цели — кромки долей тают вместе с формой цветка.
+        float a = grow * out * (float) (1.0D - drift(t, 0.0D));
         if (a <= 0.0F) {
             return;
         }
@@ -1702,8 +1726,8 @@ public final class RainVfx {
             for (int k = 0; k < 5; k++) {
                 for (double sp : new double[] {0.25D, 0.5D, 0.75D}) {
                     Vec3 lp = lobePoint(c, k, sp, 0.0D, t, 0.0D);
-                    double hw = 5.0D * c.scale * LOBE_LEN[k] * 0.32D * Math.sin(Math.PI * sp);
-                    PlumVfx.glow(g, pose, camera, lp, hw, 0.1F * grow * out, sp < 0.4D ? SKY_MILK : LOBE_IN);
+                    double hw = FLOWER_R * c.scale * LOBE_LEN[k] * 0.32D * Math.sin(Math.PI * sp);
+                    PlumVfx.glow(g, pose, camera, lp, hw, 0.1F * grow * out * (float) (1.0D - drift(t, 0.0D)), sp < 0.4D ? SKY_MILK : LOBE_IN);
                 }
             }
             Vec3[] fb = flowerBasis(c, t);
