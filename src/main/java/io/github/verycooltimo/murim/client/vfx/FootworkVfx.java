@@ -1672,13 +1672,15 @@ public final class FootworkVfx {
                 double u = i / (double) (m - 1);
                 q[i] = nd.pos;
                 // Лента расширяется к хвосту, как сорванная ткань, и тает; у тела — острая.
-                qw[i] = (0.05D + 0.09D * Math.min(1.0D, age * 1.6D)) * Math.min(1.0D, (1.0D - u) * 5.0D + 0.1D);
+                // Полотно рефа swift step: ширина плавно растёт к хвосту до ~0,4 блока, острые концы.
+                qw[i] = (0.06D + 0.14D * Math.min(1.0D, age * 1.4D)) * Math.min(1.0D, (1.0D - u) * 5.0D + 0.1D)
+                        * Math.min(1.0D, u * 6.0D + 0.15D);
                 qa[i] = (float) Mth.clamp(1.0D - age * age, 0.0D, 1.0D);
             }
             // Насыщеннее голубой — бледный терялся ночью (автор 03.10: «голубой не заметный»).
             VfxColour col = (int) st.get(0).open % 2 == 0 ? RUN_BLUE : RUN_DEEP;
-            strip(c, pose, camera, q, qw, qa, 0.85F, col);
-            strip(c, pose, camera, q, scale(qw, 0.15D), qa, 0.75F, WHITE);
+            strip(c, pose, camera, q, qw, qa, 0.6F, col);
+            stripEdge(c, pose, camera, q, qw, qa, 0.8F, AIR_EDGE);
         }
         if (r.corridor.size() < 2) {
             return;
