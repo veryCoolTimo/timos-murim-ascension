@@ -595,6 +595,7 @@ public final class DevCaptureHandler {
             hold = (t >= 80 && t < 120) || ring.radius() > ring.centre();
         }
         minecraft.options.keyJump.setDown(hold);
+        absorbBot(minecraft);
         // MURIM_CAPTURE_TURN=1 — «крутить мышью» во время ритуала: тело обязано стоять.
         if ("1".equals(System.getenv("MURIM_CAPTURE_TURN")) && state.active()) {
             minecraft.player.turn(8.0D, 0.0D);
@@ -614,7 +615,8 @@ public final class DevCaptureHandler {
         // Сцена семени снимается чаще: вспышка длится полсекунды и между кадрами
         // по десять тиков пропадала целиком.
         // Прорыв — чаще, выход ауры — как вспышка семени: иначе короткие фазы между кадрами пропадают.
-        int step = ClientMeditationState.seedSceneAge() >= 0 || ClientMeditationState.rankUpAge() >= 0 ? 2
+        int step = ClientMeditationState.seedSceneAge() >= 0 || ClientMeditationState.rankUpAge() >= 0
+                || ClientPillState.finaleAge() >= 0 || ClientPillState.absorbing() ? 2
                 : ClientMeditationState.breakthroughAge() >= 0 ? 5 : MEDITATION_FRAME_TICKS;
         if (meditationTicks % step == 0) {
             // Снимок в тике берёт последний отрисованный кадр целиком, с интерфейсом:
@@ -626,6 +628,33 @@ public final class DevCaptureHandler {
         if (meditationTicks == 0) {
             minecraft.options.keyJump.setDown(false);
         }
+    }
+
+    /**
+     * Бот поглощения пилюль: на чтении норова двигает мышь (через настоящий поворот игрока,
+     * тот же путь ввода, что у человека): спокойный — коротко, бурный — в обход.
+     * MURIM_CAPTURE_GREEDY=1 — всегда коротко (снять удары и искажение ци).
+     */
+    private static int botFork = -1;
+
+    private static void absorbBot(Minecraft minecraft) {
+        if (!ClientPillState.absorbing() || minecraft.player == null) {
+            return;
+        }
+        var s = ClientPillState.state();
+        int key = s.clot() * 16 + s.fork();
+        boolean reading = ClientPillState.phase() == io.github.verycooltimo.murim.cultivation.AbsorbGame.Phase.APPROACH
+                && ClientPillState.phaseTicks() >= io.github.verycooltimo.murim.cultivation.AbsorbGame.APPROACH_TICKS
+                        - io.github.verycooltimo.murim.cultivation.AbsorbGame.READ_TICKS + 4;
+        if (!reading || botFork == key) {
+            return;
+        }
+        botFork = key;
+        String mode = System.getenv().getOrDefault("MURIM_CAPTURE_GREEDY", "0");
+        // 1 — всегда коротко; 2 — расчётливый риск: бурный коротко, пока напряжение ниже 40 %.
+        boolean greedy = "1".equals(mode) || "2".equals(mode) && s.strain() < 0.4F;
+        int side = s.temper() == 2 && !greedy ? -s.shortSide() : s.shortSide();
+        minecraft.player.turn(side * 60.0D, 0.0D);
     }
 
     /** Метка ракурса в именах файлов: back, front или угол поворота игрока. */

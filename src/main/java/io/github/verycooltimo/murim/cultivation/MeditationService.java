@@ -89,6 +89,8 @@ public final class MeditationService {
             player.displayClientMessage(Component.translatable("murim.meditation.begin." + cultivation.beats()), true);
         }
         sync(player, SyncMeditationPayload.Event.NONE);
+        // Съел пилюлю и сразу сел — поглощение (docs/design/19b §2, автор 03.10).
+        PillService.onMeditationStart(player);
         return true;
     }
 
@@ -98,6 +100,7 @@ public final class MeditationService {
         if (!was.active()) {
             return;
         }
+        PillService.onMeditationStop(player, "murim.meditation.broken.hurt".equals(messageKey));
         if (was.breakingThrough()) {
             if (was.breakthrough() >= Realm.WARNING_TICKS) {
                 breakthroughBroken(player);
@@ -243,10 +246,17 @@ public final class MeditationService {
             tickBreakthrough(player, state);
             return;
         }
+        // Идёт поглощение пилюли: обычный прирост ждёт, пока сгустки осядут (docs/design/19b §2).
+        if (PillService.tickAbsorb(player)) {
+            player.setData(ModAttachments.MEDITATION, player.getData(ModAttachments.MEDITATION).active()
+                    ? state.tick(null) : player.getData(ModAttachments.MEDITATION));
+            return;
+        }
         MeditationState next = state.tick(null);
         player.setData(ModAttachments.MEDITATION, next);
         DantianProfile profile = player.getData(ModAttachments.PROFILE);
-        double gain = gainAt(next.ticks()) * profile.efficiency();
+        double gain = gainAt(next.ticks()) * profile.efficiency()
+                * io.github.verycooltimo.murim.world.PlaceService.gainFactor(player);
         double cap = profile.capacity() * POOL_CAP;
         DantianProfile updated = profile.withPool(Math.min(cap, profile.pool() + gain));
         for (int i = 0; i < MEDITATION_CIRCULATION_STEPS; i++) {

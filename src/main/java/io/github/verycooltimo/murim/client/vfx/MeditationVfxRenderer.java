@@ -2129,6 +2129,18 @@ public final class MeditationVfxRenderer {
         BillboardBurst.inward(glow, s.pose(), s.core(), s.camera(), 10, t * 0.6F, 0.5D,
                               0.35F * rise, HALO, CORE);
         s.buffers().endBatch(MurimRenderTypes.impactCore());
+        // Ци бежит по телу к даньтяню ровным темпом; яркость потока — скорость прироста:
+        // ум устал — поток тоньше и тусклее, у места силы — гуще (docs/design/19b §4).
+        // Во время поглощения пилюли тело занято её сгустком — поток не рисуется.
+        if (!io.github.verycooltimo.murim.client.ClientPillState.absorbing()) {
+            double rate = MeditationService.gainAt((int) t) / MeditationService.gainAt(0);
+            boolean full = io.github.verycooltimo.murim.cultivation.Realm.atWall(
+                    io.github.verycooltimo.murim.client.ClientProfileState.profile());
+            boolean place = io.github.verycooltimo.murim.client.ClientPlaceState.node() != null;
+            float strength = full || io.github.verycooltimo.murim.client.ClientPlaceState.stunned() ? 0.0F
+                    : (float) Mth.clamp(rate * (place ? 1.0D : 0.6D), 0.12D, 1.0D) * rise;
+            drawStreams(s, t, strength);
+        }
     }
 
     /** Послесвечение законченной сессии: осевшее кольцо или рассыпавшаяся ци. */

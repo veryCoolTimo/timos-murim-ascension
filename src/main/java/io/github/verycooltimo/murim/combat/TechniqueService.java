@@ -79,7 +79,8 @@ public final class TechniqueService {
         // Слой освоения меняет цену: корявая техника дороже, обжитая — дешевле (§3г).
         double cost = techniqueCost(technique) * io.github.verycooltimo.murim.mastery.MasteryRules.costFactor(
                 Math.max(0, io.github.verycooltimo.murim.mastery.MasteryService.layer(player, technique.id())),
-                technique.layers());
+                technique.layers())
+                * io.github.verycooltimo.murim.cultivation.PillService.costFactor(player);
         // Мечевая форма — только с мечом в руке или ци-мечом (пустая рука пробуждённого), 03.10.
         if (QiSword.needsSword(technique) && !QiSword.hasBlade(player)) {
             // Ниже устоявшегося Пика ци-меча нет — не звать «освободить руку» (автор 03.10).
