@@ -23,7 +23,7 @@ public final class RainExecutor {
     /** Начало IMPACT: цель по взгляду до 16 блоков, рывок сбоку неё за спину. */
     public static boolean start(ServerPlayer player, ResourceLocation id) {
         int layer = Math.max(0, io.github.verycooltimo.murim.mastery.MasteryService.layer(player, id));
-        double base = player.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE);
+        double base = TechniqueDamage.base(player, id);
         Vec3 o = player.position();
         Vec3 look = player.getLookAngle();
         Vec3 f = new Vec3(look.x, 0.0D, look.z);
@@ -135,7 +135,7 @@ public final class RainExecutor {
             target.setDeltaMovement(0.0D, target.getDeltaMovement().y, 0.0D);
             target.hurtMarked = true;
         }
-        double base = player.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE)
+        double base = TechniqueDamage.base(player, id)
                 * RainRules.power(layer);
         for (int k = 0; k < RainRules.COHORTS.length; k++) {
             if (t != RainRules.contact(k)) {

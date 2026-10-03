@@ -48,6 +48,9 @@ public final class ManualScreen extends Screen {
      * изучаются по очереди. У обычной техники — одна форма, она же сама техника.
      */
     private final List<ResourceLocation> forms;
+    /** Развороты: {@code null} в списке форм — титул стиля. */
+    private final List<ResourceLocation> spreads = new java.util.ArrayList<>();
+    private ResourceLocation styleId;
     private int page;
     private int ticks;
     private net.minecraft.client.gui.screens.inventory.PageButton prev;
@@ -62,9 +65,27 @@ public final class ManualScreen extends Screen {
         styleTitle = Component.translatable(s.nameKey());
     }
 
-    /** Форма текущей страницы-текста (у книги стиля — страница 1 = первая форма). */
+
+    private static ResourceLocation pageTex(ResourceLocation f) {
+        return ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/gui/book/pages/" + f.getPath() + ".png");
+    }
+
+    private static ResourceLocation titleOf(ResourceLocation style) {
+        return ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, style.getPath() + "_title");
+    }
+
+    private static boolean hasPage(ResourceLocation f) {
+        return net.minecraft.client.Minecraft.getInstance().getResourceManager().getResource(pageTex(f)).isPresent();
+    }
+
+    /** Форма текущего разворота; на титуле — первая форма (для подписи не используется). */
     private ResourceLocation form() {
-        return illustrated ? forms.get(Math.max(0, page - 1)) : forms.get(0);
+        ResourceLocation f = spreads.get(page);
+        return f != null ? f : forms.get(0);
+    }
+
+    private boolean titlePage() {
+        return spreads.get(page) == null;
     }
 
     /** Состояние формы: 2 — изучена, 1 — можно изучить, 0 — закрыта (нужна предыдущая). */
@@ -89,21 +110,29 @@ public final class ManualScreen extends Screen {
         this.open = open;
         java.util.Optional<io.github.verycooltimo.murim.technique.Styles.Style> style =
                 io.github.verycooltimo.murim.technique.Styles.of(open.technique());
-        boolean book = style.isPresent() && io.github.verycooltimo.murim.technique.Styles.sequential(style.get());
-        this.forms = book ? style.get().forms() : List.of(open.technique());
-        this.illustrated = book;
-        this.pages = illustrated ? 1 + forms.size() : 1;
-        if (book) {
+        // Автор 03.10: в каждом развороте слева — своя картинка формы, справа — объяснение.
+        // Книга с картинками — если у первой формы есть страница-иллюстрация.
+        this.forms = style.isPresent() ? style.get().forms() : List.of(open.technique());
+        this.illustrated = hasPage(forms.get(0));
+        if (illustrated && style.isPresent()) {
+            styleId = style.get().id();
             setTitleFromStyle(style.get());
+            if (styleId.getPath().equals("seven_plum") || hasPage(titleOf(styleId))) {
+                spreads.add(null);
+            }
         }
+        if (illustrated) {
+            spreads.addAll(forms);
+        } else {
+            spreads.add(open.technique());
+        }
+        this.pages = spreads.size();
     }
 
     @Override
     protected void init() {
-        k = Math.min((width - 16) / (float) TEX_W, (height - 16) / (float) TEX_H);
-        if (k >= 1.0F) {
-            k = (float) Math.floor(k);
-        }
+        // Автор 03.10: «слишком огромная» — разворот ~60 % ширины экрана.
+        k = Math.min(width * 0.6F / TEX_W, height * 0.72F / TEX_H);
         bx = (int) ((width - TEX_W * k) / 2);
         by = (int) ((height - TEX_H * k) / 2);
         if (pages > 1) {
@@ -159,24 +188,52 @@ public final class ManualScreen extends Screen {
      * Текущий разворот: {@code which} 0 — только левая страница, 1 — только правая, 2 — обе.
      */
     private void spread(GuiGraphics g, int which, boolean left, boolean right, int mouseX, int mouseY) {
-        boolean textPage = !illustrated || page >= 1;
-        ResourceLocation tex = textPage ? BASIC : PLUM;
-        if (left) {
-            g.blit(tex, 0, 0, 0.0F, 0.0F, PAGE_W, TEX_H, TEX_W, TEX_H);
+        if (titlePage() && styleId != null && styleId.getPath().equals("seven_plum")) {
+            // Титул Семи Цветков — одобренный разворот целиком.
+            g.blit(PLUM, 0, 0, 0.0F, 0.0F, TEX_W, TEX_H, TEX_W, TEX_H);
+            g.pose().pushPose();
+            g.pose().translate(214, 236, 0.0F);
+            g.pose().scale(0.6F, 0.6F, 1.0F);
+            g.drawString(font, styleTitle, 0, 0, INK, false);
+            g.pose().popPose();
+            return;
         }
-        if (right) {
-            g.blit(tex, PAGE_W, 0, PAGE_W, 0.0F, PAGE_W, TEX_H, TEX_W, TEX_H);
-            if (textPage) {
-                text(g, 214, 24, 144, 176, 0.8F);
-                seal(g, mouseX, mouseY);
-            } else {
-                g.pose().pushPose();
-                g.pose().translate(214, 236, 0.0F);
-                g.pose().scale(0.6F, 0.6F, 1.0F);
-                g.drawString(font, styleTitle != null ? styleTitle : title, 0, 0, INK, false);
-                g.pose().popPose();
+        // Слева — картинка формы (или титул стиля), иначе шаблон секты.
+        ResourceLocation leftTex = titlePage() ? pageTex(titleOf(styleId)) : illustrated ? pageTex(form()) : null;
+        if (leftTex != null) {
+            g.blit(leftTex, 0, 0, 0.0F, 0.0F, PAGE_W, TEX_H, PAGE_W, TEX_H);
+        } else {
+            g.blit(BASIC, 0, 0, 0.0F, 0.0F, PAGE_W, TEX_H, TEX_W, TEX_H);
+        }
+        g.blit(BASIC, PAGE_W, 0, PAGE_W, 0.0F, PAGE_W, TEX_H, TEX_W, TEX_H);
+        if (titlePage()) {
+            styleIntro(g);
+        } else {
+            text(g, 214, 24, 144, 176, 0.8F);
+            seal(g, mouseX, mouseY);
+        }
+    }
+
+    /** Правая страница титула: название стиля и вступление. */
+    private void styleIntro(GuiGraphics g) {
+        String key = "book.murim.style." + styleId.getPath();
+        g.pose().pushPose();
+        g.pose().translate(214, 24, 0.0F);
+        g.pose().scale(0.8F, 0.8F, 1.0F);
+        int lw = (int) (144 / 0.8F);
+        int cy = 0;
+        for (FormattedCharSequence line : font.split(styleTitle, lw)) {
+            g.drawString(font, line, 0, cy, INK, false);
+            cy += font.lineHeight + 1;
+        }
+        cy += 4;
+        if (I18n.exists(key)) {
+            for (FormattedCharSequence line : font.split(FormattedText.of(I18n.get(key)), lw)) {
+                g.drawString(font, line, 0, cy, FADED, false);
+                cy += font.lineHeight + 1;
             }
         }
+        g.pose().popPose();
     }
 
     /** Красная печать «Изучить»: при наведении темнее и «вдавлена» на пиксель. */
@@ -221,7 +278,7 @@ public final class ManualScreen extends Screen {
     private boolean overSeal(double mouseX, double mouseY) {
         double tx = (mouseX - bx) / k;
         double ty = (mouseY - by) / k;
-        return opened(ticks) && (!illustrated || page >= 1) && state(form()) == 1
+        return opened(ticks) && !titlePage() && state(form()) == 1
                 && tx >= SEAL_X && tx <= SEAL_X + SEAL_W && ty >= SEAL_Y && ty <= SEAL_Y + SEAL_H;
     }
 

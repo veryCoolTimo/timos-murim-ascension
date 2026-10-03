@@ -26,7 +26,7 @@ public final class ScatterExecutor {
     /** Начало IMPACT: цель (захват — первой), прыжок в сторону, клоны выходят. */
     public static boolean start(ServerPlayer player, ResourceLocation id) {
         int layer = Math.max(0, io.github.verycooltimo.murim.mastery.MasteryService.layer(player, id));
-        double base = player.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE);
+        double base = TechniqueDamage.base(player, id);
         Vec3 o = player.position();
         Vec3 look = player.getLookAngle();
         if (layer <= 0) {
@@ -110,7 +110,7 @@ public final class ScatterExecutor {
         Vec3 centre = new Vec3(s[3], s[4], s[5]);
         double base = s[6];
         boolean grounded = s[10] > 0.5D;
-        double dmg = player.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE)
+        double dmg = TechniqueDamage.base(player, id)
                 * ScatterRules.power(layer);
         // Удары клонов: каждый — по своему отрезку, свой набор задетых.
         for (int i = 0; i < ScatterRules.clones(layer); i++) {

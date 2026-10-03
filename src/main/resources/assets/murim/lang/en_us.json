@@ -219,5 +219,6 @@
   "form.murim.twenty_four_plum_scatter": "Scatter",
   "itemGroup.murim": "Murim",
   "murim.manual.learned": "Learned",
-  "murim.manual.locked": "First: %s, layer %s"
+  "murim.manual.locked": "First: %s, layer %s",
+  "murim.technique.cooldown": "Cooldown: %s s"
 }

@@ -62,7 +62,8 @@
   },
   "interruption": {
     "cancellable_until": "windup",
-    "break_on_damage": true
+    "break_on_damage": true,
+    "damage_threshold": 8.0
   },
   "weakness": "technique.murim.twenty_four_plum_scatter.weakness",
   "hit_stop_ticks": 2,

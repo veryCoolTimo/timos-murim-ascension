@@ -153,7 +153,7 @@ public final class BehaviorExecutor {
      */
     private static boolean plumSlash(ServerPlayer player, net.minecraft.resources.ResourceLocation id) {
         int layer = Math.max(0, io.github.verycooltimo.murim.mastery.MasteryService.layer(player, id));
-        double base = player.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE);
+        double base = TechniqueDamage.base(player, id);
         float damage = (float) (base * PlumRules.coefficient(layer));
         Vec3 origin = player.position();
         Vec3 look = player.getLookAngle();
@@ -239,7 +239,7 @@ public final class BehaviorExecutor {
         if (coefficient <= 0.0D) {
             return;
         }
-        float damage = (float) (player.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE) * coefficient);
+        float damage = (float) (TechniqueDamage.base(player, id) * coefficient);
         Vec3 origin = player.position();
         Vec3 look = player.getLookAngle();
         Vec3 forward = new Vec3(look.x, 0.0D, look.z);
@@ -486,7 +486,7 @@ public final class BehaviorExecutor {
      */
     private static boolean whirlStart(ServerPlayer player, net.minecraft.resources.ResourceLocation id) {
         int layer = Math.max(0, io.github.verycooltimo.murim.mastery.MasteryService.layer(player, id));
-        double base = player.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE);
+        double base = TechniqueDamage.base(player, id);
         Vec3 origin = player.position();
         Vec3 look = player.getLookAngle();
         Vec3 forward = new Vec3(look.x, 0.0D, look.z);
@@ -551,7 +551,7 @@ public final class BehaviorExecutor {
         }
         Vec3 aim = new Vec3(w[8], w[9], w[10]);
         double r = WhirlRules.radius(layer);
-        double base = player.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE);
+        double base = TechniqueDamage.base(player, id);
         // Столпы и стены — вокруг мастера: задевают тех, кто подошёл вплотную.
         if (WhirlRules.pillars(layer) > 0 && (since == WhirlRules.WALL_STROKES[0] || since == WhirlRules.WALL_STROKES[2])) {
             for (LivingEntity t : whirlInside(player, centre, r + 1.2D, layer)) {
@@ -637,7 +637,7 @@ public final class BehaviorExecutor {
     /** Выпуск урагана: направление по взгляду фиксируется здесь; цель — первая на пути. */
     private static boolean rushStart(ServerPlayer player, net.minecraft.resources.ResourceLocation id) {
         int layer = Math.max(0, io.github.verycooltimo.murim.mastery.MasteryService.layer(player, id));
-        double base = player.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE);
+        double base = TechniqueDamage.base(player, id);
         Vec3 look = player.getLookAngle();
         Vec3 f = new Vec3(look.x, 0.0D, look.z);
         f = f.lengthSqr() < 1.0E-6D ? new Vec3(0.0D, 0.0D, 1.0D) : f.normalize();
@@ -695,7 +695,7 @@ public final class BehaviorExecutor {
         if (layer <= 0) {
             return;
         }
-        double base = player.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE)
+        double base = TechniqueDamage.base(player, id)
                 * RushRules.power(layer);
         Vec3 o = new Vec3(r[0], r[1], r[2]);
         Vec3 f = new Vec3(r[3], r.length > 13 ? r[13] : 0.0D, r[4]);
@@ -796,7 +796,7 @@ public final class BehaviorExecutor {
     /** Выход клонов: цель по взгляду до 6 блоков фиксируется вместе с точкой у её стоп. */
     private static boolean execStart(ServerPlayer player, net.minecraft.resources.ResourceLocation id) {
         int layer = Math.max(0, io.github.verycooltimo.murim.mastery.MasteryService.layer(player, id));
-        double base = player.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE);
+        double base = TechniqueDamage.base(player, id);
         Vec3 origin = player.position();
         Vec3 look = player.getLookAngle();
         Vec3 forward = new Vec3(look.x, 0.0D, look.z);
@@ -851,7 +851,7 @@ public final class BehaviorExecutor {
         if (layer <= 0) {
             return;
         }
-        double base = player.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE);
+        double base = TechniqueDamage.base(player, id);
         LivingEntity target = e[6] >= 0 && player.level().getEntity((int) e[6]) instanceof LivingEntity le && le.isAlive() ? le : null;
         // Клоны ведут живую позицию цели: отошла или подошла — заход идёт за ней.
         if (target != null && target.position().distanceTo(player.position()) < 18.0D) {

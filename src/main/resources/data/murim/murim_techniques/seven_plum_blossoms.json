@@ -62,7 +62,8 @@
   },
   "interruption": {
     "cancellable_until": "windup",
-    "break_on_damage": true
+    "break_on_damage": true,
+    "damage_threshold": 6.0
   },
   "weakness": "technique.murim.seven_plum_blossoms.weakness",
   "hit_stop_ticks": 2,

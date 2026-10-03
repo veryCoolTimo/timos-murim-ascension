@@ -71,7 +71,11 @@ public final class ClientTechniqueHandler {
             // Применяется техника выбранного слота (кольцо выбора, автор 01.10). Пустой слот —
             // подсказка, где разложить техники, а не тишина.
             java.util.Optional<net.minecraft.resources.ResourceLocation> active = ClientLoadoutState.activeTechnique();
-            if (active.isPresent()) {
+            if (active.isPresent() && ClientCooldowns.remaining(active.get()) > 0 && minecraft.player != null) {
+                // Нажал во время перезарядки — сказать сколько ждать, а не молчать.
+                minecraft.player.displayClientMessage(net.minecraft.network.chat.Component.translatable("murim.technique.cooldown",
+                        String.format(java.util.Locale.ROOT, "%.1f", ClientCooldowns.remaining(active.get()) / 20.0F)), true);
+            } else if (active.isPresent()) {
                 // Техника шага — семейство подтехник: вместе с R уходит контекст ввода,
                 // подтехнику выбирает сервер (docs/design/21-footwork-families.md).
                 if (io.github.verycooltimo.murim.combat.FootworkService.family(
@@ -229,6 +233,9 @@ public final class ClientTechniqueHandler {
     public static void onTechniqueEvent(TechniqueEventPayload payload) {
         switch (payload.event()) {
             case STARTED -> {
+                if (Minecraft.getInstance().player != null && payload.sourceId() == Minecraft.getInstance().player.getId()) {
+                    ClientCooldowns.started();
+                }
                 scheduleAnimation(payload);
                 TechniqueDefinition started = TechniqueLoader.get(payload.techniqueId());
                 // У ладони собственный набор слоёв: общая схема дуги её не описывает.

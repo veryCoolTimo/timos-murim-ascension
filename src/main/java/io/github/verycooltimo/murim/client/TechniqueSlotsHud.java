@@ -94,6 +94,15 @@ public final class TechniqueSlotsHud {
             graphics.blit(TechniqueIcons.of(technique.get()), x + 2, y + 2, SIZE - 4, SIZE - 4,
                     0.0F, 0.0F, 48, 48, 48, 48);
             graphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
+            // Перезарядка: затемнение снизу вверх и секунды поверх иконки.
+            int left = ClientCooldowns.remaining(technique.get());
+            if (left > 0) {
+                int hh = (int) Math.ceil((SIZE - 4) * ClientCooldowns.fraction(technique.get()));
+                graphics.fill(x + 2, y + SIZE - 2 - hh, x + SIZE - 2, y + SIZE - 2, ((int) (presence * 0xA0) << 24) | 0x000000);
+                String sec = left >= 200 ? String.valueOf((left + 19) / 20) : String.format(java.util.Locale.ROOT, "%.1f", left / 20.0F);
+                net.minecraft.client.gui.Font font = Minecraft.getInstance().font;
+                graphics.drawString(font, sec, x + SIZE / 2 - font.width(sec) / 2, y + SIZE / 2 - 4, (a << 24) | 0xFFFFFF, true);
+            }
             // Освоение текущего слоя — тонкая полоса по низу слота.
             SyncMasteryPayload.Entry entry = mastery(technique.get());
             if (entry != null && entry.layer() < entry.cap()) {

@@ -42,7 +42,7 @@ public final class FallingPetalExecutor {
         Vec3 f = new Vec3(look.x, 0.0D, look.z);
         f = f.lengthSqr() < 1.0E-6D ? new Vec3(0.0D, 0.0D, 1.0D) : f.normalize();
         LivingEntity target = pick(player, o, f);
-        double base = player.getAttributeValue(Attributes.ATTACK_DAMAGE) * FallingPetalRules.power(layer);
+        double base = TechniqueDamage.base(player, id) * FallingPetalRules.power(layer);
         if (target != null) {
             Vec3 to = new Vec3(target.getX() - o.x, 0.0D, target.getZ() - o.z);
             if (to.lengthSqr() > 1.0E-4D) {

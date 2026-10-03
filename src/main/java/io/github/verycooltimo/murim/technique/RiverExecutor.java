@@ -33,7 +33,7 @@ public final class RiverExecutor {
     /** Начало IMPACT (T = {@link RiverRules#AIM}): прицел и цель фиксируются. */
     public static boolean start(ServerPlayer player, ResourceLocation id) {
         int layer = Math.max(0, io.github.verycooltimo.murim.mastery.MasteryService.layer(player, id));
-        double base = player.getAttributeValue(Attributes.ATTACK_DAMAGE);
+        double base = TechniqueDamage.base(player, id);
         Vec3 look = player.getLookAngle();
         if (layer <= 0) {
             // Слой 0 — учебный укол в ближнем секторе, без эффектов (как у Ливня).

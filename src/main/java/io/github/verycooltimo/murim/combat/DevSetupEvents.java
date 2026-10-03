@@ -379,7 +379,8 @@ public final class DevSetupEvents {
             }
             net.minecraft.world.entity.monster.Zombie zombie =
                     new net.minecraft.world.entity.monster.Zombie(net.minecraft.world.entity.EntityType.ZOMBIE, level);
-            zombie.setNoAi(true);
+            // MURIM_CAPTURE_ENEMY_AI=1 — живой зомби (идёт и бьёт): проверка оглушения и прохода за спину.
+            zombie.setNoAi(!"1".equals(System.getenv("MURIM_CAPTURE_ENEMY_AI")));
             zombie.setPersistenceRequired();
             // MURIM_CAPTURE_ENEMY_HP — запас здоровья цели: долгая техника (Вихрь) убивала зомби
             // раньше финала, и финальный проход было не по кому снять.

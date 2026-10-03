@@ -68,7 +68,7 @@ public final class QiHud {
     private static void render(GuiGraphics graphics, DeltaTracker delta) {
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.options.hideGui || minecraft.player == null || minecraft.gameMode == null
-                || !minecraft.gameMode.canHurtPlayer() || !ClientProfileState.profile().isAwakened()) {
+                || minecraft.player.isSpectator() || !ClientProfileState.profile().isAwakened()) {
             return;
         }
         float circ = Mth.clamp(shownCirc, 0.0F, 1.0F);

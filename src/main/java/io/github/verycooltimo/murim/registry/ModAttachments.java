@@ -109,6 +109,10 @@ public final class ModAttachments {
     public static final Supplier<AttachmentType<long[]>> FROZEN =
             ATTACHMENT_TYPES.register("frozen", () -> AttachmentType.<long[]>builder(() -> new long[] {0L, 0L}).build());
 
+    /** 1 — ИИ моба выключили мы на время оглушения техникой (вернуть после). Не сохраняется. */
+    public static final Supplier<AttachmentType<int[]>> STUN_AI =
+            ATTACHMENT_TYPES.register("stun_ai", () -> AttachmentType.<int[]>builder(() -> new int[] {0}).build());
+
     public static final Supplier<AttachmentType<int[]>> TRAVERSE =
             ATTACHMENT_TYPES.register("traverse",
                     () -> AttachmentType.<int[]>builder(() -> new int[] {0, 0, 0, 0, Integer.MIN_VALUE / 2, 0, 0,
