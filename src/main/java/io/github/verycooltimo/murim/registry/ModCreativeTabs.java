@@ -45,6 +45,8 @@ public final class ModCreativeTabs {
                 // Враги этапа M1 (автор 03.10: «яйцо призыва во вкладке Мурим»).
                 out.accept(new ItemStack(ModItems.BANDIT_SWORDSMAN_SPAWN_EGG.get()));
                 out.accept(new ItemStack(ModItems.BANDIT_ARCHER_SPAWN_EGG.get()));
+                // Кинжал клана Тан (модель автора, 03.10).
+                out.accept(new ItemStack(ModItems.TANG_DAGGER.get()));
                 // Пилюли (M5, docs/design/19b).
                 out.accept(new ItemStack(ModItems.PILL_SNOW_PLUM.get()));
                 out.accept(new ItemStack(ModItems.PILL_ORIGIN_ENERGY.get()));

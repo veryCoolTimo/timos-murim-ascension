@@ -70,6 +70,11 @@ public final class DevSetupEvents {
         boolean emptyHand = "empty".equals(System.getenv("MURIM_CAPTURE_HAND"));
         event.getEntity().setItemInHand(InteractionHand.MAIN_HAND,
                 ceremony || tang || emptyHand ? ItemStack.EMPTY : new ItemStack(Items.NETHERITE_SWORD));
+        // MURIM_CAPTURE_HAND=tang_dagger — в руке кинжал клана Тан (съёмка модели автора, 03.10).
+        if ("tang_dagger".equals(System.getenv("MURIM_CAPTURE_HAND"))) {
+            event.getEntity().setItemInHand(InteractionHand.MAIN_HAND,
+                    new ItemStack(io.github.verycooltimo.murim.registry.ModItems.TANG_DAGGER.get(), 12));
+        }
 
         // Площадка над лесом. Оценивать светящуюся ленту на фоне листвы невозможно: контраст
         // низкий, а ветки перекрывают силуэт. Чистое небо даёт однозначный фон, на котором

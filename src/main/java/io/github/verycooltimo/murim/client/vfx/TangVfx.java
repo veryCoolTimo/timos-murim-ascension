@@ -916,14 +916,14 @@ public final class TangVfx {
             ps.translate(-camera.x, -camera.y, -camera.z);
             PoseStack.Pose pose = ps.last();
             // Кинжалы в руках: розетка Двенадцати и кинжал на ладони Тёмного Взрыва.
-            VertexConsumer solid = buffers.getBuffer(MurimRenderTypes.solid());
+            VertexConsumer solid = buffers.getBuffer(TangDaggerMesh.renderType());
             for (Cast c : CASTS) {
                 Entity e = mc.level.getEntity(c.entityId);
                 if (e != null) {
-                    held(c, e, pose, solid, c.t() + partial);
+                    held(c, e, ps, solid, c.t() + partial);
                 }
             }
-            buffers.endBatch(MurimRenderTypes.solid());
+            buffers.endBatch(TangDaggerMesh.renderType());
             VertexConsumer air = buffers.getBuffer(MurimRenderTypes.airBand());
             for (Cast c : CASTS) {
                 Entity e = mc.level.getEntity(c.entityId);
@@ -949,7 +949,7 @@ public final class TangVfx {
     }
 
     /** Розетка из кинжалов между ладонями (s01–s02, d1-01) и кинжал над ладонью (d1-02, d2-01). */
-    private static void held(Cast c, Entity e, PoseStack.Pose pose, VertexConsumer v, float t) {
+    private static void held(Cast c, Entity e, PoseStack ps, VertexConsumer v, float t) {
         int w = TangRules.windup(c.form);
         if (t >= w) {
             return;
@@ -974,7 +974,7 @@ public final class TangVfx {
                 double born = Mth.clamp((t - TangRules.ROSETTE_FROM - k * (16.0D / n)) / 3.0D, 0.0D, 1.0D);
                 Vec3 at = ctr.add(radial.scale(0.2D * squeeze)).add(f.scale(0.05D * Math.sin(a * 2.0D)));
                 Vec3 tipDir = radial.add(normal.scale(0.15D)).normalize();
-                TangDaggerRenderer.draw(v, pose, at, tipDir, normal, 0.65D * squeeze, (float) born, false, false);
+                TangDaggerRenderer.drawModel(ps, v, at, tipDir, a, (float) (0.65D * squeeze * born), 1.0F);
             }
         }
         if (c.form == TangRules.BURST) {
@@ -984,7 +984,7 @@ public final class TangVfx {
             double writhe = t > 12.0D ? Math.sin(t * 0.9D) * 0.35D * Mth.clamp((t - 12.0D) / 8.0D, 0.0D, 1.0D) : 0.0D;
             Vec3 tip = f.add(side.scale(writhe)).add(0.0D, 0.15D, 0.0D).normalize();
             Vec3 at = palm.add(0.0D, 0.08D + 0.22D * lift, 0.0D).subtract(tip.scale(0.15D));
-            TangDaggerRenderer.draw(v, pose, at, tip, new Vec3(0.0D, 1.0D, 0.0D), 1.0D, 1.0F, true, false);
+            TangDaggerRenderer.drawModel(ps, v, at, tip, t * 0.2D, 1.0F, 1.0F);
         }
     }
 

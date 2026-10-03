@@ -31,6 +31,13 @@ public final class ModItems {
     public static final DeferredHolder<Item, Item> BANDIT_ARCHER_SPAWN_EGG = ITEMS.register("bandit_archer_spawn_egg",
             () -> new net.neoforged.neoforge.common.DeferredSpawnEggItem(ModEntities.BANDIT_ARCHER, 0x3E4A34, 0xB89A5A, new Item.Properties()));
 
+    /**
+     * Метательный кинжал клана Тан («лист ивы», гл. 194), модель автора art/items/tang_dagger. В стопке — 12:
+     * Тан носят ровно двенадцать кинжалов (tang-clan.md §9.3). Рисуется TangDaggerItemRenderer.
+     */
+    public static final DeferredHolder<Item, Item> TANG_DAGGER = ITEMS.register("tang_dagger",
+            () -> new Item(new Item.Properties().stacksTo(12)));
+
     /** Пилюли (docs/design/19b §1). */
     public static final DeferredHolder<Item, Item> PILL_SNOW_PLUM = pill(io.github.verycooltimo.murim.cultivation.PillKind.SNOW_PLUM, 16);
     public static final DeferredHolder<Item, Item> PILL_ORIGIN_ENERGY = pill(io.github.verycooltimo.murim.cultivation.PillKind.ORIGIN_ENERGY, 4);
