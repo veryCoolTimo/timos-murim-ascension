@@ -196,7 +196,7 @@ public final class MeditationService {
                 player.setData(ModAttachments.PROFILE, seeded);
                 ProfileNetwork.sync(player);
                 player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
-                        SoundEvents.BEACON_POWER_SELECT, SoundSource.PLAYERS, 0.6F, 1.2F);
+                        io.github.verycooltimo.murim.registry.ModSounds.QI_CHIME.get(), SoundSource.PLAYERS, 0.8F, 0.8F);
                 player.displayClientMessage(Component.translatable("murim.meditation.seed")
                         .withStyle(ChatFormatting.AQUA), false);
                 event = SyncMeditationPayload.Event.SEED;
@@ -309,7 +309,7 @@ public final class MeditationService {
         player.setData(ModAttachments.MEDITATION, next);
         if (next.breakthrough() == Realm.WARNING_TICKS) {
             player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
-                    SoundEvents.BEACON_POWER_SELECT, SoundSource.PLAYERS, 0.7F, 0.6F);
+                    io.github.verycooltimo.murim.registry.ModSounds.QI_CHARGE.get(), SoundSource.PLAYERS, 0.7F, 0.9F);
         }
         if (next.breakthrough() < Realm.WARNING_TICKS + Realm.BREAKTHROUGH_TICKS) {
             if (next.breakthrough() % 5 == 0) {
@@ -326,7 +326,7 @@ public final class MeditationService {
         player.setHealth(player.getMaxHealth());
         ProfileNetwork.sync(player);
         player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
-                SoundEvents.TOTEM_USE, SoundSource.PLAYERS, 0.6F, 0.8F);
+                io.github.verycooltimo.murim.registry.ModSounds.BREAKTHROUGH.get(), SoundSource.PLAYERS, 0.9F, 1.0F);
         player.displayClientMessage(Component.translatable("murim.rank.breakthrough.done",
                 Component.translatable(Realm.nameKey(risen.rank()))).withStyle(ChatFormatting.GOLD), false);
         sync(player, SyncMeditationPayload.Event.RANK_UP);

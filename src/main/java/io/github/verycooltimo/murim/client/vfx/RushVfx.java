@@ -14,7 +14,6 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
@@ -221,8 +220,8 @@ public final class RushVfx {
                 CameraShakeHandler.quake(0.4F, 8);
             }
             if (mc.player != null && mc.player.position().distanceTo(c.origin) < 24.0D) {
-                mc.player.level().playLocalSound(c.origin.x, c.origin.y + 1.0D, c.origin.z, SoundEvents.BREEZE_WIND_CHARGE_BURST.value(),
-                        SoundSource.PLAYERS, 1.0F, 0.6F, false);
+                io.github.verycooltimo.murim.client.Sfx.play(c.origin.x, c.origin.y + 1.0D, c.origin.z, io.github.verycooltimo.murim.registry.ModSounds.WHIRLWIND.get(),
+                        SoundSource.PLAYERS, 1.0F, 1.0F, false);
             }
         } else if (p.stage() == 1) {
             // Контакт урагана с целью: импакт-кадр, тряска, крупный дым, взрыв лепестков.
@@ -235,10 +234,10 @@ public final class RushVfx {
             if (mc.player != null && dist < 24.0D) {
                 float q = dist < 8.0D ? 0.8F : (float) (0.8D * (1.0D - (dist - 8.0D) / 16.0D));
                 CameraShakeHandler.quake(Math.max(q, own ? 0.7F : 0.0F), 16);
-                mc.player.level().playLocalSound(c.wrapAt.x, c.wrapAt.y, c.wrapAt.z, SoundEvents.PLAYER_ATTACK_STRONG,
-                        SoundSource.PLAYERS, 1.0F, 0.6F, false);
-                mc.player.level().playLocalSound(c.wrapAt.x, c.wrapAt.y, c.wrapAt.z, SoundEvents.GENERIC_EXPLODE.value(),
-                        SoundSource.PLAYERS, 0.5F, 1.4F, false);
+                io.github.verycooltimo.murim.client.Sfx.play(c.wrapAt.x, c.wrapAt.y, c.wrapAt.z, io.github.verycooltimo.murim.registry.ModSounds.SWORD_HIT.get(),
+                        SoundSource.PLAYERS, 1.0F, 0.85F, false);
+                io.github.verycooltimo.murim.client.Sfx.play(c.wrapAt.x, c.wrapAt.y, c.wrapAt.z, io.github.verycooltimo.murim.registry.ModSounds.IMPACT_HEAVY.get(),
+                        SoundSource.PLAYERS, 0.7F, 1.1F, false);
             }
             // Дым урагана — низкий вал и короче финального: вихрь и рывок должны читаться сквозь него.
             smoke(c, p.centre(), 1.05D, c.fFlat, false, 0.6D, 12);
@@ -260,10 +259,10 @@ public final class RushVfx {
             if (mc.player != null && dist < 24.0D) {
                 float q = dist < 8.0D ? 1.0F : (float) (1.0D - (dist - 8.0D) / 16.0D);
                 CameraShakeHandler.quake(Math.max(q, own ? 0.9F : 0.0F), 20);
-                mc.player.level().playLocalSound(p.centre().x, p.centre().y, p.centre().z, SoundEvents.PLAYER_ATTACK_STRONG,
-                        SoundSource.PLAYERS, 1.0F, 0.5F, false);
-                mc.player.level().playLocalSound(p.centre().x, p.centre().y, p.centre().z, SoundEvents.GENERIC_EXPLODE.value(),
-                        SoundSource.PLAYERS, 0.7F, 1.2F, false);
+                io.github.verycooltimo.murim.client.Sfx.play(p.centre().x, p.centre().y, p.centre().z, io.github.verycooltimo.murim.registry.ModSounds.SWORD_HIT.get(),
+                        SoundSource.PLAYERS, 1.0F, 0.8F, false);
+                io.github.verycooltimo.murim.client.Sfx.play(p.centre().x, p.centre().y, p.centre().z, io.github.verycooltimo.murim.registry.ModSounds.IMPACT_HEAVY.get(),
+                        SoundSource.PLAYERS, 0.9F, 0.95F, false);
             }
             burst(c, p.centre(), c.n(45), 0.55D, c.dashDir);
             // codex 03.10: дым уносится по ходу отброса и редеет за ~1,5 с, клинок и цель видны.
@@ -552,8 +551,8 @@ public final class RushVfx {
                             CameraShakeHandler.quake(0.4F, 6);
                         }
                         if (mc.player != null && mc.player.position().distanceTo(e.position()) < 24.0D) {
-                            mc.player.level().playLocalSound(e.getX(), e.getY() + 1.0D, e.getZ(), SoundEvents.BREEZE_WIND_CHARGE_BURST.value(),
-                                    SoundSource.PLAYERS, 0.9F, 1.1F, false);
+                            io.github.verycooltimo.murim.client.Sfx.play(e.getX(), e.getY() + 1.0D, e.getZ(), io.github.verycooltimo.murim.registry.ModSounds.DASH.get(),
+                                    SoundSource.PLAYERS, 1.0F, 1.0F, false);
                         }
                     } else if (w <= dashT + RushRules.DASH_TICKS) {
                         dustRing(c, e.position(), c.n(5), 0.22D, 0.3D);

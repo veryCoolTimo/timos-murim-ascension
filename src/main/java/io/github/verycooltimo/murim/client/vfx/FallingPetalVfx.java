@@ -303,8 +303,9 @@ public final class FallingPetalVfx {
                     CameraShakeHandler.quake(0.18F * own2, 4);
                 }
             }
-            mc.level.playLocalSound(at.x, at.y, at.z, k == 4 ? SoundEvents.PLAYER_ATTACK_CRIT : k == 2 ? SoundEvents.PLAYER_ATTACK_KNOCKBACK
-                    : SoundEvents.PLAYER_ATTACK_STRONG, SoundSource.PLAYERS, 1.0F, k == 2 ? 0.62F : k == 4 ? 0.8F : 1.05F, false);
+            io.github.verycooltimo.murim.client.Sfx.play(at.x, at.y, at.z, k == 4 ? io.github.verycooltimo.murim.registry.ModSounds.IMPACT_HEAVY.get()
+                    : io.github.verycooltimo.murim.registry.ModSounds.SWORD_HIT.get(), SoundSource.PLAYERS, 1.0F,
+                    k == 2 ? 0.8F : k == 4 ? 1.0F : 1.05F, false);
             if (k == 2) {
                 // «Ломает кости»: глухой хруст поверх звона клинка.
                 mc.level.playLocalSound(at.x, at.y, at.z, SoundEvents.ZOMBIE_ATTACK_WOODEN_DOOR, SoundSource.PLAYERS, 0.45F, 1.6F, false);
@@ -627,8 +628,8 @@ public final class FallingPetalVfx {
             }
             if (!ret && Math.abs(b[2] - 0.75D) < 0.13D) {
                 // Свист клинка у каждого реза, даже мимо: техника слышна.
-                Minecraft.getInstance().level.playLocalSound(tip.x, tip.y, tip.z, SoundEvents.PLAYER_ATTACK_SWEEP,
-                        SoundSource.PLAYERS, 0.5F, 1.35F + 0.1F * k, false);
+                io.github.verycooltimo.murim.client.Sfx.play(tip.x, tip.y, tip.z, io.github.verycooltimo.murim.registry.ModSounds.SWORD_SWING.get(),
+                        SoundSource.PLAYERS, 0.5F, 1.05F + 0.05F * k, false);
             }
         }
         // Шаг-разворот ref4: кольцо у голеней.

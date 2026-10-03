@@ -81,6 +81,7 @@ public final class TraverseVfx {
         Vec3 dir = new Vec3(e.dirX(), 0.0D, e.dirZ());
         // Зрелище форм — своё у каждой (FootworkVfx); здесь — ввод бега и толчки прыжка.
         FootworkVfx.onEvent(entity, e.kind(), e.layer(), dir, e.entityId());
+        sound(entity, e.kind(), e.layer());
         switch (e.kind()) {
             case 0 -> RUNS.remove(e.entityId());
             case 1 -> {
@@ -99,6 +100,40 @@ public final class TraverseVfx {
                     burst(entity, e.kind(), e.layer(), dir);
                 }
             }
+        }
+    }
+
+    /**
+     * Звуки форм шагов. Слой 0 — без звуков эффектов: только сам рывок/шаг, тише.
+     * Бег — петля ветра, громкость по скорости; тень — без петли (скрытность), только вход.
+     */
+    private static void sound(Entity entity, int kind, int layer) {
+        if (entity == null) {
+            return;
+        }
+        float k = layer >= 1 ? 1.0F : 0.5F;
+        switch (kind) {
+            case 1 -> {
+                if (layer >= 1) {
+                    int id = entity.getId();
+                    Vec3[] last = {entity.position()};
+                    float[] speed = {0.0F};
+                    io.github.verycooltimo.murim.client.Sfx.loop("run:" + id, entity, io.github.verycooltimo.murim.registry.ModSounds.RUN_WIND, () -> {
+                        Vec3 now = entity.position();
+                        double v = Math.hypot(now.x - last[0].x, now.z - last[0].z);
+                        last[0] = now;
+                        speed[0] = speed[0] * 0.8F + (float) Math.min(1.0D, v / 0.6D) * 0.2F;
+                        return 0.15F + 0.55F * speed[0];
+                    }, 1.0F, () -> RUNS.containsKey(id), 8);
+                }
+            }
+            case 5 -> io.github.verycooltimo.murim.client.Sfx.play(entity, layer >= 1 ? io.github.verycooltimo.murim.registry.ModSounds.BLINK : io.github.verycooltimo.murim.registry.ModSounds.DASH, 0.9F * k, 1.0F);
+            case 6 -> io.github.verycooltimo.murim.client.Sfx.play(entity, io.github.verycooltimo.murim.registry.ModSounds.STEP_SOFT, 0.7F, 0.9F);
+            case 8 -> io.github.verycooltimo.murim.client.Sfx.play(entity, layer >= 1 ? io.github.verycooltimo.murim.registry.ModSounds.BURST_STEP : io.github.verycooltimo.murim.registry.ModSounds.DASH, 1.0F * k, 0.9F);
+            case 9 -> io.github.verycooltimo.murim.client.Sfx.play(entity, layer >= 1 ? io.github.verycooltimo.murim.registry.ModSounds.BLINK : io.github.verycooltimo.murim.registry.ModSounds.DASH, 0.8F * k, 1.1F);
+            case 0, 7 -> {
+            }
+            default -> io.github.verycooltimo.murim.client.Sfx.play(entity, layer >= 1 ? io.github.verycooltimo.murim.registry.ModSounds.BURST_STEP : io.github.verycooltimo.murim.registry.ModSounds.STEP_SOFT, 0.8F * k, 1.0F);
         }
     }
 

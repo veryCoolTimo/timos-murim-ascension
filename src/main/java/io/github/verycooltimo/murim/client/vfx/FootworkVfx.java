@@ -446,6 +446,8 @@ public final class FootworkVfx {
         Minecraft mc = Minecraft.getInstance();
         Entity entity = mc.level == null ? null : mc.level.getEntity(p.entityId());
         Vec3 flat = new Vec3(p.to().x - p.from().x, 0.0D, p.to().z - p.from().z);
+        // Уклонение слышно и на слое 0 (это сам шаг, не эффект), но тише.
+        io.github.verycooltimo.murim.client.Sfx.play(p.from().add(0.0D, 0.9D, 0.0D), io.github.verycooltimo.murim.registry.ModSounds.DASH, layer <= 0 ? 0.5F : 0.9F, 1.0F);
         if (layer <= 0) {
             return;
         }

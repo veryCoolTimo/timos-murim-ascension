@@ -1,6 +1,5 @@
 package io.github.verycooltimo.murim.entity;
 
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.DifficultyInstance;
@@ -271,8 +270,9 @@ public class BanditSwordsman extends Bandit {
         private void startWindup(BanditMove m) {
             getNavigation().stop();
             setState(WINDUP, m);
-            playSound(m == BanditMove.QI_DASH ? SoundEvents.TRIDENT_RIPTIDE_1.value() : SoundEvents.ARMOR_EQUIP_IRON.value(),
-                    m == BanditMove.QI_DASH ? 0.7F : 1.0F, m == BanditMove.QI_DASH ? 1.4F : 0.8F);
+            playSound(m == BanditMove.QI_DASH ? io.github.verycooltimo.murim.registry.ModSounds.QI_CHARGE.get()
+                    : io.github.verycooltimo.murim.registry.ModSounds.BANDIT_WINDUP.get(),
+                    m == BanditMove.QI_DASH ? 0.8F : 0.9F, 0.93F + 0.14F * getRandom().nextFloat());
         }
 
         private void windup(LivingEntity t) {
@@ -288,7 +288,7 @@ public class BanditSwordsman extends Bandit {
                     Vec3 to = t == null ? Vec3.directionFromRotation(0.0F, yBodyRot)
                             : new Vec3(t.getX() - getX(), 0.0D, t.getZ() - getZ());
                     dashDir = to.lengthSqr() < 1.0E-4D ? Vec3.directionFromRotation(0.0F, yBodyRot) : to.normalize();
-                    playSound(SoundEvents.PLAYER_ATTACK_SWEEP, 1.0F, 1.3F);
+                    playSound(io.github.verycooltimo.murim.registry.ModSounds.SWORD_SWING_HEAVY.get(), 1.0F, 1.05F + 0.1F * getRandom().nextFloat());
                 }
             }
         }
@@ -309,7 +309,7 @@ public class BanditSwordsman extends Bandit {
             } else {
                 getNavigation().stop();
                 if (stateTick == m.hitTick()) {
-                    playSound(SoundEvents.PLAYER_ATTACK_SWEEP, 0.9F, 0.85F);
+                    playSound(io.github.verycooltimo.murim.registry.ModSounds.SWORD_SWING_HEAVY.get(), 0.95F, 0.9F + 0.1F * getRandom().nextFloat());
                     if (t != null && m.reaches(t.getX() - getX(), t.getY() - getY(), t.getZ() - getZ(), yBodyRot)
                             && getSensing().hasLineOfSight(t)) {
                         hit(t, m);
