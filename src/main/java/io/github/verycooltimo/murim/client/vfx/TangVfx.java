@@ -476,7 +476,7 @@ public final class TangVfx {
             m.colour = i % 3 == 0 ? CYAN : i % 3 == 1 ? WHITE : GREY;
             FX.motes.add(m);
         }
-        smoke(at, 1.6D * k);
+        smoke(at, 1.1D * k, 2);
         BlockPos below = BlockPos.containing(at.add(0.0D, -1.5D, 0.0D));
         if (mc.level != null && !mc.level.getBlockState(below).isAir()) {
             FX.scars.add(new Scar(new Vec3(at.x, below.getY() + 1.02D, at.z), clientTicks, RANDOM.nextLong()));

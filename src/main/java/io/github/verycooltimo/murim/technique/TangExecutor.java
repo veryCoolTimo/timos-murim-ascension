@@ -312,7 +312,8 @@ public final class TangExecutor {
     /** Тёмный Взрыв: один кинжал с ладони, медленный «карп». */
     private static void carp(ServerPlayer player, int layer, double h, LivingEntity t) {
         Vec3 palm = hand(player, true).add(0.0D, 0.15D, 0.0D);
-        Vec3 aim = t != null ? TangDagger.throat(t) : lookPoint(player, TangRules.BURST_RANGE);
+        // Без цели — кинжал уходит на 12 блоков по взгляду и там зависает: его можно отозвать по новой линии.
+        Vec3 aim = t != null ? TangDagger.throat(t) : lookPoint(player, 12.0D);
         Vec3 dir = aim.subtract(palm).normalize();
         TangDagger d = new TangDagger(player.level(), player, TangRules.BURST, layer, 0);
         d.setPos(palm);
