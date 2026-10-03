@@ -64,10 +64,12 @@ public final class DevSetupEvents {
         // Меч нужен для съёмки техник, но в церемонии он торчит из сложенных рук и
         // перекрывает то самое тело, ради которого сцена и снимается.
         boolean ceremony = "meditation".equals(System.getProperty("murim.capture.technique"));
+        // Кинжалы Тан — из рукавов, рука пустая (меч им не нужен).
+        boolean tang = System.getProperty("murim.capture.technique", "").startsWith("tang_");
         // MURIM_CAPTURE_HAND=empty — пустая рука: съёмка ци-меча (03.10).
         boolean emptyHand = "empty".equals(System.getenv("MURIM_CAPTURE_HAND"));
         event.getEntity().setItemInHand(InteractionHand.MAIN_HAND,
-                ceremony || emptyHand ? ItemStack.EMPTY : new ItemStack(Items.NETHERITE_SWORD));
+                ceremony || tang || emptyHand ? ItemStack.EMPTY : new ItemStack(Items.NETHERITE_SWORD));
 
         // Площадка над лесом. Оценивать светящуюся ленту на фоне листвы невозможно: контраст
         // низкий, а ветки перекрывают силуэт. Чистое небо даёт однозначный фон, на котором
