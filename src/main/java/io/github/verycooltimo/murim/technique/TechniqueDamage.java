@@ -24,7 +24,10 @@ public final class TechniqueDamage {
             hand -= io.github.verycooltimo.murim.combat.QiSword.bonus(player);
         }
         TechniqueTier tier = d == null ? TechniqueTier.BASIC : d.tier();
-        return hand * (tier == TechniqueTier.SECRET ? SECRET : tier == TechniqueTier.ADVANCED ? ADVANCED : BASIC);
+        // Ранг даёт силу (автор 03.10, этап M2): одна точка для всех техник, без ранга ×0,8 … Пик ×1,75.
+        double rank = io.github.verycooltimo.murim.cultivation.Realm.power(
+                player.getData(io.github.verycooltimo.murim.registry.ModAttachments.PROFILE).rank());
+        return hand * (tier == TechniqueTier.SECRET ? SECRET : tier == TechniqueTier.ADVANCED ? ADVANCED : BASIC) * rank;
     }
 
     private TechniqueDamage() {

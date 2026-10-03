@@ -100,7 +100,7 @@ public final class ManualScreen extends Screen {
         return !spreads.get(page).picture();
     }
 
-    /** Состояние формы: 2 — изучена, 1 — можно изучить, 0 — закрыта (нужна предыдущая). */
+    /** Состояние формы: 2 — изучена, 1 — можно изучить, 0 — закрыта (нужна предыдущая), 3 — нет даньтяня, 4 — ниже Пика. */
     private int state(ResourceLocation f) {
         if (io.github.verycooltimo.murim.client.TechniqueSlotsHud.mastery(f) != null) {
             return 2;
@@ -109,12 +109,25 @@ public final class ManualScreen extends Screen {
         if (!ClientProfileState.profile().isAwakened()) {
             return 3;
         }
+        // Сокровенная книга (24 Движения) — только с Пика (автор 03.10, этап M2); сервер проверяет сам.
+        if (!io.github.verycooltimo.murim.mastery.MasteryRules.rankAllows(ClientProfileState.profile(), tier())) {
+            return 4;
+        }
         java.util.Optional<ResourceLocation> prevForm = io.github.verycooltimo.murim.technique.Styles.previous(f);
         if (prevForm.isEmpty()) {
             return 1;
         }
         io.github.verycooltimo.murim.network.SyncMasteryPayload.Entry e = io.github.verycooltimo.murim.client.TechniqueSlotsHud.mastery(prevForm.get());
         return e != null && e.layer() >= io.github.verycooltimo.murim.technique.Styles.NEXT_FORM_LAYER ? 1 : 0;
+    }
+
+    /** Уровень книги из пакета открытия: все формы книги стиля одного уровня. */
+    private io.github.verycooltimo.murim.mastery.TechniqueTier tier() {
+        try {
+            return io.github.verycooltimo.murim.mastery.TechniqueTier.valueOf(open.tier().toUpperCase(java.util.Locale.ROOT));
+        } catch (IllegalArgumentException e) {
+            return io.github.verycooltimo.murim.mastery.TechniqueTier.BASIC;
+        }
     }
 
     public static void open(ManualPayloads.Open open) {
@@ -283,10 +296,28 @@ public final class ManualScreen extends Screen {
     /** Красная печать «Изучить»: при наведении темнее и «вдавлена» на пиксель. */
     private void seal(GuiGraphics g, int mouseX, int mouseY) {
         int st = state(form());
+        if (st == 4) {
+            // Сокровенная ниже Пика (автор 03.10): на месте печати — её бледный, нетронутый тушью
+            // оттиск, рядом крупнее обычной подписи — «Вашей мудрости недостаточно». Причину не называем.
+            int ghost = (SEAL & 0x00FFFFFF) | 0x38000000;
+            g.fill(SEAL_X + 1, SEAL_Y, SEAL_X + SEAL_W - 1, SEAL_Y + SEAL_H, ghost);
+            g.fill(SEAL_X, SEAL_Y + 1, SEAL_X + SEAL_W, SEAL_Y + SEAL_H - 1, ghost);
+            g.pose().pushPose();
+            g.pose().translate(214, SEAL_Y + 2, 0.0F);
+            g.pose().scale(0.75F, 0.75F, 1.0F);
+            int ny = 0;
+            for (FormattedCharSequence line : font.split(Component.translatable("murim.manual.need_peak"), (int) ((SEAL_X - 214 - 4) / 0.75F))) {
+                g.drawString(font, line, 0, ny, SEAL_DARK, false);
+                ny += font.lineHeight + 1;
+            }
+            g.pose().popPose();
+            return;
+        }
         if (st != 1) {
             // Изучено или нет даньтяня — бледная подпись; закрыто — подпись, что нужно сначала.
             Component note = st == 2 ? Component.translatable("murim.manual.learned")
                     : st == 3 ? Component.translatable("murim.manual.no_dantian")
+                    : st == 4 ? Component.translatable("murim.manual.need_peak")
                     : Component.translatable("murim.manual.locked",
                             io.github.verycooltimo.murim.mastery.MasteryService.name(io.github.verycooltimo.murim.technique.Styles.previous(form()).orElse(form())),
                             io.github.verycooltimo.murim.technique.Styles.NEXT_FORM_LAYER);
@@ -295,7 +326,7 @@ public final class ManualScreen extends Screen {
             g.pose().scale(0.6F, 0.6F, 1.0F);
             int ly = 0;
             for (FormattedCharSequence line : font.split(note, (int) (140 / 0.6F))) {
-                g.drawString(font, line, 0, ly, st == 0 ? SEAL_DARK : 0xFF8A7C6A, false);
+                g.drawString(font, line, 0, ly, st == 0 || st == 4 ? SEAL_DARK : 0xFF8A7C6A, false);
                 ly += font.lineHeight + 1;
             }
             g.pose().popPose();

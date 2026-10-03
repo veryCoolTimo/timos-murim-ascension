@@ -22,7 +22,7 @@ import java.util.Map;
 public final class MasteryService {
 
     /** Итог попытки выучить технику. */
-    public enum Learn { LEARNED, ALREADY, MISSING_BASICS, UNKNOWN, NO_DANTIAN }
+    public enum Learn { LEARNED, ALREADY, MISSING_BASICS, UNKNOWN, NO_DANTIAN, NEED_RANK }
 
     /**
      * Изучение из манускрипта.
@@ -65,6 +65,13 @@ public final class MasteryService {
         if (!MasteryRules.canLearn(player.getData(ModAttachments.PROFILE))) {
             message(player, "murim.mastery.no_dantian", ChatFormatting.GOLD);
             return Learn.NO_DANTIAN;
+        }
+        // Сокровенные техники (24 Движения) — только с Пика (автор 03.10, этап M2).
+        TechniqueDefinition definition = TechniqueLoader.get(id);
+        if (!MasteryRules.rankAllows(player.getData(ModAttachments.PROFILE), definition.tier())
+                && !player.getData(ModAttachments.MASTERY).knows(id)) {
+            message(player, "murim.mastery.need_peak", ChatFormatting.GOLD);
+            return Learn.NEED_RANK;
         }
         return grant(player, id, depth);
     }

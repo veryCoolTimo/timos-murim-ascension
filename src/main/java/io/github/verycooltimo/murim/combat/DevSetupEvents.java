@@ -205,6 +205,8 @@ public final class DevSetupEvents {
                 awakened.withPool(500.0D).withCirculating(awakened.maxCirculating()));
         if (event.getEntity() instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
             io.github.verycooltimo.murim.profile.ProfileNetwork.sync(serverPlayer);
+            // Ранг выставлен после входа: сердца и скорость ранга ставятся заново (этап M2).
+            io.github.verycooltimo.murim.cultivation.RankEffects.apply(serverPlayer);
         }
 
         // Стенд применяет техники — значит, должен их знать (docs/design/19 §3г).
@@ -311,6 +313,24 @@ public final class DevSetupEvents {
      * <p>Выполняется через два десятка тиков после входа, когда чанки вокруг площадки
      * уже загружены и сохранённые сущности прошлых прогонов существуют в мире.
      */
+    /**
+     * Урон игрока по цели — в лог (этап M2: таблица «урон одной техники на разных рангах»).
+     * API: reference/neoforge-src/net/neoforged/neoforge/event/entity/living/LivingDamageEvent.java#Post
+     */
+    @SubscribeEvent
+    static void onDamageDealt(net.neoforged.neoforge.event.entity.living.LivingDamageEvent.Post event) {
+        if (net.neoforged.fml.loading.FMLEnvironment.production || !Boolean.getBoolean(CAPTURE_PROPERTY)
+                || !(event.getSource().getEntity() instanceof net.minecraft.server.level.ServerPlayer player)) {
+            return;
+        }
+        MurimMod.LOGGER.info("Съёмка: урон {} (до брони {}) по {}, ранг {}, техника {}",
+                String.format(java.util.Locale.ROOT, "%.2f", event.getNewDamage()),
+                String.format(java.util.Locale.ROOT, "%.2f", event.getOriginalDamage()),
+                event.getEntity().getType().getDescriptionId(),
+                player.getData(io.github.verycooltimo.murim.registry.ModAttachments.PROFILE).rank(),
+                System.getProperty("murim.capture.technique"));
+    }
+
     @SubscribeEvent
     static void onServerTick(net.neoforged.neoforge.event.tick.ServerTickEvent.Post event) {
         if (pendingSetup <= 0 || --pendingSetup > 0) {

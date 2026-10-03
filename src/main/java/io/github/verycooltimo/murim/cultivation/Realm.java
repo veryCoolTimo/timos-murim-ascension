@@ -9,9 +9,12 @@ import java.util.Map;
 /**
  * Ранги и прорывы: правила без сервера, чтобы их проверяли тесты.
  *
- * <p>docs/design/19-dantian-qi-meditation.md §3д, §3е. Ранг хранится в
- * {@link DantianProfile#rank()}: 0 — без ранга (даньтянь только родился), 1 — третий,
- * 2 — второй, 3 — первый. Пик и выше — после MVP.
+ * <p>docs/design/19-dantian-qi-meditation.md §3д, §3е, docs/design/07-realms.md §2. Ранг хранится в
+ * {@link DantianProfile#rank()} — номер большой ступени по роману (автор 03.10, этап M2):
+ * 0 — без ранга, 1 — третий, 2 — второй, 3 — первый, 4 — Пик, 5 — Трансцендентный,
+ * 6 — Преображение, 7 — Глубокий, 8 — Жизнь и Смерть, 9 — Природа, 10 — Пустота/Воля.
+ * Играбельно (прорывом) — до Пика ({@link #MAX}); выше — данные на будущее, их ставит только
+ * команда {@code /murim rank} и аура противника. Та же шкала у ауры ({@code AuraState.rank}).
  *
  * <p>«Стена» — потолок запаса ({@code ёмкость × }{@link MeditationService#POOL_CAP}). Упёрся —
  * расти дальше нельзя, нужен прорыв; прорыв поднимает ёмкость, и до новой стены снова копишь.
@@ -30,9 +33,40 @@ public final class Realm {
      */
     public static final int PEAK = 4;
 
+    public static final int TRANSCENDENT = 5;
+    public static final int TRANSFORMATION = 6;
+    public static final int PROFOUND = 7;
+    public static final int LIFE_AND_DEATH = 8;
+    public static final int NATURAL = 9;
+    public static final int VOID = 10;
+
+    /** Последний ранг, до которого ведут прорывы (MVP — до Пика, автор 03.10). */
     public static final int MAX = PEAK;
 
-    /** Во сколько раз прорыв поднимает ёмкость. Множителей к урону нет — запрет документа 05. */
+    /** Вершина лестницы по роману: ранги выше {@link #MAX} — данные на будущее. */
+    public static final int TOP = VOID;
+
+    /**
+     * Подступени (начальная → утвердившаяся → вершина) — только с Пика (автор 01.10, вики Myst).
+     * Пока не хранятся: прорыв внутри Пика — после MVP (M3+), там же появится поле в профиле.
+     */
+    public static final int STAGES = 3;
+
+    /**
+     * Множитель силы техник по рангу (автор 03.10, этап M2): маленький, «чтобы Божественный мастер
+     * не бил палкой на 99999». Применяется в одной точке — {@code TechniqueDamage.base}.
+     * Это осознанное исключение из запрета множителей к урону документа 05: тот запрет — про оси
+     * профиля даньтяня (чистота, ёмкость), ранг автор разрешил прямо.
+     */
+    private static final double[] POWER = {0.8D, 1.0D, 1.25D, 1.5D, 1.75D, 2.2D, 2.5D, 2.8D, 3.1D, 3.4D, 3.7D};
+
+    /** Прибавка множителя за каждую подступень после начальной (с Пика). */
+    public static final double POWER_PER_STAGE = 0.1D;
+
+    /** Прибавка скорости бега за ранг: немного, чтобы шаги и рывки не ломались (автор 03.10: 2–4 %). */
+    public static final double SPEED_PER_RANK = 0.03D;
+
+    /** Во сколько раз прорыв поднимает ёмкость. */
     public static final double CAPACITY_GROWTH = 1.8D;
 
     /** Сколько очков здоровья даёт каждый ранг: тело перестроено, два сердца. */
@@ -44,8 +78,24 @@ public final class Realm {
     /** Запас считается упёршимся в стену чуть раньше ровного потолка: прирост к концу медитации исчезающе мал. */
     public static final double WALL_FRACTION = 0.99D;
 
-    /** Для прорыва в третий ранг хотя бы одна техника должна быть освоена до этого слоя. */
-    public static final int THIRD_LAYER_NEED = 2;
+    /**
+     * Прорыв 1 (в третий ранг) — «освоить любую технику» (автор 03.10): хотя бы одна техника
+     * пройдена дальше прочтения, до этого слоя. Слой 0 — только прочитал; 1 — освоил.
+     */
+    public static final int THIRD_LAYER_NEED = 1;
+
+    /** Что требует прорыв, кроме стены (план M2–M4, автор 03.10). */
+    public enum Condition {
+        /** Прорыв 1: освоить любую технику (слой {@link #THIRD_LAYER_NEED}). */
+        MASTER_ANY,
+        /**
+         * Прорыв 2: победить босса. TODO(M4): босса ещё нет — до него условие проверяется
+         * по слою техники ({@link #layerNeed}); флаг «босс побеждён» добавить в профиль вместе с боссом.
+         */
+        DEFEAT_BOSS,
+        /** Прорыв 3 (и Пик до решения автора): форма до слоя {@link #layerNeed}. TODO(M3): N уточнить на игре. */
+        FORM_LAYER
+    }
 
     /**
      * Предупреждение перед сценой: 2,5 секунды стука сердца (решение автора 01.10).
@@ -85,14 +135,43 @@ public final class Realm {
         if (!atWall(profile)) {
             return Blocker.NOT_AT_WALL;
         }
+        // TODO(M5): место силы ускоряет медитацию с риском, но условием прорыва не является.
         int need = layerNeed(profile.rank() + 1);
         boolean known = layers.values().stream().anyMatch(layer -> layer >= need);
         return known ? Blocker.NONE : Blocker.NO_TECHNIQUE;
     }
 
-    /** Слой техники, которого требует прорыв в данный ранг: третий — 2, дальше на слой выше. */
+    /** Условие прорыва в данный ранг (кроме стены запаса). */
+    public static Condition condition(int targetRank) {
+        return switch (targetRank) {
+            case THIRD -> Condition.MASTER_ANY;
+            case SECOND -> Condition.DEFEAT_BOSS;
+            default -> Condition.FORM_LAYER;
+        };
+    }
+
+    /**
+     * Слой техники, которого требует прорыв в данный ранг: третий — 1 («освоить любую»),
+     * второй — 3 (пока вместо босса), первый — 4, Пик — 5.
+     */
     public static int layerNeed(int targetRank) {
-        return THIRD_LAYER_NEED + Math.max(0, targetRank - THIRD);
+        return targetRank <= THIRD ? THIRD_LAYER_NEED : targetRank + 1;
+    }
+
+    /** Множитель силы техник на ранге {@code rank}, подступень {@code stage} (0 — начальная; только с Пика). */
+    public static double power(int rank, int stage) {
+        int r = Math.max(0, Math.min(TOP, rank));
+        int s = r >= PEAK ? Math.max(0, Math.min(STAGES - 1, stage)) : 0;
+        return POWER[r] + s * POWER_PER_STAGE;
+    }
+
+    public static double power(int rank) {
+        return power(rank, 0);
+    }
+
+    /** Прибавка к скорости бега (доля базовой): +3 % за ранг. */
+    public static double bonusSpeed(int rank) {
+        return Math.max(0, Math.min(TOP, rank)) * SPEED_PER_RANK;
     }
 
     /** Профиль после успешного прорыва: ранг выше, ёмкость и каналы шире, запас сохранён. */
@@ -109,11 +188,11 @@ public final class Realm {
 
     /** Добавка к максимальному здоровью от ранга. */
     public static double bonusHealth(int rank) {
-        return Math.max(0, Math.min(MAX, rank)) * HEALTH_PER_RANK;
+        return Math.max(0, Math.min(TOP, rank)) * HEALTH_PER_RANK;
     }
 
     public static String nameKey(int rank) {
-        return "murim.rank." + Math.max(0, Math.min(MAX, rank));
+        return "murim.rank." + Math.max(0, Math.min(TOP, rank));
     }
 
     private Realm() {
