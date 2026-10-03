@@ -166,8 +166,8 @@ public final class BehaviorExecutor {
      * коридор вперёд: длина обрезается первой стеной на высоте груди, цель задевается, если её
      * хитбокс пересекает коридор; каждая — один раз. Урон — базовый урон в руке × коэффициент.
      */
-    private static boolean plumSlash(ServerPlayer player, net.minecraft.resources.ResourceLocation id) {
-        int layer = Math.max(0, io.github.verycooltimo.murim.mastery.MasteryService.layer(player, id));
+    public static boolean plumSlash(LivingEntity player, net.minecraft.resources.ResourceLocation id) {
+        int layer = Casters.layer(player, id);
         double base = TechniqueDamage.base(player, id);
         float damage = (float) (base * PlumRules.coefficient(layer));
         Vec3 origin = player.position();
@@ -212,7 +212,7 @@ public final class BehaviorExecutor {
             if (!inside) {
                 continue;
             }
-            if (target.hurt(player.damageSources().playerAttack(player), damage)) {
+            if (target.hurt(Casters.attack(player), damage)) {
                 hits++;
                 anyHit = true;
                 // Толчок вперёд по коридору, не подброс в воздух (спецификация §2.4).
@@ -222,7 +222,7 @@ public final class BehaviorExecutor {
                 if (layer >= 1) {
                     stagger(target);
                 }
-                io.github.verycooltimo.murim.mastery.MasteryService.onHit(player, id, target);
+                Casters.onHit(player, id, target);
             }
         }
         net.neoforged.neoforge.network.PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
@@ -250,8 +250,8 @@ public final class BehaviorExecutor {
      * Падение дерева: полоса за основанием ствола вперёд на высоту дерева, шириной ~3,6 блока;
      * урон — урон в руке × коэффициент падения, по одному разу на цель.
      */
-    public static void plumFall(ServerPlayer player, net.minecraft.resources.ResourceLocation id) {
-        int layer = Math.max(0, io.github.verycooltimo.murim.mastery.MasteryService.layer(player, id));
+    public static void plumFall(LivingEntity player, net.minecraft.resources.ResourceLocation id) {
+        int layer = Casters.layer(player, id);
         double coefficient = PlumRules.fallCoefficient(layer);
         if (coefficient <= 0.0D) {
             return;
@@ -278,12 +278,12 @@ public final class BehaviorExecutor {
                     || box.minY > origin.y + 2.5D) {
                 continue;
             }
-            if (target.hurt(player.damageSources().playerAttack(player), damage)) {
+            if (target.hurt(Casters.attack(player), damage)) {
                 hits++;
                 // Отбрасывает до ~2 блоков вперёд по линии падения.
                 target.push(forward.x * 0.6D, 0.25D, forward.z * 0.6D);
                 target.hurtMarked = true;
-                io.github.verycooltimo.murim.mastery.MasteryService.onHit(player, id, target);
+                Casters.onHit(player, id, target);
             }
         }
         scorch(player, origin, forward, right, base, reach, layer);
@@ -294,11 +294,11 @@ public final class BehaviorExecutor {
      * блоки — земля, песок, гравий, камень, до 48 штук, без дропа. Руды, контейнеры и всё
      * остальное не трогаются; выключается настройкой {@code techniqueTerrainDamage}.
      */
-    private static void scorch(ServerPlayer player, Vec3 origin, Vec3 forward, Vec3 right, double from, double to, int layer) {
+    private static void scorch(LivingEntity player, Vec3 origin, Vec3 forward, Vec3 right, double from, double to, int layer) {
         if (layer < 2 || !io.github.verycooltimo.murim.Config.TECHNIQUE_TERRAIN.get()) {
             return;
         }
-        net.minecraft.server.level.ServerLevel level = player.serverLevel();
+        net.minecraft.server.level.ServerLevel level = Casters.level(player);
         java.util.Random r = new java.util.Random(player.getId() * 31L + level.getGameTime());
         int broken = 0;
         // Автор 02.10: «слишком много блоков взрывается» — борозда только под стволом,
@@ -317,7 +317,7 @@ public final class BehaviorExecutor {
                     if (state.isAir() || !level.getBlockState(p.above()).isAir()) {
                         continue;
                     }
-                    if (natural(state) && level.mayInteract(player, p)) {
+                    if (natural(state) && Casters.mayBreak(player, p)) {
                         level.destroyBlock(p, false, player);
                         broken++;
                     }
@@ -652,8 +652,8 @@ public final class BehaviorExecutor {
     // ------------------------------------------------------------------ Натиск Цветущей Сливы
 
     /** Выпуск урагана: направление по взгляду фиксируется здесь; цель — первая на пути. */
-    private static boolean rushStart(ServerPlayer player, net.minecraft.resources.ResourceLocation id) {
-        int layer = Math.max(0, io.github.verycooltimo.murim.mastery.MasteryService.layer(player, id));
+    public static boolean rushStart(LivingEntity player, net.minecraft.resources.ResourceLocation id) {
+        int layer = Casters.layer(player, id);
         double base = TechniqueDamage.base(player, id);
         Vec3 look = player.getLookAngle();
         Vec3 f = new Vec3(look.x, 0.0D, look.z);
@@ -663,7 +663,7 @@ public final class BehaviorExecutor {
             double cos = Math.cos(Math.toRadians(PlumRules.TRAINING_ARC / 2.0D));
             for (LivingEntity t : candidates(player, player.getBoundingBox().inflate(PlumRules.TRAINING_REACH + 1.0D))) {
                 if (inArc(player.getEyePosition(), look, t.getBoundingBox(), PlumRules.TRAINING_REACH, cos)
-                        && t.hurt(player.damageSources().playerAttack(player), (float) base)) {
+                        && t.hurt(Casters.attack(player), (float) base)) {
                     hit = true;
                 }
             }
@@ -673,7 +673,7 @@ public final class BehaviorExecutor {
         Vec3 axis0 = o.add(0.0D, 1.2D, 0.0D);
         // Наводка (03.10 — в любом направлении): захваченная цель, иначе ближайший противник в
         // конусе 30° взгляда до 16 блоков, в том числе выше или ниже — ураган летит прямо на него.
-        LivingEntity aim = io.github.verycooltimo.murim.combat.TargetLock.locked(player, RushRules.RANGE + 4.0D);
+        LivingEntity aim = Casters.target(player, RushRules.RANGE + 4.0D);
         if (aim == null) {
             double best = Double.MAX_VALUE;
             double cone = Math.cos(Math.toRadians(30.0D));
@@ -681,7 +681,7 @@ public final class BehaviorExecutor {
                 Vec3 to = io.github.verycooltimo.murim.combat.TargetLock.centre(t).subtract(player.getEyePosition());
                 double d = to.length();
                 if (t instanceof net.minecraft.world.entity.decoration.ArmorStand || d > RushRules.RANGE
-                        || !io.github.verycooltimo.murim.combat.TargetLock.inCone(player, t, 30.0D) || !player.hasLineOfSight(t)) {
+                        || !Casters.inCone(player, t, 30.0D) || !player.hasLineOfSight(t)) {
                     continue;
                 }
                 if (d < best) {
@@ -710,7 +710,7 @@ public final class BehaviorExecutor {
     }
 
     /** Полёт урагана, обволакивание, рывок и укол, см. RushRules. */
-    public static void rushTick(ServerPlayer player, net.minecraft.resources.ResourceLocation id, int since) {
+    public static void rushTick(LivingEntity player, net.minecraft.resources.ResourceLocation id, int since) {
         double[] r = player.getData(io.github.verycooltimo.murim.registry.ModAttachments.RUSH);
         int layer = (int) r[5];
         if (layer <= 0) {
@@ -787,7 +787,7 @@ public final class BehaviorExecutor {
                 flatDir = flatDir.lengthSqr() < 1.0E-6D ? new Vec3(0.0D, 0.0D, 1.0D) : flatDir.normalize();
                 Vec3 dest = aim.add(flatDir.scale(target.getBbWidth() * 0.5D + 1.3D)).add(new Vec3(-flatDir.z, 0.0D, flatDir.x).scale(0.6D));
                 Vec3 path = dest.subtract(player.position());
-                io.github.verycooltimo.murim.combat.FootworkService.sendDash(player, path.normalize(), path.length(), RushRules.DASH_TICKS);
+                Casters.dash(player, path.normalize(), path.length(), RushRules.DASH_TICKS);
             }
         }
         // Окно укола: позиция игрока на сервере отстаёт от плавного рывка на пару тиков.
@@ -822,7 +822,7 @@ public final class BehaviorExecutor {
      * один раз получает скользящий удар и дальше тащится головой урагана вперёд и по кругу.
      * Без оглушения — иначе стан гасит скорость (TargetLock.stunTick); стан даётся при сбросе.
      */
-    private static void rushDrag(ServerPlayer player, net.minecraft.resources.ResourceLocation id, double[] r, Vec3 axis0, Vec3 f,
+    private static void rushDrag(LivingEntity player, net.minecraft.resources.ResourceLocation id, double[] r, Vec3 axis0, Vec3 f,
                                  double head, double base, LivingEntity stop) {
         if (r.length <= 16 + RUSH_CATCH_MAX) {
             return;
@@ -850,8 +850,8 @@ public final class BehaviorExecutor {
                 r[16] += 1.0D;
                 player.setData(io.github.verycooltimo.murim.registry.ModAttachments.RUSH, r);
                 t.invulnerableTime = 0;
-                if (t.hurt(player.damageSources().playerAttack(player), (float) (base * RushRules.DMG_GRAZE))) {
-                    io.github.verycooltimo.murim.mastery.MasteryService.onHit(player, id, t);
+                if (t.hurt(Casters.attack(player), (float) (base * RushRules.DMG_GRAZE))) {
+                    Casters.onHit(player, id, t);
                 }
             }
             // Тащит вперёд со скоростью головы и закручивает вокруг оси (боковая составляющая).
@@ -864,7 +864,7 @@ public final class BehaviorExecutor {
     }
 
     /** Ураган ударил в наводку: волочёных раскидывает в стороны и оглушает. */
-    private static void rushFling(double[] r, Vec3 f, ServerPlayer player) {
+    private static void rushFling(double[] r, Vec3 f, LivingEntity player) {
         if (r.length <= 16 + RUSH_CATCH_MAX) {
             return;
         }
@@ -886,7 +886,7 @@ public final class BehaviorExecutor {
      * Отброс уколом: цель срывается с заморозки и улетает по ходу рывка с подбросом; оглушение
      * снимается на полёт (stunTick гасит скорость) и возвращается через 7 тиков (см. rushTick).
      */
-    private static void rushKnock(ServerPlayer player, LivingEntity target, double[] r, int t) {
+    private static void rushKnock(LivingEntity player, LivingEntity target, double[] r, int t) {
         Vec3 dir = target.position().subtract(new Vec3(r[0], r[1], r[2]));
         dir = new Vec3(dir.x, 0.0D, dir.z);
         dir = dir.lengthSqr() < 1.0E-4D ? new Vec3(r[3], 0.0D, r[4]) : dir.normalize();
@@ -901,9 +901,9 @@ public final class BehaviorExecutor {
         player.setData(io.github.verycooltimo.murim.registry.ModAttachments.RUSH, r);
     }
 
-    private static boolean rushHurt(ServerPlayer player, net.minecraft.resources.ResourceLocation id, LivingEntity t, double amount, double[] r) {
+    private static boolean rushHurt(LivingEntity player, net.minecraft.resources.ResourceLocation id, LivingEntity t, double amount, double[] r) {
         t.invulnerableTime = 0;
-        if (!t.hurt(player.damageSources().playerAttack(player), (float) amount)) {
+        if (!t.hurt(Casters.attack(player), (float) amount)) {
             return false;
         }
         if (r[11] < 0.5D) {
@@ -914,7 +914,7 @@ public final class BehaviorExecutor {
             t.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.MOVEMENT_SLOWDOWN, ticks, 9, false, false, false));
             t.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.WEAKNESS, ticks, 9, false, false, false));
         }
-        io.github.verycooltimo.murim.mastery.MasteryService.onHit(player, id, t);
+        Casters.onHit(player, id, t);
         return true;
     }
 
@@ -1107,9 +1107,10 @@ public final class BehaviorExecutor {
         }
     }
 
-    private static List<LivingEntity> candidates(ServerPlayer player, AABB box) {
-        return player.serverLevel().getEntitiesOfClass(LivingEntity.class, box,
-                candidate -> candidate != player && candidate.isAlive() && !candidate.isSpectator());
+    private static List<LivingEntity> candidates(LivingEntity player, AABB box) {
+        return Casters.level(player).getEntitiesOfClass(LivingEntity.class, box,
+                candidate -> candidate != player && candidate.isAlive() && !candidate.isSpectator()
+                        && (!(player instanceof Casters.Caster c) || c.canHit(candidate)));
     }
 
     private static Vec3 rotateAroundY(Vec3 vector, double radians) {

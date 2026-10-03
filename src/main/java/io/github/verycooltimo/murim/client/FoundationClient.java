@@ -111,6 +111,10 @@ public final class FoundationClient {
             QiSwordClient.mark(other);
             float cooldown = FoundationForms.NOMINAL_TICKS / Math.max(0.1F, payload.speed());
             play(other, FoundationForms.Form.values()[payload.form()], payload.layer(), payload.speed(), cooldown, null, false);
+        } else if (minecraft.level.getEntity(payload.entityId()) instanceof net.minecraft.world.entity.LivingEntity npc) {
+            // NPC секты: тело анимирует его модель (SectDisciple.anim), здесь — только серп.
+            float cooldown = FoundationForms.NOMINAL_TICKS / Math.max(0.1F, payload.speed());
+            FoundationVfx.start(npc.getId(), FoundationForms.Form.values()[payload.form()], payload.layer(), cooldown, null, false);
         }
     }
 

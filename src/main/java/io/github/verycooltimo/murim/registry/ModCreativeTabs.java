@@ -51,6 +51,7 @@ public final class ModCreativeTabs {
                 out.accept(new ItemStack(ModItems.PILL_THOUSAND_POISON.get()));
                 out.accept(new ItemStack(ModItems.BEAUTY_TEAR.get()));
                 out.accept(new ItemStack(io.github.verycooltimo.murim.world.ModWorld.SPIRIT_VEIN_ITEM.get()));
+                out.accept(new ItemStack(ModItems.SECT_DISCIPLE_SPAWN_EGG.get()));
             })
             .build());
 

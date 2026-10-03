@@ -20,6 +20,7 @@ public final class EntityAttributeEvents {
         event.put(ModEntities.DUMMY.get(), TrainingDummy.attributes().build());
         event.put(ModEntities.BANDIT_SWORDSMAN.get(), BanditSwordsman.attributes().build());
         event.put(ModEntities.BANDIT_ARCHER.get(), BanditArcher.attributes().build());
+        event.put(ModEntities.SECT_DISCIPLE.get(), SectDisciple.attributes().build());
     }
 
     /**
