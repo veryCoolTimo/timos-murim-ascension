@@ -350,8 +350,9 @@ final class MountHuaChunkWriter {
             return ModBlocks.HUA_GRANITE_DARK.get().defaultBlockState();
         }
         // Water stains: vertical streak lines (2D noise is constant along y) hanging from the lip.
-        double streak = noise.noise(x / 1.9, z / 1.9, 51.0);
-        if (streak > 0.45 && t - y < 14 + 20 * (0.5 + 0.5 * noise.noise(x / 6.0, z / 6.0, 3.0))) {
+        // Bands a few blocks wide and tens of blocks long (codex r3: organised runoff, not flecks).
+        double streak = noise.noise(x / 4.5, z / 4.5, 51.0);
+        if (streak > 0.5 && t - y < 18 + 30 * (0.5 + 0.5 * noise.noise(x / 9.0, z / 9.0, 3.0))) {
             return ModBlocks.HUA_GRANITE_STAINED.get().defaultBlockState();
         }
         // Rims: frost-shattered blocks just below an edge.
@@ -360,11 +361,8 @@ final class MountHuaChunkWriter {
         }
         // North faces stay damp: moss and lichen (world north = -z).
         boolean northFace = topAt(lx, lz - 1) < y;
-        if (northFace && y < SNOW_Y && noise.noise(x / 5.0, y / 7.0, z / 5.0) > 0.3) {
+        if (northFace && y < SNOW_Y && noise.noise(x / 12.0, y / 12.0, z / 12.0) > 0.35) {
             return ModBlocks.HUA_GRANITE_MOSSY.get().defaultBlockState();
-        }
-        if (noise.noise(x / 4.0, y / 4.0, z / 4.0 + 40.0) > 0.62) {
-            return ModBlocks.HUA_GRANITE_CRACKED.get().defaultBlockState();
         }
         // Altitude banding: warm granite low, pale grey high (blended by noise, never a contour).
         double frac = (y - site.baseY()) / (double) (MountHuaSite.SUMMIT_Y - site.baseY());
@@ -417,9 +415,17 @@ final class MountHuaChunkWriter {
         // with moss (codex r1: green contour bands). Low ground (the forested foot) keeps its soil.
         double soil = noise.noise(wx / 23.0, wz / 23.0, 47.0) + (t < site.baseY() + 60 ? 0.6 : 0.0)
                 + (drop >= 2 ? 0.25 : 0.0);
-        if (soil < -0.15 && t > site.baseY() + 30) {
+        // Steps of a steep wall are not shelves: within two blocks the rock falls away by 5+,
+        // so no soil there (stand 03.10: brown dots marching diagonally across the faces).
+        int fall = 0;
+        for (int dz = -2; dz <= 2; dz += 2) {
+            for (int dx = -2; dx <= 2; dx += 2) {
+                fall = Math.max(fall, t - topAt(lx + dx, lz + dz));
+            }
+        }
+        if ((soil < -0.15 || fall >= 5) && t > site.baseY() + 30) {
             if (n > 0.35 && t < SNOW_Y) {
-                chunk.setBlockState(pos.set(wx, t, wz), Blocks.MOSS_BLOCK.defaultBlockState(), false);
+                chunk.setBlockState(pos.set(wx, t, wz), ModBlocks.HUA_GRANITE_MOSSY.get().defaultBlockState(), false);
             }
             return;
         }
@@ -720,7 +726,7 @@ final class MountHuaChunkWriter {
                 long h = mix(wx, wz, 7);
                 int roll = (int) Math.floorMod(h, 1000L);
                 // Pines on ledges and rims (a big drop right next to a flat spot), fewer inland.
-                int chance = drop <= 2 && deep >= 7 ? 45 : (soil && drop <= 2 ? 8 : (drop <= 4 ? 2 : 0));
+                int chance = drop <= 2 && deep >= 7 ? 25 : (soil && drop <= 2 ? 6 : 0);
                 if (roll < chance) {
                     pine(wx, t + 1, wz, h, lx, lz, pos);
                 } else if (soil && drop <= 2 && t < site.baseY() + 130 && roll > 996) {
