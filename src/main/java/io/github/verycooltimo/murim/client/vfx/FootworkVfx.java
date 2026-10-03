@@ -426,6 +426,9 @@ public final class FootworkVfx {
         final java.util.ArrayDeque<Vec3> dirs = new java.util.ArrayDeque<>();
         int lastGhost = -100;
         int lastTurn = -100;
+        int lastClone = -100;
+        /** Тики окончания живых теневых копий. */
+        final List<Integer> clones = new ArrayList<>();
         double moved;
         Vec3 last;
 
@@ -830,6 +833,8 @@ public final class FootworkVfx {
         final double size;
         /** Сборка: частица летит ИЗ потока в точку тела и садится к {@code release} (тело собирается из ветра). */
         float gatherFrom = Float.NaN;
+        /** Обычная частица не видна раньше этого тика (копия появляется, когда сборка закончилась). */
+        float visibleFrom = -Float.MAX_VALUE;
 
         Mote(Vec3 origin, float release, float life, Vec3 flow, double amp, VfxColour colour, float alpha, double size) {
             this.origin = origin;
@@ -994,7 +999,7 @@ public final class FootworkVfx {
     /** Отрисовка частицы силуэта: квадрат, вытягивающийся вдоль потока и сужающийся поперёк. */
     private static void mote(VertexConsumer c, PoseStack.Pose pose, Vec3 camera, Mote m, float now) {
         float a = now - m.release;
-        if (now > m.release + m.life) {
+        if (now > m.release + m.life || now < m.visibleFrom) {
             return;
         }
         Vec3 p = m.at(now);
@@ -1417,6 +1422,28 @@ public final class FootworkVfx {
                 if (now % 6 == 0 && step.lengthSqr() > 1.0E-4D) {
                     silhouette(pl, pos, pl.yBodyRot, now, dirNow.scale(-1.0D), hex(0x9FB8C4), 0.16F, 36, 0.0F, 2.0F, 4.0F, true);
                 }
+                // Теневые копии «повсюду» (автор 03.10): рядом из ветра собирается копия в своей позе,
+                // стоит ~0,4 с и снова рассыпается в ветер — тем же способом, что принятые Миг и Смерть.
+                if (s.layer >= 3 && now - s.lastClone >= (s.layer >= 5 ? 7 : 10) && s.clones.size() < 3) {
+                    s.lastClone = now;
+                    double th = RNG.nextDouble() * Math.PI * 2.0D;
+                    double rr = 1.6D + 2.0D * RNG.nextDouble();
+                    Vec3 at = pos.add(Math.cos(th) * rr, 0.0D, Math.sin(th) * rr);
+                    float cy = RNG.nextFloat() * 360.0F;
+                    Vec3 wind = Vec3.directionFromRotation(0.0F, cy + 90.0F + RNG.nextFloat() * 180.0F);
+                    List<Vec3> pose = posePoints(pl, at, cy, false);
+                    // 0–3: собирается из ветра; 3–11: стоит; 11–16: рассыпается.
+                    silhouetteMotes(pose, at, now, wind, hex(0x9FB8C4), 0.32F, 170, 0.0F, 3.0F, 1.5F, now - 1.0F);
+                    int first = MOTES.size();
+                    silhouetteMotes(pose, at, now + 3.0F, wind, hex(0x9FB8C4), 0.32F, 170, 8.0F, 5.0F, 5.0F, Float.NaN);
+                    for (int i = first; i < MOTES.size(); i++) {
+                        MOTES.get(i).visibleFrom = now + 3.5F;
+                    }
+                    RIBBONS.add(sheet(spiral(at, wind, 0.5D, 0.3D, 1.4D, Math.PI, Math.toRadians(220.0D), 14), now + 10.0F, 2.0F, 2.0F,
+                            5.0F, 0.13D, hex(0x91B5C1), 0.32F, wind.scale(0.14D)));
+                    s.clones.add(now + 17);
+                }
+                s.clones.removeIf(end -> end < now);
                 // Поза остаётся на миг на повороте и сдувается (спецификация формы).
                 if (s.layer >= 3 && s.dirs.size() == 7 && dirNow.dot(s.dirs.peekFirst()) < Math.cos(Math.toRadians(25.0D))
                         && now - s.lastTurn >= 8) {
