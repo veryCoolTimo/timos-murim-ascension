@@ -30,11 +30,11 @@ public final class Styles {
             Optional.of(id("seven_plum_basic")));
 
     /**
-     * Меч 24 Движений Цветущей Сливы: пока одна секретная форма — Ливень. Обычные движения
+     * Меч 24 Движений Цветущей Сливы: секретные формы — Ливень, Рассеяние. Обычные движения
      * стиля добавятся формами сюда же, своей основы ЛКМ у стиля пока нет.
      */
     public static final Style TWENTY_FOUR_PLUM = new Style(id("twenty_four_plum"), List.of(
-            id("twenty_four_plum_rainfall")), Optional.empty());
+            id("twenty_four_plum_rainfall"), id("twenty_four_plum_scatter")), Optional.empty());
 
     /**
      * Шаги — тоже стили форм (автор 03.10: «техника шагов — то же, что 7 цветков: как ты
