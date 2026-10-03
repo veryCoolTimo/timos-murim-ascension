@@ -62,7 +62,6 @@ public final class DomeVfx {
     private static final VfxColour FLASH_WHITE = hex(0xFFFFFF);
     private static final VfxColour FLASH_CYAN = hex(0x72DFFF);
     private static final VfxColour FLASH_BLUE = hex(0x477FE5);
-    private static final VfxColour GLOW_CYAN = hex(0xBDFFFF);
     private static final VfxColour WIND = hex(0xE8EDF1);
     private static final VfxColour MILK = hex(0xFFD5EE);
 
@@ -123,7 +122,7 @@ public final class DomeVfx {
             for (int k = 0; k < kinks; k++) {
                 at[k] = 1 + (int) Math.round((n - 2) * (k + 0.5D + (r.nextDouble() - 0.5D) * 0.6D) / kinks);
                 // Излом 10–18° (codex 03.10): поперечный сдвиг ~0,05–0,08 длины.
-                double amp = depth == 0 ? 0.035D : link ? 0.07D : 0.08D;
+                double amp = depth == 0 ? 0.035D : link ? 0.07D : depth == 1 ? 0.11D : 0.07D;
                 off[Math.max(1, Math.min(n - 1, at[k]))] = (r.nextBoolean() ? 1.0D : -1.0D) * (0.5D + 0.5D * r.nextDouble()) * len * amp;
             }
             // Между изломами — линейная интерполяция сдвига: отрезки прямые, углы резкие.
@@ -398,7 +397,7 @@ public final class DomeVfx {
             Vec3 mid = loc(c, Math.sin(a) * (DomeRules.RADIUS + 0.3D), h * 0.5D, Math.cos(a) * (DomeRules.RADIUS + 0.3D));
             Vec3 top = loc(c, Math.sin(a) * (DomeRules.RADIUS - curl), h * 0.92D, Math.cos(a) * (DomeRules.RADIUS - curl));
             // codex 03.10: ствол 0,10–0,16 блока.
-            double w = 0.1D + 0.05D * c.scale;
+            double w = (0.1D + 0.05D * c.scale) * (DomeRules.bearing(c.layer, k) ? 1.15D : 0.62D);
             c.branches.add(new Branch(base, mid, top, w, born, DomeRules.GROW, 0, k, false, r, 2 + r.nextInt(2), rad));
             // Корни-раструб: два коротких отростка у пола — ствол встаёт из земли, а не висит.
             for (int s = -1; s <= 1; s += 2) {
@@ -420,7 +419,7 @@ public final class DomeVfx {
                 Vec3 ct = st.add(dir.scale(len * 0.5D)).add(c.up.scale(len * 0.15D)).add(rad.scale(0.15D));
                 float lb = born + DomeRules.GROW * (float) at + 1.0F + 0.3F * i;
                 double lw = 0.025D + 0.02D * (1.0D - at);
-                Branch b = new Branch(st, ct, en, lw, lb, 2.5F, 1, k, false, r, 2 + r.nextInt(3), rad);
+                Branch b = new Branch(st, ct, en, lw, lb, 2.5F, 1, k, false, r, 2, rad);
                 b.dark = r.nextInt(4) == 0;
                 c.branches.add(b);
                 grow(c, b, dir, len, lw, lb + 1.5F, 2, c.layer >= 7 ? 3 : 2, k, rad);
@@ -428,13 +427,15 @@ public final class DomeVfx {
             // Развилка (d04): верх ствола расходится на 2–3 толстых сука — один загибается над
             // мастером (свод купола), другие — вверх и в стороны к соседям.
             // codex 03.10: развилка на 45–65 % высоты.
-            Vec3 fork = bezier(base, mid, top, 0.55D + 0.1D * r.nextDouble());
-            int forks = c.layer >= 4 ? 3 : 2;
+            Vec3 fork = bezier(base, mid, top, 0.5D + 0.2D * r.nextDouble());
+            // Развилка неровная (codex раунд 4: верх не должен повторять одинаковые дуги-рога).
+            int forks = c.layer >= 4 && r.nextInt(3) > 0 ? 3 : 2;
             for (int i = 0; i < forks; i++) {
-                double sd = forks == 3 ? i - 1 : i == 0 ? -0.6D : 0.6D;
+                double sd = (forks == 3 ? i - 1 : i == 0 ? -0.6D : 0.6D) + (r.nextDouble() - 0.5D) * 0.6D;
                 Vec3 dir = c.up.scale(0.75D).add(tan.scale(sd * 0.75D)).add(rad.scale(i == forks / 2 ? -0.75D : -0.2D)).normalize();
-                double len = (1.6D + 0.5D * r.nextDouble()) * c.scale;
-                Vec3 en = fork.add(dir.scale(len)).add(rad.scale(-0.5D * c.scale));
+                // Раунд 5: свободные концы короче на 40 % — не частокол.
+                double len = (0.95D + 0.35D * r.nextDouble()) * c.scale;
+                Vec3 en = fork.add(dir.scale(len)).add(rad.scale(-0.4D * c.scale));
                 Vec3 ct = fork.add(dir.scale(len * 0.55D)).add(rad.scale(0.12D));
                 float cb = born + DomeRules.GROW * 0.8F + 0.4F * i;
                 Branch b = new Branch(fork, ct, en, 0.045D, cb, 2.2F, 1, k, false, r, 3, rad);
@@ -460,18 +461,21 @@ public final class DomeVfx {
                 double y0 = y + (rise ? -dy : dy);
                 double y1 = y + (rise ? dy : -dy);
                 double rr = DomeRules.RADIUS + 0.1D * Math.sin(j * 1.7D + k);
-                double curl0 = 1.0D * c.scale * Math.pow(y0 / Math.max(1.0D, hMin), 2.0D);
-                double curl1 = 1.0D * c.scale * Math.pow(y1 / Math.max(1.0D, hMin), 2.0D);
-                Vec3 s = loc(c, Math.sin(a0) * (rr - curl0), y0, Math.cos(a0) * (rr - curl0));
-                Vec3 e = loc(c, Math.sin(a1) * (rr - curl1), y1, Math.cos(a1) * (rr - curl1));
                 double am = (a0 + a1) * 0.5D;
-                // Выгиб наружу и вверх: сеть выпуклая.
-                double bulge = 0.25D + 0.15D * r.nextDouble();
-                Vec3 ct = loc(c, Math.sin(am) * (rr + bulge), (y0 + y1) * 0.5D + 0.2D, Math.cos(am) * (rr + bulge));
-                float lb = Math.max(ready + 1.0F + j * 0.8F, Math.min(DomeRules.LOCK - 1.0F, ready + 3.0F + j));
-                Branch b = new Branch(s, ct, e, 0.022D + 0.012D * c.scale, lb, 3.0F, 2, k, true, r, 2, radial(c, am));
-                b.dark = (j + k) % 4 == 1;
-                c.branches.add(b);
+                // Одна перемычка на ярус (раунд 5: X-решётка спорила со стволами d04).
+                for (int x = 0; x < 1; x++) {
+                    double ya = x == 0 ? y0 : y1;
+                    double yb = x == 0 ? y1 : y0;
+                    Vec3 s = trunkAt(c, k, ya);
+                    Vec3 e = trunkAt(c, k + 1, yb);
+                    // Выгиб наружу и вверх: сеть выпуклая.
+                    double bulge = 0.25D + 0.15D * r.nextDouble();
+                    Vec3 ct = loc(c, Math.sin(am) * (rr + bulge), (ya + yb) * 0.5D + 0.2D, Math.cos(am) * (rr + bulge));
+                    float lb = Math.max(ready + 1.0F + j * 0.8F + x, Math.min(DomeRules.LOCK - 1.0F, ready + 3.0F + j + x));
+                    Branch b = new Branch(s, ct, e, 0.032D + 0.014D * c.scale, lb, 3.0F, 2, k, true, r, 2, radial(c, am));
+                    b.dark = (j + k + x) % 4 == 1;
+                    c.branches.add(b);
+                }
             }
         }
         // Цветы (codex: −70 %): вдоль сучьев и прутьев, мелкие, 8–12 на блок у концов.
@@ -516,6 +520,17 @@ public final class DomeVfx {
         }
     }
 
+    /** Точка на стволе {@code k} на высоте {@code y} (та же кривая, что рисуется). */
+    private static Vec3 trunkAt(Cast c, int k, double y) {
+        double h = DomeRules.trunkHeight(c.layer, k);
+        double a = Math.toRadians(DomeRules.trunkAngle(c.layer, k));
+        double curl = 0.5D * c.scale;
+        Vec3 base = loc(c, Math.sin(a) * DomeRules.RADIUS, -0.05D, Math.cos(a) * DomeRules.RADIUS);
+        Vec3 mid = loc(c, Math.sin(a) * (DomeRules.RADIUS + 0.3D), h * 0.5D, Math.cos(a) * (DomeRules.RADIUS + 0.3D));
+        Vec3 top = loc(c, Math.sin(a) * (DomeRules.RADIUS - curl), h * 0.92D, Math.cos(a) * (DomeRules.RADIUS - curl));
+        return bezier(base, mid, top, Mth.clamp(y / (h * 0.92D), 0.0D, 1.0D));
+    }
+
     private static Vec3 rotate(Vec3 v, Vec3 axis, double th) {
         double cs = Math.cos(th);
         double sn = Math.sin(th);
@@ -539,7 +554,7 @@ public final class DomeVfx {
         float size = Mth.clamp(0.5F + 1.0F * share, 0.5F, 0.7F) * (float) (0.85D + 0.15D * c.scale);
         Vec3 out = from.lengthSqr() > 1.0E-6D ? from.scale(-1.0D) : c.ahead;
         c.flashes.add(new Flash(at, out, clientTicks, size, share > 0.25F || last));
-        for (int i = 0; i < Math.max(6, c.n(18)); i++) {
+        for (int i = 0; i < Math.max(4, c.n(7)); i++) {
             Vec3 d = out.add(c.random.nextGaussian() * 0.6D, c.random.nextGaussian() * 0.6D, c.random.nextGaussian() * 0.6D).normalize();
             Mote m = new Mote(at, d.scale(0.3D + 0.3D * c.random.nextDouble()), 6 + c.random.nextInt(4), Mote.SPARK, 0, 0.0F,
                     0.03D + 0.03D * c.random.nextDouble(), 4);
@@ -547,9 +562,9 @@ public final class DomeVfx {
             c.motes.add(m);
         }
         if (DomeRules.petals(c.layer)) {
-            for (int i = 0; i < c.n(14) + 6; i++) {
+            for (int i = 0; i < c.n(30) + 8; i++) {
                 Vec3 d = out.add(c.random.nextGaussian() * 0.8D, c.random.nextGaussian() * 0.6D + 0.2D, c.random.nextGaussian() * 0.8D).normalize();
-                Mote m = petal(c, at, d.scale(0.12D + 0.2D * c.random.nextDouble()), 26 + c.random.nextInt(14));
+                Mote m = petal(c, at.add(d.scale(0.35D)), d.scale(0.12D + 0.2D * c.random.nextDouble()), 26 + c.random.nextInt(14));
                 m.turbulence = 0.008D;
                 m.tone = c.random.nextInt(4) == 0 ? 2 : 1;
                 c.motes.add(m);
@@ -828,7 +843,7 @@ public final class DomeVfx {
             }
         }
         c.swings.removeIf(s -> clientTicks - s.born() > 6);
-        c.flashes.removeIf(f -> clientTicks - f.born() > 10);
+        c.flashes.removeIf(f -> clientTicks - f.born() > 14);
     }
 
     private static void tickMotes(Cast c) {
@@ -896,7 +911,7 @@ public final class DomeVfx {
         if (mc.level == null || mc.level.getBlockState(BlockPos.containing(ground.add(0.0D, -0.2D, 0.0D))).isAir()) {
             return;
         }
-        int n = Math.max(6, c.n(16));
+        int n = Math.max(4, c.n(9));
         for (int i = 0; i < n; i++) {
             double a = Math.PI * 2.0D * i / n + c.random.nextDouble() * 0.3D;
             Vec3 out = new Vec3(Math.cos(a), 0.0D, Math.sin(a));
@@ -1037,7 +1052,8 @@ public final class DomeVfx {
             float age = clientTicks - f.born();
             double d = p.distanceTo(f.at());
             if (d < 2.6D && age >= 0.0F) {
-                off = off.add(f.dir().scale(0.18D * f.size() * (1.0D - d / 2.6D) * Math.sin(age * 2.4D) * Math.exp(-age / 3.0D)));
+                // Удар вдавливает участок сети внутрь (к мастеру) и он пружинит обратно (codex раунд 3).
+                off = off.add(f.dir().scale(-0.32D * (1.0D - d / 2.6D) * Math.cos(age * 0.9D) * Math.exp(-age / 3.5D)));
             }
         }
         return p.add(off);
@@ -1124,23 +1140,24 @@ public final class DomeVfx {
                 for (int i = 0; i < a.length; i++) {
                     double hf = Math.min(1.0D, i / (double) n);
                     // Белые нижние 60 %, переход на 22 % высоты (codex 03.10).
-                    double k = Mth.clamp((hf - 0.6D) / 0.22D, 0.0D, 1.0D);
+                    // Раунд 3: белое ещё на 15 % выше.
+                    double k = Mth.clamp((hf - 0.72D) / 0.22D, 0.0D, 1.0D);
                     white[i] = a[i] * (float) (1.0D - 0.85D * k);
                     rose[i] = a[i] * (float) (0.3D + 0.7D * k);
                 }
                 PlumVfx.stripVar(v, pose, camera, p, PlumVfx.scale(w, 1.9D), PlumVfx.scaled(a, 0.05F), pink ? BRANCH : COLD);
-                PlumVfx.stripVar(v, pose, camera, p, PlumVfx.scale(w, 1.25D), PlumVfx.scaled(a, 0.48F), pink ? TRUNK_RIM : COLD);
+                PlumVfx.stripVar(v, pose, camera, p, PlumVfx.scale(w, 1.35D), PlumVfx.scaled(a, 0.62F), pink ? TRUNK_RIM : COLD);
                 if (pink) {
                     PlumVfx.stripVar(v, pose, camera, p, w, PlumVfx.scaled(rose, 0.9F), BRANCH);
                 }
-                PlumVfx.stripVar(v, pose, camera, p, w, PlumVfx.scaled(white, 0.95F), TRUNK);
+                PlumVfx.stripVar(v, pose, camera, p, PlumVfx.scale(w, 0.8D), PlumVfx.scaled(white, 0.95F), TRUNK);
                 PlumVfx.stripVar(v, pose, camera, p, PlumVfx.scale(w, 0.4D), PlumVfx.scaled(white, 0.7F), EDGE);
                 continue;
             }
             // Ветви (d04, d08): чёткая ломаная линия без широкого свечения; передние — тёмные.
             VfxColour body = !pink ? COLD : b.dark ? BRANCH_DARK : b.link ? BRANCH_HOT : b.depth == 1 ? BRANCH : BRANCH_DEEP;
             PlumVfx.stripVar(v, pose, camera, p, w, PlumVfx.scaled(a, 0.92F), body);
-            if (b.depth <= 1 && !b.dark) {
+            if ((b.depth <= 1 || b.link) && !b.dark) {
                 PlumVfx.stripVar(v, pose, camera, p, PlumVfx.scale(w, 0.35D), PlumVfx.scaled(a, 0.7F), pink ? TRUNK_RIM : EDGE);
             }
         }
@@ -1201,11 +1218,16 @@ public final class DomeVfx {
             for (int k = 0; k < rays; k++) {
                 double ang = k * Math.PI * 2.0D / rays + 0.35D * Math.sin(k * 2.9D + f.born());
                 // Неравные лучи 0,3–0,65 блока; голубая только внешняя пятая часть (d10).
-                double len = (0.3D + 0.35D * (0.5D + 0.5D * Math.sin(k * 2.3D + f.born()))) * grow * f.size() / 0.6D;
+                double len = 1.3D * (0.3D + 0.35D * (0.5D + 0.5D * Math.sin(k * 2.3D + f.born()))) * grow * f.size() / 0.6D;
                 Vec3 d = ax.scale(Math.cos(ang)).add(ay.scale(Math.sin(ang)));
                 Vec3[] p = {f.at(), f.at().add(d.scale(len * 0.4D)), f.at().add(d.scale(len * 0.8D))};
                 Vec3[] q = {f.at().add(d.scale(len * 0.78D)), f.at().add(d.scale(len))};
-                PlumVfx.strip(v, pose, camera, p, new double[] {0.06D, 0.035D, 0.012D}, 0.97F * a, FLASH_WHITE);
+                // Три-четыре длинных луча заметно длиннее остальных.
+                if (k % 2 == 0) {
+                    Vec3[] lp = {f.at(), f.at().add(d.scale(len * 0.9D)), f.at().add(d.scale(len * 1.5D))};
+                    PlumVfx.strip(v, pose, camera, lp, new double[] {0.07D, 0.03D, 0.0D}, 0.97F * a, FLASH_WHITE);
+                }
+                PlumVfx.strip(v, pose, camera, p, new double[] {0.08D, 0.045D, 0.014D}, 0.97F * a, FLASH_WHITE);
                 PlumVfx.strip(v, pose, camera, q, new double[] {0.016D, 0.0D}, 0.9F * a, FLASH_CYAN);
             }
             // За звездой — 2–3 голубые спиральные дуги (воронка d08), раскручиваются наружу.
@@ -1261,8 +1283,8 @@ public final class DomeVfx {
                 PlumVfx.stripVar(v, pose, camera, p, w, PlumVfx.scaled(al, 0.38F), WIND);
                 PlumVfx.stripVar(v, pose, camera, p, PlumVfx.scale(w, 0.25D), PlumVfx.scaled(al, 0.85F), EDGE);
             } else if (m.kind == Mote.SPARK) {
-                PlumVfx.stripVar(v, pose, camera, p, PlumVfx.scale(w, 2.0D), PlumVfx.scaled(al, 0.4F), FLASH_CYAN);
-                PlumVfx.stripVar(v, pose, camera, p, PlumVfx.scale(w, 0.6D), PlumVfx.scaled(al, 0.95F), FLASH_WHITE);
+                PlumVfx.stripVar(v, pose, camera, p, PlumVfx.scale(w, 1.6D), PlumVfx.scaled(al, 0.15F), FLASH_CYAN);
+                PlumVfx.stripVar(v, pose, camera, p, PlumVfx.scale(w, 0.7D), PlumVfx.scaled(al, 0.95F), FLASH_WHITE);
             } else {
                 PlumVfx.stripVar(v, pose, camera, p, PlumVfx.scale(w, 1.6D), PlumVfx.scaled(al, 0.5F), BRANCH);
                 PlumVfx.stripVar(v, pose, camera, p, PlumVfx.scale(w, 0.5D), PlumVfx.scaled(al, 0.95F), TRUNK);
@@ -1366,8 +1388,8 @@ public final class DomeVfx {
             float a = (float) PlumVfx.curve(age, 0.0, 1.0, 2.0, 0.8, 6.0, 0.0);
             if (a > 0.0F) {
                 // Белое ядро 0,18–0,25 блока, узкая голубая кайма.
-                PlumVfx.glow(g, pose, camera, f.at(), 0.22D, 1.0F * a, FLASH_WHITE);
-                PlumVfx.glow(g, pose, camera, f.at(), 0.36D, 0.25F * a, GLOW_CYAN);
+                // Раунд 5: звезда, а не сгусток — ядро меньше, без голубого ореола, лучи несут форму.
+                PlumVfx.glow(g, pose, camera, f.at(), 0.3D, 1.0F * a, FLASH_WHITE);
             }
         }
         buffers.endBatch(gt);

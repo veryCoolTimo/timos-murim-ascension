@@ -126,7 +126,16 @@ public final class DomeRules {
     /** Высота ствола: купол — центр выше краёв. */
     public static double trunkHeight(int layer, int k) {
         double a = trunkAngle(layer, k) / TRUNK_SPREAD;
-        return HEIGHT * scale(layer) * (1.0D - 0.24D * a * a) * (1.0D + 0.05D * Math.sin(k * 1.7D));
+        return HEIGHT * scale(layer) * (1.0D - 0.24D * a * a) * (1.0D + 0.05D * Math.sin(k * 1.7D)) * (bearing(layer, k) ? 1.0D : 0.8D);
+    }
+
+    /**
+     * Несущий ствол (codex 03.10: в d04 доминируют 3–4 крупных ствола, не 7 равных): чётные от
+     * края — несущие, между ними — тоньше и ниже.
+     */
+    public static boolean bearing(int layer, int k) {
+        int n = trunks(layer);
+        return n <= 3 || k % 2 == 0;
     }
 
     /** Порядок посадки: центр, потом вразнобой к краям. Возвращает индекс ствола для {@code order}-го. */

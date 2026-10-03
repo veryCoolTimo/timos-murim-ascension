@@ -57,7 +57,7 @@ public final class DomeExecutor {
             elevation = -player.getXRot();
         }
         // Против врага в небе форма наклоняется к нему; до 20° — стволы из земли.
-        double tilt = elevation > 20.0D ? Math.min(55.0D, elevation - 10.0D) : 0.0D;
+        double tilt = elevation > 20.0D ? Math.min(55.0D, elevation * 0.9D) : 0.0D;
         DomeRules.Frame f = new DomeRules.Frame(player.position(), forward, tilt);
         double pool = DomeRules.pool(layer, player.getMaxHealth());
         player.setData(ModAttachments.DOME, new double[] {f.pivot().x, f.pivot().y, f.pivot().z,
@@ -197,7 +197,7 @@ public final class DomeExecutor {
         Vec3 dir = to.subtract(from);
         arrow.shoot(dir.x, dir.y + dir.horizontalDistance() * 0.02D, dir.z, 2.2F, 0.0F);
         player.level().addFreshEntity(arrow);
-        MurimMod.LOGGER.info("Купол-стенд: стрела на тике {} от {}", tick, shooter.getName().getString());
+        MurimMod.LOGGER.debug("Купол-стенд: стрела на тике {} от {}", tick, shooter.getName().getString());
     }
 
     /** Снаряд остановлен сетью: исчезает, пул снимается по его силе. */
@@ -217,7 +217,7 @@ public final class DomeExecutor {
             d[BROKEN] = 1.0D;
         }
         player.setData(ModAttachments.DOME, d);
-        MurimMod.LOGGER.info("Купол: погашено {} (пул {} / {}){}", String.format("%.1f", cost), String.format("%.1f", d[POOL]),
+        MurimMod.LOGGER.debug("Купол: погашено {} (пул {} / {}){}", String.format("%.1f", cost), String.format("%.1f", d[POOL]),
                 String.format("%.1f", d[POOL_MAX]), broke ? ", сеть порвана" : "");
         float share = (float) Math.min(1.0D, cost / Math.max(1.0D, d[POOL_MAX]));
         PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
