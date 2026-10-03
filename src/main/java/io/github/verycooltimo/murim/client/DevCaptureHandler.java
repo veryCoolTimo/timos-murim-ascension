@@ -223,7 +223,7 @@ public final class DevCaptureHandler {
                 return;
             }
             if ("manual".equals(subject)) {
-                manualTicks = 40;
+                manualTicks = 56;
                 return;
             }
             if (MEDITATION.equals(subject)) {
@@ -272,11 +272,14 @@ public final class DevCaptureHandler {
         }
 
         if (manualTicks > 0) {
-            int t = 40 - manualTicks--;
+            int t = 56 - manualTicks--;
             if (t == 4 && minecraft.player != null && minecraft.gameMode != null) {
                 minecraft.gameMode.useItem(minecraft.player, net.minecraft.world.InteractionHand.MAIN_HAND);
             }
-            if (t >= 10 && t % 6 == 0) {
+            if (t == 38 && minecraft.screen != null) {
+                minecraft.screen.mouseScrolled(0, 0, 0, -1);
+            }
+            if (t >= 6 && t % 2 == 0) {
                 grab(minecraft, String.format("murim_%s_%03d.png", anglePrefix(), frameIndex));
                 grab(minecraft, String.format("clean_%s_%03d.png", anglePrefix(), frameIndex));
                 frameIndex++;
