@@ -241,6 +241,16 @@ public final class DevSetupEvents {
             book.set(io.github.verycooltimo.murim.registry.ModDataComponents.TECHNIQUE.get(), net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(
                     io.github.verycooltimo.murim.MurimMod.MODID, System.getenv().getOrDefault("MURIM_CAPTURE_MANUAL", "six_harmonies")));
             mp.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, book);
+            // MURIM_CAPTURE_MANUAL_FRESH=1 — книга ещё не изучена (видна печать «Изучить»).
+            if ("1".equals(System.getenv("MURIM_CAPTURE_MANUAL_FRESH"))) {
+                mp.setData(io.github.verycooltimo.murim.registry.ModAttachments.MASTERY, io.github.verycooltimo.murim.mastery.MasteryState.EMPTY);
+                io.github.verycooltimo.murim.mastery.MasteryService.sync(mp);
+            }
+            // MURIM_CAPTURE_NO_DANTIAN=1 — игрок без даньтяня: книга читается, но не учит.
+            if ("1".equals(System.getenv("MURIM_CAPTURE_NO_DANTIAN"))) {
+                mp.setData(io.github.verycooltimo.murim.registry.ModAttachments.PROFILE, io.github.verycooltimo.murim.profile.DantianProfile.INITIAL);
+                io.github.verycooltimo.murim.profile.ProfileNetwork.sync(mp);
+            }
         }
         // Съёмка интерфейсов техник: шесть открытых слотов, пять техник, часть освоена наполовину.
         if ("ui".equals(System.getProperty("murim.capture.technique"))

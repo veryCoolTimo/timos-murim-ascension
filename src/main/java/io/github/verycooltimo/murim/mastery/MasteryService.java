@@ -22,7 +22,7 @@ import java.util.Map;
 public final class MasteryService {
 
     /** Итог попытки выучить технику. */
-    public enum Learn { LEARNED, ALREADY, MISSING_BASICS, UNKNOWN }
+    public enum Learn { LEARNED, ALREADY, MISSING_BASICS, UNKNOWN, NO_DANTIAN }
 
     /**
      * Изучение из манускрипта.
@@ -50,13 +50,27 @@ public final class MasteryService {
             }
             for (ResourceLocation f : style.forms()) {
                 if (!player.getData(ModAttachments.MASTERY).knows(f)) {
-                    learn(player, f, cap);
+                    grant(player, f, cap);
                 }
             }
         }
     }
 
     public static Learn learn(ServerPlayer player, ResourceLocation id, int depth) {
+        if (TechniqueLoader.get(id) == null) {
+            return Learn.UNKNOWN;
+        }
+        // Без даньтяня ци не удержать — ни одна техника не учится (автор 03.10).
+        // Dev-команды и стенд пишут MASTERY напрямую и сюда не заходят.
+        if (!MasteryRules.canLearn(player.getData(ModAttachments.PROFILE))) {
+            message(player, "murim.mastery.no_dantian", ChatFormatting.GOLD);
+            return Learn.NO_DANTIAN;
+        }
+        return grant(player, id, depth);
+    }
+
+    /** Изучение без проверки даньтяня: дочерние формы стиля и достройка уже начатых стилей. */
+    private static Learn grant(ServerPlayer player, ResourceLocation id, int depth) {
         TechniqueDefinition definition = TechniqueLoader.get(id);
         if (definition == null) {
             return Learn.UNKNOWN;
@@ -95,12 +109,12 @@ public final class MasteryService {
             if (!io.github.verycooltimo.murim.technique.Styles.sequential(style)) {
                 for (ResourceLocation form : style.forms()) {
                     if (!player.getData(ModAttachments.MASTERY).knows(form)) {
-                        learn(player, form, depth);
+                        grant(player, form, depth);
                     }
                 }
             }
             if (!io.github.verycooltimo.murim.technique.Styles.sequential(style)) {
-                style.basic().filter(b -> !player.getData(ModAttachments.MASTERY).knows(b)).ifPresent(b -> learn(player, b, depth));
+                style.basic().filter(b -> !player.getData(ModAttachments.MASTERY).knows(b)).ifPresent(b -> grant(player, b, depth));
             }
         });
         sync(player);
