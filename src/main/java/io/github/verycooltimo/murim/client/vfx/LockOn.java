@@ -58,7 +58,7 @@ public final class LockOn {
 
     private static void set(int id) {
         if (id >= 0 && id != targetId) {
-            io.github.verycooltimo.murim.client.Sfx.ui(io.github.verycooltimo.murim.registry.ModSounds.LOCK_ON, 0.8F, 1.0F);
+            io.github.verycooltimo.murim.client.Sfx.ui(io.github.verycooltimo.murim.registry.ModSounds.LOCK_ON, 0.25F, 1.0F);
         }
         targetId = id;
         unseen = 0;

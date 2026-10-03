@@ -316,24 +316,7 @@
     "subtitle": "subtitles.murim.lock_on",
     "sounds": [
       {
-        "name": "murim:lock_on_a",
-        "attenuation_distance": 8
-      },
-      {
         "name": "murim:lock_on_b",
-        "attenuation_distance": 8
-      }
-    ]
-  },
-  "wheel_open": {
-    "subtitle": "subtitles.murim.wheel_open",
-    "sounds": [
-      {
-        "name": "murim:wheel_open_a",
-        "attenuation_distance": 8
-      },
-      {
-        "name": "murim:wheel_open_b",
         "attenuation_distance": 8
       }
     ]

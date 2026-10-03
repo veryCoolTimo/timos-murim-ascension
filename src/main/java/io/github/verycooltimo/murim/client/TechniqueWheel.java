@@ -151,7 +151,6 @@ public final class TechniqueWheel {
         if (wanted && !open) {
             open = true;
             age = 0;
-            io.github.verycooltimo.murim.client.Sfx.ui(io.github.verycooltimo.murim.registry.ModSounds.WHEEL_OPEN, 0.7F, 1.0F);
             baseYaw = player.getYRot();
             basePitch = player.getXRot();
             cursorX = 0.0F;
