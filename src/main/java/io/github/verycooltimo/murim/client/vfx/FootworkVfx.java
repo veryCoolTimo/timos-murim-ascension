@@ -234,8 +234,112 @@ public final class FootworkVfx {
      * шага); null — плоский бело-нефритовый силуэт (Бог Ветров).
      */
     private record Ghost(int entityId, PartPose[] pose, ResourceLocation skin, Vec3 pos, float yaw, boolean crouch,
-                         float born, float life, float alpha, VfxColour colour, float vapor, Vec3 drift) {
+                         float born, float life, float alpha, VfxColour colour, float vapor, Vec3 drift, int[] gone) {
+        /** Силуэт Бога Ветров рассыпается по частям в ветер, а не просто гаснет (автор 03.10). */
+        boolean dissolves() {
+            return skin == null && vapor > 0.0F;
+        }
     }
+
+    /** Части модели, исчезающие по очереди: индексы в {@link #parts}, порог доли жизни, точка (вбок, вверх). */
+    private static final int[][] DISSOLVE_PARTS = {{4, 5}, {6, 7}, {0, 1}, {2, 3}, {8, 9}, {10, 11}};
+    private static final float[] DISSOLVE_AT = {0.18F, 0.28F, 0.4F, 0.52F, 0.64F, 0.76F};
+    private static final double[][] DISSOLVE_POINT = {{-0.36D, 1.25D}, {0.36D, 1.25D}, {0.0D, 1.6D}, {0.0D, 1.05D},
+            {-0.12D, 0.45D}, {0.12D, 0.45D}};
+
+    /**
+     * Струя воздуха — как языки ауры (AuraSim): частица со своей скоростью в вихревом поле, тянет
+     * за собой след из последних положений; рисуется сужающейся лентой по следу.
+     */
+    private static final class Wisp {
+        static final int TRAIL = 12;
+        final double[] trail = new double[TRAIL * 3];
+        int trailCount;
+        Vec3 pos;
+        Vec3 prev;
+        Vec3 vel;
+        final float born;
+        final float life;
+        final double width;
+        final VfxColour colour;
+        final double seed;
+        int age = -1;
+        /** Широкая лента ветра (swift step): поверхность + белая сердцевина, а не тонкая струя. */
+        boolean ribbon;
+
+        Wisp ribbon() {
+            this.ribbon = true;
+            return this;
+        }
+
+        Wisp(Vec3 pos, Vec3 vel, float born, float life, double width, VfxColour colour) {
+            this.pos = pos;
+            this.prev = pos;
+            this.vel = vel;
+            this.born = born;
+            this.life = life;
+            this.width = width;
+            this.colour = colour;
+            this.seed = RNG.nextDouble() * 10.0D;
+        }
+
+        void push() {
+            System.arraycopy(trail, 0, trail, 3, (TRAIL - 1) * 3);
+            trail[0] = pos.x;
+            trail[1] = pos.y;
+            trail[2] = pos.z;
+            trailCount = Math.min(TRAIL, trailCount + 1);
+        }
+    }
+
+    private static final List<Wisp> WISPS = new ArrayList<>();
+
+    /** Ветер Бога Ветров по рефу «swift step» (03.10): бледно-голубые ленты, тёмная складка, белая кромка. */
+    private static final VfxColour WIND_BLUE = hex(0xC4E4F2);
+    private static final VfxColour WIND_FOLD = hex(0x86B3CC);
+
+    /** Тело рвётся на ленты ветра: широкие длинные полосы срываются с точки и уходят по {@code drift}. */
+    private static void tearRibbons(Vec3 at, Vec3 drift, int count, float born, double spread) {
+        for (int i = 0; i < count; i++) {
+            Vec3 o = new Vec3(RNG.nextDouble() - 0.5D, RNG.nextDouble() - 0.5D, RNG.nextDouble() - 0.5D).scale(spread);
+            Vec3 v = drift.add(o.scale(0.12D)).add(0.0D, 0.01D + 0.02D * RNG.nextDouble(), 0.0D);
+            WISPS.add(new Wisp(at.add(o), v, born, 10.0F + RNG.nextFloat() * 8.0F, 0.05D + 0.08D * RNG.nextDouble(),
+                    RNG.nextFloat() < 0.7F ? WIND_BLUE : WIND_FOLD).ribbon());
+        }
+    }
+
+    /**
+     * Часть силуэта уходит в ветер: широкие плоские ленты срываются с точки и ОБТЕКАЮТ тело
+     * (касательная скорость вокруг оси копии — часть лент проходит спереди, часть сзади), тонкие
+     * струи и светлые крупинки между ними (подпись рефа swift step, 03.10).
+     */
+    private static void burstWind(Vec3 at, Vec3 drift, int count, float born, VfxColour colour, Vec3 centre) {
+        Vec3 rad = new Vec3(at.x - centre.x, 0.0D, at.z - centre.z);
+        if (rad.lengthSqr() < 1.0E-4D) {
+            rad = new Vec3(RNG.nextDouble() - 0.5D, 0.0D, RNG.nextDouble() - 0.5D);
+        }
+        rad = rad.normalize();
+        for (int i = 0; i < count; i++) {
+            double turn = RNG.nextBoolean() ? 1.0D : -1.0D;
+            Vec3 tangent = new Vec3(-rad.z, 0.0D, rad.x).scale(turn);
+            // Длинный изогнутый поток: лента уходит на 2–3 блока за тело (подпись рефа, п. 4).
+            Vec3 v = tangent.scale(0.18D + 0.08D * RNG.nextDouble()).add(rad.scale(0.04D)).add(drift.scale(1.6D))
+                    .add(0.0D, (RNG.nextDouble() - 0.3D) * 0.04D, 0.0D);
+            Vec3 p = at.add(rad.scale(0.1D)).add(0.0D, (RNG.nextDouble() - 0.5D) * 0.2D, 0.0D);
+            if (i % 3 == 2) {
+                WISPS.add(new Wisp(p, v.scale(1.3D), born, 10.0F + RNG.nextFloat() * 6.0F, 0.015D + 0.01D * RNG.nextDouble(), hex(0x5E9BC4)));
+            } else {
+                WISPS.add(new Wisp(p, v, born, 16.0F + RNG.nextFloat() * 8.0F, 0.07D + 0.09D * RNG.nextDouble(),
+                        RNG.nextFloat() < 0.7F ? WIND_BLUE : hex(0xEAF6FB)).ribbon());
+            }
+        }
+        for (int i = 0; i < count / 2 + 1; i++) {
+            Vec3 o = new Vec3(RNG.nextDouble() - 0.5D, RNG.nextDouble() - 0.5D, RNG.nextDouble() - 0.5D).scale(0.3D);
+            SHARDS.add(new Shard(at.add(o), o.scale(0.15D).add(drift), born, 10.0F + RNG.nextFloat() * 6.0F,
+                    0.02D + 0.02D * RNG.nextDouble()).vapor(RNG.nextFloat() < 0.5F ? colour : WHITE));
+        }
+    }
+
 
     /** Звёздная вспышка: острые неравные лучи из точки, длиннее по направлению {@code dir}, без ореола. */
     private record Flash(Vec3 pos, float born, float life, double size, double[] angles, double[] lengths, boolean warm, Vec3 dir,
@@ -288,6 +392,8 @@ public final class FootworkVfx {
         final List<Node> left = new ArrayList<>();
         final List<Node> right = new ArrayList<>();
         final List<Node> corridor = new ArrayList<>();
+        /** Шаг молнии: ленты ветра, привязанные к точкам тела, тянутся за бегущим (реф swift step). */
+        final List<List<Node>> streamers = List.of(new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
         Vec3 last;
         float lastYaw;
         double travelled;
@@ -363,7 +469,7 @@ public final class FootworkVfx {
             double h = 0.15D + 0.2D * Math.sin(Math.PI * Math.min(1.0D, u * 1.1D));
             arc[i] = at.add(0.0D, h, 0.0D);
         }
-        RIBBONS.add(new Ribbon(arc, now, 3.0F, 2.5F, 3.0F + layer * 0.5F, 0.055D + 0.006D * layer, H_SURFACE, H_EDGE,
+        RIBBONS.add(new Ribbon(arc, now, 3.0F, 2.5F, 3.0F + layer * 0.5F, 0.07D + 0.008D * layer, H_SURFACE, H_EDGE,
                 layer >= 3, 1.0F, side.scale(0.008D)));
         if (layer >= 2) {
             // Встречный завиток на месте удара — выше и с другой стороны (пересекающиеся петли 01_huas).
@@ -378,10 +484,20 @@ public final class FootworkVfx {
                     layer >= 4, 0.75F, new Vec3(0.0D, 0.01D, 0.0D)));
         }
         dust(from, d.scale(-1.0D), 3 + layer / 2, now, 0.7D);
+        if (layer >= 3) {
+            // Лепестки срываются вдоль самого рывка, пока тело летит (5 тиков).
+            Vec3 to = p.to();
+            for (int i = 0; i < 4 + 2 * layer; i++) {
+                double u = RNG.nextDouble();
+                Vec3 at = from.lerp(to, u).add((RNG.nextDouble() - 0.5D) * 0.4D, 0.3D + 1.2D * RNG.nextDouble(), (RNG.nextDouble() - 0.5D) * 0.4D);
+                PETALS.add(new Petal(at, d.scale(0.04D).add(0.0D, 0.01D, 0.0D), now + (float) (5.0D * timeOf(u)),
+                        14.0F + RNG.nextFloat() * 8.0F, 0.1D + 0.05D * RNG.nextDouble()));
+            }
+        }
         // Лепестки — там, куда пришёлся бы удар: висят на груди прежнего места, дрейфуют сами,
         // за игроком не летят.
         if (layer >= 3) {
-            int count = layer >= 4 ? 16 : 12;
+            int count = layer >= 4 ? 22 : 14;
             Vec3 hit = from.add(0.0D, 0.65D, 0.0D);
             for (int i = 0; i < count; i++) {
                 // Облачко радиусом ~0,45 блока, шире, чем выше: место удара, а не столб.
@@ -397,7 +513,9 @@ public final class FootworkVfx {
         }
         // Бледный двойник на старте — его убирать нельзя (чек-лист §8).
         if (layer >= 2 && entity instanceof AbstractClientPlayer player) {
-            ghost(player, from, 0.0F, 4.0F, 0.3F, null, true);
+            // Двойник старта держится и осыпается лепестками (автор 03.10: «нужен лучше VFX»).
+            ghost(player, from, player.yBodyRot, 0.0F, 8.0F, 0.32F, null, true, layer >= 3 ? 1.5F + 0.5F * layer : 0.0F,
+                    d.scale(0.02D));
         }
     }
 
@@ -462,8 +580,16 @@ public final class FootworkVfx {
         // (автор 03.10: «нужен VFX»; 03_wind — исчезновение с остаточным силуэтом).
         if (entity instanceof AbstractClientPlayer player) {
             float rate = 2.0F + 0.6F * layer;
-            ghost(player, from, player.yBodyRot, 0.0F, 6.0F, 0.3F + 0.01F * layer, JADE, false, layer >= 2 ? rate : 0.0F,
+            ghost(player, from, player.yBodyRot, 0.0F, 13.0F, 0.34F + 0.01F * layer, WIND_BLUE, false, layer >= 2 ? rate : 0.0F,
                     d.scale(0.05D));
+            // Срыв с места закручивает воздух вокруг тела — струи, как у ауры (автор 03.10: «как пыль или воздух»).
+            for (int i = 0; i < 6 + layer; i++) {
+                double th = RNG.nextDouble() * Math.PI * 2.0D;
+                Vec3 o = new Vec3(Math.cos(th), 0.0D, Math.sin(th));
+                Vec3 at = from.add(o.scale(0.45D)).add(0.0D, 0.1D + 1.6D * RNG.nextDouble(), 0.0D);
+                WISPS.add(new Wisp(at, new Vec3(-o.z, 0.0D, o.x).scale(0.13D).add(d.scale(0.1D)).add(0.0D, 0.015D, 0.0D), now,
+                        16.0F + RNG.nextFloat() * 8.0F, 0.07D + 0.08D * RNG.nextDouble(), RNG.nextBoolean() ? WIND_BLUE : hex(0xEAF6FB)).ribbon());
+            }
             if (layer >= 6) {
                 ghost(player, from.add(offset.scale(0.5D)), player.yBodyRot, 1.0F, 4.0F, 0.18F, WHITE, false, rate * 0.5F,
                         d.scale(0.04D));
@@ -574,14 +700,21 @@ public final class FootworkVfx {
         // рождаются, когда тело их проходит, и сгорают за 5 тиков (03_wind: копии вдоль маршрута).
         if (entity instanceof AbstractClientPlayer player) {
             float rate = 3.0F + 0.8F * layer;
-            ghost(player, from, player.yBodyRot, 0.0F, 8.0F, 0.32F, WHITE, false, rate, d.scale(0.07D));
+            ghost(player, from, player.yBodyRot, 0.0F, 13.0F, 0.34F, WHITE, false, rate, d.scale(0.07D));
             if (layer >= 3) {
                 for (double sAt : new double[]{0.35D, 0.7D}) {
                     float when = now + (float) (draw * timeOf(sAt));
-                    ghost(player, from.add(offset.scale(sAt)), player.yBodyRot, when - now, 5.0F, 0.2F, JADE, false,
+                    ghost(player, from.add(offset.scale(sAt)), player.yBodyRot, when - now, 9.0F, 0.24F, WIND_BLUE, false,
                             rate * 0.6F, d.scale(0.06D));
                 }
             }
+        }
+        // Тело рвётся на ленты ветра по ходу прорыва (реф swift step): полосы срываются там, где оно прошло.
+        for (int i = 0; i < 6 + 2 * layer; i++) {
+            double u = RNG.nextDouble();
+            float at = now + (float) (draw * timeOf(u));
+            Vec3 p0 = from.lerp(from.add(offset.scale(0.92D)), u).add(0.0D, 0.2D + 1.5D * RNG.nextDouble(), 0.0D);
+            tearRibbons(p0, d.scale(-0.08D - 0.06D * RNG.nextDouble()), 1, at, 0.3D);
         }
         // Тело само «испаряется» на ходу: тёмные и светлые хлопья срываются там, где оно проходит.
         for (int i = 0; i < 10 + 3 * layer; i++) {
@@ -699,8 +832,18 @@ public final class FootworkVfx {
                         14.0F + RNG.nextFloat() * 8.0F, 0.1D + 0.05D * RNG.nextDouble()));
             }
         }
+        if (layer >= 3) {
+            // Лепестки и по пути обхода (автор 03.10: «на трейле тоже должны быть листья»).
+            for (int i = 0; i < 6 + 2 * layer; i++) {
+                double u = 0.1D + 0.9D * RNG.nextDouble();
+                Vec3 at = path[(int) (u * (n - 1))].add((RNG.nextDouble() - 0.5D) * 0.3D, 0.1D + 0.4D * RNG.nextDouble(),
+                        (RNG.nextDouble() - 0.5D) * 0.3D);
+                PETALS.add(new Petal(at, new Vec3((RNG.nextDouble() - 0.5D) * 0.03D, 0.01D, (RNG.nextDouble() - 0.5D) * 0.03D),
+                        now + 2.0F + (float) (4.0D * u), 14.0F + RNG.nextFloat() * 8.0F, 0.1D + 0.04D * RNG.nextDouble()));
+            }
+        }
         if (layer >= 2 && entity instanceof AbstractClientPlayer player) {
-            ghost(player, from, 0.0F, 5.0F, 0.26F, null, true);
+            ghost(player, from, player.yBodyRot, 0.0F, 7.0F, 0.28F, null, true, layer >= 3 ? 2.0F : 0.0F, d.scale(0.02D));
         }
     }
 
@@ -729,6 +872,7 @@ public final class FootworkVfx {
             GHOSTS.clear();
             FLASHES.clear();
             SPARKS.clear();
+            WISPS.clear();
             RUNS.clear();
             SHADOWS.clear();
             return;
@@ -797,9 +941,41 @@ public final class FootworkVfx {
             k.pos = k.pos.add(k.vel);
         }
         SPARKS.removeIf(k -> k.age > k.life);
+        float tt = clientTicks;
+        for (Wisp w : WISPS) {
+            if (now < w.born) {
+                continue;
+            }
+            w.prev = w.pos;
+            w.age++;
+            if (w.age == 0) {
+                w.push();
+            }
+            // Вихревое поле, как у потоков ауры: несоизмеримые синусы по координатам и времени.
+            double tx = Math.sin(w.pos.y * 1.7D + tt * 0.11D + w.seed) + Math.sin(w.pos.z * 1.3D - tt * 0.07D);
+            double ty = Math.sin(w.pos.x * 1.1D + tt * 0.09D + w.seed);
+            double tz = Math.sin(w.pos.x * 1.9D - tt * 0.13D + w.seed) + Math.sin(w.pos.y * 1.5D + tt * 0.05D);
+            double curl = w.ribbon ? 0.005D : 0.008D;
+            w.vel = w.vel.scale(w.ribbon ? 0.95D : 0.9D).add(tx * curl, ty * curl * 0.5D + 0.002D, tz * curl);
+            w.pos = w.pos.add(w.vel);
+            w.push();
+        }
+        WISPS.removeIf(w -> w.age > w.life);
         GHOSTS.removeIf(g -> now > g.born + g.life + 1.0F);
         for (Ghost g : GHOSTS) {
             float t = (now - g.born()) / g.life();
+            if (g.dissolves() && t >= 0.0F) {
+                // Части силуэта по очереди уходят в ветер: рука, вторая рука, голова, корпус, ноги.
+                double yr = Math.toRadians(g.yaw());
+                Vec3 right = new Vec3(-Math.cos(yr), 0.0D, -Math.sin(yr));
+                for (int k = 0; k < DISSOLVE_AT.length; k++) {
+                    if ((g.gone()[0] & (1 << k)) == 0 && t >= DISSOLVE_AT[k]) {
+                        g.gone()[0] |= 1 << k;
+                        Vec3 at = g.pos().add(right.scale(DISSOLVE_POINT[k][0])).add(0.0D, DISSOLVE_POINT[k][1] - (g.crouch() ? 0.2D : 0.0D), 0.0D);
+                        burstWind(at, g.drift(), 3 + (int) g.vapor(), now, g.colour(), g.pos());
+                    }
+                }
+            }
             if (g.vapor() <= 0.0F || t < 0.0F || t > 1.0F) {
                 continue;
             }
@@ -808,6 +984,12 @@ public final class FootworkVfx {
             int k = (int) rate + (RNG.nextFloat() < rate - (int) rate ? 1 : 0);
             for (int i = 0; i < k; i++) {
                 Vec3 at = g.pos().add((RNG.nextDouble() - 0.5D) * 0.55D, 0.1D + 1.7D * RNG.nextDouble(), (RNG.nextDouble() - 0.5D) * 0.55D);
+                if (g.skin() != null) {
+                    // Хуашань: двойник осыпается лепестками сливы, а не хлопьями.
+                    PETALS.add(new Petal(at, g.drift().add((RNG.nextDouble() - 0.5D) * 0.03D, 0.005D + 0.01D * RNG.nextDouble(),
+                            (RNG.nextDouble() - 0.5D) * 0.03D), now, 14.0F + RNG.nextFloat() * 8.0F, 0.1D + 0.05D * RNG.nextDouble()));
+                    continue;
+                }
                 SHARDS.add(new Shard(at, g.drift().add((RNG.nextDouble() - 0.5D) * 0.02D, 0.01D + 0.015D * RNG.nextDouble(),
                         (RNG.nextDouble() - 0.5D) * 0.02D), now, 9.0F + RNG.nextFloat() * 6.0F, 0.025D + 0.03D * RNG.nextDouble())
                         .vapor(RNG.nextFloat() < 0.6F ? g.colour() : WHITE));
@@ -845,6 +1027,10 @@ public final class FootworkVfx {
             age(r.left);
             age(r.right);
             age(r.corridor);
+            for (List<Node> st : r.streamers) {
+                age(st);
+                trim(st, 14);
+            }
             if (r.layer < 1) {
                 continue;
             }
@@ -868,11 +1054,15 @@ public final class FootworkVfx {
                         r.right.add(new Node(pos.add(side.scale(0.15D + (spread - 0.15D) * outerR - wave)).add(0.0D, lift, 0.0D),
                                 side.scale(0.01D * open).add(0.0D, 0.003D, 0.0D), now, open * outerR));
                     }
-                    if (r.layer >= 3 && now % Math.max(6, 11 - r.layer) == 0) {
+                    if (r.layer >= 3 && now % Math.max(2, 6 - r.layer) == 0) {
                         List<Node> src = RNG.nextBoolean() || r.right.isEmpty() ? r.left : r.right;
                         Node from = src.get(Math.max(0, src.size() - 2 - RNG.nextInt(Math.max(1, src.size() - 2))));
                         PETALS.add(new Petal(from.pos.add(0.0D, 0.1D, 0.0D), dir.scale(-0.02D).add(side.scale((RNG.nextDouble() - 0.5D) * 0.04D))
                                 .add(0.0D, 0.025D, 0.0D), now, 14.0F + RNG.nextFloat() * 6.0F, 0.09D + 0.04D * RNG.nextDouble()));
+                    }
+                    if (r.layer >= 4 && now % 10 == 0 && e instanceof AbstractClientPlayer runner) {
+                        // Бегущий оставляет двойника, который осыпается лепестками (01_huas: фигуры вдоль пути).
+                        ghost(runner, pos, runner.yBodyRot, 0.0F, 7.0F, 0.22F, null, true, 1.5F, Vec3.ZERO);
                     }
                     if (open > 0.5D && now % 2 == 0) {
                         // Короткие воздушные штрихи на повороте — с внешней стороны.
@@ -904,6 +1094,36 @@ public final class FootworkVfx {
                 } else if (r.layer >= 5 && age > 20 && speed > 0.3D && age % 12 == 0) {
                     FLASHES.add(flash(pos.add(0.0D, 0.9D, 0.0D).subtract(dir.scale(0.55D)), now, 2.0F, 0.45D,
                             5, false, dir.scale(-1.0D), 0.035D));
+                }
+                if (r.layer >= 2 && speed > 0.1D) {
+                    // Ленты ветра от плеч, спины и пояса: точка тела оставляет полосу, которая
+                    // расходится и колышется — тело «рвётся» на ленты (swift step 03.10).
+                    double[][] anchors = {{-0.3D, 1.35D, 0.0D}, {0.3D, 1.3D, 1.7D}, {0.0D, 1.0D, 3.1D}, {0.0D, 0.6D, 4.4D}};
+                    int count = Math.min(4, 1 + r.layer / 2);
+                    for (int k = 0; k < count; k++) {
+                        double ph = anchors[k][2] + now * 0.45D;
+                        Vec3 at = pos.add(side.scale(anchors[k][0] + 0.12D * Math.sin(ph))).add(0.0D, anchors[k][1] + 0.1D * Math.cos(ph * 1.3D), 0.0D)
+                                .subtract(dir.scale(0.25D));
+                        Vec3 v = side.scale((anchors[k][0] == 0.0D ? Math.sin(ph) : Math.signum(anchors[k][0])) * 0.02D)
+                                .add(0.0D, 0.006D + 0.004D * Math.sin(ph), 0.0D);
+                        r.streamers.get(k).add(new Node(at, v, now, k));
+                    }
+                }
+                if (r.layer >= 2 && speed > 0.15D) {
+                    // Тело рвётся на ленты ветра, которые тянутся за бегущим (реф swift step, 03.10):
+                    // с плеч, спины и ног каждый тик срываются широкие бледно-голубые полосы.
+                    int k = 1 + r.layer / 3;
+                    for (int i = 0; i < k; i++) {
+                        Vec3 at = pos.add(side.scale((RNG.nextDouble() - 0.5D) * 0.6D)).add(0.0D, 0.2D + 1.5D * RNG.nextDouble(), 0.0D);
+                        tearRibbons(at, dir.scale(-0.12D - 0.1D * RNG.nextDouble()), 1, now, 0.2D);
+                    }
+                    if (r.layer >= 4) {
+                        for (int i = 0; i < 2; i++) {
+                            Vec3 at = pos.add((RNG.nextDouble() - 0.5D) * 0.6D, 0.2D + 1.6D * RNG.nextDouble(), (RNG.nextDouble() - 0.5D) * 0.6D);
+                            SHARDS.add(new Shard(at, dir.scale(-0.1D).add(0.0D, 0.01D, 0.0D), now, 8.0F + RNG.nextFloat() * 5.0F,
+                                    0.025D + 0.03D * RNG.nextDouble()).vapor(RNG.nextBoolean() ? WIND_BLUE : WHITE));
+                        }
+                    }
                 }
                 if (r.layer >= 4 && speed > 0.2D && now % 2 == 0) {
                     // Потоки воздуха вдоль коридора: тонкие штрихи сносит назад.
@@ -975,7 +1195,7 @@ public final class FootworkVfx {
                 double th = RNG.nextDouble() * Math.PI * 2.0D;
                 double rr = 1.5D + 2.0D * RNG.nextDouble();
                 Vec3 at = pos.add(Math.cos(th) * rr, 0.0D, Math.sin(th) * rr);
-                ghost(clonePlayer, at, RNG.nextFloat() * 360.0F, 0.0F, 12.0F, 0.3F, hex(0xCFE6DD), false, 3.0F,
+                ghost(clonePlayer, at, RNG.nextFloat() * 360.0F, 0.0F, 16.0F, 0.34F, WIND_BLUE, false, 3.0F,
                         new Vec3(0.0D, 0.01D, 0.0D));
             }
             // Силуэт «дымится»: мелкие частицы обтекают тело и уходят вверх-назад.
@@ -996,7 +1216,7 @@ public final class FootworkVfx {
             if (s.layer >= 3 && s.dirs.size() == 7 && dir.dot(s.dirs.peekFirst()) < Math.cos(Math.toRadians(20.0D))
                     && now - s.lastGhost >= 6 && alive < 2 && e instanceof AbstractClientPlayer player) {
                 // Копия стоит на 0,25 блока позади по прежнему ходу — поза задержалась на старом месте.
-                ghost(player, pos.subtract(s.dirs.peekFirst().scale(0.25D)), player.yBodyRot, 0.0F, 8.0F, 0.24F, hex(0xA4B5B5), false,
+                ghost(player, pos.subtract(s.dirs.peekFirst().scale(0.25D)), player.yBodyRot, 0.0F, 12.0F, 0.26F, WIND_FOLD, false,
                         2.5F, new Vec3(0.0D, 0.01D, 0.0D));
                 s.lastGhost = now;
             }
@@ -1078,7 +1298,7 @@ public final class FootworkVfx {
             pose[i] = parts[i].storePose();
         }
         GHOSTS.add(new Ghost(player.getId(), pose, skin ? player.getSkin().texture() : null, pos, yaw,
-                player.isCrouching(), clientTicks + delay, life, alpha, colour == null ? H_SURFACE : colour, vapor, drift));
+                player.isCrouching(), clientTicks + delay, life, alpha, colour == null ? H_SURFACE : colour, vapor, drift, new int[1]));
     }
 
     private static ModelPart[] parts(PlayerModel<?> m) {
@@ -1093,7 +1313,7 @@ public final class FootworkVfx {
         if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_PARTICLES) {
             return;
         }
-        if (RIBBONS.isEmpty() && PETALS.isEmpty() && PUFFS.isEmpty() && SHARDS.isEmpty() && GHOSTS.isEmpty() && SPARKS.isEmpty()
+        if (RIBBONS.isEmpty() && PETALS.isEmpty() && PUFFS.isEmpty() && SHARDS.isEmpty() && GHOSTS.isEmpty() && SPARKS.isEmpty() && WISPS.isEmpty()
                 && FLASHES.isEmpty() && RUNS.isEmpty() && SHADOWS.isEmpty()) {
             return;
         }
@@ -1175,6 +1395,30 @@ public final class FootworkVfx {
                 Vec3[] p = {head.subtract(v.scale(l)), head.subtract(v.scale(l * 0.35D)), head};
                 float a = (float) Mth.clamp((1.0D - kt) / 0.5D, 0.0D, 1.0D);
                 strip(air, pose, camera, p, new double[]{0.0D, k.width, k.width * 0.25D}, new float[]{a, a, a}, 0.9F, k.colour);
+            }
+            for (Wisp w : WISPS) {
+                if (w.age < 0 || w.trailCount < 2) {
+                    continue;
+                }
+                float wt = (w.age + partial) / w.life;
+                int m = w.trailCount;
+                Vec3[] p = new Vec3[m];
+                double[] hw = new double[m];
+                float[] al = new float[m];
+                Vec3 head = w.prev.lerp(w.pos, partial);
+                for (int i = 0; i < m; i++) {
+                    // Точка 0 — голова (интерполирована), дальше — след к хвосту.
+                    p[m - 1 - i] = i == 0 ? head : new Vec3(w.trail[i * 3], w.trail[i * 3 + 1], w.trail[i * 3 + 2]);
+                    double u = i / (double) (m - 1);
+                    hw[m - 1 - i] = w.width * Math.sin(Math.PI * Math.min(1.0D, 0.15D + u)) * (1.0D - 0.6D * wt);
+                    al[m - 1 - i] = (float) Math.pow(1.0F - wt, 0.6D);
+                }
+                if (w.ribbon) {
+                    strip(air, pose, camera, p, hw, al, 0.7F, w.colour);
+                    strip(air, pose, camera, p, scale(hw, 0.15D), al, 0.7F, WHITE);
+                } else {
+                    strip(air, pose, camera, p, hw, al, 0.8F, w.colour);
+                }
             }
             buffers.endBatch(MurimRenderTypes.airBand());
             if (!PETALS.isEmpty()) {
@@ -1264,10 +1508,31 @@ public final class FootworkVfx {
     /** Ленты Хуашань от стоп или световой коридор Молнии — из живых узлов следа. */
     private static void run(VertexConsumer c, PoseStack.Pose pose, Vec3 camera, RunTrail r, Entity e, float partial, float now) {
         if (r.family == HUASHAN) {
-            double base = 0.018D + 0.002D * r.layer;
+            double base = 0.024D + 0.003D * r.layer;
             trail(c, pose, camera, r.left, base, 8 + r.layer / 2, now, r.layer >= 3, 0.9F);
-            trail(c, pose, camera, r.right, base, 8 + r.layer / 2, now, r.layer >= 4, 0.8F);
+            trail(c, pose, camera, r.right, base, 8 + r.layer / 2, now, r.layer >= 3, 0.85F);
             return;
+        }
+        for (List<Node> st : r.streamers) {
+            int m = st.size();
+            if (m < 2) {
+                continue;
+            }
+            Vec3[] q = new Vec3[m];
+            double[] qw = new double[m];
+            float[] qa = new float[m];
+            for (int i = 0; i < m; i++) {
+                Node nd = st.get(i);
+                double age = (now - nd.born) / 14.0D;
+                double u = i / (double) (m - 1);
+                q[i] = nd.pos;
+                // Лента расширяется к хвосту, как сорванная ткань, и тает; у тела — острая.
+                qw[i] = (0.05D + 0.09D * Math.min(1.0D, age * 1.6D)) * Math.min(1.0D, (1.0D - u) * 5.0D + 0.1D);
+                qa[i] = (float) Mth.clamp(1.0D - age * age, 0.0D, 1.0D);
+            }
+            VfxColour col = (int) st.get(0).open % 2 == 0 ? WIND_BLUE : WIND_FOLD;
+            strip(c, pose, camera, q, qw, qa, 0.6F, col);
+            strip(c, pose, camera, q, scale(qw, 0.18D), qa, 0.8F, WHITE);
         }
         if (r.corridor.size() < 2) {
             return;
@@ -1410,13 +1675,27 @@ public final class FootworkVfx {
                 for (int i = 0; i < parts.length; i++) {
                     parts[i].loadPose(g.pose()[i]);
                 }
-                // Держится чётким до середины жизни и гаснет — силуэт, не туман.
-                float a = g.alpha() * (t < 0.4F ? 1.0F : (float) Math.pow((1.0F - t) / 0.6F, 1.3D))
+                boolean[] wasVisible = new boolean[parts.length];
+                for (int i = 0; i < parts.length; i++) {
+                    wasVisible[i] = parts[i].visible;
+                }
+                if (g.dissolves()) {
+                    for (int k = 0; k < DISSOLVE_PARTS.length; k++) {
+                        if ((g.gone()[0] & (1 << k)) != 0) {
+                            for (int idx : DISSOLVE_PARTS[k]) {
+                                parts[idx].visible = false;
+                            }
+                        }
+                    }
+                }
+                // Рассыпающийся силуэт держит плотность до конца — уходит частями; прочие гаснут.
+                float a = g.alpha() * (g.dissolves() ? 1.0F - t * t * t : t < 0.4F ? 1.0F : (float) Math.pow((1.0F - t) / 0.6F, 1.3D))
                         // Копия у самой камеры гаснет — не закрывает экран.
                         * (float) Mth.clamp((g.pos().add(0.0D, 1.0D, 0.0D).distanceTo(mc.gameRenderer.getMainCamera().getPosition()) - 1.5D) / 2.0D, 0.0D, 1.0D);
                 drawModel(model, poseStack, buffers, g.skin(), g.pos(), g.yaw(), g.crouch(), 1.0F, a, g.colour());
                 for (int i = 0; i < parts.length; i++) {
                     parts[i].loadPose(saved[i]);
+                    parts[i].visible = wasVisible[i];
                 }
             }
         } finally {
