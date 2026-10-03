@@ -1,0 +1,36 @@
+{
+  "variants": {
+    "": [
+      {
+        "model": "murim:block/hua_granite_cracked"
+      },
+      {
+        "model": "murim:block/hua_granite_cracked",
+        "y": 90
+      },
+      {
+        "model": "murim:block/hua_granite_cracked",
+        "y": 180
+      },
+      {
+        "model": "murim:block/hua_granite_cracked",
+        "y": 270
+      },
+      {
+        "model": "murim:block/hua_granite_cracked_b"
+      },
+      {
+        "model": "murim:block/hua_granite_cracked_b",
+        "y": 90
+      },
+      {
+        "model": "murim:block/hua_granite_cracked_b",
+        "y": 180
+      },
+      {
+        "model": "murim:block/hua_granite_cracked_b",
+        "y": 270
+      }
+    ]
+  }
+}

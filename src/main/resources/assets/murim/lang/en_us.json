@@ -437,5 +437,16 @@
   "book.murim.tang_sleeve_return": "A sweep of the arm, and every blade lying on the ground flies back into the sleeve at once, cutting all in its way.",
   "book.murim.tang_sleeve_return.full": "Blades Return to the Sleeve. It is said the great weakness of throwing blades is that a thrown blade is hard to call back. A Tang master calls them back with one sweep: \"all the throwing blades lying on the ground were returned to his sleeve.\" The misses of earlier throws are not lost; they lie glinting and wait. Stand so that the enemy is between you and them, and every miss becomes a second strike. Whoever keeps off those lines need not fear the return.",
   "item.murim.tang_dagger": "Tang Clan Dagger",
-  "item.murim.huashan_sword": "Mount Hua Sword"
+  "item.murim.huashan_sword": "Mount Hua Sword",
+  "block.murim.hua_granite": "Huashan Granite",
+  "block.murim.hua_granite_pale": "Pale Huashan Granite",
+  "block.murim.hua_granite_stained": "Stained Huashan Granite",
+  "block.murim.hua_granite_cracked": "Cracked Huashan Granite",
+  "block.murim.hua_granite_dark": "Shadowed Huashan Granite",
+  "block.murim.hua_granite_mossy": "Mossy Huashan Granite",
+  "block.murim.polished_hua_granite": "Polished Huashan Granite",
+  "block.murim.polished_hua_granite_stairs": "Polished Huashan Granite Stairs",
+  "block.murim.polished_hua_granite_slab": "Polished Huashan Granite Slab",
+  "block.murim.polished_hua_granite_wall": "Polished Huashan Granite Wall",
+  "block.murim.hua_litter": "Pine Litter"
 }

@@ -151,10 +151,11 @@ public final class HuaMist {
             return; // chunk not loaded yet
         }
         double y;
-        boolean sea = RANDOM.nextFloat() < 0.6F;
+        // More valley mist, fewer high puffs (codex r2: puffs on the summits looked stuck on).
+        boolean sea = RANDOM.nextFloat() < 0.35F;
         if (sea) {
-            y = site.worldY(95 + RANDOM.nextDouble() * 40);
-            if (g > y - 4) {
+            y = site.worldY(90 + RANDOM.nextDouble() * 35);
+            if (g > y - 15) {
                 return;
             }
         } else {

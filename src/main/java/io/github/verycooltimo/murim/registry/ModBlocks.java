@@ -3,6 +3,11 @@ package io.github.verycooltimo.murim.registry;
 import io.github.verycooltimo.murim.MurimMod;
 import io.github.verycooltimo.murim.world.hua.PlumBlossomBlock;
 import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.SlabBlock;
+import net.minecraft.world.level.block.StairBlock;
+import net.minecraft.world.level.block.WallBlock;
+import net.minecraft.world.level.block.state.properties.NoteBlockInstrument;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.MapColor;
@@ -31,6 +36,43 @@ public final class ModBlocks {
     public static final DeferredItem<BlockItem> PLUM_BLOSSOM_ITEM = ITEMS.registerSimpleBlockItem(PLUM_BLOSSOM);
     public static final DeferredItem<BlockItem> PLUM_BLOSSOM_PALE_ITEM = ITEMS.registerSimpleBlockItem(PLUM_BLOSSOM_PALE);
     public static final DeferredItem<BlockItem> PLUM_BLOSSOM_RED_ITEM = ITEMS.registerSimpleBlockItem(PLUM_BLOSSOM_RED);
+
+    // Huashan granite (author 03.10: our own rock blocks, pixel art in vanilla style). Several
+    // random models per block kill repetition; the generator picks the variant by exposure,
+    // height and moisture (MountHuaChunkWriter#rock).
+    public static final DeferredBlock<Block> HUA_GRANITE = stone("hua_granite", MapColor.TERRACOTTA_WHITE);
+    public static final DeferredBlock<Block> HUA_GRANITE_PALE = stone("hua_granite_pale", MapColor.QUARTZ);
+    public static final DeferredBlock<Block> HUA_GRANITE_STAINED = stone("hua_granite_stained", MapColor.TERRACOTTA_WHITE);
+    public static final DeferredBlock<Block> HUA_GRANITE_CRACKED = stone("hua_granite_cracked", MapColor.TERRACOTTA_WHITE);
+    public static final DeferredBlock<Block> HUA_GRANITE_DARK = stone("hua_granite_dark", MapColor.STONE);
+    public static final DeferredBlock<Block> HUA_GRANITE_MOSSY = stone("hua_granite_mossy", MapColor.COLOR_GREEN);
+    public static final DeferredBlock<Block> POLISHED_HUA_GRANITE = stone("polished_hua_granite", MapColor.TERRACOTTA_WHITE);
+    public static final DeferredBlock<StairBlock> POLISHED_HUA_GRANITE_STAIRS = BLOCKS.registerBlock(
+            "polished_hua_granite_stairs", p -> new StairBlock(POLISHED_HUA_GRANITE.get().defaultBlockState(), p), rock(MapColor.TERRACOTTA_WHITE));
+    public static final DeferredBlock<SlabBlock> POLISHED_HUA_GRANITE_SLAB = BLOCKS.registerBlock(
+            "polished_hua_granite_slab", SlabBlock::new, rock(MapColor.TERRACOTTA_WHITE));
+    public static final DeferredBlock<WallBlock> POLISHED_HUA_GRANITE_WALL = BLOCKS.registerBlock(
+            "polished_hua_granite_wall", WallBlock::new, rock(MapColor.TERRACOTTA_WHITE).forceSolidOn());
+    /** Pine needles and grit over thin soil on the ledges. */
+    public static final DeferredBlock<Block> HUA_LITTER = BLOCKS.registerBlock("hua_litter", Block::new,
+            BlockBehaviour.Properties.of().mapColor(MapColor.DIRT).strength(0.6F).sound(SoundType.GRAVEL));
+
+    static {
+        for (DeferredBlock<? extends Block> b : java.util.List.of(HUA_GRANITE, HUA_GRANITE_PALE, HUA_GRANITE_STAINED,
+                HUA_GRANITE_CRACKED, HUA_GRANITE_DARK, HUA_GRANITE_MOSSY, POLISHED_HUA_GRANITE,
+                POLISHED_HUA_GRANITE_STAIRS, POLISHED_HUA_GRANITE_SLAB, POLISHED_HUA_GRANITE_WALL, HUA_LITTER)) {
+            ITEMS.registerSimpleBlockItem(b);
+        }
+    }
+
+    private static BlockBehaviour.Properties rock(MapColor colour) {
+        return BlockBehaviour.Properties.of().mapColor(colour).instrument(NoteBlockInstrument.BASEDRUM)
+                .requiresCorrectToolForDrops().strength(1.5F, 6.0F);
+    }
+
+    private static DeferredBlock<Block> stone(String name, MapColor colour) {
+        return BLOCKS.registerBlock(name, Block::new, rock(colour));
+    }
 
     private static DeferredBlock<PlumBlossomBlock> blossom(String name, MapColor colour) {
         return BLOCKS.registerBlock(name, PlumBlossomBlock::new, BlockBehaviour.Properties.of()
