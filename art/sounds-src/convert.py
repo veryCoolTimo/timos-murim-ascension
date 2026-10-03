@@ -14,10 +14,11 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, '..', '..', 'src', 'main', 'resources', 'assets', 'murim', 'sounds')
 
 # Цель (LUFS, пиковый потолок дБ) по категориям.
-LOUD = (-19.0, -3.0)
-SOFT = (-23.0, -6.0)
+# 03.10 автор дважды: «тише» — всё, кроме интерфейса, опущено на 5 дБ.
+LOUD = (-24.0, -8.0)
+SOFT = (-28.0, -11.0)
 UI = (-26.0, -9.0)
-LOOP = (-28.0, -10.0)
+LOOP = (-33.0, -15.0)
 CAT = {
     'step_soft': SOFT, 'qi_chime': SOFT, 'meditation_cycle': SOFT, 'blossom_open': SOFT, 'sword_draw': SOFT,
     'lock_on': UI, 'wheel_open': UI, 'wheel_select': UI,

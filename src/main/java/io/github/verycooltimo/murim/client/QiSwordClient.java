@@ -72,8 +72,8 @@ public final class QiSwordClient {
         MARKS.put(player.getId(), player.level().getGameTime());
         if (!was) {
             burst(player);
-            io.github.verycooltimo.murim.client.Sfx.play(player, io.github.verycooltimo.murim.registry.ModSounds.QI_SWORD_SUMMON, 0.45F, 1.0F);
-            io.github.verycooltimo.murim.client.Sfx.loop("qisword:" + player.getId(), player, io.github.verycooltimo.murim.registry.ModSounds.QI_SWORD_HUM, () -> 0.2F, 1.0F, () -> visible(player), 6);
+            io.github.verycooltimo.murim.client.Sfx.play(player, io.github.verycooltimo.murim.registry.ModSounds.QI_SWORD_SUMMON, 0.8F, 1.0F);
+            io.github.verycooltimo.murim.client.Sfx.loop("qisword:" + player.getId(), player, io.github.verycooltimo.murim.registry.ModSounds.QI_SWORD_HUM, () -> 0.36F, 1.0F, () -> visible(player), 6);
         }
     }
 
