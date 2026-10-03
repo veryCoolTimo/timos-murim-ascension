@@ -491,7 +491,8 @@ public final class TangVfx {
             m.colour = i % 3 == 0 ? CYAN : i % 3 == 1 ? WHITE : GREY;
             FX.motes.add(m);
         }
-        smoke(at, 1.1D * k, 3);
+        // Автор 03.10 «чуть странновато» → codex: дым не должен глушить вспышку — меньше, реже, короче.
+        smokeLight(at, 0.7D * k, 2);
         BlockPos below = BlockPos.containing(at.add(0.0D, -1.5D, 0.0D));
         if (mc.level != null && !mc.level.getBlockState(below).isAir()) {
             FX.scars.add(new Scar(new Vec3(at.x, below.getY() + 1.02D, at.z), clientTicks, RANDOM.nextLong()));
@@ -505,6 +506,19 @@ public final class TangVfx {
         if (distance < 26.0F) {
             float q = distance < 8.0F ? 1.0F : 1.0F - (distance - 8.0F) / 18.0F;
             CameraShakeHandler.quake(Math.max(q, own ? 0.85F : 0.0F) * (main ? 1.0F : 0.6F), 16);
+        }
+    }
+
+    /** Короткий дым после взрыва: 6 клубов разного размера, тают за ~0,8 с. */
+    private static void smokeLight(Vec3 at, double scale, int lag) {
+        for (int i = 0; i < 6; i++) {
+            double a = Math.PI * 2.0D * i / 6 + RANDOM.nextDouble() * 0.5D;
+            Vec3 out = new Vec3(Math.cos(a), 0.25D * RANDOM.nextGaussian(), Math.sin(a)).normalize();
+            double size = (0.35D + 0.55D * RANDOM.nextDouble()) * scale;
+            Puff p = new Puff(at.add(out.scale(0.4D * scale)), out.scale(0.08D + 0.1D * RANDOM.nextDouble()).add(0.0D, 0.02D, 0.0D),
+                    14 + RANDOM.nextInt(6), RANDOM.nextInt(16), size, true, 0.55F + 0.3F * RANDOM.nextFloat(), (float) (RANDOM.nextDouble() * 6.28D));
+            p.delay = lag + RANDOM.nextInt(2);
+            FX.puffs.add(p);
         }
     }
 
@@ -1028,8 +1042,9 @@ public final class TangVfx {
             int rings = d.layer() >= 7 ? 5 : 4;
             for (int i = 0; i < rings; i++) {
                 Vec3 c = at.subtract(f.scale(0.1D + 0.38D * i));
-                double r = (0.12D + 0.12D * i) * (0.7D + 0.5D * grow);
-                ring(v, pose, camera, c, f, r, 0.022D + 0.006D * i, age * (0.28D - 0.03D * i) + i * 1.7D, 0.42D, 0.85F - 0.12F * i,
+                // Кольца не крупнее 1–1,5 длины клинка и тусклее: оружие главнее спиралей (codex 03.10).
+                double r = (0.08D + 0.09D * i) * (0.7D + 0.5D * grow);
+                ring(v, pose, camera, c, f, r, 0.016D + 0.004D * i, age * (0.28D - 0.03D * i) + i * 1.7D, 0.42D, 0.5F - 0.08F * i,
                         i == 0 ? WHITE : PALE);
             }
         }
