@@ -87,7 +87,8 @@ public final class Styles {
             return Optional.empty();
         }
         int i = s.get().forms().indexOf(technique);
-        return i > 0 ? Optional.of(s.get().forms().get(i - 1)) : Optional.empty();
+        // Первая форма — после основы стиля (автор 03.10: «сначала изучаешь сам стиль»).
+        return i > 0 ? Optional.of(s.get().forms().get(i - 1)) : s.get().basic();
     }
 
     /** Стили шагов: их первая форма — мгновенное уклонение. */
@@ -97,6 +98,16 @@ public final class Styles {
     public static Optional<Style> of(ResourceLocation technique) {
         for (Style s : ALL) {
             if (s.forms().contains(technique)) {
+                return Optional.of(s);
+            }
+        }
+        return Optional.empty();
+    }
+
+    /** Стиль, основой ЛКМ которого служит {@code technique}. */
+    public static Optional<Style> ofBasic(ResourceLocation technique) {
+        for (Style s : ALL) {
+            if (s.basic().isPresent() && s.basic().get().equals(technique)) {
                 return Optional.of(s);
             }
         }

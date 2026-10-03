@@ -69,6 +69,8 @@ public final class ManualScreen extends Screen {
     private int by;
     private float k;
     private Component styleTitle;
+    private ResourceLocation basic;
+    private String styleKey;
 
     /** Имя формы внутри книги стиля («Разрез · Частокол»), иначе имя техники. */
     private static Component formName(ResourceLocation f) {
@@ -84,9 +86,14 @@ public final class ManualScreen extends Screen {
         return net.minecraft.client.Minecraft.getInstance().getResourceManager().getResource(tex).isPresent();
     }
 
+    /** Форма разворота; на странице стиля — основа стиля (или первая форма, если основы нет). */
     private ResourceLocation form() {
         ResourceLocation f = spreads.get(page).form();
-        return f != null ? f : forms.get(0);
+        return f != null ? f : basic != null ? basic : forms.get(0);
+    }
+
+    private boolean stylePage() {
+        return spreads.get(page).form() == null;
     }
 
     private boolean textPage() {
@@ -120,10 +127,14 @@ public final class ManualScreen extends Screen {
         if (book) {
             styleTitle = Component.translatable(style.get().nameKey());
             String sp = style.get().id().getPath();
+            styleKey = "book.murim.style." + sp;
             ResourceLocation title = sp.equals("seven_plum") ? PLUM : spreadTex(sp + "_title");
             if (exists(title)) {
                 spreads.add(new Spread(true, null, title));
             }
+            // Затем — текст всего стиля; его печать учит основу стиля (автор 03.10).
+            basic = style.get().basic().orElse(null);
+            spreads.add(new Spread(false, null, BASIC));
         }
         for (ResourceLocation f : forms) {
             ResourceLocation pic = spreadTex(f.getPath());
@@ -230,10 +241,39 @@ public final class ManualScreen extends Screen {
             List<FormattedCharSequence> lines = font.split(name, (int) (140 / 0.6F));
             g.drawString(font, lines.get(0), 0, 0, INK, false);
             g.pose().popPose();
+        } else if (stylePage()) {
+            styleIntro(g);
+            if (basic != null) {
+                seal(g, mouseX, mouseY);
+            }
         } else {
             text(g, 214, 24, 144, 176, 0.8F);
             seal(g, mouseX, mouseY);
         }
+    }
+
+    /** Страница стиля: название и описание всего стиля. */
+    private void styleIntro(GuiGraphics g) {
+        g.pose().pushPose();
+        g.pose().translate(214, 24, 0.0F);
+        g.pose().scale(0.8F, 0.8F, 1.0F);
+        int lw = (int) (144 / 0.8F);
+        int cy = 0;
+        for (FormattedCharSequence line : font.split(styleTitle, lw)) {
+            g.drawString(font, line, 0, cy, INK, false);
+            cy += font.lineHeight + 1;
+        }
+        cy += 4;
+        if (styleKey != null && I18n.exists(styleKey)) {
+            for (FormattedCharSequence line : font.split(FormattedText.of(I18n.get(styleKey)), lw)) {
+                if (cy + font.lineHeight > 176 / 0.8F) {
+                    break;
+                }
+                g.drawString(font, line, 0, cy, FADED, false);
+                cy += font.lineHeight + 1;
+            }
+        }
+        g.pose().popPose();
     }
 
     /** Красная печать «Изучить»: при наведении темнее и «вдавлена» на пиксель. */
@@ -278,7 +318,7 @@ public final class ManualScreen extends Screen {
     private boolean overSeal(double mouseX, double mouseY) {
         double tx = (mouseX - bx) / k;
         double ty = (mouseY - by) / k;
-        return opened(ticks) && textPage() && state(form()) == 1
+        return opened(ticks) && textPage() && (!stylePage() || basic != null) && state(form()) == 1
                 && tx >= SEAL_X && tx <= SEAL_X + SEAL_W && ty >= SEAL_Y && ty <= SEAL_Y + SEAL_H;
     }
 

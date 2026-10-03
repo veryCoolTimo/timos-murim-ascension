@@ -31,7 +31,8 @@ public final class ClientCooldowns {
             return 0;
         }
         long own = LAST.getOrDefault(id, Long.MIN_VALUE / 2) + d.cooldownTicks() - mc.level.getGameTime();
-        long gap = lastAny + io.github.verycooltimo.murim.combat.TechniqueService.GLOBAL_GAP_TICKS - mc.level.getGameTime();
+        long gap = LAST.containsKey(id) && LAST.get(id) == lastAny ? 0L
+                : lastAny + io.github.verycooltimo.murim.combat.TechniqueService.gapAfter(LAST, lastAny) - mc.level.getGameTime();
         return (int) Math.max(0L, Math.max(own, gap));
     }
 

@@ -59,7 +59,7 @@ public final class TechniqueService {
         // Своя перезарядка у каждой техники + короткая общая пауза между приёмами.
         Long own = player.getData(ModAttachments.COOLDOWNS).get(technique.id());
         if (!offCooldown(now, own == null ? Long.MIN_VALUE : own, technique.cooldownTicks())
-                || !offCooldown(now, state.lastStartGameTime(), GLOBAL_GAP_TICKS)) {
+                || !offCooldown(now, state.lastStartGameTime(), gapAfter(player.getData(ModAttachments.COOLDOWNS), state.lastStartGameTime()))) {
             return false;
         }
 
@@ -132,6 +132,27 @@ public final class TechniqueService {
      */
     /** Общая пауза между любыми двумя техниками, тиков. */
     public static final int GLOBAL_GAP_TICKS = 10;
+
+    /**
+     * Пауза до следующей (другой) техники по уровню последней (автор 03.10: после секретной —
+     * около 5 с, «чтобы связать следующую форму, но не спамить»): секретная 100, продвинутая 40,
+     * обычная 10 тиков.
+     */
+    public static int gapAfter(java.util.Map<net.minecraft.resources.ResourceLocation, Long> cds, long lastStart) {
+        for (java.util.Map.Entry<net.minecraft.resources.ResourceLocation, Long> e : cds.entrySet()) {
+            if (e.getValue() == lastStart) {
+                TechniqueDefinition d = resolve(e.getKey());
+                if (d != null) {
+                    return switch (d.tier()) {
+                        case SECRET -> 100;
+                        case ADVANCED -> 40;
+                        default -> GLOBAL_GAP_TICKS;
+                    };
+                }
+            }
+        }
+        return GLOBAL_GAP_TICKS;
+    }
 
     static boolean offCooldown(long now, long lastStart, int cooldownTicks) {
         if (lastStart == Long.MIN_VALUE) {
