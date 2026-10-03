@@ -43,7 +43,24 @@ public class BoneAnchorLayer extends RenderLayer<AbstractClientPlayer, PlayerMod
         RIGHT_HAND,
         LEFT_HAND,
         CHEST,
-        DANTIAN
+        DANTIAN,
+        // Концы конечностей и голова нужны сцене создания даньтяня: жилы растут ОТ них
+        // к средоточию, и без них поток некуда было бы вести.
+        RIGHT_FOOT,
+        LEFT_FOOT,
+        HEAD,
+        // Колени и плечи — узлы меридианов. Поток идёт снизу вверх через точки на теле,
+        // а не по прямой от конечности к центру: прямая читается как спица, а не как
+        // канал, проложенный по телу.
+        RIGHT_KNEE,
+        LEFT_KNEE,
+        RIGHT_SHOULDER,
+        LEFT_SHOULDER,
+        // Середина и кончик меча в правой руке: след формы меча идёт по настоящему движению
+        // клинка из анимации, а не по заданной дуге. Смещение — по виду держания меча
+        // в третьем лице: клинок выходит из кулака вперёд и чуть вверх.
+        BLADE_MID,
+        BLADE_TIP
     }
 
     /**
@@ -87,6 +104,18 @@ public class BoneAnchorLayer extends RenderLayer<AbstractClientPlayer, PlayerMod
         bones.put(Bone.CHEST, pointOf(poseStack, model.body, 0.0F, 2.0F, 0.0F));
         // Даньтянь — под пупком, ниже центра корпуса.
         bones.put(Bone.DANTIAN, pointOf(poseStack, model.body, 0.0F, 9.0F, -1.0F));
+        // Ступни — нижний конец ноги длиной 12 единиц; голова — её центр.
+        bones.put(Bone.RIGHT_FOOT, pointOf(poseStack, model.rightLeg, 0.0F, 11.0F, 0.0F));
+        bones.put(Bone.LEFT_FOOT, pointOf(poseStack, model.leftLeg, 0.0F, 11.0F, 0.0F));
+        bones.put(Bone.HEAD, pointOf(poseStack, model.head, 0.0F, -4.0F, 0.0F));
+        // Колено — середина ноги, плечо — верх руки.
+        bones.put(Bone.RIGHT_KNEE, pointOf(poseStack, model.rightLeg, 0.0F, 6.0F, 0.0F));
+        bones.put(Bone.LEFT_KNEE, pointOf(poseStack, model.leftLeg, 0.0F, 6.0F, 0.0F));
+        bones.put(Bone.RIGHT_SHOULDER, pointOf(poseStack, model.rightArm, 0.0F, 1.0F, 0.0F));
+        bones.put(Bone.LEFT_SHOULDER, pointOf(poseStack, model.leftArm, 0.0F, 1.0F, 0.0F));
+        // [НЕПРОВЕРЕНО: точное положение клинка зависит от модели предмета; подобрано по кадрам]
+        bones.put(Bone.BLADE_MID, pointOf(poseStack, model.rightArm, -1.0F, 9.0F, -4.0F));
+        bones.put(Bone.BLADE_TIP, pointOf(poseStack, model.rightArm, -1.0F, 5.0F, -15.0F));
     }
 
     /**

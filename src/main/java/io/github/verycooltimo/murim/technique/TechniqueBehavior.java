@@ -21,12 +21,33 @@ import java.util.Map;
  */
 public sealed interface TechniqueBehavior
         permits TechniqueBehavior.MeleeArc, TechniqueBehavior.ProjectileFan, TechniqueBehavior.Dash,
-                TechniqueBehavior.PalmBlast {
+                TechniqueBehavior.PalmBlast, TechniqueBehavior.Step, TechniqueBehavior.Footwork,
+                TechniqueBehavior.PlumSlash, TechniqueBehavior.PlumWhirlwind, TechniqueBehavior.PlumExecution, TechniqueBehavior.PlumRush,
+                TechniqueBehavior.PlumRainfall,
+                TechniqueBehavior.PlumExplosion,
+                TechniqueBehavior.PlumRiver,
+                TechniqueBehavior.PlumScatter,
+                TechniqueBehavior.PlumDome,
+                TechniqueBehavior.PlumShower,
+                TechniqueBehavior.FallingPetal {
 
     ResourceLocation MELEE_ARC = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "melee_arc");
     ResourceLocation PROJECTILE_FAN = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "projectile_fan");
     ResourceLocation DASH = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "dash");
     ResourceLocation PALM_BLAST = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "palm_blast");
+    ResourceLocation STEP = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "step");
+    ResourceLocation FOOTWORK = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "footwork");
+    ResourceLocation PLUM_SLASH = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "plum_slash");
+    ResourceLocation PLUM_WHIRLWIND = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "plum_whirlwind");
+    ResourceLocation PLUM_EXECUTION = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "plum_execution");
+    ResourceLocation PLUM_RUSH = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "plum_rush");
+    ResourceLocation PLUM_RAINFALL = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "plum_rainfall");
+    ResourceLocation PLUM_EXPLOSION = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "plum_explosion");
+    ResourceLocation PLUM_RIVER = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "plum_river");
+    ResourceLocation PLUM_SCATTER = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "plum_scatter");
+    ResourceLocation PLUM_DOME = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "plum_dome");
+    ResourceLocation FALLING_PETAL = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "falling_petal");
+    ResourceLocation PLUM_SHOWER = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "plum_shower");
 
     ResourceLocation type();
 
@@ -184,11 +205,236 @@ public sealed interface TechniqueBehavior
         }
     }
 
-    Map<ResourceLocation, MapCodec<? extends TechniqueBehavior>> TYPES = Map.of(
-            MELEE_ARC, MeleeArc.CODEC,
-            PROJECTILE_FAN, ProjectileFan.CODEC,
-            DASH, Dash.CODEC,
-            PALM_BLAST, PalmBlast.CODEC);
+    /**
+     * Шаг-уход без урона (Шаг Невидимого Аромата). Дальность, неуязвимость и число рывков —
+     * по слою освоения, см. {@link io.github.verycooltimo.murim.technique.StepRules}.
+     */
+    record Step(float damage) implements TechniqueBehavior {
+        public static final MapCodec<Step> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
+                Codec.FLOAT.optionalFieldOf("damage", 0.0F).forGetter(Step::damage)
+        ).apply(i, Step::new));
+
+        @Override
+        public ResourceLocation type() {
+            return STEP;
+        }
+    }
+
+    /**
+     * Семейство шагов (Шаги Бога Ветров): одна техника, подтехники по контексту ввода и слою —
+     * см. {@link io.github.verycooltimo.murim.technique.FootworkFamily}. На фазе удара — Шаг Мига.
+     */
+    /**
+     * Шаг. {@code mode} — форма стиля шагов (решение 03.10: шаги — стиль форм на кольце):
+     * evade, run, shadow, death, behind; пусто — прежний выбор подтехники по контексту ввода.
+     */
+    record Footwork(String family, String mode) implements TechniqueBehavior {
+        public static final MapCodec<Footwork> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
+                Codec.STRING.optionalFieldOf("family", "wind_god").forGetter(Footwork::family),
+                Codec.STRING.optionalFieldOf("mode", "").forGetter(Footwork::mode)
+        ).apply(i, Footwork::new));
+
+        @Override
+        public float damage() {
+            return 0.0F;
+        }
+
+        @Override
+        public ResourceLocation type() {
+            return FOOTWORK;
+        }
+    }
+
+    /**
+     * Меч Семи Цветков Сливы, «Разрез»: коридор и урон по слою, см.
+     * {@link io.github.verycooltimo.murim.technique.PlumRules}.
+     */
+    record PlumSlash() implements TechniqueBehavior {
+        public static final MapCodec<PlumSlash> CODEC = MapCodec.unit(PlumSlash::new);
+
+        @Override
+        public float damage() {
+            return 0.0F;
+        }
+
+        @Override
+        public ResourceLocation type() {
+            return PLUM_SLASH;
+        }
+    }
+
+    /**
+     * Меч Семи Цветков Сливы, «Вихрь»: разрез → столпы и стены → схождение → пыль → вихрь →
+     * финальный проход, см. {@link io.github.verycooltimo.murim.technique.WhirlRules}.
+     */
+    record PlumWhirlwind() implements TechniqueBehavior {
+        public static final MapCodec<PlumWhirlwind> CODEC = MapCodec.unit(PlumWhirlwind::new);
+
+        @Override
+        public float damage() {
+            return 0.0F;
+        }
+
+        @Override
+        public ResourceLocation type() {
+            return PLUM_WHIRLWIND;
+        }
+    }
+
+    /** Меч Семи Цветков Сливы, «Казнь»: шесть клонов из лепестков, см. ExecRules. */
+    record PlumExecution() implements TechniqueBehavior {
+        public static final MapCodec<PlumExecution> CODEC = MapCodec.unit(PlumExecution::new);
+
+        @Override
+        public float damage() {
+            return 0.0F;
+        }
+
+        @Override
+        public ResourceLocation type() {
+            return PLUM_EXECUTION;
+        }
+    }
+
+    /** Меч Семи Цветков Сливы, «Натиск»: дальний ураган и укол, см. RushRules. */
+    record PlumRush() implements TechniqueBehavior {
+        public static final MapCodec<PlumRush> CODEC = MapCodec.unit(PlumRush::new);
+
+        @Override
+        public float damage() {
+            return 0.0F;
+        }
+
+        @Override
+        public ResourceLocation type() {
+            return PLUM_RUSH;
+        }
+    }
+
+    /** Меч 24 Движений Цветущей Сливы, «Ливень»: уколы, проход за спину, иллюзия и ливень, см. RainRules. */
+    record PlumRainfall() implements TechniqueBehavior {
+        public static final MapCodec<PlumRainfall> CODEC = MapCodec.unit(PlumRainfall::new);
+
+        @Override
+        public float damage() {
+            return 0.0F;
+        }
+
+        @Override
+        public ResourceLocation type() {
+            return PLUM_RAINFALL;
+        }
+    }
+
+    /** Меч Семи Цветков Сливы, «Взрыв»: стена цветущих кольев и направленный выброс, см. ExplosionRules. */
+    record PlumExplosion() implements TechniqueBehavior {
+        public static final MapCodec<PlumExplosion> CODEC = MapCodec.unit(PlumExplosion::new);
+
+        @Override
+        public float damage() {
+            return 0.0F;
+        }
+
+        @Override
+        public ResourceLocation type() {
+            return PLUM_EXPLOSION;
+        }
+    }
+
+    /** Меч 24 Движений Цветущей Сливы, «Опадающие Лепестки, Перекрывающие Реку», см. RiverRules. */
+    record PlumRiver() implements TechniqueBehavior {
+        public static final MapCodec<PlumRiver> CODEC = MapCodec.unit(PlumRiver::new);
+
+        @Override
+        public float damage() {
+            return 0.0F;
+        }
+
+        @Override
+        public ResourceLocation type() {
+            return PLUM_RIVER;
+        }
+    }
+
+    /** Меч 24 Движений Цветущей Сливы, «Рассеяние»: клоны бьют сами, см. ScatterRules. */
+    record PlumScatter() implements TechniqueBehavior {
+        public static final MapCodec<PlumScatter> CODEC = MapCodec.unit(PlumScatter::new);
+
+        @Override
+        public float damage() {
+            return 0.0F;
+        }
+
+        @Override
+        public ResourceLocation type() {
+            return PLUM_SCATTER;
+        }
+    }
+
+    /** Меч 24 Движений Цветущей Сливы, «Купол»: стволы-барьер спереди гасят удары, см. DomeRules. */
+    record PlumDome() implements TechniqueBehavior {
+        public static final MapCodec<PlumDome> CODEC = MapCodec.unit(PlumDome::new);
+
+        @Override
+        public float damage() {
+            return 0.0F;
+        }
+
+        @Override
+        public ResourceLocation type() {
+            return PLUM_DOME;
+        }
+    }
+
+    /** Меч Падающего Цветка: натиск из пяти ударов вокруг цели, см. FallingPetalRules. */
+    record FallingPetal() implements TechniqueBehavior {
+        public static final MapCodec<FallingPetal> CODEC = MapCodec.unit(FallingPetal::new);
+
+        @Override
+        public float damage() {
+            return 0.0F;
+        }
+
+        @Override
+        public ResourceLocation type() {
+            return FALLING_PETAL;
+        }
+    }
+
+    /** Меч Семи Цветков Сливы, «Ливень Цветов»: дальний огромный тычок-пикирование сквозь цель, см. ShowerRules. */
+    record PlumShower() implements TechniqueBehavior {
+        public static final MapCodec<PlumShower> CODEC = MapCodec.unit(PlumShower::new);
+
+        @Override
+        public float damage() {
+            return 0.0F;
+        }
+
+        @Override
+        public ResourceLocation type() {
+            return PLUM_SHOWER;
+        }
+    }
+
+    // Map.of держит не больше 10 пар — дальше Map.ofEntries.
+    Map<ResourceLocation, MapCodec<? extends TechniqueBehavior>> TYPES = Map.ofEntries(
+            Map.entry(MELEE_ARC, MeleeArc.CODEC),
+            Map.entry(PROJECTILE_FAN, ProjectileFan.CODEC),
+            Map.entry(DASH, Dash.CODEC),
+            Map.entry(PALM_BLAST, PalmBlast.CODEC),
+            Map.entry(STEP, Step.CODEC),
+            Map.entry(FOOTWORK, Footwork.CODEC),
+            Map.entry(PLUM_SLASH, PlumSlash.CODEC),
+            Map.entry(PLUM_WHIRLWIND, PlumWhirlwind.CODEC),
+            Map.entry(PLUM_EXECUTION, PlumExecution.CODEC),
+            Map.entry(PLUM_RUSH, PlumRush.CODEC),
+            Map.entry(PLUM_RAINFALL, PlumRainfall.CODEC),
+            Map.entry(PLUM_EXPLOSION, PlumExplosion.CODEC),
+            Map.entry(PLUM_RIVER, PlumRiver.CODEC),
+            Map.entry(PLUM_SCATTER, PlumScatter.CODEC),
+            Map.entry(PLUM_DOME, PlumDome.CODEC),
+            Map.entry(PLUM_SHOWER, PlumShower.CODEC),
+            Map.entry(FALLING_PETAL, FallingPetal.CODEC));
 
     Codec<TechniqueBehavior> CODEC = ResourceLocation.CODEC
             .dispatch("type", TechniqueBehavior::type, type -> {

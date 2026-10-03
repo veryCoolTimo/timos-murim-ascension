@@ -79,7 +79,7 @@ public final class TechniqueNameLayer {
         Minecraft minecraft = Minecraft.getInstance();
         // Слои мода обёрткой hideGui не накрываются — GuiLayerManager вешает её только
         // на ванильные слои, поэтому проверяем сами.
-        if (minecraft.options.hideGui || delay > 0.0F || remaining <= 0.0F) {
+        if (minecraft.options.hideGui || delay > 0.0F || remaining <= 0.0F || TechniqueCaption.active()) {
             return;
         }
         float age = remaining - delta.getGameTimeDeltaPartialTick(false);

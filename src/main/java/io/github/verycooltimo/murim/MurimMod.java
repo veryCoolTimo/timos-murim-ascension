@@ -29,7 +29,9 @@ public class MurimMod {
 
         ModAttachments.ATTACHMENT_TYPES.register(modEventBus);
         io.github.verycooltimo.murim.registry.ModEntities.register(modEventBus);
+        io.github.verycooltimo.murim.registry.ModDataComponents.register(modEventBus);
         io.github.verycooltimo.murim.registry.ModItems.register(modEventBus);
+        io.github.verycooltimo.murim.registry.ModCreativeTabs.register(modEventBus);
 
         modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
     }

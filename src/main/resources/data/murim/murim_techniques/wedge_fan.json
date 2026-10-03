@@ -41,5 +41,7 @@
   },
   "weakness": "technique.murim.wedge_fan.weakness",
   "hit_stop_ticks": 0,
-  "cooldown_ticks": 60
+  "cooldown_ticks": 60,
+  "layers": 4,
+  "tier": "basic"
 }

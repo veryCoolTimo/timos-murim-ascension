@@ -38,5 +38,8 @@
   },
   "weakness": "technique.murim.shadow_step.weakness",
   "hit_stop_ticks": 2,
-  "cooldown_ticks": 40
+  "cooldown_ticks": 40,
+  "layers": 8,
+  "tier": "advanced",
+  "requires": [{"technique": "murim:crescent_sweep", "layer": 2}]
 }

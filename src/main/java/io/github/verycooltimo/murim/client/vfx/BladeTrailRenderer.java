@@ -681,18 +681,12 @@ public final class BladeTrailRenderer {
         vertex(consumer, pose, innerB, normalB, uB, 0.0F, alphaB, colour);
     }
 
+    /** Запись вершины — общая на весь мод, см. {@link VfxDraw}. */
     private static void vertex(VertexConsumer consumer, com.mojang.blaze3d.vertex.PoseStack.Pose pose,
                                Vec3 position, Vec3 normal, float u, float v, float alpha,
                                TechniqueVfx.Colour colour) {
-        // Формат NEW_ENTITY требует все элементы: цвет, uv, overlay, свет и нормаль.
-        // Пропуск любого даёт исключение при завершении вершины, а не ошибку компиляции.
-        // Свет выставлен в максимум формально: слой идёт с NO_LIGHTMAP и шейдером без Sampler2.
-        consumer.addVertex(pose.pose(), (float) position.x, (float) position.y, (float) position.z)
-                .setColor(colour.red(), colour.green(), colour.blue(), alpha)
-                .setUv(u, v)
-                .setOverlay(net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY)
-                .setLight(0x00F000F0)
-                .setNormal(pose, (float) normal.x, (float) normal.y, (float) normal.z);
+        VfxDraw.vertex(consumer, pose, position, normal, u, v, alpha,
+                       colour.red(), colour.green(), colour.blue());
     }
 
     private BladeTrailRenderer() {

@@ -12,12 +12,16 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
+import org.joml.Vector4f;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -29,45 +33,115 @@ import java.util.concurrent.ConcurrentHashMap;
  * означало бы получить схему, которая плохо описывает оба случая. Если появится вторая техника
  * такого рода, слои имеет смысл обобщить — до тех пор обобщение преждевременно.
  *
- * <p><b>Слои, найденные на референсах</b> (docs/design/reference/palm-1.png и palm-2.png):
- * холодное бело-голубое ядро, немного зелёных прядей, тёмные штрихи поверх свечения,
- * россыпь мелкой белой пыли, чёрные угловатые осколки на ударе, стекающие потёки с каплей
- * на сборе, и корона из неровных шипов вокруг ладони.
+ * <p><b>Что рисуется</b> — по описанию автора, docs/design/techniques/demon-palm.md.
+ * Сбор: мягкие дуги-эссенции ({@link EssenceArc}) закручиваются к светящейся кисти, вокруг
+ * белые точки. Удар: всплеск яда во все стороны от точки контакта и шлейф над ладонью.
  */
 @EventBusSubscriber(modid = MurimMod.MODID, value = Dist.CLIENT)
 public final class PalmVfxRenderer {
 
-    /** Зелёных прядей немного — четыре-восемь, как на референсах. Не десятки. */
-    private static final int STRANDS = 7;
-
-    /** Тёмных штрихов больше, чем светящихся прядей: они и создают фактуру движения. */
-    private static final int DARK_STRANDS = 14;
-
-    /** Белой пыли много и она мелкая. */
-    private static final int DUST = 56;
-
-    /** Осколков немного, но они крупные и жёсткие. */
-    private static final int SHARDS = 12;
-
-    /** Шипов короны вокруг ладони. */
-    private static final int CORONA_SPIKES = 16;
-
-    /** Ленты, стекающие с ладони на сборе. Главный элемент первой панели референса. */
-    private static final int GATHER_RIBBONS = 7;
+    /** Белых точек вокруг дуг. */
+    private static final int DUST = 40;
 
     /**
-     * Крупные ленты — «большая форма» эффекта.
-     *
-     * <p>Плотность добирается слоями РАЗНОГО масштаба, а не количеством одинаковых точек:
-     * две-три крупные ленты, несколько средних дуг, десятки мелких искр и мягкий туман.
-     * Полсотни одинаковых белых точек дают шум, а не насыщенность.
+     * Семя беспорядка техники. Постоянное, а не случайное: эффект должен выглядеть
+     * одинаково при каждом применении, иначе игрок не запомнит его силуэт, а отладка
+     * по кадрам станет невоспроизводимой.
      */
-    private static final int BIG_RIBBONS = 3;
+    private static final long SEED = 0x5EED0FA1L;
 
-    /** Клубы мягкого зелёного тумана вокруг эффекта. */
-    private static final int FOG_PUFFS = 5;
+    /** Дуг-эссенций на сборе: автор насчитал на референсе шесть. */
+    private static final int ESSENCE_ARCS = 6;
+
+    /** Тиков между появлением соседних дуг: «по одной, но быстро». */
+    private static final float ARC_STAGGER_TICKS = 1.6F;
+
+    /** За сколько тиков дуга дорастает до кисти. */
+    private static final float ARC_GROW_TICKS = 3.0F;
+
+    /** Светлое ядро дуги: бледно-зелёное, почти белое. */
+    private static final VfxColour ESSENCE_CORE = new VfxColour(0.80F, 1.0F, 0.86F);
+
+    /**
+     * Разновидность дуг. Пока автор не выбрал, её можно задать переменной окружения
+     * {@code MURIM_ARC_STYLE} (a, b, c) — съёмочный стенд снимает все три подряд.
+     */
+    private static final EssenceArc.Style ARC_STYLE =
+            EssenceArc.Style.byName(System.getenv("MURIM_ARC_STYLE"));
+
+    /** Радиус облака белых точек вокруг ладони до сжатия зарядом. */
+    private static final double DUST_RADIUS = 0.85D;
+
+    /** Сколько тиков живёт шлейф после удара. */
+    private static final float TRAIL_TICKS = 10.0F;
+
+    /** Нитей в шлейфе: как у дуг варианта C, основная и спутницы. */
+    private static final int TRAIL_STRANDS = 3;
+
+    /** За сколько тиков истории строится шлейф. */
+    private static final float TRAIL_HISTORY_TICKS = 8.0F;
+
+    /** Ближе этого кисть считается у цели, и всплеск идёт прямо из неё. */
+    private static final double PALM_TOUCH = 0.9D;
+
+    /** Квадрат наименьшего шага между узлами шлейфа: 0.04 блока. */
+    private static final double TRAIL_MIN_STEP_SQR = 0.04D * 0.04D;
+
+    /** Полуширина цели: всплеск ставится на её поверхность. */
+    private static final double TARGET_HALF_WIDTH = 0.3D;
+
+    private static final VfxColour DUST_COLD = new VfxColour(0.88F, 1.0F, 0.94F);
 
     private static final Map<Integer, State> ACTIVE = new ConcurrentHashMap<>();
+
+    /**
+     * Возраст, С КОТОРЫМ КАДР БЫЛ РЕАЛЬНО НАРИСОВАН, включая дробную часть тика.
+     *
+     * <p>Телеметрия пишется в обработчике тика, а снимок берёт последний отрисованный кадр —
+     * его дробная доля тика произвольна. Из-за этого два прогона одного билда расходились
+     * ровно на тик, и метрики по одному кадру мерили дрожание выборки, а не эффект.
+     */
+    private static final Map<Integer, Float> DRAWN_AGE = new ConcurrentHashMap<>();
+
+    /**
+     * МИРОВАЯ точка, в которой эффект реально поставил ладонь в этом кадре.
+     *
+     * <p>Пишется в телеметрию рядом с позицией кости. Без этого нельзя отличить ошибку
+     * привязки от ошибки измерения: обе выглядят как «эффект не там, где кость».
+     */
+    private static final Map<Integer, Vec3> DRAWN_PALM = new ConcurrentHashMap<>();
+
+    /**
+     * Куда пришёлся удар, если он состоялся.
+     *
+     * <p>Брызги яда рисуются В ТОЧКЕ КОНТАКТА и только при попадании. Прежде выброс
+     * возникал всегда и уходил вперёд на пять блоков независимо от того, задел ли он
+     * кого-нибудь: «трейл берётся из воздуха», как это назвал автор.
+     */
+    private record Hit(Vec3 at, float height, int tick) {
+    }
+
+    private static final Map<Integer, Hit> HITS = new ConcurrentHashMap<>();
+
+    /** Точка кисти в мире в один момент: из истории строится шлейф удара. */
+    private record Sample(float age, Vec3 world) {
+    }
+
+    /** История кисти за последние тики, от старой к новой. */
+    private static final Map<Integer, ArrayDeque<Sample>> PALM_PATH = new ConcurrentHashMap<>();
+
+    /** Мировая точка всплеска, выбранная в первый кадр после попадания. */
+    private static final Map<Integer, Vec3> SPLASH_ORIGIN = new ConcurrentHashMap<>();
+
+    /** Принимает точку контакта с сервера. */
+    public static void recordHit(int sourceId, double x, double y, double z, float height) {
+        HITS.put(sourceId, new Hit(new Vec3(x, y, z), height, clientTicks));
+    }
+
+    /** Где эффект поставил ладонь, или {@code null}. */
+    public static Vec3 drawnPalm(int entityId) {
+        return DRAWN_PALM.get(entityId);
+    }
 
     private static int clientTicks;
 
@@ -86,10 +160,52 @@ public final class PalmVfxRenderer {
 
     public static void cancel(int entityId) {
         ACTIVE.remove(entityId);
+        forget(entityId);
+    }
+
+    /**
+     * Забыть отладочные следы техники.
+     *
+     * <p>Вызывается на КАЖДОМ пути завершения, включая штатное истечение. Иначе записи
+     * переживают выход из мира: в новом мире тот же идентификатор принадлежит другому
+     * существу, и телеметрия получает координаты из прошлой сессии как «где эффект
+     * нарисовал ладонь сейчас».
+     */
+    private static void forget(int entityId) {
+        DRAWN_AGE.remove(entityId);
+        DRAWN_PALM.remove(entityId);
+        HITS.remove(entityId);
+        PALM_PATH.remove(entityId);
+        SPLASH_ORIGIN.remove(entityId);
+    }
+
+    /**
+     * Возраст техники в тиках и тик удара — для отладочной съёмки.
+     *
+     * <p>Нужно потому, что кадр съёмки и возраст эффекта НЕ совпадают: съёмка стартует в тот
+     * тик, когда запрос уходит на сервер, а эффект начинается только после ответа. Задержка
+     * плавает между прогонами, и привязка метрик к номеру кадра сравнивала разные фазы.
+     *
+     * @return {@code {возраст, тик удара}} или {@code null}, если техника не активна
+     */
+    public static float[] captureAgeOf(int entityId) {
+        State state = ACTIVE.get(entityId);
+        if (state == null) {
+            return null;
+        }
+        return new float[] {
+                DRAWN_AGE.getOrDefault(entityId, (float) (clientTicks - state.startTick())),
+                state.definition().startTickOf(TechniquePhase.IMPACT) - 1.0F
+        };
     }
 
     public static void clear() {
         ACTIVE.clear();
+        DRAWN_AGE.clear();
+        DRAWN_PALM.clear();
+        HITS.clear();
+        PALM_PATH.clear();
+        SPLASH_ORIGIN.clear();
     }
 
     @SubscribeEvent
@@ -115,16 +231,21 @@ public final class PalmVfxRenderer {
             State state = entry.getValue();
             float age = state.ageAt(partial);
             if (age > state.definition.totalTicks()) {
+                forget(entry.getKey());
                 return true;
             }
             Entity entity = minecraft.level.getEntity(entry.getKey());
             if (entity == null) {
+                forget(entry.getKey());
                 return true;
             }
-            if (entity == minecraft.player && minecraft.options.getCameraType().isFirstPerson()) {
+            // Не рисуем только тогда, когда смотрим ГЛАЗАМИ этой сущности: при съёмке сбоку
+            // камера стоит у другой сущности, и первое лицо не значит, что игрока не видно.
+            if (entity == minecraft.getCameraEntity() && minecraft.options.getCameraType().isFirstPerson()) {
                 return false;
             }
             render(poseStack, buffers, camera, entity, state.definition, age, partial);
+            DRAWN_AGE.put(entry.getKey(), age);
             return false;
         });
 
@@ -156,14 +277,79 @@ public final class PalmVfxRenderer {
             if (palm == null) {
                 return;
             }
+            // Точка берётся из ТОЙ ЖЕ матрицы, которой рисуется геометрия, а не обратным
+            // преобразованием моих же функций. Прежний вариант считал
+            // toWorld(toLocal(кость)) и по построению всегда возвращал ровно кость —
+            // проверка не могла разойтись и не доказывала ничего.
+            Vector4f drawn = pose.pose().transform(
+                    new Vector4f((float) palm.x, (float) palm.y, (float) palm.z, 1.0F));
+            Vec3 palmWorld = new Vec3(drawn.x() + cameraPos.x,
+                                      drawn.y() + cameraPos.y,
+                                      drawn.z() + cameraPos.z);
+            DRAWN_PALM.put(entity.getId(), palmWorld);
+            List<Vec3> trail = remember(entity.getId(), age, palmWorld, feet, bodyYaw);
+            // Время всплеска считается от ПРИХОДА попадания, а не от расчётного тика удара:
+            // пакет с сервера приходит на пару тиков позже, и всплеск появлялся уже
+            // наполовину отыгранным, без вспышки контакта.
+            Hit hit = HITS.get(entity.getId());
+            Vec3 splashAt = null;
+            Vec3 away = new Vec3(0.0D, 0.0D, -1.0D);
+            float hitSince = -1.0F;
+            if (hit != null) {
+                hitSince = clientTicks - hit.tick() + partial;
+                Vec3 origin = SPLASH_ORIGIN.computeIfAbsent(entity.getId(),
+                        id -> splashOrigin(hit, palmWorld));
+                splashAt = toLocal(origin.subtract(feet), bodyYaw);
+                // Наружу от поверхности цели — туда жидкость и выплёскивается.
+                Vec3 target = toLocal(hit.at().subtract(feet), bodyYaw);
+                Vec3 out = new Vec3(splashAt.x - target.x, 0.0D, splashAt.z - target.z);
+                if (out.lengthSqr() > 1.0E-6D) {
+                    away = out.normalize();
+                }
+            }
             if (age < impactAge) {
                 gather(buffers, pose, cameraLocal, palm, age, windupAge, impactAge);
             } else {
-                release(buffers, pose, cameraLocal, palm, age - impactAge);
+                release(buffers, pose, cameraLocal, age - impactAge, splashAt, away, hitSince, trail);
             }
         } finally {
             poseStack.popPose();
         }
+    }
+
+    /**
+     * Запоминает кисть и возвращает путь за последние тики в системе игрока.
+     *
+     * <p>Храним МИРОВЫЕ точки и переводим их в систему игрока на каждом кадре: корпус
+     * поворачивается во время удара, и путь в старой системе уехал бы вместе с ним.
+     */
+    private static List<Vec3> remember(int entityId, float age, Vec3 world, Vec3 feet,
+                                       float bodyYaw) {
+        ArrayDeque<Sample> path = PALM_PATH.computeIfAbsent(entityId, id -> new ArrayDeque<>());
+        Sample last = path.peekLast();
+        if (last == null || age - last.age() >= 0.2F) {
+            path.addLast(new Sample(age, world));
+        }
+        while (!path.isEmpty() && age - path.peekFirst().age() > TRAIL_HISTORY_TICKS) {
+            path.removeFirst();
+        }
+        // Прореживание по РАССТОЯНИЮ: пока кисть стоит на сборе, в одну точку набиваются
+        // десятки совпадающих узлов, их квады складываются в яркое пятно позади игрока,
+        // а касательная между ними не определена.
+        List<Vec3> local = new ArrayList<>(path.size() + 1);
+        Vec3 now = toLocal(world.subtract(feet), bodyYaw);
+        for (Sample sample : path) {
+            Vec3 point = toLocal(sample.world().subtract(feet), bodyYaw);
+            if (local.isEmpty() || point.distanceToSqr(local.get(local.size() - 1)) > TRAIL_MIN_STEP_SQR) {
+                local.add(point);
+            }
+        }
+        if (local.isEmpty() || now.distanceToSqr(local.get(local.size() - 1)) > TRAIL_MIN_STEP_SQR) {
+            local.add(now);
+        } else {
+            local.set(local.size() - 1, now);
+        }
+        return local;
     }
 
     /**
@@ -194,271 +380,81 @@ public final class PalmVfxRenderer {
     private static void gather(MultiBufferSource.BufferSource buffers, PoseStack.Pose pose,
                                Vec3 cameraLocal, Vec3 palm, float age, float windupAge,
                                float impactAge) {
-        float charge = Mth.clamp((age - windupAge) / Math.max(1.0F, impactAge - windupAge), 0.0F, 1.0F);
-        if (charge <= 0.0F) {
+        float span = Math.max(1.0F, impactAge - windupAge);
+        float since = age - windupAge;
+        float charge = Mth.clamp(since / span, 0.0F, 1.0F);
+        if (since <= 0.0F) {
             return;
         }
-
+        // Сбор по описанию автора (docs/design/techniques/demon-palm.md): мягкие дуги-эссенции
+        // закручиваются к кисти, появляются по одной, но быстро; вокруг белые точки; кисть
+        // светится. Прежние слои — корона шипов, потёки, тёмные штрихи, зелёный туман —
+        // убраны: в описании их нет, а туман автор прямо назвал лишним.
+        //
         // ВАЖНО: слои рисуются строго по одному. Общий источник буферов строит только один
         // тип за раз, и запрос второго молча закрывает первый — запись в удержанную ссылку
-        // после этого падает с «Not building!». Поймано на первом же прогоне ладони.
-        VertexConsumer glow = buffers.getBuffer(MurimRenderTypes.impactCore());
+        // после этого падает с «Not building!».
+        VertexConsumer essence = buffers.getBuffer(MurimRenderTypes.essence());
+        EssenceArc.gather(essence, pose, palm, cameraLocal, ARC_STYLE, ESSENCE_ARCS, since,
+                          charge, ARC_STAGGER_TICKS, ARC_GROW_TICKS, 1.0F, SEED,
+                          VfxColour.VENOM, ESSENCE_CORE);
+        buffers.endBatch(MurimRenderTypes.essence());
 
-        // Холодное ядро в ладони. Растёт кубически: сила должна набираться заметным всплеском.
-        float core = charge * charge * charge;
-        // Соотношение цветов перевёрнуто относительно первой версии. На референсе зелёное
-        // занимает почти всю площадь, а холодное — только маленькое ядро в центре. У меня
-        // было наоборот: белая вспышка на весь кадр и почти без зелени.
-        // Мягкий зелёный туман: самая широкая и самая прозрачная масса. Она и создаёт
-        // ощущение плотности, не засвечивая силуэт.
-        for (int i = 0; i < FOG_PUFFS; i++) {
-            double angle = i * 2.399D + age * 0.02D;
-            double drift = 0.09D + 0.06D * Math.sin(age * 0.05D + i);
-            Vec3 puff = palm.add(new Vec3(Math.cos(angle) * drift, Math.sin(angle) * drift * 0.7D,
-                    Math.sin(angle * 1.3D) * drift));
-            // Радиусы поджаты к ладони. Прежние полтора блока растаскивали центр свечения
-            // на полкорпуса от руки: якорь был верным, а геометрия вокруг него — нет.
-            billboard(glow, pose, puff, cameraLocal, 0.26D + 0.34D * core,
-                      (0.07F + 0.11F * core), 0.26F, 0.95F, 0.42F);
-        }
-        billboard(glow, pose, palm, cameraLocal, 0.15D + 0.24D * core,
-                  0.22F + 0.40F * core, 0.36F, 1.0F, 0.52F);
-        // Белое ТОЛЬКО ядром и небольшое: у референса холодного мало, оно плотное и в центре.
-        billboard(glow, pose, palm, cameraLocal, 0.055D + 0.10D * core,
-                  0.35F + 0.55F * core, 0.88F, 0.99F, 1.0F);
-
-        // Частицы СТЯГИВАЮТСЯ к ладони по спирали — направление читается с первой панели.
-        for (int i = 0; i < DUST; i++) {
-            float cycle = ((age * 0.05F) + i / (float) DUST) % 1.0F;
-            double angle = i * 2.399D + age * 0.06D;
-            double radius = (0.55D - 0.48D * cycle) * (1.0D - 0.25D * charge);
-            double lift = Math.sin(angle * 1.3D + i) * 0.22D * (1.0D - cycle);
-            Vec3 point = palm.add(new Vec3(Math.cos(angle) * radius, lift, Math.sin(angle) * radius));
-            float alpha = charge * cycle * 0.9F;
-            // Крупнее и с чередованием холодных и зелёных: на референсе частицы разного
-            // размера и не все белые.
-            // Холодной остаётся лишь треть искр. Прежде было наоборот, и белая масса
-            // забивала зелёную — тот самый перекос, который назвали и я, и codex.
-            boolean cold = (i % 3) == 0;
-            billboard(glow, pose, point, cameraLocal, 0.030D + 0.030D * cycle, alpha,
-                      cold ? 0.88F : 0.42F, 1.0F, cold ? 0.94F : 0.55F);
-        }
-        buffers.endBatch(MurimRenderTypes.impactCore());
-
-        VertexConsumer strands = buffers.getBuffer(MurimRenderTypes.strand());
-
-        // Длинные ленты, стекающие вниз от ладони. На референсе именно они занимают панель,
-        // а не точки: без них сбор читается как искра, а не как поток силы.
-        for (int i = 0; i < GATHER_RIBBONS; i++) {
-            double sway = Math.sin(age * 0.06D + i * 1.7D);
-            double side = (i - (GATHER_RIBBONS - 1) / 2.0D) * 0.16D;
-            Vec3 top = palm.add(new Vec3(side * 0.4D, 0.10D, side * 0.3D));
-            int segments = 5;
-            Vec3 previous = top;
-            for (int seg = 1; seg <= segments; seg++) {
-                double t = seg / (double) segments;
-                Vec3 point = top.add(new Vec3(
-                        side + sway * 0.18D * t,
-                        -(0.16D + 0.52D * charge) * t,
-                        sway * 0.12D * t));
-                strandQuad(strands, pose, previous, point, cameraLocal,
-                           0.075D * (1.0D - 0.55D * t),
-                           charge * 0.75F * (1.0F - 0.5F * (float) t), 0.34F, 1.0F, 0.5F);
-                previous = point;
-            }
-        }
-
-        // Крупные ленты — большая форма, которой не хватало сильнее всего.
-        for (int b = 0; b < BIG_RIBBONS; b++) {
-            double base = b * (Math.PI * 2.0D / BIG_RIBBONS) + age * 0.018D;
-            Vec3 previous = palm;
-            for (int seg = 1; seg <= 7; seg++) {
-                double t = seg / 7.0D;
-                double angle = base + t * Math.PI * 1.1D;
-                double radius = (0.14D + 0.34D * charge) * Math.sin(Math.PI * t * 0.85D);
-                Vec3 point = palm.add(new Vec3(Math.cos(angle) * radius,
-                        0.30D * charge * Math.sin(Math.PI * t) - 0.25D * t,
-                        Math.sin(angle) * radius * 0.7D));
-                strandQuad(strands, pose, previous, point, cameraLocal,
-                           0.15D * (1.0D - 0.4D * t), charge * 0.6F, 0.30F, 1.0F, 0.46F);
-                previous = point;
-            }
-        }
-
-        for (int i = 0; i < CORONA_SPIKES; i++) {
-            double angle = i * (Math.PI * 2.0D / CORONA_SPIKES) + age * 0.03D;
-            double jitter = 0.55D + 0.45D * Math.abs(Math.sin(i * 2.399D));
-            double radius = (0.22D + 0.30D * core) * jitter;
-            Vec3 tip = palm.add(new Vec3(Math.cos(angle) * radius, Math.sin(angle) * radius * 0.8D,
-                    Math.sin(angle * 1.7D) * radius * 0.35D));
-            strandQuad(strands, pose, palm, tip, cameraLocal, 0.022D,
-                       0.28F * core, 0.40F, 1.0F, 0.58F);
-        }
-        buffers.endBatch(MurimRenderTypes.strand());
-
-        VertexConsumer drips = buffers.getBuffer(MurimRenderTypes.drip());
-        // Потёки с каплей: стекают с ладони вниз. На панели сбора они есть, на панели удара нет.
-        for (int i = 0; i < 5; i++) {
-            double phase = (age * 0.03F + i * 0.21D) % 1.0D;
-            Vec3 top = palm.add(new Vec3(-0.08D + 0.05D * i, -0.05D, -0.04D + 0.03D * i));
-            Vec3 bottom = top.add(new Vec3(0.0D, -0.20D - 0.28D * phase, 0.0D));
-            strandQuad(drips, pose, top, bottom, cameraLocal, 0.075D,
-                       (float) (charge * (1.0D - phase) * 1.0D), 0.72F, 1.0F, 0.78F);
-        }
-        buffers.endBatch(MurimRenderTypes.drip());
-
-        // Тёмные штрихи поверх свечения — именно они дают фактуру смазанного движения.
-        VertexConsumer dark = buffers.getBuffer(MurimRenderTypes.shard());
-        for (int i = 0; i < DARK_STRANDS / 2; i++) {
-            double angle = i * 1.7D + age * 0.02D;
-            Vec3 a = palm.add(new Vec3(Math.cos(angle) * 0.5D, 0.25D * Math.sin(angle), Math.sin(angle) * 0.5D));
-            Vec3 b = a.add(new Vec3(Math.cos(angle + 0.6D) * 0.45D, -0.12D, Math.sin(angle + 0.6D) * 0.45D));
-            strandQuad(dark, pose, a, b, cameraLocal, 0.03D, 0.5F * charge, 0.06F, 0.09F, 0.07F);
-        }
-        buffers.endBatch(MurimRenderTypes.shard());
+        VertexConsumer glow = buffers.getBuffer(MurimRenderTypes.mote());
+        // Кисть светится и разгорается к удару.
+        float hand = charge * charge;
+        VfxDraw.billboard(glow, pose, palm, cameraLocal, 0.10D + 0.14D * hand, 0.25F + 0.45F * hand,
+                          VfxColour.VENOM.red(), VfxColour.VENOM.green(), VfxColour.VENOM.blue());
+        VfxDraw.billboard(glow, pose, palm, cameraLocal, 0.05D + 0.06D * hand, 0.35F + 0.6F * hand,
+                          ESSENCE_CORE.red(), ESSENCE_CORE.green(), ESSENCE_CORE.blue());
+        // Белые точки вокруг дуг, втягиваются к кисти вместе с потоком.
+        BillboardBurst.inward(glow, pose, palm, cameraLocal, DUST, age,
+                              DUST_RADIUS * (1.0D - 0.25D * charge),
+                              Mth.clamp(since / 4.0F, 0.0F, 1.0F),
+                              DUST_COLD, VfxColour.COLD_CORE);
+        buffers.endBatch(MurimRenderTypes.mote());
     }
 
+    /**
+     * Удар по описанию автора (docs/design/techniques/demon-palm.md).
+     *
+     * <p>Дуги сбора не летят в цель: ладонь бьёт сама, над ней тянется шлейф из тех же
+     * дуг, а из-под ладони во все стороны выплёскивается яд — светлый и тёмно-зелёный,
+     * ниже чёрные капли. Дыма нет. Прежние слои — веер прядей вперёд, волны по телу цели,
+     * большая белая вспышка — убраны: в описании их нет.
+     *
+     * @param hit точка контакта или {@code null}, если удар прошёл мимо
+     */
     private static void release(MultiBufferSource.BufferSource buffers, PoseStack.Pose pose,
-                                Vec3 cameraLocal, Vec3 palm, float since) {
-        float life = Mth.clamp(since / 26.0F, 0.0F, 1.0F);
-        float fade = 1.0F - life;
-        if (fade <= 0.0F) {
-            return;
+                                Vec3 cameraLocal, float since, Vec3 splashAt, Vec3 away,
+                                float hitSince, List<Vec3> trail) {
+        float fade = 1.0F - Mth.clamp(since / TRAIL_TICKS, 0.0F, 1.0F);
+        if (fade > 0.0F) {
+            VertexConsumer essence = buffers.getBuffer(MurimRenderTypes.essence());
+            EssenceTrail.draw(essence, pose, trail, cameraLocal, TRAIL_STRANDS, 0.20D,
+                              fade, since, SEED, VfxColour.VENOM, ESSENCE_CORE);
+            buffers.endBatch(MurimRenderTypes.essence());
         }
-        Vec3 forward = new Vec3(0.0D, 0.0D, 1.0D);
-        double reach = 1.2D + 3.4D * Math.min(1.0F, since / 5.0F);
-
-        VertexConsumer glow = buffers.getBuffer(MurimRenderTypes.impactCore());
-
-        // Ядро: широкая холодная лента вперёд, слегка волнистая. Самый яркий элемент.
-        int steps = 10;
-        Vec3 previous = palm;
-        for (int i = 1; i <= steps; i++) {
-            double t = i / (double) steps;
-            double wobble = Math.sin(t * 5.0D + since * 0.35D) * 0.16D * t;
-            Vec3 point = palm.add(forward.scale(reach * t)).add(new Vec3(wobble, wobble * 0.6D, 0.0D));
-            strandQuad(glow, pose, previous, point, cameraLocal, 0.26D * (1.0D - 0.45D * t),
-                       fade * 0.9F, 0.85F, 0.98F, 1.0F);
-            previous = point;
+        if (splashAt != null) {
+            FlipbookSplash.draw(buffers, pose, splashAt, away, cameraLocal, hitSince);
         }
-
-        // Туман вдоль канала: собирает отдельные линии в один плотный импульс.
-        for (int i = 0; i < FOG_PUFFS + 3; i++) {
-            double t = (i + 0.5D) / (FOG_PUFFS + 3);
-            Vec3 puff = palm.add(forward.scale(reach * t));
-            billboard(glow, pose, puff, cameraLocal, 0.42D + 0.30D * Math.sin(Math.PI * t),
-                      fade * 0.13F, 0.24F, 0.95F, 0.40F);
-        }
-
-        // Белая пыль по всей зоне: мелкая, резкая, холодная.
-        for (int i = 0; i < DUST; i++) {
-            double t = ((i * 0.137D) + since * 0.05D) % 1.0D;
-            double angle = i * 2.399D;
-            double radius = 0.15D + 0.7D * Math.sin(Math.PI * t) * (0.4D + 0.6D * ((i % 5) / 4.0D));
-            Vec3 point = palm.add(forward.scale(reach * t))
-                    .add(new Vec3(Math.cos(angle) * radius, Math.sin(angle) * radius, 0.0D));
-            billboard(glow, pose, point, cameraLocal, 0.020D + 0.026D * ((i % 3) / 2.0D),
-                      fade * 0.95F, 0.94F, 1.0F, 0.98F);
-        }
-        buffers.endBatch(MurimRenderTypes.impactCore());
-
-        VertexConsumer strands = buffers.getBuffer(MurimRenderTypes.strand());
-        for (int s2 = 0; s2 < STRANDS; s2++) {
-            double phase = s2 * (Math.PI * 2.0D / STRANDS);
-            Vec3 prev = palm;
-            for (int i = 1; i <= steps; i++) {
-                double t = i / (double) steps;
-                double angle = phase + t * Math.PI * 1.8D + since * 0.12D;
-                double radius = 0.34D * Math.sin(Math.PI * t) + 0.05D;
-                Vec3 point = palm.add(forward.scale(reach * t))
-                        .add(new Vec3(Math.cos(angle) * radius, Math.sin(angle) * radius, 0.0D));
-                strandQuad(strands, pose, prev, point, cameraLocal, 0.055D,
-                           fade * 0.9F, 0.38F, 1.0F, 0.52F);
-                prev = point;
-            }
-        }
-        buffers.endBatch(MurimRenderTypes.strand());
-
-        VertexConsumer dark = buffers.getBuffer(MurimRenderTypes.shard());
-        // Чёрные осколки: жёсткие, угловатые, только на ударе. Рисуются НЕаддитивно.
-        for (int i = 0; i < SHARDS; i++) {
-            double t = 0.25D + 0.7D * ((i * 0.113D + since * 0.03D) % 1.0D);
-            double angle = i * 1.94D + since * 0.05D;
-            double radius = 0.28D + 0.55D * Math.abs(Math.sin(i * 1.7D));
-            Vec3 point = palm.add(forward.scale(reach * t))
-                    .add(new Vec3(Math.cos(angle) * radius, Math.sin(angle) * radius * 0.8D, 0.0D));
-            // Осколки крупнее и непрозрачнее: в первой версии они терялись на фоне
-            // свечения и на кадрах их не было видно вовсе.
-            billboard(dark, pose, point, cameraLocal, 0.13D + 0.11D * ((i % 4) / 3.0D),
-                      fade * 0.95F, 0.04F, 0.07F, 0.05F);
-        }
-
-        // Тёмные штрихи поверх свечения.
-        for (int i = 0; i < DARK_STRANDS; i++) {
-            double t0 = ((i * 0.09D) + since * 0.04D) % 0.9D;
-            double angle = i * 2.1D;
-            double radius = 0.2D + 0.45D * Math.abs(Math.cos(i * 1.3D));
-            Vec3 a = palm.add(forward.scale(reach * t0))
-                    .add(new Vec3(Math.cos(angle) * radius, Math.sin(angle) * radius, 0.0D));
-            Vec3 b = a.add(forward.scale(reach * 0.22D)).add(new Vec3(0.05D, -0.04D, 0.0D));
-            strandQuad(dark, pose, a, b, cameraLocal, 0.025D, fade * 0.6F, 0.05F, 0.08F, 0.06F);
-        }
-        buffers.endBatch(MurimRenderTypes.shard());
     }
 
-    /** Четырёхугольник вдоль отрезка, развёрнутый шириной к камере. */
-    private static void strandQuad(VertexConsumer consumer, PoseStack.Pose pose, Vec3 from, Vec3 to,
-                                   Vec3 cameraLocal, double halfWidth, float alpha,
-                                   float red, float green, float blue) {
-        if (alpha <= 0.0F) {
-            return;
+    /**
+     * Откуда бьёт всплеск — «из-под ладони».
+     *
+     * <p>Берётся кисть в момент прихода попадания, если она у цели. Если кисть не дотянулась
+     * (дальность удара больше длины руки), — поверхность цели со стороны кисти, а не центр:
+     * из центра тела всплеск наполовину прятался в модели. Точка запоминается один раз:
+     * после удара рука уходит назад, а всплеск остаётся там, где был контакт.
+     */
+    private static Vec3 splashOrigin(Hit hit, Vec3 palmWorld) {
+        Vec3 toPalm = new Vec3(palmWorld.x - hit.at().x, 0.0D, palmWorld.z - hit.at().z);
+        if (toPalm.lengthSqr() < 1.0E-6D) {
+            return hit.at();
         }
-        Vec3 axis = to.subtract(from);
-        if (axis.lengthSqr() < 1.0E-9D) {
-            return;
-        }
-        Vec3 mid = from.add(to).scale(0.5D);
-        Vec3 toCamera = cameraLocal.subtract(mid).normalize();
-        Vec3 side = axis.normalize().cross(toCamera);
-        if (side.lengthSqr() < 1.0E-6D) {
-            return;
-        }
-        Vec3 offset = side.normalize().scale(halfWidth);
-        Vec3 normal = toCamera;
-
-        vertex(consumer, pose, from.subtract(offset), normal, 0.0F, 0.0F, alpha, red, green, blue);
-        vertex(consumer, pose, to.subtract(offset), normal, 1.0F, 0.0F, alpha, red, green, blue);
-        vertex(consumer, pose, to.add(offset), normal, 1.0F, 1.0F, alpha, red, green, blue);
-        vertex(consumer, pose, from.add(offset), normal, 0.0F, 1.0F, alpha, red, green, blue);
-    }
-
-    private static void billboard(VertexConsumer consumer, PoseStack.Pose pose, Vec3 centre,
-                                  Vec3 cameraLocal, double size, float alpha,
-                                  float red, float green, float blue) {
-        if (alpha <= 0.0F || size <= 0.0D) {
-            return;
-        }
-        Vec3 forward = cameraLocal.subtract(centre).normalize();
-        Vec3 reference = Math.abs(forward.y) > 0.95D ? new Vec3(1.0D, 0.0D, 0.0D)
-                                                     : new Vec3(0.0D, 1.0D, 0.0D);
-        Vec3 right = forward.cross(reference).normalize().scale(size);
-        Vec3 up = right.normalize().cross(forward).normalize().scale(size);
-
-        vertex(consumer, pose, centre.subtract(right).subtract(up), forward, 0.0F, 0.0F, alpha, red, green, blue);
-        vertex(consumer, pose, centre.subtract(right).add(up), forward, 0.0F, 1.0F, alpha, red, green, blue);
-        vertex(consumer, pose, centre.add(right).add(up), forward, 1.0F, 1.0F, alpha, red, green, blue);
-        vertex(consumer, pose, centre.add(right).subtract(up), forward, 1.0F, 0.0F, alpha, red, green, blue);
-    }
-
-    private static void vertex(VertexConsumer consumer, PoseStack.Pose pose, Vec3 position,
-                               Vec3 normal, float u, float v, float alpha,
-                               float red, float green, float blue) {
-        consumer.addVertex(pose.pose(), (float) position.x, (float) position.y, (float) position.z)
-                .setColor(red, green, blue, alpha)
-                .setUv(u, v)
-                .setOverlay(net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY)
-                .setLight(0x00F000F0)
-                .setNormal(pose, (float) normal.x, (float) normal.y, (float) normal.z);
+        Vec3 surface = hit.at().add(toPalm.normalize().scale(TARGET_HALF_WIDTH));
+        return palmWorld.distanceTo(surface) < PALM_TOUCH ? palmWorld : surface;
     }
 
     private static Vec3 toLocal(Vec3 delta, float bodyYaw) {

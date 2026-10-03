@@ -1,0 +1,275 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "six_form_6": {
+      "loop": false,
+      "animation_length": 0.625,
+      "bones": {
+        "right_arm": {
+          "rotation": {
+            "0.0": {
+              "vector": [
+                -28,
+                4,
+                6
+              ],
+              "easing": "linear"
+            },
+            "0.04": {
+              "vector": [
+                -110,
+                60,
+                60
+              ],
+              "easing": "easeOutCubic"
+            },
+            "0.12": {
+              "vector": [
+                -70,
+                -10,
+                10
+              ],
+              "easing": "easeOutExpo"
+            },
+            "0.42": {
+              "vector": [
+                -66.5,
+                -9.5,
+                9.5
+              ],
+              "easing": "linear"
+            },
+            "0.625": {
+              "vector": [
+                -28,
+                4,
+                6
+              ],
+              "easing": "easeInOutSine"
+            }
+          }
+        },
+        "left_arm": {
+          "rotation": {
+            "0.0": {
+              "vector": [
+                -10,
+                0,
+                -8
+              ],
+              "easing": "linear"
+            },
+            "0.04": {
+              "vector": [
+                -60,
+                0,
+                -10
+              ],
+              "easing": "easeOutCubic"
+            },
+            "0.12": {
+              "vector": [
+                -26,
+                0,
+                -14
+              ],
+              "easing": "easeOutExpo"
+            },
+            "0.42": {
+              "vector": [
+                -24.7,
+                0.0,
+                -13.299999999999999
+              ],
+              "easing": "linear"
+            },
+            "0.625": {
+              "vector": [
+                -10,
+                0,
+                -8
+              ],
+              "easing": "easeInOutSine"
+            }
+          }
+        },
+        "torso": {
+          "rotation": {
+            "0.0": {
+              "vector": [
+                0,
+                -6,
+                0
+              ],
+              "easing": "linear"
+            },
+            "0.04": {
+              "vector": [
+                -4,
+                20,
+                0
+              ],
+              "easing": "easeOutCubic"
+            },
+            "0.12": {
+              "vector": [
+                12,
+                -12,
+                0
+              ],
+              "easing": "easeOutExpo"
+            },
+            "0.42": {
+              "vector": [
+                11.399999999999999,
+                -11.399999999999999,
+                0.0
+              ],
+              "easing": "linear"
+            },
+            "0.625": {
+              "vector": [
+                0,
+                -6,
+                0
+              ],
+              "easing": "easeInOutSine"
+            }
+          }
+        },
+        "head": {
+          "rotation": {
+            "0.0": {
+              "vector": [
+                0,
+                6,
+                0
+              ],
+              "easing": "linear"
+            },
+            "0.04": {
+              "vector": [
+                0,
+                6,
+                0
+              ],
+              "easing": "easeOutCubic"
+            },
+            "0.12": {
+              "vector": [
+                -6,
+                -8,
+                0
+              ],
+              "easing": "easeOutExpo"
+            },
+            "0.42": {
+              "vector": [
+                -5.699999999999999,
+                -7.6,
+                0.0
+              ],
+              "easing": "linear"
+            },
+            "0.625": {
+              "vector": [
+                0,
+                6,
+                0
+              ],
+              "easing": "easeInOutSine"
+            }
+          }
+        },
+        "right_leg": {
+          "rotation": {
+            "0.0": {
+              "vector": [
+                6,
+                0,
+                4
+              ],
+              "easing": "linear"
+            },
+            "0.04": {
+              "vector": [
+                6,
+                0,
+                4
+              ],
+              "easing": "easeOutCubic"
+            },
+            "0.12": {
+              "vector": [
+                18,
+                0,
+                5
+              ],
+              "easing": "easeOutExpo"
+            },
+            "0.42": {
+              "vector": [
+                17.099999999999998,
+                0.0,
+                4.75
+              ],
+              "easing": "linear"
+            },
+            "0.625": {
+              "vector": [
+                6,
+                0,
+                4
+              ],
+              "easing": "easeInOutSine"
+            }
+          }
+        },
+        "left_leg": {
+          "rotation": {
+            "0.0": {
+              "vector": [
+                -8,
+                0,
+                -4
+              ],
+              "easing": "linear"
+            },
+            "0.04": {
+              "vector": [
+                -8,
+                0,
+                -4
+              ],
+              "easing": "easeOutCubic"
+            },
+            "0.12": {
+              "vector": [
+                -24,
+                0,
+                -5
+              ],
+              "easing": "easeOutExpo"
+            },
+            "0.42": {
+              "vector": [
+                -22.799999999999997,
+                0.0,
+                -4.75
+              ],
+              "easing": "linear"
+            },
+            "0.625": {
+              "vector": [
+                -8,
+                0,
+                -4
+              ],
+              "easing": "easeInOutSine"
+            }
+          }
+        }
+      }
+    }
+  }
+}

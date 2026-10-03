@@ -1,0 +1,73 @@
+{
+  "id": "murim:falling_petal_sword",
+  "form": "slash",
+  "intent": "strike",
+  "breath": "hollow_breath",
+  "phases": {
+    "ritual": 0,
+    "windup": 10,
+    "impact": 2,
+    "recovery": 68,
+    "dissipation": 4
+  },
+  "behavior": {
+    "type": "murim:falling_petal"
+  },
+  "animation": "murim:falling_petal_sword",
+  "vfx": {
+    "pivot": [
+      0.0,
+      1.0,
+      0.0
+    ],
+    "basis_a": [
+      0.0,
+      0.55,
+      -0.84
+    ],
+    "basis_b": [
+      0.0,
+      0.84,
+      0.55
+    ],
+    "inner_radius": 0.1,
+    "outer_radius": 0.95,
+    "start_angle": 0.0,
+    "end_angle": 120.0,
+    "colour": {
+      "r": 0.9,
+      "g": 0.95,
+      "b": 1.0
+    },
+    "trail": {
+      "enabled": false,
+      "alpha": 0.0,
+      "size": 0.1,
+      "life_ticks": 1.0
+    },
+    "crescent": {
+      "enabled": false,
+      "alpha": 0.0,
+      "size": 0.1,
+      "life_ticks": 1.0
+    },
+    "core": {
+      "enabled": false,
+      "alpha": 0.0,
+      "size": 0.1,
+      "life_ticks": 1.0
+    },
+    "windup_motes": 0,
+    "ritual_motes": 0
+  },
+  "interruption": {
+    "cancellable_until": "windup",
+    "break_on_damage": true,
+    "damage_threshold": 6.0
+  },
+  "weakness": "technique.murim.falling_petal_sword.weakness",
+  "hit_stop_ticks": 2,
+  "cooldown_ticks": 160,
+  "layers": 8,
+  "tier": "advanced"
+}

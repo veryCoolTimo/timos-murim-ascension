@@ -63,12 +63,9 @@ public final class BoneDebugRenderer {
                 float v = (i >= 2) ? 1.0F : 0.0F;
                 float x = (u - 0.5F) * size * 2.0F;
                 float y = (v - 0.5F) * size * 2.0F;
-                consumer.addVertex(pose.pose(), x, y, 0.0F)
-                        .setColor(red, green, blue, 1.0F)
-                        .setUv(u, v)
-                        .setOverlay(net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY)
-                        .setLight(0x00F000F0)
-                        .setNormal(pose, 0.0F, 0.0F, 1.0F);
+                VfxDraw.vertex(consumer, pose, new net.minecraft.world.phys.Vec3(x, y, 0.0D),
+                               new net.minecraft.world.phys.Vec3(0.0D, 0.0D, 1.0D),
+                               u, v, 1.0F, red, green, blue);
             }
         } finally {
             poseStack.popPose();

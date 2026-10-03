@@ -29,9 +29,48 @@ public final class ModKeyMappings {
             GLFW.GLFW_KEY_R,
             CATEGORY);
 
+    /**
+     * Медитация: сесть или встать. На корточках — «брать всё», без отсева примесей
+     * (docs/design/19 §3: выбор делается один раз, перед тем как сесть).
+     */
+    public static final KeyMapping MEDITATION = new KeyMapping(
+            "key." + MurimMod.MODID + ".meditation",
+            KeyConflictContext.IN_GAME,
+            InputConstants.Type.KEYSYM,
+            GLFW.GLFW_KEY_G,
+            CATEGORY);
+
+    /** Кольцо выбора техник: зажал — кольцо, повёл мышь — выбрал, отпустил (автор 01.10). */
+    public static final KeyMapping WHEEL = new KeyMapping(
+            "key." + MurimMod.MODID + ".wheel",
+            KeyConflictContext.IN_GAME,
+            InputConstants.Type.KEYSYM,
+            GLFW.GLFW_KEY_V,
+            CATEGORY);
+
+    /** Экран раскладки техник по слотам. */
+    public static final KeyMapping LOADOUT = new KeyMapping(
+            "key." + MurimMod.MODID + ".loadout",
+            KeyConflictContext.IN_GAME,
+            InputConstants.Type.KEYSYM,
+            GLFW.GLFW_KEY_K,
+            CATEGORY);
+
+    /** Захват цели как в Devil May Cry (автор 03.10): нажал — захват, ещё раз — снять. */
+    public static final KeyMapping LOCK = new KeyMapping(
+            "key." + MurimMod.MODID + ".lock",
+            KeyConflictContext.IN_GAME,
+            InputConstants.Type.KEYSYM,
+            GLFW.GLFW_KEY_Z,
+            CATEGORY);
+
     @SubscribeEvent
     static void register(RegisterKeyMappingsEvent event) {
+        event.register(LOCK);
         event.register(TECHNIQUE);
+        event.register(MEDITATION);
+        event.register(WHEEL);
+        event.register(LOADOUT);
     }
 
     private ModKeyMappings() {

@@ -1,0 +1,15 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "wind_god_steps": {
+      "loop": false,
+      "animation_length": 0.25,
+      "bones": {
+        "torso": {"rotation": {"0.0": {"vector": [0, 0, 0], "easing": "linear"}, "0.06": {"vector": [14, 0, 0], "easing": "easeOutCubic"}, "0.25": {"vector": [0, 0, 0], "easing": "easeInOutSine"}}},
+        "right_arm": {"rotation": {"0.0": {"vector": [0, 0, 0], "easing": "linear"}, "0.06": {"vector": [30, 0, 8], "easing": "easeOutCubic"}, "0.25": {"vector": [0, 0, 0], "easing": "easeInOutSine"}}},
+        "left_arm": {"rotation": {"0.0": {"vector": [0, 0, 0], "easing": "linear"}, "0.06": {"vector": [30, 0, -8], "easing": "easeOutCubic"}, "0.25": {"vector": [0, 0, 0], "easing": "easeInOutSine"}}},
+        "right_leg": {"rotation": {"0.0": {"vector": [0, 0, 0], "easing": "linear"}, "0.06": {"vector": [20, 0, 0], "easing": "easeOutCubic"}, "0.25": {"vector": [0, 0, 0], "easing": "easeInOutSine"}}}
+      }
+    }
+  }
+}

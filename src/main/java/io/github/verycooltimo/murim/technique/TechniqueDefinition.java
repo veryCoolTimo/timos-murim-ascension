@@ -33,7 +33,11 @@ public record TechniqueDefinition(
         Interruption interruption,
         String weaknessKey,
         int hitStopTicks,
-        int cooldownTicks
+        int cooldownTicks,
+        int layers,
+        io.github.verycooltimo.murim.mastery.TechniqueTier tier,
+        List<io.github.verycooltimo.murim.mastery.TechniqueRequirement> requires,
+        boolean foundation
 ) {
 
     /**
@@ -88,7 +92,17 @@ public record TechniqueDefinition(
                     .forGetter(TechniqueDefinition::interruption),
             Codec.STRING.optionalFieldOf("weakness", "").forGetter(TechniqueDefinition::weaknessKey),
             Codec.INT.optionalFieldOf("hit_stop_ticks", 0).forGetter(TechniqueDefinition::hitStopTicks),
-            Codec.INT.fieldOf("cooldown_ticks").forGetter(TechniqueDefinition::cooldownTicks)
+            Codec.INT.fieldOf("cooldown_ticks").forGetter(TechniqueDefinition::cooldownTicks),
+            // Освоение (docs/design/19 §3г): число слоёв, уровень и основы, без которых не выучить.
+            Codec.INT.optionalFieldOf("layers", 3).forGetter(TechniqueDefinition::layers),
+            io.github.verycooltimo.murim.mastery.TechniqueTier.CODEC
+                    .optionalFieldOf("tier", io.github.verycooltimo.murim.mastery.TechniqueTier.BASIC)
+                    .forGetter(TechniqueDefinition::tier),
+            io.github.verycooltimo.murim.mastery.TechniqueRequirement.CODEC.listOf()
+                    .optionalFieldOf("requires", List.of()).forGetter(TechniqueDefinition::requires),
+            // Основа меча (автор 01.10): не техника на клавише, а то, КАК персонаж бьёт обычной
+            // атакой. Кладётся в отдельную ячейку раскладки, в слоты техник — нет.
+            Codec.BOOL.optionalFieldOf("foundation", false).forGetter(TechniqueDefinition::foundation)
     ).apply(i, TechniqueDefinition::new));
 
     public TechniqueDefinition {
@@ -102,6 +116,10 @@ public record TechniqueDefinition(
             }
         }
         phaseTicks = java.util.Collections.unmodifiableMap(copy);
+        if (layers < 1) {
+            throw new IllegalArgumentException("У техники " + id + " должен быть хотя бы один слой");
+        }
+        requires = List.copyOf(requires);
         if (hitStopTicks < 0 || cooldownTicks < 0) {
             throw new IllegalArgumentException("Отрицательные тики у техники " + id);
         }

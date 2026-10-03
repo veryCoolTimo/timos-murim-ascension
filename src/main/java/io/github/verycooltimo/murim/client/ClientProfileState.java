@@ -1,6 +1,5 @@
 package io.github.verycooltimo.murim.client;
 
-import io.github.verycooltimo.murim.network.SyncRitualPayload;
 import io.github.verycooltimo.murim.profile.DantianProfile;
 
 /**
@@ -15,28 +14,18 @@ public final class ClientProfileState {
     // пакета, читает рендер. Одно изменение обработчика на сетевой поток без этого
     // превратилось бы в невоспроизводимый рассинхрон интерфейса.
     private static volatile DantianProfile profile = DantianProfile.INITIAL;
-    private static volatile SyncRitualPayload ritual = new SyncRitualPayload(false, 0, 0.0F, 0.0F);
 
     public static DantianProfile profile() {
         return profile;
-    }
-
-    public static SyncRitualPayload ritual() {
-        return ritual;
     }
 
     public static void setProfile(DantianProfile value) {
         profile = value;
     }
 
-    public static void setRitual(SyncRitualPayload value) {
-        ritual = value;
-    }
-
     /** Сброс при выходе из мира: чужой профиль не должен подсвечиваться в новом. */
     public static void reset() {
         profile = DantianProfile.INITIAL;
-        ritual = new SyncRitualPayload(false, 0, 0.0F, 0.0F);
     }
 
     private ClientProfileState() {

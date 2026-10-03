@@ -1,0 +1,74 @@
+{
+  "id": "murim:wind_god_shadow",
+  "form": "step",
+  "intent": "evasion",
+  "breath": "hollow_breath",
+  "phases": {
+    "ritual": 0,
+    "windup": 1,
+    "impact": 1,
+    "recovery": 6,
+    "dissipation": 0
+  },
+  "behavior": {
+    "type": "murim:footwork",
+    "family": "wind_god",
+    "mode": "shadow"
+  },
+  "animation": "murim:wind_god_steps",
+  "vfx": {
+    "pivot": [
+      0.0,
+      1.0,
+      0.0
+    ],
+    "basis_a": [
+      0.0,
+      0.55,
+      -0.84
+    ],
+    "basis_b": [
+      0.0,
+      0.84,
+      0.55
+    ],
+    "inner_radius": 0.1,
+    "outer_radius": 0.95,
+    "start_angle": 0.0,
+    "end_angle": 120.0,
+    "colour": {
+      "r": 0.9,
+      "g": 0.95,
+      "b": 1.0
+    },
+    "trail": {
+      "enabled": false,
+      "alpha": 0.0,
+      "size": 0.1,
+      "life_ticks": 1.0
+    },
+    "crescent": {
+      "enabled": false,
+      "alpha": 0.0,
+      "size": 0.1,
+      "life_ticks": 1.0
+    },
+    "core": {
+      "enabled": false,
+      "alpha": 0.0,
+      "size": 0.1,
+      "life_ticks": 1.0
+    },
+    "windup_motes": 0,
+    "ritual_motes": 0
+  },
+  "interruption": {
+    "cancellable_until": "windup",
+    "break_on_damage": false
+  },
+  "weakness": "technique.murim.wind_god_shadow.weakness",
+  "hit_stop_ticks": 0,
+  "cooldown_ticks": 160,
+  "layers": 8,
+  "tier": "advanced"
+}

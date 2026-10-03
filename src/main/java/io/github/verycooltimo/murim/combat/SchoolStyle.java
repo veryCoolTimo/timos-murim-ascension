@@ -44,6 +44,10 @@ public final class SchoolStyle {
         if (!(event.getTarget() instanceof LivingEntity target)) {
             return;
         }
+        // Выбрана основа меча — удар ведёт она, старая серия стиля не нужна (автор 01.10).
+        if (FoundationService.onHit(player, target)) {
+            return;
+        }
         DantianProfile profile = player.getData(ModAttachments.PROFILE);
         if (!profile.isAwakened()) {
             return;

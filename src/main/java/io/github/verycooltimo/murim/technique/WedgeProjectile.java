@@ -25,6 +25,9 @@ import net.minecraft.world.phys.Vec3;
 public class WedgeProjectile extends Projectile {
 
     private float damage;
+
+    /** Какой техникой брошен: попадание идёт в её освоение. Не сохраняется — клин живёт секунды. */
+    net.minecraft.resources.ResourceLocation technique;
     private int lifetime;
 
     public WedgeProjectile(EntityType<? extends WedgeProjectile> type, Level level) {
@@ -86,6 +89,9 @@ public class WedgeProjectile extends Projectile {
                 damageSources().mobProjectile(this, owner instanceof net.minecraft.world.entity.LivingEntity living
                         ? living : null);
         boolean landed = target.hurt(source, damage);
+        if (landed && technique != null && owner instanceof net.minecraft.server.level.ServerPlayer thrower) {
+            io.github.verycooltimo.murim.mastery.MasteryService.onHit(thrower, technique, target);
+        }
         // Исчезаем только при реальном попадании. Прежде клин пропадал безусловно, и весь
         // веер по одной цели давал урон ровно одного клина: остальные приходили в кадрах
         // неуязвимости, получали false и всё равно удалялись.

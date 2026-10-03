@@ -51,6 +51,15 @@ public final class CameraShakeHandler {
      *                  а берёт максимум — иначе серия попаданий раскачивает камеру до тошноты
      */
     public static void request(float intensity) {
+        // Во время автоматической съёмки камера НЕ трясётся.
+        //
+        // Метрики эффекта строятся на вычитании опорного кадра, а тряска приходится ровно
+        // на кульминацию — то есть портит именно те кадры, ради которых съёмка и делается:
+        // сдвиг камеры засчитывается как «энергия эффекта». Сама тряска проверяется
+        // отдельно и не нуждается в этом стенде.
+        if ("true".equals(System.getProperty("murim.capture"))) {
+            return;
+        }
         float clamped = Mth.clamp(intensity, 0.0F, 1.0F);
         if (clamped <= 0.0F) {
             return;
@@ -64,10 +73,45 @@ public final class CameraShakeHandler {
         elapsed = 0;
     }
 
+    /**
+     * Дрожь земли (падение дерева Сливы и т. п.): дольше и сильнее удара, преимущественно
+     * по тангажу — камера «подпрыгивает» вместе с землёй; затухает квадратично за {@code ticks}.
+     * Ползунок тряски в настройках действует и здесь.
+     */
+    public static void quake(float intensity, int ticks) {
+        if ("true".equals(System.getProperty("murim.capture")) && !"1".equals(System.getenv("MURIM_CAPTURE_SHAKE"))) {
+            return;
+        }
+        float clamped = Mth.clamp(intensity, 0.0F, 1.0F);
+        float current = quakeStrength * quakeLeft();
+        if (clamped <= current) {
+            return;
+        }
+        quakeStrength = clamped;
+        quakeDuration = Math.max(1, ticks);
+        quakeRemaining = quakeDuration;
+        quakeElapsed = 0;
+    }
+
+    private static float quakeStrength;
+    private static int quakeDuration = 1;
+    private static float quakeRemaining;
+    private static int quakeElapsed;
+
+    private static float quakeLeft() {
+        float k = Mth.clamp(quakeRemaining / quakeDuration, 0.0F, 1.0F);
+        return k * k;
+    }
+
     /** Мгновенно останавливает тряску: смена мира не должна тащить за собой качающуюся камеру. */
     public static void reset() {
         remaining = 0.0F;
         strength = 0.0F;
+    }
+
+    private static void resetQuake() {
+        quakeRemaining = 0.0F;
+        quakeStrength = 0.0F;
     }
 
     /** Квадратичное затухание: удар должен ощущаться резким, а успокоение — быстрым. */
@@ -78,6 +122,12 @@ public final class CameraShakeHandler {
 
     @SubscribeEvent
     static void onClientTick(ClientTickEvent.Post event) {
+        if (quakeRemaining > 0.0F) {
+            quakeElapsed++;
+            if (--quakeRemaining <= 0.0F) {
+                resetQuake();
+            }
+        }
         if (remaining <= 0.0F) {
             return;
         }
@@ -89,11 +139,20 @@ public final class CameraShakeHandler {
 
     @SubscribeEvent
     static void onComputeCameraAngles(ViewportEvent.ComputeCameraAngles event) {
-        if (remaining <= 0.0F || strength <= 0.0F) {
-            return;
-        }
         double setting = ClientConfig.cameraShake();
         if (setting <= 0.0D) {
+            return;
+        }
+        if (quakeRemaining > 0.0F && quakeStrength > 0.0F) {
+            float qt = quakeElapsed + (float) event.getPartialTick();
+            float k = Mth.clamp((quakeRemaining - (float) event.getPartialTick()) / quakeDuration, 0.0F, 1.0F);
+            float qa = (float) (quakeStrength * setting * k * k);
+            // Два несоизмеримых синуса на ось — дрожь без заметного повтора.
+            event.setPitch(event.getPitch() + (Mth.sin(qt * 2.9F) + 0.6F * Mth.sin(qt * 4.7F + 0.8F)) * 4.5F * qa);
+            event.setYaw(event.getYaw() + (Mth.sin(qt * 2.3F + 1.1F) + 0.5F * Mth.sin(qt * 5.3F)) * 2.6F * qa);
+            event.setRoll(event.getRoll() + Mth.sin(qt * 3.4F + 2.0F) * 2.6F * qa);
+        }
+        if (remaining <= 0.0F || strength <= 0.0F) {
             return;
         }
 

@@ -1,0 +1,8 @@
+{
+  "id": "murim:mountain_root",
+  "nature": "pure",
+  "purity": 0.7,
+  "capacity": 48.0,
+  "impurity": 0.3,
+  "route": "wide_circle"
+}

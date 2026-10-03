@@ -8,7 +8,6 @@ import io.github.verycooltimo.murim.technique.WedgeProjectile;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
-import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
@@ -72,14 +71,10 @@ public class WedgeRenderer extends EntityRenderer<WedgeProjectile> {
         vertex(consumer, pose, d, normal, 0.0F, 1.0F);
     }
 
+    /** Запись вершины — общая на весь мод, см. {@link VfxDraw}. */
     private static void vertex(VertexConsumer consumer, PoseStack.Pose pose, Vec3 position,
                                Vec3 normal, float u, float v) {
-        consumer.addVertex(pose.pose(), (float) position.x, (float) position.y, (float) position.z)
-                .setColor(0.72F, 0.98F, 0.86F, 0.85F)
-                .setUv(u, v)
-                .setOverlay(OverlayTexture.NO_OVERLAY)
-                .setLight(0x00F000F0)
-                .setNormal(pose, (float) normal.x, (float) normal.y, (float) normal.z);
+        VfxDraw.vertex(consumer, pose, position, normal, u, v, 0.85F, 0.72F, 0.98F, 0.86F);
     }
 
     @Override

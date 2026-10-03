@@ -139,6 +139,11 @@ public record DantianProfile(
         return changed.withCirculating(changed.circulating());
     }
 
+    public DantianProfile withRank(int value) {
+        return new DantianProfile(capacity, purity, meridians, nature, imprint, pool, circulating,
+                foundation, value);
+    }
+
     public DantianProfile withTags(String newNature, String newImprint) {
         return new DantianProfile(capacity, purity, meridians, newNature, newImprint, pool,
                 circulating, foundation, rank);
