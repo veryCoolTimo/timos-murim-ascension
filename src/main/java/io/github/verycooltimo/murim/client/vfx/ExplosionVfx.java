@@ -37,9 +37,10 @@ import static io.github.verycooltimo.murim.client.vfx.PlumVfx.PINK;
  * Взрыв Цветущей Сливы (рефы «7 plum blossoms sword/explosion» 01–03, шкала — {@link ExplosionRules}).
  *
  * <p>Автор 03.10: «Он короткий: просто долгий замах справа вверх, и на ударе — взрыв лепестков».
- * Стойка (синяя ци, пыль) → долгий медленный замах: острие идёт снизу справа вверх и за плечо,
+ * Последняя правка: «удар — снизу вверх, а не сверху вниз».
+ * Стойка (синяя ци, пыль) → долгий медленный замах: острие уходит вниз и назад к правой ноге,
  * за ним тянется холодный след, вокруг закручиваются и стягиваются к клинку розовые лепестки
- * и ветер → короткая пауза наверху, клинок дрожит → быстрый удар вниз-вперёд, голубо-белая
+ * и ветер → короткая пауза внизу, клинок дрожит → быстрый восходящий разрез снизу вверх, голубо-белая
  * косая дуга (ref2) → в точке удара белое ядро и взрыв лепестков конусом к цели (ref3; в небо —
  * тоже): лучи, рваные розовые шлейфы, слитная масса, три полосы скорости, турбулентность растёт.
  * Импакт-кадр, сильная тряска и дым — только по пакету попадания. Всё — симуляция частиц.
@@ -256,7 +257,7 @@ public final class ExplosionVfx {
             facing(c, p.yaw());
             dust(c, p.origin(), c.n(10) + 4, 0.2D);
             if (c.own()) {
-                SpeedLines.radial(0.5F, 0.5F, 0.7F, 6, SpeedLines.WHITE);
+                // Экранные линии скорости убраны (автор 03.10: «убери ветер линиями»).
             }
             if (mc.player != null) {
                 mc.player.level().playLocalSound(p.origin().x, p.origin().y, p.origin().z, net.minecraft.sounds.SoundEvents.PLAYER_ATTACK_SWEEP,
@@ -295,7 +296,7 @@ public final class ExplosionVfx {
         }
         Vec3 at = c.strike;
         if (c.own()) {
-            SpeedLines.radial(0.5F, 0.5F, 1.0F, 8, SpeedLines.WHITE);
+            // Экранные линии скорости убраны (автор 03.10: «убери ветер линиями»).
         }
         if (mc.player != null) {
             double dist = mc.player.position().distanceTo(at);
@@ -375,7 +376,7 @@ public final class ExplosionVfx {
         if (c.own() && !c.impactShown) {
             c.impactShown = true;
             ImpactFrames.trigger(at);
-            SpeedLines.radial(0.5F, 0.5F, 0.9F, 7, SpeedLines.WHITE);
+            // Экранные линии скорости убраны (автор 03.10: «убери ветер линиями»).
         }
         if (mc.player != null && dist < 24.0D) {
             float q = dist < 8.0D ? 1.0F : (float) (1.0D - (dist - 8.0D) / 16.0D);
@@ -491,22 +492,23 @@ public final class ExplosionVfx {
             if (t > 0 && t < ExplosionRules.LUNGE && t % 6 == 0 && e != null) {
                 dust(c, e.position(), 2, 0.08D);
             }
-            // Острие в ударе: из-за правого плеча вниз-вперёд, к точке удара.
+            // Острие в ударе: восходящий разрез — снизу сзади справа вверх-вперёд-влево, к точке удара.
             if (c.lungeTick >= 0 && t >= ExplosionRules.LUNGE && t <= ExplosionRules.CONTACT + 1 && e != null) {
                 double k = Mth.clamp((t - ExplosionRules.LUNGE) / (double) ExplosionRules.LUNGE_TICKS, 0.0D, 1.0D);
                 for (int sub = 0; sub < 3; sub++) {
                     double kk = Math.min(1.0D, k + sub / 3.0D / ExplosionRules.LUNGE_TICKS);
-                    // Угол от вертикали: −40° — над правым плечом сзади, +120° — впереди внизу.
-                    double a = Math.toRadians(-40.0D + 160.0D * kk * kk);
+                    // Угол от вертикали: 215° — низко сзади справа, 60° — впереди высоко.
+                    double a = Math.toRadians(215.0D - 155.0D * kk * kk);
                     // Косая дуга (ref2): из-за правого плеча вниз-влево; в вертикальной плоскости
                     // со спины она читалась столбом (codex 03.10). side — правая сторона мастера.
                     Vec3 shoulder = e.position().add(0.0D, 1.45D, 0.0D);
-                    Vec3 radial = c.normal.scale(Math.sin(a)).add(0.0D, Math.cos(a) * 0.8D, 0.0D).add(c.side.scale(Math.cos(a) * 0.75D));
+                    // Косая дуга: начинает справа, проходит снизу перед ногами и уходит вверх-влево.
+                    Vec3 radial = c.normal.scale(Math.sin(a)).add(0.0D, Math.cos(a) * 0.9D, 0.0D).add(c.side.scale(0.9D - 1.4D * kk));
                     // От первого лица дуга дальше и впереди: видна сбоку от цели, а не тает у глаз.
                     boolean fp = c.own() && mc.options.getCameraType().isFirstPerson() && mc.getCameraEntity() == e;
                     Vec3 arc = shoulder.add(radial.scale(fp ? 2.6D : 1.8D)).add(c.normal.scale(fp ? 0.9D : 0.0D));
                     // Конец дуги — ровно в точке удара, где родится взрыв (codex 03.10: одна точка).
-                    double land = Mth.clamp((kk - 0.45D) / 0.55D, 0.0D, 1.0D);
+                    double land = Mth.clamp((kk - 0.6D) / 0.4D, 0.0D, 1.0D);
                     land = land * land * (3.0D - 2.0D * land);
                     c.blade.add(c.lungeTo == null ? arc : arc.lerp(c.lungeTo, land));
                 }
@@ -518,21 +520,19 @@ public final class ExplosionVfx {
         }
     }
 
-    /** Острие в замахе: k 0 — снизу справа впереди, 1 — высоко за правым плечом. */
+    /** Острие в замахе: k 0 — впереди у пояса, 1 — низко сзади у правой ноги. */
     private static Vec3 windTip(Cast c, Entity e, double k) {
-        double a = Math.toRadians(150.0D - 190.0D * k);
+        double a = Math.toRadians(100.0D + 115.0D * k);
         Vec3 shoulder = e.position().add(0.0D, 1.45D, 0.0D).add(c.side.scale(0.3D));
-        // Дуга в косой плоскости: вверх, назад и чуть наружу вправо.
-        // Снизу далеко справа → вверх к центру за плечом: со спины дуга читается «справа вверх»,
-        // а не столбом (кадры 03.10).
-        Vec3 radial = c.normal.scale(Math.sin(a) * 0.85D).add(0.0D, Math.cos(a), 0.0D).add(c.side.scale(0.2D + 1.0D * (1.0D - k)));
+        // Дуга в косой плоскости: вниз, назад и наружу вправо (со спины не столбом, кадры 03.10).
+        Vec3 radial = c.normal.scale(Math.sin(a) * 0.85D).add(0.0D, Math.cos(a), 0.0D).add(c.side.scale(0.3D + 0.7D * k));
         return shoulder.add(radial.normalize().scale(1.7D));
     }
 
     /**
-     * Долгий замах (автор: «долгий замах справа вверх»): острие медленно идёт по дуге, за ним
-     * холодный след; ци и лепестки закручиваются вокруг мастера и стягиваются к клинку,
-     * ветер втягивается; наверху клинок дрожит. С 3-го слоя лепестки.
+     * Долгий замах: острие медленно уходит вниз и назад к правой ноге, за ним холодный след;
+     * ци и лепестки закручиваются вокруг мастера и стягиваются к клинку, ветер втягивается;
+     * внизу клинок дрожит — удар пойдёт снизу вверх (автор 03.10). С 3-го слоя лепестки.
      */
     private static void windup(Cast c, Entity e, int t, Minecraft mc) {
         Random r = c.random;
@@ -540,10 +540,10 @@ public final class ExplosionVfx {
         double k = raw * raw * (3.0D - 2.0D * raw);
         Vec3 tip = windTip(c, e, k);
         if (t >= ExplosionRules.WINDUP_END) {
-            // Пауза наверху: мелкая дрожь клинка — сила на пределе.
+            // Пауза внизу: мелкая дрожь клинка — сила на пределе.
             tip = tip.add(r.nextGaussian() * 0.03D, r.nextGaussian() * 0.03D, r.nextGaussian() * 0.03D);
         }
-        // Весь путь острия остаётся следом: одна непрерывная дуга снизу справа за плечо.
+        // Весь путь острия остаётся следом: одна непрерывная дуга вниз-назад к правой ноге.
         c.charge.add(tip);
         if (ExplosionRules.petals(c.layer)) {
             for (int i = 0; i < (t % 2 == 0 ? Math.max(1, c.n(1.5D)) : 0); i++) {
@@ -560,12 +560,7 @@ public final class ExplosionVfx {
                 c.motes.add(m);
             }
         }
-        if (t % 3 == 0) {
-            double ang = r.nextDouble() * Math.PI * 2.0D;
-            Vec3 at = e.position().add(Math.cos(ang) * 3.2D, 0.4D + r.nextDouble() * 1.6D, Math.sin(ang) * 3.2D);
-            Vec3 in = e.position().add(0.0D, 1.2D, 0.0D).subtract(at).normalize();
-            wind(c, at, in.scale(0.32D).add(new Vec3(-in.z, 0.0D, in.x).scale(0.18D)), 12 + r.nextInt(5), 0.1D);
-        }
+        // Ветер линиями убран и из замаха (автор 03.10: «убери ветер линиями»).
         if (t == ExplosionRules.STANCE || t == ExplosionRules.WINDUP_END) {
             dust(c, e.position(), 3 + c.n(4), 0.14D);
         }
@@ -693,7 +688,7 @@ public final class ExplosionVfx {
         for (int i = 0; i < p.length; i++) {
             // Ведущая кромка широкая, хвост острый (codex 03.10: видна кромка и место попадания).
             double u = (i + 0.5D) / p.length;
-            w[i] = 0.13D * Math.pow(u, 1.3D) * Math.min(1.0D, (1.0D - u) * 8.0D + 0.25D);
+            w[i] = 0.22D * Math.pow(u, 1.3D) * Math.min(1.0D, (1.0D - u) * 8.0D + 0.25D);
         }
         fstrip(v, pose, camera, p, PlumVfx.scale(w, 1.5D), 0.3F * a, BLADE_RIM);
         fstrip(v, pose, camera, p, w, 0.6F * a, BLADE_EDGE);
