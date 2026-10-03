@@ -205,6 +205,17 @@ public final class ModAttachments {
      * Решение — сериализовать состояние, но обнулять активную часть при клоне игрока
      * (см. {@code CombatEvents}).
      */
+    /**
+     * Время последнего запуска каждой техники (автор 03.10: «кулдаун одной техники влияет на
+     * все»): перезарядка теперь своя у каждой. Переживает смерть, как и состояние техники.
+     */
+    public static final Supplier<AttachmentType<java.util.Map<net.minecraft.resources.ResourceLocation, Long>>> COOLDOWNS =
+            ATTACHMENT_TYPES.register("cooldowns",
+                    () -> AttachmentType.<java.util.Map<net.minecraft.resources.ResourceLocation, Long>>builder(() -> java.util.Map.of())
+                            .serialize(com.mojang.serialization.Codec.unboundedMap(net.minecraft.resources.ResourceLocation.CODEC, com.mojang.serialization.Codec.LONG))
+                            .copyOnDeath()
+                            .build());
+
     public static final Supplier<AttachmentType<TechniqueState>> TECHNIQUE_STATE =
             ATTACHMENT_TYPES.register("technique_state",
                     () -> AttachmentType.<TechniqueState>builder(() -> TechniqueState.IDLE)

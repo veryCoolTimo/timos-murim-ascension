@@ -12,12 +12,14 @@ import net.minecraft.resources.ResourceLocation;
  */
 public final class ClientCooldowns {
 
-    private static long lastStart = Long.MIN_VALUE / 2;
+    private static long lastAny = Long.MIN_VALUE / 2;
+    private static final java.util.Map<ResourceLocation, Long> LAST = new java.util.HashMap<>();
 
-    static void started() {
+    static void started(ResourceLocation id) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level != null) {
-            lastStart = mc.level.getGameTime();
+            lastAny = mc.level.getGameTime();
+            LAST.put(id, lastAny);
         }
     }
 
@@ -28,8 +30,9 @@ public final class ClientCooldowns {
         if (mc.level == null || d == null) {
             return 0;
         }
-        long left = lastStart + d.cooldownTicks() - mc.level.getGameTime();
-        return (int) Math.max(0L, left);
+        long own = LAST.getOrDefault(id, Long.MIN_VALUE / 2) + d.cooldownTicks() - mc.level.getGameTime();
+        long gap = lastAny + io.github.verycooltimo.murim.combat.TechniqueService.GLOBAL_GAP_TICKS - mc.level.getGameTime();
+        return (int) Math.max(0L, Math.max(own, gap));
     }
 
     /** Доля оставшейся перезарядки 0…1. */

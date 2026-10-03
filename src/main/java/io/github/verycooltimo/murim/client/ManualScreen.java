@@ -70,6 +70,12 @@ public final class ManualScreen extends Screen {
     private float k;
     private Component styleTitle;
 
+    /** Имя формы внутри книги стиля («Разрез · Частокол»), иначе имя техники. */
+    private static Component formName(ResourceLocation f) {
+        String key = "form.murim." + f.getPath();
+        return I18n.exists(key) ? Component.translatable(key) : io.github.verycooltimo.murim.mastery.MasteryService.name(f);
+    }
+
     private static ResourceLocation spreadTex(String name) {
         return ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/gui/book/spreads/" + name + ".png");
     }
@@ -217,7 +223,7 @@ public final class ManualScreen extends Screen {
         g.blit(s.tex(), 0, 0, 0.0F, 0.0F, TEX_W, TEX_H, TEX_W, TEX_H);
         if (s.picture()) {
             // Имя формы (или стиля на титуле) — в рамке внизу правой страницы.
-            Component name = s.form() == null ? styleTitle : io.github.verycooltimo.murim.mastery.MasteryService.name(s.form());
+            Component name = s.form() == null ? styleTitle : formName(s.form());
             g.pose().pushPose();
             g.pose().translate(214, 233, 0.0F);
             g.pose().scale(0.6F, 0.6F, 1.0F);
@@ -322,7 +328,7 @@ public final class ManualScreen extends Screen {
         g.pose().scale(scale, scale, 1.0F);
         int lw = (int) (w / scale);
         int cy = 0;
-        for (FormattedCharSequence line : font.split(io.github.verycooltimo.murim.mastery.MasteryService.name(form()), lw)) {
+        for (FormattedCharSequence line : font.split(formName(form()), lw)) {
             g.drawString(font, line, 0, cy, INK, false);
             cy += font.lineHeight + 1;
         }

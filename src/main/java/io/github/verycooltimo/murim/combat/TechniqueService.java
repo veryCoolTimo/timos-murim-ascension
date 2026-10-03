@@ -56,7 +56,10 @@ public final class TechniqueService {
         }
 
         long now = player.serverLevel().getGameTime();
-        if (!offCooldown(now, state.lastStartGameTime(), technique.cooldownTicks())) {
+        // Своя перезарядка у каждой техники + короткая общая пауза между приёмами.
+        Long own = player.getData(ModAttachments.COOLDOWNS).get(technique.id());
+        if (!offCooldown(now, own == null ? Long.MIN_VALUE : own, technique.cooldownTicks())
+                || !offCooldown(now, state.lastStartGameTime(), GLOBAL_GAP_TICKS)) {
             return false;
         }
 
@@ -82,6 +85,9 @@ public final class TechniqueService {
         io.github.verycooltimo.murim.profile.ProfileNetwork.sync(player);
 
         player.setData(ModAttachments.TECHNIQUE_STATE, TechniqueState.started(technique.id(), now));
+        java.util.Map<net.minecraft.resources.ResourceLocation, Long> cds = new java.util.HashMap<>(player.getData(ModAttachments.COOLDOWNS));
+        cds.put(technique.id(), now);
+        player.setData(ModAttachments.COOLDOWNS, cds);
         io.github.verycooltimo.murim.mastery.LoadoutService.returnToStance(player, technique.id());
         PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
                 new TechniqueEventPayload(TechniqueEventPayload.Event.STARTED, technique.id(), player.getId(), 0,
@@ -124,6 +130,9 @@ public final class TechniqueService {
      *
      * @param lastStart {@link Long#MIN_VALUE}, если техника ещё ни разу не применялась
      */
+    /** Общая пауза между любыми двумя техниками, тиков. */
+    public static final int GLOBAL_GAP_TICKS = 10;
+
     static boolean offCooldown(long now, long lastStart, int cooldownTicks) {
         if (lastStart == Long.MIN_VALUE) {
             return true;
