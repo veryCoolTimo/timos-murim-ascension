@@ -292,21 +292,21 @@ public final class MurimRenderTypes {
             ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/vfx/mist.png");
 
     /**
-     * Mist puffs over Mount Hua ({@link HuaMist}): plain translucency like {@link #shard()} (visible
-     * on llvmpipe too), colour only — no depth write, so overlapping puffs do not cut each other.
+     * Mist puffs over Mount Hua ({@link HuaMist}): the text shader (texture × vertex colour ×
+     * lightmap, no normal shading — with the entity shader the puffs came out black on the stand),
+     * plain translucency, colour only — no depth write, so overlapping puffs do not cut each other.
      */
     private static final RenderType MIST = RenderType.create(
             MurimMod.MODID + ":mist",
-            DefaultVertexFormat.NEW_ENTITY,
+            DefaultVertexFormat.POSITION_COLOR_TEX_LIGHTMAP,
             VertexFormat.Mode.QUADS,
             4096,
             RenderType.CompositeState.builder()
-                    .setShaderState(RenderStateShard.RENDERTYPE_ENTITY_TRANSLUCENT_SHADER)
+                    .setShaderState(RenderStateShard.RENDERTYPE_TEXT_SHADER)
                     .setTextureState(new RenderStateShard.TextureStateShard(MIST_TEXTURE, false, false))
                     .setTransparencyState(RenderStateShard.TRANSLUCENT_TRANSPARENCY)
                     .setCullState(RenderStateShard.NO_CULL)
                     .setLightmapState(RenderStateShard.LIGHTMAP)
-                    .setOverlayState(RenderStateShard.NO_OVERLAY)
                     .setWriteMaskState(RenderStateShard.COLOR_WRITE)
                     .createCompositeState(false));
 

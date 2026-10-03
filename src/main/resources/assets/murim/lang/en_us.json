@@ -359,5 +359,8 @@
   "sign.murim.hua.poles": "Plum poles",
   "sign.murim.hua.grove": "Plum grove",
   "sign.murim.hua.penance": "Penance cave",
-  "sign.murim.hua.placeholder": "(building site)"
+  "sign.murim.hua.placeholder": "(building site)",
+  "block.murim.plum_blossom": "Plum Blossom",
+  "block.murim.plum_blossom_pale": "White Plum Blossom",
+  "block.murim.plum_blossom_red": "Red Plum Blossom"
 }

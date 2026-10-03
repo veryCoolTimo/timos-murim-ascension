@@ -41,7 +41,7 @@ import org.joml.Vector3f;
 @EventBusSubscriber(modid = MurimMod.MODID, value = Dist.CLIENT)
 public final class HuaMist {
 
-    private static final int MAX_PUFFS = 180;
+    private static final int MAX_PUFFS = 110;
     private static final double SPAWN_MIN = 24;
     private static final double SPAWN_MAX = 300;
     private static final double ACTIVE_RADIUS = 1100;
@@ -167,7 +167,7 @@ public final class HuaMist {
         p.x = x;
         p.y = y;
         p.z = z;
-        p.size = sea ? 14 + RANDOM.nextDouble() * 16 : 8 + RANDOM.nextDouble() * 10;
+        p.size = sea ? 18 + RANDOM.nextDouble() * 22 : 8 + RANDOM.nextDouble() * 5;
         p.life = 600 + RANDOM.nextInt(600);
         p.phase = RANDOM.nextFloat() * 6.28F;
         p.flipU = RANDOM.nextBoolean();
@@ -211,13 +211,15 @@ public final class HuaMist {
                 // Thin out close to the eye (it must not wall off the view) and at the far edge.
                 float near = (float) Math.min(1.0, Math.max(0.0, (dist - p.size * 0.6) / (p.size * 1.2)));
                 float far = (float) Math.min(1.0, Math.max(0.0, (SPAWN_MAX + 40 - dist) / 80.0));
-                float alpha = 0.62F * env * near * far;
+                float alpha = 0.45F * env * near * far;
                 if (alpha <= 0.01F) {
                     continue;
                 }
                 float c = sky * p.bright;
                 // Three overlapping lobes per puff: a wide flat body and two smaller tops.
-                quad(vc, pose, px, py, pz, p.size, p.size * 0.55, left, up, alpha, c, p.flipU);
+                // Cloud-sea puffs are flat (a layer, ref 04); valley mist a little rounder.
+                double flat = p.size > 13 ? 0.32 : 0.5;
+                quad(vc, pose, px, py, pz, p.size, p.size * flat, left, up, alpha, c, p.flipU);
                 quad(vc, pose, px + p.size * 0.22, py + p.size * 0.12, pz, p.size * 0.6, p.size * 0.42,
                         left, up, alpha * 0.8F, c, !p.flipU);
                 quad(vc, pose, px - p.size * 0.25, py + p.size * 0.08, pz + p.size * 0.1, p.size * 0.55, p.size * 0.38,
@@ -234,12 +236,19 @@ public final class HuaMist {
         Vec3 l = new Vec3(left.x() * halfW, left.y() * halfW, left.z() * halfW);
         Vec3 u = new Vec3(up.x() * halfH, up.y() * halfH, up.z() * halfH);
         Vec3 centre = new Vec3(x, y, z);
-        Vec3 normal = new Vec3(0, 1, 0);
         float u0 = flip ? 1 : 0;
         float u1 = flip ? 0 : 1;
-        VfxDraw.vertex(vc, pose, centre.add(l).add(u), normal, u0, 0, alpha, c, c, c);
-        VfxDraw.vertex(vc, pose, centre.add(l).subtract(u), normal, u0, 1, alpha, c, c, c);
-        VfxDraw.vertex(vc, pose, centre.subtract(l).subtract(u), normal, u1, 1, alpha, c, c, c);
-        VfxDraw.vertex(vc, pose, centre.subtract(l).add(u), normal, u1, 0, alpha, c, c, c);
+        vertex(vc, pose, centre.add(l).add(u), u0, 0, alpha, c);
+        vertex(vc, pose, centre.add(l).subtract(u), u0, 1, alpha, c);
+        vertex(vc, pose, centre.subtract(l).subtract(u), u1, 1, alpha, c);
+        vertex(vc, pose, centre.subtract(l).add(u), u1, 0, alpha, c);
+    }
+
+    /** POSITION_COLOR_TEX_LIGHTMAP vertex at full brightness (tint comes from the colour). */
+    private static void vertex(VertexConsumer vc, PoseStack.Pose pose, Vec3 p, float uu, float vv, float alpha, float c) {
+        vc.addVertex(pose.pose(), (float) p.x, (float) p.y, (float) p.z)
+                .setColor(c, c, c, Math.min(1.0F, alpha))
+                .setUv(uu, vv)
+                .setLight(0x00F000F0);
     }
 }
