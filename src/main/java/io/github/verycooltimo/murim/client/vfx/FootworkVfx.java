@@ -297,14 +297,21 @@ public final class FootworkVfx {
     /** Ветер Бога Ветров по рефу «swift step» (03.10): бледно-голубые ленты, тёмная складка, белая кромка. */
     private static final VfxColour WIND_BLUE = hex(0xC4E4F2);
     private static final VfxColour WIND_FOLD = hex(0x86B3CC);
+    /** Ленты бега Молнии — насыщеннее, иначе голубой не читается ночью. */
+    private static final VfxColour RUN_BLUE = hex(0x6CC0F0);
+    private static final VfxColour RUN_DEEP = hex(0x3D8FD6);
 
     /** Тело рвётся на ленты ветра: широкие длинные полосы срываются с точки и уходят по {@code drift}. */
     private static void tearRibbons(Vec3 at, Vec3 drift, int count, float born, double spread) {
+        tearRibbons(at, drift, count, born, spread, WIND_BLUE, WIND_FOLD);
+    }
+
+    private static void tearRibbons(Vec3 at, Vec3 drift, int count, float born, double spread, VfxColour main, VfxColour fold) {
         for (int i = 0; i < count; i++) {
             Vec3 o = new Vec3(RNG.nextDouble() - 0.5D, RNG.nextDouble() - 0.5D, RNG.nextDouble() - 0.5D).scale(spread);
             Vec3 v = drift.add(o.scale(0.12D)).add(0.0D, 0.01D + 0.02D * RNG.nextDouble(), 0.0D);
             WISPS.add(new Wisp(at.add(o), v, born, 10.0F + RNG.nextFloat() * 8.0F, 0.05D + 0.08D * RNG.nextDouble(),
-                    RNG.nextFloat() < 0.7F ? WIND_BLUE : WIND_FOLD).ribbon());
+                    RNG.nextFloat() < 0.7F ? main : fold).ribbon());
         }
     }
 
@@ -1104,8 +1111,11 @@ public final class FootworkVfx {
                         double ph = anchors[k][2] + now * 0.45D;
                         Vec3 at = pos.add(side.scale(anchors[k][0] + 0.12D * Math.sin(ph))).add(0.0D, anchors[k][1] + 0.1D * Math.cos(ph * 1.3D), 0.0D)
                                 .subtract(dir.scale(0.25D));
-                        Vec3 v = side.scale((anchors[k][0] == 0.0D ? Math.sin(ph) : Math.signum(anchors[k][0])) * 0.02D)
-                                .add(0.0D, 0.006D + 0.004D * Math.sin(ph), 0.0D);
+                        // Ленты расходятся в стороны и рвано колышутся (автор 03.10: «чтобы линии немного в
+                        // стороны уходили и были более хаотичными»).
+                        double out = anchors[k][0] == 0.0D ? (k % 2 == 0 ? 1.0D : -1.0D) : Math.signum(anchors[k][0]);
+                        Vec3 v = side.scale(out * (0.035D + 0.03D * RNG.nextDouble()) + (RNG.nextDouble() - 0.5D) * 0.05D)
+                                .add(0.0D, (RNG.nextDouble() - 0.4D) * 0.04D, 0.0D);
                         r.streamers.get(k).add(new Node(at, v, now, k));
                     }
                 }
@@ -1115,7 +1125,8 @@ public final class FootworkVfx {
                     int k = 1 + r.layer / 3;
                     for (int i = 0; i < k; i++) {
                         Vec3 at = pos.add(side.scale((RNG.nextDouble() - 0.5D) * 0.6D)).add(0.0D, 0.2D + 1.5D * RNG.nextDouble(), 0.0D);
-                        tearRibbons(at, dir.scale(-0.12D - 0.1D * RNG.nextDouble()), 1, now, 0.2D);
+                        tearRibbons(at, dir.scale(-0.12D - 0.1D * RNG.nextDouble()).add(side.scale((RNG.nextDouble() - 0.5D) * 0.16D)), 1, now, 0.3D,
+                                RUN_BLUE, RUN_DEEP);
                     }
                     if (r.layer >= 4) {
                         for (int i = 0; i < 2; i++) {
@@ -1530,9 +1541,10 @@ public final class FootworkVfx {
                 qw[i] = (0.05D + 0.09D * Math.min(1.0D, age * 1.6D)) * Math.min(1.0D, (1.0D - u) * 5.0D + 0.1D);
                 qa[i] = (float) Mth.clamp(1.0D - age * age, 0.0D, 1.0D);
             }
-            VfxColour col = (int) st.get(0).open % 2 == 0 ? WIND_BLUE : WIND_FOLD;
-            strip(c, pose, camera, q, qw, qa, 0.6F, col);
-            strip(c, pose, camera, q, scale(qw, 0.18D), qa, 0.8F, WHITE);
+            // Насыщеннее голубой — бледный терялся ночью (автор 03.10: «голубой не заметный»).
+            VfxColour col = (int) st.get(0).open % 2 == 0 ? RUN_BLUE : RUN_DEEP;
+            strip(c, pose, camera, q, qw, qa, 0.85F, col);
+            strip(c, pose, camera, q, scale(qw, 0.15D), qa, 0.75F, WHITE);
         }
         if (r.corridor.size() < 2) {
             return;
