@@ -589,5 +589,6 @@
   "dialogue.murim.gatekeeper.member2": "Fellow disciple! Back before supper and I'll save you a flatbread.",
   "dialogue.murim.mentor.where_leader": "The Leader is at the sect gate, at the top of the trail. Go; he'll hear you.",
   "dialogue.murim.leader.first_climbed": "You climbed on your own, up the steps and not on someone's back. That's half the answer already. What brings you to the gate?",
-  "dialogue.murim.leader.where_mentor": "Un Geom is on the main terrace past the gate. Go; he is already waiting for new disciples."
+  "dialogue.murim.leader.where_mentor": "Un Geom is on the main terrace past the gate. Go; he is already waiting for new disciples.",
+  "command.murim.learnall": "Learned all techniques at the last layer: %s. Secret ones need the Peak — /murim rank 4 1, a dantian — /murim seed"
 }

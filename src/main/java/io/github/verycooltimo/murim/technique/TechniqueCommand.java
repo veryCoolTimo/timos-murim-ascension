@@ -109,6 +109,24 @@ public final class TechniqueCommand {
                                 .executes(context -> learnCommand(context,
                                         com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(context, "layer"))))));
 
+        // Все техники сразу на последнем слое (автор 04.10: «тестировать тяжело»).
+        root.then(Commands.literal("learnall").executes(context -> {
+            ServerPlayer player = context.getSource().getPlayerOrException();
+            io.github.verycooltimo.murim.mastery.MasteryState state =
+                    player.getData(io.github.verycooltimo.murim.registry.ModAttachments.MASTERY);
+            var all = io.github.verycooltimo.murim.technique.TechniqueLoader.all();
+            for (var e : all.entrySet()) {
+                int layers = e.getValue().layers();
+                state = state.with(e.getKey(),
+                        io.github.verycooltimo.murim.mastery.TechniqueProgress.learned(layers, layers));
+            }
+            player.setData(io.github.verycooltimo.murim.registry.ModAttachments.MASTERY, state);
+            io.github.verycooltimo.murim.mastery.MasteryService.sync(player);
+            int n = all.size();
+            context.getSource().sendSuccess(() -> Component.translatable("command.murim.learnall", n), false);
+            return n;
+        }));
+
         // Освоение техник и мудрость — числами, для отладки (игроку мудрость не показывается).
         root.then(Commands.literal("mastery").executes(context -> {
             ServerPlayer player = context.getSource().getPlayerOrException();
