@@ -117,7 +117,6 @@ public final class MountHuaShape {
             h = terrace(zone, u, v, h);
         }
         h = trail(u, v, h);
-        h = paths(u, v, h);
         // Inside a terrace the level is exact (neighbouring terraces' walls never spill in).
         for (Zone zone : MountHuaPlan.ZONES) {
             if (!zone.cave() && Math.abs(u - zone.u()) <= zone.width() / 2.0
@@ -136,42 +135,11 @@ public final class MountHuaShape {
      */
     public double ground(double u, double v) {
         double h = Math.max(natural(u, v), belt(u, v));
-        h = basin(u, v, h);
-        for (Peak tower : MountHuaPlan.TOWERS) {
-            h = Math.max(h, peak(tower, u, v));
-        }
         // Gorges cut the foothill belt too (it could fill the slot back up otherwise).
         for (Gorge gorge : MountHuaPlan.GORGES) {
             h = gorge(gorge, u, v, h);
         }
         return valley(u, v, h);
-    }
-
-    /**
-     * The sect basin: a flat floor where the organic outline says so; outside it the natural
-     * spires stay as they are and meet the floor in steep walls that follow their own shapes
-     * (no extruded rim). Cliffs/clefts of the natural terrain therefore enclose the compound.
-     */
-    private double basin(double u, double v, double h) {
-        double q = Double.MAX_VALUE;
-        for (double[] e : MountHuaPlan.BASIN) {
-            double du = (u - e[0]) / e[2];
-            double dv = (v - e[1]) / e[3];
-            double a = Math.atan2(dv, du);
-            double wob = 1 + 0.10 * warp.noise(Math.cos(a) * 2.2 + e[0] * 0.01, Math.sin(a) * 2.2, 71.0 + e[1])
-                    + 0.05 * warp.noise(u / 11.0, v / 11.0, 73.0);
-            q = Math.min(q, Math.sqrt(du * du + dv * dv) / wob);
-        }
-        if (q > 1.6) {
-            return h;
-        }
-        double floor = MountHuaPlan.basinFloor(u, v);
-        if (q <= 1) {
-            return floor;
-        }
-        // Approximate distance (blocks) past the outline; the rock rises steeply from the floor.
-        double out = (q - 1) * 60;
-        return Math.min(h, floor + 2.5 * out + 1.5 * out * out);
     }
 
     /** Foothill belt height (nominal), 0 at the outer edge. */
@@ -354,7 +322,7 @@ public final class MountHuaShape {
             }
             double dx = Math.max(0, Math.abs(u - z.u()) - z.width() / 2.0);
             double dz = Math.max(0, Math.abs(v - z.v()) - z.depth() / 2.0);
-            calm = Math.max(calm, 1 - smooth(3, 12, Math.hypot(dx, dz)));
+            calm = Math.max(calm, 1 - smooth(4, 30, Math.hypot(dx, dz)));
         }
         return calm;
     }
@@ -774,10 +742,7 @@ public final class MountHuaShape {
         double hd = z.depth() / 2.0;
         double dx = Math.max(0, Math.abs(u - z.u()) - hw);
         double dz = Math.max(0, Math.abs(v - z.v()) - hd);
-        // Organic outline: the ledge reaches 1-7 blocks past the build rectangle, varying along the
-        // edge (follows the slope instead of a ruler-straight border).
-        double reach = 4 + 3 * relief.noise(u / 9.0, v / 9.0, 61.0 + z.y());
-        double d = Math.max(0, Math.hypot(dx, dz) - Math.max(1, reach));
+        double d = Math.hypot(dx, dz);
         if (d == 0) {
             return z.y();
         }
@@ -792,30 +757,15 @@ public final class MountHuaShape {
         return Math.min(h, z.y() + 2.2 * Math.max(0, d - 3));
     }
 
-    /** Stairs between the platforms: 4 wide, cut down to their level; fill only within 1 block. */
-    private double paths(double u, double v, double h) {
-        for (double[] p : MountHuaPlan.PATHS) {
-            double[] q = pathAt(p, u, v);
-            if (q[0] <= 2.1) {
-                return q[1];
-            }
-        }
-        return h;
-    }
-
-    /** {distance to the path line, nominal level there (stepped)} for one inner path. */
-    public static double[] pathAt(double[] p, double u, double v) {
-        double lx = p[3] - p[0];
-        double ly = p[4] - p[1];
-        double t = clamp(((u - p[0]) * lx + (v - p[1]) * ly) / (lx * lx + ly * ly), 0, 1);
-        double d = Math.hypot(u - (p[0] + lx * t), v - (p[1] + ly * t));
-        return new double[] {d, Math.round(p[2] + (p[5] - p[2]) * t), t};
-    }
-
     /** Smooth maximum (polynomial), k = blend width in blocks. */
     static double smax(double a, double b, double k) {
         double hh = Math.max(k - Math.abs(a - b), 0) / k;
         return Math.max(a, b) + hh * hh * k * 0.25;
+    }
+
+    /** No inner paths on the old shelf (kept for the writer). */
+    public static double[] pathAt(double[] p, double u, double v) {
+        return new double[] {Double.MAX_VALUE, 0, 0};
     }
 
     static double smooth(double e0, double e1, double x) {

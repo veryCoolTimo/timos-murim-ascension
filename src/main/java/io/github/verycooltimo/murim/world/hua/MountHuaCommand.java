@@ -200,7 +200,7 @@ public final class MountHuaCommand {
             case "view_ne" -> surface(site, 330, -420, -0.8, 1, -8, 24);
             case "view_east" -> surface(site, 175, 60, -1, 0.1, 6, 4);
             case "view_west" -> surface(site, -175, 85, 1, 0, 6, 4);
-            case "summit" -> surface(site, 5, 165, 0, -1, 14, 4);
+            case "summit" -> surface(site, 5, 125, 0, -1, 14, 4);
             case "north_peak" -> surface(site, -10, -335, 0, 1, 2, 4);
             case "golden_lock" -> surface(site, 22, -80, 0, 1, 0, 2);
             case "ridge" -> surface(site, 8, -262, -0.2, 1, -4, 2);

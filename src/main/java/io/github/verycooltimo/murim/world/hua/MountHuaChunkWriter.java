@@ -659,7 +659,7 @@ final class MountHuaChunkWriter {
         }
         int y = (int) Math.round(site.worldY(z.y()));
         boolean sect = z.v() > -60 && z.v() < 130 && Math.abs(z.u()) < 120 && !z.id().startsWith("pav");
-        if (sect && !MountHuaPlan.CORE.contains(z.id())) {
+        if (sect && !MountHuaPlan.CORE.contains(z.id()) && z.id().matches(RUINS)) {
             ruin(z, r, y, pos);
             return;
         }
@@ -687,6 +687,9 @@ final class MountHuaChunkWriter {
             }
         }
     }
+
+    /** Sites shown as ruined foundations (none on the old shelf yet; outlines elsewhere). */
+    private static final String RUINS = "ancestors|elders|treasury|scriptures|alchemy|knoll";
 
     /**
      * A site for later: the sect starts poor (canon), so here stands only a ruined foundation —
@@ -776,8 +779,7 @@ final class MountHuaChunkWriter {
         SignText text = new SignText()
                 .setMessage(0, Component.translatable("sign.murim.hua." + zone.id()))
                 .setMessage(1, Component.literal(zone.width() + " x " + zone.depth()))
-                .setMessage(2, Component.translatable(MountHuaPlan.CORE.contains(zone.id()) || !zone.id().matches(
-                        "ancestors|elders|treasury|scriptures|alchemy|knoll|poles") ? "sign.murim.hua.placeholder"
+                .setMessage(2, Component.translatable(MountHuaPlan.CORE.contains(zone.id()) || !zone.id().matches(RUINS) ? "sign.murim.hua.placeholder"
                         : "sign.murim.hua.ruin"));
         CompoundTag tag = new CompoundTag();
         tag.putString("id", "minecraft:sign");
@@ -853,7 +855,7 @@ final class MountHuaChunkWriter {
                 double v = site.localV(wx + 0.5, wz + 0.5);
                 Zone near = zoneAt(u, v, 7);
                 if (near != null && zoneAt(u, v, 2) == null && !near.cave()
-                        && (near.id().equals("grove") || near.id().equals("ancestors") || near.id().equals("elders") || near.id().equals("scriptures") || near.id().startsWith("pav"))) {
+                        && (near.id().equals("grove") || near.id().equals("upper") || near.id().equals("ancestors") || near.id().equals("elders") || near.id().equals("scriptures") || near.id().startsWith("pav"))) {
                     // A ring of plums just outside the terrace edge (the yard itself stays free).
                     long h = mix(wx, wz, 29);
                     if (Math.floorMod(h, 1000L) < 30) {

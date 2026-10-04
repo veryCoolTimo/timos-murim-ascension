@@ -22,7 +22,7 @@ class MountHuaShapeTest {
 
     @Test
     void southPeakIsTheHighestAndNorthPeakTheLowestOfTheFive() {
-        double south = top(5, 165);
+        double south = top(5, 125);
         double north = top(-10, -335);
         for (MountHuaPlan.Peak p : MountHuaPlan.PEAKS.subList(0, 5)) {
             double h = top(p.u(), p.v());
