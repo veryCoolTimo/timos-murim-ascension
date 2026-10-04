@@ -1,0 +1,167 @@
+{
+  "name": "npc.murim.mentor",
+  "title": "npc.murim.mentor.title",
+  "start": [
+    { "when": [ { "member": false } ], "node": "outsider" },
+    { "when": [ { "not_flag": "met_mentor" } ], "node": "first" },
+    { "node": "again" }
+  ],
+  "nodes": {
+    "outsider": {
+      "line": "dialogue.murim.mentor.outsider",
+      "gesture": "shake",
+      "options": [
+        { "text": "dialogue.murim.mentor.opt.who", "next": "who_outsider" },
+        { "text": "dialogue.murim.mentor.opt.to_leader", "next": "where_leader" },
+        { "text": "dialogue.murim.opt.leave" }
+      ]
+    },
+    "where_leader": {
+      "line": "dialogue.murim.mentor.where_leader",
+      "gesture": "point",
+      "options": [ { "text": "dialogue.murim.opt.leave" } ]
+    },
+    "who_outsider": {
+      "line": "dialogue.murim.mentor.who_outsider",
+      "gesture": "explain",
+      "options": [ { "text": "dialogue.murim.opt.leave" } ]
+    },
+    "first": {
+      "line": "dialogue.murim.mentor.first",
+      "gesture": "bow",
+      "enter": [ { "type": "set_flag", "value": "met_mentor" } ],
+      "options": [
+        { "text": "dialogue.murim.mentor.opt.what_teach", "next": "teach" },
+        { "text": "dialogue.murim.mentor.opt.lesson", "next": "lessons" },
+        { "text": "dialogue.murim.mentor.opt.bow_leave", "actions": [ { "type": "bow" } ], "next": "farewell" }
+      ]
+    },
+    "again": {
+      "line": "dialogue.murim.mentor.again",
+      "gesture": "nod",
+      "options": [
+        { "text": "dialogue.murim.mentor.opt.lesson", "next": "lessons" },
+        { "text": "dialogue.murim.mentor.opt.problem", "next": "problems" },
+        { "text": "dialogue.murim.mentor.opt.what_teach", "next": "teach" },
+        { "text": "dialogue.murim.opt.leave" }
+      ]
+    },
+    "teach": {
+      "line": "dialogue.murim.mentor.teach",
+      "gesture": "explain",
+      "options": [
+        { "text": "dialogue.murim.mentor.opt.lesson", "next": "lessons" },
+        { "text": "dialogue.murim.opt.leave" }
+      ]
+    },
+    "lessons": {
+      "line": "dialogue.murim.mentor.lessons",
+      "gesture": "explain",
+      "options": [
+        { "text": "dialogue.murim.mentor.opt.take_six", "when": [ { "not_flag": "lesson.six" } ],
+          "actions": [ { "type": "set_flag", "value": "lesson.six" } ], "next": "six_given" },
+        { "text": "dialogue.murim.mentor.opt.done_six",
+          "when": [ { "flag": "lesson.six", "not_flag": "lesson.six.done" }, { "technique": "murim:six_harmonies", "min_layer": 2 }, { "min_rank": 1 } ],
+          "actions": [ { "type": "set_flag", "value": "lesson.six.done" }, { "type": "give_book", "value": "murim:falling_petal_sword" } ],
+          "next": "six_done" },
+        { "text": "dialogue.murim.mentor.opt.how_six",
+          "when": [ { "flag": "lesson.six", "not_flag": "lesson.six.done" }, { "technique": "murim:six_harmonies", "below_layer": 2 } ],
+          "next": "six_hint" },
+        { "text": "dialogue.murim.mentor.opt.done_six",
+          "when": [ { "flag": "lesson.six", "not_flag": "lesson.six.done" }, { "technique": "murim:six_harmonies", "min_layer": 2 }, { "below_rank": 1 } ],
+          "next": "six_rank" },
+        { "text": "dialogue.murim.mentor.opt.take_spar", "when": [ { "flag": "lesson.six.done", "not_flag": "lesson.spar" } ],
+          "actions": [ { "type": "set_flag", "value": "lesson.spar" } ], "next": "spar_given" },
+        { "text": "dialogue.murim.mentor.opt.done_spar",
+          "when": [ { "flag": "spar.clean3", "not_flag": "lesson.spar.done" }, { "min_rank": 2 } ],
+          "actions": [ { "type": "set_flag", "value": "lesson.spar.done" }, { "type": "give_book", "value": "murim:seven_plum_blossoms" } ],
+          "next": "spar_done" },
+        { "text": "dialogue.murim.mentor.opt.done_spar",
+          "when": [ { "flag": "spar.clean3", "not_flag": "lesson.spar.done" }, { "below_rank": 2 } ],
+          "next": "spar_rank" },
+        { "text": "dialogue.murim.mentor.opt.how_spar", "when": [ { "flag": "lesson.spar", "not_flag": "spar.clean3" } ], "next": "spar_hint" },
+        { "text": "dialogue.murim.mentor.opt.next", "when": [ { "flag": "lesson.spar.done" } ], "next": "beyond" },
+        { "text": "dialogue.murim.opt.leave" }
+      ]
+    },
+    "six_given": {
+      "line": "dialogue.murim.mentor.six_given",
+      "gesture": "point",
+      "options": [ { "text": "dialogue.murim.mentor.opt.understood", "next": "again" }, { "text": "dialogue.murim.opt.leave" } ]
+    },
+    "six_hint": {
+      "line": "dialogue.murim.mentor.six_hint",
+      "args": [ "layer:murim:six_harmonies" ],
+      "gesture": "explain",
+      "options": [ { "text": "dialogue.murim.mentor.opt.understood", "next": "again" }, { "text": "dialogue.murim.opt.leave" } ]
+    },
+    "six_rank": {
+      "line": "dialogue.murim.mentor.six_rank",
+      "gesture": "shake",
+      "options": [ { "text": "dialogue.murim.mentor.opt.understood", "next": "again" }, { "text": "dialogue.murim.opt.leave" } ]
+    },
+    "six_done": {
+      "line": "dialogue.murim.mentor.six_done",
+      "gesture": "nod",
+      "options": [ { "text": "dialogue.murim.mentor.opt.thanks_bow", "actions": [ { "type": "bow" } ], "next": "again" }, { "text": "dialogue.murim.opt.leave" } ]
+    },
+    "spar_given": {
+      "line": "dialogue.murim.mentor.spar_given",
+      "gesture": "point",
+      "options": [ { "text": "dialogue.murim.mentor.opt.understood", "next": "again" }, { "text": "dialogue.murim.opt.leave" } ]
+    },
+    "spar_hint": {
+      "line": "dialogue.murim.mentor.spar_hint",
+      "gesture": "explain",
+      "options": [ { "text": "dialogue.murim.mentor.opt.understood", "next": "again" }, { "text": "dialogue.murim.opt.leave" } ]
+    },
+    "spar_rank": {
+      "line": "dialogue.murim.mentor.spar_rank",
+      "gesture": "shake",
+      "options": [ { "text": "dialogue.murim.mentor.opt.understood", "next": "again" }, { "text": "dialogue.murim.opt.leave" } ]
+    },
+    "spar_done": {
+      "line": "dialogue.murim.mentor.spar_done",
+      "gesture": "bow",
+      "options": [ { "text": "dialogue.murim.mentor.opt.thanks_bow", "actions": [ { "type": "bow" } ], "next": "again" }, { "text": "dialogue.murim.opt.leave" } ]
+    },
+    "beyond": {
+      "line": "dialogue.murim.mentor.beyond",
+      "gesture": "explain",
+      "options": [ { "text": "dialogue.murim.mentor.opt.understood", "next": "again" }, { "text": "dialogue.murim.opt.leave" } ]
+    },
+    "problems": {
+      "line": "dialogue.murim.mentor.problems",
+      "gesture": "nod",
+      "options": [
+        { "text": "dialogue.murim.mentor.opt.no_dantian", "when": [ { "awakened": false } ], "next": "no_dantian" },
+        { "text": "dialogue.murim.mentor.opt.cut_locked",
+          "when": [ { "knows": "murim:seven_plum_basic", "not_knows": "murim:seven_plum_blossoms" }, { "technique": "murim:seven_plum_basic", "below_layer": 3 } ],
+          "next": "cut_locked" },
+        { "text": "dialogue.murim.mentor.opt.secret_locked", "when": [ { "below_rank": 4 } ], "next": "secret_locked" },
+        { "text": "dialogue.murim.mentor.opt.nothing", "next": "again" }
+      ]
+    },
+    "no_dantian": {
+      "line": "dialogue.murim.mentor.no_dantian",
+      "gesture": "explain",
+      "options": [ { "text": "dialogue.murim.mentor.opt.understood", "next": "again" } ]
+    },
+    "cut_locked": {
+      "line": "dialogue.murim.mentor.cut_locked",
+      "args": [ "layer:murim:seven_plum_basic" ],
+      "gesture": "explain",
+      "options": [ { "text": "dialogue.murim.mentor.opt.understood", "next": "again" } ]
+    },
+    "secret_locked": {
+      "line": "dialogue.murim.mentor.secret_locked",
+      "gesture": "shake",
+      "options": [ { "text": "dialogue.murim.mentor.opt.understood", "next": "again" } ]
+    },
+    "farewell": {
+      "line": "dialogue.murim.mentor.farewell",
+      "gesture": "bow",
+      "options": []
+    }
+  }
+}

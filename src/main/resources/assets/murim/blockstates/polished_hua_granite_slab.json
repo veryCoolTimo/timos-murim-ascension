@@ -1,0 +1,13 @@
+{
+  "variants": {
+    "type=bottom": {
+      "model": "murim:block/polished_hua_granite_slab"
+    },
+    "type=double": {
+      "model": "murim:block/polished_hua_granite"
+    },
+    "type=top": {
+      "model": "murim:block/polished_hua_granite_slab_top"
+    }
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/outer_stairs",
+  "textures": {
+    "bottom": "murim:block/polished_hua_granite",
+    "side": "murim:block/polished_hua_granite",
+    "top": "murim:block/polished_hua_granite"
+  }
+}

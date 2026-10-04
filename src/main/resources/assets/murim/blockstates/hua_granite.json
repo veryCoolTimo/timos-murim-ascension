@@ -1,0 +1,36 @@
+{
+  "variants": {
+    "": [
+      {
+        "model": "murim:block/hua_granite"
+      },
+      {
+        "model": "murim:block/hua_granite",
+        "y": 90
+      },
+      {
+        "model": "murim:block/hua_granite",
+        "y": 180
+      },
+      {
+        "model": "murim:block/hua_granite",
+        "y": 270
+      },
+      {
+        "model": "murim:block/hua_granite_b"
+      },
+      {
+        "model": "murim:block/hua_granite_b",
+        "y": 90
+      },
+      {
+        "model": "murim:block/hua_granite_b",
+        "y": 180
+      },
+      {
+        "model": "murim:block/hua_granite_b",
+        "y": 270
+      }
+    ]
+  }
+}

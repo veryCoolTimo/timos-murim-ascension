@@ -19,7 +19,7 @@ import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 public final class ModNetwork {
 
     /** Версия протокола. Поднимать при любом несовместимом изменении пакетов. */
-    private static final String VERSION = "26";
+    private static final String VERSION = "29";
 
     @SubscribeEvent
     static void register(RegisterPayloadHandlersEvent event) {
@@ -82,6 +82,17 @@ public final class ModNetwork {
                 });
         registrar.playToClient(ManualPayloads.Open.TYPE, ManualPayloads.Open.STREAM_CODEC,
                 (payload, context) -> ClientPayloadBridge.handleManual(payload));
+        // Диалоги NPC секты: сервер выбирает реплику, клиент показывает и шлёт номер варианта.
+        registrar.playToClient(DialoguePayloads.Open.TYPE, DialoguePayloads.Open.STREAM_CODEC,
+                (payload, context) -> ClientPayloadBridge.handleDialogue(payload));
+        registrar.playToClient(DialoguePayloads.Close.TYPE, DialoguePayloads.Close.STREAM_CODEC,
+                (payload, context) -> ClientPayloadBridge.handleDialogueClose());
+        registrar.playToServer(DialoguePayloads.Choose.TYPE, DialoguePayloads.Choose.STREAM_CODEC,
+                (payload, context) -> {
+                    if (context.player() instanceof ServerPlayer serverPlayer) {
+                        io.github.verycooltimo.murim.sect.DialogueService.choose(serverPlayer, payload.index());
+                    }
+                });
         // Пилюли (docs/design/19b): клиент шлёт только сторону выбора, остальное считает сервер.
         registrar.playToClient(PillPayloads.Sync.TYPE, PillPayloads.Sync.STREAM_CODEC,
                 (payload, context) -> ClientPayloadBridge.handlePill(payload));

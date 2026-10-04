@@ -94,6 +94,13 @@ public class SectDisciple extends Bandit implements Casters.Caster {
     private static final EntityDataAccessor<String> ANIM = SynchedEntityData.defineId(SectDisciple.class, EntityDataSerializers.STRING);
     private static final EntityDataAccessor<Integer> ANIM_SEQ = SynchedEntityData.defineId(SectDisciple.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> ANIM_HOLD = SynchedEntityData.defineId(SectDisciple.class, EntityDataSerializers.INT);
+    /** Роль NPC секты (наставник, глава, старший, ученик фоном) — текстура, имя и диалог. */
+    private static final EntityDataAccessor<String> ROLE = SynchedEntityData.defineId(SectDisciple.class, EntityDataSerializers.STRING);
+    /** Жест на реплике диалога (nod, bow, point, wave) и его номер — клиент играет с прихода. */
+    private static final EntityDataAccessor<String> GESTURE = SynchedEntityData.defineId(SectDisciple.class, EntityDataSerializers.STRING);
+    private static final EntityDataAccessor<Integer> GESTURE_SEQ = SynchedEntityData.defineId(SectDisciple.class, EntityDataSerializers.INT);
+    /** Id игрока-собеседника (−1 — не разговаривает): голова и корпус к нему. */
+    private static final EntityDataAccessor<Integer> TALKING = SynchedEntityData.defineId(SectDisciple.class, EntityDataSerializers.INT);
 
     public enum Spar { NONE, WAIT, BOW_IN, FIGHT, BOW_OUT }
 
@@ -130,6 +137,13 @@ public class SectDisciple extends Bandit implements Casters.Caster {
 
     /** Клиент: тик прихода текущей анимации. */
     private int clientAnimStart;
+    /** Клиент: тик прихода жеста. */
+    private int clientGestureStart = -1000;
+
+    /** Тик последнего выпуска удара (форма или техника) — окно «чистого» ответа игрока в спарринге. */
+    private long lastSwing = Long.MIN_VALUE / 2;
+    /** Чистые попадания партнёра в этом спарринге: в окно после замаха ученика (урок наставника). */
+    private int cleanHits;
 
     public SectDisciple(EntityType<? extends Monster> type, Level level) {
         super(type, level);
@@ -156,6 +170,10 @@ public class SectDisciple extends Bandit implements Casters.Caster {
         builder.define(ANIM, "");
         builder.define(ANIM_SEQ, 0);
         builder.define(ANIM_HOLD, 0);
+        builder.define(ROLE, io.github.verycooltimo.murim.sect.SectRole.SENIOR.id());
+        builder.define(GESTURE, "");
+        builder.define(GESTURE_SEQ, 0);
+        builder.define(TALKING, -1);
     }
 
     @Override
@@ -241,6 +259,9 @@ public class SectDisciple extends Bandit implements Casters.Caster {
         if (ANIM_SEQ.equals(key)) {
             clientAnimStart = tickCount;
         }
+        if (GESTURE_SEQ.equals(key)) {
+            clientGestureStart = tickCount;
+        }
     }
 
     /** Вспышка замаха формы (последние тики) — клиент читает по анимации. */
@@ -269,6 +290,7 @@ public class SectDisciple extends Bandit implements Casters.Caster {
             return;
         }
         partner = player.getUUID();
+        cleanHits = 0;
         partnerFloor = Math.max(1.0F, player.getHealth() - player.getMaxHealth() * SPAR_LOSS);
         setHealth(getMaxHealth());
         selfFloor = Math.max(1.0F, getHealth() - getMaxHealth() * SPAR_LOSS);
@@ -306,6 +328,9 @@ public class SectDisciple extends Bandit implements Casters.Caster {
             p.displayClientMessage(Component.translatable(partnerWon ? "murim.spar.win" : "murim.spar.lose", getDisplayName()), true);
         }
         log("спарринг окончен: {}", partnerWon ? "ученик уступил" : "игрок уступил");
+        if (partnerEntity() instanceof ServerPlayer p) {
+            io.github.verycooltimo.murim.sect.SectService.onSparEnd(p, this, partnerWon);
+        }
     }
 
     private LivingEntity partnerEntity() {
@@ -314,11 +339,16 @@ public class SectDisciple extends Bandit implements Casters.Caster {
 
     @Override
     protected InteractionResult mobInteract(Player player, InteractionHand hand) {
-        if (!level().isClientSide && player instanceof ServerPlayer sp && hand == InteractionHand.MAIN_HAND
-                && (spar == Spar.NONE || spar == Spar.BOW_OUT && sparTick > BOW_TICKS)) {
-            spar = Spar.NONE;
-            startSpar(sp, 0);
-            return InteractionResult.SUCCESS;
+        // ПКМ — разговор (план секты §4.3); вызов на спарринг — из диалога старшего ученика.
+        if (hand == InteractionHand.MAIN_HAND && (spar == Spar.NONE || spar == Spar.BOW_OUT && sparTick > BOW_TICKS)) {
+            if (!level().isClientSide && player instanceof ServerPlayer sp) {
+                if (spar == Spar.BOW_OUT) {
+                    spar = Spar.NONE;
+                    playAnim(null, 0);
+                }
+                io.github.verycooltimo.murim.sect.DialogueService.open(sp, this);
+            }
+            return InteractionResult.sidedSuccess(level().isClientSide);
         }
         return super.mobInteract(player, hand);
     }
@@ -330,7 +360,7 @@ public class SectDisciple extends Bandit implements Casters.Caster {
         }
         // Ученик не дерётся всерьёз: вне спарринга удар игрока — вызов на спарринг, без урона.
         if (spar != Spar.FIGHT) {
-            if (source.getEntity() instanceof ServerPlayer p && spar == Spar.NONE && !source.is(net.minecraft.tags.DamageTypeTags.BYPASSES_INVULNERABILITY)) {
+            if (source.getEntity() instanceof ServerPlayer p && spar == Spar.NONE && spars() && !source.is(net.minecraft.tags.DamageTypeTags.BYPASSES_INVULNERABILITY)) {
                 startSpar(p, 0);
                 return false;
             }
@@ -388,6 +418,15 @@ public class SectDisciple extends Bandit implements Casters.Caster {
             tickTechnique();
         }
         tickSpar();
+        int talk = entityData.get(TALKING);
+        if (talk >= 0 && (spar == Spar.NONE || spar == Spar.BOW_OUT) && level().getEntity(talk) instanceof Player p) {
+            // Собеседник: голова — в глаза, корпус доворачивается (план секты §4.3).
+            getNavigation().stop();
+            getLookControl().setLookAt(p, 30.0F, 30.0F);
+            float want = (float) (Mth.atan2(p.getZ() - getZ(), p.getX() - getX()) * Mth.RAD_TO_DEG) - 90.0F;
+            yBodyRot = Mth.approachDegrees(yBodyRot, want, 8.0F);
+            setYRot(yBodyRot);
+        }
     }
 
     private void tickSpar() {
@@ -519,6 +558,7 @@ public class SectDisciple extends Bandit implements Casters.Caster {
         getNavigation().stop();
         if (phase == TechniquePhase.IMPACT && !impactDone) {
             impactDone = true;
+            lastSwing = level().getGameTime();
             playSound(ModSounds.SWORD_SWING.get(), 1.0F, 0.95F + 0.1F * getRandom().nextFloat());
             boolean hit = false;
             if (d.behavior() instanceof TechniqueBehavior.PlumSlash) {
@@ -571,6 +611,7 @@ public class SectDisciple extends Bandit implements Casters.Caster {
         }
         if (formTick == formWindup) {
             // Выпуск формы: серп у наблюдателей (FoundationVfx по кисти и клинку ученика).
+            lastSwing = level().getGameTime();
             PacketDistributor.sendToPlayersTrackingEntity(this,
                     new FoundationPayloads.Form(getId(), form.ordinal(), techniqueLayer(SIX), 1.0F));
             playSound(ModSounds.SWORD_SWING.get(), 0.8F, 1.05F + 0.1F * getRandom().nextFloat());
@@ -773,12 +814,90 @@ public class SectDisciple extends Bandit implements Casters.Caster {
     @Override
     public void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
+        tag.putString("role", role().id());
         // Спарринг не сохраняется: выход из игры отменяет его (план секты §5.3).
+    }
+
+    @Override
+    public void readAdditionalSaveData(CompoundTag tag) {
+        super.readAdditionalSaveData(tag);
+        if (tag.contains("role")) {
+            entityData.set(ROLE, io.github.verycooltimo.murim.sect.SectRole.of(tag.getString("role")).id());
+        }
     }
 
     /** Для журналов стенда: что сейчас делает. */
     public String doing() {
         return technique != null ? technique.getPath() + "@" + techniqueTick : formTick >= 0 ? "form " + form : spar.name();
+    }
+
+    // ------------------------------------------------------------------ NPC секты: роль, жест, разговор
+
+    public io.github.verycooltimo.murim.sect.SectRole role() {
+        return io.github.verycooltimo.murim.sect.SectRole.of(entityData.get(ROLE));
+    }
+
+    public void setRole(io.github.verycooltimo.murim.sect.SectRole role) {
+        entityData.set(ROLE, role.id());
+    }
+
+    /** Сражается только старший ученик; наставник, глава и ученики фоном только говорят. */
+    public boolean spars() {
+        return role() == io.github.verycooltimo.murim.sect.SectRole.SENIOR;
+    }
+
+    public String gesture() {
+        return entityData.get(GESTURE);
+    }
+
+    /** Возраст жеста на клиенте, тиков. */
+    public float gestureAge(float partial) {
+        return tickCount - clientGestureStart + partial;
+    }
+
+    public void gesture(String name) {
+        entityData.set(GESTURE, name == null ? "" : name);
+        entityData.set(GESTURE_SEQ, entityData.get(GESTURE_SEQ) + 1);
+    }
+
+    public int talkingTo() {
+        return entityData.get(TALKING);
+    }
+
+    public void setTalkingTo(Player player) {
+        entityData.set(TALKING, player == null ? -1 : player.getId());
+        if (player != null) {
+            getNavigation().stop();
+        }
+    }
+
+    public int cleanHits() {
+        return cleanHits;
+    }
+
+    /** Попадание партнёра в спарринге: чистое, если пришлось в окно после выпуска удара ученика. */
+    public boolean onPartnerHit() {
+        if (level().getGameTime() - lastSwing <= CLEAN_WINDOW) {
+            cleanHits++;
+            lastSwing = Long.MIN_VALUE / 2;
+            return true;
+        }
+        return false;
+    }
+
+    /** Окно чистого ответа после выпуска удара ученика, тиков (урок «три чистых удара»). */
+    public static final int CLEAN_WINDOW = 24;
+
+    @Override
+    public Component getName() {
+        Component custom = getCustomName();
+        return custom != null ? custom : Component.translatable(role().nameKey());
+    }
+
+    @Override
+    public boolean isPreventingPlayerRest(Player player) {
+        // Секта — дом: ученики рядом не мешают спать.
+        return false;
     }
 
     /** Список, чтобы тесты и стенд не трогали внутренности. */

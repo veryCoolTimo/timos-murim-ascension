@@ -7,6 +7,12 @@ import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.network.chat.Component;
+import io.github.verycooltimo.murim.registry.ModBlocks;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.tags.FluidTags;
+import net.minecraft.world.level.block.BambooStalkBlock;
+import net.minecraft.world.level.block.state.properties.BambooLeaves;
+import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.LeavesBlock;
@@ -91,6 +97,24 @@ final class MountHuaChunkWriter {
     /** Returns false if nothing of the mountain falls into this chunk. */
     boolean write() {
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+        if (!computeGrid(pos)) {
+            return false;
+        }
+        for (int lz = 0; lz < 16; lz++) {
+            for (int lx = 0; lx < 16; lx++) {
+                if (weight[idx(lx + B, lz + B)] > 0) {
+                    column(lx, lz, pos);
+                }
+            }
+        }
+        Heightmap.primeHeightmaps(chunk, EnumSet.allOf(Heightmap.Types.class));
+        decorate(pos);
+        Heightmap.primeHeightmaps(chunk, EnumSet.allOf(Heightmap.Types.class));
+        return true;
+    }
+
+    /** Original ground and planned heights for the chunk + border; false if the mountain misses it. */
+    private boolean computeGrid(BlockPos.MutableBlockPos pos) {
         for (int lz = 0; lz < 16; lz++) {
             for (int lx = 0; lx < 16; lx++) {
                 int floor = chunk.getHeight(Heightmap.Types.OCEAN_FLOOR_WG, lx, lz) - 1;
@@ -122,20 +146,183 @@ final class MountHuaChunkWriter {
                 }
             }
         }
-        if (!any) {
-            return false;
+        return any;
+    }
+
+    /**
+     * Last decoration step ({@code top_layer_modification}), after every vanilla feature:
+     * <ul>
+     *   <li>lava from vanilla springs and lakes inside the massif is turned back into rock (no
+     *       lavafalls on Huashan);</li>
+     *   <li>vanilla trees (oak, birch, dark oak…) inside the footprint are removed — the forest
+     *       around granite must read Chinese: pines, bamboo, plums (author 03.10);</li>
+     *   <li>the freed foothill ground gets our pines, bamboo clumps and a few plum trees.</li>
+     * </ul>
+     * Our own trees survive: their trunks are spruce/dark-oak WOOD blocks and their foliage is
+     * persistent, vanilla trees use logs and non-persistent leaves.
+     */
+    static void cleanup(WorldGenLevel level, ChunkAccess chunk, MountHuaSite site) {
+        MountHuaChunkWriter w = new MountHuaChunkWriter(level, chunk, site);
+        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+        if (w.computeGrid(pos)) {
+            w.cleanupPass(pos);
         }
-        for (int lz = 0; lz < 16; lz++) {
-            for (int lx = 0; lx < 16; lx++) {
-                if (weight[idx(lx + B, lz + B)] > 0) {
-                    column(lx, lz, pos);
+    }
+
+    private void cleanupPass(BlockPos.MutableBlockPos pos) {
+        int sea = level.getSeaLevel();
+        // Lava: only sections whose palette may contain it are scanned.
+        LevelChunkSection[] sections = chunk.getSections();
+        for (int si = 0; si < sections.length; si++) {
+            LevelChunkSection section = sections[si];
+            if (section.hasOnlyAir() || !section.maybeHas(st -> st.getFluidState().is(FluidTags.LAVA))) {
+                continue;
+            }
+            int y0 = chunk.getSectionYFromSectionIndex(si) << 4;
+            for (int y = 0; y < 16; y++) {
+                if (y0 + y <= sea) {
+                    continue;
+                }
+                for (int lz = 0; lz < 16; lz++) {
+                    for (int lx = 0; lx < 16; lx++) {
+                        if (weight[idx(lx + B, lz + B)] <= 0) {
+                            continue;
+                        }
+                        if (section.getBlockState(lx, y, lz).getFluidState().is(FluidTags.LAVA)) {
+                            int wx = x0 + lx;
+                            int wz = z0 + lz;
+                            chunk.setBlockState(pos.set(wx, y0 + y, wz), rock(wx, y0 + y, wz), false);
+                        }
+                    }
                 }
             }
         }
+        for (int lz = 0; lz < 16; lz++) {
+            for (int lx = 0; lx < 16; lx++) {
+                if (weight[idx(lx + B, lz + B)] < 0.95) {
+                    continue; // outer ring: vanilla forest stays, the belt fades into it
+                }
+                int wx = x0 + lx;
+                int wz = z0 + lz;
+                int surface = chunk.getHeight(Heightmap.Types.WORLD_SURFACE, lx, lz) - 1;
+                int ground = Integer.MIN_VALUE;
+                for (int y = surface; y > surface - 40; y--) {
+                    BlockState state = chunk.getBlockState(pos.set(wx, y, wz));
+                    if (state.isAir()) {
+                        continue;
+                    }
+                    boolean vanillaLeaf = state.getBlock() instanceof LeavesBlock && !state.getValue(LeavesBlock.PERSISTENT);
+                    boolean vanillaLog = state.is(BlockTags.LOGS) && !state.is(Blocks.SPRUCE_WOOD)
+                            && !state.is(Blocks.DARK_OAK_WOOD);
+                    if (vanillaLeaf || vanillaLog || state.is(Blocks.VINE) || state.is(Blocks.BEE_NEST)
+                            || state.is(Blocks.RED_MUSHROOM_BLOCK) || state.is(Blocks.BROWN_MUSHROOM_BLOCK)
+                            || state.is(Blocks.MUSHROOM_STEM)) {
+                        level.setBlock(pos, AIR, 2);
+                    } else if (state.blocksMotion()) {
+                        ground = y;
+                        break;
+                    }
+                }
+                if (ground == Integer.MIN_VALUE || ground > site.baseY() + 90) {
+                    continue;
+                }
+                BlockState g = chunk.getBlockState(pos.set(wx, ground, wz));
+                if (!(g.is(Blocks.GRASS_BLOCK) || g.is(Blocks.PODZOL) || g.is(Blocks.DIRT) || g.is(Blocks.COARSE_DIRT))) {
+                    continue;
+                }
+                if (!chunk.getBlockState(pos.set(wx, ground + 1, wz)).isAir()
+                        && !chunk.getBlockState(pos).canBeReplaced()) {
+                    continue;
+                }
+                double u = site.localU(wx + 0.5, wz + 0.5);
+                double v = site.localV(wx + 0.5, wz + 0.5);
+                if (zoneAt(u, v, 12) != null || MountHuaPlan.inPillarBasin(u, v)) {
+                    continue;
+                }
+                double[] tr = shape.trailAt(u, v);
+                if (tr != null && tr[0] < 9) {
+                    continue; // crowns must not close over the stair
+                }
+                if (shape.streamDistance(u, v) < 4) {
+                    continue;
+                }
+                long h = mix(wx, wz, 23);
+                int roll = (int) Math.floorMod(h, 1000L);
+                // Dense pine forest near the massif, thinner and mixed towards the vanilla edge.
+                double e = shape.beltDistance(u, v);
+                double density = 1.6 - smooth(0.35, 0.9, e);
+                int pines = (int) (38 * density);
+                int bamboo = pines + (int) (10 * density);
+                int plums = bamboo + 5;
+                if (roll < pines) {
+                    pine(wx, ground + 1, wz, h, lx, lz, pos);
+                } else if (roll < bamboo) {
+                    bamboo(wx, ground + 1, wz, h, pos);
+                } else if (roll < plums) {
+                    plumTree(wx, ground + 1, wz, h, pos);
+                }
+            }
+        }
+        clearTerraces(pos);
         Heightmap.primeHeightmaps(chunk, EnumSet.allOf(Heightmap.Types.class));
-        decorate(pos);
-        Heightmap.primeHeightmaps(chunk, EnumSet.allOf(Heightmap.Types.class));
-        return true;
+    }
+
+    /**
+     * Structures planned on the old ground (a village house stood on the gate terrace, stand 03.10)
+     * are removed from the building sites: everything above a terrace that is not ours goes.
+     */
+    private void clearTerraces(BlockPos.MutableBlockPos pos) {
+        // Also the eight neighbours (write radius 1): trees of a neighbour decorated after this
+        // chunk's own cleanup spill over the site otherwise (stand 04.10: leaves on the gate yard).
+        for (int lz = -16; lz < 32; lz++) {
+            for (int lx = -16; lx < 32; lx++) {
+                int wx = x0 + lx;
+                int wz = z0 + lz;
+                double cu = site.localU(wx + 0.5, wz + 0.5);
+                double cv = site.localV(wx + 0.5, wz + 0.5);
+                Zone z = zoneAt(cu, cv, 1);
+                if (z == null) {
+                    Zone around = zoneAt(cu, cv, 8);
+                    if (around != null && !around.cave()) {
+                        // Margin: vanilla trees leaning over the site go, our plums and pines stay.
+                        int ay = (int) Math.round(site.worldY(around.y()));
+                        for (int y = ay + 1; y <= ay + 30; y++) {
+                            BlockState st = level.getBlockState(pos.set(wx, y, wz));
+                            if ((st.getBlock() instanceof LeavesBlock && !st.getValue(LeavesBlock.PERSISTENT))
+                                    || (st.is(BlockTags.LOGS) && !st.is(Blocks.DARK_OAK_WOOD) && !st.is(Blocks.SPRUCE_WOOD))) {
+                                level.setBlock(pos, AIR, 2);
+                            }
+                        }
+                    }
+                    continue;
+                }
+                if (z.cave()) {
+                    continue;
+                }
+                int y0 = (int) Math.round(site.worldY(z.y()));
+                for (int y = y0 + 1; y <= y0 + 30; y++) {
+                    BlockState st = level.getBlockState(pos.set(wx, y, wz));
+                    if (st.isAir() || ours(st)) {
+                        continue;
+                    }
+                    level.setBlock(pos, AIR, 2);
+                }
+                BlockState top = level.getBlockState(pos.set(wx, y0, wz));
+                if (!ours(top) && !top.is(Blocks.GRASS_BLOCK) && !top.is(Blocks.DIRT_PATH) && !top.is(Blocks.COARSE_DIRT)
+                        && !top.is(Blocks.MOSSY_COBBLESTONE)) {
+                    level.setBlock(pos, GRASS, 2);
+                }
+            }
+        }
+    }
+
+    private static boolean ours(BlockState st) {
+        return st.is(Blocks.STRIPPED_SPRUCE_LOG) || st.is(Blocks.LANTERN) || st.is(Blocks.SPRUCE_SIGN)
+                || st.is(Blocks.DARK_OAK_WOOD) || st.is(Blocks.SPRUCE_WOOD)
+                || (st.getBlock() instanceof LeavesBlock && st.getValue(LeavesBlock.PERSISTENT))
+                || st.is(ModBlocks.POLISHED_HUA_GRANITE.get()) || st.is(ModBlocks.POLISHED_HUA_GRANITE_STAIRS.get())
+                || st.is(ModBlocks.POLISHED_HUA_GRANITE_SLAB.get()) || st.is(ModBlocks.POLISHED_HUA_GRANITE_WALL.get())
+                || st.is(Blocks.CHAIN) || st.is(ModBlocks.HUA_GRANITE_MOSSY.get()) || st.is(ModBlocks.HUA_GRANITE_CRACKED.get());
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -155,22 +342,25 @@ final class MountHuaChunkWriter {
         }
         int drop = t - lowest;
         // Cut: remove what stands above the new top (vanilla hills inside gorges/terraces).
-        int surface = chunk.getHeight(Heightmap.Types.WORLD_SURFACE_WG, lx, lz) - 1;
+        // The worldgen heightmap can lag the real top by a block or more (seen on the stand: a single
+        // grass block left floating 33 blocks over the gate terrace), so scan from above it.
+        int surface = Math.min(maxY + 13, Math.max(chunk.getHeight(Heightmap.Types.WORLD_SURFACE_WG, lx, lz), o) + 8);
         int sea = level.getSeaLevel();
         for (int y = surface; y > t; y--) {
             pos.set(wx, y, wz);
-            if (y < sea && !chunk.getBlockState(pos).getFluidState().isEmpty()) {
+            BlockState there = chunk.getBlockState(pos);
+            if (there.isAir() || (y < sea && !there.getFluidState().isEmpty())) {
                 continue;
             }
             chunk.setBlockState(pos, AIR, false);
         }
         // Fill: rock from just below the old surface (buries grass/sand) up to the new top.
         int from = Math.min(o - 2, t - 4);
-        boolean masonry = retainingWall(wx, wz, t);
+        boolean masonry = retainingWall(wx, wz, t) || stairSupport(wx, wz, t);
         for (int y = from; y <= t; y++) {
             pos.set(wx, y, wz);
             boolean exposed = y > lowest - 2 || t - y < 4;
-            chunk.setBlockState(pos, !exposed ? STONE : masonry ? masonry(wx, y, wz) : rock(wx, y, wz), false);
+            chunk.setBlockState(pos, !exposed ? STONE : masonry ? masonry(wx, y, wz) : granite(lx, lz, wx, y, wz, t, drop), false);
         }
         skin(lx, lz, t, drop, w, pos);
     }
@@ -196,16 +386,57 @@ final class MountHuaChunkWriter {
         return false;
     }
 
+    /** The stair is carried on dressed stone where it runs above the natural rock (author ref 10). */
+    private boolean stairSupport(int wx, int wz, int t) {
+        double u = site.localU(wx + 0.5, wz + 0.5);
+        double v = site.localV(wx + 0.5, wz + 0.5);
+        double[] tr = shape.trailAt(u, v);
+        return tr != null && tr[0] <= 3.6 && site.worldY(shape.ground(u, v)) < t - 2;
+    }
+
     private BlockState masonry(int x, int y, int z) {
         long h = mix(x * 31 + y, z, 13);
         int r = (int) (h & 15);
         if (r < 2) {
-            return Blocks.MOSSY_STONE_BRICKS.defaultBlockState();
+            return ModBlocks.HUA_GRANITE_MOSSY.get().defaultBlockState();
         }
         if (r < 4) {
-            return Blocks.CRACKED_STONE_BRICKS.defaultBlockState();
+            return ModBlocks.HUA_GRANITE_CRACKED.get().defaultBlockState();
         }
-        return Blocks.STONE_BRICKS.defaultBlockState();
+        return ModBlocks.POLISHED_HUA_GRANITE.get().defaultBlockState();
+    }
+
+    /**
+     * Huashan granite on an exposed face, chosen by where the block sits (author 03.10 — our own
+     * block set): dark in narrow clefts, water-stained in streaks that hang from the lips, mossy on
+     * north faces, cracked at rims, paler and greyer high up, warmer low down.
+     */
+    private BlockState granite(int lx, int lz, int x, int y, int z, int t, int drop) {
+        // Narrow cleft: rock rises on both sides of this face.
+        boolean cleftX = topAt(lx - 1, lz) > y + 1 && topAt(lx + 1, lz) > y + 1;
+        boolean cleftZ = topAt(lx, lz - 1) > y + 1 && topAt(lx, lz + 1) > y + 1;
+        if ((cleftX || cleftZ) && t - y > 2) {
+            return ModBlocks.HUA_GRANITE_DARK.get().defaultBlockState();
+        }
+        // Water stains: vertical streak lines (2D noise is constant along y) hanging from the lip.
+        // Bands a few blocks wide and tens of blocks long (codex r3: organised runoff, not flecks).
+        double streak = noise.noise(x / 4.5, z / 4.5, 51.0);
+        if (streak > 0.5 && t - y < 18 + 30 * (0.5 + 0.5 * noise.noise(x / 9.0, z / 9.0, 3.0))) {
+            return ModBlocks.HUA_GRANITE_STAINED.get().defaultBlockState();
+        }
+        // Rims: frost-shattered blocks just below an edge.
+        if (drop >= 6 && t - y <= 2 && noise.noise(x / 3.0, y / 3.0, z / 3.0) > -0.1) {
+            return ModBlocks.HUA_GRANITE_CRACKED.get().defaultBlockState();
+        }
+        // North faces stay damp: moss and lichen (world north = -z).
+        boolean northFace = topAt(lx, lz - 1) < y;
+        if (northFace && y < SNOW_Y && noise.noise(x / 12.0, y / 12.0, z / 12.0) > 0.35) {
+            return ModBlocks.HUA_GRANITE_MOSSY.get().defaultBlockState();
+        }
+        // Altitude banding: warm granite low, pale grey high (blended by noise, never a contour).
+        double frac = (y - site.baseY()) / (double) (MountHuaSite.SUMMIT_Y - site.baseY());
+        double pale = frac - 0.55 + 0.25 * noise.noise(x / 30.0, y / 20.0, z / 30.0);
+        return (pale > 0 ? ModBlocks.HUA_GRANITE_PALE : ModBlocks.HUA_GRANITE).get().defaultBlockState();
     }
 
     /**
@@ -214,36 +445,27 @@ final class MountHuaChunkWriter {
      * streaks (tuff) that run straight down the walls — a 2D noise in (x, z) is constant along y.
      */
     private BlockState rock(int x, int y, int z) {
-        // Dark streaks: thin vertical lines (2D noise, constant along y) that run for tens of blocks.
-        double streak = noise.noise(x / 1.7, z / 1.7, 51.0);
-        if (streak > 0.6 && noise.noise(x / 7.0, y / 40.0, z / 7.0) > 0.0) {
-            return Blocks.TUFF.defaultBlockState();
-        }
-        // Vertical joints: narrow andesite lines splitting the wall into columns.
-        double joint = Math.abs(noise.noise(x / 9.0, z / 9.0, 77.0));
-        if (joint < 0.03) {
-            return Blocks.ANDESITE.defaultBlockState();
-        }
-        // Large coherent patches (tens of blocks), slightly stretched vertically; tiny dither so the
-        // patch borders are not contour lines.
-        double b = noise.noise(x / 22.0, y / 30.0, z / 22.0) + 0.12 * noise.noise(x / 2.5, y / 2.5, z / 2.5);
-        if (b > 0.28) {
-            return Blocks.CALCITE.defaultBlockState();
-        }
-        if (b > -0.22) {
-            return Blocks.DIORITE.defaultBlockState();
-        }
-        if (b > -0.42) {
-            return Blocks.ANDESITE.defaultBlockState();
-        }
-        double warm = noise.noise(x / 40.0, y / 40.0, z / 40.0 + 9.0);
-        return warm > 0.55 ? Blocks.GRANITE.defaultBlockState() : STONE;
+        return (noise.noise(x / 9.0, y / 9.0, z / 9.0) > 0.3 ? ModBlocks.HUA_GRANITE_STAINED : ModBlocks.HUA_GRANITE)
+                .get().defaultBlockState();
     }
 
     /** Surface: «flat is green, steep is bare» (DESCRIPTIONS.md p.8), snow on high flats. */
     private void skin(int lx, int lz, int t, int drop, double w, BlockPos.MutableBlockPos pos) {
         int wx = x0 + lx;
         int wz = z0 + lz;
+        Zone terrace = zoneAt(site.localU(wx + 0.5, wz + 0.5), site.localV(wx + 0.5, wz + 0.5), 0);
+        if (terrace != null && !terrace.cave() && !terrace.id().equals("grove")) {
+            // Vanilla trees that root here are removed by the cleanup pass.
+            // The sect is poor and run-down (author's answer 3): an overgrown yard with worn paths.
+            long r = mix(wx, wz, 17) & 15;
+            double path = noise.noise(wx / 9.0, wz / 9.0, 71.0);
+            BlockState ground = path > 0.55 ? Blocks.DIRT_PATH.defaultBlockState()
+                    : r < 2 ? Blocks.COARSE_DIRT.defaultBlockState() : r < 3 ? Blocks.MOSSY_COBBLESTONE.defaultBlockState()
+                    : GRASS;
+            chunk.setBlockState(pos.set(wx, t, wz), ground, false);
+            chunk.setBlockState(pos.set(wx, t - 1, wz), DIRT, false);
+            return;
+        }
         BlockState was = origTop[lz * 16 + lx];
         boolean soilWas = was.is(Blocks.GRASS_BLOCK) || was.is(Blocks.DIRT) || was.is(Blocks.PODZOL)
                 || was.is(Blocks.SAND) || was.is(Blocks.RED_SAND) || was.is(Blocks.COARSE_DIRT)
@@ -258,13 +480,36 @@ final class MountHuaChunkWriter {
             return;
         }
         double n = noise.noise(wx / 7.0, wz / 7.0, 91.0);
+        // Soil collects in pockets, gullies and on shelves; big flats high up stay bare granite
+        // with moss (codex r1: green contour bands). Low ground (the forested foot) keeps its soil.
+        double soil = noise.noise(wx / 23.0, wz / 23.0, 47.0) + (t < site.baseY() + 60 ? 0.6 : 0.0)
+                + (t > site.worldY(150) ? 0.55 : 0.0)
+                + (drop >= 2 ? 0.25 : 0.0);
+        // Steps of a steep wall are not shelves: within two blocks the rock falls away by 5+,
+        // so no soil there (stand 03.10: brown dots marching diagonally across the faces).
+        int fall = 0;
+        for (int dz = -3; dz <= 3; dz += 3) {
+            for (int dx = -3; dx <= 3; dx += 3) {
+                fall = Math.max(fall, t - topAt(lx + dx, lz + dz));
+            }
+        }
+        // Stepped walls (a 45°+ staircase of single blocks) stay bare: no grass stripes across faces.
+        if ((soil < -0.15 && t > site.baseY() + 30) || (fall >= 3 && t > site.baseY() + 1)) {
+            if (n > 0.35 && t < SNOW_Y) {
+                chunk.setBlockState(pos.set(wx, t, wz), ModBlocks.HUA_GRANITE_MOSSY.get().defaultBlockState(), false);
+            }
+            return;
+        }
         if (drop <= 1 || (drop == 2 && n > 0.1)) {
             BlockState ground;
-            if (t >= SNOW_Y + (int) (6 * n)) {
+            if (t >= SNOW_Y + (int) (6 * n) && noise.noise(wx / 11.0, wz / 11.0, 63.0) > -0.1) {
                 ground = GRASS.setValue(SnowyDirtBlock.SNOWY, true);
-            } else if (n > 0.45) {
+            } else if (n > 0.3 && drop == 0 && t > site.baseY() + 50) {
+                // Needles and grit on the high shelves (custom block, author 03.10).
+                ground = ModBlocks.HUA_LITTER.get().defaultBlockState();
+            } else if (n > 0.45 && drop == 0) {
                 ground = Blocks.PODZOL.defaultBlockState();
-            } else if (n < -0.5) {
+            } else if (n < -0.5 && drop == 0) {
                 ground = Blocks.COARSE_DIRT.defaultBlockState();
             } else if (n < -0.35 && t > site.baseY() + 40) {
                 ground = Blocks.MOSS_BLOCK.defaultBlockState();
@@ -306,6 +551,9 @@ final class MountHuaChunkWriter {
         }
         vegetation(pos);
         waterfalls(pos);
+        stream(pos);
+        bridge(pos);
+        baseDetail(pos);
     }
 
     private void trailColumn(int lx, int lz, BlockPos.MutableBlockPos pos) {
@@ -314,12 +562,12 @@ final class MountHuaChunkWriter {
         double u = site.localU(wx + 0.5, wz + 0.5);
         double v = site.localV(wx + 0.5, wz + 0.5);
         double[] tr = shape.trailAt(u, v);
-        if (tr == null || tr[0] > 1.6) {
+        if (tr == null || tr[0] > 2.1) {
             return;
         }
         int index = (int) tr[2];
         int t = topAt(lx, lz);
-        if (tr[0] <= 1.6) {
+        if (tr[0] <= 2.1) {
             int here = (int) Math.round(site.worldY(shape.trailY(index)));
             int ahead = (int) Math.round(site.worldY(shape.trailY(index + 1)));
             int behind = (int) Math.round(site.worldY(shape.trailY(index - 1)));
@@ -331,27 +579,44 @@ final class MountHuaChunkWriter {
                 block = stairs(-dir[0], -dir[1]);
             } else {
                 long h = mix(wx, wz, 3);
-                block = (h & 7) == 0 ? Blocks.MOSSY_STONE_BRICKS.defaultBlockState()
-                        : (h & 7) == 1 ? Blocks.CRACKED_STONE_BRICKS.defaultBlockState()
-                        : Blocks.STONE_BRICKS.defaultBlockState();
+                // The lowest part of the trail is the oldest: worn, cracked, mossy, half cobble.
+                int worn = index < 120 ? 4 : 1;
+                int r = (int) (h & 15);
+                block = r < worn ? ModBlocks.HUA_GRANITE_MOSSY.get().defaultBlockState()
+                        : r < worn * 2 ? ModBlocks.HUA_GRANITE_CRACKED.get().defaultBlockState()
+                        : (index < 120 && r < worn * 2 + 3) ? Blocks.MOSSY_COBBLESTONE.defaultBlockState()
+                        : ModBlocks.POLISHED_HUA_GRANITE.get().defaultBlockState();
             }
             level.setBlock(pos.set(wx, t, wz), block, 2);
             for (int y = t + 1; y <= t + 4; y++) {
                 level.setBlock(pos.set(wx, y, wz), AIR, 2);
             }
-            if (tr[0] > 0.9 && t - lowestAround(lx, lz) >= 4) {
-                // Outer column over a drop: Huashan's iron chain railing on stone posts.
+            if (index < 160 && tr[0] > 1.5) {
+                // The climb starts in the gorge with wooden posts along the stair
+                // (author2/foot-of-mountain.png): spruce posts two blocks high every few steps.
                 if (index % 4 == 0) {
-                    level.setBlock(pos.set(wx, t + 1, wz), Blocks.STONE_BRICK_WALL.defaultBlockState(), 2);
-                } else {
+                    level.setBlock(pos.set(wx, t + 1, wz), Blocks.SPRUCE_FENCE.defaultBlockState(), 2);
+                    level.setBlock(pos.set(wx, t + 2, wz), Blocks.SPRUCE_FENCE.defaultBlockState(), 2);
+                }
+            } else if (tr[0] > 1.5 && t - lowestAround(lx, lz) >= 3) {
+                // Outer edge over a drop: a low stone curb with posts (author ref 10), chains only
+                // where the fall is deep.
+                BlockState curb = index % 5 == 0 ? ModBlocks.POLISHED_HUA_GRANITE_WALL.get().defaultBlockState()
+                        : ModBlocks.POLISHED_HUA_GRANITE_SLAB.get().defaultBlockState();
+                if (index % 5 != 0 && t - lowestAround(lx, lz) >= 12 && index % 5 == 2) {
                     int[] wd = site.rotateDir((int) Math.signum(Math.round(dir[0])), (int) Math.signum(Math.round(dir[1])));
                     Direction.Axis axis = Math.abs(wd[0]) >= Math.abs(wd[1]) ? Direction.Axis.X : Direction.Axis.Z;
-                    level.setBlock(pos.set(wx, t + 1, wz),
-                            Blocks.CHAIN.defaultBlockState().setValue(RotatedPillarBlock.AXIS, axis), 2);
+                    curb = Blocks.CHAIN.defaultBlockState().setValue(RotatedPillarBlock.AXIS, axis);
                 }
+                level.setBlock(pos.set(wx, t + 1, wz), curb, 2);
             }
             return;
         }
+    }
+
+    private static double smooth(double e0, double e1, double x) {
+        double t = Math.max(0, Math.min(1, (x - e0) / (e1 - e0)));
+        return t * t * (3 - 2 * t);
     }
 
     private int lowestAround(int lx, int lz) {
@@ -369,7 +634,7 @@ final class MountHuaChunkWriter {
                 Math.abs(du) >= Math.abs(dv) ? 0 : (int) Math.signum(dv));
         Direction facing = wd[0] > 0 ? Direction.EAST : wd[0] < 0 ? Direction.WEST
                 : wd[1] > 0 ? Direction.SOUTH : Direction.NORTH;
-        return Blocks.STONE_BRICK_STAIRS.defaultBlockState().setValue(StairBlock.FACING, facing);
+        return ModBlocks.POLISHED_HUA_GRANITE_STAIRS.get().defaultBlockState().setValue(StairBlock.FACING, facing);
     }
 
     /** World-space rectangle of a zone: {minX, minZ, maxX, maxZ}. */
@@ -393,11 +658,17 @@ final class MountHuaChunkWriter {
             return;
         }
         int y = (int) Math.round(site.worldY(z.y()));
+        boolean inNiche = Math.abs(z.u()) <= MountHuaPlan.NICHE_U && z.v() >= MountHuaPlan.NICHE_FRONT
+                && z.v() <= MountHuaPlan.NICHE_BACK;
+        if (inNiche && !MountHuaPlan.CORE.contains(z.id())) {
+            ruin(z, r, y, pos);
+            return;
+        }
         for (int x = Math.max(r[0], x0); x <= Math.min(r[2], x0 + 15); x++) {
             for (int zz = Math.max(r[1], z0); zz <= Math.min(r[3], z0 + 15); zz++) {
                 boolean edge = x == r[0] || x == r[2] || zz == r[1] || zz == r[3];
                 if (edge) {
-                    level.setBlock(pos.set(x, y, zz), Blocks.POLISHED_ANDESITE.defaultBlockState(), 2);
+                    level.setBlock(pos.set(x, y, zz), ModBlocks.POLISHED_HUA_GRANITE.get().defaultBlockState(), 2);
                 }
             }
         }
@@ -418,6 +689,57 @@ final class MountHuaChunkWriter {
         }
     }
 
+    /**
+     * A site for later: the sect starts poor (canon), so here stands only a ruined foundation —
+     * a broken stone footing with column stubs and moss; the author rebuilds it later.
+     */
+    private void ruin(Zone z, int[] r, int y, BlockPos.MutableBlockPos pos) {
+        for (int x = Math.max(r[0], x0); x <= Math.min(r[2], x0 + 15); x++) {
+            for (int zz = Math.max(r[1], z0); zz <= Math.min(r[3], z0 + 15); zz++) {
+                boolean edge = x == r[0] || x == r[2] || zz == r[1] || zz == r[3];
+                long h = mix(x, zz, 61);
+                if (edge && (h & 7) != 0) {
+                    level.setBlock(pos.set(x, y, zz), (h & 3) == 0 ? Blocks.MOSSY_COBBLESTONE.defaultBlockState()
+                            : ModBlocks.HUA_GRANITE_CRACKED.get().defaultBlockState(), 2);
+                    // Column stubs every 6 blocks along the footing, broken at different heights.
+                    if (((x - r[0]) % 6 == 0 || x == r[2]) && ((zz - r[1]) % 6 == 0 || zz == r[3])) {
+                        int k = 1 + (int) ((h >>> 8) % 3);
+                        for (int j = 1; j <= k; j++) {
+                            level.setBlock(pos.set(x, y + j, zz), j == k && ((h >>> 12) & 1) == 0
+                                    ? Blocks.MOSSY_STONE_BRICK_WALL.defaultBlockState()
+                                    : Blocks.STONE_BRICK_WALL.defaultBlockState(), 2);
+                        }
+                    }
+                } else if (!edge && (h % 23) == 0) {
+                    level.setBlock(pos.set(x, y, zz), Blocks.MOSSY_COBBLESTONE.defaultBlockState(), 2);
+                }
+            }
+        }
+        if (inChunk(r[0] + 1, r[1] + 1)) {
+            sign(r[0] + 1, y + 1, r[1] + 1, z, pos);
+        }
+    }
+
+    /** Wooden bridge from the treasury terrace over the slot to the plum-grove ledge. */
+    private void bridge(BlockPos.MutableBlockPos pos) {
+        int y = (int) Math.round(site.worldY(153));
+        for (int lz = 0; lz < 16; lz++) {
+            for (int lx = 0; lx < 16; lx++) {
+                int wx = x0 + lx;
+                int wz = z0 + lz;
+                double u = site.localU(wx + 0.5, wz + 0.5);
+                double v = site.localV(wx + 0.5, wz + 0.5);
+                if (u < -136 || u > -100 || Math.abs(v + 34) > 2.5 || topAt(lx, lz) >= y) {
+                    continue;
+                }
+                level.setBlock(pos.set(wx, y, wz), Blocks.SPRUCE_PLANKS.defaultBlockState(), 2);
+                if (Math.abs(v + 34) > 1.6) {
+                    level.setBlock(pos.set(wx, y + 1, wz), Blocks.SPRUCE_FENCE.defaultBlockState(), 2);
+                }
+            }
+        }
+    }
+
     private void sign(int x, int y, int z, Zone zone, BlockPos.MutableBlockPos pos) {
         if (!inChunk(x, z)) {
             return;
@@ -429,7 +751,9 @@ final class MountHuaChunkWriter {
         SignText text = new SignText()
                 .setMessage(0, Component.translatable("sign.murim.hua." + zone.id()))
                 .setMessage(1, Component.literal(zone.width() + " x " + zone.depth()))
-                .setMessage(2, Component.translatable("sign.murim.hua.placeholder"));
+                .setMessage(2, Component.translatable(MountHuaPlan.CORE.contains(zone.id()) || !zone.id().matches(
+                        "ancestors|elders|treasury|scriptures|alchemy|knoll|poles") ? "sign.murim.hua.placeholder"
+                        : "sign.murim.hua.ruin"));
         CompoundTag tag = new CompoundTag();
         tag.putString("id", "minecraft:sign");
         tag.putInt("x", x);
@@ -447,8 +771,8 @@ final class MountHuaChunkWriter {
             for (int zz = Math.max(r[1], z0); zz <= Math.min(r[3], z0 + 15); zz++) {
                 carve(x, y, zz, 5, pos);
                 boolean edge = x == r[0] || x == r[2] || zz == r[1] || zz == r[3];
-                level.setBlock(pos.set(x, y, zz), edge ? Blocks.POLISHED_ANDESITE.defaultBlockState()
-                        : Blocks.STONE_BRICKS.defaultBlockState(), 2);
+                level.setBlock(pos.set(x, y, zz), edge ? ModBlocks.POLISHED_HUA_GRANITE.get().defaultBlockState()
+                        : ModBlocks.HUA_GRANITE_DARK.get().defaultBlockState(), 2);
             }
         }
         // Tunnel: 3 wide, 4 high, straight from the room centre to the exit point.
@@ -464,7 +788,7 @@ final class MountHuaChunkWriter {
                 int[] wxz = site.toWorld(pu, pv);
                 if (inChunk(wxz[0], wxz[1])) {
                     carve(wxz[0], y, wxz[1], 4, pos);
-                    level.setBlock(pos.set(wxz[0], y, wxz[1]), Blocks.STONE_BRICKS.defaultBlockState(), 2);
+                    level.setBlock(pos.set(wxz[0], y, wxz[1]), ModBlocks.POLISHED_HUA_GRANITE.get().defaultBlockState(), 2);
                 }
             }
         }
@@ -502,18 +826,32 @@ final class MountHuaChunkWriter {
                 BlockState ground = chunk.getBlockState(pos.set(wx, t, wz));
                 double u = site.localU(wx + 0.5, wz + 0.5);
                 double v = site.localV(wx + 0.5, wz + 0.5);
-                Zone zone = zoneAt(u, v, 4);
+                Zone near = zoneAt(u, v, 7);
+                if (near != null && zoneAt(u, v, 2) == null && !near.cave()
+                        && (near.id().equals("grove") || near.id().equals("ancestors") || near.id().equals("elders") || near.id().equals("scriptures") || near.id().startsWith("pav"))) {
+                    // A ring of plums just outside the terrace edge (the yard itself stays free).
+                    long h = mix(wx, wz, 29);
+                    if (Math.floorMod(h, 1000L) < 30) {
+                        plumTree(wx, t + 1, wz, h, pos);
+                    }
+                    continue;
+                }
+                Zone zone = zoneAt(u, v, 9);
                 if (zone != null) {
                     if (zone.id().equals("grove") && zoneAt(u, v, -3) == zone) {
                         long h = mix(wx, wz, 11);
-                        if (h % 37 == 0) {
-                            plum(wx, t + 1, wz, h, pos);
+                        if (h % 31 == 0) {
+                            plumTree(wx, t + 1, wz, h, pos);
                         }
                     }
                     continue;
                 }
                 double[] tr = shape.trailAt(u, v);
-                if (tr != null && tr[0] < 4) {
+                if (tr != null && tr[0] < 8) {
+                    continue;
+                }
+                if (tr != null && tr[0] < 8 && Math.floorMod(mix(wx, wz, 31), 1000L) < 14) {
+                    plumTree(wx, t + 1, wz, mix(wx, wz, 31), pos);
                     continue;
                 }
                 int drop = 0;
@@ -528,14 +866,44 @@ final class MountHuaChunkWriter {
                         deep = Math.max(deep, t - topAt(lx + dx, lz + dz));
                     }
                 }
-                boolean soil = ground.is(Blocks.GRASS_BLOCK) || ground.is(Blocks.PODZOL)
+                boolean soil = ground.is(Blocks.GRASS_BLOCK) || ground.is(Blocks.PODZOL) || ground.is(ModBlocks.HUA_LITTER.get())
                         || ground.is(Blocks.MOSS_BLOCK) || ground.is(Blocks.COARSE_DIRT);
                 long h = mix(wx, wz, 7);
                 int roll = (int) Math.floorMod(h, 1000L);
                 // Pines on ledges and rims (a big drop right next to a flat spot), fewer inland.
-                int chance = drop <= 2 && deep >= 7 ? 55 : (soil && drop <= 2 ? 16 : (drop <= 4 ? 4 : 0));
+                int chance = drop <= 2 && deep >= 7 ? 25 : (soil && drop <= 2 ? 6 : 0);
+                // Dark-green shrub caps on tops of towers and patches clinging in folds and on
+                // shelves (author refs 03, 06, 16: «шапками на вершинах, карманами на полках»).
+                double patch = noise.noise(wx / 7.0, wz / 7.0, 57.0);
+                // The front cliff of the niche: shrubs, pines and plums cling down its face
+                // (coordinator 04.10: volume from below).
+                if (v < MountHuaPlan.NICHE_FRONT && v > MountHuaPlan.NICHE_FRONT - 40
+                        && Math.abs(u) < MountHuaPlan.NICHE_U + 20 && drop >= 1) {
+                    long hf = mix(wx, wz, 71);
+                    int rf = (int) Math.floorMod(hf, 100L);
+                    if (rf < 10) {
+                        shrub(wx, t + 1, wz, hf, pos);
+                    } else if (rf < 13) {
+                        plumTree(wx, t + 1, wz, hf, pos);
+                    } else if (rf < 16) {
+                        pine(wx, t + 1, wz, hf, lx, lz, pos);
+                    }
+                    continue;
+                }
+                // Upper faces carry more green (author 04.10, refs 03, 14): caps nearly closed,
+                // shelves and folds clothed high up; the walls themselves stay rock.
+                boolean high = t > site.worldY(140);
+                boolean cap = deep >= 10 && drop <= 2;
+                boolean fold = drop >= 2 && drop <= 5 && patch > (high ? 0.0 : 0.35) && t < SNOW_Y;
+                boolean shelf = high && drop <= 1 && patch > -0.3;
+                if ((cap && patch > -0.5) || (fold && roll % (high ? 2 : 4) == 0) || (shelf && roll % 3 == 0)) {
+                    shrub(wx, t + 1, wz, h, pos);
+                    continue;
+                }
                 if (roll < chance) {
                     pine(wx, t + 1, wz, h, lx, lz, pos);
+                } else if (soil && drop <= 2 && t < site.baseY() + 130 && roll > 996) {
+                    plumTree(wx, t + 1, wz, h, pos);
                 }
             }
         }
@@ -556,8 +924,8 @@ final class MountHuaChunkWriter {
      * from the reference photos (05, 04).
      */
     private void pine(int x, int y, int z, long h, int lx, int lz, BlockPos.MutableBlockPos pos) {
-        int height = 5 + (int) Math.floorMod(h >>> 8, 6L);
-        // Lean towards the lowest neighbour (over the edge).
+        // Size, lean and crown vary per tree (codex r1: the pines looked standardised).
+        int height = 4 + (int) Math.floorMod(h >>> 8, 10L);
         int bestDx = 0;
         int bestDz = 0;
         int lowest = Integer.MAX_VALUE;
@@ -569,13 +937,17 @@ final class MountHuaChunkWriter {
                 bestDz = d[1];
             }
         }
+        // Lean over the drop: 0–3 sideways steps spread along the trunk.
+        int leanSteps = (int) Math.floorMod(h >>> 16, 4L);
         int cx = x;
         int cz = z;
-        BlockState log = Blocks.SPRUCE_LOG.defaultBlockState();
+        BlockState log = Blocks.SPRUCE_WOOD.defaultBlockState();
         for (int k = 0; k < height; k++) {
-            if (k == height / 2 && ((h >>> 20) & 1) == 0) {
+            if (leanSteps > 0 && k > 1 && k % Math.max(2, height / (leanSteps + 1)) == 0) {
                 cx += bestDx;
                 cz += bestDz;
+                leanSteps--;
+                level.setBlock(pos.set(cx - bestDx, y + k, cz - bestDz), log, 2);
             }
             if (!level.getBlockState(pos.set(cx, y + k, cz)).isAir()) {
                 return;
@@ -583,20 +955,26 @@ final class MountHuaChunkWriter {
             level.setBlock(pos, log, 2);
         }
         BlockState leaves = Blocks.SPRUCE_LEAVES.defaultBlockState().setValue(LeavesBlock.PERSISTENT, true);
-        int tiers = 2 + (int) Math.floorMod(h >>> 24, 2L);
+        int tiers = 1 + (int) Math.floorMod(h >>> 24, 3L);
+        if (height < 6) {
+            tiers = 1;
+        }
         for (int tier = 0; tier < tiers; tier++) {
-            int py = y + height - 1 - tier * 2;
-            int radius = tier == 0 ? 2 : 3;
-            int ox = cx + (tier == 0 ? 0 : (int) Math.floorMod(h >>> (28 + tier), 3L) - 1);
-            int oz = cz + (tier == 0 ? 0 : (int) Math.floorMod(h >>> (32 + tier), 3L) - 1);
+            int py = y + height - 1 - tier * (2 + (int) Math.floorMod(h >>> (40 + tier), 2L));
+            int radius = tier == 0 ? 2 + (int) Math.floorMod(h >>> 36, 2L) : 3 + (int) Math.floorMod(h >>> (44 + tier), 2L);
+            // Pads reach out over the drop more than back over the rock.
+            int reach = tier == 0 ? 0 : 1 + (int) Math.floorMod(h >>> (28 + tier), 2L);
+            int ox = cx + bestDx * reach;
+            int oz = cz + bestDz * reach;
             if (tier > 0) {
-                // A bare branch out to the pad.
-                level.setBlock(pos.set(ox, py, oz), log, 2);
+                for (int r = 1; r <= reach; r++) {
+                    level.setBlock(pos.set(cx + bestDx * r, py, cz + bestDz * r), log, 2);
+                }
             }
             for (int dx = -radius; dx <= radius; dx++) {
                 for (int dz = -radius; dz <= radius; dz++) {
                     int d2 = dx * dx + dz * dz;
-                    if (d2 > radius * radius + 1 || (d2 == radius * radius + 1 && ((h >>> (dx + 3 + dz * 7)) & 1) == 0)) {
+                    if (d2 > radius * radius + 1 || (d2 >= radius * radius && ((h >>> ((dx + 4) * 5 + dz + 4)) & 1) == 0)) {
                         continue;
                     }
                     placeLeaf(ox + dx, py + 1, oz + dz, leaves, pos);
@@ -608,29 +986,115 @@ final class MountHuaChunkWriter {
         }
     }
 
+    /** Low dark shrub: 1-2 blocks of persistent spruce/azalea foliage hugging the rock. */
+    private void shrub(int x, int y, int z, long h, BlockPos.MutableBlockPos pos) {
+        BlockState leaves = ((h >>> 5) & 3) == 0
+                ? Blocks.AZALEA_LEAVES.defaultBlockState().setValue(LeavesBlock.PERSISTENT, true)
+                : Blocks.SPRUCE_LEAVES.defaultBlockState().setValue(LeavesBlock.PERSISTENT, true);
+        placeLeaf(x, y, z, leaves, pos);
+        if (((h >>> 9) & 1) == 0) {
+            placeLeaf(x, y + 1, z, leaves, pos);
+        }
+        int[][] side = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
+        for (int k = 0; k < 4; k++) {
+            if (((h >>> (12 + k)) & 1) == 0) {
+                int sx = x + side[k][0];
+                int sz = z + side[k][1];
+                if (!level.getBlockState(pos.set(sx, y - 1, sz)).isAir()) {
+                    placeLeaf(sx, y, sz, leaves, pos);
+                }
+            }
+        }
+    }
+
     private void placeLeaf(int x, int y, int z, BlockState leaves, BlockPos.MutableBlockPos pos) {
         if (level.getBlockState(pos.set(x, y, z)).isAir()) {
             level.setBlock(pos, leaves, 2);
         }
     }
 
-    /** Small blossoming plum (cherry log and blossom leaves) for the grove. */
-    private void plum(int x, int y, int z, long h, BlockPos.MutableBlockPos pos) {
-        BlockState log = Blocks.CHERRY_LOG.defaultBlockState();
-        BlockState leaves = Blocks.CHERRY_LEAVES.defaultBlockState().setValue(LeavesBlock.PERSISTENT, true);
-        int height = 3 + (int) Math.floorMod(h >>> 9, 2L);
-        for (int k = 0; k < height; k++) {
-            level.setBlock(pos.set(x, y + k, z), log, 2);
+    /**
+     * Plum tree (梅): a short dark gnarled trunk and a few thick crooked branches with blossoms
+     * straight on the bare wood — no green crown, so it never reads as a sakura (author 03.10).
+     * Colour per tree: pink (60%), pale/white (25%), deep red (15%).
+     */
+    private void plumTree(int x, int y, int z, long h, BlockPos.MutableBlockPos pos) {
+        BlockState wood = Blocks.DARK_OAK_WOOD.defaultBlockState();
+        int colour = (int) Math.floorMod(h >>> 3, 20L);
+        BlockState blossom = (colour < 12 ? ModBlocks.PLUM_BLOSSOM.get() : colour < 17 ? ModBlocks.PLUM_BLOSSOM_PALE.get()
+                : ModBlocks.PLUM_BLOSSOM_RED.get()).defaultBlockState().setValue(LeavesBlock.PERSISTENT, true);
+        int trunk = 2 + (int) Math.floorMod(h >>> 7, 3L);
+        int cx = x;
+        int cz = z;
+        for (int k = 0; k < trunk; k++) {
+            if (k == trunk - 1 && ((h >>> 11) & 1) == 0) {
+                cx += ((h >>> 12) & 1) == 0 ? 1 : -1;
+            }
+            if (!level.getBlockState(pos.set(cx, y + k, cz)).canBeReplaced()) {
+                return;
+            }
+            level.setBlock(pos, wood, 2);
         }
-        int cy = y + height;
-        for (int dx = -2; dx <= 2; dx++) {
-            for (int dy = -1; dy <= 1; dy++) {
-                for (int dz = -2; dz <= 2; dz++) {
-                    int d2 = dx * dx + dz * dz + dy * dy * 2;
-                    if (d2 <= 5 || (d2 <= 7 && ((h >>> ((dx + 2) * 5 + dz + 2)) & 1) == 1)) {
-                        placeLeaf(x + dx, cy + dy, z + dz, leaves, pos);
-                    }
+        int branches = 2 + (int) Math.floorMod(h >>> 14, 3L);
+        int[][] dirs = {{1, 0}, {1, 1}, {0, 1}, {-1, 1}, {-1, 0}, {-1, -1}, {0, -1}, {1, -1}};
+        int start = (int) Math.floorMod(h >>> 17, 8L);
+        for (int b = 0; b < branches; b++) {
+            int[] d = dirs[(start + b * (8 / branches) + (int) Math.floorMod(h >>> (20 + b), 2L)) % 8];
+            int bx = cx;
+            int by = y + trunk - 1 - (b % 2);
+            int bz = cz;
+            int len = 3 + (int) Math.floorMod(h >>> (24 + b * 2), 4L);
+            for (int s = 0; s < len; s++) {
+                bx += d[0];
+                bz += d[1];
+                if (s % 2 == 1 || ((h >>> (30 + s + b)) & 1) == 1) {
+                    by++;
                 }
+                // Crooked: an occasional sideways kink.
+                if (((h >>> (40 + s + b)) & 3) == 0) {
+                    bx += d[1];
+                    bz -= d[0];
+                }
+                if (!level.getBlockState(pos.set(bx, by, bz)).canBeReplaced()) {
+                    break;
+                }
+                level.setBlock(pos, wood, 2);
+                if (s >= 1 && ((h >>> (8 + s * 3 + b)) & 3) == 0) {
+                    placeLeaf(bx, by + 1, bz, blossom, pos);
+                }
+                if (s >= 2 && ((h >>> (12 + s * 2 + b)) & 3) == 0) {
+                    placeLeaf(bx + d[1], by, bz - d[0], blossom, pos);
+                }
+            }
+            // A small, gappy cluster at the tip (codex r2: blossom blocks overpowered the branches).
+            int[][] tip = {{0, 1, 0}, {1, 0, 0}, {-1, 0, 0}, {0, 0, 1}, {0, 0, -1}, {d[0], 1, d[1]}};
+            for (int k = 0; k < tip.length; k++) {
+                if (k == 0 || ((h >>> (k * 5 + b)) & 1) == 0) {
+                    placeLeaf(bx + tip[k][0], by + tip[k][1], bz + tip[k][2], blossom, pos);
+                }
+            }
+        }
+    }
+
+    /** A clump of thick bamboo (Qinling foothills), 6–12 high, leafy tops. */
+    private void bamboo(int x, int y, int z, long h, BlockPos.MutableBlockPos pos) {
+        int stalks = 4 + (int) Math.floorMod(h >>> 5, 6L);
+        for (int i = 0; i < stalks; i++) {
+            int sx = x + (int) Math.floorMod(h >>> (9 + i * 3), 5L) - 2;
+            int sz = z + (int) Math.floorMod(h >>> (11 + i * 3), 5L) - 2;
+            int ground = y - 1;
+            BlockState below = level.getBlockState(pos.set(sx, ground, sz));
+            if (!below.is(BlockTags.BAMBOO_PLANTABLE_ON) || !level.getBlockState(pos.set(sx, y, sz)).isAir()) {
+                continue;
+            }
+            int height = 6 + (int) Math.floorMod(h >>> (20 + i), 7L);
+            for (int k = 0; k < height; k++) {
+                BambooLeaves leaves = k >= height - 2 ? BambooLeaves.LARGE : k == height - 3 ? BambooLeaves.SMALL : BambooLeaves.NONE;
+                if (!level.getBlockState(pos.set(sx, y + k, sz)).isAir()) {
+                    break;
+                }
+                level.setBlock(pos, Blocks.BAMBOO.defaultBlockState().setValue(BambooStalkBlock.AGE, 1)
+                        .setValue(BambooStalkBlock.LEAVES, leaves), 2);
             }
         }
     }
@@ -680,6 +1144,140 @@ final class MountHuaChunkWriter {
             BlockPos src = new BlockPos(sx, t, sz);
             level.setBlock(src, Blocks.WATER.defaultBlockState(), 2);
             level.scheduleTick(src, Fluids.WATER, 0);
+        }
+    }
+
+    /** The stream down the main valley: still water in the carved bed (its floor steps down). */
+    private void stream(BlockPos.MutableBlockPos pos) {
+        for (int lz = 0; lz < 16; lz++) {
+            for (int lx = 0; lx < 16; lx++) {
+                if (weight[idx(lx + B, lz + B)] <= 0) {
+                    continue;
+                }
+                int wx = x0 + lx;
+                int wz = z0 + lz;
+                double d = shape.streamDistance(site.localU(wx + 0.5, wz + 0.5), site.localV(wx + 0.5, wz + 0.5));
+                if (d > 3.5) {
+                    continue;
+                }
+                int t = topAt(lx, lz);
+                long h = mix(wx, wz, 41);
+                if (d > 1.5) {
+                    // Banks: rounded stones, gravel and moss along the water.
+                    int r = (int) (h & 15);
+                    if (r < 6) {
+                        BlockState bank = r < 2 ? Blocks.MOSSY_COBBLESTONE.defaultBlockState()
+                                : r < 4 ? Blocks.GRAVEL.defaultBlockState() : ModBlocks.HUA_GRANITE_MOSSY.get().defaultBlockState();
+                        level.setBlock(pos.set(wx, t, wz), bank, 2);
+                    }
+                    continue;
+                }
+                level.setBlock(pos.set(wx, t, wz), (h & 3) == 0 ? Blocks.COBBLESTONE.defaultBlockState()
+                        : Blocks.GRAVEL.defaultBlockState(), 2);
+                // Now and then a stone breaks the surface.
+                level.setBlock(pos.set(wx, t + 1, wz), (h & 31) == 0 ? ModBlocks.HUA_GRANITE_MOSSY.get().defaultBlockState()
+                        : Blocks.WATER.defaultBlockState(), 2);
+            }
+        }
+    }
+
+    /**
+     * Detail on the lower slopes and at the foot of the walls (author 04.10: «снизу можно
+     * подетальнее»): scree aprons of gravel and cobble, boulders of mixed sizes, fallen blocks,
+     * shrubs and roots at the wall foot, moss carpets. Only below the middle of the massif.
+     */
+    private void baseDetail(BlockPos.MutableBlockPos pos) {
+        int ceiling = (int) Math.round(site.worldY(110));
+        for (int lz = 0; lz < 16; lz++) {
+            for (int lx = 0; lx < 16; lx++) {
+                if (weight[idx(lx + B, lz + B)] < 0.5) {
+                    continue;
+                }
+                int t = topAt(lx, lz);
+                if (t > ceiling) {
+                    continue;
+                }
+                int wx = x0 + lx;
+                int wz = z0 + lz;
+                double u = site.localU(wx + 0.5, wz + 0.5);
+                double v = site.localV(wx + 0.5, wz + 0.5);
+                if (zoneAt(u, v, 2) != null) {
+                    continue;
+                }
+                double[] tr = shape.trailAt(u, v);
+                if (tr != null && tr[0] < 4) {
+                    continue;
+                }
+                int drop = t - lowestAround(lx, lz);
+                if (drop > 2) {
+                    continue; // only on walkable ground, the walls keep their faces
+                }
+                int rise = 0;
+                for (int dz = -3; dz <= 3; dz += 3) {
+                    for (int dx = -3; dx <= 3; dx += 3) {
+                        rise = Math.max(rise, topAt(lx + dx, lz + dz) - t);
+                    }
+                }
+                boolean foot = rise >= 8;
+                long h = mix(wx, wz, 53);
+                int roll = (int) Math.floorMod(h, 1000L);
+                BlockState top = chunk.getBlockState(pos.set(wx, t, wz));
+                if (!top.isSolidRender(chunk, pos)) {
+                    continue;
+                }
+                if (foot) {
+                    // Scree apron: fallen material piles up at the foot of every wall.
+                    if (roll < 22) {
+                        boulder(wx, t, wz, 1 + (int) Math.floorMod(h >>> 10, 3L), h, pos);
+                    } else if (roll < 300) {
+                        int r = (int) ((h >>> 12) & 7);
+                        BlockState scree = r < 3 ? Blocks.GRAVEL.defaultBlockState()
+                                : r < 5 ? Blocks.COBBLESTONE.defaultBlockState()
+                                : r < 6 ? Blocks.MOSSY_COBBLESTONE.defaultBlockState()
+                                : ModBlocks.HUA_GRANITE_CRACKED.get().defaultBlockState();
+                        level.setBlock(pos.set(wx, t, wz), scree, 2);
+                        if (r == 7 && roll < 120) {
+                            level.setBlock(pos.set(wx, t + 1, wz), ModBlocks.HUA_GRANITE_CRACKED.get().defaultBlockState(), 2);
+                        }
+                    } else if (roll < 360) {
+                        level.setBlock(pos.set(wx, t, wz), Blocks.ROOTED_DIRT.defaultBlockState(), 2);
+                        shrub(wx, t + 1, wz, h, pos);
+                    } else if (roll < 420 && t < SNOW_Y) {
+                        level.setBlock(pos.set(wx, t + 1, wz), Blocks.MOSS_CARPET.defaultBlockState(), 2);
+                    }
+                } else if (roll < 3) {
+                    // Lone boulders of mixed size in the foothills.
+                    boulder(wx, t, wz, 1 + (int) Math.floorMod(h >>> 10, 4L), h, pos);
+                } else if (roll < 9) {
+                    level.setBlock(pos.set(wx, t, wz), Blocks.MOSSY_COBBLESTONE.defaultBlockState(), 2);
+                    level.setBlock(pos.set(wx, t + 1, wz), ModBlocks.HUA_GRANITE.get().defaultBlockState(), 2);
+                }
+            }
+        }
+    }
+
+    /** A rounded granite boulder sunk one block into the ground; moss on top, stains on its sides. */
+    private void boulder(int x, int ground, int z, int r, long h, BlockPos.MutableBlockPos pos) {
+        double ry = r * (0.6 + 0.3 * ((h >>> 20) & 3) / 3.0);
+        for (int dx = -r; dx <= r; dx++) {
+            for (int dz = -r; dz <= r; dz++) {
+                for (int dy = -1; dy <= (int) Math.ceil(ry); dy++) {
+                    double q = (dx * dx + dz * dz) / (double) (r * r + 0.5) + (dy * dy) / (ry * ry + 0.5);
+                    if (q > 1.0 + 0.25 * (((h >>> (dx + dz * 3 + 30 + dy)) & 1))) {
+                        continue;
+                    }
+                    BlockState here = level.getBlockState(pos.set(x + dx, ground + dy, z + dz));
+                    if (!here.isAir() && !here.canBeReplaced() && dy > 0) {
+                        continue;
+                    }
+                    boolean upper = dy >= ry - 0.5;
+                    BlockState st = upper && ((h >>> (dx + 7)) & 1) == 0 ? ModBlocks.HUA_GRANITE_MOSSY.get().defaultBlockState()
+                            : ((h >>> (dz + 13)) & 3) == 0 ? ModBlocks.HUA_GRANITE_CRACKED.get().defaultBlockState()
+                            : ((h >>> (dy + 17)) & 3) == 0 ? ModBlocks.HUA_GRANITE_STAINED.get().defaultBlockState()
+                            : ModBlocks.HUA_GRANITE.get().defaultBlockState();
+                    level.setBlock(pos, st, 2);
+                }
+            }
         }
     }
 

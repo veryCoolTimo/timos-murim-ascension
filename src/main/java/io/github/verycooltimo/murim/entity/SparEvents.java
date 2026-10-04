@@ -31,6 +31,11 @@ public final class SparEvents {
     static void onDamaged(LivingDamageEvent.Post event) {
         LivingEntity victim = event.getEntity();
         SectDisciple d = duel(victim, event.getSource().getEntity());
+        // Урок наставника: удар партнёра в окно после выпуска удара ученика — «чистый».
+        if (d != null && victim == d && event.getSource().getEntity() instanceof net.minecraft.server.level.ServerPlayer p
+                && event.getNewDamage() > 0.0F && d.onPartnerHit()) {
+            io.github.verycooltimo.murim.sect.SectService.onCleanHit(p, d);
+        }
         if (d != null && victim.getHealth() <= d.floorFor(victim) + 0.01F) {
             d.endSpar(victim == d);
         }

@@ -244,6 +244,11 @@ public final class DevCaptureHandler {
                 manualTicks = 72;
                 return;
             }
+            // Разговор с NPC секты (03.10): сценарий — client/sect/DialogueCapture.
+            if ("dialogue".equals(subject)) {
+                io.github.verycooltimo.murim.client.sect.DialogueCapture.begin();
+                return;
+            }
             if (MEDITATION.equals(subject)) {
                 sitDown();
                 meditationTicks = MEDITATION_CAPTURE_TICKS;

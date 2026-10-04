@@ -3,7 +3,9 @@ package io.github.verycooltimo.murim.world.hua;
 import io.github.verycooltimo.murim.MurimMod;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Random;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
@@ -18,6 +20,10 @@ import net.minecraft.tags.BiomeTags;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.chunk.ChunkGenerator;
+import net.minecraft.world.level.chunk.ChunkGeneratorStructureState;
+import net.minecraft.world.level.levelgen.structure.Structure;
+import net.minecraft.world.level.levelgen.structure.StructureSet;
+import net.minecraft.world.level.levelgen.structure.placement.StructurePlacement;
 import net.minecraft.world.level.dimension.DimensionType;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.RandomState;
@@ -192,6 +198,7 @@ public final class MountHuaSites {
             if (regionsExist(regions, probe)) {
                 score += 1000;
             }
+            score += 300 * settlements(level, generator, randomState, probe);
             if (score < bestScore) {
                 bestScore = score;
                 bestX = cx;
@@ -203,6 +210,48 @@ public final class MountHuaSites {
         data.choose(bestX, bestZ, bestY, bestRot);
         MurimMod.LOGGER.info("Mount Hua site chosen: x={} z={} y={} rot={} (score {})", bestX, bestZ, bestY,
                 bestRot, String.format("%.1f", bestScore));
+    }
+
+    /**
+     * Villages, outposts and mansions that would start inside the footprint: they are planned on the
+     * old ground, and the massif would bury or cut them (seen on the stand 03.10: a village under the
+     * talus at the gate). Counts placement chunks of those structure sets whose biome allows them.
+     */
+    private static int settlements(ServerLevel level, ChunkGenerator generator, RandomState randomState,
+            MountHuaSite probe) {
+        ChunkGeneratorStructureState state = level.getChunkSource().getGeneratorState();
+        int hits = 0;
+        for (Holder<StructureSet> set : state.possibleStructureSets()) {
+            List<Structure> settlements = new ArrayList<>();
+            for (StructureSet.StructureSelectionEntry entry : set.value().structures()) {
+                String id = entry.structure().unwrapKey().map(k -> k.location().getPath()).orElse("");
+                if (id.contains("village") || id.contains("pillager_outpost") || id.contains("mansion")) {
+                    settlements.add(entry.structure().value());
+                }
+            }
+            if (settlements.isEmpty()) {
+                continue;
+            }
+            StructurePlacement placement = set.value().placement();
+            for (int cx = probe.minX() >> 4; cx <= probe.maxX() >> 4; cx++) {
+                for (int cz = probe.minZ() >> 4; cz <= probe.maxZ() >> 4; cz++) {
+                    if (!placement.isStructureChunk(state, cx, cz)) {
+                        continue;
+                    }
+                    int bx = (cx << 4) + 8;
+                    int bz = (cz << 4) + 8;
+                    Holder<Biome> biome = generator.getBiomeSource().getNoiseBiome(QuartPos.fromBlock(bx),
+                            QuartPos.fromBlock(72), QuartPos.fromBlock(bz), randomState.sampler());
+                    for (Structure structure : settlements) {
+                        if (structure.biomes().contains(biome)) {
+                            hits++;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        return hits;
     }
 
     private static boolean regionsExist(Path regions, MountHuaSite probe) {

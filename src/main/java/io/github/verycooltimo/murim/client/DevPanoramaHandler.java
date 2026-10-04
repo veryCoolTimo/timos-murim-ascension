@@ -72,6 +72,9 @@ public final class DevPanoramaHandler {
             mc.options.hideGui = true;
             mc.options.setCameraType(CameraType.FIRST_PERSON);
             mc.options.renderDistance().set(env("MURIM_PANO_RD", 24));
+            // The server keeps the view distance the client announced on join (options.txt) until the
+            // client broadcasts its options again — without this only ~6 chunks around arrive.
+            mc.options.broadcastOptions();
             mc.options.fov().set(Math.max(30, Math.min(110, env("MURIM_CAPTURE_FOV", 70))));
             if (System.getenv("MURIM_PANO_CLOUDS") == null) {
                 mc.options.cloudStatus().set(net.minecraft.client.CloudStatus.OFF);
