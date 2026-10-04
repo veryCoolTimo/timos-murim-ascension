@@ -128,6 +128,36 @@ public final class MasteryService {
         return Learn.LEARNED;
     }
 
+    /** Продолжение рваного манускрипта страницей: предел {@code cap}, освоенное не трогается. */
+    public static void deepen(ServerPlayer player, ResourceLocation id, int cap) {
+        MasteryState state = player.getData(ModAttachments.MASTERY);
+        TechniqueProgress current = state.techniques().get(id);
+        if (current == null || cap <= current.cap()) {
+            return;
+        }
+        player.setData(ModAttachments.MASTERY, state.with(id, new TechniqueProgress(current.layer(),
+                current.progress(), current.unprocessed(), current.day(), cap)));
+        sync(player);
+    }
+
+    /** Озарение от страницы или знакомой книги: освоение сразу, со вспышкой озарения на новом слое. */
+    public static void study(ServerPlayer player, ResourceLocation id, double amount) {
+        TechniqueProgress progress = player.getData(ModAttachments.MASTERY).techniques().get(id);
+        if (progress == null) {
+            return;
+        }
+        apply(player, id, MasteryRules.study(progress, amount * MasteryRules.wisdomFactor(
+                player.getData(ModAttachments.MASTERY).wisdom()), day(player)), false);
+        sync(player);
+    }
+
+    /** Мудрость от чтения того, что уже освоено до конца. */
+    public static void addWisdom(ServerPlayer player, double amount) {
+        MasteryState state = player.getData(ModAttachments.MASTERY);
+        player.setData(ModAttachments.MASTERY, state.withWisdom(state.wisdom() + amount));
+        sync(player);
+    }
+
     /** Может ли игрок применять технику: только выученную. */
     public static boolean knows(ServerPlayer player, ResourceLocation id) {
         return player.getData(ModAttachments.MASTERY).knows(id);

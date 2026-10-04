@@ -599,5 +599,19 @@
   "command.murim.learnall": "Learned all techniques at the last layer: %s. Secret ones need the Peak — /murim rank 4 1, a dantian — /murim seed",
   "sign.murim.hua.sparring": "Sparring square",
   "item.murim.wooden_sword": "Wooden Sword",
-  "murim.sect.sword_given": "The mentor hands you a training sword: %s."
+  "murim.sect.sword_given": "The mentor hands you a training sword: %s.",
+  "item.murim.manual_page": "Manuscript Page",
+  "item.murim.manual_page.named": "Page: %s",
+  "item.murim.manual_page.hint_bind": "%s pages of one book bind into a torn manual",
+  "item.murim.manual_page.hint_known": "A known book: the page continues it or brings insight",
+  "item.murim.silver_tael": "Silver Tael",
+  "murim.page.need_more": "%s: %s of %s pages — the text does not make sense yet",
+  "murim.page.bound": "The pages are bound into a torn manual: %s (up to layer %s)",
+  "murim.page.deepened": "%s: the missing page continues the text — now up to layer %s",
+  "murim.page.insight": "%s: an old page shows the familiar form anew",
+  "murim.page.wisdom": "%s: nothing new, but reading settles the mind",
+  "murim.page.reread": "%s: rereading a familiar book, you see more than before",
+  "murim.page.reread_wisdom": "%s: you know this book by heart; reading it again settles the mind",
+  "murim.manual.reread": "Reread",
+  "murim.manual.reread_hint": "You know all of it. Rereading wears the book out but brings insight."
 }

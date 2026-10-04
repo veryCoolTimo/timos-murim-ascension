@@ -579,5 +579,19 @@
   "command.murim.learnall": "Выучены все техники на последнем слое: %s. Тайным нужен Пик — /murim rank 4 1, даньтянь — /murim seed",
   "sign.murim.hua.sparring": "Площадка поединков",
   "item.murim.wooden_sword": "Деревянный меч",
-  "murim.sect.sword_given": "Наставник вручает тебе учебный меч: %s."
+  "murim.sect.sword_given": "Наставник вручает тебе учебный меч: %s.",
+  "item.murim.manual_page": "Обрывок манускрипта",
+  "item.murim.manual_page.named": "Обрывок: %s",
+  "item.murim.manual_page.hint_bind": "%s страницы одной книги сшиваются в рваный манускрипт",
+  "item.murim.manual_page.hint_known": "Знакомая книга: страница продолжает её или даёт озарение",
+  "item.murim.silver_tael": "Серебряный лян",
+  "murim.page.need_more": "%s: страниц %s из %s — смысл ещё не складывается",
+  "murim.page.bound": "Страницы сшиты в рваный манускрипт: %s (до слоя %s)",
+  "murim.page.deepened": "%s: недостающая страница продолжает текст — теперь до слоя %s",
+  "murim.page.insight": "%s: старая страница по-новому показывает знакомую форму",
+  "murim.page.wisdom": "%s: ничего нового, но чтение проясняет ум",
+  "murim.page.reread": "%s: перечитав знакомую книгу, вы видите больше прежнего",
+  "murim.page.reread_wisdom": "%s: эту книгу вы знаете наизусть; перечитав её, вы успокаиваете ум",
+  "murim.manual.reread": "Перечитать",
+  "murim.manual.reread_hint": "Здесь всё знакомо. Перечитав, вы истреплете книгу, но обретёте озарение."
 }
