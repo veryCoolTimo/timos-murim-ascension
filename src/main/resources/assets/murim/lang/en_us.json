@@ -1063,5 +1063,15 @@
   "murim.camp.cleared": "The bandit camp is routed. Its loot is yours, and the band will not return.",
   "command.murim.camp.none": "No bandit camp within 1600 blocks",
   "command.murim.camp.info": "Bandit camp at %s %s %s — %s",
-  "command.murim.camp.reset": "The camp is reset: the band will return when you come near"
+  "command.murim.camp.reset": "The camp is reset: the band will return when you come near",
+  "entity.murim.peddler": "Travelling Peddler",
+  "item.murim.peddler_spawn_egg": "Travelling Peddler Spawn Egg",
+  "murim.peddler.says": "<%s> %s",
+  "murim.peddler.greet.0": "Silver first, goods after. That is the way of the road.",
+  "murim.peddler.greet.1": "I buy old books. What is written in them is not my concern.",
+  "murim.peddler.greet.2": "Snow Plum pills, almost fresh. Almost.",
+  "murim.peddler.greet.3": "Bandits are restless in the woods again. They say they carry pages torn from other sects' manuals.",
+  "murim.peddler.greet.4": "A wooden sword for a disciple, daggers for the bold. Take your pick, young master.",
+  "murim.peddler.arrived": "A travelling peddler has come to the village",
+  "murim.peddler.hua_name": "Liu, the Gate Shopkeeper"
 }
