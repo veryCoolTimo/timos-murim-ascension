@@ -325,9 +325,10 @@ public class SectDisciple extends Bandit implements Casters.Caster {
         partner = other.getUUID();
         cleanHits = 0;
         defending = false;
-        // Ученики между собой — не больше одной техники за бой: на площадке поединков идёт учёба, а не
-        // ливень цветков (с игроком — как раньше).
-        boutTechniques = other instanceof SectDisciple ? 1 : Integer.MAX_VALUE;
+        // Ученики между собой — техника лишь в каждом четвёртом бою и одна (только Разрез): на площадке поединков идёт учёба
+        // основой, а не ливень цветков (codex по кадрам 04.10). С игроком — как раньше.
+        boutTechniques = other instanceof SectDisciple ? (getRandom().nextFloat() < 0.25F ? 1 : 0) : Integer.MAX_VALUE;
+        npcBout = other instanceof SectDisciple;
         // Партнёр-ученик сам выставит свой порог (он тоже в спарринге); игроку — от его здоровья.
         partnerFloor = other instanceof SectDisciple ? 0.0F : Math.max(1.0F, other.getHealth() - other.getMaxHealth() * SPAR_LOSS);
         setHealth(getMaxHealth());
@@ -817,7 +818,7 @@ public class SectDisciple extends Bandit implements Casters.Caster {
         private boolean act(String what, LivingEntity t, double d, boolean sees, long now, boolean force) {
             switch (what) {
                 case "rush" -> {
-                    if (!ready(RUSH, now) || boutTechniques <= 0) {
+                    if (!ready(RUSH, now) || boutTechniques <= 0 || npcBout) {
                         return false;
                     }
                     if (sees && d >= 5.5D && d <= 14.0D) {
@@ -1011,6 +1012,8 @@ public class SectDisciple extends Bandit implements Casters.Caster {
 
     /** Сколько техник ещё можно в этом бою (ученики между собой — одна). */
     private int boutTechniques = Integer.MAX_VALUE;
+    /** Бой с другим учеником: Натиск (дым на полплощадки) не применяется, только Разрез. */
+    private boolean npcBout;
 
     private boolean useTechnique(ResourceLocation id) {
         if (startTechnique(id)) {
@@ -1020,6 +1023,27 @@ public class SectDisciple extends Bandit implements Casters.Caster {
         return false;
     }
 
+    /** Поединок с другим учеником, если идёт. */
+    public boolean inBout() {
+        return spar != Spar.NONE && partnerEntity() instanceof SectDisciple;
+    }
+
+    /** Колокол: поединок учеников окончен без победителя (оба сразу к распорядку). */
+    public void stopBout() {
+        if (!inBout()) {
+            return;
+        }
+        SectDisciple other = (SectDisciple) partnerEntity();
+        for (SectDisciple d : List.of(this, other)) {
+            d.cancelTechnique();
+            d.formTick = -1;
+            d.dashLeft = 0;
+            d.spar = Spar.NONE;
+            d.setTarget(null);
+            d.playAnim(null, 0);
+        }
+    }
+
     /** На защиту своих: цель — чужой моб. */
     public void defend(Mob enemy) {
         if (spar != Spar.NONE || enemy == null || !enemy.isAlive()) {
@@ -1027,6 +1051,7 @@ public class SectDisciple extends Bandit implements Casters.Caster {
         }
         wake();
         boutTechniques = Integer.MAX_VALUE;
+        npcBout = false;
         defending = true;
         setTarget(enemy);
     }

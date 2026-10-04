@@ -132,6 +132,10 @@ public final class SectLife {
         if ((npc.tickCount + npc.getId()) % 200 == 0 && duplicate(npc, level)) {
             return;
         }
+        // Колокол пробил — занятия кончились: поединок учеников прекращается (с игроком — доигрывается).
+        if (npc.inBout() && SectSchedule.at(level.getDayTime()) != SectSchedule.Period.TRAINING) {
+            npc.stopBout();
+        }
         // Свои — на защиту: чужой враждебный моб рядом с учеником.
         if (npc.free() && !npc.dormant()) {
             for (Mob enemy : level.getEntitiesOfClass(Mob.class, npc.getBoundingBox().inflate(10.0D),
@@ -494,6 +498,7 @@ public final class SectLife {
             if (r == null || !level.isPositionEntityTicking(BlockPos.containing(r.spot()))) {
                 continue;
             }
+            d.stopBout();
             d.wake();
             d.moveTo(r.spot().x, r.spot().y, r.spot().z, r.yaw(), 0.0F);
             d.setYHeadRot(r.yaw());

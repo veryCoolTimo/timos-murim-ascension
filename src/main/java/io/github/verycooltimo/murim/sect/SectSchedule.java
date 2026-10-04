@@ -383,8 +383,8 @@ public final class SectSchedule {
         int place = i % 3;
         double cv = -16.0D + group * 8.0D;
         double a = place * (Math.PI * 2.0D / 3.0D);
-        double du = Math.cos(a) * 1.6D;
-        double dv = Math.sin(a) * 1.6D;
+        double du = Math.cos(a) * 2.0D;
+        double dv = Math.sin(a) * 2.0D;
         return new Task(Kind.REST, "camp", du, cv + dv, -du, -dv);
     }
 

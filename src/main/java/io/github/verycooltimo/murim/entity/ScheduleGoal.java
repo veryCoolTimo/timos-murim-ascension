@@ -23,7 +23,7 @@ import java.util.EnumSet;
 public final class ScheduleGoal extends Goal {
 
     /** Подошёл к месту. */
-    private static final double ARRIVE = 1.1D;
+    private static final double ARRIVE = 0.6D;
     /** Без продвижения столько тиков — застрял. */
     private static final int STUCK_TICKS = 600;
 
@@ -156,6 +156,10 @@ public final class ScheduleGoal extends Goal {
         double d = horizontal(spot);
         if (d <= ARRIVE * ARRIVE && Math.abs(npc.getY() - spot.y) < 2.5D) {
             npc.getNavigation().stop();
+            // Ровно на место: строй и столы читаются сеткой, а не кучкой (codex по кадрам 04.10).
+            if (d > 0.0025D && npc.onGround()) {
+                npc.setPos(spot.x, npc.getY(), spot.z);
+            }
             stuck = 0;
             best = Double.MAX_VALUE;
             return true;
