@@ -61,7 +61,8 @@ public final class DevSetupEvents {
                 || !Boolean.getBoolean(CAPTURE_PROPERTY)
                 // Panorama of Mount Hua: no stage, no dummies (DevPanoramaHandler).
                 || "mounthua".equals(System.getProperty("murim.capture.technique"))
-                || "placecheck".equals(System.getProperty("murim.capture.technique"))) {
+                || "placecheck".equals(System.getProperty("murim.capture.technique"))
+                || "sectlife".equals(System.getProperty("murim.capture.technique"))) {
             return;
         }
         // Меч нужен для съёмки техник, но в церемонии он торчит из сложенных рук и
