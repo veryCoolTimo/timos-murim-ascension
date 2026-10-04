@@ -584,7 +584,15 @@ public final class MountHuaShape {
         if (Math.abs(du) > p.ra() * 1.6 + 10 || Math.abs(dv) > p.ra() * 1.6 + 10) {
             return 0;
         }
-        return bullet(du, dv, p.top(), p.ra(), p.rb(), Math.toRadians(p.angle()), p.power(), p.u() * 0.37);
+        double h = bullet(du, dv, p.top(), p.ra(), p.rb(), Math.toRadians(p.angle()), p.power(), p.u() * 0.37);
+        if (p.name().equals("south") && dv < 0 && h > 0) {
+            // The main peak rises right behind the sect shelf (author refs «sect high, peak
+            // towering»): its north flank is steepened so the wall starts close behind the pads.
+            double q = Math.min(1, Math.hypot(du / p.ra(), dv / p.rb()));
+            double lift = smooth(0, 0.6, -dv / p.rb()) * smooth(1.05, 0.55, q);
+            h = Math.min(p.top(), h + (p.top() - h) * 0.45 * lift);
+        }
+        return h;
     }
 
     /**
