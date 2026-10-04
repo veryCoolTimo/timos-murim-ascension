@@ -242,7 +242,7 @@ public final class SectService {
         ServerLevel level = event.getServer().overworld();
         SectSiteData data = level.getDataStorage().computeIfAbsent(SectSiteData.FACTORY, SectSiteData.NAME);
         placeZone(level, site, data, "gate", List.of(SectRole.LEADER, SectRole.DISCIPLE_A));
-        placeZone(level, site, data, "main", List.of(SectRole.MENTOR, SectRole.SENIOR, SectRole.DISCIPLE_B));
+        placeZone(level, site, data, "training", List.of(SectRole.MENTOR, SectRole.SENIOR, SectRole.DISCIPLE_B));
     }
 
     private static void placeZone(ServerLevel level, MountHuaSite site, SectSiteData data, String zone, List<SectRole> roles) {

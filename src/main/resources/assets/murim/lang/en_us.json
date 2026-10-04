@@ -559,5 +559,20 @@
   "sign.murim.hua.pav_north": "North Peak pavilion",
   "sign.murim.hua.pav_west": "West Peak pavilion",
   "sign.murim.hua.pav_south": "South Peak pavilion",
-  "sign.murim.hua.pav_east": "Ledge pavilion"
+  "sign.murim.hua.pav_east": "Ledge pavilion",
+  "sign.murim.hua.training": "Training ground",
+  "sign.murim.hua.bell": "Bell pavilion",
+  "sign.murim.hua.mentor": "Mentor's dais",
+  "sign.murim.hua.main_hall": "Main hall",
+  "sign.murim.hua.camp": "Disciples' camp",
+  "sign.murim.hua.dorm_2nd": "Dorm, 2nd gen.",
+  "sign.murim.hua.dorm_3rd": "Dorm, 3rd gen.",
+  "sign.murim.hua.dining": "Dining hall",
+  "sign.murim.hua.ancestors": "Ancestors' hall",
+  "sign.murim.hua.elders": "Elders' houses",
+  "sign.murim.hua.treasury": "Treasury",
+  "sign.murim.hua.scriptures": "Hall of Scriptures",
+  "sign.murim.hua.alchemy": "Alchemy pavilion",
+  "sign.murim.hua.knoll": "Knoll pavilion",
+  "sign.murim.hua.ruin": "(ruined foundation)"
 }

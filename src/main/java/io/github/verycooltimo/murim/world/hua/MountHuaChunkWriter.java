@@ -552,6 +552,7 @@ final class MountHuaChunkWriter {
         vegetation(pos);
         waterfalls(pos);
         stream(pos);
+        bridge(pos);
         baseDetail(pos);
     }
 
@@ -657,6 +658,12 @@ final class MountHuaChunkWriter {
             return;
         }
         int y = (int) Math.round(site.worldY(z.y()));
+        boolean inNiche = Math.abs(z.u()) <= MountHuaPlan.NICHE_U && z.v() >= MountHuaPlan.NICHE_FRONT
+                && z.v() <= MountHuaPlan.NICHE_BACK;
+        if (inNiche && !MountHuaPlan.CORE.contains(z.id())) {
+            ruin(z, r, y, pos);
+            return;
+        }
         for (int x = Math.max(r[0], x0); x <= Math.min(r[2], x0 + 15); x++) {
             for (int zz = Math.max(r[1], z0); zz <= Math.min(r[3], z0 + 15); zz++) {
                 boolean edge = x == r[0] || x == r[2] || zz == r[1] || zz == r[3];
@@ -682,6 +689,57 @@ final class MountHuaChunkWriter {
         }
     }
 
+    /**
+     * A site for later: the sect starts poor (canon), so here stands only a ruined foundation —
+     * a broken stone footing with column stubs and moss; the author rebuilds it later.
+     */
+    private void ruin(Zone z, int[] r, int y, BlockPos.MutableBlockPos pos) {
+        for (int x = Math.max(r[0], x0); x <= Math.min(r[2], x0 + 15); x++) {
+            for (int zz = Math.max(r[1], z0); zz <= Math.min(r[3], z0 + 15); zz++) {
+                boolean edge = x == r[0] || x == r[2] || zz == r[1] || zz == r[3];
+                long h = mix(x, zz, 61);
+                if (edge && (h & 7) != 0) {
+                    level.setBlock(pos.set(x, y, zz), (h & 3) == 0 ? Blocks.MOSSY_COBBLESTONE.defaultBlockState()
+                            : ModBlocks.HUA_GRANITE_CRACKED.get().defaultBlockState(), 2);
+                    // Column stubs every 6 blocks along the footing, broken at different heights.
+                    if (((x - r[0]) % 6 == 0 || x == r[2]) && ((zz - r[1]) % 6 == 0 || zz == r[3])) {
+                        int k = 1 + (int) ((h >>> 8) % 3);
+                        for (int j = 1; j <= k; j++) {
+                            level.setBlock(pos.set(x, y + j, zz), j == k && ((h >>> 12) & 1) == 0
+                                    ? Blocks.MOSSY_STONE_BRICK_WALL.defaultBlockState()
+                                    : Blocks.STONE_BRICK_WALL.defaultBlockState(), 2);
+                        }
+                    }
+                } else if (!edge && (h % 23) == 0) {
+                    level.setBlock(pos.set(x, y, zz), Blocks.MOSSY_COBBLESTONE.defaultBlockState(), 2);
+                }
+            }
+        }
+        if (inChunk(r[0] + 1, r[1] + 1)) {
+            sign(r[0] + 1, y + 1, r[1] + 1, z, pos);
+        }
+    }
+
+    /** Wooden bridge from the treasury terrace over the slot to the plum-grove ledge. */
+    private void bridge(BlockPos.MutableBlockPos pos) {
+        int y = (int) Math.round(site.worldY(153));
+        for (int lz = 0; lz < 16; lz++) {
+            for (int lx = 0; lx < 16; lx++) {
+                int wx = x0 + lx;
+                int wz = z0 + lz;
+                double u = site.localU(wx + 0.5, wz + 0.5);
+                double v = site.localV(wx + 0.5, wz + 0.5);
+                if (u < -136 || u > -100 || Math.abs(v + 34) > 2.5 || topAt(lx, lz) >= y) {
+                    continue;
+                }
+                level.setBlock(pos.set(wx, y, wz), Blocks.SPRUCE_PLANKS.defaultBlockState(), 2);
+                if (Math.abs(v + 34) > 1.6) {
+                    level.setBlock(pos.set(wx, y + 1, wz), Blocks.SPRUCE_FENCE.defaultBlockState(), 2);
+                }
+            }
+        }
+    }
+
     private void sign(int x, int y, int z, Zone zone, BlockPos.MutableBlockPos pos) {
         if (!inChunk(x, z)) {
             return;
@@ -693,7 +751,9 @@ final class MountHuaChunkWriter {
         SignText text = new SignText()
                 .setMessage(0, Component.translatable("sign.murim.hua." + zone.id()))
                 .setMessage(1, Component.literal(zone.width() + " x " + zone.depth()))
-                .setMessage(2, Component.translatable("sign.murim.hua.placeholder"));
+                .setMessage(2, Component.translatable(MountHuaPlan.CORE.contains(zone.id()) || !zone.id().matches(
+                        "ancestors|elders|treasury|scriptures|alchemy|knoll|poles") ? "sign.murim.hua.placeholder"
+                        : "sign.murim.hua.ruin"));
         CompoundTag tag = new CompoundTag();
         tag.putString("id", "minecraft:sign");
         tag.putInt("x", x);
@@ -768,7 +828,7 @@ final class MountHuaChunkWriter {
                 double v = site.localV(wx + 0.5, wz + 0.5);
                 Zone near = zoneAt(u, v, 7);
                 if (near != null && zoneAt(u, v, 2) == null && !near.cave()
-                        && (near.id().equals("grove") || near.id().equals("upper") || near.id().startsWith("pav"))) {
+                        && (near.id().equals("grove") || near.id().equals("ancestors") || near.id().equals("elders") || near.id().equals("scriptures") || near.id().startsWith("pav"))) {
                     // A ring of plums just outside the terrace edge (the yard itself stays free).
                     long h = mix(wx, wz, 29);
                     if (Math.floorMod(h, 1000L) < 30) {
@@ -815,6 +875,21 @@ final class MountHuaChunkWriter {
                 // Dark-green shrub caps on tops of towers and patches clinging in folds and on
                 // shelves (author refs 03, 06, 16: «шапками на вершинах, карманами на полках»).
                 double patch = noise.noise(wx / 7.0, wz / 7.0, 57.0);
+                // The front cliff of the niche: shrubs, pines and plums cling down its face
+                // (coordinator 04.10: volume from below).
+                if (v < MountHuaPlan.NICHE_FRONT && v > MountHuaPlan.NICHE_FRONT - 40
+                        && Math.abs(u) < MountHuaPlan.NICHE_U + 20 && drop >= 1) {
+                    long hf = mix(wx, wz, 71);
+                    int rf = (int) Math.floorMod(hf, 100L);
+                    if (rf < 10) {
+                        shrub(wx, t + 1, wz, hf, pos);
+                    } else if (rf < 13) {
+                        plumTree(wx, t + 1, wz, hf, pos);
+                    } else if (rf < 16) {
+                        pine(wx, t + 1, wz, hf, lx, lz, pos);
+                    }
+                    continue;
+                }
                 // Upper faces carry more green (author 04.10, refs 03, 14): caps nearly closed,
                 // shelves and folds clothed high up; the walls themselves stay rock.
                 boolean high = t > site.worldY(140);
