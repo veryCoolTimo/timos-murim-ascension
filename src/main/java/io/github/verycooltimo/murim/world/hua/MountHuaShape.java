@@ -738,23 +738,22 @@ public final class MountHuaShape {
         if (z.cave()) {
             return h;
         }
-        double hw = z.width() / 2.0;
-        double hd = z.depth() / 2.0;
-        double dx = Math.max(0, Math.abs(u - z.u()) - hw);
-        double dz = Math.max(0, Math.abs(v - z.v()) - hd);
-        double d = Math.hypot(dx, dz);
+        double dx = Math.max(0, Math.abs(u - z.u()) - z.width() / 2.0);
+        double dz = Math.max(0, Math.abs(v - z.v()) - z.depth() / 2.0);
+        // The pad edge wanders 1-4 blocks past the build rectangle: no ruler-straight border.
+        double d = Math.max(0, Math.hypot(dx, dz) - (3.0 + 2.5 * relief.noise(u / 6.0, v / 6.0, 61.0 + z.y())));
         if (d == 0) {
             return z.y();
         }
-        if (d > 40) {
+        if (d > 12) {
             return h;
         }
-        if (h < z.y()) {
-            // Retaining wall: one block of rim, then a steep buttress (3:1) down to the rock.
-            return d > 10 ? h : Math.max(h, z.y() - 3.0 * Math.max(0, d - 1));
-        }
-        // Behind the terrace the slope is cut back: a short apron, then the natural cliff.
-        return Math.min(h, z.y() + 2.2 * Math.max(0, d - 3));
+        double y = z.y();
+        // Lower ground: a short retaining bank (3 per block) that meets the natural slope;
+        // higher ground: a cut bank (1.5 per block). Beyond that the ridge stays as it was.
+        double graded = h < y ? Math.max(h, y - 3.0 * d) : Math.min(h, y + 1.5 * d);
+        double k = smooth(6, 12, d);
+        return graded * (1 - k) + h * k;
     }
 
     /** Smooth maximum (polynomial), k = blend width in blocks. */

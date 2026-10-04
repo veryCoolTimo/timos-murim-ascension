@@ -135,15 +135,20 @@ public final class MountHuaPlan {
             new Zone("pav_west", "West Peak pavilion", -125, 35, 14, 12, 222, false, 0, 0),
             new Zone("pav_south", "South Peak pavilion", 5, 125, 16, 14, 232, false, 0, 0),
             new Zone("pav_east", "East Peak ledge pavilion", 110, -10, 12, 10, 210, false, 0, 0),
-            new Zone("training", "Main terrace", -20, 20, 100, 70, 160, false, 0, 0),
-            new Zone("upper", "Temple and leader's residence", -30, 74, 60, 28, 168, false, 0, 0),
-            new Zone("vault", "Secret vault", -32, 112, 14, 12, 169, true, -32, 86),
-            new Zone("poles", "Plum blossom poles", -88, 62, 30, 26, 156, false, 0, 0),
-            new Zone("grove", "Plum grove", 38, 90, 36, 26, 166, false, 0, 0),
+            // The sect on the old natural shelf (author 04.10: «доработать старую версию»): no big
+            // terrace, only small building pads at slightly different heights that follow the
+            // ridge; natural ground with trees between them.
+            new Zone("training", "Training ground", -6, 8, 36, 34, 153, false, 0, 0),
+            new Zone("main_hall", "Main hall", -16, 47, 38, 18, 155, false, 0, 0),
+            new Zone("camp", "Disciples' camp", 36, 26, 22, 30, 146, false, 0, 0),
+            new Zone("upper", "Temple and leader's residence", -14, 80, 34, 16, 157, false, 0, 0),
+            new Zone("vault", "Secret vault", -32, 112, 14, 12, 169, true, -22, 88),
+            new Zone("poles", "Plum blossom poles", -84, 64, 22, 18, 150, false, 0, 0),
+            new Zone("grove", "Plum grove", 38, 90, 30, 22, 166, false, 0, 0),
             new Zone("penance", "Penance cave", -110, 30, 10, 10, 161, true, -78, 30));
 
     /** Core build sites (marked for the author now); the others are ruined foundations. */
-    public static final java.util.Set<String> CORE = java.util.Set.of("gate", "sect_gate", "training");
+    public static final java.util.Set<String> CORE = java.util.Set.of("gate", "sect_gate", "training", "main_hall", "camp", "upper");
 
     /** No inner paths on the old shelf. */
     public static final double[][] PATHS = {};
