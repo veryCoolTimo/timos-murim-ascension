@@ -36,6 +36,14 @@ public final class BanditCampData extends SavedData {
         public final Map<Integer, UUID> alive = new HashMap<>();
         public long lastLoss;
         public long lastAlarm = Long.MIN_VALUE / 2;
+        /**
+         * Бой (не сохраняется, {@link CampFight}): кто сейчас дерётся вблизи, кто стреляет, до какого
+         * тика банда гонится за бежавшим игроком и на каком тике порядок боя пересчитан.
+         */
+        public final java.util.Set<UUID> melee = new java.util.LinkedHashSet<>();
+        public final java.util.Set<UUID> shooters = new java.util.LinkedHashSet<>();
+        public long pursuitUntil = Long.MIN_VALUE / 2;
+        public long fightTick = Long.MIN_VALUE / 2;
 
         Camp(long key, BlockPos centre, long seed) {
             this.key = key;

@@ -63,6 +63,8 @@ public class BanditSwordsman extends Bandit {
     protected void registerGoals() {
         goalSelector.addGoal(0, new FloatGoal(this));
         goalSelector.addGoal(2, new DuelGoal());
+        // Лагерь: в бою двое, остальные ждут кольцом (docs/design/24-bandit-camp.md §3).
+        goalSelector.addGoal(3, new CampWaitGoal(this));
         goalSelector.addGoal(5, new CampIdleGoal(this));
         goalSelector.addGoal(6, new WaterAvoidingRandomStrollGoal(this, 0.8D));
         goalSelector.addGoal(7, new LookAtPlayerGoal(this, Player.class, 8.0F));
@@ -165,14 +167,16 @@ public class BanditSwordsman extends Bandit {
         @Override
         public boolean canUse() {
             LivingEntity t = getTarget();
-            return t != null && t.isAlive() && state() != STUN;
+            return t != null && t.isAlive() && state() != STUN
+                    && io.github.verycooltimo.murim.world.camp.CampFight.mayFight(BanditSwordsman.this);
         }
 
         @Override
         public boolean canContinueToUse() {
             LivingEntity t = getTarget();
             boolean busy = state() == WINDUP || state() == STRIKE || state() == RECOVER;
-            return state() != STUN && (busy || (t != null && t.isAlive() && !(t instanceof Player p && (p.isCreative() || p.isSpectator()))));
+            return state() != STUN && (busy || (t != null && t.isAlive() && !(t instanceof Player p && (p.isCreative() || p.isSpectator()))
+                    && io.github.verycooltimo.murim.world.camp.CampFight.mayFight(BanditSwordsman.this)));
         }
 
         @Override

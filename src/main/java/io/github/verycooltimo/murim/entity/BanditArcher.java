@@ -50,7 +50,14 @@ public class BanditArcher extends Bandit implements RangedAttackMob {
         goalSelector.addGoal(0, new FloatGoal(this));
         // Как у скелета на «Нормально»: выстрел раз в 2 с, радиус 15.
         // API: reference/minecraft-src/net/minecraft/world/entity/ai/goal/RangedBowAttackGoal.java
-        goalSelector.addGoal(2, new RangedBowAttackGoal<>(this, 1.0D, 40, 15.0F));
+        // Вне лагеря; в лагере — CampBowGoal: стреляет со своего места, не больше двух сразу.
+        goalSelector.addGoal(2, new RangedBowAttackGoal<BanditArcher>(this, 1.0D, 40, 15.0F) {
+            @Override
+            public boolean canUse() {
+                return campKey() == NO_CAMP && super.canUse();
+            }
+        });
+        goalSelector.addGoal(2, new CampBowGoal(this));
         goalSelector.addGoal(5, new CampIdleGoal(this));
         goalSelector.addGoal(6, new WaterAvoidingRandomStrollGoal(this, 0.8D));
         goalSelector.addGoal(7, new LookAtPlayerGoal(this, Player.class, 8.0F));
