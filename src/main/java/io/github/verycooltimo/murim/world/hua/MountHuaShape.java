@@ -136,11 +136,42 @@ public final class MountHuaShape {
      */
     public double ground(double u, double v) {
         double h = Math.max(natural(u, v), belt(u, v));
+        h = basin(u, v, h);
+        for (Peak tower : MountHuaPlan.TOWERS) {
+            h = Math.max(h, peak(tower, u, v));
+        }
         // Gorges cut the foothill belt too (it could fill the slot back up otherwise).
         for (Gorge gorge : MountHuaPlan.GORGES) {
             h = gorge(gorge, u, v, h);
         }
         return valley(u, v, h);
+    }
+
+    /**
+     * The sect basin: a flat floor where the organic outline says so; outside it the natural
+     * spires stay as they are and meet the floor in steep walls that follow their own shapes
+     * (no extruded rim). Cliffs/clefts of the natural terrain therefore enclose the compound.
+     */
+    private double basin(double u, double v, double h) {
+        double q = Double.MAX_VALUE;
+        for (double[] e : MountHuaPlan.BASIN) {
+            double du = (u - e[0]) / e[2];
+            double dv = (v - e[1]) / e[3];
+            double a = Math.atan2(dv, du);
+            double wob = 1 + 0.10 * warp.noise(Math.cos(a) * 2.2 + e[0] * 0.01, Math.sin(a) * 2.2, 71.0 + e[1])
+                    + 0.05 * warp.noise(u / 11.0, v / 11.0, 73.0);
+            q = Math.min(q, Math.sqrt(du * du + dv * dv) / wob);
+        }
+        if (q > 1.6) {
+            return h;
+        }
+        double floor = MountHuaPlan.basinFloor(u, v);
+        if (q <= 1) {
+            return floor;
+        }
+        // Approximate distance (blocks) past the outline; the rock rises steeply from the floor.
+        double out = (q - 1) * 60;
+        return Math.min(h, floor + 2.5 * out + 1.5 * out * out);
     }
 
     /** Foothill belt height (nominal), 0 at the outer edge. */
@@ -276,9 +307,6 @@ public final class MountHuaShape {
         }
         for (Peak peak : MountHuaPlan.PEAKS) {
             h = smax(h, peak(peak, u, v), 8);
-        }
-        for (Peak tower : MountHuaPlan.TOWERS) {
-            h = Math.max(h, peak(tower, u, v));
         }
         // The scarp cuts everything: a straight wall from the plain up to the North Peak.
         h *= scarp(u, v, 4);
