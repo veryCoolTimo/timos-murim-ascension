@@ -39,7 +39,7 @@ public final class PlaceService {
 
     /**
      * Место силы рядом: сначала камень жилы, иначе природное — пик (высота ≥ 110 и открытое небо),
-     * вода (текущая вода рядом — водопад, стремнина), старое дерево (много брёвен рядом).
+     * вода (текущая вода рядом — водопад, стремнина), старое дерево (ствол 2×2 рядом).
      * Автор 03.10: «также должно работать около деревьев, гор и т. д.».
      */
     public static Optional<Place> findPlace(Level level, BlockPos around) {
@@ -48,13 +48,13 @@ public final class PlaceService {
             BlockState s = level.getBlockState(stone.get());
             return Optional.of(new Place(stone.get(), s.getValue(SpiritVeinBlock.KIND), true));
         }
-        if (around.getY() >= PlaceRules.PEAK_HEIGHT && level.canSeeSky(around.above()) && solidBelow(level, around) >= 4) {
+        if (around.getY() >= PlaceRules.PEAK_HEIGHT && level.canSeeSky(around.above()) && solidBelow(level, around) >= 4
+                && localSummit(level, around)) {
             // Якорь — сетка 4×4: сидящий не сдвигается, и цикл волн не скачет.
             return Optional.of(new Place(new BlockPos(around.getX() & ~3, around.getY(), around.getZ() & ~3),
                     PlaceKind.PEAK, false));
         }
         int flowing = 0;
-        int logs = 0;
         BlockPos water = null;
         BlockPos log = null;
         for (BlockPos p : BlockPos.betweenClosed(around.offset(-5, -3, -5), around.offset(5, 8, 5))) {
@@ -65,20 +65,34 @@ public final class PlaceService {
                     water = p.immutable();
                 }
             }
-            if (level.getBlockState(p).is(net.minecraft.tags.BlockTags.LOGS)) {
-                logs++;
-                if (log == null) {
-                    log = p.immutable();
-                }
+            if (log == null && bigTrunk(level, p)) {
+                log = p.immutable();
             }
         }
         if (flowing >= PlaceRules.WATER_FLOWING) {
             return Optional.of(new Place(water, PlaceKind.WATER, false));
         }
-        if (logs >= PlaceRules.FOREST_LOGS) {
+        if (log != null) {
             return Optional.of(new Place(log, PlaceKind.FOREST, false));
         }
         return Optional.empty();
+    }
+
+    /**
+     * Старое большое дерево — ствол 2×2 высотой {@link PlaceRules#BIG_TRUNK} (тёмный дуб,
+     * огромная ель, тропическое). Счёт брёвен рядом (было ≥ 14) зажигал любой густой лес:
+     * на Хуашань сосны по 4–13 брёвен стоят тесно, и место «старого дерева» было у трети
+     * точек под кронами (стенд placecheck, 04.10).
+     */
+    static boolean bigTrunk(Level level, BlockPos base) {
+        for (int dy = 0; dy < PlaceRules.BIG_TRUNK; dy++) {
+            for (int i = 0; i < 4; i++) {
+                if (!level.getBlockState(base.offset(i & 1, dy, i >> 1)).is(net.minecraft.tags.BlockTags.LOGS)) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     /**
@@ -93,6 +107,37 @@ public final class PlaceService {
             }
         }
         return solid;
+    }
+
+    /**
+     * Настоящая вершина, а не любой склон выше {@link PlaceRules#PEAK_HEIGHT}: в радиусе
+     * {@link PlaceRules#SUMMIT_RADIUS} нет земли выше ног больше чем на 2 блока. Гора Хуашань
+     * почти вся выше 110, и без этого пиком считался каждый её блок (автор 04.10).
+     *
+     * <p>Колонка просматривается по блокам сверху вниз, а не по карте высот
+     * {@code MOTION_BLOCKING_NO_LEAVES}: клиенту сервер шлёт только {@code MOTION_BLOCKING} и
+     * {@code WORLD_SURFACE}, и на клиенте та карта пустая — любой склон был «вершиной», аура
+     * горела у медитирующего на склоне (стенд placecheck, 04.10). Листва и стволы — не земля.
+     * API: reference/minecraft-src/net/minecraft/world/level/levelgen/Heightmap.java#Types (sendToClient)
+     */
+    static boolean localSummit(Level level, BlockPos around) {
+        int r = PlaceRules.SUMMIT_RADIUS;
+        BlockPos.MutableBlockPos p = new BlockPos.MutableBlockPos();
+        for (int dx = -r; dx <= r; dx += 2) {
+            for (int dz = -r; dz <= r; dz += 2) {
+                int x = around.getX() + dx;
+                int z = around.getZ() + dz;
+                int top = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING, x, z);
+                for (int y = top - 1; y > around.getY() + 1; y--) {
+                    BlockState s = level.getBlockState(p.set(x, y, z));
+                    if (s.blocksMotion() && !s.is(net.minecraft.tags.BlockTags.LEAVES)
+                            && !s.is(net.minecraft.tags.BlockTags.LOGS)) {
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
     }
 
     /** Ближайший камень жилы в радиусе (сканирует куб 13×7×13). */

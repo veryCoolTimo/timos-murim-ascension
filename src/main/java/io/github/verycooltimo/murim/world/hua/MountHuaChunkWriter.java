@@ -658,9 +658,8 @@ final class MountHuaChunkWriter {
             return;
         }
         int y = (int) Math.round(site.worldY(z.y()));
-        boolean inNiche = Math.abs(z.u()) <= MountHuaPlan.NICHE_U && z.v() >= MountHuaPlan.NICHE_FRONT
-                && z.v() <= MountHuaPlan.NICHE_BACK;
-        if (inNiche && !MountHuaPlan.CORE.contains(z.id())) {
+        boolean sect = z.v() > -60 && z.v() < 130 && Math.abs(z.u()) < 120 && !z.id().startsWith("pav");
+        if (sect && !MountHuaPlan.CORE.contains(z.id())) {
             ruin(z, r, y, pos);
             return;
         }
@@ -720,21 +719,47 @@ final class MountHuaChunkWriter {
         }
     }
 
-    /** Wooden bridge from the treasury terrace over the slot to the plum-grove ledge. */
+    /**
+     * Stairs between the sect platforms (polished granite steps); where a path runs over lower
+     * ground it becomes a small wooden bridge with rails.
+     */
     private void bridge(BlockPos.MutableBlockPos pos) {
-        int y = (int) Math.round(site.worldY(153));
         for (int lz = 0; lz < 16; lz++) {
             for (int lx = 0; lx < 16; lx++) {
                 int wx = x0 + lx;
                 int wz = z0 + lz;
                 double u = site.localU(wx + 0.5, wz + 0.5);
                 double v = site.localV(wx + 0.5, wz + 0.5);
-                if (u < -136 || u > -100 || Math.abs(v + 34) > 2.5 || topAt(lx, lz) >= y) {
-                    continue;
-                }
-                level.setBlock(pos.set(wx, y, wz), Blocks.SPRUCE_PLANKS.defaultBlockState(), 2);
-                if (Math.abs(v + 34) > 1.6) {
-                    level.setBlock(pos.set(wx, y + 1, wz), Blocks.SPRUCE_FENCE.defaultBlockState(), 2);
+                for (double[] p : MountHuaPlan.PATHS) {
+                    double[] q = MountHuaShape.pathAt(p, u, v);
+                    if (q[0] > 2.1) {
+                        continue;
+                    }
+                    int y = (int) Math.round(site.worldY(q[1]));
+                    int natural = (int) Math.round(site.worldY(shape.ground(u, v)));
+                    if (natural < y - 3) {
+                        level.setBlock(pos.set(wx, y, wz), Blocks.SPRUCE_PLANKS.defaultBlockState(), 2);
+                        if (q[0] > 1.5) {
+                            level.setBlock(pos.set(wx, y + 1, wz), Blocks.SPRUCE_FENCE.defaultBlockState(), 2);
+                        }
+                    } else {
+                        double ahead = p[2] + (p[5] - p[2]) * Math.min(1, q[2] + 0.05);
+                        boolean rising = Math.round(site.worldY(ahead)) != y;
+                        double du = p[3] - p[0];
+                        double dv = p[4] - p[1];
+                        if (p[5] < p[2]) {
+                            du = -du;
+                            dv = -dv;
+                        }
+                        level.setBlock(pos.set(wx, y, wz), rising ? stairs(du, dv)
+                                : ModBlocks.POLISHED_HUA_GRANITE.get().defaultBlockState(), 2);
+                    }
+                    for (int k = 1; k <= 4; k++) {
+                        if (!level.getBlockState(pos.set(wx, y + k, wz)).is(Blocks.SPRUCE_FENCE)) {
+                            level.setBlock(pos, AIR, 2);
+                        }
+                    }
+                    break;
                 }
             }
         }
@@ -875,21 +900,6 @@ final class MountHuaChunkWriter {
                 // Dark-green shrub caps on tops of towers and patches clinging in folds and on
                 // shelves (author refs 03, 06, 16: «шапками на вершинах, карманами на полках»).
                 double patch = noise.noise(wx / 7.0, wz / 7.0, 57.0);
-                // The front cliff of the niche: shrubs, pines and plums cling down its face
-                // (coordinator 04.10: volume from below).
-                if (v < MountHuaPlan.NICHE_FRONT && v > MountHuaPlan.NICHE_FRONT - 40
-                        && Math.abs(u) < MountHuaPlan.NICHE_U + 20 && drop >= 1) {
-                    long hf = mix(wx, wz, 71);
-                    int rf = (int) Math.floorMod(hf, 100L);
-                    if (rf < 10) {
-                        shrub(wx, t + 1, wz, hf, pos);
-                    } else if (rf < 13) {
-                        plumTree(wx, t + 1, wz, hf, pos);
-                    } else if (rf < 16) {
-                        pine(wx, t + 1, wz, hf, lx, lz, pos);
-                    }
-                    continue;
-                }
                 // Upper faces carry more green (author 04.10, refs 03, 14): caps nearly closed,
                 // shelves and folds clothed high up; the walls themselves stay rock.
                 boolean high = t > site.worldY(140);
