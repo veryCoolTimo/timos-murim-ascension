@@ -135,11 +135,62 @@ public final class MountHuaShape {
      */
     public double ground(double u, double v) {
         double h = Math.max(natural(u, v), belt(u, v));
+        h = niche(u, v, h);
         // Gorges cut the foothill belt too (it could fill the slot back up otherwise).
         for (Gorge gorge : MountHuaPlan.GORGES) {
             h = gorge(gorge, u, v, h);
         }
         return valley(u, v, h);
+    }
+
+    /**
+     * The sect niche: a flat stepped shelf carved into the mountain, tall close walls at the back
+     * and the sides, a cliff drop at the front (north), a slot that parts the plum-grove ledge
+     * (crossed by a bridge), and stairs between the terrace levels.
+     */
+    private double niche(double u, double v, double h) {
+        double hw = MountHuaPlan.NICHE_U;
+        double front = MountHuaPlan.NICHE_FRONT;
+        double back = MountHuaPlan.NICHE_BACK;
+        double jag = 3 * relief.noise(u / 11.0, v / 11.0, 41.0);
+        double dx = Math.max(0, Math.abs(u) - hw + jag);
+        double db = Math.max(0, v - back + jag);
+        double out = Math.max(dx, db);
+        if (v >= front && out == 0) {
+            double floor = MountHuaPlan.nicheFloor(u, v);
+            // Stairs between the central levels: 7 wide, one block per block.
+            if (Math.abs(u) <= 3.5) {
+                if (v > -10 && v <= -2) {
+                    floor = 152 + (v + 10);
+                } else if (v > 38 && v <= 46) {
+                    floor = 160 + (v - 38);
+                }
+            }
+            // The rock knoll with its pavilion.
+            floor = Math.max(floor, peak(MountHuaPlan.KNOLL, u, v));
+            return floor;
+        }
+        if (v >= front - 2 && out > 0 && out < 45) {
+            // Back and side walls: rise at once far above the halls, then join the mountain.
+            double edgeFloor = MountHuaPlan.nicheFloor(Math.max(-hw, Math.min(hw, u)), Math.min(v, back));
+            double wall = Math.min(MountHuaPlan.SUMMIT - 14, edgeFloor + 50 + 20 * relief.noise(u / 17.0, v / 17.0, 44.0));
+            double k = smooth(0, 3, out) * (1 - smooth(25, 45, out));
+            h = Math.max(h, h + (wall - h) * k);
+            // The slot between the treasury and the plum-grove ledge.
+            if (u < -hw && u > -hw - 22 && v > -50 && v < -18) {
+                h = Math.min(h, 95 + 6 * relief.noise(u / 5.0, v / 5.0, 7.0));
+            }
+            return h;
+        }
+        if (v < front && Math.abs(u) < hw + 40) {
+            // Front: a cliff drop into the mist (volume from below, not a crater).
+            double f = front - v;
+            double base = 100 + 8 * relief.noise(u / 19.0, v / 19.0, 45.0) + 0.4 * Math.max(0, f - 30);
+            double cliff = 152 - (152 - base) * smooth(0, 6 + 3 * jag, f);
+            double side = smooth(hw, hw + 40, Math.abs(u));
+            h = Math.min(h, cliff + (h - cliff) * side);
+        }
+        return h;
     }
 
     /** Foothill belt height (nominal), 0 at the outer edge. */
