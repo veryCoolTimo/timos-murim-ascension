@@ -50,8 +50,15 @@ public final class MountHuaShape {
         this.relief = new HuaNoise(seed * 31 + 2);
         this.flute = new HuaNoise(seed * 31 + 3);
         this.hills = new HuaNoise(seed * 31 + 4);
+        // The stair profile was approved on the rounder rock (hua-overview-ok); it is computed
+        // from that rock so the later reshaping (sharper peaks, spires) leaves the stair as it is.
+        legacyRock = true;
         buildTrail();
+        legacyRock = false;
     }
+
+    /** True only while the stair profile is computed: rock shapes as approved at hua-overview-ok. */
+    private boolean legacyRock;
 
     public static boolean inBounds(double u, double v) {
         return u >= MIN_U && u <= MAX_U && v >= MIN_V && v <= MAX_V;
@@ -665,7 +672,10 @@ public final class MountHuaShape {
         // bundles of thin columns; the photos show broad slabs cut by occasional grooves).
         double arc = ra / 7.0;
         double groove = 1 - smooth(0.0, 0.08, Math.abs(flute.noise(cx * arc + salt, sy * arc, 4.2 + q * 0.4)));
-        q *= 1 + lobes + 0.025 * groove * smooth(0.55, 0.9, q);
+        // Vertical joints (author 04.10: «острее»): deeper, denser notches in the walls.
+        double joint = 1 - smooth(0.0, 0.06, Math.abs(flute.noise(cx * arc * 2.3 + salt, sy * arc * 2.3, 7.7)));
+        q *= legacyRock ? 1 + lobes + 0.025 * groove * smooth(0.55, 0.9, q)
+                : 1 + lobes + 0.05 * groove * smooth(0.45, 0.9, q) + 0.03 * joint * smooth(0.3, 0.95, q);
         if (q >= 1) {
             return 0;
         }
@@ -673,7 +683,26 @@ public final class MountHuaShape {
         // are big slabs on one side and wooded shoulders on the other (ref 04).
         double face = Math.cos(a - salt * 0.61);
         double pw = power * (1 + 0.45 * face);
-        double h = top * (1 - Math.pow(q, pw));
+        double dome = 1 - Math.pow(q, pw);
+        // Angular granite instead of domes (author 04.10: «слишком круглые»): a pointed profile
+        // with sheer feet mixed in, a knife-edge crest along the long axis, and the crest broken
+        // into teeth and notches. The summit itself keeps its height.
+        // Crest stretched along the long axis (short crooked knife-edge, not a lone tip); one
+        // near-vertical face and a gentler, stepped back (codex: no symmetric witch hats).
+        double qc = Math.min(1, Math.sqrt(0.35 * (x / ra) * (x / ra) + (y / rb) * (y / rb))
+                * (1 + 0.12 * warp.noise((x / ra) * 2.0 + salt, (y / rb) * 2.0, 44.0)));
+        double spike = Math.pow(Math.max(0, 1 - Math.max(qc, q * 0.8)), 0.55 - 0.22 * face);
+        if (face < -0.2) {
+            double band = 0.09;
+            double f = spike / band + salt * 0.01;
+            double frac = f - Math.floor(f);
+            spike -= band * 0.45 * smooth(0.55, 1.0, frac) * smooth(-0.2, -0.6, face);
+        }
+        double blade = Math.abs(y / rb) * smooth(0.95, 0.15, q);
+        double crest = Math.abs(flute.noise((x / ra) * 2.6 + salt, salt * 0.13, 51.0));
+        double teeth = (1 - smooth(0.0, 0.3, crest)) * smooth(0.85, 0.2, q) * smooth(0.05, 0.25, Math.abs(x / ra));
+        double h = legacyRock ? top * dome
+                : top * Math.max(0, 0.45 * dome + 0.55 * spike - 0.20 * blade - 0.09 * teeth);
         // Ledges on about half of the rocks: a steep step, then a narrow bench (pines sit there).
         if (((long) salt & 1) == 0) {
             double band = 9 + (Math.abs((long) salt) % 9);
