@@ -145,7 +145,8 @@ public final class DevCaptureHandler {
     static void onClientTick(ClientTickEvent.Post event) {
         Minecraft minecraft = Minecraft.getInstance();
         // Panorama of Mount Hua has its own driver (DevPanoramaHandler).
-        if ("mounthua".equals(System.getProperty(TECHNIQUE_PROPERTY))) {
+        if ("mounthua".equals(System.getProperty(TECHNIQUE_PROPERTY))
+                || "placecheck".equals(System.getProperty(TECHNIQUE_PROPERTY))) {
             return;
         }
         if (minecraft.player == null || minecraft.level == null) {
