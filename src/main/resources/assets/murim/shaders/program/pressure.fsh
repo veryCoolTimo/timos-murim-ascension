@@ -36,6 +36,9 @@ void main() {
     vec2 offset = (dir * wave * 0.0025 + haze * 0.0012) * p * edge;
     offset.x /= aspect;
 
+    // Порыв: расслоение цвета вспыхивает в момент толчка и гаснет за ~0,3 с (Gust — секунды с порыва).
+    // Переменная band раньше не была объявлена, и шейдер не собирался вовсе (поймано 04.10 на стенде).
+    float band = exp(-max(Gust, 0.0) * 5.0);
     vec2 ca = dir * (0.0045 * p * p + 0.006 * band * GustStrength);
     ca.x /= aspect;
     vec3 col;
