@@ -88,7 +88,7 @@ public final class SectCapture {
             }
         }
         p.setData(ModAttachments.SECT, s);
-        // Форма у манекена (испытание главы): Шесть Равновесий в ячейке основы, меч в руке.
+        // Шесть Равновесий в ячейке основы и меч в руке — как у ученика после вступления.
         p.setData(ModAttachments.LOADOUT, p.getData(ModAttachments.LOADOUT).withFoundation(Optional.of(SectService.SIX)));
         io.github.verycooltimo.murim.mastery.LoadoutService.sync(p);
         p.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.IRON_SWORD));
@@ -97,7 +97,7 @@ public final class SectCapture {
 
     private static void clean(ServerPlayer p) {
         ServerLevel level = p.serverLevel();
-        // Сцена чистая: манекены и зомби стенда убраны (манекен для испытания ставит сам глава).
+        // Сцена чистая: манекены и зомби стенда убраны .
         for (net.minecraft.world.entity.Entity e : level.getEntities((net.minecraft.world.entity.Entity) null, p.getBoundingBox().inflate(32.0D),
                 e -> e instanceof io.github.verycooltimo.murim.entity.TrainingDummy || e instanceof net.minecraft.world.entity.monster.Zombie
                         || e instanceof net.minecraft.world.entity.decoration.ArmorStand && e.getCustomName() == null)) {

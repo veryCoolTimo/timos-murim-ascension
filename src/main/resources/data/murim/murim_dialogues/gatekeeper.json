@@ -1,0 +1,79 @@
+{
+  "name": "npc.murim.gatekeeper",
+  "title": "npc.murim.gatekeeper.title",
+  "start": [
+    {
+      "when": [
+        {
+          "member": true
+        }
+      ],
+      "node": "member"
+    },
+    {
+      "node": "outsider"
+    }
+  ],
+  "nodes": {
+    "outsider": {
+      "line": "dialogue.murim.gatekeeper.outsider",
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.gatekeeper.opt.become",
+          "next": "climb"
+        },
+        {
+          "text": "dialogue.murim.gatekeeper.opt.far",
+          "next": "far"
+        },
+        {
+          "text": "dialogue.murim.gatekeeper.opt.carry",
+          "next": "no_carry"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "climb": {
+      "line": "dialogue.murim.gatekeeper.climb",
+      "gesture": "point",
+      "options": [
+        {
+          "text": "dialogue.murim.gatekeeper.opt.far",
+          "next": "far"
+        },
+        {
+          "text": "dialogue.murim.gatekeeper.opt.go"
+        }
+      ]
+    },
+    "far": {
+      "line": "dialogue.murim.gatekeeper.far",
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.gatekeeper.opt.go"
+        }
+      ]
+    },
+    "no_carry": {
+      "line": "dialogue.murim.gatekeeper.no_carry",
+      "gesture": "shake",
+      "options": [
+        {
+          "text": "dialogue.murim.gatekeeper.opt.go"
+        }
+      ]
+    },
+    "member": {
+      "random": [
+        "dialogue.murim.gatekeeper.member1",
+        "dialogue.murim.gatekeeper.member2"
+      ],
+      "gesture": "bow",
+      "options": []
+    }
+  }
+}
