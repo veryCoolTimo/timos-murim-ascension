@@ -60,8 +60,21 @@ public final class SectLifeCapture {
      * Сцена: время суток, точка камеры и куда смотреть (площадка, смещение, высота над площадкой), игрок в строю.
      */
     private record Scene(String name, int time, String zone, double du, double dv, double dy,
-                         String lookZone, double lu, double lv, double ly, boolean join) {
+                         String lookZone, double lu, double lv, double ly, boolean join, String act) {
+        Scene(String name, int time, String zone, double du, double dv, double dy,
+              String lookZone, double lu, double lv, double ly, boolean join) {
+            this(name, time, zone, du, dv, dy, lookZone, lu, lv, ly, join, "");
+        }
     }
+
+    /**
+     * Где стоит игрок-новичок в сценах иерархии (С3, часть 2): {@code intercept} — перед главным залом, глава внутри,
+     * охранник у входа; {@code guard} — у западного края казны, идёт внутрь (зажат «вперёд»).
+     */
+    private static final java.util.Map<String, double[]> ACT_START = java.util.Map.of(
+            "intercept", new double[] {0.0D, -17.0D},
+            "guard", new double[] {-15.0D, -4.0D});
+    private static final java.util.Map<String, String> ACT_ZONE = java.util.Map.of("intercept", "main_hall", "guard", "treasury");
 
     private static final List<Scene> ALL = List.of(
             // Рассвет: строй лицом к помосту, камера над помостом смотрит на ряды; наставник ходит между ними.
@@ -77,7 +90,15 @@ public final class SectLifeCapture {
             // Вечер: кружки в лагере, медитация в роще.
             new Scene("evening", 11300, "camp", -12.0D, -2.0D, 6.0D, "camp", 0.0D, 0.0D, 0.0D, false),
             // Игрок в строю: с края второго ряда бьёт формы вместе со всеми.
-            new Scene("join", 23500, "training", 12.5D, 9.5D, 2.5D, "training", 4.5D, 3.0D, 1.0D, true));
+            new Scene("join", 23500, "training", 12.5D, 9.5D, 2.5D, "training", 4.5D, 3.0D, 1.0D, true),
+            // С3, часть 2: слуги днём — носильщики со ступеней в кладовую, управляющий, метельщик на площади.
+            new Scene("workers", 4300, "training", 22.0D, -11.0D, 7.0D, "treasury", -6.0D, 0.0D, 0.0D, false),
+            // Завтрак: повар раздаёт, водонос носит воду на кухню.
+            new Scene("kitchen", 1300, "dining", -9.0D, -9.0D, 5.0D, "dining", 2.0D, 0.0D, 0.0D, false),
+            // Новичок заговаривает с главой — охранник у главного зала перехватывает (окно разговора с ним).
+            new Scene("intercept", 4400, "main_hall", 7.0D, -20.0D, 3.0D, "main_hall", -2.0D, -11.0D, 1.0D, false, "intercept"),
+            // Новичок идёт в казну — охранник встаёт на пути и отталкивает.
+            new Scene("guard", 4500, "treasury", -8.0D, -16.0D, 4.0D, "treasury", -9.0D, -4.0D, 0.5D, false, "guard"));
 
     private static boolean setup;
     private static List<Scene> scenes;
@@ -139,7 +160,19 @@ public final class SectLifeCapture {
             return;
         }
         Scene s = scenes.get(scene);
-        follow(mc);
+        // Сцена «охрана»: новичок упрямо идёт в казну (настоящее нажатие «вперёд»), охрана отталкивает. Камера —
+        // за спиной игрока: ходьба клиента работает, только когда камера — сам игрок.
+        boolean walk = "guard".equals(s.act());
+        if (walk) {
+            if (mc.getCameraEntity() != mc.player) {
+                mc.setCameraEntity(mc.player);
+            }
+            mc.options.setCameraType(CameraType.THIRD_PERSON_BACK);
+        } else {
+            mc.options.setCameraType(CameraType.FIRST_PERSON);
+            follow(mc);
+        }
+        mc.options.keyUp.setDown(walk && wait > 160);
         if (s.join() && mc.player.level().getGameTime() % SectSchedule.BEAT == SectSchedule.BEAT_STRIKE - 2) {
             // Настоящее нажатие атаки: форма основы идёт тем же путём, что у игрока (клиент → сервер → строй).
             KeyMapping.click(mc.options.keyAttack.getKey());
@@ -160,6 +193,18 @@ public final class SectLifeCapture {
                 shooting = true;
                 wait = 0;
                 MurimMod.LOGGER.info("Стенд секты: сцена {} — съёмка", s.name());
+                if ("intercept".equals(s.act())) {
+                    // Новичок заговаривает с главой: тот же путь, что ПКМ (DialogueService.open).
+                    server.execute(() -> {
+                        ServerPlayer sp = server.getPlayerList().getPlayers().get(0);
+                        for (io.github.verycooltimo.murim.entity.SectDisciple d : server.overworld().getEntitiesOfClass(
+                                io.github.verycooltimo.murim.entity.SectDisciple.class, sp.getBoundingBox().inflate(32.0D),
+                                d -> "hyun_jong".equals(d.memberKey()))) {
+                            io.github.verycooltimo.murim.sect.DialogueService.open(sp, d);
+                            MurimMod.LOGGER.info("Стенд секты: новичок заговорил с главой в {} блоках", String.format("%.1f", d.distanceTo(sp)));
+                        }
+                    });
+                }
                 server.execute(() -> {
                     for (String line : SectLife.report(server.overworld())) {
                         MurimMod.LOGGER.info("Стенд секты [{}]: {}", s.name(), line);
@@ -223,8 +268,10 @@ public final class SectLifeCapture {
         Vec3 cam = layout.at(s.zone(), s.du(), s.dv()).add(0.0D, s.dy(), 0.0D);
         Vec3 look = layout.at(s.lookZone(), s.lu(), s.lv()).add(0.0D, s.ly(), 0.0D);
         ServerPlayer p = server.getPlayerList().getPlayers().get(0);
-        // Свой ученик: глава не выходит встречать чужака к воротам.
-        if (!p.getData(ModAttachments.SECT).member()) {
+        // Свой ученик: глава не выходит встречать чужака к воротам. В сценах иерархии — свежий новичок.
+        if (!s.act().isEmpty()) {
+            p.setData(ModAttachments.SECT, io.github.verycooltimo.murim.sect.SectState.NONE.joined());
+        } else if (!p.getData(ModAttachments.SECT).member()) {
             p.setData(ModAttachments.SECT, p.getData(ModAttachments.SECT).joined());
         }
         // Овцы и свиньи на площадке не мешают кадру.
@@ -234,7 +281,18 @@ public final class SectLifeCapture {
         }
         // Сначала игрок у площадки: чанки грузятся, люди секты просыпаются.
         p.setGameMode(GameType.CREATIVE);
-        if (s.join()) {
+        if (!s.act().isEmpty()) {
+            // Новичок пешком, видимый, в режиме выживания: охрана творческих не трогает.
+            double[] st = ACT_START.get(s.act());
+            Vec3 at = SectLife.stand(level, layout.at(ACT_ZONE.get(s.act()), st[0], st[1]));
+            Vec3 to = layout.at(ACT_ZONE.get(s.act()), 0.0D, 0.0D);
+            p.setGameMode(GameType.SURVIVAL);
+            p.removeEffect(MobEffects.INVISIBILITY);
+            p.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 20 * 600, 4, false, false, false));
+            p.getAbilities().flying = false;
+            p.onUpdateAbilities();
+            p.teleportTo(level, at.x, at.y, at.z, SectLayout.yawOf(to.x - at.x, to.z - at.z), 0.0F);
+        } else if (s.join()) {
             double[] free = SectSchedule.slot(1, SectSchedule.COLUMNS - 1);
             Vec3 at = SectLife.stand(level, layout.at("training", free[0], free[1]));
             p.teleportTo(level, at.x, at.y, at.z, layout.yaw(0.0D, 1.0D), 0.0F);
@@ -255,6 +313,10 @@ public final class SectLifeCapture {
         for (ArmorStand old : level.getEntitiesOfClass(ArmorStand.class, p.getBoundingBox().inflate(256.0D),
                 a -> a.getCustomName() != null && CAMERA.equals(a.getCustomName().getString()))) {
             old.discard();
+        }
+        if ("guard".equals(s.act())) {
+            MurimMod.LOGGER.info("Стенд секты: сцена {} — камера за игроком", s.name());
+            return;
         }
         ArmorStand stand = new ArmorStand(level, cam.x, cam.y - 1.62D, cam.z);
         stand.setInvisible(true);

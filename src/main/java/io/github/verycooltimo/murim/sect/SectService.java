@@ -118,10 +118,29 @@ public final class SectService {
             p.displayClientMessage(Component.translatable("murim.sect.donate.none").withStyle(ChatFormatting.GRAY), true);
             return false;
         }
+        // Заслуги за пожертвования — не больше DONATE_CAP в день: ферма не заменяет службу (codex 04.10).
+        long day = SectSchedule.day(p.level().getDayTime());
+        net.minecraft.nbt.CompoundTag tag = p.getPersistentData().getCompound(DONATE_TAG);
+        if (tag.getLong("day") != day) {
+            tag = new net.minecraft.nbt.CompoundTag();
+            tag.putLong("day", day);
+        }
+        int left = DONATE_CAP - tag.getInt("points");
+        if (left <= 0) {
+            p.displayClientMessage(Component.translatable("murim.sect.donate.enough").withStyle(ChatFormatting.GRAY), true);
+            return false;
+        }
         need.take(p);
-        contribute(p, points);
+        int got = Math.min(points, left);
+        tag.putInt("points", tag.getInt("points") + got);
+        p.getPersistentData().put(DONATE_TAG, tag);
+        contribute(p, got);
         return true;
     }
+
+    /** Заслуг за пожертвования в день — не больше. */
+    public static final int DONATE_CAP = 6;
+    private static final String DONATE_TAG = "murim_sect_donations";
 
     /** Предмет и число: {@code "minecraft:wheat*16"} (без числа — один). */
     public record ItemNeed(net.minecraft.world.item.Item item, int count) {

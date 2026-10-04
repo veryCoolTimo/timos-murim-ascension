@@ -114,6 +114,15 @@ public final class ScheduleGoal extends Goal {
                 if (arrive(current.spot(), kind == Kind.GREET ? 1.0D : 0.8D)) {
                     npc.faceYaw(current.yaw(), 15.0F);
                     Player p = npc.level().getNearestPlayer(npc, 8.0D);
+                    // Ночная стража не чует затылком: голова поворачивается к игроку, только если он перед ней или
+                    // вплотную — иначе охрана «видела бы» любого в 8 блоках (SectWatch: ночью — только перед собой).
+                    if (p != null && kind == Kind.GUARD && SectSchedule.at(npc.level().getDayTime()) == SectSchedule.Period.NIGHT
+                            && npc.distanceTo(p) > io.github.verycooltimo.murim.sect.SectAccess.CLOSE
+                            && Math.abs(net.minecraft.util.Mth.wrapDegrees(
+                            (float) (net.minecraft.util.Mth.atan2(p.getZ() - npc.getZ(), p.getX() - npc.getX()) * net.minecraft.util.Mth.RAD_TO_DEG) - 90.0F
+                                    - npc.yBodyRot)) > io.github.verycooltimo.murim.sect.SectAccess.NIGHT_HALF_ANGLE) {
+                        p = null;
+                    }
                     if (p != null) {
                         npc.getLookControl().setLookAt(p, 20.0F, 20.0F);
                     }

@@ -1168,5 +1168,9 @@
   "dialogue.murim.water_carrier.greet2": "Пролей хоть каплю — повар голову снимет.",
   "dialogue.murim.water_carrier.opt.ask": "Сколько ведер в день?",
   "dialogue.murim.water_carrier.answer": "Не считал. Как солнце сядет — столько и было.",
-  "dialogue.murim.water_carrier.night": "Колодец до утра отдыхает. И я."
+  "dialogue.murim.water_carrier.night": "Колодец до утра отдыхает. И я.",
+  "npc.murim.baek_seo": "Пэк Со",
+  "murim.sect.guard.closing": "%s: «%s закрывается на ночь. Выходи, пока я прошу.»",
+  "murim.sect.guard.escort_again": "%s снова выводит тебя прочь.",
+  "murim.sect.donate.enough": "Управляющий: «На сегодня хватит. Завтра приноси.»"
 }

@@ -302,6 +302,8 @@ public final class SectSchedule {
             case "baek_gi" -> new Task(Kind.GUARD, "main_hall", -25.0D, 4.0D, -1.0D, 0.0D);
             // Верхний уступ: зал предков, рядом Зал писаний.
             case "baek_jin" -> new Task(Kind.GUARD, "ancestors", 8.0D, -7.0D, 0.0D, -1.0D);
+            // Казна: со стороны площади, у края внутреннего двора (управляющий — снаружи, на западном краю).
+            case "baek_won" -> new Task(Kind.GUARD, "treasury", -7.0D, -6.0D, -1.0D, 0.0D);
             // Дома старейшин и пещера покаяния за ними.
             default -> new Task(Kind.GUARD, m.home(), -6.0D, 7.0D, 1.0D, 0.0D);
         };

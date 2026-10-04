@@ -75,12 +75,17 @@ class SectHierarchyTest {
     }
 
     @Test
-    @DisplayName("Закрытые места: новичка не пускают в казну, ученика — пускают днём, ночью — только доверенного")
+    @DisplayName("Закрытые места: новичка и ученика не пускают в казну, выпускника — днём, ночью — только доверенного")
     void access() {
         SectAccess.Rule treasury = rule("treasury");
         assertFalse(SectAccess.allowed(treasury, SectStanding.NOVICE, Set.of(), Period.TRAINING));
-        assertTrue(SectAccess.allowed(treasury, SectStanding.DISCIPLE, Set.of(), Period.TRAINING));
-        assertFalse(SectAccess.allowed(treasury, SectStanding.DISCIPLE, Set.of(), Period.NIGHT));
+        assertFalse(SectAccess.allowed(treasury, SectStanding.DISCIPLE, Set.of(), Period.TRAINING));
+        assertTrue(SectAccess.allowed(treasury, SectStanding.GRADUATE, Set.of(), Period.TRAINING));
+        assertFalse(SectAccess.allowed(treasury, SectStanding.GRADUATE, Set.of(), Period.NIGHT));
+        // Дома старейшин — по приглашению.
+        assertFalse(SectAccess.allowed(rule("elders"), SectStanding.GRADUATE, Set.of(), Period.TRAINING));
+        assertTrue(SectAccess.allowed(rule("elders"), SectStanding.GRADUATE, Set.of("pass.elders"), Period.TRAINING));
+        assertTrue(SectAccess.allowed(rule("main_hall"), SectStanding.DISCIPLE, Set.of(), Period.TRAINING));
         assertTrue(SectAccess.allowed(treasury, SectStanding.TRUSTED, Set.of(), Period.NIGHT));
         // Пропуск (зов, разрешение) открывает место своему, но не чужаку.
         assertTrue(SectAccess.allowed(rule("scriptures"), SectStanding.NOVICE, Set.of("pass.scriptures"), Period.TRAINING));

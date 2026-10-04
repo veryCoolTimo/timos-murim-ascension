@@ -52,9 +52,11 @@ public final class SectAccess {
             new Rule("main_hall", "main_hall", 0.0D, 2.0D, 24.0D, SectStanding.DISCIPLE, SectStanding.TRUSTED, "pass.main_hall"),
             new Rule("ancestors", "ancestors", 0.0D, 4.0D, 24.0D, SectStanding.DISCIPLE, SectStanding.TRUSTED, "pass.ancestors"),
             new Rule("scriptures", "scriptures", 0.0D, 4.0D, 24.0D, SectStanding.GRADUATE, SectStanding.TRUSTED, "pass.scriptures"),
-            // Казна — середина хозяйственного двора; управляющий и кладовая — по краю, туда можно всем своим.
-            new Rule("treasury", "treasury", 3.0D, 4.0D, 24.0D, SectStanding.DISCIPLE, SectStanding.TRUSTED, "pass.treasury"),
-            new Rule("elders", "elders", 0.0D, 4.0D, 24.0D, SectStanding.GRADUATE, SectStanding.TRUSTED, "pass.elders"),
+            // Казна — середина хозяйственного двора; управляющий и кладовая — по краю, туда можно всем своим
+            // (пожертвования — у края). Внутрь — выпускник (codex 04.10: «первый урок не должен открывать казну»).
+            new Rule("treasury", "treasury", 3.0D, 4.0D, 24.0D, SectStanding.GRADUATE, SectStanding.TRUSTED, "pass.treasury"),
+            // Дома старейшин — частные: доверенный или по приглашению (пропуск).
+            new Rule("elders", "elders", 0.0D, 4.0D, 24.0D, SectStanding.TRUSTED, SectStanding.TRUSTED, "pass.elders"),
             // Пещера покаяния: только наказанный (флаг) или доверенный.
             new Rule("penance", "penance", 0.0D, 3.0D, 8.0D, SectStanding.TRUSTED, SectStanding.TRUSTED, "penance.sentenced"),
             // Чужак: дальше ворот секты — ни днём, ни ночью.

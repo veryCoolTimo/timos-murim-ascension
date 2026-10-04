@@ -49,7 +49,7 @@ public final class SectWatch {
     public static final int LINGER = 300;
     /** Не чаще: толчок, предупреждение о месте. */
     static final int PUSH_EVERY = 20;
-    static final int WARN_EVERY = 600;
+    public static final int WARN_EVERY = 600;
     /** После поединка за то же — в этот срок уже вывод без поединка. */
     static final int REPEAT = 2400;
     /** Штраф заслуг за силовой вход. */
@@ -68,6 +68,10 @@ public final class SectWatch {
         int inside;
         long lastPush = Long.MIN_VALUE / 2;
         long lastEscalation = Long.MIN_VALUE / 2;
+        /** Был внутри законно (до ночи): до этого тика — только просьба выйти, без толчков. */
+        long graceUntil = Long.MIN_VALUE / 2;
+        /** Последняя проверка: стоял в закрытом месте, но по праву. */
+        boolean legal;
         /** Чем кончилось последнее нарушение: {@code warn}, {@code block}, {@code spar}, {@code escort}, {@code expel}. */
         String last = "";
 
@@ -130,6 +134,7 @@ public final class SectWatch {
         }
         List<SectAccess.Rule> in = SectAccess.forbidden(layout, p.position(), standing, s.flags(), period, 0.0D);
         if (in.isEmpty()) {
+            t.legal = insideAny(layout, p.position());
             t.inside = 0;
             if (t.strikes > 0 && now - t.lastPush > 1200) {
                 t.strikes = 0;
@@ -153,6 +158,18 @@ public final class SectWatch {
             return;
         }
         SectAccess.Rule r = in.get(0);
+        if (t.legal) {
+            // Был здесь по праву, а место закрылось (наступила ночь): полминуты на выход, без толчков (codex 04.10).
+            t.legal = false;
+            t.graceUntil = now + WARN_EVERY / 2;
+            SectDisciple g = watcher(p, false);
+            if (g != null) {
+                say(p, "murim.sect.guard.closing", g, r, ChatFormatting.YELLOW);
+            }
+        }
+        if (now < t.graceUntil) {
+            return;
+        }
         SectDisciple guard = watcher(p, night);
         if (guard == null) {
             // Никто не видит — прошёл (ночью, присев, за спиной у стражи).
@@ -206,9 +223,12 @@ public final class SectWatch {
             MurimMod.LOGGER.info("Секта: {} выставлен за ворота ({})", p.getName().getString(), r.id());
             return;
         }
-        SectService.contribute(p, -PENALTY);
         boolean repeat = now - t.lastEscalation < REPEAT;
         t.lastEscalation = now;
+        // Одно взыскание на эпизод: повтор в те же две минуты — вывод без нового штрафа (codex 04.10).
+        if (!repeat) {
+            SectService.contribute(p, -PENALTY);
+        }
         if (!repeat && guard.spars() && guard.spar() == SectDisciple.Spar.NONE) {
             t.last = "spar";
             p.displayClientMessage(Component.translatable("murim.sect.guard.challenge", guard.getName(), PENALTY)
@@ -222,7 +242,7 @@ public final class SectWatch {
             p.teleportTo(p.serverLevel(), out.x, out.y, out.z, p.getYRot(), p.getXRot());
         }
         t.last = "escort";
-        p.displayClientMessage(Component.translatable("murim.sect.guard.escort", guard.getName(), PENALTY)
+        p.displayClientMessage(Component.translatable(repeat ? "murim.sect.guard.escort_again" : "murim.sect.guard.escort", guard.getName(), PENALTY)
                 .withStyle(ChatFormatting.RED), false);
         MurimMod.LOGGER.info("Секта: {} выведен из {}", p.getName().getString(), r.id());
     }
@@ -245,6 +265,16 @@ public final class SectWatch {
         double[] h = layout.half("sect_gate");
         Vec3 at = layout.at("sect_gate", 0.0D, -(h == null ? 5.0D : h[1]) - 4.0D);
         return at == null ? null : SectLife.stand(p.level(), at);
+    }
+
+    /** Стоит в любом закрытом месте (неважно, можно ли ему). */
+    static boolean insideAny(SectLayout layout, Vec3 pos) {
+        for (SectAccess.Rule r : SectAccess.RULES) {
+            if (!SectAccess.GROUNDS.equals(r.zone()) && SectAccess.inside(layout, r, pos, 0.0D)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** Игрок сейчас в поединке с охранником (охрана ждёт его конца). */

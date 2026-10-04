@@ -150,20 +150,24 @@ public final class SectHierarchyGameTests {
 
     // ------------------------------------------------------------------ положение выросло
 
-    /** Ученик третьего класса в казне днём — охрана молчит; ночью тот же ученик — нарушитель (без предупреждения). */
-    @GameTest(template = YARD, timeoutTicks = 400, batch = "sect_access_night")
+    /**
+     * Выпускник Белого Цветка в казне днём — охрана молчит; наступила ночь — сначала «выходи, закрывается», потом
+     * тот же выпускник — нарушитель.
+     */
+    @GameTest(template = YARD, timeoutTicks = 800, batch = "sect_access_night")
     public static void accessOpensAfterStandingRises(GameTestHelper helper) {
         SectGameTests.setPeriod(helper, SectSchedule.Period.TRAINING);
         Only layout = only(helper, "treasury");
         ServerPlayer p = SectGameTests.fakePlayer(helper);
         p.setData(ModAttachments.SECT, SectState.NONE.joined());
         place(helper, p, 12, 12);
-        SectDisciple guard = npc(helper, layout, "baek_won", 12, 7);
-        // Новичку сюда нельзя; урок наставника сдан — ученик третьего класса, днём можно.
+        // Охранник без поста в этой раскладке (его площадки нет) — стоит, где поставлен, и смотрит по сторонам.
+        SectDisciple guard = npc(helper, layout, "baek_seo", 12, 7);
+        // Новичку сюда нельзя; оба урока наставника сданы — выпускник, днём можно.
         helper.assertTrue(!SectAccess.forbidden(layout, p.position(), SectWatch.standing(p), Set.of(), SectSchedule.Period.TRAINING, 0.0D).isEmpty(),
                 "новичку можно в казну");
-        p.setData(ModAttachments.SECT, p.getData(ModAttachments.SECT).with(SectStanding.LESSON_ONE));
-        helper.assertTrue(SectWatch.standing(p) == SectStanding.DISCIPLE, "положение не выросло: " + SectWatch.standing(p));
+        p.setData(ModAttachments.SECT, p.getData(ModAttachments.SECT).with(SectStanding.LESSON_ONE).with(SectStanding.LESSON_TWO));
+        helper.assertTrue(SectWatch.standing(p) == SectStanding.GRADUATE, "положение не выросло: " + SectWatch.standing(p));
         int[] ticks = new int[1];
         boolean[] quietByDay = {true};
         helper.onEachTick(() -> {
@@ -181,7 +185,9 @@ public final class SectHierarchyGameTests {
         });
         helper.succeedWhen(() -> {
             helper.assertTrue(ticks[0] > 130, "ещё день");
-            helper.assertTrue(quietByDay[0], "днём охрана не пустила ученика третьего класса");
+            helper.assertTrue(quietByDay[0], "днём охрана не пустила выпускника");
+            // Был внутри по праву: полминуты на выход без толчков.
+            helper.assertTrue(ticks[0] > 120 + SectWatch.WARN_EVERY / 2, "ещё время выйти");
             helper.assertTrue(SectWatch.of(p).strikes() > 0 || guard.blockTarget() == p.getId(), "ночью охрана пропустила ученика в казну");
         });
     }

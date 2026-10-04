@@ -1188,5 +1188,9 @@
   "dialogue.murim.water_carrier.greet2": "Spill a drop and the cook will have my head.",
   "dialogue.murim.water_carrier.opt.ask": "How many buckets a day?",
   "dialogue.murim.water_carrier.answer": "Never counted. As many as there are until sundown.",
-  "dialogue.murim.water_carrier.night": "The well rests until morning. So do I."
+  "dialogue.murim.water_carrier.night": "The well rests until morning. So do I.",
+  "npc.murim.baek_seo": "Baek Seo",
+  "murim.sect.guard.closing": "%s: \"%s is closing for the night. Leave while I'm still asking.\"",
+  "murim.sect.guard.escort_again": "%s leads you out again.",
+  "murim.sect.donate.enough": "Steward: \"That's enough for today. Bring more tomorrow.\""
 }
