@@ -46,23 +46,98 @@ public final class DialogueService {
 
     // ------------------------------------------------------------------ вход и выбор
 
-    /** ПКМ по NPC: первая точка входа диалога его роли, чьи условия выполнены. */
+    /** ПКМ по NPC: первая точка входа диалога его роли, чьи условия выполнены (или перехват младшего — {@link #route}). */
     public static void open(ServerPlayer player, SectDisciple npc) {
+        Route r = route(player, npc);
+        if (r == null) {
+            MurimMod.LOGGER.warn("Нет диалога {} для {}", npc.dialogue(), npc.role());
+            return;
+        }
+        engage(player, npc, r);
+        show(player, r.speaker(), r.id(), r.dialogue(), r.node(), "");
+    }
+
+    /** Говорящий встаёт к собеседнику; перехвативший — ещё и между игроком и тем, к кому он шёл. */
+    static void engage(ServerPlayer player, SectDisciple npc, Route r) {
+        // Сидящий или спящий встаёт к собеседнику.
+        r.speaker().wake();
+        r.speaker().setTalkingTo(player);
+        if (r.intercepted()) {
+            r.speaker().block(player, npc.position(), 120);
+            MurimMod.LOGGER.info("Секта: {} перехватил {} на пути к {}", r.speaker().memberKey(), player.getName().getString(), npc.memberKey());
+        }
+    }
+
+    /**
+     * Кто ответит и с какого узла: обычно сам NPC; если у его диалога есть {@code audience} и игроку говорить с ним
+     * не по положению — ближайший старший или охранник ({@link SectRole#intercepts()}, Ун Ам) со своим диалогом
+     * перехвата, а если рядом никого — сам NPC узлом {@code busy}.
+     *
+     * @param speaker     кто говорит
+     * @param intercepted перехват (говорит не тот, к кому подошли)
+     */
+    public record Route(SectDisciple speaker, ResourceLocation id, Dialogue dialogue, String node, boolean intercepted) {
+    }
+
+    /** Радиус, в котором ищется перехватчик (от игрока). */
+    static final double INTERCEPT_RANGE = 14.0D;
+
+    public static Route route(ServerPlayer player, SectDisciple npc) {
         ResourceLocation id = npc.dialogue();
         Dialogue d = DialogueLoader.get(id);
         if (d == null) {
-            MurimMod.LOGGER.warn("Нет диалога {} для {}", id, npc.role());
-            return;
+            return null;
         }
-        for (Dialogue.Entry e : d.start()) {
-            if (all(player, npc, e.when())) {
-                // Сидящий или спящий встаёт к собеседнику.
-                npc.wake();
-                npc.setTalkingTo(player);
-                show(player, npc, id, d, e.node(), "");
-                return;
+        if (d.audience().isPresent() && !any(player, npc, d.audience().get().allow())) {
+            Dialogue.Audience a = d.audience().get();
+            SectDisciple by = a.intercept().isPresent() ? interceptor(player, npc) : null;
+            Dialogue cut = a.intercept().map(DialogueLoader::get).orElse(null);
+            if (by != null && cut != null) {
+                String node = entry(player, by, cut);
+                if (node != null) {
+                    return new Route(by, a.intercept().get(), cut, node, true);
+                }
+            }
+            if (a.busy().isPresent() && d.nodes().containsKey(a.busy().get())) {
+                return new Route(npc, id, d, a.busy().get(), false);
             }
         }
+        String node = entry(player, npc, d);
+        return node == null ? null : new Route(npc, id, d, node, false);
+    }
+
+    private static String entry(ServerPlayer player, SectDisciple npc, Dialogue d) {
+        for (Dialogue.Entry e : d.start()) {
+            if (all(player, npc, e.when())) {
+                return e.node();
+            }
+        }
+        return null;
+    }
+
+    /** Ближайший к игроку, кто может перехватить: свободный, не спящий, не сам NPC. */
+    static SectDisciple interceptor(ServerPlayer player, SectDisciple target) {
+        SectDisciple best = null;
+        double bestD = INTERCEPT_RANGE;
+        for (SectDisciple d : player.level().getEntitiesOfClass(SectDisciple.class, player.getBoundingBox().inflate(INTERCEPT_RANGE),
+                d -> d != target && d.isAlive() && d.free() && (d.role().intercepts() || "un_am".equals(d.memberKey())))) {
+            double dist = d.distanceTo(player);
+            if (dist < bestD) {
+                best = d;
+                bestD = dist;
+            }
+        }
+        return best;
+    }
+
+    /** Хотя бы одно условие выполнено (пустой список — никто). */
+    static boolean any(ServerPlayer player, SectDisciple npc, List<Dialogue.Condition> conditions) {
+        for (Dialogue.Condition c : conditions) {
+            if (test(player, npc, c)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** Клиент выбрал вариант {@code index} показанного узла; −1 — закрыл разговор. */
@@ -131,7 +206,13 @@ public final class DialogueService {
         Component line = Component.translatable(lineKey, args(player, node.args()));
         node.gesture().ifPresent(npc::gesture);
         player.setData(ModAttachments.DIALOGUE, new Session(npc.getId(), id, nodeId, List.copyOf(shown)));
-        Component title = d.title().isEmpty() ? Component.empty() : Component.translatable(d.title());
+        // Диалог перехвата без титула: титул говорящего — из его собственного диалога.
+        String titleKey = d.title();
+        if (titleKey.isEmpty()) {
+            Dialogue own = DialogueLoader.get(npc.dialogue());
+            titleKey = own == null ? "" : own.title();
+        }
+        Component title = titleKey.isEmpty() ? Component.empty() : Component.translatable(titleKey);
         PacketDistributor.sendToPlayer(player, new DialoguePayloads.Open(npc.getId(), npc.getName(), title, line, options, anim));
     }
 
@@ -216,7 +297,29 @@ public final class DialogueService {
         if (c.belowRank() >= 0 && profile.rank() >= c.belowRank()) {
             return false;
         }
+        if (!standing(player, sect, profile, c.standing())) {
+            return false;
+        }
         return c.awakened().isEmpty() || MasteryRules.canLearn(profile) == c.awakened().get();
+    }
+
+    /** Положение, заслуги, предмет в инвентаре. */
+    private static boolean standing(ServerPlayer player, SectState sect, DantianProfile profile, Dialogue.Standing c) {
+        SectStanding now = SectStanding.of(sect, profile.rank());
+        if (c.minStanding().isPresent() && !now.atLeast(SectStanding.parse(c.minStanding().get()).orElse(SectStanding.TRUSTED))) {
+            return false;
+        }
+        if (c.belowStanding().isPresent() && now.atLeast(SectStanding.parse(c.belowStanding().get()).orElse(SectStanding.OUTSIDER))) {
+            return false;
+        }
+        if (c.minContribution() >= 0 && sect.contribution() < c.minContribution()) {
+            return false;
+        }
+        if (c.hasItem().isPresent()) {
+            SectService.ItemNeed need = SectService.ItemNeed.parse(c.hasItem().get());
+            return need != null && need.count(player) >= need.count();
+        }
+        return true;
     }
 
     // ------------------------------------------------------------------ аргументы реплики
@@ -227,6 +330,10 @@ public final class DialogueService {
             String a = spec.get(i);
             if ("player".equals(a)) {
                 out[i] = player.getName();
+            } else if ("standing".equals(a)) {
+                out[i] = Component.translatable(SectService.standing(player).nameKey());
+            } else if ("contribution".equals(a)) {
+                out[i] = player.getData(ModAttachments.SECT).contribution();
             } else if ("rank".equals(a)) {
                 out[i] = player.getData(ModAttachments.PROFILE).rank();
             } else if (a.startsWith("layer:")) {
@@ -247,7 +354,19 @@ public final class DialogueService {
     private static String act(ServerPlayer player, SectDisciple npc, Dialogue.Action a) {
         String v = a.value().orElse("");
         switch (a.type()) {
-            case "set_flag" -> player.setData(ModAttachments.SECT, player.getData(ModAttachments.SECT).with(v));
+            case "set_flag" -> {
+                SectStanding before = SectService.standing(player);
+                player.setData(ModAttachments.SECT, player.getData(ModAttachments.SECT).with(v));
+                SectService.announceStanding(player, before);
+            }
+            case "contribute" -> {
+                try {
+                    SectService.contribute(player, Integer.parseInt(v.trim()));
+                } catch (NumberFormatException e) {
+                    MurimMod.LOGGER.warn("Диалог: заслуги не числом: {}", v);
+                }
+            }
+            case "donate" -> SectService.donate(player, v);
             case "clear_flag" -> player.setData(ModAttachments.SECT, player.getData(ModAttachments.SECT).without(v));
             case "give_book" -> SectService.giveBook(player, ResourceLocation.parse(v));
             case "join_sect" -> SectService.join(player);

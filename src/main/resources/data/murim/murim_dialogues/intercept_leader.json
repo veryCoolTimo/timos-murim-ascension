@@ -1,0 +1,36 @@
+{
+  "name": "npc.murim.guard",
+  "title": "",
+  "start": [
+    {
+      "node": "stop"
+    }
+  ],
+  "nodes": {
+    "stop": {
+      "random": [
+        "dialogue.murim.intercept_leader.stop1",
+        "dialogue.murim.intercept_leader.stop2"
+      ],
+      "gesture": "shake",
+      "options": [
+        {
+          "text": "dialogue.murim.intercept.opt.matter",
+          "next": "matter"
+        },
+        {
+          "text": "dialogue.murim.intercept.opt.ok"
+        }
+      ]
+    },
+    "matter": {
+      "line": "dialogue.murim.intercept_leader.matter",
+      "gesture": "point",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    }
+  }
+}

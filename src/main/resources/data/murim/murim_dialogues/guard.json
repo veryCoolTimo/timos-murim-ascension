@@ -1,6 +1,6 @@
 {
-  "name": "npc.murim.un_am",
-  "title": "npc.murim.un_am.title",
+  "name": "npc.murim.guard",
+  "title": "npc.murim.guard.title",
   "start": [
     {
       "when": [
@@ -15,40 +15,16 @@
     }
   ],
   "nodes": {
-    "night": {
-      "random": [
-        "dialogue.murim.un_am.night1"
-      ],
-      "gesture": "nod",
-      "options": [
-        {
-          "text": "dialogue.murim.un_am.opt.ask",
-          "next": "answer"
-        },
-        {
-          "text": "dialogue.murim.opt.standing",
-          "when": [
-            {
-              "member": true
-            }
-          ],
-          "next": "standing"
-        },
-        {
-          "text": "dialogue.murim.opt.leave"
-        }
-      ]
-    },
     "greet": {
       "random": [
-        "dialogue.murim.un_am.greet1",
-        "dialogue.murim.un_am.greet2"
+        "dialogue.murim.guard.greet1",
+        "dialogue.murim.guard.greet2"
       ],
       "gesture": "nod",
       "options": [
         {
-          "text": "dialogue.murim.un_am.opt.ask",
-          "next": "answer"
+          "text": "dialogue.murim.guard.opt.where",
+          "next": "where"
         },
         {
           "text": "dialogue.murim.opt.standing",
@@ -64,12 +40,72 @@
         }
       ]
     },
-    "answer": {
-      "line": "dialogue.murim.un_am.answer",
+    "night": {
+      "random": [
+        "dialogue.murim.guard.night1"
+      ],
+      "gesture": "shake",
+      "options": [
+        {
+          "text": "dialogue.murim.guard.opt.where",
+          "next": "where"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "where": {
+      "line": "dialogue.murim.guard.where",
       "gesture": "explain",
       "options": [
         {
-          "text": "dialogue.murim.opt.leave"
+          "text": "dialogue.murim.guard.opt.me",
+          "when": [
+            {
+              "member": false
+            }
+          ],
+          "next": "where_outsider"
+        },
+        {
+          "text": "dialogue.murim.guard.opt.me",
+          "when": [
+            {
+              "member": true,
+              "below_standing": "disciple"
+            }
+          ],
+          "next": "where_novice"
+        },
+        {
+          "text": "dialogue.murim.guard.opt.me",
+          "when": [
+            {
+              "min_standing": "disciple",
+              "below_standing": "graduate"
+            }
+          ],
+          "next": "where_disciple"
+        },
+        {
+          "text": "dialogue.murim.guard.opt.me",
+          "when": [
+            {
+              "min_standing": "graduate",
+              "below_standing": "trusted"
+            }
+          ],
+          "next": "where_graduate"
+        },
+        {
+          "text": "dialogue.murim.guard.opt.me",
+          "when": [
+            {
+              "min_standing": "trusted"
+            }
+          ],
+          "next": "where_trusted"
         }
       ]
     },
@@ -82,9 +118,54 @@
       "gesture": "explain",
       "options": [
         {
-          "text": "dialogue.murim.un_am.opt.how_rise",
+          "text": "dialogue.murim.guard.opt.how_rise",
           "next": "rise"
         },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "where_outsider": {
+      "line": "dialogue.murim.guard.where_outsider",
+      "gesture": "point",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "where_novice": {
+      "line": "dialogue.murim.guard.where_novice",
+      "gesture": "point",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "where_disciple": {
+      "line": "dialogue.murim.guard.where_disciple",
+      "gesture": "point",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "where_graduate": {
+      "line": "dialogue.murim.guard.where_graduate",
+      "gesture": "point",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "where_trusted": {
+      "line": "dialogue.murim.guard.where_trusted",
+      "gesture": "point",
+      "options": [
         {
           "text": "dialogue.murim.opt.leave"
         }

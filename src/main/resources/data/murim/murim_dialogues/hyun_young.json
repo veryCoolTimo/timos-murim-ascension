@@ -77,6 +77,27 @@
           "text": "dialogue.murim.opt.leave"
         }
       ]
+    },
+    "busy": {
+      "line": "dialogue.murim.hyun_young.busy",
+      "gesture": "shake",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
     }
+  },
+  "audience": {
+    "allow": [
+      {
+        "min_standing": "disciple"
+      },
+      {
+        "flag": "summon.hyun_young"
+      }
+    ],
+    "intercept": "murim:intercept_elder",
+    "busy": "busy"
   }
 }

@@ -5,6 +5,15 @@
     {
       "when": [
         {
+          "member": true,
+          "flag": "summon.leader"
+        }
+      ],
+      "node": "summoned"
+    },
+    {
+      "when": [
+        {
           "member": true
         }
       ],
@@ -216,6 +225,23 @@
           "next": "sect_state"
         },
         {
+          "text": "dialogue.murim.leader.opt.ask_trust",
+          "when": [
+            {
+              "min_standing": "graduate",
+              "min_contribution": 30,
+              "not_flag": "approval.leader"
+            }
+          ],
+          "actions": [
+            {
+              "type": "set_flag",
+              "value": "approval.leader"
+            }
+          ],
+          "next": "trusted"
+        },
+        {
           "text": "dialogue.murim.leader.opt.to_mentor",
           "next": "where_mentor"
         },
@@ -232,6 +258,62 @@
           "text": "dialogue.murim.opt.leave"
         }
       ]
+    },
+    "summoned": {
+      "line": "dialogue.murim.leader.summoned",
+      "gesture": "nod",
+      "enter": [
+        {
+          "type": "clear_flag",
+          "value": "summon.leader"
+        },
+        {
+          "type": "set_flag",
+          "value": "met.leader"
+        },
+        {
+          "type": "contribute",
+          "value": "3"
+        }
+      ],
+      "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "busy": {
+      "line": "dialogue.murim.leader.busy",
+      "gesture": "shake",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "trusted": {
+      "line": "dialogue.murim.leader.trusted",
+      "gesture": "bow",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
     }
+  },
+  "audience": {
+    "allow": [
+      {
+        "member": false
+      },
+      {
+        "min_standing": "graduate"
+      },
+      {
+        "flag": "summon.leader"
+      }
+    ],
+    "intercept": "murim:intercept_leader",
+    "busy": "busy"
   }
 }

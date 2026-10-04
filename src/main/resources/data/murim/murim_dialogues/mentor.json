@@ -177,6 +177,14 @@
             {
               "type": "give_book",
               "value": "murim:falling_petal_sword"
+            },
+            {
+              "type": "contribute",
+              "value": "5"
+            },
+            {
+              "type": "set_flag",
+              "value": "summon.leader"
             }
           ],
           "next": "six_done"
@@ -247,6 +255,14 @@
             {
               "type": "give_book",
               "value": "murim:seven_plum_blossoms"
+            },
+            {
+              "type": "contribute",
+              "value": "10"
+            },
+            {
+              "type": "set_flag",
+              "value": "summon.hyun_sang"
             }
           ],
           "next": "spar_done"

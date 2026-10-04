@@ -1,0 +1,53 @@
+{
+  "name": "npc.murim.water_carrier",
+  "title": "npc.murim.water_carrier.title",
+  "start": [
+    {
+      "when": [
+        {
+          "period": "night"
+        }
+      ],
+      "node": "night"
+    },
+    {
+      "node": "greet"
+    }
+  ],
+  "nodes": {
+    "greet": {
+      "random": [
+        "dialogue.murim.water_carrier.greet1",
+        "dialogue.murim.water_carrier.greet2"
+      ],
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.water_carrier.opt.ask",
+          "next": "answer"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "answer": {
+      "line": "dialogue.murim.water_carrier.answer",
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "night": {
+      "line": "dialogue.murim.water_carrier.night",
+      "gesture": "shake",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    }
+  }
+}

@@ -1,6 +1,7 @@
 package io.github.verycooltimo.murim.sect;
 
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.resources.ResourceLocation;
 
@@ -24,8 +25,9 @@ import java.util.Optional;
  * @param title титул под именем
  * @param start точки входа: первая, чьи условия выполнены
  * @param nodes узлы по id
+ * @param audience кто может заговорить сам (глава, старейшины); пусто — все
  */
-public record Dialogue(String name, String title, List<Entry> start, Map<String, Node> nodes) {
+public record Dialogue(String name, String title, List<Entry> start, Map<String, Node> nodes, Optional<Audience> audience) {
 
     /**
      * Условие: все заданные поля должны выполняться. Пустое условие истинно.
@@ -44,12 +46,13 @@ public record Dialogue(String name, String title, List<Entry> start, Map<String,
      * @param period     часть суток распорядка секты ({@code formation}, {@code training}, … — {@link SectSchedule.Period}),
      *                   несколько через {@code |}
      * @param free       собеседник свободен (не в поединке и не в обороне)
+     * @param standing   положение в секте и заслуги ({@link Standing}; поля в том же объекте JSON)
      */
     public record Condition(Optional<String> flag, Optional<String> notFlag, Optional<Boolean> member,
                             Optional<ResourceLocation> knows, Optional<ResourceLocation> notKnows,
                             Optional<ResourceLocation> technique, int minLayer, int belowLayer,
                             int minRank, int belowRank, Optional<Boolean> awakened,
-                            Optional<String> period, Optional<Boolean> free) {
+                            Optional<String> period, Optional<Boolean> free, Standing standing) {
         public static final Codec<Condition> CODEC = RecordCodecBuilder.create(i -> i.group(
                 Codec.STRING.optionalFieldOf("flag").forGetter(Condition::flag),
                 Codec.STRING.optionalFieldOf("not_flag").forGetter(Condition::notFlag),
@@ -63,14 +66,48 @@ public record Dialogue(String name, String title, List<Entry> start, Map<String,
                 Codec.INT.optionalFieldOf("below_rank", -1).forGetter(Condition::belowRank),
                 Codec.BOOL.optionalFieldOf("awakened").forGetter(Condition::awakened),
                 Codec.STRING.optionalFieldOf("period").forGetter(Condition::period),
-                Codec.BOOL.optionalFieldOf("free").forGetter(Condition::free)
+                Codec.BOOL.optionalFieldOf("free").forGetter(Condition::free),
+                Standing.MAP_CODEC.forGetter(Condition::standing)
         ).apply(i, Condition::new));
+    }
+
+    /**
+     * Условия положения (С3, часть 2) — в том же объекте условия, что и остальные поля:
+     * {@code {"min_standing": "disciple", "min_contribution": 15, "has_item": "minecraft:gold_ingot*1"}}.
+     *
+     * @param minStanding     положение не ниже ({@link SectStanding#id()})
+     * @param belowStanding   положение ниже
+     * @param minContribution заслуг не меньше (−1 — не проверять)
+     * @param hasItem         в инвентаре есть предмет (и число через {@code *})
+     */
+    public record Standing(Optional<String> minStanding, Optional<String> belowStanding, int minContribution,
+                           Optional<String> hasItem) {
+        public static final MapCodec<Standing> MAP_CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
+                Codec.STRING.optionalFieldOf("min_standing").forGetter(Standing::minStanding),
+                Codec.STRING.optionalFieldOf("below_standing").forGetter(Standing::belowStanding),
+                Codec.INT.optionalFieldOf("min_contribution", -1).forGetter(Standing::minContribution),
+                Codec.STRING.optionalFieldOf("has_item").forGetter(Standing::hasItem)
+        ).apply(i, Standing::new));
+    }
+
+    /**
+     * Кто может говорить с NPC сам (С3, часть 2; автор: «нельзя обычному молодому ученику заговорить с главой»).
+     * Хотя бы одно условие из {@code allow} выполнено — разговор как обычно. Иначе ближайший старший или охранник
+     * перехватывает младшего и говорит диалог {@code intercept}; если рядом никого — сам NPC отвечает узлом {@code busy}.
+     */
+    public record Audience(List<Condition> allow, Optional<ResourceLocation> intercept, Optional<String> busy) {
+        public static final Codec<Audience> CODEC = RecordCodecBuilder.create(i -> i.group(
+                Condition.CODEC.listOf().optionalFieldOf("allow", List.of()).forGetter(Audience::allow),
+                ResourceLocation.CODEC.optionalFieldOf("intercept").forGetter(Audience::intercept),
+                Codec.STRING.optionalFieldOf("busy").forGetter(Audience::busy)
+        ).apply(i, Audience::new));
     }
 
     /**
      * Действие при выборе варианта (или при входе в узел).
      * Типы: {@code set_flag}, {@code clear_flag}, {@code give_book}, {@code join_sect},
-     * {@code start_spar}, {@code bow}, {@code gesture}. Телепорта нет намеренно (автор 04.10: на гору
+     * {@code start_spar}, {@code bow}, {@code gesture}, {@code contribute} (заслуги ±N),
+     * {@code donate} ({@code "minecraft:gold_ingot*1=3"} — отдать предметы за заслуги). Телепорта нет намеренно (автор 04.10: на гору
      * игрок поднимается сам).
      */
     public record Action(String type, Optional<String> value) {
@@ -119,7 +156,8 @@ public record Dialogue(String name, String title, List<Entry> start, Map<String,
             Codec.STRING.fieldOf("name").forGetter(Dialogue::name),
             Codec.STRING.optionalFieldOf("title", "").forGetter(Dialogue::title),
             Entry.CODEC.listOf().fieldOf("start").forGetter(Dialogue::start),
-            Codec.unboundedMap(Codec.STRING, Node.CODEC).fieldOf("nodes").forGetter(Dialogue::nodes)
+            Codec.unboundedMap(Codec.STRING, Node.CODEC).fieldOf("nodes").forGetter(Dialogue::nodes),
+            Audience.CODEC.optionalFieldOf("audience").forGetter(Dialogue::audience)
     ).apply(i, Dialogue::new));
 
     /** Максимум вариантов на экране (кнопки и клавиши 1–4). */

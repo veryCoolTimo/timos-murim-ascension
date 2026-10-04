@@ -1,0 +1,50 @@
+{
+  "name": "npc.murim.guard",
+  "title": "",
+  "start": [
+    {
+      "when": [
+        {
+          "member": false
+        }
+      ],
+      "node": "outsider"
+    },
+    {
+      "node": "stop"
+    }
+  ],
+  "nodes": {
+    "outsider": {
+      "line": "dialogue.murim.intercept_elder.outsider",
+      "gesture": "shake",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "stop": {
+      "line": "dialogue.murim.intercept_elder.stop",
+      "gesture": "shake",
+      "options": [
+        {
+          "text": "dialogue.murim.intercept.opt.matter",
+          "next": "matter"
+        },
+        {
+          "text": "dialogue.murim.intercept.opt.ok"
+        }
+      ]
+    },
+    "matter": {
+      "line": "dialogue.murim.intercept_elder.matter",
+      "gesture": "point",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    }
+  }
+}

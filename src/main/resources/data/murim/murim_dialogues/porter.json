@@ -1,0 +1,53 @@
+{
+  "name": "npc.murim.porter",
+  "title": "npc.murim.porter.title",
+  "start": [
+    {
+      "when": [
+        {
+          "period": "night"
+        }
+      ],
+      "node": "night"
+    },
+    {
+      "node": "greet"
+    }
+  ],
+  "nodes": {
+    "greet": {
+      "random": [
+        "dialogue.murim.porter.greet1",
+        "dialogue.murim.porter.greet2"
+      ],
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.porter.opt.ask",
+          "next": "answer"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "answer": {
+      "line": "dialogue.murim.porter.answer",
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "night": {
+      "line": "dialogue.murim.porter.night",
+      "gesture": "shake",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,129 @@
+{
+  "name": "npc.murim.steward",
+  "title": "npc.murim.steward.title",
+  "start": [
+    {
+      "when": [
+        {
+          "period": "night"
+        }
+      ],
+      "node": "night"
+    },
+    {
+      "node": "greet"
+    }
+  ],
+  "nodes": {
+    "greet": {
+      "random": [
+        "dialogue.murim.steward.greet1",
+        "dialogue.murim.steward.greet2"
+      ],
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.steward.opt.estate",
+          "next": "estate"
+        },
+        {
+          "text": "dialogue.murim.steward.opt.help",
+          "when": [
+            {
+              "member": true
+            }
+          ],
+          "next": "help"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "night": {
+      "line": "dialogue.murim.steward.night",
+      "gesture": "shake",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "estate": {
+      "line": "dialogue.murim.steward.estate",
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "help": {
+      "line": "dialogue.murim.steward.help",
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.steward.opt.gold",
+          "when": [
+            {
+              "has_item": "minecraft:gold_ingot"
+            }
+          ],
+          "actions": [
+            {
+              "type": "donate",
+              "value": "minecraft:gold_ingot*1=3"
+            }
+          ],
+          "next": "thanks"
+        },
+        {
+          "text": "dialogue.murim.steward.opt.emerald",
+          "when": [
+            {
+              "has_item": "minecraft:emerald"
+            }
+          ],
+          "actions": [
+            {
+              "type": "donate",
+              "value": "minecraft:emerald*1=2"
+            }
+          ],
+          "next": "thanks"
+        },
+        {
+          "text": "dialogue.murim.steward.opt.wheat",
+          "when": [
+            {
+              "has_item": "minecraft:wheat*16"
+            }
+          ],
+          "actions": [
+            {
+              "type": "donate",
+              "value": "minecraft:wheat*16=1"
+            }
+          ],
+          "next": "thanks"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "thanks": {
+      "line": "dialogue.murim.steward.thanks",
+      "gesture": "bow",
+      "options": [
+        {
+          "text": "dialogue.murim.steward.opt.more",
+          "next": "help"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    }
+  }
+}

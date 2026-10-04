@@ -5,6 +5,15 @@
     {
       "when": [
         {
+          "member": true,
+          "flag": "summon.hyun_sang"
+        }
+      ],
+      "node": "summoned"
+    },
+    {
+      "when": [
+        {
           "period": "formation"
         }
       ],
@@ -65,6 +74,23 @@
           "next": "answer"
         },
         {
+          "text": "dialogue.murim.hyun_sang.opt.pass",
+          "when": [
+            {
+              "min_standing": "disciple",
+              "min_contribution": 15,
+              "not_flag": "pass.scriptures"
+            }
+          ],
+          "actions": [
+            {
+              "type": "set_flag",
+              "value": "pass.scriptures"
+            }
+          ],
+          "next": "pass"
+        },
+        {
           "text": "dialogue.murim.opt.leave"
         }
       ]
@@ -77,6 +103,55 @@
           "text": "dialogue.murim.opt.leave"
         }
       ]
+    },
+    "busy": {
+      "line": "dialogue.murim.hyun_sang.busy",
+      "gesture": "shake",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "summoned": {
+      "line": "dialogue.murim.hyun_sang.summoned",
+      "gesture": "explain",
+      "enter": [
+        {
+          "type": "clear_flag",
+          "value": "summon.hyun_sang"
+        },
+        {
+          "type": "set_flag",
+          "value": "pass.scriptures"
+        }
+      ],
+      "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "pass": {
+      "line": "dialogue.murim.hyun_sang.pass",
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
     }
+  },
+  "audience": {
+    "allow": [
+      {
+        "min_standing": "disciple"
+      },
+      {
+        "flag": "summon.hyun_sang"
+      }
+    ],
+    "intercept": "murim:intercept_elder",
+    "busy": "busy"
   }
 }
