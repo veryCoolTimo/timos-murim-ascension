@@ -50,6 +50,16 @@ class DialogueDataTest {
         for (String id : ids) {
             Dialogue d = load(id);
             assertEquals(List.of(), DialogueService.validate(d), id);
+            // Перехват: диалог перехвата есть, узел «занят» есть, положения в условиях — известные.
+            d.audience().ifPresent(a -> {
+                a.intercept().ifPresent(x -> assertTrue(ids.contains(x.getPath()), id + ": нет диалога перехвата " + x));
+                a.busy().ifPresent(b -> assertTrue(d.nodes().containsKey(b), id + ": нет узла " + b));
+                assertFalse(a.allow().isEmpty(), id + ": пустой allow — не заговорит никто");
+            });
+            d.nodes().values().forEach(n -> n.options().forEach(o -> o.when().forEach(c -> {
+                c.standing().minStanding().ifPresent(x -> assertTrue(SectStanding.parse(x).isPresent(), id + ": " + x));
+                c.standing().belowStanding().ifPresent(x -> assertTrue(SectStanding.parse(x).isPresent(), id + ": " + x));
+            })));
             // Автор 04.10: на гору игрок поднимается сам — телепорта в диалогах нет.
             d.nodes().values().forEach(n -> n.options().forEach(o -> o.actions().forEach(a ->
                     assertFalse("teleport".equals(a.type()), id + ": teleport"))));
@@ -96,6 +106,17 @@ class DialogueDataTest {
         keys.add("murim.sect.morning.count");
         keys.add("murim.sect.morning.offbeat");
         keys.add("murim.sect.morning.done");
+        // Иерархия (С3, часть 2): положение, места, охрана, заслуги.
+        for (SectStanding st : SectStanding.values()) {
+            keys.add(st.nameKey());
+        }
+        for (SectAccess.Rule r : SectAccess.RULES) {
+            keys.add(r.nameKey());
+        }
+        for (String k : List.of("warn", "warn_outsider", "block", "night", "challenge", "escort", "expel")) {
+            keys.add("murim.sect.guard." + k);
+        }
+        keys.addAll(List.of("murim.sect.standing.up", "murim.sect.contribution.gain", "murim.sect.contribution.loss", "murim.sect.donate.none"));
         for (String k : keys) {
             assertTrue(ru.has(k), "ru_ru: " + k);
             assertTrue(en.has(k), "en_us: " + k);
@@ -124,6 +145,14 @@ class DialogueDataTest {
         SectState back = SectState.CODEC.parse(JsonOps.INSTANCE, saved).getOrThrow();
         assertEquals(s, back);
         assertTrue(back.has("lesson.six"));
+        // Версия 1 (без заслуг) читается с нулём заслуг.
+        JsonObject v1 = new JsonObject();
+        v1.addProperty("version", 1);
+        v1.addProperty("member", true);
+        assertEquals(0, SectState.CODEC.parse(JsonOps.INSTANCE, v1).getOrThrow().contribution());
+        SectState rich = s.contribute(12);
+        assertEquals(12, SectState.CODEC.parse(JsonOps.INSTANCE, SectState.CODEC.encodeStart(JsonOps.INSTANCE, rich).getOrThrow())
+                .getOrThrow().contribution());
         assertFalse(back.without("lesson.six").has("lesson.six"));
     }
 }
