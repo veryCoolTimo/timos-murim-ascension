@@ -50,4 +50,18 @@ public final class SectSiteData extends SavedData {
             setDirty();
         }
     }
+
+    /** Забыть (человек секты погиб — встанет снова, когда рядом никого не будет). */
+    public void unplace(String zone) {
+        if (placed.remove(zone)) {
+            setDirty();
+        }
+    }
+
+    // Не сохраняется: состояние текущего сеанса сервера (живёт в экземпляре, а не в static).
+
+    /** Чужак у ворот секты — глава выходит навстречу. */
+    boolean outsiderAtGate;
+    /** Последний удар колокола: часть суток × 4 + номер удара, и день — чтобы не звонить дважды. */
+    long lastRing = Long.MIN_VALUE;
 }

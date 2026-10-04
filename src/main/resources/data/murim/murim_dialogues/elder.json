@@ -1,0 +1,22 @@
+{
+  "name": "npc.murim.elder",
+  "title": "npc.murim.elder.title",
+  "start": [
+    {
+      "node": "greet"
+    }
+  ],
+  "nodes": {
+    "greet": {
+      "random": [
+        "dialogue.murim.elder.greet1"
+      ],
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    }
+  }
+}

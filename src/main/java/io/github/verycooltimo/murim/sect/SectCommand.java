@@ -44,6 +44,41 @@ public final class SectCommand {
                             c.getSource().sendSuccess(() -> Component.translatable("command.murim.sect.reset"), false);
                             return 1;
                         }))
+                        .then(Commands.literal("life").executes(c -> {
+                            // Кто где и что делает (проверка распорядка без похода по горе).
+                            for (String line : SectLife.report(c.getSource().getServer().overworld())) {
+                                c.getSource().sendSuccess(() -> Component.literal(line), false);
+                                MurimMod.LOGGER.info("Секта: {}", line);
+                            }
+                            return 1;
+                        }))
+                        .then(Commands.literal("settle").executes(c -> {
+                            // Проверка: все люди секты — на местах текущей части суток.
+                            int n = SectLife.settleAll(c.getSource().getServer().overworld());
+                            c.getSource().sendSuccess(() -> Component.literal("sect settled: " + n), false);
+                            return n;
+                        }))
+                        .then(Commands.literal("time").then(Commands.argument("period", StringArgumentType.word())
+                                .suggests((c, b) -> {
+                                    for (SectSchedule.Period p : SectSchedule.Period.values()) {
+                                        b.suggest(p.id());
+                                    }
+                                    return b.buildFuture();
+                                })
+                                .executes(c -> {
+                                    // Перемотка к началу части суток: строй, завтрак, занятия, ужин, вечер, ночь.
+                                    var period = SectSchedule.Period.of(StringArgumentType.getString(c, "period"));
+                                    if (period.isEmpty()) {
+                                        return 0;
+                                    }
+                                    var level = c.getSource().getServer().overworld();
+                                    long day = Math.floorDiv(level.getDayTime(), 24000L) * 24000L;
+                                    for (var l : c.getSource().getServer().getAllLevels()) {
+                                        l.setDayTime(day + period.get().start() + 5);
+                                    }
+                                    c.getSource().sendSuccess(() -> Component.literal("sect time -> " + period.get().id()), false);
+                                    return 1;
+                                })))
                         .then(Commands.literal("flag").then(Commands.argument("flag", StringArgumentType.string()).executes(c -> {
                             ServerPlayer p = c.getSource().getPlayerOrException();
                             String f = StringArgumentType.getString(c, "flag");

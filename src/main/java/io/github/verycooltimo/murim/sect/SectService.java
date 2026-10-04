@@ -34,7 +34,6 @@ import java.util.List;
  * Диалоги решают, что сказать и что сделать ({@link DialogueService}); здесь — сами действия и
  * проверки по реальному прогрессу игрока.
  */
-@EventBusSubscriber(modid = MurimMod.MODID)
 public final class SectService {
 
     public static final ResourceLocation SIX = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "six_harmonies");
@@ -94,17 +93,26 @@ public final class SectService {
 
     /** Конец спарринга со старшим: исход для его реплики и урок «три чистых удара». */
     public static void onSparEnd(ServerPlayer player, SectDisciple senior, boolean playerWon) {
-        SectState s = state(player).without(SPAR_WON).without(SPAR_LOST).with(playerWon ? SPAR_WON : SPAR_LOST);
-        if (s.has(LESSON_SPAR) && senior.cleanHits() >= CLEAN_NEEDED) {
+        // Исход помнит только старший (его реплика после боя); урок «три чистых удара» — по второму поколению.
+        SectState s = state(player);
+        if (senior.role() == SectRole.SENIOR) {
+            s = s.without(SPAR_WON).without(SPAR_LOST).with(playerWon ? SPAR_WON : SPAR_LOST);
+        }
+        if (s.has(LESSON_SPAR) && senior.cleanHits() >= CLEAN_NEEDED && lessonPartner(senior)) {
             s = s.with(SPAR_CLEAN);
             player.displayClientMessage(Component.translatable("murim.sect.clean_done").withStyle(ChatFormatting.GOLD), false);
         }
         player.setData(ModAttachments.SECT, s);
     }
 
+    /** Урок «три чистых удара по старшему»: партнёр — старший или любой ученик второго поколения. */
+    static boolean lessonPartner(SectDisciple npc) {
+        return npc.role() == SectRole.SENIOR || npc.role() == SectRole.SECOND;
+    }
+
     /** Чистое попадание по старшему — счёт виден игроку, пока урок не сдан. */
     public static void onCleanHit(ServerPlayer player, SectDisciple senior) {
-        if (state(player).has(LESSON_SPAR) && !state(player).has(SPAR_CLEAN)) {
+        if (state(player).has(LESSON_SPAR) && !state(player).has(SPAR_CLEAN) && lessonPartner(senior)) {
             player.displayClientMessage(Component.translatable("murim.sect.clean_hit", Math.min(senior.cleanHits(), CLEAN_NEEDED), CLEAN_NEEDED)
                     .withStyle(ChatFormatting.GOLD), true);
         }
@@ -170,31 +178,6 @@ public final class SectService {
         return null;
     }
 
-    /**
-     * Гора уже в мире: NPC встают на площадки при первом приходе игрока (ворота — глава
-     * и ученик-привратник; главная терраса — наставник, старший, ученик). Генерацию горы не трогаем:
-     * только читаем {@link MountHuaSites}, а «уже поставлены» помним в {@link SectSiteData}.
-     */
-    @SubscribeEvent
-    static void onServerTick(ServerTickEvent.Post event) {
-        if (event.getServer().getTickCount() % 40 != 17) {
-            return;
-        }
-        MountHuaSite site = MountHuaSites.get(event.getServer());
-        if (site == null) {
-            return;
-        }
-        ServerLevel level = event.getServer().overworld();
-        SectSiteData data = level.getDataStorage().computeIfAbsent(SectSiteData.FACTORY, SectSiteData.NAME);
-        // Автор 04.10: внизу только привратник; глава — у ворот секты наверху тропы; экзамена нет, принимают как в книге.
-        placeZone(level, site, data, "gate", List.of(SectRole.GATEKEEPER));
-        placeZone(level, site, data, "sect_gate", List.of(SectRole.LEADER, SectRole.DISCIPLE_A));
-        placeZone(level, site, data, "training", List.of(SectRole.MENTOR, SectRole.SENIOR, SectRole.DISCIPLE_B));
-        for (ServerPlayer p : level.players()) {
-            trackClimb(p, site);
-        }
-    }
-
     /** Флаги подъёма: прошёл верхнюю часть тропы ногами, затем дошёл до ворот секты. */
     public static final String TRAIL_HIGH = "trail.high";
     public static final String CLIMBED = "climbed";
@@ -225,33 +208,5 @@ public final class SectService {
         if (gate != null && p.distanceToSqr(gate[0] + 0.5D, gate[1], gate[2] + 0.5D) < 20.0D * 20.0D) {
             flag(p, CLIMBED);
         }
-    }
-
-    private static void placeZone(ServerLevel level, MountHuaSite site, SectSiteData data, String zone, List<SectRole> roles) {
-        if (data.placed(zone)) {
-            return;
-        }
-        int[] c = zone(site, zone);
-        if (c == null) {
-            return;
-        }
-        BlockPos center = new BlockPos(c[0], c[1], c[2]);
-        if (!level.hasChunkAt(center)) {
-            return;
-        }
-        Player near = level.getNearestPlayer(c[0], c[1], c[2], 64.0D, false);
-        if (near == null) {
-            return;
-        }
-        // Уже стоят (например, поставлены командой) — только запомнить.
-        if (level.getEntitiesOfClass(SectDisciple.class, new AABB(center).inflate(40.0D)).isEmpty()) {
-            Vec3 mid = Vec3.atBottomCenterOf(center);
-            for (int i = 0; i < roles.size(); i++) {
-                double off = (i - (roles.size() - 1) / 2.0D) * 4.0D;
-                spawn(level, roles.get(i), mid.add(off, 0.0D, -3.0D), mid.add(0.0D, 0.0D, 6.0D));
-            }
-            MurimMod.LOGGER.info("Секта Хуашань: NPC на площадке {} ({})", zone, center);
-        }
-        data.place(zone);
     }
 }

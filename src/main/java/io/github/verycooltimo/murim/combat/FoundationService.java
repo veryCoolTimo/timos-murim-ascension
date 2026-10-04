@@ -56,6 +56,8 @@ public final class FoundationService {
         float speed = FoundationForms.speed(player.getCurrentItemAttackStrengthDelay());
         PacketDistributor.sendToPlayersTrackingEntity(player,
                 new FoundationPayloads.Form(player.getId(), formIndex, layer, speed));
+        // Утренний строй секты: форма в такт засчитывается в «Утреннюю тренировку».
+        io.github.verycooltimo.murim.sect.SectLife.onPlayerForm(player);
     }
 
     /**

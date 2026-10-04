@@ -1,6 +1,6 @@
 {
-  "name": "npc.murim.disciple",
-  "title": "npc.murim.disciple.title",
+  "name": "npc.murim.second",
+  "title": "npc.murim.second.title",
   "start": [
     {
       "when": [
@@ -43,25 +43,23 @@
       "node": "evening"
     },
     {
-      "node": "chatter"
+      "node": "greet"
     }
   ],
   "nodes": {
     "busy": {
       "random": [
-        "dialogue.murim.disciple.busy1",
-        "dialogue.murim.disciple.busy2"
+        "dialogue.murim.second.busy1"
       ],
       "gesture": "shake",
       "options": []
     },
     "formation": {
       "random": [
-        "dialogue.murim.disciple.formation1",
-        "dialogue.murim.disciple.formation2",
-        "dialogue.murim.disciple.formation3"
+        "dialogue.murim.second.formation1",
+        "dialogue.murim.second.formation2"
       ],
-      "gesture": "shake",
+      "gesture": "point",
       "options": [
         {
           "text": "dialogue.murim.disciple.opt.join",
@@ -79,9 +77,8 @@
     },
     "meal": {
       "random": [
-        "dialogue.murim.disciple.meal1",
-        "dialogue.murim.disciple.meal2",
-        "dialogue.murim.disciple.meal3"
+        "dialogue.murim.second.meal1",
+        "dialogue.murim.second.meal2"
       ],
       "gesture": "nod",
       "options": [
@@ -92,47 +89,42 @@
     },
     "night": {
       "random": [
-        "dialogue.murim.disciple.night1",
-        "dialogue.murim.disciple.night2"
+        "dialogue.murim.second.night1"
       ],
       "gesture": "shake",
       "options": []
     },
     "evening": {
       "random": [
-        "dialogue.murim.disciple.evening1",
-        "dialogue.murim.disciple.evening2",
-        "dialogue.murim.disciple.evening3"
-      ],
-      "gesture": "explain",
-      "options": [
-        {
-          "text": "dialogue.murim.disciple.opt.challenge",
-          "when": [
-            {
-              "free": true
-            }
-          ],
-          "next": "challenge"
-        },
-        {
-          "text": "dialogue.murim.opt.leave"
-        }
-      ]
-    },
-    "chatter": {
-      "random": [
-        "dialogue.murim.disciple.line1",
-        "dialogue.murim.disciple.line2",
-        "dialogue.murim.disciple.line3",
-        "dialogue.murim.disciple.line4",
-        "dialogue.murim.disciple.line5",
-        "dialogue.murim.disciple.line6"
+        "dialogue.murim.second.evening1",
+        "dialogue.murim.second.evening2"
       ],
       "gesture": "nod",
       "options": [
         {
-          "text": "dialogue.murim.disciple.opt.challenge",
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "greet": {
+      "random": [
+        "dialogue.murim.second.greet1",
+        "dialogue.murim.second.greet2",
+        "dialogue.murim.second.greet3"
+      ],
+      "gesture": "fist",
+      "options": [
+        {
+          "text": "dialogue.murim.second.opt.bow",
+          "actions": [
+            {
+              "type": "bow"
+            }
+          ],
+          "next": "bowed"
+        },
+        {
+          "text": "dialogue.murim.second.opt.challenge",
           "when": [
             {
               "free": true
@@ -141,28 +133,16 @@
           "next": "challenge"
         },
         {
-          "text": "dialogue.murim.disciple.opt.doing",
-          "when": [
-            {
-              "period": "training"
-            }
-          ],
-          "next": "doing"
-        },
-        {
           "text": "dialogue.murim.opt.leave"
         }
       ]
     },
-    "doing": {
-      "random": [
-        "dialogue.murim.disciple.doing_training1",
-        "dialogue.murim.disciple.doing_training2"
-      ],
-      "gesture": "explain",
+    "bowed": {
+      "line": "dialogue.murim.second.bowed",
+      "gesture": "nod",
       "options": [
         {
-          "text": "dialogue.murim.disciple.opt.challenge",
+          "text": "dialogue.murim.second.opt.challenge",
           "when": [
             {
               "free": true
@@ -176,7 +156,7 @@
       ]
     },
     "challenge": {
-      "line": "dialogue.murim.disciple.challenge",
+      "line": "dialogue.murim.second.challenge",
       "gesture": "bow",
       "options": [
         {

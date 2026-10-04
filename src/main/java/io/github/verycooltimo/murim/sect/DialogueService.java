@@ -48,15 +48,18 @@ public final class DialogueService {
 
     /** ПКМ по NPC: первая точка входа диалога его роли, чьи условия выполнены. */
     public static void open(ServerPlayer player, SectDisciple npc) {
-        Dialogue d = DialogueLoader.get(npc.role().dialogue());
+        ResourceLocation id = npc.dialogue();
+        Dialogue d = DialogueLoader.get(id);
         if (d == null) {
-            MurimMod.LOGGER.warn("Нет диалога {} для {}", npc.role().dialogue(), npc.role());
+            MurimMod.LOGGER.warn("Нет диалога {} для {}", id, npc.role());
             return;
         }
         for (Dialogue.Entry e : d.start()) {
-            if (all(player, e.when())) {
+            if (all(player, npc, e.when())) {
+                // Сидящий или спящий встаёт к собеседнику.
+                npc.wake();
                 npc.setTalkingTo(player);
-                show(player, npc, npc.role().dialogue(), d, e.node(), "");
+                show(player, npc, id, d, e.node(), "");
                 return;
             }
         }
@@ -78,7 +81,7 @@ public final class DialogueService {
         }
         Dialogue.Option option = node.options().get(s.shown().get(index));
         // Сервер проверяет вариант заново: условие могло перестать выполняться, пока экран был открыт.
-        if (!all(player, option.when())) {
+        if (!all(player, npc, option.when())) {
             show(player, npc, s.dialogue(), d, s.node(), "");
             return;
         }
@@ -118,7 +121,7 @@ public final class DialogueService {
         List<Component> options = new ArrayList<>();
         for (int i = 0; i < node.options().size() && shown.size() < Dialogue.MAX_OPTIONS; i++) {
             Dialogue.Option o = node.options().get(i);
-            if (all(player, o.when())) {
+            if (all(player, npc, o.when())) {
                 shown.add(i);
                 options.add(Component.translatable(o.text()));
             }
@@ -158,16 +161,29 @@ public final class DialogueService {
 
     // ------------------------------------------------------------------ условия
 
-    static boolean all(ServerPlayer player, List<Dialogue.Condition> conditions) {
+    static boolean all(ServerPlayer player, SectDisciple npc, List<Dialogue.Condition> conditions) {
         for (Dialogue.Condition c : conditions) {
-            if (!test(player, c)) {
+            if (!test(player, npc, c)) {
                 return false;
             }
         }
         return true;
     }
 
-    static boolean test(ServerPlayer player, Dialogue.Condition c) {
+    static boolean test(ServerPlayer player, SectDisciple npc, Dialogue.Condition c) {
+        if (c.period().isPresent()) {
+            String now = SectSchedule.at(player.level().getDayTime()).id();
+            if (!java.util.Arrays.asList(c.period().get().split("\\|")).contains(now)) {
+                return false;
+            }
+        }
+        if (c.free().isPresent() && npc != null) {
+            // Собеседник «свободен», если не в поединке с другим и не в обороне (разговор с нами — не занятость).
+            boolean free = npc.spar() == SectDisciple.Spar.NONE && !npc.defending();
+            if (free != c.free().get()) {
+                return false;
+            }
+        }
         SectState sect = player.getData(ModAttachments.SECT);
         DantianProfile profile = player.getData(ModAttachments.PROFILE);
         if (c.flag().isPresent() && !sect.has(c.flag().get())) {
@@ -241,7 +257,7 @@ public final class DialogueService {
                 return MurimMod.MODID + ":spar_bow";
             }
             case "start_spar" -> {
-                if (npc.spars()) {
+                if (npc.spars() && npc.spar() == SectDisciple.Spar.NONE && !npc.defending()) {
                     close(player, npc);
                     npc.startSpar(player, 20);
                     return "close";
@@ -250,6 +266,21 @@ public final class DialogueService {
             default -> MurimMod.LOGGER.warn("Неизвестное действие диалога: {}", a.type());
         }
         return null;
+    }
+
+    /**
+     * Вариант без экрана (GameTest): условия и действия — те же, что при выборе в разговоре.
+     *
+     * @return выполнен ли вариант (условия выполнились)
+     */
+    static boolean applyHeadless(ServerPlayer player, SectDisciple npc, Dialogue.Option option) {
+        if (!all(player, npc, option.when())) {
+            return false;
+        }
+        for (Dialogue.Action a : option.actions()) {
+            act(player, npc, a);
+        }
+        return true;
     }
 
     // ------------------------------------------------------------------ проверка данных
