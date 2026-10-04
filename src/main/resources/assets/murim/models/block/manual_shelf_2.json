@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_column",
+  "textures": {
+    "side": "murim:block/manual_shelf_2",
+    "end": "minecraft:block/dark_oak_planks"
+  }
+}

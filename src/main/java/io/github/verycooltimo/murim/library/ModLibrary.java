@@ -63,6 +63,16 @@ public final class ModLibrary {
     public static final DeferredHolder<Item, net.minecraft.world.item.BlockItem> PROPPED_SHELF_ITEM = ITEMS.register("propped_shelf",
             () -> new net.minecraft.world.item.BlockItem(PROPPED_SHELF.get(), new Item.Properties()));
 
+    /**
+     * Decorative archive shelf: dark compartments packed with near-identical pale manuals lying flat (the stacks of the
+     * Heavenly Demon Archives; vanilla shelves only show coloured spines). Broken, it spills one or two clone volumes.
+     */
+    public static final DeferredHolder<net.minecraft.world.level.block.Block, net.minecraft.world.level.block.Block> MANUAL_SHELF = BLOCKS.register("manual_shelf",
+            () -> new net.minecraft.world.level.block.Block(net.minecraft.world.level.block.state.BlockBehaviour.Properties
+                    .ofFullCopy(net.minecraft.world.level.block.Blocks.BOOKSHELF)));
+    public static final DeferredHolder<Item, net.minecraft.world.item.BlockItem> MANUAL_SHELF_ITEM = ITEMS.register("manual_shelf",
+            () -> new net.minecraft.world.item.BlockItem(MANUAL_SHELF.get(), new Item.Properties()));
+
     public static final DeferredHolder<LootItemFunctionType<?>, LootItemFunctionType<JunkBookFunction>> JUNK_BOOK_FUNCTION =
             LOOT_FUNCTIONS.register("junk_book", () -> new LootItemFunctionType<>(JunkBookFunction.CODEC));
     public static final DeferredHolder<LootItemFunctionType<?>, LootItemFunctionType<LibraryMapFunction>> LIBRARY_MAP_FUNCTION =
@@ -101,6 +111,7 @@ public final class ModLibrary {
         }
         seeds.forEach((k, s) -> event.accept(JunkFactory.stack(new JunkBook(k, s, k == JunkKind.CLUE ? 19 : -1, false))));
         event.accept(new net.minecraft.world.item.ItemStack(PROPPED_SHELF_ITEM.get()));
+        event.accept(new net.minecraft.world.item.ItemStack(MANUAL_SHELF_ITEM.get()));
     }
 
     public static void register(IEventBus modBus) {

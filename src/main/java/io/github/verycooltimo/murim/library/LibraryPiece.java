@@ -298,7 +298,7 @@ public class LibraryPiece extends StructurePiece {
             LibraryPlan.Cell kind = plan.cell(t, side, p, row);
             switch (kind) {
                 case CHISELED -> chiseled(ax, y, az, facing);
-                case PLAIN -> a(ax, y, az, Blocks.BOOKSHELF.defaultBlockState());
+                case PLAIN -> a(ax, y, az, ModLibrary.MANUAL_SHELF.get().defaultBlockState());
                 case BUNDLE -> a(ax, y, az, Blocks.BIRCH_SLAB.defaultBlockState());
                 case EMPTY -> a(ax, y, az, Blocks.DARK_OAK_SLAB.defaultBlockState());
                 case PROPPED -> a(ax, y, az, ModLibrary.PROPPED_SHELF.get().defaultBlockState().setValue(ProppedShelfBlock.FACING, facing));
@@ -365,11 +365,12 @@ public class LibraryPiece extends StructurePiece {
                         continue;
                     }
                     a(ax, y + 1, az, Blocks.DARK_OAK_FENCE.defaultBlockState());
-                    // Lattice panels on the void side of the fence line: open mangrove trapdoors (pierced pattern).
+                    // Panels on the void side of the fence line: open dark oak trapdoors, four recessed panes each —
+                    // framed rectangular bays between the posts (mangrove's red ring read as pink blobs on the stand).
                     if ((ax + az) % 2 == 0) {
                         int[] out = voidward(ax, az);
                         Direction f = facingInto(ax, az);
-                        a(out[0], y + 1, out[1], Blocks.MANGROVE_TRAPDOOR.defaultBlockState()
+                        a(out[0], y + 1, out[1], Blocks.DARK_OAK_TRAPDOOR.defaultBlockState()
                                 .setValue(TrapDoorBlock.FACING, f).setValue(TrapDoorBlock.OPEN, true).setValue(TrapDoorBlock.HALF, Half.BOTTOM));
                     }
                 }
@@ -512,7 +513,7 @@ public class LibraryPiece extends StructurePiece {
                             continue;
                         }
                         int along = ax == LibraryPlan.RAIL_LO || ax == LibraryPlan.RAIL_HI ? az : ax;
-                        if (Math.floorMod(along + 4 * t, 8) != 3) {
+                        if (Math.floorMod(along + 2 * t, 4) != 3) {
                             continue;
                         }
                         if (t < 3 && hole(t + 1, ax, az)) {
@@ -528,6 +529,22 @@ public class LibraryPiece extends StructurePiece {
                         if (!snapped) {
                             a(in[0], above - chain - 1, in[1], Blocks.LANTERN.defaultBlockState().setValue(LanternBlock.HANGING, true));
                         }
+                    }
+                }
+            }
+            // Along the shelving: a lantern under the deck by every other wall post (the shelves are what the visitor
+            // reads; stand frames 04.10 showed them sinking into black).
+            for (int t = 0; t < 4; t++) {
+                int under = ceilings[t] - 1;
+                for (int side = 0; side < 4; side++) {
+                    for (int i = 1; i < LibraryPlan.POSTS.length - 1; i += 2) {
+                        int[] w = LibraryPlan.wallCell(side, LibraryPlan.POSTS[i]);
+                        int ax = w[0] + (side == 0 ? 1 : side == 2 ? -1 : 0);
+                        int az = w[1] + (side == 3 ? 1 : side == 1 ? -1 : 0);
+                        if (t < 3 && hole(t + 1, ax, az)) {
+                            continue;
+                        }
+                        soft(ax, under, az, Blocks.LANTERN.defaultBlockState().setValue(LanternBlock.HANGING, true));
                     }
                 }
             }
@@ -617,7 +634,9 @@ public class LibraryPiece extends StructurePiece {
                             }
                             continue;
                         }
-                        if (side || y <= f - 1 || y >= f + 4) {
+                        if (x == doorway + 1 && y == f + 4 && z <= mouthZ() + 1) {
+                            s = Blocks.AIR.defaultBlockState(); // the crown of the rock opening, 4 high
+                        } else if (side || y <= f - 1 || y >= f + 4) {
                             s = lining(x, y, z);
                         } else if (y == f) {
                             s = stair && z < T - LibraryPlan.LANDING ? Blocks.STONE_BRICK_STAIRS.defaultBlockState().setValue(StairBlock.FACING, Direction.SOUTH)
@@ -640,47 +659,63 @@ public class LibraryPiece extends StructurePiece {
 
         BlockState lining(int x, int y, int z) {
             double v = n(x, y, z);
-            boolean outer = z < mouthZ() + 3;
+            // The first two slices are the bare rock of the mouth; the masonry lining starts a step inside (lfc-06).
+            if (z <= mouthZ() + 1) {
+                return v < 0.25D ? Blocks.MOSSY_COBBLESTONE.defaultBlockState() : rock(x, y, z);
+            }
             if (v < 0.12D) {
                 return Blocks.CRACKED_STONE_BRICKS.defaultBlockState();
             }
-            if (outer && v < 0.35D) {
+            if (z < mouthZ() + 4 && v < 0.35D) {
                 return Blocks.MOSSY_STONE_BRICKS.defaultBlockState();
             }
             return v > 0.93D ? Blocks.POLISHED_DEEPSLATE.defaultBlockState() : Blocks.STONE_BRICKS.defaultBlockState();
         }
 
-        /** A rough rock mound round the mouth (lfc-06), its rim irregular, on whatever terrain is there. */
+        /**
+         * A rock outcrop round the mouth (lfc-06: broken rock rim, the opening in its flank): an elliptic mound up to
+         * 8 blocks high, higher than the tunnel lining it hides, on whatever terrain is there. The opening is 3 wide and
+         * 4 high at the crown.
+         */
         void mouth() {
             int zm = mouthZ();
-            for (int x = 3; x <= 19; x++) {
-                for (int z = Math.max(0, zm - 3); z <= Math.min(T - 2, zm + 7); z++) {
-                    double d = Math.sqrt((x - 11.0D) * (x - 11.0D) * 0.5D + (z - zm - 2.0D) * (z - zm - 2.0D));
-                    int top = mouthY + 6 - (int) Math.round(d * 0.9D + n(x, 55, z) * 2.0D);
-                    if (top <= mouthY - 1) {
+            for (int x = 1; x <= 21; x++) {
+                for (int z = Math.max(0, zm - 3); z <= Math.min(T - 2, zm + 10); z++) {
+                    double ex = (x - 11.0D) / (8.5D + n(z, 51, 0) * 2.0D);
+                    double ez = (z - zm - 3.0D) / 6.5D;
+                    double e = ex * ex + ez * ez;
+                    if (e >= 1.0D) {
                         continue;
                     }
+                    int top = mouthY + (int) Math.round(8.5D * (1.0D - e) + (n(x, 55, z) - 0.5D) * 2.5D);
                     BlockPos column = getWorldPos(x, 0, z);
                     if (!box.isInside(new BlockPos(column.getX(), box.minY(), column.getZ()))) {
                         continue;
                     }
                     int ground = level.getHeight(Heightmap.Types.WORLD_SURFACE_WG, column.getX(), column.getZ()) - 1 - boundingBox.minY();
-                    for (int y = Math.min(ground, mouthY - 1); y <= top; y++) {
-                        boolean opening = x >= 10 && x <= 12 && y > floorAt(z) && y <= floorAt(z) + 3 && z >= zm - 3;
-                        boolean lined = x >= 9 && x <= 13 && z >= zm && y >= floorAt(z) - 1 && y <= floorAt(z) + 4;
-                        if (opening || lined) {
+                    for (int y = Math.min(ground, mouthY) - 1; y <= top; y++) {
+                        int f = floorAt(z);
+                        boolean opening = x >= 10 && x <= 12 && y > f && y <= f + 3 || x == 11 && y == f + 4 && z <= zm + 1;
+                        boolean lined = x >= 9 && x <= 13 && z >= zm && y >= f - 2 && y <= f + 5;
+                        if (opening && z >= zm - 3 || lined) {
                             continue;
                         }
-                        BlockState s = n(x, y, z + 300) < 0.2D ? Blocks.MOSSY_COBBLESTONE.defaultBlockState() : rock(x, y, z);
-                        put(x, y, z, s);
+                        double v = n(x, y, z + 300);
+                        BlockState state = v < 0.12D ? Blocks.MOSSY_COBBLESTONE.defaultBlockState()
+                                : v < 0.18D ? Blocks.COBBLESTONE.defaultBlockState() : rock(x, y, z);
+                        put(x, y, z, state);
                     }
-                    // Moss and roots only at the outer seam.
-                    if (z == zm - 1 && x >= 8 && x <= 14 && n(x, 66, z) < 0.5D) {
+                    // Moss and a little grass on the crown.
+                    double g = n(x, 66, z);
+                    if (g < 0.35D) {
                         put(x, top + 1, z, Blocks.MOSS_CARPET.defaultBlockState());
+                    } else if (g < 0.5D) {
+                        put(x, top + 1, z, Blocks.SHORT_GRASS.defaultBlockState());
                     }
                 }
             }
-            // A worn path out of the mouth.
+            // Hanging roots under the crown of the opening; a worn path out of the mouth.
+            put(11, mouthY + 4, zm, Blocks.HANGING_ROOTS.defaultBlockState());
             for (int z = Math.max(0, zm - 3); z < zm; z++) {
                 for (int x = 10; x <= 12; x++) {
                     put(x, mouthY, z, n(x, 3, z) < 0.4D ? Blocks.GRAVEL.defaultBlockState() : Blocks.COARSE_DIRT.defaultBlockState());

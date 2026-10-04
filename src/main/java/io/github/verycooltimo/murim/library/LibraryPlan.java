@@ -70,16 +70,16 @@ public final class LibraryPlan {
     /** Record barrels in the shelf bases, one per tier: wall side, position p. The top one holds the keeper's note. */
     public static final int[][] BARRELS = {{3, 20}, {1, 7}, {2, 11}, {3, 7}};
 
-    /** Shelf rows above a tier floor that are chiseled (take books); the third row is plain bookshelves. */
+    /** Shelf rows above a tier floor that hold takeable volumes; the third row is stacked-manual shelves. */
     public static final int CHISELED_ROWS = 2;
-    /** A shelf block is an empty frame instead of a shelf (looted, broken). */
-    public static final double EMPTY_FRAME = 0.12D;
-    /** A chiseled cell is a plain bookshelf instead (decor, cannot be emptied). */
-    public static final double PLAIN_SHELF = 0.15D;
-    /** A slot of a chiseled shelf still holds a volume. */
-    public static final double SLOT_FILLED = 0.18D;
+    /** A shelf block is an empty board instead of a shelf (looted, broken). */
+    public static final double EMPTY_FRAME = 0.07D;
+    /** A lower cell is a stacked-manuals shelf (decor, breaks into junk) rather than a chiseled one. */
+    public static final double PLAIN_SHELF = 0.30D;
+    /** A slot of a chiseled shelf still holds a volume (refs: shelving packed with manuals). */
+    public static final double SLOT_FILLED = 0.50D;
     /** A volume on the shelves is a genuine torn manual, not junk: shelves are the "98" of 98/2, almost all junk. */
-    public static final double SLOT_GENUINE = 0.003D;
+    public static final double SLOT_GENUINE = 0.0012D;
 
     /** Genuine torn manuals that can sit on the shelves: technique, depth (layers it teaches), weight. */
     public static final List<Genuine> SHELF_GENUINE = List.of(
@@ -158,8 +158,8 @@ public final class LibraryPlan {
                             } else if (r.nextDouble() < EMPTY_FRAME) {
                                 c = Cell.EMPTY;
                             } else if (row >= CHISELED_ROWS) {
-                                // Top row: pale bundles of stacked manuals (birch slabs) or plain shelves.
-                                c = r.nextDouble() < 0.55D ? Cell.BUNDLE : Cell.PLAIN;
+                                // Top row: stacked-manual shelves, now and then a loose pale bundle (birch slab).
+                                c = r.nextDouble() < 0.15D ? Cell.BUNDLE : Cell.PLAIN;
                             } else if (r.nextDouble() < PLAIN_SHELF) {
                                 c = Cell.PLAIN;
                             } else {

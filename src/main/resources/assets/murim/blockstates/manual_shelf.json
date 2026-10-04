@@ -1,0 +1,15 @@
+{
+  "variants": {
+    "": [
+      {
+        "model": "murim:block/manual_shelf_0"
+      },
+      {
+        "model": "murim:block/manual_shelf_1"
+      },
+      {
+        "model": "murim:block/manual_shelf_2"
+      }
+    ]
+  }
+}

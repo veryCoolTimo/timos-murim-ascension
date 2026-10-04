@@ -33,7 +33,7 @@ public class RuinedLibraryStructure extends Structure {
 
     /** Rock and earth between the archive's top (local y 22) and the lowest ground over it. */
     static final int COVER = 3;
-    /** How far above the lowest ground the mouth may stand (stair steps = 11 + this). */
+    /** How far above the lowest ground the mouth may stand (stair steps = 10 + this). */
     static final int MAX_MOUTH_RISE = 6;
     /** Keep away from the Mount Hua massif's box. */
     static final int HUA_MARGIN = 160;
@@ -67,10 +67,17 @@ public class RuinedLibraryStructure extends Structure {
             }
             min = Math.min(min, floor);
         }
-        BlockPos mouth = probe.world(11, 0, t - 14);
-        int mouthTop = gen.getBaseHeight(mouth.getX(), mouth.getZ(), Heightmap.Types.OCEAN_FLOOR_WG, context.heightAccessor(), context.randomState()) - 1;
         int baseY = min - 1 - COVER - (LibraryPlan.CEILING + 2);
-        int mouthY = mouthTop - baseY;
+        // The mouth's z depends on how many steps lead down, which depends on the ground at the mouth: two rounds.
+        int mouthZ = t - LibraryPlan.LANDING - 13;
+        int mouthTop = 0;
+        int mouthY = 0;
+        for (int round = 0; round < 2; round++) {
+            BlockPos mouth = probe.world(11, 0, Math.max(0, mouthZ - 1));
+            mouthTop = gen.getBaseHeight(mouth.getX(), mouth.getZ(), Heightmap.Types.OCEAN_FLOOR_WG, context.heightAccessor(), context.randomState()) - 1;
+            mouthY = mouthTop - baseY;
+            mouthZ = Math.max(1, t - LibraryPlan.LANDING - Math.max(0, mouthY - LibraryPlan.TOP));
+        }
         if (mouthTop - (min - 1) > MAX_MOUTH_RISE || mouthTop < min - 2 || min <= gen.getSeaLevel()
                 || baseY < context.heightAccessor().getMinBuildHeight() + 4 || min > 190) {
             return Optional.empty();

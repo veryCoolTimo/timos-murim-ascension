@@ -39,7 +39,8 @@ public final class JunkBookScreen extends Screen {
     private static final int SEAL = 0xFFB3262C;
     private static final int SEAL_DARK = 0xFF7E1A1F;
     private static final int SEAL_TEXT = 0xFFF3E6D0;
-    private static final float SCALE = 0.8F;
+    /** Full font scale: junk is read, not glanced at (0.8 left most volumes on one page with the other empty). */
+    private static final float SCALE = 1.0F;
     /** Text boxes of the left and right page (texture coordinates). */
     private static final int[] PAGE_X = {26, 214};
     private static final int PAGE_Y = 22;
