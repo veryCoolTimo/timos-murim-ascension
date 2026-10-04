@@ -83,6 +83,11 @@ public final class DevSetupEvents {
             event.getEntity().setItemInHand(InteractionHand.MAIN_HAND,
                     new ItemStack(io.github.verycooltimo.murim.registry.ModItems.HUASHAN_SWORD.get()));
         }
+        // MURIM_CAPTURE_HAND=wooden_sword — деревянный учебный меч (04.10).
+        if ("wooden_sword".equals(System.getenv("MURIM_CAPTURE_HAND"))) {
+            event.getEntity().setItemInHand(InteractionHand.MAIN_HAND,
+                    new ItemStack(io.github.verycooltimo.murim.registry.ModItems.WOODEN_SWORD.get()));
+        }
 
         // Площадка над лесом. Оценивать светящуюся ленту на фоне листвы невозможно: контраст
         // низкий, а ветки перекрывают силуэт. Чистое небо даёт однозначный фон, на котором
@@ -592,8 +597,8 @@ public final class DevSetupEvents {
         String drop = System.getenv("MURIM_CAPTURE_DROP");
         if (drop != null && !drop.isBlank() && !level.players().isEmpty()) {
             net.minecraft.world.entity.player.Player p0 = level.players().get(0);
-            net.minecraft.world.item.Item item = "huashan_sword".equals(drop.trim())
-                    ? io.github.verycooltimo.murim.registry.ModItems.HUASHAN_SWORD.get()
+            net.minecraft.world.item.Item item = "huashan_sword".equals(drop.trim()) ? io.github.verycooltimo.murim.registry.ModItems.HUASHAN_SWORD.get()
+                    : "wooden_sword".equals(drop.trim()) ? io.github.verycooltimo.murim.registry.ModItems.WOODEN_SWORD.get()
                     : io.github.verycooltimo.murim.registry.ModItems.TANG_DAGGER.get();
             double ahead = envDouble("MURIM_CAPTURE_DROP_DIST", 1.6D);
             net.minecraft.world.entity.item.ItemEntity dropped = new net.minecraft.world.entity.item.ItemEntity(level,
