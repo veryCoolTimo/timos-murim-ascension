@@ -23,8 +23,6 @@ public final class SectStaff {
     static final double CORNER_U = 10.0D;
     static final double CORNER_V = 15.0D;
 
-    /** Носильщики: доля пути по последнему пролёту тропы от ворот к Золотому Замку (у {@link SectLayout#STAIR}). */
-    static final double STAIR_LOW = 0.45D;
 
     private SectStaff() {
     }
@@ -92,15 +90,16 @@ public final class SectStaff {
     }
 
     /**
-     * Носильщики: с пролёта лестницы под воротами наверх, в кладовую (снабжение гильдии Ынха, гл. 178).
-     * Двое ходят со сдвигом: у каждого своё место в кладовой.
+     * Носильщики: груз, поднятый по лестнице, принимают на площадке ворот (там кончаются ступени) и несут в кладовую
+     * (снабжение гильдии Ынха, гл. 178). Двое ходят со сдвигом: у каждого своё место у ворот и в кладовой.
+     * Сам подъём по тропе не показан: тропа под воротами — вне площадок секты, NPC там не тикают без игрока.
      */
     private static Task porter(SectRoster m, Period p) {
         int i = "porter_oh".equals(m.key()) ? 1 : 0;
         return switch (p) {
             case BREAKFAST, DINNER -> SectSchedule.eat(m);
             case EVENING -> rest(m);
-            default -> SectSchedule.carry("treasury", 9.0D, i == 0 ? -5.0D : 5.0D, SectLayout.STAIR, STAIR_LOW + i * 0.08D, 0.0D);
+            default -> SectSchedule.carry("treasury", 9.0D, i == 0 ? -5.0D : 5.0D, "sect_gate", 9.0D + i * 2.0D, -3.0D);
         };
     }
 

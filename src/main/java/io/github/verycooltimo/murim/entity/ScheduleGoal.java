@@ -162,6 +162,7 @@ public final class ScheduleGoal extends Goal {
             npc.workPose(null);
             loaded = false;
             pickup = null;
+            legTicks = 0;
             outfit(k);
         }
         // Ночная стража — с фонарём в левой руке.
@@ -176,6 +177,7 @@ public final class ScheduleGoal extends Goal {
     /** Несёт ли сейчас груз (носильщик, водонос) и где его берёт. */
     private boolean loaded;
     private Vec3 pickup;
+    private int legTicks;
 
     /** Реквизит по делу: метла, мотыга, миска, книга учёта; у остальных руки пустые. */
     private void outfit(Kind k) {
@@ -228,7 +230,11 @@ public final class ScheduleGoal extends Goal {
             pickup = npc.level().isLoaded(BlockPos.containing(guess)) ? SectLife.stand(npc.level(), guess) : guess;
         }
         Vec3 target = loaded ? current.spot() : pickup;
-        if (arrive(target, loaded ? 0.55D : 0.7D)) {
+        // Между площадками пути может не быть, пока автор не поставил лестницы: застрявший носильщик не стоит
+        // столбом перед игроком, а через 20 с поворачивает обратно (как будто отдал груз на полпути).
+        boolean giveUp = ++legTicks > 400;
+        if (arrive(target, loaded ? 0.55D : 0.7D) || giveUp) {
+            legTicks = 0;
             loaded = !loaded;
             npc.hold(loaded ? load() : empty());
             npc.workPose(loaded ? "carry" : null);

@@ -140,7 +140,7 @@ class SectHierarchyTest {
                 }
                 if (t.kind() == Kind.CARRY) {
                     assertTrue(t.route(), m.key() + ": ношение без второго конца");
-                    assertTrue(SectLayout.STAIR.equals(t.toZone()) || zone(t.toZone()) != null, t.toZone());
+                    assertNotNull(zone(t.toZone()), t.toZone());
                 }
                 if (m.lay()) {
                     assertTrue(m.role().lay() && !m.role().spars(), m.key());

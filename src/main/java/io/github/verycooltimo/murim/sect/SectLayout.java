@@ -39,12 +39,6 @@ public interface SectLayout {
         return new Hua(site);
     }
 
-    /**
-     * Не площадка, а последний пролёт тропы под воротами секты: {@code at(STAIR, t, 0)} — точка на доле {@code t}
-     * пути от верхнего конца тропы к Золотому Замку (носильщики поднимают груз по ступеням).
-     */
-    String STAIR = "stair";
-
     /** Площадки секты — всё, что на полке перед Южным пиком (без нижних ворот и беседок на пиках). */
     List<String> SECT_ZONES = List.of("sect_gate", "training", "bell", "mentor", "sparring", "main_hall", "ancestors",
             "scriptures", "elders", "treasury", "camp", "dorm_2nd", "dorm_3rd", "dining", "poles", "alchemy", "grove",
@@ -69,15 +63,6 @@ public interface SectLayout {
 
         @Override
         public Vec3 at(String zone, double du, double dv) {
-            if (STAIR.equals(zone)) {
-                // Последний пролёт тропы: от точки у ворот к Золотому Замку, высота — по тропе.
-                List<MountHuaPlan.TrailPoint> trail = MountHuaPlan.TRAIL;
-                MountHuaPlan.TrailPoint top = trail.get(trail.size() - 1);
-                MountHuaPlan.TrailPoint lock = trail.get(trail.size() - 2);
-                double t = Math.max(0.0D, Math.min(1.0D, du));
-                int[] w = site.toWorld(top.u() + (lock.u() - top.u()) * t, top.v() + (lock.v() - top.v()) * t);
-                return new Vec3(w[0] + 0.5D, Math.round(site.worldY(top.y() + (lock.y() - top.y()) * t)) + 1.0D, w[1] + 0.5D);
-            }
             MountHuaPlan.Zone z = zones.get(zone);
             if (z == null) {
                 return null;

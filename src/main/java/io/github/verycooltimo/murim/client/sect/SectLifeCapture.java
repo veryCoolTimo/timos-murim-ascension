@@ -92,7 +92,9 @@ public final class SectLifeCapture {
             // Игрок в строю: с края второго ряда бьёт формы вместе со всеми.
             new Scene("join", 23500, "training", 12.5D, 9.5D, 2.5D, "training", 4.5D, 3.0D, 1.0D, true),
             // С3, часть 2: слуги днём — носильщики со ступеней в кладовую, управляющий, метельщик на площади.
-            new Scene("workers", 4300, "training", 22.0D, -11.0D, 7.0D, "treasury", -6.0D, 0.0D, 0.0D, false),
+            new Scene("workers", 4300, "training", 21.0D, -3.0D, 4.0D, "treasury", -6.0D, -2.0D, 0.5D, false),
+            // Носильщики принимают груз у ворот (наверху лестницы) и несут в кладовую.
+            new Scene("porters", 4350, "training", 18.0D, -12.0D, 3.0D, "sect_gate", 12.0D, -2.0D, 1.0D, false),
             // Завтрак: повар раздаёт, водонос носит воду на кухню.
             new Scene("kitchen", 1300, "dining", -9.0D, -9.0D, 5.0D, "dining", 2.0D, 0.0D, 0.0D, false),
             // Новичок заговаривает с главой — охранник у главного зала перехватывает (окно разговора с ним).
@@ -172,7 +174,7 @@ public final class SectLifeCapture {
             mc.options.setCameraType(CameraType.FIRST_PERSON);
             follow(mc);
         }
-        mc.options.keyUp.setDown(walk && wait > 160);
+        mc.options.keyUp.setDown(walk && shooting);
         if (s.join() && mc.player.level().getGameTime() % SectSchedule.BEAT == SectSchedule.BEAT_STRIKE - 2) {
             // Настоящее нажатие атаки: форма основы идёт тем же путём, что у игрока (клиент → сервер → строй).
             KeyMapping.click(mc.options.keyAttack.getKey());
