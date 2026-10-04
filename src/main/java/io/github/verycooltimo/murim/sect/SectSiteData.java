@@ -64,4 +64,7 @@ public final class SectSiteData extends SavedData {
     boolean outsiderAtGate;
     /** Последний удар колокола: часть суток × 4 + номер удара, и день — чтобы не звонить дважды. */
     long lastRing = Long.MIN_VALUE;
+
+    /** Нарушители закрытых мест: игрок → что было (предупреждения, толчки, поединок). Только этот сеанс. */
+    final java.util.Map<java.util.UUID, SectWatch.Trespass> trespass = new java.util.HashMap<>();
 }

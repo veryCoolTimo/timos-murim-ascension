@@ -164,6 +164,9 @@ public class SectDisciple extends Bandit implements Casters.Caster {
     public SectDisciple(EntityType<? extends Monster> type, Level level) {
         super(type, level);
         setPersistenceRequired();
+        // Груз слуг и фонарь стражи — реквизит, а не добыча.
+        setDropChance(net.minecraft.world.entity.EquipmentSlot.MAINHAND, 0.0F);
+        setDropChance(net.minecraft.world.entity.EquipmentSlot.OFFHAND, 0.0F);
     }
 
     private static ResourceLocation id(String path) {
@@ -198,6 +201,7 @@ public class SectDisciple extends Bandit implements Casters.Caster {
     protected void registerGoals() {
         goalSelector.addGoal(0, new FloatGoal(this));
         goalSelector.addGoal(2, new SparGoal());
+        goalSelector.addGoal(3, new BlockGoal());
         goalSelector.addGoal(4, new ScheduleGoal(this));
         goalSelector.addGoal(7, new LookAtPlayerGoal(this, Player.class, 8.0F));
         goalSelector.addGoal(8, new RandomLookAroundGoal(this));
@@ -325,9 +329,10 @@ public class SectDisciple extends Bandit implements Casters.Caster {
         partner = other.getUUID();
         cleanHits = 0;
         defending = false;
-        // Ученики между собой — техника лишь в каждом четвёртом бою и одна (только Разрез): на площадке поединков идёт учёба
-        // основой, а не ливень цветков (codex по кадрам 04.10). С игроком — как раньше.
-        boutTechniques = other instanceof SectDisciple ? (getRandom().nextFloat() < 0.25F ? 1 : 0) : Integer.MAX_VALUE;
+        // Ученики между собой — только основа: формы Шести Равновесий, без Семи Цветков Сливы (автор 04.10: «в спаррингах
+        // учеников — обычные, базовые техники»). Падающего Цветка у NPC пока нет — исполнителя под моба не написано.
+        // С игроком (старший, охрана) — как раньше.
+        boutTechniques = other instanceof SectDisciple ? 0 : Integer.MAX_VALUE;
         npcBout = other instanceof SectDisciple;
         // Партнёр-ученик сам выставит свой порог (он тоже в спарринге); игроку — от его здоровья.
         partnerFloor = other instanceof SectDisciple ? 0.0F : Math.max(1.0F, other.getHealth() - other.getMaxHealth() * SPAR_LOSS);
@@ -492,8 +497,11 @@ public class SectDisciple extends Bandit implements Casters.Caster {
         tickSpar();
         int talk = entityData.get(TALKING);
         if (talk >= 0 && (spar == Spar.NONE || spar == Spar.BOW_OUT) && level().getEntity(talk) instanceof Player p) {
-            // Собеседник: голова — в глаза, корпус доворачивается (план секты §4.3).
-            getNavigation().stop();
+            // Собеседник: голова — в глаза, корпус доворачивается (план секты §4.3). Перехвативший младшего
+            // ещё шагает ему наперерез — его не останавливаем.
+            if (!blocking()) {
+                getNavigation().stop();
+            }
             getLookControl().setLookAt(p, 30.0F, 30.0F);
             float want = (float) (Mth.atan2(p.getZ() - getZ(), p.getX() - getX()) * Mth.RAD_TO_DEG) - 90.0F;
             yBodyRot = Mth.approachDegrees(yBodyRot, want, 8.0F);
@@ -1098,6 +1106,7 @@ public class SectDisciple extends Bandit implements Casters.Caster {
         boolean sitting = sitting();
         if (sit && !sitting) {
             getNavigation().stop();
+            posed = false;
             playAnim(LOTUS, 0);
         } else if (!sit && sitting) {
             playAnim(null, 0);
@@ -1219,6 +1228,153 @@ public class SectDisciple extends Bandit implements Casters.Caster {
     public boolean isPreventingPlayerRest(Player player) {
         // Секта — дом: ученики рядом не мешают спать.
         return false;
+    }
+
+    // ------------------------------------------------------------------ охрана и перехват (С3, часть 2)
+
+    /** Кого охранник (или перехвативший старший) не пускает: id сущности, до какого тика, что за его спиной. */
+    private int blockTarget = -1;
+    /** Сам нарушитель (ссылка: игрока ищем не по id мира — в тесте он не в мире). */
+    private LivingEntity blockWho;
+    private long blockUntil;
+    private Vec3 blockProtect;
+
+    /**
+     * Встать на пути: между {@code who} и точкой {@code protect} (закрытый зал, глава), на {@code ticks} тиков.
+     * Распорядок ждёт; потом NPC возвращается на своё место.
+     */
+    public void block(LivingEntity who, Vec3 protect, int ticks) {
+        if (who == null || protect == null) {
+            return;
+        }
+        wake();
+        blockTarget = who.getId();
+        blockWho = who;
+        blockProtect = protect;
+        blockUntil = level().getGameTime() + ticks;
+    }
+
+    /** Сейчас стоит у кого-то на пути. */
+    public boolean blocking() {
+        return blockTarget >= 0 && level().getGameTime() < blockUntil;
+    }
+
+    /** Кого не пускает (−1 — никого). */
+    public int blockTarget() {
+        return blocking() ? blockTarget : -1;
+    }
+
+    /** Идёт наперерез: в точку в шаге перед нарушителем со стороны того, что охраняет. */
+    private final class BlockGoal extends Goal {
+
+        private int repath;
+
+        BlockGoal() {
+            setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
+        }
+
+        @Override
+        public boolean canUse() {
+            return blocking() && spar == Spar.NONE && !defending && blockWho != null && blockWho.isAlive() && blockWho.level() == level();
+        }
+
+        @Override
+        public boolean canContinueToUse() {
+            return canUse();
+        }
+
+        @Override
+        public boolean requiresUpdateEveryTick() {
+            return true;
+        }
+
+        @Override
+        public void start() {
+            repath = 0;
+            sit(false);
+            workPose(null);
+        }
+
+        @Override
+        public void stop() {
+            getNavigation().stop();
+            blockTarget = -1;
+            blockWho = null;
+        }
+
+        @Override
+        public void tick() {
+            LivingEntity who = blockWho;
+            if (who == null) {
+                return;
+            }
+            Vec3 to = new Vec3(blockProtect.x - who.getX(), 0.0D, blockProtect.z - who.getZ());
+            double len = to.length();
+            Vec3 spot = len < 1.5D ? new Vec3(blockProtect.x, who.getY(), blockProtect.z)
+                    : who.position().add(to.scale(1.4D / len));
+            getLookControl().setLookAt(who, 30.0F, 30.0F);
+            double dx = getX() - spot.x;
+            double dz = getZ() - spot.z;
+            if (dx * dx + dz * dz < 0.5D * 0.5D) {
+                getNavigation().stop();
+                face(who, 20.0F);
+                return;
+            }
+            if (--repath <= 0 || getNavigation().isDone()) {
+                repath = 8;
+                getNavigation().moveTo(spot.x, spot.y, spot.z, 1.2D);
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------ работа слуг: реквизит и позы
+
+    /** Предмет в правой руке (груз, метла, книга учёта); null — пусто. Мечи учеников — часть модели, не предмет. */
+    public void hold(net.minecraft.world.item.Item item) {
+        holdIn(net.minecraft.world.entity.EquipmentSlot.MAINHAND, item);
+    }
+
+    /** Предмет в левой руке (фонарь ночной стражи); null — пусто. */
+    public void holdOff(net.minecraft.world.item.Item item) {
+        holdIn(net.minecraft.world.entity.EquipmentSlot.OFFHAND, item);
+    }
+
+    private void holdIn(net.minecraft.world.entity.EquipmentSlot slot, net.minecraft.world.item.Item item) {
+        net.minecraft.world.item.ItemStack now = getItemBySlot(slot);
+        if (item == null) {
+            if (!now.isEmpty()) {
+                setItemSlot(slot, net.minecraft.world.item.ItemStack.EMPTY);
+            }
+        } else if (!now.is(item)) {
+            setItemSlot(slot, new net.minecraft.world.item.ItemStack(item));
+        }
+    }
+
+    private boolean posed;
+
+    /**
+     * Поза работы по id клипа ({@code murim:<id>}): sweep, carry, cook, tend, serve. Нет клипа — рендер
+     * играет обычный покой, ничего не ломается. null — снять позу.
+     * TODO(агент поз): клипы murim:sweep, murim:carry, murim:cook, murim:tend, murim:serve в player_animations.
+     */
+    public void workPose(String id) {
+        if (id == null) {
+            if (posed) {
+                posed = false;
+                playAnim(null, 0);
+            }
+            return;
+        }
+        ResourceLocation clip = id(id);
+        if (!clip.toString().equals(anim())) {
+            playAnim(clip, 0);
+        }
+        posed = true;
+    }
+
+    /** Мирянин без меча (слуги, управляющий): рендер прячет клинок модели. */
+    public boolean armed() {
+        return !role().lay();
     }
 
     /** Список, чтобы тесты и стенд не трогали внутренности. */

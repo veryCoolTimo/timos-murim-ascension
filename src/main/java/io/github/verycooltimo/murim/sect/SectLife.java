@@ -214,7 +214,7 @@ public final class SectLife {
     /** На ученика (или рядом с ним) напал чужой моб: все бойцы в 24 блоках встают на защиту. */
     public static void alarm(SectDisciple victim, Mob attacker) {
         for (SectDisciple d : victim.level().getEntitiesOfClass(SectDisciple.class, victim.getBoundingBox().inflate(24.0D),
-                d -> d.member().isPresent() && d.free())) {
+                d -> d.member().isPresent() && d.free() && !d.role().lay())) {
             d.defend(attacker);
         }
     }
@@ -446,6 +446,7 @@ public final class SectLife {
             MurimMod.LOGGER.info("Секта Хуашань: {} — утренняя тренировка засчитана", player.getName().getString());
             player.displayClientMessage(Component.translatable("murim.sect.morning.done").withStyle(ChatFormatting.GOLD), false);
             player.level().playSound(null, player.blockPosition(), SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS, 0.4F, 1.4F);
+            SectService.contribute(player, SectService.MORNING_CONTRIBUTION);
             for (SectDisciple d : player.level().getEntitiesOfClass(SectDisciple.class, player.getBoundingBox().inflate(20.0D),
                     d -> d.role() == SectRole.MENTOR)) {
                 d.gesture("nod");
