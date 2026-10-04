@@ -2,6 +2,6 @@
   "type": "murim:ruined_library",
   "biomes": "#murim:has_structure/ruined_library",
   "spawn_overrides": {},
-  "step": "surface_structures",
+  "step": "vegetal_decoration",
   "terrain_adaptation": "none"
 }

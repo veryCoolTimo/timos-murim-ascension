@@ -35,7 +35,8 @@ public final class JunkBookScreen extends Screen {
     private static final int TEX_H = 256;
     private static final int INK = 0xFF1B1612;
     private static final int FADED = 0xFF4A3F35;
-    private static final int NOTE = 0xFF7D6C58;
+    /** Margin notes and signatures: faded, but still readable at 854×480 (codex frame review). */
+    private static final int NOTE = 0xFF5E4E3E;
     private static final int SEAL = 0xFFB3262C;
     private static final int SEAL_DARK = 0xFF7E1A1F;
     private static final int SEAL_TEXT = 0xFFF3E6D0;

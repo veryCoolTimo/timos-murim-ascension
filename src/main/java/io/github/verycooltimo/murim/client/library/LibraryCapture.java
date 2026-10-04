@@ -211,15 +211,20 @@ public final class LibraryCapture {
         move(at(11.5, my + 2.5, mz - 10), at(11.5, my + 2.5, mz + 2), 50, "rock mouth");
         move(at(11.5, my + 0.1, mz - 3), at(11.5, my + 1.8, mz + 1), 50, "approach");
         move(at(11.5, my + 0.1, mz + 0.5), at(11.5, my - 1.5, mz + 9), 40, "into the mouth");
-        move(at(11.5, top + 0.1, t - 2), at(11.5, top + 1.2, t + 6), 22 * (lp.steps() + 3) / 4, "down the tunnel");
+        // Down the stairs exactly along their tops (one block down per block forward), then the landing.
+        move(at(11.5, top + 0.1, t - LibraryPlan.LANDING + 0.5), at(11.5, top + 0.5, t + 6), 6 * lp.steps(), "down the stairs");
+        move(at(11.5, top + 0.1, t - 1.5), at(11.5, top + 1.2, t + 6), 25, "landing");
         // 2. The doorway, then the rail edge: the shaft opens below; look round the tiers.
         move(at(11.5, top + 0.1, t + 3.5), ar(11.5, top + 1.2, 16), 40, "doorway");
-        move(ar(11.5, top + 0.1, 5.2), ar(12.5, 1, 13), 50, "rail edge, look down");
-        act(30, "the shaft", null);
-        move(ar(11.6, top + 0.1, 5.2), ar(22, 9, 20), 50, "look round");
-        move(ar(11.7, top + 0.1, 5.2), ar(4, 12, 20), 60, "look round 2");
+        // A camera flight out over the void: the four tiers round the shaft, lanterns, the bottom far below.
+        move(ar(11.5, top + 0.1, 4.0), ar(12.5, top - 2, 13), 40, "rail edge");
+        move(ar(11.5, top + 0.6, 8.5), ar(12.5, 0.5, 14.5), 60, "over the void, look down");
+        act(40, "the shaft", null);
+        move(ar(11.6, top + 0.6, 8.6), ar(22, 9, 21), 50, "look round");
+        move(ar(11.7, top + 0.6, 8.7), ar(3, 11, 21), 60, "look round 2");
+        move(ar(11.5, top + 0.1, 4.5), ar(7.5, top + 0.6, 1.5), 40, "back to the gallery");
         // 3. The record barrel by the doorway: open it, take the keeper's note, read it.
-        move(ar(7.5, top + 0.1, 3.2), ar(7.5, top + 0.4, 1.5), 30, "barrel");
+        move(ar(7.5, top + 0.1, 3.0), ar(7.5, top + 0.4, 1.5), 30, "barrel");
         act(45, "open barrel", () -> use(mc, lp.archive(LibraryPlan.BARRELS[3][1], top, LibraryPlan.WALL_LO), Direction.NORTH));
         act(10, "close barrel", () -> close(mc));
         act(5, "take note", () -> server.execute(() -> giveNote(server, lp)));
@@ -236,22 +241,25 @@ public final class LibraryCapture {
             act(10, "close junk", () -> close(mc));
         }
         // 5. Down the tiers: west stairs, across the middle tier to the east stairs, the west stairs again.
-        move(ar(4.9, top + 0.1, 6.8), ar(4.9, 12.5, 13), 35, "stair top");
-        move(ar(4.9, 11.1, 12.5), ar(4.2, 12.6, 22), 45, "down to tier 2");
-        move(ar(3.6, 11.1, 22.6), ar(16, 12.4, 22.6), 55, "tier 2 west");
-        move(ar(21.5, 11.1, 22.6), ar(21.5, 11.5, 14), 80, "tier 2 north");
-        move(ar(21.9, 11.1, 19.4), ar(21.9, 7.5, 13), 20, "east stair top");
-        move(ar(21.9, 6.1, 13.4), ar(21.6, 7.6, 4), 45, "down to tier 1");
-        move(ar(21.5, 6.1, 5.4), ar(10, 7.4, 5.4), 45, "tier 1 east");
-        move(ar(4.9, 6.1, 5.4), ar(4.9, 7.2, 10), 80, "tier 1 south");
-        move(ar(4.9, 6.1, 6.8), ar(4.9, 2.5, 13), 15, "west stair top");
-        move(ar(4.9, 1.1, 12.5), ar(13, 2.4, 13), 45, "down to the bottom");
+        // Gallery travel near eye level (codex frame review: keep floors under a third of the frame).
+        move(ar(3.9, top + 0.1, 6.8), ar(3.9, 13, 13), 35, "stair top");
+        move(ar(3.9, 11.1, 12.5), ar(3.5, 12.7, 23), 45, "down to tier 2");
+        move(ar(3.5, 11.1, 23.0), ar(16, 12.6, 23), 55, "tier 2 west");
+        move(ar(23.4, 11.1, 23.0), ar(23.4, 12.0, 14), 80, "tier 2 north");
+        move(ar(22.9, 11.1, 19.4), ar(22.9, 8.0, 13), 20, "east stair top");
+        move(ar(22.9, 6.1, 13.4), ar(23.2, 7.6, 3), 45, "down to tier 1");
+        move(ar(23.2, 6.1, 3.4), ar(10, 7.6, 3.4), 45, "tier 1 east");
+        move(ar(3.9, 6.1, 3.4), ar(3.9, 7.4, 10), 80, "tier 1 south, over the crack");
+        move(ar(3.9, 6.1, 6.8), ar(3.9, 3.0, 13), 15, "west stair top");
+        move(ar(3.9, 1.1, 12.5), ar(13, 2.4, 13), 45, "down to the bottom");
         // 6. The propped shelf: count to it, look at the wedge, pull the book, open it.
         int[] c = lp.plan().proppedCell();
-        Vec3 shelf = ar(c[0] + 0.5, 1.1, c[1] + 0.5);
+        Vec3 shelf = ar(c[0] + 0.5, 1.05, c[1] + 0.5);
         Vec3 unit = ar(c[0] + 0.5, 2.6, c[1] + 0.5);
-        Vec3 front = ar(c[0] + 0.5 + inward(c)[0] * 2.4, 1.1, c[1] + 0.5 + inward(c)[1] * 2.4);
-        move(ar(13, 1.1, 13), unit, 60, "void bottom");
+        Vec3 front = ar(c[0] + 0.5 + inward(c)[0] * 1.9, 1.1, c[1] + 0.5 + inward(c)[1] * 1.9);
+        move(ar(13, 1.1, 13), ar(13.5, 19, 17), 60, "void bottom, look up");
+        act(30, "the tiers above", null);
+        move(ar(13.1, 1.1, 13.1), unit, 40, "turn to the shelves");
         move(ar(c[0] + 0.5 + inward(c)[0] * 4.5, 1.1, c[1] + 0.5 + inward(c)[1] * 4.5), unit, 60, "the shelf");
         move(front, shelf, 50, "propped shelf");
         act(50, "look at the wedge", null);

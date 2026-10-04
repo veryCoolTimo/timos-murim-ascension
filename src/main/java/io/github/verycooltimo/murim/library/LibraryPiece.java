@@ -556,6 +556,23 @@ public class LibraryPiece extends StructurePiece {
             a(LibraryPlan.COLLAPSE_X0 - 2, deck + 1, 3, Blocks.LANTERN.defaultBlockState());
             a(LibraryPlan.COLLAPSE_X1 + 2, deck + 1, 3, Blocks.LANTERN.defaultBlockState());
             hang(13, 14, 5);
+            // Codex frame review: a lamp at each stair head and foot, so the next flight shows from the last one.
+            int[][] stairLamps = {
+                    {LibraryPlan.STAIR_WEST_X - 1, 15, LibraryPlan.STAIR_WEST_Z0 - 1}, {LibraryPlan.STAIR_WEST_X - 1, 10, LibraryPlan.STAIR_WEST_Z0 + 5},
+                    {LibraryPlan.STAIR_EAST_X + 2, 10, LibraryPlan.STAIR_EAST_Z0 + 1}, {LibraryPlan.STAIR_EAST_X + 2, 5, LibraryPlan.STAIR_EAST_Z0 - 5},
+                    {LibraryPlan.STAIR_WEST_X - 1, 5, LibraryPlan.STAIR_WEST_Z0 - 1}, {LibraryPlan.STAIR_WEST_X - 1, 0, LibraryPlan.STAIR_WEST_Z0 + 5}};
+            for (int[] l : stairLamps) {
+                soft(l[0], l[1] + 1, l[2], Blocks.LANTERN.defaultBlockState());
+            }
+            // The keeper's record barrel by the doorway gets a lamp beside it.
+            int[] barrel = LibraryPlan.wallCell(LibraryPlan.BARRELS[3][0], LibraryPlan.BARRELS[3][1]);
+            soft(barrel[0] + 1, LibraryPlan.TOP + 1, barrel[1] + 1, Blocks.LANTERN.defaultBlockState());
+            // Two blocks beside the propped bookcase, on the floor — enough to see the wedge, not a spotlight.
+            int[] c = plan.proppedCell();
+            int side = plan.proppedSide();
+            int ix = side == 0 ? 1 : side == 2 ? -1 : 0;
+            int iz = side == 3 ? 1 : side == 1 ? -1 : 0;
+            soft(c[0] + ix + (iz != 0 ? 2 : 0), 1, c[1] + iz + (ix != 0 ? 2 : 0), Blocks.LANTERN.defaultBlockState());
         }
 
         void hang(int ax, int az, int lowest) {
@@ -651,7 +668,7 @@ public class LibraryPiece extends StructurePiece {
                         put(x, y, z, s);
                     }
                 }
-                if (z == T - 2 || z == T - LibraryPlan.LANDING - Math.max(1, steps() / 2)) {
+                if (z == T - 2 || z == T - LibraryPlan.LANDING - Math.max(1, steps() / 2) || z == mouthZ() + 2) {
                     put(doorway + 1, f + 3, z, Blocks.LANTERN.defaultBlockState().setValue(LanternBlock.HANGING, true));
                 }
             }
@@ -679,15 +696,15 @@ public class LibraryPiece extends StructurePiece {
          */
         void mouth() {
             int zm = mouthZ();
-            for (int x = 1; x <= 21; x++) {
-                for (int z = Math.max(0, zm - 3); z <= Math.min(T - 2, zm + 10); z++) {
-                    double ex = (x - 11.0D) / (8.5D + n(z, 51, 0) * 2.0D);
-                    double ez = (z - zm - 3.0D) / 6.5D;
+            for (int x = 0; x <= 22; x++) {
+                for (int z = Math.max(0, zm - 3); z <= Math.min(T - 1, zm + 12); z++) {
+                    double ex = (x - 11.0D) / (10.0D + n(z, 51, 0) * 2.0D);
+                    double ez = (z - zm - 4.0D) / 8.0D;
                     double e = ex * ex + ez * ez;
                     if (e >= 1.0D) {
                         continue;
                     }
-                    int top = mouthY + (int) Math.round(8.5D * (1.0D - e) + (n(x, 55, z) - 0.5D) * 2.5D);
+                    int top = mouthY + (int) Math.round(10.0D * (1.0D - e) + (n(x, 55, z) - 0.5D) * 3.0D);
                     BlockPos column = getWorldPos(x, 0, z);
                     if (!box.isInside(new BlockPos(column.getX(), box.minY(), column.getZ()))) {
                         continue;

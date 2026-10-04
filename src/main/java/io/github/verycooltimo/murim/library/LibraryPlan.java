@@ -19,11 +19,11 @@ import java.util.Random;
  * <pre>
  *  az 26 shell (rock)                      tiers: floors y 0, 5, 10, 15; rock from y 20
  *  az 25 ▤▤▤|▤▤▤|▤▤▤|▤▤▤|▤▤▤|▤▤▤   shelf wall ring: 6 units of 3 per side, dark posts between (24 units a tier)
- *  az 21..24  gallery, 4 clear (codex synthesis 04.10: walk depth 4, void over four times wider)
- *  az 20      railing line: fence + mangrove-trapdoor lattice, posts through all tiers, lanterns under the deck
- *  az 7..19   void 13×13, open to the rock; at the bottom the keeper's reading spot
- *  az 6       railing line
- *  az 2..5    gallery; stairs (2 wide, inner half): T3→T2 and T1→T0 west, T2→T1 east
+ *  az 22..24  gallery, 3 clear (codex frame review 04.10: shallower galleries, the void dominates)
+ *  az 21      railing line: fence + dark oak panel lattice, posts through all tiers, lanterns under the deck
+ *  az 6..20   void 15×15, open to the rock; at the bottom the keeper's reading spot
+ *  az 5       railing line
+ *  az 2..4    gallery; stairs (2 wide, inner half): T3→T2 and T1→T0 west, T2→T1 east
  *  az 1       shelf wall; on the top tier its unit p 10-12 is the doorway from the tunnel
  * </pre>
  */
@@ -45,20 +45,21 @@ public final class LibraryPlan {
 
     public static final int WALL_LO = 1;
     public static final int WALL_HI = 25;
-    public static final int RAIL_LO = 6;
-    public static final int RAIL_HI = 20;
-    public static final int VOID_LO = 7;
-    public static final int VOID_HI = 19;
+    // Codex frame review 04.10: galleries 3 deep, the void 15 wide — the void must dominate the frame.
+    public static final int RAIL_LO = 5;
+    public static final int RAIL_HI = 21;
+    public static final int VOID_LO = 6;
+    public static final int VOID_HI = 20;
 
     /** Positions along a wall (1..25): unit columns and the dark posts between them. */
     public static final int[][] UNITS = {{2, 4}, {6, 8}, {10, 12}, {14, 16}, {18, 20}, {22, 24}};
     public static final int[] POSTS = {1, 5, 9, 13, 17, 21, 25};
     /** Posts on the railing line, running through all tiers (about 4-block centres). */
-    public static final int[] RAIL_POSTS = {6, 10, 13, 16, 20};
+    public static final int[] RAIL_POSTS = {5, 9, 13, 17, 21};
 
-    /** Stairs, 2 wide on the inner half of a gallery: west x 4..5 steps z 8..11 (T3→T2, T1→T0); east x 21..22 steps z 18..15 (T2→T1). */
-    public static final int STAIR_WEST_X = 4;
-    public static final int STAIR_EAST_X = 21;
+    /** Stairs, 2 wide on the inner half of a gallery: west x 3..4 steps z 8..11 (T3→T2, T1→T0); east x 22..23 steps z 18..15 (T2→T1). */
+    public static final int STAIR_WEST_X = 3;
+    public static final int STAIR_EAST_X = 22;
     public static final int STAIR_WEST_Z0 = 8;
     public static final int STAIR_EAST_Z0 = 18;
 
@@ -73,9 +74,9 @@ public final class LibraryPlan {
     /** Shelf rows above a tier floor that hold takeable volumes; the third row is stacked-manual shelves. */
     public static final int CHISELED_ROWS = 2;
     /** A shelf block is an empty board instead of a shelf (looted, broken). */
-    public static final double EMPTY_FRAME = 0.07D;
+    public static final double EMPTY_FRAME = 0.12D;
     /** A lower cell is a stacked-manuals shelf (decor, breaks into junk) rather than a chiseled one. */
-    public static final double PLAIN_SHELF = 0.30D;
+    public static final double PLAIN_SHELF = 0.40D;
     /** A slot of a chiseled shelf still holds a volume (refs: shelving packed with manuals). */
     public static final double SLOT_FILLED = 0.50D;
     /** A volume on the shelves is a genuine torn manual, not junk: shelves are the "98" of 98/2, almost all junk. */
