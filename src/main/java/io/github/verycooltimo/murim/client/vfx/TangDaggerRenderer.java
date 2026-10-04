@@ -34,7 +34,9 @@ public class TangDaggerRenderer extends EntityRenderer<TangDagger> {
 
     private static final ResourceLocation WHITE = ResourceLocation.withDefaultNamespace("textures/misc/white.png");
 
-    /** Монета (заглушка до модели автора): кольцо с квадратным отверстием, 6 единиц ≈ 0,38 блока. */
+    // Монета (заглушка до модели автора): кольцо с квадратным отверстием, 6 единиц.
+    /** Автор 04.10: «меньше» — 0,6 от модели, ≈ 0,23 блока в поперечнике. */
+    public static final float COIN_SCALE = 0.6F;
     public static final io.github.verycooltimo.murim.client.bedrock.BedrockItemMesh COIN = new io.github.verycooltimo.murim.client.bedrock.BedrockItemMesh(
             "/assets/murim/bedrock/tang_coin.geo.json", ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/item/tang_coin.png"));
 
@@ -59,15 +61,18 @@ public class TangDaggerRenderer extends EntityRenderer<TangDagger> {
         }
         if (e.form() == TangRules.COINS) {
             // Монета Тан — заглушка-модель (assets/murim/bedrock/tang_coin.geo.json) до модели автора: диск
-            // лежит плашмя по ходу и вращается вокруг своей оси.
+            // кувыркается через ребро поперёк хода.
             Vec3 cf = forward(e, partial);
-            float spin = (e.tickCount + partial) * 0.9F + e.index() * 0.7F;
+            // Автор 04.10: монеты должны быстро вращаться в полёте и быть меньше — кувырок через ребро, 1,6 рад (четверть оборота) за тик.
+            float spin = (e.tickCount + partial) * 1.6F + e.index() * 0.9F;
             ps.pushPose();
             try {
                 ps.mulPose(new org.joml.Quaternionf().rotationY((float) Math.atan2(cf.x, cf.z)));
-                ps.mulPose(new org.joml.Quaternionf().rotationX((float) (Math.PI / 2.0D) - (float) Math.atan2(cf.y, cf.horizontalDistance())));
-                ps.mulPose(new org.joml.Quaternionf().rotationZ(spin));
-                COIN.render(ps, buffers.getBuffer(COIN.renderType()), 0x00F000F0, 1.0F, 0.0F, 1.0F, 1.0F, 1.0F, 1.0F);
+                ps.mulPose(new org.joml.Quaternionf().rotationX(-(float) Math.atan2(cf.y, cf.horizontalDistance())));
+                // Ось кувырка — поперёк полёта; лёгкий наклон оси у каждой монеты свой, чтобы веер не крутился в такт.
+                ps.mulPose(new org.joml.Quaternionf().rotationZ(0.35F * (float) Math.sin(e.index() * 1.7D)));
+                ps.mulPose(new org.joml.Quaternionf().rotationX(spin));
+                COIN.render(ps, buffers.getBuffer(COIN.renderType()), 0x00F000F0, COIN_SCALE, 0.0F, 1.0F, 1.0F, 1.0F, 1.0F);
             } finally {
                 ps.popPose();
             }
