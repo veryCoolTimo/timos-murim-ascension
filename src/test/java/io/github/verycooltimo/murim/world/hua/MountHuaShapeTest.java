@@ -36,7 +36,7 @@ class MountHuaShapeTest {
     @Test
     void terracesAreFlat() {
         for (MountHuaPlan.Zone z : MountHuaPlan.ZONES) {
-            if (z.cave()) {
+            if (z.cave() || z.id().equals("grove")) { // the grove is a wooded outcrop, not a pad
                 continue;
             }
             for (double du = -z.width() / 2.0 + 0.5; du < z.width() / 2.0; du += 3) {

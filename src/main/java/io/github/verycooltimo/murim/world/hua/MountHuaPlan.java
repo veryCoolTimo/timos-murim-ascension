@@ -63,7 +63,7 @@ public final class MountHuaPlan {
             new Peak("south", 5, 125, 244, 80, 60, 10, 4.2),
             new Peak("east", 130, 15, 238, 66, 48, 70, 4.0),
             new Peak("west", -125, 35, 236, 74, 44, 75, 4.4),
-            new Peak("middle", 68, 48, 232, 32, 24, 40, 2.6),
+            new Peak("middle", 68, 48, 226, 32, 24, 40, 2.6),
             new Peak("north", -10, -335, 163, 46, 34, 0, 3.0),
             // Subsidiary summits and shoulders (asymmetric masses, not five isolated towers).
             new Peak("south_shoulder", 70, 140, 205, 52, 34, 140, 2.4),

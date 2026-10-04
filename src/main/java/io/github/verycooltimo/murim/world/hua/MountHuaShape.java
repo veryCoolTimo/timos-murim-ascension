@@ -120,7 +120,7 @@ public final class MountHuaShape {
         h = paths(u, v, h);
         // Inside a terrace the level is exact (neighbouring terraces' walls never spill in).
         for (Zone zone : MountHuaPlan.ZONES) {
-            if (!zone.cave() && Math.abs(u - zone.u()) <= zone.width() / 2.0
+            if (!zone.cave() && !zone.id().equals("grove") && Math.abs(u - zone.u()) <= zone.width() / 2.0
                     && Math.abs(v - zone.v()) <= zone.depth() / 2.0) {
                 h = zone.y();
             }
@@ -793,10 +793,20 @@ public final class MountHuaShape {
         if (z.cave()) {
             return h;
         }
+        if (z.id().equals("grove")) {
+            // The plum grove is a wooded outcrop (plan), not a flat pad: the ground eases toward
+            // its level but keeps a few blocks of natural roll and an irregular outline.
+            double d = Math.max(0, Math.hypot(Math.max(0, Math.abs(u - z.u()) - z.width() / 2.0),
+                    Math.max(0, Math.abs(v - z.v()) - z.depth() / 2.0)) - 4 * relief.noise(u / 8.0, v / 8.0, 67.0));
+            double soft = z.y() + clamp(h - z.y(), -3, 3);
+            double k = smooth(0, 8, d);
+            return soft * (1 - k) + h * k;
+        }
         double dx = Math.max(0, Math.abs(u - z.u()) - z.width() / 2.0);
         double dz = Math.max(0, Math.abs(v - z.v()) - z.depth() / 2.0);
         // The pad edge wanders 1-4 blocks past the build rectangle: no ruler-straight border.
-        double d = Math.max(0, Math.hypot(dx, dz) - (3.0 + 2.5 * relief.noise(u / 6.0, v / 6.0, 61.0 + z.y())));
+        double d = Math.max(0, Math.hypot(dx, dz) - (3.5 + 2.5 * relief.noise(u / 6.0, v / 6.0, 61.0 + z.y())
+                - 2.5 * relief.noise(u / 17.0, v / 17.0, 63.0 + z.y())));
         if (d == 0) {
             return z.y();
         }

@@ -736,6 +736,15 @@ final class MountHuaChunkWriter {
             ruin(z, r, y, pos);
             return;
         }
+        if (z.id().equals("grove")) {
+            // A wooded outcrop, not a pad: only the sign marks it.
+            int[] c = site.toWorld(z.u(), z.v() - z.depth() / 2.0 + 1);
+            if (inChunk(c[0], c[1])) {
+                int ty = topAt(c[0] - x0, c[1] - z0) + 1;
+                sign(c[0], ty, c[1], z, pos);
+            }
+            return;
+        }
         for (int x = Math.max(r[0], x0); x <= Math.min(r[2], x0 + 15); x++) {
             for (int zz = Math.max(r[1], z0); zz <= Math.min(r[3], z0 + 15); zz++) {
                 boolean edge = x == r[0] || x == r[2] || zz == r[1] || zz == r[3];
@@ -991,7 +1000,7 @@ final class MountHuaChunkWriter {
                         site.localV(wx + 0.5, wz + 0.5), site.nominal(t));
                 if (below > 0.3 && zoneAt(site.localU(wx + 0.5, wz + 0.5), site.localV(wx + 0.5, wz + 0.5), 3) == null) {
                     // Under the sect: pines on every ledge, plums clinging, shrubs in the folds.
-                    if (drop <= 2 && (soil || deep >= 5) && roll < 70 * below) {
+                    if (drop <= 2 && (soil || deep >= 5) && roll < 45 * below) {
                         pine(wx, t + 1, wz, h, lx, lz, pos);
                         continue;
                     }
