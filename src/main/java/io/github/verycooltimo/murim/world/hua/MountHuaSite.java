@@ -11,7 +11,7 @@ package io.github.verycooltimo.murim.world.hua;
 public final class MountHuaSite {
 
     /** South Peak summit y. World height limit in 1.21.1 overworld is 319 (pines need ~12 more). */
-    public static final int SUMMIT_Y = 306;
+    public static final int SUMMIT_Y = 314;
 
     private final int centerX;
     private final int centerZ;
@@ -149,6 +149,11 @@ public final class MountHuaSite {
     }
 
     /** Local direction (du, dv) expressed as a world (dx, dz) direction. */
+    /** Nominal height of a world y (inverse of {@link #worldY}). */
+    public double nominal(double worldY) {
+        return (worldY - baseY) / scale;
+    }
+
     public int[] rotateDir(int du, int dv) {
         return switch (rotation) {
             case 1 -> new int[] {-dv, du};

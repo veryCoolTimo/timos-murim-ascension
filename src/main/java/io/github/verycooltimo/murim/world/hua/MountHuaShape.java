@@ -117,6 +117,7 @@ public final class MountHuaShape {
             h = terrace(zone, u, v, h);
         }
         h = trail(u, v, h);
+        h = paths(u, v, h);
         // Inside a terrace the level is exact (neighbouring terraces' walls never spill in).
         for (Zone zone : MountHuaPlan.ZONES) {
             if (!zone.cave() && Math.abs(u - zone.u()) <= zone.width() / 2.0
@@ -139,7 +140,26 @@ public final class MountHuaShape {
         for (Gorge gorge : MountHuaPlan.GORGES) {
             h = gorge(gorge, u, v, h);
         }
-        return saddles(u, v, valley(u, v, h));
+        return clefts(u, v, saddles(u, v, valley(u, v, h)));
+    }
+
+    /** Narrow ravines: floor within the half width, then 3-per-block rock sides back up. */
+    private double clefts(double u, double v, double h) {
+        for (double[] c : MountHuaPlan.CLEFTS) {
+            double lx = c[2] - c[0];
+            double ly = c[3] - c[1];
+            double t = clamp(((u - c[0]) * lx + (v - c[1]) * ly) / (lx * lx + ly * ly), 0, 1);
+            double d = Math.hypot(u - (c[0] + lx * t), v - (c[1] + ly * t))
+                    + 1.2 * relief.noise(u / 6.0, v / 6.0, 93.0);
+            // Fades out at both ends so the ravine opens into the slopes instead of ending in a wall.
+            double ends = smooth(0, 0.12, t) * smooth(1, 0.88, t);
+            double floor = c[4] + 2 * relief.noise(u / 9.0, v / 9.0, 95.0);
+            double cut = floor + 3.0 * Math.max(0, d - c[5]);
+            if (cut < h) {
+                h = h + (cut - h) * ends;
+            }
+        }
+        return h;
     }
 
     /** 0..1: how much of a forested saddle this column is (the writer plants a wood there). */
@@ -786,7 +806,7 @@ public final class MountHuaShape {
         double y = z.y();
         // Lower ground: a short retaining bank (3 per block) that meets the natural slope;
         // higher ground: a cut bank (1.5 per block). Beyond that the ridge stays as it was.
-        double graded = h < y ? Math.max(h, y - 3.0 * d) : Math.min(h, y + 1.5 * d);
+        double graded = h < y ? Math.max(h, y - 3.0 * d) : Math.min(h, y + 2.5 * d);
         double k = smooth(6, 12, d);
         return graded * (1 - k) + h * k;
     }
@@ -797,9 +817,33 @@ public final class MountHuaShape {
         return Math.max(a, b) + hh * hh * k * 0.25;
     }
 
-    /** No inner paths on the old shelf (kept for the writer). */
+    /** Stairs between the pads: 4 wide at their stepped level; gaps are left for a bridge. */
+    private double paths(double u, double v, double h) {
+        for (double[] p : MountHuaPlan.PATHS) {
+            double[] q = pathAt(p, u, v);
+            if (q[0] <= 2.1 && h >= q[1] - 3) {
+                return q[1];
+            }
+        }
+        return h;
+    }
+
+    /** {distance to the path line, nominal level there (stepped), position 0..1} for one path. */
     public static double[] pathAt(double[] p, double u, double v) {
-        return new double[] {Double.MAX_VALUE, 0, 0};
+        double lx = p[3] - p[0];
+        double ly = p[4] - p[1];
+        double t = clamp(((u - p[0]) * lx + (v - p[1]) * ly) / (lx * lx + ly * ly), 0, 1);
+        double d = Math.hypot(u - (p[0] + lx * t), v - (p[1] + ly * t));
+        return new double[] {d, Math.round(p[2] + (p[5] - p[2]) * t), t};
+    }
+
+    /**
+     * 0..1: the slopes and cliffs below the sect shelf (author 04.10: more greenery under the
+     * sect — pines, shrubs, plums clinging, green hollows). {@code h} is the nominal height.
+     */
+    public static double belowSect(double u, double v, double h) {
+        double e = Math.hypot(u / 140.0, (v - 20) / 120.0);
+        return smooth(1.0, 0.7, e) * smooth(156, 146, h) * smooth(60, 80, h);
     }
 
     static double smooth(double e0, double e1, double x) {

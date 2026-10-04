@@ -83,7 +83,9 @@ final class MountHuaChunkWriter {
         this.noise = new HuaNoise(seed ^ 0x4875615368616EL);
         this.x0 = chunk.getPos().getMinBlockX();
         this.z0 = chunk.getPos().getMinBlockZ();
-        this.maxY = chunk.getMaxBuildHeight() - 14;
+        // Room above the summit for snow and shrubs; taller trees are clipped by the chunk itself
+        // (ProtoChunk ignores writes above the build height).
+        this.maxY = chunk.getMaxBuildHeight() - 5;
     }
 
     private static int idx(int i, int j) {
@@ -401,7 +403,7 @@ final class MountHuaChunkWriter {
         // Cut: remove what stands above the new top (vanilla hills inside gorges/terraces).
         // The worldgen heightmap can lag the real top by a block or more (seen on the stand: a single
         // grass block left floating 33 blocks over the gate terrace), so scan from above it.
-        int surface = Math.min(maxY + 13, Math.max(chunk.getHeight(Heightmap.Types.WORLD_SURFACE_WG, lx, lz), o) + 8);
+        int surface = Math.min(chunk.getMaxBuildHeight() - 1, Math.max(chunk.getHeight(Heightmap.Types.WORLD_SURFACE_WG, lx, lz), o) + 8);
         int sea = level.getSeaLevel();
         for (int y = surface; y > t; y--) {
             pos.set(wx, y, wz);
@@ -516,6 +518,13 @@ final class MountHuaChunkWriter {
             // The sect is poor and run-down (author's answer 3): an overgrown yard with worn paths.
             long r = mix(wx, wz, 17) & 15;
             double path = noise.noise(wx / 9.0, wz / 9.0, 71.0);
+            if (terrace.id().equals("sparring")) {
+                // Sand square with a worn edge (plan: «sparring square (sand)»).
+                chunk.setBlockState(pos.set(wx, t, wz), (mix(wx, wz, 19) & 7) == 0
+                        ? Blocks.COARSE_DIRT.defaultBlockState() : Blocks.SAND.defaultBlockState(), false);
+                chunk.setBlockState(pos.set(wx, t - 1, wz), Blocks.SANDSTONE.defaultBlockState(), false);
+                return;
+            }
             BlockState ground = path > 0.55 ? Blocks.DIRT_PATH.defaultBlockState()
                     : r < 2 ? Blocks.COARSE_DIRT.defaultBlockState() : r < 3 ? Blocks.MOSSY_COBBLESTONE.defaultBlockState()
                     : GRASS;
@@ -545,6 +554,10 @@ final class MountHuaChunkWriter {
                 // Forested saddles between the shelf and the spires keep their soil (author 04.10).
                 + 1.5 * shape.saddleWeight(site.localU(wx + 0.5, wz + 0.5), site.localV(wx + 0.5, wz + 0.5));
         boolean saddle = soil > 1.2 && shape.saddleWeight(site.localU(wx + 0.5, wz + 0.5), site.localV(wx + 0.5, wz + 0.5)) > 0.4;
+        // Below the sect shelf the ledges and folds hold soil (author 04.10: more green under the sect).
+        double below = MountHuaShape.belowSect(site.localU(wx + 0.5, wz + 0.5), site.localV(wx + 0.5, wz + 0.5),
+                site.nominal(t));
+        soil += 0.9 * below;
         // Steps of a steep wall are not shelves: within two blocks the rock falls away by 5+,
         // so no soil there (stand 03.10: brown dots marching diagonally across the faces).
         int fall = 0;
@@ -748,8 +761,8 @@ final class MountHuaChunkWriter {
         }
     }
 
-    /** Sites shown as ruined foundations (none on the old shelf yet; outlines elsewhere). */
-    private static final String RUINS = "ancestors|elders|treasury|scriptures|alchemy|knoll";
+    /** Sites shown as ruined foundations. */
+    private static final String RUINS = "^$"; // none: every plan site is a marked pad (author 04.10)
 
     /**
      * A site for later: the sect starts poor (canon), so here stands only a ruined foundation —
@@ -799,7 +812,8 @@ final class MountHuaChunkWriter {
                         continue;
                     }
                     int y = (int) Math.round(site.worldY(q[1]));
-                    int natural = (int) Math.round(site.worldY(shape.ground(u, v)));
+                    // A gap the stair does not fill (the grove ravine) gets planks; elsewhere stone steps.
+                    int natural = (int) Math.round(site.worldY(shape.height(u, v)));
                     if (natural < y - 3) {
                         level.setBlock(pos.set(wx, y, wz), Blocks.SPRUCE_PLANKS.defaultBlockState(), 2);
                         if (q[0] > 1.5) {
@@ -973,6 +987,23 @@ final class MountHuaChunkWriter {
                     continue;
                 }
                 double wood = shape.saddleWeight(site.localU(wx + 0.5, wz + 0.5), site.localV(wx + 0.5, wz + 0.5));
+                double below = MountHuaShape.belowSect(site.localU(wx + 0.5, wz + 0.5),
+                        site.localV(wx + 0.5, wz + 0.5), site.nominal(t));
+                if (below > 0.3 && zoneAt(site.localU(wx + 0.5, wz + 0.5), site.localV(wx + 0.5, wz + 0.5), 3) == null) {
+                    // Under the sect: pines on every ledge, plums clinging, shrubs in the folds.
+                    if (drop <= 2 && (soil || deep >= 5) && roll < 70 * below) {
+                        pine(wx, t + 1, wz, h, lx, lz, pos);
+                        continue;
+                    }
+                    if (soil && drop <= 2 && roll > 1000 - 18 * below) {
+                        plumTree(wx, t + 1, wz, h, pos);
+                        continue;
+                    }
+                    if (drop <= 5 && t < SNOW_Y && patch > -0.2 && roll % 3 == 0) {
+                        shrub(wx, t + 1, wz, h, pos);
+                        continue;
+                    }
+                }
                 if (wood > 0.25 && soil && drop <= 2) {
                     // A wood in the saddle: pines with plums at its edge.
                     if (roll < 60 * wood) {

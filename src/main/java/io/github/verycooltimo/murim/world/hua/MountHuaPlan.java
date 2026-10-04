@@ -22,7 +22,7 @@ public final class MountHuaPlan {
     }
 
     /** Nominal height of the South Peak summit above the foot. */
-    public static final double SUMMIT = 236.0;
+    public static final double SUMMIT = 244.0;
 
     /** Nominal line of the northern fault scarp (v). */
     public static final double SCARP_V = -372;
@@ -60,10 +60,10 @@ public final class MountHuaPlan {
     // Real heights (m): South 2155, East 2096, West 2083, Middle 2038, North 1615 -> nominal.
     public static final List<Peak> PEAKS = List.of(
             // Broad masses rather than needles (codex r2): widths vary more than heights.
-            new Peak("south", 5, 125, 236, 80, 60, 10, 4.2),
-            new Peak("east", 130, 15, 228, 66, 48, 70, 4.0),
-            new Peak("west", -125, 35, 226, 74, 44, 75, 4.4),
-            new Peak("middle", 68, 48, 220, 32, 24, 40, 2.6),
+            new Peak("south", 5, 125, 244, 80, 60, 10, 4.2),
+            new Peak("east", 130, 15, 238, 66, 48, 70, 4.0),
+            new Peak("west", -125, 35, 236, 74, 44, 75, 4.4),
+            new Peak("middle", 68, 48, 232, 32, 24, 40, 2.6),
             new Peak("north", -10, -335, 163, 46, 34, 0, 3.0),
             // Subsidiary summits and shoulders (asymmetric masses, not five isolated towers).
             new Peak("south_shoulder", 70, 140, 205, 52, 34, 140, 2.4),
@@ -129,37 +129,75 @@ public final class MountHuaPlan {
             // stands in front of a cliff face).
             new Zone("gate", "Gate terrace", -104, -404, 34, 20, 3, false, 0, 0),
             // Inner sect gate where the trail reaches the main terrace (author refs 06, 12).
-            new Zone("sect_gate", "Sect gate", 14, -24, 28, 10, 160, false, 0, 0),
+            new Zone("sect_gate", "Sect gate", 14, -24, 28, 10, 156, false, 0, 0),
             // Pavilions on summits and a cliff ledge (author refs 04, 11).
             new Zone("pav_north", "North Peak pavilion", -10, -335, 14, 12, 160, false, 0, 0),
-            new Zone("pav_west", "West Peak pavilion", -125, 35, 14, 12, 222, false, 0, 0),
-            new Zone("pav_south", "South Peak pavilion", 5, 125, 16, 14, 232, false, 0, 0),
+            new Zone("pav_west", "West Peak pavilion", -125, 35, 14, 12, 232, false, 0, 0),
+            new Zone("pav_south", "South Peak pavilion", 5, 125, 16, 14, 240, false, 0, 0),
             new Zone("pav_east", "East Peak ledge pavilion", 110, -10, 12, 10, 210, false, 0, 0),
-            // The sect on the old natural shelf (author 04.10: «доработать старую версию»): no big
-            // terrace, only small building pads at slightly different heights that follow the
-            // ridge; natural ground with trees between them.
-            new Zone("training", "Training ground", -6, 8, 36, 34, 153, false, 0, 0),
-            new Zone("main_hall", "Main hall", -16, 47, 38, 18, 155, false, 0, 0),
-            new Zone("camp", "Disciples' camp", 36, 26, 22, 30, 146, false, 0, 0),
-            new Zone("upper", "Temple and leader's residence", -14, 80, 34, 16, 157, false, 0, 0),
-            new Zone("vault", "Secret vault", -32, 112, 14, 12, 169, true, -22, 88),
-            new Zone("poles", "Plum blossom poles", -84, 64, 22, 18, 150, false, 0, 0),
-            new Zone("grove", "Plum grove", 38, 90, 30, 22, 166, false, 0, 0),
-            new Zone("penance", "Penance cave", -110, 30, 10, 10, 161, true, -78, 30));
+            // The sect on the old natural shelf, laid out after the agreed plan (author 04.10:
+            // «вернуть и редачить под наш план построек»; scratchpad sectmock/plan.png). Front =
+            // north where the stair arrives, back = the South Peak wall; plan-left = east,
+            // plan-right = west. Each site is its own graded pad at its own height following the
+            // ridge, natural ground and trees between them. Only pads and markers — the author
+            // builds every building and wall himself.
+            new Zone("training", "Training ground", 6, 4, 48, 32, 155, false, 0, 0),
+            new Zone("bell", "Bell tower", -28, -4, 10, 10, 152, false, 0, 0),
+            new Zone("treasury", "Treasury and household", 47, 5, 22, 18, 146, false, 0, 0),
+            new Zone("mentor", "Mentor's dais", 6, 24, 8, 6, 155, false, 0, 0),
+            new Zone("sparring", "Sparring square", 6, 38, 28, 20, 157, false, 0, 0),
+            new Zone("dining", "Dining hall and kitchen", -50, 52, 14, 8, 140, false, 0, 0),
+            new Zone("alchemy", "Alchemy pavilion", -32, 60, 16, 12, 150, false, 0, 0),
+            new Zone("camp", "Disciples' camp", -60, 34, 34, 48, 140, false, 0, 0),
+            new Zone("dorm_2nd", "Dormitory, 2nd generation", -69, 20, 12, 16, 140, false, 0, 0),
+            new Zone("dorm_3rd", "Dormitory, 3rd generation", -69, 40, 12, 16, 140, false, 0, 0),
+            new Zone("poles", "Plum blossom poles", -50, 22, 12, 10, 140, false, 0, 0),
+            new Zone("main_hall", "Main hall", 6, 62, 52, 22, 161, false, 0, 0),
+            new Zone("ancestors", "Ancestors' hall", 6, 90, 40, 16, 172, false, 0, 0),
+            new Zone("scriptures", "Hall of Scriptures", 42, 84, 16, 14, 168, false, 0, 0),
+            new Zone("elders", "Elders' residences", -34, 86, 22, 16, 166, false, 0, 0),
+            new Zone("grove", "Plum grove", 80, 72, 26, 20, 172, false, 0, 0),
+            new Zone("vault", "Secret vault", 4, 62, 14, 12, 151, true, -26, 66),
+            new Zone("penance", "Penance cave", -56, 112, 10, 10, 168, true, -40, 96));
 
-    /** Core build sites (marked for the author now); the others are ruined foundations. */
-    public static final java.util.Set<String> CORE = java.util.Set.of("gate", "sect_gate", "training", "main_hall", "camp", "upper");
+    /** Sites marked for the author (lanterns on the corners, a sign); none are ruins now. */
+    public static final java.util.Set<String> CORE = java.util.Set.of("gate", "sect_gate", "training",
+            "bell", "treasury", "mentor", "sparring", "dining", "alchemy", "camp", "dorm_2nd", "dorm_3rd",
+            "poles", "main_hall", "ancestors", "scriptures", "elders", "grove");
 
-    /** No inner paths on the old shelf. */
-    public static final double[][] PATHS = {};
+    /**
+     * Stairs between the pads, {u0, v0, y0, u1, v1, y1}: 4 wide, stepped. Over a gap deeper than
+     * three blocks the ground is left alone and the writer lays a plank bridge (the plum grove).
+     */
+    public static final double[][] PATHS = {
+        {14, -19, 156, 14, -11, 155},
+        {-23, -4, 152, -18, -4, 155},
+        {30, 6, 155, 36, 6, 146},
+        {6, 48, 157, 6, 51, 161},
+        {6, 73, 161, 6, 82, 172},
+        {-18, 10, 155, -45, 18, 140},
+        {-24, 60, 150, -20, 60, 161},
+        {32, 66, 161, 40, 77, 168},
+        {-20, 68, 161, -30, 78, 166},
+        {-43, 56, 140, -40, 58, 150},
+        {50, 82, 168, 67, 75, 172},
+    };
+
+    /**
+     * Narrow ravines {u0, v0, u1, v1, floor, halfWidth}: the plum grove's ledge is parted from the
+     * upper ledge by one (plan: grove on a neighbouring ledge, reached by a bridge).
+     */
+    public static final double[][] CLEFTS = {
+        {57, 60, 61, 100, 140, 2.5},
+    };
 
     /**
      * Forested saddles that part the sect shelf from the neighbouring spires (author 04.10):
      * {u, v, radius, floor} — a gentle wooded hollow instead of bare rock between them.
      */
     public static final double[][] SADDLES = {
-        {-58, 34, 24, 134},
-        {58, 10, 19, 138},
+        {-90, 30, 14, 136},
+        {68, 22, 14, 134},
     };
 
     /** The one trail: gate, gorge, cleft stair, North Peak, Canglong ridge, Golden Lock, sect. */
@@ -180,7 +218,7 @@ public final class MountHuaPlan {
             new TrailPoint(6, -125, 172),
             new TrailPoint(22, -80, 178),
             new TrailPoint(24, -45, 170),
-            new TrailPoint(22, -14, 160));
+            new TrailPoint(22, -14, 156));
 
     /** Plank road along the South Peak's eastern wall (Changkong Zhandao analogue), a side branch. */
     public static final List<TrailPoint> PLANK_ROAD = List.of(
