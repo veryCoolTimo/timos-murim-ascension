@@ -128,8 +128,8 @@ public final class PeddlerSpawns {
 
     /** Игрок в деревне: пора ли торговцу зайти. */
     static void villageVisit(ServerLevel level, ServerPlayer player) {
-        StructureStart start = level.structureManager().getStructureWithPieceAt(player.blockPosition(), StructureTags.VILLAGE);
-        if (!start.isValid() || start.getPieces().isEmpty()) {
+        StructureStart start = village(level, player.blockPosition());
+        if (start == null) {
             return;
         }
         Data data = data(level);
@@ -140,7 +140,9 @@ public final class PeddlerSpawns {
             return;
         }
         BlockPos centre = start.getPieces().get(0).getBoundingBox().getCenter();
-        if (!level.getEntitiesOfClass(Peddler.class, new AABB(centre).inflate(96.0D)).isEmpty()) {
+        // Центр деревни должен быть прогружен: иначе карта высот пуста и торговец встаёт на дно мира (стенд 04.10).
+        if (!level.isPositionEntityTicking(centre)
+                || !level.getEntitiesOfClass(Peddler.class, new AABB(centre).inflate(96.0D, 256.0D, 96.0D)).isEmpty()) {
             return;
         }
         // Первый раз — наверняка: игрок должен узнать, что торговец есть. Дальше — бросок.
@@ -158,11 +160,29 @@ public final class PeddlerSpawns {
         }
     }
 
+    /**
+     * Деревня, в чьей общей коробке стоит игрок (по x и z), а не в коробке отдельной постройки: коробки улиц
+     * низкие, и ноги игрока на дороге могут оказаться над ними [НЕПРОВЕРЕНО: сравнить с
+     * {@code getStructureWithPieceAt} на дорогах деревни]. Проверено {@code /murim peddler} на сиде 20261004.
+     */
+    static StructureStart village(ServerLevel level, BlockPos pos) {
+        var registry = level.registryAccess().registryOrThrow(net.minecraft.core.registries.Registries.STRUCTURE);
+        for (StructureStart s : level.structureManager().startsForStructure(new net.minecraft.world.level.ChunkPos(pos),
+                st -> registry.wrapAsHolder(st).is(StructureTags.VILLAGE))) {
+            var box = s.getBoundingBox();
+            if (s.isValid() && !s.getPieces().isEmpty() && pos.getX() >= box.minX() && pos.getX() <= box.maxX()
+                    && pos.getZ() >= box.minZ() && pos.getZ() <= box.maxZ()) {
+                return s;
+            }
+        }
+        return null;
+    }
+
     /** Поставить торговца на поверхность у точки: {@code stay} тиков (0 — навсегда). */
     public static Peddler arrive(ServerLevel level, BlockPos at, int stay) {
         int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, at.getX(), at.getZ());
         BlockPos pos = new BlockPos(at.getX(), y, at.getZ());
-        Peddler p = ModTrade.PEDDLER.get().create(level);
+        Peddler p = y <= level.getMinBuildHeight() ? null : ModTrade.PEDDLER.get().create(level);
         if (p == null) {
             return null;
         }

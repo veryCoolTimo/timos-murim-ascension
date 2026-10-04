@@ -1073,5 +1073,7 @@
   "murim.peddler.greet.3": "Bandits are restless in the woods again. They say they carry pages torn from other sects' manuals.",
   "murim.peddler.greet.4": "A wooden sword for a disciple, daggers for the bold. Take your pick, young master.",
   "murim.peddler.arrived": "A travelling peddler has come to the village",
-  "murim.peddler.hua_name": "Liu, the Gate Shopkeeper"
+  "murim.peddler.hua_name": "Liu, the Gate Shopkeeper",
+  "command.murim.peddler.none": "This is not a village: the travelling peddler does not come here",
+  "command.murim.peddler.info": "Village centred at %s; the peddler's next visit in %s s"
 }

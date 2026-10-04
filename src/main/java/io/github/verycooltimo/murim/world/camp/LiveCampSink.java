@@ -78,8 +78,8 @@ public final class LiveCampSink implements CampBuilder.Sink {
     }
 
     @Override
-    public void display(double x, double y, double z, float yaw, ItemStack item) {
-        net.minecraft.world.entity.Entity d = CampBuilder.itemDisplay(level, x, y, z, yaw, item, CampBuilder.MEAT_SCALE);
+    public void display(double x, double y, double z, float yaw, ItemStack item, float[] scale, float roll) {
+        net.minecraft.world.entity.Entity d = CampBuilder.itemDisplay(level, x, y, z, yaw, item, scale, roll);
         if (d != null) {
             level.addFreshEntity(d);
         }

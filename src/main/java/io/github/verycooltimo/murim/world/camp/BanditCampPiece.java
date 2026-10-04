@@ -123,8 +123,8 @@ public class BanditCampPiece extends StructurePiece {
             }
 
             @Override
-            public void display(double x, double y, double z, float yaw, ItemStack item) {
-                net.minecraft.world.entity.Entity d = CampBuilder.itemDisplay(level.getLevel(), x, y, z, yaw, item, CampBuilder.MEAT_SCALE);
+            public void display(double x, double y, double z, float yaw, ItemStack item, float[] scale, float roll) {
+                net.minecraft.world.entity.Entity d = CampBuilder.itemDisplay(level.getLevel(), x, y, z, yaw, item, scale, roll);
                 if (d != null) {
                     level.addFreshEntity(d);
                 }

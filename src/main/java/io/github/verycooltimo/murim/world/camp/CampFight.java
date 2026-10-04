@@ -95,6 +95,12 @@ public final class CampFight {
         }
         double radius = CampLayout.plan(camp.seed).radius();
         LivingEntity target = fighters.get(0).getTarget();
+        // Кто потерял цель вдали (дальность слежения 24), пока бой идёт, — снова на игрока: кольцо не рассыпается.
+        for (Bandit x : all) {
+            if (x.getTarget() == null && !x.isNoAi() && x.distanceToSqr(target) < 40.0D * 40.0D) {
+                x.setTarget(target);
+            }
+        }
         double tx = target.getX() - (camp.centre.getX() + 0.5D);
         double tz = target.getZ() - (camp.centre.getZ() + 0.5D);
         if (Math.sqrt(tx * tx + tz * tz) > radius + FLEE_MARGIN) {

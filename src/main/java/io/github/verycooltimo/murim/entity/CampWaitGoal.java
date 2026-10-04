@@ -11,8 +11,9 @@ import java.util.EnumSet;
 
 /**
  * Мечник лагеря ждёт очереди (docs/design/24-bandit-camp.md §3, {@link CampFight}): тревога его
- * подняла, но в бою уже двое. Он подходит кольцом на 6–8 блоков к цели, не дальше 12 от своего
- * поста, стоит лицом к игроку и переминается вбок — видно, что следующий он.
+ * подняла, но в бою уже двое. Он встаёт кольцом в 6–8 блоках от цели (ближе — отходит), не дальше 12
+ * от своего поста, стоит лицом к игроку и переминается вбок — видно, что следующий он. Главарь ждёт
+ * у своего шатра.
  */
 public class CampWaitGoal extends Goal {
 
@@ -60,7 +61,17 @@ public class CampWaitGoal extends Goal {
         BlockPos post = bandit.post();
         double d = bandit.distanceTo(t);
         double fromPost = post == null ? 0.0D : Math.sqrt(bandit.distanceToSqr(post.getX() + 0.5D, post.getY(), post.getZ() + 0.5D));
-        if (d > RING_MAX && fromPost < LEASH) {
+        if (bandit.isChief() && post != null) {
+            // Главарь смотрит бой от своего шатра (стенд 04.10: стоял рядом с игроком и не бил — читалось как сбой).
+            if (fromPost > 2.0D) {
+                bandit.getNavigation().moveTo(post.getX() + 0.5D, post.getY(), post.getZ() + 0.5D, 0.8D);
+            } else {
+                bandit.getNavigation().stop();
+                face(t);
+            }
+            return;
+        }
+        if ((d > RING_MAX || d < RING_MIN - 1.0D) && fromPost < LEASH) {
             // Подойти на кольцо: точка в RING_MIN..RING_MAX от цели на линии к себе, не дальше поводка.
             Vec3 away = bandit.position().subtract(t.position()).multiply(1.0D, 0.0D, 1.0D);
             Vec3 dir = away.lengthSqr() < 1.0E-4D ? new Vec3(1.0D, 0.0D, 0.0D) : away.normalize();
@@ -83,6 +94,10 @@ public class CampWaitGoal extends Goal {
         }
         float forward = d < RING_MIN - 1.0D ? -0.4F : 0.0F;
         bandit.getMoveControl().strafe(forward, 0.3F * strafeDir);
+        face(t);
+    }
+
+    private void face(LivingEntity t) {
         float want = (float) (Mth.atan2(t.getZ() - bandit.getZ(), t.getX() - bandit.getX()) * Mth.RAD_TO_DEG) - 90.0F;
         bandit.setYRot(Mth.approachDegrees(bandit.getYRot(), want, 20.0F));
         bandit.yBodyRot = bandit.getYRot();

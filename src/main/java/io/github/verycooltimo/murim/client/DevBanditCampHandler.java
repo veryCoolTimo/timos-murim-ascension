@@ -240,7 +240,8 @@ public final class DevBanditCampHandler {
             }
             case "brawl" -> {
                 // Бой без заморозки: тревога поднимает лагерь, вблизи дерутся двое, остальные ждут кольцом.
-                mc.options.setCameraType(act < 150 ? CameraType.THIRD_PERSON_BACK : CameraType.FIRST_PERSON);
+                // Сзади и сверху на центр банды: в кадре и двое в бою, и кольцо ждущих.
+                mc.options.setCameraType(CameraType.THIRD_PERSON_BACK);
                 Entity t = mc.level.getEntity(targetId);
                 Entity near = null;
                 double best = 9.0D;
@@ -250,10 +251,23 @@ public final class DevBanditCampHandler {
                         near = e;
                     }
                 }
-                Entity look = near != null ? near : t;
-                if (look != null) {
-                    face(mc, look);
-                    mc.player.setXRot(act < 150 ? 12.0F : 4.0F);
+                double gx = 0.0D, gz = 0.0D;
+                int n = 0;
+                for (Entity e : mc.level.entitiesForRendering()) {
+                    if (e instanceof Bandit b && b.isAlive() && mc.player.distanceToSqr(e) < 20.0D * 20.0D) {
+                        gx += e.getX();
+                        gz += e.getZ();
+                        n++;
+                    }
+                }
+                if (n > 0) {
+                    double dx = gx / n - mc.player.getX(), dz = gz / n - mc.player.getZ();
+                    float yaw = (float) Math.toDegrees(Math.atan2(-dx, dz));
+                    mc.player.setYRot(yaw);
+                    mc.player.setYHeadRot(yaw);
+                    mc.player.setXRot(42.0F);
+                } else if (t != null) {
+                    face(mc, t);
                 }
                 if (near != null && best < 3.2D * 3.2D && mc.player.getAttackStrengthScale(0.0F) >= 0.95F && act % 14 == 0) {
                     mc.gameMode.attack(mc.player, near);
@@ -449,13 +463,24 @@ public final class DevBanditCampHandler {
                         double sx = cx + s.dx() + 0.5D, sz = cz + s.dz() + 0.5D;
                         if (s.kind() == CampLayout.Kind.FIRE) {
                             // Вертел вдоль x: смотреть с юга, наискось сверху.
-                            v.add(view(level, sx + 1.5D, sz + 4.5D, sx, sz, 22.0F));
+                            v.add(view(level, sx + 1.0D, sz + 6.0D, sx, sz, 26.0F));
                             continue;
                         }
-                        double d = s.kind() == CampLayout.Kind.CHIEF_TENT ? 9.0D : 7.5D;
-                        // Анфас: открытый вход и постели; три четверти: скат и терраса на склоне.
-                        v.add(view(level, sx + fw[0] * d, sz + fw[1] * d, sx, sz, 14.0F));
-                        v.add(view(level, sx + (fw[0] + rt[0]) * d * 0.75D, sz + (fw[1] + rt[1]) * d * 0.75D, sx, sz, 18.0F));
+                        double d = s.kind() == CampLayout.Kind.CHIEF_TENT ? 10.0D : 8.0D;
+                        // Две точки с чистым видом: из-под углов к входу (анфас с наклоном, скат и терраса).
+                        double front = Math.atan2(fw[1], fw[0]);
+                        int taken = 0;
+                        for (double off : new double[] {0.6D, -0.6D, 1.1D, -1.1D, 0.25D, -0.25D, 1.6D, -1.6D}) {
+                            double a = front + off;
+                            double vx = sx + Math.cos(a) * d, vz = sz + Math.sin(a) * d;
+                            double[] cand = view(level, vx, vz, sx, sz, 16.0F);
+                            if (clear(level, cand, sx, cy(level, sx, sz), sz)) {
+                                v.add(cand);
+                                if (++taken == 2) {
+                                    break;
+                                }
+                            }
+                        }
                     }
                     // Ворота: снаружи по тропе и изнутри.
                     double gx = cx + g[0] * plan.radius(), gz = cz + g[1] * plan.radius();
@@ -470,13 +495,18 @@ public final class DevBanditCampHandler {
                     p.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 20 * 60, 3, false, false));
                     p.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 20 * 60, 3, false, false));
                     p.setHealth(p.getMaxHealth());
+                    // Ночные мобы в лагере мешают кадру: убрать их (спавн мобов на стенде выключен).
+                    level.getEntitiesOfClass(net.minecraft.world.entity.monster.Monster.class, new AABB(campCentre).inflate(48.0D),
+                            m -> !(m instanceof Bandit)).forEach(Entity::discard);
                     List<Bandit> band = level.getEntitiesOfClass(Bandit.class, new AABB(campCentre).inflate(40.0D), Entity::isAlive);
                     for (Bandit b : band) {
                         b.setNoAi(false);
                         b.setTarget(null);
                     }
                     // Игрок у костра со стороны ворот; первым его замечает ближайший — тревога поднимает всех.
-                    double px = cx + g[0] * 4.0D, pz = cz + g[1] * 4.0D;
+                    // Стенд: игрока не отбрасывает, чтобы бой шёл во дворе, а не у частокола.
+                    java.util.Objects.requireNonNull(p.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.KNOCKBACK_RESISTANCE)).setBaseValue(1.0D);
+                    double px = cx + g[0] * 2.5D, pz = cz + g[1] * 2.5D;
                     teleport(level, p, px, pz, cx, cz, 10.0F, 0);
                     Bandit first = band.stream().filter(b -> !b.isChief())
                             .min(java.util.Comparator.comparingDouble(b -> b.distanceToSqr(p))).orElse(null);
@@ -497,7 +527,8 @@ public final class DevBanditCampHandler {
                     }
                     teleport(level, p, village.getX() + 0.5D, village.getZ() + 0.5D, village.getX() + 4.5D, village.getZ() + 0.5D, 8.0F, 0);
                     // Торговец приходит сам, когда игрок в деревне (PeddlerSpawns, раз в 5 с) — подождать его.
-                    server.execute(() -> waitPeddler(server, village, 0));
+                    long since = level.getGameTime();
+                    server.execute(() -> waitPeddler(server, village, since));
                     return;
                 }
                 default -> {
@@ -513,6 +544,21 @@ public final class DevBanditCampHandler {
         double y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, bx, bz) + 0.2D;
         float yaw = (float) Math.toDegrees(Math.atan2(-(lookX - x), lookZ - z));
         return new double[] {x, y, z, yaw, pitch};
+    }
+
+    private static double cy(ServerLevel level, double x, double z) {
+        return level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, (int) Math.floor(x), (int) Math.floor(z)) - 0.5D;
+    }
+
+    /** От глаз до цели нет блоков на первых трёх четвертях пути. */
+    private static boolean clear(ServerLevel level, double[] v, double tx, double ty, double tz) {
+        net.minecraft.world.phys.Vec3 eye = new net.minecraft.world.phys.Vec3(v[0], v[1] + 1.62D, v[2]);
+        net.minecraft.world.phys.Vec3 to = new net.minecraft.world.phys.Vec3(tx, ty, tz);
+        net.minecraft.world.phys.Vec3 end = eye.add(to.subtract(eye).scale(0.75D));
+        var hit = level.clip(new net.minecraft.world.level.ClipContext(eye, end, net.minecraft.world.level.ClipContext.Block.VISUAL,
+                net.minecraft.world.level.ClipContext.Fluid.NONE, net.minecraft.world.phys.shapes.CollisionContext.empty()));
+        return hit.getType() == net.minecraft.world.phys.HitResult.Type.MISS
+                && level.getBlockState(BlockPos.containing(eye)).isAir();
     }
 
     /** Журнал боя: сколько дерутся вблизи, стреляют, ждут (проверка «по двое» по логу). */
@@ -540,19 +586,21 @@ public final class DevBanditCampHandler {
     }
 
     /** Ждать торговца у деревни до 20 с; не пришёл — поставить его (стенд) и встать перед ним. */
-    private static void waitPeddler(IntegratedServer server, BlockPos village, int tries) {
+    private static void waitPeddler(IntegratedServer server, BlockPos village, long since) {
         ServerLevel level = server.overworld();
         ServerPlayer p = server.getPlayerList().getPlayers().get(0);
         List<io.github.verycooltimo.murim.trade.Peddler> found = level.getEntitiesOfClass(io.github.verycooltimo.murim.trade.Peddler.class,
                 new AABB(p.blockPosition()).inflate(96.0D), Entity::isAlive);
-        if (found.isEmpty() && tries < 400) {
-            server.tell(new net.minecraft.server.TickTask(server.getTickCount() + 1, () -> waitPeddler(server, village, tries + 1)));
+        // По игровому времени, а не по числу вызовов: TickTask исполняется и между тиками, по многу раз за тик.
+        long waited = level.getGameTime() - since;
+        if (found.isEmpty() && waited < 400L) {
+            server.tell(new net.minecraft.server.TickTask(server.getTickCount() + 1, () -> waitPeddler(server, village, since)));
             return;
         }
         io.github.verycooltimo.murim.trade.Peddler ped = found.isEmpty()
                 ? io.github.verycooltimo.murim.trade.PeddlerSpawns.arrive(level, village, io.github.verycooltimo.murim.trade.Peddler.VILLAGE_STAY)
                 : found.get(0);
-        MurimMod.LOGGER.info("Bandit camp capture: peddler {} after {} ticks at {}", found.isEmpty() ? "placed" : "came", tries,
+        MurimMod.LOGGER.info("Bandit camp capture: peddler {} after {} ticks at {}", found.isEmpty() ? "placed" : "came", waited,
                 ped == null ? "-" : ped.blockPosition().toShortString());
         if (ped == null) {
             targetReady = true;
