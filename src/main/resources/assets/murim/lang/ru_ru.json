@@ -428,5 +428,10 @@
   "block.murim.polished_hua_granite_stairs": "Ступени из полированного гранита Хуашань",
   "block.murim.polished_hua_granite_slab": "Плита из полированного гранита Хуашань",
   "block.murim.polished_hua_granite_wall": "Стена из полированного гранита Хуашань",
-  "block.murim.hua_litter": "Сосновая подстилка"
+  "block.murim.hua_litter": "Сосновая подстилка",
+  "sign.murim.hua.sect_gate": "Врата секты",
+  "sign.murim.hua.pav_north": "Беседка Северного пика",
+  "sign.murim.hua.pav_west": "Беседка Западного пика",
+  "sign.murim.hua.pav_south": "Беседка Южного пика",
+  "sign.murim.hua.pav_east": "Беседка на уступе"
 }

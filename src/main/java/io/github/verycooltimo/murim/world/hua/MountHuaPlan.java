@@ -55,19 +55,30 @@ public final class MountHuaPlan {
     public record TrailPoint(double u, double v, double y) {
     }
 
+    // Domes: high exponents give the manhwa's massive rounded tops on near-vertical sides
+    // (author refs 10, 14, 16).
     // Real heights (m): South 2155, East 2096, West 2083, Middle 2038, North 1615 -> nominal.
     public static final List<Peak> PEAKS = List.of(
             // Broad masses rather than needles (codex r2): widths vary more than heights.
-            new Peak("south", 5, 125, 236, 80, 60, 10, 2.9),
-            new Peak("east", 130, 15, 228, 66, 48, 70, 3.0),
-            new Peak("west", -125, 35, 226, 74, 44, 75, 3.2),
+            new Peak("south", 5, 125, 236, 80, 60, 10, 4.2),
+            new Peak("east", 130, 15, 228, 66, 48, 70, 4.0),
+            new Peak("west", -125, 35, 226, 74, 44, 75, 4.4),
             new Peak("middle", 68, 48, 220, 32, 24, 40, 2.6),
-            new Peak("north", -10, -335, 163, 46, 34, 0, 2.2),
+            new Peak("north", -10, -335, 163, 46, 34, 0, 3.0),
             // Subsidiary summits and shoulders (asymmetric masses, not five isolated towers).
             new Peak("south_shoulder", 70, 140, 205, 52, 34, 140, 2.4),
             new Peak("west_shoulder", -175, 85, 196, 46, 30, 30, 2.4),
             new Peak("east_shoulder", 175, 60, 200, 46, 30, 120, 2.4),
             new Peak("vault_hill", -32, 116, 200, 24, 18, 0, 2.6));
+
+    /** Pillar forest basin (author ref 03): centre and radius in the local frame. */
+    public static final double PILLARS_U = 150;
+    public static final double PILLARS_V = 330;
+    public static final double PILLARS_R = 150;
+
+    public static boolean inPillarBasin(double u, double v) {
+        return Math.hypot(u - PILLARS_U, v - PILLARS_V) < PILLARS_R;
+    }
 
     /** Satellite granite peaks in the foothills, long axis pointing at the massif. */
     public static final List<Peak> SATELLITES = List.of(
@@ -85,9 +96,9 @@ public final class MountHuaPlan {
             new Ridge(new double[] {390, 300, 200}, new double[] {-470, -360, -250}, new double[] {50, 45, 70}, 1.1));
 
     /** Main valley: from the gate terrace out to the edge of the foothills (stream bed along it). */
-    public static final double[] VALLEY_U = {-100, -110, -125, -150, -120, -90};
-    public static final double[] VALLEY_V = {-385, -470, -600, -720, -840, -980};
-    public static final double[] VALLEY_FLOOR = {16, 2.5, 1.5, 1, 0.5, 0};
+    public static final double[] VALLEY_U = {-140, -135, -135, -150, -120, -90};
+    public static final double[] VALLEY_V = {-420, -470, -600, -720, -840, -980};
+    public static final double[] VALLEY_FLOOR = {2.5, 2.2, 1.5, 1, 0.5, 0};
 
     public static final List<Ridge> RIDGES = List.of(
             // Canglong (Blue Dragon) ridge: knife edge climbing from the North Peak to the Golden Lock.
@@ -112,7 +123,16 @@ public final class MountHuaPlan {
                     new double[] {3, 22, 58, 100}, 5, 4.0));
 
     public static final List<Zone> ZONES = List.of(
-            new Zone("gate", "Gate terrace", -110, -455, 40, 30, 3, false, 0, 0),
+            // Gate at the mouth of the gorge, right under the scarp wall (author ref 06: the red gate
+            // stands in front of a cliff face).
+            new Zone("gate", "Gate terrace", -140, -404, 40, 26, 3, false, 0, 0),
+            // Inner sect gate where the trail reaches the main terrace (author refs 06, 12).
+            new Zone("sect_gate", "Sect gate", 14, -24, 28, 10, 160, false, 0, 0),
+            // Pavilions on summits and a cliff ledge (author refs 04, 11).
+            new Zone("pav_north", "North Peak pavilion", -10, -335, 14, 12, 160, false, 0, 0),
+            new Zone("pav_west", "West Peak pavilion", -125, 35, 14, 12, 222, false, 0, 0),
+            new Zone("pav_south", "South Peak pavilion", 5, 125, 16, 14, 232, false, 0, 0),
+            new Zone("pav_east", "East Peak ledge pavilion", 110, -10, 12, 10, 210, false, 0, 0),
             new Zone("main", "Main terrace", -20, 20, 100, 70, 160, false, 0, 0),
             new Zone("upper", "Temple and leader's residence", -30, 74, 60, 28, 168, false, 0, 0),
             new Zone("vault", "Secret vault", -32, 112, 14, 12, 169, true, -32, 86),
@@ -122,8 +142,8 @@ public final class MountHuaPlan {
 
     /** The one trail: gate, gorge, cleft stair, North Peak, Canglong ridge, Golden Lock, sect. */
     public static final List<TrailPoint> TRAIL = List.of(
-            new TrailPoint(-110, -440, 3),
-            new TrailPoint(-108, -400, 10),
+            new TrailPoint(-120, -399, 3),
+            new TrailPoint(-108, -390, 8),
             new TrailPoint(-100, -365, 26),
             new TrailPoint(-86, -335, 52),
             new TrailPoint(-72, -305, 92),

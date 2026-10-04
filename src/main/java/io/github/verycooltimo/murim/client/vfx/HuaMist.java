@@ -41,9 +41,9 @@ import org.joml.Vector3f;
 @EventBusSubscriber(modid = MurimMod.MODID, value = Dist.CLIENT)
 public final class HuaMist {
 
-    private static final int MAX_PUFFS = 140;
+    private static final int MAX_PUFFS = 240;
     private static final double SPAWN_MIN = 24;
-    private static final double SPAWN_MAX = 300;
+    private static final double SPAWN_MAX = 420;
     private static final double ACTIVE_RADIUS = 1100;
 
     private static final class Puff {
@@ -152,9 +152,11 @@ public final class HuaMist {
         }
         double y;
         // More valley mist, fewer high puffs (codex r2: puffs on the summits looked stuck on).
-        boolean sea = RANDOM.nextFloat() < 0.2F;
+        // Over the pillar basin the cloud sea is continuous (author ref 03).
+        boolean basin = MountHuaPlan.inPillarBasin(site.localU(x, z), site.localV(x, z));
+        boolean sea = RANDOM.nextFloat() < (basin ? 0.95F : 0.5F);
         if (sea) {
-            y = site.worldY(90 + RANDOM.nextDouble() * 35);
+            y = site.worldY(100 + RANDOM.nextDouble() * 22);
             if (g > y - 15) {
                 return;
             }

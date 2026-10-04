@@ -448,5 +448,10 @@
   "block.murim.polished_hua_granite_stairs": "Polished Huashan Granite Stairs",
   "block.murim.polished_hua_granite_slab": "Polished Huashan Granite Slab",
   "block.murim.polished_hua_granite_wall": "Polished Huashan Granite Wall",
-  "block.murim.hua_litter": "Pine Litter"
+  "block.murim.hua_litter": "Pine Litter",
+  "sign.murim.hua.sect_gate": "Sect gate",
+  "sign.murim.hua.pav_north": "North Peak pavilion",
+  "sign.murim.hua.pav_west": "West Peak pavilion",
+  "sign.murim.hua.pav_south": "South Peak pavilion",
+  "sign.murim.hua.pav_east": "Ledge pavilion"
 }
