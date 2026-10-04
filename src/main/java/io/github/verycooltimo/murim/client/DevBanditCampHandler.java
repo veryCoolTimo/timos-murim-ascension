@@ -92,6 +92,7 @@ public final class DevBanditCampHandler {
             return;
         }
         String name = STAGES[stage];
+        mc.getToasts().clear();
         wait++;
         int sections = mc.levelRenderer.countRenderedSections();
         stable = sections == lastSections && mc.levelRenderer.hasRenderedAllSections() ? stable + 1 : 0;
@@ -165,7 +166,38 @@ public final class DevBanditCampHandler {
                 if (act == 85) {
                     grab(mc, name);
                 }
+                if (act == 87) {
+                    server.execute(() -> server.getPlayerList().getPlayers().forEach(ServerPlayer::closeContainer));
+                }
+                // Обрывки: три страницы одной книги в руке → название над хотбаром → ПКМ — сшиты в рваный манускрипт.
                 if (act == 90) {
+                    server.execute(() -> {
+                        ServerPlayer p = server.getPlayerList().getPlayers().get(0);
+                        p.setGameMode(GameType.SURVIVAL);
+                        ItemStack pages = new ItemStack(io.github.verycooltimo.murim.registry.ModItems.MANUAL_PAGE.get(), 3);
+                        pages.set(io.github.verycooltimo.murim.registry.ModDataComponents.TECHNIQUE.get(),
+                                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "dark_fragrance_step"));
+                        p.getInventory().setItem(1, pages);
+                    });
+                }
+                if (act == 94) {
+                    mc.player.getInventory().selected = 1;
+                }
+                if (act == 100) {
+                    grab(mc, "page");
+                }
+                if (act == 104) {
+                    mc.gameMode.useItem(mc.player, InteractionHand.MAIN_HAND);
+                }
+                if (act == 110) {
+                    grab(mc, "page");
+                    mc.setScreen(new net.minecraft.client.gui.screens.inventory.InventoryScreen(mc.player));
+                }
+                if (act == 118) {
+                    grab(mc, "page");
+                    mc.setScreen(null);
+                }
+                if (act == 120) {
                     MurimMod.LOGGER.info("Bandit camp capture: done");
                     stage++;
                 }
@@ -244,9 +276,17 @@ public final class DevBanditCampHandler {
                         return;
                     }
                     targetId = target.getId();
-                    // Поединок на тропе у ворот: открытое место, камера за игроком смотрит в лагерь.
-                    double px = cx + g[0] * (plan.radius() - 6.0D), pz = cz + g[1] * (plan.radius() - 6.0D);
-                    double tx = cx + g[0] * (plan.radius() - 10.5D), tz = cz + g[1] * (plan.radius() - 10.5D);
+                    // Стенд: остальная банда замирает, чтобы поединок читался (в игре по тревоге бегут все).
+                    for (Bandit other : level.getEntitiesOfClass(Bandit.class, new AABB(campCentre).inflate(40.0D), Entity::isAlive)) {
+                        other.setNoAi(other != target);
+                        if (other != target) {
+                            other.setTarget(null);
+                        }
+                    }
+                    // Поединок на тропе у ворот: игрок снаружи, бандит выходит из ворот — в кадре
+                    // частокол, перекладина и двор за ним, а не стенка шатра вплотную.
+                    double px = cx + g[0] * (plan.radius() + 5.0D), pz = cz + g[1] * (plan.radius() + 5.0D);
+                    double tx = cx + g[0] * (plan.radius() - 0.5D), tz = cz + g[1] * (plan.radius() - 0.5D);
                     int ty = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, (int) Math.floor(tx), (int) Math.floor(tz));
                     target.teleportTo(tx, ty, tz);
                     teleport(level, p, px, pz, tx, tz, 8.0F, 0);

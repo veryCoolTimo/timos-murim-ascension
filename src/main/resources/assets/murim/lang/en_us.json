@@ -606,7 +606,7 @@
   "item.murim.manual_page.hint_known": "A known book: the page continues it or brings insight",
   "item.murim.silver_tael": "Silver Tael",
   "murim.page.need_more": "%s: %s of %s pages — the text does not make sense yet",
-  "murim.page.bound": "The pages are bound into a torn manual: %s (up to layer %s)",
+  "murim.page.bound": "Torn manual bound: %s (to layer %s)",
   "murim.page.deepened": "%s: the missing page continues the text — now up to layer %s",
   "murim.page.insight": "%s: an old page shows the familiar form anew",
   "murim.page.wisdom": "%s: nothing new, but reading settles the mind",

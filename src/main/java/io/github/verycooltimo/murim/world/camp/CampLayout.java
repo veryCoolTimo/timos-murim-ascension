@@ -176,8 +176,8 @@ public final class CampLayout {
     public static int[] extent(Kind kind) {
         return switch (kind) {
             case FIRE -> new int[] {-3, 3, -3, 3};
-            case TENT -> new int[] {-2, 3, -2, 2};
-            case CHIEF_TENT -> new int[] {-3, 3, -3, 3};
+            case TENT -> new int[] {-3, 3, -2, 2};
+            case CHIEF_TENT -> new int[] {-4, 3, -3, 3};
             case LEAN_TO -> new int[] {-1, 2, -2, 2};
             case TOWER -> new int[] {-1, 2, -1, 1};
             case CART -> new int[] {-1, 2, -1, 2};

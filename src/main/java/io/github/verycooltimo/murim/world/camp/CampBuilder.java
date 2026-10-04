@@ -240,7 +240,7 @@ public final class CampBuilder {
      */
     private void tent(CampLayout.Spot s, int y, int half, int depth, Block wool, Block carpet, boolean chief) {
         int front = 2;
-        footprint(s, y, -depth, front + 1, -half, half, half + 2, false);
+        footprint(s, y, -depth - 1, front + 1, -half, half, half + 2, false);
         BlockState w = wool.defaultBlockState();
         for (int a = -depth; a <= front; a++) {
             for (int side = -half; side <= half; side++) {
@@ -257,6 +257,9 @@ public final class CampBuilder {
                 }
             }
         }
+        // Конёк — жердь, торчащая спереди и сзади: так шерстяные скаты читаются как шатёр, а не горка.
+        fence(rel(s, front + 1, 0), y + 1 + half, Blocks.SPRUCE_FENCE);
+        fence(rel(s, -depth - 1, 0), y + 1 + half, Blocks.SPRUCE_FENCE);
         // Колья-растяжки у входа (по краям ската, на шаг впереди).
         for (int side : new int[] {-half, half}) {
             fence(rel(s, front + 1, side), y + 1, Blocks.SPRUCE_FENCE);
@@ -431,7 +434,9 @@ public final class CampBuilder {
                 for (int k = g + 1; k <= y; k++) {
                     sink.set(p[0], k, p[1], Blocks.DIRT.defaultBlockState());
                 }
-                sink.set(p[0], y, p[1], trample ? Blocks.COARSE_DIRT.defaultBlockState() : Blocks.DIRT.defaultBlockState());
+                // Верх опоры — тропа или глина: на земле и грубой земле проросли бы деревья
+                // (котёл кадров 04.10: дерево посреди лагеря у костра).
+                sink.set(p[0], y, p[1], trample ? Blocks.DIRT_PATH.defaultBlockState() : Blocks.PACKED_MUD.defaultBlockState());
                 clearAbove(p[0], y + 1, p[1], Math.max(clear, g - y));
             }
         }
