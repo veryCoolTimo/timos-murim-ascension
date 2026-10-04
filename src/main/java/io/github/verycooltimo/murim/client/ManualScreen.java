@@ -101,8 +101,14 @@ public final class ManualScreen extends Screen {
 
     /** Состояние формы: 2 — изучена, 1 — можно изучить, 0 — закрыта (нужна предыдущая), 3 — нет даньтяня, 4 — ниже Пика. */
     private int state(ResourceLocation f) {
-        if (io.github.verycooltimo.murim.client.TechniqueSlotsHud.mastery(f) != null) {
-            return 2;
+        io.github.verycooltimo.murim.network.SyncMasteryPayload.Entry known = io.github.verycooltimo.murim.client.TechniqueSlotsHud.mastery(f);
+        if (known != null) {
+            // Выучено по рваной книге, а эта глубже — её можно изучить (предел поднимется).
+            // Нечему научить вовсе — печать «Перечитать»: книга уйдёт в озарение (docs/design/24 §3).
+            if (known.cap() >= bookCap(f)) {
+                return bookDone() ? 5 : 2;
+            }
+            return ClientProfileState.profile().isAwakened() ? 1 : 3;
         }
         // Без даньтяня книга читается, но не учит (автор 03.10): вместо печати — подсказка.
         if (!ClientProfileState.profile().isAwakened()) {
@@ -118,6 +124,29 @@ public final class ManualScreen extends Screen {
         }
         io.github.verycooltimo.murim.network.SyncMasteryPayload.Entry e = io.github.verycooltimo.murim.client.TechniqueSlotsHud.mastery(prevForm.get());
         return e != null && e.layer() >= io.github.verycooltimo.murim.technique.Styles.NEXT_FORM_LAYER ? 1 : 0;
+    }
+
+    /** Предел, до которого учит эта книга технику {@code f}: рваная — до своей глубины. */
+    private int bookCap(ResourceLocation f) {
+        io.github.verycooltimo.murim.technique.TechniqueDefinition d = io.github.verycooltimo.murim.technique.TechniqueLoader.get(f);
+        if (d == null) {
+            return 0;
+        }
+        return open.depth() <= 0 ? d.layers() : Math.min(open.depth(), d.layers());
+    }
+
+    /** Всё, чему учит книга, выучено до её глубины — дубликат. */
+    private boolean bookDone() {
+        for (ResourceLocation t : io.github.verycooltimo.murim.mastery.PageService.teaches(open.technique())) {
+            if (io.github.verycooltimo.murim.technique.TechniqueLoader.get(t) == null) {
+                continue;
+            }
+            io.github.verycooltimo.murim.network.SyncMasteryPayload.Entry e = io.github.verycooltimo.murim.client.TechniqueSlotsHud.mastery(t);
+            if (e == null || e.cap() < bookCap(t)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /** Уровень книги из пакета открытия: все формы книги стиля одного уровня. */
@@ -320,7 +349,7 @@ public final class ManualScreen extends Screen {
             g.pose().popPose();
             return;
         }
-        if (st != 1) {
+        if (st != 1 && st != 5) {
             // Изучено или нет даньтяня — бледная подпись; закрыто — подпись, что нужно сначала.
             Component note = st == 2 ? Component.translatable("murim.manual.learned")
                     : st == 3 ? Component.translatable("murim.manual.no_dantian")
@@ -349,7 +378,19 @@ public final class ManualScreen extends Screen {
         g.fill(x + 2, y + 2, x + SEAL_W - 2, y + 3, SEAL_TEXT & 0x60FFFFFF);
         g.fill(x + 2, y + SEAL_H - 3, x + SEAL_W - 2, y + SEAL_H - 2, SEAL_TEXT & 0x60FFFFFF);
         g.fill(x + 7, y, x + 9, y + 1, 0x00000000);
-        Component label = Component.translatable("murim.manual.learn");
+        Component label = Component.translatable(st == 5 ? "murim.manual.reread" : "murim.manual.learn");
+        if (st == 5) {
+            // Подпись под печатью: что будет с книгой.
+            g.pose().pushPose();
+            g.pose().translate(214, SEAL_Y, 0.0F);
+            g.pose().scale(0.6F, 0.6F, 1.0F);
+            int ry = 0;
+            for (FormattedCharSequence line : font.split(Component.translatable("murim.manual.reread_hint"), (int) ((SEAL_X - 214 - 4) / 0.6F))) {
+                g.drawString(font, line, 0, ry, 0xFF8A7C6A, false);
+                ry += font.lineHeight + 1;
+            }
+            g.pose().popPose();
+        }
         g.pose().pushPose();
         float s = 0.75F;
         g.pose().translate(x + SEAL_W / 2.0F - font.width(label) * s / 2.0F, y + SEAL_H / 2.0F - 3.0F, 0.0F);
@@ -361,7 +402,7 @@ public final class ManualScreen extends Screen {
     private boolean overSeal(double mouseX, double mouseY) {
         double tx = (mouseX - bx) / k;
         double ty = (mouseY - by) / k;
-        return opened(ticks) && textPage() && (!stylePage() || basic != null) && state(form()) == 1
+        return opened(ticks) && textPage() && (!stylePage() || basic != null) && (state(form()) == 1 || state(form()) == 5)
                 && tx >= SEAL_X && tx <= SEAL_X + SEAL_W && ty >= SEAL_Y && ty <= SEAL_Y + SEAL_H;
     }
 

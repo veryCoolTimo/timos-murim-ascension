@@ -63,6 +63,7 @@ public class BanditSwordsman extends Bandit {
     protected void registerGoals() {
         goalSelector.addGoal(0, new FloatGoal(this));
         goalSelector.addGoal(2, new DuelGoal());
+        goalSelector.addGoal(5, new CampIdleGoal(this));
         goalSelector.addGoal(6, new WaterAvoidingRandomStrollGoal(this, 0.8D));
         goalSelector.addGoal(7, new LookAtPlayerGoal(this, Player.class, 8.0F));
         goalSelector.addGoal(8, new RandomLookAroundGoal(this));
@@ -74,7 +75,7 @@ public class BanditSwordsman extends Bandit {
     public SpawnGroupData finalizeSpawn(ServerLevelAccessor level, DifficultyInstance difficulty, MobSpawnType spawnType,
                                         SpawnGroupData data) {
         SpawnGroupData out = super.finalizeSpawn(level, difficulty, spawnType, data);
-        if (level.getRandom().nextFloat() < BanditMove.ELITE_CHANCE) {
+        if (!campSpawn() && level.getRandom().nextFloat() < BanditMove.ELITE_CHANCE) {
             makeElite();
         }
         return out;
@@ -85,6 +86,22 @@ public class BanditSwordsman extends Bandit {
         setElite(true);
         java.util.Objects.requireNonNull(getAttribute(Attributes.MAX_HEALTH)).setBaseValue(32.0D);
         setHealth(getMaxHealth());
+        refreshAura();
+    }
+
+    /**
+     * Главарь лагеря (docs/design/24-bandit-camp.md §2; не босс M4): второсортный мастер — ци,
+     * 70 здоровья, броня 6, удары ×1,35, рывок ци вдвое чаще, своё имя над головой.
+     */
+    public void makeChief(net.minecraft.network.chat.Component name) {
+        setElite(true);
+        setChiefFlag(true);
+        java.util.Objects.requireNonNull(getAttribute(Attributes.MAX_HEALTH)).setBaseValue(70.0D);
+        java.util.Objects.requireNonNull(getAttribute(Attributes.ARMOR)).setBaseValue(6.0D);
+        setHealth(getMaxHealth());
+        setCustomName(name);
+        setCustomNameVisible(true);
+        refreshAura();
     }
 
     /** Стенд: первый удар не раньше чем через {@code ticks} (чтобы он пришёлся на замах техники). */
@@ -183,7 +200,7 @@ public class BanditSwordsman extends Bandit {
                     if (stateTick >= move().recover()) {
                         setState(IDLE, null);
                         // Попал — давит связкой (короткая пауза), промахнулся — отходит и кружит.
-                        attackCooldown = comboReady ? 4 : 14 + random.nextInt(18);
+                        attackCooldown = comboReady ? 4 : isChief() ? 10 + random.nextInt(12) : 14 + random.nextInt(18);
                         comboReady = false;
                     }
                 }
@@ -323,13 +340,15 @@ public class BanditSwordsman extends Bandit {
             if (stateTick >= m.strike()) {
                 setState(RECOVER, m);
                 if (m == BanditMove.QI_DASH) {
-                    dashCooldown = BanditMove.DASH_COOLDOWN;
+                    dashCooldown = isChief() ? BanditMove.DASH_COOLDOWN * 2 / 3 : BanditMove.DASH_COOLDOWN;
                 }
             }
         }
 
         private void hit(LivingEntity t, BanditMove m) {
-            boolean done = t.hurt(damageSources().mobAttack(BanditSwordsman.this), m.damage());
+            // Урон через Casters (docs/design/23 С0): источник — удар моба, сила — от ци бандита.
+            float dmg = m.damage() * (float) damageScale();
+            boolean done = t.hurt(io.github.verycooltimo.murim.technique.Casters.attack(BanditSwordsman.this), dmg);
             log("удар {} по {}: {} (урон {})", m.clip().isEmpty() ? "_chop" : m.clip(), t.getName().getString(), done ? "попал" : "погашен", m.damage());
             if (done) {
                 setLastHurtMob(t);

@@ -67,7 +67,11 @@ public class TechniqueManualItem extends Item {
         ResourceLocation id = wanted.equals(book) || styleBasic || io.github.verycooltimo.murim.technique.Styles.sameStyle(book, wanted) ? wanted : book;
         Integer depth = stack.get(ModDataComponents.MANUAL_DEPTH.get());
         MasteryService.Learn result = MasteryService.learn(serverPlayer, id, depth == null ? 0 : depth);
-        if (result == MasteryService.Learn.ALREADY) {
+        if (result == MasteryService.Learn.ALREADY && io.github.verycooltimo.murim.mastery.PageService.nothingToTeach(
+                serverPlayer.getData(io.github.verycooltimo.murim.registry.ModAttachments.MASTERY), book, depth == null ? 0 : depth)) {
+            // Дубликат (docs/design/24-bandit-camp.md §3): знакомая книга перечитывается в озарение.
+            io.github.verycooltimo.murim.mastery.PageService.reread(serverPlayer, stack, book);
+        } else if (result == MasteryService.Learn.ALREADY) {
             serverPlayer.displayClientMessage(Component.translatable("murim.mastery.already",
                     MasteryService.name(id)).withStyle(ChatFormatting.GRAY), true);
         } else if (result == MasteryService.Learn.UNKNOWN) {

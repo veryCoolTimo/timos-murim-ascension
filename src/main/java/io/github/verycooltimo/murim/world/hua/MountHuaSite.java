@@ -72,6 +72,11 @@ public final class MountHuaSite {
         return shape;
     }
 
+    /** True if (x, z) lies within {@code margin} blocks of the massif's bounding box (bandit camps keep away). */
+    public boolean near(int x, int z, int margin) {
+        return x >= minX - margin && x <= maxX + margin && z >= minZ - margin && z <= maxZ + margin;
+    }
+
     /** True if the 16x16 chunk at (chunkX, chunkZ) may receive mountain blocks. */
     public boolean touchesChunk(int chunkX, int chunkZ) {
         int x0 = chunkX << 4;

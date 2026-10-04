@@ -112,6 +112,14 @@ public final class MasteryRules {
         return advance(rest, taken * MEDITATION_GAIN * wisdomFactor(wisdom));
     }
 
+    /**
+     * Озарение от страницы или перечитанной книги (docs/design/24-bandit-camp.md §3): освоение
+     * сразу, мимо неосмысленного, но не выше предела манускрипта.
+     */
+    public static Gain study(TechniqueProgress current, double amount, long day) {
+        return advance(cool(current, day), Math.max(0.0D, amount));
+    }
+
     /** Наутро неосмысленное остывает: связь «подрался — сел осмыслить». */
     public static TechniqueProgress cool(TechniqueProgress current, long day) {
         if (day > current.day() && current.unprocessed() > 0.0D) {

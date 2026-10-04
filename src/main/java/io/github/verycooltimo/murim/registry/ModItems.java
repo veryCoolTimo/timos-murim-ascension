@@ -21,6 +21,20 @@ public final class ModItems {
     public static final DeferredHolder<Item, Item> TECHNIQUE_MANUAL = ITEMS.register("technique_manual",
             () -> new io.github.verycooltimo.murim.item.TechniqueManualItem(new Item.Properties().stacksTo(1)));
 
+    /**
+     * Обрывок манускрипта — добыча лагеря бандитов (docs/design/24-bandit-camp.md §3). Какая книга —
+     * компонент {@link ModDataComponents#TECHNIQUE}; стопка до 16 (страницы одной книги).
+     */
+    public static final DeferredHolder<Item, Item> MANUAL_PAGE = ITEMS.register("manual_page",
+            () -> new io.github.verycooltimo.murim.item.ManualPageItem(new Item.Properties().stacksTo(16)));
+
+    /**
+     * Серебряный лян (은자, «серебро» Срединной равнины в Return of the Mount Hua Sect): деньги
+     * мира мурим. Пока только добыча — торговли в моде ещё нет (docs/design/24-bandit-camp.md §5).
+     */
+    public static final DeferredHolder<Item, Item> SILVER_TAEL = ITEMS.register("silver_tael",
+            () -> new Item(new Item.Properties().stacksTo(64)));
+
     public static final DeferredHolder<Item, Item> METHOD_SCROLL = ITEMS.register("method_scroll",
             () -> new io.github.verycooltimo.murim.item.MethodScrollItem(new Item.Properties().stacksTo(1)));
 

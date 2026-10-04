@@ -64,7 +64,9 @@ public final class DevSetupEvents {
                 || "placecheck".equals(System.getProperty("murim.capture.technique"))
                 // The archive walk-through travels to a generated archive (client/library/LibraryCapture).
                 || "library".equals(System.getProperty("murim.capture.technique"))
-                || "sectlife".equals(System.getProperty("murim.capture.technique"))) {
+                || "sectlife".equals(System.getProperty("murim.capture.technique"))
+                // Bandit camp: a real world camp, no stage (DevBanditCampHandler).
+                || "banditcamp".equals(System.getProperty("murim.capture.technique"))) {
             return;
         }
         // Меч нужен для съёмки техник, но в церемонии он торчит из сложенных рук и
