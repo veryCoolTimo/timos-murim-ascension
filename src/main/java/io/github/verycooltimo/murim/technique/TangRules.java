@@ -20,6 +20,8 @@ public final class TangRules {
     public static final int THREE = 4;
     public static final int FLASH = 5;
     public static final int RETURN = 6;
+    /** Монеты Семьи Тан (docs/design/techniques/tang-coins-spec.md, автор 04.10). */
+    public static final int COINS = 7;
 
     public static final ResourceLocation FIVE_ID = id("tang_five_thunders");
     public static final ResourceLocation TWELVE_ID = id("tang_twelve_daggers");
@@ -28,6 +30,7 @@ public final class TangRules {
     public static final ResourceLocation THREE_ID = id("tang_three_instant");
     public static final ResourceLocation FLASH_ID = id("tang_flash_life");
     public static final ResourceLocation RETURN_ID = id("tang_sleeve_return");
+    public static final ResourceLocation COINS_ID = id("tang_family_coins");
 
     private static ResourceLocation id(String path) {
         return ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, path);
@@ -38,7 +41,7 @@ public final class TangRules {
         return FIVE_ID.equals(technique) ? FIVE : TWELVE_ID.equals(technique) ? TWELVE
                 : STARS_ID.equals(technique) ? STARS : BURST_ID.equals(technique) ? BURST
                 : THREE_ID.equals(technique) ? THREE : FLASH_ID.equals(technique) ? FLASH
-                : RETURN_ID.equals(technique) ? RETURN : -1;
+                : RETURN_ID.equals(technique) ? RETURN : COINS_ID.equals(technique) ? COINS : -1;
     }
 
     public static ResourceLocation technique(int form) {
@@ -49,6 +52,7 @@ public final class TangRules {
             case THREE -> THREE_ID;
             case FLASH -> FLASH_ID;
             case RETURN -> RETURN_ID;
+            case COINS -> COINS_ID;
             default -> BURST_ID;
         };
     }
@@ -62,6 +66,7 @@ public final class TangRules {
             case THREE -> 10;
             case FLASH -> 3;
             case RETURN -> 10;
+            case COINS -> 6;
             default -> 20;
         };
     }
@@ -350,6 +355,44 @@ public final class TangRules {
     public static boolean shadowed(int layer) {
         return layer >= 8;
     }
+
+    // ------------------------------------------------------------ Монеты Семьи Тан
+
+    /** Монет в веере по слою: 3 → 7 (3+) → 12 (6+) → 18 (8). */
+    public static int coinCount(int layer) {
+        return layer >= 8 ? 18 : layer >= 6 ? 12 : layer >= 3 ? 7 : 3;
+    }
+
+    /** Рикошетов от блоков: 0 на слоях 0–2, 1 на 3–5, 2 с 6-го. */
+    public static int coinBounces(int layer) {
+        return layer >= 6 ? 2 : layer >= 3 ? 1 : 0;
+    }
+
+    /** С 5-го слоя монета после попадания перескакивает на соседнего врага. */
+    public static boolean coinChain(int layer) {
+        return layer >= 5;
+    }
+
+    public static final double COIN_SPEED = 2.2D;
+    public static final int COIN_LIFE = 30;
+    /** Доля урона формы за одно попадание монеты (монеты мелкие, бьют числом). */
+    public static final double COIN_DMG = 0.2D;
+    /** Ширина веера, градусы. */
+    public static final double COIN_FAN = 50.0D;
+    /** Скорость после рикошета от блока. */
+    public static final double COIN_KEEP = 0.8D;
+    public static final double COIN_CHAIN_RANGE = 5.0D;
+
+    // ------------------------------------------------------------ Бросок рукой (ПКМ с кинжалом)
+
+    /** Скорость брошенного рукой кинжала, блоков за тик (трезубец ≈ 2,5). */
+    public static final double HAND_SPEED = 2.0D;
+    /** Тяжесть за тик: на 15 блоках кинжал опускается примерно на полблока. */
+    public static final double HAND_GRAVITY = 0.03D;
+    /** Урон броска рукой — как у стрелы из лука средней натяжки, без техники и ци. */
+    public static final double HAND_DMG = 5.0D;
+    /** Пауза между бросками рукой, тиков. */
+    public static final int HAND_COOLDOWN = 8;
 
     // ------------------------------------------------------------ Возврат Лезвий в Рукав
 

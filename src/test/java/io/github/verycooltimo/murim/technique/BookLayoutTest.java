@@ -52,7 +52,7 @@ class BookLayoutTest {
                 if (!NO_OWN_SPREAD.contains(f.getPath())) {
                     assertTrue(exists(BookLayout.spread(f.getPath())), "no picture spread for " + f);
                 }
-                assertTrue(exists("textures/gui/technique/" + f.getPath() + ".png") || NO_OWN_SPREAD.contains(f.getPath()),
+                assertTrue(exists("textures/gui/technique/" + f.getPath() + ".png"),
                         "no technique icon for " + f);
             }
         }

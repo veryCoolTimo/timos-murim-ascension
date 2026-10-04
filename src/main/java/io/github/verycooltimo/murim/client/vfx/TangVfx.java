@@ -65,6 +65,10 @@ public final class TangVfx {
     private static final VfxColour STEEL = hex(0xD8E4EC);
     private static final VfxColour WHITE = hex(0xFFFFFF);
     private static final VfxColour GREY = hex(0x9AA3AD);
+    /** Монеты Тан: бронза (tang-coins-spec.md) — чтобы не путались с циановыми лезвиями. */
+    private static final VfxColour BRONZE = hex(0xB08D57);
+    private static final VfxColour BRONZE_DARK = hex(0x8C6A3A);
+    private static final VfxColour BRONZE_HI = hex(0xF4E6C2);
     private static final VfxColour INK = hex(0x22262B);
     private static final VfxColour POISON = hex(0x3E7A5A);
     private static final VfxColour POISON_PALE = hex(0x9FCFA8);
@@ -401,6 +405,14 @@ public final class TangVfx {
                     FX.rings.add(new Ring(at.add(dir.scale(0.3D)), dir, clientTicks, 0.15D, 0.4D, 3, 0.035D, WHITE, 0.35D));
                 }
             }
+            case TangRules.COINS -> {
+                // Звон монет в ладони и щелчок — веер уходит.
+                sound(at, SoundEvents.CHAIN_PLACE, 0.8F, 1.8F);
+                sound(at, SoundEvents.ARROW_SHOOT, 0.6F, 1.6F);
+                if (own && layer >= 3) {
+                    SpeedLines.directional(0.0F, 0.15F, 2, SpeedLines.WHITE);
+                }
+            }
             case TangRules.FLASH -> {
                 // «Пааа!» — щелчок пальцами; самого лезвия не видно: читается только жест (spec Б).
                 sound(at, SoundEvents.PLAYER_ATTACK_SWEEP, 0.9F, 1.9F);
@@ -479,6 +491,10 @@ public final class TangVfx {
                 }
                 sound(at, SoundEvents.ANVIL_LAND, 0.3F, 1.7F);
                 smoke(at, 0.45D, 2);
+            } else if (p.form() == TangRules.COINS) {
+                // Монета: маленькая бронзовая искра и звон — без дыма (лёгкое оружие).
+                FX.bursts.add(new Burst(at, clientTicks, 5, 0.45D, 4, RANDOM.nextLong(), false, false));
+                sound(at, SoundEvents.CHAIN_HIT, 0.6F, 1.9F);
             } else if (p.form() == TangRules.FLASH) {
                 // Сорванный замах: белый разрыв у самого лица и кольцо.
                 // Одна короткая вспышка (codex 03.10: длинный разрыв закрывал срыв замаха).
@@ -837,6 +853,7 @@ public final class TangVfx {
             case TangRules.STARS -> 5;
             // Боковые дуги длиннее: изгиб читается по следу (codex 03.10).
             case TangRules.THREE -> d.index() != 0 ? 12 : 7;
+            case TangRules.COINS -> 4;
             case TangRules.FLASH -> 4;
             default -> d.mode() == TangDagger.CARP ? 9 : 6;
         };
@@ -1048,6 +1065,12 @@ public final class TangVfx {
             // Слои (codex 03.10): белое ядро 0,035, циан 0,1, синий край 0,19 блока.
             // Три Лезвия: боковые — «две широкие белые дуги» (spec А), прямое — обычная циановая нить (codex 03.10).
             boolean arc = d.form() == TangRules.THREE && d.index() != 0;
+            if (d.form() == TangRules.COINS) {
+                // Монета: короткий бронзовый росчерк без циана.
+                PlumVfx.stripVar(v, pose, camera, p, PlumVfx.scale(w, 1.2D), PlumVfx.scaled(a, 0.45F), BRONZE_DARK);
+                PlumVfx.stripVar(v, pose, camera, p, PlumVfx.scale(w, 0.45D), PlumVfx.scaled(a, 0.9F), BRONZE_HI);
+                continue;
+            }
             if (d.layer() >= 3) {
                 PlumVfx.stripVar(v, pose, camera, p, PlumVfx.scale(w, 2.5D), PlumVfx.scaled(a, 0.22F), dark ? GREY : arc ? STEEL : EDGE_BLUE);
                 PlumVfx.stripVar(v, pose, camera, p, PlumVfx.scale(w, 1.35D), PlumVfx.scaled(a, 0.55F), dark ? STEEL : arc ? WHITE : CYAN);

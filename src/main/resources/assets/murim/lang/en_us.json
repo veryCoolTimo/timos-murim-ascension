@@ -589,5 +589,11 @@
   "dialogue.murim.gatekeeper.member2": "Fellow disciple! Back before supper and I'll save you a flatbread.",
   "dialogue.murim.mentor.where_leader": "The Leader is at the sect gate, at the top of the trail. Go; he'll hear you.",
   "dialogue.murim.leader.first_climbed": "You climbed on your own, up the steps and not on someone's back. That's half the answer already. What brings you to the gate?",
-  "dialogue.murim.leader.where_mentor": "Un Geom is on the main terrace past the gate. Go; he is already waiting for new disciples."
+  "dialogue.murim.leader.where_mentor": "Un Geom is on the main terrace past the gate. Go; he is already waiting for new disciples.",
+  "technique.murim.tang.coins": "Tang Family Coins",
+  "technique.murim.tang_family_coins": "Tang Clan: Tang Family Coins",
+  "technique.murim.tang_family_coins.weakness": "Coins are light: a counter-swing of a weapon knocks them away, and a shield in front stops them. In open ground with nothing to bounce off and a single enemy, the coins are weak.",
+  "form.murim.tang_family_coins": "Tang Family Coins",
+  "book.murim.tang_family_coins": "Press R for a fan of bronze coins. A coin bounces off walls and floor, and from layer 5 it hops to the next enemy after a hit.",
+  "book.murim.tang_family_coins.full": "Tang Family Coins. Canon, ch. 210: \"a technique that used coins; in the past only the heads of the Tang family could learn it.\" What to do: throw the fan at a wall next to the enemy or into a crowd. What happens: each coin hits for a little, ricochets off blocks (once from layer 3, twice from layer 6) and hops to a neighbour (from layer 5). The fan grows: 3, 7, 12 and finally 18 coins. Why: it is the only Tang form that comes around corners and hits several enemies at once. Coins do not stick in the ground and do not come back."
 }

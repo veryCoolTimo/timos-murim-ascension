@@ -147,6 +147,11 @@ public final class TangExecutor {
                     sleeveReturn(player, layer, h);
                 }
             }
+            case TangRules.COINS -> {
+                if (since == 0) {
+                    coins(player, layer, h, target);
+                }
+            }
             default -> {
                 if (since == 0) {
                     carp(player, layer, h, target);
@@ -505,6 +510,15 @@ public final class TangExecutor {
     /** Касание сущности по факту. @return true — кинжал останавливается. */
     static boolean onHit(TangDagger d, Entity e, Vec3 point) {
         if (!(d.getOwner() instanceof ServerPlayer player) || !(e instanceof LivingEntity t)) {
+            d.giveBack(null, point);
+            return true;
+        }
+        if (d.thrownItem && d.mode() != TangDagger.RECALL) {
+            // Бросок рукой (ПКМ): простой урон метательного ножа, кинжал падает у цели предметом.
+            Vec3 hd = d.getDeltaMovement().lengthSqr() < 1.0E-6D ? player.getLookAngle() : d.getDeltaMovement().normalize();
+            hurt(player, d, t, TangRules.HAND_DMG);
+            send(player, d.form(), TangPayload.HIT, 0, point, hd, t.getId(), 0);
+            d.giveBack(null, point);
             return true;
         }
         int form = d.form();
@@ -537,6 +551,40 @@ public final class TangExecutor {
                     TargetLock.freeze(t, 10);
                 }
                 send(player, form, TangPayload.HIT, layer, point, dir, t.getId(), main ? 2 : count > 1 ? 1 : 0);
+                return true;
+            }
+            case TangRules.COINS -> {
+                if (t.swinging) {
+                    // Ответный удар оружием сбивает монету (Чхон Мён разбивает монеты Тан Ву мечом, гл. 210).
+                    // API: reference/minecraft-src/net/minecraft/world/entity/LivingEntity.java#swinging.
+                    send(player, form, TangPayload.CLANG, layer, point, dir.scale(-1.0D), 0, 0);
+                    return true;
+                }
+                hurt(player, d, t, d.damage * TangRules.COIN_DMG);
+                send(player, form, TangPayload.HIT, layer, point, dir, t.getId(), 0);
+                d.struck.add(t.getId());
+                if (d.chain) {
+                    // Перескок (слой 5+): к ближайшему другому врагу в 5 блоках, один раз.
+                    LivingEntity next = null;
+                    double best = TangRules.COIN_CHAIN_RANGE * TangRules.COIN_CHAIN_RANGE;
+                    for (LivingEntity o : player.serverLevel().getEntitiesOfClass(LivingEntity.class, t.getBoundingBox().inflate(TangRules.COIN_CHAIN_RANGE),
+                            x -> x != player && x != t && x.isAlive() && !x.isSpectator() && !d.struck.contains(x.getId())
+                                    && !(x instanceof net.minecraft.world.entity.decoration.ArmorStand))) {
+                        double dd = o.distanceToSqr(t);
+                        if (dd < best) {
+                            best = dd;
+                            next = o;
+                        }
+                    }
+                    if (next != null) {
+                        d.chain = false;
+                        Vec3 to = TangDagger.throat(next).subtract(point).normalize();
+                        d.setPos(point);
+                        d.setDeltaMovement(to.scale(TangRules.COIN_SPEED));
+                        d.redirected = true;
+                        return false;
+                    }
+                }
                 return true;
             }
             case TangRules.FLASH -> {
@@ -686,7 +734,86 @@ public final class TangExecutor {
     static void caught(TangDagger d) {
         if (d.getOwner() instanceof ServerPlayer player) {
             send(player, d.form(), TangPayload.CAUGHT, d.layer(), d.position(), Vec3.ZERO, d.getId(), 0);
+            // «Возврат Лезвий» вернул брошенный рукой кинжал — он снова в инвентаре.
+            d.giveBack(player, player.position());
         }
+    }
+
+    /**
+     * Монеты Семьи Тан (гл. 210; tang-coins-spec.md): веер вращающихся монет по горизонтали, к захваченной
+     * цели или по взгляду. Каждая монета несёт свои рикошеты и перескок.
+     */
+    private static void coins(ServerPlayer player, int layer, double h, LivingEntity target) {
+        Vec3 hand = hand(player, true);
+        LivingEntity t = target != null ? target : nearestInCone(player, 24.0D, 30.0D);
+        Vec3 aim = t != null ? TangDagger.throat(t) : lookPoint(player, 16.0D);
+        Vec3 dir = aim.subtract(hand).normalize();
+        int n = TangRules.coinCount(layer);
+        for (int i = 0; i < n; i++) {
+            double u = n == 1 ? 0.0D : i / (double) (n - 1) - 0.5D;
+            double yaw = Math.toRadians(u * TangRules.COIN_FAN);
+            double cos = Math.cos(yaw);
+            double sin = Math.sin(yaw);
+            // Поворот вокруг вертикали и лёгкий разброс по высоте — веер, а не одна линия.
+            Vec3 v = new Vec3(dir.x * cos - dir.z * sin, dir.y + (player.getRandom().nextDouble() - 0.5D) * 0.08D, dir.x * sin + dir.z * cos).normalize();
+            TangDagger d = new TangDagger(player.level(), player, TangRules.COINS, layer, i % 120);
+            d.setPos(hand);
+            d.setMode(TangDagger.STRAIGHT);
+            d.speed = TangRules.COIN_SPEED;
+            d.setDeltaMovement(v.scale(TangRules.COIN_SPEED));
+            d.damage = h;
+            d.life = TangRules.COIN_LIFE;
+            d.bounces = TangRules.coinBounces(layer);
+            d.chain = TangRules.coinChain(layer);
+            face(d, v);
+            player.level().addFreshEntity(d);
+        }
+        send(player, TangRules.COINS, TangPayload.SHOT, layer, hand, dir, n, 0);
+    }
+
+    /** Монета ударилась о блок: отражение скорости с потерей (рикошет) или конец пути. */
+    static void coinBlock(TangDagger d, BlockHitResult hit) {
+        Vec3 v = d.getDeltaMovement();
+        if (d.bounces <= 0 || d.mode() == TangDagger.FALL || v.lengthSqr() < 1.0E-6D) {
+            if (d.getOwner() instanceof ServerPlayer player) {
+                send(player, TangRules.COINS, TangPayload.CLANG, d.layer(), hit.getLocation(), Vec3.ZERO, hit.getDirection().get3DDataValue(), 0);
+            }
+            d.discard();
+            return;
+        }
+        d.bounces--;
+        Vec3 n = Vec3.atLowerCornerOf(hit.getDirection().getNormal());
+        Vec3 r = v.subtract(n.scale(2.0D * v.dot(n))).scale(TangRules.COIN_KEEP);
+        d.setPos(hit.getLocation().add(n.scale(0.08D)));
+        d.setDeltaMovement(r);
+        // Удар по новому направлению: снова «свежая» монета, может бить ту же цель после рикошета.
+        d.struck.clear();
+        face(d, r);
+        if (d.getOwner() instanceof ServerPlayer player) {
+            send(player, TangRules.COINS, TangPayload.CLANG, d.layer(), hit.getLocation(), r.normalize(), hit.getDirection().get3DDataValue(), 1);
+        }
+    }
+
+    /**
+     * Бросок кинжала рукой (ПКМ с предметом, автор 04.10) — без техники и без ци: один кинжал летит с
+     * тяжестью, бьёт {@link TangRules#HAND_DMG}, промах втыкается и подбирается касанием.
+     */
+    public static void throwByHand(ServerPlayer player, boolean free) {
+        Vec3 look = player.getLookAngle();
+        Vec3 from = player.getEyePosition().add(look.scale(0.4D)).add(0.0D, -0.1D, 0.0D);
+        TangDagger d = new TangDagger(player.level(), player, TangRules.FIVE, 0, 0);
+        d.thrownItem = true;
+        d.freeThrow = free;
+        d.setPos(from);
+        d.setMode(TangDagger.STRAIGHT);
+        d.speed = TangRules.HAND_SPEED;
+        d.setDeltaMovement(look.scale(TangRules.HAND_SPEED));
+        d.damage = TangRules.HAND_DMG;
+        d.life = 60;
+        face(d, look);
+        player.level().addFreshEntity(d);
+        player.level().playSound(null, player.getX(), player.getY(), player.getZ(), net.minecraft.sounds.SoundEvents.TRIDENT_THROW.value(),
+                net.minecraft.sounds.SoundSource.PLAYERS, 0.6F, 1.6F);
     }
 
     static void knockedDown(TangDagger d) {

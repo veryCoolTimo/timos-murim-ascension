@@ -616,6 +616,18 @@ public final class DevSetupEvents {
                 }
             }
         }
+        // MURIM_CAPTURE_STONEWALL=1 — каменная стена слева от линии броска (рикошеты Монет Тан, 04.10): вдоль
+        // взгляда на 3–11 блоков, в 2,5 блока сбоку, высотой 3. Без флага полоса очищается — стена не остаётся
+        // в сохранённом мире для других съёмок.
+        boolean wall = "1".equals(System.getenv("MURIM_CAPTURE_STONEWALL"));
+        for (int k = 3; k <= 11; k++) {
+            for (int h = 0; h < 3; h++) {
+                net.minecraft.core.BlockPos wp = net.minecraft.core.BlockPos.containing(
+                        STAGE_X + 0.5D + lookX * k + lookZ * 2.5D, STAGE_Y + h, STAGE_Z + 0.5D + lookZ * k - lookX * 2.5D);
+                level.setBlockAndUpdate(wp, wall ? net.minecraft.world.level.block.Blocks.STONE_BRICKS.defaultBlockState()
+                        : net.minecraft.world.level.block.Blocks.AIR.defaultBlockState());
+            }
+        }
         // MURIM_CAPTURE_EXTRA=n — ещё n зомби на пути к цели (Натиск волочит встречных, 03.10).
         int extra = (int) envDouble("MURIM_CAPTURE_EXTRA", 0.0D);
         for (int i = 0; i < extra; i++) {

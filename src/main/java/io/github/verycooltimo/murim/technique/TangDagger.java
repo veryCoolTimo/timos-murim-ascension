@@ -93,6 +93,43 @@ public class TangDagger extends Projectile {
     int chainSlot;
     /** Путь от выпуска — для спада силы с расстоянием. */
     double travelled;
+    /**
+     * Брошен рукой как предмет (ПКМ с кинжалом, автор 04.10), а не техникой: летит с тяжестью, после
+     * попадания или промаха возвращается предметом — подобрать с земли или «Возвратом Лезвий».
+     */
+    boolean thrownItem;
+    /** Игрок в творческом — кинжал не тратился, предмет назад не выдаётся. */
+    boolean freeThrow;
+    /** Монеты: сколько рикошетов от блоков осталось; перескок на соседа ещё не потрачен; сменили курс в этом тике. */
+    int bounces;
+    boolean chain;
+    boolean redirected;
+
+    /** Вернуть брошенный рукой кинжал предметом: в руки {@code to} или на землю в точке {@code at}. */
+    void giveBack(net.minecraft.world.entity.player.Player to, Vec3 at) {
+        if (!thrownItem || freeThrow || level().isClientSide) {
+            return;
+        }
+        thrownItem = false;
+        net.minecraft.world.item.ItemStack stack = new net.minecraft.world.item.ItemStack(io.github.verycooltimo.murim.registry.ModItems.TANG_DAGGER.get());
+        if (to != null && to.getInventory().add(stack)) {
+            return;
+        }
+        level().addFreshEntity(new net.minecraft.world.entity.item.ItemEntity(level(), at.x, at.y, at.z, stack));
+    }
+
+    /** Воткнутый в землю кинжал, брошенный рукой, подбирается касанием, как стрела. API: AbstractArrow#playerTouch. */
+    @Override
+    public void playerTouch(net.minecraft.world.entity.player.Player player) {
+        if (level().isClientSide || !thrownItem || mode() != STUCK) {
+            return;
+        }
+        if (freeThrow || player.getInventory().add(new net.minecraft.world.item.ItemStack(io.github.verycooltimo.murim.registry.ModItems.TANG_DAGGER.get()))) {
+            thrownItem = false;
+            player.take(this, 1);
+            discard();
+        }
+    }
 
     public TangDagger(EntityType<? extends TangDagger> type, Level level) {
         super(type, level);
@@ -188,12 +225,19 @@ public class TangDagger extends Projectile {
         modeAge++;
         if (tickCount > life) {
             int m = mode();
+            if (form() == TangRules.COINS) {
+                // Монеты не втыкаются и не возвращаются: отлетали своё — пропали.
+                discard();
+                return;
+            }
             if (m == HANG || m == STRAIGHT || m == STEER || m == PATH || m == STRIKE || m == TO_STAR || m == STAR) {
                 // Отзыва не было или лезвие пролетело мимо — падает и втыкается в землю (гл. 195:
                 // «брошенные лезвия трудно вернуть»), его подберёт «Возврат Лезвий в Рукав».
                 setMode(FALL);
                 life = tickCount + 60;
             } else {
+                // Брошенный рукой кинжал не исчезает: пролежал своё — остаётся предметом на земле.
+                giveBack(null, position());
                 discard();
                 return;
             }
@@ -309,6 +353,11 @@ public class TangDagger extends Projectile {
                         life = tickCount + 20;
                     }
                     return from;
+                }
+                // Бросок рукой: обычный снаряд — сопротивление воздуха и тяжесть, как у трезубца.
+                if (thrownItem) {
+                    setDeltaMovement(getDeltaMovement().scale(0.99D).add(0.0D, -TangRules.HAND_GRAVITY, 0.0D));
+                    return from.add(getDeltaMovement());
                 }
                 // Похищение Жизни: лезвие «появляется прямо перед лицом» (spec Б) — на последнем тике до цели
                 // путь доворачивает к горлу (не больше 1,2 блока бокового сдвига): идущий зомби иначе пропускал
@@ -439,12 +488,23 @@ public class TangDagger extends Projectile {
                         discard();
                         return;
                     }
+                    if (redirected) {
+                        // Монета перескочила на соседа: курс уже задан в onHit.
+                        redirected = false;
+                        face(getDeltaMovement());
+                        return;
+                    }
                 }
             }
             if (isRemoved()) {
                 return;
             }
             if (block.getType() != HitResult.Type.MISS) {
+                if (form() == TangRules.COINS) {
+                    // Монета — диск: отскакивает от стены и пола (или пропадает, если рикошеты кончились).
+                    TangExecutor.coinBlock(this, block);
+                    return;
+                }
                 if (mode == RECALL) {
                     // Стена обрывает линию отзыва.
                     TangExecutor.onBlock(this, block);
@@ -514,6 +574,7 @@ public class TangDagger extends Projectile {
     protected boolean canHitEntity(Entity target) {
         // Свой мастер и чужие кинжалы — не цели.
         return !(target instanceof TangDagger) && !target.is(getOwner()) && super.canHitEntity(target)
+                && !(form() == TangRules.COINS && struck.contains(target.getId()))
                 && !(target instanceof net.minecraft.world.entity.decoration.ArmorStand);
     }
 

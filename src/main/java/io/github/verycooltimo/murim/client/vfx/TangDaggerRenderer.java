@@ -34,6 +34,10 @@ public class TangDaggerRenderer extends EntityRenderer<TangDagger> {
 
     private static final ResourceLocation WHITE = ResourceLocation.withDefaultNamespace("textures/misc/white.png");
 
+    /** Монета (заглушка до модели автора): кольцо с квадратным отверстием, 6 единиц ≈ 0,38 блока. */
+    public static final io.github.verycooltimo.murim.client.bedrock.BedrockItemMesh COIN = new io.github.verycooltimo.murim.client.bedrock.BedrockItemMesh(
+            "/assets/murim/bedrock/tang_coin.geo.json", ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/item/tang_coin.png"));
+
     public TangDaggerRenderer(EntityRendererProvider.Context context) {
         super(context);
     }
@@ -51,6 +55,22 @@ public class TangDaggerRenderer extends EntityRenderer<TangDagger> {
     @Override
     public void render(TangDagger e, float yaw, float partial, PoseStack ps, MultiBufferSource buffers, int light) {
         if (TangVfx.hidden(e)) {
+            return;
+        }
+        if (e.form() == TangRules.COINS) {
+            // Монета Тан — заглушка-модель (assets/murim/bedrock/tang_coin.geo.json) до модели автора: диск
+            // лежит плашмя по ходу и вращается вокруг своей оси.
+            Vec3 cf = forward(e, partial);
+            float spin = (e.tickCount + partial) * 0.9F + e.index() * 0.7F;
+            ps.pushPose();
+            try {
+                ps.mulPose(new org.joml.Quaternionf().rotationY((float) Math.atan2(cf.x, cf.z)));
+                ps.mulPose(new org.joml.Quaternionf().rotationX((float) (Math.PI / 2.0D) - (float) Math.atan2(cf.y, cf.horizontalDistance())));
+                ps.mulPose(new org.joml.Quaternionf().rotationZ(spin));
+                COIN.render(ps, buffers.getBuffer(COIN.renderType()), 0x00F000F0, 1.0F, 0.0F, 1.0F, 1.0F, 1.0F, 1.0F);
+            } finally {
+                ps.popPose();
+            }
             return;
         }
         Vec3 f = forward(e, partial);
