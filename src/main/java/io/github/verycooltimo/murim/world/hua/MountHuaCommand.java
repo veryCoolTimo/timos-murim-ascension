@@ -40,7 +40,7 @@ import net.neoforged.neoforge.event.tick.ServerTickEvent;
 public final class MountHuaCommand {
 
     /** Places that {@code tp} knows besides the zones: local (u, v) and an extra height. */
-    private static final List<String> PLACES = List.of("approach", "approach_ridge", "cliff", "pillars", "stairs", "stairs_high", "view", "aerial", "aerial_ne", "aerial_sw", "view_ne", "view_east", "view_west",
+    private static final List<String> PLACES = List.of("approach", "approach_ridge", "cliff", "pillars", "stairs", "stairs_high", "gorge_start", "view", "aerial", "aerial_ne", "aerial_sw", "view_ne", "view_east", "view_west",
             "summit", "north_peak", "golden_lock", "ridge", "gorge");
 
     private MountHuaCommand() {
@@ -189,6 +189,7 @@ public final class MountHuaCommand {
             case "pillars" -> surface(site, 300, 520, -0.62, -0.78, 4, 50);
             case "stairs" -> onTrail(site, 0.62, -6);
             case "stairs_high" -> onTrail(site, 0.55, -12);
+            case "gorge_start" -> onTrail(site, 0.012, -14);
             case "aerial" -> surface(site, -30, -500, 0.05, 1, 4, 70);
             case "aerial_ne" -> surface(site, 330, -300, -0.8, 1, 2, 80);
             case "aerial_sw" -> surface(site, -300, 330, 0.7, -1, 2, 80);

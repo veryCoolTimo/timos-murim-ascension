@@ -483,6 +483,7 @@ final class MountHuaChunkWriter {
         // Soil collects in pockets, gullies and on shelves; big flats high up stay bare granite
         // with moss (codex r1: green contour bands). Low ground (the forested foot) keeps its soil.
         double soil = noise.noise(wx / 23.0, wz / 23.0, 47.0) + (t < site.baseY() + 60 ? 0.6 : 0.0)
+                + (t > site.worldY(150) ? 0.55 : 0.0)
                 + (drop >= 2 ? 0.25 : 0.0);
         // Steps of a steep wall are not shelves: within two blocks the rock falls away by 5+,
         // so no soil there (stand 03.10: brown dots marching diagonally across the faces).
@@ -589,7 +590,14 @@ final class MountHuaChunkWriter {
             for (int y = t + 1; y <= t + 4; y++) {
                 level.setBlock(pos.set(wx, y, wz), AIR, 2);
             }
-            if (tr[0] > 1.5 && t - lowestAround(lx, lz) >= 3) {
+            if (index < 160 && tr[0] > 1.5) {
+                // The climb starts in the gorge with wooden posts along the stair
+                // (author2/foot-of-mountain.png): spruce posts two blocks high every few steps.
+                if (index % 4 == 0) {
+                    level.setBlock(pos.set(wx, t + 1, wz), Blocks.SPRUCE_FENCE.defaultBlockState(), 2);
+                    level.setBlock(pos.set(wx, t + 2, wz), Blocks.SPRUCE_FENCE.defaultBlockState(), 2);
+                }
+            } else if (tr[0] > 1.5 && t - lowestAround(lx, lz) >= 3) {
                 // Outer edge over a drop: a low stone curb with posts (author ref 10), chains only
                 // where the fall is deep.
                 BlockState curb = index % 5 == 0 ? ModBlocks.POLISHED_HUA_GRANITE_WALL.get().defaultBlockState()
@@ -807,9 +815,13 @@ final class MountHuaChunkWriter {
                 // Dark-green shrub caps on tops of towers and patches clinging in folds and on
                 // shelves (author refs 03, 06, 16: «шапками на вершинах, карманами на полках»).
                 double patch = noise.noise(wx / 7.0, wz / 7.0, 57.0);
+                // Upper faces carry more green (author 04.10, refs 03, 14): caps nearly closed,
+                // shelves and folds clothed high up; the walls themselves stay rock.
+                boolean high = t > site.worldY(140);
                 boolean cap = deep >= 10 && drop <= 2;
-                boolean fold = drop >= 2 && drop <= 5 && patch > 0.35 && t < SNOW_Y;
-                if ((cap && patch > -0.2 && roll % 3 != 0) || (fold && roll % 4 == 0)) {
+                boolean fold = drop >= 2 && drop <= 5 && patch > (high ? 0.0 : 0.35) && t < SNOW_Y;
+                boolean shelf = high && drop <= 1 && patch > -0.3;
+                if ((cap && patch > -0.5) || (fold && roll % (high ? 2 : 4) == 0) || (shelf && roll % 3 == 0)) {
                     shrub(wx, t + 1, wz, h, pos);
                     continue;
                 }

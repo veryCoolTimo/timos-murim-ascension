@@ -113,10 +113,10 @@ public final class MountHuaShape {
             return 0;
         }
         double h = ground(u, v);
-        h = trail(u, v, h);
         for (Zone zone : MountHuaPlan.ZONES) {
             h = terrace(zone, u, v, h);
         }
+        h = trail(u, v, h);
         // Inside a terrace the level is exact (neighbouring terraces' walls never spill in).
         for (Zone zone : MountHuaPlan.ZONES) {
             if (!zone.cave() && Math.abs(u - zone.u()) <= zone.width() / 2.0
@@ -135,6 +135,10 @@ public final class MountHuaShape {
      */
     public double ground(double u, double v) {
         double h = Math.max(natural(u, v), belt(u, v));
+        // Gorges cut the foothill belt too (it could fill the slot back up otherwise).
+        for (Gorge gorge : MountHuaPlan.GORGES) {
+            h = gorge(gorge, u, v, h);
+        }
         return valley(u, v, h);
     }
 
@@ -336,7 +340,9 @@ public final class MountHuaShape {
     private void buildTrail() {
         List<TrailPoint> pts = MountHuaPlan.TRAIL;
         java.util.ArrayList<double[]> samples = new java.util.ArrayList<>();
+        java.util.ArrayList<Integer> vertices = new java.util.ArrayList<>();
         for (int i = 0; i + 1 < pts.size(); i++) {
+            vertices.add(samples.size());
             TrailPoint a = pts.get(i);
             TrailPoint b = pts.get(i + 1);
             double len = Math.hypot(b.u() - a.u(), b.v() - a.v());
@@ -383,6 +389,60 @@ public final class MountHuaShape {
             double hi = Math.min(first + s * i, end + s * (n - 1 - i));
             double lo = Math.max(first - s * i, end - s * (n - 1 - i));
             y[i] = Math.max(lo, Math.min(hi, y[i]));
+        }
+        // Landings (author 04.10: «лестница ... немного неровная»): a flat rest at every turn and
+        // every 24 steps, then the flights between them are re-fitted to the slope limit, so a
+        // turn never cuts a step sideways and the rhythm stays steady.
+        boolean[] flat = new boolean[n];
+        java.util.TreeSet<Integer> centres = new java.util.TreeSet<>(vertices);
+        for (int c = 24; c < n - 4; c += 24) {
+            centres.add(c);
+        }
+        for (int c : centres) {
+            int r = vertices.contains(c) ? 4 : 3;
+            if (c < r + 1 || c > n - r - 2) {
+                continue;
+            }
+            double level = y[c];
+            for (int j = c - r; j <= c + r; j++) {
+                y[j] = level;
+                // Turns are hard landings (a stair never turns mid-flight); rests are soft.
+                // Soft: kept only where the slope budget allows (steep flights win).
+            }
+        }
+        // Where the stair crosses a site (the sect gate), it runs at the site's level.
+        for (int i = 0; i < n; i++) {
+            for (Zone z : MountHuaPlan.ZONES) {
+                if (!z.cave() && Math.abs(trailU[i] - z.u()) <= z.width() / 2.0 + 1
+                        && Math.abs(trailV[i] - z.v()) <= z.depth() / 2.0 + 1) {
+                    y[i] = z.y();
+                    flat[i] = true;
+                }
+            }
+        }
+        for (int i = 1; i < n; i++) {
+            if (!flat[i]) {
+                y[i] = Math.max(y[i - 1] - s, Math.min(y[i - 1] + s, y[i]));
+            }
+        }
+        for (int i = n - 2; i >= 0; i--) {
+            if (!flat[i]) {
+                y[i] = Math.max(y[i + 1] - s, Math.min(y[i + 1] + s, y[i]));
+            }
+        }
+        for (int round = 0; round < 8; round++) {
+            y[0] = first;
+            y[n - 1] = end;
+            for (int i = 1; i < n - 1; i++) {
+                if (!flat[i]) {
+                    y[i] = Math.max(y[i - 1] - s, Math.min(y[i - 1] + s, y[i]));
+                }
+            }
+            for (int i = n - 2; i > 0; i--) {
+                if (!flat[i]) {
+                    y[i] = Math.max(y[i + 1] - s, Math.min(y[i + 1] + s, y[i]));
+                }
+            }
         }
         trailY = y;
     }
@@ -624,6 +684,22 @@ public final class MountHuaShape {
         double[] us = g.u();
         double[] vs = g.v();
         double[] fl = g.floor();
+        // First the rock the gorge is cut through: tall walls on both sides (a slot, not a dip).
+        double best = Double.MAX_VALUE;
+        double bestFloor = 0;
+        for (int i = 0; i + 1 < us.length; i++) {
+            double lx = us[i + 1] - us[i];
+            double ly = vs[i + 1] - vs[i];
+            double t = clamp(((u - us[i]) * lx + (v - vs[i]) * ly) / (lx * lx + ly * ly), 0, 1);
+            double d = Math.hypot(u - (us[i] + lx * t), v - (vs[i] + ly * t));
+            if (d < best) {
+                best = d;
+                bestFloor = fl[i] + (fl[i + 1] - fl[i]) * t;
+            }
+        }
+        double wall = bestFloor + 45 + 20 * relief.noise(u / 23.0, v / 23.0, 12.0);
+        double behindGate = smooth(vs[0] - 14, vs[0] + 2, v);
+        h = Math.max(h, h + (wall - h) * (1 - smooth(10, 32, best)) * behindGate * (h < wall ? 1 : 0));
         double result = h;
         for (int i = 0; i + 1 < us.length; i++) {
             double ax = us[i];
@@ -675,7 +751,7 @@ public final class MountHuaShape {
         }
         if (h < z.y()) {
             // Retaining wall: one block of rim, then a steep buttress (3:1) down to the rock.
-            return Math.max(h, z.y() - 3.0 * Math.max(0, d - 1));
+            return d > 10 ? h : Math.max(h, z.y() - 3.0 * Math.max(0, d - 1));
         }
         // Behind the terrace the slope is cut back: a short apron, then the natural cliff.
         return Math.min(h, z.y() + 2.2 * Math.max(0, d - 3));

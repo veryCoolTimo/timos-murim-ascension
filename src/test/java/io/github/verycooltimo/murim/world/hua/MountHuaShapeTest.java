@@ -83,6 +83,39 @@ class MountHuaShapeTest {
         assertEquals(3, MountHuaSites.rotationTowards(-3000, 0));
     }
 
+    /**
+     * Walks the stair along its centre line and both edges (width 4): the generated ground must
+     * follow the planned stair everywhere (no dead ends, no blocks across the path) and never
+     * rise or fall more than one block per step (author 04.10: «лестница обрывается резко»).
+     */
+    @Test
+    void trailIsContinuousAndEven() {
+        int n = shape.trailLength();
+        double scale = (MountHuaSite.SUMMIT_Y - 70) / MountHuaPlan.SUMMIT;
+        java.util.List<String> bad = new java.util.ArrayList<>();
+        long prev = Long.MIN_VALUE;
+        for (int i = 0; i < n; i++) {
+            double[] p = shape.trailPoint(i);
+            double[] d = shape.trailDir(i);
+            double nu = -d[1];
+            double nv = d[0];
+            long planned = Math.round(70 + shape.trailY(i) * scale);
+            for (double off : new double[] {-1.5, 0, 1.5}) {
+                long ground = Math.round(70 + shape.height(p[0] + nu * off, p[1] + nv * off) * scale);
+                // Centre line exactly on the plan; the edges may differ by one step (inside of a turn).
+                long tolerance = off == 0 ? 0 : 1;
+                if (Math.abs(ground - planned) > tolerance && bad.size() < 20) {
+                    bad.add(String.format("i=%d off=%.1f at (%.0f,%.0f): ground %d planned %d", i, off, p[0], p[1], ground, planned));
+                }
+            }
+            if (prev != Long.MIN_VALUE && Math.abs(planned - prev) > 1 && bad.size() < 20) {
+                bad.add(String.format("i=%d step %d -> %d", i, prev, planned));
+            }
+            prev = planned;
+        }
+        assertTrue(bad.isEmpty(), String.join("\n", bad));
+    }
+
     private double top(double u, double v) {
         double best = 0;
         for (int du = -12; du <= 12; du += 2) {

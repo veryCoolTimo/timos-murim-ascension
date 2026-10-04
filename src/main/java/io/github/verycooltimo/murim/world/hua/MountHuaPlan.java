@@ -96,8 +96,8 @@ public final class MountHuaPlan {
             new Ridge(new double[] {390, 300, 200}, new double[] {-470, -360, -250}, new double[] {50, 45, 70}, 1.1));
 
     /** Main valley: from the gate terrace out to the edge of the foothills (stream bed along it). */
-    public static final double[] VALLEY_U = {-140, -135, -135, -150, -120, -90};
-    public static final double[] VALLEY_V = {-420, -470, -600, -720, -840, -980};
+    public static final double[] VALLEY_U = {-104, -120, -135, -150, -120, -90};
+    public static final double[] VALLEY_V = {-416, -470, -600, -720, -840, -980};
     public static final double[] VALLEY_FLOOR = {2.5, 2.2, 1.5, 1, 0.5, 0};
 
     public static final List<Ridge> RIDGES = List.of(
@@ -118,14 +118,16 @@ public final class MountHuaPlan {
 
     public static final List<Gorge> GORGES = List.of(
             // Huashan Yu: the gorge of the only trail, cut through the scarp west of the North Peak.
-            new Gorge(new double[] {-110, -100, -82, -66},
-                    new double[] {-430, -372, -330, -296},
-                    new double[] {3, 22, 58, 100}, 5, 4.0));
+            // Narrow, near-vertical walls: the climb starts as a stair up into this slot
+            // (author2/foot-of-mountain.png).
+            new Gorge(new double[] {-104, -100, -82, -66},
+                    new double[] {-392, -365, -330, -296},
+                    new double[] {3, 22, 58, 100}, 3.5, 9.0));
 
     public static final List<Zone> ZONES = List.of(
             // Gate at the mouth of the gorge, right under the scarp wall (author ref 06: the red gate
             // stands in front of a cliff face).
-            new Zone("gate", "Gate terrace", -140, -404, 40, 26, 3, false, 0, 0),
+            new Zone("gate", "Gate terrace", -104, -404, 34, 20, 3, false, 0, 0),
             // Inner sect gate where the trail reaches the main terrace (author refs 06, 12).
             new Zone("sect_gate", "Sect gate", 14, -24, 28, 10, 160, false, 0, 0),
             // Pavilions on summits and a cliff ledge (author refs 04, 11).
@@ -142,11 +144,11 @@ public final class MountHuaPlan {
 
     /** The one trail: gate, gorge, cleft stair, North Peak, Canglong ridge, Golden Lock, sect. */
     public static final List<TrailPoint> TRAIL = List.of(
-            new TrailPoint(-120, -399, 3),
-            new TrailPoint(-108, -390, 8),
+            new TrailPoint(-104, -393, 3),
             new TrailPoint(-100, -365, 26),
             new TrailPoint(-86, -335, 52),
-            new TrailPoint(-72, -305, 92),
+            new TrailPoint(-76, -313, 84),
+            new TrailPoint(-64, -312, 100),
             // Thousand-foot cleft: steep stair north-east up to the North Peak shoulder.
             new TrailPoint(-50, -318, 122),
             new TrailPoint(-28, -322, 148),
