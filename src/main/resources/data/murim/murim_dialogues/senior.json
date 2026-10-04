@@ -1,0 +1,73 @@
+{
+  "name": "npc.murim.senior",
+  "title": "npc.murim.senior.title",
+  "start": [
+    { "when": [ { "flag": "spar.won" } ], "node": "after_won" },
+    { "when": [ { "flag": "spar.lost" } ], "node": "after_lost" },
+    { "when": [ { "member": false } ], "node": "outsider" },
+    { "node": "greet" }
+  ],
+  "nodes": {
+    "outsider": {
+      "line": "dialogue.murim.senior.outsider",
+      "gesture": "fist",
+      "options": [
+        { "text": "dialogue.murim.senior.opt.challenge", "next": "accept" },
+        { "text": "dialogue.murim.senior.opt.refuse", "next": "refused" }
+      ]
+    },
+    "greet": {
+      "line": "dialogue.murim.senior.greet",
+      "gesture": "fist",
+      "options": [
+        { "text": "dialogue.murim.senior.opt.challenge", "next": "accept" },
+        { "text": "dialogue.murim.senior.opt.lesson", "when": [ { "flag": "lesson.spar", "not_flag": "spar.clean3" } ], "next": "accept_lesson" },
+        { "text": "dialogue.murim.senior.opt.refuse", "next": "refused" }
+      ]
+    },
+    "accept": {
+      "line": "dialogue.murim.senior.accept",
+      "gesture": "bow",
+      "options": [
+        { "text": "dialogue.murim.senior.opt.begin", "actions": [ { "type": "start_spar" } ] },
+        { "text": "dialogue.murim.senior.opt.not_now", "next": "refused" }
+      ]
+    },
+    "accept_lesson": {
+      "line": "dialogue.murim.senior.accept_lesson",
+      "gesture": "nod",
+      "options": [
+        { "text": "dialogue.murim.senior.opt.begin", "actions": [ { "type": "start_spar" } ] },
+        { "text": "dialogue.murim.senior.opt.not_now", "next": "refused" }
+      ]
+    },
+    "refused": {
+      "random": [ "dialogue.murim.senior.refused1", "dialogue.murim.senior.refused2" ],
+      "gesture": "shake",
+      "options": []
+    },
+    "parting": {
+      "line": "dialogue.murim.senior.parting",
+      "gesture": "bow",
+      "options": []
+    },
+    "after_won": {
+      "line": "dialogue.murim.senior.after_won",
+      "gesture": "bow",
+      "enter": [ { "type": "clear_flag", "value": "spar.won" } ],
+      "options": [
+        { "text": "dialogue.murim.senior.opt.again", "next": "accept" },
+        { "text": "dialogue.murim.senior.opt.bow_out", "actions": [ { "type": "bow" } ], "next": "parting" }
+      ]
+    },
+    "after_lost": {
+      "line": "dialogue.murim.senior.after_lost",
+      "gesture": "explain",
+      "enter": [ { "type": "clear_flag", "value": "spar.lost" } ],
+      "options": [
+        { "text": "dialogue.murim.senior.opt.again", "next": "accept" },
+        { "text": "dialogue.murim.senior.opt.bow_out", "actions": [ { "type": "bow" } ], "next": "parting" }
+      ]
+    }
+  }
+}

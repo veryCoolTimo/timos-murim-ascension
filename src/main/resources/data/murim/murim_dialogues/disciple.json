@@ -1,0 +1,15 @@
+{
+  "name": "npc.murim.disciple_a",
+  "title": "npc.murim.disciple.title",
+  "start": [ { "node": "chatter" } ],
+  "nodes": {
+    "chatter": {
+      "random": [
+        "dialogue.murim.disciple.line1", "dialogue.murim.disciple.line2", "dialogue.murim.disciple.line3",
+        "dialogue.murim.disciple.line4", "dialogue.murim.disciple.line5", "dialogue.murim.disciple.line6"
+      ],
+      "gesture": "nod",
+      "options": []
+    }
+  }
+}

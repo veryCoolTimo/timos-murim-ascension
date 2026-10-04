@@ -34,7 +34,6 @@ import org.joml.Vector4f;
 @EventBusSubscriber(modid = MurimMod.MODID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.MOD)
 public class DiscipleRenderer extends MobRenderer<SectDisciple, DiscipleRenderer.Model> {
 
-    private static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/entity/sect_disciple.png");
 
     public DiscipleRenderer(EntityRendererProvider.Context context) {
         super(context, new Model(context.bakeLayer(BanditRenderer.SWORDSMAN_LAYER)), 0.5F);
@@ -43,7 +42,8 @@ public class DiscipleRenderer extends MobRenderer<SectDisciple, DiscipleRenderer
 
     @Override
     public ResourceLocation getTextureLocation(SectDisciple entity) {
-        return TEXTURE;
+        // Роль NPC секты — своя текстура (наставник серо-синий, глава тёмный с золотом, ученики в белом).
+        return entity.role().texture();
     }
 
     /** Последние тики замаха формы — короткая белая вспышка, как у бандита: «сейчас ударит». */
@@ -78,6 +78,7 @@ public class DiscipleRenderer extends MobRenderer<SectDisciple, DiscipleRenderer
             float sec = entity.animSeconds(partial);
             if (clip == null || sec > clip.lengthInSeconds() + 0.05F) {
                 super.setupAnim(entity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch);
+                NpcGestures.apply(this, entity, partial);
                 return;
             }
             root().getAllParts().forEach(ModelPart::resetPose);
@@ -88,6 +89,7 @@ public class DiscipleRenderer extends MobRenderer<SectDisciple, DiscipleRenderer
             // В поклоне меч лежит обратным хватом вдоль предплечья (приветствие с мечом), не торчит вверх.
             float blade = anim.endsWith("spar_bow") ? Mth.PI : -Mth.HALF_PI;
             getAnyDescendantWithName("weapon").ifPresent(w -> w.xRot = blade);
+            NpcGestures.apply(this, entity, partial);
         }
     }
 

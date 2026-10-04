@@ -254,6 +254,19 @@ public final class ModAttachments {
             ATTACHMENT_TYPES.register("absorb",
                     () -> AttachmentType.builder(io.github.verycooltimo.murim.cultivation.PillService.Slot::new).build());
 
+    /** Положение в секте Хуашань и флаги уроков (план секты, С1). Сохраняется, переживает смерть. */
+    public static final Supplier<AttachmentType<io.github.verycooltimo.murim.sect.SectState>> SECT =
+            ATTACHMENT_TYPES.register("sect",
+                    () -> AttachmentType.builder(() -> io.github.verycooltimo.murim.sect.SectState.NONE)
+                            .serialize(io.github.verycooltimo.murim.sect.SectState.CODEC)
+                            .copyOnDeath()
+                            .build());
+
+    /** Идущий разговор с NPC. Не сохраняется: разговор живёт, пока открыт экран. */
+    public static final Supplier<AttachmentType<io.github.verycooltimo.murim.sect.DialogueService.Session>> DIALOGUE =
+            ATTACHMENT_TYPES.register("dialogue",
+                    () -> AttachmentType.builder(() -> io.github.verycooltimo.murim.sect.DialogueService.Session.NONE).build());
+
     private ModAttachments() {
     }
 }
