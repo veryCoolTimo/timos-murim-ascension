@@ -49,8 +49,11 @@ final class MountHuaChunkWriter {
     private static final int B = 3;
     private static final int N = 16 + 2 * B;
 
-    /** World y above which flat ground gets snow (author: «снег на вершинах выше ~260»). */
-    private static final int SNOW_Y = 262;
+    /**
+     * No snow on the massif (author 04.10: «без снега», summits green like the refs): the old
+     * snow line is lifted out of reach, and the cleanup pass strips vanilla snow and ice cover.
+     */
+    private static final int SNOW_Y = Integer.MAX_VALUE / 2;
 
     private static final BlockState AIR = Blocks.AIR.defaultBlockState();
     private static final BlockState STONE = Blocks.STONE.defaultBlockState();
@@ -212,6 +215,25 @@ final class MountHuaChunkWriter {
                     BlockState state = chunk.getBlockState(pos.set(wx, y, wz));
                     if (state.isAir()) {
                         continue;
+                    }
+                    if (state.is(Blocks.SNOW) || state.is(Blocks.POWDER_SNOW)) {
+                        level.setBlock(pos, AIR, 2);
+                        continue;
+                    }
+                    if (state.is(Blocks.SNOW_BLOCK)) {
+                        level.setBlock(pos, GRASS, 2);
+                        ground = y;
+                        break;
+                    }
+                    if (state.is(Blocks.GRASS_BLOCK) && state.getValue(SnowyDirtBlock.SNOWY)) {
+                        level.setBlock(pos, GRASS, 2);
+                        ground = y;
+                        break;
+                    }
+                    if (state.is(Blocks.PODZOL) && state.getValue(SnowyDirtBlock.SNOWY)) {
+                        level.setBlock(pos, state.setValue(SnowyDirtBlock.SNOWY, false), 2);
+                        ground = y;
+                        break;
                     }
                     boolean vanillaLeaf = state.getBlock() instanceof LeavesBlock && !state.getValue(LeavesBlock.PERSISTENT);
                     boolean vanillaLog = state.is(BlockTags.LOGS) && !state.is(Blocks.SPRUCE_WOOD)
@@ -930,7 +952,7 @@ final class MountHuaChunkWriter {
                 int wx = x0 + lx;
                 int wz = z0 + lz;
                 int t = topAt(lx, lz);
-                if (t < site.baseY() + 12 || t > 296) {
+                if (t < site.baseY() + 12 || t > chunk.getMaxBuildHeight() - 8) {
                     continue;
                 }
                 BlockState ground = chunk.getBlockState(pos.set(wx, t, wz));
@@ -991,6 +1013,23 @@ final class MountHuaChunkWriter {
                 boolean cap = deep >= 10 && drop <= 2;
                 boolean fold = drop >= 2 && drop <= 5 && patch > (high ? 0.0 : 0.35) && t < SNOW_Y;
                 boolean shelf = high && drop <= 1 && patch > -0.3;
+                // Green summits (author 04.10: «вершины зелёные», no snow): tops and crest steps of
+                // the high rock carry moss caps, shrubs and the odd pine.
+                boolean summit = t > site.worldY(175) && drop <= 3;
+                if (summit) {
+                    if (drop <= 1 && (roll & 1) == 0) {
+                        chunk.setBlockState(pos.set(wx, t, wz), (roll & 6) == 0 ? ModBlocks.HUA_GRANITE_MOSSY.get().defaultBlockState()
+                                : Blocks.MOSS_BLOCK.defaultBlockState(), false);
+                    }
+                    if (roll < 22 && drop <= 1) {
+                        pine(wx, t + 1, wz, h, lx, lz, pos);
+                        continue;
+                    }
+                    if (patch > -0.6 && roll % 2 == 0) {
+                        shrub(wx, t + 1, wz, h, pos);
+                        continue;
+                    }
+                }
                 if ((cap && patch > -0.5) || (fold && roll % (high ? 2 : 4) == 0) || (shelf && roll % 3 == 0)) {
                     shrub(wx, t + 1, wz, h, pos);
                     continue;
