@@ -36,10 +36,13 @@ public final class ModItems {
 
     /**
      * Метательный кинжал клана Тан («лист ивы», гл. 194), модель автора art/items/tang_dagger. В стопке — 12:
-     * Тан носят ровно двенадцать кинжалов (tang-clan.md §9.3). Рисуется TangDaggerItemRenderer.
+     * Тан носят ровно двенадцать кинжалов (tang-clan.md §9.3). Рисуется BedrockItemRenderer.
+     * ПКМ — бросок рукой (TangDaggerItem, автор 04.10); ЛКМ — короткий быстрый удар: урон 3, скорость 2,6
+     * (железный тир, как короткий клинок). API: SwordItem#createAttributes — только атрибуты, без прочности.
      */
     public static final DeferredHolder<Item, Item> TANG_DAGGER = ITEMS.register("tang_dagger",
-            () -> new Item(new Item.Properties().stacksTo(12)));
+            () -> new io.github.verycooltimo.murim.item.TangDaggerItem(new Item.Properties().stacksTo(12)
+                    .attributes(net.minecraft.world.item.SwordItem.createAttributes(net.minecraft.world.item.Tiers.IRON, 0, -1.4F))));
 
     /**
      * Меч Хуашань (модель автора art/items/huashan_sword, 03.10): настоящий меч уровня алмазного — урон 7,

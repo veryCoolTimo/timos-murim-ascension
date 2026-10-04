@@ -241,7 +241,15 @@ public final class DevCaptureHandler {
                 return;
             }
             if ("manual".equals(subject)) {
-                manualTicks = 72;
+                // MURIM_CAPTURE_MANUAL_PAGES=<n> — сколько раз перелистнуть (по 12 тиков), по умолчанию 4.
+                manualSpan = 30 + 12 * envInt("MURIM_CAPTURE_MANUAL_PAGES", 4);
+                manualTicks = manualSpan;
+                return;
+            }
+            // Бросок кинжала рукой (ПКМ, 04.10): стенд жмёт «использовать» MURIM_CAPTURE_THROWS раз через 12 тиков.
+            if ("throw".equals(subject)) {
+                throwTicks = THROW_SPAN;
+                startCapture();
                 return;
             }
             // Разговор с NPC секты (03.10): сценарий — client/sect/DialogueCapture.
@@ -303,12 +311,18 @@ public final class DevCaptureHandler {
         if (secondPressTicks > 0 && --secondPressTicks == 0 && secondPressId != null) {
             PacketDistributor.sendToServer(new StartTechniquePayload(secondPressId));
         }
+        if (throwTicks > 0 && minecraft.player != null && minecraft.gameMode != null) {
+            int t = THROW_SPAN - throwTicks--;
+            if (t % 12 == 0 && t / 12 < envInt("MURIM_CAPTURE_THROWS", 3)) {
+                minecraft.gameMode.useItem(minecraft.player, net.minecraft.world.InteractionHand.MAIN_HAND);
+            }
+        }
         if (manualTicks > 0) {
-            int t = 72 - manualTicks--;
+            int t = manualSpan - manualTicks--;
             if (t == 4 && minecraft.player != null && minecraft.gameMode != null) {
                 minecraft.gameMode.useItem(minecraft.player, net.minecraft.world.InteractionHand.MAIN_HAND);
             }
-            if ((t == 26 || t == 38 || t == 50 || t == 62) && minecraft.screen != null) {
+            if (t >= 26 && (t - 26) % 12 == 0 && minecraft.screen != null) {
                 minecraft.screen.mouseScrolled(0, 0, 0, -1);
             }
             if (t >= 6) {
@@ -533,6 +547,9 @@ public final class DevCaptureHandler {
     private static int uiTicks;
     private static int stillSneakTicks;
     private static int manualTicks;
+    private static int manualSpan = 72;
+    private static int throwTicks;
+    private static final int THROW_SPAN = 80;
 
     private static void tickUi(Minecraft minecraft) {
         int t = UI_CAPTURE_TICKS - uiTicks--;
