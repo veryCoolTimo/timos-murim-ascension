@@ -17,11 +17,9 @@ import net.minecraft.world.level.block.LadderBlock;
 import net.minecraft.world.level.block.LanternBlock;
 import net.minecraft.world.level.block.RotatedPillarBlock;
 import net.minecraft.world.level.block.SlabBlock;
-import net.minecraft.world.level.block.TrapDoorBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.AttachFace;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
-import net.minecraft.world.level.block.state.properties.Half;
 import net.minecraft.world.level.block.state.properties.SlabType;
 import net.minecraft.world.level.storage.loot.LootTable;
 
@@ -345,7 +343,7 @@ public final class CampBuilder {
         put(rel(s, -1, -1), top + 1, Blocks.LANTERN.defaultBlockState());
     }
 
-    /** Телега с награбленным: кузов из полублоков, колёса-люки, оглобли, груз и сундук. */
+    /** Телега с награбленным: кузов из полублоков, колёса-торцы брёвен, оглобли, груз и сундук. */
     private void cart(CampLayout.Spot s, int y) {
         footprint(s, y, -2, 3, -2, 2, 3, true);
         for (int a = -1; a <= 1; a++) {
@@ -353,13 +351,11 @@ public final class CampBuilder {
                 put(rel(s, a, side), y + 1, Blocks.SPRUCE_SLAB.defaultBlockState().setValue(SlabBlock.TYPE, SlabType.TOP));
             }
         }
-        // Колёса: открытые люки по бокам кузова; пластина люка — у стороны, противоположной FACING.
-        Direction toLeft = dir(s.facing() + 3);
-        Direction toRight = dir(s.facing() + 1);
-        BlockState wheel = Blocks.DARK_OAK_TRAPDOOR.defaultBlockState().setValue(TrapDoorBlock.OPEN, true)
-                .setValue(TrapDoorBlock.HALF, Half.BOTTOM);
-        put(rel(s, 0, -1), y + 1, wheel.setValue(TrapDoorBlock.FACING, toLeft));
-        put(rel(s, 0, 2), y + 1, wheel.setValue(TrapDoorBlock.FACING, toRight));
+        // Колёса: торцы тёмных брёвен по бокам кузова — кольца на срезе читаются как колесо
+        // (люки не читались, разбор codex 04.10).
+        BlockState wheel = Blocks.STRIPPED_DARK_OAK_LOG.defaultBlockState().setValue(RotatedPillarBlock.AXIS, axisAcross(s.facing()));
+        put(rel(s, 0, -1), y + 1, wheel);
+        put(rel(s, 0, 2), y + 1, wheel);
         // Оглобли вперёд.
         fence(rel(s, 2, 0), y + 1, Blocks.SPRUCE_FENCE);
         fence(rel(s, 2, 1), y + 1, Blocks.SPRUCE_FENCE);
