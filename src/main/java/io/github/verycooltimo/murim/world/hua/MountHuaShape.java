@@ -805,8 +805,9 @@ public final class MountHuaShape {
                 // (author/DESCRIPTIONS.md, Сводка: «избегая поля одинаковых тонких шпилей»).
                 double top = (100 + 95 * rnd(hsh, 2)) * (0.75 + 0.25 * fade);
                 double ra = 10 + 11 * rnd(hsh, 5);
+                // Pillars keep their mass: only a broken, tilted crown (no needles; codex 04.10).
                 best = Math.max(best, bullet(u - cu, v - cv, top, ra, ra * (0.7 + 0.25 * rnd(hsh, 6)),
-                        rnd(hsh, 7) * Math.PI, 6 + 4 * rnd(hsh, 8), hsh & 1023));
+                        rnd(hsh, 7) * Math.PI, 6 + 4 * rnd(hsh, 8), hsh & 1023, 0.22));
             }
         }
         return best;
@@ -836,6 +837,12 @@ public final class MountHuaShape {
      */
     private double bullet(double du, double dv, double top, double ra, double rb, double ang, double power,
             double salt) {
+        return bullet(du, dv, top, ra, rb, ang, power, salt, 0.55);
+    }
+
+    /** {@code sharp}: share of the pointed profile (0 = old dome, 0.55 = the main peaks). */
+    private double bullet(double du, double dv, double top, double ra, double rb, double ang, double power,
+            double salt, double sharp) {
         double ca = Math.cos(ang);
         double sa = Math.sin(ang);
         double x = du * ca + dv * sa;
@@ -882,7 +889,7 @@ public final class MountHuaShape {
         double crest = Math.abs(flute.noise((x / ra) * 2.6 + salt, salt * 0.13, 51.0));
         double teeth = (1 - smooth(0.0, 0.3, crest)) * smooth(0.85, 0.2, q) * smooth(0.05, 0.25, Math.abs(x / ra));
         double h = legacyRock ? top * dome
-                : top * Math.max(0, 0.45 * dome + 0.55 * spike - 0.20 * blade - 0.09 * teeth);
+                : top * Math.max(0, (1 - sharp) * dome + sharp * spike - 0.36 * sharp * blade - 0.16 * sharp * teeth);
         // Ledges on about half of the rocks: a steep step, then a narrow bench (pines sit there).
         if (((long) salt & 1) == 0) {
             double band = 9 + (Math.abs((long) salt) % 9);
