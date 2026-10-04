@@ -198,7 +198,7 @@ public final class MountHuaSites {
             if (regionsExist(regions, probe)) {
                 score += 1000;
             }
-            score += 60 * settlements(level, generator, randomState, probe);
+            score += 300 * settlements(level, generator, randomState, probe);
             if (score < bestScore) {
                 bestScore = score;
                 bestX = cx;

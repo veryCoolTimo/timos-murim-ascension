@@ -262,6 +262,10 @@ public final class MountHuaShape {
         double h = env * (1 - depth1 * (1 - dome1)) * (1 - depth2 * (1 - dome2));
         h = Math.max(h, c * 12);
         h = smax(h, fangs(u, v), 8);
+        // The pillar basin is sunk deep so the towers stand free in the cloud sea (codex r4).
+        double basin = 1 - smooth(PILLARS_R * 0.55, PILLARS_R * 1.05, Math.hypot(u - PILLARS_U, v - PILLARS_V));
+        h = h * (1 - basin) + Math.min(h, 35 + 10 * hills.noise(u / 40.0, v / 40.0, 8.0)) * basin;
+        h = Math.max(h, pillars(u, v));
         for (Ridge ridge : MountHuaPlan.RIDGES) {
             h = smax(h, ridge(ridge, u, v), 6);
         }
@@ -408,6 +412,17 @@ public final class MountHuaShape {
         return new double[] {Math.sqrt(bestD), trailY[best], best};
     }
 
+    /** Number of trail samples (one per block of path). */
+    public int trailLength() {
+        return trailU.length;
+    }
+
+    /** Local (u, v) of a trail sample. */
+    public double[] trailPoint(int index) {
+        int i = Math.max(0, Math.min(trailU.length - 1, index));
+        return new double[] {trailU[i], trailV[i]};
+    }
+
     /** Nominal trail height at a sample index (clamped to the ends). */
     public double trailY(int index) {
         return trailY[Math.max(0, Math.min(trailY.length - 1, index))];
@@ -456,6 +471,48 @@ public final class MountHuaShape {
                             top * (0.55 + 0.25 * rnd(hsh, 12)), ra * 1.25, rb * 1.3, ang + 0.7, 1.8 + rnd(hsh, 13),
                             (hsh >>> 10) & 1023));
                 }
+            }
+        }
+        return best;
+    }
+
+    /** Centre and radius of the pillar forest (author ref 03: pillars rising out of a sea of clouds). */
+    private static final double PILLARS_U = MountHuaPlan.PILLARS_U;
+    private static final double PILLARS_V = MountHuaPlan.PILLARS_V;
+    private static final double PILLARS_R = MountHuaPlan.PILLARS_R;
+    private static final double PILLAR_CELL = 34;
+
+    /**
+     * Slender sheer pillars with rounded caps (vegetation "wigs" are placed by the writer), standing
+     * in a low basin south-east of the South Peak so the cloud sea (nominal 100-120) wraps their
+     * middles: the manhwa's signature view of Mount Hua (author refs 03, 09).
+     */
+    private double pillars(double u, double v) {
+        double dr = Math.hypot(u - PILLARS_U, v - PILLARS_V);
+        if (dr > PILLARS_R + 30) {
+            return 0;
+        }
+        int ci = (int) Math.floor(u / PILLAR_CELL);
+        int cj = (int) Math.floor(v / PILLAR_CELL);
+        double best = 0;
+        for (int i = ci - 1; i <= ci + 1; i++) {
+            for (int j = cj - 1; j <= cj + 1; j++) {
+                long hsh = hash(i + 50021, j + 70001);
+                if (rnd(hsh, 1) < 0.55) {
+                    continue;
+                }
+                double cu = (i + 0.25 + 0.5 * rnd(hsh, 3)) * PILLAR_CELL;
+                double cv = (j + 0.25 + 0.5 * rnd(hsh, 4)) * PILLAR_CELL;
+                double fade = 1 - smooth(PILLARS_R * 0.6, PILLARS_R, Math.hypot(cu - PILLARS_U, cv - PILLARS_V));
+                if (fade <= 0 || massif(cu, cv) < 0.3) {
+                    continue;
+                }
+                // Thick towers 20-45 wide and very different heights, not a field of equal spikes
+                // (author/DESCRIPTIONS.md, Сводка: «избегая поля одинаковых тонких шпилей»).
+                double top = (100 + 95 * rnd(hsh, 2)) * (0.75 + 0.25 * fade);
+                double ra = 10 + 11 * rnd(hsh, 5);
+                best = Math.max(best, bullet(u - cu, v - cv, top, ra, ra * (0.7 + 0.25 * rnd(hsh, 6)),
+                        rnd(hsh, 7) * Math.PI, 6 + 4 * rnd(hsh, 8), hsh & 1023));
             }
         }
         return best;
@@ -587,17 +644,17 @@ public final class MountHuaShape {
     /** Trail bed: cut to the trail level within 1.5 blocks; a small fill under it eases to 3. */
     private double trail(double u, double v, double h) {
         double[] t = trailAt(u, v);
-        if (t == null || t[0] > 3.5) {
+        if (t == null || t[0] > 3.6) {
             return h;
         }
         double y = t[1];
-        if (t[0] <= 1.6) {
+        if (t[0] <= 2.1) {
             return y;
         }
         if (h > y) {
             return h;
         }
-        double k = 1 - smooth(1.6, 3.5, t[0]);
+        double k = 1 - smooth(2.1, 3.6, t[0]);
         return h + (y - 1 - h) * k;
     }
 

@@ -534,5 +534,10 @@
   "murim.sect.no_mountain": "Горы Хуа в этом мире ещё нет.",
   "command.murim.sect.spawned": "Секта Хуашань: NPC поставлены (%s).",
   "command.murim.sect.reset": "Положение в секте сброшено.",
-  "dialogue.murim.senior.parting": "Пэк Хван отвечает поклоном: «До завтра, младший.»"
+  "dialogue.murim.senior.parting": "Пэк Хван отвечает поклоном: «До завтра, младший.»",
+  "sign.murim.hua.sect_gate": "Врата секты",
+  "sign.murim.hua.pav_north": "Беседка Северного пика",
+  "sign.murim.hua.pav_west": "Беседка Западного пика",
+  "sign.murim.hua.pav_south": "Беседка Южного пика",
+  "sign.murim.hua.pav_east": "Беседка на уступе"
 }

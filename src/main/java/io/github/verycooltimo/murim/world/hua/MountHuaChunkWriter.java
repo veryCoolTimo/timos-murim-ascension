@@ -214,7 +214,9 @@ final class MountHuaChunkWriter {
                     boolean vanillaLeaf = state.getBlock() instanceof LeavesBlock && !state.getValue(LeavesBlock.PERSISTENT);
                     boolean vanillaLog = state.is(BlockTags.LOGS) && !state.is(Blocks.SPRUCE_WOOD)
                             && !state.is(Blocks.DARK_OAK_WOOD);
-                    if (vanillaLeaf || vanillaLog || state.is(Blocks.VINE) || state.is(Blocks.BEE_NEST)) {
+                    if (vanillaLeaf || vanillaLog || state.is(Blocks.VINE) || state.is(Blocks.BEE_NEST)
+                            || state.is(Blocks.RED_MUSHROOM_BLOCK) || state.is(Blocks.BROWN_MUSHROOM_BLOCK)
+                            || state.is(Blocks.MUSHROOM_STEM)) {
                         level.setBlock(pos, AIR, 2);
                     } else if (state.blocksMotion()) {
                         ground = y;
@@ -234,12 +236,12 @@ final class MountHuaChunkWriter {
                 }
                 double u = site.localU(wx + 0.5, wz + 0.5);
                 double v = site.localV(wx + 0.5, wz + 0.5);
-                if (zoneAt(u, v, 6) != null) {
+                if (zoneAt(u, v, 12) != null || MountHuaPlan.inPillarBasin(u, v)) {
                     continue;
                 }
                 double[] tr = shape.trailAt(u, v);
-                if (tr != null && tr[0] < 5) {
-                    continue;
+                if (tr != null && tr[0] < 9) {
+                    continue; // crowns must not close over the stair
                 }
                 if (shape.streamDistance(u, v) < 4) {
                     continue;
@@ -261,7 +263,66 @@ final class MountHuaChunkWriter {
                 }
             }
         }
+        clearTerraces(pos);
         Heightmap.primeHeightmaps(chunk, EnumSet.allOf(Heightmap.Types.class));
+    }
+
+    /**
+     * Structures planned on the old ground (a village house stood on the gate terrace, stand 03.10)
+     * are removed from the building sites: everything above a terrace that is not ours goes.
+     */
+    private void clearTerraces(BlockPos.MutableBlockPos pos) {
+        // Also the eight neighbours (write radius 1): trees of a neighbour decorated after this
+        // chunk's own cleanup spill over the site otherwise (stand 04.10: leaves on the gate yard).
+        for (int lz = -16; lz < 32; lz++) {
+            for (int lx = -16; lx < 32; lx++) {
+                int wx = x0 + lx;
+                int wz = z0 + lz;
+                double cu = site.localU(wx + 0.5, wz + 0.5);
+                double cv = site.localV(wx + 0.5, wz + 0.5);
+                Zone z = zoneAt(cu, cv, 1);
+                if (z == null) {
+                    Zone around = zoneAt(cu, cv, 8);
+                    if (around != null && !around.cave()) {
+                        // Margin: vanilla trees leaning over the site go, our plums and pines stay.
+                        int ay = (int) Math.round(site.worldY(around.y()));
+                        for (int y = ay + 1; y <= ay + 30; y++) {
+                            BlockState st = level.getBlockState(pos.set(wx, y, wz));
+                            if ((st.getBlock() instanceof LeavesBlock && !st.getValue(LeavesBlock.PERSISTENT))
+                                    || (st.is(BlockTags.LOGS) && !st.is(Blocks.DARK_OAK_WOOD) && !st.is(Blocks.SPRUCE_WOOD))) {
+                                level.setBlock(pos, AIR, 2);
+                            }
+                        }
+                    }
+                    continue;
+                }
+                if (z.cave()) {
+                    continue;
+                }
+                int y0 = (int) Math.round(site.worldY(z.y()));
+                for (int y = y0 + 1; y <= y0 + 30; y++) {
+                    BlockState st = level.getBlockState(pos.set(wx, y, wz));
+                    if (st.isAir() || ours(st)) {
+                        continue;
+                    }
+                    level.setBlock(pos, AIR, 2);
+                }
+                BlockState top = level.getBlockState(pos.set(wx, y0, wz));
+                if (!ours(top) && !top.is(Blocks.GRASS_BLOCK) && !top.is(Blocks.DIRT_PATH) && !top.is(Blocks.COARSE_DIRT)
+                        && !top.is(Blocks.MOSSY_COBBLESTONE)) {
+                    level.setBlock(pos, GRASS, 2);
+                }
+            }
+        }
+    }
+
+    private static boolean ours(BlockState st) {
+        return st.is(Blocks.STRIPPED_SPRUCE_LOG) || st.is(Blocks.LANTERN) || st.is(Blocks.SPRUCE_SIGN)
+                || st.is(Blocks.DARK_OAK_WOOD) || st.is(Blocks.SPRUCE_WOOD)
+                || (st.getBlock() instanceof LeavesBlock && st.getValue(LeavesBlock.PERSISTENT))
+                || st.is(ModBlocks.POLISHED_HUA_GRANITE.get()) || st.is(ModBlocks.POLISHED_HUA_GRANITE_STAIRS.get())
+                || st.is(ModBlocks.POLISHED_HUA_GRANITE_SLAB.get()) || st.is(ModBlocks.POLISHED_HUA_GRANITE_WALL.get())
+                || st.is(Blocks.CHAIN) || st.is(ModBlocks.HUA_GRANITE_MOSSY.get()) || st.is(ModBlocks.HUA_GRANITE_CRACKED.get());
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -295,7 +356,7 @@ final class MountHuaChunkWriter {
         }
         // Fill: rock from just below the old surface (buries grass/sand) up to the new top.
         int from = Math.min(o - 2, t - 4);
-        boolean masonry = retainingWall(wx, wz, t);
+        boolean masonry = retainingWall(wx, wz, t) || stairSupport(wx, wz, t);
         for (int y = from; y <= t; y++) {
             pos.set(wx, y, wz);
             boolean exposed = y > lowest - 2 || t - y < 4;
@@ -323,6 +384,14 @@ final class MountHuaChunkWriter {
             }
         }
         return false;
+    }
+
+    /** The stair is carried on dressed stone where it runs above the natural rock (author ref 10). */
+    private boolean stairSupport(int wx, int wz, int t) {
+        double u = site.localU(wx + 0.5, wz + 0.5);
+        double v = site.localV(wx + 0.5, wz + 0.5);
+        double[] tr = shape.trailAt(u, v);
+        return tr != null && tr[0] <= 3.6 && site.worldY(shape.ground(u, v)) < t - 2;
     }
 
     private BlockState masonry(int x, int y, int z) {
@@ -390,7 +459,7 @@ final class MountHuaChunkWriter {
             // The sect is poor and run-down (author's answer 3): an overgrown yard with worn paths.
             long r = mix(wx, wz, 17) & 15;
             double path = noise.noise(wx / 9.0, wz / 9.0, 71.0);
-            BlockState ground = path > 0.35 ? Blocks.DIRT_PATH.defaultBlockState()
+            BlockState ground = path > 0.55 ? Blocks.DIRT_PATH.defaultBlockState()
                     : r < 2 ? Blocks.COARSE_DIRT.defaultBlockState() : r < 3 ? Blocks.MOSSY_COBBLESTONE.defaultBlockState()
                     : GRASS;
             chunk.setBlockState(pos.set(wx, t, wz), ground, false);
@@ -489,12 +558,12 @@ final class MountHuaChunkWriter {
         double u = site.localU(wx + 0.5, wz + 0.5);
         double v = site.localV(wx + 0.5, wz + 0.5);
         double[] tr = shape.trailAt(u, v);
-        if (tr == null || tr[0] > 1.6) {
+        if (tr == null || tr[0] > 2.1) {
             return;
         }
         int index = (int) tr[2];
         int t = topAt(lx, lz);
-        if (tr[0] <= 1.6) {
+        if (tr[0] <= 2.1) {
             int here = (int) Math.round(site.worldY(shape.trailY(index)));
             int ahead = (int) Math.round(site.worldY(shape.trailY(index + 1)));
             int behind = (int) Math.round(site.worldY(shape.trailY(index - 1)));
@@ -514,16 +583,17 @@ final class MountHuaChunkWriter {
             for (int y = t + 1; y <= t + 4; y++) {
                 level.setBlock(pos.set(wx, y, wz), AIR, 2);
             }
-            if (tr[0] > 0.9 && t - lowestAround(lx, lz) >= 4) {
-                // Outer column over a drop: Huashan's iron chain railing on stone posts.
-                if (index % 4 == 0) {
-                    level.setBlock(pos.set(wx, t + 1, wz), ModBlocks.POLISHED_HUA_GRANITE_WALL.get().defaultBlockState(), 2);
-                } else {
+            if (tr[0] > 1.5 && t - lowestAround(lx, lz) >= 3) {
+                // Outer edge over a drop: a low stone curb with posts (author ref 10), chains only
+                // where the fall is deep.
+                BlockState curb = index % 5 == 0 ? ModBlocks.POLISHED_HUA_GRANITE_WALL.get().defaultBlockState()
+                        : ModBlocks.POLISHED_HUA_GRANITE_SLAB.get().defaultBlockState();
+                if (index % 5 != 0 && t - lowestAround(lx, lz) >= 12 && index % 5 == 2) {
                     int[] wd = site.rotateDir((int) Math.signum(Math.round(dir[0])), (int) Math.signum(Math.round(dir[1])));
                     Direction.Axis axis = Math.abs(wd[0]) >= Math.abs(wd[1]) ? Direction.Axis.X : Direction.Axis.Z;
-                    level.setBlock(pos.set(wx, t + 1, wz),
-                            Blocks.CHAIN.defaultBlockState().setValue(RotatedPillarBlock.AXIS, axis), 2);
+                    curb = Blocks.CHAIN.defaultBlockState().setValue(RotatedPillarBlock.AXIS, axis);
                 }
+                level.setBlock(pos.set(wx, t + 1, wz), curb, 2);
             }
             return;
         }
@@ -683,7 +753,8 @@ final class MountHuaChunkWriter {
                 double u = site.localU(wx + 0.5, wz + 0.5);
                 double v = site.localV(wx + 0.5, wz + 0.5);
                 Zone near = zoneAt(u, v, 7);
-                if (near != null && zoneAt(u, v, 2) == null && !near.cave()) {
+                if (near != null && zoneAt(u, v, 2) == null && !near.cave()
+                        && (near.id().equals("grove") || near.id().equals("upper") || near.id().startsWith("pav"))) {
                     // A ring of plums just outside the terrace edge (the yard itself stays free).
                     long h = mix(wx, wz, 29);
                     if (Math.floorMod(h, 1000L) < 30) {
@@ -702,7 +773,7 @@ final class MountHuaChunkWriter {
                     continue;
                 }
                 double[] tr = shape.trailAt(u, v);
-                if (tr != null && tr[0] < 4) {
+                if (tr != null && tr[0] < 8) {
                     continue;
                 }
                 if (tr != null && tr[0] < 8 && Math.floorMod(mix(wx, wz, 31), 1000L) < 14) {
@@ -727,6 +798,15 @@ final class MountHuaChunkWriter {
                 int roll = (int) Math.floorMod(h, 1000L);
                 // Pines on ledges and rims (a big drop right next to a flat spot), fewer inland.
                 int chance = drop <= 2 && deep >= 7 ? 25 : (soil && drop <= 2 ? 6 : 0);
+                // Dark-green shrub caps on tops of towers and patches clinging in folds and on
+                // shelves (author refs 03, 06, 16: «шапками на вершинах, карманами на полках»).
+                double patch = noise.noise(wx / 7.0, wz / 7.0, 57.0);
+                boolean cap = deep >= 10 && drop <= 2;
+                boolean fold = drop >= 2 && drop <= 5 && patch > 0.35 && t < SNOW_Y;
+                if ((cap && patch > -0.2 && roll % 3 != 0) || (fold && roll % 4 == 0)) {
+                    shrub(wx, t + 1, wz, h, pos);
+                    continue;
+                }
                 if (roll < chance) {
                     pine(wx, t + 1, wz, h, lx, lz, pos);
                 } else if (soil && drop <= 2 && t < site.baseY() + 130 && roll > 996) {
@@ -808,6 +888,27 @@ final class MountHuaChunkWriter {
                     if (d2 <= 2 && tier == 0) {
                         placeLeaf(ox + dx, py + 2, oz + dz, leaves, pos);
                     }
+                }
+            }
+        }
+    }
+
+    /** Low dark shrub: 1-2 blocks of persistent spruce/azalea foliage hugging the rock. */
+    private void shrub(int x, int y, int z, long h, BlockPos.MutableBlockPos pos) {
+        BlockState leaves = ((h >>> 5) & 3) == 0
+                ? Blocks.AZALEA_LEAVES.defaultBlockState().setValue(LeavesBlock.PERSISTENT, true)
+                : Blocks.SPRUCE_LEAVES.defaultBlockState().setValue(LeavesBlock.PERSISTENT, true);
+        placeLeaf(x, y, z, leaves, pos);
+        if (((h >>> 9) & 1) == 0) {
+            placeLeaf(x, y + 1, z, leaves, pos);
+        }
+        int[][] side = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
+        for (int k = 0; k < 4; k++) {
+            if (((h >>> (12 + k)) & 1) == 0) {
+                int sx = x + side[k][0];
+                int sz = z + side[k][1];
+                if (!level.getBlockState(pos.set(sx, y - 1, sz)).isAir()) {
+                    placeLeaf(sx, y, sz, leaves, pos);
                 }
             }
         }

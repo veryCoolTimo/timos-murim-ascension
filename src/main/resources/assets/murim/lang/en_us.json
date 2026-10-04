@@ -554,5 +554,10 @@
   "murim.sect.no_mountain": "Mount Hua isn't in this world yet.",
   "command.murim.sect.spawned": "Mount Hua Sect: NPCs placed (%s).",
   "command.murim.sect.reset": "Sect standing reset.",
-  "dialogue.murim.senior.parting": "Baek Hwan returns the bow: \"Until tomorrow, junior.\""
+  "dialogue.murim.senior.parting": "Baek Hwan returns the bow: \"Until tomorrow, junior.\"",
+  "sign.murim.hua.sect_gate": "Sect gate",
+  "sign.murim.hua.pav_north": "North Peak pavilion",
+  "sign.murim.hua.pav_west": "West Peak pavilion",
+  "sign.murim.hua.pav_south": "South Peak pavilion",
+  "sign.murim.hua.pav_east": "Ledge pavilion"
 }
