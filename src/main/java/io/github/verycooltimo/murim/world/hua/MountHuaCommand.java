@@ -41,7 +41,7 @@ public final class MountHuaCommand {
 
     /** Places that {@code tp} knows besides the zones: local (u, v) and an extra height. */
     private static final List<String> PLACES = List.of("approach", "approach_ridge", "cliff", "pillars", "stairs", "stairs_high", "gorge_start", "sect_below", "sect_aerial", "courtyard", "courtyard_back", "saddle_w", "saddle_e", "shelf_front", "shelf_aerial", "under_sect", "view", "aerial", "aerial_ne", "aerial_sw", "view_ne", "view_east", "view_west",
-            "summit", "north_peak", "golden_lock", "ridge", "gorge");
+            "summit", "north_peak", "golden_lock", "ridge", "gorge", "climb_up", "climb_mid", "climb_down", "climb_overview");
 
     private MountHuaCommand() {
     }
@@ -51,6 +51,11 @@ public final class MountHuaCommand {
         List<String> names = new ArrayList<>(PLACES);
         for (MountHuaPlan.Zone z : MountHuaPlan.ZONES) {
             names.add(z.id());
+        }
+        for (MountHuaPlan.Ledge l : MountHuaPlan.CLIMB) {
+            if (l.onRoute()) {
+                names.add(l.id());
+            }
         }
         event.getDispatcher().register(Commands.literal("murim")
                 .requires(source -> source.hasPermission(2))
@@ -178,7 +183,20 @@ public final class MountHuaCommand {
         if (zone != null) {
             return new double[] {zone[0] + 0.5, zone[1], zone[2] + 0.5, yawTowards(site, 0, 1), 0};
         }
+        for (MountHuaSites.ClimbSite c : MountHuaSites.climbSites(site)) {
+            if (c.id().equals(place)) {
+                // On the ledge, facing up the face.
+                return new double[] {c.feet().getX() + 0.5, c.feet().getY(), c.feet().getZ() + 0.5,
+                        yawTowards(site, 0, 1), -20};
+            }
+        }
         return switch (place) {
+            // The training climb: from the ancestors' terrace looking up the face, from a ledge in
+            // the middle row along it, from the top ledge down onto the sect, and the whole face.
+            case "climb_up" -> surface(site, 6, 86, 0, 1, -38, 2);
+            case "climb_mid" -> surface(site, -26, 106.5, 1, 0.35, -8, 2);
+            case "climb_down" -> surface(site, -23, 113, 0.35, -1, 38, 2);
+            case "climb_overview" -> surface(site, 6, 40, 0, 1, -18, 40);
             // Views from the ground (the client builds terrain around a flying spectator poorly);
             // height = top of the ground or canopy there + offset, resolved on teleport.
             case "view" -> surface(site, -30, -480, 0.05, 1, -12, 14);

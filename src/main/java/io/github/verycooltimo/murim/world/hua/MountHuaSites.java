@@ -81,6 +81,39 @@ public final class MountHuaSites {
         return c != null && c.server() == server ? c.site() : null;
     }
 
+    /**
+     * A stand spot of the training climb: {@code id} = {@code climb_1..climb_16} in climbing order
+     * ({@link MountHuaPlan#CLIMB}), {@code feet} = the air block above the ledge top.
+     */
+    public record ClimbSite(String id, BlockPos feet, MountHuaPlan.Kind kind) {
+    }
+
+    /**
+     * The training climb's route ledges in climbing order, for sect life to send disciples to
+     * (training = wide ledges for a group, rest = a rock seat). Empty before the server has started.
+     */
+    public static List<ClimbSite> climbSites(MinecraftServer server) {
+        MountHuaSite site = get(server);
+        if (site == null) {
+            return List.of();
+        }
+        return climbSites(site);
+    }
+
+    public static List<ClimbSite> climbSites(MountHuaSite site) {
+        List<ClimbSite> out = new ArrayList<>();
+        for (MountHuaPlan.Ledge l : MountHuaPlan.CLIMB) {
+            double[] spot = site.shape().climbSpot(l);
+            if (!l.onRoute() || spot == null) {
+                continue;
+            }
+            int[] w = site.toWorld(spot[0], spot[1]);
+            int y = (int) Math.round(site.worldY(l.y())) + 1;
+            out.add(new ClimbSite(l.id(), new BlockPos(w[0], y, w[1]), l.kind()));
+        }
+        return out;
+    }
+
     static void recordChunk(MinecraftServer server, long nanos) {
         Cached c = cached;
         if (c == null || c.server() != server) {
