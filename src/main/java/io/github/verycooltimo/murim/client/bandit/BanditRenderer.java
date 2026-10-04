@@ -29,6 +29,7 @@ public class BanditRenderer<T extends Bandit> extends MobRenderer<T, BanditModel
 
     private static final ResourceLocation SWORDSMAN_TEX = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/entity/bandit.png");
     private static final ResourceLocation ELITE_TEX = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/entity/bandit_elite.png");
+    private static final ResourceLocation CHIEF_TEX = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/entity/bandit_chief.png");
     private static final ResourceLocation ARCHER_TEX = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/entity/bandit_archer.png");
 
     private final boolean archer;
@@ -46,8 +47,20 @@ public class BanditRenderer<T extends Bandit> extends MobRenderer<T, BanditModel
         if (archer) {
             return ARCHER_TEX;
         }
+        // Главарь — в багровом с золотой повязкой (docs/design/24-bandit-camp.md §2).
+        if (entity.isChief()) {
+            return CHIEF_TEX;
+        }
         // Элитный (знает технику ци) — с синей повязкой вместо красной: «этот сильнее» видно заранее.
         return entity.isElite() ? ELITE_TEX : SWORDSMAN_TEX;
+    }
+
+    /** Главарь на голову крупнее: силуэт выделяется в толпе издалека. */
+    @Override
+    protected void scale(T entity, com.mojang.blaze3d.vertex.PoseStack pose, float partialTick) {
+        if (entity.isChief()) {
+            pose.scale(1.12F, 1.12F, 1.12F);
+        }
     }
 
     /**

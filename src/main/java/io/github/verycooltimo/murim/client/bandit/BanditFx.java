@@ -38,6 +38,9 @@ public final class BanditFx {
             if (e instanceof BanditSwordsman b && b.isAlive()) {
                 tick(b, mc.level);
             }
+            if (e instanceof Bandit b && b.isAlive() && (e instanceof BanditSwordsman || e instanceof io.github.verycooltimo.murim.entity.BanditArcher)) {
+                qi(b, mc.level);
+            }
         }
     }
 
@@ -75,6 +78,40 @@ public final class BanditFx {
                 level.addParticle(new DustParticleOptions(QI_BLUE, 1.2F), x + rx * 0.3D, y, z + rz * 0.3D, 0.0D, 0.0D, 0.0D);
             }
             level.addParticle(ParticleTypes.SOUL_FIRE_FLAME, b.getX(), b.getY() + 1.0D, b.getZ(), 0.0D, 0.01D, 0.0D);
+        }
+    }
+
+    /**
+     * Ци бандита (docs/design/24-bandit-camp.md §2): у бандита с ци (ранг 1, пламени ауры ещё нет —
+     * AuraSim начинает со второго) вокруг тела поднимаются редкие голубые искры ци; главарь горит
+     * ранговой аурой AuraSim. Лучник, копящий выстрел ци, — ци течёт к луку и наконечнику.
+     */
+    private static void qi(Bandit b, Level level) {
+        RandomSource r = b.getRandom();
+        if (b.isElite() && !b.isChief() && r.nextFloat() < 0.35F) {
+            double a = r.nextDouble() * Math.PI * 2.0D;
+            double rr = 0.35D + 0.15D * r.nextDouble();
+            double y = b.getY() + 0.2D + r.nextDouble() * 1.6D;
+            level.addParticle(new DustParticleOptions(QI_BLUE, 0.55F + 0.3F * r.nextFloat()),
+                    b.getX() + Math.cos(a) * rr, y, b.getZ() + Math.sin(a) * rr, 0.0D, 0.04D, 0.0D);
+            if (r.nextFloat() < 0.25F) {
+                level.addParticle(ParticleTypes.END_ROD, b.getX() + Math.cos(a) * rr, y, b.getZ() + Math.sin(a) * rr,
+                        0.0D, 0.02D + 0.02D * r.nextDouble(), 0.0D);
+            }
+        }
+        if (b.isCharged() && b.isUsingItem()) {
+            double yaw = Math.toRadians(b.yBodyRot);
+            double fx = -Math.sin(yaw), fz = Math.cos(yaw);
+            Vec3 bow = new Vec3(b.getX() + fx * 0.55D, b.getY() + 1.35D, b.getZ() + fz * 0.55D);
+            for (int i = 0; i < 3; i++) {
+                double k = r.nextDouble();
+                level.addParticle(new DustParticleOptions(QI_BLUE, 0.9F),
+                        Mth.lerp(k, b.getX(), bow.x), Mth.lerp(k, b.getY() + 1.1D, bow.y), Mth.lerp(k, b.getZ(), bow.z), 0.0D, 0.0D, 0.0D);
+            }
+            if (r.nextFloat() < 0.5F) {
+                level.addParticle(ParticleTypes.ELECTRIC_SPARK, bow.x + fx * 0.3D, bow.y, bow.z + fz * 0.3D,
+                        (r.nextDouble() - 0.5D) * 0.1D, (r.nextDouble() - 0.5D) * 0.1D, (r.nextDouble() - 0.5D) * 0.1D);
+            }
         }
     }
 
