@@ -1,0 +1,82 @@
+{
+  "name": "npc.murim.un_gak",
+  "title": "npc.murim.un_gak.title",
+  "start": [
+    {
+      "when": [
+        {
+          "period": "breakfast|dinner"
+        }
+      ],
+      "node": "breakfast_dinner"
+    },
+    {
+      "when": [
+        {
+          "period": "night"
+        }
+      ],
+      "node": "night"
+    },
+    {
+      "node": "greet"
+    }
+  ],
+  "nodes": {
+    "breakfast_dinner": {
+      "random": [
+        "dialogue.murim.un_gak.breakfast_dinner1"
+      ],
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.un_gak.opt.ask",
+          "next": "answer"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "night": {
+      "random": [
+        "dialogue.murim.un_gak.night1"
+      ],
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.un_gak.opt.ask",
+          "next": "answer"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "greet": {
+      "random": [
+        "dialogue.murim.un_gak.greet1",
+        "dialogue.murim.un_gak.greet2"
+      ],
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.un_gak.opt.ask",
+          "next": "answer"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "answer": {
+      "line": "dialogue.murim.un_gak.answer",
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    }
+  }
+}

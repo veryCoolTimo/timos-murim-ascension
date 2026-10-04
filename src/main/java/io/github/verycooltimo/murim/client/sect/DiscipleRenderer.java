@@ -42,7 +42,11 @@ public class DiscipleRenderer extends MobRenderer<SectDisciple, DiscipleRenderer
 
     @Override
     public ResourceLocation getTextureLocation(SectDisciple entity) {
-        // Роль NPC секты — своя текстура (наставник серо-синий, глава тёмный с золотом, ученики в белом).
+        // Человек секты — свой облик (поколение по одежде, лицо и волосы разные); иначе — текстура роли.
+        String look = entity.look();
+        if (!look.isEmpty()) {
+            return ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/entity/sect/" + look + ".png");
+        }
         return entity.role().texture();
     }
 
@@ -87,7 +91,8 @@ public class DiscipleRenderer extends MobRenderer<SectDisciple, DiscipleRenderer
             // Меч в руке игрока смотрит вперёд из кулака (ванильный предмет в руке), у бандита —
             // продолжает руку: клинок поворачивается вперёд, как держит игрок.
             // В поклоне меч лежит обратным хватом вдоль предплечья (приветствие с мечом), не торчит вверх.
-            float blade = anim.endsWith("spar_bow") ? Mth.PI : -Mth.HALF_PI;
+            // Сидя (лотос: трапеза, медитация, ночь) — тоже вдоль руки, а не вперёд.
+            float blade = anim.endsWith("spar_bow") || anim.endsWith(":lotus") ? Mth.PI : -Mth.HALF_PI;
             getAnyDescendantWithName("weapon").ifPresent(w -> w.xRot = blade);
             NpcGestures.apply(this, entity, partial);
         }

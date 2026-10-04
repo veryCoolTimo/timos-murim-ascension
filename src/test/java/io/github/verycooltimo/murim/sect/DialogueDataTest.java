@@ -31,32 +31,57 @@ class DialogueDataTest {
         return Dialogue.CODEC.parse(JsonOps.INSTANCE, json).getOrThrow();
     }
 
-    @Test
-    @DisplayName("Каждый диалог читается, ссылки узлов целы, не больше 4 видимых ответов на узел")
-    void dialoguesParseAndLink() throws IOException {
-        for (SectRole role : SectRole.values()) {
-            Dialogue d = load(role.dialogue().getPath());
-            assertEquals(List.of(), DialogueService.validate(d), role.id());
-            // Автор 04.10: на гору игрок поднимается сам — телепорта в диалогах нет.
-            d.nodes().values().forEach(n -> n.options().forEach(o -> o.actions().forEach(a ->
-                    assertFalse("teleport".equals(a.type()), role.id() + ": teleport"))));
-            d.nodes().forEach((id, n) -> {
-                // Варианты с взаимоисключающими условиями могут быть больше четырёх, но без условий — не больше.
-                long always = n.options().stream().filter(o -> o.when().isEmpty()).count();
-                assertTrue(always <= Dialogue.MAX_OPTIONS, role.id() + "/" + id);
-            });
+    /** Все файлы диалогов: по ролям и свои у людей секты (murim_dialogues/<ключ>.json). */
+    private static List<String> dialogueIds() throws IOException {
+        Path dir = res("data/murim/murim_dialogues");
+        try (var files = Files.list(dir)) {
+            return files.map(f -> f.getFileName().toString()).filter(n -> n.endsWith(".json"))
+                    .map(n -> n.substring(0, n.length() - 5)).sorted().toList();
         }
     }
 
     @Test
-    @DisplayName("Все строки диалогов есть и в ru_ru, и в en_us")
+    @DisplayName("Каждый диалог читается, ссылки узлов целы, не больше 4 видимых ответов на узел")
+    void dialoguesParseAndLink() throws IOException {
+        Set<String> ids = new HashSet<>(dialogueIds());
+        for (SectRole role : SectRole.values()) {
+            assertTrue(ids.contains(role.dialogue().getPath()), "нет диалога роли " + role.id());
+        }
+        for (String id : ids) {
+            Dialogue d = load(id);
+            assertEquals(List.of(), DialogueService.validate(d), id);
+            // Автор 04.10: на гору игрок поднимается сам — телепорта в диалогах нет.
+            d.nodes().values().forEach(n -> n.options().forEach(o -> o.actions().forEach(a ->
+                    assertFalse("teleport".equals(a.type()), id + ": teleport"))));
+            d.nodes().forEach((nid, n) -> {
+                // Варианты с взаимоисключающими условиями могут быть больше четырёх, но без условий — не больше.
+                long always = n.options().stream().filter(o -> o.when().isEmpty()).count();
+                assertTrue(always <= Dialogue.MAX_OPTIONS, id + "/" + nid);
+            });
+            // Условие части суток — только известные части распорядка.
+            d.start().forEach(e -> e.when().forEach(c -> c.period().ifPresent(p -> {
+                for (String one : p.split("\\|")) {
+                    assertTrue(SectSchedule.Period.of(one).isPresent(), id + ": период " + one);
+                }
+            })));
+        }
+    }
+
+    @Test
+    @DisplayName("Все строки диалогов и имена людей секты есть и в ru_ru, и в en_us")
     void everyKeyTranslated() throws IOException {
         JsonObject ru = JsonParser.parseString(Files.readString(res("assets/murim/lang/ru_ru.json"))).getAsJsonObject();
         JsonObject en = JsonParser.parseString(Files.readString(res("assets/murim/lang/en_us.json"))).getAsJsonObject();
         Set<String> keys = new HashSet<>();
         for (SectRole role : SectRole.values()) {
             keys.add(role.nameKey());
-            Dialogue d = load(role.dialogue().getPath());
+        }
+        for (SectRoster m : SectRoster.ALL) {
+            keys.add(m.nameKey());
+        }
+        for (String id : dialogueIds()) {
+            Dialogue d = load(id);
+            keys.add(d.name());
             if (!d.title().isEmpty()) {
                 keys.add(d.title());
             }
@@ -68,9 +93,20 @@ class DialogueDataTest {
                 n.options().forEach(o -> keys.add(o.text()));
             });
         }
+        keys.add("murim.sect.morning.count");
+        keys.add("murim.sect.morning.offbeat");
+        keys.add("murim.sect.morning.done");
         for (String k : keys) {
             assertTrue(ru.has(k), "ru_ru: " + k);
             assertTrue(en.has(k), "en_us: " + k);
+        }
+    }
+
+    @Test
+    @DisplayName("У каждого человека секты есть текстура облика")
+    void everyLookExists() {
+        for (SectRoster m : SectRoster.ALL) {
+            assertTrue(Files.exists(res("assets/murim/textures/entity/sect/" + m.look() + ".png")), m.key() + ": " + m.look());
         }
     }
 

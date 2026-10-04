@@ -148,7 +148,8 @@ public final class DevCaptureHandler {
         if ("mounthua".equals(System.getProperty(TECHNIQUE_PROPERTY))
                 || "placecheck".equals(System.getProperty(TECHNIQUE_PROPERTY))
                 // The abandoned archive walk-through has its own driver (client/library/LibraryCapture).
-                || "library".equals(System.getProperty(TECHNIQUE_PROPERTY))) {
+                || "library".equals(System.getProperty(TECHNIQUE_PROPERTY))
+                || "sectlife".equals(System.getProperty(TECHNIQUE_PROPERTY))) {
             return;
         }
         if (minecraft.player == null || minecraft.level == null) {

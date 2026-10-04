@@ -6,11 +6,14 @@ import net.minecraft.resources.ResourceLocation;
 import java.util.Locale;
 
 /**
- * Кто из NPC секты (план §4.1, v1): наставник Ун Гём, глава Хён Чжон, старший ученик (спарринг)
- * и два ученика третьего поколения фоном. Модель у всех пока одна (бандит), различаются
- * текстурой; автор сделает свои.
+ * Кто из NPC секты по функции (план §4.1): наставник Ун Гём, глава Хён Чжон, старейшины, старший
+ * ученик (спарринг-урок), ученики второго и третьего поколения, привратник. Имя и облик конкретного
+ * человека — в {@link SectRoster}; роль задаёт диалог по умолчанию и то, что NPC умеет.
  *
- * @param texture  текстура {@code textures/entity/<texture>.png}
+ * <p>{@code DISCIPLE_A}/{@code DISCIPLE_B} — роли первой версии (два ученика фоном); старые сохранения
+ * их помнят, новые NPC получают {@link #DISCIPLE}.
+ *
+ * @param texture  текстура {@code textures/entity/<texture>.png} (если у человека нет своего облика)
  * @param dialogue диалог {@code murim_dialogues/<dialogue>.json}
  */
 public enum SectRole {
@@ -20,7 +23,13 @@ public enum SectRole {
     GATEKEEPER("sect_disciple", "gatekeeper"),
     SENIOR("sect_disciple", "senior"),
     DISCIPLE_A("sect_disciple", "disciple"),
-    DISCIPLE_B("sect_disciple", "disciple");
+    DISCIPLE_B("sect_disciple", "disciple"),
+    /** Старейшина (поколение Хён) или старший первого поколения (Ун): у каждого свой диалог по имени. */
+    ELDER("sect_leader", "elder"),
+    /** Ученик второго поколения (Пэк): спарринги, медитация, в строю — первый ряд. */
+    SECOND("sect_disciple", "second"),
+    /** Ученик третьего поколения (Чхон): строй, спарринги, столбы, хозяйство. */
+    DISCIPLE("sect_disciple", "disciple");
 
     private final String texture;
     private final String dialogue;
@@ -45,6 +54,16 @@ public enum SectRole {
     /** Ключ имени: {@code npc.murim.<роль>}. */
     public String nameKey() {
         return "npc.murim." + id();
+    }
+
+    /** Принимает вызов игрока на спарринг: старший и ученики обоих поколений. */
+    public boolean spars() {
+        return this == SENIOR || this == SECOND || this == DISCIPLE || this == DISCIPLE_A || this == DISCIPLE_B;
+    }
+
+    /** Ученик третьего поколения (в том числе роли первой версии). */
+    public boolean third() {
+        return this == DISCIPLE || this == DISCIPLE_A || this == DISCIPLE_B || this == GATEKEEPER;
     }
 
     public static SectRole of(String id) {

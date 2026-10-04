@@ -6,6 +6,9 @@ import io.github.verycooltimo.murim.combat.TechniquePhase;
 import io.github.verycooltimo.murim.network.FoundationPayloads;
 import io.github.verycooltimo.murim.network.TechniqueEventPayload;
 import io.github.verycooltimo.murim.registry.ModSounds;
+import io.github.verycooltimo.murim.sect.SectLayout;
+import io.github.verycooltimo.murim.sect.SectRole;
+import io.github.verycooltimo.murim.sect.SectRoster;
 import io.github.verycooltimo.murim.technique.BehaviorExecutor;
 import io.github.verycooltimo.murim.technique.Casters;
 import io.github.verycooltimo.murim.technique.PlumRules;
@@ -18,6 +21,7 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
@@ -25,7 +29,9 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
@@ -44,6 +50,7 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -68,6 +75,11 @@ public class SectDisciple extends Bandit implements Casters.Caster {
 
     /** Слои старшего ученика: основа целиком (все 6 форм), Разрез с цветением, Натиск. */
     private static final Map<ResourceLocation, Integer> LAYERS = Map.of(SIX, 4, SLASH, 3, RUSH, 3);
+    /** Третье поколение (план §5.3, автор 03.10 «basic swords»): только основа, три формы. */
+    private static final Map<ResourceLocation, Integer> LAYERS_THIRD = Map.of(SIX, 2);
+    /** Второе поколение: основа целиком и Разрез без цветения. */
+    private static final Map<ResourceLocation, Integer> LAYERS_SECOND = Map.of(SIX, 4, SLASH, 2);
+    public static final ResourceLocation LOTUS = id("lotus");
 
     /** Ранг старшего ученика — второй (Realm.SECOND). */
     public static final int RANK = 2;
@@ -101,6 +113,10 @@ public class SectDisciple extends Bandit implements Casters.Caster {
     private static final EntityDataAccessor<Integer> GESTURE_SEQ = SynchedEntityData.defineId(SectDisciple.class, EntityDataSerializers.INT);
     /** Id игрока-собеседника (−1 — не разговаривает): голова и корпус к нему. */
     private static final EntityDataAccessor<Integer> TALKING = SynchedEntityData.defineId(SectDisciple.class, EntityDataSerializers.INT);
+    /** Кто это (ключ {@link SectRoster}): имя и свой диалог; пусто — NPC без имени (команда, стенд). */
+    private static final EntityDataAccessor<String> KEY = SynchedEntityData.defineId(SectDisciple.class, EntityDataSerializers.STRING);
+    /** Облик: {@code textures/entity/sect/<look>.png}; пусто — текстура роли. */
+    private static final EntityDataAccessor<String> LOOK = SynchedEntityData.defineId(SectDisciple.class, EntityDataSerializers.STRING);
 
     public enum Spar { NONE, WAIT, BOW_IN, FIGHT, BOW_OUT }
 
@@ -158,7 +174,7 @@ public class SectDisciple extends Bandit implements Casters.Caster {
         return Monster.createMonsterAttributes()
                 .add(Attributes.MAX_HEALTH, 40.0D)
                 .add(Attributes.MOVEMENT_SPEED, 0.30D)
-                .add(Attributes.FOLLOW_RANGE, 32.0D)
+                .add(Attributes.FOLLOW_RANGE, 96.0D)
                 .add(Attributes.ARMOR, 4.0D)
                 // Железный меч: база техник = 6 × уровень техники × сила ранга (TechniqueDamage).
                 .add(Attributes.ATTACK_DAMAGE, 6.0D);
@@ -174,12 +190,15 @@ public class SectDisciple extends Bandit implements Casters.Caster {
         builder.define(GESTURE, "");
         builder.define(GESTURE_SEQ, 0);
         builder.define(TALKING, -1);
+        builder.define(KEY, "");
+        builder.define(LOOK, "");
     }
 
     @Override
     protected void registerGoals() {
         goalSelector.addGoal(0, new FloatGoal(this));
         goalSelector.addGoal(2, new SparGoal());
+        goalSelector.addGoal(4, new ScheduleGoal(this));
         goalSelector.addGoal(7, new LookAtPlayerGoal(this, Player.class, 8.0F));
         goalSelector.addGoal(8, new RandomLookAroundGoal(this));
     }
@@ -198,12 +217,15 @@ public class SectDisciple extends Bandit implements Casters.Caster {
 
     @Override
     public int techniqueLayer(ResourceLocation technique) {
-        return LAYERS.getOrDefault(technique, -1);
+        Optional<SectRoster> m = member();
+        Map<ResourceLocation, Integer> layers = m.isEmpty() || m.get().generation() < 2 || m.get().role() == SectRole.SENIOR ? LAYERS
+                : m.get().generation() == 2 ? LAYERS_SECOND : LAYERS_THIRD;
+        return layers.getOrDefault(technique, -1);
     }
 
     @Override
     public int rank() {
-        return RANK;
+        return member().map(SectRoster::rank).orElse(RANK);
     }
 
     @Override
@@ -214,7 +236,11 @@ public class SectDisciple extends Bandit implements Casters.Caster {
     @Override
     public boolean canHit(LivingEntity target) {
         // В спарринге техника задевает только партнёра: зрители и соседи вне боя.
-        return spar != Spar.FIGHT || target.getUUID().equals(partner);
+        if (spar == Spar.FIGHT) {
+            return target.getUUID().equals(partner);
+        }
+        // В обороне — только чужих: ни игрока, ни своих.
+        return !(target instanceof Player) && !(target instanceof SectDisciple);
     }
 
     @Override
@@ -286,22 +312,42 @@ public class SectDisciple extends Bandit implements Casters.Caster {
 
     /** Начать спарринг: подождать {@code delay} тиков, поклон, бой. */
     public void startSpar(ServerPlayer player, int delay) {
+        startSpar((LivingEntity) player, delay);
+        player.displayClientMessage(Component.translatable("murim.spar.start", getDisplayName()), true);
+    }
+
+    /** Спарринг с любым партнёром (игрок или другой ученик): порог — потеря половины здоровья. */
+    public void startSpar(LivingEntity other, int delay) {
         if (spar != Spar.NONE && spar != Spar.BOW_OUT) {
             return;
         }
-        partner = player.getUUID();
+        wake();
+        partner = other.getUUID();
         cleanHits = 0;
-        partnerFloor = Math.max(1.0F, player.getHealth() - player.getMaxHealth() * SPAR_LOSS);
+        defending = false;
+        // Ученики между собой — техника лишь в каждом четвёртом бою и одна (только Разрез): на площадке поединков идёт учёба
+        // основой, а не ливень цветков (codex по кадрам 04.10). С игроком — как раньше.
+        boutTechniques = other instanceof SectDisciple ? (getRandom().nextFloat() < 0.25F ? 1 : 0) : Integer.MAX_VALUE;
+        npcBout = other instanceof SectDisciple;
+        // Партнёр-ученик сам выставит свой порог (он тоже в спарринге); игроку — от его здоровья.
+        partnerFloor = other instanceof SectDisciple ? 0.0F : Math.max(1.0F, other.getHealth() - other.getMaxHealth() * SPAR_LOSS);
         setHealth(getMaxHealth());
         selfFloor = Math.max(1.0F, getHealth() - getMaxHealth() * SPAR_LOSS);
-        setTarget(player);
+        setTarget(other);
         spar = delay > 0 ? Spar.WAIT : Spar.BOW_IN;
         sparTick = delay > 0 ? -delay : 0;
         if (spar == Spar.BOW_IN) {
             beginBow();
         }
-        player.displayClientMessage(Component.translatable("murim.spar.start", getDisplayName()), true);
-        log("спарринг с {}: порог игрока {}, свой {}", player.getName().getString(), partnerFloor, selfFloor);
+        log("спарринг с {}: порог партнёра {}, свой {}", other.getName().getString(), partnerFloor, selfFloor);
+    }
+
+    /** Ученики бьются друг с другом (распорядок дня, план §4.2): оба в спарринге, партнёр — друг друга. */
+    public void sparWith(SectDisciple other, int delay) {
+        startSpar(other, delay);
+        other.startSpar(this, delay);
+        partnerFloor = other.selfFloor;
+        other.partnerFloor = selfFloor;
     }
 
     private void beginBow() {
@@ -331,10 +377,19 @@ public class SectDisciple extends Bandit implements Casters.Caster {
         if (partnerEntity() instanceof ServerPlayer p) {
             io.github.verycooltimo.murim.sect.SectService.onSparEnd(p, this, partnerWon);
         }
+        // Ученик против ученика: второй тоже кланяется (его исход — обратный).
+        if (partnerEntity() instanceof SectDisciple other && other.spar == Spar.FIGHT && getUUID().equals(other.partner)) {
+            other.endSpar(!partnerWon);
+        }
+        restUntil = level().getGameTime() + 160 + getRandom().nextInt(120);
     }
 
     private LivingEntity partnerEntity() {
-        return partner == null ? null : level().getPlayerByUUID(partner);
+        if (partner == null || !(level() instanceof ServerLevel server)) {
+            return null;
+        }
+        Entity e = server.getEntity(partner);
+        return e instanceof LivingEntity l ? l : null;
     }
 
     @Override
@@ -358,15 +413,31 @@ public class SectDisciple extends Bandit implements Casters.Caster {
         if (level().isClientSide) {
             return super.hurt(source, amount);
         }
+        boolean bypass = source.is(net.minecraft.tags.DamageTypeTags.BYPASSES_INVULNERABILITY);
+        Entity attacker = source.getEntity();
+        // Чужой моб бьёт ученика: секта встаёт на защиту (план §5.4), а сам ученик не умирает —
+        // на одном здоровье он ещё держится (план §6.3: «они не умирают»).
+        if (!bypass && attacker instanceof Mob mob && !(attacker instanceof SectDisciple) && mob.isAlive()) {
+            io.github.verycooltimo.murim.sect.SectLife.alarm(this, mob);
+            wake();
+            amount = Math.min(amount, Math.max(0.0F, getHealth() - 1.0F));
+            if (amount <= 0.0F) {
+                return false;
+            }
+            return super.hurt(source, amount);
+        }
         // Ученик не дерётся всерьёз: вне спарринга удар игрока — вызов на спарринг, без урона.
         if (spar != Spar.FIGHT) {
-            if (source.getEntity() instanceof ServerPlayer p && spar == Spar.NONE && spars() && !source.is(net.minecraft.tags.DamageTypeTags.BYPASSES_INVULNERABILITY)) {
+            if (attacker instanceof ServerPlayer p && spar == Spar.NONE && spars() && !bypass) {
                 startSpar(p, 0);
                 return false;
             }
-            if (!source.is(net.minecraft.tags.DamageTypeTags.BYPASSES_INVULNERABILITY)) {
+            if (!bypass) {
                 return false;
             }
+        } else if (!bypass && attacker != null && !attacker.getUUID().equals(partner)) {
+            // Чужой удар в чужом поединке не проходит: спарринг — между двумя.
+            return false;
         }
         boolean hurt = super.hurt(source, amount);
         // Сильный удар в замах срывает технику, как у игрока (interruption в JSON техники).
@@ -396,6 +467,7 @@ public class SectDisciple extends Bandit implements Casters.Caster {
         if (level().isClientSide) {
             return;
         }
+        tickLife();
         if (dashLeft > 0) {
             dashLeft--;
             move(MoverType.SELF, dashStep);
@@ -435,13 +507,14 @@ public class SectDisciple extends Bandit implements Casters.Caster {
         }
         sparTick++;
         LivingEntity p = partnerEntity();
-        if (p == null || !p.isAlive() || p.distanceTo(this) > 40.0D) {
-            if (spar != Spar.NONE) {
-                log("спарринг отменён: партнёр ушёл");
-            }
+        if (spar != Spar.BOW_OUT && (p == null || !p.isAlive() || p.distanceTo(this) > 40.0D
+                || p instanceof SectDisciple other && (other.spar == Spar.NONE || !getUUID().equals(other.partner)))) {
+            log("спарринг отменён: партнёр ушёл");
             cancelTechnique();
+            formTick = -1;
             spar = Spar.NONE;
             setTarget(null);
+            playAnim(null, 0);
             return;
         }
         switch (spar) {
@@ -466,12 +539,19 @@ public class SectDisciple extends Bandit implements Casters.Caster {
             case BOW_OUT -> {
                 getNavigation().stop();
                 setTarget(null);
-                face(p, 20.0F);
+                if (p != null) {
+                    face(p, 20.0F);
+                }
                 if (sparTick == 6) {
                     beginBow();
                 }
                 if (sparTick == 6 + BOW_TICKS) {
                     playAnim(null, 0);
+                }
+                if (sparTick >= 6 + BOW_TICKS + 10) {
+                    // Поклон окончен — снова к распорядку.
+                    spar = Spar.NONE;
+                    setTarget(null);
                 }
             }
             default -> {
@@ -496,7 +576,7 @@ public class SectDisciple extends Bandit implements Casters.Caster {
 
     private boolean ready(ResourceLocation id, long now) {
         TechniqueDefinition d = TechniqueLoader.get(id);
-        if (d == null || technique != null) {
+        if (d == null || technique != null || techniqueLayer(id) < 0) {
             return false;
         }
         Long own = cooldowns.get(id);
@@ -677,7 +757,8 @@ public class SectDisciple extends Bandit implements Casters.Caster {
 
         @Override
         public boolean canUse() {
-            return spar == Spar.FIGHT && getTarget() != null;
+            LivingEntity t = getTarget();
+            return t != null && t.isAlive() && (spar == Spar.FIGHT || defending && spar == Spar.NONE);
         }
 
         @Override
@@ -694,6 +775,10 @@ public class SectDisciple extends Bandit implements Casters.Caster {
         public void stop() {
             getNavigation().stop();
             setAggressive(false);
+            if (defending && (getTarget() == null || !getTarget().isAlive())) {
+                defending = false;
+                setTarget(null);
+            }
         }
 
         @Override
@@ -733,12 +818,12 @@ public class SectDisciple extends Bandit implements Casters.Caster {
         private boolean act(String what, LivingEntity t, double d, boolean sees, long now, boolean force) {
             switch (what) {
                 case "rush" -> {
-                    if (!ready(RUSH, now)) {
+                    if (!ready(RUSH, now) || boutTechniques <= 0 || npcBout) {
                         return false;
                     }
                     if (sees && d >= 5.5D && d <= 14.0D) {
                         face(t, 180.0F);
-                        return startTechnique(RUSH);
+                        return useTechnique(RUSH);
                     }
                     if (force) {
                         if (d < 5.5D) {
@@ -750,12 +835,12 @@ public class SectDisciple extends Bandit implements Casters.Caster {
                     return false;
                 }
                 case "slash" -> {
-                    if (!ready(SLASH, now)) {
+                    if (!ready(SLASH, now) || boutTechniques <= 0) {
                         return false;
                     }
                     if (sees && d >= 1.8D && d <= 4.8D) {
                         face(t, 180.0F);
-                        return startTechnique(SLASH);
+                        return useTechnique(SLASH);
                     }
                     if (force) {
                         if (d > 4.8D) {
@@ -815,6 +900,8 @@ public class SectDisciple extends Bandit implements Casters.Caster {
     public void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
         tag.putString("role", role().id());
+        tag.putString("member", entityData.get(KEY));
+        tag.putString("look", entityData.get(LOOK));
         // Спарринг не сохраняется: выход из игры отменяет его (план секты §5.3).
     }
 
@@ -824,12 +911,242 @@ public class SectDisciple extends Bandit implements Casters.Caster {
         if (tag.contains("role")) {
             entityData.set(ROLE, io.github.verycooltimo.murim.sect.SectRole.of(tag.getString("role")).id());
         }
+        if (!tag.getString("member").isEmpty()) {
+            setMember(SectRoster.of(tag.getString("member")).orElse(null));
+        }
+        if (!tag.getString("look").isEmpty()) {
+            entityData.set(LOOK, tag.getString("look"));
+        }
     }
 
     /** Для журналов стенда: что сейчас делает. */
     public String doing() {
         return technique != null ? technique.getPath() + "@" + techniqueTick : formTick >= 0 ? "form " + form : spar.name();
     }
+
+    // ------------------------------------------------------------------ жизнь секты: кто, распорядок, оборона
+
+    /** Дальше этого от игроков ИИ спит, а NPC переходит к делу распорядка без ходьбы. */
+    public static final double AWAKE_RANGE = 40.0D;
+
+    private boolean dormant;
+    private boolean defending;
+    private long restUntil;
+    private SectLayout layout;
+    /** GameTest и стенд: ИИ не засыпает без игрока рядом. */
+    private boolean keepAwake;
+
+    public void setKeepAwake(boolean keepAwake) {
+        this.keepAwake = keepAwake;
+    }
+
+    /** Человек из списка секты, если это он. */
+    public Optional<SectRoster> member() {
+        return SectRoster.of(entityData.get(KEY));
+    }
+
+    public String memberKey() {
+        return entityData.get(KEY);
+    }
+
+    /** Сделать NPC человеком из списка: роль, облик, здоровье по поколению. */
+    public void setMember(SectRoster m) {
+        if (m == null) {
+            return;
+        }
+        entityData.set(KEY, m.key());
+        entityData.set(LOOK, m.look());
+        setRole(m.role());
+        var health = getAttribute(Attributes.MAX_HEALTH);
+        if (health != null && health.getBaseValue() != m.maxHealth()) {
+            health.setBaseValue(m.maxHealth());
+            setHealth((float) m.maxHealth());
+        }
+    }
+
+    public String look() {
+        return entityData.get(LOOK);
+    }
+
+    /** Свой диалог человека ({@code murim_dialogues/<ключ>.json}), иначе — диалог роли. */
+    public ResourceLocation dialogue() {
+        String key = entityData.get(KEY);
+        if (!key.isEmpty()) {
+            ResourceLocation own = id(key);
+            if (io.github.verycooltimo.murim.sect.DialogueLoader.get(own) != null) {
+                return own;
+            }
+        }
+        return role().dialogue();
+    }
+
+    /** Раскладка площадок: своя (GameTest) или гора Хуа этого мира. */
+    public SectLayout layout() {
+        if (layout == null && level() instanceof ServerLevel server) {
+            layout = io.github.verycooltimo.murim.sect.SectLife.layout(server);
+        }
+        return layout;
+    }
+
+    public void setLayout(SectLayout layout) {
+        this.layout = layout;
+    }
+
+    public boolean dormant() {
+        return dormant;
+    }
+
+    public boolean defending() {
+        return defending;
+    }
+
+    /** Отдых после поединка: новый бой не начинается. */
+    public boolean resting() {
+        return level().getGameTime() < restUntil;
+    }
+
+    /** Свободен: не в бою, не в разговоре, не в обороне. */
+    public boolean free() {
+        return spar == Spar.NONE && !defending && talkingTo() < 0;
+    }
+
+    /** Сколько техник ещё можно в этом бою (ученики между собой — одна). */
+    private int boutTechniques = Integer.MAX_VALUE;
+    /** Бой с другим учеником: Натиск (дым на полплощадки) не применяется, только Разрез. */
+    private boolean npcBout;
+
+    private boolean useTechnique(ResourceLocation id) {
+        if (startTechnique(id)) {
+            boutTechniques--;
+            return true;
+        }
+        return false;
+    }
+
+    /** Поединок с другим учеником, если идёт. */
+    public boolean inBout() {
+        return spar != Spar.NONE && partnerEntity() instanceof SectDisciple;
+    }
+
+    /** Колокол: поединок учеников окончен без победителя (оба сразу к распорядку). */
+    public void stopBout() {
+        if (!inBout()) {
+            return;
+        }
+        SectDisciple other = (SectDisciple) partnerEntity();
+        for (SectDisciple d : List.of(this, other)) {
+            d.cancelTechnique();
+            d.formTick = -1;
+            d.dashLeft = 0;
+            d.spar = Spar.NONE;
+            d.setTarget(null);
+            d.playAnim(null, 0);
+        }
+    }
+
+    /** На защиту своих: цель — чужой моб. */
+    public void defend(Mob enemy) {
+        if (spar != Spar.NONE || enemy == null || !enemy.isAlive()) {
+            return;
+        }
+        wake();
+        boutTechniques = Integer.MAX_VALUE;
+        npcBout = false;
+        defending = true;
+        setTarget(enemy);
+    }
+
+    /** Встать с кровати и выйти из позы сидя. */
+    public void wake() {
+        dormant = false;
+        if (isSleeping()) {
+            stopSleeping();
+        }
+        if (sitting()) {
+            playAnim(null, 0);
+        }
+    }
+
+    @Override
+    protected boolean isImmobile() {
+        // Далеко от игроков ИИ не тикает вовсе (план §8.3: десятки NPC с распорядком дёшевы).
+        return super.isImmobile() || dormant;
+    }
+
+    private void tickLife() {
+        if ((tickCount + getId()) % 20 != 0) {
+            return;
+        }
+        if (defending && (getTarget() == null || !getTarget().isAlive() || getTarget().distanceTo(this) > 32.0D)) {
+            defending = false;
+            setTarget(null);
+        }
+        boolean wasDormant = dormant;
+        dormant = !keepAwake && !entityData.get(KEY).isEmpty() && spar == Spar.NONE && !defending && talkingTo() < 0
+                && level().getNearestPlayer(this, AWAKE_RANGE) == null;
+        if (dormant && !wasDormant) {
+            getNavigation().stop();
+        }
+        if (spar == Spar.NONE && !defending && getHealth() < getMaxHealth() && (tickCount + getId()) % 40 == 0) {
+            heal(1.0F);
+        }
+        io.github.verycooltimo.murim.sect.SectLife.tickNpc(this);
+    }
+
+    /** Сесть (лотос): трапеза, медитация, ночь без кровати. */
+    public void sit(boolean sit) {
+        boolean sitting = sitting();
+        if (sit && !sitting) {
+            getNavigation().stop();
+            playAnim(LOTUS, 0);
+        } else if (!sit && sitting) {
+            playAnim(null, 0);
+        }
+    }
+
+    public boolean sitting() {
+        return LOTUS.toString().equals(anim());
+    }
+
+    /**
+     * Форма строя: та же анимация формы, что в бою, с той же позой замаха, но без удара — строй
+     * повторяет формы в такт (план §4.2).
+     */
+    public void drillForm(int formIndex, int windup) {
+        if (technique != null || formTick >= 0 || spar != Spar.NONE) {
+            return;
+        }
+        FoundationForms.Form f = FoundationForms.Form.values()[Math.floorMod(formIndex, 6)];
+        getNavigation().stop();
+        playAnim(id(f.animation()), windup);
+    }
+
+    /** Звук взмаха строя (один на ряд, а не двадцать). */
+    public void drillSound() {
+        playSound(ModSounds.SWORD_SWING.get(), 0.5F, 1.0F + 0.1F * getRandom().nextFloat());
+    }
+
+    /** Повернуться корпусом и головой на {@code yaw}. */
+    public void faceYaw(float yaw, float maxStep) {
+        float y = Mth.approachDegrees(getYRot(), yaw, maxStep);
+        setYRot(y);
+        yBodyRot = y;
+        yHeadRot = y;
+    }
+
+    /** Повернуться к сущности. */
+    public void faceEntity(LivingEntity t, float maxStep) {
+        face(t, maxStep);
+    }
+
+    @Override
+    public void die(DamageSource source) {
+        super.die(source);
+        if (!level().isClientSide && !entityData.get(KEY).isEmpty()) {
+            io.github.verycooltimo.murim.sect.SectLife.onDeath(this);
+        }
+    }
+
 
     // ------------------------------------------------------------------ NPC секты: роль, жест, разговор
 
@@ -843,7 +1160,7 @@ public class SectDisciple extends Bandit implements Casters.Caster {
 
     /** Сражается только старший ученик; наставник, глава и ученики фоном только говорят. */
     public boolean spars() {
-        return role() == io.github.verycooltimo.murim.sect.SectRole.SENIOR;
+        return role().spars();
     }
 
     public String gesture() {
@@ -891,7 +1208,11 @@ public class SectDisciple extends Bandit implements Casters.Caster {
     @Override
     public Component getName() {
         Component custom = getCustomName();
-        return custom != null ? custom : Component.translatable(role().nameKey());
+        if (custom != null) {
+            return custom;
+        }
+        String key = entityData.get(KEY);
+        return Component.translatable(key.isEmpty() ? role().nameKey() : "npc.murim." + key);
     }
 
     @Override

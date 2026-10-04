@@ -160,7 +160,9 @@ public final class MasteryService {
         }
         // Поздние формы стиля-книги осваиваются медленнее (автор 03.10: «каждая сложнее прошлой»).
         MasteryRules.Gain gain = MasteryRules.experience(progress, source,
-                amount * io.github.verycooltimo.murim.technique.Styles.difficulty(id), state.wisdom(), day(player));
+                // День утренней тренировки секты — освоение чуть быстрее (план секты §4.2).
+                amount * io.github.verycooltimo.murim.technique.Styles.difficulty(id)
+                        * io.github.verycooltimo.murim.sect.SectLife.masteryBonus(player), state.wisdom(), day(player));
         apply(player, id, gain, false);
         sync(player);
     }

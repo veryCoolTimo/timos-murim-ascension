@@ -41,11 +41,15 @@ public record Dialogue(String name, String title, List<Entry> start, Map<String,
      * @param minRank    ранг культивации не ниже
      * @param belowRank  ранг ниже
      * @param awakened   даньтянь создан
+     * @param period     часть суток распорядка секты ({@code formation}, {@code training}, … — {@link SectSchedule.Period}),
+     *                   несколько через {@code |}
+     * @param free       собеседник свободен (не в поединке и не в обороне)
      */
     public record Condition(Optional<String> flag, Optional<String> notFlag, Optional<Boolean> member,
                             Optional<ResourceLocation> knows, Optional<ResourceLocation> notKnows,
                             Optional<ResourceLocation> technique, int minLayer, int belowLayer,
-                            int minRank, int belowRank, Optional<Boolean> awakened) {
+                            int minRank, int belowRank, Optional<Boolean> awakened,
+                            Optional<String> period, Optional<Boolean> free) {
         public static final Codec<Condition> CODEC = RecordCodecBuilder.create(i -> i.group(
                 Codec.STRING.optionalFieldOf("flag").forGetter(Condition::flag),
                 Codec.STRING.optionalFieldOf("not_flag").forGetter(Condition::notFlag),
@@ -57,7 +61,9 @@ public record Dialogue(String name, String title, List<Entry> start, Map<String,
                 Codec.INT.optionalFieldOf("below_layer", -1).forGetter(Condition::belowLayer),
                 Codec.INT.optionalFieldOf("min_rank", -1).forGetter(Condition::minRank),
                 Codec.INT.optionalFieldOf("below_rank", -1).forGetter(Condition::belowRank),
-                Codec.BOOL.optionalFieldOf("awakened").forGetter(Condition::awakened)
+                Codec.BOOL.optionalFieldOf("awakened").forGetter(Condition::awakened),
+                Codec.STRING.optionalFieldOf("period").forGetter(Condition::period),
+                Codec.BOOL.optionalFieldOf("free").forGetter(Condition::free)
         ).apply(i, Condition::new));
     }
 
