@@ -961,10 +961,15 @@ final class MountHuaChunkWriter {
                 Zone near = zoneAt(u, v, 7);
                 if (near != null && zoneAt(u, v, 2) == null && !near.cave()
                         && (near.id().equals("grove") || near.id().equals("upper") || near.id().equals("ancestors") || near.id().equals("elders") || near.id().equals("scriptures") || near.id().startsWith("pav"))) {
-                    // A ring of plums just outside the terrace edge (the yard itself stays free).
+                    // A ring of plums just outside the terrace edge (the yard itself stays free);
+                    // round the summit pavilions green foliage only (author 04.10: no plums up there).
                     long h = mix(wx, wz, 29);
                     if (Math.floorMod(h, 1000L) < 30) {
-                        plumTree(wx, t + 1, wz, h, pos);
+                        if (near.id().startsWith("pav")) {
+                            shrub(wx, t + 1, wz, h, pos);
+                        } else {
+                            plumTree(wx, t + 1, wz, h, pos);
+                        }
                     }
                     continue;
                 }
@@ -1043,7 +1048,7 @@ final class MountHuaChunkWriter {
                         pine(wx, t + 1, wz, h, lx, lz, pos);
                         continue;
                     }
-                    if (soil && drop <= 2 && roll > 1000 - 18 * below) {
+                    if (soil && drop <= 2 && roll > 1000 - 8 * below) {
                         plumTree(wx, t + 1, wz, h, pos);
                         continue;
                     }
@@ -1065,7 +1070,9 @@ final class MountHuaChunkWriter {
                 }
                 if (roll < chance) {
                     pine(wx, t + 1, wz, h, lx, lz, pos);
-                } else if (soil && drop <= 2 && t < site.baseY() + 130 && roll > 996) {
+                } else if (soil && drop <= 2 && t < site.worldY(165) && roll > 996
+                        && Math.hypot(site.localU(wx + 0.5, wz + 0.5), site.localV(wx + 0.5, wz + 0.5) - 40) < 170) {
+                    // Plums only by the sect (author 04.10); tops and ledges elsewhere stay green.
                     plumTree(wx, t + 1, wz, h, pos);
                 }
             }

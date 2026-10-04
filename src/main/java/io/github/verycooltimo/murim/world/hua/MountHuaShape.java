@@ -135,6 +135,10 @@ public final class MountHuaShape {
         if (beltDistance(u, v) >= 0.97) {
             return false;
         }
+        // Not on the high rock: a pinnacle on top of a peak reads as a needle over the skyline.
+        if (Math.max(natural(u, v), belt(u, v)) > 150) {
+            return false;
+        }
         for (Zone z : MountHuaPlan.ZONES) {
             double dx = Math.max(0, Math.abs(u - z.u()) - z.width() / 2.0);
             double dz = Math.max(0, Math.abs(v - z.v()) - z.depth() / 2.0);
@@ -212,6 +216,8 @@ public final class MountHuaShape {
                     double tall = arr[k + 3];
                     double shaft = dist < r ? tall * Math.pow(1 - dist / r, 0.3) : 0;
                     double foot = dist < r * 2.2 ? 0.55 * tall * Math.pow(1 - dist / (r * 2.2), 1.2) : 0;
+                    // Blunt, broad crown that can carry pines and moss (author 04.10: no points).
+                    shaft = Math.min(tall, shaft * 1.35);
                     double h = Math.max(shaft, foot);
                     if (h <= 0) {
                         continue;
@@ -878,7 +884,9 @@ public final class MountHuaShape {
         // near-vertical face and a gentler, stepped back (codex: no symmetric witch hats).
         double qc = Math.min(1, Math.sqrt(0.35 * (x / ra) * (x / ra) + (y / rb) * (y / rb))
                 * (1 + 0.12 * warp.noise((x / ra) * 2.0 + salt, (y / rb) * 2.0, 44.0)));
-        double spike = Math.pow(Math.max(0, 1 - Math.max(qc, q * 0.8)), 0.55 - 0.22 * face);
+        // Truncated, faceted profile (author 04.10: «слишком заострённые»): a broad irregular top
+        // (vegetated), then angular sides; no needle tips.
+        double spike = Math.pow(Math.min(1, Math.max(0, 1 - Math.max(qc, q * 0.8)) * (1.9 + 0.4 * face)), 0.75 - 0.2 * face);
         if (face < -0.2) {
             double band = 0.09;
             double f = spike / band + salt * 0.01;
@@ -889,7 +897,7 @@ public final class MountHuaShape {
         double crest = Math.abs(flute.noise((x / ra) * 2.6 + salt, salt * 0.13, 51.0));
         double teeth = (1 - smooth(0.0, 0.3, crest)) * smooth(0.85, 0.2, q) * smooth(0.05, 0.25, Math.abs(x / ra));
         double h = legacyRock ? top * dome
-                : top * Math.max(0, (1 - sharp) * dome + sharp * spike - 0.36 * sharp * blade - 0.16 * sharp * teeth);
+                : top * Math.max(0, (1 - sharp) * dome + sharp * spike - 0.10 * sharp * blade - 0.07 * sharp * teeth);
         // Ledges on about half of the rocks: a steep step, then a narrow bench (pines sit there).
         if (((long) salt & 1) == 0) {
             double band = 9 + (Math.abs((long) salt) % 9);
