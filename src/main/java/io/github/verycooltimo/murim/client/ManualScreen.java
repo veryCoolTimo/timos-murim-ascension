@@ -26,8 +26,6 @@ public final class ManualScreen extends Screen {
     private static final int TEX_W = 384;
     private static final int TEX_H = 256;
     private static final int PAGE_W = TEX_W / 2;
-    private static final ResourceLocation BASIC = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/gui/book/basic_huashan.png");
-    private static final ResourceLocation PLUM = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/gui/book/seven_plum.png");
     private static final int INK = 0xFF1B1612;
     private static final int FADED = 0xFF4A3F35;
     private static final int SEAL = 0xFFB3262C;
@@ -45,7 +43,8 @@ public final class ManualScreen extends Screen {
      * потом»): рисуется вживую — разворот с текстом уже под обложкой, обложка, а за ней левая
      * страница сжимаются к корешку по косинусу угла.
      */
-    private static final ResourceLocation COVER = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/gui/book/cover_huashan.png");
+    /** Обложка секты (автор 04.10: у Тан своя — чёрный лак и бронза, не красная Хуашань). */
+    private ResourceLocation cover = tex("textures/gui/book/cover_huashan.png");
     private static final float OPEN_TICKS = 9.0F;
 
     /** Разворот: картинка (готовый разворот-иллюстрация) или текст (шаблон секты + текст + печать). */
@@ -78,8 +77,8 @@ public final class ManualScreen extends Screen {
         return I18n.exists(key) ? Component.translatable(key) : io.github.verycooltimo.murim.mastery.MasteryService.name(f);
     }
 
-    private static ResourceLocation spreadTex(String name) {
-        return ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/gui/book/spreads/" + name + ".png");
+    private static ResourceLocation tex(String path) {
+        return ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, path);
     }
 
     private static boolean exists(ResourceLocation tex) {
@@ -141,24 +140,32 @@ public final class ManualScreen extends Screen {
                 io.github.verycooltimo.murim.technique.Styles.of(open.technique());
         boolean book = style.isPresent() && io.github.verycooltimo.murim.technique.Styles.sequential(style.get());
         this.forms = book ? style.get().forms() : List.of(open.technique());
+        // Порядок разворотов — BookLayout (автор 04.10: всегда «картинка, текст» на стиль и на каждую форму).
+        List<io.github.verycooltimo.murim.technique.BookLayout.Page> layout;
         if (book) {
             styleTitle = Component.translatable(style.get().nameKey());
-            String sp = style.get().id().getPath();
-            styleKey = "book.murim.style." + sp;
-            ResourceLocation title = sp.equals("seven_plum") ? PLUM : spreadTex(sp + "_title");
-            if (exists(title)) {
-                spreads.add(new Spread(true, null, title));
-            }
-            // Затем — текст всего стиля; его печать учит основу стиля (автор 03.10).
+            styleKey = "book.murim.style." + style.get().id().getPath();
+            // Печать страницы стиля учит основу стиля (автор 03.10).
             basic = style.get().basic().orElse(null);
-            spreads.add(new Spread(false, null, BASIC));
-        }
-        for (ResourceLocation f : forms) {
-            ResourceLocation pic = spreadTex(f.getPath());
-            if (exists(pic)) {
-                spreads.add(new Spread(true, f, pic));
+            String coverPath = io.github.verycooltimo.murim.technique.BookLayout.cover(style.get());
+            if (exists(tex(coverPath))) {
+                cover = tex(coverPath);
             }
-            spreads.add(new Spread(false, f, BASIC));
+            layout = io.github.verycooltimo.murim.technique.BookLayout.pages(style.get(), path -> exists(tex(path)));
+        } else {
+            layout = io.github.verycooltimo.murim.technique.BookLayout.single(open.technique(), path -> exists(tex(path)));
+        }
+        for (io.github.verycooltimo.murim.technique.BookLayout.Page p : layout) {
+            ResourceLocation t = tex(p.texture());
+            if (!exists(t)) {
+                // Страховка от «шахматки»: шаблон текста секты ещё не нарисован — шаблон Хуашань;
+                // нет картинки — разворот пропускается (тест BookLayoutTest следит, чтобы так не было).
+                if (p.picture()) {
+                    continue;
+                }
+                t = tex("textures/gui/book/basic_huashan.png");
+            }
+            spreads.add(new Spread(p.picture(), p.form(), t));
         }
         this.pages = spreads.size();
     }
@@ -233,7 +240,7 @@ public final class ManualScreen extends Screen {
             }
             int shade = (int) (110 * (1.0F - Math.abs(c)));
             if (c >= 0.0F) {
-                g.blit(COVER, PAGE_W, 0, w, TEX_H, 0.0F, 0.0F, PAGE_W, TEX_H, PAGE_W, TEX_H);
+                g.blit(cover, PAGE_W, 0, w, TEX_H, 0.0F, 0.0F, PAGE_W, TEX_H, PAGE_W, TEX_H);
                 g.fill(PAGE_W, 0, PAGE_W + w, TEX_H, shade << 24);
             } else {
                 Spread first = spreads.get(0);
