@@ -7,6 +7,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.block.BannerBlock;
 import net.minecraft.world.level.block.BarrelBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -17,9 +18,11 @@ import net.minecraft.world.level.block.LadderBlock;
 import net.minecraft.world.level.block.LanternBlock;
 import net.minecraft.world.level.block.RotatedPillarBlock;
 import net.minecraft.world.level.block.SlabBlock;
+import net.minecraft.world.level.block.StairBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.AttachFace;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.Half;
 import net.minecraft.world.level.block.state.properties.SlabType;
 import net.minecraft.world.level.storage.loot.LootTable;
 
@@ -51,15 +54,69 @@ public final class CampBuilder {
 
         /** Рамка с предметом на стене (висит на блоке позади себя). */
         void frame(int x, int y, int z, Direction facing, ItemStack item);
+
+        /** Предмет в воздухе (ItemDisplay): мясо на вертеле. Координаты — центр предмета. */
+        void display(double x, double y, double z, float yaw, ItemStack item);
+    }
+
+    /**
+     * ItemDisplay «fixed» с предметом и масштабом — через NBT: сеттеры предмета у ItemDisplay приватные.
+     * API: reference/minecraft-src/net/minecraft/world/entity/Display.java (ItemDisplay#readAdditionalSaveData:
+     * "item", "item_display", Display#readAdditionalSaveData: "transformation"), Entity#load.
+     */
+    public static net.minecraft.world.entity.Display.ItemDisplay itemDisplay(net.minecraft.server.level.ServerLevel level,
+                                                                             double x, double y, double z, float yaw, ItemStack item, float scale) {
+        net.minecraft.world.entity.Display.ItemDisplay d = net.minecraft.world.entity.EntityType.ITEM_DISPLAY.create(level);
+        if (d == null) {
+            return null;
+        }
+        net.minecraft.nbt.CompoundTag tag = new net.minecraft.nbt.CompoundTag();
+        tag.put("item", item.save(level.registryAccess()));
+        tag.putString("item_display", "fixed");
+        net.minecraft.nbt.CompoundTag tr = new net.minecraft.nbt.CompoundTag();
+        tr.put("translation", floats(0.0F, 0.0F, 0.0F));
+        tr.put("left_rotation", floats(0.0F, 0.0F, 0.0F, 1.0F));
+        tr.put("scale", floats(scale, scale, scale));
+        tr.put("right_rotation", floats(0.0F, 0.0F, 0.0F, 1.0F));
+        tag.put("transformation", tr);
+        d.load(tag);
+        d.moveTo(x, y, z, yaw, 0.0F);
+        return d;
+    }
+
+    private static net.minecraft.nbt.ListTag floats(float... v) {
+        net.minecraft.nbt.ListTag l = new net.minecraft.nbt.ListTag();
+        for (float f : v) {
+            l.add(net.minecraft.nbt.FloatTag.valueOf(f));
+        }
+        return l;
     }
 
     public static final ResourceKey<LootTable> LOOT_CRATE = loot("chests/bandit_camp/crate");
     public static final ResourceKey<LootTable> LOOT_CART = loot("chests/bandit_camp/cart");
     public static final ResourceKey<LootTable> LOOT_CHIEF = loot("chests/bandit_camp/chief");
 
-    private static final Block[] TENT_WOOL = {Blocks.BROWN_WOOL, Blocks.LIGHT_GRAY_WOOL, Blocks.GREEN_WOOL, Blocks.WHITE_WOOL};
+    /**
+     * Полотно шатра: ступени дают скат 45°, верхний полублок — конёк, полный блок — задняя стенка.
+     * Гладкий песчаник и кварц читаются как небелёный и белёный холст, ель — как кожа на жердях
+     * (шерстяная «ступенчатая горка» отвергнута: наклонной шерсти в ванили нет, codex 04.10).
+     */
+    record Canvas(Block stairs, Block slab, Block full) {
+    }
+
+    private static final Canvas[] TENT_CANVAS = {
+            new Canvas(Blocks.SMOOTH_SANDSTONE_STAIRS, Blocks.SMOOTH_SANDSTONE_SLAB, Blocks.SMOOTH_SANDSTONE),
+            new Canvas(Blocks.SPRUCE_STAIRS, Blocks.SPRUCE_SLAB, Blocks.SPRUCE_PLANKS),
+            new Canvas(Blocks.SMOOTH_QUARTZ_STAIRS, Blocks.SMOOTH_QUARTZ_SLAB, Blocks.SMOOTH_QUARTZ),
+            new Canvas(Blocks.SMOOTH_SANDSTONE_STAIRS, Blocks.SMOOTH_SANDSTONE_SLAB, Blocks.SMOOTH_SANDSTONE)};
     private static final Block[] TENT_CARPET = {Blocks.BROWN_CARPET, Blocks.GRAY_CARPET, Blocks.GREEN_CARPET, Blocks.LIGHT_GRAY_CARPET};
-    private static final Block[] CHIEF_WOOL = {Blocks.RED_WOOL, Blocks.BLACK_WOOL};
+    /** Шатёр главаря: охристо-красный холст или тёмная кожа; задняя стенка — шерсть цвета его знамени. */
+    private static final Canvas[] CHIEF_CANVAS = {
+            new Canvas(Blocks.SMOOTH_RED_SANDSTONE_STAIRS, Blocks.SMOOTH_RED_SANDSTONE_SLAB, Blocks.RED_WOOL),
+            new Canvas(Blocks.DARK_OAK_STAIRS, Blocks.DARK_OAK_SLAB, Blocks.BLACK_WOOL)};
+
+    /** Масштаб мяса на вертеле (ItemDisplay). */
+    public static final float MEAT_SCALE = 0.7F;
 
     private final CampLayout plan;
     private final int cx;
@@ -82,6 +139,7 @@ public final class CampBuilder {
 
     public void build() {
         yard();
+        gateGround();
         palisade();
         gate();
         for (int i = 0; i < plan.spots().size(); i++) {
@@ -89,8 +147,8 @@ public final class CampBuilder {
             int y = heights[i];
             switch (s.kind()) {
                 case FIRE -> fire(s, y);
-                case TENT -> tent(s, y, 2, 2, TENT_WOOL[s.variant() & 3], TENT_CARPET[s.variant() & 3], false);
-                case CHIEF_TENT -> tent(s, y, 3, 3, CHIEF_WOOL[s.variant() & 1], Blocks.RED_CARPET, true);
+                case TENT -> tent(s, y, 2, 2, TENT_CANVAS[s.variant() & 3], TENT_CARPET[s.variant() & 3], false);
+                case CHIEF_TENT -> tent(s, y, 3, 3, CHIEF_CANVAS[s.variant() & 1], Blocks.RED_CARPET, true);
                 case LEAN_TO -> leanTo(s, y);
                 case TOWER -> tower(s, y);
                 case CART -> cart(s, y);
@@ -197,18 +255,24 @@ public final class CampBuilder {
 
     // ------------------------------------------------------------------ постройки
 
-    /** Костёр с вертелом (две жерди и цепь над огнём), брёвна-скамьи вокруг, поленница. */
+    /**
+     * Костёр с вертелом: две жерди-рогатки, железный прут (цепь) над огнём и жареная птица на нём
+     * (ItemDisplay, автор: «вертел читаемый»); брёвна-скамьи вокруг, камни очага.
+     */
     private void fire(CampLayout.Spot s, int y) {
         int x = cx + s.dx(), z = cz + s.dz();
         footprint(s, y, -3, 3, -3, 3, 3, true);
         put(x, y + 1, z, Blocks.CAMPFIRE.defaultBlockState().setValue(CampfireBlock.LIT, true));
         put(x, y, z, Blocks.COBBLESTONE.defaultBlockState());
-        // Вертел вдоль оси x: жерди по бокам, цепь — прут над огнём.
+        // Вертел вдоль оси x: жерди по бокам, цепь — прут над огнём, на пруте — птица.
         fence(x - 1, y + 1, z, Blocks.SPRUCE_FENCE);
         fence(x - 1, y + 2, z, Blocks.SPRUCE_FENCE);
         fence(x + 1, y + 1, z, Blocks.SPRUCE_FENCE);
         fence(x + 1, y + 2, z, Blocks.SPRUCE_FENCE);
         put(x, y + 2, z, Blocks.CHAIN.defaultBlockState().setValue(RotatedPillarBlock.AXIS, Direction.Axis.X));
+        if (sink.owns(x, z)) {
+            sink.display(x + 0.5D, y + 2.42D, z + 0.5D, 0.0F, new ItemStack(Items.COOKED_CHICKEN));
+        }
         // Камни очага и зола вокруг.
         for (int[] o : new int[][] {{1, 1}, {-1, 1}, {1, -1}, {-1, -1}, {0, 1}, {0, -1}}) {
             put(x + o[0], y, z + o[1], (CampLayout.hash(plan.seed(), x + o[0], z + o[1]) & 1L) == 0L
@@ -233,77 +297,106 @@ public final class CampBuilder {
     }
 
     /**
-     * Шатёр-«домик»: скаты из шерсти, глухая задняя стенка, вход к костру. {@code half} — полуширина
+     * Шатёр-«домик» на жердях: скаты из ступеней полотна (45°), конёк — верхний полублок и жердь из
+     * забора во всю длину на двух стойках спереди и сзади, глухая задняя стенка, открытый вход к костру,
+     * колья-растяжки. Внутри — постели (циновка и светлое изголовье). {@code half} — полуширина
      * (2 — простой, 3 — главаря), {@code depth} — на сколько уходит назад от центра.
      */
-    private void tent(CampLayout.Spot s, int y, int half, int depth, Block wool, Block carpet, boolean chief) {
+    private void tent(CampLayout.Spot s, int y, int half, int depth, Canvas canvas, Block carpet, boolean chief) {
         int front = 2;
         footprint(s, y, -depth - 1, front + 1, -half, half, half + 2, false);
-        BlockState w = wool.defaultBlockState();
+        Direction toPlus = dir(s.facing() + 1);
+        Direction toMinus = dir(s.facing() + 3);
+        BlockState full = canvas.full().defaultBlockState();
+        BlockState ridgeSlab = canvas.slab().defaultBlockState().setValue(SlabBlock.TYPE, SlabType.TOP);
         for (int a = -depth; a <= front; a++) {
             for (int side = -half; side <= half; side++) {
-                int lvl = half - Math.abs(side);
-                // Скат: на каждой высоте — шерсть на краю, внутри пусто.
-                put(rel(s, a, side), y + 1 + lvl, w);
+                int[] c = rel(s, a, side);
+                if (side == 0) {
+                    put(c, y + half, a == -depth ? full : ridgeSlab);
+                } else {
+                    // Скат: ступень поднимается к коньку.
+                    int lvl = half - Math.abs(side);
+                    put(c, y + 1 + lvl, canvas.stairs().defaultBlockState()
+                            .setValue(StairBlock.FACING, side < 0 ? toPlus : toMinus)
+                            .setValue(StairBlock.HALF, Half.BOTTOM));
+                }
                 if (a == -depth) {
-                    // Задняя стенка: заполнить треугольник.
-                    for (int k = 0; k < lvl; k++) {
-                        put(rel(s, a, side), y + 1 + k, w);
+                    // Задняя стенка: треугольник под скатами.
+                    int top = side == 0 ? half - 1 : half - Math.abs(side);
+                    for (int k = 1; k <= top; k++) {
+                        put(c, y + k, full);
                     }
-                } else if (lvl > 0 && a < front) {
-                    put(rel(s, a, side), y + 1, carpet.defaultBlockState());
                 }
             }
         }
-        // Конёк — жердь, торчащая спереди и сзади: так шерстяные скаты читаются как шатёр, а не горка.
-        fence(rel(s, front + 1, 0), y + 1 + half, Blocks.SPRUCE_FENCE);
-        fence(rel(s, -depth - 1, 0), y + 1 + half, Blocks.SPRUCE_FENCE);
+        // Конёк-жердь во всю длину и две стойки под ней (спереди и сзади, на шаг за полотном).
+        for (int a = -depth - 1; a <= front + 1; a++) {
+            fence(rel(s, a, 0), y + half + 1, Blocks.SPRUCE_FENCE);
+        }
+        for (int a : new int[] {-depth - 1, front + 1}) {
+            for (int k = 1; k <= half; k++) {
+                fence(rel(s, a, 0), y + k, Blocks.SPRUCE_FENCE);
+            }
+        }
         // Колья-растяжки у входа (по краям ската, на шаг впереди).
         for (int side : new int[] {-half, half}) {
             fence(rel(s, front + 1, side), y + 1, Blocks.SPRUCE_FENCE);
         }
+        // Постели вдоль скатов: изголовье у задней стенки светлое, дальше циновка.
+        int[] beds = chief ? new int[] {1, 2} : new int[] {-1, 1};
+        for (int side : beds) {
+            for (int a = -depth + 1; a <= front - 1; a++) {
+                put(rel(s, a, side), y + 1, (a == -depth + 1 ? Blocks.WHITE_CARPET : carpet).defaultBlockState());
+            }
+        }
         if (chief) {
-            // Сундук главаря у задней стенки, фонарь под коньком, знамя у входа.
+            // Сундук главаря у задней стенки, бочка с фонарём, два знамени у входа.
             int[] c = rel(s, -depth + 1, 0);
             put(c, y + 1, Blocks.CHEST.defaultBlockState().setValue(ChestBlock.FACING, dir(s.facing())));
             if (sink.owns(c[0], c[1])) {
                 sink.loot(c[0], y + 1, c[1], LOOT_CHIEF);
             }
-            put(rel(s, 0, 0), y + half, Blocks.LANTERN.defaultBlockState().setValue(LanternBlock.HANGING, true));
             put(rel(s, -depth + 1, -1), y + 1, Blocks.BARREL.defaultBlockState().setValue(BarrelBlock.FACING, Direction.UP));
-            int[] b = rel(s, front + 1, half - 1);
-            put(b, y + 1, Blocks.BLACK_BANNER.defaultBlockState());
+            put(rel(s, -depth + 1, -1), y + 2, Blocks.LANTERN.defaultBlockState());
+            int rot = (s.facing() & 3) * 4;
+            put(rel(s, front + 1, -(half - 1)), y + 1, Blocks.RED_BANNER.defaultBlockState().setValue(BannerBlock.ROTATION, rot));
+            put(rel(s, front + 1, half - 1), y + 1, Blocks.BLACK_BANNER.defaultBlockState().setValue(BannerBlock.ROTATION, rot));
         } else {
-            // Свёрнутая постель: тюк сена в глубине.
-            put(rel(s, -depth + 1, 0), y + 1, Blocks.HAY_BLOCK.defaultBlockState()
-                    .setValue(RotatedPillarBlock.AXIS, axisAcross(s.facing())));
+            // Свёрток с пожитками у задней стенки.
+            put(rel(s, -depth + 1, 0), y + 1, Blocks.BARREL.defaultBlockState().setValue(BarrelBlock.FACING, Direction.UP));
         }
     }
 
-    /** Навес: дощатая задняя стена, крыша из полублоков уступом к костру, жерди спереди. */
+    /**
+     * Навес: задняя стенка из полотна на двух брёвнах, крыша скатом к костру (ступень — полублок —
+     * ступень — полублок, с 4 до 3 блоков), передние жерди, внутри две постели и бочка.
+     */
     private void leanTo(CampLayout.Spot s, int y) {
-        footprint(s, y, -2, 3, -3, 3, 4, false);
-        BlockState planks = Blocks.SPRUCE_PLANKS.defaultBlockState();
+        footprint(s, y, -2, 3, -3, 3, 5, false);
+        Canvas canvas = TENT_CANVAS[1];
+        Direction back = dir(s.facing() + 2);
+        BlockState stair = canvas.stairs().defaultBlockState().setValue(StairBlock.FACING, back).setValue(StairBlock.HALF, Half.BOTTOM);
+        BlockState slab = canvas.slab().defaultBlockState().setValue(SlabBlock.TYPE, SlabType.BOTTOM);
         for (int side = -2; side <= 2; side++) {
             for (int k = 1; k <= 3; k++) {
                 put(rel(s, -1, side), y + k, Math.abs(side) == 2
-                        ? Blocks.SPRUCE_LOG.defaultBlockState() : planks);
+                        ? Blocks.SPRUCE_LOG.defaultBlockState() : canvas.full().defaultBlockState());
             }
-            // Крыша уступом к костру: над стеной — нижний полублок на y+4, дальше верхний на y+3,
-            // у жердей — нижний на y+3.
-            BlockState slab = Blocks.SPRUCE_SLAB.defaultBlockState();
-            put(rel(s, -1, side), y + 4, slab.setValue(SlabBlock.TYPE, SlabType.BOTTOM));
-            put(rel(s, 0, side), y + 3, slab.setValue(SlabBlock.TYPE, SlabType.TOP));
-            put(rel(s, 1, side), y + 3, slab.setValue(SlabBlock.TYPE, SlabType.BOTTOM));
-            put(rel(s, 2, side), y + 3, slab.setValue(SlabBlock.TYPE, SlabType.BOTTOM));
+            put(rel(s, -1, side), y + 4, stair);
+            put(rel(s, 0, side), y + 4, slab);
+            put(rel(s, 1, side), y + 3, stair);
+            put(rel(s, 2, side), y + 3, slab);
         }
         for (int side : new int[] {-2, 2}) {
             fence(rel(s, 2, side), y + 1, Blocks.SPRUCE_FENCE);
             fence(rel(s, 2, side), y + 2, Blocks.SPRUCE_FENCE);
         }
-        put(rel(s, 0, -1), y + 1, Blocks.HAY_BLOCK.defaultBlockState().setValue(RotatedPillarBlock.AXIS, axisAcross(s.facing())));
-        put(rel(s, 0, 1), y + 1, Blocks.BARREL.defaultBlockState().setValue(BarrelBlock.FACING, Direction.UP));
-        put(rel(s, 0, 0), y + 1, Blocks.BROWN_CARPET.defaultBlockState());
+        for (int side : new int[] {-1, 1}) {
+            put(rel(s, 0, side), y + 1, Blocks.WHITE_CARPET.defaultBlockState());
+            put(rel(s, 1, side), y + 1, Blocks.BROWN_CARPET.defaultBlockState());
+        }
+        put(rel(s, 0, 0), y + 1, Blocks.BARREL.defaultBlockState().setValue(BarrelBlock.FACING, Direction.UP));
     }
 
     /** Дозорная вышка: четыре столба, площадка 3×3 на высоте 5, перила, лестница, фонарь. */
@@ -412,8 +505,9 @@ public final class CampBuilder {
 
     /**
      * Опора под постройку в прямоугольнике (вдоль: a0..a1, поперёк: s0..s1): ниже опорной высоты —
-     * подсыпать землёй, выше — срезать склон на {@code clear} блоков над полом. Верх подсыпки —
-     * утоптанная земля, если {@code trample}.
+     * подсыпать, выше — срезать склон на {@code clear} блоков над полом. Верх подсыпки — утоптанная
+     * земля, если {@code trample}. Край подсыпки — сухая кладка из булыжника, по верху — лежачее
+     * бревно-брус: на склоне видна подпорная стенка террасы, а не бок земляной горки (замечание 04.10).
      */
     private void footprint(CampLayout.Spot s, int y, int a0, int a1, int s0, int s1, int clear, boolean trample) {
         for (int a = a0; a <= a1; a++) {
@@ -427,13 +521,143 @@ public final class CampBuilder {
                     // Обрыв или скала: не строить фундамент-колонну, пусть край висит над склоном.
                     continue;
                 }
-                for (int k = g + 1; k <= y; k++) {
-                    sink.set(p[0], k, p[1], Blocks.DIRT.defaultBlockState());
+                boolean edge = a == a0 || a == a1 || side == s0 || side == s1;
+                for (int k = g + 1; k < y; k++) {
+                    sink.set(p[0], k, p[1], edge ? rubble(p[0], k, p[1]) : Blocks.DIRT.defaultBlockState());
                 }
-                // Верх опоры — тропа или глина: на земле и грубой земле проросли бы деревья
-                // (котёл кадров 04.10: дерево посреди лагеря у костра).
-                sink.set(p[0], y, p[1], trample ? Blocks.DIRT_PATH.defaultBlockState() : Blocks.PACKED_MUD.defaultBlockState());
+                if (edge && g < y) {
+                    // Брус по краю террасы: вдоль края.
+                    boolean alongSide = a == a0 || a == a1;
+                    Direction.Axis axis = alongSide ? axisAlong(s.facing() + 1) : axisAlong(s.facing());
+                    sink.set(p[0], y, p[1], Blocks.STRIPPED_SPRUCE_LOG.defaultBlockState().setValue(RotatedPillarBlock.AXIS, axis));
+                } else if (g <= y) {
+                    // Верх опоры — тропа или глина: на земле и грубой земле проросли бы деревья
+                    // (котёл кадров 04.10: дерево посреди лагеря у костра).
+                    sink.set(p[0], y, p[1], trample ? Blocks.DIRT_PATH.defaultBlockState() : Blocks.PACKED_MUD.defaultBlockState());
+                } else {
+                    sink.set(p[0], y, p[1], trample ? Blocks.DIRT_PATH.defaultBlockState() : Blocks.PACKED_MUD.defaultBlockState());
+                }
                 clearAbove(p[0], y + 1, p[1], Math.max(clear, g - y));
+            }
+        }
+    }
+
+    /** Сухая кладка: булыжник с мшистым и кое-где бревном (по хэшу клетки). */
+    private BlockState rubble(int x, int y, int z) {
+        long h = CampLayout.hash(plan.seed() ^ y, x, z) % 10L;
+        return (h < 6 ? Blocks.COBBLESTONE : h < 9 ? Blocks.MOSSY_COBBLESTONE : Blocks.ANDESITE).defaultBlockState();
+    }
+
+    /** Ось вдоль направления {@code facing} (0 юг, 1 запад, 2 север, 3 восток). */
+    private static Direction.Axis axisAlong(int facing) {
+        return (facing & 1) == 0 ? Direction.Axis.Z : Direction.Axis.X;
+    }
+
+    // ------------------------------------------------------------------ земля у ворот и на тропе
+
+    /** Полублоки-ступени на тропе: булыжник, мшистый по хэшу. */
+    private boolean stepSlab(BlockState st) {
+        return st.is(Blocks.COBBLESTONE_SLAB) || st.is(Blocks.MOSSY_COBBLESTONE_SLAB);
+    }
+
+    /** Клетка тропы (двор от ворот к костру, проём ворот, тропа в лес) и не кол частокола. */
+    private boolean walkway(int dx, int dz) {
+        if (stake(dx, dz)) {
+            return false;
+        }
+        return (plan.inside(dx, dz) && plan.onPath(dx, dz)) || (!plan.inside(dx, dz) && plan.onTrail(dx, dz)) || gateCell(dx, dz);
+    }
+
+    private boolean stake(int dx, int dz) {
+        for (CampLayout.Stake st : plan.stakes()) {
+            if (st.dx() == dx && st.dz() == dz) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean gateCell(int dx, int dz) {
+        for (int[] c : plan.gateCells()) {
+            if (c[0] == dx && c[1] == dz) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Проём ворот и по два шага тропы по обе стороны — выровнены на высоту ворот. */
+    private boolean gateApron(int dx, int dz) {
+        int[] g = plan.gateCentre();
+        double ddx = dx - g[0], ddz = dz - g[1];
+        return walkway(dx, dz) && ddx * ddx + ddz * ddz <= 2.6D * 2.6D;
+    }
+
+    /**
+     * Высота тропы в клетке без учёта своих ступеней: у ворот — высота ворот, иначе — рельеф.
+     * {@code Integer.MIN_VALUE} — под ногами не земля тропы (листва, бревно, вода).
+     */
+    private int walkHeight(int x, int z) {
+        int dx = x - cx, dz = z - cz;
+        if (gateApron(dx, dz)) {
+            return gateY();
+        }
+        int g = sink.ground(x, z);
+        BlockState top = sink.get(x, g, z);
+        if (stepSlab(top)) {
+            return g - 1;
+        }
+        boolean soil = top.is(Blocks.DIRT_PATH) || top.is(Blocks.GRAVEL) || top.is(Blocks.PACKED_MUD) || top.is(Blocks.GRASS_BLOCK)
+                || top.is(Blocks.DIRT) || top.is(Blocks.COARSE_DIRT) || top.is(Blocks.PODZOL) || top.is(Blocks.MYCELIUM);
+        return soil ? g : Integer.MIN_VALUE;
+    }
+
+    /**
+     * Ровная земля у ворот (автор: «ступенчатая земля у ворот»): проём ворот и два шага тропы с каждой
+     * стороны выровнены на высоту ворот (подсыпка — земля под тропой, срез — убрать лишнее). Дальше по тропе
+     * уступ в один блок сглажен полублоком-ступенью из булыжника на нижней клетке.
+     */
+    private void gateGround() {
+        int r = plan.radius() + CampLayout.TRAIL_LENGTH + 1;
+        int gy = gateY();
+        for (int dx = -r; dx <= r; dx++) {
+            for (int dz = -r; dz <= r; dz++) {
+                int x = cx + dx, z = cz + dz;
+                if (!sink.owns(x, z) || !gateApron(dx, dz)) {
+                    continue;
+                }
+                int g = sink.ground(x, z);
+                if (g < gy - 3 || g > gy + 3) {
+                    continue;
+                }
+                for (int k = g + 1; k < gy; k++) {
+                    sink.set(x, k, z, Blocks.DIRT.defaultBlockState());
+                }
+                sink.set(x, gy, z, Blocks.DIRT_PATH.defaultBlockState());
+                clearAbove(x, gy + 1, z, Math.max(4, g - gy));
+            }
+        }
+        for (int dx = -r; dx <= r; dx++) {
+            for (int dz = -r; dz <= r; dz++) {
+                int x = cx + dx, z = cz + dz;
+                if (!sink.owns(x, z) || !walkway(dx, dz) || gateApron(dx, dz)) {
+                    continue;
+                }
+                int h = walkHeight(x, z);
+                if (h == Integer.MIN_VALUE) {
+                    continue;
+                }
+                boolean up = false;
+                for (int f = 0; f < 4 && !up; f++) {
+                    int[] st = CampLayout.step(f);
+                    if (walkway(dx + st[0], dz + st[1])) {
+                        up = walkHeight(x + st[0], z + st[1]) == h + 1;
+                    }
+                }
+                if (up && sink.get(x, h + 1, z).isAir()) {
+                    Block slab = (CampLayout.hash(plan.seed(), x, z) & 3L) == 0L ? Blocks.MOSSY_COBBLESTONE_SLAB : Blocks.COBBLESTONE_SLAB;
+                    sink.set(x, h + 1, z, slab.defaultBlockState().setValue(SlabBlock.TYPE, SlabType.BOTTOM));
+                }
             }
         }
     }
