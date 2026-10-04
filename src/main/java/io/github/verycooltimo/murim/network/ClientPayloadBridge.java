@@ -42,6 +42,14 @@ final class ClientPayloadBridge {
         io.github.verycooltimo.murim.client.vfx.ExplosionVfx.onExplosion(payload);
     }
 
+    public static void handleDialogue(DialoguePayloads.Open payload) {
+        io.github.verycooltimo.murim.client.sect.DialogueScreen.open(payload);
+    }
+
+    public static void handleDialogueClose() {
+        io.github.verycooltimo.murim.client.sect.DialogueScreen.closeFromServer();
+    }
+
     public static void handleManual(ManualPayloads.Open payload) {
         // Только статический вызов: new ManualScreen здесь заставил бы сервер грузить клиентский Screen.
         io.github.verycooltimo.murim.client.ManualScreen.open(payload);
