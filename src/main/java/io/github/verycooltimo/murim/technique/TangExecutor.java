@@ -247,7 +247,8 @@ public final class TangExecutor {
         Vec3 hand = hand(player, true);
         LivingEntity t = TargetLock.locked(player, TangRules.FLASH_RANGE);
         if (t == null) {
-            t = nearestInCone(player, TangRules.FLASH_RANGE, 20.0D);
+            // 30°, как помощь прицела у остальных форм: на 20° цель чуть сбоку не бралась и кинжал уходил мимо.
+            t = nearestInCone(player, TangRules.FLASH_RANGE, 30.0D);
         }
         Vec3 aim;
         if (t != null) {

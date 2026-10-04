@@ -282,7 +282,9 @@ public final class TangVfx {
             case TangPayload.RECALL -> {
                 sound(p.pos(), SoundEvents.ARROW_SHOOT, p.form() == TangRules.RETURN ? 0.35F : 1.0F, p.form() == TangRules.RETURN ? 1.2F : 0.6F);
                 if (layer >= 1) {
-                    FX.rings.add(new Ring(p.pos(), camAxis(p.pos()), clientTicks, 0.15D, 0.9D, 7, 0.05D, WHITE, 0.2D));
+                    // Возврат в Рукав: лезвий много — кольцо маленькое и короткое, чтобы не закрывать прямые линии (codex 03.10).
+                    boolean many = p.form() == TangRules.RETURN;
+                    FX.rings.add(new Ring(p.pos(), camAxis(p.pos()), clientTicks, 0.1D, many ? 0.4D : 0.9D, many ? 4 : 7, 0.05D, WHITE, 0.2D));
                 }
             }
             case TangPayload.CAUGHT -> {
@@ -479,7 +481,8 @@ public final class TangVfx {
                 smoke(at, 0.45D, 2);
             } else if (p.form() == TangRules.FLASH) {
                 // Сорванный замах: белый разрыв у самого лица и кольцо.
-                FX.rings.add(new Ring(at, camAxis(at), clientTicks, 0.1D, 0.9D, 5, 0.05D, WHITE, 0.2D));
+                // Одна короткая вспышка (codex 03.10: длинный разрыв закрывал срыв замаха).
+                FX.rings.add(new Ring(at, camAxis(at), clientTicks, 0.1D, 0.6D, 3, 0.05D, WHITE, 0.2D));
                 sound(at, SoundEvents.SHIELD_BLOCK, 0.6F, 1.6F);
             } else if (p.form() == TangRules.STARS) {
                 // Белые полосы сходятся в точке у горла (d4-05): клинья наружу.
@@ -832,7 +835,8 @@ public final class TangVfx {
             case TangRules.FIVE -> 8;
             case TangRules.TWELVE -> 3;
             case TangRules.STARS -> 5;
-            case TangRules.THREE -> 7;
+            // Боковые дуги длиннее: изгиб читается по следу (codex 03.10).
+            case TangRules.THREE -> d.index() != 0 ? 12 : 7;
             case TangRules.FLASH -> 4;
             default -> d.mode() == TangDagger.CARP ? 9 : 6;
         };
@@ -1042,9 +1046,11 @@ public final class TangVfx {
                 a[k] = (float) (1.0D - u) * near(p[k], camera);
             }
             // Слои (codex 03.10): белое ядро 0,035, циан 0,1, синий край 0,19 блока.
+            // Три Лезвия: боковые — «две широкие белые дуги» (spec А), прямое — обычная циановая нить (codex 03.10).
+            boolean arc = d.form() == TangRules.THREE && d.index() != 0;
             if (d.layer() >= 3) {
-                PlumVfx.stripVar(v, pose, camera, p, PlumVfx.scale(w, 2.5D), PlumVfx.scaled(a, 0.22F), dark ? GREY : EDGE_BLUE);
-                PlumVfx.stripVar(v, pose, camera, p, PlumVfx.scale(w, 1.35D), PlumVfx.scaled(a, 0.55F), dark ? STEEL : CYAN);
+                PlumVfx.stripVar(v, pose, camera, p, PlumVfx.scale(w, 2.5D), PlumVfx.scaled(a, 0.22F), dark ? GREY : arc ? STEEL : EDGE_BLUE);
+                PlumVfx.stripVar(v, pose, camera, p, PlumVfx.scale(w, 1.35D), PlumVfx.scaled(a, 0.55F), dark ? STEEL : arc ? WHITE : CYAN);
             }
             PlumVfx.stripVar(v, pose, camera, p, PlumVfx.scale(w, 0.47D), PlumVfx.scaled(a, 0.95F), CORE);
         }

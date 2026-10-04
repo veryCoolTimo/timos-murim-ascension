@@ -310,6 +310,21 @@ public class TangDagger extends Projectile {
                     }
                     return from;
                 }
+                // Похищение Жизни: лезвие «появляется прямо перед лицом» (spec Б) — на последнем тике до цели
+                // путь доворачивает к горлу (не больше 1,2 блока бокового сдвига): идущий зомби иначе пропускал
+                // кинжал мимо уха (съёмка 04.10). Блок на линии по-прежнему останавливает.
+                if (form() == TangRules.FLASH && t != null && t.isAlive()) {
+                    Vec3 throat = throat(t);
+                    Vec3 step = getDeltaMovement();
+                    if (throat.distanceTo(from) <= step.length() + 0.5D) {
+                        Vec3 straight = from.add(step);
+                        Vec3 to = throat.add(step.normalize().scale(0.5D));
+                        Vec3 shift = to.subtract(straight);
+                        if (shift.length() <= 1.2D) {
+                            return to;
+                        }
+                    }
+                }
                 return from.add(getDeltaMovement());
             }
             case HANG -> {
