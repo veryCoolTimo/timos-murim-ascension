@@ -65,19 +65,19 @@ public final class SectLifeCapture {
 
     private static final List<Scene> ALL = List.of(
             // Рассвет: строй лицом к помосту, камера над помостом смотрит на ряды; наставник ходит между ними.
-            new Scene("dawn", 23300, "training", 2.0D, SectSchedule.FRONT_ROW + 9.0D, 4.5D, "training", 0.0D, 1.0D, 0.5D, false),
+            new Scene("dawn", 23300, "training", 3.0D, SectSchedule.FRONT_ROW + 7.0D, 3.5D, "training", 0.0D, 2.0D, 0.5D, false),
             // Тот же строй сбоку и выше — видно ряды целиком.
-            new Scene("dawn_side", 23400, "training", 17.0D, 2.0D, 6.0D, "training", 0.0D, 2.0D, 0.0D, false),
+            new Scene("dawn_side", 23400, "training", 13.0D, 3.0D, 3.0D, "training", 0.0D, 2.5D, 0.5D, false),
             // Днём: пары поединков на песке.
             new Scene("spar", 4200, "sparring", 0.0D, -14.0D, 6.0D, "sparring", 0.0D, 0.0D, 0.0D, false),
             // Днём: столбы и хозяйство в лагере.
-            new Scene("poles", 4300, "poles", 9.0D, 7.0D, 5.0D, "poles", 0.0D, 0.0D, 0.0D, false),
+            new Scene("poles", 4300, "poles", 7.0D, 6.0D, 3.5D, "poles", 0.0D, 0.0D, 0.5D, false),
             // Ужин: столовая и стол во дворе лагеря.
             new Scene("meal", 9300, "camp", 14.0D, 20.0D, 6.0D, "camp", 5.0D, 10.0D, 0.0D, false),
             // Вечер: кружки в лагере, медитация в роще.
             new Scene("evening", 11300, "camp", -12.0D, -2.0D, 6.0D, "camp", 0.0D, 0.0D, 0.0D, false),
             // Игрок в строю: с края второго ряда бьёт формы вместе со всеми.
-            new Scene("join", 23500, "training", 14.0D, 7.0D, 3.5D, "training", 5.0D, 4.0D, 0.5D, true));
+            new Scene("join", 23500, "training", 12.5D, 9.5D, 2.5D, "training", 4.5D, 3.0D, 1.0D, true));
 
     private static boolean setup;
     private static List<Scene> scenes;
@@ -145,6 +145,12 @@ public final class SectLifeCapture {
             KeyMapping.click(mc.options.keyAttack.getKey());
         }
         wait++;
+        if (!shooting && (wait == 40 || wait == 140)) {
+            // Дважды (TickTask сервер выполняет сразу, задержку считаем здесь): первый раз встают недостающие
+            // (их чанки только загрузились), второй — все на местах.
+            server.execute(() -> MurimMod.LOGGER.info("Стенд секты: сцена {} — {} людей на местах", s.name(),
+                    SectLife.settleAll(server.overworld())));
+        }
         if (!shooting) {
             int sections = mc.levelRenderer.countRenderedSections();
             stable = sections == lastSections && mc.levelRenderer.hasRenderedAllSections() ? stable + 1 : 0;
@@ -217,6 +223,15 @@ public final class SectLifeCapture {
         Vec3 cam = layout.at(s.zone(), s.du(), s.dv()).add(0.0D, s.dy(), 0.0D);
         Vec3 look = layout.at(s.lookZone(), s.lu(), s.lv()).add(0.0D, s.ly(), 0.0D);
         ServerPlayer p = server.getPlayerList().getPlayers().get(0);
+        // Свой ученик: глава не выходит встречать чужака к воротам.
+        if (!p.getData(ModAttachments.SECT).member()) {
+            p.setData(ModAttachments.SECT, p.getData(ModAttachments.SECT).joined());
+        }
+        // Овцы и свиньи на площадке не мешают кадру.
+        for (net.minecraft.world.entity.animal.Animal a : level.getEntitiesOfClass(net.minecraft.world.entity.animal.Animal.class,
+                new net.minecraft.world.phys.AABB(cam, cam).inflate(48.0D))) {
+            a.discard();
+        }
         // Сначала игрок у площадки: чанки грузятся, люди секты просыпаются.
         p.setGameMode(GameType.CREATIVE);
         if (s.join()) {
@@ -253,9 +268,6 @@ public final class SectLifeCapture {
         stand.setXRot(pitch);
         level.addFreshEntity(stand);
         // Люди секты — на места этой части суток (на следующем тике: чанки у площадки уже грузятся).
-        server.tell(new net.minecraft.server.TickTask(server.getTickCount() + 40, () -> {
-            int n = SectLife.settleAll(level);
-            MurimMod.LOGGER.info("Стенд секты: сцена {} — {} людей на местах, камера {} → {}", s.name(), n, cam, look);
-        }));
+        MurimMod.LOGGER.info("Стенд секты: сцена {}, камера {} → {}", s.name(), cam, look);
     }
 }

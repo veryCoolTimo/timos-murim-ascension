@@ -439,6 +439,7 @@ public final class SectLife {
         tag.putLong("beat", beat);
         if (count >= MORNING_FORMS) {
             tag.putBoolean("done", true);
+            MurimMod.LOGGER.info("Секта Хуашань: {} — утренняя тренировка засчитана", player.getName().getString());
             player.displayClientMessage(Component.translatable("murim.sect.morning.done").withStyle(ChatFormatting.GOLD), false);
             player.level().playSound(null, player.blockPosition(), SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS, 0.4F, 1.4F);
             for (SectDisciple d : player.level().getEntitiesOfClass(SectDisciple.class, player.getBoundingBox().inflate(20.0D),
