@@ -27,7 +27,8 @@ import net.neoforged.neoforge.client.event.ClientTickEvent;
  * <p>Viewpoints: env {@code MURIM_PANO_SHOTS} — comma list of names known to
  * {@code /murim mounthua tp} or custom {@code name@u:v:nominalY:lookU:lookV:pitch} in the
  * mountain's local frame. Env {@code MURIM_PANO_RD} — render distance (default 24),
- * {@code MURIM_CAPTURE_FOV} — field of view, {@code MURIM_PANO_TIME} — day time (default 4000).
+ * {@code MURIM_PANO_STABLE} — ticks of unchanged sections before a shot (default 80; low for
+ * fly-through frames), {@code MURIM_CAPTURE_FOV} — field of view, {@code MURIM_PANO_TIME} — day time (default 4000).
  *
  * <p>The integrated server is driven with {@code server.execute(...)} (its own thread); nothing
  * here runs without {@code -Dmurim.capture=true}.
@@ -106,7 +107,7 @@ public final class DevPanoramaHandler {
             stable = 0;
         }
         lastSections = sections;
-        boolean ready = wait >= env("MURIM_PANO_MIN", 300) && stable >= 80 && sections >= env("MURIM_PANO_SECTIONS", 300);
+        boolean ready = wait >= env("MURIM_PANO_MIN", 300) && stable >= env("MURIM_PANO_STABLE", 80) && sections >= env("MURIM_PANO_SECTIONS", 300);
         if (ready || wait >= env("MURIM_PANO_MAX", 2400)) {
             String name = shots.get(shot).split("@")[0];
             MurimMod.LOGGER.info("Panorama shot {} after {} ticks ({} sections, stable {})", name, wait, sections, stable);
