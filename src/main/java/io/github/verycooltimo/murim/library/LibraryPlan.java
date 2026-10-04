@@ -55,7 +55,8 @@ public final class LibraryPlan {
     public static final int[][] UNITS = {{2, 4}, {6, 8}, {10, 12}, {14, 16}, {18, 20}, {22, 24}};
     public static final int[] POSTS = {1, 5, 9, 13, 17, 21, 25};
     /** Posts on the railing line, running through all tiers (about 4-block centres). */
-    public static final int[] RAIL_POSTS = {5, 9, 13, 17, 21};
+    // Corners and the middle only (codex frame review: posts every 4 blocks hid the stacked galleries).
+    public static final int[] RAIL_POSTS = {5, 13, 21};
 
     /** Stairs, 2 wide on the inner half of a gallery: west x 3..4 steps z 8..11 (T3→T2, T1→T0); east x 22..23 steps z 18..15 (T2→T1). */
     public static final int STAIR_WEST_X = 3;

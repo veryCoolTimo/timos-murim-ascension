@@ -480,6 +480,10 @@ public class LibraryPiece extends StructurePiece {
             for (int ax = 10; ax <= 16; ax++) {
                 for (int az = 10; az <= 16; az++) {
                     boolean border = ax == 10 || ax == 16 || az == 10 || az == 16;
+                    // Missing and loose planks break the square (codex frame review: it read as a tidy centrepiece).
+                    if (n(ax, 3, az) < (border ? 0.3D : 0.12D)) {
+                        continue;
+                    }
                     a(ax, 0, az, border ? Blocks.DARK_OAK_PLANKS.defaultBlockState()
                             : ((ax / 2 + az / 2) % 2 == 0 ? Blocks.SPRUCE_PLANKS.defaultBlockState()
                             : Blocks.STRIPPED_SPRUCE_LOG.defaultBlockState().setValue(RotatedPillarBlock.AXIS, Direction.Axis.X)));
@@ -517,6 +521,10 @@ public class LibraryPiece extends StructurePiece {
                             continue;
                         }
                         if (t < 3 && hole(t + 1, ax, az)) {
+                            continue;
+                        }
+                        // Uneven pools of light: about a quarter of the rhythm is missing (codex frame review).
+                        if (n(ax, 88 + t, az) < 0.25D) {
                             continue;
                         }
                         // Hung from the ring beam (or the rock) right above the railing of the tier below.
@@ -602,11 +610,10 @@ public class LibraryPiece extends StructurePiece {
                     if (ax >= 10 && ax <= 16 && az >= 10 && az <= 16) {
                         continue;
                     }
-                    if (v < 0.035D) {
+                    // Dust is grey, moss green; brown carpet read as red rugs on the stand frames.
+                    if (v < 0.03D) {
                         soft(ax, 1, az, Blocks.MOSS_CARPET.defaultBlockState());
-                    } else if (v < 0.07D) {
-                        soft(ax, 1, az, Blocks.BROWN_CARPET.defaultBlockState());
-                    } else if (v < 0.09D) {
+                    } else if (v < 0.06D) {
                         soft(ax, 1, az, Blocks.LIGHT_GRAY_CARPET.defaultBlockState());
                     }
                 }
