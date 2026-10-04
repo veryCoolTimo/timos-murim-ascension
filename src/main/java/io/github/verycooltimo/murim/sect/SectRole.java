@@ -16,6 +16,8 @@ import java.util.Locale;
 public enum SectRole {
     MENTOR("sect_mentor", "mentor"),
     LEADER("sect_leader", "leader"),
+    /** Привратник у нижних ворот тропы: отправляет подниматься самому (автор 04.10). */
+    GATEKEEPER("sect_disciple", "gatekeeper"),
     SENIOR("sect_disciple", "senior"),
     DISCIPLE_A("sect_disciple", "disciple"),
     DISCIPLE_B("sect_disciple", "disciple");

@@ -12,9 +12,14 @@
       "gesture": "shake",
       "options": [
         { "text": "dialogue.murim.mentor.opt.who", "next": "who_outsider" },
-        { "text": "dialogue.murim.mentor.opt.to_leader", "actions": [ { "type": "teleport", "value": "gate" } ] },
+        { "text": "dialogue.murim.mentor.opt.to_leader", "next": "where_leader" },
         { "text": "dialogue.murim.opt.leave" }
       ]
+    },
+    "where_leader": {
+      "line": "dialogue.murim.mentor.where_leader",
+      "gesture": "point",
+      "options": [ { "text": "dialogue.murim.opt.leave" } ]
     },
     "who_outsider": {
       "line": "dialogue.murim.mentor.who_outsider",
