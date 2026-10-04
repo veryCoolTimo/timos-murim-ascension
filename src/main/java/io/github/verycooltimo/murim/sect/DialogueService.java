@@ -240,18 +240,12 @@ public final class DialogueService {
                 // Поклон игрока (табличкам предков, наставнику): клип spar_bow у игрока на этой реплике.
                 return MurimMod.MODID + ":spar_bow";
             }
-            case "start_trial" -> SectService.startTrial(player, npc);
             case "start_spar" -> {
                 if (npc.spars()) {
                     close(player, npc);
                     npc.startSpar(player, 20);
                     return "close";
                 }
-            }
-            case "teleport" -> {
-                close(player, npc);
-                SectService.teleport(player, v);
-                return "close";
             }
             default -> MurimMod.LOGGER.warn("Неизвестное действие диалога: {}", a.type());
         }

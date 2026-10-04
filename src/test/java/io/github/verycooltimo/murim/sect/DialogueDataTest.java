@@ -37,6 +37,9 @@ class DialogueDataTest {
         for (SectRole role : SectRole.values()) {
             Dialogue d = load(role.dialogue().getPath());
             assertEquals(List.of(), DialogueService.validate(d), role.id());
+            // Автор 04.10: на гору игрок поднимается сам — телепорта в диалогах нет.
+            d.nodes().values().forEach(n -> n.options().forEach(o -> o.actions().forEach(a ->
+                    assertFalse("teleport".equals(a.type()), role.id() + ": teleport"))));
             d.nodes().forEach((id, n) -> {
                 // Варианты с взаимоисключающими условиями могут быть больше четырёх, но без условий — не больше.
                 long always = n.options().stream().filter(o -> o.when().isEmpty()).count();

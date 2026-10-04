@@ -64,7 +64,8 @@ public record Dialogue(String name, String title, List<Entry> start, Map<String,
     /**
      * Действие при выборе варианта (или при входе в узел).
      * Типы: {@code set_flag}, {@code clear_flag}, {@code give_book}, {@code join_sect},
-     * {@code start_spar}, {@code start_trial}, {@code bow}, {@code teleport}, {@code gesture}.
+     * {@code start_spar}, {@code bow}, {@code gesture}. Телепорта нет намеренно (автор 04.10: на гору
+     * игрок поднимается сам).
      */
     public record Action(String type, Optional<String> value) {
         public static final Codec<Action> CODEC = RecordCodecBuilder.create(i -> i.group(

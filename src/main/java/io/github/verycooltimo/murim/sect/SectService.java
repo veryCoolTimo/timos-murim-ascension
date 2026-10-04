@@ -2,7 +2,6 @@ package io.github.verycooltimo.murim.sect;
 
 import io.github.verycooltimo.murim.MurimMod;
 import io.github.verycooltimo.murim.entity.SectDisciple;
-import io.github.verycooltimo.murim.entity.TrainingDummy;
 import io.github.verycooltimo.murim.mastery.MasteryService;
 import io.github.verycooltimo.murim.registry.ModAttachments;
 import io.github.verycooltimo.murim.registry.ModDataComponents;
@@ -26,13 +25,12 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.event.entity.player.AttackEntityEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
 import java.util.List;
 
 /**
- * Секта Хуашань на сервере (план §2.2, §5.1, этап С1): вступление, уроки наставника, книги, расстановка NPC.
+ * Секта Хуашань на сервере (план §2.2, §5.1, этап С1): вступление (без экзамена, автор 04.10), уроки наставника, книги, расстановка NPC.
  * Диалоги решают, что сказать и что сделать ({@link DialogueService}); здесь — сами действия и
  * проверки по реальному прогрессу игрока.
  */
@@ -41,9 +39,7 @@ public final class SectService {
 
     public static final ResourceLocation SIX = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "six_harmonies");
 
-    /** Флаги вступительного испытания и уроков (их же читают диалоги). */
-    public static final String TRIAL = "trial.started";
-    public static final String TRIAL_FORM = "trial.form";
+    /** Флаги уроков и спарринга (их же читают диалоги). */
     public static final String LESSON_SPAR = "lesson.spar";
     public static final String SPAR_CLEAN = "spar.clean3";
     public static final String SPAR_WON = "spar.won";
@@ -90,33 +86,6 @@ public final class SectService {
         }
     }
 
-    /** Испытание у ворот: рядом с главой — манекен, на котором игрок показывает форму. */
-    public static void startTrial(ServerPlayer player, SectDisciple leader) {
-        flag(player, TRIAL);
-        ServerLevel level = player.serverLevel();
-        if (level.getEntitiesOfClass(TrainingDummy.class, leader.getBoundingBox().inflate(10.0D)).isEmpty()) {
-            // Сбоку от главы и на шаг ближе к игроку: форму показывают у него на глазах.
-            Vec3 side = Vec3.directionFromRotation(0.0F, leader.getYRot() + 90.0F).scale(1.8D)
-                    .add(Vec3.directionFromRotation(0.0F, leader.getYRot()).scale(1.2D));
-            TrainingDummy dummy = new TrainingDummy(ModEntities.DUMMY.get(), level);
-            Vec3 at = ground(level, leader.position().add(side));
-            dummy.moveTo(at.x, at.y, at.z, leader.getYRot(), 0.0F);
-            level.addFreshEntity(dummy);
-        }
-    }
-
-    /** Телепорт к месту горы ({@link MountHuaPlan#ZONES}); горы нет — сообщение. */
-    public static void teleport(ServerPlayer player, String zone) {
-        MountHuaSite site = MountHuaSites.get(player.server);
-        int[] at = site == null ? null : zone(site, zone);
-        if (at == null) {
-            player.displayClientMessage(Component.translatable("murim.sect.no_mountain").withStyle(ChatFormatting.GRAY), true);
-            return;
-        }
-        ServerLevel overworld = player.server.overworld();
-        player.teleportTo(overworld, at[0] + 0.5D, at[1], at[2] + 0.5D, player.getYRot(), player.getXRot());
-    }
-
     /** Конец спарринга со старшим: исход для его реплики и урок «три чистых удара». */
     public static void onSparEnd(ServerPlayer player, SectDisciple senior, boolean playerWon) {
         SectState s = state(player).without(SPAR_WON).without(SPAR_LOST).with(playerWon ? SPAR_WON : SPAR_LOST);
@@ -135,39 +104,9 @@ public final class SectService {
         }
     }
 
-    /**
-     * Испытание у ворот: форма на манекене. Знает Шесть Равновесий — засчитывается только взмах формой
-     * (основа ставит отметку взмаха за тик-другой до пакета атаки, FoundationService); не знает — глава
-     * принимает и простой удар («повтори, как я показал», план §2.2 вариант Б).
-     */
-    @SubscribeEvent
-    static void onAttack(AttackEntityEvent event) {
-        if (!(event.getEntity() instanceof ServerPlayer player) || !(event.getTarget() instanceof TrainingDummy dummy)) {
-            return;
-        }
-        SectState s = state(player);
-        if (!s.has(TRIAL) || s.has(TRIAL_FORM) || s.member()) {
-            return;
-        }
-        if (MasteryService.knows(player, SIX)) {
-            int[] swing = player.getData(ModAttachments.FOUNDATION_SWING);
-            if (swing[1] < 0 || player.tickCount - swing[1] > 4) {
-                MurimMod.LOGGER.info("Испытание: удар по манекену без формы основы (взмах {} тиков назад)", player.tickCount - swing[1]);
-                return;
-            }
-        }
-        flag(player, TRIAL_FORM);
-        player.displayClientMessage(Component.translatable("murim.sect.trial_form").withStyle(ChatFormatting.GOLD), true);
-        for (SectDisciple npc : dummy.level().getEntitiesOfClass(SectDisciple.class, dummy.getBoundingBox().inflate(16.0D))) {
-            if (npc.role() == SectRole.LEADER) {
-                npc.gesture("nod");
-            }
-        }
-    }
-
     // ------------------------------------------------------------------ расстановка
 
-    /** {@code /murim sect spawn}: все NPC v1 полукругом перед игроком, манекен у главы. */
+    /** {@code /murim sect spawn}: все NPC v1 полукругом перед игроком. */
     public static int spawnAround(ServerPlayer player) {
         ServerLevel level = player.serverLevel();
         for (SectDisciple old : level.getEntitiesOfClass(SectDisciple.class, player.getBoundingBox().inflate(24.0D))) {
@@ -226,13 +165,13 @@ public final class SectService {
     }
 
     /**
-     * Гора уже в мире: NPC встают на площадки при первом приходе игрока (ворота — глава с манекеном
+     * Гора уже в мире: NPC встают на площадки при первом приходе игрока (ворота — глава
      * и ученик-привратник; главная терраса — наставник, старший, ученик). Генерацию горы не трогаем:
      * только читаем {@link MountHuaSites}, а «уже поставлены» помним в {@link SectSiteData}.
      */
     @SubscribeEvent
     static void onServerTick(ServerTickEvent.Post event) {
-        if (event.getServer().getTickCount() % 100 != 37) {
+        if (event.getServer().getTickCount() % 40 != 17) {
             return;
         }
         MountHuaSite site = MountHuaSites.get(event.getServer());
@@ -241,8 +180,45 @@ public final class SectService {
         }
         ServerLevel level = event.getServer().overworld();
         SectSiteData data = level.getDataStorage().computeIfAbsent(SectSiteData.FACTORY, SectSiteData.NAME);
-        placeZone(level, site, data, "gate", List.of(SectRole.LEADER, SectRole.DISCIPLE_A));
+        // Автор 04.10: внизу только привратник; глава — у ворот секты наверху тропы; экзамена нет, принимают как в книге.
+        placeZone(level, site, data, "gate", List.of(SectRole.GATEKEEPER));
+        placeZone(level, site, data, "sect_gate", List.of(SectRole.LEADER, SectRole.DISCIPLE_A));
         placeZone(level, site, data, "main", List.of(SectRole.MENTOR, SectRole.SENIOR, SectRole.DISCIPLE_B));
+        for (ServerPlayer p : level.players()) {
+            trackClimb(p, site);
+        }
+    }
+
+    /** Флаги подъёма: прошёл верхнюю часть тропы ногами, затем дошёл до ворот секты. */
+    public static final String TRAIL_HIGH = "trail.high";
+    public static final String CLIMBED = "climbed";
+
+    /**
+     * Подъём своими ногами (автор 04.10): игрок, прошедший мимо отметок верхней трети тропы
+     * ({@link MountHuaPlan#TRAIL}, последние точки до Золотого Замка), получает отметку; дошедший с ней
+     * до ворот секты — «поднялся сам», глава это замечает. Проверка раз в 2 с, только чтение плана горы.
+     */
+    static void trackClimb(ServerPlayer p, MountHuaSite site) {
+        SectState s = state(p);
+        if (s.has(CLIMBED) || s.member()) {
+            return;
+        }
+        if (!s.has(TRAIL_HIGH)) {
+            List<MountHuaPlan.TrailPoint> trail = MountHuaPlan.TRAIL;
+            for (int i = trail.size() * 2 / 3; i < trail.size() - 2; i++) {
+                MountHuaPlan.TrailPoint t = trail.get(i);
+                int[] w = site.toWorld(t.u(), t.v());
+                if (p.distanceToSqr(w[0] + 0.5D, site.worldY(t.y()), w[1] + 0.5D) < 14.0D * 14.0D) {
+                    flag(p, TRAIL_HIGH);
+                    return;
+                }
+            }
+            return;
+        }
+        int[] gate = zone(site, "sect_gate");
+        if (gate != null && p.distanceToSqr(gate[0] + 0.5D, gate[1], gate[2] + 0.5D) < 20.0D * 20.0D) {
+            flag(p, CLIMBED);
+        }
     }
 
     private static void placeZone(ServerLevel level, MountHuaSite site, SectSiteData data, String zone, List<SectRole> roles) {
@@ -266,14 +242,7 @@ public final class SectService {
             Vec3 mid = Vec3.atBottomCenterOf(center);
             for (int i = 0; i < roles.size(); i++) {
                 double off = (i - (roles.size() - 1) / 2.0D) * 4.0D;
-                SectDisciple npc = spawn(level, roles.get(i), mid.add(off, 0.0D, -3.0D), mid.add(0.0D, 0.0D, 6.0D));
-                if (roles.get(i) == SectRole.LEADER) {
-                    Vec3 side = Vec3.directionFromRotation(0.0F, npc.getYRot() + 90.0F).scale(2.5D);
-                    TrainingDummy dummy = new TrainingDummy(ModEntities.DUMMY.get(), level);
-                    Vec3 at = ground(level, npc.position().add(side));
-                    dummy.moveTo(at.x, at.y, at.z, npc.getYRot(), 0.0F);
-                    level.addFreshEntity(dummy);
-                }
+                spawn(level, roles.get(i), mid.add(off, 0.0D, -3.0D), mid.add(0.0D, 0.0D, 6.0D));
             }
             MurimMod.LOGGER.info("Секта Хуашань: NPC на площадке {} ({})", zone, center);
         }

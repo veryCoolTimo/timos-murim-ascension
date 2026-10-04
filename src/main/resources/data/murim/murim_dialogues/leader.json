@@ -2,108 +2,236 @@
   "name": "npc.murim.leader",
   "title": "npc.murim.leader.title",
   "start": [
-    { "when": [ { "member": true } ], "node": "member" },
-    { "when": [ { "flag": "trial.form" } ], "node": "form_seen" },
-    { "when": [ { "flag": "trial.bowed" } ], "node": "wait_form" },
-    { "when": [ { "flag": "trial.answered" } ], "node": "bow_prompt" },
-    { "node": "first" }
+    {
+      "when": [
+        {
+          "member": true
+        }
+      ],
+      "node": "member"
+    },
+    {
+      "when": [
+        {
+          "flag": "trial.answered"
+        }
+      ],
+      "node": "bow_prompt"
+    },
+    {
+      "when": [
+        {
+          "flag": "climbed"
+        }
+      ],
+      "node": "first_climbed"
+    },
+    {
+      "node": "first"
+    }
   ],
   "nodes": {
     "first": {
       "line": "dialogue.murim.leader.first",
       "gesture": "nod",
       "options": [
-        { "text": "dialogue.murim.leader.opt.become", "actions": [ { "type": "start_trial" } ], "next": "question" },
-        { "text": "dialogue.murim.leader.opt.who", "next": "who" },
-        { "text": "dialogue.murim.opt.leave" }
+        {
+          "text": "dialogue.murim.leader.opt.become",
+          "next": "question"
+        },
+        {
+          "text": "dialogue.murim.leader.opt.who",
+          "next": "who"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "first_climbed": {
+      "line": "dialogue.murim.leader.first_climbed",
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.leader.opt.become",
+          "next": "question"
+        },
+        {
+          "text": "dialogue.murim.leader.opt.who",
+          "next": "who"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "where_mentor": {
+      "line": "dialogue.murim.leader.where_mentor",
+      "gesture": "point",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
       ]
     },
     "who": {
       "line": "dialogue.murim.leader.who",
       "gesture": "explain",
       "options": [
-        { "text": "dialogue.murim.leader.opt.become", "actions": [ { "type": "start_trial" } ], "next": "question" },
-        { "text": "dialogue.murim.opt.leave" }
+        {
+          "text": "dialogue.murim.leader.opt.become",
+          "next": "question"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
       ]
     },
     "question": {
       "line": "dialogue.murim.leader.question",
       "gesture": "explain",
       "options": [
-        { "text": "dialogue.murim.leader.opt.ans_strong", "actions": [ { "type": "set_flag", "value": "trial.answered" } ], "next": "reply_strong" },
-        { "text": "dialogue.murim.leader.opt.ans_protect", "actions": [ { "type": "set_flag", "value": "trial.answered" } ], "next": "reply_protect" },
-        { "text": "dialogue.murim.leader.opt.ans_honest", "actions": [ { "type": "set_flag", "value": "trial.answered" } ], "next": "reply_honest" },
-        { "text": "dialogue.murim.leader.opt.ans_plum", "actions": [ { "type": "set_flag", "value": "trial.answered" } ], "next": "reply_plum" }
+        {
+          "text": "dialogue.murim.leader.opt.ans_strong",
+          "actions": [
+            {
+              "type": "set_flag",
+              "value": "trial.answered"
+            }
+          ],
+          "next": "reply_strong"
+        },
+        {
+          "text": "dialogue.murim.leader.opt.ans_protect",
+          "actions": [
+            {
+              "type": "set_flag",
+              "value": "trial.answered"
+            }
+          ],
+          "next": "reply_protect"
+        },
+        {
+          "text": "dialogue.murim.leader.opt.ans_honest",
+          "actions": [
+            {
+              "type": "set_flag",
+              "value": "trial.answered"
+            }
+          ],
+          "next": "reply_honest"
+        },
+        {
+          "text": "dialogue.murim.leader.opt.ans_plum",
+          "actions": [
+            {
+              "type": "set_flag",
+              "value": "trial.answered"
+            }
+          ],
+          "next": "reply_plum"
+        }
       ]
     },
     "reply_strong": {
       "line": "dialogue.murim.leader.reply_strong",
       "gesture": "shake",
-      "options": [ { "text": "dialogue.murim.leader.opt.go_on", "next": "bow_prompt" } ]
+      "options": [
+        {
+          "text": "dialogue.murim.leader.opt.go_on",
+          "next": "bow_prompt"
+        }
+      ]
     },
     "reply_protect": {
       "line": "dialogue.murim.leader.reply_protect",
       "gesture": "nod",
-      "options": [ { "text": "dialogue.murim.leader.opt.go_on", "next": "bow_prompt" } ]
+      "options": [
+        {
+          "text": "dialogue.murim.leader.opt.go_on",
+          "next": "bow_prompt"
+        }
+      ]
     },
     "reply_honest": {
       "line": "dialogue.murim.leader.reply_honest",
       "gesture": "nod",
-      "options": [ { "text": "dialogue.murim.leader.opt.go_on", "next": "bow_prompt" } ]
+      "options": [
+        {
+          "text": "dialogue.murim.leader.opt.go_on",
+          "next": "bow_prompt"
+        }
+      ]
     },
     "reply_plum": {
       "line": "dialogue.murim.leader.reply_plum",
       "gesture": "explain",
-      "options": [ { "text": "dialogue.murim.leader.opt.go_on", "next": "bow_prompt" } ]
+      "options": [
+        {
+          "text": "dialogue.murim.leader.opt.go_on",
+          "next": "bow_prompt"
+        }
+      ]
     },
     "bow_prompt": {
       "line": "dialogue.murim.leader.bow_prompt",
       "gesture": "point",
       "options": [
-        { "text": "dialogue.murim.leader.opt.bow", "actions": [ { "type": "bow" }, { "type": "set_flag", "value": "trial.bowed" } ], "next": "after_bow" },
-        { "text": "dialogue.murim.leader.opt.later" }
-      ]
-    },
-    "after_bow": {
-      "line": "dialogue.murim.leader.after_bow",
-      "gesture": "bow",
-      "enter": [ { "type": "start_trial" } ],
-      "options": [ { "text": "dialogue.murim.leader.opt.to_dummy" } ]
-    },
-    "wait_form": {
-      "line": "dialogue.murim.leader.wait_form",
-      "gesture": "point",
-      "enter": [ { "type": "start_trial" } ],
-      "options": [ { "text": "dialogue.murim.leader.opt.to_dummy" } ]
-    },
-    "form_seen": {
-      "line": "dialogue.murim.leader.form_seen",
-      "gesture": "nod",
-      "options": [
-        { "text": "dialogue.murim.leader.opt.accept", "actions": [ { "type": "join_sect" }, { "type": "bow" } ], "next": "welcome" }
+        {
+          "text": "dialogue.murim.leader.opt.bow",
+          "actions": [
+            {
+              "type": "bow"
+            },
+            {
+              "type": "join_sect"
+            }
+          ],
+          "next": "welcome"
+        },
+        {
+          "text": "dialogue.murim.leader.opt.later"
+        }
       ]
     },
     "welcome": {
       "line": "dialogue.murim.leader.welcome",
       "gesture": "bow",
       "options": [
-        { "text": "dialogue.murim.leader.opt.to_mentor", "actions": [ { "type": "teleport", "value": "main" } ] },
-        { "text": "dialogue.murim.opt.leave" }
+        {
+          "text": "dialogue.murim.leader.opt.to_mentor",
+          "next": "where_mentor"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
       ]
     },
     "member": {
       "line": "dialogue.murim.leader.member",
       "gesture": "nod",
       "options": [
-        { "text": "dialogue.murim.leader.opt.how_sect", "next": "sect_state" },
-        { "text": "dialogue.murim.leader.opt.to_mentor", "actions": [ { "type": "teleport", "value": "main" } ] },
-        { "text": "dialogue.murim.opt.leave" }
+        {
+          "text": "dialogue.murim.leader.opt.how_sect",
+          "next": "sect_state"
+        },
+        {
+          "text": "dialogue.murim.leader.opt.to_mentor",
+          "next": "where_mentor"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
       ]
     },
     "sect_state": {
       "line": "dialogue.murim.leader.sect_state",
       "gesture": "explain",
-      "options": [ { "text": "dialogue.murim.opt.leave" } ]
+      "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
     }
   }
 }
