@@ -18,21 +18,24 @@ import java.util.Set;
  * @param member     ученик Хуашань
  * @param generation поколение (3 — Чхон, канон: у игрока всегда третье), 0 — не вступил
  * @param flags      флаги разговоров и уроков
+ * @param contribution заслуги перед сектой за всё время (уроки, утренняя тренировка, пожертвования, защита горы);
+ *                     растят положение ({@link SectStanding}). Версия 2: старые сохранения читаются с нулём
  */
-public record SectState(int version, boolean member, int generation, Set<String> flags) {
+public record SectState(int version, boolean member, int generation, Set<String> flags, int contribution) {
 
-    public static final int VERSION = 1;
+    public static final int VERSION = 2;
     /** Поколение Чхон (청) — третье, как у игрока в каноне. */
     public static final int CHEON = 3;
 
-    public static final SectState NONE = new SectState(VERSION, false, 0, Set.of());
+    public static final SectState NONE = new SectState(VERSION, false, 0, Set.of(), 0);
 
     public static final Codec<SectState> CODEC = RecordCodecBuilder.<SectState>create(i -> i.group(
             Codec.INT.optionalFieldOf("version", 0).forGetter(SectState::version),
             Codec.BOOL.optionalFieldOf("member", false).forGetter(SectState::member),
             Codec.INT.optionalFieldOf("generation", 0).forGetter(SectState::generation),
             Codec.STRING.listOf().xmap(l -> (Set<String>) new HashSet<>(l), s -> s.stream().sorted().toList())
-                    .optionalFieldOf("flags", Set.of()).forGetter(SectState::flags)
+                    .optionalFieldOf("flags", Set.of()).forGetter(SectState::flags),
+            Codec.INT.optionalFieldOf("contribution", 0).forGetter(SectState::contribution)
     ).apply(i, SectState::new)).xmap(SectState::migrate, s -> s);
 
     public SectState {
@@ -41,7 +44,8 @@ public record SectState(int version, boolean member, int generation, Set<String>
 
     /** Подъём старого формата до {@link #VERSION}. */
     public SectState migrate() {
-        return version >= VERSION ? this : new SectState(VERSION, member, member && generation == 0 ? CHEON : generation, flags);
+        // Версия 2 добавила заслуги: поле необязательное, старое сохранение читается с нулём.
+        return version >= VERSION ? this : new SectState(VERSION, member, member && generation == 0 ? CHEON : generation, flags, contribution);
     }
 
     public boolean has(String flag) {
@@ -54,7 +58,7 @@ public record SectState(int version, boolean member, int generation, Set<String>
         }
         Set<String> next = new HashSet<>(flags);
         next.add(flag);
-        return new SectState(version, member, generation, next);
+        return new SectState(version, member, generation, next, contribution);
     }
 
     public SectState without(String flag) {
@@ -63,10 +67,15 @@ public record SectState(int version, boolean member, int generation, Set<String>
         }
         Set<String> next = new HashSet<>(flags);
         next.remove(flag);
-        return new SectState(version, member, generation, next);
+        return new SectState(version, member, generation, next, contribution);
     }
 
     public SectState joined() {
-        return new SectState(version, true, CHEON, flags);
+        return new SectState(version, true, CHEON, flags, contribution);
+    }
+
+    /** Заслуги ± {@code delta}; ниже нуля не падают. */
+    public SectState contribute(int delta) {
+        return new SectState(version, member, generation, flags, Math.max(0, contribution + delta));
     }
 }

@@ -12,7 +12,8 @@ import net.neoforged.neoforge.event.RegisterCommandsEvent;
 
 /**
  * {@code /murim sect spawn} — NPC секты у игрока (тест), {@code /murim sect state} — положение и флаги,
- * {@code /murim sect reset} — забыть секту, {@code /murim sect flag <флаг>} — поставить флаг (тест уроков).
+ * {@code /murim sect reset} — забыть секту, {@code /murim sect flag <флаг>} — поставить флаг (тест уроков),
+ * {@code /murim sect contribute <n>} — заслуги ± n.
  */
 @EventBusSubscriber(modid = MurimMod.MODID)
 public final class SectCommand {
@@ -35,6 +36,7 @@ public final class SectCommand {
                             ServerPlayer p = c.getSource().getPlayerOrException();
                             SectState s = p.getData(ModAttachments.SECT);
                             c.getSource().sendSuccess(() -> Component.literal("member=" + s.member() + " generation=" + s.generation()
+                                    + " standing=" + SectService.standing(p).id() + " contribution=" + s.contribution()
                                     + " flags=" + s.flags().stream().sorted().toList()), false);
                             return 1;
                         }))
@@ -77,6 +79,15 @@ public final class SectCommand {
                                         l.setDayTime(day + period.get().start() + 5);
                                     }
                                     c.getSource().sendSuccess(() -> Component.literal("sect time -> " + period.get().id()), false);
+                                    return 1;
+                                })))
+                        .then(Commands.literal("contribute").then(Commands.argument("n", com.mojang.brigadier.arguments.IntegerArgumentType.integer())
+                                .executes(c -> {
+                                    // Заслуги ± n (проверка лестницы положения без долгой игры).
+                                    ServerPlayer p = c.getSource().getPlayerOrException();
+                                    SectService.contribute(p, com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(c, "n"));
+                                    c.getSource().sendSuccess(() -> Component.literal("standing=" + SectService.standing(p).id()
+                                            + " contribution=" + p.getData(ModAttachments.SECT).contribution()), false);
                                     return 1;
                                 })))
                         .then(Commands.literal("flag").then(Commands.argument("flag", StringArgumentType.string()).executes(c -> {

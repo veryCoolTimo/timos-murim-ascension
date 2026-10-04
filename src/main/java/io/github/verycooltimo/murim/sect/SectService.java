@@ -58,6 +58,116 @@ public final class SectService {
         p.setData(ModAttachments.SECT, state(p).with(flag));
     }
 
+    // ------------------------------------------------------------------ заслуги и положение
+
+    /** Положение игрока сейчас. */
+    public static SectStanding standing(ServerPlayer p) {
+        return SectStanding.of(state(p), p.getData(ModAttachments.PROFILE).rank());
+    }
+
+    /** Заслуги за утреннюю тренировку (раз в день). */
+    public static final int MORNING_CONTRIBUTION = 2;
+
+    /**
+     * Заслуги перед сектой ± {@code delta} (уроки, утренняя тренировка, пожертвования, защита горы; штраф за
+     * силовой вход в закрытое место). Если выросло положение — сообщение с новым положением.
+     */
+    public static void contribute(ServerPlayer p, int delta) {
+        if (delta == 0 || !state(p).member()) {
+            return;
+        }
+        int rank = p.getData(ModAttachments.PROFILE).rank();
+        SectStanding before = SectStanding.of(state(p), rank);
+        SectState next = state(p).contribute(delta);
+        p.setData(ModAttachments.SECT, next);
+        p.displayClientMessage(Component.translatable(delta > 0 ? "murim.sect.contribution.gain" : "murim.sect.contribution.loss",
+                Math.abs(delta), next.contribution()).withStyle(delta > 0 ? ChatFormatting.GOLD : ChatFormatting.RED), true);
+        announceStanding(p, before);
+    }
+
+    /** Положение выросло после изменения состояния — сказать игроку (в чат, один раз на ступень). */
+    public static void announceStanding(ServerPlayer p, SectStanding before) {
+        SectStanding now = SectStanding.of(state(p), p.getData(ModAttachments.PROFILE).rank());
+        if (now.ordinal() > before.ordinal()) {
+            p.displayClientMessage(Component.translatable("murim.sect.standing.up", Component.translatable(now.nameKey()))
+                    .withStyle(ChatFormatting.LIGHT_PURPLE), false);
+            p.level().playSound(null, p.blockPosition(), SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS, 0.5F, 1.2F);
+            MurimMod.LOGGER.info("Секта: {} — положение {}", p.getName().getString(), now.id());
+        }
+    }
+
+    /**
+     * Пожертвование управляющему: {@code "minecraft:gold_ingot*1=3"} — забрать столько предметов, дать столько
+     * заслуг. Нет предметов — ничего не берёт.
+     *
+     * @return отдано ли
+     */
+    public static boolean donate(ServerPlayer p, String spec) {
+        int eq = spec.lastIndexOf('=');
+        if (eq < 0) {
+            return false;
+        }
+        ItemNeed need = ItemNeed.parse(spec.substring(0, eq));
+        int points;
+        try {
+            points = Integer.parseInt(spec.substring(eq + 1).trim());
+        } catch (NumberFormatException e) {
+            return false;
+        }
+        if (need == null || need.count(p) < need.count()) {
+            p.displayClientMessage(Component.translatable("murim.sect.donate.none").withStyle(ChatFormatting.GRAY), true);
+            return false;
+        }
+        need.take(p);
+        contribute(p, points);
+        return true;
+    }
+
+    /** Предмет и число: {@code "minecraft:wheat*16"} (без числа — один). */
+    public record ItemNeed(net.minecraft.world.item.Item item, int count) {
+
+        public static ItemNeed parse(String spec) {
+            String id = spec.trim();
+            int n = 1;
+            int star = id.indexOf('*');
+            if (star >= 0) {
+                try {
+                    n = Integer.parseInt(id.substring(star + 1).trim());
+                } catch (NumberFormatException e) {
+                    return null;
+                }
+                id = id.substring(0, star).trim();
+            }
+            ResourceLocation rl = ResourceLocation.tryParse(id);
+            if (rl == null || !net.minecraft.core.registries.BuiltInRegistries.ITEM.containsKey(rl)) {
+                return null;
+            }
+            return new ItemNeed(net.minecraft.core.registries.BuiltInRegistries.ITEM.get(rl), Math.max(1, n));
+        }
+
+        /** Сколько таких у игрока. */
+        public int count(ServerPlayer p) {
+            int c = 0;
+            for (ItemStack s : p.getInventory().items) {
+                if (s.is(item)) {
+                    c += s.getCount();
+                }
+            }
+            return c;
+        }
+
+        void take(ServerPlayer p) {
+            int left = count;
+            for (ItemStack s : p.getInventory().items) {
+                if (left > 0 && s.is(item)) {
+                    int n = Math.min(left, s.getCount());
+                    s.shrink(n);
+                    left -= n;
+                }
+            }
+        }
+    }
+
     // ------------------------------------------------------------------ действия диалогов
 
     /** Книга техники из рук наставника: тот же манускрипт, что в руинах (план §5.1). */
