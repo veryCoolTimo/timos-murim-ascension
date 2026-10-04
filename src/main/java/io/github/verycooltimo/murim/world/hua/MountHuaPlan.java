@@ -153,6 +153,15 @@ public final class MountHuaPlan {
     /** No inner paths on the old shelf. */
     public static final double[][] PATHS = {};
 
+    /**
+     * Forested saddles that part the sect shelf from the neighbouring spires (author 04.10):
+     * {u, v, radius, floor} — a gentle wooded hollow instead of bare rock between them.
+     */
+    public static final double[][] SADDLES = {
+        {-58, 34, 24, 134},
+        {58, 10, 19, 138},
+    };
+
     /** The one trail: gate, gorge, cleft stair, North Peak, Canglong ridge, Golden Lock, sect. */
     public static final List<TrailPoint> TRAIL = List.of(
             new TrailPoint(-104, -393, 3),

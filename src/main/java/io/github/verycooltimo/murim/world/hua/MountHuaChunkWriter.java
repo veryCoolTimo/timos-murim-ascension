@@ -264,7 +264,64 @@ final class MountHuaChunkWriter {
             }
         }
         clearTerraces(pos);
+        hangingGreen(pos);
         Heightmap.primeHeightmaps(chunk, EnumSet.allOf(Heightmap.Types.class));
+    }
+
+    /**
+     * The shelf front (author 04.10): greenery hanging over the drops below the sect pads — vine
+     * curtains down the rock and azalea clumps spilling over the rim. Runs in the cleanup pass so
+     * the vanilla-vine sweep above has already happened.
+     */
+    private void hangingGreen(BlockPos.MutableBlockPos pos) {
+        int[][] dirs = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
+        for (int lz = 0; lz < 16; lz++) {
+            for (int lx = 0; lx < 16; lx++) {
+                int wx = x0 + lx;
+                int wz = z0 + lz;
+                double u = site.localU(wx + 0.5, wz + 0.5);
+                double v = site.localV(wx + 0.5, wz + 0.5);
+                Zone z = zoneAt(u, v, 14);
+                if (z == null || z.cave() || !MountHuaPlan.CORE.contains(z.id()) || z.id().equals("gate")) {
+                    continue;
+                }
+                int t = topAt(lx, lz);
+                long h = mix(wx, wz, 97);
+                for (int k = 0; k < 4; k++) {
+                    int[] d = dirs[k];
+                    int tn = topAt(lx + d[0], lz + d[1]);
+                    if (tn - t < 3) {
+                        continue;
+                    }
+                    // This column sits below a step: a vine strand down the wall of the neighbour.
+                    if (((h >>> (k * 3)) & 3) != 0) {
+                        int len = 2 + (int) Math.floorMod(h >>> 20, 9L);
+                        BlockState vine = Blocks.VINE.defaultBlockState().setValue(
+                                d[0] == 1 ? net.minecraft.world.level.block.VineBlock.EAST
+                                        : d[0] == -1 ? net.minecraft.world.level.block.VineBlock.WEST
+                                        : d[1] == 1 ? net.minecraft.world.level.block.VineBlock.SOUTH
+                                        : net.minecraft.world.level.block.VineBlock.NORTH, true);
+                        for (int y = tn; y > Math.max(t, tn - len); y--) {
+                            if (!level.getBlockState(pos.set(wx, y, wz)).isAir()) {
+                                break;
+                            }
+                            level.setBlock(pos, vine, 2);
+                        }
+                    }
+                    // Over the rim: a clump of azalea spilling one block out and down.
+                    if (Math.floorMod(h >>> 32, 5L) == 0 && level.getBlockState(pos.set(wx, tn, wz)).isAir()) {
+                        BlockState leaf = ((h >>> 40) & 3) == 0 ? Blocks.FLOWERING_AZALEA_LEAVES.defaultBlockState()
+                                : Blocks.AZALEA_LEAVES.defaultBlockState();
+                        leaf = leaf.setValue(LeavesBlock.PERSISTENT, true);
+                        level.setBlock(pos.set(wx, tn, wz), leaf, 2);
+                        if (level.getBlockState(pos.set(wx, tn - 1, wz)).isAir() || level.getBlockState(pos).is(Blocks.VINE)) {
+                            level.setBlock(pos, leaf, 2);
+                        }
+                    }
+                    break;
+                }
+            }
+        }
     }
 
     /**
@@ -484,7 +541,10 @@ final class MountHuaChunkWriter {
         // with moss (codex r1: green contour bands). Low ground (the forested foot) keeps its soil.
         double soil = noise.noise(wx / 23.0, wz / 23.0, 47.0) + (t < site.baseY() + 60 ? 0.6 : 0.0)
                 + (t > site.worldY(150) ? 0.55 : 0.0)
-                + (drop >= 2 ? 0.25 : 0.0);
+                + (drop >= 2 ? 0.25 : 0.0)
+                // Forested saddles between the shelf and the spires keep their soil (author 04.10).
+                + 1.5 * shape.saddleWeight(site.localU(wx + 0.5, wz + 0.5), site.localV(wx + 0.5, wz + 0.5));
+        boolean saddle = soil > 1.2 && shape.saddleWeight(site.localU(wx + 0.5, wz + 0.5), site.localV(wx + 0.5, wz + 0.5)) > 0.4;
         // Steps of a steep wall are not shelves: within two blocks the rock falls away by 5+,
         // so no soil there (stand 03.10: brown dots marching diagonally across the faces).
         int fall = 0;
@@ -494,13 +554,13 @@ final class MountHuaChunkWriter {
             }
         }
         // Stepped walls (a 45°+ staircase of single blocks) stay bare: no grass stripes across faces.
-        if ((soil < -0.15 && t > site.baseY() + 30) || (fall >= 3 && t > site.baseY() + 1)) {
+        if (!saddle && ((soil < -0.15 && t > site.baseY() + 30) || (fall >= 3 && t > site.baseY() + 1))) {
             if (n > 0.35 && t < SNOW_Y) {
                 chunk.setBlockState(pos.set(wx, t, wz), ModBlocks.HUA_GRANITE_MOSSY.get().defaultBlockState(), false);
             }
             return;
         }
-        if (drop <= 1 || (drop == 2 && n > 0.1)) {
+        if (drop <= 1 || (drop == 2 && n > 0.1) || (saddle && drop <= 3)) {
             BlockState ground;
             if (t >= SNOW_Y + (int) (6 * n) && noise.noise(wx / 11.0, wz / 11.0, 63.0) > -0.1) {
                 ground = GRASS.setValue(SnowyDirtBlock.SNOWY, true);
@@ -910,6 +970,18 @@ final class MountHuaChunkWriter {
                 boolean shelf = high && drop <= 1 && patch > -0.3;
                 if ((cap && patch > -0.5) || (fold && roll % (high ? 2 : 4) == 0) || (shelf && roll % 3 == 0)) {
                     shrub(wx, t + 1, wz, h, pos);
+                    continue;
+                }
+                double wood = shape.saddleWeight(site.localU(wx + 0.5, wz + 0.5), site.localV(wx + 0.5, wz + 0.5));
+                if (wood > 0.25 && soil && drop <= 2) {
+                    // A wood in the saddle: pines with plums at its edge.
+                    if (roll < 60 * wood) {
+                        pine(wx, t + 1, wz, h, lx, lz, pos);
+                    } else if (roll > 1000 - 14 * wood) {
+                        plumTree(wx, t + 1, wz, h, pos);
+                    } else if (roll % 9 == 0) {
+                        shrub(wx, t + 1, wz, h, pos);
+                    }
                     continue;
                 }
                 if (roll < chance) {

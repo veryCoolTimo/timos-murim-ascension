@@ -139,7 +139,34 @@ public final class MountHuaShape {
         for (Gorge gorge : MountHuaPlan.GORGES) {
             h = gorge(gorge, u, v, h);
         }
-        return valley(u, v, h);
+        return saddles(u, v, valley(u, v, h));
+    }
+
+    /** 0..1: how much of a forested saddle this column is (the writer plants a wood there). */
+    public double saddleWeight(double u, double v) {
+        double best = 0;
+        for (double[] sd : MountHuaPlan.SADDLES) {
+            double d = Math.hypot(u - sd[0], v - sd[1]) * (1 + 0.18 * relief.noise(u / 11.0, v / 11.0, 83.0));
+            best = Math.max(best, smooth(sd[2], sd[2] * 0.45, d));
+        }
+        return best;
+    }
+
+    /**
+     * Saddles: inside each, the ground eases toward a gentle wooded bowl (0.3 rise per block
+     * from its floor), so soil and trees hold there; spire walls rising above stay rock.
+     */
+    private double saddles(double u, double v, double h) {
+        for (double[] sd : MountHuaPlan.SADDLES) {
+            double d = Math.hypot(u - sd[0], v - sd[1]) * (1 + 0.18 * relief.noise(u / 11.0, v / 11.0, 83.0));
+            if (d >= sd[2]) {
+                continue;
+            }
+            double bowl = sd[3] + 0.25 * d + 1.5 * relief.noise(u / 13.0, v / 13.0, 87.0);
+            double w = smooth(sd[2], sd[2] * 0.45, d) * smooth(sd[3] + 45, sd[3] + 25, h);
+            h = h * (1 - w) + bowl * w;
+        }
+        return h;
     }
 
     /** Foothill belt height (nominal), 0 at the outer edge. */
