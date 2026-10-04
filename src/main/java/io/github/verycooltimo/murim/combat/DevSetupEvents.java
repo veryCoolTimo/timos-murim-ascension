@@ -641,6 +641,8 @@ public final class DevSetupEvents {
             // Снаружи от оси взгляда: захват (по углу к прицелу) берёт главную цель, а не встречных.
             double sideK = 0.9D;
             z.setPos(STAGE_X + 0.5D + lookX * k - lookZ * sideK, STAGE_Y, STAGE_Z + 0.5D + lookZ * k + lookX * sideK);
+            // Шлем — чтобы днём лишние зомби не горели и не закрывали кадр огнём (съёмка 04.10).
+            z.setItemSlot(net.minecraft.world.entity.EquipmentSlot.HEAD, new ItemStack(Items.LEATHER_HELMET));
             level.addFreshEntity(z);
         }
         // MURIM_CAPTURE_AURA=4 или 4d (демоническая) — аура цели для съёмки давления.

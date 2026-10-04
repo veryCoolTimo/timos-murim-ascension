@@ -493,7 +493,8 @@ public final class TangVfx {
                 smoke(at, 0.45D, 2);
             } else if (p.form() == TangRules.COINS) {
                 // Монета: маленькая бронзовая искра и звон — без дыма (лёгкое оружие).
-                FX.bursts.add(new Burst(at, clientTicks, 5, 0.45D, 4, RANDOM.nextLong(), false, false));
+                // Бронзовое колечко 0,3 блока вместо циановой вспышки (codex 04.10: циан забивал бронзу монет).
+                FX.rings.add(new Ring(at, camAxis(at), clientTicks, 0.05D, 0.3D, 4, 0.04D, BRONZE, 0.2D));
                 sound(at, SoundEvents.CHAIN_HIT, 0.6F, 1.9F);
             } else if (p.form() == TangRules.FLASH) {
                 // Сорванный замах: белый разрыв у самого лица и кольцо.
@@ -744,6 +745,7 @@ public final class TangVfx {
                             case TangRules.THREE -> "three";
                             case TangRules.FLASH -> "flash";
                             case TangRules.RETURN -> "return";
+                            case TangRules.COINS -> "coins";
                             default -> "burst";
                         }), 40, 0.5F);
             }
@@ -853,7 +855,8 @@ public final class TangVfx {
             case TangRules.STARS -> 5;
             // Боковые дуги длиннее: изгиб читается по следу (codex 03.10).
             case TangRules.THREE -> d.index() != 0 ? 12 : 7;
-            case TangRules.COINS -> 4;
+            // След монеты длиннее (7 точек): поворот у стены после рикошета остаётся виден (codex 04.10).
+            case TangRules.COINS -> 7;
             case TangRules.FLASH -> 4;
             default -> d.mode() == TangDagger.CARP ? 9 : 6;
         };

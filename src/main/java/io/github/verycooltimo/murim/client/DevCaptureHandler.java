@@ -314,6 +314,19 @@ public final class DevCaptureHandler {
         if (throwTicks > 0 && minecraft.player != null && minecraft.gameMode != null) {
             int t = THROW_SPAN - throwTicks--;
             if (t % 12 == 0 && t / 12 < envInt("MURIM_CAPTURE_THROWS", 3)) {
+                // Целиться в ближайшего зомби, как игрок мышью: поворот уходит на сервер вместе с «использовать».
+                net.minecraft.world.entity.Entity aim = null;
+                for (net.minecraft.world.entity.Entity e : minecraft.level.entitiesForRendering()) {
+                    if (e instanceof net.minecraft.world.entity.monster.Zombie && (aim == null
+                            || e.distanceToSqr(minecraft.player) < aim.distanceToSqr(minecraft.player))) {
+                        aim = e;
+                    }
+                }
+                if (aim != null) {
+                    net.minecraft.world.phys.Vec3 d = aim.position().add(0.0D, aim.getBbHeight() * 0.7D, 0.0D).subtract(minecraft.player.getEyePosition());
+                    minecraft.player.setYRot((float) Math.toDegrees(Math.atan2(-d.x, d.z)));
+                    minecraft.player.setXRot((float) -Math.toDegrees(Math.atan2(d.y, d.horizontalDistance())));
+                }
                 minecraft.gameMode.useItem(minecraft.player, net.minecraft.world.InteractionHand.MAIN_HAND);
             }
         }
