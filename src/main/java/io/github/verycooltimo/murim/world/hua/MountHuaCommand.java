@@ -187,7 +187,7 @@ public final class MountHuaCommand {
             case "approach_ridge" -> surface(site, -470, -215, 1, 0.45, 2, 16);
             case "cliff" -> surface(site, -45, -300, 1, -0.3, -25, 3);
             case "pillars" -> surface(site, 300, 520, -0.62, -0.78, 4, 50);
-            case "stairs" -> onTrail(site, 0.22, -22);
+            case "stairs" -> onTrail(site, 0.62, -6);
             case "stairs_high" -> onTrail(site, 0.55, -12);
             case "aerial" -> surface(site, -30, -500, 0.05, 1, 4, 70);
             case "aerial_ne" -> surface(site, 330, -300, -0.8, 1, 2, 80);

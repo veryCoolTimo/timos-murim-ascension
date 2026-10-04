@@ -236,7 +236,7 @@ final class MountHuaChunkWriter {
                 }
                 double u = site.localU(wx + 0.5, wz + 0.5);
                 double v = site.localV(wx + 0.5, wz + 0.5);
-                if (zoneAt(u, v, 6) != null || MountHuaPlan.inPillarBasin(u, v)) {
+                if (zoneAt(u, v, 12) != null || MountHuaPlan.inPillarBasin(u, v)) {
                     continue;
                 }
                 double[] tr = shape.trailAt(u, v);
@@ -272,8 +272,10 @@ final class MountHuaChunkWriter {
      * are removed from the building sites: everything above a terrace that is not ours goes.
      */
     private void clearTerraces(BlockPos.MutableBlockPos pos) {
-        for (int lz = 0; lz < 16; lz++) {
-            for (int lx = 0; lx < 16; lx++) {
+        // Also the eight neighbours (write radius 1): trees of a neighbour decorated after this
+        // chunk's own cleanup spill over the site otherwise (stand 04.10: leaves on the gate yard).
+        for (int lz = -16; lz < 32; lz++) {
+            for (int lx = -16; lx < 32; lx++) {
                 int wx = x0 + lx;
                 int wz = z0 + lz;
                 double cu = site.localU(wx + 0.5, wz + 0.5);
@@ -285,7 +287,7 @@ final class MountHuaChunkWriter {
                         // Margin: vanilla trees leaning over the site go, our plums and pines stay.
                         int ay = (int) Math.round(site.worldY(around.y()));
                         for (int y = ay + 1; y <= ay + 30; y++) {
-                            BlockState st = chunk.getBlockState(pos.set(wx, y, wz));
+                            BlockState st = level.getBlockState(pos.set(wx, y, wz));
                             if ((st.getBlock() instanceof LeavesBlock && !st.getValue(LeavesBlock.PERSISTENT))
                                     || (st.is(BlockTags.LOGS) && !st.is(Blocks.DARK_OAK_WOOD) && !st.is(Blocks.SPRUCE_WOOD))) {
                                 level.setBlock(pos, AIR, 2);
@@ -299,13 +301,13 @@ final class MountHuaChunkWriter {
                 }
                 int y0 = (int) Math.round(site.worldY(z.y()));
                 for (int y = y0 + 1; y <= y0 + 30; y++) {
-                    BlockState st = chunk.getBlockState(pos.set(wx, y, wz));
+                    BlockState st = level.getBlockState(pos.set(wx, y, wz));
                     if (st.isAir() || ours(st)) {
                         continue;
                     }
                     level.setBlock(pos, AIR, 2);
                 }
-                BlockState top = chunk.getBlockState(pos.set(wx, y0, wz));
+                BlockState top = level.getBlockState(pos.set(wx, y0, wz));
                 if (!ours(top) && !top.is(Blocks.GRASS_BLOCK) && !top.is(Blocks.DIRT_PATH) && !top.is(Blocks.COARSE_DIRT)
                         && !top.is(Blocks.MOSSY_COBBLESTONE)) {
                     level.setBlock(pos, GRASS, 2);
@@ -771,7 +773,7 @@ final class MountHuaChunkWriter {
                     continue;
                 }
                 double[] tr = shape.trailAt(u, v);
-                if (tr != null && tr[0] < 6) {
+                if (tr != null && tr[0] < 8) {
                     continue;
                 }
                 if (tr != null && tr[0] < 8 && Math.floorMod(mix(wx, wz, 31), 1000L) < 14) {
