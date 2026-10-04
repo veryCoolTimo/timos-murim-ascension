@@ -22,7 +22,7 @@ class MountHuaShapeTest {
 
     @Test
     void southPeakIsTheHighestAndNorthPeakTheLowestOfTheFive() {
-        double south = top(5, 165);
+        double south = top(5, 125);
         double north = top(-10, -335);
         for (MountHuaPlan.Peak p : MountHuaPlan.PEAKS.subList(0, 5)) {
             double h = top(p.u(), p.v());
@@ -36,7 +36,7 @@ class MountHuaShapeTest {
     @Test
     void terracesAreFlat() {
         for (MountHuaPlan.Zone z : MountHuaPlan.ZONES) {
-            if (z.cave()) {
+            if (z.cave() || z.id().equals("grove")) { // the grove is a wooded outcrop, not a pad
                 continue;
             }
             for (double du = -z.width() / 2.0 + 0.5; du < z.width() / 2.0; du += 3) {

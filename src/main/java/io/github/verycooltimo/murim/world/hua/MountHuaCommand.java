@@ -40,7 +40,7 @@ import net.neoforged.neoforge.event.tick.ServerTickEvent;
 public final class MountHuaCommand {
 
     /** Places that {@code tp} knows besides the zones: local (u, v) and an extra height. */
-    private static final List<String> PLACES = List.of("approach", "approach_ridge", "cliff", "pillars", "stairs", "stairs_high", "gorge_start", "sect_below", "sect_aerial", "courtyard", "courtyard_back", "view", "aerial", "aerial_ne", "aerial_sw", "view_ne", "view_east", "view_west",
+    private static final List<String> PLACES = List.of("approach", "approach_ridge", "cliff", "pillars", "stairs", "stairs_high", "gorge_start", "sect_below", "sect_aerial", "courtyard", "courtyard_back", "saddle_w", "saddle_e", "shelf_front", "shelf_aerial", "under_sect", "view", "aerial", "aerial_ne", "aerial_sw", "view_ne", "view_east", "view_west",
             "summit", "north_peak", "golden_lock", "ridge", "gorge");
 
     private MountHuaCommand() {
@@ -194,13 +194,18 @@ public final class MountHuaCommand {
             case "sect_aerial" -> surface(site, 30, -210, -0.1, 1, -22, 120);
             case "courtyard" -> surface(site, -24, -20, 0.1, 1, 22, 2);
             case "courtyard_back" -> surface(site, -10, 60, 0.05, 1, 30, 2);
+            case "saddle_w" -> surface(site, -70, 44, 1, -0.4, 6, 2);
+            case "saddle_e" -> surface(site, 66, 16, -1, 0.1, 6, 2);
+            case "shelf_front" -> surface(site, -56, -34, 0.8, 0.7, -14, 2);
+            case "under_sect" -> surface(site, -92, -24, 1, 0.7, -12, 3);
+            case "shelf_aerial" -> surface(site, -70, -60, 0.6, 0.8, 30, 70);
             case "aerial" -> surface(site, -30, -500, 0.05, 1, 4, 70);
             case "aerial_ne" -> surface(site, 330, -300, -0.8, 1, 2, 80);
             case "aerial_sw" -> surface(site, -300, 330, 0.7, -1, 2, 80);
             case "view_ne" -> surface(site, 330, -420, -0.8, 1, -8, 24);
             case "view_east" -> surface(site, 175, 60, -1, 0.1, 6, 4);
             case "view_west" -> surface(site, -175, 85, 1, 0, 6, 4);
-            case "summit" -> surface(site, 5, 165, 0, -1, 14, 4);
+            case "summit" -> surface(site, 5, 125, 0, -1, 14, 4);
             case "north_peak" -> surface(site, -10, -335, 0, 1, 2, 4);
             case "golden_lock" -> surface(site, 22, -80, 0, 1, 0, 2);
             case "ridge" -> surface(site, 8, -262, -0.2, 1, -4, 2);

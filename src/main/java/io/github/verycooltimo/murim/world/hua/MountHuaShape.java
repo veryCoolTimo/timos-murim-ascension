@@ -120,7 +120,7 @@ public final class MountHuaShape {
         h = paths(u, v, h);
         // Inside a terrace the level is exact (neighbouring terraces' walls never spill in).
         for (Zone zone : MountHuaPlan.ZONES) {
-            if (!zone.cave() && Math.abs(u - zone.u()) <= zone.width() / 2.0
+            if (!zone.cave() && !zone.id().equals("grove") && Math.abs(u - zone.u()) <= zone.width() / 2.0
                     && Math.abs(v - zone.v()) <= zone.depth() / 2.0) {
                 h = zone.y();
             }
@@ -136,42 +136,57 @@ public final class MountHuaShape {
      */
     public double ground(double u, double v) {
         double h = Math.max(natural(u, v), belt(u, v));
-        h = basin(u, v, h);
-        for (Peak tower : MountHuaPlan.TOWERS) {
-            h = Math.max(h, peak(tower, u, v));
-        }
         // Gorges cut the foothill belt too (it could fill the slot back up otherwise).
         for (Gorge gorge : MountHuaPlan.GORGES) {
             h = gorge(gorge, u, v, h);
         }
-        return valley(u, v, h);
+        return clefts(u, v, saddles(u, v, valley(u, v, h)));
+    }
+
+    /** Narrow ravines: floor within the half width, then 3-per-block rock sides back up. */
+    private double clefts(double u, double v, double h) {
+        for (double[] c : MountHuaPlan.CLEFTS) {
+            double lx = c[2] - c[0];
+            double ly = c[3] - c[1];
+            double t = clamp(((u - c[0]) * lx + (v - c[1]) * ly) / (lx * lx + ly * ly), 0, 1);
+            double d = Math.hypot(u - (c[0] + lx * t), v - (c[1] + ly * t))
+                    + 1.2 * relief.noise(u / 6.0, v / 6.0, 93.0);
+            // Fades out at both ends so the ravine opens into the slopes instead of ending in a wall.
+            double ends = smooth(0, 0.12, t) * smooth(1, 0.88, t);
+            double floor = c[4] + 2 * relief.noise(u / 9.0, v / 9.0, 95.0);
+            double cut = floor + 3.0 * Math.max(0, d - c[5]);
+            if (cut < h) {
+                h = h + (cut - h) * ends;
+            }
+        }
+        return h;
+    }
+
+    /** 0..1: how much of a forested saddle this column is (the writer plants a wood there). */
+    public double saddleWeight(double u, double v) {
+        double best = 0;
+        for (double[] sd : MountHuaPlan.SADDLES) {
+            double d = Math.hypot(u - sd[0], v - sd[1]) * (1 + 0.18 * relief.noise(u / 11.0, v / 11.0, 83.0));
+            best = Math.max(best, smooth(sd[2], sd[2] * 0.45, d));
+        }
+        return best;
     }
 
     /**
-     * The sect basin: a flat floor where the organic outline says so; outside it the natural
-     * spires stay as they are and meet the floor in steep walls that follow their own shapes
-     * (no extruded rim). Cliffs/clefts of the natural terrain therefore enclose the compound.
+     * Saddles: inside each, the ground eases toward a gentle wooded bowl (0.3 rise per block
+     * from its floor), so soil and trees hold there; spire walls rising above stay rock.
      */
-    private double basin(double u, double v, double h) {
-        double q = Double.MAX_VALUE;
-        for (double[] e : MountHuaPlan.BASIN) {
-            double du = (u - e[0]) / e[2];
-            double dv = (v - e[1]) / e[3];
-            double a = Math.atan2(dv, du);
-            double wob = 1 + 0.10 * warp.noise(Math.cos(a) * 2.2 + e[0] * 0.01, Math.sin(a) * 2.2, 71.0 + e[1])
-                    + 0.05 * warp.noise(u / 11.0, v / 11.0, 73.0);
-            q = Math.min(q, Math.sqrt(du * du + dv * dv) / wob);
+    private double saddles(double u, double v, double h) {
+        for (double[] sd : MountHuaPlan.SADDLES) {
+            double d = Math.hypot(u - sd[0], v - sd[1]) * (1 + 0.18 * relief.noise(u / 11.0, v / 11.0, 83.0));
+            if (d >= sd[2]) {
+                continue;
+            }
+            double bowl = sd[3] + 0.25 * d + 1.5 * relief.noise(u / 13.0, v / 13.0, 87.0);
+            double w = smooth(sd[2], sd[2] * 0.45, d) * smooth(sd[3] + 45, sd[3] + 25, h);
+            h = h * (1 - w) + bowl * w;
         }
-        if (q > 1.6) {
-            return h;
-        }
-        double floor = MountHuaPlan.basinFloor(u, v);
-        if (q <= 1) {
-            return floor;
-        }
-        // Approximate distance (blocks) past the outline; the rock rises steeply from the floor.
-        double out = (q - 1) * 60;
-        return Math.min(h, floor + 2.5 * out + 1.5 * out * out);
+        return h;
     }
 
     /** Foothill belt height (nominal), 0 at the outer edge. */
@@ -354,7 +369,7 @@ public final class MountHuaShape {
             }
             double dx = Math.max(0, Math.abs(u - z.u()) - z.width() / 2.0);
             double dz = Math.max(0, Math.abs(v - z.v()) - z.depth() / 2.0);
-            calm = Math.max(calm, 1 - smooth(3, 12, Math.hypot(dx, dz)));
+            calm = Math.max(calm, 1 - smooth(4, 30, Math.hypot(dx, dz)));
         }
         return calm;
     }
@@ -616,7 +631,15 @@ public final class MountHuaShape {
         if (Math.abs(du) > p.ra() * 1.6 + 10 || Math.abs(dv) > p.ra() * 1.6 + 10) {
             return 0;
         }
-        return bullet(du, dv, p.top(), p.ra(), p.rb(), Math.toRadians(p.angle()), p.power(), p.u() * 0.37);
+        double h = bullet(du, dv, p.top(), p.ra(), p.rb(), Math.toRadians(p.angle()), p.power(), p.u() * 0.37);
+        if (p.name().equals("south") && dv < 0 && h > 0) {
+            // The main peak rises right behind the sect shelf (author refs «sect high, peak
+            // towering»): its north flank is steepened so the wall starts close behind the pads.
+            double q = Math.min(1, Math.hypot(du / p.ra(), dv / p.rb()));
+            double lift = smooth(0, 0.6, -dv / p.rb()) * smooth(1.05, 0.55, q);
+            h = Math.min(p.top(), h + (p.top() - h) * 0.45 * lift);
+        }
+        return h;
     }
 
     /**
@@ -770,40 +793,52 @@ public final class MountHuaShape {
         if (z.cave()) {
             return h;
         }
-        double hw = z.width() / 2.0;
-        double hd = z.depth() / 2.0;
-        double dx = Math.max(0, Math.abs(u - z.u()) - hw);
-        double dz = Math.max(0, Math.abs(v - z.v()) - hd);
-        // Organic outline: the ledge reaches 1-7 blocks past the build rectangle, varying along the
-        // edge (follows the slope instead of a ruler-straight border).
-        double reach = 4 + 3 * relief.noise(u / 9.0, v / 9.0, 61.0 + z.y());
-        double d = Math.max(0, Math.hypot(dx, dz) - Math.max(1, reach));
+        if (z.id().equals("grove")) {
+            // The plum grove is a wooded outcrop (plan), not a flat pad: the ground eases toward
+            // its level but keeps a few blocks of natural roll and an irregular outline.
+            double d = Math.max(0, Math.hypot(Math.max(0, Math.abs(u - z.u()) - z.width() / 2.0),
+                    Math.max(0, Math.abs(v - z.v()) - z.depth() / 2.0)) - 4 * relief.noise(u / 8.0, v / 8.0, 67.0));
+            double soft = z.y() + clamp(h - z.y(), -3, 3);
+            double k = smooth(0, 8, d);
+            return soft * (1 - k) + h * k;
+        }
+        double dx = Math.max(0, Math.abs(u - z.u()) - z.width() / 2.0);
+        double dz = Math.max(0, Math.abs(v - z.v()) - z.depth() / 2.0);
+        // The pad edge wanders 1-4 blocks past the build rectangle: no ruler-straight border.
+        double d = Math.max(0, Math.hypot(dx, dz) - (3.5 + 2.5 * relief.noise(u / 6.0, v / 6.0, 61.0 + z.y())
+                - 2.5 * relief.noise(u / 17.0, v / 17.0, 63.0 + z.y())));
         if (d == 0) {
             return z.y();
         }
-        if (d > 40) {
+        if (d > 12) {
             return h;
         }
-        if (h < z.y()) {
-            // Retaining wall: one block of rim, then a steep buttress (3:1) down to the rock.
-            return d > 10 ? h : Math.max(h, z.y() - 3.0 * Math.max(0, d - 1));
-        }
-        // Behind the terrace the slope is cut back: a short apron, then the natural cliff.
-        return Math.min(h, z.y() + 2.2 * Math.max(0, d - 3));
+        double y = z.y();
+        // Lower ground: a short retaining bank (3 per block) that meets the natural slope;
+        // higher ground: a cut bank (1.5 per block). Beyond that the ridge stays as it was.
+        double graded = h < y ? Math.max(h, y - 3.0 * d) : Math.min(h, y + 2.5 * d);
+        double k = smooth(6, 12, d);
+        return graded * (1 - k) + h * k;
     }
 
-    /** Stairs between the platforms: 4 wide, cut down to their level; fill only within 1 block. */
+    /** Smooth maximum (polynomial), k = blend width in blocks. */
+    static double smax(double a, double b, double k) {
+        double hh = Math.max(k - Math.abs(a - b), 0) / k;
+        return Math.max(a, b) + hh * hh * k * 0.25;
+    }
+
+    /** Stairs between the pads: 4 wide at their stepped level; gaps are left for a bridge. */
     private double paths(double u, double v, double h) {
         for (double[] p : MountHuaPlan.PATHS) {
             double[] q = pathAt(p, u, v);
-            if (q[0] <= 2.1) {
+            if (q[0] <= 2.1 && h >= q[1] - 3) {
                 return q[1];
             }
         }
         return h;
     }
 
-    /** {distance to the path line, nominal level there (stepped)} for one inner path. */
+    /** {distance to the path line, nominal level there (stepped), position 0..1} for one path. */
     public static double[] pathAt(double[] p, double u, double v) {
         double lx = p[3] - p[0];
         double ly = p[4] - p[1];
@@ -812,10 +847,13 @@ public final class MountHuaShape {
         return new double[] {d, Math.round(p[2] + (p[5] - p[2]) * t), t};
     }
 
-    /** Smooth maximum (polynomial), k = blend width in blocks. */
-    static double smax(double a, double b, double k) {
-        double hh = Math.max(k - Math.abs(a - b), 0) / k;
-        return Math.max(a, b) + hh * hh * k * 0.25;
+    /**
+     * 0..1: the slopes and cliffs below the sect shelf (author 04.10: more greenery under the
+     * sect — pines, shrubs, plums clinging, green hollows). {@code h} is the nominal height.
+     */
+    public static double belowSect(double u, double v, double h) {
+        double e = Math.hypot(u / 140.0, (v - 20) / 120.0);
+        return smooth(1.0, 0.7, e) * smooth(156, 146, h) * smooth(60, 80, h);
     }
 
     static double smooth(double e0, double e1, double x) {
