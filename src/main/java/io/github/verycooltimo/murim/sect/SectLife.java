@@ -175,6 +175,9 @@ public final class SectLife {
         boolean seated = kind == SectSchedule.Kind.EAT || kind == SectSchedule.Kind.MEDITATE || kind == SectSchedule.Kind.REST
                 || kind == SectSchedule.Kind.SLEEP;
         npc.sit(seated);
+        // Поза дела сразу на месте (анимации секты, entity/SectPose): издалека люди не стоят столбом.
+        npc.setPose(io.github.verycooltimo.murim.entity.SectPose.forTask(kind, true,
+                io.github.verycooltimo.murim.entity.SectPose.carrier(npc)));
     }
 
     /**

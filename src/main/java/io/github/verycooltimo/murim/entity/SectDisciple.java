@@ -117,6 +117,9 @@ public class SectDisciple extends Bandit implements Casters.Caster {
     private static final EntityDataAccessor<String> KEY = SynchedEntityData.defineId(SectDisciple.class, EntityDataSerializers.STRING);
     /** Облик: {@code textures/entity/sect/<look>.png}; пусто — текстура роли. */
     private static final EntityDataAccessor<String> LOOK = SynchedEntityData.defineId(SectDisciple.class, EntityDataSerializers.STRING);
+    /** Поза вне боя ({@link SectPose#id()}) и её номер: клиент играет клип позы с прихода. */
+    private static final EntityDataAccessor<String> POSE = SynchedEntityData.defineId(SectDisciple.class, EntityDataSerializers.STRING);
+    private static final EntityDataAccessor<Integer> POSE_SEQ = SynchedEntityData.defineId(SectDisciple.class, EntityDataSerializers.INT);
 
     public enum Spar { NONE, WAIT, BOW_IN, FIGHT, BOW_OUT }
 
@@ -155,6 +158,8 @@ public class SectDisciple extends Bandit implements Casters.Caster {
     private int clientAnimStart;
     /** Клиент: тик прихода жеста. */
     private int clientGestureStart = -1000;
+    /** Клиент: тик прихода позы. */
+    private int clientPoseStart;
 
     /** Тик последнего выпуска удара (форма или техника) — окно «чистого» ответа игрока в спарринге. */
     private long lastSwing = Long.MIN_VALUE / 2;
@@ -195,6 +200,8 @@ public class SectDisciple extends Bandit implements Casters.Caster {
         builder.define(TALKING, -1);
         builder.define(KEY, "");
         builder.define(LOOK, "");
+        builder.define(POSE, SectPose.NONE.id());
+        builder.define(POSE_SEQ, 0);
     }
 
     @Override
@@ -291,6 +298,9 @@ public class SectDisciple extends Bandit implements Casters.Caster {
         }
         if (GESTURE_SEQ.equals(key)) {
             clientGestureStart = tickCount;
+        }
+        if (POSE.equals(key) || POSE_SEQ.equals(key)) {
+            clientPoseStart = tickCount;
         }
     }
 
@@ -1170,6 +1180,31 @@ public class SectDisciple extends Bandit implements Casters.Caster {
     /** Сражается только старший ученик; наставник, глава и ученики фоном только говорят. */
     public boolean spars() {
         return role().spars();
+    }
+
+    // ------------------------------------------------------------------ поза вне боя (крючок для поведения)
+
+    /** Текущая поза (синхронизируется на клиент). */
+    public SectPose pose() {
+        return SectPose.of(entityData.get(POSE));
+    }
+
+    /** Поставить позу; та же поза — без перезапуска клипа (циклы идут дальше). Только сервер. */
+    public void setPose(SectPose pose) {
+        if (pose() != pose) {
+            entityData.set(POSE, pose.id());
+        }
+    }
+
+    /** Поставить позу и начать её клип сначала (поклон, прыжок на столб — каждый раз заново). Только сервер. */
+    public void playPose(SectPose pose) {
+        entityData.set(POSE, pose.id());
+        entityData.set(POSE_SEQ, entityData.get(POSE_SEQ) + 1);
+    }
+
+    /** Клиент: секунд с прихода позы. */
+    public float poseSeconds(float partial) {
+        return (tickCount - clientPoseStart + partial) / 20.0F;
     }
 
     public String gesture() {

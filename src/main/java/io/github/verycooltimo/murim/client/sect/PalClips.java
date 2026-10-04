@@ -62,7 +62,9 @@ public final class PalClips {
 
     private static void reload(ResourceManager resources) {
         CLIPS.clear();
-        Map<ResourceLocation, Resource> found = resources.listResources("player_animations", p -> p.getPath().endsWith(".json"));
+        // Клипы игрока (их же играет NPC) и свои клипы NPC — позы секты (entity/SectPose, npc_animations/).
+        Map<ResourceLocation, Resource> found = new HashMap<>(resources.listResources("player_animations", p -> p.getPath().endsWith(".json")));
+        found.putAll(resources.listResources("npc_animations", p -> p.getPath().endsWith(".json")));
         for (Map.Entry<ResourceLocation, Resource> e : found.entrySet()) {
             try (Reader reader = e.getValue().openAsReader()) {
                 JsonObject root = JsonParser.parseReader(reader).getAsJsonObject();
@@ -104,7 +106,10 @@ public final class PalClips {
                 bones.put(bone, list);
             }
         }
-        return new AnimationDefinition(length > 0.0F ? length : Math.max(0.05F, maxTime), false, bones);
+        // "loop": true — цикл (позы секты); "hold_on_last_frame" и false — один раз.
+        JsonElement loop = a.get("loop");
+        boolean looping = loop != null && loop.isJsonPrimitive() && loop.getAsJsonPrimitive().isBoolean() && loop.getAsBoolean();
+        return new AnimationDefinition(length > 0.0F ? length : Math.max(0.05F, maxTime), looping, bones);
     }
 
     /** Ключ PAL: время, значение и изинг перехода В этот ключ (как у GeckoLib/PAL). */
@@ -150,6 +155,11 @@ public final class PalClips {
             Key a = keys.get(i - 1);
             Key b = keys.get(i);
             float span = b.t - a.t;
+            if (java.util.Arrays.equals(a.v, b.v)) {
+                // Удержание позы: один ключ, а не тысячи (лотос держит позу 10 000 с — было 400 000 ключей).
+                out.add(frame(b.t, b.v, channel));
+                continue;
+            }
             int steps = Math.max(1, (int) Math.ceil(span / STEP));
             for (int s = 1; s <= steps; s++) {
                 float u = (float) s / steps;

@@ -65,6 +65,8 @@ public final class DevSetupEvents {
                 // The archive walk-through travels to a generated archive (client/library/LibraryCapture).
                 || "library".equals(System.getProperty("murim.capture.technique"))
                 || "sectlife".equals(System.getProperty("murim.capture.technique"))
+                // Sect NPC pose gallery: own stage (client/sect/SectPoseCapture).
+                || "sectposes".equals(System.getProperty("murim.capture.technique"))
                 // Bandit camp: a real world camp, no stage (DevBanditCampHandler).
                 || "banditcamp".equals(System.getProperty("murim.capture.technique"))) {
             return;

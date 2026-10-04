@@ -150,6 +150,7 @@ public final class DevCaptureHandler {
                 // The abandoned archive walk-through has its own driver (client/library/LibraryCapture).
                 || "library".equals(System.getProperty(TECHNIQUE_PROPERTY))
                 || "sectlife".equals(System.getProperty(TECHNIQUE_PROPERTY))
+                || "sectposes".equals(System.getProperty(TECHNIQUE_PROPERTY))
                 || "banditcamp".equals(System.getProperty(TECHNIQUE_PROPERTY))) {
             return;
         }

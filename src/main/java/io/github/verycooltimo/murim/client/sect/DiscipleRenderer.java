@@ -6,10 +6,12 @@ import io.github.verycooltimo.murim.client.bandit.BanditModel;
 import io.github.verycooltimo.murim.client.bandit.BanditRenderer;
 import io.github.verycooltimo.murim.client.vfx.BoneAnchorLayer;
 import io.github.verycooltimo.murim.entity.SectDisciple;
+import io.github.verycooltimo.murim.entity.SectPose;
 import io.github.verycooltimo.murim.registry.ModEntities;
 import net.minecraft.client.animation.AnimationDefinition;
 import net.minecraft.client.animation.KeyframeAnimations;
 import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.client.model.geom.PartPose;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.MobRenderer;
@@ -41,6 +43,7 @@ public class DiscipleRenderer extends MobRenderer<SectDisciple, DiscipleRenderer
         addLayer(new Anchors(this));
         // Реквизит слуг и фонарь ночной стражи (у учеников руки пусты: меч — часть модели).
         addLayer(new ItemInHandLayer<>(this, context.getItemInHandRenderer()));
+        addLayer(new SectProps(this, context.bakeLayer(SectProps.LAYER)));
     }
 
     @Override
@@ -64,6 +67,11 @@ public class DiscipleRenderer extends MobRenderer<SectDisciple, DiscipleRenderer
     }
 
     @SubscribeEvent
+    static void onLayers(EntityRenderersEvent.RegisterLayerDefinitions event) {
+        event.registerLayerDefinition(SectProps.LAYER, () -> io.github.verycooltimo.murim.client.bedrock.BedrockGeo.load(SectProps.GEO));
+    }
+
+    @SubscribeEvent
     static void onRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerEntityRenderer(ModEntities.SECT_DISCIPLE.get(), DiscipleRenderer::new);
     }
@@ -72,9 +80,18 @@ public class DiscipleRenderer extends MobRenderer<SectDisciple, DiscipleRenderer
     public static class Model extends BanditModel<SectDisciple> {
 
         private static final Vector3f CACHE = new Vector3f();
+        private static final String[] LEGS = {"leg_r", "leg_l", "skirt_front", "skirt_back"};
+        private static final ResourceLocation SLEEP_BED = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "sect_sleep_bed");
 
         public Model(ModelPart root) {
             super(root, "bandit");
+        }
+
+        /** Сейчас на модели клип позы секты (а не техника и не покой) — для реквизита ({@link SectProps}). */
+        private boolean poseShown;
+
+        boolean poseShown() {
+            return poseShown;
         }
 
         @Override
@@ -82,25 +99,93 @@ public class DiscipleRenderer extends MobRenderer<SectDisciple, DiscipleRenderer
             // Слуги и управляющий — без меча (модель одна на всех: видимость ставится каждый кадр).
             boolean armed = entity.armed();
             getAnyDescendantWithName("weapon").ifPresent(w -> w.visible = armed);
+            poseShown = false;
             String anim = entity.anim();
+            SectPose pose = entity.pose();
             AnimationDefinition clip = anim.isEmpty() ? null : PalClips.get(ResourceLocation.parse(anim));
             float partial = ageInTicks - entity.tickCount;
             float sec = entity.animSeconds(partial);
-            if (clip == null || sec > clip.lengthInSeconds() + 0.05F) {
-                super.setupAnim(entity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch);
+            boolean live = clip != null && (clip.looping() || sec <= clip.lengthInSeconds() + 0.05F);
+            // Сидячая поза (трапеза, сон, медитация) важнее лотоса, который ставит распорядок.
+            if (live && pose.seated() && anim.equals(SectDisciple.LOTUS.toString())) {
+                live = false;
+            }
+            if (live) {
+                root().getAllParts().forEach(ModelPart::resetPose);
+                // API: reference/minecraft-src/net/minecraft/client/animation/KeyframeAnimations.java#animate (время в мс)
+                KeyframeAnimations.animate(this, clip, (long) (Math.min(sec, clip.lengthInSeconds()) * 1000.0F), 1.0F, CACHE);
+                // Меч в руке игрока смотрит вперёд из кулака (ванильный предмет в руке), у бандита —
+                // продолжает руку: клинок поворачивается вперёд, как держит игрок.
+                // В поклоне меч лежит обратным хватом вдоль предплечья (приветствие с мечом), не торчит вверх.
+                // Сидя (лотос: трапеза, медитация, ночь) — тоже вдоль руки, а не вперёд.
+                float blade = anim.endsWith("spar_bow") || anim.endsWith(":lotus") ? Mth.PI : -Mth.HALF_PI;
+                getAnyDescendantWithName("weapon").ifPresent(w -> w.xRot = blade);
                 NpcGestures.apply(this, entity, partial);
                 return;
             }
-            root().getAllParts().forEach(ModelPart::resetPose);
-            // API: reference/minecraft-src/net/minecraft/client/animation/KeyframeAnimations.java#animate (время в мс)
-            KeyframeAnimations.animate(this, clip, (long) (Math.min(sec, clip.lengthInSeconds()) * 1000.0F), 1.0F, CACHE);
-            // Меч в руке игрока смотрит вперёд из кулака (ванильный предмет в руке), у бандита —
-            // продолжает руку: клинок поворачивается вперёд, как держит игрок.
-            // В поклоне меч лежит обратным хватом вдоль предплечья (приветствие с мечом), не торчит вверх.
-            // Сидя (лотос: трапеза, медитация, ночь) — тоже вдоль руки, а не вперёд.
-            float blade = anim.endsWith("spar_bow") || anim.endsWith(":lotus") ? Mth.PI : -Mth.HALF_PI;
-            getAnyDescendantWithName("weapon").ifPresent(w -> w.xRot = blade);
+            if (playPose(entity, pose, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, partial)) {
+                return;
+            }
+            super.setupAnim(entity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch);
             NpcGestures.apply(this, entity, partial);
+        }
+
+        /**
+         * Клип позы секты ({@link SectPose}, {@code npc_animations/}); false — у позы нет клипа или разовый клип
+         * доигран. Клип пишется на скелет NPC (torso — дочь waist, голова и руки — дочери torso), без пересчёта.
+         */
+        private boolean playPose(SectDisciple entity, SectPose pose, float limbSwing, float limbSwingAmount, float ageInTicks,
+                                 float netHeadYaw, float headPitch, float partial) {
+            if (pose.clip() == null) {
+                return false;
+            }
+            // В кровати тело кладёт ванильный рендер (поза SLEEPING) — клип только дышит.
+            ResourceLocation id = pose == SectPose.SLEEP && entity.isSleeping() ? SLEEP_BED : pose.clip();
+            AnimationDefinition clip = PalClips.get(id);
+            float sec = entity.poseSeconds(partial);
+            if (clip == null || !clip.looping() && sec > clip.lengthInSeconds()) {
+                return false;
+            }
+            if (pose.upperBody()) {
+                // Ноги — от шага/покоя бандита (несёт вёдра на ходу), корпус и руки — из клипа.
+                super.setupAnim(entity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch);
+                PartPose[] legs = new PartPose[LEGS.length];
+                for (int i = 0; i < LEGS.length; i++) {
+                    legs[i] = getAnyDescendantWithName(LEGS[i]).map(ModelPart::storePose).orElse(null);
+                }
+                root().getAllParts().forEach(ModelPart::resetPose);
+                for (int i = 0; i < LEGS.length; i++) {
+                    PartPose saved = legs[i];
+                    if (saved != null) {
+                        getAnyDescendantWithName(LEGS[i]).ifPresent(p -> p.loadPose(saved));
+                    }
+                }
+            } else {
+                root().getAllParts().forEach(ModelPart::resetPose);
+            }
+            // Вход в позу — плавно от покоя (сесть и лечь — дольше, чем поднять руки); разовые клипы начинают с покоя сами.
+            float in = pose.seated() ? 0.6F : 0.35F;
+            float blend = pose.loop() ? Mth.clamp(sec / in, 0.0F, 1.0F) : 1.0F;
+            blend = blend * blend * (3.0F - 2.0F * blend);
+            // API: reference/minecraft-src/net/minecraft/client/animation/KeyframeAnimations.java#animate (масштаб — доля позы)
+            KeyframeAnimations.animate(this, clip, (long) (sec * 1000.0F), blend, CACHE);
+            if (pose == SectPose.GUARD || pose == SectPose.TALK || pose == SectPose.CARRY || pose == SectPose.FORM) {
+                // Стоя голова ещё и смотрит на игрока (LookControl), поверх клипа.
+                getAnyDescendantWithName("head").ifPresent(h -> {
+                    h.yRot += 0.6F * netHeadYaw * Mth.DEG_TO_RAD;
+                    h.xRot += 0.6F * headPitch * Mth.DEG_TO_RAD;
+                });
+            }
+            NpcGestures.apply(this, entity, partial);
+            getAnyDescendantWithName("weapon").ifPresent(w -> {
+                if (pose.hidesWeapon()) {
+                    w.visible = false;
+                } else {
+                    w.xRot = -Mth.HALF_PI;
+                }
+            });
+            poseShown = true;
+            return true;
         }
     }
 

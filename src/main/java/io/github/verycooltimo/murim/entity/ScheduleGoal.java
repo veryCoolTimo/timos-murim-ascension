@@ -41,6 +41,12 @@ public final class ScheduleGoal extends Goal {
     private int bedSearch;
     private int drillStep;
     private int drillClock;
+    /** Последний {@link #arrive} — на месте дела (поза дела), иначе в пути (шаг). */
+    private boolean onSpot;
+    /** Разовая поза (поклон) доигрывается: столько тиков поза не меняется. */
+    private int poseHold;
+    /** Глава у ворот уже поклонился этому игроку (id), пока тот рядом. */
+    private int greeted = -1;
 
     public ScheduleGoal(SectDisciple npc) {
         this.npc = npc;
@@ -72,6 +78,7 @@ public final class ScheduleGoal extends Goal {
     public void stop() {
         npc.getNavigation().stop();
         current = null;
+        npc.setPose(SectPose.NONE);
     }
 
     @Override
@@ -83,6 +90,7 @@ public final class ScheduleGoal extends Goal {
             return;
         }
         Kind kind = current.task().kind();
+        tickPose(kind);
         switch (kind) {
             case FORM_ROW -> formRow();
             case INSPECT -> inspect();
@@ -109,6 +117,24 @@ public final class ScheduleGoal extends Goal {
                 }
             }
             case SLEEP -> sleep();
+            case GREET -> {
+                // Глава встречает: стоит у ворот, подошедшему игроку — поклон «кулак в ладонь» (один раз).
+                if (arrive(current.spot(), 1.0D)) {
+                    npc.faceYaw(current.yaw(), 15.0F);
+                    Player p = npc.level().getNearestPlayer(npc, 8.0D);
+                    if (p != null) {
+                        npc.getLookControl().setLookAt(p, 20.0F, 20.0F);
+                    }
+                    Player near = npc.level().getNearestPlayer(npc, 4.5D);
+                    if (near == null) {
+                        greeted = -1;
+                    } else if (near.getId() != greeted) {
+                        greeted = near.getId();
+                        npc.playPose(SectPose.BOW);
+                        poseHold = 44;
+                    }
+                }
+            }
             default -> {
                 // WATCH, GUARD, GREET: стоять на месте лицом куда надо, глазами — на ближнего игрока.
                 if (arrive(current.spot(), kind == Kind.GREET ? 1.0D : 0.8D)) {
@@ -131,6 +157,22 @@ public final class ScheduleGoal extends Goal {
         }
     }
 
+    /**
+     * Поза по делу (крючок анимаций, {@link SectPose#forTask}): на месте — поза дела, в пути — шаг. Ставится
+     * ДО дела этого тика: дело читает {@link #onSpot} прошлого тика, разница в тик не видна.
+     */
+    private void tickPose(Kind kind) {
+        if (poseHold > 0) {
+            poseHold--;
+            return;
+        }
+        if (kind == Kind.SLEEP && npc.isSleeping()) {
+            npc.setPose(SectPose.SLEEP);
+            return;
+        }
+        npc.setPose(SectPose.forTask(kind, onSpot, SectPose.carrier(npc)));
+    }
+
     /** Новое задание (раз в секунду): смена части суток, выход главы к воротам. */
     private void update() {
         refresh = 20;
@@ -151,6 +193,7 @@ public final class ScheduleGoal extends Goal {
             roam = null;
             bed = null;
             bedSearch = 0;
+            onSpot = false;
             Kind k = next.task().kind();
             boolean seated = k == Kind.EAT || k == Kind.MEDITATE || k == Kind.REST || k == Kind.SLEEP;
             if (!seated) {
@@ -277,6 +320,7 @@ public final class ScheduleGoal extends Goal {
         double d = horizontal(spot);
         if (d <= ARRIVE * ARRIVE && Math.abs(npc.getY() - spot.y) < 2.5D) {
             npc.getNavigation().stop();
+            onSpot = true;
             // Ровно на место: строй и столы читаются сеткой, а не кучкой (codex по кадрам 04.10).
             if (d > 0.0025D && npc.onGround()) {
                 npc.setPos(spot.x, npc.getY(), spot.z);
@@ -289,6 +333,7 @@ public final class ScheduleGoal extends Goal {
             npc.stopSleeping();
         }
         npc.sit(false);
+        onSpot = false;
         if (d < best - 0.25D) {
             best = d;
             stuck = 0;
@@ -298,6 +343,7 @@ public final class ScheduleGoal extends Goal {
             if (npc.level().getNearestPlayer(npc, 24.0D) == null && npc.level().isLoaded(BlockPos.containing(spot))) {
                 npc.moveTo(spot.x, spot.y, spot.z, current.yaw(), 0.0F);
                 npc.getNavigation().stop();
+                onSpot = true;
                 return true;
             }
         }
