@@ -55,6 +55,183 @@ public final class MountHuaShape {
         legacyRock = true;
         buildTrail();
         legacyRock = false;
+        buildSpires();
+    }
+
+    // ---------------------------------------------------------------------------------------------
+    // Spire forests (author 04.10: «больше маленьких пиков»): clusters of thin granite pinnacles,
+    // 20-80 blocks above the ground they stand on, in the foothills, between the main peaks and
+    // around the sect shelf as a backdrop. Never on the pads, the stair or the plank road.
+
+    private static final int SPIRE_CELL = 64;
+    /** Per cell: flat list of {u, v, radius, height, salt} spires (null = none). */
+    private final java.util.Map<Long, double[]> spires = new java.util.HashMap<>();
+
+    private void buildSpires() {
+        for (int i = (int) Math.floor(MIN_U / SPIRE_CELL); i <= MAX_U / SPIRE_CELL; i++) {
+            for (int j = (int) Math.floor(MIN_V / SPIRE_CELL); j <= MAX_V / SPIRE_CELL; j++) {
+                long hsh = hash(i + 91019, j + 33331);
+                double cu = (i + 0.25 + 0.5 * rnd(hsh, 1)) * SPIRE_CELL;
+                double cv = (j + 0.25 + 0.5 * rnd(hsh, 2)) * SPIRE_CELL;
+                double belt = beltDistance(cu, cv);
+                double core = massif(cu, cv);
+                double toSect = Math.hypot(cu, (cv - 40) * 0.9);
+                // Fewer, tighter groups with clear gaps (codex: not needles strewn everywhere);
+                // a ring of groups round the sect shelf, kept back from its skyline.
+                double chance = belt >= 0.6 ? 0 : core > 0.3 ? 0.14 : 0.2 * (1 - smooth(0.3, 0.6, belt));
+                if (toSect > 125 && toSect < 240) {
+                    chance = 0.45;
+                }
+                if (toSect <= 125 || rnd(hsh, 3) >= chance) {
+                    continue;
+                }
+                double near = toSect < 240 ? 0.6 : 1.0;
+                int count = 4 + (int) (5 * rnd(hsh, 4));
+                java.util.ArrayList<Double> list = new java.util.ArrayList<>();
+                double spread = 8 + 8 * rnd(hsh, 5);
+                double sumTall = 0;
+                int kept = 0;
+                for (int k = 0; k < count; k++) {
+                    double ang = rnd(hsh, 10 + k) * Math.PI * 2;
+                    double d = spread * Math.sqrt(rnd(hsh, 30 + k));
+                    double u = cu + Math.cos(ang) * d;
+                    double v = cv + Math.sin(ang) * d;
+                    double r = 6 + 6 * rnd(hsh, 50 + k);
+                    double tall = (20 + 48 * Math.pow(rnd(hsh, 70 + k), 2.0)) * near;
+                    if (!spireAllowed(u, v, r * 1.8)) {
+                        continue;
+                    }
+                    list.add(u);
+                    list.add(v);
+                    list.add(r);
+                    list.add(tall);
+                    list.add((double) ((hsh >>> (k * 3)) & 1023));
+                    list.add(0.0);
+                    sumTall += tall;
+                    kept++;
+                }
+                if (kept >= 2 && spireAllowed(cu, cv, spread + 10)) {
+                    // Shared rocky base the group stands in (bases embedded, not posts on a lawn).
+                    list.add(cu);
+                    list.add(cv);
+                    list.add(spread + 14);
+                    list.add(0.3 * sumTall / kept);
+                    list.add((double) (hsh & 1023));
+                    list.add(1.0);
+                }
+                if (kept > 0) {
+                    double[] arr = new double[list.size()];
+                    for (int k = 0; k < arr.length; k++) {
+                        arr[k] = list.get(k);
+                    }
+                    spires.put(((long) i << 32) ^ (j & 0xffffffffL), arr);
+                }
+            }
+        }
+    }
+
+    /** Spires keep clear of the pads, the stair, the plank road and the gate gorge. */
+    private boolean spireAllowed(double u, double v, double r) {
+        if (beltDistance(u, v) >= 0.97) {
+            return false;
+        }
+        for (Zone z : MountHuaPlan.ZONES) {
+            double dx = Math.max(0, Math.abs(u - z.u()) - z.width() / 2.0);
+            double dz = Math.max(0, Math.abs(v - z.v()) - z.depth() / 2.0);
+            if (Math.hypot(dx, dz) < r + 16) {
+                return false;
+            }
+        }
+        if (polyDistance(MountHuaPlan.TRAIL, u, v) < r + 14 || polyDistance(MountHuaPlan.PLANK_ROAD, u, v) < r + 10) {
+            return false;
+        }
+        for (double[] p : MountHuaPlan.PATHS) {
+            double[] q = pathAt(p, u, v);
+            if (q[0] < r + 8) {
+                return false;
+            }
+        }
+        for (Gorge g : MountHuaPlan.GORGES) {
+            for (int i = 0; i + 1 < g.u().length; i++) {
+                if (segDistance(g.u()[i], g.v()[i], g.u()[i + 1], g.v()[i + 1], u, v) < r + 12) {
+                    return false;
+                }
+            }
+        }
+        // The gate valley stays open (the approach view of the scarp).
+        return !(Math.abs(u - (-104)) < 70 && v < MountHuaPlan.SCARP_V + 10);
+    }
+
+    private static double polyDistance(List<TrailPoint> pts, double u, double v) {
+        double best = Double.MAX_VALUE;
+        for (int i = 0; i + 1 < pts.size(); i++) {
+            best = Math.min(best, segDistance(pts.get(i).u(), pts.get(i).v(), pts.get(i + 1).u(), pts.get(i + 1).v(), u, v));
+        }
+        return best;
+    }
+
+    private static double segDistance(double ax, double ay, double bx, double by, double u, double v) {
+        double lx = bx - ax;
+        double ly = by - ay;
+        double t = clamp(((u - ax) * lx + (v - ay) * ly) / (lx * lx + ly * ly), 0, 1);
+        return Math.hypot(u - (ax + lx * t), v - (ay + ly * t));
+    }
+
+    /** Extra height of the spire forests here (added on top of the ground). */
+    private double spireLift(double u, double v) {
+        int ci = (int) Math.floor(u / SPIRE_CELL);
+        int cj = (int) Math.floor(v / SPIRE_CELL);
+        double best = 0;
+        for (int i = ci - 1; i <= ci + 1; i++) {
+            for (int j = cj - 1; j <= cj + 1; j++) {
+                double[] arr = spires.get(((long) i << 32) ^ (j & 0xffffffffL));
+                if (arr == null) {
+                    continue;
+                }
+                for (int k = 0; k < arr.length; k += 6) {
+                    double du = u - arr[k];
+                    double dv = v - arr[k + 1];
+                    double r = arr[k + 2];
+                    double salt = arr[k + 4];
+                    if (arr[k + 5] > 0) {
+                        // Group base: a rough rocky mound.
+                        double q = Math.hypot(du, dv) / r * (1 + 0.25 * warp.noise(u / 9.0, v / 9.0, 63.0 + salt));
+                        if (q < 1) {
+                            best = Math.max(best, arr[k + 3] * Math.pow(1 - q * q, 1.2));
+                        }
+                        continue;
+                    }
+                    // Wide flared foot, tapering shaft with uneven shoulders.
+                    if (Math.abs(du) > r * 2.2 || Math.abs(dv) > r * 2.2) {
+                        continue;
+                    }
+                    double a = Math.atan2(dv, du);
+                    double rim = 1 + 0.22 * warp.noise(Math.cos(a) * 1.7 + salt, Math.sin(a) * 1.7, 61.0)
+                            + 0.10 * (1 - smooth(0, 0.08, Math.abs(flute.noise(Math.cos(a) * 3 + salt, Math.sin(a) * 3, 62.0))));
+                    double dist = Math.hypot(du, dv) / rim;
+                    double tall = arr[k + 3];
+                    double shaft = dist < r ? tall * Math.pow(1 - dist / r, 0.3) : 0;
+                    double foot = dist < r * 2.2 ? 0.55 * tall * Math.pow(1 - dist / (r * 2.2), 1.2) : 0;
+                    double h = Math.max(shaft, foot);
+                    if (h <= 0) {
+                        continue;
+                    }
+                    // Sloping, sometimes split crown instead of a cut-off top.
+                    double tilt = (du * Math.cos(salt) + dv * Math.sin(salt)) / r;
+                    h -= 0.12 * tall * Math.max(0, tilt) * smooth(0.6, 0.95, h / tall);
+                    if (((long) salt & 3) == 0) {
+                        double split = Math.abs(du * Math.sin(salt) - dv * Math.cos(salt)) / r;
+                        h -= 0.15 * tall * (1 - smooth(0.0, 0.18, split)) * smooth(0.7, 0.95, h / tall);
+                    }
+                    // Ledges on the way up (pines and moss sit there).
+                    double band = 7 + (salt % 5);
+                    double f = h / band;
+                    h -= band * 0.35 * smooth(0.65, 1.0, f - Math.floor(f)) * smooth(0.25, 0.7, dist / r);
+                    best = Math.max(best, h);
+                }
+            }
+        }
+        return best;
     }
 
     /** True only while the stair profile is computed: rock shapes as approved at hua-overview-ok. */
@@ -143,6 +320,9 @@ public final class MountHuaShape {
      */
     public double ground(double u, double v) {
         double h = Math.max(natural(u, v), belt(u, v));
+        if (!legacyRock) {
+            h += spireLift(u, v);
+        }
         // Gorges cut the foothill belt too (it could fill the slot back up otherwise).
         for (Gorge gorge : MountHuaPlan.GORGES) {
             h = gorge(gorge, u, v, h);
