@@ -287,8 +287,8 @@ public final class MeditationService {
         if (profile.rank() == Realm.PEAK) {
             return checkStage(player, profile, state);
         }
-        Realm.Blocker blocker = Realm.check(profile,
-                player.getData(ModAttachments.MASTERY).layers());
+        Realm.Blocker blocker = Realm.check(profile, player.getData(ModAttachments.MASTERY).layers(),
+                player.getData(io.github.verycooltimo.murim.entity.boss.BossRegistry.BOSS_DEFEATED));
         if (blocker == Realm.Blocker.NONE) {
             player.setData(ModAttachments.MEDITATION, state.withBreakthrough(0));
             // Без текста (решение автора 01.10): о стене говорят стук сердца и пульс экрана.
@@ -296,7 +296,8 @@ public final class MeditationService {
             return true;
         }
         if (Realm.atWall(profile) && state.ticks() % WALL_HINT_TICKS == 0) {
-            String key = blocker != Realm.Blocker.NO_TECHNIQUE ? "murim.rank.wall.max"
+            String key = blocker == Realm.Blocker.NO_BOSS ? "murim.rank.wall.boss"
+                    : blocker != Realm.Blocker.NO_TECHNIQUE ? "murim.rank.wall.max"
                     : Realm.condition(profile.rank() + 1) == Realm.Condition.MASTER_ANY
                     ? "murim.rank.wall.master_any" : "murim.rank.wall.technique";
             player.displayClientMessage(Component.translatable(key, Realm.layerNeed(profile.rank() + 1))

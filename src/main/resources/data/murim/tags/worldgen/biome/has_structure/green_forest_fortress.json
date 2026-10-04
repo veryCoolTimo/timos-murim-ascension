@@ -1,0 +1,12 @@
+{
+  "values": [
+    "#minecraft:is_forest",
+    "#minecraft:is_taiga",
+    "#minecraft:is_hill",
+    "minecraft:meadow",
+    "minecraft:plains",
+    "minecraft:cherry_grove",
+    "minecraft:savanna",
+    "minecraft:windswept_savanna"
+  ]
+}

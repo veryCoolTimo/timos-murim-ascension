@@ -38,6 +38,8 @@ public class MurimMod {
         io.github.verycooltimo.murim.registry.ModFeatures.register(modEventBus);
         io.github.verycooltimo.murim.library.ModLibrary.register(modEventBus);
         io.github.verycooltimo.murim.world.camp.BanditCamp.register(modEventBus);
+        io.github.verycooltimo.murim.entity.boss.BossRegistry.register(modEventBus);
+        io.github.verycooltimo.murim.world.fortress.Fortress.register(modEventBus);
 
         modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
     }
