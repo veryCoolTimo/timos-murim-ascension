@@ -21,6 +21,9 @@ public final class PlaceRules {
     /** Высота пика: с неё открытое небо — место силы. */
     public static final int PEAK_HEIGHT = 110;
 
+    /** Вершина: в этом радиусе нет земли выше ног больше чем на 2 блока. */
+    public static final int SUMMIT_RADIUS = 10;
+
     /** Сколько текущей (не стоячей) воды рядом делает место водным: водопад, стремнина. */
     public static final int WATER_FLOWING = 4;
 

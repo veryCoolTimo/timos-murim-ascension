@@ -48,7 +48,8 @@ public final class PlaceService {
             BlockState s = level.getBlockState(stone.get());
             return Optional.of(new Place(stone.get(), s.getValue(SpiritVeinBlock.KIND), true));
         }
-        if (around.getY() >= PlaceRules.PEAK_HEIGHT && level.canSeeSky(around.above()) && solidBelow(level, around) >= 4) {
+        if (around.getY() >= PlaceRules.PEAK_HEIGHT && level.canSeeSky(around.above()) && solidBelow(level, around) >= 4
+                && localSummit(level, around)) {
             // Якорь — сетка 4×4: сидящий не сдвигается, и цикл волн не скачет.
             return Optional.of(new Place(new BlockPos(around.getX() & ~3, around.getY(), around.getZ() & ~3),
                     PlaceKind.PEAK, false));
@@ -93,6 +94,25 @@ public final class PlaceService {
             }
         }
         return solid;
+    }
+
+    /**
+     * Настоящая вершина, а не любой склон выше {@link PlaceRules#PEAK_HEIGHT}: в радиусе
+     * {@link PlaceRules#SUMMIT_RADIUS} нет земли выше ног больше чем на 2 блока. Гора Хуашань
+     * почти вся выше 110, и без этого пиком считался каждый её блок (автор 04.10).
+     */
+    static boolean localSummit(Level level, BlockPos around) {
+        int r = PlaceRules.SUMMIT_RADIUS;
+        for (int dx = -r; dx <= r; dx += 2) {
+            for (int dz = -r; dz <= r; dz += 2) {
+                int top = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                        around.getX() + dx, around.getZ() + dz);
+                if (top > around.getY() + 2) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     /** Ближайший камень жилы в радиусе (сканирует куб 13×7×13). */
