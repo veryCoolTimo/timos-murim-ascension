@@ -117,6 +117,7 @@ public final class MountHuaShape {
             h = terrace(zone, u, v, h);
         }
         h = trail(u, v, h);
+        h = paths(u, v, h);
         // Inside a terrace the level is exact (neighbouring terraces' walls never spill in).
         for (Zone zone : MountHuaPlan.ZONES) {
             if (!zone.cave() && Math.abs(u - zone.u()) <= zone.width() / 2.0
@@ -135,7 +136,10 @@ public final class MountHuaShape {
      */
     public double ground(double u, double v) {
         double h = Math.max(natural(u, v), belt(u, v));
-        h = niche(u, v, h);
+        h = basin(u, v, h);
+        for (Peak tower : MountHuaPlan.TOWERS) {
+            h = Math.max(h, peak(tower, u, v));
+        }
         // Gorges cut the foothill belt too (it could fill the slot back up otherwise).
         for (Gorge gorge : MountHuaPlan.GORGES) {
             h = gorge(gorge, u, v, h);
@@ -144,53 +148,30 @@ public final class MountHuaShape {
     }
 
     /**
-     * The sect niche: a flat stepped shelf carved into the mountain, tall close walls at the back
-     * and the sides, a cliff drop at the front (north), a slot that parts the plum-grove ledge
-     * (crossed by a bridge), and stairs between the terrace levels.
+     * The sect basin: a flat floor where the organic outline says so; outside it the natural
+     * spires stay as they are and meet the floor in steep walls that follow their own shapes
+     * (no extruded rim). Cliffs/clefts of the natural terrain therefore enclose the compound.
      */
-    private double niche(double u, double v, double h) {
-        double hw = MountHuaPlan.NICHE_U;
-        double front = MountHuaPlan.NICHE_FRONT;
-        double back = MountHuaPlan.NICHE_BACK;
-        double jag = 3 * relief.noise(u / 11.0, v / 11.0, 41.0);
-        double dx = Math.max(0, Math.abs(u) - hw + jag);
-        double db = Math.max(0, v - back + jag);
-        double out = Math.max(dx, db);
-        if (v >= front && out == 0) {
-            double floor = MountHuaPlan.nicheFloor(u, v);
-            // Stairs between the central levels: 7 wide, one block per block.
-            if (Math.abs(u) <= 3.5) {
-                if (v > -10 && v <= -2) {
-                    floor = 152 + (v + 10);
-                } else if (v > 38 && v <= 46) {
-                    floor = 160 + (v - 38);
-                }
-            }
-            // The rock knoll with its pavilion.
-            floor = Math.max(floor, peak(MountHuaPlan.KNOLL, u, v));
-            return floor;
+    private double basin(double u, double v, double h) {
+        double q = Double.MAX_VALUE;
+        for (double[] e : MountHuaPlan.BASIN) {
+            double du = (u - e[0]) / e[2];
+            double dv = (v - e[1]) / e[3];
+            double a = Math.atan2(dv, du);
+            double wob = 1 + 0.10 * warp.noise(Math.cos(a) * 2.2 + e[0] * 0.01, Math.sin(a) * 2.2, 71.0 + e[1])
+                    + 0.05 * warp.noise(u / 11.0, v / 11.0, 73.0);
+            q = Math.min(q, Math.sqrt(du * du + dv * dv) / wob);
         }
-        if (v >= front - 2 && out > 0 && out < 45) {
-            // Back and side walls: rise at once far above the halls, then join the mountain.
-            double edgeFloor = MountHuaPlan.nicheFloor(Math.max(-hw, Math.min(hw, u)), Math.min(v, back));
-            double wall = Math.min(MountHuaPlan.SUMMIT - 14, edgeFloor + 50 + 20 * relief.noise(u / 17.0, v / 17.0, 44.0));
-            double k = smooth(0, 3, out) * (1 - smooth(25, 45, out));
-            h = Math.max(h, h + (wall - h) * k);
-            // The slot between the treasury and the plum-grove ledge.
-            if (u < -hw && u > -hw - 22 && v > -50 && v < -18) {
-                h = Math.min(h, 95 + 6 * relief.noise(u / 5.0, v / 5.0, 7.0));
-            }
+        if (q > 1.6) {
             return h;
         }
-        if (v < front && Math.abs(u) < hw + 40) {
-            // Front: a cliff drop into the mist (volume from below, not a crater).
-            double f = front - v;
-            double base = 100 + 8 * relief.noise(u / 19.0, v / 19.0, 45.0) + 0.4 * Math.max(0, f - 30);
-            double cliff = 152 - (152 - base) * smooth(0, 6 + 3 * jag, f);
-            double side = smooth(hw, hw + 40, Math.abs(u));
-            h = Math.min(h, cliff + (h - cliff) * side);
+        double floor = MountHuaPlan.basinFloor(u, v);
+        if (q <= 1) {
+            return floor;
         }
-        return h;
+        // Approximate distance (blocks) past the outline; the rock rises steeply from the floor.
+        double out = (q - 1) * 60;
+        return Math.min(h, floor + 2.5 * out + 1.5 * out * out);
     }
 
     /** Foothill belt height (nominal), 0 at the outer edge. */
@@ -373,7 +354,7 @@ public final class MountHuaShape {
             }
             double dx = Math.max(0, Math.abs(u - z.u()) - z.width() / 2.0);
             double dz = Math.max(0, Math.abs(v - z.v()) - z.depth() / 2.0);
-            calm = Math.max(calm, 1 - smooth(4, 30, Math.hypot(dx, dz)));
+            calm = Math.max(calm, 1 - smooth(3, 12, Math.hypot(dx, dz)));
         }
         return calm;
     }
@@ -793,7 +774,10 @@ public final class MountHuaShape {
         double hd = z.depth() / 2.0;
         double dx = Math.max(0, Math.abs(u - z.u()) - hw);
         double dz = Math.max(0, Math.abs(v - z.v()) - hd);
-        double d = Math.hypot(dx, dz);
+        // Organic outline: the ledge reaches 1-7 blocks past the build rectangle, varying along the
+        // edge (follows the slope instead of a ruler-straight border).
+        double reach = 4 + 3 * relief.noise(u / 9.0, v / 9.0, 61.0 + z.y());
+        double d = Math.max(0, Math.hypot(dx, dz) - Math.max(1, reach));
         if (d == 0) {
             return z.y();
         }
@@ -806,6 +790,26 @@ public final class MountHuaShape {
         }
         // Behind the terrace the slope is cut back: a short apron, then the natural cliff.
         return Math.min(h, z.y() + 2.2 * Math.max(0, d - 3));
+    }
+
+    /** Stairs between the platforms: 4 wide, cut down to their level; fill only within 1 block. */
+    private double paths(double u, double v, double h) {
+        for (double[] p : MountHuaPlan.PATHS) {
+            double[] q = pathAt(p, u, v);
+            if (q[0] <= 2.1) {
+                return q[1];
+            }
+        }
+        return h;
+    }
+
+    /** {distance to the path line, nominal level there (stepped)} for one inner path. */
+    public static double[] pathAt(double[] p, double u, double v) {
+        double lx = p[3] - p[0];
+        double ly = p[4] - p[1];
+        double t = clamp(((u - p[0]) * lx + (v - p[1]) * ly) / (lx * lx + ly * ly), 0, 1);
+        double d = Math.hypot(u - (p[0] + lx * t), v - (p[1] + ly * t));
+        return new double[] {d, Math.round(p[2] + (p[5] - p[2]) * t), t};
     }
 
     /** Smooth maximum (polynomial), k = blend width in blocks. */
