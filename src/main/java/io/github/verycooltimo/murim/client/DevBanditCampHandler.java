@@ -43,7 +43,16 @@ public final class DevBanditCampHandler {
     private static final boolean ENABLED = Boolean.getBoolean("murim.capture")
             && "banditcamp".equals(System.getProperty("murim.capture.technique"));
 
-    private static final String[] STAGES = {"approach", "overview", "overview2", "qi", "chief", "loot"};
+    /**
+     * Сцены по порядку; MURIM_CAMP_STAGES — свой список через запятую (tents, brawl, trade — полировка 04.10:
+     * шатры вблизи, бой «по двое», покупка у торговца). После последней сцены клиент закрывается.
+     */
+    private static final String[] STAGES = System.getenv().getOrDefault("MURIM_CAMP_STAGES",
+            "approach,overview,overview2,qi,chief,loot").split(",");
+
+    /** Точки съёмки сцены tents: x, y, z, yaw, pitch. */
+    private static volatile List<double[]> views = List.of();
+    private static volatile int peddlerId = -1;
 
     private static boolean setup;
     private static int stage = -1;
@@ -88,7 +97,15 @@ public final class DevBanditCampHandler {
             next(server);
             return;
         }
-        if (stage < 0 || stage >= STAGES.length || !targetReady) {
+        if (stage >= STAGES.length) {
+            if (stage == STAGES.length) {
+                stage++;
+                MurimMod.LOGGER.info("Bandit camp capture: all stages done");
+                mc.stop();
+            }
+            return;
+        }
+        if (stage < 0 || !targetReady) {
             return;
         }
         String name = STAGES[stage];
@@ -198,8 +215,119 @@ public final class DevBanditCampHandler {
                     mc.setScreen(null);
                 }
                 if (act == 120) {
-                    MurimMod.LOGGER.info("Bandit camp capture: done");
-                    stage++;
+                    MurimMod.LOGGER.info("Bandit camp capture: loot done");
+                    next(server);
+                }
+            }
+            case "tents" -> {
+                // Шатры, навес, костёр и ворота вблизи: по точке на 30 тиков, кадр на 24-м.
+                mc.options.setCameraType(CameraType.FIRST_PERSON);
+                mc.options.hideGui = true;
+                int i = (act - 1) / 30;
+                int t = (act - 1) % 30;
+                if (i >= views.size()) {
+                    mc.options.hideGui = false;
+                    next(server);
+                } else if (t == 0) {
+                    double[] v = views.get(i);
+                    server.execute(() -> {
+                        ServerPlayer p = server.getPlayerList().getPlayers().get(0);
+                        p.teleportTo(server.overworld(), v[0], v[1], v[2], (float) v[3], (float) v[4]);
+                    });
+                } else if (t == 24) {
+                    grab(mc, name);
+                }
+            }
+            case "brawl" -> {
+                // Бой без заморозки: тревога поднимает лагерь, вблизи дерутся двое, остальные ждут кольцом.
+                mc.options.setCameraType(act < 150 ? CameraType.THIRD_PERSON_BACK : CameraType.FIRST_PERSON);
+                Entity t = mc.level.getEntity(targetId);
+                Entity near = null;
+                double best = 9.0D;
+                for (Entity e : mc.level.entitiesForRendering()) {
+                    if (e instanceof Bandit b && b.isAlive() && b.isAggressive() && mc.player.distanceToSqr(e) < best) {
+                        best = mc.player.distanceToSqr(e);
+                        near = e;
+                    }
+                }
+                Entity look = near != null ? near : t;
+                if (look != null) {
+                    face(mc, look);
+                    mc.player.setXRot(act < 150 ? 12.0F : 4.0F);
+                }
+                if (near != null && best < 3.2D * 3.2D && mc.player.getAttackStrengthScale(0.0F) >= 0.95F && act % 14 == 0) {
+                    mc.gameMode.attack(mc.player, near);
+                    mc.player.swing(InteractionHand.MAIN_HAND);
+                }
+                if (act % 4 == 0) {
+                    grab(mc, name);
+                }
+                if (act % 20 == 0) {
+                    server.execute(() -> logFight(server));
+                }
+                if (act >= 300) {
+                    next(server);
+                }
+            }
+            case "trade" -> {
+                // Покупка у торговца: открыть его экран, выбрать пилюлю, забрать её за серебро.
+                mc.options.setCameraType(CameraType.FIRST_PERSON);
+                mc.options.hideGui = false;
+                Entity ped = mc.level.getEntity(peddlerId);
+                if (ped != null && act < 20) {
+                    face(mc, ped);
+                    mc.player.setXRot(8.0F);
+                }
+                if (act == 10) {
+                    grab(mc, name);
+                }
+                if (act == 20 && ped != null) {
+                    mc.gameMode.interact(mc.player, ped, InteractionHand.MAIN_HAND);
+                }
+                if (act == 40) {
+                    grab(mc, name);
+                }
+                if (act == 45 && mc.player.containerMenu instanceof net.minecraft.world.inventory.MerchantMenu menu) {
+                    int pick = -1;
+                    for (int k = 0; k < menu.getOffers().size(); k++) {
+                        if (menu.getOffers().get(k).getResult().is(io.github.verycooltimo.murim.registry.ModItems.PILL_SNOW_PLUM.get())) {
+                            pick = k;
+                        }
+                    }
+                    MurimMod.LOGGER.info("Bandit camp capture: trade offers {}, pill at {}", menu.getOffers().size(), pick);
+                    if (pick >= 0) {
+                        menu.setSelectionHint(pick);
+                        menu.tryMoveItems(pick);
+                        mc.getConnection().send(new net.minecraft.network.protocol.game.ServerboundSelectTradePacket(pick));
+                    }
+                }
+                if (act == 55) {
+                    grab(mc, name);
+                }
+                if (act == 60 && mc.player.containerMenu instanceof net.minecraft.world.inventory.MerchantMenu menu) {
+                    mc.gameMode.handleInventoryMouseClick(menu.containerId, 2, 0, net.minecraft.world.inventory.ClickType.QUICK_MOVE, mc.player);
+                }
+                if (act == 70) {
+                    grab(mc, name);
+                }
+                if (act == 75) {
+                    mc.player.closeContainer();
+                }
+                if (act == 85) {
+                    mc.setScreen(new net.minecraft.client.gui.screens.inventory.InventoryScreen(mc.player));
+                }
+                if (act == 95) {
+                    grab(mc, name);
+                    server.execute(() -> {
+                        ServerPlayer p = server.getPlayerList().getPlayers().get(0);
+                        MurimMod.LOGGER.info("Bandit camp capture: after trade silver {}, pills {}",
+                                p.getInventory().countItem(io.github.verycooltimo.murim.registry.ModItems.SILVER_TAEL.get()),
+                                p.getInventory().countItem(io.github.verycooltimo.murim.registry.ModItems.PILL_SNOW_PLUM.get()));
+                    });
+                }
+                if (act == 100) {
+                    mc.setScreen(null);
+                    next(server);
                 }
             }
             default -> {
@@ -308,11 +436,133 @@ public final class DevBanditCampHandler {
                     chests = List.copyOf(found);
                     MurimMod.LOGGER.info("Bandit camp capture: chests {}", chests);
                 }
+                case "tents" -> {
+                    p.setGameMode(GameType.SPECTATOR);
+                    List<double[]> v = new java.util.ArrayList<>();
+                    for (CampLayout.Spot s : plan.spots()) {
+                        if (s.kind() != CampLayout.Kind.TENT && s.kind() != CampLayout.Kind.CHIEF_TENT
+                                && s.kind() != CampLayout.Kind.LEAN_TO && s.kind() != CampLayout.Kind.FIRE) {
+                            continue;
+                        }
+                        int[] fw = CampLayout.step(s.facing());
+                        int[] rt = CampLayout.step(s.facing() + 1);
+                        double sx = cx + s.dx() + 0.5D, sz = cz + s.dz() + 0.5D;
+                        if (s.kind() == CampLayout.Kind.FIRE) {
+                            // Вертел вдоль x: смотреть с юга, наискось сверху.
+                            v.add(view(level, sx + 1.5D, sz + 4.5D, sx, sz, 22.0F));
+                            continue;
+                        }
+                        double d = s.kind() == CampLayout.Kind.CHIEF_TENT ? 9.0D : 7.5D;
+                        // Анфас: открытый вход и постели; три четверти: скат и терраса на склоне.
+                        v.add(view(level, sx + fw[0] * d, sz + fw[1] * d, sx, sz, 14.0F));
+                        v.add(view(level, sx + (fw[0] + rt[0]) * d * 0.75D, sz + (fw[1] + rt[1]) * d * 0.75D, sx, sz, 18.0F));
+                    }
+                    // Ворота: снаружи по тропе и изнутри.
+                    double gx = cx + g[0] * plan.radius(), gz = cz + g[1] * plan.radius();
+                    v.add(view(level, cx + g[0] * (plan.radius() + 8.0D), cz + g[1] * (plan.radius() + 8.0D), gx, gz, 10.0F));
+                    v.add(view(level, cx + g[0] * (plan.radius() - 7.0D), cz + g[1] * (plan.radius() - 7.0D), gx, gz, 8.0F));
+                    views = List.copyOf(v);
+                    MurimMod.LOGGER.info("Bandit camp capture: {} tent views", v.size());
+                }
+                case "brawl" -> {
+                    p.setGameMode(GameType.SURVIVAL);
+                    p.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.IRON_SWORD));
+                    p.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 20 * 60, 3, false, false));
+                    p.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 20 * 60, 3, false, false));
+                    p.setHealth(p.getMaxHealth());
+                    List<Bandit> band = level.getEntitiesOfClass(Bandit.class, new AABB(campCentre).inflate(40.0D), Entity::isAlive);
+                    for (Bandit b : band) {
+                        b.setNoAi(false);
+                        b.setTarget(null);
+                    }
+                    // Игрок у костра со стороны ворот; первым его замечает ближайший — тревога поднимает всех.
+                    double px = cx + g[0] * 4.0D, pz = cz + g[1] * 4.0D;
+                    teleport(level, p, px, pz, cx, cz, 10.0F, 0);
+                    Bandit first = band.stream().filter(b -> !b.isChief())
+                            .min(java.util.Comparator.comparingDouble(b -> b.distanceToSqr(p))).orElse(null);
+                    if (first != null) {
+                        first.setTarget(p);
+                        targetId = first.getId();
+                    }
+                    MurimMod.LOGGER.info("Bandit camp capture: brawl with {} bandits", band.size());
+                }
+                case "trade" -> {
+                    p.setGameMode(GameType.SURVIVAL);
+                    p.getInventory().clearContent();
+                    p.getInventory().add(new ItemStack(io.github.verycooltimo.murim.registry.ModItems.SILVER_TAEL.get(), 20));
+                    BlockPos village = nearestVillage(level, campCentre);
+                    if (village == null) {
+                        MurimMod.LOGGER.warn("Bandit camp capture: no village");
+                        break;
+                    }
+                    teleport(level, p, village.getX() + 0.5D, village.getZ() + 0.5D, village.getX() + 4.5D, village.getZ() + 0.5D, 8.0F, 0);
+                    // Торговец приходит сам, когда игрок в деревне (PeddlerSpawns, раз в 5 с) — подождать его.
+                    server.execute(() -> waitPeddler(server, village, 0));
+                    return;
+                }
                 default -> {
                 }
             }
             targetReady = true;
         });
+    }
+
+    private static double[] view(ServerLevel level, double x, double z, double lookX, double lookZ, float pitch) {
+        int bx = (int) Math.floor(x), bz = (int) Math.floor(z);
+        level.getChunk(bx >> 4, bz >> 4);
+        double y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, bx, bz) + 0.2D;
+        float yaw = (float) Math.toDegrees(Math.atan2(-(lookX - x), lookZ - z));
+        return new double[] {x, y, z, yaw, pitch};
+    }
+
+    /** Журнал боя: сколько дерутся вблизи, стреляют, ждут (проверка «по двое» по логу). */
+    private static void logFight(IntegratedServer server) {
+        ServerLevel level = server.overworld();
+        List<Bandit> band = level.getEntitiesOfClass(Bandit.class, new AABB(campCentre).inflate(48.0D), Entity::isAlive);
+        long melee = band.stream().filter(b -> !(b instanceof io.github.verycooltimo.murim.entity.BanditArcher) && b.getTarget() != null
+                && io.github.verycooltimo.murim.world.camp.CampFight.mayFight(b)).count();
+        long shoot = band.stream().filter(b -> b instanceof io.github.verycooltimo.murim.entity.BanditArcher && b.getTarget() != null
+                && io.github.verycooltimo.murim.world.camp.CampFight.mayFight(b)).count();
+        long wait = band.stream().filter(io.github.verycooltimo.murim.world.camp.CampFight::waiting).count();
+        boolean chief = band.stream().anyMatch(b -> b.isChief() && b.getTarget() != null && io.github.verycooltimo.murim.world.camp.CampFight.mayFight(b));
+        MurimMod.LOGGER.info("Bandit camp capture: fight alive {} melee {} shooting {} waiting {} chief engaged {}",
+                band.size(), melee, shoot, wait, chief);
+    }
+
+    private static BlockPos nearestVillage(ServerLevel level, BlockPos from) {
+        var tag = level.registryAccess().registryOrThrow(net.minecraft.core.registries.Registries.STRUCTURE)
+                .getTag(net.minecraft.tags.StructureTags.VILLAGE).orElse(null);
+        if (tag == null) {
+            return null;
+        }
+        var found = level.getChunkSource().getGenerator().findNearestMapStructure(level, tag, from, 100, false);
+        return found == null ? null : found.getFirst();
+    }
+
+    /** Ждать торговца у деревни до 20 с; не пришёл — поставить его (стенд) и встать перед ним. */
+    private static void waitPeddler(IntegratedServer server, BlockPos village, int tries) {
+        ServerLevel level = server.overworld();
+        ServerPlayer p = server.getPlayerList().getPlayers().get(0);
+        List<io.github.verycooltimo.murim.trade.Peddler> found = level.getEntitiesOfClass(io.github.verycooltimo.murim.trade.Peddler.class,
+                new AABB(p.blockPosition()).inflate(96.0D), Entity::isAlive);
+        if (found.isEmpty() && tries < 400) {
+            server.tell(new net.minecraft.server.TickTask(server.getTickCount() + 1, () -> waitPeddler(server, village, tries + 1)));
+            return;
+        }
+        io.github.verycooltimo.murim.trade.Peddler ped = found.isEmpty()
+                ? io.github.verycooltimo.murim.trade.PeddlerSpawns.arrive(level, village, io.github.verycooltimo.murim.trade.Peddler.VILLAGE_STAY)
+                : found.get(0);
+        MurimMod.LOGGER.info("Bandit camp capture: peddler {} after {} ticks at {}", found.isEmpty() ? "placed" : "came", tries,
+                ped == null ? "-" : ped.blockPosition().toShortString());
+        if (ped == null) {
+            targetReady = true;
+            return;
+        }
+        peddlerId = ped.getId();
+        float yaw = ped.getYRot();
+        double fx = ped.getX() - Math.sin(Math.toRadians(yaw)) * 2.6D, fz = ped.getZ() + Math.cos(Math.toRadians(yaw)) * 2.6D;
+        teleport(level, p, fx, fz, ped.getX(), ped.getZ(), 8.0F, 0);
+        targetReady = true;
     }
 
     private static void teleport(ServerLevel level, ServerPlayer p, double x, double z, double lookX, double lookZ, float pitch, int lift) {
