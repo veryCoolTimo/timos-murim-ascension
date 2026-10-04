@@ -104,13 +104,17 @@ public final class CampBuilder {
 
     // ------------------------------------------------------------------ двор и частокол
 
-    /** Утоптанный двор: тропа от ворот к костру, вокруг — земля, гравий, глина; у частокола трава. */
+    /**
+     * Утоптанный двор: тропа от ворот к костру и дальше наружу в лес, вокруг — тропа, гравий,
+     * глина. Ни тропа, ни гравий, ни глина не держат ростки — деревья в лагере не вырастают.
+     */
     private void yard() {
-        int r = plan.radius() + 2;
+        int r = plan.radius() + CampLayout.TRAIL_LENGTH + 1;
         for (int dx = -r; dx <= r; dx++) {
             for (int dz = -r; dz <= r; dz++) {
                 int x = cx + dx, z = cz + dz;
-                if (!sink.owns(x, z) || !plan.inside(dx, dz)) {
+                boolean trail = !plan.inside(dx, dz) && plan.onTrail(dx, dz);
+                if (!sink.owns(x, z) || !(plan.inside(dx, dz) || trail)) {
                     continue;
                 }
                 int g = sink.ground(x, z);
@@ -122,15 +126,15 @@ public final class CampBuilder {
                 long h = CampLayout.hash(plan.seed(), x, z) % 100L;
                 double edge = Math.sqrt(dx * dx + dz * dz) / plan.radius();
                 BlockState floor;
-                if (plan.onPath(dx, dz)) {
+                if (plan.onPath(dx, dz) || trail) {
                     floor = h < 85 ? Blocks.DIRT_PATH.defaultBlockState() : Blocks.GRAVEL.defaultBlockState();
-                } else if (edge > 0.78D && h < 55) {
-                    continue;
+                } else if (edge > 0.78D) {
+                    // У частокола — гравий и глина: на них не приживаются ростки деревьев.
+                    floor = h < 50 ? Blocks.GRAVEL.defaultBlockState() : Blocks.PACKED_MUD.defaultBlockState();
                 } else {
                     floor = h < 45 ? Blocks.DIRT_PATH.defaultBlockState()
                             : h < 65 ? Blocks.PACKED_MUD.defaultBlockState()
-                            : h < 80 ? Blocks.GRAVEL.defaultBlockState()
-                            : Blocks.COARSE_DIRT.defaultBlockState();
+                            : Blocks.GRAVEL.defaultBlockState();
                 }
                 sink.set(x, g, z, floor);
                 clearAbove(x, g + 1, z, 4);

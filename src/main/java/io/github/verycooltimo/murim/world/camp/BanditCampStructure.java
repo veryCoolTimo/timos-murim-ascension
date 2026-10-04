@@ -86,7 +86,7 @@ public class BanditCampStructure extends Structure {
             heights[heights.length - 1] = median(gen, context, x + g[0], z + g[1]);
             int lo = Arrays.stream(heights).min().orElse(centreY) - 8;
             int hi = Arrays.stream(heights).max().orElse(centreY) + 12;
-            int R = plan.radius() + 3;
+            int R = plan.radius() + CampLayout.TRAIL_LENGTH + 2;
             builder.addPiece(new BanditCampPiece(seed, x, z, heights, new BoundingBox(x - R, lo, z - R, x + R, hi, z + R)));
         }));
     }

@@ -339,6 +339,18 @@ public final class CampLayout {
         return px * px + pz * pz <= 1.6D;
     }
 
+    /** Сколько блоков тропа тянется от ворот наружу. */
+    public static final int TRAIL_LENGTH = 10;
+
+    /** Тропа от ворот в лес: банда ходит на дорогу (и подход к лагерю не упирается в стволы). */
+    public boolean onTrail(int dx, int dz) {
+        double[] g = gateDirection();
+        double along = dx * g[0] + dz * g[1];
+        double across = -dx * g[1] + dz * g[0];
+        double wobble = 0.8D * Math.sin(along * 0.45D + (seed & 7));
+        return along > radius - 1.5D && along < radius + TRAIL_LENGTH && Math.abs(across - wobble) <= 1.2D;
+    }
+
     /** Направление ворот наружу: x, z на единичной окружности. */
     public double[] gateDirection() {
         return new double[] {Math.cos(gateAngle), Math.sin(gateAngle)};
