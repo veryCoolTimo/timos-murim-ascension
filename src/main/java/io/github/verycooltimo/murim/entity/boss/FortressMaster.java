@@ -103,6 +103,8 @@ public class FortressMaster extends Monster implements Casters.Caster {
     private double laneLength;
     private final Set<UUID> hit = new HashSet<>();
     private final Set<UUID> participants = new HashSet<>();
+    /** Стенд: очередь приёмов по сценарию съёмки (пусто — выбор по правилам). */
+    private final java.util.ArrayDeque<BossMove> script = new java.util.ArrayDeque<>();
     private final ServerBossEvent bossEvent = new ServerBossEvent(Component.translatable("entity.murim.fortress_master"),
             BossEvent.BossBarColor.GREEN, BossEvent.BossBarOverlay.NOTCHED_10);
 
@@ -572,6 +574,15 @@ public class FortressMaster extends Monster implements Casters.Caster {
             }
             return;
         }
+        if (!script.isEmpty()) {
+            BossMove next = script.peek();
+            if (next == BossMove.CHAIN && d > BossMove.CHAIN_REACH - 0.4D) {
+                getNavigation().moveTo(t, 1.1D);
+                return;
+            }
+            startMove(script.poll(), t);
+            return;
+        }
         boolean[] ready = new boolean[cooldowns.length];
         for (int i = 0; i < ready.length; i++) {
             ready[i] = cooldowns[i] == 0;
@@ -850,6 +861,16 @@ public class FortressMaster extends Monster implements Casters.Caster {
                 setLastHurtMob(p);
             }
         }
+    }
+
+    /** Стенд: следующие приёмы по сценарию (после текущего), в обход выбора и кулдаунов. */
+    public void script(BossMove... moves) {
+        script.addAll(java.util.List.of(moves));
+    }
+
+    /** Стенд: сценарий выполнен и хозяин свободен. */
+    public boolean scriptDone() {
+        return script.isEmpty() && state() == IDLE && !pendingRoar && !pendingBoil;
     }
 
     /** GameTest и стенд: добавить участника боя (обычно — ступил на плац). */
