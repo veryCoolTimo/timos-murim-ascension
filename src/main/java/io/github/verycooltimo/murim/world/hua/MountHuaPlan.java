@@ -220,6 +220,56 @@ public final class MountHuaPlan {
             new TrailPoint(24, -45, 170),
             new TrailPoint(22, -14, 156));
 
+    /**
+     * One rock ledge of the training climb: rounded top at nominal {@code y}, half sizes {@code ru}
+     * (along u) and {@code rv} (along v). {@code kind}: route step, rest (a rock seat), training
+     * (wide enough for a group), or side (off the route: greenery and pines only).
+     */
+    public record Ledge(String id, double u, double v, double y, double ru, double rv, Kind kind) {
+        public boolean onRoute() {
+            return kind != Kind.SIDE;
+        }
+    }
+
+    public enum Kind { STEP, REST, TRAINING, SIDE }
+
+    /**
+     * The training climb behind the sect (author2/sect-high-on-mountain.png): above the ancestors'
+     * hall the South Peak's north face rises as stepped rock lobes with bushes, and disciples climb
+     * and train on them towards the summit. The route zigzags across the face in three rows
+     * (east → west, west → east, east → west): rises of 3-5 between neighbours, a wide ledge at
+     * each turn, rests with a rock seat, and the top ledge under the summit rim. The ids
+     * {@code climb_1..climb_16} are the route in climbing order (sites for sect life).
+     */
+    public static final List<Ledge> CLIMB = List.of(
+            // Row 1, east -> west, just above the back edge of the ancestors' terrace (172).
+            new Ledge("climb_1", 17, 103.5, 175, 4.5, 2.6, Kind.STEP),
+            new Ledge("climb_2", 9.5, 103, 179, 5, 2.4, Kind.STEP),
+            new Ledge("climb_3", 0, 103.8, 182, 4.6, 2.5, Kind.STEP),
+            new Ledge("climb_4", -9.5, 103.2, 187, 5.2, 2.6, Kind.REST),
+            new Ledge("climb_5", -18.5, 104, 190, 4.4, 2.6, Kind.STEP),
+            // West turn: a wide ledge spanning two rows.
+            new Ledge("climb_6", -26, 106.5, 194, 5.5, 4.2, Kind.TRAINING),
+            // Row 2, west -> east.
+            new Ledge("climb_7", -16.5, 108.8, 198, 5.4, 2.1, Kind.STEP),
+            new Ledge("climb_8", -6, 108.2, 202, 5.8, 2.2, Kind.STEP),
+            new Ledge("climb_9", 4.2, 108.9, 205, 5, 2.1, Kind.STEP),
+            new Ledge("climb_10", 14.5, 108.3, 210, 5.2, 2.2, Kind.REST),
+            // East turn.
+            new Ledge("climb_11", 27.5, 107.5, 214, 6, 4.4, Kind.TRAINING),
+            // Row 3, east -> west, under the summit rim.
+            new Ledge("climb_12", 18, 112.6, 218, 4.6, 2.0, Kind.STEP),
+            new Ledge("climb_13", 8, 112.2, 222, 4.8, 2.0, Kind.STEP),
+            new Ledge("climb_14", -2, 112.8, 226, 4.6, 2.0, Kind.STEP),
+            new Ledge("climb_15", -12, 112.3, 231, 4.8, 2.1, Kind.STEP),
+            // Top: a wide rest ledge looking down on the sect; the summit rim is one step up.
+            new Ledge("climb_16", -23, 113.2, 235, 5.5, 2.8, Kind.TRAINING),
+            // Side lobes off the route: the face reads as a field of ledges, not one stair.
+            new Ledge("side_e1", 41, 100.5, 183, 3.6, 2.2, Kind.SIDE),
+            new Ledge("side_e2", 41, 115, 224, 3.8, 2.4, Kind.SIDE),
+            new Ledge("side_w1", -32, 100.8, 182, 3.4, 2.0, Kind.SIDE),
+            new Ledge("side_w2", -31, 112.2, 226, 3.0, 2.0, Kind.SIDE));
+
     /** Plank road along the South Peak's eastern wall (Changkong Zhandao analogue), a side branch. */
     public static final List<TrailPoint> PLANK_ROAD = List.of(
             new TrailPoint(58, 112, 212),
