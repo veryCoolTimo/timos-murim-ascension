@@ -19,11 +19,13 @@ import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 public final class ModNetwork {
 
     /** Версия протокола. Поднимать при любом несовместимом изменении пакетов. */
-    private static final String VERSION = "29";
+    private static final String VERSION = "30";
 
     @SubscribeEvent
     static void register(RegisterPayloadHandlersEvent event) {
         PayloadRegistrar registrar = event.registrar(VERSION);
+        // Ruined library: «Попробовать» on a heretical junk method (docs/design/25-ruined-library.md).
+        io.github.verycooltimo.murim.library.LibraryNetwork.register(registrar);
 
         registrar.playToServer(
                 StartTechniquePayload.TYPE,

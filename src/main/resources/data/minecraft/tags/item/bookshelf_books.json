@@ -1,0 +1,10 @@
+{
+  "replace": false,
+  "values": [
+    "murim:junk_manual",
+    "murim:junk_manual_blue",
+    "murim:junk_manual_red",
+    "murim:junk_letters",
+    "murim:technique_manual"
+  ]
+}

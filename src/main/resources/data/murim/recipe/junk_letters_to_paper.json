@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "murim:junk_letters"
+    }
+  ],
+  "result": {
+    "id": "minecraft:paper",
+    "count": 1
+  }
+}

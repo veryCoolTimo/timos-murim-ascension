@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "murim:block/propped_shelf"
+    },
+    "facing=east": {
+      "model": "murim:block/propped_shelf",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "murim:block/propped_shelf",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "murim:block/propped_shelf",
+      "y": 270
+    }
+  }
+}

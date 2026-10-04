@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "rolls": 1.0,
+      "bonus_rolls": 0.0,
+      "entries": [
+        {
+          "type": "minecraft:loot_table",
+          "value": "murim:chests/ruined_library/propped"
+        }
+      ]
+    }
+  ],
+  "random_sequence": "murim:blocks/propped_shelf"
+}

@@ -1,0 +1,7 @@
+{
+  "type": "murim:ruined_library",
+  "biomes": "#murim:has_structure/ruined_library",
+  "spawn_overrides": {},
+  "step": "surface_structures",
+  "terrain_adaptation": "none"
+}
