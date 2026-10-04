@@ -85,7 +85,7 @@ public final class SectGameTests {
      * ванильные пакеты (сообщения, звук) уходят в никуда.
      * API: reference/minecraft-src/net/minecraft/server/network/ServerGamePacketListenerImpl.java (конструктор ставит player.connection)
      */
-    private static ServerPlayer fakePlayer(GameTestHelper helper) {
+    static ServerPlayer fakePlayer(GameTestHelper helper) {
         var cookie = net.minecraft.server.network.CommonListenerCookie.createInitial(
                 new com.mojang.authlib.GameProfile(java.util.UUID.randomUUID(), "sect-test"), false);
         ServerPlayer p = new ServerPlayer(helper.getLevel().getServer(), helper.getLevel(), cookie.gameProfile(), cookie.clientInformation());
@@ -95,7 +95,7 @@ public final class SectGameTests {
         return p;
     }
 
-    private static void setPeriod(GameTestHelper helper, SectSchedule.Period p) {
+    static void setPeriod(GameTestHelper helper, SectSchedule.Period p) {
         long day = Math.floorDiv(helper.getLevel().getDayTime(), 24000L) * 24000L;
         helper.getLevel().setDayTime(day + p.start() + 20);
     }

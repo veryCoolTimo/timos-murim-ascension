@@ -98,7 +98,20 @@ public final class SectSchedule {
         /** Вечерний отдых кружком в лагере. */
         REST,
         /** Сон: кровать в общежитии, если есть, иначе сидя в лагере. */
-        SLEEP
+        SLEEP,
+        /**
+         * Носит груз между двумя точками: берёт в {@code to} (ступени тропы, колодец), несёт в {@code zone}
+         * (кладовая, кухня) с грузом в руках, обратно идёт пустой.
+         */
+        CARRY,
+        /** Метёт двор: медленный обход площадки, остановки (поза sweep — у агента поз). */
+        SWEEP,
+        /** Повар у очага: стоит у кухни, иногда отходит и возвращается. */
+        COOK,
+        /** Раздаёт еду: ходит между столами столовой. */
+        SERVE,
+        /** Травник на грядках у павильона алхимии: обход, остановки на корточках (поза tend). */
+        TEND
     }
 
     /**
@@ -106,10 +119,25 @@ public final class SectSchedule {
      *
      * @param partner ключ партнёра (спарринг) или пусто
      */
-    public record Task(Kind kind, String zone, double du, double dv, double faceU, double faceV, String partner) {
+    public record Task(Kind kind, String zone, double du, double dv, double faceU, double faceV, String partner,
+                       String toZone, double toU, double toV) {
         Task(Kind kind, String zone, double du, double dv, double faceU, double faceV) {
             this(kind, zone, du, dv, faceU, faceV, "");
         }
+
+        Task(Kind kind, String zone, double du, double dv, double faceU, double faceV, String partner) {
+            this(kind, zone, du, dv, faceU, faceV, partner, "", 0.0D, 0.0D);
+        }
+
+        /** Второй конец пути ({@link Kind#CARRY}): площадка и смещение; пусто — пути нет. */
+        public boolean route() {
+            return !toZone.isEmpty();
+        }
+    }
+
+    /** Ношение груза: взять в {@code (toZone, toU, toV)}, отнести в {@code (zone, du, dv)}, вернуться. */
+    static Task carry(String zone, double du, double dv, String toZone, double toU, double toV) {
+        return new Task(Kind.CARRY, zone, du, dv, 0.0D, 1.0D, "", toZone, toU, toV);
     }
 
     private SectSchedule() {
@@ -216,6 +244,8 @@ public final class SectSchedule {
     public static Task task(SectRoster m, Period p, long day) {
         return switch (m.role()) {
             case GATEKEEPER -> new Task(Kind.GUARD, "gate", 0.0D, -2.0D, 0.0D, -1.0D);
+            case GUARD -> post(m);
+            case STEWARD, COOK, PORTER, GARDENER, SWEEPER, WATER_CARRIER -> SectStaff.task(m, p, day);
             case LEADER -> leaderTask(m, p);
             case MENTOR -> mentor(m, p);
             case ELDER -> elder(m, p);
@@ -255,6 +285,25 @@ public final class SectSchedule {
             case EVENING -> new Task(Kind.MEDITATE, m.home(), 2.0D, 2.0D, 0.0D, -1.0D);
             case NIGHT -> sleep(m);
             default -> home(m);
+        };
+    }
+
+    /**
+     * Пост охраны — у входа в свой зал, днём и ночью (ночная стража — те же люди, с фонарём). Лицом туда,
+     * откуда приходят.
+     */
+    static Task post(SectRoster m) {
+        return switch (m.key()) {
+            // Ворота секты: изнутри, рядом с Ун Амом; чужак дальше ворот не идёт.
+            case "baek_mu" -> new Task(Kind.GUARD, "sect_gate", 5.0D, 1.0D, 0.0D, -1.0D);
+            // Главный зал: у входа со стороны площади.
+            case "baek_ryeong" -> new Task(Kind.GUARD, "main_hall", -4.0D, -10.0D, 0.0D, -1.0D);
+            // Тайник: вход с западного бока главного зала.
+            case "baek_gi" -> new Task(Kind.GUARD, "main_hall", -25.0D, 4.0D, -1.0D, 0.0D);
+            // Верхний уступ: зал предков, рядом Зал писаний.
+            case "baek_jin" -> new Task(Kind.GUARD, "ancestors", 8.0D, -7.0D, 0.0D, -1.0D);
+            // Дома старейшин и пещера покаяния за ними.
+            default -> new Task(Kind.GUARD, m.home(), -6.0D, 7.0D, 1.0D, 0.0D);
         };
     }
 
@@ -365,13 +414,17 @@ public final class SectSchedule {
         return new Task(Kind.EAT, "camp", side == 0 ? 3.5D : 6.5D, dv + 8.0D, side == 0 ? 1.0D : -1.0D, 0.0D);
     }
 
-    /** Порядок за столом: наставник, второе поколение, третье. */
+    /** Порядок за столом: наставник, второе поколение, третье, слуги (во дворе лагеря, с краю). */
     static int seatIndex(SectRoster m) {
         if (m.role() == SectRole.MENTOR) {
             return 0;
         }
         if (m.generation() == 2) {
             return 1 + SectRoster.generation(2).indexOf(m);
+        }
+        int disciples = 1 + SectRoster.generation(2).size() + SectRoster.generation(3).size();
+        if (m.lay()) {
+            return disciples + SectStaff.index(m);
         }
         return 1 + SectRoster.generation(2).size() + SectRoster.generation(3).indexOf(m);
     }
@@ -401,13 +454,16 @@ public final class SectSchedule {
      * ближайшую свободную; нет — сидит на своём месте (автор строит общежития сам).
      */
     static Task sleep(SectRoster m) {
+        if (m.lay()) {
+            return SectStaff.sleep(m);
+        }
         if (m.generation() <= 1 && m.role() != SectRole.MENTOR) {
             int i = 0;
             for (SectRoster r : SectRoster.ALL) {
                 if (r.equals(m)) {
                     break;
                 }
-                if (r.generation() <= 1 && r.role() != SectRole.MENTOR) {
+                if (r.generation() <= 1 && !r.lay() && r.role() != SectRole.MENTOR) {
                     i++;
                 }
             }

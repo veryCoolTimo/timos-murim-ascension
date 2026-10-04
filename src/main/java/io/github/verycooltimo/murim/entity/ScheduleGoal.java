@@ -7,6 +7,7 @@ import io.github.verycooltimo.murim.sect.SectSchedule.Kind;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.EnumSet;
@@ -48,7 +49,7 @@ public final class ScheduleGoal extends Goal {
 
     @Override
     public boolean canUse() {
-        return npc.member().isPresent() && !npc.dormant() && npc.free() && npc.layout() != null;
+        return npc.member().isPresent() && !npc.dormant() && npc.free() && !npc.blocking() && npc.layout() != null;
     }
 
     @Override
@@ -96,6 +97,11 @@ public final class ScheduleGoal extends Goal {
             case POLES -> poles();
             case DRILL -> drill();
             case CHORE, WORK -> roamAround(kind == Kind.CHORE ? 0.7D : 0.5D, kind == Kind.CHORE ? 6.0D : 3.0D);
+            case CARRY -> carry();
+            case SWEEP -> work(0.45D, 7.0D, "sweep", 50, 70);
+            case COOK -> work(0.4D, 1.5D, "cook", 100, 120);
+            case SERVE -> work(0.5D, 5.0D, "serve", 30, 40);
+            case TEND -> work(0.4D, 6.0D, "tend", 80, 100);
             case EAT, MEDITATE, REST -> {
                 if (arrive(current.spot(), 0.8D)) {
                     npc.faceYaw(current.yaw(), 30.0F);
@@ -143,6 +149,106 @@ public final class ScheduleGoal extends Goal {
             }
             if (k != Kind.SLEEP && npc.isSleeping()) {
                 npc.stopSleeping();
+            }
+            npc.workPose(null);
+            loaded = false;
+            pickup = null;
+            outfit(k);
+        }
+        // Ночная стража — с фонарём в левой руке.
+        if (next.task().kind() == Kind.GUARD) {
+            boolean night = SectSchedule.at(npc.level().getDayTime()) == SectSchedule.Period.NIGHT;
+            npc.holdOff(night ? Items.LANTERN : null);
+        }
+    }
+
+    // ------------------------------------------------------------------ слуги (С3, часть 2)
+
+    /** Несёт ли сейчас груз (носильщик, водонос) и где его берёт. */
+    private boolean loaded;
+    private Vec3 pickup;
+
+    /** Реквизит по делу: метла, мотыга, миска, книга учёта; у остальных руки пустые. */
+    private void outfit(Kind k) {
+        if (!npc.role().lay()) {
+            return;
+        }
+        npc.hold(switch (k) {
+            // Метла: ванильная кисть — ближайший предмет-«щётка» (своей метлы в моде нет).
+            case SWEEP -> Items.BRUSH;
+            case TEND -> Items.WOODEN_HOE;
+            case SERVE -> Items.BOWL;
+            case WORK -> npc.role() == io.github.verycooltimo.murim.sect.SectRole.STEWARD ? Items.WRITABLE_BOOK : null;
+            case CARRY -> empty();
+            default -> null;
+        });
+    }
+
+    /** Груз в руках: носильщик — сноп или бочонок, водонос — ведро воды. */
+    private net.minecraft.world.item.Item load() {
+        return switch (npc.role()) {
+            case WATER_CARRIER -> Items.WATER_BUCKET;
+            case PORTER -> "porter_oh".equals(npc.memberKey()) ? Items.BARREL : Items.HAY_BLOCK;
+            default -> Items.BUNDLE;
+        };
+    }
+
+    /** Обратный путь: водонос несёт пустое ведро, носильщик идёт налегке. */
+    private net.minecraft.world.item.Item empty() {
+        return npc.role() == io.github.verycooltimo.murim.sect.SectRole.WATER_CARRIER ? Items.BUCKET : null;
+    }
+
+    /**
+     * Ношение: к месту, где берут груз ({@code to} задания), — пауза, груз в руках — к месту задания, пауза,
+     * снова за грузом.
+     */
+    private void carry() {
+        if (pause > 0) {
+            pause--;
+            return;
+        }
+        if (pickup == null) {
+            SectLayout layout = npc.layout();
+            SectSchedule.Task t = current.task();
+            Vec3 guess = t.route() ? layout.at(t.toZone(), t.toU(), t.toV()) : null;
+            if (guess == null) {
+                // Пути нет (тестовая раскладка, нет площадки) — просто стоит у места.
+                arrive(current.spot(), 0.6D);
+                return;
+            }
+            pickup = npc.level().isLoaded(BlockPos.containing(guess)) ? SectLife.stand(npc.level(), guess) : guess;
+        }
+        Vec3 target = loaded ? current.spot() : pickup;
+        if (arrive(target, loaded ? 0.55D : 0.7D)) {
+            loaded = !loaded;
+            npc.hold(loaded ? load() : empty());
+            npc.workPose(loaded ? "carry" : null);
+            pause = 40 + npc.getRandom().nextInt(40);
+        }
+    }
+
+    /** Работа на месте: обход площадки, на остановках — поза дела. */
+    private void work(double speed, double radius, String pose, int pauseMin, int pauseRand) {
+        if (pause > 0) {
+            pause--;
+            if (pause == 1) {
+                npc.workPose(null);
+            }
+            return;
+        }
+        if (roam == null) {
+            roam = pick(radius, radius * 0.7D);
+        }
+        if (roam == null) {
+            return;
+        }
+        if (arrive(roam, speed)) {
+            pause = pauseMin + npc.getRandom().nextInt(pauseRand);
+            roam = null;
+            npc.faceYaw(current.yaw(), 30.0F);
+            npc.workPose(pose);
+            if (npc.getRandom().nextInt(5) == 0) {
+                npc.gesture("nod");
             }
         }
     }

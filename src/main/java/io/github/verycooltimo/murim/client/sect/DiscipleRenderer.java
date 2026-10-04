@@ -14,6 +14,7 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.MobRenderer;
 import net.minecraft.client.renderer.entity.RenderLayerParent;
+import net.minecraft.client.renderer.entity.layers.ItemInHandLayer;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
@@ -38,6 +39,8 @@ public class DiscipleRenderer extends MobRenderer<SectDisciple, DiscipleRenderer
     public DiscipleRenderer(EntityRendererProvider.Context context) {
         super(context, new Model(context.bakeLayer(BanditRenderer.SWORDSMAN_LAYER)), 0.5F);
         addLayer(new Anchors(this));
+        // Реквизит слуг и фонарь ночной стражи (у учеников руки пусты: меч — часть модели).
+        addLayer(new ItemInHandLayer<>(this, context.getItemInHandRenderer()));
     }
 
     @Override
@@ -76,6 +79,9 @@ public class DiscipleRenderer extends MobRenderer<SectDisciple, DiscipleRenderer
 
         @Override
         public void setupAnim(SectDisciple entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+            // Слуги и управляющий — без меча (модель одна на всех: видимость ставится каждый кадр).
+            boolean armed = entity.armed();
+            getAnyDescendantWithName("weapon").ifPresent(w -> w.visible = armed);
             String anim = entity.anim();
             AnimationDefinition clip = anim.isEmpty() ? null : PalClips.get(ResourceLocation.parse(anim));
             float partial = ageInTicks - entity.tickCount;

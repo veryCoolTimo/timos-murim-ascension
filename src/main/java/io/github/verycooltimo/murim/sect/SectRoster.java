@@ -22,6 +22,9 @@ import java.util.Optional;
  */
 public record SectRoster(String key, SectRole role, int generation, String home, String look, int temper) {
 
+    /** Поколение мирян при секте (слуги, управляющий): вне линии учителей. */
+    public static final int LAY = -1;
+
     public static final List<SectRoster> ALL = List.of(
             // Глава и старейшины (Хён), первое поколение (Ун).
             new SectRoster("hyun_jong", SectRole.LEADER, 0, "main_hall", "leader", 0),
@@ -53,7 +56,21 @@ public record SectRoster(String key, SectRole role, int generation, String home,
             new SectRoster("cheong_su", SectRole.DISCIPLE, 3, "camp", "third_8", 0),
             new SectRoster("cheong_bin", SectRole.DISCIPLE, 3, "camp", "third_5", 1),
             // Привратник у подножия тропы — живёт там всегда.
-            new SectRoster("gatekeeper", SectRole.GATEKEEPER, 3, "gate", "third_7", 0));
+            new SectRoster("gatekeeper", SectRole.GATEKEEPER, 3, "gate", "third_7", 0),
+            // Охрана (С3, часть 2): второе поколение на постах у ворот и закрытых залов; в строй и пары не встаёт.
+            new SectRoster("baek_mu", SectRole.GUARD, 2, "sect_gate", "guard_0", 1),
+            new SectRoster("baek_ryeong", SectRole.GUARD, 2, "main_hall", "guard_1", 0),
+            new SectRoster("baek_gi", SectRole.GUARD, 2, "main_hall", "guard_2", 2),
+            new SectRoster("baek_jin", SectRole.GUARD, 2, "ancestors", "guard_3", 1),
+            new SectRoster("baek_won", SectRole.GUARD, 2, "elders", "guard_4", 0),
+            // Миряне при секте (поколение −1): управляющий хозяйством и слуги. Имена — простые мирские, не каноничные.
+            new SectRoster("steward_mun", SectRole.STEWARD, LAY, "treasury", "lay_steward", 0),
+            new SectRoster("cook_kim", SectRole.COOK, LAY, "dining", "lay_cook", 0),
+            new SectRoster("water_gu", SectRole.WATER_CARRIER, LAY, "dining", "lay_water", 0),
+            new SectRoster("porter_jang", SectRole.PORTER, LAY, "treasury", "lay_porter_0", 0),
+            new SectRoster("porter_oh", SectRole.PORTER, LAY, "treasury", "lay_porter_1", 0),
+            new SectRoster("herbalist_han", SectRole.GARDENER, LAY, "alchemy", "lay_herbalist", 0),
+            new SectRoster("sweeper_ma", SectRole.SWEEPER, LAY, "training", "lay_sweeper", 0));
 
     /** Человек по ключу. */
     public static Optional<SectRoster> of(String key) {
@@ -86,20 +103,25 @@ public record SectRoster(String key, SectRole role, int generation, String home,
         };
     }
 
-    /** Члены одного поколения в порядке списка. */
+    /** Члены одного поколения в порядке списка (без привратника и охраны на постах: они не в строю и не в парах). */
     public static List<SectRoster> generation(int generation) {
         List<SectRoster> out = new ArrayList<>();
         for (SectRoster m : ALL) {
-            if (m.generation == generation && m.role != SectRole.GATEKEEPER) {
+            if (m.generation == generation && m.role != SectRole.GATEKEEPER && m.role != SectRole.GUARD && !m.role.lay()) {
                 out.add(m);
             }
         }
         return out;
     }
 
-    /** Ученик (второе или третье поколение, без привратника). */
+    /** Ученик (второе или третье поколение, без привратника и охраны на постах). */
     public boolean disciple() {
-        return (generation == 2 || generation == 3) && role != SectRole.GATEKEEPER;
+        return (generation == 2 || generation == 3) && role != SectRole.GATEKEEPER && role != SectRole.GUARD;
+    }
+
+    /** Мирянин при секте: слуга или управляющий. */
+    public boolean lay() {
+        return generation == LAY;
     }
 
     /** Ключ имени. */
@@ -110,7 +132,7 @@ public record SectRoster(String key, SectRole role, int generation, String home,
     /** Ранг культивации NPC по поколению (шкала Realm): Чхон — 1, Пэк — 2, Ун — 3, Хён — 4. */
     public int rank() {
         return switch (generation) {
-            case 3 -> 1;
+            case LAY, 3 -> 1;
             case 2 -> 2;
             case 1 -> 3;
             default -> 4;
@@ -120,6 +142,7 @@ public record SectRoster(String key, SectRole role, int generation, String home,
     /** Здоровье по поколению: старшие крепче. */
     public double maxHealth() {
         return switch (generation) {
+            case LAY -> 20.0D;
             case 3 -> 30.0D;
             case 2 -> 40.0D;
             default -> 60.0D;

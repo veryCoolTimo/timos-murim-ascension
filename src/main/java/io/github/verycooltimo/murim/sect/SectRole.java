@@ -29,7 +29,23 @@ public enum SectRole {
     /** Ученик второго поколения (Пэк): спарринги, медитация, в строю — первый ряд. */
     SECOND("sect_disciple", "second"),
     /** Ученик третьего поколения (Чхон): строй, спарринги, столбы, хозяйство. */
-    DISCIPLE("sect_disciple", "disciple");
+    DISCIPLE("sect_disciple", "disciple"),
+    /**
+     * Охрана: ученик второго поколения на посту у входа в зал (С3, часть 2): предупреждает, встаёт на пути,
+     * отталкивает; если лезут силой — поединок или за ворота ({@link SectWatch}).
+     */
+    GUARD("sect_disciple", "guard"),
+    /**
+     * Управляющий хозяйством секты: припасы, земли и лавки Хуаиня (владелец имущества по запросу автора —
+     * «владелец» понят как управляющий; казной по канону ведает старейшина Хён Ён). Мирянин, не боец.
+     */
+    STEWARD("sect_disciple", "steward"),
+    /** Слуги-миряне при секте: повар, носильщик, травник, метельщик, водонос. Не бойцы, не в строю. */
+    COOK("sect_disciple", "cook"),
+    PORTER("sect_disciple", "porter"),
+    GARDENER("sect_disciple", "gardener"),
+    SWEEPER("sect_disciple", "sweeper"),
+    WATER_CARRIER("sect_disciple", "water_carrier");
 
     private final String texture;
     private final String dialogue;
@@ -56,9 +72,19 @@ public enum SectRole {
         return "npc.murim." + id();
     }
 
-    /** Принимает вызов игрока на спарринг: старший и ученики обоих поколений. */
+    /** Принимает вызов игрока на спарринг: старший, ученики обоих поколений и охрана. */
     public boolean spars() {
-        return this == SENIOR || this == SECOND || this == DISCIPLE || this == DISCIPLE_A || this == DISCIPLE_B;
+        return this == SENIOR || this == SECOND || this == DISCIPLE || this == DISCIPLE_A || this == DISCIPLE_B || this == GUARD;
+    }
+
+    /** Слуга или управляющий: мирянин при секте, без меча, не встаёт на защиту и не в строю. */
+    public boolean lay() {
+        return this == STEWARD || this == COOK || this == PORTER || this == GARDENER || this == SWEEPER || this == WATER_CARRIER;
+    }
+
+    /** Может перехватить младшего на пути к главе или старейшине и встать на пути в закрытый зал. */
+    public boolean intercepts() {
+        return this == GUARD || this == SENIOR || this == SECOND;
     }
 
     /** Ученик третьего поколения (в том числе роли первой версии). */
