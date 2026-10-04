@@ -52,6 +52,12 @@ public final class ClientPlaceState {
             place = null;
             return;
         }
+        // Природное место видно только сидящему в медитации (автор 04.10: на Хуашань «куда ни
+        // встанешь — всё горит»). Камни жилы рисуются своим блоком и от этого не зависят.
+        if (!ClientMeditationState.state().active()) {
+            place = null;
+            return;
+        }
         if (mc.player.tickCount % 20 != 0) {
             return;
         }
