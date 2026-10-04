@@ -387,6 +387,10 @@ public class FortressMaster extends Monster implements Casters.Caster {
         if (!BossRules.inYard(getX(), getZ(), y.x, y.z, YARD_HALF, 0.0D)) {
             teleportTo(BossRules.clampToYard(getX(), y.x, YARD_HALF, 1.0D), y.y, BossRules.clampToYard(getZ(), y.z, YARD_HALF, 1.0D));
         }
+        LivingEntity held = getTarget();
+        if (held != null && !(held instanceof Player) && held.isAlive() && BossRules.inYard(held.getX(), held.getZ(), y.x, y.z, YARD_HALF, 1.0D)) {
+            anyone = true;
+        }
         noTarget = anyone ? 0 : noTarget + 1;
         if (noTarget >= BossRules.RESET_TICKS) {
             resetFight();
@@ -522,6 +526,12 @@ public class FortressMaster extends Monster implements Casters.Caster {
                 bestD = d;
                 best = p;
             }
+        }
+        // Не игрок (манекен GameTest, призванный моб) — цель держится, пока он жив и на плацу.
+        LivingEntity held = getTarget();
+        if (best == null && held != null && !(held instanceof Player) && held.isAlive()
+                && BossRules.inYard(held.getX(), held.getZ(), y.x, y.z, YARD_HALF, 1.0D)) {
+            return held;
         }
         if (best != getTarget()) {
             setTarget(best);
@@ -813,8 +823,8 @@ public class FortressMaster extends Monster implements Casters.Caster {
      * @param lift    подброс
      * @param fromBoss отбрасывать от босса (иначе — от центра метки)
      */
-    private void hitPlayers(java.util.function.Predicate<Player> zone, float damage, double knock, double lift, boolean fromBoss) {
-        List<Player> victims = new ArrayList<>();
+    private void hitPlayers(java.util.function.Predicate<LivingEntity> zone, float damage, double knock, double lift, boolean fromBoss) {
+        List<LivingEntity> victims = new ArrayList<>();
         for (Player p : level().players()) {
             if (!p.isAlive() || p.isSpectator() || p.isCreative() || hit.contains(p.getUUID())) {
                 continue;
@@ -823,7 +833,11 @@ public class FortressMaster extends Monster implements Casters.Caster {
                 victims.add(p);
             }
         }
-        for (Player p : victims) {
+        LivingEntity held = getTarget();
+        if (held != null && !(held instanceof Player) && held.isAlive() && !hit.contains(held.getUUID()) && zone.test(held)) {
+            victims.add(held);
+        }
+        for (LivingEntity p : victims) {
             hit.add(p.getUUID());
             float dmg = damage * (float) damageScale();
             boolean done = p.hurt(Casters.attack(this), dmg);
@@ -836,6 +850,11 @@ public class FortressMaster extends Monster implements Casters.Caster {
                 setLastHurtMob(p);
             }
         }
+    }
+
+    /** GameTest и стенд: добавить участника боя (обычно — ступил на плац). */
+    public void addParticipant(UUID id) {
+        participants.add(id);
     }
 
     private double flatDistance(Entity t) {

@@ -213,8 +213,6 @@ public final class Fortresses {
 
     /** Хозяин повержен: флаг участникам, сокровищница, запись о победе. */
     public static void onMasterDefeated(ServerLevel level, FortressMaster master) {
-        FortressData data = data(level);
-        FortressData.Entry e = data.get(master.fortressKey());
         List<ServerPlayer> winners = new ArrayList<>();
         for (UUID id : master.participants()) {
             ServerPlayer p = level.getServer().getPlayerList().getPlayer(id);
@@ -225,6 +223,13 @@ public final class Fortresses {
         if (winners.isEmpty() && master.getLastHurtByMob() instanceof ServerPlayer p) {
             winners.add(p);
         }
+        defeat(level, master, winners);
+    }
+
+    /** Победа над хозяином: флаг победителям, запись, сокровищница (GameTest зовёт напрямую). */
+    public static void defeat(ServerLevel level, FortressMaster master, List<ServerPlayer> winners) {
+        FortressData data = data(level);
+        FortressData.Entry e = data.get(master.fortressKey());
         for (ServerPlayer p : winners) {
             boolean first = !p.getData(BossRegistry.BOSS_DEFEATED);
             p.setData(BossRegistry.BOSS_DEFEATED, true);
