@@ -39,6 +39,9 @@ public final class BedrockItemRenderer extends BlockEntityWithoutLevelRenderer {
 
     public static final BedrockItemMesh HUASHAN_SWORD = new BedrockItemMesh("/assets/murim/bedrock/huashan_sword.geo.json",
             ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/item/huashan_sword.png"));
+    /** Деревянный меч: та же модель автора, текстура дерева (art/items/wooden_sword/wood.png, та же раскладка UV 128×128). */
+    public static final BedrockItemMesh WOODEN_SWORD = new BedrockItemMesh("/assets/murim/bedrock/huashan_sword.geo.json",
+            ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/item/wooden_sword.png"));
 
     private static final Map<Item, Spec> SPECS = new IdentityHashMap<>();
     private static BedrockItemRenderer instance;
@@ -52,6 +55,7 @@ public final class BedrockItemRenderer extends BlockEntityWithoutLevelRenderer {
         // Клинок кинжала в модели лежит в YZ, у меча — в XY: кинжал докручен на 90°, чтобы делить трансформы меча.
         SPECS.put(ModItems.TANG_DAGGER.get(), new Spec(TangDaggerMesh.MESH, 90.0F));
         SPECS.put(ModItems.HUASHAN_SWORD.get(), new Spec(HUASHAN_SWORD, 0.0F));
+        SPECS.put(ModItems.WOODEN_SWORD.get(), new Spec(WOODEN_SWORD, 0.0F));
         IClientItemExtensions ext = new IClientItemExtensions() {
             @Override
             public BlockEntityWithoutLevelRenderer getCustomRenderer() {
@@ -61,7 +65,7 @@ public final class BedrockItemRenderer extends BlockEntityWithoutLevelRenderer {
                 return instance;
             }
         };
-        event.registerItem(ext, ModItems.TANG_DAGGER.get(), ModItems.HUASHAN_SWORD.get());
+        event.registerItem(ext, ModItems.TANG_DAGGER.get(), ModItems.HUASHAN_SWORD.get(), ModItems.WOODEN_SWORD.get());
     }
 
     @Override

@@ -1,6 +1,7 @@
 {
   "replace": false,
   "values": [
-    "murim:huashan_sword"
+    "murim:huashan_sword",
+    "murim:wooden_sword"
   ]
 }

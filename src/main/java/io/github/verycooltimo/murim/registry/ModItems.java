@@ -52,6 +52,15 @@ public final class ModItems {
             () -> new net.minecraft.world.item.SwordItem(HuashanTier.INSTANCE, new Item.Properties()
                     .attributes(net.minecraft.world.item.SwordItem.createAttributes(HuashanTier.INSTANCE, 3, -2.4F))));
 
+    /**
+     * Деревянный учебный меч (автор 04.10): та же модель, что у Меча Хуашань, своя текстура
+     * (art/items/wooden_sword/wood.png). Слабый, как ванильный деревянный: урон 4, скорость меча, прочность 59;
+     * в теге мечей — техники меча с ним работают. Наставник даёт его новому ученику при вступлении.
+     */
+    public static final DeferredHolder<Item, Item> WOODEN_SWORD = ITEMS.register("wooden_sword",
+            () -> new net.minecraft.world.item.SwordItem(net.minecraft.world.item.Tiers.WOOD, new Item.Properties()
+                    .attributes(net.minecraft.world.item.SwordItem.createAttributes(net.minecraft.world.item.Tiers.WOOD, 3, -2.4F))));
+
     /** Уровень Меча Хуашань: как алмаз, но прочность 1200. API: reference/minecraft-src/net/minecraft/world/item/Tier.java. */
     private enum HuashanTier implements net.minecraft.world.item.Tier {
         INSTANCE;

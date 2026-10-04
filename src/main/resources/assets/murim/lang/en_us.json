@@ -597,5 +597,7 @@
   "book.murim.tang_family_coins": "Press R for a fan of bronze coins. A coin bounces off walls and floor, and from layer 5 it hops to the next enemy after a hit.",
   "book.murim.tang_family_coins.full": "Tang Family Coins. Canon, ch. 210: \"a technique that used coins; in the past only the heads of the Tang family could learn it.\" What to do: throw the fan at a wall next to the enemy or into a crowd. What happens: each coin hits for a little, ricochets off blocks (once from layer 3, twice from layer 6) and hops to a neighbour (from layer 5). The fan grows: 3, 7, 12 and finally 18 coins. Why: it is the only Tang form that comes around corners and hits several enemies at once. Coins do not stick in the ground and do not come back.",
   "command.murim.learnall": "Learned all techniques at the last layer: %s. Secret ones need the Peak — /murim rank 4 1, a dantian — /murim seed",
-  "sign.murim.hua.sparring": "Sparring square"
+  "sign.murim.hua.sparring": "Sparring square",
+  "item.murim.wooden_sword": "Wooden Sword",
+  "murim.sect.sword_given": "The mentor hands you a training sword: %s."
 }

@@ -48,6 +48,7 @@ public final class ModCreativeTabs {
                 // Кинжал клана Тан (модель автора, 03.10).
                 out.accept(new ItemStack(ModItems.TANG_DAGGER.get()));
                 out.accept(new ItemStack(ModItems.HUASHAN_SWORD.get()));
+                out.accept(new ItemStack(ModItems.WOODEN_SWORD.get()));
                 // Пилюли (M5, docs/design/19b).
                 out.accept(new ItemStack(ModItems.PILL_SNOW_PLUM.get()));
                 out.accept(new ItemStack(ModItems.PILL_ORIGIN_ENERGY.get()));

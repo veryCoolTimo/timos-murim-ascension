@@ -84,6 +84,12 @@ public final class SectService {
         if (!MasteryService.knows(player, SIX)) {
             giveBook(player, SIX);
         }
+        // Учебный деревянный меч новому ученику (автор 04.10): раньше наставник оружия не давал.
+        ItemStack sword = new ItemStack(ModItems.WOODEN_SWORD.get());
+        if (!player.getInventory().add(sword)) {
+            player.drop(sword, false);
+        }
+        player.displayClientMessage(Component.translatable("murim.sect.sword_given", sword.getHoverName()).withStyle(ChatFormatting.GOLD), false);
     }
 
     /** Конец спарринга со старшим: исход для его реплики и урок «три чистых удара». */
