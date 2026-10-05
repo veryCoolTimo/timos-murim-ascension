@@ -169,16 +169,70 @@ public final class MasteryService {
         return progress == null ? -1 : progress.layer();
     }
 
-    /** Попадание техникой: живой противник — бой, манекен и стойка — тренировка. */
+    /**
+     * Попадание техникой: живой противник — бой, манекен и стойка — тренировка. Цена попадания —
+     * {@link MasteryPacing}: кто противник, его ранг против ранга игрока и усталость за день.
+     */
     public static void onHit(ServerPlayer player, ResourceLocation id, Entity target) {
-        boolean training = target instanceof ArmorStand
-                || target instanceof io.github.verycooltimo.murim.entity.TrainingDummy;
-        experience(player, id, training ? MasteryRules.Source.TRAINING : MasteryRules.Source.FIGHT, 1.0D);
+        if (!player.getData(ModAttachments.MASTERY).knows(id)) {
+            return;
+        }
+        double worth = hitWorth(player, target);
+        experience(player, id, kind(target) == MasteryPacing.Kind.TRAINING ? MasteryRules.Source.TRAINING
+                : MasteryRules.Source.FIGHT, worth);
     }
 
-    /** Техника доиграла без попадания — это тоже тренировка формы, но слабее. */
+    /** Цена этого попадания для освоения; засчитывает попадание в усталость дня. */
+    static double hitWorth(ServerPlayer player, Entity target) {
+        MasteryPacing.Kind kind = kind(target);
+        int rank = target instanceof io.github.verycooltimo.murim.technique.Casters.Caster c ? c.rank() : 0;
+        return MasteryPacing.worth(kind, rank, player.getData(ModAttachments.PROFILE).rank(),
+                countHit(player, fatigueKey(kind, target)));
+    }
+
+    /** Техника доиграла без попадания — это тоже тренировка формы, но слабее и быстро надоедает. */
     public static void onMiss(ServerPlayer player, ResourceLocation id) {
-        experience(player, id, MasteryRules.Source.TRAINING, 0.5D);
+        double worth = MasteryPacing.worth(MasteryPacing.Kind.TRAINING, 0, 0, countHit(player, "training"));
+        experience(player, id, MasteryRules.Source.TRAINING, 0.5D * worth);
+    }
+
+    /** Вид противника для освоения. */
+    static MasteryPacing.Kind kind(Entity target) {
+        if (target instanceof ArmorStand || target instanceof io.github.verycooltimo.murim.entity.TrainingDummy) {
+            return MasteryPacing.Kind.TRAINING;
+        }
+        if (target instanceof io.github.verycooltimo.murim.entity.boss.FortressMaster) {
+            return MasteryPacing.Kind.BOSS;
+        }
+        if (target instanceof io.github.verycooltimo.murim.entity.SectDisciple) {
+            return MasteryPacing.Kind.SPAR;
+        }
+        if (target instanceof io.github.verycooltimo.murim.technique.Casters.Caster) {
+            return MasteryPacing.Kind.BANDIT;
+        }
+        return MasteryPacing.Kind.WEAK;
+    }
+
+    private static String fatigueKey(MasteryPacing.Kind kind, Entity target) {
+        return kind == MasteryPacing.Kind.TRAINING ? "training"
+                : net.minecraft.world.entity.EntityType.getKey(target.getType()).toString();
+    }
+
+    /** Тег усталости в persistentData игрока: {day, ключ → попаданий}; формат attachment-ов не меняется. */
+    private static final String FATIGUE_TAG = "murim_mastery_fatigue";
+
+    /** Сколько попаданий по этому виду уже было сегодня (до этого); счётчик увеличивается. */
+    private static int countHit(ServerPlayer player, String key) {
+        net.minecraft.nbt.CompoundTag tag = player.getPersistentData().getCompound(FATIGUE_TAG);
+        long today = day(player);
+        if (tag.getLong("day") != today) {
+            tag = new net.minecraft.nbt.CompoundTag();
+            tag.putLong("day", today);
+        }
+        int before = tag.getInt(key);
+        tag.putInt(key, before + 1);
+        player.getPersistentData().put(FATIGUE_TAG, tag);
+        return before;
     }
 
     private static void experience(ServerPlayer player, ResourceLocation id, MasteryRules.Source source,
