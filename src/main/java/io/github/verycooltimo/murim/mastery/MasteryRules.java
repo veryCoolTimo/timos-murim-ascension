@@ -53,14 +53,21 @@ public final class MasteryRules {
     /** Доля пережитого, сразу идущая в освоение: «через бой тоже качать». */
     static final double DIRECT_SHARE = 0.5D;
 
-    /** Во сколько раз медитация выгоднее для неосмысленного. */
-    static final double MEDITATION_GAIN = 3.5D;
+    /**
+     * Во сколько раз медитация выгоднее для неосмысленного. Было 3,5: бой + медитация давали ×2,25 к
+     * чистому бою, и слой Шести Равновесий шёл за 2–3 зомби (автор 05.10). 1,75 — ×1,375
+     * (docs/design/27-balance.md).
+     */
+    static final double MEDITATION_GAIN = 1.75D;
 
     /** Сколько неосмысленного медитация перерабатывает за тик. */
     static final double MEDITATION_RATE = 0.02D;
 
-    /** Сколько пережитого нужно на первый слой; каждый следующий дороже. */
-    static final double FIRST_LAYER = 12.0D;
+    /**
+     * Сколько пережитого нужно на первый слой; каждый следующий дороже. Было 12; 18 — слой 2 Шести
+     * Равновесий за ~20 минут игры (docs/design/27-balance.md). Цена попадания — {@link MasteryPacing}.
+     */
+    static final double FIRST_LAYER = 18.0D;
     static final double LAYER_GROWTH = 1.6D;
 
     /** Мудрость за изучение новой техники и за постижение крутой. */

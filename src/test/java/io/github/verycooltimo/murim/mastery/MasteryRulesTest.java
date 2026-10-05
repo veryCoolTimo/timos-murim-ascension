@@ -45,7 +45,7 @@ class MasteryRulesTest {
         }
         assertEquals(0.0D, p.unprocessed(), 1.0E-9D);
         double total = p.layer() > 0 ? MasteryRules.need(0) + p.progress() : p.progress();
-        assertTrue(total > afterFight.progress() * 3.0D, "осмысленное должно дать заметно больше");
+        assertTrue(total > afterFight.progress() * 2.5D, "осмысленное должно дать заметно больше");
     }
 
     @Test
