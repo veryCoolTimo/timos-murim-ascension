@@ -270,10 +270,16 @@ public final class DialogueScreen extends Screen {
             g.pose().scale(0.85F, 0.85F, 1.0F);
             g.drawString(font, String.valueOf(i + 1), 0, 0, SEAL_TEXT & 0x00FFFFFF | oa, false);
             g.pose().popPose();
+            // Two lines per option: a longer reply (RU runs past two) shrinks instead of losing its tail (gallery 05.10).
+            s = OPTION;
+            List<FormattedCharSequence> wrapped = font.split(line.options().get(i), (int) ((OPT_RIGHT - sx - 13) / s));
+            while (wrapped.size() > 2 && s > OPTION * 0.75F) {
+                s -= OPTION * 0.05F;
+                wrapped = font.split(line.options().get(i), (int) ((OPT_RIGHT - sx - 13) / s));
+            }
             g.pose().pushPose();
             g.pose().translate(sx + 13, y + 1.0F, 0.0F);
             g.pose().scale(s, s, 1.0F);
-            List<FormattedCharSequence> wrapped = font.split(line.options().get(i), (int) ((OPT_RIGHT - sx - 13) / s));
             int ly = 0;
             for (int j = 0; j < Math.min(2, wrapped.size()); j++) {
                 g.drawString(font, wrapped.get(j), 0, ly, INK & 0x00FFFFFF | oa, false);
