@@ -78,7 +78,7 @@ public final class ClientTraining {
             if (s.beat() != TrainingPayloads.Beat.NONE) {
                 flash = s.beat();
                 flashAt = localAt;
-                beatSound(mc, s.beat());
+                beatSound(mc, s.beat(), s.reps());
             }
             if (s.beat() == TrainingPayloads.Beat.FINISH) {
                 // The finished run stays on the HUD for a few seconds with its time.
@@ -93,24 +93,25 @@ public final class ClientTraining {
     }
 
     /**
-     * A quiet tick on each rep for the trainee only (codex 05.10: the colour of the flash alone does not read):
-     * a hat on the beat, a lower one near it, a dull bass off it.
+     * A quiet knock on each rep for the trainee only (codex 05.10: the colour of the flash alone does not read):
+     * higher on the beat, lower near it, dull off it; a double knock and an exhale when a set with reps ends.
      * API: reference/minecraft-src/net/minecraft/client/resources/sounds/SimpleSoundInstance.java#forUI
      */
-    private static void beatSound(Minecraft mc, TrainingPayloads.Beat beat) {
-        net.minecraft.client.resources.sounds.SimpleSoundInstance sound = switch (beat) {
-            case GOOD -> net.minecraft.client.resources.sounds.SimpleSoundInstance.forUI(
-                    net.minecraft.sounds.SoundEvents.NOTE_BLOCK_HAT.value(), 1.4F, 0.35F);
-            case FAIR -> net.minecraft.client.resources.sounds.SimpleSoundInstance.forUI(
-                    net.minecraft.sounds.SoundEvents.NOTE_BLOCK_HAT.value(), 1.0F, 0.3F);
-            case OFF, RUSHED -> net.minecraft.client.resources.sounds.SimpleSoundInstance.forUI(
-                    net.minecraft.sounds.SoundEvents.NOTE_BLOCK_BASS.value(), 0.7F, 0.35F);
-            case REACH -> net.minecraft.client.resources.sounds.SimpleSoundInstance.forUI(
-                    net.minecraft.sounds.SoundEvents.NOTE_BLOCK_HAT.value(), 1.8F, 0.4F);
-            default -> null;
-        };
-        if (sound != null) {
-            mc.getSoundManager().play(sound);
+    private static void beatSound(Minecraft mc, TrainingPayloads.Beat beat, int reps) {
+        // 05.10: wooden knock instead of note-block hats; pitch still separates good / fair / off.
+        var rep = io.github.verycooltimo.murim.registry.ModSounds.TRAINING_REP;
+        switch (beat) {
+            case GOOD -> io.github.verycooltimo.murim.client.Sfx.ui(rep, 0.5F, 1.25F);
+            case FAIR -> io.github.verycooltimo.murim.client.Sfx.ui(rep, 0.4F, 1.0F);
+            case OFF, RUSHED -> io.github.verycooltimo.murim.client.Sfx.ui(rep, 0.35F, 0.7F);
+            case REACH -> io.github.verycooltimo.murim.client.Sfx.ui(rep, 0.55F, 1.5F);
+            case END -> {
+                if (reps > 0) {
+                    io.github.verycooltimo.murim.client.Sfx.ui(io.github.verycooltimo.murim.registry.ModSounds.TRAINING_SET, 0.6F, 1.0F);
+                }
+            }
+            default -> {
+            }
         }
     }
 

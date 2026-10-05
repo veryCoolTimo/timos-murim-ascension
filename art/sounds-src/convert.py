@@ -24,6 +24,11 @@ CAT = {
     'qi_charge': SOFT, 'breakthrough': SOFT, 'aura_gust': SOFT,
     'step_soft': SOFT, 'qi_chime': SOFT, 'meditation_cycle': SOFT, 'blossom_open': SOFT, 'sword_draw': SOFT,
     'lock_on': UI, 'wheel_open': UI, 'wheel_select': UI,
+    # 05.10 polish pass: progression and interface sounds — never louder than technique hits.
+    'pill_eat': SOFT, 'absorb_pulse': SOFT, 'absorb_success': SOFT, 'absorb_fail': SOFT,
+    'breakthrough_fail': SOFT, 'rank_up': SOFT, 'technique_learn': SOFT,
+    'meditation_start': SOFT, 'meditation_stop': SOFT,
+    'book_open': UI, 'page_bind': UI, 'coin_clink': UI, 'training_rep': UI, 'training_set': UI,
     'run_wind': LOOP, 'aura_charge': LOOP, 'meditation_loop': LOOP, 'qi_sword_hum': LOOP,
 }
 
@@ -56,6 +61,11 @@ def convert(variant):
     is_loop = name in loops()
     target, ceil = CAT.get(name, LOOP if is_loop else LOUD)
     pre = 'aformat=channel_layouts=mono,'
+    # Quiet sources (prompts with "quiet" come out at −20…−30 dB peak): lift the peak to −1 dB first,
+    # otherwise the fixed −45 dB gate eats the soft attack (05.10, book_open / meditation_stop).
+    raw = peak(src, pre)
+    if raw < -6.0:
+        pre += f'volume={-1.0 - raw:.2f}dB,'
     if not is_loop:
         pre += 'silenceremove=start_periods=1:start_threshold=-45dB,areverse,silenceremove=start_periods=1:start_threshold=-55dB,areverse,'
     m = measure(src, pre)

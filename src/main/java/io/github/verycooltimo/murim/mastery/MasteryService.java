@@ -73,7 +73,13 @@ public final class MasteryService {
             message(player, "murim.mastery.need_peak", ChatFormatting.GOLD);
             return Learn.NEED_RANK;
         }
-        return grant(player, id, depth);
+        Learn result = grant(player, id, depth);
+        if (result == Learn.LEARNED) {
+            // Один звук на изучение, а не на каждую форму стиля (grant рекурсивен по формам).
+            player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
+                    io.github.verycooltimo.murim.registry.ModSounds.TECHNIQUE_LEARN.get(), SoundSource.PLAYERS, 0.9F, 1.0F);
+        }
+        return result;
     }
 
     /** Изучение без проверки даньтяня: дочерние формы стиля и достройка уже начатых стилей. */

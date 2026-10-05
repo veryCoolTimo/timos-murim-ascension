@@ -219,8 +219,8 @@ public final class ManualScreen extends Screen {
     public void tick() {
         ticks++;
         if (ticks == 3 && minecraft != null) {
-            minecraft.getSoundManager().play(net.minecraft.client.resources.sounds.SimpleSoundInstance.forUI(
-                    net.minecraft.sounds.SoundEvents.BOOK_PAGE_TURN, 0.8F, 0.7F));
+            // Открытие книги (05.10) — свой звук; перелистывание остаётся ванильным BOOK_PAGE_TURN.
+            Sfx.ui(io.github.verycooltimo.murim.registry.ModSounds.BOOK_OPEN, 0.8F, 1.0F);
         }
     }
 

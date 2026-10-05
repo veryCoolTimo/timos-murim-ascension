@@ -97,7 +97,7 @@ public final class PageService {
                     player.drop(manual, false);
                 }
                 message(player, "murim.page.bound", ChatFormatting.GOLD, name, PageRules.BOUND_DEPTH);
-                sound(player, 0.7F);
+                bindSound(player, 0.9F);
             }
             case DEEPEN -> {
                 for (ResourceLocation t : teaches(book)) {
@@ -110,7 +110,7 @@ public final class PageService {
                 stack.shrink(1);
                 TechniqueProgress after = player.getData(ModAttachments.MASTERY).techniques().get(front.get());
                 message(player, "murim.page.deepened", ChatFormatting.AQUA, name, after == null ? 0 : after.cap());
-                sound(player, 1.0F);
+                bindSound(player, 1.1F);
             }
             case INSIGHT -> {
                 stack.shrink(1);
@@ -164,6 +164,12 @@ public final class PageService {
             message(player, "murim.page.reread_wisdom", ChatFormatting.GRAY, name);
         }
         sound(player, 0.9F);
+    }
+
+    /** Страница вшита в книгу (05.10): шорох, протяжка нити, глухой стук — не просто перелистывание. */
+    private static void bindSound(ServerPlayer player, float pitch) {
+        player.level().playSound(null, player.blockPosition(),
+                io.github.verycooltimo.murim.registry.ModSounds.PAGE_BIND.get(), SoundSource.PLAYERS, 0.9F, pitch);
     }
 
     private static void sound(ServerPlayer player, float pitch) {

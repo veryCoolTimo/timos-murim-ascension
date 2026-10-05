@@ -91,7 +91,7 @@ public final class JunkBookScreen extends Screen {
         prev = addRenderableWidget(new PageButton(bx + 8, y, false, b -> turn(-1), true));
         next = addRenderableWidget(new PageButton((int) (bx + TEX_W * k) - 31, y, true, b -> turn(1), true));
         if (minecraft != null) {
-            minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.BOOK_PAGE_TURN, 0.8F, 0.7F));
+            io.github.verycooltimo.murim.client.Sfx.ui(io.github.verycooltimo.murim.registry.ModSounds.BOOK_OPEN, 0.7F, 1.1F);
         }
     }
 

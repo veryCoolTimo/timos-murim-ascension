@@ -1423,5 +1423,19 @@
   "dialogue.murim.penance.sentence": "You broke the rules of the mountain again. The penance cave: %s days in the dark, or until you sit %s min in meditation. You may refuse — then the sect forgets %s of your merit.",
   "dialogue.murim.penance.opt.accept": "I accept the punishment.",
   "dialogue.murim.penance.opt.refuse": "I refuse.",
-  "murim.vault.forms": "%s (%s forms in order)"
+  "murim.vault.forms": "%s (%s forms in order)",
+  "subtitles.murim.pill_eat": "Pill swallowed",
+  "subtitles.murim.absorb_pulse": "Qi settles",
+  "subtitles.murim.absorb_success": "Pill absorbed",
+  "subtitles.murim.absorb_fail": "Qi backlash",
+  "subtitles.murim.breakthrough_fail": "Breakthrough fails",
+  "subtitles.murim.rank_up": "Gong of ascension",
+  "subtitles.murim.book_open": "Book opens",
+  "subtitles.murim.technique_learn": "Technique learned",
+  "subtitles.murim.page_bind": "Page bound into book",
+  "subtitles.murim.meditation_start": "Meditation begins",
+  "subtitles.murim.meditation_stop": "Meditation ends",
+  "subtitles.murim.training_rep": "Training rep",
+  "subtitles.murim.training_set": "Training set done",
+  "subtitles.murim.coin_clink": "Coins clink"
 }

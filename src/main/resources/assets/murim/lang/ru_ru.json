@@ -1403,5 +1403,19 @@
   "dialogue.murim.penance.sentence": "Ты снова нарушил устав горы. Пещера покаяния: %s дня во тьме, или пока не отсидишь %s мин в медитации. Можешь отказаться — тогда секта забудет %s твоих заслуг.",
   "dialogue.murim.penance.opt.accept": "Принимаю наказание.",
   "dialogue.murim.penance.opt.refuse": "Отказываюсь.",
-  "murim.vault.forms": "%s (%s форм по порядку)"
+  "murim.vault.forms": "%s (%s форм по порядку)",
+  "subtitles.murim.pill_eat": "Проглочена пилюля",
+  "subtitles.murim.absorb_pulse": "Ци оседает",
+  "subtitles.murim.absorb_success": "Пилюля усвоена",
+  "subtitles.murim.absorb_fail": "Отдача ци",
+  "subtitles.murim.breakthrough_fail": "Прорыв сорван",
+  "subtitles.murim.rank_up": "Гонг восхождения",
+  "subtitles.murim.book_open": "Книга открыта",
+  "subtitles.murim.technique_learn": "Техника усвоена",
+  "subtitles.murim.page_bind": "Страница вшита",
+  "subtitles.murim.meditation_start": "Начало медитации",
+  "subtitles.murim.meditation_stop": "Конец медитации",
+  "subtitles.murim.training_rep": "Повтор упражнения",
+  "subtitles.murim.training_set": "Подход окончен",
+  "subtitles.murim.coin_clink": "Звон монет"
 }
