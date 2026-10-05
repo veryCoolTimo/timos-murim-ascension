@@ -67,6 +67,8 @@ public final class DevSetupEvents {
                 || "sectlife".equals(System.getProperty("murim.capture.technique"))
                 // Sect NPC pose gallery: own stage (client/sect/SectPoseCapture).
                 || "sectposes".equals(System.getProperty("murim.capture.technique"))
+                // Body training: own yard and the South Peak climb (client/training/TrainingCapture).
+                || "training".equals(System.getProperty("murim.capture.technique"))
                 // Bandit camp: a real world camp, no stage (DevBanditCampHandler).
                 || "banditcamp".equals(System.getProperty("murim.capture.technique"))
                 // Boss M4: a fortress built at the player, no stage (client/boss/DevBossHandler).

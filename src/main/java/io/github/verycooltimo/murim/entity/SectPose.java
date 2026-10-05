@@ -45,7 +45,19 @@ public enum SectPose {
     /** Страж: меч в ножнах у левого бедра, левая рука на рукояти (готов обнажить), медленно осматривается. */
     GUARD("guard", "sect_guard", true, false, List.of("scabbard")),
     /** Разговор: жесты рук (ноги — покой/шаг). */
-    TALK("talk", "sect_talk", true, true, List.of());
+    TALK("talk", "sect_talk", true, true, List.of()),
+    // Body training (docs/design/27-body-training.md): the behaviour task schedules them through
+    // training/DiscipleTraining; blockout clips from tools/art/training_anims.py.
+    /** Squats in rhythm, hands forward at the bottom. */
+    SQUAT("squat", "sect_train_squat", true, false, List.of()),
+    /** Push-ups: plank, down, up. */
+    PUSHUP("pushup", "sect_train_pushup", true, false, List.of()),
+    /** Push-ups with the weight slab strapped on the back (slower). */
+    PUSHUP_WEIGHTED("pushup_weighted", "sect_train_pushup_weighted", true, false, List.of("slab")),
+    /** Horse stance held, a slow breath, fists at the hips. */
+    HORSE_STANCE("horse_stance", "sect_train_horse", true, false, List.of()),
+    /** Carries the training stone at the chest (upper body; legs walk). */
+    CARRY_STONE("carry_stone", "sect_train_carry", true, true, List.of("rock"));
 
     private final String id;
     private final ResourceLocation clip;
@@ -89,7 +101,12 @@ public enum SectPose {
 
     /** Меч в руке спрятан: руки заняты (чашка, метла, вёдра), меч в ножнах или на столбах руки для равновесия. */
     public boolean hidesWeapon() {
-        return !props.isEmpty() || this == BOW || this == TALK || this == POLES || this == POLE_STEP || seated();
+        return !props.isEmpty() || this == BOW || this == TALK || this == POLES || this == POLE_STEP || seated() || training();
+    }
+
+    /** A body-training pose: hands are busy, no sword. */
+    public boolean training() {
+        return this == SQUAT || this == PUSHUP || this == PUSHUP_WEIGHTED || this == HORSE_STANCE || this == CARRY_STONE;
     }
 
     public static SectPose of(String id) {

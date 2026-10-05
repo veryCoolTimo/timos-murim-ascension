@@ -1,0 +1,214 @@
+{
+  "parent": "minecraft:block/block",
+  "ambientocclusion": true,
+  "textures": {
+    "particle": "murim:block/training_stone",
+    "t": "murim:block/training_stone"
+  },
+  "elements": [
+    {
+      "from": [
+        2,
+        1,
+        2
+      ],
+      "to": [
+        14,
+        9,
+        14
+      ],
+      "faces": {
+        "north": {
+          "texture": "#t",
+          "uv": [
+            2,
+            7,
+            14,
+            15
+          ]
+        },
+        "south": {
+          "texture": "#t",
+          "uv": [
+            2,
+            7,
+            14,
+            15
+          ]
+        },
+        "east": {
+          "texture": "#t",
+          "uv": [
+            2,
+            7,
+            14,
+            15
+          ]
+        },
+        "west": {
+          "texture": "#t",
+          "uv": [
+            2,
+            7,
+            14,
+            15
+          ]
+        },
+        "up": {
+          "texture": "#t",
+          "uv": [
+            2,
+            2,
+            14,
+            14
+          ]
+        },
+        "down": {
+          "texture": "#t",
+          "uv": [
+            2,
+            2,
+            14,
+            14
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        3.5,
+        9,
+        3.5
+      ],
+      "to": [
+        12.5,
+        11,
+        12.5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#t",
+          "uv": [
+            3.5,
+            5,
+            12.5,
+            7
+          ]
+        },
+        "south": {
+          "texture": "#t",
+          "uv": [
+            3.5,
+            5,
+            12.5,
+            7
+          ]
+        },
+        "east": {
+          "texture": "#t",
+          "uv": [
+            3.5,
+            5,
+            12.5,
+            7
+          ]
+        },
+        "west": {
+          "texture": "#t",
+          "uv": [
+            3.5,
+            5,
+            12.5,
+            7
+          ]
+        },
+        "up": {
+          "texture": "#t",
+          "uv": [
+            3.5,
+            3.5,
+            12.5,
+            12.5
+          ]
+        },
+        "down": {
+          "texture": "#t",
+          "uv": [
+            3.5,
+            3.5,
+            12.5,
+            12.5
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        3,
+        0,
+        3
+      ],
+      "to": [
+        13,
+        1,
+        13
+      ],
+      "faces": {
+        "north": {
+          "texture": "#t",
+          "uv": [
+            3,
+            15,
+            13,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#t",
+          "uv": [
+            3,
+            15,
+            13,
+            16
+          ]
+        },
+        "east": {
+          "texture": "#t",
+          "uv": [
+            3,
+            15,
+            13,
+            16
+          ]
+        },
+        "west": {
+          "texture": "#t",
+          "uv": [
+            3,
+            15,
+            13,
+            16
+          ]
+        },
+        "up": {
+          "texture": "#t",
+          "uv": [
+            3,
+            3,
+            13,
+            13
+          ]
+        },
+        "down": {
+          "texture": "#t",
+          "uv": [
+            3,
+            3,
+            13,
+            13
+          ]
+        }
+      }
+    }
+  ]
+}
