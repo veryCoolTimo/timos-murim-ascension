@@ -1184,5 +1184,6 @@
   "murim.peddler.arrived": "В деревню пришёл бродячий торговец",
   "murim.peddler.hua_name": "Лавочник Лю у ворот",
   "command.murim.peddler.none": "Здесь не деревня: бродячий торговец сюда не заходит",
-  "command.murim.peddler.info": "Деревня с центром у %s; следующий заход торговца через %s с"
+  "command.murim.peddler.info": "Деревня с центром у %s; следующий заход торговца через %s с",
+  "block.murim.tent_canvas": "Полотно шатра"
 }

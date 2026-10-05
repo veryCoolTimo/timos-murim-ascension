@@ -1204,5 +1204,6 @@
   "murim.peddler.arrived": "A travelling peddler has come to the village",
   "murim.peddler.hua_name": "Liu, the Gate Shopkeeper",
   "command.murim.peddler.none": "This is not a village: the travelling peddler does not come here",
-  "command.murim.peddler.info": "Village centred at %s; the peddler's next visit in %s s"
+  "command.murim.peddler.info": "Village centred at %s; the peddler's next visit in %s s",
+  "block.murim.tent_canvas": "Tent Canvas"
 }

@@ -1,0 +1,229 @@
+{
+  "variants": {
+    "cloth=linen,facing=south,part=slope": {
+      "model": "murim:block/tent_canvas_slope_linen"
+    },
+    "cloth=white,facing=south,part=slope": {
+      "model": "murim:block/tent_canvas_slope_white"
+    },
+    "cloth=crimson,facing=south,part=slope": {
+      "model": "murim:block/tent_canvas_slope_crimson"
+    },
+    "cloth=linen,facing=south,part=ridge": {
+      "model": "murim:block/tent_canvas_ridge_linen"
+    },
+    "cloth=white,facing=south,part=ridge": {
+      "model": "murim:block/tent_canvas_ridge_white"
+    },
+    "cloth=crimson,facing=south,part=ridge": {
+      "model": "murim:block/tent_canvas_ridge_crimson"
+    },
+    "cloth=linen,facing=south,part=gable_slope": {
+      "model": "murim:block/tent_canvas_gable_slope_linen"
+    },
+    "cloth=white,facing=south,part=gable_slope": {
+      "model": "murim:block/tent_canvas_gable_slope_white"
+    },
+    "cloth=crimson,facing=south,part=gable_slope": {
+      "model": "murim:block/tent_canvas_gable_slope_crimson"
+    },
+    "cloth=linen,facing=south,part=gable_ridge": {
+      "model": "murim:block/tent_canvas_gable_ridge_linen"
+    },
+    "cloth=white,facing=south,part=gable_ridge": {
+      "model": "murim:block/tent_canvas_gable_ridge_white"
+    },
+    "cloth=crimson,facing=south,part=gable_ridge": {
+      "model": "murim:block/tent_canvas_gable_ridge_crimson"
+    },
+    "cloth=linen,facing=south,part=wall": {
+      "model": "murim:block/tent_canvas_wall_linen"
+    },
+    "cloth=white,facing=south,part=wall": {
+      "model": "murim:block/tent_canvas_wall_white"
+    },
+    "cloth=crimson,facing=south,part=wall": {
+      "model": "murim:block/tent_canvas_wall_crimson"
+    },
+    "cloth=linen,facing=west,part=slope": {
+      "model": "murim:block/tent_canvas_slope_linen",
+      "y": 90
+    },
+    "cloth=white,facing=west,part=slope": {
+      "model": "murim:block/tent_canvas_slope_white",
+      "y": 90
+    },
+    "cloth=crimson,facing=west,part=slope": {
+      "model": "murim:block/tent_canvas_slope_crimson",
+      "y": 90
+    },
+    "cloth=linen,facing=west,part=ridge": {
+      "model": "murim:block/tent_canvas_ridge_linen",
+      "y": 90
+    },
+    "cloth=white,facing=west,part=ridge": {
+      "model": "murim:block/tent_canvas_ridge_white",
+      "y": 90
+    },
+    "cloth=crimson,facing=west,part=ridge": {
+      "model": "murim:block/tent_canvas_ridge_crimson",
+      "y": 90
+    },
+    "cloth=linen,facing=west,part=gable_slope": {
+      "model": "murim:block/tent_canvas_gable_slope_linen",
+      "y": 90
+    },
+    "cloth=white,facing=west,part=gable_slope": {
+      "model": "murim:block/tent_canvas_gable_slope_white",
+      "y": 90
+    },
+    "cloth=crimson,facing=west,part=gable_slope": {
+      "model": "murim:block/tent_canvas_gable_slope_crimson",
+      "y": 90
+    },
+    "cloth=linen,facing=west,part=gable_ridge": {
+      "model": "murim:block/tent_canvas_gable_ridge_linen",
+      "y": 90
+    },
+    "cloth=white,facing=west,part=gable_ridge": {
+      "model": "murim:block/tent_canvas_gable_ridge_white",
+      "y": 90
+    },
+    "cloth=crimson,facing=west,part=gable_ridge": {
+      "model": "murim:block/tent_canvas_gable_ridge_crimson",
+      "y": 90
+    },
+    "cloth=linen,facing=west,part=wall": {
+      "model": "murim:block/tent_canvas_wall_linen",
+      "y": 90
+    },
+    "cloth=white,facing=west,part=wall": {
+      "model": "murim:block/tent_canvas_wall_white",
+      "y": 90
+    },
+    "cloth=crimson,facing=west,part=wall": {
+      "model": "murim:block/tent_canvas_wall_crimson",
+      "y": 90
+    },
+    "cloth=linen,facing=north,part=slope": {
+      "model": "murim:block/tent_canvas_slope_linen",
+      "y": 180
+    },
+    "cloth=white,facing=north,part=slope": {
+      "model": "murim:block/tent_canvas_slope_white",
+      "y": 180
+    },
+    "cloth=crimson,facing=north,part=slope": {
+      "model": "murim:block/tent_canvas_slope_crimson",
+      "y": 180
+    },
+    "cloth=linen,facing=north,part=ridge": {
+      "model": "murim:block/tent_canvas_ridge_linen",
+      "y": 180
+    },
+    "cloth=white,facing=north,part=ridge": {
+      "model": "murim:block/tent_canvas_ridge_white",
+      "y": 180
+    },
+    "cloth=crimson,facing=north,part=ridge": {
+      "model": "murim:block/tent_canvas_ridge_crimson",
+      "y": 180
+    },
+    "cloth=linen,facing=north,part=gable_slope": {
+      "model": "murim:block/tent_canvas_gable_slope_linen",
+      "y": 180
+    },
+    "cloth=white,facing=north,part=gable_slope": {
+      "model": "murim:block/tent_canvas_gable_slope_white",
+      "y": 180
+    },
+    "cloth=crimson,facing=north,part=gable_slope": {
+      "model": "murim:block/tent_canvas_gable_slope_crimson",
+      "y": 180
+    },
+    "cloth=linen,facing=north,part=gable_ridge": {
+      "model": "murim:block/tent_canvas_gable_ridge_linen",
+      "y": 180
+    },
+    "cloth=white,facing=north,part=gable_ridge": {
+      "model": "murim:block/tent_canvas_gable_ridge_white",
+      "y": 180
+    },
+    "cloth=crimson,facing=north,part=gable_ridge": {
+      "model": "murim:block/tent_canvas_gable_ridge_crimson",
+      "y": 180
+    },
+    "cloth=linen,facing=north,part=wall": {
+      "model": "murim:block/tent_canvas_wall_linen",
+      "y": 180
+    },
+    "cloth=white,facing=north,part=wall": {
+      "model": "murim:block/tent_canvas_wall_white",
+      "y": 180
+    },
+    "cloth=crimson,facing=north,part=wall": {
+      "model": "murim:block/tent_canvas_wall_crimson",
+      "y": 180
+    },
+    "cloth=linen,facing=east,part=slope": {
+      "model": "murim:block/tent_canvas_slope_linen",
+      "y": 270
+    },
+    "cloth=white,facing=east,part=slope": {
+      "model": "murim:block/tent_canvas_slope_white",
+      "y": 270
+    },
+    "cloth=crimson,facing=east,part=slope": {
+      "model": "murim:block/tent_canvas_slope_crimson",
+      "y": 270
+    },
+    "cloth=linen,facing=east,part=ridge": {
+      "model": "murim:block/tent_canvas_ridge_linen",
+      "y": 270
+    },
+    "cloth=white,facing=east,part=ridge": {
+      "model": "murim:block/tent_canvas_ridge_white",
+      "y": 270
+    },
+    "cloth=crimson,facing=east,part=ridge": {
+      "model": "murim:block/tent_canvas_ridge_crimson",
+      "y": 270
+    },
+    "cloth=linen,facing=east,part=gable_slope": {
+      "model": "murim:block/tent_canvas_gable_slope_linen",
+      "y": 270
+    },
+    "cloth=white,facing=east,part=gable_slope": {
+      "model": "murim:block/tent_canvas_gable_slope_white",
+      "y": 270
+    },
+    "cloth=crimson,facing=east,part=gable_slope": {
+      "model": "murim:block/tent_canvas_gable_slope_crimson",
+      "y": 270
+    },
+    "cloth=linen,facing=east,part=gable_ridge": {
+      "model": "murim:block/tent_canvas_gable_ridge_linen",
+      "y": 270
+    },
+    "cloth=white,facing=east,part=gable_ridge": {
+      "model": "murim:block/tent_canvas_gable_ridge_white",
+      "y": 270
+    },
+    "cloth=crimson,facing=east,part=gable_ridge": {
+      "model": "murim:block/tent_canvas_gable_ridge_crimson",
+      "y": 270
+    },
+    "cloth=linen,facing=east,part=wall": {
+      "model": "murim:block/tent_canvas_wall_linen",
+      "y": 270
+    },
+    "cloth=white,facing=east,part=wall": {
+      "model": "murim:block/tent_canvas_wall_white",
+      "y": 270
+    },
+    "cloth=crimson,facing=east,part=wall": {
+      "model": "murim:block/tent_canvas_wall_crimson",
+      "y": 270
+    }
+  }
+}
