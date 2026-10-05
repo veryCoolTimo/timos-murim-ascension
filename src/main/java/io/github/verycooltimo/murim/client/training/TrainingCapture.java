@@ -173,7 +173,9 @@ public final class TrainingCapture {
     private static void follow(Minecraft mc) {
         Entity newest = null;
         for (Entity e : mc.level.entitiesForRendering()) {
+            // Only a stand near the player: a stale one left at the yard must not film the mountain run.
             if (e instanceof ArmorStand && e.isAlive() && e.getCustomName() != null && CAMERA.equals(e.getCustomName().getString())
+                    && e.distanceTo(mc.player) < 64.0F
                     && (newest == null || e.getId() > newest.getId())) {
                 newest = e;
             }
@@ -382,9 +384,10 @@ public final class TrainingCapture {
         }, false));
         // The stone up the stair: player camera from the front, walk forward up the steps.
         steps.add(new Step("p_carry", 110, 5, () -> {
-            // Side of the stair, wide enough for the whole climb.
-            Vec3 look = new Vec3(origin.getX() + 17.0D, origin.getY() + 2.5D, origin.getZ() - 9.5D);
-            stand(server, look, look.add(-1.0D, 1.5D, 9.0D));
+            // The player's own camera (third person, front): with a stand as the camera the client does not send its
+            // position (LocalPlayer#sendPosition only for the controlled camera) and the server never sees the climb.
+            stand(server, Vec3.ZERO, null);
+            mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT);
             server.execute(() -> {
                 ServerPlayer p = sp(server);
                 p.teleportTo(server.overworld(), origin.getX() + 11.5D, origin.getY(), origin.getZ() - 9.5D, -90.0F, 10.0F);
@@ -394,9 +397,11 @@ public final class TrainingCapture {
             // With a stand as the camera the player's input is not read (LocalPlayer#serverAiStep only for the
             // controlled camera, agent-log 03.10): walk by setting the forward impulse directly.
             mc.player.zza = i > 15 && i < 100 ? 1.0F : 0.0F;
+            mc.options.keyUp.setDown(i > 15 && i < 100);
         }, false));
         steps.add(new Step("p_carry_end", 20, 0, () -> {
             mc.player.zza = 0.0F;
+            mc.options.keyUp.setDown(false);
             hand(server, ItemStack.EMPTY);
         }, i -> { }, false));
     }

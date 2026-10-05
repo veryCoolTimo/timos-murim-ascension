@@ -53,8 +53,10 @@ public final class TrainingPropLayer extends RenderLayer<AbstractClientPlayer, P
             pose.scale(0.85F, 0.85F, 0.85F);
         } else {
             // Flat on the back between the shoulder blades.
-            pose.translate(0.0D, 0.34D, 0.3D);
-            pose.mulPose(Axis.XP.rotationDegrees(90.0F));
+            // Model space (y down, back = +z, back face at z 0.125). The slab model lies in y 0..3/16 of its block;
+            // turned −90° about X it stands against the back at z 0.135..0.265 (with +90° it sat inside the torso).
+            pose.translate(0.0D, 0.34D, -0.085D);
+            pose.mulPose(Axis.XP.rotationDegrees(-90.0F));
             pose.scale(0.7F, 0.7F, 0.7F);
         }
         Minecraft.getInstance().getItemRenderer().renderStatic(stack, ItemDisplayContext.FIXED, light, OverlayTexture.NO_OVERLAY,
