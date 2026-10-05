@@ -114,17 +114,17 @@ public final class SectLifeCapture {
             // Новичок идёт в казну — охранник встаёт на пути и отталкивает.
             new Scene("guard", 4500, "treasury", -8.0D, -16.0D, 4.0D, "treasury", -9.0D, -4.0D, 0.5D, false, "guard"),
             // Члены секты (автор 05.10). Совет старейшин в главном зале: глава во главе, старейшины двумя рядами.
-            new Scene("council", 6300, "main_hall", 7.0D, -3.0D, 3.0D, "main_hall", 0.0D, 2.5D, 0.3D, false),
+            new Scene("council", 6300, "main_hall", 0.5D, -4.5D, 6.0D, "main_hall", 0.0D, 2.5D, 0.0D, false),
             // Доклад: Ун Ам в завтрак перед главой в главном зале — поклон, говорит; глава отвечает.
-            new Scene("report", 1300, "main_hall", 5.0D, -1.5D, 2.2D, "main_hall", 0.0D, 3.2D, 1.0D, false),
+            new Scene("report", 1300, "main_hall", 4.5D, 3.2D, 1.8D, "main_hall", 0.0D, 3.1D, 1.0D, false, "report"),
             // Казна: Хён Ён у стола с книгой учёта, носильщики приносят груз — принимает, они кланяются.
-            new Scene("treasury", 3300, "treasury", 14.0D, -9.0D, 3.5D, "treasury", 7.0D, 0.0D, 0.5D, false, "porters"),
+            new Scene("treasury", 3300, "treasury", 12.0D, 2.5D, 2.2D, "treasury", 7.0D, -2.5D, 0.6D, false, "porters"),
             // Лекарь: после поединка раненый сидит у края площадки, Ун Гак на колене лечит.
-            new Scene("healer", 7600, "sparring", -4.0D, -15.0D, 3.0D, "sparring", -9.5D, -7.0D, 0.3D, false, "wound"),
+            new Scene("healer", 7600, "sparring", -8.0D, -14.5D, 3.0D, "sparring", -7.5D, -8.5D, 0.3D, false, "wound"),
             // Смена охраны у ворот секты в сумерках: сменщик приходит, оба кланяются, сменённый уходит.
-            new Scene("shift", 13030, "sect_gate", 9.5D, 6.0D, 2.5D, "sect_gate", 4.0D, 1.5D, 1.0D, false, "shift"),
+            new Scene("shift", 13040, "sect_gate", 8.5D, 4.5D, 2.0D, "sect_gate", 4.5D, 1.0D, 1.0D, false, "shift"),
             // Итог дня: вечером игрок говорит с наставником — журнал дня и «зачем всё это».
-            new Scene("summary", 11300, "training", 3.0D, 14.0D, 2.0D, "training", 0.0D, 10.0D, 1.0D, false, "summary"));
+            new Scene("summary", 12300, "training", 3.0D, 14.0D, 2.0D, "training", 0.0D, 10.0D, 1.0D, false, "summary"));
 
     private static boolean setup;
     private static List<Scene> scenes;
@@ -303,7 +303,7 @@ public final class SectLifeCapture {
                 }
             }
             case "wound" -> {
-                Vec3 ring = layout.at("sparring", -8.5D, -5.5D);
+                Vec3 ring = layout.at("sparring", -6.5D, -8.5D);
                 io.github.verycooltimo.murim.entity.SectDisciple best = null;
                 for (io.github.verycooltimo.murim.entity.SectDisciple d : people) {
                     if (d.member().map(m -> m.generation() == 3 && m.disciple()).orElse(false)
@@ -321,11 +321,34 @@ public final class SectLifeCapture {
                 }
             }
             case "shift" -> {
+                // Смена могла пройти до съёмки (сменщик вдали «переходит» к посту без ходьбы): ставим её заново —
+                // сменяемый на посту, сменщик в нескольких шагах.
+                for (io.github.verycooltimo.murim.entity.SectDisciple d : people) {
+                    if ("baek_mu".equals(d.memberKey())) {
+                        d.relieve(Long.MIN_VALUE);
+                        SectSchedule.Task post = SectSchedule.task(d.member().orElseThrow(), SectSchedule.Period.TRAINING, 0);
+                        Vec3 at = SectLife.stand(level, layout.at(post.zone(), post.du(), post.dv()));
+                        d.moveTo(at.x, at.y, at.z, layout.yaw(post.faceU(), post.faceV()), 0.0F);
+                        d.getNavigation().stop();
+                    }
+                }
                 for (io.github.verycooltimo.murim.entity.SectDisciple d : people) {
                     if ("baek_un".equals(d.memberKey())) {
+                        d.setHandedOver(Long.MIN_VALUE);
+                        d.setKeepAwake(true);
                         Vec3 at = SectLife.stand(level, layout.at("sect_gate", 6.0D, 9.0D));
                         d.moveTo(at.x, at.y, at.z, 180.0F, 0.0F);
                         MurimMod.LOGGER.info("Стенд секты: сменщик {} идёт к посту", d.memberKey());
+                    }
+                }
+            }
+            case "report" -> {
+                // Ун Ам заново подходит к главе: доклад начинается с поклона в кадре.
+                for (io.github.verycooltimo.murim.entity.SectDisciple d : people) {
+                    if ("un_am".equals(d.memberKey())) {
+                        Vec3 at = SectLife.stand(level, layout.at("main_hall", 4.0D, -3.0D));
+                        d.moveTo(at.x, at.y, at.z, 0.0F, 0.0F);
+                        d.getNavigation().stop();
                     }
                 }
             }
@@ -382,6 +405,8 @@ public final class SectLifeCapture {
         }
         SectLayout layout = SectLayout.hua(site);
         long day = Math.floorDiv(level.getDayTime(), 24000L) * 24000L + 24000L;
+        // Время заморожено во всех сценах: смену охраны стенд ставит заново в начале съёмки (act shift).
+        level.getGameRules().getRule(GameRules.RULE_DAYLIGHT).set(false, server);
         for (ServerLevel l : server.getAllLevels()) {
             l.setDayTime(day + s.time());
         }

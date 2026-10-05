@@ -62,8 +62,6 @@ public final class ScheduleGoal extends Goal {
     private int stoveSearch;
     /** Сколько тиков лекарь идёт к раненому. */
     private int treatWalk;
-    /** Сменщик уже принял пост в эту часть суток (день × 8 + часть). */
-    private long handedOver = Long.MIN_VALUE;
 
     public ScheduleGoal(SectDisciple npc) {
         this.npc = npc;
@@ -472,6 +470,8 @@ public final class ScheduleGoal extends Goal {
      */
     private void report() {
         if (!arrive(current.spot(), 0.7D)) {
+            // Отошёл и вернулся — доклад снова начнётся с поклона.
+            reported = false;
             return;
         }
         npc.faceYaw(current.yaw(), 20.0F);
@@ -620,7 +620,7 @@ public final class ScheduleGoal extends Goal {
         long time = npc.level().getDayTime();
         SectSchedule.Period p = SectSchedule.at(time);
         long key = SectSchedule.day(time) * 8L + p.ordinal();
-        if (!SectSchedule.onShift(me.get(), p) || SectSchedule.sincePeriodStart(time) >= SectSchedule.HANDOVER || handedOver == key) {
+        if (!SectSchedule.onShift(me.get(), p) || SectSchedule.sincePeriodStart(time) >= SectSchedule.HANDOVER || npc.handedOver() == key) {
             return false;
         }
         Optional<SectRoster> outKey = me.get().relief();
@@ -633,7 +633,7 @@ public final class ScheduleGoal extends Goal {
         if (!arrive(side, 0.6D)) {
             return true;
         }
-        handedOver = key;
+        npc.setHandedOver(key);
         npc.attend(out, 44);
         out.attend(npc, 44);
         npc.faceEntity(out, 90.0F);

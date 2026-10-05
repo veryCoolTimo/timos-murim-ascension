@@ -1498,6 +1498,17 @@ public class SectDisciple extends Bandit implements Casters.Caster {
         relievedKey = key;
     }
 
+    /** Сменщик уже принял пост в эту часть суток (день × 8 + часть). */
+    private long handedOver = Long.MIN_VALUE;
+
+    public long handedOver() {
+        return handedOver;
+    }
+
+    public void setHandedOver(long key) {
+        handedOver = key;
+    }
+
     /** Повернуться к тому, кто подошёл (носильщик с грузом, сменщик), на {@code ticks} тиков. */
     private LivingEntity attendTo;
     private long attendUntil;
