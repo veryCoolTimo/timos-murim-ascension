@@ -93,6 +93,11 @@ public final class HudGalleryCapture {
             // Seated widget is the game HUD, not the dantian ceremony: keep the play camera and the GUI.
             mc.options.hideGui = false;
             mc.options.setCameraType(CameraType.THIRD_PERSON_BACK);
+            // The server re-syncs the stand player's (unawakened) profile; the seated widget needs a dantian.
+            if (!ClientProfileState.profile().isAwakened()) {
+                ClientProfileState.setProfile(io.github.verycooltimo.murim.profile.DantianProfile.INITIAL.withTags("calm", "none")
+                        .withPool(12.4D).withCirculating(3.1D));
+            }
         }
         if (t > 0 && t < SHOT && "training".equals(scene) && t % 12 == 0) {
             beat(mc, t);
@@ -165,8 +170,11 @@ public final class HudGalleryCapture {
             default -> {
             }
         }
+        // onClose, not setScreen(null): the dialogue screen ends its camera there; otherwise the next pass is shot
+        // from inside the player (gallery 05.10, GUI 3 frames).
         if (mc.screen != null) {
-            mc.setScreen(null);
+            mc.screen.onClose();
         }
+        mc.options.setCameraType(CameraType.THIRD_PERSON_BACK);
     }
 }
