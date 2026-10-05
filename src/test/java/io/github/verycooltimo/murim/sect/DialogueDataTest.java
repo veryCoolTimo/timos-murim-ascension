@@ -26,9 +26,28 @@ class DialogueDataTest {
         return Files.exists(p) ? p : Path.of("../../src/main/resources/" + rel);
     }
 
+    /** Диалог как его видит игра: личный — поверх базы (диалога роли), как в {@link DialogueLoader}. */
     private static Dialogue load(String id) throws IOException {
+        Dialogue d = raw(id);
+        return d.base().isPresent() ? d.over(raw(d.base().get().getPath())) : d;
+    }
+
+    private static Dialogue raw(String id) throws IOException {
         JsonElement json = JsonParser.parseString(Files.readString(res("data/murim/murim_dialogues/" + id + ".json")));
         return Dialogue.CODEC.parse(JsonOps.INSTANCE, json).getOrThrow();
+    }
+
+    private static JsonObject lang(String code) throws IOException {
+        return JsonParser.parseString(Files.readString(res("assets/murim/lang/" + code + ".json"))).getAsJsonObject();
+    }
+
+    /** Число подстановок {@code %s} в строке. */
+    static int placeholders(String s) {
+        int n = 0;
+        for (int i = s.indexOf("%s"); i >= 0; i = s.indexOf("%s", i + 2)) {
+            n++;
+        }
+        return n;
     }
 
     /** Все файлы диалогов: по ролям и свои у людей секты (murim_dialogues/<ключ>.json). */
@@ -99,7 +118,8 @@ class DialogueDataTest {
                 if (!n.line().isEmpty()) {
                     keys.add(n.line());
                 }
-                keys.addAll(n.random());
+                // Особые строки (@trait, @personal, @rumour) — не ключи: их реплики проверяются ниже (SectTalk).
+                n.random().stream().filter(k -> !k.startsWith("@")).forEach(keys::add);
                 n.options().forEach(o -> keys.add(o.text()));
             });
         }
@@ -117,9 +137,68 @@ class DialogueDataTest {
             keys.add("murim.sect.guard." + k);
         }
         keys.addAll(List.of("murim.sect.standing.up", "murim.sect.contribution.gain", "murim.sect.contribution.loss", "murim.sect.donate.none"));
+        // Личные реплики учеников (SectTalk): черты, слухи, личная фраза каждого ученика.
+        keys.addAll(SectTalk.allKeys());
+        for (SectRoster m : SectRoster.ALL) {
+            if (m.disciple()) {
+                keys.add(SectTalk.personalKey(m.key()));
+            }
+        }
         for (String k : keys) {
             assertTrue(ru.has(k), "ru_ru: " + k);
             assertTrue(en.has(k), "en_us: " + k);
+            // Подстановки совпадают: иначе в одном из языков пропадёт имя или число.
+            assertEquals(placeholders(en.get(k).getAsString()), placeholders(ru.get(k).getAsString()), "%s в ru/en: " + k);
+        }
+    }
+
+    @Test
+    @DisplayName("Каждый человек горы находит свой диалог (личный или роли), и у личного диалога есть база")
+    void everyPersonResolvesDialogue() throws IOException {
+        Set<String> ids = new HashSet<>(dialogueIds());
+        for (SectRoster m : SectRoster.ALL) {
+            String id = ids.contains(m.key()) ? m.key() : m.role().dialogue().getPath();
+            assertTrue(ids.contains(id), m.key() + ": нет диалога " + id);
+            Dialogue d = load(id);
+            assertEquals(List.of(), DialogueService.validate(d), m.key() + " → " + id);
+            Dialogue own = raw(id);
+            own.base().ifPresent(b -> assertTrue(ids.contains(b.getPath()), id + ": нет базы " + b));
+        }
+        // Каноничные люди (задача 05.10) говорят своими словами, а не репликами роли.
+        for (String key : List.of("baek_cheon", "yu_iseol", "yoon_jong", "jo_gol", "baek_sang", "baek_ho", "hyun_seong")) {
+            assertTrue(ids.contains(key), "нет личного диалога " + key);
+            assertTrue(raw(key).base().isPresent(), key + ": личный диалог без базы роли");
+        }
+        // Старейшина по роли — не заглушка из одной реплики.
+        assertTrue(raw("elder").nodes().size() >= 4, "elder.json — заглушка");
+    }
+
+    @Test
+    @DisplayName("Реплики SectTalk: подстановок ровно столько, сколько аргументов")
+    void talkArgsMatchLang() throws IOException {
+        JsonObject en = lang("en_us");
+        JsonObject ru = lang("ru_ru");
+        SectTalk.Context[] contexts = {
+                new SectTalk.Context("", "Tester", false, false, 3),
+                new SectTalk.Context("cheong_jin", "Tester", true, true, 0),
+                new SectTalk.Context("@Tester", "Tester", true, false, 6),
+                new SectTalk.Context("@Other", "Tester", false, true, 2),
+        };
+        for (SectRoster m : SectRoster.ALL) {
+            for (long day = 0; day < 14; day++) {
+                for (SectTalk.Context ctx : contexts) {
+                    for (String token : List.of(SectTalk.TRAIT, SectTalk.PERSONAL, SectTalk.RUMOUR)) {
+                        for (int roll = 0; roll < 12; roll++) {
+                            SectTalk.Line l = SectTalk.line(token, m.key(), day, roll % 2 == 0, roll, ctx);
+                            assertTrue(en.has(l.key()), m.key() + ": " + l.key());
+                            assertEquals(l.args().size(), placeholders(en.get(l.key()).getAsString()), l.key());
+                            assertEquals(l.args().size(), placeholders(ru.get(l.key()).getAsString()), l.key());
+                            // Говорящий не пересказывает слух о себе в третьем лице.
+                            assertFalse(l.args().contains("npc:" + m.key()), m.key() + " о себе: " + l.key());
+                        }
+                    }
+                }
+            }
         }
     }
 
