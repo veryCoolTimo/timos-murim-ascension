@@ -21,6 +21,8 @@ public final class SectSiteData extends SavedData {
     public static final SavedData.Factory<SectSiteData> FACTORY = new SavedData.Factory<>(SectSiteData::new, SectSiteData::load);
 
     private final Set<String> placed = new HashSet<>();
+    /** День секты последнего смотра учеников (SectReview): смотр не повторяется в тот же день. */
+    private long lastReview = Long.MIN_VALUE;
 
     public SectSiteData() {
     }
@@ -30,6 +32,9 @@ public final class SectSiteData extends SavedData {
         for (Tag t : tag.getList("placed", Tag.TAG_STRING)) {
             data.placed.add(t.getAsString());
         }
+        if (tag.contains("last_review")) {
+            data.lastReview = tag.getLong("last_review");
+        }
         return data;
     }
 
@@ -38,6 +43,9 @@ public final class SectSiteData extends SavedData {
         ListTag list = new ListTag();
         placed.stream().sorted().forEach(z -> list.add(StringTag.valueOf(z)));
         tag.put("placed", list);
+        if (lastReview != Long.MIN_VALUE) {
+            tag.putLong("last_review", lastReview);
+        }
         return tag;
     }
 
@@ -58,6 +66,16 @@ public final class SectSiteData extends SavedData {
         }
     }
 
+    public long lastReview() {
+        return lastReview;
+    }
+
+    /** Смотр этого дня окончен (или прерван). */
+    public void finishReview(long day) {
+        lastReview = day;
+        setDirty();
+    }
+
     // Не сохраняется: состояние текущего сеанса сервера (живёт в экземпляре, а не в static).
 
     /** Чужак у ворот секты — глава выходит навстречу. */
@@ -67,4 +85,7 @@ public final class SectSiteData extends SavedData {
 
     /** Нарушители закрытых мест: игрок → что было (предупреждения, толчки, поединок). Только этот сеанс. */
     final java.util.Map<java.util.UUID, SectWatch.Trespass> trespass = new java.util.HashMap<>();
+
+    /** Идущий смотр учеников (SectReview) или null. */
+    SectReview.State review;
 }

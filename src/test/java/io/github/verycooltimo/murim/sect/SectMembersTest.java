@@ -83,29 +83,40 @@ class SectMembersTest {
     }
 
     @Test
-    @DisplayName("Охрана: каждый пост занят в любую часть суток; дневная смена ночью спит, ночная днём спит, потом отдыхает")
+    @DisplayName("Дежурство второго поколения: 2 днём и 2 ночью, каждый день другие; посты заняты; отстоявший ночь спит до полудня")
     void guardShifts() {
-        assertEquals(6, SectRoster.DAY_WATCH.size());
-        assertEquals(SectRoster.DAY_WATCH.size(), SectRoster.NIGHT_WATCH.size());
-        for (Period p : Period.values()) {
-            for (int post = 0; post < SectRoster.DAY_WATCH.size(); post++) {
-                SectRoster day = m(SectRoster.DAY_WATCH.get(post));
-                SectRoster night = m(SectRoster.NIGHT_WATCH.get(post));
-                assertEquals(day.home(), night.home(), "пост " + post);
-                assertEquals(night, day.relief().orElseThrow());
-                assertEquals(day, night.relief().orElseThrow());
-                Task a = SectSchedule.task(day, p, 0);
-                Task b = SectSchedule.task(night, p, 0);
-                assertTrue(a.kind() == Kind.GUARD ^ b.kind() == Kind.GUARD, "пост " + post + " в " + p + ": " + a.kind() + "/" + b.kind());
-                Task on = a.kind() == Kind.GUARD ? a : b;
-                assertEquals(SectSchedule.post(day), on, "сменщик стоит не на том же месте");
-                Task off = a.kind() == Kind.GUARD ? b : a;
-                insideZone(off, (a.kind() == Kind.GUARD ? night : day).key());
+        assertEquals(7, SectRota.pool().size(), "пул дежурных — второе поколение без старшего");
+        java.util.Set<SectRoster> served = new java.util.HashSet<>();
+        for (long day = 0; day < 14; day++) {
+            java.util.Set<SectRoster> busy = new java.util.HashSet<>();
+            for (int post = 0; post < SectRota.POSTS; post++) {
+                SectRoster d = SectRota.dayWatch(day, post);
+                SectRoster n = SectRota.nightWatch(day, post);
+                assertTrue(busy.add(d) && busy.add(n), "один человек дважды в смене дня " + day);
+                assertTrue(SectRota.nightWatch(day - 1, post) != d, "вчерашний ночной снова днём, день " + day);
+                served.add(d);
+                served.add(n);
+                long t = day * 24000L;
+                // Днём (занятия) на посту дневной, ночью — ночной, на том же месте.
+                assertEquals(SectSchedule.post(new SectRota.Duty(post, false)), SectSchedule.task(d, t + 4000L));
+                assertEquals(SectSchedule.post(new SectRota.Duty(post, true)), SectSchedule.task(n, t + 15000L));
+                assertEquals(Kind.SLEEP, SectSchedule.task(d, t + 15000L).kind(), "дневной ночью спит");
+                assertEquals(n, SectRota.relief(new SectRota.Duty(post, false), t + 13100L));
+                assertEquals(d, SectRota.relieved(new SectRota.Duty(post, true), t + 13100L));
             }
+            // Отстоявшие ночь: утром спят, после полудня отдыхают.
+            for (int post = 0; post < SectRota.POSTS; post++) {
+                SectRoster n = SectRota.nightWatch(day, post);
+                long next = (day + 1) * 24000L;
+                assertEquals(Kind.SLEEP, SectSchedule.task(n, next + 3000L).kind(), "ночная смена спит до полудня");
+                assertEquals(Kind.REST, SectSchedule.task(n, next + 8000L).kind());
+            }
+            // Занимаются старший и трое: две пары, никто не стоит без партнёра.
+            java.util.List<SectRoster> training = SectRota.training(day);
+            assertEquals(4, training.size(), "день " + day);
+            assertEquals(SectRole.SENIOR, training.get(0).role());
         }
-        assertEquals(Kind.SLEEP, SectSchedule.task(m("baek_un"), 3000).kind(), "ночная смена спит до полудня");
-        assertEquals(Kind.REST, SectSchedule.task(m("baek_un"), 8000).kind());
-        assertEquals(Kind.SLEEP, SectSchedule.task(m("baek_mu"), 15000).kind());
+        assertEquals(7, served.size(), "каждый из семерых дежурит за две недели");
     }
 
     // ------------------------------------------------------------------ журнал секты

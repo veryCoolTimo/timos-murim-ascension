@@ -398,6 +398,8 @@ public class SectDisciple extends Bandit implements Casters.Caster {
         if (partnerEntity() instanceof ServerPlayer p) {
             io.github.verycooltimo.murim.sect.SectService.onSparEnd(p, this, partnerWon);
         }
+        // Смотр учеников: исход боя сетки (sect/SectReview).
+        io.github.verycooltimo.murim.sect.SectReview.onBoutEnd(this, partnerEntity(), partnerWon);
         // Ученик против ученика: второй тоже кланяется (его исход — обратный).
         if (partnerEntity() instanceof SectDisciple other && other.spar == Spar.FIGHT && getUUID().equals(other.partner)) {
             other.endSpar(!partnerWon);
@@ -949,7 +951,9 @@ public class SectDisciple extends Bandit implements Casters.Caster {
             entityData.set(ROLE, io.github.verycooltimo.murim.sect.SectRole.of(tag.getString("role")).id());
         }
         if (!tag.getString("member").isEmpty()) {
-            setMember(SectRoster.of(tag.getString("member")).orElse(null));
+            // Человек прежнего состава (SectRoster.RETIRED) сохраняет ключ: SectLife уберёт его с горы при первом тике.
+            String key = tag.getString("member");
+            SectRoster.of(key).ifPresentOrElse(this::setMember, () -> entityData.set(KEY, key));
         }
         if (!tag.getString("look").isEmpty()) {
             entityData.set(LOOK, tag.getString("look"));
@@ -1444,7 +1448,8 @@ public class SectDisciple extends Bandit implements Casters.Caster {
      * форма, строй форм и столбы, заслон стражи, защита своих от моба. Остальное время — в ножнах; смена мгновенная.
      */
     boolean wantsDrawn() {
-        if (!armed()) {
+        // Поклон — всегда с мечом в ножнах, даже если поединок начался посреди форм или столбов (поза ещё не сменилась).
+        if (!armed() || spar == Spar.BOW_IN || spar == Spar.BOW_OUT) {
             return false;
         }
         SectPose p = pose();

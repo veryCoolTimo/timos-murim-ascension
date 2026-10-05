@@ -44,12 +44,23 @@ class SectScheduleTest {
     }
 
     @Test
-    @DisplayName("Список: 20 учеников (5 второго поколения, 15 третьего), старейшины, наставник, привратник")
+    @DisplayName("Состав 05.10: глава, 3 старейшины Хён, 3 Ун, 8 Пэк, 17 Чхон, 6 слуг, управляющий, привратник — 40; без стражи и Чхон Мёна")
     void roster() {
-        assertEquals(5, SectRoster.generation(2).size());
-        assertEquals(15, SectRoster.generation(3).size());
-        long disciples = SectRoster.ALL.stream().filter(SectRoster::disciple).count();
-        assertTrue(disciples >= 20 && disciples <= 25, "учеников " + disciples);
+        assertEquals(8, SectRoster.generation(2).size());
+        assertEquals(17, SectRoster.generation(3).size());
+        assertEquals(25, SectRoster.ALL.stream().filter(SectRoster::disciple).count());
+        assertEquals(40, SectRoster.ALL.size());
+        assertEquals(4, SectRoster.ALL.stream().filter(m -> m.generation() == 0).count(), "глава и три старейшины Хён");
+        assertEquals(3, SectRoster.ALL.stream().filter(m -> m.generation() == 1).count(), "три Ун");
+        assertEquals(6, SectRoster.ALL.stream().filter(m -> m.lay() && m.role() != SectRole.STEWARD).count(), "шесть слуг");
+        assertEquals(1, SectRoster.ALL.stream().filter(m -> m.role() == SectRole.STEWARD).count());
+        assertEquals(1, SectRoster.ALL.stream().filter(m -> m.role() == SectRole.GATEKEEPER).count());
+        assertEquals(0, SectRoster.ALL.stream().filter(m -> m.role() == SectRole.GUARD).count(), "отдельной стражи нет");
+        assertTrue(SectRoster.of("chung_myung").isEmpty() && SectRoster.of("cheong_myeong").isEmpty(), "Чхон Мён — это игрок");
+        assertEquals(SectRole.SENIOR, SectRoster.of("baek_cheon").orElseThrow().role(), "старший — Пэк Чхон");
+        for (String gone : SectRoster.RETIRED) {
+            assertTrue(SectRoster.of(gone).isEmpty(), "ушедший в составе: " + gone);
+        }
         Set<String> keys = new HashSet<>();
         for (SectRoster m : SectRoster.ALL) {
             assertTrue(keys.add(m.key()), "дубль " + m.key());
@@ -67,15 +78,31 @@ class SectScheduleTest {
     @DisplayName("Строй: все ученики в рядах, места не совпадают, в каждом ряду свободное место для игрока")
     void formationSlots() {
         Set<String> used = new HashSet<>();
-        for (SectRoster m : SectRoster.ALL) {
-            double[] s = SectSchedule.formationSlot(m);
-            if (m.disciple()) {
+        for (long day = 0; day < 7; day++) {
+            Set<String> today = new HashSet<>();
+            int rowed = 0;
+            for (SectRoster m : SectRoster.ALL) {
+                if (!m.disciple()) {
+                    continue;
+                }
+                // Строй дня: 23500 предыдущих суток открывают день секты {@code day}.
+                Task t = SectSchedule.task(m, day * 24000L - 500L);
+                if (m.generation() == 3) {
+                    assertEquals(Kind.FORM_ROW, t.kind(), m.key());
+                }
+                if (t.kind() != Kind.FORM_ROW) {
+                    // Второе поколение: дежурный на посту или отсыпается после ночи.
+                    assertTrue(SectRota.onDuty(m, day * 24000L - 500L) || SectRota.afterNight(m, day * 24000L - 500L), m.key());
+                    continue;
+                }
+                rowed++;
+                double[] s = SectSchedule.formationSlot(m, day);
                 assertNotNull(s, m.key());
-                assertTrue(used.add(s[0] + "," + s[1]), "место занято дважды: " + m.key());
-                Task t = SectSchedule.task(m, Period.FORMATION, 3);
-                assertEquals(Kind.FORM_ROW, t.kind(), m.key());
+                assertTrue(today.add(s[0] + "," + s[1]), "место занято дважды: " + m.key());
                 assertEquals("training", t.zone());
             }
+            assertEquals(17 + 4, rowed, "день " + day + ": в строю всё третье поколение и четверо второго");
+            used.addAll(today);
         }
         for (int row = 0; row < SectSchedule.rows(); row++) {
             double[] free = SectSchedule.slot(row, SectSchedule.COLUMNS - 1);
@@ -120,7 +147,7 @@ class SectScheduleTest {
             assertEquals(10, spar.size(), "день " + day + ": пять пар");
             assertTrue(kinds.containsValue(Kind.POLES));
             assertTrue(kinds.containsValue(Kind.CHORE));
-            assertEquals(Kind.SPAR, kinds.get("senior"), "старший всегда на площадке поединков");
+            assertEquals(Kind.SPAR, kinds.get("baek_cheon"), "старший всегда на площадке поединков");
         }
         // Состав групп третьего поколения меняется от дня к дню.
         SectRoster m = SectRoster.of("jo_gol").orElseThrow();

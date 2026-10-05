@@ -77,18 +77,21 @@ public final class SectLifeCapture {
             "intercept", new double[] {0.0D, -17.0D},
             "guard", new double[] {-15.0D, -4.0D},
             // Итог дня у наставника: игрок перед ним на площади (наставник вечером стоит у первого ряда).
-            "summary", new double[] {0.6D, SectSchedule.FRONT_ROW + 0.6D});
+            "summary", new double[] {0.6D, SectSchedule.FRONT_ROW + 0.6D},
+            // Обмен заслуг: игрок перед столом казны, лицом к Хён Ёну (он у стола смотрит на восток).
+            "merit", new double[] {7.6D, 0.4D});
     private static final java.util.Map<String, String> ACT_ZONE = java.util.Map.of("intercept", "main_hall", "guard", "treasury",
-            "summary", "training");
+            "summary", "training", "merit", "treasury");
     /**
      * Сцены членов секты (автор 05.10) — свои кадры и шаг: {кадров, тиков между кадрами}. Действия {@code porters},
      * {@code wound}, {@code shift} ставят людей после расстановки, чтобы дело случилось в кадре.
      */
     private static final java.util.Map<String, int[]> PACE = java.util.Map.of(
             "council", new int[] {60, 6}, "report", new int[] {60, 4}, "treasury", new int[] {80, 6},
-            "healer", new int[] {80, 5}, "shift", new int[] {80, 5}, "summary", new int[] {130, 4});
-    /** Игрок сам в кадре (выживание, без невидимости): перехват, охрана, итог дня. */
-    private static final java.util.Set<String> PLAYER_ACTS = java.util.Set.of("intercept", "guard", "summary");
+            "healer", new int[] {80, 5}, "shift", new int[] {80, 5}, "summary", new int[] {130, 4},
+            "review", new int[] {200, 10}, "merit", new int[] {110, 4});
+    /** Игрок сам в кадре (выживание, без невидимости): перехват, охрана, итог дня, обмен заслуг. */
+    private static final java.util.Set<String> PLAYER_ACTS = java.util.Set.of("intercept", "guard", "summary", "merit");
 
     private static final List<Scene> ALL = List.of(
             // Рассвет: строй лицом к помосту, камера над помостом смотрит на ряды; наставник ходит между ними.
@@ -126,7 +129,12 @@ public final class SectLifeCapture {
             // Смена охраны у ворот секты в сумерках: сменщик приходит, оба кланяются, сменённый уходит.
             new Scene("shift", 13040, "sect_gate", 8.5D, 4.5D, 2.0D, "sect_gate", 4.5D, 1.0D, 1.0D, false, "shift"),
             // Итог дня: вечером игрок говорит с наставником — журнал дня и «зачем всё это».
-            new Scene("summary", 12300, "training", 3.0D, 14.0D, 2.0D, "training", 0.0D, 10.0D, 1.0D, false, "summary"));
+            new Scene("summary", 12300, "training", 3.0D, 14.0D, 2.0D, "training", 0.0D, 10.0D, 1.0D, false, "summary"),
+            // Смотр учеников (раз в 7 дней): сетка из четырёх на площадке поединков, зрители вдоль краёв, глава на помосте.
+            new Scene("review", io.github.verycooltimo.murim.sect.SectReview.FROM + 100, "sparring", 0.0D, 17.0D, 7.0D,
+                    "sparring", 0.0D, 0.0D, 0.0D, false, "review"),
+            // Обмен заслуг: игрок у стола казны говорит с Хён Ёном и берёт меч за заслуги.
+            new Scene("merit", 3500, "treasury", 0.0D, 0.0D, 0.0D, "treasury", 5.5D, 0.0D, 1.0D, false, "merit"));
 
     private static boolean setup;
     private static List<Scene> scenes;
@@ -203,15 +211,23 @@ public final class SectLifeCapture {
                 mc.setCameraEntity(mc.player);
             }
             mc.options.setCameraType(CameraType.THIRD_PERSON_BACK);
-        } else if ("summary".equals(s.act())) {
+        } else if ("summary".equals(s.act()) || "merit".equals(s.act())) {
             // Разговор снимает камера разговора (DialogueCamera): до него — глаза игрока.
             mc.options.setCameraType(CameraType.FIRST_PERSON);
             if (!DialogueCamera.active() && mc.getCameraEntity() != mc.player) {
                 mc.setCameraEntity(mc.player);
             }
-            if (shooting && wait == 260 && mc.screen instanceof DialogueScreen ds) {
+            if ("summary".equals(s.act()) && shooting && wait == 260 && mc.screen instanceof DialogueScreen ds) {
                 // «Зачем всё это?» — наставник объясняет, зачем строй и распорядок.
                 ds.press(0);
+            }
+            if ("merit".equals(s.act()) && shooting && mc.screen instanceof DialogueScreen ds) {
+                // «Обменять заслуги» (второй вариант), затем «Меч Хуашань» (первый) — настоящим выбором варианта.
+                if (wait == 100) {
+                    ds.press(1);
+                } else if (wait == 240) {
+                    ds.press(0);
+                }
             }
         } else {
             mc.options.setCameraType(CameraType.FIRST_PERSON);
@@ -332,17 +348,21 @@ public final class SectLifeCapture {
             case "shift" -> {
                 // Смена могла пройти до съёмки (сменщик вдали «переходит» к посту без ходьбы): ставим её заново —
                 // сменяемый на посту, сменщик в нескольких шагах.
+                // Дежурство второго поколения (SectRota): сменяемый — дневной дежурный поста 0, сменщик — ночной того же дня.
+                long rotaDay = SectSchedule.day(level.getDayTime());
+                String outKey = io.github.verycooltimo.murim.sect.SectRota.dayWatch(rotaDay, 0).key();
+                String inKey = io.github.verycooltimo.murim.sect.SectRota.nightWatch(rotaDay, 0).key();
                 for (io.github.verycooltimo.murim.entity.SectDisciple d : people) {
-                    if ("baek_mu".equals(d.memberKey())) {
+                    if (outKey.equals(d.memberKey())) {
                         d.relieve(Long.MIN_VALUE);
-                        SectSchedule.Task post = SectSchedule.task(d.member().orElseThrow(), SectSchedule.Period.TRAINING, 0);
+                        SectSchedule.Task post = SectSchedule.post(new io.github.verycooltimo.murim.sect.SectRota.Duty(0, false));
                         Vec3 at = SectLife.stand(level, layout.at(post.zone(), post.du(), post.dv()));
                         d.moveTo(at.x, at.y, at.z, layout.yaw(post.faceU(), post.faceV()), 0.0F);
                         d.getNavigation().stop();
                     }
                 }
                 for (io.github.verycooltimo.murim.entity.SectDisciple d : people) {
-                    if ("baek_un".equals(d.memberKey())) {
+                    if (inKey.equals(d.memberKey())) {
                         d.setHandedOver(Long.MIN_VALUE);
                         d.setKeepAwake(true);
                         Vec3 at = SectLife.stand(level, layout.at("sect_gate", 6.0D, 9.0D));
@@ -358,6 +378,19 @@ public final class SectLifeCapture {
                         Vec3 at = SectLife.stand(level, layout.at("main_hall", 4.0D, -3.0D));
                         d.moveTo(at.x, at.y, at.z, 0.0F, 0.0F);
                         d.getNavigation().stop();
+                    }
+                }
+            }
+            case "review" -> {
+                // Смотр мог начаться сам во время прогрева — начинаем заново к съёмке, бойцы уже у рингов.
+                io.github.verycooltimo.murim.sect.SectReview.restartForCapture(level, layout);
+            }
+            case "merit" -> {
+                for (io.github.verycooltimo.murim.entity.SectDisciple d : people) {
+                    if ("hyun_young".equals(d.memberKey())) {
+                        io.github.verycooltimo.murim.sect.DialogueService.open(sp, d);
+                        MurimMod.LOGGER.info("Стенд секты: обмен заслуг — разговор с Хён Ёном, заслуг {}",
+                                sp.getData(ModAttachments.SECT).merit());
                     }
                 }
             }
@@ -414,6 +447,10 @@ public final class SectLifeCapture {
         }
         SectLayout layout = SectLayout.hua(site);
         long day = Math.floorDiv(level.getDayTime(), 24000L) * 24000L + 24000L;
+        if ("review".equals(s.act())) {
+            // День смотра: ближайший седьмой день секты.
+            day += io.github.verycooltimo.murim.sect.SectReview.daysUntil(day + s.time()) * 24000L;
+        }
         // Время заморожено во всех сценах: смену охраны стенд ставит заново в начале съёмки (act shift).
         level.getGameRules().getRule(GameRules.RULE_DAYLIGHT).set(false, server);
         for (ServerLevel l : server.getAllLevels()) {
@@ -431,6 +468,11 @@ public final class SectLifeCapture {
                     new io.github.verycooltimo.murim.sect.SectAttendance.Day(sectDay, java.util.Set.of("formation", "lesson"),
                             java.util.Set.of("formation", "climb", "meal")),
                     io.github.verycooltimo.murim.sect.SectAttendance.Day.NONE, 2, 0, false, Long.MIN_VALUE));
+        } else if ("merit".equals(s.act())) {
+            // Выпускник с 40 заслугами: казна открыта, Хён Ён говорит сам.
+            p.setData(ModAttachments.SECT, io.github.verycooltimo.murim.sect.SectState.NONE.joined().with("met_mentor")
+                    .with(io.github.verycooltimo.murim.sect.SectStanding.LESSON_ONE).with(io.github.verycooltimo.murim.sect.SectStanding.LESSON_TWO)
+                    .contribute(40));
         } else if (PLAYER_ACTS.contains(s.act())) {
             p.setData(ModAttachments.SECT, io.github.verycooltimo.murim.sect.SectState.NONE.joined());
         } else if (!p.getData(ModAttachments.SECT).member()) {
@@ -447,7 +489,8 @@ public final class SectLifeCapture {
             // Новичок пешком, видимый, в режиме выживания: охрана творческих не трогает.
             double[] st = ACT_START.get(s.act());
             Vec3 at = SectLife.stand(level, layout.at(ACT_ZONE.get(s.act()), st[0], st[1]));
-            Vec3 to = "summary".equals(s.act()) ? layout.at("training", 0.0D, SectSchedule.FRONT_ROW + 3.0D) : layout.at(ACT_ZONE.get(s.act()), 0.0D, 0.0D);
+            Vec3 to = "summary".equals(s.act()) ? layout.at("training", 0.0D, SectSchedule.FRONT_ROW + 3.0D)
+                    : "merit".equals(s.act()) ? layout.at("treasury", 5.5D, 0.0D) : layout.at(ACT_ZONE.get(s.act()), 0.0D, 0.0D);
             p.setGameMode(GameType.SURVIVAL);
             p.removeEffect(MobEffects.INVISIBILITY);
             p.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 20 * 600, 4, false, false, false));
@@ -476,7 +519,7 @@ public final class SectLifeCapture {
                 a -> a.getCustomName() != null && CAMERA.equals(a.getCustomName().getString()))) {
             old.discard();
         }
-        if ("guard".equals(s.act()) || "summary".equals(s.act())) {
+        if ("guard".equals(s.act()) || "summary".equals(s.act()) || "merit".equals(s.act())) {
             MurimMod.LOGGER.info("Стенд секты: сцена {} — камера за игроком", s.name());
             return;
         }

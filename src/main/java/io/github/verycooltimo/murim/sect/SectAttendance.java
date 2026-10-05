@@ -306,6 +306,10 @@ public final class SectAttendance {
                     .withStyle(ChatFormatting.GOLD), false);
             SectService.contribute(p, s.bonus());
         }
+        // Неделя полных дней подряд — одобрение главы (SectReview.APPROVAL_STREAK; второй путь — победа на смотре).
+        if (s.full() && s.log().streak() >= SectReview.APPROVAL_STREAK) {
+            SectReview.approve(p, "streak");
+        }
         if (s.choresGiven()) {
             p.displayClientMessage(Component.translatable("murim.sect.log.chores").withStyle(ChatFormatting.YELLOW), false);
         }

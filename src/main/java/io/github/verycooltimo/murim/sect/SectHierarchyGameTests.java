@@ -85,7 +85,7 @@ public final class SectHierarchyGameTests {
         p.setData(ModAttachments.SECT, SectState.NONE.joined());
         place(helper, p, 4, 4);
         SectDisciple leader = npc(helper, layout, "hyun_jong", 14, 14);
-        SectDisciple guard = npc(helper, layout, "baek_ryeong", 3, 12);
+        SectDisciple guard = npc(helper, layout, SectRota.dayWatch(SectSchedule.day(helper.getLevel().getDayTime()), 0).key(), 3, 12);
 
         DialogueService.Route r = DialogueService.route(p, leader);
         helper.assertTrue(r != null && r.intercepted(), "новичка не перехватили: " + r);
@@ -130,7 +130,7 @@ public final class SectHierarchyGameTests {
         ServerPlayer p = SectGameTests.fakePlayer(helper);
         p.setData(ModAttachments.SECT, SectState.NONE.joined().contribute(8));
         place(helper, p, 12, 12);
-        SectDisciple guard = npc(helper, layout, "baek_won", 12, 3);
+        SectDisciple guard = npc(helper, layout, SectRota.dayWatch(SectSchedule.day(helper.getLevel().getDayTime()), 1).key(), 12, 3);
         helper.assertTrue(!SectAccess.forbidden(layout, p.position(), SectWatch.standing(p), Set.of(), SectSchedule.Period.TRAINING, 0.0D).isEmpty(),
                 "новичок в казне — не нарушение");
         boolean[] blocked = new boolean[1];
@@ -163,10 +163,10 @@ public final class SectHierarchyGameTests {
         ServerPlayer p = SectGameTests.fakePlayer(helper);
         p.setData(ModAttachments.SECT, SectState.NONE.joined());
         place(helper, p, 12, 12);
-        // Охранник без поста в этой раскладке (его площадки нет) — стоит, где поставлен, и смотрит по сторонам.
-        SectDisciple guard = npc(helper, layout, "baek_seo", 12, 7);
+        // Дежурные поста 0 (главный зал, SectRota): в этой раскладке площадки нет — стоят, где поставлены, и смотрят по сторонам.
+        SectDisciple guard = npc(helper, layout, SectRota.dayWatch(SectSchedule.day(helper.getLevel().getDayTime()), 0).key(), 12, 7);
         // Его сменщик ночной смены (автор 05.10: охрана меняется) — ночью на страже он.
-        SectDisciple night = npc(helper, layout, "baek_seung", 12, 6);
+        SectDisciple night = npc(helper, layout, SectRota.nightWatch(SectSchedule.day(helper.getLevel().getDayTime()), 0).key(), 12, 6);
         // Новичку сюда нельзя; оба урока наставника сданы — выпускник, днём можно.
         helper.assertTrue(!SectAccess.forbidden(layout, p.position(), SectWatch.standing(p), Set.of(), SectSchedule.Period.TRAINING, 0.0D).isEmpty(),
                 "новичку можно в казну");

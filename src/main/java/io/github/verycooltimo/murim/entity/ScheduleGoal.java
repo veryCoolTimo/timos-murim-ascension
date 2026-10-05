@@ -222,13 +222,13 @@ public final class ScheduleGoal extends Goal {
             }
             default -> {
                 // WATCH, GUARD, HEAL_POST: стоять на месте лицом куда надо, глазами — на ближнего игрока.
-                if (kind == Kind.GUARD && npc.role() == SectRole.GUARD && handover()) {
+                if (kind == Kind.GUARD && handover()) {
                     return;
                 }
                 if (arrive(current.spot(), 0.8D)) {
                     npc.faceYaw(current.yaw(), 15.0F);
                     // Старшие у площадки поединков смотрят и поправляют: показывают рукой, кивают.
-                    if (kind == Kind.WATCH && npc.role() != SectRole.GUARD && --talkClock <= 0) {
+                    if (kind == Kind.WATCH && --talkClock <= 0) {
                         talkClock = 80 + npc.getRandom().nextInt(120);
                         npc.gesture(npc.getRandom().nextInt(3) == 0 ? "point" : "nod");
                     }
@@ -336,7 +336,7 @@ public final class ScheduleGoal extends Goal {
             });
             return;
         }
-        if (npc.role() == SectRole.GUARD) {
+        if (k == Kind.GUARD) {
             return;
         }
         boolean treasurer = "hyun_young".equals(npc.memberKey());
@@ -620,10 +620,12 @@ public final class ScheduleGoal extends Goal {
         long time = npc.level().getDayTime();
         SectSchedule.Period p = SectSchedule.at(time);
         long key = SectSchedule.day(time) * 8L + p.ordinal();
-        if (!SectSchedule.onShift(me.get(), p) || SectSchedule.sincePeriodStart(time) >= SectSchedule.HANDOVER || npc.handedOver() == key) {
+        Optional<io.github.verycooltimo.murim.sect.SectRota.Duty> duty = io.github.verycooltimo.murim.sect.SectRota.duty(me.get(), time);
+        if (duty.isEmpty() || SectSchedule.sincePeriodStart(time) >= SectSchedule.HANDOVER || npc.handedOver() == key) {
             return false;
         }
-        Optional<SectRoster> outKey = me.get().relief();
+        // Кого сменяю (дежурство второго поколения, SectRota): дневной — вчерашнего ночного, ночной — дневного.
+        Optional<SectRoster> outKey = Optional.of(io.github.verycooltimo.murim.sect.SectRota.relieved(duty.get(), time));
         SectDisciple out = outKey.isEmpty() ? null : find(outKey.get().key(), 24.0D);
         if (out == null || !SectLife.handoverPending(out, outKey.get()) || out.position().distanceToSqr(current.spot()) > 4.0D * 4.0D) {
             return false;

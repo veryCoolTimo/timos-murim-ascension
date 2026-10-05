@@ -17,6 +17,7 @@ import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Разговор с NPC на сервере (план секты §4.3): выбор узла, проверка условий, действия.
@@ -220,7 +221,7 @@ public final class DialogueService {
             Dialogue.Option o = node.options().get(i);
             if (all(player, npc, o.when())) {
                 shown.add(i);
-                options.add(Component.translatable(o.text()));
+                options.add(optionText(o));
             }
         }
         String lineKey = node.random().isEmpty() ? node.line()
@@ -236,6 +237,19 @@ public final class DialogueService {
         }
         Component title = titleKey.isEmpty() ? Component.empty() : Component.translatable(titleKey);
         PacketDistributor.sendToPlayer(player, new DialoguePayloads.Open(npc.getId(), npc.getName(), title, line, options, anim));
+    }
+
+    /** Текст варианта: у обмена заслуг — с ценой ({@code merit_buy}, {@link MeritShop}). */
+    static Component optionText(Dialogue.Option o) {
+        for (Dialogue.Action a : o.actions()) {
+            if ("merit_buy".equals(a.type())) {
+                Optional<MeritShop.Offer> offer = MeritShop.offer(a.value().orElse(""));
+                if (offer.isPresent()) {
+                    return Component.translatable(o.text(), offer.get().price());
+                }
+            }
+        }
+        return Component.translatable(o.text());
     }
 
     public static void close(ServerPlayer player, SectDisciple npc) {
@@ -383,6 +397,10 @@ public final class DialogueService {
                 out[i] = io.github.verycooltimo.murim.sect.seal.PenanceRules.MEDITATION_QUOTA / 1200;
             } else if ("penance_cost".equals(a)) {
                 out[i] = io.github.verycooltimo.murim.sect.seal.PenanceRules.REFUSE_COST;
+            } else if ("merit".equals(a)) {
+                out[i] = player.getData(ModAttachments.SECT).merit();
+            } else if ("review_days".equals(a)) {
+                out[i] = SectReview.daysUntil(player.level().getDayTime());
             } else if ("rank".equals(a)) {
                 out[i] = player.getData(ModAttachments.PROFILE).rank();
             } else if (a.startsWith("layer:")) {
@@ -442,6 +460,8 @@ public final class DialogueService {
                 npc.holdPose(io.github.verycooltimo.murim.entity.SectPose.TREAT, 60);
             }
             case "record" -> SectAttendance.record(player, v);
+            case "merit_buy" -> MeritShop.buy(player, v);
+            case "review_enter" -> SectReview.signUp(player);
             case "penance_accept" -> {
                 close(player, npc);
                 io.github.verycooltimo.murim.sect.seal.PenanceService.accept(player);

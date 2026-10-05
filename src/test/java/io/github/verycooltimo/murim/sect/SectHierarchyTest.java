@@ -121,23 +121,19 @@ class SectHierarchyTest {
     @Test
     @DisplayName("Охрана и слуги: не в строю и не в парах, у каждого дело в каждую часть суток, в пределах площадок")
     void staffAndGuards() {
-        long guards = SectRoster.ALL.stream().filter(m -> m.role() == SectRole.GUARD).count();
-        assertTrue(guards >= 4, "охраны " + guards);
+        assertEquals(0, SectRoster.ALL.stream().filter(m -> m.role() == SectRole.GUARD).count(), "отдельной стражи нет (05.10)");
         assertTrue(SectRoster.ALL.stream().anyMatch(m -> m.role() == SectRole.STEWARD));
         for (SectRole r : List.of(SectRole.COOK, SectRole.PORTER, SectRole.GARDENER, SectRole.SWEEPER, SectRole.WATER_CARRIER)) {
             assertTrue(SectRoster.ALL.stream().anyMatch(m -> m.role() == r), "нет " + r);
         }
         for (SectRoster m : SectRoster.ALL) {
-            if (m.role() != SectRole.GUARD && !m.lay()) {
+            if (!m.lay()) {
                 continue;
             }
             assertFalse(SectRoster.generation(m.generation()).contains(m), m.key() + " в списке поколения");
             for (Period p : Period.values()) {
                 Task t = SectSchedule.task(m, p, 2);
                 assertNotNull(zone(t.zone()), m.key() + " " + p + " → " + t.zone());
-                if (m.role() == SectRole.GUARD && SectSchedule.onShift(m, p)) {
-                    assertEquals(Kind.GUARD, t.kind(), m.key() + " ушёл с поста в " + p);
-                }
                 if (t.kind() == Kind.CARRY) {
                     assertTrue(t.route(), m.key() + ": ношение без второго конца");
                     assertNotNull(zone(t.toZone()), t.toZone());

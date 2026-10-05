@@ -20,14 +20,16 @@ import java.util.Set;
  * @param flags      флаги разговоров и уроков
  * @param contribution заслуги перед сектой за всё время (уроки, утренняя тренировка, пожертвования, защита горы);
  *                     растят положение ({@link SectStanding}). Версия 2: старые сохранения читаются с нулём
+ * @param spent        сколько заслуг потрачено в обмене ({@link MeritShop}, план §6.2: «тратить можно — положение не
+ *                     падает»): остаток — {@link #merit()}. Версия 3: старые сохранения читаются с нулём
  */
-public record SectState(int version, boolean member, int generation, Set<String> flags, int contribution) {
+public record SectState(int version, boolean member, int generation, Set<String> flags, int contribution, int spent) {
 
-    public static final int VERSION = 2;
+    public static final int VERSION = 3;
     /** Поколение Чхон (청) — третье, как у игрока в каноне. */
     public static final int CHEON = 3;
 
-    public static final SectState NONE = new SectState(VERSION, false, 0, Set.of(), 0);
+    public static final SectState NONE = new SectState(VERSION, false, 0, Set.of(), 0, 0);
 
     public static final Codec<SectState> CODEC = RecordCodecBuilder.<SectState>create(i -> i.group(
             Codec.INT.optionalFieldOf("version", 0).forGetter(SectState::version),
@@ -35,7 +37,8 @@ public record SectState(int version, boolean member, int generation, Set<String>
             Codec.INT.optionalFieldOf("generation", 0).forGetter(SectState::generation),
             Codec.STRING.listOf().xmap(l -> (Set<String>) new HashSet<>(l), s -> s.stream().sorted().toList())
                     .optionalFieldOf("flags", Set.of()).forGetter(SectState::flags),
-            Codec.INT.optionalFieldOf("contribution", 0).forGetter(SectState::contribution)
+            Codec.INT.optionalFieldOf("contribution", 0).forGetter(SectState::contribution),
+            Codec.INT.optionalFieldOf("spent", 0).forGetter(SectState::spent)
     ).apply(i, SectState::new)).xmap(SectState::migrate, s -> s);
 
     public SectState {
@@ -45,7 +48,8 @@ public record SectState(int version, boolean member, int generation, Set<String>
     /** Подъём старого формата до {@link #VERSION}. */
     public SectState migrate() {
         // Версия 2 добавила заслуги: поле необязательное, старое сохранение читается с нулём.
-        return version >= VERSION ? this : new SectState(VERSION, member, member && generation == 0 ? CHEON : generation, flags, contribution);
+        // Версия 3 добавила потраченные заслуги: старое сохранение — ничего не потрачено.
+        return version >= VERSION ? this : new SectState(VERSION, member, member && generation == 0 ? CHEON : generation, flags, contribution, spent);
     }
 
     public boolean has(String flag) {
@@ -58,7 +62,7 @@ public record SectState(int version, boolean member, int generation, Set<String>
         }
         Set<String> next = new HashSet<>(flags);
         next.add(flag);
-        return new SectState(version, member, generation, next, contribution);
+        return new SectState(version, member, generation, next, contribution, spent);
     }
 
     public SectState without(String flag) {
@@ -67,15 +71,25 @@ public record SectState(int version, boolean member, int generation, Set<String>
         }
         Set<String> next = new HashSet<>(flags);
         next.remove(flag);
-        return new SectState(version, member, generation, next, contribution);
+        return new SectState(version, member, generation, next, contribution, spent);
     }
 
     public SectState joined() {
-        return new SectState(version, true, CHEON, flags, contribution);
+        return new SectState(version, true, CHEON, flags, contribution, spent);
     }
 
     /** Заслуги ± {@code delta}; ниже нуля не падают. */
     public SectState contribute(int delta) {
-        return new SectState(version, member, generation, flags, Math.max(0, contribution + delta));
+        return new SectState(version, member, generation, flags, Math.max(0, contribution + delta), spent);
+    }
+
+    /** Заслуги, которые можно потратить: за всё время минус потраченные (не ниже нуля — штрафы могли съесть остаток). */
+    public int merit() {
+        return Math.max(0, contribution - spent);
+    }
+
+    /** Потратить {@code cost} заслуг: сумма за всё время (и положение) не меняется. */
+    public SectState spend(int cost) {
+        return new SectState(version, member, generation, flags, contribution, spent + Math.max(0, cost));
     }
 }

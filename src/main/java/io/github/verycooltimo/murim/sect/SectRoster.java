@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Люди секты Хуашань на горе (docs/design/23-mount-hua-sect.md §1.1, §4.1; автор 04.10: «20–25 учеников»).
+ * Люди секты Хуашань на горе (docs/design/23-mount-hua-sect.md §1.1, §4.1, «Состав секты — принято автором 05.10»).
  * Глава, старейшины, первое поколение и наставник — каноничные имена из «Возрождения Хуашань»; ученики
  * второго (Пэк) и третьего (Чхон) поколения — канон, где он есть (Пэк Чхон, Ю Исоль, Пэк Сан, Юн Чжон,
  * Чо Голь), остальные — сгенерированные имена на слог поколения (план §4.1 п. «Имена»).
@@ -26,20 +26,27 @@ public record SectRoster(String key, SectRole role, int generation, String home,
     public static final int LAY = -1;
 
     public static final List<SectRoster> ALL = List.of(
-            // Глава и старейшины (Хён), первое поколение (Ун).
+            // Состав секты — принято автором 05.10 (docs/design/23-mount-hua-sect.md «Состав секты»): около 40 человек.
+            // Глава и три старейшины (Хён): казна, дисциплина и Зал писаний, третий — для совета (имя сгенерировано).
             new SectRoster("hyun_jong", SectRole.LEADER, 0, "main_hall", "leader", 0),
             new SectRoster("hyun_young", SectRole.ELDER, 0, "treasury", "elder_young", 0),
             new SectRoster("hyun_sang", SectRole.ELDER, 0, "scriptures", "elder_sang", 1),
+            new SectRoster("hyun_seong", SectRole.ELDER, 0, "elders", "elder_seong", 0),
+            // Первое поколение (Ун): лекарь, правая рука главы у ворот, наставник.
             new SectRoster("un_gak", SectRole.ELDER, 1, "alchemy", "elder_gak", 2),
             new SectRoster("un_am", SectRole.ELDER, 1, "sect_gate", "first_am", 0),
             new SectRoster("un_geom", SectRole.MENTOR, 1, "mentor", "mentor", 1),
-            // Второе поколение (Пэк): старший — партнёр урока «три чистых удара».
-            new SectRoster("senior", SectRole.SENIOR, 2, "sparring", "second_0", 1),
-            new SectRoster("baek_cheon", SectRole.SECOND, 2, "sparring", "second_1", 1),
+            // Второе поколение (Пэк), 8 человек: старший Пэк Чхон — партнёр урока «три чистых удара»; остальные семеро
+            // по очереди дежурят на постах (SectRota: 2 днём, 2 ночью). Пэк Му, Рён, Ги, Чжин — бывшая стража первой версии.
+            new SectRoster("baek_cheon", SectRole.SENIOR, 2, "sparring", "second_0", 1),
             new SectRoster("yu_iseol", SectRole.SECOND, 2, "sparring", "second_2", 2),
             new SectRoster("baek_sang", SectRole.SECOND, 2, "sparring", "second_3", 0),
             new SectRoster("baek_ho", SectRole.SECOND, 2, "sparring", "second_4", 0),
-            // Третье поколение (Чхон).
+            new SectRoster("baek_mu", SectRole.SECOND, 2, "sparring", "guard_0", 1),
+            new SectRoster("baek_ryeong", SectRole.SECOND, 2, "sparring", "guard_1", 0),
+            new SectRoster("baek_gi", SectRole.SECOND, 2, "sparring", "guard_2", 2),
+            new SectRoster("baek_jin", SectRole.SECOND, 2, "sparring", "guard_3", 1),
+            // Третье поколение (Чхон), 17 человек. Чхон Мён в секте нет — его место занимает игрок.
             new SectRoster("yoon_jong", SectRole.DISCIPLE, 3, "camp", "third_0", 0),
             new SectRoster("jo_gol", SectRole.DISCIPLE, 3, "camp", "third_1", 1),
             new SectRoster("disciple_a", SectRole.DISCIPLE, 3, "camp", "third_2", 2),
@@ -55,23 +62,10 @@ public record SectRoster(String key, SectRole role, int generation, String home,
             new SectRoster("cheong_rim", SectRole.DISCIPLE, 3, "camp", "third_6", 2),
             new SectRoster("cheong_su", SectRole.DISCIPLE, 3, "camp", "third_8", 0),
             new SectRoster("cheong_bin", SectRole.DISCIPLE, 3, "camp", "third_5", 1),
-            // Привратник у подножия тропы — живёт там всегда.
+            new SectRoster("cheong_gyeong", SectRole.DISCIPLE, 3, "camp", "third_1", 2),
+            new SectRoster("cheong_ak", SectRole.DISCIPLE, 3, "camp", "third_4", 1),
+            // Привратник у подножия тропы Чхон Ын — живёт там всегда.
             new SectRoster("gatekeeper", SectRole.GATEKEEPER, 3, "gate", "third_7", 0),
-            // Охрана (С3, часть 2): второе поколение на постах у ворот и закрытых залов; в строй и пары не встаёт.
-            new SectRoster("baek_mu", SectRole.GUARD, 2, "sect_gate", "guard_0", 1),
-            new SectRoster("baek_ryeong", SectRole.GUARD, 2, "main_hall", "guard_1", 0),
-            new SectRoster("baek_gi", SectRole.GUARD, 2, "main_hall", "guard_2", 2),
-            new SectRoster("baek_jin", SectRole.GUARD, 2, "ancestors", "guard_3", 1),
-            new SectRoster("baek_won", SectRole.GUARD, 2, "treasury", "guard_4", 0),
-            new SectRoster("baek_seo", SectRole.GUARD, 2, "elders", "guard_0", 2),
-            // Ночная смена (автор 05.10: «охрана меняется»): те же шесть постов, по одному сменщику на каждый, в том же
-            // порядке. Днём спят в общежитии второго поколения, после полудня — отдыхают в лагере. Имена сгенерированы.
-            new SectRoster("baek_un", SectRole.GUARD, 2, "sect_gate", "guard_2", 0),
-            new SectRoster("baek_ik", SectRole.GUARD, 2, "main_hall", "guard_3", 1),
-            new SectRoster("baek_ryu", SectRole.GUARD, 2, "main_hall", "guard_4", 0),
-            new SectRoster("baek_gang", SectRole.GUARD, 2, "ancestors", "guard_0", 2),
-            new SectRoster("baek_gyu", SectRole.GUARD, 2, "treasury", "guard_1", 1),
-            new SectRoster("baek_seung", SectRole.GUARD, 2, "elders", "guard_2", 0),
             // Миряне при секте (поколение −1): управляющий хозяйством и слуги. Имена — простые мирские, не каноничные.
             new SectRoster("steward_mun", SectRole.STEWARD, LAY, "treasury", "lay_steward", 0),
             new SectRoster("cook_kim", SectRole.COOK, LAY, "dining", "lay_cook", 0),
@@ -81,6 +75,14 @@ public record SectRoster(String key, SectRole role, int generation, String home,
             new SectRoster("herbalist_han", SectRole.GARDENER, LAY, "alchemy", "lay_herbalist", 0),
             new SectRoster("sweeper_ma", SectRole.SWEEPER, LAY, "training", "lay_sweeper", 0));
 
+    /**
+     * Ключи людей прежних составов, которых больше нет (миграция сохранений): старший Пэк Хван первой версии (теперь
+     * старший — Пэк Чхон) и восемь стражников С3, часть 2 (стражу заменило дежурство второго поколения). Такой NPC
+     * при первом тике уходит с горы — без дублей и без «статистов» в форме охраны.
+     */
+    public static final java.util.Set<String> RETIRED = java.util.Set.of("senior", "baek_won", "baek_seo", "baek_un", "baek_ik",
+            "baek_ryu", "baek_gang", "baek_gyu", "baek_seung");
+
     /** Человек по ключу. */
     public static Optional<SectRoster> of(String key) {
         for (SectRoster m : ALL) {
@@ -89,30 +91,6 @@ public record SectRoster(String key, SectRole role, int generation, String home,
             }
         }
         return Optional.empty();
-    }
-
-    /** Ключи дневной смены охраны по постам; ночная смена — {@link #NIGHT_WATCH} в том же порядке. */
-    public static final List<String> DAY_WATCH = List.of("baek_mu", "baek_ryeong", "baek_gi", "baek_jin", "baek_won", "baek_seo");
-    public static final List<String> NIGHT_WATCH = List.of("baek_un", "baek_ik", "baek_ryu", "baek_gang", "baek_gyu", "baek_seung");
-
-    /** Номер поста охранника (0…5) или −1 — не охрана. */
-    public int post() {
-        int i = DAY_WATCH.indexOf(key);
-        return i >= 0 ? i : NIGHT_WATCH.indexOf(key);
-    }
-
-    /** Охранник ночной смены. */
-    public boolean nightWatch() {
-        return NIGHT_WATCH.contains(key);
-    }
-
-    /** Сменщик на том же посту (другая смена) или пусто. */
-    public Optional<SectRoster> relief() {
-        int i = post();
-        if (i < 0) {
-            return Optional.empty();
-        }
-        return of(nightWatch() ? DAY_WATCH.get(i) : NIGHT_WATCH.get(i));
     }
 
     /** Номер в списке (−1 — нет такого). */
@@ -128,7 +106,7 @@ public record SectRoster(String key, SectRole role, int generation, String home,
         return switch (role) {
             case LEADER -> of("hyun_jong");
             case MENTOR -> of("un_geom");
-            case SENIOR -> of("senior");
+            case SENIOR -> of("baek_cheon");
             case GATEKEEPER -> of("gatekeeper");
             case DISCIPLE_A -> of("disciple_a");
             case DISCIPLE_B -> of("disciple_b");
@@ -136,20 +114,20 @@ public record SectRoster(String key, SectRole role, int generation, String home,
         };
     }
 
-    /** Члены одного поколения в порядке списка (без привратника и охраны на постах: они не в строю и не в парах). */
+    /** Члены одного поколения в порядке списка (без привратника: он не в строю и не в парах). */
     public static List<SectRoster> generation(int generation) {
         List<SectRoster> out = new ArrayList<>();
         for (SectRoster m : ALL) {
-            if (m.generation == generation && m.role != SectRole.GATEKEEPER && m.role != SectRole.GUARD && !m.role.lay()) {
+            if (m.generation == generation && m.role != SectRole.GATEKEEPER && !m.role.lay()) {
                 out.add(m);
             }
         }
         return out;
     }
 
-    /** Ученик (второе или третье поколение, без привратника и охраны на постах). */
+    /** Ученик (второе или третье поколение, без привратника). */
     public boolean disciple() {
-        return (generation == 2 || generation == 3) && role != SectRole.GATEKEEPER && role != SectRole.GUARD;
+        return (generation == 2 || generation == 3) && role != SectRole.GATEKEEPER;
     }
 
     /** Мирянин при секте: слуга или управляющий. */

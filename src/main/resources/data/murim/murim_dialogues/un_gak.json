@@ -34,6 +34,15 @@
           "next": "heal"
         },
         {
+          "text": "dialogue.murim.un_gak.opt.pills",
+          "when": [
+            {
+              "member": true
+            }
+          ],
+          "next": "pills"
+        },
+        {
           "text": "dialogue.murim.un_gak.opt.ask",
           "next": "answer"
         },
@@ -73,6 +82,15 @@
           "next": "heal"
         },
         {
+          "text": "dialogue.murim.un_gak.opt.pills",
+          "when": [
+            {
+              "member": true
+            }
+          ],
+          "next": "pills"
+        },
+        {
           "text": "dialogue.murim.un_gak.opt.ask",
           "next": "answer"
         },
@@ -102,6 +120,43 @@
         {
           "text": "dialogue.murim.un_gak.opt.ask",
           "next": "answer"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "pills": {
+      "line": "dialogue.murim.un_gak.pills",
+      "args": [
+        "merit"
+      ],
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.merit.snow_plum",
+          "actions": [
+            {
+              "type": "merit_buy",
+              "value": "snow_plum"
+            }
+          ],
+          "next": "pills"
+        },
+        {
+          "text": "dialogue.murim.merit.origin_energy",
+          "when": [
+            {
+              "min_standing": "graduate"
+            }
+          ],
+          "actions": [
+            {
+              "type": "merit_buy",
+              "value": "origin_energy"
+            }
+          ],
+          "next": "pills"
         },
         {
           "text": "dialogue.murim.opt.leave"

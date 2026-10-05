@@ -233,7 +233,7 @@ public final class SectService {
         }
         player.setData(ModAttachments.SECT, s);
         // Поединок с учеником днём — занятие в журнале секты (вызов охраны за силовой вход — не занятие).
-        if (senior.role() != SectRole.GUARD && SectSchedule.at(player.level().getDayTime()) != SectSchedule.Period.NIGHT) {
+        if (!SectLife.onWatch(senior) && SectSchedule.at(player.level().getDayTime()) != SectSchedule.Period.NIGHT) {
             SectAttendance.record(player, SectAttendance.Activity.LESSON);
         }
     }

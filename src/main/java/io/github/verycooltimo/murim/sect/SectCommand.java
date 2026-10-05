@@ -36,7 +36,7 @@ public final class SectCommand {
                             ServerPlayer p = c.getSource().getPlayerOrException();
                             SectState s = p.getData(ModAttachments.SECT);
                             c.getSource().sendSuccess(() -> Component.literal("member=" + s.member() + " generation=" + s.generation()
-                                    + " standing=" + SectService.standing(p).id() + " contribution=" + s.contribution()
+                                    + " standing=" + SectService.standing(p).id() + " contribution=" + s.contribution() + " merit=" + s.merit()
                                     + " flags=" + s.flags().stream().sorted().toList()), false);
                             return 1;
                         }))
@@ -98,6 +98,27 @@ public final class SectCommand {
                                             + " contribution=" + p.getData(ModAttachments.SECT).contribution()), false);
                                     return 1;
                                 })))
+                        .then(Commands.literal("review").executes(c -> {
+                            // Смотр учеников (SectReview): перемотка к началу ближайшего смотра; начнётся сам, если рядом игрок.
+                            var level = c.getSource().getServer().overworld();
+                            long day = SectSchedule.day(level.getDayTime()) + SectReview.daysUntil(level.getDayTime());
+                            if (SectReview.state(level) != null) {
+                                c.getSource().sendSuccess(() -> Component.literal("review running: " + SectReview.state(level).bouts().size() + " bouts"), false);
+                                return 1;
+                            }
+                            for (var l : c.getSource().getServer().getAllLevels()) {
+                                l.setDayTime(day * 24000L + SectReview.FROM + 5);
+                            }
+                            c.getSource().sendSuccess(() -> Component.literal("sect review day " + day), false);
+                            return 1;
+                        }))
+                        .then(Commands.literal("buy").then(Commands.argument("offer", StringArgumentType.word()).executes(c -> {
+                            // Обмен заслуг без разговора (проверка цен).
+                            ServerPlayer p = c.getSource().getPlayerOrException();
+                            var r = MeritShop.buy(p, StringArgumentType.getString(c, "offer"));
+                            c.getSource().sendSuccess(() -> Component.literal("merit buy: " + r), false);
+                            return 1;
+                        })))
                         .then(Commands.literal("flag").then(Commands.argument("flag", StringArgumentType.string()).executes(c -> {
                             ServerPlayer p = c.getSource().getPlayerOrException();
                             String f = StringArgumentType.getString(c, "flag");

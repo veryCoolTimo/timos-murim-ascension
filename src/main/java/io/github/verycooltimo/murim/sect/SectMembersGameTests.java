@@ -94,12 +94,14 @@ public final class SectMembersGameTests {
     public static void guardShiftChange(GameTestHelper helper) {
         setTime(helper, SectSchedule.Period.NIGHT.start() + 20);
         SectGameTests.Yard yard = yard(helper, 0.5D);
-        SectRoster dayGuard = SectRoster.of("baek_mu").orElseThrow();
-        SectSchedule.Task post = SectSchedule.post(dayGuard);
+        // Дежурство второго поколения (SectRota): дневной дежурный поста 0 ждёт ночного того же дня.
+        long day = SectSchedule.day(helper.getLevel().getDayTime());
+        SectRoster dayGuard = SectRota.dayWatch(day, 0);
+        SectSchedule.Task post = SectSchedule.post(new SectRota.Duty(0, false));
         Vec3 at = yard.at(post.zone(), post.du(), post.dv());
         Vec3 rel = at.subtract(helper.absoluteVec(Vec3.ZERO));
-        SectDisciple out = npc(helper, yard, "baek_mu", rel.x - 0.5D, rel.z - 0.5D);
-        SectDisciple in = npc(helper, yard, "baek_un", 20, 20);
+        SectDisciple out = npc(helper, yard, dayGuard.key(), rel.x - 0.5D, rel.z - 0.5D);
+        SectDisciple in = npc(helper, yard, SectRota.nightWatch(day, 0).key(), 20, 20);
         helper.assertTrue(SectLife.onWatch(out), "сменяемый ушёл с поста до прихода сменщика");
         boolean[] bowed = new boolean[1];
         helper.onEachTick(() -> bowed[0] |= in.pose() == SectPose.BOW && out.pose() == SectPose.BOW);

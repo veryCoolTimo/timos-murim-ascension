@@ -106,8 +106,13 @@ public final class SectLife {
         if (m.get().role() == SectRole.LEADER && npc.level() instanceof ServerLevel server && data(server).outsiderAtGate) {
             t = new SectSchedule.Task(SectSchedule.Kind.GREET, "sect_gate", 2.0D, 1.0D, 0.0D, -1.0D);
         }
+        // Смотр учеников: боец сетки идёт на своё место в ринге (SectReview).
+        SectSchedule.Task fight = SectReview.fighterTask(npc);
+        if (fight != null) {
+            t = fight;
+        }
         // Раненый после поединка сидит, где упал, и ждёт лекаря.
-        if (npc.wounded()) {
+        if (fight == null && npc.wounded()) {
             Vec3 at = npc.woundSpot();
             return new Resolved(new SectSchedule.Task(SectSchedule.Kind.WAIT_TREAT, t.zone(), 0.0D, 0.0D, 0.0D, 0.0D), at, npc.getYRot());
         }
@@ -126,8 +131,9 @@ public final class SectLife {
             }
         }
         // Смена поста: сменяемый ждёт сменщика на посту, пока они не поклонятся друг другу (или окно не выйдет).
-        if (m.get().role() == SectRole.GUARD && handoverPending(npc, m.get())) {
-            t = SectSchedule.post(m.get());
+        Optional<SectRota.Duty> ending = SectRota.ending(m.get(), time);
+        if (ending.isPresent() && handoverPending(npc, m.get())) {
+            t = SectSchedule.post(ending.get());
         }
         Vec3 guess = layout.at(t.zone(), t.du(), t.dv());
         if (guess == null) {
@@ -164,24 +170,23 @@ public final class SectLife {
     public static boolean handoverPending(SectDisciple npc, SectRoster m) {
         long time = npc.level().getDayTime();
         SectSchedule.Period p = SectSchedule.at(time);
-        if (SectSchedule.onShift(m, p)) {
-            return false;
-        }
-        boolean justEnded = m.nightWatch() ? p == SectSchedule.Period.FORMATION : p == SectSchedule.Period.NIGHT;
         int since = SectSchedule.sincePeriodStart(time);
-        if (!justEnded || since >= SectSchedule.HANDOVER) {
+        if (SectRota.ending(m, time).isEmpty() || since >= SectSchedule.HANDOVER) {
             return false;
         }
         return npc.relievedKey() != SectSchedule.day(time) * 8L + p.ordinal();
     }
 
-    /** Охранник сейчас на страже: его смена или ждёт сменщика (не на смене — спит, ест, отдыхает и не смотрит). */
+    /**
+     * Ученик второго поколения сейчас на страже (SectRota): его смена или ждёт сменщика. Не на смене — занимается,
+     * спит, ест и не смотрит за закрытыми местами.
+     */
     public static boolean onWatch(SectDisciple d) {
         Optional<SectRoster> m = d.member();
-        if (m.isEmpty() || m.get().role() != SectRole.GUARD) {
-            return true;
+        if (m.isEmpty()) {
+            return false;
         }
-        return SectSchedule.onShift(m.get(), SectSchedule.at(d.level().getDayTime())) || handoverPending(d, m.get());
+        return SectRota.onDuty(m.get(), d.level().getDayTime()) || handoverPending(d, m.get());
     }
 
     /**
@@ -219,6 +224,12 @@ public final class SectLife {
             return;
         }
         if (npc.member().isEmpty()) {
+            // Человек прежнего состава (стража, старший первой версии): уходит с горы — дублей и «статистов» нет.
+            if (SectRoster.RETIRED.contains(npc.memberKey()) || npc.role() == SectRole.GUARD) {
+                MurimMod.LOGGER.info("Секта: {} ({}) больше не в составе — убран", npc.memberKey(), npc.role().id());
+                npc.discard();
+                return;
+            }
             adoptLegacy(npc, level);
             return;
         }

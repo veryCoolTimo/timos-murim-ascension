@@ -80,6 +80,22 @@
           "next": "accept_lesson"
         },
         {
+          "text": "dialogue.murim.senior.opt.review",
+          "when": [
+            {
+              "member": true,
+              "min_standing": "disciple",
+              "not_flag": "review.signed"
+            }
+          ],
+          "actions": [
+            {
+              "type": "review_enter"
+            }
+          ],
+          "next": "review"
+        },
+        {
           "text": "dialogue.murim.senior.opt.refuse",
           "next": "refused"
         }
@@ -210,6 +226,14 @@
     "joined": {
       "line": "dialogue.murim.disciple.joined",
       "gesture": "point",
+      "options": []
+    },
+    "review": {
+      "line": "dialogue.murim.senior.review",
+      "args": [
+        "review_days"
+      ],
+      "gesture": "nod",
       "options": []
     }
   }

@@ -65,6 +65,15 @@
           "next": "answer"
         },
         {
+          "text": "dialogue.murim.hyun_young.opt.exchange",
+          "when": [
+            {
+              "member": true
+            }
+          ],
+          "next": "exchange"
+        },
+        {
           "text": "dialogue.murim.opt.leave"
         }
       ]
@@ -82,6 +91,80 @@
       "line": "dialogue.murim.hyun_young.busy",
       "gesture": "shake",
       "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "exchange": {
+      "line": "dialogue.murim.hyun_young.exchange",
+      "args": [
+        "merit"
+      ],
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.merit.sword",
+          "actions": [
+            {
+              "type": "merit_buy",
+              "value": "sword"
+            }
+          ],
+          "next": "exchange"
+        },
+        {
+          "text": "dialogue.murim.merit.page",
+          "actions": [
+            {
+              "type": "merit_buy",
+              "value": "page"
+            }
+          ],
+          "next": "exchange"
+        },
+        {
+          "text": "dialogue.murim.merit.scriptures",
+          "when": [
+            {
+              "not_flag": "pass.scriptures"
+            }
+          ],
+          "actions": [
+            {
+              "type": "merit_buy",
+              "value": "scriptures"
+            }
+          ],
+          "next": "exchange"
+        },
+        {
+          "text": "dialogue.murim.hyun_young.opt.more",
+          "next": "exchange_more"
+        }
+      ]
+    },
+    "exchange_more": {
+      "line": "dialogue.murim.hyun_young.exchange_more",
+      "args": [
+        "merit"
+      ],
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.merit.silver",
+          "actions": [
+            {
+              "type": "merit_buy",
+              "value": "silver"
+            }
+          ],
+          "next": "exchange_more"
+        },
+        {
+          "text": "dialogue.murim.hyun_young.opt.back",
+          "next": "exchange"
+        },
         {
           "text": "dialogue.murim.opt.leave"
         }

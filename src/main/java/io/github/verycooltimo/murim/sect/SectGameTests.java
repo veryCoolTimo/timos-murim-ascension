@@ -107,7 +107,9 @@ public final class SectGameTests {
     public static void formationInStep(GameTestHelper helper) {
         setPeriod(helper, SectSchedule.Period.FORMATION);
         Yard yard = yard(helper, 0.8D);
-        List<SectDisciple> row = List.of(npc(helper, yard, "baek_sang", 3, 3), npc(helper, yard, "cheong_jin", 20, 4),
+        // Второе поколение в строю — не дежурный (SectRota): первый по списку после старшего.
+        long day = SectSchedule.day(helper.getLevel().getDayTime());
+        List<SectDisciple> row = List.of(npc(helper, yard, SectRota.training(day).get(1).key(), 3, 3), npc(helper, yard, "cheong_jin", 20, 4),
                 npc(helper, yard, "cheong_seok", 4, 20));
         Set<String> drilled = new HashSet<>();
         Set<String> together = new HashSet<>();
@@ -128,7 +130,7 @@ public final class SectGameTests {
         });
         helper.succeedWhen(() -> {
             for (SectDisciple d : row) {
-                double[] slot = SectSchedule.formationSlot(d.member().orElseThrow());
+                double[] slot = SectSchedule.formationSlot(d.member().orElseThrow(), day);
                 Vec3 want = yard.at("training", slot[0], slot[1]);
                 double dx = d.getX() - want.x;
                 double dz = d.getZ() - want.z;
