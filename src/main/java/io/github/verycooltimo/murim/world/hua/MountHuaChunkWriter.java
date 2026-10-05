@@ -400,14 +400,45 @@ final class MountHuaChunkWriter {
                     }
                     break;
                 }
+                MountHuaPlan.Ledge ledge = shape.climbLedgeAt(u, v);
+                boolean ledgeTop = ledge != null && t == ledgeY(ledge);
+                // Couloirs between the rock masses are dark green (ref: the recesses between the
+                // pale lobes are filled with foliage): curtains up every tall wall (7+, never a
+                // route riser) from 3 blocks above the column, and bushes or a pine on the floor
+                // where it is off the route.
+                if (shape.climbGap(u, v) > 0.35) {
+                    for (int k = 0; k < 4; k++) {
+                        int tn = topAt(lx + dirs[k][0], lz + dirs[k][1]);
+                        if (tn - t < 7) {
+                            continue;
+                        }
+                        for (int y = t + 3; y < tn; y++) {
+                            double patch = noise.noise(wx / 5.0, y / 4.0, wz / 5.0 + 300.0);
+                            if (patch > -0.25) {
+                                placeLeaf(wx, y, wz, (patch > 0.45 ? Blocks.AZALEA_LEAVES : Blocks.SPRUCE_LEAVES)
+                                        .defaultBlockState().setValue(LeavesBlock.PERSISTENT, true), pos);
+                            }
+                        }
+                    }
+                }
+                if (shape.climbCouloir(u, v) > 0.35 && !ledgeTop) {
+                    if (level.getBlockState(pos.set(wx, t + 1, wz)).isAir()) {
+                        int rr = (int) Math.floorMod(h >>> 8, 100L);
+                        if (rr < 7) {
+                            smallPine(wx, t + 1, wz, h, pos);
+                        } else if (rr < 85) {
+                            climbBush(wx, t + 1, wz, h, pos);
+                        }
+                    }
+                    continue;
+                }
                 if (!level.getBlockState(pos.set(wx, t + 1, wz)).isAir()) {
                     continue;
                 }
-                MountHuaPlan.Ledge ledge = shape.climbLedgeAt(u, v);
                 int r = (int) Math.floorMod(h >>> 8, 100L);
                 BlockState ground = level.getBlockState(pos.set(wx, t, wz));
                 boolean soil = ground.is(Blocks.GRASS_BLOCK) || ground.is(Blocks.MOSS_BLOCK) || ground.is(Blocks.PODZOL);
-                if (ledge != null && t == ledgeY(ledge)) {
+                if (ledgeTop) {
                     if (maxFall >= 6 && r < (ledge.kind() == MountHuaPlan.Kind.TRAINING ? 30 : 55)) {
                         climbBush(wx, t + 1, wz, h, pos);
                         // The cushion spills over the lip (ref: green rolls along every lobe edge).
@@ -625,12 +656,13 @@ final class MountHuaChunkWriter {
         int from = Math.min(o - 2, t - 4);
         // The training climb is natural rock, not a terrace buttress.
         boolean climbFace = shape.climbChanged(site.localU(wx + 0.5, wz + 0.5), site.localV(wx + 0.5, wz + 0.5));
+        double gap = climbFace ? shape.climbGap(site.localU(wx + 0.5, wz + 0.5), site.localV(wx + 0.5, wz + 0.5)) : 0;
         boolean masonry = (retainingWall(wx, wz, t) || stairSupport(wx, wz, t)) && !climbFace;
         for (int y = from; y <= t; y++) {
             pos.set(wx, y, wz);
             boolean exposed = y > lowest - 2 || t - y < 4;
             chunk.setBlockState(pos, !exposed ? STONE : masonry ? masonry(wx, y, wz)
-                    : climbFace ? climbRock(wx, y, wz, t) : granite(lx, lz, wx, y, wz, t, drop), false);
+                    : climbFace ? climbRock(wx, y, wz, t, gap) : granite(lx, lz, wx, y, wz, t, drop), false);
         }
         skin(lx, lz, t, drop, w, pos);
     }
@@ -669,8 +701,14 @@ final class MountHuaChunkWriter {
      * the dark cleft rock the narrow cuts between them would otherwise get: pale with grey
      * patches, moss creeping down from each top, a cracked rim.
      */
-    private BlockState climbRock(int x, int y, int z, int t) {
+    private BlockState climbRock(int x, int y, int z, int t, double gap) {
         double n = noise.noise(x / 6.0, y / 5.0, z / 6.0);
+        if (gap > 0.35) {
+            // Couloir between two masses: shaded, damp rock (ref: dark recesses between the lobes).
+            return n > 0.3 ? ModBlocks.HUA_GRANITE_MOSSY.get().defaultBlockState()
+                    : n < -0.4 ? ModBlocks.HUA_GRANITE_STAINED.get().defaultBlockState()
+                    : ModBlocks.HUA_GRANITE_DARK.get().defaultBlockState();
+        }
         if (t - y <= 1 && n > -0.2) {
             return ModBlocks.HUA_GRANITE_MOSSY.get().defaultBlockState();
         }

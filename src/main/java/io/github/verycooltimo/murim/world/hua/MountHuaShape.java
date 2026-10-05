@@ -125,6 +125,7 @@ public final class MountHuaShape {
             return h;
         }
         boolean onLedge = false;
+        double nearest = Double.MAX_VALUE;
         for (MountHuaPlan.Ledge l : CLIMB_ORDER) {
             double ex = u - l.u();
             double ey = v - l.v();
@@ -135,9 +136,11 @@ public final class MountHuaShape {
             if (q <= 1) {
                 h = l.y();
                 onLedge = true;
+                nearest = 0;
                 continue;
             }
             double d = Math.hypot(ex, ey) * (1 - 1 / q);
+            nearest = Math.min(nearest, d);
             if (h < l.y()) {
                 // Over bare rock the lip rounds off; over a lower ledge the riser is sheer, so the
                 // ledge below keeps its depth.
@@ -148,7 +151,10 @@ public final class MountHuaShape {
                     // A cliff between rows: the rock above bulges out over the ledge below by
                     // 0-2.5 blocks (codex: lobes, not a flat wall with lines), so the lower
                     // ledge's depth varies along its length.
-                    double bulge = 2.5 * Math.max(0, relief.noise(u / 5.0, v / 5.0, 117.0 + l.y()));
+                    // Strongest in the middle of each rock mass, none at the couloirs: every
+                    // row's cliff is convex in plan, so the masses read as bulging bodies.
+                    double bulge = 2.8 * (0.65 * massCentre(u, v)
+                            + 0.35 * Math.max(0, relief.noise(u / 5.0, v / 5.0, 117.0 + l.y())));
                     // ...and in places a half-height shoulder steps out below the bulge: the
                     // cliff breaks into stacked lobes with a bush on each (ref), not one wall.
                     double shoulder = 2.0 * Math.max(0, relief.noise(u / 6.0, v / 6.0, 119.0 + l.y()));
@@ -166,7 +172,66 @@ public final class MountHuaShape {
                 h = cut + (h - cut) * smooth(4, 7, d);
             }
         }
+        if (!onLedge) {
+            // Couloirs between the rock masses: the cliffs there are cut back 3-4 blocks, the
+            // summit rim is notched deeper, so the face reads as separate bulging masses with
+            // recesses between them (ref), not one wall. Never next to a ledge (the route keeps
+            // every step and riser).
+            double gap = climbGap(u, v) * smooth(1.2, 2.5, nearest);
+            double main = Math.abs(u - MountHuaPlan.CLIMB_GAPS[0]) < 10 ? 1 : 0;
+            h -= gap * (3.5 + (4.0 + 5.0 * main) * smooth(220, 236, h));
+        }
         return h;
+    }
+
+    /** 0 on a couloir line, 1 from 9 blocks away: how central (u, v) is within its rock mass. */
+    private double massCentre(double u, double v) {
+        double best = Double.MAX_VALUE;
+        for (double g : MountHuaPlan.CLIMB_GAPS) {
+            best = Math.min(best, Math.abs(u - (g + 1.8 * relief.noise(v / 7.0, g * 0.1, 121.0))));
+        }
+        return smooth(1.5, 9, best);
+    }
+
+    /** {@link #climbGap} faded out within 2.5 blocks of any ledge: the part of a couloir off the route. */
+    public double climbCouloir(double u, double v) {
+        double gap = climbGap(u, v);
+        if (gap <= 0) {
+            return 0;
+        }
+        double nearest = Double.MAX_VALUE;
+        for (MountHuaPlan.Ledge l : CLIMB_ORDER) {
+            double ex = u - l.u();
+            double ey = v - l.v();
+            if (Math.abs(ex) > l.ru() + 8 || Math.abs(ey) > l.rv() + 8) {
+                continue;
+            }
+            double q = ledgeQ(l, u, v);
+            nearest = Math.min(nearest, q <= 1 ? 0 : Math.hypot(ex, ey) * (1 - 1 / q));
+        }
+        return gap * smooth(1.2, 2.5, nearest);
+    }
+
+    /**
+     * 0..1: how much (u, v) lies in a couloir between the climb's rock masses
+     * ({@link MountHuaPlan#CLIMB_GAPS}); the couloirs wander and widen towards the summit rim.
+     */
+    public double climbGap(double u, double v) {
+        if (!climb || !inClimbBox(u, v)) {
+            return 0;
+        }
+        double best = 0;
+        for (double g : MountHuaPlan.CLIMB_GAPS) {
+            double centre = g + 1.8 * relief.noise(v / 7.0, g * 0.1, 121.0);
+            double half = 2.0 + 0.22 * clamp(v - 100, 0, 18);
+            if (g == MountHuaPlan.CLIMB_GAPS[0]) {
+                // The main couloir opens into a broad hollow in the upper third (codex r3): it
+                // parts the west mass from the centre one right up to the skyline.
+                half += 4.5 * smooth(108, 117, v);
+            }
+            best = Math.max(best, smooth(half, half * 0.35, Math.abs(u - centre)));
+        }
+        return best;
     }
 
     /** The climb ledge whose flat top covers (u, v) (the highest if several), or null. */

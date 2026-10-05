@@ -254,7 +254,7 @@ public final class MountHuaPlan {
             new Ledge("climb_7", -16.5, 108.8, 198, 5.4, 2.1, Kind.STEP),
             new Ledge("climb_8", -6, 108.2, 202, 5.8, 2.2, Kind.STEP),
             new Ledge("climb_9", 4.2, 108.9, 205, 5, 2.1, Kind.STEP),
-            new Ledge("climb_10", 15, 108.3, 210, 5.6, 2.2, Kind.REST),
+            new Ledge("climb_10", 15.4, 108.1, 210, 6, 2.2, Kind.REST),
             // East turn.
             new Ledge("climb_11", 27.5, 107.5, 214, 6, 4.4, Kind.TRAINING),
             // Row 3, east -> west, under the summit rim.
@@ -269,6 +269,13 @@ public final class MountHuaPlan {
             new Ledge("side_e2", 41, 115, 224, 3.8, 2.4, Kind.SIDE),
             new Ledge("side_w1", -32, 100.8, 182, 3.4, 2.0, Kind.SIDE),
             new Ledge("side_w2", -31, 112.2, 226, 3.0, 2.0, Kind.SIDE));
+
+    /**
+     * Couloirs (local u) that part the climb face into rock masses — west (turn 6, rows' west
+     * ends, top ledge), centre and east (turn 11) — plus the two flanks beside the side lobes.
+     * The first is the main one: it opens into a broad hollow under the summit rim.
+     */
+    public static final double[] CLIMB_GAPS = {-13, 12, -37, 39};
 
     /** Plank road along the South Peak's eastern wall (Changkong Zhandao analogue), a side branch. */
     public static final List<TrailPoint> PLANK_ROAD = List.of(
