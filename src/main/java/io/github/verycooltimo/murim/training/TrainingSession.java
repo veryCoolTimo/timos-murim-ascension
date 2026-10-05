@@ -15,7 +15,11 @@ public final class TrainingSession {
     /** Carry: highest feet block reached with the stone since it was lifted; blocks gained. */
     boolean carrying;
     int carryTop;
+    /** Feet block where the stone was lifted. */
+    int carryFrom;
     int carried;
+    /** Game tick of the last meal that recovered fatigue. */
+    long lastMeal = Long.MIN_VALUE / 2;
     /** Previous tick position (movement check) and whether it is set. */
     double lastX;
     double lastY;

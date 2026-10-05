@@ -20,7 +20,7 @@ public enum Exercise {
     /** Push-ups with the weight slab strapped on the back. */
     PUSHUP_WEIGHTED(36, 2.2D, 0.013D, 0.11D),
     /** Horse stance: the bottom of a squat held; a unit is a second. */
-    HORSE_STANCE(20, 0.6D, 0.004D, 0.012D),
+    HORSE_STANCE(20, 0.35D, 0.004D, 0.012D),
     /** Carrying the training stone uphill; a unit is a block of new height. */
     CARRY_STONE(0, 1.5D, 0.01D, 0.0D),
     /** South Peak climb, climb_1 → climb_16, no qi; a unit is a finished run. */

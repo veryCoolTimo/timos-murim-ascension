@@ -71,7 +71,8 @@ public final class BodyRules {
     }
 
     public static double afterMeal(double fatigue, int nutrition, boolean atSect) {
-        double cut = nutrition * TrainingBalance.MEAL_PER_NUTRITION * (atSect ? TrainingBalance.SECT_MEAL : 1.0D);
+        double cut = Math.min(TrainingBalance.MEAL_CAP,
+                nutrition * TrainingBalance.MEAL_PER_NUTRITION * (atSect ? TrainingBalance.SECT_MEAL : 1.0D));
         return Math.max(0.0D, fatigue - cut);
     }
 

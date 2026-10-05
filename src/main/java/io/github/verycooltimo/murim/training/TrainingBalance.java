@@ -32,8 +32,8 @@ public final class TrainingBalance {
     public static final double QUALITY_FAIR = 0.7D;
     public static final double QUALITY_OFF = 0.35D;
     /** Beat window, ticks from the beat: good / fair. */
-    public static final int BEAT_GOOD = 3;
-    public static final int BEAT_FAIR = 6;
+    public static final int BEAT_GOOD = 4;
+    public static final int BEAT_FAIR = 7;
 
     // ------------------------------------------------------------------ fatigue (long, per day) and stamina (short, per set)
 
@@ -48,6 +48,10 @@ public final class TrainingBalance {
     /** A meal: fatigue − nutrition × this (a bread, 5 → 0.2); at the sect dining hall twice as much. */
     public static final double MEAL_PER_NUTRITION = 0.04D;
     public static final double SECT_MEAL = 2.0D;
+    /** One meal takes at most this much (codex 05.10: a steak at the sect would wipe two thirds of the bar). */
+    public static final double MEAL_CAP = 0.25D;
+    /** Meals closer than this (ticks) recover nothing more: eating a stack is not resting. */
+    public static final int MEAL_COOLDOWN = 1200;
     /** A night's sleep: at the sect fatigue goes to zero, elsewhere it is multiplied by this. */
     public static final double SLEEP_ELSEWHERE = 0.4D;
     /** Set stamina regen per tick between reps (a full bar in 12.5 s). */
@@ -75,6 +79,11 @@ public final class TrainingBalance {
     /** Carry stone: movement speed −{@code CARRY_SLOW}, minus {@link #CARRY_SLOW_PER_LEVEL} per body level. */
     public static final double CARRY_SLOW = 0.35D;
     public static final double CARRY_SLOW_PER_LEVEL = 0.025D;
+    /**
+     * Carry gains start once the stone is this many blocks above where it was lifted (then the first blocks count
+     * too): putting it down and lifting it again on one step is not a climb (codex 05.10).
+     */
+    public static final int CARRY_MIN_RISE = 3;
     /** Climb run: falling this far below the last ledge sends you back to the last rest ledge. */
     public static final double CLIMB_FALL = 3.5D;
     /** Runs end by themselves after this long, ticks (10 and 15 minutes). */

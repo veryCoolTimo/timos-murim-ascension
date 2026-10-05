@@ -78,6 +78,7 @@ public final class ClientTraining {
             if (s.beat() != TrainingPayloads.Beat.NONE) {
                 flash = s.beat();
                 flashAt = localAt;
+                beatSound(mc, s.beat());
             }
             if (s.beat() == TrainingPayloads.Beat.FINISH) {
                 // The finished run stays on the HUD for a few seconds with its time.
@@ -88,6 +89,28 @@ public final class ClientTraining {
         Entity entity = mc.level.getEntity(s.entity());
         if (entity instanceof AbstractClientPlayer player) {
             clip(player, e, before, s.beat());
+        }
+    }
+
+    /**
+     * A quiet tick on each rep for the trainee only (codex 05.10: the colour of the flash alone does not read):
+     * a hat on the beat, a lower one near it, a dull bass off it.
+     * API: reference/minecraft-src/net/minecraft/client/resources/sounds/SimpleSoundInstance.java#forUI
+     */
+    private static void beatSound(Minecraft mc, TrainingPayloads.Beat beat) {
+        net.minecraft.client.resources.sounds.SimpleSoundInstance sound = switch (beat) {
+            case GOOD -> net.minecraft.client.resources.sounds.SimpleSoundInstance.forUI(
+                    net.minecraft.sounds.SoundEvents.NOTE_BLOCK_HAT.value(), 1.4F, 0.35F);
+            case FAIR -> net.minecraft.client.resources.sounds.SimpleSoundInstance.forUI(
+                    net.minecraft.sounds.SoundEvents.NOTE_BLOCK_HAT.value(), 1.0F, 0.3F);
+            case OFF, RUSHED -> net.minecraft.client.resources.sounds.SimpleSoundInstance.forUI(
+                    net.minecraft.sounds.SoundEvents.NOTE_BLOCK_BASS.value(), 0.7F, 0.35F);
+            case REACH -> net.minecraft.client.resources.sounds.SimpleSoundInstance.forUI(
+                    net.minecraft.sounds.SoundEvents.NOTE_BLOCK_HAT.value(), 1.8F, 0.4F);
+            default -> null;
+        };
+        if (sound != null) {
+            mc.getSoundManager().play(sound);
         }
     }
 

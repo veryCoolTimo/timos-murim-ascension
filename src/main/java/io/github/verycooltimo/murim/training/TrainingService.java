@@ -97,6 +97,12 @@ public final class TrainingService {
         if (food == null || food.nutrition() <= 0) {
             return;
         }
+        TrainingSession session = player.getData(TrainingRegistry.SESSION);
+        long now = player.level().getGameTime();
+        if (now - session.lastMeal < TrainingBalance.MEAL_COOLDOWN) {
+            return;
+        }
+        session.lastMeal = now;
         BodyState s = player.getData(TrainingRegistry.BODY);
         player.setData(TrainingRegistry.BODY, s.withFatigue(BodyRules.afterMeal(s.fatigue(), food.nutrition(), atSect(player))));
         TrainingNetwork.body(player);
@@ -168,9 +174,10 @@ public final class TrainingService {
 
     /** Things that make a set impossible: sitting in meditation, a technique, riding, swimming, flying, sleeping. */
     static boolean blocked(ServerPlayer player) {
+        // A hit ends the set too (codex 05.10: defined cancellation on damage).
         return player.getData(ModAttachments.MEDITATION).active() || player.getData(ModAttachments.TECHNIQUE_STATE).isActive()
                 || player.isPassenger() || player.isInWater() || player.getAbilities().flying || player.isFallFlying()
-                || player.isSleeping() || FootworkService.isRunning(player) || FootworkService.inShadow(player);
+                || player.isSleeping() || player.hurtTime > 0 || FootworkService.isRunning(player) || FootworkService.inShadow(player);
     }
 
     /** At the sect: its land ({@link SectTerritory}) or the South Peak climb face. */
@@ -262,6 +269,7 @@ public final class TrainingService {
             }
             s.carrying = true;
             s.carryTop = player.getBlockY();
+            s.carryFrom = player.getBlockY();
             s.carried = 0;
             s.setGain = 0.0D;
             carrySpeed(player, true);
@@ -282,8 +290,10 @@ public final class TrainingService {
         if (!s.carrying) {
             return;
         }
-        // Each new block of height with the stone is a unit; going down and up again does not count twice.
-        if (player.onGround() && player.getBlockY() > s.carryTop) {
+        // Each new block of height with the stone is a unit; going down and up again does not count twice; nothing
+        // counts until the stone is CARRY_MIN_RISE above where it was lifted (then the first blocks count too).
+        if (player.onGround() && player.getBlockY() > s.carryTop
+                && player.getBlockY() - s.carryFrom >= TrainingBalance.CARRY_MIN_RISE) {
             int gained = player.getBlockY() - s.carryTop;
             s.carryTop = player.getBlockY();
             for (int i = 0; i < gained; i++) {
@@ -321,7 +331,9 @@ public final class TrainingService {
             s.climb = new RouteRun(Routes.climb(site), TrainingBalance.CLIMB_FALL, TrainingBalance.CLIMB_ABANDON, TrainingBalance.CLIMB_TIMEOUT);
             s.trail = new RouteRun(Routes.trail(site), 0.0D, TrainingBalance.TRAIL_ABANDON, TrainingBalance.TRAIL_TIMEOUT);
         }
-        boolean violation = moved > 8.0D || player.isFallFlying() || player.getAbilities().flying
+        // Lifts are not legs either: mounts, water columns, levitation (codex 05.10).
+        boolean violation = moved > 8.0D || player.isFallFlying() || player.getAbilities().flying || player.isPassenger()
+                || player.isInWater() || player.hasEffect(net.minecraft.world.effect.MobEffects.LEVITATION)
                 || player.getData(ModAttachments.TECHNIQUE_STATE).isActive()
                 || FootworkService.isRunning(player) || FootworkService.inShadow(player);
         route(player, s, s.climb, Exercise.PEAK_CLIMB, now, true, violation);
