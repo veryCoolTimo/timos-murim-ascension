@@ -306,7 +306,12 @@ final class MountHuaChunkWriter {
     private void climbProps(BlockPos.MutableBlockPos pos) {
         for (MountHuaPlan.Ledge l : MountHuaPlan.CLIMB) {
             double[] seat = shape.climbSeat(l);
-            if (seat != null) {
+            if (seat != null && l.kind() == MountHuaPlan.Kind.TRAINING) {
+                int[] w = site.toWorld(seat[0], seat[1]);
+                if (inChunk(w[0], w[1])) {
+                    smallPine(w[0], topAt(w[0] - x0, w[1] - z0) + 1, w[1], mix(w[0], w[1], 141), pos);
+                }
+            } else if (seat != null) {
                 for (int k = 0; k < 4; k += 2) {
                     int[] w = site.toWorld(seat[k], seat[k + 1]);
                     if (inChunk(w[0], w[1])) {
@@ -378,7 +383,7 @@ final class MountHuaChunkWriter {
                         continue;
                     }
                     int len = rise <= 6 ? rise
-                            : ((h >>> (k * 4)) & 3) == 0 ? Math.min(9, 2 + (int) Math.floorMod(h >>> 20, (long) (rise - 4))) : 0;
+                            : ((h >>> (k * 4)) & 15) == 0 ? 1 + (int) Math.floorMod(h >>> 20, 3L) : 0;
                     if (len == 0) {
                         continue;
                     }
@@ -403,17 +408,59 @@ final class MountHuaChunkWriter {
                 BlockState ground = level.getBlockState(pos.set(wx, t, wz));
                 boolean soil = ground.is(Blocks.GRASS_BLOCK) || ground.is(Blocks.MOSS_BLOCK) || ground.is(Blocks.PODZOL);
                 if (ledge != null && t == ledgeY(ledge)) {
-                    if (maxFall >= 6 && r < (ledge.kind() == MountHuaPlan.Kind.TRAINING ? 18 : 34)) {
+                    if (maxFall >= 6 && r < (ledge.kind() == MountHuaPlan.Kind.TRAINING ? 30 : 55)) {
                         climbBush(wx, t + 1, wz, h, pos);
+                        // The cushion spills over the lip (ref: green rolls along every lobe edge).
+                        for (int[] d : dirs) {
+                            if (t - topAt(lx + d[0], lz + d[1]) >= 6) {
+                                BlockState spill = level.getBlockState(pos.set(wx, t + 1, wz));
+                                if (spill.getBlock() instanceof LeavesBlock) {
+                                    placeLeaf(wx + d[0], t, wz + d[1], spill, pos);
+                                    if (((h >>> 40) & 1) == 0) {
+                                        placeLeaf(wx + d[0], t - 1, wz + d[1], spill, pos);
+                                    }
+                                }
+                                break;
+                            }
+                        }
                     } else if (soil && r < 46) {
                         level.setBlock(pos.set(wx, t + 1, wz), r < 41 ? Blocks.SHORT_GRASS.defaultBlockState()
                                 : Blocks.FERN.defaultBlockState(), 2);
                     } else if (r > 92) {
                         level.setBlock(pos.set(wx, t + 1, wz), Blocks.MOSS_CARPET.defaultBlockState(), 2);
                     }
-                } else if (maxRise < 2 && maxFall >= 2 && r < 30) {
+                } else if (maxRise >= 3 && maxFall >= 3 && r < 60) {
+                    // A shoulder halfway up a cliff: a bush cushion on it.
+                    climbBush(wx, t + 1, wz, h, pos);
+                } else if (maxRise >= 3 && maxFall < 2 && r < 35) {
+                    // A pocket at the foot of a wall: soil gathers, a bush grows.
+                    climbBush(wx, t + 1, wz, h, pos);
+                } else if (maxRise < 2 && maxFall >= 2 && r < 45) {
                     // Rock ribs and lips between the ledges: a clinging bush.
                     climbBush(wx, t + 1, wz, h, pos);
+                }
+            }
+        }
+    }
+
+    /** A small cliff pine for a wide ledge: 3-4 trunk, a flat pad and a small top (stays clear of the row above). */
+    private void smallPine(int x, int y, int z, long h, BlockPos.MutableBlockPos pos) {
+        int trunk = 3 + (int) ((h >>> 3) & 1);
+        BlockState log = Blocks.SPRUCE_WOOD.defaultBlockState();
+        BlockState leaves = Blocks.SPRUCE_LEAVES.defaultBlockState().setValue(LeavesBlock.PERSISTENT, true);
+        for (int k = 0; k < trunk; k++) {
+            if (!level.getBlockState(pos.set(x, y + k, z)).isAir()) {
+                return;
+            }
+            level.setBlock(pos, log, 2);
+        }
+        for (int dx = -2; dx <= 2; dx++) {
+            for (int dz = -2; dz <= 2; dz++) {
+                if (Math.abs(dx) + Math.abs(dz) <= 3 && !(Math.abs(dx) == 2 && Math.abs(dz) == 2)) {
+                    placeLeaf(x + dx, y + trunk, z + dz, leaves, pos);
+                }
+                if (Math.abs(dx) + Math.abs(dz) <= 1) {
+                    placeLeaf(x + dx, y + trunk + 1, z + dz, leaves, pos);
                 }
             }
         }
@@ -577,12 +624,13 @@ final class MountHuaChunkWriter {
         // Fill: rock from just below the old surface (buries grass/sand) up to the new top.
         int from = Math.min(o - 2, t - 4);
         // The training climb is natural rock, not a terrace buttress.
-        boolean masonry = (retainingWall(wx, wz, t) || stairSupport(wx, wz, t))
-                && !shape.climbChanged(site.localU(wx + 0.5, wz + 0.5), site.localV(wx + 0.5, wz + 0.5));
+        boolean climbFace = shape.climbChanged(site.localU(wx + 0.5, wz + 0.5), site.localV(wx + 0.5, wz + 0.5));
+        boolean masonry = (retainingWall(wx, wz, t) || stairSupport(wx, wz, t)) && !climbFace;
         for (int y = from; y <= t; y++) {
             pos.set(wx, y, wz);
             boolean exposed = y > lowest - 2 || t - y < 4;
-            chunk.setBlockState(pos, !exposed ? STONE : masonry ? masonry(wx, y, wz) : granite(lx, lz, wx, y, wz, t, drop), false);
+            chunk.setBlockState(pos, !exposed ? STONE : masonry ? masonry(wx, y, wz)
+                    : climbFace ? climbRock(wx, y, wz, t) : granite(lx, lz, wx, y, wz, t, drop), false);
         }
         skin(lx, lz, t, drop, w, pos);
     }
@@ -614,6 +662,22 @@ final class MountHuaChunkWriter {
         double v = site.localV(wx + 0.5, wz + 0.5);
         double[] tr = shape.trailAt(u, v);
         return tr != null && tr[0] <= 3.6 && site.worldY(shape.ground(u, v)) < t - 2;
+    }
+
+    /**
+     * The climb's lobes are pale, sunlit granite (ref: cream-grey rock with green cushions), not
+     * the dark cleft rock the narrow cuts between them would otherwise get: pale with grey
+     * patches, moss creeping down from each top, a cracked rim.
+     */
+    private BlockState climbRock(int x, int y, int z, int t) {
+        double n = noise.noise(x / 6.0, y / 5.0, z / 6.0);
+        if (t - y <= 1 && n > -0.2) {
+            return ModBlocks.HUA_GRANITE_MOSSY.get().defaultBlockState();
+        }
+        if (t - y <= 3 && n > 0.45) {
+            return ModBlocks.HUA_GRANITE_CRACKED.get().defaultBlockState();
+        }
+        return (n < -0.35 ? ModBlocks.HUA_GRANITE : ModBlocks.HUA_GRANITE_PALE).get().defaultBlockState();
     }
 
     private BlockState masonry(int x, int y, int z) {
@@ -699,12 +763,18 @@ final class MountHuaChunkWriter {
         if (ledge != null && t == ledgeY(ledge)) {
             // Climb ledge top: moss and grass on granite (ref: green cushions on every lobe).
             int r = (int) (mix(wx, wz, 137) & 15);
-            BlockState ground = r < 7 ? GRASS : r < 11 ? Blocks.MOSS_BLOCK.defaultBlockState()
-                    : r < 13 ? Blocks.PODZOL.defaultBlockState() : r < 14 ? ModBlocks.HUA_LITTER.get().defaultBlockState()
+            // Moss rather than grass: its sides stay green on the lip (no brown dirt faces), and
+            // the block under it stays rock.
+            BlockState ground = r < 12 ? Blocks.MOSS_BLOCK.defaultBlockState()
                     : ModBlocks.HUA_GRANITE_MOSSY.get().defaultBlockState();
             chunk.setBlockState(pos.set(wx, t, wz), ground, false);
-            if (!ground.is(ModBlocks.HUA_GRANITE_MOSSY.get())) {
-                chunk.setBlockState(pos.set(wx, t - 1, wz), DIRT, false);
+            return;
+        }
+        if (shape.climbChanged(site.localU(wx + 0.5, wz + 0.5), site.localV(wx + 0.5, wz + 0.5))) {
+            // Lips and shoulders between the ledges: moss on anything flat enough, rock elsewhere
+            // (no soil skin, whose dirt would show on the faces).
+            if (drop <= 2) {
+                chunk.setBlockState(pos.set(wx, t, wz), Blocks.MOSS_BLOCK.defaultBlockState(), false);
             }
             return;
         }

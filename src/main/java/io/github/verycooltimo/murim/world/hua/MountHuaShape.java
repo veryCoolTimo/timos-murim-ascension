@@ -110,7 +110,7 @@ public final class MountHuaShape {
         double dv = (v - l.v()) / l.rv();
         double a = Math.atan2(dv, du);
         double salt = l.u() * 0.37 + l.y() * 0.11;
-        double rim = 1 + 0.18 * relief.noise(Math.cos(a) * 1.5 + salt, Math.sin(a) * 1.5, 111.0)
+        double rim = 1 + 0.26 * relief.noise(Math.cos(a) * 1.1 + salt, Math.sin(a) * 1.1, 111.0)
                 + 0.07 * relief.noise(u / 2.3, v / 2.3, 113.0);
         return Math.hypot(du, dv) * rim;
     }
@@ -141,7 +141,26 @@ public final class MountHuaShape {
             if (h < l.y()) {
                 // Over bare rock the lip rounds off; over a lower ledge the riser is sheer, so the
                 // ledge below keeps its depth.
-                h = Math.max(h, onLedge ? l.y() - 2 * d - 20 * d * d : l.y() - 1.2 * d - 2.5 * d * d);
+                double lip;
+                if (!onLedge) {
+                    lip = l.y() - 1.2 * d - 2.5 * d * d;
+                } else if (l.y() - h >= 8) {
+                    // A cliff between rows: the rock above bulges out over the ledge below by
+                    // 0-2.5 blocks (codex: lobes, not a flat wall with lines), so the lower
+                    // ledge's depth varies along its length.
+                    double bulge = 2.5 * Math.max(0, relief.noise(u / 5.0, v / 5.0, 117.0 + l.y()));
+                    // ...and in places a half-height shoulder steps out below the bulge: the
+                    // cliff breaks into stacked lobes with a bush on each (ref), not one wall.
+                    double shoulder = 2.0 * Math.max(0, relief.noise(u / 6.0, v / 6.0, 119.0 + l.y()));
+                    double over = Math.max(0, d - bulge);
+                    lip = l.y() - 0.9 * d - 20 * over * over;
+                    if (over > 0 && over < shoulder) {
+                        lip = Math.max(lip, Math.floor((l.y() + h) / 2));
+                    }
+                } else {
+                    lip = l.y() - 2 * d - 20 * d * d;
+                }
+                h = Math.max(h, lip);
             } else {
                 double cut = Math.min(h, l.y() + 4.0 * d);
                 h = cut + (h - cut) * smooth(4, 7, d);
@@ -192,8 +211,9 @@ public final class MountHuaShape {
                         best = score;
                         climbSpot[i] = new double[] {u, v};
                     }
-                    // Rock seat: two flat columns along the back wall of a rest ledge.
-                    if (l.kind() == MountHuaPlan.Kind.REST && flatOn(l, u + 1, v)
+                    // Rock seat (rest) or a small pine (training): two flat columns against the
+                    // back wall, nearest the ledge's middle.
+                    if ((l.kind() == MountHuaPlan.Kind.REST || l.kind() == MountHuaPlan.Kind.TRAINING) && flatOn(l, u + 1, v)
                             && height(u, v + 1) >= l.y() + 2 && height(u + 1, v + 1) >= l.y() + 2) {
                         double s = Math.abs(u + 0.5 - l.u());
                         if (s < seatBest) {
@@ -250,7 +270,7 @@ public final class MountHuaShape {
         return climbSpot == null || i < 0 ? null : climbSpot[i];
     }
 
-    /** Rock seat columns {u0, v0, u1, v1} of a rest ledge, or null. */
+    /** Back-wall columns {u0, v0, u1, v1} of a rest (rock seat) or training ledge (pine), or null. */
     public double[] climbSeat(MountHuaPlan.Ledge ledge) {
         int i = MountHuaPlan.CLIMB.indexOf(ledge);
         return climbSeat == null || i < 0 ? null : climbSeat[i];

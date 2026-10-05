@@ -254,7 +254,7 @@ public final class MountHuaPlan {
             new Ledge("climb_7", -16.5, 108.8, 198, 5.4, 2.1, Kind.STEP),
             new Ledge("climb_8", -6, 108.2, 202, 5.8, 2.2, Kind.STEP),
             new Ledge("climb_9", 4.2, 108.9, 205, 5, 2.1, Kind.STEP),
-            new Ledge("climb_10", 14.5, 108.3, 210, 5.2, 2.2, Kind.REST),
+            new Ledge("climb_10", 15, 108.3, 210, 5.6, 2.2, Kind.REST),
             // East turn.
             new Ledge("climb_11", 27.5, 107.5, 214, 6, 4.4, Kind.TRAINING),
             // Row 3, east -> west, under the summit rim.
