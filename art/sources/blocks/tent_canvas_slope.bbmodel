@@ -1,0 +1,201 @@
+{
+ "meta": {
+  "format_version": "4.10",
+  "model_format": "java_block",
+  "box_uv": false
+ },
+ "name": "tent_canvas_slope",
+ "parent": "minecraft:block/block",
+ "ambientocclusion": false,
+ "front_gui_light": false,
+ "visible_box": [
+  1,
+  1,
+  0
+ ],
+ "variable_placeholders": "",
+ "variable_placeholder_buttons": [],
+ "timeline_setups": [],
+ "unhandled_root_fields": {},
+ "resolution": {
+  "width": 16,
+  "height": 16
+ },
+ "elements": [
+  {
+   "name": "cube",
+   "box_uv": false,
+   "rescale": false,
+   "locked": false,
+   "render_order": "default",
+   "allow_mirror_modeling": true,
+   "from": [
+    0,
+    7.5,
+    -3.3137
+   ],
+   "to": [
+    16,
+    8.5,
+    19.3137
+   ],
+   "autouv": 0,
+   "color": 0,
+   "shade": true,
+   "origin": [
+    8,
+    8,
+    8
+   ],
+   "rotation": [
+    45,
+    0,
+    0
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": 0
+    },
+    "east": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": 0
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": 0
+    },
+    "west": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": 0
+    },
+    "up": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": 0
+    },
+    "down": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": 0
+    }
+   },
+   "type": "cube",
+   "uuid": "93d80030-731c-5c39-a209-8b06f86b3199"
+  }
+ ],
+ "outliner": [
+  "93d80030-731c-5c39-a209-8b06f86b3199"
+ ],
+ "textures": [
+  {
+   "path": "",
+   "name": "tent_canvas_crimson.png",
+   "folder": "block",
+   "namespace": "murim",
+   "id": "cloth",
+   "group": "",
+   "width": 16,
+   "height": 16,
+   "uv_width": 16,
+   "uv_height": 16,
+   "particle": false,
+   "use_as_default": false,
+   "layers_enabled": false,
+   "sync_to_project": "",
+   "render_mode": "default",
+   "render_sides": "auto",
+   "frame_time": 1,
+   "frame_order_type": "loop",
+   "frame_order": "",
+   "frame_interpolate": false,
+   "visible": true,
+   "internal": true,
+   "saved": true,
+   "uuid": "34a0bb40-525c-5966-95cb-10c8b3d07ef6",
+   "source": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAACNUlEQVR4nFWTu47kNhQFi5fiQxKhmQ4WTrwfsIE/2Z/mxIYjB+1pNSWKL23QaBmOSIAgWTh1rvr9tx/n4/HAWkutlWEYOI6Dz89PSimc50nOmXmeyTljrWXfd7TW9N6RbdswxpBzZhgGzvNkHEdKKRhj+GtLTNNEKYXWGjFG5nlm2zYAZBxHtNYsy8JxHGityTkDkFLi++T5+vpCRBiGAe8967pyu904jgN5Pp8X1jiOpJTw3hNjpLVGSgnnHK01nHP03rHWcr/fMcYg1lrWdUVrjVKKeZ4ppbAsCyLCPx1qrfTe2fcday29d0IIaK2R1hohhCvAWivOOWKM9N75JuC9fwUmQowRrTXAfwQxRrz37PuOMYZ1XZmm6cJNKaGUIsaIiLDvO7VWWmvIeZ4451jXlWEY6L1zu93Yto0QAn+nzDiO1Fr5+PhAKXWp7r0jxhhSSszzjIgA8Hg88N6Tc+bX0VFrJYRAzhkRobV2qZZt2y7M3jtvKxeiCEopcs5XD97nIYQXgVKKaZouhcdx4L3HGMOfcb/KBVyriLx68A6o1sqyLLTWWJaFWivGGH4ZXgTrujLPM/u+01p7XRZB3sqsteSccc7xfD6ptXIcByEEeu8YY/7Xg6uJInJ5f8+EUgoApRR//PvgPM/XbyKc53lZ0FojpRSGYUApxbZtjOOItZZpmgD4PvlrCksp10NKqdf+OA5KKSilCCGQUqK1xv1+xznHvu8459i2DREh53xVexgGfgKJbnGs2aDjHgAAAABJRU5ErkJggg=="
+  },
+  {
+   "path": "",
+   "name": "tent_canvas_linen.png",
+   "folder": "block",
+   "namespace": "murim",
+   "id": "cloth_tent_canvas_linen",
+   "group": "",
+   "width": 16,
+   "height": 16,
+   "uv_width": 16,
+   "uv_height": 16,
+   "particle": false,
+   "use_as_default": false,
+   "layers_enabled": false,
+   "sync_to_project": "",
+   "render_mode": "default",
+   "render_sides": "auto",
+   "frame_time": 1,
+   "frame_order_type": "loop",
+   "frame_order": "",
+   "frame_interpolate": false,
+   "visible": true,
+   "internal": true,
+   "saved": true,
+   "uuid": "53bdd176-2f74-5789-8670-7d0809aa00b3",
+   "source": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAACS0lEQVR4nFWTWY7lNgxFjylZg+3nwisknU6AJIvOarKGbKIzISNsl59HWZby8VAO+pMAeUke8hY//fhDDiFgrWWeZ5xznOfJcRyICM45Ho8HVVVxnidKKfZ9xznHtm3IMAwYY+j7nqIoiDGilKIsS7TW/PLpZ9q25TgOUkrPIhHWdaVpGsRayzAM3O93Uko45wghkHNmXVe++PAl4ziitSbnjIgQQkBrzTiOSM6Ztm3p+x4Roes6ANZ1pW1blFJ475nnGe89+77TNA3neVKWJeK95/F48Pr6SkqJqqrQWlOWJcuy8Ncff7JtG8aYz0SUUogIMk0TzjmGYaCua5ZlIcbIeZ5Ya/n4zdcYY1BKYa3lPE+01hdQcc5RFAVaa7Zt436/E2PEe38lLcuCUooYI03TEGOkqipSSkiMkbIsOc+TlBLDMNC27RX//utvWGvJOZNS4u3tjZzzdRUpy5JpmlBKYYzBOUfXdTjnSCnx4eNX174ASilyzpRlCfBk0DQNKSWKoiCEQF3X9H0PQAjhmuZ9jbqumabpKWCMYd93vPes64pzjhgjxhhyzgxdT4zxYlRVFfM8IyIcx4E2xiAijOOI9/6pKkKMkdvtxnEcvLy8sG3bBVApRUrp+QfvlJumQUQ+80HXdbwzijE+O2pNURT/e2EcR6y1ABftuq4REbz3/Pv3P1hrr47HcVyidV2jvffEGMk5X/cNIaCUAuDb779j2zZutxshBIwx15NN04SklACusfZ9v6wtIkzThPeecRw5juMSFxHatuU/uLVzsEQO42oAAAAASUVORK5CYII="
+  },
+  {
+   "path": "",
+   "name": "tent_canvas_white.png",
+   "folder": "block",
+   "namespace": "murim",
+   "id": "cloth_tent_canvas_white",
+   "group": "",
+   "width": 16,
+   "height": 16,
+   "uv_width": 16,
+   "uv_height": 16,
+   "particle": false,
+   "use_as_default": false,
+   "layers_enabled": false,
+   "sync_to_project": "",
+   "render_mode": "default",
+   "render_sides": "auto",
+   "frame_time": 1,
+   "frame_order_type": "loop",
+   "frame_order": "",
+   "frame_interpolate": false,
+   "visible": true,
+   "internal": true,
+   "saved": true,
+   "uuid": "dfb7cfe2-61f5-5634-90be-d42cb5a45068",
+   "source": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAACSklEQVR4nGWTy47cNhBFD0WKD0nTAnoZO0Di5P+/xR9g2JNV7ACZ0VskRYpeNFpAkG1VoR7n3hKvXz6XqqpQSlFKQQjBcRw0TcO2bZznSYwRrTVSSoQQlFLIOaO1pgJQSrFtG8dxkFLCWsu+75RS+OfHd4wxSCnJObPvO1JKpJSklKi01njvcc6RUkIpxTRNAFRVxac//iSEgJSS8zxp25bzPLHWPmpSSnRdRwgB5xzneWKM4TxPhBC8v79jrWVZFowxpJQQQuC9p65rKucc0zRR1zU5Z6qqIsaIUgrvPe9v/xJCuJgYY8g5Y60l54xa1/VaSylFjJGu65jnma7rcM4hpWRdV7TW5JwppbAsywOiMYZpmsg5k1JCa808zzzjdV0TQqDve0opaK0ppdC2LUIIKu89xhgASikMw0Bd16SUcM7x+u0rzjm897Rty9vbG845hmEgxkillLru995zv9//I+UvHz4yjuMF9OXlhZwz9/sdpRRVCIGUEud50jQNwzBgjCGEcAHruu7KH8eBlJJhGB4NpJQAl1RP2tZahBD8+P73RV8IgbWWdV2x1jLPMyrnjBCCfd+p6xoArTUxRqy1fPj46+W6nDMhhEulvu+pbrcbSimapkFrjdb6f2suy4IQAiklTdMwjiPGGLz3VE/TxBjJOV+TY4y0bctfr98uoFJKlmWh73tCCA8nPnV/PoiUkhgjTdOw7zu//f6JEMJ1lnOObdtomubxTOu6XpSllFezcRy53W4cx0HXdXjvL69orVmWhZwzPwG6EnQQ/UDe6wAAAABJRU5ErkJggg=="
+  }
+ ]
+}

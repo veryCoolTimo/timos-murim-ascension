@@ -1,0 +1,350 @@
+{
+ "meta": {
+  "format_version": "4.10",
+  "model_format": "java_block",
+  "box_uv": false
+ },
+ "name": "propped_shelf",
+ "parent": "minecraft:block/block",
+ "ambientocclusion": true,
+ "front_gui_light": false,
+ "visible_box": [
+  1,
+  1,
+  0
+ ],
+ "variable_placeholders": "",
+ "variable_placeholder_buttons": [],
+ "timeline_setups": [],
+ "unhandled_root_fields": {},
+ "resolution": {
+  "width": 16,
+  "height": 16
+ },
+ "elements": [
+  {
+   "name": "cube",
+   "box_uv": false,
+   "rescale": false,
+   "locked": false,
+   "render_order": "default",
+   "allow_mirror_modeling": true,
+   "from": [
+    0,
+    3,
+    0
+   ],
+   "to": [
+    16,
+    16,
+    16
+   ],
+   "autouv": 0,
+   "color": 0,
+   "shade": true,
+   "origin": [
+    8,
+    8,
+    8
+   ],
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      16,
+      13
+     ],
+     "texture": 0,
+     "cullface": "north"
+    },
+    "east": {
+     "uv": [
+      0,
+      0,
+      16,
+      13
+     ],
+     "texture": 1,
+     "cullface": "east"
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      16,
+      13
+     ],
+     "texture": 1,
+     "cullface": "south"
+    },
+    "west": {
+     "uv": [
+      0,
+      0,
+      16,
+      13
+     ],
+     "texture": 1,
+     "cullface": "west"
+    },
+    "up": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": 2,
+     "cullface": "up"
+    },
+    "down": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": 2
+    }
+   },
+   "type": "cube",
+   "uuid": "ce1abfb8-f778-5a45-b3a4-23dceae1ff4d"
+  },
+  {
+   "name": "cube",
+   "box_uv": false,
+   "rescale": false,
+   "locked": false,
+   "render_order": "default",
+   "allow_mirror_modeling": true,
+   "from": [
+    1,
+    0,
+    -5
+   ],
+   "to": [
+    11,
+    3,
+    9
+   ],
+   "autouv": 0,
+   "color": 0,
+   "shade": true,
+   "origin": [
+    6,
+    1.5,
+    2
+   ],
+   "rotation": [
+    0,
+    -22.5,
+    0
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      10,
+      3
+     ],
+     "texture": 4
+    },
+    "east": {
+     "uv": [
+      0,
+      0,
+      14,
+      3
+     ],
+     "texture": 4
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      10,
+      3
+     ],
+     "texture": 4
+    },
+    "west": {
+     "uv": [
+      0,
+      13,
+      14,
+      16
+     ],
+     "texture": 3
+    },
+    "up": {
+     "uv": [
+      0,
+      0,
+      10,
+      14
+     ],
+     "texture": 3
+    },
+    "down": {
+     "uv": [
+      0,
+      0,
+      10,
+      14
+     ],
+     "texture": 3
+    }
+   },
+   "type": "cube",
+   "uuid": "a2f18fe0-f030-5d91-b66e-aa01ffcfa2da"
+  }
+ ],
+ "outliner": [
+  "ce1abfb8-f778-5a45-b3a4-23dceae1ff4d",
+  "a2f18fe0-f030-5d91-b66e-aa01ffcfa2da"
+ ],
+ "textures": [
+  {
+   "path": "",
+   "name": "chiseled_bookshelf_occupied.png",
+   "folder": "block",
+   "namespace": "minecraft",
+   "id": "front",
+   "group": "",
+   "width": 16,
+   "height": 16,
+   "uv_width": 16,
+   "uv_height": 16,
+   "particle": false,
+   "use_as_default": false,
+   "layers_enabled": false,
+   "sync_to_project": "",
+   "render_mode": "default",
+   "render_sides": "auto",
+   "frame_time": 1,
+   "frame_order_type": "loop",
+   "frame_order": "",
+   "frame_interpolate": false,
+   "visible": true,
+   "internal": true,
+   "saved": true,
+   "uuid": "f4a942a3-c9e0-5a4a-90a1-12474feeeb62",
+   "source": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAAeFBMVEXyyVjMpmy8mGKzjFHDjwCfhE1rnjq7b1Sbd0LUSm6tYUanQ+UilJRXhSp8Yj62PFwWhYWOO8KFYgB+RjN6MacnWaVAYR+RL0mRMxQQYWFnK45rPCsgTZGAKkEyTxcPUlJOOh5qJQ9JJl8XOWpLH2cPLl01HEYZEwrUzIfpAAAAq0lEQVR42kWO0RaCIBBEF0aKLLW0MEwQQ+X//zAwrfuyZ+fszgwxxgCWEEIAgkRIKGVtmKZlKYkPVz0EVSgbbufuXRL0RQ+uOCjruvu0SMKTstFllNW7MGb1GIrD9iKp1D+PeJFMAc5jKOcciMkESBnnusgISdMaE1a8n+eSmKlaE/Jj8wr9w8+S2JqYBJcKgFCdKvPtEQvswv8FJNrk0eRR8H3y2FoAPCKBD8RcEcc5N82wAAAAAElFTkSuQmCC"
+  },
+  {
+   "path": "",
+   "name": "chiseled_bookshelf_side.png",
+   "folder": "block",
+   "namespace": "minecraft",
+   "id": "side",
+   "group": "",
+   "width": 16,
+   "height": 16,
+   "uv_width": 16,
+   "uv_height": 16,
+   "particle": false,
+   "use_as_default": false,
+   "layers_enabled": false,
+   "sync_to_project": "",
+   "render_mode": "default",
+   "render_sides": "auto",
+   "frame_time": 1,
+   "frame_order_type": "loop",
+   "frame_order": "",
+   "frame_interpolate": false,
+   "visible": true,
+   "internal": true,
+   "saved": true,
+   "uuid": "5da531f7-8a00-53e0-8f7a-210778f244da",
+   "source": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQBAMAAADt3eJSAAAAElBMVEXOqnHCnWK4lF+vj1WfhE2WdEHLZTheAAAAaElEQVR42i3MwQ3CMBBE0T+RuSHhMckVIioJVED/Tay5QxZB8gp4oIqrrLIY8nWkMNKeehS1ebVuDBUBnAZcbRmNd8Kpt3DINVLna8dk/z2hGisHpu2hzZ/9Seh4SHt7puX/ZLkEEZgv+T8d47dW17kAAAAASUVORK5CYII="
+  },
+  {
+   "path": "",
+   "name": "chiseled_bookshelf_top.png",
+   "folder": "block",
+   "namespace": "minecraft",
+   "id": "top",
+   "group": "",
+   "width": 16,
+   "height": 16,
+   "uv_width": 16,
+   "uv_height": 16,
+   "particle": false,
+   "use_as_default": false,
+   "layers_enabled": false,
+   "sync_to_project": "",
+   "render_mode": "default",
+   "render_sides": "auto",
+   "frame_time": 1,
+   "frame_order_type": "loop",
+   "frame_order": "",
+   "frame_interpolate": false,
+   "visible": true,
+   "internal": true,
+   "saved": true,
+   "uuid": "c4c2dc61-d388-5cb2-ac23-3e33edb14757",
+   "source": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQBAMAAADt3eJSAAAAElBMVEXOqnHCnWK4lF+vj1WfhE2WdEHLZTheAAAAcElEQVR42iXM0Q3CMAxF0Wur/PslDIALCxAYoFQZAKR2/xEQDABI9AxwAAUmMfSepfeZgX05TjY79QBqX7eQZBZO0vKdEHZCkyV1vNbLbTw7G3MTYRLslr6uyxaiuz0Gan7y1fCIADNzMuLpgtRf+QE5HA+k6rfWnwAAAABJRU5ErkJggg=="
+  },
+  {
+   "path": "",
+   "name": "propped_manual.png",
+   "folder": "block",
+   "namespace": "murim",
+   "id": "cover",
+   "group": "",
+   "width": 16,
+   "height": 16,
+   "uv_width": 16,
+   "uv_height": 16,
+   "particle": false,
+   "use_as_default": false,
+   "layers_enabled": false,
+   "sync_to_project": "",
+   "render_mode": "default",
+   "render_sides": "auto",
+   "frame_time": 1,
+   "frame_order_type": "loop",
+   "frame_order": "",
+   "frame_interpolate": false,
+   "visible": true,
+   "internal": true,
+   "saved": true,
+   "uuid": "58803147-f910-52ba-8aed-5a94a211009f",
+   "source": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAvElEQVR4nKVTMQ4CIRAcCd0lhoZQG3zC9fdA3+MDbKx8gsaa0BASOxItLiCQBbk43WZ2ltkBdtfz6Y0/wAHgeX80Gw5HTfLGOigpwCjChwk+TORAYx0AQEnxdQAAl9t6yjJr+NC2HIVxWOFgmXVbSThJKxjrhsX1CqwmeqIozGuWT2uh5vM6raCkSEFuQeGgzmFkIOs1xoF1PnnNqZP3/FXUvQw4sD7XHnp8+gsxSEo89Bd+XWWNTQ+px38A28BWQquw210AAAAASUVORK5CYII="
+  },
+  {
+   "path": "",
+   "name": "propped_manual_pages.png",
+   "folder": "block",
+   "namespace": "murim",
+   "id": "pages",
+   "group": "",
+   "width": 16,
+   "height": 16,
+   "uv_width": 16,
+   "uv_height": 16,
+   "particle": false,
+   "use_as_default": false,
+   "layers_enabled": false,
+   "sync_to_project": "",
+   "render_mode": "default",
+   "render_sides": "auto",
+   "frame_time": 1,
+   "frame_order_type": "loop",
+   "frame_order": "",
+   "frame_interpolate": false,
+   "visible": true,
+   "internal": true,
+   "saved": true,
+   "uuid": "e199aae7-c24a-5315-9af3-fa8f524d02bf",
+   "source": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAeUlEQVR4nK1SQQ7AIAjTZY9Q/3/YH3baZ4BfbCdMR+AETYwCSVu1/bmvtyVwCtOvMeZqwrR37VnorKcdKBsqWkeess7yDuw9rYLnEM81Djx2z5GHml+IlLxMYL/OQZRGrBH4XmkHBzIK015YW2Wc1SdR2aPkIcZc7QO02oFw3kWelQAAAABJRU5ErkJggg=="
+  }
+ ]
+}

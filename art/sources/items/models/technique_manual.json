@@ -1,0 +1,20 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "murim:item/technique_manual"
+  },
+  "overrides": [
+    {
+      "predicate": {
+        "murim:book_tier": 0.5
+      },
+      "model": "murim:item/technique_manual_advanced"
+    },
+    {
+      "predicate": {
+        "murim:book_tier": 1.0
+      },
+      "model": "murim:item/technique_manual_secret"
+    }
+  ]
+}

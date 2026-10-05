@@ -1,0 +1,284 @@
+{
+ "entities": {
+  "bandit": {
+   "geo": "bedrock/bandit.geo.json",
+   "geometry_from": "bedrock/bandit.geo.json",
+   "animation": "bedrock/bandit.animation.json",
+   "textures": {
+    "bandit": "textures/entity/bandit.png",
+    "bandit_elite": "textures/entity/bandit_elite.png",
+    "bandit_chief": "textures/entity/bandit_chief.png"
+   }
+  },
+  "bandit_archer": {
+   "geo": "bedrock/bandit_archer.geo.json",
+   "geometry_from": "bedrock/bandit_archer.geo.json",
+   "animation": "bedrock/bandit_archer.animation.json",
+   "textures": {
+    "bandit_archer": "textures/entity/bandit_archer.png",
+    "peddler": "textures/entity/peddler.png"
+   }
+  },
+  "sect_people": {
+   "geo": null,
+   "geometry_from": "bedrock/bandit.geo.json",
+   "animation": null,
+   "textures": {
+    "sect_disciple": "textures/entity/sect_disciple.png",
+    "sect_leader": "textures/entity/sect_leader.png",
+    "sect_mentor": "textures/entity/sect_mentor.png",
+    "elder_gak": "textures/entity/sect/elder_gak.png",
+    "elder_sang": "textures/entity/sect/elder_sang.png",
+    "elder_young": "textures/entity/sect/elder_young.png",
+    "first_am": "textures/entity/sect/first_am.png",
+    "guard_0": "textures/entity/sect/guard_0.png",
+    "guard_1": "textures/entity/sect/guard_1.png",
+    "guard_2": "textures/entity/sect/guard_2.png",
+    "guard_3": "textures/entity/sect/guard_3.png",
+    "guard_4": "textures/entity/sect/guard_4.png",
+    "lay_cook": "textures/entity/sect/lay_cook.png",
+    "lay_herbalist": "textures/entity/sect/lay_herbalist.png",
+    "lay_porter_0": "textures/entity/sect/lay_porter_0.png",
+    "lay_porter_1": "textures/entity/sect/lay_porter_1.png",
+    "lay_steward": "textures/entity/sect/lay_steward.png",
+    "lay_sweeper": "textures/entity/sect/lay_sweeper.png",
+    "lay_water": "textures/entity/sect/lay_water.png",
+    "leader": "textures/entity/sect/leader.png",
+    "mentor": "textures/entity/sect/mentor.png",
+    "second_0": "textures/entity/sect/second_0.png",
+    "second_1": "textures/entity/sect/second_1.png",
+    "second_2": "textures/entity/sect/second_2.png",
+    "second_3": "textures/entity/sect/second_3.png",
+    "second_4": "textures/entity/sect/second_4.png",
+    "third_0": "textures/entity/sect/third_0.png",
+    "third_1": "textures/entity/sect/third_1.png",
+    "third_2": "textures/entity/sect/third_2.png",
+    "third_3": "textures/entity/sect/third_3.png",
+    "third_4": "textures/entity/sect/third_4.png",
+    "third_5": "textures/entity/sect/third_5.png",
+    "third_6": "textures/entity/sect/third_6.png",
+    "third_7": "textures/entity/sect/third_7.png",
+    "third_8": "textures/entity/sect/third_8.png",
+    "third_9": "textures/entity/sect/third_9.png"
+   }
+  },
+  "fortress_master": {
+   "geo": "bedrock/fortress_master.geo.json",
+   "geometry_from": "bedrock/fortress_master.geo.json",
+   "animation": "bedrock/fortress_master.animation.json",
+   "textures": {
+    "fortress_master": "textures/entity/fortress_master.png",
+    "fortress_master_boil": "textures/entity/fortress_master_boil.png"
+   }
+  },
+  "sect_props": {
+   "geo": "bedrock/sect_props.geo.json",
+   "geometry_from": "bedrock/sect_props.geo.json",
+   "animation": null,
+   "textures": {
+    "sect_props": "textures/entity/sect_props.png"
+   }
+  },
+  "huashan_sword": {
+   "geo": "bedrock/huashan_sword.geo.json",
+   "geometry_from": "bedrock/huashan_sword.geo.json",
+   "animation": null,
+   "textures": {
+    "huashan_sword": "textures/item/huashan_sword.png"
+   }
+  },
+  "tang_dagger": {
+   "geo": "bedrock/tang_dagger.geo.json",
+   "geometry_from": "bedrock/tang_dagger.geo.json",
+   "animation": null,
+   "textures": {
+    "tang_dagger": "textures/item/tang_dagger.png"
+   }
+  },
+  "tang_coin": {
+   "geo": "bedrock/tang_coin.geo.json",
+   "geometry_from": "bedrock/tang_coin.geo.json",
+   "animation": null,
+   "textures": {
+    "tang_coin": "textures/item/tang_coin.png"
+   }
+  }
+ },
+ "blocks": {
+  "propped_shelf": {
+   "model": "models/block/propped_shelf.json",
+   "textures": {
+    "propped_manual": "textures/block/propped_manual.png",
+    "propped_manual_pages": "textures/block/propped_manual_pages.png"
+   }
+  },
+  "tent_canvas_gable_ridge": {
+   "model": "models/block/tent_canvas_gable_ridge.json",
+   "textures": {
+    "tent_canvas_crimson": "textures/block/tent_canvas_crimson.png",
+    "tent_canvas_linen": "textures/block/tent_canvas_linen.png",
+    "tent_canvas_white": "textures/block/tent_canvas_white.png"
+   }
+  },
+  "tent_canvas_gable_slope": {
+   "model": "models/block/tent_canvas_gable_slope.json",
+   "textures": {
+    "tent_canvas_crimson": "textures/block/tent_canvas_crimson.png",
+    "tent_canvas_linen": "textures/block/tent_canvas_linen.png",
+    "tent_canvas_white": "textures/block/tent_canvas_white.png"
+   }
+  },
+  "tent_canvas_ridge": {
+   "model": "models/block/tent_canvas_ridge.json",
+   "textures": {
+    "tent_canvas_crimson": "textures/block/tent_canvas_crimson.png",
+    "tent_canvas_linen": "textures/block/tent_canvas_linen.png",
+    "tent_canvas_white": "textures/block/tent_canvas_white.png"
+   }
+  },
+  "tent_canvas_slope": {
+   "model": "models/block/tent_canvas_slope.json",
+   "textures": {
+    "tent_canvas_crimson": "textures/block/tent_canvas_crimson.png",
+    "tent_canvas_linen": "textures/block/tent_canvas_linen.png",
+    "tent_canvas_white": "textures/block/tent_canvas_white.png"
+   }
+  },
+  "tent_canvas_wall": {
+   "model": "models/block/tent_canvas_wall.json",
+   "textures": {
+    "tent_canvas_crimson": "textures/block/tent_canvas_crimson.png",
+    "tent_canvas_linen": "textures/block/tent_canvas_linen.png",
+    "tent_canvas_white": "textures/block/tent_canvas_white.png"
+   }
+  }
+ },
+ "block_textures": {
+  "textures/hua_granite.png": "textures/block/hua_granite.png",
+  "textures/hua_granite_b.png": "textures/block/hua_granite_b.png",
+  "textures/hua_granite_cracked.png": "textures/block/hua_granite_cracked.png",
+  "textures/hua_granite_cracked_b.png": "textures/block/hua_granite_cracked_b.png",
+  "textures/hua_granite_dark.png": "textures/block/hua_granite_dark.png",
+  "textures/hua_granite_dark_b.png": "textures/block/hua_granite_dark_b.png",
+  "textures/hua_granite_mossy.png": "textures/block/hua_granite_mossy.png",
+  "textures/hua_granite_mossy_top.png": "textures/block/hua_granite_mossy_top.png",
+  "textures/hua_granite_pale.png": "textures/block/hua_granite_pale.png",
+  "textures/hua_granite_pale_b.png": "textures/block/hua_granite_pale_b.png",
+  "textures/hua_granite_stained.png": "textures/block/hua_granite_stained.png",
+  "textures/hua_granite_stained_b.png": "textures/block/hua_granite_stained_b.png",
+  "textures/hua_litter_side.png": "textures/block/hua_litter_side.png",
+  "textures/hua_litter_top.png": "textures/block/hua_litter_top.png",
+  "textures/manual_shelf_0.png": "textures/block/manual_shelf_0.png",
+  "textures/manual_shelf_1.png": "textures/block/manual_shelf_1.png",
+  "textures/manual_shelf_2.png": "textures/block/manual_shelf_2.png",
+  "textures/plum_blossom.png": "textures/block/plum_blossom.png",
+  "textures/plum_blossom_pale.png": "textures/block/plum_blossom_pale.png",
+  "textures/plum_blossom_red.png": "textures/block/plum_blossom_red.png",
+  "textures/polished_hua_granite.png": "textures/block/polished_hua_granite.png",
+  "textures/spirit_vein_stone.png": "textures/block/spirit_vein_stone.png"
+ },
+ "block_models": {
+  "models/hua_granite.json": "models/block/hua_granite.json",
+  "models/hua_granite_b.json": "models/block/hua_granite_b.json",
+  "models/hua_granite_cracked.json": "models/block/hua_granite_cracked.json",
+  "models/hua_granite_cracked_b.json": "models/block/hua_granite_cracked_b.json",
+  "models/hua_granite_dark.json": "models/block/hua_granite_dark.json",
+  "models/hua_granite_dark_b.json": "models/block/hua_granite_dark_b.json",
+  "models/hua_granite_mossy.json": "models/block/hua_granite_mossy.json",
+  "models/hua_granite_pale.json": "models/block/hua_granite_pale.json",
+  "models/hua_granite_pale_b.json": "models/block/hua_granite_pale_b.json",
+  "models/hua_granite_stained.json": "models/block/hua_granite_stained.json",
+  "models/hua_granite_stained_b.json": "models/block/hua_granite_stained_b.json",
+  "models/hua_litter.json": "models/block/hua_litter.json",
+  "models/manual_shelf_0.json": "models/block/manual_shelf_0.json",
+  "models/manual_shelf_1.json": "models/block/manual_shelf_1.json",
+  "models/manual_shelf_2.json": "models/block/manual_shelf_2.json",
+  "models/plum_blossom.json": "models/block/plum_blossom.json",
+  "models/plum_blossom_pale.json": "models/block/plum_blossom_pale.json",
+  "models/plum_blossom_red.json": "models/block/plum_blossom_red.json",
+  "models/polished_hua_granite.json": "models/block/polished_hua_granite.json",
+  "models/polished_hua_granite_slab.json": "models/block/polished_hua_granite_slab.json",
+  "models/polished_hua_granite_slab_top.json": "models/block/polished_hua_granite_slab_top.json",
+  "models/polished_hua_granite_stairs.json": "models/block/polished_hua_granite_stairs.json",
+  "models/polished_hua_granite_stairs_inner.json": "models/block/polished_hua_granite_stairs_inner.json",
+  "models/polished_hua_granite_stairs_outer.json": "models/block/polished_hua_granite_stairs_outer.json",
+  "models/polished_hua_granite_wall_inventory.json": "models/block/polished_hua_granite_wall_inventory.json",
+  "models/polished_hua_granite_wall_post.json": "models/block/polished_hua_granite_wall_post.json",
+  "models/polished_hua_granite_wall_side.json": "models/block/polished_hua_granite_wall_side.json",
+  "models/polished_hua_granite_wall_side_tall.json": "models/block/polished_hua_granite_wall_side_tall.json",
+  "models/spirit_vein_stone.json": "models/block/spirit_vein_stone.json",
+  "models/tent_canvas_gable_ridge_crimson.json": "models/block/tent_canvas_gable_ridge_crimson.json",
+  "models/tent_canvas_gable_ridge_linen.json": "models/block/tent_canvas_gable_ridge_linen.json",
+  "models/tent_canvas_gable_ridge_white.json": "models/block/tent_canvas_gable_ridge_white.json",
+  "models/tent_canvas_gable_slope_crimson.json": "models/block/tent_canvas_gable_slope_crimson.json",
+  "models/tent_canvas_gable_slope_linen.json": "models/block/tent_canvas_gable_slope_linen.json",
+  "models/tent_canvas_gable_slope_white.json": "models/block/tent_canvas_gable_slope_white.json",
+  "models/tent_canvas_ridge_crimson.json": "models/block/tent_canvas_ridge_crimson.json",
+  "models/tent_canvas_ridge_linen.json": "models/block/tent_canvas_ridge_linen.json",
+  "models/tent_canvas_ridge_white.json": "models/block/tent_canvas_ridge_white.json",
+  "models/tent_canvas_slope_crimson.json": "models/block/tent_canvas_slope_crimson.json",
+  "models/tent_canvas_slope_linen.json": "models/block/tent_canvas_slope_linen.json",
+  "models/tent_canvas_slope_white.json": "models/block/tent_canvas_slope_white.json",
+  "models/tent_canvas_wall_crimson.json": "models/block/tent_canvas_wall_crimson.json",
+  "models/tent_canvas_wall_linen.json": "models/block/tent_canvas_wall_linen.json",
+  "models/tent_canvas_wall_white.json": "models/block/tent_canvas_wall_white.json"
+ },
+ "item_textures": {
+  "textures/beauty_tear.png": "textures/item/beauty_tear.png",
+  "textures/junk_letters.png": "textures/item/junk_letters.png",
+  "textures/junk_manual.png": "textures/item/junk_manual.png",
+  "textures/junk_manual_blue.png": "textures/item/junk_manual_blue.png",
+  "textures/junk_manual_red.png": "textures/item/junk_manual_red.png",
+  "textures/manual_page.png": "textures/item/manual_page.png",
+  "textures/method_scroll.png": "textures/item/method_scroll.png",
+  "textures/pill_origin_energy.png": "textures/item/pill_origin_energy.png",
+  "textures/pill_snow_plum.png": "textures/item/pill_snow_plum.png",
+  "textures/pill_thousand_poison.png": "textures/item/pill_thousand_poison.png",
+  "textures/silver_tael.png": "textures/item/silver_tael.png",
+  "textures/technique_manual.png": "textures/item/technique_manual.png",
+  "textures/technique_manual_advanced.png": "textures/item/technique_manual_advanced.png",
+  "textures/technique_manual_secret.png": "textures/item/technique_manual_secret.png",
+  "textures/wooden_sword.png": "textures/item/wooden_sword.png"
+ },
+ "item_models": {
+  "models/bandit_archer_spawn_egg.json": "models/item/bandit_archer_spawn_egg.json",
+  "models/bandit_swordsman_spawn_egg.json": "models/item/bandit_swordsman_spawn_egg.json",
+  "models/beauty_tear.json": "models/item/beauty_tear.json",
+  "models/hua_granite.json": "models/item/hua_granite.json",
+  "models/hua_granite_cracked.json": "models/item/hua_granite_cracked.json",
+  "models/hua_granite_dark.json": "models/item/hua_granite_dark.json",
+  "models/hua_granite_mossy.json": "models/item/hua_granite_mossy.json",
+  "models/hua_granite_pale.json": "models/item/hua_granite_pale.json",
+  "models/hua_granite_stained.json": "models/item/hua_granite_stained.json",
+  "models/hua_litter.json": "models/item/hua_litter.json",
+  "models/huashan_sword.json": "models/item/huashan_sword.json",
+  "models/junk_letters.json": "models/item/junk_letters.json",
+  "models/junk_manual.json": "models/item/junk_manual.json",
+  "models/junk_manual_blue.json": "models/item/junk_manual_blue.json",
+  "models/junk_manual_red.json": "models/item/junk_manual_red.json",
+  "models/manual_page.json": "models/item/manual_page.json",
+  "models/manual_shelf.json": "models/item/manual_shelf.json",
+  "models/method_scroll.json": "models/item/method_scroll.json",
+  "models/peddler_spawn_egg.json": "models/item/peddler_spawn_egg.json",
+  "models/pill_origin_energy.json": "models/item/pill_origin_energy.json",
+  "models/pill_snow_plum.json": "models/item/pill_snow_plum.json",
+  "models/pill_thousand_poison.json": "models/item/pill_thousand_poison.json",
+  "models/plum_blossom.json": "models/item/plum_blossom.json",
+  "models/plum_blossom_pale.json": "models/item/plum_blossom_pale.json",
+  "models/plum_blossom_red.json": "models/item/plum_blossom_red.json",
+  "models/polished_hua_granite.json": "models/item/polished_hua_granite.json",
+  "models/polished_hua_granite_slab.json": "models/item/polished_hua_granite_slab.json",
+  "models/polished_hua_granite_stairs.json": "models/item/polished_hua_granite_stairs.json",
+  "models/polished_hua_granite_wall.json": "models/item/polished_hua_granite_wall.json",
+  "models/propped_shelf.json": "models/item/propped_shelf.json",
+  "models/sect_disciple_spawn_egg.json": "models/item/sect_disciple_spawn_egg.json",
+  "models/silver_tael.json": "models/item/silver_tael.json",
+  "models/spirit_vein_stone.json": "models/item/spirit_vein_stone.json",
+  "models/tang_dagger.json": "models/item/tang_dagger.json",
+  "models/technique_manual.json": "models/item/technique_manual.json",
+  "models/technique_manual_advanced.json": "models/item/technique_manual_advanced.json",
+  "models/technique_manual_secret.json": "models/item/technique_manual_secret.json",
+  "models/tent_canvas.json": "models/item/tent_canvas.json",
+  "models/wooden_sword.json": "models/item/wooden_sword.json"
+ }
+}
