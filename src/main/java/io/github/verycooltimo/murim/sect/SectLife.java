@@ -256,6 +256,9 @@ public final class SectLife {
             return;
         }
         SectSchedule.Kind kind = r.task().kind();
+        if (kind != SectSchedule.Kind.SLEEP && npc.isSleeping()) {
+            npc.stopSleeping();
+        }
         if (npc.position().distanceToSqr(r.spot()) > 9.0D) {
             if (npc.isSleeping()) {
                 npc.stopSleeping();

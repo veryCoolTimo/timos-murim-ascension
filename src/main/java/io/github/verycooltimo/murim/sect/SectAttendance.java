@@ -82,8 +82,11 @@ public final class SectAttendance {
     /** Порядок строк в журнале. */
     static final List<Activity> SHOWN = List.of(Activity.FORMATION, Activity.LESSON, Activity.MEAL, Activity.CLIMB);
 
-    /** Перекличка строя: был на горе до этого часа строя (тиков от 23000; рассвет — 0, т. е. 1000). */
-    public static final int ROLL_FORMATION = 1000;
+    /**
+     * Перекличка строя: был на горе до этого часа строя (тиков от 23000; рассвет — 0, т. е. 1000). Запас после рассвета —
+     * для проснувшегося в общежитии: сон кончается в 0, до конца строя ещё 1000 тиков, десяти форм хватает 300.
+     */
+    public static final int ROLL_FORMATION = 1300;
     /** Перекличка занятий: был на горе в первую половину занятий. */
     public static final int ROLL_LESSON = 3500;
     /** Трапеза засчитана: столько тиков за столами. */
@@ -197,7 +200,8 @@ public final class SectAttendance {
      * усердие подряд, пропущенные строи и наряд. Дни вне горы не меняют ни усердия, ни счёта пропусков.
      */
     public static Settled roll(Log log, long day) {
-        if (log.today().day() == day) {
+        // Тот же день — или время отмотали назад (команда): журнал не закрывается и награды не повторяются.
+        if (log.today().day() == day || log.today().day() != Long.MIN_VALUE && day < log.today().day()) {
             return new Settled(log, 0, false, false);
         }
         Day closed = log.today();
@@ -206,13 +210,18 @@ public final class SectAttendance {
             Day last = closed.present() ? closed : log.last();
             return new Settled(new Log(fresh, last, log.streak(), log.missedRow(), log.chores(), log.scolded()), 0, false, false);
         }
+        // Строй сделан — счёт пропусков строя сначала, даже если занятия пропущены (codex 05.10).
+        int missed = closed.did(Activity.FORMATION) ? 0 : log.missedRow();
         if (closed.full()) {
             int streak = log.streak() + 1;
             int bonus = log.chores() ? 0 : DAY_BONUS + (streak >= STREAK_DAYS ? 1 : 0);
-            int missed = closed.expects(Activity.FORMATION) ? 0 : log.missedRow();
             return new Settled(new Log(fresh, closed, streak, missed, log.chores(), log.scolded()), bonus, true, false);
         }
-        int missed = closed.missed(Activity.FORMATION) ? log.missedRow() + 1 : log.missedRow();
+        // Пропуск строя считается, только если игрок остался при секте и на занятия (ушёл в поход после переклички —
+        // не пропуск).
+        if (closed.missed(Activity.FORMATION) && closed.expects(Activity.LESSON)) {
+            missed = log.missedRow() + 1;
+        }
         boolean given = !log.chores() && missed >= CHORE_AFTER;
         return new Settled(new Log(fresh, closed, 0, missed, log.chores() || given, log.scolded()), 0, false, given);
     }
@@ -260,12 +269,7 @@ public final class SectAttendance {
                 .withStyle(ChatFormatting.GREEN), true);
         MurimMod.LOGGER.info("Журнал секты: {} — {} (день {})", p.getName().getString(), a.id(), day);
         switch (a) {
-            case LESSON -> {
-                // Пока наряд не отработан, занятие засчитывается без заслуг («меньше заслуг», не наказание).
-                if (!log.chores()) {
-                    SectService.contribute(p, LESSON_CONTRIBUTION);
-                }
-            }
+            case LESSON -> SectService.contribute(p, LESSON_CONTRIBUTION);
             case CLIMB -> SectService.contribute(p, CLIMB_CONTRIBUTION);
             case MEAL -> {
                 // Злаки и орехи — «самая дешёвая диета» (гл. 76): сытно не бывает, но силы есть.
@@ -326,7 +330,14 @@ public final class SectAttendance {
     /** Раз в {@code dt} тиков: смена дня, перекличка, трапеза, столбы, урок, подъём, ворчание наставника. */
     public static void tick(ServerPlayer p, SectLayout layout, int dt) {
         settle(p);
-        climb(p);
+        long day = today(p);
+        CompoundTag tag = p.getPersistentData().getCompound(PRESENCE_TAG);
+        if (tag.getLong("day") != day) {
+            tag = new CompoundTag();
+            tag.putLong("day", day);
+        }
+        climb(p, tag);
+        p.getPersistentData().put(PRESENCE_TAG, tag);
         Vec3 pos = p.position();
         if (!onShelf(layout, pos)) {
             return;
@@ -334,17 +345,17 @@ public final class SectAttendance {
         long time = p.level().getDayTime();
         SectSchedule.Period period = SectSchedule.at(time);
         int since = SectSchedule.sincePeriodStart(time);
-        long day = today(p);
         Log log = log(p);
+        boolean called = false;
         if (period == SectSchedule.Period.FORMATION && since <= ROLL_FORMATION && !log.today().expects(Activity.FORMATION)) {
             p.setData(ModAttachments.SECT_ATTENDANCE, mark(log, day, Activity.FORMATION, true));
+            called = true;
         } else if (period == SectSchedule.Period.TRAINING && since <= ROLL_LESSON && !log.today().expects(Activity.LESSON)) {
             p.setData(ModAttachments.SECT_ATTENDANCE, mark(log, day, Activity.LESSON, true));
+            called = true;
         }
-        CompoundTag tag = p.getPersistentData().getCompound(PRESENCE_TAG);
-        if (tag.getLong("day") != day) {
-            tag = new CompoundTag();
-            tag.putLong("day", day);
+        if (called) {
+            explainOnce(p);
         }
         if (period.meal() && (layout.inside("dining", pos, 2.0D) || nearTable(layout, pos))) {
             tag.putInt("meal", tag.getInt("meal") + dt);
@@ -353,7 +364,9 @@ public final class SectAttendance {
             }
         }
         if (period == SectSchedule.Period.TRAINING) {
-            if (layout.inside("poles", pos, 0.5D)) {
+            // На столбах — значит на столбе (выше площадки), а не рядом на земле.
+            Vec3 pad = layout.at("poles", 0.0D, 0.0D);
+            if (layout.inside("poles", pos, 0.5D) && pad != null && pos.y >= pad.y + 1.0D && p.onGround()) {
                 tag.putInt("poles", tag.getInt("poles") + dt);
             }
             if (nearLecture(p)) {
@@ -388,35 +401,67 @@ public final class SectAttendance {
     static boolean nearLecture(ServerPlayer p) {
         for (SectDisciple d : p.level().getEntitiesOfClass(SectDisciple.class, p.getBoundingBox().inflate(7.0D),
                 d -> "hyun_sang".equals(d.memberKey()))) {
+            // Урок идёт: старейшина на месте и говорит (поза разговора), а не спит вдали и не идёт.
             SectSchedule.Task t = d.member().map(m -> SectSchedule.task(m, p.level().getDayTime())).orElse(null);
-            if (t != null && t.kind() == SectSchedule.Kind.LECTURE) {
+            if (t != null && t.kind() == SectSchedule.Kind.LECTURE && !d.dormant()
+                    && d.pose() == io.github.verycooltimo.murim.entity.SectPose.TALK) {
                 return true;
             }
         }
         return false;
     }
 
-    /** Подъём: верхний уступ тренировочной стены ({@code climb_16}) ногами, днём. */
-    static void climb(ServerPlayer p) {
-        if (SectSchedule.at(p.level().getDayTime()) == SectSchedule.Period.NIGHT || p.getAbilities().flying || log(p).today().did(Activity.CLIMB)) {
+    /**
+     * Подъём: сегодня начал с нижнего уступа тренировочной стены ({@code climb_1}) и дошёл до верхнего
+     * ({@code climb_16}) ногами, днём. Стоять наверху день за днём — не подъём (codex 05.10).
+     */
+    static void climb(ServerPlayer p, CompoundTag tag) {
+        if (SectSchedule.at(p.level().getDayTime()) == SectSchedule.Period.NIGHT || p.getAbilities().flying
+                || p.level().dimension() != net.minecraft.world.level.Level.OVERWORLD || log(p).today().did(Activity.CLIMB)) {
             return;
         }
         MountHuaSite site = MountHuaSites.get(p.getServer());
         if (site == null) {
             return;
         }
-        MountHuaPlan.Ledge top = MountHuaPlan.CLIMB.get(MountHuaPlan.CLIMB.size() - 1);
+        MountHuaPlan.Ledge first = null;
+        MountHuaPlan.Ledge top = null;
         for (MountHuaPlan.Ledge l : MountHuaPlan.CLIMB) {
             if (l.kind() != MountHuaPlan.Kind.SIDE) {
+                first = first == null ? l : first;
                 top = l;
             }
         }
-        int[] w = site.toWorld(top.u(), top.v());
-        double y = site.worldY(top.y());
-        if (p.distanceToSqr(w[0] + 0.5D, y + 1.0D, w[1] + 0.5D) < 6.0D * 6.0D) {
+        if (first == null) {
+            return;
+        }
+        if (near(p, site, first)) {
+            tag.putBoolean("climb_start", true);
+        } else if (tag.getBoolean("climb_start") && near(p, site, top) && p.onGround()) {
             record(p, Activity.CLIMB);
         }
     }
+
+    private static boolean near(ServerPlayer p, MountHuaSite site, MountHuaPlan.Ledge l) {
+        int[] w = site.toWorld(l.u(), l.v());
+        return p.distanceToSqr(w[0] + 0.5D, site.worldY(l.y()) + 1.0D, w[1] + 0.5D) < 6.0D * 6.0D;
+    }
+
+    /**
+     * Первая перекличка ученика: наставник объясняет распорядок — что, где, как засчитывается и что за это (codex 05.10:
+     * «обязательства выставляются молча»). Один раз за всю жизнь в секте.
+     */
+    static void explainOnce(ServerPlayer p) {
+        SectState s = p.getData(ModAttachments.SECT);
+        if (s.has(EXPLAINED)) {
+            return;
+        }
+        p.setData(ModAttachments.SECT, s.with(EXPLAINED));
+        p.displayClientMessage(Component.translatable("murim.sect.log.rules").withStyle(ChatFormatting.GOLD), false);
+    }
+
+    /** Флаг секты: распорядок объяснён. */
+    public static final String EXPLAINED = "log.explained";
 
     /**
      * Строй пропущен (перекличка была, форм нет), строй уже кончился: наставник, если он рядом, ворчит — один раз за
@@ -498,11 +543,12 @@ public final class SectAttendance {
             key = "away";
         } else if (log.chores() && !d.did(Activity.CHORE)) {
             key = "chores";
-        } else if (d.missed(Activity.FORMATION)) {
+        } else if (d.missed(Activity.FORMATION) && !(d == log.today() && open(p, Activity.FORMATION))) {
             key = "missed_formation";
         } else if (d.missed(Activity.LESSON) && !(d == log.today() && open(p, Activity.LESSON))) {
             key = "missed_lesson";
-        } else if (d.full() || d.did(Activity.FORMATION) && d.did(Activity.LESSON)) {
+        } else if ((d.full() || d.did(Activity.FORMATION) && d.did(Activity.LESSON))
+                && !(d == log.today() && !d.did(Activity.LESSON) && open(p, Activity.LESSON))) {
             key = log.streak() + (d == log.today() ? 1 : 0) >= STREAK_DAYS ? "streak" : "full";
         } else {
             key = "partial";

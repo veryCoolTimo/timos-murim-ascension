@@ -60,6 +60,8 @@ public final class ScheduleGoal extends Goal {
     private Vec3 stoveSpot;
     private float stoveYaw;
     private int stoveSearch;
+    /** Сколько тиков лекарь идёт к раненому. */
+    private int treatWalk;
     /** Сменщик уже принял пост в эту часть суток (день × 8 + часть). */
     private long handedOver = Long.MIN_VALUE;
 
@@ -523,9 +525,18 @@ public final class ScheduleGoal extends Goal {
     /** Лекарь лечит раненого: на колено рядом, раз в секунду — здоровье назад; вылечил — тот кланяется, лекарь кивает. */
     private void treat() {
         SectDisciple patient = find(current.task().partner(), 10.0D);
-        if (!arrive(current.spot(), 0.5D) || patient == null) {
+        if (patient == null || !patient.wounded()) {
             return;
         }
+        if (!arrive(current.spot(), 0.5D)) {
+            // Не дойти (нет лестницы между площадками): через 30 с раненый «дошёл до павильона сам» — лекарь не залипает.
+            if (++treatWalk > 600) {
+                treatWalk = 0;
+                patient.setWounded(false);
+            }
+            return;
+        }
+        treatWalk = 0;
         npc.faceEntity(patient, 30.0F);
         npc.getLookControl().setLookAt(patient, 30.0F, 30.0F);
         patient.attend(npc, 30);

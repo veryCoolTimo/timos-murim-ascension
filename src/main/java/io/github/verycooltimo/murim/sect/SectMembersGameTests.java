@@ -177,9 +177,14 @@ public final class SectMembersGameTests {
         long day = SectSchedule.day(helper.getLevel().getDayTime());
         helper.assertTrue(SectAttendance.current(p).scolded() == day, "наставник не заметил пропуск строя");
         helper.assertTrue("scold".equals(DialogueService.route(p, mentor).node()), "разговор не с упрёка");
+        // Остался при секте на занятия — пропуск строя засчитан (ушедший в поход после переклички — нет).
+        helper.getLevel().setDayTime(base + 24000L + 2500L);
+        SectAttendance.tick(p, yard, 20);
 
-        // Второй рассвет без строя.
+        // Второй рассвет без строя, снова на занятиях.
         helper.getLevel().setDayTime(base + 48000L - 700L);
+        SectAttendance.tick(p, yard, 20);
+        helper.getLevel().setDayTime(base + 48000L + 2500L);
         SectAttendance.tick(p, yard, 20);
         // Третий рассвет: смена дня подводит итог — наряд.
         helper.getLevel().setDayTime(base + 72000L - 700L);
