@@ -240,7 +240,7 @@ public final class LoadoutScreen extends Screen {
             graphics.pose().pushPose();
             graphics.pose().translate(fx, fy + SLOT_SIZE + 3 + 7 * i, 0.0F);
             graphics.pose().scale(0.75F, 0.75F, 1.0F);
-            graphics.drawString(font, label.get(i), 0, 0, INK_GREY, false);
+            graphics.drawString(font, label.get(i), 0, 0, INK, false);
             graphics.pose().popPose();
         }
         graphics.blit(SLOT, fx, fy, 0, 0.0F, 0.0F, SLOT_SIZE, SLOT_SIZE, SLOT_SIZE, SLOT_SIZE);
