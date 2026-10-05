@@ -53,6 +53,16 @@ public final class DevBanditCampHandler {
     /** Точки съёмки сцены tents: x, y, z, yaw, pitch. */
     private static volatile List<double[]> views = List.of();
     private static volatile int peddlerId = -1;
+    /** Сцена brawl: камера отъезжает на 14 блоков назад-вверх, чтобы в кадре был весь двор и кольцо ждущих. */
+    private static boolean wideCamera;
+
+    /** API: reference/neoforge-src/net/neoforged/neoforge/client/event/CalculateDetachedCameraDistanceEvent.java */
+    @SubscribeEvent
+    static void onCameraDistance(net.neoforged.neoforge.client.event.CalculateDetachedCameraDistanceEvent event) {
+        if (ENABLED && wideCamera) {
+            event.setDistance(14.0F);
+        }
+    }
 
     private static boolean setup;
     private static int stage = -1;
@@ -242,6 +252,7 @@ public final class DevBanditCampHandler {
                 // Бой без заморозки: тревога поднимает лагерь, вблизи дерутся двое, остальные ждут кольцом.
                 // Сзади и сверху на центр банды: в кадре и двое в бою, и кольцо ждущих.
                 mc.options.setCameraType(CameraType.THIRD_PERSON_BACK);
+                wideCamera = act < 300;
                 Entity t = mc.level.getEntity(targetId);
                 Entity near = null;
                 double best = 9.0D;
@@ -265,7 +276,7 @@ public final class DevBanditCampHandler {
                     float yaw = (float) Math.toDegrees(Math.atan2(-dx, dz));
                     mc.player.setYRot(yaw);
                     mc.player.setYHeadRot(yaw);
-                    mc.player.setXRot(42.0F);
+                    mc.player.setXRot(48.0F);
                 } else if (t != null) {
                     face(mc, t);
                 }
@@ -593,6 +604,12 @@ public final class DevBanditCampHandler {
                 new AABB(p.blockPosition()).inflate(96.0D), Entity::isAlive);
         // По игровому времени, а не по числу вызовов: TickTask исполняется и между тиками, по многу раз за тик.
         long waited = level.getGameTime() - since;
+        if (waited % 100L == 0L) {
+            var start = io.github.verycooltimo.murim.trade.PeddlerSpawns.village(level, p.blockPosition());
+            BlockPos c = start == null ? null : start.getPieces().get(0).getBoundingBox().getCenter();
+            MurimMod.LOGGER.info("Bandit camp capture: at {} village {} centre ticking {}", p.blockPosition().toShortString(),
+                    c == null ? "-" : c.toShortString(), c != null && level.isPositionEntityTicking(c));
+        }
         if (found.isEmpty() && waited < 400L) {
             server.tell(new net.minecraft.server.TickTask(server.getTickCount() + 1, () -> waitPeddler(server, village, since)));
             return;

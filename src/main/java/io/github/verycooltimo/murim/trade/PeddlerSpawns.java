@@ -165,7 +165,7 @@ public final class PeddlerSpawns {
      * низкие, и ноги игрока на дороге могут оказаться над ними [НЕПРОВЕРЕНО: сравнить с
      * {@code getStructureWithPieceAt} на дорогах деревни]. Проверено {@code /murim peddler} на сиде 20261004.
      */
-    static StructureStart village(ServerLevel level, BlockPos pos) {
+    public static StructureStart village(ServerLevel level, BlockPos pos) {
         var registry = level.registryAccess().registryOrThrow(net.minecraft.core.registries.Registries.STRUCTURE);
         for (StructureStart s : level.structureManager().startsForStructure(new net.minecraft.world.level.ChunkPos(pos),
                 st -> registry.wrapAsHolder(st).is(StructureTags.VILLAGE))) {

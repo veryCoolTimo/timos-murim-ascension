@@ -19,6 +19,7 @@ import net.minecraft.world.level.block.LanternBlock;
 import net.minecraft.world.level.block.RotatedPillarBlock;
 import net.minecraft.world.level.block.SlabBlock;
 import net.minecraft.world.level.block.StairBlock;
+import net.minecraft.world.level.block.TrapDoorBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.AttachFace;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
@@ -103,19 +104,19 @@ public final class CampBuilder {
      * Гладкий песчаник и кварц читаются как небелёный и белёный холст, ель — как кожа на жердях
      * (шерстяная «ступенчатая горка» отвергнута: наклонной шерсти в ванили нет, codex 04.10).
      */
-    record Canvas(Block stairs, Block slab, Block full) {
+    record Canvas(Block stairs, Block slab, Block full, Block trapdoor) {
     }
 
     private static final Canvas[] TENT_CANVAS = {
-            new Canvas(Blocks.SMOOTH_SANDSTONE_STAIRS, Blocks.SMOOTH_SANDSTONE_SLAB, Blocks.SMOOTH_SANDSTONE),
-            new Canvas(Blocks.SPRUCE_STAIRS, Blocks.SPRUCE_SLAB, Blocks.SPRUCE_PLANKS),
-            new Canvas(Blocks.SMOOTH_QUARTZ_STAIRS, Blocks.SMOOTH_QUARTZ_SLAB, Blocks.SMOOTH_QUARTZ),
-            new Canvas(Blocks.SMOOTH_SANDSTONE_STAIRS, Blocks.SMOOTH_SANDSTONE_SLAB, Blocks.SMOOTH_SANDSTONE)};
+            new Canvas(Blocks.SMOOTH_SANDSTONE_STAIRS, Blocks.SMOOTH_SANDSTONE_SLAB, Blocks.SMOOTH_SANDSTONE, Blocks.BIRCH_TRAPDOOR),
+            new Canvas(Blocks.SPRUCE_STAIRS, Blocks.SPRUCE_SLAB, Blocks.SPRUCE_PLANKS, Blocks.SPRUCE_TRAPDOOR),
+            new Canvas(Blocks.SMOOTH_QUARTZ_STAIRS, Blocks.SMOOTH_QUARTZ_SLAB, Blocks.SMOOTH_QUARTZ, Blocks.BIRCH_TRAPDOOR),
+            new Canvas(Blocks.SMOOTH_SANDSTONE_STAIRS, Blocks.SMOOTH_SANDSTONE_SLAB, Blocks.SMOOTH_SANDSTONE, Blocks.BIRCH_TRAPDOOR)};
     private static final Block[] TENT_CARPET = {Blocks.BROWN_CARPET, Blocks.GRAY_CARPET, Blocks.GREEN_CARPET, Blocks.LIGHT_GRAY_CARPET};
     /** Шатёр главаря: охристо-красный холст или тёмная кожа; задняя стенка — шерсть цвета его знамени. */
     private static final Canvas[] CHIEF_CANVAS = {
-            new Canvas(Blocks.SMOOTH_RED_SANDSTONE_STAIRS, Blocks.SMOOTH_RED_SANDSTONE_SLAB, Blocks.RED_WOOL),
-            new Canvas(Blocks.DARK_OAK_STAIRS, Blocks.DARK_OAK_SLAB, Blocks.BLACK_WOOL)};
+            new Canvas(Blocks.SMOOTH_RED_SANDSTONE_STAIRS, Blocks.SMOOTH_RED_SANDSTONE_SLAB, Blocks.RED_WOOL, Blocks.ACACIA_TRAPDOOR),
+            new Canvas(Blocks.DARK_OAK_STAIRS, Blocks.DARK_OAK_SLAB, Blocks.BLACK_WOOL, Blocks.DARK_OAK_TRAPDOOR)};
 
     /** Масштаб мяса на вертеле и прута (ItemDisplay, по осям x, y, z модели): стержень ×6 по своей оси — 3 блока. */
     public static final float[] MEAT_SCALE = {0.75F, 0.75F, 0.75F};
@@ -320,6 +321,13 @@ public final class CampBuilder {
                 int[] c = rel(s, a, side);
                 if (side == 0) {
                     put(c, y + half, a == -depth ? full : ridgeSlab);
+                } else if (Math.abs(side) == half) {
+                    // Нижний ряд — тонкая отвесная стенка (открытый люк у внешнего края), а не ещё одна ступень:
+                    // скат не спускается террасами до земли (codex 04.10: «ступенчатая горка»).
+                    put(c, y + 1, canvas.trapdoor().defaultBlockState()
+                            .setValue(TrapDoorBlock.FACING, side < 0 ? toPlus : toMinus)
+                            .setValue(TrapDoorBlock.OPEN, true)
+                            .setValue(TrapDoorBlock.HALF, Half.BOTTOM));
                 } else {
                     // Скат: ступень поднимается к коньку.
                     int lvl = half - Math.abs(side);
@@ -366,14 +374,13 @@ public final class CampBuilder {
             put(rel(s, -depth + 1, -1), y + 1, Blocks.BARREL.defaultBlockState().setValue(BarrelBlock.FACING, Direction.UP));
             put(rel(s, -depth + 1, -1), y + 2, Blocks.LANTERN.defaultBlockState());
             int rot = (s.facing() & 3) * 4;
-            // Знамёна на жердях у входа: над пологом их видно со всего двора.
-            fence(rel(s, front + 1, -(half - 1)), y + 1, Blocks.SPRUCE_FENCE);
-            fence(rel(s, front + 1, half - 1), y + 1, Blocks.SPRUCE_FENCE);
-            put(rel(s, front + 1, -(half - 1)), y + 2, Blocks.RED_BANNER.defaultBlockState().setValue(BannerBlock.ROTATION, rot));
-            put(rel(s, front + 1, half - 1), y + 2, Blocks.BLACK_BANNER.defaultBlockState().setValue(BannerBlock.ROTATION, rot));
+            // Знамёна на жердях-растяжках у входа: над пологом их видно со всего двора.
+            // По углам, вне проёма входа (codex: знамя заслоняло вход).
+            put(rel(s, front + 1, -half), y + 2, Blocks.RED_BANNER.defaultBlockState().setValue(BannerBlock.ROTATION, rot));
+            put(rel(s, front + 1, half), y + 2, Blocks.BLACK_BANNER.defaultBlockState().setValue(BannerBlock.ROTATION, rot));
         } else {
-            // Свёрток с пожитками у задней стенки.
-            put(rel(s, -depth + 1, 0), y + 1, Blocks.BARREL.defaultBlockState().setValue(BarrelBlock.FACING, Direction.UP));
+            // Фонарь у задней стенки: в открытом входе виден освещённый пустой шатёр с постелями.
+            put(rel(s, -depth + 1, 0), y + 1, Blocks.LANTERN.defaultBlockState());
         }
     }
 
@@ -591,54 +598,78 @@ public final class CampBuilder {
         return false;
     }
 
-    /** Проём ворот и по два шага тропы по обе стороны: ямки здесь подсыпаются до высоты ворот. */
-    private boolean gateApron(int dx, int dz) {
-        int[] g = plan.gateCentre();
-        double ddx = dx - g[0], ddz = dz - g[1];
-        return walkway(dx, dz) && ddx * ddx + ddz * ddz <= 2.6D * 2.6D;
-    }
+    /** Сколько блоков тропа может подняться над рельефом при сглаживании (выше — оставить как есть). */
+    private static final int WALK_FILL_MAX = 3;
+    /** Радиус сглаживания тропы (манхэттенский). */
+    private static final int WALK_REACH = 4;
 
     /**
-     * Высота тропы в клетке без учёта своих ступеней: у ворот — высота ворот, иначе — рельеф.
+     * Рельеф под тропой без своих ступеней: верх земли, а под полублоком-ступенью — блок под ним.
      * {@code Integer.MIN_VALUE} — под ногами не земля тропы (листва, бревно, вода).
      */
-    private int walkHeight(int x, int z) {
-        int dx = x - cx, dz = z - cz;
+    private int natural(int x, int z) {
         int g = sink.ground(x, z);
-        if (gateApron(dx, dz) && g == gateY() - 1) {
-            return gateY();
-        }
         BlockState top = sink.get(x, g, z);
         if (stepSlab(top)) {
             return g - 1;
         }
         boolean soil = top.is(Blocks.DIRT_PATH) || top.is(Blocks.GRAVEL) || top.is(Blocks.PACKED_MUD) || top.is(Blocks.GRASS_BLOCK)
-                || top.is(Blocks.DIRT) || top.is(Blocks.COARSE_DIRT) || top.is(Blocks.PODZOL) || top.is(Blocks.MYCELIUM);
+                || top.is(Blocks.DIRT) || top.is(Blocks.COARSE_DIRT) || top.is(Blocks.PODZOL) || top.is(Blocks.MYCELIUM)
+                || top.is(Blocks.COBBLESTONE) || top.is(Blocks.MOSSY_COBBLESTONE) || top.is(Blocks.ANDESITE);
         return soil ? g : Integer.MIN_VALUE;
     }
 
     /**
-     * Ровная земля у ворот (автор: «ступенчатая земля у ворот»): в проёме ворот и в двух шагах тропы с каждой
-     * стороны ямка на блок ниже ворот подсыпана вровень; по всей тропе уступ в один блок сглажен
-     * полублоком-ступенью из булыжника на нижней клетке.
+     * Высота тропы после сглаживания: не ниже, чем (высота соседней клетки тропы − расстояние до неё).
+     * Так соседние клетки тропы различаются не больше чем на блок, а уступ в блок закрывает полублок.
+     * Считается из рельефа и одинаково в любом чанке: поднятая соседом клетка даёт ту же оценку
+     * (неравенство треугольника), поэтому порядок генерации чанков не важен.
+     */
+    private int walkTarget(int x, int z) {
+        int best = natural(x, z);
+        if (best == Integer.MIN_VALUE) {
+            return best;
+        }
+        int dx = x - cx, dz = z - cz;
+        for (int ox = -WALK_REACH; ox <= WALK_REACH; ox++) {
+            for (int oz = -WALK_REACH; oz <= WALK_REACH; oz++) {
+                int d = Math.abs(ox) + Math.abs(oz);
+                if (d == 0 || d > WALK_REACH || !walkway(dx + ox, dz + oz)) {
+                    continue;
+                }
+                int n = natural(x + ox, z + oz);
+                if (n != Integer.MIN_VALUE) {
+                    best = Math.max(best, n - d);
+                }
+            }
+        }
+        return best - natural(x, z) > WALK_FILL_MAX ? natural(x, z) : best;
+    }
+
+    /**
+     * Тропа от леса через ворота к костру без уступов (автор: «ступенчатая земля у ворот»; codex 04.10:
+     * «обрывы в блок и больше на подходе»): клетка тропы ниже соседних поднимается насыпью из бутового
+     * камня (бока — сухая кладка, а не земля) до высоты, при которой соседи различаются не больше чем на
+     * блок; оставшийся уступ в блок закрывает полублок-ступень из булыжника на нижней клетке.
      */
     private void gateGround() {
         int r = plan.radius() + CampLayout.TRAIL_LENGTH + 1;
-        int gy = gateY();
         for (int dx = -r; dx <= r; dx++) {
             for (int dz = -r; dz <= r; dz++) {
                 int x = cx + dx, z = cz + dz;
-                if (!sink.owns(x, z) || !gateApron(dx, dz)) {
+                if (!sink.owns(x, z) || !walkway(dx, dz)) {
                     continue;
                 }
-                int g = sink.ground(x, z);
-                // Только подсыпать ямку на блок: срез и высокая подсыпка дают яму или горку на краю (стенд 04.10).
-                if (g != gy - 1) {
+                int g = natural(x, z);
+                int t = walkTarget(x, z);
+                if (g == Integer.MIN_VALUE || t <= g) {
                     continue;
                 }
-                sink.set(x, g, z, Blocks.DIRT.defaultBlockState());
-                sink.set(x, gy, z, Blocks.DIRT_PATH.defaultBlockState());
-                clearAbove(x, gy + 1, z, 4);
+                for (int k = g; k < t; k++) {
+                    sink.set(x, k, z, rubble(x, k, z));
+                }
+                sink.set(x, t, z, Blocks.DIRT_PATH.defaultBlockState());
+                clearAbove(x, t + 1, z, 3);
             }
         }
         for (int dx = -r; dx <= r; dx++) {
@@ -647,7 +678,7 @@ public final class CampBuilder {
                 if (!sink.owns(x, z) || !walkway(dx, dz)) {
                     continue;
                 }
-                int h = walkHeight(x, z);
+                int h = walkTarget(x, z);
                 if (h == Integer.MIN_VALUE) {
                     continue;
                 }
@@ -655,7 +686,7 @@ public final class CampBuilder {
                 for (int f = 0; f < 4 && !up; f++) {
                     int[] st = CampLayout.step(f);
                     if (walkway(dx + st[0], dz + st[1])) {
-                        up = walkHeight(x + st[0], z + st[1]) == h + 1;
+                        up = walkTarget(x + st[0], z + st[1]) == h + 1;
                     }
                 }
                 if (up && sink.get(x, h + 1, z).isAir()) {
