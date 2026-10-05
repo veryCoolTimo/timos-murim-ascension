@@ -28,7 +28,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.BlockTags;
-import net.minecraft.world.Container;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.entity.decoration.HangingEntity;
@@ -68,6 +67,11 @@ public final class LocationCapture {
     /** Largest capture, blocks per axis (the sect shelf with its halls fits; a whole mountain does not). */
     public static final int MAX_XZ = 320;
     public static final int MAX_Y = 192;
+    /**
+     * Largest capture of a location that becomes a world structure: vanilla finds structure starts only within
+     * 8 chunks, so a template wider than ~15 chunks would lose its edges in generated worlds (codex review 05.10).
+     */
+    public static final int MAX_STRUCTURE_XZ = 224;
 
     /** What the capture did, for the command's answer. */
     public record Result(CapturedLocation location, int blocks, int entities, Path worldDir, Path sourceDir) {
@@ -238,7 +242,8 @@ public final class LocationCapture {
             order.add(sign.relative(d));
         }
         for (BlockPos p : order) {
-            if (level.getBlockEntity(p) instanceof Container) {
+            // Only containers that load a loot table (chests, barrels, hoppers…): a furnace would come out empty.
+            if (level.getBlockEntity(p) instanceof net.minecraft.world.RandomizableContainer) {
                 return p.immutable();
             }
         }

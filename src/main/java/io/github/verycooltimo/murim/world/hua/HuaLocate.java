@@ -62,7 +62,10 @@ public final class HuaLocate {
         ServerLevel level = source.getLevel();
         BlockPos from = BlockPos.containing(source.getPosition());
         Stopwatch watch = Stopwatch.createStarted(Util.TICKER);
-        Pair<BlockPos, Holder<Biome>> found = level.dimension() == Level.OVERWORLD ? nearestHua(level, biome, from) : null;
+        // Only for the biome named directly: a tag goes the vanilla way (a Hua answer would hide a nearer vanilla
+        // biome of the same tag — codex review 05.10).
+        boolean direct = biome.unwrap().left().isPresent();
+        Pair<BlockPos, Holder<Biome>> found = direct && level.dimension() == Level.OVERWORLD ? nearestHua(level, biome, from) : null;
         if (found == null) {
             found = level.findClosestBiome3d(biome, from, 6400, 32, 64);
         }

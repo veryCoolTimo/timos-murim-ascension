@@ -116,9 +116,10 @@ public final class LocationCommand {
             return 0;
         }
         BoundingBox box = region.box();
-        if (box.getXSpan() > LocationCapture.MAX_XZ || box.getZSpan() > LocationCapture.MAX_XZ || box.getYSpan() > LocationCapture.MAX_Y) {
+        int maxXz = id.equals(ModLocations.HUA_SECT) ? LocationCapture.MAX_XZ : LocationCapture.MAX_STRUCTURE_XZ;
+        if (box.getXSpan() > maxXz || box.getZSpan() > maxXz || box.getYSpan() > LocationCapture.MAX_Y) {
             source.sendFailure(Component.translatable("command.murim.capture.too_big", box.getXSpan(), box.getYSpan(), box.getZSpan(),
-                    LocationCapture.MAX_XZ, LocationCapture.MAX_Y));
+                    maxXz, LocationCapture.MAX_Y));
             return 0;
         }
         try {

@@ -152,7 +152,9 @@ public final class DevCaptureHandler {
                 || "sectlife".equals(System.getProperty(TECHNIQUE_PROPERTY))
                 || "sectposes".equals(System.getProperty(TECHNIQUE_PROPERTY))
                 || "banditcamp".equals(System.getProperty(TECHNIQUE_PROPERTY))
-                || "boss".equals(System.getProperty(TECHNIQUE_PROPERTY))) {
+                || "boss".equals(System.getProperty(TECHNIQUE_PROPERTY))
+                // Location round trip and biome: client/DevLocationHandler.
+                || "location".equals(System.getProperty(TECHNIQUE_PROPERTY))) {
             return;
         }
         if (minecraft.player == null || minecraft.level == null) {
