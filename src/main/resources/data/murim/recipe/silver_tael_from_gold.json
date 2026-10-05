@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "murim_coins",
+  "ingredients": [
+    {
+      "item": "murim:gold_tael"
+    }
+  ],
+  "result": {
+    "id": "murim:silver_tael",
+    "count": 9
+  }
+}

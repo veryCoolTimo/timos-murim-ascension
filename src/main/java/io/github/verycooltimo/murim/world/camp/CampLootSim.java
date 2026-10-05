@@ -118,6 +118,10 @@ public final class CampLootSim {
                     pageCount.merge(book, s.getCount(), Integer::sum);
                     pages += s.getCount();
                 } else if (s.is(ModItems.TECHNIQUE_MANUAL.get()) && book != null) {
+                    // Книжка уличного искусства — не продвижение M3 (docs/design/techniques/junk-arts.md).
+                    if (io.github.verycooltimo.murim.technique.JunkArts.isJunk(book)) {
+                        continue;
+                    }
                     if (profile.known().containsKey(book)) {
                         runInsight += PageRules.BOOK_INSIGHT;
                     } else {
@@ -125,6 +129,11 @@ public final class CampLootSim {
                     }
                 } else if (s.is(ModItems.SILVER_TAEL.get())) {
                     silver += s.getCount();
+                } else if (s.is(io.github.verycooltimo.murim.trade.ModTrade.COPPER_COIN.get())) {
+                    // Серебро — в пересчёте: медь и золото по курсу (docs/design/29-economy.md).
+                    silver += s.getCount() / (double) io.github.verycooltimo.murim.trade.Coins.WEN_PER_SILVER;
+                } else if (s.is(io.github.verycooltimo.murim.trade.ModTrade.GOLD_TAEL.get())) {
+                    silver += s.getCount() * (double) io.github.verycooltimo.murim.trade.Coins.SILVER_PER_GOLD;
                 } else if (s.getItem() instanceof io.github.verycooltimo.murim.item.PillItem) {
                     pills += s.getCount();
                 }

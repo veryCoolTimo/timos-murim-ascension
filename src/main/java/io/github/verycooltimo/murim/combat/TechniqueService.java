@@ -88,6 +88,12 @@ public final class TechniqueService {
                     QiSword.available(profile) ? "murim.technique.need_sword" : "murim.qi_sword.need_peak"), true);
             return false;
         }
+        // Искусство третьего сорта со своим оружием (топор) — docs/design/techniques/junk-arts.md.
+        java.util.Optional<String> weapon = io.github.verycooltimo.murim.technique.JunkArts.weaponProblem(player, technique.id());
+        if (weapon.isPresent()) {
+            player.displayClientMessage(net.minecraft.network.chat.Component.translatable(weapon.get()), true);
+            return false;
+        }
         if (profile.circulating() < cost) {
             player.displayClientMessage(
                     net.minecraft.network.chat.Component.translatable("murim.technique.no_qi"), true);
@@ -108,7 +114,8 @@ public final class TechniqueService {
                 new TechniqueEventPayload(TechniqueEventPayload.Event.STARTED, technique.id(), player.getId(), 0,
                         Math.max(0, io.github.verycooltimo.murim.mastery.MasteryService.layer(player, technique.id()))));
         // Ладонь в начале захватывает цель и делает рывок к ней (автор 01.10).
-        if (technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.PalmBlast palm) {
+        if (technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.PalmBlast palm
+                && !io.github.verycooltimo.murim.technique.JunkArts.isJunk(technique.id())) {
             io.github.verycooltimo.murim.technique.BehaviorExecutor.palmLunge(player, palm, technique.totalTicks());
         }
         // Взрыв закладывает стену кольев в мир в начале каста: колья вырастают ещё в замахе.
@@ -372,6 +379,7 @@ public final class TechniqueService {
                 net.minecraft.sounds.SoundSource.PLAYERS, 1.0F, 0.95F + 0.1F * player.getRandom().nextFloat());
 
         boolean anyHit = BehaviorExecutor.execute(player, technique);
+        io.github.verycooltimo.murim.technique.JunkArts.afterImpact(player, technique.id());
         // Промах — тоже тренировка формы, слабее попадания. У снарядов попадание придёт позже.
         if (!anyHit && !(technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.ProjectileFan)) {
             io.github.verycooltimo.murim.mastery.MasteryService.onMiss(player, technique.id());

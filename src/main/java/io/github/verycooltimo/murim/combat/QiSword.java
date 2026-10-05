@@ -98,6 +98,11 @@ public final class QiSword {
         if (d == null) {
             return false;
         }
+        // Искусства третьего сорта сами говорят, чем бьют: кулак и топор меча не требуют.
+        java.util.Optional<io.github.verycooltimo.murim.technique.JunkArts.Art> junk = io.github.verycooltimo.murim.technique.JunkArts.art(d.id());
+        if (junk.isPresent()) {
+            return junk.get().weapon() == io.github.verycooltimo.murim.technique.JunkArts.Weapon.SWORD;
+        }
         java.util.Optional<Styles.Style> style = Styles.of(d.id());
         if (style.isPresent() && (style.get() == Styles.SEVEN_PLUM || style.get() == Styles.TWENTY_FOUR_PLUM)) {
             return true;

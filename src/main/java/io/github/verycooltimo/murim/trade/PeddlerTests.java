@@ -26,27 +26,39 @@ public final class PeddlerTests {
     private PeddlerTests() {
     }
 
-    /** Пилюля за 7 лян (за 6 — нет), хлам и страница скупаются за серебро, страница на продажу — с книгой. */
+    /**
+     * Пилюля за 7 лян (за 6 — нет), хлам скупается за медь, страница — за серебро, страница на продажу — с книгой,
+     * книжка уличного искусства — с техникой третьего сорта, размен по курсу (docs/design/29-economy.md).
+     */
     @GameTest(template = "small_floor", timeoutTicks = 40)
     public static void peddlerTradesForSilver(GameTestHelper helper) {
         Peddler p = PeddlerSpawns.arrive(helper.getLevel(), helper.absolutePos(new BlockPos(2, 2, 2)), Peddler.VILLAGE_STAY);
         helper.assertTrue(p != null, "торговец не появился");
         MerchantOffers offers = p.getOffers();
-        helper.assertTrue(offers.size() >= 9, "предложений " + offers.size());
+        helper.assertTrue(offers.size() >= 13, "предложений " + offers.size());
         MerchantOffer pill = find(offers, ModItems.PILL_SNOW_PLUM.get().getDefaultInstance());
         helper.assertTrue(pill != null, "нет пилюли в продаже");
-        int price = PeddlerStock.sellPrice("murim:pill_snow_plum");
+        int price = PeddlerStock.sellPrice("murim:pill_snow_plum") / Coins.WEN_PER_SILVER;
         helper.assertTrue(pill.satisfiedBy(new ItemStack(ModItems.SILVER_TAEL.get(), price), ItemStack.EMPTY), "пилюля не продаётся за " + price);
         helper.assertTrue(!pill.satisfiedBy(new ItemStack(ModItems.SILVER_TAEL.get(), price - 1), ItemStack.EMPTY), "пилюля дешевле цены");
+        MerchantOffer bread = find(offers, new ItemStack(net.minecraft.world.item.Items.BREAD));
+        helper.assertTrue(bread != null && bread.getBaseCostA().is(ModTrade.COPPER_COIN.get()), "хлеб не за медь");
         ItemStack junk = JunkFactory.stack(new JunkBook(JunkKind.FAKE_GRAND, 7L, -1, false));
-        boolean junkBought = offers.stream().anyMatch(o -> o.getResult().is(ModItems.SILVER_TAEL.get()) && o.satisfiedBy(junk, ItemStack.EMPTY));
-        helper.assertTrue(junkBought, "хлам " + junk.getItem() + " не скупается");
+        boolean junkBought = offers.stream().anyMatch(o -> o.getResult().is(ModTrade.COPPER_COIN.get()) && o.satisfiedBy(junk, ItemStack.EMPTY));
+        helper.assertTrue(junkBought, "хлам " + junk.getItem() + " не скупается за медь");
         ItemStack page = new ItemStack(ModItems.MANUAL_PAGE.get());
         page.set(ModDataComponents.TECHNIQUE.get(), net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "wind_god_steps"));
         helper.assertTrue(offers.stream().anyMatch(o -> o.getResult().is(ModItems.SILVER_TAEL.get()) && o.satisfiedBy(page, ItemStack.EMPTY)),
                 "страница не скупается");
         offers.stream().filter(o -> o.getResult().is(ModItems.MANUAL_PAGE.get())).forEach(o ->
                 helper.assertTrue(o.getResult().get(ModDataComponents.TECHNIQUE.get()) != null, "страница на продажу без книги"));
+        offers.stream().filter(o -> o.getResult().is(ModItems.TECHNIQUE_MANUAL.get())).forEach(o ->
+                helper.assertTrue(io.github.verycooltimo.murim.technique.JunkArts.isJunk(o.getResult().get(ModDataComponents.TECHNIQUE.get())),
+                        "торговец продаёт не уличную книжку"));
+        helper.assertTrue(offers.stream().anyMatch(o -> o.getResult().is(ModTrade.GOLD_TAEL.get())
+                && o.satisfiedBy(new ItemStack(ModItems.SILVER_TAEL.get(), Coins.SILVER_PER_GOLD), ItemStack.EMPTY)), "нет размена серебра на золото");
+        helper.assertTrue(offers.stream().anyMatch(o -> o.getResult().is(ModTrade.COPPER_COIN.get()) && o.getResult().getCount() == Coins.WEN_PER_SILVER
+                && o.satisfiedBy(new ItemStack(ModItems.SILVER_TAEL.get()), ItemStack.EMPTY)), "нет размена серебра на медь");
         p.discard();
         helper.succeed();
     }

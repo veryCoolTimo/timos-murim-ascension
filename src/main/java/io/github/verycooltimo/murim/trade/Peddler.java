@@ -135,7 +135,7 @@ public class Peddler extends AbstractVillager {
         stock(getOffers());
     }
 
-    /** Завоз: собрать предложения из {@link PeddlerStock} (редкие строки — по своей вероятности). */
+    /** Завоз: собрать предложения из {@link PeddlerStock} (редкие строки — по своей вероятности), цены — монетами {@link Coins}. */
     void stock(MerchantOffers offers) {
         offers.clear();
         for (PeddlerStock.Line l : PeddlerStock.SELLS) {
@@ -143,18 +143,45 @@ public class Peddler extends AbstractVillager {
                 continue;
             }
             ItemStack result = new ItemStack(item(l.item()), l.count());
-            if (l.page()) {
+            if ("page".equals(l.book())) {
                 result.set(ModDataComponents.TECHNIQUE.get(), ResourceLocation.parse(PeddlerStock.pageBook(random.nextDouble())));
+            } else if ("junk_art".equals(l.book())) {
+                result.set(ModDataComponents.TECHNIQUE.get(), io.github.verycooltimo.murim.technique.JunkArts.streetBook(random.nextDouble()));
             }
-            offers.add(new MerchantOffer(new ItemCost(io.github.verycooltimo.murim.registry.ModItems.SILVER_TAEL.get(), l.silver()),
+            java.util.List<Coins.Pile> price = Coins.price(l.wen());
+            offers.add(new MerchantOffer(cost(price.get(0)), price.size() > 1 ? java.util.Optional.of(cost(price.get(1))) : java.util.Optional.empty(),
                     result, l.uses(), 0, 0.0F));
         }
         for (PeddlerStock.Line l : PeddlerStock.BUYS) {
             // Скупка: любой экземпляр предмета (у хлама и страниц свои компоненты — ItemCost без них их принимает).
-            offers.add(new MerchantOffer(new ItemCost(item(l.item()), l.count()),
-                    new ItemStack(io.github.verycooltimo.murim.registry.ModItems.SILVER_TAEL.get(), l.silver()), l.uses(), 0, 0.0F));
+            // Выручка — одной монетой: крупнейшей, что делит сумму без остатка.
+            offers.add(new MerchantOffer(new ItemCost(item(l.item()), l.count()), payout(l.wen()), l.uses(), 0, 0.0F));
         }
+        // Размен по курсу, без потерь: серебро ↔ медь, золото ↔ серебро.
+        offers.add(new MerchantOffer(new ItemCost(coin(Coins.Coin.SILVER), 1), new ItemStack(coin(Coins.Coin.COPPER), Coins.WEN_PER_SILVER),
+                PeddlerStock.EXCHANGE_USES, 0, 0.0F));
+        offers.add(new MerchantOffer(new ItemCost(coin(Coins.Coin.COPPER), Coins.WEN_PER_SILVER), new ItemStack(coin(Coins.Coin.SILVER), 1),
+                PeddlerStock.EXCHANGE_USES, 0, 0.0F));
+        offers.add(new MerchantOffer(new ItemCost(coin(Coins.Coin.GOLD), 1), new ItemStack(coin(Coins.Coin.SILVER), Coins.SILVER_PER_GOLD),
+                PeddlerStock.EXCHANGE_USES, 0, 0.0F));
+        offers.add(new MerchantOffer(new ItemCost(coin(Coins.Coin.SILVER), Coins.SILVER_PER_GOLD), new ItemStack(coin(Coins.Coin.GOLD), 1),
+                PeddlerStock.EXCHANGE_USES, 0, 0.0F));
         lastRestock = level().getGameTime();
+    }
+
+    private static Item coin(Coins.Coin c) {
+        return item(c.item());
+    }
+
+    private static ItemCost cost(Coins.Pile p) {
+        return new ItemCost(coin(p.coin()), p.count());
+    }
+
+    /** Выручка одной стопкой: серебро, если сумма делится на лян, иначе медь. */
+    static ItemStack payout(int wen) {
+        return wen % Coins.WEN_PER_SILVER == 0
+                ? new ItemStack(coin(Coins.Coin.SILVER), wen / Coins.WEN_PER_SILVER)
+                : new ItemStack(coin(Coins.Coin.COPPER), wen);
     }
 
     private static Item item(String id) {

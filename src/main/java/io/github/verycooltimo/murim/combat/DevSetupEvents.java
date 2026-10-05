@@ -162,10 +162,12 @@ public final class DevSetupEvents {
         // камера стоит спереди, и стенд по центру полностью закрывал персонажа.
         // Мишени отнесены на шесть блоков: при двух блоках снаряды долетали за пару тиков
         // и на кадрах их было не разглядеть — сцена скрывала работающую механику.
+        // MURIM_CAPTURE_TARGET_Z — ближе для коротких искусств (кулак, песок: 2–3 блока), 05.10.
+        double targetZ = System.getenv("MURIM_CAPTURE_TARGET_Z") == null ? 6.0D : Double.parseDouble(System.getenv("MURIM_CAPTURE_TARGET_Z"));
         for (double dx : new double[] {-1.6D, 1.6D}) {
             net.minecraft.world.entity.decoration.ArmorStand target =
                     new net.minecraft.world.entity.decoration.ArmorStand(
-                            serverLevel, STAGE_X + 0.5D + dx, STAGE_Y, STAGE_Z + 6.0D);
+                            serverLevel, STAGE_X + 0.5D + dx * Math.min(1.0D, targetZ / 6.0D), STAGE_Y, STAGE_Z + targetZ);
             target.addTag(TARGET_TAG);
             serverLevel.addFreshEntity(target);
         }

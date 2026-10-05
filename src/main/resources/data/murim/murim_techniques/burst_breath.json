@@ -1,0 +1,79 @@
+{
+  "id": "murim:burst_breath",
+  "form": "stance",
+  "intent": "self",
+  "breath": "forced_inhale",
+  "phases": {
+    "ritual": 0,
+    "windup": 16,
+    "impact": 2,
+    "recovery": 6,
+    "dissipation": 2
+  },
+  "behavior": {
+    "type": "murim:self_art",
+    "buff": "minecraft:strength",
+    "amplifier": 0,
+    "buff_ticks": 160,
+    "backlash": "minecraft:weakness",
+    "backlash_ticks": 160,
+    "self_damage": 2.0
+  },
+  "animation": "murim:junk_burst_breath",
+  "vfx": {
+    "pivot": [
+      0.0,
+      1.2,
+      0.0
+    ],
+    "basis_a": [
+      0.0,
+      1.0,
+      0.0
+    ],
+    "basis_b": [
+      0.0,
+      0.0,
+      1.0
+    ],
+    "inner_radius": 0.1,
+    "outer_radius": 0.5,
+    "start_angle": 0.0,
+    "end_angle": 10.0,
+    "colour": {
+      "r": 1.0,
+      "g": 1.0,
+      "b": 1.0
+    },
+    "trail": {
+      "enabled": false,
+      "alpha": 0.0,
+      "size": 0.1,
+      "life_ticks": 1.0
+    },
+    "crescent": {
+      "enabled": false,
+      "alpha": 0.0,
+      "size": 0.1,
+      "life_ticks": 1.0
+    },
+    "core": {
+      "enabled": false,
+      "alpha": 0.0,
+      "size": 0.1,
+      "life_ticks": 1.0
+    },
+    "windup_motes": 0,
+    "ritual_motes": 0
+  },
+  "interruption": {
+    "cancellable_until": "windup",
+    "break_on_damage": true,
+    "damage_threshold": 1.0
+  },
+  "weakness": "technique.murim.burst_breath.weakness",
+  "hit_stop_ticks": 0,
+  "cooldown_ticks": 400,
+  "layers": 2,
+  "tier": "basic"
+}

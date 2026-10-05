@@ -120,6 +120,110 @@
       "entries": [
         {
           "type": "minecraft:item",
+          "name": "murim:copper_coin",
+          "weight": 1,
+          "functions": [
+            {
+              "function": "minecraft:set_count",
+              "count": {
+                "type": "minecraft:uniform",
+                "min": 2,
+                "max": 6
+              }
+            }
+          ]
+        }
+      ],
+      "conditions": [
+        {
+          "condition": "minecraft:random_chance",
+          "chance": 0.6
+        }
+      ]
+    },
+    {
+      "rolls": 1,
+      "bonus_rolls": 0,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "murim:technique_manual",
+          "weight": 1,
+          "functions": [
+            {
+              "function": "minecraft:set_components",
+              "components": {
+                "murim:technique": "murim:village_brawler_fist"
+              }
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "murim:technique_manual",
+          "weight": 1,
+          "functions": [
+            {
+              "function": "minecraft:set_components",
+              "components": {
+                "murim:technique": "murim:green_forest_axe"
+              }
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "murim:technique_manual",
+          "weight": 1,
+          "functions": [
+            {
+              "function": "minecraft:set_components",
+              "components": {
+                "murim:technique": "murim:burst_breath"
+              }
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "murim:technique_manual",
+          "weight": 1,
+          "functions": [
+            {
+              "function": "minecraft:set_components",
+              "components": {
+                "murim:technique": "murim:bandit_rush"
+              }
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "murim:technique_manual",
+          "weight": 1,
+          "functions": [
+            {
+              "function": "minecraft:set_components",
+              "components": {
+                "murim:technique": "murim:sand_in_eyes"
+              }
+            }
+          ]
+        }
+      ],
+      "conditions": [
+        {
+          "condition": "minecraft:random_chance",
+          "chance": 0.04
+        }
+      ]
+    },
+    {
+      "rolls": 1,
+      "bonus_rolls": 0,
+      "entries": [
+        {
+          "type": "minecraft:item",
           "name": "minecraft:arrow",
           "weight": 1,
           "functions": [

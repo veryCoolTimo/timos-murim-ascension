@@ -15,11 +15,12 @@ class PeddlerStockTest {
     @Test
     @DisplayName("поход в лагерь окупает две-три пилюли, но не две страницы")
     void campRunBuysPillsNotPages() {
+        int run = Coins.silver(PeddlerStock.CAMP_RUN_SILVER);
         int pill = PeddlerStock.sellPrice("murim:pill_snow_plum");
         int page = PeddlerStock.sellPrice("murim:manual_page");
-        assertTrue(PeddlerStock.CAMP_RUN_SILVER / pill >= 2 && PeddlerStock.CAMP_RUN_SILVER / pill <= 3, "пилюль за поход: " + PeddlerStock.CAMP_RUN_SILVER / pill);
-        assertTrue(PeddlerStock.CAMP_RUN_SILVER / page == 1, "страниц за поход: " + PeddlerStock.CAMP_RUN_SILVER / page);
-        assertTrue(PeddlerStock.sellPrice("murim:pill_origin_energy") > PeddlerStock.CAMP_RUN_SILVER, "редкая пилюля дешевле похода");
+        assertTrue(run / pill >= 2 && run / pill <= 3, "пилюль за поход: " + run / pill);
+        assertTrue(run / page == 1, "страниц за поход: " + run / page);
+        assertTrue(PeddlerStock.sellPrice("murim:pill_origin_energy") > run, "редкая пилюля дешевле похода");
     }
 
     @Test
@@ -29,16 +30,37 @@ class PeddlerStockTest {
         int back = PeddlerStock.buyPrice("murim:manual_page");
         assertTrue(back * 5 <= page, "страница: продажа " + page + ", скупка " + back);
         for (PeddlerStock.Line l : PeddlerStock.BUYS) {
-            assertTrue(l.silver() <= 2, "скупка дороже двух лян: " + l);
+            assertTrue(l.wen() <= Coins.silver(2), "скупка дороже двух лян: " + l);
         }
     }
 
     @Test
     @DisplayName("еда и учебное оружие доступны новичку")
     void basicsAreCheap() {
-        assertTrue(PeddlerStock.sellPrice("minecraft:bread") <= 1);
-        assertTrue(PeddlerStock.sellPrice("murim:wooden_sword") <= 3);
-        assertTrue(PeddlerStock.sellPrice("murim:tang_dagger") <= 6);
+        assertTrue(PeddlerStock.sellPrice("minecraft:bread") < Coins.WEN_PER_SILVER, "хлеб — за медь");
+        assertTrue(PeddlerStock.sellPrice("murim:wooden_sword") <= Coins.silver(3));
+        assertTrue(PeddlerStock.sellPrice("murim:tang_dagger") <= Coins.silver(6));
+        assertTrue(PeddlerStock.sellPrice("murim:technique_manual") < PeddlerStock.sellPrice("murim:manual_page"),
+                "книжка уличного искусства дороже страницы настоящей книги");
+    }
+
+    @Test
+    @DisplayName("хлам из архива скупается за медь: 16 томов не дают больше 6 лян")
+    void junkSellsForCopper() {
+        int junk = PeddlerStock.buyPrice("murim:junk_manual");
+        assertTrue(junk > 0 && junk < Coins.WEN_PER_SILVER, "том хлама: " + junk);
+        assertTrue(junk * 16 <= Coins.silver(6), "полный завоз хлама: " + junk * 16);
+    }
+
+    @Test
+    @DisplayName("любая цена ложится на прилавок двумя монетами и не дешевле таблицы")
+    void pricesFitTwoSlots() {
+        for (PeddlerStock.Line l : PeddlerStock.SELLS) {
+            java.util.List<Coins.Pile> p = Coins.price(l.wen());
+            assertTrue(p.size() >= 1 && p.size() <= 2, l + " → " + p);
+            assertTrue(Coins.total(p) >= l.wen(), l + " дешевле таблицы: " + p);
+            assertTrue(p.stream().allMatch(x -> x.count() <= 64), l + " не влезает в стопку: " + p);
+        }
     }
 
     @Test

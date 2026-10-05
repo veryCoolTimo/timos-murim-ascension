@@ -254,7 +254,10 @@ public final class ClientTechniqueHandler {
                 // ладони невидимыми для измерения — большую часть энергии давала дуга.
                 boolean palm = started != null && started.behavior().type().equals(
                         io.github.verycooltimo.murim.technique.TechniqueBehavior.PALM_BLAST);
-                if (palm) {
+                // Искусства третьего сорта: на слое 0 никаких эффектов, мелочи слоя 1 шлёт сервер (JunkArts).
+                if (io.github.verycooltimo.murim.technique.JunkArts.isJunk(payload.techniqueId())) {
+                    MurimMod.LOGGER.debug("Искусство третьего сорта {} — без эффектов", payload.techniqueId());
+                } else if (palm) {
                     io.github.verycooltimo.murim.client.vfx.PalmVfxRenderer.start(
                             payload.sourceId(), started);
                 } else {
@@ -279,8 +282,12 @@ public final class ClientTechniqueHandler {
                 // соседа — это гриферство с обычного клиента, а не эффект.
                 if (isLocalPlayer(payload.sourceId())) {
                     HitStopHandler.request(payload.hitStopTicks());
-                    CameraShakeHandler.request(1.0F);
-                    ImpactScreenLayer.trigger();
+                    // Уличный удар — без импакт-кадра и с лёгкой тряской: это не техника мастера.
+                    boolean junk = io.github.verycooltimo.murim.technique.JunkArts.isJunk(payload.techniqueId());
+                    CameraShakeHandler.request(junk ? 0.3F : 1.0F);
+                    if (!junk) {
+                        ImpactScreenLayer.trigger();
+                    }
                 }
             }
             case CANCELLED -> {
