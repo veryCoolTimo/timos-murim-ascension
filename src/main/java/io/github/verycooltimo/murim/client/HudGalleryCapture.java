@@ -102,6 +102,12 @@ public final class HudGalleryCapture {
         if (t > 0 && t < SHOT && "training".equals(scene) && t % 12 == 0) {
             beat(mc, t);
         }
+        if (t == SHOT && "meditation".equals(scene)) {
+            MurimMod.LOGGER.info("HUD gallery meditation: active={} beats={} awakened={} absorbing={} break={} rank={} warn={} hide={}",
+                    ClientMeditationState.state().active(), ClientMeditationState.state().beats(),
+                    ClientProfileState.profile().isAwakened(), ClientPillState.absorbing(), ClientMeditationState.breakthroughAge(),
+                    ClientMeditationState.rankUpAge(), ClientMeditationState.warningAge(), mc.options.hideGui);
+        }
         if (t == SHOT) {
             String name = String.format("gallery_%d_%s.png", scales[si], scene);
             Screenshot.grab(mc.gameDirectory, name, mc.getMainRenderTarget(), message -> {
@@ -130,7 +136,7 @@ public final class HudGalleryCapture {
                         : io.github.verycooltimo.murim.profile.DantianProfile.INITIAL.withTags("calm", "none")
                         .withPool(12.4D).withCirculating(3.1D));
                 ClientMeditationState.accept(new SyncMeditationPayload(true, 3, 400, SyncMeditationPayload.Event.NONE,
-                        SyncMeditationPayload.Ring.NONE, 0, ClientProfileState.profile().rank()));
+                        SyncMeditationPayload.Ring.NONE, -1, ClientProfileState.profile().rank()));
                 ClientPlaceState.forceForCapture(new io.github.verycooltimo.murim.world.Place(mc.player.blockPosition(),
                         io.github.verycooltimo.murim.world.PlaceKind.values()[0], false));
             }
@@ -165,7 +171,7 @@ public final class HudGalleryCapture {
             case "meditation" -> {
                 ClientPlaceState.forceForCapture(null);
                 ClientMeditationState.accept(new SyncMeditationPayload(false, 0, 0, SyncMeditationPayload.Event.NONE,
-                        SyncMeditationPayload.Ring.NONE, 0, ClientProfileState.profile().rank()));
+                        SyncMeditationPayload.Ring.NONE, -1, ClientProfileState.profile().rank()));
             }
             default -> {
             }
