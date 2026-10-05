@@ -191,15 +191,12 @@ public final class ScatterExecutor {
         }
         t.setDeltaMovement(t.getDeltaMovement().multiply(0.1D, 0.0D, 0.1D));
         t.hurtMarked = true;
-        io.github.verycooltimo.murim.mastery.MasteryService.onHit(player, id, t);
+        Casters.onHit(player, id, t);
         if (s[11] < 0.5D) {
             // Первое попадание оглушает: мобы до конца техники, игрок 0,6 с, босс 0,5 с.
             s[11] = 1.0D;
             player.setData(ModAttachments.SCATTER, s);
-            boolean boss = t.getType().is(net.neoforged.neoforge.common.Tags.EntityTypes.BOSSES);
-            int ticks = t instanceof net.minecraft.world.entity.player.Player ? 12 : boss ? 10 : ScatterRules.END - ScatterRules.STRIKE0;
-            t.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.MOVEMENT_SLOWDOWN, ticks, 9, false, false, false));
-            t.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.WEAKNESS, ticks, 9, false, false, false));
+            io.github.verycooltimo.murim.combat.Stun.apply(t, ScatterRules.END - ScatterRules.STRIKE0);
         }
         return true;
     }

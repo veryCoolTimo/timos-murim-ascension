@@ -169,7 +169,7 @@ public final class RiverExecutor {
         primary.invulnerableTime = 0;
         if (primary.hurt(player.damageSources().playerAttack(player), (float) (base * RiverRules.DMG_PRIMARY))) {
             any = true;
-            io.github.verycooltimo.murim.mastery.MasteryService.onHit(player, id, primary);
+            Casters.onHit(player, id, primary);
             knock(primary, axis, RiverRules.PUSH_PRIMARY);
         }
         for (LivingEntity e : candidates(player, new AABB(node, node).inflate(RiverRules.BURST_RADIUS + 1.0D))) {
@@ -185,6 +185,7 @@ public final class RiverExecutor {
             if (e.hurt(player.damageSources().playerAttack(player), (float) (base * RiverRules.areaShare(d)))) {
                 any = true;
                 knock(e, d < 0.1D ? axis : c.subtract(node), RiverRules.PUSH_AREA);
+                io.github.verycooltimo.murim.combat.Stun.onTechniqueHit(id, e);
             }
         }
         if (any) {

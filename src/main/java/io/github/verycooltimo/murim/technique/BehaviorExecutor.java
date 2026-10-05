@@ -158,7 +158,7 @@ public final class BehaviorExecutor {
             if (target.hurt(player.damageSources().playerAttack(player), melee.damage() * power)) {
                 anyHit = true;
                 // Пережитое для освоения (docs/design/19 §3г).
-                io.github.verycooltimo.murim.mastery.MasteryService.onHit(player, id, target);
+                Casters.onHit(player, id, target);
                 JunkArts.onHit(player, id, target);
             }
         }
@@ -240,14 +240,8 @@ public final class BehaviorExecutor {
      * моб — до падения дерева, игрок — 0,6 с, босс — полсекунды.
      */
     private static void stagger(LivingEntity target) {
-        boolean boss = target.getType().is(net.neoforged.neoforge.common.Tags.EntityTypes.BOSSES);
-        int ticks = target instanceof net.minecraft.world.entity.player.Player ? PlumRules.STAGGER_PVP_TICKS
-                : boss ? PlumRules.STAGGER_BOSS_TICKS : PlumRules.STAGGER_TICKS;
-        target.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.MOVEMENT_SLOWDOWN, ticks, 9, false, false, false));
-        target.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.WEAKNESS, ticks, 9, false, false, false));
-        if (target instanceof net.minecraft.world.entity.Mob mob && !boss) {
-            mob.getNavigation().stop();
-        }
+        // Игрок 0,6 с и босс 0,5 с — потолки Stun (PlumRules.STAGGER_PVP_TICKS / STAGGER_BOSS_TICKS).
+        io.github.verycooltimo.murim.combat.Stun.apply(target, PlumRules.STAGGER_TICKS);
     }
 
     /**
@@ -387,7 +381,7 @@ public final class BehaviorExecutor {
             }
             if (target.hurt(player.damageSources().playerAttack(player), dash.damage() * power)) {
                 anyHit = true;
-                io.github.verycooltimo.murim.mastery.MasteryService.onHit(player, id, target);
+                Casters.onHit(player, id, target);
                 JunkArts.onHit(player, id, target);
             }
         }
@@ -433,8 +427,7 @@ public final class BehaviorExecutor {
             return;
         }
         // Цель удержана: сильное замедление на всё время техники, инерция погашена.
-        target.addEffect(new net.minecraft.world.effect.MobEffectInstance(
-                net.minecraft.world.effect.MobEffects.MOVEMENT_SLOWDOWN, techniqueTicks, 6, false, true, true));
+        io.github.verycooltimo.murim.combat.Stun.apply(target, techniqueTicks);
         target.setDeltaMovement(0.0D, target.getDeltaMovement().y, 0.0D);
         target.hurtMarked = true;
 
@@ -470,7 +463,7 @@ public final class BehaviorExecutor {
                 continue;
             }
             anyHit = true;
-            io.github.verycooltimo.murim.mastery.MasteryService.onHit(player, id, target);
+            Casters.onHit(player, id, target);
             if (JunkArts.isJunk(id)) {
                 // Искусство третьего сорта — без брызг яда ладони: свои мелочи по слою (JunkArts).
                 JunkArts.onHit(player, id, target);
@@ -491,12 +484,7 @@ public final class BehaviorExecutor {
                         palm.poisonSeconds() * 20, 1, false, true, true));
             }
             if (palm.stunTicks() > 0) {
-                target.addEffect(new net.minecraft.world.effect.MobEffectInstance(
-                        net.minecraft.world.effect.MobEffects.MOVEMENT_SLOWDOWN,
-                        palm.stunTicks(), 6, false, true, true));
-                target.addEffect(new net.minecraft.world.effect.MobEffectInstance(
-                        net.minecraft.world.effect.MobEffects.WEAKNESS,
-                        palm.stunTicks(), 2, false, true, true));
+                io.github.verycooltimo.murim.combat.Stun.apply(target, palm.stunTicks());
                 // Гасим текущее движение, иначе цель по инерции продолжает уезжать.
                 target.setDeltaMovement(0.0D, target.getDeltaMovement().y, 0.0D);
                 target.hurtMarked = true;
@@ -810,7 +798,7 @@ public final class BehaviorExecutor {
             int left = Math.max(10, RushRules.end(wrapSince) - t);
             r[15] = -100.0D;
             player.setData(io.github.verycooltimo.murim.registry.ModAttachments.RUSH, r);
-            target.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.MOVEMENT_SLOWDOWN, left, 9, false, false, false));
+            io.github.verycooltimo.murim.combat.Stun.apply(target, left);
         }
         int thrust = RushRules.thrust(wrapSince);
         if (t >= thrust - 2 && t <= thrust + 6 && r.length > 12 && r[12] < 0.5D && target != null
@@ -830,7 +818,7 @@ public final class BehaviorExecutor {
     /**
      * Ураган волочит встречных (автор 03.10: «жёстче»): каждый, кого накрыл рукав до наводки,
      * один раз получает скользящий удар и дальше тащится головой урагана вперёд и по кругу.
-     * Без оглушения — иначе стан гасит скорость (TargetLock.stunTick); стан даётся при сбросе.
+     * Без оглушения по ходу волочения; стан даётся при сбросе (rushFling).
      */
     private static void rushDrag(LivingEntity player, net.minecraft.resources.ResourceLocation id, double[] r, Vec3 axis0, Vec3 f,
                                  double head, double base, LivingEntity stop) {
@@ -884,9 +872,9 @@ public final class BehaviorExecutor {
                 double sgn = (i % 2 == 0) ? 1.0D : -1.0D;
                 t.setDeltaMovement(f.scale(0.5D).add(side.scale(0.9D * sgn)).add(0.0D, 0.45D, 0.0D));
                 t.hurtMarked = true;
-                boolean boss = t.getType().is(net.neoforged.neoforge.common.Tags.EntityTypes.BOSSES);
-                if (!boss && !(t instanceof net.minecraft.world.entity.player.Player)) {
-                    t.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.WEAKNESS, 30, 9, false, false, false));
+                // Раньше здесь была только слабость — «оглушает» из описания не выполнялось (аудит 05.10).
+                if (!(t instanceof net.minecraft.world.entity.player.Player)) {
+                    io.github.verycooltimo.murim.combat.Stun.apply(t, 30);
                 }
             }
         }
@@ -894,7 +882,7 @@ public final class BehaviorExecutor {
 
     /**
      * Отброс уколом: цель срывается с заморозки и улетает по ходу рывка с подбросом; оглушение
-     * снимается на полёт (stunTick гасит скорость) и возвращается через 7 тиков (см. rushTick).
+     * снимается на полёт и возвращается после приземления (см. rushTick).
      */
     private static void rushKnock(LivingEntity player, LivingEntity target, double[] r, int t) {
         Vec3 dir = target.position().subtract(new Vec3(r[0], r[1], r[2]));
@@ -919,10 +907,7 @@ public final class BehaviorExecutor {
         if (r[11] < 0.5D) {
             r[11] = 1.0D;
             player.setData(io.github.verycooltimo.murim.registry.ModAttachments.RUSH, r);
-            boolean boss = t.getType().is(net.neoforged.neoforge.common.Tags.EntityTypes.BOSSES);
-            int ticks = t instanceof net.minecraft.world.entity.player.Player ? 12 : boss ? 10 : RushRules.end(r[6] < 0.0D ? 0 : (int) r[6]);
-            t.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.MOVEMENT_SLOWDOWN, ticks, 9, false, false, false));
-            t.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.WEAKNESS, ticks, 9, false, false, false));
+            io.github.verycooltimo.murim.combat.Stun.apply(t, RushRules.end(r[6] < 0.0D ? 0 : (int) r[6]));
         }
         Casters.onHit(player, id, t);
         return true;
@@ -1045,12 +1030,9 @@ public final class BehaviorExecutor {
         if (e[5] < 0.5D) {
             e[5] = 1.0D;
             player.setData(io.github.verycooltimo.murim.registry.ModAttachments.EXEC, e);
-            boolean boss = t.getType().is(net.neoforged.neoforge.common.Tags.EntityTypes.BOSSES);
-            int ticks = t instanceof net.minecraft.world.entity.player.Player ? 12 : boss ? 10 : ExecRules.END;
-            t.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.MOVEMENT_SLOWDOWN, ticks, 9, false, false, false));
-            t.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.WEAKNESS, ticks, 9, false, false, false));
+            io.github.verycooltimo.murim.combat.Stun.apply(t, ExecRules.END);
         }
-        io.github.verycooltimo.murim.mastery.MasteryService.onHit(player, id, t);
+        Casters.onHit(player, id, t);
         return true;
     }
 
@@ -1082,15 +1064,12 @@ public final class BehaviorExecutor {
             player.setData(io.github.verycooltimo.murim.registry.ModAttachments.WHIRL, w);
             whirlStagger(t);
         }
-        io.github.verycooltimo.murim.mastery.MasteryService.onHit(player, id, t);
+        Casters.onHit(player, id, t);
         return true;
     }
 
     private static void whirlStagger(LivingEntity t) {
-        boolean boss = t.getType().is(net.neoforged.neoforge.common.Tags.EntityTypes.BOSSES);
-        int ticks = t instanceof net.minecraft.world.entity.player.Player ? 12 : boss ? 10 : WhirlRules.END;
-        t.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.MOVEMENT_SLOWDOWN, ticks, 3, false, false, false));
-        t.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.WEAKNESS, ticks, 9, false, false, false));
+        io.github.verycooltimo.murim.combat.Stun.apply(t, WhirlRules.END);
     }
 
     /** Глубокие разрезы вихря по земле: ≤14 природных блоков, по касательным дугам внутри зоны. */

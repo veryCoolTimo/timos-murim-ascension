@@ -627,7 +627,7 @@ public final class TangExecutor {
                 double dmg = d.damage * (hits > TangRules.TWELVE_FULL_HITS ? TangRules.TWELVE_EXTRA : TangRules.TWELVE_DMG);
                 hurt(player, d, t, dmg);
                 if (hits == 1 && !(t instanceof Player)) {
-                    t.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 8, 3, false, false, false));
+                    stun(t, 8);
                 }
                 if (TangRules.poison(layer)) {
                     // Яд на кромках: магия раз в 20 тиков, берёт и нежить.
@@ -932,7 +932,7 @@ public final class TangExecutor {
         // Источник снарядный: щит закрывает по направлению, защита от снарядов работает.
         boolean landed = t.hurt(player.damageSources().mobProjectile(d, player), (float) dmg);
         if (landed) {
-            MasteryService.onHit(player, d.technique, t);
+            Casters.onHit(player, d.technique, t);
         }
         return landed;
     }
@@ -977,12 +977,7 @@ public final class TangExecutor {
 
     /** Оглушение = замедление ≥ 4 (TargetLock выключает ИИ моба): моб {@code ticks}, игрок 0,6 с, босс 0,5 с. */
     private static void stun(LivingEntity t, int ticks) {
-        boolean boss = t.getType().is(net.neoforged.neoforge.common.Tags.EntityTypes.BOSSES);
-        int n = t instanceof Player ? 12 : boss ? 10 : ticks;
-        t.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, n, 4, false, false, false));
-        if (t instanceof net.minecraft.world.entity.Mob mob && !boss) {
-            mob.getNavigation().stop();
-        }
+        io.github.verycooltimo.murim.combat.Stun.apply(t, ticks);
     }
 
     /** Счёт попаданий по цели в касте; @return число с этим. */

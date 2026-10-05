@@ -141,13 +141,9 @@ public final class FallingPetalExecutor {
         if (s[STUNNED] < 0.5D) {
             s[STUNNED] = 1.0D;
             player.setData(ModAttachments.FALLING_PETAL, s);
-            boolean boss = t.getType().is(net.neoforged.neoforge.common.Tags.EntityTypes.BOSSES);
-            int ticks = t instanceof net.minecraft.world.entity.player.Player ? 12 : boss ? 10
-                    : FallingPetalRules.END - FallingPetalRules.STRIKES[k] + 2;
-            t.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, ticks, 9, false, false, false));
-            t.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, ticks, 9, false, false, false));
+            io.github.verycooltimo.murim.combat.Stun.apply(t, FallingPetalRules.END - FallingPetalRules.STRIKES[k] + 2);
         }
-        MasteryService.onHit(player, id, t);
+        Casters.onHit(player, id, t);
         Vec3 at = k == 3 ? t.position().add(0.0D, t.getBbHeight() * 0.35D, 0.0D)
                 : t.position().add(0.0D, t.getBbHeight() * (k == 2 ? 0.8D : k == 4 ? 0.86D : 0.62D), 0.0D);
         PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
@@ -162,7 +158,7 @@ public final class FallingPetalExecutor {
             if (d <= FallingPetalRules.REACH + t.getBbWidth() * 0.5D && d > 1.0E-3D && to.normalize().dot(f) >= cos) {
                 t.invulnerableTime = 0;
                 if (t.hurt(player.damageSources().playerAttack(player), (float) (s[BASE] * FallingPetalRules.DAMAGE[0]))) {
-                    MasteryService.onHit(player, id, t);
+                    Casters.onHit(player, id, t);
                     PacketDistributor.sendToPlayersTrackingEntityAndSelf(player, new FallingPetalPayload(player.getId(), t.getId(), 1,
                             t.position().add(0.0D, t.getBbHeight() * 0.62D, 0.0D), f, (int) s[5]));
                 }
@@ -196,10 +192,7 @@ public final class FallingPetalExecutor {
 
     /** Снять оглушение «до конца техники» с цели. */
     private static void release(LivingEntity t) {
-        if (!(t instanceof net.minecraft.world.entity.player.Player)) {
-            t.removeEffect(MobEffects.MOVEMENT_SLOWDOWN);
-            t.removeEffect(MobEffects.WEAKNESS);
-        }
+        io.github.verycooltimo.murim.combat.Stun.release(t);
     }
 
     /** Ближайший живой противник в конусе 35° до 16 блоков при прямой видимости; стойки брони — нет. */

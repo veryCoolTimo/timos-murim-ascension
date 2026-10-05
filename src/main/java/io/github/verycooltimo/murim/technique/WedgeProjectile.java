@@ -90,7 +90,7 @@ public class WedgeProjectile extends Projectile {
                         ? living : null);
         boolean landed = target.hurt(source, damage);
         if (landed && technique != null && owner instanceof net.minecraft.server.level.ServerPlayer thrower) {
-            io.github.verycooltimo.murim.mastery.MasteryService.onHit(thrower, technique, target);
+            Casters.onHit(thrower, technique, target);
         }
         // Исчезаем только при реальном попадании. Прежде клин пропадал безусловно, и весь
         // веер по одной цели давал урон ровно одного клина: остальные приходили в кадрах

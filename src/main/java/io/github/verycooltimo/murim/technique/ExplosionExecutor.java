@@ -147,7 +147,7 @@ public final class ExplosionExecutor {
                 }
                 e.invulnerableTime = 0;
                 if (e.hurt(player.damageSources().playerAttack(player), (float) (base * ExplosionRules.DMG_GRIND))) {
-                    io.github.verycooltimo.murim.mastery.MasteryService.onHit(player, id, e);
+                    Casters.onHit(player, id, e);
                     PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
                             new ExplosionPayload(player.getId(), strike, TargetLock.centre(e), 1.0F, layer, ExplosionPayload.HIT, e.getId()));
                 }
@@ -196,7 +196,7 @@ public final class ExplosionExecutor {
             if (!e.hurt(player.damageSources().playerAttack(player), (float) (base * ExplosionRules.DMG_BLAST))) {
                 continue;
             }
-            io.github.verycooltimo.murim.mastery.MasteryService.onHit(player, id, e);
+            Casters.onHit(player, id, e);
             int k = (int) r[HITS];
             r[HIT_IDS + k] = e.getId();
             r[HITS] = k + 1;
@@ -214,14 +214,7 @@ public final class ExplosionExecutor {
 
     /** Оглушение после отброса: мобы 2 с, игрок 0,6 с, босс 0,5 с. */
     private static void stun(LivingEntity t) {
-        boolean boss = t.getType().is(net.neoforged.neoforge.common.Tags.EntityTypes.BOSSES);
-        int ticks = t instanceof net.minecraft.world.entity.player.Player ? 12 : boss ? 10
-                : ExplosionRules.STUN_MOB;
-        t.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.MOVEMENT_SLOWDOWN, ticks, 9, false, false, false));
-        t.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.WEAKNESS, ticks, 9, false, false, false));
-        if (t instanceof net.minecraft.world.entity.Mob mob && !boss) {
-            mob.getNavigation().stop();
-        }
+        io.github.verycooltimo.murim.combat.Stun.apply(t, ExplosionRules.STUN_MOB);
     }
 
     /** Лепестки не проходят сквозь камень: путь от точки удара до цели свободен от блоков. */

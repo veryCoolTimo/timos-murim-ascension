@@ -83,8 +83,12 @@ public final class Casters {
         }
     }
 
-    /** Попадание засчитывается в освоение только игроку. */
+    /**
+     * Попадание техникой: цель оглушается по таблице уровней (combat/Stun, автор 05.10: «чтобы
+     * противник точно станился»), освоение засчитывается только игроку.
+     */
     public static void onHit(LivingEntity caster, ResourceLocation technique, Entity target) {
+        io.github.verycooltimo.murim.combat.Stun.onTechniqueHit(technique, target);
         if (caster instanceof ServerPlayer player) {
             MasteryService.onHit(player, technique, target);
         }
