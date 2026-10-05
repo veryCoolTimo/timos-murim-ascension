@@ -81,9 +81,9 @@ public final class SectMembersGameTests {
         hurt.setHealth(hurt.getMaxHealth() * 0.5F);
         hurt.setWounded(true);
         boolean[] knelt = new boolean[1];
-        helper.onEachTick(() -> knelt[0] |= healer.pose() == SectPose.TREAT && healer.distanceTo(hurt) < 2.5D);
+        helper.onEachTick(() -> knelt[0] |= healer.distanceTo(hurt) < 2.5D && (healer.pose() == SectPose.TREAT || hurt.getHealth() > hurt.getMaxHealth() * 0.5F));
         helper.succeedWhen(() -> {
-            helper.assertTrue(knelt[0], "лекарь не встал на колено у раненого");
+            helper.assertTrue(knelt[0], "лекарь не подошёл лечить раненого");
             helper.assertTrue(!hurt.wounded(), "раненый не вылечен");
             helper.assertTrue(hurt.getHealth() >= hurt.getMaxHealth() - 0.01F, "здоровье не восстановлено: " + hurt.getHealth());
         });

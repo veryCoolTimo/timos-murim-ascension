@@ -524,7 +524,7 @@ public final class ScheduleGoal extends Goal {
 
     /** Лекарь лечит раненого: на колено рядом, раз в секунду — здоровье назад; вылечил — тот кланяется, лекарь кивает. */
     private void treat() {
-        SectDisciple patient = find(current.task().partner(), 10.0D);
+        SectDisciple patient = find(current.task().partner(), SectLife.PATIENT_RANGE);
         if (patient == null || !patient.wounded()) {
             return;
         }

@@ -140,7 +140,7 @@ public final class SectLife {
     // ------------------------------------------------------------------ члены секты за делом (автор 05.10)
 
     /** Лекарь ищет раненых в этом радиусе. */
-    static final double PATIENT_RANGE = 64.0D;
+    public static final double PATIENT_RANGE = 64.0D;
 
     /** Ближайший раненый ученик для лекаря, или null. */
     public static SectDisciple patient(SectDisciple healer) {
