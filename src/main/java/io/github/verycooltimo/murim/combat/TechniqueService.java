@@ -149,6 +149,8 @@ public final class TechniqueService {
                     net.minecraft.world.effect.MobEffects.MOVEMENT_SLOWDOWN,
                     slowTicks, 2, false, false, false));
         }
+        // Люди горы рядом останавливаются и смотрят (живая гора, автор 05.10).
+        io.github.verycooltimo.murim.sect.SectReactions.onTechnique(player);
         return true;
     }
 

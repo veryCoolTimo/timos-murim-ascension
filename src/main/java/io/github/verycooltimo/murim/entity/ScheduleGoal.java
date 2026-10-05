@@ -2,6 +2,7 @@ package io.github.verycooltimo.murim.entity;
 
 import io.github.verycooltimo.murim.sect.SectLayout;
 import io.github.verycooltimo.murim.sect.SectLife;
+import io.github.verycooltimo.murim.sect.SectReactions;
 import io.github.verycooltimo.murim.sect.SectRole;
 import io.github.verycooltimo.murim.sect.SectRoster;
 import io.github.verycooltimo.murim.sect.SectSchedule;
@@ -93,6 +94,7 @@ public final class ScheduleGoal extends Goal {
     public void stop() {
         npc.getNavigation().stop();
         current = null;
+        npc.setDoingKind(null);
         npc.setPose(SectPose.NONE);
     }
 
@@ -126,7 +128,21 @@ public final class ScheduleGoal extends Goal {
             npc.getLookControl().setLookAt(to, 30.0F, 30.0F);
             return;
         }
+        // Игрок применил технику рядом: остановился и смотрит (сидящий — только головой).
+        LivingEntity seen = npc.watching();
+        if (seen != null && kind != Kind.SLEEP) {
+            npc.getNavigation().stop();
+            if (!kind.seated() && !npc.sitting()) {
+                npc.faceEntity(seen, 25.0F);
+                npc.setPose(SectPose.NONE);
+            }
+            npc.getLookControl().setLookAt(seen, 30.0F, 30.0F);
+            return;
+        }
         if (!onSpot && greetSenior(kind)) {
+            return;
+        }
+        if (greetPlayer(kind)) {
             return;
         }
         tickPose(kind);
@@ -276,6 +292,7 @@ public final class ScheduleGoal extends Goal {
         boolean changed = current == null || current.task().kind() != next.task().kind()
                 || !current.task().zone().equals(next.task().zone()) || current.spot().distanceToSqr(next.spot()) > 1.0D;
         current = next;
+        npc.setDoingKind(next.task().kind());
         if (changed) {
             stuck = 0;
             best = Double.MAX_VALUE;
@@ -300,6 +317,7 @@ public final class ScheduleGoal extends Goal {
             pickup = null;
             legTicks = 0;
             reported = false;
+            playerTreat = false;
             talkClock = 0;
             stove = null;
             stoveSpot = null;
@@ -524,6 +542,10 @@ public final class ScheduleGoal extends Goal {
 
     /** Лекарь лечит раненого: на колено рядом, раз в секунду — здоровье назад; вылечил — тот кланяется, лекарь кивает. */
     private void treat() {
+        if (SectReactions.PLAYER_PATIENT.equals(current.task().partner())) {
+            treatPlayer();
+            return;
+        }
         SectDisciple patient = find(current.task().partner(), SectLife.PATIENT_RANGE);
         if (patient == null || !patient.wounded()) {
             return;
@@ -551,6 +573,43 @@ public final class ScheduleGoal extends Goal {
                 patient.holdPose(SectPose.BOW, 44);
                 npc.gesture("nod");
                 io.github.verycooltimo.murim.MurimMod.LOGGER.info("Секта: Ун Гак вылечил {}", patient.memberKey());
+            }
+        }
+    }
+
+    /**
+     * Лекарь перевязывает раненого игрока (живая гора, автор 05.10): подходит, «Сиди смирно, перевяжу», раз в секунду — два
+     * здоровья, пока не {@link SectReactions#HEALED}; в конце — «Готово» и кивок. Игрок отошёл — лекарь идёт за ним
+     * (место пересчитывается раз в секунду).
+     */
+    /** Лекарь уже начал перевязку игрока (сказал «Сиди смирно»). */
+    private boolean playerTreat;
+
+    private void treatPlayer() {
+        if (!(npc.level().getEntity(npc.healingPlayer()) instanceof Player p)) {
+            return;
+        }
+        if (!arrive(current.spot(), 0.7D) && npc.distanceTo(p) > 2.2D) {
+            return;
+        }
+        npc.getNavigation().stop();
+        npc.faceEntity(p, 30.0F);
+        npc.getLookControl().setLookAt(p, 30.0F, 30.0F);
+        if (!playerTreat) {
+            playerTreat = true;
+            npc.gesture("explain");
+            io.github.verycooltimo.murim.sect.SectChatter.sayIfQuiet(npc,
+                    io.github.verycooltimo.murim.sect.SectBubbles.Group.HEAL_START.pick(npc.getRandom().nextInt(64)), 60);
+        }
+        if ((npc.tickCount + npc.getId()) % 20 == 0) {
+            p.heal(2.0F);
+            npc.level().playSound(null, p.blockPosition(), SoundEvents.BREWING_STAND_BREW, SoundSource.NEUTRAL, 0.25F, 1.5F);
+            if (p.getHealth() >= p.getMaxHealth() * SectReactions.HEALED) {
+                npc.setHealingPlayer(-1);
+                npc.gesture("nod");
+                io.github.verycooltimo.murim.sect.SectChatter.sayIfQuiet(npc,
+                        io.github.verycooltimo.murim.sect.SectBubbles.Group.HEAL_DONE.pick(npc.getRandom().nextInt(64)), 20);
+                io.github.verycooltimo.murim.MurimMod.LOGGER.info("Секта: Ун Гак перевязал {}", p.getName().getString());
             }
         }
     }
@@ -604,6 +663,38 @@ public final class ScheduleGoal extends Goal {
             return true;
         }
         return false;
+    }
+
+    /**
+     * Поклон игроку на ходу (живая гора, автор 05.10): победителю смотра и старшему по положению
+     * ({@link SectReactions#bowReason}) — раз в день; иногда со словом.
+     */
+    private boolean greetPlayer(Kind kind) {
+        if ((npc.tickCount + npc.getId()) % 10 != 5 || kind.seated() || kind == Kind.FORM_ROW || kind == Kind.SPAR
+                || kind == Kind.POLES || kind == Kind.DRILL || kind == Kind.INSPECT || kind == Kind.TREAT || kind == Kind.GUARD
+                || kind == Kind.COUNCIL || kind == Kind.REPORT || npc.sitting()) {
+            return false;
+        }
+        Player near = npc.level().getNearestPlayer(npc, SectReactions.BOW_RANGE);
+        if (!(near instanceof net.minecraft.server.level.ServerPlayer p) || p.isSpectator()) {
+            return false;
+        }
+        long day = SectSchedule.day(npc.level().getDayTime());
+        if (npc.bowedToday(p, day)) {
+            return false;
+        }
+        SectReactions.Bow why = SectReactions.bowReason(npc, p);
+        if (why == null) {
+            return false;
+        }
+        npc.markBowed(p, day);
+        npc.attend(p, 44);
+        npc.faceEntity(p, 90.0F);
+        npc.holdPose(SectPose.BOW, 44);
+        if (npc.getRandom().nextInt(2) == 0) {
+            io.github.verycooltimo.murim.sect.SectChatter.sayIfQuiet(npc, SectReactions.bowKey(why, npc.getRandom().nextInt(64)), 100);
+        }
+        return true;
     }
 
     /**

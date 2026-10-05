@@ -1583,4 +1583,130 @@ public class SectDisciple extends Bandit implements Casters.Caster {
             bowedTo.entrySet().removeIf(e -> now - e.getValue() > 1200);
         }
     }
+
+    // ------------------------------------------------------------------ живая гора (автор 05.10): реплики, реакции, дождь
+
+    /** Дело распорядка сейчас (ставит {@link ScheduleGoal}; null — цель не работает: бой, разговор). Только сервер. */
+    private io.github.verycooltimo.murim.sect.SectSchedule.Kind doingKind;
+
+    public io.github.verycooltimo.murim.sect.SectSchedule.Kind doingKind() {
+        return doingKind;
+    }
+
+    public void setDoingKind(io.github.verycooltimo.murim.sect.SectSchedule.Kind kind) {
+        doingKind = kind;
+    }
+
+    /** Последняя реплика над головой (тик игры) и её ключ (для проверок). */
+    private long bubbleAt = Long.MIN_VALUE / 2;
+    private String bubbleKey = "";
+    /** Ответ собеседнику за столом: прозвучит в этот тик. */
+    private Component pendingBubble;
+    private String pendingKey = "";
+    private long pendingAt;
+
+    public long bubbleAt() {
+        return bubbleAt;
+    }
+
+    public String bubbleKey() {
+        return bubbleKey;
+    }
+
+    public void markBubble(String key) {
+        bubbleAt = level().getGameTime();
+        bubbleKey = key;
+    }
+
+    /** Ответить через {@code delay} тиков (обмен репликами за столом и в кругу). */
+    public void queueBubble(String key, Component text, int delay) {
+        pendingKey = key;
+        pendingBubble = text;
+        pendingAt = level().getGameTime() + delay;
+    }
+
+    /** Ответ, если подошло его время (и снять его); иначе null. Ключ — {@link #pendingKey()} до вызова. */
+    public Component takeDueBubble() {
+        if (pendingBubble == null || level().getGameTime() < pendingAt) {
+            return null;
+        }
+        Component c = pendingBubble;
+        pendingBubble = null;
+        return c;
+    }
+
+    public String pendingKey() {
+        return pendingKey;
+    }
+
+    /** Смотрит на игрока, применившего технику рядом: стоит, повернувшись к нему. */
+    private LivingEntity watchTarget;
+    private long watchUntil;
+
+    public void watch(LivingEntity who, int ticks) {
+        watchTarget = who;
+        watchUntil = level().getGameTime() + ticks;
+    }
+
+    /** На кого смотрит сейчас (null — ни на кого). */
+    public LivingEntity watching() {
+        return watchTarget != null && watchTarget.isAlive() && level().getGameTime() < watchUntil ? watchTarget : null;
+    }
+
+    /** GameTest: дождь вокруг этого человека (null — погода мира). */
+    private Boolean rainOverride;
+
+    public Boolean rainOverride() {
+        return rainOverride;
+    }
+
+    public void setRainOverride(Boolean rain) {
+        rainOverride = rain;
+    }
+
+    /** Укрытие от дождя: для какого места дела найдено, где, когда искать снова (не нашлось). */
+    private Vec3 shelterFor;
+    private Vec3 shelterSpot;
+    private long shelterRetry = Long.MIN_VALUE;
+
+    public Vec3 shelterFor() {
+        return shelterFor;
+    }
+
+    public Vec3 shelterSpot() {
+        return shelterSpot;
+    }
+
+    public long shelterRetry() {
+        return shelterRetry;
+    }
+
+    public void setShelter(Vec3 forSpot, Vec3 spot, long retry) {
+        shelterFor = forSpot;
+        shelterSpot = spot;
+        shelterRetry = retry;
+    }
+
+    /** Поклон игроку (победитель смотра, старший по положению): день секты по игроку — раз в день. */
+    private final Map<UUID, Long> bowedPlayers = new HashMap<>();
+
+    public boolean bowedToday(Player p, long day) {
+        Long d = bowedPlayers.get(p.getUUID());
+        return d != null && d == day;
+    }
+
+    public void markBowed(Player p, long day) {
+        bowedPlayers.put(p.getUUID(), day);
+    }
+
+    /** Лекарь лечит игрока (id сущности; −1 — нет). */
+    private int healingPlayer = -1;
+
+    public int healingPlayer() {
+        return healingPlayer;
+    }
+
+    public void setHealingPlayer(int id) {
+        healingPlayer = id;
+    }
 }

@@ -165,7 +165,7 @@ public enum SectPose {
             // Члены секты за делом (автор 05.10).
             case COUNCIL, WAIT_TREAT -> SIT;
             case REPORT, LECTURE -> TALK;
-            case RECEIVE, HEAL_POST, REVERE -> NONE;
+            case RECEIVE, HEAL_POST, REVERE, SHELTER -> NONE;
             case COUNT -> COUNT;
             case READ -> READ;
             case GRIND -> GRIND;

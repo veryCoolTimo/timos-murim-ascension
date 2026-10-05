@@ -130,6 +130,21 @@ public final class SectLife {
                         spot, yaw);
             }
         }
+        // Раненый игрок на земле секты (живая гора, автор 05.10): Ун Гак днём за своим делом идёт перевязать.
+        if ("un_gak".equals(m.get().key()) && !npc.dormant() && healerFree(t.kind()) && SectSchedule.at(time) != SectSchedule.Period.NIGHT) {
+            ServerPlayer hurt = SectReactions.patient(npc);
+            if (hurt != null) {
+                Vec3 p = hurt.position();
+                Vec3 dir = npc.position().subtract(p).multiply(1.0D, 0.0D, 1.0D);
+                dir = dir.lengthSqr() < 1.0E-4D ? new Vec3(1.0D, 0.0D, 0.0D) : dir.normalize();
+                Vec3 spot = stand(npc.level(), p.add(dir.scale(1.3D)));
+                float yaw = SectLayout.yawOf(p.x - spot.x, p.z - spot.z);
+                return new Resolved(new SectSchedule.Task(SectSchedule.Kind.TREAT, t.zone(), 0.0D, 0.0D, 0.0D, 0.0D,
+                        SectReactions.PLAYER_PATIENT), spot, yaw);
+            }
+        } else if ("un_gak".equals(m.get().key()) && npc.healingPlayer() >= 0) {
+            npc.setHealingPlayer(-1);
+        }
         // Смена поста: сменяемый ждёт сменщика на посту, пока они не поклонятся друг другу (или окно не выйдет).
         Optional<SectRota.Duty> ending = SectRota.ending(m.get(), time);
         if (ending.isPresent() && handoverPending(npc, m.get())) {
@@ -140,7 +155,15 @@ public final class SectLife {
             return null;
         }
         Vec3 spot = npc.level().isLoaded(BlockPos.containing(guess)) ? stand(npc.level(), guess) : guess;
-        return new Resolved(t, spot, layout.yaw(t.faceU(), t.faceV()));
+        // Дождь: дело под открытым небом прервано — под крышу рядом (SectWeather).
+        return SectWeather.apply(npc, new Resolved(t, spot, layout.yaw(t.faceU(), t.faceV())));
+    }
+
+    /** Лекарь может отойти к раненому игроку: за своим делом, в трапезу, вечером (не на совете, не с докладом, не во сне). */
+    static boolean healerFree(SectSchedule.Kind k) {
+        return k == SectSchedule.Kind.BREW || k == SectSchedule.Kind.GRIND || k == SectSchedule.Kind.HEAL_POST
+                || k == SectSchedule.Kind.EAT || k == SectSchedule.Kind.MEDITATE || k == SectSchedule.Kind.WORK
+                || k == SectSchedule.Kind.WATCH;
     }
 
     // ------------------------------------------------------------------ члены секты за делом (автор 05.10)
@@ -237,7 +260,8 @@ public final class SectLife {
             return;
         }
         // Колокол пробил — занятия кончились: поединок учеников прекращается (с игроком — доигрывается).
-        if (npc.inBout() && SectSchedule.at(level.getDayTime()) != SectSchedule.Period.TRAINING) {
+        // Дождь — тоже конец поединка учеников: оба под крышу (живая гора, автор 05.10).
+        if (npc.inBout() && (SectSchedule.at(level.getDayTime()) != SectSchedule.Period.TRAINING || SectWeather.wet(npc) && SectReview.fighterTask(npc) == null)) {
             npc.stopBout();
         }
         // Свои — на защиту: чужой враждебный моб рядом с учеником.

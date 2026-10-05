@@ -89,6 +89,9 @@ public class DiscipleRenderer extends MobRenderer<SectDisciple, DiscipleRenderer
         Body body = BODIES.get(entity.role());
         model = body == null ? bandit : bodies.get(body.geo());
         super.render(entity, yaw, partialTick, pose, buffers, light);
+        // Реплика над головой (живая гора, автор 05.10).
+        SpeechBubbles.render(entity, partialTick, pose, buffers, getFont(), entityRenderDispatcher.cameraOrientation(),
+                entityRenderDispatcher.distanceToSqr(entity));
     }
 
     @Override

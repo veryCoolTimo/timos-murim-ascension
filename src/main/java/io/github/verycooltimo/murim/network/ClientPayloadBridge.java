@@ -46,6 +46,10 @@ final class ClientPayloadBridge {
         io.github.verycooltimo.murim.client.sect.DialogueScreen.open(payload);
     }
 
+    public static void handleSectBubble(SectBubblePayload payload) {
+        io.github.verycooltimo.murim.client.sect.SpeechBubbles.onBubble(payload);
+    }
+
     public static void handleDialogueClose() {
         io.github.verycooltimo.murim.client.sect.DialogueScreen.closeFromServer();
     }
