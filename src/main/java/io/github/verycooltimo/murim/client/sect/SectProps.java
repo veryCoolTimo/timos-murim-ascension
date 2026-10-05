@@ -37,7 +37,10 @@ final class SectProps extends RenderLayer<SectDisciple, DiscipleRenderer.Model> 
             "chopsticks", new String[] {"root", "waist", "torso", "arm_r"},
             "broom", new String[] {"root", "waist", "torso", "arm_r"},
             "yoke", new String[] {"root", "waist", "torso"},
-            "scabbard", new String[] {"root", "waist"});
+            "scabbard", new String[] {"root", "waist"},
+            // Body training (tools/art/sect_props.py): stone at the chest, slab on the back.
+            "rock", new String[] {"root", "waist", "torso"},
+            "slab", new String[] {"root", "waist", "torso"});
 
     private final ModelPart props;
 
