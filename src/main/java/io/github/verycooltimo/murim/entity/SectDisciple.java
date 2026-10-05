@@ -429,6 +429,7 @@ public class SectDisciple extends Bandit implements Casters.Caster {
             if (!level().isClientSide && player instanceof ServerPlayer sp) {
                 if (spar == Spar.BOW_OUT) {
                     spar = Spar.NONE;
+                    syncDrawn();
                     playAnim(null, 0);
                 }
                 io.github.verycooltimo.murim.sect.DialogueService.open(sp, this);
@@ -555,6 +556,7 @@ public class SectDisciple extends Bandit implements Casters.Caster {
             cancelTechnique();
             formTick = -1;
             spar = Spar.NONE;
+            syncDrawn();
             setTarget(null);
             playAnim(null, 0);
             return;
@@ -593,6 +595,7 @@ public class SectDisciple extends Bandit implements Casters.Caster {
                 if (sparTick >= 6 + BOW_TICKS + 10) {
                     // Поклон окончен — снова к распорядку.
                     spar = Spar.NONE;
+                    syncDrawn();
                     setTarget(null);
                 }
             }
@@ -1083,6 +1086,7 @@ public class SectDisciple extends Bandit implements Casters.Caster {
             d.formTick = -1;
             d.dashLeft = 0;
             d.spar = Spar.NONE;
+            d.syncDrawn();
             d.setTarget(null);
             d.playAnim(null, 0);
         }
@@ -1441,6 +1445,14 @@ public class SectDisciple extends Bandit implements Casters.Caster {
         return !role().lay();
     }
 
+    /**
+     * Меч сразу по концу поединка, а не со следующего тика: партнёр мог уже оттикать в этом тике,
+     * и тест видел «поединок кончен, а меч в руке» (поймано 05.10, тест падал через раз).
+     */
+    void syncDrawn() {
+        entityData.set(DRAWN, wantsDrawn());
+    }
+
     /** Меч в руке (синхронизируется на клиент): иначе — в ножнах на поясе. */
     public boolean drawn() {
         return entityData.get(DRAWN);
@@ -1450,7 +1462,7 @@ public class SectDisciple extends Bandit implements Casters.Caster {
      * Меч обнажён в бою и на тренировке с мечом: поединок (после поклона — кланяются с мечом в ножнах), техника и
      * форма, строй форм и столбы, заслон стражи, защита своих от моба. Остальное время — в ножнах; смена мгновенная.
      */
-    boolean wantsDrawn() {
+    public boolean wantsDrawn() {
         // Поклон — всегда с мечом в ножнах, даже если поединок начался посреди форм или столбов (поза ещё не сменилась).
         if (!armed() || spar == Spar.BOW_IN || spar == Spar.BOW_OUT) {
             return false;

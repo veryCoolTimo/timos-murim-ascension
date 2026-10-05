@@ -180,10 +180,10 @@ public final class SectGameTests {
             helper.assertTrue(sheathedBow[0], "поклон с обнажённым мечом");
             helper.assertTrue(a.isAlive() && b.isAlive(), "ученик погиб в поединке");
             helper.assertTrue(a.spar() == SectDisciple.Spar.NONE && b.spar() == SectDisciple.Spar.NONE, "поединок ещё идёт");
-            // Без позы с мечом и без боя — меч в ножнах.
+            // После поединка меч в руке только если его требует новое дело (на тренировке распорядок сразу ставит
+            // формы — formTick, а поза FORM приходит позже). Раньше тест падал через раз именно на этом (05.10).
             for (SectDisciple d : List.of(a, b)) {
-                helper.assertTrue(!d.drawn() || d.pose() != io.github.verycooltimo.murim.entity.SectPose.NONE || !d.free(),
-                        d.memberKey() + ": после поединка меч не убран в ножны");
+                helper.assertTrue(!d.drawn() || d.wantsDrawn(), d.memberKey() + ": после поединка меч не убран в ножны");
             }
             float floorA = a.getMaxHealth() * (1.0F - SectDisciple.SPAR_LOSS);
             float floorB = b.getMaxHealth() * (1.0F - SectDisciple.SPAR_LOSS);
