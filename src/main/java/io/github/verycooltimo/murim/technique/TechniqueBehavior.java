@@ -31,7 +31,8 @@ public sealed interface TechniqueBehavior
                 TechniqueBehavior.PlumSea,
                 TechniqueBehavior.PlumShower,
                 TechniqueBehavior.FallingPetal,
-                TechniqueBehavior.TangDaggers {
+                TechniqueBehavior.TangDaggers,
+                TechniqueBehavior.SelfArt {
 
     ResourceLocation MELEE_ARC = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "melee_arc");
     ResourceLocation PROJECTILE_FAN = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "projectile_fan");
@@ -52,6 +53,7 @@ public sealed interface TechniqueBehavior
     ResourceLocation FALLING_PETAL = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "falling_petal");
     ResourceLocation PLUM_SHOWER = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "plum_shower");
     ResourceLocation TANG_DAGGERS = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "tang_daggers");
+    ResourceLocation SELF_ART = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "self_art");
 
     ResourceLocation type();
 
@@ -450,6 +452,51 @@ public sealed interface TechniqueBehavior
         }
     }
 
+    /**
+     * Искусство на себя (дыхательный приём третьего сорта, docs/design/techniques/junk-arts.md): эффект сразу,
+     * расплата — когда он кончится. Эффекты — ванильные id ({@code minecraft:strength}).
+     *
+     * @param buff             эффект на себя
+     * @param amplifier        его уровень (0 — первый)
+     * @param buffTicks        сколько держится
+     * @param backlash         эффект расплаты, когда действие кончилось
+     * @param backlashTicks    сколько держится расплата
+     * @param selfDamage       урон себе в момент расплаты (сквозь броню)
+     */
+    record SelfArt(ResourceLocation buff, int amplifier, int buffTicks, ResourceLocation backlash,
+                   int backlashTicks, float selfDamage) implements TechniqueBehavior {
+        public static final MapCodec<SelfArt> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
+                ResourceLocation.CODEC.fieldOf("buff").forGetter(SelfArt::buff),
+                Codec.INT.optionalFieldOf("amplifier", 0).forGetter(SelfArt::amplifier),
+                Codec.INT.fieldOf("buff_ticks").forGetter(SelfArt::buffTicks),
+                ResourceLocation.CODEC.fieldOf("backlash").forGetter(SelfArt::backlash),
+                Codec.INT.fieldOf("backlash_ticks").forGetter(SelfArt::backlashTicks),
+                Codec.FLOAT.optionalFieldOf("self_damage", 0.0F).forGetter(SelfArt::selfDamage)
+        ).apply(i, SelfArt::new));
+
+        public SelfArt {
+            if (amplifier < 0 || amplifier > 4) {
+                throw new IllegalArgumentException("Уровень эффекта вне 0..4: " + amplifier);
+            }
+            if (buffTicks < 1 || buffTicks > 1200 || backlashTicks < 0 || backlashTicks > 1200) {
+                throw new IllegalArgumentException("Длительность вне 1..1200 тиков");
+            }
+            if (!(selfDamage >= 0.0F) || !(selfDamage <= 20.0F)) {
+                throw new IllegalArgumentException("Урон себе вне 0..20: " + selfDamage);
+            }
+        }
+
+        @Override
+        public float damage() {
+            return 0.0F;
+        }
+
+        @Override
+        public ResourceLocation type() {
+            return SELF_ART;
+        }
+    }
+
     // Map.of держит не больше 10 пар — дальше Map.ofEntries.
     Map<ResourceLocation, MapCodec<? extends TechniqueBehavior>> TYPES = Map.ofEntries(
             Map.entry(MELEE_ARC, MeleeArc.CODEC),
@@ -470,7 +517,8 @@ public sealed interface TechniqueBehavior
             Map.entry(PLUM_SEA, PlumSea.CODEC),
             Map.entry(PLUM_SHOWER, PlumShower.CODEC),
             Map.entry(FALLING_PETAL, FallingPetal.CODEC),
-            Map.entry(TANG_DAGGERS, TangDaggers.CODEC));
+            Map.entry(TANG_DAGGERS, TangDaggers.CODEC),
+            Map.entry(SELF_ART, SelfArt.CODEC));
 
     Codec<TechniqueBehavior> CODEC = ResourceLocation.CODEC
             .dispatch("type", TechniqueBehavior::type, type -> {

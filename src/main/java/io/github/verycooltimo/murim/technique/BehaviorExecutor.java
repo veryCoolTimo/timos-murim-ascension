@@ -96,6 +96,9 @@ public final class BehaviorExecutor {
             step(player, definition.id());
             return false;
         }
+        if (behavior instanceof TechniqueBehavior.SelfArt art) {
+            return JunkArts.selfArt(player, art, definition.id());
+        }
         MurimMod.LOGGER.error("Тип поведения {} не реализован у техники {}",
                 behavior.type(), definition.id());
         return false;
@@ -156,6 +159,7 @@ public final class BehaviorExecutor {
                 anyHit = true;
                 // Пережитое для освоения (docs/design/19 §3г).
                 io.github.verycooltimo.murim.mastery.MasteryService.onHit(player, id, target);
+                JunkArts.onHit(player, id, target);
             }
         }
         return anyHit;
@@ -384,6 +388,7 @@ public final class BehaviorExecutor {
             if (target.hurt(player.damageSources().playerAttack(player), dash.damage() * power)) {
                 anyHit = true;
                 io.github.verycooltimo.murim.mastery.MasteryService.onHit(player, id, target);
+                JunkArts.onHit(player, id, target);
             }
         }
         return anyHit;
@@ -466,6 +471,11 @@ public final class BehaviorExecutor {
             }
             anyHit = true;
             io.github.verycooltimo.murim.mastery.MasteryService.onHit(player, id, target);
+            if (JunkArts.isJunk(id)) {
+                // Искусство третьего сорта — без брызг яда ладони: свои мелочи по слою (JunkArts).
+                JunkArts.onHit(player, id, target);
+                continue;
+            }
             // Точка контакта уходит на клиент: брызги яда рисуются ТАМ, где удар
             // состоялся. Без этого выброс возникал из воздуха независимо от попадания —
             // прямое замечание автора по кадрам.

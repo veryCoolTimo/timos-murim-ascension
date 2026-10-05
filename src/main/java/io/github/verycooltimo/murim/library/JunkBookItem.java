@@ -67,7 +67,25 @@ public class JunkBookItem extends Item {
                 serverPlayer.displayClientMessage(Component.translatable("junk.murim.msg.clue").withStyle(ChatFormatting.GRAY), true);
             }
         }
+        if (player instanceof ServerPlayer serverPlayer && book.kind() == JunkKind.FAKE_GRAND) {
+            learnFake(serverPlayer);
+        }
         return InteractionResultHolder.consume(stack);
+    }
+
+    /**
+     * The grand fake teaches its one honest slash (docs/design/techniques/junk-arts.md): of all the bluster about ten
+     * thousand dragons, only a single plain cut makes sense. Without a dantian nothing is learned and nothing is said —
+     * the book stays a joke until the reader has qi.
+     */
+    private static void learnFake(ServerPlayer player) {
+        net.minecraft.resources.ResourceLocation art = io.github.verycooltimo.murim.technique.JunkArts.TEN_THOUSAND_DRAGONS;
+        if (player.getData(ModAttachments.MASTERY).knows(art)
+                || !io.github.verycooltimo.murim.mastery.MasteryRules.canLearn(player.getData(ModAttachments.PROFILE))) {
+            return;
+        }
+        player.displayClientMessage(Component.translatable("murim.junk_art.fake_grand").withStyle(ChatFormatting.GRAY), false);
+        MasteryService.learn(player, art, 0);
     }
 
     /** First reading of the musings: a little wisdom (the same resource deep comprehension feeds). */

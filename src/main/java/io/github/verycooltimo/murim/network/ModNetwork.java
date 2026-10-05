@@ -19,7 +19,7 @@ import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 public final class ModNetwork {
 
     /** Версия протокола. Поднимать при любом несовместимом изменении пакетов. */
-    private static final String VERSION = "30";
+    private static final String VERSION = "31";
 
     @SubscribeEvent
     static void register(RegisterPayloadHandlersEvent event) {
