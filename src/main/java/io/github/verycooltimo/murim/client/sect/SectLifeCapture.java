@@ -56,6 +56,8 @@ public final class SectLifeCapture {
 
     static final String CAMERA = "murim_sect_cam";
 
+    private static final boolean BENCH = "1".equals(System.getenv("MURIM_SECT_BENCH"));
+
     /**
      * Сцена: время суток, точка камеры и куда смотреть (площадка, смещение, высота над площадкой), игрок в строю.
      */
@@ -157,8 +159,15 @@ public final class SectLifeCapture {
         if (mc.player == null || mc.level == null || server == null) {
             return;
         }
+        if (BENCH) {
+            // Server cost bench (sect/SectBench): the client draws nothing, llvmpipe does not compete for CPU.
+            mc.noRender = true;
+        }
         if (!setup) {
             setup = true;
+            if (BENCH) {
+                mc.options.framerateLimit().set(10);
+            }
             mc.options.hideGui = !"1".equals(System.getenv("MURIM_CAPTURE_GUI"));
             mc.options.setCameraType(CameraType.FIRST_PERSON);
             mc.options.renderDistance().set(env("MURIM_PANO_RD", 10));
