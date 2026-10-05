@@ -43,6 +43,8 @@ public class BossRenderer extends MobRenderer<FortressMaster, BossModel> {
             new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "fortress_master"), "main");
 
     private static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/entity/fortress_master.png");
+    /** Фаза 3, «кровь кипит»: кожа красная (Myst гл. 331). */
+    private static final ResourceLocation TEXTURE_BOIL = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/entity/fortress_master_boil.png");
 
     /** Масштаб модели: в 1,35 раза больше игрока. */
     public static final float SCALE = 1.35F;
@@ -58,7 +60,7 @@ public class BossRenderer extends MobRenderer<FortressMaster, BossModel> {
 
     @Override
     public ResourceLocation getTextureLocation(FortressMaster entity) {
-        return TEXTURE;
+        return entity.phase() >= 3 ? TEXTURE_BOIL : TEXTURE;
     }
 
     @Override
@@ -114,6 +116,7 @@ public class BossRenderer extends MobRenderer<FortressMaster, BossModel> {
             float k = Mth.clamp(age / move.strike(), 0.0F, 1.0F);
             ring(vc, m, (float) (mk.x - ex), floor, (float) (mk.y - ez), (float) BossMove.POUNCE_RADIUS, 0.28F, (0.45F + 0.5F * k) * pulse);
             disc(vc, m, (float) (mk.x - ex), floor - 0.01F, (float) (mk.y - ez), (float) BossMove.POUNCE_RADIUS * k, 0.18F * pulse);
+            hatch(vc, m, (float) (mk.x - ex), floor + 0.005F, (float) (mk.y - ez), (float) BossMove.POUNCE_RADIUS, 0.4F * pulse);
         }
         if ((state == FortressMaster.WINDUP || state == FortressMaster.STRIKE) && (move == BossMove.RAM || move == BossMove.WHIRL)) {
             double half = move == BossMove.RAM ? BossMove.RAM_HALF_WIDTH : BossMove.WHIRL_HALF_WIDTH;
@@ -126,6 +129,7 @@ public class BossRenderer extends MobRenderer<FortressMaster, BossModel> {
             float k = Mth.clamp(age / move.windup(), 0.0F, 1.0F);
             ring(vc, m, 0.0F, floor, 0.0F, (float) BossMove.ROAR_RADIUS, 0.3F, (0.4F + 0.5F * k) * pulse);
             disc(vc, m, 0.0F, floor - 0.01F, 0.0F, (float) BossMove.ROAR_RADIUS * k, 0.12F * pulse);
+            hatch(vc, m, 0.0F, floor + 0.005F, 0.0F, (float) BossMove.ROAR_RADIUS, 0.3F * pulse);
         }
         if (move == BossMove.SPLIT && (state == FortressMaster.WINDUP && age >= BossMove.SPLIT_PLANT || state == FortressMaster.STRIKE)) {
             float k = state == FortressMaster.STRIKE ? 1.0F : Mth.clamp((age - BossMove.SPLIT_PLANT) / (move.windup() - BossMove.SPLIT_PLANT), 0.0F, 1.0F);
@@ -188,6 +192,26 @@ public class BossRenderer extends MobRenderer<FortressMaster, BossModel> {
         }
     }
 
+    /**
+     * Штриховка внутри круга (codex 05.10: по одному контуру не видно, опасно внутри или снаружи):
+     * диагональные полосы через 0,7 блока, обрезанные кругом.
+     */
+    private static void hatch(VertexConsumer vc, Matrix4f m, float x, float y, float z, float radius, float alpha) {
+        float w = 0.12F;
+        for (float t = -radius + 0.35F; t < radius; t += 0.7F) {
+            float half = (float) Math.sqrt(Math.max(0.0F, radius * radius - t * t)) - 0.1F;
+            if (half <= 0.1F) {
+                continue;
+            }
+            // Полоса вдоль диагонали (1, 1)/√2, смещённая поперёк на t.
+            float ax = 0.7071F, az = 0.7071F, px = -0.7071F, pz = 0.7071F;
+            float cx = x + px * t, cz = z + pz * t;
+            quad(vc, m, new float[] {cx - ax * half - px * w, y, cz - az * half - pz * w}, new float[] {cx + ax * half - px * w, y, cz + az * half - pz * w},
+                    new float[] {cx + ax * half + px * w, y, cz + az * half + pz * w}, new float[] {cx - ax * half + px * w, y, cz - az * half + pz * w},
+                    MR, MG, MB, alpha);
+        }
+    }
+
     /** Полоса от точки (x, z) по yaw: две кромки, бледная заливка и шевроны направления. */
     private static void lane(VertexConsumer vc, Matrix4f m, double x, float y, double z, float yaw, double length, double half, float alpha) {
         double[] f = BossRules.forward(yaw);
@@ -199,7 +223,7 @@ public class BossRenderer extends MobRenderer<FortressMaster, BossModel> {
                     p(x + ix + f[0] * length, y, z + iz + f[1] * length), p(x + ix, y, z + iz), MR, MG, MB, alpha);
         }
         quad(vc, m, p(x - sx * half, y - 0.005F, z - sz * half), p(x - sx * half + f[0] * length, y - 0.005F, z - sz * half + f[1] * length),
-                p(x + sx * half + f[0] * length, y - 0.005F, z + sz * half + f[1] * length), p(x + sx * half, y - 0.005F, z + sz * half), MR, MG, MB, alpha * 0.18F);
+                p(x + sx * half + f[0] * length, y - 0.005F, z + sz * half + f[1] * length), p(x + sx * half, y - 0.005F, z + sz * half), MR, MG, MB, alpha * 0.3F);
         for (double d = 1.5D; d < length - 0.5D; d += 2.0D) {
             double cx = x + f[0] * d, cz = z + f[1] * d;
             double w = half * 0.55D;

@@ -64,7 +64,7 @@ public final class BossFx {
         if (state == FortressMaster.WINDUP && age == Math.max(1, m.windup() - 4)) {
             // Блик на дао перед ударом.
             for (int i = 0; i < 6; i++) {
-                level.addParticle(ParticleTypes.ELECTRIC_SPARK, x + (r.nextDouble() - 0.5D) * 1.2D, y + 2.2D + r.nextDouble(), z + (r.nextDouble() - 0.5D) * 1.2D,
+                level.addParticle(ParticleTypes.CRIT, x + (r.nextDouble() - 0.5D) * 1.2D, y + 2.2D + r.nextDouble(), z + (r.nextDouble() - 0.5D) * 1.2D,
                         0.0D, 0.05D, 0.0D);
             }
         }
