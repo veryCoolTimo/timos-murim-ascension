@@ -366,6 +366,10 @@ public final class TrainingService {
                 sendRoute(player, s, run, e, TrainingPayloads.Beat.FELL, now);
             }
             case VOID -> {
+                MurimMod.LOGGER.info("Training: {} {} voided at checkpoint {}: moved>8 {} elytra {} flying {} mount {} water {} technique {} footwork {}",
+                        player.getName().getString(), e.id(), ev.index(), player.position().distanceTo(new net.minecraft.world.phys.Vec3(s.lastX, s.lastY, s.lastZ)),
+                        player.isFallFlying(), player.getAbilities().flying, player.isPassenger(), player.isInWater(),
+                        player.getData(ModAttachments.TECHNIQUE_STATE).isActive(), FootworkService.isRunning(player) || FootworkService.inShadow(player));
                 player.displayClientMessage(Component.translatable("murim.training.route.void").withStyle(ChatFormatting.RED), true);
                 sendEnd(player, s, e, now);
             }

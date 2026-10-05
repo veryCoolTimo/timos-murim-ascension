@@ -128,7 +128,8 @@ public final class TrainingCapture {
             return;
         }
         follow(mc);
-        if (index < 0 || t >= steps.get(index).ticks()) {
+        // A render-wait step lasts until the world is drawn, whatever its tick count.
+        if (index < 0 || t >= steps.get(index).ticks() && !(steps.get(index).waitRender() && rendering)) {
             next(mc);
             return;
         }
@@ -138,7 +139,7 @@ public final class TrainingCapture {
             stable = sections == lastSections && mc.levelRenderer.hasRenderedAllSections() ? stable + 1 : 0;
             lastSections = sections;
             t++;
-            if (stable >= 20 && t > 60 || t > env("MURIM_TRAIN_RENDER_MAX", 1400)) {
+            if (stable >= 40 && t > 200 && sections >= env("MURIM_TRAIN_SECTIONS", 150) || t > env("MURIM_TRAIN_RENDER_MAX", 2400)) {
                 MurimMod.LOGGER.info("Стенд тренировок: {} — мир готов за {} тиков", s.name(), t);
                 rendering = false;
                 t = 0;
@@ -357,6 +358,9 @@ public final class TrainingCapture {
         steps.add(new Step("p_rest", 100, 0, () -> { }, i -> crouch(false), false));
         // Weighted push-ups: the slab in hand, look at the ground, tap — plank; a tap per beat; look up — stand.
         steps.add(new Step("p_pushup_weighted", 230, 4, () -> {
+            // Higher and from behind the shoulder: the slab on the back must be seen.
+            Vec3 look = new Vec3(origin.getX() + 4.5D, origin.getY() + 0.3D, origin.getZ() - 9.5D);
+            stand(server, look, look.add(2.2D, 2.4D, 2.6D));
             hand(server, new ItemStack(TrainingRegistry.WEIGHT_SLAB.get()));
             pitch(server, 70.0F);
         }, i -> {
@@ -367,6 +371,7 @@ public final class TrainingCapture {
             }
         }, false));
         steps.add(new Step("p_pushup", 160, 6, () -> {
+            sideCam.run();
             hand(server, ItemStack.EMPTY);
             pitch(server, 70.0F);
         }, i -> {
@@ -386,10 +391,12 @@ public final class TrainingCapture {
                 p.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(TrainingRegistry.TRAINING_STONE_ITEM.get()));
             });
         }, i -> {
-            mc.options.keyUp.setDown(i > 15 && i < 100);
+            // With a stand as the camera the player's input is not read (LocalPlayer#serverAiStep only for the
+            // controlled camera, agent-log 03.10): walk by setting the forward impulse directly.
+            mc.player.zza = i > 15 && i < 100 ? 1.0F : 0.0F;
         }, false));
         steps.add(new Step("p_carry_end", 20, 0, () -> {
-            mc.options.keyUp.setDown(false);
+            mc.player.zza = 0.0F;
             hand(server, ItemStack.EMPTY);
         }, i -> { }, false));
     }
@@ -430,6 +437,7 @@ public final class TrainingCapture {
             server.execute(() -> {
                 ServerPlayer p = sp(server);
                 p.setNoGravity(true);
+                p.setInvulnerable(true);
                 p.teleportTo(server.overworld(), first.x(), first.y() + 8.0D, first.z() + 6.0D, 180.0F, 20.0F);
             });
         }, i -> { }, false));
@@ -439,10 +447,19 @@ public final class TrainingCapture {
         List<double[]> ticks = new ArrayList<>();
         Vec3 from = new Vec3(first.x(), first.y() + 8.0D, first.z() + 6.0D);
         for (Vec3 to : path) {
-            int n = Math.max(4, (int) Math.ceil(from.distanceTo(to) / 0.5D));
-            for (int k = 1; k <= n; k++) {
-                Vec3 at = from.lerp(to, k / (double) n);
-                ticks.add(new double[] {at.x, at.y, at.z, to.x - from.x, to.z - from.z});
+            // Over the riser, not through it: up, across, down (a straight line cut through the rock and the player
+            // suffocated on the first run). A fall goes straight down.
+            double top = Math.max(from.y, to.y) + 2.5D;
+            List<Vec3> legs = to.y < from.y - 3.0D ? List.of(new Vec3(to.x, from.y, to.z), to)
+                    : List.of(new Vec3(from.x, top, from.z), new Vec3(to.x, top, to.z), to);
+            Vec3 a0 = from;
+            for (Vec3 leg : legs) {
+                int n = Math.max(2, (int) Math.ceil(a0.distanceTo(leg) / 0.5D));
+                for (int k = 1; k <= n; k++) {
+                    Vec3 at = a0.lerp(leg, k / (double) n);
+                    ticks.add(new double[] {at.x, at.y, at.z, to.x - from.x, to.z - from.z});
+                }
+                a0 = leg;
             }
             for (int k = 0; k < 12; k++) {
                 ticks.add(new double[] {to.x, to.y, to.z, to.x - from.x, to.z - from.z});

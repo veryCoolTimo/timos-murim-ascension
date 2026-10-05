@@ -54,6 +54,8 @@ public final class SetMachine {
     private double stamina = 1.0D;
     private int reps;
     private int good;
+    /** Seconds in the current horse stance (its own count; the squats around it keep theirs). */
+    private int stanceSec;
     private long lastExhaustedNote = Long.MIN_VALUE / 2;
 
     public Exercise exercise() {
@@ -73,14 +75,14 @@ public final class SetMachine {
         return stamina;
     }
 
-    /** Reps (or seconds of stance) in this set. */
+    /** Reps in this set, or seconds in the current horse stance. */
     public int reps() {
-        return reps;
+        return exercise == Exercise.HORSE_STANCE ? stanceSec : reps;
     }
 
-    /** Reps on the beat. */
+    /** Reps on the beat (stance: seconds held). */
     public int good() {
-        return good;
+        return exercise == Exercise.HORSE_STANCE ? stanceSec : good;
     }
 
     /** Ends the set from outside (carry stone picked up, logout). */
@@ -180,6 +182,7 @@ public final class SetMachine {
         if (in.crouch() && downSince >= 0 && in.tick() - downSince >= TrainingBalance.HORSE_HOLD) {
             exercise = Exercise.HORSE_STANCE;
             holdSince = in.tick();
+            stanceSec = 0;
             out.add(Event.of(Kind.SWITCH, exercise));
             return;
         }
@@ -200,8 +203,7 @@ public final class SetMachine {
         stamina -= Exercise.HORSE_STANCE.stamina() / 20.0D;
         long held = in.tick() - holdSince;
         if (held > 0 && held % 20 == 0) {
-            reps++;
-            good++;
+            stanceSec++;
             out.add(new Event(Kind.HOLD, exercise, TrainingBalance.QUALITY_GOOD, null));
         }
         if (stamina <= 0.0D) {

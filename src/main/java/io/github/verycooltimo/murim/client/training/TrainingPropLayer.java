@@ -53,7 +53,7 @@ public final class TrainingPropLayer extends RenderLayer<AbstractClientPlayer, P
             pose.scale(0.85F, 0.85F, 0.85F);
         } else {
             // Flat on the back between the shoulder blades.
-            pose.translate(0.0D, 0.32D, 0.2D);
+            pose.translate(0.0D, 0.34D, 0.3D);
             pose.mulPose(Axis.XP.rotationDegrees(90.0F));
             pose.scale(0.7F, 0.7F, 0.7F);
         }
