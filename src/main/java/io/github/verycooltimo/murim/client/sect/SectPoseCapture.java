@@ -89,7 +89,7 @@ public final class SectPoseCapture {
      * {@code MURIM_POSES=draw} — один ролик ученика третьего поколения: покой (рукоять в ножнах) → поединок с
      * товарищем (поклон с мечом в ножнах, бой с мечом Хуашань в руке) → колокол, снова покой. Камера идёт за парой.
      */
-    private static final Shot DRAW_SHOT = new Shot("clip", 4.6D, 0.5D, false, 95, 3);
+    private static final Shot DRAW_SHOT = new Shot("clip", 3.3D, 0.3D, false, 95, 3);
     /** Кадр ролика draw, на котором начинается поединок и на котором звонит колокол. */
     private static final int DRAW_SPAR_AT = 10;
     private static final int DRAW_STOP_AT = 75;
@@ -288,7 +288,8 @@ public final class SectPoseCapture {
                 npc.setNoAi(false);
                 npc.moveTo(at.getX() - 1.0D, standY, at.getZ() + 0.5D, -90.0F, 0.0F);
                 SectDisciple mate = new SectDisciple(ModEntities.SECT_DISCIPLE.get(), level);
-                mate.setRole(SectRole.DISCIPLE);
+                // Товарищ — второе поколение: обе текстуры модели ученика в одном ролике.
+                mate.setRole(SectRole.SECOND);
                 mate.setKeepAwake(true);
                 mate.moveTo(at.getX() + 2.0D, standY, at.getZ() + 0.5D, 90.0F, 0.0F);
                 level.addFreshEntity(mate);
@@ -346,7 +347,14 @@ public final class SectPoseCapture {
         }
         // Камера: сбоку от середины пары, на том же расстоянии — оба в кадре, пока бьются.
         Vec3 mid = a.position().add(b.position()).scale(0.5D).add(0.0D, 1.0D, 0.0D);
-        Vec3 cam = mid.add(new Vec3(0.35D, 0.0D, 1.0D).normalize().scale(DRAW_SHOT.dist())).add(0.0D, DRAW_SHOT.height(), 0.0D);
+        // Разошлись (натиск, отскок) — камера отходит, чтобы оба оставались в кадре и никто не налетал на неё.
+        double dist = Math.max(DRAW_SHOT.dist(), a.distanceTo(b) * 1.1D + 1.5D);
+        Vec3 side = new Vec3(b.getZ() - a.getZ(), 0.0D, a.getX() - b.getX());
+        side = side.lengthSqr() < 1.0E-4D ? new Vec3(0.0D, 0.0D, 1.0D) : side.normalize();
+        if (side.z < 0.0D) {
+            side = side.scale(-1.0D);
+        }
+        Vec3 cam = mid.add(side.scale(dist)).add(0.0D, DRAW_SHOT.height(), 0.0D);
         for (ArmorStand stand : level.getEntitiesOfClass(ArmorStand.class, new AABB(origin).inflate(256.0D),
                 s -> s.getCustomName() != null && CAMERA.equals(s.getCustomName().getString()))) {
             Vec3 d = mid.subtract(cam);
