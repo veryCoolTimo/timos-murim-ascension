@@ -281,8 +281,7 @@ public class FortressMaster extends Monster implements Casters.Caster {
     }
 
     public boolean isStunned() {
-        MobEffectInstance slow = getEffect(MobEffects.MOVEMENT_SLOWDOWN);
-        return slow != null && slow.getAmplifier() >= 3;
+        return io.github.verycooltimo.murim.combat.Stun.isStunned(this);
     }
 
     /** После оглушения и «оступился» — невосприимчивость: его нельзя держать цепочкой. */

@@ -109,9 +109,18 @@ public final class ModAttachments {
     public static final Supplier<AttachmentType<long[]>> FROZEN =
             ATTACHMENT_TYPES.register("frozen", () -> AttachmentType.<long[]>builder(() -> new long[] {0L, 0L}).build());
 
-    /** 1 — ИИ моба выключили мы на время оглушения техникой (вернуть после). Не сохраняется. */
-    public static final Supplier<AttachmentType<int[]>> STUN_AI =
-            ATTACHMENT_TYPES.register("stun_ai", () -> AttachmentType.<int[]>builder(() -> new int[] {0}).build());
+    /**
+     * Оглушение (combat/Stun): 1 — оглушён, 2 — оглушён и ИИ моба выключили мы (вернуть после).
+     * Сохраняется: иначе моб, сохранённый посреди оглушения, оставался бы без ИИ навсегда (NoAI
+     * пишется в NBT, а наш флаг — нет; находка аудита 05.10).
+     */
+    public static final Supplier<AttachmentType<Integer>> STUN =
+            ATTACHMENT_TYPES.register("stun_ai", () -> AttachmentType.builder(() -> 0)
+                    .serialize(com.mojang.serialization.Codec.INT).build());
+
+    /** Конец невосприимчивости босса к оглушению (игровое время); не сохраняется. */
+    public static final Supplier<AttachmentType<Long>> STUN_IMMUNE =
+            ATTACHMENT_TYPES.register("stun_immune", () -> AttachmentType.builder(() -> 0L).build());
 
     public static final Supplier<AttachmentType<int[]>> TRAVERSE =
             ATTACHMENT_TYPES.register("traverse",

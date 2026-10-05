@@ -97,6 +97,10 @@ final class ClientPayloadBridge {
         io.github.verycooltimo.murim.client.vfx.PlumVfx.onSlash(payload);
     }
 
+    public static void handleStun(StunPayload payload) {
+        io.github.verycooltimo.murim.client.vfx.StunStars.onStun(payload.entityId(), payload.ticks());
+    }
+
     public static void handleRush(RushPayload payload) {
         io.github.verycooltimo.murim.client.vfx.RushVfx.onRush(payload);
     }

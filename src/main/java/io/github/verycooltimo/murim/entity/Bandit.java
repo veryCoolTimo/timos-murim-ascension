@@ -228,8 +228,7 @@ public abstract class Bandit extends Monster implements io.github.verycooltimo.m
 
     /** Оглушён ли: то же правило, что у TargetLock (замедление уровня ≥ 4). */
     public boolean isStunned() {
-        MobEffectInstance slow = getEffect(MobEffects.MOVEMENT_SLOWDOWN);
-        return slow != null && slow.getAmplifier() >= 3;
+        return io.github.verycooltimo.murim.combat.Stun.isStunned(this);
     }
 
     @Override

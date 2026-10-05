@@ -74,36 +74,8 @@ public final class TargetLock {
         t.setData(ModAttachments.FROZEN, new long[] {until, ours});
     }
 
-    /**
-     * Оглушение техникой (автор 03.10: «противники не станятся»): замедление уровня ≥ 4, которым
-     * техники и оглушают, у мобов выключает ИИ и гасит движение — не ходят и не бьют. Снимается
-     * вместе с эффектом.
-     */
-    private static void stunTick(LivingEntity t) {
-        if (!(t instanceof net.minecraft.world.entity.Mob mob)) {
-            return;
-        }
-        net.minecraft.world.effect.MobEffectInstance slow = t.getEffect(net.minecraft.world.effect.MobEffects.MOVEMENT_SLOWDOWN);
-        boolean stunned = slow != null && slow.getAmplifier() >= 3;
-        int[] ours = t.hasData(ModAttachments.STUN_AI) ? t.getData(ModAttachments.STUN_AI) : null;
-        if (stunned) {
-            if (!mob.isNoAi()) {
-                mob.setNoAi(true);
-                t.setData(ModAttachments.STUN_AI, new int[] {1});
-            }
-            Vec3 v = t.getDeltaMovement();
-            t.setDeltaMovement(0.0D, Math.min(0.0D, v.y), 0.0D);
-        } else if (ours != null && ours[0] == 1) {
-            mob.setNoAi(false);
-            t.setData(ModAttachments.STUN_AI, new int[] {0});
-        }
-    }
-
     @SubscribeEvent
     static void onTick(EntityTickEvent.Pre event) {
-        if (event.getEntity() instanceof LivingEntity s && !s.level().isClientSide()) {
-            stunTick(s);
-        }
         if (!(event.getEntity() instanceof LivingEntity t) || t.level().isClientSide() || !t.hasData(ModAttachments.FROZEN)) {
             return;
         }
