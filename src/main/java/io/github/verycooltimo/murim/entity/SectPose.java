@@ -130,6 +130,10 @@ public enum SectPose {
             case REST -> SIT;
             case SLEEP -> SLEEP;
             case SPAR -> NONE;
+            // Слуги (иерархия секты): своих клипов у повара, раздатчика и травника пока нет — ближайшие позы.
+            case CARRY, SERVE -> CARRY;
+            case SWEEP -> SWEEP;
+            case COOK, TEND -> TALK;
         };
     }
 }

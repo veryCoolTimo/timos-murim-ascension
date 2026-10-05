@@ -1396,14 +1396,17 @@ public class SectDisciple extends Bandit implements Casters.Caster {
         if (id == null) {
             if (posed) {
                 posed = false;
-                playAnim(null, 0);
+                setPose(SectPose.NONE);
             }
             return;
         }
-        ResourceLocation clip = id(id);
-        if (!clip.toString().equals(anim())) {
-            playAnim(clip, 0);
-        }
+        // Позы работы — клипы агента поз (SectPose); у повара, раздатчика и травника — ближайшие.
+        SectPose pose = switch (id) {
+            case "carry", "serve" -> SectPose.CARRY;
+            case "sweep" -> SectPose.SWEEP;
+            default -> SectPose.TALK;
+        };
+        setPose(pose);
         posed = true;
     }
 
