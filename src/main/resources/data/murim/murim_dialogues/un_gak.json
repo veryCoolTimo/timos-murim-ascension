@@ -19,6 +19,14 @@
       "node": "night"
     },
     {
+      "when": [
+        {
+          "period": "training"
+        }
+      ],
+      "node": "clinic"
+    },
+    {
       "node": "greet"
     }
   ],
@@ -157,6 +165,35 @@
             }
           ],
           "next": "pills"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "clinic": {
+      "random": [
+        "dialogue.murim.un_gak.clinic1",
+        "dialogue.murim.un_gak.clinic2"
+      ],
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.un_gak.opt.heal",
+          "next": "heal"
+        },
+        {
+          "text": "dialogue.murim.un_gak.opt.pills",
+          "when": [
+            {
+              "member": true
+            }
+          ],
+          "next": "pills"
+        },
+        {
+          "text": "dialogue.murim.un_gak.opt.ask",
+          "next": "answer"
         },
         {
           "text": "dialogue.murim.opt.leave"

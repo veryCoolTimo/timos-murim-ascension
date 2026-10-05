@@ -11,6 +11,14 @@
       "node": "night"
     },
     {
+      "when": [
+        {
+          "period": "formation|training"
+        }
+      ],
+      "node": "gate"
+    },
+    {
       "node": "greet"
     }
   ],
@@ -168,6 +176,31 @@
             }
           ],
           "next": "rise_trusted"
+        }
+      ]
+    },
+    "gate": {
+      "random": [
+        "dialogue.murim.un_am.gate1",
+        "dialogue.murim.un_am.gate2"
+      ],
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.un_am.opt.ask",
+          "next": "answer"
+        },
+        {
+          "text": "dialogue.murim.opt.standing",
+          "when": [
+            {
+              "member": true
+            }
+          ],
+          "next": "standing"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
         }
       ]
     }

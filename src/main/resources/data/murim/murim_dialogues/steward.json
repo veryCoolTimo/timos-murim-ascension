@@ -11,6 +11,14 @@
       "node": "night"
     },
     {
+      "when": [
+        {
+          "period": "training"
+        }
+      ],
+      "node": "accounts"
+    },
+    {
       "node": "greet"
     }
   ],
@@ -133,6 +141,31 @@
       "options": [
         {
           "text": "dialogue.murim.steward.opt.more",
+          "next": "help"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "accounts": {
+      "random": [
+        "dialogue.murim.steward.accounts1",
+        "dialogue.murim.steward.accounts2"
+      ],
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.steward.opt.estate",
+          "next": "estate"
+        },
+        {
+          "text": "dialogue.murim.steward.opt.help",
+          "when": [
+            {
+              "member": true
+            }
+          ],
           "next": "help"
         },
         {

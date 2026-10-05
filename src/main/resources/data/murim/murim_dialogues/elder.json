@@ -3,15 +3,89 @@
   "title": "npc.murim.elder.title",
   "start": [
     {
+      "when": [
+        {
+          "period": "formation"
+        }
+      ],
+      "node": "formation"
+    },
+    {
+      "when": [
+        {
+          "period": "night"
+        }
+      ],
+      "node": "night"
+    },
+    {
+      "when": [
+        {
+          "period": "evening"
+        }
+      ],
+      "node": "evening"
+    },
+    {
       "node": "greet"
     }
   ],
   "nodes": {
     "greet": {
       "random": [
-        "dialogue.murim.elder.greet1"
+        "dialogue.murim.elder.greet1",
+        "dialogue.murim.elder.greet2",
+        "dialogue.murim.elder.greet3"
       ],
       "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.elder.opt.advice",
+          "next": "advice"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "formation": {
+      "line": "dialogue.murim.elder.formation1",
+      "gesture": "point",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "evening": {
+      "line": "dialogue.murim.elder.evening1",
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.elder.opt.advice",
+          "next": "advice"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "night": {
+      "line": "dialogue.murim.elder.night1",
+      "gesture": "shake",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "advice": {
+      "random": [
+        "dialogue.murim.elder.advice1",
+        "dialogue.murim.elder.advice2",
+        "dialogue.murim.elder.advice3"
+      ],
+      "gesture": "explain",
       "options": [
         {
           "text": "dialogue.murim.opt.leave"

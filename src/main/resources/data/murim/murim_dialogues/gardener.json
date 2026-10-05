@@ -11,6 +11,14 @@
       "node": "night"
     },
     {
+      "when": [
+        {
+          "period": "training"
+        }
+      ],
+      "node": "garden"
+    },
+    {
       "node": "greet"
     }
   ],
@@ -44,6 +52,22 @@
       "line": "dialogue.murim.gardener.night",
       "gesture": "shake",
       "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "garden": {
+      "random": [
+        "dialogue.murim.gardener.garden1",
+        "dialogue.murim.gardener.garden2"
+      ],
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.gardener.opt.ask",
+          "next": "answer"
+        },
         {
           "text": "dialogue.murim.opt.leave"
         }

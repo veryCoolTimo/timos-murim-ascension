@@ -1,0 +1,384 @@
+{
+  "name": "npc.murim.yoon_jong",
+  "base": "murim:disciple",
+  "start": [
+    {
+      "when": [
+        {
+          "free": false
+        }
+      ],
+      "node": "busy"
+    },
+    {
+      "when": [
+        {
+          "period": "formation"
+        }
+      ],
+      "node": "formation"
+    },
+    {
+      "when": [
+        {
+          "member": true,
+          "missed": "formation",
+          "period": "breakfast|training|dinner|evening"
+        }
+      ],
+      "node": "missed"
+    },
+    {
+      "when": [
+        {
+          "period": "breakfast|dinner"
+        }
+      ],
+      "node": "meal"
+    },
+    {
+      "when": [
+        {
+          "period": "night"
+        }
+      ],
+      "node": "night"
+    },
+    {
+      "when": [
+        {
+          "flag": "review.won"
+        }
+      ],
+      "node": "greet_champion"
+    },
+    {
+      "node": "greet"
+    }
+  ],
+  "nodes": {
+    "formation": {
+      "random": [
+        "dialogue.murim.yoon_jong.formation1",
+        "dialogue.murim.yoon_jong.formation2"
+      ],
+      "gesture": "point",
+      "options": [
+        {
+          "text": "dialogue.murim.disciple.opt.join",
+          "next": "joined"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "missed": {
+      "line": "dialogue.murim.yoon_jong.missed",
+      "gesture": "shake",
+      "options": [
+        {
+          "text": "dialogue.murim.yoon_jong.opt.talk",
+          "next": "topics"
+        },
+        {
+          "text": "dialogue.murim.disciple.opt.challenge",
+          "when": [
+            {
+              "free": true
+            }
+          ],
+          "next": "challenge"
+        },
+        {
+          "text": "dialogue.murim.yoon_jong.opt.paper",
+          "when": [
+            {
+              "has_item": "minecraft:paper*3",
+              "not_flag": "favour.yoon_jong"
+            }
+          ],
+          "actions": [
+            {
+              "type": "take",
+              "value": "minecraft:paper*3"
+            },
+            {
+              "type": "set_flag",
+              "value": "favour.yoon_jong"
+            },
+            {
+              "type": "contribute",
+              "value": "1"
+            }
+          ],
+          "next": "favour_done"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "meal": {
+      "random": [
+        "dialogue.murim.yoon_jong.meal1",
+        "dialogue.murim.yoon_jong.meal2"
+      ],
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "night": {
+      "random": [
+        "dialogue.murim.yoon_jong.night1"
+      ],
+      "gesture": "shake",
+      "options": []
+    },
+    "greet": {
+      "random": [
+        "dialogue.murim.yoon_jong.greet1",
+        "dialogue.murim.yoon_jong.greet2",
+        "dialogue.murim.yoon_jong.greet3"
+      ],
+      "args": [
+        "player"
+      ],
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.yoon_jong.opt.talk",
+          "next": "topics"
+        },
+        {
+          "text": "dialogue.murim.disciple.opt.challenge",
+          "when": [
+            {
+              "free": true
+            }
+          ],
+          "next": "challenge"
+        },
+        {
+          "text": "dialogue.murim.yoon_jong.opt.paper",
+          "when": [
+            {
+              "has_item": "minecraft:paper*3",
+              "not_flag": "favour.yoon_jong"
+            }
+          ],
+          "actions": [
+            {
+              "type": "take",
+              "value": "minecraft:paper*3"
+            },
+            {
+              "type": "set_flag",
+              "value": "favour.yoon_jong"
+            },
+            {
+              "type": "contribute",
+              "value": "1"
+            }
+          ],
+          "next": "favour_done"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "greet_champion": {
+      "line": "dialogue.murim.yoon_jong.champion",
+      "args": [
+        "player"
+      ],
+      "gesture": "bow",
+      "options": [
+        {
+          "text": "dialogue.murim.yoon_jong.opt.talk",
+          "next": "topics"
+        },
+        {
+          "text": "dialogue.murim.disciple.opt.challenge",
+          "when": [
+            {
+              "free": true
+            }
+          ],
+          "next": "challenge"
+        },
+        {
+          "text": "dialogue.murim.yoon_jong.opt.paper",
+          "when": [
+            {
+              "has_item": "minecraft:paper*3",
+              "not_flag": "favour.yoon_jong"
+            }
+          ],
+          "actions": [
+            {
+              "type": "take",
+              "value": "minecraft:paper*3"
+            },
+            {
+              "type": "set_flag",
+              "value": "favour.yoon_jong"
+            },
+            {
+              "type": "contribute",
+              "value": "1"
+            }
+          ],
+          "next": "favour_done"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "topics": {
+      "line": "dialogue.murim.yoon_jong.topics",
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.yoon_jong.opt.sect",
+          "next": "t_sect"
+        },
+        {
+          "text": "dialogue.murim.yoon_jong.opt.jo_gol",
+          "next": "t_jo_gol"
+        },
+        {
+          "text": "dialogue.murim.yoon_jong.opt.progress",
+          "when": [
+            {
+              "below_standing": "disciple"
+            }
+          ],
+          "next": "p_novice"
+        },
+        {
+          "text": "dialogue.murim.yoon_jong.opt.progress",
+          "when": [
+            {
+              "min_standing": "disciple",
+              "below_standing": "graduate"
+            }
+          ],
+          "next": "p_disciple"
+        },
+        {
+          "text": "dialogue.murim.yoon_jong.opt.progress",
+          "when": [
+            {
+              "min_standing": "graduate"
+            }
+          ],
+          "next": "p_graduate"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "t_sect": {
+      "line": "dialogue.murim.yoon_jong.t_sect",
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.yoon_jong.opt.help",
+          "when": [
+            {
+              "not_flag": "favour.yoon_jong"
+            }
+          ],
+          "next": "favour_ask"
+        },
+        {
+          "text": "dialogue.murim.opt.back",
+          "next": "topics"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "favour_ask": {
+      "line": "dialogue.murim.yoon_jong.favour_ask",
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "favour_done": {
+      "line": "dialogue.murim.yoon_jong.favour_done",
+      "args": [
+        "player"
+      ],
+      "gesture": "bow",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "t_jo_gol": {
+      "line": "dialogue.murim.yoon_jong.t_jo_gol",
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.back",
+          "next": "topics"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "p_novice": {
+      "line": "dialogue.murim.yoon_jong.p_novice",
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.back",
+          "next": "topics"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "p_disciple": {
+      "line": "dialogue.murim.yoon_jong.p_disciple",
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.back",
+          "next": "topics"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "p_graduate": {
+      "line": "dialogue.murim.yoon_jong.p_graduate",
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.back",
+          "next": "topics"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    }
+  }
+}

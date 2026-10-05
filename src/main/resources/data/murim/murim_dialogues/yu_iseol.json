@@ -1,0 +1,427 @@
+{
+  "name": "npc.murim.yu_iseol",
+  "base": "murim:second",
+  "start": [
+    {
+      "when": [
+        {
+          "free": false
+        }
+      ],
+      "node": "busy"
+    },
+    {
+      "when": [
+        {
+          "period": "formation"
+        }
+      ],
+      "node": "formation"
+    },
+    {
+      "when": [
+        {
+          "period": "breakfast|dinner"
+        }
+      ],
+      "node": "meal"
+    },
+    {
+      "when": [
+        {
+          "period": "night"
+        }
+      ],
+      "node": "night"
+    },
+    {
+      "when": [
+        {
+          "flag": "review.won"
+        }
+      ],
+      "node": "greet_champion"
+    },
+    {
+      "when": [
+        {
+          "flag": "favour.yu_iseol"
+        }
+      ],
+      "node": "greet_friend"
+    },
+    {
+      "when": [
+        {
+          "period": "evening"
+        }
+      ],
+      "node": "evening"
+    },
+    {
+      "node": "greet"
+    }
+  ],
+  "nodes": {
+    "formation": {
+      "random": [
+        "dialogue.murim.yu_iseol.formation1",
+        "dialogue.murim.yu_iseol.formation2"
+      ],
+      "gesture": "point",
+      "options": [
+        {
+          "text": "dialogue.murim.disciple.opt.join",
+          "next": "joined"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "meal": {
+      "random": [
+        "dialogue.murim.yu_iseol.meal1",
+        "dialogue.murim.yu_iseol.meal2"
+      ],
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "night": {
+      "random": [
+        "dialogue.murim.yu_iseol.night1",
+        "dialogue.murim.yu_iseol.night2"
+      ],
+      "gesture": "shake",
+      "options": []
+    },
+    "evening": {
+      "random": [
+        "dialogue.murim.yu_iseol.evening1"
+      ],
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.yu_iseol.opt.talk",
+          "next": "topics"
+        },
+        {
+          "text": "dialogue.murim.second.opt.challenge",
+          "when": [
+            {
+              "free": true
+            }
+          ],
+          "next": "challenge"
+        },
+        {
+          "text": "dialogue.murim.yu_iseol.opt.petals",
+          "when": [
+            {
+              "has_item": "minecraft:pink_petals*1",
+              "not_flag": "favour.yu_iseol"
+            }
+          ],
+          "actions": [
+            {
+              "type": "take",
+              "value": "minecraft:pink_petals*1"
+            },
+            {
+              "type": "set_flag",
+              "value": "favour.yu_iseol"
+            },
+            {
+              "type": "contribute",
+              "value": "1"
+            }
+          ],
+          "next": "favour_done"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "greet": {
+      "random": [
+        "dialogue.murim.yu_iseol.greet1",
+        "dialogue.murim.yu_iseol.greet2",
+        "dialogue.murim.yu_iseol.greet3"
+      ],
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.yu_iseol.opt.talk",
+          "next": "topics"
+        },
+        {
+          "text": "dialogue.murim.second.opt.challenge",
+          "when": [
+            {
+              "free": true
+            }
+          ],
+          "next": "challenge"
+        },
+        {
+          "text": "dialogue.murim.yu_iseol.opt.petals",
+          "when": [
+            {
+              "has_item": "minecraft:pink_petals*1",
+              "not_flag": "favour.yu_iseol"
+            }
+          ],
+          "actions": [
+            {
+              "type": "take",
+              "value": "minecraft:pink_petals*1"
+            },
+            {
+              "type": "set_flag",
+              "value": "favour.yu_iseol"
+            },
+            {
+              "type": "contribute",
+              "value": "1"
+            }
+          ],
+          "next": "favour_done"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "greet_champion": {
+      "random": [
+        "dialogue.murim.yu_iseol.champion1",
+        "dialogue.murim.yu_iseol.champion2"
+      ],
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.yu_iseol.opt.talk",
+          "next": "topics"
+        },
+        {
+          "text": "dialogue.murim.second.opt.challenge",
+          "when": [
+            {
+              "free": true
+            }
+          ],
+          "next": "challenge"
+        },
+        {
+          "text": "dialogue.murim.yu_iseol.opt.petals",
+          "when": [
+            {
+              "has_item": "minecraft:pink_petals*1",
+              "not_flag": "favour.yu_iseol"
+            }
+          ],
+          "actions": [
+            {
+              "type": "take",
+              "value": "minecraft:pink_petals*1"
+            },
+            {
+              "type": "set_flag",
+              "value": "favour.yu_iseol"
+            },
+            {
+              "type": "contribute",
+              "value": "1"
+            }
+          ],
+          "next": "favour_done"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "greet_friend": {
+      "random": [
+        "dialogue.murim.yu_iseol.friend1",
+        "dialogue.murim.yu_iseol.friend2"
+      ],
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.yu_iseol.opt.talk",
+          "next": "topics"
+        },
+        {
+          "text": "dialogue.murim.second.opt.challenge",
+          "when": [
+            {
+              "free": true
+            }
+          ],
+          "next": "challenge"
+        },
+        {
+          "text": "dialogue.murim.yu_iseol.opt.petals",
+          "when": [
+            {
+              "has_item": "minecraft:pink_petals*1",
+              "not_flag": "favour.yu_iseol"
+            }
+          ],
+          "actions": [
+            {
+              "type": "take",
+              "value": "minecraft:pink_petals*1"
+            },
+            {
+              "type": "set_flag",
+              "value": "favour.yu_iseol"
+            },
+            {
+              "type": "contribute",
+              "value": "1"
+            }
+          ],
+          "next": "favour_done"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "topics": {
+      "line": "dialogue.murim.yu_iseol.topics",
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.yu_iseol.opt.sword",
+          "next": "t_sword"
+        },
+        {
+          "text": "dialogue.murim.yu_iseol.opt.cheon",
+          "next": "t_cheon"
+        },
+        {
+          "text": "dialogue.murim.yu_iseol.opt.mine",
+          "when": [
+            {
+              "knows": "murim:seven_plum_blossoms"
+            }
+          ],
+          "next": "t_mine_plum"
+        },
+        {
+          "text": "dialogue.murim.yu_iseol.opt.mine",
+          "when": [
+            {
+              "not_knows": "murim:seven_plum_blossoms"
+            }
+          ],
+          "next": "t_mine_basic"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "t_sword": {
+      "line": "dialogue.murim.yu_iseol.t_sword",
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.yu_iseol.opt.plum",
+          "next": "t_plum"
+        },
+        {
+          "text": "dialogue.murim.opt.back",
+          "next": "topics"
+        }
+      ]
+    },
+    "t_plum": {
+      "line": "dialogue.murim.yu_iseol.t_plum",
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.yu_iseol.opt.find",
+          "when": [
+            {
+              "not_flag": "favour.yu_iseol"
+            }
+          ],
+          "next": "favour_ask"
+        },
+        {
+          "text": "dialogue.murim.opt.back",
+          "next": "topics"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "favour_ask": {
+      "line": "dialogue.murim.yu_iseol.favour_ask",
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "favour_done": {
+      "line": "dialogue.murim.yu_iseol.favour_done",
+      "gesture": "bow",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "t_cheon": {
+      "line": "dialogue.murim.yu_iseol.t_cheon",
+      "gesture": "shake",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.back",
+          "next": "topics"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "t_mine_plum": {
+      "line": "dialogue.murim.yu_iseol.t_mine_plum",
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.back",
+          "next": "topics"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "t_mine_basic": {
+      "line": "dialogue.murim.yu_iseol.t_mine_basic",
+      "gesture": "shake",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.back",
+          "next": "topics"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    }
+  }
+}

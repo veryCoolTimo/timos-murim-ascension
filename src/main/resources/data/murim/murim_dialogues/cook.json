@@ -20,6 +20,14 @@
       "node": "night"
     },
     {
+      "when": [
+        {
+          "period": "breakfast|dinner"
+        }
+      ],
+      "node": "serving"
+    },
+    {
       "node": "greet"
     }
   ],
@@ -86,6 +94,22 @@
       "line": "dialogue.murim.cook.chores_done",
       "gesture": "nod",
       "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "serving": {
+      "random": [
+        "dialogue.murim.cook.serving1",
+        "dialogue.murim.cook.serving2"
+      ],
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.cook.opt.ask",
+          "next": "answer"
+        },
         {
           "text": "dialogue.murim.opt.leave"
         }

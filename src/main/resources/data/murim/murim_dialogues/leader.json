@@ -14,6 +14,15 @@
     {
       "when": [
         {
+          "period": "evening|night",
+          "member": true
+        }
+      ],
+      "node": "member_evening"
+    },
+    {
+      "when": [
+        {
           "member": true
         }
       ],
@@ -295,6 +304,43 @@
       "line": "dialogue.murim.leader.trusted",
       "gesture": "bow",
       "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "member_evening": {
+      "random": [
+        "dialogue.murim.leader.member_evening1",
+        "dialogue.murim.leader.member_evening2"
+      ],
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.leader.opt.how_sect",
+          "next": "sect_state"
+        },
+        {
+          "text": "dialogue.murim.leader.opt.ask_trust",
+          "when": [
+            {
+              "min_standing": "graduate",
+              "min_contribution": 30,
+              "not_flag": "approval.leader"
+            }
+          ],
+          "actions": [
+            {
+              "type": "set_flag",
+              "value": "approval.leader"
+            }
+          ],
+          "next": "trusted"
+        },
+        {
+          "text": "dialogue.murim.leader.opt.to_mentor",
+          "next": "where_mentor"
+        },
         {
           "text": "dialogue.murim.opt.leave"
         }

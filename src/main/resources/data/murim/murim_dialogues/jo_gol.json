@@ -1,0 +1,398 @@
+{
+  "name": "npc.murim.jo_gol",
+  "base": "murim:disciple",
+  "start": [
+    {
+      "when": [
+        {
+          "free": false
+        }
+      ],
+      "node": "busy"
+    },
+    {
+      "when": [
+        {
+          "period": "formation"
+        }
+      ],
+      "node": "formation"
+    },
+    {
+      "when": [
+        {
+          "period": "breakfast|dinner"
+        }
+      ],
+      "node": "meal"
+    },
+    {
+      "when": [
+        {
+          "period": "night"
+        }
+      ],
+      "node": "night"
+    },
+    {
+      "when": [
+        {
+          "flag": "review.won"
+        }
+      ],
+      "node": "greet_champion"
+    },
+    {
+      "when": [
+        {
+          "flag": "favour.jo_gol"
+        }
+      ],
+      "node": "greet_friend"
+    },
+    {
+      "node": "greet"
+    }
+  ],
+  "nodes": {
+    "formation": {
+      "random": [
+        "dialogue.murim.jo_gol.formation1",
+        "dialogue.murim.jo_gol.formation2"
+      ],
+      "gesture": "point",
+      "options": [
+        {
+          "text": "dialogue.murim.disciple.opt.join",
+          "next": "joined"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "meal": {
+      "random": [
+        "dialogue.murim.jo_gol.meal1",
+        "dialogue.murim.jo_gol.meal2"
+      ],
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.jo_gol.opt.hungry",
+          "when": [
+            {
+              "not_flag": "favour.jo_gol"
+            }
+          ],
+          "next": "favour_ask"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "night": {
+      "random": [
+        "dialogue.murim.jo_gol.night1",
+        "dialogue.murim.jo_gol.night2"
+      ],
+      "gesture": "shake",
+      "options": []
+    },
+    "greet": {
+      "random": [
+        "dialogue.murim.jo_gol.greet1",
+        "dialogue.murim.jo_gol.greet2",
+        "dialogue.murim.jo_gol.greet3",
+        "@rumour"
+      ],
+      "args": [
+        "player"
+      ],
+      "gesture": "fist",
+      "options": [
+        {
+          "text": "dialogue.murim.jo_gol.opt.talk",
+          "next": "topics"
+        },
+        {
+          "text": "dialogue.murim.disciple.opt.challenge",
+          "when": [
+            {
+              "free": true
+            }
+          ],
+          "next": "challenge"
+        },
+        {
+          "text": "dialogue.murim.jo_gol.opt.bread",
+          "when": [
+            {
+              "has_item": "minecraft:bread*1",
+              "not_flag": "favour.jo_gol"
+            }
+          ],
+          "actions": [
+            {
+              "type": "take",
+              "value": "minecraft:bread*1"
+            },
+            {
+              "type": "set_flag",
+              "value": "favour.jo_gol"
+            },
+            {
+              "type": "contribute",
+              "value": "1"
+            }
+          ],
+          "next": "favour_done"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "greet_champion": {
+      "random": [
+        "dialogue.murim.jo_gol.champion1",
+        "dialogue.murim.jo_gol.champion2"
+      ],
+      "gesture": "fist",
+      "options": [
+        {
+          "text": "dialogue.murim.jo_gol.opt.talk",
+          "next": "topics"
+        },
+        {
+          "text": "dialogue.murim.disciple.opt.challenge",
+          "when": [
+            {
+              "free": true
+            }
+          ],
+          "next": "challenge"
+        },
+        {
+          "text": "dialogue.murim.jo_gol.opt.bread",
+          "when": [
+            {
+              "has_item": "minecraft:bread*1",
+              "not_flag": "favour.jo_gol"
+            }
+          ],
+          "actions": [
+            {
+              "type": "take",
+              "value": "minecraft:bread*1"
+            },
+            {
+              "type": "set_flag",
+              "value": "favour.jo_gol"
+            },
+            {
+              "type": "contribute",
+              "value": "1"
+            }
+          ],
+          "next": "favour_done"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "greet_friend": {
+      "random": [
+        "dialogue.murim.jo_gol.friend1",
+        "@rumour"
+      ],
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.jo_gol.opt.talk",
+          "next": "topics"
+        },
+        {
+          "text": "dialogue.murim.disciple.opt.challenge",
+          "when": [
+            {
+              "free": true
+            }
+          ],
+          "next": "challenge"
+        },
+        {
+          "text": "dialogue.murim.jo_gol.opt.bread",
+          "when": [
+            {
+              "has_item": "minecraft:bread*1",
+              "not_flag": "favour.jo_gol"
+            }
+          ],
+          "actions": [
+            {
+              "type": "take",
+              "value": "minecraft:bread*1"
+            },
+            {
+              "type": "set_flag",
+              "value": "favour.jo_gol"
+            },
+            {
+              "type": "contribute",
+              "value": "1"
+            }
+          ],
+          "next": "favour_done"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "topics": {
+      "line": "dialogue.murim.jo_gol.topics",
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.jo_gol.opt.news",
+          "next": "t_news"
+        },
+        {
+          "text": "dialogue.murim.jo_gol.opt.seniors",
+          "next": "t_seniors"
+        },
+        {
+          "text": "dialogue.murim.jo_gol.opt.progress",
+          "when": [
+            {
+              "below_standing": "disciple"
+            }
+          ],
+          "next": "p_novice"
+        },
+        {
+          "text": "dialogue.murim.jo_gol.opt.progress",
+          "when": [
+            {
+              "min_standing": "disciple",
+              "below_standing": "graduate"
+            }
+          ],
+          "next": "p_disciple"
+        },
+        {
+          "text": "dialogue.murim.jo_gol.opt.progress",
+          "when": [
+            {
+              "min_standing": "graduate"
+            }
+          ],
+          "next": "p_graduate"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "t_news": {
+      "random": [
+        "@rumour"
+      ],
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.jo_gol.opt.more",
+          "next": "t_news"
+        },
+        {
+          "text": "dialogue.murim.opt.back",
+          "next": "topics"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "t_seniors": {
+      "line": "dialogue.murim.jo_gol.t_seniors",
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.back",
+          "next": "topics"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "p_novice": {
+      "line": "dialogue.murim.jo_gol.p_novice",
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.back",
+          "next": "topics"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "p_disciple": {
+      "line": "dialogue.murim.jo_gol.p_disciple",
+      "gesture": "fist",
+      "options": [
+        {
+          "text": "dialogue.murim.disciple.opt.challenge",
+          "when": [
+            {
+              "free": true
+            }
+          ],
+          "next": "challenge"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "p_graduate": {
+      "line": "dialogue.murim.jo_gol.p_graduate",
+      "gesture": "fist",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.back",
+          "next": "topics"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "favour_ask": {
+      "line": "dialogue.murim.jo_gol.favour_ask",
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "favour_done": {
+      "line": "dialogue.murim.jo_gol.favour_done",
+      "args": [
+        "player"
+      ],
+      "gesture": "bow",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    }
+  }
+}

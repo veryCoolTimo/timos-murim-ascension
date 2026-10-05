@@ -1,0 +1,475 @@
+{
+  "name": "npc.murim.hyun_seong",
+  "title": "npc.murim.hyun_seong.title",
+  "base": "murim:elder",
+  "audience": {
+    "allow": [
+      {
+        "min_standing": "disciple"
+      },
+      {
+        "flag": "summon.hyun_seong"
+      }
+    ],
+    "intercept": "murim:intercept_elder",
+    "busy": "busy"
+  },
+  "start": [
+    {
+      "when": [
+        {
+          "period": "formation"
+        }
+      ],
+      "node": "formation"
+    },
+    {
+      "when": [
+        {
+          "period": "night"
+        }
+      ],
+      "node": "night"
+    },
+    {
+      "when": [
+        {
+          "flag": "review.won"
+        }
+      ],
+      "node": "greet_champion"
+    },
+    {
+      "when": [
+        {
+          "min_standing": "trusted"
+        }
+      ],
+      "node": "greet_trusted"
+    },
+    {
+      "when": [
+        {
+          "period": "evening"
+        }
+      ],
+      "node": "evening"
+    },
+    {
+      "when": [
+        {
+          "flag": "favour.hyun_seong"
+        }
+      ],
+      "node": "greet_friend"
+    },
+    {
+      "node": "greet"
+    }
+  ],
+  "nodes": {
+    "busy": {
+      "line": "dialogue.murim.hyun_seong.busy",
+      "gesture": "shake",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "formation": {
+      "line": "dialogue.murim.hyun_seong.formation",
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.hyun_seong.opt.talk",
+          "next": "topics"
+        },
+        {
+          "text": "dialogue.murim.hyun_seong.opt.candle",
+          "when": [
+            {
+              "has_item": "minecraft:candle*1",
+              "not_flag": "favour.hyun_seong"
+            }
+          ],
+          "actions": [
+            {
+              "type": "take",
+              "value": "minecraft:candle*1"
+            },
+            {
+              "type": "set_flag",
+              "value": "favour.hyun_seong"
+            },
+            {
+              "type": "contribute",
+              "value": "1"
+            }
+          ],
+          "next": "favour_done"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "evening": {
+      "line": "dialogue.murim.hyun_seong.evening",
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.hyun_seong.opt.talk",
+          "next": "topics"
+        },
+        {
+          "text": "dialogue.murim.hyun_seong.opt.candle",
+          "when": [
+            {
+              "has_item": "minecraft:candle*1",
+              "not_flag": "favour.hyun_seong"
+            }
+          ],
+          "actions": [
+            {
+              "type": "take",
+              "value": "minecraft:candle*1"
+            },
+            {
+              "type": "set_flag",
+              "value": "favour.hyun_seong"
+            },
+            {
+              "type": "contribute",
+              "value": "1"
+            }
+          ],
+          "next": "favour_done"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "night": {
+      "line": "dialogue.murim.hyun_seong.night",
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.hyun_seong.opt.talk",
+          "next": "topics"
+        },
+        {
+          "text": "dialogue.murim.hyun_seong.opt.candle",
+          "when": [
+            {
+              "has_item": "minecraft:candle*1",
+              "not_flag": "favour.hyun_seong"
+            }
+          ],
+          "actions": [
+            {
+              "type": "take",
+              "value": "minecraft:candle*1"
+            },
+            {
+              "type": "set_flag",
+              "value": "favour.hyun_seong"
+            },
+            {
+              "type": "contribute",
+              "value": "1"
+            }
+          ],
+          "next": "favour_done"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "greet": {
+      "random": [
+        "dialogue.murim.hyun_seong.greet1",
+        "dialogue.murim.hyun_seong.greet2"
+      ],
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.hyun_seong.opt.talk",
+          "next": "topics"
+        },
+        {
+          "text": "dialogue.murim.hyun_seong.opt.candle",
+          "when": [
+            {
+              "has_item": "minecraft:candle*1",
+              "not_flag": "favour.hyun_seong"
+            }
+          ],
+          "actions": [
+            {
+              "type": "take",
+              "value": "minecraft:candle*1"
+            },
+            {
+              "type": "set_flag",
+              "value": "favour.hyun_seong"
+            },
+            {
+              "type": "contribute",
+              "value": "1"
+            }
+          ],
+          "next": "favour_done"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "greet_friend": {
+      "line": "dialogue.murim.hyun_seong.friend",
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.hyun_seong.opt.talk",
+          "next": "topics"
+        },
+        {
+          "text": "dialogue.murim.hyun_seong.opt.candle",
+          "when": [
+            {
+              "has_item": "minecraft:candle*1",
+              "not_flag": "favour.hyun_seong"
+            }
+          ],
+          "actions": [
+            {
+              "type": "take",
+              "value": "minecraft:candle*1"
+            },
+            {
+              "type": "set_flag",
+              "value": "favour.hyun_seong"
+            },
+            {
+              "type": "contribute",
+              "value": "1"
+            }
+          ],
+          "next": "favour_done"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "greet_champion": {
+      "line": "dialogue.murim.hyun_seong.champion",
+      "gesture": "bow",
+      "options": [
+        {
+          "text": "dialogue.murim.hyun_seong.opt.talk",
+          "next": "topics"
+        },
+        {
+          "text": "dialogue.murim.hyun_seong.opt.candle",
+          "when": [
+            {
+              "has_item": "minecraft:candle*1",
+              "not_flag": "favour.hyun_seong"
+            }
+          ],
+          "actions": [
+            {
+              "type": "take",
+              "value": "minecraft:candle*1"
+            },
+            {
+              "type": "set_flag",
+              "value": "favour.hyun_seong"
+            },
+            {
+              "type": "contribute",
+              "value": "1"
+            }
+          ],
+          "next": "favour_done"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "greet_trusted": {
+      "line": "dialogue.murim.hyun_seong.trusted",
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.hyun_seong.opt.talk",
+          "next": "topics"
+        },
+        {
+          "text": "dialogue.murim.hyun_seong.opt.candle",
+          "when": [
+            {
+              "has_item": "minecraft:candle*1",
+              "not_flag": "favour.hyun_seong"
+            }
+          ],
+          "actions": [
+            {
+              "type": "take",
+              "value": "minecraft:candle*1"
+            },
+            {
+              "type": "set_flag",
+              "value": "favour.hyun_seong"
+            },
+            {
+              "type": "contribute",
+              "value": "1"
+            }
+          ],
+          "next": "favour_done"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "topics": {
+      "line": "dialogue.murim.hyun_seong.topics",
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.hyun_seong.opt.past",
+          "next": "t_past"
+        },
+        {
+          "text": "dialogue.murim.hyun_seong.opt.council",
+          "next": "t_council"
+        },
+        {
+          "text": "dialogue.murim.hyun_seong.opt.path",
+          "when": [
+            {
+              "below_standing": "graduate"
+            }
+          ],
+          "next": "t_path_low"
+        },
+        {
+          "text": "dialogue.murim.hyun_seong.opt.path",
+          "when": [
+            {
+              "min_standing": "graduate"
+            }
+          ],
+          "next": "t_path_high"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "t_past": {
+      "line": "dialogue.murim.hyun_seong.t_past",
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.hyun_seong.opt.saint",
+          "next": "t_saint"
+        },
+        {
+          "text": "dialogue.murim.hyun_seong.opt.annals",
+          "when": [
+            {
+              "not_flag": "favour.hyun_seong"
+            }
+          ],
+          "next": "favour_ask"
+        },
+        {
+          "text": "dialogue.murim.opt.back",
+          "next": "topics"
+        }
+      ]
+    },
+    "t_saint": {
+      "line": "dialogue.murim.hyun_seong.t_saint",
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.back",
+          "next": "topics"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "favour_ask": {
+      "line": "dialogue.murim.hyun_seong.favour_ask",
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.back",
+          "next": "topics"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "favour_done": {
+      "line": "dialogue.murim.hyun_seong.favour_done",
+      "gesture": "bow",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "t_council": {
+      "line": "dialogue.murim.hyun_seong.t_council",
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.back",
+          "next": "topics"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "t_path_low": {
+      "line": "dialogue.murim.hyun_seong.t_path_low",
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.back",
+          "next": "topics"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "t_path_high": {
+      "line": "dialogue.murim.hyun_seong.t_path_high",
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.back",
+          "next": "topics"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    }
+  }
+}

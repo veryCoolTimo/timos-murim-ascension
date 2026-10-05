@@ -11,6 +11,14 @@
       "node": "night"
     },
     {
+      "when": [
+        {
+          "period": "formation|evening"
+        }
+      ],
+      "node": "sweeping"
+    },
+    {
       "node": "greet"
     }
   ],
@@ -44,6 +52,22 @@
       "line": "dialogue.murim.sweeper.night",
       "gesture": "shake",
       "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "sweeping": {
+      "random": [
+        "dialogue.murim.sweeper.sweeping1",
+        "dialogue.murim.sweeper.sweeping2"
+      ],
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.sweeper.opt.ask",
+          "next": "answer"
+        },
         {
           "text": "dialogue.murim.opt.leave"
         }

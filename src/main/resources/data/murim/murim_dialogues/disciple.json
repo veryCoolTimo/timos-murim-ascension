@@ -81,7 +81,8 @@
       "random": [
         "dialogue.murim.disciple.meal1",
         "dialogue.murim.disciple.meal2",
-        "dialogue.murim.disciple.meal3"
+        "dialogue.murim.disciple.meal3",
+        "@trait"
       ],
       "gesture": "nod",
       "options": [
@@ -102,7 +103,9 @@
       "random": [
         "dialogue.murim.disciple.evening1",
         "dialogue.murim.disciple.evening2",
-        "dialogue.murim.disciple.evening3"
+        "dialogue.murim.disciple.evening3",
+        "@trait",
+        "@rumour"
       ],
       "gesture": "explain",
       "options": [
@@ -122,11 +125,15 @@
     },
     "chatter": {
       "random": [
+        "@trait",
+        "@trait",
+        "@trait",
+        "@personal",
+        "@rumour",
+        "@rumour",
         "dialogue.murim.disciple.line1",
-        "dialogue.murim.disciple.line2",
         "dialogue.murim.disciple.line3",
         "dialogue.murim.disciple.line4",
-        "dialogue.murim.disciple.line5",
         "dialogue.murim.disciple.line6"
       ],
       "gesture": "nod",

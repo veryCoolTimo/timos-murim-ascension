@@ -97,7 +97,8 @@
     "evening": {
       "random": [
         "dialogue.murim.second.evening1",
-        "dialogue.murim.second.evening2"
+        "dialogue.murim.second.evening2",
+        "@rumour"
       ],
       "gesture": "nod",
       "options": [
@@ -110,7 +111,10 @@
       "random": [
         "dialogue.murim.second.greet1",
         "dialogue.murim.second.greet2",
-        "dialogue.murim.second.greet3"
+        "dialogue.murim.second.greet3",
+        "@trait",
+        "@personal",
+        "@rumour"
       ],
       "gesture": "fist",
       "options": [

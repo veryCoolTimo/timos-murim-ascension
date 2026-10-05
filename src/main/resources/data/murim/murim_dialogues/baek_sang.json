@@ -1,0 +1,309 @@
+{
+  "name": "npc.murim.baek_sang",
+  "base": "murim:second",
+  "start": [
+    {
+      "when": [
+        {
+          "free": false
+        }
+      ],
+      "node": "busy"
+    },
+    {
+      "when": [
+        {
+          "period": "formation"
+        }
+      ],
+      "node": "formation"
+    },
+    {
+      "when": [
+        {
+          "period": "breakfast|dinner"
+        }
+      ],
+      "node": "meal"
+    },
+    {
+      "when": [
+        {
+          "period": "night"
+        }
+      ],
+      "node": "night"
+    },
+    {
+      "when": [
+        {
+          "flag": "review.won"
+        }
+      ],
+      "node": "greet_champion"
+    },
+    {
+      "when": [
+        {
+          "period": "evening"
+        }
+      ],
+      "node": "evening"
+    },
+    {
+      "node": "greet"
+    }
+  ],
+  "nodes": {
+    "meal": {
+      "random": [
+        "dialogue.murim.baek_sang.meal1"
+      ],
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "evening": {
+      "random": [
+        "dialogue.murim.baek_sang.evening1"
+      ],
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.baek_sang.opt.talk",
+          "next": "topics"
+        },
+        {
+          "text": "dialogue.murim.second.opt.bow",
+          "actions": [
+            {
+              "type": "bow"
+            }
+          ],
+          "next": "bowed"
+        },
+        {
+          "text": "dialogue.murim.baek_sang.opt.ink",
+          "when": [
+            {
+              "has_item": "minecraft:ink_sac*2",
+              "not_flag": "favour.baek_sang"
+            }
+          ],
+          "actions": [
+            {
+              "type": "take",
+              "value": "minecraft:ink_sac*2"
+            },
+            {
+              "type": "set_flag",
+              "value": "favour.baek_sang"
+            },
+            {
+              "type": "contribute",
+              "value": "1"
+            }
+          ],
+          "next": "favour_done"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "greet": {
+      "random": [
+        "dialogue.murim.baek_sang.greet1",
+        "dialogue.murim.baek_sang.greet2",
+        "dialogue.murim.baek_sang.greet3"
+      ],
+      "gesture": "fist",
+      "options": [
+        {
+          "text": "dialogue.murim.baek_sang.opt.talk",
+          "next": "topics"
+        },
+        {
+          "text": "dialogue.murim.second.opt.bow",
+          "actions": [
+            {
+              "type": "bow"
+            }
+          ],
+          "next": "bowed"
+        },
+        {
+          "text": "dialogue.murim.baek_sang.opt.ink",
+          "when": [
+            {
+              "has_item": "minecraft:ink_sac*2",
+              "not_flag": "favour.baek_sang"
+            }
+          ],
+          "actions": [
+            {
+              "type": "take",
+              "value": "minecraft:ink_sac*2"
+            },
+            {
+              "type": "set_flag",
+              "value": "favour.baek_sang"
+            },
+            {
+              "type": "contribute",
+              "value": "1"
+            }
+          ],
+          "next": "favour_done"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "greet_champion": {
+      "line": "dialogue.murim.baek_sang.champion",
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.baek_sang.opt.talk",
+          "next": "topics"
+        },
+        {
+          "text": "dialogue.murim.second.opt.bow",
+          "actions": [
+            {
+              "type": "bow"
+            }
+          ],
+          "next": "bowed"
+        },
+        {
+          "text": "dialogue.murim.baek_sang.opt.ink",
+          "when": [
+            {
+              "has_item": "minecraft:ink_sac*2",
+              "not_flag": "favour.baek_sang"
+            }
+          ],
+          "actions": [
+            {
+              "type": "take",
+              "value": "minecraft:ink_sac*2"
+            },
+            {
+              "type": "set_flag",
+              "value": "favour.baek_sang"
+            },
+            {
+              "type": "contribute",
+              "value": "1"
+            }
+          ],
+          "next": "favour_done"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "topics": {
+      "line": "dialogue.murim.baek_sang.topics",
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.baek_sang.opt.money",
+          "next": "t_money"
+        },
+        {
+          "text": "dialogue.murim.baek_sang.opt.merit",
+          "when": [
+            {
+              "member": true
+            }
+          ],
+          "next": "t_merit"
+        },
+        {
+          "text": "dialogue.murim.baek_sang.opt.others",
+          "next": "t_others"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "t_money": {
+      "line": "dialogue.murim.baek_sang.t_money",
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.baek_sang.opt.help",
+          "when": [
+            {
+              "not_flag": "favour.baek_sang"
+            }
+          ],
+          "next": "favour_ask"
+        },
+        {
+          "text": "dialogue.murim.opt.back",
+          "next": "topics"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "favour_ask": {
+      "line": "dialogue.murim.baek_sang.favour_ask",
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "favour_done": {
+      "line": "dialogue.murim.baek_sang.favour_done",
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "t_merit": {
+      "line": "dialogue.murim.baek_sang.t_merit",
+      "args": [
+        "merit"
+      ],
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.back",
+          "next": "topics"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "t_others": {
+      "line": "dialogue.murim.baek_sang.t_others",
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.back",
+          "next": "topics"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    }
+  }
+}

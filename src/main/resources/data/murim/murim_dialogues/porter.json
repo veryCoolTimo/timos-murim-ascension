@@ -11,6 +11,14 @@
       "node": "night"
     },
     {
+      "when": [
+        {
+          "period": "training"
+        }
+      ],
+      "node": "hauling"
+    },
+    {
       "node": "greet"
     }
   ],
@@ -44,6 +52,22 @@
       "line": "dialogue.murim.porter.night",
       "gesture": "shake",
       "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "hauling": {
+      "random": [
+        "dialogue.murim.porter.hauling1",
+        "dialogue.murim.porter.hauling2"
+      ],
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.porter.opt.ask",
+          "next": "answer"
+        },
         {
           "text": "dialogue.murim.opt.leave"
         }

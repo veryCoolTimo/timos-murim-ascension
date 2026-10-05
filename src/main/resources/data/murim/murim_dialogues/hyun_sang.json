@@ -28,6 +28,14 @@
       "node": "evening"
     },
     {
+      "when": [
+        {
+          "period": "training"
+        }
+      ],
+      "node": "training"
+    },
+    {
       "node": "greet"
     }
   ],
@@ -136,6 +144,39 @@
       "line": "dialogue.murim.hyun_sang.pass",
       "gesture": "nod",
       "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "training": {
+      "random": [
+        "dialogue.murim.hyun_sang.training1",
+        "dialogue.murim.hyun_sang.training2"
+      ],
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.hyun_sang.opt.ask",
+          "next": "answer"
+        },
+        {
+          "text": "dialogue.murim.hyun_sang.opt.pass",
+          "when": [
+            {
+              "min_standing": "disciple",
+              "min_contribution": 15,
+              "not_flag": "pass.scriptures"
+            }
+          ],
+          "actions": [
+            {
+              "type": "set_flag",
+              "value": "pass.scriptures"
+            }
+          ],
+          "next": "pass"
+        },
         {
           "text": "dialogue.murim.opt.leave"
         }

@@ -134,7 +134,6 @@
       ]
     },
     "again": {
-      "line": "dialogue.murim.mentor.again",
       "gesture": "nod",
       "options": [
         {
@@ -157,6 +156,11 @@
         {
           "text": "dialogue.murim.opt.leave"
         }
+      ],
+      "random": [
+        "dialogue.murim.mentor.again",
+        "dialogue.murim.mentor.again_extra1",
+        "dialogue.murim.mentor.again_extra2"
       ]
     },
     "teach": {

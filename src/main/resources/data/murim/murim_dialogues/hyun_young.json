@@ -19,6 +19,14 @@
       "node": "night"
     },
     {
+      "when": [
+        {
+          "period": "evening"
+        }
+      ],
+      "node": "evening"
+    },
+    {
       "node": "greet"
     }
   ],
@@ -163,6 +171,31 @@
         },
         {
           "text": "dialogue.murim.hyun_young.opt.back",
+          "next": "exchange"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "evening": {
+      "random": [
+        "dialogue.murim.hyun_young.evening1",
+        "dialogue.murim.hyun_young.evening2"
+      ],
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.hyun_young.opt.ask",
+          "next": "answer"
+        },
+        {
+          "text": "dialogue.murim.hyun_young.opt.exchange",
+          "when": [
+            {
+              "member": true
+            }
+          ],
           "next": "exchange"
         },
         {

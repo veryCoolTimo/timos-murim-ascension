@@ -11,6 +11,14 @@
       "node": "night"
     },
     {
+      "when": [
+        {
+          "period": "formation|breakfast"
+        }
+      ],
+      "node": "morning"
+    },
+    {
       "node": "greet"
     }
   ],
@@ -44,6 +52,22 @@
       "line": "dialogue.murim.water_carrier.night",
       "gesture": "shake",
       "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "morning": {
+      "random": [
+        "dialogue.murim.water_carrier.morning1",
+        "dialogue.murim.water_carrier.morning2"
+      ],
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.water_carrier.opt.ask",
+          "next": "answer"
+        },
         {
           "text": "dialogue.murim.opt.leave"
         }

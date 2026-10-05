@@ -1,0 +1,283 @@
+{
+  "name": "npc.murim.baek_ho",
+  "base": "murim:second",
+  "start": [
+    {
+      "when": [
+        {
+          "free": false
+        }
+      ],
+      "node": "busy"
+    },
+    {
+      "when": [
+        {
+          "period": "formation"
+        }
+      ],
+      "node": "formation"
+    },
+    {
+      "when": [
+        {
+          "period": "breakfast|dinner"
+        }
+      ],
+      "node": "meal"
+    },
+    {
+      "when": [
+        {
+          "period": "night"
+        }
+      ],
+      "node": "night"
+    },
+    {
+      "when": [
+        {
+          "flag": "review.won"
+        }
+      ],
+      "node": "greet_champion"
+    },
+    {
+      "node": "greet"
+    }
+  ],
+  "nodes": {
+    "meal": {
+      "random": [
+        "dialogue.murim.baek_ho.meal1"
+      ],
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "night": {
+      "random": [
+        "dialogue.murim.baek_ho.night1"
+      ],
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "greet": {
+      "random": [
+        "dialogue.murim.baek_ho.greet1",
+        "dialogue.murim.baek_ho.greet2",
+        "dialogue.murim.baek_ho.greet3"
+      ],
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.baek_ho.opt.talk",
+          "next": "topics"
+        },
+        {
+          "text": "dialogue.murim.second.opt.challenge",
+          "when": [
+            {
+              "free": true
+            }
+          ],
+          "next": "challenge"
+        },
+        {
+          "text": "dialogue.murim.baek_ho.opt.logs",
+          "when": [
+            {
+              "has_item": "minecraft:oak_log*8",
+              "not_flag": "favour.baek_ho"
+            }
+          ],
+          "actions": [
+            {
+              "type": "take",
+              "value": "minecraft:oak_log*8"
+            },
+            {
+              "type": "set_flag",
+              "value": "favour.baek_ho"
+            },
+            {
+              "type": "contribute",
+              "value": "1"
+            }
+          ],
+          "next": "favour_done"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "greet_champion": {
+      "line": "dialogue.murim.baek_ho.champion",
+      "gesture": "bow",
+      "options": [
+        {
+          "text": "dialogue.murim.baek_ho.opt.talk",
+          "next": "topics"
+        },
+        {
+          "text": "dialogue.murim.second.opt.challenge",
+          "when": [
+            {
+              "free": true
+            }
+          ],
+          "next": "challenge"
+        },
+        {
+          "text": "dialogue.murim.baek_ho.opt.logs",
+          "when": [
+            {
+              "has_item": "minecraft:oak_log*8",
+              "not_flag": "favour.baek_ho"
+            }
+          ],
+          "actions": [
+            {
+              "type": "take",
+              "value": "minecraft:oak_log*8"
+            },
+            {
+              "type": "set_flag",
+              "value": "favour.baek_ho"
+            },
+            {
+              "type": "contribute",
+              "value": "1"
+            }
+          ],
+          "next": "favour_done"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "topics": {
+      "line": "dialogue.murim.baek_ho.topics",
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.baek_ho.opt.strength",
+          "when": [
+            {
+              "below_rank": 2
+            }
+          ],
+          "next": "t_strength_low"
+        },
+        {
+          "text": "dialogue.murim.baek_ho.opt.strength",
+          "when": [
+            {
+              "min_rank": 2
+            }
+          ],
+          "next": "t_strength_high"
+        },
+        {
+          "text": "dialogue.murim.baek_ho.opt.watch",
+          "next": "t_watch"
+        },
+        {
+          "text": "dialogue.murim.baek_ho.opt.others",
+          "next": "t_others"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "t_strength_low": {
+      "line": "dialogue.murim.baek_ho.t_strength_low",
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.back",
+          "next": "topics"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "t_strength_high": {
+      "line": "dialogue.murim.baek_ho.t_strength_high",
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.back",
+          "next": "topics"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "t_watch": {
+      "line": "dialogue.murim.baek_ho.t_watch",
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.back",
+          "next": "topics"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "t_others": {
+      "line": "dialogue.murim.baek_ho.t_others",
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.baek_ho.opt.help",
+          "when": [
+            {
+              "not_flag": "favour.baek_ho"
+            }
+          ],
+          "next": "favour_ask"
+        },
+        {
+          "text": "dialogue.murim.opt.back",
+          "next": "topics"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "favour_ask": {
+      "line": "dialogue.murim.baek_ho.favour_ask",
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "favour_done": {
+      "line": "dialogue.murim.baek_ho.favour_done",
+      "gesture": "bow",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    }
+  }
+}

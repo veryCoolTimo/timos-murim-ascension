@@ -5,6 +5,15 @@
     {
       "when": [
         {
+          "period": "night",
+          "member": true
+        }
+      ],
+      "node": "member_night"
+    },
+    {
+      "when": [
+        {
           "member": true
         }
       ],
@@ -71,6 +80,14 @@
       "random": [
         "dialogue.murim.gatekeeper.member1",
         "dialogue.murim.gatekeeper.member2"
+      ],
+      "gesture": "bow",
+      "options": []
+    },
+    "member_night": {
+      "random": [
+        "dialogue.murim.gatekeeper.member_night1",
+        "dialogue.murim.gatekeeper.member_night2"
       ],
       "gesture": "bow",
       "options": []
