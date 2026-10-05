@@ -125,7 +125,7 @@ public final class BossFx {
         }
         if (state == FortressMaster.BOIL && age % 2 == 0) {
             for (int i = 0; i < 8; i++) {
-                level.addParticle(ParticleTypes.CLOUD, x + (r.nextDouble() - 0.5D) * 1.4D, y + 0.8D + r.nextDouble() * 1.8D, z + (r.nextDouble() - 0.5D) * 1.4D,
+                level.addParticle(ParticleTypes.WHITE_SMOKE, x + (r.nextDouble() - 0.5D) * 1.4D, y + 0.8D + r.nextDouble() * 1.8D, z + (r.nextDouble() - 0.5D) * 1.4D,
                         (r.nextDouble() - 0.5D) * 0.05D, 0.12D, (r.nextDouble() - 0.5D) * 0.05D);
             }
         }
@@ -175,7 +175,7 @@ public final class BossFx {
         if (b.tickCount % 2 == 0) {
             level.addParticle(INK, x + (r.nextDouble() - 0.5D) * 1.4D, y + 0.2D, z + (r.nextDouble() - 0.5D) * 1.4D, 0.0D, 0.04D, 0.0D);
             // Белый пар с тела: внешнее тело в полную силу.
-            level.addParticle(ParticleTypes.CLOUD, x + (r.nextDouble() - 0.5D) * 0.9D, y + 1.4D + r.nextDouble() * 1.0D, z + (r.nextDouble() - 0.5D) * 0.9D,
+            level.addParticle(ParticleTypes.WHITE_SMOKE, x + (r.nextDouble() - 0.5D) * 0.9D, y + 1.4D + r.nextDouble() * 1.0D, z + (r.nextDouble() - 0.5D) * 0.9D,
                     (r.nextDouble() - 0.5D) * 0.02D, 0.07D, (r.nextDouble() - 0.5D) * 0.02D);
         }
     }

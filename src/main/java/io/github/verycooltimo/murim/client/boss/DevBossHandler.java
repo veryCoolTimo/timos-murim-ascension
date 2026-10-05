@@ -64,6 +64,7 @@ public final class DevBossHandler {
     private static int segment;
     private static volatile boolean ready;
     private static volatile int bossId = -1;
+    private static volatile int dummyId = -1;
     private static volatile FortressData.Entry entry;
 
     private DevBossHandler() {
@@ -81,8 +82,11 @@ public final class DevBossHandler {
         }
         if (!setup) {
             setup = true;
-            mc.options.setCameraType(CameraType.THIRD_PERSON_BACK);
+            // Ракурс wide — от первого лица: камера сама и есть зритель на краю плаца.
+            mc.options.setCameraType(WIDE ? CameraType.FIRST_PERSON : CameraType.THIRD_PERSON_BACK);
             mc.options.renderDistance().set(8);
+            // wide: без руки и HUD — чистый кадр; полоса здоровья видна на ракурсе back.
+            mc.options.hideGui = WIDE;
             mc.options.cloudStatus().set(net.minecraft.client.CloudStatus.OFF);
             server.execute(() -> build(server));
             return;
@@ -124,7 +128,10 @@ public final class DevBossHandler {
                 if (!WIDE && boss != null && boss.isAlive()) {
                     fighter(mc, (FortressMaster) boss);
                 } else if (WIDE && boss != null) {
-                    lookAt(mc, boss.getX(), boss.getY() + 1.0D, boss.getZ(), 0.0F);
+                    Entity d = mc.level.getEntity(dummyId);
+                    double lx = d == null ? boss.getX() : (boss.getX() + d.getX()) * 0.5D;
+                    double lz = d == null ? boss.getZ() : (boss.getZ() + d.getZ()) * 0.5D;
+                    lookAt(mc, lx, boss.getY() + 0.6D, lz, 4.0F);
                 }
                 if (act % 3 == 0) {
                     grab(mc, name);
@@ -267,7 +274,11 @@ public final class DevBossHandler {
             switch (name) {
                 case "approach" -> {
                     p.setGameMode(WIDE ? GameType.CREATIVE : GameType.SURVIVAL);
-                    gear(p);
+                    if (!WIDE) {
+                        gear(p);
+                    } else {
+                        p.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
+                    }
                     FortressCommand.gate(level, p, e, -3);
                 }
                 case "overview" -> {
@@ -285,14 +296,19 @@ public final class DevBossHandler {
                     }
                     segment = 0;
                     if (WIDE) {
+                        // Манекен и хозяин — на одной линии поперёк взгляда камеры: оба видны, никто никого не закрывает.
                         TrainingDummy d = ModEntities.DUMMY.get().create(level);
-                        d.moveTo(e.yard.getX() + 0.5D, e.yard.getY(), e.yard.getZ() + 0.5D, 0.0F, 0.0F);
+                        BlockPos dp = FortressBuilder.world(e.yard.getX(), e.yard.getY(), e.yard.getZ(), e.rotation, -4, 4);
+                        BlockPos mp = FortressBuilder.world(e.yard.getX(), e.yard.getY(), e.yard.getZ(), e.rotation, 4, 4);
+                        d.moveTo(dp.getX() + 0.5D, e.yard.getY(), dp.getZ() + 0.5D, 0.0F, 0.0F);
                         level.addFreshEntity(d);
-                        m.teleportTo(e.yard.getX() + 0.5D, e.yard.getY(), e.yard.getZ() + 3.5D);
+                        dummyId = d.getId();
+                        m.teleportTo(mp.getX() + 0.5D, e.yard.getY(), mp.getZ() + 0.5D);
                         m.startFight(d);
-                        BlockPos corner = FortressBuilder.world(e.yard.getX(), e.yard.getY(), e.yard.getZ(), e.rotation, 15, -15);
+                        // Камера на краю плаца, невысоко: хозяин крупно, метки на земле целиком.
+                        BlockPos corner = FortressBuilder.world(e.yard.getX(), e.yard.getY(), e.yard.getZ(), e.rotation, 0, -4);
                         float yaw = BossRules.yawTo(e.yard.getX() - corner.getX(), e.yard.getZ() - corner.getZ());
-                        p.teleportTo(level, corner.getX() + 0.5D, e.yard.getY() + 9.0D, corner.getZ() + 0.5D, yaw, 30.0F);
+                        p.teleportTo(level, corner.getX() + 0.5D, e.yard.getY() + 3.0D, corner.getZ() + 0.5D, yaw, 25.0F);
                         p.getAbilities().flying = true;
                         p.onUpdateAbilities();
                     } else {

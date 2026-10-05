@@ -47,7 +47,7 @@ public record BossMove(int id, int windup, int strike, int recover, float damage
     public static final double[] CHAIN_ARC = {90.0D, 160.0D, 60.0D};
 
     /** Радиус кольца приземления прыжка. */
-    public static final double POUNCE_RADIUS = 3.0D;
+    public static final double POUNCE_RADIUS = 2.6D;
     /** Дистанция прыжка: ближе — не прыгает, дальше — не достаёт. */
     public static final double POUNCE_MIN = 4.0D;
     public static final double POUNCE_MAX = 12.0D;

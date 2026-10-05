@@ -271,7 +271,8 @@ public class FortressMaster extends Monster implements Casters.Caster {
     private void refreshAura() {
         if (!level().isClientSide) {
             int rank = roarPressure > 0 ? Realm.FIRST : Realm.SECOND;
-            AuraState want = new AuraState(rank, phase() >= 3);
+            // Ци хозяина — не демоническая: красная аура фазы 3 — его частицы (BossFx), а не природа ци.
+            AuraState want = new AuraState(rank, false);
             AuraState have = getData(io.github.verycooltimo.murim.registry.ModAttachments.AURA);
             if (!want.equals(have)) {
                 AuraService.set(this, want);

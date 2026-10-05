@@ -128,7 +128,7 @@ public final class FortressTests {
         });
     }
 
-    /** Фазы: на 60 % — рык с давлением первоклассного; на 25 % — «кровь кипит», броня падает, аура красная. */
+    /** Фазы: на 60 % — рык с давлением первоклассного; на 25 % — «кровь кипит», броня падает (аура остаётся второсортной, не демонической). */
     @GameTest(template = "camp_floor", timeoutTicks = 260)
     public static void phasesAndRoar(GameTestHelper helper) {
         FortressMaster m = master(helper);
@@ -156,7 +156,7 @@ public final class FortressTests {
             helper.assertTrue(m.phase() == 3, "фаза " + m.phase());
             helper.assertTrue(m.getAttributeValue(Attributes.ARMOR) <= BossRules.ARMOR_PHASE3 + 0.01D, "броня не упала");
             AuraState aura = m.getData(ModAttachments.AURA);
-            helper.assertTrue(aura.demonic() && aura.rank() == Realm.SECOND, "аура фазы 3: " + aura);
+            helper.assertTrue(!aura.demonic() && aura.rank() == Realm.SECOND, "аура фазы 3: " + aura);
             helper.succeed();
         });
     }

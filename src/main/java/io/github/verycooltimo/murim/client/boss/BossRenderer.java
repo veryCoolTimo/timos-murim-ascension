@@ -223,7 +223,7 @@ public class BossRenderer extends MobRenderer<FortressMaster, BossModel> {
                 float x0 = cx + Mth.lerp(t0, a[0], b[0]), z0 = cz + Mth.lerp(t0, a[1], b[1]);
                 float x1 = cx + Mth.lerp(t1, a[0], b[0]), z1 = cz + Mth.lerp(t1, a[1], b[1]);
                 float wave = 0.5F + 0.5F * Mth.sin(time * 0.25F + (c * seg + i) * 0.7F);
-                float alpha = 0.10F + 0.10F * wave;
+                float alpha = 0.05F + 0.07F * wave;
                 quad(vc, m, new float[] {x0, y, z0}, new float[] {x1, y, z1}, new float[] {x1, y + h, z1}, new float[] {x0, y + h, z0},
                         BR, BG, BB, alpha);
                 quad(vc, m, new float[] {x0, y + h - 0.12F, z0}, new float[] {x1, y + h - 0.12F, z1}, new float[] {x1, y + h, z1},
