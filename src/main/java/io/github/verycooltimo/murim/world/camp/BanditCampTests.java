@@ -62,6 +62,7 @@ public final class BanditCampTests {
         new CampBuilder(plan, c.getX(), c.getZ(), LiveCampSink.heights(level, plan, c.getX(), c.getZ()),
                 new LiveCampSink(level, (int) box.minX, (int) box.minZ, (int) box.maxX - 1, (int) box.maxZ - 1)).build();
         int logs = 0;
+        int canvas = 0;
         int lootable = 0;
         boolean fire = false;
         for (BlockPos p : BlockPos.betweenClosed((int) box.minX, c.getY() - 2, (int) box.minZ, (int) box.maxX - 1, c.getY() + 8, (int) box.maxZ - 1)) {
@@ -70,6 +71,9 @@ public final class BanditCampTests {
                 logs++;
             }
             fire |= level.getBlockState(p).is(Blocks.CAMPFIRE);
+            if (level.getBlockState(p).is(BanditCamp.TENT_CANVAS.get())) {
+                canvas++;
+            }
             BlockEntity be = level.getBlockEntity(p);
             if ((be instanceof ChestBlockEntity chest && chest.getLootTable() != null)
                     || (be instanceof BarrelBlockEntity barrel && barrel.getLootTable() != null)) {
@@ -78,6 +82,7 @@ public final class BanditCampTests {
         }
         int frames = level.getEntitiesOfClass(net.minecraft.world.entity.decoration.ItemFrame.class, box).size();
         helper.assertTrue(fire, "нет костра");
+        helper.assertTrue(canvas >= 40, "полотна шатров мало: " + canvas);
         helper.assertTrue(logs > 150, "частокол слишком редкий: брёвен " + logs);
         helper.assertTrue(lootable == 4, "сундуков с добычей " + lootable + " вместо 4 (2 ящика, телега, главарь)");
         helper.assertTrue(frames == 3, "рамок с оружием " + frames + " вместо 3");

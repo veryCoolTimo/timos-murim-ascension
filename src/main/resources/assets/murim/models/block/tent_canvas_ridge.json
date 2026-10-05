@@ -1,0 +1,163 @@
+{
+  "parent": "minecraft:block/block",
+  "ambientocclusion": false,
+  "textures": {
+    "particle": "#cloth"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        3.5,
+        -1.6569
+      ],
+      "to": [
+        16,
+        4.5,
+        9.6569
+      ],
+      "rotation": {
+        "origin": [
+          8,
+          4,
+          4
+        ],
+        "axis": "x",
+        "angle": -45
+      },
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#cloth"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#cloth"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#cloth"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#cloth"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#cloth"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#cloth"
+        }
+      }
+    },
+    {
+      "from": [
+        0,
+        3.5,
+        6.3431
+      ],
+      "to": [
+        16,
+        4.5,
+        17.6569
+      ],
+      "rotation": {
+        "origin": [
+          8,
+          4,
+          12
+        ],
+        "axis": "x",
+        "angle": 45
+      },
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#cloth"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#cloth"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#cloth"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#cloth"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#cloth"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#cloth"
+        }
+      }
+    }
+  ]
+}

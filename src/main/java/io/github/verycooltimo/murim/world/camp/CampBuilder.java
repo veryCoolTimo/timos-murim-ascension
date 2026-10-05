@@ -18,12 +18,9 @@ import net.minecraft.world.level.block.LadderBlock;
 import net.minecraft.world.level.block.LanternBlock;
 import net.minecraft.world.level.block.RotatedPillarBlock;
 import net.minecraft.world.level.block.SlabBlock;
-import net.minecraft.world.level.block.StairBlock;
-import net.minecraft.world.level.block.TrapDoorBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.AttachFace;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
-import net.minecraft.world.level.block.state.properties.Half;
 import net.minecraft.world.level.block.state.properties.SlabType;
 import net.minecraft.world.level.storage.loot.LootTable;
 
@@ -99,24 +96,10 @@ public final class CampBuilder {
     public static final ResourceKey<LootTable> LOOT_CART = loot("chests/bandit_camp/cart");
     public static final ResourceKey<LootTable> LOOT_CHIEF = loot("chests/bandit_camp/chief");
 
-    /**
-     * Полотно шатра: ступени дают скат 45°, верхний полублок — конёк, полный блок — задняя стенка.
-     * Гладкий песчаник и кварц читаются как небелёный и белёный холст, ель — как кожа на жердях
-     * (шерстяная «ступенчатая горка» отвергнута: наклонной шерсти в ванили нет, codex 04.10).
-     */
-    record Canvas(Block stairs, Block slab, Block full, Block trapdoor) {
-    }
-
-    private static final Canvas[] TENT_CANVAS = {
-            new Canvas(Blocks.SMOOTH_SANDSTONE_STAIRS, Blocks.SMOOTH_SANDSTONE_SLAB, Blocks.SMOOTH_SANDSTONE, Blocks.BIRCH_TRAPDOOR),
-            new Canvas(Blocks.SPRUCE_STAIRS, Blocks.SPRUCE_SLAB, Blocks.SPRUCE_PLANKS, Blocks.SPRUCE_TRAPDOOR),
-            new Canvas(Blocks.SMOOTH_QUARTZ_STAIRS, Blocks.SMOOTH_QUARTZ_SLAB, Blocks.SMOOTH_QUARTZ, Blocks.BIRCH_TRAPDOOR),
-            new Canvas(Blocks.SMOOTH_SANDSTONE_STAIRS, Blocks.SMOOTH_SANDSTONE_SLAB, Blocks.SMOOTH_SANDSTONE, Blocks.BIRCH_TRAPDOOR)};
+    /** Ткань простых шатров (по варианту) и шатра главаря. */
+    private static final TentCanvasBlock.Cloth[] TENT_CLOTH = {
+            TentCanvasBlock.Cloth.LINEN, TentCanvasBlock.Cloth.WHITE, TentCanvasBlock.Cloth.LINEN, TentCanvasBlock.Cloth.WHITE};
     private static final Block[] TENT_CARPET = {Blocks.BROWN_CARPET, Blocks.GRAY_CARPET, Blocks.GREEN_CARPET, Blocks.LIGHT_GRAY_CARPET};
-    /** Шатёр главаря: охристо-красный холст или тёмная кожа; задняя стенка — шерсть цвета его знамени. */
-    private static final Canvas[] CHIEF_CANVAS = {
-            new Canvas(Blocks.SMOOTH_RED_SANDSTONE_STAIRS, Blocks.SMOOTH_RED_SANDSTONE_SLAB, Blocks.RED_WOOL, Blocks.ACACIA_TRAPDOOR),
-            new Canvas(Blocks.DARK_OAK_STAIRS, Blocks.DARK_OAK_SLAB, Blocks.BLACK_WOOL, Blocks.DARK_OAK_TRAPDOOR)};
 
     /** Масштаб мяса на вертеле и прута (ItemDisplay, по осям x, y, z модели): стержень ×6 по своей оси — 3 блока. */
     public static final float[] MEAT_SCALE = {0.75F, 0.75F, 0.75F};
@@ -151,8 +134,8 @@ public final class CampBuilder {
             int y = heights[i];
             switch (s.kind()) {
                 case FIRE -> fire(s, y);
-                case TENT -> tent(s, y, 2, 2, TENT_CANVAS[s.variant() & 3], TENT_CARPET[s.variant() & 3], false);
-                case CHIEF_TENT -> tent(s, y, 3, 3, CHIEF_CANVAS[s.variant() & 1], Blocks.RED_CARPET, true);
+                case TENT -> tent(s, y, 2, 2, TENT_CLOTH[s.variant() & 3], TENT_CARPET[s.variant() & 3], false);
+                case CHIEF_TENT -> tent(s, y, 3, 3, TentCanvasBlock.Cloth.CRIMSON, Blocks.RED_CARPET, true);
                 case LEAN_TO -> leanTo(s, y);
                 case TOWER -> tower(s, y);
                 case CART -> cart(s, y);
@@ -304,52 +287,40 @@ public final class CampBuilder {
     }
 
     /**
-     * Шатёр-«домик» на жердях: скаты из ступеней полотна (45°), конёк — верхний полублок и жердь из
-     * забора во всю длину на двух стойках спереди и сзади, глухая задняя стенка, открытый вход к костру,
-     * колья-растяжки. Внутри — постели (циновка и светлое изголовье). {@code half} — полуширина
+     * Шатёр на жердях из своего полотна ({@link TentCanvasBlock}, codex и автор 04.10: из ванильных ступеней
+     * выходила «ступенчатая горка»). Скаты — тонкие панели под 45° от земли до конька, конёк — перевёрнутое V,
+     * задний торец — треугольник полотна, вход к костру открыт; стойки спереди и сзади поднимаются до конька,
+     * колья-растяжки у входа, внутри фонарь и постели (циновка и светлое изголовье). {@code half} — полуширина
      * (2 — простой, 3 — главаря), {@code depth} — на сколько уходит назад от центра.
      */
-    private void tent(CampLayout.Spot s, int y, int half, int depth, Canvas canvas, Block carpet, boolean chief) {
+    private void tent(CampLayout.Spot s, int y, int half, int depth, TentCanvasBlock.Cloth cloth, Block carpet, boolean chief) {
         int front = 2;
         footprint(s, y, -depth - 1, front + 1, -half, half, half + 2, false);
         Direction toPlus = dir(s.facing() + 1);
         Direction toMinus = dir(s.facing() + 3);
-        BlockState full = canvas.full().defaultBlockState();
-        BlockState ridgeSlab = canvas.slab().defaultBlockState().setValue(SlabBlock.TYPE, SlabType.TOP);
         for (int a = -depth; a <= front; a++) {
+            boolean back = a == -depth;
             for (int side = -half; side <= half; side++) {
                 int[] c = rel(s, a, side);
+                // Скат: клетка |side| на высоте y + 1 + (half − |side|), низ ската наружу; конёк — над серединой.
+                int lvl = y + 1 + half - Math.abs(side);
+                Direction out = side < 0 ? toMinus : toPlus;
                 if (side == 0) {
-                    put(c, y + half, a == -depth ? full : ridgeSlab);
-                } else if (Math.abs(side) == half) {
-                    // Нижний ряд — тонкая отвесная стенка (открытый люк у внешнего края), а не ещё одна ступень:
-                    // скат не спускается террасами до земли (codex 04.10: «ступенчатая горка»).
-                    put(c, y + 1, canvas.trapdoor().defaultBlockState()
-                            .setValue(TrapDoorBlock.FACING, side < 0 ? toPlus : toMinus)
-                            .setValue(TrapDoorBlock.OPEN, true)
-                            .setValue(TrapDoorBlock.HALF, Half.BOTTOM));
+                    put(c, lvl, canvas(cloth, back ? TentCanvasBlock.Part.GABLE_RIDGE : TentCanvasBlock.Part.RIDGE, toPlus));
                 } else {
-                    // Скат: ступень поднимается к коньку.
-                    int lvl = half - Math.abs(side);
-                    put(c, y + 1 + lvl, canvas.stairs().defaultBlockState()
-                            .setValue(StairBlock.FACING, side < 0 ? toPlus : toMinus)
-                            .setValue(StairBlock.HALF, Half.BOTTOM));
+                    put(c, lvl, canvas(cloth, back ? TentCanvasBlock.Part.GABLE_SLOPE : TentCanvasBlock.Part.SLOPE, out));
                 }
-                if (a == -depth) {
-                    // Задняя стенка: треугольник под скатами.
-                    int top = side == 0 ? half - 1 : half - Math.abs(side);
-                    for (int k = 1; k <= top; k++) {
-                        put(c, y + k, full);
+                if (back) {
+                    // Торец под скатом — стенка полотна в той же плоскости, что треугольник.
+                    for (int k = y + 1; k < lvl; k++) {
+                        put(c, k, canvas(cloth, TentCanvasBlock.Part.WALL, toPlus));
                     }
                 }
             }
         }
-        // Конёк-жердь во всю длину и две стойки под ней (спереди и сзади, на шаг за полотном).
-        for (int a = -depth - 1; a <= front + 1; a++) {
-            fence(rel(s, a, 0), y + half + 1, Blocks.SPRUCE_FENCE);
-        }
+        // Стойки спереди и сзади (на шаг за полотном) поднимаются до конька, верх торчит над ним.
         for (int a : new int[] {-depth - 1, front + 1}) {
-            for (int k = 1; k <= half; k++) {
+            for (int k = 1; k <= half + 1; k++) {
                 fence(rel(s, a, 0), y + k, Blocks.SPRUCE_FENCE);
             }
         }
@@ -365,7 +336,7 @@ public final class CampBuilder {
             }
         }
         if (chief) {
-            // Сундук главаря у задней стенки, бочка с фонарём, два знамени у входа.
+            // Сундук главаря у задней стенки, бочка с фонарём, два знамени на жердях по углам входа.
             int[] c = rel(s, -depth + 1, 0);
             put(c, y + 1, Blocks.CHEST.defaultBlockState().setValue(ChestBlock.FACING, dir(s.facing())));
             if (sink.owns(c[0], c[1])) {
@@ -374,40 +345,40 @@ public final class CampBuilder {
             put(rel(s, -depth + 1, -1), y + 1, Blocks.BARREL.defaultBlockState().setValue(BarrelBlock.FACING, Direction.UP));
             put(rel(s, -depth + 1, -1), y + 2, Blocks.LANTERN.defaultBlockState());
             int rot = (s.facing() & 3) * 4;
-            // Знамёна на жердях-растяжках у входа: над пологом их видно со всего двора.
-            // По углам, вне проёма входа (codex: знамя заслоняло вход).
             put(rel(s, front + 1, -half), y + 2, Blocks.RED_BANNER.defaultBlockState().setValue(BannerBlock.ROTATION, rot));
             put(rel(s, front + 1, half), y + 2, Blocks.BLACK_BANNER.defaultBlockState().setValue(BannerBlock.ROTATION, rot));
         } else {
-            // Фонарь у задней стенки: в открытом входе виден освещённый пустой шатёр с постелями.
+            // Фонарь у задней стенки: в открытом входе виден освещённый шатёр с постелями.
             put(rel(s, -depth + 1, 0), y + 1, Blocks.LANTERN.defaultBlockState());
         }
     }
 
+    private static BlockState canvas(TentCanvasBlock.Cloth cloth, TentCanvasBlock.Part part, Direction facing) {
+        return BanditCamp.TENT_CANVAS.get().defaultBlockState()
+                .setValue(TentCanvasBlock.CLOTH, cloth).setValue(TentCanvasBlock.PART, part).setValue(TentCanvasBlock.FACING, facing);
+    }
+
     /**
-     * Навес: полотно одним скатом от высоких передних жердей к земле позади (классический lean-to,
-     * codex 04.10: дощатая стенка и крыша «к костру» читались как деревянный ларёк). Открыт спереди и с боков;
+     * Навес: одно полотно под 45° от высоких передних жердей к земле позади, открыт спереди и с боков;
      * под высокой частью — две постели.
      */
     private void leanTo(CampLayout.Spot s, int y) {
         footprint(s, y, -2, 3, -3, 3, 4, false);
-        Canvas canvas = TENT_CANVAS[0];
-        Direction front = dir(s.facing());
-        BlockState stair = canvas.stairs().defaultBlockState().setValue(StairBlock.FACING, front).setValue(StairBlock.HALF, Half.BOTTOM);
+        Direction back = dir(s.facing() + 2);
         for (int side = -2; side <= 2; side++) {
-            put(rel(s, 2, side), y + 3, stair);
-            put(rel(s, 1, side), y + 2, stair);
-            put(rel(s, 0, side), y + 1, stair);
-            put(rel(s, -1, side), y + 1, canvas.slab().defaultBlockState().setValue(SlabBlock.TYPE, SlabType.BOTTOM));
+            put(rel(s, 1, side), y + 3, canvas(TentCanvasBlock.Cloth.LINEN, TentCanvasBlock.Part.SLOPE, back));
+            put(rel(s, 0, side), y + 2, canvas(TentCanvasBlock.Cloth.LINEN, TentCanvasBlock.Part.SLOPE, back));
+            put(rel(s, -1, side), y + 1, canvas(TentCanvasBlock.Cloth.LINEN, TentCanvasBlock.Part.SLOPE, back));
         }
-        // Передние жерди под краем полотна и брус-перекладина поверх них.
+        // Передние жерди в рост полотна: их верх — у верхнего края ската (стенд 04.10: короткие жерди не держали его).
         for (int side : new int[] {-2, 2}) {
-            fence(rel(s, 2, side), y + 1, Blocks.SPRUCE_FENCE);
-            fence(rel(s, 2, side), y + 2, Blocks.SPRUCE_FENCE);
+            for (int k = 1; k <= 3; k++) {
+                fence(rel(s, 2, side), y + k, Blocks.SPRUCE_FENCE);
+            }
         }
         for (int side : new int[] {-1, 1}) {
-            put(rel(s, 1, side), y + 1, Blocks.WHITE_CARPET.defaultBlockState());
-            put(rel(s, 2, side), y + 1, Blocks.BROWN_CARPET.defaultBlockState());
+            put(rel(s, 0, side), y + 1, Blocks.WHITE_CARPET.defaultBlockState());
+            put(rel(s, 1, side), y + 1, Blocks.BROWN_CARPET.defaultBlockState());
         }
     }
 

@@ -1,0 +1,6 @@
+{
+  "parent": "murim:block/tent_canvas_gable_slope",
+  "textures": {
+    "cloth": "murim:block/tent_canvas_white"
+  }
+}
