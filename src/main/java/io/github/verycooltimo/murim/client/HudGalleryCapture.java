@@ -35,8 +35,8 @@ public final class HudGalleryCapture {
 
     private static final List<String> SCENES = List.of("hud", "training", "meditation", "loadout", "manual", "junk", "dialogue");
     /** Ticks per scene: set up at 0, frame at {@link #SHOT}, tear down at the end. */
-    private static final int SPAN = 110;
-    private static final int SHOT = 100;
+    private static final int SPAN = 170;
+    private static final int SHOT = 160;
     private static final int WARMUP = 120;
 
     private static int tick = -WARMUP;
