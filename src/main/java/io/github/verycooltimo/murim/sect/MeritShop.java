@@ -113,7 +113,7 @@ public final class MeritShop {
         }
         p.displayClientMessage(Component.translatable("murim.sect.merit.bought", what, o.price(), next.merit())
                 .withStyle(ChatFormatting.GOLD), false);
-        p.level().playSound(null, p.blockPosition(), SoundEvents.VILLAGER_TRADE, SoundSource.NEUTRAL, 0.5F, 1.1F);
+        p.level().playSound(null, p.blockPosition(), io.github.verycooltimo.murim.registry.ModSounds.COIN_CLINK.get(), SoundSource.NEUTRAL, 0.6F, 1.0F);
         MurimMod.LOGGER.info("Обмен заслуг: {} — {} за {} (осталось {})", p.getName().getString(), o.id(), o.price(), next.merit());
         return Result.OK;
     }
