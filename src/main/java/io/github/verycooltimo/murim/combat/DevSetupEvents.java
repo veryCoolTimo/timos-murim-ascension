@@ -72,7 +72,9 @@ public final class DevSetupEvents {
                 // Bandit camp: a real world camp, no stage (DevBanditCampHandler).
                 || "banditcamp".equals(System.getProperty("murim.capture.technique"))
                 // Boss M4: a fortress built at the player, no stage (client/boss/DevBossHandler).
-                || "boss".equals(System.getProperty("murim.capture.technique"))) {
+                || "boss".equals(System.getProperty("murim.capture.technique"))
+                // Location round trip and biome: a real showcase world, no stage (client/DevLocationHandler).
+                || "location".equals(System.getProperty("murim.capture.technique"))) {
             return;
         }
         // Меч нужен для съёмки техник, но в церемонии он торчит из сложенных рук и

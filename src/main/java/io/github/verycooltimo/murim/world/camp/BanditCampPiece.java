@@ -18,6 +18,9 @@ import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.StructurePiece;
 import net.minecraft.world.level.levelgen.structure.pieces.StructurePieceSerializationContext;
 import net.minecraft.world.level.storage.loot.LootTable;
+import net.minecraft.world.level.block.Rotation;
+import net.minecraft.world.level.levelgen.structure.TerrainAdjustment;
+import net.neoforged.neoforge.common.world.PieceBeardifierModifier;
 
 /**
  * Единственный кусок структуры лагеря: зерно плана, центр и опорные высоты построек. Блоки
@@ -28,19 +31,38 @@ import net.minecraft.world.level.storage.loot.LootTable;
  * reference/minecraft-src/net/minecraft/world/level/levelgen/structure/structures/SwampHutPiece.java (образец),
  * reference/minecraft-src/net/minecraft/world/RandomizableContainer.java#setBlockEntityLootTable.
  */
-public class BanditCampPiece extends StructurePiece {
+public class BanditCampPiece extends StructurePiece implements PieceBeardifierModifier {
 
     private final long seed;
     private final int cx;
     private final int cz;
     private final int[] heights;
+    /**
+     * Оболочка: блоки ставит шаблон автора ({@link io.github.verycooltimo.murim.world.location.LocationTemplatePiece}
+     * той же структуры), этот кусок только хранит центр, зерно и поворот шаблона для жизни лагеря.
+     */
+    private final boolean shell;
+    private final Rotation rotation;
 
     public BanditCampPiece(long seed, int cx, int cz, int[] heights, BoundingBox box) {
+        this(seed, cx, cz, heights, box, false, Rotation.NONE);
+    }
+
+    private BanditCampPiece(long seed, int cx, int cz, int[] heights, BoundingBox box, boolean shell, Rotation rotation) {
         super(BanditCamp.PIECE.get(), 0, box);
         this.seed = seed;
         this.cx = cx;
         this.cz = cz;
         this.heights = heights.clone();
+        this.shell = shell;
+        this.rotation = rotation;
+    }
+
+    /** Оболочка шаблонного лагеря: центр (на земле), зерно захваченного лагеря, поворот шаблона. */
+    public static BanditCampPiece shell(long seed, BlockPos centre, Rotation rotation, BoundingBox box) {
+        int[] h = new int[CampLayout.plan(seed).spots().size() + 1];
+        java.util.Arrays.fill(h, centre.getY());
+        return new BanditCampPiece(seed, centre.getX(), centre.getZ(), h, box, true, rotation);
     }
 
     public BanditCampPiece(StructurePieceSerializationContext context, CompoundTag tag) {
@@ -49,6 +71,8 @@ public class BanditCampPiece extends StructurePiece {
         this.cx = tag.getInt("CX");
         this.cz = tag.getInt("CZ");
         this.heights = tag.getIntArray("Heights");
+        this.shell = tag.getBoolean("Shell");
+        this.rotation = Rotation.values()[Math.floorMod(tag.getInt("Rot"), 4)];
     }
 
     @Override
@@ -57,6 +81,35 @@ public class BanditCampPiece extends StructurePiece {
         tag.putInt("CX", cx);
         tag.putInt("CZ", cz);
         tag.putIntArray("Heights", heights);
+        if (shell) {
+            tag.putBoolean("Shell", true);
+            tag.putInt("Rot", rotation.ordinal());
+        }
+    }
+
+    /** Лагерь построен из шаблона автора (кусок без блоков). */
+    public boolean shell() {
+        return shell;
+    }
+
+    /** Поворот шаблона относительно захваченного лагеря (NONE у процедурного). */
+    public Rotation rotation() {
+        return rotation;
+    }
+
+    @Override
+    public BoundingBox getBeardifierBox() {
+        return boundingBox;
+    }
+
+    @Override
+    public TerrainAdjustment getTerrainAdjustment() {
+        return TerrainAdjustment.NONE;
+    }
+
+    @Override
+    public int getGroundLevelDelta() {
+        return 0;
     }
 
     public long seed() {
@@ -79,6 +132,9 @@ public class BanditCampPiece extends StructurePiece {
     @Override
     public void postProcess(WorldGenLevel level, StructureManager structureManager, ChunkGenerator generator,
                             RandomSource random, BoundingBox chunkBox, ChunkPos chunkPos, BlockPos pivot) {
+        if (shell) {
+            return;
+        }
         CampLayout plan = CampLayout.plan(seed);
         if (heights.length != plan.spots().size() + 1) {
             return;

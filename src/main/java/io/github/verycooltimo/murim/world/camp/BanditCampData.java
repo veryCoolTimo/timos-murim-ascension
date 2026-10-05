@@ -44,6 +44,14 @@ public final class BanditCampData extends SavedData {
         public final java.util.Set<UUID> shooters = new java.util.LinkedHashSet<>();
         public long pursuitUntil = Long.MIN_VALUE / 2;
         public long fightTick = Long.MIN_VALUE / 2;
+        /**
+         * Лагерь из шаблона автора (docs/design/28-location-capture.md): посты, точки появления и состав из знаков
+         * {@code spawn:*} шаблона. Не сохраняются — собираются заново при первом посещении после загрузки
+         * ({@link CampTemplate#attach}); null у процедурного лагеря.
+         */
+        public java.util.List<CampLayout.Post> templatePosts;
+        public java.util.List<BlockPos> templateFeet;
+        public java.util.List<CampRoster.Member> templateRoster;
 
         Camp(long key, BlockPos centre, long seed) {
             this.key = key;

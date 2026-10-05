@@ -32,3 +32,5 @@ bow_shot	0.6	0.5	-	Wooden bow string release twang with an arrow whoosh, dry, no
 qi_sword_summon	1.0	0.45	-	Energy sword materializing, bright rising shing of a blade forming from light with a soft hum, no music
 qi_sword_hum	3.0	0.4	loop	Steady humming of a glowing energy sword, soft resonant electric hum, seamless loop, no music
 sword_draw	0.8	0.5	-	Quick sword unsheathing, steel blade sliding out of a scabbard with a clean short ring, dry, no music
+hua_wind	20.0	0.5	loop	High mountain ambience: soft steady wind flowing through pine needles and over granite cliffs, airy and misty, calm, distant, no birds, no music, seamless loop (+28 dB on conversion)
+hua_bird	4.0	0.5	-	Single distant bird call echoing between misty mountain cliffs, a long thin cry like a crane far away, soft reverb, quiet
