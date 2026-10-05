@@ -46,6 +46,7 @@ public final class DevLocationHandler {
     private static boolean setup;
     private static int index;
     private static int wait;
+    private static int armed;
     private static int stable;
     private static int lastSections = -1;
     private static int frame;
@@ -66,7 +67,7 @@ public final class DevLocationHandler {
         }
         if (!setup) {
             setup = true;
-            mc.options.renderDistance().set(12);
+            mc.options.renderDistance().set(16);
             mc.options.cloudStatus().set(net.minecraft.client.CloudStatus.OFF);
             mc.options.setCameraType(CameraType.FIRST_PERSON);
             server.execute(() -> plan(server));
@@ -86,9 +87,12 @@ public final class DevLocationHandler {
         mc.getToasts().clear();
         if (wait == 0) {
             mc.options.hideGui = !v.debug();
-            if (mc.getDebugOverlay().showDebugScreen() != v.debug()) {
+            // F3 stays off while travelling: it caches the chunk under the camera, and an empty one (not arrived
+            // yet) would keep «Waiting for chunk…» until the camera changes chunk.
+            if (mc.getDebugOverlay().showDebugScreen()) {
                 mc.getDebugOverlay().toggleOverlay();
             }
+            armed = 0;
             server.execute(() -> {
                 ServerPlayer p = server.getPlayerList().getPlayers().get(0);
                 server.overworld().setDayTime(v.night() ? 18000L : 6000L);
@@ -99,7 +103,17 @@ public final class DevLocationHandler {
         int sections = mc.levelRenderer.countRenderedSections();
         stable = sections == lastSections && mc.levelRenderer.hasRenderedAllSections() ? stable + 1 : 0;
         lastSections = sections;
-        if ((wait >= 60 && stable >= 25) || wait >= 600) {
+        // The mountain's chunks are generated on arrival (heavy): wait for the column under the camera and a calm
+        // renderer; F3 shows «Waiting for chunk…» and no biome line until the chunk arrives.
+        boolean here = mc.level.hasChunk(mc.player.getBlockX() >> 4, mc.player.getBlockZ() >> 4);
+        if ((wait >= 60 && here && stable >= 40) || wait >= 1800 || armed > 0) {
+            if (v.debug() && armed < 8) {
+                if (armed == 0 && !mc.getDebugOverlay().showDebugScreen()) {
+                    mc.getDebugOverlay().toggleOverlay();
+                }
+                armed++;
+                return;
+            }
             Screenshot.grab(mc.gameDirectory, String.format("murim_loc_%s_%03d.png", v.stage(), frame++), mc.getMainRenderTarget(), m -> {
             });
             MurimMod.LOGGER.info("Location stand: view {} {} at {} {} {} (waited {} ticks)", index, v.stage(),
@@ -205,11 +219,12 @@ public final class DevLocationHandler {
                     level.getChunk(g[0] >> 4, g[1] >> 4);
                     double gy = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, g[0], g[1]) + 1.6;
                     out.add(view("biome", g[0] + 0.5, gy, g[1] + 0.5, gl[0], gy + 40, gl[1], true, false));
-                    int[] a = site.toWorld(-60, -620);
-                    int[] al = site.toWorld(10, 60);
-                    double ay = site.worldY(150);
-                    out.add(view("biome", a[0] + 0.5, ay, a[1] + 0.5, al[0], site.worldY(170), al[1], false, false));
-                    out.add(view("biome", a[0] + 0.5, ay, a[1] + 0.5, al[0], site.worldY(170), al[1], false, true));
+                    // Over the approach valley towards the scarp and the North Peak (within the render distance).
+                    int[] a = site.toWorld(-110, -560);
+                    int[] al = site.toWorld(-60, -340);
+                    double ay = site.worldY(45);
+                    out.add(view("biome", a[0] + 0.5, ay, a[1] + 0.5, al[0], site.worldY(105), al[1], false, false));
+                    out.add(view("biome", a[0] + 0.5, ay, a[1] + 0.5, al[0], site.worldY(105), al[1], false, true));
                     out.add(view("biome", t[0] + 0.5, ty, t[1] + 0.5, look[0], ty + 6, look[1], true, true));
                 }
                 default -> MurimMod.LOGGER.warn("Location stand: unknown stage {}", stage);

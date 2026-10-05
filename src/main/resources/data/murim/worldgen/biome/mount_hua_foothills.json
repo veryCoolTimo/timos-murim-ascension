@@ -3,12 +3,12 @@
   "temperature": 0.7,
   "downfall": 0.8,
   "effects": {
-    "sky_color": 9349574,
-    "fog_color": 12832726,
+    "sky_color": 9940157,
+    "fog_color": 12635604,
     "water_color": 4159110,
     "water_fog_color": 2442063,
-    "grass_color": 7641180,
-    "foliage_color": 5601865,
+    "grass_color": 7242851,
+    "foliage_color": 4876370,
     "additions_sound": {
       "sound": "murim:ambient.mount_hua.birds",
       "tick_chance": 0.006
