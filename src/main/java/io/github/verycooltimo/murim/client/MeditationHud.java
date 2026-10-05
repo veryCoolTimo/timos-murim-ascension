@@ -173,11 +173,7 @@ public final class MeditationHud {
             Font font = minecraft.font;
             Component hint = Component.translatable("murim.meditation.game.key",
                     minecraft.options.keyJump.getTranslatedKeyMessage());
-            graphics.pose().pushPose();
-            graphics.pose().translate(cx, by + 5, 0.0F);
-            graphics.pose().scale(0.75F, 0.75F, 1.0F);
-            graphics.drawString(font, hint, -font.width(hint) / 2, 0, 0xC0C8DCEC, true);
-            graphics.pose().popPose();
+            HudText.centered(graphics, font, hint, cx, by + 5, 0xE0C8DCEC, 0.75F);
         }
     }
 
@@ -255,14 +251,14 @@ public final class MeditationHud {
         // числами — но без доли до стены.
         small(graphics, font, Component.translatable("murim.meditation.total",
                 String.format(java.util.Locale.ROOT, "%.1f", profile.pool()),
-                String.format(java.util.Locale.ROOT, "%.1f", profile.circulating())), cx, ty - 8, 0xF0E8F6FF);
-        int line = ty - 16;
+                String.format(java.util.Locale.ROOT, "%.1f", profile.circulating())), cx, ty - LINE, 0xF0E8F6FF);
+        int line = ty - 2 * LINE;
         // Почему рост стоит — одна причина, короткая подпись.
         String reason = full ? "murim.meditation.reason.full" : stunned ? "murim.meditation.reason.stunned"
                 : tired ? "murim.meditation.reason.tired" : null;
         if (reason != null) {
             small(graphics, font, Component.translatable(reason), cx, line, 0xC0A0A8B8);
-            line -= 8;
+            line -= LINE;
         }
         if (ClientPlaceState.node() != null) {
             float warn = ClientPlaceState.warning();
@@ -270,14 +266,14 @@ public final class MeditationHud {
                             : Component.translatable("murim.place.near_kind", Component.translatable(
                                     "murim.place.kind." + ClientPlaceState.place().kind().getSerializedName())),
                     cx, line, warn > 0.0F ? 0xF0FFB070 : 0xE0A8F0D0);
-            line -= 8;
+            line -= LINE;
         }
         // Что осмысливается — то же, что показывает двойник (§3г).
         java.util.List<net.minecraft.resources.ResourceLocation> pending = ClientMasteryState.pending();
         if (!pending.isEmpty()) {
             small(graphics, font, Component.translatable("murim.meditation.seeded.pondering",
                     io.github.verycooltimo.murim.mastery.MasteryService.name(pending.get(0))), cx, line, 0xE0CFEFFF);
-            line -= 8;
+            line -= LINE;
         }
         if (ClientMeditationState.sessionTicks() < 80) {
             small(graphics, font, Component.translatable("murim.meditation.seeded.leave",
@@ -287,6 +283,8 @@ public final class MeditationHud {
 
     /** Запас + циркулирующая на начале сессии: от него считается «за сессию». */
     private static double sessionStart = Double.NaN;
+    /** Step between seated captions: 0.75 text plus its backdrop. */
+    private static final int LINE = 10;
     private static double sessionGain;
 
     /** Начало сессии: вызывается при посадке, до поглощения пилюли — её прибавка тоже «за сессию». */
@@ -301,12 +299,9 @@ public final class MeditationHud {
         return sessionGain;
     }
 
+    /** Small caption in the shared HUD style ({@link HudText}): backdrop, shadow, kept inside the screen. */
     private static void small(GuiGraphics graphics, Font font, Component text, int cx, int y, int colour) {
-        graphics.pose().pushPose();
-        graphics.pose().translate(cx, y, 0.0F);
-        graphics.pose().scale(0.75F, 0.75F, 1.0F);
-        graphics.drawString(font, text, -font.width(text) / 2, 0, colour, true);
-        graphics.pose().popPose();
+        HudText.centered(graphics, font, text, cx, y, colour, 0.75F);
     }
 
     private static void annulus(GuiGraphics graphics, float cx, float cy, float inner, float outer,

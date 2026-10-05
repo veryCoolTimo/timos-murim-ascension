@@ -2,6 +2,7 @@ package io.github.verycooltimo.murim.client.training;
 
 import io.github.verycooltimo.murim.MurimMod;
 import io.github.verycooltimo.murim.client.GuiShapes;
+import io.github.verycooltimo.murim.client.HudText;
 import io.github.verycooltimo.murim.training.Exercise;
 import io.github.verycooltimo.murim.training.TrainingPayloads;
 import net.minecraft.client.DeltaTracker;
@@ -20,8 +21,9 @@ import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
 import java.util.Locale;
 
 /**
- * Training HUD, in the style of the qi line ({@code QiHud}: thin glowing lines, no panels — the character is the main
- * thing on screen). Shown only while training, under the crosshair:
+ * Training HUD, in the style of the qi line ({@code QiHud}: thin glowing lines — the character is the main thing on
+ * screen). Shown only while training, ABOVE the crosshair on a dark backdrop ({@link HudText}): under it the captions
+ * covered the legs in third person and were pale on a light floor (codex on the training stand, 05.10):
  *
  * <ul>
  *   <li>a name and count line;</li>
@@ -42,6 +44,10 @@ public final class TrainingHud {
     private static final int RUST = 0x8A4B2A;
     private static final int GOLD = 0xFFE7A3;
     private static final int PALE = 0xD8D5C1;
+    /** Title ink: brighter than {@link #PALE}, it is read against the world. */
+    private static final int CREAM = 0xF4ECD8;
+    /** Panel height below the title line: title, rhythm line, stamina, body line and its label. */
+    private static final int PANEL = 40;
     private static final int RED = 0xC8553D;
 
     private TrainingHud() {
@@ -60,7 +66,8 @@ public final class TrainingHud {
         float now = mc.level.getGameTime() + delta.getGameTimeDeltaPartialTick(false);
         TrainingPayloads.State s = ClientTraining.local();
         int cx = g.guiWidth() / 2;
-        int y = g.guiHeight() / 2 + 22;
+        // Above the head in third person: the panel ends 14 px over the crosshair.
+        int y = g.guiHeight() / 2 - 14 - PANEL;
         if (s == null) {
             TrainingPayloads.State f = ClientTraining.finished();
             if (f != null && now - ClientTraining.finishedAt() < 100) {
@@ -83,10 +90,11 @@ public final class TrainingHud {
 
     private static void set(GuiGraphics g, Font font, TrainingPayloads.State s, Exercise e, int cx, int y, float now) {
         Component title = Component.translatable(e.nameKey()).append("  ").append(count(s, e));
-        g.drawCenteredString(font, title, cx, y, 0xFF000000 | PALE);
+        panel(g, font, title, cx, y);
+        g.drawCenteredString(font, title, cx, y, 0xFF000000 | CREAM);
         int line = y + 14;
         int half = WIDTH / 2;
-        g.fill(cx - half, line, cx + half + 1, line + 1, 0x30FFFFFF);
+        g.fill(cx - half, line, cx + half + 1, line + 1, 0x60FFFFFF);
         if (e.rhythmic()) {
             float beat = e.beat();
             float phase = Mth.positiveModulo(now - s.origin(), beat) / beat;
@@ -129,22 +137,24 @@ public final class TrainingHud {
 
     private static void route(GuiGraphics g, Font font, TrainingPayloads.State s, Exercise e, int cx, int y, float now) {
         int elapsed = (int) Math.max(0, now - s.origin());
-        Component title = Component.translatable(e.nameKey()).append("  ").append(Component.literal(clock(elapsed)));
-        g.drawCenteredString(font, title, cx, y, 0xFF000000 | PALE);
+        // Checkpoints go in the title: under the bar they collided with the body line.
+        Component title = Component.translatable(e.nameKey()).append("  ").append(Component.literal(clock(elapsed)))
+                .append("  " + s.reps() + "/" + Math.max(1, s.good()));
+        panel(g, font, title, cx, y);
+        g.drawCenteredString(font, title, cx, y, 0xFF000000 | CREAM);
         int line = y + 14;
         int half = WIDTH / 2;
         int total = Math.max(1, s.good());
         float done = Mth.clamp(s.reps() / (float) total, 0.0F, 1.0F);
-        g.fill(cx - half, line, cx + half + 1, line + 1, 0x30FFFFFF);
+        g.fill(cx - half, line, cx + half + 1, line + 1, 0x60FFFFFF);
         g.fill(cx - half, line - 1, cx - half + Math.round(WIDTH * done), line + 1, 0xD0000000 | OCHRE);
         for (int i = 0; i <= total; i++) {
             int x = cx - half + Math.round(WIDTH * i / (float) total);
             g.fill(x, line - 2, x + 1, line + 3, i <= s.reps() ? 0xE0000000 | OCHRE : 0x50FFFFFF);
         }
-        g.drawCenteredString(font, Component.literal(s.reps() + "/" + total), cx, line + 5, 0xC0000000 | PALE);
         float age = now - ClientTraining.flashAt();
         if (ClientTraining.flash() == TrainingPayloads.Beat.FELL && age < 30.0F) {
-            g.drawCenteredString(font, Component.translatable("murim.training.hud.fell"), cx, y - 12,
+            HudText.centered(g, font, Component.translatable("murim.training.hud.fell"), cx, y - 14,
                     ((int) (255 * (1.0F - age / 30.0F)) << 24) | RED);
         } else if (ClientTraining.flash() == TrainingPayloads.Beat.REACH && age < 10.0F) {
             GuiShapes.glow(g, cx - half + Math.round(WIDTH * done), line, 4.0F + age * 0.4F, GOLD, (int) (200 * (1.0F - age / 10.0F)));
@@ -161,20 +171,33 @@ public final class TrainingHud {
             return;
         }
         Component line = Component.translatable(e.nameKey()).append("  ").append(Component.literal(clock(f.reps())));
-        g.drawCenteredString(font, line, cx, y, (alpha << 24) | GOLD);
-        g.drawCenteredString(font, Component.literal(String.format(Locale.ROOT, "+%.1f", f.gain())), cx, y + 11, (alpha << 24) | OCHRE);
+        HudText.centered(g, font, line, cx, y, (alpha << 24) | GOLD);
+        HudText.centered(g, font, Component.literal(String.format(Locale.ROOT, "+%.1f", f.gain())), cx, y + 12, (alpha << 24) | OCHRE);
     }
 
     /** Body level: faint line of progress to the next level; fatigue as a rust stretch from the right. */
     private static void body(GuiGraphics g, int cx, int y) {
         TrainingPayloads.Body b = ClientTraining.body();
         int half = WIDTH / 2;
-        g.fill(cx - half, y, cx - half + Math.round(WIDTH * Mth.clamp(b.progress(), 0.0F, 1.0F)), y + 1, 0x70000000 | PALE);
+        g.fill(cx - half, y, cx + half + 1, y + 1, 0x40FFFFFF);
+        g.fill(cx - half, y, cx - half + Math.round(WIDTH * Mth.clamp(b.progress(), 0.0F, 1.0F)), y + 1, 0xC0000000 | PALE);
         int tired = Math.round(WIDTH * Mth.clamp(b.fatigue(), 0.0F, 1.0F));
         g.fill(cx + half + 1 - tired, y + 2, cx + half + 1, y + 3, 0x90000000 | RUST);
+        // Level label under the line, inside the panel (it hung left of the bar, faint, over the world).
         Minecraft mc = Minecraft.getInstance();
-        g.drawString(mc.font, Component.translatable("murim.training.hud.level", b.level()), cx - half - 2
-                - mc.font.width(Component.translatable("murim.training.hud.level", b.level())), y - 3, 0x90000000 | PALE, false);
+        Component label = Component.translatable("murim.training.hud.level", b.level());
+        float k = 0.75F;
+        g.pose().pushPose();
+        g.pose().translate(cx - mc.font.width(label) * k / 2.0F, y + 4, 0.0F);
+        g.pose().scale(k, k, 1.0F);
+        g.drawString(mc.font, label, 0, 0, 0xE0000000 | PALE, true);
+        g.pose().popPose();
+    }
+
+    /** Dark panel under the whole widget, wide enough for the title (EN names run longer). */
+    private static void panel(GuiGraphics g, Font font, Component title, int cx, int y) {
+        int half = Math.max(WIDTH / 2 + 4, font.width(title) / 2) + 6;
+        HudText.backdrop(g, cx - half, y - 4, cx + half + 1, y + PANEL, 255);
     }
 
     static String clock(int ticks) {

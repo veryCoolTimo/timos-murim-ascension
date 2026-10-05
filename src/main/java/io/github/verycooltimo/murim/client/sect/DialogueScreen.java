@@ -204,6 +204,11 @@ public final class DialogueScreen extends Screen {
         float shown = Math.min(full.length(), typed + (typing() ? CPS * partial : 0.0F));
         String part = full.substring(0, (int) shown);
         float s = SPEECH;
+        int room = PH - IN_Y - 20 - 9;
+        // Long lines (EN runs ~20 % longer) were cut at the bottom: shrink from the full line, so the size does not jump while typing.
+        while (s > SPEECH * 0.75F && font.split(FormattedText.of(full), (int) (w / s)).size() * font.lineHeight * s > room) {
+            s -= SPEECH * 0.05F;
+        }
         g.pose().pushPose();
         g.pose().translate(IN_X, IN_Y + 20, 0.0F);
         g.pose().scale(s, s, 1.0F);
