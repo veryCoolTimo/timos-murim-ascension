@@ -45,6 +45,11 @@ public final class MountHuaShape {
     private final HuaNoise hills;
 
     public MountHuaShape(long seed) {
+        this(seed, true);
+    }
+
+    /** {@code climb = false}: the terrain without the training climb (tests compare the two). */
+    MountHuaShape(long seed, boolean climb) {
         this.seed = seed;
         this.warp = new HuaNoise(seed * 31 + 1);
         this.relief = new HuaNoise(seed * 31 + 2);
@@ -56,6 +61,224 @@ public final class MountHuaShape {
         buildTrail();
         legacyRock = false;
         buildSpires();
+        this.climb = climb;
+        if (climb) {
+            buildClimbSpots();
+        }
+    }
+
+    // ---------------------------------------------------------------------------------------------
+    // Training climb (author2/sect-high-on-mountain.png): rock lobes with flat mossy tops stepping
+    // up the South Peak's north face behind the ancestors' hall. Only inside CLIMB_BOX, never on a
+    // terrace (+2 blocks); applied after the terraces' grading, so the pads stay exact.
+
+    /** Local box the climb may change: {minU, maxU, minV, maxV}. */
+    static final double[] CLIMB_BOX = {-42, 52, 96, 122};
+
+    private final boolean climb;
+    /** Ledges sorted by height: a higher ledge's top wins where two overlap. */
+    private static final List<MountHuaPlan.Ledge> CLIMB_ORDER = MountHuaPlan.CLIMB.stream()
+            .sorted(java.util.Comparator.comparingDouble(MountHuaPlan.Ledge::y)).toList();
+    /** Per ledge (plan order): the stand spot {u, v} — a flat column near the centre, null if none. */
+    private double[][] climbSpot;
+    /** Per ledge (plan order): rock seat columns {u0, v0, u1, v1} on rests, else null. */
+    private double[][] climbSeat;
+    /**
+     * Rope posts at the hardest route steps (rise ≥ 5): {lowerU, lowerV, upperU, upperV} — a column
+     * of the lower ledge and its neighbour on the upper one.
+     */
+    private final java.util.List<double[]> climbRopes = new java.util.ArrayList<>();
+
+    public static boolean inClimbBox(double u, double v) {
+        return u >= CLIMB_BOX[0] && u <= CLIMB_BOX[1] && v >= CLIMB_BOX[2] && v <= CLIMB_BOX[3];
+    }
+
+    /** True within {@code margin} blocks of a building pad (caves excluded). */
+    private static boolean onPad(double u, double v, double margin) {
+        for (Zone z : MountHuaPlan.ZONES) {
+            if (!z.cave() && Math.abs(u - z.u()) <= z.width() / 2.0 + margin
+                    && Math.abs(v - z.v()) <= z.depth() / 2.0 + margin) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Elliptic distance of (u, v) to a ledge, with a wandering rim: below 1 is on the ledge. */
+    private double ledgeQ(MountHuaPlan.Ledge l, double u, double v) {
+        double du = (u - l.u()) / l.ru();
+        double dv = (v - l.v()) / l.rv();
+        double a = Math.atan2(dv, du);
+        double salt = l.u() * 0.37 + l.y() * 0.11;
+        double rim = 1 + 0.26 * relief.noise(Math.cos(a) * 1.1 + salt, Math.sin(a) * 1.1, 111.0)
+                + 0.07 * relief.noise(u / 2.3, v / 2.3, 113.0);
+        return Math.hypot(du, dv) * rim;
+    }
+
+    /**
+     * The face carved into lobes: a ledge top is flat at its height (fill and cut); in front of it
+     * the rock rounds over its lip and drops sheer; behind it a rock wall rises 4 per block back to
+     * the slope. Higher ledges are laid last, so where two meet, the riser is the upper one's lip.
+     */
+    private double climb(double u, double v, double h) {
+        if (!inClimbBox(u, v) || onPad(u, v, 2)) {
+            return h;
+        }
+        boolean onLedge = false;
+        for (MountHuaPlan.Ledge l : CLIMB_ORDER) {
+            double ex = u - l.u();
+            double ey = v - l.v();
+            if (Math.abs(ex) > l.ru() + 8 || Math.abs(ey) > l.rv() + 8) {
+                continue;
+            }
+            double q = ledgeQ(l, u, v);
+            if (q <= 1) {
+                h = l.y();
+                onLedge = true;
+                continue;
+            }
+            double d = Math.hypot(ex, ey) * (1 - 1 / q);
+            if (h < l.y()) {
+                // Over bare rock the lip rounds off; over a lower ledge the riser is sheer, so the
+                // ledge below keeps its depth.
+                double lip;
+                if (!onLedge) {
+                    lip = l.y() - 1.2 * d - 2.5 * d * d;
+                } else if (l.y() - h >= 8) {
+                    // A cliff between rows: the rock above bulges out over the ledge below by
+                    // 0-2.5 blocks (codex: lobes, not a flat wall with lines), so the lower
+                    // ledge's depth varies along its length.
+                    double bulge = 2.5 * Math.max(0, relief.noise(u / 5.0, v / 5.0, 117.0 + l.y()));
+                    // ...and in places a half-height shoulder steps out below the bulge: the
+                    // cliff breaks into stacked lobes with a bush on each (ref), not one wall.
+                    double shoulder = 2.0 * Math.max(0, relief.noise(u / 6.0, v / 6.0, 119.0 + l.y()));
+                    double over = Math.max(0, d - bulge);
+                    lip = l.y() - 0.9 * d - 20 * over * over;
+                    if (over > 0 && over < shoulder) {
+                        lip = Math.max(lip, Math.floor((l.y() + h) / 2));
+                    }
+                } else {
+                    lip = l.y() - 2 * d - 20 * d * d;
+                }
+                h = Math.max(h, lip);
+            } else {
+                double cut = Math.min(h, l.y() + 4.0 * d);
+                h = cut + (h - cut) * smooth(4, 7, d);
+            }
+        }
+        return h;
+    }
+
+    /** The climb ledge whose flat top covers (u, v) (the highest if several), or null. */
+    public MountHuaPlan.Ledge climbLedgeAt(double u, double v) {
+        if (!climb || !inClimbBox(u, v) || onPad(u, v, 2)) {
+            return null;
+        }
+        MountHuaPlan.Ledge best = null;
+        for (MountHuaPlan.Ledge l : CLIMB_ORDER) {
+            if (Math.abs(u - l.u()) <= l.ru() + 3 && Math.abs(v - l.v()) <= l.rv() + 3 && ledgeQ(l, u, v) <= 1) {
+                best = l;
+            }
+        }
+        return best;
+    }
+
+    /** True where the climb changed the ground (the writer uses natural rock and its own greenery there). */
+    public boolean climbChanged(double u, double v) {
+        if (!climb || !inClimbBox(u, v)) {
+            return false;
+        }
+        return Math.abs(height(u, v, true) - height(u, v, false)) > 1e-9;
+    }
+
+    private void buildClimbSpots() {
+        List<MountHuaPlan.Ledge> plan = MountHuaPlan.CLIMB;
+        climbSpot = new double[plan.size()][];
+        climbSeat = new double[plan.size()][];
+        for (int i = 0; i < plan.size(); i++) {
+            MountHuaPlan.Ledge l = plan.get(i);
+            // Block centres sit on half-integers in the local frame for every rotation.
+            double best = Double.MAX_VALUE;
+            double seatBest = Double.MAX_VALUE;
+            for (double u = Math.floor(l.u() - l.ru()) + 0.5; u <= l.u() + l.ru(); u++) {
+                for (double v = Math.floor(l.v() - l.rv()) + 0.5; v <= l.v() + l.rv(); v++) {
+                    if (!flatOn(l, u, v)) {
+                        continue;
+                    }
+                    boolean wide = flatOn(l, u - 1, v) && flatOn(l, u + 1, v) && flatOn(l, u, v - 1) && flatOn(l, u, v + 1);
+                    double score = Math.hypot(u - l.u(), (v - l.v()) * 1.5) + (wide ? 0 : 6);
+                    if (score < best) {
+                        best = score;
+                        climbSpot[i] = new double[] {u, v};
+                    }
+                    // Rock seat (rest) or a small pine (training): two flat columns against the
+                    // back wall, nearest the ledge's middle.
+                    if ((l.kind() == MountHuaPlan.Kind.REST || l.kind() == MountHuaPlan.Kind.TRAINING) && flatOn(l, u + 1, v)
+                            && height(u, v + 1) >= l.y() + 2 && height(u + 1, v + 1) >= l.y() + 2) {
+                        double s = Math.abs(u + 0.5 - l.u());
+                        if (s < seatBest) {
+                            seatBest = s;
+                            climbSeat[i] = new double[] {u, v, u + 1, v};
+                        }
+                    }
+                }
+            }
+        }
+        // Hardest steps: a rope post where the upper ledge's rim meets the lower ledge.
+        List<MountHuaPlan.Ledge> route = plan.stream().filter(MountHuaPlan.Ledge::onRoute).toList();
+        for (int i = 0; i + 1 < route.size(); i++) {
+            MountHuaPlan.Ledge lo = route.get(i);
+            MountHuaPlan.Ledge hi = route.get(i + 1);
+            if (hi.y() - lo.y() < 5) {
+                continue;
+            }
+            double mu = (lo.u() + hi.u()) / 2;
+            double mv = (lo.v() + hi.v()) / 2;
+            double best = Double.MAX_VALUE;
+            double[] pick = null;
+            for (double u = Math.floor(lo.u() - lo.ru()) + 0.5; u <= lo.u() + lo.ru(); u++) {
+                for (double v = Math.floor(lo.v() - lo.rv()) + 0.5; v <= lo.v() + lo.rv(); v++) {
+                    if (!flatOn(lo, u, v)) {
+                        continue;
+                    }
+                    for (double[] d : new double[][] {{1, 0}, {-1, 0}, {0, 1}, {0, -1}}) {
+                        double hn = height(u + d[0], v + d[1]);
+                        // The upper ledge itself or the lip just in front of it.
+                        if (hn >= lo.y() + 3 && hn <= hi.y() + 0.5) {
+                            double s = Math.hypot(u - mu, v - mv) + (hi.y() - hn);
+                            if (s < best) {
+                                best = s;
+                                pick = new double[] {u, v, u + d[0], v + d[1]};
+                            }
+                        }
+                    }
+                }
+            }
+            if (pick != null) {
+                climbRopes.add(pick);
+            }
+        }
+    }
+
+    private boolean flatOn(MountHuaPlan.Ledge l, double u, double v) {
+        return climbLedgeAt(u, v) == l && Math.abs(height(u, v) - l.y()) < 1e-9;
+    }
+
+    /** Stand spot {u, v} of a climb ledge (block centre on its flat top), or null. */
+    public double[] climbSpot(MountHuaPlan.Ledge ledge) {
+        int i = MountHuaPlan.CLIMB.indexOf(ledge);
+        return climbSpot == null || i < 0 ? null : climbSpot[i];
+    }
+
+    /** Back-wall columns {u0, v0, u1, v1} of a rest (rock seat) or training ledge (pine), or null. */
+    public double[] climbSeat(MountHuaPlan.Ledge ledge) {
+        int i = MountHuaPlan.CLIMB.indexOf(ledge);
+        return climbSeat == null || i < 0 ? null : climbSeat[i];
+    }
+
+    /** Rope posts at the hardest steps: {lowerU, lowerV, upperU, upperV}. */
+    public List<double[]> climbRopes() {
+        return climbRopes;
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -299,12 +522,19 @@ public final class MountHuaShape {
 
     /** Nominal height above the foot (0 = foot level, {@link MountHuaPlan#SUMMIT} = South Peak). */
     public double height(double u, double v) {
+        return height(u, v, climb);
+    }
+
+    private double height(double u, double v, boolean withClimb) {
         if (!inBounds(u, v)) {
             return 0;
         }
         double h = ground(u, v);
         for (Zone zone : MountHuaPlan.ZONES) {
             h = terrace(zone, u, v, h);
+        }
+        if (withClimb) {
+            h = climb(u, v, h);
         }
         h = trail(u, v, h);
         h = paths(u, v, h);

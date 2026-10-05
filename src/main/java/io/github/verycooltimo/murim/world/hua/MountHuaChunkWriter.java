@@ -289,7 +289,192 @@ final class MountHuaChunkWriter {
         }
         clearTerraces(pos);
         hangingGreen(pos);
+        climbProps(pos);
+        climbGreen(pos);
         Heightmap.primeHeightmaps(chunk, EnumSet.allOf(Heightmap.Types.class));
+    }
+
+    private int ledgeY(MountHuaPlan.Ledge ledge) {
+        return (int) Math.round(site.worldY(ledge.y()));
+    }
+
+    /**
+     * Training climb furniture: a rock seat on each rest ledge, a rope post (spruce post on the
+     * upper rim, chain down the riser) at the hardest steps, one pine on each side lobe.
+     * Runs in the cleanup pass, after the vanilla sweep.
+     */
+    private void climbProps(BlockPos.MutableBlockPos pos) {
+        for (MountHuaPlan.Ledge l : MountHuaPlan.CLIMB) {
+            double[] seat = shape.climbSeat(l);
+            if (seat != null && l.kind() == MountHuaPlan.Kind.TRAINING) {
+                int[] w = site.toWorld(seat[0], seat[1]);
+                if (inChunk(w[0], w[1])) {
+                    smallPine(w[0], topAt(w[0] - x0, w[1] - z0) + 1, w[1], mix(w[0], w[1], 141), pos);
+                }
+            } else if (seat != null) {
+                for (int k = 0; k < 4; k += 2) {
+                    int[] w = site.toWorld(seat[k], seat[k + 1]);
+                    if (inChunk(w[0], w[1])) {
+                        level.setBlock(pos.set(w[0], topAt(w[0] - x0, w[1] - z0) + 1, w[1]),
+                                ModBlocks.POLISHED_HUA_GRANITE_SLAB.get().defaultBlockState(), 2);
+                    }
+                }
+            }
+            double[] spot = shape.climbSpot(l);
+            if (l.kind() == MountHuaPlan.Kind.SIDE && spot != null) {
+                int[] w = site.toWorld(spot[0], spot[1]);
+                if (inChunk(w[0], w[1])) {
+                    int t = topAt(w[0] - x0, w[1] - z0);
+                    pine(w[0], t + 1, w[1], mix(w[0], w[1], 139), w[0] - x0, w[1] - z0, pos);
+                }
+            }
+        }
+        for (double[] rope : shape.climbRopes()) {
+            int[] lo = site.toWorld(rope[0], rope[1]);
+            int[] hi = site.toWorld(rope[2], rope[3]);
+            int tLo = (int) Math.round(site.worldY(shape.height(rope[0], rope[1])));
+            int tHi = (int) Math.round(site.worldY(shape.height(rope[2], rope[3])));
+            if (inChunk(hi[0], hi[1])) {
+                level.setBlock(pos.set(hi[0], tHi + 1, hi[1]), Blocks.SPRUCE_FENCE.defaultBlockState(), 2);
+                level.setBlock(pos.set(hi[0], tHi + 2, hi[1]), Blocks.SPRUCE_FENCE.defaultBlockState(), 2);
+            }
+            if (inChunk(lo[0], lo[1])) {
+                for (int y = tHi + 1; y > tLo; y--) {
+                    level.setBlock(pos.set(lo[0], y, lo[1]), Blocks.CHAIN.defaultBlockState(), 2);
+                }
+            }
+        }
+    }
+
+    /**
+     * Greenery on the training climb (author2/sect-high-on-mountain.png: bushes and moss on every
+     * lobe, green pockets between them). Vines cover every riser of 2-6 blocks down to its foot —
+     * that is the way up; taller walls only get short strands that stop well above the ground.
+     * Bushes sit on rims over real drops (6+), never on a step of the route.
+     */
+    private void climbGreen(BlockPos.MutableBlockPos pos) {
+        int[][] dirs = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
+        for (int lz = 0; lz < 16; lz++) {
+            for (int lx = 0; lx < 16; lx++) {
+                int wx = x0 + lx;
+                int wz = z0 + lz;
+                double u = site.localU(wx + 0.5, wz + 0.5);
+                double v = site.localV(wx + 0.5, wz + 0.5);
+                if (!MountHuaShape.inClimbBox(u, v) || !shape.climbChanged(u, v)) {
+                    continue;
+                }
+                int t = topAt(lx, lz);
+                if (!level.getBlockState(pos.set(wx, t + 1, wz)).isAir()) {
+                    continue; // seat, post, chain or pine already here
+                }
+                long h = mix(wx, wz, 131);
+                int maxFall = 0;
+                int maxRise = 0;
+                for (int k = 0; k < 4; k++) {
+                    int tn = topAt(lx + dirs[k][0], lz + dirs[k][1]);
+                    maxFall = Math.max(maxFall, t - tn);
+                    maxRise = Math.max(maxRise, tn - t);
+                }
+                for (int k = 0; k < 4; k++) {
+                    int[] d = dirs[k];
+                    int tn = topAt(lx + d[0], lz + d[1]);
+                    int rise = tn - t;
+                    if (rise < 2) {
+                        continue;
+                    }
+                    int len = rise <= 6 ? rise
+                            : ((h >>> (k * 4)) & 15) == 0 ? 1 + (int) Math.floorMod(h >>> 20, 3L) : 0;
+                    if (len == 0) {
+                        continue;
+                    }
+                    BlockState vine = Blocks.VINE.defaultBlockState().setValue(
+                            d[0] == 1 ? net.minecraft.world.level.block.VineBlock.EAST
+                                    : d[0] == -1 ? net.minecraft.world.level.block.VineBlock.WEST
+                                    : d[1] == 1 ? net.minecraft.world.level.block.VineBlock.SOUTH
+                                    : net.minecraft.world.level.block.VineBlock.NORTH, true);
+                    for (int y = tn; y > tn - len; y--) {
+                        if (!level.getBlockState(pos.set(wx, y, wz)).isAir()) {
+                            break;
+                        }
+                        level.setBlock(pos, vine, 2);
+                    }
+                    break;
+                }
+                if (!level.getBlockState(pos.set(wx, t + 1, wz)).isAir()) {
+                    continue;
+                }
+                MountHuaPlan.Ledge ledge = shape.climbLedgeAt(u, v);
+                int r = (int) Math.floorMod(h >>> 8, 100L);
+                BlockState ground = level.getBlockState(pos.set(wx, t, wz));
+                boolean soil = ground.is(Blocks.GRASS_BLOCK) || ground.is(Blocks.MOSS_BLOCK) || ground.is(Blocks.PODZOL);
+                if (ledge != null && t == ledgeY(ledge)) {
+                    if (maxFall >= 6 && r < (ledge.kind() == MountHuaPlan.Kind.TRAINING ? 30 : 55)) {
+                        climbBush(wx, t + 1, wz, h, pos);
+                        // The cushion spills over the lip (ref: green rolls along every lobe edge).
+                        for (int[] d : dirs) {
+                            if (t - topAt(lx + d[0], lz + d[1]) >= 6) {
+                                BlockState spill = level.getBlockState(pos.set(wx, t + 1, wz));
+                                if (spill.getBlock() instanceof LeavesBlock) {
+                                    placeLeaf(wx + d[0], t, wz + d[1], spill, pos);
+                                    if (((h >>> 40) & 1) == 0) {
+                                        placeLeaf(wx + d[0], t - 1, wz + d[1], spill, pos);
+                                    }
+                                }
+                                break;
+                            }
+                        }
+                    } else if (soil && r < 46) {
+                        level.setBlock(pos.set(wx, t + 1, wz), r < 41 ? Blocks.SHORT_GRASS.defaultBlockState()
+                                : Blocks.FERN.defaultBlockState(), 2);
+                    } else if (r > 92) {
+                        level.setBlock(pos.set(wx, t + 1, wz), Blocks.MOSS_CARPET.defaultBlockState(), 2);
+                    }
+                } else if (maxRise >= 3 && maxFall >= 3 && r < 60) {
+                    // A shoulder halfway up a cliff: a bush cushion on it.
+                    climbBush(wx, t + 1, wz, h, pos);
+                } else if (maxRise >= 3 && maxFall < 2 && r < 35) {
+                    // A pocket at the foot of a wall: soil gathers, a bush grows.
+                    climbBush(wx, t + 1, wz, h, pos);
+                } else if (maxRise < 2 && maxFall >= 2 && r < 45) {
+                    // Rock ribs and lips between the ledges: a clinging bush.
+                    climbBush(wx, t + 1, wz, h, pos);
+                }
+            }
+        }
+    }
+
+    /** A small cliff pine for a wide ledge: 3-4 trunk, a flat pad and a small top (stays clear of the row above). */
+    private void smallPine(int x, int y, int z, long h, BlockPos.MutableBlockPos pos) {
+        int trunk = 3 + (int) ((h >>> 3) & 1);
+        BlockState log = Blocks.SPRUCE_WOOD.defaultBlockState();
+        BlockState leaves = Blocks.SPRUCE_LEAVES.defaultBlockState().setValue(LeavesBlock.PERSISTENT, true);
+        for (int k = 0; k < trunk; k++) {
+            if (!level.getBlockState(pos.set(x, y + k, z)).isAir()) {
+                return;
+            }
+            level.setBlock(pos, log, 2);
+        }
+        for (int dx = -2; dx <= 2; dx++) {
+            for (int dz = -2; dz <= 2; dz++) {
+                if (Math.abs(dx) + Math.abs(dz) <= 3 && !(Math.abs(dx) == 2 && Math.abs(dz) == 2)) {
+                    placeLeaf(x + dx, y + trunk, z + dz, leaves, pos);
+                }
+                if (Math.abs(dx) + Math.abs(dz) <= 1) {
+                    placeLeaf(x + dx, y + trunk + 1, z + dz, leaves, pos);
+                }
+            }
+        }
+    }
+
+    /** A low clinging bush: one or two blocks of persistent azalea or spruce foliage. */
+    private void climbBush(int x, int y, int z, long h, BlockPos.MutableBlockPos pos) {
+        int kind = (int) ((h >>> 30) & 7);
+        BlockState leaves = (kind == 0 ? Blocks.FLOWERING_AZALEA_LEAVES : kind < 4 ? Blocks.AZALEA_LEAVES
+                : Blocks.SPRUCE_LEAVES).defaultBlockState().setValue(LeavesBlock.PERSISTENT, true);
+        placeLeaf(x, y, z, leaves, pos);
+        if (((h >>> 34) & 3) == 0) {
+            placeLeaf(x, y + 1, z, leaves, pos);
+        }
     }
 
     /**
@@ -306,8 +491,9 @@ final class MountHuaChunkWriter {
                 double u = site.localU(wx + 0.5, wz + 0.5);
                 double v = site.localV(wx + 0.5, wz + 0.5);
                 Zone z = zoneAt(u, v, 14);
-                if (z == null || z.cave() || !MountHuaPlan.CORE.contains(z.id()) || z.id().equals("gate")) {
-                    continue;
+                if (z == null || z.cave() || !MountHuaPlan.CORE.contains(z.id()) || z.id().equals("gate")
+                        || shape.climbChanged(u, v)) {
+                    continue; // the climb face gets its own greenery (climbGreen)
                 }
                 int t = topAt(lx, lz);
                 long h = mix(wx, wz, 97);
@@ -437,11 +623,14 @@ final class MountHuaChunkWriter {
         }
         // Fill: rock from just below the old surface (buries grass/sand) up to the new top.
         int from = Math.min(o - 2, t - 4);
-        boolean masonry = retainingWall(wx, wz, t) || stairSupport(wx, wz, t);
+        // The training climb is natural rock, not a terrace buttress.
+        boolean climbFace = shape.climbChanged(site.localU(wx + 0.5, wz + 0.5), site.localV(wx + 0.5, wz + 0.5));
+        boolean masonry = (retainingWall(wx, wz, t) || stairSupport(wx, wz, t)) && !climbFace;
         for (int y = from; y <= t; y++) {
             pos.set(wx, y, wz);
             boolean exposed = y > lowest - 2 || t - y < 4;
-            chunk.setBlockState(pos, !exposed ? STONE : masonry ? masonry(wx, y, wz) : granite(lx, lz, wx, y, wz, t, drop), false);
+            chunk.setBlockState(pos, !exposed ? STONE : masonry ? masonry(wx, y, wz)
+                    : climbFace ? climbRock(wx, y, wz, t) : granite(lx, lz, wx, y, wz, t, drop), false);
         }
         skin(lx, lz, t, drop, w, pos);
     }
@@ -473,6 +662,22 @@ final class MountHuaChunkWriter {
         double v = site.localV(wx + 0.5, wz + 0.5);
         double[] tr = shape.trailAt(u, v);
         return tr != null && tr[0] <= 3.6 && site.worldY(shape.ground(u, v)) < t - 2;
+    }
+
+    /**
+     * The climb's lobes are pale, sunlit granite (ref: cream-grey rock with green cushions), not
+     * the dark cleft rock the narrow cuts between them would otherwise get: pale with grey
+     * patches, moss creeping down from each top, a cracked rim.
+     */
+    private BlockState climbRock(int x, int y, int z, int t) {
+        double n = noise.noise(x / 6.0, y / 5.0, z / 6.0);
+        if (t - y <= 1 && n > -0.2) {
+            return ModBlocks.HUA_GRANITE_MOSSY.get().defaultBlockState();
+        }
+        if (t - y <= 3 && n > 0.45) {
+            return ModBlocks.HUA_GRANITE_CRACKED.get().defaultBlockState();
+        }
+        return (n < -0.35 ? ModBlocks.HUA_GRANITE : ModBlocks.HUA_GRANITE_PALE).get().defaultBlockState();
     }
 
     private BlockState masonry(int x, int y, int z) {
@@ -552,6 +757,25 @@ final class MountHuaChunkWriter {
                     : GRASS;
             chunk.setBlockState(pos.set(wx, t, wz), ground, false);
             chunk.setBlockState(pos.set(wx, t - 1, wz), DIRT, false);
+            return;
+        }
+        MountHuaPlan.Ledge ledge = shape.climbLedgeAt(site.localU(wx + 0.5, wz + 0.5), site.localV(wx + 0.5, wz + 0.5));
+        if (ledge != null && t == ledgeY(ledge)) {
+            // Climb ledge top: moss and grass on granite (ref: green cushions on every lobe).
+            int r = (int) (mix(wx, wz, 137) & 15);
+            // Moss rather than grass: its sides stay green on the lip (no brown dirt faces), and
+            // the block under it stays rock.
+            BlockState ground = r < 12 ? Blocks.MOSS_BLOCK.defaultBlockState()
+                    : ModBlocks.HUA_GRANITE_MOSSY.get().defaultBlockState();
+            chunk.setBlockState(pos.set(wx, t, wz), ground, false);
+            return;
+        }
+        if (shape.climbChanged(site.localU(wx + 0.5, wz + 0.5), site.localV(wx + 0.5, wz + 0.5))) {
+            // Lips and shoulders between the ledges: moss on anything flat enough, rock elsewhere
+            // (no soil skin, whose dirt would show on the faces).
+            if (drop <= 2) {
+                chunk.setBlockState(pos.set(wx, t, wz), Blocks.MOSS_BLOCK.defaultBlockState(), false);
+            }
             return;
         }
         BlockState was = origTop[lz * 16 + lx];
@@ -959,7 +1183,7 @@ final class MountHuaChunkWriter {
                 double u = site.localU(wx + 0.5, wz + 0.5);
                 double v = site.localV(wx + 0.5, wz + 0.5);
                 Zone near = zoneAt(u, v, 7);
-                if (near != null && zoneAt(u, v, 2) == null && !near.cave()
+                if (near != null && zoneAt(u, v, 2) == null && !near.cave() && !shape.climbChanged(u, v)
                         && (near.id().equals("grove") || near.id().equals("upper") || near.id().equals("ancestors") || near.id().equals("elders") || near.id().equals("scriptures") || near.id().startsWith("pav"))) {
                     // A ring of plums just outside the terrace edge (the yard itself stays free);
                     // round the summit pavilions green foliage only (author 04.10: no plums up there).
