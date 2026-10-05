@@ -306,9 +306,9 @@ public final class SectWatch {
         return best;
     }
 
-    /** Стоит на страже: охрана и Ун Ам (днём у ворот). */
+    /** Стоит на страже: охрана на своей смене (или ждёт сменщика) и Ун Ам (днём у ворот). */
     public static boolean guards(SectDisciple d) {
-        return d.role() == SectRole.GUARD || "un_am".equals(d.memberKey());
+        return d.role() == SectRole.GUARD && SectLife.onWatch(d) || "un_am".equals(d.memberKey());
     }
 
     /** Игрок перед охранником в пределах угла. */

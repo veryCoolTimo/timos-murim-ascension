@@ -101,10 +101,33 @@ public final class SectLife {
             return null;
         }
         long time = npc.level().getDayTime();
-        SectSchedule.Task t = SectSchedule.task(m.get(), SectSchedule.at(time), SectSchedule.day(time));
+        SectSchedule.Task t = SectSchedule.task(m.get(), time);
         // Чужак у ворот: глава выходит навстречу и принимает без экзамена (автор 04.10).
         if (m.get().role() == SectRole.LEADER && npc.level() instanceof ServerLevel server && data(server).outsiderAtGate) {
             t = new SectSchedule.Task(SectSchedule.Kind.GREET, "sect_gate", 2.0D, 1.0D, 0.0D, -1.0D);
+        }
+        // Раненый после поединка сидит, где упал, и ждёт лекаря.
+        if (npc.wounded()) {
+            Vec3 at = npc.woundSpot();
+            return new Resolved(new SectSchedule.Task(SectSchedule.Kind.WAIT_TREAT, t.zone(), 0.0D, 0.0D, 0.0D, 0.0D), at, npc.getYRot());
+        }
+        // Лекарь за своим делом днём — к ближайшему раненому (кроме совета и ночи).
+        if ("un_gak".equals(m.get().key()) && (t.kind() == SectSchedule.Kind.BREW || t.kind() == SectSchedule.Kind.GRIND
+                || t.kind() == SectSchedule.Kind.HEAL_POST)) {
+            SectDisciple patient = patient(npc);
+            if (patient != null) {
+                Vec3 p = patient.woundSpot();
+                Vec3 dir = npc.position().subtract(p).multiply(1.0D, 0.0D, 1.0D);
+                dir = dir.lengthSqr() < 1.0E-4D ? new Vec3(1.0D, 0.0D, 0.0D) : dir.normalize();
+                Vec3 spot = p.add(dir.scale(1.1D));
+                float yaw = SectLayout.yawOf(p.x - spot.x, p.z - spot.z);
+                return new Resolved(new SectSchedule.Task(SectSchedule.Kind.TREAT, t.zone(), 0.0D, 0.0D, 0.0D, 0.0D, patient.memberKey()),
+                        spot, yaw);
+            }
+        }
+        // Смена поста: сменяемый ждёт сменщика на посту, пока они не поклонятся друг другу (или окно не выйдет).
+        if (m.get().role() == SectRole.GUARD && handoverPending(npc, m.get())) {
+            t = SectSchedule.post(m.get());
         }
         Vec3 guess = layout.at(t.zone(), t.du(), t.dv());
         if (guess == null) {
@@ -112,6 +135,76 @@ public final class SectLife {
         }
         Vec3 spot = npc.level().isLoaded(BlockPos.containing(guess)) ? stand(npc.level(), guess) : guess;
         return new Resolved(t, spot, layout.yaw(t.faceU(), t.faceV()));
+    }
+
+    // ------------------------------------------------------------------ члены секты за делом (автор 05.10)
+
+    /** Лекарь ищет раненых в этом радиусе. */
+    static final double PATIENT_RANGE = 64.0D;
+
+    /** Ближайший раненый ученик для лекаря, или null. */
+    public static SectDisciple patient(SectDisciple healer) {
+        SectDisciple best = null;
+        double bestD = Double.MAX_VALUE;
+        for (SectDisciple d : healer.level().getEntitiesOfClass(SectDisciple.class, healer.getBoundingBox().inflate(PATIENT_RANGE),
+                d -> d != healer && d.isAlive() && d.wounded() && d.spar() == SectDisciple.Spar.NONE)) {
+            double dist = d.distanceToSqr(healer);
+            if (dist < bestD) {
+                bestD = dist;
+                best = d;
+            }
+        }
+        return best;
+    }
+
+    /**
+     * Охранник только что сменился (началась чужая смена) и ещё ждёт сменщика: окно {@link SectSchedule#HANDOVER},
+     * и его не сменили в эту часть суток.
+     */
+    public static boolean handoverPending(SectDisciple npc, SectRoster m) {
+        long time = npc.level().getDayTime();
+        SectSchedule.Period p = SectSchedule.at(time);
+        if (SectSchedule.onShift(m, p)) {
+            return false;
+        }
+        boolean justEnded = m.nightWatch() ? p == SectSchedule.Period.FORMATION : p == SectSchedule.Period.NIGHT;
+        int since = SectSchedule.sincePeriodStart(time);
+        if (!justEnded || since >= SectSchedule.HANDOVER) {
+            return false;
+        }
+        return npc.relievedKey() != SectSchedule.day(time) * 8L + p.ordinal();
+    }
+
+    /** Охранник сейчас на страже: его смена или ждёт сменщика (не на смене — спит, ест, отдыхает и не смотрит). */
+    public static boolean onWatch(SectDisciple d) {
+        Optional<SectRoster> m = d.member();
+        if (m.isEmpty() || m.get().role() != SectRole.GUARD) {
+            return true;
+        }
+        return SectSchedule.onShift(m.get(), SectSchedule.at(d.level().getDayTime())) || handoverPending(d, m.get());
+    }
+
+    /**
+     * Носильщик донёс груз до кладовой: Хён Ён у стола (или управляющий) поворачивается к нему и кивает — принял;
+     * носильщик кланяется.
+     */
+    public static void delivered(SectDisciple porter) {
+        SectDisciple best = null;
+        double bestD = Double.MAX_VALUE;
+        for (SectDisciple d : porter.level().getEntitiesOfClass(SectDisciple.class, porter.getBoundingBox().inflate(12.0D),
+                d -> ("hyun_young".equals(d.memberKey()) || d.role() == SectRole.STEWARD) && d.free() && !d.dormant())) {
+            double dist = d.distanceToSqr(porter);
+            if (dist < bestD) {
+                bestD = dist;
+                best = d;
+            }
+        }
+        if (best != null) {
+            best.attend(porter, 50);
+            best.gesture(best.getRandom().nextInt(3) == 0 ? "point" : "nod");
+            porter.attend(best, 50);
+        }
+        porter.holdPose(io.github.verycooltimo.murim.entity.SectPose.BOW, 44);
     }
 
     static SectSiteData data(ServerLevel level) {
@@ -172,9 +265,11 @@ public final class SectLife {
             npc.setYBodyRot(r.yaw());
             npc.getNavigation().stop();
         }
-        boolean seated = kind == SectSchedule.Kind.EAT || kind == SectSchedule.Kind.MEDITATE || kind == SectSchedule.Kind.REST
-                || kind == SectSchedule.Kind.SLEEP;
-        npc.sit(seated);
+        npc.sit(kind.seated());
+        // Невидимый никому раненый заживает сам: лекарь не ходит к тем, кого никто не видит.
+        if (npc.wounded()) {
+            npc.setWounded(false);
+        }
         // Поза дела сразу на месте (анимации секты, entity/SectPose): издалека люди не стоят столбом.
         npc.setPose(io.github.verycooltimo.murim.entity.SectPose.forTask(kind, true,
                 io.github.verycooltimo.murim.entity.SectPose.carrier(npc)));
@@ -235,7 +330,7 @@ public final class SectLife {
      * списку начинает тот, у кого номер меньше, чтобы пара не стартовала дважды).
      */
     public static void tryPair(SectDisciple npc, String partnerKey) {
-        if (partnerKey.isEmpty() || npc.resting() || !npc.free()) {
+        if (partnerKey.isEmpty() || npc.resting() || !npc.free() || npc.wounded()) {
             return;
         }
         int mine = npc.member().map(SectRoster::index).orElse(-1);
@@ -245,7 +340,7 @@ public final class SectLife {
         }
         for (SectDisciple other : npc.level().getEntitiesOfClass(SectDisciple.class, npc.getBoundingBox().inflate(9.0D),
                 o -> o.memberKey().equals(partnerKey))) {
-            if (other.free() && !other.resting() && other.distanceTo(npc) < 7.0D && other.getNavigation().isDone()) {
+            if (other.free() && !other.resting() && !other.wounded() && other.distanceTo(npc) < 7.0D && other.getNavigation().isDone()) {
                 npc.sparWith(other, 10);
             }
             return;
@@ -253,6 +348,41 @@ public final class SectLife {
     }
 
     // ------------------------------------------------------------------ кровати
+
+    /**
+     * Печь лекаря на площадке алхимии, если автор её поставил: печь, коптильня, плавильня, костёр, котёл, варочная
+     * стойка (ближайшая). null — нет: лекарь варит на своём месте.
+     */
+    public static BlockPos findStove(SectDisciple npc, String zone) {
+        SectLayout layout = npc.layout();
+        double[] h = layout == null ? null : layout.half(zone);
+        Vec3 c = layout == null ? null : layout.at(zone, 0.0D, 0.0D);
+        if (h == null || c == null) {
+            return null;
+        }
+        Level level = npc.level();
+        double r = Math.max(h[0], h[1]);
+        BlockPos best = null;
+        double bestDist = Double.MAX_VALUE;
+        for (BlockPos p : BlockPos.betweenClosed(BlockPos.containing(c.x - r, c.y - 2, c.z - r),
+                BlockPos.containing(c.x + r, c.y + 6, c.z + r))) {
+            if (!level.isLoaded(p)) {
+                continue;
+            }
+            BlockState s = level.getBlockState(p);
+            boolean stove = s.is(Blocks.FURNACE) || s.is(Blocks.BLAST_FURNACE) || s.is(Blocks.SMOKER) || s.is(Blocks.CAMPFIRE)
+                    || s.is(Blocks.SOUL_CAMPFIRE) || s.is(Blocks.BREWING_STAND)
+                    || s.getBlock() instanceof net.minecraft.world.level.block.AbstractCauldronBlock;
+            if (stove && layout.inside(zone, Vec3.atCenterOf(p), 1.0D)) {
+                double d = p.distToCenterSqr(npc.position());
+                if (d < bestDist) {
+                    bestDist = d;
+                    best = p.immutable();
+                }
+            }
+        }
+        return best;
+    }
 
     /** Свободная кровать (изголовье) на площадке общежития; null — кроватей нет. */
     public static BlockPos findBed(SectDisciple npc, String zone) {
@@ -333,7 +463,7 @@ public final class SectLife {
                 continue;
             }
             long time = level.getDayTime();
-            SectSchedule.Task t = SectSchedule.task(m, SectSchedule.at(time), SectSchedule.day(time));
+            SectSchedule.Task t = SectSchedule.task(m, time);
             Vec3 guess = layout.at(t.zone(), t.du(), t.dv());
             if (guess == null) {
                 continue;
@@ -450,6 +580,8 @@ public final class SectLife {
             player.displayClientMessage(Component.translatable("murim.sect.morning.done").withStyle(ChatFormatting.GOLD), false);
             player.level().playSound(null, player.blockPosition(), SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS, 0.4F, 1.4F);
             SectService.contribute(player, SectService.MORNING_CONTRIBUTION);
+            // Журнал секты: строй отмечен (распорядок для игрока, автор 05.10).
+            SectAttendance.record(player, SectAttendance.Activity.FORMATION);
             for (SectDisciple d : player.level().getEntitiesOfClass(SectDisciple.class, player.getBoundingBox().inflate(20.0D),
                     d -> d.role() == SectRole.MENTOR)) {
                 d.gesture("nod");
@@ -473,10 +605,20 @@ public final class SectLife {
         return Math.abs(l[0]) <= halfU && l[1] <= front && l[1] >= back;
     }
 
-    /** Множитель освоения: в день утренней тренировки — {@link #MORNING_BONUS}. */
+    /** Прибавка освоения за усердие: столько дней подряд всё, чего ждала секта, сделано ({@link SectAttendance}). */
+    public static final double DILIGENCE_BONUS = 1.05D;
+
+    /**
+     * Множитель освоения: в день утренней тренировки — {@link #MORNING_BONUS}; при усердии
+     * ({@link SectAttendance#STREAK_DAYS} полных дней подряд) — ещё {@link #DILIGENCE_BONUS}.
+     */
     public static double masteryBonus(ServerPlayer player) {
         CompoundTag tag = player.getPersistentData().getCompound(MORNING_TAG);
-        return tag.getBoolean("done") && tag.getLong("day") == SectSchedule.day(player.level().getDayTime()) ? MORNING_BONUS : 1.0D;
+        double bonus = tag.getBoolean("done") && tag.getLong("day") == SectSchedule.day(player.level().getDayTime()) ? MORNING_BONUS : 1.0D;
+        if (player.getData(io.github.verycooltimo.murim.registry.ModAttachments.SECT_ATTENDANCE).streak() >= SectAttendance.STREAK_DAYS) {
+            bonus *= DILIGENCE_BONUS;
+        }
+        return bonus;
     }
 
     /**
@@ -516,7 +658,7 @@ public final class SectLife {
     private static void spawnRosterNow(ServerLevel level, SectLayout layout, SectSiteData data) {
         for (SectRoster m : SectRoster.ALL) {
             long time = level.getDayTime();
-            SectSchedule.Task t = SectSchedule.task(m, SectSchedule.at(time), SectSchedule.day(time));
+            SectSchedule.Task t = SectSchedule.task(m, time);
             Vec3 guess = layout.at(t.zone(), t.du(), t.dv());
             if (guess == null || !level.isPositionEntityTicking(BlockPos.containing(guess))) {
                 continue;

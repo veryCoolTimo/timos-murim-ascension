@@ -262,6 +262,18 @@ public final class ModAttachments {
                             .copyOnDeath()
                             .build());
 
+    /**
+     * Журнал секты (распорядок для игрока, автор 05.10): что ждали и что сделано сегодня и в прошлый день, усердие
+     * подряд, наряд. Новое поле — старые сохранения читаются с пустым журналом. Сохраняется, переживает смерть;
+     * на клиент не синхронизируется (читается в разговоре с наставником).
+     */
+    public static final Supplier<AttachmentType<io.github.verycooltimo.murim.sect.SectAttendance.Log>> SECT_ATTENDANCE =
+            ATTACHMENT_TYPES.register("sect_attendance",
+                    () -> AttachmentType.builder(() -> io.github.verycooltimo.murim.sect.SectAttendance.Log.NONE)
+                            .serialize(io.github.verycooltimo.murim.sect.SectAttendance.Log.CODEC)
+                            .copyOnDeath()
+                            .build());
+
     /** Идущий разговор с NPC. Не сохраняется: разговор живёт, пока открыт экран. */
     public static final Supplier<AttachmentType<io.github.verycooltimo.murim.sect.DialogueService.Session>> DIALOGUE =
             ATTACHMENT_TYPES.register("dialogue",

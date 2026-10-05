@@ -45,7 +45,17 @@ public enum SectPose {
     /** Страж: меч в ножнах у левого бедра, левая рука на рукояти (готов обнажить), медленно осматривается. */
     GUARD("guard", "sect_guard", true, false, List.of("scabbard")),
     /** Разговор: жесты рук (ноги — покой/шаг). */
-    TALK("talk", "sect_talk", true, true, List.of());
+    TALK("talk", "sect_talk", true, true, List.of()),
+    /** Чтение: книга у груди (ванильная книга в руке), голова опущена, перелистывает (Хён Сан, Зал писаний). */
+    READ("read", "sect_read", true, true, List.of()),
+    /** Счёт у стола казны: книга учёта под левой рукой, правая щёлкает счётами, поднимает глаза и кивает (Хён Ён). */
+    COUNT("count", "sect_count", true, true, List.of()),
+    /** Сидя растирает травы: ступка (миска) в левой руке, пестик (палка) в правой ходит по кругу (Ун Гак). */
+    GRIND("grind", "sect_grind", true, false, List.of()),
+    /** Варит у печи: мешает в котле черпаком, левая рука на поясе (Ун Гак). */
+    BREW("brew", "sect_brew", true, true, List.of()),
+    /** Лечит: на правом колене над сидящим раненым, руки вперёд — давит, щупает пульс (Ун Гак). */
+    TREAT("treat", "sect_treat", true, false, List.of());
 
     private final String id;
     private final ResourceLocation clip;
@@ -84,12 +94,13 @@ public enum SectPose {
 
     /** Сидячая поза: важнее лотоса ({@code sit}), который ставит распорядок. */
     public boolean seated() {
-        return this == EAT || this == SLEEP || this == MEDITATE || this == SIT;
+        return this == EAT || this == SLEEP || this == MEDITATE || this == SIT || this == GRIND;
     }
 
-    /** Меч в руке спрятан: руки заняты (чашка, метла, вёдра), меч в ножнах или на столбах руки для равновесия. */
+    /** Меч в руке спрятан: руки заняты (чашка, метла, вёдра, книга, ступка), меч в ножнах или на столбах руки для равновесия. */
     public boolean hidesWeapon() {
-        return !props.isEmpty() || this == BOW || this == TALK || this == POLES || this == POLE_STEP || seated();
+        return !props.isEmpty() || this == BOW || this == TALK || this == POLES || this == POLE_STEP || seated()
+                || this == READ || this == COUNT || this == BREW || this == TREAT;
     }
 
     public static SectPose of(String id) {
@@ -134,6 +145,15 @@ public enum SectPose {
             case CARRY, SERVE -> CARRY;
             case SWEEP -> SWEEP;
             case COOK, TEND -> TALK;
+            // Члены секты за делом (автор 05.10).
+            case COUNCIL, WAIT_TREAT -> SIT;
+            case REPORT, LECTURE -> TALK;
+            case RECEIVE, HEAL_POST, REVERE -> NONE;
+            case COUNT -> COUNT;
+            case READ -> READ;
+            case GRIND -> GRIND;
+            case BREW -> BREW;
+            case TREAT -> TREAT;
         };
     }
 }

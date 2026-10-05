@@ -30,6 +30,10 @@
       "gesture": "nod",
       "options": [
         {
+          "text": "dialogue.murim.un_gak.opt.heal",
+          "next": "heal"
+        },
+        {
           "text": "dialogue.murim.un_gak.opt.ask",
           "next": "answer"
         },
@@ -44,6 +48,10 @@
       ],
       "gesture": "nod",
       "options": [
+        {
+          "text": "dialogue.murim.un_gak.opt.heal",
+          "next": "heal"
+        },
         {
           "text": "dialogue.murim.un_gak.opt.ask",
           "next": "answer"
@@ -61,6 +69,10 @@
       "gesture": "nod",
       "options": [
         {
+          "text": "dialogue.murim.un_gak.opt.heal",
+          "next": "heal"
+        },
+        {
           "text": "dialogue.murim.un_gak.opt.ask",
           "next": "answer"
         },
@@ -73,6 +85,24 @@
       "line": "dialogue.murim.un_gak.answer",
       "gesture": "explain",
       "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "heal": {
+      "line": "dialogue.murim.un_gak.heal",
+      "gesture": "nod",
+      "enter": [
+        {
+          "type": "heal"
+        }
+      ],
+      "options": [
+        {
+          "text": "dialogue.murim.un_gak.opt.ask",
+          "next": "answer"
+        },
         {
           "text": "dialogue.murim.opt.leave"
         }

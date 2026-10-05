@@ -5,6 +5,15 @@
     {
       "when": [
         {
+          "member": true,
+          "chores": true
+        }
+      ],
+      "node": "chores"
+    },
+    {
+      "when": [
+        {
           "period": "night"
         }
       ],
@@ -43,6 +52,39 @@
     "night": {
       "line": "dialogue.murim.cook.night",
       "gesture": "shake",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "chores": {
+      "line": "dialogue.murim.cook.chores",
+      "gesture": "point",
+      "options": [
+        {
+          "text": "dialogue.murim.cook.opt.water",
+          "when": [
+            {
+              "has_item": "minecraft:water_bucket*1"
+            }
+          ],
+          "actions": [
+            {
+              "type": "chore",
+              "value": "minecraft:water_bucket*1"
+            }
+          ],
+          "next": "chores_done"
+        },
+        {
+          "text": "dialogue.murim.cook.opt.later"
+        }
+      ]
+    },
+    "chores_done": {
+      "line": "dialogue.murim.cook.chores_done",
+      "gesture": "nod",
       "options": [
         {
           "text": "dialogue.murim.opt.leave"

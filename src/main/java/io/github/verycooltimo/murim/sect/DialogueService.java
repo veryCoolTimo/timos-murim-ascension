@@ -120,7 +120,7 @@ public final class DialogueService {
         SectDisciple best = null;
         double bestD = INTERCEPT_RANGE;
         for (SectDisciple d : player.level().getEntitiesOfClass(SectDisciple.class, player.getBoundingBox().inflate(INTERCEPT_RANGE),
-                d -> d != target && d.isAlive() && d.free() && (d.role().intercepts() || "un_am".equals(d.memberKey())))) {
+                d -> d != target && d.isAlive() && d.free() && !d.isSleeping() && SectLife.onWatch(d) && (d.role().intercepts() || "un_am".equals(d.memberKey())))) {
             double dist = d.distanceTo(player);
             if (dist < bestD) {
                 best = d;
@@ -315,6 +315,23 @@ public final class DialogueService {
         if (c.minContribution() >= 0 && sect.contribution() < c.minContribution()) {
             return false;
         }
+        if (c.attended().isPresent() || c.missed().isPresent() || c.chores().isPresent() || c.logged().isPresent()) {
+            // Журнал секты (распорядок для игрока, автор 05.10).
+            SectAttendance.Log log = SectAttendance.current(player);
+            SectAttendance.Day today = log.today();
+            if (c.attended().isPresent() && !SectAttendance.Activity.of(c.attended().get()).map(today::did).orElse(false)) {
+                return false;
+            }
+            if (c.missed().isPresent() && !SectAttendance.Activity.of(c.missed().get()).map(today::missed).orElse(false)) {
+                return false;
+            }
+            if (c.chores().isPresent() && log.chores() != c.chores().get()) {
+                return false;
+            }
+            if (c.logged().isPresent() && (today.present() || log.last().present()) != c.logged().get()) {
+                return false;
+            }
+        }
         if (c.hasItem().isPresent()) {
             SectService.ItemNeed need = SectService.ItemNeed.parse(c.hasItem().get());
             return need != null && need.count(player) >= need.count();
@@ -332,6 +349,10 @@ public final class DialogueService {
                 out[i] = player.getName();
             } else if ("standing".equals(a)) {
                 out[i] = Component.translatable(SectService.standing(player).nameKey());
+            } else if ("sect_log".equals(a)) {
+                out[i] = SectAttendance.line(player);
+            } else if ("sect_verdict".equals(a)) {
+                out[i] = SectAttendance.verdict(player);
             } else if ("contribution".equals(a)) {
                 out[i] = player.getData(ModAttachments.SECT).contribution();
             } else if ("rank".equals(a)) {
@@ -367,6 +388,32 @@ public final class DialogueService {
                 }
             }
             case "donate" -> SectService.donate(player, v);
+            case "chore" -> {
+                // Наряд на кухню: отдать повару (ведро воды) — ведро возвращается пустым, наряд снят.
+                SectService.ItemNeed need = SectService.ItemNeed.parse(v.isEmpty() ? SectAttendance.CHORE_ITEM : v);
+                if (need != null && need.count(player) >= need.count() && SectAttendance.current(player).chores()) {
+                    need.take(player);
+                    if (need.item() == net.minecraft.world.item.Items.WATER_BUCKET) {
+                        net.minecraft.world.item.ItemStack bucket = new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.BUCKET);
+                        if (!player.getInventory().add(bucket)) {
+                            player.drop(bucket, false);
+                        }
+                    }
+                    SectAttendance.record(player, SectAttendance.Activity.CHORE);
+                }
+            }
+            case "heal" -> {
+                // Лекарь Ун Гак лечит раны после поединков (план §1.1: «лечит травмы с тренировок»).
+                if (player.getHealth() < player.getMaxHealth()) {
+                    player.heal(player.getMaxHealth());
+                    player.level().playSound(null, player.blockPosition(), net.minecraft.sounds.SoundEvents.BREWING_STAND_BREW,
+                            net.minecraft.sounds.SoundSource.NEUTRAL, 0.6F, 1.3F);
+                    player.displayClientMessage(Component.translatable("murim.sect.healed", npc.getName())
+                            .withStyle(net.minecraft.ChatFormatting.GREEN), true);
+                }
+                npc.holdPose(io.github.verycooltimo.murim.entity.SectPose.TREAT, 60);
+            }
+            case "record" -> SectAttendance.record(player, v);
             case "clear_flag" -> player.setData(ModAttachments.SECT, player.getData(ModAttachments.SECT).without(v));
             case "give_book" -> SectService.giveBook(player, ResourceLocation.parse(v));
             case "join_sect" -> SectService.join(player);

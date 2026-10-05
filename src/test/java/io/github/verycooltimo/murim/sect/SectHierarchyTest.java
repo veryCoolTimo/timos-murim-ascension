@@ -135,7 +135,7 @@ class SectHierarchyTest {
             for (Period p : Period.values()) {
                 Task t = SectSchedule.task(m, p, 2);
                 assertNotNull(zone(t.zone()), m.key() + " " + p + " → " + t.zone());
-                if (m.role() == SectRole.GUARD) {
+                if (m.role() == SectRole.GUARD && SectSchedule.onShift(m, p)) {
                     assertEquals(Kind.GUARD, t.kind(), m.key() + " ушёл с поста в " + p);
                 }
                 if (t.kind() == Kind.CARRY) {

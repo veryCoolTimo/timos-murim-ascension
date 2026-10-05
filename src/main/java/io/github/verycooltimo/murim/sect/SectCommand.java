@@ -40,6 +40,14 @@ public final class SectCommand {
                                     + " flags=" + s.flags().stream().sorted().toList()), false);
                             return 1;
                         }))
+                        .then(Commands.literal("log").executes(c -> {
+                            // Журнал секты: что ждали и что сделано сегодня, итог словами наставника.
+                            ServerPlayer p = c.getSource().getPlayerOrException();
+                            c.getSource().sendSuccess(() -> SectAttendance.line(p), false);
+                            c.getSource().sendSuccess(() -> SectAttendance.verdict(p), false);
+                            c.getSource().sendSuccess(() -> Component.literal(SectAttendance.report(p)), false);
+                            return 1;
+                        }))
                         .then(Commands.literal("reset").executes(c -> {
                             ServerPlayer p = c.getSource().getPlayerOrException();
                             p.setData(ModAttachments.SECT, SectState.NONE);

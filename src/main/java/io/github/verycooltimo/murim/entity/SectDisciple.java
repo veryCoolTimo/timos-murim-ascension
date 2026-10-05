@@ -397,6 +397,10 @@ public class SectDisciple extends Bandit implements Casters.Caster {
             other.endSpar(!partnerWon);
         }
         restUntil = level().getGameTime() + 160 + getRandom().nextInt(120);
+        // Проигравший в поединке учеников ранен: сядет у края площадки и дождётся лекаря Ун Гака (автор 05.10).
+        if (partnerWon && npcBout && member().isPresent()) {
+            setWounded(true);
+        }
     }
 
     private LivingEntity partnerEntity() {
@@ -1105,7 +1109,7 @@ public class SectDisciple extends Bandit implements Casters.Caster {
         if (dormant && !wasDormant) {
             getNavigation().stop();
         }
-        if (spar == Spar.NONE && !defending && getHealth() < getMaxHealth() && (tickCount + getId()) % 40 == 0) {
+        if (spar == Spar.NONE && !defending && !wounded() && getHealth() < getMaxHealth() && (tickCount + getId()) % 40 == 0) {
             heal(1.0F);
         }
         io.github.verycooltimo.murim.sect.SectLife.tickNpc(this);
@@ -1418,5 +1422,113 @@ public class SectDisciple extends Bandit implements Casters.Caster {
     /** Список, чтобы тесты и стенд не трогали внутренности. */
     public static List<ResourceLocation> techniques() {
         return List.of(SIX, SLASH, RUSH);
+    }
+
+    // ------------------------------------------------------------------ члены секты за делом (автор 05.10)
+
+    /** Разовая поза (поклон, лечение) держится до этого тика: распорядок её не перебивает, человек стоит на месте. */
+    private long poseHoldUntil = Long.MIN_VALUE;
+
+    /** Поставить позу и держать её {@code ticks} тиков (поклон старшему, передача поста). Только сервер. */
+    public void holdPose(SectPose pose, int ticks) {
+        playPose(pose);
+        poseHoldUntil = level().getGameTime() + ticks;
+        getNavigation().stop();
+    }
+
+    /** Разовая поза ещё держится. */
+    public boolean poseHeld() {
+        return level().getGameTime() < poseHoldUntil;
+    }
+
+    /** Ранен после поединка (проигравший ученик): сидит у края площадки и ждёт лекаря; сам не заживает. */
+    private boolean wounded;
+    private long woundedUntil;
+    private Vec3 woundSpot;
+    /** Сколько ждёт лекаря, тиков; потом раны заживают сами (лекаря нет, ночь). */
+    public static final int WOUND_TICKS = 2400;
+
+    public boolean wounded() {
+        if (wounded && level().getGameTime() > woundedUntil) {
+            wounded = false;
+        }
+        return wounded;
+    }
+
+    /** Место, где раненый ждёт лекаря. */
+    public Vec3 woundSpot() {
+        return woundSpot == null ? position() : woundSpot;
+    }
+
+    public void setWounded(boolean wounded) {
+        this.wounded = wounded;
+        if (wounded) {
+            woundedUntil = level().getGameTime() + WOUND_TICKS;
+            woundSpot = position();
+        }
+    }
+
+    /** Лекарь лечит: здоровье назад; вылечен — встаёт. */
+    public void treatBy(SectDisciple healer, float amount) {
+        heal(amount);
+        if (getHealth() >= getMaxHealth() - 0.01F) {
+            setWounded(false);
+        }
+    }
+
+    /** Носильщик несёт груз (между тиками цели распорядка; стенд ставит груз сразу). */
+    private boolean carrying;
+
+    public boolean carrying() {
+        return carrying;
+    }
+
+    public void setCarrying(boolean carrying) {
+        this.carrying = carrying;
+    }
+
+    /** Охранника сменили на посту в эту часть суток (день × 8 + часть; сменщик пришёл, поклонились) — может уходить. */
+    private long relievedKey = Long.MIN_VALUE;
+
+    public long relievedKey() {
+        return relievedKey;
+    }
+
+    public void relieve(long key) {
+        relievedKey = key;
+    }
+
+    /** Повернуться к тому, кто подошёл (носильщик с грузом, сменщик), на {@code ticks} тиков. */
+    private LivingEntity attendTo;
+    private long attendUntil;
+
+    public void attend(LivingEntity who, int ticks) {
+        attendTo = who;
+        attendUntil = level().getGameTime() + ticks;
+    }
+
+    /** К кому повернулся сейчас (null — ни к кому). */
+    public LivingEntity attending() {
+        return attendTo != null && attendTo.isAlive() && level().getGameTime() < attendUntil ? attendTo : null;
+    }
+
+    /** Поклоны старшим: последний поклон и кому кланялся (по id, тик) — не чаще раза в минуту одному и тому же. */
+    private long lastBow = Long.MIN_VALUE;
+    private final Map<Integer, Long> bowedTo = new HashMap<>();
+
+    /** Можно ли сейчас поклониться {@code senior}: свой перерыв и минута с прошлого поклона ему. */
+    public boolean mayBowTo(SectDisciple senior) {
+        long now = level().getGameTime();
+        Long last = bowedTo.get(senior.getId());
+        return now - lastBow > 100 && (last == null || now - last > 1200);
+    }
+
+    public void bowedTo(SectDisciple senior) {
+        long now = level().getGameTime();
+        lastBow = now;
+        bowedTo.put(senior.getId(), now);
+        if (bowedTo.size() > 32) {
+            bowedTo.entrySet().removeIf(e -> now - e.getValue() > 1200);
+        }
     }
 }

@@ -33,6 +33,38 @@
       "node": "first"
     },
     {
+      "when": [
+        {
+          "member": true,
+          "flag": "met_mentor",
+          "chores": true
+        }
+      ],
+      "node": "chores"
+    },
+    {
+      "when": [
+        {
+          "member": true,
+          "flag": "met_mentor",
+          "missed": "formation",
+          "period": "breakfast|training|dinner|evening"
+        }
+      ],
+      "node": "scold"
+    },
+    {
+      "when": [
+        {
+          "member": true,
+          "flag": "met_mentor",
+          "logged": true,
+          "period": "dinner|evening"
+        }
+      ],
+      "node": "summary"
+    },
+    {
       "node": "again"
     }
   ],
@@ -110,12 +142,17 @@
           "next": "lessons"
         },
         {
-          "text": "dialogue.murim.mentor.opt.problem",
-          "next": "problems"
+          "text": "dialogue.murim.mentor.opt.day",
+          "when": [
+            {
+              "member": true
+            }
+          ],
+          "next": "summary"
         },
         {
-          "text": "dialogue.murim.mentor.opt.what_teach",
-          "next": "teach"
+          "text": "dialogue.murim.mentor.opt.problem",
+          "next": "problems"
         },
         {
           "text": "dialogue.murim.opt.leave"
@@ -535,6 +572,127 @@
       "line": "dialogue.murim.mentor.fall_in",
       "gesture": "explain",
       "options": []
+    },
+    "summary": {
+      "line": "dialogue.murim.mentor.summary",
+      "args": [
+        "sect_log",
+        "sect_verdict"
+      ],
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.mentor.opt.why",
+          "next": "why"
+        },
+        {
+          "text": "dialogue.murim.mentor.opt.chores",
+          "when": [
+            {
+              "chores": true
+            }
+          ],
+          "next": "chores"
+        },
+        {
+          "text": "dialogue.murim.mentor.opt.lesson",
+          "next": "lessons"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "why": {
+      "line": "dialogue.murim.mentor.why",
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.mentor.opt.why2",
+          "next": "why2"
+        },
+        {
+          "text": "dialogue.murim.mentor.opt.bow_leave",
+          "actions": [
+            {
+              "type": "bow"
+            }
+          ],
+          "next": "farewell"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "why2": {
+      "line": "dialogue.murim.mentor.why2",
+      "gesture": "point",
+      "options": [
+        {
+          "text": "dialogue.murim.mentor.opt.bow_leave",
+          "actions": [
+            {
+              "type": "bow"
+            }
+          ],
+          "next": "farewell"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "scold": {
+      "line": "dialogue.murim.mentor.scold",
+      "args": [
+        "sect_log"
+      ],
+      "gesture": "shake",
+      "options": [
+        {
+          "text": "dialogue.murim.mentor.opt.overslept",
+          "actions": [
+            {
+              "type": "bow"
+            }
+          ],
+          "next": "scold_ok"
+        },
+        {
+          "text": "dialogue.murim.mentor.opt.self_train",
+          "next": "why"
+        },
+        {
+          "text": "dialogue.murim.mentor.opt.lesson",
+          "next": "lessons"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "scold_ok": {
+      "line": "dialogue.murim.mentor.scold_ok",
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "chores": {
+      "line": "dialogue.murim.mentor.chores",
+      "gesture": "point",
+      "options": [
+        {
+          "text": "dialogue.murim.mentor.opt.why",
+          "next": "why"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
     }
   }
 }

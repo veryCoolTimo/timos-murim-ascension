@@ -2,15 +2,21 @@ package io.github.verycooltimo.murim.entity;
 
 import io.github.verycooltimo.murim.sect.SectLayout;
 import io.github.verycooltimo.murim.sect.SectLife;
+import io.github.verycooltimo.murim.sect.SectRole;
+import io.github.verycooltimo.murim.sect.SectRoster;
 import io.github.verycooltimo.murim.sect.SectSchedule;
 import io.github.verycooltimo.murim.sect.SectSchedule.Kind;
 import net.minecraft.core.BlockPos;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.EnumSet;
+import java.util.Optional;
 
 /**
  * Распорядок дня у NPC секты (docs/design/23-mount-hua-sect.md §4.2): «время → место → действие».
@@ -43,10 +49,19 @@ public final class ScheduleGoal extends Goal {
     private int drillClock;
     /** Последний {@link #arrive} — на месте дела (поза дела), иначе в пути (шаг). */
     private boolean onSpot;
-    /** Разовая поза (поклон) доигрывается: столько тиков поза не меняется. */
-    private int poseHold;
     /** Глава у ворот уже поклонился этому игроку (id), пока тот рядом. */
     private int greeted = -1;
+    /** Часы реплик и жестов (совет, доклад, урок, поклон предкам). */
+    private int talkClock;
+    /** Докладчик уже поклонился главе на этом докладе. */
+    private boolean reported;
+    /** Печь лекаря (если автор её поставил) и место перед ней. */
+    private BlockPos stove;
+    private Vec3 stoveSpot;
+    private float stoveYaw;
+    private int stoveSearch;
+    /** Сменщик уже принял пост в эту часть суток (день × 8 + часть). */
+    private long handedOver = Long.MIN_VALUE;
 
     public ScheduleGoal(SectDisciple npc) {
         this.npc = npc;
@@ -90,8 +105,79 @@ public final class ScheduleGoal extends Goal {
             return;
         }
         Kind kind = current.task().kind();
+        // Разовая поза (поклон старшему, передача поста, носильщик отдал груз): стоит на месте, пока она идёт.
+        if (npc.poseHeld()) {
+            npc.getNavigation().stop();
+            LivingEntity to = npc.attending();
+            if (to != null) {
+                npc.faceEntity(to, 20.0F);
+                npc.getLookControl().setLookAt(to, 30.0F, 30.0F);
+            }
+            return;
+        }
+        // Повернулся к подошедшему (носильщик, докладчик, сменщик, лекарь): стоит, смотрит, говорит.
+        LivingEntity to = npc.attending();
+        if (to != null) {
+            npc.getNavigation().stop();
+            if (!kind.seated()) {
+                npc.faceEntity(to, 20.0F);
+                npc.setPose(SectPose.TALK);
+            }
+            npc.getLookControl().setLookAt(to, 30.0F, 30.0F);
+            return;
+        }
+        if (!onSpot && greetSenior(kind)) {
+            return;
+        }
         tickPose(kind);
         switch (kind) {
+            case COUNCIL -> council();
+            case REPORT -> report();
+            case RECEIVE -> {
+                if (arrive(current.spot(), 0.6D)) {
+                    npc.faceYaw(current.yaw(), 15.0F);
+                    lookAtNearPlayer(6.0D);
+                }
+            }
+            case COUNT, READ -> {
+                if (arrive(current.spot(), 0.6D)) {
+                    npc.faceYaw(current.yaw(), 20.0F);
+                    if (kind == Kind.COUNT && npc.getRandom().nextInt(400) == 0) {
+                        npc.gesture("nod");
+                    }
+                }
+            }
+            case LECTURE -> {
+                if (arrive(current.spot(), 0.6D)) {
+                    npc.faceYaw(current.yaw(), 20.0F);
+                    if (--talkClock <= 0) {
+                        talkClock = 45 + npc.getRandom().nextInt(40);
+                        npc.gesture(npc.getRandom().nextInt(3) == 0 ? "point" : "explain");
+                    }
+                }
+            }
+            case GRIND -> {
+                if (arrive(current.spot(), 0.6D)) {
+                    npc.faceYaw(current.yaw(), 30.0F);
+                    npc.sit(true);
+                }
+            }
+            case BREW -> brew();
+            case TREAT -> treat();
+            case WAIT_TREAT -> {
+                if (arrive(current.spot(), 0.5D)) {
+                    npc.sit(true);
+                }
+            }
+            case REVERE -> {
+                if (arrive(current.spot(), 0.6D)) {
+                    npc.faceYaw(current.yaw(), 15.0F);
+                    if (--talkClock <= 0) {
+                        talkClock = 300 + npc.getRandom().nextInt(200);
+                        npc.holdPose(SectPose.BOW, 44);
+                    }
+                }
+            }
             case FORM_ROW -> formRow();
             case INSPECT -> inspect();
             case SPAR -> {
@@ -130,15 +216,22 @@ public final class ScheduleGoal extends Goal {
                         greeted = -1;
                     } else if (near.getId() != greeted) {
                         greeted = near.getId();
-                        npc.playPose(SectPose.BOW);
-                        poseHold = 44;
+                        npc.holdPose(SectPose.BOW, 44);
                     }
                 }
             }
             default -> {
-                // WATCH, GUARD, GREET: стоять на месте лицом куда надо, глазами — на ближнего игрока.
-                if (arrive(current.spot(), kind == Kind.GREET ? 1.0D : 0.8D)) {
+                // WATCH, GUARD, HEAL_POST: стоять на месте лицом куда надо, глазами — на ближнего игрока.
+                if (kind == Kind.GUARD && npc.role() == SectRole.GUARD && handover()) {
+                    return;
+                }
+                if (arrive(current.spot(), 0.8D)) {
                     npc.faceYaw(current.yaw(), 15.0F);
+                    // Старшие у площадки поединков смотрят и поправляют: показывают рукой, кивают.
+                    if (kind == Kind.WATCH && npc.role() != SectRole.GUARD && --talkClock <= 0) {
+                        talkClock = 80 + npc.getRandom().nextInt(120);
+                        npc.gesture(npc.getRandom().nextInt(3) == 0 ? "point" : "nod");
+                    }
                     Player p = npc.level().getNearestPlayer(npc, 8.0D);
                     // Ночная стража не чует затылком: голова поворачивается к игроку, только если он перед ней или
                     // вплотную — иначе охрана «видела бы» любого в 8 блоках (SectWatch: ночью — только перед собой).
@@ -162,8 +255,7 @@ public final class ScheduleGoal extends Goal {
      * ДО дела этого тика: дело читает {@link #onSpot} прошлого тика, разница в тик не видна.
      */
     private void tickPose(Kind kind) {
-        if (poseHold > 0) {
-            poseHold--;
+        if (npc.poseHeld()) {
             return;
         }
         if (kind == Kind.SLEEP && npc.isSleeping()) {
@@ -195,17 +287,23 @@ public final class ScheduleGoal extends Goal {
             bedSearch = 0;
             onSpot = false;
             Kind k = next.task().kind();
-            boolean seated = k == Kind.EAT || k == Kind.MEDITATE || k == Kind.REST || k == Kind.SLEEP;
-            if (!seated) {
+            if (!k.seated()) {
                 npc.sit(false);
             }
             if (k != Kind.SLEEP && npc.isSleeping()) {
                 npc.stopSleeping();
             }
             npc.workPose(null);
-            loaded = false;
+            if (k != Kind.CARRY) {
+                npc.setCarrying(false);
+            }
             pickup = null;
             legTicks = 0;
+            reported = false;
+            talkClock = 0;
+            stove = null;
+            stoveSpot = null;
+            stoveSearch = 0;
             outfit(k);
         }
         // Ночная стража — с фонарём в левой руке.
@@ -217,23 +315,41 @@ public final class ScheduleGoal extends Goal {
 
     // ------------------------------------------------------------------ слуги (С3, часть 2)
 
-    /** Несёт ли сейчас груз (носильщик, водонос) и где его берёт. */
-    private boolean loaded;
+    /** Где носильщик берёт груз (несёт ли — {@link SectDisciple#carrying()}). */
     private Vec3 pickup;
     private int legTicks;
 
-    /** Реквизит по делу: метла, мотыга, миска, книга учёта; у остальных руки пустые. */
+    /**
+     * Реквизит по делу (ванильные предметы в руках): слуги — метла, мотыга, миска, книга учёта; Хён Ён — книга учёта
+     * в левой руке; Хён Сан — книга; Ун Гак — ступка (миска) и пестик (палка), черпак у печи, бинт (бумага) у раненого.
+     */
     private void outfit(Kind k) {
-        if (!npc.role().lay()) {
+        if (npc.role().lay()) {
+            npc.hold(switch (k) {
+                // Метла: ванильная кисть — ближайший предмет-«щётка» (своей метлы в моде нет).
+                case SWEEP -> Items.BRUSH;
+                case TEND -> Items.WOODEN_HOE;
+                case SERVE -> Items.BOWL;
+                case WORK -> npc.role() == SectRole.STEWARD ? Items.WRITABLE_BOOK : null;
+                case CARRY -> npc.carrying() ? load() : empty();
+                default -> null;
+            });
             return;
         }
+        if (npc.role() == SectRole.GUARD) {
+            return;
+        }
+        boolean treasurer = "hyun_young".equals(npc.memberKey());
         npc.hold(switch (k) {
-            // Метла: ванильная кисть — ближайший предмет-«щётка» (своей метлы в моде нет).
-            case SWEEP -> Items.BRUSH;
-            case TEND -> Items.WOODEN_HOE;
-            case SERVE -> Items.BOWL;
-            case WORK -> npc.role() == io.github.verycooltimo.murim.sect.SectRole.STEWARD ? Items.WRITABLE_BOOK : null;
-            case CARRY -> empty();
+            case READ -> Items.BOOK;
+            case GRIND, BREW -> Items.STICK;
+            case TREAT -> Items.PAPER;
+            default -> null;
+        });
+        npc.holdOff(switch (k) {
+            case COUNT -> Items.WRITABLE_BOOK;
+            case REPORT -> treasurer ? Items.WRITABLE_BOOK : null;
+            case GRIND -> Items.BOWL;
             default -> null;
         });
     }
@@ -272,17 +388,250 @@ public final class ScheduleGoal extends Goal {
             }
             pickup = npc.level().isLoaded(BlockPos.containing(guess)) ? SectLife.stand(npc.level(), guess) : guess;
         }
+        boolean loaded = npc.carrying();
         Vec3 target = loaded ? current.spot() : pickup;
         // Между площадками пути может не быть, пока автор не поставил лестницы: застрявший носильщик не стоит
         // столбом перед игроком, а через 20 с поворачивает обратно (как будто отдал груз на полпути).
         boolean giveUp = ++legTicks > 400;
-        if (arrive(target, loaded ? 0.55D : 0.7D) || giveUp) {
+        boolean there = arrive(target, loaded ? 0.55D : 0.7D);
+        if (there || giveUp) {
             legTicks = 0;
+            boolean handOver = there && loaded && npc.role() == SectRole.PORTER;
             loaded = !loaded;
+            npc.setCarrying(loaded);
             npc.hold(loaded ? load() : empty());
             npc.workPose(loaded ? "carry" : null);
             pause = 40 + npc.getRandom().nextInt(40);
+            // Носильщик донёс груз до кладовой: Хён Ён (или управляющий) принимает — кивает, носильщик кланяется.
+            if (handOver) {
+                SectLife.delivered(npc);
+            }
         }
+    }
+
+    // ------------------------------------------------------------------ члены секты за делом (автор 05.10)
+
+    /** Человек секты по ключу рядом. */
+    private SectDisciple find(String key, double range) {
+        if (key == null || key.isEmpty()) {
+            return null;
+        }
+        for (SectDisciple d : npc.level().getEntitiesOfClass(SectDisciple.class, npc.getBoundingBox().inflate(range),
+                d -> d != npc && d.isAlive() && key.equals(d.memberKey()))) {
+            return d;
+        }
+        return null;
+    }
+
+    private void lookAtNearPlayer(double range) {
+        Player p = npc.level().getNearestPlayer(npc, range);
+        if (p != null) {
+            npc.getLookControl().setLookAt(p, 20.0F, 20.0F);
+        }
+    }
+
+    /**
+     * Совет старейшин: сидят на своих местах; говорят по очереди (глава, Хён Ён, Хён Сан, Ун Гак, Ун Ам — по 6 с),
+     * говорящий объясняет и показывает, остальные смотрят на него, кивают; Хён Ён чаще качает головой (скупой, гл. 64).
+     */
+    private void council() {
+        if (!arrive(current.spot(), 0.6D)) {
+            return;
+        }
+        npc.faceYaw(current.yaw(), 30.0F);
+        npc.sit(true);
+        long now = npc.level().getGameTime();
+        String speaker = SectSchedule.COUNCIL.get((int) Math.floorMod(now / 120L, (long) SectSchedule.COUNCIL.size()));
+        boolean me = speaker.equals(npc.memberKey());
+        SectDisciple s = me ? null : find(speaker, 12.0D);
+        if (s != null) {
+            npc.getLookControl().setLookAt(s, 30.0F, 30.0F);
+        } else if (me) {
+            lookAtNearPlayer(8.0D);
+        }
+        if (--talkClock <= 0) {
+            if (me) {
+                talkClock = 26 + npc.getRandom().nextInt(16);
+                String[] g = {"explain", "point", "explain", "fist"};
+                npc.gesture(g[npc.getRandom().nextInt(g.length)]);
+            } else {
+                talkClock = 40 + npc.getRandom().nextInt(50);
+                if (npc.getRandom().nextInt(3) == 0) {
+                    boolean stingy = "hyun_young".equals(npc.memberKey());
+                    npc.gesture(npc.getRandom().nextInt(stingy ? 2 : 5) == 0 ? "shake" : "nod");
+                }
+            }
+        }
+    }
+
+    /**
+     * Доклад главе: дошёл, встал перед ним, поклон «кулак в ладонь» (глава кивает), потом говорит — жесты; глава
+     * поворачивается к докладчику и отвечает.
+     */
+    private void report() {
+        if (!arrive(current.spot(), 0.7D)) {
+            return;
+        }
+        npc.faceYaw(current.yaw(), 20.0F);
+        SectDisciple leader = find(current.task().partner(), 6.0D);
+        if (leader != null) {
+            npc.getLookControl().setLookAt(leader, 30.0F, 30.0F);
+        }
+        if (!reported) {
+            reported = true;
+            npc.holdPose(SectPose.BOW, 44);
+            if (leader != null) {
+                leader.attend(npc, 90);
+                leader.gesture("nod");
+            }
+            return;
+        }
+        if (--talkClock <= 0) {
+            talkClock = 50 + npc.getRandom().nextInt(40);
+            npc.gesture(npc.getRandom().nextBoolean() ? "explain" : "point");
+            if (leader != null && npc.getRandom().nextInt(2) == 0) {
+                leader.attend(npc, 60);
+                leader.gesture(npc.getRandom().nextInt(3) == 0 ? "explain" : "nod");
+            }
+        }
+    }
+
+    /** Лекарь у печи: печь автора на площадке алхимии (если стоит) — встать перед ней и мешать; иначе — на своём месте. */
+    private void brew() {
+        if (stove == null && --stoveSearch <= 0) {
+            stoveSearch = 200;
+            stove = SectLife.findStove(npc, current.task().zone());
+            if (stove != null) {
+                Vec3 c = Vec3.atBottomCenterOf(stove);
+                Vec3 d = npc.position().subtract(c).multiply(1.0D, 0.0D, 1.0D);
+                d = d.lengthSqr() < 1.0E-4D ? new Vec3(0.0D, 0.0D, 1.0D) : d.normalize();
+                stoveSpot = SectLife.stand(npc.level(), c.add(d.scale(1.4D)));
+                stoveYaw = SectLayout.yawOf(c.x - stoveSpot.x, c.z - stoveSpot.z);
+            }
+        }
+        Vec3 spot = stoveSpot != null ? stoveSpot : current.spot();
+        float yaw = stoveSpot != null ? stoveYaw : current.yaw();
+        if (arrive(spot, 0.5D)) {
+            npc.faceYaw(yaw, 20.0F);
+            if ((npc.tickCount + npc.getId()) % 90 == 0) {
+                BlockPos at = stove != null ? stove : npc.blockPosition();
+                npc.level().playSound(null, at, SoundEvents.BREWING_STAND_BREW, SoundSource.NEUTRAL, 0.35F, 0.8F + npc.getRandom().nextFloat() * 0.3F);
+            }
+        }
+    }
+
+    /** Лекарь лечит раненого: на колено рядом, раз в секунду — здоровье назад; вылечил — тот кланяется, лекарь кивает. */
+    private void treat() {
+        SectDisciple patient = find(current.task().partner(), 10.0D);
+        if (!arrive(current.spot(), 0.5D) || patient == null) {
+            return;
+        }
+        npc.faceEntity(patient, 30.0F);
+        npc.getLookControl().setLookAt(patient, 30.0F, 30.0F);
+        patient.attend(npc, 30);
+        if ((npc.tickCount + npc.getId()) % 20 == 0) {
+            patient.treatBy(npc, 2.0F);
+            if ((npc.tickCount / 20) % 3 == 0) {
+                npc.level().playSound(null, patient.blockPosition(), SoundEvents.BREWING_STAND_BREW, SoundSource.NEUTRAL, 0.25F, 1.5F);
+            }
+            if (!patient.wounded()) {
+                patient.sit(false);
+                patient.attend(npc, 44);
+                patient.holdPose(SectPose.BOW, 44);
+                npc.gesture("nod");
+                io.github.verycooltimo.murim.MurimMod.LOGGER.info("Секта: Ун Гак вылечил {}", patient.memberKey());
+            }
+        }
+    }
+
+    /** Старшинство: глава 0, старейшины Хён 1, первое поколение (Ун, наставник) 2, Пэк 3, Чхон 4, миряне 5. */
+    static int seniority(SectRoster m) {
+        if (m.role() == SectRole.LEADER) {
+            return 0;
+        }
+        if (m.lay()) {
+            return 5;
+        }
+        return switch (m.generation()) {
+            case 0 -> 1;
+            case 1 -> 2;
+            case 2 -> 3;
+            default -> 4;
+        };
+    }
+
+    /**
+     * Поклон старшему на ходу (канон: порядок старшинства держится строго, гл. 104): младший, проходя мимо главы,
+     * старейшины или первого поколения, останавливается и кланяется «кулак в ладонь»; старший кивает. Не чаще раза в
+     * минуту одному и тому же.
+     */
+    private boolean greetSenior(Kind kind) {
+        if ((npc.tickCount + npc.getId()) % 10 != 0 || kind.seated() || kind == Kind.FORM_ROW || kind == Kind.SPAR
+                || kind == Kind.POLES || kind == Kind.DRILL || kind == Kind.INSPECT || kind == Kind.TREAT || npc.sitting()) {
+            return false;
+        }
+        Optional<SectRoster> me = npc.member();
+        if (me.isEmpty() || seniority(me.get()) <= 1 && me.get().role() != SectRole.ELDER) {
+            return false;
+        }
+        int mine = seniority(me.get());
+        for (SectDisciple s : npc.level().getEntitiesOfClass(SectDisciple.class, npc.getBoundingBox().inflate(3.5D),
+                d -> d != npc && d.isAlive() && !d.isSleeping() && !d.dormant())) {
+            Optional<SectRoster> sm = s.member();
+            if (sm.isEmpty()) {
+                continue;
+            }
+            int theirs = seniority(sm.get());
+            if (theirs > 2 || theirs >= mine || !npc.mayBowTo(s)) {
+                continue;
+            }
+            npc.bowedTo(s);
+            npc.attend(s, 44);
+            npc.faceEntity(s, 90.0F);
+            npc.holdPose(SectPose.BOW, 44);
+            s.gesture("nod");
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Смена поста (автор 05.10: «охрана меняется»): сменщик приходит, встаёт рядом со сменяемым, оба кланяются,
+     * сменяемый уходит (его отпускает {@link SectDisciple#relieve}), сменщик встаёт на пост.
+     *
+     * @return идёт передача (дело поста ждёт)
+     */
+    private boolean handover() {
+        Optional<SectRoster> me = npc.member();
+        if (me.isEmpty()) {
+            return false;
+        }
+        long time = npc.level().getDayTime();
+        SectSchedule.Period p = SectSchedule.at(time);
+        long key = SectSchedule.day(time) * 8L + p.ordinal();
+        if (!SectSchedule.onShift(me.get(), p) || SectSchedule.sincePeriodStart(time) >= SectSchedule.HANDOVER || handedOver == key) {
+            return false;
+        }
+        Optional<SectRoster> outKey = me.get().relief();
+        SectDisciple out = outKey.isEmpty() ? null : find(outKey.get().key(), 24.0D);
+        if (out == null || !SectLife.handoverPending(out, outKey.get()) || out.position().distanceToSqr(current.spot()) > 4.0D * 4.0D) {
+            return false;
+        }
+        Vec3 f = Vec3.directionFromRotation(0.0F, current.yaw());
+        Vec3 side = SectLife.stand(npc.level(), current.spot().add(new Vec3(-f.z, 0.0D, f.x).scale(1.6D)));
+        if (!arrive(side, 0.6D)) {
+            return true;
+        }
+        handedOver = key;
+        npc.attend(out, 44);
+        out.attend(npc, 44);
+        npc.faceEntity(out, 90.0F);
+        out.faceEntity(npc, 90.0F);
+        npc.holdPose(SectPose.BOW, 44);
+        out.holdPose(SectPose.BOW, 44);
+        out.relieve(key);
+        io.github.verycooltimo.murim.MurimMod.LOGGER.info("Секта: смена поста — {} сменил {}", npc.memberKey(), out.memberKey());
+        return true;
     }
 
     /** Работа на месте: обход площадки, на остановках — поза дела. */
