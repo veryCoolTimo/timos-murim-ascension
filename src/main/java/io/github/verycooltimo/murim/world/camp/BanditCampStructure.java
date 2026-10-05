@@ -5,14 +5,21 @@ import io.github.verycooltimo.murim.world.hua.MountHuaSite;
 import io.github.verycooltimo.murim.world.hua.MountHuaSites;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.world.level.chunk.ChunkGenerator;
-import net.minecraft.world.level.levelgen.Heightmap;
+import io.github.verycooltimo.murim.world.location.CapturedLocation;
+import io.github.verycooltimo.murim.world.location.Ground;
+import io.github.verycooltimo.murim.world.location.LocationTemplatePiece;
+import io.github.verycooltimo.murim.world.location.LocationTemplates;
+import io.github.verycooltimo.murim.world.location.ModLocations;
+import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
+import net.minecraft.world.level.levelgen.structure.StructurePiece;
+import net.minecraft.world.level.levelgen.structure.TerrainAdjustment;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.levelgen.structure.StructureType;
 import net.neoforged.neoforge.server.ServerLifecycleHooks;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -54,53 +61,93 @@ public class BanditCampStructure extends Structure {
         if (nearMountHua(x, z)) {
             return Optional.empty();
         }
-        ChunkGenerator gen = context.chunkGenerator();
+        Ground ground = Ground.of(context);
+        int centreY = site(ground, x, z, context.chunkGenerator().getSeaLevel());
+        if (centreY == Integer.MIN_VALUE) {
+            return Optional.empty();
+        }
+        long seed = context.random().nextLong();
+        // Захваченный автором лагерь (docs/design/28-location-capture.md): поворот — лишний бросок только при
+        // шаблоне, процедурные лагеря того же зерна мира не сдвигаются.
+        CapturedLocation tpl = LocationTemplates.get(ModLocations.CAMP);
+        Rotation rot = tpl == null ? Rotation.NONE : Rotation.getRandom(context.random());
+        return Optional.of(new GenerationStub(new BlockPos(x, centreY, z),
+                builder -> pieces(seed, x, z, ground, tpl, rot).forEach(builder::addPiece)));
+    }
+
+    /**
+     * Проверка места (9 точек): вода, перепад, высота. Возвращает высоту центра (над верхним твёрдым блоком)
+     * или {@link Integer#MIN_VALUE}, если место не годится.
+     */
+    static int site(Ground ground, int x, int z, int seaLevel) {
         int r = CampLayout.MAX_RADIUS + 1;
         int min = Integer.MAX_VALUE;
         int max = Integer.MIN_VALUE;
         int[][] probes = {{0, 0}, {r, 0}, {-r, 0}, {0, r}, {0, -r}, {r * 7 / 10, r * 7 / 10},
                 {-r * 7 / 10, r * 7 / 10}, {r * 7 / 10, -r * 7 / 10}, {-r * 7 / 10, -r * 7 / 10}};
         for (int[] p : probes) {
-            int surface = gen.getBaseHeight(x + p[0], z + p[1], Heightmap.Types.WORLD_SURFACE_WG, context.heightAccessor(), context.randomState());
-            int floor = gen.getBaseHeight(x + p[0], z + p[1], Heightmap.Types.OCEAN_FLOOR_WG, context.heightAccessor(), context.randomState());
-            if (surface != floor) {
+            if (!ground.dry(x + p[0], z + p[1])) {
                 // Вода под лагерем: озеро, река или болото.
-                return Optional.empty();
+                return Integer.MIN_VALUE;
             }
+            int floor = ground.floor(x + p[0], z + p[1]) + 1;
             min = Math.min(min, floor);
             max = Math.max(max, floor);
         }
-        if (max - min > MAX_RELIEF || min <= gen.getSeaLevel() || max > 170) {
-            return Optional.empty();
+        if (max - min > MAX_RELIEF || min <= seaLevel || max > 170) {
+            return Integer.MIN_VALUE;
         }
-        int centreY = gen.getBaseHeight(x, z, Heightmap.Types.OCEAN_FLOOR_WG, context.heightAccessor(), context.randomState());
-        long seed = context.random().nextLong();
-        return Optional.of(new GenerationStub(new BlockPos(x, centreY, z), builder -> {
-            CampLayout plan = CampLayout.plan(seed);
-            int[] heights = new int[plan.spots().size() + 1];
-            for (int i = 0; i < plan.spots().size(); i++) {
-                CampLayout.Spot s = plan.spots().get(i);
-                heights[i] = median(gen, context, x + s.dx(), z + s.dz());
-            }
-            int[] g = plan.gateCentre();
-            heights[heights.length - 1] = median(gen, context, x + g[0], z + g[1]);
-            int lo = Arrays.stream(heights).min().orElse(centreY) - 8;
-            int hi = Arrays.stream(heights).max().orElse(centreY) + 12;
-            int R = plan.radius() + CampLayout.TRAIL_LENGTH + 2;
-            builder.addPiece(new BanditCampPiece(seed, x, z, heights, new BoundingBox(x - R, lo, z - R, x + R, hi, z + R)));
-        }));
+        return ground.floor(x, z) + 1;
+    }
+
+    /**
+     * Куски лагеря с центром в (x, z): процедурный кусок или, если автор захватил лагерь, его шаблон плюс
+     * «оболочка» — тот же кусок без блоков, по которому жизнь лагеря находит центр, зерно и посты.
+     * Общий для генерации и мира-витрины ({@link Ground#live}).
+     */
+    public static List<StructurePiece> pieces(long seed, int x, int z, Ground ground, CapturedLocation tpl, Rotation rot) {
+        if (tpl != null) {
+            Ground.Placement p = Ground.place(tpl, x, z, rot, ground);
+            LocationTemplatePiece piece = new LocationTemplatePiece(tpl, p.origin(), rot);
+            BlockPos centre = CapturedLocation.world(p.origin(), rot, tpl.anchor());
+            long campSeed = tpl.seed() != 0L ? tpl.seed() : seed;
+            // Поворот оболочки — поворот раскладки зерна: какой была у захваченного лагеря плюс поворот шаблона.
+            Rotation layout = Rotation.values()[Math.floorMod(tpl.anchorRot(), 4)].getRotated(rot);
+            return List.of(piece, BanditCampPiece.shell(campSeed, centre, layout, piece.getBoundingBox()));
+        }
+        CampLayout plan = CampLayout.plan(seed);
+        int[] heights = new int[plan.spots().size() + 1];
+        for (int i = 0; i < plan.spots().size(); i++) {
+            CampLayout.Spot s = plan.spots().get(i);
+            heights[i] = median(ground, x + s.dx(), z + s.dz());
+        }
+        int[] g = plan.gateCentre();
+        heights[heights.length - 1] = median(ground, x + g[0], z + g[1]);
+        int centreY = ground.floor(x, z) + 1;
+        int lo = Arrays.stream(heights).min().orElse(centreY) - 8;
+        int hi = Arrays.stream(heights).max().orElse(centreY) + 12;
+        int R = plan.radius() + CampLayout.TRAIL_LENGTH + 2;
+        return List.of(new BanditCampPiece(seed, x, z, heights, new BoundingBox(x - R, lo, z - R, x + R, hi, z + R)));
     }
 
     /** Опорная высота постройки — медиана пяти точек рельефа (верхний твёрдый блок). */
-    private static int median(ChunkGenerator gen, GenerationContext context, int x, int z) {
+    private static int median(Ground ground, int x, int z) {
         int[] v = new int[5];
         int[][] o = {{0, 0}, {2, 0}, {-2, 0}, {0, 2}, {0, -2}};
         for (int i = 0; i < 5; i++) {
-            v[i] = gen.getBaseHeight(x + o[i][0], z + o[i][1], Heightmap.Types.OCEAN_FLOOR_WG,
-                    context.heightAccessor(), context.randomState()) - 1;
+            v[i] = ground.floor(x + o[i][0], z + o[i][1]);
         }
         Arrays.sort(v);
         return v[2];
+    }
+
+    /**
+     * Шаблон автора подтягивает рельеф вокруг себя (beard_thin на куске шаблона); процедурные куски этого
+     * не просят ({@link BanditCampPiece} отвечает NONE). Без шаблона — как в данных структуры.
+     */
+    @Override
+    public TerrainAdjustment terrainAdaptation() {
+        return LocationTemplates.get(ModLocations.CAMP) != null ? TerrainAdjustment.BEARD_THIN : super.terrainAdaptation();
     }
 
     /**

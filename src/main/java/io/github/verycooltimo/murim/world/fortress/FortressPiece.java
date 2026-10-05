@@ -12,6 +12,8 @@ import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.StructurePiece;
 import net.minecraft.world.level.levelgen.structure.pieces.StructurePieceSerializationContext;
+import net.minecraft.world.level.levelgen.structure.TerrainAdjustment;
+import net.neoforged.neoforge.common.world.PieceBeardifierModifier;
 
 /**
  * Единственный кусок крепости: центр плаца, высота пола, зерно. Блоки ставит
@@ -20,19 +22,34 @@ import net.minecraft.world.level.levelgen.structure.pieces.StructurePieceSeriali
  * <p>API: как у лагеря (world/camp/BanditCampPiece) —
  * reference/minecraft-src/net/minecraft/world/level/levelgen/structure/StructurePiece.java#postProcess.
  */
-public class FortressPiece extends StructurePiece {
+public class FortressPiece extends StructurePiece implements PieceBeardifierModifier {
 
     private final long seed;
     private final int cx;
     private final int y0;
     private final int cz;
+    /**
+     * Оболочка шаблонной крепости (docs/design/28-location-capture.md): блоки ставит шаблон автора, кусок хранит
+     * плац и поворот для жизни крепости. null — процедурная крепость, поворот из зерна.
+     */
+    private final Rotation shellRotation;
 
     public FortressPiece(long seed, int cx, int y0, int cz, BoundingBox box) {
+        this(seed, cx, y0, cz, box, null);
+    }
+
+    private FortressPiece(long seed, int cx, int y0, int cz, BoundingBox box, Rotation shellRotation) {
         super(Fortress.PIECE.get(), 0, box);
         this.seed = seed;
         this.cx = cx;
         this.y0 = y0;
         this.cz = cz;
+        this.shellRotation = shellRotation;
+    }
+
+    /** Оболочка шаблонной крепости: плац (пол), поворот захваченной крепости с поворотом шаблона. */
+    public static FortressPiece shell(long seed, BlockPos yard, Rotation rotation, BoundingBox box) {
+        return new FortressPiece(seed, yard.getX(), yard.getY(), yard.getZ(), box, rotation);
     }
 
     public FortressPiece(StructurePieceSerializationContext context, CompoundTag tag) {
@@ -41,6 +58,7 @@ public class FortressPiece extends StructurePiece {
         this.cx = tag.getInt("CX");
         this.y0 = tag.getInt("Y0");
         this.cz = tag.getInt("CZ");
+        this.shellRotation = tag.contains("ShellRot") ? Rotation.values()[Math.floorMod(tag.getInt("ShellRot"), 4)] : null;
     }
 
     @Override
@@ -49,6 +67,29 @@ public class FortressPiece extends StructurePiece {
         tag.putInt("CX", cx);
         tag.putInt("Y0", y0);
         tag.putInt("CZ", cz);
+        if (shellRotation != null) {
+            tag.putInt("ShellRot", shellRotation.ordinal());
+        }
+    }
+
+    /** Крепость из шаблона автора (кусок без блоков). */
+    public boolean shell() {
+        return shellRotation != null;
+    }
+
+    @Override
+    public BoundingBox getBeardifierBox() {
+        return boundingBox;
+    }
+
+    @Override
+    public TerrainAdjustment getTerrainAdjustment() {
+        return TerrainAdjustment.NONE;
+    }
+
+    @Override
+    public int getGroundLevelDelta() {
+        return 0;
     }
 
     public long seed() {
@@ -68,12 +109,15 @@ public class FortressPiece extends StructurePiece {
     }
 
     public Rotation rotation() {
-        return FortressBuilder.rotation(seed);
+        return shellRotation != null ? shellRotation : FortressBuilder.rotation(seed);
     }
 
     @Override
     public void postProcess(WorldGenLevel level, StructureManager structureManager, ChunkGenerator generator,
                             RandomSource random, BoundingBox chunkBox, ChunkPos chunkPos, BlockPos pivot) {
+        if (shellRotation != null) {
+            return;
+        }
         BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
         new FortressBuilder(new FortressBuilder.Sink() {
             @Override

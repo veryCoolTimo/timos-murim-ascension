@@ -363,5 +363,29 @@
         "attenuation_distance": 10
       }
     ]
+  },
+  "ambient.mount_hua.wind": {
+    "subtitle": "subtitles.murim.ambient.mount_hua.wind",
+    "sounds": [
+      {
+        "name": "murim:ambient/hua_wind",
+        "stream": true,
+        "volume": 0.45
+      }
+    ]
+  },
+  "ambient.mount_hua.birds": {
+    "subtitle": "subtitles.murim.ambient.mount_hua.birds",
+    "sounds": [
+      {
+        "name": "murim:ambient/hua_bird",
+        "volume": 0.5
+      },
+      {
+        "name": "murim:ambient/hua_bird",
+        "volume": 0.35,
+        "pitch": 0.85
+      }
+    ]
   }
 }

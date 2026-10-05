@@ -41,6 +41,8 @@ public class MurimMod {
         io.github.verycooltimo.murim.trade.ModTrade.register(modEventBus);
         io.github.verycooltimo.murim.entity.boss.BossRegistry.register(modEventBus);
         io.github.verycooltimo.murim.world.fortress.Fortress.register(modEventBus);
+        io.github.verycooltimo.murim.world.location.ModLocations.register(modEventBus);
+        io.github.verycooltimo.murim.world.hua.HuaBiomes.register(modEventBus);
 
         modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
     }

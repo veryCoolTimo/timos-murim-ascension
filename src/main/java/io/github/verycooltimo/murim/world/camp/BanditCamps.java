@@ -129,6 +129,9 @@ public final class BanditCamps {
         }
         BlockPos centre = new BlockPos(piece.centreX(), piece.height(0), piece.centreZ());
         BanditCampData.Camp camp = data(level).getOrCreate(start, centre, piece.seed());
+        if (piece.shell()) {
+            CampTemplate.attach(camp, piece, CampTemplate.templatePiece(level, structure, start));
+        }
         tick(level, camp);
     }
 
@@ -148,7 +151,7 @@ public final class BanditCamps {
             populate(level, camp);
             return;
         }
-        List<CampRoster.Member> roster = CampRoster.plan(CampLayout.plan(camp.seed));
+        List<CampRoster.Member> roster = CampTemplate.roster(camp);
         if (camp.alive.size() < roster.size() && nearest > REFILL_MIN_RANGE
                 && level.getGameTime() - camp.lastLoss >= RESPAWN_TICKS) {
             refill(level, camp);
@@ -167,8 +170,7 @@ public final class BanditCamps {
 
     /** Чанки лагеря загружены и тикают сущности — можно ставить банду. */
     private static boolean ready(ServerLevel level, BanditCampData.Camp camp) {
-        CampLayout plan = CampLayout.plan(camp.seed);
-        for (CampLayout.Post p : plan.posts()) {
+        for (CampLayout.Post p : CampTemplate.posts(camp)) {
             if (!level.isPositionEntityTicking(camp.centre.offset(p.dx(), 0, p.dz()))) {
                 return false;
             }
@@ -186,13 +188,13 @@ public final class BanditCamps {
 
     /** Поставить недостающих по составу (главарь тоже возвращается, пока лагерь не разгромлен). */
     public static void refill(ServerLevel level, BanditCampData.Camp camp) {
-        CampLayout plan = CampLayout.plan(camp.seed);
-        List<CampRoster.Member> roster = CampRoster.plan(plan);
+        List<CampRoster.Member> roster = CampTemplate.roster(camp);
+        List<CampLayout.Post> posts = CampTemplate.posts(camp);
         for (CampRoster.Member m : roster) {
             if (camp.alive.containsKey(m.slot())) {
                 continue;
             }
-            Bandit b = spawn(level, camp, plan, m);
+            Bandit b = spawn(level, camp, posts, m);
             if (b != null) {
                 camp.alive.put(m.slot(), b.getUUID());
             }
@@ -200,11 +202,14 @@ public final class BanditCamps {
         data(level).setDirty();
     }
 
-    private static Bandit spawn(ServerLevel level, BanditCampData.Camp camp, CampLayout plan, CampRoster.Member m) {
-        CampLayout.Post post = plan.posts().get(Math.min(m.post(), plan.posts().size() - 1));
+    private static Bandit spawn(ServerLevel level, BanditCampData.Camp camp, List<CampLayout.Post> posts, CampRoster.Member m) {
+        int index = Math.min(m.post(), posts.size() - 1);
+        CampLayout.Post post = posts.get(index);
         int x = camp.centre.getX() + post.dx();
         int z = camp.centre.getZ() + post.dz();
-        int y = LiveCampSink.surface(level, x, z) + 1;
+        // Знак spawn:* шаблона стоит там, где бандит должен стоять (в шатре, на вышке), — не поверх крыши.
+        int y = camp.templateFeet != null && index < camp.templateFeet.size() ? camp.templateFeet.get(index).getY()
+                : LiveCampSink.surface(level, x, z) + 1;
         Bandit b = m.archer() ? ModEntities.BANDIT_ARCHER.get().create(level) : ModEntities.BANDIT_SWORDSMAN.get().create(level);
         if (b == null) {
             return null;
