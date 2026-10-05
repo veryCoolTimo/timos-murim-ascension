@@ -116,7 +116,12 @@ public final class TrainingCapture {
             if (scenes.contains("climb")) {
                 climb(mc, server);
             }
-            steps.add(new Step("done", 1, 0, () -> MurimMod.LOGGER.info("Стенд тренировок: снято"), i -> { }, false));
+            // Done: the client closes itself, so capture.sh stops waiting for a frame count it cannot know in advance.
+            steps.add(new Step("done", 40, 0, () -> MurimMod.LOGGER.info("Стенд тренировок: снято"), i -> {
+                if (i == 39) {
+                    Minecraft.getInstance().stop();
+                }
+            }, false));
             return;
         }
         if (index >= steps.size()) {
@@ -327,10 +332,12 @@ public final class TrainingCapture {
             p.teleportTo(server.overworld(), at.x, at.y, at.z, 90.0F, 0.0F);
             p.removeAllEffects();
         });
-        // Side view of the player's spot (the player faces −x, yaw 90): the camera stands to the player's left (+z side).
+        // Side profile of the player's spot (the player faces −x, yaw 90): the camera stands on the +z side, aimed
+        // 1.4 blocks east of the player, so the body sits left of the screen centre and the HUD under the crosshair
+        // does not cover it.
         Runnable sideCam = () -> {
-            Vec3 look = new Vec3(origin.getX() + 4.5D, origin.getY() + 0.8D, origin.getZ() - 9.5D);
-            stand(server, look, look.add(-1.5D, 0.9D, 4.2D));
+            Vec3 look = new Vec3(origin.getX() + 4.5D + 1.4D, origin.getY() + 0.5D, origin.getZ() - 9.5D);
+            stand(server, look, look.add(0.0D, 0.9D, 4.6D));
         };
         steps.add(new Step("p_setup", 30, 0, () -> {
             mc.options.hideGui = false;
@@ -370,8 +377,9 @@ public final class TrainingCapture {
         }, false));
         // The stone up the stair: player camera from the front, walk forward up the steps.
         steps.add(new Step("p_carry", 110, 5, () -> {
-            stand(server, Vec3.ZERO, null);
-            mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT);
+            // Side of the stair, wide enough for the whole climb.
+            Vec3 look = new Vec3(origin.getX() + 17.0D, origin.getY() + 2.5D, origin.getZ() - 9.5D);
+            stand(server, look, look.add(-1.0D, 1.5D, 9.0D));
             server.execute(() -> {
                 ServerPlayer p = sp(server);
                 p.teleportTo(server.overworld(), origin.getX() + 11.5D, origin.getY(), origin.getZ() - 9.5D, -90.0F, 10.0F);
@@ -383,7 +391,6 @@ public final class TrainingCapture {
         steps.add(new Step("p_carry_end", 20, 0, () -> {
             mc.options.keyUp.setDown(false);
             hand(server, ItemStack.EMPTY);
-            mc.options.setCameraType(CameraType.FIRST_PERSON);
         }, i -> { }, false));
     }
 
