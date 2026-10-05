@@ -84,6 +84,18 @@ public final class DialogueCapture {
 
     private static void act(Minecraft mc, String action) {
         MurimMod.LOGGER.info("Стенд разговора: тик {} — {}", tick, action);
+        // use@ключ / look@ключ — конкретный человек горы (MURIM_CAPTURE_PEOPLE, SectCapture).
+        int at = action.indexOf('@');
+        if (at > 0) {
+            Entity who = person(mc, action.substring(at + 1));
+            if (who != null) {
+                face(mc, who);
+                if (action.startsWith("use") && mc.gameMode != null) {
+                    mc.gameMode.interact(mc.player, who, InteractionHand.MAIN_HAND);
+                }
+            }
+            return;
+        }
         switch (action) {
             case "use" -> {
                 Entity npc = npc(mc);
@@ -130,6 +142,15 @@ public final class DialogueCapture {
         float yaw = (float) Math.toDegrees(Math.atan2(dz, dx)) - 90.0F;
         mc.player.setYRot(yaw);
         mc.player.setYHeadRot(yaw);
+    }
+
+    private static Entity person(Minecraft mc, String key) {
+        for (Entity e : mc.level.entitiesForRendering()) {
+            if (e instanceof SectDisciple d && key.equals(d.memberKey())) {
+                return e;
+            }
+        }
+        return null;
     }
 
     private static Entity npc(Minecraft mc) {

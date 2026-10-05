@@ -70,11 +70,29 @@ public final class SectCapture {
         Vec3 fwd = Vec3.directionFromRotation(0.0F, p.getYRot());
         Vec3 right = Vec3.directionFromRotation(0.0F, p.getYRot() + 90.0F);
         double dist = Double.parseDouble(System.getenv().getOrDefault("MURIM_CAPTURE_NPC_DIST", "3.5"));
-        SectService.spawn(level, talk, p.position().add(fwd.scale(dist)), p.position());
+        // MURIM_CAPTURE_PEOPLE="baek_cheon,yu_iseol,cheong_ak" — вместо собеседника по роли люди горы по ключу, в ряд
+        // перед игроком (личные диалоги, 05.10); стенд говорит с ними по очереди (DialogueCapture: use@ключ).
+        String people = System.getenv().getOrDefault("MURIM_CAPTURE_PEOPLE", "");
+        if (!people.isBlank()) {
+            String[] keys = people.split(",");
+            for (int k = 0; k < keys.length; k++) {
+                double side = (k - (keys.length - 1) / 2.0D) * 1.8D;
+                SectRoster m = SectRoster.of(keys[k].trim()).orElse(null);
+                if (m != null) {
+                    SectDisciple npc = SectService.spawn(level, m.role(), p.position().add(fwd.scale(Math.min(dist, 2.5D))).add(right.scale(side)),
+                            p.position());
+                    npc.setMember(m);
+                    // На горе этого мира люди ушли бы по распорядку к своим площадкам: на стенде они стоят.
+                    npc.setNoAi(true);
+                }
+            }
+        } else {
+            SectService.spawn(level, talk, p.position().add(fwd.scale(dist)), p.position());
+        }
         double[][] spots = {{8.0D, -4.0D}, {9.0D, 3.5D}, {12.0D, -1.0D}, {11.0D, 6.5D}};
         int i = 0;
         for (SectRole r : SectRole.values()) {
-            if (r != talk && i < spots.length) {
+            if (r != talk && i < spots.length && people.isBlank()) {
                 SectService.spawn(level, r, p.position().add(fwd.scale(spots[i][0])).add(right.scale(spots[i][1])), p.position());
                 i++;
             }
