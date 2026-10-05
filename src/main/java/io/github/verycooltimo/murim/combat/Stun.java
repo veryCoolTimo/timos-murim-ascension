@@ -58,6 +58,9 @@ public final class Stun {
     public static final double HOLD_HALF_ANGLE = 45.0D;
     public static final int HOLD_MAX = 6;
 
+    /** Стенд A/B: MURIM_CAPTURE_NO_HOLD=1 — техники без удержания (сравнение «до/после»). */
+    private static final boolean NO_HOLD = "1".equals(System.getenv("MURIM_CAPTURE_NO_HOLD"));
+
     private static final int NONE = 0;
     private static final int ON = 1;
     private static final int ON_NO_AI = 2;
@@ -67,6 +70,9 @@ public final class Stun {
      * (замах + удар + восстановление; рассеивание — уже без удержания).
      */
     public static void holdStart(ServerPlayer caster, TechniqueDefinition technique) {
+        if (NO_HOLD) {
+            return;
+        }
         long end = caster.level().getGameTime() + holdTicks(technique);
         caster.setData(ModAttachments.HOLD_END, end);
         LivingEntity locked = TargetLock.locked(caster, TargetLock.RANGE);
@@ -95,7 +101,7 @@ public final class Stun {
      * техники нет — NPC). Продлевает, не сокращает.
      */
     public static void hold(LivingEntity t, LivingEntity caster, int fallbackTicks) {
-        if (t.level().isClientSide() || !t.isAlive() || t == caster || t instanceof Player) {
+        if (NO_HOLD || t.level().isClientSide() || !t.isAlive() || t == caster || t instanceof Player) {
             return;
         }
         long now = t.level().getGameTime();
@@ -220,6 +226,19 @@ public final class Stun {
             }
             t.removeData(ModAttachments.STUN);
             t.removeData(ModAttachments.HOLD);
+        }
+    }
+
+    /**
+     * Удержанного не отбрасывает ванильный отброс удара: иначе первый же удар долгой техники
+     * выкидывал цель из зоны (съёмка A/B 05.10: Вихрь попал раз, бандит отлетел на 2,5 блока и
+     * простоял остаток техники вне её). Толчки, которые техника задаёт сама, остаются.
+     * API: reference/neoforge-src/net/neoforged/neoforge/event/entity/living/LivingKnockBackEvent.java
+     */
+    @SubscribeEvent
+    static void onKnockBack(net.neoforged.neoforge.event.entity.living.LivingKnockBackEvent event) {
+        if (!event.getEntity().level().isClientSide() && isHeld(event.getEntity())) {
+            event.setCanceled(true);
         }
     }
 

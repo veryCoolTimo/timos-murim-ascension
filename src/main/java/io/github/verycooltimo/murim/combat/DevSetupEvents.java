@@ -168,7 +168,8 @@ public final class DevSetupEvents {
         // и на кадрах их было не разглядеть — сцена скрывала работающую механику.
         // MURIM_CAPTURE_TARGET_Z — ближе для коротких искусств (кулак, песок: 2–3 блока), 05.10.
         double targetZ = System.getenv("MURIM_CAPTURE_TARGET_Z") == null ? 6.0D : Double.parseDouble(System.getenv("MURIM_CAPTURE_TARGET_Z"));
-        for (double dx : new double[] {-1.6D, 1.6D}) {
+        // MURIM_CAPTURE_NO_DUMMY=1 — без мишеней на сцене (съёмка A/B удержания: ничего, что стоит само).
+        for (double dx : "1".equals(System.getenv("MURIM_CAPTURE_NO_DUMMY")) ? new double[0] : new double[] {-1.6D, 1.6D}) {
             net.minecraft.world.entity.decoration.ArmorStand target =
                     new net.minecraft.world.entity.decoration.ArmorStand(
                             serverLevel, STAGE_X + 0.5D + dx * Math.min(1.0D, targetZ / 6.0D), STAGE_Y, STAGE_Z + targetZ);

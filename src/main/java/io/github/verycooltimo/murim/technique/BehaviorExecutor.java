@@ -519,10 +519,11 @@ public final class BehaviorExecutor {
         }
         // Цель — по взгляду до 9 блоков; вихрь строится ВОКРУГ МАСТЕРА (автор 02.10), к цели потом
         // идут два мини-урагана.
-        LivingEntity target = null;
+        // Захваченная цель важнее взгляда (автор 03.10: все приёмы целятся в захваченного).
+        LivingEntity target = io.github.verycooltimo.murim.combat.TargetLock.locked(player, 12.0D);
         double best = Double.MAX_VALUE;
         double cone = Math.cos(Math.toRadians(30.0D));
-        for (LivingEntity t : candidates(player, player.getBoundingBox().inflate(12.5D))) {
+        for (LivingEntity t : target != null ? java.util.List.<LivingEntity>of() : candidates(player, player.getBoundingBox().inflate(12.5D))) {
             Vec3 to = t.position().subtract(origin);
             Vec3 flat = new Vec3(to.x, 0.0D, to.z);
             double d = flat.length();
