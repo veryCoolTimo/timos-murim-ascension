@@ -314,8 +314,11 @@ public final class SectReview {
         }
         if (b.started < 0) {
             if (ea == null || eb == null) {
-                // Ученика нет (не встал на гору, погиб) — победа другому. Нет обоих — первому по сетке.
-                decide(level, s, b, ea == null && eb != null ? b.b : b.a, "absent");
+                // Ученика ещё нет (чанк не загружен, не встал на гору) — ждём, как опоздавшего; через минуту — победа
+                // другому, нет обоих — первому по сетке.
+                if (now - b.called >= SHOW_UP) {
+                    decide(level, s, b, ea == null && eb != null ? b.b : b.a, "absent");
+                }
                 return;
             }
             boolean readyA = ready(layout, b, 0, ea);

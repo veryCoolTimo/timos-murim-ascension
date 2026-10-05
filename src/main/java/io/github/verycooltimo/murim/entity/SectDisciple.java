@@ -372,6 +372,8 @@ public class SectDisciple extends Bandit implements Casters.Caster {
     }
 
     private void beginBow() {
+        // Поклон — с мечом в ножнах сразу, а не со следующего тика (tick обновляет DRAWN после логики).
+        entityData.set(DRAWN, false);
         getNavigation().stop();
         playAnim(BOW, 0);
         log("поклон ({})", spar);
@@ -391,6 +393,7 @@ public class SectDisciple extends Bandit implements Casters.Caster {
         dashLeft = 0;
         spar = Spar.BOW_OUT;
         sparTick = 0;
+        entityData.set(DRAWN, false);
         if (partnerEntity() instanceof ServerPlayer p) {
             p.displayClientMessage(Component.translatable(partnerWon ? "murim.spar.win" : "murim.spar.lose", getDisplayName()), true);
         }
