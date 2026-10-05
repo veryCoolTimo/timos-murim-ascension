@@ -79,14 +79,23 @@ public record Dialogue(String name, String title, List<Entry> start, Map<String,
      * @param belowStanding   положение ниже
      * @param minContribution заслуг не меньше (−1 — не проверять)
      * @param hasItem         в инвентаре есть предмет (и число через {@code *})
+     * @param attended        журнал секты ({@link SectAttendance}): это занятие сегодня сделано
+     * @param missed          журнал секты: занятие ждали (перекличка) и оно не сделано
+     * @param chores          журнал секты: наряд на кухню назначен и не отработан
+     * @param logged          журнал секты: в нём есть сегодняшний или прошлый день при секте
      */
     public record Standing(Optional<String> minStanding, Optional<String> belowStanding, int minContribution,
-                           Optional<String> hasItem) {
+                           Optional<String> hasItem, Optional<String> attended, Optional<String> missed,
+                           Optional<Boolean> chores, Optional<Boolean> logged) {
         public static final MapCodec<Standing> MAP_CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
                 Codec.STRING.optionalFieldOf("min_standing").forGetter(Standing::minStanding),
                 Codec.STRING.optionalFieldOf("below_standing").forGetter(Standing::belowStanding),
                 Codec.INT.optionalFieldOf("min_contribution", -1).forGetter(Standing::minContribution),
-                Codec.STRING.optionalFieldOf("has_item").forGetter(Standing::hasItem)
+                Codec.STRING.optionalFieldOf("has_item").forGetter(Standing::hasItem),
+                Codec.STRING.optionalFieldOf("attended").forGetter(Standing::attended),
+                Codec.STRING.optionalFieldOf("missed").forGetter(Standing::missed),
+                Codec.BOOL.optionalFieldOf("chores").forGetter(Standing::chores),
+                Codec.BOOL.optionalFieldOf("logged").forGetter(Standing::logged)
         ).apply(i, Standing::new));
     }
 
@@ -107,7 +116,9 @@ public record Dialogue(String name, String title, List<Entry> start, Map<String,
      * Действие при выборе варианта (или при входе в узел).
      * Типы: {@code set_flag}, {@code clear_flag}, {@code give_book}, {@code join_sect},
      * {@code start_spar}, {@code bow}, {@code gesture}, {@code contribute} (заслуги ±N),
-     * {@code donate} ({@code "minecraft:gold_ingot*1=3"} — отдать предметы за заслуги). Телепорта нет намеренно (автор 04.10: на гору
+     * {@code donate} ({@code "minecraft:gold_ingot*1=3"} — отдать предметы за заслуги), {@code chore} (наряд: отдать
+     * предмет повару — {@code "minecraft:water_bucket*1"}, журнал секты), {@code heal} (лекарь лечит раны),
+     * {@code record} (отметить занятие в журнале секты). Телепорта нет намеренно (автор 04.10: на гору
      * игрок поднимается сам).
      */
     public record Action(String type, Optional<String> value) {

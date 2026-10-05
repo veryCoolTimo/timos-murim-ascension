@@ -232,6 +232,10 @@ public final class SectService {
             player.displayClientMessage(Component.translatable("murim.sect.clean_done").withStyle(ChatFormatting.GOLD), false);
         }
         player.setData(ModAttachments.SECT, s);
+        // Поединок с учеником днём — занятие в журнале секты (вызов охраны за силовой вход — не занятие).
+        if (senior.role() != SectRole.GUARD && SectSchedule.at(player.level().getDayTime()) != SectSchedule.Period.NIGHT) {
+            SectAttendance.record(player, SectAttendance.Activity.LESSON);
+        }
     }
 
     /** Урок «три чистых удара по старшему»: партнёр — старший или любой ученик второго поколения. */

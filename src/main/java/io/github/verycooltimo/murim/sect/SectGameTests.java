@@ -205,6 +205,7 @@ public final class SectGameTests {
         setPeriod(helper, SectSchedule.Period.FORMATION);
         Yard yard = yard(helper, 0.5D);
         ServerPlayer player = fakePlayer(helper);
+        player.setData(io.github.verycooltimo.murim.registry.ModAttachments.SECT, SectState.NONE.joined());
         double[] free = SectSchedule.slot(1, SectSchedule.COLUMNS - 1);
         Vec3 at = yard.at("training", free[0], free[1]);
         player.moveTo(at.x, at.y, at.z, 0.0F, 0.0F);
@@ -225,6 +226,7 @@ public final class SectGameTests {
         helper.succeedWhen(() -> {
             helper.assertTrue(calls[0] >= SectLife.MORNING_FORMS, "форм в такт пока " + calls[0]);
             helper.assertTrue(SectLife.masteryBonus(player) > 1.0D, "утренняя тренировка не засчитана");
+            helper.assertTrue(SectAttendance.current(player).today().did(SectAttendance.Activity.FORMATION), "строй не отмечен в журнале секты");
         });
     }
 

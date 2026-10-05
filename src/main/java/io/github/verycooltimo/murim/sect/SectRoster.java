@@ -64,6 +64,14 @@ public record SectRoster(String key, SectRole role, int generation, String home,
             new SectRoster("baek_jin", SectRole.GUARD, 2, "ancestors", "guard_3", 1),
             new SectRoster("baek_won", SectRole.GUARD, 2, "treasury", "guard_4", 0),
             new SectRoster("baek_seo", SectRole.GUARD, 2, "elders", "guard_0", 2),
+            // Ночная смена (автор 05.10: «охрана меняется»): те же шесть постов, по одному сменщику на каждый, в том же
+            // порядке. Днём спят в общежитии второго поколения, после полудня — отдыхают в лагере. Имена сгенерированы.
+            new SectRoster("baek_un", SectRole.GUARD, 2, "sect_gate", "guard_2", 0),
+            new SectRoster("baek_ik", SectRole.GUARD, 2, "main_hall", "guard_3", 1),
+            new SectRoster("baek_ryu", SectRole.GUARD, 2, "main_hall", "guard_4", 0),
+            new SectRoster("baek_gang", SectRole.GUARD, 2, "ancestors", "guard_0", 2),
+            new SectRoster("baek_gyu", SectRole.GUARD, 2, "treasury", "guard_1", 1),
+            new SectRoster("baek_seung", SectRole.GUARD, 2, "elders", "guard_2", 0),
             // Миряне при секте (поколение −1): управляющий хозяйством и слуги. Имена — простые мирские, не каноничные.
             new SectRoster("steward_mun", SectRole.STEWARD, LAY, "treasury", "lay_steward", 0),
             new SectRoster("cook_kim", SectRole.COOK, LAY, "dining", "lay_cook", 0),
@@ -81,6 +89,30 @@ public record SectRoster(String key, SectRole role, int generation, String home,
             }
         }
         return Optional.empty();
+    }
+
+    /** Ключи дневной смены охраны по постам; ночная смена — {@link #NIGHT_WATCH} в том же порядке. */
+    public static final List<String> DAY_WATCH = List.of("baek_mu", "baek_ryeong", "baek_gi", "baek_jin", "baek_won", "baek_seo");
+    public static final List<String> NIGHT_WATCH = List.of("baek_un", "baek_ik", "baek_ryu", "baek_gang", "baek_gyu", "baek_seung");
+
+    /** Номер поста охранника (0…5) или −1 — не охрана. */
+    public int post() {
+        int i = DAY_WATCH.indexOf(key);
+        return i >= 0 ? i : NIGHT_WATCH.indexOf(key);
+    }
+
+    /** Охранник ночной смены. */
+    public boolean nightWatch() {
+        return NIGHT_WATCH.contains(key);
+    }
+
+    /** Сменщик на том же посту (другая смена) или пусто. */
+    public Optional<SectRoster> relief() {
+        int i = post();
+        if (i < 0) {
+            return Optional.empty();
+        }
+        return of(nightWatch() ? DAY_WATCH.get(i) : NIGHT_WATCH.get(i));
     }
 
     /** Номер в списке (−1 — нет такого). */

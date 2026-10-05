@@ -78,6 +78,8 @@ public final class SectHierarchyGameTests {
      */
     @GameTest(template = YARD, timeoutTicks = 300, batch = "sect_hierarchy")
     public static void youngDiscipleInterceptedAtLeader(GameTestHelper helper) {
+        // Днём: охрана на смене (ночью дневной страж спит, а ночная смена стоит у своего поста).
+        SectGameTests.setPeriod(helper, SectSchedule.Period.TRAINING);
         Only layout = only(helper);
         ServerPlayer p = SectGameTests.fakePlayer(helper);
         p.setData(ModAttachments.SECT, SectState.NONE.joined());
@@ -163,6 +165,8 @@ public final class SectHierarchyGameTests {
         place(helper, p, 12, 12);
         // Охранник без поста в этой раскладке (его площадки нет) — стоит, где поставлен, и смотрит по сторонам.
         SectDisciple guard = npc(helper, layout, "baek_seo", 12, 7);
+        // Его сменщик ночной смены (автор 05.10: охрана меняется) — ночью на страже он.
+        SectDisciple night = npc(helper, layout, "baek_seung", 12, 6);
         // Новичку сюда нельзя; оба урока наставника сданы — выпускник, днём можно.
         helper.assertTrue(!SectAccess.forbidden(layout, p.position(), SectWatch.standing(p), Set.of(), SectSchedule.Period.TRAINING, 0.0D).isEmpty(),
                 "новичку можно в казну");
@@ -178,7 +182,7 @@ public final class SectHierarchyGameTests {
             if (helper.getLevel().getGameTime() % SectWatch.PERIOD == 0) {
                 place(helper, p, 12, 12);
                 SectWatch.check(p, layout);
-                if (ticks[0] < 120 && (SectWatch.of(p).strikes() > 0 || guard.blockTarget() == p.getId())) {
+                if (ticks[0] < 120 && (SectWatch.of(p).strikes() > 0 || guard.blockTarget() == p.getId() || night.blockTarget() == p.getId())) {
                     quietByDay[0] = false;
                 }
             }
@@ -188,7 +192,8 @@ public final class SectHierarchyGameTests {
             helper.assertTrue(quietByDay[0], "днём охрана не пустила выпускника");
             // Был внутри по праву: полминуты на выход без толчков.
             helper.assertTrue(ticks[0] > 120 + SectWatch.WARN_EVERY / 2, "ещё время выйти");
-            helper.assertTrue(SectWatch.of(p).strikes() > 0 || guard.blockTarget() == p.getId(), "ночью охрана пропустила ученика в казну");
+            helper.assertTrue(SectWatch.of(p).strikes() > 0 || guard.blockTarget() == p.getId() || night.blockTarget() == p.getId(),
+                    "ночью охрана пропустила ученика в казну");
         });
     }
 }

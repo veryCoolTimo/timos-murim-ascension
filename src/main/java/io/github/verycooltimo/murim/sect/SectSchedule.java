@@ -35,6 +35,33 @@ public final class SectSchedule {
     /** Первый ряд (ближе к помосту наставника) — смещение по v от центра площади. */
     public static final double FRONT_ROW = 7.0D;
 
+    // ------------------------------------------------------------------ окна внутри частей суток (тики суток)
+
+    /** Конец строя: наставник докладывает главе на помосте. */
+    public static final int MENTOR_REPORT_FROM = 600;
+    public static final int MENTOR_REPORT_TO = 1000;
+    /** Завтрак: Ун Ам докладывает главе о ночи и воротах. */
+    public static final int UN_AM_REPORT_FROM = 1200;
+    public static final int UN_AM_REPORT_TO = 1800;
+    /** Начало занятий: Хён Ён приносит главе книгу учёта. */
+    public static final int LEDGER_REPORT_FROM = 2300;
+    public static final int LEDGER_REPORT_TO = 2900;
+    /** Хён Сан учит учеников на площади до этого часа, потом читает в Зале писаний. */
+    public static final int LECTURE_TO = 4000;
+    /** Ун Гак варит у печи до этого часа, потом растирает травы. */
+    public static final int BREW_TO = 4000;
+    /** Совет старейшин в главном зале (середина дня). */
+    public static final int COUNCIL_FROM = 6000;
+    public static final int COUNCIL_TO = 7200;
+    /** Ночная смена охраны спит до этого часа, потом отдыхает в лагере. */
+    public static final int NIGHT_WATCH_WAKE = 7000;
+    /** Смена поста: столько тиков сменяемый ждёт сменщика на посту. */
+    public static final int HANDOVER = 600;
+    /** Глава во главе совета и порядок мест: слева и справа от него — двумя рядами. */
+    public static final List<String> COUNCIL = List.of("hyun_jong", "hyun_young", "hyun_sang", "un_gak", "un_am");
+    /** Кому докладывают. */
+    public static final String LEADER = "hyun_jong";
+
     /** Части суток. */
     public enum Period {
         FORMATION(23000), BREAKFAST(1000), TRAINING(2000), DINNER(9000), EVENING(11000), NIGHT(13000);
@@ -111,7 +138,40 @@ public final class SectSchedule {
         /** Раздаёт еду: ходит между столами столовой. */
         SERVE,
         /** Травник на грядках у павильона алхимии: обход, остановки на корточках (поза tend). */
-        TEND
+        TEND,
+        /**
+         * Совет старейшин в главном зале (автор 05.10): глава во главе, старейшины двумя рядами лицом друг к другу, сидят;
+         * говорят по очереди, остальные кивают или качают головой.
+         */
+        COUNCIL,
+        /** Доклад главе: дойти, встать перед ним, поклон, говорить; {@code partner} — кому докладывает. */
+        REPORT,
+        /** Глава принимает в главном зале: стоит на своём месте, к подошедшему (доклад, гость) поворачивается и говорит. */
+        RECEIVE,
+        /** Хён Ён у стола казны: считает по книге, принимает груз носильщиков. */
+        COUNT,
+        /** Хён Сан учит: стоит перед учениками, объясняет и показывает. */
+        LECTURE,
+        /** Чтение: стоит с книгой (Зал писаний). */
+        READ,
+        /** Лекарь растирает травы в ступке, сидя. */
+        GRIND,
+        /** Лекарь у печи: варит снадобье (печь или котёл автора на площадке алхимии, если стоит). */
+        BREW,
+        /** Лекарь лечит раненого ученика: подходит, на колено, лечит (цель — {@code partner}). */
+        TREAT,
+        /** Лекарь дежурит у площадки поединков: стоит, смотрит, ждёт раненых. */
+        HEAL_POST,
+        /** Раненый после поединка сидит у края площадки и ждёт лекаря. */
+        WAIT_TREAT,
+        /** Глава в зале предков: стоит перед табличками, время от времени кланяется. */
+        REVERE;
+
+        /** Дело сидя: трапеза, медитация, вечер, сон, совет, ступка, раненый у края площадки. */
+        public boolean seated() {
+            return this == EAT || this == MEDITATE || this == REST || this == SLEEP || this == COUNCIL || this == GRIND
+                    || this == WAIT_TREAT;
+        }
     }
 
     /**
@@ -238,13 +298,107 @@ public final class SectSchedule {
     // ------------------------------------------------------------------ задания
 
     /**
+     * Что делает человек в этот час: часть суток ({@link #task(SectRoster, Period, long)}) и окна внутри неё —
+     * доклады главе, совет старейшин, урок Хён Сана, печь лекаря, сон ночной смены (автор 05.10: «члены секты —
+     * глава, советники, охрана, финансы, алхимик»).
+     */
+    public static Task task(SectRoster m, long dayTime) {
+        Period p = at(dayTime);
+        long day = day(dayTime);
+        int t = (int) Math.floorMod(dayTime, (long) DAY);
+        boolean council = p == Period.TRAINING && t >= COUNCIL_FROM && t < COUNCIL_TO;
+        if (council && COUNCIL.contains(m.key())) {
+            return councilSeat(m);
+        }
+        switch (m.key()) {
+            case "un_geom" -> {
+                if (p == Period.FORMATION && t >= MENTOR_REPORT_FROM && t < MENTOR_REPORT_TO) {
+                    return report(dayTime);
+                }
+            }
+            case "un_am" -> {
+                if (p == Period.BREAKFAST && t >= UN_AM_REPORT_FROM && t < UN_AM_REPORT_TO) {
+                    return report(dayTime);
+                }
+            }
+            case "hyun_young" -> {
+                if (p == Period.TRAINING && t >= LEDGER_REPORT_FROM && t < LEDGER_REPORT_TO) {
+                    return report(dayTime);
+                }
+            }
+            case "hyun_jong" -> {
+                // После совета глава смотрит поединки с помоста рядом с наставником.
+                if (p == Period.TRAINING && t >= COUNCIL_TO) {
+                    return new Task(Kind.WATCH, "mentor", 2.0D, 1.0D, 0.0D, 1.0D);
+                }
+            }
+            case "hyun_sang" -> {
+                if (p == Period.TRAINING) {
+                    if (t < LECTURE_TO) {
+                        // Перед учениками, которые бьют формы за строем (thirdTraining, DRILL), лицом к ним.
+                        return new Task(Kind.LECTURE, "training", 0.0D, -4.5D, 0.0D, -1.0D);
+                    }
+                    if (t >= COUNCIL_TO) {
+                        // После совета — у площадки поединков: смотрит и поправляет.
+                        return new Task(Kind.WATCH, "sparring", 12.0D, -8.5D, -0.6D, 1.0D);
+                    }
+                }
+            }
+            case "un_gak" -> {
+                if (p == Period.TRAINING) {
+                    if (t < BREW_TO) {
+                        return new Task(Kind.BREW, "alchemy", 3.0D, -2.0D, 0.0D, -1.0D);
+                    }
+                    if (t >= COUNCIL_TO) {
+                        // После совета — дежурство у площадки поединков: раненых лечит на месте.
+                        return new Task(Kind.HEAL_POST, "sparring", -12.0D, -8.5D, 0.6D, 1.0D);
+                    }
+                }
+            }
+            default -> {
+            }
+        }
+        // Ночная смена охраны спит днём до полудня.
+        if (m.role() == SectRole.GUARD && m.nightWatch() && p == Period.TRAINING && t < NIGHT_WATCH_WAKE) {
+            return sleep(m);
+        }
+        return task(m, p, day);
+    }
+
+    /** Место на совете: глава во главе (юг зала, лицом к входу), старейшины двумя рядами лицом друг к другу. */
+    static Task councilSeat(SectRoster m) {
+        int i = COUNCIL.indexOf(m.key());
+        if (i <= 0) {
+            return new Task(Kind.COUNCIL, "main_hall", 0.0D, 5.0D, 0.0D, -1.0D);
+        }
+        int side = (i - 1) % 2;
+        int rank = (i - 1) / 2;
+        return new Task(Kind.COUNCIL, "main_hall", side == 0 ? -3.0D : 3.0D, 2.5D - rank * 2.5D, side == 0 ? 1.0D : -1.0D, 0.0D);
+    }
+
+    /** Доклад главе: место в шаге перед ним (где он сейчас по распорядку), лицом к нему. */
+    static Task report(long dayTime) {
+        SectRoster leader = SectRoster.of(LEADER).orElseThrow();
+        Task at = task(leader, dayTime);
+        double len = Math.max(1.0E-6D, Math.hypot(at.faceU(), at.faceV()));
+        double fu = at.faceU() / len;
+        double fv = at.faceV() / len;
+        return new Task(Kind.REPORT, at.zone(), at.du() + fu * 1.8D, at.dv() + fv * 1.8D, -fu, -fv, LEADER);
+    }
+
+    /** Охранник на посту в эту часть суток: дневная смена — с рассвета до вечера, ночная — ночью. */
+    public static boolean onShift(SectRoster m, Period p) {
+        return m.nightWatch() == (p == Period.NIGHT);
+    }
+
+    /**
      * Что делает человек в эту часть суток. {@code day} — день секты ({@link #day}): занятия днём
      * сменяются по дням, чтобы ученики не стояли на одном месте всю жизнь.
      */
     public static Task task(SectRoster m, Period p, long day) {
         return switch (m.role()) {
             case GATEKEEPER -> new Task(Kind.GUARD, "gate", 0.0D, -2.0D, 0.0D, -1.0D);
-            case GUARD -> post(m);
+            case GUARD -> onShift(m, p) ? post(m) : offDuty(m, p);
             case STEWARD, COOK, PORTER, GARDENER, SWEEPER, WATER_CARRIER -> SectStaff.task(m, p, day);
             case LEADER -> leaderTask(m, p);
             case MENTOR -> mentor(m, p);
@@ -257,9 +411,11 @@ public final class SectSchedule {
         return switch (p) {
             // Рассвет: смотрит на строй с помоста рядом с наставником.
             case FORMATION -> new Task(Kind.WATCH, "mentor", 2.0D, 0.0D, 0.0D, -1.0D);
-            case EVENING -> new Task(Kind.WORK, "ancestors", 0.0D, -4.0D, 0.0D, 1.0D);
+            // Вечер: зал предков, перед табличками (канон: входящий кланяется предкам, гл. 9).
+            case EVENING -> new Task(Kind.REVERE, "ancestors", 0.0D, -2.0D, 0.0D, 1.0D);
             case NIGHT -> sleep(m);
-            default -> new Task(Kind.WORK, "main_hall", 0.0D, -8.0D, 0.0D, -1.0D);
+            // Днём и в трапезы — главный зал: принимает доклады и гостей на своём месте, лицом к входу.
+            default -> new Task(Kind.RECEIVE, "main_hall", 0.0D, 4.0D, 0.0D, -1.0D);
         };
     }
 
@@ -276,6 +432,17 @@ public final class SectSchedule {
 
     private static Task elder(SectRoster m, Period p) {
         boolean am = "un_am".equals(m.key());
+        // Своё дело у стола: Хён Ён — у стола казны с книгой учёта (там же принимает носильщиков), Хён Сан — читает
+        // в Зале писаний, Ун Гак — растирает травы в павильоне алхимии; так же утром и в трапезы.
+        Task desk = switch (m.key()) {
+            case "hyun_young" -> new Task(Kind.COUNT, "treasury", 5.5D, 0.0D, 1.0D, 0.0D);
+            case "hyun_sang" -> new Task(Kind.READ, "scriptures", 0.0D, -2.0D, 0.0D, -1.0D);
+            case "un_gak" -> new Task(Kind.GRIND, "alchemy", -3.0D, 1.0D, 0.0D, -1.0D);
+            default -> null;
+        };
+        if (desk != null && p != Period.EVENING && p != Period.NIGHT && !(p == Period.FORMATION && "hyun_sang".equals(m.key()))) {
+            return desk;
+        }
         return switch (p) {
             // Хён Сан (Зал боевых искусств) смотрит строй с края площади; остальные — у себя.
             case FORMATION -> "hyun_sang".equals(m.key())
@@ -293,7 +460,9 @@ public final class SectSchedule {
      * откуда приходят.
      */
     static Task post(SectRoster m) {
-        return switch (m.key()) {
+        // Ночная смена стоит на тех же постах, что дневная: место — по сменщику дневной смены.
+        String key = m.nightWatch() ? m.relief().map(SectRoster::key).orElse(m.key()) : m.key();
+        return switch (key) {
             // Ворота секты: изнутри, рядом с Ун Амом; чужак дальше ворот не идёт.
             case "baek_mu" -> new Task(Kind.GUARD, "sect_gate", 5.0D, 1.0D, 0.0D, -1.0D);
             // Главный зал: у входа со стороны площади.
@@ -307,6 +476,18 @@ public final class SectSchedule {
             // Дома старейшин и пещера покаяния за ними.
             default -> new Task(Kind.GUARD, m.home(), -6.0D, 7.0D, 1.0D, 0.0D);
         };
+    }
+
+    /**
+     * Охранник не на смене: дневная смена ночью спит в общежитии второго поколения; ночная днём спит до
+     * {@link #NIGHT_WATCH_WAKE} (окно решает {@link #task(SectRoster, long)}), потом сидит в своём углу лагеря.
+     */
+    static Task offDuty(SectRoster m, Period p) {
+        if (p == Period.NIGHT || p == Period.FORMATION || p == Period.BREAKFAST) {
+            return sleep(m);
+        }
+        int i = Math.max(0, m.post());
+        return new Task(Kind.REST, "camp", -12.0D + (i % 3) * 2.5D, -18.0D + (i / 3) * 3.0D, 0.0D, -1.0D);
     }
 
     private static Task home(SectRoster m) {
@@ -473,6 +654,11 @@ public final class SectSchedule {
         }
         if (m.role() == SectRole.MENTOR) {
             return new Task(Kind.SLEEP, "dorm_3rd", 4.0D, 7.0D, 0.0D, -1.0D);
+        }
+        if (m.role() == SectRole.GUARD) {
+            // Охрана — в своём конце общежития второго поколения: дневная смена спит ночью, ночная — днём.
+            int i = Math.max(0, m.post()) + (m.nightWatch() ? 6 : 0);
+            return new Task(Kind.SLEEP, "dorm_2nd", -5.0D + (i % 3) * 5.0D, 4.5D + (i / 3) * 1.1D, 0.0D, -1.0D);
         }
         if (m.generation() == 2) {
             int i = SectRoster.generation(2).indexOf(m);

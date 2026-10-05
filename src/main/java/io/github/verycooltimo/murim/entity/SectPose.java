@@ -57,7 +57,17 @@ public enum SectPose {
     /** Horse stance held, a slow breath, fists at the hips. */
     HORSE_STANCE("horse_stance", "sect_train_horse", true, false, List.of()),
     /** Carries the training stone at the chest (upper body; legs walk). */
-    CARRY_STONE("carry_stone", "sect_train_carry", true, true, List.of("rock"));
+    CARRY_STONE("carry_stone", "sect_train_carry", true, true, List.of("rock")),
+    /** Чтение: книга у груди (ванильная книга в руке), голова опущена, перелистывает (Хён Сан, Зал писаний). */
+    READ("read", "sect_read", true, true, List.of()),
+    /** Счёт у стола казны: книга учёта под левой рукой, правая щёлкает счётами, поднимает глаза и кивает (Хён Ён). */
+    COUNT("count", "sect_count", true, true, List.of()),
+    /** Сидя растирает травы: ступка (миска) в левой руке, пестик (палка) в правой ходит по кругу (Ун Гак). */
+    GRIND("grind", "sect_grind", true, false, List.of()),
+    /** Варит у печи: мешает в котле черпаком, левая рука на поясе (Ун Гак). */
+    BREW("brew", "sect_brew", true, true, List.of()),
+    /** Лечит: на правом колене над сидящим раненым, руки вперёд — давит, щупает пульс (Ун Гак). */
+    TREAT("treat", "sect_treat", true, false, List.of());
 
     private final String id;
     private final ResourceLocation clip;
@@ -96,12 +106,13 @@ public enum SectPose {
 
     /** Сидячая поза: важнее лотоса ({@code sit}), который ставит распорядок. */
     public boolean seated() {
-        return this == EAT || this == SLEEP || this == MEDITATE || this == SIT;
+        return this == EAT || this == SLEEP || this == MEDITATE || this == SIT || this == GRIND;
     }
 
-    /** Меч в руке спрятан: руки заняты (чашка, метла, вёдра), меч в ножнах или на столбах руки для равновесия. */
+    /** Меч в руке спрятан: руки заняты (чашка, метла, вёдра, книга, ступка), меч в ножнах или на столбах руки для равновесия. */
     public boolean hidesWeapon() {
-        return !props.isEmpty() || this == BOW || this == TALK || this == POLES || this == POLE_STEP || seated() || training();
+        return !props.isEmpty() || this == BOW || this == TALK || this == POLES || this == POLE_STEP || seated() || training()
+                || this == READ || this == COUNT || this == BREW || this == TREAT;
     }
 
     /** A body-training pose: hands are busy, no sword. */
@@ -151,6 +162,15 @@ public enum SectPose {
             case CARRY, SERVE -> CARRY;
             case SWEEP -> SWEEP;
             case COOK, TEND -> TALK;
+            // Члены секты за делом (автор 05.10).
+            case COUNCIL, WAIT_TREAT -> SIT;
+            case REPORT, LECTURE -> TALK;
+            case RECEIVE, HEAL_POST, REVERE -> NONE;
+            case COUNT -> COUNT;
+            case READ -> READ;
+            case GRIND -> GRIND;
+            case BREW -> BREW;
+            case TREAT -> TREAT;
         };
     }
 }
