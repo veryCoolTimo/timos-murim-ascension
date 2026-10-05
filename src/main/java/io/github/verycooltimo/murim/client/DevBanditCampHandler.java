@@ -53,14 +53,16 @@ public final class DevBanditCampHandler {
     /** Точки съёмки сцены tents: x, y, z, yaw, pitch. */
     private static volatile List<double[]> views = List.of();
     private static volatile int peddlerId = -1;
-    /** Сцена brawl: камера отъезжает на 14 блоков назад-вверх, чтобы в кадре был весь двор и кольцо ждущих. */
+    private static volatile BlockPos tradeVillage;
+    private static int tradeBase;
+    /** Сцена brawl: камера отъезжает на 18 блоков назад-вверх, чтобы в кадре был весь двор и кольцо ждущих. */
     private static boolean wideCamera;
 
     /** API: reference/neoforge-src/net/neoforged/neoforge/client/event/CalculateDetachedCameraDistanceEvent.java */
     @SubscribeEvent
     static void onCameraDistance(net.neoforged.neoforge.client.event.CalculateDetachedCameraDistanceEvent event) {
         if (ENABLED && wideCamera) {
-            event.setDistance(14.0F);
+            event.setDistance(18.0F);
         }
     }
 
@@ -276,7 +278,7 @@ public final class DevBanditCampHandler {
                     float yaw = (float) Math.toDegrees(Math.atan2(-dx, dz));
                     mc.player.setYRot(yaw);
                     mc.player.setYHeadRot(yaw);
-                    mc.player.setXRot(48.0F);
+                    mc.player.setXRot(60.0F);
                 } else if (t != null) {
                     face(mc, t);
                 }
@@ -295,28 +297,38 @@ public final class DevBanditCampHandler {
                 }
             }
             case "trade" -> {
-                // Покупка у торговца: открыть его экран, выбрать пилюлю, забрать её за серебро.
+                // Покупка у торговца: дождаться его в деревне, открыть его экран, выбрать пилюлю, забрать за серебро.
                 mc.options.setCameraType(CameraType.FIRST_PERSON);
                 mc.options.hideGui = false;
+                if (peddlerId < 0) {
+                    if (act % 20 == 0) {
+                        boolean force = act >= 600;
+                        int waited = act;
+                        server.execute(() -> findPeddler(server, waited, force));
+                    }
+                    tradeBase = act;
+                    return;
+                }
+                int k = act - tradeBase;
                 Entity ped = mc.level.getEntity(peddlerId);
-                if (ped != null && act < 20) {
+                if (ped != null && k < 30) {
                     face(mc, ped);
                     mc.player.setXRot(8.0F);
                 }
-                if (act == 10) {
+                if (k == 20) {
                     grab(mc, name);
                 }
-                if (act == 20 && ped != null) {
+                if (k == 30 && ped != null) {
                     mc.gameMode.interact(mc.player, ped, InteractionHand.MAIN_HAND);
                 }
-                if (act == 40) {
+                if (k == 50) {
                     grab(mc, name);
                 }
-                if (act == 45 && mc.player.containerMenu instanceof net.minecraft.world.inventory.MerchantMenu menu) {
+                if (k == 55 && mc.player.containerMenu instanceof net.minecraft.world.inventory.MerchantMenu menu) {
                     int pick = -1;
-                    for (int k = 0; k < menu.getOffers().size(); k++) {
-                        if (menu.getOffers().get(k).getResult().is(io.github.verycooltimo.murim.registry.ModItems.PILL_SNOW_PLUM.get())) {
-                            pick = k;
+                    for (int q = 0; q < menu.getOffers().size(); q++) {
+                        if (menu.getOffers().get(q).getResult().is(io.github.verycooltimo.murim.registry.ModItems.PILL_SNOW_PLUM.get())) {
+                            pick = q;
                         }
                     }
                     MurimMod.LOGGER.info("Bandit camp capture: trade offers {}, pill at {}", menu.getOffers().size(), pick);
@@ -326,22 +338,22 @@ public final class DevBanditCampHandler {
                         mc.getConnection().send(new net.minecraft.network.protocol.game.ServerboundSelectTradePacket(pick));
                     }
                 }
-                if (act == 55) {
+                if (k == 65) {
                     grab(mc, name);
                 }
-                if (act == 60 && mc.player.containerMenu instanceof net.minecraft.world.inventory.MerchantMenu menu) {
+                if (k == 70 && mc.player.containerMenu instanceof net.minecraft.world.inventory.MerchantMenu menu) {
                     mc.gameMode.handleInventoryMouseClick(menu.containerId, 2, 0, net.minecraft.world.inventory.ClickType.QUICK_MOVE, mc.player);
                 }
-                if (act == 70) {
+                if (k == 80) {
                     grab(mc, name);
                 }
-                if (act == 75) {
+                if (k == 85) {
                     mc.player.closeContainer();
                 }
-                if (act == 85) {
+                if (k == 95) {
                     mc.setScreen(new net.minecraft.client.gui.screens.inventory.InventoryScreen(mc.player));
                 }
-                if (act == 95) {
+                if (k == 105) {
                     grab(mc, name);
                     server.execute(() -> {
                         ServerPlayer p = server.getPlayerList().getPlayers().get(0);
@@ -350,7 +362,7 @@ public final class DevBanditCampHandler {
                                 p.getInventory().countItem(io.github.verycooltimo.murim.registry.ModItems.PILL_SNOW_PLUM.get()));
                     });
                 }
-                if (act == 100) {
+                if (k == 110) {
                     mc.setScreen(null);
                     next(server);
                 }
@@ -477,7 +489,7 @@ public final class DevBanditCampHandler {
                             v.add(view(level, sx + 1.0D, sz + 6.0D, sx, sz, 26.0F));
                             continue;
                         }
-                        double d = s.kind() == CampLayout.Kind.CHIEF_TENT ? 10.0D : 8.0D;
+                        double d = s.kind() == CampLayout.Kind.CHIEF_TENT ? 8.0D : 6.5D;
                         // Две точки с чистым видом: из-под углов к входу (анфас с наклоном, скат и терраса).
                         double front = Math.atan2(fw[1], fw[0]);
                         int taken = 0;
@@ -537,10 +549,11 @@ public final class DevBanditCampHandler {
                         break;
                     }
                     teleport(level, p, village.getX() + 0.5D, village.getZ() + 0.5D, village.getX() + 4.5D, village.getZ() + 0.5D, 8.0F, 0);
-                    // Торговец приходит сам, когда игрок в деревне (PeddlerSpawns, раз в 5 с) — подождать его.
-                    long since = level.getGameTime();
-                    server.execute(() -> waitPeddler(server, village, since));
-                    return;
+                    // Торговец приходит сам, когда игрок в деревне (PeddlerSpawns, раз в 5 с): клиентский тик
+                    // опрашивает раз в секунду. Не самоперезаказ TickTask: такая очередь не даёт серверу
+                    // догружать чанки между тиками, и центр деревни так и не прогружался (стенд 04.10).
+                    tradeVillage = village;
+                    peddlerId = -1;
                 }
                 default -> {
                 }
@@ -596,38 +609,29 @@ public final class DevBanditCampHandler {
         return found == null ? null : found.getFirst();
     }
 
-    /** Ждать торговца у деревни до 20 с; не пришёл — поставить его (стенд) и встать перед ним. */
-    private static void waitPeddler(IntegratedServer server, BlockPos village, long since) {
+    /** Пришёл ли торговец (через {@code waited} тиков сцены); {@code force} — не пришёл за 30 с: поставить (стенд). */
+    private static void findPeddler(IntegratedServer server, int waited, boolean force) {
         ServerLevel level = server.overworld();
         ServerPlayer p = server.getPlayerList().getPlayers().get(0);
         List<io.github.verycooltimo.murim.trade.Peddler> found = level.getEntitiesOfClass(io.github.verycooltimo.murim.trade.Peddler.class,
                 new AABB(p.blockPosition()).inflate(96.0D), Entity::isAlive);
-        // По игровому времени, а не по числу вызовов: TickTask исполняется и между тиками, по многу раз за тик.
-        long waited = level.getGameTime() - since;
-        if (waited % 100L == 0L) {
-            var start = io.github.verycooltimo.murim.trade.PeddlerSpawns.village(level, p.blockPosition());
-            BlockPos c = start == null ? null : start.getPieces().get(0).getBoundingBox().getCenter();
-            MurimMod.LOGGER.info("Bandit camp capture: at {} village {} centre ticking {}", p.blockPosition().toShortString(),
-                    c == null ? "-" : c.toShortString(), c != null && level.isPositionEntityTicking(c));
-        }
-        if (found.isEmpty() && waited < 400L) {
-            server.tell(new net.minecraft.server.TickTask(server.getTickCount() + 1, () -> waitPeddler(server, village, since)));
+        if (found.isEmpty() && !force) {
             return;
         }
-        io.github.verycooltimo.murim.trade.Peddler ped = found.isEmpty()
-                ? io.github.verycooltimo.murim.trade.PeddlerSpawns.arrive(level, village, io.github.verycooltimo.murim.trade.Peddler.VILLAGE_STAY)
+        BlockPos village = tradeVillage;
+        io.github.verycooltimo.murim.trade.Peddler ped = found.isEmpty() || village == null
+                ? (village == null ? null : io.github.verycooltimo.murim.trade.PeddlerSpawns.arrive(level, village,
+                        io.github.verycooltimo.murim.trade.Peddler.VILLAGE_STAY))
                 : found.get(0);
         MurimMod.LOGGER.info("Bandit camp capture: peddler {} after {} ticks at {}", found.isEmpty() ? "placed" : "came", waited,
                 ped == null ? "-" : ped.blockPosition().toShortString());
         if (ped == null) {
-            targetReady = true;
             return;
         }
-        peddlerId = ped.getId();
         float yaw = ped.getYRot();
         double fx = ped.getX() - Math.sin(Math.toRadians(yaw)) * 2.6D, fz = ped.getZ() + Math.cos(Math.toRadians(yaw)) * 2.6D;
         teleport(level, p, fx, fz, ped.getX(), ped.getZ(), 8.0F, 0);
-        targetReady = true;
+        peddlerId = ped.getId();
     }
 
     private static void teleport(ServerLevel level, ServerPlayer p, double x, double z, double lookX, double lookZ, float pitch, int lift) {
