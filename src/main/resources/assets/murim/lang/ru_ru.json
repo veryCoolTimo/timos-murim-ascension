@@ -1417,5 +1417,11 @@
   "subtitles.murim.meditation_stop": "Конец медитации",
   "subtitles.murim.training_rep": "Повтор упражнения",
   "subtitles.murim.training_set": "Подход окончен",
-  "subtitles.murim.coin_clink": "Звон монет"
+  "subtitles.murim.coin_clink": "Звон монет",
+  "murim.gallery.npc": "Старейшина Ун Гом",
+  "murim.gallery.npc_title": "Хуашань, старший наставник",
+  "murim.gallery.line": "Ты держишь меч, как крестьянин держит мотыгу. Прежде чем для тебя расцветёт слива, запястья должны выучить терпение: тысяча ударов на рассвете, и ни одного небрежного.",
+  "murim.gallery.option1": "Буду упражняться, пока не опадут цветы, старейшина.",
+  "murim.gallery.option2": "Что мне тренировать первым?",
+  "murim.gallery.option3": "Уйти"
 }

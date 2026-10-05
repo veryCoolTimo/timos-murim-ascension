@@ -157,7 +157,9 @@ public final class DevCaptureHandler {
                 || "banditcamp".equals(System.getProperty(TECHNIQUE_PROPERTY))
                 || "boss".equals(System.getProperty(TECHNIQUE_PROPERTY))
                 // Location round trip and biome: client/DevLocationHandler.
-                || "location".equals(System.getProperty(TECHNIQUE_PROPERTY))) {
+                || "location".equals(System.getProperty(TECHNIQUE_PROPERTY))
+                // HUD and screen gallery: client/HudGalleryCapture.
+                || HudGalleryCapture.SUBJECT.equals(System.getProperty(TECHNIQUE_PROPERTY))) {
             return;
         }
         if (minecraft.player == null || minecraft.level == null) {

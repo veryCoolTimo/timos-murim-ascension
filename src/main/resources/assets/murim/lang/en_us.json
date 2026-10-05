@@ -1437,5 +1437,11 @@
   "subtitles.murim.meditation_stop": "Meditation ends",
   "subtitles.murim.training_rep": "Training rep",
   "subtitles.murim.training_set": "Training set done",
-  "subtitles.murim.coin_clink": "Coins clink"
+  "subtitles.murim.coin_clink": "Coins clink",
+  "murim.gallery.npc": "Elder Un Geom",
+  "murim.gallery.npc_title": "Mount Hua, Head Instructor",
+  "murim.gallery.line": "You hold the sword like a farmer holds a hoe. Before the plum blossoms bloom for you, your wrists must learn patience: a thousand cuts at dawn, and not one of them careless.",
+  "murim.gallery.option1": "I will practise until the blossoms fall, Elder.",
+  "murim.gallery.option2": "What should I train first?",
+  "murim.gallery.option3": "Leave"
 }
