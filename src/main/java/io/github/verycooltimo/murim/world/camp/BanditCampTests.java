@@ -122,6 +122,43 @@ public final class BanditCampTests {
     }
 
     /**
+     * Бой не свалкой (§3): по тревоге цель у всех, но вблизи дерутся двое, стреляют не больше двух,
+     * главарь ждёт. Павший освобождает место следующему; рядовые мечники кончились — входит главарь.
+     */
+    @GameTest(template = "camp_floor", timeoutTicks = 100)
+    public static void campFightsTwoAtATime(GameTestHelper helper) {
+        BanditCampData.Camp camp = camp(helper, SEED + 4);
+        BanditCamps.populate(helper.getLevel(), camp);
+        List<Bandit> all = members(helper, camp);
+        Player intruder = helper.makeMockPlayer(GameType.SURVIVAL);
+        intruder.moveTo(camp.centre.getX() + 0.5D, camp.centre.getY(), camp.centre.getZ() + 0.5D);
+        all.get(0).setTarget(intruder);
+        List<Bandit> ranks = all.stream().filter(b -> !(b instanceof BanditArcher) && !b.isChief()).toList();
+        Bandit chief = all.stream().filter(Bandit::isChief).findFirst().orElseThrow();
+        helper.assertTrue(ranks.size() >= 3, "мало рядовых мечников для проверки: " + ranks.size());
+        helper.startSequence()
+                .thenExecuteAfter(2, () -> {
+                    long melee = ranks.stream().filter(CampFight::mayFight).count();
+                    long shooting = all.stream().filter(b -> b instanceof BanditArcher && CampFight.mayFight(b)).count();
+                    helper.assertTrue(melee == CampFight.MELEE_SLOTS, "вблизи дерутся " + melee + " вместо " + CampFight.MELEE_SLOTS);
+                    helper.assertTrue(shooting <= CampFight.SHOOTER_SLOTS, "стреляют " + shooting);
+                    helper.assertTrue(!CampFight.mayFight(chief), "главарь вступил первым");
+                    helper.assertTrue(ranks.stream().filter(b -> !CampFight.mayFight(b)).allMatch(CampFight::waiting), "лишние не ждут");
+                    // Один из дерущихся пал.
+                    ranks.stream().filter(CampFight::mayFight).findFirst().orElseThrow().kill();
+                })
+                .thenExecuteAfter(2, () -> {
+                    long melee = ranks.stream().filter(b -> b.isAlive() && CampFight.mayFight(b)).count();
+                    long alive = ranks.stream().filter(Bandit::isAlive).count();
+                    helper.assertTrue(melee == Math.min(CampFight.MELEE_SLOTS, alive), "после потери дерутся " + melee + " из " + alive);
+                    helper.assertTrue(!CampFight.mayFight(chief), "главарь вступил, пока живы рядовые");
+                    ranks.forEach(Bandit::kill);
+                })
+                .thenExecuteAfter(2, () -> helper.assertTrue(CampFight.mayFight(chief), "рядовых нет, а главарь не вступил"))
+                .thenSucceed();
+    }
+
+    /**
      * Потери и возвращение: убитые уходят из состава, лагерь не разгромлен, пока жив хоть один;
      * через сутки банда пополняется; когда убит весь состав — лагерь разгромлен и больше не заселяется.
      */

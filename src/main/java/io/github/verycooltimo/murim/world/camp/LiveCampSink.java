@@ -77,6 +77,14 @@ public final class LiveCampSink implements CampBuilder.Sink {
         level.addFreshEntity(frame);
     }
 
+    @Override
+    public void display(double x, double y, double z, float yaw, ItemStack item, float[] scale, float roll) {
+        net.minecraft.world.entity.Entity d = CampBuilder.itemDisplay(level, x, y, z, yaw, item, scale, roll);
+        if (d != null) {
+            level.addFreshEntity(d);
+        }
+    }
+
     /** Опорные высоты построек по живому рельефу (как медиана генератора, но по одной точке). */
     public static int[] heights(ServerLevel level, CampLayout plan, int cx, int cz) {
         int[] h = new int[plan.spots().size() + 1];
