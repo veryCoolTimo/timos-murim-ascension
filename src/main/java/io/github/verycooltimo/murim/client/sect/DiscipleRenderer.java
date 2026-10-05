@@ -4,7 +4,9 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import io.github.verycooltimo.murim.MurimMod;
 import io.github.verycooltimo.murim.client.bandit.BanditModel;
 import io.github.verycooltimo.murim.client.bandit.BanditRenderer;
+import io.github.verycooltimo.murim.client.bedrock.BedrockGeo;
 import io.github.verycooltimo.murim.client.vfx.BoneAnchorLayer;
+import io.github.verycooltimo.murim.sect.SectRole;
 import io.github.verycooltimo.murim.entity.SectDisciple;
 import io.github.verycooltimo.murim.entity.SectPose;
 import io.github.verycooltimo.murim.registry.ModEntities;
@@ -29,6 +31,9 @@ import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Рендер старшего ученика Хуашань: модель бандита (временная) в белом ханьфу. Пока ученик
  * исполняет технику, форму основы или поклон, тело играет тот же файл, что у игрока
@@ -38,16 +43,60 @@ import org.joml.Vector4f;
 public class DiscipleRenderer extends MobRenderer<SectDisciple, DiscipleRenderer.Model> {
 
 
+    /**
+     * Своя модель роли (автор 05.10: модель на каждую роль, присылает по одной). Роль → geo в
+     * {@code assets/murim/bedrock/} и текстура; роли нет в таблице — модель бандита и облик человека.
+     * Новая модель автора — одна строка здесь (+ исходник в art/sources/entities, см. manifest.json).
+     */
+    private static final String THIRD = "textures/entity/sect/third_rate_disciple.png";
+    private static final String SECOND = "textures/entity/sect/second_rate_disciple.png";
+    private static final Map<SectRole, Body> BODIES = Map.of(
+            // Ученики (sect_disciple.bbmodel): ножны с мечом на поясе, меч в руке — предмет (DrawnSword).
+            // Третье поколение — светлое ханьфу, второе (старший и Пэк) — тёмное; стража второго поколения — пока бандит.
+            SectRole.DISCIPLE, Body.of("sect_disciple", THIRD),
+            SectRole.DISCIPLE_A, Body.of("sect_disciple", THIRD),
+            SectRole.DISCIPLE_B, Body.of("sect_disciple", THIRD),
+            SectRole.SENIOR, Body.of("sect_disciple", SECOND),
+            SectRole.SECOND, Body.of("sect_disciple", SECOND));
+
+    /** Модель (geo без расширения) и текстура роли. */
+    record Body(String geo, ResourceLocation texture) {
+        static Body of(String geo, String texture) {
+            return new Body(geo, ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, texture));
+        }
+    }
+
+    /** Модель бандита (все роли без своей модели) и модели из {@link #BODIES} по имени geo. */
+    private final Model bandit;
+    private final Map<String, Model> bodies = new HashMap<>();
+
     public DiscipleRenderer(EntityRendererProvider.Context context) {
         super(context, new Model(context.bakeLayer(BanditRenderer.SWORDSMAN_LAYER)), 0.5F);
+        bandit = model;
+        for (Body b : BODIES.values()) {
+            bodies.computeIfAbsent(b.geo(), g -> new Model(BedrockGeo.bake("/assets/murim/bedrock/" + g + ".geo.json")));
+        }
         addLayer(new Anchors(this));
-        // Реквизит слуг и фонарь ночной стражи (у учеников руки пусты: меч — часть модели).
+        // Реквизит слуг и фонарь ночной стражи (у учеников бандитской модели руки пусты: меч — часть модели).
         addLayer(new ItemInHandLayer<>(this, context.getItemInHandRenderer()));
+        addLayer(new DrawnSword(this, context.getItemInHandRenderer()));
         addLayer(new SectProps(this, context.bakeLayer(SectProps.LAYER)));
     }
 
     @Override
+    public void render(SectDisciple entity, float yaw, float partialTick, PoseStack pose, MultiBufferSource buffers, int light) {
+        // Модель на кадр: слои берут её через getParentModel() — та же, что у тела.
+        Body body = BODIES.get(entity.role());
+        model = body == null ? bandit : bodies.get(body.geo());
+        super.render(entity, yaw, partialTick, pose, buffers, light);
+    }
+
+    @Override
     public ResourceLocation getTextureLocation(SectDisciple entity) {
+        Body body = BODIES.get(entity.role());
+        if (body != null) {
+            return body.texture();
+        }
         // Человек секты — свой облик (поколение по одежде, лицо и волосы разные); иначе — текстура роли.
         String look = entity.look();
         if (!look.isEmpty()) {
@@ -83,8 +132,17 @@ public class DiscipleRenderer extends MobRenderer<SectDisciple, DiscipleRenderer
         private static final String[] LEGS = {"leg_r", "leg_l", "skirt_front", "skirt_back"};
         private static final ResourceLocation SLEEP_BED = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "sect_sleep_bed");
 
+        /** Рукоять меча в ножнах (модель ученика): видна, пока меч не обнажён. У модели бандита её нет. */
+        private final java.util.Optional<ModelPart> handle;
+
         public Model(ModelPart root) {
             super(root, "bandit");
+            handle = getAnyDescendantWithName("handle");
+        }
+
+        /** У модели свои ножны: меч в руке — предмет ({@link DrawnSword}), а не кость weapon. */
+        boolean sheathModel() {
+            return handle.isPresent();
         }
 
         /** Сейчас на модели клип позы секты (а не техника и не покой) — для реквизита ({@link SectProps}). */
@@ -99,6 +157,8 @@ public class DiscipleRenderer extends MobRenderer<SectDisciple, DiscipleRenderer
             // Слуги и управляющий — без меча (модель одна на всех: видимость ставится каждый кадр).
             boolean armed = entity.armed();
             getAnyDescendantWithName("weapon").ifPresent(w -> w.visible = armed);
+            // Меч обнажён — рукояти в ножнах нет (смена мгновенная, автор 05.10).
+            handle.ifPresent(h -> h.visible = !entity.drawn());
             poseShown = false;
             String anim = entity.anim();
             SectPose pose = entity.pose();
@@ -190,6 +250,40 @@ public class DiscipleRenderer extends MobRenderer<SectDisciple, DiscipleRenderer
     }
 
     /**
+     * Обнажённый меч модели с ножнами: меч Хуашань (предмет, наш BEWLR) в правой руке, как у игрока — та же
+     * постановка, что у ванильного ItemInHandLayer. В слот руки не кладётся: занятая рука (реквизит) — без меча.
+     * API: reference/minecraft-src/net/minecraft/client/renderer/entity/layers/ItemInHandLayer.java#renderArmWithItem
+     */
+    static class DrawnSword extends RenderLayer<SectDisciple, Model> {
+
+        private final net.minecraft.client.renderer.ItemInHandRenderer items;
+        private net.minecraft.world.item.ItemStack sword;
+
+        DrawnSword(RenderLayerParent<SectDisciple, Model> parent, net.minecraft.client.renderer.ItemInHandRenderer items) {
+            super(parent);
+            this.items = items;
+        }
+
+        @Override
+        public void render(PoseStack pose, MultiBufferSource buffers, int light, SectDisciple entity, float limbSwing,
+                           float limbSwingAmount, float partialTick, float ageInTicks, float yaw, float pitch) {
+            if (!getParentModel().sheathModel() || !entity.drawn() || !entity.getMainHandItem().isEmpty()) {
+                return;
+            }
+            if (sword == null) {
+                sword = new net.minecraft.world.item.ItemStack(io.github.verycooltimo.murim.registry.ModItems.HUASHAN_SWORD.get());
+            }
+            pose.pushPose();
+            getParentModel().translateToHand(net.minecraft.world.entity.HumanoidArm.RIGHT, pose);
+            pose.mulPose(com.mojang.math.Axis.XP.rotationDegrees(-90.0F));
+            pose.mulPose(com.mojang.math.Axis.YP.rotationDegrees(180.0F));
+            pose.translate(1.0F / 16.0F, 0.125F, -0.625F);
+            items.renderItem(entity, sword, net.minecraft.world.item.ItemDisplayContext.THIRD_PERSON_RIGHT_HAND, false, pose, buffers, light);
+            pose.popPose();
+        }
+    }
+
+    /**
      * Точки кисти и клинка ученика для эффектов (серп формы основы и др.): та же
      * {@link BoneAnchorLayer}, что у игрока, только цепочка костей бандита.
      */
@@ -214,6 +308,10 @@ public class DiscipleRenderer extends MobRenderer<SectDisciple, DiscipleRenderer
             if (weapon != null) {
                 put(entity, BoneAnchorLayer.Bone.BLADE_MID, pose, arm, weapon, 0.0F, 8.0F, 0.0F);
                 put(entity, BoneAnchorLayer.Bone.BLADE_TIP, pose, arm, weapon, 0.0F, 14.0F, 0.0F);
+            } else if (getParentModel().sheathModel() && entity.drawn()) {
+                // Меч-предмет смотрит из кулака вперёд, как бывший weapon с xRot = −90°: от кисти (−1, 10) по −z.
+                put(entity, BoneAnchorLayer.Bone.BLADE_MID, pose, arm, null, -1.0F, 10.0F, -8.0F);
+                put(entity, BoneAnchorLayer.Bone.BLADE_TIP, pose, arm, null, -1.0F, 10.0F, -14.0F);
             }
             ModelPart[] torso = chain(root, "torso");
             if (torso != null) {

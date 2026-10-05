@@ -70,7 +70,9 @@ public final class SectPoseCapture {
             new Spot("guard", SectPose.GUARD, SectRole.GATEKEEPER),
             new Spot("talk", SectPose.TALK, SectRole.MENTOR),
             // Для сравнения: старый лотос (sit без позы) — клип игрока на скелете NPC.
-            new Spot("lotus_legacy", SectPose.NONE, SectRole.DISCIPLE_A));
+            new Spot("lotus_legacy", SectPose.NONE, SectRole.DISCIPLE_A),
+            // Только по MURIM_POSES=draw: ролик «меч в ножнах → в руке → в ножнах».
+            new Spot("draw", SectPose.NONE, SectRole.DISCIPLE));
 
     /** Ракурс: имя, расстояние, высота камеры, ночь, кадров, тиков между кадрами. */
     private record Shot(String name, double dist, double height, boolean night, int frames, int every) {
@@ -80,6 +82,17 @@ public final class SectPoseCapture {
             new Shot("near", 3.4D, 1.4D, false, 12, 5),
             new Shot("far", 10.0D, 2.0D, false, 6, 10),
             new Shot("night", 10.0D, 2.0D, true, 4, 10));
+
+    /**
+     * {@code MURIM_POSES=draw} — один ролик ученика третьего поколения: покой (рукоять в ножнах) → поединок с
+     * товарищем (поклон с мечом в ножнах, бой с мечом Хуашань в руке) → колокол, снова покой. Камера идёт за парой.
+     */
+    private static final Shot DRAW_SHOT = new Shot("clip", 4.6D, 0.5D, false, 95, 3);
+    /** Кадр ролика draw, на котором начинается поединок и на котором звонит колокол. */
+    private static final int DRAW_SPAR_AT = 10;
+    private static final int DRAW_STOP_AT = 75;
+
+    private static List<Shot> shots = SHOTS;
 
     private static boolean setup;
     private static List<Spot> spots;
@@ -113,15 +126,18 @@ public final class SectPoseCapture {
             String raw = System.getenv("MURIM_POSES");
             spots = new ArrayList<>();
             for (Spot s : ALL) {
-                if (raw == null || raw.isBlank() || List.of(raw.split(",")).contains(s.name())) {
+                if (raw == null || raw.isBlank() ? !"draw".equals(s.name()) : List.of(raw.split(",")).contains(s.name())) {
                     spots.add(s);
                 }
+            }
+            if ("draw".equals(raw)) {
+                shots = List.of(DRAW_SHOT);
             }
             server.execute(() -> build(server));
             wait = -60;
             return;
         }
-        if (origin == null || index >= spots.size() * SHOTS.size()) {
+        if (origin == null || index >= spots.size() * shots.size()) {
             return;
         }
         follow(mc);
@@ -136,8 +152,8 @@ public final class SectPoseCapture {
             }
             return;
         }
-        Shot shot = SHOTS.get(index % SHOTS.size());
-        Spot spot = spots.get(index / SHOTS.size());
+        Shot shot = shots.get(index % shots.size());
+        Spot spot = spots.get(index / shots.size());
         if (frame == 0) {
             int sections = mc.levelRenderer.countRenderedSections();
             stable = sections == lastSections && mc.levelRenderer.hasRenderedAllSections() ? stable + 1 : 0;
@@ -150,6 +166,10 @@ public final class SectPoseCapture {
             }
         } else if (wait % shot.every() != 0) {
             return;
+        }
+        if ("draw".equals(spot.name())) {
+            int at = frame;
+            server.execute(() -> drawTimeline(server, at));
         }
         String name = String.format("murim_pose_%s_%s_%02d.png", spot.name(), shot.name(), frame++);
         Screenshot.grab(mc.gameDirectory, name, mc.getMainRenderTarget(), m -> {
@@ -178,12 +198,12 @@ public final class SectPoseCapture {
         frame = 0;
         stable = 0;
         lastSections = -1;
-        if (index >= spots.size() * SHOTS.size()) {
+        if (index >= spots.size() * shots.size()) {
             MurimMod.LOGGER.info("Стенд поз секты: снято {} поз", spots.size());
             return;
         }
-        Shot shot = SHOTS.get(index % SHOTS.size());
-        int i = index / SHOTS.size();
+        Shot shot = shots.get(index % shots.size());
+        int i = index / shots.size();
         server.execute(() -> camera(server, i, shot));
     }
 
@@ -257,6 +277,19 @@ public final class SectPoseCapture {
             if ("sleep_bed".equals(s.name())) {
                 npc.startSleeping(at.north());
             }
+            if ("draw".equals(s.name())) {
+                // Ролик: двое учеников с ИИ (поединку нужен бой), лицом друг к другу; без ключа — без распорядка.
+                npc.setNoAi(false);
+                npc.moveTo(at.getX() - 1.0D, standY, at.getZ() + 0.5D, -90.0F, 0.0F);
+                SectDisciple mate = new SectDisciple(ModEntities.SECT_DISCIPLE.get(), level);
+                mate.setRole(SectRole.DISCIPLE);
+                mate.setKeepAwake(true);
+                mate.moveTo(at.getX() + 2.0D, standY, at.getZ() + 0.5D, 90.0F, 0.0F);
+                level.addFreshEntity(mate);
+                npcIds.add(npc.getId());
+                npcIds.add(mate.getId());
+                continue;
+            }
             npc.playPose(s.pose());
             npcIds.add(npc.getId());
         }
@@ -277,8 +310,8 @@ public final class SectPoseCapture {
                 e.discard();
             }
         }
-        for (int i = 0; i < npcIds.size(); i++) {
-            if (!(level.getEntity(npcIds.get(i)) instanceof SectDisciple npc)) {
+        for (int i = 0; i < npcIds.size() && i < spots.size(); i++) {
+            if ("draw".equals(spots.get(i).name()) || !(level.getEntity(npcIds.get(i)) instanceof SectDisciple npc)) {
                 continue;
             }
             SectPose pose = spots.get(i).pose();
@@ -287,6 +320,34 @@ public final class SectPoseCapture {
             } else if (pose == SectPose.FORM && level.getGameTime() % 100 == 0) {
                 npc.drillForm((int) (level.getGameTime() / 100) % 3, 8);
             }
+        }
+    }
+
+    /** Сервер, ролик draw: поединок на кадре {@link #DRAW_SPAR_AT}, колокол на {@link #DRAW_STOP_AT}; камера за парой. */
+    private static void drawTimeline(IntegratedServer server, int at) {
+        ServerLevel level = server.overworld();
+        if (npcIds.size() < 2 || !(level.getEntity(npcIds.get(0)) instanceof SectDisciple a)
+                || !(level.getEntity(npcIds.get(1)) instanceof SectDisciple b)) {
+            return;
+        }
+        if (at == DRAW_SPAR_AT) {
+            a.sparWith(b, 0);
+        } else if (at == DRAW_STOP_AT) {
+            a.stopBout();
+        }
+        if (at % 4 == 0) {
+            MurimMod.LOGGER.info("Стенд draw: кадр {} — {} drawn={} / {} drawn={}", at, a.spar(), a.drawn(), b.spar(), b.drawn());
+        }
+        // Камера: сбоку от середины пары, на том же расстоянии — оба в кадре, пока бьются.
+        Vec3 mid = a.position().add(b.position()).scale(0.5D).add(0.0D, 1.0D, 0.0D);
+        Vec3 cam = mid.add(new Vec3(0.35D, 0.0D, 1.0D).normalize().scale(DRAW_SHOT.dist())).add(0.0D, DRAW_SHOT.height(), 0.0D);
+        for (ArmorStand stand : level.getEntitiesOfClass(ArmorStand.class, new AABB(origin).inflate(256.0D),
+                s -> s.getCustomName() != null && CAMERA.equals(s.getCustomName().getString()))) {
+            Vec3 d = mid.subtract(cam);
+            float yaw = (float) Math.toDegrees(Math.atan2(d.z, d.x)) - 90.0F;
+            float pitch = (float) -Math.toDegrees(Math.atan2(d.y, Math.sqrt(d.x * d.x + d.z * d.z)));
+            stand.moveTo(cam.x, cam.y - 1.62D, cam.z, yaw, pitch);
+            stand.setYHeadRot(yaw);
         }
     }
 

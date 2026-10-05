@@ -10,7 +10,8 @@
 |---|---|---|
 | `entities/bandit.bbmodel` | Bedrock Entity | `bedrock/bandit.geo.json`, `bedrock/bandit.animation.json`, `textures/entity/bandit.png`, `bandit_elite.png`, `bandit_chief.png` |
 | `entities/bandit_archer.bbmodel` | Bedrock Entity | `bedrock/bandit_archer.geo.json`, `.animation.json`, `textures/entity/bandit_archer.png`, `peddler.png` (торговец — модель лучника) |
-| `entities/sect_people.bbmodel` | Bedrock Entity | **только текстуры** секты: `textures/entity/sect_disciple|leader|mentor.png` и все облики `textures/entity/sect/*.png`. Геометрия — модель бандита: её правь в `bandit.bbmodel` |
+| `entities/sect_disciple.bbmodel` | Bedrock Entity | модель автора для учеников (третье поколение — роль disciple, второе — старший и Пэк): `bedrock/sect_disciple.geo.json` (кости, ножны с рукоятью `handle`) + `textures/entity/sect/third_rate_disciple.png` и `second_rate_disciple.png` (обе в файле, переключаются в Blockbench). Правь геометрию и текстуры здесь. Модели других ролей — отдельными файлами по тому же образцу |
+| `entities/sect_people.bbmodel` | Bedrock Entity | **только текстуры** остальных людей секты (глава, старейшины, наставник, привратник, стража, слуги; старые облики учеников): `textures/entity/sect_disciple|leader|mentor.png` и облики `textures/entity/sect/*.png`. Геометрия — модель бандита: её правь в `bandit.bbmodel` |
 | `entities/fortress_master.bbmodel` | Bedrock Entity | `bedrock/fortress_master.geo.json`, `.animation.json`, `textures/entity/fortress_master.png`, `fortress_master_boil.png` |
 | `entities/sect_props.bbmodel` | Bedrock Entity | `bedrock/sect_props.geo.json`, `textures/entity/sect_props.png` (метла, чашка, коромысло…) |
 | `entities/huashan_sword.bbmodel`, `tang_dagger`, `tang_coin` | Bedrock Entity | `bedrock/<имя>.geo.json`, `textures/item/<имя>.png` |

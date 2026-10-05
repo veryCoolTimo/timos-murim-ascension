@@ -120,6 +120,11 @@ public class SectDisciple extends Bandit implements Casters.Caster {
     /** Поза вне боя ({@link SectPose#id()}) и её номер: клиент играет клип позы с прихода. */
     private static final EntityDataAccessor<String> POSE = SynchedEntityData.defineId(SectDisciple.class, EntityDataSerializers.STRING);
     private static final EntityDataAccessor<Integer> POSE_SEQ = SynchedEntityData.defineId(SectDisciple.class, EntityDataSerializers.INT);
+    /**
+     * Меч обнажён (автор 05.10: «handle убирать, когда он в руки берёт оружие»): рендер прячет рукоять в ножнах и
+     * рисует меч Хуашань в руке. Только вид — в слот руки меч не кладётся (атрибуты предмета не трогают урон).
+     */
+    private static final EntityDataAccessor<Boolean> DRAWN = SynchedEntityData.defineId(SectDisciple.class, EntityDataSerializers.BOOLEAN);
 
     public enum Spar { NONE, WAIT, BOW_IN, FIGHT, BOW_OUT }
 
@@ -202,6 +207,7 @@ public class SectDisciple extends Bandit implements Casters.Caster {
         builder.define(LOOK, "");
         builder.define(POSE, SectPose.NONE.id());
         builder.define(POSE_SEQ, 0);
+        builder.define(DRAWN, false);
     }
 
     @Override
@@ -494,6 +500,8 @@ public class SectDisciple extends Bandit implements Casters.Caster {
             return;
         }
         tickLife();
+        // SynchedEntityData шлёт значение только при смене.
+        entityData.set(DRAWN, wantsDrawn());
         if (dashLeft > 0) {
             dashLeft--;
             move(MoverType.SELF, dashStep);
@@ -1424,6 +1432,24 @@ public class SectDisciple extends Bandit implements Casters.Caster {
     /** Мирянин без меча (слуги, управляющий): рендер прячет клинок модели. */
     public boolean armed() {
         return !role().lay();
+    }
+
+    /** Меч в руке (синхронизируется на клиент): иначе — в ножнах на поясе. */
+    public boolean drawn() {
+        return entityData.get(DRAWN);
+    }
+
+    /**
+     * Меч обнажён в бою и на тренировке с мечом: поединок (после поклона — кланяются с мечом в ножнах), техника и
+     * форма, строй форм и столбы, заслон стражи, защита своих от моба. Остальное время — в ножнах; смена мгновенная.
+     */
+    boolean wantsDrawn() {
+        if (!armed()) {
+            return false;
+        }
+        SectPose p = pose();
+        return spar == Spar.FIGHT || technique != null || formTick >= 0 || defending || blocking()
+                || p == SectPose.FORM || p == SectPose.POLES || p == SectPose.POLE_STEP;
     }
 
     /** Список, чтобы тесты и стенд не трогали внутренности. */

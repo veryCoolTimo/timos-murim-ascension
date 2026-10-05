@@ -63,7 +63,8 @@ final class SectProps extends RenderLayer<SectDisciple, DiscipleRenderer.Model> 
         ModelPart root = getParentModel().root();
         for (String name : p.props()) {
             String[] chain = ATTACH.get(name);
-            if (chain == null || !props.hasChild(name)) {
+            // У модели со своими ножнами (ученик третьего поколения) ножны-реквизит не нужны.
+            if (chain == null || !props.hasChild(name) || "scabbard".equals(name) && getParentModel().sheathModel()) {
                 continue;
             }
             ModelPart prop = props.getChild(name);

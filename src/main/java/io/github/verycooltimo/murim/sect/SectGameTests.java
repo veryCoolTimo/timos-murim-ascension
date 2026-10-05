@@ -151,10 +151,17 @@ public final class SectGameTests {
         SectDisciple b = npc(helper, yard, "cheong_il", 14, 12);
         boolean[] fought = new boolean[1];
         float[] lowest = {Float.MAX_VALUE, Float.MAX_VALUE};
+        boolean[] sheathedBow = {true};
+        boolean[] drawnFight = {false};
         helper.runAfterDelay(5, () -> a.sparWith(b, 0));
         helper.onEachTick(() -> {
             if (a.spar() == SectDisciple.Spar.FIGHT && b.spar() == SectDisciple.Spar.FIGHT) {
                 fought[0] = true;
+                // Меч обнажается в поединке (сервер ставит со следующего тика).
+                drawnFight[0] |= a.drawn() && b.drawn();
+            }
+            if (a.spar() == SectDisciple.Spar.BOW_IN && a.drawn()) {
+                sheathedBow[0] = false;
             }
             lowest[0] = Math.min(lowest[0], a.getHealth());
             lowest[1] = Math.min(lowest[1], b.getHealth());
@@ -167,8 +174,15 @@ public final class SectGameTests {
         });
         helper.succeedWhen(() -> {
             helper.assertTrue(fought[0], "поединок не начался");
+            helper.assertTrue(drawnFight[0], "в поединке меч не обнажён");
+            helper.assertTrue(sheathedBow[0], "поклон с обнажённым мечом");
             helper.assertTrue(a.isAlive() && b.isAlive(), "ученик погиб в поединке");
             helper.assertTrue(a.spar() == SectDisciple.Spar.NONE && b.spar() == SectDisciple.Spar.NONE, "поединок ещё идёт");
+            // Без позы с мечом и без боя — меч в ножнах.
+            for (SectDisciple d : List.of(a, b)) {
+                helper.assertTrue(!d.drawn() || d.pose() != io.github.verycooltimo.murim.entity.SectPose.NONE || !d.free(),
+                        d.memberKey() + ": после поединка меч не убран в ножны");
+            }
             float floorA = a.getMaxHealth() * (1.0F - SectDisciple.SPAR_LOSS);
             float floorB = b.getMaxHealth() * (1.0F - SectDisciple.SPAR_LOSS);
             helper.assertTrue(lowest[0] <= floorA + 0.5F || lowest[1] <= floorB + 0.5F, "никто не дошёл до порога");
@@ -191,8 +205,11 @@ public final class SectGameTests {
             helper.assertTrue(victim.isAlive() && victim.getHealth() >= 1.0F, "ученик погиб от одного удара");
             helper.assertTrue(friend.defending() || friend.getTarget() == zombie, "товарищ не встал на защиту");
         });
+        boolean[] drawn = new boolean[1];
+        helper.onEachTick(() -> drawn[0] |= friend.defending() && friend.drawn());
         helper.succeedWhen(() -> {
             helper.assertTrue(!zombie.isAlive(), "зомби жив");
+            helper.assertTrue(drawn[0], "защищает своих с мечом в ножнах");
             helper.assertTrue(victim.isAlive() && friend.isAlive(), "ученик погиб");
         });
     }

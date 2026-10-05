@@ -102,6 +102,15 @@
    "textures": {
     "tang_coin": "textures/item/tang_coin.png"
    }
+  },
+  "sect_disciple": {
+   "geo": "bedrock/sect_disciple.geo.json",
+   "geometry_from": "bedrock/sect_disciple.geo.json",
+   "animation": null,
+   "textures": {
+    "third_rate_disciple": "textures/entity/sect/third_rate_disciple.png",
+    "second_rate_disciple": "textures/entity/sect/second_rate_disciple.png"
+   }
   }
  },
  "blocks": {
