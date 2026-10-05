@@ -464,7 +464,9 @@ public final class FootworkService {
         s[ACTIVE] = 1;
         s[LAYER] = layer;
         s[FAMILY] = family.ordinal();
-        s[RUN_LEFT] = TraverseRules.maxTicks(tier);
+        // Tempered body runs longer: +3 % per body level (docs/design/27-body-training.md §3).
+        s[RUN_LEFT] = (int) Math.round(TraverseRules.maxTicks(tier)
+                * io.github.verycooltimo.murim.training.TrainingService.footworkStamina(player));
         s[NO_SPRINT] = 0;
         s[PAID] = 0;
         player.setData(ModAttachments.TRAVERSE, s);

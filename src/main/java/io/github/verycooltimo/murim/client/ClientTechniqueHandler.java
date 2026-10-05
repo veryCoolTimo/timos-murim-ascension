@@ -126,7 +126,9 @@ public final class ClientTechniqueHandler {
         net.minecraft.client.Options o = minecraft.options;
         boolean blocked = minecraft.player == null || minecraft.screen != null || TechniqueWheel.open()
                 || ClientMeditationState.state().active() || minecraft.player.isInWater() || minecraft.player.onClimbable()
-                || minecraft.player.isFallFlying();
+                || minecraft.player.isFallFlying()
+                // Body training: a held crouch is a horse stance, the trail sprint is without qi (05.10).
+                || io.github.verycooltimo.murim.client.training.ClientTraining.suppressFootwork();
         java.util.Optional<io.github.verycooltimo.murim.technique.Styles.Style> style = footworkStyle();
         boolean[] now = {o.keyLeft.isDown(), o.keyRight.isDown(), o.keyDown.isDown()};
         for (int i = 0; i < 3; i++) {

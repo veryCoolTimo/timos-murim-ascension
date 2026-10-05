@@ -289,6 +289,15 @@ public final class MeditationService {
         }
         Realm.Blocker blocker = Realm.check(profile, player.getData(ModAttachments.MASTERY).layers(),
                 player.getData(io.github.verycooltimo.murim.entity.boss.BossRegistry.BOSS_DEFEATED));
+        // Body gate: off until the balance doc sets TrainingBalance.BREAKTHROUGH_BODY_LEVEL (all zero on 05.10).
+        if (blocker == Realm.Blocker.NONE && !io.github.verycooltimo.murim.training.BodyRules.breakthroughReady(profile.rank() + 1,
+                io.github.verycooltimo.murim.training.TrainingService.level(player))) {
+            if (state.ticks() % WALL_HINT_TICKS == 0) {
+                player.displayClientMessage(Component.translatable("murim.rank.wall.body",
+                        io.github.verycooltimo.murim.training.BodyRules.breakthroughNeed(profile.rank() + 1)).withStyle(ChatFormatting.GRAY), true);
+            }
+            return false;
+        }
         if (blocker == Realm.Blocker.NONE) {
             player.setData(ModAttachments.MEDITATION, state.withBreakthrough(0));
             // Без текста (решение автора 01.10): о стене говорят стук сердца и пульс экрана.
