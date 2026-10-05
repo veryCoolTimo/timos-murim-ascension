@@ -115,8 +115,8 @@ public final class SectChatter {
                 SectSchedule.at(time) == SectSchedule.Period.NIGHT, SectSchedule.sincePeriodStart(time));
     }
 
-    /** Сказать строку за делом; за столом и в кругу — сосед ответит. */
-    static boolean speak(SectDisciple d, RandomSource random) {
+    /** Сказать строку за делом; за столом и в кругу — сосед ответит (стенд зовёт напрямую — первая реплика сцены). */
+    public static boolean speak(SectDisciple d, RandomSource random) {
         SectBubbles.Group g = group(d);
         if (g == null) {
             return false;

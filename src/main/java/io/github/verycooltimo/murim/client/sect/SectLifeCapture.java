@@ -79,19 +79,25 @@ public final class SectLifeCapture {
             // Итог дня у наставника: игрок перед ним на площади (наставник вечером стоит у первого ряда).
             "summary", new double[] {0.6D, SectSchedule.FRONT_ROW + 0.6D},
             // Обмен заслуг: игрок перед столом казны, лицом к Хён Ёну (он у стола смотрит на восток).
-            "merit", new double[] {7.6D, 0.4D});
+            "merit", new double[] {7.6D, 0.4D},
+            // Живая гора: игрок у столбов применяет технику — ученики вокруг останавливаются и смотрят.
+            "watch", new double[] {0.0D, 6.0D});
     private static final java.util.Map<String, String> ACT_ZONE = java.util.Map.of("intercept", "main_hall", "guard", "treasury",
-            "summary", "training", "merit", "treasury");
+            "summary", "training", "merit", "treasury", "watch", "poles");
     /**
      * Сцены членов секты (автор 05.10) — свои кадры и шаг: {кадров, тиков между кадрами}. Действия {@code porters},
      * {@code wound}, {@code shift} ставят людей после расстановки, чтобы дело случилось в кадре.
      */
-    private static final java.util.Map<String, int[]> PACE = java.util.Map.of(
-            "council", new int[] {60, 6}, "report", new int[] {60, 4}, "treasury", new int[] {80, 6},
-            "healer", new int[] {80, 5}, "shift", new int[] {80, 5}, "summary", new int[] {130, 4},
-            "review", new int[] {200, 10}, "merit", new int[] {110, 4});
+    private static final java.util.Map<String, int[]> PACE = java.util.Map.ofEntries(
+            java.util.Map.entry("council", new int[] {60, 6}), java.util.Map.entry("report", new int[] {60, 4}),
+            java.util.Map.entry("treasury", new int[] {80, 6}), java.util.Map.entry("healer", new int[] {80, 5}),
+            java.util.Map.entry("shift", new int[] {80, 5}), java.util.Map.entry("summary", new int[] {130, 4}),
+            java.util.Map.entry("review", new int[] {200, 10}), java.util.Map.entry("merit", new int[] {110, 4}),
+            // Живая гора: реплики приходят раз в несколько секунд — сцены длиннее.
+            java.util.Map.entry("alive_meal", new int[] {100, 4}), java.util.Map.entry("alive_watch", new int[] {80, 3}),
+            java.util.Map.entry("alive_rain", new int[] {110, 6}));
     /** Игрок сам в кадре (выживание, без невидимости): перехват, охрана, итог дня, обмен заслуг. */
-    private static final java.util.Set<String> PLAYER_ACTS = java.util.Set.of("intercept", "guard", "summary", "merit");
+    private static final java.util.Set<String> PLAYER_ACTS = java.util.Set.of("intercept", "guard", "summary", "merit", "watch");
 
     private static final List<Scene> ALL = List.of(
             // Рассвет: строй лицом к помосту, камера над помостом смотрит на ряды; наставник ходит между ними.
@@ -134,7 +140,13 @@ public final class SectLifeCapture {
             new Scene("review", io.github.verycooltimo.murim.sect.SectReview.FROM + 100, "sparring", 0.0D, 17.0D, 7.0D,
                     "sparring", 0.0D, 0.0D, 0.0D, false, "review"),
             // Обмен заслуг: игрок у стола казны говорит с Хён Ёном и берёт меч за заслуги.
-            new Scene("merit", 3500, "treasury", 0.0D, 0.0D, 0.0D, "treasury", 5.5D, 0.0D, 1.0D, false, "merit"));
+            new Scene("merit", 3500, "treasury", 0.0D, 0.0D, 0.0D, "treasury", 5.5D, 0.0D, 1.0D, false, "merit"),
+            // Живая гора (автор 05.10): ужин во дворе лагеря вблизи — реплики над головами и ответы соседей.
+            new Scene("alive_meal", 9400, "camp", 10.5D, 9.0D, 2.4D, "camp", 5.0D, 3.0D, 0.9D, false, "chatter"),
+            // Игрок у столбов применяет технику — ученики останавливаются и поворачиваются к нему.
+            new Scene("alive_watch", 4300, "poles", 8.0D, 12.0D, 3.0D, "poles", 0.0D, 3.0D, 0.8D, false, "watch"),
+            // Дождь днём: поединки и столбы прерваны, люди уходят под крышу, дерево или к стене.
+            new Scene("alive_rain", 4400, "sparring", 0.0D, -17.0D, 7.0D, "sparring", 0.0D, -1.0D, 0.0D, false, "rain"));
 
     private static boolean setup;
     private static List<Scene> scenes;
@@ -234,6 +246,10 @@ public final class SectLifeCapture {
             follow(mc);
         }
         mc.options.keyUp.setDown(walk && shooting);
+        if ("watch".equals(s.act()) && shooting && wait == 130) {
+            // Второй приём: люди, отвернувшиеся после первого, снова смотрят.
+            server.execute(() -> castForCapture(server));
+        }
         if (s.join() && mc.player.level().getGameTime() % SectSchedule.BEAT == SectSchedule.BEAT_STRIKE - 2) {
             // Настоящее нажатие атаки: форма основы идёт тем же путём, что у игрока (клиент → сервер → строй).
             KeyMapping.click(mc.options.keyAttack.getKey());
@@ -394,6 +410,24 @@ public final class SectLifeCapture {
                     }
                 }
             }
+            case "chatter" -> {
+                // Первая реплика сразу (дальше — сами, по SectChatter): ближайший к камере за столом говорит, сосед отвечает.
+                io.github.verycooltimo.murim.entity.SectDisciple near = null;
+                for (io.github.verycooltimo.murim.entity.SectDisciple d : people) {
+                    if (d.doingKind() == SectSchedule.Kind.EAT && (near == null || d.distanceToSqr(sp) < near.distanceToSqr(sp))) {
+                        near = d;
+                    }
+                }
+                if (near != null) {
+                    io.github.verycooltimo.murim.sect.SectChatter.speak(near, level.random);
+                    MurimMod.LOGGER.info("Стенд секты: за столом заговорил {}", near.memberKey());
+                }
+            }
+            case "watch" -> castForCapture(server);
+            case "rain" -> {
+                level.setWeatherParameters(0, 6000, true, false);
+                MurimMod.LOGGER.info("Стенд секты: пошёл дождь");
+            }
             case "summary" -> {
                 for (io.github.verycooltimo.murim.entity.SectDisciple d : people) {
                     if ("un_geom".equals(d.memberKey())) {
@@ -406,6 +440,27 @@ public final class SectLifeCapture {
             default -> {
             }
         }
+    }
+
+    /**
+     * Живая гора: игрок с мечом применяет Семь Цветков Сливы настоящим запуском (как клавиша R); не вышло (не выучено, нет
+     * ци) — реакция людей вызывается напрямую, и это пишется в лог.
+     */
+    private static void castForCapture(IntegratedServer server) {
+        ServerPlayer sp = server.getPlayerList().getPlayers().get(0);
+        net.minecraft.resources.ResourceLocation id = io.github.verycooltimo.murim.entity.SectDisciple.SLASH;
+        sp.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.IRON_SWORD));
+        if (!MasteryService.knows(sp, id)) {
+            sp.setData(ModAttachments.MASTERY, sp.getData(ModAttachments.MASTERY).with(id, TechniqueProgress.learned(3, 6)));
+            MasteryService.sync(sp);
+        }
+        var profile = sp.getData(ModAttachments.PROFILE);
+        sp.setData(ModAttachments.PROFILE, profile.withCirculating(Math.max(profile.circulating(), Math.max(profile.pool(), 200.0D))));
+        boolean ok = io.github.verycooltimo.murim.combat.TechniqueService.tryStart(sp, id);
+        if (!ok) {
+            io.github.verycooltimo.murim.sect.SectReactions.onTechnique(sp);
+        }
+        MurimMod.LOGGER.info("Стенд секты: игрок применил технику — {}", ok ? "запуск" : "не запустилась (реакция напрямую)");
     }
 
     /** Камера — стойка сцены, как только она пришла на клиент. */
@@ -453,6 +508,8 @@ public final class SectLifeCapture {
         }
         // Время заморожено во всех сценах: смену охраны стенд ставит заново в начале съёмки (act shift).
         level.getGameRules().getRule(GameRules.RULE_DAYLIGHT).set(false, server);
+        // Дождь — только в своей сцене (act rain в начале съёмки).
+        level.setWeatherParameters(12000, 0, false, false);
         for (ServerLevel l : server.getAllLevels()) {
             l.setDayTime(day + s.time());
         }
@@ -490,6 +547,7 @@ public final class SectLifeCapture {
             double[] st = ACT_START.get(s.act());
             Vec3 at = SectLife.stand(level, layout.at(ACT_ZONE.get(s.act()), st[0], st[1]));
             Vec3 to = "summary".equals(s.act()) ? layout.at("training", 0.0D, SectSchedule.FRONT_ROW + 3.0D)
+                    : "watch".equals(s.act()) ? layout.at("poles", 0.0D, -6.0D)
                     : "merit".equals(s.act()) ? layout.at("treasury", 5.5D, 0.0D) : layout.at(ACT_ZONE.get(s.act()), 0.0D, 0.0D);
             p.setGameMode(GameType.SURVIVAL);
             p.removeEffect(MobEffects.INVISIBILITY);
