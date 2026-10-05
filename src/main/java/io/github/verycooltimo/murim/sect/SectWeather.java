@@ -106,6 +106,9 @@ public final class SectWeather {
         }
         Vec3 found = find(npc, from);
         npc.setShelter(from, found, now + RETRY);
+        io.github.verycooltimo.murim.MurimMod.LOGGER.info("Секта: дождь — {} {}", npc.memberKey(), found == null ? "мокнет на месте"
+                : covered(npc.level(), BlockPos.containing(found)) ? "под крышу в " + String.format("%.1f", found.distanceTo(from)) + " бл."
+                : "к стене в " + String.format("%.1f", found.distanceTo(from)) + " бл.");
         return found;
     }
 

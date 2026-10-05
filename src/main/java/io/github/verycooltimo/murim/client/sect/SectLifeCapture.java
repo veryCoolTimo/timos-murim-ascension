@@ -81,7 +81,7 @@ public final class SectLifeCapture {
             // Обмен заслуг: игрок перед столом казны, лицом к Хён Ёну (он у стола смотрит на восток).
             "merit", new double[] {7.6D, 0.4D},
             // Живая гора: игрок у столбов применяет технику — ученики вокруг останавливаются и смотрят.
-            "watch", new double[] {0.0D, 6.0D});
+            "watch", new double[] {0.0D, 9.0D});
     private static final java.util.Map<String, String> ACT_ZONE = java.util.Map.of("intercept", "main_hall", "guard", "treasury",
             "summary", "training", "merit", "treasury", "watch", "poles");
     /**
@@ -142,11 +142,11 @@ public final class SectLifeCapture {
             // Обмен заслуг: игрок у стола казны говорит с Хён Ёном и берёт меч за заслуги.
             new Scene("merit", 3500, "treasury", 0.0D, 0.0D, 0.0D, "treasury", 5.5D, 0.0D, 1.0D, false, "merit"),
             // Живая гора (автор 05.10): ужин во дворе лагеря вблизи — реплики над головами и ответы соседей.
-            new Scene("alive_meal", 9400, "camp", 10.5D, 9.0D, 2.4D, "camp", 5.0D, 3.0D, 0.9D, false, "chatter"),
+            new Scene("alive_meal", 9400, "camp", 8.0D, 6.5D, 2.0D, "camp", 4.5D, 2.0D, 0.9D, false, "chatter"),
             // Игрок у столбов применяет технику — ученики останавливаются и поворачиваются к нему.
-            new Scene("alive_watch", 4300, "poles", 8.0D, 12.0D, 3.0D, "poles", 0.0D, 3.0D, 0.8D, false, "watch"),
+            new Scene("alive_watch", 4300, "poles", 5.5D, 14.5D, 2.2D, "poles", 0.0D, 5.0D, 1.0D, false, "watch"),
             // Дождь днём: поединки и столбы прерваны, люди уходят под крышу, дерево или к стене.
-            new Scene("alive_rain", 4400, "sparring", 0.0D, -17.0D, 7.0D, "sparring", 0.0D, -1.0D, 0.0D, false, "rain"));
+            new Scene("alive_rain", 4400, "sparring", -4.0D, -13.0D, 3.5D, "sparring", 0.0D, -3.0D, 0.5D, false, "rain"));
 
     private static boolean setup;
     private static List<Scene> scenes;
@@ -547,7 +547,7 @@ public final class SectLifeCapture {
             double[] st = ACT_START.get(s.act());
             Vec3 at = SectLife.stand(level, layout.at(ACT_ZONE.get(s.act()), st[0], st[1]));
             Vec3 to = "summary".equals(s.act()) ? layout.at("training", 0.0D, SectSchedule.FRONT_ROW + 3.0D)
-                    : "watch".equals(s.act()) ? layout.at("poles", 0.0D, -6.0D)
+                    : "watch".equals(s.act()) ? layout.at("poles", 0.0D, 20.0D)
                     : "merit".equals(s.act()) ? layout.at("treasury", 5.5D, 0.0D) : layout.at(ACT_ZONE.get(s.act()), 0.0D, 0.0D);
             p.setGameMode(GameType.SURVIVAL);
             p.removeEffect(MobEffects.INVISIBILITY);

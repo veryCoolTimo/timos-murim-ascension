@@ -61,10 +61,11 @@ public final class SectReactions {
             return;
         }
         MurimMod.LOGGER.info("Секта: {} смотрят на технику игрока", watchers.size());
-        java.util.Collections.shuffle(watchers, new java.util.Random(level.random.nextLong()));
+        // Ближайший к игроку говорит всегда (codex 05.10: без слова реакцию легко не заметить), остальные — через раз.
+        watchers.sort(java.util.Comparator.comparingDouble(d -> d.distanceToSqr(p)));
         int said = 0;
         for (SectDisciple d : watchers) {
-            if (said >= WATCH_BUBBLES || level.random.nextInt(3) == 0) {
+            if (said >= WATCH_BUBBLES || said > 0 && level.random.nextInt(2) == 0) {
                 continue;
             }
             Optional<SectRoster> m = d.member();
