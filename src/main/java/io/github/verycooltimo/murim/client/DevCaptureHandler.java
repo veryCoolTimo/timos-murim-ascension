@@ -151,7 +151,8 @@ public final class DevCaptureHandler {
                 || "library".equals(System.getProperty(TECHNIQUE_PROPERTY))
                 || "sectlife".equals(System.getProperty(TECHNIQUE_PROPERTY))
                 || "sectposes".equals(System.getProperty(TECHNIQUE_PROPERTY))
-                || "banditcamp".equals(System.getProperty(TECHNIQUE_PROPERTY))) {
+                || "banditcamp".equals(System.getProperty(TECHNIQUE_PROPERTY))
+                || "boss".equals(System.getProperty(TECHNIQUE_PROPERTY))) {
             return;
         }
         if (minecraft.player == null || minecraft.level == null) {

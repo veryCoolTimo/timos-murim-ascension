@@ -68,7 +68,9 @@ public final class DevSetupEvents {
                 // Sect NPC pose gallery: own stage (client/sect/SectPoseCapture).
                 || "sectposes".equals(System.getProperty("murim.capture.technique"))
                 // Bandit camp: a real world camp, no stage (DevBanditCampHandler).
-                || "banditcamp".equals(System.getProperty("murim.capture.technique"))) {
+                || "banditcamp".equals(System.getProperty("murim.capture.technique"))
+                // Boss M4: a fortress built at the player, no stage (client/boss/DevBossHandler).
+                || "boss".equals(System.getProperty("murim.capture.technique"))) {
             return;
         }
         // Меч нужен для съёмки техник, но в церемонии он торчит из сложенных рук и

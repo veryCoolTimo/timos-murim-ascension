@@ -1,0 +1,7 @@
+{
+  "type": "murim:green_forest_fortress",
+  "biomes": "#murim:has_structure/green_forest_fortress",
+  "spawn_overrides": {},
+  "step": "surface_structures",
+  "terrain_adaptation": "none"
+}

@@ -35,9 +35,12 @@ class RealmTest {
         assertEquals(Realm.Blocker.NO_TECHNIQUE, Realm.check(awakened(120.0D, 0), Map.of()));
         assertEquals(Realm.Blocker.NO_TECHNIQUE, Realm.check(awakened(120.0D, 0), Map.of(SWEEP, 0)));
         assertEquals(Realm.Blocker.NONE, Realm.check(awakened(120.0D, 0), Map.of(SWEEP, 1)));
-        // Во второй ранг (пока вместо босса) нужен уже третий слой.
-        assertEquals(Realm.Blocker.NO_TECHNIQUE, Realm.check(awakened(120.0D, 1), Map.of(SWEEP, 2)));
-        assertEquals(Realm.Blocker.NONE, Realm.check(awakened(120.0D, 1), Map.of(SWEEP, 3)));
+        // Во второй ранг — победа над хозяином крепости (docs/design/26), слой техники не важен.
+        assertEquals(Realm.Blocker.NO_BOSS, Realm.check(awakened(120.0D, 1), Map.of(SWEEP, 9)));
+        assertEquals(Realm.Blocker.NONE, Realm.check(awakened(120.0D, 1), Map.of(SWEEP, 1), true));
+        assertEquals(Realm.Blocker.NOT_AT_WALL, Realm.check(awakened(100.0D, 1), Map.of(SWEEP, 1), true));
+        // В первый ранг босс уже не нужен — снова слой формы.
+        assertEquals(Realm.Blocker.NO_TECHNIQUE, Realm.check(awakened(400.0D, 2), Map.of(SWEEP, 3), true));
     }
 
     @Test

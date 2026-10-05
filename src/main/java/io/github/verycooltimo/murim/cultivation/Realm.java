@@ -99,8 +99,8 @@ public final class Realm {
         /** Прорыв 1: освоить любую технику (слой {@link #THIRD_LAYER_NEED}). */
         MASTER_ANY,
         /**
-         * Прорыв 2: победить босса. TODO(M4): босса ещё нет — до него условие проверяется
-         * по слою техники ({@link #layerNeed}); флаг «босс побеждён» добавить в профиль вместе с боссом.
+         * Прорыв 2: победить хозяина крепости Зелёного Леса (docs/design/26-boss.md). Флаг —
+         * {@code BossRegistry.BOSS_DEFEATED} у игрока; слой техники для этого прорыва не нужен.
          */
         DEFEAT_BOSS,
         /** Прорыв 3 (и Пик до решения автора): форма до слоя {@link #layerNeed}. TODO(M3): N уточнить на игре. */
@@ -120,7 +120,7 @@ public final class Realm {
     public static final double INJURY_POOL_LOSS = 1.0D / 3.0D;
 
     /** Что мешает прорыву прямо сейчас. */
-    public enum Blocker { NONE, NO_DANTIAN, NOT_AT_WALL, NO_TECHNIQUE, MAX_RANK }
+    public enum Blocker { NONE, NO_DANTIAN, NOT_AT_WALL, NO_TECHNIQUE, NO_BOSS, MAX_RANK }
 
     public static double wall(DantianProfile profile) {
         return profile.capacity() * MeditationService.POOL_CAP;
@@ -136,6 +136,16 @@ public final class Realm {
      * @param layers слои освоенных техник игрока
      */
     public static Blocker check(DantianProfile profile, Map<ResourceLocation, Integer> layers) {
+        return check(profile, layers, false);
+    }
+
+    /**
+     * Можно ли начать прорыв в следующий ранг.
+     *
+     * @param layers       слои освоенных техник игрока
+     * @param bossDefeated игрок победил хозяина крепости (условие прорыва 2)
+     */
+    public static Blocker check(DantianProfile profile, Map<ResourceLocation, Integer> layers, boolean bossDefeated) {
         if (!profile.isAwakened()) {
             return Blocker.NO_DANTIAN;
         }
@@ -146,6 +156,9 @@ public final class Realm {
             return Blocker.NOT_AT_WALL;
         }
         // TODO(M5): место силы ускоряет медитацию с риском, но условием прорыва не является.
+        if (condition(profile.rank() + 1) == Condition.DEFEAT_BOSS) {
+            return bossDefeated ? Blocker.NONE : Blocker.NO_BOSS;
+        }
         int need = layerNeed(profile.rank() + 1);
         boolean known = layers.values().stream().anyMatch(layer -> layer >= need);
         return known ? Blocker.NONE : Blocker.NO_TECHNIQUE;
@@ -162,7 +175,7 @@ public final class Realm {
 
     /**
      * Слой техники, которого требует прорыв в данный ранг: третий — 1 («освоить любую»),
-     * второй — 3 (пока вместо босса), первый — 4, Пик — 5.
+     * второй — 3 (не проверяется: условие — победа над хозяином крепости), первый — 4, Пик — 5.
      */
     public static int layerNeed(int targetRank) {
         return targetRank <= THIRD ? THIRD_LAYER_NEED : targetRank + 1;
