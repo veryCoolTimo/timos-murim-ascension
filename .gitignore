@@ -51,3 +51,4 @@ CLAUDE.local.md
 # Книги для отдельного RAG — не в репозиторий (объём и авторские права)
 docs/books/
 tools/__pycache__/
+__pycache__/
