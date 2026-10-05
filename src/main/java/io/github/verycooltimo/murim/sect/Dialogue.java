@@ -26,8 +26,11 @@ import java.util.Optional;
  * @param start точки входа: первая, чьи условия выполнены
  * @param nodes узлы по id
  * @param audience кто может заговорить сам (глава, старейшины); пусто — все
+ * @param base     личный диалог поверх диалога роли ({@code "base": "murim:second"}): узлы базы доступны по своим id,
+ *                 свои узлы с тем же id заменяют их; пустой {@code start} — точки входа базы ({@link #over})
  */
-public record Dialogue(String name, String title, List<Entry> start, Map<String, Node> nodes, Optional<Audience> audience) {
+public record Dialogue(String name, String title, List<Entry> start, Map<String, Node> nodes, Optional<Audience> audience,
+                       Optional<ResourceLocation> base) {
 
     /**
      * Условие: все заданные поля должны выполняться. Пустое условие истинно.
@@ -166,10 +169,22 @@ public record Dialogue(String name, String title, List<Entry> start, Map<String,
     public static final Codec<Dialogue> CODEC = RecordCodecBuilder.create(i -> i.group(
             Codec.STRING.fieldOf("name").forGetter(Dialogue::name),
             Codec.STRING.optionalFieldOf("title", "").forGetter(Dialogue::title),
-            Entry.CODEC.listOf().fieldOf("start").forGetter(Dialogue::start),
+            Entry.CODEC.listOf().optionalFieldOf("start", List.of()).forGetter(Dialogue::start),
             Codec.unboundedMap(Codec.STRING, Node.CODEC).fieldOf("nodes").forGetter(Dialogue::nodes),
-            Audience.CODEC.optionalFieldOf("audience").forGetter(Dialogue::audience)
+            Audience.CODEC.optionalFieldOf("audience").forGetter(Dialogue::audience),
+            ResourceLocation.CODEC.optionalFieldOf("base").forGetter(Dialogue::base)
     ).apply(i, Dialogue::new));
+
+    /**
+     * Личный диалог поверх базы (диалога роли): узлы базы плюс свои (свои важнее), свои точки входа (если есть —
+     * целиком вместо базовых), титул и {@code audience} — свои, иначе базы. Имя — своё.
+     */
+    public Dialogue over(Dialogue parent) {
+        Map<String, Node> merged = new java.util.HashMap<>(parent.nodes());
+        merged.putAll(nodes);
+        return new Dialogue(name, title.isEmpty() ? parent.title() : title, start.isEmpty() ? parent.start() : start,
+                Map.copyOf(merged), audience.isPresent() ? audience : parent.audience(), Optional.empty());
+    }
 
     /** Максимум вариантов на экране (кнопки и клавиши 1–4). */
     public static final int MAX_OPTIONS = 4;

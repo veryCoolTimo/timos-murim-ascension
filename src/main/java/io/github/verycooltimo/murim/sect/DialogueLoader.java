@@ -46,13 +46,23 @@ public final class DialogueLoader extends SimpleJsonResourceReloadListener {
         for (Map.Entry<ResourceLocation, JsonElement> e : files.entrySet()) {
             Dialogue.CODEC.parse(JsonOps.INSTANCE, e.getValue())
                     .resultOrPartial(error -> MurimMod.LOGGER.error("Диалог {} не прочитан: {}", e.getKey(), error))
-                    .ifPresent(d -> {
-                        for (String bad : DialogueService.validate(d)) {
-                            MurimMod.LOGGER.error("Диалог {}: {}", e.getKey(), bad);
-                        }
-                        parsed.put(e.getKey(), d);
-                    });
+                    .ifPresent(d -> parsed.put(e.getKey(), d));
         }
+        // Личные диалоги поверх диалогов роли (base): база — уже прочитанный файл, без цепочек.
+        Map<ResourceLocation, Dialogue> resolved = new HashMap<>();
+        parsed.forEach((id, d) -> {
+            Dialogue parent = d.base().map(parsed::get).orElse(null);
+            if (d.base().isPresent() && parent == null) {
+                MurimMod.LOGGER.error("Диалог {}: нет базы {}", id, d.base().get());
+            }
+            Dialogue out = parent == null ? d : d.over(parent);
+            for (String bad : DialogueService.validate(out)) {
+                MurimMod.LOGGER.error("Диалог {}: {}", id, bad);
+            }
+            resolved.put(id, out);
+        });
+        parsed.clear();
+        parsed.putAll(resolved);
         loaded = Map.copyOf(parsed);
         MurimMod.LOGGER.info("Загружено диалогов: {}", parsed.size());
     }

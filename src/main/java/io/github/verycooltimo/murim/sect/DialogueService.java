@@ -226,7 +226,8 @@ public final class DialogueService {
         }
         String lineKey = node.random().isEmpty() ? node.line()
                 : node.random().get(player.getRandom().nextInt(node.random().size()));
-        Component line = Component.translatable(lineKey, args(player, node.args()));
+        Component line = lineKey.startsWith("@") ? talk(player, npc, lineKey)
+                : Component.translatable(lineKey, args(player, node.args()));
         node.gesture().ifPresent(npc::gesture);
         player.setData(ModAttachments.DIALOGUE, new Session(npc.getId(), id, nodeId, List.copyOf(shown)));
         // Диалог перехвата без титула: титул говорящего — из его собственного диалога.
@@ -375,6 +376,34 @@ public final class DialogueService {
         return true;
     }
 
+    // ------------------------------------------------------------------ личные реплики учеников
+
+    /** Черта, личная фраза или слух ({@link SectTalk}): реплика по ключу говорящего, дню и журналу секты. */
+    static Component talk(ServerPlayer player, SectDisciple npc, String token) {
+        long time = player.level().getDayTime();
+        SectState sect = player.getData(ModAttachments.SECT);
+        String champion = player.level() instanceof net.minecraft.server.level.ServerLevel level ? SectLife.data(level).lastChampion() : "";
+        SectTalk.Context ctx = new SectTalk.Context(champion, player.getName().getString(), sect.has(SectTalk.REVIEW_WON),
+                sect.member() && SectAttendance.current(player).today().missed(SectAttendance.Activity.FORMATION),
+                SectReview.daysUntil(time));
+        SectTalk.Line l = SectTalk.line(token, npc.memberKey(), SectSchedule.day(time),
+                SectSchedule.at(time) == SectSchedule.Period.NIGHT, player.getRandom().nextInt(1 << 16), ctx);
+        Object[] args = new Object[l.args().size()];
+        for (int i = 0; i < args.length; i++) {
+            Object a = l.args().get(i);
+            if ("player".equals(a)) {
+                args[i] = player.getName();
+            } else if (a instanceof String s && s.startsWith("npc:")) {
+                args[i] = Component.translatable("npc.murim." + s.substring(4));
+            } else if (a instanceof String s && s.startsWith("name:")) {
+                args[i] = Component.literal(s.substring(5));
+            } else {
+                args[i] = a;
+            }
+        }
+        return Component.translatable(l.key(), args);
+    }
+
     // ------------------------------------------------------------------ аргументы реплики
 
     private static Object[] args(ServerPlayer player, List<String> spec) {
@@ -468,6 +497,13 @@ public final class DialogueService {
                 return "close";
             }
             case "penance_refuse" -> io.github.verycooltimo.murim.sect.seal.PenanceService.refuse(player);
+            case "take" -> {
+                // Просьба человека секты: отдать ему предметы (без заслуг — заслуги, если нужны, отдельным действием).
+                SectService.ItemNeed need = SectService.ItemNeed.parse(v);
+                if (need != null && need.count(player) >= need.count()) {
+                    need.take(player);
+                }
+            }
             case "clear_flag" -> player.setData(ModAttachments.SECT, player.getData(ModAttachments.SECT).without(v));
             case "give_book" -> SectService.giveBook(player, ResourceLocation.parse(v));
             case "join_sect" -> SectService.join(player);
@@ -508,6 +544,9 @@ public final class DialogueService {
     /** Ошибки ссылок в диалоге (узлы, на которые указывают вход и варианты). */
     static List<String> validate(Dialogue d) {
         List<String> bad = new ArrayList<>();
+        if (d.start().isEmpty()) {
+            bad.add("нет точек входа");
+        }
         for (Dialogue.Entry e : d.start()) {
             if (!d.nodes().containsKey(e.node())) {
                 bad.add("вход ведёт в несуществующий узел " + e.node());

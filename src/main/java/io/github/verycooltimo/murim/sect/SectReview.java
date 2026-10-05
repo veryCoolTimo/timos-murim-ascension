@@ -472,7 +472,10 @@ public final class SectReview {
         if (champ instanceof ServerPlayer p) {
             SectService.contribute(p, CHAMPION);
             approve(p, "review");
+            p.setData(ModAttachments.SECT, p.getData(ModAttachments.SECT).with(SectTalk.REVIEW_WON));
         }
+        // О победителе говорят ученики (SectTalk): ключ ученика или имя игрока.
+        SectLife.data(level).crown(champ instanceof ServerPlayer p ? "@" + p.getName().getString() : s.champion);
         MurimMod.LOGGER.info("Секта: смотр дня {} окончен, победил {}", s.day, s.champion);
         SectLife.data(level).review = null;
     }

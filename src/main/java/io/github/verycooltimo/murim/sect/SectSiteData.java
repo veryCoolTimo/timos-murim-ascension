@@ -23,6 +23,8 @@ public final class SectSiteData extends SavedData {
     private final Set<String> placed = new HashSet<>();
     /** День секты последнего смотра учеников (SectReview): смотр не повторяется в тот же день. */
     private long lastReview = Long.MIN_VALUE;
+    /** Победитель последнего смотра: ключ ученика или {@code @<имя игрока>} (слухи учеников, {@link SectTalk}). */
+    private String lastChampion = "";
 
     public SectSiteData() {
     }
@@ -35,6 +37,7 @@ public final class SectSiteData extends SavedData {
         if (tag.contains("last_review")) {
             data.lastReview = tag.getLong("last_review");
         }
+        data.lastChampion = tag.getString("last_champion");
         return data;
     }
 
@@ -45,6 +48,9 @@ public final class SectSiteData extends SavedData {
         tag.put("placed", list);
         if (lastReview != Long.MIN_VALUE) {
             tag.putLong("last_review", lastReview);
+        }
+        if (!lastChampion.isEmpty()) {
+            tag.putString("last_champion", lastChampion);
         }
         return tag;
     }
@@ -68,6 +74,16 @@ public final class SectSiteData extends SavedData {
 
     public long lastReview() {
         return lastReview;
+    }
+
+    public String lastChampion() {
+        return lastChampion;
+    }
+
+    /** Победитель смотра — о нём говорят ученики до следующего. */
+    public void crown(String champion) {
+        lastChampion = champion == null ? "" : champion;
+        setDirty();
     }
 
     /** Смотр этого дня окончен (или прерван). */
