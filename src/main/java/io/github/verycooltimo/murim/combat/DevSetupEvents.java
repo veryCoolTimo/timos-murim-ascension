@@ -602,6 +602,27 @@ public final class DevSetupEvents {
         target.setPos(STAGE_X + 0.5D + lookX * dummyDistance, STAGE_Y + lift,
                       STAGE_Z + 0.5D + lookZ * dummyDistance);
         level.addFreshEntity(target);
+        // MURIM_CAPTURE_EXTRA_ZOMBIE=1 — живой зомби рядом с целью (за целью, чуть вбок): съёмка оглушения
+        // бандита и зомби одной техникой (combat/Stun, 05.10).
+        if ("1".equals(System.getenv("MURIM_CAPTURE_EXTRA_ZOMBIE"))) {
+            net.minecraft.world.entity.monster.Zombie extra =
+                    new net.minecraft.world.entity.monster.Zombie(net.minecraft.world.entity.EntityType.ZOMBIE, level);
+            extra.setPersistenceRequired();
+            java.util.Objects.requireNonNull(extra.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH))
+                    .setBaseValue(400.0D);
+            extra.setHealth(extra.getMaxHealth());
+            extra.setItemSlot(net.minecraft.world.entity.EquipmentSlot.HEAD,
+                    new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.LEATHER_HELMET));
+            // За целью и чуть вбок, с замедлением III (не стан: порог оглушения — IV) — иначе зомби
+            // добегал до игрока раньше удара и стоял вне коридора техники.
+            extra.setPos(target.getX() - lookX * 0.9D + lookZ * 0.9D, target.getY(), target.getZ() - lookZ * 0.9D - lookX * 0.9D);
+            extra.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.MOVEMENT_SLOWDOWN, 200, 2));
+            float face = (float) Math.toDegrees(aim) + 180.0F;
+            extra.setYRot(face);
+            extra.setYHeadRot(face);
+            extra.setYBodyRot(face);
+            level.addFreshEntity(extra);
+        }
         // MURIM_CAPTURE_TANG_STUCK=N — за целью лежат N воткнутых кинжалов игрока (съёмка «Возврата Лезвий»).
         int stuck = (int) envDouble("MURIM_CAPTURE_TANG_STUCK", 0.0D);
         if (stuck > 0 && !level.players().isEmpty()) {
