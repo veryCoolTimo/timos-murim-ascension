@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "top": "murim:block/penance_seal_top",
+    "side": "murim:block/penance_seal_side",
+    "bottom": "murim:block/hua_granite_dark"
+  }
+}

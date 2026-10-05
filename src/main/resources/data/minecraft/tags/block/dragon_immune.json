@@ -1,0 +1,24 @@
+{
+  "replace": false,
+  "values": [
+    "murim:sealed_hua_granite",
+    "murim:sealed_polished_hua_granite",
+    "murim:sealed_stone_bricks",
+    "murim:sealed_planks",
+    "murim:sealed_hua_granite_stairs",
+    "murim:sealed_polished_hua_granite_stairs",
+    "murim:sealed_stone_brick_stairs",
+    "murim:sealed_plank_stairs",
+    "murim:sealed_hua_granite_slab",
+    "murim:sealed_polished_hua_granite_slab",
+    "murim:sealed_stone_brick_slab",
+    "murim:sealed_plank_slab",
+    "murim:sealed_hua_granite_wall",
+    "murim:sealed_stone_brick_wall",
+    "murim:cold_iron_block",
+    "murim:cold_iron_bars",
+    "murim:cold_iron_door",
+    "murim:vault_seal",
+    "murim:penance_seal"
+  ]
+}

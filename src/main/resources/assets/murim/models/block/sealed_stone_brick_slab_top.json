@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/slab_top",
+  "textures": {
+    "bottom": "murim:block/sealed_stone_bricks",
+    "side": "murim:block/sealed_stone_bricks",
+    "top": "murim:block/sealed_stone_bricks"
+  }
+}

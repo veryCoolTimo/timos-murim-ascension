@@ -21,6 +21,12 @@ public final class ClientProfileState {
 
     public static void setProfile(DantianProfile value) {
         profile = value;
+        // Тот же профиль — в attachment своего игрока: общий код блоков (холодное железо) читает ранг и ци
+        // через player.getData и на клиенте, чтобы предсказать «не поддаётся» так же, как сервер.
+        var player = net.minecraft.client.Minecraft.getInstance().player;
+        if (player != null) {
+            player.setData(io.github.verycooltimo.murim.registry.ModAttachments.PROFILE, value);
+        }
     }
 
     /** Сброс при выходе из мира: чужой профиль не должен подсвечиваться в новом. */

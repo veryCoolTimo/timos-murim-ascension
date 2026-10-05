@@ -1,0 +1,37 @@
+{
+  "name": "npc.murim.penance",
+  "start": [
+    {
+      "node": "sentence"
+    }
+  ],
+  "nodes": {
+    "sentence": {
+      "line": "dialogue.murim.penance.sentence",
+      "args": [
+        "penance_days",
+        "penance_minutes",
+        "penance_cost"
+      ],
+      "gesture": "shake",
+      "options": [
+        {
+          "text": "dialogue.murim.penance.opt.accept",
+          "actions": [
+            {
+              "type": "penance_accept"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.penance.opt.refuse",
+          "actions": [
+            {
+              "type": "penance_refuse"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

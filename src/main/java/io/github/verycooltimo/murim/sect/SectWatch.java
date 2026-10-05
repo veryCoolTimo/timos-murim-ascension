@@ -225,6 +225,10 @@ public final class SectWatch {
         }
         boolean repeat = now - t.lastEscalation < REPEAT;
         t.lastEscalation = now;
+        // Силовой вход — проступок: второй за окно дней — пещера покаяния (seal/PenanceService, автор 03.10 п.7).
+        if (!repeat) {
+            io.github.verycooltimo.murim.sect.seal.PenanceService.offence(p, "trespass", guard);
+        }
         // Одно взыскание на эпизод: повтор в те же две минуты — вывод без нового штрафа (codex 04.10).
         if (!repeat) {
             SectService.contribute(p, -PENALTY);

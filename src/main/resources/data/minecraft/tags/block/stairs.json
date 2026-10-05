@@ -1,6 +1,10 @@
 {
   "replace": false,
   "values": [
-    "murim:polished_hua_granite_stairs"
+    "murim:polished_hua_granite_stairs",
+    "murim:sealed_hua_granite_stairs",
+    "murim:sealed_polished_hua_granite_stairs",
+    "murim:sealed_stone_brick_stairs",
+    "murim:sealed_plank_stairs"
   ]
 }

@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "murim:block/cold_iron_block"
+    }
+  }
+}

@@ -152,6 +152,8 @@ public final class DevCaptureHandler {
                 || "sectlife".equals(System.getProperty(TECHNIQUE_PROPERTY))
                 || "sectposes".equals(System.getProperty(TECHNIQUE_PROPERTY))
                 || "training".equals(System.getProperty(TECHNIQUE_PROPERTY))
+                // Sect seals: cold iron and the vault trial (client/seal/SealCapture).
+                || "seals".equals(System.getProperty(TECHNIQUE_PROPERTY))
                 || "banditcamp".equals(System.getProperty(TECHNIQUE_PROPERTY))
                 || "boss".equals(System.getProperty(TECHNIQUE_PROPERTY))
                 // Location round trip and biome: client/DevLocationHandler.

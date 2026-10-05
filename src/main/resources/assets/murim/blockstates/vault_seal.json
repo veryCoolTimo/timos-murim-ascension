@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "murim:block/vault_seal"
+    },
+    "facing=east": {
+      "model": "murim:block/vault_seal",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "murim:block/vault_seal",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "murim:block/vault_seal",
+      "y": 270
+    }
+  }
+}

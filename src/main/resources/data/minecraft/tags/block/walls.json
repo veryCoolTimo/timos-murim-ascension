@@ -1,6 +1,8 @@
 {
   "replace": false,
   "values": [
-    "murim:polished_hua_granite_wall"
+    "murim:polished_hua_granite_wall",
+    "murim:sealed_hua_granite_wall",
+    "murim:sealed_stone_brick_wall"
   ]
 }
