@@ -53,7 +53,7 @@ public final class SectTalk {
 
     /** Слухи без черты: ключ {@code dialogue.murim.rumour.<id>}. */
     public static final List<String> RUMOURS = List.of("guard_night", "guard_me", "guard_day", "slept", "review_winner",
-            "review_me", "review_you", "review_soon", "skipped", "you_skipped");
+            "review_me", "review_you", "review_soon", "review_today", "skipped", "you_skipped");
 
     /**
      * Что говорящий знает о мире.
@@ -164,7 +164,8 @@ public final class SectTalk {
         // Смотр: кто выиграл последний; если ещё не было — сколько ждать.
         String champ = ctx.champion();
         if (champ.isEmpty()) {
-            out.add(new Line("dialogue.murim.rumour.review_soon", List.of(ctx.reviewDays())));
+            out.add(ctx.reviewDays() == 0 ? new Line("dialogue.murim.rumour.review_today", List.of())
+                    : new Line("dialogue.murim.rumour.review_soon", List.of(ctx.reviewDays())));
         } else if (champ.startsWith("@")) {
             String name = champ.substring(1);
             out.add(name.equals(ctx.playerName()) ? new Line("dialogue.murim.rumour.review_you", List.of("player"))
