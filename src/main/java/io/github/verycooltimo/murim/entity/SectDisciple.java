@@ -452,10 +452,17 @@ public class SectDisciple extends Bandit implements Casters.Caster {
                 return false;
             }
             if (!bypass) {
+                // Удар не стал вызовом (слуга, старший, занятый): рука на брата вне поединка — проступок (пещера покаяния).
+                if (attacker instanceof ServerPlayer p && !p.getUUID().equals(partner)) {
+                    io.github.verycooltimo.murim.sect.seal.PenanceService.offence(p, "assault", this);
+                }
                 return false;
             }
         } else if (!bypass && attacker != null && !attacker.getUUID().equals(partner)) {
             // Чужой удар в чужом поединке не проходит: спарринг — между двумя.
+            if (attacker instanceof ServerPlayer p) {
+                io.github.verycooltimo.murim.sect.seal.PenanceService.offence(p, "assault", this);
+            }
             return false;
         }
         boolean hurt = super.hurt(source, amount);

@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/door_top_left_open",
+  "textures": {
+    "bottom": "murim:block/cold_iron_door_bottom",
+    "top": "murim:block/cold_iron_door_top"
+  },
+  "render_type": "minecraft:cutout"
+}

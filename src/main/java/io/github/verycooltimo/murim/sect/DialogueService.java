@@ -48,6 +48,11 @@ public final class DialogueService {
 
     /** ПКМ по NPC: первая точка входа диалога его роли, чьи условия выполнены (или перехват младшего — {@link #route}). */
     public static void open(ServerPlayer player, SectDisciple npc) {
+        // Приговор к пещере покаяния, который некому было прочесть, читает первый же член секты (seal/PenanceService).
+        if (player.getData(ModAttachments.SECT).has(io.github.verycooltimo.murim.sect.seal.PenanceService.SUMMONED)
+                && openDialogue(player, npc, io.github.verycooltimo.murim.sect.seal.PenanceService.DIALOGUE, "sentence")) {
+            return;
+        }
         Route r = route(player, npc);
         if (r == null) {
             MurimMod.LOGGER.warn("Нет диалога {} для {}", npc.dialogue(), npc.role());
@@ -55,6 +60,23 @@ public final class DialogueService {
         }
         engage(player, npc, r);
         show(player, r.speaker(), r.id(), r.dialogue(), r.node(), "");
+    }
+
+    /**
+     * Открыть узел {@code node} диалога {@code id} от имени {@code npc} — не по роли NPC (приговор к пещере покаяния).
+     *
+     * @return диалог и узел нашлись
+     */
+    public static boolean openDialogue(ServerPlayer player, SectDisciple npc, ResourceLocation id, String node) {
+        Dialogue d = DialogueLoader.get(id);
+        if (d == null || !d.nodes().containsKey(node)) {
+            MurimMod.LOGGER.warn("Нет диалога {} с узлом {}", id, node);
+            return false;
+        }
+        npc.wake();
+        npc.setTalkingTo(player);
+        show(player, npc, id, d, node, "");
+        return true;
     }
 
     /** Говорящий встаёт к собеседнику; перехвативший — ещё и между игроком и тем, к кому он шёл. */
@@ -355,6 +377,12 @@ public final class DialogueService {
                 out[i] = SectAttendance.verdict(player);
             } else if ("contribution".equals(a)) {
                 out[i] = player.getData(ModAttachments.SECT).contribution();
+            } else if ("penance_days".equals(a)) {
+                out[i] = io.github.verycooltimo.murim.sect.seal.PenanceRules.DAYS;
+            } else if ("penance_minutes".equals(a)) {
+                out[i] = io.github.verycooltimo.murim.sect.seal.PenanceRules.MEDITATION_QUOTA / 1200;
+            } else if ("penance_cost".equals(a)) {
+                out[i] = io.github.verycooltimo.murim.sect.seal.PenanceRules.REFUSE_COST;
             } else if ("rank".equals(a)) {
                 out[i] = player.getData(ModAttachments.PROFILE).rank();
             } else if (a.startsWith("layer:")) {
@@ -414,6 +442,12 @@ public final class DialogueService {
                 npc.holdPose(io.github.verycooltimo.murim.entity.SectPose.TREAT, 60);
             }
             case "record" -> SectAttendance.record(player, v);
+            case "penance_accept" -> {
+                close(player, npc);
+                io.github.verycooltimo.murim.sect.seal.PenanceService.accept(player);
+                return "close";
+            }
+            case "penance_refuse" -> io.github.verycooltimo.murim.sect.seal.PenanceService.refuse(player);
             case "clear_flag" -> player.setData(ModAttachments.SECT, player.getData(ModAttachments.SECT).without(v));
             case "give_book" -> SectService.giveBook(player, ResourceLocation.parse(v));
             case "join_sect" -> SectService.join(player);

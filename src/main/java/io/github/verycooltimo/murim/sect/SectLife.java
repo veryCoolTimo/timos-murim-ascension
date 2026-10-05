@@ -543,6 +543,9 @@ public final class SectLife {
      * тренировка»: до конца дня освоение идёт быстрее (план §4.2, §6.1).
      */
     public static void onPlayerForm(ServerPlayer player) {
+        // Испытание двери тайника: форма основы — ступень лестницы (seal/VaultTrial).
+        player.getData(io.github.verycooltimo.murim.registry.ModAttachments.LOADOUT).foundation().ifPresent(f -> io.github.verycooltimo.murim.sect.seal.VaultTrial
+                .onFoundation(player, f, player.getData(io.github.verycooltimo.murim.registry.ModAttachments.FOUNDATION_SWING)[0]));
         SectLayout layout = layout(player.serverLevel());
         if (layout == null) {
             return;

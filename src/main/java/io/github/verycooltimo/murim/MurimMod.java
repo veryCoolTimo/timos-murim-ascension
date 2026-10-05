@@ -42,6 +42,7 @@ public class MurimMod {
         io.github.verycooltimo.murim.entity.boss.BossRegistry.register(modEventBus);
         io.github.verycooltimo.murim.world.fortress.Fortress.register(modEventBus);
         io.github.verycooltimo.murim.training.TrainingRegistry.register(modEventBus);
+        io.github.verycooltimo.murim.sect.seal.SealRegistry.register(modEventBus);
         io.github.verycooltimo.murim.world.location.ModLocations.register(modEventBus);
         io.github.verycooltimo.murim.world.hua.HuaBiomes.register(modEventBus);
 

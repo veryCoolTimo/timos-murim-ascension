@@ -271,7 +271,9 @@ public final class MeditationService {
         player.setData(ModAttachments.MEDITATION, next);
         DantianProfile profile = player.getData(ModAttachments.PROFILE);
         double gain = gainAt(next.ticks()) * profile.efficiency()
-                * io.github.verycooltimo.murim.world.PlaceService.gainFactor(player);
+                * io.github.verycooltimo.murim.world.PlaceService.gainFactor(player)
+                // Пещера покаяния: медитация в келье ×1,5 (автор 03.10 п.7).
+                * io.github.verycooltimo.murim.sect.seal.PenanceService.meditationFactor(player);
         double cap = profile.capacity() * POOL_CAP;
         DantianProfile updated = profile.withPool(Math.min(cap, profile.pool() + gain));
         for (int i = 0; i < MEDITATION_CIRCULATION_STEPS; i++) {
