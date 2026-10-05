@@ -72,7 +72,9 @@ public final class SectPoseCapture {
             // Для сравнения: старый лотос (sit без позы) — клип игрока на скелете NPC.
             new Spot("lotus_legacy", SectPose.NONE, SectRole.DISCIPLE_A),
             // Только по MURIM_POSES=draw: ролик «меч в ножнах → в руке → в ножнах».
-            new Spot("draw", SectPose.NONE, SectRole.DISCIPLE));
+            new Spot("draw", SectPose.NONE, SectRole.DISCIPLE),
+            // Только по MURIM_POSES=model: ученик в покое спереди, сбоку и сзади вблизи (сверка текстуры с Blockbench).
+            new Spot("model", SectPose.NONE, SectRole.DISCIPLE));
 
     /** Ракурс: имя, расстояние, высота камеры, ночь, кадров, тиков между кадрами. */
     private record Shot(String name, double dist, double height, boolean night, int frames, int every) {
@@ -126,9 +128,13 @@ public final class SectPoseCapture {
             String raw = System.getenv("MURIM_POSES");
             spots = new ArrayList<>();
             for (Spot s : ALL) {
-                if (raw == null || raw.isBlank() ? !"draw".equals(s.name()) : List.of(raw.split(",")).contains(s.name())) {
+                if (raw == null || raw.isBlank() ? !List.of("draw", "model").contains(s.name()) : List.of(raw.split(",")).contains(s.name())) {
                     spots.add(s);
                 }
+            }
+            if ("model".equals(raw)) {
+                shots = List.of(new Shot("front", 2.6D, 0.2D, false, 2, 5), new Shot("side", 2.6D, 0.2D, false, 2, 5),
+                        new Shot("back", 2.6D, 0.2D, false, 2, 5));
             }
             if ("draw".equals(raw)) {
                 shots = List.of(DRAW_SHOT);
@@ -362,7 +368,12 @@ public final class SectPoseCapture {
         }
         Vec3 look = target.position().add(0.0D, spots.get(i).pose().seated() ? 0.5D : 1.0D, 0.0D);
         // Человек смотрит на юг; камера с юга и на 35° к востоку: лицо и профиль позы видны вместе.
-        Vec3 dir = new Vec3(0.7D, 0.0D, 1.0D).normalize();
+        Vec3 dir = switch (shot.name()) {
+            case "front" -> new Vec3(0.0D, 0.0D, 1.0D);
+            case "side" -> new Vec3(1.0D, 0.0D, 0.0D);
+            case "back" -> new Vec3(0.0D, 0.0D, -1.0D);
+            default -> new Vec3(0.7D, 0.0D, 1.0D).normalize();
+        };
         Vec3 cam = look.add(dir.scale(shot.dist())).add(0.0D, shot.height(), 0.0D);
         ServerPlayer p = server.getPlayerList().getPlayers().get(0);
         p.teleportTo(level, cam.x, cam.y + 1.0D, cam.z, 0.0F, 0.0F);
