@@ -35,8 +35,8 @@ public final class HudGalleryCapture {
 
     private static final List<String> SCENES = List.of("hud", "training", "meditation", "loadout", "manual", "junk", "dialogue");
     /** Ticks per scene: set up at 0, frame at {@link #SHOT}, tear down at the end. */
-    private static final int SPAN = 70;
-    private static final int SHOT = 55;
+    private static final int SPAN = 110;
+    private static final int SHOT = 100;
     private static final int WARMUP = 120;
 
     private static int tick = -WARMUP;
@@ -61,6 +61,12 @@ public final class HudGalleryCapture {
         if (tick++ < 0) {
             if (tick == -WARMUP + 2) {
                 mc.options.setCameraType(CameraType.THIRD_PERSON_BACK);
+                // The early loading window ignores options.txt overrideWidth; resize here (MURIM_GALLERY_SIZE=1920x1080).
+                // API: com/mojang/blaze3d/platform/Window.java#setWindowed (neoforge sources jar).
+                String[] size = System.getenv().getOrDefault("MURIM_GALLERY_SIZE", "").split("x");
+                if (size.length == 2) {
+                    mc.getWindow().setWindowed(Integer.parseInt(size[0].trim()), Integer.parseInt(size[1].trim()));
+                }
             }
             return;
         }
@@ -83,6 +89,11 @@ public final class HudGalleryCapture {
         if (t == 0) {
             setUp(mc, scene);
         }
+        if ("meditation".equals(scene) && t > 0) {
+            // Seated widget is the game HUD, not the dantian ceremony: keep the play camera and the GUI.
+            mc.options.hideGui = false;
+            mc.options.setCameraType(CameraType.THIRD_PERSON_BACK);
+        }
         if (t > 0 && t < SHOT && "training".equals(scene) && t % 12 == 0) {
             beat(mc, t);
         }
@@ -101,9 +112,9 @@ public final class HudGalleryCapture {
             case "hud" -> {
                 CombatMode.engage();
                 // Chat sits over the lower-left HUD; two typical lines show the overlap.
-                mc.gui.getChat().addMessage(Component.translatable("murim.training.end.set",
-                        Component.translatable("murim.training.exercise.squat"), 13, 11, "4.2"));
-                mc.gui.getChat().addMessage(Component.translatable("murim.meditation.held"));
+                mc.player.displayClientMessage(Component.translatable("murim.training.end.set",
+                        Component.translatable("murim.training.exercise.squat"), 13, 11, "4.2"), false);
+                mc.player.displayClientMessage(Component.translatable("murim.meditation.held"), false);
             }
             case "training" -> {
                 ClientTraining.onBody(new TrainingPayloads.Body(3, 0.62F, 0.35F, 0.4F, 0, 0));
