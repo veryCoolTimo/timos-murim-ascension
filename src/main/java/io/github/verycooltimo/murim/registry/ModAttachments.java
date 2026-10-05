@@ -118,6 +118,14 @@ public final class ModAttachments {
             ATTACHMENT_TYPES.register("stun_ai", () -> AttachmentType.builder(() -> 0)
                     .serialize(com.mojang.serialization.Codec.INT).build());
 
+    /** Удержание техникой (combat/Stun): {id применяющего, игровое время конца}; не сохраняется. */
+    public static final Supplier<AttachmentType<long[]>> HOLD =
+            ATTACHMENT_TYPES.register("technique_hold", () -> AttachmentType.<long[]>builder(() -> new long[] {-1L, 0L}).build());
+
+    /** У применяющего: до какого игрового времени держит его текущая техника; не сохраняется. */
+    public static final Supplier<AttachmentType<Long>> HOLD_END =
+            ATTACHMENT_TYPES.register("technique_hold_end", () -> AttachmentType.builder(() -> 0L).build());
+
     /** Конец невосприимчивости босса к оглушению (игровое время); не сохраняется. */
     public static final Supplier<AttachmentType<Long>> STUN_IMMUNE =
             ATTACHMENT_TYPES.register("stun_immune", () -> AttachmentType.builder(() -> 0L).build());

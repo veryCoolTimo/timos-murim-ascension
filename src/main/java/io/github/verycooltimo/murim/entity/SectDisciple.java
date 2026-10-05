@@ -501,8 +501,8 @@ public class SectDisciple extends Bandit implements Casters.Caster {
             hurtMarked = true;
             fallDistance = 0.0F;
         }
-        if (isStunned()) {
-            // Оглушённый не доигрывает начатое (TargetLock выключил ИИ — цель тоже не трогаем).
+        if (isStunned() || io.github.verycooltimo.murim.combat.Stun.isHeld(this)) {
+            // Оглушённый или удержанный техникой не доигрывает начатое (TargetLock выключил ИИ — цель тоже не трогаем).
             if (tickCount % 10 == 0) {
                 log("оглушён, спарринг {}", spar);
             }

@@ -113,6 +113,8 @@ public final class TechniqueService {
         PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
                 new TechniqueEventPayload(TechniqueEventPayload.Event.STARTED, technique.id(), player.getId(), 0,
                         Math.max(0, io.github.verycooltimo.murim.mastery.MasteryService.layer(player, technique.id()))));
+        // Цель не уходит пешком из долгой техники (автор 05.10): удержание с начала каста.
+        Stun.holdStart(player, technique);
         // Ладонь в начале захватывает цель и делает рывок к ней (автор 01.10).
         if (technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.PalmBlast palm
                 && !io.github.verycooltimo.murim.technique.JunkArts.isJunk(technique.id())) {
@@ -355,6 +357,7 @@ public final class TechniqueService {
         TechniqueState state = player.getData(ModAttachments.TECHNIQUE_STATE);
         ResourceLocation id = state.techniqueId();
         player.setData(ModAttachments.TECHNIQUE_STATE, state.finished());
+        Stun.releaseHolds(player);
         if (id != null) {
             PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
                     new TechniqueEventPayload(event, id, player.getId(), 0, 0));

@@ -120,7 +120,7 @@ public final class RainExecutor {
             if (flat(target.position(), new Vec3(r[9], r[10], r[11])) < 4.5D) {
                 r[7] = 1.0D;
                 player.setData(ModAttachments.RAIN, r);
-                entrance(target);
+                entrance(target, player);
                 PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
                         new RainPayload(player.getId(), new Vec3(r[0], r[1], r[2]), target.position(), 0.0F, layer,
                                 RainPayload.MARKED, target.getId()));
@@ -161,8 +161,8 @@ public final class RainExecutor {
     }
 
     /** Оцепенение иллюзии: мобы до конца ливня, игрок 0,6 с, босс 0,5 с. */
-    private static void entrance(LivingEntity t) {
-        io.github.verycooltimo.murim.combat.Stun.apply(t, RainRules.contact(2) - RainRules.MARK + 6);
+    private static void entrance(LivingEntity t, LivingEntity player) {
+        io.github.verycooltimo.murim.combat.Stun.hold(t, player, RainRules.contact(2) - RainRules.MARK + 6);
     }
 
     /** Лепестки падают с неба: путь от высоты ядра до головы цели свободен от блоков. */

@@ -141,7 +141,7 @@ public final class FallingPetalExecutor {
         if (s[STUNNED] < 0.5D) {
             s[STUNNED] = 1.0D;
             player.setData(ModAttachments.FALLING_PETAL, s);
-            io.github.verycooltimo.murim.combat.Stun.apply(t, FallingPetalRules.END - FallingPetalRules.STRIKES[k] + 2);
+            io.github.verycooltimo.murim.combat.Stun.hold(t, player, FallingPetalRules.END - FallingPetalRules.STRIKES[k] + 2);
         }
         Casters.onHit(player, id, t);
         Vec3 at = k == 3 ? t.position().add(0.0D, t.getBbHeight() * 0.35D, 0.0D)
@@ -192,7 +192,7 @@ public final class FallingPetalExecutor {
 
     /** Снять оглушение «до конца техники» с цели. */
     private static void release(LivingEntity t) {
-        io.github.verycooltimo.murim.combat.Stun.release(t);
+        io.github.verycooltimo.murim.combat.Stun.unhold(t);
     }
 
     /** Ближайший живой противник в конусе 35° до 16 блоков при прямой видимости; стойки брони — нет. */

@@ -8,9 +8,6 @@ import io.github.verycooltimo.murim.entity.TrainingDummy;
 import io.github.verycooltimo.murim.entity.boss.BossRegistry;
 import io.github.verycooltimo.murim.entity.boss.FortressMaster;
 import io.github.verycooltimo.murim.registry.ModEntities;
-import io.github.verycooltimo.murim.technique.BehaviorExecutor;
-import io.github.verycooltimo.murim.technique.Casters;
-import io.github.verycooltimo.murim.technique.TechniqueBehavior;
 import io.github.verycooltimo.murim.technique.TechniqueDefinition;
 import io.github.verycooltimo.murim.technique.TechniqueLoader;
 import net.minecraft.core.BlockPos;
@@ -29,14 +26,12 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
- * GameTest оглушения (combat/Stun, автор 05.10: «чтобы противник точно станился»): каждая
- * атакующая техника оглушает зомби; оглушённый зомби и бандит-мечник не идут и не бьют, лучник
- * не стреляет, в воздухе оглушённый падает, а не висит; ИИ возвращается; босс — 0,5 с и 4 с
- * невосприимчивости.
+ * GameTest удержания техникой (combat/Stun, автор 05.10: «противник не может двигаться, пока мы
+ * технику используем»): цель перед игроком стоит весь долгий замах и сразу свободна после
+ * техники; мечник не бьёт, лучник не стреляет, в воздухе удержанный падает; босс — 0,5 с и 4 с
+ * невосприимчивости; явное оглушение техник (Взрыв, ладонь) осталось.
  */
 @GameTestHolder(MurimMod.MODID)
 @PrefixGameTestTemplate(false)
@@ -62,159 +57,160 @@ public final class StunTests {
         return p;
     }
 
-    /** Атакующие техники: всё, кроме шагов, своих искусств и защит. */
-    static List<ResourceLocation> offensive() {
-        List<ResourceLocation> out = new ArrayList<>();
-        for (TechniqueDefinition d : TechniqueLoader.all().values()) {
-            TechniqueBehavior b = d.behavior();
-            if (b instanceof TechniqueBehavior.Footwork || b instanceof TechniqueBehavior.Step
-                    || b instanceof TechniqueBehavior.SelfArt || b instanceof TechniqueBehavior.PlumDome
-                    || b instanceof TechniqueBehavior.PlumSea) {
-                continue;
-            }
-            out.add(d.id());
+    private static TechniqueDefinition def(String path) {
+        TechniqueDefinition d = TechniqueLoader.get(ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, path));
+        if (d == null) {
+            throw new net.minecraft.gametest.framework.GameTestAssertException("нет техники " + path);
         }
-        return out;
+        return d;
     }
 
     private static double flat(Vec3 a, Vec3 b) {
         return Math.hypot(a.x - b.x, a.z - b.z);
     }
 
-    /** Каждая атакующая техника: попадание оглушает зомби и выключает ему ИИ. */
-    @GameTest(template = "camp_floor", timeoutTicks = 40)
-    public static void everyTechniqueStunsZombie(GameTestHelper helper) {
-        ServerPlayer p = fakePlayer(helper, new Vec3(3.5D, 2.0D, 3.5D), 0.0F);
-        List<ResourceLocation> ids = offensive();
-        helper.assertTrue(ids.size() >= 20, "техник мало: " + ids.size());
-        List<Zombie> zombies = new ArrayList<>();
-        for (int i = 0; i < ids.size(); i++) {
-            Zombie z = helper.spawn(EntityType.ZOMBIE, new BlockPos(2 + (i % 8) * 3, 2, 8 + (i / 8) * 3));
-            Casters.onHit(p, ids.get(i), z);
-            helper.assertTrue(Stun.isStunned(z), ids.get(i) + ": попадание не оглушило");
-            zombies.add(z);
-        }
-        helper.runAfterDelay(2, () -> {
-            for (int i = 0; i < zombies.size(); i++) {
-                helper.assertTrue(zombies.get(i).isNoAi(), ids.get(i) + ": ИИ не выключен");
-            }
-            MurimMod.LOGGER.info("GameTest оглушение: {} техник оглушают зомби", ids.size());
-            helper.succeed();
-        });
-    }
-
     /**
-     * Настоящая техника (Разрез Семи Цветков, учебный слой) по живому зомби: стоит, не бьёт, потом
-     * ИИ возвращается.
+     * Долгий замах (Ливень 24 Сливы): зомби перед игроком с начала каста стоит и не бьёт всю
+     * технику; зомби за спиной не удержан; конец техники — сразу свободен.
      */
-    @GameTest(template = "camp_floor", timeoutTicks = 80)
-    public static void realTechniqueFreezesZombie(GameTestHelper helper) {
-        ServerPlayer p = fakePlayer(helper, new Vec3(5.5D, 2.0D, 5.5D), 0.0F);
-        p.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.WOODEN_SWORD));
-        Zombie z = helper.spawn(EntityType.ZOMBIE, new Vec3(5.5D, 2.0D, 7.3D));
-        z.setTarget(p);
-        z.setHealth(z.getMaxHealth());
-        z.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).setBaseValue(500.0D);
-        z.setHealth(500.0F);
-        helper.runAfterDelay(1, () -> {
-            boolean hit = BehaviorExecutor.plumSlash(p, ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "seven_plum_blossoms"));
-            helper.assertTrue(hit, "разрез не попал");
-            helper.assertTrue(Stun.isStunned(z), "разрез не оглушил");
-        });
-        float[] hp = new float[1];
+    @GameTest(template = "camp_floor", timeoutTicks = 200)
+    public static void longTechniqueHoldsTargetThenReleases(GameTestHelper helper) {
+        ServerPlayer p = fakePlayer(helper, new Vec3(8.5D, 2.0D, 6.5D), 0.0F);
+        Zombie front = helper.spawn(EntityType.ZOMBIE, new Vec3(8.5D, 2.0D, 10.5D));
+        Zombie behind = helper.spawn(EntityType.ZOMBIE, new Vec3(8.5D, 2.0D, 1.5D));
+        front.setTarget(p);
+        behind.setTarget(p);
+        TechniqueDefinition rain = def("twenty_four_plum_rainfall");
+        helper.assertTrue(Stun.holdTicks(rain) > 100, "Ливень короче, чем ждали: " + Stun.holdTicks(rain));
         Vec3[] at = new Vec3[1];
-        helper.runAfterDelay(3, () -> {
+        float[] hp = new float[1];
+        helper.runAfterDelay(1, () -> {
+            Stun.holdStart(p, rain);
+            helper.assertTrue(Stun.isHeld(front), "цель перед игроком не удержана");
+            helper.assertFalse(Stun.isHeld(behind), "удержан зомби за спиной");
+            at[0] = front.position();
             hp[0] = p.getHealth();
-            at[0] = z.position();
-            helper.assertTrue(z.isNoAi(), "ИИ зомби не выключен");
         });
-        helper.runAfterDelay(14, () -> {
-            helper.assertTrue(Stun.isStunned(z), "оглушение кончилось раньше таблицы");
-            helper.assertTrue(flat(z.position(), at[0]) < 0.35D, "оглушённый зомби шёл: " + flat(z.position(), at[0]));
-            helper.assertTrue(p.getHealth() >= hp[0], "оглушённый зомби ударил");
+        helper.runAfterDelay(120, () -> {
+            helper.assertTrue(Stun.isHeld(front) && front.isNoAi(), "удержание кончилось посреди техники");
+            helper.assertTrue(flat(front.position(), at[0]) < 0.35D, "удержанный ушёл: " + flat(front.position(), at[0]));
+            helper.assertFalse(Stun.isStunned(front), "удержание стало оглушением");
+            // Техника кончилась — отпустить.
+            Stun.releaseHolds(p);
         });
-        helper.runAfterDelay(40, () -> {
-            helper.assertFalse(Stun.isStunned(z), "оглушение не кончилось");
-            helper.assertFalse(z.isNoAi(), "ИИ не вернулся");
+        helper.runAfterDelay(122, () -> {
+            helper.assertFalse(Stun.isHeld(front), "цель не отпущена после техники");
+            helper.assertFalse(front.isNoAi(), "ИИ не вернулся");
             helper.succeed();
         });
     }
 
-    /** Оглушённый в воздухе падает (было: ИИ выключен — висит), отброс работает. */
+    /** Без срыва удержание кончается само с концом удара техники (без рассеивания). */
+    @GameTest(template = "camp_floor", timeoutTicks = 120)
+    public static void holdEndsWithTechnique(GameTestHelper helper) {
+        ServerPlayer p = fakePlayer(helper, new Vec3(8.5D, 2.0D, 6.5D), 0.0F);
+        Zombie z = helper.spawn(EntityType.ZOMBIE, new Vec3(8.5D, 2.0D, 9.5D));
+        TechniqueDefinition d = def("seven_plum_explosion");
+        int n = Stun.holdTicks(d);
+        helper.runAfterDelay(1, () -> Stun.holdStart(p, d));
+        helper.runAfterDelay(n - 2, () -> helper.assertTrue(Stun.isHeld(z), "отпущен раньше конца удара"));
+        helper.runAfterDelay(n + 3, () -> {
+            helper.assertFalse(Stun.isHeld(z) || z.isNoAi(), "держит после конца удара");
+            helper.succeed();
+        });
+    }
+
+    /** Удержанный в воздухе падает, отброс работает. */
     @GameTest(template = "camp_floor", timeoutTicks = 40)
-    public static void stunnedMobFallsAndIsKnockedBack(GameTestHelper helper) {
+    public static void heldMobFallsAndIsKnockedBack(GameTestHelper helper) {
+        ServerPlayer p = fakePlayer(helper, new Vec3(8.5D, 2.0D, 2.5D), 0.0F);
         Zombie z = helper.spawn(EntityType.ZOMBIE, new Vec3(8.5D, 6.0D, 8.5D));
-        Stun.apply(z, 60);
+        Stun.hold(z, p, 60);
         Vec3 start = z.position();
         helper.runAfterDelay(1, () -> z.setDeltaMovement(0.8D, 0.0D, 0.0D));
         helper.runAfterDelay(25, () -> {
-            helper.assertTrue(z.onGround(), "оглушённый висит в воздухе, y=" + z.getY());
-            helper.assertTrue(z.getX() - start.x > 0.5D, "отброс не сдвинул оглушённого");
-            helper.assertTrue(Stun.isStunned(z) && z.isNoAi(), "оглушение слетело");
+            helper.assertTrue(z.onGround(), "удержанный висит в воздухе, y=" + z.getY());
+            helper.assertTrue(z.getX() - start.x > 0.5D, "отброс не сдвинул удержанного");
+            helper.assertTrue(Stun.isHeld(z) && z.isNoAi(), "удержание слетело");
             helper.succeed();
         });
     }
 
-    /** Мечник: оглушён — стоит в клипе stun, не бьёт; потом снова в бою. */
-    @GameTest(template = "camp_floor", timeoutTicks = 80)
-    public static void stunnedSwordsmanDoesNotStrike(GameTestHelper helper) {
+    /** Мечник под захватом: не бьёт и не уходит, после техники снова в бою. */
+    @GameTest(template = "camp_floor", timeoutTicks = 120)
+    public static void heldSwordsmanDoesNotStrike(GameTestHelper helper) {
         ServerPlayer p = fakePlayer(helper, new Vec3(6.5D, 2.0D, 6.5D), 0.0F);
         BanditSwordsman b = helper.spawn(ModEntities.BANDIT_SWORDSMAN.get(), new Vec3(6.5D, 2.0D, 8.5D));
         b.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.IRON_SWORD));
         b.setTarget(p);
-        helper.runAfterDelay(2, () -> Casters.onHit(p, ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "seven_plum_blossoms"), b));
         float[] hp = new float[1];
         Vec3[] at = new Vec3[1];
-        helper.runAfterDelay(4, () -> {
+        helper.runAfterDelay(2, () -> {
+            TargetLock.set(p, b.getId());
+            Stun.holdStart(p, def("twenty_four_plum_rainfall"));
             hp[0] = p.getHealth();
             at[0] = b.position();
-            helper.assertTrue(b.state() == Bandit.STUN, "мечник не в оглушении: " + b.state());
-            Stun.apply(b, 40);
         });
-        helper.runAfterDelay(40, () -> {
-            helper.assertTrue(b.state() == Bandit.STUN && b.isNoAi(), "мечник вышел из оглушения");
-            helper.assertTrue(p.getHealth() >= hp[0], "оглушённый мечник ударил");
-            helper.assertTrue(flat(b.position(), at[0]) < 0.35D, "оглушённый мечник шёл");
+        helper.runAfterDelay(80, () -> {
+            helper.assertTrue(Stun.isHeld(b) && b.isNoAi(), "мечник вышел из удержания");
+            helper.assertTrue(b.state() != Bandit.STUN, "удержание включило клип оглушения");
+            helper.assertTrue(p.getHealth() >= hp[0], "удержанный мечник ударил");
+            helper.assertTrue(flat(b.position(), at[0]) < 0.35D, "удержанный мечник шёл");
+            Stun.releaseHolds(p);
         });
-        helper.runAfterDelay(50, () -> {
-            helper.assertTrue(b.state() != Bandit.STUN && !b.isNoAi(), "мечник не вернулся в бой");
+        helper.runAfterDelay(83, () -> {
+            helper.assertTrue(!Stun.isHeld(b) && !b.isNoAi(), "мечник не вернулся в бой");
             helper.succeed();
         });
     }
 
-    /** Лучник: натягивал — оглушён: тетива отпущена, ни одной стрелы за всё оглушение; потом стреляет. */
-    @GameTest(template = "camp_floor", timeoutTicks = 200)
-    public static void stunnedArcherDoesNotShoot(GameTestHelper helper) {
+    /** Лучник под захватом: тетива отпущена, ни одной стрелы за удержание; потом стреляет. */
+    @GameTest(template = "camp_floor", timeoutTicks = 260)
+    public static void heldArcherDoesNotShoot(GameTestHelper helper) {
         ServerPlayer p = fakePlayer(helper, new Vec3(4.5D, 2.0D, 4.5D), 0.0F);
         BanditArcher a = helper.spawn(ModEntities.BANDIT_ARCHER.get(), new Vec3(4.5D, 2.0D, 13.5D));
         a.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.BOW));
         a.setTarget(p);
         AABB area = new AABB(helper.absolutePos(BlockPos.ZERO)).inflate(40.0D);
         ServerLevel level = helper.getLevel();
-        long[] stunAt = {-1L};
-        // Ждём натяжения, затем оглушаем на 3 с.
+        long[] heldAt = {-1L};
+        TechniqueDefinition d = def("seven_plum_explosion");
+        int n = Stun.holdTicks(d);
         helper.onEachTick(() -> {
-            if (stunAt[0] < 0L && a.isUsingItem()) {
+            if (heldAt[0] < 0L && a.isUsingItem()) {
                 level.getEntitiesOfClass(AbstractArrow.class, area).forEach(net.minecraft.world.entity.Entity::discard);
-                Stun.apply(a, 60);
-                stunAt[0] = level.getGameTime();
+                TargetLock.set(p, a.getId());
+                Stun.holdStart(p, d);
+                heldAt[0] = level.getGameTime();
             }
-            if (stunAt[0] >= 0L) {
-                long since = level.getGameTime() - stunAt[0];
-                if (since >= 1L && since < 60L) {
-                    helper.assertFalse(a.isUsingItem(), "оглушённый лучник держит натяжение");
-                    helper.assertTrue(level.getEntitiesOfClass(AbstractArrow.class, area).isEmpty(), "оглушённый лучник выстрелил");
+            if (heldAt[0] >= 0L) {
+                long since = level.getGameTime() - heldAt[0];
+                if (since >= 1L && since < n) {
+                    helper.assertFalse(a.isUsingItem(), "удержанный лучник держит натяжение");
+                    helper.assertTrue(level.getEntitiesOfClass(AbstractArrow.class, area).isEmpty(), "удержанный лучник выстрелил");
                 }
-                if (since > 62L && !level.getEntitiesOfClass(AbstractArrow.class, area).isEmpty()) {
+                if (since > n + 2 && !level.getEntitiesOfClass(AbstractArrow.class, area).isEmpty()) {
                     helper.succeed();
                 }
             }
         });
     }
 
-    /** Босс: оглушение не дольше 0,5 с, повтор — сквозь невосприимчивость не проходит. */
+    /** Явное оглушение техники (Взрыв, Демоническая ладонь) осталось и работает. */
+    @GameTest(template = "camp_floor", timeoutTicks = 60)
+    public static void explicitStunStillWorks(GameTestHelper helper) {
+        Zombie z = helper.spawn(EntityType.ZOMBIE, new Vec3(8.5D, 2.0D, 8.5D));
+        Stun.apply(z, 40);
+        helper.runAfterDelay(2, () -> helper.assertTrue(Stun.isStunned(z) && z.isNoAi(), "оглушение не легло"));
+        helper.runAfterDelay(45, () -> {
+            helper.assertFalse(Stun.isStunned(z) || z.isNoAi(), "оглушение не кончилось");
+            helper.succeed();
+        });
+    }
+
+    /** Босс: удержание — не дольше 0,5 с, потом 4 с невосприимчивости (иначе каждая долгая техника выключала бы бой). */
     @GameTest(template = "camp_floor", timeoutTicks = 80)
-    public static void bossStunIsCapped(GameTestHelper helper) {
+    public static void bossHoldIsCapped(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos c = helper.absolutePos(new BlockPos(17, 2, 17));
         FortressMaster m = BossRegistry.FORTRESS_MASTER.get().create(level);
@@ -225,13 +221,13 @@ public final class StunTests {
         level.addFreshEntity(d);
         m.startFight(d);
         helper.runAfterDelay(35, () -> {
-            int n = Stun.apply(m, 60);
-            helper.assertTrue(n > 0 && n <= Stun.BOSS_CAP, "босс оглушён на " + n);
-            helper.assertTrue(m.isStunned(), "оглушение не легло");
+            Stun.hold(m, d, 200);
+            helper.assertTrue(m.isStunned(), "босс не удержан");
         });
         helper.runAfterDelay(35 + Stun.BOSS_CAP + 3, () -> {
-            helper.assertFalse(m.isStunned(), "босс оглушён дольше 0,5 с");
-            helper.assertTrue(Stun.apply(m, 60) == 0 && !m.isStunned(), "повторное оглушение прошло сквозь невосприимчивость");
+            helper.assertFalse(m.isStunned(), "босс удержан дольше 0,5 с");
+            Stun.hold(m, d, 200);
+            helper.assertTrue(Stun.apply(m, 60) == 0 && !m.isStunned(), "повторное удержание прошло сквозь невосприимчивость");
             helper.succeed();
         });
     }

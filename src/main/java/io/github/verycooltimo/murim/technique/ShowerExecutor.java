@@ -229,7 +229,7 @@ public final class ShowerExecutor {
         }
         if (r[9] < 0.5D) {
             r[9] = 1.0D;
-            io.github.verycooltimo.murim.combat.Stun.apply(t, ShowerRules.END - ShowerRules.DIVE);
+            io.github.verycooltimo.murim.combat.Stun.hold(t, player, ShowerRules.END - ShowerRules.DIVE);
         }
         Casters.onHit(player, id, t);
         return true;

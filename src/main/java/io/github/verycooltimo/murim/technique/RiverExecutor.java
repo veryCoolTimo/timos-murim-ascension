@@ -185,7 +185,7 @@ public final class RiverExecutor {
             if (e.hurt(player.damageSources().playerAttack(player), (float) (base * RiverRules.areaShare(d)))) {
                 any = true;
                 knock(e, d < 0.1D ? axis : c.subtract(node), RiverRules.PUSH_AREA);
-                io.github.verycooltimo.murim.combat.Stun.onTechniqueHit(id, e);
+                io.github.verycooltimo.murim.combat.Stun.hold(e, player, 0);
             }
         }
         if (any) {

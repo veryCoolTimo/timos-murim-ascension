@@ -224,7 +224,7 @@ public final class BehaviorExecutor {
                 target.hurtMarked = true;
                 // Попал первый удар — противник оглушён до падения дерева (автор 02.10).
                 if (layer >= 1) {
-                    stagger(target);
+                    stagger(target, player);
                 }
                 Casters.onHit(player, id, target);
             }
@@ -239,9 +239,9 @@ public final class BehaviorExecutor {
      * Оглушение: стоит и не бьёт (замедление до неподвижности, слабость — без урона). Обычный
      * моб — до падения дерева, игрок — 0,6 с, босс — полсекунды.
      */
-    private static void stagger(LivingEntity target) {
+    private static void stagger(LivingEntity target, LivingEntity player) {
         // Игрок 0,6 с и босс 0,5 с — потолки Stun (PlumRules.STAGGER_PVP_TICKS / STAGGER_BOSS_TICKS).
-        io.github.verycooltimo.murim.combat.Stun.apply(target, PlumRules.STAGGER_TICKS);
+        io.github.verycooltimo.murim.combat.Stun.hold(target, player, PlumRules.STAGGER_TICKS);
     }
 
     /**
@@ -427,7 +427,7 @@ public final class BehaviorExecutor {
             return;
         }
         // Цель удержана: сильное замедление на всё время техники, инерция погашена.
-        io.github.verycooltimo.murim.combat.Stun.apply(target, techniqueTicks);
+        io.github.verycooltimo.murim.combat.Stun.hold(target, player, techniqueTicks);
         target.setDeltaMovement(0.0D, target.getDeltaMovement().y, 0.0D);
         target.hurtMarked = true;
 
@@ -798,7 +798,7 @@ public final class BehaviorExecutor {
             int left = Math.max(10, RushRules.end(wrapSince) - t);
             r[15] = -100.0D;
             player.setData(io.github.verycooltimo.murim.registry.ModAttachments.RUSH, r);
-            io.github.verycooltimo.murim.combat.Stun.apply(target, left);
+            io.github.verycooltimo.murim.combat.Stun.hold(target, player, left);
         }
         int thrust = RushRules.thrust(wrapSince);
         if (t >= thrust - 2 && t <= thrust + 6 && r.length > 12 && r[12] < 0.5D && target != null
@@ -874,7 +874,7 @@ public final class BehaviorExecutor {
                 t.hurtMarked = true;
                 // Раньше здесь была только слабость — «оглушает» из описания не выполнялось (аудит 05.10).
                 if (!(t instanceof net.minecraft.world.entity.player.Player)) {
-                    io.github.verycooltimo.murim.combat.Stun.apply(t, 30);
+                    io.github.verycooltimo.murim.combat.Stun.hold(t, player, 30);
                 }
             }
         }
@@ -907,7 +907,7 @@ public final class BehaviorExecutor {
         if (r[11] < 0.5D) {
             r[11] = 1.0D;
             player.setData(io.github.verycooltimo.murim.registry.ModAttachments.RUSH, r);
-            io.github.verycooltimo.murim.combat.Stun.apply(t, RushRules.end(r[6] < 0.0D ? 0 : (int) r[6]));
+            io.github.verycooltimo.murim.combat.Stun.hold(t, player, RushRules.end(r[6] < 0.0D ? 0 : (int) r[6]));
         }
         Casters.onHit(player, id, t);
         return true;
@@ -1030,7 +1030,7 @@ public final class BehaviorExecutor {
         if (e[5] < 0.5D) {
             e[5] = 1.0D;
             player.setData(io.github.verycooltimo.murim.registry.ModAttachments.EXEC, e);
-            io.github.verycooltimo.murim.combat.Stun.apply(t, ExecRules.END);
+            io.github.verycooltimo.murim.combat.Stun.hold(t, player, ExecRules.END);
         }
         Casters.onHit(player, id, t);
         return true;
@@ -1062,14 +1062,14 @@ public final class BehaviorExecutor {
         if (w[5] < 0.5D) {
             w[5] = 1.0D;
             player.setData(io.github.verycooltimo.murim.registry.ModAttachments.WHIRL, w);
-            whirlStagger(t);
+            whirlStagger(t, player);
         }
         Casters.onHit(player, id, t);
         return true;
     }
 
-    private static void whirlStagger(LivingEntity t) {
-        io.github.verycooltimo.murim.combat.Stun.apply(t, WhirlRules.END);
+    private static void whirlStagger(LivingEntity t, LivingEntity player) {
+        io.github.verycooltimo.murim.combat.Stun.hold(t, player, WhirlRules.END);
     }
 
     /** Глубокие разрезы вихря по земле: ≤14 природных блоков, по касательным дугам внутри зоны. */

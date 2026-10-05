@@ -196,7 +196,7 @@ public final class ScatterExecutor {
             // Первое попадание оглушает: мобы до конца техники, игрок 0,6 с, босс 0,5 с.
             s[11] = 1.0D;
             player.setData(ModAttachments.SCATTER, s);
-            io.github.verycooltimo.murim.combat.Stun.apply(t, ScatterRules.END - ScatterRules.STRIKE0);
+            io.github.verycooltimo.murim.combat.Stun.hold(t, player, ScatterRules.END - ScatterRules.STRIKE0);
         }
         return true;
     }
