@@ -63,6 +63,21 @@
       "gesture": "nod",
       "options": [
         {
+          "text": "dialogue.murim.steward.opt.silver",
+          "when": [
+            {
+              "has_item": "murim:silver_tael*5"
+            }
+          ],
+          "actions": [
+            {
+              "type": "donate",
+              "value": "murim:silver_tael*5=2"
+            }
+          ],
+          "next": "thanks"
+        },
+        {
           "text": "dialogue.murim.steward.opt.gold",
           "when": [
             {

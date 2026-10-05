@@ -1,0 +1,38 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "murim_coins",
+  "ingredients": [
+    {
+      "item": "murim:copper_coin"
+    },
+    {
+      "item": "murim:copper_coin"
+    },
+    {
+      "item": "murim:copper_coin"
+    },
+    {
+      "item": "murim:copper_coin"
+    },
+    {
+      "item": "murim:copper_coin"
+    },
+    {
+      "item": "murim:copper_coin"
+    },
+    {
+      "item": "murim:copper_coin"
+    },
+    {
+      "item": "murim:copper_coin"
+    },
+    {
+      "item": "murim:copper_coin"
+    }
+  ],
+  "result": {
+    "id": "murim:silver_tael",
+    "count": 1
+  }
+}

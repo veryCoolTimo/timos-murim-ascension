@@ -38,6 +38,17 @@ public final class ModTrade {
     public static final DeferredHolder<Item, DeferredSpawnEggItem> PEDDLER_SPAWN_EGG = ITEMS.register("peddler_spawn_egg",
             () -> new DeferredSpawnEggItem(PEDDLER, 0x2F3A5E, 0xC9A36A, new Item.Properties()));
 
+    /**
+     * Медный вэнь (文, «медяк») — мелочь мира мурим (docs/design/29-economy.md): 9 вэней = лян серебра.
+     * Серебряный лян остаётся в {@code ModItems.SILVER_TAEL} (его уже знают таблицы лута).
+     */
+    public static final DeferredHolder<Item, Item> COPPER_COIN = ITEMS.register("copper_coin",
+            () -> new Item(new Item.Properties().stacksTo(64)));
+
+    /** Золотой лян (金子): 9 лян серебра. Редок — сокровищница крепости, её хозяин, главарь банды. */
+    public static final DeferredHolder<Item, Item> GOLD_TAEL = ITEMS.register("gold_tael",
+            () -> new Item(new Item.Properties().stacksTo(64).rarity(net.minecraft.world.item.Rarity.UNCOMMON)));
+
     private static void attributes(EntityAttributeCreationEvent event) {
         event.put(PEDDLER.get(), Peddler.attributes().build());
     }
@@ -45,6 +56,8 @@ public final class ModTrade {
     private static void tabs(BuildCreativeModeTabContentsEvent event) {
         if (event.getTabKey().equals(io.github.verycooltimo.murim.registry.ModCreativeTabs.MURIM.getKey())) {
             event.accept(new ItemStack(PEDDLER_SPAWN_EGG.get()));
+            event.accept(new ItemStack(COPPER_COIN.get()));
+            event.accept(new ItemStack(GOLD_TAEL.get()));
         }
     }
 

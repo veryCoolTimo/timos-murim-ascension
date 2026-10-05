@@ -7,14 +7,14 @@
       "entries": [
         {
           "type": "minecraft:item",
-          "name": "murim:silver_tael",
+          "name": "murim:gold_tael",
           "functions": [
             {
               "function": "minecraft:set_count",
               "count": {
                 "type": "minecraft:uniform",
-                "min": 25,
-                "max": 45
+                "min": 3,
+                "max": 5
               }
             }
           ]
