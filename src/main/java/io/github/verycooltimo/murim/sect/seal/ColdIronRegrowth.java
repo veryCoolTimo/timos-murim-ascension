@@ -130,7 +130,7 @@ public final class ColdIronRegrowth extends SavedData {
         }
     }
 
-    static boolean isColdIron(BlockState state) {
+    public static boolean isColdIron(BlockState state) {
         return state.getBlock() instanceof ColdIronBlock || state.getBlock() instanceof ColdIronBarsBlock
                 || state.getBlock() instanceof ColdIronDoorBlock;
     }

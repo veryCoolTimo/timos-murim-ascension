@@ -1375,7 +1375,7 @@
   "block.murim.cold_iron_door": "Дверь из холодного железа",
   "block.murim.vault_seal": "Печать тайника",
   "block.murim.penance_seal": "Камень покаяния",
-  "murim.cold_iron.refuse": "Холодное железо не поддаётся",
+  "murim.cold_iron.refuse": "Холодное железо не поддаётся: его берёт только сила выше Пика",
   "murim.cold_iron.no_qi": "Холодное железо не поддаётся: для удара нужен полный запас ци",
   "murim.seal.door.locked": "Дверь из холодного железа заперта",
   "murim.seal.door.vault": "Дверь тайника не открывается. Коснись печати рядом и исполни выгравированное",
@@ -1383,7 +1383,6 @@
   "murim.vault.known": "Печать узнаёт тебя — дверь открывается",
   "murim.vault.engraving": "На печати выгравировано: %s. Исполни это здесь, по порядку.",
   "murim.vault.form": "%s, форма %s",
-  "murim.vault.form_all": "%s (шесть форм по порядку)",
   "murim.vault.progress": "Испытание двери: %s/%s — далее: %s",
   "murim.vault.broken": "Гравировка гаснет: ждали «%s». Лестница прервана — сначала.",
   "murim.vault.left": "Ты отошёл от печати — испытание прервано",
@@ -1403,5 +1402,6 @@
   "npc.murim.penance": "Приговор",
   "dialogue.murim.penance.sentence": "Ты снова нарушил устав горы. Пещера покаяния: %s дня во тьме, или пока не отсидишь %s мин в медитации. Можешь отказаться — тогда секта забудет %s твоих заслуг.",
   "dialogue.murim.penance.opt.accept": "Принимаю наказание.",
-  "dialogue.murim.penance.opt.refuse": "Отказываюсь."
+  "dialogue.murim.penance.opt.refuse": "Отказываюсь.",
+  "murim.vault.forms": "%s (%s форм по порядку)"
 }

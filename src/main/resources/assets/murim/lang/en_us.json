@@ -1395,7 +1395,7 @@
   "block.murim.cold_iron_door": "Cold Iron Door",
   "block.murim.vault_seal": "Vault Seal",
   "block.murim.penance_seal": "Penance Stone",
-  "murim.cold_iron.refuse": "The cold iron does not yield",
+  "murim.cold_iron.refuse": "The cold iron does not yield: only strength above Peak can break it",
   "murim.cold_iron.no_qi": "The cold iron does not yield: a strike needs full qi",
   "murim.seal.door.locked": "The cold iron door is locked",
   "murim.seal.door.vault": "The vault door does not open. Touch the seal beside it and perform what is engraved",
@@ -1403,7 +1403,6 @@
   "murim.vault.known": "The seal knows you — the door opens",
   "murim.vault.engraving": "Engraved on the seal: %s. Perform it here, in order.",
   "murim.vault.form": "%s, form %s",
-  "murim.vault.form_all": "%s (the six forms in order)",
   "murim.vault.progress": "Door trial: %s/%s — next: %s",
   "murim.vault.broken": "The engraving dims: it wanted «%s». The ladder broke — start over.",
   "murim.vault.left": "You stepped away from the seal — the trial ends",
@@ -1423,5 +1422,6 @@
   "npc.murim.penance": "Sentence",
   "dialogue.murim.penance.sentence": "You broke the rules of the mountain again. The penance cave: %s days in the dark, or until you sit %s min in meditation. You may refuse — then the sect forgets %s of your merit.",
   "dialogue.murim.penance.opt.accept": "I accept the punishment.",
-  "dialogue.murim.penance.opt.refuse": "I refuse."
+  "dialogue.murim.penance.opt.refuse": "I refuse.",
+  "murim.vault.forms": "%s (%s forms in order)"
 }

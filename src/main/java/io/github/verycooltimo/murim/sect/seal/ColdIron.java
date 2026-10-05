@@ -5,7 +5,6 @@ import io.github.verycooltimo.murim.profile.ProfileNetwork;
 import io.github.verycooltimo.murim.registry.ModAttachments;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
@@ -16,7 +15,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.BlockGetter;
 
 /**
- * What all cold iron blocks share: how fast a player breaks one ({@link ColdIronRules}), the qi it drains, the sparks
+ * What all cold iron blocks share: how fast a player breaks one ({@link ColdIronRules}), the qi it drains, the clang
  * and the refusal. Called from {@code getDestroyProgress} of the blocks, which the server asks every tick of digging
  * (ServerPlayerGameMode#tick → incrementDestroyProgress) and the client asks for its own crack animation.
  *
@@ -32,6 +31,13 @@ public final class ColdIron {
     private static final int SAY_EVERY = 30;
 
     private ColdIron() {
+    }
+
+    /** Did the current strike of {@code player} begin with full qi (client sparks read it: client/seal/ColdIronSparks). */
+    public static boolean biting(Player player) {
+        CompoundTag tag = player.getPersistentData().getCompound(TAG);
+        DantianProfile profile = player.getData(ModAttachments.PROFILE);
+        return tag.getBoolean("ok") && ColdIronRules.progress(profile.rank(), profile.circulating(), profile.maxCirculating(), false) > 0.0F;
     }
 
     /** Progress per tick for {@code player} digging the cold iron at {@code pos}. */
@@ -52,9 +58,7 @@ public final class ColdIron {
         player.getPersistentData().put(TAG, tag);
         float progress = tag.getBoolean("ok")
                 ? ColdIronRules.progress(profile.rank(), profile.circulating(), profile.maxCirculating(), false) : 0.0F;
-        if (player.level().isClientSide) {
-            sparks(player, pos, progress > 0.0F, newStrike);
-        } else if (player instanceof ServerPlayer sp && sp.level() instanceof ServerLevel sl) {
+        if (player instanceof ServerPlayer sp && sp.level() instanceof ServerLevel sl) {
             if (progress > 0.0F) {
                 drain(sp, sl, pos, profile);
             } else if (newStrike || now - tag.getLong("said") >= SAY_EVERY) {
@@ -66,7 +70,7 @@ public final class ColdIron {
         return progress;
     }
 
-    /** One tick of a qi strike: qi out of the reserve, sparks off the iron, a ring now and then. */
+    /** One tick of a qi strike: qi out of the reserve, a ring of the iron now and then (sparks — client/seal/ColdIronSparks). */
     private static void drain(ServerPlayer p, ServerLevel level, BlockPos pos, DantianProfile profile) {
         p.setData(ModAttachments.PROFILE, profile.withCirculating(profile.circulating() - ColdIronRules.costPerTick(profile.maxCirculating())));
         long now = level.getGameTime();
@@ -77,29 +81,6 @@ public final class ColdIron {
         // (a GameTest player has no negotiated channels).
         if (now % 10 == 0 && p.connection.hasChannel(io.github.verycooltimo.murim.network.SyncProfilePayload.TYPE)) {
             ProfileNetwork.sync(p);
-        }
-    }
-
-    /**
-     * Sparks off the struck face, on the digging client only — block feedback in the vanilla way (like
-     * {@code animateTick}), not a technique effect: blue sparks while qi bites, a few dull chips when it does not.
-     */
-    private static void sparks(Player p, BlockPos pos, boolean biting, boolean newStrike) {
-        var level = p.level();
-        var hit = p.pick(5.0D, 1.0F, false).getLocation();
-        if (biting) {
-            for (int i = 0; i < 3; i++) {
-                level.addParticle(ParticleTypes.ELECTRIC_SPARK, hit.x, hit.y, hit.z,
-                        (level.random.nextDouble() - 0.5D) * 0.6D, level.random.nextDouble() * 0.4D, (level.random.nextDouble() - 0.5D) * 0.6D);
-            }
-            if (level.getGameTime() % 4 == 0) {
-                level.addParticle(ParticleTypes.CRIT, hit.x, hit.y, hit.z, 0.0D, 0.1D, 0.0D);
-            }
-        } else if (newStrike) {
-            for (int i = 0; i < 4; i++) {
-                level.addParticle(ParticleTypes.CRIT, hit.x, hit.y, hit.z,
-                        (level.random.nextDouble() - 0.5D) * 0.3D, level.random.nextDouble() * 0.2D, (level.random.nextDouble() - 0.5D) * 0.3D);
-            }
         }
     }
 

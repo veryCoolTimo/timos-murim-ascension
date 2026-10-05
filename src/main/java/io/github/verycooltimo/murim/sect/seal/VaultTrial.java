@@ -171,15 +171,26 @@ public final class VaultTrial {
         return MasteryService.name(s.technique());
     }
 
-    /** The whole engraving for the chat: rung → rung → … */
+    /** The engraving for the chat, short: «Six Harmonies (6 forms) → Falling Petal → Seven Plum Blossoms (6 forms)». */
     static Component ladderText() {
         MutableComponent out = Component.empty();
         List<VaultLadder.Step> ladder = VaultLadder.LADDER;
-        out.append(Component.translatable("murim.vault.form_all", MasteryService.name(VaultLadder.SIX)));
-        for (VaultLadder.Step s : ladder) {
-            if (!s.foundation()) {
-                out.append(" → ").append(MasteryService.name(s.technique()));
+        int i = 0;
+        while (i < ladder.size()) {
+            VaultLadder.Step s = ladder.get(i);
+            var style = s.foundation() ? java.util.Optional.<io.github.verycooltimo.murim.technique.Styles.Style>empty()
+                    : io.github.verycooltimo.murim.technique.Styles.of(s.technique());
+            int j = i + 1;
+            while (j < ladder.size() && (s.foundation() ? ladder.get(j).foundation() && ladder.get(j).technique().equals(s.technique())
+                    : style.isPresent() && style.equals(io.github.verycooltimo.murim.technique.Styles.of(ladder.get(j).technique())))) {
+                j++;
             }
+            if (i > 0) {
+                out.append(" → ");
+            }
+            Component name = style.isPresent() ? Component.translatable(style.get().nameKey()) : MasteryService.name(s.technique());
+            out.append(j - i > 1 ? Component.translatable("murim.vault.forms", name, j - i) : name);
+            i = j;
         }
         return out;
     }
