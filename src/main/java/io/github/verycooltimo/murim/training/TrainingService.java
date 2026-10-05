@@ -238,7 +238,8 @@ public final class TrainingService {
     private static void levelUp(ServerPlayer player, int level) {
         applyEffects(player);
         player.displayClientMessage(Component.translatable("murim.training.level_up", level).withStyle(ChatFormatting.GOLD), false);
-        player.level().playSound(null, player.blockPosition(), SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS, 0.5F, 0.7F);
+        player.level().playSound(null, player.blockPosition(), io.github.verycooltimo.murim.registry.ModSounds.RANK_UP.get(),
+                SoundSource.PLAYERS, 0.5F, 1.3F);
         MurimMod.LOGGER.info("Training: {} body level {}", player.getName().getString(), level);
         TrainingNetwork.body(player);
     }

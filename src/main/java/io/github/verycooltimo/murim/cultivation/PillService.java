@@ -9,7 +9,7 @@ import io.github.verycooltimo.murim.registry.ModAttachments;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvents;
+import io.github.verycooltimo.murim.registry.ModSounds;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
@@ -491,17 +491,27 @@ public final class PillService {
         }
     }
 
-    /** Звуковой хук: звуки подбирает отдельная задача; пока — тихие ванильные заглушки. */
+    /**
+     * Звуковой хук (05.10, ElevenLabs — art/sounds-src/prompts.tsv): глоток, шаги мини-игры, итог.
+     * «Пять цветов» — тот же звук успеха выше тоном; удар «дикой» стороны — тихая отдача.
+     */
     static void sound(ServerPlayer player, String hook) {
-        var sound = switch (hook) {
-            case "pill_eat" -> SoundEvents.GENERIC_EAT;
-            case "absorb_strike" -> SoundEvents.PLAYER_HURT;
-            case "absorb_five_colours", "absorb_finish" -> SoundEvents.BEACON_POWER_SELECT;
-            case "absorb_backlash" -> SoundEvents.PLAYER_HURT;
+        record S(net.minecraft.sounds.SoundEvent event, float volume, float pitch) {
+        }
+        S s = switch (hook) {
+            case "pill_eat" -> new S(ModSounds.PILL_EAT.get(), 0.9F, 1.0F);
+            case "absorb_start" -> new S(ModSounds.ABSORB_PULSE.get(), 0.6F, 0.8F);
+            case "absorb_settle" -> new S(ModSounds.ABSORB_PULSE.get(), 0.6F, 1.1F);
+            case "absorb_cool" -> new S(ModSounds.ABSORB_PULSE.get(), 0.5F, 0.9F);
+            case "absorb_strike" -> new S(ModSounds.ABSORB_FAIL.get(), 0.45F, 1.3F);
+            case "absorb_finish" -> new S(ModSounds.ABSORB_SUCCESS.get(), 0.8F, 1.0F);
+            case "absorb_five_colours" -> new S(ModSounds.ABSORB_SUCCESS.get(), 0.9F, 1.25F);
+            case "absorb_backlash" -> new S(ModSounds.ABSORB_FAIL.get(), 0.9F, 0.9F);
             default -> null;
         };
-        if (sound != null) {
-            player.level().playSound(null, player.getX(), player.getY(), player.getZ(), sound, SoundSource.PLAYERS, 0.5F, 1.0F);
+        if (s != null) {
+            player.level().playSound(null, player.getX(), player.getY(), player.getZ(), s.event(), SoundSource.PLAYERS,
+                    s.volume(), s.pitch());
         }
     }
 

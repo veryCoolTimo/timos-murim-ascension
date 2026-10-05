@@ -68,6 +68,30 @@ public final class ModSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> QI_SWORD_SUMMON = sound("qi_sword_summon");
     public static final DeferredHolder<SoundEvent, SoundEvent> QI_SWORD_HUM = sound("qi_sword_hum");
 
+    // Путь совершенствования (05.10): пилюли, прорыв, ранг, медитация.
+    public static final DeferredHolder<SoundEvent, SoundEvent> PILL_EAT = sound("pill_eat");
+    /** Спокойный шаг мини-игры поглощения. */
+    public static final DeferredHolder<SoundEvent, SoundEvent> ABSORB_PULSE = sound("absorb_pulse");
+    public static final DeferredHolder<SoundEvent, SoundEvent> ABSORB_SUCCESS = sound("absorb_success");
+    /** Отдача: и удар «дикой» стороны, и сорванное поглощение, и искажение ци в медитации. */
+    public static final DeferredHolder<SoundEvent, SoundEvent> ABSORB_FAIL = sound("absorb_fail");
+    public static final DeferredHolder<SoundEvent, SoundEvent> BREAKTHROUGH_FAIL = sound("breakthrough_fail");
+    /** Гонг: новый ранг, подступень Пика, уровень тела. */
+    public static final DeferredHolder<SoundEvent, SoundEvent> RANK_UP = sound("rank_up");
+    public static final DeferredHolder<SoundEvent, SoundEvent> MEDITATION_START = sound("meditation_start");
+    public static final DeferredHolder<SoundEvent, SoundEvent> MEDITATION_STOP = sound("meditation_stop");
+
+    // Книги и страницы.
+    public static final DeferredHolder<SoundEvent, SoundEvent> BOOK_OPEN = sound("book_open");
+    public static final DeferredHolder<SoundEvent, SoundEvent> TECHNIQUE_LEARN = sound("technique_learn");
+    public static final DeferredHolder<SoundEvent, SoundEvent> PAGE_BIND = sound("page_bind");
+
+    // Тренировка тела и деньги.
+    public static final DeferredHolder<SoundEvent, SoundEvent> TRAINING_REP = sound("training_rep");
+    public static final DeferredHolder<SoundEvent, SoundEvent> TRAINING_SET = sound("training_set");
+    /** Монеты: сделка у торговца; заслуги секты могут брать тот же звук. */
+    public static final DeferredHolder<SoundEvent, SoundEvent> COIN_CLINK = sound("coin_clink");
+
     private static DeferredHolder<SoundEvent, SoundEvent> sound(String id) {
         return SOUNDS.register(id, () -> SoundEvent.createVariableRangeEvent(
                 ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, id)));

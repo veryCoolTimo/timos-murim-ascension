@@ -190,10 +190,8 @@ public final class RankReading {
         if (a < 8) {
             return;
         }
-        int w = font.width(text);
-        // Плотная подложка: на вспышках ауры и красном фоне строка иначе тонула (разбор codex 01.10).
-        graphics.fill(cx - w / 2 - 4, y - 2, cx + w / 2 + 4, y + 10, (Math.round(a * 0.62F) << 24) | 0x05070B);
-        graphics.drawString(font, text, cx - w / 2, y, (a << 24) | rgb, true);
+        // Плотная подложка: на вспышках ауры и красном фоне строка иначе тонула (разбор codex 01.10) — теперь общий HudText.
+        HudText.centered(graphics, font, text, cx, y, (a << 24) | rgb);
     }
 
     private RankReading() {

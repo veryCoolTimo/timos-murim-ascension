@@ -219,8 +219,8 @@ public final class ManualScreen extends Screen {
     public void tick() {
         ticks++;
         if (ticks == 3 && minecraft != null) {
-            minecraft.getSoundManager().play(net.minecraft.client.resources.sounds.SimpleSoundInstance.forUI(
-                    net.minecraft.sounds.SoundEvents.BOOK_PAGE_TURN, 0.8F, 0.7F));
+            // Открытие книги (05.10) — свой звук; перелистывание остаётся ванильным BOOK_PAGE_TURN.
+            Sfx.ui(io.github.verycooltimo.murim.registry.ModSounds.BOOK_OPEN, 0.8F, 1.0F);
         }
     }
 
@@ -440,6 +440,13 @@ public final class ManualScreen extends Screen {
         }
     }
 
+    /** Height of the page text at line width {@code lw}, in unscaled font pixels. */
+    private int textHeight(String body, int lw) {
+        int lines = font.split(formName(form()), lw).size() + (open.depth() > 0 ? 1 : 0)
+                + font.split(FormattedText.of(body), lw).size();
+        return lines * (font.lineHeight + 1) + 4;
+    }
+
     /** Название и текст техники в прямоугольнике страницы (координаты текстуры 384×256). */
     private void text(GuiGraphics g, int x, int y, int w, int h, float scale) {
         String path = form().getPath();
@@ -447,6 +454,12 @@ public final class ManualScreen extends Screen {
         String key = I18n.exists("book.murim." + path + ".full") ? "book.murim." + path + ".full" : "book.murim." + path;
         String body = I18n.exists(key) ? I18n.get(key)
                 : I18n.exists("technique.murim." + path + ".weakness") ? I18n.get("technique.murim." + path + ".weakness") : "";
+        // Longer translations (EN) overflowed the page and were cut silently: shrink until it fits, down to 70 %.
+        float fitted = scale;
+        while (fitted > scale * 0.7F && textHeight(body, (int) (w / fitted)) * fitted > h) {
+            fitted -= scale * 0.05F;
+        }
+        scale = fitted;
         g.pose().pushPose();
         g.pose().translate(x, y, 0.0F);
         g.pose().scale(scale, scale, 1.0F);

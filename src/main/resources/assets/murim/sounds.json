@@ -387,5 +387,137 @@
         "pitch": 0.85
       }
     ]
+  },
+  "pill_eat": {
+    "subtitle": "subtitles.murim.pill_eat",
+    "sounds": [
+      {
+        "name": "murim:pill_eat_a"
+      },
+      {
+        "name": "murim:pill_eat_b"
+      }
+    ]
+  },
+  "absorb_pulse": {
+    "subtitle": "subtitles.murim.absorb_pulse",
+    "sounds": [
+      {
+        "name": "murim:absorb_pulse_a"
+      }
+    ]
+  },
+  "absorb_success": {
+    "subtitle": "subtitles.murim.absorb_success",
+    "sounds": [
+      {
+        "name": "murim:absorb_success_a"
+      }
+    ]
+  },
+  "absorb_fail": {
+    "subtitle": "subtitles.murim.absorb_fail",
+    "sounds": [
+      {
+        "name": "murim:absorb_fail_a"
+      }
+    ]
+  },
+  "breakthrough_fail": {
+    "subtitle": "subtitles.murim.breakthrough_fail",
+    "sounds": [
+      {
+        "name": "murim:breakthrough_fail_a",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "rank_up": {
+    "subtitle": "subtitles.murim.rank_up",
+    "sounds": [
+      {
+        "name": "murim:rank_up_a",
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "book_open": {
+    "subtitle": "subtitles.murim.book_open",
+    "sounds": [
+      {
+        "name": "murim:book_open_a",
+        "attenuation_distance": 8
+      }
+    ]
+  },
+  "technique_learn": {
+    "subtitle": "subtitles.murim.technique_learn",
+    "sounds": [
+      {
+        "name": "murim:technique_learn_a"
+      }
+    ]
+  },
+  "page_bind": {
+    "subtitle": "subtitles.murim.page_bind",
+    "sounds": [
+      {
+        "name": "murim:page_bind_a",
+        "attenuation_distance": 8
+      },
+      {
+        "name": "murim:page_bind_b",
+        "attenuation_distance": 8
+      }
+    ]
+  },
+  "meditation_start": {
+    "subtitle": "subtitles.murim.meditation_start",
+    "sounds": [
+      {
+        "name": "murim:meditation_start_a",
+        "attenuation_distance": 10
+      }
+    ]
+  },
+  "meditation_stop": {
+    "subtitle": "subtitles.murim.meditation_stop",
+    "sounds": [
+      {
+        "name": "murim:meditation_stop_a",
+        "attenuation_distance": 10
+      }
+    ]
+  },
+  "training_rep": {
+    "subtitle": "subtitles.murim.training_rep",
+    "sounds": [
+      {
+        "name": "murim:training_rep_a",
+        "attenuation_distance": 8
+      }
+    ]
+  },
+  "training_set": {
+    "subtitle": "subtitles.murim.training_set",
+    "sounds": [
+      {
+        "name": "murim:training_set_a",
+        "attenuation_distance": 8
+      }
+    ]
+  },
+  "coin_clink": {
+    "subtitle": "subtitles.murim.coin_clink",
+    "sounds": [
+      {
+        "name": "murim:coin_clink_a",
+        "attenuation_distance": 8
+      },
+      {
+        "name": "murim:coin_clink_b",
+        "attenuation_distance": 8
+      }
+    ]
   }
 }

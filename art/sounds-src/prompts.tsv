@@ -34,3 +34,17 @@ qi_sword_hum	3.0	0.4	loop	Steady humming of a glowing energy sword, soft resonan
 sword_draw	0.8	0.5	-	Quick sword unsheathing, steel blade sliding out of a scabbard with a clean short ring, dry, no music
 hua_wind	20.0	0.5	loop	High mountain ambience: soft steady wind flowing through pine needles and over granite cliffs, airy and misty, calm, distant, no birds, no music, seamless loop (+28 dB on conversion)
 hua_bird	4.0	0.5	-	Single distant bird call echoing between misty mountain cliffs, a long thin cry like a crane far away, soft reverb, quiet
+pill_eat	1.0	0.5	-	Swallowing a small herbal pill: tiny dry crunch, a quick soft gulp, then a faint warm herbal fizz, close and quiet, no words, no music
+absorb_pulse	0.7	0.5	-	Soft deep pulse of inner energy settling in the body, muffled low thump with a gentle airy hum, calm, no music
+absorb_success	1.6	0.5	-	Warm resonant shimmer as inner energy settles: soft rising airy whoosh resolving into a clear gentle singing bowl ring, calm, no music
+absorb_fail	1.4	0.5	-	Inner energy backlash: sharp crackle of static and a dull internal thud, then a short hiss of escaping steam, painful, no voice, no music
+breakthrough_fail	2.0	0.5	-	Failed meditation breakthrough: deep low rumble that cracks like glass breaking inside, then collapses into a muffled thud and fading hiss, ominous, no music
+rank_up	2.5	0.4	-	Large bronze temple gong struck softly once, deep warm swell with a long shimmering tail, ceremonial, no voice, no music
+book_open	0.9	0.5	-	Opening an old hand-bound book: soft cover creak and rustle of thin rice paper pages, close and quiet, no music
+technique_learn	1.6	0.4	-	Ink brush stroke on rice paper followed by a soft airy shimmer and a faint high chime, calm, no music
+page_bind	0.9	0.5	-	Loose paper page pressed into a hand-stitched book: paper slide, quick thread pull and a soft muffled tap, close and quiet, no music
+meditation_start	1.6	0.4	-	Slow calm inhale followed by a soft small singing bowl strike, gentle and quiet, no words, no music
+meditation_stop	1.0	0.5	-	Calm slow exhale and soft cloth robe rustle as someone stands up, quiet, close, no music
+training_rep	0.5	0.5	-	Single dull wooden knock, short hollow wood block tap, dry, quiet, no music
+training_set	1.0	0.5	-	Two quick hollow wooden block knocks followed by a short tired exhale, dry, close, no music
+coin_clink	0.7	0.5	-	A few old bronze coins clinking into a cloth purse, short bright metallic jingle, dry, close, no music

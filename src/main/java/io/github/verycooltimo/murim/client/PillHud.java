@@ -197,12 +197,9 @@ public final class PillHud {
         g.pose().popPose();
     }
 
+    /** Small caption in the shared HUD style ({@link HudText}). */
     private static void small(GuiGraphics g, Font font, Component text, int cx, int y, int colour) {
-        g.pose().pushPose();
-        g.pose().translate(cx, y, 0.0F);
-        g.pose().scale(0.75F, 0.75F, 1.0F);
-        g.drawString(font, text, -font.width(text) / 2, 0, colour, true);
-        g.pose().popPose();
+        HudText.centered(g, font, text, cx, y, colour, 0.75F);
     }
 
     private PillHud() {

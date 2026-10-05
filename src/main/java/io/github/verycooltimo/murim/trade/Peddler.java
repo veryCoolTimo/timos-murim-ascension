@@ -226,7 +226,7 @@ public class Peddler extends AbstractVillager {
     // Звук сделки — звон монет (цепь), без «хм» жителя.
     @Override
     public SoundEvent getNotifyTradeSound() {
-        return SoundEvents.ARMOR_EQUIP_CHAIN.value();
+        return io.github.verycooltimo.murim.registry.ModSounds.COIN_CLINK.get();
     }
 
     @Override

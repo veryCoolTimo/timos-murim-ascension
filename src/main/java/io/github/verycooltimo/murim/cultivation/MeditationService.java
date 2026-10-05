@@ -8,7 +8,6 @@ import io.github.verycooltimo.murim.registry.ModAttachments;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
@@ -98,7 +97,7 @@ public final class MeditationService {
         }
         player.setData(ModAttachments.MEDITATION, MeditationState.started(filter, cultivation.beats()));
         player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
-                SoundEvents.BEACON_ACTIVATE, SoundSource.PLAYERS, 0.3F, 1.5F);
+                io.github.verycooltimo.murim.registry.ModSounds.MEDITATION_START.get(), SoundSource.PLAYERS, 0.8F, 1.0F);
         // После даньтяня строка не нужна: виджет у хотбара сам показывает, что идёт.
         if (!cultivation.seeded()) {
             player.displayClientMessage(Component.translatable("murim.meditation.begin." + cultivation.beats()), true);
@@ -125,6 +124,8 @@ public final class MeditationService {
             messageKey = "murim.rank.breakthrough.held";
         }
         player.setData(ModAttachments.MEDITATION, MeditationState.IDLE);
+        player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
+                io.github.verycooltimo.murim.registry.ModSounds.MEDITATION_STOP.get(), SoundSource.PLAYERS, 0.7F, 1.0F);
         if (messageKey != null) {
             player.displayClientMessage(Component.translatable(messageKey).withStyle(ChatFormatting.GRAY), true);
         }
@@ -249,7 +250,7 @@ public final class MeditationService {
             player.getFoodData().setFoodLevel(Math.min(player.getFoodData().getFoodLevel(), 17));
         }
         player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
-                SoundEvents.PLAYER_HURT, SoundSource.PLAYERS, 1.0F, 0.6F);
+                io.github.verycooltimo.murim.registry.ModSounds.ABSORB_FAIL.get(), SoundSource.PLAYERS, 1.0F, 0.8F);
         player.displayClientMessage(Component.translatable("murim.meditation.backlash")
                 .withStyle(ChatFormatting.DARK_RED), false);
         sync(player, SyncMeditationPayload.Event.BACKLASH);
@@ -346,7 +347,7 @@ public final class MeditationService {
             player.setData(ModAttachments.MEDITATION, MeditationState.IDLE);
             ProfileNetwork.sync(player);
             player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
-                    io.github.verycooltimo.murim.registry.ModSounds.QI_CHIME.get(), SoundSource.PLAYERS, 0.9F, 0.7F);
+                    io.github.verycooltimo.murim.registry.ModSounds.RANK_UP.get(), SoundSource.PLAYERS, 0.7F, 1.15F);
             player.displayClientMessage(Component.translatable("murim.rank.stage.done",
                     Component.translatable(Realm.nameKey(settled.rank())),
                     Component.translatable(Realm.stageKey(settled.stage()))).withStyle(ChatFormatting.GOLD), false);
@@ -398,6 +399,9 @@ public final class MeditationService {
         ProfileNetwork.sync(player);
         player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
                 io.github.verycooltimo.murim.registry.ModSounds.BREAKTHROUGH.get(), SoundSource.PLAYERS, 0.9F, 1.0F);
+        // Гонг под прорыв — тише самого прорыва, чтобы не спорить с ним (автор 03.10: «не взрывать уши»).
+        player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
+                io.github.verycooltimo.murim.registry.ModSounds.RANK_UP.get(), SoundSource.PLAYERS, 0.55F, 1.0F);
         player.displayClientMessage(Component.translatable("murim.rank.breakthrough.done",
                 Component.translatable(Realm.nameKey(risen.rank()))).withStyle(ChatFormatting.GOLD), false);
         sync(player, SyncMeditationPayload.Event.RANK_UP);
@@ -413,7 +417,7 @@ public final class MeditationService {
         }
         ProfileNetwork.sync(player);
         player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
-                SoundEvents.PLAYER_HURT, SoundSource.PLAYERS, 1.0F, 0.5F);
+                io.github.verycooltimo.murim.registry.ModSounds.BREAKTHROUGH_FAIL.get(), SoundSource.PLAYERS, 1.0F, 1.0F);
         player.displayClientMessage(Component.translatable("murim.rank.breakthrough.broken")
                 .withStyle(ChatFormatting.DARK_RED), false);
         sync(player, SyncMeditationPayload.Event.BROKEN);

@@ -232,7 +232,17 @@ public final class LoadoutScreen extends Screen {
         // Основа меча — отдельная ячейка.
         int fx = x0 + FOUNDATION_X;
         int fy = y0 + TOP;
-        small(graphics, Component.translatable("murim.loadout.foundation"), fx, fy - 10, INK_GREY);
+        // Under the slot, wrapped to the free width: above it the English label ran past the scroll's edge and,
+        // wrapped, sat under the seal stamp (gallery 05.10).
+        List<net.minecraft.util.FormattedCharSequence> label = font.split(Component.translatable("murim.loadout.foundation"),
+                (int) ((W - ROD - 4 - FOUNDATION_X) / 0.75F));
+        for (int i = 0; i < label.size(); i++) {
+            graphics.pose().pushPose();
+            graphics.pose().translate(fx, fy + SLOT_SIZE + 3 + 7 * i, 0.0F);
+            graphics.pose().scale(0.75F, 0.75F, 1.0F);
+            graphics.drawString(font, label.get(i), 0, 0, INK, false);
+            graphics.pose().popPose();
+        }
         graphics.blit(SLOT, fx, fy, 0, 0.0F, 0.0F, SLOT_SIZE, SLOT_SIZE, SLOT_SIZE, SLOT_SIZE);
         if (inside(mouseX, mouseY, fx, fy, SLOT_SIZE, SLOT_SIZE)) {
             graphics.fill(fx + 2, fy + 2, fx + SLOT_SIZE - 2, fy + SLOT_SIZE - 2, 0x28A79D8C);

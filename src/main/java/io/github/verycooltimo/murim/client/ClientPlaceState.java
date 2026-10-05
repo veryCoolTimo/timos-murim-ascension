@@ -19,6 +19,13 @@ import net.neoforged.neoforge.client.event.ClientTickEvent;
 public final class ClientPlaceState {
 
     private static io.github.verycooltimo.murim.world.Place place;
+    /** Dev stand only ({@link HudGalleryCapture}): a place shown regardless of the world. */
+    private static io.github.verycooltimo.murim.world.Place forced;
+
+    public static void forceForCapture(io.github.verycooltimo.murim.world.Place value) {
+        forced = value;
+        place = value;
+    }
 
     private ClientPlaceState() {
     }
@@ -56,6 +63,10 @@ public final class ClientPlaceState {
         // встанешь — всё горит»). Камни жилы рисуются своим блоком и от этого не зависят.
         if (!ClientMeditationState.state().active()) {
             place = null;
+            return;
+        }
+        if (forced != null) {
+            place = forced;
             return;
         }
         if (mc.player.tickCount % 20 != 0) {
