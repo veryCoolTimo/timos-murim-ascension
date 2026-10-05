@@ -36,8 +36,23 @@ public final class MeditationService {
     /** Длина первого такта: 15 секунд — показать тепло, не заставляя ждать. */
     public static final int FIRST_FEELING_TICKS = 300;
 
-    /** Прирост запаса за тик в начале медитации после семени. */
-    static final double GAIN_START = 0.05D;
+    /**
+     * Прирост запаса за тик в начале медитации после семени. Было 0,05 — стена первого ранга за две
+     * сессии; 0,03 — первый прорыв к ~30-й минуте (docs/design/27-balance.md, симулятор PacingSimTest).
+     */
+    static final double GAIN_START = 0.03D;
+
+    /**
+     * Ручка для системы тренировки тела (параллельная ветка, 05.10): на сколько закалённое тело ускоряет
+     * прирост запаса за единицу «тела». 0 — не влияет, пока та система не подключит {@link #bodyFactor}
+     * в {@code tickSeeded}. Так тело кормит прорывы, не трогая их условий (docs/design/27-balance.md §4).
+     */
+    public static final double BODY_GAIN_PER_POINT = 0.0D;
+
+    /** Множитель прироста запаса от тела; 1 — без влияния. */
+    public static double bodyFactor(double body) {
+        return 1.0D + BODY_GAIN_PER_POINT * Math.max(0.0D, body);
+    }
 
     /** За сколько тиков прирост падает в e раз: «усталость ума». */
     static final double GAIN_DECAY_TICKS = 1200.0D;
