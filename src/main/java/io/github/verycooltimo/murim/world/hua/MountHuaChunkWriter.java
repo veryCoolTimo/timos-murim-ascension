@@ -289,6 +289,7 @@ final class MountHuaChunkWriter {
         }
         clearTerraces(pos);
         hangingGreen(pos);
+        faceGreen(pos);
         climbProps(pos);
         climbGreen(pos);
         Heightmap.primeHeightmaps(chunk, EnumSet.allOf(Heightmap.Types.class));
@@ -300,7 +301,8 @@ final class MountHuaChunkWriter {
 
     /**
      * Training climb furniture: a rock seat on each rest ledge, a rope post (spruce post on the
-     * upper rim, chain down the riser) at the hardest steps, one pine on each side lobe.
+     * upper rim, an old hemp rope down the riser — author 06.10, our block instead of the chain) at the
+     * hardest steps, one pine on each side lobe.
      * Runs in the cleanup pass, after the vanilla sweep.
      */
     private void climbProps(BlockPos.MutableBlockPos pos) {
@@ -340,7 +342,7 @@ final class MountHuaChunkWriter {
             }
             if (inChunk(lo[0], lo[1])) {
                 for (int y = tHi + 1; y > tLo; y--) {
-                    level.setBlock(pos.set(lo[0], y, lo[1]), Blocks.CHAIN.defaultBlockState(), 2);
+                    level.setBlock(pos.set(lo[0], y, lo[1]), ModBlocks.OLD_ROPE.get().defaultBlockState(), 2);
                 }
             }
         }
@@ -348,8 +350,9 @@ final class MountHuaChunkWriter {
 
     /**
      * Greenery on the training climb (author2/sect-high-on-mountain.png: bushes and moss on every
-     * lobe, green pockets between them). Vines cover every riser of 2-6 blocks down to its foot —
-     * that is the way up; taller walls only get short strands that stop well above the ground.
+     * lobe, green pockets between them). Our climbing aids (author 06.10, no vanilla vines) cover every
+     * riser of 2-6 blocks down to its foot — moss mats and granite handholds, holds in the cracks and on the
+     * hard steps ({@link ClimbAids}); taller walls only get short moss strands that stop well above the ground.
      * Bushes sit on rims over real drops (6+), never on a step of the route.
      */
     private void climbGreen(BlockPos.MutableBlockPos pos) {
@@ -382,21 +385,21 @@ final class MountHuaChunkWriter {
                     if (rise < 2) {
                         continue;
                     }
-                    int len = rise <= 6 ? rise
-                            : ((h >>> (k * 4)) & 15) == 0 ? 1 + (int) Math.floorMod(h >>> 20, 3L) : 0;
-                    if (len == 0) {
+                    boolean[] cracked = new boolean[Math.min(rise, ClimbAids.ROUTE_RISE)];
+                    for (int c = 0; c < cracked.length; c++) {
+                        cracked[c] = level.getBlockState(pos.set(wx + d[0], tn - c, wz + d[1]))
+                                .is(ModBlocks.HUA_GRANITE_CRACKED.get());
+                    }
+                    ClimbAids.Aid[] aids = ClimbAids.riser(rise, h >>> (k * 4), cracked);
+                    if (aids.length == 0) {
                         continue;
                     }
-                    BlockState vine = Blocks.VINE.defaultBlockState().setValue(
-                            d[0] == 1 ? net.minecraft.world.level.block.VineBlock.EAST
-                                    : d[0] == -1 ? net.minecraft.world.level.block.VineBlock.WEST
-                                    : d[1] == 1 ? net.minecraft.world.level.block.VineBlock.SOUTH
-                                    : net.minecraft.world.level.block.VineBlock.NORTH, true);
-                    for (int y = tn; y > tn - len; y--) {
-                        if (!level.getBlockState(pos.set(wx, y, wz)).isAir()) {
+                    Direction facing = facingAway(d);
+                    for (int c = 0; c < aids.length; c++) {
+                        if (!level.getBlockState(pos.set(wx, tn - c, wz)).isAir()) {
                             break;
                         }
-                        level.setBlock(pos, vine, 2);
+                        level.setBlock(pos, aid(aids[c], facing), 2);
                     }
                     break;
                 }
@@ -474,6 +477,16 @@ final class MountHuaChunkWriter {
         }
     }
 
+    /** Ladder-style facing of a climbing aid on the wall of the neighbour at offset {@code d}: away from it. */
+    private static Direction facingAway(int[] d) {
+        return d[0] == 1 ? Direction.WEST : d[0] == -1 ? Direction.EAST : d[1] == 1 ? Direction.NORTH : Direction.SOUTH;
+    }
+
+    private static BlockState aid(ClimbAids.Aid aid, Direction facing) {
+        return (aid == ClimbAids.Aid.HOLD ? ModBlocks.ROCK_HANDHOLD : ModBlocks.CLIMBING_MOSS).get().defaultBlockState()
+                .setValue(net.minecraft.world.level.block.LadderBlock.FACING, facing);
+    }
+
     /** A small cliff pine for a wide ledge: 3-4 trunk, a flat pad and a small top (stays clear of the row above). */
     private void smallPine(int x, int y, int z, long h, BlockPos.MutableBlockPos pos) {
         int trunk = 3 + (int) ((h >>> 3) & 1);
@@ -509,7 +522,7 @@ final class MountHuaChunkWriter {
     }
 
     /**
-     * The shelf front (author 04.10): greenery hanging over the drops below the sect pads — vine
+     * The shelf front (author 04.10): greenery hanging over the drops below the sect pads — moss
      * curtains down the rock and azalea clumps spilling over the rim. Runs in the cleanup pass so
      * the vanilla-vine sweep above has already happened.
      */
@@ -534,14 +547,11 @@ final class MountHuaChunkWriter {
                     if (tn - t < 3) {
                         continue;
                     }
-                    // This column sits below a step: a vine strand down the wall of the neighbour.
+                    // This column sits below a step: a moss mat hanging down the wall of the neighbour
+                    // (author 06.10: our own moss, not the vanilla vine).
                     if (((h >>> (k * 3)) & 3) != 0) {
                         int len = 2 + (int) Math.floorMod(h >>> 20, 9L);
-                        BlockState vine = Blocks.VINE.defaultBlockState().setValue(
-                                d[0] == 1 ? net.minecraft.world.level.block.VineBlock.EAST
-                                        : d[0] == -1 ? net.minecraft.world.level.block.VineBlock.WEST
-                                        : d[1] == 1 ? net.minecraft.world.level.block.VineBlock.SOUTH
-                                        : net.minecraft.world.level.block.VineBlock.NORTH, true);
+                        BlockState vine = aid(ClimbAids.Aid.MOSS, facingAway(d));
                         for (int y = tn; y > Math.max(t, tn - len); y--) {
                             if (!level.getBlockState(pos.set(wx, y, wz)).isAir()) {
                                 break;
@@ -555,7 +565,73 @@ final class MountHuaChunkWriter {
                                 : Blocks.AZALEA_LEAVES.defaultBlockState();
                         leaf = leaf.setValue(LeavesBlock.PERSISTENT, true);
                         level.setBlock(pos.set(wx, tn, wz), leaf, 2);
-                        if (level.getBlockState(pos.set(wx, tn - 1, wz)).isAir() || level.getBlockState(pos).is(Blocks.VINE)) {
+                        if (level.getBlockState(pos.set(wx, tn - 1, wz)).isAir() || level.getBlockState(pos).is(ModBlocks.CLIMBING_MOSS.get())) {
+                            level.setBlock(pos, leaf, 2);
+                        }
+                    }
+                    break;
+                }
+            }
+        }
+    }
+
+    /**
+     * Green on the massif's faces away from the sect and the climb (author 06.10: «не хватает зелени на горах —
+     * листвы, мха»): in noise patches, moss mats hang a few blocks down the walls from their lips (never to the
+     * foot — the faces stay rock, the patches only soften them), and azalea or spruce tufts spill over the rims.
+     * Skips the pads (+4), the stair, streams, caves and the climb face, which have their own dressing.
+     */
+    private void faceGreen(BlockPos.MutableBlockPos pos) {
+        int[][] dirs = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
+        for (int lz = 0; lz < 16; lz++) {
+            for (int lx = 0; lx < 16; lx++) {
+                if (weight[idx(lx + B, lz + B)] < 0.95) {
+                    continue;
+                }
+                int wx = x0 + lx;
+                int wz = z0 + lz;
+                int t = topAt(lx, lz);
+                if (t < site.baseY() + 20) {
+                    continue;
+                }
+                double u = site.localU(wx + 0.5, wz + 0.5);
+                double v = site.localV(wx + 0.5, wz + 0.5);
+                if (shape.massif(u, v) <= HuaBiomes.MASSIF || zoneAt(u, v, 4) != null || shape.climbChanged(u, v)
+                        || MountHuaPlan.inPillarBasin(u, v) || shape.streamDistance(u, v) < 4) {
+                    continue;
+                }
+                double[] tr = shape.trailAt(u, v);
+                if (tr != null && tr[0] < 6) {
+                    continue;
+                }
+                double patch = noise.noise(wx / 8.0, wz / 8.0, 400.0);
+                if (patch < 0.05) {
+                    continue;
+                }
+                long h = mix(wx, wz, 151);
+                for (int k = 0; k < 4; k++) {
+                    int[] d = dirs[k];
+                    int tn = topAt(lx + d[0], lz + d[1]);
+                    int rise = tn - t;
+                    if (rise < 5 || ((h >>> (k * 3)) & 7) >= (patch > 0.4 ? 4 : 2)) {
+                        continue;
+                    }
+                    // A mat from the lip down, a third to a half of the wall, at most 7 blocks.
+                    int len = Math.min(7, rise / 3 + (int) Math.floorMod(h >>> 20, Math.max(1, rise / 6 + 1)));
+                    BlockState moss = aid(ClimbAids.Aid.MOSS, facingAway(d));
+                    for (int y = tn; y > tn - len; y--) {
+                        if (!level.getBlockState(pos.set(wx, y, wz)).isAir()) {
+                            break;
+                        }
+                        level.setBlock(pos, moss, 2);
+                    }
+                    // A tuft over the rim of the wall above.
+                    if (Math.floorMod(h >>> 32, 4L) == 0 && level.getBlockState(pos.set(wx, tn + 1, wz)).isAir()
+                            && level.getBlockState(pos.set(wx + d[0], tn + 1, wz + d[1])).isAir()) {
+                        BlockState leaf = (((h >>> 40) & 1) == 0 ? Blocks.AZALEA_LEAVES : Blocks.SPRUCE_LEAVES)
+                                .defaultBlockState().setValue(LeavesBlock.PERSISTENT, true);
+                        level.setBlock(pos.set(wx + d[0], tn + 1, wz + d[1]), leaf, 2);
+                        if (level.getBlockState(pos.set(wx, tn, wz)).is(ModBlocks.CLIMBING_MOSS.get())) {
                             level.setBlock(pos, leaf, 2);
                         }
                     }
@@ -620,7 +696,8 @@ final class MountHuaChunkWriter {
                 || (st.getBlock() instanceof LeavesBlock && st.getValue(LeavesBlock.PERSISTENT))
                 || st.is(ModBlocks.POLISHED_HUA_GRANITE.get()) || st.is(ModBlocks.POLISHED_HUA_GRANITE_STAIRS.get())
                 || st.is(ModBlocks.POLISHED_HUA_GRANITE_SLAB.get()) || st.is(ModBlocks.POLISHED_HUA_GRANITE_WALL.get())
-                || st.is(Blocks.CHAIN) || st.is(ModBlocks.HUA_GRANITE_MOSSY.get()) || st.is(ModBlocks.HUA_GRANITE_CRACKED.get());
+                || st.is(Blocks.CHAIN) || st.is(ModBlocks.HUA_GRANITE_MOSSY.get()) || st.is(ModBlocks.HUA_GRANITE_CRACKED.get())
+                || st.is(ModBlocks.CLIMBING_MOSS.get()) || st.is(ModBlocks.ROCK_HANDHOLD.get()) || st.is(ModBlocks.OLD_ROPE.get());
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -752,9 +829,14 @@ final class MountHuaChunkWriter {
         if (drop >= 6 && t - y <= 2 && noise.noise(x / 3.0, y / 3.0, z / 3.0) > -0.1) {
             return ModBlocks.HUA_GRANITE_CRACKED.get().defaultBlockState();
         }
-        // North faces stay damp: moss and lichen (world north = -z).
+        // North faces stay damp: moss and lichen (world north = -z). Author 06.10 «не хватает зелени на
+        // горах — листвы, мха»: wider patches than before (0.35), and moss creeping a block or two down
+        // from every lip in noise patches.
         boolean northFace = topAt(lx, lz - 1) < y;
-        if (northFace && y < SNOW_Y && noise.noise(x / 12.0, y / 12.0, z / 12.0) > 0.35) {
+        if (northFace && y < SNOW_Y && noise.noise(x / 12.0, y / 12.0, z / 12.0) > 0.18) {
+            return ModBlocks.HUA_GRANITE_MOSSY.get().defaultBlockState();
+        }
+        if (drop >= 3 && t - y <= 1 && noise.noise(x / 6.0, y / 6.0, z / 6.0 + 210.0) > 0.1) {
             return ModBlocks.HUA_GRANITE_MOSSY.get().defaultBlockState();
         }
         // Altitude banding: warm granite low, pale grey high (blended by noise, never a contour).
@@ -852,7 +934,7 @@ final class MountHuaChunkWriter {
         }
         // Stepped walls (a 45°+ staircase of single blocks) stay bare: no grass stripes across faces.
         if (!saddle && ((soil < -0.15 && t > site.baseY() + 30) || (fall >= 3 && t > site.baseY() + 1))) {
-            if (n > 0.35 && t < SNOW_Y) {
+            if (n > 0.12 && t < SNOW_Y) { // author 06.10: more moss on the bare steps (was 0.35)
                 chunk.setBlockState(pos.set(wx, t, wz), ModBlocks.HUA_GRANITE_MOSSY.get().defaultBlockState(), false);
             }
             return;
