@@ -97,7 +97,8 @@ public final class SectGameTests {
 
     static void setPeriod(GameTestHelper helper, SectSchedule.Period p) {
         long day = Math.floorDiv(helper.getLevel().getDayTime(), 24000L) * 24000L;
-        helper.getLevel().setDayTime(day + p.start() + 20);
+        // После личных опозданий к смене части суток (SectStagger): все уже за делом новой части.
+        helper.getLevel().setDayTime(day + p.start() + SectStagger.LAG_MAX + 20);
     }
 
     // ------------------------------------------------------------------ строй

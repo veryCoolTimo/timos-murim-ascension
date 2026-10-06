@@ -29,7 +29,8 @@ final class NpcGestures {
         if (npc.spar() == SectDisciple.Spar.FIGHT || !npc.anim().isEmpty() && npc.role() == SectRole.SENIOR && npc.spar() != SectDisciple.Spar.NONE) {
             return;
         }
-        float t = npc.tickCount + partial;
+        // Своя фаза покачивания у каждого (автор 06.10: не хором).
+        float t = npc.tickCount + partial + LoopVariety.phase(LoopVariety.seed(npc.getUUID())) * 200.0F;
         if (npc.talkingTo() >= 0 && armR != null && waist != null) {
             // Говорит: дыхание корпуса и ладонь чуть вперёд, медленно.
             waist.xRot += 0.04F * Mth.sin(t * 0.12F);

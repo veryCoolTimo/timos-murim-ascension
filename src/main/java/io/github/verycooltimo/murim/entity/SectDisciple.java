@@ -1656,14 +1656,41 @@ public class SectDisciple extends Bandit implements Casters.Caster {
     private LivingEntity watchTarget;
     private long watchUntil;
 
+    private long watchFrom;
+
     public void watch(LivingEntity who, int ticks) {
+        watch(who, ticks, 0);
+    }
+
+    /** Обернуться через {@code delay} тиков: дальние замечают позже ближних (автор 06.10: не хором). */
+    public void watch(LivingEntity who, int ticks, int delay) {
         watchTarget = who;
-        watchUntil = level().getGameTime() + ticks;
+        watchFrom = level().getGameTime() + delay;
+        watchUntil = watchFrom + ticks;
     }
 
     /** На кого смотрит сейчас (null — ни на кого). */
     public LivingEntity watching() {
-        return watchTarget != null && watchTarget.isAlive() && level().getGameTime() < watchUntil ? watchTarget : null;
+        long now = level().getGameTime();
+        return watchTarget != null && watchTarget.isAlive() && now >= watchFrom && now < watchUntil ? watchTarget : null;
+    }
+
+    /** Человек уже «почувствовал» дождь (или его конец): каждый в своё время (SectWeather, автор 06.10). */
+    private boolean feelsRain;
+    /** Когда погода стала не той, что он чувствует; Long.MIN_VALUE — совпадает. */
+    private long rainFlip = Long.MIN_VALUE;
+
+    public boolean feelsRain() {
+        return feelsRain;
+    }
+
+    public long rainFlip() {
+        return rainFlip;
+    }
+
+    public void feelRain(boolean rain, long flip) {
+        feelsRain = rain;
+        rainFlip = flip;
     }
 
     /** GameTest: дождь вокруг этого человека (null — погода мира). */

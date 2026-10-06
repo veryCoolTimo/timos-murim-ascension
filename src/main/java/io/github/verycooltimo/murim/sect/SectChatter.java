@@ -47,13 +47,31 @@ public final class SectChatter {
 
     @SubscribeEvent
     static void onServerTick(ServerTickEvent.Post event) {
-        if (event.getServer().getTickCount() % 20 != 9) {
+        int tick = event.getServer().getTickCount();
+        // Ответы с заминкой — раз в 4 тика (не все пузыри в один тик секунды), новая реплика — раз в секунду.
+        if (tick % 20 != 9 && tick % 4 != 1) {
             return;
         }
         ServerLevel level = event.getServer().overworld();
         for (ServerPlayer p : level.players()) {
-            if (!p.isSpectator()) {
+            if (p.isSpectator()) {
+                continue;
+            }
+            if (tick % 20 == 9) {
                 tickPlayer(level, p);
+            } else {
+                deliverDue(near(level, p, HEAR_RANGE));
+            }
+        }
+    }
+
+    /** Ответы соседей, которым подошло время. */
+    static void deliverDue(List<SectDisciple> near) {
+        for (SectDisciple d : near) {
+            String key = d.pendingKey();
+            Component due = d.takeDueBubble();
+            if (due != null) {
+                send(d, key, due);
             }
         }
     }
@@ -70,14 +88,7 @@ public final class SectChatter {
         if (near.isEmpty()) {
             return;
         }
-        // Ответы соседей, которым подошло время.
-        for (SectDisciple d : near) {
-            String key = d.pendingKey();
-            Component due = d.takeDueBubble();
-            if (due != null) {
-                send(d, key, due);
-            }
-        }
+        deliverDue(near);
         CompoundTag tag = p.getPersistentData();
         if (tag.getLong(NEXT_TAG) > now || level.random.nextInt(3) != 0) {
             return;

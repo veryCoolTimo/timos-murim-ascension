@@ -95,7 +95,9 @@ public final class SectLifeCapture {
             java.util.Map.entry("review", new int[] {200, 10}), java.util.Map.entry("merit", new int[] {110, 4}),
             // Живая гора: реплики приходят раз в несколько секунд — сцены длиннее.
             java.util.Map.entry("alive_meal", new int[] {100, 4}), java.util.Map.entry("alive_watch", new int[] {80, 3}),
-            java.util.Map.entry("alive_rain", new int[] {110, 6}));
+            java.util.Map.entry("alive_rain", new int[] {110, 6}),
+            // Конец ужина: время идёт, люди встают из-за стола каждый в своё время (автор 06.10) — 45 с.
+            java.util.Map.entry("alive_leave", new int[] {90, 10}));
     /** Игрок сам в кадре (выживание, без невидимости): перехват, охрана, итог дня, обмен заслуг. */
     private static final java.util.Set<String> PLAYER_ACTS = java.util.Set.of("intercept", "guard", "summary", "merit", "watch");
 
@@ -146,7 +148,9 @@ public final class SectLifeCapture {
             // Игрок у столбов применяет технику — ученики останавливаются и поворачиваются к нему.
             new Scene("alive_watch", 4300, "poles", 5.5D, 14.5D, 2.2D, "poles", 0.0D, 5.0D, 1.0D, false, "watch"),
             // Дождь днём: поединки и столбы прерваны, люди уходят под крышу, дерево или к стене.
-            new Scene("alive_rain", 4400, "sparring", -4.0D, -13.0D, 3.5D, "sparring", 0.0D, -3.0D, 0.5D, false, "rain"));
+            new Scene("alive_rain", 4400, "sparring", -4.0D, -13.0D, 3.5D, "sparring", 0.0D, -3.0D, 0.5D, false, "rain"),
+            // Конец ужина (автор 06.10: «нужна разница во времени»): колокол — и люди встают из-за стола не хором.
+            new Scene("alive_leave", 10700, "camp", 9.5D, 8.5D, 3.2D, "camp", 4.5D, 2.0D, 0.6D, false, "leave"));
 
     private static boolean setup;
     private static List<Scene> scenes;
@@ -249,6 +253,19 @@ public final class SectLifeCapture {
         if ("watch".equals(s.act()) && shooting && wait == 130) {
             // Второй приём: люди, отвернувшиеся после первого, снова смотрят.
             server.execute(() -> castForCapture(server));
+        }
+        if ("leave".equals(s.act()) && shooting && wait % 40 == 0) {
+            // Журнал: сколько ещё за столом — видно, что встают по одному, а не разом.
+            server.execute(() -> {
+                ServerLevel lv = server.overworld();
+                ServerPlayer sp = server.getPlayerList().getPlayers().get(0);
+                List<String> eating = new ArrayList<>();
+                for (io.github.verycooltimo.murim.entity.SectDisciple d : lv.getEntitiesOfClass(io.github.verycooltimo.murim.entity.SectDisciple.class,
+                        sp.getBoundingBox().inflate(48.0D), d -> d.doingKind() == SectSchedule.Kind.EAT)) {
+                    eating.add(d.memberKey());
+                }
+                MurimMod.LOGGER.info("Стенд секты [alive_leave]: время {} — за столом {}: {}", lv.getDayTime() % 24000L, eating.size(), eating);
+            });
         }
         if (s.join() && mc.player.level().getGameTime() % SectSchedule.BEAT == SectSchedule.BEAT_STRIKE - 2) {
             // Настоящее нажатие атаки: форма основы идёт тем же путём, что у игрока (клиент → сервер → строй).
@@ -424,6 +441,13 @@ public final class SectLifeCapture {
                 }
             }
             case "watch" -> castForCapture(server);
+            case "leave" -> {
+                // За две секунды до колокола и время пошло: дальше каждый встаёт по своему опозданию (SectStagger).
+                long day = Math.floorDiv(level.getDayTime(), 24000L) * 24000L;
+                level.setDayTime(day + SectSchedule.Period.EVENING.start() - 40);
+                level.getGameRules().getRule(GameRules.RULE_DAYLIGHT).set(true, server);
+                MurimMod.LOGGER.info("Стенд секты: конец ужина, время идёт");
+            }
             case "rain" -> {
                 level.setWeatherParameters(0, 6000, true, false);
                 MurimMod.LOGGER.info("Стенд секты: пошёл дождь");

@@ -148,6 +148,13 @@ public class DiscipleRenderer extends MobRenderer<SectDisciple, DiscipleRenderer
         /** Сейчас на модели клип позы секты (а не техника и не покой) — для реквизита ({@link SectProps}). */
         private boolean poseShown;
 
+        /** Время зацикленного клипа со сдвигом фазы и темпом этого человека, без пауз. */
+        private static float varied(SectDisciple entity, float sec, float len) {
+            long seed = LoopVariety.seed(entity.getUUID());
+            float t = sec * LoopVariety.tempo(seed) + LoopVariety.phase(seed) * len;
+            return len > 0.0F ? t % len : 0.0F;
+        }
+
         boolean poseShown() {
             return poseShown;
         }
@@ -173,7 +180,10 @@ public class DiscipleRenderer extends MobRenderer<SectDisciple, DiscipleRenderer
             if (live) {
                 root().getAllParts().forEach(ModelPart::resetPose);
                 // API: reference/minecraft-src/net/minecraft/client/animation/KeyframeAnimations.java#animate (время в мс)
-                KeyframeAnimations.animate(this, clip, (long) (Math.min(sec, clip.lengthInSeconds()) * 1000.0F), 1.0F, CACHE);
+                // Зацикленный клип вне строя (лотос) — в своём темпе и фазе; формы строя синхронны намеренно.
+                float t = clip.looping() && !anim.contains("six_form_") ? varied(entity, sec, clip.lengthInSeconds())
+                        : Math.min(sec, clip.lengthInSeconds());
+                KeyframeAnimations.animate(this, clip, (long) (t * 1000.0F), 1.0F, CACHE);
                 // Меч в руке игрока смотрит вперёд из кулака (ванильный предмет в руке), у бандита —
                 // продолжает руку: клинок поворачивается вперёд, как держит игрок.
                 // В поклоне меч лежит обратным хватом вдоль предплечья (приветствие с мечом), не торчит вверх.
@@ -188,6 +198,19 @@ public class DiscipleRenderer extends MobRenderer<SectDisciple, DiscipleRenderer
             }
             super.setupAnim(entity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch);
             NpcGestures.apply(this, entity, partial);
+        }
+
+        /** Пауза между циклами: взгляд на соседа, чашка на коленях (поверх клипа, доля — вход в позу). */
+        private void vary(LoopVariety.Frame v, float blend) {
+            if (v.glance() != 0.0F) {
+                getAnyDescendantWithName("head").ifPresent(h -> h.yRot += blend * 0.55F * v.glance());
+            }
+            if (v.lower() > 0.0F) {
+                float k = blend * v.lower();
+                getAnyDescendantWithName("arm_l").ifPresent(a -> a.xRot += 0.6F * k);
+                getAnyDescendantWithName("arm_r").ifPresent(a -> a.xRot += 0.45F * k);
+                getAnyDescendantWithName("head").ifPresent(h -> h.xRot -= 0.12F * k);
+            }
         }
 
         /**
@@ -227,8 +250,16 @@ public class DiscipleRenderer extends MobRenderer<SectDisciple, DiscipleRenderer
             float in = pose.seated() ? 0.6F : 0.35F;
             float blend = pose.loop() ? Mth.clamp(sec / in, 0.0F, 1.0F) : 1.0F;
             blend = blend * blend * (3.0F - 2.0F * blend);
+            // Каждый в своём ритме (автор 06.10: «как хор»): фаза, темп и паузы цикла — по сущности (LoopVariety).
+            // Стойка строя между ударами (FORM) — нет: строй синхронный намеренно.
+            LoopVariety.Frame vary = pose.loop() && clip.looping() && pose != SectPose.FORM
+                    ? LoopVariety.frame(LoopVariety.seed(entity.getUUID()), pose, sec, clip.lengthInSeconds()) : null;
+            float clipSec = vary == null ? sec : vary.clip();
             // API: reference/minecraft-src/net/minecraft/client/animation/KeyframeAnimations.java#animate (масштаб — доля позы)
-            KeyframeAnimations.animate(this, clip, (long) (sec * 1000.0F), blend, CACHE);
+            KeyframeAnimations.animate(this, clip, (long) (clipSec * 1000.0F), blend, CACHE);
+            if (vary != null) {
+                vary(vary, blend);
+            }
             if (pose == SectPose.GUARD || pose == SectPose.TALK || pose == SectPose.CARRY || pose == SectPose.FORM) {
                 // Стоя голова ещё и смотрит на игрока (LookControl), поверх клипа.
                 getAnyDescendantWithName("head").ifPresent(h -> {

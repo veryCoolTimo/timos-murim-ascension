@@ -283,7 +283,8 @@ public final class ScheduleGoal extends Goal {
 
     /** Новое задание (раз в секунду): смена части суток, выход главы к воротам. */
     private void update() {
-        refresh = 20;
+        // Раз в секунду, но у каждого в свой тик: смена дела и поиск пути не в один тик у всей горы.
+        refresh = current == null ? 1 + Math.floorMod(npc.getId() * 13, 20) : 20;
         SectLife.Resolved next = SectLife.resolve(npc);
         if (next == null) {
             current = null;
@@ -636,7 +637,8 @@ public final class ScheduleGoal extends Goal {
      * минуту одному и тому же.
      */
     private boolean greetSenior(Kind kind) {
-        if ((npc.tickCount + npc.getId()) % 10 != 0 || kind.seated() || kind == Kind.FORM_ROW || kind == Kind.SPAR
+        // Не хором (автор 06.10): каждый замечает старшего в своё время — проверка через раз, в среднем ~1 с.
+        if ((npc.tickCount + npc.getId()) % 10 != 0 || npc.getRandom().nextInt(3) != 0 || kind.seated() || kind == Kind.FORM_ROW || kind == Kind.SPAR
                 || kind == Kind.POLES || kind == Kind.DRILL || kind == Kind.INSPECT || kind == Kind.TREAT || npc.sitting()) {
             return false;
         }
@@ -670,7 +672,8 @@ public final class ScheduleGoal extends Goal {
      * ({@link SectReactions#bowReason}) — раз в день; иногда со словом.
      */
     private boolean greetPlayer(Kind kind) {
-        if ((npc.tickCount + npc.getId()) % 10 != 5 || kind.seated() || kind == Kind.FORM_ROW || kind == Kind.SPAR
+        // Поклон игроку — тоже не хором: свой миг у каждого (в среднем через ~1 с после прихода игрока).
+        if ((npc.tickCount + npc.getId()) % 10 != 5 || npc.getRandom().nextInt(3) != 0 || kind.seated() || kind == Kind.FORM_ROW || kind == Kind.SPAR
                 || kind == Kind.POLES || kind == Kind.DRILL || kind == Kind.INSPECT || kind == Kind.TREAT || kind == Kind.GUARD
                 || kind == Kind.COUNCIL || kind == Kind.REPORT || npc.sitting()) {
             return false;
@@ -770,6 +773,8 @@ public final class ScheduleGoal extends Goal {
      * Идти к точке; true — уже на месте. Скорость — поспешная, если далеко (опаздывает к колоколу).
      */
     private boolean arrive(Vec3 spot, double speed) {
+        // Свой шаг у каждого (±12 %, автор 06.10): толпа не идёт одним темпом.
+        speed *= pace();
         double d = horizontal(spot);
         if (d <= ARRIVE * ARRIVE && Math.abs(npc.getY() - spot.y) < 2.5D) {
             npc.getNavigation().stop();
@@ -806,11 +811,17 @@ public final class ScheduleGoal extends Goal {
             return false;
         }
         if (--repath <= 0 || npc.getNavigation().isDone()) {
-            repath = 40;
-            double run = d > 30.0D * 30.0D ? 1.0D : speed;
+            // Пересчёт пути — не всем в один тик: свой интервал 1,5..2,5 с.
+            repath = 30 + Math.floorMod(npc.getId() * 7 + npc.tickCount, 21);
+            double run = d > 30.0D * 30.0D ? pace() : speed;
             npc.getNavigation().moveTo(spot.x, spot.y, spot.z, run);
         }
         return false;
+    }
+
+    /** Личный темп шага по ключу человека. */
+    private double pace() {
+        return io.github.verycooltimo.murim.sect.SectStagger.factor(npc.memberKey(), "pace", 0.12D);
     }
 
     private double horizontal(Vec3 spot) {

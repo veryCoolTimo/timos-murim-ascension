@@ -5,6 +5,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.HitResult;
@@ -17,6 +18,8 @@ import net.neoforged.neoforge.client.event.ClientTickEvent;
 /**
  * Камера разговора (автор 03.10: «как в играх — экран, и там NPC стоит»): из глаз игрока плавно
  * уходит за плечо и берёт игрока и NPC в один кадр, NPC — в верхних двух третях (снизу панель).
+ * Кадр ставится от NPC на постоянном расстоянии ({@link DialogueShot}, автор 06.10): одинаковый, подошёл ли игрок
+ * вплотную или стоит в четырёх блоках; заслоняющие люди на время разговора не рисуются.
  * По окончании так же плавно возвращается в глаза.
  *
  * <p>Камера — невидимая клиентская стойка вне мира: {@code Minecraft#setCameraEntity}; позиция
@@ -43,6 +46,9 @@ public final class DialogueCamera {
     private static Vec3 startPos;
     private static float startYaw;
     private static float startPitch;
+    /** Кадр разговора (DialogueShot) и где стоял NPC, когда он считался. */
+    private static DialogueShot.Shot shot;
+    private static Vec3 shotNpc = Vec3.ZERO;
 
     private DialogueCamera() {
     }
@@ -66,6 +72,7 @@ public final class DialogueCamera {
             return;
         }
         npc = npcId;
+        shot = null;
         leaving = false;
         if (cam != null) {
             return;
@@ -115,6 +122,54 @@ public final class DialogueCamera {
         }
         cam = null;
         npc = -1;
+        shot = null;
+    }
+
+    /** Кадр по миру: стены режут луч от груди NPC к камере. */
+    private static DialogueShot.Shot plan(Minecraft mc, Entity target) {
+        Vec3 look = mc.player.getLookAngle();
+        // API: reference/minecraft-src/net/minecraft/world/level/BlockGetter.java#clip
+        return DialogueShot.plan(target.position(), target.getBbHeight(), mc.player.position(), look, (from, to) -> {
+            var hit = mc.level.clip(new ClipContext(from, to, ClipContext.Block.VISUAL, ClipContext.Fluid.NONE, target));
+            return hit.getType() == HitResult.Type.MISS ? from.distanceTo(to) : from.distanceTo(hit.getLocation());
+        });
+    }
+
+    /**
+     * Кадр не заслоняют: другие люди между камерой и собеседником (или у самой камеры) на время разговора не рисуются;
+     * игрок — тоже, если стоит вплотную к NPC и закрыл бы его.
+     * API: reference/neoforge-src/net/neoforged/neoforge/client/event/RenderLivingEvent.java#Pre (cancelable)
+     */
+    @SubscribeEvent
+    static void onRenderLiving(net.neoforged.neoforge.client.event.RenderLivingEvent.Pre<?, ?> event) {
+        if (cam == null || shot == null || amount(0.0F) < 0.5F) {
+            return;
+        }
+        LivingEntity e = event.getEntity();
+        if (e == cam || e.getId() == npc) {
+            return;
+        }
+        Minecraft mc = Minecraft.getInstance();
+        if (e == mc.player) {
+            if (shot.hidePlayer()) {
+                event.setCanceled(true);
+            }
+            return;
+        }
+        Entity target = mc.level == null ? null : mc.level.getEntity(npc);
+        if (target == null) {
+            return;
+        }
+        Vec3 c = cam.getEyePosition();
+        Vec3 t = target.position().add(0.0D, target.getBbHeight() * 0.5D, 0.0D);
+        Vec3 p = e.position().add(0.0D, e.getBbHeight() * 0.5D, 0.0D);
+        Vec3 seg = t.subtract(c);
+        double len2 = seg.lengthSqr();
+        double k = len2 < 1.0E-6D ? 0.0D : Mth.clamp(p.subtract(c).dot(seg) / len2, 0.0D, 1.0D);
+        double off = p.distanceTo(c.add(seg.scale(k)));
+        if (p.distanceTo(c) < 1.2D || k > 0.0D && k < 0.92D && off < e.getBbWidth() * 0.5D + 0.7D) {
+            event.setCanceled(true);
+        }
     }
 
     @SubscribeEvent
@@ -143,27 +198,16 @@ public final class DialogueCamera {
         float shotYaw = mc.player.getYRot();
         float shotPitch = mc.player.getXRot();
         if (target != null) {
-            Vec3 head = target.getEyePosition();
-            Vec3 d = new Vec3(head.x - eye.x, 0.0D, head.z - eye.z);
-            double dist = Math.max(0.5D, d.length());
-            d = d.scale(1.0D / dist);
-            Vec3 right = new Vec3(-d.z, 0.0D, d.x);
-            // За правым плечом: голова игрока — край кадра слева, NPC — справа от центра.
-            double back = Mth.clamp(dist * 0.28D, 0.8D, 1.4D);
-            Vec3 want = eye.subtract(d.scale(back)).add(right.scale(1.4D)).add(0.0D, 0.05D, 0.0D);
-            // Камера не уходит в стену за спиной.
-            var hit = mc.level.clip(new ClipContext(eye, want, ClipContext.Block.VISUAL, ClipContext.Fluid.NONE, mc.player));
-            if (hit.getType() != HitResult.Type.MISS) {
-                want = hit.getLocation().add(eye.subtract(want).normalize().scale(0.25D));
+            // Кадр от собеседника, а не от игрока (автор 06.10: вплотную NPC был на весь экран). План считается
+            // раз и держится, пока NPC стоит; глаза NPC — на ~28 % высоты, сбоку от центра (codex 03.10).
+            if (shot == null || target.position().distanceToSqr(shotNpc) > 1.0D) {
+                shot = plan(mc, target);
+                shotNpc = target.position();
             }
-            shotPos = want;
-            // Смотрим чуть ниже глаз NPC: его голова — в верхней трети кадра, низ занимает панель.
-            // Узкий объектив (см. onFov) — NPC крупно, по пояс, в верхней половине кадра (низ — свиток).
-            // codex 03.10: глаза NPC — правее центра (~55 % ширины) и на ~28 % высоты; плечо игрока — край слева.
-            Vec3 aim = head.subtract(right.scale(0.3D)).add(0.0D, -0.78D, 0.0D);
-            Vec3 look = aim.subtract(shotPos);
-            shotYaw = (float) (Mth.atan2(look.z, look.x) * Mth.RAD_TO_DEG) - 90.0F;
-            shotPitch = (float) (-Mth.atan2(look.y, Math.sqrt(look.x * look.x + look.z * look.z)) * Mth.RAD_TO_DEG);
+            shotPos = shot.camera();
+            float[] look = DialogueShot.look(shotPos, target.position().add(0.0D, target.getBbHeight() * DialogueShot.AIM, 0.0D), shot.side());
+            shotYaw = look[0];
+            shotPitch = look[1];
         }
         // Наезд — от камеры игрока на момент начала; возврат — в живые глаза игрока.
         Vec3 basePos = leaving ? eye : startPos;
@@ -173,7 +217,7 @@ public final class DialogueCamera {
         if (target != null) {
             // Дуга вправо на полпути: камера обходит голову игрока, а не проходит сквозь неё.
             Vec3 toNpc = target.position().subtract(mc.player.position());
-            Vec3 side = new Vec3(-toNpc.z, 0.0D, toNpc.x).normalize();
+            Vec3 side = new Vec3(-toNpc.z, 0.0D, toNpc.x).normalize().scale(shot == null ? 1.0D : shot.side());
             pos = pos.add(side.scale(1.2D * Mth.sin(e * Mth.PI)));
         }
         float yaw = baseYaw + Mth.wrapDegrees(shotYaw - baseYaw) * e;
@@ -214,14 +258,14 @@ public final class DialogueCamera {
         cam.yHeadRot = cam.getYRot();
     }
 
-    /** Объектив разговора: поле зрения сужается вместе с наездом (план «по пояс»). */
-    private static final double TALK_FOV = 36.0D;
+    /** Объектив разговора: поле зрения сужается вместе с наездом (план «по пояс»); у стены — шире (DialogueShot). */
+    private static final double TALK_FOV = DialogueShot.FOV;
 
     @SubscribeEvent
     static void onFov(net.neoforged.neoforge.client.event.ViewportEvent.ComputeFov event) {
         if (cam != null && event.getCamera().getEntity() == cam) {
             float a = amount((float) event.getPartialTick());
-            event.setFOV(Mth.lerp(a, event.getFOV(), TALK_FOV));
+            event.setFOV(Mth.lerp(a, event.getFOV(), shot == null ? TALK_FOV : shot.fov()));
         }
     }
 
