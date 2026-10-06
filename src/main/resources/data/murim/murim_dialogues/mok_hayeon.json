@@ -1,5 +1,5 @@
 {
-  "name": "npc.murim.yu_iseol",
+  "name": "npc.murim.mok_hayeon",
   "base": "murim:second",
   "start": [
     {
@@ -45,7 +45,7 @@
     {
       "when": [
         {
-          "flag": "favour.yu_iseol"
+          "flag": "favour.mok_hayeon"
         }
       ],
       "node": "greet_friend"
@@ -65,8 +65,8 @@
   "nodes": {
     "formation": {
       "random": [
-        "dialogue.murim.yu_iseol.formation1",
-        "dialogue.murim.yu_iseol.formation2"
+        "dialogue.murim.mok_hayeon.formation1",
+        "dialogue.murim.mok_hayeon.formation2"
       ],
       "gesture": "point",
       "options": [
@@ -81,8 +81,8 @@
     },
     "meal": {
       "random": [
-        "dialogue.murim.yu_iseol.meal1",
-        "dialogue.murim.yu_iseol.meal2"
+        "dialogue.murim.mok_hayeon.meal1",
+        "dialogue.murim.mok_hayeon.meal2"
       ],
       "gesture": "nod",
       "options": [
@@ -93,20 +93,20 @@
     },
     "night": {
       "random": [
-        "dialogue.murim.yu_iseol.night1",
-        "dialogue.murim.yu_iseol.night2"
+        "dialogue.murim.mok_hayeon.night1",
+        "dialogue.murim.mok_hayeon.night2"
       ],
       "gesture": "shake",
       "options": []
     },
     "evening": {
       "random": [
-        "dialogue.murim.yu_iseol.evening1"
+        "dialogue.murim.mok_hayeon.evening1"
       ],
       "gesture": "nod",
       "options": [
         {
-          "text": "dialogue.murim.yu_iseol.opt.talk",
+          "text": "dialogue.murim.mok_hayeon.opt.talk",
           "next": "topics"
         },
         {
@@ -119,11 +119,11 @@
           "next": "challenge"
         },
         {
-          "text": "dialogue.murim.yu_iseol.opt.petals",
+          "text": "dialogue.murim.mok_hayeon.opt.petals",
           "when": [
             {
               "has_item": "minecraft:pink_petals*1",
-              "not_flag": "favour.yu_iseol"
+              "not_flag": "favour.mok_hayeon"
             }
           ],
           "actions": [
@@ -133,7 +133,7 @@
             },
             {
               "type": "set_flag",
-              "value": "favour.yu_iseol"
+              "value": "favour.mok_hayeon"
             },
             {
               "type": "contribute",
@@ -149,14 +149,14 @@
     },
     "greet": {
       "random": [
-        "dialogue.murim.yu_iseol.greet1",
-        "dialogue.murim.yu_iseol.greet2",
-        "dialogue.murim.yu_iseol.greet3"
+        "dialogue.murim.mok_hayeon.greet1",
+        "dialogue.murim.mok_hayeon.greet2",
+        "dialogue.murim.mok_hayeon.greet3"
       ],
       "gesture": "nod",
       "options": [
         {
-          "text": "dialogue.murim.yu_iseol.opt.talk",
+          "text": "dialogue.murim.mok_hayeon.opt.talk",
           "next": "topics"
         },
         {
@@ -169,11 +169,11 @@
           "next": "challenge"
         },
         {
-          "text": "dialogue.murim.yu_iseol.opt.petals",
+          "text": "dialogue.murim.mok_hayeon.opt.petals",
           "when": [
             {
               "has_item": "minecraft:pink_petals*1",
-              "not_flag": "favour.yu_iseol"
+              "not_flag": "favour.mok_hayeon"
             }
           ],
           "actions": [
@@ -183,7 +183,7 @@
             },
             {
               "type": "set_flag",
-              "value": "favour.yu_iseol"
+              "value": "favour.mok_hayeon"
             },
             {
               "type": "contribute",
@@ -199,13 +199,13 @@
     },
     "greet_champion": {
       "random": [
-        "dialogue.murim.yu_iseol.champion1",
-        "dialogue.murim.yu_iseol.champion2"
+        "dialogue.murim.mok_hayeon.champion1",
+        "dialogue.murim.mok_hayeon.champion2"
       ],
       "gesture": "nod",
       "options": [
         {
-          "text": "dialogue.murim.yu_iseol.opt.talk",
+          "text": "dialogue.murim.mok_hayeon.opt.talk",
           "next": "topics"
         },
         {
@@ -218,11 +218,11 @@
           "next": "challenge"
         },
         {
-          "text": "dialogue.murim.yu_iseol.opt.petals",
+          "text": "dialogue.murim.mok_hayeon.opt.petals",
           "when": [
             {
               "has_item": "minecraft:pink_petals*1",
-              "not_flag": "favour.yu_iseol"
+              "not_flag": "favour.mok_hayeon"
             }
           ],
           "actions": [
@@ -232,7 +232,7 @@
             },
             {
               "type": "set_flag",
-              "value": "favour.yu_iseol"
+              "value": "favour.mok_hayeon"
             },
             {
               "type": "contribute",
@@ -248,13 +248,13 @@
     },
     "greet_friend": {
       "random": [
-        "dialogue.murim.yu_iseol.friend1",
-        "dialogue.murim.yu_iseol.friend2"
+        "dialogue.murim.mok_hayeon.friend1",
+        "dialogue.murim.mok_hayeon.friend2"
       ],
       "gesture": "nod",
       "options": [
         {
-          "text": "dialogue.murim.yu_iseol.opt.talk",
+          "text": "dialogue.murim.mok_hayeon.opt.talk",
           "next": "topics"
         },
         {
@@ -267,11 +267,11 @@
           "next": "challenge"
         },
         {
-          "text": "dialogue.murim.yu_iseol.opt.petals",
+          "text": "dialogue.murim.mok_hayeon.opt.petals",
           "when": [
             {
               "has_item": "minecraft:pink_petals*1",
-              "not_flag": "favour.yu_iseol"
+              "not_flag": "favour.mok_hayeon"
             }
           ],
           "actions": [
@@ -281,7 +281,7 @@
             },
             {
               "type": "set_flag",
-              "value": "favour.yu_iseol"
+              "value": "favour.mok_hayeon"
             },
             {
               "type": "contribute",
@@ -296,19 +296,19 @@
       ]
     },
     "topics": {
-      "line": "dialogue.murim.yu_iseol.topics",
+      "line": "dialogue.murim.mok_hayeon.topics",
       "gesture": "nod",
       "options": [
         {
-          "text": "dialogue.murim.yu_iseol.opt.sword",
+          "text": "dialogue.murim.mok_hayeon.opt.sword",
           "next": "t_sword"
         },
         {
-          "text": "dialogue.murim.yu_iseol.opt.cheon",
+          "text": "dialogue.murim.mok_hayeon.opt.cheon",
           "next": "t_cheon"
         },
         {
-          "text": "dialogue.murim.yu_iseol.opt.mine",
+          "text": "dialogue.murim.mok_hayeon.opt.mine",
           "when": [
             {
               "knows": "murim:seven_plum_blossoms"
@@ -317,7 +317,7 @@
           "next": "t_mine_plum"
         },
         {
-          "text": "dialogue.murim.yu_iseol.opt.mine",
+          "text": "dialogue.murim.mok_hayeon.opt.mine",
           "when": [
             {
               "not_knows": "murim:seven_plum_blossoms"
@@ -331,11 +331,11 @@
       ]
     },
     "t_sword": {
-      "line": "dialogue.murim.yu_iseol.t_sword",
+      "line": "dialogue.murim.mok_hayeon.t_sword",
       "gesture": "nod",
       "options": [
         {
-          "text": "dialogue.murim.yu_iseol.opt.plum",
+          "text": "dialogue.murim.mok_hayeon.opt.plum",
           "next": "t_plum"
         },
         {
@@ -345,14 +345,14 @@
       ]
     },
     "t_plum": {
-      "line": "dialogue.murim.yu_iseol.t_plum",
+      "line": "dialogue.murim.mok_hayeon.t_plum",
       "gesture": "explain",
       "options": [
         {
-          "text": "dialogue.murim.yu_iseol.opt.find",
+          "text": "dialogue.murim.mok_hayeon.opt.find",
           "when": [
             {
-              "not_flag": "favour.yu_iseol"
+              "not_flag": "favour.mok_hayeon"
             }
           ],
           "next": "favour_ask"
@@ -367,7 +367,7 @@
       ]
     },
     "favour_ask": {
-      "line": "dialogue.murim.yu_iseol.favour_ask",
+      "line": "dialogue.murim.mok_hayeon.favour_ask",
       "gesture": "nod",
       "options": [
         {
@@ -376,7 +376,7 @@
       ]
     },
     "favour_done": {
-      "line": "dialogue.murim.yu_iseol.favour_done",
+      "line": "dialogue.murim.mok_hayeon.favour_done",
       "gesture": "bow",
       "options": [
         {
@@ -385,7 +385,7 @@
       ]
     },
     "t_cheon": {
-      "line": "dialogue.murim.yu_iseol.t_cheon",
+      "line": "dialogue.murim.mok_hayeon.t_cheon",
       "gesture": "shake",
       "options": [
         {
@@ -398,7 +398,7 @@
       ]
     },
     "t_mine_plum": {
-      "line": "dialogue.murim.yu_iseol.t_mine_plum",
+      "line": "dialogue.murim.mok_hayeon.t_mine_plum",
       "gesture": "explain",
       "options": [
         {
@@ -411,7 +411,7 @@
       ]
     },
     "t_mine_basic": {
-      "line": "dialogue.murim.yu_iseol.t_mine_basic",
+      "line": "dialogue.murim.mok_hayeon.t_mine_basic",
       "gesture": "shake",
       "options": [
         {

@@ -16,7 +16,7 @@ import java.util.Set;
  *
  * @param version    версия формата
  * @param member     ученик Хуашань
- * @param generation поколение (3 — Чхон, канон: у игрока всегда третье), 0 — не вступил
+ * @param generation поколение (3 — Юль: у игрока всегда третье), 0 — не вступил
  * @param flags      флаги разговоров и уроков
  * @param contribution заслуги перед сектой за всё время (уроки, утренняя тренировка, пожертвования, защита горы);
  *                     растят положение ({@link SectStanding}). Версия 2: старые сохранения читаются с нулём
@@ -25,9 +25,9 @@ import java.util.Set;
  */
 public record SectState(int version, boolean member, int generation, Set<String> flags, int contribution, int spent) {
 
-    public static final int VERSION = 3;
-    /** Поколение Чхон (청) — третье, как у игрока в каноне. */
-    public static final int CHEON = 3;
+    public static final int VERSION = 4;
+    /** Третье поколение (율 Юль): у игрока всегда третье. */
+    public static final int THIRD = 3;
 
     public static final SectState NONE = new SectState(VERSION, false, 0, Set.of(), 0, 0);
 
@@ -49,7 +49,15 @@ public record SectState(int version, boolean member, int generation, Set<String>
     public SectState migrate() {
         // Версия 2 добавила заслуги: поле необязательное, старое сохранение читается с нулём.
         // Версия 3 добавила потраченные заслуги: старое сохранение — ничего не потрачено.
-        return version >= VERSION ? this : new SectState(VERSION, member, member && generation == 0 ? CHEON : generation, flags, contribution, spent);
+        // Версия 4 (06.10): люди секты переименованы, флаги с прежним ключом человека переводятся (SectRoster.RENAMED).
+        if (version >= VERSION) {
+            return this;
+        }
+        Set<String> moved = new HashSet<>();
+        for (String flag : flags) {
+            moved.add(SectRoster.renamedFlag(flag));
+        }
+        return new SectState(VERSION, member, member && generation == 0 ? THIRD : generation, moved, contribution, spent);
     }
 
     public boolean has(String flag) {
@@ -75,7 +83,7 @@ public record SectState(int version, boolean member, int generation, Set<String>
     }
 
     public SectState joined() {
-        return new SectState(version, true, CHEON, flags, contribution, spent);
+        return new SectState(version, true, THIRD, flags, contribution, spent);
     }
 
     /** Заслуги ± {@code delta}; ниже нуля не падают. */

@@ -6,7 +6,7 @@ import io.github.verycooltimo.murim.entity.SectPose;
 import java.util.List;
 
 /**
- * Hook for the sect behaviour task: disciples do the same exercises in the morning (canon: Un Geom drives the
+ * Hook for the sect behaviour task: disciples do the same exercises in the morning (canon: Gyeong Pil drives the
  * children at dawn, ch. 16, 43; push-ups with shouts, ch. 66). This class only gives poses and a fair rotation;
  * WHEN and WHERE a disciple trains is the schedule's business ({@code sect/SectSchedule}, not touched here).
  *

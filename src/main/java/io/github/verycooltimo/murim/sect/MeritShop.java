@@ -19,7 +19,7 @@ import java.util.Optional;
 
 /**
  * Обмен заслуг (docs/design/23-mount-hua-sect.md §6.2, «Что осталось от секты» п. 1): заслуги тратятся у старейшины
- * Хён Ёна (казна: меч, страница, пропуск в Зал писаний, серебро) и у лекаря Ун Гака (пилюли). Тратится остаток
+ * Тэ Гюна (казна: меч, страница, пропуск в Зал писаний, серебро) и у лекаря Гён Чхо (пилюли). Тратится остаток
  * ({@link SectState#merit()}), сумма за всё время и положение не падают. Магазин — варианты разговора (действие
  * {@code merit_buy}, цена подставляется в текст варианта), отдельного экрана нет.
  *
@@ -48,12 +48,12 @@ public final class MeritShop {
     }
 
     public static final List<Offer> OFFERS = List.of(
-            new Offer("sword", "murim:huashan_sword", 1, 20, SectStanding.DISCIPLE, "hyun_young", ""),
-            new Offer("page", "murim:manual_page", 1, 8, SectStanding.DISCIPLE, "hyun_young", "murim:seven_plum_blossoms"),
-            new Offer("scriptures", "", 0, 12, SectStanding.DISCIPLE, "hyun_young", "pass.scriptures"),
-            new Offer("silver", "murim:silver_tael", 3, 2, SectStanding.NOVICE, "hyun_young", ""),
-            new Offer("snow_plum", "murim:pill_snow_plum", 1, 4, SectStanding.NOVICE, "un_gak", ""),
-            new Offer("origin_energy", "murim:pill_origin_energy", 1, 15, SectStanding.GRADUATE, "un_gak", ""));
+            new Offer("sword", "murim:huashan_sword", 1, 20, SectStanding.DISCIPLE, "tae_gyun", ""),
+            new Offer("page", "murim:manual_page", 1, 8, SectStanding.DISCIPLE, "tae_gyun", "murim:seven_plum_blossoms"),
+            new Offer("scriptures", "", 0, 12, SectStanding.DISCIPLE, "tae_gyun", "pass.scriptures"),
+            new Offer("silver", "murim:silver_tael", 3, 2, SectStanding.NOVICE, "tae_gyun", ""),
+            new Offer("snow_plum", "murim:pill_snow_plum", 1, 4, SectStanding.NOVICE, "gyeong_cho", ""),
+            new Offer("origin_energy", "murim:pill_origin_energy", 1, 15, SectStanding.GRADUATE, "gyeong_cho", ""));
 
     /** Исход обмена. */
     public enum Result {

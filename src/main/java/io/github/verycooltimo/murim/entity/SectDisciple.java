@@ -408,7 +408,7 @@ public class SectDisciple extends Bandit implements Casters.Caster {
             other.endSpar(!partnerWon);
         }
         restUntil = level().getGameTime() + 160 + getRandom().nextInt(120);
-        // Проигравший в поединке учеников ранен: сядет у края площадки и дождётся лекаря Ун Гака (автор 05.10).
+        // Проигравший в поединке учеников ранен: сядет у края площадки и дождётся лекаря Гён Чхо (автор 05.10).
         if (partnerWon && npcBout && member().isPresent()) {
             setWounded(true);
         }
@@ -958,11 +958,12 @@ public class SectDisciple extends Bandit implements Casters.Caster {
         }
         if (!tag.getString("member").isEmpty()) {
             // Человек прежнего состава (SectRoster.RETIRED) сохраняет ключ: SectLife уберёт его с горы при первом тике.
-            String key = tag.getString("member");
+            // Прежний ключ переименованного человека (SectRoster.RENAMED, 06.10) читается как новый.
+            String key = SectRoster.renamed(tag.getString("member"));
             SectRoster.of(key).ifPresentOrElse(this::setMember, () -> entityData.set(KEY, key));
         }
         if (!tag.getString("look").isEmpty()) {
-            entityData.set(LOOK, tag.getString("look"));
+            entityData.set(LOOK, SectRoster.renamedLook(tag.getString("look")));
         }
     }
 

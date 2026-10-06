@@ -1,6 +1,6 @@
 {
-  "name": "npc.murim.un_gak",
-  "title": "npc.murim.un_gak.title",
+  "name": "npc.murim.gyeong_cho",
+  "title": "npc.murim.gyeong_cho.title",
   "start": [
     {
       "when": [
@@ -33,16 +33,16 @@
   "nodes": {
     "breakfast_dinner": {
       "random": [
-        "dialogue.murim.un_gak.breakfast_dinner1"
+        "dialogue.murim.gyeong_cho.breakfast_dinner1"
       ],
       "gesture": "nod",
       "options": [
         {
-          "text": "dialogue.murim.un_gak.opt.heal",
+          "text": "dialogue.murim.gyeong_cho.opt.heal",
           "next": "heal"
         },
         {
-          "text": "dialogue.murim.un_gak.opt.pills",
+          "text": "dialogue.murim.gyeong_cho.opt.pills",
           "when": [
             {
               "member": true
@@ -51,7 +51,7 @@
           "next": "pills"
         },
         {
-          "text": "dialogue.murim.un_gak.opt.ask",
+          "text": "dialogue.murim.gyeong_cho.opt.ask",
           "next": "answer"
         },
         {
@@ -61,16 +61,16 @@
     },
     "night": {
       "random": [
-        "dialogue.murim.un_gak.night1"
+        "dialogue.murim.gyeong_cho.night1"
       ],
       "gesture": "nod",
       "options": [
         {
-          "text": "dialogue.murim.un_gak.opt.heal",
+          "text": "dialogue.murim.gyeong_cho.opt.heal",
           "next": "heal"
         },
         {
-          "text": "dialogue.murim.un_gak.opt.ask",
+          "text": "dialogue.murim.gyeong_cho.opt.ask",
           "next": "answer"
         },
         {
@@ -80,17 +80,17 @@
     },
     "greet": {
       "random": [
-        "dialogue.murim.un_gak.greet1",
-        "dialogue.murim.un_gak.greet2"
+        "dialogue.murim.gyeong_cho.greet1",
+        "dialogue.murim.gyeong_cho.greet2"
       ],
       "gesture": "nod",
       "options": [
         {
-          "text": "dialogue.murim.un_gak.opt.heal",
+          "text": "dialogue.murim.gyeong_cho.opt.heal",
           "next": "heal"
         },
         {
-          "text": "dialogue.murim.un_gak.opt.pills",
+          "text": "dialogue.murim.gyeong_cho.opt.pills",
           "when": [
             {
               "member": true
@@ -99,7 +99,7 @@
           "next": "pills"
         },
         {
-          "text": "dialogue.murim.un_gak.opt.ask",
+          "text": "dialogue.murim.gyeong_cho.opt.ask",
           "next": "answer"
         },
         {
@@ -108,7 +108,7 @@
       ]
     },
     "answer": {
-      "line": "dialogue.murim.un_gak.answer",
+      "line": "dialogue.murim.gyeong_cho.answer",
       "gesture": "explain",
       "options": [
         {
@@ -117,7 +117,7 @@
       ]
     },
     "heal": {
-      "line": "dialogue.murim.un_gak.heal",
+      "line": "dialogue.murim.gyeong_cho.heal",
       "gesture": "nod",
       "enter": [
         {
@@ -126,7 +126,7 @@
       ],
       "options": [
         {
-          "text": "dialogue.murim.un_gak.opt.ask",
+          "text": "dialogue.murim.gyeong_cho.opt.ask",
           "next": "answer"
         },
         {
@@ -135,7 +135,7 @@
       ]
     },
     "pills": {
-      "line": "dialogue.murim.un_gak.pills",
+      "line": "dialogue.murim.gyeong_cho.pills",
       "args": [
         "merit"
       ],
@@ -173,17 +173,17 @@
     },
     "clinic": {
       "random": [
-        "dialogue.murim.un_gak.clinic1",
-        "dialogue.murim.un_gak.clinic2"
+        "dialogue.murim.gyeong_cho.clinic1",
+        "dialogue.murim.gyeong_cho.clinic2"
       ],
       "gesture": "nod",
       "options": [
         {
-          "text": "dialogue.murim.un_gak.opt.heal",
+          "text": "dialogue.murim.gyeong_cho.opt.heal",
           "next": "heal"
         },
         {
-          "text": "dialogue.murim.un_gak.opt.pills",
+          "text": "dialogue.murim.gyeong_cho.opt.pills",
           "when": [
             {
               "member": true
@@ -192,7 +192,7 @@
           "next": "pills"
         },
         {
-          "text": "dialogue.murim.un_gak.opt.ask",
+          "text": "dialogue.murim.gyeong_cho.opt.ask",
           "next": "answer"
         },
         {

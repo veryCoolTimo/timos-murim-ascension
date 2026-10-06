@@ -21,7 +21,7 @@ import java.util.Set;
 
 /**
  * GameTest-ы личных диалогов (05.10): у каноничного человека свой диалог поверх диалога роли, приветствие меняется после
- * победы игрока на смотре; ученик без своего диалога говорит личной фразой, чертой и слухами; просьба Чо Голя забирает
+ * победы игрока на смотре; ученик без своего диалога говорит личной фразой, чертой и слухами; просьба Бок Мансока забирает
  * хлеб и отмечает флаг. API: reference/minecraft-src/net/minecraft/network/chat/contents/TranslatableContents.java
  */
 @GameTestHolder(MurimMod.MODID)
@@ -51,14 +51,14 @@ public final class SectTalkGameTests {
         return ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, path);
     }
 
-    /** Пэк Чхон: свой диалог поверх диалога старшего; после победы игрока на смотре — другое приветствие. */
+    /** Со Ран: свой диалог поверх диалога старшего; после победы игрока на смотре — другое приветствие. */
     @GameTest(template = YARD, timeoutTicks = 40, batch = "sect_talk")
     public static void personalDialogueOverRole(GameTestHelper helper) {
         helper.getLevel().setDayTime(24000L + SectSchedule.Period.TRAINING.start() + 500);
         ServerPlayer p = SectGameTests.fakePlayer(helper);
         p.setData(ModAttachments.SECT, SectState.NONE.joined().with(SectStanding.LESSON_ONE));
-        SectDisciple cheon = npc(helper, "baek_cheon", 10, 10);
-        helper.assertTrue(id("baek_cheon").equals(cheon.dialogue()), "у Пэк Чхона не свой диалог: " + cheon.dialogue());
+        SectDisciple cheon = npc(helper, "seo_rang", 10, 10);
+        helper.assertTrue(id("seo_rang").equals(cheon.dialogue()), "у Со Рана не свой диалог: " + cheon.dialogue());
         Dialogue d = DialogueLoader.get(cheon.dialogue());
         helper.assertTrue(d.nodes().containsKey("accept") && d.nodes().containsKey("topics"), "узлы базы не слились со своими");
         DialogueService.Route r = DialogueService.route(p, cheon);
@@ -67,8 +67,8 @@ public final class SectTalkGameTests {
         r = DialogueService.route(p, cheon);
         helper.assertTrue(r != null && "greet_champion".equals(r.node()), "вход после победы: " + (r == null ? null : r.node()));
         // Ученик без своего диалога — диалог роли.
-        SectDisciple ak = npc(helper, "cheong_ak", 12, 10);
-        helper.assertTrue(SectRole.DISCIPLE.dialogue().equals(ak.dialogue()), "у Чхон Ака не диалог роли: " + ak.dialogue());
+        SectDisciple ak = npc(helper, "yul_ak", 12, 10);
+        helper.assertTrue(SectRole.DISCIPLE.dialogue().equals(ak.dialogue()), "у Юль Ака не диалог роли: " + ak.dialogue());
         helper.succeed();
     }
 
@@ -78,10 +78,10 @@ public final class SectTalkGameTests {
         helper.getLevel().setDayTime(2L * 24000L + SectSchedule.Period.TRAINING.start() + 500);
         ServerPlayer p = SectGameTests.fakePlayer(helper);
         p.setData(ModAttachments.SECT, SectState.NONE.joined());
-        SectDisciple ak = npc(helper, "cheong_ak", 10, 10);
-        helper.assertTrue(SectTalk.personalKey("cheong_ak").equals(key(DialogueService.talk(p, ak, SectTalk.PERSONAL))), "нет личной фразы");
+        SectDisciple ak = npc(helper, "yul_ak", 10, 10);
+        helper.assertTrue(SectTalk.personalKey("yul_ak").equals(key(DialogueService.talk(p, ak, SectTalk.PERSONAL))), "нет личной фразы");
         String trait = key(DialogueService.talk(p, ak, SectTalk.TRAIT));
-        helper.assertTrue(trait.startsWith("dialogue.murim.trait." + SectTalk.trait("cheong_ak").id() + "."), "черта: " + trait);
+        helper.assertTrue(trait.startsWith("dialogue.murim.trait." + SectTalk.trait("yul_ak").id() + "."), "черта: " + trait);
 
         SectSiteData site = SectLife.data(helper.getLevel());
         String before = site.lastChampion();
@@ -96,20 +96,20 @@ public final class SectTalkGameTests {
         helper.succeed();
     }
 
-    /** Просьба Чо Голя: хлеб уходит, флаг стоит, +1 заслуга; второй раз вариант не выполняется. */
+    /** Просьба Бок Мансока: хлеб уходит, флаг стоит, +1 заслуга; второй раз вариант не выполняется. */
     @GameTest(template = YARD, timeoutTicks = 40, batch = "sect_talk")
     public static void favourTakesItem(GameTestHelper helper) {
         ServerPlayer p = SectGameTests.fakePlayer(helper);
         p.setData(ModAttachments.SECT, SectState.NONE.joined());
         p.getInventory().add(new ItemStack(Items.BREAD, 2));
-        SectDisciple gol = npc(helper, "jo_gol", 10, 10);
+        SectDisciple gol = npc(helper, "bok_manseok", 10, 10);
         Dialogue d = DialogueLoader.get(gol.dialogue());
         Dialogue.Option bread = d.nodes().get("greet").options().stream()
-                .filter(o -> o.text().equals("dialogue.murim.jo_gol.opt.bread")).findFirst().orElseThrow();
+                .filter(o -> o.text().equals("dialogue.murim.bok_manseok.opt.bread")).findFirst().orElseThrow();
         int merit = p.getData(ModAttachments.SECT).contribution();
         helper.assertTrue(DialogueService.applyHeadless(p, gol, bread), "просьба не выполнилась");
         helper.assertTrue(p.getInventory().countItem(Items.BREAD) == 1, "хлеб не забран: " + p.getInventory().countItem(Items.BREAD));
-        helper.assertTrue(p.getData(ModAttachments.SECT).has("favour.jo_gol"), "нет флага просьбы");
+        helper.assertTrue(p.getData(ModAttachments.SECT).has("favour.bok_manseok"), "нет флага просьбы");
         helper.assertTrue(p.getData(ModAttachments.SECT).contribution() == merit + 1, "нет заслуги за просьбу");
         helper.assertFalse(DialogueService.applyHeadless(p, gol, bread), "просьба выполнилась дважды");
         helper.succeed();

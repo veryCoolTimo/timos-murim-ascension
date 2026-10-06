@@ -70,7 +70,7 @@ public final class SectCapture {
         Vec3 fwd = Vec3.directionFromRotation(0.0F, p.getYRot());
         Vec3 right = Vec3.directionFromRotation(0.0F, p.getYRot() + 90.0F);
         double dist = Double.parseDouble(System.getenv().getOrDefault("MURIM_CAPTURE_NPC_DIST", "3.5"));
-        // MURIM_CAPTURE_PEOPLE="baek_cheon,yu_iseol,cheong_ak" — вместо собеседника по роли люди горы по ключу, в ряд
+        // MURIM_CAPTURE_PEOPLE="seo_rang,mok_hayeon,yul_ak" — вместо собеседника по роли люди горы по ключу, в ряд
         // перед игроком (личные диалоги, 05.10); стенд говорит с ними по очереди (DialogueCapture: use@ключ).
         String people = System.getenv().getOrDefault("MURIM_CAPTURE_PEOPLE", "");
         if (!people.isBlank()) {

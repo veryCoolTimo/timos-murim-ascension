@@ -1,12 +1,12 @@
 {
-  "name": "npc.murim.hyun_sang",
-  "title": "npc.murim.hyun_sang.title",
+  "name": "npc.murim.tae_rok",
+  "title": "npc.murim.tae_rok.title",
   "start": [
     {
       "when": [
         {
           "member": true,
-          "flag": "summon.hyun_sang"
+          "flag": "summon.tae_rok"
         }
       ],
       "node": "summoned"
@@ -42,12 +42,12 @@
   "nodes": {
     "formation": {
       "random": [
-        "dialogue.murim.hyun_sang.formation1"
+        "dialogue.murim.tae_rok.formation1"
       ],
       "gesture": "nod",
       "options": [
         {
-          "text": "dialogue.murim.hyun_sang.opt.ask",
+          "text": "dialogue.murim.tae_rok.opt.ask",
           "next": "answer"
         },
         {
@@ -57,12 +57,12 @@
     },
     "evening": {
       "random": [
-        "dialogue.murim.hyun_sang.evening1"
+        "dialogue.murim.tae_rok.evening1"
       ],
       "gesture": "nod",
       "options": [
         {
-          "text": "dialogue.murim.hyun_sang.opt.ask",
+          "text": "dialogue.murim.tae_rok.opt.ask",
           "next": "answer"
         },
         {
@@ -72,17 +72,17 @@
     },
     "greet": {
       "random": [
-        "dialogue.murim.hyun_sang.greet1",
-        "dialogue.murim.hyun_sang.greet2"
+        "dialogue.murim.tae_rok.greet1",
+        "dialogue.murim.tae_rok.greet2"
       ],
       "gesture": "nod",
       "options": [
         {
-          "text": "dialogue.murim.hyun_sang.opt.ask",
+          "text": "dialogue.murim.tae_rok.opt.ask",
           "next": "answer"
         },
         {
-          "text": "dialogue.murim.hyun_sang.opt.pass",
+          "text": "dialogue.murim.tae_rok.opt.pass",
           "when": [
             {
               "min_standing": "disciple",
@@ -104,7 +104,7 @@
       ]
     },
     "answer": {
-      "line": "dialogue.murim.hyun_sang.answer",
+      "line": "dialogue.murim.tae_rok.answer",
       "gesture": "explain",
       "options": [
         {
@@ -113,7 +113,7 @@
       ]
     },
     "busy": {
-      "line": "dialogue.murim.hyun_sang.busy",
+      "line": "dialogue.murim.tae_rok.busy",
       "gesture": "shake",
       "options": [
         {
@@ -122,12 +122,12 @@
       ]
     },
     "summoned": {
-      "line": "dialogue.murim.hyun_sang.summoned",
+      "line": "dialogue.murim.tae_rok.summoned",
       "gesture": "explain",
       "enter": [
         {
           "type": "clear_flag",
-          "value": "summon.hyun_sang"
+          "value": "summon.tae_rok"
         },
         {
           "type": "set_flag",
@@ -141,7 +141,7 @@
       ]
     },
     "pass": {
-      "line": "dialogue.murim.hyun_sang.pass",
+      "line": "dialogue.murim.tae_rok.pass",
       "gesture": "nod",
       "options": [
         {
@@ -151,17 +151,17 @@
     },
     "training": {
       "random": [
-        "dialogue.murim.hyun_sang.training1",
-        "dialogue.murim.hyun_sang.training2"
+        "dialogue.murim.tae_rok.training1",
+        "dialogue.murim.tae_rok.training2"
       ],
       "gesture": "nod",
       "options": [
         {
-          "text": "dialogue.murim.hyun_sang.opt.ask",
+          "text": "dialogue.murim.tae_rok.opt.ask",
           "next": "answer"
         },
         {
-          "text": "dialogue.murim.hyun_sang.opt.pass",
+          "text": "dialogue.murim.tae_rok.opt.pass",
           "when": [
             {
               "min_standing": "disciple",
@@ -189,7 +189,7 @@
         "min_standing": "disciple"
       },
       {
-        "flag": "summon.hyun_sang"
+        "flag": "summon.tae_rok"
       }
     ],
     "intercept": "murim:intercept_elder",

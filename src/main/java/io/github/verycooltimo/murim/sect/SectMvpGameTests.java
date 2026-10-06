@@ -75,7 +75,7 @@ public final class SectMvpGameTests {
         helper.assertTrue(SectWatch.guards(night), "ночной дежурный не на страже ночью");
         helper.assertFalse(SectWatch.guards(on), "дневной дежурный сторожит ночью");
 
-        // Сохранение прежнего состава: стражник Пэк Сын (ночная смена С3, часть 2) — роль guard, ключа нет в списке.
+        // Сохранение прежнего состава: стражник Со Сын (ночная смена С3, часть 2) — роль guard, ключа нет в списке.
         SectDisciple old = new SectDisciple(ModEntities.SECT_DISCIPLE.get(), helper.getLevel());
         CompoundTag tag = new CompoundTag();
         old.saveWithoutId(tag);
@@ -115,11 +115,11 @@ public final class SectMvpGameTests {
         helper.assertTrue(MeritShop.buy(p, "snow_plum") == MeritShop.Result.OK, "пилюля Снежной Сливы не куплена");
         helper.assertTrue(p.getInventory().countItem(ModItems.PILL_SNOW_PLUM.get()) == 1, "пилюли нет");
         helper.assertTrue(p.getData(ModAttachments.SECT).merit() == 6, "остаток после пилюли: " + p.getData(ModAttachments.SECT).merit());
-        // Покупка из разговора: вариант Хён Ёна с действием merit_buy, цена — в тексте варианта.
-        Dialogue d = DialogueLoader.get(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "hyun_young"));
-        helper.assertTrue(d != null && d.nodes().containsKey("exchange"), "у Хён Ёна нет обмена");
+        // Покупка из разговора: вариант Тэ Гюна с действием merit_buy, цена — в тексте варианта.
+        Dialogue d = DialogueLoader.get(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "tae_gyun"));
+        helper.assertTrue(d != null && d.nodes().containsKey("exchange"), "у Тэ Гюна нет обмена");
         Dialogue.Option silver = d.nodes().get("exchange_more").options().get(0);
-        SectDisciple treasurer = npc(helper, yard(helper, 0.3D), "hyun_young", 12, 12);
+        SectDisciple treasurer = npc(helper, yard(helper, 0.3D), "tae_gyun", 12, 12);
         helper.assertTrue(DialogueService.applyHeadless(p, treasurer, silver), "вариант серебра не выполнился");
         helper.assertTrue(p.getInventory().countItem(ModItems.SILVER_TAEL.get()) == 3, "серебра нет");
         helper.assertTrue(p.getData(ModAttachments.SECT).merit() == 4, "серебро не списало заслуги");
@@ -145,7 +145,7 @@ public final class SectMvpGameTests {
             fighters.add(npc(helper, yard, keys.get(i), 4 + i * 5, 20));
         }
         // Зритель: глава смотрит с помоста.
-        SectDisciple leader = npc(helper, yard, "hyun_jong", 20, 4);
+        SectDisciple leader = npc(helper, yard, "tae_hwi", 20, 4);
         helper.assertTrue(SectSchedule.task(leader.member().orElseThrow(), helper.getLevel().getDayTime()).kind() == SectSchedule.Kind.WATCH,
                 "глава не смотрит смотр");
         long finalDay = day;
