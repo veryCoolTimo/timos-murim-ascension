@@ -38,7 +38,25 @@ public final class SectWeather {
     /** Идёт ли дождь вокруг человека (GameTest задаёт сам, иначе погода мира; снег на горе — тоже повод уйти под крышу). */
     public static boolean wet(SectDisciple npc) {
         Boolean o = npc.rainOverride();
-        return o != null ? o : npc.level().isRaining();
+        if (o != null) {
+            return o;
+        }
+        // Не все разом (автор 06.10): каждый замечает дождь и его конец через свои 2..20 с.
+        boolean raining = npc.level().isRaining();
+        if (raining == npc.feelsRain()) {
+            if (npc.rainFlip() != Long.MIN_VALUE) {
+                npc.feelRain(raining, Long.MIN_VALUE);
+            }
+            return raining;
+        }
+        long now = npc.level().getGameTime();
+        long since = npc.rainFlip() == Long.MIN_VALUE ? now : npc.rainFlip();
+        if (now - since >= SectStagger.ticks(npc.memberKey(), raining ? "rain" : "dry", SectStagger.RAIN_MIN, SectStagger.RAIN_MAX)) {
+            npc.feelRain(raining, Long.MIN_VALUE);
+            return raining;
+        }
+        npc.feelRain(npc.feelsRain(), since);
+        return npc.feelsRain();
     }
 
     /** Над головой стоящего в {@code feet} есть крыша (блок, который держит дождь). */

@@ -53,7 +53,9 @@ public final class SectReactions {
         for (SectDisciple d : level.getEntitiesOfClass(SectDisciple.class, p.getBoundingBox().inflate(WATCH_RANGE),
                 d -> d.isAlive() && d.member().isPresent() && d.layout() != null)) {
             if (watches(d) && d.distanceToSqr(p) <= WATCH_RANGE * WATCH_RANGE) {
-                d.watch(p, WATCH_TICKS + level.random.nextInt(WATCH_EXTRA));
+                // Оборачиваются не хором: дальше стоит — позже заметил, и у каждого своя заминка (до ~0,7 с).
+                int delay = (int) Math.sqrt(d.distanceToSqr(p)) + level.random.nextInt(8);
+                d.watch(p, WATCH_TICKS + level.random.nextInt(WATCH_EXTRA), delay);
                 watchers.add(d);
             }
         }
@@ -72,7 +74,14 @@ public final class SectReactions {
             String key = m.isPresent() && m.get().disciple() && level.random.nextBoolean()
                     ? SectBubbles.watchKey(SectTalk.trait(d.memberKey()))
                     : SectBubbles.Group.WATCH.pick(level.random.nextInt(64));
-            if (SectChatter.sayIfQuiet(d, key, 100)) {
+            if (said == 0) {
+                if (SectChatter.sayIfQuiet(d, key, 100)) {
+                    said++;
+                }
+            } else if (level.getGameTime() - d.bubbleAt() > 100) {
+                // Второй — с заминкой, не в один тик с первым.
+                d.queueBubble(key, net.minecraft.network.chat.Component.translatable(key), 14 + level.random.nextInt(26));
+                d.markBubble(key);
                 said++;
             }
         }

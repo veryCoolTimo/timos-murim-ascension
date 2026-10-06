@@ -147,4 +147,36 @@ public final class SectAliveGameTests {
                     + ", дело " + d.doingKind());
         });
     }
+
+    /**
+     * Конец ужина (автор 06.10: «нужна разница во времени»): после колокола ученики встают из-за стола не в один тик —
+     * у кого опоздание меньше, тот уже ушёл на вечернее дело, сосед ещё ест.
+     */
+    @GameTest(template = YARD, timeoutTicks = 100, batch = "sect_alive_stagger")
+    public static void dinnerEndsStaggered(GameTestHelper helper) {
+        SectGameTests.Yard yard = yard(helper, 0.8D);
+        // Двое третьего поколения с самым разным опозданием.
+        SectRoster early = null;
+        SectRoster late = null;
+        for (SectRoster m : SectRoster.generation(3)) {
+            if (!SectStagger.staggered(m)) {
+                continue;
+            }
+            if (early == null || SectStagger.lag(m) < SectStagger.lag(early)) {
+                early = m;
+            }
+            if (late == null || SectStagger.lag(m) > SectStagger.lag(late)) {
+                late = m;
+            }
+        }
+        helper.assertTrue(early != null && SectStagger.lag(late) - SectStagger.lag(early) > 200, "опоздания почти одинаковые");
+        SectDisciple a = npc(helper, yard, early.key(), 6, 6);
+        SectDisciple b = npc(helper, yard, late.key(), 10, 6);
+        setTime(helper, SectSchedule.Period.EVENING.start() + (SectStagger.lag(early) + SectStagger.lag(late)) / 2);
+        SectSchedule.Kind ka = SectLife.resolve(a).task().kind();
+        SectSchedule.Kind kb = SectLife.resolve(b).task().kind();
+        helper.assertTrue(ka != SectSchedule.Kind.EAT, early.key() + " ещё ест после своего опоздания (" + ka + ")");
+        helper.assertTrue(kb == SectSchedule.Kind.EAT, late.key() + " уже встал из-за стола до своего опоздания (" + kb + ")");
+        helper.succeed();
+    }
 }

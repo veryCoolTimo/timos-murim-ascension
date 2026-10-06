@@ -102,6 +102,16 @@ public final class SectLife {
         }
         long time = npc.level().getDayTime();
         SectSchedule.Task t = SectSchedule.task(m.get(), time);
+        // Разница во времени (автор 06.10): в начале части суток каждый ещё немного доделывает прежнее — из-за стола,
+        // со сна, в строй встают не в один тик. Пост, поединок и смотр — по колоколу: там ждут друг друга.
+        long late = SectStagger.scheduleTime(m.get(), time);
+        if (late != time && !SectRota.onDuty(m.get(), time) && !SectRota.onDuty(m.get(), late)
+                && !SectReview.window(time) && !SectReview.window(late)) {
+            SectSchedule.Task before = SectSchedule.task(m.get(), late);
+            if (before.kind() != SectSchedule.Kind.SPAR) {
+                t = before;
+            }
+        }
         // Чужак у ворот: глава выходит навстречу и принимает без экзамена (автор 04.10).
         if (m.get().role() == SectRole.LEADER && npc.level() instanceof ServerLevel server && data(server).outsiderAtGate) {
             t = new SectSchedule.Task(SectSchedule.Kind.GREET, "sect_gate", 2.0D, 1.0D, 0.0D, -1.0D);
