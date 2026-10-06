@@ -1,6 +1,8 @@
 package io.github.verycooltimo.murim.registry;
 
 import io.github.verycooltimo.murim.MurimMod;
+import io.github.verycooltimo.murim.world.hua.ClimbingAidBlock;
+import io.github.verycooltimo.murim.world.hua.OldRopeBlock;
 import io.github.verycooltimo.murim.world.hua.PlumBlossomBlock;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.level.block.Block;
@@ -57,10 +59,26 @@ public final class ModBlocks {
     public static final DeferredBlock<Block> HUA_LITTER = BLOCKS.registerBlock("hua_litter", Block::new,
             BlockBehaviour.Properties.of().mapColor(MapColor.DIRT).strength(0.6F).sound(SoundType.GRAVEL));
 
+    // The South Peak climb (author 06.10: our own climbable blocks instead of vanilla vines, in the Hua
+    // palette): moss mats hang like vines (no collision), handholds are granite knobs with the ladder's
+    // 3-pixel body, the old rope hangs at the three hardest steps. Properties after Blocks#VINE/#LADDER/#CHAIN.
+    public static final DeferredBlock<ClimbingAidBlock> CLIMBING_MOSS = BLOCKS.registerBlock("climbing_moss",
+            ClimbingAidBlock::new, BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_GREEN).forceSolidOff()
+                    .noCollission().noOcclusion().strength(0.2F).sound(SoundType.MOSS_CARPET).ignitedByLava()
+                    .pushReaction(PushReaction.DESTROY));
+    public static final DeferredBlock<ClimbingAidBlock> ROCK_HANDHOLD = BLOCKS.registerBlock("rock_handhold",
+            ClimbingAidBlock::new, BlockBehaviour.Properties.of().mapColor(MapColor.TERRACOTTA_WHITE).forceSolidOff()
+                    .noOcclusion().strength(0.8F).sound(SoundType.STONE).pushReaction(PushReaction.DESTROY));
+    public static final DeferredBlock<OldRopeBlock> OLD_ROPE = BLOCKS.registerBlock("old_rope",
+            OldRopeBlock::new, BlockBehaviour.Properties.of().mapColor(MapColor.WOOD).forceSolidOff()
+                    .noCollission().noOcclusion().strength(0.3F).sound(SoundType.WOOL).ignitedByLava()
+                    .pushReaction(PushReaction.DESTROY));
+
     static {
         for (DeferredBlock<? extends Block> b : java.util.List.of(HUA_GRANITE, HUA_GRANITE_PALE, HUA_GRANITE_STAINED,
                 HUA_GRANITE_CRACKED, HUA_GRANITE_DARK, HUA_GRANITE_MOSSY, POLISHED_HUA_GRANITE,
-                POLISHED_HUA_GRANITE_STAIRS, POLISHED_HUA_GRANITE_SLAB, POLISHED_HUA_GRANITE_WALL, HUA_LITTER)) {
+                POLISHED_HUA_GRANITE_STAIRS, POLISHED_HUA_GRANITE_SLAB, POLISHED_HUA_GRANITE_WALL, HUA_LITTER,
+                CLIMBING_MOSS, ROCK_HANDHOLD, OLD_ROPE)) {
             ITEMS.registerSimpleBlockItem(b);
         }
     }

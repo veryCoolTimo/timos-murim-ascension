@@ -1,0 +1,42 @@
+{
+  "variants": {
+    "facing=north": [
+      {
+        "model": "murim:block/rock_handhold"
+      },
+      {
+        "model": "murim:block/rock_handhold_b"
+      }
+    ],
+    "facing=east": [
+      {
+        "model": "murim:block/rock_handhold",
+        "y": 90
+      },
+      {
+        "model": "murim:block/rock_handhold_b",
+        "y": 90
+      }
+    ],
+    "facing=south": [
+      {
+        "model": "murim:block/rock_handhold",
+        "y": 180
+      },
+      {
+        "model": "murim:block/rock_handhold_b",
+        "y": 180
+      }
+    ],
+    "facing=west": [
+      {
+        "model": "murim:block/rock_handhold",
+        "y": 270
+      },
+      {
+        "model": "murim:block/rock_handhold_b",
+        "y": 270
+      }
+    ]
+  }
+}
