@@ -44,20 +44,20 @@ class SectScheduleTest {
     }
 
     @Test
-    @DisplayName("Состав 05.10: глава, 3 старейшины Хён, 3 Ун, 8 Пэк, 17 Чхон, 6 слуг, управляющий, привратник — 40; без стражи и Чхон Мёна")
+    @DisplayName("Состав 05.10: глава, 3 старейшины Тэ, 3 Гён, 8 Со, 17 Юль, 6 слуг, управляющий, привратник — 40; без стражи и Чхон Мёна")
     void roster() {
         assertEquals(8, SectRoster.generation(2).size());
         assertEquals(17, SectRoster.generation(3).size());
         assertEquals(25, SectRoster.ALL.stream().filter(SectRoster::disciple).count());
         assertEquals(40, SectRoster.ALL.size());
-        assertEquals(4, SectRoster.ALL.stream().filter(m -> m.generation() == 0).count(), "глава и три старейшины Хён");
-        assertEquals(3, SectRoster.ALL.stream().filter(m -> m.generation() == 1).count(), "три Ун");
+        assertEquals(4, SectRoster.ALL.stream().filter(m -> m.generation() == 0).count(), "глава и три старейшины Тэ");
+        assertEquals(3, SectRoster.ALL.stream().filter(m -> m.generation() == 1).count(), "три Гён");
         assertEquals(6, SectRoster.ALL.stream().filter(m -> m.lay() && m.role() != SectRole.STEWARD).count(), "шесть слуг");
         assertEquals(1, SectRoster.ALL.stream().filter(m -> m.role() == SectRole.STEWARD).count());
         assertEquals(1, SectRoster.ALL.stream().filter(m -> m.role() == SectRole.GATEKEEPER).count());
         assertEquals(0, SectRoster.ALL.stream().filter(m -> m.role() == SectRole.GUARD).count(), "отдельной стражи нет");
         assertTrue(SectRoster.of("chung_myung").isEmpty() && SectRoster.of("cheong_myeong").isEmpty(), "Чхон Мён — это игрок");
-        assertEquals(SectRole.SENIOR, SectRoster.of("seo_rang").orElseThrow().role(), "старший — Пэк Чхон");
+        assertEquals(SectRole.SENIOR, SectRoster.of("seo_rang").orElseThrow().role(), "старший — Со Ран");
         for (String gone : SectRoster.RETIRED) {
             assertTrue(SectRoster.of(gone).isEmpty(), "ушедший в составе: " + gone);
         }

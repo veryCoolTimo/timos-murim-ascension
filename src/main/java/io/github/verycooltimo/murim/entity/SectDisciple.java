@@ -408,7 +408,7 @@ public class SectDisciple extends Bandit implements Casters.Caster {
             other.endSpar(!partnerWon);
         }
         restUntil = level().getGameTime() + 160 + getRandom().nextInt(120);
-        // Проигравший в поединке учеников ранен: сядет у края площадки и дождётся лекаря Ун Гака (автор 05.10).
+        // Проигравший в поединке учеников ранен: сядет у края площадки и дождётся лекаря Гён Чхо (автор 05.10).
         if (partnerWon && npcBout && member().isPresent()) {
             setWounded(true);
         }

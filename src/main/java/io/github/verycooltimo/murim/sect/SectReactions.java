@@ -14,7 +14,7 @@ import java.util.Optional;
 
 /**
  * Люди горы замечают игрока (автор 05.10: «реакции — да»): применил технику рядом — свободные останавливаются и
- * смотрят; победителю смотра и старшему по положению кланяются на ходу (раз в день); раненому игроку Ун Гак приходит и
+ * смотрят; победителю смотра и старшему по положению кланяются на ходу (раз в день); раненому игроку Гён Чхо приходит и
  * перевязывает — тем же делом {@link SectSchedule.Kind#TREAT}, что раненых учеников.
  *
  * <p>Состояние — на людях ({@link SectDisciple#watching}, {@link SectDisciple#bowedToday}, {@link SectDisciple#healingPlayer}),
@@ -149,7 +149,7 @@ public final class SectReactions {
         }
         if (best != null) {
             healer.setHealingPlayer(best.getId());
-            MurimMod.LOGGER.info("Секта: Ун Гак идёт лечить {}", best.getName().getString());
+            MurimMod.LOGGER.info("Секта: Гён Чхо идёт лечить {}", best.getName().getString());
         }
         return best;
     }

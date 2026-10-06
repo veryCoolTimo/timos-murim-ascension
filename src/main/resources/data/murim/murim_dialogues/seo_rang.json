@@ -288,8 +288,8 @@
       "gesture": "explain",
       "options": [
         {
-          "text": "dialogue.murim.seo_rang.opt.jongnam",
-          "next": "t_jongnam"
+          "text": "dialogue.murim.seo_rang.opt.huayin",
+          "next": "t_huayin"
         },
         {
           "text": "dialogue.murim.opt.back",
@@ -297,8 +297,8 @@
         }
       ]
     },
-    "t_jongnam": {
-      "line": "dialogue.murim.seo_rang.t_jongnam",
+    "t_huayin": {
+      "line": "dialogue.murim.seo_rang.t_huayin",
       "gesture": "fist",
       "options": [
         {

@@ -50,7 +50,7 @@ public final class SectAttendance {
     public enum Activity {
         /** Утренний строй: десять форм в такт ({@link SectLife#onPlayerForm}). */
         FORMATION,
-        /** Занятие днём: поединок с учеником, столбы, урок Хён Сана, упражнение (крючок). */
+        /** Занятие днём: поединок с учеником, столбы, урок Тэ Рока, упражнение (крючок). */
         LESSON,
         /** Трапеза со всеми: завтрак или ужин за столами. */
         MEAL,
@@ -91,7 +91,7 @@ public final class SectAttendance {
     public static final int ROLL_LESSON = 3500;
     /** Трапеза засчитана: столько тиков за столами. */
     public static final int MEAL_TICKS = 200;
-    /** Столбы и урок Хён Сана: столько тиков — занятие. */
+    /** Столбы и урок Тэ Рока: столько тиков — занятие. */
     public static final int PRACTICE_TICKS = 400;
     /** Заслуги за полный день (всё, чего ждали, сделано) и прибавка за усердие подряд. */
     public static final int DAY_BONUS = 1;
@@ -401,7 +401,7 @@ public final class SectAttendance {
         return l != null && l[0] > 1.0D && l[0] < 9.0D && l[1] > -4.0D && l[1] < 9.0D;
     }
 
-    /** Рядом с Хён Саном, пока он учит. */
+    /** Рядом с Тэ Роком, пока он учит. */
     static boolean nearLecture(ServerPlayer p) {
         for (SectDisciple d : p.level().getEntitiesOfClass(SectDisciple.class, p.getBoundingBox().inflate(7.0D),
                 d -> "tae_rok".equals(d.memberKey()))) {

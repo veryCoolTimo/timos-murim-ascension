@@ -338,8 +338,8 @@ public final class ScheduleGoal extends Goal {
     private int legTicks;
 
     /**
-     * Реквизит по делу (ванильные предметы в руках): слуги — метла, мотыга, миска, книга учёта; Хён Ён — книга учёта
-     * в левой руке; Хён Сан — книга; Ун Гак — ступка (миска) и пестик (палка), черпак у печи, бинт (бумага) у раненого.
+     * Реквизит по делу (ванильные предметы в руках): слуги — метла, мотыга, миска, книга учёта; Тэ Гюн — книга учёта
+     * в левой руке; Тэ Рок — книга; Гён Чхо — ступка (миска) и пестик (палка), черпак у печи, бинт (бумага) у раненого.
      */
     private void outfit(Kind k) {
         if (npc.role().lay()) {
@@ -420,7 +420,7 @@ public final class ScheduleGoal extends Goal {
             npc.hold(loaded ? load() : empty());
             npc.workPose(loaded ? "carry" : null);
             pause = 40 + npc.getRandom().nextInt(40);
-            // Носильщик донёс груз до кладовой: Хён Ён (или управляющий) принимает — кивает, носильщик кланяется.
+            // Носильщик донёс груз до кладовой: Тэ Гюн (или управляющий) принимает — кивает, носильщик кланяется.
             if (handOver) {
                 SectLife.delivered(npc);
             }
@@ -449,8 +449,8 @@ public final class ScheduleGoal extends Goal {
     }
 
     /**
-     * Совет старейшин: сидят на своих местах; говорят по очереди (глава, Хён Ён, Хён Сан, Ун Гак, Ун Ам — по 6 с),
-     * говорящий объясняет и показывает, остальные смотрят на него, кивают; Хён Ён чаще качает головой (скупой, гл. 64).
+     * Совет старейшин: сидят на своих местах; говорят по очереди (глава, Тэ Гюн, Тэ Рок, Гён Чхо, Гён Так — по 6 с),
+     * говорящий объясняет и показывает, остальные смотрят на него, кивают; Тэ Гюн чаще качает головой (скупой, гл. 64).
      */
     private void council() {
         if (!arrive(current.spot(), 0.6D)) {
@@ -572,7 +572,7 @@ public final class ScheduleGoal extends Goal {
                 patient.attend(npc, 44);
                 patient.holdPose(SectPose.BOW, 44);
                 npc.gesture("nod");
-                io.github.verycooltimo.murim.MurimMod.LOGGER.info("Секта: Ун Гак вылечил {}", patient.memberKey());
+                io.github.verycooltimo.murim.MurimMod.LOGGER.info("Секта: Гён Чхо вылечил {}", patient.memberKey());
             }
         }
     }
@@ -609,12 +609,12 @@ public final class ScheduleGoal extends Goal {
                 npc.gesture("nod");
                 io.github.verycooltimo.murim.sect.SectChatter.sayIfQuiet(npc,
                         io.github.verycooltimo.murim.sect.SectBubbles.Group.HEAL_DONE.pick(npc.getRandom().nextInt(64)), 20);
-                io.github.verycooltimo.murim.MurimMod.LOGGER.info("Секта: Ун Гак перевязал {}", p.getName().getString());
+                io.github.verycooltimo.murim.MurimMod.LOGGER.info("Секта: Гён Чхо перевязал {}", p.getName().getString());
             }
         }
     }
 
-    /** Старшинство: глава 0, старейшины Хён 1, первое поколение (Ун, наставник) 2, Пэк 3, Чхон 4, миряне 5. */
+    /** Старшинство: глава 0, старейшины Тэ 1, первое поколение (Гён, наставник) 2, Со 3, Юль 4, миряне 5. */
     static int seniority(SectRoster m) {
         if (m.role() == SectRole.LEADER) {
             return 0;

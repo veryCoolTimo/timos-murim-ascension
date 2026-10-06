@@ -52,7 +52,7 @@ public final class SectMembersGameTests {
 
     // ------------------------------------------------------------------ члены секты
 
-    /** Завтрак: Ун Ам идёт к главе в главный зал, кланяется; глава поворачивается к нему. */
+    /** Завтрак: Гён Так идёт к главе в главный зал, кланяется; глава поворачивается к нему. */
     @GameTest(template = YARD, timeoutTicks = 600, batch = "sect_members_report")
     public static void unAmReportsToLeader(GameTestHelper helper) {
         setTime(helper, 1300);
@@ -65,13 +65,13 @@ public final class SectMembersGameTests {
             seen[1] |= leader.attending() == unAm;
         });
         helper.succeedWhen(() -> {
-            helper.assertTrue(seen[0], "Ун Ам не поклонился главе (поза " + unAm.pose().id() + ", до главы "
+            helper.assertTrue(seen[0], "Гён Так не поклонился главе (поза " + unAm.pose().id() + ", до главы "
                     + String.format("%.1f", unAm.distanceTo(leader)) + ")");
             helper.assertTrue(seen[1], "глава не повернулся к докладчику");
         });
     }
 
-    /** После поединка раненый сидит и ждёт; Ун Гак приходит, лечит на колене; вылеченный встаёт и кланяется. */
+    /** После поединка раненый сидит и ждёт; Гён Чхо приходит, лечит на колене; вылеченный встаёт и кланяется. */
     @GameTest(template = YARD, timeoutTicks = 900, batch = "sect_members_healer")
     public static void healerTreatsWounded(GameTestHelper helper) {
         setTime(helper, 8000);

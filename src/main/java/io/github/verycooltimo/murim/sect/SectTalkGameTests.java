@@ -21,7 +21,7 @@ import java.util.Set;
 
 /**
  * GameTest-ы личных диалогов (05.10): у каноничного человека свой диалог поверх диалога роли, приветствие меняется после
- * победы игрока на смотре; ученик без своего диалога говорит личной фразой, чертой и слухами; просьба Чо Голя забирает
+ * победы игрока на смотре; ученик без своего диалога говорит личной фразой, чертой и слухами; просьба Бок Мансока забирает
  * хлеб и отмечает флаг. API: reference/minecraft-src/net/minecraft/network/chat/contents/TranslatableContents.java
  */
 @GameTestHolder(MurimMod.MODID)
@@ -51,14 +51,14 @@ public final class SectTalkGameTests {
         return ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, path);
     }
 
-    /** Пэк Чхон: свой диалог поверх диалога старшего; после победы игрока на смотре — другое приветствие. */
+    /** Со Ран: свой диалог поверх диалога старшего; после победы игрока на смотре — другое приветствие. */
     @GameTest(template = YARD, timeoutTicks = 40, batch = "sect_talk")
     public static void personalDialogueOverRole(GameTestHelper helper) {
         helper.getLevel().setDayTime(24000L + SectSchedule.Period.TRAINING.start() + 500);
         ServerPlayer p = SectGameTests.fakePlayer(helper);
         p.setData(ModAttachments.SECT, SectState.NONE.joined().with(SectStanding.LESSON_ONE));
         SectDisciple cheon = npc(helper, "seo_rang", 10, 10);
-        helper.assertTrue(id("seo_rang").equals(cheon.dialogue()), "у Пэк Чхона не свой диалог: " + cheon.dialogue());
+        helper.assertTrue(id("seo_rang").equals(cheon.dialogue()), "у Со Рана не свой диалог: " + cheon.dialogue());
         Dialogue d = DialogueLoader.get(cheon.dialogue());
         helper.assertTrue(d.nodes().containsKey("accept") && d.nodes().containsKey("topics"), "узлы базы не слились со своими");
         DialogueService.Route r = DialogueService.route(p, cheon);
@@ -68,7 +68,7 @@ public final class SectTalkGameTests {
         helper.assertTrue(r != null && "greet_champion".equals(r.node()), "вход после победы: " + (r == null ? null : r.node()));
         // Ученик без своего диалога — диалог роли.
         SectDisciple ak = npc(helper, "yul_ak", 12, 10);
-        helper.assertTrue(SectRole.DISCIPLE.dialogue().equals(ak.dialogue()), "у Чхон Ака не диалог роли: " + ak.dialogue());
+        helper.assertTrue(SectRole.DISCIPLE.dialogue().equals(ak.dialogue()), "у Юль Ака не диалог роли: " + ak.dialogue());
         helper.succeed();
     }
 
@@ -96,7 +96,7 @@ public final class SectTalkGameTests {
         helper.succeed();
     }
 
-    /** Просьба Чо Голя: хлеб уходит, флаг стоит, +1 заслуга; второй раз вариант не выполняется. */
+    /** Просьба Бок Мансока: хлеб уходит, флаг стоит, +1 заслуга; второй раз вариант не выполняется. */
     @GameTest(template = YARD, timeoutTicks = 40, batch = "sect_talk")
     public static void favourTakesItem(GameTestHelper helper) {
         ServerPlayer p = SectGameTests.fakePlayer(helper);

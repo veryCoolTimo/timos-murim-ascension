@@ -201,7 +201,7 @@ public final class SectService {
         player.displayClientMessage(Component.translatable("murim.sect.book_given", name).withStyle(ChatFormatting.GOLD), false);
     }
 
-    /** Вступление: ученик третьего поколения (Чхон) и книга Шести Равновесий, если её ещё нет. */
+    /** Вступление: ученик третьего поколения (Юль) и книга Шести Равновесий, если её ещё нет. */
     public static void join(ServerPlayer player) {
         if (state(player).member()) {
             return;

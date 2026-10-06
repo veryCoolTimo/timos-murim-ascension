@@ -310,7 +310,7 @@ public final class SectWatch {
         return best;
     }
 
-    /** Стоит на страже: дежурный второго поколения на смене (или ждёт сменщика, SectRota) и Ун Ам (днём у ворот). */
+    /** Стоит на страже: дежурный второго поколения на смене (или ждёт сменщика, SectRota) и Гён Так (днём у ворот). */
     public static boolean guards(SectDisciple d) {
         return SectLife.onWatch(d) || "gyeong_tak".equals(d.memberKey());
     }

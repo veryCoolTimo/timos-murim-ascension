@@ -186,7 +186,7 @@ public final class SectTalk {
             out.add(new Line("dialogue.murim.rumour.skipped", List.of(npc(late))));
         }
         // Пересуды о характере другого ученика.
-        // Ю Исоль в пересуды не попадает: в русских репликах о ней нужен женский род.
+        // Мок Хаён в пересуды не попадает: в русских репликах о ней нужен женский род.
         List<SectRoster> all = new ArrayList<>(SectRoster.generation(2));
         all.addAll(SectRoster.generation(3));
         all.removeIf(m -> FEMALE.contains(m.key()));

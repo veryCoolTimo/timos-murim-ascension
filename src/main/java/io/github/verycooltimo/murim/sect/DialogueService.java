@@ -93,7 +93,7 @@ public final class DialogueService {
 
     /**
      * Кто ответит и с какого узла: обычно сам NPC; если у его диалога есть {@code audience} и игроку говорить с ним
-     * не по положению — ближайший старший или охранник ({@link SectRole#intercepts()}, Ун Ам) со своим диалогом
+     * не по положению — ближайший старший или охранник ({@link SectRole#intercepts()}, Гён Так) со своим диалогом
      * перехвата, а если рядом никого — сам NPC узлом {@code busy}.
      *
      * @param speaker     кто говорит
@@ -478,7 +478,7 @@ public final class DialogueService {
                 }
             }
             case "heal" -> {
-                // Лекарь Ун Гак лечит раны после поединков (план §1.1: «лечит травмы с тренировок»).
+                // Лекарь Гён Чхо лечит раны после поединков (план §1.1: «лечит травмы с тренировок»).
                 if (player.getHealth() < player.getMaxHealth()) {
                     player.heal(player.getMaxHealth());
                     player.level().playSound(null, player.blockPosition(), net.minecraft.sounds.SoundEvents.BREWING_STAND_BREW,

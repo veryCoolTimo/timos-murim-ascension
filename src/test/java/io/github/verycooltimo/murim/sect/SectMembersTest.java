@@ -64,7 +64,7 @@ class SectMembersTest {
     }
 
     @Test
-    @DisplayName("Доклады главе: наставник после строя, Ун Ам в завтрак, Хён Ён с книгой — в шаге перед главой, лицом к нему")
+    @DisplayName("Доклады главе: наставник после строя, Гён Так в завтрак, Тэ Гюн с книгой — в шаге перед главой, лицом к нему")
     void reports() {
         for (Object[] r : new Object[][] {{"gyeong_pil", 800L}, {"gyeong_tak", 1500L}, {"tae_gyun", 2600L}}) {
             long time = (Long) r[1];

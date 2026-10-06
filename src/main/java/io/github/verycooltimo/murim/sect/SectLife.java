@@ -130,7 +130,7 @@ public final class SectLife {
                         spot, yaw);
             }
         }
-        // Раненый игрок на земле секты (живая гора, автор 05.10): Ун Гак днём за своим делом идёт перевязать.
+        // Раненый игрок на земле секты (живая гора, автор 05.10): Гён Чхо днём за своим делом идёт перевязать.
         if ("gyeong_cho".equals(m.get().key()) && !npc.dormant() && healerFree(t.kind()) && SectSchedule.at(time) != SectSchedule.Period.NIGHT) {
             ServerPlayer hurt = SectReactions.patient(npc);
             if (hurt != null) {
@@ -213,7 +213,7 @@ public final class SectLife {
     }
 
     /**
-     * Носильщик донёс груз до кладовой: Хён Ён у стола (или управляющий) поворачивается к нему и кивает — принял;
+     * Носильщик донёс груз до кладовой: Тэ Гюн у стола (или управляющий) поворачивается к нему и кивает — принял;
      * носильщик кланяется.
      */
     public static void delivered(SectDisciple porter) {

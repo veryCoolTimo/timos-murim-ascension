@@ -52,7 +52,7 @@ public class DiscipleRenderer extends MobRenderer<SectDisciple, DiscipleRenderer
     private static final String SECOND = "textures/entity/sect/second_rate_disciple.png";
     private static final Map<SectRole, Body> BODIES = Map.of(
             // Ученики (sect_disciple.bbmodel): ножны с мечом на поясе, меч в руке — предмет (DrawnSword).
-            // Третье поколение — светлое ханьфу, второе (старший и Пэк) — тёмное; стража второго поколения — пока бандит.
+            // Третье поколение — светлое ханьфу, второе (старший и Со) — тёмное; стража второго поколения — пока бандит.
             SectRole.DISCIPLE, Body.of("sect_disciple", THIRD),
             SectRole.DISCIPLE_A, Body.of("sect_disciple", THIRD),
             SectRole.DISCIPLE_B, Body.of("sect_disciple", THIRD),
