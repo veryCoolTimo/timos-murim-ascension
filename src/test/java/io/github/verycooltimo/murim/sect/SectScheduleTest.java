@@ -44,20 +44,20 @@ class SectScheduleTest {
     }
 
     @Test
-    @DisplayName("Состав 05.10: глава, 3 старейшины Хён, 3 Ун, 8 Пэк, 17 Чхон, 6 слуг, управляющий, привратник — 40; без стражи и Чхон Мёна")
+    @DisplayName("Состав 05.10: глава, 3 старейшины Тэ, 3 Гён, 8 Со, 17 Юль, 6 слуг, управляющий, привратник — 40; без стражи и Чхон Мёна")
     void roster() {
         assertEquals(8, SectRoster.generation(2).size());
         assertEquals(17, SectRoster.generation(3).size());
         assertEquals(25, SectRoster.ALL.stream().filter(SectRoster::disciple).count());
         assertEquals(40, SectRoster.ALL.size());
-        assertEquals(4, SectRoster.ALL.stream().filter(m -> m.generation() == 0).count(), "глава и три старейшины Хён");
-        assertEquals(3, SectRoster.ALL.stream().filter(m -> m.generation() == 1).count(), "три Ун");
+        assertEquals(4, SectRoster.ALL.stream().filter(m -> m.generation() == 0).count(), "глава и три старейшины Тэ");
+        assertEquals(3, SectRoster.ALL.stream().filter(m -> m.generation() == 1).count(), "три Гён");
         assertEquals(6, SectRoster.ALL.stream().filter(m -> m.lay() && m.role() != SectRole.STEWARD).count(), "шесть слуг");
         assertEquals(1, SectRoster.ALL.stream().filter(m -> m.role() == SectRole.STEWARD).count());
         assertEquals(1, SectRoster.ALL.stream().filter(m -> m.role() == SectRole.GATEKEEPER).count());
         assertEquals(0, SectRoster.ALL.stream().filter(m -> m.role() == SectRole.GUARD).count(), "отдельной стражи нет");
         assertTrue(SectRoster.of("chung_myung").isEmpty() && SectRoster.of("cheong_myeong").isEmpty(), "Чхон Мён — это игрок");
-        assertEquals(SectRole.SENIOR, SectRoster.of("baek_cheon").orElseThrow().role(), "старший — Пэк Чхон");
+        assertEquals(SectRole.SENIOR, SectRoster.of("seo_rang").orElseThrow().role(), "старший — Со Ран");
         for (String gone : SectRoster.RETIRED) {
             assertTrue(SectRoster.of(gone).isEmpty(), "ушедший в составе: " + gone);
         }
@@ -116,9 +116,9 @@ class SectScheduleTest {
             assertTrue(Math.abs(Double.parseDouble(p[1])) < training.depth() / 2.0D - 2.0D);
         }
         // Наставник ходит вдоль рядов, глава смотрит.
-        SectRoster mentor = SectRoster.of("un_geom").orElseThrow();
+        SectRoster mentor = SectRoster.of("gyeong_pil").orElseThrow();
         assertEquals(Kind.INSPECT, SectSchedule.task(mentor, Period.FORMATION, 0).kind());
-        assertEquals(Kind.WATCH, SectSchedule.task(SectRoster.of("hyun_jong").orElseThrow(), Period.FORMATION, 0).kind());
+        assertEquals(Kind.WATCH, SectSchedule.task(SectRoster.of("tae_hwi").orElseThrow(), Period.FORMATION, 0).kind());
     }
 
     @Test
@@ -147,10 +147,10 @@ class SectScheduleTest {
             assertEquals(10, spar.size(), "день " + day + ": пять пар");
             assertTrue(kinds.containsValue(Kind.POLES));
             assertTrue(kinds.containsValue(Kind.CHORE));
-            assertEquals(Kind.SPAR, kinds.get("baek_cheon"), "старший всегда на площадке поединков");
+            assertEquals(Kind.SPAR, kinds.get("seo_rang"), "старший всегда на площадке поединков");
         }
         // Состав групп третьего поколения меняется от дня к дню.
-        SectRoster m = SectRoster.of("jo_gol").orElseThrow();
+        SectRoster m = SectRoster.of("bok_manseok").orElseThrow();
         Set<Kind> seen = new HashSet<>();
         for (long day = 0; day < 15; day++) {
             seen.add(SectSchedule.task(m, Period.TRAINING, day).kind());

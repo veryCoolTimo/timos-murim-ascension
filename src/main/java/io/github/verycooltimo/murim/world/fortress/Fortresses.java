@@ -89,7 +89,7 @@ public final class Fortresses {
         return level.getDataStorage().computeIfAbsent(FortressData.FACTORY, FortressData.NAME);
     }
 
-    /** Имя хозяина из зерна: первая крепость — Дун Сюн, Крепость Чёрного Ветра. */
+    /** Имя хозяина из зерна: первая крепость — Ба Тешань, Крепость Чёрного Ветра. */
     public static Component masterName(long seed) {
         int n = (int) Math.floorMod(seed >>> 3, (long) NAMES);
         int f = (int) Math.floorMod(seed >>> 11, (long) FORTRESS_NAMES);

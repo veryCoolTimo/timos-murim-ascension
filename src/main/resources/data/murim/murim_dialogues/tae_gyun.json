@@ -1,6 +1,6 @@
 {
-  "name": "npc.murim.hyun_young",
-  "title": "npc.murim.hyun_young.title",
+  "name": "npc.murim.tae_gyun",
+  "title": "npc.murim.tae_gyun.title",
   "start": [
     {
       "when": [
@@ -33,12 +33,12 @@
   "nodes": {
     "formation": {
       "random": [
-        "dialogue.murim.hyun_young.formation1"
+        "dialogue.murim.tae_gyun.formation1"
       ],
       "gesture": "nod",
       "options": [
         {
-          "text": "dialogue.murim.hyun_young.opt.ask",
+          "text": "dialogue.murim.tae_gyun.opt.ask",
           "next": "answer"
         },
         {
@@ -48,12 +48,12 @@
     },
     "night": {
       "random": [
-        "dialogue.murim.hyun_young.night1"
+        "dialogue.murim.tae_gyun.night1"
       ],
       "gesture": "nod",
       "options": [
         {
-          "text": "dialogue.murim.hyun_young.opt.ask",
+          "text": "dialogue.murim.tae_gyun.opt.ask",
           "next": "answer"
         },
         {
@@ -63,17 +63,17 @@
     },
     "greet": {
       "random": [
-        "dialogue.murim.hyun_young.greet1",
-        "dialogue.murim.hyun_young.greet2"
+        "dialogue.murim.tae_gyun.greet1",
+        "dialogue.murim.tae_gyun.greet2"
       ],
       "gesture": "nod",
       "options": [
         {
-          "text": "dialogue.murim.hyun_young.opt.ask",
+          "text": "dialogue.murim.tae_gyun.opt.ask",
           "next": "answer"
         },
         {
-          "text": "dialogue.murim.hyun_young.opt.exchange",
+          "text": "dialogue.murim.tae_gyun.opt.exchange",
           "when": [
             {
               "member": true
@@ -87,7 +87,7 @@
       ]
     },
     "answer": {
-      "line": "dialogue.murim.hyun_young.answer",
+      "line": "dialogue.murim.tae_gyun.answer",
       "gesture": "explain",
       "options": [
         {
@@ -96,7 +96,7 @@
       ]
     },
     "busy": {
-      "line": "dialogue.murim.hyun_young.busy",
+      "line": "dialogue.murim.tae_gyun.busy",
       "gesture": "shake",
       "options": [
         {
@@ -105,7 +105,7 @@
       ]
     },
     "exchange": {
-      "line": "dialogue.murim.hyun_young.exchange",
+      "line": "dialogue.murim.tae_gyun.exchange",
       "args": [
         "merit"
       ],
@@ -147,13 +147,13 @@
           "next": "exchange"
         },
         {
-          "text": "dialogue.murim.hyun_young.opt.more",
+          "text": "dialogue.murim.tae_gyun.opt.more",
           "next": "exchange_more"
         }
       ]
     },
     "exchange_more": {
-      "line": "dialogue.murim.hyun_young.exchange_more",
+      "line": "dialogue.murim.tae_gyun.exchange_more",
       "args": [
         "merit"
       ],
@@ -170,7 +170,7 @@
           "next": "exchange_more"
         },
         {
-          "text": "dialogue.murim.hyun_young.opt.back",
+          "text": "dialogue.murim.tae_gyun.opt.back",
           "next": "exchange"
         },
         {
@@ -180,17 +180,17 @@
     },
     "evening": {
       "random": [
-        "dialogue.murim.hyun_young.evening1",
-        "dialogue.murim.hyun_young.evening2"
+        "dialogue.murim.tae_gyun.evening1",
+        "dialogue.murim.tae_gyun.evening2"
       ],
       "gesture": "nod",
       "options": [
         {
-          "text": "dialogue.murim.hyun_young.opt.ask",
+          "text": "dialogue.murim.tae_gyun.opt.ask",
           "next": "answer"
         },
         {
-          "text": "dialogue.murim.hyun_young.opt.exchange",
+          "text": "dialogue.murim.tae_gyun.opt.exchange",
           "when": [
             {
               "member": true
@@ -210,7 +210,7 @@
         "min_standing": "disciple"
       },
       {
-        "flag": "summon.hyun_young"
+        "flag": "summon.tae_gyun"
       }
     ],
     "intercept": "murim:intercept_elder",

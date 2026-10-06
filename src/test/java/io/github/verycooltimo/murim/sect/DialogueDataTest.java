@@ -164,8 +164,8 @@ class DialogueDataTest {
             Dialogue own = raw(id);
             own.base().ifPresent(b -> assertTrue(ids.contains(b.getPath()), id + ": нет базы " + b));
         }
-        // Каноничные люди (задача 05.10) говорят своими словами, а не репликами роли.
-        for (String key : List.of("baek_cheon", "yu_iseol", "yoon_jong", "jo_gol", "baek_sang", "baek_ho", "hyun_seong")) {
+        // Люди с личным диалогом (задача 05.10, имена 06.10) говорят своими словами, а не репликами роли.
+        for (String key : List.of("seo_rang", "mok_hayeon", "ham_doyun", "bok_manseok", "seo_gyu", "seo_ho", "tae_seong")) {
             assertTrue(ids.contains(key), "нет личного диалога " + key);
             assertTrue(raw(key).base().isPresent(), key + ": личный диалог без базы роли");
         }
@@ -180,7 +180,7 @@ class DialogueDataTest {
         JsonObject ru = lang("ru_ru");
         SectTalk.Context[] contexts = {
                 new SectTalk.Context("", "Tester", false, false, 3),
-                new SectTalk.Context("cheong_jin", "Tester", true, true, 0),
+                new SectTalk.Context("yul_jin", "Tester", true, true, 0),
                 new SectTalk.Context("@Tester", "Tester", true, false, 6),
                 new SectTalk.Context("@Other", "Tester", false, true, 2),
         };
@@ -217,7 +217,7 @@ class DialogueDataTest {
         old.addProperty("member", true);
         SectState migrated = SectState.CODEC.parse(JsonOps.INSTANCE, old).getOrThrow();
         assertEquals(SectState.VERSION, migrated.version());
-        assertEquals(SectState.CHEON, migrated.generation());
+        assertEquals(SectState.THIRD, migrated.generation());
 
         SectState s = SectState.NONE.with("lesson.six").with("met_mentor").joined();
         JsonElement saved = SectState.CODEC.encodeStart(JsonOps.INSTANCE, s).getOrThrow();

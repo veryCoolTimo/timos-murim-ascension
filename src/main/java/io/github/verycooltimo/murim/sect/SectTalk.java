@@ -72,7 +72,7 @@ public final class SectTalk {
     }
 
     /** Ученицы: о них не говорят репликами, где в русском нужен род. */
-    static final java.util.Set<String> FEMALE = java.util.Set.of("yu_iseol");
+    static final java.util.Set<String> FEMALE = java.util.Set.of("mok_hayeon");
 
     private SectTalk() {
     }
@@ -83,7 +83,8 @@ public final class SectTalk {
      * трёх раз (тест {@code SectTalkTest}).
      */
     public static Trait trait(String key) {
-        int h = (SALT + ":" + key).hashCode() * 0x9E3779B1;
+        // Хеш от прежнего ключа (SectRoster.seed): после переименования 06.10 у человека та же черта, что была.
+        int h = (SALT + ":" + SectRoster.seed(key)).hashCode() * 0x9E3779B1;
         return Trait.values()[h >>> 29];
     }
 
@@ -185,7 +186,7 @@ public final class SectTalk {
             out.add(new Line("dialogue.murim.rumour.skipped", List.of(npc(late))));
         }
         // Пересуды о характере другого ученика.
-        // Ю Исоль в пересуды не попадает: в русских репликах о ней нужен женский род.
+        // Мок Хаён в пересуды не попадает: в русских репликах о ней нужен женский род.
         List<SectRoster> all = new ArrayList<>(SectRoster.generation(2));
         all.addAll(SectRoster.generation(3));
         all.removeIf(m -> FEMALE.contains(m.key()));

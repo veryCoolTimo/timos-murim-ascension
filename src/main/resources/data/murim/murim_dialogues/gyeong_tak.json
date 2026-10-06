@@ -1,6 +1,6 @@
 {
-  "name": "npc.murim.un_am",
-  "title": "npc.murim.un_am.title",
+  "name": "npc.murim.gyeong_tak",
+  "title": "npc.murim.gyeong_tak.title",
   "start": [
     {
       "when": [
@@ -25,12 +25,12 @@
   "nodes": {
     "night": {
       "random": [
-        "dialogue.murim.un_am.night1"
+        "dialogue.murim.gyeong_tak.night1"
       ],
       "gesture": "nod",
       "options": [
         {
-          "text": "dialogue.murim.un_am.opt.ask",
+          "text": "dialogue.murim.gyeong_tak.opt.ask",
           "next": "answer"
         },
         {
@@ -49,13 +49,13 @@
     },
     "greet": {
       "random": [
-        "dialogue.murim.un_am.greet1",
-        "dialogue.murim.un_am.greet2"
+        "dialogue.murim.gyeong_tak.greet1",
+        "dialogue.murim.gyeong_tak.greet2"
       ],
       "gesture": "nod",
       "options": [
         {
-          "text": "dialogue.murim.un_am.opt.ask",
+          "text": "dialogue.murim.gyeong_tak.opt.ask",
           "next": "answer"
         },
         {
@@ -73,7 +73,7 @@
       ]
     },
     "answer": {
-      "line": "dialogue.murim.un_am.answer",
+      "line": "dialogue.murim.gyeong_tak.answer",
       "gesture": "explain",
       "options": [
         {
@@ -90,7 +90,7 @@
       "gesture": "explain",
       "options": [
         {
-          "text": "dialogue.murim.un_am.opt.how_rise",
+          "text": "dialogue.murim.gyeong_tak.opt.how_rise",
           "next": "rise"
         },
         {
@@ -181,13 +181,13 @@
     },
     "gate": {
       "random": [
-        "dialogue.murim.un_am.gate1",
-        "dialogue.murim.un_am.gate2"
+        "dialogue.murim.gyeong_tak.gate1",
+        "dialogue.murim.gyeong_tak.gate2"
       ],
       "gesture": "nod",
       "options": [
         {
-          "text": "dialogue.murim.un_am.opt.ask",
+          "text": "dialogue.murim.gyeong_tak.opt.ask",
           "next": "answer"
         },
         {

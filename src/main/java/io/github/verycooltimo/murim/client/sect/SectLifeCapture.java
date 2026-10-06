@@ -78,7 +78,7 @@ public final class SectLifeCapture {
             "guard", new double[] {-15.0D, -4.0D},
             // Итог дня у наставника: игрок перед ним на площади (наставник вечером стоит у первого ряда).
             "summary", new double[] {0.6D, SectSchedule.FRONT_ROW + 0.6D},
-            // Обмен заслуг: игрок перед столом казны, лицом к Хён Ёну (он у стола смотрит на восток).
+            // Обмен заслуг: игрок перед столом казны, лицом к Тэ Гюну (он у стола смотрит на восток).
             "merit", new double[] {7.6D, 0.4D},
             // Живая гора: игрок у столбов применяет технику — ученики вокруг останавливаются и смотрят.
             "watch", new double[] {0.0D, 9.0D});
@@ -126,11 +126,11 @@ public final class SectLifeCapture {
             new Scene("guard", 4500, "treasury", -8.0D, -16.0D, 4.0D, "treasury", -9.0D, -4.0D, 0.5D, false, "guard"),
             // Члены секты (автор 05.10). Совет старейшин в главном зале: глава во главе, старейшины двумя рядами.
             new Scene("council", 6300, "main_hall", 0.5D, -4.5D, 6.0D, "main_hall", 0.0D, 2.5D, 0.0D, false),
-            // Доклад: Ун Ам в завтрак перед главой в главном зале — поклон, говорит; глава отвечает.
+            // Доклад: Гён Так в завтрак перед главой в главном зале — поклон, говорит; глава отвечает.
             new Scene("report", 1300, "main_hall", 4.5D, 3.2D, 1.8D, "main_hall", 0.0D, 3.1D, 1.0D, false, "report"),
-            // Казна: Хён Ён у стола с книгой учёта, носильщики приносят груз — принимает, они кланяются.
+            // Казна: Тэ Гюн у стола с книгой учёта, носильщики приносят груз — принимает, они кланяются.
             new Scene("treasury", 3300, "treasury", 12.0D, 2.5D, 2.2D, "treasury", 7.0D, -2.5D, 0.6D, false, "porters"),
-            // Лекарь: после поединка раненый сидит у края площадки, Ун Гак на колене лечит.
+            // Лекарь: после поединка раненый сидит у края площадки, Гён Чхо на колене лечит.
             new Scene("healer", 7600, "sparring", -8.0D, -14.5D, 3.0D, "sparring", -7.5D, -8.5D, 0.3D, false, "wound"),
             // Смена охраны у ворот секты в сумерках: сменщик приходит, оба кланяются, сменённый уходит.
             new Scene("shift", 13040, "sect_gate", 8.5D, 4.5D, 2.0D, "sect_gate", 4.5D, 1.0D, 1.0D, false, "shift"),
@@ -139,7 +139,7 @@ public final class SectLifeCapture {
             // Смотр учеников (раз в 7 дней): сетка из четырёх на площадке поединков, зрители вдоль краёв, глава на помосте.
             new Scene("review", io.github.verycooltimo.murim.sect.SectReview.FROM + 100, "sparring", 0.0D, 17.0D, 7.0D,
                     "sparring", 0.0D, 0.0D, 0.0D, false, "review"),
-            // Обмен заслуг: игрок у стола казны говорит с Хён Ёном и берёт меч за заслуги.
+            // Обмен заслуг: игрок у стола казны говорит с Тэ Гюном и берёт меч за заслуги.
             new Scene("merit", 3500, "treasury", 0.0D, 0.0D, 0.0D, "treasury", 5.5D, 0.0D, 1.0D, false, "merit"),
             // Живая гора (автор 05.10): ужин во дворе лагеря вблизи — реплики над головами и ответы соседей.
             new Scene("alive_meal", 9400, "camp", 8.0D, 6.5D, 2.0D, "camp", 4.5D, 2.0D, 0.9D, false, "chatter"),
@@ -279,7 +279,7 @@ public final class SectLifeCapture {
                         ServerPlayer sp = server.getPlayerList().getPlayers().get(0);
                         for (io.github.verycooltimo.murim.entity.SectDisciple d : server.overworld().getEntitiesOfClass(
                                 io.github.verycooltimo.murim.entity.SectDisciple.class, sp.getBoundingBox().inflate(32.0D),
-                                d -> "hyun_jong".equals(d.memberKey()))) {
+                                d -> "tae_hwi".equals(d.memberKey()))) {
                             io.github.verycooltimo.murim.sect.DialogueService.open(sp, d);
                             MurimMod.LOGGER.info("Стенд секты: новичок заговорил с главой в {} блоках", String.format("%.1f", d.distanceTo(sp)));
                         }
@@ -388,9 +388,9 @@ public final class SectLifeCapture {
                 }
             }
             case "report" -> {
-                // Ун Ам заново подходит к главе: доклад начинается с поклона в кадре.
+                // Гён Так заново подходит к главе: доклад начинается с поклона в кадре.
                 for (io.github.verycooltimo.murim.entity.SectDisciple d : people) {
-                    if ("un_am".equals(d.memberKey())) {
+                    if ("gyeong_tak".equals(d.memberKey())) {
                         Vec3 at = SectLife.stand(level, layout.at("main_hall", 4.0D, -3.0D));
                         d.moveTo(at.x, at.y, at.z, 0.0F, 0.0F);
                         d.getNavigation().stop();
@@ -403,9 +403,9 @@ public final class SectLifeCapture {
             }
             case "merit" -> {
                 for (io.github.verycooltimo.murim.entity.SectDisciple d : people) {
-                    if ("hyun_young".equals(d.memberKey())) {
+                    if ("tae_gyun".equals(d.memberKey())) {
                         io.github.verycooltimo.murim.sect.DialogueService.open(sp, d);
-                        MurimMod.LOGGER.info("Стенд секты: обмен заслуг — разговор с Хён Ёном, заслуг {}",
+                        MurimMod.LOGGER.info("Стенд секты: обмен заслуг — разговор с Тэ Гюном, заслуг {}",
                                 sp.getData(ModAttachments.SECT).merit());
                     }
                 }
@@ -430,7 +430,7 @@ public final class SectLifeCapture {
             }
             case "summary" -> {
                 for (io.github.verycooltimo.murim.entity.SectDisciple d : people) {
-                    if ("un_geom".equals(d.memberKey())) {
+                    if ("gyeong_pil".equals(d.memberKey())) {
                         io.github.verycooltimo.murim.sect.DialogueService.open(sp, d);
                         MurimMod.LOGGER.info("Стенд секты: итог дня — разговор с наставником, журнал {}",
                                 io.github.verycooltimo.murim.sect.SectAttendance.report(sp));
@@ -526,7 +526,7 @@ public final class SectLifeCapture {
                             java.util.Set.of("formation", "climb", "meal")),
                     io.github.verycooltimo.murim.sect.SectAttendance.Day.NONE, 2, 0, false, Long.MIN_VALUE));
         } else if ("merit".equals(s.act())) {
-            // Выпускник с 40 заслугами: казна открыта, Хён Ён говорит сам.
+            // Выпускник с 40 заслугами: казна открыта, Тэ Гюн говорит сам.
             p.setData(ModAttachments.SECT, io.github.verycooltimo.murim.sect.SectState.NONE.joined().with("met_mentor")
                     .with(io.github.verycooltimo.murim.sect.SectStanding.LESSON_ONE).with(io.github.verycooltimo.murim.sect.SectStanding.LESSON_TWO)
                     .contribute(40));

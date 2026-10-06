@@ -52,32 +52,32 @@ public final class SectMembersGameTests {
 
     // ------------------------------------------------------------------ члены секты
 
-    /** Завтрак: Ун Ам идёт к главе в главный зал, кланяется; глава поворачивается к нему. */
+    /** Завтрак: Гён Так идёт к главе в главный зал, кланяется; глава поворачивается к нему. */
     @GameTest(template = YARD, timeoutTicks = 600, batch = "sect_members_report")
     public static void unAmReportsToLeader(GameTestHelper helper) {
         setTime(helper, 1300);
         SectGameTests.Yard yard = yard(helper, 1.0D);
-        SectDisciple leader = npc(helper, yard, "hyun_jong", 12, 14);
-        SectDisciple unAm = npc(helper, yard, "un_am", 3, 3);
+        SectDisciple leader = npc(helper, yard, "tae_hwi", 12, 14);
+        SectDisciple unAm = npc(helper, yard, "gyeong_tak", 3, 3);
         boolean[] seen = new boolean[2];
         helper.onEachTick(() -> {
             seen[0] |= unAm.pose() == SectPose.BOW && unAm.distanceTo(leader) < 3.0D;
             seen[1] |= leader.attending() == unAm;
         });
         helper.succeedWhen(() -> {
-            helper.assertTrue(seen[0], "Ун Ам не поклонился главе (поза " + unAm.pose().id() + ", до главы "
+            helper.assertTrue(seen[0], "Гён Так не поклонился главе (поза " + unAm.pose().id() + ", до главы "
                     + String.format("%.1f", unAm.distanceTo(leader)) + ")");
             helper.assertTrue(seen[1], "глава не повернулся к докладчику");
         });
     }
 
-    /** После поединка раненый сидит и ждёт; Ун Гак приходит, лечит на колене; вылеченный встаёт и кланяется. */
+    /** После поединка раненый сидит и ждёт; Гён Чхо приходит, лечит на колене; вылеченный встаёт и кланяется. */
     @GameTest(template = YARD, timeoutTicks = 900, batch = "sect_members_healer")
     public static void healerTreatsWounded(GameTestHelper helper) {
         setTime(helper, 8000);
         SectGameTests.Yard yard = yard(helper, 0.5D);
-        SectDisciple healer = npc(helper, yard, "un_gak", 3, 3);
-        SectDisciple hurt = npc(helper, yard, "jo_gol", 18, 18);
+        SectDisciple healer = npc(helper, yard, "gyeong_cho", 3, 3);
+        SectDisciple hurt = npc(helper, yard, "bok_manseok", 18, 18);
         hurt.setHealth(hurt.getMaxHealth() * 0.5F);
         hurt.setWounded(true);
         boolean[] knelt = new boolean[1];
@@ -127,7 +127,7 @@ public final class SectMembersGameTests {
         p.setData(ModAttachments.SECT, SectState.NONE.joined().with("met_mentor"));
         Vec3 at = yard.at("training", 0.0D, 0.0D);
         p.moveTo(at.x, at.y, at.z, 0.0F, 0.0F);
-        SectDisciple mentor = npc(helper, yard, "un_geom", 14, 14);
+        SectDisciple mentor = npc(helper, yard, "gyeong_pil", 14, 14);
         long base = Math.floorDiv(helper.getLevel().getDayTime(), 24000L) * 24000L;
 
         // Рассвет открывает новый день секты (23000): строй, потом занятия и ужин того же дня.
@@ -168,7 +168,7 @@ public final class SectMembersGameTests {
         p.setData(ModAttachments.SECT, SectState.NONE.joined().with("met_mentor"));
         Vec3 at = yard.at("training", 0.0D, 0.0D);
         p.moveTo(at.x, at.y, at.z, 0.0F, 0.0F);
-        SectDisciple mentor = npc(helper, yard, "un_geom", 13, 13);
+        SectDisciple mentor = npc(helper, yard, "gyeong_pil", 13, 13);
         SectDisciple cook = npc(helper, yard, "cook_kim", 11, 13);
 
         long base = Math.floorDiv(helper.getLevel().getDayTime(), 24000L) * 24000L;

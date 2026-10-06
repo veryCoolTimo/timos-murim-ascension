@@ -44,7 +44,7 @@ public final class SectReview {
 
     /** Раз в столько дней секты. Смотр — в последний день недели: первый — на седьмой день мира. */
     public static final int EVERY = 7;
-    /** Окно смотра в тиках суток: после доклада Хён Ёна (2900) до совета старейшин (6000). */
+    /** Окно смотра в тиках суток: после доклада Тэ Гюна (2900) до совета старейшин (6000). */
     public static final int FROM = 2900;
     public static final int TO = 6000;
     /** Флаг игрока: записан на ближайший смотр. */
@@ -88,25 +88,25 @@ public final class SectReview {
     }
 
     /**
-     * Место зрителя на смотре: глава и наставник — на помосте, Хён Сан и Хён Сон — у края площадки, лекарь — на дежурстве у
+     * Место зрителя на смотре: глава и наставник — на помосте, Тэ Рок и Тэ Сон — у края площадки, лекарь — на дежурстве у
      * края; ученики (второе и третье поколение) — двумя рядами вдоль северного и южного края лицом к рингам. Остальные
-     * (Ун Ам у ворот, Хён Ён у казны, слуги) — своим делом: null.
+     * (Гён Так у ворот, Тэ Гюн у казны, слуги) — своим делом: null.
      */
     static SectSchedule.Task spectator(SectRoster m) {
         switch (m.key()) {
-            case "hyun_jong" -> {
+            case "tae_hwi" -> {
                 return new SectSchedule.Task(SectSchedule.Kind.WATCH, "mentor", 2.0D, 1.0D, 0.0D, 1.0D);
             }
-            case "un_geom" -> {
+            case "gyeong_pil" -> {
                 return new SectSchedule.Task(SectSchedule.Kind.WATCH, "mentor", -1.0D, 1.0D, 0.0D, 1.0D);
             }
-            case "hyun_sang" -> {
+            case "tae_rok" -> {
                 return new SectSchedule.Task(SectSchedule.Kind.WATCH, "sparring", 12.0D, -8.5D, -0.6D, 1.0D);
             }
-            case "hyun_seong" -> {
+            case "tae_seong" -> {
                 return new SectSchedule.Task(SectSchedule.Kind.WATCH, "sparring", 12.0D, 8.5D, -0.6D, -1.0D);
             }
-            case "un_gak" -> {
+            case "gyeong_cho" -> {
                 return new SectSchedule.Task(SectSchedule.Kind.HEAL_POST, "sparring", -12.0D, -8.5D, 0.6D, 1.0D);
             }
             default -> {
@@ -525,7 +525,7 @@ public final class SectReview {
         begin(level, layout, SectSchedule.day(level.getDayTime()), null, SEARCH);
     }
 
-    /** Записаться на смотр (диалог старшего Пэк Чхона): положение «ученик третьего класса» и выше. */
+    /** Записаться на смотр (диалог старшего Со Рана): положение «ученик третьего класса» и выше. */
     public static void signUp(ServerPlayer p) {
         SectState st = p.getData(ModAttachments.SECT);
         if (!SectService.standing(p).atLeast(SectStanding.DISCIPLE)) {

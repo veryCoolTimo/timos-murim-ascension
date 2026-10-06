@@ -303,7 +303,7 @@
             },
             {
               "type": "set_flag",
-              "value": "summon.hyun_sang"
+              "value": "summon.tae_rok"
             }
           ],
           "next": "spar_done"

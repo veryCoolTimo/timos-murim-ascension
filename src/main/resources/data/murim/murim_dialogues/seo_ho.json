@@ -1,5 +1,5 @@
 {
-  "name": "npc.murim.baek_ho",
+  "name": "npc.murim.seo_ho",
   "base": "murim:second",
   "start": [
     {
@@ -49,7 +49,7 @@
   "nodes": {
     "meal": {
       "random": [
-        "dialogue.murim.baek_ho.meal1"
+        "dialogue.murim.seo_ho.meal1"
       ],
       "gesture": "nod",
       "options": [
@@ -60,7 +60,7 @@
     },
     "night": {
       "random": [
-        "dialogue.murim.baek_ho.night1"
+        "dialogue.murim.seo_ho.night1"
       ],
       "gesture": "nod",
       "options": [
@@ -71,14 +71,14 @@
     },
     "greet": {
       "random": [
-        "dialogue.murim.baek_ho.greet1",
-        "dialogue.murim.baek_ho.greet2",
-        "dialogue.murim.baek_ho.greet3"
+        "dialogue.murim.seo_ho.greet1",
+        "dialogue.murim.seo_ho.greet2",
+        "dialogue.murim.seo_ho.greet3"
       ],
       "gesture": "nod",
       "options": [
         {
-          "text": "dialogue.murim.baek_ho.opt.talk",
+          "text": "dialogue.murim.seo_ho.opt.talk",
           "next": "topics"
         },
         {
@@ -91,11 +91,11 @@
           "next": "challenge"
         },
         {
-          "text": "dialogue.murim.baek_ho.opt.logs",
+          "text": "dialogue.murim.seo_ho.opt.logs",
           "when": [
             {
               "has_item": "minecraft:oak_log*8",
-              "not_flag": "favour.baek_ho"
+              "not_flag": "favour.seo_ho"
             }
           ],
           "actions": [
@@ -105,7 +105,7 @@
             },
             {
               "type": "set_flag",
-              "value": "favour.baek_ho"
+              "value": "favour.seo_ho"
             },
             {
               "type": "contribute",
@@ -120,11 +120,11 @@
       ]
     },
     "greet_champion": {
-      "line": "dialogue.murim.baek_ho.champion",
+      "line": "dialogue.murim.seo_ho.champion",
       "gesture": "bow",
       "options": [
         {
-          "text": "dialogue.murim.baek_ho.opt.talk",
+          "text": "dialogue.murim.seo_ho.opt.talk",
           "next": "topics"
         },
         {
@@ -137,11 +137,11 @@
           "next": "challenge"
         },
         {
-          "text": "dialogue.murim.baek_ho.opt.logs",
+          "text": "dialogue.murim.seo_ho.opt.logs",
           "when": [
             {
               "has_item": "minecraft:oak_log*8",
-              "not_flag": "favour.baek_ho"
+              "not_flag": "favour.seo_ho"
             }
           ],
           "actions": [
@@ -151,7 +151,7 @@
             },
             {
               "type": "set_flag",
-              "value": "favour.baek_ho"
+              "value": "favour.seo_ho"
             },
             {
               "type": "contribute",
@@ -166,11 +166,11 @@
       ]
     },
     "topics": {
-      "line": "dialogue.murim.baek_ho.topics",
+      "line": "dialogue.murim.seo_ho.topics",
       "gesture": "nod",
       "options": [
         {
-          "text": "dialogue.murim.baek_ho.opt.strength",
+          "text": "dialogue.murim.seo_ho.opt.strength",
           "when": [
             {
               "below_rank": 2
@@ -179,7 +179,7 @@
           "next": "t_strength_low"
         },
         {
-          "text": "dialogue.murim.baek_ho.opt.strength",
+          "text": "dialogue.murim.seo_ho.opt.strength",
           "when": [
             {
               "min_rank": 2
@@ -188,11 +188,11 @@
           "next": "t_strength_high"
         },
         {
-          "text": "dialogue.murim.baek_ho.opt.watch",
+          "text": "dialogue.murim.seo_ho.opt.watch",
           "next": "t_watch"
         },
         {
-          "text": "dialogue.murim.baek_ho.opt.others",
+          "text": "dialogue.murim.seo_ho.opt.others",
           "next": "t_others"
         },
         {
@@ -201,7 +201,7 @@
       ]
     },
     "t_strength_low": {
-      "line": "dialogue.murim.baek_ho.t_strength_low",
+      "line": "dialogue.murim.seo_ho.t_strength_low",
       "gesture": "explain",
       "options": [
         {
@@ -214,7 +214,7 @@
       ]
     },
     "t_strength_high": {
-      "line": "dialogue.murim.baek_ho.t_strength_high",
+      "line": "dialogue.murim.seo_ho.t_strength_high",
       "gesture": "explain",
       "options": [
         {
@@ -227,7 +227,7 @@
       ]
     },
     "t_watch": {
-      "line": "dialogue.murim.baek_ho.t_watch",
+      "line": "dialogue.murim.seo_ho.t_watch",
       "gesture": "explain",
       "options": [
         {
@@ -240,14 +240,14 @@
       ]
     },
     "t_others": {
-      "line": "dialogue.murim.baek_ho.t_others",
+      "line": "dialogue.murim.seo_ho.t_others",
       "gesture": "nod",
       "options": [
         {
-          "text": "dialogue.murim.baek_ho.opt.help",
+          "text": "dialogue.murim.seo_ho.opt.help",
           "when": [
             {
-              "not_flag": "favour.baek_ho"
+              "not_flag": "favour.seo_ho"
             }
           ],
           "next": "favour_ask"
@@ -262,7 +262,7 @@
       ]
     },
     "favour_ask": {
-      "line": "dialogue.murim.baek_ho.favour_ask",
+      "line": "dialogue.murim.seo_ho.favour_ask",
       "gesture": "explain",
       "options": [
         {
@@ -271,7 +271,7 @@
       ]
     },
     "favour_done": {
-      "line": "dialogue.murim.baek_ho.favour_done",
+      "line": "dialogue.murim.seo_ho.favour_done",
       "gesture": "bow",
       "options": [
         {
