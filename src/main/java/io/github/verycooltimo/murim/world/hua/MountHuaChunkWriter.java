@@ -578,7 +578,7 @@ final class MountHuaChunkWriter {
     /**
      * Green on the massif's faces away from the sect and the climb (author 06.10: «не хватает зелени на горах —
      * листвы, мха»): in noise patches, moss mats hang a few blocks down the walls from their lips (never to the
-     * foot — the faces stay rock, the patches only soften them), and azalea or spruce tufts spill over the rims.
+     * foot — the faces stay rock, the patches only soften them), and some mats are crowned by an azalea or spruce clump hanging over the lip.
      * Skips the pads (+4), the stair, streams, caves and the climb face, which have their own dressing.
      */
     private void faceGreen(BlockPos.MutableBlockPos pos) {
@@ -625,13 +625,13 @@ final class MountHuaChunkWriter {
                         }
                         level.setBlock(pos, moss, 2);
                     }
-                    // A tuft over the rim of the wall above.
-                    if (Math.floorMod(h >>> 32, 4L) == 0 && level.getBlockState(pos.set(wx, tn + 1, wz)).isAir()
-                            && level.getBlockState(pos.set(wx + d[0], tn + 1, wz + d[1])).isAir()) {
+                    // Now and then a leafy clump crowns the mat, hanging over the lip in front of the wall
+                    // (never a cube standing on the rim: on stepped faces those read as dots — stand 06.10).
+                    if (Math.floorMod(h >>> 32, 4L) == 0 && level.getBlockState(pos.set(wx, tn, wz)).is(ModBlocks.CLIMBING_MOSS.get())) {
                         BlockState leaf = (((h >>> 40) & 1) == 0 ? Blocks.AZALEA_LEAVES : Blocks.SPRUCE_LEAVES)
                                 .defaultBlockState().setValue(LeavesBlock.PERSISTENT, true);
-                        level.setBlock(pos.set(wx + d[0], tn + 1, wz + d[1]), leaf, 2);
-                        if (level.getBlockState(pos.set(wx, tn, wz)).is(ModBlocks.CLIMBING_MOSS.get())) {
+                        level.setBlock(pos, leaf, 2);
+                        if (((h >>> 41) & 1) == 0 && level.getBlockState(pos.set(wx, tn - 1, wz)).is(ModBlocks.CLIMBING_MOSS.get())) {
                             level.setBlock(pos, leaf, 2);
                         }
                     }
