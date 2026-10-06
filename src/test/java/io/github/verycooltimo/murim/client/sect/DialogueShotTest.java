@@ -26,9 +26,9 @@ class DialogueShotTest {
             DialogueShot.Shot s = DialogueShot.plan(NPC, 1.8D, new Vec3(0.0D, 64.0D, gap), new Vec3(0.0D, 0.0D, -1.0D), OPEN);
             assertEquals(want, npcDistance(s), 1.0E-6D, "игрок в " + gap);
             assertEquals(DialogueShot.FOV, s.fov(), 1.0E-6D);
-            assertEquals(64.0D + 1.8D * 0.85D, s.camera().y, 1.0E-6D);
+            assertEquals(64.0D + 1.8D * DialogueShot.EYE, s.camera().y, 1.0E-6D);
         }
-        assertTrue(want >= 2.5D && want <= 3.5D, "план ≈3 блока: " + want);
+        assertTrue(want >= 2.5D && want <= 3.5D, "план ≈3,3 блока: " + want);
     }
 
     @Test

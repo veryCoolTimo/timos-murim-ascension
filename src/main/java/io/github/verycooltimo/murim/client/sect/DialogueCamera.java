@@ -205,7 +205,7 @@ public final class DialogueCamera {
                 shotNpc = target.position();
             }
             shotPos = shot.camera();
-            float[] look = DialogueShot.look(shotPos, target.position().add(0.0D, target.getBbHeight() * 0.62D, 0.0D), shot.side());
+            float[] look = DialogueShot.look(shotPos, target.position().add(0.0D, target.getBbHeight() * DialogueShot.AIM, 0.0D), shot.side());
             shotYaw = look[0];
             shotPitch = look[1];
         }

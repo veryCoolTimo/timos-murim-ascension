@@ -6,7 +6,7 @@ import net.minecraft.world.phys.Vec3;
  * Кадр разговора — чистая геометрия без мира (юнит-тест {@code DialogueShotTest}). Автор 06.10: «нужна фиксированная
  * камера с NPC, потому что если ты близко подходишь, то NPC на весь экран».
  *
- * <p>Камера ставится не от игрока, а от собеседника: на дуге радиуса {@link #distance} вокруг NPC (≈3 блока при росте
+ * <p>Камера ставится не от игрока, а от собеседника: на дуге радиуса {@link #distance} вокруг NPC (≈3,3 блока при росте
  * 1,8), на высоте глаз, лицом к NPC. Поэтому NPC в кадре одного размера — подошёл игрок вплотную или стоит в четырёх
  * блоках. Классический план «через плечо»: на дуге выбирается угол, при котором игрок виден краем кадра с другой
  * стороны ({@link #PLAYER_ANGLE}). Стена за спиной — камера подтягивается по лучу, но не ближе {@link #MIN_SHARE}
@@ -24,7 +24,10 @@ public final class DialogueShot {
     /** Ближе этого угла игрок закрывал бы NPC — его не рисуем. */
     static final double HIDE_ANGLE = 14.0D;
     /** Вертикальный угол объектива на полном плане, градусов. */
-    static final double FOV = 36.0D;
+    static final double FOV = 40.0D;
+    /** Центр кадра по высоте NPC (доля роста) и высота камеры: над свитком видно от макушки до пояса. */
+    public static final double AIM = 0.45D;
+    static final double EYE = 0.78D;
 
     /** Сколько блоков свободно по лучу от точки прицела к камере (стены). */
     @FunctionalInterface
@@ -45,9 +48,9 @@ public final class DialogueShot {
     private DialogueShot() {
     }
 
-    /** План по росту NPC: ~3 блока при 1,8 — от головы до пояса над свитком. */
+    /** План по росту NPC: ~3,3 блока при 1,8 — от головы до пояса над свитком (кадр 06.10: при 3 — только по грудь). */
     public static double distance(double height) {
-        return Math.max(2.4D, Math.min(9.0D, 1.67D * height));
+        return Math.max(2.6D, Math.min(9.5D, 1.83D * height));
     }
 
     /**
@@ -71,8 +74,8 @@ public final class DialogueShot {
         }
         f = f.normalize();
         Vec3 r = new Vec3(-f.z, 0.0D, f.x);
-        Vec3 aim = npcFeet.add(0.0D, npcHeight * 0.62D, 0.0D);
-        double camY = npcFeet.y + npcHeight * 0.85D;
+        Vec3 aim = npcFeet.add(0.0D, npcHeight * AIM, 0.0D);
+        double camY = npcFeet.y + npcHeight * EYE;
 
         Shot best = null;
         double bestFree = -1.0D;
