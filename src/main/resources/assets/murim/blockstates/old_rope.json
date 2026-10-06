@@ -1,0 +1,13 @@
+{
+  "variants": {
+    "": [
+      {
+        "model": "murim:block/old_rope"
+      },
+      {
+        "model": "murim:block/old_rope",
+        "y": 90
+      }
+    ]
+  }
+}

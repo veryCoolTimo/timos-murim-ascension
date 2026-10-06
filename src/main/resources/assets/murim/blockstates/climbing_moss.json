@@ -1,0 +1,42 @@
+{
+  "variants": {
+    "facing=north": [
+      {
+        "model": "murim:block/climbing_moss"
+      },
+      {
+        "model": "murim:block/climbing_moss_b"
+      }
+    ],
+    "facing=east": [
+      {
+        "model": "murim:block/climbing_moss",
+        "y": 90
+      },
+      {
+        "model": "murim:block/climbing_moss_b",
+        "y": 90
+      }
+    ],
+    "facing=south": [
+      {
+        "model": "murim:block/climbing_moss",
+        "y": 180
+      },
+      {
+        "model": "murim:block/climbing_moss_b",
+        "y": 180
+      }
+    ],
+    "facing=west": [
+      {
+        "model": "murim:block/climbing_moss",
+        "y": 270
+      },
+      {
+        "model": "murim:block/climbing_moss_b",
+        "y": 270
+      }
+    ]
+  }
+}
