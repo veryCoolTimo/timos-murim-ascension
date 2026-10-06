@@ -16,18 +16,18 @@ import net.minecraft.world.phys.Vec3;
 public final class DialogueShot {
 
     /** Угол между NPC и игроком в кадре, градусов: плечо игрока у края, NPC правее центра. */
-    static final double PLAYER_ANGLE = 30.0D;
+    static final double PLAYER_ANGLE = 36.0D;
     /** NPC правее (левее) центра кадра на столько градусов. */
-    static final double NPC_OFFSET = 8.0D;
+    static final double NPC_OFFSET = 10.0D;
     /** Камера подтягивается стеной не ближе этой доли плана. */
     static final double MIN_SHARE = 0.6D;
     /** Ближе этого угла игрок закрывал бы NPC — его не рисуем. */
     static final double HIDE_ANGLE = 14.0D;
     /** Вертикальный угол объектива на полном плане, градусов. */
-    static final double FOV = 40.0D;
+    static final double FOV = 50.0D;
     /** Центр кадра по высоте NPC (доля роста) и высота камеры: над свитком видно от макушки до пояса. */
-    public static final double AIM = 0.45D;
-    static final double EYE = 0.78D;
+    public static final double AIM = 0.55D;
+    static final double EYE = 0.8D;
 
     /** Сколько блоков свободно по лучу от точки прицела к камере (стены). */
     @FunctionalInterface
@@ -48,9 +48,12 @@ public final class DialogueShot {
     private DialogueShot() {
     }
 
-    /** План по росту NPC: ~3,3 блока при 1,8 — от головы до пояса над свитком (кадр 06.10: при 3 — только по грудь). */
+    /**
+     * План по росту NPC: ~3,4 блока при 1,8 и объектив 50° — от макушки до пояса над свитком (кадры 06.10: при 3 блоках
+     * и 36–40° видно только по грудь — модель NPC крупнее хитбокса, а свиток закрывает нижние 45 % кадра).
+     */
     public static double distance(double height) {
-        return Math.max(2.6D, Math.min(9.5D, 1.83D * height));
+        return Math.max(2.8D, Math.min(10.0D, 1.89D * height));
     }
 
     /**

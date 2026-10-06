@@ -34,7 +34,7 @@ class DialogueShotTest {
     @Test
     @DisplayName("Через плечо: игрок в кадре сбоку от NPC; вплотную — скрыт, а не заслоняет")
     void overTheShoulder() {
-        Vec3 player = new Vec3(0.0D, 64.0D, 1.8D);
+        Vec3 player = new Vec3(0.0D, 64.0D, 2.4D);
         DialogueShot.Shot s = DialogueShot.plan(NPC, 1.8D, player, Vec3.ZERO, OPEN);
         Vec3 flat = new Vec3(s.camera().x, 0.0D, s.camera().z);
         double a = DialogueShot.angle(flat, NPC, player);
