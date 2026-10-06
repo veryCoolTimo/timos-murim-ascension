@@ -1,5 +1,5 @@
 {
-  "name": "npc.murim.baek_cheon",
+  "name": "npc.murim.seo_rang",
   "base": "murim:senior",
   "start": [
     {
@@ -73,15 +73,15 @@
   "nodes": {
     "greet": {
       "random": [
-        "dialogue.murim.baek_cheon.greet1",
-        "dialogue.murim.baek_cheon.greet2",
-        "dialogue.murim.baek_cheon.greet3",
-        "dialogue.murim.baek_cheon.greet4"
+        "dialogue.murim.seo_rang.greet1",
+        "dialogue.murim.seo_rang.greet2",
+        "dialogue.murim.seo_rang.greet3",
+        "dialogue.murim.seo_rang.greet4"
       ],
       "gesture": "fist",
       "options": [
         {
-          "text": "dialogue.murim.baek_cheon.opt.talk",
+          "text": "dialogue.murim.seo_rang.opt.talk",
           "next": "topics"
         },
         {
@@ -118,13 +118,13 @@
     },
     "greet_graduate": {
       "random": [
-        "dialogue.murim.baek_cheon.graduate1",
-        "dialogue.murim.baek_cheon.graduate2"
+        "dialogue.murim.seo_rang.graduate1",
+        "dialogue.murim.seo_rang.graduate2"
       ],
       "gesture": "nod",
       "options": [
         {
-          "text": "dialogue.murim.baek_cheon.opt.talk",
+          "text": "dialogue.murim.seo_rang.opt.talk",
           "next": "topics"
         },
         {
@@ -161,13 +161,13 @@
     },
     "greet_champion": {
       "random": [
-        "dialogue.murim.baek_cheon.champion1",
-        "dialogue.murim.baek_cheon.champion2"
+        "dialogue.murim.seo_rang.champion1",
+        "dialogue.murim.seo_rang.champion2"
       ],
       "gesture": "fist",
       "options": [
         {
-          "text": "dialogue.murim.baek_cheon.opt.talk",
+          "text": "dialogue.murim.seo_rang.opt.talk",
           "next": "topics"
         },
         {
@@ -204,22 +204,22 @@
     },
     "night": {
       "random": [
-        "dialogue.murim.baek_cheon.night1",
-        "dialogue.murim.baek_cheon.night2"
+        "dialogue.murim.seo_rang.night1",
+        "dialogue.murim.seo_rang.night2"
       ],
       "gesture": "shake",
       "options": [
         {
-          "text": "dialogue.murim.baek_cheon.opt.saw_nothing",
+          "text": "dialogue.murim.seo_rang.opt.saw_nothing",
           "when": [
             {
-              "not_flag": "secret.baek_cheon"
+              "not_flag": "secret.seo_rang"
             }
           ],
           "actions": [
             {
               "type": "set_flag",
-              "value": "secret.baek_cheon"
+              "value": "secret.seo_rang"
             }
           ],
           "next": "night_secret"
@@ -230,7 +230,7 @@
       ]
     },
     "night_secret": {
-      "line": "dialogue.murim.baek_cheon.night_secret",
+      "line": "dialogue.murim.seo_rang.night_secret",
       "gesture": "nod",
       "options": [
         {
@@ -239,19 +239,19 @@
       ]
     },
     "topics": {
-      "line": "dialogue.murim.baek_cheon.topics",
+      "line": "dialogue.murim.seo_rang.topics",
       "gesture": "nod",
       "options": [
         {
-          "text": "dialogue.murim.baek_cheon.opt.sect",
+          "text": "dialogue.murim.seo_rang.opt.sect",
           "next": "t_sect"
         },
         {
-          "text": "dialogue.murim.baek_cheon.opt.others",
+          "text": "dialogue.murim.seo_rang.opt.others",
           "next": "t_others"
         },
         {
-          "text": "dialogue.murim.baek_cheon.opt.progress",
+          "text": "dialogue.murim.seo_rang.opt.progress",
           "when": [
             {
               "below_standing": "disciple"
@@ -260,7 +260,7 @@
           "next": "p_novice"
         },
         {
-          "text": "dialogue.murim.baek_cheon.opt.progress",
+          "text": "dialogue.murim.seo_rang.opt.progress",
           "when": [
             {
               "min_standing": "disciple",
@@ -270,7 +270,7 @@
           "next": "p_disciple"
         },
         {
-          "text": "dialogue.murim.baek_cheon.opt.progress",
+          "text": "dialogue.murim.seo_rang.opt.progress",
           "when": [
             {
               "min_standing": "graduate"
@@ -284,11 +284,11 @@
       ]
     },
     "t_sect": {
-      "line": "dialogue.murim.baek_cheon.t_sect",
+      "line": "dialogue.murim.seo_rang.t_sect",
       "gesture": "explain",
       "options": [
         {
-          "text": "dialogue.murim.baek_cheon.opt.jongnam",
+          "text": "dialogue.murim.seo_rang.opt.jongnam",
           "next": "t_jongnam"
         },
         {
@@ -298,7 +298,7 @@
       ]
     },
     "t_jongnam": {
-      "line": "dialogue.murim.baek_cheon.t_jongnam",
+      "line": "dialogue.murim.seo_rang.t_jongnam",
       "gesture": "fist",
       "options": [
         {
@@ -311,7 +311,7 @@
       ]
     },
     "t_others": {
-      "line": "dialogue.murim.baek_cheon.t_others",
+      "line": "dialogue.murim.seo_rang.t_others",
       "gesture": "explain",
       "options": [
         {
@@ -324,7 +324,7 @@
       ]
     },
     "p_novice": {
-      "line": "dialogue.murim.baek_cheon.p_novice",
+      "line": "dialogue.murim.seo_rang.p_novice",
       "gesture": "shake",
       "options": [
         {
@@ -337,7 +337,7 @@
       ]
     },
     "p_disciple": {
-      "line": "dialogue.murim.baek_cheon.p_disciple",
+      "line": "dialogue.murim.seo_rang.p_disciple",
       "gesture": "nod",
       "options": [
         {
@@ -350,7 +350,7 @@
       ]
     },
     "p_graduate": {
-      "line": "dialogue.murim.baek_cheon.p_graduate",
+      "line": "dialogue.murim.seo_rang.p_graduate",
       "gesture": "nod",
       "options": [
         {

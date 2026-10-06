@@ -404,7 +404,7 @@ public final class SectAttendance {
     /** Рядом с Хён Саном, пока он учит. */
     static boolean nearLecture(ServerPlayer p) {
         for (SectDisciple d : p.level().getEntitiesOfClass(SectDisciple.class, p.getBoundingBox().inflate(7.0D),
-                d -> "hyun_sang".equals(d.memberKey()))) {
+                d -> "tae_rok".equals(d.memberKey()))) {
             // Урок идёт: старейшина на месте и говорит (поза разговора), а не спит вдали и не идёт.
             SectSchedule.Task t = d.member().map(m -> SectSchedule.task(m, p.level().getDayTime())).orElse(null);
             if (t != null && t.kind() == SectSchedule.Kind.LECTURE && !d.dormant()

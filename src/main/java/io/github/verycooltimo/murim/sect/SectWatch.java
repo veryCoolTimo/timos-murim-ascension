@@ -312,7 +312,7 @@ public final class SectWatch {
 
     /** Стоит на страже: дежурный второго поколения на смене (или ждёт сменщика, SectRota) и Ун Ам (днём у ворот). */
     public static boolean guards(SectDisciple d) {
-        return SectLife.onWatch(d) || "un_am".equals(d.memberKey());
+        return SectLife.onWatch(d) || "gyeong_tak".equals(d.memberKey());
     }
 
     /** Игрок перед охранником в пределах угла. */

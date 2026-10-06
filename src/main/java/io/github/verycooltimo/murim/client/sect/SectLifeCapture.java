@@ -279,7 +279,7 @@ public final class SectLifeCapture {
                         ServerPlayer sp = server.getPlayerList().getPlayers().get(0);
                         for (io.github.verycooltimo.murim.entity.SectDisciple d : server.overworld().getEntitiesOfClass(
                                 io.github.verycooltimo.murim.entity.SectDisciple.class, sp.getBoundingBox().inflate(32.0D),
-                                d -> "hyun_jong".equals(d.memberKey()))) {
+                                d -> "tae_hwi".equals(d.memberKey()))) {
                             io.github.verycooltimo.murim.sect.DialogueService.open(sp, d);
                             MurimMod.LOGGER.info("Стенд секты: новичок заговорил с главой в {} блоках", String.format("%.1f", d.distanceTo(sp)));
                         }
@@ -390,7 +390,7 @@ public final class SectLifeCapture {
             case "report" -> {
                 // Ун Ам заново подходит к главе: доклад начинается с поклона в кадре.
                 for (io.github.verycooltimo.murim.entity.SectDisciple d : people) {
-                    if ("un_am".equals(d.memberKey())) {
+                    if ("gyeong_tak".equals(d.memberKey())) {
                         Vec3 at = SectLife.stand(level, layout.at("main_hall", 4.0D, -3.0D));
                         d.moveTo(at.x, at.y, at.z, 0.0F, 0.0F);
                         d.getNavigation().stop();
@@ -403,7 +403,7 @@ public final class SectLifeCapture {
             }
             case "merit" -> {
                 for (io.github.verycooltimo.murim.entity.SectDisciple d : people) {
-                    if ("hyun_young".equals(d.memberKey())) {
+                    if ("tae_gyun".equals(d.memberKey())) {
                         io.github.verycooltimo.murim.sect.DialogueService.open(sp, d);
                         MurimMod.LOGGER.info("Стенд секты: обмен заслуг — разговор с Хён Ёном, заслуг {}",
                                 sp.getData(ModAttachments.SECT).merit());
@@ -430,7 +430,7 @@ public final class SectLifeCapture {
             }
             case "summary" -> {
                 for (io.github.verycooltimo.murim.entity.SectDisciple d : people) {
-                    if ("un_geom".equals(d.memberKey())) {
+                    if ("gyeong_pil".equals(d.memberKey())) {
                         io.github.verycooltimo.murim.sect.DialogueService.open(sp, d);
                         MurimMod.LOGGER.info("Стенд секты: итог дня — разговор с наставником, журнал {}",
                                 io.github.verycooltimo.murim.sect.SectAttendance.report(sp));

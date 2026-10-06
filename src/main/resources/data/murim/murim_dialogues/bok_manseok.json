@@ -1,5 +1,5 @@
 {
-  "name": "npc.murim.jo_gol",
+  "name": "npc.murim.bok_manseok",
   "base": "murim:disciple",
   "start": [
     {
@@ -45,7 +45,7 @@
     {
       "when": [
         {
-          "flag": "favour.jo_gol"
+          "flag": "favour.bok_manseok"
         }
       ],
       "node": "greet_friend"
@@ -57,8 +57,8 @@
   "nodes": {
     "formation": {
       "random": [
-        "dialogue.murim.jo_gol.formation1",
-        "dialogue.murim.jo_gol.formation2"
+        "dialogue.murim.bok_manseok.formation1",
+        "dialogue.murim.bok_manseok.formation2"
       ],
       "gesture": "point",
       "options": [
@@ -73,16 +73,16 @@
     },
     "meal": {
       "random": [
-        "dialogue.murim.jo_gol.meal1",
-        "dialogue.murim.jo_gol.meal2"
+        "dialogue.murim.bok_manseok.meal1",
+        "dialogue.murim.bok_manseok.meal2"
       ],
       "gesture": "nod",
       "options": [
         {
-          "text": "dialogue.murim.jo_gol.opt.hungry",
+          "text": "dialogue.murim.bok_manseok.opt.hungry",
           "when": [
             {
-              "not_flag": "favour.jo_gol"
+              "not_flag": "favour.bok_manseok"
             }
           ],
           "next": "favour_ask"
@@ -94,17 +94,17 @@
     },
     "night": {
       "random": [
-        "dialogue.murim.jo_gol.night1",
-        "dialogue.murim.jo_gol.night2"
+        "dialogue.murim.bok_manseok.night1",
+        "dialogue.murim.bok_manseok.night2"
       ],
       "gesture": "shake",
       "options": []
     },
     "greet": {
       "random": [
-        "dialogue.murim.jo_gol.greet1",
-        "dialogue.murim.jo_gol.greet2",
-        "dialogue.murim.jo_gol.greet3",
+        "dialogue.murim.bok_manseok.greet1",
+        "dialogue.murim.bok_manseok.greet2",
+        "dialogue.murim.bok_manseok.greet3",
         "@rumour"
       ],
       "args": [
@@ -113,7 +113,7 @@
       "gesture": "fist",
       "options": [
         {
-          "text": "dialogue.murim.jo_gol.opt.talk",
+          "text": "dialogue.murim.bok_manseok.opt.talk",
           "next": "topics"
         },
         {
@@ -126,11 +126,11 @@
           "next": "challenge"
         },
         {
-          "text": "dialogue.murim.jo_gol.opt.bread",
+          "text": "dialogue.murim.bok_manseok.opt.bread",
           "when": [
             {
               "has_item": "minecraft:bread*1",
-              "not_flag": "favour.jo_gol"
+              "not_flag": "favour.bok_manseok"
             }
           ],
           "actions": [
@@ -140,7 +140,7 @@
             },
             {
               "type": "set_flag",
-              "value": "favour.jo_gol"
+              "value": "favour.bok_manseok"
             },
             {
               "type": "contribute",
@@ -156,13 +156,13 @@
     },
     "greet_champion": {
       "random": [
-        "dialogue.murim.jo_gol.champion1",
-        "dialogue.murim.jo_gol.champion2"
+        "dialogue.murim.bok_manseok.champion1",
+        "dialogue.murim.bok_manseok.champion2"
       ],
       "gesture": "fist",
       "options": [
         {
-          "text": "dialogue.murim.jo_gol.opt.talk",
+          "text": "dialogue.murim.bok_manseok.opt.talk",
           "next": "topics"
         },
         {
@@ -175,11 +175,11 @@
           "next": "challenge"
         },
         {
-          "text": "dialogue.murim.jo_gol.opt.bread",
+          "text": "dialogue.murim.bok_manseok.opt.bread",
           "when": [
             {
               "has_item": "minecraft:bread*1",
-              "not_flag": "favour.jo_gol"
+              "not_flag": "favour.bok_manseok"
             }
           ],
           "actions": [
@@ -189,7 +189,7 @@
             },
             {
               "type": "set_flag",
-              "value": "favour.jo_gol"
+              "value": "favour.bok_manseok"
             },
             {
               "type": "contribute",
@@ -205,13 +205,13 @@
     },
     "greet_friend": {
       "random": [
-        "dialogue.murim.jo_gol.friend1",
+        "dialogue.murim.bok_manseok.friend1",
         "@rumour"
       ],
       "gesture": "nod",
       "options": [
         {
-          "text": "dialogue.murim.jo_gol.opt.talk",
+          "text": "dialogue.murim.bok_manseok.opt.talk",
           "next": "topics"
         },
         {
@@ -224,11 +224,11 @@
           "next": "challenge"
         },
         {
-          "text": "dialogue.murim.jo_gol.opt.bread",
+          "text": "dialogue.murim.bok_manseok.opt.bread",
           "when": [
             {
               "has_item": "minecraft:bread*1",
-              "not_flag": "favour.jo_gol"
+              "not_flag": "favour.bok_manseok"
             }
           ],
           "actions": [
@@ -238,7 +238,7 @@
             },
             {
               "type": "set_flag",
-              "value": "favour.jo_gol"
+              "value": "favour.bok_manseok"
             },
             {
               "type": "contribute",
@@ -253,19 +253,19 @@
       ]
     },
     "topics": {
-      "line": "dialogue.murim.jo_gol.topics",
+      "line": "dialogue.murim.bok_manseok.topics",
       "gesture": "explain",
       "options": [
         {
-          "text": "dialogue.murim.jo_gol.opt.news",
+          "text": "dialogue.murim.bok_manseok.opt.news",
           "next": "t_news"
         },
         {
-          "text": "dialogue.murim.jo_gol.opt.seniors",
+          "text": "dialogue.murim.bok_manseok.opt.seniors",
           "next": "t_seniors"
         },
         {
-          "text": "dialogue.murim.jo_gol.opt.progress",
+          "text": "dialogue.murim.bok_manseok.opt.progress",
           "when": [
             {
               "below_standing": "disciple"
@@ -274,7 +274,7 @@
           "next": "p_novice"
         },
         {
-          "text": "dialogue.murim.jo_gol.opt.progress",
+          "text": "dialogue.murim.bok_manseok.opt.progress",
           "when": [
             {
               "min_standing": "disciple",
@@ -284,7 +284,7 @@
           "next": "p_disciple"
         },
         {
-          "text": "dialogue.murim.jo_gol.opt.progress",
+          "text": "dialogue.murim.bok_manseok.opt.progress",
           "when": [
             {
               "min_standing": "graduate"
@@ -304,7 +304,7 @@
       "gesture": "explain",
       "options": [
         {
-          "text": "dialogue.murim.jo_gol.opt.more",
+          "text": "dialogue.murim.bok_manseok.opt.more",
           "next": "t_news"
         },
         {
@@ -317,7 +317,7 @@
       ]
     },
     "t_seniors": {
-      "line": "dialogue.murim.jo_gol.t_seniors",
+      "line": "dialogue.murim.bok_manseok.t_seniors",
       "gesture": "explain",
       "options": [
         {
@@ -330,7 +330,7 @@
       ]
     },
     "p_novice": {
-      "line": "dialogue.murim.jo_gol.p_novice",
+      "line": "dialogue.murim.bok_manseok.p_novice",
       "gesture": "nod",
       "options": [
         {
@@ -343,7 +343,7 @@
       ]
     },
     "p_disciple": {
-      "line": "dialogue.murim.jo_gol.p_disciple",
+      "line": "dialogue.murim.bok_manseok.p_disciple",
       "gesture": "fist",
       "options": [
         {
@@ -361,7 +361,7 @@
       ]
     },
     "p_graduate": {
-      "line": "dialogue.murim.jo_gol.p_graduate",
+      "line": "dialogue.murim.bok_manseok.p_graduate",
       "gesture": "fist",
       "options": [
         {
@@ -374,7 +374,7 @@
       ]
     },
     "favour_ask": {
-      "line": "dialogue.murim.jo_gol.favour_ask",
+      "line": "dialogue.murim.bok_manseok.favour_ask",
       "gesture": "explain",
       "options": [
         {
@@ -383,7 +383,7 @@
       ]
     },
     "favour_done": {
-      "line": "dialogue.murim.jo_gol.favour_done",
+      "line": "dialogue.murim.bok_manseok.favour_done",
       "args": [
         "player"
       ],

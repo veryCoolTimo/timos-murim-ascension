@@ -94,19 +94,19 @@ public final class SectReview {
      */
     static SectSchedule.Task spectator(SectRoster m) {
         switch (m.key()) {
-            case "hyun_jong" -> {
+            case "tae_hwi" -> {
                 return new SectSchedule.Task(SectSchedule.Kind.WATCH, "mentor", 2.0D, 1.0D, 0.0D, 1.0D);
             }
-            case "un_geom" -> {
+            case "gyeong_pil" -> {
                 return new SectSchedule.Task(SectSchedule.Kind.WATCH, "mentor", -1.0D, 1.0D, 0.0D, 1.0D);
             }
-            case "hyun_sang" -> {
+            case "tae_rok" -> {
                 return new SectSchedule.Task(SectSchedule.Kind.WATCH, "sparring", 12.0D, -8.5D, -0.6D, 1.0D);
             }
-            case "hyun_seong" -> {
+            case "tae_seong" -> {
                 return new SectSchedule.Task(SectSchedule.Kind.WATCH, "sparring", 12.0D, 8.5D, -0.6D, -1.0D);
             }
-            case "un_gak" -> {
+            case "gyeong_cho" -> {
                 return new SectSchedule.Task(SectSchedule.Kind.HEAL_POST, "sparring", -12.0D, -8.5D, 0.6D, 1.0D);
             }
             default -> {

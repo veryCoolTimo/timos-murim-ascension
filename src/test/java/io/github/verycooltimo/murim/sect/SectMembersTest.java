@@ -51,25 +51,25 @@ class SectMembersTest {
             assertTrue(seats.add(t.du() + "," + t.dv()), "место совета занято дважды: " + key);
         }
         // Ряды старейшин смотрят друг на друга, глава — к входу.
-        assertEquals(-SectSchedule.task(m("hyun_young"), noon).faceU(), SectSchedule.task(m("hyun_sang"), noon).faceU(), 1e-9);
+        assertEquals(-SectSchedule.task(m("tae_gyun"), noon).faceU(), SectSchedule.task(m("tae_rok"), noon).faceU(), 1e-9);
         // Вне совета — каждый за своим делом.
-        assertEquals(Kind.RECEIVE, SectSchedule.task(m("hyun_jong"), 4000).kind());
-        assertEquals(Kind.COUNT, SectSchedule.task(m("hyun_young"), 4000).kind());
-        assertEquals(Kind.READ, SectSchedule.task(m("hyun_sang"), 5000).kind());
-        assertEquals(Kind.LECTURE, SectSchedule.task(m("hyun_sang"), 3000).kind());
-        assertEquals(Kind.BREW, SectSchedule.task(m("un_gak"), 3000).kind());
-        assertEquals(Kind.GRIND, SectSchedule.task(m("un_gak"), 5000).kind());
-        assertEquals(Kind.HEAL_POST, SectSchedule.task(m("un_gak"), 8000).kind());
-        assertEquals(Kind.REVERE, SectSchedule.task(m("hyun_jong"), 12000).kind());
+        assertEquals(Kind.RECEIVE, SectSchedule.task(m("tae_hwi"), 4000).kind());
+        assertEquals(Kind.COUNT, SectSchedule.task(m("tae_gyun"), 4000).kind());
+        assertEquals(Kind.READ, SectSchedule.task(m("tae_rok"), 5000).kind());
+        assertEquals(Kind.LECTURE, SectSchedule.task(m("tae_rok"), 3000).kind());
+        assertEquals(Kind.BREW, SectSchedule.task(m("gyeong_cho"), 3000).kind());
+        assertEquals(Kind.GRIND, SectSchedule.task(m("gyeong_cho"), 5000).kind());
+        assertEquals(Kind.HEAL_POST, SectSchedule.task(m("gyeong_cho"), 8000).kind());
+        assertEquals(Kind.REVERE, SectSchedule.task(m("tae_hwi"), 12000).kind());
     }
 
     @Test
     @DisplayName("Доклады главе: наставник после строя, Ун Ам в завтрак, Хён Ён с книгой — в шаге перед главой, лицом к нему")
     void reports() {
-        for (Object[] r : new Object[][] {{"un_geom", 800L}, {"un_am", 1500L}, {"hyun_young", 2600L}}) {
+        for (Object[] r : new Object[][] {{"gyeong_pil", 800L}, {"gyeong_tak", 1500L}, {"tae_gyun", 2600L}}) {
             long time = (Long) r[1];
             Task rep = SectSchedule.task(m((String) r[0]), time);
-            Task leader = SectSchedule.task(m("hyun_jong"), time);
+            Task leader = SectSchedule.task(m("tae_hwi"), time);
             assertEquals(Kind.REPORT, rep.kind(), (String) r[0]);
             assertEquals(SectSchedule.LEADER, rep.partner());
             assertEquals(leader.zone(), rep.zone());

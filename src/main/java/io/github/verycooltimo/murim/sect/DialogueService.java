@@ -143,7 +143,7 @@ public final class DialogueService {
         SectDisciple best = null;
         double bestD = INTERCEPT_RANGE;
         for (SectDisciple d : player.level().getEntitiesOfClass(SectDisciple.class, player.getBoundingBox().inflate(INTERCEPT_RANGE),
-                d -> d != target && d.isAlive() && d.free() && !d.isSleeping() && SectLife.onWatch(d) && (d.role().intercepts() || "un_am".equals(d.memberKey())))) {
+                d -> d != target && d.isAlive() && d.free() && !d.isSleeping() && SectLife.onWatch(d) && (d.role().intercepts() || "gyeong_tak".equals(d.memberKey())))) {
             double dist = d.distanceTo(player);
             if (dist < bestD) {
                 best = d;

@@ -117,7 +117,7 @@ public final class SectLife {
             return new Resolved(new SectSchedule.Task(SectSchedule.Kind.WAIT_TREAT, t.zone(), 0.0D, 0.0D, 0.0D, 0.0D), at, npc.getYRot());
         }
         // Лекарь за своим делом днём — к ближайшему раненому (кроме совета и ночи).
-        if ("un_gak".equals(m.get().key()) && (t.kind() == SectSchedule.Kind.BREW || t.kind() == SectSchedule.Kind.GRIND
+        if ("gyeong_cho".equals(m.get().key()) && (t.kind() == SectSchedule.Kind.BREW || t.kind() == SectSchedule.Kind.GRIND
                 || t.kind() == SectSchedule.Kind.HEAL_POST)) {
             SectDisciple patient = patient(npc);
             if (patient != null) {
@@ -131,7 +131,7 @@ public final class SectLife {
             }
         }
         // Раненый игрок на земле секты (живая гора, автор 05.10): Ун Гак днём за своим делом идёт перевязать.
-        if ("un_gak".equals(m.get().key()) && !npc.dormant() && healerFree(t.kind()) && SectSchedule.at(time) != SectSchedule.Period.NIGHT) {
+        if ("gyeong_cho".equals(m.get().key()) && !npc.dormant() && healerFree(t.kind()) && SectSchedule.at(time) != SectSchedule.Period.NIGHT) {
             ServerPlayer hurt = SectReactions.patient(npc);
             if (hurt != null) {
                 Vec3 p = hurt.position();
@@ -142,7 +142,7 @@ public final class SectLife {
                 return new Resolved(new SectSchedule.Task(SectSchedule.Kind.TREAT, t.zone(), 0.0D, 0.0D, 0.0D, 0.0D,
                         SectReactions.PLAYER_PATIENT), spot, yaw);
             }
-        } else if ("un_gak".equals(m.get().key()) && npc.healingPlayer() >= 0) {
+        } else if ("gyeong_cho".equals(m.get().key()) && npc.healingPlayer() >= 0) {
             npc.setHealingPlayer(-1);
         }
         // Смена поста: сменяемый ждёт сменщика на посту, пока они не поклонятся друг другу (или окно не выйдет).
@@ -220,7 +220,7 @@ public final class SectLife {
         SectDisciple best = null;
         double bestD = Double.MAX_VALUE;
         for (SectDisciple d : porter.level().getEntitiesOfClass(SectDisciple.class, porter.getBoundingBox().inflate(12.0D),
-                d -> ("hyun_young".equals(d.memberKey()) || d.role() == SectRole.STEWARD) && d.free() && !d.dormant())) {
+                d -> ("tae_gyun".equals(d.memberKey()) || d.role() == SectRole.STEWARD) && d.free() && !d.dormant())) {
             double dist = d.distanceToSqr(porter);
             if (dist < bestD) {
                 bestD = dist;

@@ -1,5 +1,5 @@
 {
-  "name": "npc.murim.baek_sang",
+  "name": "npc.murim.seo_gyu",
   "base": "murim:second",
   "start": [
     {
@@ -57,7 +57,7 @@
   "nodes": {
     "meal": {
       "random": [
-        "dialogue.murim.baek_sang.meal1"
+        "dialogue.murim.seo_gyu.meal1"
       ],
       "gesture": "nod",
       "options": [
@@ -68,12 +68,12 @@
     },
     "evening": {
       "random": [
-        "dialogue.murim.baek_sang.evening1"
+        "dialogue.murim.seo_gyu.evening1"
       ],
       "gesture": "nod",
       "options": [
         {
-          "text": "dialogue.murim.baek_sang.opt.talk",
+          "text": "dialogue.murim.seo_gyu.opt.talk",
           "next": "topics"
         },
         {
@@ -86,11 +86,11 @@
           "next": "bowed"
         },
         {
-          "text": "dialogue.murim.baek_sang.opt.ink",
+          "text": "dialogue.murim.seo_gyu.opt.ink",
           "when": [
             {
               "has_item": "minecraft:ink_sac*2",
-              "not_flag": "favour.baek_sang"
+              "not_flag": "favour.seo_gyu"
             }
           ],
           "actions": [
@@ -100,7 +100,7 @@
             },
             {
               "type": "set_flag",
-              "value": "favour.baek_sang"
+              "value": "favour.seo_gyu"
             },
             {
               "type": "contribute",
@@ -116,14 +116,14 @@
     },
     "greet": {
       "random": [
-        "dialogue.murim.baek_sang.greet1",
-        "dialogue.murim.baek_sang.greet2",
-        "dialogue.murim.baek_sang.greet3"
+        "dialogue.murim.seo_gyu.greet1",
+        "dialogue.murim.seo_gyu.greet2",
+        "dialogue.murim.seo_gyu.greet3"
       ],
       "gesture": "fist",
       "options": [
         {
-          "text": "dialogue.murim.baek_sang.opt.talk",
+          "text": "dialogue.murim.seo_gyu.opt.talk",
           "next": "topics"
         },
         {
@@ -136,11 +136,11 @@
           "next": "bowed"
         },
         {
-          "text": "dialogue.murim.baek_sang.opt.ink",
+          "text": "dialogue.murim.seo_gyu.opt.ink",
           "when": [
             {
               "has_item": "minecraft:ink_sac*2",
-              "not_flag": "favour.baek_sang"
+              "not_flag": "favour.seo_gyu"
             }
           ],
           "actions": [
@@ -150,7 +150,7 @@
             },
             {
               "type": "set_flag",
-              "value": "favour.baek_sang"
+              "value": "favour.seo_gyu"
             },
             {
               "type": "contribute",
@@ -165,11 +165,11 @@
       ]
     },
     "greet_champion": {
-      "line": "dialogue.murim.baek_sang.champion",
+      "line": "dialogue.murim.seo_gyu.champion",
       "gesture": "nod",
       "options": [
         {
-          "text": "dialogue.murim.baek_sang.opt.talk",
+          "text": "dialogue.murim.seo_gyu.opt.talk",
           "next": "topics"
         },
         {
@@ -182,11 +182,11 @@
           "next": "bowed"
         },
         {
-          "text": "dialogue.murim.baek_sang.opt.ink",
+          "text": "dialogue.murim.seo_gyu.opt.ink",
           "when": [
             {
               "has_item": "minecraft:ink_sac*2",
-              "not_flag": "favour.baek_sang"
+              "not_flag": "favour.seo_gyu"
             }
           ],
           "actions": [
@@ -196,7 +196,7 @@
             },
             {
               "type": "set_flag",
-              "value": "favour.baek_sang"
+              "value": "favour.seo_gyu"
             },
             {
               "type": "contribute",
@@ -211,15 +211,15 @@
       ]
     },
     "topics": {
-      "line": "dialogue.murim.baek_sang.topics",
+      "line": "dialogue.murim.seo_gyu.topics",
       "gesture": "nod",
       "options": [
         {
-          "text": "dialogue.murim.baek_sang.opt.money",
+          "text": "dialogue.murim.seo_gyu.opt.money",
           "next": "t_money"
         },
         {
-          "text": "dialogue.murim.baek_sang.opt.merit",
+          "text": "dialogue.murim.seo_gyu.opt.merit",
           "when": [
             {
               "member": true
@@ -228,7 +228,7 @@
           "next": "t_merit"
         },
         {
-          "text": "dialogue.murim.baek_sang.opt.others",
+          "text": "dialogue.murim.seo_gyu.opt.others",
           "next": "t_others"
         },
         {
@@ -237,14 +237,14 @@
       ]
     },
     "t_money": {
-      "line": "dialogue.murim.baek_sang.t_money",
+      "line": "dialogue.murim.seo_gyu.t_money",
       "gesture": "explain",
       "options": [
         {
-          "text": "dialogue.murim.baek_sang.opt.help",
+          "text": "dialogue.murim.seo_gyu.opt.help",
           "when": [
             {
-              "not_flag": "favour.baek_sang"
+              "not_flag": "favour.seo_gyu"
             }
           ],
           "next": "favour_ask"
@@ -259,7 +259,7 @@
       ]
     },
     "favour_ask": {
-      "line": "dialogue.murim.baek_sang.favour_ask",
+      "line": "dialogue.murim.seo_gyu.favour_ask",
       "gesture": "explain",
       "options": [
         {
@@ -268,7 +268,7 @@
       ]
     },
     "favour_done": {
-      "line": "dialogue.murim.baek_sang.favour_done",
+      "line": "dialogue.murim.seo_gyu.favour_done",
       "gesture": "nod",
       "options": [
         {
@@ -277,7 +277,7 @@
       ]
     },
     "t_merit": {
-      "line": "dialogue.murim.baek_sang.t_merit",
+      "line": "dialogue.murim.seo_gyu.t_merit",
       "args": [
         "merit"
       ],
@@ -293,7 +293,7 @@
       ]
     },
     "t_others": {
-      "line": "dialogue.murim.baek_sang.t_others",
+      "line": "dialogue.murim.seo_gyu.t_others",
       "gesture": "explain",
       "options": [
         {

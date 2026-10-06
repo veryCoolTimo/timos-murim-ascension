@@ -23,7 +23,7 @@ class MeritShopTest {
         for (MeritShop.Offer o : MeritShop.OFFERS) {
             assertTrue(ids.add(o.id()), "дубль " + o.id());
             assertTrue(o.price() > 0, o.id());
-            assertTrue(List.of("hyun_young", "un_gak").contains(o.seller()), o.id());
+            assertTrue(List.of("tae_gyun", "gyeong_cho").contains(o.seller()), o.id());
         }
         // Пожертвование: 5 лян серебра = 2 заслуги (economy §4) → заслуга ≈ 2,5 ляна; торговец — в вэнях.
         double wenPerMerit = 5.0D * 9.0D / 2.0D;
@@ -87,6 +87,6 @@ class MeritShopTest {
             assertEquals("sparring", t.zone());
             assertTrue(spots.add(t.du() + "," + t.dv()), "место зрителя занято: " + m.key());
         }
-        assertNotNull(SectReview.spectator(SectRoster.of("hyun_jong").orElseThrow()));
+        assertNotNull(SectReview.spectator(SectRoster.of("tae_hwi").orElseThrow()));
     }
 }

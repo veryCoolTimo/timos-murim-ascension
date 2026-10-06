@@ -357,7 +357,7 @@ public final class ScheduleGoal extends Goal {
         if (k == Kind.GUARD) {
             return;
         }
-        boolean treasurer = "hyun_young".equals(npc.memberKey());
+        boolean treasurer = "tae_gyun".equals(npc.memberKey());
         npc.hold(switch (k) {
             case READ -> Items.BOOK;
             case GRIND, BREW -> Items.STICK;
@@ -475,7 +475,7 @@ public final class ScheduleGoal extends Goal {
             } else {
                 talkClock = 40 + npc.getRandom().nextInt(50);
                 if (npc.getRandom().nextInt(3) == 0) {
-                    boolean stingy = "hyun_young".equals(npc.memberKey());
+                    boolean stingy = "tae_gyun".equals(npc.memberKey());
                     npc.gesture(npc.getRandom().nextInt(stingy ? 2 : 5) == 0 ? "shake" : "nod");
                 }
             }

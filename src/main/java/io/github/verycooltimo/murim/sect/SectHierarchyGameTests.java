@@ -84,7 +84,7 @@ public final class SectHierarchyGameTests {
         ServerPlayer p = SectGameTests.fakePlayer(helper);
         p.setData(ModAttachments.SECT, SectState.NONE.joined());
         place(helper, p, 4, 4);
-        SectDisciple leader = npc(helper, layout, "hyun_jong", 14, 14);
+        SectDisciple leader = npc(helper, layout, "tae_hwi", 14, 14);
         SectDisciple guard = npc(helper, layout, SectRota.dayWatch(SectSchedule.day(helper.getLevel().getDayTime()), 0).key(), 3, 12);
 
         DialogueService.Route r = DialogueService.route(p, leader);

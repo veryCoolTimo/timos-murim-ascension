@@ -74,7 +74,7 @@ public final class SectAliveGameTests {
             }
         }
         SectGameTests.Yard yard = yard(helper, 0.5D);
-        SectDisciple d = npc(helper, yard, "cheong_jin", 16, 16);
+        SectDisciple d = npc(helper, yard, "yul_jin", 16, 16);
         d.setRainOverride(true);
         int[] phase = {0};
         helper.onEachTick(() -> {
@@ -100,8 +100,8 @@ public final class SectAliveGameTests {
         long day = SectSchedule.day(helper.getLevel().getDayTime());
         SectRoster watchKey = SectRota.nightWatch(day, 0);
         SectDisciple guard = npc(helper, yard, watchKey.key(), 4, 4);
-        SectDisciple junior = npc(helper, yard, "cheong_jin", 20, 6);
-        SectDisciple mentor = npc(helper, yard, "un_geom", 6, 20);
+        SectDisciple junior = npc(helper, yard, "yul_jin", 20, 6);
+        SectDisciple mentor = npc(helper, yard, "gyeong_pil", 6, 20);
         SectSchedule.Task post = SectSchedule.post(SectRota.duty(watchKey, helper.getLevel().getDayTime()).orElseThrow());
         Vec3 at = yard.at(post.zone(), post.du(), post.dv());
         helper.succeedWhen(() -> {
@@ -122,7 +122,7 @@ public final class SectAliveGameTests {
     public static void techniqueDrawsWatchers(GameTestHelper helper) {
         setTime(helper, 3000);
         SectGameTests.Yard yard = yard(helper, 0.5D);
-        SectDisciple d = npc(helper, yard, "cheong_jin", 12, 12);
+        SectDisciple d = npc(helper, yard, "yul_jin", 12, 12);
         ServerPlayer p = SectGameTests.fakePlayer(helper);
         Vec3 pp = helper.absoluteVec(new Vec3(4.5D, 2.0D, 20.5D));
         p.moveTo(pp.x, SectLife.stand(helper.getLevel(), pp).y, pp.z, 0.0F, 0.0F);

@@ -58,9 +58,9 @@ public final class SectSchedule {
     /** Смена поста: столько тиков сменяемый ждёт сменщика на посту. */
     public static final int HANDOVER = 600;
     /** Глава во главе совета и порядок мест: слева и справа от него — двумя рядами. */
-    public static final List<String> COUNCIL = List.of("hyun_jong", "hyun_young", "hyun_sang", "hyun_seong", "un_gak", "un_am");
+    public static final List<String> COUNCIL = List.of("tae_hwi", "tae_gyun", "tae_rok", "tae_seong", "gyeong_cho", "gyeong_tak");
     /** Кому докладывают. */
-    public static final String LEADER = "hyun_jong";
+    public static final String LEADER = "tae_hwi";
 
     /** Части суток. */
     public enum Period {
@@ -316,28 +316,28 @@ public final class SectSchedule {
             return councilSeat(m);
         }
         switch (m.key()) {
-            case "un_geom" -> {
+            case "gyeong_pil" -> {
                 if (p == Period.FORMATION && t >= MENTOR_REPORT_FROM && t < MENTOR_REPORT_TO) {
                     return report(dayTime);
                 }
             }
-            case "un_am" -> {
+            case "gyeong_tak" -> {
                 if (p == Period.BREAKFAST && t >= UN_AM_REPORT_FROM && t < UN_AM_REPORT_TO) {
                     return report(dayTime);
                 }
             }
-            case "hyun_young" -> {
+            case "tae_gyun" -> {
                 if (p == Period.TRAINING && t >= LEDGER_REPORT_FROM && t < LEDGER_REPORT_TO) {
                     return report(dayTime);
                 }
             }
-            case "hyun_jong" -> {
+            case "tae_hwi" -> {
                 // После совета глава смотрит поединки с помоста рядом с наставником.
                 if (p == Period.TRAINING && t >= COUNCIL_TO) {
                     return new Task(Kind.WATCH, "mentor", 2.0D, 1.0D, 0.0D, 1.0D);
                 }
             }
-            case "hyun_sang" -> {
+            case "tae_rok" -> {
                 if (p == Period.TRAINING) {
                     if (t < LECTURE_TO) {
                         // Перед учениками, которые бьют формы за строем (thirdTraining, DRILL), лицом к ним.
@@ -349,7 +349,7 @@ public final class SectSchedule {
                     }
                 }
             }
-            case "un_gak" -> {
+            case "gyeong_cho" -> {
                 if (p == Period.TRAINING) {
                     if (t < BREW_TO) {
                         return new Task(Kind.BREW, "alchemy", 3.0D, -2.0D, 0.0D, -1.0D);
@@ -446,21 +446,21 @@ public final class SectSchedule {
     }
 
     private static Task elder(SectRoster m, Period p) {
-        boolean am = "un_am".equals(m.key());
+        boolean am = "gyeong_tak".equals(m.key());
         // Своё дело у стола: Хён Ён — у стола казны с книгой учёта (там же принимает носильщиков), Хён Сан — читает
         // в Зале писаний, Ун Гак — растирает травы в павильоне алхимии; так же утром и в трапезы.
         Task desk = switch (m.key()) {
-            case "hyun_young" -> new Task(Kind.COUNT, "treasury", 5.5D, 0.0D, 1.0D, 0.0D);
-            case "hyun_sang" -> new Task(Kind.READ, "scriptures", 0.0D, -2.0D, 0.0D, -1.0D);
-            case "un_gak" -> new Task(Kind.GRIND, "alchemy", -3.0D, 1.0D, 0.0D, -1.0D);
+            case "tae_gyun" -> new Task(Kind.COUNT, "treasury", 5.5D, 0.0D, 1.0D, 0.0D);
+            case "tae_rok" -> new Task(Kind.READ, "scriptures", 0.0D, -2.0D, 0.0D, -1.0D);
+            case "gyeong_cho" -> new Task(Kind.GRIND, "alchemy", -3.0D, 1.0D, 0.0D, -1.0D);
             default -> null;
         };
-        if (desk != null && p != Period.EVENING && p != Period.NIGHT && !(p == Period.FORMATION && "hyun_sang".equals(m.key()))) {
+        if (desk != null && p != Period.EVENING && p != Period.NIGHT && !(p == Period.FORMATION && "tae_rok".equals(m.key()))) {
             return desk;
         }
         return switch (p) {
             // Хён Сан (Зал боевых искусств) смотрит строй с края площади; остальные — у себя.
-            case FORMATION -> "hyun_sang".equals(m.key())
+            case FORMATION -> "tae_rok".equals(m.key())
                     ? new Task(Kind.WATCH, "training", 16.0D, 4.0D, -1.0D, 0.0D)
                     : home(m);
             case TRAINING -> am ? new Task(Kind.GUARD, "sect_gate", -3.0D, 0.0D, 0.0D, -1.0D) : home(m);

@@ -109,8 +109,8 @@ public final class SectGameTests {
         Yard yard = yard(helper, 0.8D);
         // Второе поколение в строю — не дежурный (SectRota): первый по списку после старшего.
         long day = SectSchedule.day(helper.getLevel().getDayTime());
-        List<SectDisciple> row = List.of(npc(helper, yard, SectRota.training(day).get(1).key(), 3, 3), npc(helper, yard, "cheong_jin", 20, 4),
-                npc(helper, yard, "cheong_seok", 4, 20));
+        List<SectDisciple> row = List.of(npc(helper, yard, SectRota.training(day).get(1).key(), 3, 3), npc(helper, yard, "yul_jin", 20, 4),
+                npc(helper, yard, "yul_seok", 4, 20));
         Set<String> drilled = new HashSet<>();
         Set<String> together = new HashSet<>();
         helper.onEachTick(() -> {
@@ -149,8 +149,8 @@ public final class SectGameTests {
     public static void disciplesSparWithoutDeath(GameTestHelper helper) {
         setPeriod(helper, SectSchedule.Period.TRAINING);
         Yard yard = yard(helper, 0.3D);
-        SectDisciple a = npc(helper, yard, "cheong_pyo", 10, 12);
-        SectDisciple b = npc(helper, yard, "cheong_il", 14, 12);
+        SectDisciple a = npc(helper, yard, "yul_pyo", 10, 12);
+        SectDisciple b = npc(helper, yard, "yul_il", 14, 12);
         boolean[] fought = new boolean[1];
         float[] lowest = {Float.MAX_VALUE, Float.MAX_VALUE};
         boolean[] sheathedBow = {true};
@@ -199,8 +199,8 @@ public final class SectGameTests {
     public static void disciplesDefendEachOther(GameTestHelper helper) {
         setPeriod(helper, SectSchedule.Period.NIGHT);
         Yard yard = yard(helper, 0.3D);
-        SectDisciple victim = npc(helper, yard, "cheong_yeon", 8, 8);
-        SectDisciple friend = npc(helper, yard, "cheong_gwang", 16, 16);
+        SectDisciple victim = npc(helper, yard, "yul_yeon", 8, 8);
+        SectDisciple friend = npc(helper, yard, "yul_gwang", 16, 16);
         Zombie zombie = helper.spawn(EntityType.ZOMBIE, new Vec3(9.5D, 2.0D, 9.5D));
         helper.runAfterDelay(3, () -> {
             victim.hurt(helper.getLevel().damageSources().mobAttack(zombie), 100.0F);
@@ -278,7 +278,7 @@ public final class SectGameTests {
     public static void mentorLessonChain(GameTestHelper helper) {
         ServerPlayer p = fakePlayer(helper);
         Yard yard = yard(helper, 0.3D);
-        SectDisciple mentor = npc(helper, yard, "un_geom", 12, 12);
+        SectDisciple mentor = npc(helper, yard, "gyeong_pil", 12, 12);
         Dialogue d = DialogueLoader.get(mentor.dialogue());
         helper.assertTrue(d != null, "нет диалога наставника " + mentor.dialogue());
         ResourceLocation six = SectService.SIX;

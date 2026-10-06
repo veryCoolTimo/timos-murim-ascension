@@ -1,5 +1,5 @@
 {
-  "name": "npc.murim.yoon_jong",
+  "name": "npc.murim.ham_doyun",
   "base": "murim:disciple",
   "start": [
     {
@@ -59,8 +59,8 @@
   "nodes": {
     "formation": {
       "random": [
-        "dialogue.murim.yoon_jong.formation1",
-        "dialogue.murim.yoon_jong.formation2"
+        "dialogue.murim.ham_doyun.formation1",
+        "dialogue.murim.ham_doyun.formation2"
       ],
       "gesture": "point",
       "options": [
@@ -74,11 +74,11 @@
       ]
     },
     "missed": {
-      "line": "dialogue.murim.yoon_jong.missed",
+      "line": "dialogue.murim.ham_doyun.missed",
       "gesture": "shake",
       "options": [
         {
-          "text": "dialogue.murim.yoon_jong.opt.talk",
+          "text": "dialogue.murim.ham_doyun.opt.talk",
           "next": "topics"
         },
         {
@@ -91,11 +91,11 @@
           "next": "challenge"
         },
         {
-          "text": "dialogue.murim.yoon_jong.opt.paper",
+          "text": "dialogue.murim.ham_doyun.opt.paper",
           "when": [
             {
               "has_item": "minecraft:paper*3",
-              "not_flag": "favour.yoon_jong"
+              "not_flag": "favour.ham_doyun"
             }
           ],
           "actions": [
@@ -105,7 +105,7 @@
             },
             {
               "type": "set_flag",
-              "value": "favour.yoon_jong"
+              "value": "favour.ham_doyun"
             },
             {
               "type": "contribute",
@@ -121,8 +121,8 @@
     },
     "meal": {
       "random": [
-        "dialogue.murim.yoon_jong.meal1",
-        "dialogue.murim.yoon_jong.meal2"
+        "dialogue.murim.ham_doyun.meal1",
+        "dialogue.murim.ham_doyun.meal2"
       ],
       "gesture": "nod",
       "options": [
@@ -133,16 +133,16 @@
     },
     "night": {
       "random": [
-        "dialogue.murim.yoon_jong.night1"
+        "dialogue.murim.ham_doyun.night1"
       ],
       "gesture": "shake",
       "options": []
     },
     "greet": {
       "random": [
-        "dialogue.murim.yoon_jong.greet1",
-        "dialogue.murim.yoon_jong.greet2",
-        "dialogue.murim.yoon_jong.greet3"
+        "dialogue.murim.ham_doyun.greet1",
+        "dialogue.murim.ham_doyun.greet2",
+        "dialogue.murim.ham_doyun.greet3"
       ],
       "args": [
         "player"
@@ -150,7 +150,7 @@
       "gesture": "nod",
       "options": [
         {
-          "text": "dialogue.murim.yoon_jong.opt.talk",
+          "text": "dialogue.murim.ham_doyun.opt.talk",
           "next": "topics"
         },
         {
@@ -163,11 +163,11 @@
           "next": "challenge"
         },
         {
-          "text": "dialogue.murim.yoon_jong.opt.paper",
+          "text": "dialogue.murim.ham_doyun.opt.paper",
           "when": [
             {
               "has_item": "minecraft:paper*3",
-              "not_flag": "favour.yoon_jong"
+              "not_flag": "favour.ham_doyun"
             }
           ],
           "actions": [
@@ -177,7 +177,7 @@
             },
             {
               "type": "set_flag",
-              "value": "favour.yoon_jong"
+              "value": "favour.ham_doyun"
             },
             {
               "type": "contribute",
@@ -192,14 +192,14 @@
       ]
     },
     "greet_champion": {
-      "line": "dialogue.murim.yoon_jong.champion",
+      "line": "dialogue.murim.ham_doyun.champion",
       "args": [
         "player"
       ],
       "gesture": "bow",
       "options": [
         {
-          "text": "dialogue.murim.yoon_jong.opt.talk",
+          "text": "dialogue.murim.ham_doyun.opt.talk",
           "next": "topics"
         },
         {
@@ -212,11 +212,11 @@
           "next": "challenge"
         },
         {
-          "text": "dialogue.murim.yoon_jong.opt.paper",
+          "text": "dialogue.murim.ham_doyun.opt.paper",
           "when": [
             {
               "has_item": "minecraft:paper*3",
-              "not_flag": "favour.yoon_jong"
+              "not_flag": "favour.ham_doyun"
             }
           ],
           "actions": [
@@ -226,7 +226,7 @@
             },
             {
               "type": "set_flag",
-              "value": "favour.yoon_jong"
+              "value": "favour.ham_doyun"
             },
             {
               "type": "contribute",
@@ -241,19 +241,19 @@
       ]
     },
     "topics": {
-      "line": "dialogue.murim.yoon_jong.topics",
+      "line": "dialogue.murim.ham_doyun.topics",
       "gesture": "nod",
       "options": [
         {
-          "text": "dialogue.murim.yoon_jong.opt.sect",
+          "text": "dialogue.murim.ham_doyun.opt.sect",
           "next": "t_sect"
         },
         {
-          "text": "dialogue.murim.yoon_jong.opt.jo_gol",
-          "next": "t_jo_gol"
+          "text": "dialogue.murim.ham_doyun.opt.bok_manseok",
+          "next": "t_manseok"
         },
         {
-          "text": "dialogue.murim.yoon_jong.opt.progress",
+          "text": "dialogue.murim.ham_doyun.opt.progress",
           "when": [
             {
               "below_standing": "disciple"
@@ -262,7 +262,7 @@
           "next": "p_novice"
         },
         {
-          "text": "dialogue.murim.yoon_jong.opt.progress",
+          "text": "dialogue.murim.ham_doyun.opt.progress",
           "when": [
             {
               "min_standing": "disciple",
@@ -272,7 +272,7 @@
           "next": "p_disciple"
         },
         {
-          "text": "dialogue.murim.yoon_jong.opt.progress",
+          "text": "dialogue.murim.ham_doyun.opt.progress",
           "when": [
             {
               "min_standing": "graduate"
@@ -286,14 +286,14 @@
       ]
     },
     "t_sect": {
-      "line": "dialogue.murim.yoon_jong.t_sect",
+      "line": "dialogue.murim.ham_doyun.t_sect",
       "gesture": "explain",
       "options": [
         {
-          "text": "dialogue.murim.yoon_jong.opt.help",
+          "text": "dialogue.murim.ham_doyun.opt.help",
           "when": [
             {
-              "not_flag": "favour.yoon_jong"
+              "not_flag": "favour.ham_doyun"
             }
           ],
           "next": "favour_ask"
@@ -308,7 +308,7 @@
       ]
     },
     "favour_ask": {
-      "line": "dialogue.murim.yoon_jong.favour_ask",
+      "line": "dialogue.murim.ham_doyun.favour_ask",
       "gesture": "explain",
       "options": [
         {
@@ -317,7 +317,7 @@
       ]
     },
     "favour_done": {
-      "line": "dialogue.murim.yoon_jong.favour_done",
+      "line": "dialogue.murim.ham_doyun.favour_done",
       "args": [
         "player"
       ],
@@ -328,8 +328,8 @@
         }
       ]
     },
-    "t_jo_gol": {
-      "line": "dialogue.murim.yoon_jong.t_jo_gol",
+    "t_manseok": {
+      "line": "dialogue.murim.ham_doyun.t_manseok",
       "gesture": "nod",
       "options": [
         {
@@ -342,7 +342,7 @@
       ]
     },
     "p_novice": {
-      "line": "dialogue.murim.yoon_jong.p_novice",
+      "line": "dialogue.murim.ham_doyun.p_novice",
       "gesture": "nod",
       "options": [
         {
@@ -355,7 +355,7 @@
       ]
     },
     "p_disciple": {
-      "line": "dialogue.murim.yoon_jong.p_disciple",
+      "line": "dialogue.murim.ham_doyun.p_disciple",
       "gesture": "explain",
       "options": [
         {
@@ -368,7 +368,7 @@
       ]
     },
     "p_graduate": {
-      "line": "dialogue.murim.yoon_jong.p_graduate",
+      "line": "dialogue.murim.ham_doyun.p_graduate",
       "gesture": "nod",
       "options": [
         {

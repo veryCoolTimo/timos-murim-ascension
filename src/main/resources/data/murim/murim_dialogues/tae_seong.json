@@ -1,6 +1,6 @@
 {
-  "name": "npc.murim.hyun_seong",
-  "title": "npc.murim.hyun_seong.title",
+  "name": "npc.murim.tae_seong",
+  "title": "npc.murim.tae_seong.title",
   "base": "murim:elder",
   "audience": {
     "allow": [
@@ -8,7 +8,7 @@
         "min_standing": "disciple"
       },
       {
-        "flag": "summon.hyun_seong"
+        "flag": "summon.tae_seong"
       }
     ],
     "intercept": "murim:intercept_elder",
@@ -58,7 +58,7 @@
     {
       "when": [
         {
-          "flag": "favour.hyun_seong"
+          "flag": "favour.tae_seong"
         }
       ],
       "node": "greet_friend"
@@ -69,7 +69,7 @@
   ],
   "nodes": {
     "busy": {
-      "line": "dialogue.murim.hyun_seong.busy",
+      "line": "dialogue.murim.tae_seong.busy",
       "gesture": "shake",
       "options": [
         {
@@ -78,19 +78,19 @@
       ]
     },
     "formation": {
-      "line": "dialogue.murim.hyun_seong.formation",
+      "line": "dialogue.murim.tae_seong.formation",
       "gesture": "nod",
       "options": [
         {
-          "text": "dialogue.murim.hyun_seong.opt.talk",
+          "text": "dialogue.murim.tae_seong.opt.talk",
           "next": "topics"
         },
         {
-          "text": "dialogue.murim.hyun_seong.opt.candle",
+          "text": "dialogue.murim.tae_seong.opt.candle",
           "when": [
             {
               "has_item": "minecraft:candle*1",
-              "not_flag": "favour.hyun_seong"
+              "not_flag": "favour.tae_seong"
             }
           ],
           "actions": [
@@ -100,7 +100,7 @@
             },
             {
               "type": "set_flag",
-              "value": "favour.hyun_seong"
+              "value": "favour.tae_seong"
             },
             {
               "type": "contribute",
@@ -115,19 +115,19 @@
       ]
     },
     "evening": {
-      "line": "dialogue.murim.hyun_seong.evening",
+      "line": "dialogue.murim.tae_seong.evening",
       "gesture": "nod",
       "options": [
         {
-          "text": "dialogue.murim.hyun_seong.opt.talk",
+          "text": "dialogue.murim.tae_seong.opt.talk",
           "next": "topics"
         },
         {
-          "text": "dialogue.murim.hyun_seong.opt.candle",
+          "text": "dialogue.murim.tae_seong.opt.candle",
           "when": [
             {
               "has_item": "minecraft:candle*1",
-              "not_flag": "favour.hyun_seong"
+              "not_flag": "favour.tae_seong"
             }
           ],
           "actions": [
@@ -137,7 +137,7 @@
             },
             {
               "type": "set_flag",
-              "value": "favour.hyun_seong"
+              "value": "favour.tae_seong"
             },
             {
               "type": "contribute",
@@ -152,19 +152,19 @@
       ]
     },
     "night": {
-      "line": "dialogue.murim.hyun_seong.night",
+      "line": "dialogue.murim.tae_seong.night",
       "gesture": "nod",
       "options": [
         {
-          "text": "dialogue.murim.hyun_seong.opt.talk",
+          "text": "dialogue.murim.tae_seong.opt.talk",
           "next": "topics"
         },
         {
-          "text": "dialogue.murim.hyun_seong.opt.candle",
+          "text": "dialogue.murim.tae_seong.opt.candle",
           "when": [
             {
               "has_item": "minecraft:candle*1",
-              "not_flag": "favour.hyun_seong"
+              "not_flag": "favour.tae_seong"
             }
           ],
           "actions": [
@@ -174,7 +174,7 @@
             },
             {
               "type": "set_flag",
-              "value": "favour.hyun_seong"
+              "value": "favour.tae_seong"
             },
             {
               "type": "contribute",
@@ -190,21 +190,21 @@
     },
     "greet": {
       "random": [
-        "dialogue.murim.hyun_seong.greet1",
-        "dialogue.murim.hyun_seong.greet2"
+        "dialogue.murim.tae_seong.greet1",
+        "dialogue.murim.tae_seong.greet2"
       ],
       "gesture": "nod",
       "options": [
         {
-          "text": "dialogue.murim.hyun_seong.opt.talk",
+          "text": "dialogue.murim.tae_seong.opt.talk",
           "next": "topics"
         },
         {
-          "text": "dialogue.murim.hyun_seong.opt.candle",
+          "text": "dialogue.murim.tae_seong.opt.candle",
           "when": [
             {
               "has_item": "minecraft:candle*1",
-              "not_flag": "favour.hyun_seong"
+              "not_flag": "favour.tae_seong"
             }
           ],
           "actions": [
@@ -214,7 +214,7 @@
             },
             {
               "type": "set_flag",
-              "value": "favour.hyun_seong"
+              "value": "favour.tae_seong"
             },
             {
               "type": "contribute",
@@ -229,19 +229,19 @@
       ]
     },
     "greet_friend": {
-      "line": "dialogue.murim.hyun_seong.friend",
+      "line": "dialogue.murim.tae_seong.friend",
       "gesture": "nod",
       "options": [
         {
-          "text": "dialogue.murim.hyun_seong.opt.talk",
+          "text": "dialogue.murim.tae_seong.opt.talk",
           "next": "topics"
         },
         {
-          "text": "dialogue.murim.hyun_seong.opt.candle",
+          "text": "dialogue.murim.tae_seong.opt.candle",
           "when": [
             {
               "has_item": "minecraft:candle*1",
-              "not_flag": "favour.hyun_seong"
+              "not_flag": "favour.tae_seong"
             }
           ],
           "actions": [
@@ -251,7 +251,7 @@
             },
             {
               "type": "set_flag",
-              "value": "favour.hyun_seong"
+              "value": "favour.tae_seong"
             },
             {
               "type": "contribute",
@@ -266,19 +266,19 @@
       ]
     },
     "greet_champion": {
-      "line": "dialogue.murim.hyun_seong.champion",
+      "line": "dialogue.murim.tae_seong.champion",
       "gesture": "bow",
       "options": [
         {
-          "text": "dialogue.murim.hyun_seong.opt.talk",
+          "text": "dialogue.murim.tae_seong.opt.talk",
           "next": "topics"
         },
         {
-          "text": "dialogue.murim.hyun_seong.opt.candle",
+          "text": "dialogue.murim.tae_seong.opt.candle",
           "when": [
             {
               "has_item": "minecraft:candle*1",
-              "not_flag": "favour.hyun_seong"
+              "not_flag": "favour.tae_seong"
             }
           ],
           "actions": [
@@ -288,7 +288,7 @@
             },
             {
               "type": "set_flag",
-              "value": "favour.hyun_seong"
+              "value": "favour.tae_seong"
             },
             {
               "type": "contribute",
@@ -303,19 +303,19 @@
       ]
     },
     "greet_trusted": {
-      "line": "dialogue.murim.hyun_seong.trusted",
+      "line": "dialogue.murim.tae_seong.trusted",
       "gesture": "nod",
       "options": [
         {
-          "text": "dialogue.murim.hyun_seong.opt.talk",
+          "text": "dialogue.murim.tae_seong.opt.talk",
           "next": "topics"
         },
         {
-          "text": "dialogue.murim.hyun_seong.opt.candle",
+          "text": "dialogue.murim.tae_seong.opt.candle",
           "when": [
             {
               "has_item": "minecraft:candle*1",
-              "not_flag": "favour.hyun_seong"
+              "not_flag": "favour.tae_seong"
             }
           ],
           "actions": [
@@ -325,7 +325,7 @@
             },
             {
               "type": "set_flag",
-              "value": "favour.hyun_seong"
+              "value": "favour.tae_seong"
             },
             {
               "type": "contribute",
@@ -340,19 +340,19 @@
       ]
     },
     "topics": {
-      "line": "dialogue.murim.hyun_seong.topics",
+      "line": "dialogue.murim.tae_seong.topics",
       "gesture": "nod",
       "options": [
         {
-          "text": "dialogue.murim.hyun_seong.opt.past",
+          "text": "dialogue.murim.tae_seong.opt.past",
           "next": "t_past"
         },
         {
-          "text": "dialogue.murim.hyun_seong.opt.council",
+          "text": "dialogue.murim.tae_seong.opt.council",
           "next": "t_council"
         },
         {
-          "text": "dialogue.murim.hyun_seong.opt.path",
+          "text": "dialogue.murim.tae_seong.opt.path",
           "when": [
             {
               "below_standing": "graduate"
@@ -361,7 +361,7 @@
           "next": "t_path_low"
         },
         {
-          "text": "dialogue.murim.hyun_seong.opt.path",
+          "text": "dialogue.murim.tae_seong.opt.path",
           "when": [
             {
               "min_standing": "graduate"
@@ -375,18 +375,18 @@
       ]
     },
     "t_past": {
-      "line": "dialogue.murim.hyun_seong.t_past",
+      "line": "dialogue.murim.tae_seong.t_past",
       "gesture": "explain",
       "options": [
         {
-          "text": "dialogue.murim.hyun_seong.opt.saint",
+          "text": "dialogue.murim.tae_seong.opt.saint",
           "next": "t_saint"
         },
         {
-          "text": "dialogue.murim.hyun_seong.opt.annals",
+          "text": "dialogue.murim.tae_seong.opt.annals",
           "when": [
             {
-              "not_flag": "favour.hyun_seong"
+              "not_flag": "favour.tae_seong"
             }
           ],
           "next": "favour_ask"
@@ -398,7 +398,7 @@
       ]
     },
     "t_saint": {
-      "line": "dialogue.murim.hyun_seong.t_saint",
+      "line": "dialogue.murim.tae_seong.t_saint",
       "gesture": "explain",
       "options": [
         {
@@ -411,7 +411,7 @@
       ]
     },
     "favour_ask": {
-      "line": "dialogue.murim.hyun_seong.favour_ask",
+      "line": "dialogue.murim.tae_seong.favour_ask",
       "gesture": "explain",
       "options": [
         {
@@ -424,7 +424,7 @@
       ]
     },
     "favour_done": {
-      "line": "dialogue.murim.hyun_seong.favour_done",
+      "line": "dialogue.murim.tae_seong.favour_done",
       "gesture": "bow",
       "options": [
         {
@@ -433,7 +433,7 @@
       ]
     },
     "t_council": {
-      "line": "dialogue.murim.hyun_seong.t_council",
+      "line": "dialogue.murim.tae_seong.t_council",
       "gesture": "explain",
       "options": [
         {
@@ -446,7 +446,7 @@
       ]
     },
     "t_path_low": {
-      "line": "dialogue.murim.hyun_seong.t_path_low",
+      "line": "dialogue.murim.tae_seong.t_path_low",
       "gesture": "explain",
       "options": [
         {
@@ -459,7 +459,7 @@
       ]
     },
     "t_path_high": {
-      "line": "dialogue.murim.hyun_seong.t_path_high",
+      "line": "dialogue.murim.tae_seong.t_path_high",
       "gesture": "explain",
       "options": [
         {
