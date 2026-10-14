@@ -14,7 +14,7 @@ import net.minecraft.world.phys.Vec3;
  * землю или исчез (a — точка, value — id), 3 — огненный шар погас в коконе (a — точка, value — id),
  * 4 — оплачен шаг продления (value — номер шага), 5 — тихий мираж (конец), 9 — прервано.
  */
-public record SeaPayload(int entityId, Vec3 a, Vec3 b, int value, int layer, int stage) implements CustomPacketPayload {
+public record SeaPayload(int entityId, Vec3 a, Vec3 b, int value, int executionTier, int stage) implements CustomPacketPayload {
 
     public static final int BEGIN = 0;
     public static final int CAPTURE = 1;
@@ -35,7 +35,7 @@ public record SeaPayload(int entityId, Vec3 a, Vec3 b, int value, int layer, int
             VEC, SeaPayload::a,
             VEC, SeaPayload::b,
             ByteBufCodecs.VAR_INT, SeaPayload::value,
-            ByteBufCodecs.VAR_INT, SeaPayload::layer,
+            ByteBufCodecs.VAR_INT, SeaPayload::executionTier,
             ByteBufCodecs.VAR_INT, SeaPayload::stage,
             SeaPayload::new);
 

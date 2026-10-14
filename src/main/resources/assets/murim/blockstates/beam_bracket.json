@@ -1,0 +1,2470 @@
+{
+ "multipart": [
+  {
+   "when": {
+    "axis": "x",
+    "offset": "center",
+    "rest": "on_low",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_on_low_none_center"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "center",
+    "rest": "on_low",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_on_low_none_center",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "center",
+    "rest": "on_mid",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_on_mid_none_center"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "center",
+    "rest": "on_mid",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_on_mid_none_center",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "center",
+    "rest": "floor",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_floor_none_center"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "center",
+    "rest": "floor",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_floor_none_center",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "center",
+    "rest": "lintel",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_lintel_none_center"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "center",
+    "rest": "lintel",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_lintel_none_center",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "center",
+    "rest": "under_low",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_low_none_center"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "center",
+    "rest": "under_low",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_low_none_center",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "center",
+    "rest": "under_mid",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_mid_none_center"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "center",
+    "rest": "under_mid",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_mid_none_center",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "center",
+    "rest": "under_top",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_top_none_center"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "center",
+    "rest": "under_top",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_top_none_center",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "center",
+    "carry": "true"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_carried_center"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "center",
+    "carry": "true"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_carried_center",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "north",
+    "rest": "on_low",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_on_low_none_north"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "east",
+    "rest": "on_low",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_on_low_none_north",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "north",
+    "rest": "on_mid",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_on_mid_none_north"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "east",
+    "rest": "on_mid",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_on_mid_none_north",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "north",
+    "rest": "floor",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_floor_none_north"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "east",
+    "rest": "floor",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_floor_none_north",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "north",
+    "rest": "lintel",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_lintel_none_north"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "east",
+    "rest": "lintel",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_lintel_none_north",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "north",
+    "rest": "under_low",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_low_none_north"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "east",
+    "rest": "under_low",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_low_none_north",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "north",
+    "rest": "under_mid",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_mid_none_north"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "east",
+    "rest": "under_mid",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_mid_none_north",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "north",
+    "rest": "under_top",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_top_none_north"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "east",
+    "rest": "under_top",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_top_none_north",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "north",
+    "carry": "true"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_carried_minus"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "north",
+    "carry": "true"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_carried_center",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "north_east",
+    "rest": "on_low",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_on_low_none_north_east"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "south_east",
+    "rest": "on_low",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_on_low_none_north_east",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "north_east",
+    "rest": "on_mid",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_on_mid_none_north_east"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "south_east",
+    "rest": "on_mid",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_on_mid_none_north_east",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "north_east",
+    "rest": "floor",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_floor_none_north_east"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "south_east",
+    "rest": "floor",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_floor_none_north_east",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "north_east",
+    "rest": "lintel",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_lintel_none_north_east"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "south_east",
+    "rest": "lintel",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_lintel_none_north_east",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "north_east",
+    "rest": "under_low",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_low_none_north_east"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "south_east",
+    "rest": "under_low",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_low_none_north_east",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "north_east",
+    "rest": "under_mid",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_mid_none_north_east"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "south_east",
+    "rest": "under_mid",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_mid_none_north_east",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "north_east",
+    "rest": "under_top",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_top_none_north_east"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "south_east",
+    "rest": "under_top",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_top_none_north_east",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "north_east",
+    "rest": "floor",
+    "reach": "pos_near"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_floor_pos_near_north_east"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "south_east",
+    "rest": "floor",
+    "reach": "pos_near"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_floor_pos_near_north_east",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "north_east",
+    "rest": "under_low",
+    "reach": "pos_near"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_low_pos_near_north_east"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "south_east",
+    "rest": "under_low",
+    "reach": "pos_near"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_low_pos_near_north_east",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "north_east",
+    "rest": "floor",
+    "reach": "pos_mid"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_floor_pos_mid_north_east"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "south_east",
+    "rest": "floor",
+    "reach": "pos_mid"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_floor_pos_mid_north_east",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "north_east",
+    "rest": "under_low",
+    "reach": "pos_mid"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_low_pos_mid_north_east"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "south_east",
+    "rest": "under_low",
+    "reach": "pos_mid"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_low_pos_mid_north_east",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "north_east",
+    "rest": "floor",
+    "reach": "pos_far"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_floor_pos_far_north_east"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "south_east",
+    "rest": "floor",
+    "reach": "pos_far"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_floor_pos_far_north_east",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "north_east",
+    "rest": "under_low",
+    "reach": "pos_far"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_low_pos_far_north_east"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "south_east",
+    "rest": "under_low",
+    "reach": "pos_far"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_low_pos_far_north_east",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "north_east",
+    "carry": "true"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_carried_minus"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "north_east",
+    "carry": "true"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_carried_minus",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "east",
+    "rest": "on_low",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_on_low_none_east"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "south",
+    "rest": "on_low",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_on_low_none_east",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "east",
+    "rest": "on_mid",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_on_mid_none_east"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "south",
+    "rest": "on_mid",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_on_mid_none_east",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "east",
+    "rest": "floor",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_floor_none_east"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "south",
+    "rest": "floor",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_floor_none_east",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "east",
+    "rest": "lintel",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_lintel_none_east"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "south",
+    "rest": "lintel",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_lintel_none_east",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "east",
+    "rest": "under_low",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_low_none_east"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "south",
+    "rest": "under_low",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_low_none_east",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "east",
+    "rest": "under_mid",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_mid_none_east"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "south",
+    "rest": "under_mid",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_mid_none_east",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "east",
+    "rest": "under_top",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_top_none_east"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "south",
+    "rest": "under_top",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_top_none_east",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "east",
+    "rest": "floor",
+    "reach": "pos_near"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_floor_pos_near_east"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "south",
+    "rest": "floor",
+    "reach": "pos_near"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_floor_pos_near_east",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "east",
+    "rest": "under_low",
+    "reach": "pos_near"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_low_pos_near_east"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "south",
+    "rest": "under_low",
+    "reach": "pos_near"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_low_pos_near_east",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "east",
+    "rest": "floor",
+    "reach": "pos_mid"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_floor_pos_mid_east"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "south",
+    "rest": "floor",
+    "reach": "pos_mid"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_floor_pos_mid_east",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "east",
+    "rest": "under_low",
+    "reach": "pos_mid"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_low_pos_mid_east"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "south",
+    "rest": "under_low",
+    "reach": "pos_mid"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_low_pos_mid_east",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "east",
+    "rest": "floor",
+    "reach": "pos_far"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_floor_pos_far_east"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "south",
+    "rest": "floor",
+    "reach": "pos_far"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_floor_pos_far_east",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "east",
+    "rest": "under_low",
+    "reach": "pos_far"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_low_pos_far_east"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "south",
+    "rest": "under_low",
+    "reach": "pos_far"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_low_pos_far_east",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "east",
+    "carry": "true"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_carried_center"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "east",
+    "carry": "true"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_carried_minus",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "south_east",
+    "rest": "on_low",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_on_low_none_south_east"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "south_west",
+    "rest": "on_low",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_on_low_none_south_east",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "south_east",
+    "rest": "on_mid",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_on_mid_none_south_east"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "south_west",
+    "rest": "on_mid",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_on_mid_none_south_east",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "south_east",
+    "rest": "floor",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_floor_none_south_east"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "south_west",
+    "rest": "floor",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_floor_none_south_east",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "south_east",
+    "rest": "lintel",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_lintel_none_south_east"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "south_west",
+    "rest": "lintel",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_lintel_none_south_east",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "south_east",
+    "rest": "under_low",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_low_none_south_east"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "south_west",
+    "rest": "under_low",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_low_none_south_east",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "south_east",
+    "rest": "under_mid",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_mid_none_south_east"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "south_west",
+    "rest": "under_mid",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_mid_none_south_east",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "south_east",
+    "rest": "under_top",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_top_none_south_east"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "south_west",
+    "rest": "under_top",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_top_none_south_east",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "south_east",
+    "rest": "floor",
+    "reach": "pos_near"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_floor_pos_near_south_east"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "south_west",
+    "rest": "floor",
+    "reach": "pos_near"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_floor_pos_near_south_east",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "south_east",
+    "rest": "under_low",
+    "reach": "pos_near"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_low_pos_near_south_east"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "south_west",
+    "rest": "under_low",
+    "reach": "pos_near"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_low_pos_near_south_east",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "south_east",
+    "rest": "floor",
+    "reach": "pos_mid"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_floor_pos_mid_south_east"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "south_west",
+    "rest": "floor",
+    "reach": "pos_mid"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_floor_pos_mid_south_east",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "south_east",
+    "rest": "under_low",
+    "reach": "pos_mid"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_low_pos_mid_south_east"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "south_west",
+    "rest": "under_low",
+    "reach": "pos_mid"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_low_pos_mid_south_east",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "south_east",
+    "rest": "floor",
+    "reach": "pos_far"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_floor_pos_far_south_east"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "south_west",
+    "rest": "floor",
+    "reach": "pos_far"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_floor_pos_far_south_east",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "south_east",
+    "rest": "under_low",
+    "reach": "pos_far"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_low_pos_far_south_east"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "south_west",
+    "rest": "under_low",
+    "reach": "pos_far"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_low_pos_far_south_east",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "south_east",
+    "carry": "true"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_carried_plus"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "south_east",
+    "carry": "true"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_carried_minus",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "south",
+    "rest": "on_low",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_on_low_none_south"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "west",
+    "rest": "on_low",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_on_low_none_south",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "south",
+    "rest": "on_mid",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_on_mid_none_south"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "west",
+    "rest": "on_mid",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_on_mid_none_south",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "south",
+    "rest": "floor",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_floor_none_south"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "west",
+    "rest": "floor",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_floor_none_south",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "south",
+    "rest": "lintel",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_lintel_none_south"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "west",
+    "rest": "lintel",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_lintel_none_south",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "south",
+    "rest": "under_low",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_low_none_south"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "west",
+    "rest": "under_low",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_low_none_south",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "south",
+    "rest": "under_mid",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_mid_none_south"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "west",
+    "rest": "under_mid",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_mid_none_south",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "south",
+    "rest": "under_top",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_top_none_south"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "west",
+    "rest": "under_top",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_top_none_south",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "south",
+    "carry": "true"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_carried_plus"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "south",
+    "carry": "true"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_carried_center",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "south_west",
+    "rest": "on_low",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_on_low_none_south_west"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "north_west",
+    "rest": "on_low",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_on_low_none_south_west",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "south_west",
+    "rest": "on_mid",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_on_mid_none_south_west"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "north_west",
+    "rest": "on_mid",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_on_mid_none_south_west",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "south_west",
+    "rest": "floor",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_floor_none_south_west"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "north_west",
+    "rest": "floor",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_floor_none_south_west",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "south_west",
+    "rest": "lintel",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_lintel_none_south_west"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "north_west",
+    "rest": "lintel",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_lintel_none_south_west",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "south_west",
+    "rest": "under_low",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_low_none_south_west"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "north_west",
+    "rest": "under_low",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_low_none_south_west",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "south_west",
+    "rest": "under_mid",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_mid_none_south_west"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "north_west",
+    "rest": "under_mid",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_mid_none_south_west",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "south_west",
+    "rest": "under_top",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_top_none_south_west"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "north_west",
+    "rest": "under_top",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_top_none_south_west",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "south_west",
+    "rest": "floor",
+    "reach": "neg_near"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_floor_neg_near_south_west"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "north_west",
+    "rest": "floor",
+    "reach": "neg_near"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_floor_neg_near_south_west",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "south_west",
+    "rest": "under_low",
+    "reach": "neg_near"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_low_neg_near_south_west"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "north_west",
+    "rest": "under_low",
+    "reach": "neg_near"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_low_neg_near_south_west",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "south_west",
+    "rest": "floor",
+    "reach": "neg_mid"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_floor_neg_mid_south_west"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "north_west",
+    "rest": "floor",
+    "reach": "neg_mid"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_floor_neg_mid_south_west",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "south_west",
+    "rest": "under_low",
+    "reach": "neg_mid"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_low_neg_mid_south_west"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "north_west",
+    "rest": "under_low",
+    "reach": "neg_mid"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_low_neg_mid_south_west",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "south_west",
+    "rest": "floor",
+    "reach": "neg_far"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_floor_neg_far_south_west"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "north_west",
+    "rest": "floor",
+    "reach": "neg_far"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_floor_neg_far_south_west",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "south_west",
+    "rest": "under_low",
+    "reach": "neg_far"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_low_neg_far_south_west"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "north_west",
+    "rest": "under_low",
+    "reach": "neg_far"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_low_neg_far_south_west",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "south_west",
+    "carry": "true"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_carried_plus"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "south_west",
+    "carry": "true"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_carried_plus",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "west",
+    "rest": "on_low",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_on_low_none_west"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "north",
+    "rest": "on_low",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_on_low_none_west",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "west",
+    "rest": "on_mid",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_on_mid_none_west"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "north",
+    "rest": "on_mid",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_on_mid_none_west",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "west",
+    "rest": "floor",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_floor_none_west"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "north",
+    "rest": "floor",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_floor_none_west",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "west",
+    "rest": "lintel",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_lintel_none_west"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "north",
+    "rest": "lintel",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_lintel_none_west",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "west",
+    "rest": "under_low",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_low_none_west"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "north",
+    "rest": "under_low",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_low_none_west",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "west",
+    "rest": "under_mid",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_mid_none_west"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "north",
+    "rest": "under_mid",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_mid_none_west",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "west",
+    "rest": "under_top",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_top_none_west"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "north",
+    "rest": "under_top",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_top_none_west",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "west",
+    "rest": "floor",
+    "reach": "neg_near"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_floor_neg_near_west"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "north",
+    "rest": "floor",
+    "reach": "neg_near"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_floor_neg_near_west",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "west",
+    "rest": "under_low",
+    "reach": "neg_near"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_low_neg_near_west"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "north",
+    "rest": "under_low",
+    "reach": "neg_near"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_low_neg_near_west",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "west",
+    "rest": "floor",
+    "reach": "neg_mid"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_floor_neg_mid_west"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "north",
+    "rest": "floor",
+    "reach": "neg_mid"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_floor_neg_mid_west",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "west",
+    "rest": "under_low",
+    "reach": "neg_mid"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_low_neg_mid_west"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "north",
+    "rest": "under_low",
+    "reach": "neg_mid"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_low_neg_mid_west",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "west",
+    "rest": "floor",
+    "reach": "neg_far"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_floor_neg_far_west"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "north",
+    "rest": "floor",
+    "reach": "neg_far"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_floor_neg_far_west",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "west",
+    "rest": "under_low",
+    "reach": "neg_far"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_low_neg_far_west"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "north",
+    "rest": "under_low",
+    "reach": "neg_far"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_low_neg_far_west",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "west",
+    "carry": "true"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_carried_center"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "west",
+    "carry": "true"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_carried_plus",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "north_west",
+    "rest": "on_low",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_on_low_none_north_west"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "north_east",
+    "rest": "on_low",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_on_low_none_north_west",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "north_west",
+    "rest": "on_mid",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_on_mid_none_north_west"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "north_east",
+    "rest": "on_mid",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_on_mid_none_north_west",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "north_west",
+    "rest": "floor",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_floor_none_north_west"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "north_east",
+    "rest": "floor",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_floor_none_north_west",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "north_west",
+    "rest": "lintel",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_lintel_none_north_west"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "north_east",
+    "rest": "lintel",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_lintel_none_north_west",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "north_west",
+    "rest": "under_low",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_low_none_north_west"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "north_east",
+    "rest": "under_low",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_low_none_north_west",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "north_west",
+    "rest": "under_mid",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_mid_none_north_west"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "north_east",
+    "rest": "under_mid",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_mid_none_north_west",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "north_west",
+    "rest": "under_top",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_top_none_north_west"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "north_east",
+    "rest": "under_top",
+    "reach": "none"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_top_none_north_west",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "north_west",
+    "rest": "floor",
+    "reach": "neg_near"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_floor_neg_near_north_west"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "north_east",
+    "rest": "floor",
+    "reach": "neg_near"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_floor_neg_near_north_west",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "north_west",
+    "rest": "under_low",
+    "reach": "neg_near"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_low_neg_near_north_west"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "north_east",
+    "rest": "under_low",
+    "reach": "neg_near"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_low_neg_near_north_west",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "north_west",
+    "rest": "floor",
+    "reach": "neg_mid"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_floor_neg_mid_north_west"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "north_east",
+    "rest": "floor",
+    "reach": "neg_mid"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_floor_neg_mid_north_west",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "north_west",
+    "rest": "under_low",
+    "reach": "neg_mid"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_low_neg_mid_north_west"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "north_east",
+    "rest": "under_low",
+    "reach": "neg_mid"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_low_neg_mid_north_west",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "north_west",
+    "rest": "floor",
+    "reach": "neg_far"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_floor_neg_far_north_west"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "north_east",
+    "rest": "floor",
+    "reach": "neg_far"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_floor_neg_far_north_west",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "north_west",
+    "rest": "under_low",
+    "reach": "neg_far"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_low_neg_far_north_west"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "north_east",
+    "rest": "under_low",
+    "reach": "neg_far"
+   },
+   "apply": {
+    "model": "murim:block/beam_bracket_under_low_neg_far_north_west",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "north_west",
+    "carry": "true"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_carried_minus"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "north_west",
+    "carry": "true"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_carried_plus",
+    "y": 90
+   }
+  }
+ ]
+}

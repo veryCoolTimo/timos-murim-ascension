@@ -13,7 +13,7 @@ import net.minecraft.world.phys.Vec3;
  * {@code entityId} — мастер, {@code pos}/{@code dir} — точка и направление события, {@code a} — id цели
  * или номер кинжала, {@code b} — сила события (0 — обычное, 1 — цепь, 2 — главное попадание формы).
  */
-public record TangPayload(int entityId, int form, int stage, int layer, Vec3 pos, Vec3 dir, int a, int b)
+public record TangPayload(int entityId, int form, int stage, int executionTier, Vec3 pos, Vec3 dir, int a, int b)
         implements CustomPacketPayload {
 
     /** Кинжал выпущен из кисти/рукава. */
@@ -58,7 +58,7 @@ public record TangPayload(int entityId, int form, int stage, int layer, Vec3 pos
                 ByteBufCodecs.VAR_INT.encode(buf, p.entityId());
                 ByteBufCodecs.VAR_INT.encode(buf, p.form());
                 ByteBufCodecs.VAR_INT.encode(buf, p.stage());
-                ByteBufCodecs.VAR_INT.encode(buf, p.layer());
+                ByteBufCodecs.VAR_INT.encode(buf, p.executionTier());
                 VEC.encode(buf, p.pos());
                 VEC.encode(buf, p.dir());
                 ByteBufCodecs.VAR_INT.encode(buf, p.a());

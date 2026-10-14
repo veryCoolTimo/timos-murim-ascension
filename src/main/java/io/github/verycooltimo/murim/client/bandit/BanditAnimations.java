@@ -26,8 +26,10 @@ import java.util.Optional;
 @EventBusSubscriber(modid = MurimMod.MODID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.MOD)
 public final class BanditAnimations {
 
-    /** Имена файлов анимаций врагов. */
-    private static final String[] NAMES = {"bandit", "bandit_archer"};
+    /** Имена файлов анимаций врагов; {@code sect} — покой и шаг людей секты без меча в руке,
+     * {@code elder} — глава в длинном одеянии (руки за спиной, полы за ногами), {@code first} — первое поколение
+     * в том же одеянии (руки свободно, шаг шире). */
+    private static final String[] NAMES = {"bandit", "bandit_archer", "sect", "elder", "first"};
 
     private static final Map<String, Map<String, AnimationDefinition>> CLIPS = new HashMap<>();
 

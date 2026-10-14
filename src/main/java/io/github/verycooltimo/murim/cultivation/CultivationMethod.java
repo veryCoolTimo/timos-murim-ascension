@@ -34,8 +34,15 @@ public record CultivationMethod(
         double impurity,
         String route,
         List<ResourceLocation> outerForms,
-        boolean nightOnly
+        boolean nightOnly,
+        int starCap
 ) {
+
+    public CultivationMethod(ResourceLocation id, String nature, double purity, double capacity,
+                             double impurity, String route, List<ResourceLocation> outerForms, boolean nightOnly) {
+        this(id, nature, purity, capacity, impurity, route, outerForms, nightOnly,
+                io.github.verycooltimo.murim.mastery.Arts.methodCap(id));
+    }
 
     /** Природы энергии MVP (решение автора 2026-09-29). */
     public static final Set<String> NATURES = Set.of("pure", "poison", "demonic", "dead");
@@ -49,11 +56,14 @@ public record CultivationMethod(
             Codec.STRING.fieldOf("route").forGetter(CultivationMethod::route),
             ResourceLocation.CODEC.listOf().optionalFieldOf("outer_forms", List.of())
                     .forGetter(CultivationMethod::outerForms),
-            Codec.BOOL.optionalFieldOf("night_only", false).forGetter(CultivationMethod::nightOnly)
+            Codec.BOOL.optionalFieldOf("night_only", false).forGetter(CultivationMethod::nightOnly),
+            Codec.INT.optionalFieldOf("star_cap", io.github.verycooltimo.murim.mastery.Arts.MAX_STARS).forGetter(CultivationMethod::starCap)
     ).apply(i, CultivationMethod::new));
 
     public CultivationMethod {
         java.util.Objects.requireNonNull(id, "id");
+        // Retain the datapack field for compatibility; completion is universal.
+        starCap = io.github.verycooltimo.murim.mastery.Arts.MAX_STARS;
         if (!NATURES.contains(nature)) {
             // Опечатка в природе молча выключила бы все проверки совместимости техник.
             throw new IllegalArgumentException("Неизвестная природа энергии: " + nature);

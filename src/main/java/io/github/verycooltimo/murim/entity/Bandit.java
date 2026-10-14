@@ -178,7 +178,7 @@ public abstract class Bandit extends Monster implements io.github.verycooltimo.m
 
     /** Бандит не знает техник игрока: его ци — свой рывок-разрез и выстрел ци. */
     @Override
-    public int techniqueLayer(net.minecraft.resources.ResourceLocation technique) {
+    public int techniqueTier(net.minecraft.resources.ResourceLocation technique) {
         return -1;
     }
 

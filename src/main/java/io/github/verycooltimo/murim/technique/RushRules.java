@@ -60,18 +60,18 @@ public final class RushRules {
     }
 
     /** Длина рукава по слою (блоки). */
-    public static double length(int layer) {
-        return Math.min(6.0D, 3.5D + 0.42D * Math.max(0, layer - 1));
+    public static double length(int executionTier) {
+        return Math.min(6.0D, 3.5D + 0.42D * Math.max(0, executionTier - 1));
     }
 
     /** Радиус рукава по слою (блоки). */
-    public static double radius(int layer) {
-        return Math.min(2.65D, 1.6D + 0.15D * Math.max(0, layer));
+    public static double radius(int executionTier) {
+        return Math.min(2.65D, 1.6D + 0.15D * Math.max(0, executionTier));
     }
 
     /** Множитель урона по слою (слой 7 = 1). */
-    public static double power(int layer) {
-        return layer <= 0 ? 0.0D : 0.3D + 0.1D * Math.min(7, layer);
+    public static double power(int executionTier) {
+        return executionTier <= 0 ? 0.0D : 0.3D + 0.1D * Math.min(7, executionTier);
     }
 
     /** Ось урагана: точка на расстоянии {@code d} от старта по направлению {@code f}. */

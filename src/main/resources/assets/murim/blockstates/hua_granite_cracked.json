@@ -2,34 +2,156 @@
   "variants": {
     "": [
       {
-        "model": "murim:block/hua_granite_cracked"
+        "model": "murim:block/hua_granite_cracked",
+        "weight": 2
       },
       {
         "model": "murim:block/hua_granite_cracked",
-        "y": 90
+        "y": 90,
+        "weight": 2
       },
       {
         "model": "murim:block/hua_granite_cracked",
-        "y": 180
+        "y": 180,
+        "weight": 2
       },
       {
         "model": "murim:block/hua_granite_cracked",
-        "y": 270
-      },
-      {
-        "model": "murim:block/hua_granite_cracked_b"
-      },
-      {
-        "model": "murim:block/hua_granite_cracked_b",
-        "y": 90
+        "y": 270,
+        "weight": 2
       },
       {
         "model": "murim:block/hua_granite_cracked_b",
-        "y": 180
+        "weight": 2
       },
       {
         "model": "murim:block/hua_granite_cracked_b",
-        "y": 270
+        "y": 90,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/hua_granite_cracked_b",
+        "y": 180,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/hua_granite_cracked_b",
+        "y": 270,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/hua_granite_cracked_c",
+        "weight": 2
+      },
+      {
+        "model": "murim:block/hua_granite_cracked_c",
+        "y": 90,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/hua_granite_cracked_c",
+        "y": 180,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/hua_granite_cracked_c",
+        "y": 270,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/hua_granite_cracked_d",
+        "weight": 2
+      },
+      {
+        "model": "murim:block/hua_granite_cracked_d",
+        "y": 90,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/hua_granite_cracked_d",
+        "y": 180,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/hua_granite_cracked_d",
+        "y": 270,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/hua_granite_cracked_e",
+        "weight": 2
+      },
+      {
+        "model": "murim:block/hua_granite_cracked_e",
+        "y": 90,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/hua_granite_cracked_e",
+        "y": 180,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/hua_granite_cracked_e",
+        "y": 270,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/hua_granite_cracked_f",
+        "weight": 2
+      },
+      {
+        "model": "murim:block/hua_granite_cracked_f",
+        "y": 90,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/hua_granite_cracked_f",
+        "y": 180,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/hua_granite_cracked_f",
+        "y": 270,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/hua_granite",
+        "weight": 6
+      },
+      {
+        "model": "murim:block/hua_granite",
+        "y": 90,
+        "weight": 6
+      },
+      {
+        "model": "murim:block/hua_granite",
+        "y": 180,
+        "weight": 6
+      },
+      {
+        "model": "murim:block/hua_granite",
+        "y": 270,
+        "weight": 6
+      },
+      {
+        "model": "murim:block/hua_granite_b",
+        "weight": 6
+      },
+      {
+        "model": "murim:block/hua_granite_b",
+        "y": 90,
+        "weight": 6
+      },
+      {
+        "model": "murim:block/hua_granite_b",
+        "y": 180,
+        "weight": 6
+      },
+      {
+        "model": "murim:block/hua_granite_b",
+        "y": 270,
+        "weight": 6
       }
     ]
   }

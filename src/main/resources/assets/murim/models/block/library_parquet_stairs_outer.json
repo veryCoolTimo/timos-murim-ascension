@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/outer_stairs",
+  "textures": {
+    "bottom": "murim:block/library_parquet_border",
+    "top": "murim:block/library_parquet_0",
+    "side": "murim:block/library_parquet_border"
+  }
+}

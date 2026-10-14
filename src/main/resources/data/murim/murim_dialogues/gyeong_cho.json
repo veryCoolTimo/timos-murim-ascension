@@ -61,10 +61,19 @@
     },
     "night": {
       "random": [
-        "dialogue.murim.gyeong_cho.night1"
+        "@context"
       ],
       "gesture": "nod",
       "options": [
+        {
+          "text": "dialogue.murim.social.opt.business",
+          "when": [
+            {
+              "social": "business"
+            }
+          ],
+          "next": "sect_business"
+        },
         {
           "text": "dialogue.murim.gyeong_cho.opt.heal",
           "next": "heal"
@@ -80,27 +89,22 @@
     },
     "greet": {
       "random": [
-        "dialogue.murim.gyeong_cho.greet1",
-        "dialogue.murim.gyeong_cho.greet2"
+        "@context"
       ],
       "gesture": "nod",
       "options": [
         {
-          "text": "dialogue.murim.gyeong_cho.opt.heal",
-          "next": "heal"
-        },
-        {
-          "text": "dialogue.murim.gyeong_cho.opt.pills",
+          "text": "dialogue.murim.social.opt.business",
           "when": [
             {
-              "member": true
+              "social": "business"
             }
           ],
-          "next": "pills"
+          "next": "sect_business"
         },
         {
-          "text": "dialogue.murim.gyeong_cho.opt.ask",
-          "next": "answer"
+          "text": "dialogue.murim.social.opt.topics",
+          "next": "sect_topics"
         },
         {
           "text": "dialogue.murim.opt.leave"
@@ -194,6 +198,76 @@
         {
           "text": "dialogue.murim.gyeong_cho.opt.ask",
           "next": "answer"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "sect_topics": {
+      "line": "dialogue.murim.social.business",
+      "options": [
+        {
+          "text": "dialogue.murim.gyeong_cho.opt.heal",
+          "next": "heal"
+        },
+        {
+          "text": "dialogue.murim.gyeong_cho.opt.pills",
+          "when": [
+            {
+              "member": true
+            }
+          ],
+          "next": "pills"
+        },
+        {
+          "text": "dialogue.murim.gyeong_cho.opt.ask",
+          "next": "answer"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "sect_business": {
+      "line": "dialogue.murim.social.business",
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.social.opt.first",
+          "when": [
+            {
+              "social": "promotion:first"
+            }
+          ],
+          "actions": [
+            {
+              "type": "promotion_offer",
+              "value": "first"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.social.opt.elder",
+          "when": [
+            {
+              "social": "promotion:elder"
+            }
+          ],
+          "actions": [
+            {
+              "type": "promotion_offer",
+              "value": "elder"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.social.opt.requests",
+          "actions": [
+            {
+              "type": "request_menu"
+            }
+          ]
         },
         {
           "text": "dialogue.murim.opt.leave"

@@ -1,0 +1,43 @@
+{
+ "type": "minecraft:block",
+ "pools": [
+  {
+   "bonus_rolls": 0.0,
+   "conditions": [
+    {
+     "condition": "minecraft:survives_explosion"
+    }
+   ],
+   "entries": [
+    {
+     "type": "minecraft:item",
+     "name": "murim:white_pillar"
+    }
+   ],
+   "rolls": 1.0
+  },
+  {
+   "bonus_rolls": 0.0,
+   "rolls": 1.0,
+   "conditions": [
+    {
+     "condition": "minecraft:survives_explosion"
+    },
+    {
+     "condition": "minecraft:block_state_property",
+     "block": "murim:white_pillar",
+     "properties": {
+      "bridged": "true"
+     }
+    }
+   ],
+   "entries": [
+    {
+     "type": "minecraft:item",
+     "name": "murim:red_beam"
+    }
+   ]
+  }
+ ],
+ "random_sequence": "murim:blocks/white_pillar"
+}

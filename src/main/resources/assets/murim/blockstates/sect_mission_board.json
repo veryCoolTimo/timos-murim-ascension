@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "murim:block/sect_mission_board"
+    },
+    "facing=east": {
+      "model": "murim:block/sect_mission_board",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "murim:block/sect_mission_board",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "murim:block/sect_mission_board",
+      "y": 270
+    }
+  }
+}

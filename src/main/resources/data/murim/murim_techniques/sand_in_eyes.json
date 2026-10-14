@@ -73,6 +73,6 @@
   "weakness": "technique.murim.sand_in_eyes.weakness",
   "hit_stop_ticks": 0,
   "cooldown_ticks": 200,
-  "layers": 2,
+  "star_cap": 12,
   "tier": "basic"
 }

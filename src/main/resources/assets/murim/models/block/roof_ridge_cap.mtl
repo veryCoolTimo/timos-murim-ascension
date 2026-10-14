@@ -1,0 +1,5 @@
+newmtl ends
+map_Kd #ends
+
+newmtl tiles
+map_Kd #tiles

@@ -22,13 +22,13 @@ public final class RainExecutor {
 
     /** Начало IMPACT: цель по взгляду до 16 блоков, рывок сбоку неё за спину. */
     public static boolean start(ServerPlayer player, ResourceLocation id) {
-        int layer = Math.max(0, io.github.verycooltimo.murim.mastery.MasteryService.layer(player, id));
+        int executionTier = Math.max(0, io.github.verycooltimo.murim.mastery.MasteryService.executionTier(player, id));
         double base = TechniqueDamage.base(player, id);
         Vec3 o = player.position();
         Vec3 look = player.getLookAngle();
         Vec3 f = new Vec3(look.x, 0.0D, look.z);
         f = f.lengthSqr() < 1.0E-6D ? new Vec3(0.0D, 0.0D, 1.0D) : f.normalize();
-        if (layer <= 0) {
+        if (executionTier <= 0) {
             // Слой 0 — учебный укол в ближнем секторе, без эффектов.
             boolean hit = false;
             double cos = Math.cos(Math.toRadians(PlumRules.TRAINING_ARC / 2.0D));
@@ -71,13 +71,13 @@ public final class RainExecutor {
         if (path.lengthSqr() > 1.0E-4D) {
             io.github.verycooltimo.murim.combat.FootworkService.sendDash(player, path.normalize(), path.length(), RainRules.DASH_TICKS);
         }
-        player.setData(ModAttachments.RAIN, new double[] {o.x, o.y, o.z, dir.x, dir.z, layer,
+        player.setData(ModAttachments.RAIN, new double[] {o.x, o.y, o.z, dir.x, dir.z, executionTier,
                 target == null ? -1 : target.getId(), 0, 0, dest.x, dest.y, dest.z});
         // Иммунитет на проходе: мастер — размытая полоса.
         player.invulnerableTime = Math.max(player.invulnerableTime, RainRules.DASH_TICKS + 4);
         float yaw = (float) Math.toDegrees(Math.atan2(-dir.x, dir.z));
         PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
-                new RainPayload(player.getId(), o, dest, yaw, layer, RainPayload.RELEASE, target == null ? -1 : target.getId()));
+                new RainPayload(player.getId(), o, dest, yaw, executionTier, RainPayload.RELEASE, target == null ? -1 : target.getId()));
         return false;
     }
 
@@ -99,8 +99,8 @@ public final class RainExecutor {
     /** Шкала после замаха: метка, оцепенение, три волны ливня. */
     public static void tick(ServerPlayer player, ResourceLocation id, int since) {
         double[] r = player.getData(ModAttachments.RAIN);
-        int layer = (int) r[5];
-        if (layer <= 0 || r.length < 12) {
+        int executionTier = (int) r[5];
+        if (executionTier <= 0 || r.length < 12) {
             return;
         }
         int t = since + RainRules.RELEASE;
@@ -111,7 +111,7 @@ public final class RainExecutor {
             r[6] = -1;
             player.setData(ModAttachments.RAIN, r);
             PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
-                    new RainPayload(player.getId(), player.position(), player.position(), 0.0F, layer, RainPayload.LOST, -1));
+                    new RainPayload(player.getId(), player.position(), player.position(), 0.0F, executionTier, RainPayload.LOST, -1));
             return;
         }
         // Метка: мастер прошёл у цели — замах «провёл» по ней, но урона нет.
@@ -122,7 +122,7 @@ public final class RainExecutor {
                 player.setData(ModAttachments.RAIN, r);
                 entrance(target, player);
                 PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
-                        new RainPayload(player.getId(), new Vec3(r[0], r[1], r[2]), target.position(), 0.0F, layer,
+                        new RainPayload(player.getId(), new Vec3(r[0], r[1], r[2]), target.position(), 0.0F, executionTier,
                                 RainPayload.MARKED, target.getId()));
             }
         }
@@ -136,7 +136,7 @@ public final class RainExecutor {
             target.hurtMarked = true;
         }
         double base = TechniqueDamage.base(player, id)
-                * RainRules.power(layer);
+                * RainRules.power(executionTier);
         for (int k = 0; k < RainRules.COHORTS.length; k++) {
             if (t != RainRules.contact(k)) {
                 continue;
@@ -154,7 +154,7 @@ public final class RainExecutor {
                 }
                 PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
                         new RainPayload(player.getId(), new Vec3(r[0], r[1], r[2]),
-                                target.position().add(0.0D, target.getBbHeight() * 0.5D, 0.0D), 0.0F, layer,
+                                target.position().add(0.0D, target.getBbHeight() * 0.5D, 0.0D), 0.0F, executionTier,
                                 RainPayload.HIT + k, target.getId()));
             }
         }

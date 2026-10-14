@@ -1,0 +1,107 @@
+{
+  "multipart": [
+    {
+      "apply": {
+        "model": "murim:block/dining_table_top"
+      }
+    },
+    {
+      "when": {
+        "north": "false"
+      },
+      "apply": {
+        "model": "murim:block/dining_table_side"
+      }
+    },
+    {
+      "when": {
+        "east": "false"
+      },
+      "apply": {
+        "model": "murim:block/dining_table_side",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "south": "false"
+      },
+      "apply": {
+        "model": "murim:block/dining_table_side",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "west": "false"
+      },
+      "apply": {
+        "model": "murim:block/dining_table_side",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "AND": [
+          {
+            "north": "false"
+          },
+          {
+            "west": "false"
+          }
+        ]
+      },
+      "apply": {
+        "model": "murim:block/dining_table_leg"
+      }
+    },
+    {
+      "when": {
+        "AND": [
+          {
+            "north": "false"
+          },
+          {
+            "east": "false"
+          }
+        ]
+      },
+      "apply": {
+        "model": "murim:block/dining_table_leg",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "AND": [
+          {
+            "south": "false"
+          },
+          {
+            "east": "false"
+          }
+        ]
+      },
+      "apply": {
+        "model": "murim:block/dining_table_leg",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "AND": [
+          {
+            "south": "false"
+          },
+          {
+            "west": "false"
+          }
+        ]
+      },
+      "apply": {
+        "model": "murim:block/dining_table_leg",
+        "y": 270
+      }
+    }
+  ]
+}

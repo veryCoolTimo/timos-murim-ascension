@@ -1,0 +1,5 @@
+newmtl soffit
+map_Kd #soffit
+
+newmtl wood
+map_Kd #wood

@@ -79,8 +79,8 @@ public final class WhirlRules {
 
     /** Радиус зоны по слою (блоки). */
     /** Радиус вихря вокруг мастера по слою (блоки). */
-    public static double radius(int layer) {
-        return switch (Math.max(0, Math.min(7, layer))) {
+    public static double radius(int executionTier) {
+        return switch (Math.max(0, Math.min(7, executionTier))) {
             case 0, 1 -> 1.6D;
             case 2 -> 2.0D;
             case 3 -> 2.4D;
@@ -91,25 +91,25 @@ public final class WhirlRules {
         };
     }
 
-    public static double height(int layer) {
-        return Math.min(6.0D, 2.5D + 0.5D * Math.max(0, layer));
+    public static double height(int executionTier) {
+        return Math.min(6.0D, 2.5D + 0.5D * Math.max(0, executionTier));
     }
 
     /** Число столпов: 0 на слоях 0–1, 4 на 2-м, 6 на 3-м, 8 на 4–6-м, 12 на 7-м. */
-    public static int pillars(int layer) {
-        return layer <= 1 ? 0 : layer == 2 ? 4 : layer == 3 ? 6 : layer <= 6 ? 8 : 12;
+    public static int pillars(int executionTier) {
+        return executionTier <= 1 ? 0 : executionTier == 2 ? 4 : executionTier == 3 ? 6 : executionTier <= 6 ? 8 : 12;
     }
 
-    public static boolean walls(int layer) {
-        return layer >= 4;
+    public static boolean walls(int executionTier) {
+        return executionTier >= 4;
     }
 
-    public static boolean whirl(int layer) {
-        return layer >= 5;
+    public static boolean whirl(int executionTier) {
+        return executionTier >= 5;
     }
 
-    public static boolean finale(int layer) {
-        return layer >= 6;
+    public static boolean finale(int executionTier) {
+        return executionTier >= 6;
     }
 
     private WhirlRules() {

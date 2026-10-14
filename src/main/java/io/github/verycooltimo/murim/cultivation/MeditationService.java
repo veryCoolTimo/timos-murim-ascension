@@ -272,10 +272,11 @@ public final class MeditationService {
         player.setData(ModAttachments.MEDITATION, next);
         DantianProfile profile = player.getData(ModAttachments.PROFILE);
         double gain = gainAt(next.ticks()) * profile.efficiency()
+                * io.github.verycooltimo.murim.mastery.MasteryService.practiceMethod(player)
                 * io.github.verycooltimo.murim.world.PlaceService.gainFactor(player)
                 // Пещера покаяния: медитация в келье ×1,5 (автор 03.10 п.7).
                 * io.github.verycooltimo.murim.sect.seal.PenanceService.meditationFactor(player);
-        double cap = profile.capacity() * POOL_CAP;
+        double cap = Realm.wall(profile);
         DantianProfile updated = profile.withPool(Math.min(cap, profile.pool() + gain));
         for (int i = 0; i < MEDITATION_CIRCULATION_STEPS; i++) {
             updated = updated.circulateOnce();
@@ -305,7 +306,7 @@ public final class MeditationService {
         if (profile.rank() == Realm.PEAK) {
             return checkStage(player, profile, state);
         }
-        Realm.Blocker blocker = Realm.check(profile, player.getData(ModAttachments.MASTERY).layers(),
+        Realm.Blocker blocker = Realm.check(profile, player.getData(ModAttachments.MASTERY).executionTiers(),
                 player.getData(io.github.verycooltimo.murim.entity.boss.BossRegistry.BOSS_DEFEATED));
         // Body gate: off until the balance doc sets TrainingBalance.BREAKTHROUGH_BODY_LEVEL (all zero on 05.10).
         if (blocker == Realm.Blocker.NONE && !io.github.verycooltimo.murim.training.BodyRules.breakthroughReady(profile.rank() + 1,
@@ -327,7 +328,8 @@ public final class MeditationService {
                     : blocker != Realm.Blocker.NO_TECHNIQUE ? "murim.rank.wall.max"
                     : Realm.condition(profile.rank() + 1) == Realm.Condition.MASTER_ANY
                     ? "murim.rank.wall.master_any" : "murim.rank.wall.technique";
-            player.displayClientMessage(Component.translatable(key, Realm.layerNeed(profile.rank() + 1))
+            player.displayClientMessage(Component.translatable(key,
+                            io.github.verycooltimo.murim.mastery.MasteryService.requirement(player, Realm.tierNeed(profile.rank() + 1)))
                     .withStyle(ChatFormatting.GRAY), true);
         }
         return false;
@@ -335,12 +337,12 @@ public final class MeditationService {
 
     /**
      * Подступень Пика утверждается без сцены прорыва (автор 03.10): стена запаса и техника до слоя
-     * {@link Realm#stageLayerNeed} — глаза открываются, звон, строка в чате. Травмы нет: это не стена ступени.
+     * {@link Realm#stageTierNeed} — глаза открываются, звон, строка в чате. Травмы нет: это не стена ступени.
      *
      * @return {@code true}, если подступень утверждена и сессия закончилась
      */
     private static boolean checkStage(ServerPlayer player, DantianProfile profile, MeditationState state) {
-        Realm.Blocker blocker = Realm.checkStage(profile, player.getData(ModAttachments.MASTERY).layers());
+        Realm.Blocker blocker = Realm.checkStage(profile, player.getData(ModAttachments.MASTERY).executionTiers());
         if (blocker == Realm.Blocker.NONE) {
             DantianProfile settled = Realm.settle(profile);
             player.setData(ModAttachments.PROFILE, settled);
@@ -357,7 +359,8 @@ public final class MeditationService {
         if (Realm.atWall(profile) && state.ticks() % WALL_HINT_TICKS == 0) {
             boolean summit = blocker == Realm.Blocker.MAX_RANK;
             player.displayClientMessage(Component.translatable(summit ? "murim.rank.wall.max" : "murim.rank.wall.stage",
-                    Realm.stageLayerNeed(profile.stage() + 1)).withStyle(ChatFormatting.GRAY), true);
+                    io.github.verycooltimo.murim.mastery.MasteryService.requirement(player,
+                            Realm.stageTierNeed(profile.stage() + 1))).withStyle(ChatFormatting.GRAY), true);
         }
         return false;
     }
@@ -440,9 +443,13 @@ public final class MeditationService {
                     (float) RingMinigame.bandHalfWidth(beat, game.ticks()),
                     (float) game.stability(), (float) game.strain());
         }
-        PacketDistributor.sendToPlayer(player, new SyncMeditationPayload(state.active(),
+        var payload = new SyncMeditationPayload(state.active(),
                 cultivation.beats(), state.ticks(), event, ring,
-                state.active() ? state.breakthrough() : -1, player.getData(ModAttachments.PROFILE).rank()));
+                state.active() ? state.breakthrough() : -1, player.getData(ModAttachments.PROFILE).rank());
+        // GameTest mock players have no client channel for our payloads.
+        if (player.connection != null && player.connection.hasChannel(payload)) {
+            PacketDistributor.sendToPlayer(player, payload);
+        }
     }
 
     private MeditationService() {

@@ -47,6 +47,7 @@ public final class ClientTechniqueHandler {
         // consumeClick вычитывает накопленные нажатия. Вычерпываем очередь полностью, но
         // отправляем не более одного запроса за тик: иначе при лагах уходит пачка пакетов,
         // из которых сервер всё равно примет первый — остальные упрутся в кулдаун.
+        TechniqueWheel.finishSelectionIfReleased();
         tickPending();
         tickDodge(minecraft);
 
@@ -71,6 +72,8 @@ public final class ClientTechniqueHandler {
             // Применяется техника выбранного слота (кольцо выбора, автор 01.10). Пустой слот —
             // подсказка, где разложить техники, а не тишина.
             java.util.Optional<net.minecraft.resources.ResourceLocation> active = ClientLoadoutState.activeTechnique();
+            io.github.verycooltimo.murim.MurimMod.LOGGER.info("Кольцо (клиент): R применяет {} из слота {}", active.orElse(null),
+                    ClientLoadoutState.active());
             if (active.isPresent() && ClientCooldowns.remaining(active.get()) > 0 && minecraft.player != null) {
                 // Нажал во время перезарядки — сказать сколько ждать, а не молчать.
                 minecraft.player.displayClientMessage(net.minecraft.network.chat.Component.translatable("murim.technique.cooldown",
@@ -240,11 +243,6 @@ public final class ClientTechniqueHandler {
                 }
                 scheduleAnimation(payload);
                 TechniqueDefinition started = TechniqueLoader.get(payload.techniqueId());
-                // Мечевая форма с пустой рукой — в руке появляется ци-меч (03.10).
-                if (io.github.verycooltimo.murim.combat.QiSword.needsSword(started) && Minecraft.getInstance().level != null
-                        && Minecraft.getInstance().level.getEntity(payload.sourceId()) instanceof net.minecraft.world.entity.player.Player caster) {
-                    QiSwordClient.mark(caster);
-                }
                 // У ладони собственный набор слоёв: общая схема дуги её не описывает.
                 //
                 // Рендереры ВЗАИМОИСКЛЮЧАЮЩИЕ. Раньше общая дуга запускалась и для ладони
@@ -254,9 +252,14 @@ public final class ClientTechniqueHandler {
                 // ладони невидимыми для измерения — большую часть энергии давала дуга.
                 boolean palm = started != null && started.behavior().type().equals(
                         io.github.verycooltimo.murim.technique.TechniqueBehavior.PALM_BLAST);
-                // Искусства третьего сорта: на слое 0 никаких эффектов, мелочи слоя 1 шлёт сервер (JunkArts).
-                if (io.github.verycooltimo.murim.technique.JunkArts.isJunk(payload.techniqueId())) {
-                    MurimMod.LOGGER.debug("Искусство третьего сорта {} — без эффектов", payload.techniqueId());
+                // Старые уличные искусства без VFX; у трёх танцев — только шуточное свечение и пыль.
+                if (payload.executionTier() <= 0) {
+                    // Learned form at zero mastery: animation only, no qi VFX.
+                } else if (started != null && started.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.DemonicArt) {
+                    io.github.verycooltimo.murim.client.vfx.VfxManager.start(payload.sourceId(), started, payload.executionTier());
+                } else if (io.github.verycooltimo.murim.technique.JunkArts.isJunk(payload.techniqueId())) {
+                    io.github.verycooltimo.murim.client.vfx.FunnyJunkVfx.start(payload.sourceId(), started);
+                    MurimMod.LOGGER.debug("Искусство третьего сорта {}", payload.techniqueId());
                 } else if (palm) {
                     io.github.verycooltimo.murim.client.vfx.PalmVfxRenderer.start(
                             payload.sourceId(), started);
@@ -281,19 +284,36 @@ public final class ClientTechniqueHandler {
                 // Hit stop только тому, кто ударил. Заморозка чужого экрана из-за попадания
                 // соседа — это гриферство с обычного клиента, а не эффект.
                 if (isLocalPlayer(payload.sourceId())) {
-                    HitStopHandler.request(payload.hitStopTicks());
+                    TechniqueDefinition hitDefinition = TechniqueLoader.get(payload.techniqueId());
+                    var kind = hitDefinition != null && hitDefinition.foundation()
+                            ? io.github.verycooltimo.murim.combat.StrikeKind.FOUNDATION
+                            : io.github.verycooltimo.murim.combat.StrikeKind.TECHNIQUE_FINALE;
+                    if (kind.allowsHitStop()) HitStopHandler.request(payload.hitStopTicks());
                     // Уличный удар — без импакт-кадра и с лёгкой тряской: это не техника мастера.
                     boolean junk = io.github.verycooltimo.murim.technique.JunkArts.isJunk(payload.techniqueId());
-                    CameraShakeHandler.request(junk ? 0.3F : 1.0F);
-                    if (!junk) {
+                    if (payload.executionTier() > 0) CameraShakeHandler.request(junk ? 0.3F : 1.0F);
+                    if (kind.allowsImpactFrames() && !junk && payload.executionTier() > 0) {
                         ImpactScreenLayer.trigger();
                     }
                 }
             }
             case CANCELLED -> {
+                io.github.verycooltimo.murim.client.vfx.VfxManager.cancel(payload.sourceId());
                 // Прерванная техника не должна оставлять после себя ни висящий след,
                 // ни отложенный взмах, который выстрелит уже после отмены.
                 PENDING.remove(payload.sourceId());
+                if (io.github.verycooltimo.murim.technique.DemonicRules.isArt(payload.techniqueId())
+                        && Minecraft.getInstance().level != null
+                        && Minecraft.getInstance().level.getEntity(payload.sourceId()) instanceof AbstractClientPlayer fighter) {
+                    MurimPlayerAnimations.stopBlended(fighter, 6);
+                }
+                if (io.github.verycooltimo.murim.technique.JunkArts.FUNNY.contains(payload.techniqueId())) {
+                    io.github.verycooltimo.murim.client.vfx.FunnyJunkVfx.cancel(payload.sourceId());
+                    if (Minecraft.getInstance().level != null
+                            && Minecraft.getInstance().level.getEntity(payload.sourceId()) instanceof AbstractClientPlayer dancer) {
+                        MurimPlayerAnimations.stop(dancer);
+                    }
+                }
                 BladeTrailRenderer.cancel(payload.sourceId());
                 io.github.verycooltimo.murim.client.vfx.PalmVfxRenderer.cancel(payload.sourceId());
                 MurimMod.LOGGER.debug("Техника {} прервана", payload.techniqueId());
@@ -324,6 +344,8 @@ public final class ClientTechniqueHandler {
     /** Снимает отложенные запуски: смена мира не должна выстрелить анимацией в новом. */
     public static void reset() {
         PENDING.clear();
+        io.github.verycooltimo.murim.client.vfx.FunnyJunkVfx.reset();
+        io.github.verycooltimo.murim.client.vfx.VfxManager.reset();
     }
 
     private static void scheduleAnimation(TechniqueEventPayload payload) {
@@ -333,8 +355,13 @@ public final class ClientTechniqueHandler {
         if (definition == null) {
             return;
         }
-        int delay = definition.startTickOf(TechniquePhase.WINDUP);
+        int delay = definition.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.DemonicArt
+                ? 0 : definition.startTickOf(TechniquePhase.WINDUP);
         net.minecraft.resources.ResourceLocation animation = definition.animation();
+        if (payload.techniqueId().equals(io.github.verycooltimo.murim.technique.DemonicRules.id("clear_sky_sword"))) {
+            int contacts = io.github.verycooltimo.murim.technique.DemonicRules.contacts("clear_sky_sword", payload.executionTier());
+            if (contacts < 3) animation = io.github.verycooltimo.murim.technique.DemonicRules.id("clear_sky_sword_" + contacts);
+        }
         if (delay <= 0) {
             playAnimation(payload, animation);
             return;

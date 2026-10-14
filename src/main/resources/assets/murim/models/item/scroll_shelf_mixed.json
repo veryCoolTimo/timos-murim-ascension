@@ -1,0 +1,129 @@
+{
+  "loader": "neoforge:obj",
+  "model": "murim:models/block/obj/scroll_shelf_mixed_item.obj",
+  "flip_v": false,
+  "emissive_ambient": true,
+  "automatic_culling": true,
+  "shade_quads": true,
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "wood": "murim:block/plum_shelf_wood",
+    "dark": "murim:block/plum_shelf_dark",
+    "dark_top": "murim:block/plum_shelf_dark_top",
+    "particle": "murim:block/plum_shelf_dark",
+    "pages": "murim:block/library_book_pages",
+    "scroll": "murim:block/library_scroll_end",
+    "stack_edge": "murim:block/library_stack_edge",
+    "red": "murim:block/library_cover_red",
+    "indigo": "murim:block/library_cover_indigo",
+    "ochre": "murim:block/library_cover_ochre",
+    "olive": "murim:block/library_cover_olive",
+    "brown": "murim:block/library_cover_brown",
+    "case": "murim:block/library_wood"
+  },
+  "display": {
+    "gui": {
+      "rotation": [
+        30,
+        225,
+        0
+      ],
+      "translation": [
+        0,
+        -4.5,
+        0
+      ],
+      "scale": [
+        0.42,
+        0.42,
+        0.42
+      ]
+    },
+    "ground": {
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "translation": [
+        0,
+        2,
+        0
+      ],
+      "scale": [
+        0.2,
+        0.2,
+        0.2
+      ]
+    },
+    "fixed": {
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "translation": [
+        0,
+        -4,
+        0
+      ],
+      "scale": [
+        0.4,
+        0.4,
+        0.4
+      ]
+    },
+    "thirdperson_righthand": {
+      "rotation": [
+        75,
+        45,
+        0
+      ],
+      "translation": [
+        0,
+        1.5,
+        0
+      ],
+      "scale": [
+        0.25,
+        0.25,
+        0.25
+      ]
+    },
+    "firstperson_righthand": {
+      "rotation": [
+        0,
+        45,
+        0
+      ],
+      "translation": [
+        0,
+        -2,
+        0
+      ],
+      "scale": [
+        0.3,
+        0.3,
+        0.3
+      ]
+    },
+    "firstperson_lefthand": {
+      "rotation": [
+        0,
+        225,
+        0
+      ],
+      "translation": [
+        0,
+        -2,
+        0
+      ],
+      "scale": [
+        0.3,
+        0.3,
+        0.3
+      ]
+    }
+  },
+  "ambientocclusion": false
+}

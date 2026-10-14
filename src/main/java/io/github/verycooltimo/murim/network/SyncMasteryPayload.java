@@ -15,21 +15,27 @@ import java.util.List;
  * Мудрость не передаётся — игрок её не видит (автор 30.09: «косвенно»).
  *
  * @param entries выученные техники
+ * @param qiCostFactor текущая скидка пилюль, без повторного множителя освоения
+ * @param qiDiscountUntil серверное время конца скидки
  */
-public record SyncMasteryPayload(List<Entry> entries) implements CustomPacketPayload {
+public record SyncMasteryPayload(List<Entry> entries, float qiCostFactor, long qiDiscountUntil) implements CustomPacketPayload {
+
+    public SyncMasteryPayload(List<Entry> entries) {
+        this(entries, 1.0F, 0L);
+    }
 
     /**
      * @param technique техника
-     * @param layer     пройденный слой
+     * @param stars     пройденный слой
      * @param cap       предел манускрипта
      * @param progress  доля пути к следующему слою, 0..1
      * @param pending   неосмысленное пережитое — его показывает двойник в медитации
      */
-    public record Entry(ResourceLocation technique, int layer, int cap, float progress, float pending) {
+    public record Entry(ResourceLocation technique, int stars, int cap, float progress, float pending) {
 
         public static final StreamCodec<ByteBuf, Entry> STREAM_CODEC = StreamCodec.composite(
                 ResourceLocation.STREAM_CODEC, Entry::technique,
-                ByteBufCodecs.VAR_INT, Entry::layer,
+                ByteBufCodecs.VAR_INT, Entry::stars,
                 ByteBufCodecs.VAR_INT, Entry::cap,
                 ByteBufCodecs.FLOAT, Entry::progress,
                 ByteBufCodecs.FLOAT, Entry::pending,
@@ -42,6 +48,8 @@ public record SyncMasteryPayload(List<Entry> entries) implements CustomPacketPay
     public static final StreamCodec<RegistryFriendlyByteBuf, SyncMasteryPayload> STREAM_CODEC =
             StreamCodec.composite(
                     Entry.STREAM_CODEC.apply(ByteBufCodecs.list()).cast(), SyncMasteryPayload::entries,
+                    ByteBufCodecs.FLOAT, SyncMasteryPayload::qiCostFactor,
+                    ByteBufCodecs.VAR_LONG, SyncMasteryPayload::qiDiscountUntil,
                     SyncMasteryPayload::new);
 
     @Override

@@ -1,0 +1,16 @@
+{
+  "parent": "minecraft:block/block",
+  "loader": "neoforge:obj",
+  "model": "murim:models/block/roof_v7_ridge.obj",
+  "flip_v": false,
+  "emissive_ambient": false,
+  "automatic_culling": false,
+  "ambientocclusion": false,
+  "textures": {
+    "ridge": "murim:block/roof_v7_cream",
+    "under": "murim:block/roof_tiles_under",
+    "top": "murim:block/roof_v7_tiles",
+    "particle": "murim:block/roof_v7_cream"
+  },
+  "render_type": "minecraft:solid"
+}

@@ -6,8 +6,39 @@
       "bonus_rolls": 0.0,
       "entries": [
         {
+          "type": "minecraft:item",
+          "name": "murim:propped_shelf"
+        }
+      ],
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        },
+        {
+          "condition": "minecraft:block_state_property",
+          "block": "murim:propped_shelf",
+          "properties": {
+            "half": "lower"
+          }
+        }
+      ]
+    },
+    {
+      "rolls": 1,
+      "entries": [
+        {
           "type": "minecraft:loot_table",
           "value": "murim:chests/ruined_library/propped"
+        }
+      ],
+      "conditions": [
+        {
+          "condition": "minecraft:block_state_property",
+          "block": "murim:propped_shelf",
+          "properties": {
+            "half": "lower",
+            "has_book": "true"
+          }
         }
       ]
     }

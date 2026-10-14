@@ -1,0 +1,15 @@
+{
+  "variants": {
+    "": [
+      {
+        "model": "murim:block/grey_bricks"
+      },
+      {
+        "model": "murim:block/grey_bricks_b"
+      },
+      {
+        "model": "murim:block/grey_bricks_c"
+      }
+    ]
+  }
+}

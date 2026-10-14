@@ -1,0 +1,13 @@
+{
+  "loader": "neoforge:obj",
+  "model": "murim:models/block/obj/round_silk_lantern_wall.obj",
+  "flip_v": false,
+  "emissive_ambient": true,
+  "automatic_culling": true,
+  "shade_quads": true,
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "tex": "murim:block/hall_lantern",
+    "particle": "murim:block/hall_lantern"
+  }
+}

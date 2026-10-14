@@ -46,8 +46,8 @@ class TangRulesTest {
     @Test
     void fiveLeaveAlmostAtOnceFromDifferentSides() {
         // Автор 03.10: «почти одновременно… немного из разных сторон».
-        for (int layer = 0; layer <= 8; layer++) {
-            assertTrue(TangRules.fiveRelease(TangRules.fiveCount(layer) - 1, layer) <= 4);
+        for (int executionTier = 0; executionTier <= 8; executionTier++) {
+            assertTrue(TangRules.fiveRelease(TangRules.fiveCount(executionTier) - 1, executionTier) <= 4);
         }
         assertEquals(1, TangRules.fiveCount(0));
         assertEquals(5, TangRules.fiveCount(7));

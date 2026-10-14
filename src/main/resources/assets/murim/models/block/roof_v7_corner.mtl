@@ -1,0 +1,17 @@
+newmtl cap
+map_Kd #cap
+
+newmtl hipridge
+map_Kd #hipridge
+
+newmtl rafter
+map_Kd #rafter
+
+newmtl side
+map_Kd #side
+
+newmtl top
+map_Kd #top
+
+newmtl under
+map_Kd #under

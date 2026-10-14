@@ -226,37 +226,40 @@
       ]
     },
     "member": {
-      "line": "dialogue.murim.leader.member",
       "gesture": "nod",
       "options": [
         {
-          "text": "dialogue.murim.leader.opt.how_sect",
-          "next": "sect_state"
-        },
-        {
-          "text": "dialogue.murim.leader.opt.ask_trust",
+          "text": "dialogue.murim.progression.opt.menu",
           "when": [
             {
-              "min_standing": "graduate",
-              "min_contribution": 30,
-              "not_flag": "approval.leader"
+              "social": "progression:menu"
             }
           ],
           "actions": [
             {
-              "type": "set_flag",
-              "value": "approval.leader"
+              "type": "progression_menu"
             }
-          ],
-          "next": "trusted"
+          ]
         },
         {
-          "text": "dialogue.murim.leader.opt.to_mentor",
-          "next": "where_mentor"
+          "text": "dialogue.murim.social.opt.business",
+          "when": [
+            {
+              "social": "business"
+            }
+          ],
+          "next": "sect_business"
+        },
+        {
+          "text": "dialogue.murim.social.opt.topics",
+          "next": "sect_topics"
         },
         {
           "text": "dialogue.murim.opt.leave"
         }
+      ],
+      "random": [
+        "@context"
       ]
     },
     "sect_state": {
@@ -311,10 +314,51 @@
     },
     "member_evening": {
       "random": [
-        "dialogue.murim.leader.member_evening1",
-        "dialogue.murim.leader.member_evening2"
+        "@context"
       ],
       "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.social.opt.business",
+          "when": [
+            {
+              "social": "business"
+            }
+          ],
+          "next": "sect_business"
+        },
+        {
+          "text": "dialogue.murim.leader.opt.how_sect",
+          "next": "sect_state"
+        },
+        {
+          "text": "dialogue.murim.leader.opt.ask_trust",
+          "when": [
+            {
+              "min_standing": "graduate",
+              "min_contribution": 30,
+              "not_flag": "approval.leader"
+            }
+          ],
+          "actions": [
+            {
+              "type": "set_flag",
+              "value": "approval.leader"
+            }
+          ],
+          "next": "trusted"
+        },
+        {
+          "text": "dialogue.murim.leader.opt.to_mentor",
+          "next": "where_mentor"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "sect_topics": {
+      "line": "dialogue.murim.social.business",
       "options": [
         {
           "text": "dialogue.murim.leader.opt.how_sect",
@@ -340,6 +384,51 @@
         {
           "text": "dialogue.murim.leader.opt.to_mentor",
           "next": "where_mentor"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "sect_business": {
+      "line": "dialogue.murim.social.business",
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.social.opt.first",
+          "when": [
+            {
+              "social": "promotion:first"
+            }
+          ],
+          "actions": [
+            {
+              "type": "promotion_offer",
+              "value": "first"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.social.opt.elder",
+          "when": [
+            {
+              "social": "promotion:elder"
+            }
+          ],
+          "actions": [
+            {
+              "type": "promotion_offer",
+              "value": "elder"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.social.opt.requests",
+          "actions": [
+            {
+              "type": "request_menu"
+            }
+          ]
         },
         {
           "text": "dialogue.murim.opt.leave"

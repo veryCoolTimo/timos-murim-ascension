@@ -1,0 +1,35 @@
+{
+  "note": "Existing author geometry, UVs and textures; original names for outsiders.",
+  "entities": {
+    "ha_yun": {
+      "geo": "bedrock/bandit.geo.json",
+      "texture": "textures/entity/bandit_elite.png",
+      "animation": "bedrock/bandit.animation.json"
+    },
+    "cho_gan": {
+      "geo": "bedrock/bandit.geo.json",
+      "texture": "textures/entity/bandit.png",
+      "animation": "bedrock/bandit.animation.json"
+    },
+    "bae_do": {
+      "geo": "bedrock/bandit_archer.geo.json",
+      "texture": "textures/entity/peddler.png",
+      "animation": "bedrock/bandit_archer.animation.json"
+    },
+    "tae_hyeon": {
+      "geo": "bedrock/bandit.geo.json",
+      "texture": "textures/entity/bandit_elite.png",
+      "animation": "bedrock/bandit.animation.json"
+    },
+    "han_dok": {
+      "geo": "bedrock/bandit.geo.json",
+      "texture": "textures/entity/bandit_chief.png",
+      "animation": "bedrock/bandit.animation.json"
+    },
+    "kwon_yeon": {
+      "geo": "bedrock/bandit.geo.json",
+      "texture": "textures/entity/bandit_chief.png",
+      "animation": "bedrock/bandit.animation.json"
+    }
+  }
+}

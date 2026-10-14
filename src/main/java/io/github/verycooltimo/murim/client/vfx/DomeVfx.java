@@ -234,7 +234,7 @@ public final class DomeVfx {
 
     private static final class Cast {
         final int entityId;
-        final int layer;
+        final int executionTier;
         int start;
         final Random random;
         final double density;
@@ -259,13 +259,13 @@ public final class DomeVfx {
         /** Контуры вибрирующего клинка: {тик, смещение x, y} в плоскости экрана. */
         final List<double[]> ghosts = new ArrayList<>();
 
-        Cast(int entityId, int layer) {
+        Cast(int entityId, int executionTier) {
             this.entityId = entityId;
-            this.layer = layer;
+            this.executionTier = executionTier;
             this.start = clientTicks;
             this.random = new Random(entityId * 6151L + clientTicks);
-            this.density = DomeRules.density(layer);
-            this.scale = DomeRules.scale(layer);
+            this.density = DomeRules.density(executionTier);
+            this.scale = DomeRules.scale(executionTier);
         }
 
         int t() {
@@ -305,16 +305,16 @@ public final class DomeVfx {
             }
             return;
         }
-        if (payload.event() != TechniqueEventPayload.Event.STARTED || payload.layer() <= 0) {
+        if (payload.event() != TechniqueEventPayload.Event.STARTED || payload.executionTier() <= 0) {
             return;
         }
         Cast old = find(payload.sourceId());
-        if (old != null && old.t() <= 1 && old.layer == payload.layer()) {
+        if (old != null && old.t() <= 1 && old.executionTier == payload.executionTier()) {
             // Пакет посадки пришёл раньше события старта — шкала уже идёт.
             return;
         }
         CASTS.removeIf(c -> c.entityId == payload.sourceId());
-        Cast c = new Cast(payload.sourceId(), payload.layer());
+        Cast c = new Cast(payload.sourceId(), payload.executionTier());
         CASTS.add(c);
         stance(c);
     }
@@ -325,7 +325,7 @@ public final class DomeVfx {
         if (p.stage() == DomePayload.BEGIN) {
             if (c == null || c.t() > 2) {
                 CASTS.removeIf(x -> x.entityId == p.entityId());
-                c = new Cast(p.entityId(), p.layer());
+                c = new Cast(p.entityId(), p.executionTier());
                 CASTS.add(c);
                 stance(c);
             }
@@ -363,8 +363,8 @@ public final class DomeVfx {
 
     /** Стойка: синяя аура, серая пыль из-под ног. */
     private static void stance(Cast c) {
-        if (c.layer >= 3) {
-            ClientAuraState.techniqueAura(c.entityId, 2 + Math.min(2, c.layer / 3), 0, DomeRules.RAISE + 4);
+        if (c.executionTier >= 3) {
+            ClientAuraState.techniqueAura(c.entityId, 2 + Math.min(2, c.executionTier / 3), 0, DomeRules.RAISE + 4);
         }
         Minecraft mc = Minecraft.getInstance();
         Entity e = mc.level == null ? null : mc.level.getEntity(c.entityId);
@@ -381,13 +381,13 @@ public final class DomeVfx {
     private static void build(Cast c) {
         c.branches.clear();
         c.blossoms.clear();
-        int n = DomeRules.trunks(c.layer);
+        int n = DomeRules.trunks(c.executionTier);
         Random r = c.random;
         double spacing = n > 1 ? Math.toRadians(2.0D * DomeRules.TRUNK_SPREAD / (n - 1)) * DomeRules.RADIUS : 2.0D;
         for (int k = 0; k < n; k++) {
-            double ang = DomeRules.trunkAngle(c.layer, k);
-            double h = DomeRules.trunkHeight(c.layer, k);
-            float born = DomeRules.plantTick(c.layer, k);
+            double ang = DomeRules.trunkAngle(c.executionTier, k);
+            double h = DomeRules.trunkHeight(c.executionTier, k);
+            float born = DomeRules.plantTick(c.executionTier, k);
             double a = Math.toRadians(ang);
             Vec3 rad = radial(c, a);
             Vec3 tan = c.side.scale(Math.cos(a)).subtract(c.ahead.scale(Math.sin(a)));
@@ -397,7 +397,7 @@ public final class DomeVfx {
             Vec3 mid = loc(c, Math.sin(a) * (DomeRules.RADIUS + 0.3D), h * 0.5D, Math.cos(a) * (DomeRules.RADIUS + 0.3D));
             Vec3 top = loc(c, Math.sin(a) * (DomeRules.RADIUS - curl), h * 0.92D, Math.cos(a) * (DomeRules.RADIUS - curl));
             // codex 03.10: ствол 0,10–0,16 блока.
-            double w = (0.1D + 0.05D * c.scale) * (DomeRules.bearing(c.layer, k) ? 1.15D : 0.62D);
+            double w = (0.1D + 0.05D * c.scale) * (DomeRules.bearing(c.executionTier, k) ? 1.15D : 0.62D);
             c.branches.add(new Branch(base, mid, top, w, born, DomeRules.GROW, 0, k, false, r, 2 + r.nextInt(2), rad));
             // Корни-раструб: два коротких отростка у пола — ствол встаёт из земли, а не висит.
             for (int s = -1; s <= 1; s += 2) {
@@ -406,7 +406,7 @@ public final class DomeVfx {
                         0.035D, born, 2.0F, 1, k, false, r, 1, rad));
             }
             // Сучья: 3–5 несимметричных, в плоскости дуги к соседям, 2–4 излома.
-            int limbs = c.layer >= 6 ? 5 : c.layer >= 3 ? 4 : 3;
+            int limbs = c.executionTier >= 6 ? 5 : c.executionTier >= 3 ? 4 : 3;
             for (int i = 0; i < limbs; i++) {
                 double at = 0.28D + 0.6D * (i + 0.5D) / limbs + (r.nextDouble() - 0.5D) * 0.1D;
                 int side = r.nextDouble() < 0.5D ? 1 : -1;
@@ -422,14 +422,14 @@ public final class DomeVfx {
                 Branch b = new Branch(st, ct, en, lw, lb, 2.5F, 1, k, false, r, 2, rad);
                 b.dark = r.nextInt(4) == 0;
                 c.branches.add(b);
-                grow(c, b, dir, len, lw, lb + 1.5F, 2, c.layer >= 7 ? 3 : 2, k, rad);
+                grow(c, b, dir, len, lw, lb + 1.5F, 2, c.executionTier >= 7 ? 3 : 2, k, rad);
             }
             // Развилка (d04): верх ствола расходится на 2–3 толстых сука — один загибается над
             // мастером (свод купола), другие — вверх и в стороны к соседям.
             // codex 03.10: развилка на 45–65 % высоты.
             Vec3 fork = bezier(base, mid, top, 0.5D + 0.2D * r.nextDouble());
             // Развилка неровная (codex раунд 4: верх не должен повторять одинаковые дуги-рога).
-            int forks = c.layer >= 4 && r.nextInt(3) > 0 ? 3 : 2;
+            int forks = c.executionTier >= 4 && r.nextInt(3) > 0 ? 3 : 2;
             for (int i = 0; i < forks; i++) {
                 double sd = (forks == 3 ? i - 1 : i == 0 ? -0.6D : 0.6D) + (r.nextDouble() - 0.5D) * 0.6D;
                 Vec3 dir = c.up.scale(0.75D).add(tan.scale(sd * 0.75D)).add(rad.scale(i == forks / 2 ? -0.75D : -0.2D)).normalize();
@@ -440,17 +440,17 @@ public final class DomeVfx {
                 float cb = born + DomeRules.GROW * 0.8F + 0.4F * i;
                 Branch b = new Branch(fork, ct, en, 0.045D, cb, 2.2F, 1, k, false, r, 3, rad);
                 c.branches.add(b);
-                grow(c, b, dir, len, 0.03D, cb + 1.2F, 2, c.layer >= 6 ? 3 : 2, k, rad);
+                grow(c, b, dir, len, 0.03D, cb + 1.2F, 2, c.executionTier >= 6 ? 3 : 2, k, rad);
             }
         }
         // Сеть (codex 03.10): 12–18 отчётливых перемычек соседей на 1,4/2,6/3,7 блока, ломаные,
         // с неровными просветами; смыкаются к фиксации позы.
         double[] heights = {1.4D, 2.6D, 3.7D};
         for (int k = 0; k + 1 < n; k++) {
-            double a0 = Math.toRadians(DomeRules.trunkAngle(c.layer, k));
-            double a1 = Math.toRadians(DomeRules.trunkAngle(c.layer, k + 1));
-            double hMin = Math.min(DomeRules.trunkHeight(c.layer, k), DomeRules.trunkHeight(c.layer, k + 1));
-            float ready = Math.max(DomeRules.plantTick(c.layer, k), DomeRules.plantTick(c.layer, k + 1)) + DomeRules.GROW;
+            double a0 = Math.toRadians(DomeRules.trunkAngle(c.executionTier, k));
+            double a1 = Math.toRadians(DomeRules.trunkAngle(c.executionTier, k + 1));
+            double hMin = Math.min(DomeRules.trunkHeight(c.executionTier, k), DomeRules.trunkHeight(c.executionTier, k + 1));
+            float ready = Math.max(DomeRules.plantTick(c.executionTier, k), DomeRules.plantTick(c.executionTier, k + 1)) + DomeRules.GROW;
             for (int j = 0; j < heights.length; j++) {
                 double y = heights[j] * c.scale + (r.nextDouble() - 0.5D) * 0.4D;
                 if (y > hMin * 0.92D) {
@@ -479,7 +479,7 @@ public final class DomeVfx {
             }
         }
         // Цветы (codex: −70 %): вдоль сучьев и прутьев, мелкие, 8–12 на блок у концов.
-        if (DomeRules.petals(c.layer)) {
+        if (DomeRules.petals(c.executionTier)) {
             for (Branch b : c.branches) {
                 if (b.depth == 0 || b.link || r.nextDouble() > 0.2D * Math.min(1.0D, c.density + 0.2D)) {
                     continue;
@@ -522,8 +522,8 @@ public final class DomeVfx {
 
     /** Точка на стволе {@code k} на высоте {@code y} (та же кривая, что рисуется). */
     private static Vec3 trunkAt(Cast c, int k, double y) {
-        double h = DomeRules.trunkHeight(c.layer, k);
-        double a = Math.toRadians(DomeRules.trunkAngle(c.layer, k));
+        double h = DomeRules.trunkHeight(c.executionTier, k);
+        double a = Math.toRadians(DomeRules.trunkAngle(c.executionTier, k));
         double curl = 0.5D * c.scale;
         Vec3 base = loc(c, Math.sin(a) * DomeRules.RADIUS, -0.05D, Math.cos(a) * DomeRules.RADIUS);
         Vec3 mid = loc(c, Math.sin(a) * (DomeRules.RADIUS + 0.3D), h * 0.5D, Math.cos(a) * (DomeRules.RADIUS + 0.3D));
@@ -561,7 +561,7 @@ public final class DomeVfx {
             m.drag = 0.8D;
             c.motes.add(m);
         }
-        if (DomeRules.petals(c.layer)) {
+        if (DomeRules.petals(c.executionTier)) {
             for (int i = 0; i < c.n(30) + 8; i++) {
                 Vec3 d = out.add(c.random.nextGaussian() * 0.8D, c.random.nextGaussian() * 0.6D + 0.2D, c.random.nextGaussian() * 0.8D).normalize();
                 Mote m = petal(c, at.add(d.scale(0.35D)), d.scale(0.12D + 0.2D * c.random.nextDouble()), 26 + c.random.nextInt(14));
@@ -656,7 +656,7 @@ public final class DomeVfx {
         boolean alive = c.endAt < 0.0F;
         Vec3 feet = e.position();
         // Вибрация клинка: копии смещены в плоскости экрана, частота растёт к первому удару.
-        if (alive && DomeRules.afterimages(c.layer) && t >= 6 && t < DomeRules.HOLD_END) {
+        if (alive && DomeRules.afterimages(c.executionTier) && t >= 6 && t < DomeRules.HOLD_END) {
             int every = t < DomeRules.SWINGS[0] ? 1 : t < DomeRules.RAISE ? 2 : 3;
             if (t % every == 0) {
                 double amp = t < DomeRules.SWINGS[0] ? 0.04D + 0.1D * (t - 6) / 6.0D : 0.08D;
@@ -711,14 +711,14 @@ public final class DomeVfx {
 
     /** Взмах {@code s}: серп клинка, розовая полоса к корню, на корне — пыль, лепестки, ветер. */
     private static void swing(Cast c, Entity e, int s, Minecraft mc) {
-        int n = DomeRules.trunks(c.layer);
+        int n = DomeRules.trunks(c.executionTier);
         Vec3 hand = hand(c, e);
         for (int k = 0; k < n; k++) {
-            int pt = DomeRules.plantTick(c.layer, k);
+            int pt = DomeRules.plantTick(c.executionTier, k);
             if (pt < DomeRules.SWINGS[s] || pt > DomeRules.SWINGS[s] + 1) {
                 continue;
             }
-            double ang = DomeRules.trunkAngle(c.layer, k);
+            double ang = DomeRules.trunkAngle(c.executionTier, k);
             Vec3 base = c.frame.base(ang);
             int side = ang > 2.0D ? 1 : ang < -2.0D ? -1 : 0;
             Vec3 from = hand.add(c.up.scale(1.1D)).add(c.side.scale(-side * 0.5D));
@@ -730,7 +730,7 @@ public final class DomeVfx {
                 Vec3 v = c.up.scale(0.25D + 0.15D * c.random.nextDouble()).add(c.side.scale(c.random.nextGaussian() * 0.06D));
                 wind(c, base.add(c.side.scale(c.random.nextGaussian() * 0.2D)), v, 12, 0.05D + 0.03D * c.scale);
             }
-            if (DomeRules.petals(c.layer)) {
+            if (DomeRules.petals(c.executionTier)) {
                 for (int i = 0; i < c.n(14) + 2; i++) {
                     double a = c.random.nextDouble() * Math.PI * 2.0D;
                     Vec3 v = new Vec3(Math.cos(a) * 0.12D, 0.12D + 0.2D * c.random.nextDouble(), Math.sin(a) * 0.12D);
@@ -761,22 +761,22 @@ public final class DomeVfx {
     private static void dome(Cast c, Entity e, int t, Minecraft mc) {
         boolean alive = c.endAt < 0.0F && t < DomeRules.HOLD_END;
         if (t == DomeRules.RAISE && alive) {
-            if (c.layer >= 3) {
-                ClientAuraState.techniqueAura(c.entityId, 2 + Math.min(2, c.layer / 3), 1, DomeRules.HOLD_END - DomeRules.RAISE);
+            if (c.executionTier >= 3) {
+                ClientAuraState.techniqueAura(c.entityId, 2 + Math.min(2, c.executionTier / 3), 1, DomeRules.HOLD_END - DomeRules.RAISE);
             }
             if (c.own()) {
                 SpeedLines.radial(0.5F, 0.5F, 0.55F, 5, SpeedLines.WHITE);
-                if (c.layer >= 3) {
+                if (c.executionTier >= 3) {
                     TechniqueCaption.showSecret(Component.translatable("technique.murim.twenty_four_plum.school"),
                             Component.translatable("technique.murim.twenty_four_plum.dome"), 34);
                 }
             }
             // Смыкание: волна лепестков и ветра вдоль всей сети наружу.
-            int n = DomeRules.trunks(c.layer);
+            int n = DomeRules.trunks(c.executionTier);
             for (int k = 0; k < n; k++) {
-                Vec3 base = c.frame.base(DomeRules.trunkAngle(c.layer, k));
+                Vec3 base = c.frame.base(DomeRules.trunkAngle(c.executionTier, k));
                 dust(c, base, c.n(4) + 1, 0.1D);
-                Vec3 out = radial(c, Math.toRadians(DomeRules.trunkAngle(c.layer, k)));
+                Vec3 out = radial(c, Math.toRadians(DomeRules.trunkAngle(c.executionTier, k)));
                 for (int i = 0; i < 2; i++) {
                     wind(c, base.add(c.up.scale(0.8D + 2.0D * c.random.nextDouble() * c.scale)),
                             out.scale(0.25D).add(c.up.scale(0.06D)), 14, 0.06D + 0.04D * c.scale);
@@ -789,18 +789,18 @@ public final class DomeVfx {
             }
         }
         // Подпитка (d11): от острия к корням бегут лепестки и поднимаются по стволам.
-        if (alive && e != null && DomeRules.petals(c.layer) && t >= DomeRules.LOCK) {
+        if (alive && e != null && DomeRules.petals(c.executionTier) && t >= DomeRules.LOCK) {
             // codex 03.10: три дорожки — к центральному стволу и к двум через одного.
-            int n = DomeRules.trunks(c.layer);
+            int n = DomeRules.trunks(c.executionTier);
             int[] lanes = {n / 2, Math.max(0, n / 2 - 2), Math.min(n - 1, n / 2 + 2)};
             for (int li = 0; li < lanes.length; li++) {
-                if ((t + li) % (c.layer >= 6 ? 1 : 2) != 0) {
+                if ((t + li) % (c.executionTier >= 6 ? 1 : 2) != 0) {
                     continue;
                 }
                 int k = lanes[li];
                 double tone = c.random.nextDouble();
                 c.feeds.add(new Feed(tip(c, e), k, clientTicks, 24 + c.random.nextInt(4),
-                        (0.55D + 0.4D * c.random.nextDouble()) * DomeRules.trunkHeight(c.layer, k),
+                        (0.55D + 0.4D * c.random.nextDouble()) * DomeRules.trunkHeight(c.executionTier, k),
                         (c.random.nextDouble() - 0.5D) * 0.12D, c.random.nextInt(4), (float) ((c.random.nextDouble() - 0.5D) * 0.7D),
                         tone < 0.45D ? 2 : tone < 0.8D ? 1 : 0));
             }
@@ -810,8 +810,8 @@ public final class DomeVfx {
         if (alive && t > DomeRules.RAISE && t % 3 == 0 && !c.branches.isEmpty()) {
             Branch b = c.branches.get(c.random.nextInt(c.branches.size()));
             Vec3 at = b.at(1.0D);
-            double a = Math.toRadians(DomeRules.trunkAngle(c.layer, b.tree));
-            if (DomeRules.petals(c.layer)) {
+            double a = Math.toRadians(DomeRules.trunkAngle(c.executionTier, b.tree));
+            if (DomeRules.petals(c.executionTier)) {
                 Mote m = petal(c, at, radial(c, a).scale(0.04D + 0.05D * c.random.nextDouble()).add(0.0D, -0.01D, 0.0D), 40 + c.random.nextInt(20));
                 m.drag = 0.97D;
                 m.gravity = 0.002D;
@@ -824,7 +824,7 @@ public final class DomeVfx {
         }
         // Распад: цветы срываются и летят наружу, ствол гаснет сверху вниз.
         float end = c.endAt >= 0.0F ? c.endAt : t >= DomeRules.HOLD_END ? DomeRules.HOLD_END : -1.0F;
-        if (end >= 0.0F && t >= end && t < end + 8 && DomeRules.petals(c.layer)) {
+        if (end >= 0.0F && t >= end && t < end + 8 && DomeRules.petals(c.executionTier)) {
             for (int i = 0; i < c.blossoms.size() / 8 + 1 && !c.blossoms.isEmpty(); i++) {
                 Blossom bl = c.blossoms.remove(c.random.nextInt(c.blossoms.size()));
                 Vec3 out = bl.pos().subtract(c.frame.pivot()).multiply(1.0D, 0.0D, 1.0D);
@@ -837,8 +837,8 @@ public final class DomeVfx {
                 c.motes.add(m);
             }
             if (t == (int) end) {
-                for (int k = 0; k < DomeRules.trunks(c.layer); k++) {
-                    dust(c, c.frame.base(DomeRules.trunkAngle(c.layer, k)), c.n(3) + 1, 0.08D);
+                for (int k = 0; k < DomeRules.trunks(c.executionTier); k++) {
+                    dust(c, c.frame.base(DomeRules.trunkAngle(c.executionTier, k)), c.n(3) + 1, 0.08D);
                 }
             }
         }
@@ -883,7 +883,7 @@ public final class DomeVfx {
     }
 
     private static void wind(Cast c, Vec3 at, Vec3 vel, int life, double size) {
-        if (c.layer < 1) {
+        if (c.executionTier < 1) {
             return;
         }
         Mote m = new Mote(at, vel, life, Mote.WIND, 0, 0.0F, size, 10);
@@ -1025,7 +1025,7 @@ public final class DomeVfx {
                 PlumVfx.stripVar(v, pose, camera, p, PlumVfx.scale(w, 0.3D), PlumVfx.scaled(al, 0.95F), EDGE);
             }
             // Розовая полоса: от конца серпа по земле к корню — продолжается в растущий ствол.
-            if (DomeRules.petals(c.layer) || c.layer >= 1) {
+            if (DomeRules.petals(c.executionTier) || c.executionTier >= 1) {
                 float pa = (float) PlumVfx.curve(age, 0.0, 0.0, 0.8, 1.0, 2.5, 0.9, 5.0, 0.0);
                 double reach = Mth.clamp(age / 2.0D, 0.0D, 1.0D);
                 Vec3 g0 = new Vec3(s.to().x, c.frame.pivot().y + 0.08D, s.to().z);
@@ -1033,7 +1033,7 @@ public final class DomeVfx {
                 Vec3[] p = {s.to(), g0.lerp(g1, 0.5D * reach).add(0.0D, 0.15D, 0.0D), g0.lerp(g1, reach)};
                 double[] w = {0.02D, 0.07D, 0.04D};
                 float[] al = {pa * 0.5F * near(p[0], camera), pa * near(p[1], camera), pa * near(p[2], camera)};
-                VfxColour col = DomeRules.petals(c.layer) ? BRANCH : COLD;
+                VfxColour col = DomeRules.petals(c.executionTier) ? BRANCH : COLD;
                 PlumVfx.stripVar(v, pose, camera, p, PlumVfx.scale(w, 2.0D), PlumVfx.scaled(al, 0.2F), col);
                 PlumVfx.stripVar(v, pose, camera, p, w, PlumVfx.scaled(al, 0.75F), col);
                 PlumVfx.stripVar(v, pose, camera, p, PlumVfx.scale(w, 0.3D), PlumVfx.scaled(al, 0.9F), TRUNK);
@@ -1092,7 +1092,7 @@ public final class DomeVfx {
 
     /** Стволы, сучья, прутья и сеть: прорисовываются от основания, сужаются к концу. */
     private static void tree(Cast c, PoseStack.Pose pose, Vec3 camera, VertexConsumer v, float t) {
-        boolean pink = DomeRules.petals(c.layer);
+        boolean pink = DomeRules.petals(c.executionTier);
         for (Branch b : c.branches) {
             float age = t - b.born;
             if (age < 0.0F) {
@@ -1182,9 +1182,9 @@ public final class DomeVfx {
 
     /** Путь лепестка подпитки: 0–0,45 — дугой от клинка к корню, дальше вверх по стволу. */
     private static Vec3 feedAt(Cast c, Feed f, double u) {
-        int k = Math.min(f.tree(), DomeRules.trunks(c.layer) - 1);
-        double ang = Math.toRadians(DomeRules.trunkAngle(c.layer, k));
-        Vec3 base = c.frame.base(DomeRules.trunkAngle(c.layer, k)).add(c.up.scale(0.15D));
+        int k = Math.min(f.tree(), DomeRules.trunks(c.executionTier) - 1);
+        double ang = Math.toRadians(DomeRules.trunkAngle(c.executionTier, k));
+        Vec3 base = c.frame.base(DomeRules.trunkAngle(c.executionTier, k)).add(c.up.scale(0.15D));
         Vec3 lane = c.side.scale(Math.cos(ang)).subtract(c.ahead.scale(Math.sin(ang))).scale(f.lane());
         if (u < 0.45D) {
             double k1 = u / 0.45D;
@@ -1193,7 +1193,7 @@ public final class DomeVfx {
         }
         double k2 = (u - 0.45D) / 0.55D;
         double h = f.top() * (1.0D - (1.0D - k2) * (1.0D - k2));
-        double a = Math.toRadians(DomeRules.trunkAngle(c.layer, k));
+        double a = Math.toRadians(DomeRules.trunkAngle(c.executionTier, k));
         double curl = 0.9D * c.scale * (h / Math.max(1.0D, c.height()));
         double r = DomeRules.RADIUS + 0.3D * Math.sin(Math.PI * h / Math.max(1.0D, c.height())) - curl * curl;
         // Спираль вокруг ствола: лепесток обвивает его, поднимаясь.
@@ -1325,7 +1325,7 @@ public final class DomeVfx {
 
     /** Лепестки: цветы на ветвях (колышутся на месте), свободные, подпитка; светятся изнутри. */
     private static void petals(Cast c, PoseStack.Pose pose, Vec3 camera, MultiBufferSource.BufferSource buffers, float partial, float t) {
-        if (!DomeRules.petals(c.layer)) {
+        if (!DomeRules.petals(c.executionTier)) {
             return;
         }
         RenderType pt = MurimRenderTypes.plumPetals();

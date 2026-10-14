@@ -19,9 +19,9 @@ import net.minecraft.resources.ResourceLocation;
  * @param techniqueId какая техника
  * @param sourceId   сетевой идентификатор применяющей сущности
  * @param hitStopTicks длительность hit stop в тиках; осмысленно только для {@link Event#HIT}
- * @param layer       слой освоения применяющего на старте: от него зависят анимация и эффекты формы
+ * @param executionTier       слой освоения применяющего на старте: от него зависят анимация и эффекты формы
  */
-public record TechniqueEventPayload(Event event, ResourceLocation techniqueId, int sourceId, int hitStopTicks, int layer)
+public record TechniqueEventPayload(Event event, ResourceLocation techniqueId, int sourceId, int hitStopTicks, int executionTier)
         implements CustomPacketPayload {
 
     public enum Event {
@@ -56,7 +56,7 @@ public record TechniqueEventPayload(Event event, ResourceLocation techniqueId, i
                     ResourceLocation.STREAM_CODEC, TechniqueEventPayload::techniqueId,
                     ByteBufCodecs.VAR_INT, TechniqueEventPayload::sourceId,
                     ByteBufCodecs.VAR_INT, TechniqueEventPayload::hitStopTicks,
-                    ByteBufCodecs.VAR_INT, TechniqueEventPayload::layer,
+                    ByteBufCodecs.VAR_INT, TechniqueEventPayload::executionTier,
                     TechniqueEventPayload::new);
 
     @Override

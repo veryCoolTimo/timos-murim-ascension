@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:block",
+  "random_sequence": "murim:blocks/pailou_roof_cap",
+  "pools": [
+    {
+      "rolls": 1.0,
+      "bonus_rolls": 0.0,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "murim:pailou_roof_cap"
+        }
+      ],
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        }
+      ]
+    }
+  ]
+}

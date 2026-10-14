@@ -30,15 +30,31 @@ public final class TechniqueSlotsHud {
 
     static final int SIZE = 20;
     private static final int GAP = 2;
+    private static final ResourceLocation FINISHER = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "sword_finisher");
 
     @SubscribeEvent
     static void onRegisterLayers(RegisterGuiLayersEvent event) {
+        io.github.verycooltimo.murim.item.TechniqueManualItem.clientFootworkInfo = FootworkText::lines;
         event.registerAbove(VanillaGuiLayers.HOTBAR, LAYER, TechniqueSlotsHud::render);
     }
 
     private static void render(GuiGraphics graphics, DeltaTracker delta) {
         Minecraft minecraft = Minecraft.getInstance();
-        if (minecraft.options.hideGui || minecraft.player == null || ClientMeditationState.state().active()) {
+        if (minecraft.options.hideGui || minecraft.player == null || minecraft.player.isSpectator()
+                || ClientMeditationState.state().active() || !ClientProfileState.profile().isAwakened()) {
+            return;
+        }
+        // Open slots are progression metadata, not evidence that the player can use an art.
+        boolean usable = ClientMasteryState.entries().stream().anyMatch(entry -> {
+            var definition = io.github.verycooltimo.murim.technique.TechniqueLoader.get(entry.technique());
+            return definition != null
+                    && io.github.verycooltimo.murim.technique.JunkArts.weaponProblem(minecraft.player, entry.technique()).isEmpty()
+                    && (!io.github.verycooltimo.murim.combat.QiSword.needsSword(definition)
+                    || (definition.foundation()
+                        ? io.github.verycooltimo.murim.combat.QiSword.holdsSword(minecraft.player.getMainHandItem())
+                        : QiSwordClient.hasBlade(minecraft.player)));
+        });
+        if (!usable) {
             return;
         }
         float presence = CombatMode.presence(delta.getGameTimeDeltaPartialTick(false));
@@ -46,7 +62,12 @@ public final class TechniqueSlotsHud {
             return;
         }
         List<Optional<ResourceLocation>> slots = ClientLoadoutState.slots();
-        int count = Math.max(slots.size(), ClientLoadoutState.open());
+        int techniques = Math.max(slots.size(), ClientLoadoutState.open());
+        boolean blade = io.github.verycooltimo.murim.combat.SwordBasicCombo.ownsAttack(
+                ClientLoadoutState.foundation().filter(id -> mastery(id) != null).orElse(null),
+                io.github.verycooltimo.murim.combat.QiSword.holdsSword(minecraft.player.getMainHandItem()),
+                net.neoforged.fml.ModList.get().isLoaded("bettercombat"));
+        int count = techniques + (blade ? 1 : 0);
         if (count == 0) {
             return;
         }
@@ -67,9 +88,26 @@ public final class TechniqueSlotsHud {
                 x = w / 2 - 91 - 6 - SIZE - col * (SIZE + GAP);
                 y = h - SIZE - 1 - row * (SIZE + GAP);
             }
-            slot(graphics, x, y, i < slots.size() ? slots.get(i) : Optional.empty(),
-                    i == ClientLoadoutState.active(), i + 1, presence);
+            if (blade && i == techniques) {
+                slot(graphics, x, y, Optional.of(FINISHER), false, 0, presence);
+            } else {
+                slot(graphics, x, y, i < slots.size() ? slots.get(i) : Optional.empty(),
+                        i == ClientLoadoutState.active(), i + 1, presence);
+            }
         }
+        ClientLoadoutState.activeTechnique().ifPresent(id -> {
+            List<net.minecraft.network.chat.Component> details = FootworkText.combatLines(id);
+            List<net.minecraft.util.FormattedCharSequence> wrapped = new java.util.ArrayList<>();
+            for (net.minecraft.network.chat.Component line : details) {
+                wrapped.addAll(minecraft.font.split(line, Math.min(300, w - 20)));
+            }
+            int y = h - 99 - wrapped.size() * minecraft.font.lineHeight;
+            for (net.minecraft.util.FormattedCharSequence line : wrapped) {
+                graphics.drawString(minecraft.font, line, w / 2 - minecraft.font.width(line) / 2, y,
+                        ((int) (presence * 255) << 24) | 0xC9E7F4, true);
+                y += minecraft.font.lineHeight;
+            }
+        });
         graphics.flush();
     }
 
@@ -89,13 +127,18 @@ public final class TechniqueSlotsHud {
             GuiShapes.glow(graphics, x + SIZE / 2.0F, y + SIZE / 2.0F, SIZE * 0.75F, 0x8FE8F4, (int) (presence * 60));
         }
         if (technique.isPresent()) {
+            boolean basic = number == 0 && technique.get().equals(FINISHER);
             graphics.setColor(1.0F, 1.0F, 1.0F, presence);
             com.mojang.blaze3d.systems.RenderSystem.enableBlend();
             graphics.blit(TechniqueIcons.of(technique.get()), x + 2, y + 2, SIZE - 4, SIZE - 4,
-                    0.0F, 0.0F, 48, 48, 48, 48);
+                    0.0F, 0.0F, basic ? 16 : 48, basic ? 16 : 48, basic ? 16 : 48, basic ? 16 : 48);
             graphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
             // Перезарядка: затемнение снизу вверх и секунды поверх иконки.
-            int left = ClientCooldowns.remaining(technique.get());
+            if (basic) {
+                float charge = Minecraft.getInstance().player.getAttackStrengthScale(0.0F);
+                cooldownSweep(graphics, x + 2, y + 2, 1.0F - charge, ((int) (presence * 0xA0) << 24));
+            }
+            int left = basic ? 0 : ClientCooldowns.remaining(technique.get());
             if (left > 0) {
                 int hh = (int) Math.ceil((SIZE - 4) * ClientCooldowns.fraction(technique.get()));
                 graphics.fill(x + 2, y + SIZE - 2 - hh, x + SIZE - 2, y + SIZE - 2, ((int) (presence * 0xA0) << 24) | 0x000000);
@@ -104,8 +147,9 @@ public final class TechniqueSlotsHud {
                 graphics.drawString(font, sec, x + SIZE / 2 - font.width(sec) / 2, y + SIZE / 2 - 4, (a << 24) | 0xFFFFFF, true);
             }
             // Освоение текущего слоя — тонкая полоса по низу слота.
-            SyncMasteryPayload.Entry entry = mastery(technique.get());
-            if (entry != null && entry.layer() < entry.cap()) {
+            SyncMasteryPayload.Entry entry = basic ? ClientLoadoutState.foundation().map(TechniqueSlotsHud::mastery).orElse(null)
+                    : mastery(technique.get());
+            if (entry != null && entry.stars() < entry.cap()) {
                 int filled = (int) ((SIZE - 4) * Mth.clamp(entry.progress(), 0.0F, 1.0F));
                 graphics.fill(x + 2, y + SIZE - 3, x + 2 + filled, y + SIZE - 2, (a << 24) | 0x7FE0C8);
             }
@@ -113,9 +157,30 @@ public final class TechniqueSlotsHud {
         graphics.pose().pushPose();
         graphics.pose().translate(x + 2, y + 2, 0.0F);
         graphics.pose().scale(0.5F, 0.5F, 1.0F);
-        graphics.drawString(Minecraft.getInstance().font, String.valueOf(number), 0, 0,
+        graphics.drawString(Minecraft.getInstance().font, number == 0
+                        ? net.minecraft.network.chat.Component.translatable("hud.murim.sword_finisher.key").getString()
+                        : String.valueOf(number), 0, 0,
                 ((int) (presence * 0xA0) << 24) | 0xC8DCEC, false);
         graphics.pose().popPose();
+    }
+
+    /** Clockwise recovery mask, using the real weapon recharge; adds no gameplay cooldown. */
+    private static void cooldownSweep(GuiGraphics graphics, int x, int y, float fraction, int colour) {
+        if (fraction <= 0.0F) return;
+        int size = SIZE - 4;
+        for (int row = 0; row < size; row++) {
+            int from = -1;
+            for (int col = 0; col <= size; col++) {
+                double angle = col == size ? 0 : Math.atan2(col + 0.5D - size / 2.0D, size / 2.0D - row - 0.5D);
+                if (angle < 0) angle += Math.PI * 2;
+                boolean covered = col < size && angle / (Math.PI * 2) < fraction;
+                if (covered && from < 0) from = col;
+                if (!covered && from >= 0) {
+                    graphics.fill(x + from, y + row, x + col, y + row + 1, colour);
+                    from = -1;
+                }
+            }
+        }
     }
 
     static SyncMasteryPayload.Entry mastery(ResourceLocation technique) {

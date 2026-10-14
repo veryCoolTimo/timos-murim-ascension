@@ -1,0 +1,13 @@
+{
+ "variants": {
+  "type=bottom": {
+   "model": "murim:block/plum_slab"
+  },
+  "type=top": {
+   "model": "murim:block/plum_slab_top"
+  },
+  "type=double": {
+   "model": "murim:block/plum_planks"
+  }
+ }
+}

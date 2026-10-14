@@ -1,0 +1,64 @@
+{
+ "source": "/tmp/uvfix/mac/Desktop/murim-sources/entities/huashan_sword.bbmodel",
+ "inverted_cubes": 0,
+ "flipped_faces": 94,
+ "rotated_faces": 0,
+ "overlapping_faces": 31,
+ "zero_uv_faces": 0,
+ "zero_area_faces": 0,
+ "inexact_faces": [
+  "guard/cube/north: 0.0% x 9.4%",
+  "guard/cube/east: 25.0% x 9.4%",
+  "guard/cube/south: 0.0% x 9.4%",
+  "guard/cube/west: 25.0% x 9.4%",
+  "guard/cube/up: 0.0% x 25.0%",
+  "guard/cube/down: 0.0% x 25.0%",
+  "guard/cube/north: 9.4% x 14.8%",
+  "guard/cube/east: 25.0% x 14.8%",
+  "guard/cube/south: 9.4% x 14.8%",
+  "guard/cube/west: 25.0% x 14.8%",
+  "guard/cube/up: 9.4% x 25.0%",
+  "guard/cube/down: 9.4% x 25.0%",
+  "guard/cube/north: 23.2% x 13.9%",
+  "guard/cube/east: 0.0% x 13.9%",
+  "guard/cube/south: 23.2% x 13.9%",
+  "guard/cube/west: 0.0% x 13.9%",
+  "guard/cube/up: 23.2% x 0.0%",
+  "guard/cube/down: 23.2% x 0.0%",
+  "guard/cube/north: 23.2% x 13.9%",
+  "guard/cube/east: 0.0% x 13.9%",
+  "guard/cube/south: 23.2% x 13.9%",
+  "guard/cube/west: 0.0% x 13.9%",
+  "guard/cube/up: 23.2% x 0.0%",
+  "guard/cube/down: 23.2% x 0.0%",
+  "guard/cube/north: 23.2% x 17.5%",
+  "guard/cube/east: 15.6% x 17.5%",
+  "guard/cube/south: 23.2% x 17.5%",
+  "guard/cube/west: 15.6% x 17.5%",
+  "guard/cube/up: 23.2% x 15.6%",
+  "guard/cube/down: 23.2% x 15.6%"
+ ],
+ "dense_faces": 8,
+ "texture_size_before": [
+  128,
+  128
+ ],
+ "uv_size_before": [
+  32,
+  32
+ ],
+ "baked_textures": [
+  "huashan_sword.png"
+ ],
+ "untouched_textures": [],
+ "texture_size_after": [
+  128,
+  128
+ ],
+ "uv_size_after": [
+  32,
+  32
+ ],
+ "faces": 312,
+ "cubes": 52
+}

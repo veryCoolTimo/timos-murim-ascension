@@ -1,6 +1,6 @@
 {
   "has_precipitation": true,
-  "temperature": 0.6,
+  "temperature": 1.0,
   "downfall": 0.8,
   "effects": {
     "sky_color": 10399674,
@@ -28,9 +28,9 @@
     },
     "particle": {
       "options": {
-        "type": "minecraft:white_ash"
+        "type": "minecraft:cherry_leaves"
       },
-      "probability": 0.004
+      "probability": 0.0008
     }
   },
   "spawners": {

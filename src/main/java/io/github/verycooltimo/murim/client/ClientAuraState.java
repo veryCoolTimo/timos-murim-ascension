@@ -163,6 +163,7 @@ public final class ClientAuraState {
         if (minecraft.player.isSpectator() || minecraft.player.isCreative() && !"true".equals(System.getProperty("murim.capture"))) {
             strongest = 0.0F;
         }
+        strongest *= (float)io.github.verycooltimo.murim.client.vfx.VfxManager.pressureFactor(minecraft.player.getId());
         target = strongest;
         if (strongestId >= 0) {
             sourceId = strongestId;

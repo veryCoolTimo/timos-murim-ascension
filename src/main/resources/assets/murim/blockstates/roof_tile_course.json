@@ -1,0 +1,1079 @@
+{
+  "multipart": [
+    {
+      "when": {
+        "profile": "flat",
+        "facing": "east",
+        "shape": "inner_left"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_flat_inner",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "profile": "flat",
+        "facing": "east",
+        "shape": "inner_right"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_flat_inner"
+      }
+    },
+    {
+      "when": {
+        "profile": "flat",
+        "facing": "east",
+        "shape": "outer_left"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_flat_outer",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "profile": "flat",
+        "facing": "east",
+        "shape": "outer_right"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_flat_outer"
+      }
+    },
+    {
+      "when": {
+        "profile": "flat",
+        "facing": "east",
+        "shape": "straight"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_flat"
+      }
+    },
+    {
+      "when": {
+        "profile": "flat",
+        "facing": "north",
+        "shape": "inner_left"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_flat_inner",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "profile": "flat",
+        "facing": "north",
+        "shape": "inner_right"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_flat_inner",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "profile": "flat",
+        "facing": "north",
+        "shape": "outer_left"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_flat_outer",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "profile": "flat",
+        "facing": "north",
+        "shape": "outer_right"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_flat_outer",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "profile": "flat",
+        "facing": "north",
+        "shape": "straight"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_flat",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "profile": "flat",
+        "facing": "south",
+        "shape": "inner_left"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_flat_inner"
+      }
+    },
+    {
+      "when": {
+        "profile": "flat",
+        "facing": "south",
+        "shape": "inner_right"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_flat_inner",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "profile": "flat",
+        "facing": "south",
+        "shape": "outer_left"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_flat_outer"
+      }
+    },
+    {
+      "when": {
+        "profile": "flat",
+        "facing": "south",
+        "shape": "outer_right"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_flat_outer",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "profile": "flat",
+        "facing": "south",
+        "shape": "straight"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_flat",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "profile": "flat",
+        "facing": "west",
+        "shape": "inner_left"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_flat_inner",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "profile": "flat",
+        "facing": "west",
+        "shape": "inner_right"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_flat_inner",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "profile": "flat",
+        "facing": "west",
+        "shape": "outer_left"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_flat_outer",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "profile": "flat",
+        "facing": "west",
+        "shape": "outer_right"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_flat_outer",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "profile": "flat",
+        "facing": "west",
+        "shape": "straight"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_flat",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "profile": "foot",
+        "facing": "east",
+        "shape": "inner_left"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_foot_inner",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "profile": "foot",
+        "facing": "east",
+        "shape": "inner_right"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_foot_inner"
+      }
+    },
+    {
+      "when": {
+        "profile": "foot",
+        "facing": "east",
+        "shape": "outer_left"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_foot_outer",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "profile": "foot",
+        "facing": "east",
+        "shape": "outer_right"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_foot_outer"
+      }
+    },
+    {
+      "when": {
+        "profile": "foot",
+        "facing": "east",
+        "shape": "straight"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_foot"
+      }
+    },
+    {
+      "when": {
+        "profile": "foot",
+        "facing": "north",
+        "shape": "inner_left"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_foot_inner",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "profile": "foot",
+        "facing": "north",
+        "shape": "inner_right"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_foot_inner",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "profile": "foot",
+        "facing": "north",
+        "shape": "outer_left"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_foot_outer",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "profile": "foot",
+        "facing": "north",
+        "shape": "outer_right"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_foot_outer",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "profile": "foot",
+        "facing": "north",
+        "shape": "straight"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_foot",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "profile": "foot",
+        "facing": "south",
+        "shape": "inner_left"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_foot_inner"
+      }
+    },
+    {
+      "when": {
+        "profile": "foot",
+        "facing": "south",
+        "shape": "inner_right"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_foot_inner",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "profile": "foot",
+        "facing": "south",
+        "shape": "outer_left"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_foot_outer"
+      }
+    },
+    {
+      "when": {
+        "profile": "foot",
+        "facing": "south",
+        "shape": "outer_right"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_foot_outer",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "profile": "foot",
+        "facing": "south",
+        "shape": "straight"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_foot",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "profile": "foot",
+        "facing": "west",
+        "shape": "inner_left"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_foot_inner",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "profile": "foot",
+        "facing": "west",
+        "shape": "inner_right"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_foot_inner",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "profile": "foot",
+        "facing": "west",
+        "shape": "outer_left"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_foot_outer",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "profile": "foot",
+        "facing": "west",
+        "shape": "outer_right"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_foot_outer",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "profile": "foot",
+        "facing": "west",
+        "shape": "straight"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_foot",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "profile": "gentle",
+        "facing": "east",
+        "shape": "inner_left"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_gentle_inner",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "profile": "gentle",
+        "facing": "east",
+        "shape": "inner_right"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_gentle_inner"
+      }
+    },
+    {
+      "when": {
+        "profile": "gentle",
+        "facing": "east",
+        "shape": "outer_left"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_gentle_outer",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "profile": "gentle",
+        "facing": "east",
+        "shape": "outer_right"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_gentle_outer"
+      }
+    },
+    {
+      "when": {
+        "profile": "gentle",
+        "facing": "east",
+        "shape": "straight"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_gentle"
+      }
+    },
+    {
+      "when": {
+        "profile": "gentle",
+        "facing": "north",
+        "shape": "inner_left"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_gentle_inner",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "profile": "gentle",
+        "facing": "north",
+        "shape": "inner_right"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_gentle_inner",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "profile": "gentle",
+        "facing": "north",
+        "shape": "outer_left"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_gentle_outer",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "profile": "gentle",
+        "facing": "north",
+        "shape": "outer_right"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_gentle_outer",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "profile": "gentle",
+        "facing": "north",
+        "shape": "straight"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_gentle",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "profile": "gentle",
+        "facing": "south",
+        "shape": "inner_left"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_gentle_inner"
+      }
+    },
+    {
+      "when": {
+        "profile": "gentle",
+        "facing": "south",
+        "shape": "inner_right"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_gentle_inner",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "profile": "gentle",
+        "facing": "south",
+        "shape": "outer_left"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_gentle_outer"
+      }
+    },
+    {
+      "when": {
+        "profile": "gentle",
+        "facing": "south",
+        "shape": "outer_right"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_gentle_outer",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "profile": "gentle",
+        "facing": "south",
+        "shape": "straight"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_gentle",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "profile": "gentle",
+        "facing": "west",
+        "shape": "inner_left"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_gentle_inner",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "profile": "gentle",
+        "facing": "west",
+        "shape": "inner_right"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_gentle_inner",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "profile": "gentle",
+        "facing": "west",
+        "shape": "outer_left"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_gentle_outer",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "profile": "gentle",
+        "facing": "west",
+        "shape": "outer_right"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_gentle_outer",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "profile": "gentle",
+        "facing": "west",
+        "shape": "straight"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_gentle",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "profile": "low_high",
+        "facing": "east",
+        "shape": "inner_left"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_low_high_inner",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "profile": "low_high",
+        "facing": "east",
+        "shape": "inner_right"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_low_high_inner"
+      }
+    },
+    {
+      "when": {
+        "profile": "low_high",
+        "facing": "east",
+        "shape": "outer_left"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_low_high_outer",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "profile": "low_high",
+        "facing": "east",
+        "shape": "outer_right"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_low_high_outer"
+      }
+    },
+    {
+      "when": {
+        "profile": "low_high",
+        "facing": "east",
+        "shape": "straight"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_low_high"
+      }
+    },
+    {
+      "when": {
+        "profile": "low_high",
+        "facing": "north",
+        "shape": "inner_left"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_low_high_inner",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "profile": "low_high",
+        "facing": "north",
+        "shape": "inner_right"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_low_high_inner",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "profile": "low_high",
+        "facing": "north",
+        "shape": "outer_left"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_low_high_outer",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "profile": "low_high",
+        "facing": "north",
+        "shape": "outer_right"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_low_high_outer",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "profile": "low_high",
+        "facing": "north",
+        "shape": "straight"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_low_high",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "profile": "low_high",
+        "facing": "south",
+        "shape": "inner_left"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_low_high_inner"
+      }
+    },
+    {
+      "when": {
+        "profile": "low_high",
+        "facing": "south",
+        "shape": "inner_right"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_low_high_inner",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "profile": "low_high",
+        "facing": "south",
+        "shape": "outer_left"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_low_high_outer"
+      }
+    },
+    {
+      "when": {
+        "profile": "low_high",
+        "facing": "south",
+        "shape": "outer_right"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_low_high_outer",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "profile": "low_high",
+        "facing": "south",
+        "shape": "straight"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_low_high",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "profile": "low_high",
+        "facing": "west",
+        "shape": "inner_left"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_low_high_inner",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "profile": "low_high",
+        "facing": "west",
+        "shape": "inner_right"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_low_high_inner",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "profile": "low_high",
+        "facing": "west",
+        "shape": "outer_left"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_low_high_outer",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "profile": "low_high",
+        "facing": "west",
+        "shape": "outer_right"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_low_high_outer",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "profile": "low_high",
+        "facing": "west",
+        "shape": "straight"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_low_high",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "profile": "knee",
+        "facing": "east",
+        "shape": "inner_left"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_knee_inner",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "profile": "knee",
+        "facing": "east",
+        "shape": "inner_right"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_knee_inner"
+      }
+    },
+    {
+      "when": {
+        "profile": "knee",
+        "facing": "east",
+        "shape": "outer_left"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_knee_outer",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "profile": "knee",
+        "facing": "east",
+        "shape": "outer_right"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_knee_outer"
+      }
+    },
+    {
+      "when": {
+        "profile": "knee",
+        "facing": "east",
+        "shape": "straight"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_knee"
+      }
+    },
+    {
+      "when": {
+        "profile": "knee",
+        "facing": "north",
+        "shape": "inner_left"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_knee_inner",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "profile": "knee",
+        "facing": "north",
+        "shape": "inner_right"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_knee_inner",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "profile": "knee",
+        "facing": "north",
+        "shape": "outer_left"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_knee_outer",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "profile": "knee",
+        "facing": "north",
+        "shape": "outer_right"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_knee_outer",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "profile": "knee",
+        "facing": "north",
+        "shape": "straight"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_knee",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "profile": "knee",
+        "facing": "south",
+        "shape": "inner_left"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_knee_inner"
+      }
+    },
+    {
+      "when": {
+        "profile": "knee",
+        "facing": "south",
+        "shape": "inner_right"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_knee_inner",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "profile": "knee",
+        "facing": "south",
+        "shape": "outer_left"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_knee_outer"
+      }
+    },
+    {
+      "when": {
+        "profile": "knee",
+        "facing": "south",
+        "shape": "outer_right"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_knee_outer",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "profile": "knee",
+        "facing": "south",
+        "shape": "straight"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_knee",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "profile": "knee",
+        "facing": "west",
+        "shape": "inner_left"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_knee_inner",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "profile": "knee",
+        "facing": "west",
+        "shape": "inner_right"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_knee_inner",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "profile": "knee",
+        "facing": "west",
+        "shape": "outer_left"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_knee_outer",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "profile": "knee",
+        "facing": "west",
+        "shape": "outer_right"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_knee_outer",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "profile": "knee",
+        "facing": "west",
+        "shape": "straight"
+      },
+      "apply": {
+        "model": "murim:block/roof_tile_course_knee",
+        "y": 180
+      }
+    }
+  ]
+}

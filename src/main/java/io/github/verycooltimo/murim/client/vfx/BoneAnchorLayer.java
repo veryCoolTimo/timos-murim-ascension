@@ -60,7 +60,9 @@ public class BoneAnchorLayer extends RenderLayer<AbstractClientPlayer, PlayerMod
         // клинка из анимации, а не по заданной дуге. Смещение — по виду держания меча
         // в третьем лице: клинок выходит из кулака вперёд и чуть вверх.
         BLADE_MID,
-        BLADE_TIP
+        BLADE_TIP,
+        BLADE_BASE,
+        FINISHER_BLADE_TIP
     }
 
     /**
@@ -121,6 +123,31 @@ public class BoneAnchorLayer extends RenderLayer<AbstractClientPlayer, PlayerMod
         // [НЕПРОВЕРЕНО: точное положение клинка зависит от модели предмета; подобрано по кадрам]
         bones.put(Bone.BLADE_MID, pointOf(poseStack, model.rightArm, -1.0F, 9.0F, -4.0F));
         bones.put(Bone.BLADE_TIP, pointOf(poseStack, model.rightArm, -1.0F, 5.0F, -15.0F));
+        bones.put(Bone.BLADE_BASE, bones.get(Bone.RIGHT_HAND));
+        bones.put(Bone.FINISHER_BLADE_TIP, bones.get(Bone.BLADE_TIP));
+        // Custom sword trails are captured in BedrockItemRenderer at the actual held-item pose.
+        var stack = player.getMainHandItem();
+        if (io.github.verycooltimo.murim.combat.QiSword.holdsSword(stack)
+                && io.github.verycooltimo.murim.client.bedrock.BedrockItemRenderer.swordEndpoints(stack) == null) {
+            boolean left = player.getMainArm() == net.minecraft.world.entity.HumanoidArm.LEFT;
+            poseStack.pushPose();
+            try {
+                model.translateToHand(player.getMainArm(), poseStack);
+                poseStack.mulPose(com.mojang.math.Axis.XP.rotationDegrees(-90));
+                poseStack.mulPose(com.mojang.math.Axis.YP.rotationDegrees(180));
+                poseStack.translate((left ? -1 : 1) / 16.0F, 0.125F, -0.625F);
+                var itemModel = net.minecraft.client.Minecraft.getInstance().getItemRenderer().getModel(stack, player.level(), player, 0);
+                if (!itemModel.isCustomRenderer()) {
+                    net.neoforged.neoforge.client.ClientHooks.handleCameraTransforms(poseStack, itemModel,
+                            left ? net.minecraft.world.item.ItemDisplayContext.THIRD_PERSON_LEFT_HAND
+                                    : net.minecraft.world.item.ItemDisplayContext.THIRD_PERSON_RIGHT_HAND, left);
+                    FoundationVfx.recordThirdPersonBlade(player, partialTick, poseStack,
+                            new Vec3(-0.125D, -0.125D, 0), new Vec3(0.4375D, 0.4375D, 0));
+                }
+            } finally {
+                poseStack.popPose();
+            }
+        }
     }
 
     /**

@@ -66,23 +66,23 @@ public final class ExplosionRules {
     public static final double LIFT = 0.35D;
 
     /** Сила слоя: слой 7 = 1, слой 8 сильнее. */
-    public static double power(int layer) {
-        return layer <= 0 ? 0.0D : layer >= 8 ? 1.15D : 0.3D + 0.1D * layer;
+    public static double power(int executionTier) {
+        return executionTier <= 0 ? 0.0D : executionTier >= 8 ? 1.15D : 0.3D + 0.1D * executionTier;
     }
 
     /** Дальность выброса по слою: слой 1 — 6,6 блока, слой 7 — 16. */
-    public static double range(int layer) {
-        return layer <= 0 ? 0.0D : Math.min(17.5D, 5.0D + 1.6D * layer);
+    public static double range(int executionTier) {
+        return executionTier <= 0 ? 0.0D : Math.min(17.5D, 5.0D + 1.6D * executionTier);
     }
 
     /** Лепестки — с 3-го слоя; до этого выброс из холодных штрихов. */
-    public static boolean petals(int layer) {
-        return layer >= 3;
+    public static boolean petals(int executionTier) {
+        return executionTier >= 3;
     }
 
     /** Плотность эффектов по слою (доля от полного рисунка слоя 7). */
-    public static double density(int layer) {
-        return switch (Math.max(0, Math.min(8, layer))) {
+    public static double density(int executionTier) {
+        return switch (Math.max(0, Math.min(8, executionTier))) {
             case 0 -> 0.0D;
             case 1 -> 0.15D;
             case 2 -> 0.25D;
@@ -96,8 +96,8 @@ public final class ExplosionRules {
     }
 
     /** Фронт выброса (блоков от точки удара) через {@code s} тиков после контакта. */
-    public static double front(double s, int layer) {
-        return Math.min(range(layer), START + SPEED * Math.max(0.0D, s));
+    public static double front(double s, int executionTier) {
+        return Math.min(range(executionTier), START + SPEED * Math.max(0.0D, s));
     }
 
     /** Точка удара: перед мастером по горизонтали направления {@code aim}, с учётом полушага. */
@@ -132,7 +132,7 @@ public final class ExplosionRules {
      *
      * @return расстояние вдоль оси или −1, если снаружи
      */
-    public static double inside(Vec3 strike, Vec3 axis, Vec3 p, double front, int layer, double pad) {
+    public static double inside(Vec3 strike, Vec3 axis, Vec3 p, double front, int executionTier, double pad) {
         Vec3 rel = p.subtract(strike);
         double along = rel.dot(axis);
         if (along < -(STEP + STRIKE_DIST + 0.5D + pad) || along > front + pad) {

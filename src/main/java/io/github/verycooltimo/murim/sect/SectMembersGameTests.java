@@ -18,7 +18,7 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 /**
  * GameTest-ы членов секты и распорядка для игрока (автор 05.10): доклад главе с поклоном, лекарь лечит раненого после
  * поединка, смена поста охраны; журнал секты — перекличка, занятие через крючок, трапеза, итог наставника; пропущенный
- * строй — ворчание, наряд, вода повару.
+ * строй — добровольная практика, помощь кухне без наказания.
  * Площадка {@code murim:sect_yard}; все площадки сжаты в один двор ({@link SectGameTests.Yard}).
  */
 @GameTestHolder(MurimMod.MODID)
@@ -124,6 +124,7 @@ public final class SectMembersGameTests {
     public static void attendanceDay(GameTestHelper helper) {
         SectGameTests.Yard yard = yard(helper, 0.3D);
         ServerPlayer p = SectGameTests.fakePlayer(helper);
+        p.setData(ModAttachments.PROFILE, io.github.verycooltimo.murim.profile.DantianProfile.INITIAL.withTags("pure", "log-test"));
         p.setData(ModAttachments.SECT, SectState.NONE.joined().with("met_mentor"));
         Vec3 at = yard.at("training", 0.0D, 0.0D);
         p.moveTo(at.x, at.y, at.z, 0.0F, 0.0F);
@@ -139,7 +140,7 @@ public final class SectMembersGameTests {
 
         helper.getLevel().setDayTime(base + 24000L + 2500L);
         SectAttendance.tick(p, yard, 20);
-        helper.assertTrue(SectAttendance.current(p).today().missed(Activity.LESSON), "занятия не ждут");
+        helper.assertTrue(SectAttendance.current(p).today().expects(Activity.LESSON), "нет приглашения на занятия");
         int before = p.getData(ModAttachments.SECT).contribution();
         helper.assertTrue(SectAttendance.record(p, "pushups"), "крючок не отметил упражнение");
         helper.assertTrue(!SectAttendance.record(p, Activity.LESSON), "занятие отмечено дважды за день");
@@ -160,9 +161,9 @@ public final class SectMembersGameTests {
         helper.succeed();
     }
 
-    /** Строй пропущен: наставник ворчит и начинает разговор с упрёка; два таких утра — наряд, ведро воды повару снимает его. */
+    /** Несделанный строй ничего не отнимает; воду кухне можно принести добровольно. */
     @GameTest(template = YARD, timeoutTicks = 200, batch = "sect_members_chores")
-    public static void missedFormationGivesChores(GameTestHelper helper) {
+    public static void missedFormationIsHarmlessAndKitchenHelpOptional(GameTestHelper helper) {
         SectGameTests.Yard yard = yard(helper, 0.3D);
         ServerPlayer p = SectGameTests.fakePlayer(helper);
         p.setData(ModAttachments.SECT, SectState.NONE.joined().with("met_mentor"));
@@ -177,9 +178,9 @@ public final class SectMembersGameTests {
         helper.getLevel().setDayTime(base + 24000L + 1500L);
         SectAttendance.tick(p, yard, 20);
         long day = SectSchedule.day(helper.getLevel().getDayTime());
-        helper.assertTrue(SectAttendance.current(p).scolded() == day, "наставник не заметил пропуск строя");
-        helper.assertTrue("scold".equals(DialogueService.route(p, mentor).node()), "разговор не с упрёка");
-        // Остался при секте на занятия — пропуск строя засчитан (ушедший в поход после переклички — нет).
+        helper.assertTrue(SectAttendance.current(p).scolded() != day, "наставник упрекает за отсутствие");
+        helper.assertTrue(!"scold".equals(DialogueService.route(p, mentor).node()), "разговор с упрёка");
+        // Можно остаться на горе заниматься своими делами: это тоже не пропуск.
         helper.getLevel().setDayTime(base + 24000L + 2500L);
         SectAttendance.tick(p, yard, 20);
 
@@ -188,11 +189,11 @@ public final class SectMembersGameTests {
         SectAttendance.tick(p, yard, 20);
         helper.getLevel().setDayTime(base + 48000L + 2500L);
         SectAttendance.tick(p, yard, 20);
-        // Третий рассвет: смена дня подводит итог — наряд.
+        // Третий рассвет: смена дня не назначает наказания.
         helper.getLevel().setDayTime(base + 72000L - 700L);
         SectAttendance.tick(p, yard, 20);
-        helper.assertTrue(SectAttendance.current(p).chores(), "нет наряда после двух пропусков: " + SectAttendance.report(p));
-        helper.assertTrue("chores".equals(DialogueService.route(p, cook).node()), "повар не про наряд");
+        helper.assertTrue(!SectAttendance.current(p).chores(), "отсутствие назначило наряд: " + SectAttendance.report(p));
+        helper.assertTrue(!"chores".equals(DialogueService.route(p, cook).node()), "повар навязал наряд");
 
         p.getInventory().add(new ItemStack(Items.WATER_BUCKET));
         Dialogue d = DialogueLoader.get(cook.dialogue());
@@ -201,5 +202,51 @@ public final class SectMembersGameTests {
         helper.assertTrue(!SectAttendance.current(p).chores(), "наряд не снят");
         helper.assertTrue(p.getInventory().contains(new ItemStack(Items.BUCKET)), "пустое ведро не вернули");
         helper.succeed();
+    }
+
+    // ------------------------------------------------------------------ первое поколение (рядовые Гён)
+
+    /**
+     * Четверо рядовых первого поколения (автор 06.10): в составе, поколение 1, у каждого дело в любой час суток на
+     * площадке горы; помощник наставника — один в день и меняется; на занятиях ученик дошёл до своего места и бьёт формы.
+     */
+    @GameTest(template = YARD, timeoutTicks = 400, batch = "sect_members_first_gen")
+    public static void firstGenerationOnSchedule(GameTestHelper helper) {
+        java.util.List<String> keys = java.util.List.of("gyeong_on", "gyeong_dan", "gyeong_ha", "gyeong_ryun");
+        helper.assertTrue(SectRoster.firstRanks().stream().map(SectRoster::key).toList().equals(keys),
+                "рядовые первого поколения: " + SectRoster.firstRanks());
+        int[] times = {23500, 500, 1500, 3000, 6500, 8000, 10000, 12000, 15000, 20000};
+        java.util.Set<SectRoster> assistants = new java.util.HashSet<>();
+        for (String key : keys) {
+            SectRoster m = SectRoster.of(key).orElseThrow();
+            helper.assertTrue(m.generation() == 1 && m.role() == SectRole.FIRST, key + ": поколение " + m.generation() + ", роль " + m.role());
+            helper.assertTrue(SectLayout.SECT_ZONES.contains(m.home()), key + ": нет площадки дома " + m.home());
+            for (long day = 0; day < 4; day++) {
+                for (int t : times) {
+                    SectSchedule.Task task = SectSchedule.task(m, day * 24000L + t);
+                    helper.assertTrue(task != null && SectLayout.SECT_ZONES.contains(task.zone()),
+                            key + " день " + day + " " + t + ": " + task);
+                }
+                helper.assertTrue(SectSchedule.task(m, day * 24000L + 15000).zone().equals("dorm_2nd"), key + " спит не в общежитии");
+            }
+        }
+        for (long day = 0; day < 4; day++) {
+            assistants.add(SectSchedule.firstAssist(day));
+        }
+        helper.assertTrue(assistants.size() == 4, "помощник наставника не меняется по дням: " + assistants);
+
+        // Живой: в день 0 на занятиях Гён Ха (очередь 2) бьёт формы на своём месте.
+        setTime(helper, 3000);
+        SectGameTests.Yard yard = yard(helper, 0.25D);
+        long day = SectSchedule.day(helper.getLevel().getDayTime());
+        SectRoster drilling = keys.stream().map(k -> SectRoster.of(k).orElseThrow())
+                .filter(m -> SectSchedule.firstTurn(m, day) >= 2).findFirst().orElseThrow();
+        SectDisciple npc = npc(helper, yard, drilling.key(), 12, 8);
+        helper.succeedWhen(() -> {
+            SectLife.Resolved r = SectLife.resolve(npc);
+            helper.assertTrue(r != null && r.task().kind() == SectSchedule.Kind.DRILL, drilling.key() + ": дело " + (r == null ? "-" : r.task()));
+            helper.assertTrue(npc.position().distanceTo(r.spot()) < 1.5D,
+                    drilling.key() + " не дошёл до своего места: " + String.format("%.1f", npc.position().distanceTo(r.spot())));
+        });
     }
 }

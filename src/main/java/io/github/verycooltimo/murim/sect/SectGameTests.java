@@ -293,10 +293,10 @@ public final class SectGameTests {
 
         helper.assertTrue(DialogueService.applyHeadless(p, mentor, option(d, "lessons", "dialogue.murim.mentor.opt.take_six", 0)), "урок 1 не взят");
         Dialogue.Option doneSix = option(d, "lessons", "dialogue.murim.mentor.opt.done_six", 0);
-        helper.assertTrue(!DialogueService.applyHeadless(p, mentor, doneSix), "урок 1 сдан без слоя");
+        helper.assertTrue(!DialogueService.applyHeadless(p, mentor, doneSix), "урок 1 сдан без звезды");
         p.setData(ModAttachments.MASTERY, MasteryState.EMPTY.with(six, TechniqueProgress.learned(2, 6)));
         p.setData(ModAttachments.PROFILE, p.getData(ModAttachments.PROFILE).withRank(1));
-        helper.assertTrue(DialogueService.applyHeadless(p, mentor, doneSix), "урок 1 не сдан на 2-м слое и третьем ранге");
+        helper.assertTrue(DialogueService.applyHeadless(p, mentor, doneSix), "урок 1 не сдан на 2-й звезде и третьем ранге");
         helper.assertTrue(hasBook(p, petal), "нет книги Падающего Цветка");
 
         helper.assertTrue(DialogueService.applyHeadless(p, mentor, option(d, "lessons", "dialogue.murim.mentor.opt.take_spar", 0)), "урок 2 не взят");

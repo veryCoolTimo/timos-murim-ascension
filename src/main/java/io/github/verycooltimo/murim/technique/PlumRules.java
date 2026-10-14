@@ -9,23 +9,23 @@ package io.github.verycooltimo.murim.technique;
 public final class PlumRules {
 
     /** Длина коридора вперёд, блоков (от 0,4 перед стопами). 0 — учебный удар без коридора. */
-    public static double length(int layer) {
-        return layer <= 0 ? 0.0D : layer == 1 ? 3.0D : layer == 2 ? 4.0D : 4.8D;
+    public static double length(int executionTier) {
+        return executionTier <= 0 ? 0.0D : executionTier == 1 ? 3.0D : executionTier == 2 ? 4.0D : 4.8D;
     }
 
     /** Ширина коридора, блоков. */
-    public static double width(int layer) {
-        return layer <= 1 ? 1.1D : layer == 2 ? 1.2D : 1.4D;
+    public static double width(int executionTier) {
+        return executionTier <= 1 ? 1.1D : executionTier == 2 ? 1.2D : 1.4D;
     }
 
     /** Высота столпа, блоков. */
-    public static double height(int layer) {
-        return layer <= 0 ? 2.2D : layer == 1 ? 3.0D : layer == 2 ? 4.0D : 4.8D;
+    public static double height(int executionTier) {
+        return executionTier <= 0 ? 2.2D : executionTier == 1 ? 3.0D : executionTier == 2 ? 4.0D : 4.8D;
     }
 
     /** Коэффициент к базовому урону меча. */
-    public static double coefficient(int layer) {
-        return layer <= 0 ? 1.0D : layer == 1 ? 1.15D : layer == 2 ? 1.30D : 1.45D;
+    public static double coefficient(int executionTier) {
+        return executionTier <= 0 ? 1.0D : executionTier == 1 ? 1.15D : executionTier == 2 ? 1.30D : 1.45D;
     }
 
     /** Учебный удар слоя 0: радиус и угол сектора. */
@@ -49,8 +49,8 @@ public final class PlumRules {
     public static final int FALL_TICK = LAND;
 
     /** Высота дерева по слоям: на 4-м — 12 блоков (ref7–9: многократно выше человека). */
-    public static double treeHeight(int layer) {
-        return switch (Math.max(0, Math.min(7, layer))) {
+    public static double treeHeight(int executionTier) {
+        return switch (Math.max(0, Math.min(7, executionTier))) {
             case 0 -> 0.0D;
             case 1 -> 5.0D;
             case 2 -> 7.0D;
@@ -68,8 +68,8 @@ public final class PlumRules {
     public static final int STAGGER_BOSS_TICKS = 10;
 
     /** Коэффициент удара падающего дерева: слой 1 — один ствол, дальше крона тяжелее. */
-    public static double fallCoefficient(int layer) {
-        return layer <= 0 ? 0.0D : layer == 1 ? 0.8D : layer <= 3 ? 1.6D : 2.0D;
+    public static double fallCoefficient(int executionTier) {
+        return executionTier <= 0 ? 0.0D : executionTier == 1 ? 0.8D : executionTier <= 3 ? 1.6D : 2.0D;
     }
 
     /** Основание ствола: от стоп вперёд, не дальше ~2,4 блока (где бьёт и клиентский ствол). */
@@ -78,8 +78,8 @@ public final class PlumRules {
     }
 
     /** Розовое цветение начинается с третьего слоя (до этого разрез холодный). */
-    public static boolean blossoms(int layer) {
-        return layer >= 3;
+    public static boolean blossoms(int executionTier) {
+        return executionTier >= 3;
     }
 
     /** Насколько ниже ног разрез ещё задевает цель (враг в яме, на склоне), блоков. */

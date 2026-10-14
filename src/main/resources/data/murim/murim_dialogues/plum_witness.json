@@ -1,0 +1,28 @@
+{
+  "name": "npc.murim.elder",
+  "start": [
+    {
+      "node": "unauthorized"
+    }
+  ],
+  "nodes": {
+    "unauthorized": {
+      "line": "dialogue.murim.plum_witness.unauthorized",
+      "gesture": "shake",
+      "options": [
+        {
+          "text": "dialogue.murim.plum_witness.opt.answer"
+        }
+      ]
+    },
+    "recognized": {
+      "line": "dialogue.murim.plum_witness.recognized",
+      "gesture": "point",
+      "options": [
+        {
+          "text": "dialogue.murim.plum_witness.opt.answer"
+        }
+      ]
+    }
+  }
+}

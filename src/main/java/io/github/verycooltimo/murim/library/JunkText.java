@@ -55,27 +55,35 @@ public final class JunkText {
         // java.util.Random: its sequence is fixed by the Java spec, so a seed reads the same everywhere.
         Gen g = new Gen(new Random(book.seed() * 31L + book.kind().ordinal()));
         return switch (book.kind()) {
-            case FAKE_GRAND -> fake(g);
+            case FAKE_GRAND -> fake(g, book);
             case HERETICAL -> heretical(g);
             case COOK -> cook(g);
             case BEGGAR -> beggar(g);
             case MUSINGS -> musings(g);
             case LEDGER -> ledger(g);
-            case CLUE -> clue(g, book.hint());
+            case CLUE -> clue(g, book);
             case LOVE -> love(g);
             case TORN -> torn(g);
             case WATER -> water(g);
         };
     }
 
-    private static Text fake(Gen g) {
-        Component title = g.grandTitle();
+    private static Text fake(Gen g, JunkBook book) {
+        var art = JunkFactory.fakeArt(book);
+        boolean dance = io.github.verycooltimo.murim.technique.JunkArts.FUNNY.contains(art);
+        String key = "technique." + art.getNamespace() + "." + art.getPath();
+        Component title = dance ? Component.translatable(key) : g.grandTitle();
         Component author = g.author();
         List<Para> out = new ArrayList<>();
         out.add(new Para(title, Style.HEADING));
         out.add(new Para(Component.translatable(P + "author", author), Style.NOTE));
         out.add(new Para(Component.translatable(g.key("fake.intro"), title, author), Style.BODY));
-        lessons(g, out, "fake.step");
+        if (dance) {
+            out.add(new Para(Component.translatable(key + ".description"), Style.BODY));
+            out.add(new Para(Component.translatable(key + ".weakness"), Style.NOTE));
+        } else {
+            lessons(g, out, "fake.step");
+        }
         out.add(new Para(Component.translatable(g.key("fake.end")), Style.BODY));
         out.add(new Para(Component.translatable(g.key("seal"), g.sectGen()), Style.SEAL));
         return new Text(title, out);
@@ -139,15 +147,28 @@ public final class JunkText {
         return new Text(title, out);
     }
 
-    private static Text clue(Gen g, int hint) {
+    private static Text clue(Gen g, JunkBook book) {
         Component title = Component.translatable(g.key("clue.head"));
         List<Para> out = new ArrayList<>();
         out.add(new Para(title, Style.HEADING));
-        int nth = hint - FIRST_ORDINAL;
+        int nth = book.hint() - FIRST_ORDINAL;
         if (nth >= 0 && nth < JunkLexicon.size("nth")) {
             out.add(new Para(Component.translatable(g.key("clue.body"), tr("nth", nth)), Style.BODY));
         } else {
             out.add(new Para(Component.translatable(g.key("clue.vague")), Style.BODY));
+        }
+        if (book.manualTiers() == 0) {
+            out.add(new Para(Component.translatable(P + "clue.no_loose"), Style.BODY));
+        } else if (book.manualTiers() > 0) {
+            var tiers = Component.empty();
+            boolean first = true;
+            for (int tier = 0; tier < LibraryPlan.TIERS.length; tier++) {
+                if ((book.manualTiers() & (1 << tier)) == 0) continue;
+                if (!first) tiers.append(", ");
+                tiers.append(Component.translatable(P + "clue.tier." + tier));
+                first = false;
+            }
+            out.add(new Para(Component.translatable(P + "clue.loose_tiers", tiers), Style.BODY));
         }
         out.add(new Para(Component.translatable(g.key("clue.sign")), Style.NOTE));
         return new Text(title, out);

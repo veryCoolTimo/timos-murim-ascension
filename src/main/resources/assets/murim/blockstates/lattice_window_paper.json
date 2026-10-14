@@ -1,0 +1,1492 @@
+{
+  "multipart": [
+    {
+      "when": {
+        "facing": "north",
+        "up": "false",
+        "down": "false",
+        "left": "false",
+        "right": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_paper_pane_0000"
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "up": "false",
+        "down": "false",
+        "left": "false",
+        "right": "true"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_paper_pane_0001"
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "up": "false",
+        "down": "false",
+        "left": "true",
+        "right": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_paper_pane_0010"
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "up": "false",
+        "down": "false",
+        "left": "true",
+        "right": "true"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_paper_pane_0011"
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "up": "false",
+        "down": "true",
+        "left": "false",
+        "right": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_paper_pane_0100"
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "up": "false",
+        "down": "true",
+        "left": "false",
+        "right": "true"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_paper_pane_0101"
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "up": "false",
+        "down": "true",
+        "left": "true",
+        "right": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_paper_pane_0110"
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "up": "false",
+        "down": "true",
+        "left": "true",
+        "right": "true"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_paper_pane_0111"
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "up": "true",
+        "down": "false",
+        "left": "false",
+        "right": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_paper_pane_1000"
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "up": "true",
+        "down": "false",
+        "left": "false",
+        "right": "true"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_paper_pane_1001"
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "up": "true",
+        "down": "false",
+        "left": "true",
+        "right": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_paper_pane_1010"
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "up": "true",
+        "down": "false",
+        "left": "true",
+        "right": "true"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_paper_pane_1011"
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "up": "true",
+        "down": "true",
+        "left": "false",
+        "right": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_paper_pane_1100"
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "up": "true",
+        "down": "true",
+        "left": "false",
+        "right": "true"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_paper_pane_1101"
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "up": "true",
+        "down": "true",
+        "left": "true",
+        "right": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_paper_pane_1110"
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "up": "true",
+        "down": "true",
+        "left": "true",
+        "right": "true"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_paper_pane_1111"
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "up": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_frame_up"
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "down": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_frame_down"
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "left": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_frame_left"
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "right": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_frame_right"
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "up": "false",
+        "left": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_corner_up_left"
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "up": "false",
+        "left": "true"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_corner_up_left_horizontal"
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "up": "true",
+        "left": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_corner_up_left_vertical"
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "up": "false",
+        "right": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_corner_up_right"
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "up": "false",
+        "right": "true"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_corner_up_right_horizontal"
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "up": "true",
+        "right": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_corner_up_right_vertical"
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "down": "false",
+        "left": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_corner_down_left"
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "down": "false",
+        "left": "true"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_corner_down_left_horizontal"
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "down": "true",
+        "left": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_corner_down_left_vertical"
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "down": "false",
+        "right": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_corner_down_right"
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "down": "false",
+        "right": "true"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_corner_down_right_horizontal"
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "down": "true",
+        "right": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_corner_down_right_vertical"
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "up": "false",
+        "down": "false",
+        "left": "false",
+        "right": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_paper_pane_0000",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "up": "false",
+        "down": "false",
+        "left": "false",
+        "right": "true"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_paper_pane_0001",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "up": "false",
+        "down": "false",
+        "left": "true",
+        "right": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_paper_pane_0010",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "up": "false",
+        "down": "false",
+        "left": "true",
+        "right": "true"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_paper_pane_0011",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "up": "false",
+        "down": "true",
+        "left": "false",
+        "right": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_paper_pane_0100",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "up": "false",
+        "down": "true",
+        "left": "false",
+        "right": "true"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_paper_pane_0101",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "up": "false",
+        "down": "true",
+        "left": "true",
+        "right": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_paper_pane_0110",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "up": "false",
+        "down": "true",
+        "left": "true",
+        "right": "true"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_paper_pane_0111",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "up": "true",
+        "down": "false",
+        "left": "false",
+        "right": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_paper_pane_1000",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "up": "true",
+        "down": "false",
+        "left": "false",
+        "right": "true"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_paper_pane_1001",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "up": "true",
+        "down": "false",
+        "left": "true",
+        "right": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_paper_pane_1010",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "up": "true",
+        "down": "false",
+        "left": "true",
+        "right": "true"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_paper_pane_1011",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "up": "true",
+        "down": "true",
+        "left": "false",
+        "right": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_paper_pane_1100",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "up": "true",
+        "down": "true",
+        "left": "false",
+        "right": "true"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_paper_pane_1101",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "up": "true",
+        "down": "true",
+        "left": "true",
+        "right": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_paper_pane_1110",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "up": "true",
+        "down": "true",
+        "left": "true",
+        "right": "true"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_paper_pane_1111",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "up": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_frame_up",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "down": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_frame_down",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "left": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_frame_left",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "right": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_frame_right",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "up": "false",
+        "left": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_corner_up_left",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "up": "false",
+        "left": "true"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_corner_up_left_horizontal",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "up": "true",
+        "left": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_corner_up_left_vertical",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "up": "false",
+        "right": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_corner_up_right",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "up": "false",
+        "right": "true"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_corner_up_right_horizontal",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "up": "true",
+        "right": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_corner_up_right_vertical",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "down": "false",
+        "left": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_corner_down_left",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "down": "false",
+        "left": "true"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_corner_down_left_horizontal",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "down": "true",
+        "left": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_corner_down_left_vertical",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "down": "false",
+        "right": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_corner_down_right",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "down": "false",
+        "right": "true"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_corner_down_right_horizontal",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "down": "true",
+        "right": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_corner_down_right_vertical",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "up": "false",
+        "down": "false",
+        "left": "false",
+        "right": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_paper_pane_0000",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "up": "false",
+        "down": "false",
+        "left": "false",
+        "right": "true"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_paper_pane_0001",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "up": "false",
+        "down": "false",
+        "left": "true",
+        "right": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_paper_pane_0010",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "up": "false",
+        "down": "false",
+        "left": "true",
+        "right": "true"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_paper_pane_0011",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "up": "false",
+        "down": "true",
+        "left": "false",
+        "right": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_paper_pane_0100",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "up": "false",
+        "down": "true",
+        "left": "false",
+        "right": "true"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_paper_pane_0101",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "up": "false",
+        "down": "true",
+        "left": "true",
+        "right": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_paper_pane_0110",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "up": "false",
+        "down": "true",
+        "left": "true",
+        "right": "true"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_paper_pane_0111",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "up": "true",
+        "down": "false",
+        "left": "false",
+        "right": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_paper_pane_1000",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "up": "true",
+        "down": "false",
+        "left": "false",
+        "right": "true"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_paper_pane_1001",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "up": "true",
+        "down": "false",
+        "left": "true",
+        "right": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_paper_pane_1010",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "up": "true",
+        "down": "false",
+        "left": "true",
+        "right": "true"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_paper_pane_1011",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "up": "true",
+        "down": "true",
+        "left": "false",
+        "right": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_paper_pane_1100",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "up": "true",
+        "down": "true",
+        "left": "false",
+        "right": "true"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_paper_pane_1101",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "up": "true",
+        "down": "true",
+        "left": "true",
+        "right": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_paper_pane_1110",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "up": "true",
+        "down": "true",
+        "left": "true",
+        "right": "true"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_paper_pane_1111",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "up": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_frame_up",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "down": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_frame_down",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "left": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_frame_left",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "right": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_frame_right",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "up": "false",
+        "left": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_corner_up_left",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "up": "false",
+        "left": "true"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_corner_up_left_horizontal",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "up": "true",
+        "left": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_corner_up_left_vertical",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "up": "false",
+        "right": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_corner_up_right",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "up": "false",
+        "right": "true"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_corner_up_right_horizontal",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "up": "true",
+        "right": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_corner_up_right_vertical",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "down": "false",
+        "left": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_corner_down_left",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "down": "false",
+        "left": "true"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_corner_down_left_horizontal",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "down": "true",
+        "left": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_corner_down_left_vertical",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "down": "false",
+        "right": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_corner_down_right",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "down": "false",
+        "right": "true"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_corner_down_right_horizontal",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "down": "true",
+        "right": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_corner_down_right_vertical",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "up": "false",
+        "down": "false",
+        "left": "false",
+        "right": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_paper_pane_0000",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "up": "false",
+        "down": "false",
+        "left": "false",
+        "right": "true"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_paper_pane_0001",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "up": "false",
+        "down": "false",
+        "left": "true",
+        "right": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_paper_pane_0010",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "up": "false",
+        "down": "false",
+        "left": "true",
+        "right": "true"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_paper_pane_0011",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "up": "false",
+        "down": "true",
+        "left": "false",
+        "right": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_paper_pane_0100",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "up": "false",
+        "down": "true",
+        "left": "false",
+        "right": "true"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_paper_pane_0101",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "up": "false",
+        "down": "true",
+        "left": "true",
+        "right": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_paper_pane_0110",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "up": "false",
+        "down": "true",
+        "left": "true",
+        "right": "true"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_paper_pane_0111",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "up": "true",
+        "down": "false",
+        "left": "false",
+        "right": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_paper_pane_1000",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "up": "true",
+        "down": "false",
+        "left": "false",
+        "right": "true"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_paper_pane_1001",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "up": "true",
+        "down": "false",
+        "left": "true",
+        "right": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_paper_pane_1010",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "up": "true",
+        "down": "false",
+        "left": "true",
+        "right": "true"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_paper_pane_1011",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "up": "true",
+        "down": "true",
+        "left": "false",
+        "right": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_paper_pane_1100",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "up": "true",
+        "down": "true",
+        "left": "false",
+        "right": "true"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_paper_pane_1101",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "up": "true",
+        "down": "true",
+        "left": "true",
+        "right": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_paper_pane_1110",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "up": "true",
+        "down": "true",
+        "left": "true",
+        "right": "true"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_paper_pane_1111",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "up": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_frame_up",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "down": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_frame_down",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "left": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_frame_left",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "right": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_frame_right",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "up": "false",
+        "left": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_corner_up_left",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "up": "false",
+        "left": "true"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_corner_up_left_horizontal",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "up": "true",
+        "left": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_corner_up_left_vertical",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "up": "false",
+        "right": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_corner_up_right",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "up": "false",
+        "right": "true"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_corner_up_right_horizontal",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "up": "true",
+        "right": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_corner_up_right_vertical",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "down": "false",
+        "left": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_corner_down_left",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "down": "false",
+        "left": "true"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_corner_down_left_horizontal",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "down": "true",
+        "left": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_corner_down_left_vertical",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "down": "false",
+        "right": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_corner_down_right",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "down": "false",
+        "right": "true"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_corner_down_right_horizontal",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "down": "true",
+        "right": "false"
+      },
+      "apply": {
+        "model": "murim:block/lattice_window_corner_down_right_vertical",
+        "y": 270
+      }
+    }
+  ]
+}

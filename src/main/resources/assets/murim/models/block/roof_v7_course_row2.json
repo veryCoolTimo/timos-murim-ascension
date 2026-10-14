@@ -1,0 +1,16 @@
+{
+  "parent": "minecraft:block/block",
+  "loader": "neoforge:obj",
+  "model": "murim:models/block/roof_v7_course_row2.obj",
+  "flip_v": false,
+  "emissive_ambient": false,
+  "automatic_culling": false,
+  "ambientocclusion": false,
+  "textures": {
+    "top": "murim:block/roof_v7_tiles",
+    "side": "murim:block/roof_tiles_side",
+    "under": "murim:block/roof_tiles_under",
+    "particle": "murim:block/roof_tiles"
+  },
+  "render_type": "minecraft:solid"
+}

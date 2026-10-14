@@ -1,0 +1,75 @@
+{
+  "id": "murim:high_cloud_steps",
+  "form": "step",
+  "intent": "evasion",
+  "breath": "hollow_breath",
+  "phases": {
+    "ritual": 0,
+    "windup": 6,
+    "impact": 1,
+    "recovery": 7,
+    "dissipation": 4
+  },
+  "behavior": {
+    "type": "murim:demonic_art",
+    "art": "high_cloud_steps"
+  },
+  "animation": "murim:high_cloud_steps",
+  "vfx": {
+    "pivot": [
+      0,
+      1.1,
+      0
+    ],
+    "basis_a": [
+      1,
+      0,
+      0
+    ],
+    "basis_b": [
+      0,
+      0,
+      1
+    ],
+    "inner_radius": 0.2,
+    "outer_radius": 1.1,
+    "start_angle": -35,
+    "end_angle": 35,
+    "colour": {
+      "r": 0.85,
+      "g": 0.055,
+      "b": 0.1
+    },
+    "trail": {
+      "enabled": false,
+      "alpha": 0.25,
+      "size": 0.12,
+      "life_ticks": 4
+    },
+    "crescent": {
+      "enabled": false,
+      "alpha": 0.2,
+      "size": 0.1,
+      "life_ticks": 3
+    },
+    "core": {
+      "enabled": false,
+      "alpha": 0.3,
+      "size": 0.18,
+      "life_ticks": 2
+    },
+    "windup_motes": 0,
+    "ritual_motes": 0
+  },
+  "interruption": {
+    "cancellable_until": "windup",
+    "break_on_damage": false,
+    "damage_threshold": 0
+  },
+  "weakness": "technique.murim.high_cloud_steps.weakness",
+  "hit_stop_ticks": 0,
+  "cooldown_ticks": 40,
+  "star_cap": 12,
+  "tier": "advanced",
+  "requires": []
+}

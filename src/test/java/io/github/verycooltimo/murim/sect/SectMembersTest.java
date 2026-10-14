@@ -155,29 +155,29 @@ class SectMembersTest {
     }
 
     @Test
-    @DisplayName("Журнал: два пропущенных строя подряд — наряд; пока наряд, полный день без заслуг; отработал — снят")
-    void missedFormationsGiveChores() {
-        Log l = Log.NONE;
+    @DisplayName("Журнал: приглашения можно пропускать; усердие не сбрасывается, старый наряд не блокирует бонус")
+    void incompleteDaysPreserveDiligenceAndLegacyChoresClear() {
+        Log l = new Log(SectAttendance.Day.NONE, SectAttendance.Day.NONE, 2, 2, true, Long.MIN_VALUE);
+        assertFalse(l.chores());
+        assertEquals(0, l.missedRow());
         for (long day = 1; day <= 2; day++) {
             l = SectAttendance.roll(l, day).log();
             l = mark(l, day, Activity.FORMATION, true);
             l = mark(l, day, Activity.LESSON, true);
             l = mark(l, day, Activity.LESSON, false);
-            assertTrue(l.today().missed(Activity.FORMATION));
+            assertFalse(l.today().missed(Activity.FORMATION));
         }
-        SectAttendance.Settled s = SectAttendance.roll(l, 3);
-        assertTrue(s.choresGiven(), "наряд не назначен");
-        assertTrue(s.log().chores());
-        assertEquals(0, s.log().streak());
-        l = s.log();
-        l = mark(l, 3, Activity.FORMATION, true);
-        l = mark(l, 3, Activity.FORMATION, false);
-        SectAttendance.Settled withChores = SectAttendance.roll(l, 4);
-        assertTrue(withChores.full());
-        assertEquals(0, withChores.bonus(), "наряд не отработан, а заслуги за день даны");
-        l = withChores.log().choresDone();
-        assertFalse(l.chores());
-        assertEquals(0, l.missedRow());
+        SectAttendance.Settled s = SectAttendance.roll(l, 30);
+        assertFalse(s.choresGiven());
+        assertFalse(s.log().chores());
+        assertEquals(2, s.log().streak());
+        l = mark(s.log(), 30, Activity.FORMATION, true);
+        l = mark(l, 30, Activity.FORMATION, false);
+        SectAttendance.Settled resumed = SectAttendance.roll(l, 31);
+        assertTrue(resumed.full());
+        assertEquals(3, resumed.log().streak());
+        assertEquals(SectAttendance.DAY_BONUS + 1, resumed.bonus());
+        assertEquals(0, SectAttendance.roll(resumed.log(), 31).bonus());
     }
 
     @Test
@@ -188,7 +188,7 @@ class SectMembersTest {
         assertTrue(l.today().present());
         assertFalse(l.today().full(), "день без ожиданий не «полный»");
         l = mark(l, 5, Activity.FORMATION, true);
-        assertTrue(l.today().missed(Activity.FORMATION));
+        assertFalse(l.today().missed(Activity.FORMATION));
         l = mark(l, 5, Activity.FORMATION, false);
         assertFalse(l.today().missed(Activity.FORMATION));
         assertTrue(l.today().full());

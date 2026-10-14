@@ -1,0 +1,5 @@
+newmtl cream
+map_Kd #cream
+
+newmtl tiles_x
+map_Kd #tiles_x

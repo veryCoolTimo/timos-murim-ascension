@@ -4,6 +4,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import io.github.verycooltimo.murim.MurimMod;
+import io.github.verycooltimo.murim.technique.FootworkFamily;
 import io.github.verycooltimo.murim.network.StepPayload;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.PlayerModel;
@@ -37,7 +38,7 @@ import java.util.Random;
  * Своё зрелище каждой формы стилей шагов (docs/design/techniques/footwork-styles.md, 03.10).
  * Всё — живая симуляция: точки лент рождаются там, где прошло тело, и дрейфуют своей скоростью;
  * лепестки, пыль, обрывки и дымка — частицы со скоростью, сопротивлением и турбулентностью.
- * Слой 0 — без эффектов; с каждым слоем растут длина, ширина, число лент и частиц.
+ * Бог Ветра использует V0..3: пыль, короткая лента, затем ограниченные послеобразы; на L8 след длиннее.
  *
  * <p>Тёмный Аромат (Хуашань) — бело-голубые ленты с розовой нитью и лепестки:
  * <ul>
@@ -396,7 +397,7 @@ public final class FootworkVfx {
 
     private static final class RunTrail {
         final int family;
-        final int layer;
+        final int executionTier;
         final int startTick;
         final List<Node> left = new ArrayList<>();
         final List<Node> right = new ArrayList<>();
@@ -411,9 +412,9 @@ public final class FootworkVfx {
         double turnSign = 1.0D;
         int steps;
 
-        RunTrail(int family, int layer, Entity e) {
+        RunTrail(int family, int executionTier, Entity e) {
             this.family = family;
-            this.layer = layer;
+            this.executionTier = executionTier;
             this.startTick = clientTicks;
             this.last = e.position();
             this.lastYaw = e instanceof LivingEntity l ? l.yBodyRot : e.getYRot();
@@ -421,19 +422,13 @@ public final class FootworkVfx {
     }
 
     private static final class Shadow {
-        final int layer;
-        /** Направления хода за последние тики: поворот — расхождение с направлением 4 тика назад. */
-        final java.util.ArrayDeque<Vec3> dirs = new java.util.ArrayDeque<>();
+        final int executionTier;
         int lastGhost = -100;
-        int lastTurn = -100;
-        int lastClone = -100;
-        /** Тики окончания живых теневых копий. */
-        final List<Integer> clones = new ArrayList<>();
         double moved;
         Vec3 last;
 
-        Shadow(int layer, Entity e) {
-            this.layer = layer;
+        Shadow(int executionTier, Entity e) {
+            this.executionTier = executionTier;
             this.last = e.position();
         }
     }
@@ -446,23 +441,23 @@ public final class FootworkVfx {
      * удар; бледный двойник на старте. Рывок 5 тиков (разбор codex 03.10: не длинный волнистый разрез).
      */
     public static void petalStep(StepPayload p) {
-        int layer = Math.min(4, p.layer());
+        int executionTier = Math.min(4, p.executionTier());
         Minecraft mc = Minecraft.getInstance();
         Entity entity = mc.level == null ? null : mc.level.getEntity(p.entityId());
         Vec3 flat = new Vec3(p.to().x - p.from().x, 0.0D, p.to().z - p.from().z);
         // Уклонение слышно и на слое 0 (это сам шаг, не эффект), но тише.
-        io.github.verycooltimo.murim.client.Sfx.play(p.from().add(0.0D, 0.9D, 0.0D), io.github.verycooltimo.murim.registry.ModSounds.DASH, layer <= 0 ? 0.5F : 0.9F, 1.0F);
-        if (layer <= 0) {
+        io.github.verycooltimo.murim.client.Sfx.play(p.from().add(0.0D, 0.9D, 0.0D), io.github.verycooltimo.murim.registry.ModSounds.DASH, executionTier <= 0 ? 0.5F : 0.9F, 1.0F);
+        if (executionTier <= 0) {
             return;
         }
         if (flat.lengthSqr() > 1.0E-4D) {
-            TraverseVfx.ownLines(mc, entity, flat, 0.45F + 0.1F * layer);
+            TraverseVfx.ownLines(mc, entity, flat, 0.45F + 0.1F * executionTier);
         }
         Vec3 from = p.from();
         Vec3 d = flat.lengthSqr() < 1.0E-4D ? Vec3.directionFromRotation(0.0F, p.yaw()) : flat.normalize();
         Vec3 side = new Vec3(-d.z, 0.0D, d.x).scale(RNG.nextBoolean() ? 1.0D : -1.0D);
         float now = clientTicks;
-        double r = 0.5D + 0.03D * layer;
+        double r = 0.5D + 0.03D * executionTier;
         double dist = Math.max(0.5D, flat.length());
         // Дуга начинается со стороны удара (перед прежним местом), огибает его сбоку, выходит за
         // спину и коротким хвостом (≤ 1 блока) тянется к прибытию. Высота — от голени к поясу.
@@ -485,9 +480,9 @@ public final class FootworkVfx {
             double h = 0.15D + 0.2D * Math.sin(Math.PI * Math.min(1.0D, u * 1.1D));
             arc[i] = at.add(0.0D, h, 0.0D);
         }
-        RIBBONS.add(new Ribbon(arc, now, 3.0F, 2.5F, 3.0F + layer * 0.5F, 0.07D + 0.008D * layer, H_SURFACE, H_EDGE,
-                layer >= 3, 1.0F, side.scale(0.008D)));
-        if (layer >= 2) {
+        RIBBONS.add(new Ribbon(arc, now, 3.0F, 2.5F, 3.0F + executionTier * 0.5F, 0.07D + 0.008D * executionTier, H_SURFACE, H_EDGE,
+                executionTier >= 3, 1.0F, side.scale(0.008D)));
+        if (executionTier >= 2) {
             // Встречный завиток на месте удара — выше и с другой стороны (пересекающиеся петли 01_huas).
             Vec3[] curl = new Vec3[16];
             for (int i = 0; i < curl.length; i++) {
@@ -496,14 +491,14 @@ public final class FootworkVfx {
                 curl[i] = from.add(d.scale(-0.45D * Math.cos(th))).add(side.scale(0.45D * Math.sin(th)))
                         .add(0.0D, 0.9D + 0.25D * u, 0.0D);
             }
-            RIBBONS.add(new Ribbon(curl, now + 0.5F, 2.0F, 1.5F, 3.0F, 0.035D + 0.01D * layer, H_SURFACE, H_EDGE,
-                    layer >= 4, 0.75F, new Vec3(0.0D, 0.01D, 0.0D)));
+            RIBBONS.add(new Ribbon(curl, now + 0.5F, 2.0F, 1.5F, 3.0F, 0.035D + 0.01D * executionTier, H_SURFACE, H_EDGE,
+                    executionTier >= 4, 0.75F, new Vec3(0.0D, 0.01D, 0.0D)));
         }
-        dust(from, d.scale(-1.0D), 3 + layer / 2, now, 0.7D);
-        if (layer >= 3) {
+        dust(from, d.scale(-1.0D), 3 + executionTier / 2, now, 0.7D);
+        if (executionTier >= 3) {
             // Лепестки срываются вдоль самого рывка, пока тело летит (5 тиков).
             Vec3 to = p.to();
-            for (int i = 0; i < 4 + 2 * layer; i++) {
+            for (int i = 0; i < 4 + 2 * executionTier; i++) {
                 double u = RNG.nextDouble();
                 Vec3 at = from.lerp(to, u).add((RNG.nextDouble() - 0.5D) * 0.4D, 0.3D + 1.2D * RNG.nextDouble(), (RNG.nextDouble() - 0.5D) * 0.4D);
                 PETALS.add(new Petal(at, d.scale(0.04D).add(0.0D, 0.01D, 0.0D), now + (float) (5.0D * timeOf(u)),
@@ -512,8 +507,8 @@ public final class FootworkVfx {
         }
         // Лепестки — там, куда пришёлся бы удар: висят на груди прежнего места, дрейфуют сами,
         // за игроком не летят.
-        if (layer >= 3) {
-            int count = layer >= 4 ? 22 : 14;
+        if (executionTier >= 3) {
+            int count = executionTier >= 4 ? 22 : 14;
             Vec3 hit = from.add(0.0D, 0.65D, 0.0D);
             for (int i = 0; i < count; i++) {
                 // Облачко радиусом ~0,45 блока, шире, чем выше: место удара, а не столб.
@@ -528,47 +523,47 @@ public final class FootworkVfx {
             }
         }
         // Бледный двойник на старте — его убирать нельзя (чек-лист §8).
-        if (layer >= 2 && entity instanceof AbstractClientPlayer player) {
+        if (executionTier >= 2 && entity instanceof AbstractClientPlayer player) {
             // Двойник старта держится и осыпается лепестками (автор 03.10: «нужен лучше VFX»).
-            ghost(player, from, player.yBodyRot, 0.0F, 8.0F, 0.32F, null, true, layer >= 3 ? 1.5F + 0.5F * layer : 0.0F,
+            ghost(player, from, player.yBodyRot, 0.0F, 8.0F, 0.32F, null, true, executionTier >= 3 ? 1.5F + 0.5F * executionTier : 0.0F,
                     d.scale(0.02D));
         }
     }
 
     /** Событие бега/толчка/формы из {@link TraverseVfx}: вид — как в {@code TraversePayloads.Event}. */
-    static void onEvent(Entity entity, int kind, int layer, Vec3 dir, int entityId) {
+    static void onEvent(Entity entity, int kind, int executionTier, Vec3 dir, int entityId) {
         switch (kind) {
             case 0 -> RUNS.remove(entityId);
             case 1 -> {
                 if (entity != null) {
-                    RUNS.put(entityId, new RunTrail((int) Math.round(dir.x), layer, entity));
+                    RUNS.put(entityId, new RunTrail((int) Math.round(dir.x), executionTier, entity));
                 }
             }
             case 5 -> {
                 if (entity != null) {
-                    blink(entity, layer, dir);
+                    blink(entity, executionTier, dir);
                 }
             }
             case 6 -> {
                 if (entity != null) {
-                    SHADOWS.put(entityId, new Shadow(layer, entity));
-                    shadowEnter(entity, layer);
+                    SHADOWS.put(entityId, new Shadow(executionTier, entity));
+                    shadowEnter(entity, executionTier);
                 }
             }
             case 7 -> {
                 Shadow was = SHADOWS.remove(entityId);
                 if (entity != null && was != null) {
-                    shadowExit(entity, was.layer);
+                    shadowExit(entity, was.executionTier);
                 }
             }
             case 8 -> {
                 if (entity != null) {
-                    death(entity, layer, dir);
+                    death(entity, executionTier, dir);
                 }
             }
             case 9 -> {
                 if (entity != null) {
-                    behind(entity, layer, dir);
+                    behind(entity, executionTier, dir);
                 }
             }
             default -> {
@@ -577,141 +572,53 @@ public final class FootworkVfx {
     }
 
     /**
-     * Шаг мига (разбор codex-astra 03.10 + реф swift step): тело стягивается в воздушную складку.
-     * 0–2 — на старом месте силуэт из частиц, его обвивают две широкие ленты (голень → плечо и за
-     * поясницей); 2–7 — фронт распада проходит по силуэту, частицы сдувает по ходу ухода в ленты;
-     * 5–9 — ленты вытягиваются на ~2 блока; у прибытия — короткая ответная дуга. Резкий срез по
-     * корпусу — с прошлой версии («норм»).
+     * Миг: воздух по пути и послеобразы по уровню V0..3 из таблицы звёзд.
      */
-    private static void blink(Entity entity, int layer, Vec3 offset) {
-        if (layer < 1 || offset.lengthSqr() < 1.0E-4D) {
+    private static void blink(Entity entity, int executionTier, Vec3 offset) {
+        windDash(entity, executionTier, offset, true);
+    }
+
+    /** V0..3 keep the existing air palette and bound copies to 1/2/3, lasting 4/6/8 ticks. */
+    private static void windDash(Entity entity, int executionTier, Vec3 offset, boolean evade) {
+        if (offset.lengthSqr() < 1.0E-4D) {
             return;
         }
-        float now = clientTicks;
+        int tier = FootworkFamily.windVfxTier(executionTier);
         Vec3 from = entity.position();
-        Vec3 d = offset.normalize();
-        double len = Math.min(1.8D, offset.length());
-        Vec3 a = from.subtract(d.scale(0.4D)).add(0.0D, 1.1D, 0.0D);
-        Vec3 b = from.add(d.scale(len)).add(0.0D, 0.85D, 0.0D);
-        RIBBONS.add(new Ribbon(line(a, b, 14, Vec3.ZERO), now, 0.3F, 0.7F, 1.2F, 0.03D, hex(0xF2FAF7), WHITE,
-                false, 1.0F, Vec3.ZERO));
-        dust(from, d.scale(-1.0D), 3 + layer / 4, now, 0.5D);
-        double k = 0.75D + 0.04D * layer;
-        // Лента 1: от голени к противоположному плечу, раскрывается в сторону ухода.
-        double start = Math.atan2(0.0D, -1.0D);
-        RIBBONS.add(sheet(spiral(from, d, 0.55D, 0.25D, 1.45D, start, Math.toRadians(250.0D), 18), now, 2.0F, 3.0F, 6.0F,
-                0.21D * k, AIR_SHEET, 0.42F, d.scale(0.22D)));
-        if (layer >= 3) {
-            // Лента 2: за поясницей, уже и ниже.
-            RIBBONS.add(sheet(spiral(from, d, 0.5D, 0.85D, 1.1D, start + Math.PI, Math.toRadians(-180.0D), 14), now + 0.5F, 2.0F,
-                    3.0F, 6.0F, 0.13D * k, hex(0xA9DDEA), 0.32F, d.scale(0.18D)));
-            // Ответная дуга у прибытия.
-            Vec3 to = from.add(offset);
-            RIBBONS.add(sheet(spiral(to, d, 0.4D, 0.8D, 1.0D, Math.PI * 0.5D, Math.toRadians(120.0D), 10), now + 5.0F, 1.0F, 1.0F,
-                    2.0F, 0.09D, AIR_SHEET, 0.38F, Vec3.ZERO));
+        Vec3 dir = offset.normalize();
+        dust(from, dir.scale(-1.0D), 2, clientTicks, 0.4D);
+        if (tier == 0) {
+            return;
         }
-        if (layer >= 2 && entity instanceof AbstractClientPlayer player) {
-            silhouette(player, from, player.yBodyRot, now, d, AIR_BODY, 0.36F, 120 + 20 * layer, 2.0F, 5.0F, 5.0F, false);
+        double length = tier == 1 ? Math.min(2.0D, offset.length()) : offset.length();
+        RIBBONS.add(sheet(line(from.add(0.0D, 0.6D, 0.0D), from.add(dir.scale(length)).add(0.0D, 0.9D, 0.0D),
+                8, Vec3.ZERO), clientTicks, 0.5F, 1.0F, FootworkFamily.windAfterimageLife(executionTier),
+                evade ? 0.08D : 0.12D, AIR_SHEET, 0.4F, Vec3.ZERO));
+        if (tier >= 2) {
+            RIBBONS.add(sheet(spiral(from, dir, 0.45D, 0.25D, 1.2D, Math.PI, Math.toRadians(180), 10),
+                    clientTicks, 1.0F, 1.0F, 4.0F, 0.12D, AIR_SHEET, 0.3F, dir.scale(0.08D)));
+        }
+        if (entity instanceof AbstractClientPlayer player && (evade || tier >= 2)) {
+            int copies = FootworkFamily.windAfterimages(executionTier);
+            for (int i = 0; i < copies; i++) {
+                windGhost(player, from.add(offset.scale(i / (double) copies)), executionTier, i, AIR_BODY);
+            }
         }
     }
 
-    /**
-     * Шаг смерти, v5 (автор 03.10: «очень хорошо, но если поднажмёшь — шедевр»). Качество — как у
-     * принятого Мига: тело на старте сдувает в ветер, его обвивают две широкие ленты; по пути
-     * прорыва — щель и две узкие ленты, винтом обвивающие ось прорыва (сверло); у цели — светлый
-     * участок, штрихи и лента, на миг обвившая её корпус; на финише тело СОБИРАЕТСЯ из ветра —
-     * частицы прилетают по следу и садятся в позу, ленты заворачиваются вокруг.
-     */
-    private static void death(Entity entity, int layer, Vec3 offset) {
-        if (layer < 1 || offset.lengthSqr() < 1.0E-4D) {
+    private static void windGhost(AbstractClientPlayer player, Vec3 pos, int executionTier, float delay, VfxColour colour) {
+        Minecraft mc = Minecraft.getInstance();
+        if (pos.distanceToSqr(mc.gameRenderer.getMainCamera().getPosition()) > 32.0D * 32.0D
+                || GHOSTS.size() >= 24
+                || GHOSTS.stream().filter(g -> g.entityId() == player.getId()).count() >= FootworkFamily.windAfterimages(executionTier)) {
             return;
         }
-        float now = clientTicks;
-        Vec3 from = entity.position();
-        Vec3 d = offset.normalize();
-        Vec3 side = new Vec3(-d.z, 0.0D, d.x);
-        double len = offset.length();
-        Vec3 end = from.add(offset.scale(0.92D));
-        float draw = 6.0F;
-        dust(from, d.scale(-1.0D), 3 + layer / 2, now, 0.9D);
-        // Длинная щель: почти прямая, один плавный выгиб вбок 0,25.
-        int n = 24;
-        Vec3[] pts = new Vec3[n];
-        for (int i = 0; i < n; i++) {
-            double u = i / (double) (n - 1);
-            pts[i] = from.lerp(end, u).add(side.scale(0.25D * Math.sin(Math.PI * u))).add(0.0D, 0.95D + 0.1D * u, 0.0D);
-        }
-        TimedRibbon slit = new TimedRibbon(pts, now, draw, 2.0F, 5.0F, 0.12D + 0.01D * layer, AIR_SHEET, AIR_EDGE);
-        slit.sheetAlpha = 0.4F;
-        RIBBONS.add(slit);
-        if (layer >= 2) {
-            // Сверло: две узкие ленты винтом вокруг оси прорыва (два оборота), растут вместе с телом.
-            for (int k = 0; k < 2; k++) {
-                Vec3[] hx = new Vec3[40];
-                for (int i = 0; i < hx.length; i++) {
-                    double u = i / (double) (hx.length - 1);
-                    double th = k * Math.PI + 4.0D * Math.PI * u;
-                    double r = 0.38D * Math.sin(Math.PI * Math.min(1.0D, u * 1.15D)) + 0.05D;
-                    hx[i] = pts[(int) Math.round(u * (n - 1))].add(side.scale(r * Math.cos(th))).add(0.0D, r * Math.sin(th), 0.0D);
-                }
-                TimedRibbon h = new TimedRibbon(hx, now + 0.3F * k, draw, 1.0F, 3.0F, 0.06D, k == 0 ? AIR_SHEET : hex(0xA9DDEA), AIR_EDGE);
-                h.sheetAlpha = 0.36F;
-                RIBBONS.add(h);
-            }
-        }
-        if (layer >= 3) {
-            Minecraft mc = Minecraft.getInstance();
-            for (LivingEntity t : mc.level.getEntitiesOfClass(LivingEntity.class,
-                    entity.getBoundingBox().expandTowards(offset).inflate(1.5D), e -> e != entity && e.isAlive())) {
-                Vec3 to = t.position().subtract(from);
-                double s = (to.x * d.x + to.z * d.z) / len;
-                double off = Math.abs(to.x * d.z - to.z * d.x);
-                // Тело идёт по горизонтали: цель в небе над путём не «пересекается».
-                if (s <= 0.0D || s >= 1.05D || off > t.getBbWidth() / 2.0D + 0.9D || Math.abs(t.getY() - from.y) > 1.5D) {
-                    continue;
-                }
-                float when = now + (float) (draw * timeOf(Math.min(1.0D, s)));
-                Vec3 c = from.add(d.scale(s * len)).add(0.0D, 1.0D, 0.0D);
-                // Самое светлое место — короткий участок пересечения: полоса 0,9 × 0,06 на 2 тика.
-                RIBBONS.add(new Ribbon(line(c.subtract(d.scale(0.45D)), c.add(d.scale(0.45D)), 6, Vec3.ZERO), when, 0.2F, 1.0F,
-                        1.0F, 0.03D, hex(0xF1FFFF), WHITE, false, 1.0F, Vec3.ZERO));
-                for (int i = 0; i < 6; i++) {
-                    Vec3 at = c.add(side.scale((RNG.nextDouble() - 0.5D) * 0.5D)).add(0.0D, (RNG.nextDouble() - 0.5D) * 0.6D, 0.0D);
-                    SPARKS.add(new Spark(at, d.scale(0.12D + 0.08D * RNG.nextDouble()), when, 4.0F, 0.12D + 0.13D * RNG.nextDouble(),
-                            0.012D, WHITE));
-                }
-                // Ветер прорыва на миг обвивает корпус цели (обтекание из рефа swift step).
-                RIBBONS.add(sheet(spiral(t.position(), d, t.getBbWidth() / 2.0D + 0.35D, 0.5D, Math.min(1.6D, t.getBbHeight() * 0.8D),
-                        Math.PI, Math.toRadians(220.0D), 14), when, 1.5F, 1.5F, 3.0F, 0.12D, AIR_SHEET, 0.38F, d.scale(0.1D)));
-                // За целью — вторая короткая лента с приподнятым концом.
-                Vec3 behindT = c.add(d.scale(0.6D));
-                Vec3[] tail = new Vec3[10];
-                for (int i = 0; i < tail.length; i++) {
-                    double u = i / (double) (tail.length - 1);
-                    tail[i] = behindT.add(d.scale(2.0D * u)).add(side.scale(-0.15D * Math.sin(Math.PI * u))).add(0.0D, 0.35D * u * u, 0.0D);
-                }
-                RIBBONS.add(sheet(tail, when + 1.0F, 2.0F, 2.0F, 4.0F, 0.11D, AIR_SHEET, 0.36F, d.scale(0.05D)));
-            }
-        }
-        // Финиш: две ленты заворачиваются вокруг тела, загнутый хвост.
-        RIBBONS.add(sheet(spiral(end, d, 0.5D, 0.3D, 1.5D, Math.PI, Math.toRadians(-240.0D), 16), now + draw - 1.0F, 2.0F, 2.0F, 4.0F,
-                0.15D, AIR_SHEET, 0.38F, new Vec3(0.0D, 0.015D, 0.0D)));
-        RIBBONS.add(sheet(spiral(end, d, 0.4D, 1.4D, 0.8D, 0.0D, Math.toRadians(180.0D), 12), now + draw, 1.5F, 2.0F, 3.0F,
-                0.09D, hex(0xA9DDEA), 0.32F, new Vec3(0.0D, 0.02D, 0.0D)));
-        if (layer >= 2 && entity instanceof AbstractClientPlayer player) {
-            // Старт: две ленты обвивают отпечаток (как у Мига), его сдувает в начало щели.
-            double start = Math.atan2(0.0D, -1.0D);
-            RIBBONS.add(sheet(spiral(from, d, 0.55D, 0.25D, 1.45D, start, Math.toRadians(250.0D), 18), now, 2.0F, 3.0F, 6.0F,
-                    0.2D, AIR_SHEET, 0.42F, d.scale(0.22D)));
-            RIBBONS.add(sheet(spiral(from, d, 0.5D, 0.85D, 1.15D, start + Math.PI, Math.toRadians(-180.0D), 14), now + 0.5F, 2.0F,
-                    3.0F, 6.0F, 0.12D, hex(0xA9DDEA), 0.32F, d.scale(0.18D)));
-            silhouette(player, from, player.yBodyRot, now, d, AIR_BODY, 0.38F, 140 + 15 * layer, 2.0F, 5.0F, 5.0F, false);
-            if (layer >= 3) {
-                // Тело собирается из ветра на финише: частицы летят по следу и садятся в позу к концу рывка.
-                List<Vec3> pose = posePoints(player, end, player.yBodyRot, false);
-                silhouetteMotes(pose, end, now + 3.0F, d, AIR_BODY, 0.34F, 110 + 10 * layer, 0.0F, 3.0F, 1.5F, now + 1.0F);
-            }
-        }
+        ghost(player, pos, player.yBodyRot, delay, FootworkFamily.windAfterimageLife(executionTier), 0.3F, colour, false, 0.0F, Vec3.ZERO);
+    }
+
+    /** Наступление использует тот же воздушный след, с более широкой полосой. */
+    private static void death(Entity entity, int executionTier, Vec3 offset) {
+        windDash(entity, executionTier, offset, false);
     }
 
     /**
@@ -721,8 +628,8 @@ public final class FootworkVfx {
      * розовая дуга по внешней стороне поворота, лепестки по касательной; 6–9 — за спиной лента
      * загибается вверх до 1,4, веер лепестков; передний участок гаснет первым.
      */
-    private static void behind(Entity entity, int layer, Vec3 offset) {
-        if (layer < 1 || offset.lengthSqr() < 1.0E-4D) {
+    private static void behind(Entity entity, int executionTier, Vec3 offset) {
+        if (executionTier < 1 || offset.lengthSqr() < 1.0E-4D) {
             return;
         }
         float now = clientTicks;
@@ -767,7 +674,7 @@ public final class FootworkVfx {
             path[i] = new Vec3(at.x, from.y + h, at.z);
         }
         RIBBONS.add(sheet(path, now + 2.0F, 3.0F, 3.0F, 5.0F, 0.2D, hex(0xD0F1F6), 0.4F, Vec3.ZERO));
-        dust(from, d.scale(-1.0D), 2 + layer / 2, now, 0.8D);
+        dust(from, d.scale(-1.0D), 2 + executionTier / 2, now, 0.8D);
         // Ложный разворот спереди: дуга загибается в сторону, противоположную обходу.
         Vec3 front = c.subtract(td.scale(half + 0.5D));
         Vec3[] fake = new Vec3[12];
@@ -776,7 +683,7 @@ public final class FootworkVfx {
             fake[i] = front.add(sd.scale(0.5D - 1.1D * u)).add(td.scale(-0.35D * u * u)).add(0.0D, 0.7D + 0.1D * u, 0.0D);
         }
         RIBBONS.add(sheet(fake, now, 1.5F, 1.0F, 3.0F, 0.16D, hex(0xD0F1F6), 0.4F, Vec3.ZERO));
-        if (layer >= 3) {
+        if (executionTier >= 3) {
             Vec3 tip = fake[fake.length - 1];
             for (int i = 0; i < 5; i++) {
                 PETALS.add(new Petal(tip.add((RNG.nextDouble() - 0.5D) * 0.2D, (RNG.nextDouble() - 0.5D) * 0.2D, (RNG.nextDouble() - 0.5D) * 0.2D),
@@ -1249,7 +1156,7 @@ public final class FootworkVfx {
                 age(st);
                 trim(st, 14);
             }
-            if (r.layer < 1) {
+            if (r.family == HUASHAN && r.executionTier < 1) {
                 continue;
             }
             Vec3 dir = speed > 1.0E-3D ? step.normalize() : Vec3.directionFromRotation(0.0F, yaw);
@@ -1263,14 +1170,14 @@ public final class FootworkVfx {
                     int t = now - r.startTick;
                     double ph = 2.0D * Math.PI * t / 24.0D;
                     double hp = 2.0D * Math.PI * t / 12.0D;
-                    double k = 0.8D + 0.05D * r.layer;
+                    double k = 0.8D + 0.05D * r.executionTier;
                     r.left.add(new Node(pos.add(side.scale(0.5D * Math.sin(ph))).add(0.0D, 0.5D + 0.3D * Math.sin(hp), 0.0D),
                             Vec3.ZERO, now, 0.16D * k));
-                    if (r.layer >= 2) {
+                    if (r.executionTier >= 2) {
                         r.right.add(new Node(pos.add(side.scale(-0.42D * Math.sin(ph + 1.0D))).add(0.0D, 0.35D + 0.18D * Math.sin(hp + 2.0D), 0.0D),
                                 Vec3.ZERO, now, 0.1D * k));
                     }
-                    if (r.layer >= 3 && t % 12 == 8) {
+                    if (r.executionTier >= 3 && t % 12 == 8) {
                         // Розовая дуга на внешней стороне изгиба и 3–4 лепестка из неё.
                         double out = Math.signum(Math.sin(ph) + 1.0E-3D);
                         Vec3 cen = pos.add(0.0D, 0.6D, 0.0D);
@@ -1281,7 +1188,7 @@ public final class FootworkVfx {
                             arc[i] = cen.add(side.scale(out * 0.6D * Math.cos(th))).add(dir.scale(-0.6D * Math.sin(th) - 0.3D))
                                     .add(0.0D, 0.15D * u, 0.0D);
                         }
-                        Ribbon pr = new Ribbon(arc, now, 1.0F, 2.0F, 2.0F, 0.035D + 0.003D * r.layer, PINK, hex(0xFFE1EF), false, 1.0F,
+                        Ribbon pr = new Ribbon(arc, now, 1.0F, 2.0F, 2.0F, 0.035D + 0.003D * r.executionTier, PINK, hex(0xFFE1EF), false, 1.0F,
                                 dir.scale(-0.02D));
                         pr.sheetAlpha = 0.65F;
                         RIBBONS.add(pr);
@@ -1299,67 +1206,30 @@ public final class FootworkVfx {
                 trimLength(r.left, 3.5D);
                 trimLength(r.right, 3.5D);
             } else {
-                if (r.layer >= 2 && speed > 0.05D) {
-                    // Белая линия от тела гнётся так же, как голубые ленты (автор 03.10): узел получает
-                    // плавно меняющийся снос вбок и вверх-вниз и уплывает, хвост изгибается волной.
-                    double ph = now * 0.45D;
-                    Vec3 sway = side.scale(0.035D * Math.sin(ph) + (RNG.nextDouble() - 0.5D) * 0.012D)
-                            .add(0.0D, 0.02D * Math.cos(ph * 1.3D) + 0.004D, 0.0D);
-                    r.corridor.add(new Node(pos.add(0.0D, 0.8D, 0.0D).subtract(dir.scale(0.2D)), sway, now, 0.0D));
-                }
-                // Вытягивается с разгоном: 3 блока на старте → до 12 через секунду.
-                double ramp = Mth.clamp((now - r.startTick) / 20.0D, 0.0D, 1.0D);
-                double maxLen = (3.0D + (4.0D + r.layer * 0.7D) * ramp) * Mth.clamp(speed / 0.45D, 0.5D, 1.9D);
-                trimLength(r.corridor, maxLen);
-                trim(r.corridor, 30);
-                int age = now - r.startTick;
-                if (r.layer >= 3 && speed > 0.15D && (age == 3 || age == 20)) {
-                    // Вспышка позади тела на срыве и на выходе на полную скорость (18_wind).
-                    FLASHES.add(flash(pos.add(0.0D, 0.9D, 0.0D).subtract(dir.scale(0.55D)), now, 2.5F, 0.8D + 0.05D * r.layer,
-                            9, false, dir.scale(-1.0D), 0.05D));
-                } else if (r.layer >= 5 && age > 20 && speed > 0.3D && age % 12 == 0) {
-                    FLASHES.add(flash(pos.add(0.0D, 0.9D, 0.0D).subtract(dir.scale(0.55D)), now, 2.0F, 0.45D,
-                            5, false, dir.scale(-1.0D), 0.035D));
-                }
-                if (r.layer >= 2 && speed > 0.1D) {
-                    // Ленты ветра от плеч, спины и пояса: точка тела оставляет полосу, которая
-                    // расходится и колышется — тело «рвётся» на ленты (swift step 03.10).
-                    double[][] anchors = {{-0.3D, 1.35D, 0.0D}, {0.3D, 1.3D, 1.7D}, {0.0D, 1.0D, 3.1D}, {0.0D, 0.6D, 4.4D}};
-                    int count = Math.min(4, 1 + r.layer / 2);
-                    for (int k = 0; k < count; k++) {
-                        double ph = anchors[k][2] + now * 0.45D;
-                        Vec3 at = pos.add(side.scale(anchors[k][0] + 0.12D * Math.sin(ph))).add(0.0D, anchors[k][1] + 0.1D * Math.cos(ph * 1.3D), 0.0D)
-                                .subtract(dir.scale(0.25D));
-                        // Ленты расходятся в стороны и рвано колышутся (автор 03.10: «чтобы линии немного в
-                        // стороны уходили и были более хаотичными»).
-                        double out = anchors[k][0] == 0.0D ? (k % 2 == 0 ? 1.0D : -1.0D) : Math.signum(anchors[k][0]);
-                        Vec3 v = side.scale(out * (0.035D + 0.03D * RNG.nextDouble()) + (RNG.nextDouble() - 0.5D) * 0.05D)
-                                .add(0.0D, (RNG.nextDouble() - 0.4D) * 0.04D, 0.0D);
-                        r.streamers.get(k).add(new Node(at, v, now, k));
-                    }
-                }
-                if (r.layer >= 2 && speed > 0.15D) {
-                    // Тело рвётся на ленты ветра, которые тянутся за бегущим (реф swift step, 03.10):
-                    // с плеч, спины и ног каждый тик срываются широкие бледно-голубые полосы.
-                    int k = 1 + r.layer / 3;
-                    for (int i = 0; i < k; i++) {
-                        Vec3 at = pos.add(side.scale((RNG.nextDouble() - 0.5D) * 0.6D)).add(0.0D, 0.2D + 1.5D * RNG.nextDouble(), 0.0D);
-                        tearRibbons(at, dir.scale(-0.12D - 0.1D * RNG.nextDouble()).add(side.scale((RNG.nextDouble() - 0.5D) * 0.16D)), 1, now, 0.3D,
-                                RUN_BLUE, RUN_DEEP);
-                    }
-                    if (r.layer >= 4) {
-                        for (int i = 0; i < 2; i++) {
-                            Vec3 at = pos.add((RNG.nextDouble() - 0.5D) * 0.6D, 0.2D + 1.6D * RNG.nextDouble(), (RNG.nextDouble() - 0.5D) * 0.6D);
-                            SHARDS.add(new Shard(at, dir.scale(-0.1D).add(0.0D, 0.01D, 0.0D), now, 8.0F + RNG.nextFloat() * 5.0F,
-                                    0.025D + 0.03D * RNG.nextDouble()).vapor(RNG.nextBoolean() ? WIND_BLUE : WHITE));
+                int tier = FootworkFamily.windVfxTier(r.executionTier);
+                int nowAge = now - r.startTick;
+                boolean near = pos.distanceToSqr(mc.gameRenderer.getMainCamera().getPosition()) <= 32.0D * 32.0D;
+                if (tier >= 1 && speed > 0.05D) {
+                    r.corridor.add(new Node(pos.add(0.0D, 0.8D, 0.0D), Vec3.ZERO, now, 0.0D));
+                    double ramp = Mth.clamp(nowAge / 20.0D, 0.0D, 1.0D);
+                    double maxLen = tier == 1 ? 2.0D : tier == 2 ? 6.0D : (r.executionTier == 8 ? 20.0D : 10.0D);
+                    trimLength(r.corridor, 2.0D + (maxLen - 2.0D) * ramp);
+                    trim(r.corridor, 30);
+                    if (tier >= 2 && near) {
+                        int count = tier == 3 ? 3 : 2;
+                        for (int k = 0; k < count; k++) {
+                            Vec3 at = pos.add(side.scale((k - (count - 1) / 2.0D) * 0.3D)).add(0.0D, 0.6D + k * 0.3D, 0.0D);
+                            r.streamers.get(k).add(new Node(at, side.scale(0.02D * Math.sin(now * 0.4D + k)), now, k));
+                        }
+                        // Never more than one new running copy every six ticks.
+                        if (nowAge % 6 == 0 && e instanceof AbstractClientPlayer player) {
+                            windGhost(player, pos, r.executionTier, 0.0F, RUN_BLUE);
                         }
                     }
-                }
-                if (r.layer >= 4 && speed > 0.2D && now % 2 == 0) {
-                    // Потоки воздуха вдоль коридора: тонкие штрихи сносит назад.
-                    Vec3 o = side.scale((RNG.nextDouble() - 0.5D) * 0.7D).add(0.0D, 0.3D + 1.2D * RNG.nextDouble(), 0.0D);
-                    SPARKS.add(new Spark(pos.add(o), dir.scale(-0.2D), now, 6.0F, 1.0D + 0.5D * RNG.nextDouble(), 0.016D,
-                            RNG.nextBoolean() ? WHITE : JADE));
+                    if (tier == 3 && nowAge == 20) {
+                        io.github.verycooltimo.murim.client.Sfx.play(e,
+                                io.github.verycooltimo.murim.registry.ModSounds.BURST_STEP, 0.6F, 1.0F);
+                    }
                 }
             }
             // Пыль от стоп — серыми клубами назад, не выше 0,2 блока.
@@ -1370,12 +1240,12 @@ public final class FootworkVfx {
                     r.travelled = 0.0D;
                     r.steps++;
                     Vec3 foot = pos.add(side.scale(r.steps % 2 == 0 ? 0.15D : -0.15D));
-                    int k = r.family == HUASHAN ? 1 + r.layer / 3 : 2 + r.layer / 3;
+                    int k = r.family == HUASHAN ? 1 + r.executionTier / 3 : 2;
                     for (int i = 0; i < k; i++) {
                         Vec3 v = dir.scale(-0.06D - 0.04D * RNG.nextDouble()).add(side.scale((RNG.nextDouble() - 0.5D) * 0.06D))
                                 .add(0.0D, 0.015D + 0.015D * RNG.nextDouble(), 0.0D);
                         PUFFS.add(new Puff(foot.add(0.0D, 0.06D, 0.0D), v, now, 6.0F + RNG.nextFloat() * 3.0F,
-                                0.06D + 0.005D * r.layer, 0.38F + 0.05F * RNG.nextFloat(), 0.7F, false));
+                                0.06D + 0.005D * r.executionTier, 0.38F + 0.05F * RNG.nextFloat(), 0.7F, false));
                     }
                 }
             }
@@ -1385,124 +1255,44 @@ public final class FootworkVfx {
     private static void tickShadows(Minecraft mc) {
         Iterator<Map.Entry<Integer, Shadow>> it = SHADOWS.entrySet().iterator();
         while (it.hasNext()) {
-            Map.Entry<Integer, Shadow> en = it.next();
-            Entity e = mc.level.getEntity(en.getKey());
-            if (e == null || !e.isAlive()) {
+            Map.Entry<Integer, Shadow> entry = it.next();
+            Entity entity = mc.level.getEntity(entry.getKey());
+            if (entity == null || !entity.isAlive()) {
                 it.remove();
                 continue;
             }
-            Shadow s = en.getValue();
-            Vec3 pos = e.position();
-            Vec3 step = new Vec3(pos.x - s.last.x, 0.0D, pos.z - s.last.z);
-            s.last = pos;
-            int now = clientTicks;
-            if (s.layer < 1) {
-                continue;
+            Shadow shadow = entry.getValue();
+            Vec3 pos = entity.position();
+            Vec3 step = pos.subtract(shadow.last);
+            shadow.last = pos;
+            shadow.moved += step.horizontalDistance();
+            if (clientTicks % 12 == 0) {
+                dust(pos, Vec3.ZERO, 1, clientTicks, 0.25D);
             }
-            // Тихая серая дымка у ног: редкая, низкая, мелкая — не выдаёт направления.
-            if (now % 3 == 0) {
-                double th = RNG.nextDouble() * Math.PI * 2.0D;
-                Vec3 o = new Vec3(Math.cos(th), 0.0D, Math.sin(th)).scale(0.2D + 0.2D * RNG.nextDouble());
-                PUFFS.add(new Puff(pos.add(o).add(0.0D, 0.05D, 0.0D), o.scale(0.05D).add(0.0D, 0.003D, 0.0D), now,
-                        8.0F + RNG.nextFloat() * 3.0F, 0.045D + 0.002D * s.layer, 0.48F, 0.5F, true));
-            }
-            // Остаточный контур на пройденном пути (codex-astra 03.10): не чаще раза в 20 тиков и
-            // только после 1,5 блока хода; одна блёклая кромка позы, которую сдувает назад. Строя
-            // двойников нет — след возникает во времени.
-            s.moved += step.length();
-            float bodyYaw = e instanceof LivingEntity lv ? lv.yBodyRot : e.getYRot();
-            Vec3 dirNow = step.lengthSqr() > 4.0E-4D ? step.normalize() : Vec3.directionFromRotation(0.0F, bodyYaw);
-            s.dirs.addLast(dirNow);
-            if (s.dirs.size() > 7) {
-                s.dirs.removeFirst();
-            }
-            if (s.layer >= 2 && e instanceof AbstractClientPlayer pl) {
-                // Тело «дымится» по кромке: раз в 6 тиков с контура позы срывается редкая горсть
-                // частиц и уходит назад тем же полем, что и при исчезновении (тише, чем вход).
-                if (now % 6 == 0 && step.lengthSqr() > 1.0E-4D) {
-                    silhouette(pl, pos, pl.yBodyRot, now, dirNow.scale(-1.0D), hex(0x9FB8C4), 0.16F, 36, 0.0F, 2.0F, 4.0F, true);
-                }
-                // Теневые копии «повсюду» (автор 03.10): рядом из ветра собирается копия в своей позе,
-                // стоит ~0,4 с и снова рассыпается в ветер — тем же способом, что принятые Миг и Смерть.
-                if (s.layer >= 3 && now - s.lastClone >= (s.layer >= 5 ? 7 : 10) && s.clones.size() < 3) {
-                    s.lastClone = now;
-                    double th = RNG.nextDouble() * Math.PI * 2.0D;
-                    double rr = 1.6D + 2.0D * RNG.nextDouble();
-                    Vec3 at = pos.add(Math.cos(th) * rr, 0.0D, Math.sin(th) * rr);
-                    float cy = RNG.nextFloat() * 360.0F;
-                    Vec3 wind = Vec3.directionFromRotation(0.0F, cy + 90.0F + RNG.nextFloat() * 180.0F);
-                    List<Vec3> pose = posePoints(pl, at, cy, false);
-                    // 0–3: собирается из ветра; 3–11: стоит; 11–16: рассыпается.
-                    silhouetteMotes(pose, at, now, wind, hex(0x9FB8C4), 0.32F, 170, 0.0F, 3.0F, 1.5F, now - 1.0F);
-                    int first = MOTES.size();
-                    silhouetteMotes(pose, at, now + 3.0F, wind, hex(0x9FB8C4), 0.32F, 170, 8.0F, 5.0F, 5.0F, Float.NaN);
-                    for (int i = first; i < MOTES.size(); i++) {
-                        MOTES.get(i).visibleFrom = now + 3.5F;
-                    }
-                    RIBBONS.add(sheet(spiral(at, wind, 0.5D, 0.3D, 1.4D, Math.PI, Math.toRadians(220.0D), 14), now + 10.0F, 2.0F, 2.0F,
-                            5.0F, 0.13D, hex(0x91B5C1), 0.32F, wind.scale(0.14D)));
-                    s.clones.add(now + 17);
-                }
-                s.clones.removeIf(end -> end < now);
-                // Поза остаётся на миг на повороте и сдувается (спецификация формы).
-                if (s.layer >= 3 && s.dirs.size() == 7 && dirNow.dot(s.dirs.peekFirst()) < Math.cos(Math.toRadians(25.0D))
-                        && now - s.lastTurn >= 8) {
-                    s.lastTurn = now;
-                    silhouette(pl, pos, pl.yBodyRot, now, s.dirs.peekFirst().scale(-1.0D), hex(0x7899A8), 0.24F, 160, 3.0F, 5.0F, 5.0F, false);
-                    RIBBONS.add(sheet(spiral(pos, s.dirs.peekFirst(), 0.5D, 0.3D, 1.3D, Math.PI, Math.toRadians(200.0D), 14), now, 2.0F,
-                            2.0F, 5.0F, 0.13D, hex(0x91B5C1), 0.3F, s.dirs.peekFirst().scale(-0.12D)));
-                }
-            }
-            if (s.layer >= 2 && now - s.lastGhost >= 20 && s.moved >= 1.5D && step.lengthSqr() > 1.0E-4D
-                    && e instanceof AbstractClientPlayer player) {
-                s.moved = 0.0D;
-                s.lastGhost = now;
-                silhouette(player, pos, player.yBodyRot, now, step.normalize().scale(-1.0D), hex(0x7899A8), 0.22F, 64, 1.0F, 2.0F,
-                        5.0F, true);
+            if (FootworkFamily.windVfxTier(shadow.executionTier) >= 2 && shadow.moved > 1.5D
+                    && clientTicks - shadow.lastGhost >= 12 && entity instanceof AbstractClientPlayer player) {
+                shadow.lastGhost = clientTicks;
+                shadow.moved = 0.0D;
+                windGhost(player, pos, shadow.executionTier, 0.0F, hex(0x91B5C1));
             }
         }
     }
 
-    /** Вход в Тень: лента косо пересекает тело, полный силуэт испаряется назад, две плоские дымки. */
-    private static void shadowEnter(Entity e, int layer) {
-        if (layer < 1) {
-            return;
-        }
-        float now = clientTicks;
-        Vec3 pos = e.position();
-        Vec3 look = Vec3.directionFromRotation(0.0F, e instanceof LivingEntity l ? l.yBodyRot : e.getYRot());
-        Vec3 back = look.scale(-1.0D);
-        dust(pos, Vec3.ZERO, 4, now, 0.6D);
-        Vec3 side = new Vec3(-look.z, 0.0D, look.x);
-        RIBBONS.add(sheet(line(pos.add(side.scale(-0.5D)).add(look.scale(0.4D)).add(0.0D, 0.5D, 0.0D),
-                pos.add(side.scale(0.6D)).add(look.scale(0.3D)).add(0.0D, 1.6D, 0.0D), 14, look.scale(0.2D)), now, 2.0F, 2.0F, 6.0F,
-                0.22D, hex(0x91B5C1), 0.32F, back.scale(0.12D)));
-        for (int i = 0; i < 2; i++) {
-            PUFFS.add(new Puff(pos.add(back.scale(0.4D + 0.4D * i)).add(0.0D, 0.6D + 0.4D * i, 0.0D), back.scale(0.02D), now + 3.0F,
-                    8.0F, 0.18D + 0.05D * i, 0.6F, 0.14F, true));
-        }
-        // Две ленты обвивают тело на входе (как у принятого Мига), тёмнее — тень, а не вспышка.
-        RIBBONS.add(sheet(spiral(pos, back, 0.55D, 0.2D, 1.5D, 0.0D, Math.toRadians(260.0D), 18), now, 2.0F, 3.0F, 7.0F, 0.19D,
-                hex(0x91B5C1), 0.36F, back.scale(0.16D)));
-        RIBBONS.add(sheet(spiral(pos, back, 0.48D, 1.2D, 0.6D, Math.PI, Math.toRadians(-200.0D), 14), now + 0.5F, 2.0F, 3.0F, 7.0F,
-                0.12D, hex(0x7FA3B2), 0.3F, back.scale(0.13D)));
-        if (layer >= 2 && e instanceof AbstractClientPlayer player) {
-            silhouette(player, pos, player.yBodyRot, now, back, hex(0x91B5C1), 0.32F, 220, 3.0F, 8.0F, 5.0F, false);
+    /** Вход в Тень: немного пыли, с V1 — одна серая воздушная лента. */
+    private static void shadowEnter(Entity e, int executionTier) {
+        dust(e.position(), Vec3.ZERO, 2, clientTicks, 0.4D);
+        if (FootworkFamily.windVfxTier(executionTier) >= 1) {
+            Vec3 back = Vec3.directionFromRotation(0.0F, e.getYRot()).scale(-1.0D);
+            RIBBONS.add(sheet(spiral(e.position(), back, 0.45D, 0.2D, 1.2D, Math.PI, Math.toRadians(180), 10),
+                    clientTicks, 1.0F, 1.0F, 4.0F, 0.12D, hex(0x91B5C1), 0.3F, back.scale(0.05D)));
         }
     }
 
-    /** Выход из Тени: тело собирается из ветра — частицы прилетают сзади и садятся в позу, лента раскручивается. */
-    private static void shadowExit(Entity e, int layer) {
-        if (layer < 2 || !(e instanceof AbstractClientPlayer player)) {
-            return;
+    /** Выход из Тени: короткий послеобраз начиная с V2. */
+    private static void shadowExit(Entity e, int executionTier) {
+        if (FootworkFamily.windVfxTier(executionTier) >= 2 && e instanceof AbstractClientPlayer player) {
+            windGhost(player, e.position(), executionTier, 0.0F, hex(0x91B5C1));
         }
-        float now = clientTicks;
-        Vec3 pos = e.position();
-        Vec3 look = Vec3.directionFromRotation(0.0F, player.yBodyRot);
-        List<Vec3> pose = posePoints(player, pos, player.yBodyRot, false);
-        silhouetteMotes(pose, pos, now + 2.0F, look, hex(0x9FB8C4), 0.3F, 180, 0.0F, 4.0F, 1.5F, now);
-        RIBBONS.add(sheet(spiral(pos, look, 0.6D, 1.5D, 0.2D, Math.PI, Math.toRadians(-240.0D), 16), now, 2.0F, 2.0F, 5.0F, 0.16D,
-                hex(0x91B5C1), 0.34F, new Vec3(0.0D, 0.01D, 0.0D)));
     }
 
     private static void age(List<Node> nodes) {
@@ -1571,7 +1361,7 @@ public final class FootworkVfx {
     private static void ghost(AbstractClientPlayer player, Vec3 pos, float yaw, float delay, float life, float alpha, VfxColour colour,
                               boolean skin, float vapor, Vec3 drift) {
         Minecraft mc = Minecraft.getInstance();
-        if (!(mc.getEntityRenderDispatcher().getRenderer(player) instanceof PlayerRenderer renderer)) {
+        if (GHOSTS.size() >= 24 || !(mc.getEntityRenderDispatcher().getRenderer(player) instanceof PlayerRenderer renderer)) {
             return;
         }
         ModelPart[] parts = parts(renderer.getModel());
@@ -1807,7 +1597,8 @@ public final class FootworkVfx {
             sheetTrail(c, pose, camera, r.right, now, hex(0xB3DBED), 0.3F);
             return;
         }
-        for (List<Node> st : r.streamers) {
+        boolean detailed = FootworkFamily.windVfxTier(r.executionTier) >= 2 && camera.distanceToSqr(e.position()) <= 32.0D * 32.0D;
+        for (List<Node> st : detailed ? r.streamers : List.<List<Node>>of()) {
             int m = st.size();
             if (m < 2) {
                 continue;
@@ -1846,17 +1637,21 @@ public final class FootworkVfx {
         float[] a = new float[n + 1];
         // Коридор: полупрозрачная нефритовая оболочка ~0,45 блока, белое ядро и 4 тонких потока,
         // сходящихся к телу (18_wind).
-        double wmax = 0.2D + 0.01D * r.layer;
+        double wmax = 0.2D + 0.01D * r.executionTier;
         for (int i = 0; i <= n; i++) {
             double u = i / (double) n;
             w[i] = wmax * Math.pow(u, 0.6D) * (u > 0.96D ? 0.5D + 0.5D * (1.0D - u) / 0.04D : 1.0D);
             a[i] = (float) Math.pow(u, 0.6D);
         }
+        if (!detailed) {
+            strip(c, pose, camera, p, scale(w, 0.25D), a, 0.65F, AIR_SHEET);
+            return;
+        }
         strip(c, pose, camera, p, w, a, 0.34F, JADE);
         strip(c, pose, camera, p, scale(w, 0.22D), a, 0.95F, WHITE);
-        if (r.layer >= 3) {
+        if (FootworkFamily.windVfxTier(r.executionTier) >= 2) {
             double[][] offs = {{0.12D, 0.12D}, {-0.14D, -0.1D}, {0.38D, 0.0D}, {-0.4D, 0.04D}, {0.05D, 0.3D}, {-0.06D, -0.3D}};
-            int streams = r.layer >= 5 ? 6 : 4;
+            int streams = FootworkFamily.windVfxTier(r.executionTier) == 3 ? 3 : 2;
             Vec3 h = p[n].subtract(p[0]);
             Vec3 fl = new Vec3(h.x, 0.0D, h.z);
             Vec3 sd = fl.lengthSqr() < 1.0E-6D ? new Vec3(1.0D, 0.0D, 0.0D) : new Vec3(-fl.z, 0.0D, fl.x).normalize();
@@ -1975,7 +1770,7 @@ public final class FootworkVfx {
             // Шаг тени: живой силуэт бледнеет — поверх тела бледная полупрозрачная оболочка в
             // текущей позе (модель хранит позу только что нарисованного игрока).
             for (Map.Entry<Integer, Shadow> en : SHADOWS.entrySet()) {
-                if (en.getValue().layer < 2 || !(mc.level.getEntity(en.getKey()) instanceof AbstractClientPlayer p)) {
+                if (en.getValue().executionTier < 2 || !(mc.level.getEntity(en.getKey()) instanceof AbstractClientPlayer p)) {
                     continue;
                 }
                 if (p == mc.getCameraEntity() && mc.options.getCameraType().isFirstPerson()) {
@@ -1983,14 +1778,14 @@ public final class FootworkVfx {
                 }
                 Vec3 at = new Vec3(Mth.lerp(partial, p.xo, p.getX()), Mth.lerp(partial, p.yo, p.getY()), Mth.lerp(partial, p.zo, p.getZ()));
                 float yaw = Mth.rotLerp(partial, p.yBodyRotO, p.yBodyRot);
-                float pulse = 0.18F + 0.04F * Mth.sin(now * 0.35F) + 0.006F * en.getValue().layer;
+                float pulse = 0.18F + 0.04F * Mth.sin(now * 0.35F) + 0.006F * en.getValue().executionTier;
                 drawModel(model, poseStack, buffers, null, at, yaw, p.isCrouching(), 1.02F, pulse, hex(0xCFE6DD));
             }
             // Шаг молнии: тело светится голубым — плотная оболочка и мягкий второй слой «глоу»
             // (автор 03.10: «добавь свечение самого персонажа и чуть-чуть глоу»).
             for (Map.Entry<Integer, RunTrail> en : RUNS.entrySet()) {
                 RunTrail r = en.getValue();
-                if (r.family == HUASHAN || r.layer < 2 || !(mc.level.getEntity(en.getKey()) instanceof AbstractClientPlayer p)) {
+                if (r.family == HUASHAN || FootworkFamily.windVfxTier(r.executionTier) < 2 || !(mc.level.getEntity(en.getKey()) instanceof AbstractClientPlayer p)) {
                     continue;
                 }
                 if (p == mc.getCameraEntity() && mc.options.getCameraType().isFirstPerson()) {
@@ -1999,10 +1794,9 @@ public final class FootworkVfx {
                 Vec3 at = new Vec3(Mth.lerp(partial, p.xo, p.getX()), Mth.lerp(partial, p.yo, p.getY()), Mth.lerp(partial, p.zo, p.getZ()));
                 float yaw = Mth.rotLerp(partial, p.yBodyRotO, p.yBodyRot);
                 float ramp = Mth.clamp((now - r.startTick) / 10.0F, 0.0F, 1.0F);
-                float flick = 0.85F + 0.15F * Mth.sin(now * 1.7F);
-                drawModel(model, poseStack, buffers, null, at, yaw, p.isCrouching(), 1.03F, 0.28F * ramp * flick, RUN_BLUE);
-                drawModel(model, poseStack, buffers, null, at, yaw, p.isCrouching(), 1.1F, 0.12F * ramp * flick, hex(0xA9E4FF));
-                drawModel(model, poseStack, buffers, null, at, yaw, p.isCrouching(), 1.2F, 0.05F * ramp, hex(0xA9E4FF));
+                if (at.distanceToSqr(mc.gameRenderer.getMainCamera().getPosition()) <= 32.0D * 32.0D) {
+                    drawModel(model, poseStack, buffers, null, at, yaw, p.isCrouching(), 1.03F, 0.22F * ramp, RUN_BLUE);
+                }
             }
             for (Ghost g : GHOSTS) {
                 float t = (now - g.born()) / g.life();

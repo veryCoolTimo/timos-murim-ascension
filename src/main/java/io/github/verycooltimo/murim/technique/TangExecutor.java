@@ -52,10 +52,10 @@ public final class TangExecutor {
         if (form < 0) {
             return false;
         }
-        int layer = Math.max(0, MasteryService.layer(player, id));
+        int executionTier = Math.max(0, MasteryService.executionTier(player, id));
         double[] s = new double[SIZE];
         s[0] = form;
-        s[1] = layer;
+        s[1] = executionTier;
         s[2] = 0;
         LivingEntity target = choose(player, form);
         s[3] = target == null ? -1 : target.getId();
@@ -100,61 +100,61 @@ public final class TangExecutor {
     /** Выпуски по шкале формы на тике {@code since} от IMPACT. */
     private static void release(ServerPlayer player, double[] s, int since) {
         int form = (int) s[0];
-        int layer = (int) s[1];
-        double h = base(player, TangRules.technique(form)) * TangRules.power(layer);
+        int executionTier = (int) s[1];
+        double h = base(player, TangRules.technique(form)) * TangRules.power(executionTier);
         LivingEntity target = s[3] >= 0 && player.level().getEntity((int) s[3]) instanceof LivingEntity t && t.isAlive() ? t : null;
         switch (form) {
             case TangRules.FIVE -> {
-                for (int k = 0; k < TangRules.fiveCount(layer); k++) {
-                    if (TangRules.fiveRelease(k, layer) == since) {
-                        fiveShot(player, layer, k, h);
+                for (int k = 0; k < TangRules.fiveCount(executionTier); k++) {
+                    if (TangRules.fiveRelease(k, executionTier) == since) {
+                        fiveShot(player, executionTier, k, h);
                     }
                 }
             }
             case TangRules.TWELVE -> {
                 if (since == 0) {
-                    twelve(player, layer, h, target);
+                    twelve(player, executionTier, h, target);
                 }
-                if (TangRules.sky(layer) && since == TangRules.LEAP) {
+                if (TangRules.sky(executionTier) && since == TangRules.LEAP) {
                     leap(player, s);
                 }
-                if (TangRules.sky(layer) && since == TangRules.SKY_THROW) {
-                    skyThrow(player, layer, h, s);
+                if (TangRules.sky(executionTier) && since == TangRules.SKY_THROW) {
+                    skyThrow(player, executionTier, h, s);
                 }
             }
             case TangRules.STARS -> {
                 // Из двух рукавов по очереди: кинжал за тик (3 + 4 за 7 тиков, codex 03.10).
-                if (since < TangRules.starCount(layer)) {
-                    stars(player, layer, h, target, since);
+                if (since < TangRules.starCount(executionTier)) {
+                    stars(player, executionTier, h, target, since);
                 }
             }
             case TangRules.THREE -> {
                 if (since == 0) {
-                    three(player, layer, h);
+                    three(player, executionTier, h);
                 }
             }
             case TangRules.FLASH -> {
                 if (since == 0) {
-                    flash(player, layer, h, false);
+                    flash(player, executionTier, h, false);
                 }
                 // Слой 8: второй кинжал «без ци» в тени первого (гл. 196).
-                if (since == 2 && TangRules.shadowed(layer)) {
-                    flash(player, layer, h, true);
+                if (since == 2 && TangRules.shadowed(executionTier)) {
+                    flash(player, executionTier, h, true);
                 }
             }
             case TangRules.RETURN -> {
                 if (since == 0) {
-                    sleeveReturn(player, layer, h);
+                    sleeveReturn(player, executionTier, h);
                 }
             }
             case TangRules.COINS -> {
                 if (since == 0) {
-                    coins(player, layer, h, target);
+                    coins(player, executionTier, h, target);
                 }
             }
             default -> {
                 if (since == 0) {
-                    carp(player, layer, h, target);
+                    carp(player, executionTier, h, target);
                 }
             }
         }
@@ -166,19 +166,19 @@ public final class TangExecutor {
      * Пять Громов: пять кинжалов почти разом, веером в разные стороны, каждый доворачивает к цели
      * и приходит со своей стороны (автор 03.10). Цель выбирается в момент выпуска — игрок ведёт прицел.
      */
-    private static void fiveShot(ServerPlayer player, int layer, int k, double h) {
+    private static void fiveShot(ServerPlayer player, int executionTier, int k, double h) {
         Vec3 hand = hand(player, true);
         LivingEntity t = TargetLock.locked(player, TangRules.FIVE_RANGE);
         if (t == null) {
             t = nearestInCone(player, TangRules.FIVE_RANGE, 30.0D);
         }
-        double speed = TangRules.fiveSpeed(k, layer);
+        double speed = TangRules.fiveSpeed(k, executionTier);
         Vec3 aim = t != null ? TangDagger.throat(t) : lookPoint(player, TangRules.FIVE_RANGE);
         Vec3 axis = aim.subtract(hand).normalize();
         double[] fan = TangRules.FIVE_FAN[k];
         // Слой 0 — один прямой кинжал; веер раскрывается со слоя 1.
-        Vec3 dir = layer <= 0 ? axis : rotate(axis, fan[0], fan[1]);
-        TangDagger d = new TangDagger(player.level(), player, TangRules.FIVE, layer, k);
+        Vec3 dir = executionTier <= 0 ? axis : rotate(axis, fan[0], fan[1]);
+        TangDagger d = new TangDagger(player.level(), player, TangRules.FIVE, executionTier, k);
         d.setPos(hand.add(dir.scale(0.25D)));
         d.setDeltaMovement(dir.scale(speed));
         d.setMode(TangDagger.STEER);
@@ -191,7 +191,7 @@ public final class TangExecutor {
         d.setTarget(t);
         face(d, dir);
         player.level().addFreshEntity(d);
-        send(player, TangRules.FIVE, TangPayload.SHOT, layer, hand, dir, k, 0);
+        send(player, TangRules.FIVE, TangPayload.SHOT, executionTier, hand, dir, k, 0);
     }
 
     /**
@@ -199,7 +199,7 @@ public final class TangExecutor {
      * приходят в один тик в точку, где цель БУДЕТ (упреждение по её скорости). Ответ — остановиться
      * или развернуться в момент броска; шаг вбок не спасает: бока закрыты дугами.
      */
-    private static void three(ServerPlayer player, int layer, double h) {
+    private static void three(ServerPlayer player, int executionTier, double h) {
         Vec3 hand = hand(player, true);
         LivingEntity t = TargetLock.locked(player, TangRules.THREE_RANGE);
         if (t == null) {
@@ -220,19 +220,19 @@ public final class TangExecutor {
         Vec3 side = new Vec3(-axis.z, 0.0D, axis.x);
         side = side.lengthSqr() < 1.0E-6D ? new Vec3(1.0D, 0.0D, 0.0D) : side.normalize();
         double bow = TangRules.THREE_BOW * axis.length();
-        int n = TangRules.threeCount(layer);
+        int n = TangRules.threeCount(executionTier);
         for (int i = 0; i < n; i++) {
             int k = n == 2 ? i * 2 : i;
-            TangDagger d = new TangDagger(player.level(), player, TangRules.THREE, layer, k);
+            TangDagger d = new TangDagger(player.level(), player, TangRules.THREE, executionTier, k);
             d.setPos(hand);
             d.setMode(TangDagger.PATH);
             d.pathFrom = hand;
             d.pathTo = to;
             d.pathSide = side;
-            d.pathBow = layer < 3 ? bow * 0.5D : bow;
+            d.pathBow = executionTier < 3 ? bow * 0.5D : bow;
             d.pathK = k;
             d.pathTicks = ticks;
-            d.kinked = k == 2 && TangRules.kink(layer);
+            d.kinked = k == 2 && TangRules.kink(executionTier);
             d.damage = h;
             d.life = ticks + 20;
             d.setTarget(t);
@@ -240,7 +240,7 @@ public final class TangExecutor {
             d.setDeltaMovement(first);
             face(d, first.normalize());
             player.level().addFreshEntity(d);
-            send(player, TangRules.THREE, TangPayload.SHOT, layer, hand, first.normalize(), k, ticks);
+            send(player, TangRules.THREE, TangPayload.SHOT, executionTier, hand, first.normalize(), k, ticks);
         }
     }
 
@@ -248,7 +248,7 @@ public final class TangExecutor {
      * Молниеносное Похищение Жизни (섬전탈명, гл. 195): «не было огромной силы… просто скорость. Кинжал,
      * исчезнувший после того как его выпустили… появился прямо перед». Перебивает замах врага.
      */
-    private static void flash(ServerPlayer player, int layer, double h, boolean shadow) {
+    private static void flash(ServerPlayer player, int executionTier, double h, boolean shadow) {
         Vec3 hand = hand(player, true);
         LivingEntity t = TargetLock.locked(player, TangRules.FLASH_RANGE);
         if (t == null) {
@@ -265,12 +265,12 @@ public final class TangExecutor {
             aim = lookPoint(player, TangRules.FLASH_RANGE);
         }
         Vec3 dir = aim.subtract(hand).normalize();
-        TangDagger d = new TangDagger(player.level(), player, TangRules.FLASH, layer, shadow ? 1 : 0);
+        TangDagger d = new TangDagger(player.level(), player, TangRules.FLASH, executionTier, shadow ? 1 : 0);
         d.setPos(hand);
         d.setMode(TangDagger.STRAIGHT);
         d.speed = TangRules.FLASH_SPEED;
         d.setDeltaMovement(dir.scale(TangRules.FLASH_SPEED));
-        d.setFlag(4, TangRules.vanish(layer));
+        d.setFlag(4, TangRules.vanish(executionTier));
         d.aim = aim;
         d.damage = h;
         d.life = (int) Math.ceil(TangRules.FLASH_RANGE / TangRules.FLASH_SPEED) + 2;
@@ -278,7 +278,7 @@ public final class TangExecutor {
         face(d, dir);
         player.level().addFreshEntity(d);
         if (!shadow) {
-            send(player, TangRules.FLASH, TangPayload.SHOT, layer, hand, dir, 0, 0);
+            send(player, TangRules.FLASH, TangPayload.SHOT, executionTier, hand, dir, 0, 0);
         }
     }
 
@@ -286,18 +286,18 @@ public final class TangExecutor {
      * Возврат Лезвий в Рукав (гл. 195: «Все метательные лезвия, лежавшие на земле, были возвращены в его
      * рукав»): воткнутые промахи срываются разом и летят по прямым к мастеру, режа всех на линиях.
      */
-    private static void sleeveReturn(ServerPlayer player, int layer, double h) {
+    private static void sleeveReturn(ServerPlayer player, int executionTier, double h) {
         List<TangDagger> stuck = new ArrayList<>(player.serverLevel().getEntitiesOfClass(TangDagger.class,
                 player.getBoundingBox().inflate(TangRules.RETURN_RANGE),
                 d -> d.getOwner() == player && d.isAlive() && d.mode() == TangDagger.STUCK
                         && d.distanceTo(player) <= TangRules.RETURN_RANGE));
         stuck.sort(Comparator.comparingDouble(d -> d.distanceToSqr(player)));
-        int n = Math.min(stuck.size(), TangRules.returnCount(layer));
+        int n = Math.min(stuck.size(), TangRules.returnCount(executionTier));
         Vec3 home = player.position().add(0.0D, player.getBbHeight() * 0.6D, 0.0D);
         for (int i = 0; i < n; i++) {
             TangDagger d = stuck.get(i);
             Vec3 via = null;
-            if (layer >= 6) {
+            if (executionTier >= 6) {
                 // Загиб к врагу у линии (не дальше 15°): промах становится вторым броском.
                 Vec3 line = home.subtract(d.position()).normalize();
                 double best = Math.cos(Math.toRadians(TangRules.RETURN_BEND));
@@ -314,7 +314,7 @@ public final class TangExecutor {
                 }
             }
             d.returnToSleeve(h, via);
-            send(player, TangRules.RETURN, TangPayload.RECALL, layer, d.position(), Vec3.ZERO, d.getId(), 1);
+            send(player, TangRules.RETURN, TangPayload.RECALL, executionTier, d.position(), Vec3.ZERO, d.getId(), 1);
         }
     }
 
@@ -335,8 +335,8 @@ public final class TangExecutor {
     }
 
     /** Двенадцать: веер по дугам на все цели в конусе; захваченной — больше. */
-    private static void twelve(ServerPlayer player, int layer, double h, LivingEntity locked) {
-        int n = TangRules.twelveCount(layer);
+    private static void twelve(ServerPlayer player, int executionTier, double h, LivingEntity locked) {
+        int n = TangRules.twelveCount(executionTier);
         List<LivingEntity> targets = new ArrayList<>();
         if (locked != null) {
             targets.add(locked);
@@ -364,11 +364,11 @@ public final class TangExecutor {
             Vec3 dir = rotate(look, yaw, pitch);
             Vec3 aim = t != null ? TangDagger.throat(t) : lookPoint(player, 16.0D).add(dir.subtract(look).scale(3.0D));
             double speed = TangRules.twelveSpeed(k);
-            TangDagger d = new TangDagger(player.level(), player, TangRules.TWELVE, layer, k);
+            TangDagger d = new TangDagger(player.level(), player, TangRules.TWELVE, executionTier, k);
             d.setPos(hand.add(dir.scale(0.3D)));
             d.setDeltaMovement(dir.scale(speed));
-            d.setMode(layer <= 0 ? TangDagger.STRAIGHT : TangDagger.STEER);
-            if (layer <= 0) {
+            d.setMode(executionTier <= 0 ? TangDagger.STRAIGHT : TangDagger.STEER);
+            if (executionTier <= 0) {
                 d.setDeltaMovement(aim.subtract(hand).normalize().scale(speed));
             }
             d.speed = speed;
@@ -379,7 +379,7 @@ public final class TangExecutor {
             d.setTarget(t);
             face(d, dir);
             player.level().addFreshEntity(d);
-            send(player, TangRules.TWELVE, TangPayload.SHOT, layer, hand, dir, k, 0);
+            send(player, TangRules.TWELVE, TangPayload.SHOT, executionTier, hand, dir, k, 0);
         }
     }
 
@@ -407,7 +407,7 @@ public final class TangExecutor {
     }
 
     /** Бросок двенадцатого сверху в главную цель. */
-    private static void skyThrow(ServerPlayer player, int layer, double h, double[] s) {
+    private static void skyThrow(ServerPlayer player, int executionTier, double h, double[] s) {
         LivingEntity t = s[3] >= 0 && player.level().getEntity((int) s[3]) instanceof LivingEntity le && le.isAlive() ? le : null;
         if (t == null) {
             return;
@@ -415,7 +415,7 @@ public final class TangExecutor {
         Vec3 hand = hand(player, true);
         Vec3 aim = TangDagger.throat(t);
         Vec3 dir = aim.subtract(hand).normalize();
-        TangDagger d = new TangDagger(player.level(), player, TangRules.TWELVE, layer, 11);
+        TangDagger d = new TangDagger(player.level(), player, TangRules.TWELVE, executionTier, 11);
         d.setFlag(1, true);
         d.setPos(hand);
         d.setDeltaMovement(dir.scale(TangRules.SKY_SPEED));
@@ -428,12 +428,12 @@ public final class TangExecutor {
         d.setTarget(t);
         face(d, dir);
         player.level().addFreshEntity(d);
-        send(player, TangRules.TWELVE, TangPayload.SHOT, layer, hand, dir, 11, 1);
+        send(player, TangRules.TWELVE, TangPayload.SHOT, executionTier, hand, dir, 11, 1);
     }
 
     /** Семь Звёзд: из обоих рукавов по дугам в точки-звёзды вокруг цели. */
-    private static void stars(ServerPlayer player, int layer, double h, LivingEntity t, int only) {
-        int n = TangRules.starCount(layer);
+    private static void stars(ServerPlayer player, int executionTier, double h, LivingEntity t, int only) {
+        int n = TangRules.starCount(executionTier);
         Vec3 centre = t != null ? t.position().add(0.0D, t.getBbHeight() * 0.55D, 0.0D) : lookPoint(player, 10.0D);
         Vec3 back = new Vec3(centre.x - player.getX(), 0.0D, centre.z - player.getZ());
         back = back.lengthSqr() < 1.0E-6D ? player.getLookAngle() : back.normalize();
@@ -444,7 +444,7 @@ public final class TangExecutor {
             Vec3 sleeve = hand(player, right);
             Vec3 side = new Vec3(-back.z, 0.0D, back.x).scale(right ? -1.0D : 1.0D);
             Vec3 dir = side.scale(0.8D).add(back.scale(0.6D)).add(0.0D, 0.25D + 0.08D * k, 0.0D).normalize();
-            TangDagger d = new TangDagger(player.level(), player, TangRules.STARS, layer, k);
+            TangDagger d = new TangDagger(player.level(), player, TangRules.STARS, executionTier, k);
             d.setPos(sleeve);
             d.setDeltaMovement(dir.scale(1.6D));
             d.speed = 1.3D + 0.1D * (k % 3);
@@ -454,7 +454,7 @@ public final class TangExecutor {
             d.damage = h;
             d.life = TangRules.STAR_STRIKE + 30;
             d.setTarget(t);
-            if (layer <= 0) {
+            if (executionTier <= 0) {
                 // Слой 0 — три голых кинжала прямо в цель.
                 Vec3 aim = t != null ? TangDagger.throat(t) : centre;
                 d.setMode(TangDagger.STEER);
@@ -469,23 +469,23 @@ public final class TangExecutor {
             }
             face(d, dir);
             player.level().addFreshEntity(d);
-            send(player, TangRules.STARS, TangPayload.SHOT, layer, sleeve, dir, k, 0);
+            send(player, TangRules.STARS, TangPayload.SHOT, executionTier, sleeve, dir, k, 0);
         }
     }
 
     /** Тёмный Взрыв: один кинжал с ладони, медленный «карп». */
-    private static void carp(ServerPlayer player, int layer, double h, LivingEntity t) {
+    private static void carp(ServerPlayer player, int executionTier, double h, LivingEntity t) {
         Vec3 palm = hand(player, true).add(0.0D, 0.15D, 0.0D);
         // Без цели — кинжал уходит на 12 блоков по взгляду и там зависает: его можно отозвать по новой линии.
         Vec3 aim = t != null ? TangDagger.throat(t) : lookPoint(player, 12.0D);
         Vec3 dir = aim.subtract(palm).normalize();
-        TangDagger d = new TangDagger(player.level(), player, TangRules.BURST, layer, 0);
+        TangDagger d = new TangDagger(player.level(), player, TangRules.BURST, executionTier, 0);
         d.setPos(palm);
         d.aim = aim;
         d.damage = h;
         d.life = 140;
         d.setTarget(t);
-        if (layer <= 0) {
+        if (executionTier <= 0) {
             // Слой 0 — обычный бросок по прямой.
             d.setMode(TangDagger.STRAIGHT);
             d.speed = 1.8D;
@@ -502,7 +502,7 @@ public final class TangExecutor {
         }
         face(d, dir);
         player.level().addFreshEntity(d);
-        send(player, TangRules.BURST, TangPayload.SHOT, layer, palm, dir, 0, 0);
+        send(player, TangRules.BURST, TangPayload.SHOT, executionTier, palm, dir, 0, 0);
     }
 
     // ------------------------------------------------------------------ события кинжала
@@ -522,13 +522,13 @@ public final class TangExecutor {
             return true;
         }
         int form = d.form();
-        int layer = d.layer();
+        int executionTier = d.executionTier();
         double[] s = player.getData(ModAttachments.TANG);
         Vec3 dir = d.getDeltaMovement().lengthSqr() < 1.0E-6D ? player.getLookAngle() : d.getDeltaMovement().normalize();
         if (d.mode() == TangDagger.RECALL) {
             // Отзыв/возврат режет всех на линии и не останавливается.
             hurt(player, d, t, d.damage * d.recallDmg);
-            send(player, form, TangPayload.HIT, layer, point, dir, t.getId(), 1);
+            send(player, form, TangPayload.HIT, executionTier, point, dir, t.getId(), 1);
             return false;
         }
         switch (form) {
@@ -550,18 +550,18 @@ public final class TangExecutor {
                 if (!t.onGround()) {
                     TargetLock.freeze(t, 10);
                 }
-                send(player, form, TangPayload.HIT, layer, point, dir, t.getId(), main ? 2 : count > 1 ? 1 : 0);
+                send(player, form, TangPayload.HIT, executionTier, point, dir, t.getId(), main ? 2 : count > 1 ? 1 : 0);
                 return true;
             }
             case TangRules.COINS -> {
                 if (t.swinging) {
                     // Ответный удар оружием сбивает монету (Чхон Мён разбивает монеты Тан Ву мечом, гл. 210).
                     // API: reference/minecraft-src/net/minecraft/world/entity/LivingEntity.java#swinging.
-                    send(player, form, TangPayload.CLANG, layer, point, dir.scale(-1.0D), 0, 0);
+                    send(player, form, TangPayload.CLANG, executionTier, point, dir.scale(-1.0D), 0, 0);
                     return true;
                 }
                 hurt(player, d, t, d.damage * TangRules.COIN_DMG);
-                send(player, form, TangPayload.HIT, layer, point, dir, t.getId(), 0);
+                send(player, form, TangPayload.HIT, executionTier, point, dir, t.getId(), 0);
                 d.struck.add(t.getId());
                 if (d.chain) {
                     // Перескок (слой 5+): к ближайшему другому врагу в 5 блоках, один раз.
@@ -589,8 +589,8 @@ public final class TangExecutor {
             }
             case TangRules.FLASH -> {
                 hurt(player, d, t, d.damage * TangRules.FLASH_DMG);
-                boolean cut = TangRules.interrupt(layer) && interrupt(t);
-                send(player, form, TangPayload.HIT, layer, point, dir, t.getId(), cut ? 2 : 1);
+                boolean cut = TangRules.interrupt(executionTier) && interrupt(t);
+                send(player, form, TangPayload.HIT, executionTier, point, dir, t.getId(), cut ? 2 : 1);
                 return true;
             }
             case TangRules.FIVE -> {
@@ -606,21 +606,21 @@ public final class TangExecutor {
                 if (chain == 4 && t instanceof Player p && p.isBlocking()) {
                     p.disableShield();
                 }
-                boolean main = chain >= 5 && layer >= 4;
+                boolean main = chain >= 5 && executionTier >= 4;
                 if (main) {
                     stun(t, TangRules.FIVE_STUN);
                 }
                 if (!t.onGround()) {
                     TargetLock.freeze(t, 10);
                 }
-                send(player, form, TangPayload.HIT, layer, point, dir, t.getId(), main ? 2 : landed && chain > 1 ? 1 : 0);
+                send(player, form, TangPayload.HIT, executionTier, point, dir, t.getId(), main ? 2 : landed && chain > 1 ? 1 : 0);
                 return true;
             }
             case TangRules.TWELVE -> {
                 if (d.sky()) {
                     hurt(player, d, t, d.damage * TangRules.SKY_DMG);
-                    stun(t, layer >= 8 ? 24 : 16);
-                    send(player, form, TangPayload.HIT, layer, point, dir, t.getId(), 2);
+                    stun(t, executionTier >= 8 ? 24 : 16);
+                    send(player, form, TangPayload.HIT, executionTier, point, dir, t.getId(), 2);
                     return true;
                 }
                 int hits = bump(s, t.getId());
@@ -629,7 +629,7 @@ public final class TangExecutor {
                 if (hits == 1 && !(t instanceof Player)) {
                     stun(t, 8);
                 }
-                if (TangRules.poison(layer)) {
+                if (TangRules.poison(executionTier)) {
                     // Яд на кромках: магия раз в 20 тиков, берёт и нежить.
                     t.setData(ModAttachments.TANG_POISON, new double[] {TangRules.TWELVE_POISON_PULSES, player.getId(),
                             d.damage * TangRules.TWELVE_POISON, 20});
@@ -637,7 +637,7 @@ public final class TangExecutor {
                 if (!t.onGround()) {
                     TargetLock.freeze(t, 10);
                 }
-                send(player, form, TangPayload.HIT, layer, point, dir, t.getId(), hits > 1 ? 1 : 0);
+                send(player, form, TangPayload.HIT, executionTier, point, dir, t.getId(), hits > 1 ? 1 : 0);
                 return true;
             }
             case TangRules.STARS -> {
@@ -648,16 +648,16 @@ public final class TangExecutor {
                     s[7] = 1;
                     stun(t, 20);
                 }
-                send(player, form, TangPayload.HIT, layer, point, dir, t.getId(), main ? 2 : 0);
+                send(player, form, TangPayload.HIT, executionTier, point, dir, t.getId(), main ? 2 : 0);
                 return true;
             }
             default -> {
                 if (d.mode() == TangDagger.HANG || d.mode() == TangDagger.FALL) {
                     return false;
                 }
-                if (layer <= 0 || d.index() == 1) {
+                if (executionTier <= 0 || d.index() == 1) {
                     hurt(player, d, t, d.damage);
-                    send(player, form, TangPayload.HIT, layer, point, dir, t.getId(), 0);
+                    send(player, form, TangPayload.HIT, executionTier, point, dir, t.getId(), 0);
                     return true;
                 }
                 explode(player, d, point, t, d.mode() == TangDagger.CARP ? 0.6D : 1.0D);
@@ -672,12 +672,12 @@ public final class TangExecutor {
             return true;
         }
         Vec3 dir = d.getDeltaMovement().lengthSqr() < 1.0E-6D ? Vec3.ZERO : d.getDeltaMovement().normalize();
-        if (d.form() == TangRules.BURST && d.layer() > 0 && d.index() == 0 && (d.mode() == TangDagger.BURST || d.mode() == TangDagger.CARP)) {
+        if (d.form() == TangRules.BURST && d.executionTier() > 0 && d.index() == 0 && (d.mode() == TangDagger.BURST || d.mode() == TangDagger.CARP)) {
             explode(player, d, hit.getLocation(), null, d.mode() == TangDagger.CARP ? 0.6D : 1.0D);
             return true;
         }
         if (d.mode() != TangDagger.FALL) {
-            send(player, d.form(), TangPayload.CLANG, d.layer(), hit.getLocation(), dir, hit.getDirection().get3DDataValue(), 0);
+            send(player, d.form(), TangPayload.CLANG, d.executionTier(), hit.getLocation(), dir, hit.getDirection().get3DDataValue(), 0);
         }
         // Отзыв, упёршийся в стену, падает и тоже втыкается.
         return false;
@@ -709,31 +709,31 @@ public final class TangExecutor {
 
     static void starPlaced(TangDagger d) {
         if (d.getOwner() instanceof ServerPlayer player) {
-            send(player, d.form(), TangPayload.STAR, d.layer(), d.position(), Vec3.ZERO, d.index(), d.targetId());
+            send(player, d.form(), TangPayload.STAR, d.executionTier(), d.position(), Vec3.ZERO, d.index(), d.targetId());
         }
     }
 
     static void threadCut(TangDagger d) {
         if (d.getOwner() instanceof ServerPlayer player) {
-            send(player, d.form(), TangPayload.CUT, d.layer(), d.position(), Vec3.ZERO, d.index(), 0);
+            send(player, d.form(), TangPayload.CUT, d.executionTier(), d.position(), Vec3.ZERO, d.index(), 0);
         }
     }
 
     static void burstStart(TangDagger d, Vec3 dir) {
         if (d.getOwner() instanceof ServerPlayer player) {
-            send(player, d.form(), TangPayload.BURST, d.layer(), d.position(), dir, d.getId(), d.doubled() ? 1 : 0);
+            send(player, d.form(), TangPayload.BURST, d.executionTier(), d.position(), dir, d.getId(), d.doubled() ? 1 : 0);
         }
     }
 
     static void hang(TangDagger d) {
         if (d.getOwner() instanceof ServerPlayer player) {
-            send(player, d.form(), TangPayload.HANG, d.layer(), d.position(), Vec3.ZERO, d.getId(), 0);
+            send(player, d.form(), TangPayload.HANG, d.executionTier(), d.position(), Vec3.ZERO, d.getId(), 0);
         }
     }
 
     static void caught(TangDagger d) {
         if (d.getOwner() instanceof ServerPlayer player) {
-            send(player, d.form(), TangPayload.CAUGHT, d.layer(), d.position(), Vec3.ZERO, d.getId(), 0);
+            send(player, d.form(), TangPayload.CAUGHT, d.executionTier(), d.position(), Vec3.ZERO, d.getId(), 0);
             // «Возврат Лезвий» вернул брошенный рукой кинжал — он снова в инвентаре.
             d.giveBack(player, player.position());
         }
@@ -743,12 +743,12 @@ public final class TangExecutor {
      * Монеты Семьи Тан (гл. 210; tang-coins-spec.md): веер вращающихся монет по горизонтали, к захваченной
      * цели или по взгляду. Каждая монета несёт свои рикошеты и перескок.
      */
-    private static void coins(ServerPlayer player, int layer, double h, LivingEntity target) {
+    private static void coins(ServerPlayer player, int executionTier, double h, LivingEntity target) {
         Vec3 hand = hand(player, true);
         LivingEntity t = target != null ? target : nearestInCone(player, 24.0D, 30.0D);
         Vec3 aim = t != null ? TangDagger.throat(t) : lookPoint(player, 16.0D);
         Vec3 dir = aim.subtract(hand).normalize();
-        int n = TangRules.coinCount(layer);
+        int n = TangRules.coinCount(executionTier);
         for (int i = 0; i < n; i++) {
             double u = n == 1 ? 0.0D : i / (double) (n - 1) - 0.5D;
             double yaw = Math.toRadians(u * TangRules.COIN_FAN);
@@ -756,19 +756,19 @@ public final class TangExecutor {
             double sin = Math.sin(yaw);
             // Поворот вокруг вертикали и лёгкий разброс по высоте — веер, а не одна линия.
             Vec3 v = new Vec3(dir.x * cos - dir.z * sin, dir.y + (player.getRandom().nextDouble() - 0.5D) * 0.08D, dir.x * sin + dir.z * cos).normalize();
-            TangDagger d = new TangDagger(player.level(), player, TangRules.COINS, layer, i % 120);
+            TangDagger d = new TangDagger(player.level(), player, TangRules.COINS, executionTier, i % 120);
             d.setPos(hand);
             d.setMode(TangDagger.STRAIGHT);
             d.speed = TangRules.COIN_SPEED;
             d.setDeltaMovement(v.scale(TangRules.COIN_SPEED));
             d.damage = h;
             d.life = TangRules.COIN_LIFE;
-            d.bounces = TangRules.coinBounces(layer);
-            d.chain = TangRules.coinChain(layer);
+            d.bounces = TangRules.coinBounces(executionTier);
+            d.chain = TangRules.coinChain(executionTier);
             face(d, v);
             player.level().addFreshEntity(d);
         }
-        send(player, TangRules.COINS, TangPayload.SHOT, layer, hand, dir, n, 0);
+        send(player, TangRules.COINS, TangPayload.SHOT, executionTier, hand, dir, n, 0);
     }
 
     /** Монета ударилась о блок: отражение скорости с потерей (рикошет) или конец пути. */
@@ -776,7 +776,7 @@ public final class TangExecutor {
         Vec3 v = d.getDeltaMovement();
         if (d.bounces <= 0 || d.mode() == TangDagger.FALL || v.lengthSqr() < 1.0E-6D) {
             if (d.getOwner() instanceof ServerPlayer player) {
-                send(player, TangRules.COINS, TangPayload.CLANG, d.layer(), hit.getLocation(), Vec3.ZERO, hit.getDirection().get3DDataValue(), 0);
+                send(player, TangRules.COINS, TangPayload.CLANG, d.executionTier(), hit.getLocation(), Vec3.ZERO, hit.getDirection().get3DDataValue(), 0);
             }
             d.discard();
             return;
@@ -790,7 +790,7 @@ public final class TangExecutor {
         d.struck.clear();
         face(d, r);
         if (d.getOwner() instanceof ServerPlayer player) {
-            send(player, TangRules.COINS, TangPayload.CLANG, d.layer(), hit.getLocation(), r.normalize(), hit.getDirection().get3DDataValue(), 1);
+            send(player, TangRules.COINS, TangPayload.CLANG, d.executionTier(), hit.getLocation(), r.normalize(), hit.getDirection().get3DDataValue(), 1);
         }
     }
 
@@ -818,7 +818,7 @@ public final class TangExecutor {
 
     static void knockedDown(TangDagger d) {
         if (d.getOwner() instanceof ServerPlayer player) {
-            send(player, d.form(), TangPayload.DOWN, d.layer(), d.position(), Vec3.ZERO, d.getId(), 0);
+            send(player, d.form(), TangPayload.DOWN, d.executionTier(), d.position(), Vec3.ZERO, d.getId(), 0);
         }
     }
 
@@ -849,13 +849,13 @@ public final class TangExecutor {
         }
         boolean any = false;
         for (TangDagger d : mine) {
-            if (d.mode() == TangDagger.CARP && TangRules.doubled(d.layer()) && d.boostAt == Long.MAX_VALUE && !d.doubled()) {
+            if (d.mode() == TangDagger.CARP && TangRules.doubled(d.executionTier()) && d.boostAt == Long.MAX_VALUE && !d.doubled()) {
                 // Второй кинжал вдогонку первому (гл. 196): долетит — рывок вдвое быстрее.
                 Vec3 hand = hand(player, true);
                 Vec3 to = d.position().add(d.getDeltaMovement().scale(2.0D));
                 Vec3 dir = to.subtract(hand).normalize();
                 int ticks = Math.max(1, (int) Math.ceil(to.distanceTo(hand) / TangRules.SECOND_SPEED));
-                TangDagger second = new TangDagger(player.level(), player, TangRules.BURST, d.layer(), 1);
+                TangDagger second = new TangDagger(player.level(), player, TangRules.BURST, d.executionTier(), 1);
                 second.setPos(hand);
                 second.setMode(TangDagger.STRAIGHT);
                 second.speed = TangRules.SECOND_SPEED;
@@ -865,13 +865,13 @@ public final class TangExecutor {
                 face(second, dir);
                 player.level().addFreshEntity(second);
                 d.boostAt = player.level().getGameTime() + ticks;
-                send(player, form, TangPayload.SHOT, d.layer(), hand, dir, 1, 2);
+                send(player, form, TangPayload.SHOT, d.executionTier(), hand, dir, 1, 2);
                 any = true;
                 continue;
             }
-            if (d.mode() == TangDagger.HANG && TangRules.recall(d.layer())) {
+            if (d.mode() == TangDagger.HANG && TangRules.recall(d.executionTier())) {
                 d.recall();
-                send(player, form, TangPayload.RECALL, d.layer(), d.position(), Vec3.ZERO, d.getId(), 0);
+                send(player, form, TangPayload.RECALL, d.executionTier(), d.position(), Vec3.ZERO, d.getId(), 0);
                 any = true;
             }
         }
@@ -959,7 +959,7 @@ public final class TangExecutor {
             hurt(player, d, e, d.damage * f * k);
             push(e, at, c.subtract(at), 0.6D);
         }
-        send(player, TangRules.BURST, TangPayload.EXPLODE, d.layer(), at, dir, main == null ? -1 : main.getId(),
+        send(player, TangRules.BURST, TangPayload.EXPLODE, d.executionTier(), at, dir, main == null ? -1 : main.getId(),
                 main != null ? 2 : 0);
     }
 
@@ -1090,7 +1090,7 @@ public final class TangExecutor {
         d.setYRot((float) (Math.atan2(dir.x, dir.z) * 180.0D / Math.PI));
     }
 
-    private static void send(ServerPlayer player, int form, int stage, int layer, Vec3 pos, Vec3 dir, int a, int b) {
-        PacketDistributor.sendToPlayersTrackingEntityAndSelf(player, new TangPayload(player.getId(), form, stage, layer, pos, dir, a, b));
+    private static void send(ServerPlayer player, int form, int stage, int executionTier, Vec3 pos, Vec3 dir, int a, int b) {
+        PacketDistributor.sendToPlayersTrackingEntityAndSelf(player, new TangPayload(player.getId(), form, stage, executionTier, pos, dir, a, b));
     }
 }

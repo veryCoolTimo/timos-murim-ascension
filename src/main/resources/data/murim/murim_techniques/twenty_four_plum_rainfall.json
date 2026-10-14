@@ -68,6 +68,6 @@
   "weakness": "technique.murim.twenty_four_plum_rainfall.weakness",
   "hit_stop_ticks": 2,
   "cooldown_ticks": 900,
-  "layers": 8,
+  "star_cap": 12,
   "tier": "secret"
 }

@@ -68,6 +68,12 @@
   "weakness": "technique.murim.tang_family_coins.weakness",
   "hit_stop_ticks": 1,
   "cooldown_ticks": 200,
-  "layers": 8,
-  "tier": "advanced"
+  "star_cap": 12,
+  "tier": "advanced",
+  "requires": [
+    {
+      "technique": "murim:tang_dark_burst",
+      "star": 5
+    }
+  ]
 }

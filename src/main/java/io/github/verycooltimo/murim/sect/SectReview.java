@@ -112,6 +112,11 @@ public final class SectReview {
             default -> {
             }
         }
+        if (m.firstRank()) {
+            // Рядовые первого поколения — у западного края площадки, лицом к рингам: смотрят и поправляют.
+            int f = SectRoster.firstRanks().indexOf(m);
+            return new SectSchedule.Task(SectSchedule.Kind.WATCH, "sparring", -15.0D, -4.5D + f * 3.0D, 1.0D, 0.0D);
+        }
         List<SectRoster> crowd = crowd();
         int i = crowd.indexOf(m);
         if (i < 0) {
@@ -473,6 +478,7 @@ public final class SectReview {
             SectService.contribute(p, CHAMPION);
             approve(p, "review");
             p.setData(ModAttachments.SECT, p.getData(ModAttachments.SECT).with(SectTalk.REVIEW_WON));
+            SectRequests.reviewWon(p);
         }
         // О победителе говорят ученики (SectTalk): ключ ученика или имя игрока.
         SectLife.data(level).crown(champ instanceof ServerPlayer p ? "@" + p.getName().getString() : s.champion);

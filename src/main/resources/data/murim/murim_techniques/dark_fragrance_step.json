@@ -36,6 +36,6 @@
   "weakness": "technique.murim.dark_fragrance_step.weakness",
   "hit_stop_ticks": 0,
   "cooldown_ticks": 30,
-  "layers": 5,
+  "star_cap": 12,
   "tier": "basic"
 }

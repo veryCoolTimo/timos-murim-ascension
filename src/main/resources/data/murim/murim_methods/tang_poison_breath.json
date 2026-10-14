@@ -4,5 +4,6 @@
   "purity": 0.7,
   "capacity": 32.0,
   "impurity": 0.4,
-  "route": "coiled_meridians"
+  "route": "coiled_meridians",
+  "star_cap": 12
 }

@@ -1,0 +1,19 @@
+{
+  "name": "npc.murim.han_dok",
+  "title": "npc.murim.han_dok.title",
+  "start": [
+    {
+      "node": "greet"
+    }
+  ],
+  "nodes": {
+    "greet": {
+      "line": "dialogue.murim.guest_han_dok.greet",
+      "options": [
+        {
+          "text": "dialogue.murim.guest.leave"
+        }
+      ]
+    }
+  }
+}

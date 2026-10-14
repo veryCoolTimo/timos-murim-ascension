@@ -87,6 +87,17 @@ public final class MeditationHud {
             // Во время прорыва виджет ци не нужен: идёт сцена, игроку нечего нажимать.
             if (breakAge < 0 && rankAge < 0 && warnAge < 0 && !ClientPillState.absorbing()) {
                 seeded(graphics, minecraft, partial);
+                ResourceLocation method = ResourceLocation.tryParse(ClientProfileState.profile().imprint());
+                if (method != null) {
+                    ResourceLocation art = io.github.verycooltimo.murim.mastery.Arts.methodArt(method);
+                    var entry = TechniqueSlotsHud.mastery(art);
+                    if (entry != null) {
+                        Component stars = MasteryText.summary(art, entry);
+                        graphics.drawString(minecraft.font, stars,
+                                (graphics.guiWidth() - minecraft.font.width(stars)) / 2,
+                                TOP + 28, 0xFFA8E4FF, true);
+                    }
+                }
             }
             return;
         }
@@ -248,10 +259,12 @@ public final class MeditationHud {
         small(graphics, font, Component.translatable("murim.meditation.session",
                 String.format(java.util.Locale.ROOT, "%.1f", sessionGain)), cx, ty, 0xE0BFE6FF);
         // Сколько всего ци (автор 03.10: «хотелось бы знать, сколько всего у тебя ци»): запас и боевая,
-        // числами — но без доли до стены.
+        // числами вместе с пределами: после прорыва видно расширение центра.
         small(graphics, font, Component.translatable("murim.meditation.total",
                 String.format(java.util.Locale.ROOT, "%.1f", profile.pool()),
-                String.format(java.util.Locale.ROOT, "%.1f", profile.circulating())), cx, ty - LINE, 0xF0E8F6FF);
+                String.format(java.util.Locale.ROOT, "%.1f", io.github.verycooltimo.murim.cultivation.Realm.wall(profile)),
+                String.format(java.util.Locale.ROOT, "%.1f", profile.circulating()),
+                String.format(java.util.Locale.ROOT, "%.1f", profile.maxCirculating())), cx, ty - LINE, 0xF0E8F6FF);
         int line = ty - 2 * LINE;
         // Почему рост стоит — одна причина, короткая подпись.
         String reason = full ? "murim.meditation.reason.full" : stunned ? "murim.meditation.reason.stunned"

@@ -327,6 +327,7 @@ public final class PillService {
                     if (s >= 0.5D) {
                         player.setData(ModAttachments.PILLS, player.getData(ModAttachments.PILLS).withPoisonResistant());
                         player.getData(ModAttachments.ABSORB).discountUntil = player.level().getGameTime() + DISCOUNT_TICKS;
+                        io.github.verycooltimo.murim.mastery.MasteryService.sync(player);
                     }
                 }
                 case BEAUTY_TEAR -> purity += PillRules.permanent(0.05D, s, taken);
@@ -349,6 +350,11 @@ public final class PillService {
             }
         }
         return false;
+    }
+
+    /** Expiry sent to the HUD, so its displayed costs revert without another practice event. */
+    public static long costDiscountUntil(ServerPlayer player) {
+        return player.getData(ModAttachments.ABSORB).discountUntil;
     }
 
     /** Множитель цены техник: Пилюля Тысячи Ядов делает их дешевле на 20 минут. */
@@ -389,7 +395,8 @@ public final class PillService {
      */
     @SubscribeEvent
     static void onDrops(net.neoforged.neoforge.event.entity.living.LivingDropsEvent event) {
-        if (!(event.getEntity() instanceof io.github.verycooltimo.murim.entity.Bandit bandit) || !event.isRecentlyHit()
+        if (!(event.getEntity() instanceof io.github.verycooltimo.murim.entity.Bandit bandit)
+                || bandit instanceof io.github.verycooltimo.murim.npc.GuestFighter || !event.isRecentlyHit()
                 || !(event.getSource().getEntity() instanceof Player)) {
             return;
         }

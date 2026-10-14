@@ -46,6 +46,18 @@ public final class ModDataComponents {
                     .persistent(com.mojang.serialization.Codec.INT)
                     .networkSynchronized(net.minecraft.network.codec.ByteBufCodecs.VAR_INT));
 
+    /** Star limit of new manuscripts; manual_depth remains readable for old item stacks. */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> MANUAL_STARS =
+            COMPONENTS.registerComponentType("manual_stars", builder -> builder
+                    .persistent(com.mojang.serialization.Codec.INT)
+                    .networkSynchronized(net.minecraft.network.codec.ByteBufCodecs.VAR_INT));
+
+    /** Absent on version 2 books, whose manual_stars used per-art denominators. */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> MANUAL_STAR_VERSION =
+            COMPONENTS.registerComponentType("manual_star_version", builder -> builder
+                    .persistent(com.mojang.serialization.Codec.INT)
+                    .networkSynchronized(net.minecraft.network.codec.ByteBufCodecs.VAR_INT));
+
     public static void register(IEventBus modBus) {
         COMPONENTS.register(modBus);
     }

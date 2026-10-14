@@ -122,7 +122,7 @@ public final class SectTalk {
      */
     public static Line line(String token, String speaker, long day, boolean night, int roll, Context ctx) {
         int r = Math.abs(roll);
-        boolean known = SectRoster.of(speaker).map(SectRoster::disciple).orElse(false);
+        boolean known = SectRoster.of(speaker).map(m -> m.disciple() || m.firstRank()).orElse(false);
         if (PERSONAL.equals(token) && known) {
             return new Line(personalKey(speaker), List.of());
         }

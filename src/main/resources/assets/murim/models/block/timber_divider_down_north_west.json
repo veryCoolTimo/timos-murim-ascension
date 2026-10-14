@@ -1,0 +1,372 @@
+{
+ "textures": {
+  "particle": "murim:block/red_lacquer",
+  "dark": "murim:block/dark_timber",
+  "lacquer": "murim:block/red_lacquer"
+ },
+ "elements": [
+  {
+   "name": "post",
+   "from": [
+    1.75,
+    2,
+    1.75
+   ],
+   "to": [
+    4.25,
+    16,
+    4.25
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      11.75,
+      0,
+      14.25,
+      14
+     ],
+     "texture": "#lacquer"
+    },
+    "east": {
+     "uv": [
+      11.75,
+      0,
+      14.25,
+      14
+     ],
+     "texture": "#lacquer"
+    },
+    "south": {
+     "uv": [
+      1.75,
+      0,
+      4.25,
+      14
+     ],
+     "texture": "#lacquer"
+    },
+    "west": {
+     "uv": [
+      1.75,
+      0,
+      4.25,
+      14
+     ],
+     "texture": "#lacquer"
+    },
+    "up": {
+     "uv": [
+      1.75,
+      1.75,
+      4.25,
+      4.25
+     ],
+     "texture": "#lacquer"
+    }
+   }
+  },
+  {
+   "name": "post",
+   "from": [
+    1.75,
+    2,
+    1.75
+   ],
+   "to": [
+    2,
+    16,
+    4.25
+   ],
+   "faces": {
+    "down": {
+     "uv": [
+      1.75,
+      11.75,
+      2,
+      14.25
+     ],
+     "texture": "#lacquer"
+    }
+   }
+  },
+  {
+   "name": "post",
+   "from": [
+    4,
+    2,
+    1.75
+   ],
+   "to": [
+    4.25,
+    16,
+    4.25
+   ],
+   "faces": {
+    "down": {
+     "uv": [
+      4,
+      11.75,
+      4.25,
+      14.25
+     ],
+     "texture": "#lacquer"
+    }
+   }
+  },
+  {
+   "name": "post",
+   "from": [
+    2,
+    2,
+    1.75
+   ],
+   "to": [
+    4,
+    16,
+    2
+   ],
+   "faces": {
+    "down": {
+     "uv": [
+      2,
+      14,
+      4,
+      14.25
+     ],
+     "texture": "#lacquer"
+    }
+   }
+  },
+  {
+   "name": "post",
+   "from": [
+    2,
+    2,
+    4
+   ],
+   "to": [
+    4,
+    16,
+    4.25
+   ],
+   "faces": {
+    "down": {
+     "uv": [
+      2,
+      11.75,
+      4,
+      12
+     ],
+     "texture": "#lacquer"
+    }
+   }
+  },
+  {
+   "name": "groove",
+   "from": [
+    2,
+    1.5,
+    2
+   ],
+   "to": [
+    4,
+    2,
+    4
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      12,
+      14,
+      14,
+      14.5
+     ],
+     "texture": "#dark"
+    },
+    "east": {
+     "uv": [
+      12,
+      14,
+      14,
+      14.5
+     ],
+     "texture": "#dark"
+    },
+    "south": {
+     "uv": [
+      2,
+      14,
+      4,
+      14.5
+     ],
+     "texture": "#dark"
+    },
+    "west": {
+     "uv": [
+      2,
+      14,
+      4,
+      14.5
+     ],
+     "texture": "#dark"
+    }
+   }
+  },
+  {
+   "name": "cap",
+   "from": [
+    1.75,
+    0,
+    1.75
+   ],
+   "to": [
+    4.25,
+    1.5,
+    4.25
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      11.75,
+      14.5,
+      14.25,
+      16
+     ],
+     "texture": "#lacquer"
+    },
+    "east": {
+     "uv": [
+      11.75,
+      14.5,
+      14.25,
+      16
+     ],
+     "texture": "#lacquer"
+    },
+    "south": {
+     "uv": [
+      1.75,
+      14.5,
+      4.25,
+      16
+     ],
+     "texture": "#lacquer"
+    },
+    "west": {
+     "uv": [
+      1.75,
+      14.5,
+      4.25,
+      16
+     ],
+     "texture": "#lacquer"
+    },
+    "down": {
+     "uv": [
+      1.75,
+      11.75,
+      4.25,
+      14.25
+     ],
+     "texture": "#lacquer"
+    }
+   }
+  },
+  {
+   "name": "cap",
+   "from": [
+    1.75,
+    0,
+    1.75
+   ],
+   "to": [
+    2,
+    1.5,
+    4.25
+   ],
+   "faces": {
+    "up": {
+     "uv": [
+      1.75,
+      1.75,
+      2,
+      4.25
+     ],
+     "texture": "#lacquer"
+    }
+   }
+  },
+  {
+   "name": "cap",
+   "from": [
+    4,
+    0,
+    1.75
+   ],
+   "to": [
+    4.25,
+    1.5,
+    4.25
+   ],
+   "faces": {
+    "up": {
+     "uv": [
+      4,
+      1.75,
+      4.25,
+      4.25
+     ],
+     "texture": "#lacquer"
+    }
+   }
+  },
+  {
+   "name": "cap",
+   "from": [
+    2,
+    0,
+    1.75
+   ],
+   "to": [
+    4,
+    1.5,
+    2
+   ],
+   "faces": {
+    "up": {
+     "uv": [
+      2,
+      1.75,
+      4,
+      2
+     ],
+     "texture": "#lacquer"
+    }
+   }
+  },
+  {
+   "name": "cap",
+   "from": [
+    2,
+    0,
+    4
+   ],
+   "to": [
+    4,
+    1.5,
+    4.25
+   ],
+   "faces": {
+    "up": {
+     "uv": [
+      2,
+      4,
+      4,
+      4.25
+     ],
+     "texture": "#lacquer"
+    }
+   }
+  }
+ ]
+}

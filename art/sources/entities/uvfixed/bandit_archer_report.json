@@ -1,0 +1,34 @@
+{
+ "source": "art/sources/entities/bandit_archer.bbmodel",
+ "inverted_cubes": 0,
+ "flipped_faces": 26,
+ "rotated_faces": 0,
+ "overlapping_faces": 12,
+ "zero_uv_faces": 8,
+ "zero_area_faces": 8,
+ "inexact_faces": [],
+ "dense_faces": 0,
+ "texture_size_before": [
+  128,
+  64
+ ],
+ "uv_size_before": [
+  128,
+  64
+ ],
+ "baked_textures": [
+  "bandit_archer.png",
+  "peddler.png"
+ ],
+ "untouched_textures": [],
+ "texture_size_after": [
+  128,
+  64
+ ],
+ "uv_size_after": [
+  128,
+  64
+ ],
+ "faces": 78,
+ "cubes": 13
+}

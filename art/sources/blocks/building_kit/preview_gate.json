@@ -1,0 +1,14445 @@
+{
+ "textures": {
+  "particle": "murim:block/red_lacquer",
+  "dark_timber": "murim:block/dark_timber",
+  "planks": "murim:block/plum_planks",
+  "red_beam_end": "murim:block/red_beam_end",
+  "red_lacquer": "murim:block/red_lacquer",
+  "red_lacquer_beam": "murim:block/red_lacquer_beam"
+ },
+ "elements": [
+  {
+   "name": "red_pillar_0_0_shaft_a",
+   "from": [
+    5.5,
+    0,
+    6.9645
+   ],
+   "to": [
+    10.5,
+    16,
+    9.0355
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "east": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "south": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "west": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "up": {
+     "uv": [
+      5.5,
+      6.9645,
+      10.5,
+      9.0355
+     ],
+     "texture": "#red_lacquer"
+    },
+    "down": {
+     "uv": [
+      5.5,
+      6.9645,
+      10.5,
+      9.0355
+     ],
+     "texture": "#red_lacquer"
+    }
+   }
+  },
+  {
+   "name": "red_pillar_0_0_shaft_b",
+   "from": [
+    6.9645,
+    0,
+    5.5
+   ],
+   "to": [
+    9.0355,
+    16,
+    10.5
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "east": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "south": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "west": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "up": {
+     "uv": [
+      6.9645,
+      5.5,
+      9.0355,
+      10.5
+     ],
+     "texture": "#red_lacquer"
+    },
+    "down": {
+     "uv": [
+      6.9645,
+      5.5,
+      9.0355,
+      10.5
+     ],
+     "texture": "#red_lacquer"
+    }
+   }
+  },
+  {
+   "name": "red_pillar_0_0_shaft_c",
+   "from": [
+    5.5,
+    0,
+    6.9645
+   ],
+   "to": [
+    10.5,
+    16,
+    9.0355
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "east": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "south": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "west": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "up": {
+     "uv": [
+      5.5,
+      6.9645,
+      10.5,
+      9.0355
+     ],
+     "texture": "#red_lacquer"
+    },
+    "down": {
+     "uv": [
+      5.5,
+      6.9645,
+      10.5,
+      9.0355
+     ],
+     "texture": "#red_lacquer"
+    }
+   },
+   "rotation": {
+    "angle": 45,
+    "axis": "y",
+    "origin": [
+     8,
+     0,
+     8
+    ]
+   }
+  },
+  {
+   "name": "red_pillar_0_0_shaft_d",
+   "from": [
+    5.5,
+    0,
+    6.9645
+   ],
+   "to": [
+    10.5,
+    16,
+    9.0355
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "east": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "south": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "west": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "up": {
+     "uv": [
+      5.5,
+      6.9645,
+      10.5,
+      9.0355
+     ],
+     "texture": "#red_lacquer"
+    },
+    "down": {
+     "uv": [
+      5.5,
+      6.9645,
+      10.5,
+      9.0355
+     ],
+     "texture": "#red_lacquer"
+    }
+   },
+   "rotation": {
+    "angle": -45,
+    "axis": "y",
+    "origin": [
+     8,
+     0,
+     8
+    ]
+   }
+  },
+  {
+   "name": "red_pillar_0_0_base_ring_a",
+   "from": [
+    5,
+    0,
+    6.7574
+   ],
+   "to": [
+    11,
+    1.5,
+    9.2426
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      5,
+      14.5,
+      11,
+      16
+     ],
+     "texture": "#dark_timber"
+    },
+    "east": {
+     "uv": [
+      6.7574,
+      14.5,
+      9.2426,
+      16
+     ],
+     "texture": "#dark_timber"
+    },
+    "south": {
+     "uv": [
+      5,
+      14.5,
+      11,
+      16
+     ],
+     "texture": "#dark_timber"
+    },
+    "west": {
+     "uv": [
+      6.7574,
+      14.5,
+      9.2426,
+      16
+     ],
+     "texture": "#dark_timber"
+    },
+    "up": {
+     "uv": [
+      5,
+      6.7574,
+      11,
+      9.2426
+     ],
+     "texture": "#dark_timber"
+    },
+    "down": {
+     "uv": [
+      5,
+      6.7574,
+      11,
+      9.2426
+     ],
+     "texture": "#dark_timber"
+    }
+   }
+  },
+  {
+   "name": "red_pillar_0_0_base_ring_b",
+   "from": [
+    6.7574,
+    0,
+    5
+   ],
+   "to": [
+    9.2426,
+    1.5,
+    11
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      6.7574,
+      14.5,
+      9.2426,
+      16
+     ],
+     "texture": "#dark_timber"
+    },
+    "east": {
+     "uv": [
+      5,
+      14.5,
+      11,
+      16
+     ],
+     "texture": "#dark_timber"
+    },
+    "south": {
+     "uv": [
+      6.7574,
+      14.5,
+      9.2426,
+      16
+     ],
+     "texture": "#dark_timber"
+    },
+    "west": {
+     "uv": [
+      5,
+      14.5,
+      11,
+      16
+     ],
+     "texture": "#dark_timber"
+    },
+    "up": {
+     "uv": [
+      6.7574,
+      5,
+      9.2426,
+      11
+     ],
+     "texture": "#dark_timber"
+    },
+    "down": {
+     "uv": [
+      6.7574,
+      5,
+      9.2426,
+      11
+     ],
+     "texture": "#dark_timber"
+    }
+   }
+  },
+  {
+   "name": "red_pillar_0_0_base_ring_c",
+   "from": [
+    5,
+    0,
+    6.7574
+   ],
+   "to": [
+    11,
+    1.5,
+    9.2426
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      5,
+      14.5,
+      11,
+      16
+     ],
+     "texture": "#dark_timber"
+    },
+    "east": {
+     "uv": [
+      6.7574,
+      14.5,
+      9.2426,
+      16
+     ],
+     "texture": "#dark_timber"
+    },
+    "south": {
+     "uv": [
+      5,
+      14.5,
+      11,
+      16
+     ],
+     "texture": "#dark_timber"
+    },
+    "west": {
+     "uv": [
+      6.7574,
+      14.5,
+      9.2426,
+      16
+     ],
+     "texture": "#dark_timber"
+    },
+    "up": {
+     "uv": [
+      5,
+      6.7574,
+      11,
+      9.2426
+     ],
+     "texture": "#dark_timber"
+    },
+    "down": {
+     "uv": [
+      5,
+      6.7574,
+      11,
+      9.2426
+     ],
+     "texture": "#dark_timber"
+    }
+   },
+   "rotation": {
+    "angle": 45,
+    "axis": "y",
+    "origin": [
+     8,
+     0,
+     8
+    ]
+   }
+  },
+  {
+   "name": "red_pillar_0_0_base_ring_d",
+   "from": [
+    5,
+    0,
+    6.7574
+   ],
+   "to": [
+    11,
+    1.5,
+    9.2426
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      5,
+      14.5,
+      11,
+      16
+     ],
+     "texture": "#dark_timber"
+    },
+    "east": {
+     "uv": [
+      6.7574,
+      14.5,
+      9.2426,
+      16
+     ],
+     "texture": "#dark_timber"
+    },
+    "south": {
+     "uv": [
+      5,
+      14.5,
+      11,
+      16
+     ],
+     "texture": "#dark_timber"
+    },
+    "west": {
+     "uv": [
+      6.7574,
+      14.5,
+      9.2426,
+      16
+     ],
+     "texture": "#dark_timber"
+    },
+    "up": {
+     "uv": [
+      5,
+      6.7574,
+      11,
+      9.2426
+     ],
+     "texture": "#dark_timber"
+    },
+    "down": {
+     "uv": [
+      5,
+      6.7574,
+      11,
+      9.2426
+     ],
+     "texture": "#dark_timber"
+    }
+   },
+   "rotation": {
+    "angle": -45,
+    "axis": "y",
+    "origin": [
+     8,
+     0,
+     8
+    ]
+   }
+  },
+  {
+   "name": "red_pillar_0_0_base_lip_a",
+   "from": [
+    5.25,
+    1.5,
+    6.8609
+   ],
+   "to": [
+    10.75,
+    2,
+    9.1391
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      5.25,
+      14,
+      10.75,
+      14.5
+     ],
+     "texture": "#dark_timber"
+    },
+    "east": {
+     "uv": [
+      6.8609,
+      14,
+      9.1391,
+      14.5
+     ],
+     "texture": "#dark_timber"
+    },
+    "south": {
+     "uv": [
+      5.25,
+      14,
+      10.75,
+      14.5
+     ],
+     "texture": "#dark_timber"
+    },
+    "west": {
+     "uv": [
+      6.8609,
+      14,
+      9.1391,
+      14.5
+     ],
+     "texture": "#dark_timber"
+    },
+    "up": {
+     "uv": [
+      5.25,
+      6.8609,
+      10.75,
+      9.1391
+     ],
+     "texture": "#dark_timber"
+    },
+    "down": {
+     "uv": [
+      5.25,
+      6.8609,
+      10.75,
+      9.1391
+     ],
+     "texture": "#dark_timber"
+    }
+   }
+  },
+  {
+   "name": "red_pillar_0_0_base_lip_b",
+   "from": [
+    6.8609,
+    1.5,
+    5.25
+   ],
+   "to": [
+    9.1391,
+    2,
+    10.75
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      6.8609,
+      14,
+      9.1391,
+      14.5
+     ],
+     "texture": "#dark_timber"
+    },
+    "east": {
+     "uv": [
+      5.25,
+      14,
+      10.75,
+      14.5
+     ],
+     "texture": "#dark_timber"
+    },
+    "south": {
+     "uv": [
+      6.8609,
+      14,
+      9.1391,
+      14.5
+     ],
+     "texture": "#dark_timber"
+    },
+    "west": {
+     "uv": [
+      5.25,
+      14,
+      10.75,
+      14.5
+     ],
+     "texture": "#dark_timber"
+    },
+    "up": {
+     "uv": [
+      6.8609,
+      5.25,
+      9.1391,
+      10.75
+     ],
+     "texture": "#dark_timber"
+    },
+    "down": {
+     "uv": [
+      6.8609,
+      5.25,
+      9.1391,
+      10.75
+     ],
+     "texture": "#dark_timber"
+    }
+   }
+  },
+  {
+   "name": "red_pillar_0_0_base_lip_c",
+   "from": [
+    5.25,
+    1.5,
+    6.8609
+   ],
+   "to": [
+    10.75,
+    2,
+    9.1391
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      5.25,
+      14,
+      10.75,
+      14.5
+     ],
+     "texture": "#dark_timber"
+    },
+    "east": {
+     "uv": [
+      6.8609,
+      14,
+      9.1391,
+      14.5
+     ],
+     "texture": "#dark_timber"
+    },
+    "south": {
+     "uv": [
+      5.25,
+      14,
+      10.75,
+      14.5
+     ],
+     "texture": "#dark_timber"
+    },
+    "west": {
+     "uv": [
+      6.8609,
+      14,
+      9.1391,
+      14.5
+     ],
+     "texture": "#dark_timber"
+    },
+    "up": {
+     "uv": [
+      5.25,
+      6.8609,
+      10.75,
+      9.1391
+     ],
+     "texture": "#dark_timber"
+    },
+    "down": {
+     "uv": [
+      5.25,
+      6.8609,
+      10.75,
+      9.1391
+     ],
+     "texture": "#dark_timber"
+    }
+   },
+   "rotation": {
+    "angle": 45,
+    "axis": "y",
+    "origin": [
+     8,
+     1.5,
+     8
+    ]
+   }
+  },
+  {
+   "name": "red_pillar_0_0_base_lip_d",
+   "from": [
+    5.25,
+    1.5,
+    6.8609
+   ],
+   "to": [
+    10.75,
+    2,
+    9.1391
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      5.25,
+      14,
+      10.75,
+      14.5
+     ],
+     "texture": "#dark_timber"
+    },
+    "east": {
+     "uv": [
+      6.8609,
+      14,
+      9.1391,
+      14.5
+     ],
+     "texture": "#dark_timber"
+    },
+    "south": {
+     "uv": [
+      5.25,
+      14,
+      10.75,
+      14.5
+     ],
+     "texture": "#dark_timber"
+    },
+    "west": {
+     "uv": [
+      6.8609,
+      14,
+      9.1391,
+      14.5
+     ],
+     "texture": "#dark_timber"
+    },
+    "up": {
+     "uv": [
+      5.25,
+      6.8609,
+      10.75,
+      9.1391
+     ],
+     "texture": "#dark_timber"
+    },
+    "down": {
+     "uv": [
+      5.25,
+      6.8609,
+      10.75,
+      9.1391
+     ],
+     "texture": "#dark_timber"
+    }
+   },
+   "rotation": {
+    "angle": -45,
+    "axis": "y",
+    "origin": [
+     8,
+     1.5,
+     8
+    ]
+   }
+  },
+  {
+   "name": "red_pillar_6_0_shaft_a",
+   "from": [
+    101.5,
+    0,
+    6.9645
+   ],
+   "to": [
+    106.5,
+    16,
+    9.0355
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "east": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "south": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "west": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "up": {
+     "uv": [
+      5.5,
+      6.9645,
+      10.5,
+      9.0355
+     ],
+     "texture": "#red_lacquer"
+    },
+    "down": {
+     "uv": [
+      5.5,
+      6.9645,
+      10.5,
+      9.0355
+     ],
+     "texture": "#red_lacquer"
+    }
+   }
+  },
+  {
+   "name": "red_pillar_6_0_shaft_b",
+   "from": [
+    102.9645,
+    0,
+    5.5
+   ],
+   "to": [
+    105.0355,
+    16,
+    10.5
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "east": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "south": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "west": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "up": {
+     "uv": [
+      6.9645,
+      5.5,
+      9.0355,
+      10.5
+     ],
+     "texture": "#red_lacquer"
+    },
+    "down": {
+     "uv": [
+      6.9645,
+      5.5,
+      9.0355,
+      10.5
+     ],
+     "texture": "#red_lacquer"
+    }
+   }
+  },
+  {
+   "name": "red_pillar_6_0_shaft_c",
+   "from": [
+    101.5,
+    0,
+    6.9645
+   ],
+   "to": [
+    106.5,
+    16,
+    9.0355
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "east": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "south": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "west": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "up": {
+     "uv": [
+      5.5,
+      6.9645,
+      10.5,
+      9.0355
+     ],
+     "texture": "#red_lacquer"
+    },
+    "down": {
+     "uv": [
+      5.5,
+      6.9645,
+      10.5,
+      9.0355
+     ],
+     "texture": "#red_lacquer"
+    }
+   },
+   "rotation": {
+    "angle": 45,
+    "axis": "y",
+    "origin": [
+     104,
+     0,
+     8
+    ]
+   }
+  },
+  {
+   "name": "red_pillar_6_0_shaft_d",
+   "from": [
+    101.5,
+    0,
+    6.9645
+   ],
+   "to": [
+    106.5,
+    16,
+    9.0355
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "east": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "south": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "west": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "up": {
+     "uv": [
+      5.5,
+      6.9645,
+      10.5,
+      9.0355
+     ],
+     "texture": "#red_lacquer"
+    },
+    "down": {
+     "uv": [
+      5.5,
+      6.9645,
+      10.5,
+      9.0355
+     ],
+     "texture": "#red_lacquer"
+    }
+   },
+   "rotation": {
+    "angle": -45,
+    "axis": "y",
+    "origin": [
+     104,
+     0,
+     8
+    ]
+   }
+  },
+  {
+   "name": "red_pillar_6_0_base_ring_a",
+   "from": [
+    101,
+    0,
+    6.7574
+   ],
+   "to": [
+    107,
+    1.5,
+    9.2426
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      5,
+      14.5,
+      11,
+      16
+     ],
+     "texture": "#dark_timber"
+    },
+    "east": {
+     "uv": [
+      6.7574,
+      14.5,
+      9.2426,
+      16
+     ],
+     "texture": "#dark_timber"
+    },
+    "south": {
+     "uv": [
+      5,
+      14.5,
+      11,
+      16
+     ],
+     "texture": "#dark_timber"
+    },
+    "west": {
+     "uv": [
+      6.7574,
+      14.5,
+      9.2426,
+      16
+     ],
+     "texture": "#dark_timber"
+    },
+    "up": {
+     "uv": [
+      5,
+      6.7574,
+      11,
+      9.2426
+     ],
+     "texture": "#dark_timber"
+    },
+    "down": {
+     "uv": [
+      5,
+      6.7574,
+      11,
+      9.2426
+     ],
+     "texture": "#dark_timber"
+    }
+   }
+  },
+  {
+   "name": "red_pillar_6_0_base_ring_b",
+   "from": [
+    102.7574,
+    0,
+    5
+   ],
+   "to": [
+    105.2426,
+    1.5,
+    11
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      6.7574,
+      14.5,
+      9.2426,
+      16
+     ],
+     "texture": "#dark_timber"
+    },
+    "east": {
+     "uv": [
+      5,
+      14.5,
+      11,
+      16
+     ],
+     "texture": "#dark_timber"
+    },
+    "south": {
+     "uv": [
+      6.7574,
+      14.5,
+      9.2426,
+      16
+     ],
+     "texture": "#dark_timber"
+    },
+    "west": {
+     "uv": [
+      5,
+      14.5,
+      11,
+      16
+     ],
+     "texture": "#dark_timber"
+    },
+    "up": {
+     "uv": [
+      6.7574,
+      5,
+      9.2426,
+      11
+     ],
+     "texture": "#dark_timber"
+    },
+    "down": {
+     "uv": [
+      6.7574,
+      5,
+      9.2426,
+      11
+     ],
+     "texture": "#dark_timber"
+    }
+   }
+  },
+  {
+   "name": "red_pillar_6_0_base_ring_c",
+   "from": [
+    101,
+    0,
+    6.7574
+   ],
+   "to": [
+    107,
+    1.5,
+    9.2426
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      5,
+      14.5,
+      11,
+      16
+     ],
+     "texture": "#dark_timber"
+    },
+    "east": {
+     "uv": [
+      6.7574,
+      14.5,
+      9.2426,
+      16
+     ],
+     "texture": "#dark_timber"
+    },
+    "south": {
+     "uv": [
+      5,
+      14.5,
+      11,
+      16
+     ],
+     "texture": "#dark_timber"
+    },
+    "west": {
+     "uv": [
+      6.7574,
+      14.5,
+      9.2426,
+      16
+     ],
+     "texture": "#dark_timber"
+    },
+    "up": {
+     "uv": [
+      5,
+      6.7574,
+      11,
+      9.2426
+     ],
+     "texture": "#dark_timber"
+    },
+    "down": {
+     "uv": [
+      5,
+      6.7574,
+      11,
+      9.2426
+     ],
+     "texture": "#dark_timber"
+    }
+   },
+   "rotation": {
+    "angle": 45,
+    "axis": "y",
+    "origin": [
+     104,
+     0,
+     8
+    ]
+   }
+  },
+  {
+   "name": "red_pillar_6_0_base_ring_d",
+   "from": [
+    101,
+    0,
+    6.7574
+   ],
+   "to": [
+    107,
+    1.5,
+    9.2426
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      5,
+      14.5,
+      11,
+      16
+     ],
+     "texture": "#dark_timber"
+    },
+    "east": {
+     "uv": [
+      6.7574,
+      14.5,
+      9.2426,
+      16
+     ],
+     "texture": "#dark_timber"
+    },
+    "south": {
+     "uv": [
+      5,
+      14.5,
+      11,
+      16
+     ],
+     "texture": "#dark_timber"
+    },
+    "west": {
+     "uv": [
+      6.7574,
+      14.5,
+      9.2426,
+      16
+     ],
+     "texture": "#dark_timber"
+    },
+    "up": {
+     "uv": [
+      5,
+      6.7574,
+      11,
+      9.2426
+     ],
+     "texture": "#dark_timber"
+    },
+    "down": {
+     "uv": [
+      5,
+      6.7574,
+      11,
+      9.2426
+     ],
+     "texture": "#dark_timber"
+    }
+   },
+   "rotation": {
+    "angle": -45,
+    "axis": "y",
+    "origin": [
+     104,
+     0,
+     8
+    ]
+   }
+  },
+  {
+   "name": "red_pillar_6_0_base_lip_a",
+   "from": [
+    101.25,
+    1.5,
+    6.8609
+   ],
+   "to": [
+    106.75,
+    2,
+    9.1391
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      5.25,
+      14,
+      10.75,
+      14.5
+     ],
+     "texture": "#dark_timber"
+    },
+    "east": {
+     "uv": [
+      6.8609,
+      14,
+      9.1391,
+      14.5
+     ],
+     "texture": "#dark_timber"
+    },
+    "south": {
+     "uv": [
+      5.25,
+      14,
+      10.75,
+      14.5
+     ],
+     "texture": "#dark_timber"
+    },
+    "west": {
+     "uv": [
+      6.8609,
+      14,
+      9.1391,
+      14.5
+     ],
+     "texture": "#dark_timber"
+    },
+    "up": {
+     "uv": [
+      5.25,
+      6.8609,
+      10.75,
+      9.1391
+     ],
+     "texture": "#dark_timber"
+    },
+    "down": {
+     "uv": [
+      5.25,
+      6.8609,
+      10.75,
+      9.1391
+     ],
+     "texture": "#dark_timber"
+    }
+   }
+  },
+  {
+   "name": "red_pillar_6_0_base_lip_b",
+   "from": [
+    102.8609,
+    1.5,
+    5.25
+   ],
+   "to": [
+    105.1391,
+    2,
+    10.75
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      6.8609,
+      14,
+      9.1391,
+      14.5
+     ],
+     "texture": "#dark_timber"
+    },
+    "east": {
+     "uv": [
+      5.25,
+      14,
+      10.75,
+      14.5
+     ],
+     "texture": "#dark_timber"
+    },
+    "south": {
+     "uv": [
+      6.8609,
+      14,
+      9.1391,
+      14.5
+     ],
+     "texture": "#dark_timber"
+    },
+    "west": {
+     "uv": [
+      5.25,
+      14,
+      10.75,
+      14.5
+     ],
+     "texture": "#dark_timber"
+    },
+    "up": {
+     "uv": [
+      6.8609,
+      5.25,
+      9.1391,
+      10.75
+     ],
+     "texture": "#dark_timber"
+    },
+    "down": {
+     "uv": [
+      6.8609,
+      5.25,
+      9.1391,
+      10.75
+     ],
+     "texture": "#dark_timber"
+    }
+   }
+  },
+  {
+   "name": "red_pillar_6_0_base_lip_c",
+   "from": [
+    101.25,
+    1.5,
+    6.8609
+   ],
+   "to": [
+    106.75,
+    2,
+    9.1391
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      5.25,
+      14,
+      10.75,
+      14.5
+     ],
+     "texture": "#dark_timber"
+    },
+    "east": {
+     "uv": [
+      6.8609,
+      14,
+      9.1391,
+      14.5
+     ],
+     "texture": "#dark_timber"
+    },
+    "south": {
+     "uv": [
+      5.25,
+      14,
+      10.75,
+      14.5
+     ],
+     "texture": "#dark_timber"
+    },
+    "west": {
+     "uv": [
+      6.8609,
+      14,
+      9.1391,
+      14.5
+     ],
+     "texture": "#dark_timber"
+    },
+    "up": {
+     "uv": [
+      5.25,
+      6.8609,
+      10.75,
+      9.1391
+     ],
+     "texture": "#dark_timber"
+    },
+    "down": {
+     "uv": [
+      5.25,
+      6.8609,
+      10.75,
+      9.1391
+     ],
+     "texture": "#dark_timber"
+    }
+   },
+   "rotation": {
+    "angle": 45,
+    "axis": "y",
+    "origin": [
+     104,
+     1.5,
+     8
+    ]
+   }
+  },
+  {
+   "name": "red_pillar_6_0_base_lip_d",
+   "from": [
+    101.25,
+    1.5,
+    6.8609
+   ],
+   "to": [
+    106.75,
+    2,
+    9.1391
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      5.25,
+      14,
+      10.75,
+      14.5
+     ],
+     "texture": "#dark_timber"
+    },
+    "east": {
+     "uv": [
+      6.8609,
+      14,
+      9.1391,
+      14.5
+     ],
+     "texture": "#dark_timber"
+    },
+    "south": {
+     "uv": [
+      5.25,
+      14,
+      10.75,
+      14.5
+     ],
+     "texture": "#dark_timber"
+    },
+    "west": {
+     "uv": [
+      6.8609,
+      14,
+      9.1391,
+      14.5
+     ],
+     "texture": "#dark_timber"
+    },
+    "up": {
+     "uv": [
+      5.25,
+      6.8609,
+      10.75,
+      9.1391
+     ],
+     "texture": "#dark_timber"
+    },
+    "down": {
+     "uv": [
+      5.25,
+      6.8609,
+      10.75,
+      9.1391
+     ],
+     "texture": "#dark_timber"
+    }
+   },
+   "rotation": {
+    "angle": -45,
+    "axis": "y",
+    "origin": [
+     104,
+     1.5,
+     8
+    ]
+   }
+  },
+  {
+   "name": "red_pillar_0_1_shaft_a",
+   "from": [
+    5.5,
+    16,
+    6.9645
+   ],
+   "to": [
+    10.5,
+    32,
+    9.0355
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "east": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "south": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "west": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "up": {
+     "uv": [
+      5.5,
+      6.9645,
+      10.5,
+      9.0355
+     ],
+     "texture": "#red_lacquer"
+    },
+    "down": {
+     "uv": [
+      5.5,
+      6.9645,
+      10.5,
+      9.0355
+     ],
+     "texture": "#red_lacquer"
+    }
+   }
+  },
+  {
+   "name": "red_pillar_0_1_shaft_b",
+   "from": [
+    6.9645,
+    16,
+    5.5
+   ],
+   "to": [
+    9.0355,
+    32,
+    10.5
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "east": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "south": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "west": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "up": {
+     "uv": [
+      6.9645,
+      5.5,
+      9.0355,
+      10.5
+     ],
+     "texture": "#red_lacquer"
+    },
+    "down": {
+     "uv": [
+      6.9645,
+      5.5,
+      9.0355,
+      10.5
+     ],
+     "texture": "#red_lacquer"
+    }
+   }
+  },
+  {
+   "name": "red_pillar_0_1_shaft_c",
+   "from": [
+    5.5,
+    16,
+    6.9645
+   ],
+   "to": [
+    10.5,
+    32,
+    9.0355
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "east": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "south": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "west": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "up": {
+     "uv": [
+      5.5,
+      6.9645,
+      10.5,
+      9.0355
+     ],
+     "texture": "#red_lacquer"
+    },
+    "down": {
+     "uv": [
+      5.5,
+      6.9645,
+      10.5,
+      9.0355
+     ],
+     "texture": "#red_lacquer"
+    }
+   },
+   "rotation": {
+    "angle": 45,
+    "axis": "y",
+    "origin": [
+     8,
+     16,
+     8
+    ]
+   }
+  },
+  {
+   "name": "red_pillar_0_1_shaft_d",
+   "from": [
+    5.5,
+    16,
+    6.9645
+   ],
+   "to": [
+    10.5,
+    32,
+    9.0355
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "east": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "south": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "west": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "up": {
+     "uv": [
+      5.5,
+      6.9645,
+      10.5,
+      9.0355
+     ],
+     "texture": "#red_lacquer"
+    },
+    "down": {
+     "uv": [
+      5.5,
+      6.9645,
+      10.5,
+      9.0355
+     ],
+     "texture": "#red_lacquer"
+    }
+   },
+   "rotation": {
+    "angle": -45,
+    "axis": "y",
+    "origin": [
+     8,
+     16,
+     8
+    ]
+   }
+  },
+  {
+   "name": "red_pillar_6_1_shaft_a",
+   "from": [
+    101.5,
+    16,
+    6.9645
+   ],
+   "to": [
+    106.5,
+    32,
+    9.0355
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "east": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "south": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "west": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "up": {
+     "uv": [
+      5.5,
+      6.9645,
+      10.5,
+      9.0355
+     ],
+     "texture": "#red_lacquer"
+    },
+    "down": {
+     "uv": [
+      5.5,
+      6.9645,
+      10.5,
+      9.0355
+     ],
+     "texture": "#red_lacquer"
+    }
+   }
+  },
+  {
+   "name": "red_pillar_6_1_shaft_b",
+   "from": [
+    102.9645,
+    16,
+    5.5
+   ],
+   "to": [
+    105.0355,
+    32,
+    10.5
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "east": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "south": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "west": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "up": {
+     "uv": [
+      6.9645,
+      5.5,
+      9.0355,
+      10.5
+     ],
+     "texture": "#red_lacquer"
+    },
+    "down": {
+     "uv": [
+      6.9645,
+      5.5,
+      9.0355,
+      10.5
+     ],
+     "texture": "#red_lacquer"
+    }
+   }
+  },
+  {
+   "name": "red_pillar_6_1_shaft_c",
+   "from": [
+    101.5,
+    16,
+    6.9645
+   ],
+   "to": [
+    106.5,
+    32,
+    9.0355
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "east": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "south": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "west": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "up": {
+     "uv": [
+      5.5,
+      6.9645,
+      10.5,
+      9.0355
+     ],
+     "texture": "#red_lacquer"
+    },
+    "down": {
+     "uv": [
+      5.5,
+      6.9645,
+      10.5,
+      9.0355
+     ],
+     "texture": "#red_lacquer"
+    }
+   },
+   "rotation": {
+    "angle": 45,
+    "axis": "y",
+    "origin": [
+     104,
+     16,
+     8
+    ]
+   }
+  },
+  {
+   "name": "red_pillar_6_1_shaft_d",
+   "from": [
+    101.5,
+    16,
+    6.9645
+   ],
+   "to": [
+    106.5,
+    32,
+    9.0355
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "east": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "south": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "west": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "up": {
+     "uv": [
+      5.5,
+      6.9645,
+      10.5,
+      9.0355
+     ],
+     "texture": "#red_lacquer"
+    },
+    "down": {
+     "uv": [
+      5.5,
+      6.9645,
+      10.5,
+      9.0355
+     ],
+     "texture": "#red_lacquer"
+    }
+   },
+   "rotation": {
+    "angle": -45,
+    "axis": "y",
+    "origin": [
+     104,
+     16,
+     8
+    ]
+   }
+  },
+  {
+   "name": "red_pillar_0_2_shaft_a",
+   "from": [
+    5.5,
+    32,
+    6.9645
+   ],
+   "to": [
+    10.5,
+    48,
+    9.0355
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "east": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "south": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "west": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "up": {
+     "uv": [
+      5.5,
+      6.9645,
+      10.5,
+      9.0355
+     ],
+     "texture": "#red_lacquer"
+    },
+    "down": {
+     "uv": [
+      5.5,
+      6.9645,
+      10.5,
+      9.0355
+     ],
+     "texture": "#red_lacquer"
+    }
+   }
+  },
+  {
+   "name": "red_pillar_0_2_shaft_b",
+   "from": [
+    6.9645,
+    32,
+    5.5
+   ],
+   "to": [
+    9.0355,
+    48,
+    10.5
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "east": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "south": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "west": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "up": {
+     "uv": [
+      6.9645,
+      5.5,
+      9.0355,
+      10.5
+     ],
+     "texture": "#red_lacquer"
+    },
+    "down": {
+     "uv": [
+      6.9645,
+      5.5,
+      9.0355,
+      10.5
+     ],
+     "texture": "#red_lacquer"
+    }
+   }
+  },
+  {
+   "name": "red_pillar_0_2_shaft_c",
+   "from": [
+    5.5,
+    32,
+    6.9645
+   ],
+   "to": [
+    10.5,
+    48,
+    9.0355
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "east": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "south": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "west": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "up": {
+     "uv": [
+      5.5,
+      6.9645,
+      10.5,
+      9.0355
+     ],
+     "texture": "#red_lacquer"
+    },
+    "down": {
+     "uv": [
+      5.5,
+      6.9645,
+      10.5,
+      9.0355
+     ],
+     "texture": "#red_lacquer"
+    }
+   },
+   "rotation": {
+    "angle": 45,
+    "axis": "y",
+    "origin": [
+     8,
+     32,
+     8
+    ]
+   }
+  },
+  {
+   "name": "red_pillar_0_2_shaft_d",
+   "from": [
+    5.5,
+    32,
+    6.9645
+   ],
+   "to": [
+    10.5,
+    48,
+    9.0355
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "east": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "south": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "west": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "up": {
+     "uv": [
+      5.5,
+      6.9645,
+      10.5,
+      9.0355
+     ],
+     "texture": "#red_lacquer"
+    },
+    "down": {
+     "uv": [
+      5.5,
+      6.9645,
+      10.5,
+      9.0355
+     ],
+     "texture": "#red_lacquer"
+    }
+   },
+   "rotation": {
+    "angle": -45,
+    "axis": "y",
+    "origin": [
+     8,
+     32,
+     8
+    ]
+   }
+  },
+  {
+   "name": "red_pillar_6_2_shaft_a",
+   "from": [
+    101.5,
+    32,
+    6.9645
+   ],
+   "to": [
+    106.5,
+    48,
+    9.0355
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "east": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "south": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "west": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "up": {
+     "uv": [
+      5.5,
+      6.9645,
+      10.5,
+      9.0355
+     ],
+     "texture": "#red_lacquer"
+    },
+    "down": {
+     "uv": [
+      5.5,
+      6.9645,
+      10.5,
+      9.0355
+     ],
+     "texture": "#red_lacquer"
+    }
+   }
+  },
+  {
+   "name": "red_pillar_6_2_shaft_b",
+   "from": [
+    102.9645,
+    32,
+    5.5
+   ],
+   "to": [
+    105.0355,
+    48,
+    10.5
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "east": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "south": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "west": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "up": {
+     "uv": [
+      6.9645,
+      5.5,
+      9.0355,
+      10.5
+     ],
+     "texture": "#red_lacquer"
+    },
+    "down": {
+     "uv": [
+      6.9645,
+      5.5,
+      9.0355,
+      10.5
+     ],
+     "texture": "#red_lacquer"
+    }
+   }
+  },
+  {
+   "name": "red_pillar_6_2_shaft_c",
+   "from": [
+    101.5,
+    32,
+    6.9645
+   ],
+   "to": [
+    106.5,
+    48,
+    9.0355
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "east": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "south": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "west": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "up": {
+     "uv": [
+      5.5,
+      6.9645,
+      10.5,
+      9.0355
+     ],
+     "texture": "#red_lacquer"
+    },
+    "down": {
+     "uv": [
+      5.5,
+      6.9645,
+      10.5,
+      9.0355
+     ],
+     "texture": "#red_lacquer"
+    }
+   },
+   "rotation": {
+    "angle": 45,
+    "axis": "y",
+    "origin": [
+     104,
+     32,
+     8
+    ]
+   }
+  },
+  {
+   "name": "red_pillar_6_2_shaft_d",
+   "from": [
+    101.5,
+    32,
+    6.9645
+   ],
+   "to": [
+    106.5,
+    48,
+    9.0355
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "east": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "south": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "west": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "up": {
+     "uv": [
+      5.5,
+      6.9645,
+      10.5,
+      9.0355
+     ],
+     "texture": "#red_lacquer"
+    },
+    "down": {
+     "uv": [
+      5.5,
+      6.9645,
+      10.5,
+      9.0355
+     ],
+     "texture": "#red_lacquer"
+    }
+   },
+   "rotation": {
+    "angle": -45,
+    "axis": "y",
+    "origin": [
+     104,
+     32,
+     8
+    ]
+   }
+  },
+  {
+   "name": "red_pillar_0_3_shaft_a",
+   "from": [
+    5.5,
+    48,
+    6.9645
+   ],
+   "to": [
+    10.5,
+    64,
+    9.0355
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "east": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "south": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "west": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "up": {
+     "uv": [
+      5.5,
+      6.9645,
+      10.5,
+      9.0355
+     ],
+     "texture": "#red_lacquer"
+    },
+    "down": {
+     "uv": [
+      5.5,
+      6.9645,
+      10.5,
+      9.0355
+     ],
+     "texture": "#red_lacquer"
+    }
+   }
+  },
+  {
+   "name": "red_pillar_0_3_shaft_b",
+   "from": [
+    6.9645,
+    48,
+    5.5
+   ],
+   "to": [
+    9.0355,
+    64,
+    10.5
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "east": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "south": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "west": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "up": {
+     "uv": [
+      6.9645,
+      5.5,
+      9.0355,
+      10.5
+     ],
+     "texture": "#red_lacquer"
+    },
+    "down": {
+     "uv": [
+      6.9645,
+      5.5,
+      9.0355,
+      10.5
+     ],
+     "texture": "#red_lacquer"
+    }
+   }
+  },
+  {
+   "name": "red_pillar_0_3_shaft_c",
+   "from": [
+    5.5,
+    48,
+    6.9645
+   ],
+   "to": [
+    10.5,
+    64,
+    9.0355
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "east": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "south": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "west": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "up": {
+     "uv": [
+      5.5,
+      6.9645,
+      10.5,
+      9.0355
+     ],
+     "texture": "#red_lacquer"
+    },
+    "down": {
+     "uv": [
+      5.5,
+      6.9645,
+      10.5,
+      9.0355
+     ],
+     "texture": "#red_lacquer"
+    }
+   },
+   "rotation": {
+    "angle": 45,
+    "axis": "y",
+    "origin": [
+     8,
+     48,
+     8
+    ]
+   }
+  },
+  {
+   "name": "red_pillar_0_3_shaft_d",
+   "from": [
+    5.5,
+    48,
+    6.9645
+   ],
+   "to": [
+    10.5,
+    64,
+    9.0355
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "east": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "south": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "west": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "up": {
+     "uv": [
+      5.5,
+      6.9645,
+      10.5,
+      9.0355
+     ],
+     "texture": "#red_lacquer"
+    },
+    "down": {
+     "uv": [
+      5.5,
+      6.9645,
+      10.5,
+      9.0355
+     ],
+     "texture": "#red_lacquer"
+    }
+   },
+   "rotation": {
+    "angle": -45,
+    "axis": "y",
+    "origin": [
+     8,
+     48,
+     8
+    ]
+   }
+  },
+  {
+   "name": "red_pillar_6_3_shaft_a",
+   "from": [
+    101.5,
+    48,
+    6.9645
+   ],
+   "to": [
+    106.5,
+    64,
+    9.0355
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "east": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "south": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "west": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "up": {
+     "uv": [
+      5.5,
+      6.9645,
+      10.5,
+      9.0355
+     ],
+     "texture": "#red_lacquer"
+    },
+    "down": {
+     "uv": [
+      5.5,
+      6.9645,
+      10.5,
+      9.0355
+     ],
+     "texture": "#red_lacquer"
+    }
+   }
+  },
+  {
+   "name": "red_pillar_6_3_shaft_b",
+   "from": [
+    102.9645,
+    48,
+    5.5
+   ],
+   "to": [
+    105.0355,
+    64,
+    10.5
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "east": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "south": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "west": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "up": {
+     "uv": [
+      6.9645,
+      5.5,
+      9.0355,
+      10.5
+     ],
+     "texture": "#red_lacquer"
+    },
+    "down": {
+     "uv": [
+      6.9645,
+      5.5,
+      9.0355,
+      10.5
+     ],
+     "texture": "#red_lacquer"
+    }
+   }
+  },
+  {
+   "name": "red_pillar_6_3_shaft_c",
+   "from": [
+    101.5,
+    48,
+    6.9645
+   ],
+   "to": [
+    106.5,
+    64,
+    9.0355
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "east": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "south": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "west": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "up": {
+     "uv": [
+      5.5,
+      6.9645,
+      10.5,
+      9.0355
+     ],
+     "texture": "#red_lacquer"
+    },
+    "down": {
+     "uv": [
+      5.5,
+      6.9645,
+      10.5,
+      9.0355
+     ],
+     "texture": "#red_lacquer"
+    }
+   },
+   "rotation": {
+    "angle": 45,
+    "axis": "y",
+    "origin": [
+     104,
+     48,
+     8
+    ]
+   }
+  },
+  {
+   "name": "red_pillar_6_3_shaft_d",
+   "from": [
+    101.5,
+    48,
+    6.9645
+   ],
+   "to": [
+    106.5,
+    64,
+    9.0355
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "east": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "south": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "west": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "up": {
+     "uv": [
+      5.5,
+      6.9645,
+      10.5,
+      9.0355
+     ],
+     "texture": "#red_lacquer"
+    },
+    "down": {
+     "uv": [
+      5.5,
+      6.9645,
+      10.5,
+      9.0355
+     ],
+     "texture": "#red_lacquer"
+    }
+   },
+   "rotation": {
+    "angle": -45,
+    "axis": "y",
+    "origin": [
+     104,
+     48,
+     8
+    ]
+   }
+  },
+  {
+   "name": "red_pillar_0_4_shaft_a",
+   "from": [
+    5.5,
+    64,
+    6.9645
+   ],
+   "to": [
+    10.5,
+    80,
+    9.0355
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "east": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "south": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "west": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "up": {
+     "uv": [
+      5.5,
+      6.9645,
+      10.5,
+      9.0355
+     ],
+     "texture": "#red_lacquer"
+    },
+    "down": {
+     "uv": [
+      5.5,
+      6.9645,
+      10.5,
+      9.0355
+     ],
+     "texture": "#red_lacquer"
+    }
+   }
+  },
+  {
+   "name": "red_pillar_0_4_shaft_b",
+   "from": [
+    6.9645,
+    64,
+    5.5
+   ],
+   "to": [
+    9.0355,
+    80,
+    10.5
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "east": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "south": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "west": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "up": {
+     "uv": [
+      6.9645,
+      5.5,
+      9.0355,
+      10.5
+     ],
+     "texture": "#red_lacquer"
+    },
+    "down": {
+     "uv": [
+      6.9645,
+      5.5,
+      9.0355,
+      10.5
+     ],
+     "texture": "#red_lacquer"
+    }
+   }
+  },
+  {
+   "name": "red_pillar_0_4_shaft_c",
+   "from": [
+    5.5,
+    64,
+    6.9645
+   ],
+   "to": [
+    10.5,
+    80,
+    9.0355
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "east": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "south": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "west": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "up": {
+     "uv": [
+      5.5,
+      6.9645,
+      10.5,
+      9.0355
+     ],
+     "texture": "#red_lacquer"
+    },
+    "down": {
+     "uv": [
+      5.5,
+      6.9645,
+      10.5,
+      9.0355
+     ],
+     "texture": "#red_lacquer"
+    }
+   },
+   "rotation": {
+    "angle": 45,
+    "axis": "y",
+    "origin": [
+     8,
+     64,
+     8
+    ]
+   }
+  },
+  {
+   "name": "red_pillar_0_4_shaft_d",
+   "from": [
+    5.5,
+    64,
+    6.9645
+   ],
+   "to": [
+    10.5,
+    80,
+    9.0355
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "east": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "south": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "west": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "up": {
+     "uv": [
+      5.5,
+      6.9645,
+      10.5,
+      9.0355
+     ],
+     "texture": "#red_lacquer"
+    },
+    "down": {
+     "uv": [
+      5.5,
+      6.9645,
+      10.5,
+      9.0355
+     ],
+     "texture": "#red_lacquer"
+    }
+   },
+   "rotation": {
+    "angle": -45,
+    "axis": "y",
+    "origin": [
+     8,
+     64,
+     8
+    ]
+   }
+  },
+  {
+   "name": "red_pillar_0_4_into_a",
+   "from": [
+    5.51,
+    80,
+    6.9686
+   ],
+   "to": [
+    10.49,
+    82.99,
+    9.0314
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      5.51,
+      13.01,
+      10.49,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "east": {
+     "uv": [
+      6.9686,
+      13.01,
+      9.0314,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "south": {
+     "uv": [
+      5.51,
+      13.01,
+      10.49,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "west": {
+     "uv": [
+      6.9686,
+      13.01,
+      9.0314,
+      16
+     ],
+     "texture": "#red_lacquer"
+    }
+   }
+  },
+  {
+   "name": "red_pillar_0_4_into_b",
+   "from": [
+    6.9686,
+    80,
+    5.51
+   ],
+   "to": [
+    9.0314,
+    82.99,
+    10.49
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      6.9686,
+      13.01,
+      9.0314,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "east": {
+     "uv": [
+      5.51,
+      13.01,
+      10.49,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "south": {
+     "uv": [
+      6.9686,
+      13.01,
+      9.0314,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "west": {
+     "uv": [
+      5.51,
+      13.01,
+      10.49,
+      16
+     ],
+     "texture": "#red_lacquer"
+    }
+   }
+  },
+  {
+   "name": "red_pillar_0_4_into_c",
+   "from": [
+    5.51,
+    80,
+    6.9686
+   ],
+   "to": [
+    10.49,
+    82.99,
+    9.0314
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      5.51,
+      13.01,
+      10.49,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "east": {
+     "uv": [
+      6.9686,
+      13.01,
+      9.0314,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "south": {
+     "uv": [
+      5.51,
+      13.01,
+      10.49,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "west": {
+     "uv": [
+      6.9686,
+      13.01,
+      9.0314,
+      16
+     ],
+     "texture": "#red_lacquer"
+    }
+   },
+   "rotation": {
+    "angle": 45,
+    "axis": "y",
+    "origin": [
+     8,
+     80,
+     8
+    ]
+   }
+  },
+  {
+   "name": "red_pillar_0_4_into_d",
+   "from": [
+    5.51,
+    80,
+    6.9686
+   ],
+   "to": [
+    10.49,
+    82.99,
+    9.0314
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      5.51,
+      13.01,
+      10.49,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "east": {
+     "uv": [
+      6.9686,
+      13.01,
+      9.0314,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "south": {
+     "uv": [
+      5.51,
+      13.01,
+      10.49,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "west": {
+     "uv": [
+      6.9686,
+      13.01,
+      9.0314,
+      16
+     ],
+     "texture": "#red_lacquer"
+    }
+   },
+   "rotation": {
+    "angle": -45,
+    "axis": "y",
+    "origin": [
+     8,
+     80,
+     8
+    ]
+   }
+  },
+  {
+   "name": "red_pillar_6_4_shaft_a",
+   "from": [
+    101.5,
+    64,
+    6.9645
+   ],
+   "to": [
+    106.5,
+    80,
+    9.0355
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "east": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "south": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "west": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "up": {
+     "uv": [
+      5.5,
+      6.9645,
+      10.5,
+      9.0355
+     ],
+     "texture": "#red_lacquer"
+    },
+    "down": {
+     "uv": [
+      5.5,
+      6.9645,
+      10.5,
+      9.0355
+     ],
+     "texture": "#red_lacquer"
+    }
+   }
+  },
+  {
+   "name": "red_pillar_6_4_shaft_b",
+   "from": [
+    102.9645,
+    64,
+    5.5
+   ],
+   "to": [
+    105.0355,
+    80,
+    10.5
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "east": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "south": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "west": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "up": {
+     "uv": [
+      6.9645,
+      5.5,
+      9.0355,
+      10.5
+     ],
+     "texture": "#red_lacquer"
+    },
+    "down": {
+     "uv": [
+      6.9645,
+      5.5,
+      9.0355,
+      10.5
+     ],
+     "texture": "#red_lacquer"
+    }
+   }
+  },
+  {
+   "name": "red_pillar_6_4_shaft_c",
+   "from": [
+    101.5,
+    64,
+    6.9645
+   ],
+   "to": [
+    106.5,
+    80,
+    9.0355
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "east": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "south": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "west": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "up": {
+     "uv": [
+      5.5,
+      6.9645,
+      10.5,
+      9.0355
+     ],
+     "texture": "#red_lacquer"
+    },
+    "down": {
+     "uv": [
+      5.5,
+      6.9645,
+      10.5,
+      9.0355
+     ],
+     "texture": "#red_lacquer"
+    }
+   },
+   "rotation": {
+    "angle": 45,
+    "axis": "y",
+    "origin": [
+     104,
+     64,
+     8
+    ]
+   }
+  },
+  {
+   "name": "red_pillar_6_4_shaft_d",
+   "from": [
+    101.5,
+    64,
+    6.9645
+   ],
+   "to": [
+    106.5,
+    80,
+    9.0355
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "east": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "south": {
+     "uv": [
+      5.5,
+      0,
+      10.5,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "west": {
+     "uv": [
+      6.9645,
+      0,
+      9.0355,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "up": {
+     "uv": [
+      5.5,
+      6.9645,
+      10.5,
+      9.0355
+     ],
+     "texture": "#red_lacquer"
+    },
+    "down": {
+     "uv": [
+      5.5,
+      6.9645,
+      10.5,
+      9.0355
+     ],
+     "texture": "#red_lacquer"
+    }
+   },
+   "rotation": {
+    "angle": -45,
+    "axis": "y",
+    "origin": [
+     104,
+     64,
+     8
+    ]
+   }
+  },
+  {
+   "name": "red_pillar_6_4_into_a",
+   "from": [
+    101.51,
+    80,
+    6.9686
+   ],
+   "to": [
+    106.49,
+    82.99,
+    9.0314
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      5.51,
+      13.01,
+      10.49,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "east": {
+     "uv": [
+      6.9686,
+      13.01,
+      9.0314,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "south": {
+     "uv": [
+      5.51,
+      13.01,
+      10.49,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "west": {
+     "uv": [
+      6.9686,
+      13.01,
+      9.0314,
+      16
+     ],
+     "texture": "#red_lacquer"
+    }
+   }
+  },
+  {
+   "name": "red_pillar_6_4_into_b",
+   "from": [
+    102.9686,
+    80,
+    5.51
+   ],
+   "to": [
+    105.0314,
+    82.99,
+    10.49
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      6.9686,
+      13.01,
+      9.0314,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "east": {
+     "uv": [
+      5.51,
+      13.01,
+      10.49,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "south": {
+     "uv": [
+      6.9686,
+      13.01,
+      9.0314,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "west": {
+     "uv": [
+      5.51,
+      13.01,
+      10.49,
+      16
+     ],
+     "texture": "#red_lacquer"
+    }
+   }
+  },
+  {
+   "name": "red_pillar_6_4_into_c",
+   "from": [
+    101.51,
+    80,
+    6.9686
+   ],
+   "to": [
+    106.49,
+    82.99,
+    9.0314
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      5.51,
+      13.01,
+      10.49,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "east": {
+     "uv": [
+      6.9686,
+      13.01,
+      9.0314,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "south": {
+     "uv": [
+      5.51,
+      13.01,
+      10.49,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "west": {
+     "uv": [
+      6.9686,
+      13.01,
+      9.0314,
+      16
+     ],
+     "texture": "#red_lacquer"
+    }
+   },
+   "rotation": {
+    "angle": 45,
+    "axis": "y",
+    "origin": [
+     104,
+     80,
+     8
+    ]
+   }
+  },
+  {
+   "name": "red_pillar_6_4_into_d",
+   "from": [
+    101.51,
+    80,
+    6.9686
+   ],
+   "to": [
+    106.49,
+    82.99,
+    9.0314
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      5.51,
+      13.01,
+      10.49,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "east": {
+     "uv": [
+      6.9686,
+      13.01,
+      9.0314,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "south": {
+     "uv": [
+      5.51,
+      13.01,
+      10.49,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "west": {
+     "uv": [
+      6.9686,
+      13.01,
+      9.0314,
+      16
+     ],
+     "texture": "#red_lacquer"
+    }
+   },
+   "rotation": {
+    "angle": -45,
+    "axis": "y",
+    "origin": [
+     104,
+     80,
+     8
+    ]
+   }
+  },
+  {
+   "name": "red_beam_1_3_beam",
+   "from": [
+    16,
+    60,
+    6.5
+   ],
+   "to": [
+    32,
+    64,
+    9.5
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      16,
+      4
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "east": {
+     "uv": [
+      6.5,
+      6,
+      9.5,
+      10
+     ],
+     "texture": "#red_beam_end"
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      16,
+      4
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "west": {
+     "uv": [
+      6.5,
+      6,
+      9.5,
+      10
+     ],
+     "texture": "#red_beam_end"
+    },
+    "up": {
+     "uv": [
+      0,
+      6.5,
+      16,
+      9.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "down": {
+     "uv": [
+      0,
+      6.5,
+      16,
+      9.5
+     ],
+     "texture": "#red_lacquer_beam"
+    }
+   }
+  },
+  {
+   "name": "red_beam_1_3_through",
+   "from": [
+    5.5,
+    60.01,
+    6.51
+   ],
+   "to": [
+    16,
+    63.99,
+    9.49
+   ],
+   "faces": {
+    "south": {
+     "uv": [
+      5.5,
+      0.01,
+      16,
+      3.99
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "north": {
+     "uv": [
+      0,
+      0.01,
+      10.5,
+      3.99
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "up": {
+     "uv": [
+      0,
+      6.51,
+      10.5,
+      9.49
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "down": {
+     "uv": [
+      0,
+      6.51,
+      10.5,
+      9.49
+     ],
+     "texture": "#red_lacquer_beam"
+    }
+   }
+  },
+  {
+   "name": "red_beam_1_4_beam",
+   "from": [
+    16,
+    76,
+    6.5
+   ],
+   "to": [
+    32,
+    80,
+    9.5
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      16,
+      4
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "east": {
+     "uv": [
+      6.5,
+      6,
+      9.5,
+      10
+     ],
+     "texture": "#red_beam_end"
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      16,
+      4
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "west": {
+     "uv": [
+      6.5,
+      6,
+      9.5,
+      10
+     ],
+     "texture": "#red_beam_end"
+    },
+    "up": {
+     "uv": [
+      0,
+      6.5,
+      16,
+      9.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "down": {
+     "uv": [
+      0,
+      6.5,
+      16,
+      9.5
+     ],
+     "texture": "#red_lacquer_beam"
+    }
+   }
+  },
+  {
+   "name": "red_beam_1_4_through",
+   "from": [
+    5.5,
+    76.01,
+    6.51
+   ],
+   "to": [
+    16,
+    79.99,
+    9.49
+   ],
+   "faces": {
+    "south": {
+     "uv": [
+      5.5,
+      0.01,
+      16,
+      3.99
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "north": {
+     "uv": [
+      0,
+      0.01,
+      10.5,
+      3.99
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "up": {
+     "uv": [
+      0,
+      6.51,
+      10.5,
+      9.49
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "down": {
+     "uv": [
+      0,
+      6.51,
+      10.5,
+      9.49
+     ],
+     "texture": "#red_lacquer_beam"
+    }
+   }
+  },
+  {
+   "name": "red_beam_2_3_beam",
+   "from": [
+    32,
+    60,
+    6.5
+   ],
+   "to": [
+    48,
+    64,
+    9.5
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      16,
+      4
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "east": {
+     "uv": [
+      6.5,
+      6,
+      9.5,
+      10
+     ],
+     "texture": "#red_beam_end"
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      16,
+      4
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "west": {
+     "uv": [
+      6.5,
+      6,
+      9.5,
+      10
+     ],
+     "texture": "#red_beam_end"
+    },
+    "up": {
+     "uv": [
+      0,
+      6.5,
+      16,
+      9.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "down": {
+     "uv": [
+      0,
+      6.5,
+      16,
+      9.5
+     ],
+     "texture": "#red_lacquer_beam"
+    }
+   }
+  },
+  {
+   "name": "hanging_post_2_4_strut",
+   "from": [
+    38.75,
+    58,
+    6.75
+   ],
+   "to": [
+    41.25,
+    76,
+    9.25
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      6.75,
+      0,
+      9.25,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "east": {
+     "uv": [
+      6.75,
+      0,
+      9.25,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "south": {
+     "uv": [
+      6.75,
+      0,
+      9.25,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "west": {
+     "uv": [
+      6.75,
+      0,
+      9.25,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "up": {
+     "uv": [
+      6.75,
+      6.75,
+      9.25,
+      9.25
+     ],
+     "texture": "#red_lacquer"
+    },
+    "down": {
+     "uv": [
+      6.75,
+      6.75,
+      9.25,
+      9.25
+     ],
+     "texture": "#red_lacquer"
+    }
+   }
+  },
+  {
+   "name": "hanging_post_2_4_groove",
+   "from": [
+    39,
+    57.5,
+    7
+   ],
+   "to": [
+    41,
+    58,
+    9
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      7,
+      6,
+      9,
+      6.5
+     ],
+     "texture": "#dark_timber"
+    },
+    "east": {
+     "uv": [
+      7,
+      6,
+      9,
+      6.5
+     ],
+     "texture": "#dark_timber"
+    },
+    "south": {
+     "uv": [
+      7,
+      6,
+      9,
+      6.5
+     ],
+     "texture": "#dark_timber"
+    },
+    "west": {
+     "uv": [
+      7,
+      6,
+      9,
+      6.5
+     ],
+     "texture": "#dark_timber"
+    },
+    "up": {
+     "uv": [
+      7,
+      7,
+      9,
+      9
+     ],
+     "texture": "#dark_timber"
+    },
+    "down": {
+     "uv": [
+      7,
+      7,
+      9,
+      9
+     ],
+     "texture": "#dark_timber"
+    }
+   }
+  },
+  {
+   "name": "hanging_post_2_4_cap",
+   "from": [
+    38.75,
+    56,
+    6.75
+   ],
+   "to": [
+    41.25,
+    57.5,
+    9.25
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      6.75,
+      6.5,
+      9.25,
+      8
+     ],
+     "texture": "#red_lacquer"
+    },
+    "east": {
+     "uv": [
+      6.75,
+      6.5,
+      9.25,
+      8
+     ],
+     "texture": "#red_lacquer"
+    },
+    "south": {
+     "uv": [
+      6.75,
+      6.5,
+      9.25,
+      8
+     ],
+     "texture": "#red_lacquer"
+    },
+    "west": {
+     "uv": [
+      6.75,
+      6.5,
+      9.25,
+      8
+     ],
+     "texture": "#red_lacquer"
+    },
+    "up": {
+     "uv": [
+      6.75,
+      6.75,
+      9.25,
+      9.25
+     ],
+     "texture": "#red_lacquer"
+    },
+    "down": {
+     "uv": [
+      6.75,
+      6.75,
+      9.25,
+      9.25
+     ],
+     "texture": "#red_lacquer"
+    }
+   }
+  },
+  {
+   "name": "hanging_post_2_4_beam",
+   "from": [
+    32,
+    76,
+    6.5
+   ],
+   "to": [
+    48,
+    80,
+    9.5
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      16,
+      4
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "east": {
+     "uv": [
+      6.5,
+      6,
+      9.5,
+      10
+     ],
+     "texture": "#red_beam_end"
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      16,
+      4
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "west": {
+     "uv": [
+      6.5,
+      6,
+      9.5,
+      10
+     ],
+     "texture": "#red_beam_end"
+    },
+    "up": {
+     "uv": [
+      0,
+      6.5,
+      16,
+      9.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "down": {
+     "uv": [
+      0,
+      6.5,
+      16,
+      9.5
+     ],
+     "texture": "#red_lacquer_beam"
+    }
+   }
+  },
+  {
+   "name": "red_beam_3_3_beam",
+   "from": [
+    48,
+    60,
+    6.5
+   ],
+   "to": [
+    64,
+    64,
+    9.5
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      16,
+      4
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "east": {
+     "uv": [
+      6.5,
+      6,
+      9.5,
+      10
+     ],
+     "texture": "#red_beam_end"
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      16,
+      4
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "west": {
+     "uv": [
+      6.5,
+      6,
+      9.5,
+      10
+     ],
+     "texture": "#red_beam_end"
+    },
+    "up": {
+     "uv": [
+      0,
+      6.5,
+      16,
+      9.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "down": {
+     "uv": [
+      0,
+      6.5,
+      16,
+      9.5
+     ],
+     "texture": "#red_lacquer_beam"
+    }
+   }
+  },
+  {
+   "name": "hanging_post_3_4_strut",
+   "from": [
+    54.75,
+    58,
+    6.75
+   ],
+   "to": [
+    57.25,
+    76,
+    9.25
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      6.75,
+      0,
+      9.25,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "east": {
+     "uv": [
+      6.75,
+      0,
+      9.25,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "south": {
+     "uv": [
+      6.75,
+      0,
+      9.25,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "west": {
+     "uv": [
+      6.75,
+      0,
+      9.25,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "up": {
+     "uv": [
+      6.75,
+      6.75,
+      9.25,
+      9.25
+     ],
+     "texture": "#red_lacquer"
+    },
+    "down": {
+     "uv": [
+      6.75,
+      6.75,
+      9.25,
+      9.25
+     ],
+     "texture": "#red_lacquer"
+    }
+   }
+  },
+  {
+   "name": "hanging_post_3_4_groove",
+   "from": [
+    55,
+    57.5,
+    7
+   ],
+   "to": [
+    57,
+    58,
+    9
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      7,
+      6,
+      9,
+      6.5
+     ],
+     "texture": "#dark_timber"
+    },
+    "east": {
+     "uv": [
+      7,
+      6,
+      9,
+      6.5
+     ],
+     "texture": "#dark_timber"
+    },
+    "south": {
+     "uv": [
+      7,
+      6,
+      9,
+      6.5
+     ],
+     "texture": "#dark_timber"
+    },
+    "west": {
+     "uv": [
+      7,
+      6,
+      9,
+      6.5
+     ],
+     "texture": "#dark_timber"
+    },
+    "up": {
+     "uv": [
+      7,
+      7,
+      9,
+      9
+     ],
+     "texture": "#dark_timber"
+    },
+    "down": {
+     "uv": [
+      7,
+      7,
+      9,
+      9
+     ],
+     "texture": "#dark_timber"
+    }
+   }
+  },
+  {
+   "name": "hanging_post_3_4_cap",
+   "from": [
+    54.75,
+    56,
+    6.75
+   ],
+   "to": [
+    57.25,
+    57.5,
+    9.25
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      6.75,
+      6.5,
+      9.25,
+      8
+     ],
+     "texture": "#red_lacquer"
+    },
+    "east": {
+     "uv": [
+      6.75,
+      6.5,
+      9.25,
+      8
+     ],
+     "texture": "#red_lacquer"
+    },
+    "south": {
+     "uv": [
+      6.75,
+      6.5,
+      9.25,
+      8
+     ],
+     "texture": "#red_lacquer"
+    },
+    "west": {
+     "uv": [
+      6.75,
+      6.5,
+      9.25,
+      8
+     ],
+     "texture": "#red_lacquer"
+    },
+    "up": {
+     "uv": [
+      6.75,
+      6.75,
+      9.25,
+      9.25
+     ],
+     "texture": "#red_lacquer"
+    },
+    "down": {
+     "uv": [
+      6.75,
+      6.75,
+      9.25,
+      9.25
+     ],
+     "texture": "#red_lacquer"
+    }
+   }
+  },
+  {
+   "name": "hanging_post_3_4_beam",
+   "from": [
+    48,
+    76,
+    6.5
+   ],
+   "to": [
+    64,
+    80,
+    9.5
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      16,
+      4
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "east": {
+     "uv": [
+      6.5,
+      6,
+      9.5,
+      10
+     ],
+     "texture": "#red_beam_end"
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      16,
+      4
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "west": {
+     "uv": [
+      6.5,
+      6,
+      9.5,
+      10
+     ],
+     "texture": "#red_beam_end"
+    },
+    "up": {
+     "uv": [
+      0,
+      6.5,
+      16,
+      9.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "down": {
+     "uv": [
+      0,
+      6.5,
+      16,
+      9.5
+     ],
+     "texture": "#red_lacquer_beam"
+    }
+   }
+  },
+  {
+   "name": "red_beam_4_3_beam",
+   "from": [
+    64,
+    60,
+    6.5
+   ],
+   "to": [
+    80,
+    64,
+    9.5
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      16,
+      4
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "east": {
+     "uv": [
+      6.5,
+      6,
+      9.5,
+      10
+     ],
+     "texture": "#red_beam_end"
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      16,
+      4
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "west": {
+     "uv": [
+      6.5,
+      6,
+      9.5,
+      10
+     ],
+     "texture": "#red_beam_end"
+    },
+    "up": {
+     "uv": [
+      0,
+      6.5,
+      16,
+      9.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "down": {
+     "uv": [
+      0,
+      6.5,
+      16,
+      9.5
+     ],
+     "texture": "#red_lacquer_beam"
+    }
+   }
+  },
+  {
+   "name": "hanging_post_4_4_strut",
+   "from": [
+    70.75,
+    58,
+    6.75
+   ],
+   "to": [
+    73.25,
+    76,
+    9.25
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      6.75,
+      0,
+      9.25,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "east": {
+     "uv": [
+      6.75,
+      0,
+      9.25,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "south": {
+     "uv": [
+      6.75,
+      0,
+      9.25,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "west": {
+     "uv": [
+      6.75,
+      0,
+      9.25,
+      16
+     ],
+     "texture": "#red_lacquer"
+    },
+    "up": {
+     "uv": [
+      6.75,
+      6.75,
+      9.25,
+      9.25
+     ],
+     "texture": "#red_lacquer"
+    },
+    "down": {
+     "uv": [
+      6.75,
+      6.75,
+      9.25,
+      9.25
+     ],
+     "texture": "#red_lacquer"
+    }
+   }
+  },
+  {
+   "name": "hanging_post_4_4_groove",
+   "from": [
+    71,
+    57.5,
+    7
+   ],
+   "to": [
+    73,
+    58,
+    9
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      7,
+      6,
+      9,
+      6.5
+     ],
+     "texture": "#dark_timber"
+    },
+    "east": {
+     "uv": [
+      7,
+      6,
+      9,
+      6.5
+     ],
+     "texture": "#dark_timber"
+    },
+    "south": {
+     "uv": [
+      7,
+      6,
+      9,
+      6.5
+     ],
+     "texture": "#dark_timber"
+    },
+    "west": {
+     "uv": [
+      7,
+      6,
+      9,
+      6.5
+     ],
+     "texture": "#dark_timber"
+    },
+    "up": {
+     "uv": [
+      7,
+      7,
+      9,
+      9
+     ],
+     "texture": "#dark_timber"
+    },
+    "down": {
+     "uv": [
+      7,
+      7,
+      9,
+      9
+     ],
+     "texture": "#dark_timber"
+    }
+   }
+  },
+  {
+   "name": "hanging_post_4_4_cap",
+   "from": [
+    70.75,
+    56,
+    6.75
+   ],
+   "to": [
+    73.25,
+    57.5,
+    9.25
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      6.75,
+      6.5,
+      9.25,
+      8
+     ],
+     "texture": "#red_lacquer"
+    },
+    "east": {
+     "uv": [
+      6.75,
+      6.5,
+      9.25,
+      8
+     ],
+     "texture": "#red_lacquer"
+    },
+    "south": {
+     "uv": [
+      6.75,
+      6.5,
+      9.25,
+      8
+     ],
+     "texture": "#red_lacquer"
+    },
+    "west": {
+     "uv": [
+      6.75,
+      6.5,
+      9.25,
+      8
+     ],
+     "texture": "#red_lacquer"
+    },
+    "up": {
+     "uv": [
+      6.75,
+      6.75,
+      9.25,
+      9.25
+     ],
+     "texture": "#red_lacquer"
+    },
+    "down": {
+     "uv": [
+      6.75,
+      6.75,
+      9.25,
+      9.25
+     ],
+     "texture": "#red_lacquer"
+    }
+   }
+  },
+  {
+   "name": "hanging_post_4_4_beam",
+   "from": [
+    64,
+    76,
+    6.5
+   ],
+   "to": [
+    80,
+    80,
+    9.5
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      16,
+      4
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "east": {
+     "uv": [
+      6.5,
+      6,
+      9.5,
+      10
+     ],
+     "texture": "#red_beam_end"
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      16,
+      4
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "west": {
+     "uv": [
+      6.5,
+      6,
+      9.5,
+      10
+     ],
+     "texture": "#red_beam_end"
+    },
+    "up": {
+     "uv": [
+      0,
+      6.5,
+      16,
+      9.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "down": {
+     "uv": [
+      0,
+      6.5,
+      16,
+      9.5
+     ],
+     "texture": "#red_lacquer_beam"
+    }
+   }
+  },
+  {
+   "name": "red_beam_5_3_beam",
+   "from": [
+    80,
+    60,
+    6.5
+   ],
+   "to": [
+    96,
+    64,
+    9.5
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      16,
+      4
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "east": {
+     "uv": [
+      6.5,
+      6,
+      9.5,
+      10
+     ],
+     "texture": "#red_beam_end"
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      16,
+      4
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "west": {
+     "uv": [
+      6.5,
+      6,
+      9.5,
+      10
+     ],
+     "texture": "#red_beam_end"
+    },
+    "up": {
+     "uv": [
+      0,
+      6.5,
+      16,
+      9.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "down": {
+     "uv": [
+      0,
+      6.5,
+      16,
+      9.5
+     ],
+     "texture": "#red_lacquer_beam"
+    }
+   }
+  },
+  {
+   "name": "red_beam_5_3_through",
+   "from": [
+    96,
+    60.01,
+    6.51
+   ],
+   "to": [
+    106.5,
+    63.99,
+    9.49
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      5.5,
+      0.01,
+      16,
+      3.99
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "south": {
+     "uv": [
+      0,
+      0.01,
+      10.5,
+      3.99
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "up": {
+     "uv": [
+      0,
+      6.51,
+      10.5,
+      9.49
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "down": {
+     "uv": [
+      0,
+      6.51,
+      10.5,
+      9.49
+     ],
+     "texture": "#red_lacquer_beam"
+    }
+   }
+  },
+  {
+   "name": "red_beam_5_4_beam",
+   "from": [
+    80,
+    76,
+    6.5
+   ],
+   "to": [
+    96,
+    80,
+    9.5
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      16,
+      4
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "east": {
+     "uv": [
+      6.5,
+      6,
+      9.5,
+      10
+     ],
+     "texture": "#red_beam_end"
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      16,
+      4
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "west": {
+     "uv": [
+      6.5,
+      6,
+      9.5,
+      10
+     ],
+     "texture": "#red_beam_end"
+    },
+    "up": {
+     "uv": [
+      0,
+      6.5,
+      16,
+      9.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "down": {
+     "uv": [
+      0,
+      6.5,
+      16,
+      9.5
+     ],
+     "texture": "#red_lacquer_beam"
+    }
+   }
+  },
+  {
+   "name": "red_beam_5_4_through",
+   "from": [
+    96,
+    76.01,
+    6.51
+   ],
+   "to": [
+    106.5,
+    79.99,
+    9.49
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      5.5,
+      0.01,
+      16,
+      3.99
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "south": {
+     "uv": [
+      0,
+      0.01,
+      10.5,
+      3.99
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "up": {
+     "uv": [
+      0,
+      6.51,
+      10.5,
+      9.49
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "down": {
+     "uv": [
+      0,
+      6.51,
+      10.5,
+      9.49
+     ],
+     "texture": "#red_lacquer_beam"
+    }
+   }
+  },
+  {
+   "name": "beam_stub_-1_3_stub",
+   "from": [
+    3.5,
+    60,
+    6.5
+   ],
+   "to": [
+    5.5,
+    64,
+    9.5
+   ],
+   "faces": {
+    "south": {
+     "uv": [
+      3.5,
+      0,
+      5.5,
+      4
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "west": {
+     "uv": [
+      6.5,
+      6,
+      9.5,
+      10
+     ],
+     "texture": "#red_beam_end"
+    },
+    "north": {
+     "uv": [
+      10.5,
+      0,
+      12.5,
+      4
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "east": {
+     "uv": [
+      6.5,
+      6,
+      9.5,
+      10
+     ],
+     "texture": "#red_beam_end"
+    },
+    "up": {
+     "uv": [
+      10.5,
+      6.5,
+      12.5,
+      9.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "down": {
+     "uv": [
+      10.5,
+      6.5,
+      12.5,
+      9.5
+     ],
+     "texture": "#red_lacquer_beam"
+    }
+   }
+  },
+  {
+   "name": "beam_stub_7_3_stub",
+   "from": [
+    106.5,
+    60,
+    6.5
+   ],
+   "to": [
+    108.5,
+    64,
+    9.5
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      3.5,
+      0,
+      5.5,
+      4
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "east": {
+     "uv": [
+      6.5,
+      6,
+      9.5,
+      10
+     ],
+     "texture": "#red_beam_end"
+    },
+    "south": {
+     "uv": [
+      10.5,
+      0,
+      12.5,
+      4
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "west": {
+     "uv": [
+      6.5,
+      6,
+      9.5,
+      10
+     ],
+     "texture": "#red_beam_end"
+    },
+    "up": {
+     "uv": [
+      10.5,
+      6.5,
+      12.5,
+      9.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "down": {
+     "uv": [
+      10.5,
+      6.5,
+      12.5,
+      9.5
+     ],
+     "texture": "#red_lacquer_beam"
+    }
+   }
+  },
+  {
+   "name": "beam_stub_-1_4_stub",
+   "from": [
+    3.5,
+    76,
+    6.5
+   ],
+   "to": [
+    5.5,
+    80,
+    9.5
+   ],
+   "faces": {
+    "south": {
+     "uv": [
+      3.5,
+      0,
+      5.5,
+      4
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "west": {
+     "uv": [
+      6.5,
+      6,
+      9.5,
+      10
+     ],
+     "texture": "#red_beam_end"
+    },
+    "north": {
+     "uv": [
+      10.5,
+      0,
+      12.5,
+      4
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "east": {
+     "uv": [
+      6.5,
+      6,
+      9.5,
+      10
+     ],
+     "texture": "#red_beam_end"
+    },
+    "up": {
+     "uv": [
+      10.5,
+      6.5,
+      12.5,
+      9.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "down": {
+     "uv": [
+      10.5,
+      6.5,
+      12.5,
+      9.5
+     ],
+     "texture": "#red_lacquer_beam"
+    }
+   }
+  },
+  {
+   "name": "beam_stub_7_4_stub",
+   "from": [
+    106.5,
+    76,
+    6.5
+   ],
+   "to": [
+    108.5,
+    80,
+    9.5
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      3.5,
+      0,
+      5.5,
+      4
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "east": {
+     "uv": [
+      6.5,
+      6,
+      9.5,
+      10
+     ],
+     "texture": "#red_beam_end"
+    },
+    "south": {
+     "uv": [
+      10.5,
+      0,
+      12.5,
+      4
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "west": {
+     "uv": [
+      6.5,
+      6,
+      9.5,
+      10
+     ],
+     "texture": "#red_beam_end"
+    },
+    "up": {
+     "uv": [
+      10.5,
+      6.5,
+      12.5,
+      9.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "down": {
+     "uv": [
+      10.5,
+      6.5,
+      12.5,
+      9.5
+     ],
+     "texture": "#red_lacquer_beam"
+    }
+   }
+  },
+  {
+   "name": "red_pillar_-1_5_shaft_a",
+   "from": [
+    -16,
+    80.5,
+    6.9645
+   ],
+   "to": [
+    0,
+    85.5,
+    9.0355
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      10.5,
+      16,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "east": {
+     "uv": [
+      6.9645,
+      10.5,
+      9.0355,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "south": {
+     "uv": [
+      0,
+      10.5,
+      16,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "west": {
+     "uv": [
+      6.9645,
+      10.5,
+      9.0355,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "up": {
+     "uv": [
+      0,
+      6.9645,
+      16,
+      9.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "down": {
+     "uv": [
+      0,
+      6.9645,
+      16,
+      9.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    }
+   }
+  },
+  {
+   "name": "red_pillar_-1_5_shaft_b",
+   "from": [
+    -16,
+    81.9645,
+    5.5
+   ],
+   "to": [
+    0,
+    84.0355,
+    10.5
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      11.9645,
+      16,
+      14.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "east": {
+     "uv": [
+      5.5,
+      11.9645,
+      10.5,
+      14.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "south": {
+     "uv": [
+      0,
+      11.9645,
+      16,
+      14.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "west": {
+     "uv": [
+      5.5,
+      11.9645,
+      10.5,
+      14.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "up": {
+     "uv": [
+      0,
+      5.5,
+      16,
+      10.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "down": {
+     "uv": [
+      0,
+      5.5,
+      16,
+      10.5
+     ],
+     "texture": "#red_lacquer_beam"
+    }
+   }
+  },
+  {
+   "name": "red_pillar_-1_5_shaft_c",
+   "from": [
+    -16,
+    80.5,
+    6.9645
+   ],
+   "to": [
+    0,
+    85.5,
+    9.0355
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      10.5,
+      16,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "east": {
+     "uv": [
+      6.9645,
+      10.5,
+      9.0355,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "south": {
+     "uv": [
+      0,
+      10.5,
+      16,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "west": {
+     "uv": [
+      6.9645,
+      10.5,
+      9.0355,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "up": {
+     "uv": [
+      0,
+      6.9645,
+      16,
+      9.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "down": {
+     "uv": [
+      0,
+      6.9645,
+      16,
+      9.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    }
+   },
+   "rotation": {
+    "angle": 45,
+    "axis": "x",
+    "origin": [
+     -16,
+     83,
+     8
+    ]
+   }
+  },
+  {
+   "name": "red_pillar_-1_5_shaft_d",
+   "from": [
+    -16,
+    80.5,
+    6.9645
+   ],
+   "to": [
+    0,
+    85.5,
+    9.0355
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      10.5,
+      16,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "east": {
+     "uv": [
+      6.9645,
+      10.5,
+      9.0355,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "south": {
+     "uv": [
+      0,
+      10.5,
+      16,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "west": {
+     "uv": [
+      6.9645,
+      10.5,
+      9.0355,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "up": {
+     "uv": [
+      0,
+      6.9645,
+      16,
+      9.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "down": {
+     "uv": [
+      0,
+      6.9645,
+      16,
+      9.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    }
+   },
+   "rotation": {
+    "angle": -45,
+    "axis": "x",
+    "origin": [
+     -16,
+     83,
+     8
+    ]
+   }
+  },
+  {
+   "name": "red_pillar_-1_5_base_ring_a",
+   "from": [
+    -16,
+    80,
+    6.7574
+   ],
+   "to": [
+    -14.5,
+    86,
+    9.2426
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      14.5,
+      10,
+      16,
+      16
+     ],
+     "texture": "#dark_timber"
+    },
+    "east": {
+     "uv": [
+      6.7574,
+      10,
+      9.2426,
+      16
+     ],
+     "texture": "#dark_timber"
+    },
+    "south": {
+     "uv": [
+      0,
+      10,
+      1.5,
+      16
+     ],
+     "texture": "#dark_timber"
+    },
+    "west": {
+     "uv": [
+      6.7574,
+      10,
+      9.2426,
+      16
+     ],
+     "texture": "#dark_timber"
+    },
+    "up": {
+     "uv": [
+      0,
+      6.7574,
+      1.5,
+      9.2426
+     ],
+     "texture": "#dark_timber"
+    },
+    "down": {
+     "uv": [
+      0,
+      6.7574,
+      1.5,
+      9.2426
+     ],
+     "texture": "#dark_timber"
+    }
+   }
+  },
+  {
+   "name": "red_pillar_-1_5_base_ring_b",
+   "from": [
+    -16,
+    81.7574,
+    5
+   ],
+   "to": [
+    -14.5,
+    84.2426,
+    11
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      14.5,
+      11.7574,
+      16,
+      14.2426
+     ],
+     "texture": "#dark_timber"
+    },
+    "east": {
+     "uv": [
+      5,
+      11.7574,
+      11,
+      14.2426
+     ],
+     "texture": "#dark_timber"
+    },
+    "south": {
+     "uv": [
+      0,
+      11.7574,
+      1.5,
+      14.2426
+     ],
+     "texture": "#dark_timber"
+    },
+    "west": {
+     "uv": [
+      5,
+      11.7574,
+      11,
+      14.2426
+     ],
+     "texture": "#dark_timber"
+    },
+    "up": {
+     "uv": [
+      0,
+      5,
+      1.5,
+      11
+     ],
+     "texture": "#dark_timber"
+    },
+    "down": {
+     "uv": [
+      0,
+      5,
+      1.5,
+      11
+     ],
+     "texture": "#dark_timber"
+    }
+   }
+  },
+  {
+   "name": "red_pillar_-1_5_base_ring_c",
+   "from": [
+    -16,
+    80,
+    6.7574
+   ],
+   "to": [
+    -14.5,
+    86,
+    9.2426
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      14.5,
+      10,
+      16,
+      16
+     ],
+     "texture": "#dark_timber"
+    },
+    "east": {
+     "uv": [
+      6.7574,
+      10,
+      9.2426,
+      16
+     ],
+     "texture": "#dark_timber"
+    },
+    "south": {
+     "uv": [
+      0,
+      10,
+      1.5,
+      16
+     ],
+     "texture": "#dark_timber"
+    },
+    "west": {
+     "uv": [
+      6.7574,
+      10,
+      9.2426,
+      16
+     ],
+     "texture": "#dark_timber"
+    },
+    "up": {
+     "uv": [
+      0,
+      6.7574,
+      1.5,
+      9.2426
+     ],
+     "texture": "#dark_timber"
+    },
+    "down": {
+     "uv": [
+      0,
+      6.7574,
+      1.5,
+      9.2426
+     ],
+     "texture": "#dark_timber"
+    }
+   },
+   "rotation": {
+    "angle": 45,
+    "axis": "x",
+    "origin": [
+     -16,
+     83,
+     8
+    ]
+   }
+  },
+  {
+   "name": "red_pillar_-1_5_base_ring_d",
+   "from": [
+    -16,
+    80,
+    6.7574
+   ],
+   "to": [
+    -14.5,
+    86,
+    9.2426
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      14.5,
+      10,
+      16,
+      16
+     ],
+     "texture": "#dark_timber"
+    },
+    "east": {
+     "uv": [
+      6.7574,
+      10,
+      9.2426,
+      16
+     ],
+     "texture": "#dark_timber"
+    },
+    "south": {
+     "uv": [
+      0,
+      10,
+      1.5,
+      16
+     ],
+     "texture": "#dark_timber"
+    },
+    "west": {
+     "uv": [
+      6.7574,
+      10,
+      9.2426,
+      16
+     ],
+     "texture": "#dark_timber"
+    },
+    "up": {
+     "uv": [
+      0,
+      6.7574,
+      1.5,
+      9.2426
+     ],
+     "texture": "#dark_timber"
+    },
+    "down": {
+     "uv": [
+      0,
+      6.7574,
+      1.5,
+      9.2426
+     ],
+     "texture": "#dark_timber"
+    }
+   },
+   "rotation": {
+    "angle": -45,
+    "axis": "x",
+    "origin": [
+     -16,
+     83,
+     8
+    ]
+   }
+  },
+  {
+   "name": "red_pillar_-1_5_base_lip_a",
+   "from": [
+    -14.5,
+    80.25,
+    6.8609
+   ],
+   "to": [
+    -14,
+    85.75,
+    9.1391
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      14,
+      10.25,
+      14.5,
+      15.75
+     ],
+     "texture": "#dark_timber"
+    },
+    "east": {
+     "uv": [
+      6.8609,
+      10.25,
+      9.1391,
+      15.75
+     ],
+     "texture": "#dark_timber"
+    },
+    "south": {
+     "uv": [
+      1.5,
+      10.25,
+      2,
+      15.75
+     ],
+     "texture": "#dark_timber"
+    },
+    "west": {
+     "uv": [
+      6.8609,
+      10.25,
+      9.1391,
+      15.75
+     ],
+     "texture": "#dark_timber"
+    },
+    "up": {
+     "uv": [
+      1.5,
+      6.8609,
+      2,
+      9.1391
+     ],
+     "texture": "#dark_timber"
+    },
+    "down": {
+     "uv": [
+      1.5,
+      6.8609,
+      2,
+      9.1391
+     ],
+     "texture": "#dark_timber"
+    }
+   }
+  },
+  {
+   "name": "red_pillar_-1_5_base_lip_b",
+   "from": [
+    -14.5,
+    81.8609,
+    5.25
+   ],
+   "to": [
+    -14,
+    84.1391,
+    10.75
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      14,
+      11.8609,
+      14.5,
+      14.1391
+     ],
+     "texture": "#dark_timber"
+    },
+    "east": {
+     "uv": [
+      5.25,
+      11.8609,
+      10.75,
+      14.1391
+     ],
+     "texture": "#dark_timber"
+    },
+    "south": {
+     "uv": [
+      1.5,
+      11.8609,
+      2,
+      14.1391
+     ],
+     "texture": "#dark_timber"
+    },
+    "west": {
+     "uv": [
+      5.25,
+      11.8609,
+      10.75,
+      14.1391
+     ],
+     "texture": "#dark_timber"
+    },
+    "up": {
+     "uv": [
+      1.5,
+      5.25,
+      2,
+      10.75
+     ],
+     "texture": "#dark_timber"
+    },
+    "down": {
+     "uv": [
+      1.5,
+      5.25,
+      2,
+      10.75
+     ],
+     "texture": "#dark_timber"
+    }
+   }
+  },
+  {
+   "name": "red_pillar_-1_5_base_lip_c",
+   "from": [
+    -14.5,
+    80.25,
+    6.8609
+   ],
+   "to": [
+    -14,
+    85.75,
+    9.1391
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      14,
+      10.25,
+      14.5,
+      15.75
+     ],
+     "texture": "#dark_timber"
+    },
+    "east": {
+     "uv": [
+      6.8609,
+      10.25,
+      9.1391,
+      15.75
+     ],
+     "texture": "#dark_timber"
+    },
+    "south": {
+     "uv": [
+      1.5,
+      10.25,
+      2,
+      15.75
+     ],
+     "texture": "#dark_timber"
+    },
+    "west": {
+     "uv": [
+      6.8609,
+      10.25,
+      9.1391,
+      15.75
+     ],
+     "texture": "#dark_timber"
+    },
+    "up": {
+     "uv": [
+      1.5,
+      6.8609,
+      2,
+      9.1391
+     ],
+     "texture": "#dark_timber"
+    },
+    "down": {
+     "uv": [
+      1.5,
+      6.8609,
+      2,
+      9.1391
+     ],
+     "texture": "#dark_timber"
+    }
+   },
+   "rotation": {
+    "angle": 45,
+    "axis": "x",
+    "origin": [
+     -14.5,
+     83,
+     8
+    ]
+   }
+  },
+  {
+   "name": "red_pillar_-1_5_base_lip_d",
+   "from": [
+    -14.5,
+    80.25,
+    6.8609
+   ],
+   "to": [
+    -14,
+    85.75,
+    9.1391
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      14,
+      10.25,
+      14.5,
+      15.75
+     ],
+     "texture": "#dark_timber"
+    },
+    "east": {
+     "uv": [
+      6.8609,
+      10.25,
+      9.1391,
+      15.75
+     ],
+     "texture": "#dark_timber"
+    },
+    "south": {
+     "uv": [
+      1.5,
+      10.25,
+      2,
+      15.75
+     ],
+     "texture": "#dark_timber"
+    },
+    "west": {
+     "uv": [
+      6.8609,
+      10.25,
+      9.1391,
+      15.75
+     ],
+     "texture": "#dark_timber"
+    },
+    "up": {
+     "uv": [
+      1.5,
+      6.8609,
+      2,
+      9.1391
+     ],
+     "texture": "#dark_timber"
+    },
+    "down": {
+     "uv": [
+      1.5,
+      6.8609,
+      2,
+      9.1391
+     ],
+     "texture": "#dark_timber"
+    }
+   },
+   "rotation": {
+    "angle": -45,
+    "axis": "x",
+    "origin": [
+     -14.5,
+     83,
+     8
+    ]
+   }
+  },
+  {
+   "name": "red_pillar_0_5_shaft_a",
+   "from": [
+    0,
+    80.5,
+    6.9645
+   ],
+   "to": [
+    16,
+    85.5,
+    9.0355
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      10.5,
+      16,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "east": {
+     "uv": [
+      6.9645,
+      10.5,
+      9.0355,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "south": {
+     "uv": [
+      0,
+      10.5,
+      16,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "west": {
+     "uv": [
+      6.9645,
+      10.5,
+      9.0355,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "up": {
+     "uv": [
+      0,
+      6.9645,
+      16,
+      9.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "down": {
+     "uv": [
+      0,
+      6.9645,
+      16,
+      9.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    }
+   }
+  },
+  {
+   "name": "red_pillar_0_5_shaft_b",
+   "from": [
+    0,
+    81.9645,
+    5.5
+   ],
+   "to": [
+    16,
+    84.0355,
+    10.5
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      11.9645,
+      16,
+      14.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "east": {
+     "uv": [
+      5.5,
+      11.9645,
+      10.5,
+      14.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "south": {
+     "uv": [
+      0,
+      11.9645,
+      16,
+      14.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "west": {
+     "uv": [
+      5.5,
+      11.9645,
+      10.5,
+      14.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "up": {
+     "uv": [
+      0,
+      5.5,
+      16,
+      10.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "down": {
+     "uv": [
+      0,
+      5.5,
+      16,
+      10.5
+     ],
+     "texture": "#red_lacquer_beam"
+    }
+   }
+  },
+  {
+   "name": "red_pillar_0_5_shaft_c",
+   "from": [
+    0,
+    80.5,
+    6.9645
+   ],
+   "to": [
+    16,
+    85.5,
+    9.0355
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      10.5,
+      16,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "east": {
+     "uv": [
+      6.9645,
+      10.5,
+      9.0355,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "south": {
+     "uv": [
+      0,
+      10.5,
+      16,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "west": {
+     "uv": [
+      6.9645,
+      10.5,
+      9.0355,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "up": {
+     "uv": [
+      0,
+      6.9645,
+      16,
+      9.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "down": {
+     "uv": [
+      0,
+      6.9645,
+      16,
+      9.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    }
+   },
+   "rotation": {
+    "angle": 45,
+    "axis": "x",
+    "origin": [
+     0,
+     83,
+     8
+    ]
+   }
+  },
+  {
+   "name": "red_pillar_0_5_shaft_d",
+   "from": [
+    0,
+    80.5,
+    6.9645
+   ],
+   "to": [
+    16,
+    85.5,
+    9.0355
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      10.5,
+      16,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "east": {
+     "uv": [
+      6.9645,
+      10.5,
+      9.0355,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "south": {
+     "uv": [
+      0,
+      10.5,
+      16,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "west": {
+     "uv": [
+      6.9645,
+      10.5,
+      9.0355,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "up": {
+     "uv": [
+      0,
+      6.9645,
+      16,
+      9.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "down": {
+     "uv": [
+      0,
+      6.9645,
+      16,
+      9.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    }
+   },
+   "rotation": {
+    "angle": -45,
+    "axis": "x",
+    "origin": [
+     0,
+     83,
+     8
+    ]
+   }
+  },
+  {
+   "name": "red_pillar_1_5_shaft_a",
+   "from": [
+    16,
+    80.5,
+    6.9645
+   ],
+   "to": [
+    32,
+    85.5,
+    9.0355
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      10.5,
+      16,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "east": {
+     "uv": [
+      6.9645,
+      10.5,
+      9.0355,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "south": {
+     "uv": [
+      0,
+      10.5,
+      16,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "west": {
+     "uv": [
+      6.9645,
+      10.5,
+      9.0355,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "up": {
+     "uv": [
+      0,
+      6.9645,
+      16,
+      9.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "down": {
+     "uv": [
+      0,
+      6.9645,
+      16,
+      9.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    }
+   }
+  },
+  {
+   "name": "red_pillar_1_5_shaft_b",
+   "from": [
+    16,
+    81.9645,
+    5.5
+   ],
+   "to": [
+    32,
+    84.0355,
+    10.5
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      11.9645,
+      16,
+      14.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "east": {
+     "uv": [
+      5.5,
+      11.9645,
+      10.5,
+      14.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "south": {
+     "uv": [
+      0,
+      11.9645,
+      16,
+      14.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "west": {
+     "uv": [
+      5.5,
+      11.9645,
+      10.5,
+      14.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "up": {
+     "uv": [
+      0,
+      5.5,
+      16,
+      10.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "down": {
+     "uv": [
+      0,
+      5.5,
+      16,
+      10.5
+     ],
+     "texture": "#red_lacquer_beam"
+    }
+   }
+  },
+  {
+   "name": "red_pillar_1_5_shaft_c",
+   "from": [
+    16,
+    80.5,
+    6.9645
+   ],
+   "to": [
+    32,
+    85.5,
+    9.0355
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      10.5,
+      16,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "east": {
+     "uv": [
+      6.9645,
+      10.5,
+      9.0355,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "south": {
+     "uv": [
+      0,
+      10.5,
+      16,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "west": {
+     "uv": [
+      6.9645,
+      10.5,
+      9.0355,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "up": {
+     "uv": [
+      0,
+      6.9645,
+      16,
+      9.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "down": {
+     "uv": [
+      0,
+      6.9645,
+      16,
+      9.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    }
+   },
+   "rotation": {
+    "angle": 45,
+    "axis": "x",
+    "origin": [
+     16,
+     83,
+     8
+    ]
+   }
+  },
+  {
+   "name": "red_pillar_1_5_shaft_d",
+   "from": [
+    16,
+    80.5,
+    6.9645
+   ],
+   "to": [
+    32,
+    85.5,
+    9.0355
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      10.5,
+      16,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "east": {
+     "uv": [
+      6.9645,
+      10.5,
+      9.0355,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "south": {
+     "uv": [
+      0,
+      10.5,
+      16,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "west": {
+     "uv": [
+      6.9645,
+      10.5,
+      9.0355,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "up": {
+     "uv": [
+      0,
+      6.9645,
+      16,
+      9.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "down": {
+     "uv": [
+      0,
+      6.9645,
+      16,
+      9.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    }
+   },
+   "rotation": {
+    "angle": -45,
+    "axis": "x",
+    "origin": [
+     16,
+     83,
+     8
+    ]
+   }
+  },
+  {
+   "name": "red_pillar_2_5_shaft_a",
+   "from": [
+    32,
+    80.5,
+    6.9645
+   ],
+   "to": [
+    48,
+    85.5,
+    9.0355
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      10.5,
+      16,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "east": {
+     "uv": [
+      6.9645,
+      10.5,
+      9.0355,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "south": {
+     "uv": [
+      0,
+      10.5,
+      16,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "west": {
+     "uv": [
+      6.9645,
+      10.5,
+      9.0355,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "up": {
+     "uv": [
+      0,
+      6.9645,
+      16,
+      9.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "down": {
+     "uv": [
+      0,
+      6.9645,
+      16,
+      9.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    }
+   }
+  },
+  {
+   "name": "red_pillar_2_5_shaft_b",
+   "from": [
+    32,
+    81.9645,
+    5.5
+   ],
+   "to": [
+    48,
+    84.0355,
+    10.5
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      11.9645,
+      16,
+      14.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "east": {
+     "uv": [
+      5.5,
+      11.9645,
+      10.5,
+      14.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "south": {
+     "uv": [
+      0,
+      11.9645,
+      16,
+      14.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "west": {
+     "uv": [
+      5.5,
+      11.9645,
+      10.5,
+      14.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "up": {
+     "uv": [
+      0,
+      5.5,
+      16,
+      10.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "down": {
+     "uv": [
+      0,
+      5.5,
+      16,
+      10.5
+     ],
+     "texture": "#red_lacquer_beam"
+    }
+   }
+  },
+  {
+   "name": "red_pillar_2_5_shaft_c",
+   "from": [
+    32,
+    80.5,
+    6.9645
+   ],
+   "to": [
+    48,
+    85.5,
+    9.0355
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      10.5,
+      16,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "east": {
+     "uv": [
+      6.9645,
+      10.5,
+      9.0355,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "south": {
+     "uv": [
+      0,
+      10.5,
+      16,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "west": {
+     "uv": [
+      6.9645,
+      10.5,
+      9.0355,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "up": {
+     "uv": [
+      0,
+      6.9645,
+      16,
+      9.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "down": {
+     "uv": [
+      0,
+      6.9645,
+      16,
+      9.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    }
+   },
+   "rotation": {
+    "angle": 45,
+    "axis": "x",
+    "origin": [
+     32,
+     83,
+     8
+    ]
+   }
+  },
+  {
+   "name": "red_pillar_2_5_shaft_d",
+   "from": [
+    32,
+    80.5,
+    6.9645
+   ],
+   "to": [
+    48,
+    85.5,
+    9.0355
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      10.5,
+      16,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "east": {
+     "uv": [
+      6.9645,
+      10.5,
+      9.0355,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "south": {
+     "uv": [
+      0,
+      10.5,
+      16,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "west": {
+     "uv": [
+      6.9645,
+      10.5,
+      9.0355,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "up": {
+     "uv": [
+      0,
+      6.9645,
+      16,
+      9.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "down": {
+     "uv": [
+      0,
+      6.9645,
+      16,
+      9.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    }
+   },
+   "rotation": {
+    "angle": -45,
+    "axis": "x",
+    "origin": [
+     32,
+     83,
+     8
+    ]
+   }
+  },
+  {
+   "name": "red_pillar_3_5_shaft_a",
+   "from": [
+    48,
+    80.5,
+    6.9645
+   ],
+   "to": [
+    64,
+    85.5,
+    9.0355
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      10.5,
+      16,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "east": {
+     "uv": [
+      6.9645,
+      10.5,
+      9.0355,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "south": {
+     "uv": [
+      0,
+      10.5,
+      16,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "west": {
+     "uv": [
+      6.9645,
+      10.5,
+      9.0355,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "up": {
+     "uv": [
+      0,
+      6.9645,
+      16,
+      9.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "down": {
+     "uv": [
+      0,
+      6.9645,
+      16,
+      9.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    }
+   }
+  },
+  {
+   "name": "red_pillar_3_5_shaft_b",
+   "from": [
+    48,
+    81.9645,
+    5.5
+   ],
+   "to": [
+    64,
+    84.0355,
+    10.5
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      11.9645,
+      16,
+      14.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "east": {
+     "uv": [
+      5.5,
+      11.9645,
+      10.5,
+      14.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "south": {
+     "uv": [
+      0,
+      11.9645,
+      16,
+      14.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "west": {
+     "uv": [
+      5.5,
+      11.9645,
+      10.5,
+      14.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "up": {
+     "uv": [
+      0,
+      5.5,
+      16,
+      10.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "down": {
+     "uv": [
+      0,
+      5.5,
+      16,
+      10.5
+     ],
+     "texture": "#red_lacquer_beam"
+    }
+   }
+  },
+  {
+   "name": "red_pillar_3_5_shaft_c",
+   "from": [
+    48,
+    80.5,
+    6.9645
+   ],
+   "to": [
+    64,
+    85.5,
+    9.0355
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      10.5,
+      16,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "east": {
+     "uv": [
+      6.9645,
+      10.5,
+      9.0355,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "south": {
+     "uv": [
+      0,
+      10.5,
+      16,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "west": {
+     "uv": [
+      6.9645,
+      10.5,
+      9.0355,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "up": {
+     "uv": [
+      0,
+      6.9645,
+      16,
+      9.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "down": {
+     "uv": [
+      0,
+      6.9645,
+      16,
+      9.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    }
+   },
+   "rotation": {
+    "angle": 45,
+    "axis": "x",
+    "origin": [
+     48,
+     83,
+     8
+    ]
+   }
+  },
+  {
+   "name": "red_pillar_3_5_shaft_d",
+   "from": [
+    48,
+    80.5,
+    6.9645
+   ],
+   "to": [
+    64,
+    85.5,
+    9.0355
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      10.5,
+      16,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "east": {
+     "uv": [
+      6.9645,
+      10.5,
+      9.0355,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "south": {
+     "uv": [
+      0,
+      10.5,
+      16,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "west": {
+     "uv": [
+      6.9645,
+      10.5,
+      9.0355,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "up": {
+     "uv": [
+      0,
+      6.9645,
+      16,
+      9.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "down": {
+     "uv": [
+      0,
+      6.9645,
+      16,
+      9.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    }
+   },
+   "rotation": {
+    "angle": -45,
+    "axis": "x",
+    "origin": [
+     48,
+     83,
+     8
+    ]
+   }
+  },
+  {
+   "name": "red_pillar_4_5_shaft_a",
+   "from": [
+    64,
+    80.5,
+    6.9645
+   ],
+   "to": [
+    80,
+    85.5,
+    9.0355
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      10.5,
+      16,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "east": {
+     "uv": [
+      6.9645,
+      10.5,
+      9.0355,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "south": {
+     "uv": [
+      0,
+      10.5,
+      16,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "west": {
+     "uv": [
+      6.9645,
+      10.5,
+      9.0355,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "up": {
+     "uv": [
+      0,
+      6.9645,
+      16,
+      9.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "down": {
+     "uv": [
+      0,
+      6.9645,
+      16,
+      9.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    }
+   }
+  },
+  {
+   "name": "red_pillar_4_5_shaft_b",
+   "from": [
+    64,
+    81.9645,
+    5.5
+   ],
+   "to": [
+    80,
+    84.0355,
+    10.5
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      11.9645,
+      16,
+      14.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "east": {
+     "uv": [
+      5.5,
+      11.9645,
+      10.5,
+      14.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "south": {
+     "uv": [
+      0,
+      11.9645,
+      16,
+      14.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "west": {
+     "uv": [
+      5.5,
+      11.9645,
+      10.5,
+      14.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "up": {
+     "uv": [
+      0,
+      5.5,
+      16,
+      10.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "down": {
+     "uv": [
+      0,
+      5.5,
+      16,
+      10.5
+     ],
+     "texture": "#red_lacquer_beam"
+    }
+   }
+  },
+  {
+   "name": "red_pillar_4_5_shaft_c",
+   "from": [
+    64,
+    80.5,
+    6.9645
+   ],
+   "to": [
+    80,
+    85.5,
+    9.0355
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      10.5,
+      16,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "east": {
+     "uv": [
+      6.9645,
+      10.5,
+      9.0355,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "south": {
+     "uv": [
+      0,
+      10.5,
+      16,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "west": {
+     "uv": [
+      6.9645,
+      10.5,
+      9.0355,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "up": {
+     "uv": [
+      0,
+      6.9645,
+      16,
+      9.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "down": {
+     "uv": [
+      0,
+      6.9645,
+      16,
+      9.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    }
+   },
+   "rotation": {
+    "angle": 45,
+    "axis": "x",
+    "origin": [
+     64,
+     83,
+     8
+    ]
+   }
+  },
+  {
+   "name": "red_pillar_4_5_shaft_d",
+   "from": [
+    64,
+    80.5,
+    6.9645
+   ],
+   "to": [
+    80,
+    85.5,
+    9.0355
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      10.5,
+      16,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "east": {
+     "uv": [
+      6.9645,
+      10.5,
+      9.0355,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "south": {
+     "uv": [
+      0,
+      10.5,
+      16,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "west": {
+     "uv": [
+      6.9645,
+      10.5,
+      9.0355,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "up": {
+     "uv": [
+      0,
+      6.9645,
+      16,
+      9.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "down": {
+     "uv": [
+      0,
+      6.9645,
+      16,
+      9.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    }
+   },
+   "rotation": {
+    "angle": -45,
+    "axis": "x",
+    "origin": [
+     64,
+     83,
+     8
+    ]
+   }
+  },
+  {
+   "name": "red_pillar_5_5_shaft_a",
+   "from": [
+    80,
+    80.5,
+    6.9645
+   ],
+   "to": [
+    96,
+    85.5,
+    9.0355
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      10.5,
+      16,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "east": {
+     "uv": [
+      6.9645,
+      10.5,
+      9.0355,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "south": {
+     "uv": [
+      0,
+      10.5,
+      16,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "west": {
+     "uv": [
+      6.9645,
+      10.5,
+      9.0355,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "up": {
+     "uv": [
+      0,
+      6.9645,
+      16,
+      9.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "down": {
+     "uv": [
+      0,
+      6.9645,
+      16,
+      9.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    }
+   }
+  },
+  {
+   "name": "red_pillar_5_5_shaft_b",
+   "from": [
+    80,
+    81.9645,
+    5.5
+   ],
+   "to": [
+    96,
+    84.0355,
+    10.5
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      11.9645,
+      16,
+      14.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "east": {
+     "uv": [
+      5.5,
+      11.9645,
+      10.5,
+      14.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "south": {
+     "uv": [
+      0,
+      11.9645,
+      16,
+      14.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "west": {
+     "uv": [
+      5.5,
+      11.9645,
+      10.5,
+      14.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "up": {
+     "uv": [
+      0,
+      5.5,
+      16,
+      10.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "down": {
+     "uv": [
+      0,
+      5.5,
+      16,
+      10.5
+     ],
+     "texture": "#red_lacquer_beam"
+    }
+   }
+  },
+  {
+   "name": "red_pillar_5_5_shaft_c",
+   "from": [
+    80,
+    80.5,
+    6.9645
+   ],
+   "to": [
+    96,
+    85.5,
+    9.0355
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      10.5,
+      16,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "east": {
+     "uv": [
+      6.9645,
+      10.5,
+      9.0355,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "south": {
+     "uv": [
+      0,
+      10.5,
+      16,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "west": {
+     "uv": [
+      6.9645,
+      10.5,
+      9.0355,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "up": {
+     "uv": [
+      0,
+      6.9645,
+      16,
+      9.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "down": {
+     "uv": [
+      0,
+      6.9645,
+      16,
+      9.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    }
+   },
+   "rotation": {
+    "angle": 45,
+    "axis": "x",
+    "origin": [
+     80,
+     83,
+     8
+    ]
+   }
+  },
+  {
+   "name": "red_pillar_5_5_shaft_d",
+   "from": [
+    80,
+    80.5,
+    6.9645
+   ],
+   "to": [
+    96,
+    85.5,
+    9.0355
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      10.5,
+      16,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "east": {
+     "uv": [
+      6.9645,
+      10.5,
+      9.0355,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "south": {
+     "uv": [
+      0,
+      10.5,
+      16,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "west": {
+     "uv": [
+      6.9645,
+      10.5,
+      9.0355,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "up": {
+     "uv": [
+      0,
+      6.9645,
+      16,
+      9.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "down": {
+     "uv": [
+      0,
+      6.9645,
+      16,
+      9.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    }
+   },
+   "rotation": {
+    "angle": -45,
+    "axis": "x",
+    "origin": [
+     80,
+     83,
+     8
+    ]
+   }
+  },
+  {
+   "name": "red_pillar_6_5_shaft_a",
+   "from": [
+    96,
+    80.5,
+    6.9645
+   ],
+   "to": [
+    112,
+    85.5,
+    9.0355
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      10.5,
+      16,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "east": {
+     "uv": [
+      6.9645,
+      10.5,
+      9.0355,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "south": {
+     "uv": [
+      0,
+      10.5,
+      16,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "west": {
+     "uv": [
+      6.9645,
+      10.5,
+      9.0355,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "up": {
+     "uv": [
+      0,
+      6.9645,
+      16,
+      9.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "down": {
+     "uv": [
+      0,
+      6.9645,
+      16,
+      9.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    }
+   }
+  },
+  {
+   "name": "red_pillar_6_5_shaft_b",
+   "from": [
+    96,
+    81.9645,
+    5.5
+   ],
+   "to": [
+    112,
+    84.0355,
+    10.5
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      11.9645,
+      16,
+      14.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "east": {
+     "uv": [
+      5.5,
+      11.9645,
+      10.5,
+      14.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "south": {
+     "uv": [
+      0,
+      11.9645,
+      16,
+      14.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "west": {
+     "uv": [
+      5.5,
+      11.9645,
+      10.5,
+      14.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "up": {
+     "uv": [
+      0,
+      5.5,
+      16,
+      10.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "down": {
+     "uv": [
+      0,
+      5.5,
+      16,
+      10.5
+     ],
+     "texture": "#red_lacquer_beam"
+    }
+   }
+  },
+  {
+   "name": "red_pillar_6_5_shaft_c",
+   "from": [
+    96,
+    80.5,
+    6.9645
+   ],
+   "to": [
+    112,
+    85.5,
+    9.0355
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      10.5,
+      16,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "east": {
+     "uv": [
+      6.9645,
+      10.5,
+      9.0355,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "south": {
+     "uv": [
+      0,
+      10.5,
+      16,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "west": {
+     "uv": [
+      6.9645,
+      10.5,
+      9.0355,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "up": {
+     "uv": [
+      0,
+      6.9645,
+      16,
+      9.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "down": {
+     "uv": [
+      0,
+      6.9645,
+      16,
+      9.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    }
+   },
+   "rotation": {
+    "angle": 45,
+    "axis": "x",
+    "origin": [
+     96,
+     83,
+     8
+    ]
+   }
+  },
+  {
+   "name": "red_pillar_6_5_shaft_d",
+   "from": [
+    96,
+    80.5,
+    6.9645
+   ],
+   "to": [
+    112,
+    85.5,
+    9.0355
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      10.5,
+      16,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "east": {
+     "uv": [
+      6.9645,
+      10.5,
+      9.0355,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "south": {
+     "uv": [
+      0,
+      10.5,
+      16,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "west": {
+     "uv": [
+      6.9645,
+      10.5,
+      9.0355,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "up": {
+     "uv": [
+      0,
+      6.9645,
+      16,
+      9.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "down": {
+     "uv": [
+      0,
+      6.9645,
+      16,
+      9.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    }
+   },
+   "rotation": {
+    "angle": -45,
+    "axis": "x",
+    "origin": [
+     96,
+     83,
+     8
+    ]
+   }
+  },
+  {
+   "name": "red_pillar_7_5_shaft_a",
+   "from": [
+    112,
+    80.5,
+    6.9645
+   ],
+   "to": [
+    128,
+    85.5,
+    9.0355
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      10.5,
+      16,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "east": {
+     "uv": [
+      6.9645,
+      10.5,
+      9.0355,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "south": {
+     "uv": [
+      0,
+      10.5,
+      16,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "west": {
+     "uv": [
+      6.9645,
+      10.5,
+      9.0355,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "up": {
+     "uv": [
+      0,
+      6.9645,
+      16,
+      9.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "down": {
+     "uv": [
+      0,
+      6.9645,
+      16,
+      9.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    }
+   }
+  },
+  {
+   "name": "red_pillar_7_5_shaft_b",
+   "from": [
+    112,
+    81.9645,
+    5.5
+   ],
+   "to": [
+    128,
+    84.0355,
+    10.5
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      11.9645,
+      16,
+      14.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "east": {
+     "uv": [
+      5.5,
+      11.9645,
+      10.5,
+      14.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "south": {
+     "uv": [
+      0,
+      11.9645,
+      16,
+      14.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "west": {
+     "uv": [
+      5.5,
+      11.9645,
+      10.5,
+      14.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "up": {
+     "uv": [
+      0,
+      5.5,
+      16,
+      10.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "down": {
+     "uv": [
+      0,
+      5.5,
+      16,
+      10.5
+     ],
+     "texture": "#red_lacquer_beam"
+    }
+   }
+  },
+  {
+   "name": "red_pillar_7_5_shaft_c",
+   "from": [
+    112,
+    80.5,
+    6.9645
+   ],
+   "to": [
+    128,
+    85.5,
+    9.0355
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      10.5,
+      16,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "east": {
+     "uv": [
+      6.9645,
+      10.5,
+      9.0355,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "south": {
+     "uv": [
+      0,
+      10.5,
+      16,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "west": {
+     "uv": [
+      6.9645,
+      10.5,
+      9.0355,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "up": {
+     "uv": [
+      0,
+      6.9645,
+      16,
+      9.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "down": {
+     "uv": [
+      0,
+      6.9645,
+      16,
+      9.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    }
+   },
+   "rotation": {
+    "angle": 45,
+    "axis": "x",
+    "origin": [
+     112,
+     83,
+     8
+    ]
+   }
+  },
+  {
+   "name": "red_pillar_7_5_shaft_d",
+   "from": [
+    112,
+    80.5,
+    6.9645
+   ],
+   "to": [
+    128,
+    85.5,
+    9.0355
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      10.5,
+      16,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "east": {
+     "uv": [
+      6.9645,
+      10.5,
+      9.0355,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "south": {
+     "uv": [
+      0,
+      10.5,
+      16,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "west": {
+     "uv": [
+      6.9645,
+      10.5,
+      9.0355,
+      15.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "up": {
+     "uv": [
+      0,
+      6.9645,
+      16,
+      9.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "down": {
+     "uv": [
+      0,
+      6.9645,
+      16,
+      9.0355
+     ],
+     "texture": "#red_lacquer_beam"
+    }
+   },
+   "rotation": {
+    "angle": -45,
+    "axis": "x",
+    "origin": [
+     112,
+     83,
+     8
+    ]
+   }
+  },
+  {
+   "name": "red_pillar_7_5_capital_ring_a",
+   "from": [
+    126,
+    80,
+    6.7574
+   ],
+   "to": [
+    127,
+    86,
+    9.2426
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      1,
+      10,
+      2,
+      16
+     ],
+     "texture": "#dark_timber"
+    },
+    "east": {
+     "uv": [
+      6.7574,
+      10,
+      9.2426,
+      16
+     ],
+     "texture": "#dark_timber"
+    },
+    "south": {
+     "uv": [
+      14,
+      10,
+      15,
+      16
+     ],
+     "texture": "#dark_timber"
+    },
+    "west": {
+     "uv": [
+      6.7574,
+      10,
+      9.2426,
+      16
+     ],
+     "texture": "#dark_timber"
+    },
+    "up": {
+     "uv": [
+      14,
+      6.7574,
+      15,
+      9.2426
+     ],
+     "texture": "#dark_timber"
+    },
+    "down": {
+     "uv": [
+      14,
+      6.7574,
+      15,
+      9.2426
+     ],
+     "texture": "#dark_timber"
+    }
+   }
+  },
+  {
+   "name": "red_pillar_7_5_capital_ring_b",
+   "from": [
+    126,
+    81.7574,
+    5
+   ],
+   "to": [
+    127,
+    84.2426,
+    11
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      1,
+      11.7574,
+      2,
+      14.2426
+     ],
+     "texture": "#dark_timber"
+    },
+    "east": {
+     "uv": [
+      5,
+      11.7574,
+      11,
+      14.2426
+     ],
+     "texture": "#dark_timber"
+    },
+    "south": {
+     "uv": [
+      14,
+      11.7574,
+      15,
+      14.2426
+     ],
+     "texture": "#dark_timber"
+    },
+    "west": {
+     "uv": [
+      5,
+      11.7574,
+      11,
+      14.2426
+     ],
+     "texture": "#dark_timber"
+    },
+    "up": {
+     "uv": [
+      14,
+      5,
+      15,
+      11
+     ],
+     "texture": "#dark_timber"
+    },
+    "down": {
+     "uv": [
+      14,
+      5,
+      15,
+      11
+     ],
+     "texture": "#dark_timber"
+    }
+   }
+  },
+  {
+   "name": "red_pillar_7_5_capital_ring_c",
+   "from": [
+    126,
+    80,
+    6.7574
+   ],
+   "to": [
+    127,
+    86,
+    9.2426
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      1,
+      10,
+      2,
+      16
+     ],
+     "texture": "#dark_timber"
+    },
+    "east": {
+     "uv": [
+      6.7574,
+      10,
+      9.2426,
+      16
+     ],
+     "texture": "#dark_timber"
+    },
+    "south": {
+     "uv": [
+      14,
+      10,
+      15,
+      16
+     ],
+     "texture": "#dark_timber"
+    },
+    "west": {
+     "uv": [
+      6.7574,
+      10,
+      9.2426,
+      16
+     ],
+     "texture": "#dark_timber"
+    },
+    "up": {
+     "uv": [
+      14,
+      6.7574,
+      15,
+      9.2426
+     ],
+     "texture": "#dark_timber"
+    },
+    "down": {
+     "uv": [
+      14,
+      6.7574,
+      15,
+      9.2426
+     ],
+     "texture": "#dark_timber"
+    }
+   },
+   "rotation": {
+    "angle": 45,
+    "axis": "x",
+    "origin": [
+     126,
+     83,
+     8
+    ]
+   }
+  },
+  {
+   "name": "red_pillar_7_5_capital_ring_d",
+   "from": [
+    126,
+    80,
+    6.7574
+   ],
+   "to": [
+    127,
+    86,
+    9.2426
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      1,
+      10,
+      2,
+      16
+     ],
+     "texture": "#dark_timber"
+    },
+    "east": {
+     "uv": [
+      6.7574,
+      10,
+      9.2426,
+      16
+     ],
+     "texture": "#dark_timber"
+    },
+    "south": {
+     "uv": [
+      14,
+      10,
+      15,
+      16
+     ],
+     "texture": "#dark_timber"
+    },
+    "west": {
+     "uv": [
+      6.7574,
+      10,
+      9.2426,
+      16
+     ],
+     "texture": "#dark_timber"
+    },
+    "up": {
+     "uv": [
+      14,
+      6.7574,
+      15,
+      9.2426
+     ],
+     "texture": "#dark_timber"
+    },
+    "down": {
+     "uv": [
+      14,
+      6.7574,
+      15,
+      9.2426
+     ],
+     "texture": "#dark_timber"
+    }
+   },
+   "rotation": {
+    "angle": -45,
+    "axis": "x",
+    "origin": [
+     126,
+     83,
+     8
+    ]
+   }
+  },
+  {
+   "name": "red_pillar_7_5_abacus_a",
+   "from": [
+    127.5,
+    80.25,
+    6.8609
+   ],
+   "to": [
+    128,
+    85.75,
+    9.1391
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      10.25,
+      0.5,
+      15.75
+     ],
+     "texture": "#dark_timber"
+    },
+    "east": {
+     "uv": [
+      6.8609,
+      10.25,
+      9.1391,
+      15.75
+     ],
+     "texture": "#dark_timber"
+    },
+    "south": {
+     "uv": [
+      15.5,
+      10.25,
+      16,
+      15.75
+     ],
+     "texture": "#dark_timber"
+    },
+    "west": {
+     "uv": [
+      6.8609,
+      10.25,
+      9.1391,
+      15.75
+     ],
+     "texture": "#dark_timber"
+    },
+    "up": {
+     "uv": [
+      15.5,
+      6.8609,
+      16,
+      9.1391
+     ],
+     "texture": "#dark_timber"
+    },
+    "down": {
+     "uv": [
+      15.5,
+      6.8609,
+      16,
+      9.1391
+     ],
+     "texture": "#dark_timber"
+    }
+   }
+  },
+  {
+   "name": "red_pillar_7_5_abacus_b",
+   "from": [
+    127.5,
+    81.8609,
+    5.25
+   ],
+   "to": [
+    128,
+    84.1391,
+    10.75
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      11.8609,
+      0.5,
+      14.1391
+     ],
+     "texture": "#dark_timber"
+    },
+    "east": {
+     "uv": [
+      5.25,
+      11.8609,
+      10.75,
+      14.1391
+     ],
+     "texture": "#dark_timber"
+    },
+    "south": {
+     "uv": [
+      15.5,
+      11.8609,
+      16,
+      14.1391
+     ],
+     "texture": "#dark_timber"
+    },
+    "west": {
+     "uv": [
+      5.25,
+      11.8609,
+      10.75,
+      14.1391
+     ],
+     "texture": "#dark_timber"
+    },
+    "up": {
+     "uv": [
+      15.5,
+      5.25,
+      16,
+      10.75
+     ],
+     "texture": "#dark_timber"
+    },
+    "down": {
+     "uv": [
+      15.5,
+      5.25,
+      16,
+      10.75
+     ],
+     "texture": "#dark_timber"
+    }
+   }
+  },
+  {
+   "name": "red_pillar_7_5_abacus_c",
+   "from": [
+    127.5,
+    80.25,
+    6.8609
+   ],
+   "to": [
+    128,
+    85.75,
+    9.1391
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      10.25,
+      0.5,
+      15.75
+     ],
+     "texture": "#dark_timber"
+    },
+    "east": {
+     "uv": [
+      6.8609,
+      10.25,
+      9.1391,
+      15.75
+     ],
+     "texture": "#dark_timber"
+    },
+    "south": {
+     "uv": [
+      15.5,
+      10.25,
+      16,
+      15.75
+     ],
+     "texture": "#dark_timber"
+    },
+    "west": {
+     "uv": [
+      6.8609,
+      10.25,
+      9.1391,
+      15.75
+     ],
+     "texture": "#dark_timber"
+    },
+    "up": {
+     "uv": [
+      15.5,
+      6.8609,
+      16,
+      9.1391
+     ],
+     "texture": "#dark_timber"
+    },
+    "down": {
+     "uv": [
+      15.5,
+      6.8609,
+      16,
+      9.1391
+     ],
+     "texture": "#dark_timber"
+    }
+   },
+   "rotation": {
+    "angle": 45,
+    "axis": "x",
+    "origin": [
+     127.5,
+     83,
+     8
+    ]
+   }
+  },
+  {
+   "name": "red_pillar_7_5_abacus_d",
+   "from": [
+    127.5,
+    80.25,
+    6.8609
+   ],
+   "to": [
+    128,
+    85.75,
+    9.1391
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      10.25,
+      0.5,
+      15.75
+     ],
+     "texture": "#dark_timber"
+    },
+    "east": {
+     "uv": [
+      6.8609,
+      10.25,
+      9.1391,
+      15.75
+     ],
+     "texture": "#dark_timber"
+    },
+    "south": {
+     "uv": [
+      15.5,
+      10.25,
+      16,
+      15.75
+     ],
+     "texture": "#dark_timber"
+    },
+    "west": {
+     "uv": [
+      6.8609,
+      10.25,
+      9.1391,
+      15.75
+     ],
+     "texture": "#dark_timber"
+    },
+    "up": {
+     "uv": [
+      15.5,
+      6.8609,
+      16,
+      9.1391
+     ],
+     "texture": "#dark_timber"
+    },
+    "down": {
+     "uv": [
+      15.5,
+      6.8609,
+      16,
+      9.1391
+     ],
+     "texture": "#dark_timber"
+    }
+   },
+   "rotation": {
+    "angle": -45,
+    "axis": "x",
+    "origin": [
+     127.5,
+     83,
+     8
+    ]
+   }
+  },
+  {
+   "name": "red_beam_0_3_beam",
+   "from": [
+    6.5,
+    60,
+    16
+   ],
+   "to": [
+    9.5,
+    64,
+    32
+   ],
+   "faces": {
+    "east": {
+     "uv": [
+      0,
+      0,
+      16,
+      4
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "south": {
+     "uv": [
+      6.5,
+      6,
+      9.5,
+      10
+     ],
+     "texture": "#red_beam_end"
+    },
+    "west": {
+     "uv": [
+      0,
+      0,
+      16,
+      4
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "north": {
+     "uv": [
+      6.5,
+      6,
+      9.5,
+      10
+     ],
+     "texture": "#red_beam_end"
+    },
+    "up": {
+     "uv": [
+      0,
+      6.5,
+      16,
+      9.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "down": {
+     "uv": [
+      0,
+      6.5,
+      16,
+      9.5
+     ],
+     "texture": "#red_lacquer_beam"
+    }
+   }
+  },
+  {
+   "name": "red_beam_0_3_through",
+   "from": [
+    6.51,
+    60.01,
+    5.5
+   ],
+   "to": [
+    9.49,
+    63.99,
+    16
+   ],
+   "faces": {
+    "west": {
+     "uv": [
+      5.5,
+      0.01,
+      16,
+      3.99
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "east": {
+     "uv": [
+      0,
+      0.01,
+      10.5,
+      3.99
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "up": {
+     "uv": [
+      0,
+      6.51,
+      10.5,
+      9.49
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "down": {
+     "uv": [
+      0,
+      6.51,
+      10.5,
+      9.49
+     ],
+     "texture": "#red_lacquer_beam"
+    }
+   }
+  },
+  {
+   "name": "hanging_post_0_3_strut",
+   "from": [
+    6.75,
+    57,
+    38.75
+   ],
+   "to": [
+    9.25,
+    60,
+    41.25
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      6.75,
+      4,
+      9.25,
+      7
+     ],
+     "texture": "#red_lacquer"
+    },
+    "east": {
+     "uv": [
+      6.75,
+      4,
+      9.25,
+      7
+     ],
+     "texture": "#red_lacquer"
+    },
+    "south": {
+     "uv": [
+      6.75,
+      4,
+      9.25,
+      7
+     ],
+     "texture": "#red_lacquer"
+    },
+    "west": {
+     "uv": [
+      6.75,
+      4,
+      9.25,
+      7
+     ],
+     "texture": "#red_lacquer"
+    },
+    "up": {
+     "uv": [
+      6.75,
+      6.75,
+      9.25,
+      9.25
+     ],
+     "texture": "#red_lacquer"
+    },
+    "down": {
+     "uv": [
+      6.75,
+      6.75,
+      9.25,
+      9.25
+     ],
+     "texture": "#red_lacquer"
+    }
+   }
+  },
+  {
+   "name": "hanging_post_0_3_groove",
+   "from": [
+    7,
+    56.5,
+    39
+   ],
+   "to": [
+    9,
+    57,
+    41
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      7,
+      7,
+      9,
+      7.5
+     ],
+     "texture": "#dark_timber"
+    },
+    "east": {
+     "uv": [
+      7,
+      7,
+      9,
+      7.5
+     ],
+     "texture": "#dark_timber"
+    },
+    "south": {
+     "uv": [
+      7,
+      7,
+      9,
+      7.5
+     ],
+     "texture": "#dark_timber"
+    },
+    "west": {
+     "uv": [
+      7,
+      7,
+      9,
+      7.5
+     ],
+     "texture": "#dark_timber"
+    },
+    "up": {
+     "uv": [
+      7,
+      7,
+      9,
+      9
+     ],
+     "texture": "#dark_timber"
+    },
+    "down": {
+     "uv": [
+      7,
+      7,
+      9,
+      9
+     ],
+     "texture": "#dark_timber"
+    }
+   }
+  },
+  {
+   "name": "hanging_post_0_3_cap",
+   "from": [
+    6.75,
+    55,
+    38.75
+   ],
+   "to": [
+    9.25,
+    56.5,
+    41.25
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      6.75,
+      7.5,
+      9.25,
+      9
+     ],
+     "texture": "#red_lacquer"
+    },
+    "east": {
+     "uv": [
+      6.75,
+      7.5,
+      9.25,
+      9
+     ],
+     "texture": "#red_lacquer"
+    },
+    "south": {
+     "uv": [
+      6.75,
+      7.5,
+      9.25,
+      9
+     ],
+     "texture": "#red_lacquer"
+    },
+    "west": {
+     "uv": [
+      6.75,
+      7.5,
+      9.25,
+      9
+     ],
+     "texture": "#red_lacquer"
+    },
+    "up": {
+     "uv": [
+      6.75,
+      6.75,
+      9.25,
+      9.25
+     ],
+     "texture": "#red_lacquer"
+    },
+    "down": {
+     "uv": [
+      6.75,
+      6.75,
+      9.25,
+      9.25
+     ],
+     "texture": "#red_lacquer"
+    }
+   }
+  },
+  {
+   "name": "hanging_post_0_3_beam",
+   "from": [
+    6.5,
+    60,
+    32
+   ],
+   "to": [
+    9.5,
+    64,
+    48
+   ],
+   "faces": {
+    "east": {
+     "uv": [
+      0,
+      0,
+      16,
+      4
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "south": {
+     "uv": [
+      6.5,
+      6,
+      9.5,
+      10
+     ],
+     "texture": "#red_beam_end"
+    },
+    "west": {
+     "uv": [
+      0,
+      0,
+      16,
+      4
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "north": {
+     "uv": [
+      6.5,
+      6,
+      9.5,
+      10
+     ],
+     "texture": "#red_beam_end"
+    },
+    "up": {
+     "uv": [
+      0,
+      6.5,
+      16,
+      9.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "down": {
+     "uv": [
+      0,
+      6.5,
+      16,
+      9.5
+     ],
+     "texture": "#red_lacquer_beam"
+    }
+   }
+  },
+  {
+   "name": "red_beam_0_3_beam",
+   "from": [
+    6.5,
+    60,
+    48
+   ],
+   "to": [
+    9.5,
+    64,
+    64
+   ],
+   "faces": {
+    "east": {
+     "uv": [
+      0,
+      0,
+      16,
+      4
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "south": {
+     "uv": [
+      6.5,
+      6,
+      9.5,
+      10
+     ],
+     "texture": "#red_beam_end"
+    },
+    "west": {
+     "uv": [
+      0,
+      0,
+      16,
+      4
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "north": {
+     "uv": [
+      6.5,
+      6,
+      9.5,
+      10
+     ],
+     "texture": "#red_beam_end"
+    },
+    "up": {
+     "uv": [
+      0,
+      6.5,
+      16,
+      9.5
+     ],
+     "texture": "#red_lacquer_beam"
+    },
+    "down": {
+     "uv": [
+      0,
+      6.5,
+      16,
+      9.5
+     ],
+     "texture": "#red_lacquer_beam"
+    }
+   }
+  },
+  {
+   "name": "plum_planks_-2_-1_plank",
+   "from": [
+    -32,
+    -16,
+    -16
+   ],
+   "to": [
+    -16,
+    0,
+    0
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "east": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "west": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "up": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "down": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    }
+   }
+  },
+  {
+   "name": "plum_planks_-2_-1_plank",
+   "from": [
+    -32,
+    -16,
+    0
+   ],
+   "to": [
+    -16,
+    0,
+    16
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "east": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "west": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "up": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "down": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    }
+   }
+  },
+  {
+   "name": "plum_planks_-2_-1_plank",
+   "from": [
+    -32,
+    -16,
+    16
+   ],
+   "to": [
+    -16,
+    0,
+    32
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "east": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "west": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "up": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "down": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    }
+   }
+  },
+  {
+   "name": "plum_planks_-2_-1_plank",
+   "from": [
+    -32,
+    -16,
+    32
+   ],
+   "to": [
+    -16,
+    0,
+    48
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "east": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "west": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "up": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "down": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    }
+   }
+  },
+  {
+   "name": "plum_planks_-2_-1_plank",
+   "from": [
+    -32,
+    -16,
+    48
+   ],
+   "to": [
+    -16,
+    0,
+    64
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "east": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "west": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "up": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "down": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    }
+   }
+  },
+  {
+   "name": "plum_planks_-1_-1_plank",
+   "from": [
+    -16,
+    -16,
+    -16
+   ],
+   "to": [
+    0,
+    0,
+    0
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "east": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "west": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "up": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "down": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    }
+   }
+  },
+  {
+   "name": "plum_planks_-1_-1_plank",
+   "from": [
+    -16,
+    -16,
+    0
+   ],
+   "to": [
+    0,
+    0,
+    16
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "east": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "west": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "up": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "down": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    }
+   }
+  },
+  {
+   "name": "plum_planks_-1_-1_plank",
+   "from": [
+    -16,
+    -16,
+    16
+   ],
+   "to": [
+    0,
+    0,
+    32
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "east": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "west": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "up": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "down": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    }
+   }
+  },
+  {
+   "name": "plum_planks_-1_-1_plank",
+   "from": [
+    -16,
+    -16,
+    32
+   ],
+   "to": [
+    0,
+    0,
+    48
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "east": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "west": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "up": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "down": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    }
+   }
+  },
+  {
+   "name": "plum_planks_-1_-1_plank",
+   "from": [
+    -16,
+    -16,
+    48
+   ],
+   "to": [
+    0,
+    0,
+    64
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "east": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "west": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "up": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "down": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    }
+   }
+  },
+  {
+   "name": "plum_planks_0_-1_plank",
+   "from": [
+    0,
+    -16,
+    -16
+   ],
+   "to": [
+    16,
+    0,
+    0
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "east": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "west": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "up": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "down": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    }
+   }
+  },
+  {
+   "name": "plum_planks_0_-1_plank",
+   "from": [
+    0,
+    -16,
+    0
+   ],
+   "to": [
+    16,
+    0,
+    16
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "east": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "west": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "up": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "down": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    }
+   }
+  },
+  {
+   "name": "plum_planks_0_-1_plank",
+   "from": [
+    0,
+    -16,
+    16
+   ],
+   "to": [
+    16,
+    0,
+    32
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "east": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "west": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "up": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "down": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    }
+   }
+  },
+  {
+   "name": "plum_planks_0_-1_plank",
+   "from": [
+    0,
+    -16,
+    32
+   ],
+   "to": [
+    16,
+    0,
+    48
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "east": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "west": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "up": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "down": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    }
+   }
+  },
+  {
+   "name": "plum_planks_0_-1_plank",
+   "from": [
+    0,
+    -16,
+    48
+   ],
+   "to": [
+    16,
+    0,
+    64
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "east": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "west": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "up": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "down": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    }
+   }
+  },
+  {
+   "name": "plum_planks_1_-1_plank",
+   "from": [
+    16,
+    -16,
+    -16
+   ],
+   "to": [
+    32,
+    0,
+    0
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "east": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "west": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "up": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "down": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    }
+   }
+  },
+  {
+   "name": "plum_planks_1_-1_plank",
+   "from": [
+    16,
+    -16,
+    0
+   ],
+   "to": [
+    32,
+    0,
+    16
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "east": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "west": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "up": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "down": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    }
+   }
+  },
+  {
+   "name": "plum_planks_1_-1_plank",
+   "from": [
+    16,
+    -16,
+    16
+   ],
+   "to": [
+    32,
+    0,
+    32
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "east": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "west": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "up": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "down": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    }
+   }
+  },
+  {
+   "name": "plum_planks_1_-1_plank",
+   "from": [
+    16,
+    -16,
+    32
+   ],
+   "to": [
+    32,
+    0,
+    48
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "east": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "west": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "up": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "down": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    }
+   }
+  },
+  {
+   "name": "plum_planks_1_-1_plank",
+   "from": [
+    16,
+    -16,
+    48
+   ],
+   "to": [
+    32,
+    0,
+    64
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "east": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "west": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "up": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "down": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    }
+   }
+  },
+  {
+   "name": "plum_planks_2_-1_plank",
+   "from": [
+    32,
+    -16,
+    -16
+   ],
+   "to": [
+    48,
+    0,
+    0
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "east": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "west": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "up": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "down": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    }
+   }
+  },
+  {
+   "name": "plum_planks_2_-1_plank",
+   "from": [
+    32,
+    -16,
+    0
+   ],
+   "to": [
+    48,
+    0,
+    16
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "east": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "west": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "up": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "down": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    }
+   }
+  },
+  {
+   "name": "plum_planks_2_-1_plank",
+   "from": [
+    32,
+    -16,
+    16
+   ],
+   "to": [
+    48,
+    0,
+    32
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "east": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "west": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "up": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "down": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    }
+   }
+  },
+  {
+   "name": "plum_planks_2_-1_plank",
+   "from": [
+    32,
+    -16,
+    32
+   ],
+   "to": [
+    48,
+    0,
+    48
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "east": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "west": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "up": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "down": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    }
+   }
+  },
+  {
+   "name": "plum_planks_2_-1_plank",
+   "from": [
+    32,
+    -16,
+    48
+   ],
+   "to": [
+    48,
+    0,
+    64
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "east": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "west": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "up": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "down": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    }
+   }
+  },
+  {
+   "name": "plum_planks_3_-1_plank",
+   "from": [
+    48,
+    -16,
+    -16
+   ],
+   "to": [
+    64,
+    0,
+    0
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "east": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "west": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "up": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "down": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    }
+   }
+  },
+  {
+   "name": "plum_planks_3_-1_plank",
+   "from": [
+    48,
+    -16,
+    0
+   ],
+   "to": [
+    64,
+    0,
+    16
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "east": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "west": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "up": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "down": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    }
+   }
+  },
+  {
+   "name": "plum_planks_3_-1_plank",
+   "from": [
+    48,
+    -16,
+    16
+   ],
+   "to": [
+    64,
+    0,
+    32
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "east": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "west": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "up": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "down": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    }
+   }
+  },
+  {
+   "name": "plum_planks_3_-1_plank",
+   "from": [
+    48,
+    -16,
+    32
+   ],
+   "to": [
+    64,
+    0,
+    48
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "east": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "west": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "up": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "down": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    }
+   }
+  },
+  {
+   "name": "plum_planks_3_-1_plank",
+   "from": [
+    48,
+    -16,
+    48
+   ],
+   "to": [
+    64,
+    0,
+    64
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "east": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "west": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "up": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "down": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    }
+   }
+  },
+  {
+   "name": "plum_planks_4_-1_plank",
+   "from": [
+    64,
+    -16,
+    -16
+   ],
+   "to": [
+    80,
+    0,
+    0
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "east": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "west": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "up": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "down": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    }
+   }
+  },
+  {
+   "name": "plum_planks_4_-1_plank",
+   "from": [
+    64,
+    -16,
+    0
+   ],
+   "to": [
+    80,
+    0,
+    16
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "east": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "west": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "up": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "down": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    }
+   }
+  },
+  {
+   "name": "plum_planks_4_-1_plank",
+   "from": [
+    64,
+    -16,
+    16
+   ],
+   "to": [
+    80,
+    0,
+    32
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "east": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "west": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "up": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "down": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    }
+   }
+  },
+  {
+   "name": "plum_planks_4_-1_plank",
+   "from": [
+    64,
+    -16,
+    32
+   ],
+   "to": [
+    80,
+    0,
+    48
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "east": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "west": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "up": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "down": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    }
+   }
+  },
+  {
+   "name": "plum_planks_4_-1_plank",
+   "from": [
+    64,
+    -16,
+    48
+   ],
+   "to": [
+    80,
+    0,
+    64
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "east": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "west": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "up": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "down": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    }
+   }
+  },
+  {
+   "name": "plum_planks_5_-1_plank",
+   "from": [
+    80,
+    -16,
+    -16
+   ],
+   "to": [
+    96,
+    0,
+    0
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "east": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "west": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "up": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "down": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    }
+   }
+  },
+  {
+   "name": "plum_planks_5_-1_plank",
+   "from": [
+    80,
+    -16,
+    0
+   ],
+   "to": [
+    96,
+    0,
+    16
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "east": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "west": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "up": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "down": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    }
+   }
+  },
+  {
+   "name": "plum_planks_5_-1_plank",
+   "from": [
+    80,
+    -16,
+    16
+   ],
+   "to": [
+    96,
+    0,
+    32
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "east": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "west": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "up": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "down": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    }
+   }
+  },
+  {
+   "name": "plum_planks_5_-1_plank",
+   "from": [
+    80,
+    -16,
+    32
+   ],
+   "to": [
+    96,
+    0,
+    48
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "east": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "west": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "up": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "down": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    }
+   }
+  },
+  {
+   "name": "plum_planks_5_-1_plank",
+   "from": [
+    80,
+    -16,
+    48
+   ],
+   "to": [
+    96,
+    0,
+    64
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "east": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "west": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "up": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "down": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    }
+   }
+  },
+  {
+   "name": "plum_planks_6_-1_plank",
+   "from": [
+    96,
+    -16,
+    -16
+   ],
+   "to": [
+    112,
+    0,
+    0
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "east": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "west": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "up": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "down": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    }
+   }
+  },
+  {
+   "name": "plum_planks_6_-1_plank",
+   "from": [
+    96,
+    -16,
+    0
+   ],
+   "to": [
+    112,
+    0,
+    16
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "east": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "west": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "up": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "down": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    }
+   }
+  },
+  {
+   "name": "plum_planks_6_-1_plank",
+   "from": [
+    96,
+    -16,
+    16
+   ],
+   "to": [
+    112,
+    0,
+    32
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "east": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "west": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "up": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "down": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    }
+   }
+  },
+  {
+   "name": "plum_planks_6_-1_plank",
+   "from": [
+    96,
+    -16,
+    32
+   ],
+   "to": [
+    112,
+    0,
+    48
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "east": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "west": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "up": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "down": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    }
+   }
+  },
+  {
+   "name": "plum_planks_6_-1_plank",
+   "from": [
+    96,
+    -16,
+    48
+   ],
+   "to": [
+    112,
+    0,
+    64
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "east": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "west": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "up": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "down": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    }
+   }
+  },
+  {
+   "name": "plum_planks_7_-1_plank",
+   "from": [
+    112,
+    -16,
+    -16
+   ],
+   "to": [
+    128,
+    0,
+    0
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "east": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "west": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "up": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "down": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    }
+   }
+  },
+  {
+   "name": "plum_planks_7_-1_plank",
+   "from": [
+    112,
+    -16,
+    0
+   ],
+   "to": [
+    128,
+    0,
+    16
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "east": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "west": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "up": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "down": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    }
+   }
+  },
+  {
+   "name": "plum_planks_7_-1_plank",
+   "from": [
+    112,
+    -16,
+    16
+   ],
+   "to": [
+    128,
+    0,
+    32
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "east": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "west": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "up": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "down": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    }
+   }
+  },
+  {
+   "name": "plum_planks_7_-1_plank",
+   "from": [
+    112,
+    -16,
+    32
+   ],
+   "to": [
+    128,
+    0,
+    48
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "east": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "west": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "up": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "down": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    }
+   }
+  },
+  {
+   "name": "plum_planks_7_-1_plank",
+   "from": [
+    112,
+    -16,
+    48
+   ],
+   "to": [
+    128,
+    0,
+    64
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "east": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "west": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "up": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "down": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    }
+   }
+  },
+  {
+   "name": "plum_planks_8_-1_plank",
+   "from": [
+    128,
+    -16,
+    -16
+   ],
+   "to": [
+    144,
+    0,
+    0
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "east": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "west": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "up": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "down": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    }
+   }
+  },
+  {
+   "name": "plum_planks_8_-1_plank",
+   "from": [
+    128,
+    -16,
+    0
+   ],
+   "to": [
+    144,
+    0,
+    16
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "east": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "west": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "up": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "down": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    }
+   }
+  },
+  {
+   "name": "plum_planks_8_-1_plank",
+   "from": [
+    128,
+    -16,
+    16
+   ],
+   "to": [
+    144,
+    0,
+    32
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "east": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "west": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "up": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "down": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    }
+   }
+  },
+  {
+   "name": "plum_planks_8_-1_plank",
+   "from": [
+    128,
+    -16,
+    32
+   ],
+   "to": [
+    144,
+    0,
+    48
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "east": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "west": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "up": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "down": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    }
+   }
+  },
+  {
+   "name": "plum_planks_8_-1_plank",
+   "from": [
+    128,
+    -16,
+    48
+   ],
+   "to": [
+    144,
+    0,
+    64
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "east": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "west": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "up": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    },
+    "down": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#planks"
+    }
+   }
+  }
+ ]
+}

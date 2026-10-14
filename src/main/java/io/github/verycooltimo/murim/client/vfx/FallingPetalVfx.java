@@ -172,7 +172,7 @@ public final class FallingPetalVfx {
 
     private static final class Cast {
         final int entityId;
-        final int layer;
+        final int executionTier;
         final int start;
         final Random random;
         int targetId = -1;
@@ -196,9 +196,9 @@ public final class FallingPetalVfx {
         Vec3 moved = Vec3.ZERO;
         Vec3 face;
 
-        Cast(int entityId, int layer) {
+        Cast(int entityId, int executionTier) {
             this.entityId = entityId;
-            this.layer = layer;
+            this.executionTier = executionTier;
             this.start = clientTicks;
             this.random = new Random(entityId * 7919L + clientTicks * 31L);
         }
@@ -212,7 +212,7 @@ public final class FallingPetalVfx {
         }
 
         boolean fx() {
-            return layer >= 1;
+            return executionTier >= 1;
         }
 
         boolean lunge() {
@@ -220,11 +220,11 @@ public final class FallingPetalVfx {
         }
 
         double widthK() {
-            return layer <= 1 ? 0.6D : layer == 2 ? 0.8D : layer == 3 ? 1.0D : layer <= 5 ? 1.1D : 1.2D;
+            return executionTier <= 1 ? 0.6D : executionTier == 2 ? 0.8D : executionTier == 3 ? 1.0D : executionTier <= 5 ? 1.1D : 1.2D;
         }
 
         double petalK() {
-            return layer < 3 ? 0.0D : 0.55D + 0.12D * (layer - 3);
+            return executionTier < 3 ? 0.0D : 0.55D + 0.12D * (executionTier - 3);
         }
     }
 
@@ -249,18 +249,18 @@ public final class FallingPetalVfx {
             return;
         }
         CASTS.removeIf(x -> x.entityId == payload.sourceId() && x.age() < 200 && !x.begun);
-        Cast c = new Cast(payload.sourceId(), payload.layer());
+        Cast c = new Cast(payload.sourceId(), payload.executionTier());
         CASTS.add(c);
         if (c.fx()) {
             // Синяя живая аура стойки (AuraSim): горит в стойке и на входе, гаснет к первому удару.
-            ClientAuraState.techniqueAura(c.entityId, 2, 0, 13);
+            ClientAuraState.techniqueAura(c.entityId, 2, 0, FallingPetalRules.STANCE + 8);
         }
     }
 
     public static void onPayload(FallingPetalPayload p) {
         Cast c = find(p.entityId());
         if (c == null) {
-            c = new Cast(p.entityId(), p.layer());
+            c = new Cast(p.entityId(), p.executionTier());
             CASTS.add(c);
         }
         Minecraft mc = Minecraft.getInstance();
@@ -285,7 +285,12 @@ public final class FallingPetalVfx {
             }
             return;
         }
+        if (stage >= 10) {
+            blinkFx(c, p.at(), p.axis(), own);
+            return;
+        }
         int k = stage - 1;
+        int last = FallingPetalRules.STRIKES.length - 1;
         Vec3 at = p.at();
         Entity e = mc.level == null ? null : mc.level.getEntity(c.entityId);
         Vec3 away = e == null ? c.axis : flat(at.subtract(e.position()));
@@ -295,18 +300,18 @@ public final class FallingPetalVfx {
             float own2 = own || mc.player.getId() == p.targetId() ? 1.0F : near;
             if (c.fx()) {
                 // Тряска у всех рядом, в том числе у мастера (у него — напрямую, без деления на расстояние).
-                if (k == 4) {
+                if (k == last) {
                     CameraShakeHandler.quake(0.8F * own2, 12);
-                } else if (k == 2) {
+                } else if (k == 1) {
                     CameraShakeHandler.quake(0.5F * own2, 8);
                 } else {
                     CameraShakeHandler.quake(0.18F * own2, 4);
                 }
             }
-            io.github.verycooltimo.murim.client.Sfx.play(at.x, at.y, at.z, k == 4 ? io.github.verycooltimo.murim.registry.ModSounds.IMPACT_HEAVY.get()
+            io.github.verycooltimo.murim.client.Sfx.play(at.x, at.y, at.z, k == last ? io.github.verycooltimo.murim.registry.ModSounds.IMPACT_HEAVY.get()
                     : io.github.verycooltimo.murim.registry.ModSounds.SWORD_HIT.get(), SoundSource.PLAYERS, 1.0F,
-                    k == 2 ? 0.8F : k == 4 ? 1.0F : 1.05F, false);
-            if (k == 2) {
+                    k == 1 ? 0.9F : k == last ? 1.0F : 1.05F, false);
+            if (k == last) {
                 // «Ломает кости»: глухой хруст поверх звона клинка.
                 mc.level.playLocalSound(at.x, at.y, at.z, SoundEvents.ZOMBIE_ATTACK_WOODEN_DOOR, SoundSource.PLAYERS, 0.45F, 1.6F, false);
             }
@@ -315,29 +320,29 @@ public final class FallingPetalVfx {
             return;
         }
         // Плечо: всплеск живёт дольше импакт-кадра (8 тиков) и смотрит от мастера и вниз (ref3).
-        Vec3 dirB = k == 2 ? away.add(0.0D, -0.35D, 0.0D) : away;
+        Vec3 dirB = k == last ? away.add(0.0D, -0.35D, 0.0D) : away;
         // Основание всплеска — на поверхности цели со стороны мастера, а не в её центре.
         Entity tgtE = mc.level == null ? null : mc.level.getEntity(p.targetId());
         double half = tgtE == null ? 0.3D : tgtE.getBbWidth() * 0.5D;
         at = at.subtract(away.scale(half));
-        c.bursts.add(new Burst(at, dirB, clientTicks, k == 2 ? 1.5D : k == 4 ? 0.7D : 0.85D, c.random.nextLong(), k == 2 ? 8 : 5));
-        if (k == 4) {
+        c.bursts.add(new Burst(at, dirB, clientTicks, k == last ? 1.5D : 0.95D, c.random.nextLong(), k == last ? 8 : 5));
+        if (k == last) {
             c.throat = at;
         }
-        if (k == 2 || k == 4) {
+        if (k >= 1) {
             if (own) {
                 ImpactFrames.trigger(at);
-                SpeedLines.radial(0.5F, 0.5F, k == 4 ? 1.0F : 0.7F, k == 4 ? 8 : 5, SpeedLines.WHITE);
+                SpeedLines.radial(0.5F, 0.5F, k == last ? 1.0F : 0.7F, k == last ? 8 : 5, SpeedLines.WHITE);
             }
             // Дым из места попадания, а не вал у ног: несколько неравных клочьев.
-            smoke(c, at.subtract(0.0D, 0.25D, 0.0D).add(away.scale(k == 4 ? 0.45D : 0.2D)), k == 4 ? 4 : 2, k == 4 ? 0.2D : 0.17D, k == 4 ? 12 : 9);
+            smoke(c, at.subtract(0.0D, 0.25D, 0.0D).add(away.scale(k == last ? 0.45D : 0.2D)), k == last ? 4 : 2, k == last ? 0.2D : 0.17D, k == last ? 12 : 9);
         } else {
             smoke(c, at.subtract(0.0D, 0.6D, 0.0D), 1, 0.3D, 10);
         }
         // Удар собран в точке контакта (ref3/ref7): плотный веер лепестков и белых штрихов по
         // направлению реза, 2,5–4 блока; на прочих движениях лепестков меньше.
-        petalsAt(c, at, (int) Math.round((k == 4 ? 45 : k == 2 ? 32 : 16) * c.petalK()), k == 4 ? 0.3D : 0.24D, away);
-        int streaks = k == 4 ? 9 : k == 2 ? 7 : 4;
+        petalsAt(c, at, (int) Math.round((k == last ? 45 : 28) * c.petalK()), k == last ? 0.3D : 0.24D, away);
+        int streaks = k == last ? 9 : 6;
         for (int i = 0; i < streaks; i++) {
             Vec3 d = away.add(c.random.nextGaussian() * 0.35D, 0.1D + c.random.nextGaussian() * 0.3D, c.random.nextGaussian() * 0.35D).normalize();
             Ribbon st = new Ribbon(at, d.scale(0.5D + 0.25D * c.random.nextDouble()), 0.0D, 0.06D * c.widthK(), 4 + c.random.nextInt(2), 0.95F, 0.0D);
@@ -467,23 +472,11 @@ public final class FallingPetalVfx {
         if (!c.begun) {
             return null;
         }
-        if (s >= 1.0D && s <= FallingPetalRules.DASHES[0][1] - 1.0D) {
-            return new double[] {CARRY, 0, (s - 1.0D) / (FallingPetalRules.DASHES[0][1] - 2.0D)};
-        }
-        if (s >= FallingPetalRules.STRIKES[3] + 3.4D && s <= FallingPetalRules.STRIKES[3] + 8.0D) {
-            return new double[] {LOOP, 0, (s - FallingPetalRules.STRIKES[3] - 3.4D) / 4.6D};
-        }
         for (int k = 0; k < FallingPetalRules.STRIKES.length; k++) {
             int hit = FallingPetalRules.STRIKES[k];
             double p = (s - (hit - FallingPetalRules.CUT)) / FallingPetalRules.CUT;
             if (p >= 0.0D && p <= 1.3D) {
                 return new double[] {k, 0, p};
-            }
-            if (FallingPetalRules.RETURNS[k]) {
-                double r = (s - (hit + 1.2D)) / FallingPetalRules.RETURN;
-                if (r >= 0.0D && r <= 1.0D) {
-                    return new double[] {k, 1, r};
-                }
             }
         }
         return null;
@@ -525,7 +518,7 @@ public final class FallingPetalVfx {
                 tipAt = waist(e, frac).add(c.face.scale(-0.35D - 0.5D * Math.sin(ph))).add(sd.scale(-0.55D + 0.9D * b[2]))
                         .add(0.0D, -0.6D + 1.15D * Math.sin(ph), 0.0D);
             } else {
-                double[] arc = ret ? FallingPetalRules.returnArc(k) : FallingPetalRules.ARCS[k];
+                double[] arc = FallingPetalRules.ARCS[k];
                 tipAt = FallingPetalRules.tip(waist(e, frac), c.face, arc, b[2]);
             }
             tr.pts.add(new Pt(tipAt, c.age() - 1 + frac));
@@ -543,14 +536,14 @@ public final class FallingPetalVfx {
         Vec3 dir = speed > 1.0E-3D ? new Vec3(c.moved.x / speed, 0.0D, c.moved.z / speed) : f;
         // Рывки: ленты ветра срываются назад, закручиваясь, пыль от каждой опоры.
         if (speed > 0.12D) {
-            int n = c.layer >= 5 ? 2 : 1;
+            int n = c.executionTier >= 5 ? 2 : 1;
             for (int i = 0; i < n; i++) {
                 double h = 0.25D + c.random.nextDouble() * 1.3D;
                 double sgn = c.random.nextBoolean() ? 1.0D : -1.0D;
                 Vec3 at = e.position().add(0.0D, h, 0.0D).add(FallingPetalRules.left(dir).scale(sgn * (0.3D + 0.3D * c.random.nextDouble())));
                 c.ribbons.add(new Ribbon(at, dir.scale(-0.16D - 0.12D * c.random.nextDouble()).add(0.0D, 0.02D, 0.0D),
                         0.18D * sgn, (0.07D + 0.05D * c.random.nextDouble()) * c.widthK(),
-                        s >= FallingPetalRules.STRIKES[3] ? 5 + c.random.nextInt(2) : 9 + c.random.nextInt(4),
+                        s >= FallingPetalRules.STRIKES[FallingPetalRules.STRIKES.length - 1] ? 5 + c.random.nextInt(2) : 9 + c.random.nextInt(4),
                         0.42F, c.random.nextDouble() * 6.0D));
             }
             // Скольжение — вытянутый след пыли назад (ref1/ref4).
@@ -563,44 +556,12 @@ public final class FallingPetalVfx {
                         1, 0.07D, dir.scale(-1.0D));
             }
         }
-        // Круговые следы ref2: проход вокруг цели оставляет длинные серо-белые дуги, огибающие
-        // цель на разных высотах — каждая со своей скоростью и закруткой, без замкнутых колец.
-        Entity tgt = c.targetId >= 0 ? Minecraft.getInstance().level.getEntity(c.targetId) : null;
-        if (tgt != null && speed > 0.1D && s > FallingPetalRules.STRIKES[0] + 1 && s < FallingPetalRules.STRIKES[3] && !nearContact(s)
-                && c.ribbons.stream().filter(x -> x.orbit).count() < 8) {
-            Vec3 rad = flat(e.position().subtract(tgt.position()));
-            double rr = Mth.clamp(e.position().subtract(tgt.position()).horizontalDistance(), 0.9D, 2.2D);
-            Vec3 tang = new Vec3(-rad.z, 0.0D, rad.x);
-            double sgn = Math.signum(tang.dot(dir));
-            if (sgn != 0.0D) {
-                // ref2: широкий серый вихрь вокруг цели — по две длинные дуги каждый тик обхода.
-                int n = 2;
-                for (int i = 0; i < n; i++) {
-                    double h = 0.25D + c.random.nextDouble() * 1.6D;
-                    double sp = 0.55D + 0.15D * c.random.nextDouble();
-                    Ribbon o = new Ribbon(tgt.position().add(rad.scale(rr * (0.9D + 0.25D * c.random.nextDouble()))).add(0.0D, h, 0.0D),
-                            tang.scale(sgn * sp).add(0.0D, (c.random.nextDouble() - 0.5D) * 0.04D, 0.0D),
-                            sgn * sp / rr, (0.16D + 0.1D * c.random.nextDouble()) * c.widthK(), 14 + c.random.nextInt(5),
-                            0.5F, c.random.nextDouble() * 6.0D);
-                    o.tail = 9;
-                    o.orbit = true;
-                    c.ribbons.add(o);
-                }
-            }
-        }
-        for (int di = 0; di < FallingPetalRules.DASHES.length; di++) {
-            int[] d = FallingPetalRules.DASHES[di];
-            if (di != FallingPetalRules.PIVOT && (s == d[0] || s == d[0] + d[1])) {
-                // Постановка стопы — короткий острый веер наружу за 2–3 тика (ref6).
-                dust(c, e.position(), s == d[0] ? 14 : 18, 0.24D);
-            }
-        }
         // На каждом контакте: две-три ленты по касательной реза и лепестки из хвоста следа.
         double[] b = blade(c, s);
         if (b != null && (int) b[0] < CARRY) {
             int k = (int) b[0];
             boolean ret = b[1] > 0.5D;
-            double[] arc = ret ? FallingPetalRules.returnArc(k) : FallingPetalRules.ARCS[k];
+            double[] arc = FallingPetalRules.ARCS[k];
             Vec3 tip = FallingPetalRules.tip(waist(e, 1.0D), f, arc, b[2]);
             Vec3 tip2 = FallingPetalRules.tip(waist(e, 1.0D), f, arc, b[2] + 0.15D);
             Vec3 tan = tip2.subtract(tip);
@@ -608,7 +569,7 @@ public final class FallingPetalVfx {
             double sw = Math.signum(arc[1] - arc[0]);
             if (!ret && b[2] > 0.45D && b[2] < 0.95D && c.age() % 2 == 0) {
                 // Три направленные дуги ветра у стоп, пояса и плеч (ref2/ref5), между ними пусто.
-                int n = c.layer >= 2 ? 3 : 1;
+                int n = c.executionTier >= 2 ? 3 : 1;
                 double[] hs = {0.25D, 1.0D, 1.6D};
                 for (int i = 0; i < n; i++) {
                     Vec3 from = new Vec3(tip.x, e.getY() + hs[i], tip.z);
@@ -632,26 +593,44 @@ public final class FallingPetalVfx {
                         SoundSource.PLAYERS, 0.5F, 1.05F + 0.05F * k, false);
             }
         }
-        // Шаг-разворот ref4: кольцо у голеней.
-        int[] pivot = FallingPetalRules.DASHES[FallingPetalRules.PIVOT];
-        if (!c.lunge() && s == pivot[0]) {
-            c.ringBorn = clientTicks;
-            c.ringAt = e.position();
-            dust(c, e.position(), 3, 0.12D);
-        }
-        if (!c.lunge() && s > pivot[0] && s <= pivot[0] + pivot[1]) {
-            c.ringAt = e.position();
-            Vec3 at = e.position().add(0.0D, 0.2D, 0.0D);
-            c.ribbons.add(new Ribbon(at.add(side.scale(0.5D)), f.scale(0.12D), 0.4D, 0.05D * c.widthK(), 8, 0.45F, 1.0D));
-            if (c.petalK() > 0.0D) {
-                petalsAt(c, at, 2, 0.08D, side);
-            }
-        }
         // Финальная волна ref7: высокий серп над бойцами — часть движения, рисуется и при промахе.
-        if (!c.lunge() && s == FallingPetalRules.STRIKES[4]) {
+        if (!c.lunge() && s == FallingPetalRules.STRIKES[FallingPetalRules.STRIKES.length - 1]) {
             c.waveBorn = clientTicks;
             c.waveBase = e.position();
             c.waveF = f;
+        }
+    }
+
+    /**
+     * Blink (v3): petal burst and a puff where the master vanished, 3-5 afterimage streaks along
+     * the jump, and a smaller burst with dust where he reappears behind the target.
+     */
+    private static void blinkFx(Cast c, Vec3 from, Vec3 to, boolean own) {
+        Vec3 path = to.subtract(from);
+        Vec3 dir = path.lengthSqr() > 1.0E-4D ? path.normalize() : (c.face == null ? new Vec3(0.0D, 0.0D, 1.0D) : c.face);
+        io.github.verycooltimo.murim.client.Sfx.play(from.x, from.y + 1.0D, from.z,
+                io.github.verycooltimo.murim.registry.ModSounds.SWORD_SWING.get(), SoundSource.PLAYERS, 0.7F, 0.75F, false);
+        if (!c.fx()) {
+            return;
+        }
+        dust(c, from, 10, 0.2D);
+        smoke(c, from.add(0.0D, 0.9D, 0.0D), 2, 0.3D, 8);
+        if (c.petalK() > 0.0D) {
+            petalsAt(c, from.add(0.0D, 1.0D, 0.0D), (int) Math.round(18 * c.petalK()), 0.22D, dir);
+            petalsAt(c, to.add(0.0D, 1.0D, 0.0D), (int) Math.round(10 * c.petalK()), 0.14D, dir.scale(-1.0D));
+        }
+        int n = c.executionTier >= 4 ? 5 : 3;
+        for (int i = 0; i < n; i++) {
+            double h = 0.3D + 1.3D * i / Math.max(1, n - 1);
+            Ribbon st = new Ribbon(from.add(0.0D, h, 0.0D), path.scale(0.5D).add(0.0D, 0.0D, 0.0D), 0.0D,
+                    0.07D * c.widthK(), 4 + c.random.nextInt(2), 0.7F, 0.0D);
+            st.tail = 6;
+            st.streak = true;
+            c.ribbons.add(st);
+        }
+        dust(c, to, 8, 0.16D);
+        if (own) {
+            SpeedLines.radial(0.5F, 0.5F, 0.6F, 4, SpeedLines.WHITE);
         }
     }
 
@@ -771,6 +750,11 @@ public final class FallingPetalVfx {
         }
     }
 
+    /** Shared edge-on tumbling for the command Rainfall approximation. */
+    static double tumblingWidth(double age, double phase) {
+        return 0.55D + 0.45D * Math.abs(Math.sin(age * 0.35D + phase));
+    }
+
     private static Vec3 flat(Vec3 v) {
         Vec3 f = new Vec3(v.x, 0.0D, v.z);
         return f.lengthSqr() < 1.0E-8D ? new Vec3(0.0D, 0.0D, 1.0D) : f.normalize();
@@ -848,7 +832,7 @@ public final class FallingPetalVfx {
                         }
                         float a = Mth.clamp((m.life - m.age - partial) / 12.0F, 0.0F, 1.0F) * Mth.clamp((m.age + partial) / 2.0F, 0.0F, 1.0F);
                         // Лепесток переворачивается в полёте: ширина «мигает» вдоль оси вращения.
-                        double flip = 0.55D + 0.45D * Math.abs(Math.sin((m.age + partial) * 0.35D + m.phase));
+                        double flip = tumblingWidth(m.age + partial, m.phase);
                         // ~80% #EDEAE2, ~20% #DABDC5 (бледный румянец сливы).
                         float r = m.tint == 1 ? 0xDA / 255.0F : 0xED / 255.0F;
                         float g = m.tint == 1 ? 0xBD / 255.0F : 0xEA / 255.0F;
@@ -918,7 +902,7 @@ public final class FallingPetalVfx {
         PlumVfx.stripVar(v, pose, camera, p, w, PlumVfx.scaled(a, 0.95F), CORE);
         PlumVfx.stripVar(v, pose, camera, p, PlumVfx.scale(w, 0.5D), PlumVfx.scaled(a, 1.0F), WHITE);
         // Слой 6+: вторая тонкая отстающая кромка у плеча и низкого прохода.
-        if (c.layer >= 6 && (t.strike == 2 || t.strike == 3) && n > 6) {
+        if (c.executionTier >= 6 && (t.strike == 2 || t.strike == 3) && n > 6) {
             Vec3[] lag = new Vec3[n - 3];
             double[] lw = new double[n - 3];
             float[] la = new float[n - 3];
@@ -1007,7 +991,7 @@ public final class FallingPetalVfx {
         if (t < -1.0F || t > 10.0F) {
             return;
         }
-        double height = c.layer <= 1 ? 2.4D : c.layer == 2 ? 2.8D : c.layer <= 4 ? 3.2D : c.layer <= 6 ? 3.5D : 3.7D;
+        double height = c.executionTier <= 1 ? 2.4D : c.executionTier == 2 ? 2.8D : c.executionTier <= 4 ? 3.2D : c.executionTier <= 6 ? 3.5D : 3.7D;
         // Пик — на самом контакте (тик удара): волна вырастает за 1,5 тика и сразу распадается.
         t += 1.0F;
         float fade = Mth.clamp((11.0F - t) / 4.0F, 0.0F, 1.0F);
@@ -1018,7 +1002,7 @@ public final class FallingPetalVfx {
         Vec3 a = c.throat != null ? c.throat : base.add(f.scale(0.95D)).add(s.scale(-0.25D)).add(0.0D, 1.6D, 0.0D);
         Vec3 b = base.add(f.scale(0.35D)).add(s.scale(0.45D)).add(0.0D, height + 0.9D, 0.0D);
         Vec3 z = base.add(f.scale(-1.7D)).add(s.scale(0.9D)).add(0.0D, height * 0.62D, 0.0D);
-        for (int edge = 0; edge < (c.layer >= 6 ? 2 : 1); edge++) {
+        for (int edge = 0; edge < (c.executionTier >= 6 ? 2 : 1); edge++) {
             float te = t - edge * 2.0F;
             if (te < 0.0F) {
                 continue;

@@ -14,7 +14,7 @@ import net.minecraft.world.phys.Vec3;
  * value — доля пула, которую он снял), 2 — пул исчерпан, сеть рвётся (a — точка контакта),
  * 9 — мастер вышел из-за щита или техника прервана: распад.
  */
-public record DomePayload(int entityId, Vec3 a, Vec3 b, float value, int layer, int stage) implements CustomPacketPayload {
+public record DomePayload(int entityId, Vec3 a, Vec3 b, float value, int executionTier, int stage) implements CustomPacketPayload {
 
     public static final int BEGIN = 0;
     public static final int BLOCK = 1;
@@ -32,7 +32,7 @@ public record DomePayload(int entityId, Vec3 a, Vec3 b, float value, int layer, 
             VEC, DomePayload::a,
             VEC, DomePayload::b,
             ByteBufCodecs.FLOAT, DomePayload::value,
-            ByteBufCodecs.VAR_INT, DomePayload::layer,
+            ByteBufCodecs.VAR_INT, DomePayload::executionTier,
             ByteBufCodecs.VAR_INT, DomePayload::stage,
             DomePayload::new);
 

@@ -68,12 +68,12 @@
   "weakness": "technique.murim.seven_plum_explosion.weakness",
   "hit_stop_ticks": 2,
   "cooldown_ticks": 1000,
-  "layers": 8,
+  "star_cap": 12,
   "tier": "advanced",
   "requires": [
     {
       "technique": "murim:seven_plum_shower",
-      "layer": 3
+      "star": 5
     }
   ]
 }

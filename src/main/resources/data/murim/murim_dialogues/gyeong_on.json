@@ -1,0 +1,65 @@
+{
+  "name": "npc.murim.gyeong_on",
+  "base": "murim:first",
+  "nodes": {
+    "greet": {
+      "random": [
+        "@context"
+      ],
+      "gesture": "fist",
+      "options": [
+        {
+          "text": "dialogue.murim.first.opt.bow",
+          "actions": [
+            {
+              "type": "bow"
+            }
+          ],
+          "next": "bowed"
+        },
+        {
+          "text": "dialogue.murim.first.opt.advice",
+          "when": [
+            {
+              "free": true
+            }
+          ],
+          "next": "advice"
+        },
+        {
+          "text": "dialogue.murim.social.opt.news",
+          "next": "sect_news"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "advice": {
+      "random": [
+        "dialogue.murim.gyeong_on.advice",
+        "dialogue.murim.first.advice1",
+        "dialogue.murim.first.advice2"
+      ],
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "sect_news": {
+      "random": [
+        "@trait",
+        "@personal",
+        "@rumour"
+      ],
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    }
+  }
+}

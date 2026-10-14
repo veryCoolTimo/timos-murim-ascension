@@ -49,7 +49,7 @@ public final class Realm {
     /**
      * Подступени (начальная → утвердившаяся → вершина) — только с Пика (автор 01.10, вики Myst).
      * Хранятся в {@link DantianProfile#stage()} (автор 03.10). Растут без сцены прорыва — «утверждением»:
-     * на Пике запас снова упёрся в стену, и техника освоена до слоя {@link #stageLayerNeed}
+     * на Пике запас снова упёрся в стену, и техника освоена до слоя {@link #stageTierNeed}
      * (6 — утвердившаяся, 7 — вершина). Так в книгах: внутри большой ступени копят ци и оттачивают
      * искусство, стены-прорыва нет.
      */
@@ -79,6 +79,27 @@ public final class Realm {
     /** Во сколько раз прорыв поднимает ёмкость. */
     public static final double CAPACITY_GROWTH = 1.8D;
 
+    /** Total capacity multiplier from rank-zero seed; stages count only at Peak and above. */
+    public static double capacityFactor(int rank, int stage) {
+        int r = Math.max(NONE, Math.min(TOP, rank));
+        int s = r >= PEAK ? Math.max(0, Math.min(STAGES - 1, stage)) : 0;
+        return Math.pow(CAPACITY_GROWTH, r) * Math.pow(STAGE_CAPACITY_GROWTH, s);
+    }
+
+    /**
+     * Old /rank only changed the number, while breakthroughs already grew capacity.
+     * Raise to the seed's rank/stage floor, preserving larger capacity and all stored qi.
+     * max makes this repair idempotent: a correctly grown save is never multiplied again.
+     */
+    public static DantianProfile migrateCapacity(DantianProfile profile, double seedCapacity) {
+        if (!profile.isAwakened()) return profile;
+        double floor = Mth.clamp(seedCapacity, 0.1D, DantianProfile.MAX_CAPACITY)
+                * capacityFactor(profile.rank(), profile.stage());
+        if (profile.capacity() >= floor) return profile;
+        return new DantianProfile(floor, profile.purity(), profile.meridians(), profile.nature(),
+                profile.imprint(), profile.pool(), profile.circulating(), profile.foundation(), profile.rank(), profile.stage());
+    }
+
     /** Сколько очков здоровья даёт каждый ранг: тело перестроено, два сердца. */
     public static final double HEALTH_PER_RANK = 4.0D;
 
@@ -90,21 +111,21 @@ public final class Realm {
 
     /**
      * Прорыв 1 (в третий ранг) — «освоить любую технику» (автор 03.10): хотя бы одна техника
-     * пройдена дальше прочтения, до этого слоя. Слой 0 — только прочитал; 1 — освоил.
+     * пройдена дальше прочтения, до этого слоя. Индекс 0 — только прочитал; 1 — освоил.
      */
-    public static final int THIRD_LAYER_NEED = 1;
+    public static final int THIRD_TIER_NEED = 1;
 
     /** Что требует прорыв, кроме стены (план M2–M4, автор 03.10). */
     public enum Condition {
-        /** Прорыв 1: освоить любую технику (слой {@link #THIRD_LAYER_NEED}). */
+        /** Прорыв 1: освоить любую технику (слой {@link #THIRD_TIER_NEED}). */
         MASTER_ANY,
         /**
          * Прорыв 2: победить хозяина крепости Зелёного Леса (docs/design/26-boss.md). Флаг —
-         * {@code BossRegistry.BOSS_DEFEATED} у игрока; слой техники для этого прорыва не нужен.
+         * {@code BossRegistry.BOSS_DEFEATED} у игрока; индекс исполнения техники для этого прорыва не нужен.
          */
         DEFEAT_BOSS,
-        /** Прорыв 3 (и Пик до решения автора): форма до слоя {@link #layerNeed}. TODO(M3): N уточнить на игре. */
-        FORM_LAYER
+        /** Прорыв 3 (и Пик до решения автора): форма до слоя {@link #tierNeed}. TODO(M3): N уточнить на игре. */
+        FORM_MASTERY
     }
 
     /**
@@ -133,19 +154,19 @@ public final class Realm {
     /**
      * Можно ли начать прорыв в следующий ранг.
      *
-     * @param layers слои освоенных техник игрока
+     * @param executionTiers нормализованные индексы исполнения боевых искусств игрока
      */
-    public static Blocker check(DantianProfile profile, Map<ResourceLocation, Integer> layers) {
-        return check(profile, layers, false);
+    public static Blocker check(DantianProfile profile, Map<ResourceLocation, Integer> executionTiers) {
+        return check(profile, executionTiers, false);
     }
 
     /**
      * Можно ли начать прорыв в следующий ранг.
      *
-     * @param layers       слои освоенных техник игрока
+     * @param executionTiers       нормализованные индексы исполнения боевых искусств игрока
      * @param bossDefeated игрок победил хозяина крепости (условие прорыва 2)
      */
-    public static Blocker check(DantianProfile profile, Map<ResourceLocation, Integer> layers, boolean bossDefeated) {
+    public static Blocker check(DantianProfile profile, Map<ResourceLocation, Integer> executionTiers, boolean bossDefeated) {
         if (!profile.isAwakened()) {
             return Blocker.NO_DANTIAN;
         }
@@ -159,8 +180,8 @@ public final class Realm {
         if (condition(profile.rank() + 1) == Condition.DEFEAT_BOSS) {
             return bossDefeated ? Blocker.NONE : Blocker.NO_BOSS;
         }
-        int need = layerNeed(profile.rank() + 1);
-        boolean known = layers.values().stream().anyMatch(layer -> layer >= need);
+        int need = tierNeed(profile.rank() + 1);
+        boolean known = executionTiers.values().stream().anyMatch(executionTier -> executionTier >= need);
         return known ? Blocker.NONE : Blocker.NO_TECHNIQUE;
     }
 
@@ -169,7 +190,7 @@ public final class Realm {
         return switch (targetRank) {
             case THIRD -> Condition.MASTER_ANY;
             case SECOND -> Condition.DEFEAT_BOSS;
-            default -> Condition.FORM_LAYER;
+            default -> Condition.FORM_MASTERY;
         };
     }
 
@@ -177,12 +198,12 @@ public final class Realm {
      * Слой техники, которого требует прорыв в данный ранг: третий — 1 («освоить любую»),
      * второй — 3 (не проверяется: условие — победа над хозяином крепости), первый — 4, Пик — 5.
      */
-    public static int layerNeed(int targetRank) {
-        return targetRank <= THIRD ? THIRD_LAYER_NEED : targetRank + 1;
+    public static int tierNeed(int targetRank) {
+        return targetRank <= THIRD ? THIRD_TIER_NEED : targetRank + 1;
     }
 
     /** Что мешает утвердить следующую подступень Пика прямо сейчас ({@code MAX_RANK} — не Пик или уже вершина). */
-    public static Blocker checkStage(DantianProfile profile, Map<ResourceLocation, Integer> layers) {
+    public static Blocker checkStage(DantianProfile profile, Map<ResourceLocation, Integer> executionTiers) {
         if (!profile.isAwakened()) {
             return Blocker.NO_DANTIAN;
         }
@@ -192,19 +213,18 @@ public final class Realm {
         if (!atWall(profile)) {
             return Blocker.NOT_AT_WALL;
         }
-        int need = stageLayerNeed(profile.stage() + 1);
-        return layers.values().stream().anyMatch(layer -> layer >= need) ? Blocker.NONE : Blocker.NO_TECHNIQUE;
+        int need = stageTierNeed(profile.stage() + 1);
+        return executionTiers.values().stream().anyMatch(executionTier -> executionTier >= need) ? Blocker.NONE : Blocker.NO_TECHNIQUE;
     }
 
     /** Слой техники для подступени Пика: утвердившаяся — 6, вершина — 7 (вход в Пик — 5). */
-    public static int stageLayerNeed(int targetStage) {
-        return layerNeed(PEAK) + Math.max(1, targetStage);
+    public static int stageTierNeed(int targetStage) {
+        return tierNeed(PEAK) + Math.max(1, targetStage);
     }
 
     /** Профиль после утверждения подступени: на ступень выше внутри Пика, центр чуть шире, запас сохранён. */
     public static DantianProfile settle(DantianProfile profile) {
-        return profile.withAxes(profile.capacity() * STAGE_CAPACITY_GROWTH, profile.purity(), profile.meridians())
-                .withStage(profile.stage() + 1);
+        return profile.withStage(profile.stage() + 1);
     }
 
     /** Ключ названия подступени: {@code murim.rank.stage.0..2}. */
@@ -234,7 +254,8 @@ public final class Realm {
 
     /** Профиль после успешного прорыва: ранг выше, ёмкость и каналы шире, запас сохранён. */
     public static DantianProfile advance(DantianProfile profile) {
-        DantianProfile grown = profile.withAxes(profile.capacity() * CAPACITY_GROWTH, profile.purity(),
+        if (profile.rank() >= MAX) return profile;
+        DantianProfile grown = profile.withAxes(profile.capacity(), profile.purity(),
                 Mth.clamp(profile.meridians() + MERIDIAN_GROWTH, 0.0D, 1.0D));
         return grown.withRank(Math.min(MAX, profile.rank() + 1));
     }

@@ -99,8 +99,9 @@ public final class LoadoutScreen extends Screen {
         List<SyncMasteryPayload.Entry> out = new java.util.ArrayList<>();
         for (SyncMasteryPayload.Entry e : ClientMasteryState.entries().stream()
                 .sorted(java.util.Comparator.comparing(e -> e.technique().toString())).toList()) {
+            if (io.github.verycooltimo.murim.technique.TechniqueLoader.get(e.technique()) == null) continue;
             Optional<io.github.verycooltimo.murim.technique.Styles.Style> style = io.github.verycooltimo.murim.technique.Styles.of(e.technique());
-            if (style.isPresent()) {
+            if (style.isPresent() && !io.github.verycooltimo.murim.technique.Styles.individualBooks(style.get())) {
                 if (!seenStyles.add(style.get().id())) {
                     continue;
                 }
@@ -179,9 +180,9 @@ public final class LoadoutScreen extends Screen {
             }
             icon(graphics, e.technique(), lx, ry, 20, 1.0F);
             // Название чуть мельче обычного шрифта: длинные имена техник иначе не помещаются.
-            Optional<io.github.verycooltimo.murim.technique.Styles.Style> rowStyle = io.github.verycooltimo.murim.technique.Styles.of(e.technique());
-            String name = rowStyle.isPresent() ? Component.translatable(rowStyle.get().nameKey()).getString()
-                    : MasteryService.name(e.technique()).getString();
+            var definition = io.github.verycooltimo.murim.technique.TechniqueLoader.get(e.technique());
+            String name = (definition != null && definition.foundation()
+                    ? MasteryService.name(e.technique()) : MasteryService.artName(e.technique())).getString();
             int room = (int) ((LIST_W - 26) / NAME_SCALE);
             if (font.width(name) > room) {
                 name = font.plainSubstrByWidth(name, room - font.width("…")) + "…";
@@ -191,16 +192,15 @@ public final class LoadoutScreen extends Screen {
             graphics.pose().scale(NAME_SCALE, NAME_SCALE, 1.0F);
             graphics.drawString(font, name, 0, 0, INK, false);
             graphics.pose().popPose();
-            Component layer = rowStyle.isPresent()
-                    ? Component.translatable("murim.loadout.forms", knownForms(rowStyle.get()), rowStyle.get().forms().size())
-                    : Component.translatable("murim.loadout.layer", e.layer(), e.cap());
-            small(graphics, layer, lx + 24, ry + 11, INK_GREY);
-            // Освоение текущего слоя — тонкий штрих кисти.
-            int barX = lx + 24 + (int) (font.width(layer) * 0.75F) + 4;
-            int barW = lx + LIST_W - barX;
-            if (barW > 6 && e.layer() < e.cap()) {
-                graphics.fill(barX, ry + 14, barX + barW, ry + 15, 0x60A79D8C);
-                graphics.fill(barX, ry + 14, barX + (int) (barW * Mth.clamp(e.progress(), 0.0F, 1.0F)), ry + 15, JADE);
+            Component stars = MasteryText.summary(e.technique(), e);
+            float starScale = Math.min(0.75F, (LIST_W - 26.0F) / Math.max(1, font.width(stars)));
+            small(graphics, stars, lx + 24, ry + 11, INK_GREY, starScale);
+            // Progress belongs below the gauge so twelve stars fit the same row.
+            int barX = lx + 24;
+            int barW = LIST_W - 26;
+            if (e.stars() < e.cap()) {
+                graphics.fill(barX, ry + 19, barX + barW, ry + 20, 0x60A79D8C);
+                graphics.fill(barX, ry + 19, barX + (int) (barW * Mth.clamp(e.progress(), 0.0F, 1.0F)), ry + 20, JADE);
             }
         }
         if (list.size() > VISIBLE) {
@@ -375,9 +375,13 @@ public final class LoadoutScreen extends Screen {
     }
 
     private void small(GuiGraphics g, Component text, int x, int y, int colour) {
+        small(g, text, x, y, colour, 0.75F);
+    }
+
+    private void small(GuiGraphics g, Component text, int x, int y, int colour, float scale) {
         g.pose().pushPose();
         g.pose().translate(x, y, 0.0F);
-        g.pose().scale(0.75F, 0.75F, 1.0F);
+        g.pose().scale(scale, scale, 1.0F);
         g.drawString(this.font, text, 0, 0, colour, false);
         g.pose().popPose();
     }

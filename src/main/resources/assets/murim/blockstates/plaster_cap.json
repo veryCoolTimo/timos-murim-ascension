@@ -1,0 +1,36 @@
+{
+  "variants": {
+    "": [
+      {
+        "model": "murim:block/plaster_cap"
+      },
+      {
+        "model": "murim:block/plaster_cap",
+        "y": 90
+      },
+      {
+        "model": "murim:block/plaster_cap",
+        "y": 180
+      },
+      {
+        "model": "murim:block/plaster_cap",
+        "y": 270
+      },
+      {
+        "model": "murim:block/plaster_cap_b"
+      },
+      {
+        "model": "murim:block/plaster_cap_b",
+        "y": 90
+      },
+      {
+        "model": "murim:block/plaster_cap_b",
+        "y": 180
+      },
+      {
+        "model": "murim:block/plaster_cap_b",
+        "y": 270
+      }
+    ]
+  }
+}

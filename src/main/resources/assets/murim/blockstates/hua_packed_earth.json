@@ -1,0 +1,26 @@
+{
+  "variants": {
+    "": [
+      {
+        "model": "murim:block/hua_packed_earth",
+        "weight": 6
+      },
+      {
+        "model": "murim:block/hua_packed_earth_b",
+        "weight": 6
+      },
+      {
+        "model": "murim:block/hua_packed_earth_c",
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_packed_earth_d",
+        "weight": 2
+      },
+      {
+        "model": "murim:block/hua_packed_earth_e",
+        "weight": 2
+      }
+    ]
+  }
+}

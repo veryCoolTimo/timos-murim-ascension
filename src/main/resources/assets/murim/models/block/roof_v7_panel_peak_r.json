@@ -1,0 +1,16 @@
+{
+  "parent": "minecraft:block/block",
+  "loader": "neoforge:obj",
+  "model": "murim:models/block/roof_v7_panel_peak_r.obj",
+  "flip_v": false,
+  "emissive_ambient": false,
+  "automatic_culling": false,
+  "ambientocclusion": false,
+  "textures": {
+    "plaster": "murim:block/plaster",
+    "verge": "murim:block/roof_tiles_under",
+    "hipridge": "murim:block/roof_v7_cream",
+    "particle": "murim:block/plaster"
+  },
+  "render_type": "minecraft:solid"
+}

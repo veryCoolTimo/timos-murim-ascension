@@ -1,0 +1,15 @@
+{
+  "loader": "neoforge:obj",
+  "model": "murim:models/block/obj/lattice_window_paper_pane_0001.obj",
+  "flip_v": false,
+  "emissive_ambient": true,
+  "automatic_culling": false,
+  "shade_quads": true,
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "tex": "murim:block/lattice_window",
+    "particle": "murim:block/lattice_window",
+    "g": "murim:block/lattice_window_insert"
+  },
+  "ambientocclusion": false
+}

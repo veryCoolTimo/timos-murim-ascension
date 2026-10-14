@@ -1,0 +1,118 @@
+{
+  "name": "npc.murim.leader",
+  "title": "npc.murim.leader.title",
+  "start": [
+    {
+      "node": "first"
+    }
+  ],
+  "nodes": {
+    "first": {
+      "random": [
+        "dialogue.murim.social.offer.first.1",
+        "dialogue.murim.social.offer.first.2",
+        "dialogue.murim.social.offer.first.3",
+        "dialogue.murim.social.offer.first.4"
+      ],
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.social.opt.accept",
+          "when": [
+            {
+              "social": "promotion:first",
+              "flag": "position.offer.first"
+            }
+          ],
+          "actions": [
+            {
+              "type": "promotion_accept",
+              "value": "first"
+            }
+          ],
+          "next": "ceremony_first"
+        },
+        {
+          "text": "dialogue.murim.social.opt.decline",
+          "actions": [
+            {
+              "type": "promotion_decline",
+              "value": "first"
+            }
+          ],
+          "next": "declined"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "ceremony_first": {
+      "line": "dialogue.murim.social.ceremony.first",
+      "gesture": "bow",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "elder": {
+      "random": [
+        "dialogue.murim.social.offer.elder.1",
+        "dialogue.murim.social.offer.elder.2",
+        "dialogue.murim.social.offer.elder.3",
+        "dialogue.murim.social.offer.elder.4"
+      ],
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.social.opt.accept",
+          "when": [
+            {
+              "social": "promotion:elder",
+              "flag": "position.offer.elder"
+            }
+          ],
+          "actions": [
+            {
+              "type": "promotion_accept",
+              "value": "elder"
+            }
+          ],
+          "next": "ceremony_elder"
+        },
+        {
+          "text": "dialogue.murim.social.opt.decline",
+          "actions": [
+            {
+              "type": "promotion_decline",
+              "value": "elder"
+            }
+          ],
+          "next": "declined"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "ceremony_elder": {
+      "line": "dialogue.murim.social.ceremony.elder",
+      "gesture": "bow",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "declined": {
+      "line": "dialogue.murim.social.declined",
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    }
+  }
+}

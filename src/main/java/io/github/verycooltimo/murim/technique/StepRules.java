@@ -12,16 +12,16 @@ public final class StepRules {
     /** Тиков между рывками серии на высшем слое. */
     public static final int CHAIN_GAP = 5;
 
-    public static double distance(int layer) {
-        return layer <= 0 ? 4.0D : layer <= 2 ? 5.0D : 6.0D;
+    public static double distance(int executionTier) {
+        return executionTier <= 0 ? 4.0D : executionTier <= 2 ? 5.0D : 6.0D;
     }
 
     /** Неуязвимость в тиках после рывка: проход сквозь чужую ци. */
-    public static int invulnerableTicks(int layer) {
-        return layer >= 2 ? 10 : 0;
+    public static int invulnerableTicks(int executionTier) {
+        return executionTier >= 2 ? 10 : 0;
     }
 
-    public static int dashes(int layer) {
+    public static int dashes(int executionTier) {
         return 1;
     }
 

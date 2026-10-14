@@ -32,7 +32,7 @@ public sealed interface TechniqueBehavior
                 TechniqueBehavior.PlumShower,
                 TechniqueBehavior.FallingPetal,
                 TechniqueBehavior.TangDaggers,
-                TechniqueBehavior.SelfArt {
+                TechniqueBehavior.SelfArt, TechniqueBehavior.JunkDance, TechniqueBehavior.DemonicArt {
 
     ResourceLocation MELEE_ARC = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "melee_arc");
     ResourceLocation PROJECTILE_FAN = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "projectile_fan");
@@ -497,6 +497,34 @@ public sealed interface TechniqueBehavior
         }
     }
 
+    /** A harmless dance: flapping is timed by FunnyJunkTiming, never a zero-damage attack. */
+    record JunkDance() implements TechniqueBehavior {
+        public static final MapCodec<JunkDance> CODEC = MapCodec.unit(JunkDance::new);
+        public static final ResourceLocation TYPE = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "junk_dance");
+
+        @Override
+        public float damage() {
+            return 0.0F;
+        }
+
+        @Override
+        public ResourceLocation type() {
+            return TYPE;
+        }
+    }
+
+    /** Six Heavenly Demon arts; executionTier tables live in DemonicRules, not unknown JSON fields. */
+    record DemonicArt(String art) implements TechniqueBehavior {
+        public static final ResourceLocation TYPE = DemonicRules.id("demonic_art");
+        public static final MapCodec<DemonicArt> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
+                Codec.STRING.fieldOf("art").forGetter(DemonicArt::art)).apply(i, DemonicArt::new));
+        public DemonicArt {
+            if (!DemonicRules.ARTS.contains(art)) throw new IllegalArgumentException("Unknown demonic art: " + art);
+        }
+        @Override public float damage() { return 0; }
+        @Override public ResourceLocation type() { return TYPE; }
+    }
+
     // Map.of держит не больше 10 пар — дальше Map.ofEntries.
     Map<ResourceLocation, MapCodec<? extends TechniqueBehavior>> TYPES = Map.ofEntries(
             Map.entry(MELEE_ARC, MeleeArc.CODEC),
@@ -518,7 +546,9 @@ public sealed interface TechniqueBehavior
             Map.entry(PLUM_SHOWER, PlumShower.CODEC),
             Map.entry(FALLING_PETAL, FallingPetal.CODEC),
             Map.entry(TANG_DAGGERS, TangDaggers.CODEC),
-            Map.entry(SELF_ART, SelfArt.CODEC));
+            Map.entry(SELF_ART, SelfArt.CODEC),
+            Map.entry(JunkDance.TYPE, JunkDance.CODEC),
+            Map.entry(DemonicArt.TYPE, DemonicArt.CODEC));
 
     Codec<TechniqueBehavior> CODEC = ResourceLocation.CODEC
             .dispatch("type", TechniqueBehavior::type, type -> {

@@ -1,0 +1,36 @@
+{
+  "type": "minecraft:chest",
+  "pools": [
+    {
+      "rolls": 1,
+      "conditions": [
+        {
+          "condition": "minecraft:random_chance",
+          "chance": 0.16
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "murim:mountain_thunder_fist_manual"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "murim:rift_palm_manual"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "murim:clear_sky_sword_manual"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "murim:high_cloud_steps_manual"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "murim:quiet_heart_guard_manual"
+        }
+      ]
+    }
+  ]
+}

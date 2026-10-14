@@ -1,0 +1,124 @@
+{
+  "variants": {
+    "facing=south,half=lower,variant=0": {
+      "model": "murim:block/scroll_shelf_lower"
+    },
+    "facing=west,half=lower,variant=0": {
+      "model": "murim:block/scroll_shelf_lower",
+      "y": 90
+    },
+    "facing=north,half=lower,variant=0": {
+      "model": "murim:block/scroll_shelf_lower",
+      "y": 180
+    },
+    "facing=east,half=lower,variant=0": {
+      "model": "murim:block/scroll_shelf_lower",
+      "y": 270
+    },
+    "facing=south,half=upper,variant=0": {
+      "model": "murim:block/scroll_shelf_upper"
+    },
+    "facing=west,half=upper,variant=0": {
+      "model": "murim:block/scroll_shelf_upper",
+      "y": 90
+    },
+    "facing=north,half=upper,variant=0": {
+      "model": "murim:block/scroll_shelf_upper",
+      "y": 180
+    },
+    "facing=east,half=upper,variant=0": {
+      "model": "murim:block/scroll_shelf_upper",
+      "y": 270
+    },
+    "facing=south,half=lower,variant=1": {
+      "model": "murim:block/scroll_shelf_books_lower"
+    },
+    "facing=west,half=lower,variant=1": {
+      "model": "murim:block/scroll_shelf_books_lower",
+      "y": 90
+    },
+    "facing=north,half=lower,variant=1": {
+      "model": "murim:block/scroll_shelf_books_lower",
+      "y": 180
+    },
+    "facing=east,half=lower,variant=1": {
+      "model": "murim:block/scroll_shelf_books_lower",
+      "y": 270
+    },
+    "facing=south,half=upper,variant=1": {
+      "model": "murim:block/scroll_shelf_books_upper"
+    },
+    "facing=west,half=upper,variant=1": {
+      "model": "murim:block/scroll_shelf_books_upper",
+      "y": 90
+    },
+    "facing=north,half=upper,variant=1": {
+      "model": "murim:block/scroll_shelf_books_upper",
+      "y": 180
+    },
+    "facing=east,half=upper,variant=1": {
+      "model": "murim:block/scroll_shelf_books_upper",
+      "y": 270
+    },
+    "facing=south,half=lower,variant=2": {
+      "model": "murim:block/scroll_shelf_mixed_lower"
+    },
+    "facing=west,half=lower,variant=2": {
+      "model": "murim:block/scroll_shelf_mixed_lower",
+      "y": 90
+    },
+    "facing=north,half=lower,variant=2": {
+      "model": "murim:block/scroll_shelf_mixed_lower",
+      "y": 180
+    },
+    "facing=east,half=lower,variant=2": {
+      "model": "murim:block/scroll_shelf_mixed_lower",
+      "y": 270
+    },
+    "facing=south,half=upper,variant=2": {
+      "model": "murim:block/scroll_shelf_mixed_upper"
+    },
+    "facing=west,half=upper,variant=2": {
+      "model": "murim:block/scroll_shelf_mixed_upper",
+      "y": 90
+    },
+    "facing=north,half=upper,variant=2": {
+      "model": "murim:block/scroll_shelf_mixed_upper",
+      "y": 180
+    },
+    "facing=east,half=upper,variant=2": {
+      "model": "murim:block/scroll_shelf_mixed_upper",
+      "y": 270
+    },
+    "facing=south,half=lower,variant=3": {
+      "model": "murim:block/scroll_shelf_sparse_lower"
+    },
+    "facing=west,half=lower,variant=3": {
+      "model": "murim:block/scroll_shelf_sparse_lower",
+      "y": 90
+    },
+    "facing=north,half=lower,variant=3": {
+      "model": "murim:block/scroll_shelf_sparse_lower",
+      "y": 180
+    },
+    "facing=east,half=lower,variant=3": {
+      "model": "murim:block/scroll_shelf_sparse_lower",
+      "y": 270
+    },
+    "facing=south,half=upper,variant=3": {
+      "model": "murim:block/scroll_shelf_sparse_upper"
+    },
+    "facing=west,half=upper,variant=3": {
+      "model": "murim:block/scroll_shelf_sparse_upper",
+      "y": 90
+    },
+    "facing=north,half=upper,variant=3": {
+      "model": "murim:block/scroll_shelf_sparse_upper",
+      "y": 180
+    },
+    "facing=east,half=upper,variant=3": {
+      "model": "murim:block/scroll_shelf_sparse_upper",
+      "y": 270
+    }
+  }
+}

@@ -5,6 +5,16 @@
     "murim:sealed_hua_granite_slab",
     "murim:sealed_polished_hua_granite_slab",
     "murim:sealed_stone_brick_slab",
-    "murim:sealed_plank_slab"
+    "murim:sealed_plank_slab",
+    "murim:grey_brick_slab",
+    "murim:floor_tile_slab",
+    "murim:roof_tile_slab",
+    "murim:hua_packed_earth_slab",
+    "murim:hua_scree_slab",
+    "murim:hua_courtyard_pavers_slab",
+    "murim:hua_rectangular_paving_slab",
+    "murim:rough_hua_granite_slab",
+    "murim:mossy_hua_granite_slab",
+    "murim:hua_flagstone_paving_slab"
   ]
 }

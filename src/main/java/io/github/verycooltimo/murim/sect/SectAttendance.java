@@ -13,8 +13,6 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -27,21 +25,9 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
- * Распорядок для игрока (автор 05.10: «как нас будет уверять, почему мы должны тренироваться, и как это всё
- * регистрируется»). Секта ждёт ученика на утреннем строю, на занятиях и за трапезой; что он сделал — отмечается в
- * журнале секты, наставник подводит итог дня и объясняет, зачем это. Награды — заслуги ({@link SectService#contribute}),
- * прибавка освоения ({@link SectLife#masteryBonus}) и рост положения через заслуги; последствия мягкие: наставник
- * ворчит, за два пропущенных строя подряд — наряд на кухню, пока наряд не отработан, усердие дня не засчитывается.
- *
- * <p>Ничего не ждут от того, кого не было на горе: перекличка — только если игрок был на полке секты в начале строя
- * (до рассвета, {@link #ROLL_FORMATION}) или в первую половину занятий ({@link #ROLL_LESSON}). Ушёл в поход — день
- * «не на горе», без упрёка.
- *
- * <p><b>Крючок для других систем</b> (упражнения, испытания): {@link #record(ServerPlayer, Activity)} или
- * {@link #record(ServerPlayer, String)} — отметить занятие; повторная отметка за день ничего не даёт.
- *
- * <p>Хранится в attachment {@code murim:sect_attendance} (переживает смерть), на клиент не синхронизируется: журнал
- * читается в разговоре с наставником (аргумент реплики {@code sect_log}) и командой {@code /murim sect log}.
+ * Optional sect practice log. Roll calls are invitations; incomplete days and journeys preserve diligence.
+ * Earned full days accumulate towards bonuses and the leader's approval, with no consecutive-day requirement.
+ * Legacy punishment fields remain readable for old saves and are cleared by the Log constructor.
  */
 @EventBusSubscriber(modid = MurimMod.MODID)
 public final class SectAttendance {
@@ -93,11 +79,9 @@ public final class SectAttendance {
     public static final int MEAL_TICKS = 200;
     /** Столбы и урок Тэ Рока: столько тиков — занятие. */
     public static final int PRACTICE_TICKS = 400;
-    /** Заслуги за полный день (всё, чего ждали, сделано) и прибавка за усердие подряд. */
+    /** Заслуги за полный учебный день; прибавка после трёх таких дней, с любыми перерывами. */
     public static final int DAY_BONUS = 1;
     public static final int STREAK_DAYS = 3;
-    /** Пропущенных строев подряд до наряда на кухню. */
-    public static final int CHORE_AFTER = 2;
     /** Заслуги за занятие и за подъём (раз в день). */
     public static final int LESSON_CONTRIBUTION = 1;
     public static final int CLIMB_CONTRIBUTION = 1;
@@ -134,9 +118,9 @@ public final class SectAttendance {
             return expected.contains(a.id());
         }
 
-        /** Ждали и не сделано. */
+        /** Legacy dialogue condition: optional invitations never count as a missed obligation. */
         public boolean missed(Activity a) {
-            return expects(a) && !did(a);
+            return false;
         }
 
         /** Был ли игрок в этот день при секте (ждали или сделал хоть что-то). */
@@ -157,8 +141,8 @@ public final class SectAttendance {
     }
 
     /**
-     * Журнал ученика: сегодня, прошлый день при секте, усердие подряд, пропущенные строи подряд, наряд, день, когда
-     * наставник уже ворчал.
+     * Журнал ученика: сегодня, прошлый день при секте, суммарное число полных дней.
+     * missedRow/chores/scolded — поля прежних сохранений; пропуски и наказания больше не назначаются.
      */
     public record Log(Day today, Day last, int streak, int missedRow, boolean chores, long scolded) {
         public static final Log NONE = new Log(Day.NONE, Day.NONE, 0, 0, false, Long.MIN_VALUE);
@@ -172,12 +156,14 @@ public final class SectAttendance {
                 Codec.LONG.optionalFieldOf("scolded", Long.MIN_VALUE).forGetter(Log::scolded)
         ).apply(i, Log::new));
 
-        Log today(Day d) {
-            return new Log(d, last, streak, missedRow, chores, scolded);
+        public Log {
+            // Migration of old kitchen sentences is immediate, including same-day saves.
+            missedRow = 0;
+            chores = false;
         }
 
-        Log scolded(long day) {
-            return new Log(today, last, streak, missedRow, chores, day);
+        Log today(Day d) {
+            return new Log(d, last, streak, missedRow, chores, scolded);
         }
 
         Log choresDone() {
@@ -190,14 +176,14 @@ public final class SectAttendance {
      *
      * @param bonus         заслуги за полный день
      * @param full          всё, чего ждали, сделано
-     * @param choresGiven   назначен наряд (сегодня)
+     * @param choresGiven   прежнее поле результата; теперь всегда false
      */
     public record Settled(Log log, int bonus, boolean full, boolean choresGiven) {
     }
 
     /**
      * Смена дня (чистая функция): сегодняшний день уходит в прошлый, если игрок в нём был при секте; считается
-     * усердие подряд, пропущенные строи и наряд. Дни вне горы не меняют ни усердия, ни счёта пропусков.
+     * полные учебные дни. Перерывы и невыполненные приглашения не отнимают прогресс.
      */
     public static Settled roll(Log log, long day) {
         // Тот же день — или время отмотали назад (команда): журнал не закрывается и награды не повторяются.
@@ -210,20 +196,13 @@ public final class SectAttendance {
             Day last = closed.present() ? closed : log.last();
             return new Settled(new Log(fresh, last, log.streak(), log.missedRow(), log.chores(), log.scolded()), 0, false, false);
         }
-        // Строй сделан — счёт пропусков строя сначала, даже если занятия пропущены (codex 05.10).
-        int missed = closed.did(Activity.FORMATION) ? 0 : log.missedRow();
         if (closed.full()) {
             int streak = log.streak() + 1;
-            int bonus = log.chores() ? 0 : DAY_BONUS + (streak >= STREAK_DAYS ? 1 : 0);
-            return new Settled(new Log(fresh, closed, streak, missed, log.chores(), log.scolded()), bonus, true, false);
+            int bonus = DAY_BONUS + (streak >= STREAK_DAYS ? 1 : 0);
+            return new Settled(new Log(fresh, closed, streak, 0, false, log.scolded()), bonus, true, false);
         }
-        // Пропуск строя считается, только если игрок остался при секте и на занятия (ушёл в поход после переклички —
-        // не пропуск).
-        if (closed.missed(Activity.FORMATION) && closed.expects(Activity.LESSON)) {
-            missed = log.missedRow() + 1;
-        }
-        boolean given = !log.chores() && missed >= CHORE_AFTER;
-        return new Settled(new Log(fresh, closed, 0, missed, log.chores() || given, log.scolded()), 0, false, given);
+        // An invitation can be ignored, including while doing other Minecraft activities on the mountain.
+        return new Settled(new Log(fresh, closed, log.streak(), 0, false, log.scolded()), 0, false, false);
     }
 
     /** Отметить (чистая функция): {@code expect} — перекличка, иначе — сделано. */
@@ -294,24 +273,26 @@ public final class SectAttendance {
         return record(p, Activity.of(activity).orElse(Activity.LESSON));
     }
 
-    /** Смена дня: итог прошлого — заслуги за усердие, наряд. */
+    /** Смена дня: заслуги за полный учебный день. */
     static void settle(ServerPlayer p) {
-        Settled s = roll(log(p), today(p));
-        if (s.log() == log(p)) {
+        Log previous = log(p);
+        Settled s = roll(previous, today(p));
+        if (s.log() == previous) {
             return;
         }
         p.setData(ModAttachments.SECT_ATTENDANCE, s.log());
+        if (previous.today().day() != Long.MIN_VALUE && today(p) - previous.today().day() >= 2
+                && p.getData(ModAttachments.SECT).member()) {
+            p.displayClientMessage(Component.translatable("murim.sect.journey.welcome"), false);
+        }
         if (s.full() && s.bonus() > 0) {
             p.displayClientMessage(Component.translatable("murim.sect.log.day_bonus", s.bonus(), s.log().streak())
                     .withStyle(ChatFormatting.GOLD), false);
             SectService.contribute(p, s.bonus());
         }
-        // Неделя полных дней подряд — одобрение главы (SectReview.APPROVAL_STREAK; второй путь — победа на смотре).
+        // Семь полных дней, с любыми перерывами — одобрение главы (SectReview.APPROVAL_STREAK; второй путь — победа на смотре).
         if (s.full() && s.log().streak() >= SectReview.APPROVAL_STREAK) {
             SectReview.approve(p, "streak");
-        }
-        if (s.choresGiven()) {
-            p.displayClientMessage(Component.translatable("murim.sect.log.chores").withStyle(ChatFormatting.YELLOW), false);
         }
     }
 
@@ -331,7 +312,7 @@ public final class SectAttendance {
         }
     }
 
-    /** Раз в {@code dt} тиков: смена дня, перекличка, трапеза, столбы, урок, подъём, ворчание наставника. */
+    /** Раз в {@code dt} тиков: смена дня, приглашения, трапеза, столбы, урок, подъём. */
     public static void tick(ServerPlayer p, SectLayout layout, int dt) {
         settle(p);
         long day = today(p);
@@ -381,7 +362,6 @@ public final class SectAttendance {
             }
         }
         p.getPersistentData().put(PRESENCE_TAG, tag);
-        scold(p);
     }
 
     /** На полке секты: в пределах любой площадки секты с запасом. */
@@ -467,31 +447,6 @@ public final class SectAttendance {
     /** Флаг секты: распорядок объяснён. */
     public static final String EXPLAINED = "log.explained";
 
-    /**
-     * Строй пропущен (перекличка была, форм нет), строй уже кончился: наставник, если он рядом, ворчит — один раз за
-     * день, и объясняет, зачем это (канон: «всё начинается и заканчивается движением из шести», гл. 11).
-     */
-    static void scold(ServerPlayer p) {
-        Log log = log(p);
-        long day = today(p);
-        SectSchedule.Period period = SectSchedule.at(p.level().getDayTime());
-        if (log.scolded() == day || period == SectSchedule.Period.FORMATION || !log.today().missed(Activity.FORMATION)) {
-            return;
-        }
-        for (SectDisciple d : p.level().getEntitiesOfClass(SectDisciple.class, p.getBoundingBox().inflate(10.0D),
-                d -> d.role() == SectRole.MENTOR && d.free())) {
-            d.getLookControl().setLookAt(p, 30.0F, 30.0F);
-            d.gesture("shake");
-            int line = 1 + (int) Math.floorMod(day, 4L);
-            p.displayClientMessage(Component.translatable("murim.sect.mentor.scold", d.getName(),
-                    Component.translatable("murim.sect.mentor.scold." + line)).withStyle(ChatFormatting.YELLOW), false);
-            p.level().playSound(null, d.blockPosition(), SoundEvents.VILLAGER_NO, SoundSource.NEUTRAL, 0.3F, 0.8F);
-            p.setData(ModAttachments.SECT_ATTENDANCE, log.scolded(day));
-            MurimMod.LOGGER.info("Журнал секты: наставник ворчит на {} — строй пропущен", p.getName().getString());
-            return;
-        }
-    }
-
     // ------------------------------------------------------------------ журнал словами
 
     /** День для итога: сегодня, если в нём что-то было, иначе прошлый день при секте. */
@@ -518,7 +473,7 @@ public final class SectAttendance {
                 out.append(" · ");
             }
             first = false;
-            String mark = d.did(a) ? "murim.sect.log.mark.done" : d.expects(a) ? (today && open(p, a) ? "murim.sect.log.mark.open" : "murim.sect.log.mark.missed")
+            String mark = d.did(a) ? "murim.sect.log.mark.done" : d.expects(a) ? (today && open(p, a) ? "murim.sect.log.mark.open" : "murim.sect.log.mark.skipped")
                     : "murim.sect.log.mark.none";
             out.append(Component.translatable(mark, Component.translatable(a.nameKey())));
         }
@@ -536,21 +491,14 @@ public final class SectAttendance {
     }
 
     /**
-     * Слово наставника к журналу: хвалит полный день, за пропущенный строй или занятие — объясняет, зачем это; наряд —
-     * напоминает.
+     * Слово наставника: приветствует вернувшегося, благодарит за участие, хвалит полный учебный день.
      */
     public static Component verdict(ServerPlayer p) {
         Log log = current(p);
         Day d = shownDay(log);
         String key;
-        if (!d.present()) {
+        if (!log.today().present()) {
             key = "away";
-        } else if (log.chores() && !d.did(Activity.CHORE)) {
-            key = "chores";
-        } else if (d.missed(Activity.FORMATION) && !(d == log.today() && open(p, Activity.FORMATION))) {
-            key = "missed_formation";
-        } else if (d.missed(Activity.LESSON) && !(d == log.today() && open(p, Activity.LESSON))) {
-            key = "missed_lesson";
         } else if ((d.full() || d.did(Activity.FORMATION) && d.did(Activity.LESSON))
                 && !(d == log.today() && !d.did(Activity.LESSON) && open(p, Activity.LESSON))) {
             key = log.streak() + (d == log.today() ? 1 : 0) >= STREAK_DAYS ? "streak" : "full";

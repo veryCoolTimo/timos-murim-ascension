@@ -1,0 +1,2461 @@
+{
+  "multipart": [
+    {
+      "when": {
+        "axis": "y",
+        "offset": "center"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_shaft_center"
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "center",
+        "down": "none"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_base_center"
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "center",
+        "up": "none"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_cap_center"
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "center",
+        "up": "near"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_into_up_near_center"
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "center",
+        "down": "near"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_into_down_near_center"
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "center",
+        "up": "mid"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_into_up_mid_center"
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "center",
+        "down": "mid"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_into_down_mid_center"
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "center",
+        "up": "far"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_into_up_far_center"
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "center",
+        "down": "far"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_into_down_far_center"
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "north"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_shaft_north"
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "north",
+        "down": "none"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_base_north"
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "north",
+        "up": "none"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_cap_north"
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "north",
+        "up": "near"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_into_up_near_north"
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "north",
+        "down": "near"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_into_down_near_north"
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "north",
+        "up": "mid"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_into_up_mid_north"
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "north",
+        "down": "mid"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_into_down_mid_north"
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "north",
+        "up": "far"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_into_up_far_north"
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "north",
+        "down": "far"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_into_down_far_north"
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "north_east"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_shaft_north_west",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "north_east",
+        "down": "none"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_base_north_west",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "north_east",
+        "up": "none"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_cap_north_west",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "north_east",
+        "up": "near"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_into_up_near_north_west",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "north_east",
+        "down": "near"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_into_down_near_north_west",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "north_east",
+        "up": "mid"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_into_up_mid_north_west",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "north_east",
+        "down": "mid"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_into_down_mid_north_west",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "north_east",
+        "up": "far"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_into_up_far_north_west",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "north_east",
+        "down": "far"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_into_down_far_north_west",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "east"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_shaft_north",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "east",
+        "down": "none"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_base_north",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "east",
+        "up": "none"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_cap_north",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "east",
+        "up": "near"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_into_up_near_north",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "east",
+        "down": "near"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_into_down_near_north",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "east",
+        "up": "mid"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_into_up_mid_north",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "east",
+        "down": "mid"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_into_down_mid_north",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "east",
+        "up": "far"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_into_up_far_north",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "east",
+        "down": "far"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_into_down_far_north",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "south_east"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_shaft_north_west",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "south_east",
+        "down": "none"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_base_north_west",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "south_east",
+        "up": "none"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_cap_north_west",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "south_east",
+        "up": "near"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_into_up_near_north_west",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "south_east",
+        "down": "near"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_into_down_near_north_west",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "south_east",
+        "up": "mid"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_into_up_mid_north_west",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "south_east",
+        "down": "mid"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_into_down_mid_north_west",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "south_east",
+        "up": "far"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_into_up_far_north_west",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "south_east",
+        "down": "far"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_into_down_far_north_west",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "south"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_shaft_north",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "south",
+        "down": "none"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_base_north",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "south",
+        "up": "none"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_cap_north",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "south",
+        "up": "near"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_into_up_near_north",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "south",
+        "down": "near"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_into_down_near_north",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "south",
+        "up": "mid"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_into_up_mid_north",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "south",
+        "down": "mid"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_into_down_mid_north",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "south",
+        "up": "far"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_into_up_far_north",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "south",
+        "down": "far"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_into_down_far_north",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "south_west"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_shaft_north_west",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "south_west",
+        "down": "none"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_base_north_west",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "south_west",
+        "up": "none"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_cap_north_west",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "south_west",
+        "up": "near"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_into_up_near_north_west",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "south_west",
+        "down": "near"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_into_down_near_north_west",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "south_west",
+        "up": "mid"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_into_up_mid_north_west",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "south_west",
+        "down": "mid"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_into_down_mid_north_west",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "south_west",
+        "up": "far"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_into_up_far_north_west",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "south_west",
+        "down": "far"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_into_down_far_north_west",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "west"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_shaft_north",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "west",
+        "down": "none"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_base_north",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "west",
+        "up": "none"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_cap_north",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "west",
+        "up": "near"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_into_up_near_north",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "west",
+        "down": "near"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_into_down_near_north",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "west",
+        "up": "mid"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_into_up_mid_north",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "west",
+        "down": "mid"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_into_down_mid_north",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "west",
+        "up": "far"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_into_up_far_north",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "west",
+        "down": "far"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_into_down_far_north",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "north_west"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_shaft_north_west"
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "north_west",
+        "down": "none"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_base_north_west"
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "north_west",
+        "up": "none"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_cap_north_west"
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "north_west",
+        "up": "near"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_into_up_near_north_west"
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "north_west",
+        "down": "near"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_into_down_near_north_west"
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "north_west",
+        "up": "mid"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_into_up_mid_north_west"
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "north_west",
+        "down": "mid"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_into_down_mid_north_west"
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "north_west",
+        "up": "far"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_into_up_far_north_west"
+      }
+    },
+    {
+      "when": {
+        "axis": "y",
+        "offset": "north_west",
+        "down": "far"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_into_down_far_north_west"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "center"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_lying_x_shaft_center"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "center",
+        "down": "none"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_lying_x_base_center"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "center",
+        "up": "none"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_lying_x_cap_center"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "center",
+        "up": "near"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_x_into_up_near_center"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "center",
+        "down": "near"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_x_into_down_near_center"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "center",
+        "up": "mid"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_x_into_up_mid_center"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "center",
+        "down": "mid"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_x_into_down_mid_center"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "center",
+        "up": "far"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_x_into_up_far_center"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "center",
+        "down": "far"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_x_into_down_far_center"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "north"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_lying_x_shaft_north"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "north",
+        "down": "none"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_lying_x_base_north"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "north",
+        "up": "none"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_lying_x_cap_north"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "north",
+        "up": "near"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_x_into_up_near_north"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "north",
+        "down": "near"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_x_into_down_near_north"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "north",
+        "up": "mid"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_x_into_up_mid_north"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "north",
+        "down": "mid"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_x_into_down_mid_north"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "north",
+        "up": "far"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_x_into_up_far_north"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "north",
+        "down": "far"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_x_into_down_far_north"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "north_east"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_lying_x_shaft_north_east"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "north_east",
+        "down": "none"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_lying_x_base_north_east"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "north_east",
+        "up": "none"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_lying_x_cap_north_east"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "north_east",
+        "up": "near"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_x_into_up_near_north_east"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "north_east",
+        "down": "near"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_x_into_down_near_north_east"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "north_east",
+        "up": "mid"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_x_into_up_mid_north_east"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "north_east",
+        "down": "mid"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_x_into_down_mid_north_east"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "north_east",
+        "up": "far"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_x_into_up_far_north_east"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "north_east",
+        "down": "far"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_x_into_down_far_north_east"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "east"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_lying_x_shaft_east"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "east",
+        "down": "none"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_lying_x_base_east"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "east",
+        "up": "none"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_lying_x_cap_east"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "east",
+        "up": "near"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_x_into_up_near_east"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "east",
+        "down": "near"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_x_into_down_near_east"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "east",
+        "up": "mid"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_x_into_up_mid_east"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "east",
+        "down": "mid"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_x_into_down_mid_east"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "east",
+        "up": "far"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_x_into_up_far_east"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "east",
+        "down": "far"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_x_into_down_far_east"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "south_east"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_lying_x_shaft_south_east"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "south_east",
+        "down": "none"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_lying_x_base_south_east"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "south_east",
+        "up": "none"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_lying_x_cap_south_east"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "south_east",
+        "up": "near"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_x_into_up_near_south_east"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "south_east",
+        "down": "near"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_x_into_down_near_south_east"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "south_east",
+        "up": "mid"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_x_into_up_mid_south_east"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "south_east",
+        "down": "mid"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_x_into_down_mid_south_east"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "south_east",
+        "up": "far"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_x_into_up_far_south_east"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "south_east",
+        "down": "far"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_x_into_down_far_south_east"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "south"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_lying_x_shaft_south"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "south",
+        "down": "none"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_lying_x_base_south"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "south",
+        "up": "none"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_lying_x_cap_south"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "south",
+        "up": "near"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_x_into_up_near_south"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "south",
+        "down": "near"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_x_into_down_near_south"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "south",
+        "up": "mid"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_x_into_up_mid_south"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "south",
+        "down": "mid"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_x_into_down_mid_south"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "south",
+        "up": "far"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_x_into_up_far_south"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "south",
+        "down": "far"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_x_into_down_far_south"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "south_west"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_lying_x_shaft_south_west"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "south_west",
+        "down": "none"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_lying_x_base_south_west"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "south_west",
+        "up": "none"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_lying_x_cap_south_west"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "south_west",
+        "up": "near"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_x_into_up_near_south_west"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "south_west",
+        "down": "near"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_x_into_down_near_south_west"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "south_west",
+        "up": "mid"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_x_into_up_mid_south_west"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "south_west",
+        "down": "mid"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_x_into_down_mid_south_west"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "south_west",
+        "up": "far"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_x_into_up_far_south_west"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "south_west",
+        "down": "far"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_x_into_down_far_south_west"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "west"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_lying_x_shaft_west"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "west",
+        "down": "none"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_lying_x_base_west"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "west",
+        "up": "none"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_lying_x_cap_west"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "west",
+        "up": "near"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_x_into_up_near_west"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "west",
+        "down": "near"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_x_into_down_near_west"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "west",
+        "up": "mid"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_x_into_up_mid_west"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "west",
+        "down": "mid"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_x_into_down_mid_west"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "west",
+        "up": "far"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_x_into_up_far_west"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "west",
+        "down": "far"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_x_into_down_far_west"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "north_west"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_lying_x_shaft_north_west"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "north_west",
+        "down": "none"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_lying_x_base_north_west"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "north_west",
+        "up": "none"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_lying_x_cap_north_west"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "north_west",
+        "up": "near"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_x_into_up_near_north_west"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "north_west",
+        "down": "near"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_x_into_down_near_north_west"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "north_west",
+        "up": "mid"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_x_into_up_mid_north_west"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "north_west",
+        "down": "mid"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_x_into_down_mid_north_west"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "north_west",
+        "up": "far"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_x_into_up_far_north_west"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "offset": "north_west",
+        "down": "far"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_x_into_down_far_north_west"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "center"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_lying_z_shaft_center"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "center",
+        "down": "none"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_lying_z_base_center"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "center",
+        "up": "none"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_lying_z_cap_center"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "center",
+        "up": "near"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_z_into_up_near_center"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "center",
+        "down": "near"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_z_into_down_near_center"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "center",
+        "up": "mid"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_z_into_up_mid_center"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "center",
+        "down": "mid"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_z_into_down_mid_center"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "center",
+        "up": "far"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_z_into_up_far_center"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "center",
+        "down": "far"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_z_into_down_far_center"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "north"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_lying_z_shaft_north"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "north",
+        "down": "none"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_lying_z_base_north"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "north",
+        "up": "none"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_lying_z_cap_north"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "north",
+        "up": "near"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_z_into_up_near_north"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "north",
+        "down": "near"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_z_into_down_near_north"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "north",
+        "up": "mid"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_z_into_up_mid_north"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "north",
+        "down": "mid"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_z_into_down_mid_north"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "north",
+        "up": "far"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_z_into_up_far_north"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "north",
+        "down": "far"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_z_into_down_far_north"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "north_east"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_lying_z_shaft_north_east"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "north_east",
+        "down": "none"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_lying_z_base_north_east"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "north_east",
+        "up": "none"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_lying_z_cap_north_east"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "north_east",
+        "up": "near"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_z_into_up_near_north_east"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "north_east",
+        "down": "near"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_z_into_down_near_north_east"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "north_east",
+        "up": "mid"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_z_into_up_mid_north_east"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "north_east",
+        "down": "mid"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_z_into_down_mid_north_east"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "north_east",
+        "up": "far"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_z_into_up_far_north_east"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "north_east",
+        "down": "far"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_z_into_down_far_north_east"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "east"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_lying_z_shaft_east"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "east",
+        "down": "none"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_lying_z_base_east"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "east",
+        "up": "none"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_lying_z_cap_east"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "east",
+        "up": "near"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_z_into_up_near_east"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "east",
+        "down": "near"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_z_into_down_near_east"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "east",
+        "up": "mid"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_z_into_up_mid_east"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "east",
+        "down": "mid"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_z_into_down_mid_east"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "east",
+        "up": "far"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_z_into_up_far_east"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "east",
+        "down": "far"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_z_into_down_far_east"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "south_east"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_lying_z_shaft_south_east"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "south_east",
+        "down": "none"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_lying_z_base_south_east"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "south_east",
+        "up": "none"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_lying_z_cap_south_east"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "south_east",
+        "up": "near"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_z_into_up_near_south_east"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "south_east",
+        "down": "near"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_z_into_down_near_south_east"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "south_east",
+        "up": "mid"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_z_into_up_mid_south_east"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "south_east",
+        "down": "mid"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_z_into_down_mid_south_east"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "south_east",
+        "up": "far"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_z_into_up_far_south_east"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "south_east",
+        "down": "far"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_z_into_down_far_south_east"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "south"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_lying_z_shaft_south"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "south",
+        "down": "none"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_lying_z_base_south"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "south",
+        "up": "none"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_lying_z_cap_south"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "south",
+        "up": "near"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_z_into_up_near_south"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "south",
+        "down": "near"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_z_into_down_near_south"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "south",
+        "up": "mid"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_z_into_up_mid_south"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "south",
+        "down": "mid"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_z_into_down_mid_south"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "south",
+        "up": "far"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_z_into_up_far_south"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "south",
+        "down": "far"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_z_into_down_far_south"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "south_west"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_lying_z_shaft_south_west"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "south_west",
+        "down": "none"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_lying_z_base_south_west"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "south_west",
+        "up": "none"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_lying_z_cap_south_west"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "south_west",
+        "up": "near"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_z_into_up_near_south_west"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "south_west",
+        "down": "near"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_z_into_down_near_south_west"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "south_west",
+        "up": "mid"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_z_into_up_mid_south_west"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "south_west",
+        "down": "mid"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_z_into_down_mid_south_west"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "south_west",
+        "up": "far"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_z_into_up_far_south_west"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "south_west",
+        "down": "far"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_z_into_down_far_south_west"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "west"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_lying_z_shaft_west"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "west",
+        "down": "none"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_lying_z_base_west"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "west",
+        "up": "none"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_lying_z_cap_west"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "west",
+        "up": "near"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_z_into_up_near_west"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "west",
+        "down": "near"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_z_into_down_near_west"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "west",
+        "up": "mid"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_z_into_up_mid_west"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "west",
+        "down": "mid"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_z_into_down_mid_west"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "west",
+        "up": "far"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_z_into_up_far_west"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "west",
+        "down": "far"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_z_into_down_far_west"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "north_west"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_lying_z_shaft_north_west"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "north_west",
+        "down": "none"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_lying_z_base_north_west"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "north_west",
+        "up": "none"
+      },
+      "apply": {
+        "model": "murim:block/thick_red_pillar_lying_z_cap_north_west"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "north_west",
+        "up": "near"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_z_into_up_near_north_west"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "north_west",
+        "down": "near"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_z_into_down_near_north_west"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "north_west",
+        "up": "mid"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_z_into_up_mid_north_west"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "north_west",
+        "down": "mid"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_z_into_down_mid_north_west"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "north_west",
+        "up": "far"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_z_into_up_far_north_west"
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "offset": "north_west",
+        "down": "far"
+      },
+      "apply": {
+        "model": "murim:block/red_pillar_lying_z_into_down_far_north_west"
+      }
+    }
+  ]
+}

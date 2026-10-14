@@ -58,8 +58,8 @@ public final class DomeRules {
     public static final int TRAINING_TO = 52;
 
     /** Стволов по слою (codex): 3/3/4/5/5/6/7/7. */
-    public static int trunks(int layer) {
-        return switch (Math.max(0, Math.min(8, layer))) {
+    public static int trunks(int executionTier) {
+        return switch (Math.max(0, Math.min(8, executionTier))) {
             case 0 -> 0;
             case 1, 2 -> 3;
             case 3 -> 4;
@@ -70,8 +70,8 @@ public final class DomeRules {
     }
 
     /** Масштаб высоты и кроны по слою. */
-    public static double scale(int layer) {
-        return switch (Math.max(0, Math.min(8, layer))) {
+    public static double scale(int executionTier) {
+        return switch (Math.max(0, Math.min(8, executionTier))) {
             case 0 -> 0.0D;
             case 1 -> 0.62D;
             case 2 -> 0.68D;
@@ -85,8 +85,8 @@ public final class DomeRules {
     }
 
     /** Плотность эффектов (доля полного рисунка 7-го слоя). */
-    public static double density(int layer) {
-        return switch (Math.max(0, Math.min(8, layer))) {
+    public static double density(int executionTier) {
+        return switch (Math.max(0, Math.min(8, executionTier))) {
             case 0 -> 0.0D;
             case 1 -> 0.15D;
             case 2 -> 0.25D;
@@ -99,23 +99,23 @@ public final class DomeRules {
         };
     }
 
-    public static boolean petals(int layer) {
-        return layer >= 3;
+    public static boolean petals(int executionTier) {
+        return executionTier >= 3;
     }
 
     /** Остаточные контуры вибрирующего клинка — со 2-го слоя. */
-    public static boolean afterimages(int layer) {
-        return layer >= 2;
+    public static boolean afterimages(int executionTier) {
+        return executionTier >= 2;
     }
 
     /** Пул прочности: максимум здоровья × (0,4 + 0,2 × слой) — урон, который сеть выдержит. */
-    public static double pool(int layer, double maxHealth) {
-        return layer <= 0 ? 0.0D : maxHealth * (0.4D + 0.2D * Math.min(8, layer));
+    public static double pool(int executionTier, double maxHealth) {
+        return executionTier <= 0 ? 0.0D : maxHealth * (0.4D + 0.2D * Math.min(8, executionTier));
     }
 
     /** Угол ствола {@code k} от оси (градусы, + — вправо): равномерно по дуге, с лёгким разбросом. */
-    public static double trunkAngle(int layer, int k) {
-        int n = trunks(layer);
+    public static double trunkAngle(int executionTier, int k) {
+        int n = trunks(executionTier);
         if (n <= 1) {
             return 0.0D;
         }
@@ -124,23 +124,23 @@ public final class DomeRules {
     }
 
     /** Высота ствола: купол — центр выше краёв. */
-    public static double trunkHeight(int layer, int k) {
-        double a = trunkAngle(layer, k) / TRUNK_SPREAD;
-        return HEIGHT * scale(layer) * (1.0D - 0.24D * a * a) * (1.0D + 0.05D * Math.sin(k * 1.7D)) * (bearing(layer, k) ? 1.0D : 0.8D);
+    public static double trunkHeight(int executionTier, int k) {
+        double a = trunkAngle(executionTier, k) / TRUNK_SPREAD;
+        return HEIGHT * scale(executionTier) * (1.0D - 0.24D * a * a) * (1.0D + 0.05D * Math.sin(k * 1.7D)) * (bearing(executionTier, k) ? 1.0D : 0.8D);
     }
 
     /**
      * Несущий ствол (codex 03.10: в d04 доминируют 3–4 крупных ствола, не 7 равных): чётные от
      * края — несущие, между ними — тоньше и ниже.
      */
-    public static boolean bearing(int layer, int k) {
-        int n = trunks(layer);
+    public static boolean bearing(int executionTier, int k) {
+        int n = trunks(executionTier);
         return n <= 3 || k % 2 == 0;
     }
 
     /** Порядок посадки: центр, потом вразнобой к краям. Возвращает индекс ствола для {@code order}-го. */
-    public static int plantOrder(int layer, int order) {
-        int n = trunks(layer);
+    public static int plantOrder(int executionTier, int order) {
+        int n = trunks(executionTier);
         // 0 → центр, дальше чередуем стороны: +1, −1, +2, −2… (правая сторона первой — неровно).
         int c = n / 2;
         int seen = 0;
@@ -159,10 +159,10 @@ public final class DomeRules {
     }
 
     /** Тик, на котором сажается ствол {@code k}: последние взмахи сажают по два. */
-    public static int plantTick(int layer, int k) {
-        int n = trunks(layer);
+    public static int plantTick(int executionTier, int k) {
+        int n = trunks(executionTier);
         for (int order = 0; order < n; order++) {
-            if (plantOrder(layer, order) == k) {
+            if (plantOrder(executionTier, order) == k) {
                 int swing = Math.min(SWINGS.length - 1, (int) Math.floor(order * (double) SWINGS.length / n));
                 // Второй ствол того же взмаха — на тик позже.
                 int same = 0;
@@ -178,29 +178,29 @@ public final class DomeRules {
     }
 
     /** Ствол стоит (готов защищать) к тику {@code tick}. */
-    public static boolean ready(int layer, int k, int tick) {
-        return tick >= plantTick(layer, k) + GROW;
+    public static boolean ready(int executionTier, int k, int tick) {
+        return tick >= plantTick(executionTier, k) + GROW;
     }
 
     /**
      * Защищён ли направление {@code angle} (градусы от оси) к тику {@code tick}: ближайший к нему
      * ствол стоит. Края сектора закрывают крайние стволы.
      */
-    public static boolean covered(int layer, double angle, int tick) {
-        int n = trunks(layer);
+    public static boolean covered(int executionTier, double angle, int tick) {
+        int n = trunks(executionTier);
         if (n == 0 || Math.abs(angle) > SECTOR || tick >= HOLD_END) {
             return false;
         }
         int best = 0;
         double bestD = Double.MAX_VALUE;
         for (int k = 0; k < n; k++) {
-            double d = Math.abs(angle - trunkAngle(layer, k));
+            double d = Math.abs(angle - trunkAngle(executionTier, k));
             if (d < bestD) {
                 bestD = d;
                 best = k;
             }
         }
-        return ready(layer, best, tick);
+        return ready(executionTier, best, tick);
     }
 
     /**
@@ -262,8 +262,8 @@ public final class DomeRules {
     }
 
     /** Точка снаружи дуги и в полосе высоты барьера: отсюда пришедшее гасится. */
-    public static boolean outside(int layer, double[] l) {
-        double h = HEIGHT * scale(layer) + 1.2D;
+    public static boolean outside(int executionTier, double[] l) {
+        double h = HEIGHT * scale(executionTier) + 1.2D;
         return rho(l) > RADIUS - 0.4D && Math.abs(angle(l)) <= SECTOR && l[1] > -1.0D && l[1] < h + 1.5D;
     }
 
@@ -271,7 +271,7 @@ public final class DomeRules {
      * Пересекает ли отрезок {@code a → b} дугу барьера снаружи внутрь; возвращает долю пути до
      * пересечения или −1. Высота — в полосе стволов (крона загибается внутрь — запас сверху).
      */
-    public static double crossing(int layer, Frame f, Vec3 a, Vec3 b, int tick) {
+    public static double crossing(int executionTier, Frame f, Vec3 a, Vec3 b, int tick) {
         double[] la = f.local(a);
         double[] lb = f.local(b);
         double ra = rho(la);
@@ -282,18 +282,18 @@ public final class DomeRules {
         // Плоская интерполяция по радиусу хватает: шаг снаряда много меньше радиуса дуги.
         double u = (ra - RADIUS) / Math.max(1.0E-6D, ra - rb);
         double[] l = {la[0] + (lb[0] - la[0]) * u, la[1] + (lb[1] - la[1]) * u, la[2] + (lb[2] - la[2]) * u};
-        double h = HEIGHT * scale(layer) + 1.0D;
-        if (l[1] < -0.6D || l[1] > h || !covered(layer, angle(l), tick)) {
+        double h = HEIGHT * scale(executionTier) + 1.0D;
+        if (l[1] < -0.6D || l[1] > h || !covered(executionTier, angle(l), tick)) {
             return -1.0D;
         }
         return u;
     }
 
     /** Точка контакта на дуге для удара из {@code source}: туда приходит вспышка. */
-    public static Vec3 contact(int layer, Frame f, Vec3 source) {
+    public static Vec3 contact(int executionTier, Frame f, Vec3 source) {
         double[] l = f.local(source);
         double a = Math.toRadians(Math.max(-SECTOR, Math.min(SECTOR, angle(l))));
-        double y = Math.max(0.3D, Math.min(HEIGHT * scale(layer), l[1]));
+        double y = Math.max(0.3D, Math.min(HEIGHT * scale(executionTier), l[1]));
         return f.world(Math.sin(a) * RADIUS, y, Math.cos(a) * RADIUS);
     }
 

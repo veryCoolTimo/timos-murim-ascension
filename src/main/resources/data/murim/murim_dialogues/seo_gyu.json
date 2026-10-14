@@ -57,10 +57,14 @@
   "nodes": {
     "meal": {
       "random": [
-        "dialogue.murim.seo_gyu.meal1"
+        "@context"
       ],
       "gesture": "nod",
       "options": [
+        {
+          "text": "dialogue.murim.social.opt.news",
+          "next": "sect_news"
+        },
         {
           "text": "dialogue.murim.opt.leave"
         }
@@ -68,7 +72,7 @@
     },
     "evening": {
       "random": [
-        "dialogue.murim.seo_gyu.evening1"
+        "@context"
       ],
       "gesture": "nod",
       "options": [
@@ -116,9 +120,7 @@
     },
     "greet": {
       "random": [
-        "dialogue.murim.seo_gyu.greet1",
-        "dialogue.murim.seo_gyu.greet2",
-        "dialogue.murim.seo_gyu.greet3"
+        "@context"
       ],
       "gesture": "fist",
       "options": [
@@ -165,7 +167,6 @@
       ]
     },
     "greet_champion": {
-      "line": "dialogue.murim.seo_gyu.champion",
       "gesture": "nod",
       "options": [
         {
@@ -208,6 +209,9 @@
         {
           "text": "dialogue.murim.opt.leave"
         }
+      ],
+      "random": [
+        "@context"
       ]
     },
     "topics": {
@@ -300,6 +304,19 @@
           "text": "dialogue.murim.opt.back",
           "next": "topics"
         },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "sect_news": {
+      "random": [
+        "@trait",
+        "@personal",
+        "@rumour"
+      ],
+      "gesture": "explain",
+      "options": [
         {
           "text": "dialogue.murim.opt.leave"
         }

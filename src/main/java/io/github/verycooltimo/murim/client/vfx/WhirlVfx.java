@@ -124,7 +124,7 @@ public final class WhirlVfx {
 
     private static final class Cast {
         final int entityId;
-        final int layer;
+        final int executionTier;
         final int start;
         final Random random;
         int slashTick = -1;
@@ -142,9 +142,9 @@ public final class WhirlVfx {
         int passTick = -1;
         Vec3 slowPetal;
 
-        Cast(int entityId, int layer) {
+        Cast(int entityId, int executionTier) {
             this.entityId = entityId;
-            this.layer = layer;
+            this.executionTier = executionTier;
             this.start = clientTicks;
             this.random = new Random(entityId * 7919L + clientTicks);
         }
@@ -158,14 +158,14 @@ public final class WhirlVfx {
 
     public static void onTechniqueEvent(TechniqueEventPayload payload) {
         if (payload.event() != TechniqueEventPayload.Event.STARTED || !TECHNIQUE.equals(payload.techniqueId())
-                || payload.layer() <= 0) {
+                || payload.executionTier() <= 0) {
             return;
         }
-        Cast c = new Cast(payload.sourceId(), payload.layer());
+        Cast c = new Cast(payload.sourceId(), payload.executionTier());
         CASTS.add(c);
-        if (payload.layer() >= 3) {
+        if (payload.executionTier() >= 3) {
             // Стойка (w2–w3): тело горит холодной синей ци.
-            ClientAuraState.techniqueAura(payload.sourceId(), 2 + Math.min(3, payload.layer()), 0, WhirlRules.SLASH + 4);
+            ClientAuraState.techniqueAura(payload.sourceId(), 2 + Math.min(3, payload.executionTier()), 0, WhirlRules.SLASH + 4);
         }
         Minecraft mc = Minecraft.getInstance();
         Entity e = mc.level == null ? null : mc.level.getEntity(payload.sourceId());
@@ -198,7 +198,7 @@ public final class WhirlVfx {
             return;
         }
         if (c == null) {
-            c = new Cast(p.entityId(), p.layer());
+            c = new Cast(p.entityId(), p.executionTier());
             CASTS.add(c);
         }
         Vec3 f = Vec3.directionFromRotation(0.0F, p.yaw());
@@ -212,11 +212,11 @@ public final class WhirlVfx {
         buildPillars(c);
         Minecraft mc = Minecraft.getInstance();
         boolean own = mc.player != null && mc.player.getId() == c.entityId;
-        if (c.layer >= 3) {
-            ClientAuraState.techniqueAura(c.entityId, 2 + Math.min(3, c.layer), 1, WhirlRules.END);
+        if (c.executionTier >= 3) {
+            ClientAuraState.techniqueAura(c.entityId, 2 + Math.min(3, c.executionTier), 1, WhirlRules.END);
         }
         if (own) {
-            if (c.layer >= 3) {
+            if (c.executionTier >= 3) {
                 TechniqueCaption.show(school(), form("slash"), 30);
             }
             SpeedLines.radial(0.5F, 0.6F, 0.8F, 7, SpeedLines.WHITE);
@@ -239,8 +239,8 @@ public final class WhirlVfx {
 
     /** Столпы вокруг центра: по трети на каждом из трёх взмахов (w6). */
     private static void buildPillars(Cast c) {
-        int n = WhirlRules.pillars(c.layer);
-        double h = WhirlRules.height(c.layer);
+        int n = WhirlRules.pillars(c.executionTier);
+        double h = WhirlRules.height(c.executionTier);
         for (int i = 0; i < n; i++) {
             // Неровно (автор 02.10: «слишком симметрично»): углы, радиус, высота, наклон — вразнобой.
             double a = Math.PI * 2.0D * i / n + (c.random.nextDouble() - 0.5D) * 0.7D;
@@ -296,7 +296,7 @@ public final class WhirlVfx {
             tickParticles(c, s);
             if (s >= 0) {
                 events(c, s, mc);
-            } else if (c.layer >= 2 && (clientTicks - c.start) % 3 == 0) {
+            } else if (c.executionTier >= 2 && (clientTicks - c.start) % 3 == 0) {
                 // Стойка: ветер обвивает корпус (w3–w4).
                 Entity e = mc.level.getEntity(c.entityId);
                 if (e != null) {
@@ -314,13 +314,13 @@ public final class WhirlVfx {
 
     private static void events(Cast c, int s, Minecraft mc) {
         boolean own = mc.player != null && mc.player.getId() == c.entityId;
-        double r = WhirlRules.radius(c.layer);
+        double r = WhirlRules.radius(c.executionTier);
         // Три взмаха: каждый — порыв ветра, лепестки, пыль, линии скорости.
         for (int k = 0; k < 3; k++) {
-            if (s == WhirlRules.WALL_STROKES[k] && WhirlRules.pillars(c.layer) > 0) {
+            if (s == WhirlRules.WALL_STROKES[k] && WhirlRules.pillars(c.executionTier) > 0) {
                 for (Pillar p : c.pillars) {
                     if (p.born() == s || p.born() == s + 1) {
-                        burst(c, pillarBase(c, p, s).add(0.0D, 0.6D, 0.0D), 4, 0.2D, c.layer >= 3);
+                        burst(c, pillarBase(c, p, s).add(0.0D, 0.6D, 0.0D), 4, 0.2D, c.executionTier >= 3);
                     }
                 }
                 Entity e = mc.level.getEntity(c.entityId);
@@ -333,7 +333,7 @@ public final class WhirlVfx {
             }
         }
         // Распад стен в пыль (w9): с каждой точки стен и столпов — фрагмент с инерцией внутрь.
-        if (s >= WhirlRules.SHATTER && s < WhirlRules.SHATTER + 6 && WhirlRules.whirl(c.layer)) {
+        if (s >= WhirlRules.SHATTER && s < WhirlRules.SHATTER + 6 && WhirlRules.whirl(c.executionTier)) {
             // Стены дробятся от пересечений: фрагменты рождаются прямо на лентах стен,
             // розовые, с инерцией внутрь — и тот же материал подхватывает вихрь.
             int n = c.pillars.size();
@@ -347,13 +347,13 @@ public final class WhirlVfx {
                     Vec3 tan = new Vec3(in.z, 0.0D, -in.x);
                     Mote m = new Mote(at, in.scale(0.14D).add(tan.scale(0.1D)), 40 + c.random.nextInt(20), false, 0, 0.0F,
                             0.1D + 0.08D * c.random.nextDouble(), 14);
-                    m.pink = c.layer >= 3;
+                    m.pink = c.executionTier >= 3;
                     m.tilt = (c.random.nextDouble() - 0.5D) * 0.8D;
                     c.motes.add(m);
                 }
             }
         }
-        if (s == WhirlRules.SHATTER && WhirlRules.whirl(c.layer)) {
+        if (s == WhirlRules.SHATTER && WhirlRules.whirl(c.executionTier)) {
             for (Pillar p : c.pillars) {
                 for (double u = 0.1D; u <= 1.0D; u += 0.15D) {
                     Vec3 at = pillarPoint(c, p, u, s);
@@ -361,8 +361,8 @@ public final class WhirlVfx {
                     in = new Vec3(in.x, 0.0D, in.z).normalize();
                     Vec3 tan = new Vec3(-in.z, 0.0D, in.x);
                     Vec3 v = in.scale(0.12D).add(tan.scale(0.18D)).add(0.0D, 0.02D, 0.0D);
-                    c.motes.add(new Mote(at, v, 70 + c.random.nextInt(30), c.layer >= 3, c.random.nextInt(4),
-                            (float) (c.random.nextDouble() - 0.5D), 0.1D + 0.06D * c.random.nextDouble(), c.layer >= 3 ? 0 : 1));
+                    c.motes.add(new Mote(at, v, 70 + c.random.nextInt(30), c.executionTier >= 3, c.random.nextInt(4),
+                            (float) (c.random.nextDouble() - 0.5D), 0.1D + 0.06D * c.random.nextDouble(), c.executionTier >= 3 ? 0 : 1));
                     if (c.random.nextBoolean()) {
                         c.puffs.add(new Puff(at, v.scale(0.8D), 30 + c.random.nextInt(14), c.random.nextInt(16),
                                 0.25D + 0.15D * c.random.nextDouble(), false, 0.62F, 0.0F));
@@ -374,18 +374,18 @@ public final class WhirlVfx {
             }
         }
         // Вихрь (w10–w11): поток пополняется лентами и лепестками, по земле режет разрезы.
-        if (WhirlRules.whirl(c.layer) && s >= WhirlRules.WHIRL && s < WhirlRules.WHIRL_END) {
-            double h = WhirlRules.height(c.layer);
+        if (WhirlRules.whirl(c.executionTier) && s >= WhirlRules.WHIRL && s < WhirlRules.WHIRL_END) {
+            double h = WhirlRules.height(c.executionTier);
             for (int i = 0; i < 2; i++) {
                 double a = c.random.nextDouble() * Math.PI * 2.0D;
                 double rr = 1.2D + (r - 1.2D) * c.random.nextDouble();
                 Vec3 at = c.centre.add(Math.cos(a) * rr, 0.3D + c.random.nextDouble() * h * 0.8D, Math.sin(a) * rr);
                 Mote m = new Mote(at, Vec3.ZERO, 26 + c.random.nextInt(14), false, 0, 0.0F, 0.14D + 0.16D * c.random.nextDouble(), 16);
                 m.tilt = (c.random.nextDouble() - 0.5D) * 1.2D;
-                m.pink = c.layer >= 3 && c.random.nextInt(3) == 0;
+                m.pink = c.executionTier >= 3 && c.random.nextInt(3) == 0;
                 c.motes.add(m);
             }
-            if (c.layer >= 3) {
+            if (c.executionTier >= 3) {
                 for (int i = 0; i < 3; i++) {
                     double a = c.random.nextDouble() * Math.PI * 2.0D;
                     double rr = 1.0D + (r - 1.0D) * c.random.nextDouble();
@@ -394,7 +394,7 @@ public final class WhirlVfx {
                             (float) (c.random.nextDouble() - 0.5D), 0.09D + 0.06D * c.random.nextDouble(), 0));
                 }
             }
-            if (c.layer >= 4 && s % 5 == 0 && c.cuts.size() < 6 + 2 * c.layer) {
+            if (c.executionTier >= 4 && s % 5 == 0 && c.cuts.size() < 6 + 2 * c.executionTier) {
                 cut(c, r, s);
             }
             if (s == WhirlRules.WHIRL && mc.player != null && mc.player.position().distanceTo(c.centre) < 16.0D) {
@@ -402,13 +402,13 @@ public final class WhirlVfx {
             }
         }
         // Два мини-урагана (автор 02.10): медленно отделяются от вихря, идут к цели и сквозь неё.
-        if (s == WhirlRules.TORNADO_FORM && WhirlRules.finale(c.layer) && own) {
+        if (s == WhirlRules.TORNADO_FORM && WhirlRules.finale(c.executionTier) && own) {
             TechniqueCaption.show(school(), form("whirlwind"), 44);
         }
         if (s == WhirlRules.TORNADO_GO && own) {
             SpeedLines.radial(0.5F, 0.5F, 0.6F, 8, SpeedLines.WHITE);
         }
-        if (WhirlRules.finale(c.layer) && c.target != null && s >= WhirlRules.TORNADO_FORM && s < WhirlRules.TORNADO_END) {
+        if (WhirlRules.finale(c.executionTier) && c.target != null && s >= WhirlRules.TORNADO_FORM && s < WhirlRules.TORNADO_END) {
             double grow = Mth.clamp((s - WhirlRules.TORNADO_FORM) / (double) (WhirlRules.TORNADO_GO - WhirlRules.TORNADO_FORM), 0.0D, 1.0D);
             for (int which = -1; which <= 1; which += 2) {
                 Vec3 at = WhirlRules.tornado(c.centre, c.target, r, which, s).add(0.0D, 1.1D, 0.0D);
@@ -417,21 +417,21 @@ public final class WhirlVfx {
                     double rad = (0.5D + 0.9D * c.random.nextDouble()) * (0.5D + 0.5D * grow);
                     Vec3 pos = at.add(c.right.scale(Math.cos(a) * rad)).add(0.0D, Math.sin(a) * rad, 0.0D);
                     Vec3 tan = c.right.scale(-Math.sin(a)).add(0.0D, Math.cos(a), 0.0D).scale(0.2D * which).add(c.forward.scale(0.12D));
-                    Mote m = new Mote(pos, tan, 18 + c.random.nextInt(10), c.layer >= 3 && i < 3, c.random.nextInt(4),
+                    Mote m = new Mote(pos, tan, 18 + c.random.nextInt(10), c.executionTier >= 3 && i < 3, c.random.nextInt(4),
                             (float) (c.random.nextDouble() - 0.5D), i < 3 ? 0.09D : 0.1D, i < 3 ? 0 : 10);
                     m.free = true;
-                    m.pink = c.layer >= 3;
+                    m.pink = c.executionTier >= 3;
                     c.motes.add(m);
                 }
                 // Проход сквозь цель: выброс лепестков и пыли.
                 if (s == (WhirlRules.TORNADO_GO + WhirlRules.TORNADO_END) / 2 + 4) {
-                    burst(c, c.target.add(0.0D, 1.0D, 0.0D), 14, 0.3D, c.layer >= 3);
+                    burst(c, c.target.add(0.0D, 1.0D, 0.0D), 14, 0.3D, c.executionTier >= 3);
                     dust(c, c.target, 5);
                 }
             }
         }
         // Тихая пауза (w14–w15): один медленный лепесток плывёт к цели.
-        if (s == WhirlRules.QUIET && WhirlRules.finale(c.layer)) {
+        if (s == WhirlRules.QUIET && WhirlRules.finale(c.executionTier)) {
             Vec3 tp = c.target != null ? c.target : c.centre;
             c.slowPetal = tp.add(c.right.scale(0.8D)).add(c.forward.scale(-0.4D)).add(0.0D, 2.4D, 0.0D);
         }
@@ -440,7 +440,7 @@ public final class WhirlVfx {
             c.slowPetal = c.slowPetal.add(goal.subtract(c.slowPetal).scale(0.06D));
         }
         // Финальный проход: записываем путь мастера — по нему тянется тонкий след разреза.
-        if (WhirlRules.finale(c.layer) && s >= WhirlRules.PASS && s <= WhirlRules.PASS + WhirlRules.PASS_TICKS) {
+        if (WhirlRules.finale(c.executionTier) && s >= WhirlRules.PASS && s <= WhirlRules.PASS + WhirlRules.PASS_TICKS) {
             Entity e = mc.level.getEntity(c.entityId);
             if (e != null) {
                 c.pass.add(e.position().add(0.0D, 1.2D, 0.0D));
@@ -452,8 +452,8 @@ public final class WhirlVfx {
         }
         // Выход: вал дыма по зоне → облако.
         // Дым — только после финала, у земли и следов (codex: пауза не должна выглядеть затуханием взрыва).
-        if (s == WhirlRules.EXIT && WhirlRules.whirl(c.layer)) {
-            smoke(c, c.centre, r * 0.8D, 8 + 2 * Math.min(4, c.layer));
+        if (s == WhirlRules.EXIT && WhirlRules.whirl(c.executionTier)) {
+            smoke(c, c.centre, r * 0.8D, 8 + 2 * Math.min(4, c.executionTier));
         }
     }
 
@@ -470,7 +470,7 @@ public final class WhirlVfx {
             io.github.verycooltimo.murim.client.Sfx.play(at.x, at.y, at.z, io.github.verycooltimo.murim.registry.ModSounds.IMPACT_HEAVY.get(),
                     net.minecraft.sounds.SoundSource.PLAYERS, 0.9F, 1.0F, false);
         }
-        burst(c, at, 30, 0.35D, c.layer >= 3);
+        burst(c, at, 30, 0.35D, c.executionTier >= 3);
         smoke(c, new Vec3(at.x, c.centre == null ? at.y - 1.0D : c.centre.y, at.z), 2.6D, 7);
     }
 
@@ -559,8 +559,8 @@ public final class WhirlVfx {
         // Тихая пауза перед проходом: декоративное время замедляется до 25 % (сервер — 20 т/с).
         double slow = s >= WhirlRules.QUIET && s < WhirlRules.PASS ? 0.25D
                 : s >= WhirlRules.PASS && s < WhirlRules.PASS + 8 ? 0.25D + 0.75D * (s - WhirlRules.PASS) / 8.0D : 1.0D;
-        boolean field = c.centre != null && WhirlRules.whirl(c.layer) && s >= WhirlRules.SHATTER && s < WhirlRules.WHIRL_END + 10;
-        double r = WhirlRules.radius(c.layer);
+        boolean field = c.centre != null && WhirlRules.whirl(c.executionTier) && s >= WhirlRules.SHATTER && s < WhirlRules.WHIRL_END + 10;
+        double r = WhirlRules.radius(c.executionTier);
         for (Mote m : c.motes) {
             if (m.trail.length > 1) {
                 System.arraycopy(m.trail, 0, m.trail, 1, m.trail.length - 1);
@@ -609,8 +609,8 @@ public final class WhirlVfx {
 
     /** Радиус оболочки стен: R → 0,55R при схождении (сначала медленно, потом быстрее). */
     private static double shell(Cast c, float s) {
-        double r = WhirlRules.radius(c.layer);
-        if (s < WhirlRules.CONVERGE || !WhirlRules.walls(c.layer)) {
+        double r = WhirlRules.radius(c.executionTier);
+        if (s < WhirlRules.CONVERGE || !WhirlRules.walls(c.executionTier)) {
             return r;
         }
         double k = Mth.clamp((s - WhirlRules.CONVERGE) / (double) (WhirlRules.SHATTER - WhirlRules.CONVERGE), 0.0D, 1.0D);
@@ -618,8 +618,8 @@ public final class WhirlVfx {
     }
 
     private static Vec3 pillarBase(Cast c, Pillar p, float s) {
-        double r = WhirlRules.radius(c.layer);
-        double k = WhirlRules.walls(c.layer) ? Mth.clamp((s - WhirlRules.CONVERGE - p.delay()) / p.dur(), 0.0D, 1.0D) : 0.0D;
+        double r = WhirlRules.radius(c.executionTier);
+        double k = WhirlRules.walls(c.executionTier) ? Mth.clamp((s - WhirlRules.CONVERGE - p.delay()) / p.dur(), 0.0D, 1.0D) : 0.0D;
         // Эллипс с наклоном, разный радиус и разное сжатие — круг больше не идеальный.
         double ellipse = 1.0D + 0.22D * Math.cos(2.0D * (p.angle() - c.base));
         double rr = r * p.reach() * ellipse * (1.0D - (1.0D - p.fin()) * k * k);
@@ -635,7 +635,7 @@ public final class WhirlVfx {
         Vec3 in = c.centre.subtract(base);
         in = new Vec3(in.x, 0.0D, in.z).normalize();
         Vec3 tan = new Vec3(-in.z, 0.0D, in.x);
-        double pull = WhirlRules.walls(c.layer) ? Mth.clamp((s - WhirlRules.TENSION) / 12.0D, 0.0D, 1.0D) : 0.0D;
+        double pull = WhirlRules.walls(c.executionTier) ? Mth.clamp((s - WhirlRules.TENSION) / 12.0D, 0.0D, 1.0D) : 0.0D;
         double bow = Math.sin(Math.PI * u) * 0.35D;
         return base.add(0.0D, p.height() * u, 0.0D).add(tan.scale(p.lean() * u + bow))
                 .add(in.scale(0.6D * pull * u * u + 0.15D * Math.sin(s * 0.3D + p.angle()) * u * u));
@@ -717,7 +717,7 @@ public final class WhirlVfx {
                     }
                     buffers.endBatch(smokeType);
                 }
-                if (c.layer >= 3) {
+                if (c.executionTier >= 3) {
                     RenderType petals = MurimRenderTypes.plumPetals();
                     VertexConsumer pc = buffers.getBuffer(petals);
                     for (Mote m : c.motes) {
@@ -758,7 +758,7 @@ public final class WhirlVfx {
         if (fade <= 0.0F) {
             return;
         }
-        double h = WhirlRules.height(c.layer) * 1.05D;
+        double h = WhirlRules.height(c.executionTier) * 1.05D;
         double grow = Mth.clamp(s / 2.0D, 0.0D, 1.0D);
         int n = 16;
         Vec3[] p = new Vec3[n + 1];
@@ -771,7 +771,7 @@ public final class WhirlVfx {
             w[i] = 0.28D * (1.0D - 0.85D * u) * (1.0D + 0.4D * beat * beat);
             a[i] = fade;
         }
-        boolean pink = c.layer >= 3;
+        boolean pink = c.executionTier >= 3;
         PlumVfx.stripVar(v, pose, camera, p, PlumVfx.scale(w, 2.6D), PlumVfx.scaled(a, 0.12F), pink ? PINK : COLD);
         PlumVfx.stripVar(v, pose, camera, p, w, PlumVfx.scaled(a, 0.6F), pink ? PINK : COLD);
         PlumVfx.stripVar(v, pose, camera, p, PlumVfx.scale(w, 0.4D), PlumVfx.scaled(a, 0.95F), EDGE);
@@ -799,12 +799,12 @@ public final class WhirlVfx {
         if (c.pillars.isEmpty()) {
             return;
         }
-        float fade = WhirlRules.whirl(c.layer) ? (float) Mth.clamp((WhirlRules.SHATTER + 6 - s) / 6.0D, 0.0D, 1.0D)
+        float fade = WhirlRules.whirl(c.executionTier) ? (float) Mth.clamp((WhirlRules.SHATTER + 6 - s) / 6.0D, 0.0D, 1.0D)
                 : (float) Mth.clamp((WhirlRules.WHIRL_END - s) / 10.0D, 0.0D, 1.0D);
         if (fade <= 0.0F) {
             return;
         }
-        boolean pink = c.layer >= 3;
+        boolean pink = c.executionTier >= 3;
         double conv = s >= WhirlRules.CONVERGE ? Mth.clamp((s - WhirlRules.CONVERGE) / 14.0D, 0.0D, 1.0D) : 0.0D;
         for (Pillar p : c.pillars) {
             float t = s - p.born();
@@ -826,7 +826,7 @@ public final class WhirlVfx {
             PlumVfx.strip(v, pose, camera, q, w, 0.55F * a, pink ? PINK : COLD);
             PlumVfx.strip(v, pose, camera, q, PlumVfx.scale(w, 0.4D), 0.92F * a, EDGE);
         }
-        if (!WhirlRules.walls(c.layer)) {
+        if (!WhirlRules.walls(c.executionTier)) {
             return;
         }
         int n = c.pillars.size();
@@ -883,7 +883,7 @@ public final class WhirlVfx {
 
     /** Яркие узлы пересечений стен при схождении (w8). */
     private static void wallNodes(Cast c, PoseStack.Pose pose, Vec3 camera, VertexConsumer g, float s) {
-        if (!WhirlRules.walls(c.layer) || s < WhirlRules.CONVERGE || s > WhirlRules.SHATTER + 2) {
+        if (!WhirlRules.walls(c.executionTier) || s < WhirlRules.CONVERGE || s > WhirlRules.SHATTER + 2) {
             return;
         }
         float k = (float) Mth.clamp((s - WhirlRules.CONVERGE) / 10.0D, 0.0D, 1.0D);
@@ -901,10 +901,10 @@ public final class WhirlVfx {
      * сквозь неё, хвост тянется следом; вокруг оси — три спиральные ленты, шире у головы.
      */
     private static void tornadoes(Cast c, PoseStack.Pose pose, Vec3 camera, VertexConsumer v, float s) {
-        if (!WhirlRules.finale(c.layer) || c.target == null || s < WhirlRules.TORNADO_FORM || s > WhirlRules.TORNADO_END + 10) {
+        if (!WhirlRules.finale(c.executionTier) || c.target == null || s < WhirlRules.TORNADO_FORM || s > WhirlRules.TORNADO_END + 10) {
             return;
         }
-        double r = WhirlRules.radius(c.layer);
+        double r = WhirlRules.radius(c.executionTier);
         double grow = Mth.clamp((s - WhirlRules.TORNADO_FORM) / (double) (WhirlRules.TORNADO_GO - WhirlRules.TORNADO_FORM), 0.0D, 1.0D);
         double k = Mth.clamp((s - WhirlRules.TORNADO_GO) / (double) (WhirlRules.TORNADO_END - WhirlRules.TORNADO_GO), 0.0D, 1.0D);
         double head = 0.12D * grow + 0.88D * k * k * (3.0D - 2.0D * k);

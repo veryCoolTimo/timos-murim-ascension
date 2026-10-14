@@ -78,6 +78,7 @@ public final class SectService {
         }
         int rank = p.getData(ModAttachments.PROFILE).rank();
         SectStanding before = SectStanding.of(state(p), rank);
+        delta += SectPositions.incomeBonus(state(p), delta);
         SectState next = state(p).contribute(delta);
         p.setData(ModAttachments.SECT, next);
         p.displayClientMessage(Component.translatable(delta > 0 ? "murim.sect.contribution.gain" : "murim.sect.contribution.loss",
@@ -135,6 +136,7 @@ public final class SectService {
         tag.putInt("points", tag.getInt("points") + got);
         p.getPersistentData().put(DONATE_TAG, tag);
         contribute(p, got);
+        SectSocial.remember(p, "loot");
         return true;
     }
 
@@ -212,6 +214,7 @@ public final class SectService {
         if (!MasteryService.knows(player, SIX)) {
             giveBook(player, SIX);
         }
+        player.displayClientMessage(SectJourney.line(player), false);
         // Учебный деревянный меч новому ученику (автор 04.10): раньше наставник оружия не давал.
         ItemStack sword = new ItemStack(ModItems.WOODEN_SWORD.get());
         if (!player.getInventory().add(sword)) {
@@ -232,6 +235,8 @@ public final class SectService {
             player.displayClientMessage(Component.translatable("murim.sect.clean_done").withStyle(ChatFormatting.GOLD), false);
         }
         player.setData(ModAttachments.SECT, s);
+        SectRequests.juniorTrained(player, senior, playerWon);
+        SectProgression.sparEnded(player, senior, playerWon);
         // Поединок с учеником днём — занятие в журнале секты (вызов охраны за силовой вход — не занятие).
         if (!SectLife.onWatch(senior) && SectSchedule.at(player.level().getDayTime()) != SectSchedule.Period.NIGHT) {
             SectAttendance.record(player, SectAttendance.Activity.LESSON);

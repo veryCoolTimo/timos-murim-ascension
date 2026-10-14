@@ -1,0 +1,70 @@
+{
+  "variants": {
+    "type=bottom": [
+      {
+        "model": "murim:block/hua_packed_earth_slab",
+        "weight": 6
+      },
+      {
+        "model": "murim:block/hua_packed_earth_slab_1",
+        "weight": 6
+      },
+      {
+        "model": "murim:block/hua_packed_earth_slab_2",
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_packed_earth_slab_3",
+        "weight": 2
+      },
+      {
+        "model": "murim:block/hua_packed_earth_slab_4",
+        "weight": 2
+      }
+    ],
+    "type=top": [
+      {
+        "model": "murim:block/hua_packed_earth_slab_top",
+        "weight": 6
+      },
+      {
+        "model": "murim:block/hua_packed_earth_slab_top_1",
+        "weight": 6
+      },
+      {
+        "model": "murim:block/hua_packed_earth_slab_top_2",
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_packed_earth_slab_top_3",
+        "weight": 2
+      },
+      {
+        "model": "murim:block/hua_packed_earth_slab_top_4",
+        "weight": 2
+      }
+    ],
+    "type=double": [
+      {
+        "model": "murim:block/hua_packed_earth",
+        "weight": 6
+      },
+      {
+        "model": "murim:block/hua_packed_earth_b",
+        "weight": 6
+      },
+      {
+        "model": "murim:block/hua_packed_earth_c",
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_packed_earth_d",
+        "weight": 2
+      },
+      {
+        "model": "murim:block/hua_packed_earth_e",
+        "weight": 2
+      }
+    ]
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "murim:block/studded_band"
+    },
+    "facing=east": {
+      "model": "murim:block/studded_band",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "murim:block/studded_band",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "murim:block/studded_band",
+      "y": 270
+    }
+  }
+}

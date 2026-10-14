@@ -9,8 +9,12 @@ import net.neoforged.neoforge.network.PacketDistributor;
 public final class ProfileNetwork {
 
     public static void sync(ServerPlayer player) {
-        PacketDistributor.sendToPlayer(player,
-                new SyncProfilePayload(player.getData(ModAttachments.PROFILE)));
+        SyncProfilePayload payload = new SyncProfilePayload(player.getData(ModAttachments.PROFILE));
+        // GameTest mock players have no mod channel.
+        // API: reference/neoforge-src/net/neoforged/neoforge/common/extensions/ICommonPacketListener.java#hasChannel
+        if (player.connection != null && player.connection.hasChannel(payload)) {
+            PacketDistributor.sendToPlayer(player, payload);
+        }
     }
 
     private ProfileNetwork() {

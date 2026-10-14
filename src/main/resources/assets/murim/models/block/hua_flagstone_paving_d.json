@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "bottom": "murim:block/hua_flagstone_paving_d",
+    "side": "murim:block/hua_flagstone_paving_d",
+    "top": "murim:block/hua_flagstone_paving_d"
+  }
+}

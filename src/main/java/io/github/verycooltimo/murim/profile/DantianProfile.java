@@ -15,7 +15,8 @@ import net.minecraft.util.Mth;
  * сидячей циркуляцией, а не сном. Разделение взято из книг: боевое истощение там тактически
  * значимо, персонаж не может применить лучшую технику из-за расхода в предыдущих схватках.
  *
- * @param capacity    ёмкость даньтяня, растёт регулярно
+ * @param capacity    полная ёмкость даньтяня: базовая × 1,8^ранг × 1,25^подступень (с Пика);
+ *                    хранится уже с множителем, повторно при чтении не умножается
  * @param purity      чистота ци: сильнее в применении, но копится в разы медленнее
  * @param meridians   пропускная способность каналов
  * @param nature      природа энергии — тег, меняется только редкими событиями
@@ -121,8 +122,12 @@ public record DantianProfile(
         return 0.85D + 0.45D * purity;
     }
 
-    /** Потолок ёмкости. Без него медитация даёт неограниченный рост и обесценивает риск. */
+    /** Потолок ёмкости без ранга; ранг и подступень расширяют его тем же множителем, что центр. */
     public static final double MAX_CAPACITY = 240.0D;
+
+    public double capacityLimit() {
+        return MAX_CAPACITY * io.github.verycooltimo.murim.cultivation.Realm.capacityFactor(rank, stage);
+    }
 
     public DantianProfile withCirculating(double value) {
         return new DantianProfile(capacity, purity, meridians, nature, imprint, pool,
@@ -141,7 +146,7 @@ public record DantianProfile(
 
     public DantianProfile withAxes(double newCapacity, double newPurity, double newMeridians) {
         DantianProfile changed = new DantianProfile(
-                Mth.clamp(newCapacity, 0.1D, MAX_CAPACITY),
+                Mth.clamp(newCapacity, 0.1D, capacityLimit()),
                 Mth.clamp(newPurity, 0.0D, 1.0D),
                 Mth.clamp(newMeridians, 0.0D, 1.0D),
                 nature, imprint, pool, circulating, foundation, rank, stage);
@@ -150,16 +155,30 @@ public record DantianProfile(
         return changed.withCirculating(changed.circulating());
     }
 
-    /** Новый ранг. Подступень сохраняется только на том же ранге: новая ступень начинается с начальной. */
+    /**
+     * Новый ранг: ёмкость меняется отношением нового и прежнего множителя, без бесплатного ци.
+     * Команда и естественный прорыв используют один путь. Повтор того же ранга ничего не меняет;
+     * новая ступень начинается с начальной подступени. Понижение зажимает только боевую ци.
+     */
     public DantianProfile withRank(int value) {
-        return new DantianProfile(capacity, purity, meridians, nature, imprint, pool, circulating,
-                foundation, value, value == rank ? stage : 0);
+        if (value == rank) return this;
+        int nextStage = 0;
+        double scaled = capacity * io.github.verycooltimo.murim.cultivation.Realm.capacityFactor(value, nextStage)
+                / io.github.verycooltimo.murim.cultivation.Realm.capacityFactor(rank, stage);
+        DantianProfile changed = new DantianProfile(scaled, purity, meridians, nature, imprint, pool, circulating,
+                foundation, value, nextStage);
+        return changed.withCirculating(circulating);
     }
 
     /** Подступень Пика; ниже Пика (ранг 4) её нет — остаётся 0. */
     public DantianProfile withStage(int value) {
-        return new DantianProfile(capacity, purity, meridians, nature, imprint, pool, circulating,
-                foundation, rank, rank >= 4 ? Mth.clamp(value, 0, MAX_STAGE) : 0);
+        int nextStage = rank >= 4 ? Mth.clamp(value, 0, MAX_STAGE) : 0;
+        if (nextStage == stage) return this;
+        double scaled = capacity * io.github.verycooltimo.murim.cultivation.Realm.capacityFactor(rank, nextStage)
+                / io.github.verycooltimo.murim.cultivation.Realm.capacityFactor(rank, stage);
+        DantianProfile changed = new DantianProfile(scaled, purity, meridians, nature, imprint, pool, circulating,
+                foundation, rank, nextStage);
+        return changed.withCirculating(circulating);
     }
 
     public DantianProfile withTags(String newNature, String newImprint) {

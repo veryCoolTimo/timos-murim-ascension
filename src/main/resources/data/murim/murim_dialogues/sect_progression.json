@@ -1,0 +1,504 @@
+{
+  "name": "npc.murim.elder",
+  "start": [
+    {
+      "node": "menu"
+    }
+  ],
+  "nodes": {
+    "menu": {
+      "line": "dialogue.murim.progression.menu",
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.progression.opt.training",
+          "next": "training"
+        },
+        {
+          "text": "dialogue.murim.progression.opt.duties",
+          "next": "duties"
+        },
+        {
+          "text": "dialogue.murim.progression.opt.relations",
+          "next": "relations"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "training": {
+      "line": "dialogue.murim.progression.training",
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.progression.opt.direct",
+          "next": "direct",
+          "when": [
+            {
+              "social": "progression:direct"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.progression.opt.lesson",
+          "next": "lesson_done",
+          "actions": [
+            {
+              "type": "progression",
+              "value": "lesson"
+            }
+          ],
+          "when": [
+            {
+              "social": "progression:lesson"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.progression.opt.archive",
+          "next": "archive"
+        },
+        {
+          "text": "dialogue.murim.social.opt.back",
+          "next": "menu"
+        }
+      ]
+    },
+    "direct": {
+      "line": "dialogue.murim.progression.direct",
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.progression.opt.begin",
+          "next": "ceremony",
+          "actions": [
+            {
+              "type": "progression",
+              "value": "direct"
+            },
+            {
+              "type": "bow"
+            }
+          ],
+          "when": [
+            {
+              "social": "progression:direct"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.social.opt.back",
+          "next": "menu"
+        }
+      ]
+    },
+    "ceremony": {
+      "line": "dialogue.murim.progression.ceremony",
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.progression.opt.confirm",
+          "next": "direct_done",
+          "actions": [
+            {
+              "type": "progression",
+              "value": "ceremony"
+            }
+          ],
+          "when": [
+            {
+              "social": "progression:ceremony"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.progression.opt.refresh",
+          "next": "ceremony"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "archive": {
+      "line": "dialogue.murim.progression.archive",
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.progression.opt.archive0",
+          "next": "read_done",
+          "actions": [
+            {
+              "type": "progression",
+              "value": "archive0"
+            }
+          ],
+          "when": [
+            {
+              "social": "progression:archive0"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.progression.opt.archive1",
+          "next": "read_done",
+          "actions": [
+            {
+              "type": "progression",
+              "value": "archive1"
+            }
+          ],
+          "when": [
+            {
+              "social": "progression:archive1"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.progression.opt.archive2",
+          "next": "read_done",
+          "actions": [
+            {
+              "type": "progression",
+              "value": "archive2"
+            }
+          ],
+          "when": [
+            {
+              "social": "progression:archive2"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.social.opt.back",
+          "next": "menu"
+        }
+      ]
+    },
+    "duties": {
+      "line": "dialogue.murim.progression.duties",
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.progression.opt.supply",
+          "next": "duty_active",
+          "actions": [
+            {
+              "type": "progression",
+              "value": "supply"
+            }
+          ],
+          "when": [
+            {
+              "social": "progression:supply"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.progression.opt.patrol",
+          "next": "duty_active",
+          "actions": [
+            {
+              "type": "progression",
+              "value": "patrol"
+            }
+          ],
+          "when": [
+            {
+              "social": "progression:patrol"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.progression.opt.report",
+          "next": "report"
+        },
+        {
+          "text": "dialogue.murim.social.opt.back",
+          "next": "menu"
+        }
+      ]
+    },
+    "report": {
+      "line": "dialogue.murim.progression.report",
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.progression.opt.complete",
+          "next": "duty_done",
+          "actions": [
+            {
+              "type": "progression",
+              "value": "complete"
+            }
+          ],
+          "when": [
+            {
+              "social": "progression:complete"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.progression.opt.abandon",
+          "next": "abandoned",
+          "actions": [
+            {
+              "type": "progression",
+              "value": "abandon"
+            }
+          ],
+          "when": [
+            {
+              "social": "progression:abandon"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.social.opt.back",
+          "next": "duties"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "relations": {
+      "line": "dialogue.murim.progression.relations",
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.progression.opt.rival",
+          "next": "rival"
+        },
+        {
+          "text": "dialogue.murim.progression.opt.council",
+          "next": "council",
+          "when": [
+            {
+              "social": "progression:council_view"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.progression.opt.discipline",
+          "next": "discipline"
+        },
+        {
+          "text": "dialogue.murim.social.opt.back",
+          "next": "menu"
+        }
+      ]
+    },
+    "rival": {
+      "random": [
+        "@rival"
+      ],
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.progression.opt.challenge",
+          "actions": [
+            {
+              "type": "progression",
+              "value": "rival"
+            }
+          ],
+          "when": [
+            {
+              "social": "progression:rival"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.social.opt.back",
+          "next": "menu"
+        }
+      ]
+    },
+    "council": {
+      "random": [
+        "@council"
+      ],
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.progression.opt.hear",
+          "next": "council_done",
+          "actions": [
+            {
+              "type": "progression",
+              "value": "council"
+            }
+          ],
+          "when": [
+            {
+              "social": "progression:council"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.social.opt.back",
+          "next": "menu"
+        }
+      ]
+    },
+    "discipline": {
+      "line": "dialogue.murim.progression.discipline",
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.progression.opt.apology",
+          "next": "apology_done",
+          "actions": [
+            {
+              "type": "progression",
+              "value": "apology"
+            }
+          ],
+          "when": [
+            {
+              "social": "progression:apology"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.progression.opt.repair",
+          "next": "repair_done",
+          "actions": [
+            {
+              "type": "progression",
+              "value": "repair"
+            }
+          ],
+          "when": [
+            {
+              "social": "progression:repair"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.social.opt.back",
+          "next": "menu"
+        }
+      ]
+    },
+    "direct_done": {
+      "line": "dialogue.murim.progression.direct_done",
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.social.opt.back",
+          "next": "menu"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "lesson_done": {
+      "line": "dialogue.murim.progression.lesson_done",
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.social.opt.back",
+          "next": "menu"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "read_done": {
+      "line": "dialogue.murim.progression.read_done",
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.social.opt.back",
+          "next": "menu"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "duty_active": {
+      "line": "dialogue.murim.progression.duty_active",
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.social.opt.back",
+          "next": "menu"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "duty_done": {
+      "line": "dialogue.murim.progression.duty_done",
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.social.opt.back",
+          "next": "menu"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "abandoned": {
+      "line": "dialogue.murim.progression.abandoned",
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.social.opt.back",
+          "next": "menu"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "apology_done": {
+      "line": "dialogue.murim.progression.apology_done",
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.social.opt.back",
+          "next": "menu"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "repair_done": {
+      "line": "dialogue.murim.progression.repair_done",
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.social.opt.back",
+          "next": "menu"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "council_done": {
+      "line": "dialogue.murim.progression.council_done",
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.social.opt.back",
+          "next": "menu"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    }
+  }
+}

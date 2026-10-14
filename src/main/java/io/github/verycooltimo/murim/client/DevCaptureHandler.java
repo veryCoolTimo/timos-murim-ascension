@@ -191,6 +191,13 @@ public final class DevCaptureHandler {
             // Площадка стенда на высоте облаков: ночью они тёмными плитами ложатся поверх
             // высоких эффектов (дерево Сливы в 12 блоков) — в съёмке их нет.
             minecraft.options.cloudStatus().set(net.minecraft.client.CloudStatus.OFF);
+            // Frame size for close-ups (MURIM_CAPTURE_SIZE=1920x1080), as HudGalleryCapture does it: the early
+            // loading window ignores options.txt overrideWidth/Height.
+            // API: com/mojang/blaze3d/platform/Window.java#setWindowed (neoforge sources jar).
+            String[] size = System.getenv().getOrDefault("MURIM_CAPTURE_SIZE", "").split("x");
+            if (size.length == 2) {
+                minecraft.getWindow().setWindowed(Integer.parseInt(size[0].trim()), Integer.parseInt(size[1].trim()));
+            }
             String fov = System.getenv("MURIM_CAPTURE_FOV");
             if (fov != null) {
                 minecraft.options.fov().set(Mth.clamp(Integer.parseInt(fov.trim()), 30, 110));
@@ -217,6 +224,11 @@ public final class DevCaptureHandler {
             }
             if (newest != null && minecraft.getCameraEntity() != newest) {
                 minecraft.setCameraEntity(newest);
+                // MURIM_CAPTURE_CAMTYPE=third: the real third-person camera (4 blocks behind the stand) instead of
+                // first-person-from-the-stand, so the mod's own isFirstPerson() checks see what a player sees.
+                if ("third".equals(System.getenv("MURIM_CAPTURE_CAMTYPE"))) {
+                    minecraft.options.setCameraType(CameraType.THIRD_PERSON_BACK);
+                }
                 MurimMod.LOGGER.info("Автосъёмка: камера сбоку на {}", newest.position());
             }
         }
@@ -269,6 +281,12 @@ public final class DevCaptureHandler {
             // Разговор с NPC секты (03.10): сценарий — client/sect/DialogueCapture.
             if ("dialogue".equals(subject)) {
                 io.github.verycooltimo.murim.client.sect.DialogueCapture.begin();
+                return;
+            }
+            // Player animation reel (old | new comparisons): client/AnimReelCapture.
+            if (AnimReelCapture.SUBJECT.equals(subject)) {
+                AnimReelCapture.begin(minecraft);
+                startCapture();
                 return;
             }
             if (MEDITATION.equals(subject)) {
@@ -410,24 +428,31 @@ public final class DevCaptureHandler {
             // Удар формой каждые 14 тиков — чуть дольше перезарядки меча: цепочка идёт по
             // формам, как при размеренных кликах. Цель — ближайший манекен в досягаемости.
             if (t % 14 == 2 && minecraft.player != null && minecraft.gameMode != null) {
-                FoundationClient.swing(minecraft, true);
                 net.minecraft.world.entity.LivingEntity target = minecraft.level.getEntitiesOfClass(
                                 net.minecraft.world.entity.LivingEntity.class, minecraft.player.getBoundingBox().inflate(3.5D),
                                 e -> e != minecraft.player && !(e instanceof net.minecraft.world.entity.decoration.ArmorStand))
                         .stream().min(java.util.Comparator.comparingDouble(minecraft.player::distanceToSqr)).orElse(null);
-                if (target != null) {
-                    minecraft.gameMode.attack(minecraft.player, target);
+                boolean delayed = io.github.verycooltimo.murim.combat.SwordBasicCombo.ownsAttack(
+                        ClientLoadoutState.foundation().orElse(null),
+                        io.github.verycooltimo.murim.combat.QiSword.holdsSword(minecraft.player.getMainHandItem()),
+                        net.neoforged.fml.ModList.get().isLoaded("bettercombat"));
+                FoundationClient.swing(minecraft, true, target == null ? -1 : target.getId());
+                // Seven Plum already sends a delayed server intent. A vanilla packet here dealt a second hit.
+                if (!delayed) {
+                    if (target != null) minecraft.gameMode.attack(minecraft.player, target);
+                    minecraft.player.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
                 }
-                minecraft.player.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
             }
-            if (t % 2 == 0) {
+            // MURIM_CAPTURE_FOUNDATION_STEP=1: a frame every tick (one-tick impact frames are lost at the default 2).
+            if (t % Math.max(1, (int) Double.parseDouble(System.getenv().getOrDefault("MURIM_CAPTURE_FOUNDATION_STEP", "2"))) == 0) {
                 grab(minecraft, String.format("murim_%s_%03d.png", anglePrefix(), frameIndex));
                 frameIndex++;
             }
         }
         if (auraTicks > 0) {
             int t = AURA_CAPTURE_TICKS - auraTicks--;
-            if (t % 3 == 0) {
+            runClientCommands(minecraft);
+            if (t % AURA_FRAME_STEP == 0) {
                 grab(minecraft, String.format("murim_%s_%03d.png", anglePrefix(), frameIndex));
                 frameIndex++;
             }
@@ -435,6 +460,7 @@ public final class DevCaptureHandler {
         if (uiTicks > 0) {
             tickUi(minecraft);
         }
+        AnimReelCapture.tick(minecraft, frameIndex);
 
         if (framesLeft > 0 && tickCounter++ % FRAME_INTERVAL_TICKS == 0) {
             MurimMod.LOGGER.debug("Кадр {} на клиентском тике {}", frameIndex, tickCounter - 1);
@@ -531,6 +557,18 @@ public final class DevCaptureHandler {
             // ошибку привязки от ошибки измерения — снаружи они выглядят одинаково.
             net.minecraft.world.phys.Vec3 drawn =
                     io.github.verycooltimo.murim.client.vfx.PalmVfxRenderer.drawnPalm(player.getId());
+            // Every limb point (for the Blockbench -> game pose calibration, tools/art/calib_poses.py).
+            StringBuilder limbPts = new StringBuilder();
+            if (player instanceof net.minecraft.client.player.AbstractClientPlayer client) {
+                for (io.github.verycooltimo.murim.client.vfx.BoneAnchorLayer.Bone bone
+                        : io.github.verycooltimo.murim.client.vfx.BoneAnchorLayer.Bone.values()) {
+                    net.minecraft.world.phys.Vec3 at = io.github.verycooltimo.murim.client.vfx.BoneAnchorLayer.position(client, bone);
+                    if (at != null) {
+                        limbPts.append(String.format(java.util.Locale.ROOT, ",\"%s\":[%.4f,%.4f,%.4f]",
+                                bone.name(), at.x, at.y, at.z));
+                    }
+                }
+            }
             telemetry.printf(java.util.Locale.ROOT,
                     "{\"frame\":%d,\"tick\":%d,\"px\":%.4f,\"py\":%.4f,\"pz\":%.4f,"
                             + "\"eye\":%.4f,\"yaw\":%.3f,\"bodyYaw\":%.3f,"
@@ -541,7 +579,7 @@ public final class DevCaptureHandler {
                             + "\"rx\":%.4f,\"ry\":%.4f,\"rz\":%.4f,"
                             + "\"boneMissing\":%b,\"fovDisturbed\":%b,"
                             + "\"scenePhase\":\"%s\",\"sceneTick\":%d,\"limbs\":%d,"
-                            + "\"w\":%d,\"h\":%d}%n",
+                            + "\"w\":%d,\"h\":%d%s}%n",
                     frame, tickCounter - 1,
                     player.getX(), player.getY(), player.getZ(), player.getEyeHeight(),
                     player.getYRot(), player.yBodyRot,
@@ -553,7 +591,7 @@ public final class DevCaptureHandler {
                     drawn == null ? 0.0D : drawn.x, drawn == null ? 0.0D : drawn.y,
                     drawn == null ? 0.0D : drawn.z,
                     boneMissing, fovDisturbed, scenePhase, sceneTick, limbs,
-                    minecraft.getWindow().getWidth(), minecraft.getWindow().getHeight());
+                    minecraft.getWindow().getWidth(), minecraft.getWindow().getHeight(), limbPts);
         } catch (java.io.IOException exception) {
             MurimMod.LOGGER.warn("Телеметрия не пишется: {}", exception.getMessage());
         }
@@ -565,8 +603,31 @@ public final class DevCaptureHandler {
     private static int foundationTicks;
 
     /** Давление ауры: игрок стоит перед противником, кадр каждые три тика. */
+    /** MURIM_CAPTURE_CLIENT_CMDS="wait 10;murim vfx backend aaa;murim vfx shockwave": client commands, run during the aura subject. */
+    private static final java.util.ArrayDeque<String> CLIENT_CMDS = new java.util.ArrayDeque<>();
+    private static boolean clientCmdsRead;
+    private static int clientCmdWait;
+
+    private static void runClientCommands(Minecraft minecraft) {
+        if (!clientCmdsRead) {
+            clientCmdsRead = true;
+            for (String cmd : System.getenv().getOrDefault("MURIM_CAPTURE_CLIENT_CMDS", "").split(";")) {
+                if (!cmd.isBlank()) CLIENT_CMDS.add(cmd.trim());
+            }
+        }
+        if (clientCmdWait > 0) { clientCmdWait--; return; }
+        while (!CLIENT_CMDS.isEmpty() && minecraft.player != null) {
+            String cmd = CLIENT_CMDS.poll();
+            if (cmd.startsWith("wait ")) { clientCmdWait = Integer.parseInt(cmd.substring(5).trim()); return; }
+            MurimMod.LOGGER.info("Capture client command: {}", cmd);
+            minecraft.player.connection.sendCommand(cmd);
+        }
+    }
+
     private static final String AURA = "aura";
-    private static final int AURA_CAPTURE_TICKS = 150;
+    /** Aura / still-scene capture span and frame step (env MURIM_CAPTURE_AURA_TICKS, _AURA_STEP: long orbit shots). */
+    private static final int AURA_CAPTURE_TICKS = envInt("MURIM_CAPTURE_AURA_TICKS", 150);
+    private static final int AURA_FRAME_STEP = Math.max(1, envInt("MURIM_CAPTURE_AURA_STEP", 3));
     private static int auraTicks;
 
     /** Сценарий интерфейсов техник: слоты боя → кольцо → экран раскладки. */

@@ -34,7 +34,7 @@ public record TechniqueDefinition(
         String weaknessKey,
         int hitStopTicks,
         int cooldownTicks,
-        int layers,
+        int starCap,
         io.github.verycooltimo.murim.mastery.TechniqueTier tier,
         List<io.github.verycooltimo.murim.mastery.TechniqueRequirement> requires,
         boolean foundation
@@ -93,8 +93,8 @@ public record TechniqueDefinition(
             Codec.STRING.optionalFieldOf("weakness", "").forGetter(TechniqueDefinition::weaknessKey),
             Codec.INT.optionalFieldOf("hit_stop_ticks", 0).forGetter(TechniqueDefinition::hitStopTicks),
             Codec.INT.fieldOf("cooldown_ticks").forGetter(TechniqueDefinition::cooldownTicks),
-            // Освоение (docs/design/19 §3г): число слоёв, уровень и основы, без которых не выучить.
-            Codec.INT.optionalFieldOf("layers", 3).forGetter(TechniqueDefinition::layers),
+            // Освоение (docs/design/19 §3г): предел звёзд, уровень и основы, без которых не выучить.
+            Codec.INT.optionalFieldOf("star_cap", io.github.verycooltimo.murim.mastery.Arts.MAX_STARS).forGetter(TechniqueDefinition::starCap),
             io.github.verycooltimo.murim.mastery.TechniqueTier.CODEC
                     .optionalFieldOf("tier", io.github.verycooltimo.murim.mastery.TechniqueTier.BASIC)
                     .forGetter(TechniqueDefinition::tier),
@@ -116,9 +116,8 @@ public record TechniqueDefinition(
             }
         }
         phaseTicks = java.util.Collections.unmodifiableMap(copy);
-        if (layers < 1) {
-            throw new IllegalArgumentException("У техники " + id + " должен быть хотя бы один слой");
-        }
+        // Retain the datapack field for compatibility; completion is universal.
+        starCap = io.github.verycooltimo.murim.mastery.Arts.MAX_STARS;
         requires = List.copyOf(requires);
         if (hitStopTicks < 0 || cooldownTicks < 0) {
             throw new IllegalArgumentException("Отрицательные тики у техники " + id);

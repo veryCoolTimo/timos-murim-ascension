@@ -1,0 +1,19 @@
+{
+  "loader": "neoforge:obj",
+  "model": "murim:models/block/obj/book_stack_4.obj",
+  "flip_v": false,
+  "emissive_ambient": true,
+  "automatic_culling": true,
+  "shade_quads": true,
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "particle": "murim:block/library_book_pages",
+    "stack_edge": "murim:block/library_stack_edge",
+    "red": "murim:block/library_cover_red",
+    "indigo": "murim:block/library_cover_indigo",
+    "ochre": "murim:block/library_cover_ochre",
+    "olive": "murim:block/library_cover_olive",
+    "brown": "murim:block/library_cover_brown"
+  },
+  "ambientocclusion": false
+}

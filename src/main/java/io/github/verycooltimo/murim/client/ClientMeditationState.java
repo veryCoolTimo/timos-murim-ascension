@@ -275,7 +275,7 @@ public final class ClientMeditationState {
                 aftermathTicks = AFTERMATH_TICKS;
                 // Встал сам, сдвинулся или получил удар — ци рассеивается.
                 if (player != null) {
-                    MurimPlayerAnimations.stop(player);
+                    MurimPlayerAnimations.stopBlended(player, 6);
                 }
             }
         }
@@ -290,7 +290,7 @@ public final class ClientMeditationState {
     private static void endSeedScene(Minecraft minecraft) {
         seedSceneTicks = 0;
         if (minecraft.player != null && !state.active()) {
-            MurimPlayerAnimations.stop(minecraft.player);
+            MurimPlayerAnimations.stopBlended(minecraft.player, 6);
         }
     }
 
@@ -471,7 +471,7 @@ public final class ClientMeditationState {
             stainTicks--;
         }
         if (rankUpTicks > 0 && --rankUpTicks == 0 && !state.active()) {
-            MurimPlayerAnimations.stop(minecraft.player);
+            MurimPlayerAnimations.stopBlended(minecraft.player, 6);
         }
         if (minecraft.screen != null) {
             return;

@@ -1,0 +1,25 @@
+{
+  "variants": {
+    "axis=x,type=bottom": {
+      "model": "murim:block/roof_tile_slab"
+    },
+    "axis=x,type=top": {
+      "model": "murim:block/roof_tile_slab_top"
+    },
+    "axis=x,type=double": {
+      "model": "murim:block/roof_tiles"
+    },
+    "axis=z,type=bottom": {
+      "model": "murim:block/roof_tile_slab",
+      "y": 90
+    },
+    "axis=z,type=top": {
+      "model": "murim:block/roof_tile_slab_top",
+      "y": 90
+    },
+    "axis=z,type=double": {
+      "model": "murim:block/roof_tiles",
+      "y": 90
+    }
+  }
+}

@@ -77,13 +77,13 @@ public final class RiverRules {
     }
 
     /** Сила слоя: как у Ливня — слой 7 = 1, слой 8 сильнее. */
-    public static double power(int layer) {
-        return layer <= 0 ? 0.0D : layer >= 8 ? 1.15D : 0.3D + 0.1D * layer;
+    public static double power(int executionTier) {
+        return executionTier <= 0 ? 0.0D : executionTier >= 8 ? 1.15D : 0.3D + 0.1D * executionTier;
     }
 
     /** Лепестков к концу рождения (codex 03.10): 0 до 3-го слоя. */
-    public static int petals(int layer) {
-        return switch (Math.max(0, Math.min(8, layer))) {
+    public static int petals(int executionTier) {
+        return switch (Math.max(0, Math.min(8, executionTier))) {
             case 3 -> 160;
             case 4 -> 300;
             case 5 -> 480;
@@ -121,30 +121,30 @@ public final class RiverRules {
     public static final int LONE = 4;
 
     /** Струй выпуска / спиралей сбора / звёздных лучей по слою. */
-    public static int strands(int layer) {
-        return layer >= 7 ? 7 : layer >= 5 ? 5 : layer >= 4 ? 3 : layer >= 1 ? 1 : 0;
+    public static int strands(int executionTier) {
+        return executionTier >= 7 ? 7 : executionTier >= 5 ? 5 : executionTier >= 4 ? 3 : executionTier >= 1 ? 1 : 0;
     }
 
-    public static int spirals(int layer) {
-        return layer >= 5 ? 3 : layer >= 4 ? 2 : layer >= 3 ? 1 : 0;
+    public static int spirals(int executionTier) {
+        return executionTier >= 5 ? 3 : executionTier >= 4 ? 2 : executionTier >= 3 ? 1 : 0;
     }
 
-    public static int rays(int layer) {
-        return layer >= 7 ? 8 : layer >= 6 ? 6 : layer >= 5 ? 4 : layer >= 2 ? 2 : 0;
+    public static int rays(int executionTier) {
+        return executionTier >= 7 ? 8 : executionTier >= 6 ? 6 : executionTier >= 5 ? 4 : executionTier >= 2 ? 2 : 0;
     }
 
     /** Копии руки и штрихи резонанса — со 2-го слоя; секретная надпись — с 3-го. */
-    public static boolean afterimages(int layer) {
-        return layer >= 2;
+    public static boolean afterimages(int executionTier) {
+        return executionTier >= 2;
     }
 
-    public static boolean caption(int layer) {
-        return layer >= 3;
+    public static boolean caption(int executionTier) {
+        return executionTier >= 3;
     }
 
     /** Визуальный масштаб: слой 8 крупнее на 15 %. */
-    public static double scale(int layer) {
-        return switch (Math.max(0, Math.min(8, layer))) {
+    public static double scale(int executionTier) {
+        return switch (Math.max(0, Math.min(8, executionTier))) {
             case 0 -> 0.0D;
             case 1 -> 0.5D;
             case 2 -> 0.6D;

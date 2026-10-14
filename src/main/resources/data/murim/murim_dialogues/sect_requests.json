@@ -1,0 +1,325 @@
+{
+  "name": "npc.murim.elder",
+  "title": "",
+  "start": [
+    {
+      "node": "menu"
+    }
+  ],
+  "nodes": {
+    "menu": {
+      "random": [
+        "dialogue.murim.social.requests.1",
+        "dialogue.murim.social.requests.2",
+        "dialogue.murim.social.requests.3",
+        "dialogue.murim.social.requests.4"
+      ],
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.social.request.vault.opt",
+          "when": [
+            {
+              "social": "request:vault"
+            }
+          ],
+          "next": "vault"
+        },
+        {
+          "text": "dialogue.murim.social.request.training.opt",
+          "when": [
+            {
+              "social": "request:training"
+            }
+          ],
+          "next": "training"
+        },
+        {
+          "text": "dialogue.murim.social.request.pills.opt",
+          "when": [
+            {
+              "social": "request:pills"
+            }
+          ],
+          "next": "pills"
+        },
+        {
+          "text": "dialogue.murim.social.request.bandits.opt",
+          "when": [
+            {
+              "social": "request:bandits"
+            }
+          ],
+          "next": "bandits"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "vault": {
+      "random": [
+        "dialogue.murim.social.request.vault.1",
+        "dialogue.murim.social.request.vault.2",
+        "dialogue.murim.social.request.vault.3",
+        "dialogue.murim.social.request.vault.4"
+      ],
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.social.opt.start",
+          "when": [
+            {
+              "social": "request_start:vault"
+            }
+          ],
+          "actions": [
+            {
+              "type": "request_start",
+              "value": "vault"
+            }
+          ],
+          "next": "active_vault"
+        },
+        {
+          "text": "dialogue.murim.social.opt.complete",
+          "when": [
+            {
+              "social": "request_complete:vault"
+            }
+          ],
+          "actions": [
+            {
+              "type": "request_complete",
+              "value": "vault"
+            }
+          ],
+          "next": "done_vault"
+        },
+        {
+          "text": "dialogue.murim.social.opt.back",
+          "next": "menu"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "active_vault": {
+      "line": "dialogue.murim.social.request.vault.active",
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "done_vault": {
+      "line": "dialogue.murim.social.request.vault.done",
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "training": {
+      "random": [
+        "dialogue.murim.social.request.training.1",
+        "dialogue.murim.social.request.training.2",
+        "dialogue.murim.social.request.training.3",
+        "dialogue.murim.social.request.training.4"
+      ],
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.social.opt.start",
+          "when": [
+            {
+              "social": "request_start:training"
+            }
+          ],
+          "actions": [
+            {
+              "type": "request_start",
+              "value": "training"
+            }
+          ],
+          "next": "active_training"
+        },
+        {
+          "text": "dialogue.murim.social.opt.complete",
+          "when": [
+            {
+              "social": "request_complete:training"
+            }
+          ],
+          "actions": [
+            {
+              "type": "request_complete",
+              "value": "training"
+            }
+          ],
+          "next": "done_training"
+        },
+        {
+          "text": "dialogue.murim.social.opt.back",
+          "next": "menu"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "active_training": {
+      "line": "dialogue.murim.social.request.training.active",
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "done_training": {
+      "line": "dialogue.murim.social.request.training.done",
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "pills": {
+      "random": [
+        "dialogue.murim.social.request.pills.1",
+        "dialogue.murim.social.request.pills.2",
+        "dialogue.murim.social.request.pills.3",
+        "dialogue.murim.social.request.pills.4"
+      ],
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.social.opt.start",
+          "when": [
+            {
+              "social": "request_start:pills"
+            }
+          ],
+          "actions": [
+            {
+              "type": "request_start",
+              "value": "pills"
+            }
+          ],
+          "next": "active_pills"
+        },
+        {
+          "text": "dialogue.murim.social.opt.complete",
+          "when": [
+            {
+              "social": "request_complete:pills"
+            }
+          ],
+          "actions": [
+            {
+              "type": "request_complete",
+              "value": "pills"
+            }
+          ],
+          "next": "done_pills"
+        },
+        {
+          "text": "dialogue.murim.social.opt.back",
+          "next": "menu"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "active_pills": {
+      "line": "dialogue.murim.social.request.pills.active",
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "done_pills": {
+      "line": "dialogue.murim.social.request.pills.done",
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "bandits": {
+      "random": [
+        "dialogue.murim.social.request.bandits.1",
+        "dialogue.murim.social.request.bandits.2",
+        "dialogue.murim.social.request.bandits.3",
+        "dialogue.murim.social.request.bandits.4"
+      ],
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.social.opt.start",
+          "when": [
+            {
+              "social": "request_start:bandits"
+            }
+          ],
+          "actions": [
+            {
+              "type": "request_start",
+              "value": "bandits"
+            }
+          ],
+          "next": "active_bandits"
+        },
+        {
+          "text": "dialogue.murim.social.opt.complete",
+          "when": [
+            {
+              "social": "request_complete:bandits"
+            }
+          ],
+          "actions": [
+            {
+              "type": "request_complete",
+              "value": "bandits"
+            }
+          ],
+          "next": "done_bandits"
+        },
+        {
+          "text": "dialogue.murim.social.opt.back",
+          "next": "menu"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "active_bandits": {
+      "line": "dialogue.murim.social.request.bandits.active",
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "done_bandits": {
+      "line": "dialogue.murim.social.request.bandits.done",
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    }
+  }
+}

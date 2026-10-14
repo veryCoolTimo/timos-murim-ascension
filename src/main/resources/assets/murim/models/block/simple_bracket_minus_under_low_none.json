@@ -1,0 +1,229 @@
+{
+  "parent": "minecraft:block/block",
+  "ambientocclusion": false,
+  "textures": {
+    "side": "murim:block/simple_timber",
+    "particle": "murim:block/simple_timber"
+  },
+  "elements": [
+    {
+      "name": "step_0",
+      "from": [
+        5.3333,
+        8,
+        1.5
+      ],
+      "to": [
+        7.1111,
+        16,
+        4.5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            8.8889,
+            0,
+            10.6667,
+            8
+          ],
+          "texture": "#side"
+        },
+        "south": {
+          "uv": [
+            5.3333,
+            0,
+            7.1111,
+            8
+          ],
+          "texture": "#side"
+        },
+        "west": {
+          "uv": [
+            1.5,
+            0,
+            4.5,
+            8
+          ],
+          "texture": "#side"
+        },
+        "up": {
+          "uv": [
+            5.3333,
+            1.5,
+            7.1111,
+            4.5
+          ],
+          "texture": "#side"
+        },
+        "down": {
+          "uv": [
+            5.3333,
+            11.5,
+            7.1111,
+            14.5
+          ],
+          "texture": "#side"
+        }
+      }
+    },
+    {
+      "name": "step_0",
+      "from": [
+        5.3333,
+        8,
+        1.5
+      ],
+      "to": [
+        7.1111,
+        11,
+        4.5
+      ],
+      "faces": {
+        "east": {
+          "uv": [
+            11.5,
+            5,
+            14.5,
+            8
+          ],
+          "texture": "#side"
+        }
+      }
+    },
+    {
+      "name": "step_1",
+      "from": [
+        7.1111,
+        11,
+        1.5
+      ],
+      "to": [
+        8.8889,
+        16,
+        4.5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            7.1111,
+            0,
+            8.8889,
+            5
+          ],
+          "texture": "#side"
+        },
+        "south": {
+          "uv": [
+            7.1111,
+            0,
+            8.8889,
+            5
+          ],
+          "texture": "#side"
+        },
+        "up": {
+          "uv": [
+            7.1111,
+            1.5,
+            8.8889,
+            4.5
+          ],
+          "texture": "#side"
+        },
+        "down": {
+          "uv": [
+            7.1111,
+            11.5,
+            8.8889,
+            14.5
+          ],
+          "texture": "#side"
+        }
+      }
+    },
+    {
+      "name": "step_1",
+      "from": [
+        7.1111,
+        11,
+        1.5
+      ],
+      "to": [
+        8.8889,
+        14,
+        4.5
+      ],
+      "faces": {
+        "east": {
+          "uv": [
+            11.5,
+            2,
+            14.5,
+            5
+          ],
+          "texture": "#side"
+        }
+      }
+    },
+    {
+      "name": "step_2",
+      "from": [
+        8.8889,
+        14,
+        1.5
+      ],
+      "to": [
+        10.6667,
+        16,
+        4.5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            5.3333,
+            0,
+            7.1111,
+            2
+          ],
+          "texture": "#side"
+        },
+        "east": {
+          "uv": [
+            11.5,
+            0,
+            14.5,
+            2
+          ],
+          "texture": "#side"
+        },
+        "south": {
+          "uv": [
+            8.8889,
+            0,
+            10.6667,
+            2
+          ],
+          "texture": "#side"
+        },
+        "up": {
+          "uv": [
+            8.8889,
+            1.5,
+            10.6667,
+            4.5
+          ],
+          "texture": "#side"
+        },
+        "down": {
+          "uv": [
+            8.8889,
+            11.5,
+            10.6667,
+            14.5
+          ],
+          "texture": "#side"
+        }
+      }
+    }
+  ]
+}

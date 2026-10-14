@@ -53,6 +53,31 @@ public final class LoadoutService {
         return d != null && d.foundation();
     }
 
+    /** Атомарный выбор формы существующего слота стиля; неверный запрос возвращает клиенту текущую раскладку. */
+    public static boolean selectForm(ServerPlayer player, int slot, ResourceLocation technique, boolean activate) {
+        Loadout loadout = player.getData(ModAttachments.LOADOUT);
+        Optional<ResourceLocation> old = loadout.at(slot);
+        if (slot < 0 || slot >= openSlots(player) || old.isEmpty() || isFoundation(technique)
+                || !MasteryService.knows(player, technique) || !old.get().equals(technique)
+                && !io.github.verycooltimo.murim.technique.Styles.sameStyle(old.get(), technique)) {
+            // Diagnostics for «I pick another form on the wheel but the old one stays» (author 14.10).
+            io.github.verycooltimo.murim.MurimMod.LOGGER.info("Кольцо: отказ выбора {} в слот {} (открыто {}, было {}, основа {}, знает {}, тот же стиль {})",
+                    technique, slot, openSlots(player), old.orElse(null), isFoundation(technique),
+                    MasteryService.knows(player, technique),
+                    old.isPresent() && io.github.verycooltimo.murim.technique.Styles.sameStyle(old.get(), technique));
+            sync(player);
+            return false;
+        }
+        io.github.verycooltimo.murim.MurimMod.LOGGER.info("Кольцо: выбрано {} в слот {} (активировать {})", technique, slot, activate);
+        player.setData(ModAttachments.LOADOUT, loadout.with(slot, Optional.of(technique)));
+        if (activate) {
+            select(player, slot);
+        } else {
+            sync(player);
+        }
+        return true;
+    }
+
     public static void select(ServerPlayer player, int slot) {
         if (slot < 0 || slot >= openSlots(player)) {
             return;
@@ -136,8 +161,13 @@ public final class LoadoutService {
         for (int i = 0; i < open; i++) {
             slots.add(loadout.at(i));
         }
-        PacketDistributor.sendToPlayer(player, new LoadoutPayloads.Sync(slots,
-                Math.min(loadout.active(), Math.max(0, open - 1)), open, loadout.foundation()));
+        LoadoutPayloads.Sync sync = new LoadoutPayloads.Sync(slots,
+                Math.min(loadout.active(), Math.max(0, open - 1)), open, loadout.foundation());
+        // GameTest mock players have no mod channel.
+        // API: reference/neoforge-src/net/neoforged/neoforge/common/extensions/ICommonPacketListener.java#hasChannel
+        if (player.connection != null && player.connection.hasChannel(sync)) {
+            PacketDistributor.sendToPlayer(player, sync);
+        }
     }
 
     private LoadoutService() {

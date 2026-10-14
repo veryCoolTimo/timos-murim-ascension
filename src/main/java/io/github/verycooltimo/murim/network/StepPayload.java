@@ -9,7 +9,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.Vec3;
 
 /** Сервер → клиентам: шаг совершён — откуда, куда и на каком слое (для эффекта). */
-public record StepPayload(int entityId, Vec3 from, Vec3 to, float yaw, int layer) implements CustomPacketPayload {
+public record StepPayload(int entityId, Vec3 from, Vec3 to, float yaw, int executionTier) implements CustomPacketPayload {
 
     public static final Type<StepPayload> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "step"));
 
@@ -21,7 +21,7 @@ public record StepPayload(int entityId, Vec3 from, Vec3 to, float yaw, int layer
             VEC, StepPayload::from,
             VEC, StepPayload::to,
             ByteBufCodecs.FLOAT, StepPayload::yaw,
-            ByteBufCodecs.VAR_INT, StepPayload::layer,
+            ByteBufCodecs.VAR_INT, StepPayload::executionTier,
             StepPayload::new);
 
     @Override

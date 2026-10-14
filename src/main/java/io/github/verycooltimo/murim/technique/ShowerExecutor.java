@@ -24,13 +24,13 @@ public final class ShowerExecutor {
 
     /** Начало IMPACT: цель, точка зависания, толчок и взлёт. */
     public static boolean start(ServerPlayer player, ResourceLocation id) {
-        int layer = Math.max(0, io.github.verycooltimo.murim.mastery.MasteryService.layer(player, id));
+        int executionTier = Math.max(0, io.github.verycooltimo.murim.mastery.MasteryService.executionTier(player, id));
         double base = TechniqueDamage.base(player, id);
         Vec3 o = player.position();
         Vec3 look = player.getLookAngle();
         Vec3 f = new Vec3(look.x, 0.0D, look.z);
         f = f.lengthSqr() < 1.0E-6D ? new Vec3(0.0D, 0.0D, 1.0D) : f.normalize();
-        if (layer <= 0) {
+        if (executionTier <= 0) {
             // Слой 0 — учебный укол в ближнем секторе, без эффектов.
             boolean hit = false;
             double cos = Math.cos(Math.toRadians(PlumRules.TRAINING_ARC / 2.0D));
@@ -62,12 +62,12 @@ public final class ShowerExecutor {
         }
         Vec3 apex;
         if (target != null) {
-            apex = ShowerRules.apex(o, target.position(), layer);
+            apex = ShowerRules.apex(o, target.position(), executionTier);
             // Цель замирает до конца прохода — в небе висит, а не падает из-под укола.
             io.github.verycooltimo.murim.combat.TargetLock.freeze(target, ShowerRules.DIVE + ShowerRules.HIT_WINDOW + 4);
         } else {
             // Без цели — прыжок вперёд и пикирование в землю в 9 блоках.
-            apex = o.add(f.scale(3.5D)).add(0.0D, ShowerRules.height(layer), 0.0D);
+            apex = o.add(f.scale(3.5D)).add(0.0D, ShowerRules.height(executionTier), 0.0D);
         }
         apex = clip(player, o, apex);
         Vec3 path = apex.subtract(o);
@@ -81,7 +81,7 @@ public final class ShowerExecutor {
         r[3] = apex.x;
         r[4] = apex.y;
         r[5] = apex.z;
-        r[6] = layer;
+        r[6] = executionTier;
         r[7] = target == null ? -1 : target.getId();
         r[8] = -1;
         r[13] = f.x;
@@ -95,7 +95,7 @@ public final class ShowerExecutor {
         player.invulnerableTime = Math.max(player.invulnerableTime, ShowerRules.DIVE + ShowerRules.DIVE_TICKS + 4);
         player.fallDistance = 0.0F;
         PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
-                new ShowerPayload(player.getId(), o, apex, layer, ShowerPayload.RELEASE, target == null ? -1 : target.getId()));
+                new ShowerPayload(player.getId(), o, apex, executionTier, ShowerPayload.RELEASE, target == null ? -1 : target.getId()));
         return false;
     }
 
@@ -105,8 +105,8 @@ public final class ShowerExecutor {
         if (r.length < SIZE) {
             return;
         }
-        int layer = (int) r[6];
-        if (layer <= 0) {
+        int executionTier = (int) r[6];
+        if (executionTier <= 0) {
             return;
         }
         // Падение с высоты пикирования — часть приёма, а не урон себе.
@@ -114,7 +114,7 @@ public final class ShowerExecutor {
             player.fallDistance = 0.0F;
         }
         LivingEntity target = r[7] >= 0 && player.level().getEntity((int) r[7]) instanceof LivingEntity le && le.isAlive() ? le : null;
-        double base = TechniqueDamage.base(player, id) * ShowerRules.power(layer);
+        double base = TechniqueDamage.base(player, id) * ShowerRules.power(executionTier);
         Vec3 body = player.position().add(0.0D, 0.9D, 0.0D);
         Vec3 prev = new Vec3(r[16], r[17], r[18]);
         r[16] = body.x;
@@ -143,7 +143,7 @@ public final class ShowerExecutor {
             r[11] = exit.y;
             r[12] = exit.z;
             PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
-                    new ShowerPayload(player.getId(), from, exit, layer, ShowerPayload.DIVE, (int) r[7]));
+                    new ShowerPayload(player.getId(), from, exit, executionTier, ShowerPayload.DIVE, (int) r[7]));
         }
 
         // Скольжение за цель: пикирование упирается в землю у её ступней, мастер проезжает дальше.
@@ -171,7 +171,7 @@ public final class ShowerExecutor {
                 if (hurt(player, id, target, base * ShowerRules.DMG_PIERCE, r)) {
                     io.github.verycooltimo.murim.combat.TargetLock.freeze(target, ShowerRules.CUTS[ShowerRules.CUTS.length - 1] + 2);
                     PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
-                            new ShowerPayload(player.getId(), c, c.add(dir), layer, ShowerPayload.HIT, target.getId()));
+                            new ShowerPayload(player.getId(), c, c.add(dir), executionTier, ShowerPayload.HIT, target.getId()));
                 } else {
                     r[8] = -2;
                 }
@@ -187,7 +187,7 @@ public final class ShowerExecutor {
                         && hurt(player, id, target, base * ShowerRules.DMG_CUT, r)) {
                     PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
                             new ShowerPayload(player.getId(), io.github.verycooltimo.murim.combat.TargetLock.centre(target),
-                                    c.add(r[13], r[14], r[15]), layer, ShowerPayload.CUT, k));
+                                    c.add(r[13], r[14], r[15]), executionTier, ShowerPayload.CUT, k));
                     if (k == ShowerRules.CUTS.length - 1) {
                         // Последний разрез сбивает вдоль прохода.
                         target.push(r[13] * 0.5D, Math.max(-0.2D, r[14] * 0.3D), r[15] * 0.5D);
@@ -216,7 +216,7 @@ public final class ShowerExecutor {
                 }
             }
             PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
-                    new ShowerPayload(player.getId(), feet, feet.add(r[13], 0.0D, r[15]), layer, ShowerPayload.LAND, pierced ? 1 : 0));
+                    new ShowerPayload(player.getId(), feet, feet.add(r[13], 0.0D, r[15]), executionTier, ShowerPayload.LAND, pierced ? 1 : 0));
         }
         player.setData(ModAttachments.SHOWER, r);
     }

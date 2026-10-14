@@ -130,6 +130,11 @@ public final class ModAttachments {
     public static final Supplier<AttachmentType<Long>> STUN_IMMUNE =
             ATTACHMENT_TYPES.register("stun_immune", () -> AttachmentType.builder(() -> 0L).build());
 
+    /** Earliest restart after a completed run, per family; transient and uses long game time. */
+    public static final Supplier<AttachmentType<long[]>> FOOTWORK_RUN_READY =
+            ATTACHMENT_TYPES.register("footwork_run_ready",
+                    () -> AttachmentType.<long[]>builder(() -> new long[io.github.verycooltimo.murim.technique.FootworkFamily.values().length]).build());
+
     public static final Supplier<AttachmentType<int[]>> TRAVERSE =
             ATTACHMENT_TYPES.register("traverse",
                     () -> AttachmentType.<int[]>builder(() -> new int[] {0, 0, 0, 0, Integer.MIN_VALUE / 2, 0, 0,
@@ -217,6 +222,18 @@ public final class ModAttachments {
             ATTACHMENT_TYPES.register("foundation_swing",
                     () -> AttachmentType.<int[]>builder(() -> new int[] {0, -1}).build());
 
+    /** A single pending style cut; never serialized or copied on death. */
+    public static final Supplier<AttachmentType<io.github.verycooltimo.murim.combat.SwordBasicAttack.Pending>> BASIC_ATTACK =
+            ATTACHMENT_TYPES.register("basic_attack",
+                    () -> AttachmentType.<io.github.verycooltimo.murim.combat.SwordBasicAttack.Pending>builder(
+                            () -> io.github.verycooltimo.murim.combat.SwordBasicAttack.Pending.IDLE).build());
+
+    /** Server-authoritative order of style basics; never saved across login/death. */
+    public static final Supplier<AttachmentType<io.github.verycooltimo.murim.combat.SwordBasicCombo.State>> BASIC_COMBO =
+            ATTACHMENT_TYPES.register("basic_combo",
+                    () -> AttachmentType.<io.github.verycooltimo.murim.combat.SwordBasicCombo.State>builder(
+                            () -> io.github.verycooltimo.murim.combat.SwordBasicCombo.State.IDLE).build());
+
     /** Серия обычных ударов. Не сохраняется: связка живёт секунды и через сейв не тянется. */
     public static final Supplier<AttachmentType<io.github.verycooltimo.murim.combat.SchoolStyle.ComboState>> COMBO =
             ATTACHMENT_TYPES.register("combo_state",
@@ -295,6 +312,11 @@ public final class ModAttachments {
     public static final Supplier<AttachmentType<io.github.verycooltimo.murim.sect.DialogueService.Session>> DIALOGUE =
             ATTACHMENT_TYPES.register("dialogue",
                     () -> AttachmentType.builder(() -> io.github.verycooltimo.murim.sect.DialogueService.Session.NONE).build());
+
+    /** Belt sword (gear/BeltSword): the sword held last and the belt last sent. Not saved, reset on death. */
+    public static final Supplier<AttachmentType<io.github.verycooltimo.murim.gear.BeltSword.State>> BELT_SWORD =
+            ATTACHMENT_TYPES.register("belt_sword",
+                    () -> AttachmentType.builder(io.github.verycooltimo.murim.gear.BeltSword.State::new).build());
 
     private ModAttachments() {
     }

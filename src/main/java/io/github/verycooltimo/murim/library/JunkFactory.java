@@ -39,6 +39,12 @@ public final class JunkFactory {
         return new JunkBook(JunkKind.pick(kinds, random.nextInt(total)), random.nextLong());
     }
 
+    /** Stable choice for FAKE_GRAND: reading the same seed always teaches the same art. */
+    public static net.minecraft.resources.ResourceLocation fakeArt(JunkBook book) {
+        var arts = io.github.verycooltimo.murim.technique.JunkArts.ARCHIVE_BOOKS;
+        return arts.get((int) Math.floorMod(book.seed(), (long) arts.size()));
+    }
+
     /** The item for {@code book}: the letter bundle or the clone manual in the seed's colour. */
     public static Item item(JunkBook book) {
         if (book.kind().letters()) {

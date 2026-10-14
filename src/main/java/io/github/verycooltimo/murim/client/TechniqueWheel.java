@@ -141,6 +141,7 @@ public final class TechniqueWheel {
     static void onClientTick(ClientTickEvent.Post event) {
         Minecraft minecraft = Minecraft.getInstance();
         LocalPlayer player = minecraft.player;
+        finishSelectionIfReleased();
         // Кольцо — после 0,2 с удержания V: быстрое V+R (закреплённый шаг) его не открывает.
         holdTicks = ModKeyMappings.WHEEL.isDown() ? holdTicks + 1 : 0;
         if (holdTicks == 0) {
@@ -161,27 +162,42 @@ public final class TechniqueWheel {
             entries = entriesOf(page);
         } else if (!wanted && open) {
             open = false;
-            if (slotHover >= 0 && !entriesOf(slotHover).isEmpty()) {
-                // Слот снаружи: стиль с его последней формой (или отдельная техника, шаг).
-                PacketDistributor.sendToServer(new LoadoutPayloads.Select(slotHover));
-            } else if (selected >= 0 && selected < entries.size() && isFootwork(entries.get(selected))
-                    && ClientLoadoutState.active() != page) {
-                // Форма шагов закрепляется для V+R, а активным остаётся меч (codex 03.10).
-                ResourceLocation form = entries.get(selected);
-                ClientTechniqueHandler.pinStep(form);
-                PacketDistributor.sendToServer(new LoadoutPayloads.SetSlot(page, Optional.of(form)));
-            } else if (selected >= 0 && selected < entries.size()) {
-                ResourceLocation form = entries.get(selected);
-                List<Optional<ResourceLocation>> slots = ClientLoadoutState.slots();
-                if (page >= slots.size() || !slots.get(page).equals(Optional.of(form))) {
-                    PacketDistributor.sendToServer(new LoadoutPayloads.SetSlot(page, Optional.of(form)));
-                }
-                PacketDistributor.sendToServer(new LoadoutPayloads.Select(page));
-            }
+            // Открытый экран или потеря мира отменяют выбор. Отпускание V обработано выше.
         }
         if (open) {
             age++;
         }
+    }
+
+    /** Вызывается также перед чтением R: порядок подписчиков тика не влияет на выбранную форму. */
+    public static void finishSelectionIfReleased() {
+        if (!open || ModKeyMappings.WHEEL.isDown()) {
+            return;
+        }
+        open = false;
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null || mc.level == null || mc.screen != null) {
+            return;
+        }
+        if (slotHover >= 0 && !entriesOf(slotHover).isEmpty()) {
+            ResourceLocation form = ClientLoadoutState.slots().get(slotHover).orElseThrow();
+            choose(slotHover, form, true);
+        } else if (selected >= 0 && selected < entries.size()) {
+            ResourceLocation form = entries.get(selected);
+            // Author 14.10: picking a sub-form must take effect at once, even on a slot that is not active yet (it used to
+            // only pin a footwork step there, so the old technique stayed selected until the slot was activated first).
+            if (isFootwork(form)) {
+                ClientTechniqueHandler.pinStep(form);
+            }
+            choose(page, form, true);
+        }
+    }
+
+    private static void choose(int slot, ResourceLocation form, boolean activate) {
+        io.github.verycooltimo.murim.MurimMod.LOGGER.info("Кольцо (клиент): выбор {} в слот {}, активировать {}, активный был {}",
+                form, slot, activate, ClientLoadoutState.active());
+        PacketDistributor.sendToServer(new LoadoutPayloads.SelectForm(slot, form, activate));
+        ClientLoadoutState.choose(slot, form, activate);
     }
 
     @SubscribeEvent
@@ -369,7 +385,7 @@ public final class TechniqueWheel {
             int ty = titleY();
             graphics.drawString(font, name, (int) cx - font.width(name) / 2, ty, textA | 0xE6F4FF, true);
             if (entry != null) {
-                small(graphics, font, Component.translatable("murim.loadout.layer", entry.layer(), entry.cap()),
+                small(graphics, font, MasteryText.summary(technique.get(), entry),
                         (int) cx, ty + 11, textA | 0x8FD3E8);
             }
         } else {

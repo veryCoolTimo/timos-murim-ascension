@@ -1,0 +1,71 @@
+{
+  "textures": {
+    "p": "murim:block/framed_panel",
+    "m": "murim:block/framed_panel_moulding",
+    "particle": "murim:block/framed_panel"
+  },
+  "elements": [
+    {
+      "name": "right_u",
+      "from": [
+        2,
+        12,
+        -0.25
+      ],
+      "to": [
+        4,
+        16,
+        0
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            16,
+            4,
+            14,
+            8
+          ],
+          "texture": "#m",
+          "cullface": "north"
+        },
+        "east": {
+          "uv": [
+            4,
+            8,
+            4.5,
+            10
+          ],
+          "texture": "#m"
+        },
+        "west": {
+          "uv": [
+            4,
+            8,
+            4.5,
+            10
+          ],
+          "texture": "#m"
+        },
+        "up": {
+          "uv": [
+            4,
+            8,
+            4.5,
+            10
+          ],
+          "texture": "#m",
+          "cullface": "up"
+        },
+        "down": {
+          "uv": [
+            4,
+            8,
+            4.5,
+            10
+          ],
+          "texture": "#m"
+        }
+      }
+    }
+  ]
+}

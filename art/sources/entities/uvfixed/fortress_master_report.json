@@ -1,0 +1,34 @@
+{
+ "source": "art/sources/entities/fortress_master.bbmodel",
+ "inverted_cubes": 0,
+ "flipped_faces": 60,
+ "rotated_faces": 0,
+ "overlapping_faces": 12,
+ "zero_uv_faces": 8,
+ "zero_area_faces": 8,
+ "inexact_faces": [],
+ "dense_faces": 0,
+ "texture_size_before": [
+  128,
+  128
+ ],
+ "uv_size_before": [
+  128,
+  128
+ ],
+ "baked_textures": [
+  "fortress_master.png",
+  "fortress_master_boil.png"
+ ],
+ "untouched_textures": [],
+ "texture_size_after": [
+  128,
+  128
+ ],
+ "uv_size_after": [
+  128,
+  128
+ ],
+ "faces": 180,
+ "cubes": 30
+}

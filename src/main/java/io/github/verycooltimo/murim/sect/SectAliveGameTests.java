@@ -179,4 +179,22 @@ public final class SectAliveGameTests {
         helper.assertTrue(kb == SectSchedule.Kind.EAT, late.key() + " уже встал из-за стола до своего опоздания (" + kb + ")");
         helper.succeed();
     }
+
+    /**
+     * Меч в руке из старого сохранения (автор 06.10: «у Тэ Хви какой-то странный меч на поясе») снимается при загрузке,
+     * реквизит слуги остаётся.
+     */
+    @GameTest(template = YARD, timeoutTicks = 40, batch = "sect_alive_stale_sword")
+    public static void staleSwordDroppedOnLoad(GameTestHelper helper) {
+        SectGameTests.Yard yard = yard(helper, 0.8D);
+        SectDisciple leader = npc(helper, yard, "tae_hwi", 6, 6);
+        leader.setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, new net.minecraft.world.item.ItemStack(Items.IRON_SWORD));
+        leader.setItemSlot(net.minecraft.world.entity.EquipmentSlot.OFFHAND, new net.minecraft.world.item.ItemStack(Items.WRITABLE_BOOK));
+        net.minecraft.nbt.CompoundTag tag = leader.saveWithoutId(new net.minecraft.nbt.CompoundTag());
+        SectDisciple loaded = new SectDisciple(ModEntities.SECT_DISCIPLE.get(), helper.getLevel());
+        loaded.load(tag);
+        helper.assertTrue(loaded.getMainHandItem().isEmpty(), "меч главы пережил загрузку: " + loaded.getMainHandItem());
+        helper.assertTrue(loaded.getOffhandItem().is(Items.WRITABLE_BOOK), "книга учёта пропала при загрузке: " + loaded.getOffhandItem());
+        helper.succeed();
+    }
 }

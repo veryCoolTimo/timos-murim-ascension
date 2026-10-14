@@ -5,6 +5,18 @@
     "murim:sealed_hua_granite_stairs",
     "murim:sealed_polished_hua_granite_stairs",
     "murim:sealed_stone_brick_stairs",
-    "murim:sealed_plank_stairs"
+    "murim:sealed_plank_stairs",
+    "murim:grey_brick_stairs",
+    "murim:floor_tile_stairs",
+    "murim:roof_tile_stairs",
+    "murim:roof_tile_low",
+    "murim:roof_tile_course",
+    "murim:hua_packed_earth_stairs",
+    "murim:hua_scree_stairs",
+    "murim:hua_courtyard_pavers_stairs",
+    "murim:hua_rectangular_paving_stairs",
+    "murim:rough_hua_granite_stairs",
+    "murim:hua_flagstone_paving_stairs",
+    "murim:library_parquet_stairs"
   ]
 }

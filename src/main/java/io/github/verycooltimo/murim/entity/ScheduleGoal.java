@@ -117,6 +117,7 @@ public final class ScheduleGoal extends Goal {
             }
             return;
         }
+        if (io.github.verycooltimo.murim.sect.SectSocial.yielding(npc)) return;
         // Повернулся к подошедшему (носильщик, докладчик, сменщик, лекарь): стоит, смотрит, говорит.
         LivingEntity to = npc.attending();
         if (to != null) {
@@ -686,6 +687,12 @@ public final class ScheduleGoal extends Goal {
         if (npc.bowedToday(p, day)) {
             return false;
         }
+        // Stronger players receive the bow AND room to pass, including previous review winners.
+        if (!npc.role().lay() && npc.rank() <= 2 && io.github.verycooltimo.murim.sect.SectSocial.power(p, npc)
+                == io.github.verycooltimo.murim.sect.SectSocial.Power.STRONG) {
+            io.github.verycooltimo.murim.sect.SectSocial.react(p, npc);
+            if (npc.bowedToday(p, day)) return true;
+        }
         SectReactions.Bow why = SectReactions.bowReason(npc, p);
         if (why == null) {
             return false;
@@ -694,7 +701,13 @@ public final class ScheduleGoal extends Goal {
         npc.attend(p, 44);
         npc.faceEntity(p, 90.0F);
         npc.holdPose(SectPose.BOW, 44);
-        if (npc.getRandom().nextInt(2) == 0) {
+        var sect = p.getData(io.github.verycooltimo.murim.registry.ModAttachments.SECT);
+        if (npc.role().third() && (sect.has(io.github.verycooltimo.murim.sect.SectPositions.FIRST)
+                || sect.has(io.github.verycooltimo.murim.sect.SectPositions.ELDER))) {
+            String key = "murim.bubble.social.title." + (1 + npc.getRandom().nextInt(4));
+            io.github.verycooltimo.murim.sect.SectChatter.send(npc, key, net.minecraft.network.chat.Component.translatable(key,
+                    net.minecraft.network.chat.Component.translatable(io.github.verycooltimo.murim.sect.SectPositions.titleKey(sect))));
+        } else if (npc.getRandom().nextInt(2) == 0) {
             io.github.verycooltimo.murim.sect.SectChatter.sayIfQuiet(npc, SectReactions.bowKey(why, npc.getRandom().nextInt(64)), 100);
         }
         return true;

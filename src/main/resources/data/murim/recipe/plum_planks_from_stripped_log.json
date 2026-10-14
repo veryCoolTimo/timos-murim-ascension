@@ -1,0 +1,14 @@
+{
+ "type": "minecraft:crafting_shapeless",
+ "category": "building",
+ "group": "planks",
+ "ingredients": [
+  {
+   "item": "murim:stripped_plum_log"
+  }
+ ],
+ "result": {
+  "count": 4,
+  "id": "murim:plum_planks"
+ }
+}

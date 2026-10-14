@@ -69,6 +69,6 @@
   "weakness": "technique.murim.wind_god_lightning.weakness",
   "hit_stop_ticks": 0,
   "cooldown_ticks": 160,
-  "layers": 8,
+  "star_cap": 12,
   "tier": "advanced"
 }

@@ -57,10 +57,19 @@
     },
     "evening": {
       "random": [
-        "dialogue.murim.tae_rok.evening1"
+        "@context"
       ],
       "gesture": "nod",
       "options": [
+        {
+          "text": "dialogue.murim.social.opt.business",
+          "when": [
+            {
+              "social": "business"
+            }
+          ],
+          "next": "sect_business"
+        },
         {
           "text": "dialogue.murim.tae_rok.opt.ask",
           "next": "answer"
@@ -72,31 +81,22 @@
     },
     "greet": {
       "random": [
-        "dialogue.murim.tae_rok.greet1",
-        "dialogue.murim.tae_rok.greet2"
+        "@context"
       ],
       "gesture": "nod",
       "options": [
         {
-          "text": "dialogue.murim.tae_rok.opt.ask",
-          "next": "answer"
-        },
-        {
-          "text": "dialogue.murim.tae_rok.opt.pass",
+          "text": "dialogue.murim.social.opt.business",
           "when": [
             {
-              "min_standing": "disciple",
-              "min_contribution": 15,
-              "not_flag": "pass.scriptures"
+              "social": "business"
             }
           ],
-          "actions": [
-            {
-              "type": "set_flag",
-              "value": "pass.scriptures"
-            }
-          ],
-          "next": "pass"
+          "next": "sect_business"
+        },
+        {
+          "text": "dialogue.murim.social.opt.topics",
+          "next": "sect_topics"
         },
         {
           "text": "dialogue.murim.opt.leave"
@@ -176,6 +176,93 @@
             }
           ],
           "next": "pass"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "sect_topics": {
+      "line": "dialogue.murim.social.business",
+      "options": [
+        {
+          "text": "dialogue.murim.progression.opt.menu",
+          "when": [
+            {
+              "social": "progression:menu"
+            }
+          ],
+          "actions": [
+            {
+              "type": "progression_menu"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.tae_rok.opt.ask",
+          "next": "answer"
+        },
+        {
+          "text": "dialogue.murim.tae_rok.opt.pass",
+          "when": [
+            {
+              "min_standing": "disciple",
+              "min_contribution": 15,
+              "not_flag": "pass.scriptures"
+            }
+          ],
+          "actions": [
+            {
+              "type": "set_flag",
+              "value": "pass.scriptures"
+            }
+          ],
+          "next": "pass"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "sect_business": {
+      "line": "dialogue.murim.social.business",
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.social.opt.first",
+          "when": [
+            {
+              "social": "promotion:first"
+            }
+          ],
+          "actions": [
+            {
+              "type": "promotion_offer",
+              "value": "first"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.social.opt.elder",
+          "when": [
+            {
+              "social": "promotion:elder"
+            }
+          ],
+          "actions": [
+            {
+              "type": "promotion_offer",
+              "value": "elder"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.social.opt.requests",
+          "actions": [
+            {
+              "type": "request_menu"
+            }
+          ]
         },
         {
           "text": "dialogue.murim.opt.leave"

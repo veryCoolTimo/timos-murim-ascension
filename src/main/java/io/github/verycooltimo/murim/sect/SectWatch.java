@@ -129,9 +129,15 @@ public final class SectWatch {
         SectState s = p.getData(ModAttachments.SECT);
         SectStanding standing = SectStanding.of(s, p.getData(ModAttachments.PROFILE).rank());
         Trespass t = trespass(p);
-        if (inGuardSpar(p)) {
+        boolean summoned = s.has(io.github.verycooltimo.murim.sect.seal.PenanceService.SUMMONED);
+        if (summoned) {
+            t.legal = false;
+            t.graceUntil = Long.MIN_VALUE / 2;
+        }
+        if (inGuardSpar(p) || p.getData(ModAttachments.DIALOGUE).active()) {
             return;
         }
+        DialogueService.interceptNearElder(p);
         List<SectAccess.Rule> in = SectAccess.forbidden(layout, p.position(), standing, s.flags(), period, 0.0D);
         if (in.isEmpty()) {
             t.legal = insideAny(layout, p.position());
@@ -192,6 +198,12 @@ public final class SectWatch {
             say(p, "murim.sect.guard.block", guard, r, ChatFormatting.GOLD);
         }
         if (t.strikes >= STRIKES || t.inside >= LINGER) {
+            if (summoned) {
+                // Уже ждёт приговора: страж не начинает новый поединок вместо доставки старейшины.
+                t.strikes = 0;
+                t.inside = 0;
+                return;
+            }
             escalate(p, guard, r, layout, standing, t, now);
         }
     }
@@ -296,7 +308,7 @@ public final class SectWatch {
         SectDisciple best = null;
         double bestD = Double.MAX_VALUE;
         for (SectDisciple d : p.level().getEntitiesOfClass(SectDisciple.class, p.getBoundingBox().inflate(range),
-                d -> d.isAlive() && guards(d) && !d.dormant() && d.spar() == SectDisciple.Spar.NONE)) {
+                d -> d.isAlive() && guards(d) && !d.dormant() && d.talkingTo() < 0 && d.spar() == SectDisciple.Spar.NONE)) {
             double dist = d.distanceTo(p);
             if (dist > range || dist >= bestD || !d.getSensing().hasLineOfSight(p)) {
                 continue;

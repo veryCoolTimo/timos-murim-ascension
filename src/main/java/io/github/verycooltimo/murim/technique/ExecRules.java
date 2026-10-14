@@ -36,12 +36,12 @@ public final class ExecRules {
     public static final double DMG_CLONE = 0.2D;
     public static final double DMG_FINAL = 0.4D;
 
-    public static int clones(int layer) {
-        return layer <= 1 ? 1 : layer == 2 ? 2 : layer == 3 ? 3 : layer == 4 ? 4 : 6;
+    public static int clones(int executionTier) {
+        return executionTier <= 1 ? 1 : executionTier == 2 ? 2 : executionTier == 3 ? 3 : executionTier == 4 ? 4 : 6;
     }
 
-    public static boolean finale(int layer) {
-        return layer >= 6;
+    public static boolean finale(int executionTier) {
+        return executionTier >= 6;
     }
 
     public static int contact(int i) {

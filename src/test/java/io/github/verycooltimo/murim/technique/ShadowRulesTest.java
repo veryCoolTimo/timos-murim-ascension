@@ -9,10 +9,10 @@ class ShadowRulesTest {
 
     @Test
     void growsWithMastery() {
-        for (int layer = 2; layer <= 7; layer++) {
-            assertTrue(ShadowRules.duration(layer) >= ShadowRules.duration(layer - 1));
-            assertTrue(ShadowRules.observers(layer) >= ShadowRules.observers(layer - 1));
-            assertTrue(ShadowRules.detection(layer, false) <= ShadowRules.detection(layer - 1, false));
+        for (int executionTier = 2; executionTier <= 7; executionTier++) {
+            assertTrue(ShadowRules.duration(executionTier) >= ShadowRules.duration(executionTier - 1));
+            assertTrue(ShadowRules.observers(executionTier) >= ShadowRules.observers(executionTier - 1));
+            assertTrue(ShadowRules.detection(executionTier, false) <= ShadowRules.detection(executionTier - 1, false));
         }
         assertEquals(0, ShadowRules.duration(0));
         assertEquals(8, ShadowRules.observers(7));

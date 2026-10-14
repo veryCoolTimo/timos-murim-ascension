@@ -1,0 +1,59 @@
+{
+ "textures": {
+  "particle": "murim:block/red_lacquer",
+  "beam": "murim:block/red_lacquer_beam"
+ },
+ "elements": [
+  {
+   "name": "through",
+   "from": [
+    16,
+    0.02,
+    11.52
+   ],
+   "to": [
+    24,
+    3.98,
+    14.48
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      8,
+      12.02,
+      16,
+      15.98
+     ],
+     "texture": "#beam"
+    },
+    "south": {
+     "uv": [
+      0,
+      12.02,
+      8,
+      15.98
+     ],
+     "texture": "#beam"
+    },
+    "up": {
+     "uv": [
+      0,
+      11.52,
+      8,
+      14.48
+     ],
+     "texture": "#beam"
+    },
+    "down": {
+     "uv": [
+      0,
+      1.52,
+      8,
+      4.48
+     ],
+     "texture": "#beam"
+    }
+   }
+  }
+ ]
+}

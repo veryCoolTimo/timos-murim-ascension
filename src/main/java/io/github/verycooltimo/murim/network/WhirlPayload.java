@@ -12,7 +12,7 @@ import net.minecraft.world.phys.Vec3;
  * Вихрь Цветущей Сливы: стадия 0 — Разрез вверх (центр зоны фиксирован, клиент ведёт всю шкалу
  * сам), стадия 1 — финальный проход ПОПАЛ (импакт-кадр, дрожь, дым — только по факту).
  */
-public record WhirlPayload(int entityId, Vec3 centre, Vec3 target, float yaw, int layer, int stage) implements CustomPacketPayload {
+public record WhirlPayload(int entityId, Vec3 centre, Vec3 target, float yaw, int executionTier, int stage) implements CustomPacketPayload {
 
     private static final StreamCodec<RegistryFriendlyByteBuf, Vec3> VEC = StreamCodec.composite(
             ByteBufCodecs.DOUBLE, Vec3::x, ByteBufCodecs.DOUBLE, Vec3::y, ByteBufCodecs.DOUBLE, Vec3::z, Vec3::new);
@@ -24,7 +24,7 @@ public record WhirlPayload(int entityId, Vec3 centre, Vec3 target, float yaw, in
             VEC, WhirlPayload::centre,
             VEC, WhirlPayload::target,
             ByteBufCodecs.FLOAT, WhirlPayload::yaw,
-            ByteBufCodecs.VAR_INT, WhirlPayload::layer,
+            ByteBufCodecs.VAR_INT, WhirlPayload::executionTier,
             ByteBufCodecs.VAR_INT, WhirlPayload::stage,
             WhirlPayload::new);
 

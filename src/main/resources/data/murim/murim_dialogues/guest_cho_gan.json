@@ -1,0 +1,39 @@
+{
+  "name": "npc.murim.cho_gan",
+  "title": "npc.murim.cho_gan.title",
+  "start": [
+    {
+      "node": "greet"
+    }
+  ],
+  "nodes": {
+    "greet": {
+      "line": "dialogue.murim.guest_cho_gan.greet",
+      "options": [
+        {
+          "text": "dialogue.murim.guest_cho_gan.lesson",
+          "next": "lesson"
+        },
+        {
+          "text": "dialogue.murim.guest_cho_gan.spar",
+          "actions": [
+            {
+              "type": "guest_spar"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.guest.leave"
+        }
+      ]
+    },
+    "lesson": {
+      "line": "dialogue.murim.guest_cho_gan.lesson_line",
+      "options": [
+        {
+          "text": "dialogue.murim.guest.leave"
+        }
+      ]
+    }
+  }
+}

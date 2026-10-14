@@ -18,7 +18,7 @@ import java.util.Optional;
  * @param role       функция (диалог по умолчанию, спарринг, бой)
  * @param generation 0 — Тэ (глава, старейшины), 1 — Гён, 2 — Со, 3 — Юль
  * @param home       площадка горы ({@code MountHuaPlan.ZONES}), где человек живёт днём
- * @param look       облик: {@code textures/entity/sect/<look>.png}
+ * @param look       облик: ключ своей модели автора (DiscipleRenderer.LOOK_BODIES); без своей модели — по роли и поколению
  * @param temper     привычка в бою: 0 — ровный, 1 — напористый, 2 — осторожный (план §5.3)
  */
 public record SectRoster(String key, SectRole role, int generation, String home, String look, int temper) {
@@ -27,16 +27,23 @@ public record SectRoster(String key, SectRole role, int generation, String home,
     public static final int LAY = -1;
 
     public static final List<SectRoster> ALL = List.of(
-            // Состав секты — принято автором 05.10 (docs/design/23-mount-hua-sect.md «Состав секты»): около 40 человек.
+            // Состав секты — принято автором 05.10 (docs/design/23-mount-hua-sect.md «Состав секты»): 44 человека.
             // Глава и три старейшины (Тэ): казна, дисциплина и Зал писаний, третий — для совета.
             new SectRoster("tae_hwi", SectRole.LEADER, 0, "main_hall", "leader", 0),
             new SectRoster("tae_gyun", SectRole.ELDER, 0, "treasury", "elder_treasury", 0),
             new SectRoster("tae_rok", SectRole.ELDER, 0, "scriptures", "elder_martial", 1),
             new SectRoster("tae_seong", SectRole.ELDER, 0, "elders", "elder_council", 0),
-            // Первое поколение (Гён): лекарь, правая рука главы у ворот, наставник.
+            // Первое поколение (Гён): лекарь, правая рука главы у ворот, наставник, четверо рядовых.
             new SectRoster("gyeong_cho", SectRole.ELDER, 1, "alchemy", "elder_healer", 2),
             new SectRoster("gyeong_tak", SectRole.ELDER, 1, "sect_gate", "first_gate", 0),
             new SectRoster("gyeong_pil", SectRole.MENTOR, 1, "mentor", "mentor", 1),
+            // Рядовые первого поколения (автор 06.10): четверо старших учеников над вторым поколением. Занимаются отдельно
+            // на краю площади, по очереди стоят при Гён Пхиле и поправляют младших у столбов; спят в общежитии второго
+            // поколения. Облик — first_rate_disciple (базовая текстура, ножны с мечом). Имена свои.
+            new SectRoster("gyeong_on", SectRole.FIRST, 1, "training", "first_rate_disciple", 0),
+            new SectRoster("gyeong_dan", SectRole.FIRST, 1, "training", "first_rate_disciple", 1),
+            new SectRoster("gyeong_ha", SectRole.FIRST, 1, "training", "first_rate_disciple", 2),
+            new SectRoster("gyeong_ryun", SectRole.FIRST, 1, "training", "first_rate_disciple", 1),
             // Второе поколение (Со), 8 человек: старший Со Ран — партнёр урока «три чистых удара»; остальные семеро
             // по очереди дежурят на постах (SectRota: 2 днём, 2 ночью). Со Му, Рён, Ги, Чин — бывшая стража первой версии.
             new SectRoster("seo_rang", SectRole.SENIOR, 2, "sparring", "second_0", 1),
@@ -178,6 +185,22 @@ public record SectRoster(String key, SectRole role, int generation, String home,
         List<SectRoster> out = new ArrayList<>();
         for (SectRoster m : ALL) {
             if (m.generation == generation && m.role != SectRole.GATEKEEPER && !m.role.lay()) {
+                out.add(m);
+            }
+        }
+        return out;
+    }
+
+    /** Рядовой ученик первого поколения (не наставник и не старейшина). */
+    public boolean firstRank() {
+        return role == SectRole.FIRST;
+    }
+
+    /** Члены первого поколения в ранге рядовых, в порядке списка. */
+    public static List<SectRoster> firstRanks() {
+        List<SectRoster> out = new ArrayList<>();
+        for (SectRoster m : ALL) {
+            if (m.firstRank()) {
                 out.add(m);
             }
         }

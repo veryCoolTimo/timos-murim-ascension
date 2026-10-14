@@ -1,0 +1,2044 @@
+{
+  "variants": {
+    "facing=east,half=bottom,shape=inner_left": [
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner",
+        "uvlock": true,
+        "y": 270,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_1",
+        "uvlock": true,
+        "y": 270,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_2",
+        "uvlock": true,
+        "y": 270,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_3",
+        "uvlock": true,
+        "y": 270,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_4",
+        "uvlock": true,
+        "y": 270,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_5",
+        "uvlock": true,
+        "y": 270,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_6",
+        "uvlock": true,
+        "y": 270,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_7",
+        "uvlock": true,
+        "y": 270,
+        "weight": 4
+      }
+    ],
+    "facing=east,half=bottom,shape=inner_right": [
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner",
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_1",
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_2",
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_3",
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_4",
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_5",
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_6",
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_7",
+        "weight": 4
+      }
+    ],
+    "facing=east,half=bottom,shape=outer_left": [
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer",
+        "uvlock": true,
+        "y": 270,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_1",
+        "uvlock": true,
+        "y": 270,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_2",
+        "uvlock": true,
+        "y": 270,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_3",
+        "uvlock": true,
+        "y": 270,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_4",
+        "uvlock": true,
+        "y": 270,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_5",
+        "uvlock": true,
+        "y": 270,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_6",
+        "uvlock": true,
+        "y": 270,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_7",
+        "uvlock": true,
+        "y": 270,
+        "weight": 4
+      }
+    ],
+    "facing=east,half=bottom,shape=outer_right": [
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer",
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_1",
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_2",
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_3",
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_4",
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_5",
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_6",
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_7",
+        "weight": 4
+      }
+    ],
+    "facing=east,half=bottom,shape=straight": [
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs",
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_1",
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_2",
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_3",
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_4",
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_5",
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_6",
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_7",
+        "weight": 4
+      }
+    ],
+    "facing=east,half=top,shape=inner_left": [
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner",
+        "uvlock": true,
+        "x": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_1",
+        "uvlock": true,
+        "x": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_2",
+        "uvlock": true,
+        "x": 180,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_3",
+        "uvlock": true,
+        "x": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_4",
+        "uvlock": true,
+        "x": 180,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_5",
+        "uvlock": true,
+        "x": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_6",
+        "uvlock": true,
+        "x": 180,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_7",
+        "uvlock": true,
+        "x": 180,
+        "weight": 4
+      }
+    ],
+    "facing=east,half=top,shape=inner_right": [
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner",
+        "uvlock": true,
+        "x": 180,
+        "y": 90,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_1",
+        "uvlock": true,
+        "x": 180,
+        "y": 90,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_2",
+        "uvlock": true,
+        "x": 180,
+        "y": 90,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_3",
+        "uvlock": true,
+        "x": 180,
+        "y": 90,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_4",
+        "uvlock": true,
+        "x": 180,
+        "y": 90,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_5",
+        "uvlock": true,
+        "x": 180,
+        "y": 90,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_6",
+        "uvlock": true,
+        "x": 180,
+        "y": 90,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_7",
+        "uvlock": true,
+        "x": 180,
+        "y": 90,
+        "weight": 4
+      }
+    ],
+    "facing=east,half=top,shape=outer_left": [
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer",
+        "uvlock": true,
+        "x": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_1",
+        "uvlock": true,
+        "x": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_2",
+        "uvlock": true,
+        "x": 180,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_3",
+        "uvlock": true,
+        "x": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_4",
+        "uvlock": true,
+        "x": 180,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_5",
+        "uvlock": true,
+        "x": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_6",
+        "uvlock": true,
+        "x": 180,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_7",
+        "uvlock": true,
+        "x": 180,
+        "weight": 4
+      }
+    ],
+    "facing=east,half=top,shape=outer_right": [
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer",
+        "uvlock": true,
+        "x": 180,
+        "y": 90,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_1",
+        "uvlock": true,
+        "x": 180,
+        "y": 90,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_2",
+        "uvlock": true,
+        "x": 180,
+        "y": 90,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_3",
+        "uvlock": true,
+        "x": 180,
+        "y": 90,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_4",
+        "uvlock": true,
+        "x": 180,
+        "y": 90,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_5",
+        "uvlock": true,
+        "x": 180,
+        "y": 90,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_6",
+        "uvlock": true,
+        "x": 180,
+        "y": 90,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_7",
+        "uvlock": true,
+        "x": 180,
+        "y": 90,
+        "weight": 4
+      }
+    ],
+    "facing=east,half=top,shape=straight": [
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs",
+        "uvlock": true,
+        "x": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_1",
+        "uvlock": true,
+        "x": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_2",
+        "uvlock": true,
+        "x": 180,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_3",
+        "uvlock": true,
+        "x": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_4",
+        "uvlock": true,
+        "x": 180,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_5",
+        "uvlock": true,
+        "x": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_6",
+        "uvlock": true,
+        "x": 180,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_7",
+        "uvlock": true,
+        "x": 180,
+        "weight": 4
+      }
+    ],
+    "facing=north,half=bottom,shape=inner_left": [
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner",
+        "uvlock": true,
+        "y": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_1",
+        "uvlock": true,
+        "y": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_2",
+        "uvlock": true,
+        "y": 180,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_3",
+        "uvlock": true,
+        "y": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_4",
+        "uvlock": true,
+        "y": 180,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_5",
+        "uvlock": true,
+        "y": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_6",
+        "uvlock": true,
+        "y": 180,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_7",
+        "uvlock": true,
+        "y": 180,
+        "weight": 4
+      }
+    ],
+    "facing=north,half=bottom,shape=inner_right": [
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner",
+        "uvlock": true,
+        "y": 270,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_1",
+        "uvlock": true,
+        "y": 270,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_2",
+        "uvlock": true,
+        "y": 270,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_3",
+        "uvlock": true,
+        "y": 270,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_4",
+        "uvlock": true,
+        "y": 270,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_5",
+        "uvlock": true,
+        "y": 270,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_6",
+        "uvlock": true,
+        "y": 270,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_7",
+        "uvlock": true,
+        "y": 270,
+        "weight": 4
+      }
+    ],
+    "facing=north,half=bottom,shape=outer_left": [
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer",
+        "uvlock": true,
+        "y": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_1",
+        "uvlock": true,
+        "y": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_2",
+        "uvlock": true,
+        "y": 180,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_3",
+        "uvlock": true,
+        "y": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_4",
+        "uvlock": true,
+        "y": 180,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_5",
+        "uvlock": true,
+        "y": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_6",
+        "uvlock": true,
+        "y": 180,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_7",
+        "uvlock": true,
+        "y": 180,
+        "weight": 4
+      }
+    ],
+    "facing=north,half=bottom,shape=outer_right": [
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer",
+        "uvlock": true,
+        "y": 270,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_1",
+        "uvlock": true,
+        "y": 270,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_2",
+        "uvlock": true,
+        "y": 270,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_3",
+        "uvlock": true,
+        "y": 270,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_4",
+        "uvlock": true,
+        "y": 270,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_5",
+        "uvlock": true,
+        "y": 270,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_6",
+        "uvlock": true,
+        "y": 270,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_7",
+        "uvlock": true,
+        "y": 270,
+        "weight": 4
+      }
+    ],
+    "facing=north,half=bottom,shape=straight": [
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs",
+        "uvlock": true,
+        "y": 270,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_1",
+        "uvlock": true,
+        "y": 270,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_2",
+        "uvlock": true,
+        "y": 270,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_3",
+        "uvlock": true,
+        "y": 270,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_4",
+        "uvlock": true,
+        "y": 270,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_5",
+        "uvlock": true,
+        "y": 270,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_6",
+        "uvlock": true,
+        "y": 270,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_7",
+        "uvlock": true,
+        "y": 270,
+        "weight": 4
+      }
+    ],
+    "facing=north,half=top,shape=inner_left": [
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner",
+        "uvlock": true,
+        "x": 180,
+        "y": 270,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_1",
+        "uvlock": true,
+        "x": 180,
+        "y": 270,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_2",
+        "uvlock": true,
+        "x": 180,
+        "y": 270,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_3",
+        "uvlock": true,
+        "x": 180,
+        "y": 270,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_4",
+        "uvlock": true,
+        "x": 180,
+        "y": 270,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_5",
+        "uvlock": true,
+        "x": 180,
+        "y": 270,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_6",
+        "uvlock": true,
+        "x": 180,
+        "y": 270,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_7",
+        "uvlock": true,
+        "x": 180,
+        "y": 270,
+        "weight": 4
+      }
+    ],
+    "facing=north,half=top,shape=inner_right": [
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner",
+        "uvlock": true,
+        "x": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_1",
+        "uvlock": true,
+        "x": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_2",
+        "uvlock": true,
+        "x": 180,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_3",
+        "uvlock": true,
+        "x": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_4",
+        "uvlock": true,
+        "x": 180,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_5",
+        "uvlock": true,
+        "x": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_6",
+        "uvlock": true,
+        "x": 180,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_7",
+        "uvlock": true,
+        "x": 180,
+        "weight": 4
+      }
+    ],
+    "facing=north,half=top,shape=outer_left": [
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer",
+        "uvlock": true,
+        "x": 180,
+        "y": 270,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_1",
+        "uvlock": true,
+        "x": 180,
+        "y": 270,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_2",
+        "uvlock": true,
+        "x": 180,
+        "y": 270,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_3",
+        "uvlock": true,
+        "x": 180,
+        "y": 270,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_4",
+        "uvlock": true,
+        "x": 180,
+        "y": 270,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_5",
+        "uvlock": true,
+        "x": 180,
+        "y": 270,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_6",
+        "uvlock": true,
+        "x": 180,
+        "y": 270,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_7",
+        "uvlock": true,
+        "x": 180,
+        "y": 270,
+        "weight": 4
+      }
+    ],
+    "facing=north,half=top,shape=outer_right": [
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer",
+        "uvlock": true,
+        "x": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_1",
+        "uvlock": true,
+        "x": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_2",
+        "uvlock": true,
+        "x": 180,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_3",
+        "uvlock": true,
+        "x": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_4",
+        "uvlock": true,
+        "x": 180,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_5",
+        "uvlock": true,
+        "x": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_6",
+        "uvlock": true,
+        "x": 180,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_7",
+        "uvlock": true,
+        "x": 180,
+        "weight": 4
+      }
+    ],
+    "facing=north,half=top,shape=straight": [
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs",
+        "uvlock": true,
+        "x": 180,
+        "y": 270,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_1",
+        "uvlock": true,
+        "x": 180,
+        "y": 270,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_2",
+        "uvlock": true,
+        "x": 180,
+        "y": 270,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_3",
+        "uvlock": true,
+        "x": 180,
+        "y": 270,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_4",
+        "uvlock": true,
+        "x": 180,
+        "y": 270,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_5",
+        "uvlock": true,
+        "x": 180,
+        "y": 270,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_6",
+        "uvlock": true,
+        "x": 180,
+        "y": 270,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_7",
+        "uvlock": true,
+        "x": 180,
+        "y": 270,
+        "weight": 4
+      }
+    ],
+    "facing=south,half=bottom,shape=inner_left": [
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner",
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_1",
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_2",
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_3",
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_4",
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_5",
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_6",
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_7",
+        "weight": 4
+      }
+    ],
+    "facing=south,half=bottom,shape=inner_right": [
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner",
+        "uvlock": true,
+        "y": 90,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_1",
+        "uvlock": true,
+        "y": 90,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_2",
+        "uvlock": true,
+        "y": 90,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_3",
+        "uvlock": true,
+        "y": 90,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_4",
+        "uvlock": true,
+        "y": 90,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_5",
+        "uvlock": true,
+        "y": 90,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_6",
+        "uvlock": true,
+        "y": 90,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_7",
+        "uvlock": true,
+        "y": 90,
+        "weight": 4
+      }
+    ],
+    "facing=south,half=bottom,shape=outer_left": [
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer",
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_1",
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_2",
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_3",
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_4",
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_5",
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_6",
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_7",
+        "weight": 4
+      }
+    ],
+    "facing=south,half=bottom,shape=outer_right": [
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer",
+        "uvlock": true,
+        "y": 90,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_1",
+        "uvlock": true,
+        "y": 90,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_2",
+        "uvlock": true,
+        "y": 90,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_3",
+        "uvlock": true,
+        "y": 90,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_4",
+        "uvlock": true,
+        "y": 90,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_5",
+        "uvlock": true,
+        "y": 90,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_6",
+        "uvlock": true,
+        "y": 90,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_7",
+        "uvlock": true,
+        "y": 90,
+        "weight": 4
+      }
+    ],
+    "facing=south,half=bottom,shape=straight": [
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs",
+        "uvlock": true,
+        "y": 90,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_1",
+        "uvlock": true,
+        "y": 90,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_2",
+        "uvlock": true,
+        "y": 90,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_3",
+        "uvlock": true,
+        "y": 90,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_4",
+        "uvlock": true,
+        "y": 90,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_5",
+        "uvlock": true,
+        "y": 90,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_6",
+        "uvlock": true,
+        "y": 90,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_7",
+        "uvlock": true,
+        "y": 90,
+        "weight": 4
+      }
+    ],
+    "facing=south,half=top,shape=inner_left": [
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner",
+        "uvlock": true,
+        "x": 180,
+        "y": 90,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_1",
+        "uvlock": true,
+        "x": 180,
+        "y": 90,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_2",
+        "uvlock": true,
+        "x": 180,
+        "y": 90,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_3",
+        "uvlock": true,
+        "x": 180,
+        "y": 90,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_4",
+        "uvlock": true,
+        "x": 180,
+        "y": 90,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_5",
+        "uvlock": true,
+        "x": 180,
+        "y": 90,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_6",
+        "uvlock": true,
+        "x": 180,
+        "y": 90,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_7",
+        "uvlock": true,
+        "x": 180,
+        "y": 90,
+        "weight": 4
+      }
+    ],
+    "facing=south,half=top,shape=inner_right": [
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner",
+        "uvlock": true,
+        "x": 180,
+        "y": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_1",
+        "uvlock": true,
+        "x": 180,
+        "y": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_2",
+        "uvlock": true,
+        "x": 180,
+        "y": 180,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_3",
+        "uvlock": true,
+        "x": 180,
+        "y": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_4",
+        "uvlock": true,
+        "x": 180,
+        "y": 180,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_5",
+        "uvlock": true,
+        "x": 180,
+        "y": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_6",
+        "uvlock": true,
+        "x": 180,
+        "y": 180,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_7",
+        "uvlock": true,
+        "x": 180,
+        "y": 180,
+        "weight": 4
+      }
+    ],
+    "facing=south,half=top,shape=outer_left": [
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer",
+        "uvlock": true,
+        "x": 180,
+        "y": 90,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_1",
+        "uvlock": true,
+        "x": 180,
+        "y": 90,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_2",
+        "uvlock": true,
+        "x": 180,
+        "y": 90,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_3",
+        "uvlock": true,
+        "x": 180,
+        "y": 90,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_4",
+        "uvlock": true,
+        "x": 180,
+        "y": 90,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_5",
+        "uvlock": true,
+        "x": 180,
+        "y": 90,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_6",
+        "uvlock": true,
+        "x": 180,
+        "y": 90,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_7",
+        "uvlock": true,
+        "x": 180,
+        "y": 90,
+        "weight": 4
+      }
+    ],
+    "facing=south,half=top,shape=outer_right": [
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer",
+        "uvlock": true,
+        "x": 180,
+        "y": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_1",
+        "uvlock": true,
+        "x": 180,
+        "y": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_2",
+        "uvlock": true,
+        "x": 180,
+        "y": 180,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_3",
+        "uvlock": true,
+        "x": 180,
+        "y": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_4",
+        "uvlock": true,
+        "x": 180,
+        "y": 180,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_5",
+        "uvlock": true,
+        "x": 180,
+        "y": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_6",
+        "uvlock": true,
+        "x": 180,
+        "y": 180,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_7",
+        "uvlock": true,
+        "x": 180,
+        "y": 180,
+        "weight": 4
+      }
+    ],
+    "facing=south,half=top,shape=straight": [
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs",
+        "uvlock": true,
+        "x": 180,
+        "y": 90,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_1",
+        "uvlock": true,
+        "x": 180,
+        "y": 90,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_2",
+        "uvlock": true,
+        "x": 180,
+        "y": 90,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_3",
+        "uvlock": true,
+        "x": 180,
+        "y": 90,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_4",
+        "uvlock": true,
+        "x": 180,
+        "y": 90,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_5",
+        "uvlock": true,
+        "x": 180,
+        "y": 90,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_6",
+        "uvlock": true,
+        "x": 180,
+        "y": 90,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_7",
+        "uvlock": true,
+        "x": 180,
+        "y": 90,
+        "weight": 4
+      }
+    ],
+    "facing=west,half=bottom,shape=inner_left": [
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner",
+        "uvlock": true,
+        "y": 90,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_1",
+        "uvlock": true,
+        "y": 90,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_2",
+        "uvlock": true,
+        "y": 90,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_3",
+        "uvlock": true,
+        "y": 90,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_4",
+        "uvlock": true,
+        "y": 90,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_5",
+        "uvlock": true,
+        "y": 90,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_6",
+        "uvlock": true,
+        "y": 90,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_7",
+        "uvlock": true,
+        "y": 90,
+        "weight": 4
+      }
+    ],
+    "facing=west,half=bottom,shape=inner_right": [
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner",
+        "uvlock": true,
+        "y": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_1",
+        "uvlock": true,
+        "y": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_2",
+        "uvlock": true,
+        "y": 180,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_3",
+        "uvlock": true,
+        "y": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_4",
+        "uvlock": true,
+        "y": 180,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_5",
+        "uvlock": true,
+        "y": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_6",
+        "uvlock": true,
+        "y": 180,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_7",
+        "uvlock": true,
+        "y": 180,
+        "weight": 4
+      }
+    ],
+    "facing=west,half=bottom,shape=outer_left": [
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer",
+        "uvlock": true,
+        "y": 90,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_1",
+        "uvlock": true,
+        "y": 90,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_2",
+        "uvlock": true,
+        "y": 90,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_3",
+        "uvlock": true,
+        "y": 90,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_4",
+        "uvlock": true,
+        "y": 90,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_5",
+        "uvlock": true,
+        "y": 90,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_6",
+        "uvlock": true,
+        "y": 90,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_7",
+        "uvlock": true,
+        "y": 90,
+        "weight": 4
+      }
+    ],
+    "facing=west,half=bottom,shape=outer_right": [
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer",
+        "uvlock": true,
+        "y": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_1",
+        "uvlock": true,
+        "y": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_2",
+        "uvlock": true,
+        "y": 180,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_3",
+        "uvlock": true,
+        "y": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_4",
+        "uvlock": true,
+        "y": 180,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_5",
+        "uvlock": true,
+        "y": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_6",
+        "uvlock": true,
+        "y": 180,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_7",
+        "uvlock": true,
+        "y": 180,
+        "weight": 4
+      }
+    ],
+    "facing=west,half=bottom,shape=straight": [
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs",
+        "uvlock": true,
+        "y": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_1",
+        "uvlock": true,
+        "y": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_2",
+        "uvlock": true,
+        "y": 180,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_3",
+        "uvlock": true,
+        "y": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_4",
+        "uvlock": true,
+        "y": 180,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_5",
+        "uvlock": true,
+        "y": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_6",
+        "uvlock": true,
+        "y": 180,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_7",
+        "uvlock": true,
+        "y": 180,
+        "weight": 4
+      }
+    ],
+    "facing=west,half=top,shape=inner_left": [
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner",
+        "uvlock": true,
+        "x": 180,
+        "y": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_1",
+        "uvlock": true,
+        "x": 180,
+        "y": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_2",
+        "uvlock": true,
+        "x": 180,
+        "y": 180,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_3",
+        "uvlock": true,
+        "x": 180,
+        "y": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_4",
+        "uvlock": true,
+        "x": 180,
+        "y": 180,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_5",
+        "uvlock": true,
+        "x": 180,
+        "y": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_6",
+        "uvlock": true,
+        "x": 180,
+        "y": 180,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_7",
+        "uvlock": true,
+        "x": 180,
+        "y": 180,
+        "weight": 4
+      }
+    ],
+    "facing=west,half=top,shape=inner_right": [
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner",
+        "uvlock": true,
+        "x": 180,
+        "y": 270,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_1",
+        "uvlock": true,
+        "x": 180,
+        "y": 270,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_2",
+        "uvlock": true,
+        "x": 180,
+        "y": 270,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_3",
+        "uvlock": true,
+        "x": 180,
+        "y": 270,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_4",
+        "uvlock": true,
+        "x": 180,
+        "y": 270,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_5",
+        "uvlock": true,
+        "x": 180,
+        "y": 270,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_6",
+        "uvlock": true,
+        "x": 180,
+        "y": 270,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_inner_7",
+        "uvlock": true,
+        "x": 180,
+        "y": 270,
+        "weight": 4
+      }
+    ],
+    "facing=west,half=top,shape=outer_left": [
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer",
+        "uvlock": true,
+        "x": 180,
+        "y": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_1",
+        "uvlock": true,
+        "x": 180,
+        "y": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_2",
+        "uvlock": true,
+        "x": 180,
+        "y": 180,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_3",
+        "uvlock": true,
+        "x": 180,
+        "y": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_4",
+        "uvlock": true,
+        "x": 180,
+        "y": 180,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_5",
+        "uvlock": true,
+        "x": 180,
+        "y": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_6",
+        "uvlock": true,
+        "x": 180,
+        "y": 180,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_7",
+        "uvlock": true,
+        "x": 180,
+        "y": 180,
+        "weight": 4
+      }
+    ],
+    "facing=west,half=top,shape=outer_right": [
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer",
+        "uvlock": true,
+        "x": 180,
+        "y": 270,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_1",
+        "uvlock": true,
+        "x": 180,
+        "y": 270,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_2",
+        "uvlock": true,
+        "x": 180,
+        "y": 270,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_3",
+        "uvlock": true,
+        "x": 180,
+        "y": 270,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_4",
+        "uvlock": true,
+        "x": 180,
+        "y": 270,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_5",
+        "uvlock": true,
+        "x": 180,
+        "y": 270,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_6",
+        "uvlock": true,
+        "x": 180,
+        "y": 270,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_outer_7",
+        "uvlock": true,
+        "x": 180,
+        "y": 270,
+        "weight": 4
+      }
+    ],
+    "facing=west,half=top,shape=straight": [
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs",
+        "uvlock": true,
+        "x": 180,
+        "y": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_1",
+        "uvlock": true,
+        "x": 180,
+        "y": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_2",
+        "uvlock": true,
+        "x": 180,
+        "y": 180,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_3",
+        "uvlock": true,
+        "x": 180,
+        "y": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_4",
+        "uvlock": true,
+        "x": 180,
+        "y": 180,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_5",
+        "uvlock": true,
+        "x": 180,
+        "y": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_6",
+        "uvlock": true,
+        "x": 180,
+        "y": 180,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_stairs_7",
+        "uvlock": true,
+        "x": 180,
+        "y": 180,
+        "weight": 4
+      }
+    ]
+  }
+}

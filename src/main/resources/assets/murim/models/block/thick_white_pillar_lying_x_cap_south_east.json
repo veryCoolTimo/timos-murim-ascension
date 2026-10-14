@@ -1,0 +1,14 @@
+{
+  "loader": "neoforge:obj",
+  "model": "murim:models/block/obj/hall_joinery/thick_white_pillar_lying_x_cap_south_east.obj",
+  "flip_v": false,
+  "emissive_ambient": true,
+  "automatic_culling": false,
+  "shade_quads": true,
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "wood": "murim:block/white_plaster",
+    "particle": "murim:block/white_plaster"
+  },
+  "ambientocclusion": false
+}

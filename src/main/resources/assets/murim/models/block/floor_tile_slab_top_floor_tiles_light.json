@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/slab_top",
+  "textures": {
+    "bottom": "murim:block/floor_tiles_light",
+    "side": "murim:block/floor_tiles_light",
+    "top": "murim:block/floor_tiles_light"
+  }
+}

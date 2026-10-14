@@ -87,7 +87,8 @@ public class Peddler extends AbstractVillager {
         goalSelector.addGoal(1, new TradeWithPlayerGoal(this));
         // Разбойники лагеря — его главный страх (не ученики секты, хоть они тоже Bandit по классу).
         goalSelector.addGoal(1, new AvoidEntityGoal<>(this, Bandit.class, 10.0F, 0.5D, 0.6D,
-                e -> e instanceof Bandit b && !(b instanceof io.github.verycooltimo.murim.entity.SectDisciple)));
+                e -> e instanceof Bandit b && !(b instanceof io.github.verycooltimo.murim.entity.SectDisciple)
+                        && (!(b instanceof io.github.verycooltimo.murim.npc.GuestFighter guest) || guest.hostile())));
         goalSelector.addGoal(1, new PanicGoal(this, 0.5D));
         goalSelector.addGoal(1, new LookAtTradingPlayerGoal(this));
         goalSelector.addGoal(4, new MoveTowardsRestrictionGoal(this, 0.35D));

@@ -13,6 +13,21 @@ import java.util.Optional;
 /** Пакеты раскладки техник по слотам (решение автора 01.10). */
 public final class LoadoutPayloads {
 
+    /** Колесо → сервер: форма и активный слот применяются одним изменением. */
+    public record SelectForm(int slot, ResourceLocation technique, boolean activate) implements CustomPacketPayload {
+        public static final Type<SelectForm> TYPE = new Type<>(
+                ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "loadout_form"));
+        public static final StreamCodec<RegistryFriendlyByteBuf, SelectForm> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.VAR_INT, SelectForm::slot,
+                ResourceLocation.STREAM_CODEC, SelectForm::technique,
+                ByteBufCodecs.BOOL, SelectForm::activate, SelectForm::new);
+
+        @Override
+        public Type<? extends CustomPacketPayload> type() {
+            return TYPE;
+        }
+    }
+
     /** Клиент → сервер: положить технику в слот или очистить его; слот −1 — ячейка основы меча. */
     public record SetSlot(int slot, Optional<ResourceLocation> technique) implements CustomPacketPayload {
         public static final Type<SetSlot> TYPE = new Type<>(

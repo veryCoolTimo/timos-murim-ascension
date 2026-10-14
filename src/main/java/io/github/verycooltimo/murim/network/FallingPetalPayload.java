@@ -13,7 +13,7 @@ import net.minecraft.world.phys.Vec3;
  * или −1), 1..5 — удар k ПОПАЛ (at — точка контакта), 8 — колени цели (at — ноги),
  * 9 — техника оборвана (цель умерла/ушла).
  */
-public record FallingPetalPayload(int entityId, int targetId, int stage, Vec3 at, Vec3 axis, int layer)
+public record FallingPetalPayload(int entityId, int targetId, int stage, Vec3 at, Vec3 axis, int executionTier)
         implements CustomPacketPayload {
 
     private static final StreamCodec<RegistryFriendlyByteBuf, Vec3> VEC = StreamCodec.composite(
@@ -28,7 +28,7 @@ public record FallingPetalPayload(int entityId, int targetId, int stage, Vec3 at
             ByteBufCodecs.VAR_INT, FallingPetalPayload::stage,
             VEC, FallingPetalPayload::at,
             VEC, FallingPetalPayload::axis,
-            ByteBufCodecs.VAR_INT, FallingPetalPayload::layer,
+            ByteBufCodecs.VAR_INT, FallingPetalPayload::executionTier,
             FallingPetalPayload::new);
 
     @Override

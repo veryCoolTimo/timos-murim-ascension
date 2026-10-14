@@ -40,9 +40,9 @@ public record Dialogue(String name, String title, List<Entry> start, Map<String,
      * @param member     вступил ли в секту
      * @param knows      техника выучена
      * @param notKnows   техника не выучена
-     * @param technique  техника для {@code minLayer}/{@code belowLayer}
-     * @param minLayer   слой техники не ниже (−1 — не проверять)
-     * @param belowLayer слой техники ниже (−1 — не проверять); невыученная — слой −1, тоже «ниже»
+     * @param technique  техника для {@code minStar}/{@code belowStar}
+     * @param minStar   слой техники не ниже (−1 — не проверять)
+     * @param belowStar слой техники ниже (−1 — не проверять); невыученная — слой −1, тоже «ниже»
      * @param minRank    ранг культивации не ниже
      * @param belowRank  ранг ниже
      * @param awakened   даньтянь создан
@@ -53,7 +53,7 @@ public record Dialogue(String name, String title, List<Entry> start, Map<String,
      */
     public record Condition(Optional<String> flag, Optional<String> notFlag, Optional<Boolean> member,
                             Optional<ResourceLocation> knows, Optional<ResourceLocation> notKnows,
-                            Optional<ResourceLocation> technique, int minLayer, int belowLayer,
+                            Optional<ResourceLocation> technique, int minStar, int belowStar,
                             int minRank, int belowRank, Optional<Boolean> awakened,
                             Optional<String> period, Optional<Boolean> free, Standing standing) {
         public static final Codec<Condition> CODEC = RecordCodecBuilder.create(i -> i.group(
@@ -63,8 +63,8 @@ public record Dialogue(String name, String title, List<Entry> start, Map<String,
                 ResourceLocation.CODEC.optionalFieldOf("knows").forGetter(Condition::knows),
                 ResourceLocation.CODEC.optionalFieldOf("not_knows").forGetter(Condition::notKnows),
                 ResourceLocation.CODEC.optionalFieldOf("technique").forGetter(Condition::technique),
-                Codec.INT.optionalFieldOf("min_layer", -1).forGetter(Condition::minLayer),
-                Codec.INT.optionalFieldOf("below_layer", -1).forGetter(Condition::belowLayer),
+                Codec.INT.optionalFieldOf("min_star", -1).forGetter(Condition::minStar),
+                Codec.INT.optionalFieldOf("below_star", -1).forGetter(Condition::belowStar),
                 Codec.INT.optionalFieldOf("min_rank", -1).forGetter(Condition::minRank),
                 Codec.INT.optionalFieldOf("below_rank", -1).forGetter(Condition::belowRank),
                 Codec.BOOL.optionalFieldOf("awakened").forGetter(Condition::awakened),
@@ -86,10 +86,12 @@ public record Dialogue(String name, String title, List<Entry> start, Map<String,
      * @param missed          журнал секты: занятие ждали (перекличка) и оно не сделано
      * @param chores          журнал секты: наряд на кухню назначен и не отработан
      * @param logged          журнал секты: в нём есть сегодняшний или прошлый день при секте
+     * @param social          серверный контекст: business, promotion:first|elder,
+     *                        request:<id>, request_start:<id>, request_complete:<id>
      */
     public record Standing(Optional<String> minStanding, Optional<String> belowStanding, int minContribution,
                            Optional<String> hasItem, Optional<String> attended, Optional<String> missed,
-                           Optional<Boolean> chores, Optional<Boolean> logged) {
+                           Optional<Boolean> chores, Optional<Boolean> logged, Optional<String> social) {
         public static final MapCodec<Standing> MAP_CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
                 Codec.STRING.optionalFieldOf("min_standing").forGetter(Standing::minStanding),
                 Codec.STRING.optionalFieldOf("below_standing").forGetter(Standing::belowStanding),
@@ -98,7 +100,8 @@ public record Dialogue(String name, String title, List<Entry> start, Map<String,
                 Codec.STRING.optionalFieldOf("attended").forGetter(Standing::attended),
                 Codec.STRING.optionalFieldOf("missed").forGetter(Standing::missed),
                 Codec.BOOL.optionalFieldOf("chores").forGetter(Standing::chores),
-                Codec.BOOL.optionalFieldOf("logged").forGetter(Standing::logged)
+                Codec.BOOL.optionalFieldOf("logged").forGetter(Standing::logged),
+                Codec.STRING.optionalFieldOf("social").forGetter(Standing::social)
         ).apply(i, Standing::new));
     }
 
@@ -144,7 +147,7 @@ public record Dialogue(String name, String title, List<Entry> start, Map<String,
     /**
      * Узел: реплика NPC (или случайная из {@code random}), жест, аргументы реплики, действия при входе
      * и варианты (видны только те, чьи условия выполнены, не больше четырёх).
-     * Аргументы: {@code player}, {@code rank}, {@code layer:<техника>}.
+     * Аргументы: {@code player}, {@code rank}, {@code star:<техника>}.
      */
     public record Node(String line, List<String> random, List<String> args, Optional<String> gesture,
                        List<Action> enter, List<Option> options) {

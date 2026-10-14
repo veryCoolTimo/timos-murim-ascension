@@ -1,0 +1,134 @@
+{
+  "variants": {
+    "": [
+      {
+        "model": "murim:block/cracked_plaster_0"
+      },
+      {
+        "model": "murim:block/cracked_plaster_0",
+        "y": 90
+      },
+      {
+        "model": "murim:block/cracked_plaster_0",
+        "y": 180
+      },
+      {
+        "model": "murim:block/cracked_plaster_0",
+        "y": 270
+      },
+      {
+        "model": "murim:block/cracked_plaster_1"
+      },
+      {
+        "model": "murim:block/cracked_plaster_1",
+        "y": 90
+      },
+      {
+        "model": "murim:block/cracked_plaster_1",
+        "y": 180
+      },
+      {
+        "model": "murim:block/cracked_plaster_1",
+        "y": 270
+      },
+      {
+        "model": "murim:block/cracked_plaster_2"
+      },
+      {
+        "model": "murim:block/cracked_plaster_2",
+        "y": 90
+      },
+      {
+        "model": "murim:block/cracked_plaster_2",
+        "y": 180
+      },
+      {
+        "model": "murim:block/cracked_plaster_2",
+        "y": 270
+      },
+      {
+        "model": "murim:block/cracked_plaster_3"
+      },
+      {
+        "model": "murim:block/cracked_plaster_3",
+        "y": 90
+      },
+      {
+        "model": "murim:block/cracked_plaster_3",
+        "y": 180
+      },
+      {
+        "model": "murim:block/cracked_plaster_3",
+        "y": 270
+      },
+      {
+        "model": "murim:block/cracked_plaster_4"
+      },
+      {
+        "model": "murim:block/cracked_plaster_4",
+        "y": 90
+      },
+      {
+        "model": "murim:block/cracked_plaster_4",
+        "y": 180
+      },
+      {
+        "model": "murim:block/cracked_plaster_4",
+        "y": 270
+      },
+      {
+        "model": "murim:block/cracked_plaster_5"
+      },
+      {
+        "model": "murim:block/cracked_plaster_5",
+        "y": 90
+      },
+      {
+        "model": "murim:block/cracked_plaster_5",
+        "y": 180
+      },
+      {
+        "model": "murim:block/cracked_plaster_5",
+        "y": 270
+      },
+      {
+        "model": "murim:block/plaster",
+        "weight": 4
+      },
+      {
+        "model": "murim:block/plaster",
+        "y": 90,
+        "weight": 4
+      },
+      {
+        "model": "murim:block/plaster",
+        "y": 180,
+        "weight": 4
+      },
+      {
+        "model": "murim:block/plaster",
+        "y": 270,
+        "weight": 4
+      },
+      {
+        "model": "murim:block/plaster_b",
+        "weight": 4
+      },
+      {
+        "model": "murim:block/plaster_b",
+        "y": 90,
+        "weight": 4
+      },
+      {
+        "model": "murim:block/plaster_b",
+        "y": 180,
+        "weight": 4
+      },
+      {
+        "model": "murim:block/plaster_b",
+        "y": 270,
+        "weight": 4
+      }
+    ]
+  }
+}

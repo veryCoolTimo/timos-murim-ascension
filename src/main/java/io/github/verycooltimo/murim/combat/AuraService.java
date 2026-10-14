@@ -101,7 +101,7 @@ public final class AuraService {
         }
         // Сильнейший источник — от него дует порыв.
         player.getData(ModAttachments.AURA_GUST)[2] = sourceId;
-        return strongest;
+        return io.github.verycooltimo.murim.technique.DemonicExecutor.reducePressure(player, strongest);
     }
 
     /**

@@ -189,7 +189,7 @@ public final class ScatterVfx {
 
     private static final class Cast {
         final int entityId;
-        final int layer;
+        final int executionTier;
         int start;
         final Random random;
         final double density;
@@ -228,13 +228,13 @@ public final class ScatterVfx {
         final List<List<Vec3>> tips = new ArrayList<>();
         final boolean[] burst = new boolean[6];
 
-        Cast(int entityId, int layer) {
+        Cast(int entityId, int executionTier) {
             this.entityId = entityId;
-            this.layer = layer;
+            this.executionTier = executionTier;
             this.start = clientTicks;
             this.random = new Random(entityId * 6151L + clientTicks);
-            this.density = ScatterRules.density(layer);
-            this.scale = ScatterRules.scale(layer);
+            this.density = ScatterRules.density(executionTier);
+            this.scale = ScatterRules.scale(executionTier);
             for (int i = 0; i < 6; i++) {
                 tips.add(new ArrayList<>());
             }
@@ -265,17 +265,17 @@ public final class ScatterVfx {
 
         /** Центр корпуса клона {@code i} в тик {@code t}. */
         Vec3 clone(int i, double t) {
-            return ScatterRules.clone(cluster(origin, i), jump, centre, base, layer, i, t, grounded);
+            return ScatterRules.clone(cluster(origin, i), jump, centre, base, executionTier, i, t, grounded);
         }
 
         double dissolveAt() {
-            if (ScatterRules.scatter(layer)) {
+            if (ScatterRules.scatter(executionTier)) {
                 return ScatterRules.SCATTER - 2;
             }
-            if (ScatterRules.finalSwing(layer)) {
+            if (ScatterRules.finalSwing(executionTier)) {
                 return ScatterRules.FINAL;
             }
-            return ScatterRules.strokeStart(layer, ScatterRules.clones(layer) - 1, ScatterRules.strokes(layer) - 1) + ScatterRules.PASS + 8;
+            return ScatterRules.strokeStart(executionTier, ScatterRules.clones(executionTier) - 1, ScatterRules.strokes(executionTier) - 1) + ScatterRules.PASS + 8;
         }
     }
 
@@ -297,13 +297,13 @@ public final class ScatterVfx {
             }
             return;
         }
-        if (payload.event() != TechniqueEventPayload.Event.STARTED || payload.layer() <= 0) {
+        if (payload.event() != TechniqueEventPayload.Event.STARTED || payload.executionTier() <= 0) {
             return;
         }
         CASTS.removeIf(c -> c.entityId == payload.sourceId());
-        Cast c = new Cast(payload.sourceId(), payload.layer());
+        Cast c = new Cast(payload.sourceId(), payload.executionTier());
         CASTS.add(c);
-        if (c.layer >= 3) {
+        if (c.executionTier >= 3) {
             // Концентрация: слабая синяя аура, целиком огонь — с тика FIRE.
             ClientAuraState.techniqueAura(c.entityId, 3, 0, ScatterRules.FIRE + 2);
         }
@@ -319,7 +319,7 @@ public final class ScatterVfx {
         Minecraft mc = Minecraft.getInstance();
         if (p.stage() == ScatterPayload.RELEASE) {
             if (c == null) {
-                c = new Cast(p.entityId(), p.layer());
+                c = new Cast(p.entityId(), p.executionTier());
                 CASTS.add(c);
             }
             c.start = clientTicks - ScatterRules.RELEASE;
@@ -352,14 +352,14 @@ public final class ScatterVfx {
 
     /** Прыжок (full-10): скопления взрываются лепестками, из них выходят клоны; пыль, ветер. */
     private static void release(Cast c, Minecraft mc) {
-        if (c.layer >= 3) {
-            ClientAuraState.techniqueAura(c.entityId, 3 + Math.min(3, c.layer / 2), 1, ScatterRules.END - ScatterRules.RELEASE);
+        if (c.executionTier >= 3) {
+            ClientAuraState.techniqueAura(c.entityId, 3 + Math.min(3, c.executionTier / 2), 1, ScatterRules.END - ScatterRules.RELEASE);
         }
         if (mc.level != null && mc.level.getEntity(c.entityId) instanceof AbstractClientPlayer player
                 && mc.getEntityRenderDispatcher().getRenderer(player) instanceof PlayerRenderer renderer) {
             c.skin = player.getSkin().texture();
             c.basePose = capture(renderer.getModel());
-            if (ScatterRules.afterimages(c.layer)) {
+            if (ScatterRules.afterimages(c.executionTier)) {
                 // Остаточный образ на месте толчка.
                 c.ghosts.add(new Ghost(player.position(), bodyYaw(player), clientTicks, 10, c.basePose, false, 0xBFD8FF, 0.5F));
             }
@@ -395,7 +395,7 @@ public final class ScatterVfx {
                 m.turbulence = 0.01D;
             }
         }
-        if (ScatterRules.petals(c.layer)) {
+        if (ScatterRules.petals(c.executionTier)) {
             for (int k = 0; k < c.n(10); k++) {
                 Vec3 d = aim.add(c.random.nextGaussian() * 0.35D, c.random.nextGaussian() * 0.35D, c.random.nextGaussian() * 0.35D).normalize();
                 Mote m = petal(c, cl.add(d.scale(0.2D)), d.scale(0.2D + 0.15D * c.random.nextDouble()), 24 + c.random.nextInt(14));
@@ -417,7 +417,7 @@ public final class ScatterVfx {
             c.cores.add(new Vec3[] {at.subtract(d.scale(r)), at, at.add(d.scale(r)), new Vec3(clientTicks, 1, 0)});
         }
         shards(c, at, c.n(8) + 2, 0.35D);
-        if (ScatterRules.petals(c.layer)) {
+        if (ScatterRules.petals(c.executionTier)) {
             for (int i = 0; i < c.n(6); i++) {
                 Vec3 v = new Vec3(c.random.nextGaussian(), c.random.nextGaussian() * 0.6D + 0.3D, c.random.nextGaussian()).normalize()
                         .scale(0.12D + 0.18D * c.random.nextDouble());
@@ -446,7 +446,7 @@ public final class ScatterVfx {
             c.cores.add(new Vec3[] {at.subtract(d.scale(1.8D)), at, at.add(d.scale(1.8D)), new Vec3(clientTicks, 2, 0)});
         }
         shards(c, at, c.n(14) + 3, 0.45D);
-        if (ScatterRules.petals(c.layer)) {
+        if (ScatterRules.petals(c.executionTier)) {
             for (int i = 0; i < c.n(26); i++) {
                 Vec3 v = new Vec3(c.random.nextGaussian(), c.random.nextGaussian() * 0.6D + 0.2D, c.random.nextGaussian()).normalize()
                         .scale(0.15D + 0.25D * c.random.nextDouble());
@@ -659,7 +659,7 @@ public final class ScatterVfx {
             dust(c, feet, c.n(6) + 2, 0.1D);
         }
         // Дрожь (full-02, full-05): сдвинутые контуры тела и руки, из тела торчат копии.
-        if (t >= ScatterRules.VIBRATE && t < ScatterRules.SPLIT && ScatterRules.afterimages(c.layer) && c.livePose != null) {
+        if (t >= ScatterRules.VIBRATE && t < ScatterRules.SPLIT && ScatterRules.afterimages(c.executionTier) && c.livePose != null) {
             double a = c.random.nextDouble() * Math.PI * 2.0D;
             double r = 0.05D + 0.09D * c.random.nextDouble();
             c.ghosts.add(new Ghost(feet.add(Math.cos(a) * r, 0.0D, Math.sin(a) * r), yaw + (float) c.random.nextGaussian() * 3.0F,
@@ -681,10 +681,10 @@ public final class ScatterVfx {
         // От первого лица тела не видно: дрожь — мелкой встряской камеры, синий огонь — языками
         // по краям кадра (снизу и с боков), поднимающимися вверх.
         if (c.eyes()) {
-            if (t >= ScatterRules.VIBRATE && t < ScatterRules.SPLIT && t % 2 == 0 && c.layer >= 2) {
+            if (t >= ScatterRules.VIBRATE && t < ScatterRules.SPLIT && t % 2 == 0 && c.executionTier >= 2) {
                 CameraShakeHandler.quake(0.05F, 2);
             }
-            if (t >= ScatterRules.FIRE && t < ScatterRules.RELEASE && c.layer >= 3) {
+            if (t >= ScatterRules.FIRE && t < ScatterRules.RELEASE && c.executionTier >= 3) {
                 Vec3 eye = e.getEyePosition();
                 Vec3 look = e.getLookAngle();
                 Vec3 right = look.cross(new Vec3(0.0D, 1.0D, 0.0D));
@@ -703,9 +703,9 @@ public final class ScatterVfx {
         }
         // Рывки (full-06): на каждом — пыль, ветер наружу и короткая встряска.
         if ((t == ScatterRules.SPLIT || t == ScatterRules.SPLIT + 3 || t == ScatterRules.SPLIT + 5 || t == ScatterRules.SPLIT_BACK)
-                && c.layer >= 1) {
+                && c.executionTier >= 1) {
             dust(c, feet, c.n(6) + 2, t == ScatterRules.SPLIT_BACK ? 0.24D : 0.14D);
-            int n = Math.max(1, ScatterRules.clones(c.layer));
+            int n = Math.max(1, ScatterRules.clones(c.executionTier));
             for (int i = 0; i < n; i++) {
                 double a = Math.toRadians(c.facing + 90.0D + 60.0D * i + 30.0D);
                 Vec3 out = new Vec3(Math.cos(a), 0.0D, Math.sin(a));
@@ -718,9 +718,9 @@ public final class ScatterVfx {
         }
         // Стойка в огне (full-04): широкая низкая стойка — пыль кольцом, ветер по земле.
         if (t == ScatterRules.FIRE) {
-            if (c.layer >= 3) {
+            if (c.executionTier >= 3) {
                 ClientAuraState.techniqueAura(c.entityId, 5, 0, ScatterRules.RELEASE - ScatterRules.FIRE + 2);
-            } else if (c.layer >= 1) {
+            } else if (c.executionTier >= 1) {
                 ClientAuraState.techniqueAura(c.entityId, 3, 0, ScatterRules.RELEASE - ScatterRules.FIRE + 2);
             }
             dust(c, feet, c.n(14) + 3, 0.22D);
@@ -732,7 +732,7 @@ public final class ScatterVfx {
         }
         // Пик концентрации (full-07): открытые острые белые дуги огибают мастера по наклонным
         // плоскостям — каждая живёт 5 тиков, новые рождаются со сдвигом плоскости.
-        if (t >= ScatterRules.FIRE + 4 && t < ScatterRules.RELEASE && c.layer >= 2 && t % 3 == 0) {
+        if (t >= ScatterRules.FIRE + 4 && t < ScatterRules.RELEASE && c.executionTier >= 2 && t % 3 == 0) {
             Vec3 n = new Vec3(c.random.nextGaussian(), 1.6D + c.random.nextDouble(), c.random.nextGaussian()).normalize();
             Vec3 u = n.cross(new Vec3(0.0D, 0.0D, 1.0D)).normalize();
             Vec3 w = n.cross(u).normalize();
@@ -741,7 +741,7 @@ public final class ScatterVfx {
                     0.05D + 0.02D * c.scale));
         }
         // Пик концентрации (full-07): тонкие голубые штрихи наружу от груди.
-        if (t >= ScatterRules.FIRE + 4 && t < ScatterRules.RELEASE && c.layer >= 2 && c.random.nextInt(3) == 0) {
+        if (t >= ScatterRules.FIRE + 4 && t < ScatterRules.RELEASE && c.executionTier >= 2 && c.random.nextInt(3) == 0) {
             Vec3 d = new Vec3(c.random.nextGaussian(), c.random.nextGaussian() * 0.6D, c.random.nextGaussian()).normalize();
             Mote m = new Mote(chest.add(d.scale(0.5D)), d.scale(0.4D + 0.2D * c.random.nextDouble()), 5, Mote.STREAK, 0, 0.0F,
                     0.025D + 0.02D * c.random.nextDouble(), 4);
@@ -749,8 +749,8 @@ public final class ScatterVfx {
             c.motes.add(m);
         }
         // Лепестки приходят издалека (full-08): по спирали к шести скоплениям вокруг мастера.
-        if (ScatterRules.petals(c.layer) && t >= ScatterRules.PETALS && t < ScatterRules.PETALS + 11) {
-            int clusters = Math.max(1, ScatterRules.clones(c.layer));
+        if (ScatterRules.petals(c.executionTier) && t >= ScatterRules.PETALS && t < ScatterRules.PETALS + 11) {
+            int clusters = Math.max(1, ScatterRules.clones(c.executionTier));
             for (int i = 0; i < c.n(10); i++) {
                 double a = c.random.nextDouble() * Math.PI * 2.0D;
                 double r = 4.0D + 2.5D * c.random.nextDouble();
@@ -764,10 +764,10 @@ public final class ScatterVfx {
             }
         }
         // Натяжение (full-09): с груди — линии скорости к центру.
-        if (t == ScatterRules.CLUSTER && c.own() && c.layer >= 2) {
+        if (t == ScatterRules.CLUSTER && c.own() && c.executionTier >= 2) {
             SpeedLines.radial(0.5F, 0.55F, 0.45F, 10, SpeedLines.WHITE);
         }
-        if (t == ScatterRules.CLUSTER && c.layer >= 1) {
+        if (t == ScatterRules.CLUSTER && c.executionTier >= 1) {
             dust(c, feet, c.n(8) + 2, 0.12D);
         }
         // Мастер ждёт на месте прыжка, потом опускает меч: пыль и короткий ветер.
@@ -783,11 +783,11 @@ public final class ScatterVfx {
         if (c.centre == null) {
             return;
         }
-        int n = ScatterRules.clones(c.layer);
+        int n = ScatterRules.clones(c.executionTier);
         double dissolve = c.dissolveAt();
         // Прыжок мастера: копии тела по пути, пыль, ветер.
         if (t > ScatterRules.RELEASE && t <= ScatterRules.RELEASE + ScatterRules.JUMP_TICKS + 1 && e != null) {
-            if (t % 2 == 0 && c.basePose != null && ScatterRules.afterimages(c.layer)) {
+            if (t % 2 == 0 && c.basePose != null && ScatterRules.afterimages(c.executionTier)) {
                 c.ghosts.add(new Ghost(e.position(), bodyYaw(e), clientTicks, 8, c.basePose, false, 0xFFC8DE, 0.38F));
             }
             if (t == ScatterRules.RELEASE + ScatterRules.JUMP_TICKS + 1) {
@@ -804,14 +804,14 @@ public final class ScatterVfx {
             if (alive && t > ScatterRules.exit(i)) {
                 double speed = p.distanceTo(prev);
                 // Синий огонь по телу клона (full-15) и лепестки, срывающиеся с него (full-12).
-                if (c.layer >= 3) {
+                if (c.executionTier >= 3) {
                     for (int k = 0; k < Math.max(1, c.n(3)); k++) {
                         Vec3 at = p.add((c.random.nextDouble() - 0.5D) * 0.5D, (c.random.nextDouble() - 0.5D) * 1.6D,
                                 (c.random.nextDouble() - 0.5D) * 0.5D);
                         flame(c, at, prev.subtract(p).scale(0.25D));
                     }
                 }
-                if (ScatterRules.petals(c.layer) && c.random.nextInt(4) == 0) {
+                if (ScatterRules.petals(c.executionTier) && c.random.nextInt(4) == 0) {
                     Mote m = petal(c, p.add((c.random.nextDouble() - 0.5D) * 0.6D, (c.random.nextDouble() - 0.5D) * 1.4D,
                             (c.random.nextDouble() - 0.5D) * 0.6D), prev.subtract(p).scale(0.08D)
                             .add(c.random.nextGaussian() * 0.02D, 0.01D, c.random.nextGaussian() * 0.02D), 22 + c.random.nextInt(12));
@@ -825,8 +825,8 @@ public final class ScatterVfx {
                 }
             }
             // Начало удара: белая дуга вокруг цели (full-15) и свист.
-            for (int j = 0; j < ScatterRules.strokes(c.layer); j++) {
-                if (t == (int) Math.ceil(ScatterRules.strokeStart(c.layer, i, j)) && c.layer >= 2) {
+            for (int j = 0; j < ScatterRules.strokes(c.executionTier); j++) {
+                if (t == (int) Math.ceil(ScatterRules.strokeStart(c.executionTier, i, j)) && c.executionTier >= 2) {
                     Vec3[] ch = ScatterRules.stroke(c.centre, c.base, i, j, c.grounded);
                     Vec3 u = ch[1].subtract(ch[0]).normalize();
                     Vec3 w = u.cross(new Vec3(c.random.nextGaussian(), 1.0D, c.random.nextGaussian())).normalize();
@@ -849,17 +849,17 @@ public final class ScatterVfx {
                             c.random.nextGaussian() * 0.06D), 30 + c.random.nextInt(20));
                     m.tone = c.random.nextInt(3) == 0 ? 2 : 1;
                     m.turbulence = 0.01D;
-                    if (ScatterRules.petals(c.layer)) {
+                    if (ScatterRules.petals(c.executionTier)) {
                         c.motes.add(m);
                     }
                 }
             }
         }
         // Взмах мастера (full-18): путь на высоте груди — огромная лента.
-        if (ScatterRules.finalSwing(c.layer) && e != null && t >= ScatterRules.FINAL && t <= ScatterRules.FINAL + ScatterRules.FINAL_TICKS + 1) {
+        if (ScatterRules.finalSwing(c.executionTier) && e != null && t >= ScatterRules.FINAL && t <= ScatterRules.FINAL + ScatterRules.FINAL_TICKS + 1) {
             c.dash.add(e.position().add(0.0D, 1.15D, 0.0D));
             dust(c, e.position(), 2, 0.2D);
-            if (c.basePose != null && ScatterRules.afterimages(c.layer) && t % 2 == 1) {
+            if (c.basePose != null && ScatterRules.afterimages(c.executionTier) && t % 2 == 1) {
                 c.ghosts.add(new Ghost(e.position(), bodyYaw(e), clientTicks, 8, c.basePose, false, 0xFFC8DE, 0.4F));
             }
             Vec3 back = c.dash.size() > 1 ? c.dash.get(0).subtract(c.dash.get(c.dash.size() - 1)).normalize() : Vec3.ZERO;
@@ -870,14 +870,14 @@ public final class ScatterVfx {
             }
         }
         // Надпись: секретная форма — «Меч 24 Движений Цветущей Сливы / Рассеяние Цветущей Сливы».
-        if (t == ScatterRules.SCATTER + 4 && c.own() && c.layer >= 3 && !c.caption) {
+        if (t == ScatterRules.SCATTER + 4 && c.own() && c.executionTier >= 3 && !c.caption) {
             c.caption = true;
             TechniqueCaption.showSecret(Component.translatable("technique.murim.twenty_four_plum.school"),
                     Component.translatable("technique.murim.twenty_four_plum.scatter"), ScatterRules.END - ScatterRules.SCATTER - 4);
         }
         // Рассеяние (full-19): широкие спиральные ленты вокруг цели, лепестки по спиралям наружу,
         // звёздные вспышки и цветы света. Сам вихрь — приём; удар (кадр, тряска, дым) — по попаданию.
-        if (ScatterRules.scatter(c.layer) && t == ScatterRules.SCATTER) {
+        if (ScatterRules.scatter(c.executionTier) && t == ScatterRules.SCATTER) {
             Vec3 tiltN = new Vec3(c.random.nextGaussian() * 0.2D, 1.0D, c.random.nextGaussian() * 0.2D).normalize();
             Vec3 u = tiltN.cross(new Vec3(1.0D, 0.0D, 0.0D)).normalize();
             Vec3 v = tiltN.cross(u).normalize();
@@ -909,7 +909,7 @@ public final class ScatterVfx {
                 Vec3 mid = c.centre.add(off);
                 c.cores.add(new Vec3[] {mid.subtract(d.scale(len)), mid, mid.add(d.scale(len)), new Vec3(clientTicks + k, 3, 0)});
             }
-            if (ScatterRules.petals(c.layer)) {
+            if (ScatterRules.petals(c.executionTier)) {
                 for (int k = 0; k < c.n(130); k++) {
                     double a = c.random.nextDouble() * Math.PI * 2.0D;
                     Vec3 out = u.scale(Math.cos(a)).add(v.scale(Math.sin(a)));
@@ -927,8 +927,8 @@ public final class ScatterVfx {
                         net.minecraft.sounds.SoundSource.PLAYERS, 0.8F, 1.15F, false);
             }
         }
-        if (ScatterRules.scatter(c.layer) && t >= ScatterRules.SCATTER && t < ScatterRules.SCATTER + 14 && t % 2 == 0) {
-            for (int k = 0; k < 1 + (c.layer >= 7 ? 1 : 0); k++) {
+        if (ScatterRules.scatter(c.executionTier) && t >= ScatterRules.SCATTER && t < ScatterRules.SCATTER + 14 && t % 2 == 0) {
+            for (int k = 0; k < 1 + (c.executionTier >= 7 ? 1 : 0); k++) {
                 double a = c.random.nextDouble() * Math.PI * 2.0D;
                 double r = (1.5D + 5.0D * c.random.nextDouble()) * c.scale;
                 Vec3 at = c.centre.add(Math.cos(a) * r, c.random.nextGaussian() * 1.2D, Math.sin(a) * r);
@@ -1072,9 +1072,9 @@ public final class ScatterVfx {
                 parts[i].visible = vis[i];
             }
             // Рывки в стороны (full-06): копии рывками расходятся по шести направлениям и возвращаются.
-            if (!fpOwn && c.livePose != null && ScatterRules.afterimages(c.layer) && t >= ScatterRules.SPLIT && t < ScatterRules.SPLIT_BACK + 4) {
+            if (!fpOwn && c.livePose != null && ScatterRules.afterimages(c.executionTier) && t >= ScatterRules.SPLIT && t < ScatterRules.SPLIT_BACK + 4) {
                 double rad = splitRadius(t);
-                int n = Math.max(1, ScatterRules.clones(c.layer));
+                int n = Math.max(1, ScatterRules.clones(c.executionTier));
                 Vec3 feet = player.getPosition(partial);
                 for (int i = 0; i < n; i++) {
                     double a = Math.toRadians(c.facing + 90.0D + 60.0D * i + 30.0D);
@@ -1086,7 +1086,7 @@ public final class ScatterVfx {
                 }
             }
             if (c.released && c.basePose != null && c.centre != null) {
-                for (int i = 0; i < ScatterRules.clones(c.layer); i++) {
+                for (int i = 0; i < ScatterRules.clones(c.executionTier); i++) {
                     drawClone(mc, c, model, parts, ps, buffers, type, i, t, camera);
                 }
             }
@@ -1151,11 +1151,11 @@ public final class ScatterVfx {
     }
 
     private static boolean striking(Cast c, int i, double t) {
-        if (t < ScatterRules.strokeStart(c.layer, i, 0) - 3.0D) {
+        if (t < ScatterRules.strokeStart(c.executionTier, i, 0) - 3.0D) {
             return true;
         }
-        for (int j = 0; j < ScatterRules.strokes(c.layer); j++) {
-            double st = ScatterRules.strokeStart(c.layer, i, j);
+        for (int j = 0; j < ScatterRules.strokes(c.executionTier); j++) {
+            double st = ScatterRules.strokeStart(c.executionTier, i, j);
             if (t >= st - 3.0D && t <= st + ScatterRules.PASS + 1.0D) {
                 return true;
             }
@@ -1183,7 +1183,7 @@ public final class ScatterVfx {
         float body;
         float roll = 0.0F;
         double jEnd = ScatterRules.exit(i) + ScatterRules.JUMP_TICKS;
-        double s0 = ScatterRules.strokeStart(c.layer, i, 0);
+        double s0 = ScatterRules.strokeStart(c.executionTier, i, 0);
         if (t <= jEnd) {
             rax = 0.5F;
             raz = 0.3F;
@@ -1204,12 +1204,12 @@ public final class ScatterVfx {
             roll = (float) (side * 10.0D * Math.sin(Math.PI * k));
         } else {
             int j = 0;
-            for (int q = 0; q < ScatterRules.strokes(c.layer); q++) {
-                if (t >= ScatterRules.strokeStart(c.layer, i, q)) {
+            for (int q = 0; q < ScatterRules.strokes(c.executionTier); q++) {
+                if (t >= ScatterRules.strokeStart(c.executionTier, i, q)) {
                     j = q;
                 }
             }
-            double st = ScatterRules.strokeStart(c.layer, i, j);
+            double st = ScatterRules.strokeStart(c.executionTier, i, j);
             double k = (t - st) / ScatterRules.PASS;
             if (k <= 1.0D) {
                 // Рез: за 1 тик — замах сверху, дальше рука проходит поперёк вниз.
@@ -1225,7 +1225,7 @@ public final class ScatterVfx {
                 roll = (float) (side * 18.0D * Math.sin(Math.PI * e));
             } else {
                 // Зависание: меч вперёд, к следующему заходу — снова замах.
-                double next = j + 1 < ScatterRules.strokes(c.layer) ? ScatterRules.strokeStart(c.layer, i, j + 1) : st + 40.0D;
+                double next = j + 1 < ScatterRules.strokes(c.executionTier) ? ScatterRules.strokeStart(c.executionTier, i, j + 1) : st + 40.0D;
                 double w = Mth.clamp((t - st - ScatterRules.PASS) / Math.max(1.0D, next - st - ScatterRules.PASS), 0.0D, 1.0D);
                 rax = (float) Mth.lerp(w * w, -1.3D, -2.7D);
                 raz = (float) Mth.lerp(w, -0.4D, 0.8D);
@@ -1312,9 +1312,9 @@ public final class ScatterVfx {
         if (!c.released || c.centre == null) {
             return;
         }
-        for (int i = 0; i < ScatterRules.clones(c.layer); i++) {
-            for (int j = 0; j < ScatterRules.strokes(c.layer); j++) {
-                double st = ScatterRules.strokeStart(c.layer, i, j);
+        for (int i = 0; i < ScatterRules.clones(c.executionTier); i++) {
+            for (int j = 0; j < ScatterRules.strokes(c.executionTier); j++) {
+                double st = ScatterRules.strokeStart(c.executionTier, i, j);
                 double age = t - st;
                 if (age < 0.0D || age > ScatterRules.PASS + 3.0D) {
                     continue;
@@ -1340,7 +1340,7 @@ public final class ScatterVfx {
                     // Острое к обоим концам: ширина как у клинка, самая широкая треть — у головы.
                     w[k] = (0.12D + 0.1D * c.scale) * Math.pow(Math.sin(Math.PI * Math.min(1.0D, x * 0.98D + 0.01D)), 1.4D) * (0.55D + 0.45D * x);
                 }
-                boolean pink = ScatterRules.petals(c.layer);
+                boolean pink = ScatterRules.petals(c.executionTier);
                 fstrip(v, pose, camera, p, PlumVfx.scale(w, 1.9D), 0.22F * fade, pink ? SLASH_EDGE : FIRE_OUT);
                 fstrip(v, pose, camera, p, w, 0.75F * fade, pink ? SLASH_EDGE : COLD);
                 fstrip(v, pose, camera, p, PlumVfx.scale(w, 0.45D), fade, SLASH_CORE);
@@ -1392,7 +1392,7 @@ public final class ScatterVfx {
                     .add(side.scale(1.2D * Math.sin(Math.PI * u)));
             w[i] = (0.2D + 0.14D * c.scale) * Math.pow(Math.sin(Math.PI * Math.min(1.0D, u * 1.02D + 0.01D)), 0.6D);
         }
-        boolean pink = ScatterRules.petals(c.layer);
+        boolean pink = ScatterRules.petals(c.executionTier);
         fstrip(v, pose, camera, p, PlumVfx.scale(w, 2.8D), 0.1F * a, pink ? SLASH_RIM : COLD);
         fstrip(v, pose, camera, p, PlumVfx.scale(w, 1.6D), 0.32F * a, pink ? SLASH_RIM : COLD);
         fstrip(v, pose, camera, p, w, 0.8F * a, pink ? SLASH_BODY : WIND);
@@ -1616,12 +1616,12 @@ public final class ScatterVfx {
             }
         }
         // Скопления лепестков перед прыжком (full-09): розовое ядро, пульс напряжения.
-        if (ScatterRules.petals(c.layer) && t >= ScatterRules.RELEASE - 16 && t < ScatterRules.exit(5) + 1) {
+        if (ScatterRules.petals(c.executionTier) && t >= ScatterRules.RELEASE - 16 && t < ScatterRules.exit(5) + 1) {
             Minecraft mc = Minecraft.getInstance();
             Entity e = mc.level.getEntity(c.entityId);
             if (e != null) {
                 float a = (float) PlumVfx.curve(t, ScatterRules.RELEASE - 16, 0.0, ScatterRules.RELEASE - 8, 1.0, ScatterRules.RELEASE, 1.0);
-                for (int i = 0; i < Math.max(1, ScatterRules.clones(c.layer)); i++) {
+                for (int i = 0; i < Math.max(1, ScatterRules.clones(c.executionTier)); i++) {
                     if (t > ScatterRules.exit(i) + 1) {
                         continue;
                     }

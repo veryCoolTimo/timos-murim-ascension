@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=east": {
+      "model": "murim:block/roof_rafters"
+    },
+    "facing=south": {
+      "model": "murim:block/roof_rafters",
+      "y": 90
+    },
+    "facing=west": {
+      "model": "murim:block/roof_rafters",
+      "y": 180
+    },
+    "facing=north": {
+      "model": "murim:block/roof_rafters",
+      "y": 270
+    }
+  }
+}

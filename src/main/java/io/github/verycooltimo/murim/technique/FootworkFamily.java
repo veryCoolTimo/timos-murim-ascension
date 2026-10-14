@@ -14,19 +14,26 @@ package io.github.verycooltimo.murim.technique;
  */
 public enum FootworkFamily {
     HUASHAN("huashan", 5, new int[] {0, 0, 1, 2, 2}, 1, 2, -1, 3),
-    WIND_GOD("wind_god", 8, new int[] {0, 0, 1, 1, 2, 3, 3, 4}, 0, 2, 4, 7);
+    WIND_GOD("wind_god", 8, new int[] {0, 0, 1, 1, 2, 3, 3, 4, 4}, 0, 2, 4, 7),
+    HEAVENLY_DEMON("heavenly_demon", 8, new int[] {0, 0, 1, 1, 2, 2, 2, 3, 3}, 0, 2, -1, -1);
+
+    private static final double[] WIND_EVADE_DISTANCE = {3, 3.5, 4, 4, 5, 5.5, 6, 6, 7};
+    private static final int[] WIND_EVADE_WINDOW = {0, 0, 2, 2, 3, 3, 4, 4, 4};
+    private static final int[] WIND_EVADE_COOLDOWN = {60, 60, 58, 56, 54, 50, 48, 44, 40};
+    private static final int[] WIND_VFX = {0, 0, 1, 1, 2, 2, 2, 3, 3};
+    private static final int[] WIND_GHOST_LIFE = {0, 4, 6, 8};
 
     private final String id;
-    private final int layers;
+    private final int executionSteps;
     private final int[] travelTier;
     private final int runUnlock;
     private final int leapUnlock;
     private final int wallUnlock;
     private final int airTurnUnlock;
 
-    FootworkFamily(String id, int layers, int[] travelTier, int runUnlock, int leapUnlock, int wallUnlock, int airTurnUnlock) {
+    FootworkFamily(String id, int executionSteps, int[] travelTier, int runUnlock, int leapUnlock, int wallUnlock, int airTurnUnlock) {
         this.id = id;
-        this.layers = layers;
+        this.executionSteps = executionSteps;
         this.travelTier = travelTier;
         this.runUnlock = runUnlock;
         this.leapUnlock = leapUnlock;
@@ -38,8 +45,8 @@ public enum FootworkFamily {
         return id;
     }
 
-    public int layers() {
-        return layers;
+    public int executionSteps() {
+        return executionSteps;
     }
 
     public static FootworkFamily byId(String id) {
@@ -52,28 +59,57 @@ public enum FootworkFamily {
     }
 
     /** Индекс таблицы бега {@link TraverseRules} для слоя семейства — не второе освоение. */
-    public int tier(int layer) {
-        return travelTier[Math.max(0, Math.min(travelTier.length - 1, layer))];
+    public int tier(int executionTier) {
+        return travelTier[Math.max(0, Math.min(travelTier.length - 1, executionTier))];
     }
 
-    public boolean canRun(int layer) {
-        return layer >= runUnlock;
+    public boolean canRun(int executionTier) {
+        return executionTier >= runUnlock;
     }
 
-    public boolean canLeap(int layer) {
-        return layer >= leapUnlock;
+    public boolean canLeap(int executionTier) {
+        return executionTier >= leapUnlock;
     }
 
     /** Отталкиваний от стены за отрыв от земли: у Хуашань нет вовсе. */
-    public int wallKicks(int layer) {
-        if (wallUnlock < 0 || layer < wallUnlock) {
+    public int wallKicks(int executionTier) {
+        if (wallUnlock < 0 || executionTier < wallUnlock) {
             return 0;
         }
-        return layer >= 7 ? 2 : 1;
+        return executionTier >= 7 ? 2 : 1;
     }
 
-    public boolean canAirTurn(int layer) {
-        return layer >= airTurnUnlock;
+    public boolean canAirTurn(int executionTier) {
+        return airTurnUnlock >= 0 && executionTier >= airTurnUnlock;
+    }
+
+    /** God Wind uses all nine mastery indices, independently of Huashan travel tiers. */
+    public static int windTier(int executionTier) {
+        return Math.max(0, Math.min(8, executionTier));
+    }
+
+    public static double windEvadeDistance(int executionTier) {
+        return WIND_EVADE_DISTANCE[windTier(executionTier)];
+    }
+
+    public static int windEvadeInvulnerable(int executionTier) {
+        return WIND_EVADE_WINDOW[windTier(executionTier)];
+    }
+
+    public static int windEvadeCooldown(int executionTier) {
+        return WIND_EVADE_COOLDOWN[windTier(executionTier)];
+    }
+
+    public static int windVfxTier(int executionTier) {
+        return WIND_VFX[windTier(executionTier)];
+    }
+
+    public static int windAfterimages(int executionTier) {
+        return windVfxTier(executionTier);
+    }
+
+    public static int windAfterimageLife(int executionTier) {
+        return WIND_GHOST_LIFE[windVfxTier(executionTier)];
     }
 
     /** Шаг Мига Бога Ветров: дальность по таблице бега (3/4/5/5/6 блоков). */

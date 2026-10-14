@@ -1,0 +1,5 @@
+newmtl tiles_x
+map_Kd #tiles_x
+
+newmtl wood
+map_Kd #wood

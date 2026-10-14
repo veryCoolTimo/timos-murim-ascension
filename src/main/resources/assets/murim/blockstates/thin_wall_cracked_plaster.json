@@ -1,0 +1,1536 @@
+{
+  "multipart": [
+    {
+      "when": {
+        "center": "false",
+        "facing": "north",
+        "shape": "straight"
+      },
+      "apply": [
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_0_straight"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_1_straight"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_2_straight"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_3_straight"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_4_straight"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_5_straight"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_plaster_straight",
+          "weight": 4
+        },
+        {
+          "model": "murim:block/thin_wall/thin_plaster_b_straight",
+          "weight": 4
+        }
+      ]
+    },
+    {
+      "when": {
+        "center": "false",
+        "facing": "north",
+        "shape": "inner_left"
+      },
+      "apply": [
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_0_inner_left"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_1_inner_left"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_2_inner_left"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_3_inner_left"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_4_inner_left"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_5_inner_left"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_plaster_inner_left",
+          "weight": 4
+        },
+        {
+          "model": "murim:block/thin_wall/thin_plaster_b_inner_left",
+          "weight": 4
+        }
+      ]
+    },
+    {
+      "when": {
+        "center": "false",
+        "facing": "north",
+        "shape": "inner_right"
+      },
+      "apply": [
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_0_inner_right"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_1_inner_right"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_2_inner_right"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_3_inner_right"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_4_inner_right"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_5_inner_right"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_plaster_inner_right",
+          "weight": 4
+        },
+        {
+          "model": "murim:block/thin_wall/thin_plaster_b_inner_right",
+          "weight": 4
+        }
+      ]
+    },
+    {
+      "when": {
+        "center": "false",
+        "facing": "north",
+        "shape": "outer_left"
+      },
+      "apply": [
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_0_outer_left"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_1_outer_left"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_2_outer_left"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_3_outer_left"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_4_outer_left"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_5_outer_left"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_plaster_outer_left",
+          "weight": 4
+        },
+        {
+          "model": "murim:block/thin_wall/thin_plaster_b_outer_left",
+          "weight": 4
+        }
+      ]
+    },
+    {
+      "when": {
+        "center": "false",
+        "facing": "north",
+        "shape": "outer_right"
+      },
+      "apply": [
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_0_outer_right"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_1_outer_right"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_2_outer_right"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_3_outer_right"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_4_outer_right"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_5_outer_right"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_plaster_outer_right",
+          "weight": 4
+        },
+        {
+          "model": "murim:block/thin_wall/thin_plaster_b_outer_right",
+          "weight": 4
+        }
+      ]
+    },
+    {
+      "when": {
+        "center": "false",
+        "facing": "east",
+        "shape": "straight"
+      },
+      "apply": [
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_0_straight",
+          "y": 90,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_1_straight",
+          "y": 90,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_2_straight",
+          "y": 90,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_3_straight",
+          "y": 90,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_4_straight",
+          "y": 90,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_5_straight",
+          "y": 90,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_plaster_straight",
+          "y": 90,
+          "uvlock": true,
+          "weight": 4
+        },
+        {
+          "model": "murim:block/thin_wall/thin_plaster_b_straight",
+          "y": 90,
+          "uvlock": true,
+          "weight": 4
+        }
+      ]
+    },
+    {
+      "when": {
+        "center": "false",
+        "facing": "east",
+        "shape": "inner_left"
+      },
+      "apply": [
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_0_inner_left",
+          "y": 90,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_1_inner_left",
+          "y": 90,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_2_inner_left",
+          "y": 90,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_3_inner_left",
+          "y": 90,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_4_inner_left",
+          "y": 90,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_5_inner_left",
+          "y": 90,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_plaster_inner_left",
+          "y": 90,
+          "uvlock": true,
+          "weight": 4
+        },
+        {
+          "model": "murim:block/thin_wall/thin_plaster_b_inner_left",
+          "y": 90,
+          "uvlock": true,
+          "weight": 4
+        }
+      ]
+    },
+    {
+      "when": {
+        "center": "false",
+        "facing": "east",
+        "shape": "inner_right"
+      },
+      "apply": [
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_0_inner_right",
+          "y": 90,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_1_inner_right",
+          "y": 90,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_2_inner_right",
+          "y": 90,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_3_inner_right",
+          "y": 90,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_4_inner_right",
+          "y": 90,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_5_inner_right",
+          "y": 90,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_plaster_inner_right",
+          "y": 90,
+          "uvlock": true,
+          "weight": 4
+        },
+        {
+          "model": "murim:block/thin_wall/thin_plaster_b_inner_right",
+          "y": 90,
+          "uvlock": true,
+          "weight": 4
+        }
+      ]
+    },
+    {
+      "when": {
+        "center": "false",
+        "facing": "east",
+        "shape": "outer_left"
+      },
+      "apply": [
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_0_outer_left",
+          "y": 90,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_1_outer_left",
+          "y": 90,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_2_outer_left",
+          "y": 90,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_3_outer_left",
+          "y": 90,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_4_outer_left",
+          "y": 90,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_5_outer_left",
+          "y": 90,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_plaster_outer_left",
+          "y": 90,
+          "uvlock": true,
+          "weight": 4
+        },
+        {
+          "model": "murim:block/thin_wall/thin_plaster_b_outer_left",
+          "y": 90,
+          "uvlock": true,
+          "weight": 4
+        }
+      ]
+    },
+    {
+      "when": {
+        "center": "false",
+        "facing": "east",
+        "shape": "outer_right"
+      },
+      "apply": [
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_0_outer_right",
+          "y": 90,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_1_outer_right",
+          "y": 90,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_2_outer_right",
+          "y": 90,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_3_outer_right",
+          "y": 90,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_4_outer_right",
+          "y": 90,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_5_outer_right",
+          "y": 90,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_plaster_outer_right",
+          "y": 90,
+          "uvlock": true,
+          "weight": 4
+        },
+        {
+          "model": "murim:block/thin_wall/thin_plaster_b_outer_right",
+          "y": 90,
+          "uvlock": true,
+          "weight": 4
+        }
+      ]
+    },
+    {
+      "when": {
+        "center": "false",
+        "facing": "south",
+        "shape": "straight"
+      },
+      "apply": [
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_0_straight",
+          "y": 180,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_1_straight",
+          "y": 180,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_2_straight",
+          "y": 180,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_3_straight",
+          "y": 180,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_4_straight",
+          "y": 180,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_5_straight",
+          "y": 180,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_plaster_straight",
+          "y": 180,
+          "uvlock": true,
+          "weight": 4
+        },
+        {
+          "model": "murim:block/thin_wall/thin_plaster_b_straight",
+          "y": 180,
+          "uvlock": true,
+          "weight": 4
+        }
+      ]
+    },
+    {
+      "when": {
+        "center": "false",
+        "facing": "south",
+        "shape": "inner_left"
+      },
+      "apply": [
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_0_inner_left",
+          "y": 180,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_1_inner_left",
+          "y": 180,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_2_inner_left",
+          "y": 180,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_3_inner_left",
+          "y": 180,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_4_inner_left",
+          "y": 180,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_5_inner_left",
+          "y": 180,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_plaster_inner_left",
+          "y": 180,
+          "uvlock": true,
+          "weight": 4
+        },
+        {
+          "model": "murim:block/thin_wall/thin_plaster_b_inner_left",
+          "y": 180,
+          "uvlock": true,
+          "weight": 4
+        }
+      ]
+    },
+    {
+      "when": {
+        "center": "false",
+        "facing": "south",
+        "shape": "inner_right"
+      },
+      "apply": [
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_0_inner_right",
+          "y": 180,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_1_inner_right",
+          "y": 180,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_2_inner_right",
+          "y": 180,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_3_inner_right",
+          "y": 180,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_4_inner_right",
+          "y": 180,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_5_inner_right",
+          "y": 180,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_plaster_inner_right",
+          "y": 180,
+          "uvlock": true,
+          "weight": 4
+        },
+        {
+          "model": "murim:block/thin_wall/thin_plaster_b_inner_right",
+          "y": 180,
+          "uvlock": true,
+          "weight": 4
+        }
+      ]
+    },
+    {
+      "when": {
+        "center": "false",
+        "facing": "south",
+        "shape": "outer_left"
+      },
+      "apply": [
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_0_outer_left",
+          "y": 180,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_1_outer_left",
+          "y": 180,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_2_outer_left",
+          "y": 180,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_3_outer_left",
+          "y": 180,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_4_outer_left",
+          "y": 180,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_5_outer_left",
+          "y": 180,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_plaster_outer_left",
+          "y": 180,
+          "uvlock": true,
+          "weight": 4
+        },
+        {
+          "model": "murim:block/thin_wall/thin_plaster_b_outer_left",
+          "y": 180,
+          "uvlock": true,
+          "weight": 4
+        }
+      ]
+    },
+    {
+      "when": {
+        "center": "false",
+        "facing": "south",
+        "shape": "outer_right"
+      },
+      "apply": [
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_0_outer_right",
+          "y": 180,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_1_outer_right",
+          "y": 180,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_2_outer_right",
+          "y": 180,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_3_outer_right",
+          "y": 180,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_4_outer_right",
+          "y": 180,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_5_outer_right",
+          "y": 180,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_plaster_outer_right",
+          "y": 180,
+          "uvlock": true,
+          "weight": 4
+        },
+        {
+          "model": "murim:block/thin_wall/thin_plaster_b_outer_right",
+          "y": 180,
+          "uvlock": true,
+          "weight": 4
+        }
+      ]
+    },
+    {
+      "when": {
+        "center": "false",
+        "facing": "west",
+        "shape": "straight"
+      },
+      "apply": [
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_0_straight",
+          "y": 270,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_1_straight",
+          "y": 270,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_2_straight",
+          "y": 270,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_3_straight",
+          "y": 270,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_4_straight",
+          "y": 270,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_5_straight",
+          "y": 270,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_plaster_straight",
+          "y": 270,
+          "uvlock": true,
+          "weight": 4
+        },
+        {
+          "model": "murim:block/thin_wall/thin_plaster_b_straight",
+          "y": 270,
+          "uvlock": true,
+          "weight": 4
+        }
+      ]
+    },
+    {
+      "when": {
+        "center": "false",
+        "facing": "west",
+        "shape": "inner_left"
+      },
+      "apply": [
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_0_inner_left",
+          "y": 270,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_1_inner_left",
+          "y": 270,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_2_inner_left",
+          "y": 270,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_3_inner_left",
+          "y": 270,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_4_inner_left",
+          "y": 270,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_5_inner_left",
+          "y": 270,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_plaster_inner_left",
+          "y": 270,
+          "uvlock": true,
+          "weight": 4
+        },
+        {
+          "model": "murim:block/thin_wall/thin_plaster_b_inner_left",
+          "y": 270,
+          "uvlock": true,
+          "weight": 4
+        }
+      ]
+    },
+    {
+      "when": {
+        "center": "false",
+        "facing": "west",
+        "shape": "inner_right"
+      },
+      "apply": [
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_0_inner_right",
+          "y": 270,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_1_inner_right",
+          "y": 270,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_2_inner_right",
+          "y": 270,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_3_inner_right",
+          "y": 270,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_4_inner_right",
+          "y": 270,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_5_inner_right",
+          "y": 270,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_plaster_inner_right",
+          "y": 270,
+          "uvlock": true,
+          "weight": 4
+        },
+        {
+          "model": "murim:block/thin_wall/thin_plaster_b_inner_right",
+          "y": 270,
+          "uvlock": true,
+          "weight": 4
+        }
+      ]
+    },
+    {
+      "when": {
+        "center": "false",
+        "facing": "west",
+        "shape": "outer_left"
+      },
+      "apply": [
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_0_outer_left",
+          "y": 270,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_1_outer_left",
+          "y": 270,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_2_outer_left",
+          "y": 270,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_3_outer_left",
+          "y": 270,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_4_outer_left",
+          "y": 270,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_5_outer_left",
+          "y": 270,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_plaster_outer_left",
+          "y": 270,
+          "uvlock": true,
+          "weight": 4
+        },
+        {
+          "model": "murim:block/thin_wall/thin_plaster_b_outer_left",
+          "y": 270,
+          "uvlock": true,
+          "weight": 4
+        }
+      ]
+    },
+    {
+      "when": {
+        "center": "false",
+        "facing": "west",
+        "shape": "outer_right"
+      },
+      "apply": [
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_0_outer_right",
+          "y": 270,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_1_outer_right",
+          "y": 270,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_2_outer_right",
+          "y": 270,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_3_outer_right",
+          "y": 270,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_4_outer_right",
+          "y": 270,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_5_outer_right",
+          "y": 270,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/thin_plaster_outer_right",
+          "y": 270,
+          "uvlock": true,
+          "weight": 4
+        },
+        {
+          "model": "murim:block/thin_wall/thin_plaster_b_outer_right",
+          "y": 270,
+          "uvlock": true,
+          "weight": 4
+        }
+      ]
+    },
+    {
+      "when": {
+        "center": "true",
+        "north": "false",
+        "east": "false",
+        "south": "false",
+        "west": "false"
+      },
+      "apply": [
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_0_c_post"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_1_c_post"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_2_c_post"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_3_c_post"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_4_c_post"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_5_c_post"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_plaster_c_post",
+          "weight": 4
+        },
+        {
+          "model": "murim:block/thin_wall/thin_plaster_b_c_post",
+          "weight": 4
+        }
+      ]
+    },
+    {
+      "when": {
+        "center": "true",
+        "north": "true",
+        "east": "false",
+        "south": "false",
+        "west": "false"
+      },
+      "apply": [
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_0_c_n"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_1_c_n"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_2_c_n"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_3_c_n"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_4_c_n"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_5_c_n"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_plaster_c_n",
+          "weight": 4
+        },
+        {
+          "model": "murim:block/thin_wall/thin_plaster_b_c_n",
+          "weight": 4
+        }
+      ]
+    },
+    {
+      "when": {
+        "center": "true",
+        "north": "false",
+        "east": "true",
+        "south": "false",
+        "west": "false"
+      },
+      "apply": [
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_0_c_e"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_1_c_e"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_2_c_e"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_3_c_e"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_4_c_e"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_5_c_e"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_plaster_c_e",
+          "weight": 4
+        },
+        {
+          "model": "murim:block/thin_wall/thin_plaster_b_c_e",
+          "weight": 4
+        }
+      ]
+    },
+    {
+      "when": {
+        "center": "true",
+        "north": "true",
+        "east": "true",
+        "south": "false",
+        "west": "false"
+      },
+      "apply": [
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_0_c_ne"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_1_c_ne"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_2_c_ne"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_3_c_ne"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_4_c_ne"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_5_c_ne"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_plaster_c_ne",
+          "weight": 4
+        },
+        {
+          "model": "murim:block/thin_wall/thin_plaster_b_c_ne",
+          "weight": 4
+        }
+      ]
+    },
+    {
+      "when": {
+        "center": "true",
+        "north": "false",
+        "east": "false",
+        "south": "true",
+        "west": "false"
+      },
+      "apply": [
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_0_c_s"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_1_c_s"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_2_c_s"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_3_c_s"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_4_c_s"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_5_c_s"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_plaster_c_s",
+          "weight": 4
+        },
+        {
+          "model": "murim:block/thin_wall/thin_plaster_b_c_s",
+          "weight": 4
+        }
+      ]
+    },
+    {
+      "when": {
+        "center": "true",
+        "north": "true",
+        "east": "false",
+        "south": "true",
+        "west": "false"
+      },
+      "apply": [
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_0_c_ns"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_1_c_ns"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_2_c_ns"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_3_c_ns"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_4_c_ns"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_5_c_ns"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_plaster_c_ns",
+          "weight": 4
+        },
+        {
+          "model": "murim:block/thin_wall/thin_plaster_b_c_ns",
+          "weight": 4
+        }
+      ]
+    },
+    {
+      "when": {
+        "center": "true",
+        "north": "false",
+        "east": "true",
+        "south": "true",
+        "west": "false"
+      },
+      "apply": [
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_0_c_es"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_1_c_es"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_2_c_es"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_3_c_es"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_4_c_es"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_5_c_es"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_plaster_c_es",
+          "weight": 4
+        },
+        {
+          "model": "murim:block/thin_wall/thin_plaster_b_c_es",
+          "weight": 4
+        }
+      ]
+    },
+    {
+      "when": {
+        "center": "true",
+        "north": "true",
+        "east": "true",
+        "south": "true",
+        "west": "false"
+      },
+      "apply": [
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_0_c_nes"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_1_c_nes"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_2_c_nes"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_3_c_nes"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_4_c_nes"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_5_c_nes"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_plaster_c_nes",
+          "weight": 4
+        },
+        {
+          "model": "murim:block/thin_wall/thin_plaster_b_c_nes",
+          "weight": 4
+        }
+      ]
+    },
+    {
+      "when": {
+        "center": "true",
+        "north": "false",
+        "east": "false",
+        "south": "false",
+        "west": "true"
+      },
+      "apply": [
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_0_c_w"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_1_c_w"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_2_c_w"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_3_c_w"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_4_c_w"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_5_c_w"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_plaster_c_w",
+          "weight": 4
+        },
+        {
+          "model": "murim:block/thin_wall/thin_plaster_b_c_w",
+          "weight": 4
+        }
+      ]
+    },
+    {
+      "when": {
+        "center": "true",
+        "north": "true",
+        "east": "false",
+        "south": "false",
+        "west": "true"
+      },
+      "apply": [
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_0_c_nw"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_1_c_nw"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_2_c_nw"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_3_c_nw"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_4_c_nw"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_5_c_nw"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_plaster_c_nw",
+          "weight": 4
+        },
+        {
+          "model": "murim:block/thin_wall/thin_plaster_b_c_nw",
+          "weight": 4
+        }
+      ]
+    },
+    {
+      "when": {
+        "center": "true",
+        "north": "false",
+        "east": "true",
+        "south": "false",
+        "west": "true"
+      },
+      "apply": [
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_0_c_ew"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_1_c_ew"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_2_c_ew"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_3_c_ew"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_4_c_ew"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_5_c_ew"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_plaster_c_ew",
+          "weight": 4
+        },
+        {
+          "model": "murim:block/thin_wall/thin_plaster_b_c_ew",
+          "weight": 4
+        }
+      ]
+    },
+    {
+      "when": {
+        "center": "true",
+        "north": "true",
+        "east": "true",
+        "south": "false",
+        "west": "true"
+      },
+      "apply": [
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_0_c_new"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_1_c_new"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_2_c_new"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_3_c_new"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_4_c_new"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_5_c_new"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_plaster_c_new",
+          "weight": 4
+        },
+        {
+          "model": "murim:block/thin_wall/thin_plaster_b_c_new",
+          "weight": 4
+        }
+      ]
+    },
+    {
+      "when": {
+        "center": "true",
+        "north": "false",
+        "east": "false",
+        "south": "true",
+        "west": "true"
+      },
+      "apply": [
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_0_c_sw"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_1_c_sw"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_2_c_sw"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_3_c_sw"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_4_c_sw"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_5_c_sw"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_plaster_c_sw",
+          "weight": 4
+        },
+        {
+          "model": "murim:block/thin_wall/thin_plaster_b_c_sw",
+          "weight": 4
+        }
+      ]
+    },
+    {
+      "when": {
+        "center": "true",
+        "north": "true",
+        "east": "false",
+        "south": "true",
+        "west": "true"
+      },
+      "apply": [
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_0_c_nsw"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_1_c_nsw"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_2_c_nsw"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_3_c_nsw"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_4_c_nsw"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_5_c_nsw"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_plaster_c_nsw",
+          "weight": 4
+        },
+        {
+          "model": "murim:block/thin_wall/thin_plaster_b_c_nsw",
+          "weight": 4
+        }
+      ]
+    },
+    {
+      "when": {
+        "center": "true",
+        "north": "false",
+        "east": "true",
+        "south": "true",
+        "west": "true"
+      },
+      "apply": [
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_0_c_esw"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_1_c_esw"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_2_c_esw"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_3_c_esw"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_4_c_esw"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_5_c_esw"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_plaster_c_esw",
+          "weight": 4
+        },
+        {
+          "model": "murim:block/thin_wall/thin_plaster_b_c_esw",
+          "weight": 4
+        }
+      ]
+    },
+    {
+      "when": {
+        "center": "true",
+        "north": "true",
+        "east": "true",
+        "south": "true",
+        "west": "true"
+      },
+      "apply": [
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_0_c_nesw"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_1_c_nesw"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_2_c_nesw"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_3_c_nesw"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_4_c_nesw"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_cracked_plaster_5_c_nesw"
+        },
+        {
+          "model": "murim:block/thin_wall/thin_plaster_c_nesw",
+          "weight": 4
+        },
+        {
+          "model": "murim:block/thin_wall/thin_plaster_b_c_nesw",
+          "weight": 4
+        }
+      ]
+    }
+  ]
+}

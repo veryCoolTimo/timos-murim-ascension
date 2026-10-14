@@ -1,0 +1,84 @@
+{
+  "id": "murim:four_horizons",
+  "form": "sword_cut",
+  "intent": "destruction",
+  "breath": "deep_breath",
+  "phases": {
+    "ritual": 8,
+    "windup": 18,
+    "impact": 4,
+    "recovery": 20,
+    "dissipation": 10
+  },
+  "behavior": {
+    "type": "murim:demonic_art",
+    "art": "four_horizons"
+  },
+  "animation": "murim:four_horizons",
+  "vfx": {
+    "pivot": [
+      0,
+      1.1,
+      0
+    ],
+    "basis_a": [
+      1,
+      0,
+      0
+    ],
+    "basis_b": [
+      0,
+      0,
+      1
+    ],
+    "inner_radius": 0.2,
+    "outer_radius": 1.1,
+    "start_angle": -35,
+    "end_angle": 35,
+    "colour": {
+      "r": 0.85,
+      "g": 0.055,
+      "b": 0.1
+    },
+    "trail": {
+      "enabled": false,
+      "alpha": 0.25,
+      "size": 0.12,
+      "life_ticks": 4
+    },
+    "crescent": {
+      "enabled": false,
+      "alpha": 0.2,
+      "size": 0.1,
+      "life_ticks": 3
+    },
+    "core": {
+      "enabled": false,
+      "alpha": 0.3,
+      "size": 0.18,
+      "life_ticks": 2
+    },
+    "windup_motes": 0,
+    "ritual_motes": 0
+  },
+  "interruption": {
+    "cancellable_until": "windup",
+    "break_on_damage": true,
+    "damage_threshold": 5
+  },
+  "weakness": "technique.murim.four_horizons.weakness",
+  "hit_stop_ticks": 4,
+  "cooldown_ticks": 240,
+  "star_cap": 12,
+  "tier": "secret",
+  "requires": [
+    {
+      "technique": "murim:clear_sky_sword",
+      "star": 9
+    },
+    {
+      "technique": "murim:quiet_heart_guard",
+      "star": 6
+    }
+  ]
+}

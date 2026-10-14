@@ -1,0 +1,16 @@
+{
+  "loader": "neoforge:obj",
+  "model": "murim:models/block/obj/sect_bell.obj",
+  "flip_v": false,
+  "emissive_ambient": true,
+  "automatic_culling": true,
+  "shade_quads": true,
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "temple_bronze": "murim:block/temple_bronze",
+    "temple_rim": "murim:block/temple_rim",
+    "temple_wood": "murim:block/library_wood",
+    "particle": "murim:block/temple_bronze"
+  },
+  "ambientocclusion": false
+}

@@ -118,7 +118,7 @@ class PacingSimTest {
             }
             // Ци на каст: TechniqueService.techniqueCost (1 + 84 тика × 0,05) × costFactor слоя; тратится
             // циркулирующая, а её пассивно доливает запас — значит, каст съедает запас.
-            double cost = (1.0D + 84 * 0.05D) * MasteryRules.costFactor(petal.layer(), 8);
+            double cost = (1.0D + 84 * 0.05D) * MasteryRules.costFactor(petal.stars(), 8);
             profile = profile.withPool(profile.pool() - cost);
             for (int i = 0; i < Math.round(targets); i++) {
                 double w = worth(kind, key, rank);
@@ -154,10 +154,10 @@ class PacingSimTest {
             if (profile != null) {
                 Map<net.minecraft.resources.ResourceLocation, Integer> layers = new HashMap<>();
                 if (six != null) {
-                    layers.put(id("six"), six.layer());
+                    layers.put(id("six"), six.stars());
                 }
                 if (petal != null) {
-                    layers.put(id("petal"), petal.layer());
+                    layers.put(id("petal"), petal.stars());
                 }
                 if (Realm.atWall(profile)) {
                     mark("wall rank " + (profile.rank() + 1));
@@ -175,8 +175,8 @@ class PacingSimTest {
                 return false;
             }
             Map<net.minecraft.resources.ResourceLocation, Integer> layers = new HashMap<>();
-            layers.put(id("six"), six == null ? 0 : six.layer());
-            layers.put(id("petal"), petal == null ? 0 : petal.layer());
+            layers.put(id("six"), six == null ? 0 : six.stars());
+            layers.put(id("petal"), petal == null ? 0 : petal.stars());
             return Realm.check(profile, layers, boss) == Realm.Blocker.NOT_AT_WALL
                     && Realm.check(profile.withPool(Realm.wall(profile)), layers, boss) == Realm.Blocker.NONE;
         }
@@ -187,7 +187,7 @@ class PacingSimTest {
 
         void checkLayers() {
             if (six != null) {
-                for (int l = 1; l <= six.layer(); l++) {
+                for (int l = 1; l <= six.stars(); l++) {
                     if (!milestones.containsKey("Six L" + l)) {
                         mark("Six L" + l);
                         milestones.put("six" + l, t - sixUseStart);
@@ -195,7 +195,7 @@ class PacingSimTest {
                 }
             }
             if (petal != null) {
-                for (int l = 1; l <= petal.layer(); l++) {
+                for (int l = 1; l <= petal.stars(); l++) {
                     mark("Falling Petal L" + l);
                 }
             }
@@ -218,7 +218,7 @@ class PacingSimTest {
             }
             t += 6.0D;
             if (six != null && six.atCap() == false) {
-                double amount = CAMP_PAGE_INSIGHT_LAYERS * MasteryRules.need(six.layer());
+                double amount = CAMP_PAGE_INSIGHT_LAYERS * MasteryRules.need(six.stars());
                 six = MasteryRules.study(six, amount * MasteryRules.wisdomFactor(wisdom), day).progress();
             }
             checkLayers();
@@ -256,7 +256,7 @@ class PacingSimTest {
                     wisdom += MasteryRules.wisdomForLearning(TechniqueTier.BASIC);
                     sixUseStart = t;
                 }
-                if (petal == null && six != null && six.layer() >= 2 && profile != null && profile.rank() >= 1) {
+                if (petal == null && six != null && six.stars() >= 2 && profile != null && profile.rank() >= 1) {
                     t += 3.0D; // разговор с наставником
                     petal = TechniqueProgress.learned(0, 8);
                     wisdom += MasteryRules.wisdomForLearning(TechniqueTier.ADVANCED);
@@ -331,7 +331,7 @@ class PacingSimTest {
             s.weakKill("zombie");
             Sim probe = copy(s);
             probe.meditate(2.0D);
-            if (probe.six.layer() >= 1) {
+            if (probe.six.stars() >= 1) {
                 return z;
             }
         }
@@ -379,7 +379,7 @@ class PacingSimTest {
         int zNow = zombiesToFirstLayer(false);
         System.out.println("zombies to Six L1 (fresh player, sit after): without pacing " + zOld + " | with " + zNow);
         System.out.println("pool " + fmt(now.profile.pool()) + " / wall " + fmt(Realm.wall(now.profile)));
-        System.out.println("final: Six L" + now.six.layer() + ", Petal L" + (now.petal == null ? -1 : now.petal.layer())
+        System.out.println("final: Six L" + now.six.stars() + ", Petal L" + (now.petal == null ? -1 : now.petal.stars())
                 + ", rank " + now.profile.rank());
 
         assertTrue(zNow >= 6, "слой 1 Шести Равновесий за " + zNow + " зомби — снова «2–3 убийства»");
@@ -391,6 +391,6 @@ class PacingSimTest {
         assertTrue(boss != null && boss >= 120.0D && boss <= 180.0D, "босс на " + boss + " мин, цель 2–3 ч");
         Double rank2 = now.milestones.get("rank 2");
         assertTrue(rank2 != null && rank2 <= 200.0D, "второй прорыв на " + rank2 + " мин");
-        assertTrue(now.petal != null && now.petal.layer() >= 1, "Падающий Цветок не освоен к боссу");
+        assertTrue(now.petal != null && now.petal.stars() >= 1, "Падающий Цветок не освоен к боссу");
     }
 }

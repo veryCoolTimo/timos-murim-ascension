@@ -73,10 +73,7 @@
   "nodes": {
     "greet": {
       "random": [
-        "dialogue.murim.seo_rang.greet1",
-        "dialogue.murim.seo_rang.greet2",
-        "dialogue.murim.seo_rang.greet3",
-        "dialogue.murim.seo_rang.greet4"
+        "@context"
       ],
       "gesture": "fist",
       "options": [
@@ -118,8 +115,7 @@
     },
     "greet_graduate": {
       "random": [
-        "dialogue.murim.seo_rang.graduate1",
-        "dialogue.murim.seo_rang.graduate2"
+        "@context"
       ],
       "gesture": "nod",
       "options": [
@@ -161,8 +157,7 @@
     },
     "greet_champion": {
       "random": [
-        "dialogue.murim.seo_rang.champion1",
-        "dialogue.murim.seo_rang.champion2"
+        "@context"
       ],
       "gesture": "fist",
       "options": [
@@ -204,8 +199,7 @@
     },
     "night": {
       "random": [
-        "dialogue.murim.seo_rang.night1",
-        "dialogue.murim.seo_rang.night2"
+        "@context"
       ],
       "gesture": "shake",
       "options": [
@@ -357,6 +351,19 @@
           "text": "dialogue.murim.opt.back",
           "next": "topics"
         },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "sect_news": {
+      "random": [
+        "@trait",
+        "@personal",
+        "@rumour"
+      ],
+      "gesture": "explain",
+      "options": [
         {
           "text": "dialogue.murim.opt.leave"
         }

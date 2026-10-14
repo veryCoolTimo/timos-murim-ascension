@@ -46,6 +46,17 @@ public final class BedrockItemMesh {
     /** Габариты модели по Y (единицы geo) — для подгонки рукояти и длины. */
     private float minY = Float.MAX_VALUE;
     private float maxY = -Float.MAX_VALUE;
+    private float bladeBaseY = Float.MAX_VALUE;
+    private float bladeTipY = -Float.MAX_VALUE;
+
+    public net.minecraft.world.phys.Vec3[] bladeEndpoints() {
+        quads();
+        if (bladeBaseY == Float.MAX_VALUE) return null;
+        return new net.minecraft.world.phys.Vec3[] {
+                new net.minecraft.world.phys.Vec3(0, bladeBaseY / 16.0D, 0),
+                new net.minecraft.world.phys.Vec3(0, bladeTipY / 16.0D, 0)
+        };
+    }
 
     public BedrockItemMesh(String geoPath, ResourceLocation texture) {
         this.geoPath = geoPath;
@@ -101,8 +112,18 @@ public final class BedrockItemMesh {
                 if (!bone.has("cubes")) {
                     continue;
                 }
+                int firstQuad = out.size();
                 for (JsonElement ce : bone.getAsJsonArray("cubes")) {
                     cube(ce.getAsJsonObject(), bx, tw, th, out);
+                }
+                // Huashan's imported blade is bone2; the other sword meshes name blade/tip.
+                if (e.getKey().equals("blade") || e.getKey().equals("tip") || e.getKey().equals("bone2")) {
+                    for (int i = firstQuad; i < out.size(); i++) {
+                        for (float[] point : out.get(i).pos()) {
+                            bladeBaseY = Math.min(bladeBaseY, point[1]);
+                            bladeTipY = Math.max(bladeTipY, point[1]);
+                        }
+                    }
                 }
             }
         } catch (Exception ex) {

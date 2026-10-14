@@ -27,7 +27,7 @@ public final class JunkArtTests {
     }
 
     /** Игрок без входа на сервер (как в SectGameTests): ванильные пакеты уходят во встроенный канал. */
-    private static ServerPlayer fakePlayer(GameTestHelper helper) {
+    static ServerPlayer fakePlayer(GameTestHelper helper) {
         var cookie = net.minecraft.server.network.CommonListenerCookie.createInitial(
                 new com.mojang.authlib.GameProfile(java.util.UUID.randomUUID(), "junk-test"), false);
         ServerPlayer p = new ServerPlayer(helper.getLevel().getServer(), helper.getLevel(), cookie.gameProfile(), cookie.clientInformation());
@@ -41,13 +41,13 @@ public final class JunkArtTests {
         return p;
     }
 
-    /** Все шесть в датапаке, мелкие (2 слоя, basic), без слоёв эффекта; меч нужен только подделке Драконов. */
+    /** Все искусства в датапаке, простые (12 звёзд, basic), без слоёв эффекта; меч нужен только подделке Драконов. */
     @GameTest(template = "small_floor", timeoutTicks = 20)
     public static void junkArtsLoadWithoutVfx(GameTestHelper helper) {
         for (JunkArts.Art a : JunkArts.ALL) {
             TechniqueDefinition d = TechniqueLoader.get(a.id());
             helper.assertTrue(d != null, "нет техники " + a.id());
-            helper.assertTrue(d.layers() == 2 && d.tier() == io.github.verycooltimo.murim.mastery.TechniqueTier.BASIC, a.id() + ": не мелкая");
+            helper.assertTrue(d.starCap() == 12 && d.tier() == io.github.verycooltimo.murim.mastery.TechniqueTier.BASIC, a.id() + ": не мелкая");
             helper.assertTrue(!d.vfx().trail().enabled() && !d.vfx().crescent().enabled() && !d.vfx().core().enabled(),
                     a.id() + ": есть слой эффекта");
             helper.assertTrue(io.github.verycooltimo.murim.combat.QiSword.needsSword(d) == (a.weapon() == JunkArts.Weapon.SWORD),

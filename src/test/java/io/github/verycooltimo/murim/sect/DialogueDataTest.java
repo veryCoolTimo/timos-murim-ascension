@@ -139,6 +139,7 @@ class DialogueDataTest {
         keys.addAll(List.of("murim.sect.standing.up", "murim.sect.contribution.gain", "murim.sect.contribution.loss", "murim.sect.donate.none"));
         // Личные реплики учеников (SectTalk): черты, слухи, личная фраза каждого ученика.
         keys.addAll(SectTalk.allKeys());
+        keys.addAll(SectSocial.allDialogueKeys());
         for (SectRoster m : SectRoster.ALL) {
             if (m.disciple()) {
                 keys.add(SectTalk.personalKey(m.key()));
@@ -203,10 +204,19 @@ class DialogueDataTest {
     }
 
     @Test
-    @DisplayName("У каждого человека секты есть текстура облика")
-    void everyLookExists() {
+    @DisplayName("Секта — только модели и текстуры автора: старых обликов-перекрасок нет, у каждого человека облик задан")
+    void onlyAuthorSectArt() throws java.io.IOException {
+        java.util.Set<String> author = java.util.Set.of("third_rate_disciple.png", "second_rate_disciple.png", "sect_head.png",
+                "sect_econom.png", "elder1.png", "first_rate_disciple.png", "first_coach.png", "first_coach2.png",
+                "first_alchemist.png");
+        try (var files = Files.list(res("assets/murim/textures/entity/sect"))) {
+            assertEquals(author, files.map(f -> f.getFileName().toString()).collect(java.util.stream.Collectors.toSet()));
+        }
+        for (String geo : java.util.List.of("sect_disciple", "high_sect_people", "economic", "elder1", "first_rate_disciple")) {
+            assertTrue(Files.exists(res("assets/murim/bedrock/" + geo + ".geo.json")), geo);
+        }
         for (SectRoster m : SectRoster.ALL) {
-            assertTrue(Files.exists(res("assets/murim/textures/entity/sect/" + m.look() + ".png")), m.key() + ": " + m.look());
+            assertFalse(m.look().isEmpty(), m.key());
         }
     }
 

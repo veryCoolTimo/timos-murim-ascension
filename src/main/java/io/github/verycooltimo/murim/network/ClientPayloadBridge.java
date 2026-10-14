@@ -46,6 +46,10 @@ final class ClientPayloadBridge {
         io.github.verycooltimo.murim.client.sect.DialogueScreen.open(payload);
     }
 
+    public static void handleSectGoal(SectGoalPayload payload) {
+        io.github.verycooltimo.murim.client.sect.SectJourneyHud.accept(payload);
+    }
+
     public static void handleSectBubble(SectBubblePayload payload) {
         io.github.verycooltimo.murim.client.sect.SpeechBubbles.onBubble(payload);
     }
@@ -137,9 +141,24 @@ final class ClientPayloadBridge {
         io.github.verycooltimo.murim.client.FoundationClient.onRemoteForm(payload);
     }
 
+    public static void handleFoundationHit(FoundationPayloads.Hit payload) {
+        io.github.verycooltimo.murim.client.vfx.FoundationVfx.confirmHit(payload);
+    }
+
+    public static void handleQiSwordHit(QiSwordHitPayload payload) {
+        var level = net.minecraft.client.Minecraft.getInstance().level;
+        if (level != null && level.getEntity(payload.sourceId()) instanceof net.minecraft.world.entity.player.Player player) {
+            io.github.verycooltimo.murim.client.QiSwordClient.mark(player);
+        }
+    }
+
     public static void handleAuraGust(AuraGustPayload payload) {
         io.github.verycooltimo.murim.client.ClientAuraState.gust(payload.sourceId(), payload.victimId(),
                 payload.strength(), payload.pull());
+    }
+
+    public static void handleBeltSword(io.github.verycooltimo.murim.gear.BeltSwordPayload payload) {
+        io.github.verycooltimo.murim.client.gear.ClientBeltSwords.set(payload.entityId(), payload.stack());
     }
 
     public static void handleSyncAura(SyncAuraPayload payload) {
@@ -147,6 +166,10 @@ final class ClientPayloadBridge {
     }
 
     /** Попадание техники: брызги возникают в точке контакта, а не из воздуха. */
+    public static void handleDemonic(DemonicPayload payload) {
+        io.github.verycooltimo.murim.client.vfx.VfxManager.accept(payload);
+    }
+
     public static void handleTechniqueHit(TechniqueHitPayload payload) {
         io.github.verycooltimo.murim.client.vfx.PalmVfxRenderer.recordHit(
                 payload.sourceId(), payload.x(), payload.y(), payload.z(), payload.height());

@@ -31,7 +31,8 @@ import java.util.Optional;
  * <p>Собраны из существующих поведений (взмах, ладонь, рывок) и одного нового — {@link TechniqueBehavior.SelfArt}.
  * У каждой честный изъян: срыв любым ударом, расплата телом, ничтожный урон. ВИЗУАЛ: слой 0 — без эффектов
  * совсем и на всех слоях (клиент не запускает ни след клинка, ни ладонь, ни импакт-кадр); слой 1 отличается
- * только звуком попадания — это мусор, а не техника мастера. Каталог общий для сервера и клиента.
+ * только звуком попадания. Три новых танца имеют маленькие шуточные VFX на любом слое
+ * (FunnyJunkVfx): свечение при подготовке и пыль от притопов. Каталог общий для сервера и клиента.
  */
 @EventBusSubscriber(modid = MurimMod.MODID)
 public final class JunkArts {
@@ -53,17 +54,28 @@ public final class JunkArts {
     public static final ResourceLocation BANDIT_RUSH = id("bandit_rush");
     public static final ResourceLocation SAND_IN_EYES = id("sand_in_eyes");
 
+    public static final ResourceLocation HEAVENLY_DRAGON = id("heavenly_dragon_strike");
+    public static final ResourceLocation THOUSAND_CRANES = id("thousand_cranes_dance");
+    public static final ResourceLocation BEGGARS_TAP = id("beggars_crushing_tap");
+    public static final List<ResourceLocation> FUNNY = List.of(HEAVENLY_DRAGON, THOUSAND_CRANES, BEGGARS_TAP);
+    /** Seeded archive fakes: the old boast plus the three new dance manuals. */
+    public static final List<ResourceLocation> ARCHIVE_BOOKS = List.of(TEN_THOUSAND_DRAGONS,
+            HEAVENLY_DRAGON, THOUSAND_CRANES, BEGGARS_TAP);
+
     public static final List<Art> ALL = List.of(
             new Art(BRAWLER_FIST, Weapon.NONE),
             new Art(GREEN_FOREST_AXE, Weapon.AXE),
             new Art(TEN_THOUSAND_DRAGONS, Weapon.SWORD),
             new Art(BURST_BREATH, Weapon.NONE),
             new Art(BANDIT_RUSH, Weapon.NONE),
-            new Art(SAND_IN_EYES, Weapon.NONE));
+            new Art(SAND_IN_EYES, Weapon.NONE),
+            new Art(HEAVENLY_DRAGON, Weapon.NONE),
+            new Art(THOUSAND_CRANES, Weapon.NONE),
+            new Art(BEGGARS_TAP, Weapon.NONE));
 
     /** Книжки, что носят разбойники (лут, торговец): всё, кроме подделки — та только с полок архива. */
     public static final List<ResourceLocation> STREET_BOOKS = List.of(BRAWLER_FIST, GREEN_FOREST_AXE, BURST_BREATH,
-            BANDIT_RUSH, SAND_IN_EYES);
+            BANDIT_RUSH, SAND_IN_EYES, HEAVENLY_DRAGON, THOUSAND_CRANES, BEGGARS_TAP);
 
     /** Топор тянет тело: замедление после удара, тиков. */
     public static final int AXE_STAGGER = 40;
@@ -114,7 +126,7 @@ public final class JunkArts {
         if (!isJunk(technique)) {
             return;
         }
-        int layer = Math.max(0, io.github.verycooltimo.murim.mastery.MasteryService.layer(player, technique));
+        int executionTier = Math.max(0, io.github.verycooltimo.murim.mastery.MasteryService.executionTier(player, technique));
         if (SAND_IN_EYES.equals(technique)) {
             // Мастера не обмануть горстью песка: босс крепости только щурится.
             if (!(target instanceof io.github.verycooltimo.murim.entity.boss.FortressMaster)) {
@@ -127,7 +139,7 @@ public final class JunkArts {
         if (BRAWLER_FIST.equals(technique)) {
             player.hurt(player.damageSources().generic(), KNUCKLES);
         }
-        if (layer >= 1) {
+        if (executionTier >= 1) {
             // Обжитое искусство звучит увереннее; частиц нет вовсе (правило 03: частицы только через клиентский VfxManager).
             net.minecraft.sounds.SoundEvent sound = SAND_IN_EYES.equals(technique) ? SoundEvents.SAND_BREAK
                     : GREEN_FOREST_AXE.equals(technique) ? SoundEvents.PLAYER_ATTACK_CRIT : SoundEvents.PLAYER_ATTACK_STRONG;

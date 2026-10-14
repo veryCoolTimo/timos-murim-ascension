@@ -564,7 +564,7 @@ public final class SectLife {
         }
         BlockPos bell = null;
         for (BlockPos p : BlockPos.betweenClosed(BlockPos.containing(c.x - 5, c.y - 1, c.z - 5), BlockPos.containing(c.x + 5, c.y + 14, c.z + 5))) {
-            if (level.getBlockState(p).is(Blocks.BELL)) {
+            if (level.getBlockState(p).is(Blocks.BELL) || level.getBlockState(p).getBlock() instanceof io.github.verycooltimo.murim.decor.SectBellBlock) {
                 bell = p.immutable();
                 break;
             }
@@ -572,9 +572,15 @@ public final class SectLife {
         if (bell != null && level.getBlockState(bell).getBlock() instanceof BellBlock b) {
             b.attemptToRing(level, bell, Direction.NORTH);
         }
-        // Колокол слышно на всей полке: громкость > 1 растягивает дальность звука (16 блоков × громкость).
-        BlockPos from = bell != null ? bell : BlockPos.containing(c.x, c.y + 6, c.z);
-        level.playSound(null, from, SoundEvents.BELL_BLOCK, SoundSource.BLOCKS, 6.0F, 0.6F);
+        // Бронзовый колокол секты (decor/HallFurniture): качается и звучит своим звуком вместо ванильного.
+        if (bell != null && level.getBlockState(bell).getBlock() instanceof io.github.verycooltimo.murim.decor.SectBellBlock) {
+            io.github.verycooltimo.murim.decor.SectBellBlock.ring(level, bell, Direction.NORTH, null, false);
+            level.playSound(null, bell, io.github.verycooltimo.murim.decor.HallFurniture.SECT_BELL_SOUND.get(), SoundSource.BLOCKS, 6.0F, 1.0F);
+        } else {
+            // Колокол слышно на всей полке: громкость > 1 растягивает дальность звука (16 блоков × громкость).
+            BlockPos from = bell != null ? bell : BlockPos.containing(c.x, c.y + 6, c.z);
+            level.playSound(null, from, SoundEvents.BELL_BLOCK, SoundSource.BLOCKS, 6.0F, 0.6F);
+        }
         if (since == 0) {
             MurimMod.LOGGER.info("Секта Хуашань: колокол — {}", SectSchedule.at(time).id());
         }
@@ -669,6 +675,9 @@ public final class SectLife {
         if (player.getData(io.github.verycooltimo.murim.registry.ModAttachments.SECT_ATTENDANCE).streak() >= SectAttendance.STREAK_DAYS) {
             bonus *= DILIGENCE_BONUS;
         }
+        if (player.level().dimension() == net.minecraft.world.level.Level.OVERWORLD
+                && player.getData(io.github.verycooltimo.murim.registry.ModAttachments.SECT).member()
+                && data(player.serverLevel()).suppliedUntil() > SectSchedule.day(player.level().getDayTime())) bonus *= 1.05D;
         return bonus;
     }
 

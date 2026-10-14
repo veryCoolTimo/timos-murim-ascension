@@ -1,0 +1,11 @@
+{
+  "variants": {
+    "axis=x": {
+      "model": "murim:block/roof_v7_ridge"
+    },
+    "axis=z": {
+      "model": "murim:block/roof_v7_ridge",
+      "y": 90
+    }
+  }
+}

@@ -13,7 +13,7 @@ import net.minecraft.world.phys.Vec3;
  * 1 — замах ПРОШЁЛ у цели, иллюзия (centre — ступни цели), 2..4 — волна ливня ПОПАЛА (centre — точка
  * удара), 9 — цель потеряна, иллюзия рассыпается.
  */
-public record RainPayload(int entityId, Vec3 origin, Vec3 centre, float yaw, int layer, int stage, int targetId)
+public record RainPayload(int entityId, Vec3 origin, Vec3 centre, float yaw, int executionTier, int stage, int targetId)
         implements CustomPacketPayload {
 
     public static final int RELEASE = 0;
@@ -33,7 +33,7 @@ public record RainPayload(int entityId, Vec3 origin, Vec3 centre, float yaw, int
                 VEC.encode(buf, p.origin());
                 VEC.encode(buf, p.centre());
                 buf.writeFloat(p.yaw());
-                ByteBufCodecs.VAR_INT.encode(buf, p.layer());
+                ByteBufCodecs.VAR_INT.encode(buf, p.executionTier());
                 ByteBufCodecs.VAR_INT.encode(buf, p.stage());
                 ByteBufCodecs.VAR_INT.encode(buf, p.targetId());
             },

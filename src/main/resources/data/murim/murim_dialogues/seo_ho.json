@@ -49,10 +49,14 @@
   "nodes": {
     "meal": {
       "random": [
-        "dialogue.murim.seo_ho.meal1"
+        "@context"
       ],
       "gesture": "nod",
       "options": [
+        {
+          "text": "dialogue.murim.social.opt.news",
+          "next": "sect_news"
+        },
         {
           "text": "dialogue.murim.opt.leave"
         }
@@ -60,7 +64,7 @@
     },
     "night": {
       "random": [
-        "dialogue.murim.seo_ho.night1"
+        "@context"
       ],
       "gesture": "nod",
       "options": [
@@ -71,9 +75,7 @@
     },
     "greet": {
       "random": [
-        "dialogue.murim.seo_ho.greet1",
-        "dialogue.murim.seo_ho.greet2",
-        "dialogue.murim.seo_ho.greet3"
+        "@context"
       ],
       "gesture": "nod",
       "options": [
@@ -82,13 +84,18 @@
           "next": "topics"
         },
         {
-          "text": "dialogue.murim.second.opt.challenge",
+          "text": "dialogue.murim.progression.opt.rival",
           "when": [
             {
-              "free": true
+              "social": "progression:menu"
             }
           ],
-          "next": "challenge"
+          "actions": [
+            {
+              "type": "progression_menu",
+              "value": "rival"
+            }
+          ]
         },
         {
           "text": "dialogue.murim.seo_ho.opt.logs",
@@ -120,7 +127,6 @@
       ]
     },
     "greet_champion": {
-      "line": "dialogue.murim.seo_ho.champion",
       "gesture": "bow",
       "options": [
         {
@@ -128,13 +134,18 @@
           "next": "topics"
         },
         {
-          "text": "dialogue.murim.second.opt.challenge",
+          "text": "dialogue.murim.progression.opt.rival",
           "when": [
             {
-              "free": true
+              "social": "progression:menu"
             }
           ],
-          "next": "challenge"
+          "actions": [
+            {
+              "type": "progression_menu",
+              "value": "rival"
+            }
+          ]
         },
         {
           "text": "dialogue.murim.seo_ho.opt.logs",
@@ -163,6 +174,9 @@
         {
           "text": "dialogue.murim.opt.leave"
         }
+      ],
+      "random": [
+        "@context"
       ]
     },
     "topics": {
@@ -273,6 +287,19 @@
     "favour_done": {
       "line": "dialogue.murim.seo_ho.favour_done",
       "gesture": "bow",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "sect_news": {
+      "random": [
+        "@trait",
+        "@personal",
+        "@rumour"
+      ],
+      "gesture": "explain",
       "options": [
         {
           "text": "dialogue.murim.opt.leave"

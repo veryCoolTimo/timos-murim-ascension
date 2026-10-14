@@ -163,7 +163,7 @@ public final class ShowerVfx {
 
     private static final class Cast {
         final int entityId;
-        final int layer;
+        final int executionTier;
         final int start;
         final Random random;
         final double density;
@@ -192,12 +192,12 @@ public final class ShowerVfx {
         /** Точки тела мастера с толчка: след взлёта. */
         final List<Vec3> path = new ArrayList<>();
 
-        Cast(int entityId, int layer) {
+        Cast(int entityId, int executionTier) {
             this.entityId = entityId;
-            this.layer = layer;
+            this.executionTier = executionTier;
             this.start = clientTicks;
             this.random = new Random(entityId * 7919L + clientTicks);
-            this.density = switch (Math.max(0, Math.min(8, layer))) {
+            this.density = switch (Math.max(0, Math.min(8, executionTier))) {
                 case 0 -> 0.0D;
                 case 1 -> 0.15D;
                 case 2 -> 0.25D;
@@ -239,15 +239,15 @@ public final class ShowerVfx {
 
     public static void onTechniqueEvent(TechniqueEventPayload payload) {
         if (payload.event() != TechniqueEventPayload.Event.STARTED || !TECHNIQUE.equals(payload.techniqueId())
-                || payload.layer() <= 0) {
+                || payload.executionTier() <= 0) {
             return;
         }
         CASTS.removeIf(c -> c.entityId == payload.sourceId());
-        Cast c = new Cast(payload.sourceId(), payload.layer());
+        Cast c = new Cast(payload.sourceId(), payload.executionTier());
         CASTS.add(c);
         // Чек-лист: синяя аура в стойке и сжатии (shower2-01) → после толчка розовая с 3-го слоя.
         // Синяя на всём полёте оставляла голубые клочья над траекторией (codex 03.10, раунды 1–3).
-        ClientAuraState.techniqueAura(c.entityId, 2 + Math.min(1, c.layer / 4), 0, ShowerRules.RELEASE + 1);
+        ClientAuraState.techniqueAura(c.entityId, 2 + Math.min(1, c.executionTier / 4), 0, ShowerRules.RELEASE + 1);
     }
 
     public static void onShower(ShowerPayload p) {
@@ -258,7 +258,7 @@ public final class ShowerVfx {
             }
         }
         if (c == null) {
-            c = new Cast(p.entityId(), p.layer());
+            c = new Cast(p.entityId(), p.executionTier());
             CASTS.add(c);
         }
         Minecraft mc = Minecraft.getInstance();
@@ -276,7 +276,7 @@ public final class ShowerVfx {
     /** Толчок: пыль конусом назад, кольцо пробитого воздуха у стоп, ветер, лепестки, надпись. */
     private static void release(Cast c, ShowerPayload p, Minecraft mc) {
         c.release = clientTicks;
-        if (c.layer >= 3) {
+        if (c.executionTier >= 3) {
             ClientAuraState.techniqueAura(c.entityId, 2, 1, ShowerRules.DIVE + ShowerRules.DIVE_TICKS + 6);
         }
         c.origin = p.a();
@@ -292,7 +292,7 @@ public final class ShowerVfx {
             Vec3 v = back.scale(0.25D).add(c.random.nextGaussian() * 0.15D, 0.05D + 0.1D * c.random.nextDouble(), c.random.nextGaussian() * 0.15D);
             wind(c, c.origin.add(0.0D, 0.2D + c.random.nextDouble() * 0.8D, 0.0D), v, 12, 0.07D);
         }
-        if (ShowerRules.petals(c.layer)) {
+        if (ShowerRules.petals(c.executionTier)) {
             for (int i = 0; i < c.n(26); i++) {
                 Vec3 v = new Vec3(c.random.nextGaussian(), 0.3D + c.random.nextDouble(), c.random.nextGaussian()).normalize()
                         .scale(0.12D + 0.2D * c.random.nextDouble());
@@ -301,7 +301,7 @@ public final class ShowerVfx {
         }
         if (c.own()) {
             SpeedLines.radial(0.5F, 0.6F, 0.45F, 5, SpeedLines.WHITE);
-            if (c.layer >= 3) {
+            if (c.executionTier >= 3) {
                 TechniqueCaption.show(Component.translatable("technique.murim.seven_plum_blossoms.school"),
                         Component.translatable("technique.murim.seven_plum_blossoms.shower"), 40);
             }
@@ -328,7 +328,7 @@ public final class ShowerVfx {
         c.s1 = side.lengthSqr() < 1.0E-4D ? new Vec3(1.0D, 0.0D, 0.0D) : side.normalize();
         c.s2 = c.s1.cross(c.dir).normalize();
         c.streaks.clear();
-        int n = ShowerRules.streaks(c.layer);
+        int n = ShowerRules.streaks(c.executionTier);
         for (int i = 0; i < n; i++) {
             // Сечение: ровнее вбок (веер), уже поперёк; без симметрии — шаг с дрожанием.
             double u = -1.0D + 2.0D * (i + 0.2D + 0.6D * c.random.nextDouble()) / n;
@@ -378,7 +378,7 @@ public final class ShowerVfx {
             m.gravity = 0.02D;
             c.motes.add(m);
         }
-        if (ShowerRules.petals(c.layer)) {
+        if (ShowerRules.petals(c.executionTier)) {
             for (int i = 0; i < c.n(44); i++) {
                 Vec3 v = new Vec3(c.random.nextGaussian(), c.random.nextGaussian() * 0.6D + 0.2D, c.random.nextGaussian()).normalize()
                         .scale(0.15D + 0.3D * c.random.nextDouble()).add(d.scale(0.2D));
@@ -406,7 +406,7 @@ public final class ShowerVfx {
         Vec3 d = c.dir.add(c.s1.scale((k - 1) * 0.12D)).normalize();
         double len = 1.5D + 0.3D * k;
         c.rays.add(new Ray(o.subtract(d.scale(len)), o.add(d.scale(len)), clientTicks, 5, 0.06D, false));
-        if (ShowerRules.petals(c.layer)) {
+        if (ShowerRules.petals(c.executionTier)) {
             for (int i = 0; i < c.n(8); i++) {
                 Vec3 v = new Vec3(c.random.nextGaussian(), c.random.nextDouble(), c.random.nextGaussian()).normalize().scale(0.15D);
                 petal(c, o, v, 24 + c.random.nextInt(12));
@@ -451,7 +451,7 @@ public final class ShowerVfx {
             Vec3 g0 = feet.add(0.0D, 0.05D, 0.0D);
             c.rays.add(new Ray(g0.add(d.scale(0.4D)), g0.add(d.scale(len)), clientTicks, 12, 0.07D + 0.05D * c.random.nextDouble(), true));
         }
-        if (ShowerRules.petals(c.layer)) {
+        if (ShowerRules.petals(c.executionTier)) {
             // Облака лепестков по краям вспышки (shower-5).
             for (int i = 0; i < c.n(80); i++) {
                 Vec3 lat = side.scale(c.random.nextBoolean() ? 1.0D : -1.0D);
@@ -642,7 +642,7 @@ public final class ShowerVfx {
             Vec3 in = new Vec3(-Math.cos(a), 0.0D, -Math.sin(a));
             wind(c, at, tang.scale(0.16D).add(in.scale(0.1D)), 12, 0.05D);
         }
-        if (ShowerRules.petals(c.layer) && t % 2 == 0) {
+        if (ShowerRules.petals(c.executionTier) && t % 2 == 0) {
             double a = c.random.nextDouble() * Math.PI * 2.0D;
             Vec3 at = k.add(Math.cos(a) * 2.4D, (c.random.nextDouble() - 0.3D) * 1.4D, Math.sin(a) * 2.4D);
             Mote m = new Mote(at, k.subtract(at).scale(0.05D), 22, Mote.PETAL, c.random.nextInt(4), 0.3F, 0.07D, 1);
@@ -666,7 +666,7 @@ public final class ShowerVfx {
                         back.scale(0.3D).add(c.random.nextGaussian() * 0.05D, c.random.nextGaussian() * 0.05D, c.random.nextGaussian() * 0.05D),
                         7, 0.045D);
             }
-            if (ShowerRules.petals(c.layer)) {
+            if (ShowerRules.petals(c.executionTier)) {
                 // Лепестки сходят с потока: основная скорость вдоль хода, небольшой разброс вбок.
                 for (int i = 0; i < (diving ? c.n(3) : c.n(1)); i++) {
                     Vec3 along = diving ? c.dir : back.scale(-1.0D);
@@ -700,7 +700,7 @@ public final class ShowerVfx {
             }
         }
         // Остаточные образы тела на пикировании (shower-4): короткие, чёткие, без размытия.
-        if (diving && ShowerRules.afterimages(c.layer) && e instanceof AbstractClientPlayer player
+        if (diving && ShowerRules.afterimages(c.executionTier) && e instanceof AbstractClientPlayer player
                 && mc.getEntityRenderDispatcher().getRenderer(player) instanceof PlayerRenderer renderer) {
             if (c.skin == null) {
                 c.skin = player.getSkin().texture();
@@ -794,7 +794,7 @@ public final class ShowerVfx {
 
     /** Голубые дуги вокруг корпуса в сжатии (shower2-01): три неравные, вращаются вразнобой; со 2-го слоя. */
     private static void coilArcs(Cast c, Entity e, PoseStack.Pose pose, Vec3 camera, VertexConsumer v, float partial) {
-        if (c.layer < 2 || c.eyes()) {
+        if (c.executionTier < 2 || c.eyes()) {
             return;
         }
         float t = c.t() + partial;
@@ -870,7 +870,7 @@ public final class ShowerVfx {
 
     /** Зависание над целью: широкие полупрозрачные розовые полосы вдоль будущего пикирования (shower-2). */
     private static void apexBands(Cast c, PoseStack.Pose pose, Vec3 camera, VertexConsumer v, float partial) {
-        if (c.release < 0 || c.apex == null || c.layer < 3) {
+        if (c.release < 0 || c.apex == null || c.executionTier < 3) {
             return;
         }
         float s = clientTicks - c.release + partial;
@@ -941,7 +941,7 @@ public final class ShowerVfx {
         if (a <= 0.0F) {
             return;
         }
-        double spread = ShowerRules.spread(c.layer) * (0.9D + 0.1D * Math.min(1.0D, c.density));
+        double spread = ShowerRules.spread(c.executionTier) * (0.9D + 0.1D * Math.min(1.0D, c.density));
         for (Streak st : c.streaks) {
             if (age < st.delay()) {
                 continue;
@@ -1001,7 +1001,7 @@ public final class ShowerVfx {
             }
         }
         // Голубые дуги поперёк пучка (shower2-03) — с 5-го слоя, коротко.
-        if (ShowerRules.crossArcs(c.layer) && age < 9.0F) {
+        if (ShowerRules.crossArcs(c.executionTier) && age < 9.0F) {
             float ca = (float) PlumVfx.curve(age, 0.0, 0.0, 1.5, 1.0, 9.0, 0.0);
             for (int k = 0; k < 2; k++) {
                 double tt = k == 0 ? 0.45D : 0.72D;
@@ -1191,7 +1191,7 @@ public final class ShowerVfx {
     }
 
     private static void petals(Cast c, PoseStack.Pose pose, Vec3 camera, MultiBufferSource.BufferSource buffers, float partial) {
-        if (!ShowerRules.petals(c.layer)) {
+        if (!ShowerRules.petals(c.executionTier)) {
             return;
         }
         RenderType pt = MurimRenderTypes.plumPetals();

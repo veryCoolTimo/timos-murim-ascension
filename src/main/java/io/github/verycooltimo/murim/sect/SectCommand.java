@@ -1,11 +1,15 @@
 package io.github.verycooltimo.murim.sect;
 
+import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.tree.CommandNode;
 import io.github.verycooltimo.murim.MurimMod;
 import io.github.verycooltimo.murim.registry.ModAttachments;
+import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
+import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
@@ -21,11 +25,14 @@ public final class SectCommand {
     private SectCommand() {
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(priority = EventPriority.LOWEST)
     static void onRegisterCommands(RegisterCommandsEvent event) {
         event.getDispatcher().register(Commands.literal("murim")
                 .requires(source -> source.hasPermission(2))
                 .then(Commands.literal("sect")
+                        .then(Commands.literal("boxes")
+                                .executes(c -> SectLayoutBoxes.place(c.getSource()))
+                                .then(Commands.literal("clear").executes(c -> SectLayoutBoxes.clear(c.getSource()))))
                         .then(Commands.literal("spawn").executes(c -> {
                             ServerPlayer p = c.getSource().getPlayerOrException();
                             int n = SectService.spawnAround(p);
@@ -45,7 +52,7 @@ public final class SectCommand {
                             ServerPlayer p = c.getSource().getPlayerOrException();
                             c.getSource().sendSuccess(() -> SectAttendance.line(p), false);
                             c.getSource().sendSuccess(() -> SectAttendance.verdict(p), false);
-                            c.getSource().sendSuccess(() -> Component.literal(SectAttendance.report(p)), false);
+                            c.getSource().sendSuccess(() -> SectJourney.line(p), false);
                             return 1;
                         }))
                         .then(Commands.literal("reset").executes(c -> {
@@ -125,6 +132,50 @@ public final class SectCommand {
                             p.setData(ModAttachments.SECT, p.getData(ModAttachments.SECT).with(f));
                             c.getSource().sendSuccess(() -> Component.literal("+" + f), false);
                             return 1;
-                        })))));
+                        })))
+                        // Dev/playtest exit from the penance cave (author 10.10).
+                        .then(Commands.literal("release").executes(c -> {
+                            ServerPlayer p = c.getSource().getPlayerOrException();
+                            if (!io.github.verycooltimo.murim.sect.seal.PenanceService.sentenced(p)) {
+                                c.getSource().sendSuccess(() -> Component.literal("not sentenced"), false);
+                                return 0;
+                            }
+                            io.github.verycooltimo.murim.sect.seal.PenanceService.release(p);
+                            return 1;
+                        }))));
+        makeLogPublic(event.getDispatcher());
+    }
+
+    /** Lift parent guards only for the read-only log, retaining them on every sibling command. */
+    static void makeLogPublic(CommandDispatcher<CommandSourceStack> dispatcher) {
+        var root = dispatcher.getRoot().getChild("murim");
+        var sect = root.getChild("sect");
+        var publicRoot = copy(root, source -> true);
+        var publicSect = copy(sect, source -> true);
+        for (var child : sect.getChildren()) {
+            publicSect.addChild(copyWithChildren(child, source -> "log".equals(child.getName())
+                    ? child.canUse(source) : root.canUse(source) && sect.canUse(source) && child.canUse(source)));
+        }
+        for (var child : root.getChildren()) {
+            if (child == sect) publicRoot.addChild(publicSect);
+            else {
+                publicRoot.addChild(copyWithChildren(child, source -> root.canUse(source) && child.canUse(source)));
+            }
+        }
+        // Brigadier exposes the children map's mutable values; addChild also replaces the literal lookup entry.
+        dispatcher.getRoot().getChildren().remove(root);
+        dispatcher.getRoot().addChild(publicRoot);
+    }
+
+    private static CommandNode<CommandSourceStack> copy(CommandNode<CommandSourceStack> node,
+            java.util.function.Predicate<CommandSourceStack> requirement) {
+        return node.createBuilder().requires(requirement).build();
+    }
+
+    private static CommandNode<CommandSourceStack> copyWithChildren(CommandNode<CommandSourceStack> node,
+            java.util.function.Predicate<CommandSourceStack> requirement) {
+        var result = copy(node, requirement);
+        node.getChildren().forEach(result::addChild);
+        return result;
     }
 }

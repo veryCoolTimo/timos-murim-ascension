@@ -1,11 +1,16 @@
 package io.github.verycooltimo.murim.library;
 
 import io.github.verycooltimo.murim.MurimMod;
+import io.github.verycooltimo.murim.decor.BookcaseManualBlockEntity;
+import io.github.verycooltimo.murim.decor.HallFurniture;
+import java.util.EnumMap;
+import java.util.Map;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.levelgen.structure.StructureType;
 import net.minecraft.world.level.levelgen.structure.pieces.StructurePieceType;
@@ -15,9 +20,6 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
-
-import java.util.EnumMap;
-import java.util.Map;
 
 /**
  * Registries of the ruined library and its junk-book factory (docs/design/25-ruined-library.md). Own class, own
@@ -36,6 +38,29 @@ public final class ModLibrary {
 
     private static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(MurimMod.MODID);
     private static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(MurimMod.MODID);
+
+    // Small, vanilla JSON family from tools/art/library_rebuild.py. No extra state variants.
+    public static final net.neoforged.neoforge.registries.DeferredBlock<net.minecraft.world.level.block.Block> LIBRARY_PARQUET =
+            BLOCKS.registerBlock("library_parquet", net.minecraft.world.level.block.Block::new,
+                    net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.DARK_OAK_PLANKS));
+    public static final net.neoforged.neoforge.registries.DeferredBlock<net.minecraft.world.level.block.Block> LIBRARY_PARQUET_BORDER =
+            BLOCKS.registerBlock("library_parquet_border", net.minecraft.world.level.block.Block::new,
+                    net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.DARK_OAK_PLANKS));
+    public static final net.neoforged.neoforge.registries.DeferredBlock<net.minecraft.world.level.block.StairBlock> LIBRARY_PARQUET_STAIRS =
+            BLOCKS.registerBlock("library_parquet_stairs", p -> new net.minecraft.world.level.block.StairBlock(LIBRARY_PARQUET.get().defaultBlockState(), p),
+                    net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.DARK_OAK_STAIRS));
+    public static final net.neoforged.neoforge.registries.DeferredBlock<net.minecraft.world.level.block.Block> LIBRARY_COFFER =
+            BLOCKS.registerBlock("library_coffer", net.minecraft.world.level.block.Block::new,
+                    net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.DARK_OAK_PLANKS));
+    public static final net.neoforged.neoforge.registries.DeferredBlock<io.github.verycooltimo.murim.decor.LibraryPostBlock> LIBRARY_POST =
+            BLOCKS.registerBlock("library_post", io.github.verycooltimo.murim.decor.LibraryPostBlock::new,
+                    net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.DARK_OAK_PLANKS).noOcclusion());
+    private static final java.util.List<net.neoforged.neoforge.registries.DeferredBlock<? extends net.minecraft.world.level.block.Block>> DECOR_BLOCKS =
+            java.util.List.of(LIBRARY_PARQUET, LIBRARY_PARQUET_BORDER, LIBRARY_PARQUET_STAIRS, LIBRARY_COFFER, LIBRARY_POST);
+    private static final java.util.List<net.neoforged.neoforge.registries.DeferredItem<net.minecraft.world.item.BlockItem>> DECOR_ITEMS =
+            DECOR_BLOCKS.stream().map(b -> ITEMS.registerSimpleBlockItem(b)).toList();
+    private static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITIES =
+            DeferredRegister.create(Registries.BLOCK_ENTITY_TYPE, MurimMod.MODID);
     private static final DeferredRegister.DataComponents COMPONENTS =
             DeferredRegister.createDataComponents(Registries.DATA_COMPONENT_TYPE, MurimMod.MODID);
     private static final DeferredRegister<LootItemFunctionType<?>> LOOT_FUNCTIONS =
@@ -56,7 +81,7 @@ public final class ModLibrary {
     public static final DeferredHolder<Item, JunkBookItem> JUNK_MANUAL_RED = junk("junk_manual_red", 2, 300);
     public static final DeferredHolder<Item, JunkBookItem> JUNK_LETTERS = junk("junk_letters", 1, 100);
 
-    /** The shelf that stands on the archive's genuine manual (hda-04: the 19th bookshelf). */
+    /** Two-half bookcase; its lower foot stands on the archive's genuine manual (hda-04: the 19th bookshelf). */
     public static final DeferredHolder<net.minecraft.world.level.block.Block, ProppedShelfBlock> PROPPED_SHELF = BLOCKS.register("propped_shelf",
             () -> new ProppedShelfBlock(net.minecraft.world.level.block.state.BlockBehaviour.Properties
                     .ofFullCopy(net.minecraft.world.level.block.Blocks.CHISELED_BOOKSHELF).noOcclusion()));
@@ -71,7 +96,35 @@ public final class ModLibrary {
             () -> new net.minecraft.world.level.block.Block(net.minecraft.world.level.block.state.BlockBehaviour.Properties
                     .ofFullCopy(net.minecraft.world.level.block.Blocks.BOOKSHELF)));
     public static final DeferredHolder<Item, net.minecraft.world.item.BlockItem> MANUAL_SHELF_ITEM = ITEMS.register("manual_shelf",
-            () -> new net.minecraft.world.item.BlockItem(MANUAL_SHELF.get(), new Item.Properties()));
+            () -> new net.minecraft.world.item.BlockItem(
+                    HallFurniture.LIBRARY_BOOKCASE.get(), new Item.Properties()) {
+                // Compatibility item places the new rack; do not replace the canonical block->item mapping.
+                @Override
+                public void registerBlocks(java.util.Map<net.minecraft.world.level.block.Block, Item> map, Item item) { }
+            });
+
+    public static final DeferredHolder<net.minecraft.world.level.block.Block, ArchiveShelfBlock> ARCHIVE_SHELF =
+            BLOCKS.register("archive_shelf", () -> new ArchiveShelfBlock(net.minecraft.world.level.block.state.BlockBehaviour.Properties
+                    .ofFullCopy(net.minecraft.world.level.block.Blocks.CHISELED_BOOKSHELF)));
+    public static final DeferredHolder<Item, net.minecraft.world.item.BlockItem> ARCHIVE_SHELF_ITEM = ITEMS.register("archive_shelf",
+            () -> new net.minecraft.world.item.BlockItem(ARCHIVE_SHELF.get(), new Item.Properties()));
+    public static final DeferredHolder<net.minecraft.world.level.block.Block, BookshelfRailingBlock> BOOKSHELF_RAILING =
+            BLOCKS.register("bookshelf_railing", () -> new BookshelfRailingBlock(net.minecraft.world.level.block.state.BlockBehaviour.Properties
+                    .ofFullCopy(net.minecraft.world.level.block.Blocks.DARK_OAK_FENCE).noOcclusion()));
+    public static final DeferredHolder<Item, net.minecraft.world.item.BlockItem> BOOKSHELF_RAILING_ITEM = ITEMS.register("bookshelf_railing",
+            () -> new net.minecraft.world.item.BlockItem(BOOKSHELF_RAILING.get(), new Item.Properties()));
+    @SuppressWarnings("DataFlowIssue")
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ArchiveShelfBlockEntity>> ARCHIVE_SHELF_ENTITY =
+            BLOCK_ENTITIES.register("archive_shelf", () -> BlockEntityType.Builder.of(ArchiveShelfBlockEntity::new,
+                    ARCHIVE_SHELF.get()).build(null));
+
+    /** Persistent generated manuals in both rack heights; decorative/player-placed racks start empty. */
+    @SuppressWarnings("DataFlowIssue")
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<BookcaseManualBlockEntity>> BOOKCASE_MANUAL_ENTITY =
+            BLOCK_ENTITIES.register("bookcase_manual", () -> BlockEntityType.Builder.of(
+                    BookcaseManualBlockEntity::new,
+                    HallFurniture.LIBRARY_BOOKCASE.get(),
+                    HallFurniture.LIBRARY_BOOKCASE_TALL.get()).build(null));
 
     public static final DeferredHolder<LootItemFunctionType<?>, LootItemFunctionType<JunkBookFunction>> JUNK_BOOK_FUNCTION =
             LOOT_FUNCTIONS.register("junk_book", () -> new LootItemFunctionType<>(JunkBookFunction.CODEC));
@@ -111,12 +164,15 @@ public final class ModLibrary {
         }
         seeds.forEach((k, s) -> event.accept(JunkFactory.stack(new JunkBook(k, s, k == JunkKind.CLUE ? 19 : -1, false))));
         event.accept(new net.minecraft.world.item.ItemStack(PROPPED_SHELF_ITEM.get()));
-        event.accept(new net.minecraft.world.item.ItemStack(MANUAL_SHELF_ITEM.get()));
+        event.accept(new net.minecraft.world.item.ItemStack(ARCHIVE_SHELF_ITEM.get()));
+        event.accept(new net.minecraft.world.item.ItemStack(BOOKSHELF_RAILING_ITEM.get()));
+        DECOR_ITEMS.forEach(item -> event.accept(new net.minecraft.world.item.ItemStack(item.get())));
     }
 
     public static void register(IEventBus modBus) {
         BLOCKS.register(modBus);
         ITEMS.register(modBus);
+        BLOCK_ENTITIES.register(modBus);
         COMPONENTS.register(modBus);
         LOOT_FUNCTIONS.register(modBus);
         STRUCTURE_TYPES.register(modBus);

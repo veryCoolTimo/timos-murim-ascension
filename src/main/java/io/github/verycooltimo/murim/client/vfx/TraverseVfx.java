@@ -53,13 +53,15 @@ public final class TraverseVfx {
     private static int clientTicks;
 
     private static final class Run {
-        final int layer;
+        final int executionTier;
+        final int family;
         Vec3 last;
         double travelled;
         int count;
 
-        Run(int layer, Vec3 last) {
-            this.layer = layer;
+        Run(int executionTier, int family, Vec3 last) {
+            this.family = family;
+            this.executionTier = executionTier;
             this.last = last;
         }
     }
@@ -80,24 +82,24 @@ public final class TraverseVfx {
         Entity entity = minecraft.level.getEntity(e.entityId());
         Vec3 dir = new Vec3(e.dirX(), 0.0D, e.dirZ());
         // Зрелище форм — своё у каждой (FootworkVfx); здесь — ввод бега и толчки прыжка.
-        FootworkVfx.onEvent(entity, e.kind(), e.layer(), dir, e.entityId());
-        sound(entity, e.kind(), e.layer());
+        FootworkVfx.onEvent(entity, e.kind(), e.executionTier(), dir, e.entityId());
+        sound(entity, e.kind(), e.executionTier());
         switch (e.kind()) {
             case 0 -> RUNS.remove(e.entityId());
             case 1 -> {
                 if (entity != null) {
-                    RUNS.put(e.entityId(), new Run(e.layer(), entity.position()));
+                    RUNS.put(e.entityId(), new Run(e.executionTier(), (int) e.dirX(), entity.position()));
                 }
             }
             // Слой 0 — без эффектов, и экранных линий тоже.
-            case 5 -> ownLines(minecraft, entity, e.layer() >= 1 ? dir : Vec3.ZERO, 0.55F);
-            case 8 -> ownLines(minecraft, entity, e.layer() >= 1 ? dir : Vec3.ZERO, 0.9F);
-            case 9 -> ownLines(minecraft, entity, e.layer() >= 1 ? dir : Vec3.ZERO, 0.6F);
+            case 5 -> ownLines(minecraft, entity, io.github.verycooltimo.murim.technique.FootworkFamily.windVfxTier(e.executionTier()) >= 1 ? dir : Vec3.ZERO, 0.55F);
+            case 8 -> ownLines(minecraft, entity, io.github.verycooltimo.murim.technique.FootworkFamily.windVfxTier(e.executionTier()) >= 1 ? dir : Vec3.ZERO, 0.9F);
+            case 9 -> ownLines(minecraft, entity, e.executionTier() >= 1 ? dir : Vec3.ZERO, 0.6F);
             case 6, 7 -> {
             }
             default -> {
-                if (entity != null && e.layer() >= 1) {
-                    burst(entity, e.kind(), e.layer(), dir);
+                if (entity != null && e.executionTier() >= 1) {
+                    burst(entity, e.kind(), e.executionTier(), dir);
                 }
             }
         }
@@ -107,14 +109,14 @@ public final class TraverseVfx {
      * Звуки форм шагов. Слой 0 — без звуков эффектов: только сам рывок/шаг, тише.
      * Бег — петля ветра, громкость по скорости; тень — без петли (скрытность), только вход.
      */
-    private static void sound(Entity entity, int kind, int layer) {
+    private static void sound(Entity entity, int kind, int executionTier) {
         if (entity == null) {
             return;
         }
-        float k = layer >= 1 ? 1.0F : 0.5F;
+        float k = executionTier >= 1 ? 1.0F : 0.5F;
         switch (kind) {
             case 1 -> {
-                if (layer >= 1) {
+                if (executionTier >= 1) {
                     int id = entity.getId();
                     Vec3[] last = {entity.position()};
                     float[] speed = {0.0F};
@@ -127,13 +129,13 @@ public final class TraverseVfx {
                     }, 1.0F, () -> RUNS.containsKey(id), 8);
                 }
             }
-            case 5 -> io.github.verycooltimo.murim.client.Sfx.play(entity, layer >= 1 ? io.github.verycooltimo.murim.registry.ModSounds.BLINK : io.github.verycooltimo.murim.registry.ModSounds.DASH, 0.9F * k, 1.0F);
+            case 5 -> io.github.verycooltimo.murim.client.Sfx.play(entity, executionTier >= 1 ? io.github.verycooltimo.murim.registry.ModSounds.BLINK : io.github.verycooltimo.murim.registry.ModSounds.DASH, 0.9F * k, 1.0F);
             case 6 -> io.github.verycooltimo.murim.client.Sfx.play(entity, io.github.verycooltimo.murim.registry.ModSounds.STEP_SOFT, 0.7F, 0.9F);
-            case 8 -> io.github.verycooltimo.murim.client.Sfx.play(entity, layer >= 1 ? io.github.verycooltimo.murim.registry.ModSounds.BURST_STEP : io.github.verycooltimo.murim.registry.ModSounds.DASH, 1.0F * k, 0.9F);
-            case 9 -> io.github.verycooltimo.murim.client.Sfx.play(entity, layer >= 1 ? io.github.verycooltimo.murim.registry.ModSounds.BLINK : io.github.verycooltimo.murim.registry.ModSounds.DASH, 0.8F * k, 1.1F);
+            case 8 -> io.github.verycooltimo.murim.client.Sfx.play(entity, executionTier >= 1 ? io.github.verycooltimo.murim.registry.ModSounds.BURST_STEP : io.github.verycooltimo.murim.registry.ModSounds.DASH, 1.0F * k, 0.9F);
+            case 9 -> io.github.verycooltimo.murim.client.Sfx.play(entity, executionTier >= 1 ? io.github.verycooltimo.murim.registry.ModSounds.BLINK : io.github.verycooltimo.murim.registry.ModSounds.DASH, 0.8F * k, 1.1F);
             case 0, 7 -> {
             }
-            default -> io.github.verycooltimo.murim.client.Sfx.play(entity, layer >= 1 ? io.github.verycooltimo.murim.registry.ModSounds.BURST_STEP : io.github.verycooltimo.murim.registry.ModSounds.STEP_SOFT, 0.8F * k, 1.0F);
+            default -> io.github.verycooltimo.murim.client.Sfx.play(entity, executionTier >= 1 ? io.github.verycooltimo.murim.registry.ModSounds.BURST_STEP : io.github.verycooltimo.murim.registry.ModSounds.STEP_SOFT, 0.8F * k, 1.0F);
         }
     }
 
@@ -173,7 +175,8 @@ public final class TraverseVfx {
             Vec3 pos = entity.position();
             Vec3 d = new Vec3(pos.x - run.last.x, 0.0D, pos.z - run.last.z);
             run.last = pos;
-            if (entity == minecraft.player && run.layer >= 3 && d.length() > 0.45D && clientTicks % 8 == 0) {
+            if (entity == minecraft.player && run.executionTier >= 3 && d.length() > 0.45D && (run.family == io.github.verycooltimo.murim.technique.FootworkFamily.HUASHAN.ordinal()
+                    ? clientTicks % 8 == 0 : run.count++ == 20)) {
                 SpeedLines.radial(0.5F, 0.5F, 0.2F, 10, SpeedLines.WHITE);
             }
         }
@@ -181,7 +184,7 @@ public final class TraverseVfx {
     }
 
     /** Толчок: серп под стопой (прыжок), у стены (отталкивание), под ногами в воздухе (коррекция). */
-    private static void burst(Entity entity, int kind, int layer, Vec3 dir) {
+    private static void burst(Entity entity, int kind, int executionTier, Vec3 dir) {
         Vec3 pos = entity.position();
         Vec3 d = dir.lengthSqr() < 1.0E-6D ? Vec3.directionFromRotation(0.0F, entity.getYRot()) : dir.normalize();
         Vec3 side = new Vec3(-d.z, 0.0D, d.x);
@@ -193,10 +196,10 @@ public final class TraverseVfx {
                     double th = Math.PI + Math.toRadians(200.0D) * (i / 12.0D - 0.5D);
                     pts[i] = pos.add(d.scale(0.45D * Math.cos(th))).add(side.scale(0.35D * Math.sin(th))).add(0.0D, 0.05D, 0.0D);
                 }
-                STREAKS.add(new Streak(pts, 0.07D + 0.01D * layer, clientTicks, 4.0F, 1.0F));
+                STREAKS.add(new Streak(pts, 0.07D + 0.01D * executionTier, clientTicks, 4.0F, 1.0F));
             }
             case 3 -> {
-                if (layer >= 2) {
+                if (executionTier >= 2) {
                     // От стены (dir — её нормаль): дуга вверх вдоль стены.
                     Vec3[] pts = new Vec3[10];
                     for (int i = 0; i < pts.length; i++) {
@@ -207,7 +210,7 @@ public final class TraverseVfx {
                 }
             }
             case 4 -> {
-                if (layer >= 4) {
+                if (executionTier >= 4) {
                     STREAKS.add(streak(pos.add(0.0D, -0.05D, 0.0D), d.scale(-1.0D), 1.0D, 0.06D, 0.0D, 3.0F, 0.9F));
                 }
             }

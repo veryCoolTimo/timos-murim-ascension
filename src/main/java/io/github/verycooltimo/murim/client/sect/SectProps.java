@@ -37,7 +37,6 @@ final class SectProps extends RenderLayer<SectDisciple, DiscipleRenderer.Model> 
             "chopsticks", new String[] {"root", "waist", "torso", "arm_r"},
             "broom", new String[] {"root", "waist", "torso", "arm_r"},
             "yoke", new String[] {"root", "waist", "torso"},
-            "scabbard", new String[] {"root", "waist"},
             // Body training (tools/art/sect_props.py): stone at the chest, slab on the back.
             "rock", new String[] {"root", "waist", "torso"},
             "slab", new String[] {"root", "waist", "torso"});
@@ -63,8 +62,7 @@ final class SectProps extends RenderLayer<SectDisciple, DiscipleRenderer.Model> 
         ModelPart root = getParentModel().root();
         for (String name : p.props()) {
             String[] chain = ATTACH.get(name);
-            // У модели со своими ножнами (ученик третьего поколения) ножны-реквизит не нужны.
-            if (chain == null || !props.hasChild(name) || "scabbard".equals(name) && getParentModel().sheathModel()) {
+            if (chain == null || !props.hasChild(name)) {
                 continue;
             }
             ModelPart prop = props.getChild(name);

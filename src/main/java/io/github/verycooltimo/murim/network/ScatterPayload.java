@@ -13,7 +13,7 @@ import net.minecraft.world.phys.Vec3;
  * b — центр цели, arg — бит 0: сторона прыжка вправо, бит 1: цель на земле); 1 — удар клона ПОПАЛ
  * (a — точка, arg — клон × 8 + удар); 2 — взмах мастера попал; 3 — рассеяние попало (a — центр).
  */
-public record ScatterPayload(int entityId, Vec3 a, Vec3 b, float base, int layer, int stage, int arg, int targetId)
+public record ScatterPayload(int entityId, Vec3 a, Vec3 b, float base, int executionTier, int stage, int arg, int targetId)
         implements CustomPacketPayload {
 
     public static final int RELEASE = 0;
@@ -33,7 +33,7 @@ public record ScatterPayload(int entityId, Vec3 a, Vec3 b, float base, int layer
                 VEC.encode(buf, p.a());
                 VEC.encode(buf, p.b());
                 buf.writeFloat(p.base());
-                ByteBufCodecs.VAR_INT.encode(buf, p.layer());
+                ByteBufCodecs.VAR_INT.encode(buf, p.executionTier());
                 ByteBufCodecs.VAR_INT.encode(buf, p.stage());
                 ByteBufCodecs.VAR_INT.encode(buf, p.arg());
                 ByteBufCodecs.VAR_INT.encode(buf, p.targetId());

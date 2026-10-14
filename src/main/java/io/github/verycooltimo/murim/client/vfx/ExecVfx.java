@@ -84,7 +84,7 @@ public final class ExecVfx {
 
     private static final class Cast {
         final int entityId;
-        final int layer;
+        final int executionTier;
         final int start;
         final Random random;
         int exitTick = -1;
@@ -103,9 +103,9 @@ public final class ExecVfx {
         int targetId = -1;
         Vec3 hitAt;
 
-        Cast(int entityId, int layer) {
+        Cast(int entityId, int executionTier) {
             this.entityId = entityId;
-            this.layer = layer;
+            this.executionTier = executionTier;
             this.start = clientTicks;
             this.random = new Random(entityId * 4513L + clientTicks);
             for (int i = 0; i < 6; i++) {
@@ -122,12 +122,12 @@ public final class ExecVfx {
 
     public static void onTechniqueEvent(TechniqueEventPayload payload) {
         if (payload.event() != TechniqueEventPayload.Event.STARTED || !TECHNIQUE.equals(payload.techniqueId())
-                || payload.layer() <= 0) {
+                || payload.executionTier() <= 0) {
             return;
         }
-        Cast c = new Cast(payload.sourceId(), payload.layer());
+        Cast c = new Cast(payload.sourceId(), payload.executionTier());
         CASTS.add(c);
-        if (c.layer >= 3) {
+        if (c.executionTier >= 3) {
             // Слабая аура и гаснет к 42-му тику: перед выходом клонов — настоящая пауза (codex 02.10).
             ClientAuraState.techniqueAura(c.entityId, 2, 0, PREP_TO);
         }
@@ -145,6 +145,9 @@ public final class ExecVfx {
                 c.finalHit = c.since();
                 c.hitAt = p.centre();
                 Minecraft mc = Minecraft.getInstance();
+                if (mc.level != null) {
+                    VfxBackends.shockwave(mc.level, QiShockwaveVfx.ground(mc.level, p.centre()));
+                }
                 if (mc.player != null && mc.player.getId() == c.entityId) {
                     ImpactFrames.trigger(p.centre());
                     SpeedLines.radial(0.5F, 0.5F, 1.0F, 7, SpeedLines.WHITE);
@@ -161,7 +164,7 @@ public final class ExecVfx {
             return;
         }
         if (c == null) {
-            c = new Cast(p.entityId(), p.layer());
+            c = new Cast(p.entityId(), p.executionTier());
             CASTS.add(c);
         }
         c.origin = p.origin();
@@ -175,8 +178,8 @@ public final class ExecVfx {
             c.skin = player.getSkin().texture();
             c.basePose = capture(renderer.getModel());
         }
-        if (c.layer >= 3) {
-            ClientAuraState.techniqueAura(c.entityId, 2 + Math.min(3, c.layer), 1, ExecRules.END);
+        if (c.executionTier >= 3) {
+            ClientAuraState.techniqueAura(c.entityId, 2 + Math.min(3, c.executionTier), 1, ExecRules.END);
         }
         if (mc.player != null && mc.player.getId() == c.entityId) {
             SpeedLines.radial(0.5F, 0.55F, 0.6F, 6, SpeedLines.WHITE);
@@ -243,7 +246,7 @@ public final class ExecVfx {
             int age = clientTicks - c.start;
             Entity e = mc.level.getEntity(c.entityId);
             // Подготовка: шесть проводок меча — на каждой тело «двоится» застывшей копией.
-            if (c.exitTick < 0 && age >= PREP_FROM && age <= PREP_TO && (age - PREP_FROM) % 5 == 0 && c.layer >= 2
+            if (c.exitTick < 0 && age >= PREP_FROM && age <= PREP_TO && (age - PREP_FROM) % 5 == 0 && c.executionTier >= 2
                     && e instanceof AbstractClientPlayer player
                     && mc.getEntityRenderDispatcher().getRenderer(player) instanceof PlayerRenderer renderer) {
                 PartPose[] pose = capture(renderer.getModel());
@@ -251,7 +254,7 @@ public final class ExecVfx {
                     Vec3 jit = new Vec3((c.random.nextDouble() - 0.5D) * 0.14D, 0.0D, (c.random.nextDouble() - 0.5D) * 0.14D);
                     c.ghosts.add(new Ghost(player.position().add(jit), player.getYRot(), clientTicks + k, pose));
                 }
-                if (c.layer >= 3) {
+                if (c.executionTier >= 3) {
                     Vec3 hand = player.position().add(0.0D, 1.4D, 0.0D);
                     for (int i = 0; i < 2; i++) {
                         petal(c, hand, new Vec3(c.random.nextGaussian() * 0.05D, 0.03D, c.random.nextGaussian() * 0.05D));
@@ -266,7 +269,7 @@ public final class ExecVfx {
             }
             int s = c.since();
             if (s >= 0 && c.centre != null) {
-                for (int i = 0; i < ExecRules.clones(c.layer); i++) {
+                for (int i = 0; i < ExecRules.clones(c.executionTier); i++) {
                     Vec3 p = ExecRules.clone(c.origin, c.centre, c.base, i, s);
                     List<Vec3> tr = c.trails.get(i);
                     int ct = ExecRules.contact(i);
@@ -279,7 +282,7 @@ public final class ExecVfx {
                         tr.remove(0);
                     }
                     // Копия из лепестков: на лету с неё постоянно срываются лепестки.
-                    if (c.layer >= 3 && s > ExecRules.EXIT && s < ExecRules.FINAL && c.random.nextInt(2) == 0) {
+                    if (c.executionTier >= 3 && s > ExecRules.EXIT && s < ExecRules.FINAL && c.random.nextInt(2) == 0) {
                         petal(c, p.add((c.random.nextDouble() - 0.5D) * 0.5D, 0.4D + 1.2D * c.random.nextDouble(),
                                 (c.random.nextDouble() - 0.5D) * 0.5D), new Vec3(c.random.nextGaussian() * 0.02D, 0.01D, c.random.nextGaussian() * 0.02D));
                     }
@@ -288,7 +291,7 @@ public final class ExecVfx {
                         dustAt(c, p);
                     }
                     // Распад: лепестки рвутся с тела, наследуя направление полёта.
-                    if (s > ExecRules.FINAL + ExecRules.DISSOLVE_DELAY && s <= ExecRules.FINAL + ExecRules.DISSOLVE_DELAY + ExecRules.DISSOLVE && c.layer >= 3) {
+                    if (s > ExecRules.FINAL + ExecRules.DISSOLVE_DELAY && s <= ExecRules.FINAL + ExecRules.DISSOLVE_DELAY + ExecRules.DISSOLVE && c.executionTier >= 3) {
                         Vec3 vel = new Vec3(p.x - c.centre.x, 0.0D, p.z - c.centre.z).normalize().scale(0.12D);
                         for (int k = 0; k < 5; k++) {
                             // Точки тела: корпус вытянут вдоль полёта — разброс вдоль скорости больше.
@@ -301,11 +304,11 @@ public final class ExecVfx {
                     }
                 }
                 // Надпись — в паузе перед казнью (codex 02.10), центр свободен.
-                if (s == ExecRules.FINAL - 6 && ExecRules.finale(c.layer) && c.layer >= 3 && mc.player != null && mc.player.getId() == c.entityId) {
+                if (s == ExecRules.FINAL - 6 && ExecRules.finale(c.executionTier) && c.executionTier >= 3 && mc.player != null && mc.player.getId() == c.entityId) {
                     TechniqueCaption.show(Component.translatable("technique.murim.seven_plum_blossoms.school"),
                             Component.translatable("technique.murim.seven_plum_blossoms.execution"), 30);
                 }
-                if (ExecRules.finale(c.layer) && s >= ExecRules.DASH && s <= ExecRules.DASH + ExecRules.DASH_TICKS && e != null) {
+                if (ExecRules.finale(c.executionTier) && s >= ExecRules.DASH && s <= ExecRules.DASH + ExecRules.DASH_TICKS && e != null) {
                     c.dash.add(e.position().add(0.0D, 1.1D, 0.0D));
                 }
 
@@ -382,7 +385,7 @@ public final class ExecVfx {
                     }
                     buffers.endBatch(dt);
                 }
-                if (c.layer >= 3 && !c.petals.isEmpty()) {
+                if (c.executionTier >= 3 && !c.petals.isEmpty()) {
                     RenderType petals = MurimRenderTypes.plumPetals();
                     VertexConsumer pc = buffers.getBuffer(petals);
                     for (Mote m : c.petals) {
@@ -398,7 +401,7 @@ public final class ExecVfx {
                     VertexConsumer g = buffers.getBuffer(glowType);
                     // Внутреннее свечение копий: мягкое розовое пятно в груди.
                     if (s >= 0.0F && c.centre != null) {
-                        for (int i = 0; i < ExecRules.clones(c.layer); i++) {
+                        for (int i = 0; i < ExecRules.clones(c.executionTier); i++) {
                             float dz = (float) Mth.clamp((s - ExecRules.FINAL - ExecRules.DISSOLVE_DELAY) / ExecRules.DISSOLVE, 0.0D, 1.0D);
                             if (dz < 1.0F) {
                                 Vec3 cp = ExecRules.clone(c.origin, c.centre, c.base, i, s).add(0.0D, 1.1D, 0.0D);
@@ -450,7 +453,7 @@ public final class ExecVfx {
                 draw(model, ps, buffers.getBuffer(type), g.pos(), g.yaw(), 0.0F, 0.22F * (1.0F - t), 0xC9E7F4);
             }
             if (s >= 0.0F && c.centre != null && c.basePose != null) {
-                for (int i = 0; i < ExecRules.clones(c.layer); i++) {
+                for (int i = 0; i < ExecRules.clones(c.executionTier); i++) {
                     int ct = ExecRules.contact(i);
                     // Клоны стоят за спиной жертвы до финала и рассыпаются вместе с шестью разрезами.
                     float dissolve = (float) Mth.clamp((s - ExecRules.FINAL - ExecRules.DISSOLVE_DELAY) / ExecRules.DISSOLVE, 0.0D, 1.0D);
@@ -616,10 +619,10 @@ public final class ExecVfx {
 
     /** Разрез каждого клона по цели: узкая лента клинка под своим углом, живёт 8 тиков. */
     private static void slashes(Cast c, PoseStack.Pose pose, Vec3 camera, VertexConsumer v, float s) {
-        for (int i = 0; i < ExecRules.clones(c.layer); i++) {
+        for (int i = 0; i < ExecRules.clones(c.executionTier); i++) {
             float t = s - ExecRules.contact(i);
             // Метка будущего разреза висит на цели до казни.
-            if (t > 6.0F && s < ExecRules.FINAL && ExecRules.finale(c.layer)) {
+            if (t > 6.0F && s < ExecRules.FINAL && ExecRules.finale(c.executionTier)) {
                 slashLine(c, pose, camera, v, i, 0.35F, 1.0F, 0.9D);
             }
             if (t < 0.0F || t > 5.0F) {
@@ -668,7 +671,7 @@ public final class ExecVfx {
 
     /** Казнь (e8): шесть разрезов разом раскрываются на цели крупнее одиночных. */
     private static void finale(Cast c, PoseStack.Pose pose, Vec3 camera, VertexConsumer v, float s) {
-        if (!ExecRules.finale(c.layer)) {
+        if (!ExecRules.finale(c.executionTier)) {
             return;
         }
         float t = s - ExecRules.FINAL;

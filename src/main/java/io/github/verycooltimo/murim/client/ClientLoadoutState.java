@@ -15,6 +15,24 @@ public final class ClientLoadoutState {
         state = payload;
     }
 
+    /** Выбор сразу доступен клавише R; сервер проверяет запрос и присылает окончательное состояние. */
+    public static void choose(int slot, ResourceLocation form, boolean activate) {
+        if (slot < 0 || slot >= state.open()) {
+            return;
+        }
+        var next = new io.github.verycooltimo.murim.mastery.Loadout(state.slots(), state.active(), state.foundation())
+                .with(slot, Optional.of(form));
+        if (activate) {
+            next = next.select(slot);
+            Optional<ResourceLocation> basic = io.github.verycooltimo.murim.technique.Styles.of(form)
+                    .flatMap(io.github.verycooltimo.murim.technique.Styles.Style::basic);
+            if (basic.isPresent() && TechniqueSlotsHud.mastery(basic.get()) != null) {
+                next = next.withFoundation(basic);
+            }
+        }
+        state = new LoadoutPayloads.Sync(next.slots(), next.active(), state.open(), next.foundation());
+    }
+
     /** Открытые слоты (их столько, сколько даёт прогрессия). */
     public static List<Optional<ResourceLocation>> slots() {
         return state.slots();

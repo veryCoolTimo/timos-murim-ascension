@@ -174,16 +174,16 @@ public final class TangVfx {
     private static final class Cast {
         final int entityId;
         final int form;
-        final int layer;
+        final int executionTier;
         int start;
         final double density;
 
-        Cast(int entityId, int form, int layer) {
+        Cast(int entityId, int form, int executionTier) {
             this.entityId = entityId;
             this.form = form;
-            this.layer = layer;
+            this.executionTier = executionTier;
             this.start = clientTicks;
-            this.density = TangRules.density(layer);
+            this.density = TangRules.density(executionTier);
         }
 
         int t() {
@@ -211,16 +211,16 @@ public final class TangVfx {
             return;
         }
         CASTS.removeIf(c -> c.entityId == payload.sourceId());
-        Cast c = new Cast(payload.sourceId(), form, payload.layer());
+        Cast c = new Cast(payload.sourceId(), form, payload.executionTier());
         CASTS.add(c);
-        if (c.layer >= 3) {
+        if (c.executionTier >= 3) {
             // Холодная синяя аура в стойке (рефы s01, d4-01: синие языки у плеч и головы).
             // У Пяти Громов аура — только у руки по смыслу: короче и слабее, чтобы не глушить выпуски (codex 03.10).
-            ClientAuraState.techniqueAura(c.entityId, form == TangRules.STARS ? 2 + Math.min(1, c.layer / 4) : 2, 0,
+            ClientAuraState.techniqueAura(c.entityId, form == TangRules.STARS ? 2 + Math.min(1, c.executionTier / 4) : 2, 0,
                     TangRules.windup(form) + (form == TangRules.FIVE ? 0 : 24));
         }
         Minecraft mc = Minecraft.getInstance();
-        if (c.layer >= 1 && mc.level != null && mc.level.getEntity(c.entityId) instanceof Entity e) {
+        if (c.executionTier >= 1 && mc.level != null && mc.level.getEntity(c.entityId) instanceof Entity e) {
             dust(e.position(), form == TangRules.FIVE ? 2 : c.n(8) + 2, 0.12D);
             sound(e.position(), SoundEvents.ARMOR_EQUIP_CHAIN.value(), 0.6F, 1.6F);
         }
@@ -231,13 +231,13 @@ public final class TangVfx {
         if (mc.level == null) {
             return;
         }
-        int layer = p.layer();
+        int executionTier = p.executionTier();
         Entity master = mc.level.getEntity(p.entityId());
         boolean own = mc.player != null && mc.player.getId() == p.entityId();
         switch (p.stage()) {
             case TangPayload.SHOT -> shot(p, master, own);
             case TangPayload.HIT -> hit(p, own, mc);
-            case TangPayload.CLANG -> clang(p.pos(), p.dir(), layer);
+            case TangPayload.CLANG -> clang(p.pos(), p.dir(), executionTier);
             case TangPayload.EXPLODE -> explode(p, own, mc);
             case TangPayload.BURST -> {
                 sound(p.pos(), SoundEvents.TRIDENT_RIPTIDE_1.value(), 1.0F, 0.7F);
@@ -246,7 +246,7 @@ public final class TangVfx {
                     sound(p.pos(), SoundEvents.ANVIL_LAND, 0.5F, 1.9F);
                     FX.bursts.add(new Burst(p.pos(), clientTicks, 8, 1.1D, 5, RANDOM.nextLong(), false, false));
                 }
-                if (layer >= 6) {
+                if (executionTier >= 6) {
                     // Кольца рвутся назад туннелем (s10).
                     // Туннель s10: 6 колец через 0,9 блока по ходу рывка, живут 4 тика.
                     for (int i = 0; i < 6; i++) {
@@ -254,7 +254,7 @@ public final class TangVfx {
                                 4, 0.045D, i % 2 == 0 ? WHITE : PALE, 0.3D));
                     }
                 }
-                if (layer >= 1) {
+                if (executionTier >= 1) {
                     for (int i = 0; i < 8; i++) {
                         Vec3 v = p.dir().scale(-0.25D).add(RANDOM.nextGaussian() * 0.12D, RANDOM.nextGaussian() * 0.12D, RANDOM.nextGaussian() * 0.12D);
                         wind(p.pos(), v, 10, 0.06D);
@@ -265,7 +265,7 @@ public final class TangVfx {
                 }
             }
             case TangPayload.STAR -> {
-                if (layer >= 3) {
+                if (executionTier >= 3) {
                     FX.rings.add(new Ring(p.pos(), camAxis(p.pos()), clientTicks, 0.1D, 0.55D, 6, 0.04D, WHITE, 0.0D));
                 }
                 sound(p.pos(), SoundEvents.AMETHYST_BLOCK_CHIME, 0.5F, 1.7F + 0.05F * p.a());
@@ -276,7 +276,7 @@ public final class TangVfx {
             }
             case TangPayload.STRIKE -> sound(p.pos(), SoundEvents.TRIDENT_THROW.value(), 1.0F, 1.6F);
             case TangPayload.CUT -> {
-                clang(p.pos(), Vec3.ZERO, layer);
+                clang(p.pos(), Vec3.ZERO, executionTier);
                 sound(p.pos(), SoundEvents.CHAIN_HIT, 0.7F, 1.6F);
             }
             case TangPayload.HANG -> {
@@ -285,7 +285,7 @@ public final class TangVfx {
             }
             case TangPayload.RECALL -> {
                 sound(p.pos(), SoundEvents.ARROW_SHOOT, p.form() == TangRules.RETURN ? 0.35F : 1.0F, p.form() == TangRules.RETURN ? 1.2F : 0.6F);
-                if (layer >= 1) {
+                if (executionTier >= 1) {
                     // Возврат в Рукав: лезвий много — кольцо маленькое и короткое, чтобы не закрывать прямые линии (codex 03.10).
                     boolean many = p.form() == TangRules.RETURN;
                     FX.rings.add(new Ring(p.pos(), camAxis(p.pos()), clientTicks, 0.1D, many ? 0.4D : 0.9D, many ? 4 : 7, 0.05D, WHITE, 0.2D));
@@ -293,7 +293,7 @@ public final class TangVfx {
             }
             case TangPayload.CAUGHT -> {
                 FX.hangOwner.remove(p.a());
-                if (master != null && layer >= 1) {
+                if (master != null && executionTier >= 1) {
                     for (int i = 0; i < 5; i++) {
                         wind(p.pos(), new Vec3(RANDOM.nextGaussian() * 0.08D, 0.05D, RANDOM.nextGaussian() * 0.08D), 8, 0.04D);
                     }
@@ -301,11 +301,11 @@ public final class TangVfx {
                 sound(p.pos(), SoundEvents.ARMOR_EQUIP_CHAIN.value(), 0.7F, 1.4F);
             }
             case TangPayload.DOWN -> {
-                clang(p.pos(), Vec3.ZERO, layer);
+                clang(p.pos(), Vec3.ZERO, executionTier);
                 sound(p.pos(), SoundEvents.ANVIL_LAND, 0.25F, 2.0F);
             }
             case TangPayload.POISON -> {
-                if (layer >= 0) {
+                if (executionTier >= 0) {
                     // Ядовитая дымка у раны: тёмно-зелёные струйки поднимаются и тают (рефы poison).
                     for (int i = 0; i < 6; i++) {
                         Mote m = new Mote(p.pos().add(RANDOM.nextGaussian() * 0.2D, RANDOM.nextGaussian() * 0.25D, RANDOM.nextGaussian() * 0.2D),
@@ -333,17 +333,17 @@ public final class TangVfx {
     // ------------------------------------------------------------------ выпуск и удар
 
     private static void shot(TangPayload p, Entity master, boolean own) {
-        int layer = p.layer();
+        int executionTier = p.executionTier();
         Vec3 at = p.pos();
         Vec3 dir = p.dir();
         switch (p.form()) {
             case TangRules.FIVE -> {
                 sound(at, SoundEvents.ARROW_SHOOT, 0.9F, 1.5F + 0.12F * p.a());
-                if (layer >= 3) {
+                if (executionTier >= 3) {
                     // Поперечная белая дуга у кисти на каждом щелчке (d3-03, «кольцевые следы у точки старта»).
                     FX.rings.add(new Ring(at.add(dir.scale(0.3D)), dir, clientTicks, 0.18D, 0.32D + 0.02D * p.a(), 3, 0.035D, WHITE, 0.35D));
                 }
-                if (layer >= 1) {
+                if (executionTier >= 1) {
                     for (int i = 0; i < 3; i++) {
                         wind(at, dir.scale(0.25D).add(RANDOM.nextGaussian() * 0.06D, RANDOM.nextGaussian() * 0.06D, RANDOM.nextGaussian() * 0.06D), 8, 0.04D);
                     }
@@ -356,21 +356,21 @@ public final class TangVfx {
                 if (p.b() == 1) {
                     // 12-й с неба: вспышка «против солнца» у мастера.
                     sound(at, SoundEvents.TRIDENT_THROW.value(), 1.0F, 0.8F);
-                    if (layer >= 1) {
+                    if (executionTier >= 1) {
                         FX.bursts.add(new Burst(at.add(0.0D, 0.6D, 0.0D), clientTicks, 10, 1.6D, 8, RANDOM.nextLong(), false, false));
                     }
                     return;
                 }
                 if (p.a() == 0) {
                     sound(at, SoundEvents.TRIDENT_THROW.value(), 1.0F, 1.3F);
-                    if (layer >= 6) {
+                    if (executionTier >= 6) {
                         FX.rings.add(new Ring(at, dir, clientTicks, 0.4D, 2.6D, 9, 0.07D, WHITE, 0.3D));
                     }
                     if (own) {
                         SpeedLines.directional(0.0F, 0.28F, 3, SpeedLines.WHITE);
                     }
                 }
-                if (layer >= 2) {
+                if (executionTier >= 2) {
                     // Веер из кисти (s03): белая стрела-всполох по направлению каждого кинжала.
                     Mote m = new Mote(at, dir.scale(0.6D), 5, Mote.SPARK, 0.07D, 5);
                     m.drag = 0.7D;
@@ -385,7 +385,7 @@ public final class TangVfx {
                         SpeedLines.radial(0.5F, 0.5F, 0.25F, 3, SpeedLines.WHITE);
                     }
                 }
-                if (layer >= 1) {
+                if (executionTier >= 1) {
                     // Рукав раскрывается: лента ветра по дуге вылета (d4-02).
                     wind(at, dir.scale(0.3D), 10, 0.07D);
                 }
@@ -398,10 +398,10 @@ public final class TangVfx {
                         SpeedLines.directional(0.0F, 0.15F, 2, SpeedLines.WHITE);
                     }
                 }
-                if (layer >= 1) {
+                if (executionTier >= 1) {
                     wind(at, dir.scale(0.3D), 7, 0.045D);
                 }
-                if (layer >= 3 && p.a() == 0) {
+                if (executionTier >= 3 && p.a() == 0) {
                     FX.rings.add(new Ring(at.add(dir.scale(0.3D)), dir, clientTicks, 0.15D, 0.4D, 3, 0.035D, WHITE, 0.35D));
                 }
             }
@@ -409,14 +409,14 @@ public final class TangVfx {
                 // Звон монет в ладони и щелчок — веер уходит.
                 sound(at, SoundEvents.CHAIN_PLACE, 0.8F, 1.8F);
                 sound(at, SoundEvents.ARROW_SHOOT, 0.6F, 1.6F);
-                if (own && layer >= 3) {
+                if (own && executionTier >= 3) {
                     SpeedLines.directional(0.0F, 0.15F, 2, SpeedLines.WHITE);
                 }
             }
             case TangRules.FLASH -> {
                 // «Пааа!» — щелчок пальцами; самого лезвия не видно: читается только жест (spec Б).
                 sound(at, SoundEvents.PLAYER_ATTACK_SWEEP, 0.9F, 1.9F);
-                if (layer >= 1) {
+                if (executionTier >= 1) {
                     FX.bursts.add(new Burst(at.add(dir.scale(0.25D)), clientTicks, 5, 0.35D, 3, RANDOM.nextLong(), false, false));
                 }
                 if (own) {
@@ -427,7 +427,7 @@ public final class TangVfx {
                 if (p.b() == 2) {
                     // Второй кинжал вдогонку: короткий хлёсткий выброс.
                     sound(at, SoundEvents.TRIDENT_THROW.value(), 1.0F, 1.4F);
-                    if (layer >= 1) {
+                    if (executionTier >= 1) {
                         wind(at, dir.scale(0.4D), 6, 0.05D);
                     }
                     return;
@@ -438,7 +438,7 @@ public final class TangVfx {
     }
 
     private static void hit(TangPayload p, boolean own, Minecraft mc) {
-        int layer = p.layer();
+        int executionTier = p.executionTier();
         Vec3 at = p.pos();
         Vec3 dir = p.dir().lengthSqr() < 1.0E-6D ? new Vec3(0.0D, 0.0D, 1.0D) : p.dir().normalize();
         int strength = p.b();
@@ -448,7 +448,7 @@ public final class TangVfx {
             // «Канг!» по металлу на каждом контакте (гл. 195).
             sound(at, SoundEvents.ANVIL_LAND, 0.18F, 1.8F + 0.04F * strength);
         }
-        if (layer <= 0) {
+        if (executionTier <= 0) {
             return;
         }
         // Звёздочка удара: четыре-шесть белых игл из точки.
@@ -465,7 +465,7 @@ public final class TangVfx {
             m.colour = i % 3 == 0 ? CYAN : STEEL;
             FX.motes.add(m);
         }
-        if (layer >= 3) {
+        if (executionTier >= 3) {
             FX.rings.add(new Ring(at, dir, clientTicks, 0.15D, main ? 1.5D : 0.6D, main ? 9 : 6, main ? 0.07D : 0.04D, PALE, 0.2D));
         }
         float distance = mc.player == null ? 99.0F : (float) mc.player.position().distanceTo(at);
@@ -481,7 +481,7 @@ public final class TangVfx {
             }
             if (p.form() == TangRules.TWELVE) {
                 // 12-й: огромная звезда изогнутых лучей с точками на концах (рефы «12th dagger», s11).
-                FX.bursts.add(new Burst(at, clientTicks, 12, 5.0D * (layer >= 8 ? 1.25D : 1.0D), 18, RANDOM.nextLong(), true, false));
+                FX.bursts.add(new Burst(at, clientTicks, 12, 5.0D * (executionTier >= 8 ? 1.25D : 1.0D), 18, RANDOM.nextLong(), true, false));
                 smoke(at, 1.3D, 4);
                 sound(at, SoundEvents.GENERIC_EXPLODE.value(), 0.6F, 1.5F);
             } else if (p.form() == TangRules.THREE) {
@@ -513,9 +513,9 @@ public final class TangVfx {
         }
     }
 
-    private static void clang(Vec3 at, Vec3 dir, int layer) {
+    private static void clang(Vec3 at, Vec3 dir, int executionTier) {
         sound(at, SoundEvents.ANVIL_LAND, 0.12F, 2.0F);
-        if (layer <= 0) {
+        if (executionTier <= 0) {
             return;
         }
         for (int i = 0; i < 6; i++) {
@@ -532,7 +532,7 @@ public final class TangVfx {
     private static void explode(TangPayload p, boolean own, Minecraft mc) {
         Vec3 at = p.pos();
         boolean main = p.b() >= 2;
-        double k = TangRules.density(p.layer()) * 0.6D + 0.4D;
+        double k = TangRules.density(p.executionTier()) * 0.6D + 0.4D;
         sound(at, SoundEvents.GENERIC_EXPLODE.value(), 1.0F, 1.2F);
         sound(at, SoundEvents.PLAYER_ATTACK_STRONG, 1.0F, 0.6F);
         // 6–8 белых клиньев, вытянутых вперёд по ходу рывка (codex 03.10).
@@ -710,7 +710,7 @@ public final class TangVfx {
         while (it.hasNext()) {
             Cast c = it.next();
             Entity e = mc.level.getEntity(c.entityId);
-            if (e != null && c.layer > 0) {
+            if (e != null && c.executionTier > 0) {
                 body(c, e, c.t(), mc);
             }
             if (c.t() > TangRules.windup(c.form) + 80) {
@@ -736,7 +736,7 @@ public final class TangVfx {
                     wind(h, f.scale(0.2D).add(RANDOM.nextGaussian() * 0.1D, 0.05D, RANDOM.nextGaussian() * 0.1D), 10, 0.05D);
                 }
             }
-            if (c.own() && c.layer >= 3) {
+            if (c.own() && c.executionTier >= 3) {
                 TechniqueCaption.showScaled(Component.translatable("technique.murim.tang.school"),
                         Component.translatable("technique.murim.tang." + switch (c.form) {
                             case TangRules.FIVE -> "five";
@@ -758,7 +758,7 @@ public final class TangVfx {
             Vec3 h = hand(e, t % 8 == 1);
             wind(h, new Vec3(RANDOM.nextGaussian() * 0.04D, 0.06D, RANDOM.nextGaussian() * 0.04D), 10, 0.035D);
         }
-        if (c.form == TangRules.STARS && c.layer >= 2 && t > 2 && t < w && t % 2 == 0) {
+        if (c.form == TangRules.STARS && c.executionTier >= 2 && t > 2 && t < w && t % 2 == 0) {
             // Голубые острые выступы у плеч (d4-01): короткие частицы наружу.
             for (boolean right : new boolean[] {true, false}) {
                 Vec3 s = shoulder(e, right);
@@ -769,7 +769,7 @@ public final class TangVfx {
                 FX.motes.add(m);
             }
         }
-        if (c.form == TangRules.TWELVE && c.layer >= 3 && t >= TangRules.ROSETTE_FROM && t < w && t % 3 == 0) {
+        if (c.form == TangRules.TWELVE && c.executionTier >= 3 && t >= TangRules.ROSETTE_FROM && t < w && t % 3 == 0) {
             // Белые завитки обтекают розетку (s02).
             Vec3 ctr = rosetteCentre(e);
             double a = t * 0.7D;
@@ -795,7 +795,7 @@ public final class TangVfx {
             if (d.invisible() && !REVEALED.contains(d.getId()) && !hidden(d)) {
                 // Похищение Жизни: лезвие «появилось прямо перед» — вспышка в точке появления.
                 REVEALED.add(d.getId());
-                if (d.layer() >= 1) {
+                if (d.executionTier() >= 1) {
                     FX.bursts.add(new Burst(d.position(), clientTicks, 6, 0.6D, 4, RANDOM.nextLong(), false, false));
                     FX.rings.add(new Ring(d.position(), camAxis(d.position()), clientTicks, 0.1D, 0.5D, 3, 0.03D, WHITE, 0.0D));
                 }
@@ -809,8 +809,8 @@ public final class TangVfx {
                     h.removeLast();
                 }
             }
-            int layer = d.layer();
-            if (mode == TangDagger.CARP && layer >= 3) {
+            int executionTier = d.executionTier();
+            if (mode == TangDagger.CARP && executionTier >= 3) {
                 // Вихрь пыли у земли под медленным кинжалом (гл. 196: «пыль поднималась»).
                 BlockPos below = BlockPos.containing(d.position().add(0.0D, -2.5D, 0.0D));
                 BlockPos ground = null;
@@ -834,7 +834,7 @@ public final class TangVfx {
                     }
                 }
             }
-            if (mode == TangDagger.BURST && layer >= 2 && d.tickCount % 1 == 0) {
+            if (mode == TangDagger.BURST && executionTier >= 2 && d.tickCount % 1 == 0) {
                 // Спиральные ленты вокруг прямого потока (d2-06).
                 Vec3 v = d.getDeltaMovement();
                 if (v.lengthSqr() > 1.0E-4D) {
@@ -951,7 +951,7 @@ public final class TangVfx {
             VertexConsumer air = buffers.getBuffer(MurimRenderTypes.airBand());
             for (Cast c : CASTS) {
                 Entity e = mc.level.getEntity(c.entityId);
-                if (e != null && c.layer >= 3) {
+                if (e != null && c.executionTier >= 3) {
                     rosetteRings(c, e, pose, camera, air, c.t() + partial);
                 }
             }
@@ -981,7 +981,7 @@ public final class TangVfx {
         Vec3 f = forward(e);
         Vec3 side = new Vec3(-f.z, 0.0D, f.x);
         if (c.form == TangRules.TWELVE && t >= TangRules.ROSETTE_FROM) {
-            int n = TangRules.twelveCount(c.layer);
+            int n = TangRules.twelveCount(c.executionTier);
             double fill = Mth.clamp((t - TangRules.ROSETTE_FROM) / (double) (TangRules.ROSETTE_FULL - TangRules.ROSETTE_FROM), 0.0D, 1.0D);
             int shown = (int) Math.ceil(n * fill);
             Vec3 ctr = rosetteCentre(e);
@@ -1038,7 +1038,7 @@ public final class TangVfx {
     /** Следы кинжалов: белое ядро, циановая кромка, синий край — по истории положений. */
     private static void trails(Minecraft mc, PoseStack.Pose pose, Vec3 camera, VertexConsumer v, float partial) {
         for (Map.Entry<Integer, Deque<Vec3>> en : TRAILS.entrySet()) {
-            if (!(mc.level.getEntity(en.getKey()) instanceof TangDagger d) || d.layer() < 2) {
+            if (!(mc.level.getEntity(en.getKey()) instanceof TangDagger d) || d.executionTier() < 2) {
                 continue;
             }
             Deque<Vec3> h = en.getValue();
@@ -1074,7 +1074,7 @@ public final class TangVfx {
                 PlumVfx.stripVar(v, pose, camera, p, PlumVfx.scale(w, 0.45D), PlumVfx.scaled(a, 0.9F), BRONZE_HI);
                 continue;
             }
-            if (d.layer() >= 3) {
+            if (d.executionTier() >= 3) {
                 PlumVfx.stripVar(v, pose, camera, p, PlumVfx.scale(w, 2.5D), PlumVfx.scaled(a, 0.22F), dark ? GREY : arc ? STEEL : EDGE_BLUE);
                 PlumVfx.stripVar(v, pose, camera, p, PlumVfx.scale(w, 1.35D), PlumVfx.scaled(a, 0.55F), dark ? STEEL : arc ? WHITE : CYAN);
             }
@@ -1085,7 +1085,7 @@ public final class TangVfx {
     /** Висящие звёзды: игольчатый венец вокруг кинжала (s05, d4-03), вспышка перед схождением. */
     private static void stars(Minecraft mc, PoseStack.Pose pose, Vec3 camera, VertexConsumer v, float partial) {
         for (Entity en : mc.level.entitiesForRendering()) {
-            if (!(en instanceof TangDagger d) || d.form() != TangRules.STARS || d.layer() < 3
+            if (!(en instanceof TangDagger d) || d.form() != TangRules.STARS || d.executionTier() < 3
                     || d.mode() != TangDagger.STAR && d.mode() != TangDagger.TO_STAR) {
                 continue;
             }
@@ -1094,7 +1094,7 @@ public final class TangVfx {
             Integer flareUntil = d.getOwner() != null ? FX.flare.get(d.getOwner().getId()) : null;
             boolean flare = flareUntil != null;
             // Венец 0,35–0,55 блока, во вспышке +20 % (codex 03.10): кинжал в центре читается.
-            double size = (d.mode() == TangDagger.STAR ? 0.26D : 0.12D) * (d.layer() >= 8 ? 1.2D : 1.0D) * (flare ? 1.2D : 1.0D);
+            double size = (d.mode() == TangDagger.STAR ? 0.26D : 0.12D) * (d.executionTier() >= 8 ? 1.2D : 1.0D) * (flare ? 1.2D : 1.0D);
             Vec3 axis = camera.subtract(at).normalize();
             Vec3 e1 = axis.cross(new Vec3(0.0D, 1.0D, 0.0D));
             e1 = e1.lengthSqr() < 1.0E-6D ? new Vec3(1.0D, 0.0D, 0.0D) : e1.normalize();
@@ -1116,7 +1116,7 @@ public final class TangVfx {
     /** Конус вращающихся колец позади острия «карпа» (s09): шире к рывку — телеграф. */
     private static void carp(Minecraft mc, PoseStack.Pose pose, Vec3 camera, VertexConsumer v, float partial) {
         for (Entity en : mc.level.entitiesForRendering()) {
-            if (!(en instanceof TangDagger d) || d.mode() != TangDagger.CARP || d.layer() < 3) {
+            if (!(en instanceof TangDagger d) || d.mode() != TangDagger.CARP || d.executionTier() < 3) {
                 continue;
             }
             Vec3 at = new Vec3(Mth.lerp(partial, d.xo, d.getX()), Mth.lerp(partial, d.yo, d.getY()), Mth.lerp(partial, d.zo, d.getZ()));
@@ -1124,7 +1124,7 @@ public final class TangVfx {
             float age = d.tickCount + partial;
             double grow = Mth.clamp(age / (double) TangRules.CARP_TICKS, 0.15D, 1.0D);
             // Конус s09 (codex 03.10): 4–5 колец на 1,6 блока, радиус от 0,12 у острия до 0,6 сзади.
-            int rings = d.layer() >= 7 ? 5 : 4;
+            int rings = d.executionTier() >= 7 ? 5 : 4;
             for (int i = 0; i < rings; i++) {
                 Vec3 c = at.subtract(f.scale(0.1D + 0.38D * i));
                 // Кольца не крупнее 1–1,5 длины клинка и тусклее: оружие главнее спиралей (codex 03.10).
@@ -1138,7 +1138,7 @@ public final class TangVfx {
     /** Подготовка «Возврата»: тонкие линии от каждого воткнутого лезвия к рукаву — телеграф линий (spec В). */
     private static void returnLines(Minecraft mc, PoseStack.Pose pose, Vec3 camera, VertexConsumer v, float partial) {
         for (Cast c : CASTS) {
-            if (c.form != TangRules.RETURN || c.t() > TangRules.windup(TangRules.RETURN) + 2 || c.layer < 1
+            if (c.form != TangRules.RETURN || c.t() > TangRules.windup(TangRules.RETURN) + 2 || c.executionTier < 1
                     || !(mc.level.getEntity(c.entityId) instanceof Entity owner)) {
                 continue;
             }
@@ -1159,7 +1159,7 @@ public final class TangVfx {
     /** Нити ци от рукава мастера к звёздам и к зависшему кинжалу (слой 5+). */
     private static void threads(Minecraft mc, PoseStack.Pose pose, Vec3 camera, VertexConsumer v, float partial) {
         for (Entity en : mc.level.entitiesForRendering()) {
-            if (!(en instanceof TangDagger d) || d.layer() < 5 || !(d.getOwner() instanceof Entity owner)) {
+            if (!(en instanceof TangDagger d) || d.executionTier() < 5 || !(d.getOwner() instanceof Entity owner)) {
                 continue;
             }
             boolean star = d.form() == TangRules.STARS && (d.mode() == TangDagger.STAR || d.mode() == TangDagger.TO_STAR);
@@ -1387,7 +1387,7 @@ public final class TangVfx {
         RenderType gt = MurimRenderTypes.mote();
         VertexConsumer g = buffers.getBuffer(gt);
         for (Entity en : mc.level.entitiesForRendering()) {
-            if (!(en instanceof TangDagger d) || d.layer() < 3) {
+            if (!(en instanceof TangDagger d) || d.executionTier() < 3) {
                 continue;
             }
             Vec3 at = new Vec3(Mth.lerp(partial, d.xo, d.getX()), Mth.lerp(partial, d.yo, d.getY()), Mth.lerp(partial, d.zo, d.getZ()));

@@ -1,0 +1,165 @@
+{
+ "multipart": [
+  {
+   "apply": {
+    "model": "murim:block/hua_balustrade_post"
+   }
+  },
+  {
+   "apply": {
+    "model": "murim:block/hua_balustrade_side",
+    "uvlock": false
+   },
+   "when": {
+    "north": "true"
+   }
+  },
+  {
+   "apply": {
+    "model": "murim:block/hua_balustrade_side",
+    "uvlock": false,
+    "y": 90
+   },
+   "when": {
+    "east": "true"
+   }
+  },
+  {
+   "apply": {
+    "model": "murim:block/hua_balustrade_side",
+    "uvlock": false,
+    "y": 180
+   },
+   "when": {
+    "south": "true"
+   }
+  },
+  {
+   "apply": {
+    "model": "murim:block/hua_balustrade_side",
+    "uvlock": false,
+    "y": 270
+   },
+   "when": {
+    "west": "true"
+   }
+  },
+  {
+   "apply": {
+    "model": "murim:block/hua_balustrade_side_diagonal",
+    "uvlock": false
+   },
+   "when": {
+    "north_east": "true"
+   }
+  },
+  {
+   "apply": {
+    "model": "murim:block/hua_balustrade_side_diagonal",
+    "uvlock": false,
+    "y": 90
+   },
+   "when": {
+    "south_east": "true"
+   }
+  },
+  {
+   "apply": {
+    "model": "murim:block/hua_balustrade_side_diagonal",
+    "uvlock": false,
+    "y": 180
+   },
+   "when": {
+    "south_west": "true"
+   }
+  },
+  {
+   "apply": {
+    "model": "murim:block/hua_balustrade_side_diagonal",
+    "uvlock": false,
+    "y": 270
+   },
+   "when": {
+    "north_west": "true"
+   }
+  },
+  {
+   "apply": {
+    "model": "murim:block/hua_balustrade_side_up",
+    "uvlock": false
+   },
+   "when": {
+    "slope_up": "north"
+   }
+  },
+  {
+   "apply": {
+    "model": "murim:block/hua_balustrade_side_up",
+    "uvlock": false,
+    "y": 90
+   },
+   "when": {
+    "slope_up": "east"
+   }
+  },
+  {
+   "apply": {
+    "model": "murim:block/hua_balustrade_side_up",
+    "uvlock": false,
+    "y": 180
+   },
+   "when": {
+    "slope_up": "south"
+   }
+  },
+  {
+   "apply": {
+    "model": "murim:block/hua_balustrade_side_up",
+    "uvlock": false,
+    "y": 270
+   },
+   "when": {
+    "slope_up": "west"
+   }
+  },
+  {
+   "apply": {
+    "model": "murim:block/hua_balustrade_side_down",
+    "uvlock": false
+   },
+   "when": {
+    "slope_down": "north"
+   }
+  },
+  {
+   "apply": {
+    "model": "murim:block/hua_balustrade_side_down",
+    "uvlock": false,
+    "y": 90
+   },
+   "when": {
+    "slope_down": "east"
+   }
+  },
+  {
+   "apply": {
+    "model": "murim:block/hua_balustrade_side_down",
+    "uvlock": false,
+    "y": 180
+   },
+   "when": {
+    "slope_down": "south"
+   }
+  },
+  {
+   "apply": {
+    "model": "murim:block/hua_balustrade_side_down",
+    "uvlock": false,
+    "y": 270
+   },
+   "when": {
+    "slope_down": "west"
+   }
+  }
+ ]
+}

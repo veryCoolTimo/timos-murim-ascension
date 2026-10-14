@@ -1,0 +1,8 @@
+newmtl band
+map_Kd #band
+
+newmtl plaster
+map_Kd #plaster
+
+newmtl vridge
+map_Kd #vridge

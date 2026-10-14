@@ -1,0 +1,11 @@
+{
+  "variants": {
+    "axis=x": {
+      "model": "murim:block/pailou_roof_cap"
+    },
+    "axis=z": {
+      "model": "murim:block/pailou_roof_cap",
+      "y": 90
+    }
+  }
+}

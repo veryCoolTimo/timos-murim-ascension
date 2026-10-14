@@ -55,6 +55,7 @@ public final class MountHuaFeature extends Feature<NoneFeatureConfiguration> {
             // The author's captured sect over the shelf, then the Mount Hua biomes (docs/design/28-location-capture.md).
             MountHuaOverlay.apply(level, chunkPos, site);
             HuaBiomes.paint(level, level.getChunk(chunkPos.x, chunkPos.z), site);
+            MountHuaChunkWriter.clearSnow(level, level.getChunk(chunkPos.x, chunkPos.z), site);
             return true;
         }
         long start = System.nanoTime();

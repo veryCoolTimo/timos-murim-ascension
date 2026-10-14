@@ -13,6 +13,15 @@
     {
       "when": [
         {
+          "member": true,
+          "awakened": false
+        }
+      ],
+      "node": "journey"
+    },
+    {
+      "when": [
+        {
           "member": true
         },
         {
@@ -31,27 +40,6 @@
         }
       ],
       "node": "first"
-    },
-    {
-      "when": [
-        {
-          "member": true,
-          "flag": "met_mentor",
-          "chores": true
-        }
-      ],
-      "node": "chores"
-    },
-    {
-      "when": [
-        {
-          "member": true,
-          "flag": "met_mentor",
-          "missed": "formation",
-          "period": "breakfast|training|dinner|evening"
-        }
-      ],
-      "node": "scold"
     },
     {
       "when": [
@@ -115,6 +103,15 @@
       ],
       "options": [
         {
+          "text": "dialogue.murim.mentor.opt.journey",
+          "when": [
+            {
+              "member": true
+            }
+          ],
+          "next": "journey"
+        },
+        {
           "text": "dialogue.murim.mentor.opt.what_teach",
           "next": "teach"
         },
@@ -131,36 +128,42 @@
           ],
           "next": "farewell"
         }
+      ],
+      "args": [
+        "sect_goal"
       ]
     },
     "again": {
       "gesture": "nod",
       "options": [
         {
-          "text": "dialogue.murim.mentor.opt.lesson",
-          "next": "lessons"
-        },
-        {
-          "text": "dialogue.murim.mentor.opt.day",
+          "text": "dialogue.murim.mentor.opt.journey",
           "when": [
             {
               "member": true
             }
           ],
-          "next": "summary"
+          "next": "journey"
         },
         {
-          "text": "dialogue.murim.mentor.opt.problem",
-          "next": "problems"
+          "text": "dialogue.murim.social.opt.business",
+          "when": [
+            {
+              "social": "business"
+            }
+          ],
+          "next": "sect_business"
+        },
+        {
+          "text": "dialogue.murim.social.opt.topics",
+          "next": "sect_topics"
         },
         {
           "text": "dialogue.murim.opt.leave"
         }
       ],
       "random": [
-        "dialogue.murim.mentor.again",
-        "dialogue.murim.mentor.again_extra1",
-        "dialogue.murim.mentor.again_extra2"
+        "@context"
       ]
     },
     "teach": {
@@ -177,7 +180,7 @@
       ]
     },
     "lessons": {
-      "line": "dialogue.murim.mentor.lessons",
+      "line": "@journey",
       "gesture": "explain",
       "options": [
         {
@@ -204,7 +207,7 @@
             },
             {
               "technique": "murim:six_harmonies",
-              "min_layer": 2
+              "min_star": 2
             },
             {
               "min_rank": 1
@@ -253,7 +256,7 @@
             },
             {
               "technique": "murim:six_harmonies",
-              "min_layer": 2
+              "min_star": 2
             },
             {
               "below_rank": 1
@@ -359,10 +362,7 @@
       ]
     },
     "six_hint": {
-      "line": "dialogue.murim.mentor.six_hint",
-      "args": [
-        "layer:murim:six_harmonies"
-      ],
+      "line": "@journey",
       "gesture": "explain",
       "options": [
         {
@@ -375,7 +375,7 @@
       ]
     },
     "six_rank": {
-      "line": "dialogue.murim.mentor.six_rank",
+      "line": "@journey",
       "gesture": "shake",
       "options": [
         {
@@ -403,6 +403,9 @@
         {
           "text": "dialogue.murim.opt.leave"
         }
+      ],
+      "args": [
+        "sect_goal"
       ]
     },
     "spar_given": {
@@ -419,7 +422,7 @@
       ]
     },
     "spar_hint": {
-      "line": "dialogue.murim.mentor.spar_hint",
+      "line": "@journey",
       "gesture": "explain",
       "options": [
         {
@@ -432,7 +435,7 @@
       ]
     },
     "spar_rank": {
-      "line": "dialogue.murim.mentor.spar_rank",
+      "line": "@journey",
       "gesture": "shake",
       "options": [
         {
@@ -460,10 +463,13 @@
         {
           "text": "dialogue.murim.opt.leave"
         }
+      ],
+      "args": [
+        "sect_goal"
       ]
     },
     "beyond": {
-      "line": "dialogue.murim.mentor.beyond",
+      "line": "@journey",
       "gesture": "explain",
       "options": [
         {
@@ -518,9 +524,23 @@
       ]
     },
     "no_dantian": {
-      "line": "dialogue.murim.mentor.no_dantian",
+      "line": "@journey",
       "gesture": "explain",
       "options": [
+        {
+          "text": "dialogue.murim.mentor.opt.method_help",
+          "when": [
+            {
+              "social": "journey_help"
+            }
+          ],
+          "actions": [
+            {
+              "type": "journey_help"
+            }
+          ],
+          "next": "journey"
+        },
         {
           "text": "dialogue.murim.mentor.opt.understood",
           "next": "again"
@@ -530,7 +550,7 @@
     "cut_locked": {
       "line": "dialogue.murim.mentor.cut_locked",
       "args": [
-        "layer:murim:seven_plum_basic"
+        "star:murim:seven_plum_basic"
       ],
       "gesture": "explain",
       "options": [
@@ -581,22 +601,14 @@
       "line": "dialogue.murim.mentor.summary",
       "args": [
         "sect_log",
-        "sect_verdict"
+        "sect_verdict",
+        "sect_goal"
       ],
       "gesture": "explain",
       "options": [
         {
           "text": "dialogue.murim.mentor.opt.why",
           "next": "why"
-        },
-        {
-          "text": "dialogue.murim.mentor.opt.chores",
-          "when": [
-            {
-              "chores": true
-            }
-          ],
-          "next": "chores"
         },
         {
           "text": "dialogue.murim.mentor.opt.lesson",
@@ -647,51 +659,108 @@
         }
       ]
     },
-    "scold": {
-      "line": "dialogue.murim.mentor.scold",
-      "args": [
-        "sect_log"
-      ],
-      "gesture": "shake",
+    "sect_topics": {
+      "line": "dialogue.murim.social.business",
       "options": [
         {
-          "text": "dialogue.murim.mentor.opt.overslept",
-          "actions": [
+          "text": "dialogue.murim.mentor.opt.journey",
+          "when": [
             {
-              "type": "bow"
+              "member": true
             }
           ],
-          "next": "scold_ok"
-        },
-        {
-          "text": "dialogue.murim.mentor.opt.self_train",
-          "next": "why"
+          "next": "journey"
         },
         {
           "text": "dialogue.murim.mentor.opt.lesson",
           "next": "lessons"
         },
         {
-          "text": "dialogue.murim.opt.leave"
-        }
-      ]
-    },
-    "scold_ok": {
-      "line": "dialogue.murim.mentor.scold_ok",
-      "gesture": "nod",
-      "options": [
+          "text": "dialogue.murim.mentor.opt.day",
+          "when": [
+            {
+              "member": true
+            }
+          ],
+          "next": "summary"
+        },
         {
           "text": "dialogue.murim.opt.leave"
         }
       ]
     },
-    "chores": {
-      "line": "dialogue.murim.mentor.chores",
-      "gesture": "point",
+    "sect_business": {
+      "line": "dialogue.murim.social.business",
+      "gesture": "explain",
       "options": [
         {
-          "text": "dialogue.murim.mentor.opt.why",
-          "next": "why"
+          "text": "dialogue.murim.social.opt.first",
+          "when": [
+            {
+              "social": "promotion:first"
+            }
+          ],
+          "actions": [
+            {
+              "type": "promotion_offer",
+              "value": "first"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.social.opt.elder",
+          "when": [
+            {
+              "social": "promotion:elder"
+            }
+          ],
+          "actions": [
+            {
+              "type": "promotion_offer",
+              "value": "elder"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.social.opt.requests",
+          "actions": [
+            {
+              "type": "request_menu"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "journey": {
+      "line": "@journey",
+      "gesture": "explain",
+      "enter": [
+        {
+          "type": "set_flag",
+          "value": "met_mentor"
+        }
+      ],
+      "options": [
+        {
+          "text": "dialogue.murim.mentor.opt.method_help",
+          "when": [
+            {
+              "social": "journey_help"
+            }
+          ],
+          "actions": [
+            {
+              "type": "journey_help"
+            }
+          ],
+          "next": "journey"
+        },
+        {
+          "text": "dialogue.murim.mentor.opt.lesson",
+          "next": "lessons"
         },
         {
           "text": "dialogue.murim.opt.leave"

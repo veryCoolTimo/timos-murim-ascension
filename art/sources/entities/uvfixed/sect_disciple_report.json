@@ -1,0 +1,34 @@
+{
+ "source": "art/sources/entities/sect_disciple.bbmodel",
+ "inverted_cubes": 0,
+ "flipped_faces": 78,
+ "rotated_faces": 0,
+ "overlapping_faces": 474,
+ "zero_uv_faces": 322,
+ "zero_area_faces": 8,
+ "inexact_faces": [],
+ "dense_faces": 36,
+ "texture_size_before": [
+  256,
+  256
+ ],
+ "uv_size_before": [
+  128,
+  128
+ ],
+ "baked_textures": [
+  "third_rate_disciple.png",
+  "second_rate_disciple.png"
+ ],
+ "untouched_textures": [],
+ "texture_size_after": [
+  256,
+  256
+ ],
+ "uv_size_after": [
+  128,
+  128
+ ],
+ "faces": 546,
+ "cubes": 91
+}

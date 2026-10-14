@@ -1,0 +1,34 @@
+{
+  "variants": {
+    "facing=east,part=root": {
+      "model": "murim:block/roof_v7_ridge_end"
+    },
+    "facing=east,part=tip": {
+      "model": "murim:block/roof_v7_ridge_end_tip"
+    },
+    "facing=south,part=root": {
+      "model": "murim:block/roof_v7_ridge_end",
+      "y": 90
+    },
+    "facing=south,part=tip": {
+      "model": "murim:block/roof_v7_ridge_end_tip",
+      "y": 90
+    },
+    "facing=west,part=root": {
+      "model": "murim:block/roof_v7_ridge_end",
+      "y": 180
+    },
+    "facing=west,part=tip": {
+      "model": "murim:block/roof_v7_ridge_end_tip",
+      "y": 180
+    },
+    "facing=north,part=root": {
+      "model": "murim:block/roof_v7_ridge_end",
+      "y": 270
+    },
+    "facing=north,part=tip": {
+      "model": "murim:block/roof_v7_ridge_end_tip",
+      "y": 270
+    }
+  }
+}

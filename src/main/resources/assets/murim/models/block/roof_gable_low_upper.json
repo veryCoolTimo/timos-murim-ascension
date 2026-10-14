@@ -1,0 +1,14 @@
+{
+  "parent": "minecraft:block/block",
+  "loader": "neoforge:obj",
+  "model": "murim:models/block/roof_gable_low_upper.obj",
+  "flip_v": false,
+  "emissive_ambient": false,
+  "automatic_culling": false,
+  "ambientocclusion": false,
+  "render_type": "minecraft:solid",
+  "textures": {
+    "plaster": "murim:block/roof_polish_plaster",
+    "particle": "murim:block/roof_polish_plaster"
+  }
+}

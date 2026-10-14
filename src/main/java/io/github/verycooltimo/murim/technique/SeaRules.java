@@ -64,8 +64,8 @@ public final class SeaRules {
     public static final int TRAINING_TO = 60;
 
     /** Одновременных захватов по слою: 1/1/1/2/2/3/3/4/4. */
-    public static int captures(int layer) {
-        return switch (Math.max(0, Math.min(8, layer))) {
+    public static int captures(int executionTier) {
+        return switch (Math.max(0, Math.min(8, executionTier))) {
             case 0, 1, 2 -> 1;
             case 3, 4 -> 2;
             case 5, 6 -> 3;
@@ -74,8 +74,8 @@ public final class SeaRules {
     }
 
     /** Радиус сектора по слою, блоков. */
-    public static double radius(int layer) {
-        return switch (Math.max(0, Math.min(8, layer))) {
+    public static double radius(int executionTier) {
+        return switch (Math.max(0, Math.min(8, executionTier))) {
             case 0 -> TRAINING_RADIUS;
             case 1 -> 3.5D;
             case 2 -> 4.0D;
@@ -89,38 +89,38 @@ public final class SeaRules {
     }
 
     /** Полуугол сектора по слою: учебный уже. */
-    public static double sector(int layer) {
-        return layer <= 0 ? TRAINING_SECTOR : SECTOR;
+    public static double sector(int executionTier) {
+        return executionTier <= 0 ? TRAINING_SECTOR : SECTOR;
     }
 
     /** Продление за сердце — с 6-го слоя. */
-    public static boolean extendable(int layer) {
-        return layer >= 6;
+    public static boolean extendable(int executionTier) {
+        return executionTier >= 6;
     }
 
     /** Лепестки, море, кокон, надпись, аура — с 3-го слоя. */
-    public static boolean petals(int layer) {
-        return layer >= 3;
+    public static boolean petals(int executionTier) {
+        return executionTier >= 3;
     }
 
     /** Остаточный образ руки на захвате — со 2-го слоя. */
-    public static boolean afterimages(int layer) {
-        return layer >= 2;
+    public static boolean afterimages(int executionTier) {
+        return executionTier >= 2;
     }
 
     /** Волна торможения: от точки захвата по полю расходится поклон цветов — с 4-го слоя. */
-    public static boolean bowWave(int layer) {
-        return layer >= 4;
+    public static boolean bowWave(int executionTier) {
+        return executionTier >= 4;
     }
 
     /** Бутоны-слоты на клинке и подъём цветов столбом к высоким снарядам — с 5-го слоя. */
-    public static boolean slotBuds(int layer) {
-        return layer >= 5;
+    public static boolean slotBuds(int executionTier) {
+        return executionTier >= 5;
     }
 
     /** Плотность моря по слою (доля от полного рисунка слоя 7). */
-    public static double density(int layer) {
-        return switch (Math.max(0, Math.min(8, layer))) {
+    public static double density(int executionTier) {
+        return switch (Math.max(0, Math.min(8, executionTier))) {
             case 0 -> 0.0D;
             case 1 -> 0.10D;
             case 2 -> 0.20D;
@@ -134,8 +134,8 @@ public final class SeaRules {
     }
 
     /** Масштаб цветов по слою. */
-    public static double scale(int layer) {
-        return switch (Math.max(0, Math.min(8, layer))) {
+    public static double scale(int executionTier) {
+        return switch (Math.max(0, Math.min(8, executionTier))) {
             case 0 -> 0.0D;
             case 1, 2 -> 0.6D;
             case 3 -> 0.75D;
@@ -186,26 +186,26 @@ public final class SeaRules {
      * Точка {@code pos} в секторе: от груди мастера {@code chest} в конусе вокруг {@code axis}
      * с полууглом {@link #sector} (3D: снаряды сверху тоже), ближе {@link #radius} × доля прилива.
      */
-    public static boolean inCone(int layer, Vec3 chest, Vec3 axis, Vec3 pos, double grown) {
+    public static boolean inCone(int executionTier, Vec3 chest, Vec3 axis, Vec3 pos, double grown) {
         Vec3 to = pos.subtract(chest);
         double d = to.length();
-        if (d < 0.3D || d > radius(layer) * Math.max(0.15D, grown)) {
+        if (d < 0.3D || d > radius(executionTier) * Math.max(0.15D, grown)) {
             return false;
         }
-        return to.normalize().dot(axis.normalize()) >= Math.cos(Math.toRadians(sector(layer)));
+        return to.normalize().dot(axis.normalize()) >= Math.cos(Math.toRadians(sector(executionTier)));
     }
 
     /**
      * Снаряд входит в сектор: отрезок пути за тик (две точки и середина) задевает конус, снаряд летит
      * к мастеру и его прямая проходит ближе {@link #THREAT} от груди — не пролёт мимо.
      */
-    public static boolean entering(int layer, Vec3 chest, Vec3 axis, Vec3 pos, Vec3 vel, double grown) {
+    public static boolean entering(int executionTier, Vec3 chest, Vec3 axis, Vec3 pos, Vec3 vel, double grown) {
         if (vel.lengthSqr() < 1.0E-4D || vel.dot(chest.subtract(pos)) <= 0.0D || miss(chest, pos, vel) > THREAT) {
             return false;
         }
         Vec3 next = pos.add(vel);
-        return inCone(layer, chest, axis, pos, grown) || inCone(layer, chest, axis, pos.lerp(next, 0.5D), grown)
-                || inCone(layer, chest, axis, next, grown);
+        return inCone(executionTier, chest, axis, pos, grown) || inCone(executionTier, chest, axis, pos.lerp(next, 0.5D), grown)
+                || inCone(executionTier, chest, axis, next, grown);
     }
 
     /**

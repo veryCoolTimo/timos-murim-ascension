@@ -1,0 +1,19 @@
+{
+  "parent": "minecraft:block/block",
+  "loader": "neoforge:obj",
+  "model": "murim:models/block/roof_v7_corner.obj",
+  "flip_v": false,
+  "emissive_ambient": false,
+  "automatic_culling": false,
+  "ambientocclusion": false,
+  "textures": {
+    "top": "murim:block/roof_v7_tiles",
+    "side": "murim:block/roof_tiles_under",
+    "under": "murim:block/roof_tiles_under",
+    "cap": "murim:block/roof_v7_tile_cap",
+    "hipridge": "murim:block/roof_v7_cream",
+    "rafter": "murim:block/roof_v7_wood",
+    "particle": "murim:block/roof_tiles"
+  },
+  "render_type": "minecraft:solid"
+}

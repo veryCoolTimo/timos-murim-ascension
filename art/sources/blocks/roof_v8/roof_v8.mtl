@@ -1,0 +1,36 @@
+# Source model materials; no runtime block resources.
+newmtl cream
+Kd 1 1 1
+map_Kd roof_v8_cream.png
+
+newmtl plaster
+Kd 1 1 1
+map_Kd roof_v8_plaster.png
+
+newmtl tile_side
+Kd 1 1 1
+map_Kd roof_v8_tile_side.png
+
+newmtl ochre
+Kd 1 1 1
+map_Kd roof_v8_ochre.png
+
+newmtl band
+Kd 1 1 1
+map_Kd roof_v8_band.png
+
+newmtl wood
+Kd 1 1 1
+map_Kd roof_v8_wood.png
+
+newmtl tiles
+Kd 1 1 1
+map_Kd roof_v8_tiles.png
+
+newmtl tile_cap
+Kd 1 1 1
+map_Kd roof_v8_tile_cap.png
+
+newmtl emblem
+Kd 1 1 1
+map_Kd roof_v8_emblem.png

@@ -1,0 +1,577 @@
+{
+ "multipart": [
+  {
+   "when": {
+    "offset": "center",
+    "down": "true",
+    "carry": "true"
+   },
+   "apply": {
+    "model": "murim:block/hanging_post_center_dt_ct"
+   }
+  },
+  {
+   "when": {
+    "offset": "center",
+    "down": "true",
+    "carry": "false"
+   },
+   "apply": {
+    "model": "murim:block/hanging_post_center_dt_cf"
+   }
+  },
+  {
+   "when": {
+    "offset": "center",
+    "down": "false",
+    "carry": "true"
+   },
+   "apply": {
+    "model": "murim:block/hanging_post_center_df_ct"
+   }
+  },
+  {
+   "when": {
+    "offset": "center",
+    "down": "false",
+    "carry": "false"
+   },
+   "apply": {
+    "model": "murim:block/hanging_post_center_df_cf"
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "center",
+    "carry": "true"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_carried_center"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "center",
+    "carry": "true"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_carried_center",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "offset": "north",
+    "down": "true",
+    "carry": "true"
+   },
+   "apply": {
+    "model": "murim:block/hanging_post_north_dt_ct"
+   }
+  },
+  {
+   "when": {
+    "offset": "north",
+    "down": "true",
+    "carry": "false"
+   },
+   "apply": {
+    "model": "murim:block/hanging_post_north_dt_cf"
+   }
+  },
+  {
+   "when": {
+    "offset": "north",
+    "down": "false",
+    "carry": "true"
+   },
+   "apply": {
+    "model": "murim:block/hanging_post_north_df_ct"
+   }
+  },
+  {
+   "when": {
+    "offset": "north",
+    "down": "false",
+    "carry": "false"
+   },
+   "apply": {
+    "model": "murim:block/hanging_post_north_df_cf"
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "north",
+    "carry": "true"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_carried_minus"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "north",
+    "carry": "true"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_carried_center",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "offset": "north_east",
+    "down": "true",
+    "carry": "true"
+   },
+   "apply": {
+    "model": "murim:block/hanging_post_north_west_dt_ct",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "offset": "north_east",
+    "down": "true",
+    "carry": "false"
+   },
+   "apply": {
+    "model": "murim:block/hanging_post_north_west_dt_cf",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "offset": "north_east",
+    "down": "false",
+    "carry": "true"
+   },
+   "apply": {
+    "model": "murim:block/hanging_post_north_west_df_ct",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "offset": "north_east",
+    "down": "false",
+    "carry": "false"
+   },
+   "apply": {
+    "model": "murim:block/hanging_post_north_west_df_cf",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "north_east",
+    "carry": "true"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_carried_minus"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "north_east",
+    "carry": "true"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_carried_minus",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "offset": "east",
+    "down": "true",
+    "carry": "true"
+   },
+   "apply": {
+    "model": "murim:block/hanging_post_north_dt_ct",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "offset": "east",
+    "down": "true",
+    "carry": "false"
+   },
+   "apply": {
+    "model": "murim:block/hanging_post_north_dt_cf",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "offset": "east",
+    "down": "false",
+    "carry": "true"
+   },
+   "apply": {
+    "model": "murim:block/hanging_post_north_df_ct",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "offset": "east",
+    "down": "false",
+    "carry": "false"
+   },
+   "apply": {
+    "model": "murim:block/hanging_post_north_df_cf",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "east",
+    "carry": "true"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_carried_center"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "east",
+    "carry": "true"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_carried_minus",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "offset": "south_east",
+    "down": "true",
+    "carry": "true"
+   },
+   "apply": {
+    "model": "murim:block/hanging_post_north_west_dt_ct",
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "offset": "south_east",
+    "down": "true",
+    "carry": "false"
+   },
+   "apply": {
+    "model": "murim:block/hanging_post_north_west_dt_cf",
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "offset": "south_east",
+    "down": "false",
+    "carry": "true"
+   },
+   "apply": {
+    "model": "murim:block/hanging_post_north_west_df_ct",
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "offset": "south_east",
+    "down": "false",
+    "carry": "false"
+   },
+   "apply": {
+    "model": "murim:block/hanging_post_north_west_df_cf",
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "south_east",
+    "carry": "true"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_carried_plus"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "south_east",
+    "carry": "true"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_carried_minus",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "offset": "south",
+    "down": "true",
+    "carry": "true"
+   },
+   "apply": {
+    "model": "murim:block/hanging_post_north_dt_ct",
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "offset": "south",
+    "down": "true",
+    "carry": "false"
+   },
+   "apply": {
+    "model": "murim:block/hanging_post_north_dt_cf",
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "offset": "south",
+    "down": "false",
+    "carry": "true"
+   },
+   "apply": {
+    "model": "murim:block/hanging_post_north_df_ct",
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "offset": "south",
+    "down": "false",
+    "carry": "false"
+   },
+   "apply": {
+    "model": "murim:block/hanging_post_north_df_cf",
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "south",
+    "carry": "true"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_carried_plus"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "south",
+    "carry": "true"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_carried_center",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "offset": "south_west",
+    "down": "true",
+    "carry": "true"
+   },
+   "apply": {
+    "model": "murim:block/hanging_post_north_west_dt_ct",
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "offset": "south_west",
+    "down": "true",
+    "carry": "false"
+   },
+   "apply": {
+    "model": "murim:block/hanging_post_north_west_dt_cf",
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "offset": "south_west",
+    "down": "false",
+    "carry": "true"
+   },
+   "apply": {
+    "model": "murim:block/hanging_post_north_west_df_ct",
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "offset": "south_west",
+    "down": "false",
+    "carry": "false"
+   },
+   "apply": {
+    "model": "murim:block/hanging_post_north_west_df_cf",
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "south_west",
+    "carry": "true"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_carried_plus"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "south_west",
+    "carry": "true"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_carried_plus",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "offset": "west",
+    "down": "true",
+    "carry": "true"
+   },
+   "apply": {
+    "model": "murim:block/hanging_post_north_dt_ct",
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "offset": "west",
+    "down": "true",
+    "carry": "false"
+   },
+   "apply": {
+    "model": "murim:block/hanging_post_north_dt_cf",
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "offset": "west",
+    "down": "false",
+    "carry": "true"
+   },
+   "apply": {
+    "model": "murim:block/hanging_post_north_df_ct",
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "offset": "west",
+    "down": "false",
+    "carry": "false"
+   },
+   "apply": {
+    "model": "murim:block/hanging_post_north_df_cf",
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "west",
+    "carry": "true"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_carried_center"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "west",
+    "carry": "true"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_carried_plus",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "offset": "north_west",
+    "down": "true",
+    "carry": "true"
+   },
+   "apply": {
+    "model": "murim:block/hanging_post_north_west_dt_ct"
+   }
+  },
+  {
+   "when": {
+    "offset": "north_west",
+    "down": "true",
+    "carry": "false"
+   },
+   "apply": {
+    "model": "murim:block/hanging_post_north_west_dt_cf"
+   }
+  },
+  {
+   "when": {
+    "offset": "north_west",
+    "down": "false",
+    "carry": "true"
+   },
+   "apply": {
+    "model": "murim:block/hanging_post_north_west_df_ct"
+   }
+  },
+  {
+   "when": {
+    "offset": "north_west",
+    "down": "false",
+    "carry": "false"
+   },
+   "apply": {
+    "model": "murim:block/hanging_post_north_west_df_cf"
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "offset": "north_west",
+    "carry": "true"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_carried_minus"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "offset": "north_west",
+    "carry": "true"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_carried_plus",
+    "y": 90
+   }
+  }
+ ]
+}

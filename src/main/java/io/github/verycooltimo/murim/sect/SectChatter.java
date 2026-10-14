@@ -141,6 +141,11 @@ public final class SectChatter {
             if (roll < 3 && d.member().map(SectRoster::disciple).orElse(false)) {
                 key = SectBubbles.traitKey(SectTalk.trait(speaker), 1 + random.nextInt(SectBubbles.TRAIT_LINES));
                 text = Component.translatable(key);
+            } else if (roll >= 5 && d.getPersistentData().getCompound(SectSocial.RUMOUR).getLong("until") > d.level().getGameTime()) {
+                var rumour = d.getPersistentData().getCompound(SectSocial.RUMOUR);
+                var choices = SectSocial.bubbleKeys("rumour").stream().filter(k -> !k.equals(d.bubbleKey())).toList();
+                key = choices.get(random.nextInt(choices.size()));
+                text = Component.translatable(key, Component.literal(rumour.getString("player")));
             } else if (roll == 3) {
                 long day = SectSchedule.day(d.level().getDayTime());
                 key = SectBubbles.RUMOUR_GUARDS;
@@ -157,6 +162,8 @@ public final class SectChatter {
         if (SectBubbles.exchange(d.doingKind())) {
             SectDisciple mate = neighbour(d);
             if (mate != null) {
+                var rumour = d.getPersistentData().getCompound(SectSocial.RUMOUR);
+                if (rumour.getLong("until") > d.level().getGameTime()) mate.getPersistentData().put(SectSocial.RUMOUR, rumour.copy());
                 String reply = SectBubbles.Group.REPLY.pick(random.nextInt(64));
                 mate.queueBubble(reply, Component.translatable(reply), 40 + random.nextInt(20));
                 mate.markBubble(reply);
@@ -199,8 +206,11 @@ public final class SectChatter {
     public static void send(SectDisciple d, String key, Component text) {
         d.markBubble(key);
         if (d.level() instanceof ServerLevel level) {
-            PacketDistributor.sendToPlayersNear(level, null, d.getX(), d.getY(), d.getZ(), HEAR_RANGE,
-                    new SectBubblePayload(d.getId(), text, BUBBLE_TICKS));
+            SectBubblePayload payload = new SectBubblePayload(d.getId(), text, BUBBLE_TICKS);
+            for (ServerPlayer player : level.players()) {
+                if (player.distanceToSqr(d) <= HEAR_RANGE * HEAR_RANGE && player.connection != null
+                        && player.connection.hasChannel(payload)) PacketDistributor.sendToPlayer(player, payload);
+            }
         }
     }
 }

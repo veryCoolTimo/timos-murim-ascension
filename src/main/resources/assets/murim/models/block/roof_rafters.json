@@ -1,0 +1,15 @@
+{
+  "parent": "minecraft:block/block",
+  "loader": "neoforge:obj",
+  "model": "murim:models/block/roof_rafters.obj",
+  "flip_v": false,
+  "emissive_ambient": false,
+  "automatic_culling": false,
+  "ambientocclusion": false,
+  "render_type": "minecraft:solid",
+  "textures": {
+    "soffit": "murim:block/roof_polish_soffit",
+    "wood": "murim:block/roof_polish_wood",
+    "particle": "murim:block/roof_polish_soffit"
+  }
+}

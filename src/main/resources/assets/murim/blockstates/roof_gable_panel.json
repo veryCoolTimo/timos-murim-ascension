@@ -1,0 +1,724 @@
+{
+  "variants": {
+    "base=false,emblem=false,facing=east,profile=steep,side=left": {
+      "model": "murim:block/roof_gable_panel_steep"
+    },
+    "base=true,emblem=false,facing=east,profile=steep,side=left": {
+      "model": "murim:block/roof_gable_panel_steep_base"
+    },
+    "base=false,emblem=true,facing=east,profile=steep,side=left": {
+      "model": "murim:block/roof_gable_panel_steep"
+    },
+    "base=true,emblem=true,facing=east,profile=steep,side=left": {
+      "model": "murim:block/roof_gable_panel_steep_base"
+    },
+    "base=false,emblem=false,facing=east,profile=knee,side=left": {
+      "model": "murim:block/roof_gable_panel_knee"
+    },
+    "base=true,emblem=false,facing=east,profile=knee,side=left": {
+      "model": "murim:block/roof_gable_panel_knee_base"
+    },
+    "base=false,emblem=true,facing=east,profile=knee,side=left": {
+      "model": "murim:block/roof_gable_panel_knee"
+    },
+    "base=true,emblem=true,facing=east,profile=knee,side=left": {
+      "model": "murim:block/roof_gable_panel_knee_base"
+    },
+    "base=false,emblem=false,facing=east,profile=low_high,side=left": {
+      "model": "murim:block/roof_gable_panel_low_high"
+    },
+    "base=true,emblem=false,facing=east,profile=low_high,side=left": {
+      "model": "murim:block/roof_gable_panel_low_high_base"
+    },
+    "base=false,emblem=true,facing=east,profile=low_high,side=left": {
+      "model": "murim:block/roof_gable_panel_low_high"
+    },
+    "base=true,emblem=true,facing=east,profile=low_high,side=left": {
+      "model": "murim:block/roof_gable_panel_low_high_base"
+    },
+    "base=false,emblem=false,facing=east,profile=full,side=left": {
+      "model": "murim:block/roof_gable_panel_full"
+    },
+    "base=true,emblem=false,facing=east,profile=full,side=left": {
+      "model": "murim:block/roof_gable_panel_full_base"
+    },
+    "base=false,emblem=true,facing=east,profile=full,side=left": {
+      "model": "murim:block/roof_gable_panel_full_emblem"
+    },
+    "base=true,emblem=true,facing=east,profile=full,side=left": {
+      "model": "murim:block/roof_gable_panel_full_base"
+    },
+    "base=false,emblem=false,facing=east,profile=peak,side=left": {
+      "model": "murim:block/roof_gable_panel_peak"
+    },
+    "base=true,emblem=false,facing=east,profile=peak,side=left": {
+      "model": "murim:block/roof_gable_panel_peak_base"
+    },
+    "base=false,emblem=true,facing=east,profile=peak,side=left": {
+      "model": "murim:block/roof_gable_panel_peak"
+    },
+    "base=true,emblem=true,facing=east,profile=peak,side=left": {
+      "model": "murim:block/roof_gable_panel_peak_base"
+    },
+    "base=false,emblem=false,facing=east,profile=under_steep,side=left": {
+      "model": "murim:block/roof_gable_panel_under_steep"
+    },
+    "base=true,emblem=false,facing=east,profile=under_steep,side=left": {
+      "model": "murim:block/roof_gable_panel_under_steep_base"
+    },
+    "base=false,emblem=true,facing=east,profile=under_steep,side=left": {
+      "model": "murim:block/roof_gable_panel_under_steep"
+    },
+    "base=true,emblem=true,facing=east,profile=under_steep,side=left": {
+      "model": "murim:block/roof_gable_panel_under_steep_base"
+    },
+    "base=false,emblem=false,facing=east,profile=steep,side=right": {
+      "model": "murim:block/roof_gable_panel_steep_r"
+    },
+    "base=true,emblem=false,facing=east,profile=steep,side=right": {
+      "model": "murim:block/roof_gable_panel_steep_base_r"
+    },
+    "base=false,emblem=true,facing=east,profile=steep,side=right": {
+      "model": "murim:block/roof_gable_panel_steep_r"
+    },
+    "base=true,emblem=true,facing=east,profile=steep,side=right": {
+      "model": "murim:block/roof_gable_panel_steep_base_r"
+    },
+    "base=false,emblem=false,facing=east,profile=knee,side=right": {
+      "model": "murim:block/roof_gable_panel_knee_r"
+    },
+    "base=true,emblem=false,facing=east,profile=knee,side=right": {
+      "model": "murim:block/roof_gable_panel_knee_base_r"
+    },
+    "base=false,emblem=true,facing=east,profile=knee,side=right": {
+      "model": "murim:block/roof_gable_panel_knee_r"
+    },
+    "base=true,emblem=true,facing=east,profile=knee,side=right": {
+      "model": "murim:block/roof_gable_panel_knee_base_r"
+    },
+    "base=false,emblem=false,facing=east,profile=low_high,side=right": {
+      "model": "murim:block/roof_gable_panel_low_high_r"
+    },
+    "base=true,emblem=false,facing=east,profile=low_high,side=right": {
+      "model": "murim:block/roof_gable_panel_low_high_base_r"
+    },
+    "base=false,emblem=true,facing=east,profile=low_high,side=right": {
+      "model": "murim:block/roof_gable_panel_low_high_r"
+    },
+    "base=true,emblem=true,facing=east,profile=low_high,side=right": {
+      "model": "murim:block/roof_gable_panel_low_high_base_r"
+    },
+    "base=false,emblem=false,facing=east,profile=full,side=right": {
+      "model": "murim:block/roof_gable_panel_full_r"
+    },
+    "base=true,emblem=false,facing=east,profile=full,side=right": {
+      "model": "murim:block/roof_gable_panel_full_base_r"
+    },
+    "base=false,emblem=true,facing=east,profile=full,side=right": {
+      "model": "murim:block/roof_gable_panel_full_emblem_r"
+    },
+    "base=true,emblem=true,facing=east,profile=full,side=right": {
+      "model": "murim:block/roof_gable_panel_full_base_r"
+    },
+    "base=false,emblem=false,facing=east,profile=peak,side=right": {
+      "model": "murim:block/roof_gable_panel_peak_r"
+    },
+    "base=true,emblem=false,facing=east,profile=peak,side=right": {
+      "model": "murim:block/roof_gable_panel_peak_base_r"
+    },
+    "base=false,emblem=true,facing=east,profile=peak,side=right": {
+      "model": "murim:block/roof_gable_panel_peak_r"
+    },
+    "base=true,emblem=true,facing=east,profile=peak,side=right": {
+      "model": "murim:block/roof_gable_panel_peak_base_r"
+    },
+    "base=false,emblem=false,facing=east,profile=under_steep,side=right": {
+      "model": "murim:block/roof_gable_panel_under_steep_r"
+    },
+    "base=true,emblem=false,facing=east,profile=under_steep,side=right": {
+      "model": "murim:block/roof_gable_panel_under_steep_base_r"
+    },
+    "base=false,emblem=true,facing=east,profile=under_steep,side=right": {
+      "model": "murim:block/roof_gable_panel_under_steep_r"
+    },
+    "base=true,emblem=true,facing=east,profile=under_steep,side=right": {
+      "model": "murim:block/roof_gable_panel_under_steep_base_r"
+    },
+    "base=false,emblem=false,facing=south,profile=steep,side=left": {
+      "model": "murim:block/roof_gable_panel_steep",
+      "y": 90
+    },
+    "base=true,emblem=false,facing=south,profile=steep,side=left": {
+      "model": "murim:block/roof_gable_panel_steep_base",
+      "y": 90
+    },
+    "base=false,emblem=true,facing=south,profile=steep,side=left": {
+      "model": "murim:block/roof_gable_panel_steep",
+      "y": 90
+    },
+    "base=true,emblem=true,facing=south,profile=steep,side=left": {
+      "model": "murim:block/roof_gable_panel_steep_base",
+      "y": 90
+    },
+    "base=false,emblem=false,facing=south,profile=knee,side=left": {
+      "model": "murim:block/roof_gable_panel_knee",
+      "y": 90
+    },
+    "base=true,emblem=false,facing=south,profile=knee,side=left": {
+      "model": "murim:block/roof_gable_panel_knee_base",
+      "y": 90
+    },
+    "base=false,emblem=true,facing=south,profile=knee,side=left": {
+      "model": "murim:block/roof_gable_panel_knee",
+      "y": 90
+    },
+    "base=true,emblem=true,facing=south,profile=knee,side=left": {
+      "model": "murim:block/roof_gable_panel_knee_base",
+      "y": 90
+    },
+    "base=false,emblem=false,facing=south,profile=low_high,side=left": {
+      "model": "murim:block/roof_gable_panel_low_high",
+      "y": 90
+    },
+    "base=true,emblem=false,facing=south,profile=low_high,side=left": {
+      "model": "murim:block/roof_gable_panel_low_high_base",
+      "y": 90
+    },
+    "base=false,emblem=true,facing=south,profile=low_high,side=left": {
+      "model": "murim:block/roof_gable_panel_low_high",
+      "y": 90
+    },
+    "base=true,emblem=true,facing=south,profile=low_high,side=left": {
+      "model": "murim:block/roof_gable_panel_low_high_base",
+      "y": 90
+    },
+    "base=false,emblem=false,facing=south,profile=full,side=left": {
+      "model": "murim:block/roof_gable_panel_full",
+      "y": 90
+    },
+    "base=true,emblem=false,facing=south,profile=full,side=left": {
+      "model": "murim:block/roof_gable_panel_full_base",
+      "y": 90
+    },
+    "base=false,emblem=true,facing=south,profile=full,side=left": {
+      "model": "murim:block/roof_gable_panel_full_emblem",
+      "y": 90
+    },
+    "base=true,emblem=true,facing=south,profile=full,side=left": {
+      "model": "murim:block/roof_gable_panel_full_base",
+      "y": 90
+    },
+    "base=false,emblem=false,facing=south,profile=peak,side=left": {
+      "model": "murim:block/roof_gable_panel_peak",
+      "y": 90
+    },
+    "base=true,emblem=false,facing=south,profile=peak,side=left": {
+      "model": "murim:block/roof_gable_panel_peak_base",
+      "y": 90
+    },
+    "base=false,emblem=true,facing=south,profile=peak,side=left": {
+      "model": "murim:block/roof_gable_panel_peak",
+      "y": 90
+    },
+    "base=true,emblem=true,facing=south,profile=peak,side=left": {
+      "model": "murim:block/roof_gable_panel_peak_base",
+      "y": 90
+    },
+    "base=false,emblem=false,facing=south,profile=under_steep,side=left": {
+      "model": "murim:block/roof_gable_panel_under_steep",
+      "y": 90
+    },
+    "base=true,emblem=false,facing=south,profile=under_steep,side=left": {
+      "model": "murim:block/roof_gable_panel_under_steep_base",
+      "y": 90
+    },
+    "base=false,emblem=true,facing=south,profile=under_steep,side=left": {
+      "model": "murim:block/roof_gable_panel_under_steep",
+      "y": 90
+    },
+    "base=true,emblem=true,facing=south,profile=under_steep,side=left": {
+      "model": "murim:block/roof_gable_panel_under_steep_base",
+      "y": 90
+    },
+    "base=false,emblem=false,facing=south,profile=steep,side=right": {
+      "model": "murim:block/roof_gable_panel_steep_r",
+      "y": 90
+    },
+    "base=true,emblem=false,facing=south,profile=steep,side=right": {
+      "model": "murim:block/roof_gable_panel_steep_base_r",
+      "y": 90
+    },
+    "base=false,emblem=true,facing=south,profile=steep,side=right": {
+      "model": "murim:block/roof_gable_panel_steep_r",
+      "y": 90
+    },
+    "base=true,emblem=true,facing=south,profile=steep,side=right": {
+      "model": "murim:block/roof_gable_panel_steep_base_r",
+      "y": 90
+    },
+    "base=false,emblem=false,facing=south,profile=knee,side=right": {
+      "model": "murim:block/roof_gable_panel_knee_r",
+      "y": 90
+    },
+    "base=true,emblem=false,facing=south,profile=knee,side=right": {
+      "model": "murim:block/roof_gable_panel_knee_base_r",
+      "y": 90
+    },
+    "base=false,emblem=true,facing=south,profile=knee,side=right": {
+      "model": "murim:block/roof_gable_panel_knee_r",
+      "y": 90
+    },
+    "base=true,emblem=true,facing=south,profile=knee,side=right": {
+      "model": "murim:block/roof_gable_panel_knee_base_r",
+      "y": 90
+    },
+    "base=false,emblem=false,facing=south,profile=low_high,side=right": {
+      "model": "murim:block/roof_gable_panel_low_high_r",
+      "y": 90
+    },
+    "base=true,emblem=false,facing=south,profile=low_high,side=right": {
+      "model": "murim:block/roof_gable_panel_low_high_base_r",
+      "y": 90
+    },
+    "base=false,emblem=true,facing=south,profile=low_high,side=right": {
+      "model": "murim:block/roof_gable_panel_low_high_r",
+      "y": 90
+    },
+    "base=true,emblem=true,facing=south,profile=low_high,side=right": {
+      "model": "murim:block/roof_gable_panel_low_high_base_r",
+      "y": 90
+    },
+    "base=false,emblem=false,facing=south,profile=full,side=right": {
+      "model": "murim:block/roof_gable_panel_full_r",
+      "y": 90
+    },
+    "base=true,emblem=false,facing=south,profile=full,side=right": {
+      "model": "murim:block/roof_gable_panel_full_base_r",
+      "y": 90
+    },
+    "base=false,emblem=true,facing=south,profile=full,side=right": {
+      "model": "murim:block/roof_gable_panel_full_emblem_r",
+      "y": 90
+    },
+    "base=true,emblem=true,facing=south,profile=full,side=right": {
+      "model": "murim:block/roof_gable_panel_full_base_r",
+      "y": 90
+    },
+    "base=false,emblem=false,facing=south,profile=peak,side=right": {
+      "model": "murim:block/roof_gable_panel_peak_r",
+      "y": 90
+    },
+    "base=true,emblem=false,facing=south,profile=peak,side=right": {
+      "model": "murim:block/roof_gable_panel_peak_base_r",
+      "y": 90
+    },
+    "base=false,emblem=true,facing=south,profile=peak,side=right": {
+      "model": "murim:block/roof_gable_panel_peak_r",
+      "y": 90
+    },
+    "base=true,emblem=true,facing=south,profile=peak,side=right": {
+      "model": "murim:block/roof_gable_panel_peak_base_r",
+      "y": 90
+    },
+    "base=false,emblem=false,facing=south,profile=under_steep,side=right": {
+      "model": "murim:block/roof_gable_panel_under_steep_r",
+      "y": 90
+    },
+    "base=true,emblem=false,facing=south,profile=under_steep,side=right": {
+      "model": "murim:block/roof_gable_panel_under_steep_base_r",
+      "y": 90
+    },
+    "base=false,emblem=true,facing=south,profile=under_steep,side=right": {
+      "model": "murim:block/roof_gable_panel_under_steep_r",
+      "y": 90
+    },
+    "base=true,emblem=true,facing=south,profile=under_steep,side=right": {
+      "model": "murim:block/roof_gable_panel_under_steep_base_r",
+      "y": 90
+    },
+    "base=false,emblem=false,facing=west,profile=steep,side=left": {
+      "model": "murim:block/roof_gable_panel_steep",
+      "y": 180
+    },
+    "base=true,emblem=false,facing=west,profile=steep,side=left": {
+      "model": "murim:block/roof_gable_panel_steep_base",
+      "y": 180
+    },
+    "base=false,emblem=true,facing=west,profile=steep,side=left": {
+      "model": "murim:block/roof_gable_panel_steep",
+      "y": 180
+    },
+    "base=true,emblem=true,facing=west,profile=steep,side=left": {
+      "model": "murim:block/roof_gable_panel_steep_base",
+      "y": 180
+    },
+    "base=false,emblem=false,facing=west,profile=knee,side=left": {
+      "model": "murim:block/roof_gable_panel_knee",
+      "y": 180
+    },
+    "base=true,emblem=false,facing=west,profile=knee,side=left": {
+      "model": "murim:block/roof_gable_panel_knee_base",
+      "y": 180
+    },
+    "base=false,emblem=true,facing=west,profile=knee,side=left": {
+      "model": "murim:block/roof_gable_panel_knee",
+      "y": 180
+    },
+    "base=true,emblem=true,facing=west,profile=knee,side=left": {
+      "model": "murim:block/roof_gable_panel_knee_base",
+      "y": 180
+    },
+    "base=false,emblem=false,facing=west,profile=low_high,side=left": {
+      "model": "murim:block/roof_gable_panel_low_high",
+      "y": 180
+    },
+    "base=true,emblem=false,facing=west,profile=low_high,side=left": {
+      "model": "murim:block/roof_gable_panel_low_high_base",
+      "y": 180
+    },
+    "base=false,emblem=true,facing=west,profile=low_high,side=left": {
+      "model": "murim:block/roof_gable_panel_low_high",
+      "y": 180
+    },
+    "base=true,emblem=true,facing=west,profile=low_high,side=left": {
+      "model": "murim:block/roof_gable_panel_low_high_base",
+      "y": 180
+    },
+    "base=false,emblem=false,facing=west,profile=full,side=left": {
+      "model": "murim:block/roof_gable_panel_full",
+      "y": 180
+    },
+    "base=true,emblem=false,facing=west,profile=full,side=left": {
+      "model": "murim:block/roof_gable_panel_full_base",
+      "y": 180
+    },
+    "base=false,emblem=true,facing=west,profile=full,side=left": {
+      "model": "murim:block/roof_gable_panel_full_emblem",
+      "y": 180
+    },
+    "base=true,emblem=true,facing=west,profile=full,side=left": {
+      "model": "murim:block/roof_gable_panel_full_base",
+      "y": 180
+    },
+    "base=false,emblem=false,facing=west,profile=peak,side=left": {
+      "model": "murim:block/roof_gable_panel_peak",
+      "y": 180
+    },
+    "base=true,emblem=false,facing=west,profile=peak,side=left": {
+      "model": "murim:block/roof_gable_panel_peak_base",
+      "y": 180
+    },
+    "base=false,emblem=true,facing=west,profile=peak,side=left": {
+      "model": "murim:block/roof_gable_panel_peak",
+      "y": 180
+    },
+    "base=true,emblem=true,facing=west,profile=peak,side=left": {
+      "model": "murim:block/roof_gable_panel_peak_base",
+      "y": 180
+    },
+    "base=false,emblem=false,facing=west,profile=under_steep,side=left": {
+      "model": "murim:block/roof_gable_panel_under_steep",
+      "y": 180
+    },
+    "base=true,emblem=false,facing=west,profile=under_steep,side=left": {
+      "model": "murim:block/roof_gable_panel_under_steep_base",
+      "y": 180
+    },
+    "base=false,emblem=true,facing=west,profile=under_steep,side=left": {
+      "model": "murim:block/roof_gable_panel_under_steep",
+      "y": 180
+    },
+    "base=true,emblem=true,facing=west,profile=under_steep,side=left": {
+      "model": "murim:block/roof_gable_panel_under_steep_base",
+      "y": 180
+    },
+    "base=false,emblem=false,facing=west,profile=steep,side=right": {
+      "model": "murim:block/roof_gable_panel_steep_r",
+      "y": 180
+    },
+    "base=true,emblem=false,facing=west,profile=steep,side=right": {
+      "model": "murim:block/roof_gable_panel_steep_base_r",
+      "y": 180
+    },
+    "base=false,emblem=true,facing=west,profile=steep,side=right": {
+      "model": "murim:block/roof_gable_panel_steep_r",
+      "y": 180
+    },
+    "base=true,emblem=true,facing=west,profile=steep,side=right": {
+      "model": "murim:block/roof_gable_panel_steep_base_r",
+      "y": 180
+    },
+    "base=false,emblem=false,facing=west,profile=knee,side=right": {
+      "model": "murim:block/roof_gable_panel_knee_r",
+      "y": 180
+    },
+    "base=true,emblem=false,facing=west,profile=knee,side=right": {
+      "model": "murim:block/roof_gable_panel_knee_base_r",
+      "y": 180
+    },
+    "base=false,emblem=true,facing=west,profile=knee,side=right": {
+      "model": "murim:block/roof_gable_panel_knee_r",
+      "y": 180
+    },
+    "base=true,emblem=true,facing=west,profile=knee,side=right": {
+      "model": "murim:block/roof_gable_panel_knee_base_r",
+      "y": 180
+    },
+    "base=false,emblem=false,facing=west,profile=low_high,side=right": {
+      "model": "murim:block/roof_gable_panel_low_high_r",
+      "y": 180
+    },
+    "base=true,emblem=false,facing=west,profile=low_high,side=right": {
+      "model": "murim:block/roof_gable_panel_low_high_base_r",
+      "y": 180
+    },
+    "base=false,emblem=true,facing=west,profile=low_high,side=right": {
+      "model": "murim:block/roof_gable_panel_low_high_r",
+      "y": 180
+    },
+    "base=true,emblem=true,facing=west,profile=low_high,side=right": {
+      "model": "murim:block/roof_gable_panel_low_high_base_r",
+      "y": 180
+    },
+    "base=false,emblem=false,facing=west,profile=full,side=right": {
+      "model": "murim:block/roof_gable_panel_full_r",
+      "y": 180
+    },
+    "base=true,emblem=false,facing=west,profile=full,side=right": {
+      "model": "murim:block/roof_gable_panel_full_base_r",
+      "y": 180
+    },
+    "base=false,emblem=true,facing=west,profile=full,side=right": {
+      "model": "murim:block/roof_gable_panel_full_emblem_r",
+      "y": 180
+    },
+    "base=true,emblem=true,facing=west,profile=full,side=right": {
+      "model": "murim:block/roof_gable_panel_full_base_r",
+      "y": 180
+    },
+    "base=false,emblem=false,facing=west,profile=peak,side=right": {
+      "model": "murim:block/roof_gable_panel_peak_r",
+      "y": 180
+    },
+    "base=true,emblem=false,facing=west,profile=peak,side=right": {
+      "model": "murim:block/roof_gable_panel_peak_base_r",
+      "y": 180
+    },
+    "base=false,emblem=true,facing=west,profile=peak,side=right": {
+      "model": "murim:block/roof_gable_panel_peak_r",
+      "y": 180
+    },
+    "base=true,emblem=true,facing=west,profile=peak,side=right": {
+      "model": "murim:block/roof_gable_panel_peak_base_r",
+      "y": 180
+    },
+    "base=false,emblem=false,facing=west,profile=under_steep,side=right": {
+      "model": "murim:block/roof_gable_panel_under_steep_r",
+      "y": 180
+    },
+    "base=true,emblem=false,facing=west,profile=under_steep,side=right": {
+      "model": "murim:block/roof_gable_panel_under_steep_base_r",
+      "y": 180
+    },
+    "base=false,emblem=true,facing=west,profile=under_steep,side=right": {
+      "model": "murim:block/roof_gable_panel_under_steep_r",
+      "y": 180
+    },
+    "base=true,emblem=true,facing=west,profile=under_steep,side=right": {
+      "model": "murim:block/roof_gable_panel_under_steep_base_r",
+      "y": 180
+    },
+    "base=false,emblem=false,facing=north,profile=steep,side=left": {
+      "model": "murim:block/roof_gable_panel_steep",
+      "y": 270
+    },
+    "base=true,emblem=false,facing=north,profile=steep,side=left": {
+      "model": "murim:block/roof_gable_panel_steep_base",
+      "y": 270
+    },
+    "base=false,emblem=true,facing=north,profile=steep,side=left": {
+      "model": "murim:block/roof_gable_panel_steep",
+      "y": 270
+    },
+    "base=true,emblem=true,facing=north,profile=steep,side=left": {
+      "model": "murim:block/roof_gable_panel_steep_base",
+      "y": 270
+    },
+    "base=false,emblem=false,facing=north,profile=knee,side=left": {
+      "model": "murim:block/roof_gable_panel_knee",
+      "y": 270
+    },
+    "base=true,emblem=false,facing=north,profile=knee,side=left": {
+      "model": "murim:block/roof_gable_panel_knee_base",
+      "y": 270
+    },
+    "base=false,emblem=true,facing=north,profile=knee,side=left": {
+      "model": "murim:block/roof_gable_panel_knee",
+      "y": 270
+    },
+    "base=true,emblem=true,facing=north,profile=knee,side=left": {
+      "model": "murim:block/roof_gable_panel_knee_base",
+      "y": 270
+    },
+    "base=false,emblem=false,facing=north,profile=low_high,side=left": {
+      "model": "murim:block/roof_gable_panel_low_high",
+      "y": 270
+    },
+    "base=true,emblem=false,facing=north,profile=low_high,side=left": {
+      "model": "murim:block/roof_gable_panel_low_high_base",
+      "y": 270
+    },
+    "base=false,emblem=true,facing=north,profile=low_high,side=left": {
+      "model": "murim:block/roof_gable_panel_low_high",
+      "y": 270
+    },
+    "base=true,emblem=true,facing=north,profile=low_high,side=left": {
+      "model": "murim:block/roof_gable_panel_low_high_base",
+      "y": 270
+    },
+    "base=false,emblem=false,facing=north,profile=full,side=left": {
+      "model": "murim:block/roof_gable_panel_full",
+      "y": 270
+    },
+    "base=true,emblem=false,facing=north,profile=full,side=left": {
+      "model": "murim:block/roof_gable_panel_full_base",
+      "y": 270
+    },
+    "base=false,emblem=true,facing=north,profile=full,side=left": {
+      "model": "murim:block/roof_gable_panel_full_emblem",
+      "y": 270
+    },
+    "base=true,emblem=true,facing=north,profile=full,side=left": {
+      "model": "murim:block/roof_gable_panel_full_base",
+      "y": 270
+    },
+    "base=false,emblem=false,facing=north,profile=peak,side=left": {
+      "model": "murim:block/roof_gable_panel_peak",
+      "y": 270
+    },
+    "base=true,emblem=false,facing=north,profile=peak,side=left": {
+      "model": "murim:block/roof_gable_panel_peak_base",
+      "y": 270
+    },
+    "base=false,emblem=true,facing=north,profile=peak,side=left": {
+      "model": "murim:block/roof_gable_panel_peak",
+      "y": 270
+    },
+    "base=true,emblem=true,facing=north,profile=peak,side=left": {
+      "model": "murim:block/roof_gable_panel_peak_base",
+      "y": 270
+    },
+    "base=false,emblem=false,facing=north,profile=under_steep,side=left": {
+      "model": "murim:block/roof_gable_panel_under_steep",
+      "y": 270
+    },
+    "base=true,emblem=false,facing=north,profile=under_steep,side=left": {
+      "model": "murim:block/roof_gable_panel_under_steep_base",
+      "y": 270
+    },
+    "base=false,emblem=true,facing=north,profile=under_steep,side=left": {
+      "model": "murim:block/roof_gable_panel_under_steep",
+      "y": 270
+    },
+    "base=true,emblem=true,facing=north,profile=under_steep,side=left": {
+      "model": "murim:block/roof_gable_panel_under_steep_base",
+      "y": 270
+    },
+    "base=false,emblem=false,facing=north,profile=steep,side=right": {
+      "model": "murim:block/roof_gable_panel_steep_r",
+      "y": 270
+    },
+    "base=true,emblem=false,facing=north,profile=steep,side=right": {
+      "model": "murim:block/roof_gable_panel_steep_base_r",
+      "y": 270
+    },
+    "base=false,emblem=true,facing=north,profile=steep,side=right": {
+      "model": "murim:block/roof_gable_panel_steep_r",
+      "y": 270
+    },
+    "base=true,emblem=true,facing=north,profile=steep,side=right": {
+      "model": "murim:block/roof_gable_panel_steep_base_r",
+      "y": 270
+    },
+    "base=false,emblem=false,facing=north,profile=knee,side=right": {
+      "model": "murim:block/roof_gable_panel_knee_r",
+      "y": 270
+    },
+    "base=true,emblem=false,facing=north,profile=knee,side=right": {
+      "model": "murim:block/roof_gable_panel_knee_base_r",
+      "y": 270
+    },
+    "base=false,emblem=true,facing=north,profile=knee,side=right": {
+      "model": "murim:block/roof_gable_panel_knee_r",
+      "y": 270
+    },
+    "base=true,emblem=true,facing=north,profile=knee,side=right": {
+      "model": "murim:block/roof_gable_panel_knee_base_r",
+      "y": 270
+    },
+    "base=false,emblem=false,facing=north,profile=low_high,side=right": {
+      "model": "murim:block/roof_gable_panel_low_high_r",
+      "y": 270
+    },
+    "base=true,emblem=false,facing=north,profile=low_high,side=right": {
+      "model": "murim:block/roof_gable_panel_low_high_base_r",
+      "y": 270
+    },
+    "base=false,emblem=true,facing=north,profile=low_high,side=right": {
+      "model": "murim:block/roof_gable_panel_low_high_r",
+      "y": 270
+    },
+    "base=true,emblem=true,facing=north,profile=low_high,side=right": {
+      "model": "murim:block/roof_gable_panel_low_high_base_r",
+      "y": 270
+    },
+    "base=false,emblem=false,facing=north,profile=full,side=right": {
+      "model": "murim:block/roof_gable_panel_full_r",
+      "y": 270
+    },
+    "base=true,emblem=false,facing=north,profile=full,side=right": {
+      "model": "murim:block/roof_gable_panel_full_base_r",
+      "y": 270
+    },
+    "base=false,emblem=true,facing=north,profile=full,side=right": {
+      "model": "murim:block/roof_gable_panel_full_emblem_r",
+      "y": 270
+    },
+    "base=true,emblem=true,facing=north,profile=full,side=right": {
+      "model": "murim:block/roof_gable_panel_full_base_r",
+      "y": 270
+    },
+    "base=false,emblem=false,facing=north,profile=peak,side=right": {
+      "model": "murim:block/roof_gable_panel_peak_r",
+      "y": 270
+    },
+    "base=true,emblem=false,facing=north,profile=peak,side=right": {
+      "model": "murim:block/roof_gable_panel_peak_base_r",
+      "y": 270
+    },
+    "base=false,emblem=true,facing=north,profile=peak,side=right": {
+      "model": "murim:block/roof_gable_panel_peak_r",
+      "y": 270
+    },
+    "base=true,emblem=true,facing=north,profile=peak,side=right": {
+      "model": "murim:block/roof_gable_panel_peak_base_r",
+      "y": 270
+    },
+    "base=false,emblem=false,facing=north,profile=under_steep,side=right": {
+      "model": "murim:block/roof_gable_panel_under_steep_r",
+      "y": 270
+    },
+    "base=true,emblem=false,facing=north,profile=under_steep,side=right": {
+      "model": "murim:block/roof_gable_panel_under_steep_base_r",
+      "y": 270
+    },
+    "base=false,emblem=true,facing=north,profile=under_steep,side=right": {
+      "model": "murim:block/roof_gable_panel_under_steep_r",
+      "y": 270
+    },
+    "base=true,emblem=true,facing=north,profile=under_steep,side=right": {
+      "model": "murim:block/roof_gable_panel_under_steep_base_r",
+      "y": 270
+    }
+  }
+}

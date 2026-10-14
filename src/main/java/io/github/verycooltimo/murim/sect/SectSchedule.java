@@ -418,6 +418,7 @@ public final class SectSchedule {
             case LEADER -> leaderTask(m, p);
             case MENTOR -> mentor(m, p);
             case ELDER -> elder(m, p);
+            case FIRST -> first(m, p, day);
             default -> m.generation() == 2 ? second(m, p, day) : third(m, p, day);
         };
     }
@@ -488,6 +489,56 @@ public final class SectSchedule {
 
     private static Task home(SectRoster m) {
         return new Task(Kind.WORK, m.home(), 0.0D, -2.0D, 0.0D, -1.0D);
+    }
+
+    // ------------------------------------------------------------------ первое поколение (рядовые Гён)
+
+    /**
+     * Рядовые первого поколения (автор 06.10): занимаются отдельно от младших, по очереди помогают наставнику.
+     * Помощник дня ({@link #firstAssist}) на строе смотрит ряды с западного края, днём стоит при Гён Пхиле на помосте;
+     * второй по очереди поправляет младших у столбов; остальные — свои формы на восточном краю площади.
+     */
+    private static Task first(SectRoster m, Period p, long day) {
+        int k = firstTurn(m, day);
+        return switch (p) {
+            case FORMATION -> k == 0
+                    ? new Task(Kind.WATCH, "training", -13.0D, 1.0D, 1.0D, 0.0D)
+                    : firstDrill(m, -11.0D);
+            case BREAKFAST, DINNER -> eat(m);
+            case TRAINING -> switch (k) {
+                case 0 -> new Task(Kind.WATCH, "mentor", -3.0D, 1.5D, 0.0D, 1.0D);
+                case 1 -> new Task(Kind.LECTURE, "poles", 0.0D, 4.5D, 0.0D, -1.0D);
+                default -> firstDrill(m, -12.0D);
+            };
+            // Вечер — медитация в сливовой роще впереди второго поколения.
+            case EVENING -> {
+                int i = Math.max(0, SectRoster.firstRanks().indexOf(m));
+                yield new Task(Kind.MEDITATE, "grove", -6.0D + i * 4.0D, -8.0D, 0.0D, -1.0D);
+            }
+            case NIGHT -> sleep(m);
+        };
+    }
+
+    /** Очередь дня: 0 — помощник наставника, 1 — у столбов, 2–3 — свои занятия. Сдвигается каждый день. */
+    static int firstTurn(SectRoster m, long day) {
+        List<SectRoster> all = SectRoster.firstRanks();
+        return (int) Math.floorMod(all.indexOf(m) - day, (long) Math.max(1, all.size()));
+    }
+
+    /** Помощник наставника в день {@code day}. */
+    public static SectRoster firstAssist(long day) {
+        for (SectRoster m : SectRoster.firstRanks()) {
+            if (firstTurn(m, day) == 0) {
+                return m;
+            }
+        }
+        return null;
+    }
+
+    /** Свои формы первого поколения: ряд на восточном краю площади, в стороне от строя и младших. */
+    private static Task firstDrill(SectRoster m, double dv) {
+        int i = Math.max(0, SectRoster.firstRanks().indexOf(m));
+        return new Task(Kind.DRILL, "training", 14.0D + (i % 2) * 4.0D, dv + (i / 2) * 3.0D, 0.0D, 1.0D);
     }
 
     private static Task second(SectRoster m, Period p, long day) {
@@ -588,7 +639,7 @@ public final class SectSchedule {
         int seat = seatIndex(m);
         if (seat < 12) {
             int side = seat % 2;
-            double du = -5.0D + (seat / 2) * 2.0D;
+            double du = -9.0D + (seat / 2) * 2.0D;
             double dv = side == 0 ? -1.5D : 1.5D;
             return new Task(Kind.EAT, "dining", du, dv, 0.0D, side == 0 ? 1.0D : -1.0D);
         }
@@ -598,19 +649,26 @@ public final class SectSchedule {
         return new Task(Kind.EAT, "camp", side == 0 ? 3.5D : 6.5D, dv + 8.0D, side == 0 ? 1.0D : -1.0D, 0.0D);
     }
 
-    /** Порядок за столом: наставник, второе поколение, третье, слуги (во дворе лагеря, с краю). */
+    /**
+     * Порядок за столом: наставник, рядовые первого поколения, второе поколение, третье, слуги (во дворе лагеря, с краю).
+     * Старшие — в столовой: 12 мест хватает наставнику, первому поколению и семерым из второго.
+     */
     static int seatIndex(SectRoster m) {
         if (m.role() == SectRole.MENTOR) {
             return 0;
         }
-        if (m.generation() == 2) {
-            return 1 + SectRoster.generation(2).indexOf(m);
+        int firsts = SectRoster.firstRanks().size();
+        if (m.firstRank()) {
+            return 1 + SectRoster.firstRanks().indexOf(m);
         }
-        int disciples = 1 + SectRoster.generation(2).size() + SectRoster.generation(3).size();
+        if (m.generation() == 2) {
+            return 1 + firsts + SectRoster.generation(2).indexOf(m);
+        }
+        int disciples = 1 + firsts + SectRoster.generation(2).size() + SectRoster.generation(3).size();
         if (m.lay()) {
             return disciples + SectStaff.index(m);
         }
-        return 1 + SectRoster.generation(2).size() + SectRoster.generation(3).indexOf(m);
+        return 1 + firsts + SectRoster.generation(2).size() + SectRoster.generation(3).indexOf(m);
     }
 
     /** Вечер третьего поколения: кружки по трое во дворе лагеря. */
@@ -643,18 +701,23 @@ public final class SectSchedule {
         if (m.lay()) {
             return SectStaff.sleep(m);
         }
+        if (m.firstRank()) {
+            // Рядовые первого поколения — средний проход общежития второго поколения (второе — по краям, u ±3).
+            int i = Math.max(0, SectRoster.firstRanks().indexOf(m));
+            return new Task(Kind.SLEEP, "dorm_2nd", 0.0D, -6.0D + i * 4.0D, 0.0D, 1.0D);
+        }
         if (m.generation() <= 1 && m.role() != SectRole.MENTOR) {
             int i = 0;
             for (SectRoster r : SectRoster.ALL) {
                 if (r.equals(m)) {
                     break;
                 }
-                if (r.generation() <= 1 && !r.lay() && r.role() != SectRole.MENTOR) {
+                if (r.generation() <= 1 && !r.lay() && r.role() != SectRole.MENTOR && !r.firstRank()) {
                     i++;
                 }
             }
             // Глава, три старейшины Тэ, Гён Чхо и Гён Так — два ряда у домов старейшин.
-            return new Task(Kind.SLEEP, "elders", -6.0D + (i % 4) * 4.0D, i < 4 ? 0.0D : -3.0D, 0.0D, -1.0D);
+            return new Task(Kind.SLEEP, "elders", -12.0D + (i % 3) * 12.0D, (i / 3) * 2.0D, 0.0D, -1.0D);
         }
         if (m.role() == SectRole.MENTOR) {
             return new Task(Kind.SLEEP, "dorm_3rd", 4.0D, 7.0D, 0.0D, -1.0D);

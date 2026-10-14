@@ -1,0 +1,82 @@
+{
+  "variants": {
+    "type=bottom": [
+      {
+        "model": "murim:block/hua_flagstone_paving_slab",
+        "weight": 4
+      },
+      {
+        "model": "murim:block/hua_flagstone_paving_slab_1",
+        "weight": 4
+      },
+      {
+        "model": "murim:block/hua_flagstone_paving_slab_2",
+        "weight": 4
+      },
+      {
+        "model": "murim:block/hua_flagstone_paving_slab_3",
+        "weight": 4
+      },
+      {
+        "model": "murim:block/hua_flagstone_paving_slab_4",
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_flagstone_paving_slab_5",
+        "weight": 3
+      }
+    ],
+    "type=top": [
+      {
+        "model": "murim:block/hua_flagstone_paving_slab_top",
+        "weight": 4
+      },
+      {
+        "model": "murim:block/hua_flagstone_paving_slab_top_1",
+        "weight": 4
+      },
+      {
+        "model": "murim:block/hua_flagstone_paving_slab_top_2",
+        "weight": 4
+      },
+      {
+        "model": "murim:block/hua_flagstone_paving_slab_top_3",
+        "weight": 4
+      },
+      {
+        "model": "murim:block/hua_flagstone_paving_slab_top_4",
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_flagstone_paving_slab_top_5",
+        "weight": 3
+      }
+    ],
+    "type=double": [
+      {
+        "model": "murim:block/hua_flagstone_paving",
+        "weight": 4
+      },
+      {
+        "model": "murim:block/hua_flagstone_paving_b",
+        "weight": 4
+      },
+      {
+        "model": "murim:block/hua_flagstone_paving_c",
+        "weight": 4
+      },
+      {
+        "model": "murim:block/hua_flagstone_paving_d",
+        "weight": 4
+      },
+      {
+        "model": "murim:block/hua_flagstone_paving_e",
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_flagstone_paving_f",
+        "weight": 3
+      }
+    ]
+  }
+}

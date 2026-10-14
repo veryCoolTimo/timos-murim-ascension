@@ -121,11 +121,14 @@
     },
     "meal": {
       "random": [
-        "dialogue.murim.ham_doyun.meal1",
-        "dialogue.murim.ham_doyun.meal2"
+        "@context"
       ],
       "gesture": "nod",
       "options": [
+        {
+          "text": "dialogue.murim.social.opt.news",
+          "next": "sect_news"
+        },
         {
           "text": "dialogue.murim.opt.leave"
         }
@@ -133,7 +136,7 @@
     },
     "night": {
       "random": [
-        "dialogue.murim.ham_doyun.night1"
+        "@context"
       ],
       "gesture": "shake",
       "options": []
@@ -375,6 +378,19 @@
           "text": "dialogue.murim.opt.back",
           "next": "topics"
         },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "sect_news": {
+      "random": [
+        "@trait",
+        "@personal",
+        "@rumour"
+      ],
+      "gesture": "explain",
+      "options": [
         {
           "text": "dialogue.murim.opt.leave"
         }

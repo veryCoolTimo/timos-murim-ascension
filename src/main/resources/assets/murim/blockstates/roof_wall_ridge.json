@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=east": {
+      "model": "murim:block/roof_wall_ridge"
+    },
+    "facing=south": {
+      "model": "murim:block/roof_wall_ridge",
+      "y": 90
+    },
+    "facing=west": {
+      "model": "murim:block/roof_wall_ridge",
+      "y": 180
+    },
+    "facing=north": {
+      "model": "murim:block/roof_wall_ridge",
+      "y": 270
+    }
+  }
+}

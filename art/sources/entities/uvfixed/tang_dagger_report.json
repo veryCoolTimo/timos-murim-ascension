@@ -1,0 +1,33 @@
+{
+ "source": "art/sources/entities/tang_dagger.bbmodel",
+ "inverted_cubes": 0,
+ "flipped_faces": 26,
+ "rotated_faces": 0,
+ "overlapping_faces": 0,
+ "zero_uv_faces": 0,
+ "zero_area_faces": 0,
+ "inexact_faces": [],
+ "dense_faces": 0,
+ "texture_size_before": [
+  64,
+  64
+ ],
+ "uv_size_before": [
+  16,
+  16
+ ],
+ "baked_textures": [
+  "tang_dagger.png"
+ ],
+ "untouched_textures": [],
+ "texture_size_after": [
+  128,
+  128
+ ],
+ "uv_size_after": [
+  32,
+  32
+ ],
+ "faces": 78,
+ "cubes": 13
+}

@@ -1,0 +1,46 @@
+{
+ "source": "art/sources/entities/sect_props.bbmodel",
+ "inverted_cubes": 0,
+ "flipped_faces": 40,
+ "rotated_faces": 0,
+ "overlapping_faces": 0,
+ "zero_uv_faces": 0,
+ "zero_area_faces": 0,
+ "inexact_faces": [
+  "bucket_r/bucket_r/north: 0.0% x 20.3%",
+  "bucket_r/bucket_r/east: 0.0% x 20.3%",
+  "bucket_r/bucket_r/south: 0.0% x 20.3%",
+  "bucket_r/bucket_r/west: 0.0% x 20.3%",
+  "bucket_l/bucket_l/north: 0.0% x 20.3%",
+  "bucket_l/bucket_l/east: 0.0% x 20.3%",
+  "bucket_l/bucket_l/south: 0.0% x 20.3%",
+  "bucket_l/bucket_l/west: 0.0% x 20.3%",
+  "scabbard/scabbard/north: 0.0% x 20.3%",
+  "scabbard/scabbard/east: 0.0% x 20.3%",
+  "scabbard/scabbard/south: 0.0% x 20.3%",
+  "scabbard/scabbard/west: 0.0% x 20.3%"
+ ],
+ "dense_faces": 16,
+ "texture_size_before": [
+  128,
+  64
+ ],
+ "uv_size_before": [
+  128,
+  64
+ ],
+ "baked_textures": [
+  "sect_props.png"
+ ],
+ "untouched_textures": [],
+ "texture_size_after": [
+  256,
+  128
+ ],
+ "uv_size_after": [
+  256,
+  128
+ ],
+ "faces": 120,
+ "cubes": 20
+}

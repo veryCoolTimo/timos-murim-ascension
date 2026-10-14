@@ -75,13 +75,13 @@ public final class TangRules {
     public static final double DAGGER_HAND = 6.0D;
 
     /** Сила слоя: слой 7 = 1, слой 8 сильнее. */
-    public static double power(int layer) {
-        return layer <= 0 ? 0.3D : layer >= 8 ? 1.15D : 0.3D + 0.1D * layer;
+    public static double power(int executionTier) {
+        return executionTier <= 0 ? 0.3D : executionTier >= 8 ? 1.15D : 0.3D + 0.1D * executionTier;
     }
 
     /** Плотность эффектов по слою (доля от рисунка слоя 7); слой 0 — ничего. */
-    public static double density(int layer) {
-        return switch (Math.max(0, Math.min(8, layer))) {
+    public static double density(int executionTier) {
+        return switch (Math.max(0, Math.min(8, executionTier))) {
             case 0 -> 0.0D;
             case 1 -> 0.15D;
             case 2 -> 0.3D;
@@ -100,8 +100,8 @@ public final class TangRules {
      * Выпуск кинжала {@code k} от начала IMPACT: почти одновременно — по тику на кинжал (автор 03.10:
      * «кидать 5 почти одновременно, не как бараж»), на 8-м слое — все за два тика.
      */
-    public static int fiveRelease(int k, int layer) {
-        return layer >= 8 ? k / 3 : k;
+    public static int fiveRelease(int k, int executionTier) {
+        return executionTier >= 8 ? k / 3 : k;
     }
 
     /**
@@ -113,8 +113,8 @@ public final class TangRules {
     public static final double FIVE_TURN = 9.0D;
 
     /** Скорость кинжала {@code k}: разная (гл. 195), на 8-м слое +15 %. */
-    public static double fiveSpeed(int k, int layer) {
-        return FIVE_SPEED[k] * (layer >= 8 ? 1.15D : 1.0D);
+    public static double fiveSpeed(int k, int executionTier) {
+        return FIVE_SPEED[k] * (executionTier >= 8 ? 1.15D : 1.0D);
     }
     /** Разная скорость: поздние догоняют ранние — прилёт плотной очередью. */
     public static final double[] FIVE_SPEED = {1.35D, 1.45D, 1.55D, 1.65D, 1.75D};
@@ -124,8 +124,8 @@ public final class TangRules {
     public static final double FIVE_CHAIN = 0.25D;
     public static final int FIVE_STUN = 12;
 
-    public static int fiveCount(int layer) {
-        return layer <= 0 ? 1 : Math.min(5, layer + 1);
+    public static int fiveCount(int executionTier) {
+        return executionTier <= 0 ? 1 : Math.min(5, executionTier + 1);
     }
 
     /** «Сила броска падает с расстоянием» (гл. 195): до 14 блоков полная, к 24 — 60 %. */
@@ -159,8 +159,8 @@ public final class TangRules {
     /** Поворот кинжала к цели не быстрее, градусов за тик: дуга, а не самонаведение. */
     public static final double TWELVE_TURN = 5.0D;
 
-    public static int twelveCount(int layer) {
-        return switch (Math.max(0, Math.min(8, layer))) {
+    public static int twelveCount(int executionTier) {
+        return switch (Math.max(0, Math.min(8, executionTier))) {
             case 0 -> 3;
             case 1 -> 5;
             case 2 -> 7;
@@ -170,12 +170,12 @@ public final class TangRules {
     }
 
     /** Двенадцатый с неба — с 5-го слоя. */
-    public static boolean sky(int layer) {
-        return layer >= 5;
+    public static boolean sky(int executionTier) {
+        return executionTier >= 5;
     }
 
-    public static boolean poison(int layer) {
-        return layer >= 4;
+    public static boolean poison(int executionTier) {
+        return executionTier >= 4;
     }
 
     /** Скорость кинжала веера: 1,4–1,8, у каждого своя (не различить, какой какой). */
@@ -196,8 +196,8 @@ public final class TangRules {
     // ------------------------------------------------------------ Семь Звёзд
 
     /** Кинжалы встают в звёзды по одному каждые 2 тика (на 8-м слое — каждый тик). */
-    public static int starPlace(int layer) {
-        return layer >= 8 ? 1 : 2;
+    public static int starPlace(int executionTier) {
+        return executionTier >= 8 ? 1 : 2;
     }
 
     /** Расстановка идёт до этого тика (от IMPACT); второе R принимается в окне [{@link #STAR_EARLY}, {@link #STAR_SET}). */
@@ -213,8 +213,8 @@ public final class TangRules {
     /** Схождение за 3–4 тика (codex 03.10): по вспышке шаг вперёд ещё успевает. */
     public static final double STAR_SPEED = 0.5D;
 
-    public static int starCount(int layer) {
-        return switch (Math.max(0, Math.min(8, layer))) {
+    public static int starCount(int executionTier) {
+        return switch (Math.max(0, Math.min(8, executionTier))) {
             case 0, 1 -> 3;
             case 2 -> 4;
             case 3 -> 5;
@@ -273,16 +273,16 @@ public final class TangRules {
         return age * 0.45D + age * age * 0.006D;
     }
 
-    public static boolean recall(int layer) {
-        return layer >= 5;
+    public static boolean recall(int executionTier) {
+        return executionTier >= 5;
     }
 
     /**
      * Второй кинжал в первый (гл. 196, попытка 10: «импульс удвоился»): повторное R в медленной фазе
      * бросает второй кинжал вдогонку, он бьёт в первый — рывок сразу и вдвое быстрее. С 6-го слоя.
      */
-    public static boolean doubled(int layer) {
-        return layer >= 6;
+    public static boolean doubled(int executionTier) {
+        return executionTier >= 6;
     }
 
     public static final double SECOND_SPEED = 3.0D;
@@ -304,13 +304,13 @@ public final class TangRules {
     public static final double THREE_RANGE = 22.0D;
     public static final int THREE_STUN = 10;
 
-    public static int threeCount(int layer) {
-        return layer <= 0 ? 1 : layer < 3 ? 2 : 3;
+    public static int threeCount(int executionTier) {
+        return executionTier <= 0 ? 1 : executionTier < 3 ? 2 : 3;
     }
 
     /** Излом под прямым углом (гл. 898) у одного бокового лезвия — с 6-го слоя. */
-    public static boolean kink(int layer) {
-        return layer >= 6;
+    public static boolean kink(int executionTier) {
+        return executionTier >= 6;
     }
 
     /**
@@ -342,35 +342,35 @@ public final class TangRules {
     public static final double FLASH_REVEAL = 2.5D;
     public static final int FLASH_STUN = 8;
 
-    public static boolean vanish(int layer) {
-        return layer >= 3;
+    public static boolean vanish(int executionTier) {
+        return executionTier >= 3;
     }
 
     /** Срыв замаха врага — с 5-го слоя. */
-    public static boolean interrupt(int layer) {
-        return layer >= 5;
+    public static boolean interrupt(int executionTier) {
+        return executionTier >= 5;
     }
 
     /** Второй кинжал «без ци» в тени первого (гл. 196) — 8-й слой. */
-    public static boolean shadowed(int layer) {
-        return layer >= 8;
+    public static boolean shadowed(int executionTier) {
+        return executionTier >= 8;
     }
 
     // ------------------------------------------------------------ Монеты Семьи Тан
 
     /** Монет в веере по слою: 3 → 7 (3+) → 12 (6+) → 18 (8). */
-    public static int coinCount(int layer) {
-        return layer >= 8 ? 18 : layer >= 6 ? 12 : layer >= 3 ? 7 : 3;
+    public static int coinCount(int executionTier) {
+        return executionTier >= 8 ? 18 : executionTier >= 6 ? 12 : executionTier >= 3 ? 7 : 3;
     }
 
     /** Рикошетов от блоков: 0 на слоях 0–2, 1 на 3–5, 2 с 6-го. */
-    public static int coinBounces(int layer) {
-        return layer >= 6 ? 2 : layer >= 3 ? 1 : 0;
+    public static int coinBounces(int executionTier) {
+        return executionTier >= 6 ? 2 : executionTier >= 3 ? 1 : 0;
     }
 
     /** С 5-го слоя монета после попадания перескакивает на соседнего врага. */
-    public static boolean coinChain(int layer) {
-        return layer >= 5;
+    public static boolean coinChain(int executionTier) {
+        return executionTier >= 5;
     }
 
     public static final double COIN_SPEED = 2.2D;
@@ -404,8 +404,8 @@ public final class TangRules {
     /** С 6-го слоя лезвие на возврате загибает к врагу не дальше этого угла от линии. */
     public static final double RETURN_BEND = 15.0D;
 
-    public static int returnCount(int layer) {
-        return layer <= 0 ? 1 : layer < 3 ? 4 : 64;
+    public static int returnCount(int executionTier) {
+        return executionTier <= 0 ? 1 : executionTier < 3 ? 4 : 64;
     }
 
     private TangRules() {

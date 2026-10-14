@@ -1,0 +1,193 @@
+{
+  "name": "npc.murim.first",
+  "title": "npc.murim.first.title",
+  "start": [
+    {
+      "when": [
+        {
+          "free": false
+        }
+      ],
+      "node": "busy"
+    },
+    {
+      "when": [
+        {
+          "period": "formation"
+        }
+      ],
+      "node": "formation"
+    },
+    {
+      "when": [
+        {
+          "period": "breakfast|dinner"
+        }
+      ],
+      "node": "meal"
+    },
+    {
+      "when": [
+        {
+          "period": "night"
+        }
+      ],
+      "node": "night"
+    },
+    {
+      "when": [
+        {
+          "period": "evening"
+        }
+      ],
+      "node": "evening"
+    },
+    {
+      "node": "greet"
+    }
+  ],
+  "nodes": {
+    "busy": {
+      "random": [
+        "dialogue.murim.first.busy1"
+      ],
+      "gesture": "shake",
+      "options": []
+    },
+    "formation": {
+      "random": [
+        "dialogue.murim.first.formation1",
+        "dialogue.murim.first.formation2"
+      ],
+      "gesture": "point",
+      "options": [
+        {
+          "text": "dialogue.murim.disciple.opt.join",
+          "next": "joined"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "joined": {
+      "line": "dialogue.murim.disciple.joined",
+      "gesture": "point",
+      "options": []
+    },
+    "meal": {
+      "random": [
+        "@context"
+      ],
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.social.opt.news",
+          "next": "sect_news"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "night": {
+      "random": [
+        "@context"
+      ],
+      "gesture": "shake",
+      "options": []
+    },
+    "evening": {
+      "random": [
+        "@context"
+      ],
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.social.opt.news",
+          "next": "sect_news"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "greet": {
+      "random": [
+        "@context"
+      ],
+      "gesture": "fist",
+      "options": [
+        {
+          "text": "dialogue.murim.first.opt.bow",
+          "actions": [
+            {
+              "type": "bow"
+            }
+          ],
+          "next": "bowed"
+        },
+        {
+          "text": "dialogue.murim.first.opt.advice",
+          "when": [
+            {
+              "free": true
+            }
+          ],
+          "next": "advice"
+        },
+        {
+          "text": "dialogue.murim.social.opt.news",
+          "next": "sect_news"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "bowed": {
+      "line": "dialogue.murim.first.bowed",
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.first.opt.advice",
+          "when": [
+            {
+              "free": true
+            }
+          ],
+          "next": "advice"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "advice": {
+      "random": [
+        "dialogue.murim.first.advice1",
+        "dialogue.murim.first.advice2",
+        "dialogue.murim.first.advice3"
+      ],
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "sect_news": {
+      "random": [
+        "@trait",
+        "@personal",
+        "@rumour"
+      ],
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    }
+  }
+}

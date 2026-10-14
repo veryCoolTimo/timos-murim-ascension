@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/slab",
+  "textures": {
+    "bottom": "murim:block/hua_packed_earth_b",
+    "side": "murim:block/hua_packed_earth_b",
+    "top": "murim:block/hua_packed_earth_b"
+  }
+}

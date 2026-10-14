@@ -81,13 +81,13 @@ public final class RainRules {
     }
 
     /** Сила слоя: слой 7 = 1, слой 8 сильнее. */
-    public static double power(int layer) {
-        return layer <= 0 ? 0.0D : layer >= 8 ? 1.15D : 0.3D + 0.1D * layer;
+    public static double power(int executionTier) {
+        return executionTier <= 0 ? 0.0D : executionTier >= 8 ? 1.15D : 0.3D + 0.1D * executionTier;
     }
 
     /** Плотность эффектов по слою (доля от полного рисунка слоя 7). */
-    public static double density(int layer) {
-        return switch (Math.max(0, Math.min(8, layer))) {
+    public static double density(int executionTier) {
+        return switch (Math.max(0, Math.min(8, executionTier))) {
             case 0 -> 0.0D;
             case 1 -> 0.10D;
             case 2 -> 0.20D;
@@ -101,8 +101,8 @@ public final class RainRules {
     }
 
     /** Масштаб иллюзии по слою. */
-    public static double scale(int layer) {
-        return switch (Math.max(0, Math.min(8, layer))) {
+    public static double scale(int executionTier) {
+        return switch (Math.max(0, Math.min(8, executionTier))) {
             case 0 -> 0.0D;
             case 1 -> 0.45D;
             case 2 -> 0.55D;
@@ -116,22 +116,22 @@ public final class RainRules {
     }
 
     /** Остаточные образы рук — со 2-го слоя; лепестки — с 3-го. */
-    public static boolean afterimages(int layer) {
-        return layer >= 2;
+    public static boolean afterimages(int executionTier) {
+        return executionTier >= 2;
     }
 
-    public static boolean petals(int layer) {
-        return layer >= 3;
+    public static boolean petals(int executionTier) {
+        return executionTier >= 3;
     }
 
     /** Оболочек цветка-ядра: 1 на 3–5, 2 на 6, 3 с 7-го. */
-    public static int shells(int layer) {
-        return layer >= 7 ? 3 : layer == 6 ? 2 : layer >= 3 ? 1 : 0;
+    public static int shells(int executionTier) {
+        return executionTier >= 7 ? 3 : executionTier == 6 ? 2 : executionTier >= 3 ? 1 : 0;
     }
 
     /** Столб света из вертикальных лент в ливне — с 6-го слоя. */
-    public static boolean column(int layer) {
-        return layer >= 6;
+    public static boolean column(int executionTier) {
+        return executionTier >= 6;
     }
 
     /** Направление укола {@code k} в мире по рысканью мастера. */
@@ -149,9 +149,9 @@ public final class RainRules {
     }
 
     /** Ядро иллюзии над целью: вынос к мастеру-зрителю, чтобы его было видно со спины цели. */
-    public static Vec3 core(Vec3 targetFeet, Vec3 approach, int layer) {
+    public static Vec3 core(Vec3 targetFeet, Vec3 approach, int executionTier) {
         Vec3 dir = approach.lengthSqr() < 1.0E-6D ? new Vec3(0.0D, 0.0D, 1.0D) : approach.normalize();
-        double k = 0.75D + 0.25D * scale(layer);
+        double k = 0.75D + 0.25D * scale(executionTier);
         return targetFeet.add(dir.scale(-CORE_OFFSET * k)).add(0.0D, CORE_HEIGHT * k, 0.0D);
     }
 

@@ -31,7 +31,8 @@ public final class TechniqueService {
             return false;
         }
         TechniqueDefinition technique = resolve(techniqueId);
-        if (technique == null) {
+        if (technique == null || SwordBasicCombo.isBasic(technique.id())) {
+            // Style basics are vanilla attacks, never zero-damage casts with tier/global cooldowns.
             return false;
         }
         // Кинжалы Тан: повторное R, пока живы кинжалы формы, — команда (удар звёзд, отзыв), не запуск.
@@ -39,6 +40,7 @@ public final class TechniqueService {
             return false;
         }
 
+        if (io.github.verycooltimo.murim.technique.DemonicExecutor.active(player, technique.id())) return false;
         TechniqueState state = player.getData(ModAttachments.TECHNIQUE_STATE);
         if (state.isActive()) {
             return false;
@@ -59,10 +61,22 @@ public final class TechniqueService {
             return false;
         }
 
+        if (technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.Footwork form) {
+            int executionTier = io.github.verycooltimo.murim.mastery.MasteryService.executionTier(player, technique.id());
+            if ("wind_god".equals(form.family()) && "death".equals(form.mode()) && executionTier < 3) {
+                return false;
+            }
+            if ("run".equals(form.mode()) || "shadow".equals(form.mode())) {
+                FootworkService.request(player, technique.id(), 0);
+                return FootworkService.isRunning(player) || FootworkService.inShadow(player);
+            }
+        }
+
         long now = player.serverLevel().getGameTime();
         // Своя перезарядка у каждой техники + короткая общая пауза между приёмами.
         Long own = player.getData(ModAttachments.COOLDOWNS).get(technique.id());
-        if (!offCooldown(now, own == null ? Long.MIN_VALUE : own, technique.cooldownTicks())
+        if (!offCooldown(now, own == null ? Long.MIN_VALUE : own, effectiveCooldown(technique,
+                io.github.verycooltimo.murim.mastery.MasteryService.executionTier(player, technique.id())))
                 || !offCooldown(now, state.lastStartGameTime(), gapAfter(player.getData(ModAttachments.COOLDOWNS), state.lastStartGameTime()))) {
             return false;
         }
@@ -78,8 +92,8 @@ public final class TechniqueService {
         }
         // Слой освоения меняет цену: корявая техника дороже, обжитая — дешевле (§3г).
         double cost = techniqueCost(technique) * io.github.verycooltimo.murim.mastery.MasteryRules.costFactor(
-                Math.max(0, io.github.verycooltimo.murim.mastery.MasteryService.layer(player, technique.id())),
-                technique.layers())
+                Math.max(0, io.github.verycooltimo.murim.mastery.MasteryService.stars(player, technique.id())),
+                technique.starCap())
                 * io.github.verycooltimo.murim.cultivation.PillService.costFactor(player);
         // Мечевая форма — только с мечом в руке или ци-мечом (пустая рука пробуждённого), 03.10.
         if (QiSword.needsSword(technique) && !QiSword.hasBlade(player)) {
@@ -104,7 +118,7 @@ public final class TechniqueService {
 
         player.setData(ModAttachments.TECHNIQUE_STATE, TechniqueState.started(technique.id(), now));
         if (QiSword.needsSword(technique)) {
-            QiSword.draw(player);
+            QiSword.onCast(player, technique.id());
         }
         java.util.Map<net.minecraft.resources.ResourceLocation, Long> cds = new java.util.HashMap<>(player.getData(ModAttachments.COOLDOWNS));
         cds.put(technique.id(), now);
@@ -112,9 +126,13 @@ public final class TechniqueService {
         io.github.verycooltimo.murim.mastery.LoadoutService.returnToStance(player, technique.id());
         PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
                 new TechniqueEventPayload(TechniqueEventPayload.Event.STARTED, technique.id(), player.getId(), 0,
-                        Math.max(0, io.github.verycooltimo.murim.mastery.MasteryService.layer(player, technique.id()))));
+                        Math.max(0, io.github.verycooltimo.murim.mastery.MasteryService.executionTier(player, technique.id()))));
         // Цель не уходит пешком из долгой техники (автор 05.10): удержание с начала каста.
-        Stun.holdStart(player, technique);
+        if (!(technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.DemonicArt)) {
+            Stun.holdStart(player, technique);
+        } else {
+            io.github.verycooltimo.murim.technique.DemonicExecutor.begin(player, technique.id());
+        }
         // Ладонь в начале захватывает цель и делает рывок к ней (автор 01.10).
         if (technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.PalmBlast palm
                 && !io.github.verycooltimo.murim.technique.JunkArts.isJunk(technique.id())) {
@@ -150,7 +168,7 @@ public final class TechniqueService {
                     slowTicks, 2, false, false, false));
         }
         // Люди горы рядом останавливаются и смотрят (живая гора, автор 05.10).
-        io.github.verycooltimo.murim.sect.SectReactions.onTechnique(player);
+        io.github.verycooltimo.murim.sect.SectReactions.onTechnique(player, technique);
         return true;
     }
 
@@ -239,9 +257,16 @@ public final class TechniqueService {
         }
         // Ци-меч не гаснет посреди долгой мечевой формы (Вихрь длиннее его 10 с).
         if (QiSword.needsSword(technique) && state.tick() % 20 == 0) {
-            QiSword.draw(player);
+            QiSword.onCast(player, technique.id());
         }
 
+        if (technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.DemonicArt) {
+            io.github.verycooltimo.murim.technique.DemonicExecutor.prepare(player, technique, state.tick());
+            int since = state.tick() - technique.startTickOf(TechniquePhase.IMPACT);
+            if (since > 0) io.github.verycooltimo.murim.technique.DemonicExecutor.tick(player, technique.id(), since);
+            state = player.getData(ModAttachments.TECHNIQUE_STATE);
+            if (!state.isActive() || !technique.id().equals(state.techniqueId())) return;
+        }
         if (phase == TechniquePhase.IMPACT && !state.impactDone()) {
             // Отметка ставится ДО поражения: если внутри вылетит исключение, повторного
             // удара на следующем тике не будет.
@@ -330,14 +355,16 @@ public final class TechniqueService {
 
         // Шаг на высшем слое: ещё два рывка через равные промежутки.
         if (technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.Step) {
-            int layer = Math.max(0, io.github.verycooltimo.murim.mastery.MasteryService.layer(player, technique.id()));
+            int executionTier = Math.max(0, io.github.verycooltimo.murim.mastery.MasteryService.executionTier(player, technique.id()));
             int since = state.tick() - technique.startTickOf(TechniquePhase.IMPACT);
             int gap = io.github.verycooltimo.murim.technique.StepRules.CHAIN_GAP;
-            if (since > 0 && since % gap == 0 && since / gap < io.github.verycooltimo.murim.technique.StepRules.dashes(layer)) {
+            if (since > 0 && since % gap == 0 && since / gap < io.github.verycooltimo.murim.technique.StepRules.dashes(executionTier)) {
                 io.github.verycooltimo.murim.technique.BehaviorExecutor.step(player, technique.id());
             }
         }
 
+        io.github.verycooltimo.murim.technique.FunnyJunkArts.tick(player, technique,
+                state.tick() - technique.startTickOf(TechniquePhase.WINDUP));
         player.setData(ModAttachments.TECHNIQUE_STATE, state.advanced());
     }
 
@@ -360,6 +387,7 @@ public final class TechniqueService {
         ResourceLocation id = state.techniqueId();
         player.setData(ModAttachments.TECHNIQUE_STATE, state.finished());
         Stun.releaseHolds(player);
+        io.github.verycooltimo.murim.technique.DemonicExecutor.clearCast(player);
         if (id != null) {
             PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
                     new TechniqueEventPayload(event, id, player.getId(), 0, 0));
@@ -377,11 +405,19 @@ public final class TechniqueService {
      * веер снарядов или рывок. Сервис знает только когда, но не что.
      */
     private static void resolveImpact(ServerPlayer player, TechniqueDefinition technique) {
+        if (technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.DemonicArt) {
+            boolean hit = BehaviorExecutor.execute(player, technique);
+            if (!hit && !io.github.verycooltimo.murim.technique.DemonicRules.sustained(technique.id().getPath()))
+                io.github.verycooltimo.murim.mastery.MasteryService.onMiss(player, technique.id());
+            return; // specialised executor owns contact sound and one hit-stop for the complete cast.
+        }
         // Свист клинка звучит на ударе независимо от попадания: промах тоже должен быть
         // слышен, иначе игрок не понимает, сработала ли техника.
-        player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
-                io.github.verycooltimo.murim.registry.ModSounds.SWORD_SWING.get(),
-                net.minecraft.sounds.SoundSource.PLAYERS, 1.0F, 0.95F + 0.1F * player.getRandom().nextFloat());
+        if (!io.github.verycooltimo.murim.technique.JunkArts.FUNNY.contains(technique.id())) {
+            player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
+                    io.github.verycooltimo.murim.registry.ModSounds.SWORD_SWING.get(),
+                    net.minecraft.sounds.SoundSource.PLAYERS, 1.0F, 0.95F + 0.1F * player.getRandom().nextFloat());
+        }
 
         boolean anyHit = BehaviorExecutor.execute(player, technique);
         io.github.verycooltimo.murim.technique.JunkArts.afterImpact(player, technique.id());
@@ -392,7 +428,9 @@ public final class TechniqueService {
 
         if (anyHit) {
             player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
-                    io.github.verycooltimo.murim.registry.ModSounds.SWORD_HIT.get(),
+                    io.github.verycooltimo.murim.technique.JunkArts.FUNNY.contains(technique.id())
+                            ? net.minecraft.sounds.SoundEvents.PLAYER_ATTACK_WEAK
+                            : io.github.verycooltimo.murim.registry.ModSounds.SWORD_HIT.get(),
                     net.minecraft.sounds.SoundSource.PLAYERS, 0.9F, 0.95F + 0.1F * player.getRandom().nextFloat());
             // Hit stop адресно применяющему: заморозка экрана у соседей, попавших в радиус
             // трекинга, была бы гриферством с обычного клиента.
@@ -439,6 +477,15 @@ public final class TechniqueService {
      * <p>Зритель проверяется отдельно от живости: без этого режим наблюдателя давал
      * бесплатный урон по миру.
      */
+    /** Blink cooldown follows the shared God Wind mastery; other techniques keep their data. */
+    public static int effectiveCooldown(TechniqueDefinition technique, int executionTier) {
+        if (technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.Footwork f
+                && "wind_god".equals(f.family()) && "evade".equals(f.mode())) {
+            return io.github.verycooltimo.murim.technique.FootworkFamily.windEvadeCooldown(executionTier);
+        }
+        return technique.cooldownTicks();
+    }
+
     /**
      * Стоимость техники в циркулирующей ци.
      *
@@ -446,7 +493,9 @@ public final class TechniqueService {
      * объективно дороже короткого рывка, и держать это ещё одним числом в JSON значило бы
      * дать возможность их рассогласовать.
      */
-    private static double techniqueCost(TechniqueDefinition technique) {
+    public static double techniqueCost(TechniqueDefinition technique) {
+        if (technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.DemonicArt art)
+            return io.github.verycooltimo.murim.technique.DemonicRules.cost(art.art());
         return 1.0D + technique.totalTicks() * 0.05D;
     }
 

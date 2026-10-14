@@ -1,0 +1,57 @@
+{
+  "name": "npc.murim.ha_yun",
+  "title": "npc.murim.ha_yun.title",
+  "start": [
+    {
+      "node": "greet"
+    }
+  ],
+  "nodes": {
+    "greet": {
+      "line": "dialogue.murim.guest_ha_yun.greet",
+      "options": [
+        {
+          "text": "dialogue.murim.guest_ha_yun.contract",
+          "next": "contract",
+          "actions": [
+            {
+              "type": "set_flag",
+              "value": "guest.ha_yun.contract"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.guest_ha_yun.identity",
+          "next": "identity"
+        },
+        {
+          "text": "dialogue.murim.guest.leave"
+        }
+      ]
+    },
+    "contract": {
+      "line": "dialogue.murim.guest_ha_yun.lead",
+      "options": [
+        {
+          "text": "dialogue.murim.guest.leave"
+        }
+      ]
+    },
+    "identity": {
+      "line": "dialogue.murim.guest_ha_yun.identity_line",
+      "options": [
+        {
+          "text": "dialogue.murim.guest_ha_yun.challenge",
+          "actions": [
+            {
+              "type": "guest_challenge"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.guest.leave"
+        }
+      ]
+    }
+  }
+}

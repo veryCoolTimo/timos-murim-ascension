@@ -59,9 +59,12 @@ public final class BookLayout {
         return out;
     }
 
-    /** Одиночная книга техники (не стиль): картинка, если есть, и текст на шаблоне Хуашань. */
+    /** Одиночная книга: у танцев только простой текст; у остальных — картинка, если есть, и шаблон Хуашань. */
     public static List<Page> single(ResourceLocation technique, Predicate<String> exists) {
         List<Page> out = new ArrayList<>();
+        if (JunkArts.FUNNY.contains(technique)) {
+            return List.of(new Page(false, technique, "textures/gui/book/junk_text.png"));
+        }
         String pic = spread(technique.getPath());
         if (exists.test(pic)) {
             out.add(new Page(true, technique, pic));

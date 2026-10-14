@@ -1,0 +1,15 @@
+{
+  "variants": {
+    "": [
+      {
+        "model": "murim:block/library_parquet_0"
+      },
+      {
+        "model": "murim:block/library_parquet_1"
+      },
+      {
+        "model": "murim:block/library_parquet_2"
+      }
+    ]
+  }
+}

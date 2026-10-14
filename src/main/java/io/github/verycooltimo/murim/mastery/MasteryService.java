@@ -25,17 +25,13 @@ public final class MasteryService {
     public enum Learn { LEARNED, ALREADY, MISSING_BASICS, UNKNOWN, NO_DANTIAN, NEED_RANK }
 
     /**
-     * Изучение из манускрипта.
-     *
-     * @param depth до какого слоя учит манускрипт; {@code <= 0} — полный
-     */
-    /**
      * Стиль, у которого игрок знает хоть одну форму, учится целиком (формы добавились позже —
      * например, шаги стали стилями 03.10): недостающие формы — до того же предела.
      */
     public static void completeStyles(ServerPlayer player) {
         for (io.github.verycooltimo.murim.technique.Styles.Style style : io.github.verycooltimo.murim.technique.Styles.ALL) {
-            if (io.github.verycooltimo.murim.technique.Styles.sequential(style)) {
+            if (io.github.verycooltimo.murim.technique.Styles.sequential(style)
+                    || io.github.verycooltimo.murim.technique.Styles.individualBooks(style)) {
                 continue;
             }
             MasteryState state = player.getData(ModAttachments.MASTERY);
@@ -56,6 +52,7 @@ public final class MasteryService {
         }
     }
 
+    /** Изучение формы; depth — предел звёзд манускрипта, <= 0 означает полный текст. */
     public static Learn learn(ServerPlayer player, ResourceLocation id, int depth) {
         if (TechniqueLoader.get(id) == null) {
             return Learn.UNKNOWN;
@@ -89,12 +86,12 @@ public final class MasteryService {
             return Learn.UNKNOWN;
         }
         MasteryState state = player.getData(ModAttachments.MASTERY);
-        int cap = depth <= 0 ? definition.layers() : Math.min(depth, definition.layers());
+        int cap = depth <= 0 ? definition.starCap() : Math.min(depth, definition.starCap());
         if (state.knows(id)) {
             // Продолжение рваного манускрипта поднимает предел, но не сбрасывает освоенное.
             TechniqueProgress current = state.techniques().get(id);
             if (cap > current.cap()) {
-                player.setData(ModAttachments.MASTERY, state.with(id, new TechniqueProgress(current.layer(),
+                player.setData(ModAttachments.MASTERY, state.with(id, new TechniqueProgress(current.stars(),
                         current.progress(), current.unprocessed(), current.day(), cap)));
                 message(player, "murim.mastery.deeper", ChatFormatting.GRAY, name(id));
                 sync(player);
@@ -102,16 +99,19 @@ public final class MasteryService {
             }
             return Learn.ALREADY;
         }
-        List<TechniqueRequirement> missing = MasteryRules.missing(definition.requires(), state.layers());
+        List<TechniqueRequirement> missing = MasteryRules.missing(definition.requires(), state.stars());
         if (!missing.isEmpty()) {
             // Жёсткий порог (автор 30.09): без основ слова не складываются в смысл.
             TechniqueRequirement first = missing.get(0);
-            message(player, "murim.mastery.missing", ChatFormatting.GOLD, name(first.technique()), first.layer());
+            message(player, "murim.mastery.missing", ChatFormatting.GOLD, name(first.technique()), first.star());
             return Learn.MISSING_BASICS;
         }
-        int start = MasteryRules.startLayer(definition.tier(), cap, state.wisdom());
-        MasteryState next = state.with(id, TechniqueProgress.learned(start, cap))
-                .withWisdom(state.wisdom() + MasteryRules.wisdomForLearning(definition.tier()));
+        TechniqueProgress shared = state.progress(id);
+        int start = shared == null ? MasteryRules.startStars(definition.tier(), cap, state.wisdom()) : shared.stars();
+        TechniqueProgress learned = shared == null ? TechniqueProgress.learned(start, cap)
+                : new TechniqueProgress(shared.stars(), shared.progress(), shared.unprocessed(), shared.day(), Math.max(cap, shared.cap()));
+        MasteryState next = state.with(id, learned)
+                .withWisdom(state.wisdom() + (shared == null ? MasteryRules.wisdomForLearning(definition.tier()) : 0.0D));
         player.setData(ModAttachments.MASTERY, next);
         message(player, start > 0 ? "murim.mastery.learned_skipped" : "murim.mastery.learned",
                 ChatFormatting.GRAY, name(id), start);
@@ -119,14 +119,16 @@ public final class MasteryService {
         // Стиль шагов учится целиком; стили-книги (Семь Цветков, 24 Движения) — по форме за раз,
         // вместе с первой формой — основа ЛКМ стиля (автор 03.10).
         io.github.verycooltimo.murim.technique.Styles.of(id).ifPresent(style -> {
-            if (!io.github.verycooltimo.murim.technique.Styles.sequential(style)) {
+            if (!io.github.verycooltimo.murim.technique.Styles.sequential(style)
+                    && !io.github.verycooltimo.murim.technique.Styles.individualBooks(style)) {
                 for (ResourceLocation form : style.forms()) {
                     if (!player.getData(ModAttachments.MASTERY).knows(form)) {
                         grant(player, form, depth);
                     }
                 }
             }
-            if (!io.github.verycooltimo.murim.technique.Styles.sequential(style)) {
+            if (!io.github.verycooltimo.murim.technique.Styles.sequential(style)
+                    && !io.github.verycooltimo.murim.technique.Styles.individualBooks(style)) {
                 style.basic().filter(b -> !player.getData(ModAttachments.MASTERY).knows(b)).ifPresent(b -> grant(player, b, depth));
             }
         });
@@ -137,23 +139,29 @@ public final class MasteryService {
     /** Продолжение рваного манускрипта страницей: предел {@code cap}, освоенное не трогается. */
     public static void deepen(ServerPlayer player, ResourceLocation id, int cap) {
         MasteryState state = player.getData(ModAttachments.MASTERY);
-        TechniqueProgress current = state.techniques().get(id);
+        TechniqueProgress current = state.progress(id);
+        cap = Math.min(cap, Arts.cap(id));
         if (current == null || cap <= current.cap()) {
             return;
         }
-        player.setData(ModAttachments.MASTERY, state.with(id, new TechniqueProgress(current.layer(),
+        player.setData(ModAttachments.MASTERY, state.with(id, new TechniqueProgress(current.stars(),
                 current.progress(), current.unprocessed(), current.day(), cap)));
         sync(player);
     }
 
-    /** Озарение от страницы или знакомой книги: освоение сразу, со вспышкой озарения на новом слое. */
+    /** Озарение от страницы или знакомой книги: освоение сразу, со вспышкой озарения на новой звезде. */
     public static void study(ServerPlayer player, ResourceLocation id, double amount) {
+        study(player, id, amount, false);
+    }
+
+    /** A mentor's review after sparring can supply breakthrough insight. */
+    public static void study(ServerPlayer player, ResourceLocation id, double amount, boolean insight) {
         TechniqueProgress progress = player.getData(ModAttachments.MASTERY).techniques().get(id);
         if (progress == null) {
             return;
         }
         apply(player, id, MasteryRules.study(progress, amount * MasteryRules.wisdomFactor(
-                player.getData(ModAttachments.MASTERY).wisdom()), day(player)), false);
+                player.getData(ModAttachments.MASTERY).wisdom()), day(player), Arts.cap(id), insight), false);
         sync(player);
     }
 
@@ -169,10 +177,15 @@ public final class MasteryService {
         return player.getData(ModAttachments.MASTERY).knows(id);
     }
 
-    /** Слой техники у игрока, или -1, если не выучена. */
-    public static int layer(ServerPlayer player, ResourceLocation id) {
+    /** Звезда техники у игрока, или -1, если не выучена. */
+    public static int stars(ServerPlayer player, ResourceLocation id) {
         TechniqueProgress progress = player.getData(ModAttachments.MASTERY).techniques().get(id);
-        return progress == null ? -1 : progress.layer();
+        return progress == null ? -1 : progress.stars();
+    }
+
+    /** Normalized index for the existing execution and VFX tables, never player mastery. */
+    public static int executionTier(ServerPlayer player, ResourceLocation id) {
+        return Arts.executionTier(id, stars(player, id));
     }
 
     /**
@@ -184,8 +197,11 @@ public final class MasteryService {
             return;
         }
         double worth = hitWorth(player, target);
+        boolean sparring = target instanceof io.github.verycooltimo.murim.entity.SectDisciple d
+                && d.spar() == io.github.verycooltimo.murim.entity.SectDisciple.Spar.FIGHT
+                && player.getUUID().equals(d.partner());
         experience(player, id, kind(target) == MasteryPacing.Kind.TRAINING ? MasteryRules.Source.TRAINING
-                : MasteryRules.Source.FIGHT, worth);
+                : sparring ? MasteryRules.Source.SPARRING : MasteryRules.Source.FIGHT, worth);
     }
 
     /** Цена этого попадания для освоения; засчитывает попадание в усталость дня. */
@@ -248,11 +264,11 @@ public final class MasteryService {
         if (progress == null) {
             return;
         }
-        // Поздние формы стиля-книги осваиваются медленнее (автор 03.10: «каждая сложнее прошлой»).
+        // Практика любой формы развивает одно искусство, без отдельной шкалы формы.
         MasteryRules.Gain gain = MasteryRules.experience(progress, source,
                 // День утренней тренировки секты — освоение чуть быстрее (план секты §4.2).
-                amount * io.github.verycooltimo.murim.technique.Styles.difficulty(id)
-                        * io.github.verycooltimo.murim.sect.SectLife.masteryBonus(player), state.wisdom(), day(player));
+                amount * io.github.verycooltimo.murim.sect.SectLife.masteryBonus(player),
+                state.wisdom(), day(player), Arts.cap(id));
         apply(player, id, gain, false);
         sync(player);
     }
@@ -266,9 +282,14 @@ public final class MasteryService {
         MasteryState state = player.getData(ModAttachments.MASTERY);
         boolean any = false;
         long day = day(player);
+        java.util.Set<ResourceLocation> visited = new java.util.HashSet<>();
         for (Map.Entry<ResourceLocation, TechniqueProgress> entry : state.techniques().entrySet()) {
+            if (!visited.add(MasteryState.masteryId(entry.getKey()))) {
+                continue;
+            }
             TechniqueProgress cooled = MasteryRules.cool(entry.getValue(), day);
-            if (cooled.unprocessed() <= 0.0D) {
+            if (cooled.unprocessed() <= 0.0D
+                    && (cooled.atCap() || cooled.progress() < MasteryRules.need(cooled.stars()))) {
                 continue;
             }
             any = true;
@@ -281,44 +302,54 @@ public final class MasteryService {
 
     private static void apply(ServerPlayer player, ResourceLocation id, MasteryRules.Gain gain, boolean meditating) {
         MasteryState state = player.getData(ModAttachments.MASTERY).with(id, gain.progress());
-        for (int layer : gain.layersReached()) {
-            insight(player, id, layer, meditating);
+        ResourceLocation art = MasteryState.masteryId(id);
+        for (int stars : gain.starsReached()) {
+            insight(player, id, stars, meditating);
         }
         TechniqueDefinition definition = TechniqueLoader.get(id);
-        if (definition != null && !state.comprehended().contains(id)
-                && MasteryRules.comprehends(definition.tier(), gain.progress().layer(), definition.layers())) {
+        if (definition != null && !state.comprehended().contains(art)
+                && MasteryRules.comprehends(definition.tier(), gain.progress().stars(), definition.starCap())) {
             // Постижение крутой техники растит мудрость — косвенно, одной фразой.
             state = state.comprehend(id).withWisdom(state.wisdom() + MasteryRules.wisdomForComprehension());
-            message(player, "murim.mastery.comprehended", ChatFormatting.AQUA, name(id));
+            message(player, "murim.mastery.comprehended", ChatFormatting.AQUA, artName(id));
         }
         player.setData(ModAttachments.MASTERY, state);
     }
 
-    /** Озарение: новый слой. Клиент показывает его вспышкой в бою или двойником в медитации. */
-    private static void insight(ServerPlayer player, ResourceLocation id, int layer, boolean meditating) {
-        io.github.verycooltimo.murim.MurimMod.LOGGER.info("Озарение у {}: {} — слой {}{}",
-                player.getGameProfile().getName(), id, layer, meditating ? " (медитация)" : "");
+    /** Озарение: новая звезда. Клиент показывает его вспышкой в бою или двойником в медитации. */
+    private static void insight(ServerPlayer player, ResourceLocation id, int stars, boolean meditating) {
+        io.github.verycooltimo.murim.MurimMod.LOGGER.info("Озарение у {}: {} — звезда {}{}",
+                player.getGameProfile().getName(), Arts.masteryId(id), stars, meditating ? " (медитация)" : "");
         player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
                 io.github.verycooltimo.murim.registry.ModSounds.QI_CHIME.get(), SoundSource.PLAYERS, 1.0F, 1.0F);
-        net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(player,
-                new io.github.verycooltimo.murim.network.InsightPayload(id, layer, meditating));
+        message(player, "murim.mastery.insight.star", ChatFormatting.AQUA, artName(id), stars);
+        send(player, new io.github.verycooltimo.murim.network.InsightPayload(id, stars, meditating));
     }
 
-    /** Освоение уходит владельцу: слои, доля к следующему и что ждёт осмысления. */
+    /** Освоение уходит владельцу: звёзды, доля к следующему и что ждёт осмысления. */
     public static void sync(ServerPlayer player) {
         MasteryState state = player.getData(ModAttachments.MASTERY);
         long day = day(player);
         List<io.github.verycooltimo.murim.network.SyncMasteryPayload.Entry> entries = new java.util.ArrayList<>();
         state.techniques().forEach((id, raw) -> {
             TechniqueProgress p = MasteryRules.cool(raw, day);
-            float share = p.atCap() ? 1.0F : (float) Math.min(1.0D, p.progress() / MasteryRules.need(p.layer()));
+            float share = p.atCap() ? 1.0F : (float) Math.min(1.0D, p.progress() / MasteryRules.need(p.stars()));
             entries.add(new io.github.verycooltimo.murim.network.SyncMasteryPayload.Entry(
-                    id, p.layer(), p.cap(), share, (float) p.unprocessed()));
+                    id, p.stars(), p.cap(), share, (float) p.unprocessed()));
         });
-        net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(player,
-                new io.github.verycooltimo.murim.network.SyncMasteryPayload(List.copyOf(entries)));
+        send(player, new io.github.verycooltimo.murim.network.SyncMasteryPayload(List.copyOf(entries),
+                (float) io.github.verycooltimo.murim.cultivation.PillService.costFactor(player),
+                io.github.verycooltimo.murim.cultivation.PillService.costDiscountUntil(player)));
         // Мудрость меняет число открытых слотов — раскладка уходит вместе с освоением.
         LoadoutService.sync(player);
+    }
+
+    /** GameTest mock players have no mod channel: skip instead of crashing the tick. */
+    // API: reference/neoforge-src/net/neoforged/neoforge/common/extensions/ICommonPacketListener.java#hasChannel
+    private static void send(ServerPlayer player, net.minecraft.network.protocol.common.custom.CustomPacketPayload payload) {
+        if (player.connection != null && player.connection.hasChannel(payload)) {
+            net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(player, payload);
+        }
     }
 
     private static long day(ServerPlayer player) {
@@ -328,6 +359,40 @@ public final class MasteryService {
 
     public static Component name(ResourceLocation id) {
         return Component.translatable("technique." + id.getNamespace() + "." + id.getPath());
+    }
+
+    public static Component artName(ResourceLocation id) { return Component.translatable(Arts.nameKey(id)); }
+
+    /** Cultivation is a distinct art even when its scroll shares an ID with a sword foundation. */
+    public static void learnMethod(ServerPlayer player, io.github.verycooltimo.murim.cultivation.CultivationMethod method) {
+        ResourceLocation art = Arts.methodArt(method.id());
+        MasteryState state = player.getData(ModAttachments.MASTERY);
+        if (!state.knows(art)) {
+            player.setData(ModAttachments.MASTERY, state.with(art, TechniqueProgress.learned(0, method.starCap())));
+        }
+    }
+
+    /** Quiet practice: exponential star growth; contemplation itself supplies late-star insight. */
+    public static double practiceMethod(ServerPlayer player) {
+        var method = player.getData(ModAttachments.CULTIVATION).method()
+                .map(io.github.verycooltimo.murim.cultivation.MethodLoader::get).orElse(null);
+        if (method == null) return 1.0D;
+        learnMethod(player, method); // existing worlds acquire the new track lazily
+        ResourceLocation art = Arts.methodArt(method.id());
+        MasteryState state = player.getData(ModAttachments.MASTERY);
+        TechniqueProgress p = state.progress(art);
+        apply(player, art, MasteryRules.study(p, 0.001D * MasteryRules.wisdomFactor(state.wisdom()),
+                day(player), method.starCap(), true), true);
+        return 1.0D + 0.25D * p.stars() / method.starCap();
+    }
+
+    /** Name a concrete art and its converted threshold when a cultivation rank is blocked. */
+    public static Component requirement(ServerPlayer player, int executionTier) {
+        ResourceLocation form = player.getData(ModAttachments.MASTERY).techniques().keySet().stream()
+                .filter(id -> TechniqueLoader.get(id) != null)
+                .max(java.util.Comparator.comparingInt(id -> executionTier(player, id)))
+                .orElse(ResourceLocation.fromNamespaceAndPath("murim", "six_harmonies"));
+        return Component.translatable("murim.mastery.requirement", artName(form), Arts.unlockStar(form, executionTier));
     }
 
     private static void message(ServerPlayer player, String key, ChatFormatting style, Object... args) {

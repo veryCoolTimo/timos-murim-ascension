@@ -118,12 +118,17 @@ public final class ManualScreen extends Screen {
         if (!io.github.verycooltimo.murim.mastery.MasteryRules.rankAllows(ClientProfileState.profile(), tier())) {
             return 4;
         }
-        java.util.Optional<ResourceLocation> prevForm = io.github.verycooltimo.murim.technique.Styles.previous(f);
-        if (prevForm.isEmpty()) {
-            return 1;
+        return missing(f) == null ? 1 : 0;
+    }
+
+    private io.github.verycooltimo.murim.mastery.TechniqueRequirement missing(ResourceLocation f) {
+        var definition = io.github.verycooltimo.murim.technique.TechniqueLoader.get(f);
+        if (definition == null) return null;
+        for (var requirement : definition.requires()) {
+            var known = TechniqueSlotsHud.mastery(requirement.technique());
+            if (known == null || known.stars() < requirement.star()) return requirement;
         }
-        io.github.verycooltimo.murim.network.SyncMasteryPayload.Entry e = io.github.verycooltimo.murim.client.TechniqueSlotsHud.mastery(prevForm.get());
-        return e != null && e.layer() >= io.github.verycooltimo.murim.technique.Styles.NEXT_FORM_LAYER ? 1 : 0;
+        return null;
     }
 
     /** Предел, до которого учит эта книга технику {@code f}: рваная — до своей глубины. */
@@ -132,7 +137,7 @@ public final class ManualScreen extends Screen {
         if (d == null) {
             return 0;
         }
-        return open.depth() <= 0 ? d.layers() : Math.min(open.depth(), d.layers());
+        return open.depth() <= 0 ? d.starCap() : Math.min(open.depth(), d.starCap());
     }
 
     /** Всё, чему учит книга, выучено до её глубины — дубликат. */
@@ -355,8 +360,8 @@ public final class ManualScreen extends Screen {
                     : st == 3 ? Component.translatable("murim.manual.no_dantian")
                     : st == 4 ? Component.translatable("murim.manual.need_peak")
                     : Component.translatable("murim.manual.locked",
-                            io.github.verycooltimo.murim.mastery.MasteryService.name(io.github.verycooltimo.murim.technique.Styles.previous(form()).orElse(form())),
-                            io.github.verycooltimo.murim.technique.Styles.NEXT_FORM_LAYER);
+                            io.github.verycooltimo.murim.mastery.MasteryService.name(missing(form()) == null ? form() : missing(form()).technique()),
+                            missing(form()) == null ? 0 : missing(form()).star());
             g.pose().pushPose();
             g.pose().translate(214, SEAL_Y + 4, 0.0F);
             g.pose().scale(0.6F, 0.6F, 1.0F);
@@ -454,6 +459,11 @@ public final class ManualScreen extends Screen {
         String key = I18n.exists("book.murim." + path + ".full") ? "book.murim." + path + ".full" : "book.murim." + path;
         String body = I18n.exists(key) ? I18n.get(key)
                 : I18n.exists("technique.murim." + path + ".weakness") ? I18n.get("technique.murim." + path + ".weakness") : "";
+        // Put live mastery and effective costs first so they remain visible on a full page.
+        List<Component> stats = FootworkText.lines(form());
+        if (!stats.isEmpty()) {
+            body = stats.stream().map(Component::getString).collect(java.util.stream.Collectors.joining("\n")) + "\n\n" + body;
+        }
         // Longer translations (EN) overflowed the page and were cut silently: shrink until it fits, down to 70 %.
         float fitted = scale;
         while (fitted > scale * 0.7F && textHeight(body, (int) (w / fitted)) * fitted > h) {

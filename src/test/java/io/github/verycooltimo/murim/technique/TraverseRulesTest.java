@@ -9,11 +9,11 @@ class TraverseRulesTest {
 
     @Test
     void growsWithMastery() {
-        for (int layer = 1; layer <= 4; layer++) {
-            assertTrue(TraverseRules.speed(layer) > TraverseRules.speed(layer - 1));
-            assertTrue(TraverseRules.maxTicks(layer) > TraverseRules.maxTicks(layer - 1));
-            assertTrue(TraverseRules.qiPerSecond(layer) < TraverseRules.qiPerSecond(layer - 1));
-            assertTrue(TraverseRules.leapHorizontal(layer) > TraverseRules.leapHorizontal(layer - 1));
+        for (int executionTier = 1; executionTier <= 4; executionTier++) {
+            assertTrue(TraverseRules.speed(executionTier) > TraverseRules.speed(executionTier - 1));
+            assertTrue(TraverseRules.maxTicks(executionTier) > TraverseRules.maxTicks(executionTier - 1));
+            assertTrue(TraverseRules.qiPerSecond(executionTier) < TraverseRules.qiPerSecond(executionTier - 1));
+            assertTrue(TraverseRules.leapHorizontal(executionTier) > TraverseRules.leapHorizontal(executionTier - 1));
         }
     }
 

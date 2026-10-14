@@ -28,6 +28,9 @@ import java.util.List;
  */
 public class TechniqueManualItem extends Item {
 
+    /** Client-installed tooltip provider; common item code remains safe on dedicated servers. */
+    public static java.util.function.Function<ResourceLocation, List<Component>> clientFootworkInfo = id -> List.of();
+
     public TechniqueManualItem(Properties properties) {
         super(properties);
     }
@@ -43,10 +46,10 @@ public class TechniqueManualItem extends Item {
             return InteractionResultHolder.consume(stack);
         }
         // 03.10 автор: книга открывается и читается, учит кнопка «Изучить» (ManualPayloads.Learn).
-        Integer depth = stack.get(ModDataComponents.MANUAL_DEPTH.get());
+        int depth = io.github.verycooltimo.murim.mastery.ManualDepth.stars(stack, id);
         TechniqueDefinition definition = TechniqueLoader.get(id);
         net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(serverPlayer, new io.github.verycooltimo.murim.network.ManualPayloads.Open(
-                id, depth == null ? 0 : depth, definition == null ? "basic" : definition.tier().toString().toLowerCase(java.util.Locale.ROOT),
+                id, depth, definition == null ? "basic" : definition.tier().toString().toLowerCase(java.util.Locale.ROOT),
                 hand == InteractionHand.MAIN_HAND));
         return InteractionResultHolder.consume(stack);
     }
@@ -61,14 +64,15 @@ public class TechniqueManualItem extends Item {
         if (book == null) {
             return;
         }
+        if (io.github.verycooltimo.murim.technique.DemonicRules.isArt(book) && !wanted.equals(book)) return;
         // Книга стиля учит любую свою форму (по очереди — через requires в данных формы).
         boolean styleBasic = io.github.verycooltimo.murim.technique.Styles.ofBasic(wanted)
                 .equals(io.github.verycooltimo.murim.technique.Styles.of(book)) && io.github.verycooltimo.murim.technique.Styles.of(book).isPresent();
         ResourceLocation id = wanted.equals(book) || styleBasic || io.github.verycooltimo.murim.technique.Styles.sameStyle(book, wanted) ? wanted : book;
-        Integer depth = stack.get(ModDataComponents.MANUAL_DEPTH.get());
-        MasteryService.Learn result = MasteryService.learn(serverPlayer, id, depth == null ? 0 : depth);
+        int depth = io.github.verycooltimo.murim.mastery.ManualDepth.stars(stack, book);
+        MasteryService.Learn result = MasteryService.learn(serverPlayer, id, depth);
         if (result == MasteryService.Learn.ALREADY && io.github.verycooltimo.murim.mastery.PageService.nothingToTeach(
-                serverPlayer.getData(io.github.verycooltimo.murim.registry.ModAttachments.MASTERY), book, depth == null ? 0 : depth)) {
+                serverPlayer.getData(io.github.verycooltimo.murim.registry.ModAttachments.MASTERY), book, depth)) {
             // Дубликат (docs/design/24-bandit-camp.md §3): знакомая книга перечитывается в озарение.
             io.github.verycooltimo.murim.mastery.PageService.reread(serverPlayer, stack, book);
         } else if (result == MasteryService.Learn.ALREADY) {
@@ -102,13 +106,16 @@ public class TechniqueManualItem extends Item {
         if (definition == null) {
             return;
         }
-        Integer depth = stack.get(ModDataComponents.MANUAL_DEPTH.get());
-        lines.add(depth == null || depth >= definition.layers()
+        lines.addAll(clientFootworkInfo.apply(id));
+        lines.add(Component.translatable("item.murim.technique_manual.mastery_hint", MasteryService.artName(id))
+                .withStyle(ChatFormatting.DARK_GRAY));
+        int depth = io.github.verycooltimo.murim.mastery.ManualDepth.stars(stack, id);
+        lines.add(depth <= 0 || depth >= definition.starCap()
                 ? Component.translatable("item.murim.technique_manual.full").withStyle(ChatFormatting.GRAY)
                 : Component.translatable("item.murim.technique_manual.torn", depth).withStyle(ChatFormatting.GRAY));
         for (TechniqueRequirement requirement : definition.requires()) {
             lines.add(Component.translatable("item.murim.technique_manual.requires",
-                    MasteryService.name(requirement.technique()), requirement.layer())
+                    MasteryService.name(requirement.technique()), requirement.star())
                     .withStyle(ChatFormatting.DARK_GRAY));
         }
     }

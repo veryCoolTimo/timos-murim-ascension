@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /** The archive plan and the 1000-archive model of a first visit (docs/design/25-ruined-library.md §3, §5). */
@@ -30,7 +31,9 @@ class LibraryPlanTest {
             int side = a.proppedSide();
             int p = side == 0 || side == 2 ? c[1] : c[0];
             assertEquals(LibraryPlan.Cell.PROPPED, a.cell(0, side, p, 0), "seed " + seed);
-            // Exactly one propped cell in the archive.
+            assertEquals(LibraryPlan.Cell.PROPPED_UPPER, a.cell(0, side, p, 1), "seed " + seed);
+            assertNull(a.shelfAt(c[0], 2, c[1]), "upper cell still allocates books");
+            // Exactly one lower propped cell in the archive.
             int propped = 0;
             for (int t = 0; t < 4; t++) {
                 for (int s = 0; s < 4; s++) {
@@ -44,6 +47,11 @@ class LibraryPlanTest {
             assertEquals(1, propped, "seed " + seed);
             // Shelf notes on the shelves name the same shelf.
             for (LibraryPlan.Shelf s : a.shelves()) {
+                int layout = LibraryShelfLayout.variantAt(s.ax(), s.y(), s.az());
+                assertTrue(s.count() <= 2, "too many marked books");
+                for (int i = 0; i < 6; i++) {
+                    assertTrue(s.slots()[i] == null || LibraryShelfLayout.available(layout, i), "decorative slot filled");
+                }
                 for (LibraryPlan.Slot slot : s.slots()) {
                     if (slot != null && slot.junk() != null && slot.junk().kind() == JunkKind.CLUE) {
                         assertEquals(n, slot.junk().hint());
@@ -52,6 +60,35 @@ class LibraryPlanTest {
             }
         }
         assertTrue(nineteen > 300 && nineteen < 550, "19 should be the most common number: " + nineteen);
+    }
+
+    @Test
+    @DisplayName("Наставления сохраняются, стоят у фонарей лицом к проходу; опись называет именно их ярусы")
+    void litManualsAndTierClue() {
+        Set<Integer> seenTiers = new HashSet<>();
+        for (long seed = 0; seed < 1000; seed++) {
+            LibraryPlan a = LibraryPlan.plan(seed), b = LibraryPlan.plan(seed);
+            Set<LibraryPlan.Bookcase> targets = new HashSet<>();
+            Set<String> sources = new HashSet<>();
+            int tiers = 0;
+            assertEquals(a.genuineOnShelves(), a.rackManuals().size(), "reward count, seed " + seed);
+            for (int i = 0; i < a.rackManuals().size(); i++) {
+                LibraryPlan.RackManual manual = a.rackManuals().get(i);
+                LibraryPlan.Bookcase rack = manual.target();
+                assertEquals(rack, b.rackManuals().get(i).target());
+                assertTrue(a.bookcases().contains(rack) && targets.add(rack));
+                assertTrue(a.facesWalkingGallery(rack));
+                assertTrue(a.galleryLightDistance(rack) <= 5.0D);
+                assertEquals(manual.source().slots()[manual.sourceSlot()].genuine(), manual.genuine());
+                assertTrue(sources.add(manual.source().ax() + ":" + manual.source().y() + ":"
+                        + manual.source().az() + ":" + manual.sourceSlot()));
+                tiers |= 1 << rack.tier();
+                seenTiers.add(rack.tier());
+            }
+            assertEquals(tiers, a.deskClue().manualTiers());
+            assertEquals(tiers, a.deskClue().withRead().manualTiers());
+        }
+        assertEquals(Set.of(0, 1, 2, 3), seenTiers, "finds must not always use one tier");
     }
 
     @Test
@@ -76,7 +113,7 @@ class LibraryPlanTest {
     void simulation() {
         LibrarySim.Summary s = LibrarySim.run(20261004L, 1000, 0.04D);
         System.out.println("[library-sim] " + s.describe());
-        assertTrue(s.booksMean() > 150, "too few volumes: " + s.booksMean());
+        assertTrue(s.booksMean() > 80, "too few volumes: " + s.booksMean());
         assertTrue(s.shelfGenuineMean() < 2.0D, "shelves are no longer 98 % junk: " + s.shelfGenuineMean());
         assertEquals(0.0D, s.sourceShare()[LibrarySim.Source.NONE.ordinal()], 1e-9, "an archive without a find");
         assertTrue(s.p50() < 300.0D, "median time to the first useful find " + s.p50());

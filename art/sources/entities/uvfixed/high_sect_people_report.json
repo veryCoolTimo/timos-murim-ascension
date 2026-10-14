@@ -1,0 +1,33 @@
+{
+ "source": "art/sources/entities/high_sect_people.bbmodel",
+ "inverted_cubes": 0,
+ "flipped_faces": 72,
+ "rotated_faces": 0,
+ "overlapping_faces": 335,
+ "zero_uv_faces": 120,
+ "zero_area_faces": 4,
+ "inexact_faces": [],
+ "dense_faces": 28,
+ "texture_size_before": [
+  256,
+  256
+ ],
+ "uv_size_before": [
+  128,
+  128
+ ],
+ "baked_textures": [
+  "sect_head.png"
+ ],
+ "untouched_textures": [],
+ "texture_size_after": [
+  256,
+  256
+ ],
+ "uv_size_after": [
+  128,
+  128
+ ],
+ "faces": 408,
+ "cubes": 68
+}

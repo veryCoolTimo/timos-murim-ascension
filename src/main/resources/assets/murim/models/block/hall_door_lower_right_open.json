@@ -1,0 +1,16 @@
+{
+  "loader": "neoforge:obj",
+  "model": "murim:models/block/obj/hall_joinery/hall_door_lower_right_open.obj",
+  "flip_v": false,
+  "emissive_ambient": true,
+  "automatic_culling": false,
+  "shade_quads": true,
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "wood": "murim:block/red_lacquer",
+    "recess": "murim:block/dark_timber",
+    "brass": "murim:block/hall_door_brass",
+    "particle": "murim:block/red_lacquer"
+  },
+  "ambientocclusion": false
+}

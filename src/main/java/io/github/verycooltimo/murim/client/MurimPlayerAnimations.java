@@ -55,7 +55,8 @@ public final class MurimPlayerAnimations {
      */
     /**
      * Отдельный слой для форм основы меча (ЛКМ): у него модификатор скорости — анимация формы
-     * растягивается под перезарядку оружия и никогда не медленнее ванильного удара.
+     * Шести Равновесий растягивается под перезарядку оружия; у основ стилей скорость 1,
+     * короткий клип не растягивается вместе с оружием.
      */
     private static final ResourceLocation FOUNDATION_LAYER =
             ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "foundation_layer");
@@ -113,6 +114,48 @@ public final class MurimPlayerAnimations {
             return false;
         }
         return true;
+    }
+
+    /** Пустой клип (0,3 с, без костей): цель плавного выхода — кости уходят к ванильной позе. */
+    private static final ResourceLocation REST = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "rest");
+
+    /**
+     * Запуск с плавным входом из текущей позы (idle или прошлый клип) за {@code fadeTicks} тиков —
+     * для клипов, которые начинаются не в позе покоя (циклы стойки всадника, ношения камня):
+     * без этого тело прыгает в первую позу за кадр (автор 10.10: «не дёрганными»).
+     *
+     * <p>API: com.zigythebird.playeranim.animation.PlayerAnimationController#replaceAnimationWithFade
+     * (AbstractFadeModifier, ResourceLocation, boolean fadeFromNothing) и
+     * AbstractFadeModifier#standardFadeIn(int, EasingType) (javap, PAL 1.1.5).
+     */
+    public static boolean playBlended(AbstractClientPlayer player, ResourceLocation animation, int fadeTicks) {
+        IAnimation layer = PlayerAnimationAccess.getPlayerAnimationLayer(player, LAYER);
+        if (!(layer instanceof PlayerAnimationController controller)) {
+            return false;
+        }
+        boolean ok = controller.replaceAnimationWithFade(com.zigythebird.playeranimcore.animation.layered.modifier.AbstractFadeModifier
+                .standardFadeIn(fadeTicks, com.zigythebird.playeranimcore.easing.EasingType.EASE_IN_OUT_SINE), animation, true);
+        if (!ok) {
+            MurimMod.LOGGER.warn("Анимация {} не найдена: проверь assets/{}/player_animations/",
+                    animation, animation.getNamespace());
+        }
+        return ok;
+    }
+
+    /**
+     * Плавный выход в ванильную позу за {@code fadeTicks} тиков вместо мгновенного {@link #stop}: слой
+     * переходит в пустой клип {@code murim:rest}, а когда тот кончается — останавливается сам.
+     * [НЕПРОВЕРЕНО: кости, которых нет в целевом клипе, PAL ведёт к ванильной позе; проверено съёмкой
+     * выхода из лотоса и стойки всадника на стенде animreel.]
+     */
+    public static void stopBlended(AbstractClientPlayer player, int fadeTicks) {
+        IAnimation layer = PlayerAnimationAccess.getPlayerAnimationLayer(player, LAYER);
+        if (layer instanceof PlayerAnimationController controller) {
+            if (!controller.isActive() || !controller.replaceAnimationWithFade(com.zigythebird.playeranimcore.animation.layered.modifier.AbstractFadeModifier
+                    .standardFadeIn(fadeTicks, com.zigythebird.playeranimcore.easing.EasingType.EASE_IN_OUT_SINE), REST, false)) {
+                controller.stop();
+            }
+        }
     }
 
     /**

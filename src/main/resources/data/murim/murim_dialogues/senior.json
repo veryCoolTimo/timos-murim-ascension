@@ -62,7 +62,6 @@
       ]
     },
     "greet": {
-      "line": "dialogue.murim.senior.greet",
       "gesture": "fist",
       "options": [
         {
@@ -99,6 +98,9 @@
           "text": "dialogue.murim.senior.opt.refuse",
           "next": "refused"
         }
+      ],
+      "random": [
+        "@context"
       ]
     },
     "accept": {
@@ -235,6 +237,19 @@
       ],
       "gesture": "nod",
       "options": []
+    },
+    "sect_news": {
+      "random": [
+        "@trait",
+        "@personal",
+        "@rumour"
+      ],
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
     }
   }
 }

@@ -72,12 +72,12 @@ public final class TraversePayloads {
      *             4 — поворот в воздухе, 5 — Шаг Мига (dir — смещение рывка),
      *             6/7 — Тень вкл/выкл, 8 — Шаг Смерти, 9 — рывок Хуашань (Аромат за спиной)
      */
-    public record Event(int entityId, int kind, int layer, float dirX, float dirZ) implements CustomPacketPayload {
+    public record Event(int entityId, int kind, int executionTier, float dirX, float dirZ) implements CustomPacketPayload {
         public static final Type<Event> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "traverse_event"));
         public static final StreamCodec<RegistryFriendlyByteBuf, Event> STREAM_CODEC = StreamCodec.composite(
                 ByteBufCodecs.VAR_INT, Event::entityId,
                 ByteBufCodecs.VAR_INT, Event::kind,
-                ByteBufCodecs.VAR_INT, Event::layer,
+                ByteBufCodecs.VAR_INT, Event::executionTier,
                 ByteBufCodecs.FLOAT, Event::dirX,
                 ByteBufCodecs.FLOAT, Event::dirZ,
                 Event::new);

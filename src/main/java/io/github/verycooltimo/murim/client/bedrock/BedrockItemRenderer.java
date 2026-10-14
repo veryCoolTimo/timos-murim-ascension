@@ -39,12 +39,26 @@ public final class BedrockItemRenderer extends BlockEntityWithoutLevelRenderer {
 
     public static final BedrockItemMesh HUASHAN_SWORD = new BedrockItemMesh("/assets/murim/bedrock/huashan_sword.geo.json",
             ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/item/huashan_sword.png"));
-    /** Деревянный меч: та же модель автора, текстура дерева (art/items/wooden_sword/wood.png, та же раскладка UV 128×128). */
+    /** Деревянный меч: та же модель и UV 32×32, PNG 128×128; wooden_sword_texture.py окрашивает текущую развёртку. */
     public static final BedrockItemMesh WOODEN_SWORD = new BedrockItemMesh("/assets/murim/bedrock/huashan_sword.geo.json",
             ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/item/wooden_sword.png"));
 
+    public static final BedrockItemMesh PLUM_GUARD_SWORD = new BedrockItemMesh("/assets/murim/bedrock/plum_guard_sword.geo.json",
+            ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/item/plum_guard_sword.png"));
+
+    public static final BedrockItemMesh BLACK_DRAGON_SWORD = new BedrockItemMesh("/assets/murim/bedrock/black_dragon_sword.geo.json",
+            ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/item/black_dragon_sword.png"));
+
     private static final Map<Item, Spec> SPECS = new IdentityHashMap<>();
     private static BedrockItemRenderer instance;
+
+    /** Raw blade endpoints in mesh block units; renderByItem supplies centering and yaw. */
+    public static net.minecraft.world.phys.Vec3[] swordEndpoints(ItemStack stack) {
+        if (!stack.is(ModItems.HUASHAN_SWORD.get()) && !stack.is(ModItems.WOODEN_SWORD.get())
+                && !stack.is(ModItems.PLUM_GUARD_SWORD.get()) && !stack.is(ModItems.BLACK_DRAGON_SWORD.get())) return null;
+        Spec spec = SPECS.get(stack.getItem());
+        return spec == null ? null : spec.mesh().bladeEndpoints();
+    }
 
     public BedrockItemRenderer() {
         super(Minecraft.getInstance().getBlockEntityRenderDispatcher(), Minecraft.getInstance().getEntityModels());
@@ -55,6 +69,8 @@ public final class BedrockItemRenderer extends BlockEntityWithoutLevelRenderer {
         // Клинок кинжала в модели лежит в YZ, у меча — в XY: кинжал докручен на 90°, чтобы делить трансформы меча.
         SPECS.put(ModItems.TANG_DAGGER.get(), new Spec(TangDaggerMesh.MESH, 90.0F));
         SPECS.put(ModItems.HUASHAN_SWORD.get(), new Spec(HUASHAN_SWORD, 0.0F));
+        SPECS.put(ModItems.PLUM_GUARD_SWORD.get(), new Spec(PLUM_GUARD_SWORD, 0.0F));
+        SPECS.put(ModItems.BLACK_DRAGON_SWORD.get(), new Spec(BLACK_DRAGON_SWORD, 0.0F));
         SPECS.put(ModItems.WOODEN_SWORD.get(), new Spec(WOODEN_SWORD, 0.0F));
         IClientItemExtensions ext = new IClientItemExtensions() {
             @Override
@@ -65,7 +81,7 @@ public final class BedrockItemRenderer extends BlockEntityWithoutLevelRenderer {
                 return instance;
             }
         };
-        event.registerItem(ext, ModItems.TANG_DAGGER.get(), ModItems.HUASHAN_SWORD.get(), ModItems.WOODEN_SWORD.get());
+        event.registerItem(ext, ModItems.BLACK_DRAGON_SWORD.get(), ModItems.PLUM_GUARD_SWORD.get(), ModItems.TANG_DAGGER.get(), ModItems.HUASHAN_SWORD.get(), ModItems.WOODEN_SWORD.get());
     }
 
     @Override
@@ -80,6 +96,10 @@ public final class BedrockItemRenderer extends BlockEntityWithoutLevelRenderer {
             ps.translate(0.5F, 0.0F, 0.5F);
             ps.mulPose(new Quaternionf().rotationY((float) Math.toRadians(spec.yaw())));
             mesh.render(ps, buffers.getBuffer(mesh.renderType()), light, 1.0F, 0.0F, 1.0F, 1.0F, 1.0F, 1.0F);
+            var endpoints = swordEndpoints(stack);
+            if (endpoints != null) {
+                io.github.verycooltimo.murim.client.vfx.FoundationVfx.recordRenderedBlade(stack, context, ps, buffers, endpoints);
+            }
         } finally {
             ps.popPose();
         }

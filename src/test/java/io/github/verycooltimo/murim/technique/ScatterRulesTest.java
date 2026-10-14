@@ -18,12 +18,12 @@ class ScatterRulesTest {
     void twentyFourStrokes() {
         int n = ScatterRules.clones(7) * ScatterRules.strokes(7);
         assertEquals(24, n);
-        for (int layer = 1; layer <= 8; layer++) {
-            for (int i = 0; i < ScatterRules.clones(layer); i++) {
-                for (int j = 0; j < ScatterRules.strokes(layer); j++) {
-                    double end = ScatterRules.strokeStart(layer, i, j) + ScatterRules.PASS;
-                    assertTrue(end < ScatterRules.FINAL, "удар " + i + "/" + j + " слоя " + layer + " заходит на взмах");
-                    assertTrue(ScatterRules.strokeStart(layer, i, j) >= ScatterRules.STRIKE0);
+        for (int executionTier = 1; executionTier <= 8; executionTier++) {
+            for (int i = 0; i < ScatterRules.clones(executionTier); i++) {
+                for (int j = 0; j < ScatterRules.strokes(executionTier); j++) {
+                    double end = ScatterRules.strokeStart(executionTier, i, j) + ScatterRules.PASS;
+                    assertTrue(end < ScatterRules.FINAL, "удар " + i + "/" + j + " слоя " + executionTier + " заходит на взмах");
+                    assertTrue(ScatterRules.strokeStart(executionTier, i, j) >= ScatterRules.STRIKE0);
                 }
             }
         }

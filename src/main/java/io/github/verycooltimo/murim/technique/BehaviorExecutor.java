@@ -35,8 +35,14 @@ public final class BehaviorExecutor {
         TechniqueBehavior behavior = definition.behavior();
         // Слой освоения меняет силу: корявая техника слабее, обжитая — сильнее (§3г).
         float power = (float) io.github.verycooltimo.murim.mastery.MasteryRules.powerFactor(
-                Math.max(0, io.github.verycooltimo.murim.mastery.MasteryService.layer(player, definition.id())),
-                definition.layers());
+                Math.max(0, io.github.verycooltimo.murim.mastery.MasteryService.stars(player, definition.id())),
+                definition.starCap());
+        if (behavior instanceof TechniqueBehavior.DemonicArt) {
+            return DemonicExecutor.start(player, definition.id());
+        }
+        if (behavior instanceof TechniqueBehavior.JunkDance) {
+            return false;
+        }
         if (behavior instanceof TechniqueBehavior.MeleeArc melee) {
             return meleeArc(player, melee, definition.id(), power);
         }
@@ -109,7 +115,7 @@ public final class BehaviorExecutor {
      * телепортировал сквозь стены), неуязвимость на высоких слоях, пакет для эффекта.
      */
     public static void step(ServerPlayer player, net.minecraft.resources.ResourceLocation id) {
-        int layer = Math.max(0, io.github.verycooltimo.murim.mastery.MasteryService.layer(player, id));
+        int executionTier = Math.max(0, io.github.verycooltimo.murim.mastery.MasteryService.executionTier(player, id));
         // Направление задаёт контекст ввода (уклонение влево/вправо/назад), иначе — взгляд.
         Vec3 context = io.github.verycooltimo.murim.combat.FootworkService.dashDirection(player);
         Vec3 look = context != null ? context : player.getLookAngle();
@@ -119,7 +125,7 @@ public final class BehaviorExecutor {
         }
         Vec3 dir = flat.normalize();
         Vec3 start = player.position();
-        double distance = StepRules.distance(layer);
+        double distance = StepRules.distance(executionTier);
         // Луч на уровне пояса: упираемся в стену, а не проходим сквозь неё.
         Vec3 from = start.add(0.0D, 0.9D, 0.0D);
         net.minecraft.world.phys.BlockHitResult wall = player.level().clip(new net.minecraft.world.level.ClipContext(
@@ -130,13 +136,13 @@ public final class BehaviorExecutor {
         Vec3 end = start.add(dir.scale(reach));
         // Не телепорт: игрок сам проносится за 5 тиков (FootworkMotion на клиенте).
         io.github.verycooltimo.murim.combat.FootworkService.sendDash(player, dir, reach, 5);
-        int iframes = StepRules.invulnerableTicks(layer);
+        int iframes = StepRules.invulnerableTicks(executionTier);
         if (iframes > 0) {
             player.invulnerableTime = Math.max(player.invulnerableTime, iframes);
         }
         io.github.verycooltimo.murim.mastery.MasteryService.onMiss(player, id);
         net.neoforged.neoforge.network.PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
-                new io.github.verycooltimo.murim.network.StepPayload(player.getId(), start, end, player.getYRot(), layer));
+                new io.github.verycooltimo.murim.network.StepPayload(player.getId(), start, end, player.getYRot(), executionTier));
     }
 
     private static boolean meleeArc(ServerPlayer player, TechniqueBehavior.MeleeArc melee,
@@ -171,16 +177,16 @@ public final class BehaviorExecutor {
      * хитбокс пересекает коридор; каждая — один раз. Урон — базовый урон в руке × коэффициент.
      */
     public static boolean plumSlash(LivingEntity player, net.minecraft.resources.ResourceLocation id) {
-        int layer = Casters.layer(player, id);
+        int executionTier = Casters.executionTier(player, id);
         double base = TechniqueDamage.base(player, id);
-        float damage = (float) (base * PlumRules.coefficient(layer));
+        float damage = (float) (base * PlumRules.coefficient(executionTier));
         Vec3 origin = player.position();
         Vec3 look = player.getLookAngle();
         Vec3 forward = new Vec3(look.x, 0.0D, look.z);
         forward = forward.lengthSqr() < 1.0E-6D ? new Vec3(0.0D, 0.0D, 1.0D) : forward.normalize();
         Vec3 right = new Vec3(-forward.z, 0.0D, forward.x);
-        double length = PlumRules.length(layer);
-        if (layer > 0) {
+        double length = PlumRules.length(executionTier);
+        if (executionTier > 0) {
             Vec3 chest = origin.add(0.0D, 1.2D, 0.0D);
             net.minecraft.world.phys.BlockHitResult wall = player.level().clip(new net.minecraft.world.level.ClipContext(
                     chest, chest.add(forward.scale(0.4D + length)), net.minecraft.world.level.ClipContext.Block.COLLIDER,
@@ -189,8 +195,8 @@ public final class BehaviorExecutor {
                 length = Math.max(0.5D, wall.getLocation().distanceTo(chest) - 0.4D);
             }
         }
-        double reach = layer > 0 ? 0.4D + length : PlumRules.TRAINING_REACH;
-        AABB search = new AABB(origin, origin).inflate(reach + 1.0D, PlumRules.height(layer) + 1.0D, reach + 1.0D);
+        double reach = executionTier > 0 ? 0.4D + length : PlumRules.TRAINING_REACH;
+        AABB search = new AABB(origin, origin).inflate(reach + 1.0D, PlumRules.height(executionTier) + 1.0D, reach + 1.0D);
         double cosLimit = Math.cos(Math.toRadians(PlumRules.TRAINING_ARC / 2.0D));
         boolean anyHit = false;
         int hits = 0;
@@ -200,7 +206,7 @@ public final class BehaviorExecutor {
             }
             AABB box = target.getBoundingBox();
             boolean inside;
-            if (layer <= 0) {
+            if (executionTier <= 0) {
                 inside = inArc(player.getEyePosition(), look, box, PlumRules.TRAINING_REACH, cosLimit);
             } else {
                 Vec3 c = box.getCenter().subtract(origin);
@@ -208,10 +214,10 @@ public final class BehaviorExecutor {
                 double s = c.dot(forward);
                 double r = c.dot(right);
                 inside = s >= 0.4D - half && s <= 0.4D + length + half
-                        && Math.abs(r) <= PlumRules.width(layer) / 2.0D + half
+                        && Math.abs(r) <= PlumRules.width(executionTier) / 2.0D + half
                         // Ниже ног тоже (M1, 03.10: бандит в яме под мастером не задевался вовсе —
                         // попадало только падающее дерево, без оглушения): до PlumRules.BELOW блоков вниз.
-                        && box.maxY >= origin.y - PlumRules.BELOW && box.minY <= origin.y + PlumRules.height(layer);
+                        && box.maxY >= origin.y - PlumRules.BELOW && box.minY <= origin.y + PlumRules.height(executionTier);
             }
             if (!inside) {
                 continue;
@@ -223,7 +229,7 @@ public final class BehaviorExecutor {
                 target.push(forward.x * 0.2D, 0.06D, forward.z * 0.2D);
                 target.hurtMarked = true;
                 // Попал первый удар — противник оглушён до падения дерева (автор 02.10).
-                if (layer >= 1) {
+                if (executionTier >= 1) {
                     stagger(target, player);
                 }
                 Casters.onHit(player, id, target);
@@ -231,7 +237,7 @@ public final class BehaviorExecutor {
         }
         net.neoforged.neoforge.network.PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
                 new io.github.verycooltimo.murim.network.PlumSlashPayload(player.getId(), origin,
-                        player.getYRot(), layer, (float) length));
+                        player.getYRot(), executionTier, (float) length));
         return anyHit;
     }
 
@@ -249,8 +255,8 @@ public final class BehaviorExecutor {
      * урон — урон в руке × коэффициент падения, по одному разу на цель.
      */
     public static void plumFall(LivingEntity player, net.minecraft.resources.ResourceLocation id) {
-        int layer = Casters.layer(player, id);
-        double coefficient = PlumRules.fallCoefficient(layer);
+        int executionTier = Casters.executionTier(player, id);
+        double coefficient = PlumRules.fallCoefficient(executionTier);
         if (coefficient <= 0.0D) {
             return;
         }
@@ -260,8 +266,8 @@ public final class BehaviorExecutor {
         Vec3 forward = new Vec3(look.x, 0.0D, look.z);
         forward = forward.lengthSqr() < 1.0E-6D ? new Vec3(0.0D, 0.0D, 1.0D) : forward.normalize();
         Vec3 right = new Vec3(-forward.z, 0.0D, forward.x);
-        double base = PlumRules.trunkOffset(PlumRules.length(layer));
-        double reach = base + PlumRules.treeHeight(layer) * 0.9D;
+        double base = PlumRules.trunkOffset(PlumRules.length(executionTier));
+        double reach = base + PlumRules.treeHeight(executionTier) * 0.9D;
         AABB search = new AABB(origin, origin).inflate(reach + 1.0D, 3.0D, reach + 1.0D);
         int hits = 0;
         for (LivingEntity target : candidates(player, search)) {
@@ -284,7 +290,7 @@ public final class BehaviorExecutor {
                 Casters.onHit(player, id, target);
             }
         }
-        scorch(player, origin, forward, right, base, reach, layer);
+        scorch(player, origin, forward, right, base, reach, executionTier);
     }
 
     /**
@@ -292,8 +298,8 @@ public final class BehaviorExecutor {
      * блоки — земля, песок, гравий, камень, до 48 штук, без дропа. Руды, контейнеры и всё
      * остальное не трогаются; выключается настройкой {@code techniqueTerrainDamage}.
      */
-    private static void scorch(LivingEntity player, Vec3 origin, Vec3 forward, Vec3 right, double from, double to, int layer) {
-        if (layer < 2 || !io.github.verycooltimo.murim.Config.TECHNIQUE_TERRAIN.get()) {
+    private static void scorch(LivingEntity player, Vec3 origin, Vec3 forward, Vec3 right, double from, double to, int executionTier) {
+        if (executionTier < 2 || !io.github.verycooltimo.murim.Config.TECHNIQUE_TERRAIN.get()) {
             return;
         }
         net.minecraft.server.level.ServerLevel level = Casters.level(player);
@@ -301,7 +307,7 @@ public final class BehaviorExecutor {
         int broken = 0;
         // Автор 02.10: «слишком много блоков взрывается» — борозда только под стволом,
         // рваная, до 14 блоков на 4-м слое.
-        int budget = Math.min(16, 3 * layer + 2);
+        int budget = Math.min(16, 3 * executionTier + 2);
         for (double s = from; s <= to && broken < budget; s += 0.9D) {
             for (double w = -0.6D; w <= 0.6D && broken < budget; w += 0.6D) {
                 if (r.nextDouble() > 0.45D - 0.15D * Math.abs(w)) {
@@ -500,13 +506,13 @@ public final class BehaviorExecutor {
      * здесь и дальше не преследует. Слой 0 — учебный удар в ближнем секторе.
      */
     private static boolean whirlStart(ServerPlayer player, net.minecraft.resources.ResourceLocation id) {
-        int layer = Math.max(0, io.github.verycooltimo.murim.mastery.MasteryService.layer(player, id));
+        int executionTier = Math.max(0, io.github.verycooltimo.murim.mastery.MasteryService.executionTier(player, id));
         double base = TechniqueDamage.base(player, id);
         Vec3 origin = player.position();
         Vec3 look = player.getLookAngle();
         Vec3 forward = new Vec3(look.x, 0.0D, look.z);
         forward = forward.lengthSqr() < 1.0E-6D ? new Vec3(0.0D, 0.0D, 1.0D) : forward.normalize();
-        if (layer <= 0) {
+        if (executionTier <= 0) {
             boolean hit = false;
             double cos = Math.cos(Math.toRadians(PlumRules.TRAINING_ARC / 2.0D));
             for (LivingEntity t : candidates(player, player.getBoundingBox().inflate(PlumRules.TRAINING_REACH + 1.0D))) {
@@ -539,23 +545,23 @@ public final class BehaviorExecutor {
         }
         Vec3 aim = target != null ? new Vec3(target.getX(), origin.y, target.getZ()) : origin.add(forward.scale(6.0D));
         player.setData(io.github.verycooltimo.murim.registry.ModAttachments.WHIRL, new double[] {
-                origin.x, origin.y, origin.z, player.getYRot(), layer, 0, 0, target == null ? -1 : target.getId(),
+                origin.x, origin.y, origin.z, player.getYRot(), executionTier, 0, 0, target == null ? -1 : target.getId(),
                 aim.x, aim.y, aim.z});
         // Разрез вверх (w5): столп из пола перед мастером.
         boolean hit = false;
-        for (LivingEntity t : whirlInside(player, origin.add(forward.scale(1.5D)), 1.4D, layer)) {
+        for (LivingEntity t : whirlInside(player, origin.add(forward.scale(1.5D)), 1.4D, executionTier)) {
             hit |= whirlHurt(player, id, t, base * WhirlRules.DMG_SLASH);
         }
         net.neoforged.neoforge.network.PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
-                new io.github.verycooltimo.murim.network.WhirlPayload(player.getId(), origin, aim, player.getYRot(), layer, 0));
+                new io.github.verycooltimo.murim.network.WhirlPayload(player.getId(), origin, aim, player.getYRot(), executionTier, 0));
         return hit;
     }
 
     /** Шкала Вихря после Разреза (тики {@code since}), см. WhirlRules. */
     public static void whirlTick(ServerPlayer player, net.minecraft.resources.ResourceLocation id, int since) {
         double[] w = player.getData(io.github.verycooltimo.murim.registry.ModAttachments.WHIRL);
-        int layer = (int) w[4];
-        if (layer <= 0 || w.length < 11) {
+        int executionTier = (int) w[4];
+        if (executionTier <= 0 || w.length < 11) {
             return;
         }
         Vec3 centre = new Vec3(w[0], w[1], w[2]);
@@ -566,38 +572,38 @@ public final class BehaviorExecutor {
             w[10] = live.getZ();
         }
         Vec3 aim = new Vec3(w[8], w[9], w[10]);
-        double r = WhirlRules.radius(layer);
+        double r = WhirlRules.radius(executionTier);
         double base = TechniqueDamage.base(player, id);
         // Столпы и стены — вокруг мастера: задевают тех, кто подошёл вплотную.
-        if (WhirlRules.pillars(layer) > 0 && (since == WhirlRules.WALL_STROKES[0] || since == WhirlRules.WALL_STROKES[2])) {
-            for (LivingEntity t : whirlInside(player, centre, r + 1.2D, layer)) {
+        if (WhirlRules.pillars(executionTier) > 0 && (since == WhirlRules.WALL_STROKES[0] || since == WhirlRules.WALL_STROKES[2])) {
+            for (LivingEntity t : whirlInside(player, centre, r + 1.2D, executionTier)) {
                 if (Math.abs(flatDistance(t.position(), centre) - r) < 1.2D) {
                     whirlHurt(player, id, t, base * WhirlRules.DMG_WALL);
                 }
             }
         }
-        if (WhirlRules.walls(layer) && since == WhirlRules.CONVERGE + 12) {
-            for (LivingEntity t : whirlInside(player, centre, r, layer)) {
+        if (WhirlRules.walls(executionTier) && since == WhirlRules.CONVERGE + 12) {
+            for (LivingEntity t : whirlInside(player, centre, r, executionTier)) {
                 whirlHurt(player, id, t, base * WhirlRules.DMG_CONVERGE);
             }
         }
-        if (WhirlRules.whirl(layer)) {
+        if (WhirlRules.whirl(executionTier)) {
             for (int p : WhirlRules.PULSES) {
                 if (p == since) {
-                    for (LivingEntity t : whirlInside(player, centre, r, layer)) {
+                    for (LivingEntity t : whirlInside(player, centre, r, executionTier)) {
                         whirlHurt(player, id, t, base * WhirlRules.DMG_PULSE);
                     }
                 }
             }
             if (since == WhirlRules.WHIRL + 12) {
-                whirlCuts(player, centre, r, layer);
+                whirlCuts(player, centre, r, executionTier);
             }
         }
         // Два мини-урагана: идут к цели и сквозь неё; кто внутри — получает удар и его крутит.
-        if (WhirlRules.finale(layer) && since >= WhirlRules.TORNADO_GO && since <= WhirlRules.TORNADO_END) {
+        if (WhirlRules.finale(executionTier) && since >= WhirlRules.TORNADO_GO && since <= WhirlRules.TORNADO_END) {
             for (int which = -1; which <= 1; which += 2) {
                 Vec3 at = WhirlRules.tornado(centre, aim, r, which, since);
-                for (LivingEntity t : whirlInside(player, at, 1.4D, layer)) {
+                for (LivingEntity t : whirlInside(player, at, 1.4D, executionTier)) {
                     Vec3 in = at.subtract(t.position());
                     Vec3 tan = new Vec3(-in.z, 0.0D, in.x).normalize().scale(0.08D * which);
                     t.setDeltaMovement(t.getDeltaMovement().multiply(0.6D, 1.0D, 0.6D)
@@ -611,7 +617,7 @@ public final class BehaviorExecutor {
         }
         // Финал (автор 02.10: «чётко к противнику и за спину чётко»): рывок прямо на противника
         // с остановкой в метре перед ним, затем точный перенос за его спину и удар.
-        if (WhirlRules.finale(layer) && since == WhirlRules.PASS) {
+        if (WhirlRules.finale(executionTier) && since == WhirlRules.PASS) {
             LivingEntity target = w[7] >= 0 && player.level().getEntity((int) w[7]) instanceof LivingEntity le && le.isAlive() ? le : null;
             Vec3 goal = target != null ? target.position() : aim;
             Vec3 flat = new Vec3(goal.x - player.getX(), 0.0D, goal.z - player.getZ());
@@ -625,7 +631,7 @@ public final class BehaviorExecutor {
                 player.setData(io.github.verycooltimo.murim.registry.ModAttachments.WHIRL, w);
             }
         }
-        if (WhirlRules.finale(layer) && since == WhirlRules.PASS + WhirlRules.PASS_TICKS - 1 && w[6] > 0.0D) {
+        if (WhirlRules.finale(executionTier) && since == WhirlRules.PASS + WhirlRules.PASS_TICKS - 1 && w[6] > 0.0D) {
             LivingEntity target = w[7] >= 0 && player.level().getEntity((int) w[7]) instanceof LivingEntity le && le.isAlive() ? le : null;
             Vec3 dir = new Vec3(w[1], 0.0D, w[3]);
             if (target != null && flatDistance(target.position(), player.position()) < 4.0D) {
@@ -640,7 +646,7 @@ public final class BehaviorExecutor {
                     target.push(-dir.x * 0.25D, 0.08D, -dir.z * 0.25D);
                     net.neoforged.neoforge.network.PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
                             new io.github.verycooltimo.murim.network.WhirlPayload(player.getId(),
-                                    target.position().add(0.0D, target.getBbHeight() * 0.6D, 0.0D), aim, player.getYRot(), layer, 1));
+                                    target.position().add(0.0D, target.getBbHeight() * 0.6D, 0.0D), aim, player.getYRot(), executionTier, 1));
                 }
             }
             w[6] = 0.0D;
@@ -652,12 +658,12 @@ public final class BehaviorExecutor {
 
     /** Выпуск урагана: направление по взгляду фиксируется здесь; цель — первая на пути. */
     public static boolean rushStart(LivingEntity player, net.minecraft.resources.ResourceLocation id) {
-        int layer = Casters.layer(player, id);
+        int executionTier = Casters.executionTier(player, id);
         double base = TechniqueDamage.base(player, id);
         Vec3 look = player.getLookAngle();
         Vec3 f = new Vec3(look.x, 0.0D, look.z);
         f = f.lengthSqr() < 1.0E-6D ? new Vec3(0.0D, 0.0D, 1.0D) : f.normalize();
-        if (layer <= 0) {
+        if (executionTier <= 0) {
             boolean hit = false;
             double cos = Math.cos(Math.toRadians(PlumRules.TRAINING_ARC / 2.0D));
             for (LivingEntity t : candidates(player, player.getBoundingBox().inflate(PlumRules.TRAINING_REACH + 1.0D))) {
@@ -699,24 +705,24 @@ public final class BehaviorExecutor {
         // 14 — id наводки (встречные до неё волочатся ураганом), 15 — тик укола, 16 — число
         // захваченных встречных, 17… — их id.
         double[] rd = new double[17 + RUSH_CATCH_MAX];
-        double[] head = {o.x, o.y, o.z, f3.x, f3.z, layer, -1, -1, 0, 0, 0, 0, 0, f3.y, aim == null ? -1 : aim.getId(), -1, 0};
+        double[] head = {o.x, o.y, o.z, f3.x, f3.z, executionTier, -1, -1, 0, 0, 0, 0, 0, f3.y, aim == null ? -1 : aim.getId(), -1, 0};
         System.arraycopy(head, 0, rd, 0, head.length);
         player.setData(io.github.verycooltimo.murim.registry.ModAttachments.RUSH, rd);
         // Направление урагана — точка {@code o + f} во втором векторе пакета (клиент берёт разность).
         net.neoforged.neoforge.network.PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
-                new io.github.verycooltimo.murim.network.RushPayload(player.getId(), o, o.add(f3), (float) Math.toDegrees(Math.atan2(-f3.x, f3.z)), layer, 0));
+                new io.github.verycooltimo.murim.network.RushPayload(player.getId(), o, o.add(f3), (float) Math.toDegrees(Math.atan2(-f3.x, f3.z)), executionTier, 0));
         return false;
     }
 
     /** Полёт урагана, обволакивание, рывок и укол, см. RushRules. */
     public static void rushTick(LivingEntity player, net.minecraft.resources.ResourceLocation id, int since) {
         double[] r = player.getData(io.github.verycooltimo.murim.registry.ModAttachments.RUSH);
-        int layer = (int) r[5];
-        if (layer <= 0) {
+        int executionTier = (int) r[5];
+        if (executionTier <= 0) {
             return;
         }
         double base = TechniqueDamage.base(player, id)
-                * RushRules.power(layer);
+                * RushRules.power(executionTier);
         Vec3 o = new Vec3(r[0], r[1], r[2]);
         Vec3 f = new Vec3(r[3], r.length > 13 ? r[13] : 0.0D, r[4]);
         f = f.lengthSqr() < 1.0E-6D ? new Vec3(0.0D, 0.0D, 1.0D) : f.normalize();
@@ -758,7 +764,7 @@ public final class BehaviorExecutor {
                 rushFling(r, f, player);
                 rushHurt(player, id, hit, base * RushRules.DMG_FIRST, r);
                 net.neoforged.neoforge.network.PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
-                        new io.github.verycooltimo.murim.network.RushPayload(player.getId(), o, hit.position(), 0.0F, layer, 1));
+                        new io.github.verycooltimo.murim.network.RushPayload(player.getId(), o, hit.position(), 0.0F, executionTier, 1));
             }
             return;
         }
@@ -809,7 +815,7 @@ public final class BehaviorExecutor {
                 rushKnock(player, target, r, t);
                 net.neoforged.neoforge.network.PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
                         new io.github.verycooltimo.murim.network.RushPayload(player.getId(), o,
-                                target.position().add(0.0D, target.getBbHeight() * 0.6D, 0.0D), 0.0F, layer, 2));
+                                target.position().add(0.0D, target.getBbHeight() * 0.6D, 0.0D), 0.0F, executionTier, 2));
             }
         }
     }
@@ -918,13 +924,13 @@ public final class BehaviorExecutor {
 
     /** Выход клонов: цель по взгляду до 6 блоков фиксируется вместе с точкой у её стоп. */
     private static boolean execStart(ServerPlayer player, net.minecraft.resources.ResourceLocation id) {
-        int layer = Math.max(0, io.github.verycooltimo.murim.mastery.MasteryService.layer(player, id));
+        int executionTier = Math.max(0, io.github.verycooltimo.murim.mastery.MasteryService.executionTier(player, id));
         double base = TechniqueDamage.base(player, id);
         Vec3 origin = player.position();
         Vec3 look = player.getLookAngle();
         Vec3 forward = new Vec3(look.x, 0.0D, look.z);
         forward = forward.lengthSqr() < 1.0E-6D ? new Vec3(0.0D, 0.0D, 1.0D) : forward.normalize();
-        if (layer <= 0) {
+        if (executionTier <= 0) {
             boolean hit = false;
             double cos = Math.cos(Math.toRadians(PlumRules.TRAINING_ARC / 2.0D));
             for (LivingEntity t : candidates(player, player.getBoundingBox().inflate(PlumRules.TRAINING_REACH + 1.0D))) {
@@ -961,17 +967,17 @@ public final class BehaviorExecutor {
         Vec3 centre = target != null ? target.position() : origin.add(forward.scale(4.0D));
         double baseAngle = Math.atan2(origin.z - centre.z, origin.x - centre.x);
         player.setData(io.github.verycooltimo.murim.registry.ModAttachments.EXEC, new double[] {
-                centre.x, centre.y, centre.z, baseAngle, layer, 0, target == null ? -1 : target.getId(), 0, origin.x, origin.z});
+                centre.x, centre.y, centre.z, baseAngle, executionTier, 0, target == null ? -1 : target.getId(), 0, origin.x, origin.z});
         net.neoforged.neoforge.network.PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
-                new io.github.verycooltimo.murim.network.ExecPayload(player.getId(), origin, centre, (float) baseAngle, layer, 0));
+                new io.github.verycooltimo.murim.network.ExecPayload(player.getId(), origin, centre, (float) baseAngle, executionTier, 0));
         return false;
     }
 
     /** Шкала Казни после выхода клонов, см. ExecRules. */
     public static void execTick(ServerPlayer player, net.minecraft.resources.ResourceLocation id, int since) {
         double[] e = player.getData(io.github.verycooltimo.murim.registry.ModAttachments.EXEC);
-        int layer = (int) e[4];
-        if (layer <= 0) {
+        int executionTier = (int) e[4];
+        if (executionTier <= 0) {
             return;
         }
         double base = TechniqueDamage.base(player, id);
@@ -984,7 +990,7 @@ public final class BehaviorExecutor {
         }
         Vec3 centre = new Vec3(e[0], e[1], e[2]);
         // Контакт каждого клона: цель у точки сбора — удар (без отбрасывания), метка на финал.
-        for (int i = 0; i < ExecRules.clones(layer); i++) {
+        for (int i = 0; i < ExecRules.clones(executionTier); i++) {
             if (since == ExecRules.contact(i) && target != null) {
                 if (execHurt(player, id, target, base * ExecRules.DMG_CLONE)) {
                     e[7] += 1.0D;
@@ -992,7 +998,7 @@ public final class BehaviorExecutor {
             }
         }
         // Оригинал плавно проходит сбоку цели и встаёт за её спиной.
-        if (ExecRules.finale(layer) && since == ExecRules.DASH) {
+        if (ExecRules.finale(executionTier) && since == ExecRules.DASH) {
             Vec3 aim = target != null ? target.position() : centre;
             Vec3 from = new Vec3(e[8], player.getY(), e[9]);
             Vec3 dir = new Vec3(aim.x - from.x, 0.0D, aim.z - from.z);
@@ -1008,11 +1014,11 @@ public final class BehaviorExecutor {
         // Казнь: шесть разрезов разом — одним событием урона по числу попавших клонов.
         if (since == ExecRules.FINAL) {
             int marks = (int) e[7];
-            if (ExecRules.finale(layer) && target != null && marks > 0) {
+            if (ExecRules.finale(executionTier) && target != null && marks > 0) {
                 if (execHurt(player, id, target, base * ExecRules.DMG_FINAL * marks)) {
                     net.neoforged.neoforge.network.PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
                             new io.github.verycooltimo.murim.network.ExecPayload(player.getId(), player.position(),
-                                    target.position().add(0.0D, target.getBbHeight() * 0.6D, 0.0D), (float) e[3], layer, 1));
+                                    target.position().add(0.0D, target.getBbHeight() * 0.6D, 0.0D), (float) e[3], executionTier, 1));
                 }
             }
             e[7] = 0.0D;
@@ -1037,8 +1043,8 @@ public final class BehaviorExecutor {
         return true;
     }
 
-    private static List<LivingEntity> whirlInside(ServerPlayer player, Vec3 centre, double radius, int layer) {
-        double h = WhirlRules.height(layer);
+    private static List<LivingEntity> whirlInside(ServerPlayer player, Vec3 centre, double radius, int executionTier) {
+        double h = WhirlRules.height(executionTier);
         return player.serverLevel().getEntitiesOfClass(LivingEntity.class,
                 new AABB(centre.x - radius, centre.y - 1.0D, centre.z - radius, centre.x + radius, centre.y + h, centre.z + radius),
                 t -> t != player && t.isAlive() && !t.isSpectator() && flatDistance(t.position(), centre) <= radius);
@@ -1074,13 +1080,13 @@ public final class BehaviorExecutor {
     }
 
     /** Глубокие разрезы вихря по земле: ≤14 природных блоков, по касательным дугам внутри зоны. */
-    private static void whirlCuts(ServerPlayer player, Vec3 centre, double r, int layer) {
-        if (layer < 4 || !io.github.verycooltimo.murim.Config.TECHNIQUE_TERRAIN.get()) {
+    private static void whirlCuts(ServerPlayer player, Vec3 centre, double r, int executionTier) {
+        if (executionTier < 4 || !io.github.verycooltimo.murim.Config.TECHNIQUE_TERRAIN.get()) {
             return;
         }
         net.minecraft.server.level.ServerLevel level = player.serverLevel();
         java.util.Random rnd = new java.util.Random(player.getId() * 131L + level.getGameTime());
-        int budget = Math.min(14, 2 * layer);
+        int budget = Math.min(14, 2 * executionTier);
         int broken = 0;
         for (int tries = 0; tries < 60 && broken < budget; tries++) {
             double a = rnd.nextDouble() * Math.PI * 2.0D;

@@ -3,87 +3,88 @@ package io.github.verycooltimo.murim.technique;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * «Меч Падающего Цветка» (낙화검, docs/design/techniques/falling-petal-sword-spec.md, рефы
- * reference/techniques/falling petal sword/): низкая стойка → вход-рывок к цели → пять ударов,
- * мастер обходит цель слева за спину, «меч возвращается быстрее, чем бьёт» → удар в горло →
- * остановка сразу за целью. Общие числа для сервера (урон, рывки) и клиента (следы, позы).
+ * «Меч Падающего Цветка» (낙화검), v3 by the author 09.10: the basic technique plus ONE move.
+ * Stance and a short gather (ref1), then three blinks: the master vanishes in a burst and
+ * reappears BEHIND the target, each time from another side (rear, rear-left, rear-right of the
+ * target's current facing), cuts once in one tick and holds while the target turns toward him;
+ * the third cut ends in the ref7 pose (free hand on the target's head), then back to idle.
+ * Numbers shared by the server (teleports, damage) and the client (trails, bursts).
  *
- * <p>Тики {@code since} — от начала IMPACT (тик 10 техники: 10 тиков стойки).
+ * <p>Ticks {@code since} count from IMPACT (technique tick 24, after the 24-tick stance).
  */
 public final class FallingPetalRules {
 
-    /** Стойка (WINDUP в json): поза, удержание, подпись. */
-    public static final int STANCE = 10;
-    /** Последний тик шкалы от IMPACT (всего техника 84 тика). */
-    public static final int END = 73;
+    /**
+     * Stance and anticipation (WINDUP in the json), v5 1.2 s: settle low, breathe, draw back, a still
+     * beat, then the first blink — about 3x the blink-and-cut it prepares (35-animation-lessons.md).
+     */
+    public static final int STANCE = 24;
+    /** Last tick of the timeline from IMPACT (the technique is 80 ticks / 4.0 s, since 0..55). */
+    public static final int END = 55;
 
-    /** Тики контакта пяти ударов: вход, повтор, плечо, низкий проход, горло. */
-    public static final int[] STRIKES = {14, 22, 34, 46, 62};
-    /** Длительность режущего движения до контакта (тики). */
-    public static final int CUT = 4;
-    /** Быстрый возврат после удара (тики) — вдвое короче реза. */
-    public static final int RETURN = 2;
-    /** Удары, после которых клинок возвращается (вход, плечо, низкий проход). */
-    public static final boolean[] RETURNS = {true, false, true, true, false};
+    /** Vanish ticks: the dash pose and the burst at the old spot. */
+    public static final int[] VANISH = {6, 20, 34};
+    /** The server moves the master behind the target one tick after the vanish. */
+    public static final int APPEAR_DELAY = 1;
+    /** Contact ticks of the three cuts (the arm snaps hit - 1 -> hit). */
+    public static final int[] STRIKES = {10, 24, 40};
+    /** Blade trail before contact (ticks); the arm itself moves in one tick. */
+    public static final int CUT = 2;
+    /** Strike pose held after contact (ticks). */
+    public static final int HOLD = 4;
+    /** After a cut the target turns toward the master over these ticks (from hit + 2). */
+    public static final int TURN_TICKS = 6;
+    /** Degrees per tick the target turns. */
+    public static final float TURN_SPEED = 32.0F;
 
-    /** Доли урона в руке по ударам (сумма 3,0). */
-    public static final double[] DAMAGE = {0.40D, 0.45D, 0.65D, 0.45D, 1.05D};
+    /** Damage shares per cut (sum 3.0). */
+    public static final double[] DAMAGE = {0.8D, 0.9D, 1.3D};
 
-    /** Дальность наводки и сопровождения живой цели. */
+    /** Targeting and follow range. */
     public static final double RANGE = 16.0D;
-    /** Дальность контакта клинка от центра мастера до края хитбокса цели. */
+    /** Blade reach from the master's centre to the target's hitbox edge. */
     public static final double REACH = 2.6D;
-    /** Удар 5 фиксирует направление за 4 тика до контакта. */
-    public static final int FINALE_LOCK = 58;
+    /** Distance behind the target's hitbox where the master reappears (author: not hugging it). */
+    public static final double BEHIND = 2.4D;
+    /** The cut closes the gap: a lunge slide starting this many ticks before contact... */
+    public static final int LUNGE_STEP_TICKS = 2;
+    /** ...that stops this far from the target's hitbox edge. */
+    public static final double STRIKE_GAP = 1.0D;
+    /** Side of each reappearance, degrees from the target's back (+ = target's left). */
+    public static final double[] SIDES = {0.0D, 55.0D, -55.0D};
 
-    /** Рывки: тик начала, длительность. Точки — {@link #point}. */
-    public static final int[][] DASHES = {
-            {0, 12},   // вход к передней левой четверти
-            {16, 5},   // вдоль левого края цели
-            {23, 3},   // шаг-разворот (ref4), затем удержание 26–29
-            {30, 4},   // к задней левой четверти — плечо
-            {41, 5},   // низкий проход за спиной в заднюю правую четверть (ref5)
-            {52, 3},   // вплотную для финала (ref7)
-            {63, 5}};  // выход сразу за спину и остановка
-
-    /** Шаг-разворот с кольцом у ног — индекс рывка. */
-    public static final int PIVOT = 2;
-    /** Колени цели после удара 4 (ref6). */
-    public static final int KNEEL = 49;
-
-    /** Нет цели: короткий натиск вперёд на 3 блока и один взмах. */
+    /** No target: short lunge forward and one cut. */
     public static final double LUNGE = 3.0D;
     public static final int LUNGE_TICKS = 8;
     public static final int LUNGE_CUT = 8;
 
     /**
-     * Точка рывка {@code k} в системе цели: {@code t} — ноги цели, {@code f} — исходная ось входа
-     * (от мастера к цели), {@code half} — половина ширины хитбокса цели. Левая сторона —
-     * поворот {@code f} на 90° против часовой (вид сверху).
+     * Reappear point {@code k}: behind the target ({@code t} its feet, {@code facing} its flat look,
+     * {@code half} half its hitbox width), turned by {@link #SIDES}[k] around it.
      */
-    public static Vec3 point(int k, Vec3 t, Vec3 f, double half) {
-        Vec3 s = left(f);
-        return switch (k) {
-            case 0 -> t.add(f.scale(-(1.5D + half))).add(s.scale(0.45D));
-            case 1 -> t.add(f.scale(-0.55D)).add(s.scale(1.25D + half));
-            case 2 -> t.add(f.scale(0.15D)).add(s.scale(1.45D + half));
-            case 3 -> t.add(f.scale(0.95D + half)).add(s.scale(0.95D));
-            case 4 -> t.add(f.scale(1.15D + half)).add(s.scale(-(0.85D + half)));
-            case 5 -> t.add(f.scale(0.8D + half)).add(s.scale(-0.45D));
-            default -> t.add(f.scale(1.0D + half)).add(s.scale(-0.1D));
-        };
+    public static Vec3 behind(int k, Vec3 t, Vec3 facing, double half) {
+        return behind(t, facing, half, SIDES[k], BEHIND);
+    }
+
+    public static Vec3 behind(Vec3 t, Vec3 facing, double half, double sideDeg, double gap) {
+        Vec3 back = facing.scale(-1.0D);
+        double a = Math.toRadians(sideDeg);
+        // Rotate the back vector toward the target's left (left(f) = (f.z, 0, -f.x)).
+        Vec3 l = left(facing);
+        Vec3 dir = back.scale(Math.cos(a)).add(l.scale(Math.sin(a)));
+        return t.add(dir.scale(half + gap));
     }
 
     public static Vec3 left(Vec3 f) {
         return new Vec3(f.z, 0.0D, -f.x);
     }
 
-    /** Множитель урона по слою: слой 0 — ученический удар, слой 7 — полный. */
-    public static double power(int layer) {
-        return 0.55D + 0.45D * Math.min(7, Math.max(0, layer)) / 7.0D;
+    /** Damage multiplier by executionTier: executionTier 0 is a student's cut, executionTier 7 the full one. */
+    public static double power(int executionTier) {
+        return 0.55D + 0.45D * Math.min(7, Math.max(0, executionTier)) / 7.0D;
     }
 
-    /** Номер удара, чей контакт в тик {@code since}, или −1. */
+    /** Cut whose contact is at tick {@code since}, or −1. */
     public static int strikeAt(int since) {
         for (int i = 0; i < STRIKES.length; i++) {
             if (STRIKES[i] == since) {
@@ -94,29 +95,16 @@ public final class FallingPetalRules {
     }
 
     /**
-     * Траектория острия удара {@code k} в системе мастера: {θ0, θ1 (градусы, + — влево),
-     * h0, h1 (высота над поясом), радиус}. Асимметрично: вход сверху справа вниз влево,
-     * повтор горизонтально, плечо обратным ходом слева направо, низкий проход широко у земли,
-     * горло — короткий рез на уровне шеи.
+     * Blade tip path of cut {@code k} in the master's frame: {θ0, θ1 (degrees, + = left),
+     * h0, h1 (height above the waist), radius}. Rear: high right down to low left; rear-left:
+     * rising from low left to high right (codex 09.10: three distinct cuts); finale: across and up-out over both (ref7).
      */
     public static final double[][] ARCS = {
-            {-75.0D, 65.0D, 1.15D, -0.55D, 1.45D},
-            {-60.0D, 75.0D, 0.35D, 0.2D, 1.5D},
-            {42.0D, -32.0D, 0.95D, 0.15D, 1.2D},
-            {-85.0D, 85.0D, -0.6D, -0.85D, 1.7D},
-            {-35.0D, 40.0D, 0.6D, 0.75D, 1.15D}};
+            {-70.0D, 65.0D, 1.15D, -0.5D, 1.45D},
+            {60.0D, -70.0D, -0.4D, 1.3D, 1.5D},
+            {-60.0D, 70.0D, 1.1D, 1.6D, 1.4D}};
 
-    /** Возврат: короче и ближе к телу, обратным ходом к правому боку. */
-    public static double[] returnArc(int k) {
-        double[] a = ARCS[k];
-        double from = a[1] * 0.7D;
-        return new double[] {from, from - Math.signum(a[1] - a[0]) * 55.0D, a[3] * 0.6D, 0.3D, a[4] * 0.6D};
-    }
-
-    /**
-     * Острие клинка: {@code base} — пояс мастера, {@code f} — направление на цель, {@code arc} —
-     * {@link #ARCS}, {@code p} — доля движения 0..1 (за пределами — продолжение по инерции).
-     */
+    /** Tip of the blade: {@code base} the master's waist, {@code f} toward the target, p in 0..1. */
     public static Vec3 tip(Vec3 base, Vec3 f, double[] arc, double p) {
         double e = p <= 0.0D ? 0.0D : p >= 1.0D ? 1.0D + (p - 1.0D) * 0.6D : 1.0D - Math.pow(1.0D - p, 2.2D);
         double th = Math.toRadians(arc[0] + (arc[1] - arc[0]) * e);

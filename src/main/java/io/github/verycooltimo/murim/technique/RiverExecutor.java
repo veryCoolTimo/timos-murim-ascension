@@ -32,10 +32,10 @@ public final class RiverExecutor {
 
     /** Начало IMPACT (T = {@link RiverRules#AIM}): прицел и цель фиксируются. */
     public static boolean start(ServerPlayer player, ResourceLocation id) {
-        int layer = Math.max(0, io.github.verycooltimo.murim.mastery.MasteryService.layer(player, id));
+        int executionTier = Math.max(0, io.github.verycooltimo.murim.mastery.MasteryService.executionTier(player, id));
         double base = TechniqueDamage.base(player, id);
         Vec3 look = player.getLookAngle();
-        if (layer <= 0) {
+        if (executionTier <= 0) {
             // Слой 0 — учебный укол в ближнем секторе, без эффектов (как у Ливня).
             boolean hit = false;
             double cos = Math.cos(Math.toRadians(PlumRules.TRAINING_ARC / 2.0D));
@@ -72,10 +72,10 @@ public final class RiverExecutor {
             aim = player.getEyePosition().add(look.scale(16.0D));
         }
         double dist = aim.distanceTo(hand);
-        player.setData(ModAttachments.RIVER, new double[] {hand.x, hand.y, hand.z, aim.x, aim.y, aim.z, layer,
+        player.setData(ModAttachments.RIVER, new double[] {hand.x, hand.y, hand.z, aim.x, aim.y, aim.z, executionTier,
                 target == null ? -1 : target.getId(), -1, -1, base, 0, dist});
         PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
-                new RiverPayload(player.getId(), hand, aim, layer, RiverPayload.AIM, target == null ? -1 : target.getId()));
+                new RiverPayload(player.getId(), hand, aim, executionTier, RiverPayload.AIM, target == null ? -1 : target.getId()));
         return false;
     }
 
@@ -91,26 +91,26 @@ public final class RiverExecutor {
     /** Шкала после прицела: контакт, удержание, взрыв. */
     public static void tick(ServerPlayer player, ResourceLocation id, int since) {
         double[] r = player.getData(ModAttachments.RIVER);
-        int layer = (int) r[6];
-        if (layer <= 0 || r.length < 13) {
+        int executionTier = (int) r[6];
+        if (executionTier <= 0 || r.length < 13) {
             return;
         }
         int t = since + RiverRules.AIM;
         Vec3 hand = new Vec3(r[0], r[1], r[2]);
         Vec3 aim = new Vec3(r[3], r[4], r[5]);
         if (r[8] < 0 && t == RiverRules.contact(r[12])) {
-            contact(player, r, hand, aim, t, layer);
+            contact(player, r, hand, aim, t, executionTier);
             return;
         }
         if (r[8] >= 0 && r[9] >= 0 && r[11] < 0.5D && t == RiverRules.BURST) {
             r[11] = 1.0D;
             player.setData(ModAttachments.RIVER, r);
-            burst(player, id, r, hand, layer);
+            burst(player, id, r, hand, executionTier);
         }
     }
 
     /** Поток проходит отрезок кисть → прицел: блок останавливает, первая сущность на пути — цель контакта. */
-    private static void contact(ServerPlayer player, double[] r, Vec3 hand, Vec3 aim, int t, int layer) {
+    private static void contact(ServerPlayer player, double[] r, Vec3 hand, Vec3 aim, int t, int executionTier) {
         // API: reference/minecraft-src/net/minecraft/world/level/BlockGetter.java#clip
         var wall = player.level().clip(new ClipContext(hand, aim, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, player));
         Vec3 end = wall.getType() == HitResult.Type.MISS ? aim : wall.getLocation();
@@ -136,7 +136,7 @@ public final class RiverExecutor {
         if (hit == null) {
             player.setData(ModAttachments.RIVER, r);
             PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
-                    new RiverPayload(player.getId(), hand, end, layer, RiverPayload.MISS, -1));
+                    new RiverPayload(player.getId(), hand, end, executionTier, RiverPayload.MISS, -1));
             return;
         }
         r[9] = hit.getId();
@@ -150,11 +150,11 @@ public final class RiverExecutor {
             mob.getNavigation().stop();
         }
         PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
-                new RiverPayload(player.getId(), hand, TargetLock.centre(hit), layer, RiverPayload.CONTACT, hit.getId()));
+                new RiverPayload(player.getId(), hand, TargetLock.centre(hit), executionTier, RiverPayload.CONTACT, hit.getId()));
     }
 
     /** Звёздный взрыв: основная цель 8H, остальные в радиусе 3 при видимости от узла. */
-    private static void burst(ServerPlayer player, ResourceLocation id, double[] r, Vec3 hand, int layer) {
+    private static void burst(ServerPlayer player, ResourceLocation id, double[] r, Vec3 hand, int executionTier) {
         if (!(player.level().getEntity((int) r[9]) instanceof LivingEntity primary) || !primary.isAlive()) {
             return;
         }
@@ -163,7 +163,7 @@ public final class RiverExecutor {
         if (node.distanceTo(hand) > RiverRules.RANGE + 6.0D) {
             return;
         }
-        double base = r[10] * RiverRules.power(layer);
+        double base = r[10] * RiverRules.power(executionTier);
         Vec3 axis = node.subtract(hand);
         boolean any = false;
         primary.invulnerableTime = 0;
@@ -190,7 +190,7 @@ public final class RiverExecutor {
         }
         if (any) {
             PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
-                    new RiverPayload(player.getId(), hand, node, layer, RiverPayload.BURST, primary.getId()));
+                    new RiverPayload(player.getId(), hand, node, executionTier, RiverPayload.BURST, primary.getId()));
         }
     }
 

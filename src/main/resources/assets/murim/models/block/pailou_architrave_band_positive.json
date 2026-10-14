@@ -1,0 +1,217 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "wood": "murim:block/pailou_timber",
+    "paint": "murim:block/pailou_architrave_band",
+    "particle": "murim:block/pailou_timber"
+  },
+  "elements": [
+    {
+      "name": "lower_red_moulding",
+      "from": [
+        16,
+        0,
+        4
+      ],
+      "to": [
+        21.5,
+        3,
+        12
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            13,
+            5.5,
+            16
+          ],
+          "texture": "#wood"
+        },
+        "south": {
+          "uv": [
+            0,
+            13,
+            5.5,
+            16
+          ],
+          "texture": "#wood"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            5.5,
+            8
+          ],
+          "texture": "#wood"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            5.5,
+            8
+          ],
+          "texture": "#wood"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            5.5,
+            8
+          ],
+          "texture": "#wood"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            5.5,
+            8
+          ],
+          "texture": "#wood"
+        }
+      }
+    },
+    {
+      "name": "painted_field",
+      "from": [
+        16,
+        3,
+        5
+      ],
+      "to": [
+        21.5,
+        12,
+        11
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            4,
+            5.5,
+            13
+          ],
+          "texture": "#paint"
+        },
+        "south": {
+          "uv": [
+            0,
+            4,
+            5.5,
+            13
+          ],
+          "texture": "#paint"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            5.5,
+            8
+          ],
+          "texture": "#wood"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            5.5,
+            8
+          ],
+          "texture": "#wood"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            5.5,
+            8
+          ],
+          "texture": "#wood"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            5.5,
+            8
+          ],
+          "texture": "#wood"
+        }
+      }
+    },
+    {
+      "name": "upper_red_moulding",
+      "from": [
+        16,
+        12,
+        4
+      ],
+      "to": [
+        21.5,
+        16,
+        12
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            5.5,
+            4
+          ],
+          "texture": "#wood"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            5.5,
+            4
+          ],
+          "texture": "#wood"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            5.5,
+            8
+          ],
+          "texture": "#wood"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            5.5,
+            8
+          ],
+          "texture": "#wood"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            5.5,
+            8
+          ],
+          "texture": "#wood"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            5.5,
+            8
+          ],
+          "texture": "#wood"
+        }
+      }
+    }
+  ]
+}

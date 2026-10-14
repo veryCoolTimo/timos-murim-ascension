@@ -151,7 +151,7 @@ public final class PlumVfx {
 
     private static final class Cast {
         final int entityId;
-        final int layer;
+        final int executionTier;
         final int start;
         Vec3 origin;
         Vec3 forward;
@@ -168,9 +168,9 @@ public final class PlumVfx {
         int landTick = -1;
         final Random random;
 
-        Cast(int entityId, int layer) {
+        Cast(int entityId, int executionTier) {
             this.entityId = entityId;
-            this.layer = layer;
+            this.executionTier = executionTier;
             this.start = clientTicks;
             this.random = new Random(entityId * 977L + clientTicks);
         }
@@ -178,17 +178,17 @@ public final class PlumVfx {
 
     public static void onTechniqueEvent(TechniqueEventPayload payload) {
         if (payload.event() != TechniqueEventPayload.Event.STARTED || !TECHNIQUE.equals(payload.techniqueId())
-                || payload.layer() <= 0) {
+                || payload.executionTier() <= 0) {
             return;
         }
-        Cast cast = new Cast(payload.sourceId(), payload.layer());
+        Cast cast = new Cast(payload.sourceId(), payload.executionTier());
         CASTS.add(cast);
         // Стойка: тело загорается холодной синей ци (ref3), из-под ног — пыль (ref1).
-        io.github.verycooltimo.murim.client.ClientAuraState.techniqueAura(payload.sourceId(), 2 + Math.min(3, payload.layer()), 0, COMMIT + 6);
+        io.github.verycooltimo.murim.client.ClientAuraState.techniqueAura(payload.sourceId(), 2 + Math.min(3, payload.executionTier()), 0, COMMIT + 6);
         Minecraft mc = Minecraft.getInstance();
         Entity e = mc.level == null ? null : mc.level.getEntity(payload.sourceId());
         if (e != null && !mc.level.getBlockState(net.minecraft.core.BlockPos.containing(e.position().add(0.0D, -0.2D, 0.0D))).isAir()) {
-            for (int i = 0; i < 4 + payload.layer(); i++) {
+            for (int i = 0; i < 4 + payload.executionTier(); i++) {
                 double a = cast.random.nextDouble() * Math.PI * 2.0D;
                 Vec3 out = new Vec3(Math.cos(a), 0.0D, Math.sin(a));
                 cast.puffs.add(new Puff(e.position().add(out.scale(0.35D)).add(0.0D, 0.1D, 0.0D),
@@ -199,7 +199,7 @@ public final class PlumVfx {
     }
 
     public static void onSlash(PlumSlashPayload p) {
-        if (p.layer() <= 0) {
+        if (p.executionTier() <= 0) {
             return;
         }
         Cast cast = null;
@@ -209,7 +209,7 @@ public final class PlumVfx {
             }
         }
         if (cast == null) {
-            cast = new Cast(p.entityId(), p.layer());
+            cast = new Cast(p.entityId(), p.executionTier());
             CASTS.add(cast);
         }
         cast.origin = p.origin();
@@ -225,24 +225,24 @@ public final class PlumVfx {
             SpeedLines.radial(0.5F, 0.6F, 0.9F, 8, SpeedLines.WHITE);
         }
         // После выпуска ци розовеет (с 3-го слоя), горит до падения дерева.
-        io.github.verycooltimo.murim.client.ClientAuraState.techniqueAura(p.entityId(), 2 + Math.min(3, cast.layer),
-                PlumRules.blossoms(cast.layer) ? 1 : 0, PlumRules.LAND);
+        io.github.verycooltimo.murim.client.ClientAuraState.techniqueAura(p.entityId(), 2 + Math.min(3, cast.executionTier),
+                PlumRules.blossoms(cast.executionTier) ? 1 : 0, PlumRules.LAND);
         buildTree(cast);
         spawnGround(cast);
         // Выпуск: тяжёлый взмах, из которого растёт дерево ци.
         io.github.verycooltimo.murim.client.Sfx.play(cast.origin, io.github.verycooltimo.murim.registry.ModSounds.SWORD_SWING_HEAVY, 1.0F, 1.0F);
         Minecraft mc = Minecraft.getInstance();
-        if (mc.player != null && mc.player.getId() == p.entityId() && cast.layer >= 2) {
+        if (mc.player != null && mc.player.getId() == p.entityId() && cast.executionTier >= 2) {
             // Выпуск — виньетка к точке удара (чуть выше центра: дуга уходит вверх).
-            SpeedLines.radial(0.5F, 0.45F, Math.min(1.0F, 0.45F + 0.12F * cast.layer), 7, SpeedLines.WHITE);
+            SpeedLines.radial(0.5F, 0.45F, Math.min(1.0F, 0.45F + 0.12F * cast.executionTier), 7, SpeedLines.WHITE);
         }
-        if (PlumRules.blossoms(cast.layer)) {
+        if (PlumRules.blossoms(cast.executionTier)) {
             // Лепестки цветка уходят в поток разреза, остальные рождаются вдоль него.
-            int total = cast.layer >= 4 ? 8 : 5;
+            int total = cast.executionTier >= 4 ? 8 : 5;
             for (int i = 0; i < total; i++) {
                 // 5 — лепестки цветка, 5 — из нижней пятой части столпа, остальные выше.
                 double u = i < 5 ? 0.02D * i : i < 10 ? 0.2D * cast.random.nextDouble() : 0.3D + 0.4D * cast.random.nextDouble();
-                Vec3 at = trunkBase(cast).add(0.0D, PlumRules.height(cast.layer) * u, 0.0D).add(cast.right.scale((cast.random.nextDouble() - 0.5D) * 1.6D * u));
+                Vec3 at = trunkBase(cast).add(0.0D, PlumRules.height(cast.executionTier) * u, 0.0D).add(cast.right.scale((cast.random.nextDouble() - 0.5D) * 1.6D * u));
                 Vec3 vel = new Vec3(0.0D, 0.08D + 0.06D * cast.random.nextDouble(), 0.0D)
                         .add(cast.forward.scale(0.03D + 0.04D * cast.random.nextDouble()))
                         .add(cast.right.scale((cast.random.nextDouble() - 0.5D) * 0.06D));
@@ -265,7 +265,7 @@ public final class PlumVfx {
         }
         Random r = c.random;
         Vec3 root = trunkBase(c);
-        int puffs = c.layer >= 4 ? 5 : c.layer == 3 ? 4 : 3;
+        int puffs = c.executionTier >= 4 ? 5 : c.executionTier == 3 ? 4 : 3;
         for (int i = 0; i < puffs; i++) {
             // Только от корня и наружу, вдоль земли (ref7): перед ногами комом не копится.
             double a = (r.nextDouble() - 0.5D) * Math.PI * 1.3D;
@@ -275,14 +275,14 @@ public final class PlumVfx {
             Vec3 tangent = new Vec3(-out.z, 0.0D, out.x);
             Vec3 vel = out.scale(0.12D + 0.1D * r.nextDouble()).add(tangent.scale(0.12D + 0.08D * r.nextDouble()))
                     .add(0.0D, 0.01D + 0.02D * r.nextDouble(), 0.0D);
-            c.puffs.add(new Puff(at, vel, 12 + r.nextInt(10), r.nextInt(16), 0.22D + 0.15D * r.nextDouble() + 0.03D * c.layer));
+            c.puffs.add(new Puff(at, vel, 12 + r.nextInt(10), r.nextInt(16), 0.22D + 0.15D * r.nextDouble() + 0.03D * c.executionTier));
         }
         // Ветер — одна-две широкие закрученные приземные дуги (whirl5), не россыпь нитей.
-        int gusts = c.layer >= 2 ? 2 : 1;
+        int gusts = c.executionTier >= 2 ? 2 : 1;
         for (int i = 0; i < gusts; i++) {
             double a = (i == 0 ? -0.6D : 0.7D) + (r.nextDouble() - 0.5D) * 0.4D;
             c.gusts.add(new Gust(a, Math.toRadians(110.0D) * (i == 0 ? 1 : -1), 0.25D + 0.15D * r.nextDouble(),
-                    0.26D + 0.08D * r.nextDouble(), 0.5F * i, 2.6D + 0.25D * c.layer));
+                    0.26D + 0.08D * r.nextDouble(), 0.5F * i, 2.6D + 0.25D * c.executionTier));
         }
     }
 
@@ -335,10 +335,10 @@ public final class PlumVfx {
             if (c.slashTick >= 0) {
                 int since = clientTicks - c.slashTick;
                 int k = (since - PlumRules.SWING_START) / PlumRules.SWING_GAP;
-                if (since >= PlumRules.SWING_START && (since - PlumRules.SWING_START) % PlumRules.SWING_GAP == 0 && k < 6 && c.layer >= 2) {
+                if (since >= PlumRules.SWING_START && (since - PlumRules.SWING_START) % PlumRules.SWING_GAP == 0 && k < 6 && c.executionTier >= 2) {
                     swingBurst(c, k);
                 }
-                if (since >= PlumRules.SWING_START && since < PlumRules.LAND && c.layer >= 2) {
+                if (since >= PlumRules.SWING_START && since < PlumRules.LAND && c.executionTier >= 2) {
                     breathe(c, since);
                 }
                 if (since == PlumRules.SWING_START + 6 * PlumRules.SWING_GAP && minecraft.player != null
@@ -397,7 +397,7 @@ public final class PlumVfx {
                 if (entity != null && !ownFirstPerson) {
                     preparation(c, entity, pose, camera, air, t, partial);
                 }
-                if (entity != null && c.layer >= 1) {
+                if (entity != null && c.executionTier >= 1) {
                     charge(c, entity, pose, camera, air, t, partial);
                 }
                 if (c.slashTick >= 0) {
@@ -439,7 +439,7 @@ public final class PlumVfx {
                 }
                 RenderType petals = MurimRenderTypes.plumPetals();
                 VertexConsumer pc = buffers.getBuffer(petals);
-                if (entity != null && !ownFirstPerson && PlumRules.blossoms(c.layer) && c.slashTick < 0) {
+                if (entity != null && !ownFirstPerson && PlumRules.blossoms(c.executionTier) && c.slashTick < 0) {
                     blossom(c, entity, pose, camera, pc, t, partial);
                 }
                 for (Petal p : c.petals) {
@@ -448,7 +448,7 @@ public final class PlumVfx {
                             1.0F, 0.75F, 0.8F);
                 }
                 buffers.endBatch(petals);
-                if (PlumRules.blossoms(c.layer) && c.slashTick >= 0) {
+                if (PlumRules.blossoms(c.executionTier) && c.slashTick >= 0) {
                     RenderType glowType = MurimRenderTypes.mote();
                     VertexConsumer g = buffers.getBuffer(glowType);
                     float sa = clientTicks - c.slashTick + partial;
@@ -478,7 +478,7 @@ public final class PlumVfx {
                             float in = (float) Mth.clamp((sa - b.born() - b.draw()) / 4.0D, 0.0D, 1.0D);
                             Vec3 at = fall(c, bezier(b.start(), b.ctrl(), b.end(), 0.7D), sa);
                             double beat = pulse(c, at, sa);
-                            glow(g, pose, camera, at, PlumRules.treeHeight(c.layer) * 0.22D * (1.0D + 0.15D * beat), (0.08F + 0.06F * (float) beat) * in * keep, PINK);
+                            glow(g, pose, camera, at, PlumRules.treeHeight(c.executionTier) * 0.22D * (1.0D + 0.15D * beat), (0.08F + 0.06F * (float) beat) * in * keep, PINK);
                         }
                     }
                     // Угли на остывающем следе: мерцают, гаснут к ~10 с.
@@ -524,11 +524,11 @@ public final class PlumVfx {
         Vec3 hand = tip(e, partial, 0.0F).add(0.0D, -0.1D, 0.0D);
         Vec3 f = Vec3.directionFromRotation(0.0F, e.getViewYRot(partial));
         Vec3 r = new Vec3(-f.z, 0.0D, f.x);
-        arc(v, pose, camera, hand, r, f, 0.28D, 160.0D, 20.0D, c.layer >= 2 ? 0.08D : 0.06D, t - 5.0F, fade);
-        if (c.layer >= 2) {
+        arc(v, pose, camera, hand, r, f, 0.28D, 160.0D, 20.0D, c.executionTier >= 2 ? 0.08D : 0.06D, t - 5.0F, fade);
+        if (c.executionTier >= 2) {
             arc(v, pose, camera, hand.add(f.scale(-0.35D)).add(0.0D, -0.25D, 0.0D), r, f, 0.22D, 130.0D, 200.0D, 0.05D, t - 3.0F, fade);
         }
-        if (c.layer >= 3) {
+        if (c.executionTier >= 3) {
             arc(v, pose, camera, e.getPosition(partial).add(r.scale(0.3D)).add(0.0D, 1.35D, 0.0D), r, f, 0.4D, 150.0D, 90.0D, 0.13D, t - 2.0F, fade * 0.8F);
         }
     }
@@ -542,7 +542,7 @@ public final class PlumVfx {
         if (k < 0.0F || k > 1.0F || c.slashTick >= 0) {
             return;
         }
-        VfxColour col = PlumRules.blossoms(c.layer) && k > 0.5F ? PINK : COLD;
+        VfxColour col = PlumRules.blossoms(c.executionTier) && k > 0.5F ? PINK : COLD;
         Vec3 feet = e.getPosition(partial).add(0.0D, 0.05D, 0.0D);
         double rad = 1.8D - 1.2D * k * k;
         int n = 24;
@@ -594,7 +594,7 @@ public final class PlumVfx {
         if (t < COMMIT - 4) {
             return;
         }
-        double diameter = 0.04D + (c.layer >= 4 ? 0.12D : 0.08D) * k;
+        double diameter = 0.04D + (c.executionTier >= 4 ? 0.12D : 0.08D) * k;
         Vec3 at = tip(e, partial, 0.35F);
         for (int i = 0; i < 5; i++) {
             double th = Math.PI * 2.0D * i / 5.0D;
@@ -619,9 +619,9 @@ public final class PlumVfx {
      */
     private static void buildTree(Cast c) {
         Random r = c.random;
-        double h = PlumRules.treeHeight(c.layer);
+        double h = PlumRules.treeHeight(c.executionTier);
         // Ширина растёт с деревом: на 4-м слое крона ~10 блоков.
-        double wScale = PlumRules.width(c.layer) / 1.4D * (h / 7.0D);
+        double wScale = PlumRules.width(c.executionTier) / 1.4D * (h / 7.0D);
         Vec3 base = trunkBase(c);
         Vec3 top = base.add(0.0D, h, 0.0D).add(c.forward.scale(0.15D));
         // Ствол — от самого пола, в 2–3 раза толще ветвей (разбор codex 02.10).
@@ -634,7 +634,7 @@ public final class PlumVfx {
                     0.09D * wScale, 0.3F, 2.6F, 0));
         }
         int[] counts = {0, 0, 4, 6, 14, 16, 18, 20};
-        int count = counts[Math.max(0, Math.min(7, c.layer))];
+        int count = counts[Math.max(0, Math.min(7, c.executionTier))];
         for (int i = 0; i < count; i++) {
             double at = 0.22D + 0.62D * (i + 0.5D) / count + (r.nextDouble() - 0.5D) * 0.06D;
             int side = i % 2 == 0 ? 1 : -1;
@@ -659,7 +659,7 @@ public final class PlumVfx {
             c.branches.add(new Branch(start, ctrl, end, width, born, 1.2F, 1));
             // Ветвь ветвится дальше (ref8 — «дерево из тысячи прутьев»): 3 сучка, у каждого
             // по 2 прутика; глубина растёт со слоем.
-            grow(c, start, ctrl, end, dir, len, width, born + 1.0F, 2, c.layer >= 4 ? 4 : c.layer >= 3 ? 3 : 1);
+            grow(c, start, ctrl, end, dir, len, width, born + 1.0F, 2, c.executionTier >= 4 ? 4 : c.executionTier >= 3 ? 3 : 1);
         }
     }
 
@@ -701,7 +701,7 @@ public final class PlumVfx {
      */
     private static Vec3 fall(Cast c, Vec3 p, float age) {
         Vec3 base = trunkBase(c);
-        double h = Math.max(1.0D, PlumRules.treeHeight(c.layer));
+        double h = Math.max(1.0D, PlumRules.treeHeight(c.executionTier));
         double hf = Mth.clamp((p.y - base.y) / h, 0.0D, 1.0D);
         double sway = 0.035D * h * hf * hf * Math.sin(age * 0.22D + hf * 2.2D);
         double nod = 0.02D * h * hf * hf * Math.sin(age * 0.17D + 1.3D);
@@ -710,7 +710,7 @@ public final class PlumVfx {
 
     /** Сердцебиение дерева: волна свечения от корня к кроне раз в 0,7 с. */
     private static double pulse(Cast c, Vec3 p, float age) {
-        double h = Math.max(1.0D, PlumRules.treeHeight(c.layer));
+        double h = Math.max(1.0D, PlumRules.treeHeight(c.executionTier));
         double hf = Mth.clamp((p.y - trunkBase(c).y) / h, 0.0D, 1.0D);
         double wave = Math.max(0.0D, Math.sin(Math.PI * 2.0D * (age / 14.0D - hf * 0.8D)));
         return wave * wave * wave;
@@ -729,7 +729,7 @@ public final class PlumVfx {
         Vec3 d = p.subtract(base);
         // Рука отводится к груди — дерево гнётся внутрь, к мастеру (верх сильнее, как лук);
         // толчок — оно распрямляется и с ускорением валится вперёд до ~85°.
-        double hFrac = Mth.clamp(d.y / Math.max(1.0D, PlumRules.treeHeight(c.layer)), 0.0D, 1.0D);
+        double hFrac = Mth.clamp(d.y / Math.max(1.0D, PlumRules.treeHeight(c.executionTier)), 0.0D, 1.0D);
         double pull = Mth.clamp(t0 / (double) (PlumRules.PUSH - PlumRules.BEND_START), 0.0D, 1.0D);
         double back = -Math.toRadians(30.0D) * pull * pull * (3.0D - 2.0D * pull) * Math.pow(hFrac, 1.5D);
         double drop = Mth.clamp((age - PlumRules.FALL_START) / (double) (PlumRules.LAND - PlumRules.FALL_START), 0.0D, 1.0D);
@@ -762,9 +762,9 @@ public final class PlumVfx {
         if (tips.isEmpty()) {
             return;
         }
-        Vec3 centre = trunkBase(c).add(0.0D, PlumRules.treeHeight(c.layer) * 0.6D, 0.0D);
-        if (PlumRules.blossoms(c.layer)) {
-            int n = 1 + Math.min(3, c.layer - 2);
+        Vec3 centre = trunkBase(c).add(0.0D, PlumRules.treeHeight(c.executionTier) * 0.6D, 0.0D);
+        if (PlumRules.blossoms(c.executionTier)) {
+            int n = 1 + Math.min(3, c.executionTier - 2);
             for (int i = 0; i < n && c.petals.size() < MAX_PETALS; i++) {
                 Vec3 at = fall(c, tips.get(r.nextInt(tips.size())), since);
                 Vec3 out = at.subtract(centre).normalize().scale(0.06D + 0.08D * r.nextDouble())
@@ -825,10 +825,10 @@ public final class PlumVfx {
     private static void landing(Cast c) {
         Random r = c.random;
         Vec3 base = trunkBase(c);
-        double h = PlumRules.treeHeight(c.layer);
+        double h = PlumRules.treeHeight(c.executionTier);
         Minecraft mc = Minecraft.getInstance();
         if (mc.level != null && !mc.level.getBlockState(net.minecraft.core.BlockPos.containing(base.add(0.0D, -0.2D, 0.0D))).isAir()) {
-            int n = 10 + 4 * Math.min(4, c.layer);
+            int n = 10 + 4 * Math.min(4, c.executionTier);
             for (int i = 0; i < n; i++) {
                 Vec3 at = base.add(c.forward.scale(h * (0.25D + 0.7D * r.nextDouble()))).add(c.right.scale((r.nextDouble() - 0.5D) * 2.4D))
                         .add(0.0D, 0.15D, 0.0D);
@@ -844,7 +844,7 @@ public final class PlumVfx {
                     out.scale(0.6D + 0.2D * r.nextDouble()).add(0.0D, 0.04D, 0.0D), 14 + r.nextInt(6),
                     (i % 2 == 0 ? 1 : -1) * 0.06D, 0.16D));
         }
-        if (PlumRules.blossoms(c.layer)) {
+        if (PlumRules.blossoms(c.executionTier)) {
             for (int i = 0; i < 50 && c.petals.size() < MAX_PETALS; i++) {
                 Vec3 at = base.add(c.forward.scale(h * (0.3D + 0.7D * r.nextDouble()))).add(c.right.scale((r.nextDouble() - 0.5D) * 2.4D))
                         .add(0.0D, 0.3D + 0.6D * r.nextDouble(), 0.0D);
@@ -855,25 +855,25 @@ public final class PlumVfx {
         if (mc.player != null && mc.player.getId() == c.entityId) {
             SpeedLines.radial(0.5F, 0.55F, 1.0F, 7, SpeedLines.WHITE);
             // Импакт-кадры rimuru (автор 02.10): вспышка → негатив → киноварь, ~0,25 с.
-            if (c.layer >= 3) {
+            if (c.executionTier >= 3) {
                 ImpactFrames.trigger(base.add(c.forward.scale(h * 0.35D)).add(0.0D, 0.3D, 0.0D));
             }
         }
         // Земля дрожит: толчок камеры всем рядом (тот же пружинный удар, что у порывов ауры).
         if (mc.player != null && mc.player.position().distanceTo(base) < 16.0D) {
             double d = mc.player.position().distanceTo(base.add(c.forward.scale(h * 0.4D)));
-            float strength = (float) Mth.clamp(1.0D - d / 26.0D, 0.0D, 1.0D) * (0.5F + 0.125F * Math.min(4, c.layer));
+            float strength = (float) Mth.clamp(1.0D - d / 26.0D, 0.0D, 1.0D) * (0.5F + 0.125F * Math.min(4, c.executionTier));
             if (mc.player.getId() == c.entityId) {
-                strength = Math.max(strength, 0.2F * Math.min(4, c.layer));
+                strength = Math.max(strength, 0.2F * Math.min(4, c.executionTier));
             }
             // Дрожь земли и мастеру тоже (порыв ауры от себя к себе вырождался в ноль).
-            io.github.verycooltimo.murim.client.CameraShakeHandler.quake(strength, 16 + 3 * Math.min(4, c.layer));
+            io.github.verycooltimo.murim.client.CameraShakeHandler.quake(strength, 16 + 3 * Math.min(4, c.executionTier));
             if (mc.player.getId() != c.entityId) {
                 io.github.verycooltimo.murim.client.ClientAuraState.gust(c.entityId, mc.player.getId(), strength, false);
             }
             io.github.verycooltimo.murim.client.Sfx.play(base.x, base.y, base.z, io.github.verycooltimo.murim.registry.ModSounds.IMPACT_HEAVY.get(),
                     net.minecraft.sounds.SoundSource.PLAYERS, 0.6F + 0.4F * strength, 1.0F, false);
-            if (PlumRules.blossoms(c.layer)) {
+            if (PlumRules.blossoms(c.executionTier)) {
                 // Цветы срываются с упавшего дерева — взрыв лепестков поверх удара.
                 io.github.verycooltimo.murim.client.Sfx.play(base.add(c.forward.scale(h * 0.45D)), io.github.verycooltimo.murim.registry.ModSounds.PETAL_BURST, 0.6F + 0.4F * strength, 1.0F);
             }
@@ -881,7 +881,7 @@ public final class PlumVfx {
         // Волна пыли от удара: кольцом наружу радиусом до ~8 блоков.
         if (mc.level != null && !mc.level.getBlockState(net.minecraft.core.BlockPos.containing(base.add(0.0D, -0.2D, 0.0D))).isAir()) {
             Vec3 mid = base.add(c.forward.scale(h * 0.45D));
-            int ring = 18 + 4 * Math.min(4, c.layer);
+            int ring = 18 + 4 * Math.min(4, c.executionTier);
             for (int i = 0; i < ring; i++) {
                 double a = Math.PI * 2.0D * i / ring + r.nextDouble() * 0.3D;
                 Vec3 out = c.forward.scale(Math.cos(a)).add(c.right.scale(Math.sin(a)));
@@ -890,7 +890,7 @@ public final class PlumVfx {
                         28 + r.nextInt(14), r.nextInt(16), 0.9D + 0.5D * r.nextDouble()));
             }
             // Вал (codex 02.10): низкие клубы разного размера катятся от полосы в стороны — сразу.
-            for (int i = 0; i < 24 + 4 * Math.min(4, c.layer); i++) {
+            for (int i = 0; i < 24 + 4 * Math.min(4, c.executionTier); i++) {
                 double sAt = h * r.nextDouble();
                 double side = r.nextBoolean() ? 1.0D : -1.0D;
                 double size = 0.6D + 1.4D * r.nextDouble() * r.nextDouble();
@@ -906,7 +906,7 @@ public final class PlumVfx {
                 c.puffs.add(roll);
             }
             // Облако: встаёт позже (через 0,3–0,8 с), над осью падения, клубы сливаются в массу.
-            for (int i = 0; i < 12 + 2 * Math.min(4, c.layer); i++) {
+            for (int i = 0; i < 12 + 2 * Math.min(4, c.executionTier); i++) {
                 double sAt = h * (0.15D + 0.75D * r.nextDouble());
                 double size = 1.0D + 1.6D * r.nextDouble();
                 Vec3 at = base.add(c.forward.scale(sAt)).add(c.right.scale((r.nextDouble() - 0.5D) * 1.2D)).add(0.0D, 0.6D, 0.0D);
@@ -994,7 +994,7 @@ public final class PlumVfx {
         // Контакт: в первые 3 тика по всей полосе падения — бело-розовая вспышка.
         if (age < 4.0F) {
             Vec3 base = trunkBase(c);
-            double h = PlumRules.treeHeight(c.layer);
+            double h = PlumRules.treeHeight(c.executionTier);
             Vec3[] line = new Vec3[9];
             double[] lw = new double[9];
             for (int i = 0; i < 9; i++) {
@@ -1062,14 +1062,14 @@ public final class PlumVfx {
         if (age > PlumRules.FALL_TICK + 14.0F) {
             return;
         }
-        boolean pink = PlumRules.blossoms(c.layer);
+        boolean pink = PlumRules.blossoms(c.executionTier);
         if (pink) {
             crown(c, pose, camera, v, age);
         }
         for (Branch b : c.branches) {
             branch(c, pose, camera, v, age, b, pink);
         }
-        if (c.layer >= 2) {
+        if (c.executionTier >= 2) {
             swings(c, pose, camera, v, age, pink);
         }
         handWave(c, pose, camera, v, age);
@@ -1126,7 +1126,7 @@ public final class PlumVfx {
      */
     private static void swings(Cast c, PoseStack.Pose pose, Vec3 camera, VertexConsumer v, float age, boolean pink) {
         Vec3 base = trunkBase(c);
-        double h = PlumRules.treeHeight(c.layer);
+        double h = PlumRules.treeHeight(c.executionTier);
         for (int k = 0; k < 6; k++) {
             float t = age - (PlumRules.SWING_START + PlumRules.SWING_GAP * k);
             if (t < 0.0F || t > 3.0F) {
@@ -1270,15 +1270,15 @@ public final class PlumVfx {
         // Каждый из шести взмахов слышен; с цветами — ещё и раскрытие бутонов (выше с каждым взмахом).
         Vec3 swingAt = trunkBase(c).add(0.0D, 1.2D, 0.0D);
         io.github.verycooltimo.murim.client.Sfx.play(swingAt, io.github.verycooltimo.murim.registry.ModSounds.SWORD_SWING, 0.7F, 1.0F + 0.04F * k);
-        if (PlumRules.blossoms(c.layer)) {
-            io.github.verycooltimo.murim.client.Sfx.play(swingAt.add(c.forward.scale(PlumRules.treeHeight(c.layer) * 0.5D)), io.github.verycooltimo.murim.registry.ModSounds.BLOSSOM_OPEN, 0.5F, 0.9F + 0.06F * k);
+        if (PlumRules.blossoms(c.executionTier)) {
+            io.github.verycooltimo.murim.client.Sfx.play(swingAt.add(c.forward.scale(PlumRules.treeHeight(c.executionTier) * 0.5D)), io.github.verycooltimo.murim.registry.ModSounds.BLOSSOM_OPEN, 0.5F, 0.9F + 0.06F * k);
         }
         int side = k % 2 == 0 ? 1 : -1;
         c.gusts.add(new Gust(side > 0 ? Math.PI * 0.5D : -Math.PI * 0.5D, Math.toRadians(70.0D) * side,
                 0.2D + 0.15D * r.nextDouble(), 0.3D + 0.08D * r.nextDouble(),
-                PlumRules.SWING_START + PlumRules.SWING_GAP * k, 3.5D + 0.4D * Math.min(4, c.layer)));
-        if (PlumRules.blossoms(c.layer)) {
-            double h = PlumRules.treeHeight(c.layer);
+                PlumRules.SWING_START + PlumRules.SWING_GAP * k, 3.5D + 0.4D * Math.min(4, c.executionTier)));
+        if (PlumRules.blossoms(c.executionTier)) {
+            double h = PlumRules.treeHeight(c.executionTier);
             // Лепестки рвутся с концов ветвей, выросших на этом взмахе.
             float sw = PlumRules.SWING_START + PlumRules.SWING_GAP * k;
             List<Vec3> fresh = new ArrayList<>();
@@ -1300,7 +1300,7 @@ public final class PlumVfx {
             }
         }
         // Завитки ветра от удара: уходят в сторону взмаха и закручиваются.
-        double h0 = PlumRules.treeHeight(c.layer);
+        double h0 = PlumRules.treeHeight(c.executionTier);
         for (int i = 0; i < 4 && c.winds.size() < MAX_WINDS; i++) {
             Vec3 at = trunkBase(c).add(0.0D, h0 * (0.25D + 0.1D * k) + (r.nextDouble() - 0.5D), 0.0D);
             Vec3 vel = c.right.scale(side * (0.45D + 0.2D * r.nextDouble())).add(c.forward.scale((r.nextDouble() - 0.5D) * 0.4D))
@@ -1356,7 +1356,7 @@ public final class PlumVfx {
             return;
         }
         Vec3 centre = c.origin.add(c.forward.scale(0.3D)).add(0.0D, 0.08D, 0.0D);
-        int swirls = c.layer >= 4 ? 2 : 1;
+        int swirls = c.executionTier >= 4 ? 2 : 1;
         for (int k = 0; k < swirls; k++) {
             double open = Mth.clamp(age / 5.0D, 0.0D, 1.0D);
             double radius = 1.1D + 0.5D * (1.0D - (1.0D - open) * (1.0D - open)) + 0.25D * k;

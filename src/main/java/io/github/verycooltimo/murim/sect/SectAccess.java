@@ -70,6 +70,13 @@ public final class SectAccess {
 
     /** Можно ли сюда с этим положением и флагами в эту часть суток. */
     public static boolean allowed(Rule rule, SectStanding standing, Set<String> flags, SectSchedule.Period period) {
+        if ((flags.contains(io.github.verycooltimo.murim.sect.seal.PenanceService.SUMMONED)
+                || flags.contains(io.github.verycooltimo.murim.sect.seal.PenanceService.SENTENCED) && !"penance".equals(rule.id()))
+                && !GROUNDS.equals(rule.zone())) {
+            return false;
+        }
+        // The vault is a permission, never an automatic privilege of a title (also used by its iron door).
+        if ("vault".equals(rule.id())) return standing != SectStanding.OUTSIDER && flags.contains("vault.permitted");
         if (standing.atLeast(rule.need(period))) {
             return true;
         }

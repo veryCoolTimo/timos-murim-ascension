@@ -112,6 +112,39 @@ class JunkTextTest {
         }
     }
 
+    @Test
+    @DisplayName("Подсказка ярусов сохраняется в компоненте и сети; старые записки не выдумывают ярусы")
+    void tierClueRoundTripAndTranslations() throws IOException {
+        var ops = com.mojang.serialization.JsonOps.INSTANCE;
+        JunkBook old = JunkBook.CODEC.parse(ops,
+                JsonParser.parseString("{\"kind\":\"clue\",\"seed\":42,\"hint\":19}")).getOrThrow();
+        assertEquals(-1, old.manualTiers());
+        JsonObject ru = lang("ru_ru"), en = lang("en_us");
+        for (int mask = 0; mask < 16; mask++) {
+            JunkBook note = new JunkBook(JunkKind.CLUE, 42L, 19, false, mask);
+            assertEquals(note, JunkBook.CODEC.parse(ops, JunkBook.CODEC.encodeStart(ops, note).getOrThrow()).getOrThrow());
+            var buffer = io.netty.buffer.Unpooled.buffer();
+            try {
+                JunkBook.STREAM_CODEC.encode(buffer, note);
+                assertEquals(note, JunkBook.STREAM_CODEC.decode(buffer));
+            } finally {
+                buffer.release();
+            }
+            Set<String> used = new TreeSet<>();
+            for (JunkText.Para para : JunkText.paras(note)) keys(para.text(), used);
+            for (String key : used) assertTrue(ru.has(key) && en.has(key), key);
+            assertTrue(used.contains(JunkLexicon.PREFIX + (mask == 0 ? "clue.no_loose" : "clue.loose_tiers")));
+            for (int tier = 0; tier < 4; tier++) {
+                assertEquals((mask & (1 << tier)) != 0, used.contains(JunkLexicon.PREFIX + "clue.tier." + tier));
+            }
+            assertEquals(JunkText.paras(note), JunkText.paras(note.withRead()));
+        }
+        Set<String> oldKeys = new TreeSet<>();
+        for (JunkText.Para para : JunkText.paras(old)) keys(para.text(), oldKeys);
+        assertTrue(!oldKeys.contains(JunkLexicon.PREFIX + "clue.loose_tiers")
+                && !oldKeys.contains(JunkLexicon.PREFIX + "clue.no_loose"));
+    }
+
     private static Set<String> placeholders(Pattern p, String s) {
         Set<String> out = new TreeSet<>();
         Matcher m = p.matcher(s);

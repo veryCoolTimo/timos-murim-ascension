@@ -1,0 +1,116 @@
+{
+  "textures": {
+    "front": "murim:block/gate_door_front",
+    "back": "murim:block/gate_door_back",
+    "edge": "murim:block/red_lacquer",
+    "iron": "murim:block/gate_door_iron",
+    "iron_dark": "murim:block/gate_door_iron_dark",
+    "stud": "murim:block/gate_door_stud",
+    "crown": "murim:block/gate_door_stud_crown",
+    "particle": "murim:block/gate_door_front"
+  },
+  "elements": [
+    {
+      "name": "leaf",
+      "from": [
+        0,
+        0,
+        6.5
+      ],
+      "to": [
+        16,
+        16,
+        9.5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            12,
+            4,
+            16
+          ],
+          "texture": "#front"
+        },
+        "south": {
+          "uv": [
+            12,
+            12,
+            16,
+            16
+          ],
+          "texture": "#back"
+        },
+        "east": {
+          "uv": [
+            6.5,
+            0,
+            9.5,
+            16
+          ],
+          "texture": "#edge"
+        },
+        "down": {
+          "uv": [
+            0,
+            6.5,
+            16,
+            9.5
+          ],
+          "texture": "#edge"
+        }
+      }
+    },
+    {
+      "name": "kick",
+      "from": [
+        0,
+        1,
+        6
+      ],
+      "to": [
+        16,
+        5,
+        6.5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            11,
+            16,
+            15
+          ],
+          "texture": "#iron_dark"
+        },
+        "up": {
+          "uv": [
+            0,
+            6,
+            16,
+            6.5
+          ],
+          "texture": "#iron_dark"
+        },
+        "down": {
+          "uv": [
+            0,
+            9.5,
+            16,
+            10
+          ],
+          "texture": "#iron_dark"
+        },
+        "east": {
+          "uv": [
+            9.5,
+            11,
+            10,
+            15
+          ],
+          "texture": "#iron_dark"
+        }
+      }
+    }
+  ]
+}

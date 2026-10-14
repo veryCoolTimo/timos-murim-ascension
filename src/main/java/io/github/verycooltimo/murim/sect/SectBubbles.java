@@ -152,6 +152,7 @@ public final class SectBubbles {
             }
             out.add(watchKey(t));
         }
+        for (String group : SectSocial.BUBBLE_GROUPS) out.addAll(SectSocial.bubbleKeys(group));
         out.add(RUMOUR_GUARDS);
         out.add(RUMOUR_CHAMPION);
         return out;

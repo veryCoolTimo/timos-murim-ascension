@@ -1,0 +1,79 @@
+{
+  "name": "npc.murim.tae_hyeon",
+  "title": "npc.murim.tae_hyeon.title",
+  "start": [
+    {
+      "when": [
+        {
+          "flag": "guest.tae_hyeon.report"
+        }
+      ],
+      "node": "reported"
+    },
+    {
+      "node": "greet"
+    }
+  ],
+  "nodes": {
+    "greet": {
+      "line": "dialogue.murim.guest_tae_hyeon.greet",
+      "options": [
+        {
+          "text": "dialogue.murim.guest_tae_hyeon.report",
+          "next": "reported",
+          "actions": [
+            {
+              "type": "guest_report"
+            }
+          ],
+          "when": [
+            {
+              "member": true,
+              "flag": "guest.bae_do.tip",
+              "not_flag": "guest.tae_hyeon.report"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.guest_tae_hyeon.contract_report",
+          "next": "reported",
+          "actions": [
+            {
+              "type": "guest_report"
+            }
+          ],
+          "when": [
+            {
+              "member": true,
+              "flag": "guest.ha_yun.contract",
+              "not_flag": "guest.tae_hyeon.report"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.guest_tae_hyeon.purpose",
+          "next": "purpose"
+        },
+        {
+          "text": "dialogue.murim.guest.leave"
+        }
+      ]
+    },
+    "purpose": {
+      "line": "dialogue.murim.guest_tae_hyeon.purpose_line",
+      "options": [
+        {
+          "text": "dialogue.murim.guest.leave"
+        }
+      ]
+    },
+    "reported": {
+      "line": "dialogue.murim.guest_tae_hyeon.reported_line",
+      "options": [
+        {
+          "text": "dialogue.murim.guest.leave"
+        }
+      ]
+    }
+  }
+}

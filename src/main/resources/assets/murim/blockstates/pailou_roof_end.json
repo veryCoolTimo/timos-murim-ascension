@@ -1,0 +1,20 @@
+{
+  "variants": {
+    "facing=east": {
+      "model": "murim:block/pailou_roof_end",
+      "y": 0
+    },
+    "facing=south": {
+      "model": "murim:block/pailou_roof_end",
+      "y": 90
+    },
+    "facing=west": {
+      "model": "murim:block/pailou_roof_end",
+      "y": 180
+    },
+    "facing=north": {
+      "model": "murim:block/pailou_roof_end",
+      "y": 270
+    }
+  }
+}

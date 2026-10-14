@@ -52,6 +52,17 @@ public final class DevSetupEvents {
     /** Обратный отсчёт до отложенной доводки сцены; ноль означает «делать нечего». */
     private static int pendingSetup;
 
+    /**
+     * Env MURIM_CAPTURE_CMDS: server commands separated by ';', run once after the stand is ready
+     * (after the delayed setup, before the client starts frames). A token {@code wait N} delays the
+     * commands after it by N ticks, so one run can film several views. Example:
+     * {@code fill ~2 ~ ~2 ~5 ~ ~2 murim:hua_balustrade;tp @p 8 121 4 0 20;wait 40;tp @p 2 121 9 -90 20}.
+     * Commands run as the player with permission 4, so {@code ~} is relative to the player.
+     */
+    private static final java.util.ArrayDeque<String> PENDING_COMMANDS = new java.util.ArrayDeque<>();
+    private static int commandDelay;
+    private static java.util.UUID commandPlayer;
+
     @SubscribeEvent
     static void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
         // Два барьера, а не один. Системного свойства мало: класс уезжает в релизный jar,
@@ -79,6 +90,7 @@ public final class DevSetupEvents {
                 || "location".equals(System.getProperty("murim.capture.technique"))) {
             return;
         }
+        scheduleCaptureCommands(event.getEntity());
         // Меч нужен для съёмки техник, но в церемонии он торчит из сложенных рук и
         // перекрывает то самое тело, ради которого сцена и снимается.
         boolean ceremony = "meditation".equals(System.getProperty("murim.capture.technique"));
@@ -423,12 +435,56 @@ public final class DevSetupEvents {
                 || !(event.getSource().getEntity() instanceof net.minecraft.server.level.ServerPlayer player)) {
             return;
         }
-        MurimMod.LOGGER.info("Съёмка: урон {} (до брони {}) по {}, ранг {}, техника {}",
+        MurimMod.LOGGER.info("Съёмка: урон {} (до брони {}) по {} id={} uuid={}, tick={}, source={}, direct={}, queued={}, ранг {}, техника {}",
                 String.format(java.util.Locale.ROOT, "%.2f", event.getNewDamage()),
                 String.format(java.util.Locale.ROOT, "%.2f", event.getOriginalDamage()),
-                event.getEntity().getType().getDescriptionId(),
+                event.getEntity().getType().getDescriptionId(), event.getEntity().getId(), event.getEntity().getUUID(),
+                player.level().getGameTime(), event.getSource().getMsgId(),
+                event.getSource().getDirectEntity() == null ? -1 : event.getSource().getDirectEntity().getId(),
+                player.getData(io.github.verycooltimo.murim.registry.ModAttachments.BASIC_ATTACK).targetId(),
                 player.getData(io.github.verycooltimo.murim.registry.ModAttachments.PROFILE).rank(),
                 System.getProperty("murim.capture.technique"));
+    }
+
+    private static void scheduleCaptureCommands(net.minecraft.world.entity.player.Player player) {
+        PENDING_COMMANDS.clear();
+        String raw = System.getenv("MURIM_CAPTURE_CMDS");
+        if (raw == null || raw.isBlank()) {
+            return;
+        }
+        for (String cmd : raw.split(";")) {
+            if (!cmd.isBlank()) {
+                PENDING_COMMANDS.add(cmd.trim());
+            }
+        }
+        // After the delayed setup (dummy, camera stand), so the commands can also remove what it spawns.
+        commandDelay = SETUP_DELAY_TICKS + 5;
+        commandPlayer = player.getUUID();
+    }
+
+    private static void runCaptureCommands(net.minecraft.server.MinecraftServer server) {
+        if (PENDING_COMMANDS.isEmpty() || --commandDelay > 0) {
+            return;
+        }
+        net.minecraft.server.level.ServerPlayer player = server.getPlayerList().getPlayer(commandPlayer);
+        net.minecraft.commands.CommandSourceStack source = (player != null
+                ? player.createCommandSourceStack() : server.createCommandSourceStack()).withPermission(4).withSuppressedOutput();
+        while (!PENDING_COMMANDS.isEmpty()) {
+            String cmd = PENDING_COMMANDS.poll();
+            if (cmd.startsWith("wait ")) {
+                commandDelay = Integer.parseInt(cmd.substring(5).trim());
+                return;
+            }
+            MurimMod.LOGGER.info("Capture command: {}", cmd);
+            server.getCommands().performPrefixedCommand(source, cmd);
+        }
+    }
+
+    @SubscribeEvent
+    static void onCaptureCommandsTick(net.neoforged.neoforge.event.tick.ServerTickEvent.Post event) {
+        if (!net.neoforged.fml.loading.FMLEnvironment.production && Boolean.getBoolean(CAPTURE_PROPERTY)) {
+            runCaptureCommands(event.getServer());
+        }
     }
 
     @SubscribeEvent
@@ -486,19 +542,22 @@ public final class DevSetupEvents {
         // Строго по оси её не видно вовсе, и брызги по телу оценить нельзя.
         // От первого лица (давление ауры) цель — строго по оси взгляда.
         boolean fpCamera = "fp".equalsIgnoreCase(System.getProperty("murim.capture.camera", "back"));
-        double aim = fpCamera ? yaw : yaw + Math.toRadians(28.0D);
+        boolean demonic = io.github.verycooltimo.murim.technique.DemonicRules.ARTS.contains(
+                System.getProperty("murim.capture.technique", ""));
+        double aim = fpCamera || demonic ? yaw : yaw + Math.toRadians(28.0D);
         double lookX = -Math.sin(aim);
         double lookZ = Math.cos(aim);
         // Сбоку манекен стоит на вытянутую руку: иначе ладонь до него не достаёт, и всплеск
         // «под ладонью» висит в воздухе в метре от кисти (кадры 2026-09-24).
         double dummyDistance = "side".equalsIgnoreCase(
                 System.getProperty("murim.capture.camera", "back")) ? 1.15D : 1.7D;
+        if (demonic) dummyDistance = 1.8D;
         // MURIM_CAPTURE_DUMMY_DIST — поставить цель дальше вытянутой руки: проверка рывка ладони.
         String dist = System.getenv("MURIM_CAPTURE_DUMMY_DIST");
         if (dist != null) {
             dummyDistance = Double.parseDouble(dist.trim());
         }
-        if (fpCamera && dist == null) {
+        if (fpCamera && !demonic && dist == null) {
             dummyDistance = 4.0D;
         }
         // MURIM_CAPTURE_ENEMY=zombie — вместо манекена зомби без ИИ, лицом к игроку:
@@ -694,9 +753,9 @@ public final class DevSetupEvents {
         String aura = System.getenv("MURIM_CAPTURE_AURA");
         if (aura != null && !aura.isBlank()) {
             String value = aura.trim();
-            boolean demonic = value.endsWith("d");
+            boolean demonicAura = value.endsWith("d");
             AuraService.set(target, new AuraState(
-                    Integer.parseInt(demonic ? value.substring(0, value.length() - 1) : value), demonic));
+                    Integer.parseInt(demonicAura ? value.substring(0, value.length() - 1) : value), demonicAura));
         }
 
         // Камера сбоку для съёмки удара: со спины кисть и шлейф закрывает корпус, спереди
@@ -715,8 +774,13 @@ public final class DevSetupEvents {
             // MURIM_CAPTURE_CAM_DIST — отвести камеру: аура выше головы не влезала в кадр.
             double camDist = System.getenv("MURIM_CAPTURE_CAM_DIST") == null ? 3.2D
                     : Double.parseDouble(System.getenv("MURIM_CAPTURE_CAM_DIST").trim());
-            double camX = midX + rightX * camDist;
-            double camZ = midZ + rightZ * camDist;
+            // MURIM_CAPTURE_CAM_ORBIT — degrees to swing the camera from the right side toward the front
+            // (45 = three-quarter view from front-right), still aimed at the same point.
+            double orbit = Math.toRadians(envDouble("MURIM_CAPTURE_CAM_ORBIT", 0.0D));
+            double offX = rightX * Math.cos(orbit) + lookX * Math.sin(orbit);
+            double offZ = rightZ * Math.cos(orbit) + lookZ * Math.sin(orbit);
+            double camX = midX + offX * camDist;
+            double camZ = midZ + offZ * camDist;
             net.minecraft.world.entity.decoration.ArmorStand stand =
                     new net.minecraft.world.entity.decoration.ArmorStand(level, camX, STAGE_Y - 0.45D + envDouble("MURIM_CAPTURE_CAM_Y", 0.0D), camZ);
             stand.setInvisible(true);
@@ -748,11 +812,15 @@ public final class DevSetupEvents {
         io.github.verycooltimo.murim.mastery.MasteryState state = io.github.verycooltimo.murim.mastery.MasteryState.EMPTY;
         for (io.github.verycooltimo.murim.technique.TechniqueDefinition definition
                 : io.github.verycooltimo.murim.technique.TechniqueLoader.all().values()) {
-            // MURIM_CAPTURE_LAYER — слой освоения для съёмки слоёв формы (иначе — высший).
-            String layer = System.getenv("MURIM_CAPTURE_LAYER");
-            int start = layer == null || layer.isBlank() ? definition.layers() : Integer.parseInt(layer.trim());
+            // STAR uses current mastery; the legacy capture variable preserves old table indices.
+            String stars = System.getenv("MURIM_CAPTURE_STAR");
+            String legacy = System.getenv("MURIM_CAPTURE_LAYER");
+            int start = stars != null && !stars.isBlank() ? Integer.parseInt(stars.trim())
+                    : legacy != null && !legacy.isBlank()
+                    ? io.github.verycooltimo.murim.mastery.Arts.unlockStar(definition.id(), Integer.parseInt(legacy.trim()))
+                    : definition.starCap();
             state = state.with(definition.id(), io.github.verycooltimo.murim.mastery.TechniqueProgress.learned(
-                    start, definition.layers()));
+                    start, definition.starCap()));
         }
         player.setData(io.github.verycooltimo.murim.registry.ModAttachments.MASTERY, state);
         if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
@@ -775,7 +843,7 @@ public final class DevSetupEvents {
         player.setData(io.github.verycooltimo.murim.registry.ModAttachments.MASTERY, state.with(id,
                 new io.github.verycooltimo.murim.mastery.TechniqueProgress(layer,
                         io.github.verycooltimo.murim.mastery.MasteryRules.need(layer) * share,
-                        unprocessed, day, definition.layers())));
+                        unprocessed, day, definition.starCap())));
         if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
             io.github.verycooltimo.murim.mastery.MasteryService.sync(serverPlayer);
         }

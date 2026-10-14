@@ -1,0 +1,13 @@
+{
+ "loader": "neoforge:obj",
+ "model": "murim:models/block/obj/building_kit/red_pillar_base_center.obj",
+ "flip_v": false,
+ "automatic_culling": false,
+ "shade_quads": true,
+ "ambientocclusion": false,
+ "textures": {
+  "particle": "murim:block/white_plaster",
+  "dark": "murim:block/white_pillar_plinth",
+  "lacquer": "murim:block/white_plaster"
+ }
+}

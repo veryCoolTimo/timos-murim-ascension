@@ -54,13 +54,26 @@ public final class DialogueService {
                 && openDialogue(player, npc, io.github.verycooltimo.murim.sect.seal.PenanceService.DIALOGUE, "sentence")) {
             return;
         }
+        if (SectProgression.canApologise(player, npc)
+                && openDialogue(player, npc, SectProgression.DIALOGUE, "discipline")) return;
+        if (npc.role() == SectRole.LEADER && !SectPositions.disciplined(SectService.state(player))) {
+            for (String office : List.of("elder", "first")) {
+                SectPositions.offer(player, office, false);
+                if (SectService.state(player).has("position.offer." + office)
+                        && SectPositions.eligible(SectService.state(player), player.getData(ModAttachments.PROFILE).rank(), office)
+                        && openDialogue(player, npc, SectPositions.DIALOGUE, office)) return;
+            }
+        }
         Route r = route(player, npc);
         if (r == null) {
             MurimMod.LOGGER.warn("Нет диалога {} для {}", npc.dialogue(), npc.role());
             return;
         }
-        engage(player, npc, r);
-        show(player, r.speaker(), r.id(), r.dialogue(), r.node(), "");
+        if (r.intercepted()) {
+            engage(player, npc, r);
+        } else {
+            openDialogue(player, r.speaker(), r.id(), r.node());
+        }
     }
 
     /**
@@ -74,6 +87,17 @@ public final class DialogueService {
             MurimMod.LOGGER.warn("Нет диалога {} с узлом {}", id, node);
             return false;
         }
+        if (!npc.isAlive() || npc.level() != player.level() || npc.talkingTo() >= 0 && npc.talkingTo() != player.getId()) {
+            return false;
+        }
+        Session old = player.getData(ModAttachments.DIALOGUE);
+        if (old.active() && old.npc() != npc.getId()) {
+            if (player.level().getEntity(old.npc()) instanceof io.github.verycooltimo.murim.npc.DialogueActor guest) {
+                GuestDialogueService.close(player, guest);
+            } else {
+                close(player, player.level().getEntity(old.npc()) instanceof SectDisciple previous ? previous : null);
+            }
+        }
         npc.wake();
         npc.setTalkingTo(player);
         show(player, npc, id, d, node, "");
@@ -83,11 +107,12 @@ public final class DialogueService {
     /** Говорящий встаёт к собеседнику; перехвативший — ещё и между игроком и тем, к кому он шёл. */
     static void engage(ServerPlayer player, SectDisciple npc, Route r) {
         // Сидящий или спящий встаёт к собеседнику.
-        r.speaker().wake();
-        r.speaker().setTalkingTo(player);
         if (r.intercepted()) {
-            r.speaker().block(player, npc.position(), 120);
+            r.speaker().approachDialogue(player, r.id(), r.node(), npc.position());
             MurimMod.LOGGER.info("Секта: {} перехватил {} на пути к {}", r.speaker().memberKey(), player.getName().getString(), npc.memberKey());
+        } else {
+            r.speaker().wake();
+            r.speaker().setTalkingTo(player);
         }
     }
 
@@ -129,6 +154,30 @@ public final class DialogueService {
         return node == null ? null : new Route(npc, id, d, node, false);
     }
 
+    /** Страж сам перехватывает младшего, подошедшего к старейшине, без обязательного ПКМ. */
+    public static void interceptNearElder(ServerPlayer player) {
+        if (player.getData(ModAttachments.DIALOGUE).active()
+                || player.getData(ModAttachments.SECT).has(io.github.verycooltimo.murim.sect.seal.PenanceService.SUMMONED)) {
+            return;
+        }
+        String stamp = "murim_elder_intercept_at";
+        long now = player.level().getGameTime();
+        if (player.getPersistentData().contains(stamp) && now - player.getPersistentData().getLong(stamp) < 200) {
+            return;
+        }
+        SectDisciple target = player.level().getEntitiesOfClass(SectDisciple.class, player.getBoundingBox().inflate(6.0D),
+                        d -> d.isAlive() && d.free() && !d.blocking() && (d.role() == SectRole.ELDER || d.role() == SectRole.LEADER)
+                                && d.distanceToSqr(player) <= 36.0D && d.getSensing().hasLineOfSight(player))
+                .stream().min(java.util.Comparator.comparingDouble(d -> d.distanceToSqr(player))).orElse(null);
+        if (target != null) {
+            Route r = route(player, target);
+            if (r != null && r.intercepted() && !r.speaker().approachingDialogue(player, r.id())) {
+                player.getPersistentData().putLong(stamp, now);
+                engage(player, target, r);
+            }
+        }
+    }
+
     private static String entry(ServerPlayer player, SectDisciple npc, Dialogue d) {
         for (Dialogue.Entry e : d.start()) {
             if (all(player, npc, e.when())) {
@@ -143,7 +192,8 @@ public final class DialogueService {
         SectDisciple best = null;
         double bestD = INTERCEPT_RANGE;
         for (SectDisciple d : player.level().getEntitiesOfClass(SectDisciple.class, player.getBoundingBox().inflate(INTERCEPT_RANGE),
-                d -> d != target && d.isAlive() && d.free() && !d.isSleeping() && SectLife.onWatch(d) && (d.role().intercepts() || "gyeong_tak".equals(d.memberKey())))) {
+                d -> d != target && d.isAlive() && d.free() && !d.isSleeping() && SectWatch.guards(d)
+                        && (!d.blocking() || d.blockTarget() == player.getId()) && (d.role().intercepts() || "gyeong_tak".equals(d.memberKey())))) {
             double dist = d.distanceTo(player);
             if (dist < bestD) {
                 best = d;
@@ -169,6 +219,10 @@ public final class DialogueService {
         if (!s.active()) {
             return;
         }
+        if (player.level().getEntity(s.npc()) instanceof io.github.verycooltimo.murim.npc.DialogueActor guest) {
+            GuestDialogueService.choose(player, guest, index);
+            return;
+        }
         SectDisciple npc = player.level().getEntity(s.npc()) instanceof SectDisciple n ? n : null;
         Dialogue d = DialogueLoader.get(s.dialogue());
         Dialogue.Node node = d == null ? null : d.nodes().get(s.node());
@@ -187,6 +241,11 @@ public final class DialogueService {
         boolean closing = false;
         for (Dialogue.Action a : option.actions()) {
             String r = act(player, npc, a);
+            if ("switch".equals(r)) return;
+            if ("retry".equals(r)) {
+                show(player, npc, s.dialogue(), d, s.node(), "");
+                return;
+            }
             if ("close".equals(r)) {
                 closing = true;
             } else if (r != null) {
@@ -225,7 +284,9 @@ public final class DialogueService {
             }
         }
         String lineKey = node.random().isEmpty() ? node.line()
-                : node.random().get(player.getRandom().nextInt(node.random().size()));
+                : node.random().stream().anyMatch(k -> k.startsWith("@"))
+                ? SectSocial.pickToken(player, npc, node.random())
+                : SectSocial.pick(player, npc, node.random());
         Component line = lineKey.startsWith("@") ? talk(player, npc, lineKey)
                 : Component.translatable(lineKey, args(player, node.args()));
         node.gesture().ifPresent(npc::gesture);
@@ -237,7 +298,10 @@ public final class DialogueService {
             titleKey = own == null ? "" : own.title();
         }
         Component title = titleKey.isEmpty() ? Component.empty() : Component.translatable(titleKey);
-        PacketDistributor.sendToPlayer(player, new DialoguePayloads.Open(npc.getId(), npc.getName(), title, line, options, anim));
+        DialoguePayloads.Open open = new DialoguePayloads.Open(npc.getId(), npc.getName(), title, line, options, anim);
+        // GameTest mock players have no mod channel: an NPC-initiated dialogue (guard, elder) must not crash the tick.
+        // API: reference/neoforge-src/net/neoforged/neoforge/common/extensions/ICommonPacketListener.java#hasChannel
+        send(player, open);
     }
 
     /** Текст варианта: у обмена заслуг — с ценой ({@code merit_buy}, {@link MeritShop}). */
@@ -258,7 +322,7 @@ public final class DialogueService {
         if (npc != null && npc.talkingTo() == player.getId()) {
             npc.setTalkingTo(null);
         }
-        PacketDistributor.sendToPlayer(player, new DialoguePayloads.Close());
+        send(player, new DialoguePayloads.Close());
     }
 
     /** Собеседник ушёл или NPC исчез — разговор окончен. */
@@ -269,6 +333,10 @@ public final class DialogueService {
         }
         Session s = player.getData(ModAttachments.DIALOGUE);
         if (!s.active()) {
+            return;
+        }
+        if (player.level().getEntity(s.npc()) instanceof io.github.verycooltimo.murim.npc.DialogueActor guest) {
+            GuestDialogueService.tick(player, guest);
             return;
         }
         SectDisciple npc = player.level().getEntity(s.npc()) instanceof SectDisciple n ? n : null;
@@ -320,11 +388,11 @@ public final class DialogueService {
             return false;
         }
         if (c.technique().isPresent()) {
-            int layer = MasteryService.layer(player, c.technique().get());
-            if (c.minLayer() >= 0 && layer < c.minLayer()) {
+            int layer = MasteryService.stars(player, c.technique().get());
+            if (c.minStar() >= 0 && layer < c.minStar()) {
                 return false;
             }
-            if (c.belowLayer() >= 0 && layer >= c.belowLayer()) {
+            if (c.belowStar() >= 0 && layer >= c.belowStar()) {
                 return false;
             }
         }
@@ -334,14 +402,15 @@ public final class DialogueService {
         if (c.belowRank() >= 0 && profile.rank() >= c.belowRank()) {
             return false;
         }
-        if (!standing(player, sect, profile, c.standing())) {
+        if (!standing(player, npc, sect, profile, c.standing())) {
             return false;
         }
         return c.awakened().isEmpty() || MasteryRules.canLearn(profile) == c.awakened().get();
     }
 
     /** Положение, заслуги, предмет в инвентаре. */
-    private static boolean standing(ServerPlayer player, SectState sect, DantianProfile profile, Dialogue.Standing c) {
+    private static boolean standing(ServerPlayer player, SectDisciple npc, SectState sect, DantianProfile profile, Dialogue.Standing c) {
+        if (c.social().isPresent() && !SectSocial.matches(player, npc, c.social().get())) return false;
         SectStanding now = SectStanding.of(sect, profile.rank());
         if (c.minStanding().isPresent() && !now.atLeast(SectStanding.parse(c.minStanding().get()).orElse(SectStanding.TRUSTED))) {
             return false;
@@ -380,14 +449,30 @@ public final class DialogueService {
 
     /** Черта, личная фраза или слух ({@link SectTalk}): реплика по ключу говорящего, дню и журналу секты. */
     static Component talk(ServerPlayer player, SectDisciple npc, String token) {
+        if ("@journey".equals(token)) return SectJourney.line(player);
+        if ("@council".equals(token)) return SectProgression.councilNews(player);
+        if ("@rival".equals(token)) return SectProgression.rivalLine(player);
+        if ("@context".equals(token)) return SectSocial.context(player, npc);
+        if (SectTalk.RUMOUR.equals(token)) {
+            var rumour = npc.getPersistentData().getCompound(SectSocial.RUMOUR);
+            if (rumour.getLong("until") > player.level().getGameTime() && !rumour.getString("player").isEmpty()) {
+                String key = SectSocial.pick(player, npc, SectSocial.bubbleKeys("rumour"));
+                return Component.translatable(key, Component.literal(rumour.getString("player")));
+            }
+        }
         long time = player.level().getDayTime();
         SectState sect = player.getData(ModAttachments.SECT);
         String champion = player.level() instanceof net.minecraft.server.level.ServerLevel level ? SectLife.data(level).lastChampion() : "";
         SectTalk.Context ctx = new SectTalk.Context(champion, player.getName().getString(), sect.has(SectTalk.REVIEW_WON),
-                sect.member() && SectAttendance.current(player).today().missed(SectAttendance.Activity.FORMATION),
+                false,
                 SectReview.daysUntil(time));
-        SectTalk.Line l = SectTalk.line(token, npc.memberKey(), SectSchedule.day(time),
-                SectSchedule.at(time) == SectSchedule.Period.NIGHT, player.getRandom().nextInt(1 << 16), ctx);
+        java.util.Map<String, SectTalk.Line> candidates = new java.util.LinkedHashMap<>();
+        for (int roll = 0; roll < 64; roll++) {
+            SectTalk.Line candidate = SectTalk.line(token, npc.memberKey(), SectSchedule.day(time),
+                    SectSchedule.at(time) == SectSchedule.Period.NIGHT, roll, ctx);
+            candidates.putIfAbsent(candidate.key(), candidate);
+        }
+        SectTalk.Line l = candidates.get(SectSocial.pick(player, npc, List.copyOf(candidates.keySet())));
         Object[] args = new Object[l.args().size()];
         for (int i = 0; i < args.length; i++) {
             Object a = l.args().get(i);
@@ -414,6 +499,8 @@ public final class DialogueService {
                 out[i] = player.getName();
             } else if ("standing".equals(a)) {
                 out[i] = Component.translatable(SectService.standing(player).nameKey());
+            } else if ("sect_goal".equals(a)) {
+                out[i] = SectJourney.line(player);
             } else if ("sect_log".equals(a)) {
                 out[i] = SectAttendance.line(player);
             } else if ("sect_verdict".equals(a)) {
@@ -432,8 +519,8 @@ public final class DialogueService {
                 out[i] = SectReview.daysUntil(player.level().getDayTime());
             } else if ("rank".equals(a)) {
                 out[i] = player.getData(ModAttachments.PROFILE).rank();
-            } else if (a.startsWith("layer:")) {
-                out[i] = Math.max(0, MasteryService.layer(player, ResourceLocation.parse(a.substring(6))));
+            } else if (a.startsWith("star:")) {
+                out[i] = Math.max(0, MasteryService.stars(player, ResourceLocation.parse(a.substring(5))));
             } else {
                 out[i] = a;
             }
@@ -450,6 +537,26 @@ public final class DialogueService {
     private static String act(ServerPlayer player, SectDisciple npc, Dialogue.Action a) {
         String v = a.value().orElse("");
         switch (a.type()) {
+            case "journey_help" -> { if (!SectJourney.help(player, npc)) return "retry"; }
+            case "progression_menu" -> {
+                if (!SectProgression.matches(player, npc, "menu")) return "retry";
+                return openDialogue(player, npc, SectProgression.DIALOGUE, v.isEmpty() ? "menu" : v) ? "switch" : "retry";
+            }
+            case "progression" -> {
+                if (!SectProgression.act(player, npc, v)) return "retry";
+                if ("rival".equals(v)) return "close";
+            }
+            case "request_menu" -> {
+                return openDialogue(player, npc, SectRequests.DIALOGUE, "menu") ? "switch" : "retry";
+            }
+            case "request_start" -> { if (!SectRequests.start(player, npc, v)) return "retry"; }
+            case "request_complete" -> { if (!SectRequests.complete(player, npc, v)) return "retry"; }
+            case "promotion_offer" -> {
+                if (npc.role() != SectRole.LEADER || !SectPositions.offer(player, v, true)) return "retry";
+                return openDialogue(player, npc, SectPositions.DIALOGUE, v) ? "switch" : "retry";
+            }
+            case "promotion_accept" -> { if (!SectPositions.accept(player, npc, v)) return "retry"; }
+            case "promotion_decline" -> SectPositions.decline(player, npc, v);
             case "set_flag" -> {
                 SectStanding before = SectService.standing(player);
                 player.setData(ModAttachments.SECT, player.getData(ModAttachments.SECT).with(v));
@@ -464,9 +571,10 @@ public final class DialogueService {
             }
             case "donate" -> SectService.donate(player, v);
             case "chore" -> {
-                // Наряд на кухню: отдать повару (ведро воды) — ведро возвращается пустым, наряд снят.
+                // Добровольная помощь кухне раз в день; возвращаем пустое ведро.
                 SectService.ItemNeed need = SectService.ItemNeed.parse(v.isEmpty() ? SectAttendance.CHORE_ITEM : v);
-                if (need != null && need.count(player) >= need.count() && SectAttendance.current(player).chores()) {
+                if (need != null && need.count(player) >= need.count() && SectService.state(player).member()
+                        && !SectAttendance.current(player).today().did(SectAttendance.Activity.CHORE)) {
                     need.take(player);
                     if (need.item() == net.minecraft.world.item.Items.WATER_BUCKET) {
                         net.minecraft.world.item.ItemStack bucket = new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.BUCKET);
@@ -534,7 +642,7 @@ public final class DialogueService {
             return false;
         }
         for (Dialogue.Action a : option.actions()) {
-            act(player, npc, a);
+            if ("retry".equals(act(player, npc, a))) return false;
         }
         return true;
     }
@@ -561,5 +669,13 @@ public final class DialogueService {
             }
         });
         return bad;
+    }
+
+    /** GameTest mock players have no mod channel: NPC-initiated dialogues must not crash the server tick. */
+    // API: reference/neoforge-src/net/neoforged/neoforge/common/extensions/ICommonPacketListener.java#hasChannel
+    private static void send(ServerPlayer player, net.minecraft.network.protocol.common.custom.CustomPacketPayload payload) {
+        if (player.connection != null && player.connection.hasChannel(payload)) {
+            PacketDistributor.sendToPlayer(player, payload);
+        }
     }
 }

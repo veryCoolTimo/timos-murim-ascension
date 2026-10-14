@@ -1,0 +1,14 @@
+{
+  "parent": "minecraft:block/block",
+  "loader": "neoforge:obj",
+  "model": "murim:models/block/roof_apex_ridge_16.obj",
+  "flip_v": false,
+  "emissive_ambient": false,
+  "automatic_culling": false,
+  "ambientocclusion": false,
+  "render_type": "minecraft:solid",
+  "textures": {
+    "cream": "murim:block/roof_polish_cream",
+    "particle": "murim:block/roof_polish_cream"
+  }
+}

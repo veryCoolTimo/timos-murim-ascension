@@ -9,6 +9,8 @@ import io.github.verycooltimo.murim.sect.SectLife;
 import io.github.verycooltimo.murim.sect.SectSchedule;
 import io.github.verycooltimo.murim.sect.SectService;
 import io.github.verycooltimo.murim.sect.SectState;
+import io.github.verycooltimo.murim.sect.SectRole;
+import io.github.verycooltimo.murim.sect.SectWatch;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -31,7 +33,7 @@ import net.neoforged.neoforge.event.tick.PlayerTickEvent;
  *   <li>{@link #offence}: a hand raised on a brother outside a spar ({@code SectDisciple#hurt}), a closed place forced
  *       ({@code SectWatch#escalate}). First — a warning; the second within the window — the sentence is read.</li>
  *   <li>The sentence is read by a sect member nearby as a dialogue ({@code murim:penance}: accept / refuse); with
- *       nobody near, flag {@link #SUMMONED} makes the next sect member he talks to read it.</li>
+ *       nobody near, flag {@link #SUMMONED} keeps calling the nearest elder or guard to approach.</li>
  *   <li>{@link #sentence}: flag {@code penance.sentenced} (the guards let him into the cave), the player stands on the
  *       penance seal the author placed in his cave (none — the cave of the generated mountain), the cold iron door
  *       shuts. Leaving the cell brings him back.</li>
@@ -68,7 +70,7 @@ public final class PenanceService {
      */
     public static void offence(ServerPlayer p, String kind, SectDisciple witness) {
         SectState s = p.getData(ModAttachments.SECT);
-        if (!s.member() || s.has(SENTENCED) || p.isCreative()) {
+        if (!s.member() || s.has(SENTENCED) || s.has(SUMMONED) || p.isCreative() || p.isSpectator()) {
             return;
         }
         long now = p.level().getGameTime();
@@ -79,6 +81,7 @@ public final class PenanceService {
         if ("assault".equals(kind)) {
             tag.putLong("lastAssault", now);
         }
+        io.github.verycooltimo.murim.sect.SectProgression.offence(p, kind, witness);
         long today = SectSchedule.day(p.level().getDayTime());
         int count = PenanceRules.count(tag.getInt("count"), tag.getLong("day"), today);
         tag.putLong("day", today);
@@ -92,24 +95,56 @@ public final class PenanceService {
         }
         tag.putInt("count", 0);
         p.getPersistentData().put(OFFENCE_TAG, tag);
-        p.setData(ModAttachments.SECT, p.getData(ModAttachments.SECT).with(SUMMONED));
-        offer(p, witness);
+        summon(p, witness);
     }
 
-    /** The sentence is read: by the witness or the nearest sect member; nobody near — at the next talk. */
-    public static boolean offer(ServerPlayer p, SectDisciple witness) {
-        SectDisciple speaker = witness != null && witness.isAlive() && witness.distanceTo(p) < 12.0D ? witness : nearest(p);
-        if (speaker == null) {
+    /** Серьёзный проступок сразу требует приговора, обычные — после повторения. */
+    public static void summon(ServerPlayer p, SectDisciple witness) {
+        if (!p.getData(ModAttachments.SECT).member() || sentenced(p) || p.isCreative() || p.isSpectator()) {
+            return;
+        }
+        boolean first = !p.getData(ModAttachments.SECT).has(SUMMONED);
+        p.setData(ModAttachments.SECT, p.getData(ModAttachments.SECT).with(SUMMONED));
+        io.github.verycooltimo.murim.sect.SectSocial.remember(p, "punished");
+        if (!offer(p, witness) && first) {
             p.displayClientMessage(Component.translatable("murim.penance.summoned").withStyle(ChatFormatting.RED), false);
+        }
+    }
+
+    private static boolean canDeliver(SectDisciple d) {
+        return d.isAlive() && d.free() && !d.wounded()
+                && (d.role() == SectRole.ELDER || d.role() == SectRole.LEADER || SectWatch.guards(d) || d.role() == SectRole.GUARD);
+    }
+
+    /** Приговор читает подошедший старейшина или страж; закрытый экран не снимает вызов. */
+    public static boolean offer(ServerPlayer p, SectDisciple witness) {
+        if (p.getData(ModAttachments.DIALOGUE).active()) {
+            return true;
+        }
+        SectDisciple speaker = nearest(p);
+        if (speaker == null && witness != null && witness.level() == p.level() && canDeliver(witness) && witness.distanceTo(p) < 64.0D) {
+            speaker = witness;
+        }
+        if (speaker == null) {
             return false;
         }
-        return DialogueService.openDialogue(p, speaker, DIALOGUE, "sentence");
+        if (speaker.distanceToSqr(p) <= 9.0D && speaker.getSensing().hasLineOfSight(p)) {
+            return DialogueService.openDialogue(p, speaker, DIALOGUE, "sentence");
+        }
+        speaker.approachDialogue(p, DIALOGUE, "sentence", p.position());
+        return true;
     }
 
     private static SectDisciple nearest(ServerPlayer p) {
         SectDisciple best = null;
-        double bestD = 16.0D;
-        for (SectDisciple d : p.level().getEntitiesOfClass(SectDisciple.class, p.getBoundingBox().inflate(16.0D), SectDisciple::isAlive)) {
+        double bestD = 64.0D;
+        for (SectDisciple d : p.level().getEntitiesOfClass(SectDisciple.class, p.getBoundingBox().inflate(64.0D), PenanceService::canDeliver)) {
+            if (d.approachingDialogue(p, DIALOGUE)) {
+                return d;
+            }
+            if (d.blocking() && d.blockTarget() != p.getId()) {
+                continue;
+            }
             double dist = d.distanceTo(p);
             if (dist < bestD) {
                 best = d;
@@ -201,10 +236,14 @@ public final class PenanceService {
 
     @SubscribeEvent
     static void onPlayerTick(PlayerTickEvent.Post event) {
-        if (!(event.getEntity() instanceof ServerPlayer p) || p.tickCount % 20 != 0 || !sentenced(p) || !p.isAlive()) {
+        if (!(event.getEntity() instanceof ServerPlayer p) || p.tickCount % 20 != 0 || !p.isAlive()) {
             return;
         }
-        tick(p);
+        if (sentenced(p)) {
+            tick(p);
+        } else if (p.getData(ModAttachments.SECT).has(SUMMONED) && !p.isCreative() && !p.isSpectator()) {
+            offer(p, null);
+        }
     }
 
     /** One check (once a second): count meditation, keep him in, release when served. */

@@ -1,0 +1,18 @@
+{
+  "variants": {
+    "": [
+      {
+        "model": "murim:block/hua_scree",
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_scree_b",
+        "weight": 4
+      },
+      {
+        "model": "murim:block/hua_scree_c",
+        "weight": 3
+      }
+    ]
+  }
+}

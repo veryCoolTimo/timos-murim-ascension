@@ -44,14 +44,15 @@ class SectScheduleTest {
     }
 
     @Test
-    @DisplayName("Состав 05.10: глава, 3 старейшины Тэ, 3 Гён, 8 Со, 17 Юль, 6 слуг, управляющий, привратник — 40; без стражи и Чхон Мёна")
+    @DisplayName("Состав 05.10 + 06.10: глава, 3 старейшины Тэ, 3 Гён + 4 рядовых Гён, 8 Со, 17 Юль, 6 слуг, управляющий, привратник — 44; без стражи и Чхон Мёна")
     void roster() {
         assertEquals(8, SectRoster.generation(2).size());
         assertEquals(17, SectRoster.generation(3).size());
         assertEquals(25, SectRoster.ALL.stream().filter(SectRoster::disciple).count());
-        assertEquals(40, SectRoster.ALL.size());
+        assertEquals(44, SectRoster.ALL.size());
         assertEquals(4, SectRoster.ALL.stream().filter(m -> m.generation() == 0).count(), "глава и три старейшины Тэ");
-        assertEquals(3, SectRoster.ALL.stream().filter(m -> m.generation() == 1).count(), "три Гён");
+        assertEquals(7, SectRoster.ALL.stream().filter(m -> m.generation() == 1).count(), "три Гён и четверо рядовых");
+        assertEquals(4, SectRoster.firstRanks().size(), "рядовые первого поколения");
         assertEquals(6, SectRoster.ALL.stream().filter(m -> m.lay() && m.role() != SectRole.STEWARD).count(), "шесть слуг");
         assertEquals(1, SectRoster.ALL.stream().filter(m -> m.role() == SectRole.STEWARD).count());
         assertEquals(1, SectRoster.ALL.stream().filter(m -> m.role() == SectRole.GATEKEEPER).count());

@@ -128,7 +128,7 @@ public final class ClientTraining {
                 if (e.pushup()) {
                     MurimPlayerAnimations.play(player, PLANK);
                 } else if (e == Exercise.CARRY_STONE) {
-                    MurimPlayerAnimations.play(player, CARRY);
+                    MurimPlayerAnimations.playBlended(player, CARRY, 5);
                 }
             }
             case GOOD, FAIR, OFF -> {
@@ -140,9 +140,9 @@ public final class ClientTraining {
             }
             case SWITCH -> {
                 if (e == Exercise.HORSE_STANCE) {
-                    MurimPlayerAnimations.play(player, HORSE);
+                    MurimPlayerAnimations.playBlended(player, HORSE, 5);
                 } else {
-                    MurimPlayerAnimations.stop(player);
+                    MurimPlayerAnimations.stopBlended(player, 6);
                 }
             }
             case END -> {
@@ -150,7 +150,7 @@ public final class ClientTraining {
                 if (was.pushup()) {
                     MurimPlayerAnimations.play(player, PLANK_UP);
                 } else if (!was.route()) {
-                    MurimPlayerAnimations.stop(player);
+                    MurimPlayerAnimations.stopBlended(player, 6);
                 }
             }
             default -> {

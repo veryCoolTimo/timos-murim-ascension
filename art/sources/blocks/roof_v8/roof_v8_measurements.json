@@ -1,0 +1,68 @@
+{
+  "footprint_blocks": [
+    17,
+    15
+  ],
+  "main_ridge_length_blocks": 9,
+  "plate_thickness_model_px": 2.0,
+  "lower_true_width_blocks": 0.621,
+  "lower_profile_SZ": [
+    [
+      0.0,
+      2.6
+    ],
+    [
+      1.8276426832884425,
+      1.364362566566086
+    ],
+    [
+      3.655285366576885,
+      0.8381554916848236
+    ],
+    [
+      5.482928049865327,
+      0.9000000000000005
+    ],
+    [
+      6.041009033009578,
+      2.6112993941016716
+    ]
+  ],
+  "turns_degrees": [
+    17.999999999999996,
+    18.0,
+    70.0
+  ],
+  "texture_size": [
+    16,
+    16
+  ],
+  "editable_meshes": 483,
+  "faces": 7760,
+  "groups": [
+    "main_ridge",
+    "horn_L",
+    "gable_L",
+    "raking_ridge_L_N",
+    "lower_ridge_L_N",
+    "raking_ridge_L_S",
+    "lower_ridge_L_S",
+    "horn_R",
+    "gable_R",
+    "raking_ridge_R_N",
+    "lower_ridge_R_N",
+    "raking_ridge_R_S",
+    "lower_ridge_R_S",
+    "tiles",
+    "wood",
+    "eaves"
+  ],
+  "bbmodel_roundtrip": "passed",
+  "seam_samples_per_mirror": 181,
+  "seam_checked_against": "actual top triangles of BOTH adjacent roof surfaces",
+  "limitations": [
+    "Red and horn contours are coarse straight-facet interpretations of sheet images.",
+    "Reference artwork has no camera metadata; reference camera is an estimate.",
+    "No runtime blocks, collision, registration or client/Gradle verification."
+  ]
+}

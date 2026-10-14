@@ -1,0 +1,2579 @@
+{
+  "variants": {
+    "facing=east,half=bottom,shape=inner_left": [
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles",
+        "uvlock": true,
+        "y": 270,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_b",
+        "uvlock": true,
+        "y": 270,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_light",
+        "uvlock": true,
+        "y": 270,
+        "weight": 4
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_light_b",
+        "uvlock": true,
+        "y": 270,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_dark",
+        "uvlock": true,
+        "y": 270,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_dark_b",
+        "uvlock": true,
+        "y": 270,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_cracked",
+        "uvlock": true,
+        "y": 270
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_cracked_b",
+        "uvlock": true,
+        "y": 270
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_chipped",
+        "uvlock": true,
+        "y": 270
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_chipped_b",
+        "uvlock": true,
+        "y": 270
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_chipped_c",
+        "uvlock": true,
+        "y": 270
+      }
+    ],
+    "facing=east,half=bottom,shape=inner_right": [
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles",
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_b",
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_light",
+        "weight": 4
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_light_b",
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_dark",
+        "weight": 3
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_dark_b",
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_cracked"
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_cracked_b"
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_chipped"
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_chipped_b"
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_chipped_c"
+      }
+    ],
+    "facing=east,half=bottom,shape=outer_left": [
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles",
+        "uvlock": true,
+        "y": 270,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_b",
+        "uvlock": true,
+        "y": 270,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_light",
+        "uvlock": true,
+        "y": 270,
+        "weight": 4
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_light_b",
+        "uvlock": true,
+        "y": 270,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_dark",
+        "uvlock": true,
+        "y": 270,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_dark_b",
+        "uvlock": true,
+        "y": 270,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_cracked",
+        "uvlock": true,
+        "y": 270
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_cracked_b",
+        "uvlock": true,
+        "y": 270
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_chipped",
+        "uvlock": true,
+        "y": 270
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_chipped_b",
+        "uvlock": true,
+        "y": 270
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_chipped_c",
+        "uvlock": true,
+        "y": 270
+      }
+    ],
+    "facing=east,half=bottom,shape=outer_right": [
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles",
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_b",
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_light",
+        "weight": 4
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_light_b",
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_dark",
+        "weight": 3
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_dark_b",
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_cracked"
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_cracked_b"
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_chipped"
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_chipped_b"
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_chipped_c"
+      }
+    ],
+    "facing=east,half=bottom,shape=straight": [
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles",
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_b",
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_light",
+        "weight": 4
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_light_b",
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_dark",
+        "weight": 3
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_dark_b",
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_cracked"
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_cracked_b"
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_chipped"
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_chipped_b"
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_chipped_c"
+      }
+    ],
+    "facing=east,half=top,shape=inner_left": [
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles",
+        "uvlock": true,
+        "x": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_b",
+        "uvlock": true,
+        "x": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_light",
+        "uvlock": true,
+        "x": 180,
+        "weight": 4
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_light_b",
+        "uvlock": true,
+        "x": 180,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_dark",
+        "uvlock": true,
+        "x": 180,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_dark_b",
+        "uvlock": true,
+        "x": 180,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_cracked",
+        "uvlock": true,
+        "x": 180
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_cracked_b",
+        "uvlock": true,
+        "x": 180
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_chipped",
+        "uvlock": true,
+        "x": 180
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_chipped_b",
+        "uvlock": true,
+        "x": 180
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_chipped_c",
+        "uvlock": true,
+        "x": 180
+      }
+    ],
+    "facing=east,half=top,shape=inner_right": [
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles",
+        "uvlock": true,
+        "x": 180,
+        "y": 90,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_b",
+        "uvlock": true,
+        "x": 180,
+        "y": 90,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_light",
+        "uvlock": true,
+        "x": 180,
+        "y": 90,
+        "weight": 4
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_light_b",
+        "uvlock": true,
+        "x": 180,
+        "y": 90,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_dark",
+        "uvlock": true,
+        "x": 180,
+        "y": 90,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_dark_b",
+        "uvlock": true,
+        "x": 180,
+        "y": 90,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_cracked",
+        "uvlock": true,
+        "x": 180,
+        "y": 90
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_cracked_b",
+        "uvlock": true,
+        "x": 180,
+        "y": 90
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_chipped",
+        "uvlock": true,
+        "x": 180,
+        "y": 90
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_chipped_b",
+        "uvlock": true,
+        "x": 180,
+        "y": 90
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_chipped_c",
+        "uvlock": true,
+        "x": 180,
+        "y": 90
+      }
+    ],
+    "facing=east,half=top,shape=outer_left": [
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles",
+        "uvlock": true,
+        "x": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_b",
+        "uvlock": true,
+        "x": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_light",
+        "uvlock": true,
+        "x": 180,
+        "weight": 4
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_light_b",
+        "uvlock": true,
+        "x": 180,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_dark",
+        "uvlock": true,
+        "x": 180,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_dark_b",
+        "uvlock": true,
+        "x": 180,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_cracked",
+        "uvlock": true,
+        "x": 180
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_cracked_b",
+        "uvlock": true,
+        "x": 180
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_chipped",
+        "uvlock": true,
+        "x": 180
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_chipped_b",
+        "uvlock": true,
+        "x": 180
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_chipped_c",
+        "uvlock": true,
+        "x": 180
+      }
+    ],
+    "facing=east,half=top,shape=outer_right": [
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles",
+        "uvlock": true,
+        "x": 180,
+        "y": 90,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_b",
+        "uvlock": true,
+        "x": 180,
+        "y": 90,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_light",
+        "uvlock": true,
+        "x": 180,
+        "y": 90,
+        "weight": 4
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_light_b",
+        "uvlock": true,
+        "x": 180,
+        "y": 90,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_dark",
+        "uvlock": true,
+        "x": 180,
+        "y": 90,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_dark_b",
+        "uvlock": true,
+        "x": 180,
+        "y": 90,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_cracked",
+        "uvlock": true,
+        "x": 180,
+        "y": 90
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_cracked_b",
+        "uvlock": true,
+        "x": 180,
+        "y": 90
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_chipped",
+        "uvlock": true,
+        "x": 180,
+        "y": 90
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_chipped_b",
+        "uvlock": true,
+        "x": 180,
+        "y": 90
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_chipped_c",
+        "uvlock": true,
+        "x": 180,
+        "y": 90
+      }
+    ],
+    "facing=east,half=top,shape=straight": [
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles",
+        "uvlock": true,
+        "x": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_b",
+        "uvlock": true,
+        "x": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_light",
+        "uvlock": true,
+        "x": 180,
+        "weight": 4
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_light_b",
+        "uvlock": true,
+        "x": 180,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_dark",
+        "uvlock": true,
+        "x": 180,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_dark_b",
+        "uvlock": true,
+        "x": 180,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_cracked",
+        "uvlock": true,
+        "x": 180
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_cracked_b",
+        "uvlock": true,
+        "x": 180
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_chipped",
+        "uvlock": true,
+        "x": 180
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_chipped_b",
+        "uvlock": true,
+        "x": 180
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_chipped_c",
+        "uvlock": true,
+        "x": 180
+      }
+    ],
+    "facing=north,half=bottom,shape=inner_left": [
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles",
+        "uvlock": true,
+        "y": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_b",
+        "uvlock": true,
+        "y": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_light",
+        "uvlock": true,
+        "y": 180,
+        "weight": 4
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_light_b",
+        "uvlock": true,
+        "y": 180,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_dark",
+        "uvlock": true,
+        "y": 180,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_dark_b",
+        "uvlock": true,
+        "y": 180,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_cracked",
+        "uvlock": true,
+        "y": 180
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_cracked_b",
+        "uvlock": true,
+        "y": 180
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_chipped",
+        "uvlock": true,
+        "y": 180
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_chipped_b",
+        "uvlock": true,
+        "y": 180
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_chipped_c",
+        "uvlock": true,
+        "y": 180
+      }
+    ],
+    "facing=north,half=bottom,shape=inner_right": [
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles",
+        "uvlock": true,
+        "y": 270,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_b",
+        "uvlock": true,
+        "y": 270,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_light",
+        "uvlock": true,
+        "y": 270,
+        "weight": 4
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_light_b",
+        "uvlock": true,
+        "y": 270,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_dark",
+        "uvlock": true,
+        "y": 270,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_dark_b",
+        "uvlock": true,
+        "y": 270,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_cracked",
+        "uvlock": true,
+        "y": 270
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_cracked_b",
+        "uvlock": true,
+        "y": 270
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_chipped",
+        "uvlock": true,
+        "y": 270
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_chipped_b",
+        "uvlock": true,
+        "y": 270
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_chipped_c",
+        "uvlock": true,
+        "y": 270
+      }
+    ],
+    "facing=north,half=bottom,shape=outer_left": [
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles",
+        "uvlock": true,
+        "y": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_b",
+        "uvlock": true,
+        "y": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_light",
+        "uvlock": true,
+        "y": 180,
+        "weight": 4
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_light_b",
+        "uvlock": true,
+        "y": 180,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_dark",
+        "uvlock": true,
+        "y": 180,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_dark_b",
+        "uvlock": true,
+        "y": 180,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_cracked",
+        "uvlock": true,
+        "y": 180
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_cracked_b",
+        "uvlock": true,
+        "y": 180
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_chipped",
+        "uvlock": true,
+        "y": 180
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_chipped_b",
+        "uvlock": true,
+        "y": 180
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_chipped_c",
+        "uvlock": true,
+        "y": 180
+      }
+    ],
+    "facing=north,half=bottom,shape=outer_right": [
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles",
+        "uvlock": true,
+        "y": 270,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_b",
+        "uvlock": true,
+        "y": 270,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_light",
+        "uvlock": true,
+        "y": 270,
+        "weight": 4
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_light_b",
+        "uvlock": true,
+        "y": 270,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_dark",
+        "uvlock": true,
+        "y": 270,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_dark_b",
+        "uvlock": true,
+        "y": 270,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_cracked",
+        "uvlock": true,
+        "y": 270
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_cracked_b",
+        "uvlock": true,
+        "y": 270
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_chipped",
+        "uvlock": true,
+        "y": 270
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_chipped_b",
+        "uvlock": true,
+        "y": 270
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_chipped_c",
+        "uvlock": true,
+        "y": 270
+      }
+    ],
+    "facing=north,half=bottom,shape=straight": [
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles",
+        "uvlock": true,
+        "y": 270,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_b",
+        "uvlock": true,
+        "y": 270,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_light",
+        "uvlock": true,
+        "y": 270,
+        "weight": 4
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_light_b",
+        "uvlock": true,
+        "y": 270,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_dark",
+        "uvlock": true,
+        "y": 270,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_dark_b",
+        "uvlock": true,
+        "y": 270,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_cracked",
+        "uvlock": true,
+        "y": 270
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_cracked_b",
+        "uvlock": true,
+        "y": 270
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_chipped",
+        "uvlock": true,
+        "y": 270
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_chipped_b",
+        "uvlock": true,
+        "y": 270
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_chipped_c",
+        "uvlock": true,
+        "y": 270
+      }
+    ],
+    "facing=north,half=top,shape=inner_left": [
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles",
+        "uvlock": true,
+        "x": 180,
+        "y": 270,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_b",
+        "uvlock": true,
+        "x": 180,
+        "y": 270,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_light",
+        "uvlock": true,
+        "x": 180,
+        "y": 270,
+        "weight": 4
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_light_b",
+        "uvlock": true,
+        "x": 180,
+        "y": 270,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_dark",
+        "uvlock": true,
+        "x": 180,
+        "y": 270,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_dark_b",
+        "uvlock": true,
+        "x": 180,
+        "y": 270,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_cracked",
+        "uvlock": true,
+        "x": 180,
+        "y": 270
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_cracked_b",
+        "uvlock": true,
+        "x": 180,
+        "y": 270
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_chipped",
+        "uvlock": true,
+        "x": 180,
+        "y": 270
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_chipped_b",
+        "uvlock": true,
+        "x": 180,
+        "y": 270
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_chipped_c",
+        "uvlock": true,
+        "x": 180,
+        "y": 270
+      }
+    ],
+    "facing=north,half=top,shape=inner_right": [
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles",
+        "uvlock": true,
+        "x": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_b",
+        "uvlock": true,
+        "x": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_light",
+        "uvlock": true,
+        "x": 180,
+        "weight": 4
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_light_b",
+        "uvlock": true,
+        "x": 180,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_dark",
+        "uvlock": true,
+        "x": 180,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_dark_b",
+        "uvlock": true,
+        "x": 180,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_cracked",
+        "uvlock": true,
+        "x": 180
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_cracked_b",
+        "uvlock": true,
+        "x": 180
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_chipped",
+        "uvlock": true,
+        "x": 180
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_chipped_b",
+        "uvlock": true,
+        "x": 180
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_chipped_c",
+        "uvlock": true,
+        "x": 180
+      }
+    ],
+    "facing=north,half=top,shape=outer_left": [
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles",
+        "uvlock": true,
+        "x": 180,
+        "y": 270,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_b",
+        "uvlock": true,
+        "x": 180,
+        "y": 270,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_light",
+        "uvlock": true,
+        "x": 180,
+        "y": 270,
+        "weight": 4
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_light_b",
+        "uvlock": true,
+        "x": 180,
+        "y": 270,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_dark",
+        "uvlock": true,
+        "x": 180,
+        "y": 270,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_dark_b",
+        "uvlock": true,
+        "x": 180,
+        "y": 270,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_cracked",
+        "uvlock": true,
+        "x": 180,
+        "y": 270
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_cracked_b",
+        "uvlock": true,
+        "x": 180,
+        "y": 270
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_chipped",
+        "uvlock": true,
+        "x": 180,
+        "y": 270
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_chipped_b",
+        "uvlock": true,
+        "x": 180,
+        "y": 270
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_chipped_c",
+        "uvlock": true,
+        "x": 180,
+        "y": 270
+      }
+    ],
+    "facing=north,half=top,shape=outer_right": [
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles",
+        "uvlock": true,
+        "x": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_b",
+        "uvlock": true,
+        "x": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_light",
+        "uvlock": true,
+        "x": 180,
+        "weight": 4
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_light_b",
+        "uvlock": true,
+        "x": 180,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_dark",
+        "uvlock": true,
+        "x": 180,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_dark_b",
+        "uvlock": true,
+        "x": 180,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_cracked",
+        "uvlock": true,
+        "x": 180
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_cracked_b",
+        "uvlock": true,
+        "x": 180
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_chipped",
+        "uvlock": true,
+        "x": 180
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_chipped_b",
+        "uvlock": true,
+        "x": 180
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_chipped_c",
+        "uvlock": true,
+        "x": 180
+      }
+    ],
+    "facing=north,half=top,shape=straight": [
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles",
+        "uvlock": true,
+        "x": 180,
+        "y": 270,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_b",
+        "uvlock": true,
+        "x": 180,
+        "y": 270,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_light",
+        "uvlock": true,
+        "x": 180,
+        "y": 270,
+        "weight": 4
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_light_b",
+        "uvlock": true,
+        "x": 180,
+        "y": 270,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_dark",
+        "uvlock": true,
+        "x": 180,
+        "y": 270,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_dark_b",
+        "uvlock": true,
+        "x": 180,
+        "y": 270,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_cracked",
+        "uvlock": true,
+        "x": 180,
+        "y": 270
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_cracked_b",
+        "uvlock": true,
+        "x": 180,
+        "y": 270
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_chipped",
+        "uvlock": true,
+        "x": 180,
+        "y": 270
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_chipped_b",
+        "uvlock": true,
+        "x": 180,
+        "y": 270
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_chipped_c",
+        "uvlock": true,
+        "x": 180,
+        "y": 270
+      }
+    ],
+    "facing=south,half=bottom,shape=inner_left": [
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles",
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_b",
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_light",
+        "weight": 4
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_light_b",
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_dark",
+        "weight": 3
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_dark_b",
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_cracked"
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_cracked_b"
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_chipped"
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_chipped_b"
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_chipped_c"
+      }
+    ],
+    "facing=south,half=bottom,shape=inner_right": [
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles",
+        "uvlock": true,
+        "y": 90,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_b",
+        "uvlock": true,
+        "y": 90,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_light",
+        "uvlock": true,
+        "y": 90,
+        "weight": 4
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_light_b",
+        "uvlock": true,
+        "y": 90,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_dark",
+        "uvlock": true,
+        "y": 90,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_dark_b",
+        "uvlock": true,
+        "y": 90,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_cracked",
+        "uvlock": true,
+        "y": 90
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_cracked_b",
+        "uvlock": true,
+        "y": 90
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_chipped",
+        "uvlock": true,
+        "y": 90
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_chipped_b",
+        "uvlock": true,
+        "y": 90
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_chipped_c",
+        "uvlock": true,
+        "y": 90
+      }
+    ],
+    "facing=south,half=bottom,shape=outer_left": [
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles",
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_b",
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_light",
+        "weight": 4
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_light_b",
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_dark",
+        "weight": 3
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_dark_b",
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_cracked"
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_cracked_b"
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_chipped"
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_chipped_b"
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_chipped_c"
+      }
+    ],
+    "facing=south,half=bottom,shape=outer_right": [
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles",
+        "uvlock": true,
+        "y": 90,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_b",
+        "uvlock": true,
+        "y": 90,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_light",
+        "uvlock": true,
+        "y": 90,
+        "weight": 4
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_light_b",
+        "uvlock": true,
+        "y": 90,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_dark",
+        "uvlock": true,
+        "y": 90,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_dark_b",
+        "uvlock": true,
+        "y": 90,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_cracked",
+        "uvlock": true,
+        "y": 90
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_cracked_b",
+        "uvlock": true,
+        "y": 90
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_chipped",
+        "uvlock": true,
+        "y": 90
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_chipped_b",
+        "uvlock": true,
+        "y": 90
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_chipped_c",
+        "uvlock": true,
+        "y": 90
+      }
+    ],
+    "facing=south,half=bottom,shape=straight": [
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles",
+        "uvlock": true,
+        "y": 90,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_b",
+        "uvlock": true,
+        "y": 90,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_light",
+        "uvlock": true,
+        "y": 90,
+        "weight": 4
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_light_b",
+        "uvlock": true,
+        "y": 90,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_dark",
+        "uvlock": true,
+        "y": 90,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_dark_b",
+        "uvlock": true,
+        "y": 90,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_cracked",
+        "uvlock": true,
+        "y": 90
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_cracked_b",
+        "uvlock": true,
+        "y": 90
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_chipped",
+        "uvlock": true,
+        "y": 90
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_chipped_b",
+        "uvlock": true,
+        "y": 90
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_chipped_c",
+        "uvlock": true,
+        "y": 90
+      }
+    ],
+    "facing=south,half=top,shape=inner_left": [
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles",
+        "uvlock": true,
+        "x": 180,
+        "y": 90,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_b",
+        "uvlock": true,
+        "x": 180,
+        "y": 90,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_light",
+        "uvlock": true,
+        "x": 180,
+        "y": 90,
+        "weight": 4
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_light_b",
+        "uvlock": true,
+        "x": 180,
+        "y": 90,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_dark",
+        "uvlock": true,
+        "x": 180,
+        "y": 90,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_dark_b",
+        "uvlock": true,
+        "x": 180,
+        "y": 90,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_cracked",
+        "uvlock": true,
+        "x": 180,
+        "y": 90
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_cracked_b",
+        "uvlock": true,
+        "x": 180,
+        "y": 90
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_chipped",
+        "uvlock": true,
+        "x": 180,
+        "y": 90
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_chipped_b",
+        "uvlock": true,
+        "x": 180,
+        "y": 90
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_chipped_c",
+        "uvlock": true,
+        "x": 180,
+        "y": 90
+      }
+    ],
+    "facing=south,half=top,shape=inner_right": [
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles",
+        "uvlock": true,
+        "x": 180,
+        "y": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_b",
+        "uvlock": true,
+        "x": 180,
+        "y": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_light",
+        "uvlock": true,
+        "x": 180,
+        "y": 180,
+        "weight": 4
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_light_b",
+        "uvlock": true,
+        "x": 180,
+        "y": 180,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_dark",
+        "uvlock": true,
+        "x": 180,
+        "y": 180,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_dark_b",
+        "uvlock": true,
+        "x": 180,
+        "y": 180,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_cracked",
+        "uvlock": true,
+        "x": 180,
+        "y": 180
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_cracked_b",
+        "uvlock": true,
+        "x": 180,
+        "y": 180
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_chipped",
+        "uvlock": true,
+        "x": 180,
+        "y": 180
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_chipped_b",
+        "uvlock": true,
+        "x": 180,
+        "y": 180
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_chipped_c",
+        "uvlock": true,
+        "x": 180,
+        "y": 180
+      }
+    ],
+    "facing=south,half=top,shape=outer_left": [
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles",
+        "uvlock": true,
+        "x": 180,
+        "y": 90,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_b",
+        "uvlock": true,
+        "x": 180,
+        "y": 90,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_light",
+        "uvlock": true,
+        "x": 180,
+        "y": 90,
+        "weight": 4
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_light_b",
+        "uvlock": true,
+        "x": 180,
+        "y": 90,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_dark",
+        "uvlock": true,
+        "x": 180,
+        "y": 90,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_dark_b",
+        "uvlock": true,
+        "x": 180,
+        "y": 90,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_cracked",
+        "uvlock": true,
+        "x": 180,
+        "y": 90
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_cracked_b",
+        "uvlock": true,
+        "x": 180,
+        "y": 90
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_chipped",
+        "uvlock": true,
+        "x": 180,
+        "y": 90
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_chipped_b",
+        "uvlock": true,
+        "x": 180,
+        "y": 90
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_chipped_c",
+        "uvlock": true,
+        "x": 180,
+        "y": 90
+      }
+    ],
+    "facing=south,half=top,shape=outer_right": [
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles",
+        "uvlock": true,
+        "x": 180,
+        "y": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_b",
+        "uvlock": true,
+        "x": 180,
+        "y": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_light",
+        "uvlock": true,
+        "x": 180,
+        "y": 180,
+        "weight": 4
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_light_b",
+        "uvlock": true,
+        "x": 180,
+        "y": 180,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_dark",
+        "uvlock": true,
+        "x": 180,
+        "y": 180,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_dark_b",
+        "uvlock": true,
+        "x": 180,
+        "y": 180,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_cracked",
+        "uvlock": true,
+        "x": 180,
+        "y": 180
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_cracked_b",
+        "uvlock": true,
+        "x": 180,
+        "y": 180
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_chipped",
+        "uvlock": true,
+        "x": 180,
+        "y": 180
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_chipped_b",
+        "uvlock": true,
+        "x": 180,
+        "y": 180
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_chipped_c",
+        "uvlock": true,
+        "x": 180,
+        "y": 180
+      }
+    ],
+    "facing=south,half=top,shape=straight": [
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles",
+        "uvlock": true,
+        "x": 180,
+        "y": 90,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_b",
+        "uvlock": true,
+        "x": 180,
+        "y": 90,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_light",
+        "uvlock": true,
+        "x": 180,
+        "y": 90,
+        "weight": 4
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_light_b",
+        "uvlock": true,
+        "x": 180,
+        "y": 90,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_dark",
+        "uvlock": true,
+        "x": 180,
+        "y": 90,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_dark_b",
+        "uvlock": true,
+        "x": 180,
+        "y": 90,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_cracked",
+        "uvlock": true,
+        "x": 180,
+        "y": 90
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_cracked_b",
+        "uvlock": true,
+        "x": 180,
+        "y": 90
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_chipped",
+        "uvlock": true,
+        "x": 180,
+        "y": 90
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_chipped_b",
+        "uvlock": true,
+        "x": 180,
+        "y": 90
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_chipped_c",
+        "uvlock": true,
+        "x": 180,
+        "y": 90
+      }
+    ],
+    "facing=west,half=bottom,shape=inner_left": [
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles",
+        "uvlock": true,
+        "y": 90,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_b",
+        "uvlock": true,
+        "y": 90,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_light",
+        "uvlock": true,
+        "y": 90,
+        "weight": 4
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_light_b",
+        "uvlock": true,
+        "y": 90,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_dark",
+        "uvlock": true,
+        "y": 90,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_dark_b",
+        "uvlock": true,
+        "y": 90,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_cracked",
+        "uvlock": true,
+        "y": 90
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_cracked_b",
+        "uvlock": true,
+        "y": 90
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_chipped",
+        "uvlock": true,
+        "y": 90
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_chipped_b",
+        "uvlock": true,
+        "y": 90
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_chipped_c",
+        "uvlock": true,
+        "y": 90
+      }
+    ],
+    "facing=west,half=bottom,shape=inner_right": [
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles",
+        "uvlock": true,
+        "y": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_b",
+        "uvlock": true,
+        "y": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_light",
+        "uvlock": true,
+        "y": 180,
+        "weight": 4
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_light_b",
+        "uvlock": true,
+        "y": 180,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_dark",
+        "uvlock": true,
+        "y": 180,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_dark_b",
+        "uvlock": true,
+        "y": 180,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_cracked",
+        "uvlock": true,
+        "y": 180
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_cracked_b",
+        "uvlock": true,
+        "y": 180
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_chipped",
+        "uvlock": true,
+        "y": 180
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_chipped_b",
+        "uvlock": true,
+        "y": 180
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_chipped_c",
+        "uvlock": true,
+        "y": 180
+      }
+    ],
+    "facing=west,half=bottom,shape=outer_left": [
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles",
+        "uvlock": true,
+        "y": 90,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_b",
+        "uvlock": true,
+        "y": 90,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_light",
+        "uvlock": true,
+        "y": 90,
+        "weight": 4
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_light_b",
+        "uvlock": true,
+        "y": 90,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_dark",
+        "uvlock": true,
+        "y": 90,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_dark_b",
+        "uvlock": true,
+        "y": 90,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_cracked",
+        "uvlock": true,
+        "y": 90
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_cracked_b",
+        "uvlock": true,
+        "y": 90
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_chipped",
+        "uvlock": true,
+        "y": 90
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_chipped_b",
+        "uvlock": true,
+        "y": 90
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_chipped_c",
+        "uvlock": true,
+        "y": 90
+      }
+    ],
+    "facing=west,half=bottom,shape=outer_right": [
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles",
+        "uvlock": true,
+        "y": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_b",
+        "uvlock": true,
+        "y": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_light",
+        "uvlock": true,
+        "y": 180,
+        "weight": 4
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_light_b",
+        "uvlock": true,
+        "y": 180,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_dark",
+        "uvlock": true,
+        "y": 180,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_dark_b",
+        "uvlock": true,
+        "y": 180,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_cracked",
+        "uvlock": true,
+        "y": 180
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_cracked_b",
+        "uvlock": true,
+        "y": 180
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_chipped",
+        "uvlock": true,
+        "y": 180
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_chipped_b",
+        "uvlock": true,
+        "y": 180
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_chipped_c",
+        "uvlock": true,
+        "y": 180
+      }
+    ],
+    "facing=west,half=bottom,shape=straight": [
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles",
+        "uvlock": true,
+        "y": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_b",
+        "uvlock": true,
+        "y": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_light",
+        "uvlock": true,
+        "y": 180,
+        "weight": 4
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_light_b",
+        "uvlock": true,
+        "y": 180,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_dark",
+        "uvlock": true,
+        "y": 180,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_dark_b",
+        "uvlock": true,
+        "y": 180,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_cracked",
+        "uvlock": true,
+        "y": 180
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_cracked_b",
+        "uvlock": true,
+        "y": 180
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_chipped",
+        "uvlock": true,
+        "y": 180
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_chipped_b",
+        "uvlock": true,
+        "y": 180
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_chipped_c",
+        "uvlock": true,
+        "y": 180
+      }
+    ],
+    "facing=west,half=top,shape=inner_left": [
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles",
+        "uvlock": true,
+        "x": 180,
+        "y": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_b",
+        "uvlock": true,
+        "x": 180,
+        "y": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_light",
+        "uvlock": true,
+        "x": 180,
+        "y": 180,
+        "weight": 4
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_light_b",
+        "uvlock": true,
+        "x": 180,
+        "y": 180,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_dark",
+        "uvlock": true,
+        "x": 180,
+        "y": 180,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_dark_b",
+        "uvlock": true,
+        "x": 180,
+        "y": 180,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_cracked",
+        "uvlock": true,
+        "x": 180,
+        "y": 180
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_cracked_b",
+        "uvlock": true,
+        "x": 180,
+        "y": 180
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_chipped",
+        "uvlock": true,
+        "x": 180,
+        "y": 180
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_chipped_b",
+        "uvlock": true,
+        "x": 180,
+        "y": 180
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_chipped_c",
+        "uvlock": true,
+        "x": 180,
+        "y": 180
+      }
+    ],
+    "facing=west,half=top,shape=inner_right": [
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles",
+        "uvlock": true,
+        "x": 180,
+        "y": 270,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_b",
+        "uvlock": true,
+        "x": 180,
+        "y": 270,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_light",
+        "uvlock": true,
+        "x": 180,
+        "y": 270,
+        "weight": 4
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_light_b",
+        "uvlock": true,
+        "x": 180,
+        "y": 270,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_dark",
+        "uvlock": true,
+        "x": 180,
+        "y": 270,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_dark_b",
+        "uvlock": true,
+        "x": 180,
+        "y": 270,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_cracked",
+        "uvlock": true,
+        "x": 180,
+        "y": 270
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_cracked_b",
+        "uvlock": true,
+        "x": 180,
+        "y": 270
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_chipped",
+        "uvlock": true,
+        "x": 180,
+        "y": 270
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_chipped_b",
+        "uvlock": true,
+        "x": 180,
+        "y": 270
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_inner_floor_tiles_chipped_c",
+        "uvlock": true,
+        "x": 180,
+        "y": 270
+      }
+    ],
+    "facing=west,half=top,shape=outer_left": [
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles",
+        "uvlock": true,
+        "x": 180,
+        "y": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_b",
+        "uvlock": true,
+        "x": 180,
+        "y": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_light",
+        "uvlock": true,
+        "x": 180,
+        "y": 180,
+        "weight": 4
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_light_b",
+        "uvlock": true,
+        "x": 180,
+        "y": 180,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_dark",
+        "uvlock": true,
+        "x": 180,
+        "y": 180,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_dark_b",
+        "uvlock": true,
+        "x": 180,
+        "y": 180,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_cracked",
+        "uvlock": true,
+        "x": 180,
+        "y": 180
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_cracked_b",
+        "uvlock": true,
+        "x": 180,
+        "y": 180
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_chipped",
+        "uvlock": true,
+        "x": 180,
+        "y": 180
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_chipped_b",
+        "uvlock": true,
+        "x": 180,
+        "y": 180
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_chipped_c",
+        "uvlock": true,
+        "x": 180,
+        "y": 180
+      }
+    ],
+    "facing=west,half=top,shape=outer_right": [
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles",
+        "uvlock": true,
+        "x": 180,
+        "y": 270,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_b",
+        "uvlock": true,
+        "x": 180,
+        "y": 270,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_light",
+        "uvlock": true,
+        "x": 180,
+        "y": 270,
+        "weight": 4
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_light_b",
+        "uvlock": true,
+        "x": 180,
+        "y": 270,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_dark",
+        "uvlock": true,
+        "x": 180,
+        "y": 270,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_dark_b",
+        "uvlock": true,
+        "x": 180,
+        "y": 270,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_cracked",
+        "uvlock": true,
+        "x": 180,
+        "y": 270
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_cracked_b",
+        "uvlock": true,
+        "x": 180,
+        "y": 270
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_chipped",
+        "uvlock": true,
+        "x": 180,
+        "y": 270
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_chipped_b",
+        "uvlock": true,
+        "x": 180,
+        "y": 270
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_outer_floor_tiles_chipped_c",
+        "uvlock": true,
+        "x": 180,
+        "y": 270
+      }
+    ],
+    "facing=west,half=top,shape=straight": [
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles",
+        "uvlock": true,
+        "x": 180,
+        "y": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_b",
+        "uvlock": true,
+        "x": 180,
+        "y": 180,
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_light",
+        "uvlock": true,
+        "x": 180,
+        "y": 180,
+        "weight": 4
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_light_b",
+        "uvlock": true,
+        "x": 180,
+        "y": 180,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_dark",
+        "uvlock": true,
+        "x": 180,
+        "y": 180,
+        "weight": 3
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_dark_b",
+        "uvlock": true,
+        "x": 180,
+        "y": 180,
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_cracked",
+        "uvlock": true,
+        "x": 180,
+        "y": 180
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_cracked_b",
+        "uvlock": true,
+        "x": 180,
+        "y": 180
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_chipped",
+        "uvlock": true,
+        "x": 180,
+        "y": 180
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_chipped_b",
+        "uvlock": true,
+        "x": 180,
+        "y": 180
+      },
+      {
+        "model": "murim:block/floor_tile_stairs_floor_tiles_chipped_c",
+        "uvlock": true,
+        "x": 180,
+        "y": 180
+      }
+    ]
+  }
+}

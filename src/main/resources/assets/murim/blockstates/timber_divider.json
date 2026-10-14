@@ -1,0 +1,268 @@
+{
+ "variants": {
+  "cap=down,down=false,offset=center,up=false": {
+   "model": "murim:block/timber_divider_down_center"
+  },
+  "cap=down,down=true,offset=center,up=false": {
+   "model": "murim:block/timber_divider_full_center"
+  },
+  "cap=down,down=false,offset=center,up=true": {
+   "model": "murim:block/timber_divider_down_center"
+  },
+  "cap=down,down=true,offset=center,up=true": {
+   "model": "murim:block/timber_divider_full_center"
+  },
+  "cap=up,down=false,offset=center,up=false": {
+   "model": "murim:block/timber_divider_up_center"
+  },
+  "cap=up,down=true,offset=center,up=false": {
+   "model": "murim:block/timber_divider_up_center"
+  },
+  "cap=up,down=false,offset=center,up=true": {
+   "model": "murim:block/timber_divider_full_center"
+  },
+  "cap=up,down=true,offset=center,up=true": {
+   "model": "murim:block/timber_divider_full_center"
+  },
+  "cap=down,down=false,offset=north,up=false": {
+   "model": "murim:block/timber_divider_down_north"
+  },
+  "cap=down,down=true,offset=north,up=false": {
+   "model": "murim:block/timber_divider_full_north"
+  },
+  "cap=down,down=false,offset=north,up=true": {
+   "model": "murim:block/timber_divider_down_north"
+  },
+  "cap=down,down=true,offset=north,up=true": {
+   "model": "murim:block/timber_divider_full_north"
+  },
+  "cap=up,down=false,offset=north,up=false": {
+   "model": "murim:block/timber_divider_up_north"
+  },
+  "cap=up,down=true,offset=north,up=false": {
+   "model": "murim:block/timber_divider_up_north"
+  },
+  "cap=up,down=false,offset=north,up=true": {
+   "model": "murim:block/timber_divider_full_north"
+  },
+  "cap=up,down=true,offset=north,up=true": {
+   "model": "murim:block/timber_divider_full_north"
+  },
+  "cap=down,down=false,offset=north_east,up=false": {
+   "model": "murim:block/timber_divider_down_north_west",
+   "y": 90
+  },
+  "cap=down,down=true,offset=north_east,up=false": {
+   "model": "murim:block/timber_divider_full_north_west",
+   "y": 90
+  },
+  "cap=down,down=false,offset=north_east,up=true": {
+   "model": "murim:block/timber_divider_down_north_west",
+   "y": 90
+  },
+  "cap=down,down=true,offset=north_east,up=true": {
+   "model": "murim:block/timber_divider_full_north_west",
+   "y": 90
+  },
+  "cap=up,down=false,offset=north_east,up=false": {
+   "model": "murim:block/timber_divider_up_north_west",
+   "y": 90
+  },
+  "cap=up,down=true,offset=north_east,up=false": {
+   "model": "murim:block/timber_divider_up_north_west",
+   "y": 90
+  },
+  "cap=up,down=false,offset=north_east,up=true": {
+   "model": "murim:block/timber_divider_full_north_west",
+   "y": 90
+  },
+  "cap=up,down=true,offset=north_east,up=true": {
+   "model": "murim:block/timber_divider_full_north_west",
+   "y": 90
+  },
+  "cap=down,down=false,offset=east,up=false": {
+   "model": "murim:block/timber_divider_down_north",
+   "y": 90
+  },
+  "cap=down,down=true,offset=east,up=false": {
+   "model": "murim:block/timber_divider_full_north",
+   "y": 90
+  },
+  "cap=down,down=false,offset=east,up=true": {
+   "model": "murim:block/timber_divider_down_north",
+   "y": 90
+  },
+  "cap=down,down=true,offset=east,up=true": {
+   "model": "murim:block/timber_divider_full_north",
+   "y": 90
+  },
+  "cap=up,down=false,offset=east,up=false": {
+   "model": "murim:block/timber_divider_up_north",
+   "y": 90
+  },
+  "cap=up,down=true,offset=east,up=false": {
+   "model": "murim:block/timber_divider_up_north",
+   "y": 90
+  },
+  "cap=up,down=false,offset=east,up=true": {
+   "model": "murim:block/timber_divider_full_north",
+   "y": 90
+  },
+  "cap=up,down=true,offset=east,up=true": {
+   "model": "murim:block/timber_divider_full_north",
+   "y": 90
+  },
+  "cap=down,down=false,offset=south_east,up=false": {
+   "model": "murim:block/timber_divider_down_north_west",
+   "y": 180
+  },
+  "cap=down,down=true,offset=south_east,up=false": {
+   "model": "murim:block/timber_divider_full_north_west",
+   "y": 180
+  },
+  "cap=down,down=false,offset=south_east,up=true": {
+   "model": "murim:block/timber_divider_down_north_west",
+   "y": 180
+  },
+  "cap=down,down=true,offset=south_east,up=true": {
+   "model": "murim:block/timber_divider_full_north_west",
+   "y": 180
+  },
+  "cap=up,down=false,offset=south_east,up=false": {
+   "model": "murim:block/timber_divider_up_north_west",
+   "y": 180
+  },
+  "cap=up,down=true,offset=south_east,up=false": {
+   "model": "murim:block/timber_divider_up_north_west",
+   "y": 180
+  },
+  "cap=up,down=false,offset=south_east,up=true": {
+   "model": "murim:block/timber_divider_full_north_west",
+   "y": 180
+  },
+  "cap=up,down=true,offset=south_east,up=true": {
+   "model": "murim:block/timber_divider_full_north_west",
+   "y": 180
+  },
+  "cap=down,down=false,offset=south,up=false": {
+   "model": "murim:block/timber_divider_down_north",
+   "y": 180
+  },
+  "cap=down,down=true,offset=south,up=false": {
+   "model": "murim:block/timber_divider_full_north",
+   "y": 180
+  },
+  "cap=down,down=false,offset=south,up=true": {
+   "model": "murim:block/timber_divider_down_north",
+   "y": 180
+  },
+  "cap=down,down=true,offset=south,up=true": {
+   "model": "murim:block/timber_divider_full_north",
+   "y": 180
+  },
+  "cap=up,down=false,offset=south,up=false": {
+   "model": "murim:block/timber_divider_up_north",
+   "y": 180
+  },
+  "cap=up,down=true,offset=south,up=false": {
+   "model": "murim:block/timber_divider_up_north",
+   "y": 180
+  },
+  "cap=up,down=false,offset=south,up=true": {
+   "model": "murim:block/timber_divider_full_north",
+   "y": 180
+  },
+  "cap=up,down=true,offset=south,up=true": {
+   "model": "murim:block/timber_divider_full_north",
+   "y": 180
+  },
+  "cap=down,down=false,offset=south_west,up=false": {
+   "model": "murim:block/timber_divider_down_north_west",
+   "y": 270
+  },
+  "cap=down,down=true,offset=south_west,up=false": {
+   "model": "murim:block/timber_divider_full_north_west",
+   "y": 270
+  },
+  "cap=down,down=false,offset=south_west,up=true": {
+   "model": "murim:block/timber_divider_down_north_west",
+   "y": 270
+  },
+  "cap=down,down=true,offset=south_west,up=true": {
+   "model": "murim:block/timber_divider_full_north_west",
+   "y": 270
+  },
+  "cap=up,down=false,offset=south_west,up=false": {
+   "model": "murim:block/timber_divider_up_north_west",
+   "y": 270
+  },
+  "cap=up,down=true,offset=south_west,up=false": {
+   "model": "murim:block/timber_divider_up_north_west",
+   "y": 270
+  },
+  "cap=up,down=false,offset=south_west,up=true": {
+   "model": "murim:block/timber_divider_full_north_west",
+   "y": 270
+  },
+  "cap=up,down=true,offset=south_west,up=true": {
+   "model": "murim:block/timber_divider_full_north_west",
+   "y": 270
+  },
+  "cap=down,down=false,offset=west,up=false": {
+   "model": "murim:block/timber_divider_down_north",
+   "y": 270
+  },
+  "cap=down,down=true,offset=west,up=false": {
+   "model": "murim:block/timber_divider_full_north",
+   "y": 270
+  },
+  "cap=down,down=false,offset=west,up=true": {
+   "model": "murim:block/timber_divider_down_north",
+   "y": 270
+  },
+  "cap=down,down=true,offset=west,up=true": {
+   "model": "murim:block/timber_divider_full_north",
+   "y": 270
+  },
+  "cap=up,down=false,offset=west,up=false": {
+   "model": "murim:block/timber_divider_up_north",
+   "y": 270
+  },
+  "cap=up,down=true,offset=west,up=false": {
+   "model": "murim:block/timber_divider_up_north",
+   "y": 270
+  },
+  "cap=up,down=false,offset=west,up=true": {
+   "model": "murim:block/timber_divider_full_north",
+   "y": 270
+  },
+  "cap=up,down=true,offset=west,up=true": {
+   "model": "murim:block/timber_divider_full_north",
+   "y": 270
+  },
+  "cap=down,down=false,offset=north_west,up=false": {
+   "model": "murim:block/timber_divider_down_north_west"
+  },
+  "cap=down,down=true,offset=north_west,up=false": {
+   "model": "murim:block/timber_divider_full_north_west"
+  },
+  "cap=down,down=false,offset=north_west,up=true": {
+   "model": "murim:block/timber_divider_down_north_west"
+  },
+  "cap=down,down=true,offset=north_west,up=true": {
+   "model": "murim:block/timber_divider_full_north_west"
+  },
+  "cap=up,down=false,offset=north_west,up=false": {
+   "model": "murim:block/timber_divider_up_north_west"
+  },
+  "cap=up,down=true,offset=north_west,up=false": {
+   "model": "murim:block/timber_divider_up_north_west"
+  },
+  "cap=up,down=false,offset=north_west,up=true": {
+   "model": "murim:block/timber_divider_full_north_west"
+  },
+  "cap=up,down=true,offset=north_west,up=true": {
+   "model": "murim:block/timber_divider_full_north_west"
+  }
+ }
+}

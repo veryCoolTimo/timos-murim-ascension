@@ -1,0 +1,34 @@
+{
+  "variants": {
+    "": [
+      {
+        "model": "murim:block/hua_courtyard_pavers",
+        "weight": 10
+      },
+      {
+        "model": "murim:block/hua_courtyard_pavers_b",
+        "weight": 8
+      },
+      {
+        "model": "murim:block/hua_courtyard_pavers_c",
+        "weight": 8
+      },
+      {
+        "model": "murim:block/hua_courtyard_pavers_d",
+        "weight": 4
+      },
+      {
+        "model": "murim:block/hua_courtyard_pavers_e",
+        "weight": 4
+      },
+      {
+        "model": "murim:block/hua_courtyard_pavers_f",
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_courtyard_pavers_g",
+        "weight": 1
+      }
+    ]
+  }
+}

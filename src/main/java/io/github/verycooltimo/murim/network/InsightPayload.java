@@ -12,10 +12,10 @@ import net.minecraft.resources.ResourceLocation;
  * вспышку и замирание на долю секунды; в медитации двойник чисто выполняет приём.
  *
  * @param technique  техника
- * @param layer      новый слой
+ * @param stars      новый слой
  * @param meditating случилось ли в медитации
  */
-public record InsightPayload(ResourceLocation technique, int layer, boolean meditating)
+public record InsightPayload(ResourceLocation technique, int stars, boolean meditating)
         implements CustomPacketPayload {
 
     public static final Type<InsightPayload> TYPE = new Type<>(
@@ -24,7 +24,7 @@ public record InsightPayload(ResourceLocation technique, int layer, boolean medi
     public static final StreamCodec<RegistryFriendlyByteBuf, InsightPayload> STREAM_CODEC =
             StreamCodec.composite(
                     ResourceLocation.STREAM_CODEC, InsightPayload::technique,
-                    ByteBufCodecs.VAR_INT, InsightPayload::layer,
+                    ByteBufCodecs.VAR_INT, InsightPayload::stars,
                     ByteBufCodecs.BOOL, InsightPayload::meditating,
                     InsightPayload::new);
 

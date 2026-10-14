@@ -1,0 +1,70 @@
+{
+  "variants": {
+    "axis=x": [
+      {
+        "model": "murim:block/hua_edge_stone_horizontal",
+        "weight": 6,
+        "x": 90,
+        "y": 90
+      },
+      {
+        "model": "murim:block/hua_edge_stone_b_horizontal",
+        "weight": 5,
+        "x": 90,
+        "y": 90
+      },
+      {
+        "model": "murim:block/hua_edge_stone_c_horizontal",
+        "weight": 2,
+        "x": 90,
+        "y": 90
+      },
+      {
+        "model": "murim:block/hua_edge_stone_d_horizontal",
+        "weight": 2,
+        "x": 90,
+        "y": 90
+      }
+    ],
+    "axis=y": [
+      {
+        "model": "murim:block/hua_edge_stone",
+        "weight": 6
+      },
+      {
+        "model": "murim:block/hua_edge_stone_b",
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_edge_stone_c",
+        "weight": 2
+      },
+      {
+        "model": "murim:block/hua_edge_stone_d",
+        "weight": 2
+      }
+    ],
+    "axis=z": [
+      {
+        "model": "murim:block/hua_edge_stone_horizontal",
+        "weight": 6,
+        "x": 90
+      },
+      {
+        "model": "murim:block/hua_edge_stone_b_horizontal",
+        "weight": 5,
+        "x": 90
+      },
+      {
+        "model": "murim:block/hua_edge_stone_c_horizontal",
+        "weight": 2,
+        "x": 90
+      },
+      {
+        "model": "murim:block/hua_edge_stone_d_horizontal",
+        "weight": 2,
+        "x": 90
+      }
+    ]
+  }
+}

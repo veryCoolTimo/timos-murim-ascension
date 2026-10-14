@@ -40,6 +40,6 @@
   "weakness": "technique.murim.ceremonial_draw.weakness",
   "hit_stop_ticks": 3,
   "cooldown_ticks": 110,
-  "layers": 4,
+  "star_cap": 12,
   "tier": "basic"
 }

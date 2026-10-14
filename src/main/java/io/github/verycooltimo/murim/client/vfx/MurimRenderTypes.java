@@ -372,6 +372,11 @@ public final class MurimRenderTypes {
                         .createCompositeState(false));
     }
 
+    /** Simulated demonic ink uses the proven aura entity shader without writing depth. */
+    private static final RenderType DEMONIC_INK = auraLayer("demonic_ink", "textures/vfx/air_band.png");
+
+    public static RenderType demonicInk() { return DEMONIC_INK; }
+
     private static final RenderType AURA_STROKES = auraLayer("aura_strokes", "textures/vfx/aura_strokes.png");
 
     /** Лепестки сливы, атлас 2×2. */
@@ -398,6 +403,22 @@ public final class MurimRenderTypes {
     public static RenderType solid() {
         return RenderType.entityTranslucent(ResourceLocation.withDefaultNamespace("textures/misc/white.png"));
     }
+
+    /** Crisp fullbright pale blade path/edge, normal alpha blending and normal depth test. */
+    private static final RenderType SWORD_FINISHER = RenderType.create(
+            MurimMod.MODID + ":sword_finisher", DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.QUADS, 4096,
+            RenderType.CompositeState.builder()
+                    .setShaderState(RenderStateShard.RENDERTYPE_EYES_SHADER)
+                    .setTextureState(new RenderStateShard.TextureStateShard(
+                            ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/vfx/sword_finisher.png"), false, false))
+                    .setTransparencyState(RenderStateShard.TRANSLUCENT_TRANSPARENCY)
+                    .setCullState(RenderStateShard.NO_CULL)
+                    .setLightmapState(RenderStateShard.NO_LIGHTMAP)
+                    .setOverlayState(RenderStateShard.NO_OVERLAY)
+                    .setWriteMaskState(RenderStateShard.COLOR_WRITE)
+                    .createCompositeState(false));
+
+    public static RenderType swordFinisher() { return SWORD_FINISHER; }
 
     public static RenderType airBand() {
         return AIR_BAND;

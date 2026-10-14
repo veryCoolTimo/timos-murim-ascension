@@ -1,0 +1,106 @@
+{
+  "variants": {
+    "type=bottom": [
+      {
+        "model": "murim:block/hua_rectangular_paving_slab",
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_slab_1",
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_slab_2",
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_slab_3",
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_slab_4",
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_slab_5",
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_slab_6",
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_slab_7",
+        "weight": 4
+      }
+    ],
+    "type=top": [
+      {
+        "model": "murim:block/hua_rectangular_paving_slab_top",
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_slab_top_1",
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_slab_top_2",
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_slab_top_3",
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_slab_top_4",
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_slab_top_5",
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_slab_top_6",
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_slab_top_7",
+        "weight": 4
+      }
+    ],
+    "type=double": [
+      {
+        "model": "murim:block/hua_rectangular_paving",
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_b",
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_c",
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_d",
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_e",
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_f",
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_g",
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_rectangular_paving_h",
+        "weight": 4
+      }
+    ]
+  }
+}

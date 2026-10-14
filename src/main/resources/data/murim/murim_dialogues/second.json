@@ -77,11 +77,14 @@
     },
     "meal": {
       "random": [
-        "dialogue.murim.second.meal1",
-        "dialogue.murim.second.meal2"
+        "@context"
       ],
       "gesture": "nod",
       "options": [
+        {
+          "text": "dialogue.murim.social.opt.news",
+          "next": "sect_news"
+        },
         {
           "text": "dialogue.murim.opt.leave"
         }
@@ -89,19 +92,21 @@
     },
     "night": {
       "random": [
-        "dialogue.murim.second.night1"
+        "@context"
       ],
       "gesture": "shake",
       "options": []
     },
     "evening": {
       "random": [
-        "dialogue.murim.second.evening1",
-        "dialogue.murim.second.evening2",
-        "@rumour"
+        "@context"
       ],
       "gesture": "nod",
       "options": [
+        {
+          "text": "dialogue.murim.social.opt.news",
+          "next": "sect_news"
+        },
         {
           "text": "dialogue.murim.opt.leave"
         }
@@ -109,12 +114,7 @@
     },
     "greet": {
       "random": [
-        "dialogue.murim.second.greet1",
-        "dialogue.murim.second.greet2",
-        "dialogue.murim.second.greet3",
-        "@trait",
-        "@personal",
-        "@rumour"
+        "@context"
       ],
       "gesture": "fist",
       "options": [
@@ -135,6 +135,10 @@
             }
           ],
           "next": "challenge"
+        },
+        {
+          "text": "dialogue.murim.social.opt.news",
+          "next": "sect_news"
         },
         {
           "text": "dialogue.murim.opt.leave"
@@ -178,6 +182,19 @@
         },
         {
           "text": "dialogue.murim.disciple.opt.not_now"
+        }
+      ]
+    },
+    "sect_news": {
+      "random": [
+        "@trait",
+        "@personal",
+        "@rumour"
+      ],
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
         }
       ]
     }

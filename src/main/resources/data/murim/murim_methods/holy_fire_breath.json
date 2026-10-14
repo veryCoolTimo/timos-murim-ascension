@@ -4,5 +4,6 @@
   "purity": 0.6,
   "capacity": 38.0,
   "impurity": 0.5,
-  "route": "rising_flame"
+  "route": "rising_flame",
+  "star_cap": 12
 }

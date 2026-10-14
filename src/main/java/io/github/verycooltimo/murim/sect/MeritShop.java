@@ -57,7 +57,7 @@ public final class MeritShop {
 
     /** Исход обмена. */
     public enum Result {
-        OK, UNKNOWN, OUTSIDER, STANDING, MERIT, OWNED
+        OK, UNKNOWN, OUTSIDER, STANDING, MERIT, OWNED, SUMMONED
     }
 
     private MeritShop() {
@@ -69,6 +69,9 @@ public final class MeritShop {
 
     /** Можно ли купить: чистая проверка (юнит-тест). */
     public static Result check(SectState s, SectStanding standing, Offer o) {
+        if (s.has(io.github.verycooltimo.murim.sect.seal.PenanceService.SUMMONED)) {
+            return Result.SUMMONED;
+        }
         if (!s.member()) {
             return Result.OUTSIDER;
         }

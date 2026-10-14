@@ -1,0 +1,16 @@
+{
+  "loader": "neoforge:obj",
+  "model": "murim:models/block/obj/library_manual_upper_1.obj",
+  "flip_v": false,
+  "emissive_ambient": true,
+  "automatic_culling": true,
+  "shade_quads": true,
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "cover": "murim:block/library_manual_indigo",
+    "spine": "murim:block/library_manual_indigo_spine",
+    "pages": "murim:block/library_book_pages",
+    "particle": "murim:block/library_manual_indigo"
+  },
+  "ambientocclusion": false
+}

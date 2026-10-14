@@ -1,0 +1,1885 @@
+{
+ "multipart": [
+  {
+   "when": {
+    "axis": "x",
+    "side": "center",
+    "level": "bottom"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_center_bottom"
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "center",
+    "level": "bottom",
+    "neg_end": "none"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_cap_center_bottom",
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "center",
+    "level": "bottom",
+    "neg_end": "pillar"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_center_bottom",
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "center",
+    "level": "bottom",
+    "neg_end": "pillar_mid"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_mid_center_bottom",
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "center",
+    "level": "bottom",
+    "neg_end": "pillar_far"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_far_center_bottom",
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "center",
+    "level": "bottom",
+    "pos_end": "none"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_cap_center_bottom"
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "center",
+    "level": "bottom",
+    "pos_end": "pillar"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_center_bottom"
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "center",
+    "level": "bottom",
+    "pos_end": "pillar_mid"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_mid_center_bottom"
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "center",
+    "level": "bottom",
+    "pos_end": "pillar_far"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_far_center_bottom"
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "center",
+    "level": "middle"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_center_middle"
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "center",
+    "level": "middle",
+    "neg_end": "none"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_cap_center_middle",
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "center",
+    "level": "middle",
+    "neg_end": "pillar"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_center_middle",
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "center",
+    "level": "middle",
+    "neg_end": "pillar_mid"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_mid_center_middle",
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "center",
+    "level": "middle",
+    "neg_end": "pillar_far"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_far_center_middle",
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "center",
+    "level": "middle",
+    "pos_end": "none"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_cap_center_middle"
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "center",
+    "level": "middle",
+    "pos_end": "pillar"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_center_middle"
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "center",
+    "level": "middle",
+    "pos_end": "pillar_mid"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_mid_center_middle"
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "center",
+    "level": "middle",
+    "pos_end": "pillar_far"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_far_center_middle"
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "center",
+    "level": "top"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_center_top"
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "center",
+    "level": "top",
+    "neg_end": "none"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_cap_center_top",
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "center",
+    "level": "top",
+    "neg_end": "pillar"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_center_top",
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "center",
+    "level": "top",
+    "neg_end": "pillar_mid"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_mid_center_top",
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "center",
+    "level": "top",
+    "neg_end": "pillar_far"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_far_center_top",
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "center",
+    "level": "top",
+    "pos_end": "none"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_cap_center_top"
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "center",
+    "level": "top",
+    "pos_end": "pillar"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_center_top"
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "center",
+    "level": "top",
+    "pos_end": "pillar_mid"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_mid_center_top"
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "center",
+    "level": "top",
+    "pos_end": "pillar_far"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_far_center_top"
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "minus",
+    "level": "bottom"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_minus_bottom"
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "minus",
+    "level": "bottom",
+    "neg_end": "none"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_cap_plus_bottom",
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "minus",
+    "level": "bottom",
+    "neg_end": "pillar"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_plus_bottom",
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "minus",
+    "level": "bottom",
+    "neg_end": "pillar_mid"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_mid_plus_bottom",
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "minus",
+    "level": "bottom",
+    "neg_end": "pillar_far"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_far_plus_bottom",
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "minus",
+    "level": "bottom",
+    "pos_end": "none"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_cap_minus_bottom"
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "minus",
+    "level": "bottom",
+    "pos_end": "pillar"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_minus_bottom"
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "minus",
+    "level": "bottom",
+    "pos_end": "pillar_mid"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_mid_minus_bottom"
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "minus",
+    "level": "bottom",
+    "pos_end": "pillar_far"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_far_minus_bottom"
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "minus",
+    "level": "middle"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_minus_middle"
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "minus",
+    "level": "middle",
+    "neg_end": "none"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_cap_plus_middle",
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "minus",
+    "level": "middle",
+    "neg_end": "pillar"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_plus_middle",
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "minus",
+    "level": "middle",
+    "neg_end": "pillar_mid"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_mid_plus_middle",
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "minus",
+    "level": "middle",
+    "neg_end": "pillar_far"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_far_plus_middle",
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "minus",
+    "level": "middle",
+    "pos_end": "none"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_cap_minus_middle"
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "minus",
+    "level": "middle",
+    "pos_end": "pillar"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_minus_middle"
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "minus",
+    "level": "middle",
+    "pos_end": "pillar_mid"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_mid_minus_middle"
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "minus",
+    "level": "middle",
+    "pos_end": "pillar_far"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_far_minus_middle"
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "minus",
+    "level": "top"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_minus_top"
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "minus",
+    "level": "top",
+    "neg_end": "none"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_cap_plus_top",
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "minus",
+    "level": "top",
+    "neg_end": "pillar"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_plus_top",
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "minus",
+    "level": "top",
+    "neg_end": "pillar_mid"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_mid_plus_top",
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "minus",
+    "level": "top",
+    "neg_end": "pillar_far"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_far_plus_top",
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "minus",
+    "level": "top",
+    "pos_end": "none"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_cap_minus_top"
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "minus",
+    "level": "top",
+    "pos_end": "pillar"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_minus_top"
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "minus",
+    "level": "top",
+    "pos_end": "pillar_mid"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_mid_minus_top"
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "minus",
+    "level": "top",
+    "pos_end": "pillar_far"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_far_minus_top"
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "plus",
+    "level": "bottom"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_plus_bottom"
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "plus",
+    "level": "bottom",
+    "neg_end": "none"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_cap_minus_bottom",
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "plus",
+    "level": "bottom",
+    "neg_end": "pillar"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_minus_bottom",
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "plus",
+    "level": "bottom",
+    "neg_end": "pillar_mid"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_mid_minus_bottom",
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "plus",
+    "level": "bottom",
+    "neg_end": "pillar_far"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_far_minus_bottom",
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "plus",
+    "level": "bottom",
+    "pos_end": "none"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_cap_plus_bottom"
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "plus",
+    "level": "bottom",
+    "pos_end": "pillar"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_plus_bottom"
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "plus",
+    "level": "bottom",
+    "pos_end": "pillar_mid"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_mid_plus_bottom"
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "plus",
+    "level": "bottom",
+    "pos_end": "pillar_far"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_far_plus_bottom"
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "plus",
+    "level": "middle"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_plus_middle"
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "plus",
+    "level": "middle",
+    "neg_end": "none"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_cap_minus_middle",
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "plus",
+    "level": "middle",
+    "neg_end": "pillar"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_minus_middle",
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "plus",
+    "level": "middle",
+    "neg_end": "pillar_mid"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_mid_minus_middle",
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "plus",
+    "level": "middle",
+    "neg_end": "pillar_far"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_far_minus_middle",
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "plus",
+    "level": "middle",
+    "pos_end": "none"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_cap_plus_middle"
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "plus",
+    "level": "middle",
+    "pos_end": "pillar"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_plus_middle"
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "plus",
+    "level": "middle",
+    "pos_end": "pillar_mid"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_mid_plus_middle"
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "plus",
+    "level": "middle",
+    "pos_end": "pillar_far"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_far_plus_middle"
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "plus",
+    "level": "top"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_plus_top"
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "plus",
+    "level": "top",
+    "neg_end": "none"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_cap_minus_top",
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "plus",
+    "level": "top",
+    "neg_end": "pillar"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_minus_top",
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "plus",
+    "level": "top",
+    "neg_end": "pillar_mid"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_mid_minus_top",
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "plus",
+    "level": "top",
+    "neg_end": "pillar_far"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_far_minus_top",
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "plus",
+    "level": "top",
+    "pos_end": "none"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_cap_plus_top"
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "plus",
+    "level": "top",
+    "pos_end": "pillar"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_plus_top"
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "plus",
+    "level": "top",
+    "pos_end": "pillar_mid"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_mid_plus_top"
+   }
+  },
+  {
+   "when": {
+    "axis": "x",
+    "side": "plus",
+    "level": "top",
+    "pos_end": "pillar_far"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_far_plus_top"
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "center",
+    "level": "bottom"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_center_bottom",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "center",
+    "level": "bottom",
+    "neg_end": "none"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_cap_center_bottom",
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "center",
+    "level": "bottom",
+    "neg_end": "pillar"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_center_bottom",
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "center",
+    "level": "bottom",
+    "neg_end": "pillar_mid"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_mid_center_bottom",
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "center",
+    "level": "bottom",
+    "neg_end": "pillar_far"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_far_center_bottom",
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "center",
+    "level": "bottom",
+    "pos_end": "none"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_cap_center_bottom",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "center",
+    "level": "bottom",
+    "pos_end": "pillar"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_center_bottom",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "center",
+    "level": "bottom",
+    "pos_end": "pillar_mid"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_mid_center_bottom",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "center",
+    "level": "bottom",
+    "pos_end": "pillar_far"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_far_center_bottom",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "center",
+    "level": "middle"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_center_middle",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "center",
+    "level": "middle",
+    "neg_end": "none"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_cap_center_middle",
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "center",
+    "level": "middle",
+    "neg_end": "pillar"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_center_middle",
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "center",
+    "level": "middle",
+    "neg_end": "pillar_mid"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_mid_center_middle",
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "center",
+    "level": "middle",
+    "neg_end": "pillar_far"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_far_center_middle",
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "center",
+    "level": "middle",
+    "pos_end": "none"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_cap_center_middle",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "center",
+    "level": "middle",
+    "pos_end": "pillar"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_center_middle",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "center",
+    "level": "middle",
+    "pos_end": "pillar_mid"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_mid_center_middle",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "center",
+    "level": "middle",
+    "pos_end": "pillar_far"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_far_center_middle",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "center",
+    "level": "top"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_center_top",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "center",
+    "level": "top",
+    "neg_end": "none"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_cap_center_top",
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "center",
+    "level": "top",
+    "neg_end": "pillar"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_center_top",
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "center",
+    "level": "top",
+    "neg_end": "pillar_mid"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_mid_center_top",
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "center",
+    "level": "top",
+    "neg_end": "pillar_far"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_far_center_top",
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "center",
+    "level": "top",
+    "pos_end": "none"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_cap_center_top",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "center",
+    "level": "top",
+    "pos_end": "pillar"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_center_top",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "center",
+    "level": "top",
+    "pos_end": "pillar_mid"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_mid_center_top",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "center",
+    "level": "top",
+    "pos_end": "pillar_far"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_far_center_top",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "minus",
+    "level": "bottom"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_plus_bottom",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "minus",
+    "level": "bottom",
+    "neg_end": "none"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_cap_minus_bottom",
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "minus",
+    "level": "bottom",
+    "neg_end": "pillar"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_minus_bottom",
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "minus",
+    "level": "bottom",
+    "neg_end": "pillar_mid"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_mid_minus_bottom",
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "minus",
+    "level": "bottom",
+    "neg_end": "pillar_far"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_far_minus_bottom",
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "minus",
+    "level": "bottom",
+    "pos_end": "none"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_cap_plus_bottom",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "minus",
+    "level": "bottom",
+    "pos_end": "pillar"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_plus_bottom",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "minus",
+    "level": "bottom",
+    "pos_end": "pillar_mid"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_mid_plus_bottom",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "minus",
+    "level": "bottom",
+    "pos_end": "pillar_far"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_far_plus_bottom",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "minus",
+    "level": "middle"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_plus_middle",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "minus",
+    "level": "middle",
+    "neg_end": "none"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_cap_minus_middle",
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "minus",
+    "level": "middle",
+    "neg_end": "pillar"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_minus_middle",
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "minus",
+    "level": "middle",
+    "neg_end": "pillar_mid"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_mid_minus_middle",
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "minus",
+    "level": "middle",
+    "neg_end": "pillar_far"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_far_minus_middle",
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "minus",
+    "level": "middle",
+    "pos_end": "none"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_cap_plus_middle",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "minus",
+    "level": "middle",
+    "pos_end": "pillar"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_plus_middle",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "minus",
+    "level": "middle",
+    "pos_end": "pillar_mid"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_mid_plus_middle",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "minus",
+    "level": "middle",
+    "pos_end": "pillar_far"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_far_plus_middle",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "minus",
+    "level": "top"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_plus_top",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "minus",
+    "level": "top",
+    "neg_end": "none"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_cap_minus_top",
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "minus",
+    "level": "top",
+    "neg_end": "pillar"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_minus_top",
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "minus",
+    "level": "top",
+    "neg_end": "pillar_mid"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_mid_minus_top",
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "minus",
+    "level": "top",
+    "neg_end": "pillar_far"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_far_minus_top",
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "minus",
+    "level": "top",
+    "pos_end": "none"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_cap_plus_top",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "minus",
+    "level": "top",
+    "pos_end": "pillar"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_plus_top",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "minus",
+    "level": "top",
+    "pos_end": "pillar_mid"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_mid_plus_top",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "minus",
+    "level": "top",
+    "pos_end": "pillar_far"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_far_plus_top",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "plus",
+    "level": "bottom"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_minus_bottom",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "plus",
+    "level": "bottom",
+    "neg_end": "none"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_cap_plus_bottom",
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "plus",
+    "level": "bottom",
+    "neg_end": "pillar"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_plus_bottom",
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "plus",
+    "level": "bottom",
+    "neg_end": "pillar_mid"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_mid_plus_bottom",
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "plus",
+    "level": "bottom",
+    "neg_end": "pillar_far"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_far_plus_bottom",
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "plus",
+    "level": "bottom",
+    "pos_end": "none"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_cap_minus_bottom",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "plus",
+    "level": "bottom",
+    "pos_end": "pillar"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_minus_bottom",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "plus",
+    "level": "bottom",
+    "pos_end": "pillar_mid"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_mid_minus_bottom",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "plus",
+    "level": "bottom",
+    "pos_end": "pillar_far"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_far_minus_bottom",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "plus",
+    "level": "middle"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_minus_middle",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "plus",
+    "level": "middle",
+    "neg_end": "none"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_cap_plus_middle",
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "plus",
+    "level": "middle",
+    "neg_end": "pillar"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_plus_middle",
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "plus",
+    "level": "middle",
+    "neg_end": "pillar_mid"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_mid_plus_middle",
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "plus",
+    "level": "middle",
+    "neg_end": "pillar_far"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_far_plus_middle",
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "plus",
+    "level": "middle",
+    "pos_end": "none"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_cap_minus_middle",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "plus",
+    "level": "middle",
+    "pos_end": "pillar"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_minus_middle",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "plus",
+    "level": "middle",
+    "pos_end": "pillar_mid"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_mid_minus_middle",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "plus",
+    "level": "middle",
+    "pos_end": "pillar_far"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_far_minus_middle",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "plus",
+    "level": "top"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_minus_top",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "plus",
+    "level": "top",
+    "neg_end": "none"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_cap_plus_top",
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "plus",
+    "level": "top",
+    "neg_end": "pillar"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_plus_top",
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "plus",
+    "level": "top",
+    "neg_end": "pillar_mid"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_mid_plus_top",
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "plus",
+    "level": "top",
+    "neg_end": "pillar_far"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_far_plus_top",
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "plus",
+    "level": "top",
+    "pos_end": "none"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_cap_minus_top",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "plus",
+    "level": "top",
+    "pos_end": "pillar"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_minus_top",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "plus",
+    "level": "top",
+    "pos_end": "pillar_mid"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_mid_minus_top",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "axis": "z",
+    "side": "plus",
+    "level": "top",
+    "pos_end": "pillar_far"
+   },
+   "apply": {
+    "model": "murim:block/red_beam_end_pillar_far_minus_top",
+    "y": 90
+   }
+  }
+ ]
+}

@@ -1,0 +1,5 @@
+newmtl emblem
+map_Kd #emblem
+
+newmtl plaster
+map_Kd #plaster

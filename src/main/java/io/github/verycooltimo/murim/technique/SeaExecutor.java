@@ -45,7 +45,7 @@ import java.util.List;
 @EventBusSubscriber(modid = MurimMod.MODID)
 public final class SeaExecutor {
 
-    private static final int LAYER = 0;
+    private static final int TIER = 0;
     private static final int AX = 1;
     private static final int HELD = 4;
     private static final int MELT = 5;
@@ -65,13 +65,13 @@ public final class SeaExecutor {
     /** Начало каста: ось сектора — захваченная цель (только начальное направление, по codex), иначе взгляд. */
     public static void begin(ServerPlayer player, ResourceLocation id, double cost) {
         release(player, player.getData(ModAttachments.SEA), false);
-        int layer = Math.max(0, io.github.verycooltimo.murim.mastery.MasteryService.layer(player, id));
+        int executionTier = Math.max(0, io.github.verycooltimo.murim.mastery.MasteryService.executionTier(player, id));
         Vec3 chest = chest(player);
         LivingEntity target = io.github.verycooltimo.murim.combat.TargetLock.locked(player, 32.0D);
         Vec3 axis = target != null ? io.github.verycooltimo.murim.combat.TargetLock.centre(target).subtract(chest).normalize()
                 : player.getLookAngle();
         double[] d = new double[SIZE];
-        d[LAYER] = layer;
+        d[TIER] = executionTier;
         d[AX] = axis.x;
         d[AX + 1] = axis.y;
         d[AX + 2] = axis.z;
@@ -91,12 +91,12 @@ public final class SeaExecutor {
         if (d.length < SIZE) {
             return false;
         }
-        int layer = (int) d[LAYER];
+        int executionTier = (int) d[TIER];
         player.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.MOVEMENT_SLOWDOWN,
                 SeaRules.END - SeaRules.RELEASE, 9, false, false, false));
-        if (layer > 0) {
+        if (executionTier > 0) {
             PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
-                    new SeaPayload(player.getId(), player.position(), axis(d), 0, layer, SeaPayload.BEGIN));
+                    new SeaPayload(player.getId(), player.position(), axis(d), 0, executionTier, SeaPayload.BEGIN));
         }
         return false;
     }
@@ -122,26 +122,26 @@ public final class SeaExecutor {
             return false;
         }
         captureVolley(player, tick);
-        int layer = (int) d[LAYER];
+        int executionTier = (int) d[TIER];
         // Ось ведёт взгляд игрока, не быстрее 4°/тик (захваченная цель — только начальное направление).
         Vec3 axis = SeaRules.turn(axis(d), player.getLookAngle());
         d[AX] = axis.x;
         d[AX + 1] = axis.y;
         d[AX + 2] = axis.z;
-        int holdEnd = layer <= 0 ? SeaRules.TRAINING_TO : SeaRules.HOLD_END;
+        int holdEnd = executionTier <= 0 ? SeaRules.TRAINING_TO : SeaRules.HOLD_END;
         if (d[MELT] < 0.0D && tick >= holdEnd) {
             int over = tick - holdEnd;
-            boolean extend = SeaRules.extendable(layer) && d[HELD] > 0.5D && over < SeaRules.EXTEND_MAX;
+            boolean extend = SeaRules.extendable(executionTier) && d[HELD] > 0.5D && over < SeaRules.EXTEND_MAX;
             if (extend && over % SeaRules.EXTEND_STEP == 0) {
-                extend = pay(player, d, layer);
+                extend = pay(player, d, executionTier);
             }
             if (!extend) {
-                melt(player, d, layer, tick);
+                melt(player, d, executionTier, tick);
             }
         }
         if (d[MELT] >= 0.0D) {
             player.setData(ModAttachments.SEA, d);
-            if (tick >= d[MELT] + (layer <= 0 ? 1 : SeaRules.MELT)) {
+            if (tick >= d[MELT] + (executionTier <= 0 ? 1 : SeaRules.MELT)) {
                 player.removeEffect(net.minecraft.world.effect.MobEffects.MOVEMENT_SLOWDOWN);
                 player.setData(ModAttachments.SEA, new double[0]);
                 io.github.verycooltimo.murim.combat.TechniqueService.finish(player);
@@ -150,15 +150,15 @@ public final class SeaExecutor {
             return false;
         }
         if (tick >= SeaRules.RELEASE) {
-            tickSlots(player, d, layer, tick);
-            catchNew(player, id, d, layer, tick, axis);
+            tickSlots(player, d, executionTier, tick);
+            catchNew(player, id, d, executionTier, tick, axis);
         }
         player.setData(ModAttachments.SEA, d);
         return false;
     }
 
     /** Шаг продления: 1 сердце и четверть стартовой цены ци; не хватает — мираж. */
-    private static boolean pay(ServerPlayer player, double[] d, int layer) {
+    private static boolean pay(ServerPlayer player, double[] d, int executionTier) {
         io.github.verycooltimo.murim.profile.DantianProfile profile = player.getData(ModAttachments.PROFILE);
         double qi = d[COST] * SeaRules.EXTEND_QI;
         if (player.getHealth() <= SeaRules.EXTEND_FLOOR || profile.circulating() < qi) {
@@ -170,22 +170,22 @@ public final class SeaExecutor {
         player.setHealth(player.getHealth() - SeaRules.EXTEND_HEALTH);
         d[STEPS] += 1.0D;
         PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
-                new SeaPayload(player.getId(), player.getEyePosition(), axis(d), (int) d[STEPS], layer, SeaPayload.BLEED));
+                new SeaPayload(player.getId(), player.getEyePosition(), axis(d), (int) d[STEPS], executionTier, SeaPayload.BLEED));
         return true;
     }
 
     /** Тихий мираж: захваченные — сразу вниз, клиенту — таяние. */
-    private static void melt(ServerPlayer player, double[] d, int layer, int tick) {
+    private static void melt(ServerPlayer player, double[] d, int executionTier, int tick) {
         d[MELT] = tick;
         release(player, d, true);
-        if (layer > 0) {
+        if (executionTier > 0) {
             PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
-                    new SeaPayload(player.getId(), player.position(), axis(d), 0, layer, SeaPayload.MELT));
+                    new SeaPayload(player.getId(), player.position(), axis(d), 0, executionTier, SeaPayload.MELT));
         }
     }
 
     /** Захваченные снаряды: висение, падение, гашение огненного шара, посадка. */
-    private static void tickSlots(ServerPlayer player, double[] d, int layer, int tick) {
+    private static void tickSlots(ServerPlayer player, double[] d, int executionTier, int tick) {
         for (int i = 0; i < MAX_SLOTS; i++) {
             int s = SLOTS + i * SLOT_SIZE;
             if (d[s] < 0.0D || d[s + 2] > 0.5D) {
@@ -195,7 +195,7 @@ public final class SeaExecutor {
             int age = tick - (int) d[s + 1];
             if (!(e instanceof Projectile p) || !p.isAlive()) {
                 free(d, (int) d[s]);
-                send(player, layer, SeaPayload.LAND, Vec3.ZERO, Vec3.ZERO, (int) d[s]);
+                send(player, executionTier, SeaPayload.LAND, Vec3.ZERO, Vec3.ZERO, (int) d[s]);
                 continue;
             }
             if (p instanceof AbstractHurtingProjectile && age >= SeaRules.SNUFF) {
@@ -203,14 +203,14 @@ public final class SeaExecutor {
                 Vec3 at = p.position();
                 p.discard();
                 free(d, (int) d[s]);
-                send(player, layer, SeaPayload.SNUFF, at, Vec3.ZERO, p.getId());
+                send(player, executionTier, SeaPayload.SNUFF, at, Vec3.ZERO, p.getId());
                 continue;
             }
             boolean still = age > SeaRules.HANG + 1 && p.position().distanceToSqr(p.xo, p.yo, p.zo) < 1.0E-4D;
             if (still || age >= SeaRules.HOLD_PROJECTILE) {
                 drop(p);
                 free(d, p.getId());
-                send(player, layer, SeaPayload.LAND, p.position(), Vec3.ZERO, p.getId());
+                send(player, executionTier, SeaPayload.LAND, p.position(), Vec3.ZERO, p.getId());
                 continue;
             }
             p.setDeltaMovement(SeaRules.brake(p.getDeltaMovement(), age));
@@ -219,15 +219,15 @@ public final class SeaExecutor {
     }
 
     /** Новые входы в сектор: по возрастанию расстояния; нет слота — «прошёл». */
-    private static void catchNew(ServerPlayer player, ResourceLocation id, double[] d, int layer, int tick, Vec3 axis) {
-        if (layer <= 0 && tick > SeaRules.TRAINING_TO) {
+    private static void catchNew(ServerPlayer player, ResourceLocation id, double[] d, int executionTier, int tick, Vec3 axis) {
+        if (executionTier <= 0 && tick > SeaRules.TRAINING_TO) {
             return;
         }
         Vec3 chest = chest(player);
-        double grown = layer <= 0 ? 1.0D : SeaRules.grown(tick);
+        double grown = executionTier <= 0 ? 1.0D : SeaRules.grown(tick);
         long now = player.serverLevel().getGameTime();
         long cast = (long) d[START];
-        AABB box = new AABB(chest, chest).inflate(SeaRules.radius(layer) + 3.0D);
+        AABB box = new AABB(chest, chest).inflate(SeaRules.radius(executionTier) + 3.0D);
         List<Projectile> in = new ArrayList<>();
         for (Projectile p : player.serverLevel().getEntitiesOfClass(Projectile.class, box, p -> p.isAlive() && supported(p))) {
             if (p.getOwner() == player) {
@@ -237,25 +237,25 @@ public final class SeaExecutor {
             if (tag.getLong(TAG_UNTIL) > now || tag.contains(TAG_PASSED) && tag.getLong(TAG_PASSED) == cast) {
                 continue;
             }
-            if (SeaRules.entering(layer, chest, axis, p.position(), p.getDeltaMovement(), grown)) {
+            if (SeaRules.entering(executionTier, chest, axis, p.position(), p.getDeltaMovement(), grown)) {
                 in.add(p);
             }
         }
         in.sort(Comparator.comparingDouble(p -> p.position().distanceToSqr(chest)));
         for (Projectile p : in) {
             int weight = p instanceof LargeFireball ? 2 : 1;
-            if (freeSlots(d, layer) < weight) {
+            if (freeSlots(d, executionTier) < weight) {
                 p.getPersistentData().putLong(TAG_PASSED, cast);
                 if (Boolean.getBoolean("murim.capture")) {
                     MurimMod.LOGGER.info("Море: {} прошёл (нет слота) на тике {}", p.getType().getDescriptionId(), tick);
                 }
                 continue;
             }
-            capture(player, id, d, layer, tick, p, weight);
+            capture(player, id, d, executionTier, tick, p, weight);
         }
     }
 
-    private static void capture(ServerPlayer player, ResourceLocation id, double[] d, int layer, int tick, Projectile p, int weight) {
+    private static void capture(ServerPlayer player, ResourceLocation id, double[] d, int executionTier, int tick, Projectile p, int weight) {
         long now = player.serverLevel().getGameTime();
         p.getPersistentData().putLong(TAG_UNTIL, now + SeaRules.MARK_TICKS);
         p.setNoGravity(true);
@@ -283,8 +283,8 @@ public final class SeaExecutor {
             d[MASTERED] = 1.0D;
             io.github.verycooltimo.murim.mastery.MasteryService.onHit(player, id, p.getOwner());
         }
-        if (layer > 0) {
-            send(player, layer, SeaPayload.CAPTURE, p.position(), v, p.getId());
+        if (executionTier > 0) {
+            send(player, executionTier, SeaPayload.CAPTURE, p.position(), v, p.getId());
         } else {
             // Слой 0 — учебное парирование: только простой звук, без эффектов.
             player.level().playSound(null, p.getX(), p.getY(), p.getZ(), net.minecraft.sounds.SoundEvents.SHIELD_BLOCK,
@@ -292,7 +292,7 @@ public final class SeaExecutor {
         }
         if (Boolean.getBoolean("murim.capture")) {
             // Стенд: журнал захватов — по нему проверяется «лишний проходит».
-            MurimMod.LOGGER.info("Море: захват {} на тике {}, свободно слотов {}", p.getType().getDescriptionId(), tick, freeSlots(d, layer));
+            MurimMod.LOGGER.info("Море: захват {} на тике {}, свободно слотов {}", p.getType().getDescriptionId(), tick, freeSlots(d, executionTier));
         }
     }
 
@@ -308,14 +308,14 @@ public final class SeaExecutor {
                 || owner instanceof net.minecraft.world.entity.Mob m && m.getTarget() == player);
     }
 
-    private static int freeSlots(double[] d, int layer) {
+    private static int freeSlots(double[] d, int executionTier) {
         int used = 0;
         for (int i = 0; i < MAX_SLOTS; i++) {
             if (d[SLOTS + i * SLOT_SIZE] >= 0.0D) {
                 used++;
             }
         }
-        return Math.max(0, SeaRules.captures(layer) - used);
+        return Math.max(0, SeaRules.captures(executionTier) - used);
     }
 
     private static void free(double[] d, int projectile) {
@@ -357,9 +357,9 @@ public final class SeaExecutor {
         }
     }
 
-    private static void send(ServerPlayer player, int layer, int stage, Vec3 a, Vec3 b, int value) {
-        if (layer > 0) {
-            PacketDistributor.sendToPlayersTrackingEntityAndSelf(player, new SeaPayload(player.getId(), a, b, value, layer, stage));
+    private static void send(ServerPlayer player, int executionTier, int stage, Vec3 a, Vec3 b, int value) {
+        if (executionTier > 0) {
+            PacketDistributor.sendToPlayersTrackingEntityAndSelf(player, new SeaPayload(player.getId(), a, b, value, executionTier, stage));
         }
     }
 
@@ -393,9 +393,9 @@ public final class SeaExecutor {
         }
         release(player, d, false);
         player.setData(ModAttachments.SEA, new double[0]);
-        if (d[LAYER] > 0.5D) {
+        if (d[TIER] > 0.5D) {
             PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
-                    new SeaPayload(player.getId(), player.position(), Vec3.ZERO, 0, (int) d[LAYER], SeaPayload.LOST));
+                    new SeaPayload(player.getId(), player.position(), Vec3.ZERO, 0, (int) d[TIER], SeaPayload.LOST));
         }
     }
 
@@ -419,7 +419,7 @@ public final class SeaExecutor {
     static void onAttack(AttackEntityEvent event) {
         if (event.getEntity() instanceof ServerPlayer player && active(player)) {
             double[] d = player.getData(ModAttachments.SEA);
-            if (d.length >= SIZE && d[LAYER] > 0.5D) {
+            if (d.length >= SIZE && d[TIER] > 0.5D) {
                 event.setCanceled(true);
             }
         }

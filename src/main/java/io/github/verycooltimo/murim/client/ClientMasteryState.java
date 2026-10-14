@@ -14,7 +14,17 @@ public final class ClientMasteryState {
 
     private static volatile List<SyncMasteryPayload.Entry> entries = List.of();
 
+    private static float qiCostFactor = 1.0F;
+    private static long qiDiscountUntil;
+
+    public static double qiCostFactor() {
+        var level = net.minecraft.client.Minecraft.getInstance().level;
+        return level != null && level.getGameTime() < qiDiscountUntil ? qiCostFactor : 1.0D;
+    }
+
     public static void accept(SyncMasteryPayload payload) {
+        qiCostFactor = payload.qiCostFactor();
+        qiDiscountUntil = payload.qiDiscountUntil();
         entries = List.copyOf(payload.entries());
     }
 
@@ -24,24 +34,32 @@ public final class ClientMasteryState {
 
     /** Что ждёт осмысления — по убыванию: двойник начинает с самого пережитого. */
     public static List<ResourceLocation> pending() {
+        java.util.Set<ResourceLocation> seen = new java.util.HashSet<>();
         return entries.stream()
                 .filter(e -> e.pending() > 0.01F)
                 .sorted(Comparator.comparingDouble((SyncMasteryPayload.Entry e) -> e.pending()).reversed())
-                .map(SyncMasteryPayload.Entry::technique)
+                .filter(e -> seen.add(io.github.verycooltimo.murim.mastery.MasteryState.masteryId(e.technique())))
+                .map(SyncMasteryPayload.Entry::technique) // echo animations need a learned FORM ID
                 .toList();
     }
 
-    /** Слой освоения техники или −1, если она не выучена. */
-    public static int layer(ResourceLocation id) {
+    /** Звёзды искусства этой формы или −1, если она не выучена. */
+    public static int stars(ResourceLocation id) {
         for (SyncMasteryPayload.Entry e : entries()) {
             if (e.technique().equals(id)) {
-                return e.layer();
+                return e.stars();
             }
         }
         return -1;
     }
 
+    public static int executionTier(ResourceLocation id) {
+        return io.github.verycooltimo.murim.mastery.Arts.executionTier(id, stars(id));
+    }
+
     public static void reset() {
+        qiCostFactor = 1.0F;
+        qiDiscountUntil = 0L;
         entries = List.of();
     }
 

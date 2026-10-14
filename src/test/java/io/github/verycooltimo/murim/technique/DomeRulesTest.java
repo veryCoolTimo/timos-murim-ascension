@@ -16,38 +16,38 @@ class DomeRulesTest {
         assertEquals(30, DomeRules.RAISE);
         assertEquals(91, DomeRules.HOLD_END);
         assertEquals(101, DomeRules.END);
-        for (int layer = 1; layer <= 8; layer++) {
-            for (int k = 0; k < DomeRules.trunks(layer); k++) {
-                assertTrue(DomeRules.plantTick(layer, k) + DomeRules.GROW <= DomeRules.RAISE,
-                        "ствол " + k + " слоя " + layer + " стоит к смыканию");
+        for (int executionTier = 1; executionTier <= 8; executionTier++) {
+            for (int k = 0; k < DomeRules.trunks(executionTier); k++) {
+                assertTrue(DomeRules.plantTick(executionTier, k) + DomeRules.GROW <= DomeRules.RAISE,
+                        "ствол " + k + " слоя " + executionTier + " стоит к смыканию");
             }
         }
     }
 
     @Test
     void everyTrunkIsPlantedOnce() {
-        for (int layer = 1; layer <= 8; layer++) {
-            int n = DomeRules.trunks(layer);
+        for (int executionTier = 1; executionTier <= 8; executionTier++) {
+            int n = DomeRules.trunks(executionTier);
             boolean[] seen = new boolean[n];
             for (int o = 0; o < n; o++) {
-                int k = DomeRules.plantOrder(layer, o);
+                int k = DomeRules.plantOrder(executionTier, o);
                 assertFalse(seen[k], "ствол посажен дважды");
                 seen[k] = true;
             }
             // Первым — центр.
-            assertEquals(n / 2, DomeRules.plantOrder(layer, 0));
+            assertEquals(n / 2, DomeRules.plantOrder(executionTier, 0));
         }
     }
 
     @Test
     void sectorCoversFrontOnly() {
-        int layer = 7;
-        assertTrue(DomeRules.covered(layer, 0.0D, DomeRules.RAISE));
-        assertTrue(DomeRules.covered(layer, 70.0D, DomeRules.RAISE));
-        assertFalse(DomeRules.covered(layer, 100.0D, DomeRules.RAISE), "сбоку не защищает");
-        assertFalse(DomeRules.covered(layer, 180.0D, DomeRules.RAISE), "сзади не защищает");
-        assertFalse(DomeRules.covered(layer, 0.0D, DomeRules.SWINGS[0]), "ствол ещё растёт");
-        assertFalse(DomeRules.covered(layer, 0.0D, DomeRules.HOLD_END), "подпитка кончилась");
+        int executionTier = 7;
+        assertTrue(DomeRules.covered(executionTier, 0.0D, DomeRules.RAISE));
+        assertTrue(DomeRules.covered(executionTier, 70.0D, DomeRules.RAISE));
+        assertFalse(DomeRules.covered(executionTier, 100.0D, DomeRules.RAISE), "сбоку не защищает");
+        assertFalse(DomeRules.covered(executionTier, 180.0D, DomeRules.RAISE), "сзади не защищает");
+        assertFalse(DomeRules.covered(executionTier, 0.0D, DomeRules.SWINGS[0]), "ствол ещё растёт");
+        assertFalse(DomeRules.covered(executionTier, 0.0D, DomeRules.HOLD_END), "подпитка кончилась");
     }
 
     @Test

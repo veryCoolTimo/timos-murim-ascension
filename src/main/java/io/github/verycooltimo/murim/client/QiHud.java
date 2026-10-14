@@ -1,7 +1,7 @@
 package io.github.verycooltimo.murim.client;
 
 import io.github.verycooltimo.murim.MurimMod;
-import io.github.verycooltimo.murim.cultivation.MeditationService;
+import io.github.verycooltimo.murim.cultivation.Realm;
 import io.github.verycooltimo.murim.profile.DantianProfile;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
@@ -62,7 +62,7 @@ public final class QiHud {
     }
 
     private static float pool(DantianProfile p) {
-        return (float) Mth.clamp(p.pool() / Math.max(1.0D, p.capacity() * MeditationService.POOL_CAP), 0.0D, 1.0D);
+        return (float) Mth.clamp(p.pool() / Math.max(1.0D, Realm.wall(p)), 0.0D, 1.0D);
     }
 
     private static void render(GuiGraphics graphics, DeltaTracker delta) {

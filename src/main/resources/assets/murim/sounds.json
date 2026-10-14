@@ -519,5 +519,18 @@
         "attenuation_distance": 8
       }
     ]
+  },
+  "sect_bell": {
+    "subtitle": "subtitles.murim.sect_bell",
+    "sounds": [
+      {
+        "name": "murim:sect_bell_a",
+        "attenuation_distance": 48
+      },
+      {
+        "name": "murim:sect_bell_b",
+        "attenuation_distance": 48
+      }
+    ]
   }
 }

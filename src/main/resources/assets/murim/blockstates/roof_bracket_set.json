@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=east": {
+      "model": "murim:block/roof_bracket_set"
+    },
+    "facing=south": {
+      "model": "murim:block/roof_bracket_set",
+      "y": 90
+    },
+    "facing=west": {
+      "model": "murim:block/roof_bracket_set",
+      "y": 180
+    },
+    "facing=north": {
+      "model": "murim:block/roof_bracket_set",
+      "y": 270
+    }
+  }
+}

@@ -65,17 +65,27 @@ public class MethodScrollItem extends Item {
             return InteractionResultHolder.consume(stack);
         }
 
+        learn(serverPlayer, method);
+        serverPlayer.getCooldowns().addCooldown(this, 20);
+        return InteractionResultHolder.consume(stack);
+    }
+
+    /** Also used when the sect mentor demonstrates a lost introductory scroll. No seed or rank is granted. */
+    public static void learn(ServerPlayer serverPlayer, CultivationMethod method) {
+        CultivationState state = serverPlayer.getData(ModAttachments.CULTIVATION);
+        DantianProfile profile = serverPlayer.getData(ModAttachments.PROFILE);
+        CultivationMethod current = state.method().map(MethodLoader::get).orElse(null);
         SeedLogic.LearnResult result = SeedLogic.learn(state, profile, method, current);
         serverPlayer.setData(ModAttachments.CULTIVATION, result.state());
+        io.github.verycooltimo.murim.mastery.MasteryService.learnMethod(serverPlayer, method);
+        io.github.verycooltimo.murim.mastery.MasteryService.sync(serverPlayer);
         if (result.profile() != profile) {
             serverPlayer.setData(ModAttachments.PROFILE, result.profile());
             ProfileNetwork.sync(serverPlayer);
         }
         serverPlayer.displayClientMessage(Component.translatable(
                 "murim.method.learn." + result.change().name().toLowerCase(java.util.Locale.ROOT),
-                methodName(id)).withStyle(ChatFormatting.GRAY), false);
-        serverPlayer.getCooldowns().addCooldown(this, 20);
-        return InteractionResultHolder.consume(stack);
+                methodName(method.id())).withStyle(ChatFormatting.GRAY), false);
     }
 
     @Override
@@ -96,6 +106,7 @@ public class MethodScrollItem extends Item {
         }
         // Цена метода — на самом предмете, до выбора (как было у оснований).
         lines.add(Component.translatable(methodKey(id) + ".cost").withStyle(ChatFormatting.GRAY));
+        lines.addAll(TechniqueManualItem.clientFootworkInfo.apply(io.github.verycooltimo.murim.mastery.Arts.methodArt(id)));
         lines.add(Component.translatable("item.murim.method_scroll.hint")
                 .withStyle(ChatFormatting.DARK_GRAY));
     }

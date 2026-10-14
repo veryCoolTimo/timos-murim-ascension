@@ -69,6 +69,6 @@
   "weakness": "technique.murim.wind_god_death.weakness",
   "hit_stop_ticks": 0,
   "cooldown_ticks": 120,
-  "layers": 8,
+  "star_cap": 12,
   "tier": "advanced"
 }

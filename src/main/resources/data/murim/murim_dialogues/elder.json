@@ -33,15 +33,22 @@
   "nodes": {
     "greet": {
       "random": [
-        "dialogue.murim.elder.greet1",
-        "dialogue.murim.elder.greet2",
-        "dialogue.murim.elder.greet3"
+        "@context"
       ],
       "gesture": "nod",
       "options": [
         {
-          "text": "dialogue.murim.elder.opt.advice",
-          "next": "advice"
+          "text": "dialogue.murim.social.opt.business",
+          "when": [
+            {
+              "social": "business"
+            }
+          ],
+          "next": "sect_business"
+        },
+        {
+          "text": "dialogue.murim.social.opt.topics",
+          "next": "sect_topics"
         },
         {
           "text": "dialogue.murim.opt.leave"
@@ -58,9 +65,17 @@
       ]
     },
     "evening": {
-      "line": "dialogue.murim.elder.evening1",
       "gesture": "nod",
       "options": [
+        {
+          "text": "dialogue.murim.social.opt.business",
+          "when": [
+            {
+              "social": "business"
+            }
+          ],
+          "next": "sect_business"
+        },
         {
           "text": "dialogue.murim.elder.opt.advice",
           "next": "advice"
@@ -68,15 +83,29 @@
         {
           "text": "dialogue.murim.opt.leave"
         }
+      ],
+      "random": [
+        "@context"
       ]
     },
     "night": {
-      "line": "dialogue.murim.elder.night1",
       "gesture": "shake",
       "options": [
         {
+          "text": "dialogue.murim.social.opt.business",
+          "when": [
+            {
+              "social": "business"
+            }
+          ],
+          "next": "sect_business"
+        },
+        {
           "text": "dialogue.murim.opt.leave"
         }
+      ],
+      "random": [
+        "@context"
       ]
     },
     "advice": {
@@ -87,6 +116,63 @@
       ],
       "gesture": "explain",
       "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "sect_topics": {
+      "line": "dialogue.murim.social.business",
+      "options": [
+        {
+          "text": "dialogue.murim.elder.opt.advice",
+          "next": "advice"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "sect_business": {
+      "line": "dialogue.murim.social.business",
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.social.opt.first",
+          "when": [
+            {
+              "social": "promotion:first"
+            }
+          ],
+          "actions": [
+            {
+              "type": "promotion_offer",
+              "value": "first"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.social.opt.elder",
+          "when": [
+            {
+              "social": "promotion:elder"
+            }
+          ],
+          "actions": [
+            {
+              "type": "promotion_offer",
+              "value": "elder"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.social.opt.requests",
+          "actions": [
+            {
+              "type": "request_menu"
+            }
+          ]
+        },
         {
           "text": "dialogue.murim.opt.leave"
         }

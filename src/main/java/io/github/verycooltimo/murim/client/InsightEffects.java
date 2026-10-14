@@ -104,8 +104,8 @@ public final class InsightEffects {
         int a = Math.max(4, (int) (alpha * 255)) << 24;
         Font font = minecraft.font;
         Component title = Component.translatable("murim.mastery.insight");
-        Component line = Component.translatable("murim.mastery.insight.layer",
-                io.github.verycooltimo.murim.mastery.MasteryService.name(current.technique()), current.layer());
+        Component line = Component.translatable("murim.mastery.insight.star",
+                io.github.verycooltimo.murim.mastery.MasteryService.artName(current.technique()), current.stars());
         // Выше названия техники (его слой — на трети высоты), иначе титры налезают.
         int y = (int) (h * 0.16F);
         graphics.pose().pushPose();

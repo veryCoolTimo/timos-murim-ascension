@@ -27,8 +27,8 @@ import java.util.Map;
 
 /**
  * Ци-меч на клиенте (03.10): светящийся клинок в пустой руке пробуждённого, пока тот бьёт
- * мечевыми формами. Появляется сам — на старт мечевой техники (TechniqueEvent STARTED) и на взмах
- * основы ЛКМ, гаснет через {@link QiSword#HOLD_TICKS} тиков без мечевых действий; предмет в руке
+ * мечевыми техниками. Появляется по принятому сервером запуску (QiSwordHitPayload),
+ * попадания продлевают его; гаснет через {@link QiSword#HOLD_TICKS} тиков без действий. Предмет в руке
  * гасит его сразу. Рисуется симуляцией {@link io.github.verycooltimo.murim.client.vfx.QiBladeRenderer}
  * (реф «Keen Qi»): от третьего лица — слоем модели игрока у кулака, от первого — поверх пустой руки в
  * {@link RenderHandEvent}.
@@ -47,7 +47,7 @@ public final class QiSwordClient {
                 || (player.getMainHandItem().isEmpty() && QiSword.available(ClientProfileState.profile()));
     }
 
-    /** Мечевое действие: если рука пуста — ци-меч появляется (с выбросом ци, если его не было). */
+    /** Сервер подтвердил мечевое действие: проявить клинок в пустой руке. */
     public static void mark(Player player) {
         if (player == null || !player.getMainHandItem().isEmpty()) {
             return;
@@ -200,6 +200,9 @@ public final class QiSwordClient {
             io.github.verycooltimo.murim.client.vfx.QiBladeRenderer.draw(pose, buffers,
                     new Vec3(left ? 0.0625D : -0.0625D, 0.66D, -0.02D), new Vec3(0.0D, 0.6D, -1.0D).normalize(), new Vec3(0.0D, -1.0D, 0.0D), 2.0D, time,
                     player.getId(), 1.0F, evolved(player));
+            Vec3 bladeBase = new Vec3(left ? 0.0625D : -0.0625D, 0.66D, -0.02D);
+            io.github.verycooltimo.murim.client.vfx.FoundationVfx.recordThirdPersonBlade(player, partial, pose,
+                    bladeBase, bladeBase.add(new Vec3(0, 0.6D, -1).normalize().scale(2.0D)));
             pose.popPose();
         }
     }

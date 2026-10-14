@@ -1,0 +1,87 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "wood": "murim:block/library_wood",
+    "particle": "murim:block/library_wood",
+    "pages": "murim:block/library_book_pages",
+    "scroll": "murim:block/library_scroll_end",
+    "stack_edge": "murim:block/library_stack_edge",
+    "hidden": "murim:block/library_hidden_manual",
+    "dust": "murim:block/library_wood_dust",
+    "red": "murim:block/library_cover_red",
+    "indigo": "murim:block/library_cover_indigo",
+    "ochre": "murim:block/library_cover_ochre",
+    "olive": "murim:block/library_cover_olive",
+    "brown": "murim:block/library_cover_brown"
+  },
+  "elements": [
+    {
+      "from": [
+        1.7,
+        2.6999999999999993,
+        7
+      ],
+      "to": [
+        7.0,
+        3.5499999999999994,
+        12.8
+      ],
+      "faces": {
+        "north": {
+          "texture": "#stack_edge",
+          "uv": [
+            0,
+            0,
+            5.3,
+            2
+          ]
+        },
+        "south": {
+          "texture": "#stack_edge",
+          "uv": [
+            0,
+            0,
+            5.3,
+            2
+          ]
+        },
+        "east": {
+          "texture": "#stack_edge",
+          "uv": [
+            0,
+            0,
+            5.8,
+            2
+          ]
+        },
+        "west": {
+          "texture": "#hidden",
+          "uv": [
+            1,
+            1,
+            6.800000000000001,
+            1.85
+          ]
+        },
+        "up": {
+          "texture": "#hidden",
+          "uv": [
+            1,
+            1,
+            6.3,
+            6.800000000000001
+          ]
+        },
+        "down": {
+          "texture": "#hidden",
+          "uv": [
+            1,
+            1,
+            6.3,
+            6.800000000000001
+          ]
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,774 @@
+{
+  "multipart": [
+    {
+      "when": {
+        "center": "false",
+        "facing": "north",
+        "shape": "straight"
+      },
+      "apply": [
+        {
+          "model": "murim:block/thin_wall/grey_bricks_straight"
+        },
+        {
+          "model": "murim:block/thin_wall/grey_bricks_b_straight"
+        },
+        {
+          "model": "murim:block/thin_wall/grey_bricks_c_straight"
+        }
+      ]
+    },
+    {
+      "when": {
+        "center": "false",
+        "facing": "north",
+        "shape": "inner_left"
+      },
+      "apply": [
+        {
+          "model": "murim:block/thin_wall/grey_bricks_inner_left"
+        },
+        {
+          "model": "murim:block/thin_wall/grey_bricks_b_inner_left"
+        },
+        {
+          "model": "murim:block/thin_wall/grey_bricks_c_inner_left"
+        }
+      ]
+    },
+    {
+      "when": {
+        "center": "false",
+        "facing": "north",
+        "shape": "inner_right"
+      },
+      "apply": [
+        {
+          "model": "murim:block/thin_wall/grey_bricks_inner_right"
+        },
+        {
+          "model": "murim:block/thin_wall/grey_bricks_b_inner_right"
+        },
+        {
+          "model": "murim:block/thin_wall/grey_bricks_c_inner_right"
+        }
+      ]
+    },
+    {
+      "when": {
+        "center": "false",
+        "facing": "north",
+        "shape": "outer_left"
+      },
+      "apply": [
+        {
+          "model": "murim:block/thin_wall/grey_bricks_outer_left"
+        },
+        {
+          "model": "murim:block/thin_wall/grey_bricks_b_outer_left"
+        },
+        {
+          "model": "murim:block/thin_wall/grey_bricks_c_outer_left"
+        }
+      ]
+    },
+    {
+      "when": {
+        "center": "false",
+        "facing": "north",
+        "shape": "outer_right"
+      },
+      "apply": [
+        {
+          "model": "murim:block/thin_wall/grey_bricks_outer_right"
+        },
+        {
+          "model": "murim:block/thin_wall/grey_bricks_b_outer_right"
+        },
+        {
+          "model": "murim:block/thin_wall/grey_bricks_c_outer_right"
+        }
+      ]
+    },
+    {
+      "when": {
+        "center": "false",
+        "facing": "east",
+        "shape": "straight"
+      },
+      "apply": [
+        {
+          "model": "murim:block/thin_wall/grey_bricks_straight",
+          "y": 90,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/grey_bricks_b_straight",
+          "y": 90,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/grey_bricks_c_straight",
+          "y": 90,
+          "uvlock": true
+        }
+      ]
+    },
+    {
+      "when": {
+        "center": "false",
+        "facing": "east",
+        "shape": "inner_left"
+      },
+      "apply": [
+        {
+          "model": "murim:block/thin_wall/grey_bricks_inner_left",
+          "y": 90,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/grey_bricks_b_inner_left",
+          "y": 90,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/grey_bricks_c_inner_left",
+          "y": 90,
+          "uvlock": true
+        }
+      ]
+    },
+    {
+      "when": {
+        "center": "false",
+        "facing": "east",
+        "shape": "inner_right"
+      },
+      "apply": [
+        {
+          "model": "murim:block/thin_wall/grey_bricks_inner_right",
+          "y": 90,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/grey_bricks_b_inner_right",
+          "y": 90,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/grey_bricks_c_inner_right",
+          "y": 90,
+          "uvlock": true
+        }
+      ]
+    },
+    {
+      "when": {
+        "center": "false",
+        "facing": "east",
+        "shape": "outer_left"
+      },
+      "apply": [
+        {
+          "model": "murim:block/thin_wall/grey_bricks_outer_left",
+          "y": 90,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/grey_bricks_b_outer_left",
+          "y": 90,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/grey_bricks_c_outer_left",
+          "y": 90,
+          "uvlock": true
+        }
+      ]
+    },
+    {
+      "when": {
+        "center": "false",
+        "facing": "east",
+        "shape": "outer_right"
+      },
+      "apply": [
+        {
+          "model": "murim:block/thin_wall/grey_bricks_outer_right",
+          "y": 90,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/grey_bricks_b_outer_right",
+          "y": 90,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/grey_bricks_c_outer_right",
+          "y": 90,
+          "uvlock": true
+        }
+      ]
+    },
+    {
+      "when": {
+        "center": "false",
+        "facing": "south",
+        "shape": "straight"
+      },
+      "apply": [
+        {
+          "model": "murim:block/thin_wall/grey_bricks_straight",
+          "y": 180,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/grey_bricks_b_straight",
+          "y": 180,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/grey_bricks_c_straight",
+          "y": 180,
+          "uvlock": true
+        }
+      ]
+    },
+    {
+      "when": {
+        "center": "false",
+        "facing": "south",
+        "shape": "inner_left"
+      },
+      "apply": [
+        {
+          "model": "murim:block/thin_wall/grey_bricks_inner_left",
+          "y": 180,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/grey_bricks_b_inner_left",
+          "y": 180,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/grey_bricks_c_inner_left",
+          "y": 180,
+          "uvlock": true
+        }
+      ]
+    },
+    {
+      "when": {
+        "center": "false",
+        "facing": "south",
+        "shape": "inner_right"
+      },
+      "apply": [
+        {
+          "model": "murim:block/thin_wall/grey_bricks_inner_right",
+          "y": 180,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/grey_bricks_b_inner_right",
+          "y": 180,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/grey_bricks_c_inner_right",
+          "y": 180,
+          "uvlock": true
+        }
+      ]
+    },
+    {
+      "when": {
+        "center": "false",
+        "facing": "south",
+        "shape": "outer_left"
+      },
+      "apply": [
+        {
+          "model": "murim:block/thin_wall/grey_bricks_outer_left",
+          "y": 180,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/grey_bricks_b_outer_left",
+          "y": 180,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/grey_bricks_c_outer_left",
+          "y": 180,
+          "uvlock": true
+        }
+      ]
+    },
+    {
+      "when": {
+        "center": "false",
+        "facing": "south",
+        "shape": "outer_right"
+      },
+      "apply": [
+        {
+          "model": "murim:block/thin_wall/grey_bricks_outer_right",
+          "y": 180,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/grey_bricks_b_outer_right",
+          "y": 180,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/grey_bricks_c_outer_right",
+          "y": 180,
+          "uvlock": true
+        }
+      ]
+    },
+    {
+      "when": {
+        "center": "false",
+        "facing": "west",
+        "shape": "straight"
+      },
+      "apply": [
+        {
+          "model": "murim:block/thin_wall/grey_bricks_straight",
+          "y": 270,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/grey_bricks_b_straight",
+          "y": 270,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/grey_bricks_c_straight",
+          "y": 270,
+          "uvlock": true
+        }
+      ]
+    },
+    {
+      "when": {
+        "center": "false",
+        "facing": "west",
+        "shape": "inner_left"
+      },
+      "apply": [
+        {
+          "model": "murim:block/thin_wall/grey_bricks_inner_left",
+          "y": 270,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/grey_bricks_b_inner_left",
+          "y": 270,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/grey_bricks_c_inner_left",
+          "y": 270,
+          "uvlock": true
+        }
+      ]
+    },
+    {
+      "when": {
+        "center": "false",
+        "facing": "west",
+        "shape": "inner_right"
+      },
+      "apply": [
+        {
+          "model": "murim:block/thin_wall/grey_bricks_inner_right",
+          "y": 270,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/grey_bricks_b_inner_right",
+          "y": 270,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/grey_bricks_c_inner_right",
+          "y": 270,
+          "uvlock": true
+        }
+      ]
+    },
+    {
+      "when": {
+        "center": "false",
+        "facing": "west",
+        "shape": "outer_left"
+      },
+      "apply": [
+        {
+          "model": "murim:block/thin_wall/grey_bricks_outer_left",
+          "y": 270,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/grey_bricks_b_outer_left",
+          "y": 270,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/grey_bricks_c_outer_left",
+          "y": 270,
+          "uvlock": true
+        }
+      ]
+    },
+    {
+      "when": {
+        "center": "false",
+        "facing": "west",
+        "shape": "outer_right"
+      },
+      "apply": [
+        {
+          "model": "murim:block/thin_wall/grey_bricks_outer_right",
+          "y": 270,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/grey_bricks_b_outer_right",
+          "y": 270,
+          "uvlock": true
+        },
+        {
+          "model": "murim:block/thin_wall/grey_bricks_c_outer_right",
+          "y": 270,
+          "uvlock": true
+        }
+      ]
+    },
+    {
+      "when": {
+        "center": "true",
+        "north": "false",
+        "east": "false",
+        "south": "false",
+        "west": "false"
+      },
+      "apply": [
+        {
+          "model": "murim:block/thin_wall/grey_bricks_c_post"
+        },
+        {
+          "model": "murim:block/thin_wall/grey_bricks_b_c_post"
+        },
+        {
+          "model": "murim:block/thin_wall/grey_bricks_c_c_post"
+        }
+      ]
+    },
+    {
+      "when": {
+        "center": "true",
+        "north": "true",
+        "east": "false",
+        "south": "false",
+        "west": "false"
+      },
+      "apply": [
+        {
+          "model": "murim:block/thin_wall/grey_bricks_c_n"
+        },
+        {
+          "model": "murim:block/thin_wall/grey_bricks_b_c_n"
+        },
+        {
+          "model": "murim:block/thin_wall/grey_bricks_c_c_n"
+        }
+      ]
+    },
+    {
+      "when": {
+        "center": "true",
+        "north": "false",
+        "east": "true",
+        "south": "false",
+        "west": "false"
+      },
+      "apply": [
+        {
+          "model": "murim:block/thin_wall/grey_bricks_c_e"
+        },
+        {
+          "model": "murim:block/thin_wall/grey_bricks_b_c_e"
+        },
+        {
+          "model": "murim:block/thin_wall/grey_bricks_c_c_e"
+        }
+      ]
+    },
+    {
+      "when": {
+        "center": "true",
+        "north": "true",
+        "east": "true",
+        "south": "false",
+        "west": "false"
+      },
+      "apply": [
+        {
+          "model": "murim:block/thin_wall/grey_bricks_c_ne"
+        },
+        {
+          "model": "murim:block/thin_wall/grey_bricks_b_c_ne"
+        },
+        {
+          "model": "murim:block/thin_wall/grey_bricks_c_c_ne"
+        }
+      ]
+    },
+    {
+      "when": {
+        "center": "true",
+        "north": "false",
+        "east": "false",
+        "south": "true",
+        "west": "false"
+      },
+      "apply": [
+        {
+          "model": "murim:block/thin_wall/grey_bricks_c_s"
+        },
+        {
+          "model": "murim:block/thin_wall/grey_bricks_b_c_s"
+        },
+        {
+          "model": "murim:block/thin_wall/grey_bricks_c_c_s"
+        }
+      ]
+    },
+    {
+      "when": {
+        "center": "true",
+        "north": "true",
+        "east": "false",
+        "south": "true",
+        "west": "false"
+      },
+      "apply": [
+        {
+          "model": "murim:block/thin_wall/grey_bricks_c_ns"
+        },
+        {
+          "model": "murim:block/thin_wall/grey_bricks_b_c_ns"
+        },
+        {
+          "model": "murim:block/thin_wall/grey_bricks_c_c_ns"
+        }
+      ]
+    },
+    {
+      "when": {
+        "center": "true",
+        "north": "false",
+        "east": "true",
+        "south": "true",
+        "west": "false"
+      },
+      "apply": [
+        {
+          "model": "murim:block/thin_wall/grey_bricks_c_es"
+        },
+        {
+          "model": "murim:block/thin_wall/grey_bricks_b_c_es"
+        },
+        {
+          "model": "murim:block/thin_wall/grey_bricks_c_c_es"
+        }
+      ]
+    },
+    {
+      "when": {
+        "center": "true",
+        "north": "true",
+        "east": "true",
+        "south": "true",
+        "west": "false"
+      },
+      "apply": [
+        {
+          "model": "murim:block/thin_wall/grey_bricks_c_nes"
+        },
+        {
+          "model": "murim:block/thin_wall/grey_bricks_b_c_nes"
+        },
+        {
+          "model": "murim:block/thin_wall/grey_bricks_c_c_nes"
+        }
+      ]
+    },
+    {
+      "when": {
+        "center": "true",
+        "north": "false",
+        "east": "false",
+        "south": "false",
+        "west": "true"
+      },
+      "apply": [
+        {
+          "model": "murim:block/thin_wall/grey_bricks_c_w"
+        },
+        {
+          "model": "murim:block/thin_wall/grey_bricks_b_c_w"
+        },
+        {
+          "model": "murim:block/thin_wall/grey_bricks_c_c_w"
+        }
+      ]
+    },
+    {
+      "when": {
+        "center": "true",
+        "north": "true",
+        "east": "false",
+        "south": "false",
+        "west": "true"
+      },
+      "apply": [
+        {
+          "model": "murim:block/thin_wall/grey_bricks_c_nw"
+        },
+        {
+          "model": "murim:block/thin_wall/grey_bricks_b_c_nw"
+        },
+        {
+          "model": "murim:block/thin_wall/grey_bricks_c_c_nw"
+        }
+      ]
+    },
+    {
+      "when": {
+        "center": "true",
+        "north": "false",
+        "east": "true",
+        "south": "false",
+        "west": "true"
+      },
+      "apply": [
+        {
+          "model": "murim:block/thin_wall/grey_bricks_c_ew"
+        },
+        {
+          "model": "murim:block/thin_wall/grey_bricks_b_c_ew"
+        },
+        {
+          "model": "murim:block/thin_wall/grey_bricks_c_c_ew"
+        }
+      ]
+    },
+    {
+      "when": {
+        "center": "true",
+        "north": "true",
+        "east": "true",
+        "south": "false",
+        "west": "true"
+      },
+      "apply": [
+        {
+          "model": "murim:block/thin_wall/grey_bricks_c_new"
+        },
+        {
+          "model": "murim:block/thin_wall/grey_bricks_b_c_new"
+        },
+        {
+          "model": "murim:block/thin_wall/grey_bricks_c_c_new"
+        }
+      ]
+    },
+    {
+      "when": {
+        "center": "true",
+        "north": "false",
+        "east": "false",
+        "south": "true",
+        "west": "true"
+      },
+      "apply": [
+        {
+          "model": "murim:block/thin_wall/grey_bricks_c_sw"
+        },
+        {
+          "model": "murim:block/thin_wall/grey_bricks_b_c_sw"
+        },
+        {
+          "model": "murim:block/thin_wall/grey_bricks_c_c_sw"
+        }
+      ]
+    },
+    {
+      "when": {
+        "center": "true",
+        "north": "true",
+        "east": "false",
+        "south": "true",
+        "west": "true"
+      },
+      "apply": [
+        {
+          "model": "murim:block/thin_wall/grey_bricks_c_nsw"
+        },
+        {
+          "model": "murim:block/thin_wall/grey_bricks_b_c_nsw"
+        },
+        {
+          "model": "murim:block/thin_wall/grey_bricks_c_c_nsw"
+        }
+      ]
+    },
+    {
+      "when": {
+        "center": "true",
+        "north": "false",
+        "east": "true",
+        "south": "true",
+        "west": "true"
+      },
+      "apply": [
+        {
+          "model": "murim:block/thin_wall/grey_bricks_c_esw"
+        },
+        {
+          "model": "murim:block/thin_wall/grey_bricks_b_c_esw"
+        },
+        {
+          "model": "murim:block/thin_wall/grey_bricks_c_c_esw"
+        }
+      ]
+    },
+    {
+      "when": {
+        "center": "true",
+        "north": "true",
+        "east": "true",
+        "south": "true",
+        "west": "true"
+      },
+      "apply": [
+        {
+          "model": "murim:block/thin_wall/grey_bricks_c_nesw"
+        },
+        {
+          "model": "murim:block/thin_wall/grey_bricks_b_c_nesw"
+        },
+        {
+          "model": "murim:block/thin_wall/grey_bricks_c_c_nesw"
+        }
+      ]
+    }
+  ]
+}

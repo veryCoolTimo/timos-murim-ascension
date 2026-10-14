@@ -4,5 +4,6 @@
   "purity": 0.7,
   "capacity": 48.0,
   "impurity": 0.3,
-  "route": "wide_circle"
+  "route": "wide_circle",
+  "star_cap": 12
 }

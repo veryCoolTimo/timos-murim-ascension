@@ -9,7 +9,7 @@ import java.util.Optional;
 /**
  * Стили — группы форм (docs/design/techniques/styles-and-forms.md, решение codex 02.10): стиль
  * занимает одну ячейку раскладки, его формы выбираются на кольце V, у каждой формы свои
- * анимация, урон, кулдаун и слои освоения. Встроенный каталог — одинаковый у клиента и сервера.
+ * анимация, урон и кулдаун; звёзды освоения общие для всего искусства. Встроенный каталог — одинаковый у клиента и сервера.
  */
 public final class Styles {
 
@@ -57,7 +57,13 @@ public final class Styles {
             id("tang_three_instant"), id("tang_five_thunders"), id("tang_flash_life"), id("tang_seven_stars"),
             id("tang_sleeve_return"), id("tang_dark_burst"), id("tang_family_coins"), id("tang_twelve_daggers")), Optional.empty());
 
-    public static final List<Style> ALL = List.of(SEVEN_PLUM, TWENTY_FOUR_PLUM, DARK_FRAGRANCE, WIND_GOD, TANG_DAGGERS);
+    /** A mixed curriculum with independently acquired manuals, not a book that grants all arts. */
+    public static final Style HEAVENLY_DEMON = new Style(id("heavenly_demon"),
+            DemonicRules.ARTS.stream().map(Styles::id).toList(), Optional.empty());
+
+    public static boolean individualBooks(Style style) { return style == HEAVENLY_DEMON; }
+
+    public static final List<Style> ALL = List.of(SEVEN_PLUM, TWENTY_FOUR_PLUM, DARK_FRAGRANCE, WIND_GOD, TANG_DAGGERS, HEAVENLY_DEMON);
 
     /** Форма бега стиля шагов — её включает автобег (спринт 0,5 с), 03.10. */
     public static Optional<ResourceLocation> footworkRun(Style s) {
@@ -76,18 +82,6 @@ public final class Styles {
      */
     public static boolean sequential(Style s) {
         return s == SEVEN_PLUM || s == TWENTY_FOUR_PLUM || s == TANG_DAGGERS;
-    }
-
-    /** Слой предыдущей формы, нужный, чтобы изучить следующую. */
-    public static final int NEXT_FORM_LAYER = 3;
-
-    /** Скорость освоения формы: каждая следующая медленнее — 1, 0,71, 0,56, 0,45… */
-    public static double difficulty(ResourceLocation technique) {
-        Optional<Style> s = of(technique);
-        if (s.isEmpty() || !sequential(s.get())) {
-            return 1.0D;
-        }
-        return 1.0D / (1.0D + 0.4D * s.get().forms().indexOf(technique));
     }
 
     /** Предыдущая форма в стиле-книге или пусто. */

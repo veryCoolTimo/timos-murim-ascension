@@ -9,8 +9,6 @@ import net.minecraft.server.MinecraftServer;
 import io.github.verycooltimo.murim.world.location.CapturedLocation;
 import io.github.verycooltimo.murim.world.location.Ground;
 import io.github.verycooltimo.murim.world.location.LocationTemplatePiece;
-import io.github.verycooltimo.murim.world.location.LocationTemplates;
-import io.github.verycooltimo.murim.world.location.ModLocations;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.levelgen.structure.TerrainAdjustment;
@@ -24,9 +22,9 @@ import java.util.Optional;
  * murim:ruined_library}, rare (structure_set spacing 48 chunks), in forests, taiga, hills, plains, meadows, savanna
  * and cherry groves (tag {@code murim:has_structure/ruined_library}), never at Mount Hua.
  *
- * <p>The archive is dug in: its rock ceiling stays at least three blocks under the lowest ground over it, and only
- * the rock mouth of the tunnel shows on the surface. The site is rejected over water and where the mouth would sit
- * more than six blocks above the lowest ground (the stair down would leave the piece).
+ * <p>The archive is dug in: its rock ceiling stays at least ten blocks under the lowest ground over it, and only
+ * the rock mouth of the tunnel shows on the surface. Every footprint column is checked, including valleys between
+ * the corners. Sites over water, below build height or with an exposed descent are rejected.
  *
  * <p>API: reference/minecraft-src/net/minecraft/world/level/levelgen/structure/Structure.java (#findGenerationPoint,
  * #simpleCodec, GenerationStub), reference/minecraft-src/net/minecraft/world/level/chunk/ChunkGenerator.java#getBaseHeight,
@@ -36,10 +34,8 @@ public class RuinedLibraryStructure extends Structure {
 
     public static final MapCodec<RuinedLibraryStructure> CODEC = simpleCodec(RuinedLibraryStructure::new);
 
-    /** Rock and earth between the archive's top (local y 22) and the lowest ground over it. */
-    static final int COVER = 3;
-    /** How far above the lowest ground the mouth may stand (stair steps = 10 + this). */
-    static final int MAX_MOUTH_RISE = 6;
+    /** Rock and earth between the archive's natural rock backfill (ROCK_TOP) and the lowest ground over it. */
+    static final int COVER = 10;
     /** Keep away from the Mount Hua massif's box. */
     static final int HUA_MARGIN = 160;
 
@@ -61,15 +57,8 @@ public class RuinedLibraryStructure extends Structure {
         if (piece == null) {
             return Optional.empty();
         }
-        // The author's captured archive (docs/design/28-location-capture.md) replaces the procedural one on the same
-        // site; the extra random draw happens only with a template, procedural archives keep their seeds.
-        CapturedLocation tpl = LocationTemplates.get(ModLocations.ARCHIVE);
-        if (tpl != null) {
-            Rotation rot = Rotation.getRandom(context.random());
-            Ground ground = Ground.of(context);
-            return Optional.of(new GenerationStub(piece.archive(13, LibraryPlan.TOP, 13),
-                    builder -> builder.addPiece(templatePiece(tpl, cx, cz, rot, ground))));
-        }
+        // Surface-anchored captures do not supply a deep entrance. World generation uses the buried piece;
+        // templatePiece remains available to the explicitly requested capture/showcase workflow.
         return Optional.of(new GenerationStub(piece.archive(13, LibraryPlan.TOP, 13), builder -> builder.addPiece(piece)));
     }
 
@@ -80,46 +69,65 @@ public class RuinedLibraryStructure extends Structure {
     }
 
     /**
-     * The procedural archive centred on (cx, cz), or null where it cannot stand (water over the site, the mouth too
-     * high above the lowest ground, too deep). {@code force}: skip the rejections (showcase world).
+     * The procedural archive centred on (cx, cz), or null where it cannot stand (water over the site, no covered descent,
+     * below build height). {@code force}: permit wet/high showcase terrain, still keep depth and a continuous descent.
      */
     public static LibraryPiece piece(long seed, int cx, int cz, Direction dir, Ground ground, int seaLevel, int minBuildHeight,
             boolean force) {
         int x0 = cx - LibraryPlan.WIDTH / 2;
         int z0 = cz - LibraryPlan.DEPTH / 2;
-        LibraryPiece probe = new LibraryPiece(seed, x0, 0, z0, dir, 30);
+        LibraryPiece probe = new LibraryPiece(seed, x0, 0, z0, dir, LibraryPlan.ROCK_TOP + COVER);
         int t = LibraryPlan.TUNNEL;
-        int[][] points = {{1, t + 1}, {25, t + 1}, {1, t + 25}, {25, t + 25}, {13, t + 13}, {13, t + 2}, {11, t - 3}};
-        int min = Integer.MAX_VALUE;
-        for (int[] p : points) {
-            BlockPos w = probe.world(p[0], 0, p[1]);
-            if (!ground.dry(w.getX(), w.getZ()) && !force) {
-                return null; // water over the site
+        int lowest = Integer.MAX_VALUE;
+        // Full 31x31 footprint, including the shell and roof: no sparse corner sampling.
+        for (int ax = -LibraryPiece.ROCK_PAD; ax < LibraryPlan.SIZE + LibraryPiece.ROCK_PAD; ax++) {
+            for (int az = -LibraryPiece.ROCK_PAD; az < LibraryPlan.SIZE + LibraryPiece.ROCK_PAD; az++) {
+                BlockPos w = probe.archive(ax, 0, az);
+                if (!force && !ground.dry(w.getX(), w.getZ())) return null;
+                lowest = Math.min(lowest, ground.floor(w.getX(), w.getZ()));
             }
-            min = Math.min(min, ground.floor(w.getX(), w.getZ()) + 1);
         }
-        int baseY = min - 1 - COVER - (LibraryPlan.CEILING + 2);
-        // The mouth's z depends on how many steps lead down, which depends on the ground at the mouth: two rounds.
-        int mouthZ = t - LibraryPlan.LANDING - 13;
-        int mouthTop = 0;
-        int mouthY = 0;
-        for (int round = 0; round < 2; round++) {
-            BlockPos mouth = probe.world(11, 0, Math.max(0, mouthZ - 1));
-            mouthTop = ground.floor(mouth.getX(), mouth.getZ());
-            mouthY = mouthTop - baseY;
-            mouthZ = Math.max(1, t - LibraryPlan.LANDING - Math.max(0, mouthY - LibraryPlan.TOP));
+        int baseY = lowest - COVER - LibraryPlan.ROCK_TOP;
+        if (baseY < minBuildHeight + 4 || !force && (lowest <= seaLevel || lowest > 190)) return null;
+        // Search exact mouth solutions rather than iterating two guesses on a sloping heightmap.
+        for (int mouthZ = 1; mouthZ < t - LibraryPlan.LANDING; mouthZ++) {
+            BlockPos mouth = probe.world(11, 0, mouthZ - 1);
+            int mouthY = ground.floor(mouth.getX(), mouth.getZ()) - baseY;
+            if (mouthY < LibraryPlan.TOP || mouthY - LibraryPlan.TOP > t - LibraryPlan.LANDING - 1
+                    || LibraryPaths.mouthZ(mouthY) != mouthZ) continue;
+            boolean covered = true;
+            for (int z = Math.max(0, mouthZ - 2); z < t && covered; z++) {
+                int crown = baseY + LibraryPaths.entranceFloor(mouthY, z) + 5;
+                for (int x = 8; x <= 14; x++) {
+                    BlockPos w = probe.world(x, 0, z);
+                    int outcrop = mouthRockTop(seed, x, z, mouthZ, mouthY);
+                    if ((!force && !ground.dry(w.getX(), w.getZ()))
+                            || (z > mouthZ + 2 && crown > Math.max(ground.floor(w.getX(), w.getZ()) - 2,
+                                    outcrop == Integer.MIN_VALUE ? outcrop : baseY + outcrop - 1))) {
+                        covered = false;
+                        break;
+                    }
+                }
+            }
+            if (covered) return new LibraryPiece(seed, x0, baseY, z0, dir, mouthY);
         }
-        if (!force && (mouthTop - (min - 1) > MAX_MOUTH_RISE || mouthTop < min - 2 || min <= seaLevel
-                || baseY < minBuildHeight + 4 || min > 190)) {
-            return null;
-        }
-        return new LibraryPiece(seed, x0, baseY, z0, dir, force ? Math.max(LibraryPlan.TOP, mouthY) : mouthY);
+        return null; // No walkable, covered descent at this site.
     }
 
-    /** A captured archive pulls the ground around its box to its level (beard on the template piece only). */
+    /** Exact outcrop envelope used by LibraryPiece.Builder.mouth, for descent exposure checks. */
+    static int mouthRockTop(long seed, int x, int z, int mouthZ, int mouthY) {
+        if (z < Math.max(0, mouthZ - 3) || z > Math.min(LibraryPlan.TUNNEL - 1, mouthZ + 12)) return Integer.MIN_VALUE;
+        double ex = (x - 11.0D) / (10.0D + LibraryPlan.noise(seed, z, 51, 0) * 2.0D);
+        double ez = (z - mouthZ - 4.0D) / 8.0D;
+        double e = ex * ex + ez * ez;
+        return e >= 1.0D ? Integer.MIN_VALUE : mouthY + (int) Math.round(10.0D * (1.0D - e)
+                + (LibraryPlan.noise(seed, x, 55, z) - 0.5D) * 3.0D);
+    }
+
+    /** No surface beard: the natural rock shell is already below the complete terrain footprint. */
     @Override
     public TerrainAdjustment terrainAdaptation() {
-        return LocationTemplates.get(ModLocations.ARCHIVE) != null ? TerrainAdjustment.BEARD_THIN : super.terrainAdaptation();
+        return TerrainAdjustment.NONE;
     }
 
     /**

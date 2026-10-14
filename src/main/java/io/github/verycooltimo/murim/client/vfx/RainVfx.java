@@ -243,7 +243,7 @@ public final class RainVfx {
 
     private static final class Cast {
         final int entityId;
-        final int layer;
+        final int executionTier;
         int start;
         final Random random;
         final double density;
@@ -282,13 +282,13 @@ public final class RainVfx {
         ResourceLocation skin;
         PartPose[] dashPose;
 
-        Cast(int entityId, int layer) {
+        Cast(int entityId, int executionTier) {
             this.entityId = entityId;
-            this.layer = layer;
+            this.executionTier = executionTier;
             this.start = clientTicks;
             this.random = new Random(entityId * 7919L + clientTicks);
-            this.density = RainRules.density(layer);
-            this.scale = RainRules.scale(layer);
+            this.density = RainRules.density(executionTier);
+            this.scale = RainRules.scale(executionTier);
         }
 
         int t() {
@@ -315,13 +315,13 @@ public final class RainVfx {
 
     public static void onTechniqueEvent(TechniqueEventPayload payload) {
         if (payload.event() != TechniqueEventPayload.Event.STARTED || !TECHNIQUE.equals(payload.techniqueId())
-                || payload.layer() <= 0) {
+                || payload.executionTier() <= 0) {
             return;
         }
         CASTS.removeIf(c -> c.entityId == payload.sourceId());
-        Cast c = new Cast(payload.sourceId(), payload.layer());
+        Cast c = new Cast(payload.sourceId(), payload.executionTier());
         CASTS.add(c);
-        if (c.layer >= 3) {
+        if (c.executionTier >= 3) {
             // Стойка и уколы — холодная синяя аура; розовая — с замаха.
             ClientAuraState.techniqueAura(c.entityId, 2, 0, RainRules.FLURRY + 8);
         }
@@ -337,7 +337,7 @@ public final class RainVfx {
         Minecraft mc = Minecraft.getInstance();
         if (p.stage() == RainPayload.RELEASE) {
             if (c == null) {
-                c = new Cast(p.entityId(), p.layer());
+                c = new Cast(p.entityId(), p.executionTier());
                 CASTS.add(c);
             }
             // Сверка шкалы: пакет замаха приходит ровно на тике RELEASE техники.
@@ -387,8 +387,8 @@ public final class RainVfx {
 
     /** Замах (r04): белая зубчатая вспышка у рук, розовая аура, дым из-под ног, линии скорости. */
     private static void release(Cast c, Minecraft mc) {
-        if (c.layer >= 3) {
-            ClientAuraState.techniqueAura(c.entityId, 2 + Math.min(2, c.layer / 3), 1, RainRules.BLOOM - 6 - RainRules.RELEASE);
+        if (c.executionTier >= 3) {
+            ClientAuraState.techniqueAura(c.entityId, 2 + Math.min(2, c.executionTier / 3), 1, RainRules.BLOOM - 6 - RainRules.RELEASE);
         }
         dust(c, c.origin, c.n(10) + 3, 0.18D);
         if (c.own()) {
@@ -427,7 +427,7 @@ public final class RainVfx {
 
     /** Метка прошла (r06): первые светящиеся лепестки висят вокруг цели. */
     private static void suspended(Cast c) {
-        if (!RainRules.petals(c.layer) || c.target == null) {
+        if (!RainRules.petals(c.executionTier) || c.target == null) {
             return;
         }
         for (int i = 0; i < Math.max(4, c.n(16)); i++) {
@@ -533,11 +533,11 @@ public final class RainVfx {
 
     /** Три неравные S-нити лепестков из ядра к цели (r09): 60/40/26 лепестков, заполняются сверху. */
     private static void streams(Cast c) {
-        if (!RainRules.petals(c.layer)) {
+        if (!RainRules.petals(c.executionTier)) {
             return;
         }
         int[] counts = {64, 46, 0};
-        int streams = c.layer >= 5 ? 2 : 1;
+        int streams = c.executionTier >= 5 ? 2 : 1;
         for (int k = 0; k < streams; k++) {
             int n = Math.max(8, c.n(counts[k]));
             for (int i = 0; i < n; i++) {
@@ -594,7 +594,7 @@ public final class RainVfx {
             c.marks.add(new Mark(ground.add(Math.cos(a) * r, 0.03D, Math.sin(a) * r), clientTicks, 0.25D + 0.35D * c.random.nextDouble(),
                     c.random.nextDouble() * Math.PI));
         }
-        if (RainRules.petals(c.layer)) {
+        if (RainRules.petals(c.executionTier)) {
             for (int i = 0; i < (last ? c.n(70) : c.n(18)); i++) {
                 Vec3 v = new Vec3(c.random.nextGaussian(), 0.4D + c.random.nextDouble(), c.random.nextGaussian()).normalize()
                         .scale(0.15D + 0.25D * c.random.nextDouble());
@@ -779,7 +779,7 @@ public final class RainVfx {
             windRibbon(c, shoulder(e, yaw).add(f.scale(0.6D)), f.scale(0.3D).add(0.0D, 0.03D, 0.0D), 12, 0.07D);
             dust(c, feet, c.n(6), 0.08D);
         }
-        if (RainRules.petals(c.layer) && t > 2 && t < RainRules.FLURRY && t % 3 == 0) {
+        if (RainRules.petals(c.executionTier) && t > 2 && t < RainRules.FLURRY && t % 3 == 0) {
             Mote m = petalMote(c, feet.add((c.random.nextDouble() - 0.5D) * 1.6D, 0.6D + 1.2D * c.random.nextDouble(),
                     (c.random.nextDouble() - 0.5D) * 1.6D), new Vec3(0.01D, -0.004D, 0.006D), 40);
             m.tone = 0;
@@ -800,7 +800,7 @@ public final class RainVfx {
             boolean fpOwn = c.eyes();
             Vec3 hand = fpOwn ? e.getEyePosition().add(0.0D, -0.35D, 0.0D).add(d.scale(2.2D)) : shoulder(e, yaw).add(d.scale(0.62D));
             c.thrusts.add(new Thrust(hand, d, clientTicks));
-            if (RainRules.afterimages(c.layer) && e instanceof AbstractClientPlayer player
+            if (RainRules.afterimages(c.executionTier) && e instanceof AbstractClientPlayer player
                     && mc.getEntityRenderDispatcher().getRenderer(player) instanceof PlayerRenderer renderer) {
                 if (c.skin == null) {
                     c.skin = player.getSkin().texture();
@@ -826,7 +826,7 @@ public final class RainVfx {
             if (k % 2 == 0) {
                 dust(c, feet, 2, 0.1D);
             }
-            if (RainRules.petals(c.layer)) {
+            if (RainRules.petals(c.executionTier)) {
                 for (int i = 0; i < 3; i++) {
                     Mote m = petalMote(c, hand.add(d.scale(0.8D * c.random.nextDouble())),
                             d.scale(0.08D + 0.1D * c.random.nextDouble()).add(c.random.nextGaussian() * 0.04D, 0.02D, c.random.nextGaussian() * 0.04D), 26);
@@ -855,17 +855,17 @@ public final class RainVfx {
                         1.2D, 1.2D + 2.6D * c.scale, (c.random.nextDouble() - 0.5D) * 0.35D, 18, 0.09D + 0.05D * c.scale, 0.45D + 0.2D * c.random.nextDouble()));
             }
         }
-        if ((t == 50 || t == 55) && c.layer >= 2) {
+        if ((t == 50 || t == 55) && c.executionTier >= 2) {
             double a0 = Math.toRadians(yaw + (t == 50 ? 40.0D : 200.0D));
             c.winds.add(new WindArc(feet, clientTicks, a0, t == 50 ? 1 : -1, 3.2D * c.scale, 0.5D, 1.6D, 0.12D, 16, 0.28D * c.scale, 0.55D));
         }
-        if ((t == 36 || t == 44 || t == 52) && c.layer >= 1) {
+        if ((t == 36 || t == 44 || t == 52) && c.executionTier >= 1) {
             dust(c, feet, c.n(8) + 1, 0.16D);
         }
         // Натяжение замаха (r04): лепестки и ветер втягиваются к клинку.
         if (t >= RainRules.LOAD && t < RainRules.RELEASE) {
             Vec3 tip = shoulder(e, yaw).add(0.0D, 0.8D, 0.0D).subtract(f.scale(0.4D));
-            if (RainRules.petals(c.layer)) {
+            if (RainRules.petals(c.executionTier)) {
                 for (int i = 0; i < 2; i++) {
                     double a = c.random.nextDouble() * Math.PI * 2.0D;
                     Vec3 at = tip.add(Math.cos(a) * 2.0D, (c.random.nextDouble() - 0.5D) * 1.4D, Math.sin(a) * 2.0D);
@@ -895,7 +895,7 @@ public final class RainVfx {
         // Проход: копии тела, пыль по пути, линии воздуха у земли (r05).
         if (t > RainRules.RELEASE && t <= RainRules.RELEASE + RainRules.DASH_TICKS + 1 && e != null) {
             if ((t == RainRules.RELEASE + 1 || t == RainRules.RELEASE + 4 || t == RainRules.RELEASE + 7) && c.dashPose != null
-                    && RainRules.afterimages(c.layer)) {
+                    && RainRules.afterimages(c.executionTier)) {
                 c.ghosts.add(new Ghost(e.position(), bodyYaw(e), clientTicks, 9, c.dashPose, false, 0xFFC8DE, 0.42F));
             }
             dust(c, e.position(), 2, 0.2D);
@@ -909,7 +909,7 @@ public final class RainVfx {
             }
         }
         // Искры, осыпающиеся со следа.
-        if (c.swing != null && t >= RainRules.RELEASE + 2 && t < RainRules.TRAIL_HOLD && RainRules.petals(c.layer) && c.random.nextInt(3) > 0) {
+        if (c.swing != null && t >= RainRules.RELEASE + 2 && t < RainRules.TRAIL_HOLD && RainRules.petals(c.executionTier) && c.random.nextInt(3) > 0) {
             for (int i = 0; i < 2; i++) {
                 double u = c.random.nextDouble() * Math.min(1.0D, (t - RainRules.RELEASE) / (double) RainRules.DASH_TICKS);
                 Vec3 at = c.swing[(int) (u * (c.swing.length - 1))];
@@ -923,8 +923,14 @@ public final class RainVfx {
         if (!marked) {
             return;
         }
+        // The standalone effect's impact is at 132/60 s = 44 ticks.
+        // Start during the drift so its ground impact matches the final damage cohort.
+        // Keep the technique's existing early visuals, caption, sound and hit feedback.
+        if (t == RainRules.contact(2) - 44 && RainRules.petals(c.executionTier) && mc.level != null) {
+            VfxBackends.rainfallAaa(mc.level, QiShockwaveVfx.ground(mc.level, c.target));
+        }
         // Ядро ведёт живую цель, не быстрее 0,6 блока за тик.
-        Vec3 want = RainRules.core(c.target, c.dir, c.layer);
+        Vec3 want = RainRules.core(c.target, c.dir, c.executionTier);
         c.corePrev = c.core;
         if (c.core == null) {
             c.core = want;
@@ -934,14 +940,14 @@ public final class RainVfx {
             double l = d.length();
             c.core = l > 0.6D ? c.core.add(d.scale(0.6D / l)) : want;
         }
-        if (t == RainRules.BLOOM && RainRules.shells(c.layer) > 0) {
+        if (t == RainRules.BLOOM && RainRules.shells(c.executionTier) > 0) {
             bloom(c);
         }
         if (t == RainRules.STREAM) {
             streams(c);
         }
         // Медленные лепестки вокруг цели всё время иллюзии (r07).
-        if (RainRules.petals(c.layer) && t > RainRules.BLOOM && t < RainRules.COHORTS[0] && t % 5 == 0) {
+        if (RainRules.petals(c.executionTier) && t > RainRules.BLOOM && t < RainRules.COHORTS[0] && t % 5 == 0) {
             for (int i = 0; i < Math.max(1, c.n(2)); i++) {
                 double a = c.random.nextDouble() * Math.PI * 2.0D;
                 double r = 0.5D + 3.0D * c.random.nextDouble();
@@ -953,7 +959,7 @@ public final class RainVfx {
                 c.motes.add(m);
             }
         }
-        if (t == RainRules.CAPTION && c.own() && c.layer >= 3) {
+        if (t == RainRules.CAPTION && c.own() && c.executionTier >= 3) {
             TechniqueCaption.showSecret(Component.translatable("technique.murim.twenty_four_plum.school"),
                     Component.translatable("technique.murim.twenty_four_plum.rainfall"), RainRules.contact(2) + 34 - RainRules.CAPTION);
         }
@@ -985,7 +991,7 @@ public final class RainVfx {
                 }
             }
             // Обрушение (r10): на касании последней волны — короткий белый столб на всю высоту.
-            if (k == 2 && t == RainRules.contact(2) - 1 && RainRules.column(c.layer)) {
+            if (k == 2 && t == RainRules.contact(2) - 1 && RainRules.column(c.executionTier)) {
                 for (int i = 0; i < c.n(26); i++) {
                     double a = c.random.nextDouble() * Math.PI * 2.0D;
                     double r = 1.1D * c.scale * Math.sqrt(c.random.nextDouble());
@@ -994,25 +1000,8 @@ public final class RainVfx {
                 }
             }
         }
-        // Камера мастера: после прохода плавно оглядывается на цель и поднимает взгляд к ядру.
-        if (c.own() && mc.player != null && t >= RainRules.RELEASE + RainRules.DASH_TICKS && t <= RainRules.AFTER + 10) {
-            Vec3 eye = mc.player.getEyePosition();
-            Vec3 to = c.target.subtract(eye);
-            float wantYaw = (float) Math.toDegrees(Math.atan2(-to.x, to.z));
-            float dy = Mth.wrapDegrees(wantYaw - mc.player.getYRot());
-            if (t < RainRules.BLOOM + 6) {
-                mc.player.setYRot(mc.player.getYRot() + dy * 0.24F);
-            }
-            float wantPitch;
-            if (t >= RainRules.BLOOM && t < RainRules.COHORTS[1] && c.core != null) {
-                Vec3 up = c.core.subtract(eye);
-                wantPitch = (float) Mth.clamp(-Math.toDegrees(Math.atan2(up.y, Math.hypot(up.x, up.z))) * 0.72D, -38.0D, 0.0D);
-            } else {
-                wantPitch = 4.0F;
-            }
-            float k = t < RainRules.BLOOM ? 0.0F : t < RainRules.COHORTS[1] ? 0.06F : 0.12F;
-            mc.player.setXRot(mc.player.getXRot() + (wantPitch - mc.player.getXRot()) * k);
-        }
+        // The caster's view is never turned (author 10.10): the petals above are for the opponent to see;
+        // the player looks around himself if he wants.
     }
 
     private static void tickMotes(Cast c) {
@@ -1381,7 +1370,7 @@ public final class RainVfx {
         Vec3[] p = new Vec3[m + 1];
         double[] w = new double[m + 1];
         float[] a = new float[m + 1];
-        boolean pink = RainRules.petals(c.layer);
+        boolean pink = RainRules.petals(c.executionTier);
         for (int i = 0; i <= m; i++) {
             double u = i / (double) n;
             p[i] = c.swing[Math.min(n, i)];
@@ -1656,7 +1645,7 @@ public final class RainVfx {
 
     /** Лепестки (атлас) и их свечение; цветок-ядро — сотни лепестков на орбитах и глоу сердцевины. */
     private static void petals(Cast c, PoseStack.Pose pose, Vec3 camera, MultiBufferSource.BufferSource buffers, float partial, float t) {
-        if (!RainRules.petals(c.layer)) {
+        if (!RainRules.petals(c.executionTier)) {
             return;
         }
         RenderType pt = MurimRenderTypes.plumPetals();

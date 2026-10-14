@@ -238,7 +238,7 @@ public final class RiverVfx {
 
     private static final class Cast {
         final int entityId;
-        final int layer;
+        final int executionTier;
         int start;
         final Random random;
         final double scale;
@@ -291,13 +291,13 @@ public final class RiverVfx {
         final List<Scar> scars = new ArrayList<>();
         ResourceLocation skin;
 
-        Cast(int entityId, int layer) {
+        Cast(int entityId, int executionTier) {
             this.entityId = entityId;
-            this.layer = layer;
+            this.executionTier = executionTier;
             this.start = clientTicks;
             this.random = new Random(entityId * 7919L + clientTicks);
-            this.scale = RiverRules.scale(layer);
-            this.petalsMax = RiverRules.petals(layer);
+            this.scale = RiverRules.scale(executionTier);
+            this.petalsMax = RiverRules.petals(executionTier);
         }
 
         int t() {
@@ -305,7 +305,7 @@ public final class RiverVfx {
         }
 
         int n(double full) {
-            return (int) Math.ceil(full * scale * Math.max(0.25D, layer / 7.0D));
+            return (int) Math.ceil(full * scale * Math.max(0.25D, executionTier / 7.0D));
         }
 
         boolean own() {
@@ -328,13 +328,13 @@ public final class RiverVfx {
 
     public static void onTechniqueEvent(TechniqueEventPayload payload) {
         if (payload.event() != TechniqueEventPayload.Event.STARTED || !TECHNIQUE.equals(payload.techniqueId())
-                || payload.layer() <= 0) {
+                || payload.executionTier() <= 0) {
             return;
         }
         CASTS.removeIf(c -> c.entityId == payload.sourceId());
-        CASTS.add(new Cast(payload.sourceId(), payload.layer()));
+        CASTS.add(new Cast(payload.sourceId(), payload.executionTier()));
         // Голубой предвыброс (r01) — холодная аура до 14-го тика, дальше красно-розовая.
-        ClientAuraState.techniqueAura(payload.sourceId(), 2 + Math.min(2, payload.layer() / 3), 0, RiverRules.BLUE_END + 2);
+        ClientAuraState.techniqueAura(payload.sourceId(), 2 + Math.min(2, payload.executionTier() / 3), 0, RiverRules.BLUE_END + 2);
     }
 
     public static void onRiver(RiverPayload p) {
@@ -347,7 +347,7 @@ public final class RiverVfx {
         Minecraft mc = Minecraft.getInstance();
         if (p.stage() == RiverPayload.AIM) {
             if (c == null) {
-                c = new Cast(p.entityId(), p.layer());
+                c = new Cast(p.entityId(), p.executionTier());
                 CASTS.add(c);
             }
             // Сверка шкалы: пакет прицела приходит ровно на тике AIM.
@@ -529,7 +529,7 @@ public final class RiverVfx {
         }
         // r02–r06: красно-розовая оболочка — живая аура и рваные языки по силуэту.
         if (t == RiverRules.CONCENTRATE) {
-            ClientAuraState.techniqueAura(c.entityId, 2 + Math.min(2, c.layer / 3), 1, RiverRules.BURST + 10 - RiverRules.CONCENTRATE);
+            ClientAuraState.techniqueAura(c.entityId, 2 + Math.min(2, c.executionTier / 3), 1, RiverRules.BURST + 10 - RiverRules.CONCENTRATE);
             dust(c, feet, c.n(6) + 1, 0.1D);
             if (c.own()) {
                 SpeedLines.radial(0.5F, 0.5F, 0.35F, 5, SpeedLines.WHITE);
@@ -560,7 +560,7 @@ public final class RiverVfx {
             ClientAuraState.techniqueAura(c.entityId, 2, 1, RiverRules.RELEASE - RiverRules.STROKES[1][0] - 2);
         }
         if (t == RiverRules.RELEASE) {
-            ClientAuraState.techniqueAura(c.entityId, 2 + Math.min(2, c.layer / 3), 1, 6);
+            ClientAuraState.techniqueAura(c.entityId, 2 + Math.min(2, c.executionTier / 3), 1, 6);
         }
         // Шаг в стойку и в жест — пыль от движения.
         if (t == 6 || t == 18 || t == 36) {
@@ -568,7 +568,7 @@ public final class RiverVfx {
         }
         // r07: резонанс — копии руки с малым смещением и поперечные штрихи вдоль клинка.
         if (t >= RiverRules.RESONANCE && t < RiverRules.AIM && c.hand != null) {
-            if (RiverRules.afterimages(c.layer)) {
+            if (RiverRules.afterimages(c.executionTier)) {
                 int every = t < RiverRules.STROKES[0][0] ? 2 : 4;
                 if (t % every == 0) {
                     ghostArm(c, e, mc);
@@ -770,7 +770,7 @@ public final class RiverVfx {
         // Изгиб жгута по ходу взмаха: вверх и вправо, не больше 3 блоков.
         double bow = Math.min(3.0D, 0.9D + dist * 0.18D) * (0.7D + 0.3D * c.scale);
         c.streamBend = from.lerp(to, 0.45D).add(up.scale(bow)).add(side.scale(bow * 0.55D));
-        int strands = Math.max(1, RiverRules.strands(c.layer));
+        int strands = Math.max(1, RiverRules.strands(c.executionTier));
         int window = c.flight + 6;
         int i = 0;
         for (Petal p : c.petals) {
@@ -801,7 +801,7 @@ public final class RiverVfx {
                 c.petals.add(q);
             }
         }
-        if (c.layer >= 2) {
+        if (c.executionTier >= 2) {
             for (int k = 0; k < Math.max(2, c.n(8)); k++) {
                 double u = 0.2D + 0.7D * c.random.nextDouble();
                 // Половина цветков — в стороне от кромки на 0,2–0,5 блока.
@@ -854,7 +854,7 @@ public final class RiverVfx {
             c.motes.add(m);
         }
         c.rings.add(new Ring(at, c.axis, clientTicks, 1.4D * c.scale, 8, 0.08D));
-        if (c.own() && RiverRules.caption(c.layer)) {
+        if (c.own() && RiverRules.caption(c.executionTier)) {
             c.caption = true;
             TechniqueCaption.showSecret(Component.translatable("technique.murim.twenty_four_plum.school"),
                     Component.translatable("technique.murim.twenty_four_plum.river"), RiverRules.BURST + 36 - (c.t()));
@@ -892,7 +892,7 @@ public final class RiverVfx {
         Vec3 ref = Math.abs(axis.y) > 0.9D ? new Vec3(1.0D, 0.0D, 0.0D) : new Vec3(0.0D, 1.0D, 0.0D);
         Vec3 side = axis.cross(ref).normalize();
         Vec3 up = side.cross(axis).normalize();
-        int rays = RiverRules.rays(c.layer);
+        int rays = RiverRules.rays(c.executionTier);
         double s = c.scale;
         if (rays > 0) {
             c.rays.add(new Ray(axis, 9.0D * s, 0.22D * s, clientTicks, 9));
@@ -1194,7 +1194,7 @@ public final class RiverVfx {
         Vec3 ref = Math.abs(tangent.y) > 0.9D ? new Vec3(1.0D, 0.0D, 0.0D) : new Vec3(0.0D, 1.0D, 0.0D);
         Vec3 n1 = tangent.cross(ref).normalize();
         Vec3 n2 = n1.cross(tangent).normalize();
-        int strands = Math.max(1, RiverRules.strands(c.layer));
+        int strands = Math.max(1, RiverRules.strands(c.executionTier));
         double phi = p.strand * Math.PI * 2.0D / strands + e * 4.0D * Math.PI * (p.strand % 2 == 0 ? 1.0D : -1.0D) + t * 0.05D;
         double half = (0.9D + (0.3D - 0.9D) * e) * c.scale;
         double strandR = p.strand == 0 ? 0.0D : half;
@@ -1426,7 +1426,7 @@ public final class RiverVfx {
             fstrip(v, pose, camera, p, PlumVfx.scale(w, 0.3D), 0.7F * a, PINK_LIGHT);
         }
         // r03: глаза — два компактных красных акцента с белым центром (с 4-го слоя).
-        if (c.layer >= 4 && t < RiverRules.RESONANCE + 6) {
+        if (c.executionTier >= 4 && t < RiverRules.RESONANCE + 6) {
             Vec3 head = BoneAnchorLayer.position(player, BoneAnchorLayer.Bone.HEAD);
             if (head != null) {
                 Vec3 look = Vec3.directionFromRotation(player.getXRot(), player.getYHeadRot());
@@ -1445,7 +1445,7 @@ public final class RiverVfx {
     /** Резонанс (r07): поперечные штрихи вдоль клинка и две смещённые копии линии клинка. */
     private static void vibration(Cast c, PoseStack.Pose pose, Vec3 camera, VertexConsumer v, float partial) {
         float t = c.t() + partial;
-        if (!RiverRules.afterimages(c.layer) || t < RiverRules.RESONANCE || t > RiverRules.RELEASE || c.hand == null) {
+        if (!RiverRules.afterimages(c.executionTier) || t < RiverRules.RESONANCE || t > RiverRules.RELEASE || c.hand == null) {
             return;
         }
         float a = (float) PlumVfx.curve(t, RiverRules.RESONANCE, 0.0, RiverRules.RESONANCE + 3, 1.0, RiverRules.GATHER, 1.0,
@@ -1482,7 +1482,7 @@ public final class RiverVfx {
 
     /** Сбор (r10): неравные красные спиральные ленты вокруг кисти, сходятся к центру. */
     private static void spirals(Cast c, PoseStack.Pose pose, Vec3 camera, VertexConsumer v, float t) {
-        int sp = RiverRules.spirals(c.layer);
+        int sp = RiverRules.spirals(c.executionTier);
         if (sp == 0 || t < RiverRules.GATHER || t > RiverRules.RELEASE + 3 || c.gather == null) {
             return;
         }
@@ -1614,7 +1614,7 @@ public final class RiverVfx {
         Vec3 r1 = view.cross(ref).normalize();
         Vec3 r2 = r1.cross(view).normalize();
         double rot = 0.15D + 0.02D * age;
-        int rays = Math.max(2, RiverRules.rays(c.layer) / 2 + 2);
+        int rays = Math.max(2, RiverRules.rays(c.executionTier) / 2 + 2);
         for (int i = 0; i < rays; i++) {
             double ang = rot + i * Math.PI / rays;
             boolean major = i % 2 == 0;
@@ -1650,7 +1650,7 @@ public final class RiverVfx {
         }
         // Направленный белый выброс: широкий клин по оси атаки 8–10 блоков (r16).
         float age = clientTicks - c.burstTick + partial;
-        if (age < 10.0F && RiverRules.rays(c.layer) >= 6) {
+        if (age < 10.0F && RiverRules.rays(c.executionTier) >= 6) {
             double len = (2.0D + 7.0D * (1.0D - Math.pow(1.0D - Mth.clamp(age / 3.0D, 0.0D, 1.0D), 3.0D))) * c.scale;
             float a = (float) PlumVfx.curve(age, 0.0, 1.0, 3.0, 1.0, 10.0, 0.0);
             Vec3 o = c.burstAt;

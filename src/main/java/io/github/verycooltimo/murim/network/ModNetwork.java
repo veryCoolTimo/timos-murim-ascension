@@ -19,7 +19,7 @@ import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 public final class ModNetwork {
 
     /** Версия протокола. Поднимать при любом несовместимом изменении пакетов. */
-    private static final String VERSION = "35";
+    private static final String VERSION = "42"; // universal twelve-star mastery and version 3 migration
 
     @SubscribeEvent
     static void register(RegisterPayloadHandlersEvent event) {
@@ -43,6 +43,9 @@ public final class ModNetwork {
                 TechniqueEventPayload.STREAM_CODEC,
                 ClientPayloadBridge::handleTechniqueEvent);
 
+        registrar.playToClient(FoundationPayloads.Hit.TYPE, FoundationPayloads.Hit.STREAM_CODEC,
+                (payload, context) -> ClientPayloadBridge.handleFoundationHit(payload));
+
         // Описания техник: клиенту нужна форма дуги, цвета и тайминги, а датапак живёт
         // на сервере. Рассылается при входе и после /reload — см. TechniqueEvents.
         registrar.playToClient(
@@ -56,6 +59,11 @@ public final class ModNetwork {
                 (payload, context) -> ClientPayloadBridge.handleSyncProfile(payload));
 
         // Аура существ: рисуется на клиенте и задаёт экранное давление.
+        // Belt sword (gear/BeltSword): other players' inventories are not synced, the belt is.
+        registrar.playToClient(io.github.verycooltimo.murim.gear.BeltSwordPayload.TYPE,
+                io.github.verycooltimo.murim.gear.BeltSwordPayload.STREAM_CODEC,
+                (payload, context) -> ClientPayloadBridge.handleBeltSword(payload));
+
         registrar.playToClient(
                 SyncAuraPayload.TYPE,
                 SyncAuraPayload.STREAM_CODEC,
@@ -67,7 +75,7 @@ public final class ModNetwork {
                 FoundationPayloads.Swing.STREAM_CODEC,
                 (payload, context) -> {
                     if (context.player() instanceof ServerPlayer serverPlayer) {
-                        io.github.verycooltimo.murim.combat.FoundationService.onSwing(serverPlayer, payload.form());
+                        io.github.verycooltimo.murim.combat.SwordBasicAttack.input(serverPlayer, payload.form(), payload.targetId());
                     }
                 });
         registrar.playToClient(
@@ -92,6 +100,8 @@ public final class ModNetwork {
         registrar.playToClient(DialoguePayloads.Close.TYPE, DialoguePayloads.Close.STREAM_CODEC,
                 (payload, context) -> ClientPayloadBridge.handleDialogueClose());
         // Реплики над головой людей горы (живая гора, автор 05.10): сервер выбирает строку, клиент рисует пузырь.
+        registrar.playToClient(SectGoalPayload.TYPE, SectGoalPayload.STREAM_CODEC,
+                (payload, context) -> ClientPayloadBridge.handleSectGoal(payload));
         registrar.playToClient(SectBubblePayload.TYPE, SectBubblePayload.STREAM_CODEC,
                 (payload, context) -> ClientPayloadBridge.handleSectBubble(payload));
         registrar.playToServer(DialoguePayloads.Choose.TYPE, DialoguePayloads.Choose.STREAM_CODEC,
@@ -164,6 +174,8 @@ public final class ModNetwork {
                 (payload, context) -> ClientPayloadBridge.handleFallingPetal(payload));
         registrar.playToClient(ShowerPayload.TYPE, ShowerPayload.STREAM_CODEC,
                 (payload, context) -> ClientPayloadBridge.handleShower(payload));
+        registrar.playToClient(DemonicPayload.TYPE, DemonicPayload.STREAM_CODEC,
+                (payload, context) -> ClientPayloadBridge.handleDemonic(payload));
         registrar.playToClient(StepPayload.TYPE, StepPayload.STREAM_CODEC,
                 (payload, context) -> ClientPayloadBridge.handleStep(payload));
 
@@ -197,6 +209,13 @@ public final class ModNetwork {
                 });
 
         // Раскладка техник: клиент присылает намерение, сервер проверяет и рассылает итог.
+        registrar.playToServer(LoadoutPayloads.SelectForm.TYPE, LoadoutPayloads.SelectForm.STREAM_CODEC,
+                (payload, context) -> {
+                    if (context.player() instanceof ServerPlayer player) {
+                        io.github.verycooltimo.murim.mastery.LoadoutService.selectForm(
+                                player, payload.slot(), payload.technique(), payload.activate());
+                    }
+                });
         registrar.playToServer(
                 LoadoutPayloads.SetSlot.TYPE,
                 LoadoutPayloads.SetSlot.STREAM_CODEC,
@@ -218,6 +237,9 @@ public final class ModNetwork {
                 LoadoutPayloads.Sync.TYPE,
                 LoadoutPayloads.Sync.STREAM_CODEC,
                 (payload, context) -> ClientPayloadBridge.handleLoadout(payload));
+
+        registrar.playToClient(QiSwordHitPayload.TYPE, QiSwordHitPayload.STREAM_CODEC,
+                (payload, context) -> ClientPayloadBridge.handleQiSwordHit(payload));
 
         registrar.playToClient(
                 SyncMasteryPayload.TYPE,

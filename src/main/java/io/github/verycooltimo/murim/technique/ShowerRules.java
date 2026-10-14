@@ -57,46 +57,46 @@ public final class ShowerRules {
     public static final double DMG_LAND = 0.5D;
 
     /** Высота зависания над ступнями цели по слою: слой 1 — 4,4, слой 7 — 5,6 (пикирование — длинный тычок, codex 03.10). */
-    public static double height(int layer) {
-        return 4.2D + 0.2D * Math.min(7, Math.max(1, layer));
+    public static double height(int executionTier) {
+        return 4.2D + 0.2D * Math.min(7, Math.max(1, executionTier));
     }
 
     /** Сила слоя: слой 7 = 1, слой 8 сильнее. */
-    public static double power(int layer) {
-        return layer <= 0 ? 0.0D : layer >= 8 ? 1.15D : 0.3D + 0.1D * layer;
+    public static double power(int executionTier) {
+        return executionTier <= 0 ? 0.0D : executionTier >= 8 ? 1.15D : 0.3D + 0.1D * executionTier;
     }
 
     /** Число параллельных разрезов пучка по слою: 3 на первом, 12 на седьмом, 15 на восьмом (codex 03.10: не лазер). */
-    public static int streaks(int layer) {
-        return layer <= 0 ? 0 : layer >= 8 ? 15 : 2 + Math.round(layer * 10.0F / 7.0F);
+    public static int streaks(int executionTier) {
+        return executionTier <= 0 ? 0 : executionTier >= 8 ? 15 : 2 + Math.round(executionTier * 10.0F / 7.0F);
     }
 
     /** Ширина пучка у конца (у начала — узкий), блоков. */
-    public static double spread(int layer) {
-        return layer <= 0 ? 0.0D : 0.45D + 0.11D * Math.min(8, layer);
+    public static double spread(int executionTier) {
+        return executionTier <= 0 ? 0.0D : 0.45D + 0.11D * Math.min(8, executionTier);
     }
 
     /** Лепестки — с 3-го слоя, остаточные образы — со 2-го, голубые дуги поперёк пучка — с 5-го. */
-    public static boolean petals(int layer) {
-        return layer >= 3;
+    public static boolean petals(int executionTier) {
+        return executionTier >= 3;
     }
 
-    public static boolean afterimages(int layer) {
-        return layer >= 2;
+    public static boolean afterimages(int executionTier) {
+        return executionTier >= 2;
     }
 
-    public static boolean crossArcs(int layer) {
-        return layer >= 5;
+    public static boolean crossArcs(int executionTier) {
+        return executionTier >= 5;
     }
 
     /**
      * Точка зависания: над целью на {@link #height}, отступив {@link #BACK} к мастеру по горизонтали.
      * Цель ближе отступа — мастер взлетает почти вертикально. Не ниже, чем на 1,5 над стартом.
      */
-    public static Vec3 apex(Vec3 origin, Vec3 targetFeet, int layer) {
+    public static Vec3 apex(Vec3 origin, Vec3 targetFeet, int executionTier) {
         Vec3 flat = new Vec3(targetFeet.x - origin.x, 0.0D, targetFeet.z - origin.z);
         double d = flat.length();
-        double y = Math.max(origin.y + 1.5D, targetFeet.y + height(layer));
+        double y = Math.max(origin.y + 1.5D, targetFeet.y + height(executionTier));
         if (d < BACK + 0.5D) {
             Vec3 back = d < 1.0E-3D ? Vec3.ZERO : flat.normalize().scale(Math.min(0.0D, d - BACK));
             return new Vec3(origin.x + back.x, y, origin.z + back.z);

@@ -8,7 +8,7 @@
     "windup": 2,
     "impact": 2,
     "recovery": 4,
-    "dissipation": 2
+    "dissipation": 0
   },
   "behavior": {
     "type": "murim:melee_arc",
@@ -16,7 +16,7 @@
     "arc_degrees": 90.0,
     "damage": 0.0
   },
-  "animation": "murim:six_form_1",
+  "animation": "murim:seven_plum_cut_1",
   "vfx": {
     "pivot": [
       0.0,
@@ -68,9 +68,9 @@
     "damage_threshold": 3.0
   },
   "weakness": "technique.murim.seven_plum_basic.weakness",
-  "hit_stop_ticks": 2,
-  "cooldown_ticks": 12,
-  "layers": 8,
+  "hit_stop_ticks": 0,
+  "cooldown_ticks": 8,
+  "star_cap": 12,
   "tier": "advanced",
   "foundation": true
 }

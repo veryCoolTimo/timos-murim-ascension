@@ -1,0 +1,46 @@
+{
+  "variants": {
+    "type=bottom": [
+      {
+        "model": "murim:block/hua_scree_slab",
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_scree_slab_1",
+        "weight": 4
+      },
+      {
+        "model": "murim:block/hua_scree_slab_2",
+        "weight": 3
+      }
+    ],
+    "type=top": [
+      {
+        "model": "murim:block/hua_scree_slab_top",
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_scree_slab_top_1",
+        "weight": 4
+      },
+      {
+        "model": "murim:block/hua_scree_slab_top_2",
+        "weight": 3
+      }
+    ],
+    "type=double": [
+      {
+        "model": "murim:block/hua_scree",
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_scree_b",
+        "weight": 4
+      },
+      {
+        "model": "murim:block/hua_scree_c",
+        "weight": 3
+      }
+    ]
+  }
+}

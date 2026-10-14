@@ -74,6 +74,6 @@
   "weakness": "technique.murim.burst_breath.weakness",
   "hit_stop_ticks": 0,
   "cooldown_ticks": 400,
-  "layers": 2,
+  "star_cap": 12,
   "tier": "basic"
 }

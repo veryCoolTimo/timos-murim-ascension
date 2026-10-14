@@ -34,7 +34,7 @@
             {
               "function": "minecraft:set_components",
               "components": {
-                "murim:technique": "murim:seven_plum_blossoms"
+                "murim:technique": "murim:bandit_rush"
               }
             },
             {
@@ -197,6 +197,45 @@
               }
             }
           ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "murim:junk_heavenly_dragon_strike_manual",
+          "weight": 1,
+          "functions": [
+            {
+              "function": "minecraft:set_components",
+              "components": {
+                "murim:technique": "murim:heavenly_dragon_strike"
+              }
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "murim:junk_thousand_cranes_dance_manual",
+          "weight": 1,
+          "functions": [
+            {
+              "function": "minecraft:set_components",
+              "components": {
+                "murim:technique": "murim:thousand_cranes_dance"
+              }
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "murim:junk_beggars_crushing_tap_manual",
+          "weight": 1,
+          "functions": [
+            {
+              "function": "minecraft:set_components",
+              "components": {
+                "murim:technique": "murim:beggars_crushing_tap"
+              }
+            }
+          ]
         }
       ],
       "conditions": [
@@ -300,7 +339,7 @@
             {
               "function": "minecraft:set_components",
               "components": {
-                "murim:technique": "murim:seven_plum_blossoms",
+                "murim:technique": "murim:bandit_rush",
                 "murim:manual_depth": 2
               }
             }

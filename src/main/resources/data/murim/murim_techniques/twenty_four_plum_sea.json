@@ -68,12 +68,12 @@
   "weakness": "technique.murim.twenty_four_plum_sea.weakness",
   "hit_stop_ticks": 0,
   "cooldown_ticks": 500,
-  "layers": 8,
+  "star_cap": 12,
   "tier": "secret",
   "requires": [
     {
       "technique": "murim:twenty_four_plum_river",
-      "layer": 3
+      "star": 5
     }
   ]
 }

@@ -5,6 +5,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.Map;
 
 /**
  * Положение игрока в секте Хуашань (docs/design/23-mount-hua-sect.md §2.2–2.3, этап С1): вступил ли,
@@ -20,16 +21,17 @@ import java.util.Set;
  * @param flags      флаги разговоров и уроков
  * @param contribution заслуги перед сектой за всё время (уроки, утренняя тренировка, пожертвования, защита горы);
  *                     растят положение ({@link SectStanding}). Версия 2: старые сохранения читаются с нулём
+ * @param journal      фиксированные ключи серверных занятий: дни, этапы и счётчики; версия 5
  * @param spent        сколько заслуг потрачено в обмене ({@link MeritShop}, план §6.2: «тратить можно — положение не
  *                     падает»): остаток — {@link #merit()}. Версия 3: старые сохранения читаются с нулём
  */
-public record SectState(int version, boolean member, int generation, Set<String> flags, int contribution, int spent) {
+public record SectState(int version, boolean member, int generation, Set<String> flags, int contribution, int spent, Map<String, Long> journal) {
 
-    public static final int VERSION = 4;
+    public static final int VERSION = 5;
     /** Третье поколение (율 Юль): у игрока всегда третье. */
     public static final int THIRD = 3;
 
-    public static final SectState NONE = new SectState(VERSION, false, 0, Set.of(), 0, 0);
+    public static final SectState NONE = new SectState(VERSION, false, 0, Set.of(), 0, 0, Map.of());
 
     public static final Codec<SectState> CODEC = RecordCodecBuilder.<SectState>create(i -> i.group(
             Codec.INT.optionalFieldOf("version", 0).forGetter(SectState::version),
@@ -38,17 +40,34 @@ public record SectState(int version, boolean member, int generation, Set<String>
             Codec.STRING.listOf().xmap(l -> (Set<String>) new HashSet<>(l), s -> s.stream().sorted().toList())
                     .optionalFieldOf("flags", Set.of()).forGetter(SectState::flags),
             Codec.INT.optionalFieldOf("contribution", 0).forGetter(SectState::contribution),
-            Codec.INT.optionalFieldOf("spent", 0).forGetter(SectState::spent)
+            Codec.INT.optionalFieldOf("spent", 0).forGetter(SectState::spent),
+            Codec.unboundedMap(Codec.STRING, Codec.LONG).optionalFieldOf("journal", Map.of()).forGetter(SectState::journal)
     ).apply(i, SectState::new)).xmap(SectState::migrate, s -> s);
 
     public SectState {
         flags = Set.copyOf(flags);
+        journal = Map.copyOf(journal);
+    }
+
+    /** Old callers/saves have no activity journal. The sect attachment already copies on death. */
+    public SectState(int version, boolean member, int generation, Set<String> flags, int contribution, int spent) {
+        this(version, member, generation, flags, contribution, spent, Map.of());
+    }
+
+    public long entry(String key, long fallback) { return journal.getOrDefault(key, fallback); }
+
+    /** Fixed service-owned keys are overwritten, never one new key per day or event. */
+    public SectState record(String key, long value) {
+        Map<String, Long> next = new java.util.HashMap<>(journal);
+        next.put(key, value);
+        return new SectState(version, member, generation, flags, contribution, spent, next);
     }
 
     /** Подъём старого формата до {@link #VERSION}. */
     public SectState migrate() {
         // Версия 2 добавила заслуги: поле необязательное, старое сохранение читается с нулём.
         // Версия 3 добавила потраченные заслуги: старое сохранение — ничего не потрачено.
+        // Версия 5: необязательный журнал занятий, старое сохранение читает пустую карту.
         // Версия 4 (06.10): люди секты переименованы, флаги с прежним ключом человека переводятся (SectRoster.RENAMED).
         if (version >= VERSION) {
             return this;
@@ -57,7 +76,7 @@ public record SectState(int version, boolean member, int generation, Set<String>
         for (String flag : flags) {
             moved.add(SectRoster.renamedFlag(flag));
         }
-        return new SectState(VERSION, member, member && generation == 0 ? THIRD : generation, moved, contribution, spent);
+        return new SectState(VERSION, member, member && generation == 0 ? THIRD : generation, moved, contribution, spent, journal);
     }
 
     public boolean has(String flag) {
@@ -70,7 +89,7 @@ public record SectState(int version, boolean member, int generation, Set<String>
         }
         Set<String> next = new HashSet<>(flags);
         next.add(flag);
-        return new SectState(version, member, generation, next, contribution, spent);
+        return new SectState(version, member, generation, next, contribution, spent, journal);
     }
 
     public SectState without(String flag) {
@@ -79,16 +98,16 @@ public record SectState(int version, boolean member, int generation, Set<String>
         }
         Set<String> next = new HashSet<>(flags);
         next.remove(flag);
-        return new SectState(version, member, generation, next, contribution, spent);
+        return new SectState(version, member, generation, next, contribution, spent, journal);
     }
 
     public SectState joined() {
-        return new SectState(version, true, THIRD, flags, contribution, spent);
+        return new SectState(version, true, THIRD, flags, contribution, spent, journal);
     }
 
     /** Заслуги ± {@code delta}; ниже нуля не падают. */
     public SectState contribute(int delta) {
-        return new SectState(version, member, generation, flags, Math.max(0, contribution + delta), spent);
+        return new SectState(version, member, generation, flags, Math.max(0, contribution + delta), spent, journal);
     }
 
     /** Заслуги, которые можно потратить: за всё время минус потраченные (не ниже нуля — штрафы могли съесть остаток). */
@@ -98,6 +117,6 @@ public record SectState(int version, boolean member, int generation, Set<String>
 
     /** Потратить {@code cost} заслуг: сумма за всё время (и положение) не меняется. */
     public SectState spend(int cost) {
-        return new SectState(version, member, generation, flags, contribution, spent + Math.max(0, cost));
+        return new SectState(version, member, generation, flags, contribution, spent + Math.max(0, cost), journal);
     }
 }

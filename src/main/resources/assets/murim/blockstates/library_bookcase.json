@@ -1,0 +1,4806 @@
+{
+  "multipart": [
+    {
+      "when": {
+        "half": "lower",
+        "variant": "0",
+        "facing": "south",
+        "has_book": "false"
+      },
+      "apply": {
+        "model": "murim:block/library_bookcase_lower_0"
+      }
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "0",
+        "facing": "south",
+        "has_book": "true",
+        "book_slot": "0"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_0_book"
+        },
+        {
+          "model": "murim:block/library_manual_lower_0_0"
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "0",
+        "facing": "south",
+        "has_book": "true",
+        "book_slot": "1"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_0_book_1"
+        },
+        {
+          "model": "murim:block/library_manual_lower_0_1"
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "0",
+        "facing": "south",
+        "has_book": "true",
+        "book_slot": "2"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_0_book_2"
+        },
+        {
+          "model": "murim:block/library_manual_lower_0_2"
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "0",
+        "facing": "south",
+        "has_book": "true",
+        "book_slot": "3"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_0_book_3"
+        },
+        {
+          "model": "murim:block/library_manual_lower_0_3"
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "0",
+        "facing": "west",
+        "has_book": "false"
+      },
+      "apply": {
+        "model": "murim:block/library_bookcase_lower_0",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "0",
+        "facing": "west",
+        "has_book": "true",
+        "book_slot": "0"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_0_book",
+          "y": 90
+        },
+        {
+          "model": "murim:block/library_manual_lower_0_0",
+          "y": 90
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "0",
+        "facing": "west",
+        "has_book": "true",
+        "book_slot": "1"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_0_book_1",
+          "y": 90
+        },
+        {
+          "model": "murim:block/library_manual_lower_0_1",
+          "y": 90
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "0",
+        "facing": "west",
+        "has_book": "true",
+        "book_slot": "2"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_0_book_2",
+          "y": 90
+        },
+        {
+          "model": "murim:block/library_manual_lower_0_2",
+          "y": 90
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "0",
+        "facing": "west",
+        "has_book": "true",
+        "book_slot": "3"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_0_book_3",
+          "y": 90
+        },
+        {
+          "model": "murim:block/library_manual_lower_0_3",
+          "y": 90
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "0",
+        "facing": "north",
+        "has_book": "false"
+      },
+      "apply": {
+        "model": "murim:block/library_bookcase_lower_0",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "0",
+        "facing": "north",
+        "has_book": "true",
+        "book_slot": "0"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_0_book",
+          "y": 180
+        },
+        {
+          "model": "murim:block/library_manual_lower_0_0",
+          "y": 180
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "0",
+        "facing": "north",
+        "has_book": "true",
+        "book_slot": "1"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_0_book_1",
+          "y": 180
+        },
+        {
+          "model": "murim:block/library_manual_lower_0_1",
+          "y": 180
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "0",
+        "facing": "north",
+        "has_book": "true",
+        "book_slot": "2"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_0_book_2",
+          "y": 180
+        },
+        {
+          "model": "murim:block/library_manual_lower_0_2",
+          "y": 180
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "0",
+        "facing": "north",
+        "has_book": "true",
+        "book_slot": "3"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_0_book_3",
+          "y": 180
+        },
+        {
+          "model": "murim:block/library_manual_lower_0_3",
+          "y": 180
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "0",
+        "facing": "east",
+        "has_book": "false"
+      },
+      "apply": {
+        "model": "murim:block/library_bookcase_lower_0",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "0",
+        "facing": "east",
+        "has_book": "true",
+        "book_slot": "0"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_0_book",
+          "y": 270
+        },
+        {
+          "model": "murim:block/library_manual_lower_0_0",
+          "y": 270
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "0",
+        "facing": "east",
+        "has_book": "true",
+        "book_slot": "1"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_0_book_1",
+          "y": 270
+        },
+        {
+          "model": "murim:block/library_manual_lower_0_1",
+          "y": 270
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "0",
+        "facing": "east",
+        "has_book": "true",
+        "book_slot": "2"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_0_book_2",
+          "y": 270
+        },
+        {
+          "model": "murim:block/library_manual_lower_0_2",
+          "y": 270
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "0",
+        "facing": "east",
+        "has_book": "true",
+        "book_slot": "3"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_0_book_3",
+          "y": 270
+        },
+        {
+          "model": "murim:block/library_manual_lower_0_3",
+          "y": 270
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "1",
+        "facing": "south",
+        "has_book": "false"
+      },
+      "apply": {
+        "model": "murim:block/library_bookcase_lower_1"
+      }
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "1",
+        "facing": "south",
+        "has_book": "true",
+        "book_slot": "0"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_1_book"
+        },
+        {
+          "model": "murim:block/library_manual_lower_1_0"
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "1",
+        "facing": "south",
+        "has_book": "true",
+        "book_slot": "1"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_1_book_1"
+        },
+        {
+          "model": "murim:block/library_manual_lower_1_1"
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "1",
+        "facing": "south",
+        "has_book": "true",
+        "book_slot": "2"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_1_book_2"
+        },
+        {
+          "model": "murim:block/library_manual_lower_1_2"
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "1",
+        "facing": "south",
+        "has_book": "true",
+        "book_slot": "3"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_1_book_3"
+        },
+        {
+          "model": "murim:block/library_manual_lower_1_3"
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "1",
+        "facing": "west",
+        "has_book": "false"
+      },
+      "apply": {
+        "model": "murim:block/library_bookcase_lower_1",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "1",
+        "facing": "west",
+        "has_book": "true",
+        "book_slot": "0"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_1_book",
+          "y": 90
+        },
+        {
+          "model": "murim:block/library_manual_lower_1_0",
+          "y": 90
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "1",
+        "facing": "west",
+        "has_book": "true",
+        "book_slot": "1"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_1_book_1",
+          "y": 90
+        },
+        {
+          "model": "murim:block/library_manual_lower_1_1",
+          "y": 90
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "1",
+        "facing": "west",
+        "has_book": "true",
+        "book_slot": "2"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_1_book_2",
+          "y": 90
+        },
+        {
+          "model": "murim:block/library_manual_lower_1_2",
+          "y": 90
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "1",
+        "facing": "west",
+        "has_book": "true",
+        "book_slot": "3"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_1_book_3",
+          "y": 90
+        },
+        {
+          "model": "murim:block/library_manual_lower_1_3",
+          "y": 90
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "1",
+        "facing": "north",
+        "has_book": "false"
+      },
+      "apply": {
+        "model": "murim:block/library_bookcase_lower_1",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "1",
+        "facing": "north",
+        "has_book": "true",
+        "book_slot": "0"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_1_book",
+          "y": 180
+        },
+        {
+          "model": "murim:block/library_manual_lower_1_0",
+          "y": 180
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "1",
+        "facing": "north",
+        "has_book": "true",
+        "book_slot": "1"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_1_book_1",
+          "y": 180
+        },
+        {
+          "model": "murim:block/library_manual_lower_1_1",
+          "y": 180
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "1",
+        "facing": "north",
+        "has_book": "true",
+        "book_slot": "2"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_1_book_2",
+          "y": 180
+        },
+        {
+          "model": "murim:block/library_manual_lower_1_2",
+          "y": 180
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "1",
+        "facing": "north",
+        "has_book": "true",
+        "book_slot": "3"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_1_book_3",
+          "y": 180
+        },
+        {
+          "model": "murim:block/library_manual_lower_1_3",
+          "y": 180
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "1",
+        "facing": "east",
+        "has_book": "false"
+      },
+      "apply": {
+        "model": "murim:block/library_bookcase_lower_1",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "1",
+        "facing": "east",
+        "has_book": "true",
+        "book_slot": "0"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_1_book",
+          "y": 270
+        },
+        {
+          "model": "murim:block/library_manual_lower_1_0",
+          "y": 270
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "1",
+        "facing": "east",
+        "has_book": "true",
+        "book_slot": "1"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_1_book_1",
+          "y": 270
+        },
+        {
+          "model": "murim:block/library_manual_lower_1_1",
+          "y": 270
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "1",
+        "facing": "east",
+        "has_book": "true",
+        "book_slot": "2"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_1_book_2",
+          "y": 270
+        },
+        {
+          "model": "murim:block/library_manual_lower_1_2",
+          "y": 270
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "1",
+        "facing": "east",
+        "has_book": "true",
+        "book_slot": "3"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_1_book_3",
+          "y": 270
+        },
+        {
+          "model": "murim:block/library_manual_lower_1_3",
+          "y": 270
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "2",
+        "facing": "south",
+        "has_book": "false"
+      },
+      "apply": {
+        "model": "murim:block/library_bookcase_lower_2"
+      }
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "2",
+        "facing": "south",
+        "has_book": "true",
+        "book_slot": "0"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_2_book"
+        },
+        {
+          "model": "murim:block/library_manual_lower_2_0"
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "2",
+        "facing": "south",
+        "has_book": "true",
+        "book_slot": "1"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_2_book_1"
+        },
+        {
+          "model": "murim:block/library_manual_lower_2_1"
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "2",
+        "facing": "south",
+        "has_book": "true",
+        "book_slot": "2"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_2_book_2"
+        },
+        {
+          "model": "murim:block/library_manual_lower_2_2"
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "2",
+        "facing": "south",
+        "has_book": "true",
+        "book_slot": "3"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_2_book_3"
+        },
+        {
+          "model": "murim:block/library_manual_lower_2_3"
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "2",
+        "facing": "west",
+        "has_book": "false"
+      },
+      "apply": {
+        "model": "murim:block/library_bookcase_lower_2",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "2",
+        "facing": "west",
+        "has_book": "true",
+        "book_slot": "0"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_2_book",
+          "y": 90
+        },
+        {
+          "model": "murim:block/library_manual_lower_2_0",
+          "y": 90
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "2",
+        "facing": "west",
+        "has_book": "true",
+        "book_slot": "1"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_2_book_1",
+          "y": 90
+        },
+        {
+          "model": "murim:block/library_manual_lower_2_1",
+          "y": 90
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "2",
+        "facing": "west",
+        "has_book": "true",
+        "book_slot": "2"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_2_book_2",
+          "y": 90
+        },
+        {
+          "model": "murim:block/library_manual_lower_2_2",
+          "y": 90
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "2",
+        "facing": "west",
+        "has_book": "true",
+        "book_slot": "3"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_2_book_3",
+          "y": 90
+        },
+        {
+          "model": "murim:block/library_manual_lower_2_3",
+          "y": 90
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "2",
+        "facing": "north",
+        "has_book": "false"
+      },
+      "apply": {
+        "model": "murim:block/library_bookcase_lower_2",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "2",
+        "facing": "north",
+        "has_book": "true",
+        "book_slot": "0"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_2_book",
+          "y": 180
+        },
+        {
+          "model": "murim:block/library_manual_lower_2_0",
+          "y": 180
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "2",
+        "facing": "north",
+        "has_book": "true",
+        "book_slot": "1"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_2_book_1",
+          "y": 180
+        },
+        {
+          "model": "murim:block/library_manual_lower_2_1",
+          "y": 180
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "2",
+        "facing": "north",
+        "has_book": "true",
+        "book_slot": "2"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_2_book_2",
+          "y": 180
+        },
+        {
+          "model": "murim:block/library_manual_lower_2_2",
+          "y": 180
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "2",
+        "facing": "north",
+        "has_book": "true",
+        "book_slot": "3"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_2_book_3",
+          "y": 180
+        },
+        {
+          "model": "murim:block/library_manual_lower_2_3",
+          "y": 180
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "2",
+        "facing": "east",
+        "has_book": "false"
+      },
+      "apply": {
+        "model": "murim:block/library_bookcase_lower_2",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "2",
+        "facing": "east",
+        "has_book": "true",
+        "book_slot": "0"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_2_book",
+          "y": 270
+        },
+        {
+          "model": "murim:block/library_manual_lower_2_0",
+          "y": 270
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "2",
+        "facing": "east",
+        "has_book": "true",
+        "book_slot": "1"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_2_book_1",
+          "y": 270
+        },
+        {
+          "model": "murim:block/library_manual_lower_2_1",
+          "y": 270
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "2",
+        "facing": "east",
+        "has_book": "true",
+        "book_slot": "2"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_2_book_2",
+          "y": 270
+        },
+        {
+          "model": "murim:block/library_manual_lower_2_2",
+          "y": 270
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "2",
+        "facing": "east",
+        "has_book": "true",
+        "book_slot": "3"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_2_book_3",
+          "y": 270
+        },
+        {
+          "model": "murim:block/library_manual_lower_2_3",
+          "y": 270
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "3",
+        "facing": "south",
+        "has_book": "false"
+      },
+      "apply": {
+        "model": "murim:block/library_bookcase_lower_3"
+      }
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "3",
+        "facing": "south",
+        "has_book": "true",
+        "book_slot": "0"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_3_book"
+        },
+        {
+          "model": "murim:block/library_manual_lower_3_0"
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "3",
+        "facing": "south",
+        "has_book": "true",
+        "book_slot": "1"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_3_book_1"
+        },
+        {
+          "model": "murim:block/library_manual_lower_3_1"
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "3",
+        "facing": "south",
+        "has_book": "true",
+        "book_slot": "2"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_3_book_2"
+        },
+        {
+          "model": "murim:block/library_manual_lower_3_2"
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "3",
+        "facing": "south",
+        "has_book": "true",
+        "book_slot": "3"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_3_book_3"
+        },
+        {
+          "model": "murim:block/library_manual_lower_3_3"
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "3",
+        "facing": "west",
+        "has_book": "false"
+      },
+      "apply": {
+        "model": "murim:block/library_bookcase_lower_3",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "3",
+        "facing": "west",
+        "has_book": "true",
+        "book_slot": "0"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_3_book",
+          "y": 90
+        },
+        {
+          "model": "murim:block/library_manual_lower_3_0",
+          "y": 90
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "3",
+        "facing": "west",
+        "has_book": "true",
+        "book_slot": "1"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_3_book_1",
+          "y": 90
+        },
+        {
+          "model": "murim:block/library_manual_lower_3_1",
+          "y": 90
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "3",
+        "facing": "west",
+        "has_book": "true",
+        "book_slot": "2"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_3_book_2",
+          "y": 90
+        },
+        {
+          "model": "murim:block/library_manual_lower_3_2",
+          "y": 90
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "3",
+        "facing": "west",
+        "has_book": "true",
+        "book_slot": "3"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_3_book_3",
+          "y": 90
+        },
+        {
+          "model": "murim:block/library_manual_lower_3_3",
+          "y": 90
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "3",
+        "facing": "north",
+        "has_book": "false"
+      },
+      "apply": {
+        "model": "murim:block/library_bookcase_lower_3",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "3",
+        "facing": "north",
+        "has_book": "true",
+        "book_slot": "0"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_3_book",
+          "y": 180
+        },
+        {
+          "model": "murim:block/library_manual_lower_3_0",
+          "y": 180
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "3",
+        "facing": "north",
+        "has_book": "true",
+        "book_slot": "1"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_3_book_1",
+          "y": 180
+        },
+        {
+          "model": "murim:block/library_manual_lower_3_1",
+          "y": 180
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "3",
+        "facing": "north",
+        "has_book": "true",
+        "book_slot": "2"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_3_book_2",
+          "y": 180
+        },
+        {
+          "model": "murim:block/library_manual_lower_3_2",
+          "y": 180
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "3",
+        "facing": "north",
+        "has_book": "true",
+        "book_slot": "3"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_3_book_3",
+          "y": 180
+        },
+        {
+          "model": "murim:block/library_manual_lower_3_3",
+          "y": 180
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "3",
+        "facing": "east",
+        "has_book": "false"
+      },
+      "apply": {
+        "model": "murim:block/library_bookcase_lower_3",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "3",
+        "facing": "east",
+        "has_book": "true",
+        "book_slot": "0"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_3_book",
+          "y": 270
+        },
+        {
+          "model": "murim:block/library_manual_lower_3_0",
+          "y": 270
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "3",
+        "facing": "east",
+        "has_book": "true",
+        "book_slot": "1"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_3_book_1",
+          "y": 270
+        },
+        {
+          "model": "murim:block/library_manual_lower_3_1",
+          "y": 270
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "3",
+        "facing": "east",
+        "has_book": "true",
+        "book_slot": "2"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_3_book_2",
+          "y": 270
+        },
+        {
+          "model": "murim:block/library_manual_lower_3_2",
+          "y": 270
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "3",
+        "facing": "east",
+        "has_book": "true",
+        "book_slot": "3"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_3_book_3",
+          "y": 270
+        },
+        {
+          "model": "murim:block/library_manual_lower_3_3",
+          "y": 270
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "4",
+        "facing": "south",
+        "has_book": "false"
+      },
+      "apply": {
+        "model": "murim:block/library_bookcase_lower_4"
+      }
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "4",
+        "facing": "south",
+        "has_book": "true",
+        "book_slot": "0"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_4_book"
+        },
+        {
+          "model": "murim:block/library_manual_lower_4_0"
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "4",
+        "facing": "south",
+        "has_book": "true",
+        "book_slot": "1"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_4_book_1"
+        },
+        {
+          "model": "murim:block/library_manual_lower_4_1"
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "4",
+        "facing": "south",
+        "has_book": "true",
+        "book_slot": "2"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_4_book_2"
+        },
+        {
+          "model": "murim:block/library_manual_lower_4_2"
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "4",
+        "facing": "south",
+        "has_book": "true",
+        "book_slot": "3"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_4_book_3"
+        },
+        {
+          "model": "murim:block/library_manual_lower_4_3"
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "4",
+        "facing": "west",
+        "has_book": "false"
+      },
+      "apply": {
+        "model": "murim:block/library_bookcase_lower_4",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "4",
+        "facing": "west",
+        "has_book": "true",
+        "book_slot": "0"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_4_book",
+          "y": 90
+        },
+        {
+          "model": "murim:block/library_manual_lower_4_0",
+          "y": 90
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "4",
+        "facing": "west",
+        "has_book": "true",
+        "book_slot": "1"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_4_book_1",
+          "y": 90
+        },
+        {
+          "model": "murim:block/library_manual_lower_4_1",
+          "y": 90
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "4",
+        "facing": "west",
+        "has_book": "true",
+        "book_slot": "2"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_4_book_2",
+          "y": 90
+        },
+        {
+          "model": "murim:block/library_manual_lower_4_2",
+          "y": 90
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "4",
+        "facing": "west",
+        "has_book": "true",
+        "book_slot": "3"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_4_book_3",
+          "y": 90
+        },
+        {
+          "model": "murim:block/library_manual_lower_4_3",
+          "y": 90
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "4",
+        "facing": "north",
+        "has_book": "false"
+      },
+      "apply": {
+        "model": "murim:block/library_bookcase_lower_4",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "4",
+        "facing": "north",
+        "has_book": "true",
+        "book_slot": "0"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_4_book",
+          "y": 180
+        },
+        {
+          "model": "murim:block/library_manual_lower_4_0",
+          "y": 180
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "4",
+        "facing": "north",
+        "has_book": "true",
+        "book_slot": "1"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_4_book_1",
+          "y": 180
+        },
+        {
+          "model": "murim:block/library_manual_lower_4_1",
+          "y": 180
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "4",
+        "facing": "north",
+        "has_book": "true",
+        "book_slot": "2"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_4_book_2",
+          "y": 180
+        },
+        {
+          "model": "murim:block/library_manual_lower_4_2",
+          "y": 180
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "4",
+        "facing": "north",
+        "has_book": "true",
+        "book_slot": "3"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_4_book_3",
+          "y": 180
+        },
+        {
+          "model": "murim:block/library_manual_lower_4_3",
+          "y": 180
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "4",
+        "facing": "east",
+        "has_book": "false"
+      },
+      "apply": {
+        "model": "murim:block/library_bookcase_lower_4",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "4",
+        "facing": "east",
+        "has_book": "true",
+        "book_slot": "0"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_4_book",
+          "y": 270
+        },
+        {
+          "model": "murim:block/library_manual_lower_4_0",
+          "y": 270
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "4",
+        "facing": "east",
+        "has_book": "true",
+        "book_slot": "1"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_4_book_1",
+          "y": 270
+        },
+        {
+          "model": "murim:block/library_manual_lower_4_1",
+          "y": 270
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "4",
+        "facing": "east",
+        "has_book": "true",
+        "book_slot": "2"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_4_book_2",
+          "y": 270
+        },
+        {
+          "model": "murim:block/library_manual_lower_4_2",
+          "y": 270
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "4",
+        "facing": "east",
+        "has_book": "true",
+        "book_slot": "3"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_4_book_3",
+          "y": 270
+        },
+        {
+          "model": "murim:block/library_manual_lower_4_3",
+          "y": 270
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "5",
+        "facing": "south",
+        "has_book": "false"
+      },
+      "apply": {
+        "model": "murim:block/library_bookcase_lower_5"
+      }
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "5",
+        "facing": "south",
+        "has_book": "true",
+        "book_slot": "0"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_5_book"
+        },
+        {
+          "model": "murim:block/library_manual_lower_5_0"
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "5",
+        "facing": "south",
+        "has_book": "true",
+        "book_slot": "1"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_5_book_1"
+        },
+        {
+          "model": "murim:block/library_manual_lower_5_1"
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "5",
+        "facing": "south",
+        "has_book": "true",
+        "book_slot": "2"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_5_book_2"
+        },
+        {
+          "model": "murim:block/library_manual_lower_5_2"
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "5",
+        "facing": "south",
+        "has_book": "true",
+        "book_slot": "3"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_5_book_3"
+        },
+        {
+          "model": "murim:block/library_manual_lower_5_3"
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "5",
+        "facing": "west",
+        "has_book": "false"
+      },
+      "apply": {
+        "model": "murim:block/library_bookcase_lower_5",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "5",
+        "facing": "west",
+        "has_book": "true",
+        "book_slot": "0"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_5_book",
+          "y": 90
+        },
+        {
+          "model": "murim:block/library_manual_lower_5_0",
+          "y": 90
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "5",
+        "facing": "west",
+        "has_book": "true",
+        "book_slot": "1"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_5_book_1",
+          "y": 90
+        },
+        {
+          "model": "murim:block/library_manual_lower_5_1",
+          "y": 90
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "5",
+        "facing": "west",
+        "has_book": "true",
+        "book_slot": "2"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_5_book_2",
+          "y": 90
+        },
+        {
+          "model": "murim:block/library_manual_lower_5_2",
+          "y": 90
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "5",
+        "facing": "west",
+        "has_book": "true",
+        "book_slot": "3"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_5_book_3",
+          "y": 90
+        },
+        {
+          "model": "murim:block/library_manual_lower_5_3",
+          "y": 90
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "5",
+        "facing": "north",
+        "has_book": "false"
+      },
+      "apply": {
+        "model": "murim:block/library_bookcase_lower_5",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "5",
+        "facing": "north",
+        "has_book": "true",
+        "book_slot": "0"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_5_book",
+          "y": 180
+        },
+        {
+          "model": "murim:block/library_manual_lower_5_0",
+          "y": 180
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "5",
+        "facing": "north",
+        "has_book": "true",
+        "book_slot": "1"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_5_book_1",
+          "y": 180
+        },
+        {
+          "model": "murim:block/library_manual_lower_5_1",
+          "y": 180
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "5",
+        "facing": "north",
+        "has_book": "true",
+        "book_slot": "2"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_5_book_2",
+          "y": 180
+        },
+        {
+          "model": "murim:block/library_manual_lower_5_2",
+          "y": 180
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "5",
+        "facing": "north",
+        "has_book": "true",
+        "book_slot": "3"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_5_book_3",
+          "y": 180
+        },
+        {
+          "model": "murim:block/library_manual_lower_5_3",
+          "y": 180
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "5",
+        "facing": "east",
+        "has_book": "false"
+      },
+      "apply": {
+        "model": "murim:block/library_bookcase_lower_5",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "5",
+        "facing": "east",
+        "has_book": "true",
+        "book_slot": "0"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_5_book",
+          "y": 270
+        },
+        {
+          "model": "murim:block/library_manual_lower_5_0",
+          "y": 270
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "5",
+        "facing": "east",
+        "has_book": "true",
+        "book_slot": "1"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_5_book_1",
+          "y": 270
+        },
+        {
+          "model": "murim:block/library_manual_lower_5_1",
+          "y": 270
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "5",
+        "facing": "east",
+        "has_book": "true",
+        "book_slot": "2"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_5_book_2",
+          "y": 270
+        },
+        {
+          "model": "murim:block/library_manual_lower_5_2",
+          "y": 270
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "5",
+        "facing": "east",
+        "has_book": "true",
+        "book_slot": "3"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_5_book_3",
+          "y": 270
+        },
+        {
+          "model": "murim:block/library_manual_lower_5_3",
+          "y": 270
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "6",
+        "facing": "south",
+        "has_book": "false"
+      },
+      "apply": {
+        "model": "murim:block/library_bookcase_lower_6"
+      }
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "6",
+        "facing": "south",
+        "has_book": "true",
+        "book_slot": "0"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_6_book"
+        },
+        {
+          "model": "murim:block/library_manual_lower_6_0"
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "6",
+        "facing": "south",
+        "has_book": "true",
+        "book_slot": "1"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_6_book_1"
+        },
+        {
+          "model": "murim:block/library_manual_lower_6_1"
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "6",
+        "facing": "south",
+        "has_book": "true",
+        "book_slot": "2"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_6_book_2"
+        },
+        {
+          "model": "murim:block/library_manual_lower_6_2"
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "6",
+        "facing": "south",
+        "has_book": "true",
+        "book_slot": "3"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_6_book_3"
+        },
+        {
+          "model": "murim:block/library_manual_lower_6_3"
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "6",
+        "facing": "west",
+        "has_book": "false"
+      },
+      "apply": {
+        "model": "murim:block/library_bookcase_lower_6",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "6",
+        "facing": "west",
+        "has_book": "true",
+        "book_slot": "0"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_6_book",
+          "y": 90
+        },
+        {
+          "model": "murim:block/library_manual_lower_6_0",
+          "y": 90
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "6",
+        "facing": "west",
+        "has_book": "true",
+        "book_slot": "1"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_6_book_1",
+          "y": 90
+        },
+        {
+          "model": "murim:block/library_manual_lower_6_1",
+          "y": 90
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "6",
+        "facing": "west",
+        "has_book": "true",
+        "book_slot": "2"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_6_book_2",
+          "y": 90
+        },
+        {
+          "model": "murim:block/library_manual_lower_6_2",
+          "y": 90
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "6",
+        "facing": "west",
+        "has_book": "true",
+        "book_slot": "3"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_6_book_3",
+          "y": 90
+        },
+        {
+          "model": "murim:block/library_manual_lower_6_3",
+          "y": 90
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "6",
+        "facing": "north",
+        "has_book": "false"
+      },
+      "apply": {
+        "model": "murim:block/library_bookcase_lower_6",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "6",
+        "facing": "north",
+        "has_book": "true",
+        "book_slot": "0"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_6_book",
+          "y": 180
+        },
+        {
+          "model": "murim:block/library_manual_lower_6_0",
+          "y": 180
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "6",
+        "facing": "north",
+        "has_book": "true",
+        "book_slot": "1"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_6_book_1",
+          "y": 180
+        },
+        {
+          "model": "murim:block/library_manual_lower_6_1",
+          "y": 180
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "6",
+        "facing": "north",
+        "has_book": "true",
+        "book_slot": "2"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_6_book_2",
+          "y": 180
+        },
+        {
+          "model": "murim:block/library_manual_lower_6_2",
+          "y": 180
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "6",
+        "facing": "north",
+        "has_book": "true",
+        "book_slot": "3"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_6_book_3",
+          "y": 180
+        },
+        {
+          "model": "murim:block/library_manual_lower_6_3",
+          "y": 180
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "6",
+        "facing": "east",
+        "has_book": "false"
+      },
+      "apply": {
+        "model": "murim:block/library_bookcase_lower_6",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "6",
+        "facing": "east",
+        "has_book": "true",
+        "book_slot": "0"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_6_book",
+          "y": 270
+        },
+        {
+          "model": "murim:block/library_manual_lower_6_0",
+          "y": 270
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "6",
+        "facing": "east",
+        "has_book": "true",
+        "book_slot": "1"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_6_book_1",
+          "y": 270
+        },
+        {
+          "model": "murim:block/library_manual_lower_6_1",
+          "y": 270
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "6",
+        "facing": "east",
+        "has_book": "true",
+        "book_slot": "2"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_6_book_2",
+          "y": 270
+        },
+        {
+          "model": "murim:block/library_manual_lower_6_2",
+          "y": 270
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "lower",
+        "variant": "6",
+        "facing": "east",
+        "has_book": "true",
+        "book_slot": "3"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_lower_6_book_3",
+          "y": 270
+        },
+        {
+          "model": "murim:block/library_manual_lower_6_3",
+          "y": 270
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "0",
+        "facing": "south",
+        "has_book": "false"
+      },
+      "apply": {
+        "model": "murim:block/library_bookcase_upper_0"
+      }
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "0",
+        "facing": "south",
+        "has_book": "true",
+        "book_slot": "0"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_0_book"
+        },
+        {
+          "model": "murim:block/library_manual_upper_0_0"
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "0",
+        "facing": "south",
+        "has_book": "true",
+        "book_slot": "1"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_0_book_1"
+        },
+        {
+          "model": "murim:block/library_manual_upper_0_1"
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "0",
+        "facing": "south",
+        "has_book": "true",
+        "book_slot": "2"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_0_book_2"
+        },
+        {
+          "model": "murim:block/library_manual_upper_0_2"
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "0",
+        "facing": "south",
+        "has_book": "true",
+        "book_slot": "3"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_0_book_3"
+        },
+        {
+          "model": "murim:block/library_manual_upper_0_3"
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "0",
+        "facing": "west",
+        "has_book": "false"
+      },
+      "apply": {
+        "model": "murim:block/library_bookcase_upper_0",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "0",
+        "facing": "west",
+        "has_book": "true",
+        "book_slot": "0"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_0_book",
+          "y": 90
+        },
+        {
+          "model": "murim:block/library_manual_upper_0_0",
+          "y": 90
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "0",
+        "facing": "west",
+        "has_book": "true",
+        "book_slot": "1"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_0_book_1",
+          "y": 90
+        },
+        {
+          "model": "murim:block/library_manual_upper_0_1",
+          "y": 90
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "0",
+        "facing": "west",
+        "has_book": "true",
+        "book_slot": "2"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_0_book_2",
+          "y": 90
+        },
+        {
+          "model": "murim:block/library_manual_upper_0_2",
+          "y": 90
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "0",
+        "facing": "west",
+        "has_book": "true",
+        "book_slot": "3"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_0_book_3",
+          "y": 90
+        },
+        {
+          "model": "murim:block/library_manual_upper_0_3",
+          "y": 90
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "0",
+        "facing": "north",
+        "has_book": "false"
+      },
+      "apply": {
+        "model": "murim:block/library_bookcase_upper_0",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "0",
+        "facing": "north",
+        "has_book": "true",
+        "book_slot": "0"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_0_book",
+          "y": 180
+        },
+        {
+          "model": "murim:block/library_manual_upper_0_0",
+          "y": 180
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "0",
+        "facing": "north",
+        "has_book": "true",
+        "book_slot": "1"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_0_book_1",
+          "y": 180
+        },
+        {
+          "model": "murim:block/library_manual_upper_0_1",
+          "y": 180
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "0",
+        "facing": "north",
+        "has_book": "true",
+        "book_slot": "2"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_0_book_2",
+          "y": 180
+        },
+        {
+          "model": "murim:block/library_manual_upper_0_2",
+          "y": 180
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "0",
+        "facing": "north",
+        "has_book": "true",
+        "book_slot": "3"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_0_book_3",
+          "y": 180
+        },
+        {
+          "model": "murim:block/library_manual_upper_0_3",
+          "y": 180
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "0",
+        "facing": "east",
+        "has_book": "false"
+      },
+      "apply": {
+        "model": "murim:block/library_bookcase_upper_0",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "0",
+        "facing": "east",
+        "has_book": "true",
+        "book_slot": "0"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_0_book",
+          "y": 270
+        },
+        {
+          "model": "murim:block/library_manual_upper_0_0",
+          "y": 270
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "0",
+        "facing": "east",
+        "has_book": "true",
+        "book_slot": "1"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_0_book_1",
+          "y": 270
+        },
+        {
+          "model": "murim:block/library_manual_upper_0_1",
+          "y": 270
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "0",
+        "facing": "east",
+        "has_book": "true",
+        "book_slot": "2"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_0_book_2",
+          "y": 270
+        },
+        {
+          "model": "murim:block/library_manual_upper_0_2",
+          "y": 270
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "0",
+        "facing": "east",
+        "has_book": "true",
+        "book_slot": "3"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_0_book_3",
+          "y": 270
+        },
+        {
+          "model": "murim:block/library_manual_upper_0_3",
+          "y": 270
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "1",
+        "facing": "south",
+        "has_book": "false"
+      },
+      "apply": {
+        "model": "murim:block/library_bookcase_upper_1"
+      }
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "1",
+        "facing": "south",
+        "has_book": "true",
+        "book_slot": "0"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_1_book"
+        },
+        {
+          "model": "murim:block/library_manual_upper_1_0"
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "1",
+        "facing": "south",
+        "has_book": "true",
+        "book_slot": "1"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_1_book_1"
+        },
+        {
+          "model": "murim:block/library_manual_upper_1_1"
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "1",
+        "facing": "south",
+        "has_book": "true",
+        "book_slot": "2"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_1_book_2"
+        },
+        {
+          "model": "murim:block/library_manual_upper_1_2"
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "1",
+        "facing": "south",
+        "has_book": "true",
+        "book_slot": "3"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_1_book_3"
+        },
+        {
+          "model": "murim:block/library_manual_upper_1_3"
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "1",
+        "facing": "west",
+        "has_book": "false"
+      },
+      "apply": {
+        "model": "murim:block/library_bookcase_upper_1",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "1",
+        "facing": "west",
+        "has_book": "true",
+        "book_slot": "0"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_1_book",
+          "y": 90
+        },
+        {
+          "model": "murim:block/library_manual_upper_1_0",
+          "y": 90
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "1",
+        "facing": "west",
+        "has_book": "true",
+        "book_slot": "1"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_1_book_1",
+          "y": 90
+        },
+        {
+          "model": "murim:block/library_manual_upper_1_1",
+          "y": 90
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "1",
+        "facing": "west",
+        "has_book": "true",
+        "book_slot": "2"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_1_book_2",
+          "y": 90
+        },
+        {
+          "model": "murim:block/library_manual_upper_1_2",
+          "y": 90
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "1",
+        "facing": "west",
+        "has_book": "true",
+        "book_slot": "3"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_1_book_3",
+          "y": 90
+        },
+        {
+          "model": "murim:block/library_manual_upper_1_3",
+          "y": 90
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "1",
+        "facing": "north",
+        "has_book": "false"
+      },
+      "apply": {
+        "model": "murim:block/library_bookcase_upper_1",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "1",
+        "facing": "north",
+        "has_book": "true",
+        "book_slot": "0"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_1_book",
+          "y": 180
+        },
+        {
+          "model": "murim:block/library_manual_upper_1_0",
+          "y": 180
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "1",
+        "facing": "north",
+        "has_book": "true",
+        "book_slot": "1"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_1_book_1",
+          "y": 180
+        },
+        {
+          "model": "murim:block/library_manual_upper_1_1",
+          "y": 180
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "1",
+        "facing": "north",
+        "has_book": "true",
+        "book_slot": "2"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_1_book_2",
+          "y": 180
+        },
+        {
+          "model": "murim:block/library_manual_upper_1_2",
+          "y": 180
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "1",
+        "facing": "north",
+        "has_book": "true",
+        "book_slot": "3"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_1_book_3",
+          "y": 180
+        },
+        {
+          "model": "murim:block/library_manual_upper_1_3",
+          "y": 180
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "1",
+        "facing": "east",
+        "has_book": "false"
+      },
+      "apply": {
+        "model": "murim:block/library_bookcase_upper_1",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "1",
+        "facing": "east",
+        "has_book": "true",
+        "book_slot": "0"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_1_book",
+          "y": 270
+        },
+        {
+          "model": "murim:block/library_manual_upper_1_0",
+          "y": 270
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "1",
+        "facing": "east",
+        "has_book": "true",
+        "book_slot": "1"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_1_book_1",
+          "y": 270
+        },
+        {
+          "model": "murim:block/library_manual_upper_1_1",
+          "y": 270
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "1",
+        "facing": "east",
+        "has_book": "true",
+        "book_slot": "2"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_1_book_2",
+          "y": 270
+        },
+        {
+          "model": "murim:block/library_manual_upper_1_2",
+          "y": 270
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "1",
+        "facing": "east",
+        "has_book": "true",
+        "book_slot": "3"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_1_book_3",
+          "y": 270
+        },
+        {
+          "model": "murim:block/library_manual_upper_1_3",
+          "y": 270
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "2",
+        "facing": "south",
+        "has_book": "false"
+      },
+      "apply": {
+        "model": "murim:block/library_bookcase_upper_2"
+      }
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "2",
+        "facing": "south",
+        "has_book": "true",
+        "book_slot": "0"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_2_book"
+        },
+        {
+          "model": "murim:block/library_manual_upper_2_0"
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "2",
+        "facing": "south",
+        "has_book": "true",
+        "book_slot": "1"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_2_book_1"
+        },
+        {
+          "model": "murim:block/library_manual_upper_2_1"
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "2",
+        "facing": "south",
+        "has_book": "true",
+        "book_slot": "2"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_2_book_2"
+        },
+        {
+          "model": "murim:block/library_manual_upper_2_2"
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "2",
+        "facing": "south",
+        "has_book": "true",
+        "book_slot": "3"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_2_book_3"
+        },
+        {
+          "model": "murim:block/library_manual_upper_2_3"
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "2",
+        "facing": "west",
+        "has_book": "false"
+      },
+      "apply": {
+        "model": "murim:block/library_bookcase_upper_2",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "2",
+        "facing": "west",
+        "has_book": "true",
+        "book_slot": "0"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_2_book",
+          "y": 90
+        },
+        {
+          "model": "murim:block/library_manual_upper_2_0",
+          "y": 90
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "2",
+        "facing": "west",
+        "has_book": "true",
+        "book_slot": "1"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_2_book_1",
+          "y": 90
+        },
+        {
+          "model": "murim:block/library_manual_upper_2_1",
+          "y": 90
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "2",
+        "facing": "west",
+        "has_book": "true",
+        "book_slot": "2"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_2_book_2",
+          "y": 90
+        },
+        {
+          "model": "murim:block/library_manual_upper_2_2",
+          "y": 90
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "2",
+        "facing": "west",
+        "has_book": "true",
+        "book_slot": "3"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_2_book_3",
+          "y": 90
+        },
+        {
+          "model": "murim:block/library_manual_upper_2_3",
+          "y": 90
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "2",
+        "facing": "north",
+        "has_book": "false"
+      },
+      "apply": {
+        "model": "murim:block/library_bookcase_upper_2",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "2",
+        "facing": "north",
+        "has_book": "true",
+        "book_slot": "0"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_2_book",
+          "y": 180
+        },
+        {
+          "model": "murim:block/library_manual_upper_2_0",
+          "y": 180
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "2",
+        "facing": "north",
+        "has_book": "true",
+        "book_slot": "1"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_2_book_1",
+          "y": 180
+        },
+        {
+          "model": "murim:block/library_manual_upper_2_1",
+          "y": 180
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "2",
+        "facing": "north",
+        "has_book": "true",
+        "book_slot": "2"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_2_book_2",
+          "y": 180
+        },
+        {
+          "model": "murim:block/library_manual_upper_2_2",
+          "y": 180
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "2",
+        "facing": "north",
+        "has_book": "true",
+        "book_slot": "3"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_2_book_3",
+          "y": 180
+        },
+        {
+          "model": "murim:block/library_manual_upper_2_3",
+          "y": 180
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "2",
+        "facing": "east",
+        "has_book": "false"
+      },
+      "apply": {
+        "model": "murim:block/library_bookcase_upper_2",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "2",
+        "facing": "east",
+        "has_book": "true",
+        "book_slot": "0"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_2_book",
+          "y": 270
+        },
+        {
+          "model": "murim:block/library_manual_upper_2_0",
+          "y": 270
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "2",
+        "facing": "east",
+        "has_book": "true",
+        "book_slot": "1"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_2_book_1",
+          "y": 270
+        },
+        {
+          "model": "murim:block/library_manual_upper_2_1",
+          "y": 270
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "2",
+        "facing": "east",
+        "has_book": "true",
+        "book_slot": "2"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_2_book_2",
+          "y": 270
+        },
+        {
+          "model": "murim:block/library_manual_upper_2_2",
+          "y": 270
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "2",
+        "facing": "east",
+        "has_book": "true",
+        "book_slot": "3"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_2_book_3",
+          "y": 270
+        },
+        {
+          "model": "murim:block/library_manual_upper_2_3",
+          "y": 270
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "3",
+        "facing": "south",
+        "has_book": "false"
+      },
+      "apply": {
+        "model": "murim:block/library_bookcase_upper_3"
+      }
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "3",
+        "facing": "south",
+        "has_book": "true",
+        "book_slot": "0"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_3_book"
+        },
+        {
+          "model": "murim:block/library_manual_upper_3_0"
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "3",
+        "facing": "south",
+        "has_book": "true",
+        "book_slot": "1"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_3_book_1"
+        },
+        {
+          "model": "murim:block/library_manual_upper_3_1"
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "3",
+        "facing": "south",
+        "has_book": "true",
+        "book_slot": "2"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_3_book_2"
+        },
+        {
+          "model": "murim:block/library_manual_upper_3_2"
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "3",
+        "facing": "south",
+        "has_book": "true",
+        "book_slot": "3"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_3_book_3"
+        },
+        {
+          "model": "murim:block/library_manual_upper_3_3"
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "3",
+        "facing": "west",
+        "has_book": "false"
+      },
+      "apply": {
+        "model": "murim:block/library_bookcase_upper_3",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "3",
+        "facing": "west",
+        "has_book": "true",
+        "book_slot": "0"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_3_book",
+          "y": 90
+        },
+        {
+          "model": "murim:block/library_manual_upper_3_0",
+          "y": 90
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "3",
+        "facing": "west",
+        "has_book": "true",
+        "book_slot": "1"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_3_book_1",
+          "y": 90
+        },
+        {
+          "model": "murim:block/library_manual_upper_3_1",
+          "y": 90
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "3",
+        "facing": "west",
+        "has_book": "true",
+        "book_slot": "2"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_3_book_2",
+          "y": 90
+        },
+        {
+          "model": "murim:block/library_manual_upper_3_2",
+          "y": 90
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "3",
+        "facing": "west",
+        "has_book": "true",
+        "book_slot": "3"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_3_book_3",
+          "y": 90
+        },
+        {
+          "model": "murim:block/library_manual_upper_3_3",
+          "y": 90
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "3",
+        "facing": "north",
+        "has_book": "false"
+      },
+      "apply": {
+        "model": "murim:block/library_bookcase_upper_3",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "3",
+        "facing": "north",
+        "has_book": "true",
+        "book_slot": "0"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_3_book",
+          "y": 180
+        },
+        {
+          "model": "murim:block/library_manual_upper_3_0",
+          "y": 180
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "3",
+        "facing": "north",
+        "has_book": "true",
+        "book_slot": "1"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_3_book_1",
+          "y": 180
+        },
+        {
+          "model": "murim:block/library_manual_upper_3_1",
+          "y": 180
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "3",
+        "facing": "north",
+        "has_book": "true",
+        "book_slot": "2"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_3_book_2",
+          "y": 180
+        },
+        {
+          "model": "murim:block/library_manual_upper_3_2",
+          "y": 180
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "3",
+        "facing": "north",
+        "has_book": "true",
+        "book_slot": "3"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_3_book_3",
+          "y": 180
+        },
+        {
+          "model": "murim:block/library_manual_upper_3_3",
+          "y": 180
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "3",
+        "facing": "east",
+        "has_book": "false"
+      },
+      "apply": {
+        "model": "murim:block/library_bookcase_upper_3",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "3",
+        "facing": "east",
+        "has_book": "true",
+        "book_slot": "0"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_3_book",
+          "y": 270
+        },
+        {
+          "model": "murim:block/library_manual_upper_3_0",
+          "y": 270
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "3",
+        "facing": "east",
+        "has_book": "true",
+        "book_slot": "1"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_3_book_1",
+          "y": 270
+        },
+        {
+          "model": "murim:block/library_manual_upper_3_1",
+          "y": 270
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "3",
+        "facing": "east",
+        "has_book": "true",
+        "book_slot": "2"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_3_book_2",
+          "y": 270
+        },
+        {
+          "model": "murim:block/library_manual_upper_3_2",
+          "y": 270
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "3",
+        "facing": "east",
+        "has_book": "true",
+        "book_slot": "3"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_3_book_3",
+          "y": 270
+        },
+        {
+          "model": "murim:block/library_manual_upper_3_3",
+          "y": 270
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "4",
+        "facing": "south",
+        "has_book": "false"
+      },
+      "apply": {
+        "model": "murim:block/library_bookcase_upper_4"
+      }
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "4",
+        "facing": "south",
+        "has_book": "true",
+        "book_slot": "0"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_4_book"
+        },
+        {
+          "model": "murim:block/library_manual_upper_4_0"
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "4",
+        "facing": "south",
+        "has_book": "true",
+        "book_slot": "1"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_4_book_1"
+        },
+        {
+          "model": "murim:block/library_manual_upper_4_1"
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "4",
+        "facing": "south",
+        "has_book": "true",
+        "book_slot": "2"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_4_book_2"
+        },
+        {
+          "model": "murim:block/library_manual_upper_4_2"
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "4",
+        "facing": "south",
+        "has_book": "true",
+        "book_slot": "3"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_4_book_3"
+        },
+        {
+          "model": "murim:block/library_manual_upper_4_3"
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "4",
+        "facing": "west",
+        "has_book": "false"
+      },
+      "apply": {
+        "model": "murim:block/library_bookcase_upper_4",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "4",
+        "facing": "west",
+        "has_book": "true",
+        "book_slot": "0"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_4_book",
+          "y": 90
+        },
+        {
+          "model": "murim:block/library_manual_upper_4_0",
+          "y": 90
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "4",
+        "facing": "west",
+        "has_book": "true",
+        "book_slot": "1"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_4_book_1",
+          "y": 90
+        },
+        {
+          "model": "murim:block/library_manual_upper_4_1",
+          "y": 90
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "4",
+        "facing": "west",
+        "has_book": "true",
+        "book_slot": "2"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_4_book_2",
+          "y": 90
+        },
+        {
+          "model": "murim:block/library_manual_upper_4_2",
+          "y": 90
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "4",
+        "facing": "west",
+        "has_book": "true",
+        "book_slot": "3"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_4_book_3",
+          "y": 90
+        },
+        {
+          "model": "murim:block/library_manual_upper_4_3",
+          "y": 90
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "4",
+        "facing": "north",
+        "has_book": "false"
+      },
+      "apply": {
+        "model": "murim:block/library_bookcase_upper_4",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "4",
+        "facing": "north",
+        "has_book": "true",
+        "book_slot": "0"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_4_book",
+          "y": 180
+        },
+        {
+          "model": "murim:block/library_manual_upper_4_0",
+          "y": 180
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "4",
+        "facing": "north",
+        "has_book": "true",
+        "book_slot": "1"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_4_book_1",
+          "y": 180
+        },
+        {
+          "model": "murim:block/library_manual_upper_4_1",
+          "y": 180
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "4",
+        "facing": "north",
+        "has_book": "true",
+        "book_slot": "2"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_4_book_2",
+          "y": 180
+        },
+        {
+          "model": "murim:block/library_manual_upper_4_2",
+          "y": 180
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "4",
+        "facing": "north",
+        "has_book": "true",
+        "book_slot": "3"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_4_book_3",
+          "y": 180
+        },
+        {
+          "model": "murim:block/library_manual_upper_4_3",
+          "y": 180
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "4",
+        "facing": "east",
+        "has_book": "false"
+      },
+      "apply": {
+        "model": "murim:block/library_bookcase_upper_4",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "4",
+        "facing": "east",
+        "has_book": "true",
+        "book_slot": "0"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_4_book",
+          "y": 270
+        },
+        {
+          "model": "murim:block/library_manual_upper_4_0",
+          "y": 270
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "4",
+        "facing": "east",
+        "has_book": "true",
+        "book_slot": "1"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_4_book_1",
+          "y": 270
+        },
+        {
+          "model": "murim:block/library_manual_upper_4_1",
+          "y": 270
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "4",
+        "facing": "east",
+        "has_book": "true",
+        "book_slot": "2"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_4_book_2",
+          "y": 270
+        },
+        {
+          "model": "murim:block/library_manual_upper_4_2",
+          "y": 270
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "4",
+        "facing": "east",
+        "has_book": "true",
+        "book_slot": "3"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_4_book_3",
+          "y": 270
+        },
+        {
+          "model": "murim:block/library_manual_upper_4_3",
+          "y": 270
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "5",
+        "facing": "south",
+        "has_book": "false"
+      },
+      "apply": {
+        "model": "murim:block/library_bookcase_upper_5"
+      }
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "5",
+        "facing": "south",
+        "has_book": "true",
+        "book_slot": "0"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_5_book"
+        },
+        {
+          "model": "murim:block/library_manual_upper_5_0"
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "5",
+        "facing": "south",
+        "has_book": "true",
+        "book_slot": "1"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_5_book_1"
+        },
+        {
+          "model": "murim:block/library_manual_upper_5_1"
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "5",
+        "facing": "south",
+        "has_book": "true",
+        "book_slot": "2"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_5_book_2"
+        },
+        {
+          "model": "murim:block/library_manual_upper_5_2"
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "5",
+        "facing": "south",
+        "has_book": "true",
+        "book_slot": "3"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_5_book_3"
+        },
+        {
+          "model": "murim:block/library_manual_upper_5_3"
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "5",
+        "facing": "west",
+        "has_book": "false"
+      },
+      "apply": {
+        "model": "murim:block/library_bookcase_upper_5",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "5",
+        "facing": "west",
+        "has_book": "true",
+        "book_slot": "0"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_5_book",
+          "y": 90
+        },
+        {
+          "model": "murim:block/library_manual_upper_5_0",
+          "y": 90
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "5",
+        "facing": "west",
+        "has_book": "true",
+        "book_slot": "1"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_5_book_1",
+          "y": 90
+        },
+        {
+          "model": "murim:block/library_manual_upper_5_1",
+          "y": 90
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "5",
+        "facing": "west",
+        "has_book": "true",
+        "book_slot": "2"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_5_book_2",
+          "y": 90
+        },
+        {
+          "model": "murim:block/library_manual_upper_5_2",
+          "y": 90
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "5",
+        "facing": "west",
+        "has_book": "true",
+        "book_slot": "3"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_5_book_3",
+          "y": 90
+        },
+        {
+          "model": "murim:block/library_manual_upper_5_3",
+          "y": 90
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "5",
+        "facing": "north",
+        "has_book": "false"
+      },
+      "apply": {
+        "model": "murim:block/library_bookcase_upper_5",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "5",
+        "facing": "north",
+        "has_book": "true",
+        "book_slot": "0"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_5_book",
+          "y": 180
+        },
+        {
+          "model": "murim:block/library_manual_upper_5_0",
+          "y": 180
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "5",
+        "facing": "north",
+        "has_book": "true",
+        "book_slot": "1"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_5_book_1",
+          "y": 180
+        },
+        {
+          "model": "murim:block/library_manual_upper_5_1",
+          "y": 180
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "5",
+        "facing": "north",
+        "has_book": "true",
+        "book_slot": "2"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_5_book_2",
+          "y": 180
+        },
+        {
+          "model": "murim:block/library_manual_upper_5_2",
+          "y": 180
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "5",
+        "facing": "north",
+        "has_book": "true",
+        "book_slot": "3"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_5_book_3",
+          "y": 180
+        },
+        {
+          "model": "murim:block/library_manual_upper_5_3",
+          "y": 180
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "5",
+        "facing": "east",
+        "has_book": "false"
+      },
+      "apply": {
+        "model": "murim:block/library_bookcase_upper_5",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "5",
+        "facing": "east",
+        "has_book": "true",
+        "book_slot": "0"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_5_book",
+          "y": 270
+        },
+        {
+          "model": "murim:block/library_manual_upper_5_0",
+          "y": 270
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "5",
+        "facing": "east",
+        "has_book": "true",
+        "book_slot": "1"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_5_book_1",
+          "y": 270
+        },
+        {
+          "model": "murim:block/library_manual_upper_5_1",
+          "y": 270
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "5",
+        "facing": "east",
+        "has_book": "true",
+        "book_slot": "2"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_5_book_2",
+          "y": 270
+        },
+        {
+          "model": "murim:block/library_manual_upper_5_2",
+          "y": 270
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "5",
+        "facing": "east",
+        "has_book": "true",
+        "book_slot": "3"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_5_book_3",
+          "y": 270
+        },
+        {
+          "model": "murim:block/library_manual_upper_5_3",
+          "y": 270
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "6",
+        "facing": "south",
+        "has_book": "false"
+      },
+      "apply": {
+        "model": "murim:block/library_bookcase_upper_6"
+      }
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "6",
+        "facing": "south",
+        "has_book": "true",
+        "book_slot": "0"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_6_book"
+        },
+        {
+          "model": "murim:block/library_manual_upper_6_0"
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "6",
+        "facing": "south",
+        "has_book": "true",
+        "book_slot": "1"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_6_book_1"
+        },
+        {
+          "model": "murim:block/library_manual_upper_6_1"
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "6",
+        "facing": "south",
+        "has_book": "true",
+        "book_slot": "2"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_6_book_2"
+        },
+        {
+          "model": "murim:block/library_manual_upper_6_2"
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "6",
+        "facing": "south",
+        "has_book": "true",
+        "book_slot": "3"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_6_book_3"
+        },
+        {
+          "model": "murim:block/library_manual_upper_6_3"
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "6",
+        "facing": "west",
+        "has_book": "false"
+      },
+      "apply": {
+        "model": "murim:block/library_bookcase_upper_6",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "6",
+        "facing": "west",
+        "has_book": "true",
+        "book_slot": "0"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_6_book",
+          "y": 90
+        },
+        {
+          "model": "murim:block/library_manual_upper_6_0",
+          "y": 90
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "6",
+        "facing": "west",
+        "has_book": "true",
+        "book_slot": "1"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_6_book_1",
+          "y": 90
+        },
+        {
+          "model": "murim:block/library_manual_upper_6_1",
+          "y": 90
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "6",
+        "facing": "west",
+        "has_book": "true",
+        "book_slot": "2"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_6_book_2",
+          "y": 90
+        },
+        {
+          "model": "murim:block/library_manual_upper_6_2",
+          "y": 90
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "6",
+        "facing": "west",
+        "has_book": "true",
+        "book_slot": "3"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_6_book_3",
+          "y": 90
+        },
+        {
+          "model": "murim:block/library_manual_upper_6_3",
+          "y": 90
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "6",
+        "facing": "north",
+        "has_book": "false"
+      },
+      "apply": {
+        "model": "murim:block/library_bookcase_upper_6",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "6",
+        "facing": "north",
+        "has_book": "true",
+        "book_slot": "0"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_6_book",
+          "y": 180
+        },
+        {
+          "model": "murim:block/library_manual_upper_6_0",
+          "y": 180
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "6",
+        "facing": "north",
+        "has_book": "true",
+        "book_slot": "1"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_6_book_1",
+          "y": 180
+        },
+        {
+          "model": "murim:block/library_manual_upper_6_1",
+          "y": 180
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "6",
+        "facing": "north",
+        "has_book": "true",
+        "book_slot": "2"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_6_book_2",
+          "y": 180
+        },
+        {
+          "model": "murim:block/library_manual_upper_6_2",
+          "y": 180
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "6",
+        "facing": "north",
+        "has_book": "true",
+        "book_slot": "3"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_6_book_3",
+          "y": 180
+        },
+        {
+          "model": "murim:block/library_manual_upper_6_3",
+          "y": 180
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "6",
+        "facing": "east",
+        "has_book": "false"
+      },
+      "apply": {
+        "model": "murim:block/library_bookcase_upper_6",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "6",
+        "facing": "east",
+        "has_book": "true",
+        "book_slot": "0"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_6_book",
+          "y": 270
+        },
+        {
+          "model": "murim:block/library_manual_upper_6_0",
+          "y": 270
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "6",
+        "facing": "east",
+        "has_book": "true",
+        "book_slot": "1"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_6_book_1",
+          "y": 270
+        },
+        {
+          "model": "murim:block/library_manual_upper_6_1",
+          "y": 270
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "6",
+        "facing": "east",
+        "has_book": "true",
+        "book_slot": "2"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_6_book_2",
+          "y": 270
+        },
+        {
+          "model": "murim:block/library_manual_upper_6_2",
+          "y": 270
+        }
+      ]
+    },
+    {
+      "when": {
+        "half": "upper",
+        "variant": "6",
+        "facing": "east",
+        "has_book": "true",
+        "book_slot": "3"
+      },
+      "apply": [
+        {
+          "model": "murim:block/library_bookcase_upper_6_book_3",
+          "y": 270
+        },
+        {
+          "model": "murim:block/library_manual_upper_6_3",
+          "y": 270
+        }
+      ]
+    }
+  ]
+}

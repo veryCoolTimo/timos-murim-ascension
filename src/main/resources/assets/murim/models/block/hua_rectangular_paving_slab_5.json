@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/slab",
+  "textures": {
+    "bottom": "murim:block/hua_rectangular_paving_f",
+    "side": "murim:block/hua_rectangular_paving_f",
+    "top": "murim:block/hua_rectangular_paving_f"
+  }
+}

@@ -54,7 +54,7 @@ public class TangDagger extends Projectile {
 
     private static final EntityDataAccessor<Byte> MODE = SynchedEntityData.defineId(TangDagger.class, EntityDataSerializers.BYTE);
     private static final EntityDataAccessor<Byte> FORM = SynchedEntityData.defineId(TangDagger.class, EntityDataSerializers.BYTE);
-    private static final EntityDataAccessor<Byte> LAYER = SynchedEntityData.defineId(TangDagger.class, EntityDataSerializers.BYTE);
+    private static final EntityDataAccessor<Byte> TIER = SynchedEntityData.defineId(TangDagger.class, EntityDataSerializers.BYTE);
     /** Бит 0 — двенадцатый с неба, бит 1 — удвоенный рывок, бит 2 — невидим в полёте (Похищение Жизни). */
     private static final EntityDataAccessor<Byte> FLAGS = SynchedEntityData.defineId(TangDagger.class, EntityDataSerializers.BYTE);
     private static final EntityDataAccessor<Integer> TARGET = SynchedEntityData.defineId(TangDagger.class, EntityDataSerializers.INT);
@@ -135,11 +135,11 @@ public class TangDagger extends Projectile {
         super(type, level);
     }
 
-    public TangDagger(Level level, LivingEntity owner, int form, int layer, int index) {
+    public TangDagger(Level level, LivingEntity owner, int form, int executionTier, int index) {
         this(ModEntities.TANG_DAGGER.get(), level);
         setOwner(owner);
         entityData.set(FORM, (byte) form);
-        entityData.set(LAYER, (byte) layer);
+        entityData.set(TIER, (byte) executionTier);
         entityData.set(INDEX, (byte) index);
         technique = TangRules.technique(form);
     }
@@ -148,7 +148,7 @@ public class TangDagger extends Projectile {
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
         builder.define(MODE, (byte) STRAIGHT);
         builder.define(FORM, (byte) 0);
-        builder.define(LAYER, (byte) 0);
+        builder.define(TIER, (byte) 0);
         builder.define(FLAGS, (byte) 0);
         builder.define(TARGET, -1);
         builder.define(INDEX, (byte) 0);
@@ -162,8 +162,8 @@ public class TangDagger extends Projectile {
         return entityData.get(FORM);
     }
 
-    public int layer() {
-        return entityData.get(LAYER);
+    public int executionTier() {
+        return entityData.get(TIER);
     }
 
     public int index() {
@@ -293,7 +293,7 @@ public class TangDagger extends Projectile {
                 double max = 0.35D + (t != null ? Math.max(0.0D, t.getDeltaMovement().dot(back)) * 1.5D : 0.0D);
                 Vec3 step = d.length() > max ? d.normalize().scale(max) : d;
                 // Нить ци к рукаву: блок на линии мастер → звезда рвёт её, звезда падает (слой 5+).
-                if (layer() >= 5 && getOwner() instanceof LivingEntity owner && modeAge % 2 == 0 && cut(owner)) {
+                if (executionTier() >= 5 && getOwner() instanceof LivingEntity owner && modeAge % 2 == 0 && cut(owner)) {
                     setMode(FALL);
                     life = tickCount + 24;
                     TangExecutor.threadCut(this);
@@ -344,7 +344,7 @@ public class TangDagger extends Projectile {
             case STRAIGHT, BURST -> {
                 // Рывок проскочил точку цели на 3 блока — промах: тормозит и висит за ней.
                 if (mode() == BURST && passed(from)) {
-                    if (TangRules.recall(layer())) {
+                    if (TangRules.recall(executionTier())) {
                         setMode(HANG);
                         life = tickCount + TangRules.HANG_TICKS;
                         TangExecutor.hang(this);
@@ -595,7 +595,7 @@ public class TangDagger extends Projectile {
                 || source.getEntity() == getOwner()) {
             return false;
         }
-        if (mode() == BURST && TangRules.recall(layer())) {
+        if (mode() == BURST && TangRules.recall(executionTier())) {
             // Отбитый «вращался в воздухе и возвращался» (гл. 196): виснет, ждёт отзыва.
             setDeltaMovement(getDeltaMovement().scale(-0.4D).add(0.0D, 0.2D, 0.0D));
             setMode(HANG);

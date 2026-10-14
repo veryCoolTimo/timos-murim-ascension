@@ -1,0 +1,11 @@
+newmtl hipridge
+map_Kd #hipridge
+
+newmtl side
+map_Kd #side
+
+newmtl top
+map_Kd #top
+
+newmtl under
+map_Kd #under

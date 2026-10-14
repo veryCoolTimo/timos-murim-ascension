@@ -74,7 +74,35 @@ public final class SectPoseCapture {
             // Только по MURIM_POSES=draw: ролик «меч в ножнах → в руке → в ножнах».
             new Spot("draw", SectPose.NONE, SectRole.DISCIPLE),
             // Только по MURIM_POSES=model: ученик в покое спереди, сбоку и сзади вблизи (сверка текстуры с Blockbench).
-            new Spot("model", SectPose.NONE, SectRole.DISCIPLE));
+            new Spot("model", SectPose.NONE, SectRole.DISCIPLE),
+            // Только по MURIM_POSES=head: глава (модель автора high_sect_people) рядом с учеником для масштаба —
+            // покой спереди/сбоку/сзади, шаг вдоль площадки (полы одеяния) и разговор (поза TALK).
+            new Spot("head", SectPose.NONE, SectRole.LEADER),
+            // Только по MURIM_POSES=head_watch: глава на деле WATCH / GREET (смотрит строй, встречает чужака у ворот) —
+            // вблизи спереди, сбоку, сзади: на поясе одеяния меча быть не должно (автор 06.10: «странный меч на поясе»).
+            new Spot("head_watch", SectPose.GUARD, SectRole.LEADER),
+            // Только по MURIM_POSES=first: первый тренер (наставник, модель first_rate_disciple), Гён Так первого
+            // поколения, ученик второго и третьего поколения для сравнения — те же ракурсы, что у head.
+            new Spot("first", SectPose.NONE, SectRole.MENTOR),
+            // Только по MURIM_POSES=all: вся секта в один ряд (глава первым) — у каждой роли модель и текстура автора.
+            new Spot("all", SectPose.NONE, SectRole.LEADER));
+
+    /**
+     * Ряд стенда all после главы: роль, облик (пусто — по роли и поколению), поза (стража второго поколения на посту).
+     * Стража — ученик второго поколения в позе GUARD: роли GUARD у живых людей больше нет (SectLife убирает её).
+     */
+    private record Mate(SectRole role, String look, SectPose pose) {
+    }
+
+    private static final List<Mate> ALL_MATES = List.of(
+            new Mate(SectRole.ELDER, "elder_treasury", SectPose.NONE), new Mate(SectRole.ELDER, "elder_martial", SectPose.NONE),
+            new Mate(SectRole.MENTOR, "mentor", SectPose.NONE), new Mate(SectRole.ELDER, "first_gate", SectPose.NONE),
+            new Mate(SectRole.ELDER, "elder_healer", SectPose.NONE), new Mate(SectRole.SECOND, "first_rate_disciple", SectPose.NONE),
+            new Mate(SectRole.SENIOR, "second_0", SectPose.NONE), new Mate(SectRole.SECOND, "guard_0", SectPose.GUARD),
+            new Mate(SectRole.GATEKEEPER, "third_7", SectPose.NONE), new Mate(SectRole.DISCIPLE, "third_0", SectPose.NONE),
+            new Mate(SectRole.STEWARD, "lay_steward", SectPose.NONE), new Mate(SectRole.COOK, "lay_cook", SectPose.NONE),
+            new Mate(SectRole.PORTER, "lay_porter_0", SectPose.NONE), new Mate(SectRole.GARDENER, "lay_herbalist", SectPose.NONE),
+            new Mate(SectRole.SWEEPER, "lay_sweeper", SectPose.NONE), new Mate(SectRole.WATER_CARRIER, "lay_water", SectPose.NONE));
 
     /** Ракурс: имя, расстояние, высота камеры, ночь, кадров, тиков между кадрами. */
     private record Shot(String name, double dist, double height, boolean night, int frames, int every) {
@@ -93,6 +121,25 @@ public final class SectPoseCapture {
     /** Кадр ролика draw, на котором начинается поединок и на котором звонит колокол. */
     private static final int DRAW_SPAR_AT = 10;
     private static final int DRAW_STOP_AT = 75;
+
+    /** {@code MURIM_POSES=head}: покой с трёх сторон, шаг (туда и обратно мимо камеры), разговор. */
+    private static final List<Shot> HEAD_SHOTS = List.of(new Shot("front", 5.8D, 0.2D, false, 2, 5),
+            new Shot("side", 4.8D, 0.2D, false, 2, 5), new Shot("back", 5.8D, 0.2D, false, 2, 5),
+            new Shot("walk", 7.0D, 0.2D, false, 40, 3), new Shot("talk", 5.8D, 0.2D, false, 6, 6));
+    /** {@code MURIM_POSES=first}: те же ракурсы для ряда из шести, камера дальше. */
+    private static final List<Shot> FIRST_SHOTS = List.of(new Shot("front", 8.5D, 0.2D, false, 2, 5),
+            new Shot("side", 8.8D, 0.2D, false, 2, 5), new Shot("back", 8.5D, 0.2D, false, 2, 5),
+            new Shot("walk", 7.5D, 0.2D, false, 40, 3), new Shot("talk", 8.5D, 0.2D, false, 6, 6));
+    /**
+     * {@code MURIM_POSES=all}: общий план, камера вдоль ряда спереди и сзади (кадр на человека), шаг с камерой,
+     * идущей вдоль ряда.
+     */
+    private static final List<Shot> ALL_SHOTS = List.of(new Shot("front", 30.0D, 2.0D, false, 2, 5),
+            new Shot("pan", 4.2D, 0.2D, false, ALL_MATES.size() + 1, 8), new Shot("panback", 4.2D, 0.2D, false, ALL_MATES.size() + 1, 8),
+            new Shot("walk", 6.5D, 0.4D, false, 80, 3));
+    /** Старейшины (казна и elder1) и ученик рядом с главой на стенде head (масштаб), шаг между ними, блоков. */
+    private static final List<Integer> headMates = new ArrayList<>();
+    private static final double HEAD_GAP = 1.6D;
 
     private static List<Shot> shots = SHOTS;
 
@@ -128,16 +175,25 @@ public final class SectPoseCapture {
             String raw = System.getenv("MURIM_POSES");
             spots = new ArrayList<>();
             for (Spot s : ALL) {
-                if (raw == null || raw.isBlank() ? !List.of("draw", "model").contains(s.name()) : List.of(raw.split(",")).contains(s.name())) {
+                if (raw == null || raw.isBlank() ? !List.of("draw", "model", "head", "head_watch", "first", "all").contains(s.name()) : List.of(raw.split(",")).contains(s.name())) {
                     spots.add(s);
                 }
             }
-            if ("model".equals(raw)) {
+            if ("model".equals(raw) || "head_watch".equals(raw)) {
                 shots = List.of(new Shot("front", 2.6D, 0.2D, false, 2, 5), new Shot("side", 2.6D, 0.2D, false, 2, 5),
                         new Shot("back", 2.6D, 0.2D, false, 2, 5));
             }
             if ("draw".equals(raw)) {
                 shots = List.of(DRAW_SHOT);
+            }
+            if ("head".equals(raw)) {
+                shots = HEAD_SHOTS;
+            }
+            if ("first".equals(raw)) {
+                shots = FIRST_SHOTS;
+            }
+            if ("all".equals(raw)) {
+                shots = ALL_SHOTS;
             }
             server.execute(() -> build(server));
             wait = -60;
@@ -176,6 +232,10 @@ public final class SectPoseCapture {
         if ("draw".equals(spot.name())) {
             int at = frame;
             server.execute(() -> drawTimeline(server, at));
+        }
+        if (row(spot.name())) {
+            int at = frame;
+            server.execute(() -> headTimeline(server, shot, at));
         }
         String name = String.format("murim_pose_%s_%s_%02d.png", spot.name(), shot.name(), frame++);
         Screenshot.grab(mc.gameDirectory, name, mc.getMainRenderTarget(), m -> {
@@ -224,10 +284,13 @@ public final class SectPoseCapture {
         level.setDayTime(6000L);
         BlockPos base = p.blockPosition().offset(0, 0, 8);
         int y = base.getY();
-        int width = spots.size() * SPACING + 8;
+        // Ряд всей секты (all) — 17 человек через 1,6 блока и камера общего плана за 30 блоков: площадка шире и глубже.
+        boolean wide = spots.stream().anyMatch(sp -> "all".equals(sp.name()));
+        int width = spots.size() * SPACING + 8 + (wide ? 40 : 0);
+        int south = wide ? 34 : 6;
         // Площадка: трава, над ней воздух — ровный фон и тень под ногами одинаковы у всех.
         for (int dx = -6; dx < width; dx++) {
-            for (int dz = -14; dz <= 6; dz++) {
+            for (int dz = -14; dz <= south; dz++) {
                 level.setBlock(new BlockPos(base.getX() + dx, y - 1, base.getZ() + dz), Blocks.GRASS_BLOCK.defaultBlockState(), 2);
                 for (int dy = 0; dy < 24; dy++) {
                     level.setBlock(new BlockPos(base.getX() + dx, y + dy, base.getZ() + dz), Blocks.AIR.defaultBlockState(), 2);
@@ -290,6 +353,17 @@ public final class SectPoseCapture {
                 SectDisciple mate = new SectDisciple(ModEntities.SECT_DISCIPLE.get(), level);
                 // Товарищ — второе поколение: обе текстуры модели ученика в одном ролике.
                 mate.setRole(SectRole.SECOND);
+                String drawLook = System.getenv("MURIM_DRAW_LOOK");
+                if (drawLook != null && !drawLook.isBlank()) {
+                    // MURIM_DRAW_LOOK=first_rate_disciple: тот же ролик первым поколением (ножны модели first_rate_disciple),
+                    // товарищ — Гён Так; роль не третьего поколения, иначе ножны спрятаны и в руке деревянный меч.
+                    npc.setRole(SectRole.SECOND);
+                    for (SectDisciple who : List.of(npc, mate)) {
+                        net.minecraft.nbt.CompoundTag look = new net.minecraft.nbt.CompoundTag();
+                        look.putString("look", who == npc ? drawLook : "first_gate");
+                        who.readAdditionalSaveData(look);
+                    }
+                }
                 mate.setKeepAwake(true);
                 mate.moveTo(at.getX() + 2.0D, standY, at.getZ() + 0.5D, 90.0F, 0.0F);
                 level.addFreshEntity(mate);
@@ -299,6 +373,44 @@ public final class SectPoseCapture {
             }
             npc.playPose(s.pose());
             npcIds.add(npc.getId());
+            if (row(s.name())) {
+                // head: Тэ Гюн (своя модель по облику), старейшина (elder1) и ученик третьего поколения — масштаб;
+                // first: второй тренер Гён Так, алхимик Гён Чхо, рядовой первого поколения, второе и третье поколение.
+                // MURIM_FIRST_GEN=1: ряд first — наставник и четверо рядовых первого поколения (роль FIRST, автор 06.10),
+                // последним — ученик второго поколения для сравнения.
+                boolean firstGen = "first".equals(s.name()) && "1".equals(System.getenv("MURIM_FIRST_GEN"));
+                List<SectRole> roles = "all".equals(s.name()) ? ALL_MATES.stream().map(Mate::role).toList() : firstGen
+                        ? List.of(SectRole.FIRST, SectRole.FIRST, SectRole.FIRST, SectRole.FIRST, SectRole.SECOND)
+                        : "first".equals(s.name())
+                        ? List.of(SectRole.ELDER, SectRole.ELDER, SectRole.ELDER, SectRole.SECOND, SectRole.DISCIPLE)
+                        : List.of(SectRole.ELDER, SectRole.ELDER, SectRole.DISCIPLE);
+                List<String> looks = "all".equals(s.name()) ? ALL_MATES.stream().map(Mate::look).toList() : firstGen
+                        ? List.of("first_rate_disciple", "first_rate_disciple", "first_rate_disciple", "first_rate_disciple", "")
+                        : "first".equals(s.name())
+                        ? List.of("first_gate", "elder_healer", "first_rate_disciple", "", "")
+                        : List.of("elder_treasury", "", "");
+                headMates.clear();
+                for (int k = 1; k <= roles.size(); k++) {
+                    SectDisciple mate = new SectDisciple(ModEntities.SECT_DISCIPLE.get(), level);
+                    mate.setRole(roles.get(k - 1));
+                    if (!looks.get(k - 1).isEmpty()) {
+                        // Только облик, без ключа человека: ключ включил бы распорядок, а на шаге у стенда ИИ включён.
+                        net.minecraft.nbt.CompoundTag look = new net.minecraft.nbt.CompoundTag();
+                        look.putString("look", looks.get(k - 1));
+                        mate.readAdditionalSaveData(look);
+                    }
+                    mate.setKeepAwake(true);
+                    mate.setNoAi(true);
+                    mate.moveTo(at.getX() + 0.5D + HEAD_GAP * k, standY, at.getZ() + 0.5D, 0.0F, 0.0F);
+                    mate.setYHeadRot(0.0F);
+                    mate.setYBodyRot(0.0F);
+                    level.addFreshEntity(mate);
+                    if ("all".equals(s.name()) && ALL_MATES.get(k - 1).pose() != SectPose.NONE) {
+                        mate.playPose(ALL_MATES.get(k - 1).pose());
+                    }
+                    headMates.add(mate.getId());
+                }
+            }
         }
         p.setGameMode(GameType.CREATIVE);
         p.addEffect(new MobEffectInstance(MobEffects.INVISIBILITY, 20 * 1200, 0, false, false, false));
@@ -365,6 +477,86 @@ public final class SectPoseCapture {
         }
     }
 
+    /**
+     * Сервер, стенд head: на шаге все трое идут на восток и обратно (ИИ включён только на этот ракурс, ключа человека
+     * нет — распорядка тоже), на разговоре глава и старейшина стоят лицом к камере в позе TALK.
+     */
+    private static void headTimeline(IntegratedServer server, Shot shot, int at) {
+        ServerLevel level = server.overworld();
+        List<SectDisciple> row = new ArrayList<>();
+        for (int id : java.util.stream.Stream.concat(npcIds.stream().limit(1), headMates.stream()).toList()) {
+            if (level.getEntity(id) instanceof SectDisciple n) {
+                row.add(n);
+            }
+        }
+        if (row.size() < 4) {
+            return;
+        }
+        int last = row.size() - 1;
+        // Люди секты из мира, догрузившиеся с чанками после уборки площадки, не стоят в ряду (двоились в кадре).
+        for (SectDisciple stray : level.getEntitiesOfClass(SectDisciple.class, new AABB(origin).inflate(24.0D, 8.0D, 24.0D),
+                d -> !row.contains(d))) {
+            stray.discard();
+        }
+        double x0 = origin.getX() + 0.5D;
+        if ("walk".equals(shot.name())) {
+            boolean back = at >= shot.frames() / 2;
+            for (int k = 0; k < row.size(); k++) {
+                SectDisciple n = row.get(k);
+                n.setNoAi(false);
+                n.getNavigation().moveTo(x0 + HEAD_GAP * k + (back ? -2.0D : 6.0D), origin.getY(), n.getZ(), 0.6D);
+            }
+            // Камера едет за серединой ряда с юга: все трое в профиль и крупно. Ряд всей секты длинный — камера
+            // идёт вдоль него, от главы к последнему слуге.
+            Vec3 mid = row.size() > 8
+                    ? row.get(Math.min(last, at * row.size() / shot.frames())).position().add(0.0D, 1.0D, 0.0D)
+                    : row.get(0).position().add(row.get(last).position()).scale(0.5D).add(0.0D, 1.0D, 0.0D);
+            Vec3 cam = mid.add(0.0D, shot.height(), shot.dist());
+            for (ArmorStand stand : level.getEntitiesOfClass(ArmorStand.class, new AABB(origin).inflate(256.0D),
+                    s -> s.getCustomName() != null && CAMERA.equals(s.getCustomName().getString()))) {
+                Vec3 d = mid.subtract(cam);
+                float yaw = (float) Math.toDegrees(Math.atan2(d.z, d.x)) - 90.0F;
+                float pitch = (float) -Math.toDegrees(Math.atan2(d.y, Math.sqrt(d.x * d.x + d.z * d.z)));
+                stand.moveTo(cam.x, cam.y - 1.62D, cam.z, yaw, pitch);
+                stand.setYHeadRot(yaw);
+            }
+            return;
+        }
+        if (shot.name().startsWith("pan")) {
+            // Кадр снимается раньше, чем камера доезжает: на кадре at ставится камера кадра at + 1 (кадр 0 — camera()).
+            SectDisciple n = row.get(Math.min(last, at + 1));
+            Vec3 look = n.position().add(0.0D, 1.0D, 0.0D);
+            Vec3 cam = look.add(0.0D, shot.height(), "pan".equals(shot.name()) ? shot.dist() : -shot.dist());
+            for (ArmorStand stand : level.getEntitiesOfClass(ArmorStand.class, new AABB(origin).inflate(256.0D),
+                    s -> s.getCustomName() != null && CAMERA.equals(s.getCustomName().getString()))) {
+                Vec3 d = look.subtract(cam);
+                float yaw = (float) Math.toDegrees(Math.atan2(d.z, d.x)) - 90.0F;
+                float pitch = (float) -Math.toDegrees(Math.atan2(d.y, Math.sqrt(d.x * d.x + d.z * d.z)));
+                stand.moveTo(cam.x, cam.y - 1.62D, cam.z, yaw, pitch);
+                stand.setYHeadRot(yaw);
+            }
+            return;
+        }
+        if ("talk".equals(shot.name()) && at == 0) {
+            for (int k = 0; k < row.size(); k++) {
+                SectDisciple n = row.get(k);
+                n.getNavigation().stop();
+                n.setNoAi(true);
+                n.moveTo(x0 + HEAD_GAP * k, origin.getY(), origin.getZ() + 0.5D, 0.0F, 0.0F);
+                n.setYHeadRot(0.0F);
+                n.setYBodyRot(0.0F);
+                if (k < last) {
+                    n.playPose(SectPose.TALK);
+                }
+            }
+        }
+    }
+
+    /** Стенд «ряд из четырёх» (глава со старейшинами или первое поколение со вторым и третьим). */
+    private static boolean row(String spot) {
+        return "head".equals(spot) || "first".equals(spot) || "all".equals(spot);
+    }
+
     /** Сервер: стойка-камера перед человеком {@code i}, время суток ракурса. */
     private static void camera(IntegratedServer server, int i, Shot shot) {
         ServerLevel level = server.overworld();
@@ -375,13 +567,21 @@ public final class SectPoseCapture {
             return;
         }
         Vec3 look = target.position().add(0.0D, spots.get(i).pose().seated() ? 0.5D : 1.0D, 0.0D);
+        if (row(spots.get(i).name()) && !shot.name().startsWith("pan")) {
+            // Глава и ученик справа от него: камера смотрит в середину пары (на шаге — в середину пути).
+            look = look.add(0.5D * headMates.size() * HEAD_GAP + ("walk".equals(shot.name()) ? 2.0D : 0.0D), 0.0D, 0.0D);
+        }
         // Человек смотрит на юг; камера с юга и на 35° к востоку: лицо и профиль позы видны вместе.
         Vec3 dir = switch (shot.name()) {
-            case "front" -> new Vec3(0.0D, 0.0D, 1.0D);
+            case "front", "walk", "pan" -> new Vec3(0.0D, 0.0D, 1.0D);
             case "side" -> new Vec3(1.0D, 0.0D, 0.0D);
-            case "back" -> new Vec3(0.0D, 0.0D, -1.0D);
+            case "back", "panback" -> new Vec3(0.0D, 0.0D, -1.0D);
             default -> new Vec3(0.7D, 0.0D, 1.0D).normalize();
         };
+        if (row(spots.get(i).name()) && "side".equals(shot.name())) {
+            // Ученик стоит восточнее главы — профиль главы снимается с запада, чтобы ученик не заслонял.
+            dir = dir.scale(-1.0D);
+        }
         Vec3 cam = look.add(dir.scale(shot.dist())).add(0.0D, shot.height(), 0.0D);
         ServerPlayer p = server.getPlayerList().getPlayers().get(0);
         p.teleportTo(level, cam.x, cam.y + 1.0D, cam.z, 0.0F, 0.0F);

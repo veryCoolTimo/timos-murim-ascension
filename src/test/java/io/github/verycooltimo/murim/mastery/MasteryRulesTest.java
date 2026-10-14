@@ -44,7 +44,7 @@ class MasteryRulesTest {
             p = MasteryRules.meditate(p, 0.0D, 0L).progress();
         }
         assertEquals(0.0D, p.unprocessed(), 1.0E-9D);
-        double total = p.layer() > 0 ? MasteryRules.need(0) + p.progress() : p.progress();
+        double total = p.stars() > 0 ? MasteryRules.need(0) + p.progress() : p.progress();
         assertTrue(total > afterFight.progress() * 2.2D, "осмысленное должно дать заметно больше");
     }
 
@@ -60,18 +60,18 @@ class MasteryRulesTest {
     @DisplayName("Слои идут по порядку и упираются в предел манускрипта")
     void layersInOrderUpToCap() {
         MasteryRules.Gain gain = MasteryRules.experience(fresh(2), MasteryRules.Source.FIGHT, 1000.0D, 0.0D, 0L);
-        assertEquals(List.of(1, 2), gain.layersReached());
-        assertEquals(2, gain.progress().layer());
+        assertEquals(List.of(1, 2), gain.starsReached());
+        assertEquals(2, gain.progress().stars());
         assertTrue(gain.progress().atCap());
     }
 
     @Test
     @DisplayName("Мудрый проходит нижние слои простой техники сразу, крутую — нет")
     void wisdomSkipsBasicLayers() {
-        assertEquals(0, MasteryRules.startLayer(TechniqueTier.BASIC, 5, 0.0D));
-        assertEquals(2, MasteryRules.startLayer(TechniqueTier.BASIC, 5, 12.0D));
-        assertEquals(4, MasteryRules.startLayer(TechniqueTier.BASIC, 5, 100.0D), "последний слой всегда своим трудом");
-        assertEquals(0, MasteryRules.startLayer(TechniqueTier.SECRET, 10, 100.0D));
+        assertEquals(0, MasteryRules.startStars(TechniqueTier.BASIC, 5, 0.0D));
+        assertEquals(2, MasteryRules.startStars(TechniqueTier.BASIC, 5, 12.0D));
+        assertEquals(4, MasteryRules.startStars(TechniqueTier.BASIC, 5, 100.0D), "последний слой всегда своим трудом");
+        assertEquals(0, MasteryRules.startStars(TechniqueTier.SECRET, 10, 100.0D));
     }
 
     @Test

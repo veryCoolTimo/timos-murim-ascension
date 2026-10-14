@@ -15,7 +15,7 @@ import net.minecraft.world.phys.Vec3;
  * {@link #CUT} — разрез ливня попал (a — центр цели, extra — номер); {@link #LAND} — приземление
  * (a — ступни, extra — 1, если был прокол).
  */
-public record ShowerPayload(int entityId, Vec3 a, Vec3 b, int layer, int stage, int extra) implements CustomPacketPayload {
+public record ShowerPayload(int entityId, Vec3 a, Vec3 b, int executionTier, int stage, int extra) implements CustomPacketPayload {
 
     public static final int RELEASE = 0;
     public static final int DIVE = 1;
@@ -32,7 +32,7 @@ public record ShowerPayload(int entityId, Vec3 a, Vec3 b, int layer, int stage, 
             ByteBufCodecs.VAR_INT, ShowerPayload::entityId,
             VEC, ShowerPayload::a,
             VEC, ShowerPayload::b,
-            ByteBufCodecs.VAR_INT, ShowerPayload::layer,
+            ByteBufCodecs.VAR_INT, ShowerPayload::executionTier,
             ByteBufCodecs.VAR_INT, ShowerPayload::stage,
             ByteBufCodecs.VAR_INT, ShowerPayload::extra,
             ShowerPayload::new);

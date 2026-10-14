@@ -1,0 +1,39 @@
+{
+  "name": "npc.murim.kwon_yeon",
+  "title": "npc.murim.kwon_yeon.title",
+  "start": [
+    {
+      "node": "greet"
+    }
+  ],
+  "nodes": {
+    "greet": {
+      "line": "dialogue.murim.guest_kwon_yeon.greet",
+      "options": [
+        {
+          "text": "dialogue.murim.guest_kwon_yeon.challenge",
+          "actions": [
+            {
+              "type": "guest_challenge"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.guest_kwon_yeon.voices",
+          "next": "voices"
+        },
+        {
+          "text": "dialogue.murim.guest.leave"
+        }
+      ]
+    },
+    "voices": {
+      "line": "dialogue.murim.guest_kwon_yeon.voices_line",
+      "options": [
+        {
+          "text": "dialogue.murim.guest.leave"
+        }
+      ]
+    }
+  }
+}

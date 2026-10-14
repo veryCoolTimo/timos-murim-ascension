@@ -30,7 +30,7 @@ public final class PageService {
     /** Все техники, которым учит книга {@code book}: формы стиля и его основа или сама техника. */
     public static List<ResourceLocation> teaches(ResourceLocation book) {
         Optional<Styles.Style> style = Styles.of(book);
-        if (style.isEmpty()) {
+        if (style.isEmpty() || Styles.individualBooks(style.get())) {
             return List.of(book);
         }
         List<ResourceLocation> out = new ArrayList<>(style.get().forms());
@@ -44,7 +44,7 @@ public final class PageService {
      */
     public static Optional<ResourceLocation> frontier(MasteryState state, ResourceLocation book) {
         Optional<Styles.Style> style = Styles.of(book);
-        if (style.isEmpty()) {
+        if (style.isEmpty() || Styles.individualBooks(style.get())) {
             return state.knows(book) ? Optional.of(book) : Optional.empty();
         }
         List<ResourceLocation> forms = style.get().forms();
@@ -59,7 +59,7 @@ public final class PageService {
     /** Название книги: стиль — по стилю, иначе по технике (так же называется манускрипт). */
     public static Component bookName(ResourceLocation book) {
         Optional<Styles.Style> style = Styles.of(book);
-        return style.isPresent() ? Component.translatable(style.get().nameKey()) : MasteryService.name(book);
+        return style.isPresent() && !Styles.individualBooks(style.get()) ? Component.translatable(style.get().nameKey()) : MasteryService.name(book);
     }
 
     /** Прочитать страницу из стопки в руке. */
@@ -74,14 +74,14 @@ public final class PageService {
         for (ResourceLocation t : teaches(book)) {
             TechniqueProgress p = state.techniques().get(t);
             TechniqueDefinition d = TechniqueLoader.get(t);
-            if (p != null && d != null && p.cap() < d.layers()) {
+            if (p != null && d != null && p.cap() < d.starCap()) {
                 anyShallow = true;
             }
         }
         TechniqueProgress fp = front.map(f -> state.techniques().get(f)).orElse(null);
         TechniqueDefinition fd = front.map(TechniqueLoader::get).orElse(null);
         PageRules.Outcome outcome = PageRules.page(front.isPresent(), stack.getCount(),
-                fp == null ? 0 : fp.cap(), fd == null ? 0 : fd.layers(), fp == null ? 0 : fp.layer(), anyShallow);
+                fp == null ? 0 : fp.cap(), fd == null ? 0 : fd.starCap(), fp == null ? 0 : fp.stars(), anyShallow);
         Component name = bookName(book);
         switch (outcome) {
             case NEED_MORE -> {
@@ -92,19 +92,22 @@ public final class PageService {
                 stack.shrink(PageRules.PAGES_TO_BIND);
                 ItemStack manual = new ItemStack(ModItems.TECHNIQUE_MANUAL.get());
                 manual.set(ModDataComponents.TECHNIQUE.get(), book);
-                manual.set(ModDataComponents.MANUAL_DEPTH.get(), PageRules.BOUND_DEPTH);
+                int boundStars = Math.max(1, (int) Math.round(PageRules.BOUND_DEPTH / (double) Arts.legacySteps(book) * Arts.cap(book)));
+                manual.set(ModDataComponents.MANUAL_STARS.get(), Math.min(boundStars, Arts.cap(book)));
+                manual.set(ModDataComponents.MANUAL_STAR_VERSION.get(), TechniqueProgress.VERSION);
                 if (!player.getInventory().add(manual)) {
                     player.drop(manual, false);
                 }
-                message(player, "murim.page.bound", ChatFormatting.GOLD, name, PageRules.BOUND_DEPTH);
+                message(player, "murim.page.bound", ChatFormatting.GOLD, name, Math.min(boundStars, Arts.cap(book)));
                 bindSound(player, 0.9F);
             }
             case DEEPEN -> {
+                java.util.Set<ResourceLocation> visited = new java.util.HashSet<>();
                 for (ResourceLocation t : teaches(book)) {
                     TechniqueProgress p = player.getData(ModAttachments.MASTERY).techniques().get(t);
                     TechniqueDefinition d = TechniqueLoader.get(t);
-                    if (p != null && d != null && p.cap() < d.layers()) {
-                        MasteryService.deepen(player, t, PageRules.deepen(p.cap(), d.layers()));
+                    if (p != null && d != null && visited.add(MasteryState.masteryId(t)) && p.cap() < d.starCap()) {
+                        MasteryService.deepen(player, t, PageRules.deepen(p.cap(), d.starCap()));
                     }
                 }
                 stack.shrink(1);
@@ -115,7 +118,7 @@ public final class PageService {
             case INSIGHT -> {
                 stack.shrink(1);
                 message(player, "murim.page.insight", ChatFormatting.AQUA, name);
-                MasteryService.study(player, front.get(), PageRules.insight(fp.layer(), PageRules.PAGE_INSIGHT));
+                MasteryService.study(player, front.get(), PageRules.insight(fp.stars(), PageRules.PAGE_INSIGHT));
                 sound(player, 1.2F);
             }
             case WISDOM -> {
@@ -138,7 +141,7 @@ public final class PageService {
                 continue;
             }
             TechniqueProgress p = state.techniques().get(t);
-            int bookCap = depth <= 0 ? d.layers() : Math.min(depth, d.layers());
+            int bookCap = depth <= 0 ? d.starCap() : Math.min(depth, d.starCap());
             if (p == null || p.cap() < bookCap) {
                 return false;
             }
@@ -156,9 +159,9 @@ public final class PageService {
         TechniqueProgress p = state.techniques().get(front.get());
         Component name = bookName(book);
         stack.shrink(1);
-        if (PageRules.reread(p.cap(), p.layer()) == PageRules.Outcome.INSIGHT) {
+        if (PageRules.reread(p.cap(), p.stars()) == PageRules.Outcome.INSIGHT) {
             message(player, "murim.page.reread", ChatFormatting.AQUA, name);
-            MasteryService.study(player, front.get(), PageRules.insight(p.layer(), PageRules.BOOK_INSIGHT));
+            MasteryService.study(player, front.get(), PageRules.insight(p.stars(), PageRules.BOOK_INSIGHT));
         } else {
             MasteryService.addWisdom(player, PageRules.BOOK_WISDOM);
             message(player, "murim.page.reread_wisdom", ChatFormatting.GRAY, name);

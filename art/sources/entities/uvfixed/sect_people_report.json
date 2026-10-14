@@ -1,0 +1,71 @@
+{
+ "source": "art/sources/entities/sect_people.bbmodel",
+ "inverted_cubes": 0,
+ "flipped_faces": 78,
+ "rotated_faces": 0,
+ "overlapping_faces": 474,
+ "zero_uv_faces": 322,
+ "zero_area_faces": 8,
+ "inexact_faces": [],
+ "dense_faces": 36,
+ "texture_size_before": [
+  256,
+  256
+ ],
+ "uv_size_before": [
+  128,
+  128
+ ],
+ "baked_textures": [
+  "third-rate-disciple.png",
+  "second-rate-disciple.png"
+ ],
+ "untouched_textures": [
+  "sect_disciple.png",
+  "sect_leader.png",
+  "sect_mentor.png",
+  "elder_gak.png",
+  "elder_sang.png",
+  "elder_young.png",
+  "first_am.png",
+  "guard_0.png",
+  "guard_1.png",
+  "guard_2.png",
+  "guard_3.png",
+  "guard_4.png",
+  "lay_cook.png",
+  "lay_herbalist.png",
+  "lay_porter_0.png",
+  "lay_porter_1.png",
+  "lay_steward.png",
+  "lay_sweeper.png",
+  "lay_water.png",
+  "leader.png",
+  "mentor.png",
+  "second_0.png",
+  "second_1.png",
+  "second_2.png",
+  "second_3.png",
+  "second_4.png",
+  "third_0.png",
+  "third_1.png",
+  "third_2.png",
+  "third_3.png",
+  "third_4.png",
+  "third_5.png",
+  "third_6.png",
+  "third_7.png",
+  "third_8.png",
+  "third_9.png"
+ ],
+ "texture_size_after": [
+  256,
+  256
+ ],
+ "uv_size_after": [
+  128,
+  128
+ ],
+ "faces": 546,
+ "cubes": 91
+}

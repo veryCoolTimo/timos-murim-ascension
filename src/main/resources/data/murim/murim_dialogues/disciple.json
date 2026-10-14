@@ -79,13 +79,14 @@
     },
     "meal": {
       "random": [
-        "dialogue.murim.disciple.meal1",
-        "dialogue.murim.disciple.meal2",
-        "dialogue.murim.disciple.meal3",
-        "@trait"
+        "@context"
       ],
       "gesture": "nod",
       "options": [
+        {
+          "text": "dialogue.murim.social.opt.news",
+          "next": "sect_news"
+        },
         {
           "text": "dialogue.murim.opt.leave"
         }
@@ -93,19 +94,14 @@
     },
     "night": {
       "random": [
-        "dialogue.murim.disciple.night1",
-        "dialogue.murim.disciple.night2"
+        "@context"
       ],
       "gesture": "shake",
       "options": []
     },
     "evening": {
       "random": [
-        "dialogue.murim.disciple.evening1",
-        "dialogue.murim.disciple.evening2",
-        "dialogue.murim.disciple.evening3",
-        "@trait",
-        "@rumour"
+        "@context"
       ],
       "gesture": "explain",
       "options": [
@@ -119,22 +115,17 @@
           "next": "challenge"
         },
         {
+          "text": "dialogue.murim.social.opt.news",
+          "next": "sect_news"
+        },
+        {
           "text": "dialogue.murim.opt.leave"
         }
       ]
     },
     "chatter": {
       "random": [
-        "@trait",
-        "@trait",
-        "@trait",
-        "@personal",
-        "@rumour",
-        "@rumour",
-        "dialogue.murim.disciple.line1",
-        "dialogue.murim.disciple.line3",
-        "dialogue.murim.disciple.line4",
-        "dialogue.murim.disciple.line6"
+        "@context"
       ],
       "gesture": "nod",
       "options": [
@@ -155,6 +146,10 @@
             }
           ],
           "next": "doing"
+        },
+        {
+          "text": "dialogue.murim.social.opt.news",
+          "next": "sect_news"
         },
         {
           "text": "dialogue.murim.opt.leave"
@@ -201,6 +196,19 @@
         },
         {
           "text": "dialogue.murim.disciple.opt.not_now"
+        }
+      ]
+    },
+    "sect_news": {
+      "random": [
+        "@trait",
+        "@personal",
+        "@rumour"
+      ],
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
         }
       ]
     }

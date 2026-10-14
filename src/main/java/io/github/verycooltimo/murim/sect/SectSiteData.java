@@ -26,10 +26,22 @@ public final class SectSiteData extends SavedData {
     /** Победитель последнего смотра: ключ ученика или {@code @<имя игрока>} (слухи учеников, {@link SectTalk}). */
     private String lastChampion = "";
 
+    private long suppliedUntil = -1;
+    private long councilWeek = -1;
+    private String councilTopic = "peace", councilChampion = "";
+    public long suppliedUntil() { return suppliedUntil; }
+    public void supply(long until) { suppliedUntil = Math.max(suppliedUntil, until); setDirty(); }
+    public long councilWeek() { return councilWeek; }
+    public String councilTopic() { return councilTopic; }
+    public String councilChampion() { return councilChampion; }
+    public void council(long week, String topic, String champion) {
+        councilWeek = week; councilTopic = topic; councilChampion = champion; setDirty();
+    }
+
     public SectSiteData() {
     }
 
-    private static SectSiteData load(CompoundTag tag, HolderLookup.Provider registries) {
+    static SectSiteData load(CompoundTag tag, HolderLookup.Provider registries) {
         SectSiteData data = new SectSiteData();
         for (Tag t : tag.getList("placed", Tag.TAG_STRING)) {
             data.placed.add(t.getAsString());
@@ -38,6 +50,10 @@ public final class SectSiteData extends SavedData {
             data.lastReview = tag.getLong("last_review");
         }
         data.lastChampion = tag.getString("last_champion");
+        if (tag.contains("supplied_until")) data.suppliedUntil = tag.getLong("supplied_until");
+        if (tag.contains("council_week")) data.councilWeek = tag.getLong("council_week");
+        if (tag.contains("council_topic")) data.councilTopic = tag.getString("council_topic");
+        data.councilChampion = tag.getString("council_champion");
         return data;
     }
 
@@ -52,6 +68,10 @@ public final class SectSiteData extends SavedData {
         if (!lastChampion.isEmpty()) {
             tag.putString("last_champion", lastChampion);
         }
+        tag.putLong("supplied_until", suppliedUntil);
+        tag.putLong("council_week", councilWeek);
+        tag.putString("council_topic", councilTopic);
+        tag.putString("council_champion", councilChampion);
         return tag;
     }
 

@@ -69,10 +69,14 @@ public class BanditModel<T extends Bandit> extends HierarchicalModel<T> implemen
             play(combat, age, 1.0F);
         } else {
             // Покой и шаг смешиваются по скорости: веса в сумме 1, поэтому смесь — это лерп поз.
+            Map<String, AnimationDefinition> moves = BanditAnimations.get(moveSet(entity));
+            if (moves.isEmpty()) {
+                moves = clips;
+            }
             float walk = Mth.clamp(limbSwingAmount * 2.5F, 0.0F, 1.0F);
-            boolean running = limbSwingAmount > 0.75F && clips.containsKey("run");
-            AnimationDefinition idle = clips.get("idle");
-            AnimationDefinition step = clips.get(running ? "run" : "walk");
+            boolean running = limbSwingAmount > 0.75F && moves.containsKey("run");
+            AnimationDefinition idle = moves.get("idle");
+            AnimationDefinition step = moves.get(running ? "run" : "walk");
             if (idle != null && walk < 1.0F) {
                 play(idle, ageInTicks, 1.0F - walk);
             }
@@ -96,6 +100,11 @@ public class BanditModel<T extends Bandit> extends HierarchicalModel<T> implemen
         if (entity instanceof BanditArcher && entity.isAggressive() && state != Bandit.STUN) {
             bowPose(netHeadYaw, headPitch);
         }
+    }
+
+    /** Набор клипов покоя и шага ({@code idle}, {@code walk}, {@code run}); бой — всегда из своего набора. */
+    protected String moveSet(T entity) {
+        return name;
     }
 
     /** Натянутый лук: как у ванильного скелета (HumanoidModel.ArmPose.BOW_AND_ARROW). */

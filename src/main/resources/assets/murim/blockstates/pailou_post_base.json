@@ -1,0 +1,15 @@
+{
+  "variants": {
+    "": [
+      {
+        "model": "murim:block/pailou_post_base"
+      },
+      {
+        "model": "murim:block/pailou_post_base_b"
+      },
+      {
+        "model": "murim:block/pailou_post_base_c"
+      }
+    ]
+  }
+}

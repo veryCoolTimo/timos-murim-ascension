@@ -1,0 +1,11 @@
+newmtl emblem
+map_Kd #emblem
+
+newmtl plaster
+map_Kd #plaster
+
+newmtl verge
+map_Kd #verge
+
+newmtl vridge
+map_Kd #vridge

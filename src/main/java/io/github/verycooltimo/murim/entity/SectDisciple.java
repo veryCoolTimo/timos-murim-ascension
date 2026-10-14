@@ -6,6 +6,7 @@ import io.github.verycooltimo.murim.combat.TechniquePhase;
 import io.github.verycooltimo.murim.network.FoundationPayloads;
 import io.github.verycooltimo.murim.network.TechniqueEventPayload;
 import io.github.verycooltimo.murim.registry.ModSounds;
+import io.github.verycooltimo.murim.registry.ModAttachments;
 import io.github.verycooltimo.murim.sect.SectLayout;
 import io.github.verycooltimo.murim.sect.SectRole;
 import io.github.verycooltimo.murim.sect.SectRoster;
@@ -44,7 +45,7 @@ import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.network.PacketDistributor;
+import io.github.verycooltimo.murim.network.ChannelSafe;
 
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -73,12 +74,12 @@ public class SectDisciple extends Bandit implements Casters.Caster {
     public static final ResourceLocation RUSH = id("seven_plum_rush");
     public static final ResourceLocation BOW = id("spar_bow");
 
-    /** Слои старшего ученика: основа целиком (все 6 форм), Разрез с цветением, Натиск. */
-    private static final Map<ResourceLocation, Integer> LAYERS = Map.of(SIX, 4, SLASH, 3, RUSH, 3);
+    /** Звёзды искусств старшего ученика: основа целиком (все 6 форм), Разрез с цветением, Натиск. */
+    private static final Map<ResourceLocation, Integer> ART_STARS = Map.of(SIX, 5, SLASH, 4, RUSH, 4);
     /** Третье поколение (план §5.3, автор 03.10 «basic swords»): только основа, три формы. */
-    private static final Map<ResourceLocation, Integer> LAYERS_THIRD = Map.of(SIX, 2);
+    private static final Map<ResourceLocation, Integer> ART_STARS_THIRD = Map.of(SIX, 2);
     /** Второе поколение: основа целиком и Разрез без цветения. */
-    private static final Map<ResourceLocation, Integer> LAYERS_SECOND = Map.of(SIX, 4, SLASH, 2);
+    private static final Map<ResourceLocation, Integer> ART_STARS_SECOND = Map.of(SIX, 5, SLASH, 3);
     public static final ResourceLocation LOTUS = id("lotus");
 
     /** Ранг старшего ученика — второй (Realm.SECOND). */
@@ -115,7 +116,7 @@ public class SectDisciple extends Bandit implements Casters.Caster {
     private static final EntityDataAccessor<Integer> TALKING = SynchedEntityData.defineId(SectDisciple.class, EntityDataSerializers.INT);
     /** Кто это (ключ {@link SectRoster}): имя и свой диалог; пусто — NPC без имени (команда, стенд). */
     private static final EntityDataAccessor<String> KEY = SynchedEntityData.defineId(SectDisciple.class, EntityDataSerializers.STRING);
-    /** Облик: {@code textures/entity/sect/<look>.png}; пусто — текстура роли. */
+    /** Облик человека (ключ своей модели автора в DiscipleRenderer.LOOK_BODIES); пусто или без своей модели — по роли. */
     private static final EntityDataAccessor<String> LOOK = SynchedEntityData.defineId(SectDisciple.class, EntityDataSerializers.STRING);
     /** Поза вне боя ({@link SectPose#id()}) и её номер: клиент играет клип позы с прихода. */
     private static final EntityDataAccessor<String> POSE = SynchedEntityData.defineId(SectDisciple.class, EntityDataSerializers.STRING);
@@ -233,11 +234,12 @@ public class SectDisciple extends Bandit implements Casters.Caster {
     // ------------------------------------------------------------------ Casters.Caster
 
     @Override
-    public int techniqueLayer(ResourceLocation technique) {
+    public int techniqueTier(ResourceLocation technique) {
         Optional<SectRoster> m = member();
-        Map<ResourceLocation, Integer> layers = m.isEmpty() || m.get().generation() < 2 || m.get().role() == SectRole.SENIOR ? LAYERS
-                : m.get().generation() == 2 ? LAYERS_SECOND : LAYERS_THIRD;
-        return layers.getOrDefault(technique, -1);
+        Map<ResourceLocation, Integer> stars = m.isEmpty() || m.get().generation() < 2 || m.get().role() == SectRole.SENIOR ? ART_STARS
+                : m.get().generation() == 2 ? ART_STARS_SECOND : ART_STARS_THIRD;
+        int value = stars.getOrDefault(technique, -1);
+        return value < 0 ? -1 : io.github.verycooltimo.murim.mastery.Arts.executionTier(technique, value);
     }
 
     @Override
@@ -342,6 +344,7 @@ public class SectDisciple extends Bandit implements Casters.Caster {
             return;
         }
         wake();
+        if (other instanceof ServerPlayer p) io.github.verycooltimo.murim.sect.SectProgression.sparStarted(p, this);
         partner = other.getUUID();
         cleanHits = 0;
         defending = false;
@@ -506,6 +509,10 @@ public class SectDisciple extends Bandit implements Casters.Caster {
             return;
         }
         tickLife();
+        // Меч, попавший в руку мимо реквизита (команда, чужой код), — не держится дольше секунды.
+        if (tickCount % 20 == 0) {
+            dropStaleSwords();
+        }
         // SynchedEntityData шлёт значение только при смене.
         entityData.set(DRAWN, wantsDrawn());
         if (dashLeft > 0) {
@@ -621,7 +628,7 @@ public class SectDisciple extends Bandit implements Casters.Caster {
 
     private boolean ready(ResourceLocation id, long now) {
         TechniqueDefinition d = TechniqueLoader.get(id);
-        if (d == null || technique != null || techniqueLayer(id) < 0) {
+        if (d == null || technique != null || techniqueTier(id) < 0) {
             return false;
         }
         Long own = cooldowns.get(id);
@@ -645,11 +652,11 @@ public class SectDisciple extends Bandit implements Casters.Caster {
             default -> 10;
         };
         getNavigation().stop();
-        PacketDistributor.sendToPlayersTrackingEntity(this,
-                new TechniqueEventPayload(TechniqueEventPayload.Event.STARTED, id, getId(), 0, techniqueLayer(id)));
+        ChannelSafe.nearEntity(this,
+                new TechniqueEventPayload(TechniqueEventPayload.Event.STARTED, id, getId(), 0, techniqueTier(id)), false);
         playAnim(d.animation(), 0);
         playSound(ModSounds.SWORD_DRAW.get(), 0.6F, 0.95F + 0.1F * getRandom().nextFloat());
-        log("техника {} (слой {})", id.getPath(), techniqueLayer(id));
+        log("техника {} (индекс исполнения {})", id.getPath(), techniqueTier(id));
         return true;
     }
 
@@ -661,8 +668,8 @@ public class SectDisciple extends Bandit implements Casters.Caster {
         }
         TechniquePhase phase = d.phaseAt(techniqueTick);
         if (phase == null) {
-            PacketDistributor.sendToPlayersTrackingEntity(this,
-                    new TechniqueEventPayload(TechniqueEventPayload.Event.FINISHED, technique, getId(), 0, 0));
+            ChannelSafe.nearEntity(this,
+                    new TechniqueEventPayload(TechniqueEventPayload.Event.FINISHED, technique, getId(), 0, 0), false);
             technique = null;
             return;
         }
@@ -710,8 +717,8 @@ public class SectDisciple extends Bandit implements Casters.Caster {
 
     private void cancelTechnique() {
         if (technique != null) {
-            PacketDistributor.sendToPlayersTrackingEntity(this,
-                    new TechniqueEventPayload(TechniqueEventPayload.Event.CANCELLED, technique, getId(), 0, 0));
+            ChannelSafe.nearEntity(this,
+                    new TechniqueEventPayload(TechniqueEventPayload.Event.CANCELLED, technique, getId(), 0, 0), false);
             technique = null;
             playAnim(null, 0);
         }
@@ -720,7 +727,7 @@ public class SectDisciple extends Bandit implements Casters.Caster {
     // ------------------------------------------------------------------ основа: Шесть Равновесий
 
     private void startForm(int windup) {
-        int layer = techniqueLayer(SIX);
+        int layer = techniqueTier(SIX);
         form = FoundationForms.at(formStep++, layer);
         formWindup = windup;
         formTick = 0;
@@ -737,8 +744,8 @@ public class SectDisciple extends Bandit implements Casters.Caster {
         if (formTick == formWindup) {
             // Выпуск формы: серп у наблюдателей (FoundationVfx по кисти и клинку ученика).
             lastSwing = level().getGameTime();
-            PacketDistributor.sendToPlayersTrackingEntity(this,
-                    new FoundationPayloads.Form(getId(), form.ordinal(), techniqueLayer(SIX), 1.0F));
+            ChannelSafe.nearEntity(this,
+                    new FoundationPayloads.Form(getId(), form.ordinal(), techniqueTier(SIX), 1.0F), false);
             playSound(ModSounds.SWORD_SWING.get(), 0.8F, 1.05F + 0.1F * getRandom().nextFloat());
         }
         if (formTick == formWindup + FORM_HIT && t != null) {
@@ -747,7 +754,9 @@ public class SectDisciple extends Bandit implements Casters.Caster {
         if (++formTick >= formWindup + FORM_TICKS) {
             formTick = -1;
             if (chainLeft-- > 0 && t != null && distanceTo(t) < 3.2D) {
-                startForm(FORM_WINDUP_NEXT);
+                int rivalChain = t instanceof ServerPlayer p
+                        ? io.github.verycooltimo.murim.sect.SectProgression.rivalChain(this, p) : 0;
+                startForm(rivalChain > 0 ? Math.max(12, FORM_WINDUP_NEXT) : FORM_WINDUP_NEXT);
             } else {
                 formCooldown = 18 + getRandom().nextInt(16);
                 playAnim(null, 0);
@@ -901,8 +910,10 @@ public class SectDisciple extends Bandit implements Casters.Caster {
                         return false;
                     }
                     if (sees && d <= 2.6D) {
-                        chainLeft = 1 + getRandom().nextInt(2);
-                        startForm(FORM_WINDUP_FIRST);
+                        int rivalChain = t instanceof ServerPlayer p
+                                ? io.github.verycooltimo.murim.sect.SectProgression.rivalChain(SectDisciple.this, p) : 0;
+                        chainLeft = rivalChain > 0 ? rivalChain - 1 : 1 + getRandom().nextInt(2);
+                        startForm(rivalChain > 0 ? Math.max(12, FORM_WINDUP_FIRST) : FORM_WINDUP_FIRST);
                         return true;
                     }
                     if (force) {
@@ -964,6 +975,21 @@ public class SectDisciple extends Bandit implements Casters.Caster {
         }
         if (!tag.getString("look").isEmpty()) {
             entityData.set(LOOK, SectRoster.renamedLook(tag.getString("look")));
+        }
+        dropStaleSwords();
+    }
+
+    /**
+     * Меч людей секты — не предмет в руке: у учеников он часть модели (ножны, {@code DrawnSword} в бою), у главы и
+     * старейшин меча нет вовсе. В руки кладётся только реквизит ({@link #hold}). Меч в слоте руки из старого сохранения
+     * ванильный ItemInHandLayer рисовал бы в кулаке — у главы с руками за спиной это «странный меч у пояса» (06.10).
+     */
+    public void dropStaleSwords() {
+        for (net.minecraft.world.entity.EquipmentSlot slot : new net.minecraft.world.entity.EquipmentSlot[] {
+                net.minecraft.world.entity.EquipmentSlot.MAINHAND, net.minecraft.world.entity.EquipmentSlot.OFFHAND}) {
+            if (getItemBySlot(slot).getItem() instanceof net.minecraft.world.item.SwordItem) {
+                setItemSlot(slot, net.minecraft.world.item.ItemStack.EMPTY);
+            }
         }
     }
 
@@ -1259,6 +1285,15 @@ public class SectDisciple extends Bandit implements Casters.Caster {
     public void setTalkingTo(Player player) {
         entityData.set(TALKING, player == null ? -1 : player.getId());
         if (player != null) {
+            wake();
+            sit(false);
+            workPose(null);
+            poseHoldUntil = Long.MIN_VALUE;
+            watchTarget = null;
+            setPose(SectPose.NONE);
+            setDoingKind(null);
+            blockTarget = -1;
+            pendingDialogue = null;
             getNavigation().stop();
         }
     }
@@ -1304,6 +1339,22 @@ public class SectDisciple extends Bandit implements Casters.Caster {
     private LivingEntity blockWho;
     private long blockUntil;
     private Vec3 blockProtect;
+    private ResourceLocation pendingDialogue;
+    private String pendingNode;
+
+    public boolean approachingDialogue(Player player, ResourceLocation dialogue) {
+        return blocking() && blockWho == player && dialogue.equals(pendingDialogue);
+    }
+
+    /** Подойти и самому заговорить; экран открывается только в пределах трёх блоков. */
+    public void approachDialogue(ServerPlayer player, ResourceLocation dialogue, String node, Vec3 protect) {
+        if (talkingTo() >= 0 || pendingDialogue != null && blocking() && blockWho != player) {
+            return;
+        }
+        block(player, protect, 400);
+        pendingDialogue = dialogue;
+        pendingNode = node;
+    }
 
     /**
      * Встать на пути: между {@code who} и точкой {@code protect} (закрытый зал, глава), на {@code ticks} тиков.
@@ -1334,6 +1385,8 @@ public class SectDisciple extends Bandit implements Casters.Caster {
     private final class BlockGoal extends Goal {
 
         private int repath;
+        /** Ticks spent within talking range without reaching the exact spot (the elder or a wall may block it). */
+        private int crowded;
 
         BlockGoal() {
             setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
@@ -1341,7 +1394,8 @@ public class SectDisciple extends Bandit implements Casters.Caster {
 
         @Override
         public boolean canUse() {
-            return blocking() && spar == Spar.NONE && !defending && blockWho != null && blockWho.isAlive() && blockWho.level() == level();
+            return blocking() && talkingTo() < 0 && spar == Spar.NONE && !defending && blockWho != null
+                    && blockWho.isAlive() && !blockWho.isRemoved() && blockWho.level() == level();
         }
 
         @Override
@@ -1357,8 +1411,10 @@ public class SectDisciple extends Bandit implements Casters.Caster {
         @Override
         public void start() {
             repath = 0;
+            crowded = 0;
             sit(false);
             workPose(null);
+            setPose(SectPose.NONE);
         }
 
         @Override
@@ -1366,12 +1422,21 @@ public class SectDisciple extends Bandit implements Casters.Caster {
             getNavigation().stop();
             blockTarget = -1;
             blockWho = null;
+            pendingDialogue = null;
         }
 
         @Override
         public void tick() {
             LivingEntity who = blockWho;
             if (who == null) {
+                return;
+            }
+            if (io.github.verycooltimo.murim.sect.seal.PenanceService.DIALOGUE.equals(pendingDialogue)
+                    && who instanceof ServerPlayer player
+                    && !player.getData(ModAttachments.SECT).has(io.github.verycooltimo.murim.sect.seal.PenanceService.SUMMONED)) {
+                pendingDialogue = null;
+                blockTarget = -1;
+                getNavigation().stop();
                 return;
             }
             Vec3 to = new Vec3(blockProtect.x - who.getX(), 0.0D, blockProtect.z - who.getZ());
@@ -1381,6 +1446,19 @@ public class SectDisciple extends Bandit implements Casters.Caster {
             getLookControl().setLookAt(who, 30.0F, 30.0F);
             double dx = getX() - spot.x;
             double dz = getZ() - spot.z;
+            boolean close = distanceToSqr(who) <= 9.0D;
+            crowded = close ? crowded + 1 : 0;
+            if (pendingDialogue != null && who instanceof ServerPlayer player && distanceToSqr(player) <= 9.0D
+                    && (len < 1.5D || dx * dx + dz * dz < 0.25D || crowded > 40)
+                    && getSensing().hasLineOfSight(player) && !player.getData(ModAttachments.DIALOGUE).active()) {
+                ResourceLocation dialogue = pendingDialogue;
+                String node = pendingNode;
+                if (io.github.verycooltimo.murim.sect.DialogueService.openDialogue(player, SectDisciple.this, dialogue, node)) {
+                    getNavigation().stop();
+                    face(player, 20.0F);
+                    return;
+                }
+            }
             if (dx * dx + dz * dz < 0.5D * 0.5D) {
                 getNavigation().stop();
                 face(who, 20.0F);

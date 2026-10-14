@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_column_horizontal",
+  "textures": {
+    "side": "murim:block/hua_edge_stone_side",
+    "end": "murim:block/hua_edge_stone_end"
+  }
+}

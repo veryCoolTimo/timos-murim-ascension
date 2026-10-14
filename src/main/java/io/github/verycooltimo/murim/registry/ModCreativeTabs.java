@@ -48,6 +48,8 @@ public final class ModCreativeTabs {
                 // Кинжал клана Тан (модель автора, 03.10).
                 out.accept(new ItemStack(ModItems.TANG_DAGGER.get()));
                 out.accept(new ItemStack(ModItems.HUASHAN_SWORD.get()));
+                out.accept(new ItemStack(ModItems.PLUM_GUARD_SWORD.get()));
+                out.accept(new ItemStack(ModItems.BLACK_DRAGON_SWORD.get()));
                 out.accept(new ItemStack(ModItems.WOODEN_SWORD.get()));
                 // Пилюли (M5, docs/design/19b).
                 out.accept(new ItemStack(ModItems.PILL_SNOW_PLUM.get()));
@@ -56,11 +58,45 @@ public final class ModCreativeTabs {
                 out.accept(new ItemStack(ModItems.BEAUTY_TEAR.get()));
                 out.accept(new ItemStack(io.github.verycooltimo.murim.world.ModWorld.SPIRIT_VEIN_ITEM.get()));
                 out.accept(new ItemStack(ModItems.SECT_DISCIPLE_SPAWN_EGG.get()));
+                // Red timber building kit (docs/design/33-building-kit.md).
+                out.accept(new ItemStack(ModBlocks.RED_PILLAR.get()));
+                out.accept(new ItemStack(ModBlocks.WHITE_PILLAR.get()));
+                out.accept(new ItemStack(ModBlocks.RED_BEAM.get()));
+                out.accept(new ItemStack(ModBlocks.RED_LINTEL.get()));
+                out.accept(new ItemStack(ModBlocks.SIMPLE_BRACKET.get()));
+                out.accept(new ItemStack(ModBlocks.BEAM_BRACKET.get()));
+                out.accept(new ItemStack(ModBlocks.HANGING_POST.get()));
+                out.accept(new ItemStack(ModBlocks.BEAM_STUB.get()));
+                out.accept(new ItemStack(ModBlocks.PLUM_PLANKS.get()));
+                out.accept(new ItemStack(ModBlocks.PLUM_STAIRS.get()));
+                out.accept(new ItemStack(ModBlocks.PLUM_SLAB.get()));
+                out.accept(new ItemStack(ModBlocks.TIMBER_DIVIDER.get()));
+                out.accept(new ItemStack(ModBlocks.PLUM_LOG.get()));
+                out.accept(new ItemStack(ModBlocks.PLUM_WOOD.get()));
+                out.accept(new ItemStack(ModBlocks.STRIPPED_PLUM_LOG.get()));
+                // Mount Hua blocks: balustrade, granite set, climbing blocks, plum blossoms (author 06.10: «не могу найти»).
+                for (var b : java.util.List.of(ModBlocks.HUA_BALUSTRADE, ModBlocks.HUA_GRANITE, ModBlocks.HUA_GRANITE_PALE,
+                        ModBlocks.HUA_GRANITE_STAINED, ModBlocks.HUA_GRANITE_CRACKED, ModBlocks.HUA_GRANITE_DARK,
+                        ModBlocks.HUA_GRANITE_MOSSY, ModBlocks.POLISHED_HUA_GRANITE, ModBlocks.POLISHED_HUA_GRANITE_STAIRS,
+                        ModBlocks.POLISHED_HUA_GRANITE_SLAB, ModBlocks.POLISHED_HUA_GRANITE_WALL, ModBlocks.HUA_LITTER,
+                        ModBlocks.CLIMBING_MOSS, ModBlocks.ROCK_HANDHOLD, ModBlocks.OLD_ROPE, ModBlocks.PLUM_BLOSSOM,
+                        ModBlocks.PLUM_BLOSSOM_PALE, ModBlocks.PLUM_BLOSSOM_RED, ModBlocks.PLUM_SAPLING,
+                        ModBlocks.CLIFF_PLUM_SAPLING, ModBlocks.YOUNG_PLUM_SAPLING)) {
+                    out.accept(new ItemStack(b.get()));
+                }
             })
             .build());
 
     private static ItemStack manual(ResourceLocation technique) {
-        ItemStack s = new ItemStack(ModItems.TECHNIQUE_MANUAL.get());
+        if (io.github.verycooltimo.murim.technique.DemonicRules.isArt(technique)) {
+            return new ItemStack(ModItems.DEMONIC_MANUALS.get(technique.getPath()).get());
+        }
+        ItemStack s = new ItemStack(technique.equals(io.github.verycooltimo.murim.technique.JunkArts.HEAVENLY_DRAGON)
+                ? ModItems.JUNK_HEAVENLY_DRAGON_MANUAL.get()
+                : technique.equals(io.github.verycooltimo.murim.technique.JunkArts.THOUSAND_CRANES)
+                ? ModItems.JUNK_THOUSAND_CRANES_MANUAL.get()
+                : technique.equals(io.github.verycooltimo.murim.technique.JunkArts.BEGGARS_TAP)
+                ? ModItems.JUNK_BEGGARS_TAP_MANUAL.get() : ModItems.TECHNIQUE_MANUAL.get());
         s.set(ModDataComponents.TECHNIQUE.get(), technique);
         return s;
     }
@@ -71,6 +107,11 @@ public final class ModCreativeTabs {
         // Одна книга на стиль (автор 03.10): формы и основа ЛКМ — внутри неё.
         List<ResourceLocation> inStyles = new ArrayList<>();
         for (Styles.Style style : Styles.ALL) {
+            if (Styles.individualBooks(style)) {
+                style.forms().stream().filter(id -> TechniqueLoader.get(id) != null).forEach(out::add);
+                inStyles.addAll(style.forms());
+                continue;
+            }
             ResourceLocation first = style.forms().get(0);
             if (TechniqueLoader.get(first) != null) {
                 out.add(first);

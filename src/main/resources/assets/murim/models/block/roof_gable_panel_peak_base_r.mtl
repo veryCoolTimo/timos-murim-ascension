@@ -1,0 +1,11 @@
+newmtl cream
+map_Kd #cream
+
+newmtl plaster
+map_Kd #plaster
+
+newmtl tiles_x
+map_Kd #tiles_x
+
+newmtl wood
+map_Kd #wood

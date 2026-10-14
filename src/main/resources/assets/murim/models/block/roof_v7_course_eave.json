@@ -1,0 +1,18 @@
+{
+  "parent": "minecraft:block/block",
+  "loader": "neoforge:obj",
+  "model": "murim:models/block/roof_v7_course_eave.obj",
+  "flip_v": false,
+  "emissive_ambient": false,
+  "automatic_culling": false,
+  "ambientocclusion": false,
+  "textures": {
+    "top": "murim:block/roof_v7_tiles",
+    "side": "murim:block/roof_tiles_side",
+    "under": "murim:block/roof_tiles_under",
+    "cap": "murim:block/roof_v7_tile_cap",
+    "rafter": "murim:block/roof_v7_wood",
+    "particle": "murim:block/roof_tiles"
+  },
+  "render_type": "minecraft:solid"
+}

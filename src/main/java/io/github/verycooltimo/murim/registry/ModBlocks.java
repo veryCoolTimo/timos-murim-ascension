@@ -74,13 +74,91 @@ public final class ModBlocks {
                     .noCollission().noOcclusion().strength(0.3F).sound(SoundType.WOOL).ignitedByLava()
                     .pushReaction(PushReaction.DESTROY));
 
+    /** White marble balustrade of the sect terraces (author's ref zabor.png, made with the Blockbench MCP 06.10); also runs diagonally. */
+    public static final DeferredBlock<io.github.verycooltimo.murim.world.hua.HuaBalustradeBlock> HUA_BALUSTRADE = BLOCKS.registerBlock(
+            "hua_balustrade", io.github.verycooltimo.murim.world.hua.HuaBalustradeBlock::new, rock(MapColor.TERRACOTTA_WHITE).forceSolidOn());
+
+    // Red timber building kit (author 06.10, refs decor/photo_2026-10-06_10_55_19/20; docs/design/33-building-kit.md):
+    // pillars and beams placed one per block, their position inside the block follows the click.
+    // Properties after Blocks#OAK_FENCE (wood, strength 2/3), plus noOcclusion for the thin shapes.
+    public static final DeferredBlock<io.github.verycooltimo.murim.world.build.RedPillarBlock> RED_PILLAR = BLOCKS.registerBlock(
+            "red_pillar", io.github.verycooltimo.murim.world.build.RedPillarBlock::new, timber());
+    public static final DeferredBlock<io.github.verycooltimo.murim.world.build.RedBeamBlock> RED_BEAM = BLOCKS.registerBlock(
+            "red_beam", io.github.verycooltimo.murim.world.build.RedBeamBlock::new, timber());
+    public static final DeferredBlock<io.github.verycooltimo.murim.world.build.SimpleBracketBlock> SIMPLE_BRACKET = BLOCKS.registerBlock(
+            "simple_bracket", io.github.verycooltimo.murim.world.build.SimpleBracketBlock::new, timber());
+    public static final DeferredBlock<io.github.verycooltimo.murim.world.build.RedLintelBlock> RED_LINTEL = BLOCKS.registerBlock(
+            "red_lintel", io.github.verycooltimo.murim.world.build.RedLintelBlock::new, timber());
+    public static final DeferredBlock<io.github.verycooltimo.murim.world.build.BeamBracketBlock> BEAM_BRACKET = BLOCKS.registerBlock(
+            "beam_bracket", io.github.verycooltimo.murim.world.build.BeamBracketBlock::new, timber());
+    public static final DeferredBlock<io.github.verycooltimo.murim.world.build.HangingPostBlock> HANGING_POST = BLOCKS.registerBlock(
+            "hanging_post", io.github.verycooltimo.murim.world.build.HangingPostBlock::new, timber());
+    public static final DeferredBlock<io.github.verycooltimo.murim.world.build.BeamStubBlock> BEAM_STUB = BLOCKS.registerBlock(
+            "beam_stub", io.github.verycooltimo.murim.world.build.BeamStubBlock::new, timber());
+    // Plum wood planks in the kit's red lacquer (author 06.10). Crafted from plum log, wood and stripped log.
+    // Properties after Blocks#OAK_PLANKS.
+    public static final DeferredBlock<Block> PLUM_PLANKS = BLOCKS.registerBlock("plum_planks", Block::new, planks());
+    public static final DeferredBlock<StairBlock> PLUM_STAIRS = BLOCKS.registerBlock(
+            "plum_stairs", p -> new StairBlock(PLUM_PLANKS.get().defaultBlockState(), p), planks());
+    public static final DeferredBlock<SlabBlock> PLUM_SLAB = BLOCKS.registerBlock("plum_slab", SlabBlock::new, planks());
+    // Divider post with a cap, standalone (author 07.10), and the planed plum log (author 07.10: «обтёсанный блок
+    // дерева сливы»; an axe makes it from PLUM_LOG / PLUM_WOOD below). Log after Blocks#STRIPPED_OAK_LOG.
+    public static final DeferredBlock<io.github.verycooltimo.murim.world.build.TimberDividerBlock> TIMBER_DIVIDER = BLOCKS.registerBlock(
+            "timber_divider", io.github.verycooltimo.murim.world.build.TimberDividerBlock::new, timber());
+    public static final DeferredBlock<net.minecraft.world.level.block.RotatedPillarBlock> STRIPPED_PLUM_LOG = BLOCKS.registerBlock(
+            "stripped_plum_log", net.minecraft.world.level.block.RotatedPillarBlock::new, planks());
+
+    /** White plaster column (author 07.10: «белые колонны»; refs build2/ref_04/05/08): the pillar's behaviour, white. */
+    public static final DeferredBlock<io.github.verycooltimo.murim.world.build.RedPillarBlock> WHITE_PILLAR = BLOCKS.registerBlock(
+            "white_pillar", io.github.verycooltimo.murim.world.build.RedPillarBlock::new,
+            BlockBehaviour.Properties.of().mapColor(MapColor.SNOW).instrument(NoteBlockInstrument.BASS)
+                    .strength(2.0F, 3.0F).sound(SoundType.WOOD).noOcclusion().ignitedByLava());
+
+    // Plum log and wood (dark bark, author refs build2/ref_01/02/05/13): the trunk and limbs of the plum trees;
+    // an axe strips them to STRIPPED_PLUM_LOG. Saplings, one per tree variant (world/hua/PlumTree).
+    // Properties after Blocks#CHERRY_LOG and Blocks#CHERRY_SAPLING.
+    public static final DeferredBlock<io.github.verycooltimo.murim.world.hua.PlumLogBlock> PLUM_LOG = BLOCKS.registerBlock(
+            "plum_log", io.github.verycooltimo.murim.world.hua.PlumLogBlock::new, bark());
+    public static final DeferredBlock<io.github.verycooltimo.murim.world.hua.PlumLogBlock> PLUM_WOOD = BLOCKS.registerBlock(
+            "plum_wood", io.github.verycooltimo.murim.world.hua.PlumLogBlock::new, bark());
+    public static final DeferredBlock<io.github.verycooltimo.murim.world.hua.PlumSaplingBlock> PLUM_SAPLING =
+            sapling("plum_sapling", io.github.verycooltimo.murim.world.hua.PlumTree.Variant.COURTYARD);
+    public static final DeferredBlock<io.github.verycooltimo.murim.world.hua.PlumSaplingBlock> CLIFF_PLUM_SAPLING =
+            sapling("cliff_plum_sapling", io.github.verycooltimo.murim.world.hua.PlumTree.Variant.CLIFF);
+    public static final DeferredBlock<io.github.verycooltimo.murim.world.hua.PlumSaplingBlock> YOUNG_PLUM_SAPLING =
+            sapling("young_plum_sapling", io.github.verycooltimo.murim.world.hua.PlumTree.Variant.YOUNG);
+
     static {
-        for (DeferredBlock<? extends Block> b : java.util.List.of(HUA_GRANITE, HUA_GRANITE_PALE, HUA_GRANITE_STAINED,
+        for (DeferredBlock<? extends Block> b : java.util.List.of(RED_PILLAR, WHITE_PILLAR, RED_BEAM, RED_LINTEL, SIMPLE_BRACKET, BEAM_BRACKET, HANGING_POST, BEAM_STUB,
+                PLUM_PLANKS, PLUM_STAIRS, PLUM_SLAB, TIMBER_DIVIDER, STRIPPED_PLUM_LOG, PLUM_LOG, PLUM_WOOD,
+                PLUM_SAPLING, CLIFF_PLUM_SAPLING, YOUNG_PLUM_SAPLING, HUA_BALUSTRADE, HUA_GRANITE, HUA_GRANITE_PALE, HUA_GRANITE_STAINED,
                 HUA_GRANITE_CRACKED, HUA_GRANITE_DARK, HUA_GRANITE_MOSSY, POLISHED_HUA_GRANITE,
                 POLISHED_HUA_GRANITE_STAIRS, POLISHED_HUA_GRANITE_SLAB, POLISHED_HUA_GRANITE_WALL, HUA_LITTER,
                 CLIMBING_MOSS, ROCK_HANDHOLD, OLD_ROPE)) {
             ITEMS.registerSimpleBlockItem(b);
         }
+    }
+
+    private static BlockBehaviour.Properties planks() {
+        return BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_RED).instrument(NoteBlockInstrument.BASS)
+                .strength(2.0F, 3.0F).sound(SoundType.WOOD).ignitedByLava();
+    }
+
+    private static BlockBehaviour.Properties bark() {
+        return BlockBehaviour.Properties.of().mapColor(MapColor.TERRACOTTA_BLACK).instrument(NoteBlockInstrument.BASS)
+                .strength(2.0F).sound(SoundType.CHERRY_WOOD).ignitedByLava();
+    }
+
+    private static DeferredBlock<io.github.verycooltimo.murim.world.hua.PlumSaplingBlock> sapling(
+            String name, io.github.verycooltimo.murim.world.hua.PlumTree.Variant variant) {
+        return BLOCKS.registerBlock(name, p -> new io.github.verycooltimo.murim.world.hua.PlumSaplingBlock(variant, p),
+                BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_PINK).noCollission().randomTicks().instabreak()
+                        .sound(SoundType.CHERRY_SAPLING).pushReaction(PushReaction.DESTROY));
+    }
+
+    private static BlockBehaviour.Properties timber() {
+        return BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_RED).instrument(NoteBlockInstrument.BASS)
+                .strength(2.0F, 3.0F).sound(SoundType.WOOD).noOcclusion().ignitedByLava();
     }
 
     private static BlockBehaviour.Properties rock(MapColor colour) {
@@ -105,11 +183,24 @@ public final class ModBlocks {
                 .isRedstoneConductor((s, l, p) -> false));
     }
 
+    private static final DeferredRegister<net.minecraft.world.level.block.entity.BlockEntityType<?>> BLOCK_ENTITIES =
+            DeferredRegister.create(net.minecraft.core.registries.Registries.BLOCK_ENTITY_TYPE, MurimMod.MODID);
+
+    /** Bridge beams between columns side by side (only bridged columns have it). Pattern after GateDoors. */
+    @SuppressWarnings("DataFlowIssue")
+    public static final net.neoforged.neoforge.registries.DeferredHolder<net.minecraft.world.level.block.entity.BlockEntityType<?>,
+            net.minecraft.world.level.block.entity.BlockEntityType<io.github.verycooltimo.murim.world.build.PillarBridgeBlockEntity>> PILLAR_BRIDGE_ENTITY =
+            BLOCK_ENTITIES.register("pillar_bridge", () -> net.minecraft.world.level.block.entity.BlockEntityType.Builder.of(
+                    io.github.verycooltimo.murim.world.build.PillarBridgeBlockEntity::new, RED_PILLAR.get(), WHITE_PILLAR.get(),
+                    io.github.verycooltimo.murim.decor.HallJoinery.THICK_RED_PILLAR.get(),
+                    io.github.verycooltimo.murim.decor.HallJoinery.THICK_WHITE_PILLAR.get()).build(null));
+
     private ModBlocks() {
     }
 
     public static void register(IEventBus bus) {
         BLOCKS.register(bus);
         ITEMS.register(bus);
+        BLOCK_ENTITIES.register(bus);
     }
 }

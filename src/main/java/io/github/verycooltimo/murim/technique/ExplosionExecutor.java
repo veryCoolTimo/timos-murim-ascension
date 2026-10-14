@@ -26,7 +26,7 @@ public final class ExplosionExecutor {
 
     private static final int FEET = 0;
     private static final int AIM = 3;
-    private static final int LAYER = 6;
+    private static final int TIER = 6;
     private static final int TARGET = 7;
     private static final int STRIKE = 8;
     private static final int AXIS = 11;
@@ -38,7 +38,7 @@ public final class ExplosionExecutor {
     /** Начало каста: сброс состояния (слой, цели ещё нет — она выбирается на ударе). */
     public static void begin(ServerPlayer player, ResourceLocation id) {
         double[] r = new double[HIT_IDS + MAX_HITS];
-        r[LAYER] = Math.max(0, io.github.verycooltimo.murim.mastery.MasteryService.layer(player, id));
+        r[TIER] = Math.max(0, io.github.verycooltimo.murim.mastery.MasteryService.executionTier(player, id));
         r[TARGET] = -1;
         player.setData(ModAttachments.EXPLOSION, r);
     }
@@ -71,8 +71,8 @@ public final class ExplosionExecutor {
     /** IMPACT: прыжок-удар к середине стены. Слой 0 — учебный удар в ближнем секторе. */
     public static boolean strike(ServerPlayer player, ResourceLocation id) {
         double[] r = player.getData(ModAttachments.EXPLOSION);
-        int layer = r.length > LAYER ? (int) r[LAYER] : 0;
-        if (layer <= 0 || r.length < HIT_IDS) {
+        int executionTier = r.length > TIER ? (int) r[TIER] : 0;
+        if (executionTier <= 0 || r.length < HIT_IDS) {
             double base = TechniqueDamage.base(player, id);
             Vec3 look = player.getLookAngle();
             boolean hit = false;
@@ -87,7 +87,7 @@ public final class ExplosionExecutor {
         }
         Vec3 feet = player.position();
         Vec3 chest = feet.add(0.0D, 1.3D, 0.0D);
-        LivingEntity target = aim(player, ExplosionRules.range(layer) + 2.0D);
+        LivingEntity target = aim(player, ExplosionRules.range(executionTier) + 2.0D);
         Vec3 aim = (target != null ? TargetLock.centre(target).subtract(chest) : player.getLookAngle()).normalize();
         Vec3 strike = ExplosionRules.strikePoint(feet, aim);
         Vec3 f = ExplosionRules.flat(aim);
@@ -108,19 +108,19 @@ public final class ExplosionExecutor {
         }
         float yaw = (float) Math.toDegrees(Math.atan2(-f.x, f.z));
         PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
-                new ExplosionPayload(player.getId(), feet, strike, yaw, layer, ExplosionPayload.LUNGE, (int) r[TARGET]));
+                new ExplosionPayload(player.getId(), feet, strike, yaw, executionTier, ExplosionPayload.LUNGE, (int) r[TARGET]));
         return false;
     }
 
     /** Шкала техники по тикам T: взрыв, фронт, оглушение, дорезы. */
     public static void tick(ServerPlayer player, ResourceLocation id, int t) {
         double[] r = player.getData(ModAttachments.EXPLOSION);
-        if (r.length < HIT_IDS + MAX_HITS || r[LAYER] <= 0) {
+        if (r.length < HIT_IDS + MAX_HITS || r[TIER] <= 0) {
             return;
         }
-        int layer = (int) r[LAYER];
+        int executionTier = (int) r[TIER];
         if (t == ExplosionRules.CONTACT && r[BLASTED] < 0.5D) {
-            blast(player, r, layer);
+            blast(player, r, executionTier);
         }
         if (r[BLASTED] < 0.5D) {
             return;
@@ -128,9 +128,9 @@ public final class ExplosionExecutor {
         int s = t - ExplosionRules.CONTACT;
         Vec3 strike = new Vec3(r[STRIKE], r[STRIKE + 1], r[STRIKE + 2]);
         Vec3 axis = new Vec3(r[AXIS], r[AXIS + 1], r[AXIS + 2]);
-        double base = TechniqueDamage.base(player, id) * ExplosionRules.power(layer);
-        if (s >= 0 && ExplosionRules.front(s - 1, layer) < ExplosionRules.range(layer) || s == 0) {
-            front(player, id, r, layer, strike, axis, ExplosionRules.front(s, layer), base);
+        double base = TechniqueDamage.base(player, id) * ExplosionRules.power(executionTier);
+        if (s >= 0 && ExplosionRules.front(s - 1, executionTier) < ExplosionRules.range(executionTier) || s == 0) {
+            front(player, id, r, executionTier, strike, axis, ExplosionRules.front(s, executionTier), base);
         }
         if (s == ExplosionRules.STUN_DELAY) {
             for (LivingEntity e : hit(player, r)) {
@@ -142,27 +142,27 @@ public final class ExplosionExecutor {
                 continue;
             }
             for (LivingEntity e : hit(player, r)) {
-                if (e.position().distanceTo(strike) > ExplosionRules.range(layer) + 6.0D) {
+                if (e.position().distanceTo(strike) > ExplosionRules.range(executionTier) + 6.0D) {
                     continue;
                 }
                 e.invulnerableTime = 0;
                 if (e.hurt(player.damageSources().playerAttack(player), (float) (base * ExplosionRules.DMG_GRIND))) {
                     Casters.onHit(player, id, e);
                     PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
-                            new ExplosionPayload(player.getId(), strike, TargetLock.centre(e), 1.0F, layer, ExplosionPayload.HIT, e.getId()));
+                            new ExplosionPayload(player.getId(), strike, TargetLock.centre(e), 1.0F, executionTier, ExplosionPayload.HIT, e.getId()));
                 }
             }
         }
     }
 
     /** Клинок дошёл до точки удара: ось выброса — к цели (в небо тоже), не дальше 55° от удара. */
-    private static void blast(ServerPlayer player, double[] r, int layer) {
+    private static void blast(ServerPlayer player, double[] r, int executionTier) {
         Vec3 strike = new Vec3(r[STRIKE], r[STRIKE + 1], r[STRIKE + 2]);
         Vec3 aimDir = new Vec3(r[AIM], r[AIM + 1], r[AIM + 2]);
         LivingEntity target = r[TARGET] >= 0 && player.level().getEntity((int) r[TARGET]) instanceof LivingEntity le && le.isAlive()
-                && le.distanceTo(player) < ExplosionRules.range(layer) + 6.0D ? le : null;
+                && le.distanceTo(player) < ExplosionRules.range(executionTier) + 6.0D ? le : null;
         if (target == null) {
-            target = TargetLock.locked(player, ExplosionRules.range(layer) + 4.0D);
+            target = TargetLock.locked(player, ExplosionRules.range(executionTier) + 4.0D);
         }
         Vec3 axis = ExplosionRules.axis(strike, aimDir, target == null ? null : TargetLock.centre(target));
         r[AXIS] = axis.x;
@@ -173,14 +173,14 @@ public final class ExplosionExecutor {
         // Звук взрыва играет клиент (ExplosionVfx#blast: petal_burst, по попаданию — impact_heavy) всем,
         // кто получил пакет; на слое 0 эффектов нет — только свист клинка из TechniqueService.
         PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
-                new ExplosionPayload(player.getId(), strike, strike.add(axis), 0.0F, layer, ExplosionPayload.BLAST,
+                new ExplosionPayload(player.getId(), strike, strike.add(axis), 0.0F, executionTier, ExplosionPayload.BLAST,
                         target == null ? -1 : target.getId()));
     }
 
     /** Фронт выброса: каждый, кого он накрыл впервые и до кого нет стены блоков, получает удар. */
-    private static void front(ServerPlayer player, ResourceLocation id, double[] r, int layer, Vec3 strike, Vec3 axis, double front,
+    private static void front(ServerPlayer player, ResourceLocation id, double[] r, int executionTier, Vec3 strike, Vec3 axis, double front,
                               double base) {
-        double range = ExplosionRules.range(layer);
+        double range = ExplosionRules.range(executionTier);
         Vec3 mid = strike.add(axis.scale(front * 0.5D));
         AABB box = new AABB(mid, mid).inflate(front * 0.5D + ExplosionRules.HALF_W0 + range * ExplosionRules.SPREAD_H + 2.0D);
         for (LivingEntity e : candidates(player, box)) {
@@ -189,7 +189,7 @@ public final class ExplosionExecutor {
             }
             Vec3 c = TargetLock.centre(e);
             double pad = Math.max(e.getBbWidth(), e.getBbHeight()) * 0.5D;
-            if (ExplosionRules.inside(strike, axis, c, front, layer, pad) < 0.0D || !clear(player, strike, c)) {
+            if (ExplosionRules.inside(strike, axis, c, front, executionTier, pad) < 0.0D || !clear(player, strike, c)) {
                 continue;
             }
             e.invulnerableTime = 0;
@@ -208,7 +208,7 @@ public final class ExplosionExecutor {
             e.setDeltaMovement(e.getDeltaMovement().scale(0.2D).add(push));
             e.hurtMarked = true;
             PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
-                    new ExplosionPayload(player.getId(), strike, c, 0.0F, layer, ExplosionPayload.HIT, e.getId()));
+                    new ExplosionPayload(player.getId(), strike, c, 0.0F, executionTier, ExplosionPayload.HIT, e.getId()));
         }
     }
 

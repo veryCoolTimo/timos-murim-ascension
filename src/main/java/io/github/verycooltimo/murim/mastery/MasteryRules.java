@@ -8,7 +8,7 @@ import java.util.Map;
  * Правила изучения, освоения и мудрости — без мира, игрока и пакетов (docs/design/19 §3г).
  *
  * <p>Решения автора 30.09: бой качает напрямую; тренировка тоже, но меньше; медитация
- * переводит неосмысленное в освоение выгоднее; слой 0 после чтения; жёсткий порог на
+ * переводит неосмысленное в освоение выгоднее; звезда 0 после чтения; жёсткий порог на
  * изучение; мудрость косвенная и растёт от новых техник и постижения крутых.
  * Все числа здесь — черновые, проверяются на игре.
  */
@@ -18,6 +18,8 @@ public final class MasteryRules {
     public enum Source {
         /** Попадание по живому противнику. */
         FIGHT(1.0D),
+        /** Sparring provides the insight needed to complete the final stars. */
+        SPARRING(1.0D),
         /** Манекен, удар в воздух: тренировка качает, но меньше (автор: «тренируя технику»). */
         TRAINING(0.3D);
 
@@ -55,7 +57,7 @@ public final class MasteryRules {
 
     /**
      * Во сколько раз медитация выгоднее для неосмысленного. Было 3,5: бой + медитация давали ×2,25 к
-     * чистому бою, и слой Шести Равновесий шёл за 2–3 зомби (автор 05.10). 1,5 — ×1,25 (codex 05.10: 1,25–1,4)
+     * чистому бою, и освоение Шести Равновесий шло за 2–3 зомби (автор 05.10). 1,5 — ×1,25 (codex 05.10: 1,25–1,4)
      * (docs/design/27-balance.md).
      */
     static final double MEDITATION_GAIN = 1.5D;
@@ -64,22 +66,25 @@ public final class MasteryRules {
     static final double MEDITATION_RATE = 0.02D;
 
     /**
-     * Сколько пережитого нужно на первый слой; каждый следующий дороже. Было 12; 17 — слой 2 Шести
-     * Равновесий за ~20 минут игры (docs/design/27-balance.md). Цена попадания — {@link MasteryPacing}.
+     * Первый переход требует 17 опыта; каждый следующий — в 1,6 раза больше.
+     * Последние звёзды дополнительно требуют осмысления. Цена попадания — {@link MasteryPacing}.
      */
-    static final double FIRST_LAYER = 17.0D;
-    static final double LAYER_GROWTH = 1.6D;
+    static final double FIRST_STAR = 17.0D;
+    static final double STAR_GROWTH = 1.6D;
+
+    /** Practice reaches 10; the transitions 10→11 and 11→12 need enlightenment. */
+    public static final int INSIGHT_STAR = 10;
 
     /** Мудрость за изучение новой техники и за постижение крутой. */
     static final double WISDOM_PER_TECHNIQUE = 1.0D;
     static final double WISDOM_PER_COMPREHENSION = 4.0D;
 
-    /** Сколько мудрости нужно на каждый проскакиваемый слой простой техники. */
-    static final double WISDOM_PER_SKIPPED_LAYER = 6.0D;
+    /** Сколько мудрости нужно на каждую проскакиваемую звезду простой техники. */
+    static final double WISDOM_PER_SKIPPED_STAR = 6.0D;
 
-    /** Сколько пережитого нужно, чтобы пройти слой {@code layer} → {@code layer + 1}. */
-    public static double need(int layer) {
-        return FIRST_LAYER * Math.pow(LAYER_GROWTH, layer);
+    /** Сколько пережитого нужно, чтобы достичь звезды {@code stars} → {@code stars + 1}. */
+    public static double need(int stars) {
+        return FIRST_STAR * Math.pow(STAR_GROWTH, stars);
     }
 
     /** Мудрость ускоряет освоение: +5% за единицу, без потолка, но медленно. */
@@ -87,8 +92,8 @@ public final class MasteryRules {
         return 1.0D + 0.05D * Math.max(0.0D, wisdom);
     }
 
-    /** Итог прироста: новое состояние и пройденные слои — для озарения. */
-    public record Gain(TechniqueProgress progress, List<Integer> layersReached) {
+    /** Итог прироста: новое состояние и пройденные звёзды — для озарения. */
+    public record Gain(TechniqueProgress progress, List<Integer> starsReached) {
     }
 
     /**
@@ -99,24 +104,32 @@ public final class MasteryRules {
      */
     public static Gain experience(TechniqueProgress current, Source source, double amount,
                                   double wisdom, long day) {
+        return experience(current, source, amount, wisdom, day, Arts.MAX_STARS);
+    }
+
+    public static Gain experience(TechniqueProgress current, Source source, double amount,
+                                  double wisdom, long day, int artCap) {
         TechniqueProgress cooled = cool(current, day);
         double total = amount * source.weight * wisdomFactor(wisdom);
         double direct = total * DIRECT_SHARE;
-        TechniqueProgress withLeftover = new TechniqueProgress(cooled.layer(), cooled.progress(),
+        TechniqueProgress withLeftover = new TechniqueProgress(cooled.stars(), cooled.progress(),
                 cooled.unprocessed() + (total - direct), day, cooled.cap());
-        return advance(withLeftover, direct);
+        return advance(withLeftover, direct, source == Source.SPARRING, artCap);
     }
 
     /** Один тик медитации: часть неосмысленного становится освоением, выгоднее боя. */
     public static Gain meditate(TechniqueProgress current, double wisdom, long day) {
         TechniqueProgress cooled = cool(current, day);
         if (cooled.unprocessed() <= 0.0D) {
+            if (!cooled.atCap() && cooled.progress() >= need(cooled.stars())) {
+                return advance(cooled, 0.0D, true, Arts.MAX_STARS);
+            }
             return new Gain(cooled, List.of());
         }
         double taken = Math.min(cooled.unprocessed(), MEDITATION_RATE);
-        TechniqueProgress rest = new TechniqueProgress(cooled.layer(), cooled.progress(),
+        TechniqueProgress rest = new TechniqueProgress(cooled.stars(), cooled.progress(),
                 cooled.unprocessed() - taken, cooled.day(), cooled.cap());
-        return advance(rest, taken * MEDITATION_GAIN * wisdomFactor(wisdom));
+        return advance(rest, taken * MEDITATION_GAIN * wisdomFactor(wisdom), true, Arts.MAX_STARS);
     }
 
     /**
@@ -124,45 +137,51 @@ public final class MasteryRules {
      * сразу, мимо неосмысленного, но не выше предела манускрипта.
      */
     public static Gain study(TechniqueProgress current, double amount, long day) {
-        return advance(cool(current, day), Math.max(0.0D, amount));
+        return study(current, amount, day, Arts.MAX_STARS, false);
+    }
+
+    public static Gain study(TechniqueProgress current, double amount, long day, int artCap, boolean insight) {
+        return advance(cool(current, day), Math.max(0.0D, amount), insight, artCap);
     }
 
     /** Наутро неосмысленное остывает: связь «подрался — сел осмыслить». */
     public static TechniqueProgress cool(TechniqueProgress current, long day) {
         if (day > current.day() && current.unprocessed() > 0.0D) {
-            return new TechniqueProgress(current.layer(), current.progress(), 0.0D, day, current.cap());
+            return new TechniqueProgress(current.stars(), current.progress(), 0.0D, day, current.cap());
         }
         return current;
     }
 
-    private static Gain advance(TechniqueProgress current, double amount) {
-        int layer = current.layer();
+    private static Gain advance(TechniqueProgress current, double amount, boolean insight, int artCap) {
+        int stars = current.stars();
         double progress = current.progress() + amount;
         List<Integer> reached = new ArrayList<>();
-        // Следующий слой — только после полного предыдущего; выше предела манускрипта не растёт.
-        while (layer < current.cap() && progress >= need(layer)) {
-            progress -= need(layer);
-            layer++;
-            reached.add(layer);
+        // Следующая звезда — только после полного предыдущего; выше предела манускрипта не растёт.
+        while (stars < current.cap() && progress >= need(stars)) {
+            // Store all practice at the wall; insight consumes it without resetting mastery.
+            if (!insight && stars >= INSIGHT_STAR) break;
+            progress -= need(stars);
+            stars++;
+            reached.add(stars);
         }
-        if (layer >= current.cap()) {
+        if (stars >= current.cap()) {
             progress = 0.0D;
         }
-        return new Gain(new TechniqueProgress(layer, progress, current.unprocessed(), current.day(),
+        return new Gain(new TechniqueProgress(stars, progress, current.unprocessed(), current.day(),
                 current.cap()), List.copyOf(reached));
     }
 
     /**
-     * Слой, с которого начинается только что выученная техника. Простую мудрый проходит
-     * сразу на несколько слоёв (§18: «высокий ранг проскакивает первые уровни»); крутую —
+     * Звёзды, с которых начинается только что выученная техника. Простую мудрый проходит
+     * сразу на несколько звёзд (§18: «высокий ранг проскакивает первые уровни»); крутую —
      * всегда с нуля.
      */
-    public static int startLayer(TechniqueTier tier, int cap, double wisdom) {
+    public static int startStars(TechniqueTier tier, int cap, double wisdom) {
         if (tier != TechniqueTier.BASIC) {
             return 0;
         }
-        int skipped = (int) Math.floor(Math.max(0.0D, wisdom) / WISDOM_PER_SKIPPED_LAYER);
-        return Math.min(skipped, Math.max(0, cap - 1));
+        int skipped = (int) Math.floor(Math.max(0.0D, wisdom) / WISDOM_PER_SKIPPED_STAR);
+        return Math.min(skipped, Math.max(0, Math.min(cap - 1, INSIGHT_STAR)));
     }
 
     /** Мудрость за изучение новой техники: крутые учат больше. */
@@ -171,11 +190,11 @@ public final class MasteryRules {
     }
 
     /**
-     * Постигнута ли крутая техника на этом слое: «нашёл крутую технику и понял её».
-     * Порог — три пятых всех слоёв.
+     * Постигнута ли крутая техника на этой звезде: «нашёл крутую технику и понял её».
+     * Порог — три пятых всех звёзд.
      */
-    public static boolean comprehends(TechniqueTier tier, int layer, int layers) {
-        return tier != TechniqueTier.BASIC && layer >= Math.ceil(layers * 0.6D);
+    public static boolean comprehends(TechniqueTier tier, int stars, int artCap) {
+        return tier != TechniqueTier.BASIC && stars >= Math.ceil(artCap * 0.6D);
     }
 
     public static double wisdomForComprehension() {
@@ -185,15 +204,15 @@ public final class MasteryRules {
     /**
      * Жёсткий порог изучения (автор 30.09): чего не хватает, чтобы выучить технику.
      *
-     * @param known выученные техники и их слои
+     * @param known выученные техники и их звёзды
      * @return недостающие требования; пусто — можно учить
      */
     public static List<TechniqueRequirement> missing(List<TechniqueRequirement> requires,
                                                      Map<net.minecraft.resources.ResourceLocation, Integer> known) {
         List<TechniqueRequirement> missing = new ArrayList<>();
         for (TechniqueRequirement requirement : requires) {
-            Integer layer = known.get(requirement.technique());
-            if (layer == null || layer < requirement.layer()) {
+            Integer stars = known.get(requirement.technique());
+            if (stars == null || stars < requirement.star()) {
                 missing.add(requirement);
             }
         }
@@ -201,17 +220,17 @@ public final class MasteryRules {
     }
 
     /**
-     * Во сколько раз дороже по ци техника на этом слое. Слой 0 — «коряво»: ×1.5;
+     * Во сколько раз дороже по ци техника на этой звезде. Звезда 0 — «коряво»: ×1.5;
      * полное освоение — ×0.8. Между ними — линейно (docs/design/19 §3г).
      */
-    public static double costFactor(int layer, int layers) {
-        double k = layers <= 0 ? 1.0D : Math.min(1.0D, layer / (double) layers);
+    public static double costFactor(int stars, int artCap) {
+        double k = artCap <= 0 ? 1.0D : Math.max(0.0D, Math.min(1.0D, stars / (double) artCap));
         return 1.5D - 0.7D * k;
     }
 
-    /** Сила техники на этом слое: слой 0 — ×0.6, полное освоение — ×1.25. */
-    public static double powerFactor(int layer, int layers) {
-        double k = layers <= 0 ? 1.0D : Math.min(1.0D, layer / (double) layers);
+    /** Сила техники на этой звезде: звезда 0 — ×0.6, полное освоение — ×1.25. */
+    public static double powerFactor(int stars, int artCap) {
+        double k = artCap <= 0 ? 1.0D : Math.max(0.0D, Math.min(1.0D, stars / (double) artCap));
         return 0.6D + 0.65D * k;
     }
 

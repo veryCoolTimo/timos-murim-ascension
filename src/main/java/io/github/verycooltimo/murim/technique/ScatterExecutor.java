@@ -25,11 +25,11 @@ public final class ScatterExecutor {
 
     /** Начало IMPACT: цель (захват — первой), прыжок в сторону, клоны выходят. */
     public static boolean start(ServerPlayer player, ResourceLocation id) {
-        int layer = Math.max(0, io.github.verycooltimo.murim.mastery.MasteryService.layer(player, id));
+        int executionTier = Math.max(0, io.github.verycooltimo.murim.mastery.MasteryService.executionTier(player, id));
         double base = TechniqueDamage.base(player, id);
         Vec3 o = player.position();
         Vec3 look = player.getLookAngle();
-        if (layer <= 0) {
+        if (executionTier <= 0) {
             // Слой 0 — учебный удар в ближнем секторе, без эффектов.
             boolean hit = false;
             double cos = Math.cos(Math.toRadians(PlumRules.TRAINING_ARC / 2.0D));
@@ -91,19 +91,19 @@ public final class ScatterExecutor {
             io.github.verycooltimo.murim.combat.FootworkService.sendDash(player, path.normalize(), path.length(), ScatterRules.JUMP_TICKS);
         }
         player.invulnerableTime = Math.max(player.invulnerableTime, ScatterRules.JUMP_TICKS + 4);
-        player.setData(ModAttachments.SCATTER, new double[] {o.x, o.y, o.z, centre.x, centre.y, centre.z, baseAngle, layer,
+        player.setData(ModAttachments.SCATTER, new double[] {o.x, o.y, o.z, centre.x, centre.y, centre.z, baseAngle, executionTier,
                 target == null ? -1 : target.getId(), side, grounded ? 1 : 0, 0, 0, 0, 0});
         int facing = Math.floorMod(Math.round(player.getYRot()), 360);
         PacketDistributor.sendToPlayersTrackingEntityAndSelf(player, new ScatterPayload(player.getId(), o, centre, (float) baseAngle,
-                layer, ScatterPayload.RELEASE, (side > 0 ? 1 : 0) | (grounded ? 2 : 0) | facing << 2, target == null ? -1 : target.getId()));
+                executionTier, ScatterPayload.RELEASE, (side > 0 ? 1 : 0) | (grounded ? 2 : 0) | facing << 2, target == null ? -1 : target.getId()));
         return false;
     }
 
     /** Шкала после прыжка: удары клонов, взмах мастера, рассеяние. */
     public static void tick(ServerPlayer player, ResourceLocation id, int since) {
         double[] s = player.getData(ModAttachments.SCATTER);
-        int layer = (int) s[7];
-        if (layer <= 0 || s.length < 15) {
+        int executionTier = (int) s[7];
+        if (executionTier <= 0 || s.length < 15) {
             return;
         }
         int t = since + ScatterRules.RELEASE;
@@ -111,11 +111,11 @@ public final class ScatterExecutor {
         double base = s[6];
         boolean grounded = s[10] > 0.5D;
         double dmg = TechniqueDamage.base(player, id)
-                * ScatterRules.power(layer);
+                * ScatterRules.power(executionTier);
         // Удары клонов: каждый — по своему отрезку, свой набор задетых.
-        for (int i = 0; i < ScatterRules.clones(layer); i++) {
-            for (int j = 0; j < ScatterRules.strokes(layer); j++) {
-                if (t != ScatterRules.strokeHit(layer, i, j)) {
+        for (int i = 0; i < ScatterRules.clones(executionTier); i++) {
+            for (int j = 0; j < ScatterRules.strokes(executionTier); j++) {
+                if (t != ScatterRules.strokeHit(executionTier, i, j)) {
                     continue;
                 }
                 Vec3[] chord = ScatterRules.stroke(centre, base, i, j, grounded);
@@ -128,12 +128,12 @@ public final class ScatterExecutor {
                 io.github.verycooltimo.murim.MurimMod.LOGGER.debug("Рассеяние: тик {}, клон {}, удар {} — {}", t, i, j, at != null ? "попал" : "мимо");
                 if (at != null) {
                     PacketDistributor.sendToPlayersTrackingEntityAndSelf(player, new ScatterPayload(player.getId(), at, centre,
-                            (float) base, layer, ScatterPayload.HIT, i * 8 + j, (int) s[8]));
+                            (float) base, executionTier, ScatterPayload.HIT, i * 8 + j, (int) s[8]));
                 }
             }
         }
         // Взмах мастера (full-18): рывок сквозь цель на её высоту, за спину на 2,5 блока.
-        if (ScatterRules.finalSwing(layer) && t == ScatterRules.FINAL) {
+        if (ScatterRules.finalSwing(executionTier) && t == ScatterRules.FINAL) {
             Vec3 from = player.position();
             Vec3 aim = centre.subtract(0.0D, 0.9D, 0.0D);
             Vec3 dir = new Vec3(aim.x - from.x, 0.0D, aim.z - from.z);
@@ -150,7 +150,7 @@ public final class ScatterExecutor {
             s[14] = from.z;
             player.setData(ModAttachments.SCATTER, s);
         }
-        if (ScatterRules.finalSwing(layer) && t == ScatterRules.FINAL + ScatterRules.FINAL_TICKS - 1) {
+        if (ScatterRules.finalSwing(executionTier) && t == ScatterRules.FINAL + ScatterRules.FINAL_TICKS - 1) {
             // Проверка по линии от старта взмаха к центру цели и дальше — путь клинка мастера.
             Vec3 from = new Vec3(s[12], s[13] + 1.0D, s[14]);
             Vec3 to = centre.add(centre.subtract(from).normalize().scale(2.0D));
@@ -162,11 +162,11 @@ public final class ScatterExecutor {
             }
             if (at != null) {
                 PacketDistributor.sendToPlayersTrackingEntityAndSelf(player, new ScatterPayload(player.getId(), at, centre,
-                        (float) base, layer, ScatterPayload.FINAL_HIT, 0, (int) s[8]));
+                        (float) base, executionTier, ScatterPayload.FINAL_HIT, 0, (int) s[8]));
             }
         }
         // Рассеяние (full-19): один импульс по области вокруг цели.
-        if (ScatterRules.scatter(layer) && t == ScatterRules.SCATTER) {
+        if (ScatterRules.scatter(executionTier) && t == ScatterRules.SCATTER) {
             double r = ScatterRules.SCATTER_RADIUS;
             boolean any = false;
             for (LivingEntity e : candidates(player, new AABB(centre, centre).inflate(r + 1.0D))) {
@@ -178,7 +178,7 @@ public final class ScatterExecutor {
             }
             if (any) {
                 PacketDistributor.sendToPlayersTrackingEntityAndSelf(player, new ScatterPayload(player.getId(), centre, centre,
-                        (float) base, layer, ScatterPayload.SCATTER_HIT, 0, (int) s[8]));
+                        (float) base, executionTier, ScatterPayload.SCATTER_HIT, 0, (int) s[8]));
             }
         }
     }

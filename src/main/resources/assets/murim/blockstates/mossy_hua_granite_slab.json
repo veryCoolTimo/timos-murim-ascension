@@ -1,0 +1,22 @@
+{
+  "variants": {
+    "type=bottom": [
+      {
+        "model": "murim:block/mossy_hua_granite_slab",
+        "weight": 1
+      }
+    ],
+    "type=top": [
+      {
+        "model": "murim:block/mossy_hua_granite_slab_top",
+        "weight": 1
+      }
+    ],
+    "type=double": [
+      {
+        "model": "murim:block/hua_granite_mossy",
+        "weight": 1
+      }
+    ]
+  }
+}

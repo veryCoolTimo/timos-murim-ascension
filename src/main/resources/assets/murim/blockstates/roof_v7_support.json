@@ -1,0 +1,64 @@
+{
+  "variants": {
+    "facing=east,profile=rafter": {
+      "model": "murim:block/roof_v7_support_rafter"
+    },
+    "facing=east,profile=bracket": {
+      "model": "murim:block/roof_v7_support_bracket"
+    },
+    "facing=east,profile=corner": {
+      "model": "murim:block/roof_v7_support_corner"
+    },
+    "facing=east,profile=beam": {
+      "model": "murim:block/roof_v7_support_beam"
+    },
+    "facing=south,profile=rafter": {
+      "model": "murim:block/roof_v7_support_rafter",
+      "y": 90
+    },
+    "facing=south,profile=bracket": {
+      "model": "murim:block/roof_v7_support_bracket",
+      "y": 90
+    },
+    "facing=south,profile=corner": {
+      "model": "murim:block/roof_v7_support_corner",
+      "y": 90
+    },
+    "facing=south,profile=beam": {
+      "model": "murim:block/roof_v7_support_beam",
+      "y": 90
+    },
+    "facing=west,profile=rafter": {
+      "model": "murim:block/roof_v7_support_rafter",
+      "y": 180
+    },
+    "facing=west,profile=bracket": {
+      "model": "murim:block/roof_v7_support_bracket",
+      "y": 180
+    },
+    "facing=west,profile=corner": {
+      "model": "murim:block/roof_v7_support_corner",
+      "y": 180
+    },
+    "facing=west,profile=beam": {
+      "model": "murim:block/roof_v7_support_beam",
+      "y": 180
+    },
+    "facing=north,profile=rafter": {
+      "model": "murim:block/roof_v7_support_rafter",
+      "y": 270
+    },
+    "facing=north,profile=bracket": {
+      "model": "murim:block/roof_v7_support_bracket",
+      "y": 270
+    },
+    "facing=north,profile=corner": {
+      "model": "murim:block/roof_v7_support_corner",
+      "y": 270
+    },
+    "facing=north,profile=beam": {
+      "model": "murim:block/roof_v7_support_beam",
+      "y": 270
+    }
+  }
+}

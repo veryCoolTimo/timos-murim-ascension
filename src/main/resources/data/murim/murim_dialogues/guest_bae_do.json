@@ -1,0 +1,86 @@
+{
+  "name": "npc.murim.bae_do",
+  "title": "npc.murim.bae_do.title",
+  "start": [
+    {
+      "when": [
+        {
+          "flag": "guest.bae_do.tip"
+        }
+      ],
+      "node": "known"
+    },
+    {
+      "node": "greet"
+    }
+  ],
+  "nodes": {
+    "greet": {
+      "line": "dialogue.murim.guest_bae_do.greet",
+      "options": [
+        {
+          "text": "dialogue.murim.guest_bae_do.trade",
+          "actions": [
+            {
+              "type": "guest_trade"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.guest_bae_do.tip",
+          "next": "tip",
+          "actions": [
+            {
+              "type": "guest_buy_tip"
+            }
+          ],
+          "when": [
+            {
+              "not_flag": "guest.bae_do.tip",
+              "has_item": "murim:silver_tael*2"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.guest_bae_do.price",
+          "next": "price"
+        },
+        {
+          "text": "dialogue.murim.guest.leave"
+        }
+      ]
+    },
+    "tip": {
+      "line": "dialogue.murim.guest_bae_do.tip_line",
+      "options": [
+        {
+          "text": "dialogue.murim.guest.leave"
+        }
+      ]
+    },
+    "known": {
+      "line": "dialogue.murim.guest_bae_do.known_line",
+      "options": [
+        {
+          "text": "dialogue.murim.guest_bae_do.trade_again",
+          "actions": [
+            {
+              "type": "guest_trade"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.guest.leave"
+        }
+      ]
+    },
+    "price": {
+      "line": "dialogue.murim.guest_bae_do.price_line",
+      "options": [
+        {
+          "text": "dialogue.murim.guest.leave"
+        }
+      ]
+    }
+  }
+}

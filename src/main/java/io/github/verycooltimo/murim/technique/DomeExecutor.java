@@ -35,14 +35,14 @@ public final class DomeExecutor {
     private static final int PX = 0;
     private static final int FX = 3;
     private static final int TILT = 5;
-    private static final int LAYER = 6;
+    private static final int TIER = 6;
     private static final int POOL = 7;
     private static final int POOL_MAX = 8;
     private static final int BROKEN = 9;
 
     /** Начало каста: направление — захваченная цель, иначе ближайший враг под взглядом, иначе взгляд. */
     public static void begin(ServerPlayer player, ResourceLocation id) {
-        int layer = Math.max(0, io.github.verycooltimo.murim.mastery.MasteryService.layer(player, id));
+        int executionTier = Math.max(0, io.github.verycooltimo.murim.mastery.MasteryService.executionTier(player, id));
         Vec3 look = player.getLookAngle();
         Vec3 chest = player.position().add(0.0D, DomeRules.PIVOT_Y, 0.0D);
         LivingEntity target = io.github.verycooltimo.murim.combat.TargetLock.locked(player, 32.0D);
@@ -59,19 +59,19 @@ public final class DomeExecutor {
         // Против врага в небе форма наклоняется к нему; до 20° — стволы из земли.
         double tilt = elevation > 20.0D ? Math.min(55.0D, elevation * 0.9D) : 0.0D;
         DomeRules.Frame f = new DomeRules.Frame(player.position(), forward, tilt);
-        double pool = DomeRules.pool(layer, player.getMaxHealth());
+        double pool = DomeRules.pool(executionTier, player.getMaxHealth());
         player.setData(ModAttachments.DOME, new double[] {f.pivot().x, f.pivot().y, f.pivot().z,
-                f.forward().x, f.forward().z, f.tilt(), layer, pool, pool, 0});
-        if (layer > 0) {
+                f.forward().x, f.forward().z, f.tilt(), executionTier, pool, pool, 0});
+        if (executionTier > 0) {
             PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
-                    new DomePayload(player.getId(), f.pivot(), f.forward(), (float) f.tilt(), layer, DomePayload.BEGIN));
+                    new DomePayload(player.getId(), f.pivot(), f.forward(), (float) f.tilt(), executionTier, DomePayload.BEGIN));
         }
     }
 
     /** IMPACT — смыкание сети: удар не наносится; подпитка замедляет мастера до конца удержания. */
     public static boolean raise(ServerPlayer player) {
         double[] d = player.getData(ModAttachments.DOME);
-        if (d[LAYER] > 0.5D && d[BROKEN] < 0.5D) {
+        if (d[TIER] > 0.5D && d[BROKEN] < 0.5D) {
             player.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.MOVEMENT_SLOWDOWN,
                     DomeRules.HOLD_END - DomeRules.RAISE, 3, false, false, false));
         }
@@ -101,8 +101,8 @@ public final class DomeExecutor {
     public static void tick(ServerPlayer player, ResourceLocation id, int tick) {
         captureVolley(player, tick);
         double[] d = player.getData(ModAttachments.DOME);
-        int layer = (int) d[LAYER];
-        if (layer <= 0 || d[BROKEN] > 0.5D || tick >= DomeRules.HOLD_END || tick < DomeRules.SWINGS[0]) {
+        int executionTier = (int) d[TIER];
+        if (executionTier <= 0 || d[BROKEN] > 0.5D || tick >= DomeRules.HOLD_END || tick < DomeRules.SWINGS[0]) {
             return;
         }
         DomeRules.Frame f = frame(d);
@@ -112,7 +112,7 @@ public final class DomeExecutor {
             d[BROKEN] = 1.0D;
             player.setData(ModAttachments.DOME, d);
             PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
-                    new DomePayload(player.getId(), player.position(), Vec3.ZERO, 0.0F, layer, DomePayload.LOST));
+                    new DomePayload(player.getId(), player.position(), Vec3.ZERO, 0.0F, executionTier, DomePayload.LOST));
             return;
         }
         AABB box = new AABB(f.pivot(), f.pivot()).inflate(DomeRules.RADIUS + 6.0D);
@@ -122,14 +122,14 @@ public final class DomeExecutor {
             Vec3 now = p.position();
             Vec3 prev = new Vec3(p.xo, p.yo, p.zo);
             Vec3 next = now.add(p.getDeltaMovement());
-            double u = DomeRules.crossing(layer, f, prev, now, tick);
+            double u = DomeRules.crossing(executionTier, f, prev, now, tick);
             Vec3 at = u >= 0.0D ? prev.lerp(now, u) : null;
             if (at == null) {
-                u = DomeRules.crossing(layer, f, now, next, tick);
+                u = DomeRules.crossing(executionTier, f, now, next, tick);
                 at = u >= 0.0D ? now.lerp(next, u) : null;
             }
             if (at != null) {
-                stop(player, d, layer, p, at);
+                stop(player, d, executionTier, p, at);
                 if (d[BROKEN] > 0.5D) {
                     return;
                 }
@@ -142,8 +142,8 @@ public final class DomeExecutor {
             double r = DomeRules.rho(l);
             double reach = DomeRules.RADIUS + 0.35D + e.getBbWidth() * 0.5D;
             if (r > reach || r < 0.6D || Math.abs(DomeRules.angle(l)) > DomeRules.SECTOR
-                    || l[1] < -1.0D || l[1] > DomeRules.HEIGHT * DomeRules.scale(layer) + 1.0D
-                    || !DomeRules.covered(layer, DomeRules.angle(l), tick)) {
+                    || l[1] < -1.0D || l[1] > DomeRules.HEIGHT * DomeRules.scale(executionTier) + 1.0D
+                    || !DomeRules.covered(executionTier, DomeRules.angle(l), tick)) {
                 continue;
             }
             Vec3 out = f.side().scale(l[0]).add(f.ahead().scale(l[2]));
@@ -201,15 +201,15 @@ public final class DomeExecutor {
     }
 
     /** Снаряд остановлен сетью: исчезает, пул снимается по его силе. */
-    private static void stop(ServerPlayer player, double[] d, int layer, Projectile p, Vec3 at) {
+    private static void stop(ServerPlayer player, double[] d, int executionTier, Projectile p, Vec3 at) {
         double cost = p instanceof AbstractArrow arrow ? arrow.getBaseDamage() * Math.max(1.0D, p.getDeltaMovement().length()) : 3.0D;
         Vec3 from = p.getDeltaMovement().lengthSqr() > 1.0E-6D ? p.getDeltaMovement().normalize() : Vec3.ZERO;
         p.discard();
-        absorb(player, d, layer, cost, at, from);
+        absorb(player, d, executionTier, cost, at, from);
     }
 
     /** Списать пул и сообщить клиенту: погашено или сеть порвалась. */
-    private static double absorb(ServerPlayer player, double[] d, int layer, double cost, Vec3 at, Vec3 from) {
+    private static double absorb(ServerPlayer player, double[] d, int executionTier, double cost, Vec3 at, Vec3 from) {
         double taken = Math.min(cost, d[POOL]);
         d[POOL] -= taken;
         boolean broke = d[POOL] <= 1.0E-3D;
@@ -221,10 +221,10 @@ public final class DomeExecutor {
                 String.format("%.1f", d[POOL_MAX]), broke ? ", сеть порвана" : "");
         float share = (float) Math.min(1.0D, cost / Math.max(1.0D, d[POOL_MAX]));
         PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
-                new DomePayload(player.getId(), at, from, share, layer, broke ? DomePayload.BREAK : DomePayload.BLOCK));
+                new DomePayload(player.getId(), at, from, share, executionTier, broke ? DomePayload.BREAK : DomePayload.BLOCK));
         // Со слоя 1 звук удара о барьер и разрыва играет клиент (DomeVfx: barrier_hit/barrier_break)
         // всем, кто видит пакет; на слое 0 эффектов нет — остаётся простой звук парирования.
-        if (layer <= 0) {
+        if (executionTier <= 0) {
             player.level().playSound(null, at.x, at.y, at.z, net.minecraft.sounds.SoundEvents.SHIELD_BLOCK,
                     net.minecraft.sounds.SoundSource.PLAYERS, 0.7F, broke ? 0.6F : 1.3F);
         }
@@ -250,26 +250,26 @@ public final class DomeExecutor {
             return;
         }
         double[] d = player.getData(ModAttachments.DOME);
-        int layer = (int) d[LAYER];
+        int executionTier = (int) d[TIER];
         DomeRules.Frame f = frame(d);
         double[] me = f.local(player.position());
         double[] l = f.local(src);
-        if (Math.sqrt(me[0] * me[0] + me[2] * me[2]) > DomeRules.LEAVE || !DomeRules.outside(Math.max(1, layer), l)) {
+        if (Math.sqrt(me[0] * me[0] + me[2] * me[2]) > DomeRules.LEAVE || !DomeRules.outside(Math.max(1, executionTier), l)) {
             return;
         }
-        if (layer <= 0) {
+        if (executionTier <= 0) {
             // Слой 0 — учебный блок: только ослабить удар спереди.
             if (tick[0] >= DomeRules.TRAINING_FROM && tick[0] <= DomeRules.TRAINING_TO) {
                 event.setAmount((float) (event.getAmount() * DomeRules.TRAINING_FACTOR));
             }
             return;
         }
-        if (!DomeRules.covered(layer, DomeRules.angle(l), tick[0])) {
+        if (!DomeRules.covered(executionTier, DomeRules.angle(l), tick[0])) {
             return;
         }
-        Vec3 at = DomeRules.contact(layer, f, src);
+        Vec3 at = DomeRules.contact(executionTier, f, src);
         Vec3 from = at.subtract(src);
-        double rest = absorb(player, d, layer, event.getAmount(), at, from.lengthSqr() > 1.0E-6D ? from.normalize() : Vec3.ZERO);
+        double rest = absorb(player, d, executionTier, event.getAmount(), at, from.lengthSqr() > 1.0E-6D ? from.normalize() : Vec3.ZERO);
         if (rest <= 1.0E-3D) {
             event.setCanceled(true);
         } else {
@@ -289,19 +289,19 @@ public final class DomeExecutor {
             return;
         }
         double[] d = player.getData(ModAttachments.DOME);
-        int layer = (int) d[LAYER];
-        if (layer <= 0) {
+        int executionTier = (int) d[TIER];
+        if (executionTier <= 0) {
             return;
         }
         Projectile p = event.getProjectile();
         DomeRules.Frame f = frame(d);
         Vec3 back = p.position().subtract(p.getDeltaMovement().scale(4.0D));
         double[] l = f.local(back);
-        if (!DomeRules.outside(layer, l) || !DomeRules.covered(layer, DomeRules.angle(l), tick[0])) {
+        if (!DomeRules.outside(executionTier, l) || !DomeRules.covered(executionTier, DomeRules.angle(l), tick[0])) {
             return;
         }
         event.setCanceled(true);
-        stop(player, d, layer, p, DomeRules.contact(layer, f, back));
+        stop(player, d, executionTier, p, DomeRules.contact(executionTier, f, back));
     }
 
     /** Меч занят подпиткой: мастер не бьёт, пока сеть держится. */
@@ -309,7 +309,7 @@ public final class DomeExecutor {
     static void onAttack(AttackEntityEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
             int[] tick = new int[1];
-            if (holding(player, tick) && player.getData(ModAttachments.DOME)[LAYER] > 0.5D) {
+            if (holding(player, tick) && player.getData(ModAttachments.DOME)[TIER] > 0.5D) {
                 event.setCanceled(true);
             }
         }

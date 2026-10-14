@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "bottom": "murim:block/hua_dry_stone_b",
+    "side": "murim:block/hua_dry_stone_b",
+    "top": "murim:block/hua_dry_stone_b"
+  }
+}

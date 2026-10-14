@@ -67,12 +67,12 @@
   "weakness": "technique.murim.twenty_four_plum_dome.weakness",
   "hit_stop_ticks": 0,
   "cooldown_ticks": 800,
-  "layers": 8,
+  "star_cap": 12,
   "tier": "secret",
   "requires": [
     {
       "technique": "murim:twenty_four_plum_rainfall",
-      "layer": 3
+      "star": 5
     }
   ]
 }

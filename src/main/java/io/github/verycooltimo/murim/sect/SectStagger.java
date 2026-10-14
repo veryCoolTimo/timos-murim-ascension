@@ -38,11 +38,12 @@ public final class SectStagger {
 
     /**
      * Сдвигается ли этот человек по распорядку. Глава, старейшины, наставник и привратник живут по колоколу: у них
-     * доклады, совет и строй с окнами короче сдвига. Сдвигаются ученики и слуги — толпа.
+     * доклады, совет и строй с окнами короче сдвига; рядовые первого поколения — тоже (старшие подают пример младшим).
+     * Сдвигаются ученики второго и третьего поколения и слуги — толпа.
      */
     public static boolean staggered(SectRoster m) {
         return switch (m.role()) {
-            case LEADER, ELDER, MENTOR, GATEKEEPER -> false;
+            case LEADER, ELDER, MENTOR, GATEKEEPER, FIRST -> false;
             default -> true;
         };
     }

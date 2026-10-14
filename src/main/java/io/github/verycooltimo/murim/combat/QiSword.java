@@ -2,6 +2,7 @@ package io.github.verycooltimo.murim.combat;
 
 import io.github.verycooltimo.murim.MurimMod;
 import io.github.verycooltimo.murim.registry.ModAttachments;
+import io.github.verycooltimo.murim.network.QiSwordHitPayload;
 import io.github.verycooltimo.murim.technique.Styles;
 import io.github.verycooltimo.murim.technique.TechniqueBehavior;
 import io.github.verycooltimo.murim.technique.TechniqueDefinition;
@@ -20,6 +21,9 @@ import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
+import io.github.verycooltimo.murim.network.ChannelSafe;
+import net.minecraft.world.damagesource.DamageSource;
 
 /**
  * Меч в руке и ци-меч (этап M1, автор 03.10).
@@ -27,7 +31,7 @@ import net.neoforged.neoforge.event.tick.PlayerTickEvent;
  * <p>Мечевые техники (Семь Цветков, 24 Движения, Падающий Цветок, основы ЛКМ, выхваты) работают
  * только с мечом в руке: ванильным ({@code #minecraft:swords}) или будущим мечом мода
  * ({@code #murim:swords}, тег уже включает ванильные). С пустой рукой у пробуждённого клинок
- * появляется сам — ци-меч: без новой клавиши, на первый взмах или первую мечевую форму, и гаснет
+ * появляется сам — ци-меч: без новой клавиши, при запуске мечевой техники, и гаснет
  * через {@link #HOLD_TICKS} без мечевых действий. Ладонь и шаги меча не требуют.
  *
  * <p>Ци-меч бьёт как железный меч: пока он «вынут», на пустую руку действует временный
@@ -35,9 +39,9 @@ import net.neoforged.neoforge.event.tick.PlayerTickEvent;
  * только с устоявшегося Пика ({@link #MIN_RANK}, {@link #MIN_STAGE}); ниже мечевые формы с пустой
  * рукой не работают, как без меча.
  *
- * <p>Состояние «вынут» — тик последнего мечевого действия в {@link Player#getPersistentData()}:
- * оно серверное, на клиент не синхронизируется. Клиент рисует клинок сам по тем же событиям
- * (старт мечевой техники, взмах основы), см. client/QiSwordClient.
+ * <p>Сервер готовит боевые атрибуты и запрашивает видимый клинок при принятом запуске техники
+ * через {@link QiSwordHitPayload}, см. client/QiSwordClient. Порог ранга не зависит от звёзд.
+ * Основа ЛКМ требует настоящего меча; обычный удар кулаком не проявляет ци-меч.
  */
 @EventBusSubscriber(modid = MurimMod.MODID)
 public final class QiSword {
@@ -98,6 +102,9 @@ public final class QiSword {
         if (d == null) {
             return false;
         }
+        if (d.behavior() instanceof TechniqueBehavior.DemonicArt art) {
+            return io.github.verycooltimo.murim.technique.DemonicRules.sword(art.art());
+        }
         // Искусства третьего сорта сами говорят, чем бьют: кулак и топор меча не требуют.
         java.util.Optional<io.github.verycooltimo.murim.technique.JunkArts.Art> junk = io.github.verycooltimo.murim.technique.JunkArts.art(d.id());
         if (junk.isPresent()) {
@@ -124,6 +131,37 @@ public final class QiSword {
         }
         player.getPersistentData().putLong(DRAWN_KEY, player.level().getGameTime());
         apply(player, true);
+    }
+
+    /** Accepted sword casts manifest even without a target; rejected casts never send this packet. */
+    public static boolean onCast(ServerPlayer player, ResourceLocation technique) {
+        TechniqueState state = player.getData(ModAttachments.TECHNIQUE_STATE);
+        if (!state.isActive() || !technique.equals(state.techniqueId())
+                || !needsSword(technique) || !qiAvailable(player)) return false;
+        draw(player);
+        ChannelSafe.nearEntity(player, new QiSwordHitPayload(player.getId()), true);
+        return true;
+    }
+
+    /** Подтверждённый урон мечевой техники продлевает клинок; отменённый/нулевой — нет. */
+    @SubscribeEvent
+    static void onDamage(LivingDamageEvent.Post event) {
+        if (event.getSource().getEntity() instanceof ServerPlayer player) {
+            confirmHit(player, event.getSource(), event.getNewDamage());
+        }
+    }
+
+    public static boolean confirmHit(ServerPlayer player, DamageSource source, float damage) {
+        if (damage <= 0.0F || source.getEntity() != player || !qiAvailable(player)) {
+            return false;
+        }
+        TechniqueState state = player.getData(ModAttachments.TECHNIQUE_STATE);
+        if (!state.isActive() || !needsSword(state.techniqueId())) {
+            return false;
+        }
+        draw(player);
+        ChannelSafe.nearEntity(player, new QiSwordHitPayload(player.getId()), true);
+        return true;
     }
 
     /** Вынут ли сейчас ци-меч. */
@@ -168,6 +206,13 @@ public final class QiSword {
         if (damage != null && damage.hasModifier(DAMAGE_ID) && !drawn(player)) {
             apply(player, false);
         }
+    }
+
+    /** Bare-handed vanilla punches must retain fist damage/speed while a visual blade fades. */
+    @SubscribeEvent
+    static void onAttack(net.neoforged.neoforge.event.entity.player.AttackEntityEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player
+                && !player.getData(ModAttachments.TECHNIQUE_STATE).isActive()) apply(player, false);
     }
 
     private QiSword() {

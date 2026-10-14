@@ -1,0 +1,544 @@
+{
+ "variants": {
+  "facing=east,level=bottom,reach=none,side=center": {
+   "model": "murim:block/beam_stub_center_bottom_none"
+  },
+  "facing=east,level=bottom,reach=near,side=center": {
+   "model": "murim:block/beam_stub_center_bottom_near"
+  },
+  "facing=east,level=bottom,reach=mid,side=center": {
+   "model": "murim:block/beam_stub_center_bottom_mid"
+  },
+  "facing=east,level=bottom,reach=far,side=center": {
+   "model": "murim:block/beam_stub_center_bottom_far"
+  },
+  "facing=east,level=middle,reach=none,side=center": {
+   "model": "murim:block/beam_stub_center_middle_none"
+  },
+  "facing=east,level=middle,reach=near,side=center": {
+   "model": "murim:block/beam_stub_center_middle_near"
+  },
+  "facing=east,level=middle,reach=mid,side=center": {
+   "model": "murim:block/beam_stub_center_middle_mid"
+  },
+  "facing=east,level=middle,reach=far,side=center": {
+   "model": "murim:block/beam_stub_center_middle_far"
+  },
+  "facing=east,level=top,reach=none,side=center": {
+   "model": "murim:block/beam_stub_center_top_none"
+  },
+  "facing=east,level=top,reach=near,side=center": {
+   "model": "murim:block/beam_stub_center_top_near"
+  },
+  "facing=east,level=top,reach=mid,side=center": {
+   "model": "murim:block/beam_stub_center_top_mid"
+  },
+  "facing=east,level=top,reach=far,side=center": {
+   "model": "murim:block/beam_stub_center_top_far"
+  },
+  "facing=east,level=bottom,reach=none,side=minus": {
+   "model": "murim:block/beam_stub_minus_bottom_none"
+  },
+  "facing=east,level=bottom,reach=near,side=minus": {
+   "model": "murim:block/beam_stub_minus_bottom_near"
+  },
+  "facing=east,level=bottom,reach=mid,side=minus": {
+   "model": "murim:block/beam_stub_minus_bottom_mid"
+  },
+  "facing=east,level=bottom,reach=far,side=minus": {
+   "model": "murim:block/beam_stub_minus_bottom_far"
+  },
+  "facing=east,level=middle,reach=none,side=minus": {
+   "model": "murim:block/beam_stub_minus_middle_none"
+  },
+  "facing=east,level=middle,reach=near,side=minus": {
+   "model": "murim:block/beam_stub_minus_middle_near"
+  },
+  "facing=east,level=middle,reach=mid,side=minus": {
+   "model": "murim:block/beam_stub_minus_middle_mid"
+  },
+  "facing=east,level=middle,reach=far,side=minus": {
+   "model": "murim:block/beam_stub_minus_middle_far"
+  },
+  "facing=east,level=top,reach=none,side=minus": {
+   "model": "murim:block/beam_stub_minus_top_none"
+  },
+  "facing=east,level=top,reach=near,side=minus": {
+   "model": "murim:block/beam_stub_minus_top_near"
+  },
+  "facing=east,level=top,reach=mid,side=minus": {
+   "model": "murim:block/beam_stub_minus_top_mid"
+  },
+  "facing=east,level=top,reach=far,side=minus": {
+   "model": "murim:block/beam_stub_minus_top_far"
+  },
+  "facing=east,level=bottom,reach=none,side=plus": {
+   "model": "murim:block/beam_stub_plus_bottom_none"
+  },
+  "facing=east,level=bottom,reach=near,side=plus": {
+   "model": "murim:block/beam_stub_plus_bottom_near"
+  },
+  "facing=east,level=bottom,reach=mid,side=plus": {
+   "model": "murim:block/beam_stub_plus_bottom_mid"
+  },
+  "facing=east,level=bottom,reach=far,side=plus": {
+   "model": "murim:block/beam_stub_plus_bottom_far"
+  },
+  "facing=east,level=middle,reach=none,side=plus": {
+   "model": "murim:block/beam_stub_plus_middle_none"
+  },
+  "facing=east,level=middle,reach=near,side=plus": {
+   "model": "murim:block/beam_stub_plus_middle_near"
+  },
+  "facing=east,level=middle,reach=mid,side=plus": {
+   "model": "murim:block/beam_stub_plus_middle_mid"
+  },
+  "facing=east,level=middle,reach=far,side=plus": {
+   "model": "murim:block/beam_stub_plus_middle_far"
+  },
+  "facing=east,level=top,reach=none,side=plus": {
+   "model": "murim:block/beam_stub_plus_top_none"
+  },
+  "facing=east,level=top,reach=near,side=plus": {
+   "model": "murim:block/beam_stub_plus_top_near"
+  },
+  "facing=east,level=top,reach=mid,side=plus": {
+   "model": "murim:block/beam_stub_plus_top_mid"
+  },
+  "facing=east,level=top,reach=far,side=plus": {
+   "model": "murim:block/beam_stub_plus_top_far"
+  },
+  "facing=west,level=bottom,reach=none,side=center": {
+   "model": "murim:block/beam_stub_center_bottom_none",
+   "y": 180
+  },
+  "facing=west,level=bottom,reach=near,side=center": {
+   "model": "murim:block/beam_stub_center_bottom_near",
+   "y": 180
+  },
+  "facing=west,level=bottom,reach=mid,side=center": {
+   "model": "murim:block/beam_stub_center_bottom_mid",
+   "y": 180
+  },
+  "facing=west,level=bottom,reach=far,side=center": {
+   "model": "murim:block/beam_stub_center_bottom_far",
+   "y": 180
+  },
+  "facing=west,level=middle,reach=none,side=center": {
+   "model": "murim:block/beam_stub_center_middle_none",
+   "y": 180
+  },
+  "facing=west,level=middle,reach=near,side=center": {
+   "model": "murim:block/beam_stub_center_middle_near",
+   "y": 180
+  },
+  "facing=west,level=middle,reach=mid,side=center": {
+   "model": "murim:block/beam_stub_center_middle_mid",
+   "y": 180
+  },
+  "facing=west,level=middle,reach=far,side=center": {
+   "model": "murim:block/beam_stub_center_middle_far",
+   "y": 180
+  },
+  "facing=west,level=top,reach=none,side=center": {
+   "model": "murim:block/beam_stub_center_top_none",
+   "y": 180
+  },
+  "facing=west,level=top,reach=near,side=center": {
+   "model": "murim:block/beam_stub_center_top_near",
+   "y": 180
+  },
+  "facing=west,level=top,reach=mid,side=center": {
+   "model": "murim:block/beam_stub_center_top_mid",
+   "y": 180
+  },
+  "facing=west,level=top,reach=far,side=center": {
+   "model": "murim:block/beam_stub_center_top_far",
+   "y": 180
+  },
+  "facing=west,level=bottom,reach=none,side=minus": {
+   "model": "murim:block/beam_stub_plus_bottom_none",
+   "y": 180
+  },
+  "facing=west,level=bottom,reach=near,side=minus": {
+   "model": "murim:block/beam_stub_plus_bottom_near",
+   "y": 180
+  },
+  "facing=west,level=bottom,reach=mid,side=minus": {
+   "model": "murim:block/beam_stub_plus_bottom_mid",
+   "y": 180
+  },
+  "facing=west,level=bottom,reach=far,side=minus": {
+   "model": "murim:block/beam_stub_plus_bottom_far",
+   "y": 180
+  },
+  "facing=west,level=middle,reach=none,side=minus": {
+   "model": "murim:block/beam_stub_plus_middle_none",
+   "y": 180
+  },
+  "facing=west,level=middle,reach=near,side=minus": {
+   "model": "murim:block/beam_stub_plus_middle_near",
+   "y": 180
+  },
+  "facing=west,level=middle,reach=mid,side=minus": {
+   "model": "murim:block/beam_stub_plus_middle_mid",
+   "y": 180
+  },
+  "facing=west,level=middle,reach=far,side=minus": {
+   "model": "murim:block/beam_stub_plus_middle_far",
+   "y": 180
+  },
+  "facing=west,level=top,reach=none,side=minus": {
+   "model": "murim:block/beam_stub_plus_top_none",
+   "y": 180
+  },
+  "facing=west,level=top,reach=near,side=minus": {
+   "model": "murim:block/beam_stub_plus_top_near",
+   "y": 180
+  },
+  "facing=west,level=top,reach=mid,side=minus": {
+   "model": "murim:block/beam_stub_plus_top_mid",
+   "y": 180
+  },
+  "facing=west,level=top,reach=far,side=minus": {
+   "model": "murim:block/beam_stub_plus_top_far",
+   "y": 180
+  },
+  "facing=west,level=bottom,reach=none,side=plus": {
+   "model": "murim:block/beam_stub_minus_bottom_none",
+   "y": 180
+  },
+  "facing=west,level=bottom,reach=near,side=plus": {
+   "model": "murim:block/beam_stub_minus_bottom_near",
+   "y": 180
+  },
+  "facing=west,level=bottom,reach=mid,side=plus": {
+   "model": "murim:block/beam_stub_minus_bottom_mid",
+   "y": 180
+  },
+  "facing=west,level=bottom,reach=far,side=plus": {
+   "model": "murim:block/beam_stub_minus_bottom_far",
+   "y": 180
+  },
+  "facing=west,level=middle,reach=none,side=plus": {
+   "model": "murim:block/beam_stub_minus_middle_none",
+   "y": 180
+  },
+  "facing=west,level=middle,reach=near,side=plus": {
+   "model": "murim:block/beam_stub_minus_middle_near",
+   "y": 180
+  },
+  "facing=west,level=middle,reach=mid,side=plus": {
+   "model": "murim:block/beam_stub_minus_middle_mid",
+   "y": 180
+  },
+  "facing=west,level=middle,reach=far,side=plus": {
+   "model": "murim:block/beam_stub_minus_middle_far",
+   "y": 180
+  },
+  "facing=west,level=top,reach=none,side=plus": {
+   "model": "murim:block/beam_stub_minus_top_none",
+   "y": 180
+  },
+  "facing=west,level=top,reach=near,side=plus": {
+   "model": "murim:block/beam_stub_minus_top_near",
+   "y": 180
+  },
+  "facing=west,level=top,reach=mid,side=plus": {
+   "model": "murim:block/beam_stub_minus_top_mid",
+   "y": 180
+  },
+  "facing=west,level=top,reach=far,side=plus": {
+   "model": "murim:block/beam_stub_minus_top_far",
+   "y": 180
+  },
+  "facing=south,level=bottom,reach=none,side=center": {
+   "model": "murim:block/beam_stub_center_bottom_none",
+   "y": 90
+  },
+  "facing=south,level=bottom,reach=near,side=center": {
+   "model": "murim:block/beam_stub_center_bottom_near",
+   "y": 90
+  },
+  "facing=south,level=bottom,reach=mid,side=center": {
+   "model": "murim:block/beam_stub_center_bottom_mid",
+   "y": 90
+  },
+  "facing=south,level=bottom,reach=far,side=center": {
+   "model": "murim:block/beam_stub_center_bottom_far",
+   "y": 90
+  },
+  "facing=south,level=middle,reach=none,side=center": {
+   "model": "murim:block/beam_stub_center_middle_none",
+   "y": 90
+  },
+  "facing=south,level=middle,reach=near,side=center": {
+   "model": "murim:block/beam_stub_center_middle_near",
+   "y": 90
+  },
+  "facing=south,level=middle,reach=mid,side=center": {
+   "model": "murim:block/beam_stub_center_middle_mid",
+   "y": 90
+  },
+  "facing=south,level=middle,reach=far,side=center": {
+   "model": "murim:block/beam_stub_center_middle_far",
+   "y": 90
+  },
+  "facing=south,level=top,reach=none,side=center": {
+   "model": "murim:block/beam_stub_center_top_none",
+   "y": 90
+  },
+  "facing=south,level=top,reach=near,side=center": {
+   "model": "murim:block/beam_stub_center_top_near",
+   "y": 90
+  },
+  "facing=south,level=top,reach=mid,side=center": {
+   "model": "murim:block/beam_stub_center_top_mid",
+   "y": 90
+  },
+  "facing=south,level=top,reach=far,side=center": {
+   "model": "murim:block/beam_stub_center_top_far",
+   "y": 90
+  },
+  "facing=south,level=bottom,reach=none,side=minus": {
+   "model": "murim:block/beam_stub_plus_bottom_none",
+   "y": 90
+  },
+  "facing=south,level=bottom,reach=near,side=minus": {
+   "model": "murim:block/beam_stub_plus_bottom_near",
+   "y": 90
+  },
+  "facing=south,level=bottom,reach=mid,side=minus": {
+   "model": "murim:block/beam_stub_plus_bottom_mid",
+   "y": 90
+  },
+  "facing=south,level=bottom,reach=far,side=minus": {
+   "model": "murim:block/beam_stub_plus_bottom_far",
+   "y": 90
+  },
+  "facing=south,level=middle,reach=none,side=minus": {
+   "model": "murim:block/beam_stub_plus_middle_none",
+   "y": 90
+  },
+  "facing=south,level=middle,reach=near,side=minus": {
+   "model": "murim:block/beam_stub_plus_middle_near",
+   "y": 90
+  },
+  "facing=south,level=middle,reach=mid,side=minus": {
+   "model": "murim:block/beam_stub_plus_middle_mid",
+   "y": 90
+  },
+  "facing=south,level=middle,reach=far,side=minus": {
+   "model": "murim:block/beam_stub_plus_middle_far",
+   "y": 90
+  },
+  "facing=south,level=top,reach=none,side=minus": {
+   "model": "murim:block/beam_stub_plus_top_none",
+   "y": 90
+  },
+  "facing=south,level=top,reach=near,side=minus": {
+   "model": "murim:block/beam_stub_plus_top_near",
+   "y": 90
+  },
+  "facing=south,level=top,reach=mid,side=minus": {
+   "model": "murim:block/beam_stub_plus_top_mid",
+   "y": 90
+  },
+  "facing=south,level=top,reach=far,side=minus": {
+   "model": "murim:block/beam_stub_plus_top_far",
+   "y": 90
+  },
+  "facing=south,level=bottom,reach=none,side=plus": {
+   "model": "murim:block/beam_stub_minus_bottom_none",
+   "y": 90
+  },
+  "facing=south,level=bottom,reach=near,side=plus": {
+   "model": "murim:block/beam_stub_minus_bottom_near",
+   "y": 90
+  },
+  "facing=south,level=bottom,reach=mid,side=plus": {
+   "model": "murim:block/beam_stub_minus_bottom_mid",
+   "y": 90
+  },
+  "facing=south,level=bottom,reach=far,side=plus": {
+   "model": "murim:block/beam_stub_minus_bottom_far",
+   "y": 90
+  },
+  "facing=south,level=middle,reach=none,side=plus": {
+   "model": "murim:block/beam_stub_minus_middle_none",
+   "y": 90
+  },
+  "facing=south,level=middle,reach=near,side=plus": {
+   "model": "murim:block/beam_stub_minus_middle_near",
+   "y": 90
+  },
+  "facing=south,level=middle,reach=mid,side=plus": {
+   "model": "murim:block/beam_stub_minus_middle_mid",
+   "y": 90
+  },
+  "facing=south,level=middle,reach=far,side=plus": {
+   "model": "murim:block/beam_stub_minus_middle_far",
+   "y": 90
+  },
+  "facing=south,level=top,reach=none,side=plus": {
+   "model": "murim:block/beam_stub_minus_top_none",
+   "y": 90
+  },
+  "facing=south,level=top,reach=near,side=plus": {
+   "model": "murim:block/beam_stub_minus_top_near",
+   "y": 90
+  },
+  "facing=south,level=top,reach=mid,side=plus": {
+   "model": "murim:block/beam_stub_minus_top_mid",
+   "y": 90
+  },
+  "facing=south,level=top,reach=far,side=plus": {
+   "model": "murim:block/beam_stub_minus_top_far",
+   "y": 90
+  },
+  "facing=north,level=bottom,reach=none,side=center": {
+   "model": "murim:block/beam_stub_center_bottom_none",
+   "y": 270
+  },
+  "facing=north,level=bottom,reach=near,side=center": {
+   "model": "murim:block/beam_stub_center_bottom_near",
+   "y": 270
+  },
+  "facing=north,level=bottom,reach=mid,side=center": {
+   "model": "murim:block/beam_stub_center_bottom_mid",
+   "y": 270
+  },
+  "facing=north,level=bottom,reach=far,side=center": {
+   "model": "murim:block/beam_stub_center_bottom_far",
+   "y": 270
+  },
+  "facing=north,level=middle,reach=none,side=center": {
+   "model": "murim:block/beam_stub_center_middle_none",
+   "y": 270
+  },
+  "facing=north,level=middle,reach=near,side=center": {
+   "model": "murim:block/beam_stub_center_middle_near",
+   "y": 270
+  },
+  "facing=north,level=middle,reach=mid,side=center": {
+   "model": "murim:block/beam_stub_center_middle_mid",
+   "y": 270
+  },
+  "facing=north,level=middle,reach=far,side=center": {
+   "model": "murim:block/beam_stub_center_middle_far",
+   "y": 270
+  },
+  "facing=north,level=top,reach=none,side=center": {
+   "model": "murim:block/beam_stub_center_top_none",
+   "y": 270
+  },
+  "facing=north,level=top,reach=near,side=center": {
+   "model": "murim:block/beam_stub_center_top_near",
+   "y": 270
+  },
+  "facing=north,level=top,reach=mid,side=center": {
+   "model": "murim:block/beam_stub_center_top_mid",
+   "y": 270
+  },
+  "facing=north,level=top,reach=far,side=center": {
+   "model": "murim:block/beam_stub_center_top_far",
+   "y": 270
+  },
+  "facing=north,level=bottom,reach=none,side=minus": {
+   "model": "murim:block/beam_stub_minus_bottom_none",
+   "y": 270
+  },
+  "facing=north,level=bottom,reach=near,side=minus": {
+   "model": "murim:block/beam_stub_minus_bottom_near",
+   "y": 270
+  },
+  "facing=north,level=bottom,reach=mid,side=minus": {
+   "model": "murim:block/beam_stub_minus_bottom_mid",
+   "y": 270
+  },
+  "facing=north,level=bottom,reach=far,side=minus": {
+   "model": "murim:block/beam_stub_minus_bottom_far",
+   "y": 270
+  },
+  "facing=north,level=middle,reach=none,side=minus": {
+   "model": "murim:block/beam_stub_minus_middle_none",
+   "y": 270
+  },
+  "facing=north,level=middle,reach=near,side=minus": {
+   "model": "murim:block/beam_stub_minus_middle_near",
+   "y": 270
+  },
+  "facing=north,level=middle,reach=mid,side=minus": {
+   "model": "murim:block/beam_stub_minus_middle_mid",
+   "y": 270
+  },
+  "facing=north,level=middle,reach=far,side=minus": {
+   "model": "murim:block/beam_stub_minus_middle_far",
+   "y": 270
+  },
+  "facing=north,level=top,reach=none,side=minus": {
+   "model": "murim:block/beam_stub_minus_top_none",
+   "y": 270
+  },
+  "facing=north,level=top,reach=near,side=minus": {
+   "model": "murim:block/beam_stub_minus_top_near",
+   "y": 270
+  },
+  "facing=north,level=top,reach=mid,side=minus": {
+   "model": "murim:block/beam_stub_minus_top_mid",
+   "y": 270
+  },
+  "facing=north,level=top,reach=far,side=minus": {
+   "model": "murim:block/beam_stub_minus_top_far",
+   "y": 270
+  },
+  "facing=north,level=bottom,reach=none,side=plus": {
+   "model": "murim:block/beam_stub_plus_bottom_none",
+   "y": 270
+  },
+  "facing=north,level=bottom,reach=near,side=plus": {
+   "model": "murim:block/beam_stub_plus_bottom_near",
+   "y": 270
+  },
+  "facing=north,level=bottom,reach=mid,side=plus": {
+   "model": "murim:block/beam_stub_plus_bottom_mid",
+   "y": 270
+  },
+  "facing=north,level=bottom,reach=far,side=plus": {
+   "model": "murim:block/beam_stub_plus_bottom_far",
+   "y": 270
+  },
+  "facing=north,level=middle,reach=none,side=plus": {
+   "model": "murim:block/beam_stub_plus_middle_none",
+   "y": 270
+  },
+  "facing=north,level=middle,reach=near,side=plus": {
+   "model": "murim:block/beam_stub_plus_middle_near",
+   "y": 270
+  },
+  "facing=north,level=middle,reach=mid,side=plus": {
+   "model": "murim:block/beam_stub_plus_middle_mid",
+   "y": 270
+  },
+  "facing=north,level=middle,reach=far,side=plus": {
+   "model": "murim:block/beam_stub_plus_middle_far",
+   "y": 270
+  },
+  "facing=north,level=top,reach=none,side=plus": {
+   "model": "murim:block/beam_stub_plus_top_none",
+   "y": 270
+  },
+  "facing=north,level=top,reach=near,side=plus": {
+   "model": "murim:block/beam_stub_plus_top_near",
+   "y": 270
+  },
+  "facing=north,level=top,reach=mid,side=plus": {
+   "model": "murim:block/beam_stub_plus_top_mid",
+   "y": 270
+  },
+  "facing=north,level=top,reach=far,side=plus": {
+   "model": "murim:block/beam_stub_plus_top_far",
+   "y": 270
+  }
+ }
+}

@@ -17,8 +17,8 @@ class RealmTest {
 
     /** Пробуждённый даньтянь ёмкостью 30 с запасом {@code pool}. */
     private static DantianProfile awakened(double pool, int rank) {
-        return DantianProfile.INITIAL.withAxes(30.0D, 0.8D, 0.5D).withTags("pure", "six_harmonies")
-                .withPool(pool).withRank(rank);
+        // Fixed total capacity fixture, not a simulated rank-up.
+        return new DantianProfile(30.0D, 0.8D, 0.5D, "pure", "six_harmonies", pool, 0, 1, rank, 0);
     }
 
     @Test
@@ -48,12 +48,12 @@ class RealmTest {
     void conditions() {
         assertEquals(Realm.Condition.MASTER_ANY, Realm.condition(Realm.THIRD));
         assertEquals(Realm.Condition.DEFEAT_BOSS, Realm.condition(Realm.SECOND));
-        assertEquals(Realm.Condition.FORM_LAYER, Realm.condition(Realm.FIRST));
-        assertEquals(Realm.Condition.FORM_LAYER, Realm.condition(Realm.PEAK));
-        assertEquals(1, Realm.layerNeed(Realm.THIRD));
-        assertEquals(3, Realm.layerNeed(Realm.SECOND));
-        assertEquals(4, Realm.layerNeed(Realm.FIRST));
-        assertEquals(5, Realm.layerNeed(Realm.PEAK));
+        assertEquals(Realm.Condition.FORM_MASTERY, Realm.condition(Realm.FIRST));
+        assertEquals(Realm.Condition.FORM_MASTERY, Realm.condition(Realm.PEAK));
+        assertEquals(1, Realm.tierNeed(Realm.THIRD));
+        assertEquals(3, Realm.tierNeed(Realm.SECOND));
+        assertEquals(4, Realm.tierNeed(Realm.FIRST));
+        assertEquals(5, Realm.tierNeed(Realm.PEAK));
     }
 
     @Test

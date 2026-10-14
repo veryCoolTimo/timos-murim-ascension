@@ -16,53 +16,51 @@ import java.util.Random;
  * front ({@link #TUNNEL} blocks of z) and maps {@code az → z = az + TUNNEL}. State facings in the local frame of
  * StructurePiece: NORTH = +z (deeper in), EAST = +x.
  *
- * <pre>
- *  az 26 shell (rock)                      tiers: floors y 0, 5, 10, 15; rock from y 20
- *  az 25 ▤▤▤|▤▤▤|▤▤▤|▤▤▤|▤▤▤|▤▤▤   shelf wall ring: 6 units of 3 per side, dark posts between (24 units a tier)
- *  az 22..24  gallery, 3 clear (codex frame review 04.10: shallower galleries, the void dominates)
- *  az 21      railing line: fence + dark oak panel lattice, posts through all tiers, lanterns under the deck
- *  az 6..20   void 15×15, open to the rock; at the bottom the keeper's reading spot
- *  az 5       railing line
- *  az 2..4    gallery; stairs (2 wide, inner half): T3→T2 and T1→T0 west, T2→T1 east
- *  az 1       shelf wall; on the top tier its unit p 10-12 is the doorway from the tunnel
- * </pre>
+ * <p>Four seven-block tiers, three-high lower racks plus a two-high upper band. Four clear gallery cells
+ * separate the wall from the meander railing; the open well is 13×13. Two-wide stairs occupy the outer lane,
+ * with a separate two-wide bypass. LibraryPaths describes every reserved three-high walking volume.
  */
 public final class LibraryPlan {
 
     /** Archive box side (with the rock shell). */
     public static final int SIZE = 27;
     /** Length of the entrance tunnel in front of the archive (piece z 0..TUNNEL-1). */
-    public static final int TUNNEL = 24;
+    public static final int TUNNEL = 32;
     /** Flat landing at the bottom of the entrance stairs, before the doorway. */
-    public static final int LANDING = 4;
+    public static final int LANDING = 2;
     public static final int WIDTH = SIZE;
     public static final int DEPTH = TUNNEL + SIZE;
-    /** Floors of the four tiers; the visitor arrives on the top one. */
-    public static final int[] TIERS = {0, 5, 10, 15};
-    public static final int TOP = 15;
-    /** Rock ceiling (air below it up to y 19). */
-    public static final int CEILING = 20;
+    /** Support blocks of the four tiers; the visitor arrives on the top one. */
+    public static final int TIER_HEIGHT = 7;
+    public static final int[] TIERS = {0, 7, 14, 21};
+    public static final int TOP = 21;
+    /** Recessed timber ceiling backed by rock. */
+    public static final int CEILING = 28;
+    /** Natural rock backfill above the timber coffers. */
+    public static final int ROCK_TOP = 33;
 
     public static final int WALL_LO = 1;
     public static final int WALL_HI = 25;
-    // Codex frame review 04.10: galleries 3 deep, the void 15 wide — the void must dominate the frame.
-    public static final int RAIL_LO = 5;
-    public static final int RAIL_HI = 21;
-    public static final int VOID_LO = 6;
-    public static final int VOID_HI = 20;
+    // Four-deep galleries keep a two-wide stair and a two-wide bypass beside the 13-wide void.
+    public static final int RAIL_LO = 6;
+    public static final int RAIL_HI = 20;
+    public static final int VOID_LO = 7;
+    public static final int VOID_HI = 19;
 
     /** Positions along a wall (1..25): unit columns and the dark posts between them. */
     public static final int[][] UNITS = {{2, 4}, {6, 8}, {10, 12}, {14, 16}, {18, 20}, {22, 24}};
     public static final int[] POSTS = {1, 5, 9, 13, 17, 21, 25};
-    /** Posts on the railing line, running through all tiers (about 4-block centres). */
-    // Corners and the middle only (codex frame review: posts every 4 blocks hid the stacked galleries).
-    public static final int[] RAIL_POSTS = {5, 13, 21};
+    /** Corner posts only; no posts through the middle of the view. */
+    public static final int[] RAIL_POSTS = {6, 20};
 
-    /** Stairs, 2 wide on the inner half of a gallery: west x 3..4 steps z 8..11 (T3→T2, T1→T0); east x 22..23 steps z 18..15 (T2→T1). */
-    public static final int STAIR_WEST_X = 3;
-    public static final int STAIR_EAST_X = 22;
-    public static final int STAIR_WEST_Z0 = 8;
-    public static final int STAIR_EAST_Z0 = 18;
+    private static final List<LibraryPaths.Route> SEARCH_ROUTES = LibraryPaths.routes(ROCK_TOP + 10).stream()
+            .filter(route -> !route.name().startsWith("gallery-")).toList();
+
+    /** Six treads, two wide: west x 2..3, z 7..12; east x 23..24, z 19..14. */
+    public static final int STAIR_WEST_X = 2;
+    public static final int STAIR_EAST_X = 23;
+    public static final int STAIR_WEST_Z0 = 7;
+    public static final int STAIR_EAST_Z0 = 19;
 
     /** The collapse (codex synthesis: damage by cause, one place): middle tier, south gallery, x 12..16. */
     public static final int COLLAPSE_X0 = 12;
@@ -76,7 +74,7 @@ public final class LibraryPlan {
     public static final int CHISELED_ROWS = 2;
     /** A shelf block is an empty board instead of a shelf (looted, broken). */
     public static final double EMPTY_FRAME = 0.12D;
-    /** A lower cell is a stacked-manuals shelf (decor, breaks into junk) rather than a chiseled one. */
+    /** A lower cell has only textured stacks rather than takeable marked volumes. */
     public static final double PLAIN_SHELF = 0.40D;
     /** A slot of a chiseled shelf still holds a volume (refs: shelving packed with manuals). */
     public static final double SLOT_FILLED = 0.50D;
@@ -100,7 +98,7 @@ public final class LibraryPlan {
     }
 
     /** What stands in one shelf-wall cell. */
-    public enum Cell { CHISELED, PLAIN, BUNDLE, EMPTY, PROPPED, BARREL, GONE }
+    public enum Cell { CHISELED, PLAIN, BUNDLE, EMPTY, PROPPED, PROPPED_UPPER, BARREL, GONE }
 
     /** A chiseled shelf: archive position, facing side (0 W wall, 1 N, 2 E, 3 S), tier, ring unit, six slots. */
     public record Shelf(int ax, int y, int az, int side, int tier, int unit, Slot[] slots) {
@@ -115,18 +113,41 @@ public final class LibraryPlan {
         }
     }
 
+    /** A complete lower-band rack, facing the gallery (same side convention as Shelf). */
+    public record Bookcase(int ax, int y, int az, int side, int tier, boolean tall) { }
+    /** Existing gallery lantern; wall lights are vanilla, ring lights use the decor lanterns. */
+    public record GalleryLight(int ax, int y, int az, int side, int p, int tier, boolean wall) { }
+    /** Relocation of an existing reward, never a new loot roll. */
+    public record RackManual(Shelf source, int sourceSlot, Bookcase target, Genuine genuine) { }
+
     private final long seed;
     private final int proppedNumber;
     private final List<Shelf> shelves;
     private final Cell[][][] cells;
     private final JunkBook deskClue;
+    private final List<Bookcase> bookcases;
+    private final List<GalleryLight> galleryLights;
+    private final List<RackManual> rackManuals;
 
     private LibraryPlan(long seed, int proppedNumber, List<Shelf> shelves, Cell[][][] cells, JunkBook deskClue) {
         this.seed = seed;
         this.proppedNumber = proppedNumber;
         this.shelves = shelves;
         this.cells = cells;
-        this.deskClue = deskClue;
+        this.galleryLights = planGalleryLights();
+        this.bookcases = planBookcases();
+        this.rackManuals = planRackManuals();
+        int tiers = 0;
+        for (RackManual manual : rackManuals) tiers |= 1 << manual.target().tier();
+        // Include any original shelf rewards left behind if a future plan exceeds rack capacity.
+        for (Shelf shelf : shelves) {
+            for (int slot = 0; slot < shelf.slots().length; slot++) {
+                if (shelf.slots()[slot] != null && shelf.slots()[slot].useful() && !moved(shelf, slot)) {
+                    tiers |= 1 << shelf.tier();
+                }
+            }
+        }
+        this.deskClue = new JunkBook(deskClue.kind(), deskClue.seed(), deskClue.hint(), deskClue.read(), tiers);
     }
 
     /**
@@ -153,14 +174,14 @@ public final class LibraryPlan {
                                 c = Cell.GONE; // the doorway from the tunnel
                             } else if (t == COLLAPSE_TIER && side == 3 && a[0] >= COLLAPSE_X0 && a[0] <= COLLAPSE_X1 && r.nextDouble() < 0.6D) {
                                 c = Cell.GONE; // fell with the gallery
-                            } else if (t == 0 && row == 0 && a[0] == proppedCell[0] && a[1] == proppedCell[1]) {
-                                c = Cell.PROPPED;
+                            } else if (t == 0 && row < 2 && a[0] == proppedCell[0] && a[1] == proppedCell[1]) {
+                                c = row == 0 ? Cell.PROPPED : Cell.PROPPED_UPPER;
                             } else if (row == 0 && BARRELS[t][0] == side && BARRELS[t][1] == p) {
                                 c = Cell.BARREL;
                             } else if (r.nextDouble() < EMPTY_FRAME) {
                                 c = Cell.EMPTY;
                             } else if (row >= CHISELED_ROWS) {
-                                // Top row: stacked-manual shelves, now and then a loose pale bundle (birch slab).
+                                // Top row: flat decorative stacks with a few variations in their arrangement.
                                 c = r.nextDouble() < 0.15D ? Cell.BUNDLE : Cell.PLAIN;
                             } else if (r.nextDouble() < PLAIN_SHELF) {
                                 c = Cell.PLAIN;
@@ -171,7 +192,8 @@ public final class LibraryPlan {
                             if (c == Cell.CHISELED) {
                                 Slot[] slots = new Slot[6];
                                 for (int i = 0; i < 6; i++) {
-                                    if (r.nextDouble() < SLOT_FILLED) {
+                                    if (LibraryShelfLayout.available(LibraryShelfLayout.variantAt(a[0], y, a[1]), i)
+                                            && r.nextDouble() < SLOT_FILLED) {
                                         slots[i] = slot(r, propped);
                                     }
                                 }
@@ -213,7 +235,7 @@ public final class LibraryPlan {
 
     /**
      * Counting order of the units on a tier, as the keeper's note counts them: from the foot of the bottom stairs
-     * (west gallery, landing at z 12) along the wall on the left hand — west wall northwards from the unit beside the
+     * (west gallery, landing at z 13) along the wall on the left hand — west wall northwards from the unit beside the
      * foot, then the north wall eastwards, the east wall southwards, the south wall westwards, the west wall again.
      *
      * @return 1..24 for unit {@code u} (0..5, by increasing p) of {@code side}
@@ -308,6 +330,140 @@ public final class LibraryPlan {
         }
         return n;
     }
+
+    public static boolean decorative(Cell cell) {
+        return cell == Cell.PLAIN || cell == Cell.BUNDLE;
+    }
+
+    /** Shared by the piece and reward selection, so a lantern over a missing deck is never assumed lit. */
+    public boolean hole(int tier, int ax, int az) {
+        if (tier > 0) {
+            boolean west = (tier & 1) != 0;
+            int x = west ? STAIR_WEST_X : STAIR_EAST_X;
+            int z0 = west ? STAIR_WEST_Z0 : STAIR_EAST_Z0;
+            int along = west ? az - z0 : z0 - az;
+            if (ax >= x && ax <= x + 1 && along >= 0 && along < TIER_HEIGHT - 1) return true;
+        }
+        return collapsed(tier, ax, az);
+    }
+
+    public boolean collapsed(int tier, int ax, int az) {
+        if (az > RAIL_LO) return false;
+        double jag = noise(seed, ax, tier, az);
+        if (tier == COLLAPSE_TIER) {
+            return ax >= COLLAPSE_X0 && ax <= COLLAPSE_X1 && az >= 2
+                    || (ax == COLLAPSE_X0 - 1 || ax == COLLAPSE_X1 + 1) && az >= 3 && jag < 0.5D;
+        }
+        return tier == COLLAPSE_TIER - 1 && ax >= COLLAPSE_X0 + 1 && ax <= COLLAPSE_X1 - 1
+                && az >= 2 && az <= 3 && jag < 0.8D;
+    }
+
+    private List<GalleryLight> planGalleryLights() {
+        List<GalleryLight> lights = new ArrayList<>();
+        for (int tier = 0; tier < TIERS.length; tier++) {
+            int above = tier + 1 < TIERS.length ? TIERS[tier + 1] : CEILING;
+            for (int side = 0; side < 4; side++) {
+                for (int p = RAIL_LO + 2 + (tier & 1); p < RAIL_HI; p += 4) {
+                    int ax = side == 0 ? RAIL_LO : side == 2 ? RAIL_HI : p;
+                    int az = side == 3 ? RAIL_LO : side == 1 ? RAIL_HI : p;
+                    if (tier + 1 < TIERS.length && hole(tier + 1, ax, az)) continue;
+                    lights.add(new GalleryLight(ax, TIERS[tier] + 4, az, side, p, tier, false));
+                }
+                for (int i = 1; i < POSTS.length - 1; i += 2) {
+                    int[] w = wallCell(side, POSTS[i]);
+                    int ax = w[0] + (side == 0 ? 1 : side == 2 ? -1 : 0);
+                    int az = w[1] + (side == 3 ? 1 : side == 1 ? -1 : 0);
+                    if (tier + 1 < TIERS.length && hole(tier + 1, ax, az)) continue;
+                    lights.add(new GalleryLight(ax, above - 1, az, side, POSTS[i], tier, true));
+                }
+            }
+        }
+        return List.copyOf(lights);
+    }
+
+    private List<Bookcase> planBookcases() {
+        List<Bookcase> racks = new ArrayList<>();
+        for (int tier = 0; tier < TIERS.length; tier++) {
+            int x = (tier & 1) == 0 ? 8 : 18;
+            racks.add(new Bookcase(x, TIERS[tier] + 1, 24, 1, tier, false));
+            racks.add(new Bookcase(x + 1, TIERS[tier] + 1, 24, 1, tier, true));
+            for (int side = 0; side < 4; side++) {
+                for (int[] unit : UNITS) {
+                    for (int p = unit[0]; p <= unit[1]; p++) {
+                        boolean lo = decorative(cell(tier, side, p, 0));
+                        boolean mid = decorative(cell(tier, side, p, 1));
+                        boolean hi = decorative(cell(tier, side, p, 2));
+                        int start = lo && mid ? 0 : mid && hi ? 1 : -1;
+                        if (start < 0) continue;
+                        int[] c = wallCell(side, p);
+                        racks.add(new Bookcase(c[0], TIERS[tier] + 1 + start, c[1], side, tier,
+                                start == 0 && hi));
+                    }
+                }
+            }
+        }
+        return List.copyOf(racks);
+    }
+
+    /** Distance from the lowest shelf's book area to an existing same-tier lantern. */
+    public double galleryLightDistance(Bookcase rack) {
+        double best = Double.POSITIVE_INFINITY;
+        for (GalleryLight light : galleryLights) {
+            if (light.tier() != rack.tier() || light.side() != rack.side()) continue;
+            double dx = rack.ax() - light.ax();
+            double dy = rack.y() + .4D - (light.y() + .25D);
+            double dz = rack.az() - light.az();
+            best = Math.min(best, Math.sqrt(dx * dx + dy * dy + dz * dz));
+        }
+        return best;
+    }
+
+    public boolean facesWalkingGallery(Bookcase rack) {
+        int ax = rack.ax() + (rack.side() == 0 ? 1 : rack.side() == 2 ? -1 : 0);
+        int az = rack.az() + (rack.side() == 3 ? 1 : rack.side() == 1 ? -1 : 0);
+        if (hole(rack.tier(), ax, az)) return false;
+        // Wall racks directly behind the rear sorting bays cannot be searched from the gallery.
+        int bayX = (rack.tier() & 1) == 0 ? 8 : 18;
+        if (rack.side() == 1 && rack.az() == WALL_HI && ax >= bayX && ax <= bayX + 1) return false;
+        // Keep stair treads, landings and the entrance out of the sight/click lane.
+        for (LibraryPaths.Route route : SEARCH_ROUTES) {
+            for (LibraryPaths.Tread tread : route.treads()) {
+                if (tread.x() == ax && tread.z() == az + TUNNEL
+                        && tread.y() > TIERS[rack.tier()] && tread.y() < TIERS[rack.tier()] + TIER_HEIGHT) return false;
+            }
+        }
+        return true;
+    }
+
+    private List<RackManual> planRackManuals() {
+        List<Bookcase> targets = new ArrayList<>();
+        for (Bookcase rack : bookcases) {
+            if (facesWalkingGallery(rack) && galleryLightDistance(rack) <= 5.0D) targets.add(rack);
+        }
+        // Independent RNG: shelf contents, counts, techniques and the keeper's original note seed are unchanged.
+        Collections.shuffle(targets, new Random(seed ^ 0x4D414E55414CL));
+        List<RackManual> manuals = new ArrayList<>();
+        for (Shelf shelf : shelves) {
+            for (int slot = 0; slot < shelf.slots().length; slot++) {
+                Slot book = shelf.slots()[slot];
+                if (book != null && book.useful() && manuals.size() < targets.size()) {
+                    manuals.add(new RackManual(shelf, slot, targets.get(manuals.size()), book.genuine()));
+                }
+            }
+        }
+        return List.copyOf(manuals);
+    }
+
+    private boolean moved(Shelf shelf, int slot) {
+        for (RackManual manual : rackManuals) {
+            if (manual.source() == shelf && manual.sourceSlot() == slot) return true;
+        }
+        return false;
+    }
+
+    public List<Bookcase> bookcases() { return bookcases; }
+    public List<GalleryLight> galleryLights() { return galleryLights; }
+    public List<RackManual> rackManuals() { return rackManuals; }
 
     /** Stable per-block noise in [0, 1) for ruin decisions that must agree across chunk borders. */
     public static double noise(long seed, int x, int y, int z) {

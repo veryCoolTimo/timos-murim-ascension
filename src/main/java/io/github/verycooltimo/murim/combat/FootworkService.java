@@ -68,7 +68,7 @@ public final class FootworkService {
     private static final ResourceLocation FALL = id("traverse_fall");
 
     private static final int ACTIVE = 0;
-    private static final int LAYER = 1;
+    private static final int TIER = 1;
     private static final int RUN_LEFT = 2;
     private static final int KICKS_USED = 3;
     private static final int LAST_LEAP = 4;
@@ -87,11 +87,8 @@ public final class FootworkService {
 
     private static final ResourceLocation SNEAK_SPEED = id("shadow_sneak");
 
-    /** Шаг Молнии: разгон до {@code WIND_TOP} × крейсерская за {@code WIND_RAMP} тиков. */
-    private static final double WIND_TOP = 1.6D;
-    private static final int WIND_RAMP = 20;
-    /** Тропа аромата: множитель крейсерской скорости. */
-    private static final double HUASHAN_FAST = 1.4D;
+    /** God Wind reaches its table speed ×1.6 over the first second. */
+    private static final int WIND_RAMP = TraverseRules.WIND_RAMP_TICKS;
 
     /** Тиков без спринта на земле подряд, после которых бег гаснет. */
     private static final int GRACE = 6;
@@ -132,7 +129,7 @@ public final class FootworkService {
             TechniqueService.tryStart(player, techniqueId);
             return;
         }
-        int layer = Math.max(0, MasteryService.layer(player, techniqueId));
+        int executionTier = Math.max(0, MasteryService.executionTier(player, techniqueId));
         Vec3 forward = horizontal(player.getLookAngle());
         Vec3 right = new Vec3(-forward.z, 0.0D, forward.x);
         Vec3 move = Vec3.ZERO;
@@ -155,13 +152,13 @@ public final class FootworkService {
         String mode = def.behavior() instanceof TechniqueBehavior.Footwork f ? f.mode()
                 : def.behavior() instanceof TechniqueBehavior.Step ? "evade" : "";
         if (!mode.isEmpty() && !inAir) {
-            runForm(player, techniqueId, family, layer, mode, input, forward, move, sideOrBack);
+            runForm(player, techniqueId, family, executionTier, mode, input, forward, move, sideOrBack);
             return;
         }
 
         if (inAir) {
-            if (family.canAirTurn(layer)) {
-                airTurn(player, family, layer, move.lengthSqr() > 1.0E-6D ? move.normalize() : forward);
+            if (family.canAirTurn(executionTier)) {
+                airTurn(player, family, executionTier, move.lengthSqr() > 1.0E-6D ? move.normalize() : forward);
             } else {
                 locked(player, "air_turn", family);
             }
@@ -174,8 +171,8 @@ public final class FootworkService {
         if ((input & SNEAK) != 0) {
             if (family == FootworkFamily.HUASHAN) {
                 dash(player, techniqueId, sideOrBack ? move.normalize() : forward.scale(-1.0D));
-            } else if (layer >= 1) {
-                startShadow(player, techniqueId, layer);
+            } else if (executionTier >= 1) {
+                startShadow(player, techniqueId, executionTier);
             } else {
                 locked(player, "shadow", family);
             }
@@ -184,8 +181,8 @@ public final class FootworkService {
         if ((input & SPRINT) != 0 && (input & FORWARD) != 0) {
             if (isRunning(player)) {
                 stop(player);
-            } else if (family.canRun(layer)) {
-                startRun(player, techniqueId, family, layer);
+            } else if (family.canRun(executionTier)) {
+                startRun(player, techniqueId, family, executionTier);
             } else {
                 locked(player, "run", family);
             }
@@ -205,14 +202,14 @@ public final class FootworkService {
             return;
         }
         // Шаг Смерти (L3+): цель в конусе 30° до 8 блоков — к ней; вперёд+R — сквозь неё.
-        net.minecraft.world.entity.LivingEntity target = layer >= 3 ? softTarget(player) : null;
+        net.minecraft.world.entity.LivingEntity target = executionTier >= 3 ? softTarget(player) : null;
         if (target != null) {
             Vec3 to = target.position().subtract(player.position());
             Vec3 dir = horizontal(to);
             double half = target.getBbWidth() / 2.0D + player.getBbWidth() / 2.0D;
             double flat = Math.sqrt(to.x * to.x + to.z * to.z);
             double reach = (input & FORWARD) != 0 ? flat + half + 1.2D : flat - half - 0.2D;
-            reach = Math.max(0.5D, Math.min(io.github.verycooltimo.murim.technique.ShadowRules.deathDistance(layer), reach));
+            reach = Math.max(0.5D, Math.min(io.github.verycooltimo.murim.technique.ShadowRules.deathDistance(executionTier), reach));
             player.setData(ModAttachments.FOOTWORK_DIR, new float[] {(float) dir.x, (float) dir.z, 1.0F, (float) reach});
             TechniqueService.tryStart(player, techniqueId);
             return;
@@ -224,7 +221,7 @@ public final class FootworkService {
      * Форма стиля шагов, выбранная на кольце: R делает именно её, направление и цель лишь
      * задают путь (03.10). Бег и тень — переключатели: повторное R выключает.
      */
-    private static void runForm(ServerPlayer player, ResourceLocation id, FootworkFamily family, int layer, String mode,
+    private static void runForm(ServerPlayer player, ResourceLocation id, FootworkFamily family, int executionTier, String mode,
                                 int input, Vec3 forward, Vec3 move, boolean sideOrBack) {
         switch (mode) {
             case "run" -> {
@@ -238,7 +235,7 @@ public final class FootworkService {
                     if (inShadow(player)) {
                         stop(player);
                     }
-                    startRun(player, id, family, Math.max(layer, family == FootworkFamily.HUASHAN ? 1 : 0));
+                    startRun(player, id, family, Math.max(executionTier, family == FootworkFamily.HUASHAN ? 1 : 0));
                 }
             }
             case "shadow" -> {
@@ -251,7 +248,7 @@ public final class FootworkService {
                     if (isRunning(player)) {
                         stop(player);
                     }
-                    startShadow(player, id, Math.max(1, layer));
+                    startShadow(player, id, executionTier);
                     if (inShadow(player)) {
                         int[] t = player.getData(ModAttachments.TRAVERSE).clone();
                         t[SNEAK_BOUND] = (input & PASSIVE) != 0 ? 1 : 0;
@@ -260,6 +257,10 @@ public final class FootworkService {
                 }
             }
             case "death", "behind" -> {
+                if (family == FootworkFamily.WIND_GOD && executionTier < 3) {
+                    locked(player, "death", family);
+                    return;
+                }
                 net.minecraft.world.entity.LivingEntity target = softTarget(player);
                 if (target == null) {
                     dash(player, id, sideOrBack ? move.normalize() : forward);
@@ -279,7 +280,7 @@ public final class FootworkService {
                     dir = horizontal(path);
                     reach = Math.min(6.0D, Math.sqrt(path.x * path.x + path.z * path.z));
                 } else {
-                    reach = Math.min(io.github.verycooltimo.murim.technique.ShadowRules.deathDistance(Math.max(3, layer)), flat + half + 1.2D);
+                    reach = Math.min(io.github.verycooltimo.murim.technique.ShadowRules.deathDistance(Math.max(3, executionTier)), flat + half + 1.2D);
                 }
                 player.setData(ModAttachments.FOOTWORK_DIR, new float[] {(float) dir.x, (float) dir.z, 1.0F, (float) Math.max(0.5D, reach)});
                 TechniqueService.tryStart(player, id);
@@ -310,16 +311,21 @@ public final class FootworkService {
      * первой стены, окно уклонения по таблице, без урона.
      */
     public static void windEvade(ServerPlayer player, ResourceLocation id) {
-        int layer = Math.max(0, MasteryService.layer(player, id));
-        int tier = FootworkFamily.WIND_GOD.tier(layer);
+        int executionTier = Math.max(0, MasteryService.executionTier(player, id));
         Vec3 dir = dashDirection(player);
         if (dir == null) {
             dir = horizontal(player.getLookAngle()).scale(-1.0D);
         }
         Vec3 start = player.position();
         float override = player.getData(ModAttachments.FOOTWORK_DIR)[3];
-        boolean death = override > 0.0F;
-        double distance = death ? override : FootworkFamily.evadeDistance(tier);
+        TechniqueDefinition definition = TechniqueLoader.get(id);
+        boolean windDeath = definition != null && definition.behavior() instanceof TechniqueBehavior.Footwork form
+                && "wind_god".equals(form.family()) && "death".equals(form.mode());
+        boolean huashan = family(definition) == FootworkFamily.HUASHAN;
+        boolean death = windDeath || huashan && override > 0.0F;
+        double distance = windDeath ? Math.min(io.github.verycooltimo.murim.technique.ShadowRules.deathDistance(executionTier), override > 0.0F ? override : io.github.verycooltimo.murim.technique.ShadowRules.deathDistance(executionTier))
+                : death ? override : FootworkFamily.windEvadeDistance(executionTier);
+        player.setData(ModAttachments.FOOTWORK_DIR, new float[] {0, 0, 0, 0});
         Vec3 from = start.add(0.0D, 0.9D, 0.0D);
         net.minecraft.world.phys.BlockHitResult wall = player.level().clip(new net.minecraft.world.level.ClipContext(
                 from, from.add(dir.scale(distance)), net.minecraft.world.level.ClipContext.Block.COLLIDER,
@@ -328,14 +334,16 @@ public final class FootworkService {
                 ? distance : Math.max(0.0D, wall.getLocation().distanceTo(from) - 0.5D);
         sendDash(player, dir, reach, death ? 6 : 5);
         // Смерть — проход для атаки, без окна уклонения; Миг — уклонение.
-        int iframes = death ? 0 : FootworkFamily.evadeInvulnerable(tier);
+        int iframes = death ? 0 : FootworkFamily.windEvadeInvulnerable(executionTier);
         if (iframes > 0) {
             player.invulnerableTime = Math.max(player.invulnerableTime, iframes);
         }
-        MasteryService.onMiss(player, id);
+        // TechniqueService records God Wind practice once after the impact.
+        if (huashan) {
+            MasteryService.onMiss(player, id);
+        }
         // Хуашань (Аромат за спиной) — свой вид события: у формы своё зрелище, не белая линия Смерти.
-        boolean huashan = family(TechniqueLoader.get(id)) == FootworkFamily.HUASHAN;
-        send(player, huashan ? 9 : death ? 8 : 5, layer, dir.scale(reach));
+        send(player, huashan ? 9 : death ? 8 : 5, executionTier, dir.scale(reach));
     }
 
     /**
@@ -379,7 +387,14 @@ public final class FootworkService {
     }
 
     /** Шаг Тени: присед, медленный тихий ход; мобы замечают с меньшего радиуса. */
-    private static void startShadow(ServerPlayer player, ResourceLocation technique, int layer) {
+    private static void startShadow(ServerPlayer player, ResourceLocation technique, int executionTier) {
+        if (executionTier < 1) {
+            locked(player, "shadow", FootworkFamily.WIND_GOD);
+            return;
+        }
+        if (!canSustain(player)) {
+            return;
+        }
         long now = player.serverLevel().getGameTime();
         int[] s = player.getData(ModAttachments.TRAVERSE);
         if (now < (long) s[SHADOW_READY]) {
@@ -388,23 +403,24 @@ public final class FootworkService {
         if (isRunning(player)) {
             stop(player);
         }
-        if (!pay(player, io.github.verycooltimo.murim.technique.ShadowRules.entryQi(layer))) {
+        if (!pay(player, io.github.verycooltimo.murim.technique.ShadowRules.entryQi(executionTier)
+                * io.github.verycooltimo.murim.cultivation.PillService.costFactor(player))) {
             player.displayClientMessage(Component.translatable("murim.technique.no_qi"), true);
             return;
         }
         int[] n = player.getData(ModAttachments.TRAVERSE).clone();
         n[ACTIVE] = SHADOW;
-        n[LAYER] = layer;
+        n[TIER] = executionTier;
         n[FAMILY] = FootworkFamily.WIND_GOD.ordinal();
-        n[RUN_LEFT] = io.github.verycooltimo.murim.technique.ShadowRules.duration(layer);
+        n[RUN_LEFT] = io.github.verycooltimo.murim.technique.ShadowRules.duration(executionTier);
         n[PAID] = 0;
         n[NO_SPRINT] = 0;
         player.setData(ModAttachments.TRAVERSE, n);
         player.setData(ModAttachments.FOOTWORK_TECH, technique.toString());
-        double factor = Math.min(1.0D, io.github.verycooltimo.murim.technique.ShadowRules.speed(layer)
+        double factor = Math.min(1.0D, io.github.verycooltimo.murim.technique.ShadowRules.speed(executionTier)
                 / io.github.verycooltimo.murim.technique.ShadowRules.WALK);
         modify(player, Attributes.SNEAKING_SPEED, SNEAK_SPEED, Math.max(0.0D, factor - 0.3D), AttributeModifier.Operation.ADD_VALUE);
-        send(player, 6, layer, Vec3.ZERO);
+        send(player, 6, executionTier, Vec3.ZERO);
     }
 
     /** Поддерживаемые наблюдатели Тени — у их ИИ проверено первичное обнаружение. */
@@ -425,7 +441,7 @@ public final class FootworkService {
                 || mob.getTarget() == player) {
             return;
         }
-        int layer = player.getData(ModAttachments.TRAVERSE)[LAYER];
+        int executionTier = player.getData(ModAttachments.TRAVERSE)[TIER];
         java.util.List<net.minecraft.world.entity.Mob> observers = player.level().getEntitiesOfClass(
                 net.minecraft.world.entity.Mob.class,
                 player.getBoundingBox().inflate(io.github.verycooltimo.murim.technique.ShadowRules.OBSERVER_RANGE),
@@ -433,12 +449,12 @@ public final class FootworkService {
         observers.sort(java.util.Comparator.<net.minecraft.world.entity.Mob>comparingDouble(player::distanceToSqr)
                 .thenComparing(net.minecraft.world.entity.Entity::getUUID));
         int rank = observers.indexOf(mob);
-        if (rank < 0 || rank >= io.github.verycooltimo.murim.technique.ShadowRules.observers(layer)) {
+        if (rank < 0 || rank >= io.github.verycooltimo.murim.technique.ShadowRules.observers(executionTier)) {
             return;
         }
         boolean bright = player.level().getMaxLocalRawBrightness(player.blockPosition()) >= 12;
         double radius = io.github.verycooltimo.murim.technique.ShadowRules.radius(
-                mob.getAttributeValue(Attributes.FOLLOW_RANGE), layer, bright);
+                mob.getAttributeValue(Attributes.FOLLOW_RANGE), executionTier, bright);
         if (mob.distanceTo(player) > radius) {
             event.setCanceled(true);
         }
@@ -453,34 +469,39 @@ public final class FootworkService {
     }
 
     /** Включить бег. Оплата — потиково, первый тик проверяется до выдачи бонусов. */
-    public static void startRun(ServerPlayer player, ResourceLocation technique, FootworkFamily family, int layer) {
-        int tier = family.tier(layer);
+    public static void startRun(ServerPlayer player, ResourceLocation technique, FootworkFamily family, int executionTier) {
+        io.github.verycooltimo.murim.technique.DemonicExecutor.endRun(player);
+        if (!family.canRun(executionTier) || !canSustain(player)
+                || player.serverLevel().getGameTime() < player.getData(ModAttachments.FOOTWORK_RUN_READY)[family.ordinal()]) {
+            return;
+        }
+        int tier = family.tier(executionTier);
         DantianProfile profile = player.getData(ModAttachments.PROFILE);
-        if (profile.circulating() < TraverseRules.qiPerSecond(tier) / 20.0D) {
+        if (profile.circulating() < runQiPerTick(player, family, executionTier)) {
             player.displayClientMessage(Component.translatable("murim.technique.no_qi"), true);
             return;
         }
         int[] s = player.getData(ModAttachments.TRAVERSE).clone();
         s[ACTIVE] = 1;
-        s[LAYER] = layer;
+        s[TIER] = executionTier;
         s[FAMILY] = family.ordinal();
         // Tempered body runs longer: +3 % per body level (docs/design/27-body-training.md §3).
-        s[RUN_LEFT] = (int) Math.round(TraverseRules.maxTicks(tier)
+        s[RUN_LEFT] = (int) Math.round(TraverseRules.maxTicks(family, executionTier)
                 * io.github.verycooltimo.murim.training.TrainingService.footworkStamina(player));
         s[NO_SPRINT] = 0;
         s[PAID] = 0;
         player.setData(ModAttachments.TRAVERSE, s);
         player.setData(ModAttachments.FOOTWORK_TECH, technique.toString());
         // Тропа аромата быстрее таблицы на 40 % (автор 03.10: «быстрее бег»); Молния разгоняется в onTick.
-        double fast = family == FootworkFamily.HUASHAN ? HUASHAN_FAST : 1.0D;
-        modify(player, Attributes.MOVEMENT_SPEED, SPEED, TraverseRules.speed(tier) * fast / TraverseRules.VANILLA_SPRINT - 1.0D,
+        modify(player, Attributes.MOVEMENT_SPEED, SPEED,
+                TraverseRules.acceleratedSpeed(family, executionTier, 0) / TraverseRules.VANILLA_SPRINT - 1.0D,
                 AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
         double step = TraverseRules.stepHeight(tier) - 0.6D;
         if (step > 0.0D) {
             modify(player, Attributes.STEP_HEIGHT, STEP, step, AttributeModifier.Operation.ADD_VALUE);
         }
         modify(player, Attributes.SAFE_FALL_DISTANCE, FALL, TraverseRules.safeFall(tier) - 3.0D, AttributeModifier.Operation.ADD_VALUE);
-        send(player, 1, layer, new Vec3(family.ordinal(), 0.0D, 0.0D));
+        send(player, 1, executionTier, new Vec3(family.ordinal(), 0.0D, 0.0D));
     }
 
     public static void stop(ServerPlayer player) {
@@ -491,9 +512,15 @@ public final class FootworkService {
         int[] n = s.clone();
         boolean wasShadow = n[ACTIVE] == SHADOW;
         n[ACTIVE] = 0;
+        if (!wasShadow) {
+            long[] ready = player.getData(ModAttachments.FOOTWORK_RUN_READY).clone();
+            FootworkFamily family = FootworkFamily.values()[n[FAMILY]];
+            ready[family.ordinal()] = player.serverLevel().getGameTime() + TraverseRules.cooldown(family, n[TIER]);
+            player.setData(ModAttachments.FOOTWORK_RUN_READY, ready);
+        }
         if (wasShadow) {
             n[SHADOW_READY] = (int) (player.serverLevel().getGameTime()
-                    + io.github.verycooltimo.murim.technique.ShadowRules.cooldown(n[LAYER]));
+                    + io.github.verycooltimo.murim.technique.ShadowRules.cooldown(n[TIER]));
         }
         player.setData(ModAttachments.TRAVERSE, n);
         remove(player, Attributes.MOVEMENT_SPEED, SPEED);
@@ -503,7 +530,7 @@ public final class FootworkService {
         if (player.onGround()) {
             remove(player, Attributes.SAFE_FALL_DISTANCE, FALL);
         }
-        send(player, wasShadow ? 7 : 0, n[LAYER], Vec3.ZERO);
+        send(player, wasShadow ? 7 : 0, n[TIER], Vec3.ZERO);
     }
 
     /** Полная очистка: смерть, выход, смена мира — снимает и бонус падения. */
@@ -514,9 +541,13 @@ public final class FootworkService {
 
     @SubscribeEvent
     static void onTick(PlayerTickEvent.Post event) {
-        if (!(event.getEntity() instanceof ServerPlayer player)) {
-            return;
+        if (event.getEntity() instanceof ServerPlayer player) {
+            tick(player);
         }
+    }
+
+    /** Same authoritative tick used by the event and GameTests. */
+    static void tick(ServerPlayer player) {
         long now = player.serverLevel().getGameTime();
         int[] s = player.getData(ModAttachments.TRAVERSE);
         int[] n = s.clone();
@@ -545,8 +576,8 @@ public final class FootworkService {
         }
         try {
             int[] r = n.clone();
-            int tier = FootworkFamily.values()[r[FAMILY]].tier(r[LAYER]);
-            double cost = TraverseRules.qiPerSecond(tier) / 20.0D;
+            FootworkFamily family = FootworkFamily.values()[r[FAMILY]];
+            double cost = runQiPerTick(player, family, r[TIER]);
             DantianProfile profile = player.getData(ModAttachments.PROFILE);
             if (!player.isSprinting() && player.onGround()) {
                 r[NO_SPRINT]++;
@@ -565,8 +596,8 @@ public final class FootworkService {
             r[PAID]++;
             if (r[FAMILY] == FootworkFamily.WIND_GOD.ordinal() && r[PAID] <= WIND_RAMP) {
                 // Шаг Молнии разгоняется за секунду до ×1,6 крейсерской (автор 03.10: «нужно быстрее»).
-                double k = 1.0D + (WIND_TOP - 1.0D) * r[PAID] / (double) WIND_RAMP;
-                modify(player, Attributes.MOVEMENT_SPEED, SPEED, TraverseRules.speed(tier) * k / TraverseRules.VANILLA_SPRINT - 1.0D,
+                modify(player, Attributes.MOVEMENT_SPEED, SPEED,
+                        TraverseRules.acceleratedSpeed(family, r[TIER], r[PAID]) / TraverseRules.VANILLA_SPRINT - 1.0D,
                         AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
             }
             if (r[PAID] % 20 == 0) {
@@ -590,7 +621,8 @@ public final class FootworkService {
      */
     private static void shadowTick(ServerPlayer player, int[] n, long now) {
         int[] r = n.clone();
-        double cost = io.github.verycooltimo.murim.technique.ShadowRules.qiPerSecond(r[LAYER]) / 20.0D;
+        double cost = io.github.verycooltimo.murim.technique.ShadowRules.qiPerSecond(r[TIER])
+                * io.github.verycooltimo.murim.cultivation.PillService.costFactor(player) / 20.0D;
         DantianProfile profile = player.getData(ModAttachments.PROFILE);
         boolean contact = !player.level().getEntitiesOfClass(net.minecraft.world.entity.Mob.class,
                 player.getBoundingBox().inflate(io.github.verycooltimo.murim.technique.ShadowRules.CONTACT),
@@ -629,13 +661,14 @@ public final class FootworkService {
      * отталкивание (только Бог Ветров, L4+). Поворот в воздухе теперь на R, не на прыжке.
      */
     public static void jump(ServerPlayer player, boolean clientGrounded) {
+        if (io.github.verycooltimo.murim.technique.DemonicExecutor.jump(player)) return;
         int[] s = player.getData(ModAttachments.TRAVERSE);
         if (s[ACTIVE] == 0) {
             return;
         }
         FootworkFamily family = FootworkFamily.values()[s[FAMILY]];
-        int layer = s[LAYER];
-        int tier = family.tier(layer);
+        int executionTier = s[TIER];
+        int tier = family.tier(executionTier);
         Vec3 look = horizontal(player.getLookAngle());
         long now = player.serverLevel().getGameTime();
         // Клиент шлёт прыжок в момент отрыва: сервер мог ещё не увидеть землю — верим опоре
@@ -643,8 +676,8 @@ public final class FootworkService {
         boolean grounded = player.onGround() || clientGrounded && now - s[LAST_GROUND] <= 3;
         int[] n = s.clone();
         if (grounded) {
-            if (!family.canLeap(layer) || now - (long) n[LAST_LEAP] < TraverseRules.LEAP_COOLDOWN
-                    || !pay(player, TraverseRules.LEAP_QI)) {
+            if (!family.canLeap(executionTier) || now - (long) n[LAST_LEAP] < TraverseRules.LEAP_COOLDOWN
+                    || !pay(player, extraQi(player, family, executionTier, TraverseRules.LEAP_QI))) {
                 return;
             }
             n[LAST_LEAP] = (int) now;
@@ -652,12 +685,12 @@ public final class FootworkService {
                     .add(0.0D, TraverseRules.leapVertical(Math.max(1, tier)), 0.0D));
             player.hurtMarked = true;
             player.setData(ModAttachments.TRAVERSE, n);
-            send(player, 2, layer, look);
+            send(player, 2, executionTier, look);
             return;
         }
         Vec3 wall = wallNormal(player);
-        if (wall != null && n[KICKS_USED] < family.wallKicks(layer)) {
-            if (!pay(player, TraverseRules.WALL_KICK_QI)) {
+        if (wall != null && n[KICKS_USED] < family.wallKicks(executionTier)) {
+            if (!pay(player, extraQi(player, family, executionTier, TraverseRules.WALL_KICK_QI))) {
                 return;
             }
             n[KICKS_USED]++;
@@ -666,17 +699,17 @@ public final class FootworkService {
             player.setDeltaMovement(v);
             player.hurtMarked = true;
             player.setData(ModAttachments.TRAVERSE, n);
-            send(player, 3, layer, wall);
+            send(player, 3, executionTier, wall);
         }
     }
 
     /** Поворот в воздухе по R: одна горизонтальная смена направления за отрыв, высота сохраняется. */
-    private static void airTurn(ServerPlayer player, FootworkFamily family, int layer, Vec3 dir) {
+    private static void airTurn(ServerPlayer player, FootworkFamily family, int executionTier, Vec3 dir) {
         int[] s = player.getData(ModAttachments.TRAVERSE);
         if (s[AIR_USED] != 0) {
             return;
         }
-        if (!pay(player, TraverseRules.AIR_CORRECTION_QI)) {
+        if (!pay(player, extraQi(player, family, executionTier, TraverseRules.AIR_CORRECTION_QI))) {
             player.displayClientMessage(Component.translatable("murim.technique.no_qi"), true);
             return;
         }
@@ -686,7 +719,7 @@ public final class FootworkService {
         player.setDeltaMovement(dir.scale(TraverseRules.AIR_CORRECTION_SPEED).add(0.0D, d.y, 0.0D));
         player.hurtMarked = true;
         player.setData(ModAttachments.TRAVERSE, n);
-        send(player, 4, layer, dir);
+        send(player, 4, executionTier, dir);
     }
 
     private static void locked(ServerPlayer player, String form, FootworkFamily family) {
@@ -704,6 +737,33 @@ public final class FootworkService {
             }
         }
         return null;
+    }
+
+    /** Sustained prices already include mastery in their tables; only pills multiply them. */
+    public static double runQiPerTick(ServerPlayer player, FootworkFamily family, int executionTier) {
+        return TraverseRules.qiPerSecond(family, executionTier)
+                * io.github.verycooltimo.murim.cultivation.PillService.costFactor(player) / 20.0D;
+    }
+
+    private static double extraQi(ServerPlayer player, FootworkFamily family, int executionTier, double base) {
+        ResourceLocation form = ResourceLocation.fromNamespaceAndPath("murim", switch (family) {
+            case HUASHAN -> "dark_fragrance_step";
+            case WIND_GOD -> "wind_god_steps";
+            case HEAVENLY_DEMON -> "high_cloud_steps";
+        });
+        var progress = player.getData(ModAttachments.MASTERY).progress(form);
+        double mastery = progress == null
+                ? io.github.verycooltimo.murim.mastery.MasteryRules.costFactor(executionTier, family.executionSteps())
+                : io.github.verycooltimo.murim.mastery.MasteryRules.costFactor(progress.stars(), io.github.verycooltimo.murim.mastery.Arts.cap(form));
+        return base * mastery
+                * io.github.verycooltimo.murim.cultivation.PillService.costFactor(player);
+    }
+
+    private static boolean canSustain(ServerPlayer player) {
+        return player.isAlive() && !player.isRemoved() && !player.isSpectator()
+                && player.getData(ModAttachments.PROFILE).isAwakened()
+                && AuraService.pressure(player) < AuraPressure.TECHNIQUE_LOCK
+                && !player.getData(ModAttachments.TECHNIQUE_STATE).isActive();
     }
 
     private static boolean pay(ServerPlayer player, double cost) {
@@ -767,9 +827,12 @@ public final class FootworkService {
         }
     }
 
-    private static void send(ServerPlayer player, int kind, int layer, Vec3 dir) {
-        PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
-                new TraversePayloads.Event(player.getId(), kind, layer, (float) dir.x, (float) dir.z));
+    private static void send(ServerPlayer player, int kind, int executionTier, Vec3 dir) {
+        TraversePayloads.Event payload = new TraversePayloads.Event(player.getId(), kind, executionTier, (float) dir.x, (float) dir.z);
+        // As with mastery sync, mock GameTest connections have no mod channel.
+        if (player.connection != null && player.connection.hasChannel(payload)) {
+            PacketDistributor.sendToPlayersTrackingEntityAndSelf(player, payload);
+        }
     }
 
     private static ResourceLocation id(String path) {

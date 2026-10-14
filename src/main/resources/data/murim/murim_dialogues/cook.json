@@ -5,15 +5,6 @@
     {
       "when": [
         {
-          "member": true,
-          "chores": true
-        }
-      ],
-      "node": "chores"
-    },
-    {
-      "when": [
-        {
           "period": "night"
         }
       ],
@@ -39,6 +30,15 @@
       ],
       "gesture": "nod",
       "options": [
+        {
+          "text": "dialogue.murim.cook.opt.help",
+          "when": [
+            {
+              "member": true
+            }
+          ],
+          "next": "chores"
+        },
         {
           "text": "dialogue.murim.cook.opt.ask",
           "next": "answer"
@@ -106,6 +106,15 @@
       ],
       "gesture": "nod",
       "options": [
+        {
+          "text": "dialogue.murim.cook.opt.help",
+          "when": [
+            {
+              "member": true
+            }
+          ],
+          "next": "chores"
+        },
         {
           "text": "dialogue.murim.cook.opt.ask",
           "next": "answer"

@@ -21,7 +21,7 @@ public final class Casters {
     /** Моб, который умеет техники игрока: свои слои, ранг, цель и серверный рывок. */
     public interface Caster {
         /** Слой освоения техники у этого NPC (−1 — не знает). */
-        int techniqueLayer(ResourceLocation technique);
+        int techniqueTier(ResourceLocation technique);
 
         /** Ранг по шкале Realm (0 — без ранга). */
         int rank();
@@ -41,11 +41,22 @@ public final class Casters {
     }
 
     /** Слой освоения техники у применяющего. */
-    public static int layer(LivingEntity caster, ResourceLocation technique) {
+    public static int executionTier(LivingEntity caster, ResourceLocation technique) {
         if (caster instanceof ServerPlayer player) {
-            return Math.max(0, MasteryService.layer(player, technique));
+            return Math.max(0, MasteryService.executionTier(player, technique));
         }
-        return caster instanceof Caster c ? Math.max(0, c.techniqueLayer(technique)) : 0;
+        return caster instanceof Caster c ? Math.max(0, c.techniqueTier(technique)) : 0;
+    }
+
+    /** Continuous mastery curves use stars directly; NPC table indices retain their balance. */
+    public static double powerFactor(LivingEntity caster, ResourceLocation technique) {
+        if (caster instanceof ServerPlayer player) {
+            return io.github.verycooltimo.murim.mastery.MasteryRules.powerFactor(
+                    Math.max(0, MasteryService.stars(player, technique)),
+                    io.github.verycooltimo.murim.mastery.Arts.cap(technique));
+        }
+        return io.github.verycooltimo.murim.mastery.MasteryRules.powerFactor(
+                executionTier(caster, technique), io.github.verycooltimo.murim.mastery.Arts.legacySteps(technique));
     }
 
     /** Ранг применяющего: у игрока — из профиля, у NPC — свой. */

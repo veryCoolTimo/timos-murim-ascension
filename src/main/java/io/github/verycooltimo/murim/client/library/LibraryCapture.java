@@ -121,7 +121,15 @@ public final class LibraryCapture {
         level.setDayTime(night ? 18000L : 6000L);
         server.getGameRules().getRule(net.minecraft.world.level.GameRules.RULE_DAYLIGHT).set(false, server);
         server.getGameRules().getRule(net.minecraft.world.level.GameRules.RULE_DOMOBSPAWNING).set(false, server);
-        BlockPos found = level.findNearestMapStructure(LibraryMapFunction.LIBRARIES, p.blockPosition(), 100, false);
+        // MURIM_CAPTURE_LIB_FROM="x,z": search from a far point so a freshly generated archive is filmed, not an old
+        // one already saved in the stand world.
+        BlockPos origin = p.blockPosition();
+        String from = System.getenv("MURIM_CAPTURE_LIB_FROM");
+        if (from != null && from.contains(",")) {
+            String[] xz = from.split(",");
+            origin = new BlockPos(Integer.parseInt(xz[0].trim()), 64, Integer.parseInt(xz[1].trim()));
+        }
+        BlockPos found = level.findNearestMapStructure(LibraryMapFunction.LIBRARIES, origin, 100, false);
         if (found == null) {
             MurimMod.LOGGER.error("Стенд архива: архив не найден");
             return;
@@ -220,8 +228,10 @@ public final class LibraryCapture {
         move(ar(11.5, top + 0.1, 4.0), ar(12.5, top - 2, 13), 40, "rail edge");
         move(ar(11.5, top + 0.6, 8.5), ar(12.5, 0.5, 14.5), 60, "over the void, look down");
         act(40, "the shaft", null);
-        move(ar(11.6, top + 0.6, 8.6), ar(22, 9, 21), 50, "look round");
-        move(ar(11.7, top + 0.6, 8.7), ar(3, 11, 21), 60, "look round 2");
+        move(ar(13.5, LibraryPlan.TOP + 3.1, 13.5), ar(13.5, 0.5, 13.5), 45, "top-down well");
+        act(35, "top-down well hold", null);
+        move(ar(11.6, top + 0.6, 8.6), ar(22, LibraryPlan.TIERS[2] + 2, 21), 50, "look round");
+        move(ar(11.7, top + 0.6, 8.7), ar(3, LibraryPlan.TIERS[2] + 3, 21), 60, "look round 2");
         move(ar(11.5, top + 0.1, 4.5), ar(7.5, top + 0.6, 1.5), 40, "back to the gallery");
         // 3. The record barrel by the doorway: open it, take the keeper's note, read it.
         move(ar(7.5, top + 0.1, 3.0), ar(7.5, top + 0.4, 1.5), 30, "barrel");
@@ -240,24 +250,29 @@ public final class LibraryCapture {
             act(35, "junk page", () -> page(mc));
             act(10, "close junk", () -> close(mc));
         }
-        // 5. Down the tiers: west stairs, across the middle tier to the east stairs, the west stairs again.
-        // Gallery travel near eye level (codex frame review: keep floors under a third of the frame).
-        move(ar(3.9, top + 0.1, 6.8), ar(3.9, 13, 13), 35, "stair top");
-        move(ar(3.9, 11.1, 12.5), ar(3.5, 12.7, 23), 45, "down to tier 2");
-        move(ar(3.5, 11.1, 23.0), ar(16, 12.6, 23), 55, "tier 2 west");
-        move(ar(23.4, 11.1, 23.0), ar(23.4, 12.0, 14), 80, "tier 2 north");
-        move(ar(22.9, 11.1, 19.4), ar(22.9, 8.0, 13), 20, "east stair top");
-        move(ar(22.9, 6.1, 13.4), ar(23.2, 7.6, 3), 45, "down to tier 1");
-        move(ar(23.2, 6.1, 3.4), ar(10, 7.6, 3.4), 45, "tier 1 east");
-        move(ar(3.9, 6.1, 3.4), ar(3.9, 7.4, 10), 80, "tier 1 south, over the crack");
-        move(ar(3.9, 6.1, 6.8), ar(3.9, 3.0, 13), 15, "west stair top");
-        move(ar(3.9, 1.1, 12.5), ar(13, 2.4, 13), 45, "down to the bottom");
+        // 5. Follow the actual six-tread flights and their two-wide bypass. Avoid the collapsed south span.
+        for (int tier = LibraryPlan.TIERS.length - 1; tier > 0; tier--) {
+            boolean west = (tier & 1) != 0;
+            double x = (west ? LibraryPlan.STAIR_WEST_X : LibraryPlan.STAIR_EAST_X) + 1.0;
+            int z0 = west ? LibraryPlan.STAIR_WEST_Z0 : LibraryPlan.STAIR_EAST_Z0;
+            int dir = west ? 1 : -1;
+            double upper = LibraryPlan.TIERS[tier] + 1.1;
+            double lower = LibraryPlan.TIERS[tier - 1] + 1.1;
+            move(ar(x, upper, z0 - dir + 0.5), ar(x, lower + 1, z0 + dir * 6 + 0.5), 35, "stair head " + tier);
+            move(ar(x, lower, z0 + dir * 6 + 0.5), ar(13, lower + 1, 13), 60, "down flight " + tier);
+            if (tier > 1) {
+                double bypass = west ? 4.5 : 22.5;
+                move(ar(bypass, lower, z0 + dir * 6 + 0.5), ar(bypass, lower + 1, 22.5), 15, "side bypass");
+                move(ar(bypass, lower, 22.5), ar(13, lower + 1, 22.5), 45, "north gallery corner");
+                move(ar(26 - bypass, lower, 22.5), ar(26 - bypass, lower + 1, 13), 75, "north gallery");
+            }
+        }
         // 6. The propped shelf: count to it, look at the wedge, pull the book, open it.
         int[] c = lp.plan().proppedCell();
         Vec3 shelf = ar(c[0] + 0.5, 1.05, c[1] + 0.5);
         Vec3 unit = ar(c[0] + 0.5, 2.6, c[1] + 0.5);
         Vec3 front = ar(c[0] + 0.5 + inward(c)[0] * 1.9, 1.1, c[1] + 0.5 + inward(c)[1] * 1.9);
-        move(ar(13, 1.1, 13), ar(13.5, 19, 17), 60, "void bottom, look up");
+        move(ar(13, 1.1, 13), ar(13.5, LibraryPlan.CEILING - 2, 17), 60, "void bottom, look up");
         act(30, "the tiers above", null);
         move(ar(13.1, 1.1, 13.1), unit, 40, "turn to the shelves");
         move(ar(c[0] + 0.5 + inward(c)[0] * 4.5, 1.1, c[1] + 0.5 + inward(c)[1] * 4.5), unit, 60, "the shelf");

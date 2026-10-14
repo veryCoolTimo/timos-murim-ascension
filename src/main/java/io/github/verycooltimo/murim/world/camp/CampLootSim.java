@@ -145,7 +145,7 @@ public final class CampLootSim {
                     continue;
                 }
                 TechniqueDefinition d = TechniqueLoader.get(e.getKey());
-                int layers = d == null ? 5 : d.layers();
+                int layers = d == null ? io.github.verycooltimo.murim.mastery.Arts.MAX_STARS : d.starCap();
                 int dp = Math.min(e.getValue(), layers - k[1]);
                 runDeepen += dp;
                 runInsight += PageRules.PAGE_INSIGHT * (e.getValue() - dp);

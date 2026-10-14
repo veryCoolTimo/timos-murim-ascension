@@ -2,6 +2,11 @@ package io.github.verycooltimo.murim.sect;
 
 import io.github.verycooltimo.murim.MurimMod;
 import io.github.verycooltimo.murim.entity.SectDisciple;
+import io.github.verycooltimo.murim.mastery.TechniqueTier;
+import io.github.verycooltimo.murim.sect.seal.PenanceService;
+import io.github.verycooltimo.murim.technique.TechniqueDefinition;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import io.github.verycooltimo.murim.world.hua.MountHuaSite;
 import io.github.verycooltimo.murim.world.hua.MountHuaSites;
 import net.minecraft.server.level.ServerLevel;
@@ -42,6 +47,82 @@ public final class SectReactions {
     private SectReactions() {
     }
 
+    public enum PlumReaction { NONE, OFFENCE, SERIOUS, SUMMONS }
+
+    /** Семь Цветков доступны выпускнику; секретные 24 Движения — доверенному секты. */
+    public static PlumReaction plumReaction(ResourceLocation id, TechniqueTier tier, SectStanding standing) {
+        if (!MurimMod.MODID.equals(id.getNamespace())) {
+            return PlumReaction.NONE;
+        }
+        boolean secret = id.getPath().startsWith("twenty_four_plum_")
+                || id.getPath().startsWith("seven_plum_") && tier == TechniqueTier.SECRET;
+        if (secret) {
+            return standing.atLeast(SectStanding.TRUSTED) ? PlumReaction.SUMMONS
+                    : standing.atLeast(SectStanding.GRADUATE) ? PlumReaction.OFFENCE : PlumReaction.SERIOUS;
+        }
+        return id.getPath().startsWith("seven_plum_") && !standing.atLeast(SectStanding.GRADUATE)
+                ? PlumReaction.OFFENCE : PlumReaction.NONE;
+    }
+
+    /** Увидели закрытое искусство: возгласы учеников, старейшина подходит с вопросом или приговором. */
+    public static void onTechnique(ServerPlayer p, TechniqueDefinition technique) {
+        onTechnique(p, technique, inSect(p));
+    }
+
+    /** Same, with the territory check given (GameTest yards stand outside the real mountain's territory). */
+    static void onTechnique(ServerPlayer p, TechniqueDefinition technique, boolean onSectGround) {
+        SectSocial.highArt(p, technique.tier());
+        PlumReaction reaction = plumReaction(technique.id(), technique.tier(), SectService.standing(p));
+        if (reaction == PlumReaction.NONE || p.isCreative() || p.isSpectator() || !onSectGround) {
+            onTechnique(p);
+            return;
+        }
+        List<SectDisciple> witnesses = p.level().getEntitiesOfClass(SectDisciple.class,
+                p.getBoundingBox().inflate(WATCH_RANGE), d -> d.isAlive() && d.member().isPresent()
+                        && d.free() && !d.isSleeping() && !d.wounded() && d.distanceToSqr(p) <= WATCH_RANGE * WATCH_RANGE
+                        && d.getSensing().hasLineOfSight(p));
+        if (witnesses.isEmpty()) {
+            return;
+        }
+        witnesses.sort(java.util.Comparator.comparingDouble(d -> d.distanceToSqr(p)));
+        String key = reaction == PlumReaction.SUMMONS ? "murim.sect.plum.recognized" : "murim.sect.plum.alarm";
+        int said = 0;
+        for (SectDisciple d : witnesses) {
+            d.wake();
+            d.watch(p, 160, 0);
+            d.getNavigation().stop();
+            d.faceEntity(p, 30.0F);
+            if (said++ < 3) {
+                SectChatter.send(d, key, Component.translatable(key));
+            }
+        }
+        String stamp = "murim_plum_witness_at";
+        long now = p.level().getGameTime();
+        if (p.getPersistentData().contains(stamp) && now - p.getPersistentData().getLong(stamp) < 200) {
+            return;
+        }
+        p.getPersistentData().putLong(stamp, now);
+        SectDisciple elder = p.level().getEntitiesOfClass(SectDisciple.class, p.getBoundingBox().inflate(32.0D),
+                        d -> d.isAlive() && d.free() && !d.wounded() && (!d.blocking() || d.blockTarget() == p.getId())
+                                && (d.role() == SectRole.ELDER || d.role() == SectRole.LEADER))
+                .stream().min(java.util.Comparator.comparingDouble(d -> d.distanceToSqr(p))).orElse(null);
+        SectDisciple witness = elder == null ? witnesses.get(0) : elder;
+        if (reaction == PlumReaction.SERIOUS) {
+            if (SectService.state(p).member()) {
+                PenanceService.summon(p, witness);
+            }
+        } else if (reaction == PlumReaction.OFFENCE) {
+            PenanceService.offence(p, "secret_art", witness);
+        }
+        if (elder != null && !SectService.state(p).has(PenanceService.SUMMONED)) {
+            elder.approachDialogue(p, ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "plum_witness"),
+                    reaction == PlumReaction.SUMMONS ? "recognized" : "unauthorized", p.position());
+        } else if (!SectService.state(p).member()) {
+            // Чужаку приговор секты не назначается, но старейшина требует объяснения.
+            witness.approachDialogue(p, ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "plum_witness"), "unauthorized", p.position());
+        }
+    }
+
     // ------------------------------------------------------------------ техника рядом
 
     /** Игрок применил технику (из {@code TechniqueService#tryStart}): свободные люди горы рядом смотрят. */
@@ -52,7 +133,7 @@ public final class SectReactions {
         List<SectDisciple> watchers = new ArrayList<>();
         for (SectDisciple d : level.getEntitiesOfClass(SectDisciple.class, p.getBoundingBox().inflate(WATCH_RANGE),
                 d -> d.isAlive() && d.member().isPresent() && d.layout() != null)) {
-            if (watches(d) && d.distanceToSqr(p) <= WATCH_RANGE * WATCH_RANGE) {
+            if (watches(d) && d.distanceToSqr(p) <= WATCH_RANGE * WATCH_RANGE && d.getSensing().hasLineOfSight(p)) {
                 // Оборачиваются не хором: дальше стоит — позже заметил, и у каждого своя заминка (до ~0,7 с).
                 int delay = (int) Math.sqrt(d.distanceToSqr(p)) + level.random.nextInt(8);
                 d.watch(p, WATCH_TICKS + level.random.nextInt(WATCH_EXTRA), delay);
@@ -111,6 +192,7 @@ public final class SectReactions {
         if (m.isEmpty() || !SectService.state(p).member()) {
             return null;
         }
+        if (SectSocial.power(p, d) == SectSocial.Power.WEAK) return null;
         boolean lay = m.get().lay();
         int gen = m.get().generation();
         if ((lay || gen >= 2 && m.get().disciple()) && SectService.state(p).has(SectTalk.REVIEW_WON)) {

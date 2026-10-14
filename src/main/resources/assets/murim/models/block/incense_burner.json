@@ -1,0 +1,18 @@
+{
+  "loader": "neoforge:obj",
+  "model": "murim:models/block/obj/incense_burner.obj",
+  "flip_v": false,
+  "emissive_ambient": true,
+  "automatic_culling": true,
+  "shade_quads": true,
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "temple_bronze": "murim:block/temple_bronze",
+    "temple_rim": "murim:block/temple_rim",
+    "temple_inside": "murim:block/temple_inside",
+    "temple_stick": "murim:block/temple_stick",
+    "temple_ember": "murim:block/temple_ember",
+    "particle": "murim:block/temple_bronze"
+  },
+  "ambientocclusion": false
+}

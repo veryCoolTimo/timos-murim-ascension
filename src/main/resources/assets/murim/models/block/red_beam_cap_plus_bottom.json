@@ -1,0 +1,32 @@
+{
+ "textures": {
+  "particle": "murim:block/red_lacquer",
+  "end": "murim:block/red_beam_end"
+ },
+ "elements": [
+  {
+   "name": "end",
+   "from": [
+    0,
+    0,
+    11.5
+   ],
+   "to": [
+    16,
+    4,
+    14.5
+   ],
+   "faces": {
+    "east": {
+     "uv": [
+      6.5,
+      6,
+      9.5,
+      10
+     ],
+     "texture": "#end"
+    }
+   }
+  }
+ ]
+}

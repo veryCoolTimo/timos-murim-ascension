@@ -212,7 +212,7 @@ public final class SeaVfx {
 
     private static final class Cast {
         final int entityId;
-        final int layer;
+        final int executionTier;
         int start;
         final Random random;
         final double density;
@@ -232,13 +232,13 @@ public final class SeaVfx {
         final List<Puff> puffs = new ArrayList<>();
         ResourceLocation skin;
 
-        Cast(int entityId, int layer) {
+        Cast(int entityId, int executionTier) {
             this.entityId = entityId;
-            this.layer = layer;
+            this.executionTier = executionTier;
             this.start = clientTicks;
             this.random = new Random(entityId * 31L + clientTicks);
-            this.density = SeaRules.density(layer);
-            this.scale = SeaRules.scale(layer);
+            this.density = SeaRules.density(executionTier);
+            this.scale = SeaRules.scale(executionTier);
         }
 
         int t() {
@@ -284,16 +284,16 @@ public final class SeaVfx {
             }
             return;
         }
-        if (payload.event() != TechniqueEventPayload.Event.STARTED || payload.layer() <= 0) {
+        if (payload.event() != TechniqueEventPayload.Event.STARTED || payload.executionTier() <= 0) {
             return;
         }
         CASTS.removeIf(c -> c.entityId == payload.sourceId());
-        Cast c = new Cast(payload.sourceId(), payload.layer());
+        Cast c = new Cast(payload.sourceId(), payload.executionTier());
         CASTS.add(c);
         if (c.own()) {
             sentHeld = false;
         }
-        if (SeaRules.petals(c.layer)) {
+        if (SeaRules.petals(c.executionTier)) {
             // Стойка и бутон — холодная синяя аура; розовая — с раскрытия.
             ClientAuraState.techniqueAura(c.entityId, 2, 0, SeaRules.RELEASE + 4);
         }
@@ -308,7 +308,7 @@ public final class SeaVfx {
         }
         if (p.stage() == SeaPayload.BEGIN) {
             if (c == null) {
-                c = new Cast(p.entityId(), p.layer());
+                c = new Cast(p.entityId(), p.executionTier());
                 CASTS.add(c);
             }
             // Сверка шкалы: пакет раскрытия приходит на тике RELEASE.
@@ -338,7 +338,7 @@ public final class SeaVfx {
     /** Раскрытие: пыль кольцом, розовая аура, поле цветов (родятся по ходу клинка и кольцами от острия). */
     private static void begin(Cast c, Vec3 feet) {
         dust(c, feet, c.n(12) + 4, 0.16D);
-        if (SeaRules.petals(c.layer)) {
+        if (SeaRules.petals(c.executionTier)) {
             ClientAuraState.techniqueAura(c.entityId, 2, 1, SeaRules.END - SeaRules.RELEASE);
             buildField(c);
         }
@@ -348,7 +348,7 @@ public final class SeaVfx {
     /** Поле: до 240 цветов (7-й слой) в секторе, площадь равномерно, у краёв реже. */
     private static void buildField(Cast c) {
         int n = Math.min(220, Math.max(20, c.n(170)));
-        double radius = SeaRules.radius(c.layer);
+        double radius = SeaRules.radius(c.executionTier);
         for (int i = 0; i < n; i++) {
             double r = 0.6D + (radius - 0.6D) * Math.sqrt(c.random.nextDouble());
             double a = SeaRules.SECTOR * (2.0D * c.random.nextDouble() - 1.0D);
@@ -389,7 +389,7 @@ public final class SeaVfx {
         }
         Wrap w = new Wrap(projectile, clientTicks, at, dir, length);
         c.wraps.add(w);
-        if (SeaRules.petals(c.layer)) {
+        if (SeaRules.petals(c.executionTier)) {
             // Сорванные цветы — ближайшие к пути снаряда; от них и летят лепестки обвивки.
             List<Flower> near = new ArrayList<>();
             Entity caster = mc.level == null ? null : mc.level.getEntity(c.entityId);
@@ -410,7 +410,7 @@ public final class SeaVfx {
                 } else {
                     from = at.add(c.random.nextGaussian() * 0.6D, -0.8D, c.random.nextGaussian() * 0.6D);
                 }
-                if (high && SeaRules.slotBuds(c.layer) && i % 2 == 0) {
+                if (high && SeaRules.slotBuds(c.executionTier) && i % 2 == 0) {
                     // Высокий снаряд: лепестки поднимаются к нему столбом из поля под ним.
                     from = new Vec3(at.x + c.random.nextGaussian() * 0.3D, caster.getY() + 0.5D, at.z + c.random.nextGaussian() * 0.3D);
                 }
@@ -427,7 +427,7 @@ public final class SeaVfx {
                 near.get(i).bloom = 0.0F;
             }
             // Волна торможения (4+): поклон цветов от точки захвата по полю.
-            if (SeaRules.bowWave(c.layer)) {
+            if (SeaRules.bowWave(c.executionTier)) {
                 Vec3 ground = caster != null ? new Vec3(at.x, caster.getY(), at.z) : at;
                 for (Flower f : c.flowers) {
                     if (!f.placed) {
@@ -442,13 +442,13 @@ public final class SeaVfx {
                 }
             }
         }
-        if (c.layer >= 1 && !SeaRules.petals(c.layer)) {
+        if (c.executionTier >= 1 && !SeaRules.petals(c.executionTier)) {
             Vec3 up = dir.cross(new Vec3(0.0D, 1.0D, 0.0D));
             up = up.lengthSqr() < 1.0E-6D ? new Vec3(1.0D, 0.0D, 0.0D) : up.normalize();
             Vec3 v2 = up.cross(dir).normalize();
             c.strokes.add(new Stroke(at, up.scale(0.55D).add(v2.scale(0.25D)), v2.scale(0.45D).subtract(up.scale(0.2D)), clientTicks));
         }
-        if (SeaRules.afterimages(c.layer) && mc.level != null && mc.level.getEntity(c.entityId) instanceof AbstractClientPlayer player
+        if (SeaRules.afterimages(c.executionTier) && mc.level != null && mc.level.getEntity(c.entityId) instanceof AbstractClientPlayer player
                 && mc.getEntityRenderDispatcher().getRenderer(player) instanceof PlayerRenderer renderer) {
             if (c.skin == null) {
                 c.skin = player.getSkin().texture();
@@ -672,7 +672,7 @@ public final class SeaVfx {
         if (t == 1 || t == 6) {
             dust(c, feet, c.n(6) + 2, 0.09D);
         }
-        if (!SeaRules.petals(c.layer)) {
+        if (!SeaRules.petals(c.executionTier)) {
             return;
         }
         if (t == SeaRules.BUD) {
@@ -775,7 +775,7 @@ public final class SeaVfx {
                         w.dir = new Vec3(-w.dir.x, w.dir.y, -w.dir.z).normalize();
                     }
                 }
-                if (SeaRules.petals(c.layer) && clientTicks - w.born < 10) {
+                if (SeaRules.petals(c.executionTier) && clientTicks - w.born < 10) {
                     // След: сорванные цветы от точки входа к снаряду, оседают.
                     for (int i = 0; i < 2; i++) {
                         double u = c.random.nextDouble();
@@ -917,7 +917,7 @@ public final class SeaVfx {
         RenderType pt = MurimRenderTypes.plumPetals();
         VertexConsumer pc = buffers.getBuffer(pt);
         // Бутон на острие (8 → 12 раскрывается) и бутоны-слоты на клинке.
-        if (e != null && SeaRules.petals(c.layer) && t >= SeaRules.BUD && c.meltTick < 0 && c.lostTick < 0) {
+        if (e != null && SeaRules.petals(c.executionTier) && t >= SeaRules.BUD && c.meltTick < 0 && c.lostTick < 0) {
             Vec3 tp = tip(c, e, partial);
             float k = (float) Mth.clamp((t - SeaRules.BUD) / SeaRules.BUD_OPEN, 0.0D, 1.0D);
             float fade = (float) Mth.clamp(1.0D - (t - SeaRules.SWEEP_END) / 6.0D, 0.0D, 1.0D);
@@ -930,8 +930,8 @@ public final class SeaVfx {
                             BUD[0], BUD[1], BUD[2]);
                 }
             }
-            if (SeaRules.slotBuds(c.layer) && t >= SeaRules.TIDE_END) {
-                int slots = SeaRules.captures(c.layer);
+            if (SeaRules.slotBuds(c.executionTier) && t >= SeaRules.TIDE_END) {
+                int slots = SeaRules.captures(c.executionTier);
                 int used = c.activeWraps();
                 Vec3 hand = e.getPosition(partial).add(0.0D, 1.0D, 0.0D);
                 for (int i = 0; i < slots; i++) {
@@ -1080,7 +1080,7 @@ public final class SeaVfx {
     @SubscribeEvent
     static void onCaptionTick(ClientTickEvent.Pre event) {
         for (Cast c : CASTS) {
-            if (!c.caption && c.began && c.t() >= SeaRules.CAPTION && c.own() && SeaRules.petals(c.layer) && c.meltTick < 0) {
+            if (!c.caption && c.began && c.t() >= SeaRules.CAPTION && c.own() && SeaRules.petals(c.executionTier) && c.meltTick < 0) {
                 c.caption = true;
                 TechniqueCaption.showSecret(Component.translatable("technique.murim.twenty_four_plum.school"),
                         Component.translatable("technique.murim.twenty_four_plum.sea"), 60);

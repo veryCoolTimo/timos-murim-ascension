@@ -157,7 +157,7 @@ public final class ExplosionVfx {
 
     private static final class Cast {
         final int entityId;
-        final int layer;
+        final int executionTier;
         int start;
         final Random random;
         final double density;
@@ -183,12 +183,12 @@ public final class ExplosionVfx {
         /** Перекрестья ударов по целям: {точка, тик}. */
         final List<Object[]> cuts = new ArrayList<>();
 
-        Cast(int entityId, int layer) {
+        Cast(int entityId, int executionTier) {
             this.entityId = entityId;
-            this.layer = layer;
+            this.executionTier = executionTier;
             this.start = clientTicks;
             this.random = new Random(entityId * 8191L + clientTicks);
-            this.density = ExplosionRules.density(layer);
+            this.density = ExplosionRules.density(executionTier);
         }
 
         int t() {
@@ -213,11 +213,11 @@ public final class ExplosionVfx {
 
     public static void onTechniqueEvent(TechniqueEventPayload payload) {
         if (payload.event() != TechniqueEventPayload.Event.STARTED || !TECHNIQUE.equals(payload.techniqueId())
-                || payload.layer() <= 0) {
+                || payload.executionTier() <= 0) {
             return;
         }
         CASTS.removeIf(c -> c.entityId == payload.sourceId());
-        Cast c = new Cast(payload.sourceId(), payload.layer());
+        Cast c = new Cast(payload.sourceId(), payload.executionTier());
         CASTS.add(c);
         // Стойка: тело горит холодной синей ци до прыжка.
         // codex 03.10: аура тела тише — главное в замахе след клинка.
@@ -225,7 +225,7 @@ public final class ExplosionVfx {
         Minecraft mc = Minecraft.getInstance();
         Entity e = mc.level == null ? null : mc.level.getEntity(c.entityId);
         if (e != null) {
-            dust(c, e.position(), 4 + c.layer, 0.12D);
+            dust(c, e.position(), 4 + c.executionTier, 0.12D);
             facing(c, e.getYRot());
         }
     }
@@ -291,7 +291,7 @@ public final class ExplosionVfx {
         Vec3 up = c.side.cross(c.axis).normalize();
         // Ударная волна: кольцо пыли под точкой удара.
         groundDust(c, c.strike.subtract(0.0D, ExplosionRules.STRIKE_Y, 0.0D), 10 + c.n(14), 0.32D);
-        if (c.layer >= 3) {
+        if (c.executionTier >= 3) {
             ClientAuraState.techniqueAura(c.entityId, 2, 1, 24);
         }
         Vec3 at = c.strike;
@@ -316,7 +316,7 @@ public final class ExplosionVfx {
     private static void burst(Cast c) {
         Random r = c.random;
         double speedK = 0.8D + 0.25D * c.density;
-        if (!ExplosionRules.petals(c.layer)) {
+        if (!ExplosionRules.petals(c.executionTier)) {
             return;
         }
         int n = c.n(760);
@@ -357,7 +357,7 @@ public final class ExplosionVfx {
     private static void hit(Cast c, Vec3 at, boolean grind, Minecraft mc) {
         Random r = c.random;
         c.cuts.add(new Object[] {at, clientTicks, grind});
-        if (ExplosionRules.petals(c.layer)) {
+        if (ExplosionRules.petals(c.executionTier)) {
             for (int i = 0; i < (grind ? c.n(8) : c.n(30)); i++) {
                 Vec3 v = (c.axis == null ? c.normal : c.axis).scale(0.25D).add(r.nextGaussian() * 0.2D, 0.1D + r.nextDouble() * 0.2D, r.nextGaussian() * 0.2D);
                 Mote m = petal(c, at, v, 30 + r.nextInt(20));
@@ -545,7 +545,7 @@ public final class ExplosionVfx {
         }
         // Весь путь острия остаётся следом: одна непрерывная дуга вниз-назад к правой ноге.
         c.charge.add(tip);
-        if (ExplosionRules.petals(c.layer)) {
+        if (ExplosionRules.petals(c.executionTier)) {
             for (int i = 0; i < (t % 2 == 0 ? Math.max(1, c.n(1.5D)) : 0); i++) {
                 // Лепесток рождается на кольце вокруг мастера и по спирали летит к клинку.
                 double ang = r.nextDouble() * Math.PI * 2.0D;
@@ -775,7 +775,7 @@ public final class ExplosionVfx {
                 // След быстрого лепестка — тонкая розовая черта.
                 fstrip(v, pose, camera, p, w, 0.7F * a, HOT);
             } else {
-                fstrip(v, pose, camera, p, PlumVfx.scale(w, 2.2D), 0.22F * a, ExplosionRules.petals(c.layer) ? HOT : COLD);
+                fstrip(v, pose, camera, p, PlumVfx.scale(w, 2.2D), 0.22F * a, ExplosionRules.petals(c.executionTier) ? HOT : COLD);
                 fstrip(v, pose, camera, p, PlumVfx.scale(w, 0.45D), 0.95F * a, WHITE);
             }
         }
@@ -834,7 +834,7 @@ public final class ExplosionVfx {
 
     /** Лепестки (атлас) и их свечение; ядро и слитная масса взрыва. */
     private static void petals(Cast c, PoseStack.Pose pose, Vec3 camera, MultiBufferSource.BufferSource buffers, float partial, float t) {
-        if (!ExplosionRules.petals(c.layer)) {
+        if (!ExplosionRules.petals(c.executionTier)) {
             return;
         }
         RenderType pt = MurimRenderTypes.plumPetals();

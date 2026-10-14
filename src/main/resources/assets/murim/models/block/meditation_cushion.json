@@ -1,0 +1,13 @@
+{
+  "loader": "neoforge:obj",
+  "model": "murim:models/block/obj/meditation_cushion.obj",
+  "flip_v": false,
+  "emissive_ambient": true,
+  "automatic_culling": true,
+  "shade_quads": true,
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "tex": "murim:block/hall_furniture",
+    "particle": "murim:block/hall_furniture"
+  }
+}

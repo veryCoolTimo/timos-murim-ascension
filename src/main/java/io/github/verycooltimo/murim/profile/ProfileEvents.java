@@ -109,12 +109,27 @@ public final class ProfileEvents {
     @SubscribeEvent
     static void onLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
+            migrateRankCapacity(player);
             ProfileNetwork.sync(player);
             io.github.verycooltimo.murim.mastery.MasteryService.completeStyles(player);
             io.github.verycooltimo.murim.mastery.MasteryService.sync(player);
             // Сердца ранга — временный модификатор: ставится заново при каждом входе.
             io.github.verycooltimo.murim.cultivation.RankEffects.apply(player);
         }
+    }
+
+    /** Repair before the first profile sync, using the method that imprinted the saved centre. */
+    public static void migrateRankCapacity(ServerPlayer player) {
+        DantianProfile profile = player.getData(ModAttachments.PROFILE);
+        var id = net.minecraft.resources.ResourceLocation.tryParse(profile.imprint());
+        var method = id == null ? null : io.github.verycooltimo.murim.cultivation.MethodLoader.get(id);
+        if (method == null) {
+            method = player.getData(ModAttachments.CULTIVATION).method()
+                    .map(io.github.verycooltimo.murim.cultivation.MethodLoader::get).orElse(null);
+        }
+        double seed = method == null ? DantianProfile.INITIAL.capacity() : method.capacity();
+        DantianProfile repaired = io.github.verycooltimo.murim.cultivation.Realm.migrateCapacity(profile, seed);
+        if (repaired != profile) player.setData(ModAttachments.PROFILE, repaired);
     }
 
     @SubscribeEvent

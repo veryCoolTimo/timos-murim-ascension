@@ -1,0 +1,5 @@
+newmtl plaster
+map_Kd #plaster
+
+newmtl wood
+map_Kd #wood

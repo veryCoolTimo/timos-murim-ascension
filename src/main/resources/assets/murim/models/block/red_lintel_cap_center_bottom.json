@@ -1,0 +1,35 @@
+{
+  "parent": "minecraft:block/block",
+  "ambientocclusion": false,
+  "textures": {
+    "particle": "murim:block/simple_timber",
+    "end": "murim:block/simple_timber",
+    "side": "murim:block/simple_timber"
+  },
+  "elements": [
+    {
+      "name": "end",
+      "from": [
+        0,
+        0,
+        6.5
+      ],
+      "to": [
+        16,
+        4,
+        9.5
+      ],
+      "faces": {
+        "east": {
+          "uv": [
+            6.5,
+            6,
+            9.5,
+            10
+          ],
+          "texture": "#end"
+        }
+      }
+    }
+  ]
+}

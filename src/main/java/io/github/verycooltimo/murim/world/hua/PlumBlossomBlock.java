@@ -36,7 +36,7 @@ public class PlumBlossomBlock extends LeavesBlock {
     public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
         super.animateTick(state, level, pos, random);
         // Sparser than cherry leaves (1 in 10): plum branches carry few blossoms.
-        if (random.nextInt(16) == 0) {
+        if (random.nextInt(32) == 0) {
             BlockPos below = pos.below();
             BlockState under = level.getBlockState(below);
             if (!isFaceFull(under.getCollisionShape(level, below), Direction.UP)) {

@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/inner_stairs",
+  "textures": {
+    "bottom": "murim:block/hua_granite",
+    "side": "murim:block/hua_granite",
+    "top": "murim:block/hua_granite"
+  }
+}

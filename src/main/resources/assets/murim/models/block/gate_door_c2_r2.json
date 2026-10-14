@@ -1,0 +1,56 @@
+{
+  "textures": {
+    "front": "murim:block/gate_door_front",
+    "back": "murim:block/gate_door_back",
+    "edge": "murim:block/red_lacquer",
+    "iron": "murim:block/gate_door_iron",
+    "iron_dark": "murim:block/gate_door_iron_dark",
+    "stud": "murim:block/gate_door_stud",
+    "crown": "murim:block/gate_door_stud_crown",
+    "particle": "murim:block/gate_door_front"
+  },
+  "elements": [
+    {
+      "name": "leaf",
+      "from": [
+        0,
+        0,
+        6.5
+      ],
+      "to": [
+        16,
+        16,
+        9.5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            8,
+            4,
+            12,
+            8
+          ],
+          "texture": "#front"
+        },
+        "south": {
+          "uv": [
+            4,
+            4,
+            8,
+            8
+          ],
+          "texture": "#back"
+        },
+        "east": {
+          "uv": [
+            6.5,
+            0,
+            9.5,
+            16
+          ],
+          "texture": "#edge"
+        }
+      }
+    }
+  ]
+}

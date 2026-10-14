@@ -1,0 +1,15 @@
+{
+  "parent": "minecraft:block/block",
+  "loader": "neoforge:obj",
+  "model": "murim:models/block/roof_eave_rise_left.obj",
+  "flip_v": false,
+  "emissive_ambient": false,
+  "automatic_culling": false,
+  "ambientocclusion": false,
+  "render_type": "minecraft:solid",
+  "textures": {
+    "tiles_x": "murim:block/roof_polish_tiles_x",
+    "wood": "murim:block/roof_polish_wood",
+    "particle": "murim:block/roof_polish_tiles"
+  }
+}

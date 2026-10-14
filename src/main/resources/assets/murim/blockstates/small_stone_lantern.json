@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=south": {
+      "model": "murim:block/small_stone_lantern"
+    },
+    "facing=west": {
+      "model": "murim:block/small_stone_lantern",
+      "y": 90
+    },
+    "facing=north": {
+      "model": "murim:block/small_stone_lantern",
+      "y": 180
+    },
+    "facing=east": {
+      "model": "murim:block/small_stone_lantern",
+      "y": 270
+    }
+  }
+}

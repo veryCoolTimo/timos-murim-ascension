@@ -73,6 +73,6 @@
   "weakness": "technique.murim.village_brawler_fist.weakness",
   "hit_stop_ticks": 1,
   "cooldown_ticks": 30,
-  "layers": 2,
+  "star_cap": 12,
   "tier": "basic"
 }

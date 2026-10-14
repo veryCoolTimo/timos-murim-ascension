@@ -1,0 +1,29 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "bonus_rolls": 0.0,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "murim:gate_door"
+        }
+      ],
+      "rolls": 1.0,
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        },
+        {
+          "condition": "minecraft:block_state_property",
+          "block": "murim:gate_door",
+          "properties": {
+            "col": "0",
+            "row": "0"
+          }
+        }
+      ]
+    }
+  ],
+  "random_sequence": "murim:blocks/gate_door"
+}

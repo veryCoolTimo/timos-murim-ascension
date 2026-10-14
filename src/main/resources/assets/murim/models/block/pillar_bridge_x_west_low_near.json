@@ -1,0 +1,59 @@
+{
+ "textures": {
+  "particle": "murim:block/red_lacquer",
+  "beam": "murim:block/red_lacquer_beam"
+ },
+ "elements": [
+  {
+   "name": "bridge",
+   "from": [
+    3,
+    0.03,
+    6.53
+   ],
+   "to": [
+    19,
+    3.97,
+    9.47
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      12.03,
+      16,
+      15.97
+     ],
+     "texture": "#beam"
+    },
+    "south": {
+     "uv": [
+      0,
+      12.03,
+      16,
+      15.97
+     ],
+     "texture": "#beam"
+    },
+    "up": {
+     "uv": [
+      0,
+      6.53,
+      16,
+      9.47
+     ],
+     "texture": "#beam"
+    },
+    "down": {
+     "uv": [
+      0,
+      6.53,
+      16,
+      9.47
+     ],
+     "texture": "#beam"
+    }
+   }
+  }
+ ]
+}

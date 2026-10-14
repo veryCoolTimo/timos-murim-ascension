@@ -224,7 +224,7 @@ public class FortressMaster extends Monster implements Casters.Caster {
     // ------------------------------------------------------------------ Casters.Caster
 
     @Override
-    public int techniqueLayer(ResourceLocation technique) {
+    public int techniqueTier(ResourceLocation technique) {
         return -1;
     }
 

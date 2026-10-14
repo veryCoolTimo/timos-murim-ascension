@@ -1,0 +1,30 @@
+{
+  "variants": {
+    "": [
+      {
+        "model": "murim:block/hua_flagstone_paving",
+        "weight": 4
+      },
+      {
+        "model": "murim:block/hua_flagstone_paving_b",
+        "weight": 4
+      },
+      {
+        "model": "murim:block/hua_flagstone_paving_c",
+        "weight": 4
+      },
+      {
+        "model": "murim:block/hua_flagstone_paving_d",
+        "weight": 4
+      },
+      {
+        "model": "murim:block/hua_flagstone_paving_e",
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_flagstone_paving_f",
+        "weight": 3
+      }
+    ]
+  }
+}

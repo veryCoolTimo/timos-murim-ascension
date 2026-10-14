@@ -1,0 +1,33 @@
+{
+ "source": "art/sources/entities/tang_coin.bbmodel",
+ "inverted_cubes": 0,
+ "flipped_faces": 16,
+ "rotated_faces": 0,
+ "overlapping_faces": 48,
+ "zero_uv_faces": 0,
+ "zero_area_faces": 0,
+ "inexact_faces": [],
+ "dense_faces": 48,
+ "texture_size_before": [
+  16,
+  16
+ ],
+ "uv_size_before": [
+  16,
+  16
+ ],
+ "baked_textures": [
+  "tang_coin.png"
+ ],
+ "untouched_textures": [],
+ "texture_size_after": [
+  64,
+  64
+ ],
+ "uv_size_after": [
+  64,
+  64
+ ],
+ "faces": 48,
+ "cubes": 8
+}

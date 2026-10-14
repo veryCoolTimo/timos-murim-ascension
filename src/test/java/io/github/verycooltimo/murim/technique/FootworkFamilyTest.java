@@ -14,8 +14,8 @@ class FootworkFamilyTest {
         assertFalse(h.canRun(0));
         assertTrue(h.canRun(1));
         assertTrue(h.canLeap(2));
-        for (int layer = 0; layer < h.layers(); layer++) {
-            assertEquals(0, h.wallKicks(layer));
+        for (int executionTier = 0; executionTier < h.executionSteps(); executionTier++) {
+            assertEquals(0, h.wallKicks(executionTier));
         }
         assertFalse(h.canAirTurn(2));
         assertTrue(h.canAirTurn(3));
@@ -25,7 +25,7 @@ class FootworkFamilyTest {
     @Test
     void windGodUnlocksBySpec() {
         FootworkFamily w = FootworkFamily.WIND_GOD;
-        assertEquals(8, w.layers());
+        assertEquals(8, w.executionSteps());
         assertTrue(w.canRun(0));
         assertFalse(w.canLeap(1));
         assertTrue(w.canLeap(2));
@@ -41,8 +41,8 @@ class FootworkFamilyTest {
     @Test
     void tiersNeverDecrease() {
         for (FootworkFamily f : FootworkFamily.values()) {
-            for (int layer = 1; layer < f.layers(); layer++) {
-                assertTrue(f.tier(layer) >= f.tier(layer - 1));
+            for (int executionTier = 1; executionTier < f.executionSteps(); executionTier++) {
+                assertTrue(f.tier(executionTier) >= f.tier(executionTier - 1));
             }
         }
     }

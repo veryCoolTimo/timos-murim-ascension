@@ -78,8 +78,7 @@
     },
     "member": {
       "random": [
-        "dialogue.murim.gatekeeper.member1",
-        "dialogue.murim.gatekeeper.member2"
+        "@context"
       ],
       "gesture": "bow",
       "options": []

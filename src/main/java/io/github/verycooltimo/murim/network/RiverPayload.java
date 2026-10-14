@@ -13,7 +13,7 @@ import net.minecraft.world.phys.Vec3;
  * centre — точка прицела, targetId — цель или −1), 1 — поток ДОШЁЛ до цели (centre — точка контакта),
  * 2 — промах (centre — где поток рассыпался), 3 — взрыв ПОПАЛ (centre — узел, targetId — основная цель).
  */
-public record RiverPayload(int entityId, Vec3 origin, Vec3 centre, int layer, int stage, int targetId)
+public record RiverPayload(int entityId, Vec3 origin, Vec3 centre, int executionTier, int stage, int targetId)
         implements CustomPacketPayload {
 
     public static final int AIM = 0;
@@ -32,7 +32,7 @@ public record RiverPayload(int entityId, Vec3 origin, Vec3 centre, int layer, in
                 ByteBufCodecs.VAR_INT.encode(buf, p.entityId());
                 VEC.encode(buf, p.origin());
                 VEC.encode(buf, p.centre());
-                ByteBufCodecs.VAR_INT.encode(buf, p.layer());
+                ByteBufCodecs.VAR_INT.encode(buf, p.executionTier());
                 ByteBufCodecs.VAR_INT.encode(buf, p.stage());
                 ByteBufCodecs.VAR_INT.encode(buf, p.targetId());
             },

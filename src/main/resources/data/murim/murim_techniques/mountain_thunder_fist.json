@@ -1,0 +1,80 @@
+{
+  "id": "murim:mountain_thunder_fist",
+  "form": "closed_fist",
+  "intent": "destruction",
+  "breath": "heavy_breath",
+  "phases": {
+    "ritual": 0,
+    "windup": 10,
+    "impact": 2,
+    "recovery": 12,
+    "dissipation": 6
+  },
+  "behavior": {
+    "type": "murim:demonic_art",
+    "art": "mountain_thunder_fist"
+  },
+  "animation": "murim:mountain_thunder_fist",
+  "vfx": {
+    "pivot": [
+      0,
+      1.1,
+      0
+    ],
+    "basis_a": [
+      1,
+      0,
+      0
+    ],
+    "basis_b": [
+      0,
+      0,
+      1
+    ],
+    "inner_radius": 0.2,
+    "outer_radius": 1.1,
+    "start_angle": -35,
+    "end_angle": 35,
+    "colour": {
+      "r": 0.85,
+      "g": 0.055,
+      "b": 0.1
+    },
+    "trail": {
+      "enabled": false,
+      "alpha": 0.25,
+      "size": 0.12,
+      "life_ticks": 4
+    },
+    "crescent": {
+      "enabled": false,
+      "alpha": 0.2,
+      "size": 0.1,
+      "life_ticks": 3
+    },
+    "core": {
+      "enabled": false,
+      "alpha": 0.3,
+      "size": 0.18,
+      "life_ticks": 2
+    },
+    "windup_motes": 0,
+    "ritual_motes": 0
+  },
+  "interruption": {
+    "cancellable_until": "windup",
+    "break_on_damage": true,
+    "damage_threshold": 4
+  },
+  "weakness": "technique.murim.mountain_thunder_fist.weakness",
+  "hit_stop_ticks": 3,
+  "cooldown_ticks": 100,
+  "star_cap": 12,
+  "tier": "advanced",
+  "requires": [
+    {
+      "technique": "murim:village_brawler_fist",
+      "star": 12
+    }
+  ]
+}

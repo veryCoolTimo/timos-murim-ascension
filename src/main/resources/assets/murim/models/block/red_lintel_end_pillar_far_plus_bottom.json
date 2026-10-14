@@ -1,0 +1,62 @@
+{
+  "parent": "minecraft:block/block",
+  "ambientocclusion": false,
+  "textures": {
+    "particle": "murim:block/simple_timber",
+    "beam": "murim:block/simple_timber_beam",
+    "side": "murim:block/simple_timber"
+  },
+  "elements": [
+    {
+      "name": "through",
+      "from": [
+        16,
+        0.02,
+        11.52
+      ],
+      "to": [
+        29,
+        3.98,
+        14.48
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            3,
+            12.02,
+            16,
+            15.98
+          ],
+          "texture": "#beam"
+        },
+        "south": {
+          "uv": [
+            0,
+            12.02,
+            13,
+            15.98
+          ],
+          "texture": "#beam"
+        },
+        "up": {
+          "uv": [
+            0,
+            11.52,
+            13,
+            14.48
+          ],
+          "texture": "#beam"
+        },
+        "down": {
+          "uv": [
+            0,
+            1.52,
+            13,
+            4.48
+          ],
+          "texture": "#beam"
+        }
+      }
+    }
+  ]
+}

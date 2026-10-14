@@ -1,0 +1,17 @@
+newmtl band
+map_Kd #band
+
+newmtl gend
+map_Kd #gend
+
+newmtl hipridge
+map_Kd #hipridge
+
+newmtl plaster
+map_Kd #plaster
+
+newmtl verge
+map_Kd #verge
+
+newmtl vridge
+map_Kd #vridge

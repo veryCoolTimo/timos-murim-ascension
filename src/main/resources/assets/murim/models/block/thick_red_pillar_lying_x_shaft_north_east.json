@@ -1,0 +1,14 @@
+{
+  "loader": "neoforge:obj",
+  "model": "murim:models/block/obj/hall_joinery/thick_red_pillar_lying_x_shaft_north_east.obj",
+  "flip_v": false,
+  "emissive_ambient": true,
+  "automatic_culling": false,
+  "shade_quads": true,
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "wood": "murim:block/red_lacquer",
+    "particle": "murim:block/red_lacquer"
+  },
+  "ambientocclusion": false
+}

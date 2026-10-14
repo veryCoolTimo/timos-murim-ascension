@@ -1,0 +1,16 @@
+{
+  "loader": "neoforge:obj",
+  "model": "murim:models/block/obj/library_manual_lower_1.obj",
+  "flip_v": false,
+  "emissive_ambient": true,
+  "automatic_culling": true,
+  "shade_quads": true,
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "cover": "murim:block/library_manual_oxblood",
+    "spine": "murim:block/library_manual_oxblood_spine",
+    "pages": "murim:block/library_book_pages",
+    "particle": "murim:block/library_manual_oxblood"
+  },
+  "ambientocclusion": false
+}

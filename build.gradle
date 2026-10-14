@@ -244,3 +244,4 @@ idea {
 tasks.named('test', Test).configure {
     useJUnitPlatform()
 }
+

@@ -1,0 +1,127 @@
+{
+  "variants": {
+    "type=bottom": [
+      {
+        "model": "murim:block/floor_tile_slab_floor_tiles",
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_slab_floor_tiles_b",
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_slab_floor_tiles_light",
+        "weight": 4
+      },
+      {
+        "model": "murim:block/floor_tile_slab_floor_tiles_light_b",
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_slab_floor_tiles_dark",
+        "weight": 3
+      },
+      {
+        "model": "murim:block/floor_tile_slab_floor_tiles_dark_b",
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_slab_floor_tiles_cracked"
+      },
+      {
+        "model": "murim:block/floor_tile_slab_floor_tiles_cracked_b"
+      },
+      {
+        "model": "murim:block/floor_tile_slab_floor_tiles_chipped"
+      },
+      {
+        "model": "murim:block/floor_tile_slab_floor_tiles_chipped_b"
+      },
+      {
+        "model": "murim:block/floor_tile_slab_floor_tiles_chipped_c"
+      }
+    ],
+    "type=top": [
+      {
+        "model": "murim:block/floor_tile_slab_top_floor_tiles",
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_slab_top_floor_tiles_b",
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tile_slab_top_floor_tiles_light",
+        "weight": 4
+      },
+      {
+        "model": "murim:block/floor_tile_slab_top_floor_tiles_light_b",
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_slab_top_floor_tiles_dark",
+        "weight": 3
+      },
+      {
+        "model": "murim:block/floor_tile_slab_top_floor_tiles_dark_b",
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tile_slab_top_floor_tiles_cracked"
+      },
+      {
+        "model": "murim:block/floor_tile_slab_top_floor_tiles_cracked_b"
+      },
+      {
+        "model": "murim:block/floor_tile_slab_top_floor_tiles_chipped"
+      },
+      {
+        "model": "murim:block/floor_tile_slab_top_floor_tiles_chipped_b"
+      },
+      {
+        "model": "murim:block/floor_tile_slab_top_floor_tiles_chipped_c"
+      }
+    ],
+    "type=double": [
+      {
+        "model": "murim:block/floor_tiles",
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tiles_b",
+        "weight": 5
+      },
+      {
+        "model": "murim:block/floor_tiles_light",
+        "weight": 4
+      },
+      {
+        "model": "murim:block/floor_tiles_light_b",
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tiles_dark",
+        "weight": 3
+      },
+      {
+        "model": "murim:block/floor_tiles_dark_b",
+        "weight": 2
+      },
+      {
+        "model": "murim:block/floor_tiles_cracked"
+      },
+      {
+        "model": "murim:block/floor_tiles_cracked_b"
+      },
+      {
+        "model": "murim:block/floor_tiles_chipped"
+      },
+      {
+        "model": "murim:block/floor_tiles_chipped_b"
+      },
+      {
+        "model": "murim:block/floor_tiles_chipped_c"
+      }
+    ]
+  }
+}

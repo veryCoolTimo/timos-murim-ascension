@@ -115,7 +115,7 @@ public final class RushVfx {
 
     private static final class Cast {
         final int entityId;
-        final int layer;
+        final int executionTier;
         final int start;
         final Random random;
         int release = -1;
@@ -139,9 +139,9 @@ public final class RushVfx {
         final List<Vec3> blade = new ArrayList<>();
         final double phase;
 
-        Cast(int entityId, int layer) {
+        Cast(int entityId, int executionTier) {
             this.entityId = entityId;
-            this.layer = layer;
+            this.executionTier = executionTier;
             this.start = clientTicks;
             this.random = new Random(entityId * 6151L + clientTicks);
             this.phase = random.nextDouble() * Math.PI * 2.0D;
@@ -166,7 +166,7 @@ public final class RushVfx {
 
         /** Плотность по слою: 0,4 на первом, 1 на седьмом. */
         double density() {
-            return 0.3D + 0.1D * Math.min(7, layer);
+            return 0.3D + 0.1D * Math.min(7, executionTier);
         }
 
         int n(int full) {
@@ -176,14 +176,14 @@ public final class RushVfx {
 
     public static void onTechniqueEvent(TechniqueEventPayload payload) {
         if (payload.event() != TechniqueEventPayload.Event.STARTED || !TECHNIQUE.equals(payload.techniqueId())
-                || payload.layer() <= 0) {
+                || payload.executionTier() <= 0) {
             return;
         }
-        Cast c = new Cast(payload.sourceId(), payload.layer());
+        Cast c = new Cast(payload.sourceId(), payload.executionTier());
         CASTS.add(c);
-        if (c.layer >= 3) {
+        if (c.executionTier >= 3) {
             // Только розовая аура: синее на рефах — техника противника.
-            ClientAuraState.techniqueAura(c.entityId, 2 + Math.min(2, c.layer / 3), 1, WINDUP + 4);
+            ClientAuraState.techniqueAura(c.entityId, 2 + Math.min(2, c.executionTier / 3), 1, WINDUP + 4);
         }
     }
 
@@ -195,7 +195,7 @@ public final class RushVfx {
             }
         }
         if (c == null) {
-            c = new Cast(p.entityId(), p.layer());
+            c = new Cast(p.entityId(), p.executionTier());
             CASTS.add(c);
         }
         Minecraft mc = Minecraft.getInstance();
@@ -286,7 +286,7 @@ public final class RushVfx {
 
     /** Лепестки во все стороны с перевесом по {@code bias}. */
     private static void burst(Cast c, Vec3 at, int n, double speed, Vec3 bias) {
-        if (c.layer < 3) {
+        if (c.executionTier < 3) {
             return;
         }
         for (int i = 0; i < n && c.petals.size() < 700; i++) {
@@ -395,7 +395,7 @@ public final class RushVfx {
      */
     private static void tear(Cast c, double head) {
         Vec3 tip = RushRules.axis(c.origin, c.f, head);
-        double r = RushRules.radius(c.layer);
+        double r = RushRules.radius(c.executionTier);
         Double gy = groundY(tip);
         if (gy == null || tip.y - gy > r + 0.6D) {
             return;
@@ -440,7 +440,7 @@ public final class RushVfx {
             return vel;
         }
         double head = RushRules.head(c.since());
-        double len = RushRules.length(c.layer);
+        double len = RushRules.length(c.executionTier);
         Vec3 a0 = RushRules.axis(c.origin, c.f, 0.0D);
         Vec3 rel = pos.subtract(a0);
         double along = rel.dot(c.f);
@@ -449,7 +449,7 @@ public final class RushVfx {
         }
         Vec3 radial = rel.subtract(c.f.scale(along));
         double r = radial.length();
-        double R = RushRules.radius(c.layer) * 1.4D;
+        double R = RushRules.radius(c.executionTier) * 1.4D;
         if (r > R || r < 1.0E-3D) {
             return vel;
         }
@@ -477,7 +477,7 @@ public final class RushVfx {
             int age = clientTicks - c.start;
             Entity e = mc.level.getEntity(c.entityId);
             // Концентрация: лепестки тянутся к будущему направлению атаки.
-            if (c.release < 0 && age > 12 && age < WINDUP && e != null && c.layer >= 3 && age % 2 == 0) {
+            if (c.release < 0 && age > 12 && age < WINDUP && e != null && c.executionTier >= 3 && age % 2 == 0) {
                 Vec3 look = Vec3.directionFromRotation(0.0F, e.getYRot());
                 Vec3 at = e.position().add((c.random.nextDouble() - 0.5D) * 1.2D, 0.4D + c.random.nextDouble() * 1.4D, (c.random.nextDouble() - 0.5D) * 1.2D);
                 c.petals.add(new Mote(at, new Vec3(look.x, 0.0D, look.z).scale(0.04D), 30, c.random.nextInt(4), 0.3F, 0.08D));
@@ -502,9 +502,9 @@ public final class RushVfx {
                 if (c.own() && s % 3 == 0) {
                     CameraShakeHandler.quake(0.14F, 5);
                 }
-                if (c.layer >= 3) {
+                if (c.executionTier >= 3) {
                     for (int i = 0; i < c.n(6); i++) {
-                        Vec3 p = point(c, head - c.random.nextDouble() * RushRules.length(c.layer), s, c.random.nextInt(3), c.random.nextDouble());
+                        Vec3 p = point(c, head - c.random.nextDouble() * RushRules.length(c.executionTier), s, c.random.nextInt(3), c.random.nextDouble());
                         Mote m = new Mote(p, c.f.scale(0.4D), 22 + c.random.nextInt(10), c.random.nextInt(4), (float) (c.random.nextDouble() - 0.5D),
                                 0.08D + 0.04D * c.random.nextDouble());
                         m.vortex = true;
@@ -525,7 +525,7 @@ public final class RushVfx {
                     }
                 }
                 // Локальный вихрь носит лепестки вокруг цели.
-                if (w < RushRules.WRAP && c.layer >= 3) {
+                if (w < RushRules.WRAP && c.executionTier >= 3) {
                     for (int i = 0; i < c.n(5); i++) {
                         double a = c.random.nextDouble() * Math.PI * 2.0D;
                         Vec3 rad = c.side.scale(Math.cos(a)).add(c.fFlat.scale(Math.sin(a)));
@@ -534,7 +534,7 @@ public final class RushVfx {
                                 tang.scale(0.35D).add(0.0D, 0.03D, 0.0D), 14 + c.random.nextInt(8), c.random.nextInt(4), 0.4F, 0.09D));
                     }
                 }
-                if (w == dashT && c.own() && c.layer >= 3) {
+                if (w == dashT && c.own() && c.executionTier >= 3) {
                     TechniqueCaption.show(Component.translatable("technique.murim.seven_plum_blossoms.school"),
                             Component.translatable("technique.murim.seven_plum_blossoms.rush"), 30);
                 }
@@ -556,7 +556,7 @@ public final class RushVfx {
                         }
                     } else if (w <= dashT + RushRules.DASH_TICKS) {
                         dustRing(c, e.position(), c.n(5), 0.22D, 0.3D);
-                        if (c.layer >= 3) {
+                        if (c.executionTier >= 3) {
                             // Сгусток лепестков на каждом тике пути (послеобраз рывка), живёт коротко.
                             Vec3 ctr = e.position().add(0.0D, 1.0D, 0.0D);
                             for (int i = 0; i < c.n(12); i++) {
@@ -624,7 +624,7 @@ public final class RushVfx {
                     CameraShakeHandler.quake(0.2F, 4);
                 }
             }
-            if (c.layer >= 3) {
+            if (c.executionTier >= 3) {
                 for (int i = 0; i < 2; i++) {
                     Mote m = new Mote(ctr.add(c.random.nextGaussian() * 0.5D, c.random.nextGaussian() * 0.6D, c.random.nextGaussian() * 0.5D),
                             c.f.scale(0.3D), 16, c.random.nextInt(4), 0.4F, 0.09D);
@@ -694,7 +694,7 @@ public final class RushVfx {
      * рукав выстреливает из следа клинка, а не встаёт перед мастером куполом (codex 03.10).
      */
     private static double radius(Cast c, double s) {
-        return RushRules.radius(c.layer) * Mth.clamp((s + 1.0D) / 6.0D, 0.33D, 1.0D);
+        return RushRules.radius(c.executionTier) * Mth.clamp((s + 1.0D) / 6.0D, 0.33D, 1.0D);
     }
 
     // ------------------------------------------------------------------ рендер
@@ -730,7 +730,7 @@ public final class RushVfx {
                     mass(c, pose, camera, buffers, clientTicks - c.release + partial, partial);
                 }
                 puffs(c, pose, camera, buffers, partial);
-                if (c.layer >= 3 && !c.petals.isEmpty()) {
+                if (c.executionTier >= 3 && !c.petals.isEmpty()) {
                     RenderType pt = MurimRenderTypes.plumPetals();
                     VertexConsumer pc = buffers.getBuffer(pt);
                     for (Mote m : c.petals) {
@@ -771,9 +771,9 @@ public final class RushVfx {
                 : (float) Mth.clamp((RushRules.RANGE - head + 2.0D) / 3.0D, 0.0D, 1.0D);
         // Рождение: масса набирается за 6 тиков — иначе пятна в комке у мастера сливаются в белое.
         fade *= (float) Mth.clamp(s / 6.0D, 0.2D, 1.0D);
-        if (fade > 0.0F && c.layer >= 2) {
-            double len = RushRules.length(c.layer) * Mth.clamp(s / 8.0D, 0.15D, 1.0D);
-            int n = 18 + 6 * Math.min(7, c.layer);
+        if (fade > 0.0F && c.executionTier >= 2) {
+            double len = RushRules.length(c.executionTier) * Mth.clamp(s / 8.0D, 0.15D, 1.0D);
+            int n = 18 + 6 * Math.min(7, c.executionTier);
             for (int i = 0; i < n; i++) {
                 double frac = ((i * 0.6180339D + c.phase) % 1.0D);
                 double u = 1.0D - Math.pow(frac, 1.6D);
@@ -857,7 +857,7 @@ public final class RushVfx {
      */
     private static void tornado(Cast c, PoseStack.Pose pose, Vec3 camera, VertexConsumer v, float s) {
         double head = c.wrapTick >= 0 ? RushRules.head(c.wrapTick - c.release) : RushRules.head(s);
-        double len = RushRules.length(c.layer) * Mth.clamp(s / 8.0D, 0.15D, 1.0D);
+        double len = RushRules.length(c.executionTier) * Mth.clamp(s / 8.0D, 0.15D, 1.0D);
         // Поток не схлопывается: ещё 8 тиков голова стоит на цели, хвост втекает в неё.
         if (c.wrapTick >= 0) {
             double flow = Mth.clamp((clientTicks - c.wrapTick) / 8.0D, 0.0D, 1.0D);
@@ -898,7 +898,7 @@ public final class RushVfx {
             PlumVfx.strip(v, pose, camera, q, qw, 0.4F * fade, BODY);
             PlumVfx.strip(v, pose, camera, q, PlumVfx.scale(qw, 0.3D), 0.75F * fade, CORE);
         }
-        int strands = c.layer >= 6 ? 6 : c.layer >= 4 ? 4 : c.layer >= 2 ? 3 : 2;
+        int strands = c.executionTier >= 6 ? 6 : c.executionTier >= 4 ? 4 : c.executionTier >= 2 ? 3 : 2;
         double[] lags = {0.0D, 0.8D, 1.6D, 0.4D, 1.2D, 0.2D};
         double[] bases = {1.5D, 1.0D, 0.75D, 0.6D, 0.55D, 0.5D};
         for (int k = 0; k < strands; k++) {
@@ -924,7 +924,7 @@ public final class RushVfx {
             PlumVfx.strip(v, pose, camera, p, PlumVfx.scale(w, 0.28D), 0.95F * fade, CORE);
         }
         // Сверло у головы: короткие толстые витки, быстрое вращение — фронт давит воздух.
-        if (c.wrapTick < 0 && c.layer >= 2) {
+        if (c.wrapTick < 0 && c.executionTier >= 2) {
             for (int k = 0; k < 5; k++) {
                 int n = 14;
                 Vec3[] p = new Vec3[n + 1];
@@ -972,7 +972,7 @@ public final class RushVfx {
         Vec3 feet = c.wrapAt.subtract(0.0D, 1.1D, 0.0D);
         double[] heights = {0.25D, 1.0D, 1.75D, 2.5D, 3.1D};
         double[] tilts = {14.0D, -10.0D, 22.0D, -26.0D, 6.0D};
-        int arcs = c.layer >= 4 ? 5 : c.layer >= 2 ? 4 : 3;
+        int arcs = c.executionTier >= 4 ? 5 : c.executionTier >= 2 ? 4 : 3;
         for (int k = 0; k < arcs; k++) {
             int n = 36;
             Vec3[] p = new Vec3[n + 1];

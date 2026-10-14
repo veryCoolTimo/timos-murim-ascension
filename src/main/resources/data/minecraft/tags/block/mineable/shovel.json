@@ -1,6 +1,12 @@
 {
   "replace": false,
   "values": [
-    "murim:hua_litter"
+    "murim:hua_litter",
+    "murim:hua_packed_earth",
+    "murim:hua_packed_earth_stairs",
+    "murim:hua_packed_earth_slab",
+    "murim:hua_scree",
+    "murim:hua_scree_stairs",
+    "murim:hua_scree_slab"
   ]
 }

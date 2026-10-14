@@ -1,0 +1,416 @@
+{
+  "textures": {
+    "front": "murim:block/gate_door_front",
+    "back": "murim:block/gate_door_back",
+    "edge": "murim:block/red_lacquer",
+    "iron": "murim:block/gate_door_iron",
+    "iron_dark": "murim:block/gate_door_iron_dark",
+    "stud": "murim:block/gate_door_stud",
+    "crown": "murim:block/gate_door_stud_crown",
+    "particle": "murim:block/gate_door_front"
+  },
+  "elements": [
+    {
+      "name": "leaf",
+      "from": [
+        0,
+        0,
+        6.5
+      ],
+      "to": [
+        16,
+        16,
+        9.5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            4,
+            8,
+            8,
+            12
+          ],
+          "texture": "#front"
+        },
+        "south": {
+          "uv": [
+            8,
+            8,
+            12,
+            12
+          ],
+          "texture": "#back"
+        },
+        "west": {
+          "uv": [
+            6.5,
+            0,
+            9.5,
+            16
+          ],
+          "texture": "#edge"
+        }
+      }
+    },
+    {
+      "name": "handle_plate",
+      "from": [
+        2,
+        10,
+        6
+      ],
+      "to": [
+        6,
+        15,
+        6.5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            10,
+            1,
+            14,
+            6
+          ],
+          "texture": "#iron_dark"
+        },
+        "east": {
+          "uv": [
+            9.5,
+            1,
+            10,
+            6
+          ],
+          "texture": "#iron_dark"
+        },
+        "west": {
+          "uv": [
+            6,
+            1,
+            6.5,
+            6
+          ],
+          "texture": "#iron_dark"
+        },
+        "up": {
+          "uv": [
+            2,
+            6,
+            6,
+            6.5
+          ],
+          "texture": "#iron_dark"
+        },
+        "down": {
+          "uv": [
+            2,
+            9.5,
+            6,
+            10
+          ],
+          "texture": "#iron_dark"
+        }
+      }
+    },
+    {
+      "name": "handle_knob",
+      "from": [
+        3.5,
+        12.75,
+        5.25
+      ],
+      "to": [
+        4.5,
+        13.75,
+        6
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            11.5,
+            2.25,
+            12.5,
+            3.25
+          ],
+          "texture": "#iron"
+        },
+        "east": {
+          "uv": [
+            10,
+            2.25,
+            10.75,
+            3.25
+          ],
+          "texture": "#iron"
+        },
+        "west": {
+          "uv": [
+            5.25,
+            2.25,
+            6,
+            3.25
+          ],
+          "texture": "#iron"
+        },
+        "up": {
+          "uv": [
+            3.5,
+            5.25,
+            4.5,
+            6
+          ],
+          "texture": "#iron"
+        },
+        "down": {
+          "uv": [
+            3.5,
+            10,
+            4.5,
+            10.75
+          ],
+          "texture": "#iron"
+        }
+      }
+    },
+    {
+      "name": "ring0",
+      "from": [
+        2,
+        12.5,
+        5.5
+      ],
+      "to": [
+        6,
+        13,
+        6
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            10,
+            3,
+            14,
+            3.5
+          ],
+          "texture": "#iron"
+        },
+        "east": {
+          "uv": [
+            10,
+            3,
+            10.5,
+            3.5
+          ],
+          "texture": "#iron"
+        },
+        "west": {
+          "uv": [
+            5.5,
+            3,
+            6,
+            3.5
+          ],
+          "texture": "#iron"
+        },
+        "up": {
+          "uv": [
+            2,
+            5.5,
+            6,
+            6
+          ],
+          "texture": "#iron"
+        },
+        "down": {
+          "uv": [
+            2,
+            10,
+            6,
+            10.5
+          ],
+          "texture": "#iron"
+        }
+      }
+    },
+    {
+      "name": "ring1",
+      "from": [
+        2,
+        8.5,
+        5.5
+      ],
+      "to": [
+        6,
+        9,
+        6
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            10,
+            7,
+            14,
+            7.5
+          ],
+          "texture": "#iron"
+        },
+        "east": {
+          "uv": [
+            10,
+            7,
+            10.5,
+            7.5
+          ],
+          "texture": "#iron"
+        },
+        "west": {
+          "uv": [
+            5.5,
+            7,
+            6,
+            7.5
+          ],
+          "texture": "#iron"
+        },
+        "up": {
+          "uv": [
+            2,
+            5.5,
+            6,
+            6
+          ],
+          "texture": "#iron"
+        },
+        "down": {
+          "uv": [
+            2,
+            10,
+            6,
+            10.5
+          ],
+          "texture": "#iron"
+        }
+      }
+    },
+    {
+      "name": "ring2",
+      "from": [
+        5.5,
+        8.5,
+        5.5
+      ],
+      "to": [
+        6,
+        13,
+        6
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            10,
+            3,
+            10.5,
+            7.5
+          ],
+          "texture": "#iron"
+        },
+        "east": {
+          "uv": [
+            10,
+            3,
+            10.5,
+            7.5
+          ],
+          "texture": "#iron"
+        },
+        "west": {
+          "uv": [
+            5.5,
+            3,
+            6,
+            7.5
+          ],
+          "texture": "#iron"
+        },
+        "up": {
+          "uv": [
+            5.5,
+            5.5,
+            6,
+            6
+          ],
+          "texture": "#iron"
+        },
+        "down": {
+          "uv": [
+            5.5,
+            10,
+            6,
+            10.5
+          ],
+          "texture": "#iron"
+        }
+      }
+    },
+    {
+      "name": "ring3",
+      "from": [
+        2,
+        8.5,
+        5.5
+      ],
+      "to": [
+        2.5,
+        13,
+        6
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            13.5,
+            3,
+            14,
+            7.5
+          ],
+          "texture": "#iron"
+        },
+        "east": {
+          "uv": [
+            10,
+            3,
+            10.5,
+            7.5
+          ],
+          "texture": "#iron"
+        },
+        "west": {
+          "uv": [
+            5.5,
+            3,
+            6,
+            7.5
+          ],
+          "texture": "#iron"
+        },
+        "up": {
+          "uv": [
+            2,
+            5.5,
+            2.5,
+            6
+          ],
+          "texture": "#iron"
+        },
+        "down": {
+          "uv": [
+            2,
+            10,
+            2.5,
+            10.5
+          ],
+          "texture": "#iron"
+        }
+      }
+    }
+  ]
+}

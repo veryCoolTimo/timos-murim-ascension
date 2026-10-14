@@ -1,0 +1,23 @@
+{
+  "loader": "neoforge:obj",
+  "model": "murim:models/block/obj/scroll_shelf_books_upper.obj",
+  "flip_v": false,
+  "emissive_ambient": true,
+  "automatic_culling": true,
+  "shade_quads": true,
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "wood": "murim:block/plum_shelf_wood",
+    "dark": "murim:block/plum_shelf_dark",
+    "dark_top": "murim:block/plum_shelf_dark_top",
+    "particle": "murim:block/plum_shelf_dark",
+    "pages": "murim:block/library_book_pages",
+    "stack_edge": "murim:block/library_stack_edge",
+    "red": "murim:block/library_cover_red",
+    "indigo": "murim:block/library_cover_indigo",
+    "ochre": "murim:block/library_cover_ochre",
+    "olive": "murim:block/library_cover_olive",
+    "brown": "murim:block/library_cover_brown"
+  },
+  "ambientocclusion": false
+}

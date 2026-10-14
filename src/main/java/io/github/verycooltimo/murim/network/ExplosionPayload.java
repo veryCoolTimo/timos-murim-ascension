@@ -14,7 +14,7 @@ import net.minecraft.world.phys.Vec3;
  * точки удара, взрыв (origin — точка удара, centre — origin + ось выброса), 3 — выброс ПОПАЛ
  * (centre — точка попадания, targetId — задетый; yaw 1 — дорез бурей).
  */
-public record ExplosionPayload(int entityId, Vec3 origin, Vec3 centre, float yaw, int layer, int stage, int targetId)
+public record ExplosionPayload(int entityId, Vec3 origin, Vec3 centre, float yaw, int executionTier, int stage, int targetId)
         implements CustomPacketPayload {
 
     public static final int WALL = 0;
@@ -34,7 +34,7 @@ public record ExplosionPayload(int entityId, Vec3 origin, Vec3 centre, float yaw
                 VEC.encode(buf, p.origin());
                 VEC.encode(buf, p.centre());
                 buf.writeFloat(p.yaw());
-                ByteBufCodecs.VAR_INT.encode(buf, p.layer());
+                ByteBufCodecs.VAR_INT.encode(buf, p.executionTier());
                 ByteBufCodecs.VAR_INT.encode(buf, p.stage());
                 ByteBufCodecs.VAR_INT.encode(buf, p.targetId());
             },

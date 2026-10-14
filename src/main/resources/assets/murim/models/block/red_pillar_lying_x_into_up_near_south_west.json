@@ -1,0 +1,12 @@
+{
+ "loader": "neoforge:obj",
+ "model": "murim:models/block/obj/building_kit/red_pillar_lying_x_into_up_near_south_west.obj",
+ "flip_v": false,
+ "automatic_culling": false,
+ "shade_quads": true,
+ "ambientocclusion": false,
+ "textures": {
+  "particle": "murim:block/red_lacquer",
+  "beam": "murim:block/red_lacquer_beam"
+ }
+}

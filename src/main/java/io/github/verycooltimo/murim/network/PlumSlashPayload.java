@@ -11,7 +11,7 @@ import net.minecraft.resources.ResourceLocation;
  * Сервер → клиентам: выпуск «Разреза» Семи Цветков Сливы — откуда (стопы), куда смотрел,
  * слой и фактическая длина коридора (обрезана первой стеной).
  */
-public record PlumSlashPayload(int entityId, net.minecraft.world.phys.Vec3 origin, float yaw, int layer, float length)
+public record PlumSlashPayload(int entityId, net.minecraft.world.phys.Vec3 origin, float yaw, int executionTier, float length)
         implements CustomPacketPayload {
 
     private static final StreamCodec<RegistryFriendlyByteBuf, net.minecraft.world.phys.Vec3> VEC = StreamCodec.composite(
@@ -24,7 +24,7 @@ public record PlumSlashPayload(int entityId, net.minecraft.world.phys.Vec3 origi
             ByteBufCodecs.VAR_INT, PlumSlashPayload::entityId,
             VEC, PlumSlashPayload::origin,
             ByteBufCodecs.FLOAT, PlumSlashPayload::yaw,
-            ByteBufCodecs.VAR_INT, PlumSlashPayload::layer,
+            ByteBufCodecs.VAR_INT, PlumSlashPayload::executionTier,
             ByteBufCodecs.FLOAT, PlumSlashPayload::length,
             PlumSlashPayload::new);
 

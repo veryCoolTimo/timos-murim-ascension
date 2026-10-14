@@ -1,0 +1,62 @@
+{
+  "multipart": [
+    {
+      "when": {
+        "axis": "x"
+      },
+      "apply": {
+        "model": "murim:block/pailou_architrave_band",
+        "y": 0
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "negative": "true"
+      },
+      "apply": {
+        "model": "murim:block/pailou_architrave_band_negative",
+        "y": 0
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "positive": "true"
+      },
+      "apply": {
+        "model": "murim:block/pailou_architrave_band_positive",
+        "y": 0
+      }
+    },
+    {
+      "when": {
+        "axis": "z"
+      },
+      "apply": {
+        "model": "murim:block/pailou_architrave_band",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "negative": "true"
+      },
+      "apply": {
+        "model": "murim:block/pailou_architrave_band_negative",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "positive": "true"
+      },
+      "apply": {
+        "model": "murim:block/pailou_architrave_band_positive",
+        "y": 90
+      }
+    }
+  ]
+}

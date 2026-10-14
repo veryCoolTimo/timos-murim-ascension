@@ -1,0 +1,24 @@
+{
+  "loader": "neoforge:obj",
+  "model": "murim:models/block/obj/water_vat_1.obj",
+  "flip_v": false,
+  "emissive_ambient": true,
+  "automatic_culling": true,
+  "shade_quads": true,
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "wood": "murim:block/red_lacquer",
+    "stone": "murim:block/hua_granite_pale",
+    "dark": "murim:block/red_lacquer",
+    "paper": "murim:block/sect_ornament_paper",
+    "ink": "murim:block/sect_ornament_calligraphy",
+    "plum": "murim:block/sect_ornament_plum",
+    "water": "murim:block/sect_ornament_water",
+    "clay": "murim:block/sect_ornament_clay",
+    "cloth": "murim:block/sect_ornament_drum",
+    "lion": "murim:block/sect_ornament_lion",
+    "inscription": "murim:block/sect_ornament_inscription",
+    "particle": "murim:block/red_lacquer"
+  },
+  "ambientocclusion": false
+}

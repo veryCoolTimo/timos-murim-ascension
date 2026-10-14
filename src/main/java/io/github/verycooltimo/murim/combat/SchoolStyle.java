@@ -44,6 +44,11 @@ public final class SchoolStyle {
         if (!(event.getTarget() instanceof LivingEntity target)) {
             return;
         }
+        // The legacy fallback is a sword combo too; bare fists must not inherit its finisher.
+        if (!QiSword.holdsSword(player.getMainHandItem())) {
+            player.setData(ModAttachments.COMBO, ComboState.IDLE);
+            return;
+        }
         // Выбрана основа меча — удар ведёт она, старая серия стиля не нужна (автор 01.10).
         if (FoundationService.onHit(player, target)) {
             return;

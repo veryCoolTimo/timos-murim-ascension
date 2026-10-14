@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/stairs",
+  "textures": {
+    "bottom": "murim:block/grey_bricks_c",
+    "side": "murim:block/grey_bricks_c",
+    "top": "murim:block/grey_bricks_c"
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "variants": {
+    "type=bottom": [
+      {
+        "model": "murim:block/grey_brick_slab_grey_bricks"
+      },
+      {
+        "model": "murim:block/grey_brick_slab_grey_bricks_b"
+      },
+      {
+        "model": "murim:block/grey_brick_slab_grey_bricks_c"
+      }
+    ],
+    "type=top": [
+      {
+        "model": "murim:block/grey_brick_slab_top_grey_bricks"
+      },
+      {
+        "model": "murim:block/grey_brick_slab_top_grey_bricks_b"
+      },
+      {
+        "model": "murim:block/grey_brick_slab_top_grey_bricks_c"
+      }
+    ],
+    "type=double": [
+      {
+        "model": "murim:block/grey_bricks"
+      },
+      {
+        "model": "murim:block/grey_bricks_b"
+      },
+      {
+        "model": "murim:block/grey_bricks_c"
+      }
+    ]
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "variants": {
+    "facing=south,part=left": {
+      "model": "murim:block/writing_desk_left"
+    },
+    "facing=south,part=right": {
+      "model": "murim:block/writing_desk_right"
+    },
+    "facing=west,part=left": {
+      "model": "murim:block/writing_desk_left",
+      "y": 90
+    },
+    "facing=west,part=right": {
+      "model": "murim:block/writing_desk_right",
+      "y": 90
+    },
+    "facing=north,part=left": {
+      "model": "murim:block/writing_desk_left",
+      "y": 180
+    },
+    "facing=north,part=right": {
+      "model": "murim:block/writing_desk_right",
+      "y": 180
+    },
+    "facing=east,part=left": {
+      "model": "murim:block/writing_desk_left",
+      "y": 270
+    },
+    "facing=east,part=right": {
+      "model": "murim:block/writing_desk_right",
+      "y": 270
+    }
+  }
+}

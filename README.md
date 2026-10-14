@@ -4,8 +4,9 @@
 
 # Timo's Murim Ascension
 
-**Murim martial-arts cultivation for Minecraft** — gather qi, read sword manuals, master
-techniques layer by layer and climb from Third Rate toward the realms beyond.
+**Murim / wuxia martial-arts cultivation for Minecraft** — form a dantian, gather qi, find sword
+manuals in ruined libraries, master every art up to **twelve stars** and climb from Third Rate
+toward the realms beyond — as a disciple of the **Mount Hua sect**.
 
 ![Minecraft 1.21.1](https://img.shields.io/badge/Minecraft-1.21.1-62B47A?style=flat-square)
 ![NeoForge 21.1](https://img.shields.io/badge/loader-NeoForge%2021.1-D7742F?style=flat-square)
@@ -35,9 +36,10 @@ frames — not a flat texture, and every technique grows with your mastery.
 |:---:|:---:|
 | <img src="media/breakthrough.gif" width="380"> | <img src="media/aura-pressure.gif" width="380"> |
 
-### Techniques and mastery
-- Every technique has **layers**: you master it in fights, training and meditation.
-  Layer 0 is a clumsy motion; effects grow with each layer.
+### Techniques and mastery — twelve stars
+- Every art is mastered in **stars, up to ★12** — the completion of any art. You earn them in fights,
+  training, sparring and meditation; the last stars need **insight**, not just practice.
+- At zero stars a form is a clumsy motion; speed, qi cost, power and visual effects grow with every star.
 - **Style manuals** (pixel-art books): the style's title, the style itself, then every form —
   learned in order, each harder than the last.
 
@@ -75,9 +77,37 @@ Spirit-vein stones, old trees, peaks and running water speed up meditation — a
 Footwork is a style of its own forms: evade, run, shadow, strike-through
 (Dark Fragrance, Wind God Steps). Double-tap to evade, sprint to run, crouch still to fade.
 
+### Mount Hua sect
+- A whole sect on a generated **Mount Hua**: gate, training square, halls on stepped terraces, a disciples' camp,
+  elders and servants who live by a daily schedule (drills, meals, evening, night watch).
+- Join as a newcomer: the mentor gives you an inner method, you plant your qi seed and learn the
+  **Six Equilibriums**; one clear next goal is always shown. The sect invites, it never punishes you for
+  adventuring elsewhere.
+- Sparring partners, reviews, sect merit and a merit shop, ranks inside the sect.
+
+### Ruined library
+<p align="center"><img src="media/library.gif" width="480" alt="Ruined library"></p>
+
+- A buried four-tier archive behind a cave mouth: parquet galleries, lattice railings, a coffered ceiling and
+  hundreds of small lights.
+- **Hidden manuals** sit among ordinary books — look for the one that sticks out with a pale outline and pull it
+  out. One bookcase is propped up with a very old book…
+
+<p align="center"><img src="media/library-bookcases.jpg" width="560" alt="Bookcases with a hidden manual"></p>
+
+### Buildings and decor
+- A Chinese **hall roof kit** (concave slopes, upturned corners, framed gables, continuous ridges), pillars,
+  brackets, carved railings, lanterns, bookcases, desks, bells and censers — for building your own sect.
+
+<p align="center"><img src="media/hall-roof.png" width="560" alt="Hall roof"></p>
+
 ### Combat
+- **Basic sword combo** with a finisher: the blade's crescent trail follows the real sword.
+
+<p align="center"><img src="media/sword-finisher.gif" width="560" alt="Sword combo finisher"></p>
+
 - **Lock-on**: the camera follows the target; rushes and thrusts reach enemies in the air.
-- **Technique wheel**, per-technique cooldowns, stuns that really stop the enemy.
+- **Technique wheel** with sub-forms, per-technique cooldowns, stuns that really stop the enemy.
 - Sword arts need a sword — without one you fight with a **qi-sword**.
 - **Bandits** (swordsman, archer) with readable wind-ups; some know a weak qi technique.
 
@@ -111,9 +141,12 @@ The jar lands in `build/libs/`.
 - [ ] Rank power, bandit camp and the first loop (find a manual → learn → fight → break through)
 - [ ] A boss
 - [x] Pills (absorption mini-game) and places of power
-- [ ] Ruins, libraries and a cult built from modular pieces
+- [x] Ruined library with hidden manuals
+- [x] Twelve-star mastery for every art
+- [ ] Cult strongholds built from modular pieces
 - [x] Tang clan hidden weapons (first three forms)
-- [ ] Mount Hua sect: location, masters, training
+- [x] Mount Hua sect: location, masters, training, sect life
+- [ ] Player-vs-player duels with techniques (in design)
 - [ ] Other schools
 
 ## ✦ License
@@ -124,5 +157,6 @@ artwork is included in this repository.
 ---
 
 <sub>По-русски: мод в жанре мурим для Minecraft 1.21.1 (NeoForge) — культивация ци,
-манускрипты техник и освоение по слоям, стили меча Хуашань, шаги, захват цели, бандиты.
+манускрипты техник и освоение до двенадцати звёзд, стили меча Хуашань, секта горы Хуа, разрушенная
+библиотека со спрятанными манускриптами, шаги, захват цели, бандиты.
 Все тексты в игре — на русском и английском.</sub>

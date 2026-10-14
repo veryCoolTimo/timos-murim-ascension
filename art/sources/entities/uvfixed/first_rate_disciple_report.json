@@ -1,0 +1,36 @@
+{
+ "source": "art/sources/entities/first_rate_disciple.bbmodel",
+ "inverted_cubes": 0,
+ "flipped_faces": 110,
+ "rotated_faces": 0,
+ "overlapping_faces": 688,
+ "zero_uv_faces": 422,
+ "zero_area_faces": 8,
+ "inexact_faces": [],
+ "dense_faces": 64,
+ "texture_size_before": [
+  256,
+  256
+ ],
+ "uv_size_before": [
+  128,
+  128
+ ],
+ "baked_textures": [
+  "first_rate_disciple.png",
+  "first_coach.png",
+  "first_coach2.png",
+  "first_alchemist.png"
+ ],
+ "untouched_textures": [],
+ "texture_size_after": [
+  256,
+  256
+ ],
+ "uv_size_after": [
+  128,
+  128
+ ],
+ "faces": 756,
+ "cubes": 126
+}

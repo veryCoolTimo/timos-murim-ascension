@@ -1,0 +1,49 @@
+{
+  "variants": {
+    "attach=ceiling,facing=south": {
+      "model": "murim:block/round_silk_lantern_ceiling"
+    },
+    "attach=ceiling,facing=west": {
+      "model": "murim:block/round_silk_lantern_ceiling",
+      "y": 90
+    },
+    "attach=ceiling,facing=north": {
+      "model": "murim:block/round_silk_lantern_ceiling",
+      "y": 180
+    },
+    "attach=ceiling,facing=east": {
+      "model": "murim:block/round_silk_lantern_ceiling",
+      "y": 270
+    },
+    "attach=wall,facing=south": {
+      "model": "murim:block/round_silk_lantern_wall"
+    },
+    "attach=wall,facing=west": {
+      "model": "murim:block/round_silk_lantern_wall",
+      "y": 90
+    },
+    "attach=wall,facing=north": {
+      "model": "murim:block/round_silk_lantern_wall",
+      "y": 180
+    },
+    "attach=wall,facing=east": {
+      "model": "murim:block/round_silk_lantern_wall",
+      "y": 270
+    },
+    "attach=floor,facing=south": {
+      "model": "murim:block/round_silk_lantern_floor"
+    },
+    "attach=floor,facing=west": {
+      "model": "murim:block/round_silk_lantern_floor",
+      "y": 90
+    },
+    "attach=floor,facing=north": {
+      "model": "murim:block/round_silk_lantern_floor",
+      "y": 180
+    },
+    "attach=floor,facing=east": {
+      "model": "murim:block/round_silk_lantern_floor",
+      "y": 270
+    }
+  }
+}

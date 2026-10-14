@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/slab_top",
+  "textures": {
+    "bottom": "murim:block/hua_scree_c",
+    "side": "murim:block/hua_scree_c",
+    "top": "murim:block/hua_scree_c"
+  }
+}

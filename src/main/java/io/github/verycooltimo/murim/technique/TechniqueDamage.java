@@ -24,6 +24,10 @@ public final class TechniqueDamage {
         if (!io.github.verycooltimo.murim.combat.QiSword.needsSword(d) && player instanceof ServerPlayer sp) {
             hand -= io.github.verycooltimo.murim.combat.QiSword.bonus(sp);
         }
+        if (d != null && d.behavior() instanceof TechniqueBehavior.DemonicArt art
+                && (art.art().equals("mountain_thunder_fist") || art.art().equals("rift_palm"))) {
+            hand = 4.0D; // bare-hand baseline: weapons and qi-sword never amplify these arts.
+        }
         TechniqueTier tier = d == null ? TechniqueTier.BASIC : d.tier();
         // Ранг даёт силу (автор 03.10, этап M2): одна точка для всех техник, без ранга ×0,8 … Пик ×1,75
         // (+0,1 за подступень у игрока: ×1,85 утвердившаяся, ×1,95 вершина). NPC — свой ранг (Casters).

@@ -81,11 +81,14 @@
     },
     "meal": {
       "random": [
-        "dialogue.murim.mok_hayeon.meal1",
-        "dialogue.murim.mok_hayeon.meal2"
+        "@context"
       ],
       "gesture": "nod",
       "options": [
+        {
+          "text": "dialogue.murim.social.opt.news",
+          "next": "sect_news"
+        },
         {
           "text": "dialogue.murim.opt.leave"
         }
@@ -93,15 +96,14 @@
     },
     "night": {
       "random": [
-        "dialogue.murim.mok_hayeon.night1",
-        "dialogue.murim.mok_hayeon.night2"
+        "@context"
       ],
       "gesture": "shake",
       "options": []
     },
     "evening": {
       "random": [
-        "dialogue.murim.mok_hayeon.evening1"
+        "@context"
       ],
       "gesture": "nod",
       "options": [
@@ -149,9 +151,7 @@
     },
     "greet": {
       "random": [
-        "dialogue.murim.mok_hayeon.greet1",
-        "dialogue.murim.mok_hayeon.greet2",
-        "dialogue.murim.mok_hayeon.greet3"
+        "@context"
       ],
       "gesture": "nod",
       "options": [
@@ -199,8 +199,7 @@
     },
     "greet_champion": {
       "random": [
-        "dialogue.murim.mok_hayeon.champion1",
-        "dialogue.murim.mok_hayeon.champion2"
+        "@context"
       ],
       "gesture": "nod",
       "options": [
@@ -248,8 +247,7 @@
     },
     "greet_friend": {
       "random": [
-        "dialogue.murim.mok_hayeon.friend1",
-        "dialogue.murim.mok_hayeon.friend2"
+        "@context"
       ],
       "gesture": "nod",
       "options": [
@@ -418,6 +416,19 @@
           "text": "dialogue.murim.opt.back",
           "next": "topics"
         },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "sect_news": {
+      "random": [
+        "@trait",
+        "@personal",
+        "@rumour"
+      ],
+      "gesture": "explain",
+      "options": [
         {
           "text": "dialogue.murim.opt.leave"
         }

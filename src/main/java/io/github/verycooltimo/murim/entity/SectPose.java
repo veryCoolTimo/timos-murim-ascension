@@ -43,7 +43,8 @@ public enum SectPose {
     /** Приветствие: кулак в ладонь, поклон (один раз). */
     BOW("bow", "sect_bow", false, false, List.of()),
     /** Страж: меч в ножнах у левого бедра, левая рука на рукояти (готов обнажить), медленно осматривается. */
-    GUARD("guard", "sect_guard", true, false, List.of("scabbard")),
+    // Без реквизита-ножен: свои ножны есть у моделей учеников; у одеяния главы и старейшин меча нет (автор 06.10).
+    GUARD("guard", "sect_guard", true, false, List.of()),
     /** Разговор: жесты рук (ноги — покой/шаг). */
     TALK("talk", "sect_talk", true, true, List.of()),
     // Body training (docs/design/27-body-training.md): the behaviour task schedules them through

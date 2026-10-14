@@ -1,0 +1,28 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "bonus_rolls": 0.0,
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        },
+        {
+          "block": "murim:sect_plaque",
+          "condition": "minecraft:block_state_property",
+          "properties": {
+            "part": "left"
+          }
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "murim:sect_plaque"
+        }
+      ],
+      "rolls": 1.0
+    }
+  ],
+  "random_sequence": "murim:blocks/sect_plaque"
+}

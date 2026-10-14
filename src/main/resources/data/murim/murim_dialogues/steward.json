@@ -31,6 +31,19 @@
       "gesture": "explain",
       "options": [
         {
+          "text": "dialogue.murim.progression.opt.menu",
+          "when": [
+            {
+              "social": "progression:menu"
+            }
+          ],
+          "actions": [
+            {
+              "type": "progression_menu"
+            }
+          ]
+        },
+        {
           "text": "dialogue.murim.steward.opt.estate",
           "next": "estate"
         },
@@ -155,6 +168,19 @@
       ],
       "gesture": "explain",
       "options": [
+        {
+          "text": "dialogue.murim.progression.opt.menu",
+          "when": [
+            {
+              "social": "progression:menu"
+            }
+          ],
+          "actions": [
+            {
+              "type": "progression_menu"
+            }
+          ]
+        },
         {
           "text": "dialogue.murim.steward.opt.estate",
           "next": "estate"

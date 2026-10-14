@@ -62,37 +62,37 @@ public final class ScatterRules {
     public static final double DMG_TRAINING = 1.0D;
 
     /** Клонов по слою: 1…6. */
-    public static int clones(int layer) {
-        return layer <= 0 ? 0 : Math.min(6, layer);
+    public static int clones(int executionTier) {
+        return executionTier <= 0 ? 0 : Math.min(6, executionTier);
     }
 
     /** Ударов на клона: 2 до 3-го слоя, 3 на 4–6, 4 с 7-го (6 × 4 = 24). */
-    public static int strokes(int layer) {
-        return layer <= 0 ? 0 : layer <= 3 ? 2 : layer <= 6 ? 3 : 4;
+    public static int strokes(int executionTier) {
+        return executionTier <= 0 ? 0 : executionTier <= 3 ? 2 : executionTier <= 6 ? 3 : 4;
     }
 
-    public static boolean finalSwing(int layer) {
-        return layer >= 4;
+    public static boolean finalSwing(int executionTier) {
+        return executionTier >= 4;
     }
 
-    public static boolean scatter(int layer) {
-        return layer >= 6;
+    public static boolean scatter(int executionTier) {
+        return executionTier >= 6;
     }
 
-    public static boolean afterimages(int layer) {
-        return layer >= 2;
+    public static boolean afterimages(int executionTier) {
+        return executionTier >= 2;
     }
 
-    public static boolean petals(int layer) {
-        return layer >= 3;
+    public static boolean petals(int executionTier) {
+        return executionTier >= 3;
     }
 
-    public static double power(int layer) {
-        return layer <= 0 ? 0.0D : layer >= 8 ? 1.15D : 0.3D + 0.1D * layer;
+    public static double power(int executionTier) {
+        return executionTier <= 0 ? 0.0D : executionTier >= 8 ? 1.15D : 0.3D + 0.1D * executionTier;
     }
 
-    public static double density(int layer) {
-        return switch (Math.max(0, Math.min(8, layer))) {
+    public static double density(int executionTier) {
+        return switch (Math.max(0, Math.min(8, executionTier))) {
             case 0 -> 0.0D;
             case 1 -> 0.12D;
             case 2 -> 0.22D;
@@ -105,19 +105,19 @@ public final class ScatterRules {
         };
     }
 
-    public static double scale(int layer) {
-        return layer <= 0 ? 0.0D : layer >= 8 ? 1.08D : 0.55D + 0.064D * layer;
+    public static double scale(int executionTier) {
+        return executionTier <= 0 ? 0.0D : executionTier >= 8 ? 1.08D : 0.55D + 0.064D * executionTier;
     }
 
     /** Начало удара {@code j} клона {@code i}: удары всех клонов чередуются равномерно. */
-    public static double strokeStart(int layer, int i, int j) {
-        int n = Math.max(1, clones(layer));
+    public static double strokeStart(int executionTier, int i, int j) {
+        int n = Math.max(1, clones(executionTier));
         return STRIKE0 + (j * n + i) * (double) CYCLE / n;
     }
 
     /** Тик, когда удар проходит центр цели: сервер проверяет весь отрезок удара. */
-    public static int strokeHit(int layer, int i, int j) {
-        return (int) Math.floor(strokeStart(layer, i, j) + PASS * 0.5D);
+    public static int strokeHit(int executionTier, int i, int j) {
+        return (int) Math.floor(strokeStart(executionTier, i, j) + PASS * 0.5D);
     }
 
     /** Направления захода: шесть клонов со своих сторон, удары чередуют высоты (full-15). */
@@ -172,7 +172,7 @@ public final class ScatterRules {
      * @param cluster скопление лепестков, из которого клон выходит (центр корпуса)
      * @param jump    смещение прыжка мастера
      */
-    public static Vec3 clone(Vec3 cluster, Vec3 jump, Vec3 centre, double base, int layer, int i, double t, boolean grounded) {
+    public static Vec3 clone(Vec3 cluster, Vec3 jump, Vec3 centre, double base, int executionTier, int i, double t, boolean grounded) {
         double out = exit(i);
         if (t <= out) {
             return cluster;
@@ -184,8 +184,8 @@ public final class ScatterRules {
             double e = 1.0D - (1.0D - k) * (1.0D - k);
             return cluster.lerp(landed, e).add(0.0D, 1.1D * Math.sin(Math.PI * k), 0.0D);
         }
-        int m = strokes(layer);
-        double s0 = strokeStart(layer, i, 0);
+        int m = strokes(executionTier);
+        double s0 = strokeStart(executionTier, i, 0);
         Vec3 q0 = sphere(centre, base, i, 0, grounded);
         if (t <= s0) {
             double k = (t - jEnd) / Math.max(1.0D, s0 - jEnd);
@@ -193,8 +193,8 @@ public final class ScatterRules {
             return landed.lerp(q0, e).add(0.0D, 1.4D * Math.sin(Math.PI * k), 0.0D);
         }
         for (int j = 0; j < m; j++) {
-            double s = strokeStart(layer, i, j);
-            double next = j + 1 < m ? strokeStart(layer, i, j + 1) : Double.MAX_VALUE;
+            double s = strokeStart(executionTier, i, j);
+            double next = j + 1 < m ? strokeStart(executionTier, i, j + 1) : Double.MAX_VALUE;
             if (t < s || t >= next) {
                 continue;
             }

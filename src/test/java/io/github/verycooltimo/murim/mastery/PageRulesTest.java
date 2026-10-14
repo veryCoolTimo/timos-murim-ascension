@@ -41,8 +41,8 @@ class PageRulesTest {
     void bookInsightIsALayer() {
         double amount = PageRules.insight(0, PageRules.BOOK_INSIGHT);
         MasteryRules.Gain gain = MasteryRules.study(TechniqueProgress.learned(0, 5), amount, 0L);
-        assertEquals(1, gain.progress().layer());
-        assertEquals(1, gain.layersReached().size());
+        assertEquals(1, gain.progress().stars());
+        assertEquals(1, gain.starsReached().size());
         // Страница — меньше слоя, но не ноль.
         double page = PageRules.insight(2, PageRules.PAGE_INSIGHT);
         assertTrue(page > 0.0D && page < MasteryRules.need(2));
@@ -52,7 +52,7 @@ class PageRulesTest {
     @DisplayName("Озарение не поднимает выше предела рваной книги")
     void studyStopsAtCap() {
         MasteryRules.Gain gain = MasteryRules.study(TechniqueProgress.learned(1, 2), 1000.0D, 0L);
-        assertEquals(2, gain.progress().layer());
+        assertEquals(2, gain.progress().stars());
         assertEquals(0.0D, gain.progress().progress(), 1.0E-9D);
     }
 }
