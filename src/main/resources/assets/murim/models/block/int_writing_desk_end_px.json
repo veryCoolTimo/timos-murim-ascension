@@ -1,0 +1,129 @@
+{
+  "parent": "minecraft:block/block",
+  "ambientocclusion": false,
+  "textures": {
+    "l": "murim:block/intseat_lacquer",
+    "w": "murim:block/intseat_wood",
+    "particle": "murim:block/intseat_wood"
+  },
+  "elements": [
+    {
+      "from": [
+        13,
+        0,
+        3
+      ],
+      "to": [
+        15,
+        11,
+        13
+      ],
+      "faces": {
+        "north": {
+          "texture": "#w",
+          "uv": [
+            1,
+            5,
+            3,
+            16.0
+          ]
+        },
+        "south": {
+          "texture": "#w",
+          "uv": [
+            13,
+            5,
+            15,
+            16.0
+          ]
+        },
+        "east": {
+          "texture": "#w",
+          "uv": [
+            3,
+            5,
+            13,
+            16.0
+          ]
+        },
+        "west": {
+          "texture": "#w",
+          "uv": [
+            3,
+            5,
+            13,
+            16.0
+          ]
+        },
+        "up": {
+          "texture": "#w",
+          "uv": [
+            13,
+            3,
+            15,
+            13
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        12.6,
+        0,
+        2.8
+      ],
+      "to": [
+        15.4,
+        1.2,
+        13.2
+      ],
+      "faces": {
+        "north": {
+          "texture": "#l",
+          "uv": [
+            0.6,
+            14.8,
+            3.4,
+            16.0
+          ]
+        },
+        "south": {
+          "texture": "#l",
+          "uv": [
+            12.6,
+            14.8,
+            15.4,
+            16.0
+          ]
+        },
+        "east": {
+          "texture": "#l",
+          "uv": [
+            2.8,
+            14.8,
+            13.2,
+            16.0
+          ]
+        },
+        "west": {
+          "texture": "#l",
+          "uv": [
+            2.8,
+            14.8,
+            13.2,
+            16.0
+          ]
+        },
+        "up": {
+          "texture": "#l",
+          "uv": [
+            12.6,
+            2.8,
+            15.4,
+            13.2
+          ]
+        }
+      }
+    }
+  ]
+}

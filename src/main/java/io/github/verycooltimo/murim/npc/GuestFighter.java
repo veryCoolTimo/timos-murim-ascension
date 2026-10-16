@@ -7,6 +7,11 @@ import io.github.verycooltimo.murim.entity.BanditMove;
 import io.github.verycooltimo.murim.registry.ModDataComponents;
 import io.github.verycooltimo.murim.registry.ModItems;
 import io.github.verycooltimo.murim.sect.GuestDialogueService;
+import io.github.verycooltimo.murim.sect.SectLayout;
+import io.github.verycooltimo.murim.sect.SectLife;
+import io.github.verycooltimo.murim.world.hua.MountHuaSites;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import io.github.verycooltimo.murim.technique.Casters;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.Registries;
@@ -132,6 +137,7 @@ public class GuestFighter extends Bandit implements DialogueActor {
             return true;
         }
         if ("guest_challenge".equals(action) && (profile == NpcProfile.HA_YUN || profile == NpcProfile.KWON_YEON)) {
+            if (!prepareSectDuel(p)) return false;
             GuestDialogueService.close(p, this);
             entityData.set(HOSTILE, true);
             setTarget(p);
@@ -139,6 +145,7 @@ public class GuestFighter extends Bandit implements DialogueActor {
             return true;
         }
         if ("guest_spar".equals(action) && profile == NpcProfile.CHO_GAN && p.getHealth() > 3) {
+            if (!prepareSectDuel(p)) return false;
             GuestDialogueService.close(p, this);
             sparring = p.getUUID();
             setTarget(p);
@@ -146,6 +153,37 @@ public class GuestFighter extends Bandit implements DialogueActor {
             return true;
         }
         return false;
+    }
+
+    /** Sect visits fight on the training square; road and bandit-camp encounters keep their own setting. */
+    private boolean prepareSectDuel(ServerPlayer player) {
+        if (!(level() instanceof ServerLevel level) || level.dimension() != Level.OVERWORLD) return true;
+        var site = MountHuaSites.get(level.getServer());
+        if (site == null) return true;
+        SectLayout layout = SectLayout.hua(site);
+        boolean visiting = SectLayout.SECT_ZONES.stream().anyMatch(z -> layout.inside(z, position(), 2.0D));
+        return !visiting || stageDuel(this, player, layout);
+    }
+
+    /** Resolve both safe standing points before moving either participant or starting combat. */
+    static boolean stageDuel(GuestFighter guest, ServerPlayer player, SectLayout layout) {
+        ServerLevel level = (ServerLevel) guest.level();
+        Vec3 west = layout.at("training", -2.5D, -5.0D);
+        Vec3 east = layout.at("training", 2.5D, -5.0D);
+        if (west == null || east == null || player.level() != level
+                || !level.isPositionEntityTicking(BlockPos.containing(west))
+                || !level.isPositionEntityTicking(BlockPos.containing(east))) return false;
+        west = SectLife.stand(level, west);
+        east = SectLife.stand(level, east);
+        for (Vec3 point : new Vec3[] {west, east}) {
+            BlockPos feet = BlockPos.containing(point);
+            if (!level.getBlockState(feet).isAir() || !level.getBlockState(feet.above()).isAir()
+                    || !level.getBlockState(feet.below()).isFaceSturdy(level, feet.below(), Direction.UP)) return false;
+        }
+        guest.getNavigation().stop();
+        guest.moveTo(west.x, west.y, west.z, layout.yaw(1, 0), 0.0F);
+        player.teleportTo(level, east.x, east.y, east.z, layout.yaw(-1, 0), player.getXRot());
+        return true;
     }
 
     @Override public void setTarget(LivingEntity target) {

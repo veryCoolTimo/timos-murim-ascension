@@ -61,7 +61,12 @@ public final class StarMasteryGameTests {
             h.assertTrue(state.arts().size() == 1 && state.progress(a).stars() == 3, "art practice was duplicated");
         }
         for (var definition : io.github.verycooltimo.murim.technique.TechniqueLoader.all().values()) {
-            h.assertTrue(definition.starCap() == 12 && Arts.cap(definition.id()) == 12, "non-universal cap: " + definition.id());
+            boolean footwork = "step".equals(definition.form())
+                    || io.github.verycooltimo.murim.combat.FootworkService.family(definition) != null
+                    || Styles.FOOTWORK.stream().anyMatch(s -> s.forms().contains(definition.id()));
+            int expectedCap = footwork ? 10 : 12;
+            h.assertTrue(definition.starCap() == expectedCap && Arts.cap(definition.id()) == expectedCap,
+                    "wrong art cap: " + definition.id());
         }
         for (var method : io.github.verycooltimo.murim.cultivation.MethodLoader.all().values()) {
             h.assertTrue(method.starCap() == 12 && Arts.cap(Arts.methodArt(method.id())) == 12, "non-universal method cap");
@@ -77,8 +82,8 @@ public final class StarMasteryGameTests {
         h.assertTrue(torn.stars() == 3 && torn.cap() == 3, "torn save used manuscript as full denominator");
         h.assertTrue(Arts.executionTier(id("wind_god_steps"), torn.stars()) == 2, "torn book granted maximum power");
         var bounded = MasteryState.EMPTY.with(id("wind_god_steps"), TechniqueProgress.learned(12, 12));
-        h.assertTrue(bounded.progress(id("wind_god_steps")).stars() == 12
-                && bounded.progress(id("wind_god_steps")).cap() == 12, "progress exceeded the art cap");
+        h.assertTrue(bounded.progress(id("wind_god_steps")).stars() == 10
+                && bounded.progress(id("wind_god_steps")).cap() == 10, "progress exceeded the art cap");
         var state = MasteryState.EMPTY.with(Arts.methodArt(id("six_harmonies")), TechniqueProgress.learned(6, 6));
         h.assertTrue(state.executionTiers().isEmpty(), "breathing mastery bypasses combat rank gates");
         h.succeed();
@@ -117,20 +122,20 @@ public final class StarMasteryGameTests {
                 """);
         MasteryState state = MasteryState.CODEC.parse(JsonOps.INSTANCE, json).getOrThrow();
         TechniqueProgress p = state.progress(id("seven_plum"));
-        h.assertTrue(p.stars() == 6 && p.cap() == 8 && p.version() == 3, "5/10 or torn 7/10 remigrated incorrectly");
+        h.assertTrue(p.stars() == 6 && p.cap() == 8 && p.version() == TechniqueProgress.VERSION, "5/10 or torn 7/10 remigrated incorrectly");
         h.assertTrue(Math.abs(p.progress() / MasteryRules.need(6) - 13 / MasteryRules.need(5)) < 1E-9, "progress fraction lost");
         h.assertTrue(Math.abs(p.unprocessed() / MasteryRules.need(6) - 9 / MasteryRules.need(5)) < 1E-9, "pending fraction lost");
         h.assertTrue(state.progress(id("method/six_harmonies")).stars() == 12, "cultivation mastery lost");
         h.assertTrue(state.techniques().size() == 3 && !state.knows(id("seven_plum_execution")), "migration opened forms");
         h.assertTrue(state.wisdom() == 8 && state.comprehended().equals(Set.of(id("seven_plum"))), "wisdom/comprehension changed");
         var saved = MasteryState.CODEC.encodeStart(JsonOps.INSTANCE, state).getOrThrow();
-        h.assertTrue(state.equals(MasteryState.CODEC.parse(JsonOps.INSTANCE, saved).getOrThrow()), "version 3 remigrated twice");
+        h.assertTrue(state.equals(MasteryState.CODEC.parse(JsonOps.INSTANCE, saved).getOrThrow()), "current save remigrated twice");
         for (String form : java.util.List.of("bandit_rush", "six_harmonies", "wind_god_steps", "four_horizons")) {
             ResourceLocation id = id(form);
             int previous = Arts.previousStarMaximum(id, 12, 0);
             for (int old = 0; old <= previous; old++) {
                 var migrated = new TechniqueProgress(old, 0, 0, 0, previous, 2).migrate(id);
-                h.assertTrue(migrated.stars() == Math.round(old / (double) previous * 12), "wrong proportional star conversion");
+                h.assertTrue(migrated.stars() == Math.round(old / (double) previous * Arts.cap(id)), "wrong proportional star conversion");
                 int formerTier = 0;
                 for (int step = 1; step <= Arts.legacySteps(id); step++) {
                     if (old >= Math.round(step / (double) Arts.legacySteps(id) * previous)) formerTier = step;

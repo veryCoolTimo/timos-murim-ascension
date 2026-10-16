@@ -15,6 +15,7 @@ import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.saveddata.SavedData;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
@@ -152,11 +153,18 @@ public final class NpcEncounters {
             NpcProfile[] road = {NpcProfile.BAE_DO, NpcProfile.HA_YUN, NpcProfile.CHO_GAN};
             NpcProfile profile = road[(int) Math.floorMod(day, 3)];
             if (site != null) {
-                int[] xz = site.toWorld(-87, -426);
-                tryArrive(level, profile, new BlockPos(xz[0], 0, xz[1]), profile != NpcProfile.BAE_DO);
+                if (profile == NpcProfile.CHO_GAN) {
+                    // The visiting sparring partner waits at the training square, where his duel takes place.
+                    var layout = io.github.verycooltimo.murim.sect.SectLayout.hua(site);
+                    Vec3 at = layout.at("training", 16, -10);
+                    tryArrive(level, profile, BlockPos.containing(at), true);
+                } else {
+                    int[] xz = site.toWorld(-87, -426);
+                    tryArrive(level, profile, new BlockPos(xz[0], 0, xz[1]), profile != NpcProfile.BAE_DO);
+                }
             }
             for (ServerPlayer player : level.players()) {
-                if (player.isSpectator()) continue;
+                if (player.isSpectator() || site != null && profile == NpcProfile.CHO_GAN) continue;
                 var village = PeddlerSpawns.village(level, player.blockPosition());
                 if (village != null) {
                     var box = village.getBoundingBox();

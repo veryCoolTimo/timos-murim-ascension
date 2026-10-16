@@ -29,196 +29,22 @@
       "node": "member"
     },
     {
-      "when": [
-        {
-          "flag": "trial.answered"
-        }
-      ],
-      "node": "bow_prompt"
-    },
-    {
-      "when": [
-        {
-          "flag": "climbed"
-        }
-      ],
-      "node": "first_climbed"
-    },
-    {
-      "node": "first"
+      "node": "outsider_hall"
     }
   ],
   "nodes": {
-    "first": {
-      "line": "dialogue.murim.leader.first",
-      "gesture": "nod",
-      "options": [
-        {
-          "text": "dialogue.murim.leader.opt.become",
-          "next": "question"
-        },
-        {
-          "text": "dialogue.murim.leader.opt.who",
-          "next": "who"
-        },
-        {
-          "text": "dialogue.murim.opt.leave"
-        }
-      ]
-    },
-    "first_climbed": {
-      "line": "dialogue.murim.leader.first_climbed",
-      "gesture": "nod",
-      "options": [
-        {
-          "text": "dialogue.murim.leader.opt.become",
-          "next": "question"
-        },
-        {
-          "text": "dialogue.murim.leader.opt.who",
-          "next": "who"
-        },
-        {
-          "text": "dialogue.murim.opt.leave"
-        }
-      ]
-    },
     "where_mentor": {
       "line": "dialogue.murim.leader.where_mentor",
       "gesture": "point",
       "options": [
         {
-          "text": "dialogue.murim.opt.leave"
-        }
-      ]
-    },
-    "who": {
-      "line": "dialogue.murim.leader.who",
-      "gesture": "explain",
-      "options": [
-        {
-          "text": "dialogue.murim.leader.opt.become",
-          "next": "question"
-        },
-        {
-          "text": "dialogue.murim.opt.leave"
-        }
-      ]
-    },
-    "question": {
-      "line": "dialogue.murim.leader.question",
-      "gesture": "explain",
-      "options": [
-        {
-          "text": "dialogue.murim.leader.opt.ans_strong",
-          "actions": [
+          "text": "dialogue.murim.escort.opt.menu",
+          "when": [
             {
-              "type": "set_flag",
-              "value": "trial.answered"
+              "member": true
             }
           ],
-          "next": "reply_strong"
-        },
-        {
-          "text": "dialogue.murim.leader.opt.ans_protect",
-          "actions": [
-            {
-              "type": "set_flag",
-              "value": "trial.answered"
-            }
-          ],
-          "next": "reply_protect"
-        },
-        {
-          "text": "dialogue.murim.leader.opt.ans_honest",
-          "actions": [
-            {
-              "type": "set_flag",
-              "value": "trial.answered"
-            }
-          ],
-          "next": "reply_honest"
-        },
-        {
-          "text": "dialogue.murim.leader.opt.ans_plum",
-          "actions": [
-            {
-              "type": "set_flag",
-              "value": "trial.answered"
-            }
-          ],
-          "next": "reply_plum"
-        }
-      ]
-    },
-    "reply_strong": {
-      "line": "dialogue.murim.leader.reply_strong",
-      "gesture": "shake",
-      "options": [
-        {
-          "text": "dialogue.murim.leader.opt.go_on",
-          "next": "bow_prompt"
-        }
-      ]
-    },
-    "reply_protect": {
-      "line": "dialogue.murim.leader.reply_protect",
-      "gesture": "nod",
-      "options": [
-        {
-          "text": "dialogue.murim.leader.opt.go_on",
-          "next": "bow_prompt"
-        }
-      ]
-    },
-    "reply_honest": {
-      "line": "dialogue.murim.leader.reply_honest",
-      "gesture": "nod",
-      "options": [
-        {
-          "text": "dialogue.murim.leader.opt.go_on",
-          "next": "bow_prompt"
-        }
-      ]
-    },
-    "reply_plum": {
-      "line": "dialogue.murim.leader.reply_plum",
-      "gesture": "explain",
-      "options": [
-        {
-          "text": "dialogue.murim.leader.opt.go_on",
-          "next": "bow_prompt"
-        }
-      ]
-    },
-    "bow_prompt": {
-      "line": "dialogue.murim.leader.bow_prompt",
-      "gesture": "point",
-      "options": [
-        {
-          "text": "dialogue.murim.leader.opt.bow",
-          "actions": [
-            {
-              "type": "bow"
-            },
-            {
-              "type": "join_sect"
-            }
-          ],
-          "next": "welcome"
-        },
-        {
-          "text": "dialogue.murim.leader.opt.later"
-        }
-      ]
-    },
-    "welcome": {
-      "line": "dialogue.murim.leader.welcome",
-      "gesture": "bow",
-      "options": [
-        {
-          "text": "dialogue.murim.leader.opt.to_mentor",
-          "next": "where_mentor"
+          "next": "escort_menu"
         },
         {
           "text": "dialogue.murim.opt.leave"
@@ -351,15 +177,21 @@
         {
           "text": "dialogue.murim.leader.opt.to_mentor",
           "next": "where_mentor"
-        },
-        {
-          "text": "dialogue.murim.opt.leave"
         }
       ]
     },
     "sect_topics": {
       "line": "dialogue.murim.social.business",
       "options": [
+        {
+          "text": "dialogue.murim.escort.opt.menu",
+          "when": [
+            {
+              "member": true
+            }
+          ],
+          "next": "escort_menu"
+        },
         {
           "text": "dialogue.murim.leader.opt.how_sect",
           "next": "sect_state"
@@ -384,9 +216,6 @@
         {
           "text": "dialogue.murim.leader.opt.to_mentor",
           "next": "where_mentor"
-        },
-        {
-          "text": "dialogue.murim.opt.leave"
         }
       ]
     },
@@ -434,13 +263,70 @@
           "text": "dialogue.murim.opt.leave"
         }
       ]
+    },
+    "escort_menu": {
+      "line": "dialogue.murim.escort.menu",
+      "gesture": "point",
+      "options": [
+        {
+          "text": "dialogue.murim.escort.opt.room",
+          "when": [
+            {
+              "social": "escort:room"
+            }
+          ],
+          "actions": [
+            {
+              "type": "escort",
+              "value": "room"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.escort.opt.mentor",
+          "when": [
+            {
+              "social": "escort:mentor"
+            }
+          ],
+          "actions": [
+            {
+              "type": "escort",
+              "value": "mentor"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.escort.opt.elder",
+          "when": [
+            {
+              "social": "escort:elder"
+            }
+          ],
+          "actions": [
+            {
+              "type": "escort",
+              "value": "elder"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "outsider_hall": {
+      "line": "dialogue.murim.arrival.head_hall",
+      "gesture": "point",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
     }
   },
   "audience": {
     "allow": [
-      {
-        "member": false
-      },
       {
         "min_standing": "graduate"
       },

@@ -108,8 +108,6 @@ public final class SectSchedule {
         WORK,
         /** Стоит у ворот лицом наружу. */
         GUARD,
-        /** Глава выходит к воротам навстречу чужаку (принимает без экзамена). */
-        GREET,
         /** Спарринг в паре на песчаной площадке. */
         SPAR,
         /** Столбы цветущей сливы: прыжки с точки на точку и формы. */
@@ -160,7 +158,7 @@ public final class SectSchedule {
         BREW,
         /** Лекарь лечит раненого ученика: подходит, на колено, лечит (цель — {@code partner}). */
         TREAT,
-        /** Лекарь дежурит у площадки поединков: стоит, смотрит, ждёт раненых. */
+        /** Лекарь дежурит у тренировочной площади: стоит, смотрит, ждёт раненых. */
         HEAL_POST,
         /** Раненый после поединка сидит у края площадки и ждёт лекаря. */
         WAIT_TREAT,
@@ -334,7 +332,7 @@ public final class SectSchedule {
             case "tae_hwi" -> {
                 // После совета глава смотрит поединки с помоста рядом с наставником.
                 if (p == Period.TRAINING && t >= COUNCIL_TO) {
-                    return new Task(Kind.WATCH, "mentor", 2.0D, 1.0D, 0.0D, 1.0D);
+                    return new Task(Kind.WATCH, "mentor", -1.0D, 2.0D, 1.0D, 0.0D);
                 }
             }
             case "tae_rok" -> {
@@ -344,26 +342,26 @@ public final class SectSchedule {
                         return new Task(Kind.LECTURE, "training", 0.0D, -4.5D, 0.0D, -1.0D);
                     }
                     if (t >= COUNCIL_TO) {
-                        // После совета — у площадки поединков: смотрит и поправляет.
-                        return new Task(Kind.WATCH, "sparring", 12.0D, -8.5D, -0.6D, 1.0D);
+                        // После совета — показательные поединки на тренировочной площади.
+                        return new Task(Kind.WATCH, "training", 12.0D, -8.5D, -0.6D, 1.0D);
                     }
                 }
             }
             case "gyeong_cho" -> {
                 if (p == Period.TRAINING) {
                     if (t < BREW_TO) {
-                        return new Task(Kind.BREW, "alchemy", 3.0D, -2.0D, 0.0D, -1.0D);
+                        return new Task(Kind.BREW, "alchemy", 3.0D, 3.0D, 0.0D, -1.0D);
                     }
                     if (t >= COUNCIL_TO) {
-                        // После совета — дежурство у площадки поединков: раненых лечит на месте.
-                        return new Task(Kind.HEAL_POST, "sparring", -12.0D, -8.5D, 0.6D, 1.0D);
+                        // После совета — дежурство у тренировочной площади: раненых лечит на месте.
+                        return new Task(Kind.HEAL_POST, "training", -12.0D, -8.5D, 0.6D, 1.0D);
                     }
                 }
             }
             default -> {
             }
         }
-        // Смотр учеников (раз в 7 дней, SectReview): ученики не на посту — зрители у площадки поединков, старшие смотрят.
+        // Смотр учеников (раз в 7 дней): зрители у тренировочной площади, старшие на помосте.
         if (SectReview.window(dayTime)) {
             Task watch = SectReview.spectator(m);
             if (watch != null && !SectRota.onDuty(m, dayTime) && !SectRota.afterNight(m, dayTime)) {
@@ -383,7 +381,19 @@ public final class SectSchedule {
                 return offDuty(m);
             }
         }
-        return task(m, p, day);
+        Task daily = task(m, p, day);
+        if (p == Period.TRAINING && t >= COUNCIL_TO && daily.kind() == Kind.SPAR) {
+            // Keep the same pairs; their later showcase uses the big square.
+            for (int ring = 0; ring < DAILY_RINGS.length; ring++) {
+                for (int side = 0; side < 2; side++) {
+                    Task spot = ring(ring, side, daily.partner());
+                    if (spot.du() == daily.du() && spot.dv() == daily.dv()) {
+                        return showcaseRing(ring, side, daily.partner());
+                    }
+                }
+            }
+        }
+        return daily;
     }
 
     /** Место на совете: глава во главе (юг зала, лицом к входу), старейшины двумя рядами лицом друг к другу. */
@@ -426,7 +436,7 @@ public final class SectSchedule {
     private static Task leaderTask(SectRoster m, Period p) {
         return switch (p) {
             // Рассвет: смотрит на строй с помоста рядом с наставником.
-            case FORMATION -> new Task(Kind.WATCH, "mentor", 2.0D, 0.0D, 0.0D, -1.0D);
+            case FORMATION -> new Task(Kind.WATCH, "training", 0.0D, FRONT_ROW + 5.0D, 0.0D, -1.0D);
             // Вечер: зал предков, перед табличками (канон: входящий кланяется предкам, гл. 9).
             case EVENING -> new Task(Kind.REVERE, "ancestors", 0.0D, -2.0D, 0.0D, 1.0D);
             case NIGHT -> sleep(m);
@@ -439,8 +449,8 @@ public final class SectSchedule {
         return switch (p) {
             case FORMATION -> new Task(Kind.INSPECT, "training", 0.0D, FRONT_ROW + 3.0D, 0.0D, -1.0D);
             case BREAKFAST, DINNER -> eat(m);
-            // Днём — на помосте, лицом к песчаной площадке спаррингов.
-            case TRAINING -> new Task(Kind.WATCH, "mentor", -1.0D, 1.0D, 0.0D, 1.0D);
+            // Помост обращён к тренировочной площади перед ним.
+            case TRAINING -> new Task(Kind.WATCH, "mentor", -1.0D, -1.0D, 1.0D, 0.0D);
             case EVENING -> new Task(Kind.WATCH, "training", 0.0D, FRONT_ROW + 3.0D, 0.0D, -1.0D);
             case NIGHT -> sleep(m);
         };
@@ -476,6 +486,8 @@ public final class SectSchedule {
      * внутреннего двора (управляющий — снаружи, на западном краю). Лицом туда, откуда приходят. Ночью — с фонарём.
      */
     public static Task post(SectRota.Duty duty) {
+        if (duty.night() && duty.post() == 0)
+            return new Task(Kind.GUARD, "sect_gate", -3.0D, 0.0D, 0.0D, -1.0D);
         return duty.post() == 0
                 ? new Task(Kind.GUARD, "main_hall", -4.0D, -10.0D, 0.0D, -1.0D)
                 : new Task(Kind.GUARD, "treasury", -7.0D, -6.0D, -1.0D, 0.0D);
@@ -506,7 +518,7 @@ public final class SectSchedule {
                     : firstDrill(m, -11.0D);
             case BREAKFAST, DINNER -> eat(m);
             case TRAINING -> switch (k) {
-                case 0 -> new Task(Kind.WATCH, "mentor", -3.0D, 1.5D, 0.0D, 1.0D);
+                case 0 -> new Task(Kind.WATCH, "mentor", -1.5D, -3.0D, 1.0D, 0.0D);
                 case 1 -> new Task(Kind.LECTURE, "poles", 0.0D, 4.5D, 0.0D, -1.0D);
                 default -> firstDrill(m, -12.0D);
             };
@@ -568,13 +580,15 @@ public final class SectSchedule {
 
     // ------------------------------------------------------------------ дневные занятия
 
-    /** Рингов на песчаной площадке: 3 × 2, по рингу на пару. */
+    /** Ринги показательных боёв и смотра на тренировочной площади: 3 × 2. */
     public static final double[][] RINGS = {{-9, -5}, {0, -5}, {9, -5}, {-9, 5}, {0, 5}, {9, 5}};
+    /** Daily spars on the east side of training, clear of the axis, dais and pole practice. */
+    public static final double[][] DAILY_RINGS = {{16, -16}, {16, -8}, {16, 0}, {16, 8}, {16, 16}};
     /** Половина дистанции между бойцами пары в начале боя. */
     public static final double RING_HALF = 2.5D;
 
     /**
-     * Второе поколение днём: старший всегда на площадке поединков (партнёр урока «три чистых удара»);
+     * Второе поколение днём: старший всегда участвует в поединках (партнёр урока «три чистых удара»);
      * из четверых остальных двое бьются друг с другом, третий — со старшим, четвёртый медитирует.
      */
     static Task secondTraining(SectRoster m, long day) {
@@ -613,7 +627,7 @@ public final class SectSchedule {
             return ring(2 + k / 2, k & 1, partner.key());
         }
         if (k < 10) {
-            double[][] spots = {{-3, -2}, {3, -2}, {-3, 2}, {3, 2}};
+            double[][] spots = {{-2, -2}, {2, -2}, {-2, 2}, {2, 2}};
             double[] s = spots[k - 6];
             return new Task(Kind.POLES, "poles", s[0], s[1], 0.0D, 1.0D);
         }
@@ -627,9 +641,16 @@ public final class SectSchedule {
 
     /** Место бойца в ринге {@code ring}: сторона 0 — запад, 1 — восток; лицом друг к другу. */
     static Task ring(int ring, int side, String partner) {
-        double[] r = RINGS[ring];
+        return ringAt("training", DAILY_RINGS[ring], side, partner);
+    }
+
+    static Task showcaseRing(int ring, int side, String partner) {
+        return ringAt("training", RINGS[ring], side, partner);
+    }
+
+    private static Task ringAt(String zone, double[] r, int side, String partner) {
         double du = r[0] + (side == 0 ? -RING_HALF : RING_HALF);
-        return new Task(Kind.SPAR, "sparring", du, r[1], side == 0 ? 1.0D : -1.0D, 0.0D, partner);
+        return new Task(Kind.SPAR, zone, du, r[1], side == 0 ? 1.0D : -1.0D, 0.0D, partner);
     }
 
     // ------------------------------------------------------------------ трапеза, отдых, медитация
@@ -646,7 +667,7 @@ public final class SectSchedule {
         int s = seat - 12;
         int side = s % 2;
         double dv = -1.5D - (s / 2) * 1.6D;
-        return new Task(Kind.EAT, "camp", side == 0 ? 3.5D : 6.5D, dv + 8.0D, side == 0 ? 1.0D : -1.0D, 0.0D);
+        return new Task(Kind.EAT, "camp", side == 0 ? 4.5D : 7.5D, dv + 8.0D, side == 0 ? 1.0D : -1.0D, 0.0D);
     }
 
     /**
@@ -677,7 +698,7 @@ public final class SectSchedule {
         int group = i / 3;
         int place = i % 3;
         // Кружки в два столбца: 17 человек — шесть кружков, полка лагеря не растягивается вдоль.
-        double cu = group % 2 == 0 ? -4.0D : 4.0D;
+        double cu = group % 2 == 0 ? 7.0D : 14.0D;
         double cv = -16.0D + (group / 2) * 8.0D;
         double a = place * (Math.PI * 2.0D / 3.0D);
         double du = Math.cos(a) * 2.0D;

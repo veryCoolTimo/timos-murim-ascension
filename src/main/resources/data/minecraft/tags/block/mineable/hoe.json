@@ -1,8 +1,10 @@
 {
- "replace": false,
- "values": [
-  "murim:plum_blossom",
-  "murim:plum_blossom_pale",
-  "murim:plum_blossom_red"
- ]
+  "replace": false,
+  "values": [
+    "murim:plum_blossom",
+    "murim:plum_blossom_pale",
+    "murim:plum_blossom_red",
+    "murim:int_floor_cushion",
+    "murim:int_mat"
+  ]
 }

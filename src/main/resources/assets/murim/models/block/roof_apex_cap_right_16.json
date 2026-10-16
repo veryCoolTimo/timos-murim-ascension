@@ -4,11 +4,12 @@
   "model": "murim:models/block/roof_apex_cap_right_16.obj",
   "flip_v": false,
   "emissive_ambient": false,
-  "automatic_culling": false,
+  "automatic_culling": true,
   "ambientocclusion": false,
   "render_type": "minecraft:solid",
   "textures": {
     "ends": "murim:block/roof_polish_ends",
+    "soffit": "murim:block/roof_polish_soffit",
     "particle": "murim:block/roof_polish_ends"
   }
 }

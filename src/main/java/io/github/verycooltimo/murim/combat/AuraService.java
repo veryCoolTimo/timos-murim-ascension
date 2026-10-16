@@ -84,6 +84,10 @@ public final class AuraService {
     }
 
     static float measure(ServerPlayer player) {
+        if (io.github.verycooltimo.murim.sect.seal.PenanceEnforcement.pinned(player)) {
+            player.getData(ModAttachments.AURA_GUST)[2] = -1;
+            return 1.0F;
+        }
         int rank = player.getData(ModAttachments.PROFILE).rank();
         float strongest = 0.0F;
         int sourceId = -1;
@@ -110,6 +114,7 @@ public final class AuraService {
      * отнимается: между порывами можно идти и отступать (docs/design/01).
      */
     private static void gusts(ServerPlayer player) {
+        if (io.github.verycooltimo.murim.sect.seal.PenanceEnforcement.pinned(player)) return;
         float pressure = player.getData(ModAttachments.PRESSURE);
         int[] state = player.getData(ModAttachments.AURA_GUST);
         if (pressure < AuraPressure.GUST_FROM) {

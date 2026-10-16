@@ -147,6 +147,7 @@ public final class SectSocial {
         String kind = colon < 0 ? condition : condition.substring(0, colon);
         String value = colon < 0 ? "" : condition.substring(colon + 1);
         return switch (kind) {
+            case "escort" -> SectEscorts.available(p, npc, value);
             case "journey_help" -> SectJourney.canHelp(p, npc);
             case "progression" -> SectProgression.matches(p, npc, value);
             case "request" -> SectService.state(p).member() && !SectPositions.disciplined(SectService.state(p))
@@ -198,7 +199,7 @@ public final class SectSocial {
         CompoundTag tag = npc.getPersistentData().getCompound("murim_sect_yield");
         if (tag.getLong("until") <= npc.level().getGameTime()) return false;
         Vec3 spot = new Vec3(tag.getDouble("x"), tag.getDouble("y"), tag.getDouble("z"));
-        if (npc.position().distanceToSqr(spot) > 0.25D) npc.getNavigation().moveTo(spot.x, spot.y, spot.z, 0.7D);
+        if (npc.position().distanceToSqr(spot) > 0.25D) npc.walking().walk(spot, 0.7D);
         else npc.getNavigation().stop();
         return true;
     }

@@ -115,11 +115,10 @@ public final class RoofBlocks {
 
     /**
      * Eave course: FACING points up the roof (the way the placer looks, like stairs), the round tile ends sit on the
-     * opposite edge. Thin: the plate ends at the height of the stairs' lower step.
+     * opposite edge. The tile surface is backed by a solid core down to the cell floor.
      */
     public static class Eave extends HorizontalDirectionalBlock {
         public static final MapCodec<Eave> CODEC = simpleCodec(Eave::new);
-        private static final VoxelShape SHAPE = Block.box(0, 0, 0, 16, 4, 16);
 
         public Eave(Properties properties) {
             super(properties);
@@ -163,8 +162,18 @@ public final class RoofBlocks {
         }
 
         @Override
+        protected boolean useShapeForLightOcclusion(BlockState state) {
+            return true;
+        }
+
+        @Override
+        protected VoxelShape getOcclusionShape(BlockState state, BlockGetter level, BlockPos pos) {
+            return RoofSolidShapes.get(state);
+        }
+
+        @Override
         protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-            return SHAPE;
+            return RoofSolidShapes.get(state);
         }
 
         @Override
@@ -190,30 +199,6 @@ public final class RoofBlocks {
             return CODEC;
         }
 
-        // The raised corner beam/horn remains inside its own cell.
-        private static final VoxelShape EAST = net.minecraft.world.phys.shapes.Shapes.or(
-                Block.box(0, 0, 0, 16, 4, 16), Block.box(0, 4, 0, 6, 13, 6),
-                Block.box(6, 4, 6, 12, 10, 12));
-        private static final VoxelShape SOUTH = net.minecraft.world.phys.shapes.Shapes.or(
-                Block.box(0, 0, 0, 16, 4, 16), Block.box(10, 4, 0, 16, 13, 6),
-                Block.box(4, 4, 6, 10, 10, 12));
-        private static final VoxelShape WEST = net.minecraft.world.phys.shapes.Shapes.or(
-                Block.box(0, 0, 0, 16, 4, 16), Block.box(10, 4, 10, 16, 13, 16),
-                Block.box(4, 4, 4, 10, 10, 10));
-        private static final VoxelShape NORTH = net.minecraft.world.phys.shapes.Shapes.or(
-                Block.box(0, 0, 0, 16, 4, 16), Block.box(0, 4, 10, 6, 13, 16),
-                Block.box(6, 4, 4, 12, 10, 10));
-
-        @Override
-        protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-            // Canonical corner is north-west. Rotate with FACING.
-            return switch (state.getValue(FACING)) {
-                case EAST -> EAST;
-                case SOUTH -> SOUTH;
-                case WEST -> WEST;
-                default -> NORTH;
-            };
-        }
 
         /** The facing whose corner lies behind a placer looking along {@code look}. */
         public static Direction facingFor(Vec3 look) {
@@ -271,9 +256,6 @@ public final class RoofBlocks {
         public static final MapCodec<Ridge> CODEC = simpleCodec(Ridge::new);
         public static final BooleanProperty NEGATIVE = BooleanProperty.create("negative");
         public static final BooleanProperty POSITIVE = BooleanProperty.create("positive");
-        // roof_polish.py: one cream rail, 4.5 px wide and 5 px high.
-        private static final VoxelShape SHAPE_X = Block.box(0, 0, 5.75, 16, 5, 10.25);
-        private static final VoxelShape SHAPE_Z = Block.box(5.75, 0, 0, 10.25, 5, 16);
 
         public Ridge(Properties properties) {
             super(properties);
@@ -341,8 +323,18 @@ public final class RoofBlocks {
         }
 
         @Override
+        protected boolean useShapeForLightOcclusion(BlockState state) {
+            return true;
+        }
+
+        @Override
+        protected VoxelShape getOcclusionShape(BlockState state, BlockGetter level, BlockPos pos) {
+            return RoofSolidShapes.get(state);
+        }
+
+        @Override
         protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-            return state.getValue(AXIS) == Direction.Axis.X ? SHAPE_X : SHAPE_Z;
+            return RoofSolidShapes.get(state);
         }
 
         @Override
@@ -374,17 +366,6 @@ public final class RoofBlocks {
     /** Raised ridge end; FACING points along the ridge it closes (toward the ridge). */
     public static class RidgeEnd extends HorizontalDirectionalBlock {
         public static final MapCodec<RidgeEnd> CODEC = simpleCodec(RidgeEnd::new);
-        private static final VoxelShape CAP_X = Block.box(0, 0, 5.75, 16, 5, 10.25);
-        private static final VoxelShape CAP_Z = Block.box(5.75, 0, 0, 10.25, 5, 16);
-        // Modest curved end blade: its outline and every model face stay within this cell.
-        private static final VoxelShape EAST = net.minecraft.world.phys.shapes.Shapes.or(CAP_X,
-                Block.box(2, 3, 5.75, 12, 11, 10.25));
-        private static final VoxelShape WEST = net.minecraft.world.phys.shapes.Shapes.or(CAP_X,
-                Block.box(4, 3, 5.75, 14, 11, 10.25));
-        private static final VoxelShape SOUTH = net.minecraft.world.phys.shapes.Shapes.or(CAP_Z,
-                Block.box(5.75, 3, 2, 10.25, 11, 12));
-        private static final VoxelShape NORTH = net.minecraft.world.phys.shapes.Shapes.or(CAP_Z,
-                Block.box(5.75, 3, 4, 10.25, 11, 14));
 
         public RidgeEnd(Properties properties) {
             super(properties);
@@ -429,13 +410,18 @@ public final class RoofBlocks {
         }
 
         @Override
+        protected boolean useShapeForLightOcclusion(BlockState state) {
+            return true;
+        }
+
+        @Override
+        protected VoxelShape getOcclusionShape(BlockState state, BlockGetter level, BlockPos pos) {
+            return RoofSolidShapes.get(state);
+        }
+
+        @Override
         protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-            return switch (state.getValue(FACING)) {
-                case EAST -> EAST;
-                case WEST -> WEST;
-                case SOUTH -> SOUTH;
-                default -> NORTH;
-            };
+            return RoofSolidShapes.get(state);
         }
 
         @Override
@@ -448,8 +434,6 @@ public final class RoofBlocks {
     public static class RakeEnd extends Facing {
         public static final MapCodec<RakeEnd> CODEC = simpleCodec(RakeEnd::new);
         public static final EnumProperty<Side> SIDE = EaveRise.SIDE;
-        private static final VoxelShape SHAPE_X = Block.box(0, 0, 5.75, 16, 11, 10.25);
-        private static final VoxelShape SHAPE_Z = Block.box(5.75, 0, 0, 10.25, 11, 16);
 
         public RakeEnd(Properties properties) {
             super(properties);
@@ -478,8 +462,18 @@ public final class RoofBlocks {
         }
 
         @Override
+        protected boolean useShapeForLightOcclusion(BlockState state) {
+            return true;
+        }
+
+        @Override
+        protected VoxelShape getOcclusionShape(BlockState state, BlockGetter level, BlockPos pos) {
+            return RoofSolidShapes.get(state);
+        }
+
+        @Override
         protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-            return state.getValue(FACING).getAxis() == Direction.Axis.X ? SHAPE_X : SHAPE_Z;
+            return RoofSolidShapes.get(state);
         }
 
         @Override
@@ -503,7 +497,6 @@ public final class RoofBlocks {
     /** Hip-roof apex: the hip ridges meet under a tapering cap. */
     public static class Finial extends Block {
         public static final MapCodec<Finial> CODEC = simpleCodec(Finial::new);
-        private static final VoxelShape SHAPE = Block.box(5, 0, 5, 11, 14, 11);
 
         public Finial(Properties properties) {
             super(properties);
@@ -515,8 +508,18 @@ public final class RoofBlocks {
         }
 
         @Override
+        protected boolean useShapeForLightOcclusion(BlockState state) {
+            return true;
+        }
+
+        @Override
+        protected VoxelShape getOcclusionShape(BlockState state, BlockGetter level, BlockPos pos) {
+            return RoofSolidShapes.get(state);
+        }
+
+        @Override
         protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-            return SHAPE;
+            return RoofSolidShapes.get(state);
         }
     }
 
@@ -526,7 +529,6 @@ public final class RoofBlocks {
      * FACING; SHAPE turns it into a hip or a valley next to other stairs.
      */
     public static class LowSlope extends Slope {
-        private static final VoxelShape LOWER = Block.box(0, 0, 0, 16, 8, 16);
 
         public LowSlope(BlockState base, Properties properties) {
             super(base, properties);
@@ -538,12 +540,6 @@ public final class RoofBlocks {
                 return 0;
             }
             return state.getValue(HALF) == net.minecraft.world.level.block.state.properties.Half.TOP ? 16 : 8;
-        }
-
-        @Override
-        protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-            return state.getValue(HALF) == net.minecraft.world.level.block.state.properties.Half.BOTTOM
-                    ? LOWER : net.minecraft.world.phys.shapes.Shapes.block();
         }
     }
 
@@ -580,6 +576,16 @@ public final class RoofBlocks {
         public Slope(BlockState base, Properties properties) {
             super(base, properties);
             registerDefaultState(defaultBlockState().setValue(RIDGE, ApexRidge.NONE));
+        }
+
+        @Override
+        protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+            return RoofSolidShapes.get(state);
+        }
+
+        @Override
+        protected VoxelShape getOcclusionShape(BlockState state, BlockGetter level, BlockPos pos) {
+            return RoofSolidShapes.get(state);
         }
 
         /** Height (px) of the high edge where a ridge can sit, 0 when this state cannot carry one. */
@@ -820,6 +826,31 @@ public final class RoofBlocks {
         }
     }
 
+    /** Solid seating course at the junction with an upper-storey wall. */
+    public static class WallRidge extends Facing {
+        public static final MapCodec<WallRidge> CODEC = simpleCodec(WallRidge::new);
+
+        public WallRidge(Properties properties) { super(properties); }
+
+        @Override
+        protected MapCodec<? extends HorizontalDirectionalBlock> codec() { return CODEC; }
+
+        @Override
+        protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+            return RoofSolidShapes.get(state);
+        }
+
+        @Override
+        protected boolean useShapeForLightOcclusion(BlockState state) {
+            return true;
+        }
+
+        @Override
+        protected VoxelShape getOcclusionShape(BlockState state, BlockGetter level, BlockPos pos) {
+            return RoofSolidShapes.get(state);
+        }
+    }
+
     /** Corner bracket set: the corner lies behind the placer, as for {@link Corner}. */
     public static class BracketCorner extends Facing {
         public static final MapCodec<BracketCorner> CODEC = simpleCodec(BracketCorner::new);
@@ -892,7 +923,6 @@ public final class RoofBlocks {
     public static class Gable extends Facing {
         public static final MapCodec<Gable> CODEC = simpleCodec(Gable::new);
         public static final EnumProperty<GableShape> SHAPE = EnumProperty.create("shape", GableShape.class);
-        private static final VoxelShape LOWER = Block.box(0, 0, 0, 16, 8, 16);
 
         public Gable(Properties properties) {
             super(properties);
@@ -919,8 +949,18 @@ public final class RoofBlocks {
         }
 
         @Override
+        protected boolean useShapeForLightOcclusion(BlockState state) {
+            return true;
+        }
+
+        @Override
+        protected VoxelShape getOcclusionShape(BlockState state, BlockGetter level, BlockPos pos) {
+            return RoofSolidShapes.get(state);
+        }
+
+        @Override
         protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-            return state.getValue(SHAPE) == GableShape.LOW_LOWER ? LOWER : net.minecraft.world.phys.shapes.Shapes.block();
+            return RoofSolidShapes.get(state);
         }
 
         @Override
@@ -982,13 +1022,6 @@ public final class RoofBlocks {
      */
     public static class Course extends Slope {
         public static final EnumProperty<CourseProfile> PROFILE = EnumProperty.create("profile", CourseProfile.class);
-        private static final VoxelShape[] SHAPES = new VoxelShape[CourseProfile.values().length];
-
-        static {
-            for (CourseProfile p : CourseProfile.values()) {
-                SHAPES[p.ordinal()] = Block.box(0, 0, 0, 16, p.top, 16);
-            }
-        }
 
         public Course(BlockState base, Properties properties) {
             super(base, properties);
@@ -998,11 +1031,6 @@ public final class RoofBlocks {
         @Override
         int apexHeight(BlockState state) {
             return 0;
-        }
-
-        @Override
-        protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-            return SHAPES[state.getValue(PROFILE).ordinal()];
         }
 
         /** A neighbour that shapes a course: a course of the same profile and half (others lie at other heights). */
@@ -1104,39 +1132,60 @@ public final class RoofBlocks {
 
         @Override
         public @Nullable BlockState getStateForPlacement(BlockPlaceContext context) {
+            BlockState fit = fit(context.getLevel(), context.getClickedPos(), defaultBlockState());
+            return fit != null ? fit : defaultBlockState().setValue(FACING, context.getHorizontalDirection());
+        }
+
+        /** Follow the roof built around the panel later (author 16.10: a ridge put on top was not noticed). */
+        @Override
+        protected BlockState updateShape(BlockState state, Direction dir, BlockState neighbor, LevelAccessor level,
+                                         BlockPos pos, BlockPos neighborPos) {
+            BlockState fit = fit(level, pos, state);
+            return fit != null ? fit : state;
+        }
+
+        /** Profile/facing from the neighbours: a ridge above makes the peak, a slope beside sets the contour. */
+        private @Nullable BlockState fit(BlockGetter level, BlockPos pos, BlockState base) {
+            BlockState up = level.getBlockState(pos.above());
+            if (up.getBlock() instanceof Ridge || up.getBlock() instanceof RidgeEnd || up.getBlock() instanceof RakeEnd) {
+                return base.setValue(PROFILE, PanelProfile.PEAK);
+            }
             for (Direction d : Direction.Plane.HORIZONTAL) {
-                BlockState n = context.getLevel().getBlockState(context.getClickedPos().relative(d));
+                BlockState n = level.getBlockState(pos.relative(d));
                 if (n.getBlock() instanceof Slope && n.getValue(Slope.FACING).getAxis() != d.getAxis()) {
                     Direction f = n.getValue(Slope.FACING);
                     PanelProfile p = n.getBlock() instanceof Course c
                             ? (n.getValue(Course.PROFILE) == CourseProfile.KNEE ? PanelProfile.KNEE : PanelProfile.LOW_HIGH)
                             : PanelProfile.STEEP;
-                    return defaultBlockState().setValue(FACING, f).setValue(PROFILE, p)
+                    return base.setValue(FACING, f).setValue(PROFILE, p)
                             .setValue(SIDE, f.getCounterClockWise() == d ? Side.LEFT : Side.RIGHT);
                 }
             }
             for (Direction d : Direction.Plane.HORIZONTAL) {
-                BlockState above = context.getLevel().getBlockState(context.getClickedPos().relative(d).above());
+                BlockState above = level.getBlockState(pos.relative(d).above());
                 if (above.getBlock() instanceof Slope && !(above.getBlock() instanceof LowSlope)
                         && !(above.getBlock() instanceof Course) && above.getValue(Slope.FACING).getAxis() != d.getAxis()) {
                     Direction f = above.getValue(Slope.FACING);
-                    return defaultBlockState().setValue(FACING, f).setValue(PROFILE, PanelProfile.UNDER_STEEP)
+                    return base.setValue(FACING, f).setValue(PROFILE, PanelProfile.UNDER_STEEP)
                             .setValue(SIDE, f.getCounterClockWise() == d ? Side.LEFT : Side.RIGHT);
                 }
             }
-            return defaultBlockState().setValue(FACING, context.getHorizontalDirection());
+            return null;
+        }
+
+        @Override
+        protected boolean useShapeForLightOcclusion(BlockState state) {
+            return true;
+        }
+
+        @Override
+        protected VoxelShape getOcclusionShape(BlockState state, BlockGetter level, BlockPos pos) {
+            return RoofSolidShapes.get(state);
         }
 
         @Override
         protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-            Direction f = state.getValue(FACING);
-            Direction plate = state.getValue(SIDE) == Side.LEFT ? f.getCounterClockWise() : f.getClockWise();
-            return switch (plate) {
-                case NORTH -> Block.box(0, 0, 0, 16, 16, 10.25);
-                case SOUTH -> Block.box(0, 0, 5.75, 16, 16, 16);
-                case WEST -> Block.box(0, 0, 0, 10.25, 16, 16);
-                default -> Block.box(5.75, 0, 0, 16, 16, 16);
-            };
+            return RoofSolidShapes.get(state);
         }
 
         @Override

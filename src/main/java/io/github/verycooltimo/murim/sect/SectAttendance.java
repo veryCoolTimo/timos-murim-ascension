@@ -351,7 +351,8 @@ public final class SectAttendance {
         if (period == SectSchedule.Period.TRAINING) {
             // На столбах — значит на столбе (выше площадки), а не рядом на земле.
             Vec3 pad = layout.at("poles", 0.0D, 0.0D);
-            if (layout.inside("poles", pos, 0.5D) && pad != null && pos.y >= pad.y + 1.0D && p.onGround()) {
+            if (layout.inside("training", pos, 0.0D) && layout.inside("poles", pos, 0.5D)
+                    && pad != null && pos.y >= pad.y + 1.0D && p.onGround()) {
                 tag.putInt("poles", tag.getInt("poles") + dt);
             }
             if (nearLecture(p)) {

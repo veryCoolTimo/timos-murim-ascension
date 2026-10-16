@@ -1,0 +1,139 @@
+{
+  "variants": {
+    "facing=south,col=0,part=0": {
+      "model": "murim:block/shr_ancestor_shrine_0_0"
+    },
+    "facing=south,col=0,part=1": {
+      "model": "murim:block/shr_ancestor_shrine_0_1"
+    },
+    "facing=south,col=0,part=2": {
+      "model": "murim:block/shr_ancestor_shrine_0_2"
+    },
+    "facing=south,col=1,part=0": {
+      "model": "murim:block/shr_ancestor_shrine_1_0"
+    },
+    "facing=south,col=1,part=1": {
+      "model": "murim:block/shr_ancestor_shrine_1_1"
+    },
+    "facing=south,col=1,part=2": {
+      "model": "murim:block/shr_ancestor_shrine_1_2"
+    },
+    "facing=south,col=2,part=0": {
+      "model": "murim:block/shr_ancestor_shrine_2_0"
+    },
+    "facing=south,col=2,part=1": {
+      "model": "murim:block/shr_ancestor_shrine_2_1"
+    },
+    "facing=south,col=2,part=2": {
+      "model": "murim:block/shr_ancestor_shrine_2_2"
+    },
+    "facing=west,col=0,part=0": {
+      "model": "murim:block/shr_ancestor_shrine_0_0",
+      "y": 90
+    },
+    "facing=west,col=0,part=1": {
+      "model": "murim:block/shr_ancestor_shrine_0_1",
+      "y": 90
+    },
+    "facing=west,col=0,part=2": {
+      "model": "murim:block/shr_ancestor_shrine_0_2",
+      "y": 90
+    },
+    "facing=west,col=1,part=0": {
+      "model": "murim:block/shr_ancestor_shrine_1_0",
+      "y": 90
+    },
+    "facing=west,col=1,part=1": {
+      "model": "murim:block/shr_ancestor_shrine_1_1",
+      "y": 90
+    },
+    "facing=west,col=1,part=2": {
+      "model": "murim:block/shr_ancestor_shrine_1_2",
+      "y": 90
+    },
+    "facing=west,col=2,part=0": {
+      "model": "murim:block/shr_ancestor_shrine_2_0",
+      "y": 90
+    },
+    "facing=west,col=2,part=1": {
+      "model": "murim:block/shr_ancestor_shrine_2_1",
+      "y": 90
+    },
+    "facing=west,col=2,part=2": {
+      "model": "murim:block/shr_ancestor_shrine_2_2",
+      "y": 90
+    },
+    "facing=north,col=0,part=0": {
+      "model": "murim:block/shr_ancestor_shrine_0_0",
+      "y": 180
+    },
+    "facing=north,col=0,part=1": {
+      "model": "murim:block/shr_ancestor_shrine_0_1",
+      "y": 180
+    },
+    "facing=north,col=0,part=2": {
+      "model": "murim:block/shr_ancestor_shrine_0_2",
+      "y": 180
+    },
+    "facing=north,col=1,part=0": {
+      "model": "murim:block/shr_ancestor_shrine_1_0",
+      "y": 180
+    },
+    "facing=north,col=1,part=1": {
+      "model": "murim:block/shr_ancestor_shrine_1_1",
+      "y": 180
+    },
+    "facing=north,col=1,part=2": {
+      "model": "murim:block/shr_ancestor_shrine_1_2",
+      "y": 180
+    },
+    "facing=north,col=2,part=0": {
+      "model": "murim:block/shr_ancestor_shrine_2_0",
+      "y": 180
+    },
+    "facing=north,col=2,part=1": {
+      "model": "murim:block/shr_ancestor_shrine_2_1",
+      "y": 180
+    },
+    "facing=north,col=2,part=2": {
+      "model": "murim:block/shr_ancestor_shrine_2_2",
+      "y": 180
+    },
+    "facing=east,col=0,part=0": {
+      "model": "murim:block/shr_ancestor_shrine_0_0",
+      "y": 270
+    },
+    "facing=east,col=0,part=1": {
+      "model": "murim:block/shr_ancestor_shrine_0_1",
+      "y": 270
+    },
+    "facing=east,col=0,part=2": {
+      "model": "murim:block/shr_ancestor_shrine_0_2",
+      "y": 270
+    },
+    "facing=east,col=1,part=0": {
+      "model": "murim:block/shr_ancestor_shrine_1_0",
+      "y": 270
+    },
+    "facing=east,col=1,part=1": {
+      "model": "murim:block/shr_ancestor_shrine_1_1",
+      "y": 270
+    },
+    "facing=east,col=1,part=2": {
+      "model": "murim:block/shr_ancestor_shrine_1_2",
+      "y": 270
+    },
+    "facing=east,col=2,part=0": {
+      "model": "murim:block/shr_ancestor_shrine_2_0",
+      "y": 270
+    },
+    "facing=east,col=2,part=1": {
+      "model": "murim:block/shr_ancestor_shrine_2_1",
+      "y": 270
+    },
+    "facing=east,col=2,part=2": {
+      "model": "murim:block/shr_ancestor_shrine_2_2",
+      "y": 270
+    }
+  }
+}

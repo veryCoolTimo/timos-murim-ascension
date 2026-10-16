@@ -152,6 +152,10 @@ final class ClientPayloadBridge {
         }
     }
 
+    public static void handlePenance(PenancePayload payload) {
+        io.github.verycooltimo.murim.client.ClientPenanceState.set(payload.pinned(), payload.sourceId());
+    }
+
     public static void handleAuraGust(AuraGustPayload payload) {
         io.github.verycooltimo.murim.client.ClientAuraState.gust(payload.sourceId(), payload.victimId(),
                 payload.strength(), payload.pull());

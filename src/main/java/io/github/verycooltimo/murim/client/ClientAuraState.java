@@ -164,6 +164,11 @@ public final class ClientAuraState {
             strongest = 0.0F;
         }
         strongest *= (float)io.github.verycooltimo.murim.client.vfx.VfxManager.pressureFactor(minecraft.player.getId());
+        if (ClientPenanceState.pinned()) {
+            strongest = 1.0F;
+            strongestId = ClientPenanceState.source();
+            demonic = false;
+        }
         target = strongest;
         if (strongestId >= 0) {
             sourceId = strongestId;

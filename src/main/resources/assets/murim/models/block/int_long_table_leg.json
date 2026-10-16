@@ -1,0 +1,69 @@
+{
+  "parent": "minecraft:block/block",
+  "ambientocclusion": false,
+  "textures": {
+    "w": "murim:block/intseat_wood",
+    "particle": "murim:block/intseat_wood"
+  },
+  "elements": [
+    {
+      "from": [
+        0.8,
+        0,
+        0.8
+      ],
+      "to": [
+        3.2,
+        12,
+        3.2
+      ],
+      "faces": {
+        "north": {
+          "texture": "#w",
+          "uv": [
+            12.8,
+            4,
+            15.2,
+            16.0
+          ]
+        },
+        "south": {
+          "texture": "#w",
+          "uv": [
+            0.8,
+            4,
+            3.2,
+            16.0
+          ]
+        },
+        "east": {
+          "texture": "#w",
+          "uv": [
+            12.8,
+            4,
+            15.2,
+            16.0
+          ]
+        },
+        "west": {
+          "texture": "#w",
+          "uv": [
+            0.8,
+            4,
+            3.2,
+            16.0
+          ]
+        },
+        "up": {
+          "texture": "#w",
+          "uv": [
+            0.8,
+            0.8,
+            3.2,
+            3.2
+          ]
+        }
+      }
+    }
+  ]
+}

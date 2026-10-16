@@ -1,0 +1,40 @@
+{
+  "variants": {
+    "layers=1,waterlogged=true": [
+      {
+        "model": "murim:block/polished_hua_granite_layer_1_0",
+        "weight": 1
+      }
+    ],
+    "layers=1,waterlogged=false": [
+      {
+        "model": "murim:block/polished_hua_granite_layer_1_0",
+        "weight": 1
+      }
+    ],
+    "layers=2,waterlogged=true": [
+      {
+        "model": "murim:block/polished_hua_granite_layer_2_0",
+        "weight": 1
+      }
+    ],
+    "layers=2,waterlogged=false": [
+      {
+        "model": "murim:block/polished_hua_granite_layer_2_0",
+        "weight": 1
+      }
+    ],
+    "layers=3,waterlogged=true": [
+      {
+        "model": "murim:block/polished_hua_granite_layer_3_0",
+        "weight": 1
+      }
+    ],
+    "layers=3,waterlogged=false": [
+      {
+        "model": "murim:block/polished_hua_granite_layer_3_0",
+        "weight": 1
+      }
+    ]
+  }
+}

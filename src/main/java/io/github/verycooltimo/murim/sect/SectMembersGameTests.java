@@ -102,6 +102,8 @@ public final class SectMembersGameTests {
         Vec3 rel = at.subtract(helper.absoluteVec(Vec3.ZERO));
         SectDisciple out = npc(helper, yard, dayGuard.key(), rel.x - 0.5D, rel.z - 0.5D);
         SectDisciple in = npc(helper, yard, SectRota.nightWatch(day, 0).key(), 20, 20);
+        SectSchedule.Task nightPost = SectSchedule.post(SectRota.duty(in.member().orElseThrow(), helper.getLevel().getDayTime()).orElseThrow());
+        Vec3 nightAt = yard.at(nightPost.zone(), nightPost.du(), nightPost.dv());
         helper.assertTrue(SectLife.onWatch(out), "сменяемый ушёл с поста до прихода сменщика");
         boolean[] bowed = new boolean[1];
         helper.onEachTick(() -> bowed[0] |= in.pose() == SectPose.BOW && out.pose() == SectPose.BOW);
@@ -109,12 +111,40 @@ public final class SectMembersGameTests {
             helper.assertTrue(bowed[0], "смена без поклона");
             helper.assertTrue(!SectLife.onWatch(out), "сменённый всё ещё на страже");
             helper.assertTrue(SectLife.onWatch(in), "сменщик не на страже");
-            helper.assertTrue(in.position().distanceTo(at) < 2.5D, "сменщик не на посту: " + String.format("%.1f", in.position().distanceTo(at)));
+            helper.assertTrue(in.position().distanceTo(nightAt) < 2.5D, "сменщик не на ночном посту: " + String.format("%.1f", in.position().distanceTo(nightAt)));
             helper.assertTrue(out.position().distanceTo(at) > 2.0D, "сменённый не ушёл с поста");
         });
     }
 
     // ------------------------------------------------------------------ журнал секты
+
+    @GameTest(template = YARD, timeoutTicks = 40, batch = "sect_members_log")
+    public static void poleAttendanceUsesTrainingCornerInsteadOfOldCamp(GameTestHelper helper) {
+        var origin = helper.absolutePos(net.minecraft.core.BlockPos.ZERO);
+        var site = io.github.verycooltimo.murim.world.hua.MountHuaSite.placement(origin.getX(), origin.getZ(), 70, 0);
+        SectLayout layout = SectLayout.hua(site);
+        ServerPlayer p = SectGameTests.fakePlayer(helper);
+        p.setData(ModAttachments.SECT, SectState.NONE.joined().with("met_mentor"));
+        SectGameTests.setPeriod(helper, SectSchedule.Period.TRAINING);
+        // The old pole yard is now housing: even elevated, grounded practice there cannot count.
+        int[] old = site.toWorld(-50, 22);
+        p.moveTo(old[0] + 0.5D, site.worldY(140) + 2, old[1] + 0.5D, 0, 0);
+        p.setOnGround(true);
+        SectAttendance.tick(p, layout, SectAttendance.PRACTICE_TICKS);
+        helper.assertTrue(!SectAttendance.current(p).today().did(Activity.LESSON), "old camp poles counted");
+        Vec3 pad = layout.at("poles", 0, 0);
+        p.moveTo(pad.x, pad.y, pad.z, 0, 0);
+        SectAttendance.tick(p, layout, SectAttendance.PRACTICE_TICKS);
+        helper.assertTrue(!SectAttendance.current(p).today().did(Activity.LESSON), "ground beside poles counted");
+        p.moveTo(pad.x, pad.y + 1, pad.z, 0, 0);
+        p.setOnGround(false);
+        SectAttendance.tick(p, layout, SectAttendance.PRACTICE_TICKS);
+        helper.assertTrue(!SectAttendance.current(p).today().did(Activity.LESSON), "airborne practice counted");
+        p.setOnGround(true);
+        SectAttendance.tick(p, layout, SectAttendance.PRACTICE_TICKS);
+        helper.assertTrue(SectAttendance.current(p).today().did(Activity.LESSON), "new training poles did not count");
+        helper.succeed();
+    }
 
     /**
      * День ученика: перекличка строя и занятий, занятие через крючок (упражнение по id), трапеза за столом; вечером

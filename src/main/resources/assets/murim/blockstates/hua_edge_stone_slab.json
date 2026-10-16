@@ -1,0 +1,58 @@
+{
+  "variants": {
+    "type=bottom": [
+      {
+        "model": "murim:block/hua_edge_stone_slab_0",
+        "weight": 6
+      },
+      {
+        "model": "murim:block/hua_edge_stone_slab_1",
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_edge_stone_slab_2",
+        "weight": 2
+      },
+      {
+        "model": "murim:block/hua_edge_stone_slab_3",
+        "weight": 2
+      }
+    ],
+    "type=top": [
+      {
+        "model": "murim:block/hua_edge_stone_slab_top_0",
+        "weight": 6
+      },
+      {
+        "model": "murim:block/hua_edge_stone_slab_top_1",
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_edge_stone_slab_top_2",
+        "weight": 2
+      },
+      {
+        "model": "murim:block/hua_edge_stone_slab_top_3",
+        "weight": 2
+      }
+    ],
+    "type=double": [
+      {
+        "model": "murim:block/hua_edge_stone_slab_full_0",
+        "weight": 6
+      },
+      {
+        "model": "murim:block/hua_edge_stone_slab_full_1",
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_edge_stone_slab_full_2",
+        "weight": 2
+      },
+      {
+        "model": "murim:block/hua_edge_stone_slab_full_3",
+        "weight": 2
+      }
+    ]
+  }
+}

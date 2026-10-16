@@ -119,6 +119,7 @@ public final class FootworkService {
 
     /** R на технике шага с контекстом ввода. */
     public static void request(ServerPlayer player, ResourceLocation techniqueId, int input) {
+        if (io.github.verycooltimo.murim.sect.seal.PenanceEnforcement.pinned(player)) return;
         TechniqueDefinition def = TechniqueLoader.get(techniqueId);
         FootworkFamily family = family(def);
         if (family == null) {
@@ -661,6 +662,7 @@ public final class FootworkService {
      * отталкивание (только Бог Ветров, L4+). Поворот в воздухе теперь на R, не на прыжке.
      */
     public static void jump(ServerPlayer player, boolean clientGrounded) {
+        if (io.github.verycooltimo.murim.sect.seal.PenanceEnforcement.pinned(player)) return;
         if (io.github.verycooltimo.murim.technique.DemonicExecutor.jump(player)) return;
         int[] s = player.getData(ModAttachments.TRAVERSE);
         if (s[ACTIVE] == 0) {
@@ -761,6 +763,7 @@ public final class FootworkService {
 
     private static boolean canSustain(ServerPlayer player) {
         return player.isAlive() && !player.isRemoved() && !player.isSpectator()
+                && !io.github.verycooltimo.murim.sect.seal.PenanceEnforcement.pinned(player)
                 && player.getData(ModAttachments.PROFILE).isAwakened()
                 && AuraService.pressure(player) < AuraPressure.TECHNIQUE_LOCK
                 && !player.getData(ModAttachments.TECHNIQUE_STATE).isActive();

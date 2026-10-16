@@ -1,0 +1,245 @@
+{
+  "textures": {
+    "front": "murim:block/hall_grand_door_front",
+    "back": "murim:block/hall_grand_door_back",
+    "edge": "murim:block/red_lacquer",
+    "iron": "murim:block/hall_grand_door_gold",
+    "iron_dark": "murim:block/gate_door_iron_dark",
+    "stud": "murim:block/hall_grand_door_gold",
+    "crown": "murim:block/hall_grand_door_gold_crown",
+    "particle": "murim:block/hall_grand_door_front"
+  },
+  "elements": [
+    {
+      "name": "leaf",
+      "from": [
+        0,
+        0,
+        6.5
+      ],
+      "to": [
+        16,
+        16,
+        9.5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            4,
+            0.0,
+            8,
+            2.6667
+          ],
+          "texture": "#front"
+        },
+        "south": {
+          "uv": [
+            8,
+            0.0,
+            12,
+            2.6667
+          ],
+          "texture": "#back"
+        },
+        "west": {
+          "uv": [
+            6.5,
+            0,
+            9.5,
+            16
+          ],
+          "texture": "#edge"
+        },
+        "up": {
+          "uv": [
+            0,
+            6.5,
+            16,
+            9.5
+          ],
+          "texture": "#edge"
+        }
+      }
+    },
+    {
+      "name": "stud_21_87_bar0",
+      "from": [
+        9.75,
+        6.25,
+        6
+      ],
+      "to": [
+        12.25,
+        7.75,
+        6.5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            3.75,
+            8.25,
+            6.25,
+            9.75
+          ],
+          "texture": "#stud"
+        },
+        "east": {
+          "uv": [
+            9.5,
+            8.25,
+            10,
+            9.75
+          ],
+          "texture": "#stud"
+        },
+        "west": {
+          "uv": [
+            6,
+            8.25,
+            6.5,
+            9.75
+          ],
+          "texture": "#stud"
+        },
+        "up": {
+          "uv": [
+            9.75,
+            6,
+            12.25,
+            6.5
+          ],
+          "texture": "#stud"
+        },
+        "down": {
+          "uv": [
+            9.75,
+            9.5,
+            12.25,
+            10
+          ],
+          "texture": "#stud"
+        }
+      }
+    },
+    {
+      "name": "stud_21_87_bar1",
+      "from": [
+        10.25,
+        5.75,
+        6.05
+      ],
+      "to": [
+        11.75,
+        8.25,
+        6.5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            4.25,
+            7.75,
+            5.75,
+            10.25
+          ],
+          "texture": "#stud"
+        },
+        "east": {
+          "uv": [
+            9.5,
+            7.75,
+            9.95,
+            10.25
+          ],
+          "texture": "#stud"
+        },
+        "west": {
+          "uv": [
+            6.05,
+            7.75,
+            6.5,
+            10.25
+          ],
+          "texture": "#stud"
+        },
+        "up": {
+          "uv": [
+            10.25,
+            6.05,
+            11.75,
+            6.5
+          ],
+          "texture": "#stud"
+        },
+        "down": {
+          "uv": [
+            10.25,
+            9.5,
+            11.75,
+            9.95
+          ],
+          "texture": "#stud"
+        }
+      }
+    },
+    {
+      "name": "stud_21_87_crown",
+      "from": [
+        10.3,
+        6.3,
+        5.75
+      ],
+      "to": [
+        11.7,
+        7.7,
+        6.5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            4.3,
+            8.3,
+            5.7,
+            9.7
+          ],
+          "texture": "#crown"
+        },
+        "east": {
+          "uv": [
+            9.5,
+            8.3,
+            10.25,
+            9.7
+          ],
+          "texture": "#crown"
+        },
+        "west": {
+          "uv": [
+            5.75,
+            8.3,
+            6.5,
+            9.7
+          ],
+          "texture": "#crown"
+        },
+        "up": {
+          "uv": [
+            10.3,
+            5.75,
+            11.7,
+            6.5
+          ],
+          "texture": "#crown"
+        },
+        "down": {
+          "uv": [
+            10.3,
+            9.5,
+            11.7,
+            10.25
+          ],
+          "texture": "#crown"
+        }
+      }
+    }
+  ]
+}

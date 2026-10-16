@@ -10,50 +10,11 @@
     },
     {
       "when": {
-        "axis": "x",
-        "negative": "false"
-      },
-      "apply": {
-        "model": "murim:block/roof_ridge_cap"
-      }
-    },
-    {
-      "when": {
-        "axis": "x",
-        "positive": "false"
-      },
-      "apply": {
-        "model": "murim:block/roof_ridge_cap",
-        "y": 180
-      }
-    },
-    {
-      "when": {
         "axis": "z"
       },
       "apply": {
         "model": "murim:block/roof_ridge",
         "y": 90
-      }
-    },
-    {
-      "when": {
-        "axis": "z",
-        "negative": "false"
-      },
-      "apply": {
-        "model": "murim:block/roof_ridge_cap",
-        "y": 90
-      }
-    },
-    {
-      "when": {
-        "axis": "z",
-        "positive": "false"
-      },
-      "apply": {
-        "model": "murim:block/roof_ridge_cap",
-        "y": 270
       }
     }
   ]

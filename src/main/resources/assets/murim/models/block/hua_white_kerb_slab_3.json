@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/slab",
+  "textures": {
+    "bottom": "murim:block/hua_white_kerb_d",
+    "top": "murim:block/hua_white_kerb_d",
+    "side": "murim:block/hua_white_kerb_d"
+  }
+}

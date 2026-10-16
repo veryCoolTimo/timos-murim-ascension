@@ -1,3 +1,6 @@
+newmtl soffit
+map_Kd #soffit
+
 newmtl tiles
 map_Kd #tiles
 

@@ -50,7 +50,7 @@ public record MasteryState(Map<ResourceLocation, TechniqueProgress> techniques, 
         techniques.forEach((form, raw) -> {
             ResourceLocation art = masteryId(form);
             TechniqueProgress p = raw.migrate(form);
-            int maximum = Arts.MAX_STARS;
+            int maximum = Arts.cap(form);
             p = new TechniqueProgress(Math.min(p.stars(), maximum), p.progress(), p.unprocessed(), p.day(),
                     Math.min(maximum, Math.max(p.cap(), p.stars())));
             limits.merge(art, Math.max(p.cap(), p.stars()), Math::max);

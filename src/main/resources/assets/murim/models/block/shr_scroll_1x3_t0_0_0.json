@@ -1,0 +1,13 @@
+{
+  "loader": "neoforge:obj",
+  "model": "murim:models/block/obj/shr_scroll_1x3_t0_0_0.obj",
+  "flip_v": false,
+  "emissive_ambient": true,
+  "automatic_culling": true,
+  "shade_quads": true,
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "tex": "murim:block/shr_scroll_1x3_t0",
+    "particle": "murim:block/shr_scroll_1x3_t0"
+  }
+}

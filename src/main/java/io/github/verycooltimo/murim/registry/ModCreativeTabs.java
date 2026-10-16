@@ -78,7 +78,7 @@ public final class ModCreativeTabs {
                 for (var b : java.util.List.of(ModBlocks.HUA_BALUSTRADE, ModBlocks.HUA_GRANITE, ModBlocks.HUA_GRANITE_PALE,
                         ModBlocks.HUA_GRANITE_STAINED, ModBlocks.HUA_GRANITE_CRACKED, ModBlocks.HUA_GRANITE_DARK,
                         ModBlocks.HUA_GRANITE_MOSSY, ModBlocks.POLISHED_HUA_GRANITE, ModBlocks.POLISHED_HUA_GRANITE_STAIRS,
-                        ModBlocks.POLISHED_HUA_GRANITE_SLAB, ModBlocks.POLISHED_HUA_GRANITE_WALL, ModBlocks.HUA_LITTER,
+                        ModBlocks.POLISHED_HUA_GRANITE_SLAB, io.github.verycooltimo.murim.world.hua.HuaGround.POLISHED_HUA_GRANITE_LAYER, ModBlocks.POLISHED_HUA_GRANITE_WALL, ModBlocks.HUA_LITTER,
                         ModBlocks.CLIMBING_MOSS, ModBlocks.ROCK_HANDHOLD, ModBlocks.OLD_ROPE, ModBlocks.PLUM_BLOSSOM,
                         ModBlocks.PLUM_BLOSSOM_PALE, ModBlocks.PLUM_BLOSSOM_RED, ModBlocks.PLUM_SAPLING,
                         ModBlocks.CLIFF_PLUM_SAPLING, ModBlocks.YOUNG_PLUM_SAPLING)) {

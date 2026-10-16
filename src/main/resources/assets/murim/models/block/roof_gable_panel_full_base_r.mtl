@@ -1,5 +1,8 @@
 newmtl plaster
 map_Kd #plaster
 
+newmtl soffit
+map_Kd #soffit
+
 newmtl wood
 map_Kd #wood

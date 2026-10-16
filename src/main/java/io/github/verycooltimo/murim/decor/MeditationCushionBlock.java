@@ -1,7 +1,6 @@
 package io.github.verycooltimo.murim.decor;
 
 import com.mojang.serialization.MapCodec;
-import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
@@ -10,7 +9,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.pathfinder.PathComputationType;
-import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
@@ -23,7 +21,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
  * <p>API: reference/minecraft-src/net/minecraft/world/level/block/state/BlockBehaviour.java#useWithoutItem,
  * world/entity/Entity.java#startRiding.
  */
-public class MeditationCushionBlock extends Block {
+public class MeditationCushionBlock extends Block implements SeatBlock {
 
     public static final MapCodec<MeditationCushionBlock> CODEC = simpleCodec(MeditationCushionBlock::new);
     private static final VoxelShape SHAPE = Block.box(1.2, 0, 1.2, 14.8, 3.6, 14.8);
@@ -39,17 +37,12 @@ public class MeditationCushionBlock extends Block {
 
     /** Seats a player on the cushion at {@code pos}; false when it is taken or the player rides already. */
     public static boolean sit(Level level, BlockPos pos, Player player) {
-        if (player.isPassenger() || player.isShiftKeyDown()) {
-            return false;
-        }
-        List<SeatEntity> seats = level.getEntitiesOfClass(SeatEntity.class, new AABB(pos));
-        if (!seats.isEmpty()) {
-            return false;
-        }
-        SeatEntity seat = new SeatEntity(HallFurniture.SEAT.get(), level);
-        seat.setPos(pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D);
-        level.addFreshEntity(seat);
-        return player.startRiding(seat);
+        return SeatEntity.sit(level, pos, player);
+    }
+
+    @Override
+    public double seatTop(BlockState state) {
+        return 3.6D / 16.0D;
     }
 
     @Override

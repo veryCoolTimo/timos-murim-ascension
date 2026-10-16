@@ -299,8 +299,9 @@ public final class TechniqueCommand {
         player.setData(io.github.verycooltimo.murim.registry.ModAttachments.MASTERY, state.with(id,
                 io.github.verycooltimo.murim.mastery.TechniqueProgress.learned(stars, definition.starCap())));
         io.github.verycooltimo.murim.mastery.MasteryService.sync(player);
-        context.getSource().sendSuccess(() -> Component.translatable("command.murim.mastery.set",
-                io.github.verycooltimo.murim.mastery.MasteryService.artName(id), Math.min(stars, definition.starCap())), false);
+        context.getSource().sendSuccess(() -> Component.translatable(definition.starCap() == io.github.verycooltimo.murim.mastery.Arts.FOOTWORK_STARS
+                        ? "command.murim.mastery.set.footwork" : "command.murim.mastery.set",
+                io.github.verycooltimo.murim.mastery.MasteryService.artName(id), Math.min(stars, definition.starCap()), definition.starCap()), false);
         return 1;
     }
 
@@ -329,8 +330,9 @@ public final class TechniqueCommand {
         player.setData(io.github.verycooltimo.murim.registry.ModAttachments.MASTERY,
                 state.with(form, io.github.verycooltimo.murim.mastery.TechniqueProgress.learned(stars, cap)));
         io.github.verycooltimo.murim.mastery.MasteryService.sync(player);
-        context.getSource().sendSuccess(() -> Component.translatable("command.murim.mastery.set",
-                io.github.verycooltimo.murim.mastery.MasteryService.artName(requested), Math.min(stars, cap)), false);
+        context.getSource().sendSuccess(() -> Component.translatable(cap == io.github.verycooltimo.murim.mastery.Arts.FOOTWORK_STARS
+                        ? "command.murim.mastery.set.footwork" : "command.murim.mastery.set",
+                io.github.verycooltimo.murim.mastery.MasteryService.artName(requested), Math.min(stars, cap), cap), false);
         return 1;
     }
 

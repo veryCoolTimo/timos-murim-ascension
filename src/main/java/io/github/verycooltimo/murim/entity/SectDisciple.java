@@ -214,7 +214,13 @@ public class SectDisciple extends Bandit implements Casters.Caster {
     @Override
     protected void registerGoals() {
         goalSelector.addGoal(0, new FloatGoal(this));
+        suppressionGoal = new SectSuppressionGoal(this);
+        guardGoal = new SectGuardGoal(this);
+        escortGoal = new SectEscortGoal(this);
+        goalSelector.addGoal(1, suppressionGoal);
+        goalSelector.addGoal(1, guardGoal);
         goalSelector.addGoal(2, new SparGoal());
+        goalSelector.addGoal(3, escortGoal);
         goalSelector.addGoal(3, new BlockGoal());
         goalSelector.addGoal(4, new ScheduleGoal(this));
         goalSelector.addGoal(7, new LookAtPlayerGoal(this, Player.class, 8.0F));
@@ -340,7 +346,7 @@ public class SectDisciple extends Bandit implements Casters.Caster {
 
     /** Спарринг с любым партнёром (игрок или другой ученик): порог — потеря половины здоровья. */
     public void startSpar(LivingEntity other, int delay) {
-        if (spar != Spar.NONE && spar != Spar.BOW_OUT) {
+        if (guardTarget() != null || escorting() || spar != Spar.NONE && spar != Spar.BOW_OUT) {
             return;
         }
         wake();
@@ -427,6 +433,7 @@ public class SectDisciple extends Bandit implements Casters.Caster {
 
     @Override
     protected InteractionResult mobInteract(Player player, InteractionHand hand) {
+        if (guardTarget() != null) return InteractionResult.PASS;
         // ПКМ — разговор (план секты §4.3); вызов на спарринг — из диалога старшего ученика.
         if (hand == InteractionHand.MAIN_HAND && (spar == Spar.NONE || spar == Spar.BOW_OUT && sparTick > BOW_TICKS)) {
             if (!level().isClientSide && player instanceof ServerPlayer sp) {
@@ -444,8 +451,17 @@ public class SectDisciple extends Bandit implements Casters.Caster {
 
     @Override
     public boolean hurt(DamageSource source, float amount) {
+        if (!level().isClientSide && source.getEntity() instanceof ServerPlayer p) {
+            if (io.github.verycooltimo.murim.sect.seal.PenanceEnforcement.pinned(p)) return false;
+            if (amount > 0 && !(spar != Spar.NONE && p.getUUID().equals(partner)))
+                io.github.verycooltimo.murim.sect.seal.PenanceEnforcement.assault(p, this, amount);
+            if (io.github.verycooltimo.murim.sect.seal.PenanceEnforcement.active(p)) return false;
+        }
         if (level().isClientSide) {
             return super.hurt(source, amount);
+        }
+        if (guardTarget() != null && source.getEntity() == guardTarget()) {
+            return super.hurt(source, Math.min(amount, Math.max(0.0F, getHealth() - 1.0F)));
         }
         boolean bypass = source.is(net.minecraft.tags.DamageTypeTags.BYPASSES_INVULNERABILITY);
         Entity attacker = source.getEntity();
@@ -508,6 +524,8 @@ public class SectDisciple extends Bandit implements Casters.Caster {
         if (level().isClientSide) {
             return;
         }
+        suppressionGoal.restoreAura();
+        walking.tick();
         tickLife();
         // Меч, попавший в руку мимо реквизита (команда, чужой код), — не держится дольше секунды.
         if (tickCount % 20 == 0) {
@@ -883,7 +901,7 @@ public class SectDisciple extends Bandit implements Casters.Caster {
                         if (d < 5.5D) {
                             retreat(t);
                         } else {
-                            getNavigation().moveTo(t, 1.0D);
+                            walking.walk(t.position(), 1.0D);
                         }
                     }
                     return false;
@@ -898,7 +916,7 @@ public class SectDisciple extends Bandit implements Casters.Caster {
                     }
                     if (force) {
                         if (d > 4.8D) {
-                            getNavigation().moveTo(t, 1.1D);
+                            walking.walk(t.position(), 1.1D);
                         } else {
                             retreat(t);
                         }
@@ -917,7 +935,7 @@ public class SectDisciple extends Bandit implements Casters.Caster {
                         return true;
                     }
                     if (force) {
-                        getNavigation().moveTo(t, 1.15D);
+                        walking.walk(t.position(), 1.15D);
                     }
                     return false;
                 }
@@ -936,7 +954,7 @@ public class SectDisciple extends Bandit implements Casters.Caster {
         /** Между приёмами: подойти на дистанцию основы или кружить, как бандит. */
         private void move(LivingEntity t, double d) {
             if (formCooldown <= 0 && d > 2.2D) {
-                getNavigation().moveTo(t, 1.1D);
+                walking.walk(t.position(), 1.1D);
                 return;
             }
             if (--strafeTicks <= 0) {
@@ -995,13 +1013,25 @@ public class SectDisciple extends Bandit implements Casters.Caster {
 
     /** Для журналов стенда: что сейчас делает. */
     public String doing() {
-        return technique != null ? technique.getPath() + "@" + techniqueTick : formTick >= 0 ? "form " + form : spar.name();
+        return guardTarget() != null ? "guard_attack" : escorting() ? "escort_walk"
+                : technique != null ? technique.getPath() + "@" + techniqueTick : formTick >= 0 ? "form " + form : spar.name();
     }
 
     // ------------------------------------------------------------------ жизнь секты: кто, распорядок, оборона
 
-    /** Дальше этого от игроков ИИ спит, а NPC переходит к делу распорядка без ходьбы. */
+    /** Вдали от игроков ИИ отдыхает только после пешего прихода к месту дела. */
     public static final double AWAKE_RANGE = 40.0D;
+
+    private SectEscortGoal escortGoal;
+    private SectGuardGoal guardGoal;
+    private SectSuppressionGoal suppressionGoal;
+    public SectSuppressionGoal suppressionGoal() { return suppressionGoal; }
+    private final io.github.verycooltimo.murim.sect.SectWalking walking = new io.github.verycooltimo.murim.sect.SectWalking(this);
+    public io.github.verycooltimo.murim.sect.SectWalking walking() { return walking; }
+    public SectEscortGoal escortGoal() { return escortGoal; }
+    public boolean escorting() { return escortGoal != null && escortGoal.active(); }
+    public ServerPlayer guardTarget() { return guardGoal == null ? null : guardGoal.target(); }
+    public SectGuardGoal guardGoal() { return guardGoal; }
 
     private boolean dormant;
     private boolean defending;
@@ -1081,7 +1111,7 @@ public class SectDisciple extends Bandit implements Casters.Caster {
 
     /** Свободен: не в бою, не в разговоре, не в обороне. */
     public boolean free() {
-        return spar == Spar.NONE && !defending && talkingTo() < 0;
+        return !suppressionGoal.active() && spar == Spar.NONE && !defending && guardTarget() == null && talkingTo() < 0;
     }
 
     /** Сколько техник ещё можно в этом бою (ученики между собой — одна). */
@@ -1117,6 +1147,21 @@ public class SectDisciple extends Bandit implements Casters.Caster {
             d.setTarget(null);
             d.playAnim(null, 0);
         }
+    }
+
+    /** The elder interrupts a player's practice without awarding a victory or a lesson reward. */
+    public void stopSparForPenance(ServerPlayer p) {
+        if (spar == Spar.NONE || !p.getUUID().equals(partner)) return;
+        cancelTechnique();
+        formTick = -1;
+        dashLeft = 0;
+        chainLeft = 0;
+        spar = Spar.NONE;
+        partner = null;
+        syncDrawn();
+        setTarget(null);
+        walking.stop();
+        playAnim(null, 0);
     }
 
     /** На защиту своих: цель — чужой моб. */
@@ -1157,8 +1202,10 @@ public class SectDisciple extends Bandit implements Casters.Caster {
             setTarget(null);
         }
         boolean wasDormant = dormant;
+        var routine = io.github.verycooltimo.murim.sect.SectLife.resolve(this);
         dormant = !keepAwake && !entityData.get(KEY).isEmpty() && spar == Spar.NONE && !defending && talkingTo() < 0
-                && level().getNearestPlayer(this, AWAKE_RANGE) == null;
+                && guardTarget() == null && !blocking() && !escorting() && level().getNearestPlayer(this, AWAKE_RANGE) == null
+                && routine != null && position().distanceToSqr(routine.spot()) < 1.0D;
         if (dormant && !wasDormant) {
             getNavigation().stop();
         }
@@ -1347,13 +1394,15 @@ public class SectDisciple extends Bandit implements Casters.Caster {
     }
 
     /** Подойти и самому заговорить; экран открывается только в пределах трёх блоков. */
-    public void approachDialogue(ServerPlayer player, ResourceLocation dialogue, String node, Vec3 protect) {
-        if (talkingTo() >= 0 || pendingDialogue != null && blocking() && blockWho != player) {
-            return;
+    public boolean approachDialogue(ServerPlayer player, ResourceLocation dialogue, String node, Vec3 protect) {
+        if (!free() || escorting() || player == null || protect == null
+                || blocking() && blockWho != player) {
+            return false;
         }
         block(player, protect, 400);
         pendingDialogue = dialogue;
         pendingNode = node;
+        return true;
     }
 
     /**
@@ -1361,7 +1410,7 @@ public class SectDisciple extends Bandit implements Casters.Caster {
      * Распорядок ждёт; потом NPC возвращается на своё место.
      */
     public void block(LivingEntity who, Vec3 protect, int ticks) {
-        if (who == null || protect == null) {
+        if (who == null || protect == null || escorting() || guardTarget() != null) {
             return;
         }
         wake();
@@ -1369,6 +1418,10 @@ public class SectDisciple extends Bandit implements Casters.Caster {
         blockWho = who;
         blockProtect = protect;
         blockUntil = level().getGameTime() + ticks;
+    }
+
+    public void clearBlock() {
+        blockTarget = -1; blockWho = null; pendingDialogue = null;
     }
 
     /** Сейчас стоит у кого-то на пути. */
@@ -1394,7 +1447,7 @@ public class SectDisciple extends Bandit implements Casters.Caster {
 
         @Override
         public boolean canUse() {
-            return blocking() && talkingTo() < 0 && spar == Spar.NONE && !defending && blockWho != null
+            return blocking() && talkingTo() < 0 && spar == Spar.NONE && !defending && !escorting() && guardTarget() == null && blockWho != null
                     && blockWho.isAlive() && !blockWho.isRemoved() && blockWho.level() == level();
         }
 
@@ -1419,7 +1472,7 @@ public class SectDisciple extends Bandit implements Casters.Caster {
 
         @Override
         public void stop() {
-            getNavigation().stop();
+            walking.stop();
             blockTarget = -1;
             blockWho = null;
             pendingDialogue = null;
@@ -1466,7 +1519,7 @@ public class SectDisciple extends Bandit implements Casters.Caster {
             }
             if (--repath <= 0 || getNavigation().isDone()) {
                 repath = 8;
-                getNavigation().moveTo(spot.x, spot.y, spot.z, 1.2D);
+                walking.walk(spot, 1.0D);
             }
         }
     }
@@ -1547,7 +1600,7 @@ public class SectDisciple extends Bandit implements Casters.Caster {
             return false;
         }
         SectPose p = pose();
-        return spar == Spar.FIGHT || technique != null || formTick >= 0 || defending || blocking()
+        return guardTarget() != null || spar == Spar.FIGHT || technique != null || formTick >= 0 || defending || blocking()
                 || p == SectPose.FORM || p == SectPose.POLES || p == SectPose.POLE_STEP;
     }
 

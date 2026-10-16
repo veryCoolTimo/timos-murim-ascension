@@ -22,7 +22,7 @@ public final class FootworkText {
         return lines(id, true);
     }
 
-    /** Live combat stats omit the mastery gauge; stars belong to menus and new-star insight. */
+    /** Live stats show a compact footwork count; menus retain the full star gauge. */
     public static List<Component> combatLines(ResourceLocation id) {
         return lines(id, false);
     }
@@ -37,11 +37,15 @@ public final class FootworkText {
         int known = ClientMasteryState.stars(id);
         List<Component> out = new ArrayList<>();
         if (mastery) out.add(MasteryText.summary(id, Math.max(0, known)).withStyle(ChatFormatting.AQUA));
+        if (!mastery && def.starCap() == io.github.verycooltimo.murim.mastery.Arts.FOOTWORK_STARS) {
+            out.add(Component.translatable("murim.footwork.stars", "★", Math.max(0, known), def.starCap())
+                    .withStyle(ChatFormatting.AQUA));
+        }
         var entry = TechniqueSlotsHud.mastery(id);
         if (mastery && entry != null && entry.cap() < def.starCap()) {
             out.add(Component.translatable("murim.mastery.manuscript_cap", entry.cap()).withStyle(ChatFormatting.GRAY));
         }
-        if (mastery && entry != null && entry.progress() >= 1.0F && entry.stars() >= MasteryRules.INSIGHT_STAR
+        if (mastery && entry != null && entry.progress() >= 1.0F && entry.stars() >= MasteryRules.insightStar(def.starCap())
                 && entry.stars() < entry.cap()) {
             out.add(Component.translatable("murim.mastery.insight_needed").withStyle(ChatFormatting.GOLD));
         }

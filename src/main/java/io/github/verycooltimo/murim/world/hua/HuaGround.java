@@ -55,6 +55,14 @@ public final class HuaGround {
             p -> new StairBlock(HUA_FLAGSTONE_PAVING.get().defaultBlockState(), p), stone());
     public static final DeferredBlock<SlabBlock> HUA_FLAGSTONE_PAVING_SLAB = BLOCKS.registerBlock("hua_flagstone_paving_slab", SlabBlock::new, stone());
     public static final DeferredBlock<RotatedPillarBlock> HUA_EDGE_STONE = BLOCKS.registerBlock("hua_edge_stone", RotatedPillarBlock::new, stone());
+    // Floor slabs and 4 px tiles for the training square (author 15.10, platform_slabs_ref).
+    public static final DeferredBlock<SlabBlock> HUA_EDGE_STONE_SLAB = BLOCKS.registerBlock("hua_edge_stone_slab", SlabBlock::new, stone());
+    public static final DeferredBlock<HuaLayerBlock> HUA_COURTYARD_PAVERS_LAYER = BLOCKS.registerBlock("hua_courtyard_pavers_layer", HuaLayerBlock::new, stone());
+    public static final DeferredBlock<HuaLayerBlock> HUA_EDGE_STONE_LAYER = BLOCKS.registerBlock("hua_edge_stone_layer", HuaLayerBlock::new, stone());
+    public static final DeferredBlock<Block> HUA_WHITE_KERB = BLOCKS.registerBlock("hua_white_kerb", Block::new, stone());
+    public static final DeferredBlock<SlabBlock> HUA_WHITE_KERB_SLAB = BLOCKS.registerBlock("hua_white_kerb_slab", SlabBlock::new, stone());
+    public static final DeferredBlock<HuaLayerBlock> HUA_WHITE_KERB_LAYER = BLOCKS.registerBlock("hua_white_kerb_layer", HuaLayerBlock::new, stone());
+    public static final DeferredBlock<HuaLayerBlock> POLISHED_HUA_GRANITE_LAYER = BLOCKS.registerBlock("polished_hua_granite_layer", HuaLayerBlock::new, stone());
 
     public static final DeferredBlock<StairBlock> ROUGH_HUA_GRANITE_STAIRS = BLOCKS.registerBlock("rough_hua_granite_stairs",
             p -> new StairBlock(ModBlocks.HUA_GRANITE.get().defaultBlockState(), p), stone());
@@ -69,6 +77,8 @@ public final class HuaGround {
             HUA_COURTYARD_PAVERS, HUA_COURTYARD_PAVERS_STAIRS, HUA_COURTYARD_PAVERS_SLAB,
             HUA_RECTANGULAR_PAVING, HUA_RECTANGULAR_PAVING_STAIRS, HUA_RECTANGULAR_PAVING_SLAB,
             HUA_FLAGSTONE_PAVING, HUA_FLAGSTONE_PAVING_STAIRS, HUA_FLAGSTONE_PAVING_SLAB, HUA_EDGE_STONE,
+            HUA_EDGE_STONE_SLAB, HUA_COURTYARD_PAVERS_LAYER, HUA_EDGE_STONE_LAYER, POLISHED_HUA_GRANITE_LAYER,
+            HUA_WHITE_KERB, HUA_WHITE_KERB_SLAB, HUA_WHITE_KERB_LAYER,
             ROUGH_HUA_GRANITE_STAIRS, ROUGH_HUA_GRANITE_SLAB, MOSSY_HUA_GRANITE_SLAB, HUA_DRY_STONE);
     private static final List<DeferredItem<BlockItem>> ITEMS_ALL = ALL.stream().map(b -> ITEMS.registerSimpleBlockItem(b)).toList();
 
@@ -92,6 +102,9 @@ public final class HuaGround {
     private static void tabs(BuildCreativeModeTabContentsEvent event) {
         if (event.getTabKey().equals(ModCreativeTabs.MURIM.getKey())) {
             for (DeferredItem<BlockItem> item : ITEMS_ALL) {
+                if (item.getId().getPath().equals("polished_hua_granite_layer")) {
+                    continue; // listed next to polished_hua_granite_slab in ModCreativeTabs
+                }
                 event.accept(item.get());
             }
         }

@@ -40,6 +40,20 @@ public final class RoofGameTests {
     }
 
     /** Three ridges in a row along z: inner ends joined, outer ends open; breaking the middle opens both sides. */
+    /** Author 16.10: a ridge placed on top of a gable panel afterwards was not noticed. */
+    @GameTest(template = FLOOR, batch = "roof")
+    public static void gablePanelBecomesPeakUnderARidgePlacedLater(GameTestHelper helper) {
+        BlockPos panel = new BlockPos(2, 3, 2);
+        helper.assertTrue(place(helper, RoofTiles.item(RoofTiles.ROOF_GABLE_PANEL), panel, Direction.UP).consumesAction(),
+                "panel placement refused");
+        helper.assertTrue(place(helper, RoofTiles.item(RoofTiles.ROOF_RIDGE), panel.above(), Direction.UP).consumesAction(),
+                "ridge placement refused");
+        BlockState state = helper.getBlockState(panel);
+        helper.assertTrue(state.getValue(RoofBlocks.GablePanel.PROFILE) == RoofBlocks.PanelProfile.PEAK,
+                "panel did not notice the ridge: " + state);
+        helper.succeed();
+    }
+
     @GameTest(template = FLOOR, batch = "roof")
     public static void ridgeJoinsAlongAxis(GameTestHelper helper) {
         BlockItem item = RoofTiles.item(RoofTiles.ROOF_RIDGE);
@@ -113,8 +127,10 @@ public final class RoofGameTests {
         // low tiles beside each other at a right angle form a hip like stairs do
         helper.setBlock(new BlockPos(2, 4, 4), RoofTiles.ROOF_TILE_LOW.get().defaultBlockState()
                 .setValue(RoofBlocks.LowSlope.FACING, Direction.NORTH));
-        helper.assertTrue(helper.getBlockState(new BlockPos(2, 4, 4)).getShape(helper.getLevel(), helper.absolutePos(new BlockPos(2, 4, 4)))
-                .max(Direction.Axis.Y) == 0.5D, "low tile is not half high");
+        double height = helper.getBlockState(new BlockPos(2, 4, 4))
+                .getShape(helper.getLevel(), helper.absolutePos(new BlockPos(2, 4, 4))).max(Direction.Axis.Y);
+        // A smooth OBJ's inscribed voxel mask stops up to one model pixel below its high edge.
+        helper.assertTrue(height <= 0.5D && height >= 7.0D / 16, "low tile height " + height);
         helper.succeed();
     }
 
@@ -217,6 +233,45 @@ public final class RoofGameTests {
                 "horn state count");
         helper.assertTrue(RoofTiles.ROOF_V7_PANEL.get().getStateDefinition().getPossibleStates().size() == 88,
                 "panel state count");
+        helper.succeed();
+    }
+
+    private static double roofHeightAt(net.minecraft.world.phys.shapes.VoxelShape shape, double x, double z) {
+        return shape.toAabbs().stream().filter(box -> x >= box.minX && x < box.maxX && z >= box.minZ && z < box.maxZ)
+                .mapToDouble(box -> box.maxY).max().orElse(0);
+    }
+
+    /** Former shells now collide/occlude beneath the visible skin, with matching state rotations. */
+    @GameTest(template = FLOOR, batch = "roof")
+    public static void solidRoofCoreAndMasks(GameTestHelper helper) {
+        BlockPos pos = new BlockPos(2, 3, 2);
+        BlockState gentle = RoofTiles.ROOF_TILE_COURSE.get().defaultBlockState()
+                .setValue(RoofBlocks.Slope.FACING, Direction.EAST)
+                .setValue(RoofBlocks.Course.PROFILE, RoofBlocks.CourseProfile.GENTLE);
+        for (net.minecraft.world.level.block.Rotation rotation : net.minecraft.world.level.block.Rotation.values()) {
+            BlockState state = gentle.rotate(rotation);
+            helper.setBlock(pos, state);
+            net.minecraft.world.phys.shapes.VoxelShape collision = state.getCollisionShape(helper.getLevel(), helper.absolutePos(pos));
+            net.minecraft.world.phys.shapes.VoxelShape occlusion = state.getOcclusionShape(helper.getLevel(), helper.absolutePos(pos));
+            Direction facing = state.getValue(RoofBlocks.Slope.FACING);
+            double high = roofHeightAt(collision, .5 + .375 * facing.getStepX(), .5 + .375 * facing.getStepZ());
+            double low = roofHeightAt(collision, .5 - .375 * facing.getStepX(), .5 - .375 * facing.getStepZ());
+            helper.assertTrue(high > low, "mask rises away from model facing " + state);
+            helper.assertTrue(collision.min(Direction.Axis.Y) == 0, "core does not reach floor " + state);
+            helper.assertTrue(!net.minecraft.world.phys.shapes.Shapes.joinIsNotEmpty(collision, occlusion,
+                    net.minecraft.world.phys.shapes.BooleanOp.NOT_SAME), "collision/occlusion differ " + state);
+            helper.assertTrue(collision.toAabbs().stream().anyMatch(box -> box.contains(.5, .0625, .5)),
+                    "empty core below tile " + state);
+            helper.assertTrue(!collision.toAabbs().stream().anyMatch(box -> box.contains(.5, .75, .5)),
+                    "invisible full-block collision above slope " + state);
+        }
+        BlockState left = RoofTiles.ROOF_EAVE_RISE.get().defaultBlockState()
+                .setValue(RoofBlocks.EaveRise.FACING, Direction.EAST).setValue(RoofBlocks.EaveRise.SIDE, RoofBlocks.Side.LEFT);
+        BlockState right = left.setValue(RoofBlocks.EaveRise.SIDE, RoofBlocks.Side.RIGHT);
+        helper.assertTrue(net.minecraft.world.phys.shapes.Shapes.joinIsNotEmpty(
+                left.getShape(helper.getLevel(), helper.absolutePos(pos)),
+                right.getShape(helper.getLevel(), helper.absolutePos(pos)),
+                net.minecraft.world.phys.shapes.BooleanOp.NOT_SAME), "rise sides use one mask");
         helper.succeed();
     }
 

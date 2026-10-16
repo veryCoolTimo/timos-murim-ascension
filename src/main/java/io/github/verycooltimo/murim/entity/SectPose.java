@@ -151,7 +151,7 @@ public enum SectPose {
         return switch (kind) {
             case FORM_ROW, DRILL -> FORM;
             case INSPECT, WORK -> TALK;
-            case WATCH, GUARD, GREET -> GUARD;
+            case WATCH, GUARD -> GUARD;
             case POLES -> POLES;
             case MEDITATE -> MEDITATE;
             case CHORE -> SWEEP;

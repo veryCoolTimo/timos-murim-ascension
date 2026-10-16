@@ -138,6 +138,18 @@ class SectScheduleTest {
             Set<String> spots = new HashSet<>();
             for (Map.Entry<String, Task> e : spar.entrySet()) {
                 Task t = e.getValue();
+                assertEquals("training", t.zone(), "daily spar belongs on the training square");
+                MountHuaPlan.Zone training = zone("training");
+                double u = training.u() + t.du();
+                double v = training.v() + t.dv();
+                assertTrue(Math.abs(t.du()) + 1 < training.width() / 2.0);
+                assertTrue(Math.abs(t.dv()) + 1 < training.depth() / 2.0);
+                assertTrue(Math.abs(u - zone("main_hall").u()) > 4, "spar blocks central axis");
+                for (String occupied : List.of("camp", "mentor", "poles")) {
+                    MountHuaPlan.Zone pad = zone(occupied);
+                    assertTrue(Math.abs(u - pad.u()) > pad.width() / 2.0 + 1.0
+                            || Math.abs(v - pad.v()) > pad.depth() / 2.0 + 1.0, "spar inside " + occupied);
+                }
                 Task other = spar.get(t.partner());
                 assertNotNull(other, "день " + day + ": у " + e.getKey() + " партнёр " + t.partner() + " не на поединке");
                 assertEquals(e.getKey(), other.partner(), "день " + day + ": пара не взаимна");
@@ -148,7 +160,7 @@ class SectScheduleTest {
             assertEquals(10, spar.size(), "день " + day + ": пять пар");
             assertTrue(kinds.containsValue(Kind.POLES));
             assertTrue(kinds.containsValue(Kind.CHORE));
-            assertEquals(Kind.SPAR, kinds.get("seo_rang"), "старший всегда на площадке поединков");
+            assertEquals(Kind.SPAR, kinds.get("seo_rang"), "старший всегда участвует в поединках");
         }
         // Состав групп третьего поколения меняется от дня к дню.
         SectRoster m = SectRoster.of("bok_manseok").orElseThrow();
@@ -157,6 +169,60 @@ class SectScheduleTest {
             seen.add(SectSchedule.task(m, Period.TRAINING, day).kind());
         }
         assertTrue(seen.size() >= 3, "у ученика одно занятие на всю жизнь: " + seen);
+    }
+
+    @Test
+    @DisplayName("Столбы внутри тренировочной площади; практики и поединков в жилом лагере нет")
+    void polesAndSparsStayOutsideHousing() {
+        MountHuaPlan.Zone training = zone("training"), poles = zone("poles"), mentor = zone("mentor");
+        assertEquals(training.y(), poles.y());
+        assertEquals(12, poles.width());
+        assertEquals(10, poles.depth());
+        assertTrue(Math.abs(poles.u() - training.u()) + poles.width() / 2.0 <= training.width() / 2.0);
+        assertTrue(Math.abs(poles.v() - training.v()) + poles.depth() / 2.0 <= training.depth() / 2.0);
+        assertTrue(poles.v() - poles.depth() / 2.0 >= mentor.v() + mentor.depth() / 2.0 + 3);
+        for (long day = 0; day < 20; day++) {
+            int practitioners = 0;
+            for (SectRoster member : SectRoster.ALL) {
+                Task task = SectSchedule.task(member, Period.TRAINING, day);
+                if (task.kind() == Kind.POLES) {
+                    practitioners++;
+                    assertEquals("poles", task.zone());
+                    // Include ScheduleGoal's roaming range around each assigned spot.
+                    assertTrue(Math.abs(task.du()) + 3.5 < poles.width() / 2.0);
+                    assertTrue(Math.abs(task.dv()) + 2.5 < poles.depth() / 2.0);
+                }
+                if (task.kind() == Kind.POLES || task.kind() == Kind.SPAR || task.kind() == Kind.DRILL) {
+                    assertFalse(task.zone().equals("camp") || task.zone().startsWith("dorm_"));
+                }
+            }
+            assertEquals(4, practitioners);
+        }
+    }
+
+    @Test
+    @DisplayName("После совета те же пары выступают на тренировочной площади, смотр также проходит там")
+    void showcasesAndReviewUseTrainingSquare() {
+        for (long day = 0; day < 20; day++) {
+            for (SectRoster m : SectRoster.ALL) {
+                Task daily = SectSchedule.task(m, Period.TRAINING, day);
+                Task show = SectSchedule.task(m, day * SectSchedule.DAY + SectSchedule.COUNCIL_TO + 100);
+                if (daily.kind() == Kind.SPAR) {
+                    assertEquals(Kind.SPAR, show.kind(), m.key());
+                    assertEquals("training", show.zone(), m.key());
+                    assertEquals(daily.partner(), show.partner(), m.key());
+                    Task partner = SectSchedule.task(SectRoster.of(show.partner()).orElseThrow(),
+                            day * SectSchedule.DAY + SectSchedule.COUNCIL_TO + 100);
+                    assertEquals(m.key(), partner.partner());
+                    assertEquals(show.zone(), partner.zone());
+                }
+            }
+        }
+        for (int ring : SectReview.SEMI_RINGS) {
+            for (int side = 0; side < 2; side++) {
+                assertEquals("training", SectReview.ringSpot(ring, side).zone());
+            }
+        }
     }
 
     @Test

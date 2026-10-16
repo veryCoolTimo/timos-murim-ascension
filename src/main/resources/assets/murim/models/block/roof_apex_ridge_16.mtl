@@ -1,2 +1,5 @@
 newmtl cream
 map_Kd #cream
+
+newmtl soffit
+map_Kd #soffit

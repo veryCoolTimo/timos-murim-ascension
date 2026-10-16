@@ -4,10 +4,11 @@
   "model": "murim:models/block/roof_tile_course_flat.obj",
   "flip_v": false,
   "emissive_ambient": false,
-  "automatic_culling": false,
+  "automatic_culling": true,
   "ambientocclusion": false,
   "render_type": "minecraft:solid",
   "textures": {
+    "soffit": "murim:block/roof_polish_soffit",
     "tiles_x": "murim:block/roof_polish_tiles_x",
     "particle": "murim:block/roof_polish_tiles"
   }

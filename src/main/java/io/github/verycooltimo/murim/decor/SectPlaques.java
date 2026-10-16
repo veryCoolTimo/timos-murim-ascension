@@ -37,6 +37,12 @@ public final class SectPlaques {
                     .strength(1.0F).sound(SoundType.WOOD).ignitedByLava().pushReaction(PushReaction.DESTROY));
     public static final DeferredItem<BlockItem> SECT_PLAQUE_WIDE_ITEM = ITEMS.registerSimpleBlockItem(SECT_PLAQUE_WIDE);
 
+    /** The main hall's grand name plaque, eight blocks wide. */
+    public static final DeferredBlock<HallPlaqueGrandBlock> HALL_PLAQUE_GRAND = BLOCKS.registerBlock("hall_plaque_grand", HallPlaqueGrandBlock::new,
+            BlockBehaviour.Properties.of().mapColor(MapColor.WOOD).forceSolidOn().noCollission().noOcclusion()
+                    .strength(1.0F).sound(SoundType.WOOD).ignitedByLava().pushReaction(PushReaction.DESTROY));
+    public static final DeferredItem<BlockItem> HALL_PLAQUE_GRAND_ITEM = ITEMS.registerSimpleBlockItem(HALL_PLAQUE_GRAND);
+
     private SectPlaques() {
     }
 
@@ -44,6 +50,7 @@ public final class SectPlaques {
         if (event.getTabKey().equals(io.github.verycooltimo.murim.registry.ModCreativeTabs.MURIM.getKey())) {
             event.accept(new ItemStack(SECT_PLAQUE_ITEM.get()));
             event.accept(new ItemStack(SECT_PLAQUE_WIDE_ITEM.get()));
+            event.accept(new ItemStack(HALL_PLAQUE_GRAND_ITEM.get()));
         }
     }
 

@@ -38,6 +38,7 @@ public final class FoundationService {
 
     /** Клиент сообщил о взмахе формой. */
     public static void onSwing(ServerPlayer player, int formIndex) {
+        if (io.github.verycooltimo.murim.sect.seal.PenanceEnforcement.pinned(player)) return;
         Optional<ResourceLocation> id = active(player);
         if (id.isEmpty() || formIndex < 0 || formIndex >= FoundationForms.Form.values().length) {
             return;

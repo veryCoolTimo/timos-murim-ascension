@@ -1,0 +1,28 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "rolls": 1.0,
+      "bonus_rolls": 0.0,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "murim:shr_portrait_stand"
+        }
+      ],
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        },
+        {
+          "condition": "minecraft:block_state_property",
+          "block": "murim:shr_portrait_stand",
+          "properties": {
+            "part": "0"
+          }
+        }
+      ]
+    }
+  ],
+  "random_sequence": "murim:blocks/shr_portrait_stand"
+}

@@ -1,0 +1,64 @@
+{
+  "variants": {
+    "facing=north,fill=empty": {
+      "model": "murim:block/sto_rack_empty"
+    },
+    "facing=east,fill=empty": {
+      "model": "murim:block/sto_rack_empty",
+      "y": 90
+    },
+    "facing=south,fill=empty": {
+      "model": "murim:block/sto_rack_empty",
+      "y": 180
+    },
+    "facing=west,fill=empty": {
+      "model": "murim:block/sto_rack_empty",
+      "y": 270
+    },
+    "facing=north,fill=books": {
+      "model": "murim:block/sto_rack_books"
+    },
+    "facing=east,fill=books": {
+      "model": "murim:block/sto_rack_books",
+      "y": 90
+    },
+    "facing=south,fill=books": {
+      "model": "murim:block/sto_rack_books",
+      "y": 180
+    },
+    "facing=west,fill=books": {
+      "model": "murim:block/sto_rack_books",
+      "y": 270
+    },
+    "facing=north,fill=scrolls": {
+      "model": "murim:block/sto_rack_scrolls"
+    },
+    "facing=east,fill=scrolls": {
+      "model": "murim:block/sto_rack_scrolls",
+      "y": 90
+    },
+    "facing=south,fill=scrolls": {
+      "model": "murim:block/sto_rack_scrolls",
+      "y": 180
+    },
+    "facing=west,fill=scrolls": {
+      "model": "murim:block/sto_rack_scrolls",
+      "y": 270
+    },
+    "facing=north,fill=boxes": {
+      "model": "murim:block/sto_rack_boxes"
+    },
+    "facing=east,fill=boxes": {
+      "model": "murim:block/sto_rack_boxes",
+      "y": 90
+    },
+    "facing=south,fill=boxes": {
+      "model": "murim:block/sto_rack_boxes",
+      "y": 180
+    },
+    "facing=west,fill=boxes": {
+      "model": "murim:block/sto_rack_boxes",
+      "y": 270
+    }
+  }
+}

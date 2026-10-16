@@ -525,11 +525,13 @@
     "sounds": [
       {
         "name": "murim:sect_bell_a",
-        "attenuation_distance": 48
+        "attenuation_distance": 40,
+        "volume": 0.55
       },
       {
         "name": "murim:sect_bell_b",
-        "attenuation_distance": 48
+        "attenuation_distance": 40,
+        "volume": 0.55
       }
     ]
   }

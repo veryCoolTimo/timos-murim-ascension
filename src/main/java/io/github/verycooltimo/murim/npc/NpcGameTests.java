@@ -10,6 +10,7 @@ import io.github.verycooltimo.murim.sect.DialogueLoader;
 import io.github.verycooltimo.murim.sect.DialogueService;
 import io.github.verycooltimo.murim.sect.GuestDialogueService;
 import io.github.verycooltimo.murim.sect.SectState;
+import io.github.verycooltimo.murim.sect.SectLayout;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -154,6 +155,39 @@ public final class NpcGameTests {
         rival.dialogueAction(p, "guest_spar");
         rival.hurt(p.damageSources().playerAttack(p), 1000);
         h.assertTrue(pages(p) == count, "перезагрузка вернула награду урока");
+        h.succeed();
+    }
+
+    @GameTest(template = "small_floor", timeoutTicks = 40, batch = "guest_npcs")
+    public static void sectGuestDuelUsesSafeTrainingPositions(GameTestHelper h) {
+        ServerPlayer player = player(h);
+        GuestFighter guest = h.spawn(ModNpcs.FIGHTERS.get(NpcProfile.CHO_GAN).get(), new Vec3(2.5, 2, 3.5));
+        Vec3 centre = h.absoluteVec(new Vec3(3.5, 2, 4.5));
+        SectLayout layout = new SectLayout() {
+            @Override public Vec3 at(String zone, double du, double dv) {
+                h.assertTrue(zone.equals("training"), "guest duel requested another square");
+                return centre.add(du * 0.4, 0, dv * 0.4);
+            }
+            @Override public float yaw(double du, double dv) { return SectLayout.yawOf(du, dv); }
+            @Override public double[] half(String zone) { return new double[] {10, 10}; }
+            @Override public double[] local(String zone, Vec3 pos) { return new double[] {pos.x - centre.x, pos.z - centre.z}; }
+        };
+        Vec3 east = layout.at("training", 2.5, -5);
+        BlockPos obstruction = BlockPos.containing(east);
+        for (int y = 0; y <= 7; y++) h.getLevel().setBlock(obstruction.above(y), Blocks.STONE.defaultBlockState(), 2);
+        Vec3 beforeGuest = guest.position();
+        Vec3 beforePlayer = player.position();
+        h.assertFalse(GuestFighter.stageDuel(guest, player, layout), "duel started in blocked square");
+        h.assertTrue(beforeGuest.equals(guest.position()) && beforePlayer.equals(player.position()), "failed staging moved one fighter");
+        for (int y = 0; y <= 7; y++) h.getLevel().setBlock(obstruction.above(y), Blocks.AIR.defaultBlockState(), 2);
+        h.assertTrue(GuestFighter.stageDuel(guest, player, layout), "safe training square rejected");
+        // stageDuel snaps both standing points to the ground (SectLife.stand): compare the horizontal positions.
+        Vec3 west = layout.at("training", -2.5, -5);
+        h.assertTrue(Math.abs(guest.getX() - west.x) < 0.1 && Math.abs(guest.getZ() - west.z) < 0.1
+                && Math.abs(player.getX() - east.x) < 0.1 && Math.abs(player.getZ() - east.z) < 0.1,
+                "fighters did not reach opposite sides of training ring: guest " + guest.position() + " player " + player.position()
+                        + " want " + west + " / " + east);
+        guest.discard();
         h.succeed();
     }
 

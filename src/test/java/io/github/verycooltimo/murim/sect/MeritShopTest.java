@@ -75,7 +75,7 @@ class MeritShopTest {
         }
         assertEquals(4, days);
         assertFalse(SectReview.bracket(6, false).equals(SectReview.bracket(13, false)), "каждую неделю одни и те же");
-        // Зрители: ученики не на посту — у площадки поединков, места не совпадают.
+        // Зрители: ученики не на посту — у тренировочной площади, места не совпадают.
         long reviewTime = 6L * 24000L + SectReview.FROM + 100L;
         Set<String> spots = new HashSet<>();
         for (SectRoster m : SectReview.crowd()) {
@@ -84,7 +84,7 @@ class MeritShopTest {
                 continue;
             }
             assertEquals(SectSchedule.Kind.WATCH, t.kind(), m.key());
-            assertEquals("sparring", t.zone());
+            assertEquals("training", t.zone());
             assertTrue(spots.add(t.du() + "," + t.dv()), "место зрителя занято: " + m.key());
         }
         assertNotNull(SectReview.spectator(SectRoster.of("tae_hwi").orElseThrow()));

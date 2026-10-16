@@ -4,11 +4,12 @@
   "model": "murim:models/block/roof_gable_panel_full_base_r.obj",
   "flip_v": false,
   "emissive_ambient": false,
-  "automatic_culling": false,
+  "automatic_culling": true,
   "ambientocclusion": false,
   "render_type": "minecraft:solid",
   "textures": {
     "plaster": "murim:block/roof_polish_plaster",
+    "soffit": "murim:block/roof_polish_soffit",
     "wood": "murim:block/roof_polish_wood",
     "particle": "murim:block/roof_polish_plaster"
   }

@@ -40,9 +40,29 @@ public final class HuaPavingGameTests {
         helper.assertTrue(HuaPaving.surface("training", 6, 5, 0).is(HuaGround.HUA_COURTYARD_PAVERS.get()), "training pavers");
         helper.assertTrue(HuaPaving.surface("main_hall", 6, 5, 0).is(HuaGround.HUA_RECTANGULAR_PAVING.get()), "hall rectangular");
         helper.assertTrue(HuaPaving.surface("treasury", 6, 5, 0).is(HuaGround.HUA_FLAGSTONE_PAVING.get()), "yard flagstone");
-        helper.assertTrue(HuaPaving.surface("sparring", 6, 5, 0).is(HuaGround.HUA_PACKED_EARTH.get()), "sparring earth");
+        helper.assertTrue(HuaPaving.surface("arch", 2, 5, 0).is(HuaGround.HUA_RECTANGULAR_PAVING.get()), "arch paved approach");
         helper.assertTrue(HuaPaving.isPaving(HuaGround.HUA_COURTYARD_PAVERS_SLAB.get().defaultBlockState()), "slab is paving");
         helper.assertTrue(!HuaPaving.isPaving(Blocks.GRASS_BLOCK.defaultBlockState()), "grass is not paving");
+        for (double edge : new double[] {0.5, 1.5}) for (int r = 0; r < 16; r++) {
+            for (double noise : new double[] {-1, 0, 1}) {
+                helper.assertTrue(HuaPaving.surface("main_hall", edge, r, noise).is(HuaGround.HUA_EDGE_STONE.get()),
+                        "kerb is not two clean continuous rows");
+            }
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "camp_floor", timeoutTicks = 20)
+    public static void floorTilesAreThin(GameTestHelper helper) {
+        BlockState one = HuaGround.HUA_COURTYARD_PAVERS_LAYER.get().defaultBlockState();
+        BlockState three = one.setValue(HuaLayerBlock.LAYERS, 3);
+        var origin = net.minecraft.core.BlockPos.ZERO;
+        double h1 = one.getCollisionShape(helper.getLevel(), origin).max(net.minecraft.core.Direction.Axis.Y);
+        double h3 = three.getCollisionShape(helper.getLevel(), origin).max(net.minecraft.core.Direction.Axis.Y);
+        helper.assertTrue(Math.abs(h1 - 0.25) < 1e-6, "one tile is 4 px, got " + h1);
+        helper.assertTrue(Math.abs(h3 - 0.75) < 1e-6, "three tiles are 12 px, got " + h3);
+        helper.assertTrue(HuaPaving.isPaving(HuaGround.HUA_EDGE_STONE_LAYER.get().defaultBlockState()), "kerb tile is paving");
+        helper.assertTrue(HuaGround.HUA_EDGE_STONE_SLAB.get().defaultBlockState().is(net.minecraft.tags.BlockTags.SLABS), "kerb slab in slabs tag");
         helper.succeed();
     }
 }

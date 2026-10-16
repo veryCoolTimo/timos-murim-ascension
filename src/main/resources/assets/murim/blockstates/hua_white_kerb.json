@@ -1,0 +1,26 @@
+{
+  "variants": {
+    "": [
+      {
+        "model": "murim:block/hua_white_kerb",
+        "weight": 10
+      },
+      {
+        "model": "murim:block/hua_white_kerb_b",
+        "weight": 4
+      },
+      {
+        "model": "murim:block/hua_white_kerb_c",
+        "weight": 4
+      },
+      {
+        "model": "murim:block/hua_white_kerb_d",
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_white_kerb_e",
+        "weight": 3
+      }
+    ]
+  }
+}

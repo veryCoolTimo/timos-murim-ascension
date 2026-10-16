@@ -1,0 +1,198 @@
+{
+ "texture_size": [
+  128,
+  128
+ ],
+ "textures": {
+  "0": "murim:block/anc_plaque_scriptures_3",
+  "particle": "murim:block/anc_plaque_scriptures_3"
+ },
+ "elements": [
+  {
+   "name": "board",
+   "from": [
+    0,
+    -1,
+    20.0
+   ],
+   "to": [
+    16,
+    17,
+    21.0
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      8,
+      9
+     ],
+     "texture": "#0"
+    },
+    "south": {
+     "uv": [
+      0,
+      12,
+      8,
+      13
+     ],
+     "texture": "#0"
+    },
+    "up": {
+     "uv": [
+      0,
+      11,
+      8,
+      11.5
+     ],
+     "texture": "#0"
+    },
+    "down": {
+     "uv": [
+      0,
+      11,
+      8,
+      11.5
+     ],
+     "texture": "#0"
+    },
+    "west": {
+     "uv": [
+      7.5,
+      0,
+      8,
+      9
+     ],
+     "texture": "#0"
+    }
+   }
+  },
+  {
+   "name": "frame_top",
+   "from": [
+    0,
+    16,
+    19.0
+   ],
+   "to": [
+    16,
+    17,
+    20.0
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      8,
+      0.5
+     ],
+     "texture": "#0"
+    },
+    "up": {
+     "uv": [
+      0,
+      10,
+      8,
+      10.5
+     ],
+     "texture": "#0"
+    },
+    "down": {
+     "uv": [
+      0,
+      10,
+      8,
+      10.5
+     ],
+     "texture": "#0"
+    }
+   }
+  },
+  {
+   "name": "frame_bottom",
+   "from": [
+    0,
+    -1,
+    19.0
+   ],
+   "to": [
+    16,
+    0,
+    20.0
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      8.5,
+      8,
+      9
+     ],
+     "texture": "#0"
+    },
+    "up": {
+     "uv": [
+      0,
+      10,
+      8,
+      10.5
+     ],
+     "texture": "#0"
+    },
+    "down": {
+     "uv": [
+      0,
+      10,
+      8,
+      10.5
+     ],
+     "texture": "#0"
+    }
+   }
+  },
+  {
+   "name": "frame_outer",
+   "from": [
+    0,
+    0,
+    19.0
+   ],
+   "to": [
+    1,
+    16,
+    20.0
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      7.5,
+      0.5,
+      8,
+      8.5
+     ],
+     "texture": "#0"
+    },
+    "west": {
+     "uv": [
+      7.5,
+      0.5,
+      8,
+      8.5
+     ],
+     "texture": "#0"
+    },
+    "east": {
+     "uv": [
+      0,
+      10,
+      0.5,
+      10.5
+     ],
+     "texture": "#0"
+    }
+   }
+  }
+ ]
+}

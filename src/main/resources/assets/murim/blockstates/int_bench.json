@@ -1,0 +1,165 @@
+{
+  "multipart": [
+    {
+      "when": {
+        "facing": "south"
+      },
+      "apply": {
+        "model": "murim:block/int_bench"
+      }
+    },
+    {
+      "when": {
+        "AND": [
+          {
+            "facing": "south"
+          },
+          {
+            "px": "false"
+          }
+        ]
+      },
+      "apply": {
+        "model": "murim:block/int_bench_end_px"
+      }
+    },
+    {
+      "when": {
+        "AND": [
+          {
+            "facing": "south"
+          },
+          {
+            "nx": "false"
+          }
+        ]
+      },
+      "apply": {
+        "model": "murim:block/int_bench_end_nx"
+      }
+    },
+    {
+      "when": {
+        "facing": "west"
+      },
+      "apply": {
+        "model": "murim:block/int_bench",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "AND": [
+          {
+            "facing": "west"
+          },
+          {
+            "px": "false"
+          }
+        ]
+      },
+      "apply": {
+        "model": "murim:block/int_bench_end_px",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "AND": [
+          {
+            "facing": "west"
+          },
+          {
+            "nx": "false"
+          }
+        ]
+      },
+      "apply": {
+        "model": "murim:block/int_bench_end_nx",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "north"
+      },
+      "apply": {
+        "model": "murim:block/int_bench",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "AND": [
+          {
+            "facing": "north"
+          },
+          {
+            "px": "false"
+          }
+        ]
+      },
+      "apply": {
+        "model": "murim:block/int_bench_end_px",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "AND": [
+          {
+            "facing": "north"
+          },
+          {
+            "nx": "false"
+          }
+        ]
+      },
+      "apply": {
+        "model": "murim:block/int_bench_end_nx",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "east"
+      },
+      "apply": {
+        "model": "murim:block/int_bench",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "AND": [
+          {
+            "facing": "east"
+          },
+          {
+            "px": "false"
+          }
+        ]
+      },
+      "apply": {
+        "model": "murim:block/int_bench_end_px",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "AND": [
+          {
+            "facing": "east"
+          },
+          {
+            "nx": "false"
+          }
+        ]
+      },
+      "apply": {
+        "model": "murim:block/int_bench_end_nx",
+        "y": 270
+      }
+    }
+  ]
+}

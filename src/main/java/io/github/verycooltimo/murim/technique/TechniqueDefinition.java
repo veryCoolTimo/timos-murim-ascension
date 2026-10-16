@@ -116,8 +116,14 @@ public record TechniqueDefinition(
             }
         }
         phaseTicks = java.util.Collections.unmodifiableMap(copy);
-        // Retain the datapack field for compatibility; completion is universal.
-        starCap = io.github.verycooltimo.murim.mastery.Arts.MAX_STARS;
+        if (starCap <= 0) throw new IllegalArgumentException("Неположительный предел звёзд у " + id);
+        // Includes standalone step forms (Shadow Step, High Cloud) and datapack footwork.
+        // Footwork always completes at ten; other arts retain their declared cap.
+        if ("step".equals(form) || behavior instanceof TechniqueBehavior.Step
+                || behavior instanceof TechniqueBehavior.Footwork
+                || Styles.FOOTWORK.stream().anyMatch(style -> style.forms().contains(id))) {
+            starCap = io.github.verycooltimo.murim.mastery.Arts.FOOTWORK_STARS;
+        }
         requires = List.copyOf(requires);
         if (hitStopTicks < 0 || cooldownTicks < 0) {
             throw new IllegalArgumentException("Отрицательные тики у техники " + id);

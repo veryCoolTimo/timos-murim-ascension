@@ -73,6 +73,13 @@
     "murim:stone_lion",
     "murim:water_vat",
     "murim:inscribed_stele",
-    "murim:roof_rake_end"
+    "murim:roof_rake_end",
+    "murim:hua_courtyard_pavers_layer",
+    "murim:hua_edge_stone_layer",
+    "murim:polished_hua_granite_layer",
+    "murim:hua_edge_stone_slab",
+    "murim:hua_white_kerb_layer",
+    "murim:hua_white_kerb",
+    "murim:hua_white_kerb_slab"
   ]
 }

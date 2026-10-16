@@ -4,12 +4,14 @@
   "model": "murim:models/block/roof_gable_panel_knee_base_r.obj",
   "flip_v": false,
   "emissive_ambient": false,
-  "automatic_culling": false,
+  "automatic_culling": true,
   "ambientocclusion": false,
   "render_type": "minecraft:solid",
   "textures": {
     "cream": "murim:block/roof_polish_cream",
     "plaster": "murim:block/roof_polish_plaster",
+    "soffit": "murim:block/roof_polish_soffit",
+    "tiles": "murim:block/roof_polish_tiles",
     "tiles_x": "murim:block/roof_polish_tiles_x",
     "wood": "murim:block/roof_polish_wood",
     "particle": "murim:block/roof_polish_tiles"

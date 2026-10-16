@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/slab_top",
+  "textures": {
+    "bottom": "murim:block/hua_edge_stone_end",
+    "top": "murim:block/hua_edge_stone_end",
+    "side": "murim:block/hua_edge_stone_d_side"
+  }
+}

@@ -39,8 +39,7 @@ import java.util.Optional;
  * касается нескольких людей сразу или мира.
  *
  * <p>Производительность (план §8.3): NPC тикают только в загруженных чанках; дальше
- * {@link SectDisciple#AWAKE_RANGE} от игроков ИИ спит, а человек переходит к делу без ходьбы, раз в
- * секунду. Чанки не держатся загруженными.
+ * {@link SectDisciple#AWAKE_RANGE} от игроков ИИ отдыхает после пешего прихода к месту дела. Чанки не держатся загруженными.
  */
 @EventBusSubscriber(modid = MurimMod.MODID)
 public final class SectLife {
@@ -75,13 +74,14 @@ public final class SectLife {
             int dy = (i % 2 == 0) ? i / 2 : -(i + 1) / 2;
             BlockPos b = base.offset(0, dy, 0);
             if (standable(level, b)) {
-                return new Vec3(guess.x, b.getY(), guess.z);
+                var support = level.getBlockState(b.below()).getCollisionShape(level, b.below());
+                return new Vec3(guess.x, b.getY() - 1 + support.max(net.minecraft.core.Direction.Axis.Y), guess.z);
             }
         }
         return guess;
     }
 
-    static boolean standable(Level level, BlockPos b) {
+    public static boolean standable(Level level, BlockPos b) {
         BlockState below = level.getBlockState(b.below());
         return !below.getCollisionShape(level, b.below()).isEmpty()
                 && level.getBlockState(b).getCollisionShape(level, b).isEmpty()
@@ -111,10 +111,6 @@ public final class SectLife {
             if (before.kind() != SectSchedule.Kind.SPAR) {
                 t = before;
             }
-        }
-        // Чужак у ворот: глава выходит навстречу и принимает без экзамена (автор 04.10).
-        if (m.get().role() == SectRole.LEADER && npc.level() instanceof ServerLevel server && data(server).outsiderAtGate) {
-            t = new SectSchedule.Task(SectSchedule.Kind.GREET, "sect_gate", 2.0D, 1.0D, 0.0D, -1.0D);
         }
         // Смотр учеников: боец сетки идёт на своё место в ринге (SectReview).
         SectSchedule.Task fight = SectReview.fighterTask(npc);
@@ -165,6 +161,7 @@ public final class SectLife {
             return null;
         }
         Vec3 spot = npc.level().isLoaded(BlockPos.containing(guess)) ? stand(npc.level(), guess) : guess;
+        spot = SectBuildings.routine(npc, t, spot);
         // Дождь: дело под открытым небом прервано — под крышу рядом (SectWeather).
         return SectWeather.apply(npc, new Resolved(t, spot, layout.yaw(t.faceU(), t.faceV())));
     }
@@ -287,39 +284,13 @@ public final class SectLife {
         }
     }
 
-    /**
-     * Далеко от игроков человек не ходит, а сразу оказывается на месте распорядка (его никто не видит).
-     * Только если точка в тикающем чанке: чанки ради NPC не грузим.
-     */
+    /** Idle, distant NPCs may heal in place; a changed routine wakes them to walk. */
     static void settleUnseen(SectDisciple npc, ServerLevel level) {
         Resolved r = resolve(npc);
-        if (r == null) {
-            return;
-        }
-        BlockPos at = BlockPos.containing(r.spot());
-        if (!level.isPositionEntityTicking(at)) {
-            return;
-        }
-        SectSchedule.Kind kind = r.task().kind();
-        if (kind != SectSchedule.Kind.SLEEP && npc.isSleeping()) {
-            npc.stopSleeping();
-        }
-        if (npc.position().distanceToSqr(r.spot()) > 9.0D) {
-            if (npc.isSleeping()) {
-                npc.stopSleeping();
-            }
-            npc.moveTo(r.spot().x, r.spot().y, r.spot().z, r.yaw(), 0.0F);
-            npc.setYHeadRot(r.yaw());
-            npc.setYBodyRot(r.yaw());
-            npc.getNavigation().stop();
-        }
-        npc.sit(kind.seated());
-        // Невидимый никому раненый заживает сам: лекарь не ходит к тем, кого никто не видит.
-        if (npc.wounded()) {
-            npc.setWounded(false);
-        }
-        // Поза дела сразу на месте (анимации секты, entity/SectPose): издалека люди не стоят столбом.
-        npc.setPose(io.github.verycooltimo.murim.entity.SectPose.forTask(kind, true,
+        if (r == null || npc.position().distanceToSqr(r.spot()) > 1.0D) return;
+        if (npc.wounded()) npc.setWounded(false);
+        npc.sit(r.task().kind().seated());
+        npc.setPose(io.github.verycooltimo.murim.entity.SectPose.forTask(r.task().kind(), true,
                 io.github.verycooltimo.murim.entity.SectPose.carrier(npc)));
     }
 
@@ -402,64 +373,12 @@ public final class SectLife {
      * стойка (ближайшая). null — нет: лекарь варит на своём месте.
      */
     public static BlockPos findStove(SectDisciple npc, String zone) {
-        SectLayout layout = npc.layout();
-        double[] h = layout == null ? null : layout.half(zone);
-        Vec3 c = layout == null ? null : layout.at(zone, 0.0D, 0.0D);
-        if (h == null || c == null) {
-            return null;
-        }
-        Level level = npc.level();
-        double r = Math.max(h[0], h[1]);
-        BlockPos best = null;
-        double bestDist = Double.MAX_VALUE;
-        for (BlockPos p : BlockPos.betweenClosed(BlockPos.containing(c.x - r, c.y - 2, c.z - r),
-                BlockPos.containing(c.x + r, c.y + 6, c.z + r))) {
-            if (!level.isLoaded(p)) {
-                continue;
-            }
-            BlockState s = level.getBlockState(p);
-            boolean stove = s.is(Blocks.FURNACE) || s.is(Blocks.BLAST_FURNACE) || s.is(Blocks.SMOKER) || s.is(Blocks.CAMPFIRE)
-                    || s.is(Blocks.SOUL_CAMPFIRE) || s.is(Blocks.BREWING_STAND)
-                    || s.getBlock() instanceof net.minecraft.world.level.block.AbstractCauldronBlock;
-            if (stove && layout.inside(zone, Vec3.atCenterOf(p), 1.0D)) {
-                double d = p.distToCenterSqr(npc.position());
-                if (d < bestDist) {
-                    bestDist = d;
-                    best = p.immutable();
-                }
-            }
-        }
-        return best;
+        return SectBuildings.furniture(npc, zone, SectBuildings.Kind.STOVE);
     }
 
-    /** Свободная кровать (изголовье) на площадке общежития; null — кроватей нет. */
+    /** Cached bed heads, reserved while people walk toward them. */
     public static BlockPos findBed(SectDisciple npc, String zone) {
-        SectLayout layout = npc.layout();
-        double[] h = layout == null ? null : layout.half(zone);
-        Vec3 c = layout == null ? null : layout.at(zone, 0.0D, 0.0D);
-        if (h == null || c == null) {
-            return null;
-        }
-        Level level = npc.level();
-        double r = Math.max(h[0], h[1]);
-        BlockPos best = null;
-        double bestDist = Double.MAX_VALUE;
-        for (BlockPos p : BlockPos.betweenClosed(BlockPos.containing(c.x - r, c.y - 2, c.z - r),
-                BlockPos.containing(c.x + r, c.y + 8, c.z + r))) {
-            if (!level.isLoaded(p)) {
-                continue;
-            }
-            BlockState s = level.getBlockState(p);
-            if (s.getBlock() instanceof BedBlock && s.getValue(BedBlock.PART) == BedPart.HEAD && !s.getValue(BedBlock.OCCUPIED)
-                    && layout.inside(zone, Vec3.atCenterOf(p), 1.0D)) {
-                double d = p.distToCenterSqr(npc.position()) + (npc.getRandom().nextDouble() * 0.01D);
-                if (d < bestDist) {
-                    bestDist = d;
-                    best = p.immutable();
-                }
-            }
-        }
-        return best;
+        return SectBuildings.furniture(npc, zone, SectBuildings.Kind.BED);
     }
 
     // ------------------------------------------------------------------ мир: люди, колокол, ворота
@@ -475,9 +394,6 @@ public final class SectLife {
         SectSiteData data = data(level);
         int tick = event.getServer().getTickCount();
         bell(level, layout, data);
-        if (tick % 20 == 3) {
-            data.outsiderAtGate = outsiderNear(level, layout);
-        }
         if (tick % 40 == 17) {
             spawnRoster(level, layout, data);
             for (ServerPlayer p : level.players()) {
@@ -486,23 +402,9 @@ public final class SectLife {
         }
     }
 
-    /** Не ученик секты в 40 блоках от ворот секты. */
-    static boolean outsiderNear(ServerLevel level, SectLayout layout) {
-        Vec3 gate = layout.at("sect_gate", 0.0D, 0.0D);
-        if (gate == null) {
-            return false;
-        }
-        for (ServerPlayer p : level.players()) {
-            if (!p.isSpectator() && !SectService.state(p).member() && p.position().distanceToSqr(gate) < 40.0D * 40.0D) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     /**
      * Люди встают на гору, когда рядом игрок (дом — в 96 блоках), но не у него на глазах (никого ближе
-     * 12 блоков к месту). Отметка «уже стоит» — в {@link SectSiteData}: генерацию горы не трогаем.
+     * 32 блоков к месту). Отметка «уже стоит» — в {@link SectSiteData}: генерацию горы не трогаем.
      */
     static void spawnRoster(ServerLevel level, SectLayout layout, SectSiteData data) {
         for (SectRoster m : SectRoster.ALL) {
@@ -521,7 +423,7 @@ public final class SectLife {
                 continue;
             }
             Player near = level.getNearestPlayer(guess.x, guess.y, guess.z, 96.0D, false);
-            Player close = level.getNearestPlayer(guess.x, guess.y, guess.z, 12.0D, false);
+            Player close = level.getNearestPlayer(guess.x, guess.y, guess.z, 32.0D, false);
             if (near == null || close != null) {
                 continue;
             }

@@ -1,0 +1,28 @@
+{
+ "type": "minecraft:block",
+ "pools": [
+  {
+   "bonus_rolls": 0.0,
+   "conditions": [
+    {
+     "condition": "minecraft:survives_explosion"
+    },
+    {
+     "block": "murim:hall_plaque_grand",
+     "condition": "minecraft:block_state_property",
+     "properties": {
+      "part": "3"
+     }
+    }
+   ],
+   "entries": [
+    {
+     "type": "minecraft:item",
+     "name": "murim:hall_plaque_grand"
+    }
+   ],
+   "rolls": 1.0
+  }
+ ],
+ "random_sequence": "murim:blocks/hall_plaque_grand"
+}

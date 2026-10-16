@@ -43,6 +43,18 @@ public final class MountHuaShape {
     private final HuaNoise relief;
     private final HuaNoise flute;
     private final HuaNoise hills;
+    private volatile HuaTerraceGrade terraceGrade;
+
+    private HuaTerraceGrade terraceGrade() {
+        HuaTerraceGrade result = terraceGrade;
+        if (result == null) {
+            synchronized (this) {
+                result = terraceGrade;
+                if (result == null) terraceGrade = result = new HuaTerraceGrade(this);
+            }
+        }
+        return result;
+    }
 
     public MountHuaShape(long seed) {
         this(seed, true);
@@ -73,7 +85,7 @@ public final class MountHuaShape {
     // terrace (+2 blocks); applied after the terraces' grading, so the pads stay exact.
 
     /** Local box the climb may change: {minU, maxU, minV, maxV}. */
-    static final double[] CLIMB_BOX = {-42, 52, 96, 122};
+    static final double[] CLIMB_BOX = {-42, 52, 100, 126};
 
     private final boolean climb;
     /** Ledges sorted by height: a higher ledge's top wins where two overlap. */
@@ -173,6 +185,14 @@ public final class MountHuaShape {
             }
         }
         if (!onLedge) {
+            // The enlarged upper building pads can lower the natural toe behind the last step.
+            // Keep a short rock shoulder there so grading does not strand the climb below its exit.
+            MountHuaPlan.Ledge last = CLIMB_ORDER.getLast();
+            double q = ledgeQ(last, u, v);
+            if (v > last.v() && q > 1 && q < 1.5) {
+                double exit = last.y() + 2 + 2 * (q - 1);
+                h = Math.max(h, exit);
+            }
             // Couloirs between the rock masses: the cliffs there are cut back 3-4 blocks, the
             // summit rim is notched deeper, so the face reads as separate bulging masses with
             // recesses between them (ref), not one wall. Never next to a ledge (the route keeps
@@ -223,11 +243,11 @@ public final class MountHuaShape {
         double best = 0;
         for (double g : MountHuaPlan.CLIMB_GAPS) {
             double centre = g + 1.8 * relief.noise(v / 7.0, g * 0.1, 121.0);
-            double half = 2.0 + 0.22 * clamp(v - 100, 0, 18);
+            double half = 2.0 + 0.22 * clamp(v - 104, 0, 18);
             if (g == MountHuaPlan.CLIMB_GAPS[0]) {
                 // The main couloir opens into a broad hollow in the upper third (codex r3): it
                 // parts the west mass from the centre one right up to the skyline.
-                half += 4.5 * smooth(108, 117, v);
+                half += 4.5 * smooth(112, 121, v);
             }
             best = Math.max(best, smooth(half, half * 0.35, Math.abs(u - centre)));
         }
@@ -439,7 +459,7 @@ public final class MountHuaShape {
         }
         for (double[] p : MountHuaPlan.PATHS) {
             double[] q = pathAt(p, u, v);
-            if (q[0] < r + 8) {
+            if (q[0] < r + 6 + MountHuaPlan.pathWidth(p) / 2.0) {
                 return false;
             }
         }
@@ -594,10 +614,8 @@ public final class MountHuaShape {
         if (!inBounds(u, v)) {
             return 0;
         }
-        double h = ground(u, v);
-        for (Zone zone : MountHuaPlan.ZONES) {
-            h = terrace(zone, u, v, h);
-        }
+        double h = terraceGrade().height(u, v);
+        if (Double.isNaN(h)) h = ungradedTerraces(u, v);
         if (withClimb) {
             h = climb(u, v, h);
         }
@@ -605,12 +623,18 @@ public final class MountHuaShape {
         h = paths(u, v, h);
         // Inside a terrace the level is exact (neighbouring terraces' walls never spill in).
         for (Zone zone : MountHuaPlan.ZONES) {
-            if (!zone.cave() && !zone.id().equals("grove") && Math.abs(u - zone.u()) <= zone.width() / 2.0
-                    && Math.abs(v - zone.v()) <= zone.depth() / 2.0) {
+            if (!zone.cave() && !zone.id().equals("grove") && MountHuaPlan.insidePad(zone, u, v)) {
                 h = zone.y();
             }
         }
         return Math.max(0, Math.min(MountHuaPlan.SUMMIT + 4, h));
+    }
+
+    /** Input to the immutable grading tiles; deliberately excludes climb/trail and tile lookup. */
+    double ungradedTerraces(double u, double v) {
+        double h = ground(u, v);
+        for (Zone zone : MountHuaPlan.ZONES) h = terrace(zone, u, v, h);
+        return h;
     }
 
     /**
@@ -1346,23 +1370,43 @@ public final class MountHuaShape {
         return Math.max(a, b) + hh * hh * k * 0.25;
     }
 
-    /** Stairs between the pads: 4 wide at their stepped level; gaps are left for a bridge. */
+    /** Per-path walking width; wide ceremonial flights have solid masonry and low outer cheeks. */
     private double paths(double u, double v, double h) {
         for (double[] p : MountHuaPlan.PATHS) {
             double[] q = pathAt(p, u, v);
-            if (q[0] <= 2.1 && h >= q[1] - 3) {
+            if (q[0] <= MountHuaPlan.pathHalfWidth(p)
+                    && (MountHuaPlan.accessPath(p) || MountHuaPlan.pathWidth(p) > MountHuaPlan.PATH_WIDTH || h >= q[1] - 3)) {
                 return q[1];
+            }
+            if (pathCheek(p, u, v)) {
+                return q[1] + 1;
             }
         }
         return h;
     }
 
-    /** {distance to the path line, nominal level there (stepped), position 0..1} for one path. */
+    /** One-block side curb outside a wide flight, only along its run (no wall across a landing). */
+    public static boolean pathCheek(double[] p, double u, double v) {
+        if (MountHuaPlan.pathWidth(p) <= MountHuaPlan.PATH_WIDTH) return false;
+        double du = p[3] - p[0], dv = p[4] - p[1];
+        double t = ((u - p[0]) * du + (v - p[1]) * dv) / (du * du + dv * dv);
+        double d = pathAt(p, u, v)[0];
+        return t >= 0 && t < 1 && d > MountHuaPlan.pathHalfWidth(p)
+                && d <= MountHuaPlan.pathHalfWidth(p) + 1;
+    }
+
+    /** {distance (infinite beyond a wide flight's square ends), stepped nominal level, position 0..1}. */
     public static double[] pathAt(double[] p, double u, double v) {
         double lx = p[3] - p[0];
         double ly = p[4] - p[1];
-        double t = clamp(((u - p[0]) * lx + (v - p[1]) * ly) / (lx * lx + ly * ly), 0, 1);
+        double projection = ((u - p[0]) * lx + (v - p[1]) * ly) / (lx * lx + ly * ly);
+        double t = clamp(projection, 0, 1);
         double d = Math.hypot(u - (p[0] + lx * t), v - (p[1] + ly * t));
+        // Wide flights end square at their landings; a radius-wide cap would paint repeated
+        // stairs across the flat courts before/after the actual three-block run.
+        if (MountHuaPlan.pathWidth(p) > MountHuaPlan.PATH_WIDTH && (projection < 0 || projection > 1)) {
+            d = Double.POSITIVE_INFINITY;
+        }
         return new double[] {d, Math.round(p[2] + (p[5] - p[2]) * t), t};
     }
 

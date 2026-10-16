@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=south": {
+      "model": "murim:block/int_armchair"
+    },
+    "facing=west": {
+      "model": "murim:block/int_armchair",
+      "y": 90
+    },
+    "facing=north": {
+      "model": "murim:block/int_armchair",
+      "y": 180
+    },
+    "facing=east": {
+      "model": "murim:block/int_armchair",
+      "y": 270
+    }
+  }
+}

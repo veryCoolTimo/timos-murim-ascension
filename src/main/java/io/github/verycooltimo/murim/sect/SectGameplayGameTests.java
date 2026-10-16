@@ -122,9 +122,15 @@ public final class SectGameplayGameTests {
     public static void resolvedSummonsCancelsAnElderStillApproaching(GameTestHelper h) {
         ServerPlayer p = player(h, 2, 12);
         SectDisciple elder = npc(h, "tae_seong", 22, 12);
+        SectDisciple nearer = npc(h, "tae_gyun", 3, 12);
         p.setData(ModAttachments.SECT, SectState.NONE.joined().contribute(30));
         PenanceService.summon(p, elder);
         h.assertTrue(elder.approachingDialogue(p, PenanceService.DIALOGUE), "нет подходящего старейшины");
+        h.assertTrue(!nearer.approachingDialogue(p, PenanceService.DIALOGUE) && !p.getData(ModAttachments.DIALOGUE).active(),
+                "nearby elder stole the witness's summons");
+        PenanceService.summon(p, nearer);
+        h.assertTrue(elder.approachingDialogue(p, PenanceService.DIALOGUE) && !nearer.approachingDialogue(p, PenanceService.DIALOGUE),
+                "repeat summons assigned a second elder");
         // Игрок уже ответил на приговор другому члену секты.
         PenanceService.refuse(p);
         h.runAfterDelay(4, () -> {

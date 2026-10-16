@@ -1,0 +1,11 @@
+{
+ "variants": {
+  "axis=x": {
+   "model": "murim:block/camp_herb_rack"
+  },
+  "axis=z": {
+   "model": "murim:block/camp_herb_rack",
+   "y": 90
+  }
+ }
+}

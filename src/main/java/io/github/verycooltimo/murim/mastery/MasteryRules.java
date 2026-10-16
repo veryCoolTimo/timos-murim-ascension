@@ -72,8 +72,10 @@ public final class MasteryRules {
     static final double FIRST_STAR = 17.0D;
     static final double STAR_GROWTH = 1.6D;
 
-    /** Practice reaches 10; the transitions 10→11 and 11→12 need enlightenment. */
-    public static final int INSIGHT_STAR = 10;
+    /** The final two transitions need enlightenment, relative to the full art, not the manuscript. */
+    public static int insightStar(int artCap) {
+        return Math.max(0, artCap - 2);
+    }
 
     /** Мудрость за изучение новой техники и за постижение крутой. */
     static final double WISDOM_PER_TECHNIQUE = 1.0D;
@@ -119,17 +121,21 @@ public final class MasteryRules {
 
     /** Один тик медитации: часть неосмысленного становится освоением, выгоднее боя. */
     public static Gain meditate(TechniqueProgress current, double wisdom, long day) {
+        return meditate(current, wisdom, day, Arts.MAX_STARS);
+    }
+
+    public static Gain meditate(TechniqueProgress current, double wisdom, long day, int artCap) {
         TechniqueProgress cooled = cool(current, day);
         if (cooled.unprocessed() <= 0.0D) {
             if (!cooled.atCap() && cooled.progress() >= need(cooled.stars())) {
-                return advance(cooled, 0.0D, true, Arts.MAX_STARS);
+                return advance(cooled, 0.0D, true, artCap);
             }
             return new Gain(cooled, List.of());
         }
         double taken = Math.min(cooled.unprocessed(), MEDITATION_RATE);
         TechniqueProgress rest = new TechniqueProgress(cooled.stars(), cooled.progress(),
                 cooled.unprocessed() - taken, cooled.day(), cooled.cap());
-        return advance(rest, taken * MEDITATION_GAIN * wisdomFactor(wisdom), true, Arts.MAX_STARS);
+        return advance(rest, taken * MEDITATION_GAIN * wisdomFactor(wisdom), true, artCap);
     }
 
     /**
@@ -156,15 +162,16 @@ public final class MasteryRules {
         int stars = current.stars();
         double progress = current.progress() + amount;
         List<Integer> reached = new ArrayList<>();
+        int limit = Math.min(current.cap(), artCap);
         // Следующая звезда — только после полного предыдущего; выше предела манускрипта не растёт.
-        while (stars < current.cap() && progress >= need(stars)) {
+        while (stars < limit && progress >= need(stars)) {
             // Store all practice at the wall; insight consumes it without resetting mastery.
-            if (!insight && stars >= INSIGHT_STAR) break;
+            if (!insight && stars >= insightStar(artCap)) break;
             progress -= need(stars);
             stars++;
             reached.add(stars);
         }
-        if (stars >= current.cap()) {
+        if (stars >= limit) {
             progress = 0.0D;
         }
         return new Gain(new TechniqueProgress(stars, progress, current.unprocessed(), current.day(),
@@ -177,11 +184,15 @@ public final class MasteryRules {
      * всегда с нуля.
      */
     public static int startStars(TechniqueTier tier, int cap, double wisdom) {
+        return startStars(tier, cap, wisdom, Arts.MAX_STARS);
+    }
+
+    public static int startStars(TechniqueTier tier, int cap, double wisdom, int artCap) {
         if (tier != TechniqueTier.BASIC) {
             return 0;
         }
         int skipped = (int) Math.floor(Math.max(0.0D, wisdom) / WISDOM_PER_SKIPPED_STAR);
-        return Math.min(skipped, Math.max(0, Math.min(cap - 1, INSIGHT_STAR)));
+        return Math.min(skipped, Math.max(0, Math.min(cap - 1, insightStar(artCap))));
     }
 
     /** Мудрость за изучение новой техники: крутые учат больше. */

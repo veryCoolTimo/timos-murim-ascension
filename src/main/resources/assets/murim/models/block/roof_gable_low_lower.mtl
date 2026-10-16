@@ -1,2 +1,5 @@
 newmtl plaster
 map_Kd #plaster
+
+newmtl soffit
+map_Kd #soffit

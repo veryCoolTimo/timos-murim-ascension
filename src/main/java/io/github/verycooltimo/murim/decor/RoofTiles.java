@@ -32,29 +32,29 @@ public final class RoofTiles {
 
     public static final DeferredBlock<RoofBlocks.Tiles> ROOF_TILES = BLOCKS.registerBlock("roof_tiles", RoofBlocks.Tiles::new, tile());
     public static final DeferredBlock<RoofBlocks.Slope> ROOF_TILE_STAIRS = BLOCKS.registerBlock("roof_tile_stairs",
-            p -> new RoofBlocks.Slope(ROOF_TILES.get().defaultBlockState(), p), tile().noOcclusion());
+            p -> new RoofBlocks.Slope(ROOF_TILES.get().defaultBlockState(), p), tile());
     public static final DeferredBlock<RoofBlocks.Slab> ROOF_TILE_SLAB = BLOCKS.registerBlock("roof_tile_slab", RoofBlocks.Slab::new, tile());
-    public static final DeferredBlock<RoofBlocks.Eave> ROOF_EAVE = BLOCKS.registerBlock("roof_eave", RoofBlocks.Eave::new, tile().noOcclusion());
+    public static final DeferredBlock<RoofBlocks.Eave> ROOF_EAVE = BLOCKS.registerBlock("roof_eave", RoofBlocks.Eave::new, tile());
     public static final DeferredBlock<RoofBlocks.Corner> ROOF_CORNER = BLOCKS.registerBlock("roof_corner", RoofBlocks.Corner::new,
-            tile().noOcclusion());
+            tile());
     public static final DeferredBlock<RoofBlocks.Ridge> ROOF_RIDGE = BLOCKS.registerBlock("roof_ridge", RoofBlocks.Ridge::new,
-            tile().noOcclusion());
+            tile());
     public static final DeferredBlock<RoofBlocks.RidgeEnd> ROOF_RIDGE_END = BLOCKS.registerBlock("roof_ridge_end", RoofBlocks.RidgeEnd::new,
-            tile().noOcclusion());
+            tile());
     /** Separate cell beyond the lower end of a gable rake; never crosses a neighbour's model. */
     public static final DeferredBlock<RoofBlocks.RakeEnd> ROOF_RAKE_END = BLOCKS.registerBlock("roof_rake_end", RoofBlocks.RakeEnd::new,
-            tile().noOcclusion());
+            tile());
 
     /** Apex of a hip roof where the hip ridges meet. */
     public static final DeferredBlock<RoofBlocks.Finial> ROOF_FINIAL = BLOCKS.registerBlock("roof_finial", RoofBlocks.Finial::new,
-            tile().noOcclusion());
+            tile());
 
     /** Low-pitch tiles (1:2) for the concave lower roof. */
     public static final DeferredBlock<RoofBlocks.LowSlope> ROOF_TILE_LOW = BLOCKS.registerBlock("roof_tile_low",
-            p -> new RoofBlocks.LowSlope(ROOF_TILES.get().defaultBlockState(), p), tile().noOcclusion());
+            p -> new RoofBlocks.LowSlope(ROOF_TILES.get().defaultBlockState(), p), tile());
     /** Eave lip starting to lift toward a corner. */
     public static final DeferredBlock<RoofBlocks.EaveRise> ROOF_EAVE_RISE = BLOCKS.registerBlock("roof_eave_rise",
-            RoofBlocks.EaveRise::new, tile().noOcclusion());
+            RoofBlocks.EaveRise::new, tile());
     /** Red rafters and soffit boards under an overhang. */
     public static final DeferredBlock<RoofBlocks.Rafters> ROOF_RAFTERS = BLOCKS.registerBlock("roof_rafters", RoofBlocks.Rafters::new,
             BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_RED).instrument(NoteBlockInstrument.BASS)
@@ -68,8 +68,8 @@ public final class RoofTiles {
     public static final DeferredBlock<RoofBlocks.Architrave> ROOF_ARCHITRAVE = BLOCKS.registerBlock("roof_architrave",
             RoofBlocks.Architrave::new, timber());
     /** Double eave: the ridge where the lower skirt meets the wall of the upper storey. */
-    public static final DeferredBlock<RoofBlocks.Facing> ROOF_WALL_RIDGE = BLOCKS.registerBlock("roof_wall_ridge",
-            RoofBlocks.Facing::new, tile().noOcclusion());
+    public static final DeferredBlock<RoofBlocks.WallRidge> ROOF_WALL_RIDGE = BLOCKS.registerBlock("roof_wall_ridge",
+            RoofBlocks.WallRidge::new, tile());
 
     /** Thin roof edge (ref build2/roof_thin_fascia_plaster): a plaster wall top with the wooden fascia board. */
     public static final DeferredBlock<RoofBlocks.Facing> ROOF_FASCIA = BLOCKS.registerBlock("roof_fascia", RoofBlocks.Facing::new,
@@ -78,19 +78,19 @@ public final class RoofTiles {
     /** White plaster gable infill under a roof slope (ref build2/ref_05). */
     public static final DeferredBlock<RoofBlocks.Gable> ROOF_GABLE = BLOCKS.registerBlock("roof_gable", RoofBlocks.Gable::new,
             BlockBehaviour.Properties.of().mapColor(MapColor.TERRACOTTA_WHITE).instrument(NoteBlockInstrument.BASEDRUM)
-                    .requiresCorrectToolForDrops().strength(0.9F).sound(net.minecraft.world.level.block.SoundType.CALCITE).noOcclusion());
+                    .requiresCorrectToolForDrops().strength(0.9F).sound(net.minecraft.world.level.block.SoundType.CALCITE));
     /** Round Hua plum plaque for the gable. */
     public static final DeferredBlock<RoofBlocks.Emblem> ROOF_GABLE_EMBLEM = BLOCKS.registerBlock("roof_gable_emblem",
             RoofBlocks.Emblem::new, timber());
 
     /** Gentle tile courses of a concave roof (codex 07.10 profile). */
     public static final DeferredBlock<RoofBlocks.Course> ROOF_TILE_COURSE = BLOCKS.registerBlock("roof_tile_course",
-            p -> new RoofBlocks.Course(ROOF_TILES.get().defaultBlockState(), p), tile().noOcclusion());
+            p -> new RoofBlocks.Course(ROOF_TILES.get().defaultBlockState(), p), tile());
     /** Thin white gable panel against the end of the slopes. */
     public static final DeferredBlock<RoofBlocks.GablePanel> ROOF_GABLE_PANEL = BLOCKS.registerBlock("roof_gable_panel",
             RoofBlocks.GablePanel::new, BlockBehaviour.Properties.of().mapColor(MapColor.TERRACOTTA_WHITE)
                     .instrument(NoteBlockInstrument.BASEDRUM).requiresCorrectToolForDrops().strength(0.9F)
-                    .sound(net.minecraft.world.level.block.SoundType.CALCITE).noOcclusion());
+                    .sound(net.minecraft.world.level.block.SoundType.CALCITE));
 
     /** Thin v7 ridge graph; all six block items are included in ALL and the Murim tab.
      * Shape revision keeps IDs; rebuild measured prefabs with roof_v7.mcfunction.

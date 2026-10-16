@@ -112,11 +112,11 @@ public final class SectStaff {
         };
     }
 
-    /** Метельщик: двор там, где сейчас пусто — ворота в строй, площадь в завтрак и днём, песок поединков в ужин. */
+    /** Метельщик: двор там, где сейчас пусто — ворота в строй, площадь в завтрак и днём, двор лагеря в ужин. */
     private static Task sweeper(SectRoster m, Period p) {
         return switch (p) {
             case FORMATION -> new Task(Kind.SWEEP, "sect_gate", 0.0D, 0.0D, 0.0D, -1.0D);
-            case DINNER -> new Task(Kind.SWEEP, "sparring", 0.0D, 0.0D, 0.0D, 1.0D);
+            case DINNER -> new Task(Kind.SWEEP, "camp", 11.0D, 8.0D, 0.0D, 1.0D);
             case EVENING -> rest(m);
             default -> new Task(Kind.SWEEP, "training", 0.0D, -4.0D, 0.0D, 1.0D);
         };

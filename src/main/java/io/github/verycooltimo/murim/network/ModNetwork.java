@@ -19,7 +19,7 @@ import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 public final class ModNetwork {
 
     /** Версия протокола. Поднимать при любом несовместимом изменении пакетов. */
-    private static final String VERSION = "42"; // universal twelve-star mastery and version 3 migration
+    private static final String VERSION = "43"; // per-art star caps and version 4 mastery migration
 
     @SubscribeEvent
     static void register(RegisterPayloadHandlersEvent event) {
@@ -178,6 +178,9 @@ public final class ModNetwork {
                 (payload, context) -> ClientPayloadBridge.handleDemonic(payload));
         registrar.playToClient(StepPayload.TYPE, StepPayload.STREAM_CODEC,
                 (payload, context) -> ClientPayloadBridge.handleStep(payload));
+
+        registrar.playToClient(PenancePayload.TYPE, PenancePayload.STREAM_CODEC,
+                (payload, context) -> ClientPayloadBridge.handlePenance(payload));
 
         // Порыв давления: тряска, волна и наклон пламени в момент толчка.
         registrar.playToClient(

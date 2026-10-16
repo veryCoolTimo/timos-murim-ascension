@@ -1,0 +1,28 @@
+{
+ "type": "minecraft:block",
+ "pools": [
+  {
+   "bonus_rolls": 0.0,
+   "conditions": [
+    {
+     "condition": "minecraft:survives_explosion"
+    },
+    {
+     "block": "murim:eld_plaque_pine",
+     "condition": "minecraft:block_state_property",
+     "properties": {
+      "part": "1"
+     }
+    }
+   ],
+   "entries": [
+    {
+     "type": "minecraft:item",
+     "name": "murim:eld_plaque_pine"
+    }
+   ],
+   "rolls": 1.0
+  }
+ ],
+ "random_sequence": "murim:blocks/eld_plaque_pine"
+}

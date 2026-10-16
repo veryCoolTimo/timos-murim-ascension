@@ -19,7 +19,7 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 /** Sixteen states, connecting across facing like a fence. End posts disappear at joints. */
-public final class FoldingScreenBlock extends HorizontalDirectionalBlock {
+public class FoldingScreenBlock extends HorizontalDirectionalBlock {
     public static final MapCodec<FoldingScreenBlock> CODEC = simpleCodec(FoldingScreenBlock::new);
     public static final BooleanProperty LEFT = BooleanProperty.create("left");
     public static final BooleanProperty RIGHT = BooleanProperty.create("right");

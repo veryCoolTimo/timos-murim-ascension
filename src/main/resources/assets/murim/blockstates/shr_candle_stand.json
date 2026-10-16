@@ -1,0 +1,49 @@
+{
+  "variants": {
+    "facing=south,part=0": {
+      "model": "murim:block/shr_candle_stand_0_0"
+    },
+    "facing=south,part=1": {
+      "model": "murim:block/shr_candle_stand_0_1"
+    },
+    "facing=south,part=2": {
+      "model": "murim:block/shr_candle_stand_0_1"
+    },
+    "facing=west,part=0": {
+      "model": "murim:block/shr_candle_stand_0_0",
+      "y": 90
+    },
+    "facing=west,part=1": {
+      "model": "murim:block/shr_candle_stand_0_1",
+      "y": 90
+    },
+    "facing=west,part=2": {
+      "model": "murim:block/shr_candle_stand_0_1",
+      "y": 90
+    },
+    "facing=north,part=0": {
+      "model": "murim:block/shr_candle_stand_0_0",
+      "y": 180
+    },
+    "facing=north,part=1": {
+      "model": "murim:block/shr_candle_stand_0_1",
+      "y": 180
+    },
+    "facing=north,part=2": {
+      "model": "murim:block/shr_candle_stand_0_1",
+      "y": 180
+    },
+    "facing=east,part=0": {
+      "model": "murim:block/shr_candle_stand_0_0",
+      "y": 270
+    },
+    "facing=east,part=1": {
+      "model": "murim:block/shr_candle_stand_0_1",
+      "y": 270
+    },
+    "facing=east,part=2": {
+      "model": "murim:block/shr_candle_stand_0_1",
+      "y": 270
+    }
+  }
+}

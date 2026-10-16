@@ -81,7 +81,7 @@ public final class SectLifeCapture {
             // Обмен заслуг: игрок перед столом казны, лицом к Тэ Гюну (он у стола смотрит на восток).
             "merit", new double[] {7.6D, 0.4D},
             // Живая гора: игрок у столбов применяет технику — ученики вокруг останавливаются и смотрят.
-            "watch", new double[] {0.0D, 9.0D});
+            "watch", new double[] {0.0D, -4.0D});
     private static final java.util.Map<String, String> ACT_ZONE = java.util.Map.of("intercept", "main_hall", "guard", "treasury",
             "summary", "training", "merit", "treasury", "watch", "poles");
     /**
@@ -106,14 +106,14 @@ public final class SectLifeCapture {
             new Scene("dawn", 23300, "training", 3.0D, SectSchedule.FRONT_ROW + 7.0D, 3.5D, "training", 0.0D, 2.0D, 0.5D, false),
             // Тот же строй сбоку и выше — видно ряды целиком.
             new Scene("dawn_side", 23400, "training", 13.0D, 3.0D, 3.0D, "training", 0.0D, 2.5D, 0.5D, false),
-            // Днём: пары поединков на песке.
-            new Scene("spar", 4200, "sparring", 0.0D, -14.0D, 6.0D, "sparring", 0.0D, 0.0D, 0.0D, false),
-            // Днём: столбы и хозяйство в лагере.
-            new Scene("poles", 4300, "poles", 7.0D, 6.0D, 3.5D, "poles", 0.0D, 0.0D, 0.5D, false),
+            // Днём: поединки в восточной полосе тренировочной площади.
+            new Scene("spar", 4200, "training", 22.0D, -18.0D, 9.0D, "training", 16.0D, 0.0D, 0.0D, false),
+            // Столбы в юго-западном углу той же площади, отдельно от помоста наставника.
+            new Scene("poles", 4300, "poles", 7.0D, -6.0D, 3.5D, "poles", 0.0D, 0.0D, 0.5D, false),
             // Ужин: столовая и стол во дворе лагеря.
             new Scene("meal", 9300, "camp", 14.0D, 20.0D, 6.0D, "camp", 5.0D, 10.0D, 0.0D, false),
             // Вечер: кружки в лагере, медитация в роще.
-            new Scene("evening", 11300, "camp", -12.0D, -2.0D, 6.0D, "camp", 0.0D, 0.0D, 0.0D, false),
+            new Scene("evening", 11300, "camp", 18.0D, 4.0D, 6.0D, "camp", 10.0D, -8.0D, 0.0D, false),
             // Игрок в строю: с края второго ряда бьёт формы вместе со всеми.
             new Scene("join", 23500, "training", 12.5D, 9.5D, 2.5D, "training", 4.5D, 3.0D, 1.0D, true),
             // С3, часть 2: слуги днём — носильщики со ступеней в кладовую, управляющий, метельщик на площади.
@@ -133,22 +133,22 @@ public final class SectLifeCapture {
             // Казна: Тэ Гюн у стола с книгой учёта, носильщики приносят груз — принимает, они кланяются.
             new Scene("treasury", 3300, "treasury", 12.0D, 2.5D, 2.2D, "treasury", 7.0D, -2.5D, 0.6D, false, "porters"),
             // Лекарь: после поединка раненый сидит у края площадки, Гён Чхо на колене лечит.
-            new Scene("healer", 7600, "sparring", -8.0D, -14.5D, 3.0D, "sparring", -7.5D, -8.5D, 0.3D, false, "wound"),
+            new Scene("healer", 7600, "training", -8.0D, -14.5D, 3.0D, "training", -7.5D, -8.5D, 0.3D, false, "wound"),
             // Смена охраны у ворот секты в сумерках: сменщик приходит, оба кланяются, сменённый уходит.
             new Scene("shift", 13040, "sect_gate", 8.5D, 4.5D, 2.0D, "sect_gate", 4.5D, 1.0D, 1.0D, false, "shift"),
             // Итог дня: вечером игрок говорит с наставником — журнал дня и «зачем всё это».
             new Scene("summary", 12300, "training", 3.0D, 14.0D, 2.0D, "training", 0.0D, 10.0D, 1.0D, false, "summary"),
-            // Смотр учеников (раз в 7 дней): сетка из четырёх на площадке поединков, зрители вдоль краёв, глава на помосте.
-            new Scene("review", io.github.verycooltimo.murim.sect.SectReview.FROM + 100, "sparring", 0.0D, 17.0D, 7.0D,
-                    "sparring", 0.0D, 0.0D, 0.0D, false, "review"),
+            // Смотр учеников (раз в 7 дней): сетка из четырёх на тренировочной площади, зрители вдоль краёв, глава на помосте.
+            new Scene("review", io.github.verycooltimo.murim.sect.SectReview.FROM + 100, "training", 0.0D, 17.0D, 7.0D,
+                    "training", 0.0D, 0.0D, 0.0D, false, "review"),
             // Обмен заслуг: игрок у стола казны говорит с Тэ Гюном и берёт меч за заслуги.
             new Scene("merit", 3500, "treasury", 0.0D, 0.0D, 0.0D, "treasury", 5.5D, 0.0D, 1.0D, false, "merit"),
             // Живая гора (автор 05.10): ужин во дворе лагеря вблизи — реплики над головами и ответы соседей.
             new Scene("alive_meal", 9400, "camp", 8.0D, 6.5D, 2.0D, "camp", 4.5D, 2.0D, 0.9D, false, "chatter"),
             // Игрок у столбов применяет технику — ученики останавливаются и поворачиваются к нему.
-            new Scene("alive_watch", 4300, "poles", 5.5D, 14.5D, 2.2D, "poles", 0.0D, 5.0D, 1.0D, false, "watch"),
+            new Scene("alive_watch", 4300, "poles", 5.5D, -7.0D, 2.2D, "poles", 0.0D, -2.0D, 1.0D, false, "watch"),
             // Дождь днём: поединки и столбы прерваны, люди уходят под крышу, дерево или к стене.
-            new Scene("alive_rain", 4400, "sparring", -4.0D, -13.0D, 3.5D, "sparring", 0.0D, -3.0D, 0.5D, false, "rain"),
+            new Scene("alive_rain", 4400, "training", 22.0D, -12.0D, 3.5D, "training", 16.0D, 0.0D, 0.5D, false, "rain"),
             // Конец ужина (автор 06.10: «нужна разница во времени»): колокол — и люди встают из-за стола не хором.
             new Scene("alive_leave", 10700, "camp", 9.5D, 8.5D, 3.2D, "camp", 4.5D, 2.0D, 0.6D, false, "leave"));
 
@@ -361,7 +361,7 @@ public final class SectLifeCapture {
                 }
             }
             case "wound" -> {
-                Vec3 ring = layout.at("sparring", -6.5D, -8.5D);
+                Vec3 ring = layout.at("training", -6.5D, -8.5D);
                 io.github.verycooltimo.murim.entity.SectDisciple best = null;
                 for (io.github.verycooltimo.murim.entity.SectDisciple d : people) {
                     if (d.member().map(m -> m.generation() == 3 && m.disciple()).orElse(false)
@@ -571,7 +571,7 @@ public final class SectLifeCapture {
             double[] st = ACT_START.get(s.act());
             Vec3 at = SectLife.stand(level, layout.at(ACT_ZONE.get(s.act()), st[0], st[1]));
             Vec3 to = "summary".equals(s.act()) ? layout.at("training", 0.0D, SectSchedule.FRONT_ROW + 3.0D)
-                    : "watch".equals(s.act()) ? layout.at("poles", 0.0D, 20.0D)
+                    : "watch".equals(s.act()) ? layout.at("poles", 0.0D, 0.0D)
                     : "merit".equals(s.act()) ? layout.at("treasury", 5.5D, 0.0D) : layout.at(ACT_ZONE.get(s.act()), 0.0D, 0.0D);
             p.setGameMode(GameType.SURVIVAL);
             p.removeEffect(MobEffects.INVISIBILITY);

@@ -1,2 +1,5 @@
 newmtl ends
 map_Kd #ends
+
+newmtl soffit
+map_Kd #soffit

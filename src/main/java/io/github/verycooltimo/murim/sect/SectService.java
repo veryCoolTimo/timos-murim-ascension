@@ -50,7 +50,7 @@ public final class SectService {
     private SectService() {
     }
 
-    static SectState state(ServerPlayer p) {
+    public static SectState state(ServerPlayer p) {
         return p.getData(ModAttachments.SECT);
     }
 
@@ -208,7 +208,9 @@ public final class SectService {
         if (state(player).member()) {
             return;
         }
-        player.setData(ModAttachments.SECT, state(player).joined());
+        player.setData(ModAttachments.SECT, state(player).joined().with(SectArrival.PENDING)
+                .record("arrival.day", SectSchedule.day(player.level().getDayTime()) + 1));
+        SectArrival.accepted(player);
         player.level().playSound(null, player.blockPosition(), SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS, 0.6F, 0.7F);
         player.displayClientMessage(Component.translatable("murim.sect.joined").withStyle(ChatFormatting.LIGHT_PURPLE), false);
         if (!MasteryService.knows(player, SIX)) {

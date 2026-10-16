@@ -3,6 +3,8 @@ package io.github.verycooltimo.murim.sect;
 import io.github.verycooltimo.murim.MurimMod;
 import io.github.verycooltimo.murim.world.hua.MountHuaSite;
 import io.github.verycooltimo.murim.world.hua.MountHuaSites;
+import io.github.verycooltimo.murim.world.hua.MountHuaShape;
+import io.github.verycooltimo.murim.world.hua.MountHuaPlan;
 import java.util.List;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
@@ -15,6 +17,7 @@ import net.minecraft.world.entity.Display;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -39,7 +42,7 @@ public final class SectLayoutBoxes {
             source.sendFailure(Component.translatable("command.murim.sect.boxes.already"));
             return 0;
         }
-        int n = place(level, site, SectLayoutPlan.BOXES, data);
+        int n = place(level, site, SectLayoutPlan.BOXES, data) + placeCorridors(level, site, data);
         source.sendSuccess(() -> Component.translatable("command.murim.sect.boxes.placed", n, data.blocks.size()), true);
         return n;
     }
@@ -84,12 +87,9 @@ public final class SectLayoutBoxes {
             }
             for (int x = 0; x < box.width(); x++) {
                 for (int z = 0; z < box.depth(); z++) {
-                    if (x != 0 && x != box.width() - 1 && z != 0 && z != box.depth() - 1) {
-                        continue;
-                    }
                     int[] world = site.toWorld(box.minU() + x, box.minV() + z);
                     for (int y = 0; y < box.kind().height(); y++) {
-                        if (box.door(x, z, y)) {
+                        if (!box.marker(x, z, y)) {
                             continue;
                         }
                         BlockPos pos = new BlockPos(world[0], base + y, world[1]);
@@ -109,6 +109,60 @@ public final class SectLayoutBoxes {
             n++;
         }
         return n;
+    }
+
+    /** Replace the path surface with reversible cyan marks; keep its stair profile and headroom. */
+    static int placeCorridors(ServerLevel level, MountHuaSite site, SectLayoutData data) {
+        var marker = Blocks.CYAN_CONCRETE.defaultBlockState();
+        for (var corridor : SectLayoutPlan.CORRIDORS) {
+            for (int segment = 0; segment < corridor.pathCount(); segment++) {
+                double[] p = corridor.segment(segment);
+                int pad = corridor.width(segment);
+                for (int u = (int) Math.floor(Math.min(p[0], p[3])) - pad;
+                        u <= Math.ceil(Math.max(p[0], p[3])) + pad; u++) {
+                    for (int v = (int) Math.floor(Math.min(p[1], p[4])) - pad;
+                            v <= Math.ceil(Math.max(p[1], p[4])) + pad; v++) {
+                        int[] w = site.toWorld(u, v);
+                        double localU = site.localU(w[0] + 0.5, w[1] + 0.5);
+                        double localV = site.localV(w[0] + 0.5, w[1] + 0.5);
+                        double[] q = MountHuaShape.pathAt(p, localU, localV);
+                        if (q[0] > MountHuaPlan.pathHalfWidth(p)) {
+                            continue;
+                        }
+                        // Same priority at shared landings as the worldgen path writer.
+                        boolean earlier = false;
+                        for (int i = 0; i < corridor.firstPath() + segment; i++) {
+                            if (MountHuaShape.pathAt(MountHuaPlan.PATHS[i], localU, localV)[0]
+                                    <= MountHuaPlan.pathHalfWidth(MountHuaPlan.PATHS[i])) {
+                                earlier = true;
+                                break;
+                            }
+                        }
+                        if (earlier) {
+                            continue;
+                        }
+                        BlockPos at = new BlockPos(w[0], (int) Math.round(site.worldY(q[1])), w[1]);
+                        var before = level.getBlockState(at);
+                        var key = BuiltInRegistries.BLOCK.getKey(before.getBlock());
+                        if (before.isAir() || before.hasBlockEntity() || before.equals(marker)
+                                || key.getNamespace().equals(MurimMod.MODID) && !terrain(key.getPath())) {
+                            continue;
+                        }
+                        if (level.setBlock(at, marker, 2 | 16)) {
+                            data.remember(at, before, marker);
+                        }
+                    }
+                }
+            }
+            double[] p = corridor.segment(1);
+            int[] w = site.toWorld((p[0] + p[3]) / 2, (p[1] + p[4]) / 2);
+            String key = "layout.murim.sect.corridor." + corridor.id();
+            var text = Component.translatable(key + ".ru").append("\n").append(Component.translatable(key + ".en"))
+                    .append("\n↔ " + MountHuaPlan.pathWidth(p));
+            textLabel(level, w[0] + 0.5, site.worldY(Math.max(p[2], p[5])) + 3,
+                    w[1] + 0.5, text, data);
+        }
+        return SectLayoutPlan.CORRIDORS.size();
     }
 
     /** True when the footprint already holds a real building: enough of our mod's blocks inside its volume. */
@@ -139,10 +193,6 @@ public final class SectLayoutBoxes {
     static final int BUILT_THRESHOLD = 24;
 
     private static void label(ServerLevel level, MountHuaSite site, SectLayoutPlan.Box box, int base, SectLayoutData data) {
-        Display.TextDisplay display = EntityType.TEXT_DISPLAY.create(level);
-        if (display == null) {
-            return;
-        }
         // Separate language keys intentionally show BOTH languages on clients of either locale.
         String key = "layout.murim.sect.zone." + box.zoneId();
         var text = Component.translatable(key + ".ru").append("\n").append(Component.translatable(key + ".en"));
@@ -152,6 +202,17 @@ public final class SectLayoutBoxes {
                     .append(Component.translatable(part + ".en"));
         }
         text.append("\n" + box.width() + " × " + box.depth() + " × " + box.kind().height());
+        int[] a = site.toWorld(box.minU(), box.minV());
+        int[] b = site.toWorld(box.minU() + box.width() - 1, box.minV() + box.depth() - 1);
+        textLabel(level, (a[0] + b[0]) / 2.0 + 0.5, base + box.kind().height() + 1.0,
+                (a[1] + b[1]) / 2.0 + 0.5, text, data);
+    }
+
+    private static void textLabel(ServerLevel level, double x, double y, double z, Component text, SectLayoutData data) {
+        Display.TextDisplay display = EntityType.TEXT_DISPLAY.create(level);
+        if (display == null) {
+            return;
+        }
         // Display's text/style setters are private in vanilla 1.21.1; use its public NBT load API.
         CompoundTag tag = new CompoundTag();
         tag.putString("text", Component.Serializer.toJson(text, level.registryAccess()));
@@ -161,10 +222,7 @@ public final class SectLayoutBoxes {
         tag.putInt("background", 0xB0202020);
         tag.putFloat("view_range", 4.0F);
         display.load(tag);
-        int[] a = site.toWorld(box.minU(), box.minV());
-        int[] b = site.toWorld(box.minU() + box.width() - 1, box.minV() + box.depth() - 1);
-        display.setPos((a[0] + b[0]) / 2.0 + 0.5, base + box.kind().height() + 1.0,
-                (a[1] + b[1]) / 2.0 + 0.5);
+        display.setPos(x, y, z);
         if (level.addFreshEntity(display)) {
             data.remember(display.getUUID(), display.blockPosition());
         }

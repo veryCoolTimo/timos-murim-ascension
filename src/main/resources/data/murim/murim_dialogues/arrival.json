@@ -1,0 +1,71 @@
+{
+  "name": "npc.murim.guard",
+  "title": "npc.murim.guard.title",
+  "start": [
+    {
+      "when": [
+        {
+          "flag": "arrival.mentor"
+        }
+      ],
+      "node": "waiting"
+    },
+    {
+      "node": "question"
+    }
+  ],
+  "nodes": {
+    "question": {
+      "line": "dialogue.murim.arrival.question",
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.arrival.opt.learn",
+          "next": "invited",
+          "actions": [
+            {
+              "type": "arrival_invite"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "invited": {
+      "line": "dialogue.murim.arrival.invited",
+      "gesture": "point",
+      "options": [
+        {
+          "text": "dialogue.murim.arrival.opt.follow",
+          "actions": [
+            {
+              "type": "arrival_guide"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "waiting": {
+      "line": "dialogue.murim.arrival.waiting",
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.arrival.opt.follow",
+          "actions": [
+            {
+              "type": "arrival_guide"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    }
+  }
+}

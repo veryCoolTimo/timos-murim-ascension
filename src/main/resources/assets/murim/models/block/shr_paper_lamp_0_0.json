@@ -1,0 +1,13 @@
+{
+  "loader": "neoforge:obj",
+  "model": "murim:models/block/obj/shr_paper_lamp_0_0.obj",
+  "flip_v": false,
+  "emissive_ambient": true,
+  "automatic_culling": true,
+  "shade_quads": true,
+  "render_type": "minecraft:cutout_mipped",
+  "textures": {
+    "tex": "murim:block/shr_set",
+    "particle": "murim:block/shr_set"
+  }
+}

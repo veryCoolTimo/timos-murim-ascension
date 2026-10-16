@@ -69,7 +69,7 @@
   "weakness": "technique.murim.high_cloud_steps.weakness",
   "hit_stop_ticks": 0,
   "cooldown_ticks": 40,
-  "star_cap": 12,
+  "star_cap": 10,
   "tier": "advanced",
   "requires": []
 }

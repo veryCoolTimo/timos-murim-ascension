@@ -99,7 +99,7 @@ public final class SectJourney {
         var profile = p.getData(ModAttachments.PROFILE);
         var cultivation = p.getData(ModAttachments.CULTIVATION);
         SectStanding standing = SectStanding.of(s, profile.rank());
-        if (standing == SectStanding.OUTSIDER) return goal("join", "tae_hwi", "join");
+        if (standing == SectStanding.OUTSIDER) return goal("join", "gyeong_pil", "join");
         if (SectPositions.disciplined(s)) return goal("sentence", "tae_hwi", "sentence");
         if (s.has(SectProgression.REPAIR)) {
             String person = s.flags().stream().filter(f -> f.startsWith("discipline.victim."))

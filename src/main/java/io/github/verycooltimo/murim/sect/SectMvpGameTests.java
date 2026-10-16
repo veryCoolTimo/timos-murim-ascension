@@ -129,7 +129,7 @@ public final class SectMvpGameTests {
     // ------------------------------------------------------------------ смотр учеников
 
     /**
-     * Смотр: сетка из четырёх учеников третьего поколения — два полуфинала и финал на площадке поединков; все живы,
+     * Смотр: сетка из четырёх учеников третьего поколения — два полуфинала и финал на тренировочной площади; все живы,
      * есть победитель, смотр снят, день смотра записан.
      */
     @GameTest(template = YARD, timeoutTicks = 4800, batch = "sect_mvp_review")
@@ -138,6 +138,8 @@ public final class SectMvpGameTests {
         day += SectReview.daysUntil(day * 24000L);
         setTime(helper, day, SectReview.FROM + 20);
         helper.assertTrue(SectReview.window(helper.getLevel().getDayTime()), "не окно смотра");
+        helper.assertTrue(SectReview.ringSpot(1, 0).zone().equals("training")
+                && SectReview.ringSpot(4, 1).zone().equals("training"), "смотр не на тренировочной площади");
         SectGameTests.Yard yard = yard(helper, 0.3D);
         List<String> keys = SectReview.bracket(day, false);
         List<SectDisciple> fighters = new java.util.ArrayList<>();

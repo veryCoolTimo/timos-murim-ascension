@@ -106,6 +106,15 @@
       "gesture": "explain",
       "options": [
         {
+          "text": "dialogue.murim.escort.opt.menu",
+          "when": [
+            {
+              "member": true
+            }
+          ],
+          "next": "escort_menu"
+        },
+        {
           "text": "dialogue.murim.disciple.opt.challenge",
           "when": [
             {
@@ -130,6 +139,15 @@
       "gesture": "nod",
       "options": [
         {
+          "text": "dialogue.murim.escort.opt.menu",
+          "when": [
+            {
+              "member": true
+            }
+          ],
+          "next": "escort_menu"
+        },
+        {
           "text": "dialogue.murim.disciple.opt.challenge",
           "when": [
             {
@@ -150,9 +168,6 @@
         {
           "text": "dialogue.murim.social.opt.news",
           "next": "sect_news"
-        },
-        {
-          "text": "dialogue.murim.opt.leave"
         }
       ]
     },
@@ -207,6 +222,57 @@
       ],
       "gesture": "explain",
       "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "escort_menu": {
+      "line": "dialogue.murim.escort.menu",
+      "gesture": "point",
+      "options": [
+        {
+          "text": "dialogue.murim.escort.opt.room",
+          "when": [
+            {
+              "social": "escort:room"
+            }
+          ],
+          "actions": [
+            {
+              "type": "escort",
+              "value": "room"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.escort.opt.mentor",
+          "when": [
+            {
+              "social": "escort:mentor"
+            }
+          ],
+          "actions": [
+            {
+              "type": "escort",
+              "value": "mentor"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.escort.opt.elder",
+          "when": [
+            {
+              "social": "escort:elder"
+            }
+          ],
+          "actions": [
+            {
+              "type": "escort",
+              "value": "elder"
+            }
+          ]
+        },
         {
           "text": "dialogue.murim.opt.leave"
         }

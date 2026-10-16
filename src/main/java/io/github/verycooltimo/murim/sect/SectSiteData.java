@@ -114,8 +114,6 @@ public final class SectSiteData extends SavedData {
 
     // Не сохраняется: состояние текущего сеанса сервера (живёт в экземпляре, а не в static).
 
-    /** Чужак у ворот секты — глава выходит навстречу. */
-    boolean outsiderAtGate;
     /** Последний удар колокола: часть суток × 4 + номер удара, и день — чтобы не звонить дважды. */
     long lastRing = Long.MIN_VALUE;
 

@@ -131,58 +131,125 @@ public final class MountHuaPlan {
             // Inner sect gate where the trail reaches the main terrace (author refs 06, 12).
             new Zone("sect_gate", "Sect gate", 14, -24, 28, 10, 156, false, 0, 0),
             // Pavilions on summits and a cliff ledge (author refs 04, 11).
-            new Zone("pav_north", "North Peak pavilion", -10, -335, 14, 12, 160, false, 0, 0),
-            new Zone("pav_west", "West Peak pavilion", -125, 35, 14, 12, 232, false, 0, 0),
-            new Zone("pav_south", "South Peak pavilion", 5, 125, 16, 14, 240, false, 0, 0),
-            new Zone("pav_east", "East Peak ledge pavilion", 110, -10, 12, 10, 210, false, 0, 0),
-            // The sect on the old natural shelf, laid out after the agreed plan (author 04.10:
-            // «вернуть и редачить под наш план построек»; scratchpad sectmock/plan.png). Front =
-            // north where the stair arrives, back = the South Peak wall; plan-left = east,
-            // plan-right = west. Each site is its own graded pad at its own height following the
-            // ridge, natural ground and trees between them. Only pads and markers — the author
-            // builds every building and wall himself.
-            new Zone("training", "Training ground", 6, 4, 48, 32, 155, false, 0, 0),
-            new Zone("bell", "Bell tower", -28, -4, 10, 10, 152, false, 0, 0),
-            new Zone("treasury", "Treasury and household", 47, 5, 22, 18, 146, false, 0, 0),
-            new Zone("mentor", "Mentor's dais", 6, 24, 8, 6, 155, false, 0, 0),
-            new Zone("sparring", "Sparring square", 6, 38, 28, 20, 157, false, 0, 0),
-            new Zone("dining", "Dining hall and kitchen", -56, 66, 22, 12, 140, false, 0, 0),
-            new Zone("alchemy", "Alchemy pavilion", -32, 60, 16, 12, 150, false, 0, 0),
-            new Zone("camp", "Disciples' camp", -62, 34, 38, 48, 140, false, 0, 0),
-            new Zone("dorm_2nd", "Dormitory, 2nd generation", -69, 20, 16, 18, 140, false, 0, 0),
-            new Zone("dorm_3rd", "Dormitory, 3rd generation", -69, 42, 16, 22, 140, false, 0, 0),
-            new Zone("poles", "Plum blossom poles", -50, 22, 12, 10, 140, false, 0, 0),
-            new Zone("main_hall", "Main hall", 6, 62, 52, 22, 161, false, 0, 0),
-            new Zone("ancestors", "Ancestors' hall", 6, 90, 40, 16, 172, false, 0, 0),
-            new Zone("scriptures", "Hall of Scriptures", 42, 84, 20, 18, 168, false, 0, 0),
-            new Zone("elders", "Elders' residences", -43, 86, 38, 20, 166, false, 0, 0),
+            new Zone("pav_north", "North Peak pavilion", -10, -335, 20, 18, 160, false, 0, 0),
+            new Zone("pav_west", "West Peak pavilion", -128, 35, 20, 18, 232, false, 0, 0),
+            new Zone("pav_south", "South Peak pavilion", 5, 129, 22, 20, 240, false, 0, 0),
+            new Zone("pav_east", "East Peak ledge pavilion", 110, -10, 18, 16, 210, false, 0, 0),
+            // New pads include two blocks of eaves and three clear walking blocks beyond BOXES.
+            // Authored sect_gate and arch retain their original, tighter envelopes.
+            // Same-level camp/dorm and training/practice pads are deliberately nested.
+            new Zone("training", "Training ground", 6, 11.5, 48, 47, 155, false, 0, 0),
+            new Zone("bell", "Bell tower", -28, -4, 17, 17, 152, false, 0, 0),
+            new Zone("treasury", "Treasury and household", 49, 5, 28, 22, 146, false, 0, 0),
+            new Zone("mentor", "Mentor's dais", -12, 12, 6, 8, 155, false, 0, 0),
+            // Practice stays on the main square, south-west of the dais and clear of the axis.
+            new Zone("poles", "Plum blossom poles", -10, 27, 12, 10, 155, false, 0, 0),
+            // Authored five-deep landing between the fixed ceremonial flights.
+            new Zone("arch", "Ceremonial arch", 6, 40.5, 13, 5, 158, false, 0, 0),
+            // Dining retains its already sufficient 32 x 18 envelope.
+            new Zone("dining", "Dining hall and kitchen", -58, 66, 32, 18, 140, false, 0, 0),
+            // Lower service court stays at camp height; ten cells separate it from the high hall.
+            new Zone("alchemy", "Alchemist's house", -47, 46, 26, 22, 140, false, 0, 0),
+            new Zone("camp", "Disciples' camp", -82, 25, 40, 64, 140, false, 0, 0),
+            new Zone("dorm_2nd", "Dormitory, 2nd generation", -87, 9, 30, 30, 140, false, 0, 0),
+            new Zone("dorm_3rd", "Dormitory, 3rd generation", -87, 41, 30, 32, 140, false, 0, 0),
+            // Full roof clearance starts at the fixed upper flight (v=46); rear edge v=77.
+            // Ancestors and the attached climb move four south to keep their intervening bank.
+            new Zone("main_hall", "Main hall", 6, 61.5, 60, 31, 161, false, 0, 0),
+            new Zone("ancestors", "Ancestors' hall", 6, 93, 44, 22, 172, false, 0, 0),
+            new Zone("scriptures", "Hall of Scriptures", 53, 84, 26, 24, 168, false, 0, 0),
+            // Elders follow the upper landing south; five clear cells remain behind their houses.
+            new Zone("elders", "Elders' residences", -49, 105, 50, 26, 166, false, 0, 0),
             new Zone("grove", "Plum grove", 80, 72, 26, 20, 172, false, 0, 0),
             new Zone("vault", "Secret vault", 4, 62, 14, 12, 151, true, -26, 66),
             new Zone("penance", "Penance cave", -56, 112, 10, 10, 168, true, -40, 96));
 
     /** Sites marked for the author (lanterns on the corners, a sign); none are ruins now. */
     public static final java.util.Set<String> CORE = java.util.Set.of("gate", "sect_gate", "training",
-            "bell", "treasury", "mentor", "sparring", "dining", "alchemy", "camp", "dorm_2nd", "dorm_3rd",
+            "bell", "treasury", "mentor", "arch", "dining", "alchemy", "camp", "dorm_2nd", "dorm_3rd",
             "poles", "main_hall", "ancestors", "scriptures", "elders", "grove");
 
     /**
-     * Stairs between the pads, {u0, v0, y0, u1, v1, y1}: 4 wide, stepped. Over a gap deeper than
-     * three blocks the ground is left alone and the writer lays a plank bridge (the plum grove).
+     * Stairs between the pads, {u0, v0, y0, u1, v1, y1[, width]}: stepped, default width 4. Over a gap deeper than
+     * three blocks narrow paths use a plank bridge (the plum grove); wide flights are solid stone.
      */
     public static final double[][] PATHS = {
-        {14, -19, 156, 14, -11, 155},
-        {-23, -4, 152, -18, -4, 155},
-        {30, 6, 155, 36, 6, 146},
-        {6, 48, 157, 6, 51, 161},
-        {6, 73, 161, 6, 82, 172},
-        {-18, 10, 155, -45, 18, 140},
-        {-24, 60, 150, -20, 60, 161},
-        {-56, 58, 140, -56, 60, 140},
-        {32, 66, 161, 40, 77, 168},
-        {-20, 68, 161, -28, 76, 166},
-        {-43, 56, 140, -40, 58, 150},
-        {50, 82, 168, 67, 75, 172},
+        {14, -24, 156, 14, -22, 155},
+        // Level door apron; the ascent to training is below, after the legacy routes.
+        {-26.5, -4.5, 152, -22.5, -4.5, 152, 3},
+        // Treasury stair runs along the gap, instead of dropping nine blocks in six.
+        {28.5, -18.5, 155, 32.5, -18.5, 155, 3},
+        {6, 35, 155, 6, 38, 158, 9},
+        {6, 43, 158, 6, 46, 161, 9},
+        // Rear exit -> west landing -> thirteen-long side stair -> ancestors' porch.
+        // The elders branch from the upper landing; no low path crosses beneath this stair.
+        {6, 72, 161, 6, 74, 161},
+        {6, 74, 161, -30, 74, 161},
+        {-30, 74, 161, -30, 87, 172},
+        {-30, 87, 172, 6, 87, 172},
+        {-18, 10, 155, -62, 12, 140},
+        // Dining/camp courtyard, scriptures, elders, and lower alchemy approaches.
+        {-72.5, 52.5, 140, -72.5, 58.5, 140, 3},
+        {34.5, 65.5, 161, 38.5, 65.5, 161, 3},
+        {-22.5, 87.5, 172, -22.5, 94.5, 166, 3},
+        {-63.5, 12.5, 140, -60.5, 12.5, 140, 3},
+        {61, 82, 168, 74, 75, 172},
+        // Width-three paths have solid masonry support and three clear walking lanes.
+        // Half-cell centres put exactly three cells across each orthogonal run.
+        {-22.5, -4.5, 152, -18, -4.5, 155, 3},
+        {32.5, -18.5, 155, 44.5, -18.5, 146, 3},
+        {44.5, -18.5, 146, 44.5, 1.5, 146, 3},
+        {-60.5, 12.5, 140, -60.5, 34.5, 140, 3},
+        {-60.5, 34.5, 140, -47.5, 34.5, 140, 3},
+        {-47.5, 34.5, 140, -47.5, 40.5, 140, 3},
+        {38.5, 65.5, 161, 53.5, 72.5, 168, 3},
+        {53.5, 72.5, 168, 53.5, 77.5, 168, 3},
+        {-22.5, 94.5, 166, -38.5, 94.5, 166, 3},
+        {-38.5, 94.5, 166, -64.5, 94.5, 166, 3},
+        {-64.5, 94.5, 166, -64.5, 100.5, 166, 3},
+        {-49.5, 94.5, 166, -49.5, 100.5, 166, 3},
+        {-34.5, 94.5, 166, -34.5, 100.5, 166, 3},
+        // Go around the dining hall's north end; its west door has its own level apron.
+        {-72.5, 58.5, 140, -71.5, 58.5, 140, 3},
+        {-71.5, 58.5, 140, -71.5, 65.5, 140, 3},
+        {-71.5, 65.5, 140, -68.5, 65.5, 140, 3},
+        {-71.5, 58.5, 140, -54.5, 58.5, 140, 3},
+        {-54.5, 58.5, 140, -54.5, 65.5, 140, 3},
+        {-54.5, 65.5, 140, -52.5, 65.5, 140, 3},
+        // Courtyard spine outside both dorm verandas, joined to the existing camp stair.
+        {-72.5, 10.5, 140, -72.5, 52.5, 140, 3},
+        {-72.5, 10.5, 140, -62.5, 10.5, 140, 3},
     };
+
+    /** Default clear walking width; individual PATHS rows can override it. */
+    public static final int PATH_WIDTH = 4;
+
+    /** Cell-centre test shared by generation and the regrade vegetation mask. */
+    public static boolean insidePad(Zone z, double u, double v) {
+        int x = (int) Math.floor(z.u() - z.width() / 2.0);
+        int q = (int) Math.floor(z.v() - z.depth() / 2.0);
+        return u >= x && u < x + z.width() && v >= q && v < q + z.depth();
+    }
+
+    public static boolean clearFootprint(double u, double v) {
+        return ZONES.stream().anyMatch(z -> !z.cave() && !z.id().equals("grove") && insidePad(z, u, v));
+    }
+
+    public static int pathWidth(double[] path) {
+        return path.length > 6 ? (int) path[6] : PATH_WIDTH;
+    }
+
+    public static boolean accessPath(double[] path) {
+        return pathWidth(path) == 3;
+    }
+
+    /** The legacy 0.1 tolerance keeps four-wide diagonal paths on the same grid. */
+    public static double pathHalfWidth(double[] path) {
+        return pathWidth(path) / 2.0 + (accessPath(path) ? 0 : 0.1);
+    }
+
+    public static final int ANCESTORS_PATH_FIRST = 5;
+    public static final int ANCESTORS_PATH_COUNT = 4;
 
     /**
      * Narrow ravines {u0, v0, u1, v1, floor, halfWidth}: the plum grove's ledge is parted from the
@@ -219,7 +286,7 @@ public final class MountHuaPlan {
             new TrailPoint(6, -125, 172),
             new TrailPoint(22, -80, 178),
             new TrailPoint(24, -45, 170),
-            new TrailPoint(22, -14, 156));
+            new TrailPoint(22, -25, 156));
 
     /**
      * One rock ledge of the training climb: rounded top at nominal {@code y}, half sizes {@code ru}
@@ -244,32 +311,32 @@ public final class MountHuaPlan {
      */
     public static final List<Ledge> CLIMB = List.of(
             // Row 1, east -> west, just above the back edge of the ancestors' terrace (172).
-            new Ledge("climb_1", 17, 103.5, 175, 4.5, 2.6, Kind.STEP),
-            new Ledge("climb_2", 9.5, 103, 179, 5, 2.4, Kind.STEP),
-            new Ledge("climb_3", 0, 103.8, 182, 4.6, 2.5, Kind.STEP),
-            new Ledge("climb_4", -9.5, 103.2, 187, 5.2, 2.6, Kind.REST),
-            new Ledge("climb_5", -18.5, 104, 190, 4.4, 2.6, Kind.STEP),
+            new Ledge("climb_1", 17, 107.5, 175, 4.5, 2.6, Kind.STEP),
+            new Ledge("climb_2", 9.5, 107, 179, 5, 2.4, Kind.STEP),
+            new Ledge("climb_3", 0, 107.8, 182, 4.6, 2.5, Kind.STEP),
+            new Ledge("climb_4", -9.5, 107.2, 187, 5.2, 2.6, Kind.REST),
+            new Ledge("climb_5", -18.5, 108, 190, 4.4, 2.6, Kind.STEP),
             // West turn: a wide ledge spanning two rows.
-            new Ledge("climb_6", -26, 106.5, 194, 5.5, 4.2, Kind.TRAINING),
+            new Ledge("climb_6", -26, 110.5, 194, 5.5, 4.2, Kind.TRAINING),
             // Row 2, west -> east.
-            new Ledge("climb_7", -16.5, 108.8, 198, 5.4, 2.1, Kind.STEP),
-            new Ledge("climb_8", -6, 108.2, 202, 5.8, 2.2, Kind.STEP),
-            new Ledge("climb_9", 4.2, 108.9, 205, 5, 2.1, Kind.STEP),
-            new Ledge("climb_10", 15.4, 108.1, 210, 6, 2.2, Kind.REST),
+            new Ledge("climb_7", -16.5, 112.8, 198, 5.4, 2.1, Kind.STEP),
+            new Ledge("climb_8", -6, 112.2, 202, 5.8, 2.2, Kind.STEP),
+            new Ledge("climb_9", 4.2, 112.9, 205, 5, 2.1, Kind.STEP),
+            new Ledge("climb_10", 15.4, 112.1, 210, 6, 2.2, Kind.REST),
             // East turn.
-            new Ledge("climb_11", 27.5, 107.5, 214, 6, 4.4, Kind.TRAINING),
+            new Ledge("climb_11", 27.5, 111.5, 214, 6, 4.4, Kind.TRAINING),
             // Row 3, east -> west, under the summit rim.
-            new Ledge("climb_12", 18, 112.6, 218, 4.6, 2.0, Kind.STEP),
-            new Ledge("climb_13", 8, 112.2, 222, 4.8, 2.0, Kind.STEP),
-            new Ledge("climb_14", -2, 112.8, 226, 4.6, 2.0, Kind.STEP),
-            new Ledge("climb_15", -12, 112.3, 231, 4.8, 2.1, Kind.STEP),
+            new Ledge("climb_12", 18, 116.6, 218, 4.6, 2.0, Kind.STEP),
+            new Ledge("climb_13", 8, 116.2, 222, 4.8, 2.0, Kind.STEP),
+            new Ledge("climb_14", -2, 116.8, 226, 4.6, 2.0, Kind.STEP),
+            new Ledge("climb_15", -12, 116.3, 231, 4.8, 2.1, Kind.STEP),
             // Top: a wide rest ledge looking down on the sect; the summit rim is one step up.
-            new Ledge("climb_16", -23, 113.2, 235, 5.5, 2.8, Kind.TRAINING),
+            new Ledge("climb_16", -23, 117.2, 235, 5.5, 2.8, Kind.TRAINING),
             // Side lobes off the route: the face reads as a field of ledges, not one stair.
-            new Ledge("side_e1", 41, 100.5, 183, 3.6, 2.2, Kind.SIDE),
-            new Ledge("side_e2", 41, 115, 224, 3.8, 2.4, Kind.SIDE),
-            new Ledge("side_w1", -32, 100.8, 182, 3.4, 2.0, Kind.SIDE),
-            new Ledge("side_w2", -31, 112.2, 226, 3.0, 2.0, Kind.SIDE));
+            new Ledge("side_e1", 41, 104.5, 183, 3.6, 2.2, Kind.SIDE),
+            new Ledge("side_e2", 41, 119, 224, 3.8, 2.4, Kind.SIDE),
+            new Ledge("side_w1", -32, 104.8, 182, 3.4, 2.0, Kind.SIDE),
+            new Ledge("side_w2", -31, 116.2, 226, 3.0, 2.0, Kind.SIDE));
 
     /**
      * Couloirs (local u) that part the climb face into rock masses — west (turn 6, rows' west

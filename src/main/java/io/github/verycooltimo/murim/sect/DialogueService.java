@@ -10,6 +10,7 @@ import io.github.verycooltimo.murim.registry.ModAttachments;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
@@ -82,12 +83,14 @@ public final class DialogueService {
      * @return диалог и узел нашлись
      */
     public static boolean openDialogue(ServerPlayer player, SectDisciple npc, ResourceLocation id, String node) {
+        if (io.github.verycooltimo.murim.sect.seal.PenanceEnforcement.active(player)) return false;
         Dialogue d = DialogueLoader.get(id);
         if (d == null || !d.nodes().containsKey(node)) {
             MurimMod.LOGGER.warn("Нет диалога {} с узлом {}", id, node);
             return false;
         }
-        if (!npc.isAlive() || npc.level() != player.level() || npc.talkingTo() >= 0 && npc.talkingTo() != player.getId()) {
+        if (!npc.isAlive() || npc.guardTarget() != null || npc.escorting() && !npc.escortGoal().forPlayer(player)
+                || npc.level() != player.level() || npc.talkingTo() >= 0 && npc.talkingTo() != player.getId()) {
             return false;
         }
         Session old = player.getData(ModAttachments.DIALOGUE);
@@ -132,6 +135,7 @@ public final class DialogueService {
 
     public static Route route(ServerPlayer player, SectDisciple npc) {
         ResourceLocation id = npc.dialogue();
+        if (!SectService.state(player).member() && SectArrival.greeter(npc)) id = SectArrival.DIALOGUE;
         Dialogue d = DialogueLoader.get(id);
         if (d == null) {
             return null;
@@ -537,6 +541,20 @@ public final class DialogueService {
     private static String act(ServerPlayer player, SectDisciple npc, Dialogue.Action a) {
         String v = a.value().orElse("");
         switch (a.type()) {
+            case "arrival_invite" -> { if (!SectArrival.invite(player, npc)) return "retry"; }
+            case "arrival_guide" -> {
+                close(player, npc);
+                if (!SectArrival.guide(player, npc.layout()))
+                    player.displayClientMessage(Component.translatable("murim.sect.arrival.guide_busy"), false);
+                return "close";
+            }
+            case "arrival_admit" -> { if (!SectArrival.admit(player, npc)) return "retry"; }
+            case "escort" -> {
+                if (!SectEscorts.available(player, npc, v)) return "retry";
+                Vec3 target = SectEscorts.target(player, npc, v);
+                close(player, npc);
+                return npc.escortGoal().begin(player, target, false) ? "close" : "retry";
+            }
             case "journey_help" -> { if (!SectJourney.help(player, npc)) return "retry"; }
             case "progression_menu" -> {
                 if (!SectProgression.matches(player, npc, "menu")) return "retry";

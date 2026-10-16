@@ -1,2 +1,5 @@
+newmtl soffit
+map_Kd #soffit
+
 newmtl tiles_x
 map_Kd #tiles_x

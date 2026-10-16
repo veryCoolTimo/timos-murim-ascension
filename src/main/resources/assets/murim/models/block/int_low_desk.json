@@ -1,0 +1,216 @@
+{
+  "parent": "minecraft:block/block",
+  "ambientocclusion": false,
+  "textures": {
+    "l": "murim:block/intseat_lacquer",
+    "w": "murim:block/intseat_wood",
+    "wt": "murim:block/intseat_wood_top",
+    "particle": "murim:block/intseat_wood"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        7,
+        3
+      ],
+      "to": [
+        16,
+        9,
+        13
+      ],
+      "faces": {
+        "north": {
+          "texture": "#w",
+          "uv": [
+            0.0,
+            7,
+            16.0,
+            9
+          ]
+        },
+        "south": {
+          "texture": "#w",
+          "uv": [
+            0.0,
+            7,
+            16.0,
+            9
+          ]
+        },
+        "east": {
+          "texture": "#w",
+          "uv": [
+            3,
+            7,
+            13,
+            9
+          ]
+        },
+        "west": {
+          "texture": "#w",
+          "uv": [
+            3,
+            7,
+            13,
+            9
+          ]
+        },
+        "up": {
+          "texture": "#wt",
+          "uv": [
+            0.0,
+            3,
+            16.0,
+            13
+          ]
+        },
+        "down": {
+          "texture": "#w",
+          "uv": [
+            0.0,
+            3,
+            16.0,
+            13
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        0,
+        5,
+        4
+      ],
+      "to": [
+        16,
+        7,
+        5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#l",
+          "uv": [
+            0.0,
+            9,
+            16.0,
+            11
+          ]
+        },
+        "south": {
+          "texture": "#l",
+          "uv": [
+            0.0,
+            9,
+            16.0,
+            11
+          ]
+        },
+        "east": {
+          "texture": "#l",
+          "uv": [
+            11,
+            9,
+            12,
+            11
+          ]
+        },
+        "west": {
+          "texture": "#l",
+          "uv": [
+            4,
+            9,
+            5,
+            11
+          ]
+        },
+        "up": {
+          "texture": "#l",
+          "uv": [
+            0.0,
+            4,
+            16.0,
+            5
+          ]
+        },
+        "down": {
+          "texture": "#l",
+          "uv": [
+            0.0,
+            11,
+            16.0,
+            12
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        0,
+        5,
+        11
+      ],
+      "to": [
+        16,
+        7,
+        12
+      ],
+      "faces": {
+        "north": {
+          "texture": "#l",
+          "uv": [
+            0.0,
+            9,
+            16.0,
+            11
+          ]
+        },
+        "south": {
+          "texture": "#l",
+          "uv": [
+            0.0,
+            9,
+            16.0,
+            11
+          ]
+        },
+        "east": {
+          "texture": "#l",
+          "uv": [
+            4,
+            9,
+            5,
+            11
+          ]
+        },
+        "west": {
+          "texture": "#l",
+          "uv": [
+            11,
+            9,
+            12,
+            11
+          ]
+        },
+        "up": {
+          "texture": "#l",
+          "uv": [
+            0.0,
+            11,
+            16.0,
+            12
+          ]
+        },
+        "down": {
+          "texture": "#l",
+          "uv": [
+            0.0,
+            4,
+            16.0,
+            5
+          ]
+        }
+      }
+    }
+  ]
+}

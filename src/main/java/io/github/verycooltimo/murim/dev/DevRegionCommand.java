@@ -73,11 +73,17 @@ public final class DevRegionCommand {
                                         .then(Commands.argument("name", StringArgumentType.word())
                                                 .then(Commands.argument("pos", BlockPosArgument.blockPos())
                                                         .executes(c -> load(c, Rotation.NONE))
+                                                        .then(Commands.literal("exact")
+                                                                .executes(c -> load(c, Rotation.NONE, false)))
                                                         .then(Commands.argument("rotation", StringArgumentType.word())
                                                                 .suggests((c, b) -> SharedSuggestionProvider.suggest(
                                                                         java.util.List.of("0", "90", "180", "270"), b))
                                                                 .executes(c -> load(c, rotation(
-                                                                        StringArgumentType.getString(c, "rotation")))))))))));
+                                                                        StringArgumentType.getString(c, "rotation"))))
+                                                                // Rotated exact restore: no stone footing under eaves and openings.
+                                                                .then(Commands.literal("exact")
+                                                                        .executes(c -> load(c, rotation(
+                                                                                StringArgumentType.getString(c, "rotation")), false))))))))));
     }
 
     static Rotation rotation(String deg) {
@@ -105,13 +111,8 @@ public final class DevRegionCommand {
                 level.getChunk(cx, cz);
             }
         }
-        StructureTemplate template = new StructureTemplate();
-        template.fillFromWorld(level, new BlockPos(box.minX(), box.minY(), box.minZ()),
-                new Vec3i(box.getXSpan(), box.getYSpan(), box.getZSpan()), false, Blocks.STRUCTURE_VOID);
         try {
-            Path path = file(level, name);
-            Files.createDirectories(path.getParent());
-            NbtIo.writeCompressed(template.save(new CompoundTag()), path);
+            Path path = saveRegion(level, name, box);
             source.sendSuccess(() -> Component.literal("Saved " + name + " (" + box.getXSpan() + "x" + box.getYSpan() + "x"
                     + box.getZSpan() + ", min corner " + box.minX() + " " + box.minY() + " " + box.minZ() + ") to " + path), false);
             return 1;
@@ -121,31 +122,55 @@ public final class DevRegionCommand {
         }
     }
 
-    private static int load(CommandContext<CommandSourceStack> c, Rotation rotation) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+    /** Shared by regrade: write the snapshot completely before the caller mutates the world. */
+    public static Path saveRegion(ServerLevel level, String name, BoundingBox box) throws IOException {
+        StructureTemplate template = new StructureTemplate();
+        template.fillFromWorld(level, new BlockPos(box.minX(), box.minY(), box.minZ()),
+                new Vec3i(box.getXSpan(), box.getYSpan(), box.getZSpan()), false, Blocks.STRUCTURE_VOID);
+        Path path = file(level, name);
+        Files.createDirectories(path.getParent());
+        NbtIo.writeCompressed(template.save(new CompoundTag()), path);
+        return path;
+    }
+
+    private static int load(CommandContext<CommandSourceStack> c, Rotation rotation)
+            throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+        return load(c, rotation, true);
+    }
+
+    private static int load(CommandContext<CommandSourceStack> c, Rotation rotation, boolean addFooting) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
         CommandSourceStack source = c.getSource();
         ServerLevel level = source.getLevel();
         String name = StringArgumentType.getString(c, "name");
         BlockPos at = BlockPosArgument.getBlockPos(c, "pos");
         try {
-            CompoundTag tag = NbtIo.readCompressed(file(level, name), NbtAccounter.unlimitedHeap());
-            StructureTemplate template = new StructureTemplate();
-            template.load(level.holderLookup(Registries.BLOCK), tag);
-            StructurePlaceSettings settings = new StructurePlaceSettings().setRotation(rotation).setIgnoreEntities(true);
-            BoundingBox box = template.getBoundingBox(settings, at);
-            for (int cx = box.minX() >> 4; cx <= box.maxX() >> 4; cx++) {
-                for (int cz = box.minZ() >> 4; cz <= box.maxZ() >> 4; cz++) {
-                    level.getChunk(cx, cz);
-                }
-            }
-            template.placeInWorld(level, at, at, settings, level.getRandom(), 2);
-            int footing = footing(level, tag, settings, at);
+            BoundingBox box = restoreRegion(level, name, at, rotation, addFooting);
             source.sendSuccess(() -> Component.literal("Placed " + name + " at " + at.toShortString() + " rotation " + rotation
-                    + ", box " + box + ", footing blocks " + footing), true);
+                    + ", box " + box + (addFooting ? ", footing enabled" : ", exact restore")), true);
             return 1;
         } catch (IOException e) {
             source.sendFailure(Component.literal("Load failed: " + e));
             return 0;
         }
+    }
+
+    /** Shared with the regression test; exact mode restores original states and air, without footings. */
+    public static BoundingBox restoreRegion(ServerLevel level, String name, BlockPos at,
+            Rotation rotation, boolean addFooting) throws IOException {
+        CompoundTag tag = NbtIo.readCompressed(file(level, name), NbtAccounter.unlimitedHeap());
+        StructureTemplate template = new StructureTemplate();
+        template.load(level.holderLookup(Registries.BLOCK), tag);
+        StructurePlaceSettings settings = new StructurePlaceSettings().setRotation(rotation).setIgnoreEntities(true)
+                .setKnownShape(!addFooting);
+        BoundingBox box = template.getBoundingBox(settings, at);
+        for (int cx = box.minX() >> 4; cx <= box.maxX() >> 4; cx++) {
+            for (int cz = box.minZ() >> 4; cz <= box.maxZ() >> 4; cz++) level.getChunk(cx, cz);
+        }
+        if (!template.placeInWorld(level, at, at, settings, level.getRandom(), addFooting ? 2 : 2 | 16)) {
+            throw new IOException("Structure placement failed: " + name);
+        }
+        if (addFooting) footing(level, tag, settings, at);
+        return box;
     }
 
     /** Dry stone down from under the lowest non-air block of each column until the ground is solid. */

@@ -4,6 +4,12 @@ map_Kd #cream
 newmtl plaster
 map_Kd #plaster
 
+newmtl soffit
+map_Kd #soffit
+
+newmtl tiles
+map_Kd #tiles
+
 newmtl tiles_x
 map_Kd #tiles_x
 

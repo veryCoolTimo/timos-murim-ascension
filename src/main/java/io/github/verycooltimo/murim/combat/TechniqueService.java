@@ -500,7 +500,8 @@ public final class TechniqueService {
     }
 
     private static boolean canAct(ServerPlayer player) {
-        return player.isAlive() && !player.isRemoved() && !player.isSpectator();
+        return player.isAlive() && !player.isRemoved() && !player.isSpectator()
+                && !io.github.verycooltimo.murim.sect.seal.PenanceEnforcement.pinned(player);
     }
 
     private static TechniqueDefinition resolve(ResourceLocation id) {

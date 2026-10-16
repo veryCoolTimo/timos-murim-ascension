@@ -1,0 +1,319 @@
+{
+  "textures": {
+    "wood": "murim:block/lattice_window",
+    "paper": "murim:block/lattice_transom_paper",
+    "particle": "murim:block/lattice_window"
+  },
+  "render_type": "minecraft:cutout_mipped",
+  "elements": [
+    {
+      "name": "top",
+      "from": [
+        0,
+        14,
+        13
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            2
+          ],
+          "texture": "#wood"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            2
+          ],
+          "texture": "#wood"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            2
+          ],
+          "texture": "#wood"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            2
+          ],
+          "texture": "#wood"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            2
+          ],
+          "texture": "#wood"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            2
+          ],
+          "texture": "#wood"
+        }
+      }
+    },
+    {
+      "name": "bottom",
+      "from": [
+        0,
+        0,
+        13
+      ],
+      "to": [
+        16,
+        2,
+        16
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            2
+          ],
+          "texture": "#wood"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            2
+          ],
+          "texture": "#wood"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            2
+          ],
+          "texture": "#wood"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            2
+          ],
+          "texture": "#wood"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            2
+          ],
+          "texture": "#wood"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            2
+          ],
+          "texture": "#wood"
+        }
+      }
+    },
+    {
+      "name": "left",
+      "from": [
+        0,
+        2,
+        13
+      ],
+      "to": [
+        2,
+        14,
+        16
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            8,
+            0,
+            10,
+            8
+          ],
+          "texture": "#wood"
+        },
+        "south": {
+          "uv": [
+            8,
+            0,
+            10,
+            8
+          ],
+          "texture": "#wood"
+        },
+        "east": {
+          "uv": [
+            8,
+            0,
+            10,
+            8
+          ],
+          "texture": "#wood"
+        },
+        "west": {
+          "uv": [
+            8,
+            0,
+            10,
+            8
+          ],
+          "texture": "#wood"
+        },
+        "up": {
+          "uv": [
+            8,
+            0,
+            10,
+            8
+          ],
+          "texture": "#wood"
+        },
+        "down": {
+          "uv": [
+            8,
+            0,
+            10,
+            8
+          ],
+          "texture": "#wood"
+        }
+      }
+    },
+    {
+      "name": "right",
+      "from": [
+        14,
+        2,
+        13
+      ],
+      "to": [
+        16,
+        14,
+        16
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            8,
+            0,
+            10,
+            8
+          ],
+          "texture": "#wood"
+        },
+        "south": {
+          "uv": [
+            8,
+            0,
+            10,
+            8
+          ],
+          "texture": "#wood"
+        },
+        "east": {
+          "uv": [
+            8,
+            0,
+            10,
+            8
+          ],
+          "texture": "#wood"
+        },
+        "west": {
+          "uv": [
+            8,
+            0,
+            10,
+            8
+          ],
+          "texture": "#wood"
+        },
+        "up": {
+          "uv": [
+            8,
+            0,
+            10,
+            8
+          ],
+          "texture": "#wood"
+        },
+        "down": {
+          "uv": [
+            8,
+            0,
+            10,
+            8
+          ],
+          "texture": "#wood"
+        }
+      }
+    },
+    {
+      "name": "paper",
+      "from": [
+        2,
+        2,
+        14
+      ],
+      "to": [
+        14,
+        14,
+        15
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#paper"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#paper"
+        }
+      }
+    }
+  ]
+}

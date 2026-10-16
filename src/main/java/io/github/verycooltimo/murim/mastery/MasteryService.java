@@ -107,14 +107,18 @@ public final class MasteryService {
             return Learn.MISSING_BASICS;
         }
         TechniqueProgress shared = state.progress(id);
-        int start = shared == null ? MasteryRules.startStars(definition.tier(), cap, state.wisdom()) : shared.stars();
+        int start = shared == null ? MasteryRules.startStars(definition.tier(), cap, state.wisdom(), Arts.cap(id)) : shared.stars();
         TechniqueProgress learned = shared == null ? TechniqueProgress.learned(start, cap)
                 : new TechniqueProgress(shared.stars(), shared.progress(), shared.unprocessed(), shared.day(), Math.max(cap, shared.cap()));
         MasteryState next = state.with(id, learned)
                 .withWisdom(state.wisdom() + (shared == null ? MasteryRules.wisdomForLearning(definition.tier()) : 0.0D));
         player.setData(ModAttachments.MASTERY, next);
-        message(player, start > 0 ? "murim.mastery.learned_skipped" : "murim.mastery.learned",
-                ChatFormatting.GRAY, name(id), start);
+        if (start > 0 && definition.starCap() == Arts.FOOTWORK_STARS) {
+            message(player, "murim.mastery.learned_skipped.footwork", ChatFormatting.GRAY, name(id), start, Arts.cap(id));
+        } else {
+            message(player, start > 0 ? "murim.mastery.learned_skipped" : "murim.mastery.learned",
+                    ChatFormatting.GRAY, name(id), start);
+        }
         LoadoutService.placeLearned(player, id);
         // Стиль шагов учится целиком; стили-книги (Семь Цветков, 24 Движения) — по форме за раз,
         // вместе с первой формой — основа ЛКМ стиля (автор 03.10).
@@ -295,7 +299,7 @@ public final class MasteryService {
             any = true;
             MasteryState current = player.getData(ModAttachments.MASTERY);
             apply(player, entry.getKey(),
-                    MasteryRules.meditate(current.techniques().get(entry.getKey()), current.wisdom(), day), true);
+                    MasteryRules.meditate(current.techniques().get(entry.getKey()), current.wisdom(), day, Arts.cap(entry.getKey())), true);
         }
         return any;
     }
@@ -322,7 +326,8 @@ public final class MasteryService {
                 player.getGameProfile().getName(), Arts.masteryId(id), stars, meditating ? " (медитация)" : "");
         player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
                 io.github.verycooltimo.murim.registry.ModSounds.QI_CHIME.get(), SoundSource.PLAYERS, 1.0F, 1.0F);
-        message(player, "murim.mastery.insight.star", ChatFormatting.AQUA, artName(id), stars);
+        message(player, Arts.cap(id) == Arts.FOOTWORK_STARS ? "murim.mastery.insight.footwork" : "murim.mastery.insight.star",
+                ChatFormatting.AQUA, artName(id), stars, Arts.cap(id));
         send(player, new io.github.verycooltimo.murim.network.InsightPayload(id, stars, meditating));
     }
 

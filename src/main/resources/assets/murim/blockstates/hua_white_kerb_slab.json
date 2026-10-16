@@ -1,0 +1,70 @@
+{
+  "variants": {
+    "type=bottom": [
+      {
+        "model": "murim:block/hua_white_kerb_slab_0",
+        "weight": 10
+      },
+      {
+        "model": "murim:block/hua_white_kerb_slab_1",
+        "weight": 4
+      },
+      {
+        "model": "murim:block/hua_white_kerb_slab_2",
+        "weight": 4
+      },
+      {
+        "model": "murim:block/hua_white_kerb_slab_3",
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_white_kerb_slab_4",
+        "weight": 3
+      }
+    ],
+    "type=top": [
+      {
+        "model": "murim:block/hua_white_kerb_slab_top_0",
+        "weight": 10
+      },
+      {
+        "model": "murim:block/hua_white_kerb_slab_top_1",
+        "weight": 4
+      },
+      {
+        "model": "murim:block/hua_white_kerb_slab_top_2",
+        "weight": 4
+      },
+      {
+        "model": "murim:block/hua_white_kerb_slab_top_3",
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_white_kerb_slab_top_4",
+        "weight": 3
+      }
+    ],
+    "type=double": [
+      {
+        "model": "murim:block/hua_white_kerb",
+        "weight": 10
+      },
+      {
+        "model": "murim:block/hua_white_kerb_b",
+        "weight": 4
+      },
+      {
+        "model": "murim:block/hua_white_kerb_c",
+        "weight": 4
+      },
+      {
+        "model": "murim:block/hua_white_kerb_d",
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_white_kerb_e",
+        "weight": 3
+      }
+    ]
+  }
+}

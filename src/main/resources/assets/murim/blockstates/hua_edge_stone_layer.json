@@ -1,0 +1,112 @@
+{
+  "variants": {
+    "layers=1,waterlogged=true": [
+      {
+        "model": "murim:block/hua_edge_stone_layer_1_0",
+        "weight": 6
+      },
+      {
+        "model": "murim:block/hua_edge_stone_layer_1_1",
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_edge_stone_layer_1_2",
+        "weight": 2
+      },
+      {
+        "model": "murim:block/hua_edge_stone_layer_1_3",
+        "weight": 2
+      }
+    ],
+    "layers=1,waterlogged=false": [
+      {
+        "model": "murim:block/hua_edge_stone_layer_1_0",
+        "weight": 6
+      },
+      {
+        "model": "murim:block/hua_edge_stone_layer_1_1",
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_edge_stone_layer_1_2",
+        "weight": 2
+      },
+      {
+        "model": "murim:block/hua_edge_stone_layer_1_3",
+        "weight": 2
+      }
+    ],
+    "layers=2,waterlogged=true": [
+      {
+        "model": "murim:block/hua_edge_stone_layer_2_0",
+        "weight": 6
+      },
+      {
+        "model": "murim:block/hua_edge_stone_layer_2_1",
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_edge_stone_layer_2_2",
+        "weight": 2
+      },
+      {
+        "model": "murim:block/hua_edge_stone_layer_2_3",
+        "weight": 2
+      }
+    ],
+    "layers=2,waterlogged=false": [
+      {
+        "model": "murim:block/hua_edge_stone_layer_2_0",
+        "weight": 6
+      },
+      {
+        "model": "murim:block/hua_edge_stone_layer_2_1",
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_edge_stone_layer_2_2",
+        "weight": 2
+      },
+      {
+        "model": "murim:block/hua_edge_stone_layer_2_3",
+        "weight": 2
+      }
+    ],
+    "layers=3,waterlogged=true": [
+      {
+        "model": "murim:block/hua_edge_stone_layer_3_0",
+        "weight": 6
+      },
+      {
+        "model": "murim:block/hua_edge_stone_layer_3_1",
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_edge_stone_layer_3_2",
+        "weight": 2
+      },
+      {
+        "model": "murim:block/hua_edge_stone_layer_3_3",
+        "weight": 2
+      }
+    ],
+    "layers=3,waterlogged=false": [
+      {
+        "model": "murim:block/hua_edge_stone_layer_3_0",
+        "weight": 6
+      },
+      {
+        "model": "murim:block/hua_edge_stone_layer_3_1",
+        "weight": 5
+      },
+      {
+        "model": "murim:block/hua_edge_stone_layer_3_2",
+        "weight": 2
+      },
+      {
+        "model": "murim:block/hua_edge_stone_layer_3_3",
+        "weight": 2
+      }
+    ]
+  }
+}

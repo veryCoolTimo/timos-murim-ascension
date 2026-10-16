@@ -6,7 +6,7 @@ import net.minecraft.resources.ResourceLocation;
 
 /** Mastery of an art. cap is the manuscript limit, not the art's execution scale. */
 public record TechniqueProgress(int stars, double progress, double unprocessed, long day, int cap, int version) {
-    public static final int VERSION = 3;
+    public static final int VERSION = 4;
 
     /** Existing Java callers create current star data; only decoding can create legacy data. */
     public TechniqueProgress(int stars, double progress, double unprocessed, long day, int cap) {
@@ -38,15 +38,19 @@ public record TechniqueProgress(int stars, double progress, double unprocessed, 
         }
     }
 
-    /** Layers migrate directly to /12; version 1/2 stars use the former full star scale.
+    /** Layers migrate directly to the art cap; version 1/2 stars use the former full star scale.
+     * Version 3 used twelve stars for every art, even footwork.
      * The manuscript limit never supplies a known art's full denominator.
-     * Preserve both the next-star fraction and pending experience, then save as version 3.
+     * Preserve both the next-star fraction and pending experience, then save as version 4.
      */
     public TechniqueProgress migrate(ResourceLocation form) {
         if (version >= VERSION) return this;
         int oldMaximum = version == 0 ? Arts.legacySaveMaximum(form, cap, stars)
-                : Arts.previousStarMaximum(form, cap, stars);
+                : version == 3 ? Arts.MAX_STARS : Arts.previousStarMaximum(form, cap, stars);
         int maximum = Arts.cap(form);
+        if (oldMaximum == maximum) {
+            return new TechniqueProgress(stars, progress, unprocessed, day, cap);
+        }
         int converted = Math.min(maximum, (int) Math.round(stars / (double) oldMaximum * maximum));
         int limit = Math.min(maximum, Math.max(converted, (int) Math.round(cap / (double) oldMaximum * maximum)));
         double scale = MasteryRules.need(converted) / MasteryRules.need(stars);

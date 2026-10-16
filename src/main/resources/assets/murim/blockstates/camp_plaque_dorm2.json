@@ -1,0 +1,1924 @@
+{
+ "variants": {
+  "facing=north,inset=0,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0"
+  },
+  "facing=north,inset=0,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1"
+  },
+  "facing=north,inset=0,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2"
+  },
+  "facing=north,inset=0,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3"
+  },
+  "facing=north,inset=1,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in1"
+  },
+  "facing=north,inset=1,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in1"
+  },
+  "facing=north,inset=1,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in1"
+  },
+  "facing=north,inset=1,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in1"
+  },
+  "facing=north,inset=2,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in2"
+  },
+  "facing=north,inset=2,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in2"
+  },
+  "facing=north,inset=2,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in2"
+  },
+  "facing=north,inset=2,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in2"
+  },
+  "facing=north,inset=3,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in3"
+  },
+  "facing=north,inset=3,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in3"
+  },
+  "facing=north,inset=3,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in3"
+  },
+  "facing=north,inset=3,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in3"
+  },
+  "facing=north,inset=4,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in4"
+  },
+  "facing=north,inset=4,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in4"
+  },
+  "facing=north,inset=4,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in4"
+  },
+  "facing=north,inset=4,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in4"
+  },
+  "facing=north,inset=5,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in5"
+  },
+  "facing=north,inset=5,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in5"
+  },
+  "facing=north,inset=5,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in5"
+  },
+  "facing=north,inset=5,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in5"
+  },
+  "facing=north,inset=6,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in6"
+  },
+  "facing=north,inset=6,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in6"
+  },
+  "facing=north,inset=6,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in6"
+  },
+  "facing=north,inset=6,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in6"
+  },
+  "facing=north,inset=7,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in7"
+  },
+  "facing=north,inset=7,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in7"
+  },
+  "facing=north,inset=7,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in7"
+  },
+  "facing=north,inset=7,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in7"
+  },
+  "facing=north,inset=8,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in8"
+  },
+  "facing=north,inset=8,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in8"
+  },
+  "facing=north,inset=8,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in8"
+  },
+  "facing=north,inset=8,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in8"
+  },
+  "facing=north,inset=9,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in9"
+  },
+  "facing=north,inset=9,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in9"
+  },
+  "facing=north,inset=9,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in9"
+  },
+  "facing=north,inset=9,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in9"
+  },
+  "facing=north,inset=10,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in10"
+  },
+  "facing=north,inset=10,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in10"
+  },
+  "facing=north,inset=10,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in10"
+  },
+  "facing=north,inset=10,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in10"
+  },
+  "facing=north,inset=11,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in11"
+  },
+  "facing=north,inset=11,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in11"
+  },
+  "facing=north,inset=11,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in11"
+  },
+  "facing=north,inset=11,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in11"
+  },
+  "facing=north,inset=12,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in12"
+  },
+  "facing=north,inset=12,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in12"
+  },
+  "facing=north,inset=12,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in12"
+  },
+  "facing=north,inset=12,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in12"
+  },
+  "facing=north,inset=13,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in13"
+  },
+  "facing=north,inset=13,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in13"
+  },
+  "facing=north,inset=13,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in13"
+  },
+  "facing=north,inset=13,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in13"
+  },
+  "facing=north,inset=14,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in14"
+  },
+  "facing=north,inset=14,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in14"
+  },
+  "facing=north,inset=14,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in14"
+  },
+  "facing=north,inset=14,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in14"
+  },
+  "facing=north,inset=15,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in15"
+  },
+  "facing=north,inset=15,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in15"
+  },
+  "facing=north,inset=15,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in15"
+  },
+  "facing=north,inset=15,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in15"
+  },
+  "facing=north,inset=16,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in16"
+  },
+  "facing=north,inset=16,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in16"
+  },
+  "facing=north,inset=16,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in16"
+  },
+  "facing=north,inset=16,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in16"
+  },
+  "facing=north,inset=17,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in17"
+  },
+  "facing=north,inset=17,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in17"
+  },
+  "facing=north,inset=17,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in17"
+  },
+  "facing=north,inset=17,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in17"
+  },
+  "facing=north,inset=18,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in18"
+  },
+  "facing=north,inset=18,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in18"
+  },
+  "facing=north,inset=18,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in18"
+  },
+  "facing=north,inset=18,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in18"
+  },
+  "facing=north,inset=19,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in19"
+  },
+  "facing=north,inset=19,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in19"
+  },
+  "facing=north,inset=19,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in19"
+  },
+  "facing=north,inset=19,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in19"
+  },
+  "facing=north,inset=20,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in20"
+  },
+  "facing=north,inset=20,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in20"
+  },
+  "facing=north,inset=20,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in20"
+  },
+  "facing=north,inset=20,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in20"
+  },
+  "facing=north,inset=21,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in21"
+  },
+  "facing=north,inset=21,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in21"
+  },
+  "facing=north,inset=21,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in21"
+  },
+  "facing=north,inset=21,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in21"
+  },
+  "facing=north,inset=22,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in22"
+  },
+  "facing=north,inset=22,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in22"
+  },
+  "facing=north,inset=22,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in22"
+  },
+  "facing=north,inset=22,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in22"
+  },
+  "facing=north,inset=23,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in23"
+  },
+  "facing=north,inset=23,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in23"
+  },
+  "facing=north,inset=23,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in23"
+  },
+  "facing=north,inset=23,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in23"
+  },
+  "facing=north,inset=24,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in24"
+  },
+  "facing=north,inset=24,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in24"
+  },
+  "facing=north,inset=24,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in24"
+  },
+  "facing=north,inset=24,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in24"
+  },
+  "facing=north,inset=25,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in25"
+  },
+  "facing=north,inset=25,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in25"
+  },
+  "facing=north,inset=25,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in25"
+  },
+  "facing=north,inset=25,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in25"
+  },
+  "facing=north,inset=26,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in26"
+  },
+  "facing=north,inset=26,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in26"
+  },
+  "facing=north,inset=26,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in26"
+  },
+  "facing=north,inset=26,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in26"
+  },
+  "facing=north,inset=27,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in27"
+  },
+  "facing=north,inset=27,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in27"
+  },
+  "facing=north,inset=27,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in27"
+  },
+  "facing=north,inset=27,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in27"
+  },
+  "facing=north,inset=28,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in28"
+  },
+  "facing=north,inset=28,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in28"
+  },
+  "facing=north,inset=28,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in28"
+  },
+  "facing=north,inset=28,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in28"
+  },
+  "facing=north,inset=29,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in29"
+  },
+  "facing=north,inset=29,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in29"
+  },
+  "facing=north,inset=29,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in29"
+  },
+  "facing=north,inset=29,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in29"
+  },
+  "facing=north,inset=30,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in30"
+  },
+  "facing=north,inset=30,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in30"
+  },
+  "facing=north,inset=30,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in30"
+  },
+  "facing=north,inset=30,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in30"
+  },
+  "facing=north,inset=31,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in31"
+  },
+  "facing=north,inset=31,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in31"
+  },
+  "facing=north,inset=31,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in31"
+  },
+  "facing=north,inset=31,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in31"
+  },
+  "facing=east,inset=0,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0",
+   "y": 90
+  },
+  "facing=east,inset=0,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1",
+   "y": 90
+  },
+  "facing=east,inset=0,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2",
+   "y": 90
+  },
+  "facing=east,inset=0,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3",
+   "y": 90
+  },
+  "facing=east,inset=1,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in1",
+   "y": 90
+  },
+  "facing=east,inset=1,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in1",
+   "y": 90
+  },
+  "facing=east,inset=1,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in1",
+   "y": 90
+  },
+  "facing=east,inset=1,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in1",
+   "y": 90
+  },
+  "facing=east,inset=2,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in2",
+   "y": 90
+  },
+  "facing=east,inset=2,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in2",
+   "y": 90
+  },
+  "facing=east,inset=2,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in2",
+   "y": 90
+  },
+  "facing=east,inset=2,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in2",
+   "y": 90
+  },
+  "facing=east,inset=3,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in3",
+   "y": 90
+  },
+  "facing=east,inset=3,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in3",
+   "y": 90
+  },
+  "facing=east,inset=3,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in3",
+   "y": 90
+  },
+  "facing=east,inset=3,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in3",
+   "y": 90
+  },
+  "facing=east,inset=4,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in4",
+   "y": 90
+  },
+  "facing=east,inset=4,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in4",
+   "y": 90
+  },
+  "facing=east,inset=4,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in4",
+   "y": 90
+  },
+  "facing=east,inset=4,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in4",
+   "y": 90
+  },
+  "facing=east,inset=5,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in5",
+   "y": 90
+  },
+  "facing=east,inset=5,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in5",
+   "y": 90
+  },
+  "facing=east,inset=5,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in5",
+   "y": 90
+  },
+  "facing=east,inset=5,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in5",
+   "y": 90
+  },
+  "facing=east,inset=6,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in6",
+   "y": 90
+  },
+  "facing=east,inset=6,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in6",
+   "y": 90
+  },
+  "facing=east,inset=6,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in6",
+   "y": 90
+  },
+  "facing=east,inset=6,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in6",
+   "y": 90
+  },
+  "facing=east,inset=7,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in7",
+   "y": 90
+  },
+  "facing=east,inset=7,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in7",
+   "y": 90
+  },
+  "facing=east,inset=7,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in7",
+   "y": 90
+  },
+  "facing=east,inset=7,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in7",
+   "y": 90
+  },
+  "facing=east,inset=8,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in8",
+   "y": 90
+  },
+  "facing=east,inset=8,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in8",
+   "y": 90
+  },
+  "facing=east,inset=8,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in8",
+   "y": 90
+  },
+  "facing=east,inset=8,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in8",
+   "y": 90
+  },
+  "facing=east,inset=9,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in9",
+   "y": 90
+  },
+  "facing=east,inset=9,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in9",
+   "y": 90
+  },
+  "facing=east,inset=9,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in9",
+   "y": 90
+  },
+  "facing=east,inset=9,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in9",
+   "y": 90
+  },
+  "facing=east,inset=10,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in10",
+   "y": 90
+  },
+  "facing=east,inset=10,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in10",
+   "y": 90
+  },
+  "facing=east,inset=10,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in10",
+   "y": 90
+  },
+  "facing=east,inset=10,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in10",
+   "y": 90
+  },
+  "facing=east,inset=11,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in11",
+   "y": 90
+  },
+  "facing=east,inset=11,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in11",
+   "y": 90
+  },
+  "facing=east,inset=11,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in11",
+   "y": 90
+  },
+  "facing=east,inset=11,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in11",
+   "y": 90
+  },
+  "facing=east,inset=12,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in12",
+   "y": 90
+  },
+  "facing=east,inset=12,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in12",
+   "y": 90
+  },
+  "facing=east,inset=12,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in12",
+   "y": 90
+  },
+  "facing=east,inset=12,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in12",
+   "y": 90
+  },
+  "facing=east,inset=13,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in13",
+   "y": 90
+  },
+  "facing=east,inset=13,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in13",
+   "y": 90
+  },
+  "facing=east,inset=13,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in13",
+   "y": 90
+  },
+  "facing=east,inset=13,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in13",
+   "y": 90
+  },
+  "facing=east,inset=14,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in14",
+   "y": 90
+  },
+  "facing=east,inset=14,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in14",
+   "y": 90
+  },
+  "facing=east,inset=14,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in14",
+   "y": 90
+  },
+  "facing=east,inset=14,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in14",
+   "y": 90
+  },
+  "facing=east,inset=15,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in15",
+   "y": 90
+  },
+  "facing=east,inset=15,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in15",
+   "y": 90
+  },
+  "facing=east,inset=15,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in15",
+   "y": 90
+  },
+  "facing=east,inset=15,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in15",
+   "y": 90
+  },
+  "facing=east,inset=16,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in16",
+   "y": 90
+  },
+  "facing=east,inset=16,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in16",
+   "y": 90
+  },
+  "facing=east,inset=16,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in16",
+   "y": 90
+  },
+  "facing=east,inset=16,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in16",
+   "y": 90
+  },
+  "facing=east,inset=17,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in17",
+   "y": 90
+  },
+  "facing=east,inset=17,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in17",
+   "y": 90
+  },
+  "facing=east,inset=17,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in17",
+   "y": 90
+  },
+  "facing=east,inset=17,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in17",
+   "y": 90
+  },
+  "facing=east,inset=18,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in18",
+   "y": 90
+  },
+  "facing=east,inset=18,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in18",
+   "y": 90
+  },
+  "facing=east,inset=18,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in18",
+   "y": 90
+  },
+  "facing=east,inset=18,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in18",
+   "y": 90
+  },
+  "facing=east,inset=19,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in19",
+   "y": 90
+  },
+  "facing=east,inset=19,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in19",
+   "y": 90
+  },
+  "facing=east,inset=19,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in19",
+   "y": 90
+  },
+  "facing=east,inset=19,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in19",
+   "y": 90
+  },
+  "facing=east,inset=20,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in20",
+   "y": 90
+  },
+  "facing=east,inset=20,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in20",
+   "y": 90
+  },
+  "facing=east,inset=20,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in20",
+   "y": 90
+  },
+  "facing=east,inset=20,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in20",
+   "y": 90
+  },
+  "facing=east,inset=21,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in21",
+   "y": 90
+  },
+  "facing=east,inset=21,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in21",
+   "y": 90
+  },
+  "facing=east,inset=21,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in21",
+   "y": 90
+  },
+  "facing=east,inset=21,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in21",
+   "y": 90
+  },
+  "facing=east,inset=22,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in22",
+   "y": 90
+  },
+  "facing=east,inset=22,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in22",
+   "y": 90
+  },
+  "facing=east,inset=22,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in22",
+   "y": 90
+  },
+  "facing=east,inset=22,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in22",
+   "y": 90
+  },
+  "facing=east,inset=23,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in23",
+   "y": 90
+  },
+  "facing=east,inset=23,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in23",
+   "y": 90
+  },
+  "facing=east,inset=23,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in23",
+   "y": 90
+  },
+  "facing=east,inset=23,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in23",
+   "y": 90
+  },
+  "facing=east,inset=24,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in24",
+   "y": 90
+  },
+  "facing=east,inset=24,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in24",
+   "y": 90
+  },
+  "facing=east,inset=24,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in24",
+   "y": 90
+  },
+  "facing=east,inset=24,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in24",
+   "y": 90
+  },
+  "facing=east,inset=25,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in25",
+   "y": 90
+  },
+  "facing=east,inset=25,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in25",
+   "y": 90
+  },
+  "facing=east,inset=25,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in25",
+   "y": 90
+  },
+  "facing=east,inset=25,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in25",
+   "y": 90
+  },
+  "facing=east,inset=26,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in26",
+   "y": 90
+  },
+  "facing=east,inset=26,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in26",
+   "y": 90
+  },
+  "facing=east,inset=26,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in26",
+   "y": 90
+  },
+  "facing=east,inset=26,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in26",
+   "y": 90
+  },
+  "facing=east,inset=27,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in27",
+   "y": 90
+  },
+  "facing=east,inset=27,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in27",
+   "y": 90
+  },
+  "facing=east,inset=27,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in27",
+   "y": 90
+  },
+  "facing=east,inset=27,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in27",
+   "y": 90
+  },
+  "facing=east,inset=28,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in28",
+   "y": 90
+  },
+  "facing=east,inset=28,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in28",
+   "y": 90
+  },
+  "facing=east,inset=28,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in28",
+   "y": 90
+  },
+  "facing=east,inset=28,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in28",
+   "y": 90
+  },
+  "facing=east,inset=29,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in29",
+   "y": 90
+  },
+  "facing=east,inset=29,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in29",
+   "y": 90
+  },
+  "facing=east,inset=29,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in29",
+   "y": 90
+  },
+  "facing=east,inset=29,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in29",
+   "y": 90
+  },
+  "facing=east,inset=30,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in30",
+   "y": 90
+  },
+  "facing=east,inset=30,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in30",
+   "y": 90
+  },
+  "facing=east,inset=30,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in30",
+   "y": 90
+  },
+  "facing=east,inset=30,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in30",
+   "y": 90
+  },
+  "facing=east,inset=31,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in31",
+   "y": 90
+  },
+  "facing=east,inset=31,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in31",
+   "y": 90
+  },
+  "facing=east,inset=31,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in31",
+   "y": 90
+  },
+  "facing=east,inset=31,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in31",
+   "y": 90
+  },
+  "facing=south,inset=0,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0",
+   "y": 180
+  },
+  "facing=south,inset=0,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1",
+   "y": 180
+  },
+  "facing=south,inset=0,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2",
+   "y": 180
+  },
+  "facing=south,inset=0,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3",
+   "y": 180
+  },
+  "facing=south,inset=1,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in1",
+   "y": 180
+  },
+  "facing=south,inset=1,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in1",
+   "y": 180
+  },
+  "facing=south,inset=1,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in1",
+   "y": 180
+  },
+  "facing=south,inset=1,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in1",
+   "y": 180
+  },
+  "facing=south,inset=2,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in2",
+   "y": 180
+  },
+  "facing=south,inset=2,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in2",
+   "y": 180
+  },
+  "facing=south,inset=2,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in2",
+   "y": 180
+  },
+  "facing=south,inset=2,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in2",
+   "y": 180
+  },
+  "facing=south,inset=3,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in3",
+   "y": 180
+  },
+  "facing=south,inset=3,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in3",
+   "y": 180
+  },
+  "facing=south,inset=3,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in3",
+   "y": 180
+  },
+  "facing=south,inset=3,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in3",
+   "y": 180
+  },
+  "facing=south,inset=4,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in4",
+   "y": 180
+  },
+  "facing=south,inset=4,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in4",
+   "y": 180
+  },
+  "facing=south,inset=4,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in4",
+   "y": 180
+  },
+  "facing=south,inset=4,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in4",
+   "y": 180
+  },
+  "facing=south,inset=5,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in5",
+   "y": 180
+  },
+  "facing=south,inset=5,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in5",
+   "y": 180
+  },
+  "facing=south,inset=5,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in5",
+   "y": 180
+  },
+  "facing=south,inset=5,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in5",
+   "y": 180
+  },
+  "facing=south,inset=6,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in6",
+   "y": 180
+  },
+  "facing=south,inset=6,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in6",
+   "y": 180
+  },
+  "facing=south,inset=6,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in6",
+   "y": 180
+  },
+  "facing=south,inset=6,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in6",
+   "y": 180
+  },
+  "facing=south,inset=7,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in7",
+   "y": 180
+  },
+  "facing=south,inset=7,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in7",
+   "y": 180
+  },
+  "facing=south,inset=7,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in7",
+   "y": 180
+  },
+  "facing=south,inset=7,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in7",
+   "y": 180
+  },
+  "facing=south,inset=8,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in8",
+   "y": 180
+  },
+  "facing=south,inset=8,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in8",
+   "y": 180
+  },
+  "facing=south,inset=8,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in8",
+   "y": 180
+  },
+  "facing=south,inset=8,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in8",
+   "y": 180
+  },
+  "facing=south,inset=9,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in9",
+   "y": 180
+  },
+  "facing=south,inset=9,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in9",
+   "y": 180
+  },
+  "facing=south,inset=9,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in9",
+   "y": 180
+  },
+  "facing=south,inset=9,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in9",
+   "y": 180
+  },
+  "facing=south,inset=10,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in10",
+   "y": 180
+  },
+  "facing=south,inset=10,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in10",
+   "y": 180
+  },
+  "facing=south,inset=10,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in10",
+   "y": 180
+  },
+  "facing=south,inset=10,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in10",
+   "y": 180
+  },
+  "facing=south,inset=11,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in11",
+   "y": 180
+  },
+  "facing=south,inset=11,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in11",
+   "y": 180
+  },
+  "facing=south,inset=11,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in11",
+   "y": 180
+  },
+  "facing=south,inset=11,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in11",
+   "y": 180
+  },
+  "facing=south,inset=12,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in12",
+   "y": 180
+  },
+  "facing=south,inset=12,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in12",
+   "y": 180
+  },
+  "facing=south,inset=12,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in12",
+   "y": 180
+  },
+  "facing=south,inset=12,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in12",
+   "y": 180
+  },
+  "facing=south,inset=13,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in13",
+   "y": 180
+  },
+  "facing=south,inset=13,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in13",
+   "y": 180
+  },
+  "facing=south,inset=13,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in13",
+   "y": 180
+  },
+  "facing=south,inset=13,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in13",
+   "y": 180
+  },
+  "facing=south,inset=14,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in14",
+   "y": 180
+  },
+  "facing=south,inset=14,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in14",
+   "y": 180
+  },
+  "facing=south,inset=14,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in14",
+   "y": 180
+  },
+  "facing=south,inset=14,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in14",
+   "y": 180
+  },
+  "facing=south,inset=15,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in15",
+   "y": 180
+  },
+  "facing=south,inset=15,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in15",
+   "y": 180
+  },
+  "facing=south,inset=15,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in15",
+   "y": 180
+  },
+  "facing=south,inset=15,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in15",
+   "y": 180
+  },
+  "facing=south,inset=16,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in16",
+   "y": 180
+  },
+  "facing=south,inset=16,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in16",
+   "y": 180
+  },
+  "facing=south,inset=16,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in16",
+   "y": 180
+  },
+  "facing=south,inset=16,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in16",
+   "y": 180
+  },
+  "facing=south,inset=17,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in17",
+   "y": 180
+  },
+  "facing=south,inset=17,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in17",
+   "y": 180
+  },
+  "facing=south,inset=17,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in17",
+   "y": 180
+  },
+  "facing=south,inset=17,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in17",
+   "y": 180
+  },
+  "facing=south,inset=18,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in18",
+   "y": 180
+  },
+  "facing=south,inset=18,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in18",
+   "y": 180
+  },
+  "facing=south,inset=18,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in18",
+   "y": 180
+  },
+  "facing=south,inset=18,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in18",
+   "y": 180
+  },
+  "facing=south,inset=19,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in19",
+   "y": 180
+  },
+  "facing=south,inset=19,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in19",
+   "y": 180
+  },
+  "facing=south,inset=19,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in19",
+   "y": 180
+  },
+  "facing=south,inset=19,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in19",
+   "y": 180
+  },
+  "facing=south,inset=20,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in20",
+   "y": 180
+  },
+  "facing=south,inset=20,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in20",
+   "y": 180
+  },
+  "facing=south,inset=20,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in20",
+   "y": 180
+  },
+  "facing=south,inset=20,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in20",
+   "y": 180
+  },
+  "facing=south,inset=21,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in21",
+   "y": 180
+  },
+  "facing=south,inset=21,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in21",
+   "y": 180
+  },
+  "facing=south,inset=21,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in21",
+   "y": 180
+  },
+  "facing=south,inset=21,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in21",
+   "y": 180
+  },
+  "facing=south,inset=22,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in22",
+   "y": 180
+  },
+  "facing=south,inset=22,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in22",
+   "y": 180
+  },
+  "facing=south,inset=22,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in22",
+   "y": 180
+  },
+  "facing=south,inset=22,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in22",
+   "y": 180
+  },
+  "facing=south,inset=23,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in23",
+   "y": 180
+  },
+  "facing=south,inset=23,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in23",
+   "y": 180
+  },
+  "facing=south,inset=23,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in23",
+   "y": 180
+  },
+  "facing=south,inset=23,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in23",
+   "y": 180
+  },
+  "facing=south,inset=24,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in24",
+   "y": 180
+  },
+  "facing=south,inset=24,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in24",
+   "y": 180
+  },
+  "facing=south,inset=24,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in24",
+   "y": 180
+  },
+  "facing=south,inset=24,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in24",
+   "y": 180
+  },
+  "facing=south,inset=25,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in25",
+   "y": 180
+  },
+  "facing=south,inset=25,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in25",
+   "y": 180
+  },
+  "facing=south,inset=25,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in25",
+   "y": 180
+  },
+  "facing=south,inset=25,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in25",
+   "y": 180
+  },
+  "facing=south,inset=26,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in26",
+   "y": 180
+  },
+  "facing=south,inset=26,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in26",
+   "y": 180
+  },
+  "facing=south,inset=26,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in26",
+   "y": 180
+  },
+  "facing=south,inset=26,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in26",
+   "y": 180
+  },
+  "facing=south,inset=27,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in27",
+   "y": 180
+  },
+  "facing=south,inset=27,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in27",
+   "y": 180
+  },
+  "facing=south,inset=27,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in27",
+   "y": 180
+  },
+  "facing=south,inset=27,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in27",
+   "y": 180
+  },
+  "facing=south,inset=28,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in28",
+   "y": 180
+  },
+  "facing=south,inset=28,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in28",
+   "y": 180
+  },
+  "facing=south,inset=28,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in28",
+   "y": 180
+  },
+  "facing=south,inset=28,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in28",
+   "y": 180
+  },
+  "facing=south,inset=29,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in29",
+   "y": 180
+  },
+  "facing=south,inset=29,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in29",
+   "y": 180
+  },
+  "facing=south,inset=29,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in29",
+   "y": 180
+  },
+  "facing=south,inset=29,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in29",
+   "y": 180
+  },
+  "facing=south,inset=30,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in30",
+   "y": 180
+  },
+  "facing=south,inset=30,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in30",
+   "y": 180
+  },
+  "facing=south,inset=30,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in30",
+   "y": 180
+  },
+  "facing=south,inset=30,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in30",
+   "y": 180
+  },
+  "facing=south,inset=31,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in31",
+   "y": 180
+  },
+  "facing=south,inset=31,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in31",
+   "y": 180
+  },
+  "facing=south,inset=31,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in31",
+   "y": 180
+  },
+  "facing=south,inset=31,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in31",
+   "y": 180
+  },
+  "facing=west,inset=0,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0",
+   "y": 270
+  },
+  "facing=west,inset=0,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1",
+   "y": 270
+  },
+  "facing=west,inset=0,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2",
+   "y": 270
+  },
+  "facing=west,inset=0,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3",
+   "y": 270
+  },
+  "facing=west,inset=1,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in1",
+   "y": 270
+  },
+  "facing=west,inset=1,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in1",
+   "y": 270
+  },
+  "facing=west,inset=1,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in1",
+   "y": 270
+  },
+  "facing=west,inset=1,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in1",
+   "y": 270
+  },
+  "facing=west,inset=2,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in2",
+   "y": 270
+  },
+  "facing=west,inset=2,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in2",
+   "y": 270
+  },
+  "facing=west,inset=2,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in2",
+   "y": 270
+  },
+  "facing=west,inset=2,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in2",
+   "y": 270
+  },
+  "facing=west,inset=3,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in3",
+   "y": 270
+  },
+  "facing=west,inset=3,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in3",
+   "y": 270
+  },
+  "facing=west,inset=3,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in3",
+   "y": 270
+  },
+  "facing=west,inset=3,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in3",
+   "y": 270
+  },
+  "facing=west,inset=4,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in4",
+   "y": 270
+  },
+  "facing=west,inset=4,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in4",
+   "y": 270
+  },
+  "facing=west,inset=4,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in4",
+   "y": 270
+  },
+  "facing=west,inset=4,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in4",
+   "y": 270
+  },
+  "facing=west,inset=5,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in5",
+   "y": 270
+  },
+  "facing=west,inset=5,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in5",
+   "y": 270
+  },
+  "facing=west,inset=5,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in5",
+   "y": 270
+  },
+  "facing=west,inset=5,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in5",
+   "y": 270
+  },
+  "facing=west,inset=6,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in6",
+   "y": 270
+  },
+  "facing=west,inset=6,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in6",
+   "y": 270
+  },
+  "facing=west,inset=6,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in6",
+   "y": 270
+  },
+  "facing=west,inset=6,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in6",
+   "y": 270
+  },
+  "facing=west,inset=7,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in7",
+   "y": 270
+  },
+  "facing=west,inset=7,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in7",
+   "y": 270
+  },
+  "facing=west,inset=7,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in7",
+   "y": 270
+  },
+  "facing=west,inset=7,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in7",
+   "y": 270
+  },
+  "facing=west,inset=8,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in8",
+   "y": 270
+  },
+  "facing=west,inset=8,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in8",
+   "y": 270
+  },
+  "facing=west,inset=8,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in8",
+   "y": 270
+  },
+  "facing=west,inset=8,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in8",
+   "y": 270
+  },
+  "facing=west,inset=9,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in9",
+   "y": 270
+  },
+  "facing=west,inset=9,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in9",
+   "y": 270
+  },
+  "facing=west,inset=9,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in9",
+   "y": 270
+  },
+  "facing=west,inset=9,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in9",
+   "y": 270
+  },
+  "facing=west,inset=10,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in10",
+   "y": 270
+  },
+  "facing=west,inset=10,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in10",
+   "y": 270
+  },
+  "facing=west,inset=10,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in10",
+   "y": 270
+  },
+  "facing=west,inset=10,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in10",
+   "y": 270
+  },
+  "facing=west,inset=11,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in11",
+   "y": 270
+  },
+  "facing=west,inset=11,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in11",
+   "y": 270
+  },
+  "facing=west,inset=11,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in11",
+   "y": 270
+  },
+  "facing=west,inset=11,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in11",
+   "y": 270
+  },
+  "facing=west,inset=12,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in12",
+   "y": 270
+  },
+  "facing=west,inset=12,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in12",
+   "y": 270
+  },
+  "facing=west,inset=12,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in12",
+   "y": 270
+  },
+  "facing=west,inset=12,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in12",
+   "y": 270
+  },
+  "facing=west,inset=13,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in13",
+   "y": 270
+  },
+  "facing=west,inset=13,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in13",
+   "y": 270
+  },
+  "facing=west,inset=13,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in13",
+   "y": 270
+  },
+  "facing=west,inset=13,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in13",
+   "y": 270
+  },
+  "facing=west,inset=14,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in14",
+   "y": 270
+  },
+  "facing=west,inset=14,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in14",
+   "y": 270
+  },
+  "facing=west,inset=14,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in14",
+   "y": 270
+  },
+  "facing=west,inset=14,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in14",
+   "y": 270
+  },
+  "facing=west,inset=15,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in15",
+   "y": 270
+  },
+  "facing=west,inset=15,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in15",
+   "y": 270
+  },
+  "facing=west,inset=15,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in15",
+   "y": 270
+  },
+  "facing=west,inset=15,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in15",
+   "y": 270
+  },
+  "facing=west,inset=16,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in16",
+   "y": 270
+  },
+  "facing=west,inset=16,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in16",
+   "y": 270
+  },
+  "facing=west,inset=16,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in16",
+   "y": 270
+  },
+  "facing=west,inset=16,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in16",
+   "y": 270
+  },
+  "facing=west,inset=17,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in17",
+   "y": 270
+  },
+  "facing=west,inset=17,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in17",
+   "y": 270
+  },
+  "facing=west,inset=17,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in17",
+   "y": 270
+  },
+  "facing=west,inset=17,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in17",
+   "y": 270
+  },
+  "facing=west,inset=18,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in18",
+   "y": 270
+  },
+  "facing=west,inset=18,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in18",
+   "y": 270
+  },
+  "facing=west,inset=18,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in18",
+   "y": 270
+  },
+  "facing=west,inset=18,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in18",
+   "y": 270
+  },
+  "facing=west,inset=19,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in19",
+   "y": 270
+  },
+  "facing=west,inset=19,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in19",
+   "y": 270
+  },
+  "facing=west,inset=19,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in19",
+   "y": 270
+  },
+  "facing=west,inset=19,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in19",
+   "y": 270
+  },
+  "facing=west,inset=20,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in20",
+   "y": 270
+  },
+  "facing=west,inset=20,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in20",
+   "y": 270
+  },
+  "facing=west,inset=20,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in20",
+   "y": 270
+  },
+  "facing=west,inset=20,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in20",
+   "y": 270
+  },
+  "facing=west,inset=21,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in21",
+   "y": 270
+  },
+  "facing=west,inset=21,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in21",
+   "y": 270
+  },
+  "facing=west,inset=21,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in21",
+   "y": 270
+  },
+  "facing=west,inset=21,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in21",
+   "y": 270
+  },
+  "facing=west,inset=22,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in22",
+   "y": 270
+  },
+  "facing=west,inset=22,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in22",
+   "y": 270
+  },
+  "facing=west,inset=22,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in22",
+   "y": 270
+  },
+  "facing=west,inset=22,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in22",
+   "y": 270
+  },
+  "facing=west,inset=23,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in23",
+   "y": 270
+  },
+  "facing=west,inset=23,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in23",
+   "y": 270
+  },
+  "facing=west,inset=23,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in23",
+   "y": 270
+  },
+  "facing=west,inset=23,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in23",
+   "y": 270
+  },
+  "facing=west,inset=24,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in24",
+   "y": 270
+  },
+  "facing=west,inset=24,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in24",
+   "y": 270
+  },
+  "facing=west,inset=24,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in24",
+   "y": 270
+  },
+  "facing=west,inset=24,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in24",
+   "y": 270
+  },
+  "facing=west,inset=25,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in25",
+   "y": 270
+  },
+  "facing=west,inset=25,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in25",
+   "y": 270
+  },
+  "facing=west,inset=25,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in25",
+   "y": 270
+  },
+  "facing=west,inset=25,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in25",
+   "y": 270
+  },
+  "facing=west,inset=26,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in26",
+   "y": 270
+  },
+  "facing=west,inset=26,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in26",
+   "y": 270
+  },
+  "facing=west,inset=26,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in26",
+   "y": 270
+  },
+  "facing=west,inset=26,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in26",
+   "y": 270
+  },
+  "facing=west,inset=27,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in27",
+   "y": 270
+  },
+  "facing=west,inset=27,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in27",
+   "y": 270
+  },
+  "facing=west,inset=27,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in27",
+   "y": 270
+  },
+  "facing=west,inset=27,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in27",
+   "y": 270
+  },
+  "facing=west,inset=28,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in28",
+   "y": 270
+  },
+  "facing=west,inset=28,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in28",
+   "y": 270
+  },
+  "facing=west,inset=28,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in28",
+   "y": 270
+  },
+  "facing=west,inset=28,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in28",
+   "y": 270
+  },
+  "facing=west,inset=29,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in29",
+   "y": 270
+  },
+  "facing=west,inset=29,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in29",
+   "y": 270
+  },
+  "facing=west,inset=29,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in29",
+   "y": 270
+  },
+  "facing=west,inset=29,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in29",
+   "y": 270
+  },
+  "facing=west,inset=30,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in30",
+   "y": 270
+  },
+  "facing=west,inset=30,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in30",
+   "y": 270
+  },
+  "facing=west,inset=30,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in30",
+   "y": 270
+  },
+  "facing=west,inset=30,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in30",
+   "y": 270
+  },
+  "facing=west,inset=31,part=0": {
+   "model": "murim:block/camp_plaque_dorm2_0_in31",
+   "y": 270
+  },
+  "facing=west,inset=31,part=1": {
+   "model": "murim:block/camp_plaque_dorm2_1_in31",
+   "y": 270
+  },
+  "facing=west,inset=31,part=2": {
+   "model": "murim:block/camp_plaque_dorm2_2_in31",
+   "y": 270
+  },
+  "facing=west,inset=31,part=3": {
+   "model": "murim:block/camp_plaque_dorm2_3_in31",
+   "y": 270
+  }
+ }
+}

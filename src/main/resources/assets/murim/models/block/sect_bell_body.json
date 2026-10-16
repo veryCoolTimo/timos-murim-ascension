@@ -7,10 +7,11 @@
   "shade_quads": true,
   "render_type": "minecraft:cutout",
   "textures": {
-    "temple_bronze": "murim:block/temple_bronze",
-    "temple_bosses": "murim:block/temple_bosses",
-    "temple_rim": "murim:block/temple_rim",
     "temple_inside": "murim:block/temple_inside",
+    "temple_bellbody": "murim:block/temple_bellbody",
+    "temple_bellpanel": "murim:block/temple_bellpanel",
+    "temple_bellband": "murim:block/temple_bellband",
+    "temple_bellseat": "murim:block/temple_bellseat",
     "particle": "murim:block/temple_bronze"
   },
   "ambientocclusion": false

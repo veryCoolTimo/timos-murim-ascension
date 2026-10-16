@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Смотр учеников (docs/design/23-mount-hua-sect.md §6.1): раз в 7 дней секты на площадке поединков — сетка из
+ * Смотр учеников (docs/design/23-mount-hua-sect.md §6.1): раз в 7 дней секты на тренировочной площади — сетка из
  * четырёх учеников третьего поколения (полуфиналы в двух рингах одновременно, затем финал). Ученики не на посту и
  * старшие смотрят ({@link #spectator}). Игрок записывается у наставника (флаг {@link #SIGNED}, нужно положение
  * «ученик третьего класса») и встаёт в сетку вместо одного из учеников.
@@ -63,7 +63,7 @@ public final class SectReview {
     /** Ринги смотра (номера в {@link SectSchedule#RINGS}): полуфиналы в 1 и 4, финал в 1. */
     static final int[] SEMI_RINGS = {1, 4};
     static final String PLAYER = "player";
-    /** Бойцов ищут в стольких блоках от площадки поединков (лагерь, общежития — вся полка секты). */
+    /** Бойцов ищут в стольких блоках от тренировочной площади (лагерь, общежития — вся полка секты). */
     static final double SEARCH = 160.0D;
 
     private SectReview() {
@@ -95,19 +95,19 @@ public final class SectReview {
     static SectSchedule.Task spectator(SectRoster m) {
         switch (m.key()) {
             case "tae_hwi" -> {
-                return new SectSchedule.Task(SectSchedule.Kind.WATCH, "mentor", 2.0D, 1.0D, 0.0D, 1.0D);
+                return new SectSchedule.Task(SectSchedule.Kind.WATCH, "mentor", -1.0D, 2.0D, 1.0D, 0.0D);
             }
             case "gyeong_pil" -> {
-                return new SectSchedule.Task(SectSchedule.Kind.WATCH, "mentor", -1.0D, 1.0D, 0.0D, 1.0D);
+                return new SectSchedule.Task(SectSchedule.Kind.WATCH, "mentor", -1.0D, -1.0D, 1.0D, 0.0D);
             }
             case "tae_rok" -> {
-                return new SectSchedule.Task(SectSchedule.Kind.WATCH, "sparring", 12.0D, -8.5D, -0.6D, 1.0D);
+                return new SectSchedule.Task(SectSchedule.Kind.WATCH, "training", 12.0D, -8.5D, -0.6D, 1.0D);
             }
             case "tae_seong" -> {
-                return new SectSchedule.Task(SectSchedule.Kind.WATCH, "sparring", 12.0D, 8.5D, -0.6D, -1.0D);
+                return new SectSchedule.Task(SectSchedule.Kind.WATCH, "training", 12.0D, 8.5D, -0.6D, -1.0D);
             }
             case "gyeong_cho" -> {
-                return new SectSchedule.Task(SectSchedule.Kind.HEAL_POST, "sparring", -12.0D, -8.5D, 0.6D, 1.0D);
+                return new SectSchedule.Task(SectSchedule.Kind.HEAL_POST, "training", -12.0D, -8.5D, 0.6D, 1.0D);
             }
             default -> {
             }
@@ -115,7 +115,7 @@ public final class SectReview {
         if (m.firstRank()) {
             // Рядовые первого поколения — у западного края площадки, лицом к рингам: смотрят и поправляют.
             int f = SectRoster.firstRanks().indexOf(m);
-            return new SectSchedule.Task(SectSchedule.Kind.WATCH, "sparring", -15.0D, -4.5D + f * 3.0D, 1.0D, 0.0D);
+            return new SectSchedule.Task(SectSchedule.Kind.WATCH, "training", -15.0D, -4.5D + f * 3.0D, 1.0D, 0.0D);
         }
         List<SectRoster> crowd = crowd();
         int i = crowd.indexOf(m);
@@ -125,7 +125,7 @@ public final class SectReview {
         int side = i % 2;
         int col = i / 2;
         double du = -13.5D + col * 2.25D;
-        return new SectSchedule.Task(SectSchedule.Kind.WATCH, "sparring", du, side == 0 ? -10.0D : 10.0D, 0.0D, side == 0 ? 1.0D : -1.0D);
+        return new SectSchedule.Task(SectSchedule.Kind.WATCH, "training", du, side == 0 ? -10.0D : 10.0D, 0.0D, side == 0 ? 1.0D : -1.0D);
     }
 
     /** Зрители-ученики: второе и третье поколение по списку. */
@@ -151,7 +151,7 @@ public final class SectReview {
 
     /** Место бойца: ринг и сторона (0 — запад, 1 — восток). */
     static SectSchedule.Task ringSpot(int ring, int side) {
-        return SectSchedule.ring(ring, side, "");
+        return SectSchedule.showcaseRing(ring, side, "");
     }
 
     // ------------------------------------------------------------------ состояние
@@ -188,7 +188,7 @@ public final class SectReview {
     public static final class State {
         final long day;
         final UUID player;
-        /** Где искать бойцов: центр площадки поединков и радиус. */
+        /** Где искать бойцов: центр тренировочной площади и радиус. */
         final Vec3 center;
         final double radius;
         final List<Bout> bouts = new ArrayList<>();
@@ -246,7 +246,7 @@ public final class SectReview {
         long time = level.getDayTime();
         long day = SectSchedule.day(time);
         if (data.review == null && window(time) && data.lastReview() != day) {
-            Vec3 c = layout.at("sparring", 0.0D, 0.0D);
+            Vec3 c = layout.at("training", 0.0D, 0.0D);
             // Смотр идёт, только если рядом кто-то есть: иначе люди спят (дормант), бои не сыграть — день просто проходит.
             if (c != null && level.getNearestPlayer(c.x, c.y, c.z, 96.0D, false) != null) {
                 begin(level, layout, day, signedPlayer(level, c), SEARCH);
@@ -273,7 +273,7 @@ public final class SectReview {
     /** Начать смотр: сетка из четырёх (игрок — первым, если записан). Стенд и GameTest зовут напрямую. */
     public static State begin(ServerLevel level, SectLayout layout, long day, ServerPlayer player, double radius) {
         List<String> keys = bracket(day, player != null);
-        Vec3 center = layout.at("sparring", 0.0D, 0.0D);
+        Vec3 center = layout.at("training", 0.0D, 0.0D);
         State s = new State(day, player == null ? null : player.getUUID(), center == null ? Vec3.ZERO : center, radius);
         s.bouts.add(new Bout(keys.get(0), keys.get(1), SEMI_RINGS[0]));
         s.bouts.add(new Bout(keys.get(2), keys.get(3), SEMI_RINGS[1]));
@@ -329,7 +329,7 @@ public final class SectReview {
             boolean readyA = ready(layout, b, 0, ea);
             boolean readyB = ready(layout, b, 1, eb);
             if (!(readyA && readyB) && now - b.called >= SHOW_UP) {
-                // Ученик опоздал — ставим его на место (его никто не ждёт); игрок не пришёл — поражение неявкой.
+                // Опоздавший игрок получает неявку; ученики продолжают идти к рингу.
                 boolean playerLate = PLAYER.equals(b.a) && !readyA || PLAYER.equals(b.b) && !readyB;
                 if (playerLate) {
                     decide(level, s, b, PLAYER.equals(b.a) ? b.b : b.a, "no_show");
@@ -337,7 +337,7 @@ public final class SectReview {
                 }
                 place(layout, b, 0, ea);
                 place(layout, b, 1, eb);
-                readyA = readyB = true;
+                return;
             }
             if (readyA && readyB && busyFree(ea) && busyFree(eb)) {
                 start(b, ea, eb, now);
@@ -401,8 +401,7 @@ public final class SectReview {
         Vec3 at = layout.at(t.zone(), t.du(), t.dv());
         if (at != null) {
             Vec3 spot = SectLife.stand(d.level(), at);
-            d.moveTo(spot.x, spot.y, spot.z, layout.yaw(t.faceU(), t.faceV()), 0.0F);
-            d.getNavigation().stop();
+            d.walking().walk(spot, 0.9D);
         }
     }
 
@@ -554,9 +553,9 @@ public final class SectReview {
         return Component.translatable("npc.murim." + key);
     }
 
-    /** Сообщение всем членам секты у площадки поединков (в 96 блоках). */
+    /** Сообщение всем членам секты у тренировочной площади (в 96 блоках). */
     private static void announce(ServerLevel level, SectLayout layout, Component msg) {
-        Vec3 c = layout.at("sparring", 0.0D, 0.0D);
+        Vec3 c = layout.at("training", 0.0D, 0.0D);
         for (ServerPlayer p : level.players()) {
             if (c == null || p.position().distanceToSqr(c) < 96.0D * 96.0D) {
                 p.displayClientMessage(msg.copy().withStyle(ChatFormatting.AQUA), false);

@@ -53,7 +53,8 @@ final class MountHuaChunkWriter {
     private static final BlockState DIRT = Blocks.DIRT.defaultBlockState();
     private static final BlockState GRASS = Blocks.GRASS_BLOCK.defaultBlockState();
 
-    private final WorldGenLevel level;
+    private final net.minecraft.world.level.LevelAccessor level;
+    private final RegradeAccess regrade;
     private final ChunkAccess chunk;
     private final MountHuaSite site;
     private final MountHuaShape shape;
@@ -71,17 +72,84 @@ final class MountHuaChunkWriter {
     private final BlockState[] origTop = new BlockState[256];
 
     MountHuaChunkWriter(WorldGenLevel level, ChunkAccess chunk, MountHuaSite site) {
+        this(level, chunk, site, level.getSeed(), null);
+    }
+
+    private MountHuaChunkWriter(net.minecraft.world.level.LevelAccessor level, ChunkAccess chunk,
+            MountHuaSite site, long seed, RegradeAccess regrade) {
         this.level = level;
+        this.regrade = regrade;
         this.chunk = chunk;
         this.site = site;
         this.shape = site.shape();
-        this.seed = level.getSeed();
+        this.seed = seed;
         this.noise = new HuaNoise(seed ^ 0x4875615368616EL);
         this.x0 = chunk.getPos().getMinBlockX();
         this.z0 = chunk.getPos().getMinBlockZ();
         // Room above the summit for shrubs; taller trees are clipped by the chunk itself
         // (ProtoChunk ignores writes above the build height).
         this.maxY = chunk.getMaxBuildHeight() - 5;
+    }
+
+    /** Buffered access for the dev tool. Every write, including spilling foliage, is masked here. */
+    interface RegradeAccess {
+        BlockState get(BlockPos pos);
+        boolean set(BlockPos pos, BlockState state);
+        int oldTop(int x, int z);
+        int newTop(int x, int z);
+        boolean changes(int x, int z);
+        boolean treeFits(int x, int z, int radius);
+        net.minecraft.world.level.LevelAccessor level();
+    }
+
+    private BlockState blockState(BlockPos pos) {
+        return regrade == null ? level.getBlockState(pos) : regrade.get(pos);
+    }
+
+    private BlockState terrainState(BlockPos pos) {
+        return regrade == null ? chunk.getBlockState(pos) : regrade.get(pos);
+    }
+
+    private boolean placeBlock(BlockPos pos, BlockState state, int flags) {
+        return regrade == null ? level.setBlock(pos, state, flags) : regrade.set(pos, state);
+    }
+
+    private void terrainBlock(BlockPos pos, BlockState state, boolean moving) {
+        if (regrade == null) {
+            chunk.setBlockState(pos, state, moving);
+        } else {
+            regrade.set(pos, state);
+        }
+    }
+
+    /** Same columns, skin, stair masonry and vegetation as worldgen; no markers or cave carving. */
+    static void regrade(net.minecraft.server.level.ServerLevel level, ChunkAccess chunk,
+            MountHuaSite site, RegradeAccess access, boolean decorate) {
+        MountHuaChunkWriter w = new MountHuaChunkWriter(level, chunk, site, level.getSeed(), access);
+        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+        for (int j = 0; j < N; j++) {
+            for (int i = 0; i < N; i++) {
+                int x = w.x0 - B + i;
+                int z = w.z0 - B + j;
+                w.top[idx(i, j)] = access.newTop(x, z);
+                w.weight[idx(i, j)] = 1;
+            }
+        }
+        for (int z = 0; z < 16; z++) {
+            for (int x = 0; x < 16; x++) {
+                int wx = w.x0 + x, wz = w.z0 + z;
+                w.orig[z * 16 + x] = access.oldTop(wx, wz);
+                w.origTop[z * 16 + x] = access.get(pos.set(wx, w.orig[z * 16 + x], wz));
+                if (!decorate && access.changes(wx, wz)) {
+                    w.column(x, z, pos);
+                }
+            }
+        }
+        if (decorate) {
+            w.bridge(pos);
+            w.vegetation(pos);
+            w.hangingGreen(pos);
+        }
     }
 
     private static int idx(int i, int j) {
@@ -117,7 +185,7 @@ final class MountHuaChunkWriter {
             for (int lx = 0; lx < 16; lx++) {
                 int floor = chunk.getHeight(Heightmap.Types.OCEAN_FLOOR_WG, lx, lz) - 1;
                 orig[lz * 16 + lx] = floor;
-                origTop[lz * 16 + lx] = chunk.getBlockState(pos.set(x0 + lx, floor, z0 + lz));
+                origTop[lz * 16 + lx] = terrainState(pos.set(x0 + lx, floor, z0 + lz));
             }
         }
         boolean any = false;
@@ -239,7 +307,7 @@ final class MountHuaChunkWriter {
                         if (section.getBlockState(lx, y, lz).getFluidState().is(FluidTags.LAVA)) {
                             int wx = x0 + lx;
                             int wz = z0 + lz;
-                            chunk.setBlockState(pos.set(wx, y0 + y, wz), rock(wx, y0 + y, wz), false);
+                            terrainBlock(pos.set(wx, y0 + y, wz), rock(wx, y0 + y, wz), false);
                         }
                     }
                 }
@@ -255,26 +323,26 @@ final class MountHuaChunkWriter {
                 int surface = chunk.getHeight(Heightmap.Types.WORLD_SURFACE, lx, lz) - 1;
                 int ground = Integer.MIN_VALUE;
                 for (int y = surface; y > surface - 40; y--) {
-                    BlockState state = chunk.getBlockState(pos.set(wx, y, wz));
+                    BlockState state = terrainState(pos.set(wx, y, wz));
                     if (state.isAir()) {
                         continue;
                     }
                     if (state.is(Blocks.SNOW) || state.is(Blocks.POWDER_SNOW)) {
-                        level.setBlock(pos, AIR, 2);
+                        placeBlock(pos, AIR, 2);
                         continue;
                     }
                     if (state.is(Blocks.SNOW_BLOCK)) {
-                        level.setBlock(pos, GRASS, 2);
+                        placeBlock(pos, GRASS, 2);
                         ground = y;
                         break;
                     }
                     if (state.is(Blocks.GRASS_BLOCK) && state.getValue(SnowyDirtBlock.SNOWY)) {
-                        level.setBlock(pos, GRASS, 2);
+                        placeBlock(pos, GRASS, 2);
                         ground = y;
                         break;
                     }
                     if (state.is(Blocks.PODZOL) && state.getValue(SnowyDirtBlock.SNOWY)) {
-                        level.setBlock(pos, state.setValue(SnowyDirtBlock.SNOWY, false), 2);
+                        placeBlock(pos, state.setValue(SnowyDirtBlock.SNOWY, false), 2);
                         ground = y;
                         break;
                     }
@@ -284,7 +352,7 @@ final class MountHuaChunkWriter {
                     if (vanillaLeaf || vanillaLog || state.is(Blocks.VINE) || state.is(Blocks.BEE_NEST)
                             || state.is(Blocks.RED_MUSHROOM_BLOCK) || state.is(Blocks.BROWN_MUSHROOM_BLOCK)
                             || state.is(Blocks.MUSHROOM_STEM)) {
-                        level.setBlock(pos, AIR, 2);
+                        placeBlock(pos, AIR, 2);
                     } else if (state.blocksMotion() && !(state.getBlock() instanceof LeavesBlock)
                             && !state.is(Blocks.SPRUCE_WOOD) && !PlumTree.isPlumWood(state)) {
                         // Our crown can overlap a vanilla tree: scan through it to remove the
@@ -296,12 +364,12 @@ final class MountHuaChunkWriter {
                 if (ground == Integer.MIN_VALUE || ground > site.baseY() + 90) {
                     continue;
                 }
-                BlockState g = chunk.getBlockState(pos.set(wx, ground, wz));
+                BlockState g = terrainState(pos.set(wx, ground, wz));
                 if (!(g.is(Blocks.GRASS_BLOCK) || g.is(Blocks.PODZOL) || g.is(Blocks.DIRT) || g.is(Blocks.COARSE_DIRT))) {
                     continue;
                 }
-                if (!chunk.getBlockState(pos.set(wx, ground + 1, wz)).isAir()
-                        && !chunk.getBlockState(pos).canBeReplaced()) {
+                if (!terrainState(pos.set(wx, ground + 1, wz)).isAir()
+                        && !terrainState(pos).canBeReplaced()) {
                     continue;
                 }
                 double u = site.localU(wx + 0.5, wz + 0.5);
@@ -381,7 +449,7 @@ final class MountHuaChunkWriter {
                 for (int k = 0; k < 4; k += 2) {
                     int[] w = site.toWorld(seat[k], seat[k + 1]);
                     if (inChunk(w[0], w[1])) {
-                        level.setBlock(pos.set(w[0], topAt(w[0] - x0, w[1] - z0) + 1, w[1]),
+                        placeBlock(pos.set(w[0], topAt(w[0] - x0, w[1] - z0) + 1, w[1]),
                                 ModBlocks.POLISHED_HUA_GRANITE_SLAB.get().defaultBlockState(), 2);
                     }
                 }
@@ -401,12 +469,12 @@ final class MountHuaChunkWriter {
             int tLo = (int) Math.round(site.worldY(shape.height(rope[0], rope[1])));
             int tHi = (int) Math.round(site.worldY(shape.height(rope[2], rope[3])));
             if (inChunk(hi[0], hi[1])) {
-                level.setBlock(pos.set(hi[0], tHi + 1, hi[1]), Blocks.SPRUCE_FENCE.defaultBlockState(), 2);
-                level.setBlock(pos.set(hi[0], tHi + 2, hi[1]), Blocks.SPRUCE_FENCE.defaultBlockState(), 2);
+                placeBlock(pos.set(hi[0], tHi + 1, hi[1]), Blocks.SPRUCE_FENCE.defaultBlockState(), 2);
+                placeBlock(pos.set(hi[0], tHi + 2, hi[1]), Blocks.SPRUCE_FENCE.defaultBlockState(), 2);
             }
             if (inChunk(lo[0], lo[1])) {
                 for (int y = tHi + 1; y > tLo; y--) {
-                    level.setBlock(pos.set(lo[0], y, lo[1]), ModBlocks.OLD_ROPE.get().defaultBlockState(), 2);
+                    placeBlock(pos.set(lo[0], y, lo[1]), ModBlocks.OLD_ROPE.get().defaultBlockState(), 2);
                 }
             }
         }
@@ -431,7 +499,7 @@ final class MountHuaChunkWriter {
                     continue;
                 }
                 int t = topAt(lx, lz);
-                if (!level.getBlockState(pos.set(wx, t + 1, wz)).isAir()) {
+                if (!blockState(pos.set(wx, t + 1, wz)).isAir()) {
                     continue; // seat, post, chain or pine already here
                 }
                 long h = mix(wx, wz, 131);
@@ -451,7 +519,7 @@ final class MountHuaChunkWriter {
                     }
                     boolean[] cracked = new boolean[Math.min(rise, ClimbAids.ROUTE_RISE)];
                     for (int c = 0; c < cracked.length; c++) {
-                        cracked[c] = level.getBlockState(pos.set(wx + d[0], tn - c, wz + d[1]))
+                        cracked[c] = blockState(pos.set(wx + d[0], tn - c, wz + d[1]))
                                 .is(ModBlocks.HUA_GRANITE_CRACKED.get());
                     }
                     ClimbAids.Aid[] aids = ClimbAids.riser(rise, h >>> (k * 4), cracked);
@@ -460,10 +528,10 @@ final class MountHuaChunkWriter {
                     }
                     Direction facing = facingAway(d);
                     for (int c = 0; c < aids.length; c++) {
-                        if (!level.getBlockState(pos.set(wx, tn - c, wz)).isAir()) {
+                        if (!blockState(pos.set(wx, tn - c, wz)).isAir()) {
                             break;
                         }
-                        level.setBlock(pos, aid(aids[c], facing), 2);
+                        placeBlock(pos, aid(aids[c], facing), 2);
                     }
                     break;
                 }
@@ -489,7 +557,7 @@ final class MountHuaChunkWriter {
                     }
                 }
                 if (shape.climbCouloir(u, v) > 0.35 && !ledgeTop) {
-                    if (level.getBlockState(pos.set(wx, t + 1, wz)).isAir()) {
+                    if (blockState(pos.set(wx, t + 1, wz)).isAir()) {
                         int rr = (int) Math.floorMod(h >>> 8, 100L);
                         if (rr < 7) {
                             smallPine(wx, t + 1, wz, h, pos);
@@ -499,11 +567,11 @@ final class MountHuaChunkWriter {
                     }
                     continue;
                 }
-                if (!level.getBlockState(pos.set(wx, t + 1, wz)).isAir()) {
+                if (!blockState(pos.set(wx, t + 1, wz)).isAir()) {
                     continue;
                 }
                 int r = (int) Math.floorMod(h >>> 8, 100L);
-                BlockState ground = level.getBlockState(pos.set(wx, t, wz));
+                BlockState ground = blockState(pos.set(wx, t, wz));
                 boolean soil = ground.is(Blocks.GRASS_BLOCK) || ground.is(Blocks.MOSS_BLOCK) || ground.is(Blocks.PODZOL);
                 if (ledgeTop) {
                     if (maxFall >= 6 && r < (ledge.kind() == MountHuaPlan.Kind.TRAINING ? 30 : 55)) {
@@ -511,7 +579,7 @@ final class MountHuaChunkWriter {
                         // The cushion spills over the lip (ref: green rolls along every lobe edge).
                         for (int[] d : dirs) {
                             if (t - topAt(lx + d[0], lz + d[1]) >= 6) {
-                                BlockState spill = level.getBlockState(pos.set(wx, t + 1, wz));
+                                BlockState spill = blockState(pos.set(wx, t + 1, wz));
                                 if (spill.getBlock() instanceof LeavesBlock) {
                                     placeLeaf(wx + d[0], t, wz + d[1], spill, pos);
                                     if (((h >>> 40) & 1) == 0) {
@@ -522,10 +590,10 @@ final class MountHuaChunkWriter {
                             }
                         }
                     } else if (soil && r < 46) {
-                        level.setBlock(pos.set(wx, t + 1, wz), r < 41 ? Blocks.SHORT_GRASS.defaultBlockState()
+                        placeBlock(pos.set(wx, t + 1, wz), r < 41 ? Blocks.SHORT_GRASS.defaultBlockState()
                                 : Blocks.FERN.defaultBlockState(), 2);
                     } else if (r > 92) {
-                        level.setBlock(pos.set(wx, t + 1, wz), Blocks.MOSS_CARPET.defaultBlockState(), 2);
+                        placeBlock(pos.set(wx, t + 1, wz), Blocks.MOSS_CARPET.defaultBlockState(), 2);
                     }
                 } else if (maxRise >= 3 && maxFall >= 3 && r < 60) {
                     // A shoulder halfway up a cliff: a bush cushion on it.
@@ -557,10 +625,10 @@ final class MountHuaChunkWriter {
         BlockState log = Blocks.SPRUCE_WOOD.defaultBlockState();
         BlockState leaves = Blocks.SPRUCE_LEAVES.defaultBlockState().setValue(LeavesBlock.PERSISTENT, true);
         for (int k = 0; k < trunk; k++) {
-            if (!level.getBlockState(pos.set(x, y + k, z)).isAir()) {
+            if (!blockState(pos.set(x, y + k, z)).isAir()) {
                 return;
             }
-            level.setBlock(pos, log, 2);
+            placeBlock(pos, log, 2);
         }
         for (int dx = -2; dx <= 2; dx++) {
             for (int dz = -2; dz <= 2; dz++) {
@@ -596,8 +664,10 @@ final class MountHuaChunkWriter {
             for (int lx = 0; lx < 16; lx++) {
                 int wx = x0 + lx;
                 int wz = z0 + lz;
+                if (regrade != null && !regrade.changes(wx, wz)) continue;
                 double u = site.localU(wx + 0.5, wz + 0.5);
                 double v = site.localV(wx + 0.5, wz + 0.5);
+                if (nearWideFlight(u, v) || MountHuaPlan.clearFootprint(u, v)) continue;
                 Zone z = zoneAt(u, v, 14);
                 if (z == null || z.cave() || !MountHuaPlan.CORE.contains(z.id()) || z.id().equals("gate")
                         || shape.climbChanged(u, v)) {
@@ -608,29 +678,30 @@ final class MountHuaChunkWriter {
                 for (int k = 0; k < 4; k++) {
                     int[] d = dirs[k];
                     int tn = topAt(lx + d[0], lz + d[1]);
-                    if (tn - t < 3) {
+                    if (tn - t < 2) {
                         continue;
                     }
+                    int lip = tn - (tn - t == 2 ? 1 : 2);
                     // This column sits below a step: a moss mat hanging down the wall of the neighbour
                     // (author 06.10: our own moss, not the vanilla vine).
                     if (((h >>> (k * 3)) & 3) != 0) {
                         int len = 2 + (int) Math.floorMod(h >>> 20, 9L);
                         BlockState vine = aid(ClimbAids.Aid.MOSS, facingAway(d));
-                        for (int y = tn; y > Math.max(t, tn - len); y--) {
-                            if (!level.getBlockState(pos.set(wx, y, wz)).isAir()) {
+                        for (int y = lip; y > Math.max(t, tn - len); y--) {
+                            if (!blockState(pos.set(wx, y, wz)).isAir()) {
                                 break;
                             }
-                            level.setBlock(pos, vine, 2);
+                            placeBlock(pos, vine, 2);
                         }
                     }
-                    // Over the rim: a clump of azalea spilling one block out and down.
-                    if (Math.floorMod(h >>> 32, 5L) == 0 && level.getBlockState(pos.set(wx, tn, wz)).isAir()) {
+                    // A clump of azalea below the clean top courses of the retaining wall.
+                    if (Math.floorMod(h >>> 32, 5L) == 0 && lip > t && blockState(pos.set(wx, lip, wz)).isAir()) {
                         BlockState leaf = ((h >>> 40) & 3) == 0 ? Blocks.FLOWERING_AZALEA_LEAVES.defaultBlockState()
                                 : Blocks.AZALEA_LEAVES.defaultBlockState();
                         leaf = leaf.setValue(LeavesBlock.PERSISTENT, true);
-                        level.setBlock(pos.set(wx, tn, wz), leaf, 2);
-                        if (level.getBlockState(pos.set(wx, tn - 1, wz)).isAir() || level.getBlockState(pos).is(ModBlocks.CLIMBING_MOSS.get())) {
-                            level.setBlock(pos, leaf, 2);
+                        placeBlock(pos.set(wx, lip, wz), leaf, 2);
+                        if (lip - 1 > t && (blockState(pos.set(wx, lip - 1, wz)).isAir() || blockState(pos).is(ModBlocks.CLIMBING_MOSS.get()))) {
+                            placeBlock(pos, leaf, 2);
                         }
                     }
                     break;
@@ -684,19 +755,19 @@ final class MountHuaChunkWriter {
                     int len = Math.min(7, rise / 3 + (int) Math.floorMod(h >>> 20, Math.max(1, rise / 6 + 1)));
                     BlockState moss = aid(ClimbAids.Aid.MOSS, facingAway(d));
                     for (int y = tn; y > tn - len; y--) {
-                        if (!level.getBlockState(pos.set(wx, y, wz)).isAir()) {
+                        if (!blockState(pos.set(wx, y, wz)).isAir()) {
                             break;
                         }
-                        level.setBlock(pos, moss, 2);
+                        placeBlock(pos, moss, 2);
                     }
                     // Now and then a leafy clump crowns the mat, hanging over the lip in front of the wall
                     // (never a cube standing on the rim: on stepped faces those read as dots — stand 06.10).
-                    if (Math.floorMod(h >>> 32, 4L) == 0 && level.getBlockState(pos.set(wx, tn, wz)).is(ModBlocks.CLIMBING_MOSS.get())) {
+                    if (Math.floorMod(h >>> 32, 4L) == 0 && blockState(pos.set(wx, tn, wz)).is(ModBlocks.CLIMBING_MOSS.get())) {
                         BlockState leaf = (((h >>> 40) & 1) == 0 ? Blocks.AZALEA_LEAVES : Blocks.SPRUCE_LEAVES)
                                 .defaultBlockState().setValue(LeavesBlock.PERSISTENT, true);
-                        level.setBlock(pos, leaf, 2);
-                        if (((h >>> 41) & 1) == 0 && level.getBlockState(pos.set(wx, tn - 1, wz)).is(ModBlocks.CLIMBING_MOSS.get())) {
-                            level.setBlock(pos, leaf, 2);
+                        placeBlock(pos, leaf, 2);
+                        if (((h >>> 41) & 1) == 0 && blockState(pos.set(wx, tn - 1, wz)).is(ModBlocks.CLIMBING_MOSS.get())) {
+                            placeBlock(pos, leaf, 2);
                         }
                     }
                     break;
@@ -706,63 +777,25 @@ final class MountHuaChunkWriter {
     }
 
     /**
-     * Structures planned on the old ground (a village house stood on the gate terrace, stand 03.10)
-     * are removed from the building sites: everything above a terrace that is not ours goes.
+     * Clear vegetation inside the exact pad footprints, including persistent crowns.
+     * Architecture and the trees between pads are not part of this cleanup.
      */
     private void clearTerraces(BlockPos.MutableBlockPos pos) {
-        // Also the eight neighbours (write radius 1): trees of a neighbour decorated after this
-        // chunk's own cleanup spill over the site otherwise (stand 04.10: leaves on the gate yard).
-        for (int lz = -16; lz < 32; lz++) {
-            for (int lx = -16; lx < 32; lx++) {
-                int wx = x0 + lx;
-                int wz = z0 + lz;
-                double cu = site.localU(wx + 0.5, wz + 0.5);
-                double cv = site.localV(wx + 0.5, wz + 0.5);
-                Zone z = zoneAt(cu, cv, 1);
-                if (z == null) {
-                    Zone around = zoneAt(cu, cv, 8);
-                    if (around != null && !around.cave()) {
-                        // Margin: vanilla trees leaning over the site go, our plums and pines stay.
-                        int ay = (int) Math.round(site.worldY(around.y()));
-                        for (int y = ay + 1; y <= ay + 30; y++) {
-                            BlockState st = level.getBlockState(pos.set(wx, y, wz));
-                            if ((st.getBlock() instanceof LeavesBlock && !st.getValue(LeavesBlock.PERSISTENT))
-                                    || (st.is(BlockTags.LOGS) && !st.is(Blocks.SPRUCE_WOOD)
-                                    && !PlumTree.isPlumWood(st))) {
-                                level.setBlock(pos, AIR, 2);
-                            }
-                        }
-                    }
-                    continue;
-                }
-                if (z.cave()) {
-                    continue;
-                }
-                int y0 = (int) Math.round(site.worldY(z.y()));
-                for (int y = y0 + 1; y <= y0 + 30; y++) {
-                    BlockState st = level.getBlockState(pos.set(wx, y, wz));
-                    if (st.isAir() || ours(st)) {
-                        continue;
-                    }
-                    level.setBlock(pos, AIR, 2);
-                }
-                BlockState top = level.getBlockState(pos.set(wx, y0, wz));
-                if (!ours(top) && !HuaPaving.isPaving(top) && !top.is(Blocks.GRASS_BLOCK) && !top.is(Blocks.DIRT_PATH) && !top.is(Blocks.COARSE_DIRT)
-                        && !top.is(Blocks.MOSSY_COBBLESTONE)) {
-                    level.setBlock(pos, GRASS, 2);
-                }
+        // Cache whole natural trunk components before removing their first log.
+        HuaVegetation vegetation = new HuaVegetation(this::blockState);
+        // Include neighbour chunks: their later foliage pass must not overhang a building pad.
+        for (int lz = -16; lz < 32; lz++) for (int lx = -16; lx < 32; lx++) {
+            int wx = x0 + lx, wz = z0 + lz;
+            double u = site.localU(wx + 0.5, wz + 0.5), v = site.localV(wx + 0.5, wz + 0.5);
+            if (!MountHuaPlan.clearFootprint(u, v)) continue;
+            Zone pad = MountHuaPlan.ZONES.stream().filter(z -> !z.cave() && !z.id().equals("grove")
+                    && MountHuaPlan.insidePad(z, u, v)).findFirst().orElseThrow();
+            int floor = (int) Math.round(site.worldY(pad.y()));
+            for (int y = floor + 1; y < chunk.getMaxBuildHeight(); y++) {
+                BlockState state = blockState(pos.set(wx, y, wz));
+                if (HuaVegetation.foliage(state) || vegetation.treeLog(pos)) placeBlock(pos, AIR, 2);
             }
         }
-    }
-
-    private static boolean ours(BlockState st) {
-        return st.is(Blocks.STRIPPED_SPRUCE_LOG) || st.is(Blocks.LANTERN) || st.is(Blocks.SPRUCE_SIGN)
-                || st.is(Blocks.SPRUCE_WOOD) || PlumTree.isPlumWood(st)
-                || (st.getBlock() instanceof LeavesBlock && st.getValue(LeavesBlock.PERSISTENT))
-                || st.is(ModBlocks.POLISHED_HUA_GRANITE.get()) || st.is(ModBlocks.POLISHED_HUA_GRANITE_STAIRS.get())
-                || st.is(ModBlocks.POLISHED_HUA_GRANITE_SLAB.get()) || st.is(ModBlocks.POLISHED_HUA_GRANITE_WALL.get())
-                || st.is(Blocks.CHAIN) || st.is(ModBlocks.HUA_GRANITE_MOSSY.get()) || st.is(ModBlocks.HUA_GRANITE_CRACKED.get())
-                || st.is(ModBlocks.CLIMBING_MOSS.get()) || st.is(ModBlocks.ROCK_HANDHOLD.get()) || st.is(ModBlocks.OLD_ROPE.get());
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -784,15 +817,15 @@ final class MountHuaChunkWriter {
         // Cut: remove what stands above the new top (vanilla hills inside gorges/terraces).
         // The worldgen heightmap can lag the real top by a block or more (seen on the stand: a single
         // grass block left floating 33 blocks over the gate terrace), so scan from above it.
-        int surface = Math.min(chunk.getMaxBuildHeight() - 1, Math.max(chunk.getHeight(Heightmap.Types.WORLD_SURFACE_WG, lx, lz), o) + 8);
+        int surface = Math.min(chunk.getMaxBuildHeight() - 1, Math.max(chunk.getHeight(regrade == null ? Heightmap.Types.WORLD_SURFACE_WG : Heightmap.Types.WORLD_SURFACE, lx, lz), o) + 8);
         int sea = level.getSeaLevel();
         for (int y = surface; y > t; y--) {
             pos.set(wx, y, wz);
-            BlockState there = chunk.getBlockState(pos);
+            BlockState there = terrainState(pos);
             if (there.isAir() || (y < sea && !there.getFluidState().isEmpty())) {
                 continue;
             }
-            chunk.setBlockState(pos, AIR, false);
+            terrainBlock(pos, AIR, false);
         }
         // Fill: rock from just below the old surface (buries grass/sand) up to the new top.
         int from = Math.min(o - 2, t - 4);
@@ -803,7 +836,7 @@ final class MountHuaChunkWriter {
         for (int y = from; y <= t; y++) {
             pos.set(wx, y, wz);
             boolean exposed = y > lowest - 2 || t - y < 4;
-            chunk.setBlockState(pos, !exposed ? STONE : masonry ? masonry(wx, y, wz)
+            terrainBlock(pos, !exposed ? STONE : masonry && t - y < 3 ? masonry(wx, y, wz, t)
                     : climbFace ? climbRock(wx, y, wz, t, gap) : granite(lx, lz, wx, y, wz, t, drop), false);
         }
         skin(lx, lz, t, drop, w, pos);
@@ -817,13 +850,13 @@ final class MountHuaChunkWriter {
         double u = site.localU(wx + 0.5, wz + 0.5);
         double v = site.localV(wx + 0.5, wz + 0.5);
         for (Zone z : MountHuaPlan.ZONES) {
-            if (z.cave()) {
+            if (z.cave() || z.id().equals("grove")) {
                 continue;
             }
             double dx = Math.max(0, Math.abs(u - z.u()) - z.width() / 2.0);
             double dz = Math.max(0, Math.abs(v - z.v()) - z.depth() / 2.0);
             double d = Math.hypot(dx, dz);
-            if (d > 0 && d <= 14 && t <= Math.round(site.worldY(z.y()))) {
+            if (d > 0 && d <= 3 && Math.abs(t - Math.round(site.worldY(z.y()))) <= 3) {
                 return true;
             }
         }
@@ -835,7 +868,15 @@ final class MountHuaChunkWriter {
         double u = site.localU(wx + 0.5, wz + 0.5);
         double v = site.localV(wx + 0.5, wz + 0.5);
         double[] tr = shape.trailAt(u, v);
-        return tr != null && tr[0] <= 3.6 && site.worldY(shape.ground(u, v)) < t - 2;
+        if (tr != null && tr[0] <= 3.6 && site.worldY(shape.ground(u, v)) < t - 2) return true;
+        for (double[] path : MountHuaPlan.PATHS) {
+            double distance = MountHuaShape.pathAt(path, u, v)[0];
+            if (MountHuaPlan.pathWidth(path) > MountHuaPlan.PATH_WIDTH
+                    && (distance <= MountHuaPlan.pathHalfWidth(path) || MountHuaShape.pathCheek(path, u, v))) return true;
+            if (distance <= MountHuaPlan.pathHalfWidth(path)
+                    && (MountHuaPlan.accessPath(path) || site.worldY(shape.ground(u, v)) < t - 2)) return true;
+        }
+        return false;
     }
 
     /**
@@ -860,7 +901,8 @@ final class MountHuaChunkWriter {
         return (n < -0.35 ? ModBlocks.HUA_GRANITE : ModBlocks.HUA_GRANITE_PALE).get().defaultBlockState();
     }
 
-    private BlockState masonry(int x, int y, int z) {
+    private BlockState masonry(int x, int y, int z, int top) {
+        if (y == top) return ModBlocks.POLISHED_HUA_GRANITE.get().defaultBlockState();
         long h = mix(x * 31 + y, z, 13);
         int r = (int) (h & 15);
         if (r < 2) {
@@ -924,18 +966,29 @@ final class MountHuaChunkWriter {
     private void skin(int lx, int lz, int t, int drop, double w, BlockPos.MutableBlockPos pos) {
         int wx = x0 + lx;
         int wz = z0 + lz;
-        Zone terrace = zoneAt(site.localU(wx + 0.5, wz + 0.5), site.localV(wx + 0.5, wz + 0.5), 0);
+        double localU = site.localU(wx + 0.5, wz + 0.5), localV = site.localV(wx + 0.5, wz + 0.5);
+        for (double[] p : MountHuaPlan.PATHS) {
+            if (MountHuaPlan.pathWidth(p) > MountHuaPlan.PATH_WIDTH
+                    && (MountHuaShape.pathAt(p, localU, localV)[0] <= MountHuaPlan.pathHalfWidth(p)
+                    || MountHuaShape.pathCheek(p, localU, localV))) {
+                terrainBlock(pos.set(wx, t, wz), ModBlocks.POLISHED_HUA_GRANITE.get().defaultBlockState(), false);
+                terrainBlock(pos.set(wx, t - 1, wz), ModBlocks.POLISHED_HUA_GRANITE.get().defaultBlockState(), false);
+                return;
+            }
+        }
+        Zone terrace = zoneAt(localU, localV, 0);
         if (terrace != null && !terrace.cave() && !terrace.id().equals("grove")) {
             // Vanilla trees that root here are removed by the cleanup pass.
-            // The sect is poor and run-down (author's answer 3): an overgrown yard with worn paths.
+            // Keep a little wear on the pads, with a continuous clean stone rim.
             long r = mix(wx, wz, 17) & 15;
             double path = noise.noise(wx / 9.0, wz / 9.0, 71.0);
             // The sect's floor is the Hua paving family (author 13.10), see HuaPaving.
             double u = site.localU(wx + 0.5, wz + 0.5);
             double v = site.localV(wx + 0.5, wz + 0.5);
             double edge = Math.min(terrace.width() / 2.0 - Math.abs(u - terrace.u()), terrace.depth() / 2.0 - Math.abs(v - terrace.v()));
-            chunk.setBlockState(pos.set(wx, t, wz), HuaPaving.surface(terrace.id(), edge, (int) r, path), false);
-            chunk.setBlockState(pos.set(wx, t - 1, wz), DIRT, false);
+            terrainBlock(pos.set(wx, t, wz), HuaPaving.surface(terrace.id(), edge, (int) r, path), false);
+            terrainBlock(pos.set(wx, t - 1, wz), edge < 2.0
+                    ? ModBlocks.POLISHED_HUA_GRANITE.get().defaultBlockState() : DIRT, false);
             return;
         }
         MountHuaPlan.Ledge ledge = shape.climbLedgeAt(site.localU(wx + 0.5, wz + 0.5), site.localV(wx + 0.5, wz + 0.5));
@@ -946,14 +999,14 @@ final class MountHuaChunkWriter {
             // the block under it stays rock.
             BlockState ground = r < 12 ? Blocks.MOSS_BLOCK.defaultBlockState()
                     : ModBlocks.HUA_GRANITE_MOSSY.get().defaultBlockState();
-            chunk.setBlockState(pos.set(wx, t, wz), ground, false);
+            terrainBlock(pos.set(wx, t, wz), ground, false);
             return;
         }
         if (shape.climbChanged(site.localU(wx + 0.5, wz + 0.5), site.localV(wx + 0.5, wz + 0.5))) {
             // Lips and shoulders between the ledges: moss on anything flat enough, rock elsewhere
             // (no soil skin, whose dirt would show on the faces).
             if (drop <= 2) {
-                chunk.setBlockState(pos.set(wx, t, wz), Blocks.MOSS_BLOCK.defaultBlockState(), false);
+                terrainBlock(pos.set(wx, t, wz), Blocks.MOSS_BLOCK.defaultBlockState(), false);
             }
             return;
         }
@@ -965,9 +1018,9 @@ final class MountHuaChunkWriter {
             // Apron: keep the biome's own ground (sand stays sand, grass stays grass).
             BlockState under = was.is(Blocks.SAND) ? Blocks.SANDSTONE.defaultBlockState()
                     : was.is(Blocks.RED_SAND) ? Blocks.RED_SANDSTONE.defaultBlockState() : DIRT;
-            chunk.setBlockState(pos.set(wx, t, wz), snowFree(was), false);
-            chunk.setBlockState(pos.set(wx, t - 1, wz), under, false);
-            chunk.setBlockState(pos.set(wx, t - 2, wz), under, false);
+            terrainBlock(pos.set(wx, t, wz), snowFree(was), false);
+            terrainBlock(pos.set(wx, t - 1, wz), under, false);
+            terrainBlock(pos.set(wx, t - 2, wz), under, false);
             return;
         }
         double n = noise.noise(wx / 7.0, wz / 7.0, 91.0);
@@ -994,7 +1047,7 @@ final class MountHuaChunkWriter {
         // Stepped walls (a 45°+ staircase of single blocks) stay bare: no grass stripes across faces.
         if (!saddle && ((soil < -0.15 && t > site.baseY() + 30) || (fall >= 3 && t > site.baseY() + 1))) {
             if (n > 0.12) { // author 06.10: more moss on the bare steps (was 0.35)
-                chunk.setBlockState(pos.set(wx, t, wz), ModBlocks.HUA_GRANITE_MOSSY.get().defaultBlockState(), false);
+                terrainBlock(pos.set(wx, t, wz), ModBlocks.HUA_GRANITE_MOSSY.get().defaultBlockState(), false);
             }
             return;
         }
@@ -1012,13 +1065,13 @@ final class MountHuaChunkWriter {
             } else {
                 ground = GRASS;
             }
-            chunk.setBlockState(pos.set(wx, t, wz), ground, false);
-            chunk.setBlockState(pos.set(wx, t - 1, wz), DIRT, false);
+            terrainBlock(pos.set(wx, t, wz), ground, false);
+            terrainBlock(pos.set(wx, t - 1, wz), DIRT, false);
             if (drop <= 1) {
-                chunk.setBlockState(pos.set(wx, t - 2, wz), DIRT, false);
+                terrainBlock(pos.set(wx, t - 2, wz), DIRT, false);
             }
         } else if (drop <= 3 && n > 0.35) {
-            chunk.setBlockState(pos.set(wx, t, wz), Blocks.MOSS_BLOCK.defaultBlockState(), false);
+            terrainBlock(pos.set(wx, t, wz), Blocks.MOSS_BLOCK.defaultBlockState(), false);
         }
     }
 
@@ -1078,16 +1131,16 @@ final class MountHuaChunkWriter {
                         : (index < 120 && r < worn * 2 + 3) ? Blocks.MOSSY_COBBLESTONE.defaultBlockState()
                         : ModBlocks.POLISHED_HUA_GRANITE.get().defaultBlockState();
             }
-            level.setBlock(pos.set(wx, t, wz), block, 2);
+            placeBlock(pos.set(wx, t, wz), block, 2);
             for (int y = t + 1; y <= t + 4; y++) {
-                level.setBlock(pos.set(wx, y, wz), AIR, 2);
+                placeBlock(pos.set(wx, y, wz), AIR, 2);
             }
             if (index < 160 && tr[0] > 1.5) {
                 // The climb starts in the gorge with wooden posts along the stair
                 // (author2/foot-of-mountain.png): spruce posts two blocks high every few steps.
                 if (index % 4 == 0) {
-                    level.setBlock(pos.set(wx, t + 1, wz), Blocks.SPRUCE_FENCE.defaultBlockState(), 2);
-                    level.setBlock(pos.set(wx, t + 2, wz), Blocks.SPRUCE_FENCE.defaultBlockState(), 2);
+                    placeBlock(pos.set(wx, t + 1, wz), Blocks.SPRUCE_FENCE.defaultBlockState(), 2);
+                    placeBlock(pos.set(wx, t + 2, wz), Blocks.SPRUCE_FENCE.defaultBlockState(), 2);
                 }
             } else if (tr[0] > 1.5 && t - lowestAround(lx, lz) >= 3) {
                 // Outer edge over a drop: a low stone curb with posts (author ref 10), chains only
@@ -1099,7 +1152,7 @@ final class MountHuaChunkWriter {
                     Direction.Axis axis = Math.abs(wd[0]) >= Math.abs(wd[1]) ? Direction.Axis.X : Direction.Axis.Z;
                     curb = Blocks.CHAIN.defaultBlockState().setValue(RotatedPillarBlock.AXIS, axis);
                 }
-                level.setBlock(pos.set(wx, t + 1, wz), curb, 2);
+                placeBlock(pos.set(wx, t + 1, wz), curb, 2);
             }
             return;
         }
@@ -1167,7 +1220,7 @@ final class MountHuaChunkWriter {
             for (int zz = Math.max(r[1], z0); zz <= Math.min(r[3], z0 + 15); zz++) {
                 boolean edge = x == r[0] || x == r[2] || zz == r[1] || zz == r[3];
                 if (edge) {
-                    level.setBlock(pos.set(x, y, zz), ModBlocks.POLISHED_HUA_GRANITE.get().defaultBlockState(), 2);
+                    placeBlock(pos.set(x, y, zz), ModBlocks.POLISHED_HUA_GRANITE.get().defaultBlockState(), 2);
                 }
             }
         }
@@ -1179,9 +1232,9 @@ final class MountHuaChunkWriter {
                 continue;
             }
             for (int k = 1; k <= 3; k++) {
-                level.setBlock(pos.set(cx, y + k, cz), Blocks.STRIPPED_SPRUCE_LOG.defaultBlockState(), 2);
+                placeBlock(pos.set(cx, y + k, cz), Blocks.STRIPPED_SPRUCE_LOG.defaultBlockState(), 2);
             }
-            level.setBlock(pos.set(cx, y + 4, cz), Blocks.LANTERN.defaultBlockState(), 2);
+            placeBlock(pos.set(cx, y + 4, cz), Blocks.LANTERN.defaultBlockState(), 2);
             if (c == 0) {
                 sign(cx + 1, y + 1, cz + 1, z, pos);
             }
@@ -1201,19 +1254,19 @@ final class MountHuaChunkWriter {
                 boolean edge = x == r[0] || x == r[2] || zz == r[1] || zz == r[3];
                 long h = mix(x, zz, 61);
                 if (edge && (h & 7) != 0) {
-                    level.setBlock(pos.set(x, y, zz), (h & 3) == 0 ? Blocks.MOSSY_COBBLESTONE.defaultBlockState()
+                    placeBlock(pos.set(x, y, zz), (h & 3) == 0 ? Blocks.MOSSY_COBBLESTONE.defaultBlockState()
                             : ModBlocks.HUA_GRANITE_CRACKED.get().defaultBlockState(), 2);
                     // Column stubs every 6 blocks along the footing, broken at different heights.
                     if (((x - r[0]) % 6 == 0 || x == r[2]) && ((zz - r[1]) % 6 == 0 || zz == r[3])) {
                         int k = 1 + (int) ((h >>> 8) % 3);
                         for (int j = 1; j <= k; j++) {
-                            level.setBlock(pos.set(x, y + j, zz), j == k && ((h >>> 12) & 1) == 0
+                            placeBlock(pos.set(x, y + j, zz), j == k && ((h >>> 12) & 1) == 0
                                     ? Blocks.MOSSY_STONE_BRICK_WALL.defaultBlockState()
                                     : Blocks.STONE_BRICK_WALL.defaultBlockState(), 2);
                         }
                     }
                 } else if (!edge && (h % 23) == 0) {
-                    level.setBlock(pos.set(x, y, zz), Blocks.MOSSY_COBBLESTONE.defaultBlockState(), 2);
+                    placeBlock(pos.set(x, y, zz), Blocks.MOSSY_COBBLESTONE.defaultBlockState(), 2);
                 }
             }
         }
@@ -1235,32 +1288,48 @@ final class MountHuaChunkWriter {
                 double v = site.localV(wx + 0.5, wz + 0.5);
                 for (double[] p : MountHuaPlan.PATHS) {
                     double[] q = MountHuaShape.pathAt(p, u, v);
-                    if (q[0] > 2.1) {
+                    if (MountHuaShape.pathCheek(p, u, v)) {
+                        int curb = (int) Math.round(site.worldY(q[1])) + 1;
+                        placeBlock(pos.set(wx, curb, wz), ModBlocks.POLISHED_HUA_GRANITE.get().defaultBlockState(), 2);
+                        for (int k = 1; k <= 4; k++) placeBlock(pos.set(wx, curb + k, wz), AIR, 2);
+                        break;
+                    }
+                    if (q[0] > MountHuaPlan.pathHalfWidth(p)) {
                         continue;
                     }
-                    int y = (int) Math.round(site.worldY(q[1]));
+                    // Pads win over a rounded path end, just as in MountHuaShape.height.
+                    int y = MountHuaPlan.accessPath(p) ? topAt(lx, lz) : (int) Math.round(site.worldY(q[1]));
                     // A gap the stair does not fill (the grove ravine) gets planks; elsewhere stone steps.
                     int natural = (int) Math.round(site.worldY(shape.height(u, v)));
-                    if (natural < y - 3) {
-                        level.setBlock(pos.set(wx, y, wz), Blocks.SPRUCE_PLANKS.defaultBlockState(), 2);
-                        if (q[0] > 1.5) {
-                            level.setBlock(pos.set(wx, y + 1, wz), Blocks.SPRUCE_FENCE.defaultBlockState(), 2);
+                    if (natural < y - 3 && !MountHuaPlan.accessPath(p)
+                            && MountHuaPlan.pathWidth(p) <= MountHuaPlan.PATH_WIDTH) {
+                        placeBlock(pos.set(wx, y, wz), Blocks.SPRUCE_PLANKS.defaultBlockState(), 2);
+                        if (q[0] > MountHuaPlan.pathWidth(p) / 2.0 - 0.5) {
+                            placeBlock(pos.set(wx, y + 1, wz), Blocks.SPRUCE_FENCE.defaultBlockState(), 2);
                         }
                     } else {
-                        double ahead = p[2] + (p[5] - p[2]) * Math.min(1, q[2] + 0.05);
+                        double ahead = p[2] + (p[5] - p[2]) * Math.min(1, q[2] + 1.0 / Math.hypot(p[3] - p[0], p[4] - p[1]));
                         boolean rising = Math.round(site.worldY(ahead)) != y;
+                        if (MountHuaPlan.accessPath(p) || MountHuaPlan.pathWidth(p) > MountHuaPlan.PATH_WIDTH) {
+                            double behind = p[2] + (p[5] - p[2]) * Math.max(0,
+                                    q[2] - 1.0 / Math.hypot(p[3] - p[0], p[4] - p[1]));
+                            // Quantize nominal levels just like pathAt, then scale to the world.
+                            // The final riser also needs a stair even though the landing ahead is flat.
+                            rising = Math.round(site.worldY(Math.round(ahead))) != y
+                                    || Math.round(site.worldY(Math.round(behind))) != y;
+                        }
                         double du = p[3] - p[0];
                         double dv = p[4] - p[1];
                         if (p[5] < p[2]) {
                             du = -du;
                             dv = -dv;
                         }
-                        level.setBlock(pos.set(wx, y, wz), rising ? stairs(du, dv)
+                        placeBlock(pos.set(wx, y, wz), rising ? stairs(du, dv)
                                 : ModBlocks.POLISHED_HUA_GRANITE.get().defaultBlockState(), 2);
                     }
                     for (int k = 1; k <= 4; k++) {
-                        if (!level.getBlockState(pos.set(wx, y + k, wz)).is(Blocks.SPRUCE_FENCE)) {
-                            level.setBlock(pos, AIR, 2);
+                        if (!blockState(pos.set(wx, y + k, wz)).is(Blocks.SPRUCE_FENCE)) {
+                            placeBlock(pos, AIR, 2);
                         }
                     }
                     break;
@@ -1274,7 +1343,7 @@ final class MountHuaChunkWriter {
             return;
         }
         BlockPos at = new BlockPos(x, y, z);
-        level.setBlock(at, Blocks.SPRUCE_SIGN.defaultBlockState().setValue(StandingSignBlock.ROTATION, 0), 2);
+        placeBlock(at, Blocks.SPRUCE_SIGN.defaultBlockState().setValue(StandingSignBlock.ROTATION, 0), 2);
         // SignBlockEntity#setText would mark the block for a client update (needs a live Level);
         // during generation the text goes in as pending block-entity NBT, loaded with the chunk.
         SignText text = new SignText()
@@ -1299,7 +1368,7 @@ final class MountHuaChunkWriter {
             for (int zz = Math.max(r[1], z0); zz <= Math.min(r[3], z0 + 15); zz++) {
                 carve(x, y, zz, 5, pos);
                 boolean edge = x == r[0] || x == r[2] || zz == r[1] || zz == r[3];
-                level.setBlock(pos.set(x, y, zz), edge ? ModBlocks.POLISHED_HUA_GRANITE.get().defaultBlockState()
+                placeBlock(pos.set(x, y, zz), edge ? ModBlocks.POLISHED_HUA_GRANITE.get().defaultBlockState()
                         : ModBlocks.HUA_GRANITE_DARK.get().defaultBlockState(), 2);
             }
         }
@@ -1316,14 +1385,14 @@ final class MountHuaChunkWriter {
                 int[] wxz = site.toWorld(pu, pv);
                 if (inChunk(wxz[0], wxz[1])) {
                     carve(wxz[0], y, wxz[1], 4, pos);
-                    level.setBlock(pos.set(wxz[0], y, wxz[1]), ModBlocks.POLISHED_HUA_GRANITE.get().defaultBlockState(), 2);
+                    placeBlock(pos.set(wxz[0], y, wxz[1]), ModBlocks.POLISHED_HUA_GRANITE.get().defaultBlockState(), 2);
                 }
             }
         }
         if (z.id().equals("penance") || z.id().equals("vault")) {
             int[] c = site.toWorld(z.u(), z.v());
             if (inChunk(c[0], c[1])) {
-                level.setBlock(pos.set(c[0], y + 1, c[1]), Blocks.LANTERN.defaultBlockState(), 2);
+                placeBlock(pos.set(c[0], y + 1, c[1]), Blocks.LANTERN.defaultBlockState(), 2);
                 sign(c[0] + 1, y + 1, c[1], z, pos);
             }
         }
@@ -1331,7 +1400,7 @@ final class MountHuaChunkWriter {
 
     private void carve(int x, int y, int z, int height, BlockPos.MutableBlockPos pos) {
         for (int k = 1; k <= height; k++) {
-            level.setBlock(pos.set(x, y + k, z), AIR, 2);
+            placeBlock(pos.set(x, y + k, z), AIR, 2);
         }
     }
 
@@ -1347,13 +1416,15 @@ final class MountHuaChunkWriter {
                 }
                 int wx = x0 + lx;
                 int wz = z0 + lz;
+                if (regrade != null && !regrade.changes(wx, wz)) continue;
                 int t = topAt(lx, lz);
                 if (t < site.baseY() + 12 || t > chunk.getMaxBuildHeight() - 8) {
                     continue;
                 }
-                BlockState ground = chunk.getBlockState(pos.set(wx, t, wz));
+                BlockState ground = terrainState(pos.set(wx, t, wz));
                 double u = site.localU(wx + 0.5, wz + 0.5);
                 double v = site.localV(wx + 0.5, wz + 0.5);
+                if (nearWideFlight(u, v)) continue;
                 Zone near = zoneAt(u, v, 7);
                 if (near != null && zoneAt(u, v, 2) == null && !near.cave() && !shape.climbChanged(u, v)
                         && (near.id().equals("grove") || near.id().equals("upper") || near.id().equals("ancestors") || near.id().equals("elders") || near.id().equals("scriptures") || near.id().startsWith("pav"))) {
@@ -1420,7 +1491,7 @@ final class MountHuaChunkWriter {
                 boolean summit = t > site.worldY(175) && drop <= 3;
                 if (summit) {
                     if (drop <= 1 && (roll & 1) == 0) {
-                        chunk.setBlockState(pos.set(wx, t, wz), (roll & 6) == 0 ? ModBlocks.HUA_GRANITE_MOSSY.get().defaultBlockState()
+                        terrainBlock(pos.set(wx, t, wz), (roll & 6) == 0 ? ModBlocks.HUA_GRANITE_MOSSY.get().defaultBlockState()
                                 : Blocks.MOSS_BLOCK.defaultBlockState(), false);
                     }
                     if (roll < 22 && drop <= 1) {
@@ -1476,6 +1547,14 @@ final class MountHuaChunkWriter {
         }
     }
 
+    private static boolean nearWideFlight(double u, double v) {
+        for (double[] p : MountHuaPlan.PATHS) {
+            if (MountHuaPlan.pathWidth(p) > MountHuaPlan.PATH_WIDTH
+                    && MountHuaShape.pathAt(p, u, v)[0] <= MountHuaPlan.pathHalfWidth(p) + 2) return true;
+        }
+        return false;
+    }
+
     private Zone zoneAt(double u, double v, double margin) {
         for (Zone z : MountHuaPlan.ZONES) {
             if (Math.abs(u - z.u()) <= z.width() / 2.0 + margin && Math.abs(v - z.v()) <= z.depth() / 2.0 + margin) {
@@ -1491,6 +1570,7 @@ final class MountHuaChunkWriter {
      * from the reference photos (05, 04).
      */
     private void pine(int x, int y, int z, long h, int lx, int lz, BlockPos.MutableBlockPos pos) {
+        if (!treeFitsPads(x, z, 9) || regrade != null && !regrade.treeFits(x, z, 9)) return;
         // Size, lean and crown vary per tree (codex r1: the pines looked standardised).
         int height = 4 + (int) Math.floorMod(h >>> 8, 10L);
         int bestDx = 0;
@@ -1514,12 +1594,12 @@ final class MountHuaChunkWriter {
                 cx += bestDx;
                 cz += bestDz;
                 leanSteps--;
-                level.setBlock(pos.set(cx - bestDx, y + k, cz - bestDz), log, 2);
+                placeBlock(pos.set(cx - bestDx, y + k, cz - bestDz), log, 2);
             }
-            if (!level.getBlockState(pos.set(cx, y + k, cz)).isAir()) {
+            if (!blockState(pos.set(cx, y + k, cz)).isAir()) {
                 return;
             }
-            level.setBlock(pos, log, 2);
+            placeBlock(pos, log, 2);
         }
         BlockState leaves = Blocks.SPRUCE_LEAVES.defaultBlockState().setValue(LeavesBlock.PERSISTENT, true);
         int tiers = 1 + (int) Math.floorMod(h >>> 24, 3L);
@@ -1535,7 +1615,7 @@ final class MountHuaChunkWriter {
             int oz = cz + bestDz * reach;
             if (tier > 0) {
                 for (int r = 1; r <= reach; r++) {
-                    level.setBlock(pos.set(cx + bestDx * r, py, cz + bestDz * r), log, 2);
+                    placeBlock(pos.set(cx + bestDx * r, py, cz + bestDz * r), log, 2);
                 }
             }
             for (int dx = -radius; dx <= radius; dx++) {
@@ -1567,16 +1647,26 @@ final class MountHuaChunkWriter {
             if (((h >>> (12 + k)) & 1) == 0) {
                 int sx = x + side[k][0];
                 int sz = z + side[k][1];
-                if (!level.getBlockState(pos.set(sx, y - 1, sz)).isAir()) {
+                if (!blockState(pos.set(sx, y - 1, sz)).isAir()) {
                     placeLeaf(sx, y, sz, leaves, pos);
                 }
             }
         }
     }
 
+    private boolean treeFitsPads(int x, int z, int radius) {
+        // Check the whole crown envelope before planting, including persistent/custom trees.
+        for (int dz = -radius; dz <= radius; dz++) for (int dx = -radius; dx <= radius; dx++) {
+            if (MountHuaPlan.clearFootprint(site.localU(x + dx + 0.5, z + dz + 0.5),
+                    site.localV(x + dx + 0.5, z + dz + 0.5))) return false;
+        }
+        return true;
+    }
+
     private void placeLeaf(int x, int y, int z, BlockState leaves, BlockPos.MutableBlockPos pos) {
-        if (level.getBlockState(pos.set(x, y, z)).isAir()) {
-            level.setBlock(pos, leaves, 2);
+        if (MountHuaPlan.clearFootprint(site.localU(x + 0.5, z + 0.5), site.localV(x + 0.5, z + 0.5))) return;
+        if (blockState(pos.set(x, y, z)).isAir()) {
+            placeBlock(pos, leaves, 2);
         }
     }
 
@@ -1587,11 +1677,12 @@ final class MountHuaChunkWriter {
      */
     private void plumTree(int x, int y, int z, long h, BlockPos.MutableBlockPos pos, PlumTree.Variant variant,
             @javax.annotation.Nullable net.minecraft.core.Direction lean) {
+        if (!treeFitsPads(x, z, 13) || regrade != null && !regrade.treeFits(x, z, 13)) return;
         int c = (int) Math.floorMod(h >>> 3, 20L);
         PlumTree.Palette palette = variant == PlumTree.Variant.CLIFF
                 ? (c < 12 ? PlumTree.Palette.RED : PlumTree.Palette.PINK)
                 : (c < 14 ? PlumTree.Palette.PINK : c < 18 ? PlumTree.Palette.PALE : PlumTree.Palette.RED);
-        PlumTree.grow(level, pos.set(x, y, z).immutable(), variant, palette, h, lean, 2);
+        PlumTree.grow(regrade == null ? level : regrade.level(), pos.set(x, y, z).immutable(), variant, palette, h, lean, 2);
     }
 
     /** The side whose ground two blocks out lies lowest: where a cliff plum leans. */
@@ -1615,17 +1706,17 @@ final class MountHuaChunkWriter {
             int sx = x + (int) Math.floorMod(h >>> (9 + i * 3), 5L) - 2;
             int sz = z + (int) Math.floorMod(h >>> (11 + i * 3), 5L) - 2;
             int ground = y - 1;
-            BlockState below = level.getBlockState(pos.set(sx, ground, sz));
-            if (!below.is(BlockTags.BAMBOO_PLANTABLE_ON) || !level.getBlockState(pos.set(sx, y, sz)).isAir()) {
+            BlockState below = blockState(pos.set(sx, ground, sz));
+            if (!below.is(BlockTags.BAMBOO_PLANTABLE_ON) || !blockState(pos.set(sx, y, sz)).isAir()) {
                 continue;
             }
             int height = 6 + (int) Math.floorMod(h >>> (20 + i), 7L);
             for (int k = 0; k < height; k++) {
                 BambooLeaves leaves = k >= height - 2 ? BambooLeaves.LARGE : k == height - 3 ? BambooLeaves.SMALL : BambooLeaves.NONE;
-                if (!level.getBlockState(pos.set(sx, y + k, sz)).isAir()) {
+                if (!blockState(pos.set(sx, y + k, sz)).isAir()) {
                     break;
                 }
-                level.setBlock(pos, Blocks.BAMBOO.defaultBlockState().setValue(BambooStalkBlock.AGE, 1)
+                placeBlock(pos, Blocks.BAMBOO.defaultBlockState().setValue(BambooStalkBlock.AGE, 1)
                         .setValue(BambooStalkBlock.LEAVES, leaves), 2);
             }
         }
@@ -1669,12 +1760,12 @@ final class MountHuaChunkWriter {
             // Dam the three other sides so the source spills only over the lip.
             for (int[] d : new int[][] {{1, 0}, {-1, 0}, {0, 1}, {0, -1}}) {
                 if (d != bd) {
-                    level.setBlock(pos.set(sx + d[0], t, sz + d[1]), rock(sx + d[0], t, sz + d[1]), 2);
-                    level.setBlock(pos.set(sx + d[0], t + 1, sz + d[1]), rock(sx + d[0], t + 1, sz + d[1]), 2);
+                    placeBlock(pos.set(sx + d[0], t, sz + d[1]), rock(sx + d[0], t, sz + d[1]), 2);
+                    placeBlock(pos.set(sx + d[0], t + 1, sz + d[1]), rock(sx + d[0], t + 1, sz + d[1]), 2);
                 }
             }
             BlockPos src = new BlockPos(sx, t, sz);
-            level.setBlock(src, Blocks.WATER.defaultBlockState(), 2);
+            placeBlock(src, Blocks.WATER.defaultBlockState(), 2);
             level.scheduleTick(src, Fluids.WATER, 0);
         }
     }
@@ -1700,14 +1791,14 @@ final class MountHuaChunkWriter {
                     if (r < 6) {
                         BlockState bank = r < 2 ? Blocks.MOSSY_COBBLESTONE.defaultBlockState()
                                 : r < 4 ? Blocks.GRAVEL.defaultBlockState() : ModBlocks.HUA_GRANITE_MOSSY.get().defaultBlockState();
-                        level.setBlock(pos.set(wx, t, wz), bank, 2);
+                        placeBlock(pos.set(wx, t, wz), bank, 2);
                     }
                     continue;
                 }
-                level.setBlock(pos.set(wx, t, wz), (h & 3) == 0 ? Blocks.COBBLESTONE.defaultBlockState()
+                placeBlock(pos.set(wx, t, wz), (h & 3) == 0 ? Blocks.COBBLESTONE.defaultBlockState()
                         : Blocks.GRAVEL.defaultBlockState(), 2);
                 // Now and then a stone breaks the surface.
-                level.setBlock(pos.set(wx, t + 1, wz), (h & 31) == 0 ? ModBlocks.HUA_GRANITE_MOSSY.get().defaultBlockState()
+                placeBlock(pos.set(wx, t + 1, wz), (h & 31) == 0 ? ModBlocks.HUA_GRANITE_MOSSY.get().defaultBlockState()
                         : Blocks.WATER.defaultBlockState(), 2);
             }
         }
@@ -1753,7 +1844,7 @@ final class MountHuaChunkWriter {
                 boolean foot = rise >= 8;
                 long h = mix(wx, wz, 53);
                 int roll = (int) Math.floorMod(h, 1000L);
-                BlockState top = chunk.getBlockState(pos.set(wx, t, wz));
+                BlockState top = terrainState(pos.set(wx, t, wz));
                 if (!top.isSolidRender(chunk, pos)) {
                     continue;
                 }
@@ -1767,22 +1858,22 @@ final class MountHuaChunkWriter {
                                 : r < 5 ? Blocks.COBBLESTONE.defaultBlockState()
                                 : r < 6 ? Blocks.MOSSY_COBBLESTONE.defaultBlockState()
                                 : ModBlocks.HUA_GRANITE_CRACKED.get().defaultBlockState();
-                        level.setBlock(pos.set(wx, t, wz), scree, 2);
+                        placeBlock(pos.set(wx, t, wz), scree, 2);
                         if (r == 7 && roll < 120) {
-                            level.setBlock(pos.set(wx, t + 1, wz), ModBlocks.HUA_GRANITE_CRACKED.get().defaultBlockState(), 2);
+                            placeBlock(pos.set(wx, t + 1, wz), ModBlocks.HUA_GRANITE_CRACKED.get().defaultBlockState(), 2);
                         }
                     } else if (roll < 360) {
-                        level.setBlock(pos.set(wx, t, wz), Blocks.ROOTED_DIRT.defaultBlockState(), 2);
+                        placeBlock(pos.set(wx, t, wz), Blocks.ROOTED_DIRT.defaultBlockState(), 2);
                         shrub(wx, t + 1, wz, h, pos);
                     } else if (roll < 420) {
-                        level.setBlock(pos.set(wx, t + 1, wz), Blocks.MOSS_CARPET.defaultBlockState(), 2);
+                        placeBlock(pos.set(wx, t + 1, wz), Blocks.MOSS_CARPET.defaultBlockState(), 2);
                     }
                 } else if (roll < 3) {
                     // Lone boulders of mixed size in the foothills.
                     boulder(wx, t, wz, 1 + (int) Math.floorMod(h >>> 10, 4L), h, pos);
                 } else if (roll < 9) {
-                    level.setBlock(pos.set(wx, t, wz), Blocks.MOSSY_COBBLESTONE.defaultBlockState(), 2);
-                    level.setBlock(pos.set(wx, t + 1, wz), ModBlocks.HUA_GRANITE.get().defaultBlockState(), 2);
+                    placeBlock(pos.set(wx, t, wz), Blocks.MOSSY_COBBLESTONE.defaultBlockState(), 2);
+                    placeBlock(pos.set(wx, t + 1, wz), ModBlocks.HUA_GRANITE.get().defaultBlockState(), 2);
                 }
             }
         }
@@ -1798,7 +1889,7 @@ final class MountHuaChunkWriter {
                     if (q > 1.0 + 0.25 * (((h >>> (dx + dz * 3 + 30 + dy)) & 1))) {
                         continue;
                     }
-                    BlockState here = level.getBlockState(pos.set(x + dx, ground + dy, z + dz));
+                    BlockState here = blockState(pos.set(x + dx, ground + dy, z + dz));
                     if (!here.isAir() && !here.canBeReplaced() && dy > 0) {
                         continue;
                     }
@@ -1807,7 +1898,7 @@ final class MountHuaChunkWriter {
                             : ((h >>> (dz + 13)) & 3) == 0 ? ModBlocks.HUA_GRANITE_CRACKED.get().defaultBlockState()
                             : ((h >>> (dy + 17)) & 3) == 0 ? ModBlocks.HUA_GRANITE_STAINED.get().defaultBlockState()
                             : ModBlocks.HUA_GRANITE.get().defaultBlockState();
-                    level.setBlock(pos, st, 2);
+                    placeBlock(pos, st, 2);
                 }
             }
         }

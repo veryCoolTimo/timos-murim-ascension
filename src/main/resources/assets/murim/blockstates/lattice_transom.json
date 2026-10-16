@@ -1,0 +1,34 @@
+{
+  "variants": {
+    "centered=false,facing=north": {
+      "model": "murim:block/lattice_transom_back"
+    },
+    "centered=true,facing=north": {
+      "model": "murim:block/lattice_transom_center"
+    },
+    "centered=false,facing=east": {
+      "model": "murim:block/lattice_transom_back",
+      "y": 90
+    },
+    "centered=true,facing=east": {
+      "model": "murim:block/lattice_transom_center",
+      "y": 90
+    },
+    "centered=false,facing=south": {
+      "model": "murim:block/lattice_transom_back",
+      "y": 180
+    },
+    "centered=true,facing=south": {
+      "model": "murim:block/lattice_transom_center",
+      "y": 180
+    },
+    "centered=false,facing=west": {
+      "model": "murim:block/lattice_transom_back",
+      "y": 270
+    },
+    "centered=true,facing=west": {
+      "model": "murim:block/lattice_transom_center",
+      "y": 270
+    }
+  }
+}

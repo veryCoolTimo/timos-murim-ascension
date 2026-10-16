@@ -41,7 +41,7 @@ public final class HallFurnitureClient {
 
     public static final ModelResourceLocation BELL_BODY =
             ModelResourceLocation.standalone(ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "block/sect_bell_body"));
-    private static final float PIVOT_Y = 13.6F / 16.0F;
+    private static final float PIVOT_Y = 14.2F / 16.0F;
 
     private HallFurnitureClient() {
     }
@@ -67,7 +67,7 @@ public final class HallFurnitureClient {
 
         @Override
         public AABB getRenderBoundingBox(SectBellBlockEntity be) {
-            return new AABB(be.getBlockPos()).inflate(0.5D);
+            return new AABB(be.getBlockPos()).expandTowards(0.0D, -1.2D, 0.0D).inflate(0.5D, 0.0D, 0.5D);
         }
 
         @Override

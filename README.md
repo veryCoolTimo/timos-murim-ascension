@@ -84,6 +84,25 @@ Footwork is a style of its own forms: evade, run, shadow, strike-through
   **Six Equilibriums**; one clear next goal is always shown. The sect invites, it never punishes you for
   adventuring elsewhere.
 - Sparring partners, reviews, sect merit and a merit shop, ranks inside the sect.
+- The full sect is built: a three-tier **main hall**, the hall of ancestors, the scripture pavilion, a bell
+  tower, the treasury with a vault, a long dining hall and kitchen, three-storey disciple dorms with rooms,
+  the alchemy house, the elders' walled courtyards and pavilions on the surrounding peaks.
+- Disciples and elders **walk** everywhere (no teleporting): to drills, meals, their own beds and posts.
+  Guards change shifts with a bow, newcomers are met at the gate and escorted on foot. Multiplayer-aware:
+  every player gets their own bed and joins the same ceremony.
+- Misbehave inside the sect and an elder arrives, pins you with his aura and takes you to the cell.
+
+<p align="center">
+  <img src="media/sect-main-hall.jpg" width="49%" alt="Mount Hua sect main hall in Minecraft">
+  <img src="media/sect-elders.jpg" width="49%" alt="Elders' courtyards of the Mount Hua sect">
+</p>
+
+### Building and interior blocks
+- A wuxia building kit: solid tiled roofs with eaves, ridges and gable panels, red and white pillars,
+  lattice windows and transoms, plaster and grey-brick walls, stone and silk lanterns, a bronze bell.
+- Interior furniture from manhwa references: floor cushions, tea and dining tables, benches, shrine
+  pieces, storage racks and chests.
+- Courtyard floors: granite tiles, slabs and thin 4 px layers, a white kerb with cracked and chipped variants.
 
 ### Ruined library
 <p align="center"><img src="media/library.gif" width="480" alt="Ruined library"></p>

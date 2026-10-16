@@ -69,6 +69,6 @@
   "weakness": "technique.murim.wind_god_steps.weakness",
   "hit_stop_ticks": 0,
   "cooldown_ticks": 60,
-  "star_cap": 12,
+  "star_cap": 10,
   "tier": "advanced"
 }

@@ -25,6 +25,7 @@ import java.util.Optional;
  * <p>Состояние — на людях ({@link SectDisciple#watching}, {@link SectDisciple#bowedToday}, {@link SectDisciple#healingPlayer}),
  * на клиент не синхронизируется: клиент видит позу, поворот и пузырь.
  */
+@net.neoforged.fml.common.EventBusSubscriber(modid = MurimMod.MODID)
 public final class SectReactions {
 
     /** Техника видна на столько блоков. */
@@ -170,12 +171,30 @@ public final class SectReactions {
 
     /** Свободен посмотреть: не спит, не бьётся, не лечит и не лечится, не на совете и не с докладом. */
     static boolean watches(SectDisciple d) {
-        if (!d.free() || d.dormant() || d.isSleeping() || d.wounded() || d.poseHeld()) {
+        if (!d.free() || d.escorting() || d.dormant() || d.isSleeping() || d.wounded() || d.poseHeld()) {
             return false;
         }
         SectSchedule.Kind k = d.doingKind();
         return k != SectSchedule.Kind.SLEEP && k != SectSchedule.Kind.TREAT && k != SectSchedule.Kind.WAIT_TREAT
                 && k != SectSchedule.Kind.COUNCIL && k != SectSchedule.Kind.REPORT;
+    }
+
+    /** Nearby real fights draw heads and one short line; sustained hits do not spam bubbles. */
+    @net.neoforged.bus.api.SubscribeEvent
+    static void onFight(net.neoforged.neoforge.event.entity.living.LivingDamageEvent.Post event) {
+        var victim = event.getEntity();
+        var attacker = event.getSource().getEntity();
+        if (victim.level().isClientSide || event.getNewDamage() <= 0 || !(attacker instanceof net.minecraft.world.entity.LivingEntity fighter)) return;
+        long now = victim.level().getGameTime();
+        var memory = victim.getPersistentData();
+        if (memory.getLong("murim_fight_reaction_until") > now) return;
+        memory.putLong("murim_fight_reaction_until", now + 200);
+        var witnesses = victim.level().getEntitiesOfClass(SectDisciple.class, victim.getBoundingBox().inflate(WATCH_RANGE),
+                d -> d != victim && d != fighter && d.member().isPresent() && watches(d) && !d.escorting()
+                        && d.getSensing().hasLineOfSight(victim));
+        witnesses.sort(java.util.Comparator.comparingDouble(d -> d.distanceToSqr(victim)));
+        for (SectDisciple d : witnesses) d.watch(fighter, WATCH_TICKS, (int) d.distanceTo(victim));
+        if (!witnesses.isEmpty()) SectChatter.sayIfQuiet(witnesses.get(0), "murim.sect.reaction.fight", 200);
     }
 
     // ------------------------------------------------------------------ поклон игроку

@@ -24,23 +24,14 @@ import java.util.Optional;
  * Что и где — {@link SectLife#resolve}; здесь только как: дойти, встать лицом куда надо и делать дело
  * (формы в такт строя, обход рядов, прыжки по столбам, сидеть за столом, лечь на кровать).
  *
- * <p>Застрял: каждые две секунды новая попытка пути; через 30 с без продвижения и без игрока рядом —
- * переход к месту (план §4.2: «через 30 с застревания — переход к точке, если игрока рядом нет»).
+ * <p>Ходьба и ограниченные по частоте обходы препятствий — SectWalking; опоздавшие идут дальше.
  * В бою, поединке и разговоре цель не работает: у них приоритет выше.
  */
 public final class ScheduleGoal extends Goal {
 
-    /** Подошёл к месту. */
-    private static final double ARRIVE = 0.6D;
-    /** Без продвижения столько тиков — застрял. */
-    private static final int STUCK_TICKS = 600;
-
     private final SectDisciple npc;
     private SectLife.Resolved current;
     private int refresh;
-    private int repath;
-    private int stuck;
-    private double best = Double.MAX_VALUE;
     private int pause;
     private int waypoint;
     private Vec3 roam;
@@ -48,10 +39,8 @@ public final class ScheduleGoal extends Goal {
     private int bedSearch;
     private int drillStep;
     private int drillClock;
-    /** Последний {@link #arrive} — на месте дела (поза дела), иначе в пути (шаг). */
+    /** Последний вызов arrive — на месте дела (поза дела), иначе в пути (шаг). */
     private boolean onSpot;
-    /** Глава у ворот уже поклонился этому игроку (id), пока тот рядом. */
-    private int greeted = -1;
     /** Часы реплик и жестов (совет, доклад, урок, поклон предкам). */
     private int talkClock;
     /** Докладчик уже поклонился главе на этом докладе. */
@@ -71,7 +60,7 @@ public final class ScheduleGoal extends Goal {
 
     @Override
     public boolean canUse() {
-        return npc.member().isPresent() && !npc.dormant() && npc.free() && !npc.blocking() && npc.layout() != null;
+        return npc.member().isPresent() && !npc.dormant() && npc.free() && !npc.blocking() && !npc.escorting() && npc.guardTarget() == null && npc.layout() != null;
     }
 
     @Override
@@ -92,7 +81,7 @@ public final class ScheduleGoal extends Goal {
 
     @Override
     public void stop() {
-        npc.getNavigation().stop();
+        npc.walking().stop();
         current = null;
         npc.setDoingKind(null);
         npc.setPose(SectPose.NONE);
@@ -220,23 +209,6 @@ public final class ScheduleGoal extends Goal {
                 }
             }
             case SLEEP -> sleep();
-            case GREET -> {
-                // Глава встречает: стоит у ворот, подошедшему игроку — поклон «кулак в ладонь» (один раз).
-                if (arrive(current.spot(), 1.0D)) {
-                    npc.faceYaw(current.yaw(), 15.0F);
-                    Player p = npc.level().getNearestPlayer(npc, 8.0D);
-                    if (p != null) {
-                        npc.getLookControl().setLookAt(p, 20.0F, 20.0F);
-                    }
-                    Player near = npc.level().getNearestPlayer(npc, 4.5D);
-                    if (near == null) {
-                        greeted = -1;
-                    } else if (near.getId() != greeted) {
-                        greeted = near.getId();
-                        npc.holdPose(SectPose.BOW, 44);
-                    }
-                }
-            }
             default -> {
                 // WATCH, GUARD, HEAL_POST: стоять на месте лицом куда надо, глазами — на ближнего игрока.
                 if (kind == Kind.GUARD && handover()) {
@@ -282,7 +254,7 @@ public final class ScheduleGoal extends Goal {
         npc.setPose(SectPose.forTask(kind, onSpot, SectPose.carrier(npc)));
     }
 
-    /** Новое задание (раз в секунду): смена части суток, выход главы к воротам. */
+    /** Новое задание (раз в секунду): смена части суток и места дела. */
     private void update() {
         // Раз в секунду, но у каждого в свой тик: смена дела и поиск пути не в один тик у всей горы.
         refresh = current == null ? 1 + Math.floorMod(npc.getId() * 13, 20) : 20;
@@ -296,9 +268,6 @@ public final class ScheduleGoal extends Goal {
         current = next;
         npc.setDoingKind(next.task().kind());
         if (changed) {
-            stuck = 0;
-            best = Double.MAX_VALUE;
-            repath = 0;
             pause = 0;
             waypoint = 0;
             roam = null;
@@ -732,14 +701,26 @@ public final class ScheduleGoal extends Goal {
             return false;
         }
         // Кого сменяю (дежурство второго поколения, SectRota): дневной — вчерашнего ночного, ночной — дневного.
-        Optional<SectRoster> outKey = Optional.of(io.github.verycooltimo.murim.sect.SectRota.relieved(duty.get(), time));
-        SectDisciple out = outKey.isEmpty() ? null : find(outKey.get().key(), 24.0D);
-        if (out == null || !SectLife.handoverPending(out, outKey.get()) || out.position().distanceToSqr(current.spot()) > 4.0D * 4.0D) {
+        SectRoster outKey = io.github.verycooltimo.murim.sect.SectRota.relieved(duty.get(), time);
+        SectSchedule.Task oldPost = SectSchedule.post(new io.github.verycooltimo.murim.sect.SectRota.Duty(
+                duty.get().post(), !duty.get().night()));
+        Vec3 oldSpot = npc.layout().at(oldPost.zone(), oldPost.du(), oldPost.dv());
+        if (oldSpot == null || !npc.level().isLoaded(BlockPos.containing(oldSpot))) return false;
+        oldSpot = SectLife.stand(npc.level(), oldSpot);
+        // Post 0 moves from the main hall to the gate at night. Relieve the outgoing
+        // guard at HIS post before walking to the new one; he cannot meet us at the gate.
+        SectDisciple out = npc.level().getEntitiesOfClass(SectDisciple.class,
+                new net.minecraft.world.phys.AABB(oldSpot, oldSpot).inflate(4.0D),
+                d -> d.isAlive() && d.memberKey().equals(outKey.key())).stream().findFirst().orElse(null);
+        if (out == null || !SectLife.handoverPending(out, outKey)) {
             return false;
         }
-        Vec3 f = Vec3.directionFromRotation(0.0F, current.yaw());
-        Vec3 side = SectLife.stand(npc.level(), current.spot().add(new Vec3(-f.z, 0.0D, f.x).scale(1.6D)));
-        if (!arrive(side, 0.6D)) {
+        Vec3 f = Vec3.directionFromRotation(0.0F, npc.layout().yaw(oldPost.faceU(), oldPost.faceV()));
+        Vec3 side = SectLife.stand(npc.level(), oldSpot.add(new Vec3(-f.z, 0.0D, f.x).scale(1.6D)));
+        // Close enough to the relieved guard is enough to bow: the exact side spot can be a fractional, crowded
+        // or prop-blocked block, and a walker that circles it a block away would otherwise miss the whole window.
+        boolean near = npc.distanceToSqr(out) < 2.8D * 2.8D && Math.abs(npc.getY() - out.getY()) < 1.5D;
+        if (!arrive(side, 0.6D) && !near) {
             return true;
         }
         npc.setHandedOver(key);
@@ -786,50 +767,10 @@ public final class ScheduleGoal extends Goal {
      * Идти к точке; true — уже на месте. Скорость — поспешная, если далеко (опаздывает к колоколу).
      */
     private boolean arrive(Vec3 spot, double speed) {
-        // Свой шаг у каждого (±12 %, автор 06.10): толпа не идёт одним темпом.
-        speed *= pace();
-        double d = horizontal(spot);
-        if (d <= ARRIVE * ARRIVE && Math.abs(npc.getY() - spot.y) < 2.5D) {
-            npc.getNavigation().stop();
-            onSpot = true;
-            // Ровно на место: строй и столы читаются сеткой, а не кучкой (codex по кадрам 04.10).
-            if (d > 0.0025D && npc.onGround()) {
-                npc.setPos(spot.x, npc.getY(), spot.z);
-            }
-            stuck = 0;
-            best = Double.MAX_VALUE;
-            return true;
-        }
-        if (npc.isSleeping()) {
-            npc.stopSleeping();
-        }
-        npc.sit(false);
-        onSpot = false;
-        if (d < best - 0.25D) {
-            best = d;
-            stuck = 0;
-        } else if (++stuck > STUCK_TICKS) {
-            stuck = 0;
-            best = Double.MAX_VALUE;
-            if (npc.level().getNearestPlayer(npc, 24.0D) == null && npc.level().isLoaded(BlockPos.containing(spot))) {
-                npc.moveTo(spot.x, spot.y, spot.z, current.yaw(), 0.0F);
-                npc.getNavigation().stop();
-                onSpot = true;
-                return true;
-            }
-        }
-        if (d < 3.0D * 3.0D && npc.getNavigation().isDone()) {
-            // Последние шаги — прямо к точке: путь кончается на блоке, а место в ряду — в его центре.
-            npc.getMoveControl().setWantedPosition(spot.x, spot.y, spot.z, speed);
-            return false;
-        }
-        if (--repath <= 0 || npc.getNavigation().isDone()) {
-            // Пересчёт пути — не всем в один тик: свой интервал 1,5..2,5 с.
-            repath = 30 + Math.floorMod(npc.getId() * 7 + npc.tickCount, 21);
-            double run = d > 30.0D * 30.0D ? pace() : speed;
-            npc.getNavigation().moveTo(spot.x, spot.y, spot.z, run);
-        }
-        return false;
+        if (npc.isSleeping()) npc.stopSleeping();
+        onSpot = npc.walking().walk(spot, speed * pace());
+        if (!onSpot) npc.sit(false);
+        return onSpot;
     }
 
     /** Личный темп шага по ключу человека. */
@@ -979,8 +920,8 @@ public final class ScheduleGoal extends Goal {
         if (npc.isSleeping()) {
             return;
         }
-        if (bed == null && --bedSearch <= 0) {
-            bedSearch = 200;
+        if (--bedSearch <= 0) {
+            bedSearch = 40;
             bed = SectLife.findBed(npc, current.task().zone());
         }
         if (bed != null) {
@@ -989,13 +930,14 @@ public final class ScheduleGoal extends Goal {
                 return;
             }
             Vec3 at = Vec3.atBottomCenterOf(bed);
-            if (horizontal(at) < 2.2D * 2.2D && Math.abs(npc.getY() - bed.getY()) < 2.0D) {
+            if (horizontal(at) < 1.21D && Math.abs(npc.getY() - bed.getY()) < 1.0D) {
                 npc.getNavigation().stop();
                 npc.sit(false);
                 npc.startSleeping(bed);
                 return;
             }
-            arrive(at, 0.7D);
+            Vec3 approach = io.github.verycooltimo.murim.sect.SectBuildings.approach(npc, bed);
+            arrive(approach == null ? current.spot() : approach, 0.7D);
             return;
         }
         // Кроватей нет: сидит на своём месте в общежитии (площадка в лагере).

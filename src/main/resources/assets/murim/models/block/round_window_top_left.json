@@ -5,7 +5,7 @@
   "emissive_ambient": true,
   "automatic_culling": true,
   "shade_quads": true,
-  "render_type": "minecraft:cutout",
+  "render_type": "minecraft:cutout_mipped",
   "textures": {
     "tex": "murim:block/round_window",
     "w": "murim:block/plaster",

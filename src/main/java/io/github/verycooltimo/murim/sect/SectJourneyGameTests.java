@@ -99,7 +99,9 @@ public final class SectJourneyGameTests {
         ServerPlayer p = newcomer(h); SectDisciple mentor = mentor(h, p);
         goal(h, p, "method");
         h.assertTrue(!MeditationService.start(p, true), "meditation without method accepted");
-        var help = DialogueLoader.get(mentor.dialogue()).nodes().get("journey").options().getFirst();
+        var help = DialogueLoader.get(mentor.dialogue()).nodes().get("journey").options().stream()
+                .filter(o -> o.actions().stream().anyMatch(a -> a.type().equals("journey_help")))
+                .findFirst().orElseThrow();
         h.assertTrue(DialogueService.applyHeadless(p, mentor, help), "mentor did not issue scroll");
         int scrolls = new SectService.ItemNeed(ModItems.METHOD_SCROLL.get(), 1).count(p);
         p.setData(ModAttachments.SECT, roundTrip(SectService.state(p)));

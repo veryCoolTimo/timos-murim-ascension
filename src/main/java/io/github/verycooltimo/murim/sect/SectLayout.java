@@ -40,8 +40,8 @@ public interface SectLayout {
     }
 
     /** Площадки секты — всё, что на полке перед Южным пиком (без нижних ворот и беседок на пиках). */
-    List<String> SECT_ZONES = List.of("sect_gate", "training", "bell", "mentor", "sparring", "main_hall", "ancestors",
-            "scriptures", "elders", "treasury", "camp", "dorm_2nd", "dorm_3rd", "dining", "poles", "alchemy", "grove",
+    List<String> SECT_ZONES = List.of("sect_gate", "training", "poles", "bell", "mentor", "arch", "main_hall", "ancestors",
+            "scriptures", "elders", "treasury", "camp", "dorm_2nd", "dorm_3rd", "dining", "alchemy", "grove",
             "vault", "penance");
 
     /** Раскладка по плану горы: только чтение {@link MountHuaPlan#ZONES} и {@link MountHuaSite}. */

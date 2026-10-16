@@ -5,6 +5,15 @@
     {
       "when": [
         {
+          "member": false,
+          "flag": "arrival.mentor"
+        }
+      ],
+      "node": "reception"
+    },
+    {
+      "when": [
+        {
           "member": false
         }
       ],
@@ -58,7 +67,7 @@
   ],
   "nodes": {
     "outsider": {
-      "line": "dialogue.murim.mentor.outsider",
+      "line": "dialogue.murim.arrival.mentor_gate",
       "gesture": "shake",
       "options": [
         {
@@ -66,16 +75,12 @@
           "next": "who_outsider"
         },
         {
-          "text": "dialogue.murim.mentor.opt.to_leader",
-          "next": "where_leader"
-        },
-        {
           "text": "dialogue.murim.opt.leave"
         }
       ]
     },
     "where_leader": {
-      "line": "dialogue.murim.mentor.where_leader",
+      "line": "dialogue.murim.arrival.head_hall",
       "gesture": "point",
       "options": [
         {
@@ -137,6 +142,15 @@
       "gesture": "nod",
       "options": [
         {
+          "text": "dialogue.murim.escort.opt.menu",
+          "when": [
+            {
+              "member": true
+            }
+          ],
+          "next": "escort_menu"
+        },
+        {
           "text": "dialogue.murim.mentor.opt.journey",
           "when": [
             {
@@ -157,9 +171,6 @@
         {
           "text": "dialogue.murim.social.opt.topics",
           "next": "sect_topics"
-        },
-        {
-          "text": "dialogue.murim.opt.leave"
         }
       ],
       "random": [
@@ -342,9 +353,6 @@
             }
           ],
           "next": "beyond"
-        },
-        {
-          "text": "dialogue.murim.opt.leave"
         }
       ]
     },
@@ -663,6 +671,15 @@
       "line": "dialogue.murim.social.business",
       "options": [
         {
+          "text": "dialogue.murim.escort.opt.menu",
+          "when": [
+            {
+              "member": true
+            }
+          ],
+          "next": "escort_menu"
+        },
+        {
           "text": "dialogue.murim.mentor.opt.journey",
           "when": [
             {
@@ -683,9 +700,6 @@
             }
           ],
           "next": "summary"
-        },
-        {
-          "text": "dialogue.murim.opt.leave"
         }
       ]
     },
@@ -745,6 +759,15 @@
       ],
       "options": [
         {
+          "text": "dialogue.murim.escort.opt.menu",
+          "when": [
+            {
+              "member": true
+            }
+          ],
+          "next": "escort_menu"
+        },
+        {
           "text": "dialogue.murim.mentor.opt.method_help",
           "when": [
             {
@@ -761,6 +784,75 @@
         {
           "text": "dialogue.murim.mentor.opt.lesson",
           "next": "lessons"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "escort_menu": {
+      "line": "dialogue.murim.escort.menu",
+      "gesture": "point",
+      "options": [
+        {
+          "text": "dialogue.murim.escort.opt.room",
+          "when": [
+            {
+              "social": "escort:room"
+            }
+          ],
+          "actions": [
+            {
+              "type": "escort",
+              "value": "room"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.escort.opt.mentor",
+          "when": [
+            {
+              "social": "escort:mentor"
+            }
+          ],
+          "actions": [
+            {
+              "type": "escort",
+              "value": "mentor"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.escort.opt.elder",
+          "when": [
+            {
+              "social": "escort:elder"
+            }
+          ],
+          "actions": [
+            {
+              "type": "escort",
+              "value": "elder"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "reception": {
+      "line": "dialogue.murim.arrival.mentor_reception",
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.arrival.opt.accept",
+          "actions": [
+            {
+              "type": "arrival_admit"
+            }
+          ],
+          "next": "journey"
         },
         {
           "text": "dialogue.murim.opt.leave"

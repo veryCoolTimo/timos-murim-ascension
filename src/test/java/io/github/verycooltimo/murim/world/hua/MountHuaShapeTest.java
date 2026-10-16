@@ -39,9 +39,33 @@ class MountHuaShapeTest {
             if (z.cave() || z.id().equals("grove")) { // the grove is a wooded outcrop, not a pad
                 continue;
             }
-            for (double du = -z.width() / 2.0 + 0.5; du < z.width() / 2.0; du += 3) {
-                for (double dv = -z.depth() / 2.0 + 0.5; dv < z.depth() / 2.0; dv += 3) {
-                    assertEquals(z.y(), shape.height(z.u() + du, z.v() + dv), 1e-9, z.id());
+            for (double u = Math.floor(z.u() - z.width() / 2.0) + 0.5; u < Math.floor(z.u() - z.width() / 2.0) + z.width(); u += 3) {
+                for (double v = Math.floor(z.v() - z.depth() / 2.0) + 0.5; v < Math.floor(z.v() - z.depth() / 2.0) + z.depth(); v += 3) {
+                    assertEquals(z.y(), shape.height(u, v), 1e-9, z.id());
+                }
+            }
+        }
+    }
+
+    @Test
+    void buildingPadEdgesHaveNoFaceHigherThanThreeWorldBlocks() {
+        for (long seed : new long[] {20261003L, 20261015L, 7L, 1510L}) {
+            MountHuaShape terrain = new MountHuaShape(seed);
+            for (var pad : MountHuaPlan.ZONES) {
+                if (pad.cave() || pad.id().equals("grove")) continue;
+                int x0 = (int) Math.floor(pad.u() - pad.width() / 2.0);
+                int z0 = (int) Math.floor(pad.v() - pad.depth() / 2.0);
+                for (int x = x0; x < x0 + pad.width(); x++) for (int z = z0; z < z0 + pad.depth(); z++) {
+                    for (int[] d : new int[][] {{1,0},{-1,0},{0,1},{0,-1}}) {
+                        int nx = x + d[0], nz = z + d[1];
+                        if (nx >= x0 && nx < x0 + pad.width() && nz >= z0 && nz < z0 + pad.depth()) continue;
+                        double here = terrain.height(x + 0.5, z + 0.5), there = terrain.height(nx + 0.5, nz + 0.5);
+                        for (int base : new int[] {64, 67, 70, 80}) {
+                            double scale = (MountHuaSite.SUMMIT_Y - base) / MountHuaPlan.SUMMIT;
+                            assertTrue(Math.abs(Math.round(base + here * scale) - Math.round(base + there * scale)) <= 3,
+                                    pad.id() + " tall edge at " + x + "," + z + " seed=" + seed);
+                        }
+                    }
                 }
             }
         }
@@ -162,6 +186,9 @@ class MountHuaShapeTest {
         assertEquals(16, route.size());
         java.util.List<String> bad = new java.util.ArrayList<>();
         for (MountHuaPlan.Ledge l : MountHuaPlan.CLIMB) {
+            // Decorative lobes absorbed by an expanded building pad must yield to its clearance.
+            // All sixteen route ledges remain mandatory.
+            if (!l.onRoute() && MountHuaPlan.clearFootprint(l.u(), l.v())) continue;
             double[] s = shape.climbSpot(l);
             if (s == null) {
                 bad.add(l.id() + ": no flat spot");

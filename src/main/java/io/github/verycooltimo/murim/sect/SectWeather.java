@@ -66,7 +66,7 @@ public final class SectWeather {
 
     /** Дела, которые дождь не прерывает: пост, встреча у ворот, лечение, доклад главе. */
     static boolean stays(SectSchedule.Kind k) {
-        return k == SectSchedule.Kind.GUARD || k == SectSchedule.Kind.GREET || k == SectSchedule.Kind.TREAT
+        return k == SectSchedule.Kind.GUARD || k == SectSchedule.Kind.TREAT
                 || k == SectSchedule.Kind.WAIT_TREAT || k == SectSchedule.Kind.REPORT || k == SectSchedule.Kind.SHELTER;
     }
 

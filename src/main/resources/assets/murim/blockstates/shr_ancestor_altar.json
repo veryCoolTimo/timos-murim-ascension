@@ -1,0 +1,64 @@
+{
+  "variants": {
+    "facing=south,join=single": {
+      "model": "murim:block/shr_ancestor_altar_single_0_0"
+    },
+    "facing=south,join=left": {
+      "model": "murim:block/shr_ancestor_altar_left_0_0"
+    },
+    "facing=south,join=mid": {
+      "model": "murim:block/shr_ancestor_altar_mid_0_0"
+    },
+    "facing=south,join=right": {
+      "model": "murim:block/shr_ancestor_altar_right_0_0"
+    },
+    "facing=west,join=single": {
+      "model": "murim:block/shr_ancestor_altar_single_0_0",
+      "y": 90
+    },
+    "facing=west,join=left": {
+      "model": "murim:block/shr_ancestor_altar_left_0_0",
+      "y": 90
+    },
+    "facing=west,join=mid": {
+      "model": "murim:block/shr_ancestor_altar_mid_0_0",
+      "y": 90
+    },
+    "facing=west,join=right": {
+      "model": "murim:block/shr_ancestor_altar_right_0_0",
+      "y": 90
+    },
+    "facing=north,join=single": {
+      "model": "murim:block/shr_ancestor_altar_single_0_0",
+      "y": 180
+    },
+    "facing=north,join=left": {
+      "model": "murim:block/shr_ancestor_altar_left_0_0",
+      "y": 180
+    },
+    "facing=north,join=mid": {
+      "model": "murim:block/shr_ancestor_altar_mid_0_0",
+      "y": 180
+    },
+    "facing=north,join=right": {
+      "model": "murim:block/shr_ancestor_altar_right_0_0",
+      "y": 180
+    },
+    "facing=east,join=single": {
+      "model": "murim:block/shr_ancestor_altar_single_0_0",
+      "y": 270
+    },
+    "facing=east,join=left": {
+      "model": "murim:block/shr_ancestor_altar_left_0_0",
+      "y": 270
+    },
+    "facing=east,join=mid": {
+      "model": "murim:block/shr_ancestor_altar_mid_0_0",
+      "y": 270
+    },
+    "facing=east,join=right": {
+      "model": "murim:block/shr_ancestor_altar_right_0_0",
+      "y": 270
+    }
+  }
+}

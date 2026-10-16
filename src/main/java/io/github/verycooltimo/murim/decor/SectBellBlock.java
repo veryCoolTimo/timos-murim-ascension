@@ -23,6 +23,10 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import net.minecraft.world.level.block.state.properties.EnumProperty;
+import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.level.pathfinder.PathComputationType;
 import net.minecraft.world.phys.BlockHitResult;
@@ -47,11 +51,13 @@ public class SectBellBlock extends BaseEntityBlock {
     public static final MapCodec<SectBellBlock> CODEC = simpleCodec(SectBellBlock::new);
     public static final BooleanProperty POWERED = BlockStateProperties.POWERED;
     public static final int EVENT_RING = 1;
-    private static final VoxelShape SHAPE = Block.box(0.5, 0, 0.5, 15.5, 16, 15.5);
+    public static final EnumProperty<DoubleBlockHalf> HALF = BlockStateProperties.DOUBLE_BLOCK_HALF;
+    private static final VoxelShape UPPER = Block.box(3, 0, 3, 13, 15, 13);
+    private static final VoxelShape LOWER = Block.box(0.5, 2, 0.5, 15.5, 16, 15.5);
 
     public SectBellBlock(Properties properties) {
         super(properties);
-        registerDefaultState(stateDefinition.any().setValue(POWERED, false));
+        registerDefaultState(stateDefinition.any().setValue(POWERED, false).setValue(HALF, DoubleBlockHalf.UPPER));
     }
 
     @Override
@@ -61,12 +67,12 @@ public class SectBellBlock extends BaseEntityBlock {
 
     @Override
     protected RenderShape getRenderShape(BlockState state) {
-        return RenderShape.MODEL;
+        return state.getValue(HALF) == DoubleBlockHalf.UPPER ? RenderShape.MODEL : RenderShape.INVISIBLE;
     }
 
     @Override
     public @Nullable BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
-        return new SectBellBlockEntity(pos, state);
+        return state.getValue(HALF) == DoubleBlockHalf.UPPER ? new SectBellBlockEntity(pos, state) : null;
     }
 
     @Override
@@ -79,6 +85,9 @@ public class SectBellBlock extends BaseEntityBlock {
      * ringing from a strike a moment ago (no machine-gun bell).
      */
     public static boolean ring(Level level, BlockPos pos, Direction towards, @Nullable Player who, boolean sound) {
+        if (level.getBlockState(pos).is(HallFurniture.SECT_BELL.get()) && level.getBlockState(pos).getValue(HALF) == DoubleBlockHalf.LOWER) {
+            pos = pos.above();
+        }
         if (level.isClientSide || !(level.getBlockEntity(pos) instanceof SectBellBlockEntity be)) {
             return false;
         }
@@ -88,7 +97,7 @@ public class SectBellBlock extends BaseEntityBlock {
         }
         be.rang(now);
         if (sound) {
-            level.playSound(null, pos, HallFurniture.SECT_BELL_SOUND.get(), SoundSource.BLOCKS, 3.0F, 0.95F + level.random.nextFloat() * 0.1F);
+            level.playSound(null, pos, HallFurniture.SECT_BELL_SOUND.get(), SoundSource.BLOCKS, 2.0F, 0.95F + level.random.nextFloat() * 0.1F);
         }
         level.blockEvent(pos, level.getBlockState(pos).getBlock(), EVENT_RING, towards.get2DDataValue());
         level.gameEvent(who, GameEvent.BLOCK_CHANGE, pos);
@@ -116,6 +125,9 @@ public class SectBellBlock extends BaseEntityBlock {
 
     @Override
     protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block neighbour, BlockPos from, boolean moving) {
+        if (state.getValue(HALF) == DoubleBlockHalf.LOWER) {
+            return;
+        }
         boolean power = level.hasNeighborSignal(pos);
         if (power != state.getValue(POWERED)) {
             if (power) {
@@ -127,6 +139,10 @@ public class SectBellBlock extends BaseEntityBlock {
 
     @Override
     protected boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
+        if (state.getValue(HALF) == DoubleBlockHalf.LOWER) {
+            BlockState above = level.getBlockState(pos.above());
+            return above.is(this) && above.getValue(HALF) == DoubleBlockHalf.UPPER;
+        }
         BlockPos up = pos.above();
         return Block.canSupportCenter(level, up, Direction.DOWN) || !level.getBlockState(up).getCollisionShape(level, up).isEmpty();
     }
@@ -134,13 +150,29 @@ public class SectBellBlock extends BaseEntityBlock {
     @Override
     public @Nullable BlockState getStateForPlacement(BlockPlaceContext context) {
         BlockState s = defaultBlockState();
+        BlockPos below = context.getClickedPos().below();
+        if (!context.getLevel().getBlockState(below).canBeReplaced(context)) {
+            return null;
+        }
         return s.canSurvive(context.getLevel(), context.getClickedPos()) ? s : null;
+    }
+
+    @Override
+    public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
+        if (!level.isClientSide) {
+            level.setBlock(pos.below(), state.setValue(HALF, DoubleBlockHalf.LOWER), Block.UPDATE_ALL);
+        }
     }
 
     @Override
     protected BlockState updateShape(BlockState state, Direction dir, BlockState neighbour, LevelAccessor level,
                                      BlockPos pos, BlockPos neighbourPos) {
-        if (dir == Direction.UP && !state.canSurvive(level, pos)) {
+        boolean lower = state.getValue(HALF) == DoubleBlockHalf.LOWER;
+        if (dir == (lower ? Direction.UP : Direction.DOWN)) {
+            boolean ok = neighbour.is(this) && neighbour.getValue(HALF) != state.getValue(HALF);
+            return ok && (lower || state.canSurvive(level, pos)) ? state : Blocks.AIR.defaultBlockState();
+        }
+        if (dir == Direction.UP && !lower && !state.canSurvive(level, pos)) {
             return Blocks.AIR.defaultBlockState();
         }
         return super.updateShape(state, dir, neighbour, level, pos, neighbourPos);
@@ -148,7 +180,7 @@ public class SectBellBlock extends BaseEntityBlock {
 
     @Override
     protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        return SHAPE;
+        return state.getValue(HALF) == DoubleBlockHalf.UPPER ? UPPER : LOWER;
     }
 
     @Override
@@ -158,6 +190,6 @@ public class SectBellBlock extends BaseEntityBlock {
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(POWERED);
+        builder.add(POWERED, HALF);
     }
 }

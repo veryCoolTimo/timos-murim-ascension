@@ -1,0 +1,136 @@
+{
+  "variants": {
+    "layers=1,waterlogged=true": [
+      {
+        "model": "murim:block/hua_white_kerb_layer_1_0",
+        "weight": 10
+      },
+      {
+        "model": "murim:block/hua_white_kerb_layer_1_1",
+        "weight": 4
+      },
+      {
+        "model": "murim:block/hua_white_kerb_layer_1_2",
+        "weight": 4
+      },
+      {
+        "model": "murim:block/hua_white_kerb_layer_1_3",
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_white_kerb_layer_1_4",
+        "weight": 3
+      }
+    ],
+    "layers=1,waterlogged=false": [
+      {
+        "model": "murim:block/hua_white_kerb_layer_1_0",
+        "weight": 10
+      },
+      {
+        "model": "murim:block/hua_white_kerb_layer_1_1",
+        "weight": 4
+      },
+      {
+        "model": "murim:block/hua_white_kerb_layer_1_2",
+        "weight": 4
+      },
+      {
+        "model": "murim:block/hua_white_kerb_layer_1_3",
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_white_kerb_layer_1_4",
+        "weight": 3
+      }
+    ],
+    "layers=2,waterlogged=true": [
+      {
+        "model": "murim:block/hua_white_kerb_layer_2_0",
+        "weight": 10
+      },
+      {
+        "model": "murim:block/hua_white_kerb_layer_2_1",
+        "weight": 4
+      },
+      {
+        "model": "murim:block/hua_white_kerb_layer_2_2",
+        "weight": 4
+      },
+      {
+        "model": "murim:block/hua_white_kerb_layer_2_3",
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_white_kerb_layer_2_4",
+        "weight": 3
+      }
+    ],
+    "layers=2,waterlogged=false": [
+      {
+        "model": "murim:block/hua_white_kerb_layer_2_0",
+        "weight": 10
+      },
+      {
+        "model": "murim:block/hua_white_kerb_layer_2_1",
+        "weight": 4
+      },
+      {
+        "model": "murim:block/hua_white_kerb_layer_2_2",
+        "weight": 4
+      },
+      {
+        "model": "murim:block/hua_white_kerb_layer_2_3",
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_white_kerb_layer_2_4",
+        "weight": 3
+      }
+    ],
+    "layers=3,waterlogged=true": [
+      {
+        "model": "murim:block/hua_white_kerb_layer_3_0",
+        "weight": 10
+      },
+      {
+        "model": "murim:block/hua_white_kerb_layer_3_1",
+        "weight": 4
+      },
+      {
+        "model": "murim:block/hua_white_kerb_layer_3_2",
+        "weight": 4
+      },
+      {
+        "model": "murim:block/hua_white_kerb_layer_3_3",
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_white_kerb_layer_3_4",
+        "weight": 3
+      }
+    ],
+    "layers=3,waterlogged=false": [
+      {
+        "model": "murim:block/hua_white_kerb_layer_3_0",
+        "weight": 10
+      },
+      {
+        "model": "murim:block/hua_white_kerb_layer_3_1",
+        "weight": 4
+      },
+      {
+        "model": "murim:block/hua_white_kerb_layer_3_2",
+        "weight": 4
+      },
+      {
+        "model": "murim:block/hua_white_kerb_layer_3_3",
+        "weight": 3
+      },
+      {
+        "model": "murim:block/hua_white_kerb_layer_3_4",
+        "weight": 3
+      }
+    ]
+  }
+}

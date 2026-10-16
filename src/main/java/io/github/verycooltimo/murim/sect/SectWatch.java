@@ -1,6 +1,9 @@
 package io.github.verycooltimo.murim.sect;
 
 import io.github.verycooltimo.murim.MurimMod;
+import io.github.verycooltimo.murim.Config;
+import io.github.verycooltimo.murim.sect.seal.PenanceService;
+import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 import io.github.verycooltimo.murim.entity.SectDisciple;
 import io.github.verycooltimo.murim.registry.ModAttachments;
 import io.github.verycooltimo.murim.world.hua.MountHuaSite;
@@ -23,21 +26,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Охрана закрытых мест секты (С3, часть 2): кто куда пускает ({@link SectAccess}) и что делает охрана, если
- * игрок лезет без права. Порядок — от слова к делу:
- * <ol>
- *   <li>у границы — предупреждение (охранник смотрит, называет место; раз в 30 с на место);</li>
- *   <li>внутри — охранник встаёт на пути и мягко отталкивает к выходу (толчок не чаще раза в секунду);</li>
- *   <li>три толчка или 15 с внутри — поединок с охранником (свой) или за ворота секты (чужак); второй раз за
- *       две минуты — вывод из места без поединка; каждый раз −{@link #PENALTY} заслуг.</li>
- * </ol>
- * Ночью охрана видит ближе и только перед собой: пробраться можно, но если заметят внутри — без предупреждения.
- * Творческий режим и наблюдатель охрану не волнуют (автор строит секту сам).
- *
- * <p>Сервер; раз в 10 тиков на игрока на горе. Состояние нарушителя — в {@link SectSiteData} (сеанс, не сохраняется).
- * API: reference/neoforge-src/net/neoforged/neoforge/event/entity/living/LivingDeathEvent.java
- */
+/** Restricted-zone enforcement: warning, walking escort, refusal/return combat, defeat and walking expulsion.
+ * Members without repeated recent sentences are never attacked for roaming. No absence penalties. */
 @EventBusSubscriber(modid = MurimMod.MODID)
 public final class SectWatch {
 
@@ -72,6 +62,9 @@ public final class SectWatch {
         long graceUntil = Long.MIN_VALUE / 2;
         /** Последняя проверка: стоял в закрытом месте, но по праву. */
         boolean legal;
+        SectDisciple escort;
+        long escortAt;
+        boolean leftDuringEscort;
         /** Чем кончилось последнее нарушение: {@code warn}, {@code block}, {@code spar}, {@code escort}, {@code expel}. */
         String last = "";
 
@@ -120,10 +113,13 @@ public final class SectWatch {
 
     /** Одна проверка игрока: раз в {@link #PERIOD} тиков. */
     public static void check(ServerPlayer p, SectLayout layout) {
-        if (p.isCreative() || p.isSpectator() || !p.isAlive()) {
+        if (p.isCreative() || p.isSpectator() || !p.isAlive() || PenanceService.sentenced(p)
+                || io.github.verycooltimo.murim.sect.seal.PenanceEnforcement.active(p)
+                || io.github.verycooltimo.murim.sect.seal.PenanceEnforcement.releasedOutsider(p)) {
             return;
         }
         long now = p.level().getGameTime();
+        if (p.getPersistentData().getLong("murim_sect_defeated_until") > now) return;
         SectSchedule.Period period = SectSchedule.at(p.level().getDayTime());
         boolean night = period == SectSchedule.Period.NIGHT;
         SectState s = p.getData(ModAttachments.SECT);
@@ -137,8 +133,27 @@ public final class SectWatch {
         if (inGuardSpar(p) || p.getData(ModAttachments.DIALOGUE).active()) {
             return;
         }
-        DialogueService.interceptNearElder(p);
+        // A member who simply walks around or plays elsewhere is never an enforcement target.
+        if (s.member() && !repeatOffender(p)) {
+            t.strikes = 0; t.inside = 0;
+            if (t.escort != null && t.escort.escortGoal().forPlayer(p)) t.escort.escortGoal().cancel();
+            t.escort = null;
+            return;
+        }
         List<SectAccess.Rule> in = SectAccess.forbidden(layout, p.position(), standing, s.flags(), period, 0.0D);
+        // A gate invitation permits the ordinary route to the mentor, never elder rooms or the vault.
+        if (s.has(SectArrival.INVITED) && p.level().getEntitiesOfClass(SectDisciple.class, p.getBoundingBox().inflate(64),
+                d -> d.escortGoal().forPlayer(p)).stream().anyMatch(d -> d.role().third()))
+            in = in.stream().filter(r -> !SectAccess.GROUNDS.equals(r.zone())).toList();
+        if (t.escort != null && t.escort.escortGoal().forPlayer(p)) {
+            if (in.isEmpty()) t.leftDuringEscort = true;
+            if (!in.isEmpty() && (t.leftDuringEscort || now - t.escortAt >= Config.SECT_GUARD_REFUSAL.get())
+                    && !"defeated".equals(t.last)) {
+                attack(p, t.escort, layout, in.get(0), t, now);
+            }
+            return;
+        }
+        t.escort = null;
         if (in.isEmpty()) {
             t.legal = insideAny(layout, p.position());
             t.inside = 0;
@@ -181,29 +196,24 @@ public final class SectWatch {
             // Никто не видит — прошёл (ночью, присев, за спиной у стражи).
             return;
         }
-        t.inside += PERIOD;
-        if (night && t.strikes == 0) {
-            // Пойман ночью внутри: без предупреждения.
-            t.strikes = 1;
-            say(p, "murim.sect.guard.night", guard, r, ChatFormatting.RED);
+        if (t.inside == 0) {
+            t.last = "warn";
+            t.warned.put(r.id(), now);
+            guard.faceEntity(p, 20);
+            guard.gesture("shake");
+            say(p, "murim.sect.guard.warn_outsider", guard, r, ChatFormatting.YELLOW);
         }
+        t.inside += PERIOD;
         Vec3 c = SectAccess.center(layout, r, p.position());
         guard.block(p, c, 60);
-        if (guard.distanceTo(p) <= REACH && now - t.lastPush >= PUSH_EVERY) {
-            push(p, c);
+        // Words first, no instantaneous expulsions or repeated damage while an escort is active.
+        if (t.inside >= 100 && guard.distanceTo(p) <= REACH && now - t.lastPush >= 60) {
             t.strikes++;
             t.lastPush = now;
-            t.last = "block";
             guard.gesture("point");
             say(p, "murim.sect.guard.block", guard, r, ChatFormatting.GOLD);
         }
-        if (t.strikes >= STRIKES || t.inside >= LINGER) {
-            if (summoned) {
-                // Уже ждёт приговора: страж не начинает новый поединок вместо доставки старейшины.
-                t.strikes = 0;
-                t.inside = 0;
-                return;
-            }
+        if (t.strikes >= Config.SECT_GUARD_STRIKES.get() || t.inside >= Config.SECT_GUARD_LINGER.get()) {
             escalate(p, guard, r, layout, standing, t, now);
         }
     }
@@ -220,47 +230,75 @@ public final class SectWatch {
         p.hurtMarked = true;
     }
 
-    /** Вошёл силой: поединок с охранником или вывод (чужака — за ворота секты). */
+    /** First intrusion: walk out. Refusal or a quick return: nonlethal enforcement. */
     static void escalate(ServerPlayer p, SectDisciple guard, SectAccess.Rule r, SectLayout layout, SectStanding standing,
                          Trespass t, long now) {
-        t.strikes = 0;
-        t.inside = 0;
-        if (standing == SectStanding.OUTSIDER) {
-            Vec3 out = outsideGate(layout, p);
-            if (out != null) {
-                p.teleportTo(p.serverLevel(), out.x, out.y, out.z, p.getYRot(), p.getXRot());
-            }
-            t.last = "expel";
-            say(p, "murim.sect.guard.expel", guard, r, ChatFormatting.RED);
-            MurimMod.LOGGER.info("Секта: {} выставлен за ворота ({})", p.getName().getString(), r.id());
+        if (SectService.state(p).member() && !repeatOffender(p)) return;
+        if (repeatOffender(p) || now - t.lastEscalation < Config.SECT_GUARD_REPEAT.get()) {
+            attack(p, guard, layout, r, t, now);
             return;
         }
-        boolean repeat = now - t.lastEscalation < REPEAT;
-        t.lastEscalation = now;
-        // Силовой вход — проступок: второй за окно дней — пещера покаяния (seal/PenanceService, автор 03.10 п.7).
-        if (!repeat) {
-            io.github.verycooltimo.murim.sect.seal.PenanceService.offence(p, "trespass", guard);
+        Vec3 out = outsideGate(layout, p);
+        if (out == null) out = outside(layout, r, p);
+        if (guard.escortGoal().begin(p, out, false)) {
+            t.strikes = 0; t.inside = 0;
+            t.lastEscalation = now; t.escortAt = now; t.leftDuringEscort = false;
+            t.escort = guard; t.last = "escort";
+            say(p, "murim.sect.guard.walk_out", guard, r, ChatFormatting.GOLD);
         }
-        // Одно взыскание на эпизод: повтор в те же две минуты — вывод без нового штрафа (codex 04.10).
-        if (!repeat) {
-            SectService.contribute(p, -PENALTY);
+    }
+
+    private static void attack(ServerPlayer p, SectDisciple guard, SectLayout layout, SectAccess.Rule r, Trespass t, long now) {
+        if (SectService.state(p).member() && !repeatOffender(p)) return;
+        Vec3 out = outsideGate(layout, p);
+        if (out == null) out = outside(layout, r, p);
+        if (guard.guardGoal().begin(p, out)) {
+            t.strikes = 0; t.inside = 0; t.escort = null;
+            t.lastEscalation = now; t.last = "attack";
+            say(p, "murim.sect.guard.attack", guard, r, ChatFormatting.RED);
         }
-        if (!repeat && guard.spars() && guard.spar() == SectDisciple.Spar.NONE) {
-            t.last = "spar";
-            p.displayClientMessage(Component.translatable("murim.sect.guard.challenge", guard.getName(), PENALTY)
-                    .withStyle(ChatFormatting.RED), false);
-            guard.startSpar(p, 10);
-            MurimMod.LOGGER.info("Секта: {} силой в {} — поединок с {}", p.getName().getString(), r.id(), guard.memberKey());
-            return;
+    }
+
+    public static boolean repeatOffender(ServerPlayer p) {
+        return SectService.state(p).member() && PenanceService.recentSentences(p) >= Config.SECT_JAIL_THRESHOLD.get();
+    }
+    public static float guardFloor(ServerPlayer p) { return Math.max(1, p.getMaxHealth() * 0.25F); }
+
+    public static void defeated(ServerPlayer p, SectDisciple guard) {
+        Trespass t = trespass(p);
+        t.last = "defeated"; t.escort = guard; t.escortAt = p.level().getGameTime();
+        t.strikes = 0; t.inside = 0;
+        p.getPersistentData().putLong("murim_sect_defeated_until", p.level().getGameTime() + 200);
+        p.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.MOVEMENT_SLOWDOWN,
+                100, 2, false, false, true));
+        p.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.WEAKNESS,
+                200, 1, false, false, true));
+        p.displayClientMessage(Component.translatable("murim.sect.guard.defeated", guard.getName()), false);
+    }
+
+    /** Clamp after armour and other modifiers. Enforcement never uses lethal technique executors. */
+    @SubscribeEvent(priority = net.neoforged.bus.api.EventPriority.LOWEST)
+    static void guardDamage(LivingDamageEvent.Pre event) {
+        if (event.getEntity() instanceof ServerPlayer p && event.getSource().getEntity() instanceof SectDisciple guard
+                && guard.guardTarget() == p) {
+            event.setNewDamage(Math.max(0, Math.min(event.getNewDamage(), p.getHealth() - guardFloor(p))));
+        } else if (event.getEntity() instanceof SectDisciple guard && guard.guardTarget() != null && guard.guardTarget() == event.getSource().getEntity()) {
+            event.setNewDamage(Math.max(0, Math.min(event.getNewDamage(), guard.getHealth() - 1)));
         }
-        Vec3 out = outside(layout, r, p);
-        if (out != null) {
-            p.teleportTo(p.serverLevel(), out.x, out.y, out.z, p.getYRot(), p.getXRot());
+    }
+    @SubscribeEvent(priority = net.neoforged.bus.api.EventPriority.LOWEST)
+    static void guardDamaged(LivingDamageEvent.Post event) {
+        if (event.getEntity() instanceof ServerPlayer p && event.getSource().getEntity() instanceof SectDisciple guard
+                && guard.guardTarget() == p && p.getHealth() <= guardFloor(p) + 0.01F) {
+            guard.guardGoal().defeated();
+        } else if (event.getEntity() instanceof SectDisciple guard && guard.guardTarget() != null && guard.getHealth() <= 1.01F) {
+            ServerPlayer p = guard.guardTarget();
+            guard.guardGoal().cancel();
+            Trespass t = trespass(p);
+            t.graceUntil = p.level().getGameTime() + Config.SECT_GUARD_REPEAT.get();
+            t.last = "guard_defeated";
+            p.getPersistentData().putLong("murim_sect_defeated_until", p.level().getGameTime() + Config.SECT_GUARD_REPEAT.get());
         }
-        t.last = "escort";
-        p.displayClientMessage(Component.translatable(repeat ? "murim.sect.guard.escort_again" : "murim.sect.guard.escort", guard.getName(), PENALTY)
-                .withStyle(ChatFormatting.RED), false);
-        MurimMod.LOGGER.info("Секта: {} выведен из {}", p.getName().getString(), r.id());
     }
 
     /** Точка за пределами места: от его центра через игрока, на край и ещё четыре блока. */
@@ -277,7 +315,7 @@ public final class SectWatch {
     }
 
     /** За воротами секты, на лестнице: оттуда чужак пришёл. */
-    static Vec3 outsideGate(SectLayout layout, ServerPlayer p) {
+    public static Vec3 outsideGate(SectLayout layout, ServerPlayer p) {
         double[] h = layout.half("sect_gate");
         Vec3 at = layout.at("sect_gate", 0.0D, -(h == null ? 5.0D : h[1]) - 4.0D);
         return at == null ? null : SectLife.stand(p.level(), at);
@@ -308,7 +346,7 @@ public final class SectWatch {
         SectDisciple best = null;
         double bestD = Double.MAX_VALUE;
         for (SectDisciple d : p.level().getEntitiesOfClass(SectDisciple.class, p.getBoundingBox().inflate(range),
-                d -> d.isAlive() && guards(d) && !d.dormant() && d.talkingTo() < 0 && d.spar() == SectDisciple.Spar.NONE)) {
+                d -> d.isAlive() && guards(d) && !d.escorting() && d.guardTarget() == null && !d.dormant() && d.talkingTo() < 0 && d.spar() == SectDisciple.Spar.NONE)) {
             double dist = d.distanceTo(p);
             if (dist > range || dist >= bestD || !d.getSensing().hasLineOfSight(p)) {
                 continue;
@@ -334,6 +372,8 @@ public final class SectWatch {
     }
 
     private static void say(ServerPlayer p, String key, SectDisciple guard, SectAccess.Rule r, ChatFormatting style) {
+        if (key.contains("warn") || key.endsWith("block"))
+            p.getPersistentData().putLong("murim_sect_warning_until", p.level().getGameTime() + Config.SECT_RAMPAGE_WINDOW.get());
         p.displayClientMessage(Component.translatable(key, guard.getName(), Component.translatable(r.nameKey())).withStyle(style), false);
     }
 

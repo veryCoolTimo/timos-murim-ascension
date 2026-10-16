@@ -115,6 +115,7 @@ public final class HallFurnitureGameTests {
         helper.setBlock(beam, Blocks.STRIPPED_SPRUCE_LOG);
         helper.assertTrue(click(helper, item, beam, Direction.DOWN).consumesAction(), "refused under the beam");
         helper.assertBlockPresent(HallFurniture.SECT_BELL.get(), at);
+        helper.assertBlockPresent(HallFurniture.SECT_BELL.get(), at.below());
         ServerLevel level = helper.getLevel();
         helper.assertTrue(SectBellBlock.ring(level, helper.absolutePos(at), Direction.NORTH, null, true), "first strike silent");
         helper.assertFalse(SectBellBlock.ring(level, helper.absolutePos(at), Direction.NORTH, null, true), "rang again at once");
@@ -122,6 +123,7 @@ public final class HallFurnitureGameTests {
             helper.assertTrue(SectBellBlock.ring(level, helper.absolutePos(at), Direction.EAST, null, true), "silent after the cooldown");
             level.destroyBlock(helper.absolutePos(beam), false);
             helper.assertBlockPresent(Blocks.AIR, at);
+            helper.assertBlockPresent(Blocks.AIR, at.below());
             helper.succeedWhen(() -> helper.assertItemEntityCountIs(item, at, 3.0D, 1));
         });
     }

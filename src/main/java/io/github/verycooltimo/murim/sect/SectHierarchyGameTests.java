@@ -122,31 +122,22 @@ public final class SectHierarchyGameTests {
 
     // ------------------------------------------------------------------ охрана казны
 
-    /** Новичок в казне: охранник подходит, отталкивает, после трёх толчков — вызов на поединок и −заслуги. */
+    /** A novice member may roam without combat or merit penalties; rights still govern private services. */
     @GameTest(template = YARD, timeoutTicks = 600, batch = "sect_access_day")
-    public static void guardBlocksTreasury(GameTestHelper helper) {
+    public static void goodMemberIsNotAttackedInTreasury(GameTestHelper helper) {
         SectGameTests.setPeriod(helper, SectSchedule.Period.TRAINING);
         Only layout = only(helper, "treasury");
         ServerPlayer p = SectGameTests.fakePlayer(helper);
         p.setData(ModAttachments.SECT, SectState.NONE.joined().contribute(8));
         place(helper, p, 12, 12);
         SectDisciple guard = npc(helper, layout, SectRota.dayWatch(SectSchedule.day(helper.getLevel().getDayTime()), 1).key(), 12, 3);
-        helper.assertTrue(!SectAccess.forbidden(layout, p.position(), SectWatch.standing(p), Set.of(), SectSchedule.Period.TRAINING, 0.0D).isEmpty(),
-                "новичок в казне — не нарушение");
-        boolean[] blocked = new boolean[1];
+        int[] ticks = {0};
         helper.onEachTick(() -> {
-            if (helper.getLevel().getGameTime() % SectWatch.PERIOD == 0) {
-                place(helper, p, 12, 12);
-                SectWatch.check(p, layout);
-            }
-            blocked[0] |= guard.blockTarget() == p.getId();
-        });
-        helper.succeedWhen(() -> {
-            helper.assertTrue(blocked[0], "охранник не встал на пути");
-            SectWatch.Trespass t = SectWatch.of(p);
-            helper.assertTrue("spar".equals(t.last()), "нет поединка за силовой вход, последнее: " + t.last());
-            helper.assertTrue(guard.spar() != SectDisciple.Spar.NONE && p.getUUID().equals(guard.partner()), "охранник не вызвал на поединок");
-            helper.assertTrue(p.getData(ModAttachments.SECT).contribution() == 8 - SectWatch.PENALTY, "заслуги не сняты");
+            SectWatch.check(p, layout);
+            helper.assertTrue(guard.guardTarget() == null && guard.spar() == SectDisciple.Spar.NONE && !guard.escortGoal().forPlayer(p),
+                    "good member attacked for walking");
+            helper.assertTrue(p.getData(ModAttachments.SECT).contribution() == 8, "roaming penalized");
+            if (++ticks[0] == 400) helper.succeed();
         });
     }
 
@@ -154,7 +145,7 @@ public final class SectHierarchyGameTests {
 
     /**
      * Выпускник Белого Цветка в казне днём — охрана молчит; наступила ночь — сначала «выходи, закрывается», потом
-     * тот же выпускник — нарушитель.
+     * хороший член секты сохраняет право гулять без нападения.
      */
     @GameTest(template = YARD, timeoutTicks = 800, batch = "sect_access_night")
     public static void accessOpensAfterStandingRises(GameTestHelper helper) {
@@ -192,8 +183,8 @@ public final class SectHierarchyGameTests {
             helper.assertTrue(quietByDay[0], "днём охрана не пустила выпускника");
             // Был внутри по праву: полминуты на выход без толчков.
             helper.assertTrue(ticks[0] > 120 + SectWatch.WARN_EVERY / 2, "ещё время выйти");
-            helper.assertTrue(SectWatch.of(p).strikes() > 0 || guard.blockTarget() == p.getId() || night.blockTarget() == p.getId(),
-                    "ночью охрана пропустила ученика в казну");
+            helper.assertTrue(SectWatch.of(p).strikes() == 0 && guard.guardTarget() == null && night.guardTarget() == null,
+                    "охранник атаковал хорошего члена секты за ночную прогулку");
         });
     }
 }
