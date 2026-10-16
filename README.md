@@ -14,7 +14,9 @@ toward the realms beyond — as a disciple of the **Mount Hua sect**.
 ![Environment](https://img.shields.io/badge/environment-client%20%26%20server-1976d2?style=flat-square)
 ![Status](https://img.shields.io/badge/status-in%20development-b3262c?style=flat-square)
 
-<img src="media/rainfall.gif" width="640" alt="Twenty-Four Plum Blossom Movements: Rainfall">
+<img src="media/rainfall.gif" width="640" alt="Twenty-Four Plum Blossom Movements: Rainfall — murim sword technique in Minecraft">
+
+<sub>If you like where this is going, a ⭐ helps other murim fans find it.</sub>
 
 </div>
 
@@ -23,6 +25,11 @@ toward the realms beyond — as a disciple of the **Mount Hua sect**.
 A murim (Korean/Chinese martial-arts fantasy) mod built around **techniques that look and
 feel like the manhwa**: every form is a particle simulation — petals, wind, smoke, impact
 frames — not a flat texture, and every technique grows with your mastery.
+
+**For fans of** *Return of the Mount Hua Sect*, *Absolute Regression*, *Nano Machine*,
+*Myst, Might, Mayhem* and *The Breaker* — plum blossom swordsmanship, Tang clan hidden weapons,
+Heavenly Demon arts, qi cultivation and footwork, in survival Minecraft. Plays alongside other
+combat mods; few keybinds, built to sit in a modpack.
 
 ## ✦ Features
 
@@ -113,12 +120,6 @@ Footwork is a style of its own forms: evade, run, shadow, strike-through
   out. One bookcase is propped up with a very old book…
 
 <p align="center"><img src="media/library-bookcases.jpg" width="560" alt="Bookcases with a hidden manual"></p>
-
-### Buildings and decor
-- A Chinese **hall roof kit** (concave slopes, upturned corners, framed gables, continuous ridges), pillars,
-  brackets, carved railings, lanterns, bookcases, desks, bells and censers — for building your own sect.
-
-<p align="center"><img src="media/hall-roof.png" width="560" alt="Hall roof"></p>
 
 ### Combat
 - **Basic sword combo** with a finisher: the blade's crescent trail follows the real sword.
