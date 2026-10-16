@@ -13,6 +13,7 @@ toward the realms beyond — as a disciple of the **Mount Hua sect**.
 ![Java 21](https://img.shields.io/badge/Java-21-ee9258?style=flat-square)
 ![Environment](https://img.shields.io/badge/environment-client%20%26%20server-1976d2?style=flat-square)
 ![Status](https://img.shields.io/badge/status-in%20development-b3262c?style=flat-square)
+![License](https://img.shields.io/badge/code-LGPL--3.0-blue?style=flat-square)
 
 <img src="media/rainfall.gif" width="640" alt="Twenty-Four Plum Blossom Movements: Rainfall — murim sword technique in Minecraft">
 
@@ -171,8 +172,11 @@ The jar lands in `build/libs/`.
 
 ## ✦ License
 
-All rights reserved. Technique and rank names are murim genre vocabulary; no third-party
-artwork is included in this repository.
+- **Code** — [LGPL-3.0](LICENSE): use it, learn from it, write addons; changes to the mod itself stay open.
+- **Assets** — [All Rights Reserved](ASSETS_LICENSE.md): textures, models, animations, sounds, the name and
+  logo. Videos, streams and modpacks that link back to the official page are welcome.
+
+Technique and rank names are murim genre vocabulary; no third-party artwork is included in this repository.
 
 ---
 
