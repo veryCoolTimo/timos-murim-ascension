@@ -1,0 +1,158 @@
+{
+  "note": "Sect events of the week (docs/design/38-sect-ai-locations.md, section 'Совет и приглашения'). Times are ticks of the in-game day (0..23999, the day bell is at 23000); a window with from > to runs through midnight. Days are days of the 7-day sect week (the review is on day 6). The council clock: each person sets out lead ticks before from (the sect is big, the way from the treasury takes a minute and a half), everybody sits down at from, the servant brings the tea at tea, they stand up and bow at leave, the meeting is over at to. An elder is invited at call. Invitations are optional: skipping costs nothing.",
+  "council": {
+    "days": [
+      0,
+      2,
+      4
+    ],
+    "call": 3300,
+    "from": 6000,
+    "tea": 6250,
+    "leave": 8000,
+    "to": 8200,
+    "lead": {
+      "default": 1600,
+      "tae_hwi": 800,
+      "tae_gyun": 2300,
+      "tae_rok": 1500,
+      "tae_seong": 1700,
+      "gyeong_cho": 1500,
+      "gyeong_tak": 1800,
+      "sweeper_ma": 1700,
+      "council_door": 1000
+    },
+    "members": [
+      "tae_hwi",
+      "tae_gyun",
+      "tae_rok",
+      "tae_seong",
+      "gyeong_cho",
+      "gyeong_tak"
+    ],
+    "servant": "sweeper_ma",
+    "hold": 200,
+    "contribution": 3
+  },
+  "invitations": [
+    {
+      "id": "audit",
+      "office": "elder",
+      "days": [
+        1,
+        5
+      ],
+      "call": 2100,
+      "from": 2400,
+      "to": 4300,
+      "host": "tae_gyun",
+      "attend": "near_host",
+      "hold": 120,
+      "contribution": 2
+    },
+    {
+      "id": "dispute",
+      "office": "elder",
+      "days": [
+        3
+      ],
+      "call": 2300,
+      "from": 2700,
+      "to": 4300,
+      "host": "",
+      "attend": "near_pair",
+      "hold": 120,
+      "contribution": 2
+    },
+    {
+      "id": "lead_formation",
+      "office": "first",
+      "days": [
+        1,
+        3,
+        5
+      ],
+      "call": 23000,
+      "from": 23000,
+      "to": 700,
+      "host": "gyeong_pil",
+      "attend": "formation",
+      "hold": 0,
+      "contribution": 3
+    },
+    {
+      "id": "drill",
+      "office": "first",
+      "days": [
+        0,
+        2,
+        4
+      ],
+      "call": 3000,
+      "from": 3300,
+      "to": 5200,
+      "host": "gyeong_pil",
+      "attend": "near_drill",
+      "hold": 160,
+      "contribution": 2
+    }
+  ],
+  "lessons": {
+    "errors": 2,
+    "errorWindow": 200,
+    "correctionRange": 6,
+    "holdMin": 40,
+    "holdMax": 60,
+    "correctionCooldown": 240,
+    "lateCheck": 200,
+    "commandBeats": 5,
+    "visualOffset": 3,
+    "wobbleEvery": 15,
+    "maxWobbles": 2,
+    "inspectionRange": 4,
+    "lectureFrom": 2000,
+    "lectureTo": 5200,
+    "lectureAudience": 4,
+    "secondaryAudience": 1,
+    "cadenceMin": 360,
+    "cadenceMax": 480,
+    "lectureRange": 7,
+    "inviteRange": 4,
+    "primaryTeacher": "tae_rok",
+    "mentor": "gyeong_pil",
+    "progressTeachers": "gyeong_pil,tae_rok,tae_seong",
+    "progressEvents": "realm_up,star_up,bout_won",
+    "progressRange": 25,
+    "approachRange": 3,
+    "approachTimeout": 600,
+    "route": "mentor_post,pole_stand,spar_ring,mentor_post",
+    "dwellMin": 100,
+    "dwellMax": 160,
+    "roundMin": 1600,
+    "roundMax": 2400,
+    "stationTimeout": 600,
+    "afterWitnesses": 2,
+    "afterRange": 8,
+    "afterSeniorRange": 24,
+    "afterDuration": 400,
+    "afterReply": 80,
+    "rowRange": 3,
+    "rowReactors": 3,
+    "rowHoldMin": 12,
+    "rowHoldMax": 20,
+    "rowCooldown": 200,
+    "ringPause": 20,
+    "ringMaxPause": 60,
+    "blockedTimeout": 200,
+    "ringRadius": 3,
+    "conductRange": 12,
+    "daisDwell": 40,
+    "conductCooldown": 160,
+    "daisZone": "mentor_dais",
+    "correctionPool": "lesson_correction",
+    "invitePool": "lesson_invite",
+    "ackPool": "lesson_ack",
+    "topicPool": "lesson_topic",
+    "conductPool": "conduct_gentle"
+  }
+}

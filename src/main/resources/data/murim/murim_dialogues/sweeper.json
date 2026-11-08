@@ -5,6 +5,14 @@
     {
       "when": [
         {
+          "min_standing": "first"
+        }
+      ],
+      "node": "office"
+    },
+    {
+      "when": [
+        {
           "period": "night"
         }
       ],
@@ -26,10 +34,27 @@
     "greet": {
       "random": [
         "dialogue.murim.sweeper.greet1",
-        "dialogue.murim.sweeper.greet2"
+        "dialogue.murim.sweeper.greet2",
+        "dialogue.murim.sweeper.greet3",
+        "dialogue.murim.sweeper.greet4",
+        "dialogue.murim.sweeper.greet5",
+        "dialogue.murim.sweeper.greet6"
       ],
       "gesture": "nod",
       "options": [
+        {
+          "text": "dialogue.murim.approach.opt.not_now",
+          "when": [
+            {
+              "social": "approaching"
+            }
+          ],
+          "actions": [
+            {
+              "type": "approach_decline"
+            }
+          ]
+        },
         {
           "text": "dialogue.murim.sweeper.opt.ask",
           "next": "answer"
@@ -60,10 +85,50 @@
     "sweeping": {
       "random": [
         "dialogue.murim.sweeper.sweeping1",
-        "dialogue.murim.sweeper.sweeping2"
+        "dialogue.murim.sweeper.sweeping2",
+        "dialogue.murim.sweeper.sweeping3",
+        "dialogue.murim.sweeper.sweeping4",
+        "dialogue.murim.sweeper.sweeping5",
+        "dialogue.murim.sweeper.sweeping6"
       ],
       "gesture": "nod",
       "options": [
+        {
+          "text": "dialogue.murim.sweeper.opt.ask",
+          "next": "answer"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "office": {
+      "random": [
+        "dialogue.murim.sweeper.office.1",
+        "dialogue.murim.sweeper.office.2",
+        "dialogue.murim.sweeper.office.3",
+        "dialogue.murim.sweeper.office.4",
+        "dialogue.murim.sweeper.office.5",
+        "dialogue.murim.sweeper.office.7"
+      ],
+      "args": [
+        "position"
+      ],
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.approach.opt.not_now",
+          "when": [
+            {
+              "social": "approaching"
+            }
+          ],
+          "actions": [
+            {
+              "type": "approach_decline"
+            }
+          ]
+        },
         {
           "text": "dialogue.murim.sweeper.opt.ask",
           "next": "answer"

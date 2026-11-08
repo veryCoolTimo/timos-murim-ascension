@@ -92,6 +92,9 @@ public final class LibraryTests {
         int tallBookcaseParts = 0;
         int rackManuals = 0;
         boolean clue = false;
+        int topTier = LibraryPlan.TIERS.length - 1;
+        int[] keeperCell = LibraryPlan.wallCell(LibraryPlan.BARRELS[topTier][0], LibraryPlan.BARRELS[topTier][1]);
+        BlockPos keeperBarrel = piece.archive(keeperCell[0], LibraryPlan.TIERS[topTier] + 1, keeperCell[1]);
         BoundingBox b = piece.getBoundingBox();
         for (BlockPos p : BlockPos.betweenClosed(b.minX(), b.minY(), b.minZ(), b.maxX(), b.maxY(), b.maxZ())) {
             BlockState s = level.getBlockState(p);
@@ -145,8 +148,11 @@ public final class LibraryTests {
             if (be instanceof BarrelBlockEntity barrel) {
                 barrels++;
                 helper.assertTrue(barrel.getLootTable() != null, "record barrel without loot table at " + p);
-                ItemStack note = barrel.getItem(13);
-                if (note.has(ModLibrary.JUNK.get()) && note.get(ModLibrary.JUNK.get()).kind() == JunkKind.CLUE) {
+                // Other barrels can roll a generic CLUE (hint=-1) in this slot when loot is unpacked.
+                if (p.equals(keeperBarrel)) {
+                    ItemStack note = barrel.getItem(13);
+                    helper.assertTrue(note.has(ModLibrary.JUNK.get())
+                            && note.get(ModLibrary.JUNK.get()).kind() == JunkKind.CLUE, "keeper's note missing from entrance barrel");
                     clue = true;
                     helper.assertTrue(note.get(ModLibrary.JUNK.get()).hint() == plan.proppedNumber(), "the note names another shelf");
                     helper.assertTrue(note.get(ModLibrary.JUNK.get()).manualTiers() == plan.deskClue().manualTiers(),

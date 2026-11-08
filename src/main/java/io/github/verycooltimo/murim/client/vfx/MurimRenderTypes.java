@@ -4,6 +4,7 @@ import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import io.github.verycooltimo.murim.MurimMod;
 import net.minecraft.client.renderer.RenderStateShard;
+import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
 
@@ -100,6 +101,8 @@ public final class MurimRenderTypes {
 
     /** Широкая мягкая лента: мягкая поперёк, ровная вдоль — без «бусин» на стыках отрезков. */
     private static final RenderType RIBBON = additive("ribbon", RIBBON_TEXTURE);
+    /** Широкая светящаяся полоса с чёткими краями (air_band.png: сплошная, края сглажены на один пиксель). */
+    private static final RenderType BAND = additive("band", AIR_BAND_TEXTURE);
 
     /**
      * Ленты воздуха с альфа-смешением: полупрозрачная поверхность и светлая кромка остаются
@@ -117,9 +120,9 @@ public final class MurimRenderTypes {
      * (кадры Mac 01.10: на настоящем GPU капель не было).
      */
     private static final RenderType IMPURITY_SKIN = RenderType.create(MurimMod.MODID + ":impurity_skin",
-            DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.QUADS, 4096,
+            DefaultVertexFormat.POSITION_TEX_COLOR, VertexFormat.Mode.QUADS, 4096,
             RenderType.CompositeState.builder()
-                    .setShaderState(RenderStateShard.RENDERTYPE_EYES_SHADER)
+                    .setShaderState(new RenderStateShard.ShaderStateShard(GameRenderer::getPositionTexColorShader))
                     .setTextureState(new RenderStateShard.TextureStateShard(MOTE_TEXTURE, true, false))
                     .setTransparencyState(RenderStateShard.TRANSLUCENT_TRANSPARENCY)
                     .setCullState(RenderStateShard.NO_CULL)
@@ -196,7 +199,17 @@ public final class MurimRenderTypes {
     private static final RenderType MOTE = additive("mote", MOTE_TEXTURE);
 
     /** Жилы по телу: рисуются поверх модели, см. {@link #overlayGlow}. */
+    private static final RenderType BT_BODY_GLOW = overlayGlow("bt_body_glow", MOTE_TEXTURE);
+    public static RenderType btBodyGlow() { return BT_BODY_GLOW; }
+
     private static final RenderType BODY_GLOW = overlayGlow("body_glow", STRAND_TEXTURE);
+
+    // Filming feedback 25.10: continuous white textures preserve pill colours and line width.
+    private static final RenderType FLOW_LINE = additive("flow_line", AIR_BAND_TEXTURE);
+    private static final RenderType FLOW_MOTE = additive("flow_mote", MOTE_TEXTURE);
+
+    public static RenderType flowLine() { return FLOW_LINE; }
+    public static RenderType flowMote() { return FLOW_MOTE; }
 
     /** Стекающая субстанция с каплей. */
     private static final RenderType DRIP = additive("drip", DRIP_TEXTURE);
@@ -254,9 +267,8 @@ public final class MurimRenderTypes {
      * Слои флипбука всплеска ({@link FlipbookSplash}): кадры уже окрашены, цвет вершины белый.
      *
      * <p>Светлый слой — аддитивный: он светится. Тёмный и чёрный — обычная полупрозрачность
-     * через шейдер «глаз»: он не читает ни лайтмап, ни нормали, и цвет выходит ровно тем,
-     * что нарисован. С шейдером полупрозрачных сущностей тёмная жидкость проходила через
-     * освещение и ночью становилась мутной дымкой.
+     * через position_tex_color: без лайтмапа, нормалей и затухания alpha от fog в eyes.
+     * Формат соответствует шейдеру (как GuiShapes); вершинный цвет и маска текстуры сохраняются.
      */
     private static final RenderType SPLASH_LIGHT = additive("splash_light", SPLASH_LIGHT_TEXTURE);
     private static final RenderType SPLASH_DARK = flatTranslucent("splash_dark", SPLASH_DARK_TEXTURE);
@@ -265,11 +277,11 @@ public final class MurimRenderTypes {
     private static RenderType flatTranslucent(String name, ResourceLocation texture) {
         return RenderType.create(
                 MurimMod.MODID + ":" + name,
-                DefaultVertexFormat.NEW_ENTITY,
+                DefaultVertexFormat.POSITION_TEX_COLOR,
                 VertexFormat.Mode.QUADS,
                 4096,
                 RenderType.CompositeState.builder()
-                        .setShaderState(RenderStateShard.RENDERTYPE_EYES_SHADER)
+                        .setShaderState(new RenderStateShard.ShaderStateShard(GameRenderer::getPositionTexColorShader))
                         .setTextureState(new RenderStateShard.TextureStateShard(texture, true, false))
                         .setTransparencyState(RenderStateShard.TRANSLUCENT_TRANSPARENCY)
                         .setCullState(RenderStateShard.NO_CULL)
@@ -372,12 +384,38 @@ public final class MurimRenderTypes {
                         .createCompositeState(false));
     }
 
-    /** Simulated demonic ink uses the proven aura entity shader without writing depth. */
-    private static final RenderType DEMONIC_INK = auraLayer("demonic_ink", "textures/vfx/air_band.png");
+    // Self-lit on purpose: the lit translucent aura layer drew these cel flames BLACK at night (filmed 31.10); the emissive entity type keeps
+    // the blue and violet of the atlas.
+    private static final RenderType BT_FLAME = RenderType.entityTranslucentEmissive(ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/vfx/bt_flame.png"));
+    public static RenderType btFlame() { return BT_FLAME; }
 
-    public static RenderType demonicInk() { return DEMONIC_INK; }
+    // Procedural white-centre material: position_color preserves low vertex alpha without eyes fog fade.
+    // Source: vanilla 1.21.1 assets/minecraft/shaders/core/{position_color,rendertype_eyes}.fsh.
+    private static final RenderType BT_ESSENCE_BODY = RenderType.create(
+            MurimMod.MODID + ":bt_essence_body", DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.QUADS, 4096,
+            RenderType.CompositeState.builder()
+                    .setShaderState(new RenderStateShard.ShaderStateShard(GameRenderer::getPositionColorShader))
+                    .setTextureState(new RenderStateShard.TextureStateShard(AIR_BAND_TEXTURE, false, false))
+                    .setTransparencyState(RenderStateShard.TRANSLUCENT_TRANSPARENCY)
+                    .setCullState(RenderStateShard.NO_CULL)
+                    .setLightmapState(RenderStateShard.NO_LIGHTMAP)
+                    .setOverlayState(RenderStateShard.NO_OVERLAY)
+                    .setWriteMaskState(RenderStateShard.COLOR_WRITE)
+                    .createCompositeState(false));
+    public static RenderType btEssenceBody() { return BT_ESSENCE_BODY; }
+
 
     private static final RenderType AURA_STROKES = auraLayer("aura_strokes", "textures/vfx/aura_strokes.png");
+
+    // Rainfall pilot: self-lit alpha-over, no depth writes; preserve painted wine shadows at night.
+    // API: read-only minecraft-src/net/minecraft/client/renderer/{RenderType,RenderStateShard}.java;
+    // same flatTranslucent material used by the existing splash layers.
+    private static final RenderType RAIN_PETALS = flatTranslucent("rain_petals",
+            ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/vfx/hua/petals_p24.png"));
+    private static final RenderType RAIN_AIR = flatTranslucent("rain_air",
+            ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/vfx/hua/air_p24.png"));
+    public static RenderType rainPetals() { return RAIN_PETALS; }
+    public static RenderType rainAir() { return RAIN_AIR; }
 
     /** Лепестки сливы, атлас 2×2. */
     public static RenderType plumPetals() {
@@ -406,9 +444,9 @@ public final class MurimRenderTypes {
 
     /** Crisp fullbright pale blade path/edge, normal alpha blending and normal depth test. */
     private static final RenderType SWORD_FINISHER = RenderType.create(
-            MurimMod.MODID + ":sword_finisher", DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.QUADS, 4096,
+            MurimMod.MODID + ":sword_finisher", DefaultVertexFormat.POSITION_TEX_COLOR, VertexFormat.Mode.QUADS, 4096,
             RenderType.CompositeState.builder()
-                    .setShaderState(RenderStateShard.RENDERTYPE_EYES_SHADER)
+                    .setShaderState(new RenderStateShard.ShaderStateShard(GameRenderer::getPositionTexColorShader))
                     .setTextureState(new RenderStateShard.TextureStateShard(
                             ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/vfx/sword_finisher.png"), false, false))
                     .setTransparencyState(RenderStateShard.TRANSLUCENT_TRANSPARENCY)
@@ -424,13 +462,61 @@ public final class MurimRenderTypes {
         return AIR_BAND;
     }
 
+    /** The ribbon texture, for the glow twin of {@link #ribbon()} (bt/BtGlow). */
+    public static ResourceLocation ribbonTexture() {
+        return RIBBON_TEXTURE;
+    }
+
     public static RenderType ribbon() {
         return RIBBON;
+    }
+
+    /** Аддитивная широкая лента с чёткими краями: полосы подлёта и толстые потоки пилюль. */
+    public static RenderType band() {
+        return BAND;
     }
 
     public static RenderType impactCore() {
         return IMPACT_CORE;
     }
+
+    /** Procedural vertex colours need neither a texture nor the eyes shader's alpha fog fade.
+     * API: SpeedLines uses GameRenderer#getPositionColorShader; vanilla 1.21.1
+     * assets/minecraft/shaders/core/{position_color,rendertype_eyes}.fsh.
+     * NEW_ENTITY is accepted too: the shader consumes Position/Color and ignores extra attributes.
+     */
+    private static RenderType procedural(String name, boolean additive, boolean plain) {
+        return procedural(name, additive, plain, false);
+    }
+    private static RenderType procedural(String name, boolean additive, boolean plain, boolean through) {
+        return RenderType.create(MurimMod.MODID + ":" + name,
+                plain ? DefaultVertexFormat.POSITION_COLOR : DefaultVertexFormat.NEW_ENTITY,
+                VertexFormat.Mode.QUADS, 4096, RenderType.CompositeState.builder()
+                        .setShaderState(new RenderStateShard.ShaderStateShard(GameRenderer::getPositionColorShader))
+                        .setDepthTestState(through ? RenderStateShard.NO_DEPTH_TEST : RenderStateShard.LEQUAL_DEPTH_TEST)
+                        .setTransparencyState(additive ? RenderStateShard.LIGHTNING_TRANSPARENCY : RenderStateShard.TRANSLUCENT_TRANSPARENCY)
+                        .setCullState(RenderStateShard.NO_CULL)
+                        .setWriteMaskState(RenderStateShard.COLOR_WRITE)
+                        .createCompositeState(false));
+    }
+    private static final RenderType BAMBOO_LEAVES = procedural("bamboo_leaves", false, false);
+    private static final RenderType BAMBOO_DEBRIS = auraLayer("bamboo_debris", "textures/vfx/air_band.png");
+    public static RenderType bambooDebris() { return BAMBOO_DEBRIS; }
+    public static RenderType bambooLeaves() { return BAMBOO_LEAVES; }
+    private static final RenderType PRESET_BODY = procedural("preset_body", false, false);
+    private static final RenderType PRESET_LIGHT = procedural("preset_light", true, false);
+    private static final RenderType ALPHA_CONTROL = procedural("alpha_control", false, true);
+    private static final RenderType DANTIAN_INNER = procedural("dantian_inner", false, false, true);
+    // API: /tmp/mr-ref-1121/minecraft-src/net/minecraft/client/renderer/RenderStateShard.java
+    // LIGHTNING_TRANSPARENCY = SRC_ALPHA/ONE; NO_DEPTH_TEST; COLOR_WRITE = (true, false).
+    // API: same directory RenderType.java#CompositeState.CompositeStateBuilder;
+    // GameRenderer.java#getPositionColorShader. The existing procedural helper sets NO_CULL.
+    private static final RenderType DANTIAN_GLOW = procedural("dantian_glow", true, false, true);
+    public static RenderType dantianCore() { return DANTIAN_GLOW; }
+    public static RenderType dantianInner() { return DANTIAN_INNER; }
+    public static RenderType presetBody() { return PRESET_BODY; }
+    public static RenderType presetLight() { return PRESET_LIGHT; }
+    public static RenderType alphaControl() { return ALPHA_CONTROL; }
 
     private MurimRenderTypes() {
     }

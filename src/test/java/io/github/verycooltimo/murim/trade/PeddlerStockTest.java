@@ -13,6 +13,24 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class PeddlerStockTest {
 
     @Test
+    void rareRootsAndIceHaveVisitLimits() {
+        var root = PeddlerStock.SELLS.stream().filter(l -> l.item().equals("murim:thousand_ginseng")).findFirst().orElseThrow();
+        assertEquals(0.35D, root.chance());
+        assertEquals(1, root.count() * root.uses());
+        var ice = PeddlerStock.SELLS.stream().filter(l -> l.item().equals("murim:ice_crystal")).findFirst().orElseThrow();
+        assertTrue(ice.count() * ice.uses() >= 1 && ice.count() * ice.uses() <= 2);
+        assertEquals(Coins.silver(35), ice.wen());
+    }
+
+    @Test
+    void huaMapIsGuaranteedForMembersAndOutsidersAtSamePrice() {
+        assertTrue(PeddlerStock.offersHuaMap(false));
+        assertTrue(PeddlerStock.offersHuaMap(true));
+        assertEquals(1.0D, PeddlerStock.HUA_MAP.chance());
+        assertEquals(Coins.silver(2), PeddlerStock.sellPrice("minecraft:filled_map"));
+    }
+
+    @Test
     @DisplayName("поход в лагерь окупает две-три пилюли, но не две страницы")
     void campRunBuysPillsNotPages() {
         int run = Coins.silver(PeddlerStock.CAMP_RUN_SILVER);
@@ -20,7 +38,9 @@ class PeddlerStockTest {
         int page = PeddlerStock.sellPrice("murim:manual_page");
         assertTrue(run / pill >= 2 && run / pill <= 3, "пилюль за поход: " + run / pill);
         assertTrue(run / page == 1, "страниц за поход: " + run / page);
-        assertTrue(PeddlerStock.sellPrice("murim:pill_origin_energy") > run, "редкая пилюля дешевле похода");
+        assertTrue(PeddlerStock.sellPrice("murim:pill_small_restoration") > run, "редкая пилюля дешевле похода");
+        // Origin Energy is a finite treasure, removed from renewable stock on 31.10.
+        assertEquals(-1, PeddlerStock.sellPrice("murim:pill_origin_energy"));
     }
 
     @Test
@@ -72,7 +92,7 @@ class PeddlerStockTest {
             n.merge(PeddlerStock.pageBook((i + 0.5D) / runs), 1, Integer::sum);
         }
         assertEquals(PeddlerStock.PAGE_BOOKS.size(), n.size());
-        assertEquals(5000, n.get("murim:six_harmonies"), 2);
-        assertEquals(1000, n.get("murim:wind_god_steps"), 2);
+        assertEquals(runs * 5.0D / 23, n.get("murim:six_harmonies"), 2);
+        assertEquals(runs / 23.0D, n.get("murim:wind_god_steps"), 2);
     }
 }

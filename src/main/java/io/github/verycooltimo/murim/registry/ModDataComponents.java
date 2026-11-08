@@ -58,6 +58,13 @@ public final class ModDataComponents {
                     .persistent(com.mojang.serialization.Codec.INT)
                     .networkSynchronized(net.minecraft.network.codec.ByteBufCodecs.VAR_INT));
 
+    /** Vault originals: persisted and synchronized with the stack, absent means ordinary. */
+    // API: /tmp/mr-ref-1121/minecraft-src/net/minecraft/core/component/DataComponentType.java#Builder
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Boolean>> ORIGINAL =
+            COMPONENTS.registerComponentType("original", builder -> builder
+                    .persistent(com.mojang.serialization.Codec.BOOL)
+                    .networkSynchronized(net.minecraft.network.codec.ByteBufCodecs.BOOL));
+
     public static void register(IEventBus modBus) {
         COMPONENTS.register(modBus);
     }

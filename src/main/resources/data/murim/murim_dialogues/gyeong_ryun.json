@@ -9,6 +9,19 @@
       "gesture": "fist",
       "options": [
         {
+          "text": "dialogue.murim.approach.opt.not_now",
+          "when": [
+            {
+              "social": "approaching"
+            }
+          ],
+          "actions": [
+            {
+              "type": "approach_decline"
+            }
+          ]
+        },
+        {
           "text": "dialogue.murim.first.opt.bow",
           "actions": [
             {
@@ -56,6 +69,92 @@
       ],
       "gesture": "explain",
       "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "office_elder": {
+      "random": [
+        "dialogue.murim.gyeong_ryun.office_elder.1",
+        "dialogue.murim.gyeong_ryun.office_elder.2"
+      ],
+      "gesture": "fist",
+      "options": [
+        {
+          "text": "dialogue.murim.approach.opt.not_now",
+          "when": [
+            {
+              "social": "approaching"
+            }
+          ],
+          "actions": [
+            {
+              "type": "approach_decline"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.bout.opt.ring",
+          "when": [
+            {
+              "social": "progression:bout_menu"
+            }
+          ],
+          "actions": [
+            {
+              "type": "progression_menu",
+              "value": "bouts"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.social.opt.news",
+          "next": "sect_news"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "office_first": {
+      "random": [
+        "dialogue.murim.gyeong_ryun.office_first.1",
+        "dialogue.murim.gyeong_ryun.office_first.2"
+      ],
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.approach.opt.not_now",
+          "when": [
+            {
+              "social": "approaching"
+            }
+          ],
+          "actions": [
+            {
+              "type": "approach_decline"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.bout.opt.ring",
+          "when": [
+            {
+              "social": "progression:bout_menu"
+            }
+          ],
+          "actions": [
+            {
+              "type": "progression_menu",
+              "value": "bouts"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.social.opt.news",
+          "next": "sect_news"
+        },
         {
           "text": "dialogue.murim.opt.leave"
         }

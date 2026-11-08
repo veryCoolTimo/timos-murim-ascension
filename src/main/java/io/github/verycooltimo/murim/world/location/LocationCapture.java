@@ -276,7 +276,7 @@ public final class LocationCapture {
         for (int x = box.minX(); x <= box.maxX(); x += 2) {
             for (int z = box.minZ(); z <= box.maxZ(); z += 2) {
                 for (int y = box.maxY(); y >= box.minY(); y--) {
-                    if (terrain(level.getBlockState(m.set(x, y, z)))) {
+                    if (LocationPlacer.terrain(level.getBlockState(m.set(x, y, z)))) {
                         tops.add(y);
                         break;
                     }
@@ -289,11 +289,6 @@ public final class LocationCapture {
         int[] v = tops.stream().mapToInt(Integer::intValue).toArray();
         Arrays.sort(v);
         return v[v.length / 2];
-    }
-
-    static boolean terrain(BlockState s) {
-        return s.is(BlockTags.DIRT) || s.is(BlockTags.BASE_STONE_OVERWORLD) || s.is(BlockTags.SAND) || s.is(Blocks.GRAVEL)
-                || s.is(BlockTags.TERRACOTTA) || s.is(Blocks.SNOW_BLOCK) || s.is(Blocks.CALCITE) || s.is(Blocks.SMOOTH_BASALT);
     }
 
     // ------------------------------------------------------------------ NBT

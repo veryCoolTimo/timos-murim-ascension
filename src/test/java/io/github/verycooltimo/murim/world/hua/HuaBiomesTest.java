@@ -54,4 +54,35 @@ class HuaBiomesTest {
         assertTrue(massif > 300, "massif cells " + massif);
         assertTrue(foot > massif, "foothills " + foot + " vs massif " + massif);
     }
+
+    /** Every column the terrain pass reshapes (weight above 0) is a Hua biome, not only the inner belt (26.10: jungle on the outer slopes). */
+    @Test
+    void everyReshapedColumnIsHua() {
+        int checked = 0;
+        for (double u = -900; u <= 900; u += 9) {
+            for (double v = -1000; v <= 1080; v += 9) {
+                if (shape.blend(u, v) > 0) {
+                    checked++;
+                    assertTrue(HuaBiomes.classify(shape, u, v) != HuaBiomes.Zone.NONE, "weight " + shape.blend(u, v) + " at " + u + ", " + v);
+                }
+            }
+        }
+        assertTrue(checked > 3000, "columns with a weight: " + checked);
+    }
+
+    /** The margin: a column whose weight is 0 but that lies within 8 blocks of one with a weight is Hua too, and one 40 blocks out is not. */
+    @Test
+    void theMarginRoundTheReshapedColumnsIsHua() {
+        int inMargin = 0;
+        for (double u = -900; u <= 900; u += 9) {
+            for (double v = -1000; v <= 1080; v += 9) {
+                if (shape.blend(u, v) <= 0 && shape.blend(u + HuaBiomes.MARGIN, v) > 0) {
+                    inMargin++;
+                    assertTrue(HuaBiomes.classify(shape, u, v) != HuaBiomes.Zone.NONE, "margin at " + u + ", " + v);
+                }
+            }
+        }
+        assertTrue(inMargin > 20, "margin columns: " + inMargin);
+        assertEquals(HuaBiomes.Zone.NONE, HuaBiomes.classify(shape, 0, -1200));
+    }
 }

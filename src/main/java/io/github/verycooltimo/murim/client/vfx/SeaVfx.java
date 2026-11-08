@@ -5,7 +5,6 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import io.github.verycooltimo.murim.MurimMod;
 import io.github.verycooltimo.murim.client.CameraShakeHandler;
-import io.github.verycooltimo.murim.client.ClientAuraState;
 import io.github.verycooltimo.murim.network.SeaHoldPayload;
 import io.github.verycooltimo.murim.network.SeaPayload;
 import io.github.verycooltimo.murim.network.TechniqueEventPayload;
@@ -54,20 +53,28 @@ public final class SeaVfx {
 
     private static final ResourceLocation TECHNIQUE = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "twenty_four_plum_sea");
     private static final ResourceLocation END_ANIMATION = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "twenty_four_plum_sea_end");
-    /** Палитра (спец.): бутон #E63D70, цветы #F19BC5, белая кромка #FAFFFF, тень лепестка #AD305A. */
-    // Атлас лепестков уже розовый — тон задаётся множителем к нему, как в RainVfx (codex r1: иначе фуксия).
-    private static final float[] BUD = {1.0F, 0.42F, 0.58F};
-    private static final float[] FLOWER = {1.0F, 0.86F, 0.92F};
-    private static final float[] SHADE = {0.86F, 0.56F, 0.68F};
+    /** Crimson finish: wine #4A0D22, body #E3264E, painted light face #FFEFF3. */
+    // The Rain painted atlas supplies the face, core and wine rim; avoid a second pink tint.
+    private static final float[] BUD = {.89F, .15F, .31F};
+    private static final float[] FLOWER = {1F, 1F, 1F};
+    private static final float[] SHADE = {.29F, .05F, .13F};
     private static final float[] WHITE = {1.0F, 0.98F, 1.0F};
     /** Головной цветок обвивки — чуть глубже основного тона, не малиновый (codex r2 №6). */
-    private static final float[] HEAD = {1.0F, 0.74F, 0.84F};
+    private static final float[] HEAD = {.89F, .15F, .31F};
     private static final float[] BLOOD_TINT = {0.75F, 0.08F, 0.16F};
-    private static final VfxColour GLOW_PINK = new VfxColour(0xF1 / 255.0F, 0x9B / 255.0F, 0xC5 / 255.0F);
+    private static final VfxColour GLOW_PINK = new VfxColour(0xE3 / 255.0F, 0x26 / 255.0F, 0x4E / 255.0F);
     private static final VfxColour GLOW_WHITE = new VfxColour(0xFA / 255.0F, 0xFF / 255.0F, 1.0F);
-    private static final VfxColour GLOW_BUD = new VfxColour(0xE6 / 255.0F, 0x3D / 255.0F, 0x70 / 255.0F);
+    private static final VfxColour GLOW_BUD = new VfxColour(0xE3 / 255.0F, 0x26 / 255.0F, 0x4E / 255.0F);
     private static final VfxColour STROKE = new VfxColour(0xE8 / 255.0F, 0xED / 255.0F, 0xF1 / 255.0F);
 
+    private static net.minecraft.client.multiplayer.ClientLevel presentationLevel;
+    private static void syncLevel() {
+        var current = Minecraft.getInstance().level;
+        if (presentationLevel != current) {
+            CASTS.clear();
+            presentationLevel = current;
+        }
+    }
     private static final List<Cast> CASTS = new ArrayList<>();
     private static int clientTicks;
     /** Последнее отправленное состояние R (своё Море). */
@@ -121,7 +128,8 @@ public final class SeaVfx {
         Vec3 prev;
         Vec3 vel;
         int age;
-        final int life;
+        int life;
+        int landed = -1;
         final int cell;
         final float spin;
         final double size;
@@ -213,6 +221,8 @@ public final class SeaVfx {
     private static final class Cast {
         final int entityId;
         final int executionTier;
+        int masteryStars = 1;
+        boolean has(PlumLayers.Kind kind) { return PlumLayers.has(PlumLayers.Form.SEA, masteryStars, kind); }
         int start;
         final Random random;
         final double density;
@@ -238,15 +248,16 @@ public final class SeaVfx {
             this.start = clientTicks;
             this.random = new Random(entityId * 31L + clientTicks);
             this.density = SeaRules.density(executionTier);
-            this.scale = SeaRules.scale(executionTier);
+            this.scale = SeaRules.scale(8); // Keep the existing apex geometry; stars gate individual layers.
         }
 
         int t() {
             return clientTicks - start;
         }
 
-        int n(double full) {
-            return (int) Math.ceil(full * density);
+        int n(double full) { return n(full, PlumLayers.Kind.DUST); }
+        int n(double full, PlumLayers.Kind kind) {
+            return (int) Math.ceil(full * SeaRules.density(8) * PlumLayers.density(masteryStars, kind));
         }
 
         boolean own() {
@@ -273,6 +284,9 @@ public final class SeaVfx {
     // ------------------------------------------------------------------ события
 
     public static void onTechniqueEvent(TechniqueEventPayload payload) {
+        syncLevel();
+        if (TECHNIQUE.equals(payload.techniqueId()) && (payload.event() == TechniqueEventPayload.Event.CANCELLED
+                || payload.event() == TechniqueEventPayload.Event.FINISHED)) PlumStormVfx.dissolve(payload.sourceId());
         if (!TECHNIQUE.equals(payload.techniqueId())) {
             return;
         }
@@ -287,28 +301,40 @@ public final class SeaVfx {
         if (payload.event() != TechniqueEventPayload.Event.STARTED || payload.executionTier() <= 0) {
             return;
         }
+        if (payload.masteryStars() >= 8) PlumStormVfx.prepare(payload.sourceId());
         CASTS.removeIf(c -> c.entityId == payload.sourceId());
         Cast c = new Cast(payload.sourceId(), payload.executionTier());
+        c.masteryStars = payload.masteryStars();
         CASTS.add(c);
         if (c.own()) {
             sentHeld = false;
         }
-        if (SeaRules.petals(c.executionTier)) {
+        if (c.has(PlumLayers.Kind.PETALS)) {
             // Стойка и бутон — холодная синяя аура; розовая — с раскрытия.
-            ClientAuraState.techniqueAura(c.entityId, 2, 0, SeaRules.RELEASE + 4);
         }
     }
 
     public static void onSea(SeaPayload p) {
+        if (p.executionTier() <= 0) return;
+        syncLevel();
+        if ((p.stage() == SeaPayload.CAPTURE || p.stage() == SeaPayload.SNUFF || p.stage() == SeaPayload.LAND) && p.a().lengthSqr() > 1E-6)
+            TechniqueLight.add(p.a(), 0xE3264E, 4, (.7F) * PlumLayers.light(p.stars()), 1, 1, 8);
+        if (p.stage() == SeaPayload.BEGIN)
+            PlumStormVfx.start(p.entityId(), p.executionTier(), p.stars(), PlumStormVfx.Flow.VORTEX, p.a(), p.b());
+        if ((p.stage() == SeaPayload.CAPTURE || p.stage() == SeaPayload.SNUFF || p.stage() == SeaPayload.LAND)
+                && p.a().lengthSqr() > 1E-6) PlumStormVfx.impact(p.entityId(), p.a());
+        if (p.stage() == SeaPayload.MELT || p.stage() == SeaPayload.LOST) PlumStormVfx.dissolve(p.entityId());
         Cast c = null;
         for (Cast x : CASTS) {
             if (x.entityId == p.entityId()) {
                 c = x;
             }
         }
+        if (c != null) c.masteryStars = p.stars();
         if (p.stage() == SeaPayload.BEGIN) {
             if (c == null) {
                 c = new Cast(p.entityId(), p.executionTier());
+                c.masteryStars = p.stars();
                 CASTS.add(c);
             }
             // Сверка шкалы: пакет раскрытия приходит на тике RELEASE.
@@ -338,8 +364,7 @@ public final class SeaVfx {
     /** Раскрытие: пыль кольцом, розовая аура, поле цветов (родятся по ходу клинка и кольцами от острия). */
     private static void begin(Cast c, Vec3 feet) {
         dust(c, feet, c.n(12) + 4, 0.16D);
-        if (SeaRules.petals(c.executionTier)) {
-            ClientAuraState.techniqueAura(c.entityId, 2, 1, SeaRules.END - SeaRules.RELEASE);
+        if (c.has(PlumLayers.Kind.PETALS)) {
             buildField(c);
         }
         Sfx(c, feet, io.github.verycooltimo.murim.registry.ModSounds.SWORD_SWING.get(), 0.6F, 0.8F);
@@ -347,7 +372,8 @@ public final class SeaVfx {
 
     /** Поле: до 240 цветов (7-й слой) в секторе, площадь равномерно, у краёв реже. */
     private static void buildField(Cast c) {
-        int n = Math.min(220, Math.max(20, c.n(170)));
+        if (!c.has(PlumLayers.Kind.FLOWER)) return;
+        int n = Math.min(24, Math.max(4, c.n(16, PlumLayers.Kind.FLOWER)));
         double radius = SeaRules.radius(c.executionTier);
         for (int i = 0; i < n; i++) {
             double r = 0.6D + (radius - 0.6D) * Math.sqrt(c.random.nextDouble());
@@ -389,7 +415,7 @@ public final class SeaVfx {
         }
         Wrap w = new Wrap(projectile, clientTicks, at, dir, length);
         c.wraps.add(w);
-        if (SeaRules.petals(c.executionTier)) {
+        if (c.has(PlumLayers.Kind.PETALS)) {
             // Сорванные цветы — ближайшие к пути снаряда; от них и летят лепестки обвивки.
             List<Flower> near = new ArrayList<>();
             Entity caster = mc.level == null ? null : mc.level.getEntity(c.entityId);
@@ -442,13 +468,13 @@ public final class SeaVfx {
                 }
             }
         }
-        if (c.executionTier >= 1 && !SeaRules.petals(c.executionTier)) {
+        if (c.executionTier >= 1 && !c.has(PlumLayers.Kind.PETALS)) {
             Vec3 up = dir.cross(new Vec3(0.0D, 1.0D, 0.0D));
             up = up.lengthSqr() < 1.0E-6D ? new Vec3(1.0D, 0.0D, 0.0D) : up.normalize();
             Vec3 v2 = up.cross(dir).normalize();
             c.strokes.add(new Stroke(at, up.scale(0.55D).add(v2.scale(0.25D)), v2.scale(0.45D).subtract(up.scale(0.2D)), clientTicks));
         }
-        if (SeaRules.afterimages(c.executionTier) && mc.level != null && mc.level.getEntity(c.entityId) instanceof AbstractClientPlayer player
+        if (c.has(PlumLayers.Kind.GHOST) && mc.level != null && mc.level.getEntity(c.entityId) instanceof AbstractClientPlayer player
                 && mc.getEntityRenderDispatcher().getRenderer(player) instanceof PlayerRenderer renderer) {
             if (c.skin == null) {
                 c.skin = player.getSkin().texture();
@@ -458,7 +484,7 @@ public final class SeaVfx {
         float vol = 0.75F / (1.0F + 0.6F * Math.max(0, c.activeWraps() - 1));
         Sfx(c, at, io.github.verycooltimo.murim.registry.ModSounds.BARRIER_HIT.get(), vol, 0.62F + 0.06F * c.random.nextFloat());
         if (c.own()) {
-            CameraShakeHandler.quake(0.12F, 4);
+            if (c.masteryStars >= 10) CameraShakeHandler.quake(0.12F, 4);
         }
     }
 
@@ -527,7 +553,7 @@ public final class SeaVfx {
         }
         Sfx(c, e.position(), io.github.verycooltimo.murim.registry.ModSounds.IMPACT_HEAVY.get(), 0.32F, 0.5F);
         if (c.own()) {
-            CameraShakeHandler.quake(0.18F, 5);
+            if (c.masteryStars >= 10) CameraShakeHandler.quake(0.18F, 5);
         }
     }
 
@@ -573,6 +599,7 @@ public final class SeaVfx {
     }
 
     private static void dust(Cast c, Vec3 feet, int n, double speed) {
+        if (!c.has(PlumLayers.Kind.DUST)) return;
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null || mc.level.getBlockState(BlockPos.containing(feet.add(0.0D, -0.2D, 0.0D))).isAir()) {
             return;
@@ -623,6 +650,7 @@ public final class SeaVfx {
 
     @SubscribeEvent
     static void onClientTick(ClientTickEvent.Post event) {
+        syncLevel();
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null) {
             CASTS.clear();
@@ -648,7 +676,7 @@ public final class SeaVfx {
             c.ghosts.removeIf(g -> clientTicks - g.born() > 8);
             c.puffs.removeIf(p -> clientTicks - p.born() > p.life());
             boolean done = c.meltTick >= 0 && clientTicks - c.meltTick > SeaRules.MELT + 10 && c.motes.isEmpty();
-            if (done || t > SeaRules.END + 80 || e == null && t > 40) {
+            if (done || (t > SeaRules.END + 240 || e == null && t > 40) && c.motes.isEmpty()) {
                 it.remove();
             }
         }
@@ -668,11 +696,13 @@ public final class SeaVfx {
 
     /** Стойка, бутон на острие, проход клинка: пыль, лепестки с острия. */
     private static void body(Cast c, Entity e, int t) {
+        if (c.masteryStars >= 8 && t % 6 == 0)
+            TechniqueLight.add(e.position().add(0, 1, 0), 0xE3264E, c.masteryStars < 10 ? 1.2F : 3, .18F * PlumLayers.light(c.masteryStars), 3, 3, 8);
         Vec3 feet = e.position();
         if (t == 1 || t == 6) {
             dust(c, feet, c.n(6) + 2, 0.09D);
         }
-        if (!SeaRules.petals(c.executionTier)) {
+        if (!c.has(PlumLayers.Kind.PETALS)) {
             return;
         }
         if (t == SeaRules.BUD) {
@@ -775,7 +805,7 @@ public final class SeaVfx {
                         w.dir = new Vec3(-w.dir.x, w.dir.y, -w.dir.z).normalize();
                     }
                 }
-                if (SeaRules.petals(c.executionTier) && clientTicks - w.born < 10) {
+                if (c.has(PlumLayers.Kind.PETALS) && clientTicks - w.born < 10) {
                     // След: сорванные цветы от точки входа к снаряду, оседают.
                     for (int i = 0; i < 2; i++) {
                         double u = c.random.nextDouble();
@@ -831,7 +861,11 @@ public final class SeaVfx {
             }
             Vec3 next = m.pos.add(v);
             if (!Double.isNaN(m.floor) && next.y < m.floor) {
-                // Лёг на траву: лежит, медленно гаснет.
+                // Each landing owns its 3–8 second hold, independent of the cast clock.
+                if (m.landed < 0) {
+                    m.landed = m.age;
+                    m.life = m.age + SeaScatterFinish.landedLife(m.cell + (int) (m.pos.x * 31));
+                }
                 next = new Vec3(next.x, m.floor, next.z);
                 v = Vec3.ZERO;
                 m.turbulence = 0.0D;
@@ -845,39 +879,36 @@ public final class SeaVfx {
 
     // ------------------------------------------------------------------ рендер
 
+    // rain-02/05, full-11/19: retain posed afterimages; all effect geometry lives in PlumStormVfx.
     @SubscribeEvent
     static void onRender(RenderLevelStageEvent event) {
-        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_PARTICLES || CASTS.isEmpty()) {
-            return;
-        }
+        syncLevel();
+        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_PARTICLES || CASTS.isEmpty()) return;
         Minecraft mc = Minecraft.getInstance();
-        if (mc.level == null) {
-            return;
-        }
+        if (mc.level == null) return;
         float partial = event.getPartialTick().getGameTimeDeltaPartialTick(false);
         Vec3 camera = event.getCamera().getPosition();
         PoseStack ps = event.getPoseStack();
-        MultiBufferSource.BufferSource buffers = mc.renderBuffers().bufferSource();
+        var buffers = mc.renderBuffers().bufferSource();
         ps.pushPose();
         try {
             ps.translate(-camera.x, -camera.y, -camera.z);
             for (Cast c : CASTS) {
-                float t = c.t() + partial;
                 ghosts(mc, c, ps, buffers, partial);
-                PoseStack.Pose pose = ps.last();
-                VertexConsumer air = buffers.getBuffer(MurimRenderTypes.airBand());
-                strokes(c, pose, camera, air, partial);
-                buffers.endBatch(MurimRenderTypes.airBand());
-                puffs(c, pose, camera, buffers, partial);
-                petals(c, mc, pose, camera, buffers, partial, t);
+                if (c.executionTier >= 1) {
+                    puffs(c, ps.last(), camera, buffers, partial);
+                    var strokes = buffers.getBuffer(MurimRenderTypes.airBand());
+                    strokes(c, ps.last(), camera, strokes, partial);
+                }
             }
-        } finally {
-            ps.popPose();
-        }
+            buffers.endBatch(MurimRenderTypes.airBand());
+        } finally { ps.popPose(); }
     }
+
 
     /** Белые штрихи клинка у пойманного снаряда: короткие, чёткие, 4 тика. */
     private static void strokes(Cast c, PoseStack.Pose pose, Vec3 camera, VertexConsumer v, float partial) {
+        if (!c.has(PlumLayers.Kind.BLADE_STROKE)) return;
         for (Stroke s : c.strokes) {
             float age = clientTicks - s.born() + partial;
             float a = (float) PlumVfx.curve(age, 0.0, 1.0, 1.5, 0.9, 4.5, 0.0);
@@ -895,6 +926,7 @@ public final class SeaVfx {
     }
 
     private static void puffs(Cast c, PoseStack.Pose pose, Vec3 camera, MultiBufferSource.BufferSource buffers, float partial) {
+        if (!c.has(PlumLayers.Kind.DUST)) return;
         if (c.puffs.isEmpty()) {
             return;
         }
@@ -913,11 +945,12 @@ public final class SeaVfx {
     /** Лепестки: цветы поля, обвивки, свободные; свечение — мелкое, без размытия. */
     private static void petals(Cast c, Minecraft mc, PoseStack.Pose pose, Vec3 camera, MultiBufferSource.BufferSource buffers,
                                float partial, float t) {
+        if (!c.has(PlumLayers.Kind.PETALS)) return;
         Entity e = mc.level.getEntity(c.entityId);
-        RenderType pt = MurimRenderTypes.plumPetals();
+        RenderType pt = MurimRenderTypes.rainPetals();
         VertexConsumer pc = buffers.getBuffer(pt);
         // Бутон на острие (8 → 12 раскрывается) и бутоны-слоты на клинке.
-        if (e != null && SeaRules.petals(c.executionTier) && t >= SeaRules.BUD && c.meltTick < 0 && c.lostTick < 0) {
+        if (e != null && c.has(PlumLayers.Kind.PETALS) && t >= SeaRules.BUD && c.meltTick < 0 && c.lostTick < 0) {
             Vec3 tp = tip(c, e, partial);
             float k = (float) Mth.clamp((t - SeaRules.BUD) / SeaRules.BUD_OPEN, 0.0D, 1.0D);
             float fade = (float) Mth.clamp(1.0D - (t - SeaRules.SWEEP_END) / 6.0D, 0.0D, 1.0D);
@@ -926,7 +959,7 @@ public final class SeaVfx {
                 for (int i = 0; i < 5; i++) {
                     double th = Math.PI * 2.0D * i / 5.0D;
                     Vec3 off = new Vec3(Math.cos(th), Math.sin(th) * 0.7D, Math.sin(th)).scale(diameter * 0.5D * k);
-                    PlumVfx.petal(pc, pose, camera, tp.add(off), diameter * 0.5D, i % 4, (float) (th + 0.4D * i), fade,
+                    SeaScatterPetals.draw(pc, pose, camera, tp.add(off), diameter * 0.5D, i % 4, (float) (th + 0.4D * i), fade,
                             BUD[0], BUD[1], BUD[2]);
                 }
             }
@@ -937,7 +970,7 @@ public final class SeaVfx {
                 for (int i = 0; i < slots; i++) {
                     Vec3 at = hand.lerp(tp, 0.35D + 0.6D * i / Math.max(1.0D, slots - 1.0D));
                     boolean free = i >= used;
-                    PlumVfx.petal(pc, pose, camera, at, free ? 0.045D : 0.03D, i % 4, i * 1.3F, (free ? 1.0F : 0.35F) * near(at, camera),
+                    SeaScatterPetals.draw(pc, pose, camera, at, free ? 0.045D : 0.03D, i % 4, i * 1.3F, (free ? 1.0F : 0.35F) * near(at, camera),
                             free ? BUD[0] : SHADE[0], free ? BUD[1] : SHADE[1], free ? BUD[2] : SHADE[2]);
                 }
             }
@@ -963,15 +996,20 @@ public final class SeaVfx {
             for (WrapPetal q : w.petals) {
                 Vec3 at = q.prev.lerp(q.pos, partial);
                 float[] col = q.head ? HEAD : FLOWER;
-                PlumVfx.petal(pc, pose, camera, at, q.size * 1.15D, q.cell, (t + q.cell * 5.0F) * q.spin, near(at, camera),
+                SeaScatterPetals.draw(pc, pose, camera, at, q.size * 1.15D, q.cell, (t + q.cell * 5.0F) * q.spin, near(at, camera),
                         col[0], col[1], col[2]);
             }
         }
         for (Mote m : c.motes) {
             Vec3 at = m.prev.lerp(m.pos, partial);
-            float a = Mth.clamp((m.life - m.age - partial) / 10.0F, 0.0F, 1.0F) * Mth.clamp((m.age + partial) / 2.0F, 0.0F, 1.0F)
+            float a = Mth.clamp((m.life - m.age - partial) / 10.0F, 0.0F, 1.0F) * Mth.clamp((m.age + partial) / 3.0F, 0.0F, 1.0F)
                     * (m.screen ? 1.0F : near(at, camera));
-            PlumVfx.petal(pc, pose, camera, at, m.size * 1.5D, m.cell, (m.age + partial) * m.spin, a, m.tint[0], m.tint[1], m.tint[2]);
+            if (m.landed >= 0) {
+                double spin = m.landed * m.spin;
+                SeaScatterPetals.drawPlane(pc, pose, at, new Vec3(Math.cos(spin), 0, Math.sin(spin)),
+                        new Vec3(-Math.sin(spin), 0, Math.cos(spin)), new Vec3(0, 1, 0),
+                        m.size * 1.5, m.cell, a, m.tint[0], m.tint[1], m.tint[2]);
+            } else SeaScatterPetals.draw(pc, pose, camera, at, m.size * 1.5D, m.cell, (m.age + partial) * m.spin, a, m.tint[0], m.tint[1], m.tint[2]);
         }
         buffers.endBatch(pt);
         RenderType gt = MurimRenderTypes.mote();
@@ -1004,7 +1042,7 @@ public final class SeaVfx {
             double th = rot + Math.PI * 2.0D * i / 5.0D;
             Vec3 off = new Vec3(Math.cos(th), 0.25D * Math.sin(th * 2.0D), Math.sin(th)).scale(size * 0.6D);
             float shade = i == 2 ? 0.9F : 1.0F;
-            PlumVfx.petal(pc, pose, camera, at.add(off), size * (0.55D + 0.05D * (i % 3)), (cell + i) % 4, (float) th, alpha,
+            SeaScatterPetals.draw(pc, pose, camera, at.add(off), size * (0.55D + 0.05D * (i % 3)), (cell + i) % 4, (float) th, alpha,
                     col[0] * shade, col[1] * shade, col[2] * shade);
         }
     }
@@ -1027,6 +1065,7 @@ public final class SeaVfx {
 
     /** Копия руки с мечом на захвате — тает за 8 тиков; от первого лица не рисуется. */
     private static void ghosts(Minecraft mc, Cast c, PoseStack ps, MultiBufferSource.BufferSource buffers, float partial) {
+        if (!c.has(PlumLayers.Kind.GHOST)) return;
         if (c.ghosts.isEmpty() || c.eyes() || !(mc.level.getEntity(c.entityId) instanceof AbstractClientPlayer player)) {
             return;
         }
@@ -1061,7 +1100,7 @@ public final class SeaVfx {
                     ps.scale(-1.0F, -1.0F, 1.0F);
                     ps.scale(0.9375F, 0.9375F, 0.9375F);
                     ps.translate(0.0F, -1.501F, 0.0F);
-                    int colour = ((int) (Mth.clamp(0.5F * (1.0F - k) * (1.0F - k), 0.0F, 1.0F) * 255.0F) << 24) | 0xFFD6E6;
+                    int colour = ((int) (Mth.clamp(0.5F * (1.0F - k) * (1.0F - k), 0.0F, 1.0F) * 255.0F) << 24) | 0xE3264E;
                     model.renderToBuffer(ps, buffers.getBuffer(type), 0x00F000F0, OverlayTexture.NO_OVERLAY, colour);
                 } finally {
                     ps.popPose();
@@ -1080,9 +1119,9 @@ public final class SeaVfx {
     @SubscribeEvent
     static void onCaptionTick(ClientTickEvent.Pre event) {
         for (Cast c : CASTS) {
-            if (!c.caption && c.began && c.t() >= SeaRules.CAPTION && c.own() && SeaRules.petals(c.executionTier) && c.meltTick < 0) {
+            if (!c.caption && c.began && c.t() >= SeaRules.CAPTION && c.own() && c.has(PlumLayers.Kind.PETALS) && c.meltTick < 0) {
                 c.caption = true;
-                TechniqueCaption.showSecret(Component.translatable("technique.murim.twenty_four_plum.school"),
+                if (c.masteryStars >= 10) TechniqueCaption.showSecret(Component.translatable("technique.murim.twenty_four_plum.school"),
                         Component.translatable("technique.murim.twenty_four_plum.sea"), 60);
             }
         }

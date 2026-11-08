@@ -39,11 +39,12 @@ final class NpcGestures {
         }
         String g = npc.gesture();
         float age = npc.gestureAge(partial);
-        if (g.isEmpty() || age < 0.0F || age > LENGTH) {
+        float length = "point_far".equals(g) ? SectDisciple.POINT_TICKS : "wave".equals(g) ? 56.0F : LENGTH;
+        if (g.isEmpty() || age < 0.0F || age > length) {
             return;
         }
         // Огибающая: быстрый вход (4 тика), удержание, мягкий выход.
-        float env = Mth.clamp(age / 4.0F, 0.0F, 1.0F) * Mth.clamp((LENGTH - age) / 8.0F, 0.0F, 1.0F);
+        float env = Mth.clamp(age / 4.0F, 0.0F, 1.0F) * Mth.clamp((length - age) / 8.0F, 0.0F, 1.0F);
         switch (g) {
             case "nod" -> {
                 if (head != null) {
@@ -76,6 +77,33 @@ final class NpcGestures {
                 if (armR != null) {
                     armR.xRot += env * -1.45F;
                     armR.zRot += env * 0.1F;
+                }
+            }
+            case "wave" -> {
+                // A greeting across a distance (docs/adr/0020): the right arm up beside the head, the hand swinging.
+                if (armR != null) {
+                    armR.xRot += env * -2.55F;
+                    armR.zRot += env * (0.35F + 0.3F * Mth.sin(age * 0.55F));
+                }
+                if (head != null) {
+                    head.xRot += env * -0.05F;
+                }
+            }
+            case "point_far" -> {
+                // Showing the way (docs/adr/0020): the right arm straight out at shoulder height and held, the other hand
+                // at the belt, the body leaning a little into the direction. The body itself is turned by the entity.
+                float stab = 1.0F + 0.07F * Mth.clamp(1.0F - Math.abs(age - 6.0F) / 5.0F, 0.0F, 1.0F);
+                if (armR != null) {
+                    armR.xRot += env * -1.3F * stab;
+                    armR.yRot += env * -0.04F;
+                    armR.zRot += env * 0.05F;
+                }
+                if (armL != null) {
+                    armL.xRot += env * -0.2F;
+                    armL.zRot += env * -0.25F;
+                }
+                if (waist != null) {
+                    waist.xRot += env * 0.08F;
                 }
             }
             case "explain" -> {

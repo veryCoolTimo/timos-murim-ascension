@@ -19,7 +19,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.Difficulty;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ChunkPos;
@@ -75,8 +74,11 @@ public final class Fortresses {
     static final String[] BOOKS = {"seven_plum_blossoms", "wind_god_steps", "tang_twelve_daggers", "tang_five_thunders"};
     static final int[] BOOK_WEIGHTS = {4, 3, 2, 1};
 
-    /** Страница сокровенной техники: 24 Движения Цветущей Сливы (стиль-книга). */
-    public static final ResourceLocation SECRET_BOOK = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "twenty_four_plum");
+    /**
+     * Что лежит в сундуке вместо страницы 24 Движений (автор 23.10: искусство утрачено, крепость его не отдаёт): страница из тетради
+     * торговца — улика ({@code murim_quests/vault.json}) о том, где куски искусства и как открыть хранилище главы.
+     */
+    public static final String SECRET_CLUE = "fortress_page";
 
     /** Имён хозяев — из канонического списка Зелёного Леса (вики Return of the Mount Hua Sect). */
     static final int NAMES = 6;
@@ -158,13 +160,33 @@ public final class Fortresses {
 
     /** Живой хозяин крепости или null (ищется по плацу и залу). */
     public static FortressMaster master(ServerLevel level, FortressData.Entry e) {
+        FortressMaster found = null;
+        if (e.master != null && level.getEntity(e.master) instanceof FortressMaster m && m.isAlive() && m.fortressKey() == e.key) {
+            found = m;
+        }
         AABB box = new AABB(e.yard).inflate(34.0D, 12.0D, 34.0D);
         for (FortressMaster m : level.getEntitiesOfClass(FortressMaster.class, box, FortressMaster::isAlive)) {
-            if (m.fortressKey() == e.key) {
-                return m;
+            if (m.fortressKey() != e.key || m == found) {
+                continue;
+            }
+            if (found == null) {
+                found = m;
+            } else {
+                // A duplicate (a reload race): one master per fortress. Keep the one in a fight.
+                FortressMaster drop = m;
+                if (m.arena() && !found.arena()) {
+                    drop = found;
+                    found = m;
+                }
+                drop.discard();
+                MurimMod.LOGGER.warn("Fortress {}: duplicate master removed", e.key);
             }
         }
-        return null;
+        if (found != null && !found.getUUID().equals(e.master)) {
+            e.master = found.getUUID();
+            data(level).changed();
+        }
+        return found;
     }
 
     /**
@@ -172,7 +194,10 @@ public final class Fortresses {
      * через три дня после победы, если рядом есть игрок без флага).
      */
     public static void tick(ServerLevel level, FortressData.Entry e) {
-        if (level.getDifficulty() == Difficulty.PEACEFUL || !level.isLoaded(e.throne())) {
+        placeHiddenTreasure(level, e, data(level.getServer().overworld()));
+        // The master also lives on Peaceful. Wait until the throne chunk ticks entities: a master saved there must
+        // be loaded before we decide that there is none (no duplicate after a reload).
+        if (!level.isLoaded(e.throne()) || !level.isPositionEntityTicking(e.throne())) {
             return;
         }
         boolean near = false;
@@ -231,12 +256,8 @@ public final class Fortresses {
         FortressData data = data(level);
         FortressData.Entry e = data.get(master.fortressKey());
         for (ServerPlayer p : winners) {
-            boolean first = !p.getData(BossRegistry.BOSS_DEFEATED);
-            p.setData(BossRegistry.BOSS_DEFEATED, true);
-            p.sendSystemMessage(Component.translatable("murim.fortress.defeated", master.getDisplayName()).withStyle(ChatFormatting.GOLD));
-            if (first) {
-                p.sendSystemMessage(Component.translatable("murim.fortress.wall_open").withStyle(ChatFormatting.YELLOW));
-            }
+            // The flag of the breakthrough to the second rank and, once, the qi still missing at its wall (D-2, D-3).
+            BossCredit.award(p, Component.translatable("murim.fortress.defeated", master.getDisplayName()));
         }
         if (e == null) {
             return;
@@ -247,10 +268,45 @@ public final class Fortresses {
         data.changed();
         BlockPos chest = e.vaultChest();
         fillVault(level, chest, facing(e), winners.isEmpty() ? null : winners.get(0), level.getRandom());
+        placeDragonTreasure(level, chest, data(level.getServer().overworld()));
         FortressBuilder.vaultDoor(liveSink(level), e.yard.getX(), e.yard.getY(), e.yard.getZ(), e.rotation, true);
         level.playSound(null, chest, SoundEvents.IRON_DOOR_OPEN, SoundSource.BLOCKS, 1.0F, 0.7F);
         MurimMod.LOGGER.info("Крепость {}: хозяин повержен ({} раз), победители {}", e.key, e.defeats,
                 winners.stream().map(p -> p.getName().getString()).toList());
+    }
+
+    /** Buried beneath the back corner of the vault; diggable from outside, independent of boss and locked door. */
+    static BlockPos hiddenTreasure(FortressData.Entry e) {
+        return FortressBuilder.world(e.yard.getX(), e.yard.getY() - 1, e.yard.getZ(), e.rotation, 3, 30);
+    }
+
+    /** First discovered fortress claims the world's single hidden pill; never refill even after the chest is broken. */
+    static void placeHiddenTreasure(ServerLevel level, FortressData.Entry e, FortressData world) {
+        BlockPos at = hiddenTreasure(e);
+        if (world.greatRestorationPlaced || !level.isLoaded(at)) {
+            return;
+        }
+        level.setBlock(at, Blocks.CHEST.defaultBlockState().setValue(ChestBlock.FACING, facing(e)), Block.UPDATE_ALL);
+        if (level.getBlockEntity(at) instanceof ChestBlockEntity chest) {
+            chest.setItem(0, new ItemStack(ModItems.PILL_GREAT_RESTORATION.get()));
+            world.greatRestorationPlaced = true;
+            world.changed();
+        }
+    }
+
+    /** Only the first boss treasure in the world contains an Ascending Dragon Pill. */
+    static void placeDragonTreasure(ServerLevel level, BlockPos at, FortressData world) {
+        if (world.ascendingDragonPlaced || !(level.getBlockEntity(at) instanceof ChestBlockEntity chest)) {
+            return;
+        }
+        for (int i = 0; i < chest.getContainerSize(); i++) {
+            if (chest.getItem(i).isEmpty()) {
+                chest.setItem(i, new ItemStack(ModItems.PILL_ASCENDING_DRAGON.get()));
+                world.ascendingDragonPlaced = true;
+                world.changed();
+                return;
+            }
+        }
     }
 
     private static Direction facing(FortressData.Entry e) {
@@ -260,7 +316,7 @@ public final class Fortresses {
 
     /**
      * Сундук сокровищницы с добычей: пилюли и серебро из таблицы {@link Fortress#LOOT_VAULT}, плюс
-     * продвинутая книга, которой победитель не знает, и страница сокровенной техники.
+     * продвинутая книга, которой победитель не знает, и страница-улика о 24 Движениях (самой техники в ней нет).
      *
      * @return что положено в сундук
      */
@@ -272,9 +328,7 @@ public final class Fortresses {
         ItemStack book = new ItemStack(ModItems.TECHNIQUE_MANUAL.get());
         book.set(ModDataComponents.TECHNIQUE.get(), pickBook(winner, random));
         items.add(0, book);
-        ItemStack page = new ItemStack(ModItems.MANUAL_PAGE.get());
-        page.set(ModDataComponents.TECHNIQUE.get(), SECRET_BOOK);
-        items.add(1, page);
+        items.add(1, io.github.verycooltimo.murim.quest.Clues.stack(SECRET_CLUE));
         if (level.getBlockEntity(at) instanceof ChestBlockEntity chest) {
             chest.clearContent();
             int slot = 0;

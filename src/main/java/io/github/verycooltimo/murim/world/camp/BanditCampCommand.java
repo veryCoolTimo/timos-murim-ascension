@@ -1,9 +1,9 @@
 package io.github.verycooltimo.murim.world.camp;
 
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.datafixers.util.Pair;
-import io.github.verycooltimo.murim.MurimMod;
 import io.github.verycooltimo.murim.entity.Bandit;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -21,12 +21,9 @@ import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.event.RegisterCommandsEvent;
 
 /**
- * Отладка лагерей бандитов (оператор): {@code /murim camp} — ближайший лагерь и его состояние,
+ * Отладка лагерей бандитов (оператор): {@code /murim dev camp} — ближайший лагерь и его состояние,
  * {@code tp} — к воротам снаружи, {@code reset} — убрать банду и забыть состояние (заселится
  * заново), {@code lootsim [N]} — добыча N походов на настоящих таблицах (docs/design/24 §4).
  * Обычный поиск — ванильный {@code /locate structure murim:bandit_camp}.
@@ -34,23 +31,16 @@ import net.neoforged.neoforge.event.RegisterCommandsEvent;
  * <p>API: reference/minecraft-src/net/minecraft/world/level/chunk/ChunkGenerator.java#findNearestMapStructure,
  * reference/neoforge-src/net/neoforged/neoforge/event/RegisterCommandsEvent.java.
  */
-@EventBusSubscriber(modid = MurimMod.MODID)
 public final class BanditCampCommand {
 
     private BanditCampCommand() {
     }
 
-    @SubscribeEvent
-    static void onRegisterCommands(RegisterCommandsEvent event) {
-        event.getDispatcher().register(Commands.literal("murim")
-                .requires(source -> source.hasPermission(2))
-                .then(Commands.literal("camp")
-                        .executes(BanditCampCommand::info)
-                        .then(Commands.literal("tp").executes(BanditCampCommand::teleport))
-                        .then(Commands.literal("reset").executes(BanditCampCommand::reset))
-                        .then(Commands.literal("lootsim").executes(c -> lootsim(c, 1000))
-                                .then(Commands.argument("runs", IntegerArgumentType.integer(1, 20000))
-                                        .executes(c -> lootsim(c, IntegerArgumentType.getInteger(c, "runs")))))));
+    public static LiteralArgumentBuilder<CommandSourceStack> node() {
+        return Commands.literal("camp")
+                .executes(BanditCampCommand::info)
+                .then(Commands.literal("tp").executes(BanditCampCommand::teleport))
+                .then(Commands.literal("reset").executes(BanditCampCommand::reset));
     }
 
     /** Ближайший лагерь: кусок структуры и ключ (чанк начала). */
@@ -90,8 +80,8 @@ public final class BanditCampCommand {
         String state = camp == null || !camp.populated ? "untouched" : camp.cleared ? "cleared" : "alive " + camp.alive.size();
         c.getSource().sendSuccess(() -> Component.translatable("command.murim.camp.info", p.centreX(), p.height(0), p.centreZ(), state)
                 .append(" ").append(Component.literal("[tp]").withStyle(Style.EMPTY.withColor(0x9FD8A0)
-                        .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/murim camp tp"))
-                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("/murim camp tp"))))), false);
+                        .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/murim dev camp tp"))
+                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("/murim dev camp tp"))))), false);
         return 1;
     }
 
@@ -129,6 +119,9 @@ public final class BanditCampCommand {
             camp.alive.clear();
             camp.populated = false;
             camp.cleared = false;
+            camp.travellers.clear(); camp.returning.clear(); camp.tripTarget = null;
+            camp.nextTrip = 0; camp.nextCamp = 0; camp.rebuildRetry = 0;
+            camp.successor = Long.MIN_VALUE; camp.refillDay = -1;
             BanditCamps.data(level).setDirty();
         }
         c.getSource().sendSuccess(() -> Component.translatable("command.murim.camp.reset"), true);

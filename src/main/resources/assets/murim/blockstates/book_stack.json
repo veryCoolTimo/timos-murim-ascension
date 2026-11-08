@@ -1,63 +1,543 @@
 {
   "variants": {
-    "facing=south,stacks=1": {
+    "facing=south,stacks=1,sink=0": {
       "model": "murim:block/book_stack_1"
     },
-    "facing=west,stacks=1": {
+    "facing=south,stacks=1,sink=1": {
+      "model": "murim:block/book_stack_1_sink_1"
+    },
+    "facing=south,stacks=1,sink=2": {
+      "model": "murim:block/book_stack_1_sink_2"
+    },
+    "facing=south,stacks=1,sink=3": {
+      "model": "murim:block/book_stack_1_sink_3"
+    },
+    "facing=south,stacks=1,sink=4": {
+      "model": "murim:block/book_stack_1_sink_4"
+    },
+    "facing=south,stacks=1,sink=5": {
+      "model": "murim:block/book_stack_1_sink_5"
+    },
+    "facing=south,stacks=1,sink=6": {
+      "model": "murim:block/book_stack_1_sink_6"
+    },
+    "facing=south,stacks=1,sink=7": {
+      "model": "murim:block/book_stack_1_sink_7"
+    },
+    "facing=south,stacks=1,sink=8": {
+      "model": "murim:block/book_stack_1_sink_8"
+    },
+    "facing=west,stacks=1,sink=0": {
       "model": "murim:block/book_stack_1",
       "y": 90
     },
-    "facing=north,stacks=1": {
+    "facing=west,stacks=1,sink=1": {
+      "model": "murim:block/book_stack_1_sink_1",
+      "y": 90
+    },
+    "facing=west,stacks=1,sink=2": {
+      "model": "murim:block/book_stack_1_sink_2",
+      "y": 90
+    },
+    "facing=west,stacks=1,sink=3": {
+      "model": "murim:block/book_stack_1_sink_3",
+      "y": 90
+    },
+    "facing=west,stacks=1,sink=4": {
+      "model": "murim:block/book_stack_1_sink_4",
+      "y": 90
+    },
+    "facing=west,stacks=1,sink=5": {
+      "model": "murim:block/book_stack_1_sink_5",
+      "y": 90
+    },
+    "facing=west,stacks=1,sink=6": {
+      "model": "murim:block/book_stack_1_sink_6",
+      "y": 90
+    },
+    "facing=west,stacks=1,sink=7": {
+      "model": "murim:block/book_stack_1_sink_7",
+      "y": 90
+    },
+    "facing=west,stacks=1,sink=8": {
+      "model": "murim:block/book_stack_1_sink_8",
+      "y": 90
+    },
+    "facing=north,stacks=1,sink=0": {
       "model": "murim:block/book_stack_1",
       "y": 180
     },
-    "facing=east,stacks=1": {
+    "facing=north,stacks=1,sink=1": {
+      "model": "murim:block/book_stack_1_sink_1",
+      "y": 180
+    },
+    "facing=north,stacks=1,sink=2": {
+      "model": "murim:block/book_stack_1_sink_2",
+      "y": 180
+    },
+    "facing=north,stacks=1,sink=3": {
+      "model": "murim:block/book_stack_1_sink_3",
+      "y": 180
+    },
+    "facing=north,stacks=1,sink=4": {
+      "model": "murim:block/book_stack_1_sink_4",
+      "y": 180
+    },
+    "facing=north,stacks=1,sink=5": {
+      "model": "murim:block/book_stack_1_sink_5",
+      "y": 180
+    },
+    "facing=north,stacks=1,sink=6": {
+      "model": "murim:block/book_stack_1_sink_6",
+      "y": 180
+    },
+    "facing=north,stacks=1,sink=7": {
+      "model": "murim:block/book_stack_1_sink_7",
+      "y": 180
+    },
+    "facing=north,stacks=1,sink=8": {
+      "model": "murim:block/book_stack_1_sink_8",
+      "y": 180
+    },
+    "facing=east,stacks=1,sink=0": {
       "model": "murim:block/book_stack_1",
       "y": 270
     },
-    "facing=south,stacks=2": {
+    "facing=east,stacks=1,sink=1": {
+      "model": "murim:block/book_stack_1_sink_1",
+      "y": 270
+    },
+    "facing=east,stacks=1,sink=2": {
+      "model": "murim:block/book_stack_1_sink_2",
+      "y": 270
+    },
+    "facing=east,stacks=1,sink=3": {
+      "model": "murim:block/book_stack_1_sink_3",
+      "y": 270
+    },
+    "facing=east,stacks=1,sink=4": {
+      "model": "murim:block/book_stack_1_sink_4",
+      "y": 270
+    },
+    "facing=east,stacks=1,sink=5": {
+      "model": "murim:block/book_stack_1_sink_5",
+      "y": 270
+    },
+    "facing=east,stacks=1,sink=6": {
+      "model": "murim:block/book_stack_1_sink_6",
+      "y": 270
+    },
+    "facing=east,stacks=1,sink=7": {
+      "model": "murim:block/book_stack_1_sink_7",
+      "y": 270
+    },
+    "facing=east,stacks=1,sink=8": {
+      "model": "murim:block/book_stack_1_sink_8",
+      "y": 270
+    },
+    "facing=south,stacks=2,sink=0": {
       "model": "murim:block/book_stack_2"
     },
-    "facing=west,stacks=2": {
+    "facing=south,stacks=2,sink=1": {
+      "model": "murim:block/book_stack_2_sink_1"
+    },
+    "facing=south,stacks=2,sink=2": {
+      "model": "murim:block/book_stack_2_sink_2"
+    },
+    "facing=south,stacks=2,sink=3": {
+      "model": "murim:block/book_stack_2_sink_3"
+    },
+    "facing=south,stacks=2,sink=4": {
+      "model": "murim:block/book_stack_2_sink_4"
+    },
+    "facing=south,stacks=2,sink=5": {
+      "model": "murim:block/book_stack_2_sink_5"
+    },
+    "facing=south,stacks=2,sink=6": {
+      "model": "murim:block/book_stack_2_sink_6"
+    },
+    "facing=south,stacks=2,sink=7": {
+      "model": "murim:block/book_stack_2_sink_7"
+    },
+    "facing=south,stacks=2,sink=8": {
+      "model": "murim:block/book_stack_2_sink_8"
+    },
+    "facing=west,stacks=2,sink=0": {
       "model": "murim:block/book_stack_2",
       "y": 90
     },
-    "facing=north,stacks=2": {
+    "facing=west,stacks=2,sink=1": {
+      "model": "murim:block/book_stack_2_sink_1",
+      "y": 90
+    },
+    "facing=west,stacks=2,sink=2": {
+      "model": "murim:block/book_stack_2_sink_2",
+      "y": 90
+    },
+    "facing=west,stacks=2,sink=3": {
+      "model": "murim:block/book_stack_2_sink_3",
+      "y": 90
+    },
+    "facing=west,stacks=2,sink=4": {
+      "model": "murim:block/book_stack_2_sink_4",
+      "y": 90
+    },
+    "facing=west,stacks=2,sink=5": {
+      "model": "murim:block/book_stack_2_sink_5",
+      "y": 90
+    },
+    "facing=west,stacks=2,sink=6": {
+      "model": "murim:block/book_stack_2_sink_6",
+      "y": 90
+    },
+    "facing=west,stacks=2,sink=7": {
+      "model": "murim:block/book_stack_2_sink_7",
+      "y": 90
+    },
+    "facing=west,stacks=2,sink=8": {
+      "model": "murim:block/book_stack_2_sink_8",
+      "y": 90
+    },
+    "facing=north,stacks=2,sink=0": {
       "model": "murim:block/book_stack_2",
       "y": 180
     },
-    "facing=east,stacks=2": {
+    "facing=north,stacks=2,sink=1": {
+      "model": "murim:block/book_stack_2_sink_1",
+      "y": 180
+    },
+    "facing=north,stacks=2,sink=2": {
+      "model": "murim:block/book_stack_2_sink_2",
+      "y": 180
+    },
+    "facing=north,stacks=2,sink=3": {
+      "model": "murim:block/book_stack_2_sink_3",
+      "y": 180
+    },
+    "facing=north,stacks=2,sink=4": {
+      "model": "murim:block/book_stack_2_sink_4",
+      "y": 180
+    },
+    "facing=north,stacks=2,sink=5": {
+      "model": "murim:block/book_stack_2_sink_5",
+      "y": 180
+    },
+    "facing=north,stacks=2,sink=6": {
+      "model": "murim:block/book_stack_2_sink_6",
+      "y": 180
+    },
+    "facing=north,stacks=2,sink=7": {
+      "model": "murim:block/book_stack_2_sink_7",
+      "y": 180
+    },
+    "facing=north,stacks=2,sink=8": {
+      "model": "murim:block/book_stack_2_sink_8",
+      "y": 180
+    },
+    "facing=east,stacks=2,sink=0": {
       "model": "murim:block/book_stack_2",
       "y": 270
     },
-    "facing=south,stacks=3": {
+    "facing=east,stacks=2,sink=1": {
+      "model": "murim:block/book_stack_2_sink_1",
+      "y": 270
+    },
+    "facing=east,stacks=2,sink=2": {
+      "model": "murim:block/book_stack_2_sink_2",
+      "y": 270
+    },
+    "facing=east,stacks=2,sink=3": {
+      "model": "murim:block/book_stack_2_sink_3",
+      "y": 270
+    },
+    "facing=east,stacks=2,sink=4": {
+      "model": "murim:block/book_stack_2_sink_4",
+      "y": 270
+    },
+    "facing=east,stacks=2,sink=5": {
+      "model": "murim:block/book_stack_2_sink_5",
+      "y": 270
+    },
+    "facing=east,stacks=2,sink=6": {
+      "model": "murim:block/book_stack_2_sink_6",
+      "y": 270
+    },
+    "facing=east,stacks=2,sink=7": {
+      "model": "murim:block/book_stack_2_sink_7",
+      "y": 270
+    },
+    "facing=east,stacks=2,sink=8": {
+      "model": "murim:block/book_stack_2_sink_8",
+      "y": 270
+    },
+    "facing=south,stacks=3,sink=0": {
       "model": "murim:block/book_stack_3"
     },
-    "facing=west,stacks=3": {
+    "facing=south,stacks=3,sink=1": {
+      "model": "murim:block/book_stack_3_sink_1"
+    },
+    "facing=south,stacks=3,sink=2": {
+      "model": "murim:block/book_stack_3_sink_2"
+    },
+    "facing=south,stacks=3,sink=3": {
+      "model": "murim:block/book_stack_3_sink_3"
+    },
+    "facing=south,stacks=3,sink=4": {
+      "model": "murim:block/book_stack_3_sink_4"
+    },
+    "facing=south,stacks=3,sink=5": {
+      "model": "murim:block/book_stack_3_sink_5"
+    },
+    "facing=south,stacks=3,sink=6": {
+      "model": "murim:block/book_stack_3_sink_6"
+    },
+    "facing=south,stacks=3,sink=7": {
+      "model": "murim:block/book_stack_3_sink_7"
+    },
+    "facing=south,stacks=3,sink=8": {
+      "model": "murim:block/book_stack_3_sink_8"
+    },
+    "facing=west,stacks=3,sink=0": {
       "model": "murim:block/book_stack_3",
       "y": 90
     },
-    "facing=north,stacks=3": {
+    "facing=west,stacks=3,sink=1": {
+      "model": "murim:block/book_stack_3_sink_1",
+      "y": 90
+    },
+    "facing=west,stacks=3,sink=2": {
+      "model": "murim:block/book_stack_3_sink_2",
+      "y": 90
+    },
+    "facing=west,stacks=3,sink=3": {
+      "model": "murim:block/book_stack_3_sink_3",
+      "y": 90
+    },
+    "facing=west,stacks=3,sink=4": {
+      "model": "murim:block/book_stack_3_sink_4",
+      "y": 90
+    },
+    "facing=west,stacks=3,sink=5": {
+      "model": "murim:block/book_stack_3_sink_5",
+      "y": 90
+    },
+    "facing=west,stacks=3,sink=6": {
+      "model": "murim:block/book_stack_3_sink_6",
+      "y": 90
+    },
+    "facing=west,stacks=3,sink=7": {
+      "model": "murim:block/book_stack_3_sink_7",
+      "y": 90
+    },
+    "facing=west,stacks=3,sink=8": {
+      "model": "murim:block/book_stack_3_sink_8",
+      "y": 90
+    },
+    "facing=north,stacks=3,sink=0": {
       "model": "murim:block/book_stack_3",
       "y": 180
     },
-    "facing=east,stacks=3": {
+    "facing=north,stacks=3,sink=1": {
+      "model": "murim:block/book_stack_3_sink_1",
+      "y": 180
+    },
+    "facing=north,stacks=3,sink=2": {
+      "model": "murim:block/book_stack_3_sink_2",
+      "y": 180
+    },
+    "facing=north,stacks=3,sink=3": {
+      "model": "murim:block/book_stack_3_sink_3",
+      "y": 180
+    },
+    "facing=north,stacks=3,sink=4": {
+      "model": "murim:block/book_stack_3_sink_4",
+      "y": 180
+    },
+    "facing=north,stacks=3,sink=5": {
+      "model": "murim:block/book_stack_3_sink_5",
+      "y": 180
+    },
+    "facing=north,stacks=3,sink=6": {
+      "model": "murim:block/book_stack_3_sink_6",
+      "y": 180
+    },
+    "facing=north,stacks=3,sink=7": {
+      "model": "murim:block/book_stack_3_sink_7",
+      "y": 180
+    },
+    "facing=north,stacks=3,sink=8": {
+      "model": "murim:block/book_stack_3_sink_8",
+      "y": 180
+    },
+    "facing=east,stacks=3,sink=0": {
       "model": "murim:block/book_stack_3",
       "y": 270
     },
-    "facing=south,stacks=4": {
+    "facing=east,stacks=3,sink=1": {
+      "model": "murim:block/book_stack_3_sink_1",
+      "y": 270
+    },
+    "facing=east,stacks=3,sink=2": {
+      "model": "murim:block/book_stack_3_sink_2",
+      "y": 270
+    },
+    "facing=east,stacks=3,sink=3": {
+      "model": "murim:block/book_stack_3_sink_3",
+      "y": 270
+    },
+    "facing=east,stacks=3,sink=4": {
+      "model": "murim:block/book_stack_3_sink_4",
+      "y": 270
+    },
+    "facing=east,stacks=3,sink=5": {
+      "model": "murim:block/book_stack_3_sink_5",
+      "y": 270
+    },
+    "facing=east,stacks=3,sink=6": {
+      "model": "murim:block/book_stack_3_sink_6",
+      "y": 270
+    },
+    "facing=east,stacks=3,sink=7": {
+      "model": "murim:block/book_stack_3_sink_7",
+      "y": 270
+    },
+    "facing=east,stacks=3,sink=8": {
+      "model": "murim:block/book_stack_3_sink_8",
+      "y": 270
+    },
+    "facing=south,stacks=4,sink=0": {
       "model": "murim:block/book_stack_4"
     },
-    "facing=west,stacks=4": {
+    "facing=south,stacks=4,sink=1": {
+      "model": "murim:block/book_stack_4_sink_1"
+    },
+    "facing=south,stacks=4,sink=2": {
+      "model": "murim:block/book_stack_4_sink_2"
+    },
+    "facing=south,stacks=4,sink=3": {
+      "model": "murim:block/book_stack_4_sink_3"
+    },
+    "facing=south,stacks=4,sink=4": {
+      "model": "murim:block/book_stack_4_sink_4"
+    },
+    "facing=south,stacks=4,sink=5": {
+      "model": "murim:block/book_stack_4_sink_5"
+    },
+    "facing=south,stacks=4,sink=6": {
+      "model": "murim:block/book_stack_4_sink_6"
+    },
+    "facing=south,stacks=4,sink=7": {
+      "model": "murim:block/book_stack_4_sink_7"
+    },
+    "facing=south,stacks=4,sink=8": {
+      "model": "murim:block/book_stack_4_sink_8"
+    },
+    "facing=west,stacks=4,sink=0": {
       "model": "murim:block/book_stack_4",
       "y": 90
     },
-    "facing=north,stacks=4": {
+    "facing=west,stacks=4,sink=1": {
+      "model": "murim:block/book_stack_4_sink_1",
+      "y": 90
+    },
+    "facing=west,stacks=4,sink=2": {
+      "model": "murim:block/book_stack_4_sink_2",
+      "y": 90
+    },
+    "facing=west,stacks=4,sink=3": {
+      "model": "murim:block/book_stack_4_sink_3",
+      "y": 90
+    },
+    "facing=west,stacks=4,sink=4": {
+      "model": "murim:block/book_stack_4_sink_4",
+      "y": 90
+    },
+    "facing=west,stacks=4,sink=5": {
+      "model": "murim:block/book_stack_4_sink_5",
+      "y": 90
+    },
+    "facing=west,stacks=4,sink=6": {
+      "model": "murim:block/book_stack_4_sink_6",
+      "y": 90
+    },
+    "facing=west,stacks=4,sink=7": {
+      "model": "murim:block/book_stack_4_sink_7",
+      "y": 90
+    },
+    "facing=west,stacks=4,sink=8": {
+      "model": "murim:block/book_stack_4_sink_8",
+      "y": 90
+    },
+    "facing=north,stacks=4,sink=0": {
       "model": "murim:block/book_stack_4",
       "y": 180
     },
-    "facing=east,stacks=4": {
+    "facing=north,stacks=4,sink=1": {
+      "model": "murim:block/book_stack_4_sink_1",
+      "y": 180
+    },
+    "facing=north,stacks=4,sink=2": {
+      "model": "murim:block/book_stack_4_sink_2",
+      "y": 180
+    },
+    "facing=north,stacks=4,sink=3": {
+      "model": "murim:block/book_stack_4_sink_3",
+      "y": 180
+    },
+    "facing=north,stacks=4,sink=4": {
+      "model": "murim:block/book_stack_4_sink_4",
+      "y": 180
+    },
+    "facing=north,stacks=4,sink=5": {
+      "model": "murim:block/book_stack_4_sink_5",
+      "y": 180
+    },
+    "facing=north,stacks=4,sink=6": {
+      "model": "murim:block/book_stack_4_sink_6",
+      "y": 180
+    },
+    "facing=north,stacks=4,sink=7": {
+      "model": "murim:block/book_stack_4_sink_7",
+      "y": 180
+    },
+    "facing=north,stacks=4,sink=8": {
+      "model": "murim:block/book_stack_4_sink_8",
+      "y": 180
+    },
+    "facing=east,stacks=4,sink=0": {
       "model": "murim:block/book_stack_4",
+      "y": 270
+    },
+    "facing=east,stacks=4,sink=1": {
+      "model": "murim:block/book_stack_4_sink_1",
+      "y": 270
+    },
+    "facing=east,stacks=4,sink=2": {
+      "model": "murim:block/book_stack_4_sink_2",
+      "y": 270
+    },
+    "facing=east,stacks=4,sink=3": {
+      "model": "murim:block/book_stack_4_sink_3",
+      "y": 270
+    },
+    "facing=east,stacks=4,sink=4": {
+      "model": "murim:block/book_stack_4_sink_4",
+      "y": 270
+    },
+    "facing=east,stacks=4,sink=5": {
+      "model": "murim:block/book_stack_4_sink_5",
+      "y": 270
+    },
+    "facing=east,stacks=4,sink=6": {
+      "model": "murim:block/book_stack_4_sink_6",
+      "y": 270
+    },
+    "facing=east,stacks=4,sink=7": {
+      "model": "murim:block/book_stack_4_sink_7",
+      "y": 270
+    },
+    "facing=east,stacks=4,sink=8": {
+      "model": "murim:block/book_stack_4_sink_8",
       "y": 270
     }
   }

@@ -1,0 +1,56 @@
+{
+  "id": "fragments",
+  "requires_sites": true,
+  "title": "quest.murim.fragments.title",
+  "steps": [
+    {
+      "type": "clue",
+      "id": "frag_1",
+      "model": "fragment"
+    },
+    {
+      "type": "clue",
+      "id": "frag_2",
+      "model": "rubbing"
+    },
+    {
+      "type": "clue",
+      "id": "frag_4",
+      "model": "fragment"
+    },
+    {
+      "type": "personal_chest",
+      "id": "plum_travellers",
+      "marker": "zone:sect_gate:4:4",
+      "items": [
+        "clue:frag_0",
+        "clue:frag_5"
+      ]
+    },
+    {
+      "type": "personal_chest",
+      "id": "plum_archive",
+      "marker": "zone:scriptures:4:4",
+      "items": [
+        "clue:frag_1",
+        "clue:frag_2"
+      ]
+    },
+    {
+      "type": "personal_chest",
+      "id": "plum_court",
+      "marker": "zone:training:7:4",
+      "items": [
+        "clue:frag_3"
+      ]
+    },
+    {
+      "type": "personal_chest",
+      "id": "plum_dining",
+      "marker": "zone:dining:4:4",
+      "items": [
+        "clue:frag_4"
+      ]
+    }
+  ]
+}

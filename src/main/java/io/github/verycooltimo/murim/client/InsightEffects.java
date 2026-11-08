@@ -41,6 +41,10 @@ public final class InsightEffects {
     /** Сколько живёт титр и эффекты. */
     static final int TICKS = 70;
 
+    /** The Apex Echo line comes after the usual scene and keeps the caption up this much longer (1.5 s, design A4.5). */
+    static final int ECHO_TICKS = 30;
+    private static final int ECHO_FROM = 40;
+
     private static final VfxColour HALO = new VfxColour(0.16F, 0.42F, 0.95F);
     private static final VfxColour CORE = new VfxColour(0.62F, 0.93F, 1.0F);
 
@@ -58,6 +62,11 @@ public final class InsightEffects {
         }
     }
 
+    /** How long the caption lives: a breakthrough that carries the Echo line stays longer. */
+    private static int life() {
+        return current != null && current.echo() > 0 ? TICKS + ECHO_TICKS : TICKS;
+    }
+
     /** Возраст идущего озарения в тиках, или -1. */
     public static int age() {
         return age;
@@ -65,7 +74,7 @@ public final class InsightEffects {
 
     @SubscribeEvent
     static void onClientTick(ClientTickEvent.Post event) {
-        if (age >= 0 && ++age > TICKS) {
+        if (age >= 0 && ++age > life()) {
             age = -1;
             current = null;
         }
@@ -97,7 +106,7 @@ public final class InsightEffects {
         }
 
         // Титр: «Озарение» и техника со слоем — проявляется и гаснет.
-        float alpha = Mth.clamp(t / 8.0F, 0.0F, 1.0F) * Mth.clamp((TICKS - t) / 16.0F, 0.0F, 1.0F);
+        float alpha = Mth.clamp(t / 8.0F, 0.0F, 1.0F) * Mth.clamp((life() - t) / 16.0F, 0.0F, 1.0F);
         if (alpha <= 0.02F || minecraft.options.hideGui && !ClientMeditationState.cinematic()) {
             return;
         }
@@ -105,8 +114,7 @@ public final class InsightEffects {
         Font font = minecraft.font;
         Component title = Component.translatable("murim.mastery.insight");
         int cap = io.github.verycooltimo.murim.mastery.Arts.cap(current.technique());
-        Component line = Component.translatable(cap == io.github.verycooltimo.murim.mastery.Arts.FOOTWORK_STARS
-                        ? "murim.mastery.insight.footwork" : "murim.mastery.insight.star",
+        Component line = Component.translatable("murim.mastery.insight.star",
                 io.github.verycooltimo.murim.mastery.MasteryService.artName(current.technique()), current.stars(), cap);
         // Выше названия техники (его слой — на трети высоты), иначе титры налезают.
         int y = (int) (h * 0.16F);
@@ -116,6 +124,32 @@ public final class InsightEffects {
         graphics.drawString(font, title, -font.width(title) / 2, 0, a | 0xCFEFFF, true);
         graphics.pose().popPose();
         graphics.drawString(font, line, (w - font.width(line)) / 2, y + 16, a | 0x8FC8F0, true);
+        if (current.echo() > 0) {
+            // Apex Echo (design A4.5): only here, only as words, never star numbers. The line rises after the usual
+            // scene; the closest kin, if the player has any, are named under it.
+            float echoAlpha = alpha * Mth.clamp((t - ECHO_FROM) / 10.0F, 0.0F, 1.0F);
+            if (echoAlpha > 0.02F) {
+                int ea = Math.max(4, (int) (echoAlpha * 255)) << 24;
+                Component echo = Component.translatable("murim.mastery.echo.scene",
+                        io.github.verycooltimo.murim.mastery.MasteryService.artName(current.technique()));
+                graphics.drawString(font, echo, (w - font.width(echo)) / 2, y + 32, ea | 0xE8D58A, true);
+                if (!current.kin().isEmpty()) {
+                    Component kin = Component.translatable("murim.mastery.echo.kin", joinNames(current.kin()));
+                    graphics.drawString(font, kin, (w - font.width(kin)) / 2, y + 44, ea | 0xC9B870, true);
+                }
+            }
+        }
+    }
+
+    private static Component joinNames(java.util.List<ResourceLocation> arts) {
+        net.minecraft.network.chat.MutableComponent out = Component.empty();
+        for (int i = 0; i < arts.size(); i++) {
+            if (i > 0) {
+                out.append(" · ");
+            }
+            out.append(io.github.verycooltimo.murim.mastery.MasteryService.artName(arts.get(i)));
+        }
+        return out;
     }
 
     /** Искры ци от груди игрока — озарение видно и со стороны тела. */

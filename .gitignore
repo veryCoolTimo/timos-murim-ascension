@@ -52,3 +52,5 @@ CLAUDE.local.md
 docs/books/
 tools/__pycache__/
 __pycache__/
+art/sources/previews/batch_0810/*.mp4
+!/tools/build/

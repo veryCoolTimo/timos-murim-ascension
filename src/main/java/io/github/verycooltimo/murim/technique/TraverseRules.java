@@ -8,10 +8,10 @@ package io.github.verycooltimo.murim.technique;
 public final class TraverseRules {
 
     /** God Wind L0..8; L8 is the requested qualitative jump (30 blocks/s after acceleration). */
-    private static final double[] WIND_SPEED = {7, 7.5, 8.5, 9, 10, 11.5, 12, 13, 18.75};
-    private static final int[] WIND_TICKS = {60, 70, 80, 90, 100, 120, 140, 160, 180};
-    private static final double[] WIND_QI = {0.40, 0.38, 0.36, 0.34, 0.32, 0.30, 0.28, 0.26, 0.24};
-    private static final int[] WIND_PAUSE = {20, 20, 20, 20, 20, 18, 18, 16, 16};
+    private static final double[] WIND_SPEED = {7, 7.5, 8.5, 9, 10, 11.5, 12, 13, 18.75, 21.625, 24.5};
+    private static final int[] WIND_TICKS = {60, 70, 80, 90, 100, 120, 140, 160, 180, 190, 200};
+    private static final double[] WIND_QI = {0.40, 0.38, 0.36, 0.34, 0.32, 0.30, 0.28, 0.26, 0.24, 0.23, 0.22};
+    private static final int[] WIND_PAUSE = {20, 20, 20, 20, 20, 18, 18, 16, 16, 15, 14};
     public static final int WIND_RAMP_TICKS = 20;
     public static final double WIND_TOP = 1.6D;
     public static final double HUASHAN_FAST = 1.4D;
@@ -49,7 +49,9 @@ public final class TraverseRules {
             case 1 -> 8.5D;
             case 2 -> 10.0D;
             case 3 -> 11.5D;
-            default -> 13.0D;
+            case 4 -> 13.0D;
+            case 5 -> 14.5D;
+            default -> 16.0D;
         };
     }
 
@@ -65,7 +67,9 @@ public final class TraverseRules {
             case 1 -> 80;
             case 2 -> 100;
             case 3 -> 120;
-            default -> 160;
+            case 4 -> 160;
+            case 5 -> 180;
+            default -> 200;
         };
     }
 
@@ -91,7 +95,9 @@ public final class TraverseRules {
             case 1 -> 1.0D;
             case 2 -> 1.15D;
             case 3 -> 1.3D;
-            default -> 1.45D;
+            case 4 -> 1.45D;
+            case 5 -> 1.6D;
+            default -> 1.75D;
         };
     }
 
@@ -121,7 +127,7 @@ public final class TraverseRules {
     public static final int COOLDOWN = 20;
 
     private static int clamp(int executionTier) {
-        return Math.max(0, Math.min(4, executionTier));
+        return Math.max(0, Math.min(6, executionTier));
     }
 
     private TraverseRules() {

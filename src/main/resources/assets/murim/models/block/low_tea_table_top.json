@@ -1,0 +1,14 @@
+{
+  "loader": "neoforge:obj",
+  "model": "murim:models/block/obj/cave_low_tea_table_top.obj",
+  "flip_v": false,
+  "emissive_ambient": true,
+  "automatic_culling": true,
+  "shade_quads": true,
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "table": "murim:block/cave_table",
+    "particle": "murim:block/cave_table"
+  },
+  "ambientocclusion": false
+}

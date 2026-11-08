@@ -63,6 +63,35 @@ public final class PeddlerTests {
         helper.succeed();
     }
 
+    @GameTest(template = "small_floor", timeoutTicks = 40)
+    public static void richBeginnersCanBuyPillsAndHerbStacks(GameTestHelper h) {
+        Peddler p = PeddlerSpawns.arrive(h.getLevel(), h.absolutePos(new BlockPos(2, 2, 2)), Peddler.VILLAGE_STAY);
+        h.assertTrue(p != null, "merchant did not arrive");
+        var items = new net.minecraft.world.item.Item[] {ModItems.PILL_VITALITY.get(),
+                ModItems.HUNDRED_GINSENG.get(), ModItems.THOUSAND_LINGZHI.get()};
+        int[] prices = {4, 5, 32};
+        int[] counts = {4, 2, 4};
+        int[] minimumStock = {16, 12, 16};
+        for (int i = 0; i < items.length; i++) {
+            MerchantOffer offer = find(p.getOffers(), new ItemStack(items[i]));
+            h.assertTrue(offer != null && offer.getResult().getCount() == counts[i], "missing guaranteed bundle: " + items[i]);
+            // API: Minecraft 1.21.1 MerchantOffer#getResult/satisfiedBy, ItemStack#shrink.
+            // Only lingzhi needs gold + silver (9 silver = 1 gold).
+            ItemStack first = i < 2 ? new ItemStack(ModItems.SILVER_TAEL.get(), prices[i])
+                    : new ItemStack(ModTrade.GOLD_TAEL.get(), 3);
+            ItemStack second = i < 2 ? ItemStack.EMPTY : new ItemStack(ModItems.SILVER_TAEL.get(), prices[i] - 27);
+            h.assertTrue(offer.satisfiedBy(first, second), "bundle not sold for the advertised price");
+            first.shrink(1);
+            h.assertFalse(offer.satisfiedBy(first, second), "bundle cheaper than advertised");
+            final String id = "murim:" + (i == 0 ? "pill_vitality" : i == 1 ? "hundred_ginseng" : "thousand_lingzhi");
+            final int requiredStock = minimumStock[i];
+            h.assertTrue(PeddlerStock.SELLS.stream().anyMatch(l -> l.item().equals(id) && l.chance() == 1.0D
+                    && l.count() * l.uses() >= requiredStock), "not enough guaranteed stock to buy stacks");
+        }
+        p.discard();
+        h.succeed();
+    }
+
     /** Деревенский торговец уходит по сроку; лавочник (срок 0) — нет. */
     @GameTest(template = "small_floor", timeoutTicks = 60)
     public static void peddlerLeavesVillage(GameTestHelper helper) {
@@ -84,5 +113,30 @@ public final class PeddlerTests {
             }
         }
         return null;
+    }
+
+    /** API: /tmp/mr-ref-1121/minecraft-src/net/minecraft/world/entity/Entity.java#getRandom,
+     * util/RandomSource.java#setSeed, world/item/trading/MerchantOffer.java#getResult. */
+    @GameTest(template = "small_floor", timeoutTicks = 60)
+    public static void peddlerCanOfferAllThreeFinishedArtPages(GameTestHelper h) {
+        Peddler p = PeddlerSpawns.arrive(h.getLevel(), h.absolutePos(new BlockPos(2, 2, 2)), Peddler.VILLAGE_STAY);
+        h.assertTrue(p != null, "merchant did not arrive");
+        try {
+            var missing = new java.util.HashSet<>(java.util.Set.of("murim:crescent_sweep", "murim:wedge_fan", "murim:ceremonial_draw"));
+            var offers = new MerchantOffers();
+            p.getRandom().setSeed(1102L);
+            for (int visit = 0; visit < 512 && !missing.isEmpty(); visit++) {
+                p.stock(offers);
+                for (var offer : offers) {
+                    var stack = offer.getResult();
+                    var book = stack.get(ModDataComponents.TECHNIQUE.get());
+                    if (stack.is(ModItems.MANUAL_PAGE.get()) && book != null) missing.remove(book.toString());
+                }
+            }
+            h.assertTrue(missing.isEmpty(), "peddler never offered " + missing);
+        } finally {
+            p.discard();
+        }
+        h.succeed();
     }
 }

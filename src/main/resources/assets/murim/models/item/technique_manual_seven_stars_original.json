@@ -1,0 +1,264 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "murim:item/technique_manual_seven_stars_original"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        7.5
+      ],
+      "to": [
+        16,
+        16,
+        8.5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#layer0"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#layer0"
+        }
+      }
+    },
+    {
+      "from": [
+        7,
+        5.5,
+        7.4
+      ],
+      "to": [
+        7.4,
+        5.9,
+        8.6
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            5,
+            3,
+            6,
+            4
+          ],
+          "texture": "#layer0"
+        },
+        "south": {
+          "uv": [
+            5,
+            3,
+            6,
+            4
+          ],
+          "texture": "#layer0"
+        }
+      }
+    },
+    {
+      "from": [
+        8,
+        5.8,
+        7.4
+      ],
+      "to": [
+        8.4,
+        6.2,
+        8.6
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            5,
+            3,
+            6,
+            4
+          ],
+          "texture": "#layer0"
+        },
+        "south": {
+          "uv": [
+            5,
+            3,
+            6,
+            4
+          ],
+          "texture": "#layer0"
+        }
+      }
+    },
+    {
+      "from": [
+        9,
+        5.5,
+        7.4
+      ],
+      "to": [
+        9.4,
+        5.9,
+        8.6
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            5,
+            3,
+            6,
+            4
+          ],
+          "texture": "#layer0"
+        },
+        "south": {
+          "uv": [
+            5,
+            3,
+            6,
+            4
+          ],
+          "texture": "#layer0"
+        }
+      }
+    },
+    {
+      "from": [
+        9.8,
+        4.7,
+        7.4
+      ],
+      "to": [
+        10.200000000000001,
+        5.1000000000000005,
+        8.6
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            5,
+            3,
+            6,
+            4
+          ],
+          "texture": "#layer0"
+        },
+        "south": {
+          "uv": [
+            5,
+            3,
+            6,
+            4
+          ],
+          "texture": "#layer0"
+        }
+      }
+    },
+    {
+      "from": [
+        9.5,
+        3.7,
+        7.4
+      ],
+      "to": [
+        9.9,
+        4.1000000000000005,
+        8.6
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            5,
+            3,
+            6,
+            4
+          ],
+          "texture": "#layer0"
+        },
+        "south": {
+          "uv": [
+            5,
+            3,
+            6,
+            4
+          ],
+          "texture": "#layer0"
+        }
+      }
+    },
+    {
+      "from": [
+        10.5,
+        3.2,
+        7.4
+      ],
+      "to": [
+        10.9,
+        3.6,
+        8.6
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            5,
+            3,
+            6,
+            4
+          ],
+          "texture": "#layer0"
+        },
+        "south": {
+          "uv": [
+            5,
+            3,
+            6,
+            4
+          ],
+          "texture": "#layer0"
+        }
+      }
+    },
+    {
+      "from": [
+        11.5,
+        3.5,
+        7.4
+      ],
+      "to": [
+        11.9,
+        3.9,
+        8.6
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            5,
+            3,
+            6,
+            4
+          ],
+          "texture": "#layer0"
+        },
+        "south": {
+          "uv": [
+            5,
+            3,
+            6,
+            4
+          ],
+          "texture": "#layer0"
+        }
+      }
+    }
+  ]
+}

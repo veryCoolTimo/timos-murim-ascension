@@ -2,8 +2,8 @@ package io.github.verycooltimo.murim.world.location;
 
 import io.github.verycooltimo.murim.MurimMod;
 import io.github.verycooltimo.murim.world.camp.BanditCampData;
+import io.github.verycooltimo.murim.world.camp.CampTestFixtures;
 import io.github.verycooltimo.murim.world.camp.BanditCampPiece;
-import io.github.verycooltimo.murim.world.camp.BanditCamps;
 import io.github.verycooltimo.murim.world.camp.CampTemplate;
 import io.github.verycooltimo.murim.world.hua.HuaBiomes;
 import io.github.verycooltimo.murim.world.hua.MountHuaSite;
@@ -111,7 +111,7 @@ public final class LocationTests {
         // Camp life on this template: one bandit, the chief, standing on the sign.
         LocationTemplatePiece tpl = new LocationTemplatePiece(loc, origin, rot);
         BlockPos centre = CapturedLocation.world(origin, rot, loc.anchor());
-        BanditCampData.Camp camp = BanditCamps.data(level).getOrCreate(centre.asLong() ^ 0x7E57L, centre, 42L);
+        BanditCampData.Camp camp = CampTestFixtures.fresh(helper, centre.asLong() ^ 0x7E57L, centre, 42L);
         CampTemplate.attach(camp, BanditCampPiece.shell(42L, centre, rot, tpl.getBoundingBox()), tpl);
         helper.assertTrue(CampTemplate.posts(camp).size() == 1 && CampTemplate.roster(camp).get(0).chief(),
                 "posts " + CampTemplate.posts(camp));
@@ -122,6 +122,7 @@ public final class LocationTests {
             helper.fail("cleanup: " + e);
         }
         helper.assertTrue(LocationTemplates.get(level.getServer(), id) == null, "capture still visible after forget");
+        CampTestFixtures.remove(level, camp.key);
         helper.succeed();
     }
 

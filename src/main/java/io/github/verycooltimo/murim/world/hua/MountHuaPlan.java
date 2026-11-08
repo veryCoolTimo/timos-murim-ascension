@@ -161,7 +161,9 @@ public final class MountHuaPlan {
             // Elders follow the upper landing south; five clear cells remain behind their houses.
             new Zone("elders", "Elders' residences", -49, 105, 50, 26, 166, false, 0, 0),
             new Zone("grove", "Plum grove", 80, 72, 26, 20, 172, false, 0, 0),
-            new Zone("vault", "Secret vault", 4, 62, 14, 12, 151, true, -26, 66),
+            // The head's main vault (author 21.10/23.10): the study, the door recess and the pit under the Main Hall; HuaVault builds it
+            // (the terrain pass does not carve this one), the way in is the Ancestors' Hall.
+            new Zone("vault", "Secret vault", 14, 59.5, 14, 13, 146, true, 0, 0),
             new Zone("penance", "Penance cave", -56, 112, 10, 10, 168, true, -40, 96));
 
     /** Sites marked for the author (lanterns on the corners, a sign); none are ruins now. */
@@ -191,12 +193,16 @@ public final class MountHuaPlan {
         // Dining/camp courtyard, scriptures, elders, and lower alchemy approaches.
         {-72.5, 52.5, 140, -72.5, 58.5, 140, 3},
         {34.5, 65.5, 161, 38.5, 65.5, 161, 3},
-        {-22.5, 87.5, 172, -22.5, 94.5, 166, 3},
+        // Starts at the corridor's south kerb (v=88.5): from 87.5 the corridor claimed the first stair cell and the
+        // rounded level dropped two blocks between it and the next one (MountHuaAccessTest).
+        {-22.5, 88.5, 172, -22.5, 94.5, 166, 3},
         {-63.5, 12.5, 140, -60.5, 12.5, 140, 3},
         {61, 82, 168, 74, 75, 172},
         // Width-three paths have solid masonry support and three clear walking lanes.
         // Half-cell centres put exactly three cells across each orthogonal run.
-        {-22.5, -4.5, 152, -18, -4.5, 155, 3},
+        // The ramp starts where the bell pad ends (u=-20.5): from -22.5 the pad claimed its first cells and the rounded
+        // level jumped two blocks at the pad edge (MountHuaAccessTest).
+        {-20.5, -4.5, 152, -18, -4.5, 155, 3},
         {32.5, -18.5, 155, 44.5, -18.5, 146, 3},
         {44.5, -18.5, 146, 44.5, 1.5, 146, 3},
         {-60.5, 12.5, 140, -60.5, 34.5, 140, 3},

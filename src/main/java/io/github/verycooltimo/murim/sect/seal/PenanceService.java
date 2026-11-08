@@ -1,10 +1,13 @@
 package io.github.verycooltimo.murim.sect.seal;
 
+import io.github.verycooltimo.murim.sect.PlayerJournal;
+import io.github.verycooltimo.murim.sect.SectNotice;
 import io.github.verycooltimo.murim.MurimMod;
 import io.github.verycooltimo.murim.entity.SectDisciple;
 import io.github.verycooltimo.murim.registry.ModAttachments;
 import io.github.verycooltimo.murim.sect.DialogueService;
 import io.github.verycooltimo.murim.sect.SectLayout;
+import io.github.verycooltimo.murim.sect.SectLayoutFile;
 import io.github.verycooltimo.murim.sect.SectLife;
 import io.github.verycooltimo.murim.sect.SectSchedule;
 import io.github.verycooltimo.murim.sect.SectService;
@@ -92,7 +95,7 @@ public final class PenanceService {
             tag.putInt("count", count);
             p.getPersistentData().put(OFFENCE_TAG, tag);
             Component who = witness != null ? witness.getName() : Component.translatable("murim.penance.elder");
-            p.displayClientMessage(Component.translatable("murim.penance.warn." + kind, who).withStyle(ChatFormatting.GOLD), false);
+            SectNotice.chat(p, Component.translatable("murim.penance.warn." + kind, who).withStyle(ChatFormatting.GOLD));
             return;
         }
         tag.putInt("count", 0);
@@ -109,7 +112,7 @@ public final class PenanceService {
         p.setData(ModAttachments.SECT, p.getData(ModAttachments.SECT).with(SUMMONED));
         io.github.verycooltimo.murim.sect.SectSocial.remember(p, "punished");
         if (!offer(p, witness) && first) {
-            p.displayClientMessage(Component.translatable("murim.penance.summoned").withStyle(ChatFormatting.RED), false);
+            SectNotice.chat(p, Component.translatable("murim.penance.summoned").withStyle(ChatFormatting.RED));
         }
     }
 
@@ -165,7 +168,7 @@ public final class PenanceService {
         if (PenanceEnforcement.active(p) || sentenced(p) || p.isCreative() || p.isSpectator()) return;
         p.setData(ModAttachments.SECT, p.getData(ModAttachments.SECT).without(SUMMONED));
         if (!sentence(p)) {
-            p.displayClientMessage(Component.translatable("murim.penance.no_cave").withStyle(ChatFormatting.GRAY), false);
+            SectNotice.chat(p, Component.translatable("murim.penance.no_cave").withStyle(ChatFormatting.GRAY));
         }
     }
 
@@ -174,13 +177,13 @@ public final class PenanceService {
         if (PenanceEnforcement.active(p) || sentenced(p) || !p.getData(ModAttachments.SECT).has(SUMMONED)
                 || p.isCreative() || p.isSpectator()) return;
         if (recentSentences(p) > 0) {
-            p.displayClientMessage(Component.translatable("murim.penance.repeat_refusal").withStyle(ChatFormatting.RED), false);
+            SectNotice.chat(p, Component.translatable("murim.penance.repeat_refusal").withStyle(ChatFormatting.RED));
             PenanceEnforcement.rampage(p);
             return;
         }
         p.setData(ModAttachments.SECT, p.getData(ModAttachments.SECT).without(SUMMONED));
         SectService.contribute(p, -PenanceRules.REFUSE_COST);
-        p.displayClientMessage(Component.translatable("murim.penance.refused", PenanceRules.REFUSE_COST).withStyle(ChatFormatting.RED), false);
+        SectNotice.chat(p, Component.translatable("murim.penance.refused", PenanceRules.REFUSE_COST).withStyle(ChatFormatting.RED));
         MurimMod.LOGGER.info("Секта: {} отказался от пещеры покаяния (−{} заслуг)", p.getName().getString(), PenanceRules.REFUSE_COST);
     }
 
@@ -214,7 +217,7 @@ public final class PenanceService {
             }
         }
         level.playSound(null, cell, SoundEvents.IRON_DOOR_CLOSE, SoundSource.BLOCKS, 1.0F, 0.6F);
-        p.sendSystemMessage(Component.translatable("murim.penance.sentenced", PenanceRules.DAYS, PenanceRules.MEDITATION_QUOTA / 1200)
+        SectNotice.chat(p, Component.translatable("murim.penance.sentenced", PenanceRules.DAYS, PenanceRules.MEDITATION_QUOTA / 1200)
                 .withStyle(ChatFormatting.RED));
         MurimMod.LOGGER.info("Секта: {} в пещере покаяния у {} до {}", p.getName().getString(), cell.toShortString(), until);
         return true;
@@ -263,7 +266,7 @@ public final class PenanceService {
         int doors = SealAccess.openDoors(cave(p, tag), cell, SealAccess.RANGE, PenanceRules.RELEASE_DOOR_TICKS);
         PenanceEnforcement.escortOnRelease(p);
         p.level().playSound(null, cell, SoundEvents.BELL_BLOCK, SoundSource.BLOCKS, 0.8F, 1.1F);
-        p.sendSystemMessage(Component.translatable("murim.penance.released").withStyle(ChatFormatting.GOLD));
+        SectNotice.chat(p, Component.translatable("murim.penance.released").withStyle(ChatFormatting.GOLD));
         MurimMod.LOGGER.info("Секта: {} отпущен из пещеры покаяния (дверей открыто {})", p.getName().getString(), doors);
     }
 
@@ -316,7 +319,7 @@ public final class PenanceService {
         }
         if (!inCell && !p.isCreative() && !p.isSpectator()) {
             bringBack(p, cell);
-            p.displayClientMessage(Component.translatable("murim.penance.back").withStyle(ChatFormatting.GRAY), true);
+            PlayerJournal.record(p, Component.translatable("murim.penance.back").withStyle(ChatFormatting.GRAY));
         }
     }
 
@@ -349,13 +352,26 @@ public final class PenanceService {
         p.fallDistance = 0;
     }
 
+    /** The seal of the built cave named by the layout file ({@code penance} landmark), or null: no file, no landmark, not loaded, no seal there. */
+    static BlockPos landmarkCell(ServerLevel level, SectLayout layout) {
+        SectLayoutFile file = layout == null ? null : layout.file();
+        SectLayoutFile.Landmark cave = file == null ? null : file.landmark("penance");
+        return cave != null && level.isLoaded(cave.cell()) && level.getBlockState(cave.cell()).is(SealRegistry.PENANCE_SEAL.get())
+                ? cave.cell() : null;
+    }
+
     /**
-     * The cell: the penance seal nearest to the cave zone of the mountain (the author's cave) or to the player
-     * (his showcase builds); no seal — the floor of the generated cave.
+     * The cell: the seal of the built cave (the {@code penance} landmark of the layout file — the extractor found it in the
+     * world, nothing is hard-coded here), else the penance seal nearest to the cave zone or to the player (his showcase
+     * builds); no seal — the floor of the zone.
      */
     static BlockPos findCell(ServerPlayer p) {
         ServerLevel level = p.server.overworld();
         SectLayout layout = SectLife.layout(level);
+        BlockPos built = landmarkCell(level, layout);
+        if (built != null) {
+            return built;
+        }
         Vec3 zone = layout == null ? null : layout.at("penance", 0.0D, 0.0D);
         if (zone != null) {
             BlockPos seal = SealAccess.nearest(level, BlockPos.containing(zone), FIND, SealRegistry.PENANCE_SEAL.get());

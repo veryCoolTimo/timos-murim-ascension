@@ -31,7 +31,7 @@ import java.util.Map;
  * поход продвижение, а не только мусор: новую технику (книга или три страницы незнакомой книги),
  * продолжение рваной книги или озарение не меньше 0,8 слоя.
  *
- * <p>Общая для GameTest ({@code bandit_camp_loot}) и команды {@code /murim camp lootsim}.
+ * <p>Общая для GameTest ({@code bandit_camp_loot}) и команды {@code /murim dev camp lootsim}.
  */
 public final class CampLootSim {
 

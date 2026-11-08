@@ -1,0 +1,17 @@
+{
+ "parent": "murim:block/wall_painting_10",
+ "display": {
+  "gui": {
+   "rotation": [
+    0,
+    180,
+    0
+   ],
+   "scale": [
+    0.9,
+    0.9,
+    0.9
+   ]
+  }
+ }
+}

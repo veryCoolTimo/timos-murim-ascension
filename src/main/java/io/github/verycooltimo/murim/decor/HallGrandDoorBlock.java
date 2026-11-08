@@ -71,6 +71,8 @@ public class HallGrandDoorBlock extends HorizontalDirectionalBlock implements En
     public static final int SWING_TICKS = 14;
     /** Block event id: the swing starts, param 1 = opening, 0 = closing. */
     public static final int EVENT_SWING = 1;
+    /** Block event id: somebody knocks on the closed gate (the leaves shudder on the clients). */
+    public static final int EVENT_KNOCK = 2;
 
     /** Leaf: 3 px thick in the middle of the block, z 6.5..9.5 in the north-facing model frame. */
     private static final VoxelShape[] SHAPES = {
@@ -192,6 +194,11 @@ public class HallGrandDoorBlock extends HorizontalDirectionalBlock implements En
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
         if (!level.isClientSide) {
+            // A gate that is not yet his: he knocks, the gate stays shut (author 21.10); with a tablet or a right it opens.
+            if (player instanceof net.minecraft.server.level.ServerPlayer sp
+                    && io.github.verycooltimo.murim.sect.SectKnock.knock(sp, pos, origin(pos, state), this, EVENT_KNOCK)) {
+                return InteractionResult.sidedSuccess(false);
+            }
             toggle(level, origin(pos, state), player);
         }
         return InteractionResult.sidedSuccess(level.isClientSide);
@@ -214,6 +221,19 @@ public class HallGrandDoorBlock extends HorizontalDirectionalBlock implements En
         playSound(level, origin, o.getValue(FACING), opening);
         level.gameEvent(who, opening ? GameEvent.BLOCK_OPEN : GameEvent.BLOCK_CLOSE, origin);
         return true;
+    }
+
+    /** Close even during an opening swing, so an interrupted reception cannot finish opening afterwards. */
+    public void close(Level level, BlockPos origin, @Nullable Entity who) {
+        BlockState state = level.getBlockState(origin);
+        if (!state.is(this)) return;
+        if (level.getBlockEntity(origin) instanceof HallGrandDoorBlockEntity be && be.opening()) {
+            setOpen(level, origin, false);
+            be.startClosing();
+            level.blockEvent(origin, this, EVENT_SWING, 0);
+            playSound(level, origin, state.getValue(FACING), false);
+            level.gameEvent(who, GameEvent.BLOCK_CLOSE, origin);
+        } else if (state.getValue(OPEN)) toggle(level, origin, who);
     }
 
     /** OPEN on all twenty-four parts (flags 10 as DoorBlock#setOpen: clients, no neighbour updates). */
@@ -253,20 +273,7 @@ public class HallGrandDoorBlock extends HorizontalDirectionalBlock implements En
         if (!(level.getBlockEntity(origin) instanceof HallGrandDoorBlockEntity be)) {
             return;
         }
-        Direction facing = state.getValue(FACING);
-        boolean powered = false;
-        for (int col = 0; col < WIDTH && !powered; col++) {
-            for (int row = 0; row < HEIGHT && !powered; row++) {
-                powered = level.hasNeighborSignal(partPos(origin, facing, col, row));
-            }
-        }
-        if (powered != be.powered()) {
-            be.setPowered(powered);
-            boolean openOrOpening = level.getBlockState(origin).getValue(OPEN) || be.opening();
-            if (powered != openOrOpening) {
-                toggle(level, origin, null);
-            }
-        }
+        // Permission belongs to an actor, never to a redstone signal.
     }
 
     @Override

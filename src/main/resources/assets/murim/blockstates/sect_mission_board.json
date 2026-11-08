@@ -1,19 +1,94 @@
 {
-  "variants": {
-    "facing=north": {
-      "model": "murim:block/sect_mission_board"
-    },
-    "facing=east": {
-      "model": "murim:block/sect_mission_board",
-      "y": 90
-    },
-    "facing=south": {
-      "model": "murim:block/sect_mission_board",
-      "y": 180
-    },
-    "facing=west": {
-      "model": "murim:block/sect_mission_board",
-      "y": 270
-    }
+ "variants": {
+  "col=0,facing=north,row=0": {
+   "model": "murim:block/sect_mission_board_00"
+  },
+  "col=0,facing=east,row=0": {
+   "model": "murim:block/sect_mission_board_00",
+   "y": 90
+  },
+  "col=0,facing=south,row=0": {
+   "model": "murim:block/sect_mission_board_00",
+   "y": 180
+  },
+  "col=0,facing=west,row=0": {
+   "model": "murim:block/sect_mission_board_00",
+   "y": 270
+  },
+  "col=0,facing=north,row=1": {
+   "model": "murim:block/sect_mission_board_01"
+  },
+  "col=0,facing=east,row=1": {
+   "model": "murim:block/sect_mission_board_01",
+   "y": 90
+  },
+  "col=0,facing=south,row=1": {
+   "model": "murim:block/sect_mission_board_01",
+   "y": 180
+  },
+  "col=0,facing=west,row=1": {
+   "model": "murim:block/sect_mission_board_01",
+   "y": 270
+  },
+  "col=1,facing=north,row=0": {
+   "model": "murim:block/sect_mission_board_10"
+  },
+  "col=1,facing=east,row=0": {
+   "model": "murim:block/sect_mission_board_10",
+   "y": 90
+  },
+  "col=1,facing=south,row=0": {
+   "model": "murim:block/sect_mission_board_10",
+   "y": 180
+  },
+  "col=1,facing=west,row=0": {
+   "model": "murim:block/sect_mission_board_10",
+   "y": 270
+  },
+  "col=1,facing=north,row=1": {
+   "model": "murim:block/sect_mission_board_11"
+  },
+  "col=1,facing=east,row=1": {
+   "model": "murim:block/sect_mission_board_11",
+   "y": 90
+  },
+  "col=1,facing=south,row=1": {
+   "model": "murim:block/sect_mission_board_11",
+   "y": 180
+  },
+  "col=1,facing=west,row=1": {
+   "model": "murim:block/sect_mission_board_11",
+   "y": 270
+  },
+  "col=2,facing=north,row=0": {
+   "model": "murim:block/sect_mission_board_20"
+  },
+  "col=2,facing=east,row=0": {
+   "model": "murim:block/sect_mission_board_20",
+   "y": 90
+  },
+  "col=2,facing=south,row=0": {
+   "model": "murim:block/sect_mission_board_20",
+   "y": 180
+  },
+  "col=2,facing=west,row=0": {
+   "model": "murim:block/sect_mission_board_20",
+   "y": 270
+  },
+  "col=2,facing=north,row=1": {
+   "model": "murim:block/sect_mission_board_21"
+  },
+  "col=2,facing=east,row=1": {
+   "model": "murim:block/sect_mission_board_21",
+   "y": 90
+  },
+  "col=2,facing=south,row=1": {
+   "model": "murim:block/sect_mission_board_21",
+   "y": 180
+  },
+  "col=2,facing=west,row=1": {
+   "model": "murim:block/sect_mission_board_21",
+   "y": 270
   }
+ }
 }

@@ -28,6 +28,25 @@ public final class BossRules {
     /** Через сколько тиков без цели в плацу бой сбрасывается: 30 с. */
     public static final int RESET_TICKS = 600;
 
+    /**
+     * Когда пали все участники (мертвы или ушли с плаца), сброс идёт в десять раз быстрее: 3 с. Повторная попытка чистая:
+     * кресло, полное здоровье, барьер снят — без получаса ожидания у запертого плаца (D-2, Track C).
+     */
+    public static final int DOWN_RESET_TICKS = 60;
+
+    /**
+     * Три читаемых приёма ядра (D-2, docs/design/research/hua-main-1810.md §10): связка вблизи, прыжок по метке-кольцу,
+     * таран по метке-полосе. Каждый узнаётся по своей позе и звуку, у каждого своя метка на земле и свой ответ — шаг назад,
+     * выход из кольца, шаг вбок. Рык, раскол и вихрь (свита приёмов) отложены до проверки ядра: в выборе их нет,
+     * переход фаз и «кровь кипит» остаются. Включить обратно — {@link #FULL_MOVESET}.
+     */
+    public static final boolean FULL_MOVESET = false;
+
+    /** Приём входит в то, что хозяин выбирает сам. */
+    public static boolean inCore(BossMove m) {
+        return FULL_MOVESET || m == BossMove.CHAIN || m == BossMove.POUNCE || m == BossMove.RAM;
+    }
+
     private BossRules() {
     }
 
@@ -168,13 +187,18 @@ public final class BossRules {
      * @return приём или {@code null}, если нужно сближаться
      */
     public static BossMove choose(double distance, int phase, boolean[] ready, float roll) {
-        if (phase >= 3 && ready[BossMove.WHIRL.id()] && distance <= 12.0D && roll < 0.45F) {
+        return choose(distance, phase, ready, roll, FULL_MOVESET);
+    }
+
+    /** As {@link #choose(double, int, boolean[], float)}; {@code full} switches the deferred moves (whirl, roar, split) on. */
+    public static BossMove choose(double distance, int phase, boolean[] ready, float roll, boolean full) {
+        if (full && phase >= 3 && ready[BossMove.WHIRL.id()] && distance <= 12.0D && roll < 0.45F) {
             return BossMove.WHIRL;
         }
-        if (phase >= 2 && ready[BossMove.ROAR.id()] && distance <= 6.5D) {
+        if (full && phase >= 2 && ready[BossMove.ROAR.id()] && distance <= 6.5D) {
             return BossMove.ROAR;
         }
-        if (phase >= 2 && ready[BossMove.SPLIT.id()] && distance >= 4.0D && distance <= 12.0D && roll < 0.7F) {
+        if (full && phase >= 2 && ready[BossMove.SPLIT.id()] && distance >= 4.0D && distance <= 12.0D && roll < 0.7F) {
             return BossMove.SPLIT;
         }
         if (distance >= BossMove.RAM_FROM && ready[BossMove.RAM.id()]) {

@@ -15,7 +15,7 @@ import net.neoforged.neoforge.registries.DeferredRegister;
  */
 public final class ModLocations {
 
-    /** Known locations: what {@code /murim capture} suggests and the worldgen integrations look up. */
+    /** Known locations: what {@code /murim dev loc capture} suggests and the worldgen integrations look up. */
     public static final String CAMP = "camp";
     public static final String ARCHIVE = "archive";
     public static final String FORTRESS = "fortress";

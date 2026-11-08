@@ -32,7 +32,7 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
  * GameTests of the sect seals: a sealed block survives survival, blasts and pistons but not creative; cold iron
  * refuses a Peak cultivator and gives to one above Peak (and grows back); the vault trial opens the cold iron door
  * for the one who passed it; the penance cave takes the sentenced in, keeps him and lets him out; seals and cold
- * iron come back whole from {@code /murim capture}.
+ * iron come back whole from {@code /murim dev loc capture}.
  * API: reference/minecraft-src/net/minecraft/server/level/ServerPlayerGameMode.java#handleBlockBreakAction/tick/destroyBlock,
  * PistonBaseBlock#isPushable, Level#explode.
  */
@@ -46,9 +46,20 @@ public final class SealGameTests {
     }
 
     private static ServerPlayer player(GameTestHelper helper, double x, double z) {
+        return player(helper, x, z, new java.util.ArrayList<>());
+    }
+
+    private static ServerPlayer player(GameTestHelper helper, double x, double z,
+            java.util.List<net.minecraft.network.chat.Component> bars) {
         var cookie = net.minecraft.server.network.CommonListenerCookie.createInitial(
                 new com.mojang.authlib.GameProfile(java.util.UUID.randomUUID(), "seal-test"), false);
-        ServerPlayer p = new ServerPlayer(helper.getLevel().getServer(), helper.getLevel(), cookie.gameProfile(), cookie.clientInformation());
+        ServerPlayer p = new ServerPlayer(helper.getLevel().getServer(), helper.getLevel(), cookie.gameProfile(), cookie.clientInformation()) {
+            @Override
+            public void displayClientMessage(net.minecraft.network.chat.Component message, boolean actionBar) {
+                bars.add(message);
+                super.displayClientMessage(message, actionBar);
+            }
+        };
         net.minecraft.network.Connection connection = new net.minecraft.network.Connection(net.minecraft.network.protocol.PacketFlow.SERVERBOUND);
         new io.netty.channel.embedded.EmbeddedChannel(connection);
         new net.minecraft.server.network.ServerGamePacketListenerImpl(helper.getLevel().getServer(), connection, p, cookie);
@@ -147,38 +158,65 @@ public final class SealGameTests {
 
     // ------------------------------------------------------------------ vault trial
 
-    @GameTest(template = YARD, timeoutTicks = 60, batch = "seals")
-    public static void vaultTrialOpensDoor(GameTestHelper helper) {
+    @GameTest(template = YARD, timeoutTicks = 600, batch = "seals")
+    public static void doorTrialIsAutomaticAndSilent(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
-        BlockPos seal = helper.absolutePos(new BlockPos(6, 1, 6));
-        BlockPos doorPos = helper.absolutePos(new BlockPos(9, 1, 6));
-        level.setBlock(seal, SealRegistry.VAULT_SEAL.get().defaultBlockState(), 3);
-        door(level, doorPos);
-        ServerPlayer p = player(helper, 5, 8);
-        ServerPlayer stranger = player(helper, 5, 9);
-        p.setData(ModAttachments.SECT, SectState.NONE.joined());
-        helper.assertTrue(!SealAccess.mayOpen(p, doorPos), "the door opens before the trial");
+        BlockPos door = helper.absolutePos(new BlockPos(6, 1, 6));
+        level.setBlock(door, io.github.verycooltimo.murim.sect.vault.VaultRegistry.VAULT_DOOR.get().defaultBlockState(), 3);
+        var bars = new java.util.ArrayList<net.minecraft.network.chat.Component>();
+        ServerPlayer p = player(helper, 6, 9, bars);
+        var forms = Styles.TWENTY_FOUR_PLUM.forms();
+        VaultTrial.onTechnique(p, VaultLadder.PETAL);
+        helper.assertTrue(!io.github.verycooltimo.murim.sect.vault.VaultDoorBlock.isOpen(level, door),
+                "a non-24-Plum technique opened the door");
+        p.moveTo(door.getX() + 20, door.getY(), door.getZ(), 0, 0);
+        VaultTrial.tick(p);
+        helper.assertTrue(!VaultTrial.active(p), "leaving did not end the trial");
+        p.moveTo(door.getX() + 0.5, door.getY(), door.getZ() + 3.5, 0, 0);
+        VaultTrial.onTechnique(p, VaultLadder.PETAL);
+        p.getPersistentData().getCompound("murim_vault_trial").putLong("last", level.getGameTime() - VaultTrial.IDLE_TICKS - 1);
+        VaultTrial.tick(p);
+        helper.assertTrue(!VaultTrial.active(p), "idle trial did not end");
+        var form = forms.get(0);
+        var definition = io.github.verycooltimo.murim.technique.TechniqueLoader.get(form);
+        int duration = definition == null ? 50 : definition.totalTicks();
+        long start = level.getGameTime();
+        p.setData(ModAttachments.TECHNIQUE_STATE, io.github.verycooltimo.murim.combat.TechniqueState.started(form, start));
+        VaultTrial.onTechnique(p, form);
+        helper.runAfterDelay(duration / 2, () -> {
+            p.setData(ModAttachments.TECHNIQUE_STATE, new io.github.verycooltimo.murim.combat.TechniqueState(form, duration / 2, true, start));
+            VaultTrial.tick(p);
+            helper.assertTrue(!io.github.verycooltimo.murim.sect.vault.VaultDoorBlock.isOpen(level, door), "door opened mid-form");
+            io.github.verycooltimo.murim.combat.TechniqueService.cancel(p);
+            helper.assertTrue(!io.github.verycooltimo.murim.sect.vault.VaultDoorBlock.isOpen(level, door), "cancel opened door");
+            long retry = level.getGameTime();
+            p.setData(ModAttachments.TECHNIQUE_STATE, io.github.verycooltimo.murim.combat.TechniqueState.started(form, retry));
+            VaultTrial.onTechnique(p, form);
+            helper.runAfterDelay(duration, () -> {
+                io.github.verycooltimo.murim.combat.TechniqueService.finish(p);
+                helper.assertTrue(!io.github.verycooltimo.murim.sect.vault.VaultDoorBlock.isOpen(level, door), "missing finish delay");
+                helper.runAfterDelay(8, () -> {
+                    VaultTrial.tick(p);
+                    helper.assertTrue(io.github.verycooltimo.murim.sect.vault.VaultDoorBlock.isOpen(level, door), "finished form did not open door");
+                    helper.assertTrue(bars.isEmpty(), "trial emitted text feedback");
+                    helper.succeed();
+                });
+            });
+        });
+    }
 
-        VaultTrial.begin(p, seal);
-        VaultTrial.onFoundation(p, VaultLadder.SIX, 0);
-        VaultTrial.onFoundation(p, VaultLadder.SIX, 1);
-        // A wrong move breaks the ladder; footwork does not count.
-        VaultTrial.onTechnique(p, ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "dark_fragrance_step"));
-        helper.assertTrue(VaultTrial.step(p) == 2, "footwork broke the ladder: " + VaultTrial.step(p));
-        VaultTrial.onTechnique(p, Styles.SEVEN_PLUM.forms().get(0));
-        helper.assertTrue(VaultTrial.step(p) == 0, "a wrong move did not reset: " + VaultTrial.step(p));
-        for (VaultLadder.Step s : VaultLadder.LADDER) {
-            if (s.foundation()) {
-                VaultTrial.onFoundation(p, s.technique(), s.form());
-            } else {
-                VaultTrial.onTechnique(p, s.technique());
-            }
-        }
-        helper.assertTrue(!VaultTrial.active(p), "the trial still runs after the whole ladder");
-        helper.assertTrue(p.getData(ModAttachments.SECT).has(SealAccess.VAULT_FLAG), "no vault flag after the trial");
-        helper.assertTrue(level.getBlockState(doorPos).getValue(DoorBlock.OPEN), "the door did not open on success");
-        helper.assertTrue(SealAccess.mayOpen(p, doorPos), "the door does not know the one who passed");
-        helper.assertTrue(!SealAccess.mayOpen(stranger, doorPos), "the door opens for a stranger");
+    @GameTest(template = YARD, timeoutTicks = 60, batch = "seals")
+    public static void oldSealPaletteBecomesWall(GameTestHelper helper) {
+        var tag = new net.minecraft.nbt.CompoundTag();
+        tag.putString("Name", "murim:vault_seal");
+        var properties = new net.minecraft.nbt.CompoundTag();
+        properties.putString("facing", "north");
+        properties.putString("petals", "3");
+        tag.put("Properties", properties);
+        var state = net.minecraft.nbt.NbtUtils.readBlockState(net.minecraft.core.registries.BuiltInRegistries.BLOCK.asLookup(), tag);
+        helper.assertTrue(state.is(SealRegistry.SEALED_POLISHED_HUA_GRANITE.get()), "legacy palette did not resolve to wall");
+        helper.assertTrue(!net.minecraft.core.registries.BuiltInRegistries.BLOCK.keySet().contains(
+                ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "vault_seal")), "obsolete block still registered");
         helper.succeed();
     }
 
@@ -229,6 +267,37 @@ public final class SealGameTests {
         helper.succeed();
     }
 
+    /** Holes review npc-1: a released (free) member can open the cave door again, and the door waits for him in the doorway. */
+    @GameTest(template = YARD, timeoutTicks = 100, batch = "seals_penance_release")
+    public static void releasedPrisonerIsNeverWalledIn(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BlockPos cell = helper.absolutePos(new BlockPos(6, 0, 6));
+        BlockPos doorPos = helper.absolutePos(new BlockPos(9, 1, 6));
+        level.setBlock(cell, SealRegistry.PENANCE_SEAL.get().defaultBlockState(), 3);
+        door(level, doorPos);
+        ServerPlayer p = player(helper, 8, 6);
+        p.setData(ModAttachments.SECT, SectState.NONE.joined().contribute(20));
+        helper.assertTrue(PenanceService.sentence(p, cell), "not sentenced");
+        helper.assertTrue(!SealAccess.mayOpen(p, doorPos), "the sentenced opens the door");
+        level.setDayTime(PenanceRules.until(level.getDayTime()) + 1L);
+        PenanceService.tick(p);
+        helper.assertTrue(!PenanceService.sentenced(p), "not released");
+        helper.assertTrue(SealAccess.mayOpen(p, doorPos), "the released cannot open the door again");
+        // The shutting tick finds him in the doorway: the door stays open and waits.
+        p.teleportTo(level, doorPos.getX() + 0.5D, doorPos.getY(), doorPos.getZ() + 0.5D, 0.0F, 0.0F);
+        level.addNewPlayer(p);
+        level.setBlock(doorPos, level.getBlockState(doorPos).setValue(DoorBlock.OPEN, true), 10);
+        var st = level.getBlockState(doorPos);
+        ((ColdIronDoorBlock) st.getBlock()).tick(st, level, doorPos, level.random);
+        helper.assertTrue(level.getBlockState(doorPos).getValue(DoorBlock.OPEN), "the door shut on the man in the doorway");
+        level.removePlayerImmediately(p, net.minecraft.world.entity.Entity.RemovalReason.DISCARDED);
+        // A stranger in the doorway does not hold it.
+        ServerPlayer q = player(helper, 20, 20);
+        q.setData(ModAttachments.SECT, SectState.NONE);
+        helper.assertTrue(!SealAccess.mayOpen(q, doorPos), "an outsider far from the cave opens the door");
+        helper.succeed();
+    }
+
     // ------------------------------------------------------------------ capture
 
     /** Seals and cold iron are plain blocks: a captured and re-placed template brings them back, turned with it. */
@@ -241,7 +310,7 @@ public final class SealGameTests {
         BlockPos seal = helper.absolutePos(new BlockPos(6, 2, 4));
         BlockPos doorPos = helper.absolutePos(new BlockPos(8, 2, 4));
         level.setBlock(sealed, SealRegistry.SEALED_HUA_GRANITE.get().defaultBlockState(), 3);
-        level.setBlock(seal, SealRegistry.VAULT_SEAL.get().defaultBlockState(), 3);
+        level.setBlock(seal, SealRegistry.PENANCE_SEAL.get().defaultBlockState(), 3);
         door(level, doorPos);
         CapturedLocation loc;
         try {
@@ -259,8 +328,8 @@ public final class SealGameTests {
         helper.assertTrue(level.getBlockState(CapturedLocation.world(origin, rot, sealed.subtract(min))).is(SealRegistry.SEALED_HUA_GRANITE.get()),
                 "sealed granite lost in capture");
         BlockState s2 = level.getBlockState(CapturedLocation.world(origin, rot, seal.subtract(min)));
-        helper.assertTrue(s2.is(SealRegistry.VAULT_SEAL.get()) && s2.getValue(SealBlocks.VaultSeal.FACING) == rot.rotate(Direction.NORTH),
-                "vault seal lost or not turned: " + s2);
+        helper.assertTrue(s2.is(SealRegistry.PENANCE_SEAL.get()),
+                "penance seal lost: " + s2);
         BlockPos d2 = CapturedLocation.world(origin, rot, doorPos.subtract(min));
         helper.assertTrue(level.getBlockState(d2).is(SealRegistry.COLD_IRON_DOOR.get())
                 && level.getBlockState(d2.above()).is(SealRegistry.COLD_IRON_DOOR.get()), "cold iron door lost in capture");

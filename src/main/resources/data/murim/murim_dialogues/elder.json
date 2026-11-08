@@ -5,6 +5,22 @@
     {
       "when": [
         {
+          "min_standing": "elder"
+        }
+      ],
+      "node": "office_elder"
+    },
+    {
+      "when": [
+        {
+          "min_standing": "first"
+        }
+      ],
+      "node": "office_first"
+    },
+    {
+      "when": [
+        {
           "period": "formation"
         }
       ],
@@ -38,6 +54,19 @@
       "gesture": "nod",
       "options": [
         {
+          "text": "dialogue.murim.approach.opt.not_now",
+          "when": [
+            {
+              "social": "approaching"
+            }
+          ],
+          "actions": [
+            {
+              "type": "approach_decline"
+            }
+          ]
+        },
+        {
           "text": "dialogue.murim.social.opt.business",
           "when": [
             {
@@ -52,6 +81,20 @@
         },
         {
           "text": "dialogue.murim.opt.leave"
+        },
+        {
+          "text": "dialogue.murim.bamboo_hand.ask",
+          "when": [
+            {
+              "social": "bamboo_hand_lesson"
+            }
+          ],
+          "actions": [
+            {
+              "type": "teach_bamboo_hand"
+            }
+          ],
+          "next": "bamboo_hand_given"
         }
       ]
     },
@@ -177,6 +220,113 @@
           "text": "dialogue.murim.opt.leave"
         }
       ]
+    },
+    "office_elder": {
+      "random": [
+        "@context"
+      ],
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.approach.opt.not_now",
+          "when": [
+            {
+              "social": "approaching"
+            }
+          ],
+          "actions": [
+            {
+              "type": "approach_decline"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.social.opt.business",
+          "when": [
+            {
+              "social": "business"
+            }
+          ],
+          "next": "sect_business"
+        },
+        {
+          "text": "dialogue.murim.social.opt.topics",
+          "next": "sect_topics"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        },
+        {
+          "text": "dialogue.murim.bamboo_hand.ask",
+          "when": [
+            {
+              "social": "bamboo_hand_lesson"
+            }
+          ],
+          "actions": [
+            {
+              "type": "teach_bamboo_hand"
+            }
+          ],
+          "next": "bamboo_hand_given"
+        }
+      ]
+    },
+    "office_first": {
+      "random": [
+        "@context"
+      ],
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.approach.opt.not_now",
+          "when": [
+            {
+              "social": "approaching"
+            }
+          ],
+          "actions": [
+            {
+              "type": "approach_decline"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.social.opt.business",
+          "when": [
+            {
+              "social": "business"
+            }
+          ],
+          "next": "sect_business"
+        },
+        {
+          "text": "dialogue.murim.social.opt.topics",
+          "next": "sect_topics"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        },
+        {
+          "text": "dialogue.murim.bamboo_hand.ask",
+          "when": [
+            {
+              "social": "bamboo_hand_lesson"
+            }
+          ],
+          "actions": [
+            {
+              "type": "teach_bamboo_hand"
+            }
+          ],
+          "next": "bamboo_hand_given"
+        }
+      ]
+    },
+    "bamboo_hand_given": {
+      "line": "dialogue.murim.bamboo_hand.given",
+      "gesture": "explain",
+      "options": []
     }
   }
 }

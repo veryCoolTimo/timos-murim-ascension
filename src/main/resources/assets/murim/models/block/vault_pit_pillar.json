@@ -1,0 +1,8 @@
+{
+ "parent": "minecraft:block/cube_column",
+ "textures": {
+  "particle": "murim:block/vault_pit_pillar",
+  "side": "murim:block/vault_pit_pillar",
+  "end": "murim:block/vault_pit_pillar_top"
+ }
+}

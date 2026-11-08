@@ -1,5 +1,6 @@
 {
   "id": "murim:tang_poison_breath",
+  "speed": [1.5, 3.0],
   "nature": "poison",
   "purity": 0.7,
   "capacity": 32.0,

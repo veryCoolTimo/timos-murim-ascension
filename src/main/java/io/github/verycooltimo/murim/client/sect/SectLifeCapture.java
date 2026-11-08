@@ -97,7 +97,9 @@ public final class SectLifeCapture {
             java.util.Map.entry("alive_meal", new int[] {100, 4}), java.util.Map.entry("alive_watch", new int[] {80, 3}),
             java.util.Map.entry("alive_rain", new int[] {110, 6}),
             // Конец ужина: время идёт, люди встают из-за стола каждый в своё время (автор 06.10) — 45 с.
-            java.util.Map.entry("alive_leave", new int[] {90, 10}));
+            java.util.Map.entry("alive_leave", new int[] {90, 10}),
+            // Кухня: цикл повара (мешает → пробует → рубит) и круг подноса идут по 20–30 секунд.
+            java.util.Map.entry("kitchen_cook", new int[] {80, 8}), java.util.Map.entry("kitchen_serve", new int[] {100, 6}));
     /** Игрок сам в кадре (выживание, без невидимости): перехват, охрана, итог дня, обмен заслуг. */
     private static final java.util.Set<String> PLAYER_ACTS = java.util.Set.of("intercept", "guard", "summary", "merit", "watch");
 
@@ -122,6 +124,11 @@ public final class SectLifeCapture {
             new Scene("porters", 4350, "training", 18.0D, -12.0D, 3.0D, "sect_gate", 12.0D, -2.0D, 1.0D, false),
             // Завтрак: повар раздаёт, водонос носит воду на кухню.
             new Scene("kitchen", 1300, "dining", -9.0D, -9.0D, 5.0D, "dining", 2.0D, 0.0D, 0.0D, false),
+            // Кухня Хуа (18.10): повар у печи в северном конце столовой днём — мешает, пробует, рубит; камера с юго-востока.
+            // «abs:x,y,z» — клетка запечённой секты в рамке выгрузки (столовая уже не зона плана), её переносит на живую гору scenePoint.
+            new Scene("kitchen_cook", 4200, "abs:-1115.7,213.0,4248.6", 0.0D, 0.0D, 0.0D, "abs:-1119.5,212.3,4247.6", 0.0D, 0.0D, 0.0D, false, "kitchen"),
+            // Завтрак там же: повар у стойки разливает, водонос несёт поднос к столу, ставит миски и протирает стол.
+            new Scene("kitchen_serve", 1100, "abs:-1118.6,213.1,4254.8", 0.0D, 0.0D, 0.0D, "abs:-1118.2,212.0,4250.4", 0.0D, 0.0D, 0.0D, false, "kitchen"),
             // Новичок заговаривает с главой — охранник у главного зала перехватывает (окно разговора с ним).
             new Scene("intercept", 4400, "main_hall", 7.0D, -20.0D, 3.0D, "main_hall", -2.0D, -11.0D, 1.0D, false, "intercept"),
             // Новичок идёт в казну — охранник встаёт на пути и отталкивает.
@@ -267,6 +274,26 @@ public final class SectLifeCapture {
                 MurimMod.LOGGER.info("Стенд секты [alive_leave]: время {} — за столом {}: {}", lv.getDayTime() % 24000L, eating.size(), eating);
             });
         }
+        if (s.name().startsWith("kitchen") && shooting && wait % 40 == 0) {
+            // The kitchen scenes: where the cook and the servers are and which pose they play (a film shows poses, the log says why not).
+            server.execute(() -> {
+                ServerLevel lv = server.overworld();
+                ServerPlayer sp = server.getPlayerList().getPlayers().get(0);
+                for (io.github.verycooltimo.murim.entity.SectDisciple d : lv.getEntitiesOfClass(io.github.verycooltimo.murim.entity.SectDisciple.class,
+                        sp.getBoundingBox().inflate(64.0D), d -> d.role() == io.github.verycooltimo.murim.sect.SectRole.COOK
+                                || d.role() == io.github.verycooltimo.murim.sect.SectRole.WATER_CARRIER)) {
+                    SectLife.Resolved r = SectLife.resolve(d);
+                    // API: reference/minecraft-src/net/minecraft/world/entity/ai/goal/GoalSelector.java#getAvailableGoals, WrappedGoal#isRunning
+                    String goals = d.goalSelector.getAvailableGoals().stream().filter(g -> g.isRunning())
+                            .map(g -> g.getGoal().getClass().getSimpleName()).collect(java.util.stream.Collectors.joining(","));
+                    MurimMod.LOGGER.info("Стенд секты [{}]: {} {} поза {} в {} к месту {} (ступень застревания {}, путь кончен {}, цели {}, свободен {}, спит {})",
+                            s.name(), d.memberKey(), d.doingKind(), d.pose().id(), d.blockPosition().toShortString(),
+                            r == null ? "-" : net.minecraft.core.BlockPos.containing(r.spot()).toShortString(), d.walking().stuckStage(),
+                            d.getNavigation().isDone(), goals, d.free(), d.dormant());
+
+                }
+            });
+        }
         if (s.join() && mc.player.level().getGameTime() % SectSchedule.BEAT == SectSchedule.BEAT_STRIKE - 2) {
             // Настоящее нажатие атаки: форма основы идёт тем же путём, что у игрока (клиент → сервер → строй).
             KeyMapping.click(mc.options.keyAttack.getKey());
@@ -354,11 +381,42 @@ public final class SectLifeCapture {
                     double back = "porter_oh".equals(d.memberKey()) ? 10.0D : 6.0D;
                     Vec3 at = SectLife.stand(level, r.spot().add(dir.scale(back)));
                     d.moveTo(at.x, at.y, at.z, d.getYRot(), 0.0F);
+                    // The loaded porter's sack or jar is a pose of the routine (ScheduleGoal), not a held item.
                     d.setCarrying(true);
-                    d.hold("porter_oh".equals(d.memberKey()) ? Items.BARREL : Items.HAY_BLOCK);
-                    d.workPose("carry");
                     MurimMod.LOGGER.info("Стенд секты: {} с грузом в {} блоках от кладовой", d.memberKey(), back);
                 }
+            }
+            case "kitchen" -> {
+                // The hall is cleared of everyone but the kitchen staff (a meal crowds the aisle and hides the poses), and the cook and the
+                // server start at their working spots (the film shows poses; the walk to the stove is a world question, not a pose one).
+                Vec3 centre = null;
+                for (io.github.verycooltimo.murim.entity.SectDisciple d : people) {
+                    if (d.role() == io.github.verycooltimo.murim.sect.SectRole.COOK) {
+                        SectLife.Resolved r = SectLife.resolve(d);
+                        if (r != null) centre = r.spot();
+                    }
+                }
+                for (io.github.verycooltimo.murim.entity.SectDisciple d : people) {
+                    boolean staff = d.role() == io.github.verycooltimo.murim.sect.SectRole.COOK
+                            || d.role() == io.github.verycooltimo.murim.sect.SectRole.WATER_CARRIER;
+                    if (!staff && centre != null && d.position().distanceTo(centre) < 18.0D) {
+                        d.discard();
+                    } else if (staff) {
+                        SectLife.Resolved r = SectLife.resolve(d);
+                        if (r != null) {
+                            d.moveTo(r.spot().x, r.spot().y, r.spot().z, r.yaw(), 0.0F);
+                            // The walker planned its way from where he was: forget it, or he walks the old legs away from the spot.
+                            d.walking().stop();
+                        }
+                    }
+                }
+                // The invisible player stands at the camera: a person who feels him near steps aside to make room (SectSocial#yielding)
+                // and the cook would never stand at his stove, so the player waits well behind the shot (the camera is an armor stand).
+                if (centre != null) {
+                    Vec3 away = SectLife.stand(level, centre.add(0.0D, 0.0D, 14.0D));
+                    sp.teleportTo(level, away.x, away.y, away.z, 0.0F, 0.0F);
+                }
+                MurimMod.LOGGER.info("Стенд секты: кухня расчищена, повар и водонос на местах");
             }
             case "wound" -> {
                 Vec3 ring = layout.at("training", -6.5D, -8.5D);
@@ -487,6 +545,20 @@ public final class SectLifeCapture {
         MurimMod.LOGGER.info("Стенд секты: игрок применил технику — {}", ok ? "запуск" : "не запустилась (реакция напрямую)");
     }
 
+    /** Точка сцены: площадка плана со смещением или {@code abs:x,y,z} — клетка рамки выгрузки запечённой секты на живой горе. */
+    private static Vec3 scenePoint(MountHuaSite site, SectLayout layout, String zone, double du, double dv) {
+        if (!zone.startsWith("abs:")) {
+            return layout.at(zone, du, dv);
+        }
+        String[] v = zone.substring(4).split(",");
+        double x = Double.parseDouble(v[0]);
+        double y = Double.parseDouble(v[1]);
+        double z = Double.parseDouble(v[2]);
+        var anchor = io.github.verycooltimo.murim.sect.SectLayoutFile.Anchor.to(io.github.verycooltimo.murim.sect.SectLayoutFile.shipped().frame(), site);
+        net.minecraft.core.BlockPos cell = anchor.map(net.minecraft.core.BlockPos.containing(x, y, z));
+        return new Vec3(cell.getX() + (x - Math.floor(x)), cell.getY() + (y - Math.floor(y)), cell.getZ() + (z - Math.floor(z)));
+    }
+
     /** Камера — стойка сцены, как только она пришла на клиент. */
     private static void follow(Minecraft mc) {
         Entity newest = null;
@@ -537,8 +609,8 @@ public final class SectLifeCapture {
         for (ServerLevel l : server.getAllLevels()) {
             l.setDayTime(day + s.time());
         }
-        Vec3 cam = layout.at(s.zone(), s.du(), s.dv()).add(0.0D, s.dy(), 0.0D);
-        Vec3 look = layout.at(s.lookZone(), s.lu(), s.lv()).add(0.0D, s.ly(), 0.0D);
+        Vec3 cam = scenePoint(site, layout, s.zone(), s.du(), s.dv()).add(0.0D, s.dy(), 0.0D);
+        Vec3 look = scenePoint(site, layout, s.lookZone(), s.lu(), s.lv()).add(0.0D, s.ly(), 0.0D);
         ServerPlayer p = server.getPlayerList().getPlayers().get(0);
         // Свой ученик: глава не выходит встречать чужака к воротам. В сценах иерархии — свежий новичок.
         if ("summary".equals(s.act())) {

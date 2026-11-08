@@ -72,8 +72,8 @@
   "tier": "advanced",
   "requires": [
     {
-      "technique": "murim:seven_plum_rush",
-      "star": 5
+      "technique": "murim:seven_plum_basic",
+      "star": 7
     }
   ]
 }

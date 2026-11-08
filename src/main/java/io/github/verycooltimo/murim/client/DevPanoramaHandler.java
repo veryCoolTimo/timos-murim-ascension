@@ -25,7 +25,7 @@ import net.neoforged.neoforge.client.event.ClientTickEvent;
  * built, and saves one screenshot per viewpoint as {@code screenshots/murim_pano_<name>.png}.
  *
  * <p>Viewpoints: env {@code MURIM_PANO_SHOTS} — comma list of names known to
- * {@code /murim mounthua tp} or custom {@code name@u:v:nominalY:lookU:lookV:pitch} in the
+ * {@code /murim dev hua tp} or custom {@code name@u:v:nominalY:lookU:lookV:pitch} in the
  * mountain's local frame. Env {@code MURIM_PANO_RD} — render distance (default 24),
  * {@code MURIM_PANO_STABLE} — ticks of unchanged sections before a shot (default 80; low for
  * fly-through frames), {@code MURIM_CAPTURE_FOV} — field of view, {@code MURIM_PANO_TIME} — day time (default 4000).

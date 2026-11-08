@@ -17,26 +17,18 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Client side of body training: who trains what (for the clips and the props on the back and in the hands), and the
- * local player's set for the HUD. Fed by {@link TrainingPayloads}; decides nothing.
+ * Client side of the sect drills (stone carry, South Peak climb, trail sprint): who does what (for the clip and the stone
+ * in the hands), and the local player's drill for the HUD. Fed by {@link TrainingPayloads}; decides nothing.
  *
- * <p>Clips (blockout, {@code tools/art/training_anims.py}; the author polishes them in Blockbench):
- * {@code training_squat} per rep, {@code training_horse} loop, {@code training_plank} into the plank (holds),
- * {@code training_pushup(_weighted)} per rep (starts and ends in the plank, holds), {@code training_plank_up} out of it,
- * {@code training_carry} loop (upper body).
+ * <p>Clip (blockout, {@code tools/art/training_anims.py}; the author polishes it in Blockbench): {@code training_carry}
+ * loop (upper body). The squat / push-up / horse clips are gone with the Shift-started sets (25.10).
  */
 @EventBusSubscriber(modid = MurimMod.MODID, value = Dist.CLIENT)
 public final class ClientTraining {
 
-    static final ResourceLocation SQUAT = id("training_squat");
-    static final ResourceLocation HORSE = id("training_horse");
-    static final ResourceLocation PLANK = id("training_plank");
-    static final ResourceLocation PUSHUP = id("training_pushup");
-    static final ResourceLocation PUSHUP_WEIGHTED = id("training_pushup_weighted");
-    static final ResourceLocation PLANK_UP = id("training_plank_up");
     static final ResourceLocation CARRY = id("training_carry");
 
-    /** Exercise of each player entity in view (props, clip end). */
+    /** Drill of each player entity in view (props, clip end). */
     private static final Map<Integer, Exercise> ACTIVE = new HashMap<>();
 
     /** Local player's latest state and when it came (client game time). */
@@ -45,7 +37,7 @@ public final class ClientTraining {
     /** Last event that the HUD flashes, and when. */
     private static TrainingPayloads.Beat flash = TrainingPayloads.Beat.NONE;
     private static long flashAt;
-    private static TrainingPayloads.Body body = new TrainingPayloads.Body(0, 0.0F, 0.0F, 1.0F, 0, 0);
+    private static TrainingPayloads.Body body = new TrainingPayloads.Body(0, 0.0F, 0, 0);
 
     private ClientTraining() {
     }
@@ -78,7 +70,7 @@ public final class ClientTraining {
             if (s.beat() != TrainingPayloads.Beat.NONE) {
                 flash = s.beat();
                 flashAt = localAt;
-                beatSound(mc, s.beat(), s.reps());
+                beatSound(s.beat());
             }
             if (s.beat() == TrainingPayloads.Beat.FINISH) {
                 // The finished run stays on the HUD for a few seconds with its time.
@@ -93,23 +85,14 @@ public final class ClientTraining {
     }
 
     /**
-     * A quiet knock on each rep for the trainee only (codex 05.10: the colour of the flash alone does not read):
-     * higher on the beat, lower near it, dull off it; a double knock and an exhale when a set with reps ends.
+     * A quiet knock for the trainee only: a block gained with the stone, a checkpoint reached.
      * API: reference/minecraft-src/net/minecraft/client/resources/sounds/SimpleSoundInstance.java#forUI
      */
-    private static void beatSound(Minecraft mc, TrainingPayloads.Beat beat, int reps) {
-        // 05.10: wooden knock instead of note-block hats; pitch still separates good / fair / off.
+    private static void beatSound(TrainingPayloads.Beat beat) {
         var rep = io.github.verycooltimo.murim.registry.ModSounds.TRAINING_REP;
         switch (beat) {
-            case GOOD -> io.github.verycooltimo.murim.client.Sfx.ui(rep, 0.5F, 1.25F);
-            case FAIR -> io.github.verycooltimo.murim.client.Sfx.ui(rep, 0.4F, 1.0F);
-            case OFF, RUSHED -> io.github.verycooltimo.murim.client.Sfx.ui(rep, 0.35F, 0.7F);
+            case GAIN -> io.github.verycooltimo.murim.client.Sfx.ui(rep, 0.5F, 1.25F);
             case REACH -> io.github.verycooltimo.murim.client.Sfx.ui(rep, 0.55F, 1.5F);
-            case END -> {
-                if (reps > 0) {
-                    io.github.verycooltimo.murim.client.Sfx.ui(io.github.verycooltimo.murim.registry.ModSounds.TRAINING_SET, 0.6F, 1.0F);
-                }
-            }
             default -> {
             }
         }
@@ -118,38 +101,20 @@ public final class ClientTraining {
     private static TrainingPayloads.State finished;
     private static long finishedAt;
 
-    /** Plays the clip of a training event on a player (the owner and anyone watching). */
+    /** Plays the clip of a drill event on a player (the owner and anyone watching). */
     private static void clip(AbstractClientPlayer player, Exercise e, Exercise before, TrainingPayloads.Beat beat) {
         if (e == null) {
             return;
         }
         switch (beat) {
             case START -> {
-                if (e.pushup()) {
-                    MurimPlayerAnimations.play(player, PLANK);
-                } else if (e == Exercise.CARRY_STONE) {
+                if (e == Exercise.CARRY_STONE) {
                     MurimPlayerAnimations.playBlended(player, CARRY, 5);
-                }
-            }
-            case GOOD, FAIR, OFF -> {
-                if (e == Exercise.SQUAT) {
-                    MurimPlayerAnimations.play(player, SQUAT);
-                } else if (e.pushup()) {
-                    MurimPlayerAnimations.play(player, e == Exercise.PUSHUP_WEIGHTED ? PUSHUP_WEIGHTED : PUSHUP);
-                }
-            }
-            case SWITCH -> {
-                if (e == Exercise.HORSE_STANCE) {
-                    MurimPlayerAnimations.playBlended(player, HORSE, 5);
-                } else {
-                    MurimPlayerAnimations.stopBlended(player, 6);
                 }
             }
             case END -> {
                 Exercise was = before != null ? before : e;
-                if (was.pushup()) {
-                    MurimPlayerAnimations.play(player, PLANK_UP);
-                } else if (!was.route()) {
+                if (!was.route()) {
                     MurimPlayerAnimations.stopBlended(player, 6);
                 }
             }
@@ -158,12 +123,12 @@ public final class ClientTraining {
         }
     }
 
-    /** Exercise a player entity is doing right now (props layer), or null. */
+    /** Drill a player entity is doing right now (props layer), or null. */
     public static Exercise of(int entityId) {
         return ACTIVE.get(entityId);
     }
 
-    /** The local player's set or run, or null. */
+    /** The local player's drill, or null. */
     public static TrainingPayloads.State local() {
         return local;
     }
@@ -194,7 +159,7 @@ public final class ClientTraining {
 
     /**
      * Auto-run and auto-shadow of footwork (sprint 0.5 s, still crouch 0.7 s — ClientTechniqueHandler) stay quiet while
-     * the local player trains: a held crouch here is a horse stance, a sprint up the trail is without qi.
+     * the local player does a drill: the trail sprint is without qi.
      */
     public static boolean suppressFootwork() {
         return local != null;

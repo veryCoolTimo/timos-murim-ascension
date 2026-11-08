@@ -1,0 +1,23 @@
+{
+  "display": {
+    "icon": {
+      "id": "murim:ach_stars_6"
+    },
+    "title": {
+      "translate": "advancement.murim.stars_6.title"
+    },
+    "description": {
+      "translate": "advancement.murim.stars_6.desc"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "parent": "murim:stars_1",
+  "criteria": {
+    "done": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

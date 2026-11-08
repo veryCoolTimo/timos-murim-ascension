@@ -39,7 +39,7 @@ public final class SectOrnaments {
                 .requiresCorrectToolForDrops().noOcclusion();
     }
     private static void tabs(BuildCreativeModeTabContentsEvent event) {
-        if (event.getTabKey().equals(ModCreativeTabs.MURIM.getKey())) ALL_ITEMS.forEach(i -> event.accept(i.get()));
+        if (event.getTabKey().equals(ModCreativeTabs.MURIM.getKey())) ALL_ITEMS.forEach(i -> { if (i.get().getBlock() != INSCRIBED_STELE.get()) event.accept(i.get()); }); // the stele is parked (23.10)
     }
     public static void register(IEventBus bus) { BLOCKS.register(bus); ITEMS.register(bus); bus.addListener(SectOrnaments::tabs); }
 }

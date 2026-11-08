@@ -2,11 +2,16 @@ package io.github.verycooltimo.murim.world.hua;
 
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import io.github.verycooltimo.murim.MurimMod;
+import io.github.verycooltimo.murim.sect.SectLayoutFile;
+import net.minecraft.core.BlockPos;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
@@ -20,6 +25,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
+import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
@@ -27,8 +33,8 @@ import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
 /**
- * {@code /murim mounthua} — where the mountain is (clickable teleports to the sect zones),
- * {@code /murim mounthua tp <place>} — teleport for testing, {@code /murim mounthua pregen
+ * {@code /murim dev hua} — where the mountain is (clickable teleports to the sect zones),
+ * {@code /murim dev hua tp <place>} — teleport for testing, {@code /murim dev hua pregen
  * [margin]} — generate every chunk of the mountain (plus a margin in blocks) ahead of time (spread over ticks, 25 ms per tick).
  * Permission 2, like the rest of {@code /murim}. The in-game way to find the mountain (an echo)
  * comes later.
@@ -46,8 +52,7 @@ public final class MountHuaCommand {
     private MountHuaCommand() {
     }
 
-    @SubscribeEvent
-    static void onRegisterCommands(RegisterCommandsEvent event) {
+    public static LiteralArgumentBuilder<CommandSourceStack> node() {
         List<String> names = new ArrayList<>(PLACES);
         for (MountHuaPlan.Zone z : MountHuaPlan.ZONES) {
             names.add(z.id());
@@ -57,9 +62,7 @@ public final class MountHuaCommand {
                 names.add(l.id());
             }
         }
-        event.getDispatcher().register(Commands.literal("murim")
-                .requires(source -> source.hasPermission(2))
-                .then(Commands.literal("mounthua")
+        return Commands.literal("hua")
                         .executes(MountHuaCommand::info)
                         .then(Commands.literal("tp")
                                 .then(Commands.argument("place", StringArgumentType.word())
@@ -69,9 +72,120 @@ public final class MountHuaCommand {
                                 .then(Commands.argument("place", StringArgumentType.word())
                                         .suggests((c, b) -> SharedSuggestionProvider.suggest(names, b))
                                         .executes(c -> probe(c, StringArgumentType.getString(c, "place")))))
+                        .then(Commands.literal("lingzhi").executes(c -> lingzhi(c, "near"))
+                                .then(Commands.literal("where").executes(c -> lingzhi(c, "where")))
+                                .then(Commands.literal("check").executes(c -> lingzhi(c, "check")))
+                                .then(Commands.literal("near").executes(c -> lingzhi(c, "near")))
+                                .then(Commands.literal("far").executes(c -> lingzhi(c, "far")))
+                                .then(Commands.literal("path").executes(c -> teleport(c, "pav_east"))))
+                        .then(Commands.literal("mend").executes(MountHuaCommand::mendTrail))
                         .then(Commands.literal("pregen").executes(c -> pregen(c, 0))
+                                .then(Commands.literal("cells").executes(MountHuaCommand::pregenCells))
+                                .then(Commands.literal("sample")
+                                        .then(Commands.argument("patches", IntegerArgumentType.integer(4, 400))
+                                                .then(Commands.argument("radius", IntegerArgumentType.integer(1, 8))
+                                                        .executes(c -> pregenSample(c, IntegerArgumentType.getInteger(c, "patches"),
+                                                                IntegerArgumentType.getInteger(c, "radius"))))))
+                                .then(Commands.literal("trail").executes(MountHuaCommand::pregenTrail))
                                 .then(Commands.argument("margin", IntegerArgumentType.integer(0, 1024))
-                                        .executes(c -> pregen(c, IntegerArgumentType.getInteger(c, "margin")))))));
+                                        .executes(c -> pregen(c, IntegerArgumentType.getInteger(c, "margin")))));
+    }
+
+    private static int lingzhi(CommandContext<CommandSourceStack> context, String view)
+            throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+        MountHuaSite site = site(context);
+        if (site == null) return 0;
+        ServerLevel level = context.getSource().getServer().overworld();
+        BlockPos column = HuaHerbs.blackLingzhiSpot(site);
+        ChunkPos owner = new ChunkPos(column);
+        level.getChunk(owner.x, owner.z);
+        // Generate the neighbours through the level: includes the real feature order and later cross-border stamps.
+        for (int dz = -2; dz <= 2; dz++) for (int dx = -2; dx <= 2; dx++) {
+            level.getChunk(owner.x + dx, owner.z + dz);
+        }
+        BlockPos at = HuaHerbs.blackLingzhiSpot(level, site);
+        if (view.equals("check")) {
+            int count = 0;
+            BlockPos.MutableBlockPos sample = new BlockPos.MutableBlockPos();
+            for (int dz = -2; dz <= 2; dz++) for (int dx = -2; dx <= 2; dx++) {
+                var chunk = level.getChunk(owner.x + dx, owner.z + dz);
+                int minX = (owner.x + dx) * 16, minZ = (owner.z + dz) * 16;
+                for (int z = minZ; z < minZ + 16; z++) for (int x = minX; x < minX + 16; x++) {
+                    for (int y = level.getMinBuildHeight(); y < level.getMaxBuildHeight(); y++) {
+                        sample.set(x, y, z);
+                        if (chunk.getBlockState(sample).is(
+                                io.github.verycooltimo.murim.registry.ModBlocks.BLACK_LINGZHI_PLANT.get())) count++;
+                    }
+                }
+            }
+            boolean valid = count == 1 && level.getBlockState(at).is(
+                    io.github.verycooltimo.murim.registry.ModBlocks.BLACK_LINGZHI_PLANT.get())
+                    && level.getBlockState(at).canSurvive(level, at)
+                    && level.getBlockState(at.above()).is(net.minecraft.world.level.block.Blocks.STONE);
+            String result = "Black lingzhi generation check " + (valid ? "PASS" : "FAIL")
+                    + ": " + at + "; matching plants in generated 5x5=" + count;
+            if (!valid) {
+                context.getSource().sendFailure(Component.literal(result));
+                return 0;
+            }
+            context.getSource().sendSuccess(() -> Component.literal(result), false);
+            return 1;
+        }
+        if (view.equals("where")) {
+            context.getSource().sendSuccess(() -> Component.literal("Black lingzhi: " + at
+                    + "; block=" + level.getBlockState(at) + "; real top="
+                    + HuaHerbs.realTop(level, at.getX(), at.getZ())), false);
+            return 1;
+        }
+        var direction = HuaHerbs.dropDirection(site);
+        int start = view.equals("far") ? 10 : 1;
+        int end = view.equals("far") ? 14 : 32;
+        for (int distance = start; distance <= end; distance++) {
+            for (int up = view.equals("far") ? 3 : 0; up <= (view.equals("far") ? 12 : 3); up++) {
+                BlockPos feet = at.relative(direction, distance).above(up);
+                if (!level.getBlockState(feet).isAir() || !level.getBlockState(feet.above()).isAir()) continue;
+                ServerPlayer player = context.getSource().getPlayerOrException();
+                double x = feet.getX() + 0.5, y = feet.getY(), z = feet.getZ() + 0.5;
+                double dx = at.getX() + 0.5 - x, dz = at.getZ() + 0.5 - z;
+                float yaw = (float) Math.toDegrees(Math.atan2(-dx, dz));
+                float pitch = (float) -Math.toDegrees(Math.atan2(at.getY() + 0.25 - (y + 1.62), Math.hypot(dx, dz)));
+                player.teleportTo(level, x, y, z, yaw, pitch);
+                return 1;
+            }
+        }
+        context.getSource().sendFailure(Component.literal("No free filming position on the outward side; use lingzhi where."));
+        return 0;
+    }
+
+    /**
+     * Repairs the trail of a world made before the chunk-border fix (drops of up to 6 blocks): runs the trail mend over every chunk the
+     * trail crosses. It reads the bake and the plan, not the world, so it can run again and leaves other blocks alone.
+     */
+    private static int mendTrail(CommandContext<CommandSourceStack> context) {
+        MountHuaSite site = site(context);
+        if (site == null) {
+            return 0;
+        }
+        ServerLevel level = context.getSource().getServer().overworld();
+        java.util.Set<net.minecraft.world.level.ChunkPos> chunks = new java.util.TreeSet<>(java.util.Comparator
+                .<net.minecraft.world.level.ChunkPos>comparingInt(c -> c.x).thenComparingInt(c -> c.z));
+        for (int i = 0; i < site.shape().trailLength(); i++) {
+            double[] p = site.shape().trailPoint(i);
+            int[] w = site.toWorld(p[0], p[1]);
+            for (int dx = -1; dx <= 1; dx++) {
+                for (int dz = -1; dz <= 1; dz++) {
+                    chunks.add(new net.minecraft.world.level.ChunkPos((w[0] >> 4) + dx, (w[1] >> 4) + dz));
+                }
+            }
+        }
+        int mended = 0;
+        for (net.minecraft.world.level.ChunkPos c : chunks) {
+            level.getChunk(c.x, c.z);
+            mended += HuaTrailMend.apply(level, c, site);
+        }
+        int total = mended;
+        context.getSource().sendSuccess(() -> Component.literal("Trail mended: " + total + " columns in " + chunks.size() + " chunks"), true);
+        return 1;
     }
 
     private static MountHuaSite site(CommandContext<CommandSourceStack> context) {
@@ -98,9 +212,9 @@ public final class MountHuaCommand {
         for (String place : all) {
             line.append(" ").append(Component.literal("[" + place + "]").withStyle(Style.EMPTY
                     .withColor(0x9FD8A0)
-                    .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/murim mounthua tp " + place))
+                    .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/murim dev hua tp " + place))
                     .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
-                            Component.literal("/murim mounthua tp " + place)))));
+                            Component.literal("/murim dev hua tp " + place)))));
         }
         context.getSource().sendSuccess(() -> line, false);
         return 1;
@@ -124,15 +238,15 @@ public final class MountHuaCommand {
                 int z = (int) Math.floor(t[2]) + dz;
                 level.getChunk(x >> 4, z >> 4);
                 int ground = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING, x, z) - 1;
-                double plan = site.worldY(site.shape().height(site.localU(x + 0.5, z + 0.5), site.localV(x + 0.5, z + 0.5)));
+                double plan = site.worldY(site.shape().height(site.centerU(x, z), site.centerV(x, z)));
                 out.append(String.format(" [%d,%d g%d p%.0f %s]", x, z, ground, plan,
                         level.getBlockState(new net.minecraft.core.BlockPos(x, ground, z)).getBlock().getName().getString()));
             }
         }
         int cx = (int) Math.floor(t[0]);
         int cz = (int) Math.floor(t[2]);
-        out.append(String.format(" | blend %.2f column:", site.shape().blend(site.localU(cx + 0.5, cz + 0.5),
-                site.localV(cx + 0.5, cz + 0.5))));
+        out.append(String.format(" | blend %.2f column:", site.shape().blend(site.centerU(cx, cz),
+                site.centerV(cx, cz))));
         for (int y = 60; y < 120; y++) {
             String n = level.getBlockState(new net.minecraft.core.BlockPos(cx, y, cz)).getBlock().getDescriptionId();
             out.append(' ').append(y).append('=').append(n.substring(n.lastIndexOf('.') + 1));
@@ -168,10 +282,93 @@ public final class MountHuaCommand {
         }
         ServerLevel level = context.getSource().getServer().overworld();
         resolveSurface(level, target);
+        placeInsideFreeSpace(level, site, place, target);
         player.teleportTo(level, target[0], target[1], target[2], (float) target[3], (float) target[4]);
         context.getSource().sendSuccess(() -> Component.translatable("command.murim.mounthua.teleported", place,
                 (int) target[0], (int) target[1], (int) target[2]), false);
         return 1;
+    }
+
+    /**
+     * A zone centre of the plan is a point on the plan, not a place a body fits: in the baked sect the main hall stands on a raised
+     * floor and the plan point lies in its wall (23.10: {@code hua tp main_hall} suffocated the player in 40 s). A building of the
+     * built sect is entered on the floor of its largest ground-floor room; anything else that is solid at the target moves to the
+     * nearest free cell. A viewpoint in the air (panorama, creative) is left alone.
+     */
+    static void placeInsideFreeSpace(ServerLevel level, MountHuaSite site, String place, double[] target) {
+        BlockPos at = BlockPos.containing(target[0], target[1], target[2]);
+        level.getChunk(at.getX() >> 4, at.getZ() >> 4);
+        if (level.noCollision(body(at))) {
+            return;     // free space (or a viewpoint in the air): nothing to move
+        }
+        if (site.canonical()) {
+            SectLayoutFile file = SectLayoutFile.anchored(site);
+            SectLayoutFile.Room best = null;
+            if (file != null) {
+                for (SectLayoutFile.Room r : file.rooms()) {
+                    if (r.building().equals(place) && r.floor() == 0 && !"corridor".equals(r.function())
+                            && (best == null || r.walkable() > best.walkable())) {
+                        best = r;
+                    }
+                }
+            }
+            if (best != null) {
+                BlockPos centre = new BlockPos((best.bounds().x0() + best.bounds().x1()) / 2, best.y(), (best.bounds().z0() + best.bounds().z1()) / 2);
+                level.getChunk(centre.getX() >> 4, centre.getZ() >> 4);
+                BlockPos stand = clearStand(level, centre, 12, 1, 1);
+                if (stand != null) {
+                    setTarget(target, stand);
+                    return;
+                }
+            }
+        }
+        BlockPos stand = clearStand(level, at, 10, 8, 4);
+        if (stand != null) {
+            setTarget(target, stand);
+        }
+    }
+
+    private static void setTarget(double[] target, BlockPos stand) {
+        target[0] = stand.getX() + 0.5;
+        target[1] = stand.getY();
+        target[2] = stand.getZ() + 0.5;
+    }
+
+    /** The body of a player fits at the feet cell, on a floor. */
+    static boolean fits(ServerLevel level, BlockPos feet) {
+        return level.noCollision(body(feet)) && level.getFluidState(feet).isEmpty()
+                && !level.getBlockState(feet.below()).getCollisionShape(level, feet.below()).isEmpty();
+    }
+
+    private static net.minecraft.world.phys.AABB body(BlockPos feet) {
+        return new net.minecraft.world.phys.AABB(feet.getX() + 0.5 - 0.31, feet.getY() + 0.001, feet.getZ() + 0.5 - 0.31,
+                feet.getX() + 0.5 + 0.31, feet.getY() + 1.8, feet.getZ() + 0.5 + 0.31);
+    }
+
+    /**
+     * The free standing cell nearest to {@code around} (horizontal distance first) within {@code radius} blocks, {@code up} cells
+     * above and {@code down} cells below it; null when there is none.
+     */
+    public static BlockPos clearStand(ServerLevel level, BlockPos around, int radius, int up, int down) {
+        BlockPos best = null;
+        double bestD = Double.MAX_VALUE;
+        for (int dx = -radius; dx <= radius; dx++) {
+            for (int dz = -radius; dz <= radius; dz++) {
+                double flat = dx * dx + dz * dz;
+                if (flat > radius * radius || flat >= bestD) {
+                    continue;
+                }
+                for (int dy = -down; dy <= up; dy++) {
+                    BlockPos p = around.offset(dx, dy, dz);
+                    double d = flat + dy * dy * 0.25;
+                    if (d < bestD && level.isLoaded(p) && fits(level, p)) {
+                        best = p;
+                        bestD = d;
+                    }
+                }
+            }
+        }
+        return best;
     }
 
     /**
@@ -295,6 +492,118 @@ public final class MountHuaCommand {
                 queue.add(new ChunkPos(cx, cz));
             }
         }
+        pregen = new Pregen(context.getSource().getServer(), queue, queue.size());
+        context.getSource().sendSuccess(() -> Component.translatable("command.murim.mounthua.pregen", queue.size()), true);
+        return 1;
+    }
+
+    /**
+     * Dev/test tool: square patches of (2 radius + 1)^2 chunks spread over the zones of the mountain, in four kinds in equal numbers: the massif,
+     * the foothills inside, the belt's outer band (weight 0..0.5, vanilla biome until 26.10) and its margin (weight 0, Hua since 26.10). A few
+     * minutes of work instead of a quarter of an hour; enough to count what hangs in the air and which biome stands where. The centres are
+     * logged ("Mount Hua pregen sample: ...") so that a frame can be taken at each.
+     */
+    private static int pregenSample(CommandContext<CommandSourceStack> context, int patches, int radius) {
+        MountHuaSite site = site(context);
+        if (site == null) {
+            return 0;
+        }
+        List<List<ChunkPos>> kinds = List.of(new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
+        String[] names = {"massif", "foothills", "band", "margin"};
+        for (int cx = site.minX() >> 4; cx <= site.maxX() >> 4; cx++) {
+            for (int cz = site.minZ() >> 4; cz <= site.maxZ() >> 4; cz++) {
+                double u = site.centerU(cx * 16 + 8, cz * 16 + 8);
+                double v = site.centerV(cx * 16 + 8, cz * 16 + 8);
+                double w = site.shape().blend(u, v);
+                if (w >= 1) {
+                    kinds.get(site.shape().massif(u, v) > HuaBiomes.MASSIF ? 0 : 1).add(new ChunkPos(cx, cz));
+                } else if (w > 0 && w < 0.5) {
+                    kinds.get(2).add(new ChunkPos(cx, cz));
+                } else if (w <= 0 && HuaBiomes.classify(site.shape(), u, v) != HuaBiomes.Zone.NONE) {
+                    kinds.get(3).add(new ChunkPos(cx, cz));
+                }
+            }
+        }
+        LinkedHashSet<ChunkPos> chunks = new LinkedHashSet<>();
+        int per = Math.max(1, patches / 4);
+        for (int k = 0; k < 4; k++) {
+            List<ChunkPos> list = kinds.get(k);
+            for (int i = 0; i < per && !list.isEmpty(); i++) {
+                ChunkPos c = list.get((int) ((i + 0.5) * list.size() / per));
+                MurimMod.LOGGER.info("Mount Hua pregen sample: {} centre x={} z={}", names[k], c.getMiddleBlockX(), c.getMiddleBlockZ());
+                for (int dx = -radius; dx <= radius; dx++) {
+                    for (int dz = -radius; dz <= radius; dz++) {
+                        chunks.add(new ChunkPos(c.x + dx, c.z + dz));
+                    }
+                }
+            }
+        }
+        ArrayDeque<ChunkPos> queue = new ArrayDeque<>(chunks);
+        pregen = new Pregen(context.getSource().getServer(), queue, queue.size());
+        context.getSource().sendSuccess(() -> Component.translatable("command.murim.mounthua.pregen", queue.size()), true);
+        return 1;
+    }
+
+    /**
+     * Dev/test tool: only the chunks that meet a cell of the baked sect (docs/adr/0004), about 8 % of the massif and a minute of
+     * work instead of a quarter of an hour; enough to compare the stamped buildings with the world they were cut from.
+     */
+    private static int pregenCells(CommandContext<CommandSourceStack> context) {
+        return pregenCellsAnd(context, false);
+    }
+
+    /**
+     * Dev/test tool: what {@code pregen cells} makes plus a strip of two chunks to each side of the whole trail from the foot to the sect:
+     * enough to walk and film the climb from the foot to the sect (the new-player walk audit) in minutes instead of a quarter of an hour.
+     */
+    private static int pregenTrail(CommandContext<CommandSourceStack> context) {
+        return pregenCellsAnd(context, true);
+    }
+
+    private static int pregenCellsAnd(CommandContext<CommandSourceStack> context, boolean trailStrip) {
+        MountHuaSite site = site(context);
+        if (site == null) {
+            return 0;
+        }
+        HuaBaked.Index index = HuaBaked.index(context.getSource().getServer());
+        if (index == null) {
+            context.getSource().sendFailure(Component.translatable("command.murim.mounthua.none"));
+            return 0;
+        }
+        LinkedHashSet<ChunkPos> chunks = new LinkedHashSet<>();
+        // the sect cells and the sparse pieces beside them (the author's climb, the foot lake, the dorm staircase: HuaBakedExtra)
+        List<HuaBaked.Index> indexes = new ArrayList<>(List.of(index));
+        HuaBaked.Index extra = HuaBakedExtra.index(context.getSource().getServer());
+        if (extra != null) {
+            indexes.add(extra);
+        }
+        for (HuaBaked.Index ix : indexes) {
+            for (Map.Entry<HuaBaked.Group, HuaBaked.Cell> e : HuaBaked.cells(ix)) {
+                BoundingBox box = HuaBaked.cellBox(ix, e.getKey(), e.getValue(), site);
+                for (int cx = box.minX() >> 4; cx <= box.maxX() >> 4; cx++) {
+                    for (int cz = box.minZ() >> 4; cz <= box.maxZ() >> 4; cz++) {
+                        chunks.add(new ChunkPos(cx, cz));
+                    }
+                }
+            }
+        }
+        if (trailStrip) {
+            List<MountHuaPlan.TrailPoint> trail = MountHuaPlan.TRAIL;
+            for (int i = 0; i + 1 < trail.size(); i++) {
+                MountHuaPlan.TrailPoint a = trail.get(i);
+                MountHuaPlan.TrailPoint b = trail.get(i + 1);
+                int steps = (int) Math.ceil(Math.hypot(b.u() - a.u(), b.v() - a.v()) / 8.0D);
+                for (int k = 0; k <= steps; k++) {
+                    int[] w = site.toWorld(a.u() + (b.u() - a.u()) * k / (double) steps, a.v() + (b.v() - a.v()) * k / (double) steps);
+                    for (int cx = (w[0] >> 4) - 2; cx <= (w[0] >> 4) + 2; cx++) {
+                        for (int cz = (w[1] >> 4) - 2; cz <= (w[1] >> 4) + 2; cz++) {
+                            chunks.add(new ChunkPos(cx, cz));
+                        }
+                    }
+                }
+            }
+        }
+        ArrayDeque<ChunkPos> queue = new ArrayDeque<>(chunks);
         pregen = new Pregen(context.getSource().getServer(), queue, queue.size());
         context.getSource().sendSuccess(() -> Component.translatable("command.murim.mounthua.pregen", queue.size()), true);
         return 1;

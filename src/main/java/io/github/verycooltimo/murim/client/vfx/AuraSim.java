@@ -136,12 +136,18 @@ public final class AuraSim {
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.level == null) {
             EMITTERS.clear();
+            VfxBudget.reset();
             return;
         }
         if (minecraft.isPaused()) {
             return;
         }
         ticks++;
+        int live = 0;
+        for (Emitter held : EMITTERS.values()) {
+            live += held.particles.size();
+        }
+        VfxBudget.setAura(live);
         for (Int2ObjectMap.Entry<AuraState> entry : ClientAuraState.all().int2ObjectEntrySet()) {
             Entity entity = minecraft.level.getEntity(entry.getIntKey());
             if (!(entity instanceof LivingEntity living) || !living.isAlive()
@@ -150,7 +156,9 @@ public final class AuraSim {
             }
             Emitter emitter = EMITTERS.computeIfAbsent(entity.getId(), Emitter::new);
             emitter.lastSeen = ticks;
+            int before = emitter.particles.size();
             spawn(emitter, living, entry.getValue(), minecraft);
+            VfxBudget.addAura(emitter.particles.size() - before);
         }
         var it = EMITTERS.int2ObjectEntrySet().iterator();
         while (it.hasNext()) {
@@ -167,11 +175,17 @@ public final class AuraSim {
 
     private static void spawn(Emitter e, LivingEntity entity, AuraState aura, Minecraft minecraft) {
         int rank = aura.rank();
-        if (rank < 2 || e.particles.size() >= CAP) {
+        if (rank < 2 || e.particles.size() >= CAP || !VfxBudget.hasRoom()) {
             return;
         }
         Random r = e.random;
-        float intensity = INTENSITY[rank];
+        float scene = io.github.verycooltimo.murim.client.sect.HeadIntroCamera.auraScale(entity.getId(), 0);
+        // Meditation uses the server snapshot of the breathing slot; rank tables remain the ceiling.
+        float mastery = entity == minecraft.player
+                && io.github.verycooltimo.murim.client.ClientMeditationState.state().active()
+                ? io.github.verycooltimo.murim.client.ClientMeditationState.state().auraScale() : 1.0F;
+        scene *= mastery;
+        float intensity = INTENSITY[rank] * scene;
         double h = entity.getBbHeight();
         double radius = entity.getBbWidth() * 0.5D + 0.05D;
         Vec3 feet = entity.position();
@@ -192,7 +206,7 @@ public final class AuraSim {
                 spot[2] = 6 + r.nextInt(11);
             }
         }
-        e.flameDebt += FLAME_RATE[rank];
+        e.flameDebt += FLAME_RATE[rank] * scene;
         double sc = h / 2.0D;
         while (e.flameDebt >= 1.0F) {
             e.flameDebt -= 1.0F;
@@ -214,7 +228,7 @@ public final class AuraSim {
         }
 
         // Искры и угли.
-        e.sparkDebt += 0.25F * rank * (aura.demonic() ? 1.6F : 1.0F);
+        e.sparkDebt += 0.25F * rank * (aura.demonic() ? 1.6F : 1.0F) * mastery;
         while (e.sparkDebt >= 1.0F) {
             e.sparkDebt -= 1.0F;
             double angle = r.nextDouble() * Math.PI * 2.0D;
@@ -226,7 +240,7 @@ public final class AuraSim {
 
         // Обломки: с Пика давление поднимает куски пола вокруг.
         if (rank >= 4) {
-            e.debrisDebt += 0.15F * (rank - 3);
+            e.debrisDebt += 0.15F * (rank - 3) * mastery;
             while (e.debrisDebt >= 1.0F) {
                 e.debrisDebt -= 1.0F;
                 double angle = r.nextDouble() * Math.PI * 2.0D;

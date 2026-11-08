@@ -5,6 +5,23 @@
     {
       "when": [
         {
+          "free": false,
+          "min_standing": "first"
+        }
+      ],
+      "node": "busy_office"
+    },
+    {
+      "when": [
+        {
+          "min_standing": "first"
+        }
+      ],
+      "node": "office"
+    },
+    {
+      "when": [
+        {
           "free": false
         }
       ],
@@ -80,6 +97,19 @@
       "gesture": "nod",
       "options": [
         {
+          "text": "dialogue.murim.approach.opt.not_now",
+          "when": [
+            {
+              "social": "approaching"
+            }
+          ],
+          "actions": [
+            {
+              "type": "approach_decline"
+            }
+          ]
+        },
+        {
           "text": "dialogue.murim.seo_ho.opt.talk",
           "next": "topics"
         },
@@ -127,7 +157,7 @@
       ]
     },
     "greet_champion": {
-      "gesture": "bow",
+      "gesture": "nod",
       "options": [
         {
           "text": "dialogue.murim.seo_ho.opt.talk",
@@ -187,7 +217,8 @@
           "text": "dialogue.murim.seo_ho.opt.strength",
           "when": [
             {
-              "below_rank": 2
+              "below_rank": 2,
+              "below_standing": "first"
             }
           ],
           "next": "t_strength_low"
@@ -196,7 +227,8 @@
           "text": "dialogue.murim.seo_ho.opt.strength",
           "when": [
             {
-              "min_rank": 2
+              "min_rank": 2,
+              "below_standing": "first"
             }
           ],
           "next": "t_strength_high"
@@ -301,6 +333,89 @@
       ],
       "gesture": "explain",
       "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "office": {
+      "random": [
+        "dialogue.murim.seo_ho.office.1",
+        "dialogue.murim.seo_ho.office.2",
+        "dialogue.murim.seo_ho.office.3"
+      ],
+      "args": [
+        "position"
+      ],
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.approach.opt.not_now",
+          "when": [
+            {
+              "social": "approaching"
+            }
+          ],
+          "actions": [
+            {
+              "type": "approach_decline"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.office.opt.moment",
+          "next": "topics_office"
+        },
+        {
+          "text": "dialogue.murim.office.opt.spar",
+          "when": [
+            {
+              "free": true
+            }
+          ],
+          "next": "office_spar"
+        },
+        {
+          "text": "dialogue.murim.bout.opt.ring",
+          "when": [
+            {
+              "social": "progression:bout_menu"
+            }
+          ],
+          "actions": [
+            {
+              "type": "progression_menu",
+              "value": "bouts"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "topics_office": {
+      "random": [
+        "dialogue.murim.seo_ho.topics_office.1",
+        "dialogue.murim.seo_ho.topics_office.2"
+      ],
+      "args": [
+        "position"
+      ],
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.seo_ho.opt.watch",
+          "next": "t_watch"
+        },
+        {
+          "text": "dialogue.murim.seo_ho.opt.others",
+          "next": "t_others"
+        },
+        {
+          "text": "dialogue.murim.social.opt.news",
+          "next": "sect_news"
+        },
         {
           "text": "dialogue.murim.opt.leave"
         }

@@ -2,7 +2,6 @@ package io.github.verycooltimo.murim.world.hua;
 
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
-import io.github.verycooltimo.murim.MurimMod;
 import io.github.verycooltimo.murim.dev.DevRegionCommand;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -15,26 +14,19 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.network.chat.Component;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.loading.FMLEnvironment;
-import net.neoforged.neoforge.event.RegisterCommandsEvent;
 
 /** Dev only. Default is dry-run; apply always recomputes and saves a snapshot before any mutation. */
-@EventBusSubscriber(modid = MurimMod.MODID)
 public final class HuaRegradeCommand {
     private HuaRegradeCommand() { }
-    @SubscribeEvent
-    static void commands(RegisterCommandsEvent event) {
-        if (FMLEnvironment.production) return;
-        event.getDispatcher().register(Commands.literal("murim")
-                .then(Commands.literal("dev").requires(s -> s.hasPermission(4))
-                        .then(Commands.literal("hua").then(Commands.literal("regrade")
+    /** {@code /murim dev hua regrade ...}: a child of the {@code hua} group; permission 4 is added by the caller. */
+    public static com.mojang.brigadier.builder.LiteralArgumentBuilder<net.minecraft.commands.CommandSourceStack> node() {
+        return Commands.literal("regrade")
                                 .then(Commands.argument("zones", StringArgumentType.greedyString())
                                         .suggests((c, b) -> SharedSuggestionProvider.suggest(
                                                 java.util.stream.Stream.concat(java.util.stream.Stream.of("sect_core", "dry-run sect_core", "apply sect_core"),
                                                         MountHuaPlan.ZONES.stream().filter(z -> !z.cave()).map(MountHuaPlan.Zone::id)), b))
-                                        .executes(HuaRegradeCommand::run))))));
+                                        .executes(HuaRegradeCommand::run));
     }
 
     private static int run(CommandContext<CommandSourceStack> context) {

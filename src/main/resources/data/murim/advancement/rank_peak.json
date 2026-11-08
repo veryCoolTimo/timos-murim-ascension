@@ -1,0 +1,23 @@
+{
+  "display": {
+    "icon": {
+      "id": "murim:ach_rank_peak"
+    },
+    "title": {
+      "translate": "advancement.murim.rank_peak.title"
+    },
+    "description": {
+      "translate": "advancement.murim.rank_peak.desc"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "parent": "murim:rank_first",
+  "criteria": {
+    "done": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

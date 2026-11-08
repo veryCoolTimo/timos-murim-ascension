@@ -20,7 +20,9 @@ import java.util.Map;
  * @param generation поколение (3 — Юль: у игрока всегда третье), 0 — не вступил
  * @param flags      флаги разговоров и уроков
  * @param contribution заслуги перед сектой за всё время (уроки, утренняя тренировка, пожертвования, защита горы);
- *                     растят положение ({@link SectStanding}). Версия 2: старые сохранения читаются с нулём
+ *                     растят положение ({@link SectStanding}): положение, должность и пороги диалогов считаются по этой
+ *                     сумме, а не по остатку (решение автора 19.10: «трата положение не роняет»). Версия 2: старые
+ *                     сохранения читаются с нулём
  * @param journal      фиксированные ключи серверных занятий: дни, этапы и счётчики; версия 5
  * @param spent        сколько заслуг потрачено в обмене ({@link MeritShop}, план §6.2: «тратить можно — положение не
  *                     падает»): остаток — {@link #merit()}. Версия 3: старые сохранения читаются с нулём
@@ -47,6 +49,9 @@ public record SectState(int version, boolean member, int generation, Set<String>
     public SectState {
         flags = Set.copyOf(flags);
         journal = Map.copyOf(journal);
+        // The balance is contribution - spent. A penalty larger than the balance lowers the total earned (it is a penalty,
+        // not a purchase) but must not leave a hidden debt that eats the next income: spending is never above the total.
+        spent = Math.max(0, Math.min(spent, Math.max(0, contribution)));
     }
 
     /** Old callers/saves have no activity journal. The sect attachment already copies on death. */

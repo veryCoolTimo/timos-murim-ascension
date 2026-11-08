@@ -1,0 +1,23 @@
+{
+  "display": {
+    "icon": {
+      "id": "murim:black_dragon_sword"
+    },
+    "title": {
+      "translate": "advancement.murim.boss.title"
+    },
+    "description": {
+      "translate": "advancement.murim.boss.desc"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "parent": "murim:camp_cleared",
+  "criteria": {
+    "done": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

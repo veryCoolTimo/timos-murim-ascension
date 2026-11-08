@@ -1,6 +1,7 @@
 package io.github.verycooltimo.murim.trade;
 
 import io.github.verycooltimo.murim.MurimMod;
+import io.github.verycooltimo.murim.sect.PlayerJournal;
 import io.github.verycooltimo.murim.world.hua.MountHuaSite;
 import io.github.verycooltimo.murim.world.hua.MountHuaSites;
 import net.minecraft.ChatFormatting;
@@ -155,7 +156,7 @@ public final class PeddlerSpawns {
         data.villageNext.put(key, now + VILLAGE_INTERVAL);
         data.setDirty();
         if (peddler != null) {
-            player.displayClientMessage(Component.translatable("murim.peddler.arrived").withStyle(ChatFormatting.GOLD), true);
+            PlayerJournal.record(player, Component.translatable("murim.peddler.arrived").withStyle(ChatFormatting.GOLD));
             MurimMod.LOGGER.info("Торговец пришёл в деревню у {}", peddler.blockPosition().toShortString());
         }
     }
@@ -163,7 +164,7 @@ public final class PeddlerSpawns {
     /**
      * Деревня, в чьей общей коробке стоит игрок (по x и z), а не в коробке отдельной постройки: коробки улиц
      * низкие, и ноги игрока на дороге могут оказаться над ними [НЕПРОВЕРЕНО: сравнить с
-     * {@code getStructureWithPieceAt} на дорогах деревни]. Проверено {@code /murim peddler} на сиде 20261004.
+     * {@code getStructureWithPieceAt} на дорогах деревни]. Проверено {@code /murim dev peddler} на сиде 20261004.
      */
     public static StructureStart village(ServerLevel level, BlockPos pos) {
         var registry = level.registryAccess().registryOrThrow(net.minecraft.core.registries.Registries.STRUCTURE);
@@ -191,6 +192,11 @@ public final class PeddlerSpawns {
         p.settle(pos, stay);
         level.addFreshEntity(p);
         return p;
+    }
+
+    /** World x/z of the foot-of-the-mountain stall (sect escort contracts end here). */
+    public static int[] stallXZ(MountHuaSite site) {
+        return site.toWorld(STALL_U, STALL_V);
     }
 
     /** Лавка у подножия Хуашань: стоит, пока жив лавочник; погиб — новый через сутки. */

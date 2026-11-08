@@ -1,0 +1,17 @@
+{
+  "id": "changed_breath",
+  "title": "quest.murim.changed_breath.title",
+  "steps": [
+    {
+      "type": "threshold",
+      "id": "changed_breath",
+      "npc": "gyeong_pil"
+    },
+    {
+      "type": "talk",
+      "id": "changed_breath_inspect",
+      "npc": "gyeong_pil",
+      "node": "changed_breath_inspect"
+    }
+  ]
+}

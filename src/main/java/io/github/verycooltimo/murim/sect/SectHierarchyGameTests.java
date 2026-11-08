@@ -113,16 +113,22 @@ public final class SectHierarchyGameTests {
             double d = guard.position().multiply(1, 0, 1).distanceTo(between.multiply(1, 0, 1));
             helper.assertTrue(d < 1.2D, "охранник не между игроком и главой: " + String.format("%.2f", d));
             // Охраны рядом нет — глава отвечает сам: «не сейчас».
-            guard.setPos(guard.getX() + 40.0D, guard.getY(), guard.getZ());
+            // out of the guards' reach (19.10: a guard is called from DialogueService.INTERCEPT_RANGE, no longer 14 blocks);
+            // straight up, so that the chunk stays loaded
+            double away = DialogueService.INTERCEPT_RANGE + 12.0D;
+            guard.setPos(guard.getX(), guard.getY() + away, guard.getZ());
             DialogueService.Route alone = DialogueService.route(p, leader);
-            guard.setPos(guard.getX() - 40.0D, guard.getY(), guard.getZ());
+            guard.setPos(guard.getX(), guard.getY() - away, guard.getZ());
             helper.assertTrue(alone.speaker() == leader && "busy".equals(alone.node()), "без охраны глава не сказал «не сейчас»: " + alone.node());
         });
     }
 
     // ------------------------------------------------------------------ охрана казны
 
-    /** A novice member may roam without combat or merit penalties; rights still govern private services. */
+    /**
+     * A novice member may roam without combat or merit penalties; rights still govern private services. The guard does react
+     * (warns, steps in the way, offers to lead him out: playtest 19.10, SectPlaytest1019GameTests), but never fights him.
+     */
     @GameTest(template = YARD, timeoutTicks = 600, batch = "sect_access_day")
     public static void goodMemberIsNotAttackedInTreasury(GameTestHelper helper) {
         SectGameTests.setPeriod(helper, SectSchedule.Period.TRAINING);
@@ -134,7 +140,7 @@ public final class SectHierarchyGameTests {
         int[] ticks = {0};
         helper.onEachTick(() -> {
             SectWatch.check(p, layout);
-            helper.assertTrue(guard.guardTarget() == null && guard.spar() == SectDisciple.Spar.NONE && !guard.escortGoal().forPlayer(p),
+            helper.assertTrue(guard.guardTarget() == null && guard.spar() == SectDisciple.Spar.NONE,
                     "good member attacked for walking");
             helper.assertTrue(p.getData(ModAttachments.SECT).contribution() == 8, "roaming penalized");
             if (++ticks[0] == 400) helper.succeed();

@@ -83,7 +83,7 @@ public final class PlaytestRegressionGameTests {
         for (boolean palm : new boolean[] {false, true}) {
             List<QiSwordHitPayload> packets = new ArrayList<>();
             ServerPlayer p = player(h, packets);
-            ResourceLocation technique = id(palm ? "rift_palm" : "crescent_sweep");
+            ResourceLocation technique = id(palm ? "demon_palm" : "crescent_sweep");
             DantianProfile ready = seed().withRank(QiSword.MIN_RANK)
                     .withStage(palm ? QiSword.MIN_STAGE : Realm.STAGE_INITIAL).withPool(1000);
             p.setData(ModAttachments.PROFILE, ready.withCirculating(ready.maxCirculating()));

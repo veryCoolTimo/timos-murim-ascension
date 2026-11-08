@@ -19,6 +19,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockSetType;
 import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
 import net.minecraft.world.phys.BlockHitResult;
+import io.github.verycooltimo.murim.sect.PlayerJournal;
 
 /**
  * Cold iron door of the vault and the penance cave. Redstone does not move it (a lever by the vault is no key);
@@ -56,7 +57,7 @@ public class ColdIronDoorBlock extends DoorBlock {
             return InteractionResult.CONSUME;
         }
         level.playSound(null, pos, SoundEvents.CHAIN_HIT, SoundSource.BLOCKS, 0.8F, 0.6F);
-        player.displayClientMessage(Component.translatable(SealAccess.lockedKey(level, pos)).withStyle(ChatFormatting.GRAY), true);
+        PlayerJournal.refuse(player, Component.translatable(SealAccess.lockedKey(level, pos)).withStyle(ChatFormatting.GRAY));
         return InteractionResult.CONSUME;
     }
 
@@ -76,6 +77,14 @@ public class ColdIronDoorBlock extends DoorBlock {
     @Override
     protected void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
         if (state.getValue(HALF) == DoubleBlockHalf.LOWER && isOpen(state)) {
+            // Someone free stands in the doorway or just behind it: keep it open (a released player is never shut in).
+            for (ServerPlayer p : level.players()) {
+                if (p.distanceToSqr(pos.getX() + 0.5D, pos.getY() + 1.0D, pos.getZ() + 0.5D) <= 9.0D && !PenanceService.sentenced(p)
+                        && !p.isSpectator() && SealAccess.mayOpen(p, pos)) {
+                    level.scheduleTick(pos, this, 40);
+                    return;
+                }
+            }
             setOpen(null, level, state, pos, false);
         }
     }

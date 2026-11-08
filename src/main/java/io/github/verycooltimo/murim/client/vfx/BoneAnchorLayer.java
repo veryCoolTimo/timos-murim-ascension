@@ -41,9 +41,14 @@ public class BoneAnchorLayer extends RenderLayer<AbstractClientPlayer, PlayerMod
     /** Кости, чьи позиции нужны эффектам. */
     public enum Bone {
         RIGHT_HAND,
+        RIGHT_FINGERS,
         LEFT_HAND,
         CHEST,
         DANTIAN,
+        // Torso-local frame for the pill game; independent of arm width and arm animation.
+        FLOW_BOTTOM,
+        FLOW_TOP,
+        FLOW_FRONT,
         // Концы конечностей и голова нужны сцене создания даньтяня: жилы растут ОТ них
         // к средоточию, и без них поток некуда было бы вести.
         RIGHT_FOOT,
@@ -54,6 +59,10 @@ public class BoneAnchorLayer extends RenderLayer<AbstractClientPlayer, PlayerMod
         // канал, проложенный по телу.
         RIGHT_KNEE,
         LEFT_KNEE,
+        RIGHT_ELBOW,
+        LEFT_ELBOW,
+        RIGHT_HIP,
+        LEFT_HIP,
         RIGHT_SHOULDER,
         LEFT_SHOULDER,
         // Середина и кончик меча в правой руке: след формы меча идёт по настоящему движению
@@ -62,7 +71,11 @@ public class BoneAnchorLayer extends RenderLayer<AbstractClientPlayer, PlayerMod
         BLADE_MID,
         BLADE_TIP,
         BLADE_BASE,
-        FINISHER_BLADE_TIP
+        FINISHER_BLADE_TIP,
+        // Corners of the head's front face, a hair in front of the skin: the breakthrough face shell is a decal over them.
+        FACE_RIGHT_TOP,
+        FACE_LEFT_TOP,
+        FACE_RIGHT_BOTTOM
     }
 
     /**
@@ -90,11 +103,48 @@ public class BoneAnchorLayer extends RenderLayer<AbstractClientPlayer, PlayerMod
 
     /** Запись точки кости не-игрока (NPC секты на модели бандита: client/sect/DiscipleRenderer). */
     public static void put(UUID entity, Bone bone, Vec3 at) {
+        TOUCHED.put(entity, now);
         POSITIONS.computeIfAbsent(entity, key -> new HashMap<>()).put(bone, at);
     }
 
     public static void clear() {
         POSITIONS.clear();
+        TOUCHED.clear();
+    }
+
+    /** Client tick of the last write per entity: entries nobody has refreshed lately are dropped by {@link #prune}. */
+    private static final Map<UUID, Integer> TOUCHED = new HashMap<>();
+    private static int now;
+    /** Ticks an entity may go undrawn before its anchors are forgotten (out of view that long, the anchors are stale). */
+    static final int MAX_AGE = 40;
+
+    /** Called once per client tick: forgets the entities not drawn for {@link #MAX_AGE} ticks. Cheap: runs every 20 ticks. */
+    public static void tick() {
+        now++;
+        if (now % 20 == 0) {
+            prune();
+        }
+    }
+
+    static void prune() {
+        TOUCHED.entrySet().removeIf(e -> {
+            boolean stale = now - e.getValue() > MAX_AGE;
+            if (stale) {
+                POSITIONS.remove(e.getKey());
+            }
+            return stale;
+        });
+    }
+
+    /** Entities held (for tests). */
+    static int size() {
+        return POSITIONS.size();
+    }
+
+    static void advanceForTest(int ticks) {
+        for (int i = 0; i < ticks; i++) {
+            tick();
+        }
     }
 
     @Override
@@ -102,22 +152,43 @@ public class BoneAnchorLayer extends RenderLayer<AbstractClientPlayer, PlayerMod
                        AbstractClientPlayer player, float limbSwing, float limbSwingAmount,
                        float partialTick, float ageInTicks, float yaw, float pitch) {
         PlayerModel<AbstractClientPlayer> model = getParentModel();
+        if(player==net.minecraft.client.Minecraft.getInstance().player
+                && (io.github.verycooltimo.murim.client.ClientMeditationState.breakthroughTarget()==4
+                    ||io.github.verycooltimo.murim.client.ClientMeditationState.rankUpRank()==4)) {
+            io.github.verycooltimo.murim.client.vfx.bt.BtImpactFrame.captureModel(model,poseStack);
+        }
+        TOUCHED.put(player.getUUID(), now);
         Map<Bone, Vec3> bones = POSITIONS.computeIfAbsent(player.getUUID(), key -> new HashMap<>());
 
         // Смещения внутри кости в модельных единицах: у Minecraft это шестнадцатые доли блока,
         // и ось Y направлена вниз. Кисть — нижний конец руки длиной 12 единиц.
+        bones.put(Bone.RIGHT_FINGERS, pointOf(poseStack, model.rightArm, 0.0F, 12.0F, -1.0F));
         bones.put(Bone.RIGHT_HAND, pointOf(poseStack, model.rightArm, 0.0F, 10.0F, 0.0F));
         bones.put(Bone.LEFT_HAND, pointOf(poseStack, model.leftArm, 0.0F, 10.0F, 0.0F));
         bones.put(Bone.CHEST, pointOf(poseStack, model.body, 0.0F, 2.0F, 0.0F));
         // Даньтянь — под пупком, ниже центра корпуса.
         bones.put(Bone.DANTIAN, pointOf(poseStack, model.body, 0.0F, 9.0F, -1.0F));
+        // Same posed body transform as pointOf above: translation, pitch, yaw, roll and renderer scale.
+        // Vanilla torso is 12 model pixels tall (y=0..12), front z=-2; ADR 0022.
+        bones.put(Bone.FLOW_BOTTOM, pointOf(poseStack, model.body, 0.0F, 12.0F, 0.0F));
+        bones.put(Bone.FLOW_TOP, pointOf(poseStack, model.body, 0.0F, 0.0F, 0.0F));
+        bones.put(Bone.FLOW_FRONT, pointOf(poseStack, model.body, 0.0F, 12.0F, -2.0F));
         // Ступни — нижний конец ноги длиной 12 единиц; голова — её центр.
         bones.put(Bone.RIGHT_FOOT, pointOf(poseStack, model.rightLeg, 0.0F, 11.0F, 0.0F));
         bones.put(Bone.LEFT_FOOT, pointOf(poseStack, model.leftLeg, 0.0F, 11.0F, 0.0F));
         bones.put(Bone.HEAD, pointOf(poseStack, model.head, 0.0F, -4.0F, 0.0F));
+        // Head cube -4..4 / -8..0 / -4..4, front at z=-4; the player's right is model -x (rightArm sits at x=-5).
+        bones.put(Bone.FACE_RIGHT_TOP, pointOf(poseStack, model.head, -4.0F, -8.0F, -4.06F));
+        bones.put(Bone.FACE_LEFT_TOP, pointOf(poseStack, model.head, 4.0F, -8.0F, -4.06F));
+        bones.put(Bone.FACE_RIGHT_BOTTOM, pointOf(poseStack, model.head, -4.0F, 0.0F, -4.06F));
         // Колено — середина ноги, плечо — верх руки.
         bones.put(Bone.RIGHT_KNEE, pointOf(poseStack, model.rightLeg, 0.0F, 6.0F, 0.0F));
         bones.put(Bone.LEFT_KNEE, pointOf(poseStack, model.leftLeg, 0.0F, 6.0F, 0.0F));
+        // Same posed ModelPart transform as hands/knees; BRIEF-4 body-following channels.
+        bones.put(Bone.RIGHT_ELBOW, pointOf(poseStack, model.rightArm, 0.0F, 6.0F, 0.0F));
+        bones.put(Bone.LEFT_ELBOW, pointOf(poseStack, model.leftArm, 0.0F, 6.0F, 0.0F));
+        bones.put(Bone.RIGHT_HIP, pointOf(poseStack, model.rightLeg, 0.0F, 0.0F, 0.0F));
+        bones.put(Bone.LEFT_HIP, pointOf(poseStack, model.leftLeg, 0.0F, 0.0F, 0.0F));
         bones.put(Bone.RIGHT_SHOULDER, pointOf(poseStack, model.rightArm, 0.0F, 1.0F, 0.0F));
         bones.put(Bone.LEFT_SHOULDER, pointOf(poseStack, model.leftArm, 0.0F, 1.0F, 0.0F));
         // [НЕПРОВЕРЕНО: точное положение клинка зависит от модели предмета; подобрано по кадрам]

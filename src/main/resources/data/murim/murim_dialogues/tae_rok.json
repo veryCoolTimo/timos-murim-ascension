@@ -14,6 +14,22 @@
     {
       "when": [
         {
+          "min_standing": "elder"
+        }
+      ],
+      "node": "office_elder"
+    },
+    {
+      "when": [
+        {
+          "min_standing": "first"
+        }
+      ],
+      "node": "office_first"
+    },
+    {
+      "when": [
+        {
           "period": "formation"
         }
       ],
@@ -47,6 +63,10 @@
       "gesture": "nod",
       "options": [
         {
+          "text": "dialogue.murim.basics.ask",
+          "next": "basics"
+        },
+        {
           "text": "dialogue.murim.tae_rok.opt.ask",
           "next": "answer"
         },
@@ -61,6 +81,10 @@
       ],
       "gesture": "nod",
       "options": [
+        {
+          "text": "dialogue.murim.basics.ask",
+          "next": "basics"
+        },
         {
           "text": "dialogue.murim.social.opt.business",
           "when": [
@@ -85,6 +109,23 @@
       ],
       "gesture": "nod",
       "options": [
+        {
+          "text": "dialogue.murim.basics.ask",
+          "next": "basics"
+        },
+        {
+          "text": "dialogue.murim.approach.opt.not_now",
+          "when": [
+            {
+              "social": "approaching"
+            }
+          ],
+          "actions": [
+            {
+              "type": "approach_decline"
+            }
+          ]
+        },
         {
           "text": "dialogue.murim.social.opt.business",
           "when": [
@@ -117,6 +158,10 @@
       "gesture": "shake",
       "options": [
         {
+          "text": "dialogue.murim.basics.ask",
+          "next": "basics"
+        },
+        {
           "text": "dialogue.murim.opt.leave"
         }
       ]
@@ -135,6 +180,10 @@
         }
       ],
       "options": [
+        {
+          "text": "dialogue.murim.basics.ask",
+          "next": "basics"
+        },
         {
           "text": "dialogue.murim.opt.leave"
         }
@@ -156,6 +205,10 @@
       ],
       "gesture": "nod",
       "options": [
+        {
+          "text": "dialogue.murim.basics.ask",
+          "next": "basics"
+        },
         {
           "text": "dialogue.murim.tae_rok.opt.ask",
           "next": "answer"
@@ -185,6 +238,10 @@
     "sect_topics": {
       "line": "dialogue.murim.social.business",
       "options": [
+        {
+          "text": "dialogue.murim.basics.ask",
+          "next": "basics"
+        },
         {
           "text": "dialogue.murim.progression.opt.menu",
           "when": [
@@ -263,6 +320,345 @@
               "type": "request_menu"
             }
           ]
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "office_elder": {
+      "random": [
+        "dialogue.murim.tae_rok.office_elder.1",
+        "dialogue.murim.tae_rok.office_elder.2"
+      ],
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.basics.ask",
+          "next": "basics"
+        },
+        {
+          "text": "dialogue.murim.approach.opt.not_now",
+          "when": [
+            {
+              "social": "approaching"
+            }
+          ],
+          "actions": [
+            {
+              "type": "approach_decline"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.social.opt.business",
+          "when": [
+            {
+              "social": "business"
+            }
+          ],
+          "next": "sect_business"
+        },
+        {
+          "text": "dialogue.murim.social.opt.topics",
+          "next": "sect_topics"
+        },
+        {
+          "text": "dialogue.murim.tae_rok.opt.ask",
+          "next": "answer"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "office_first": {
+      "random": [
+        "dialogue.murim.tae_rok.office_first.1",
+        "dialogue.murim.tae_rok.office_first.2"
+      ],
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.basics.ask",
+          "next": "basics"
+        },
+        {
+          "text": "dialogue.murim.approach.opt.not_now",
+          "when": [
+            {
+              "social": "approaching"
+            }
+          ],
+          "actions": [
+            {
+              "type": "approach_decline"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.social.opt.business",
+          "when": [
+            {
+              "social": "business"
+            }
+          ],
+          "next": "sect_business"
+        },
+        {
+          "text": "dialogue.murim.social.opt.topics",
+          "next": "sect_topics"
+        },
+        {
+          "text": "dialogue.murim.tae_rok.opt.ask",
+          "next": "answer"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "basics": {
+      "line": "dialogue.murim.basics.menu",
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.basics.opt.qi",
+          "next": "basics_qi"
+        },
+        {
+          "text": "dialogue.murim.basics.opt.dantian",
+          "next": "basics_dantian"
+        },
+        {
+          "text": "dialogue.murim.basics.opt.seed",
+          "next": "basics_seed"
+        },
+        {
+          "text": "dialogue.murim.basics.more",
+          "next": "basics_2"
+        }
+      ]
+    },
+    "basics_2": {
+      "line": "dialogue.murim.basics.menu",
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.basics.opt.meditation",
+          "next": "basics_meditation"
+        },
+        {
+          "text": "dialogue.murim.basics.opt.methods",
+          "next": "basics_methods"
+        },
+        {
+          "text": "dialogue.murim.basics.opt.echo",
+          "next": "basics_echo"
+        },
+        {
+          "text": "dialogue.murim.basics.more",
+          "next": "basics_3"
+        }
+      ]
+    },
+    "basics_3": {
+      "line": "dialogue.murim.basics.menu",
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.basics.opt.stars",
+          "next": "basics_stars"
+        },
+        {
+          "text": "dialogue.murim.basics.opt.insight",
+          "next": "basics_insight"
+        },
+        {
+          "text": "dialogue.murim.basics.opt.breakthroughs",
+          "next": "basics_breakthroughs"
+        },
+        {
+          "text": "dialogue.murim.basics.more",
+          "next": "basics_4"
+        }
+      ]
+    },
+    "basics_qi": {
+      "line": "dialogue.murim.basics.qi",
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.basics.back",
+          "next": "basics"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "basics_dantian": {
+      "line": "dialogue.murim.basics.dantian",
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.basics.back",
+          "next": "basics"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "basics_meditation": {
+      "line": "dialogue.murim.basics.meditation",
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.basics.back",
+          "next": "basics"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ],
+      "args": [
+        "meditation_key"
+      ]
+    },
+    "basics_methods": {
+      "line": "dialogue.murim.basics.methods",
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.basics.back",
+          "next": "basics"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "basics_stars": {
+      "line": "dialogue.murim.basics.stars",
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.basics.back",
+          "next": "basics"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "basics_breakthroughs": {
+      "line": "dialogue.murim.basics.breakthroughs",
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.basics.back",
+          "next": "basics"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "basics_body": {
+      "line": "dialogue.murim.basics.body",
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.basics.back",
+          "next": "basics"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "basics_pills": {
+      "line": "dialogue.murim.basics.pills",
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.basics.back",
+          "next": "basics"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "basics_4": {
+      "line": "dialogue.murim.basics.menu",
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.basics.opt.readiness",
+          "next": "basics_readiness"
+        },
+        {
+          "text": "dialogue.murim.basics.opt.body",
+          "next": "basics_body"
+        },
+        {
+          "text": "dialogue.murim.basics.opt.pills",
+          "next": "basics_pills"
+        },
+        {
+          "text": "dialogue.murim.basics.back",
+          "next": "basics"
+        }
+      ]
+    },
+    "basics_seed": {
+      "line": "dialogue.murim.basics.seed",
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.basics.back",
+          "next": "basics"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "basics_echo": {
+      "line": "dialogue.murim.basics.echo",
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.basics.back",
+          "next": "basics"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "basics_insight": {
+      "line": "dialogue.murim.basics.insight",
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.basics.back",
+          "next": "basics"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "basics_readiness": {
+      "line": "dialogue.murim.basics.readiness",
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.basics.back",
+          "next": "basics"
         },
         {
           "text": "dialogue.murim.opt.leave"

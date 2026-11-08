@@ -15,6 +15,317 @@
         "murim:book_tier": 1.0
       },
       "model": "murim:item/technique_manual_secret"
+    },
+    {
+      "predicate": {
+        "murim:book_cover": 1.0
+      },
+      "model": "murim:item/technique_manual_seven_plum"
+    },
+    {
+      "predicate": {
+        "murim:book_cover": 2.0
+      },
+      "model": "murim:item/technique_manual_twenty_four_plum"
+    },
+    {
+      "predicate": {
+        "murim:book_cover": 3.0
+      },
+      "model": "murim:item/technique_manual_falling_petal_sword"
+    },
+    {
+      "predicate": {
+        "murim:book_cover": 4.0
+      },
+      "model": "murim:item/technique_manual_six_harmonies"
+    },
+    {
+      "predicate": {
+        "murim:book_cover": 5.0
+      },
+      "model": "murim:item/technique_manual_dark_fragrance"
+    },
+    {
+      "predicate": {
+        "murim:book_cover": 6.0
+      },
+      "model": "murim:item/technique_manual_wind_god"
+    },
+    {
+      "predicate": {
+        "murim:book_cover": 7.0
+      },
+      "model": "murim:item/technique_manual_tang_daggers"
+    },
+    {
+      "predicate": {
+        "murim:book_cover": 8.0
+      },
+      "model": "murim:item/technique_manual_crescent_sweep"
+    },
+    {
+      "predicate": {
+        "murim:book_cover": 9.0
+      },
+      "model": "murim:item/technique_manual_shadow_step"
+    },
+    {
+      "predicate": {
+        "murim:book_cover": 10.0
+      },
+      "model": "murim:item/technique_manual_burst_breath"
+    },
+    {
+      "predicate": {
+        "murim:book_cover": 11.0
+      },
+      "model": "murim:item/technique_manual_bandit_rush"
+    },
+    {
+      "predicate": {
+        "murim:book_cover": 12.0
+      },
+      "model": "murim:item/technique_manual_wedge_fan"
+    },
+    {
+      "predicate": {
+        "murim:book_cover": 13.0
+      },
+      "model": "murim:item/technique_manual_demon_palm"
+    },
+    {
+      "predicate": {
+        "murim:book_cover": 14.0
+      },
+      "model": "murim:item/technique_manual_ceremonial_draw"
+    },
+    {
+      "predicate": {
+        "murim:book_cover": 15.0
+      },
+      "model": "murim:item/technique_manual_green_forest_axe"
+    },
+    {
+      "predicate": {
+        "murim:book_cover": 16.0
+      },
+      "model": "murim:item/technique_manual_village_brawler_fist"
+    },
+    {
+      "predicate": {
+        "murim:book_cover": 17.0
+      },
+      "model": "murim:item/technique_manual_sand_in_eyes"
+    },
+    {
+      "predicate": {
+        "murim:book_cover": 18.0
+      },
+      "model": "murim:item/technique_manual_ten_thousand_dragons"
+    },
+    {
+      "predicate": {
+        "murim:book_cover": 19.0
+      },
+      "model": "murim:item/technique_manual_beggars_crushing_tap"
+    },
+    {
+      "predicate": {
+        "murim:book_cover": 20.0
+      },
+      "model": "murim:item/technique_manual_heavenly_dragon_strike"
+    },
+    {
+      "predicate": {
+        "murim:book_cover": 21.0
+      },
+      "model": "murim:item/technique_manual_thousand_cranes_dance"
+    },
+    {
+      "predicate": {
+        "murim:book_cover": 22.0
+      },
+      "model": "murim:item/technique_manual_seven_stars"
+    },
+    {
+      "predicate": {
+        "murim:book_cover": 23.0
+      },
+      "model": "murim:item/technique_manual_true_six_elements_sword"
+    },
+    {
+      "predicate": {
+        "murim:book_cover": 24.0
+      },
+      "model": "murim:item/technique_manual_taiyi_sword"
+    },
+    {
+      "predicate": {
+        "murim:book_cover": 25.0
+      },
+      "model": "murim:item/technique_manual_bamboo_leaf_hand"
+    },
+    {
+      "predicate": {
+        "murim:book_cover": 1.0,
+        "murim:original": 1.0
+      },
+      "model": "murim:item/technique_manual_seven_plum_original"
+    },
+    {
+      "predicate": {
+        "murim:book_cover": 2.0,
+        "murim:original": 1.0
+      },
+      "model": "murim:item/technique_manual_twenty_four_plum_original"
+    },
+    {
+      "predicate": {
+        "murim:book_cover": 3.0,
+        "murim:original": 1.0
+      },
+      "model": "murim:item/technique_manual_falling_petal_sword_original"
+    },
+    {
+      "predicate": {
+        "murim:book_cover": 4.0,
+        "murim:original": 1.0
+      },
+      "model": "murim:item/technique_manual_six_harmonies_original"
+    },
+    {
+      "predicate": {
+        "murim:book_cover": 5.0,
+        "murim:original": 1.0
+      },
+      "model": "murim:item/technique_manual_dark_fragrance_original"
+    },
+    {
+      "predicate": {
+        "murim:book_cover": 6.0,
+        "murim:original": 1.0
+      },
+      "model": "murim:item/technique_manual_wind_god_original"
+    },
+    {
+      "predicate": {
+        "murim:book_cover": 7.0,
+        "murim:original": 1.0
+      },
+      "model": "murim:item/technique_manual_tang_daggers_original"
+    },
+    {
+      "predicate": {
+        "murim:book_cover": 8.0,
+        "murim:original": 1.0
+      },
+      "model": "murim:item/technique_manual_crescent_sweep_original"
+    },
+    {
+      "predicate": {
+        "murim:book_cover": 9.0,
+        "murim:original": 1.0
+      },
+      "model": "murim:item/technique_manual_shadow_step_original"
+    },
+    {
+      "predicate": {
+        "murim:book_cover": 10.0,
+        "murim:original": 1.0
+      },
+      "model": "murim:item/technique_manual_burst_breath_original"
+    },
+    {
+      "predicate": {
+        "murim:book_cover": 11.0,
+        "murim:original": 1.0
+      },
+      "model": "murim:item/technique_manual_bandit_rush_original"
+    },
+    {
+      "predicate": {
+        "murim:book_cover": 12.0,
+        "murim:original": 1.0
+      },
+      "model": "murim:item/technique_manual_wedge_fan_original"
+    },
+    {
+      "predicate": {
+        "murim:book_cover": 13.0,
+        "murim:original": 1.0
+      },
+      "model": "murim:item/technique_manual_demon_palm_original"
+    },
+    {
+      "predicate": {
+        "murim:book_cover": 14.0,
+        "murim:original": 1.0
+      },
+      "model": "murim:item/technique_manual_ceremonial_draw_original"
+    },
+    {
+      "predicate": {
+        "murim:book_cover": 15.0,
+        "murim:original": 1.0
+      },
+      "model": "murim:item/technique_manual_green_forest_axe_original"
+    },
+    {
+      "predicate": {
+        "murim:book_cover": 16.0,
+        "murim:original": 1.0
+      },
+      "model": "murim:item/technique_manual_village_brawler_fist_original"
+    },
+    {
+      "predicate": {
+        "murim:book_cover": 17.0,
+        "murim:original": 1.0
+      },
+      "model": "murim:item/technique_manual_sand_in_eyes_original"
+    },
+    {
+      "predicate": {
+        "murim:book_cover": 18.0,
+        "murim:original": 1.0
+      },
+      "model": "murim:item/technique_manual_ten_thousand_dragons_original"
+    },
+    {
+      "predicate": {
+        "murim:book_cover": 19.0,
+        "murim:original": 1.0
+      },
+      "model": "murim:item/technique_manual_beggars_crushing_tap_original"
+    },
+    {
+      "predicate": {
+        "murim:book_cover": 20.0,
+        "murim:original": 1.0
+      },
+      "model": "murim:item/technique_manual_heavenly_dragon_strike_original"
+    },
+    {
+      "predicate": {
+        "murim:book_cover": 21.0,
+        "murim:original": 1.0
+      },
+      "model": "murim:item/technique_manual_thousand_cranes_dance_original"
+    },
+    {
+      "predicate": {
+        "murim:book_cover": 22.0,
+        "murim:original": 1.0
+      },
+      "model": "murim:item/technique_manual_seven_stars_original"
+    },
+    {
+      "predicate": {
+        "murim:book_cover": 25.0,
+        "murim:original": 1.0
+      },
+      "model": "murim:item/technique_manual_bamboo_leaf_hand_original"
     }
   ]
 }

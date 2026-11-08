@@ -18,11 +18,29 @@ import net.minecraft.resources.ResourceLocation;
  * @param event      что случилось
  * @param techniqueId какая техника
  * @param sourceId   сетевой идентификатор применяющей сущности
- * @param hitStopTicks длительность hit stop в тиках; осмысленно только для {@link Event#HIT}
+ * @param hitStopTicks длительность hit stop в тиках для {@link Event#HIT}; для {@link Event#STARTED} — сколько тиков
+ *                    замаха кастер пропустил (старший в тяжёлом споре: замах урезан, эффекты клиента идут с того же тика)
+ * @param rightStep authoritative right-side Weight Shift selection; server and client must share this codec
+ * @param masteryStars actual art stars for presentation; never substitutes for executionTier
  * @param executionTier       слой освоения применяющего на старте: от него зависят анимация и эффекты формы
  */
-public record TechniqueEventPayload(Event event, ResourceLocation techniqueId, int sourceId, int hitStopTicks, int executionTier)
+public record TechniqueEventPayload(Event event, ResourceLocation techniqueId, int sourceId, int hitStopTicks, int executionTier, boolean rightStep, int masteryStars)
         implements CustomPacketPayload {
+
+    /** Compatibility constructor: other techniques do not select a step side. */
+    public TechniqueEventPayload(Event event, ResourceLocation techniqueId, int sourceId, int hitStopTicks, int executionTier) {
+        this(event, techniqueId, sourceId, hitStopTicks, executionTier, false);
+    }
+
+    /** Existing callers retain their execution tier and step side. */
+    public TechniqueEventPayload(Event event, ResourceLocation id, int source, int stop, int tier, boolean right) {
+        this(event, id, source, stop, tier, right, 0);
+    }
+
+    /** 24 Plum chooses its look from this: full mastery is ★12 (one rule with PlumPresentationRules). */
+    public boolean fullMastery() {
+        return io.github.verycooltimo.murim.technique.PlumPresentationRules.fullMastery(masteryStars);
+    }
 
     public enum Event {
         /** Техника начата: клиент запускает анимацию с нулевого тика. */
@@ -32,7 +50,9 @@ public record TechniqueEventPayload(Event event, ResourceLocation techniqueId, i
         /** Техника прервана досрочно: клиент гасит анимацию и эффекты. */
         CANCELLED,
         /** Техника доиграла штатно: клиент завершает анимацию, а не обрывает её. */
-        FINISHED
+        FINISHED,
+        /** Sword Fingers starts the interrupted technique’s full cooldown at collapse. */
+        COOLDOWN_RESET
     }
 
     public static final Type<TechniqueEventPayload> TYPE =
@@ -51,13 +71,18 @@ public record TechniqueEventPayload(Event event, ResourceLocation techniqueId, i
                     Event::ordinal);
 
     public static final StreamCodec<RegistryFriendlyByteBuf, TechniqueEventPayload> STREAM_CODEC =
-            StreamCodec.composite(
-                    EVENT_CODEC, TechniqueEventPayload::event,
-                    ResourceLocation.STREAM_CODEC, TechniqueEventPayload::techniqueId,
-                    ByteBufCodecs.VAR_INT, TechniqueEventPayload::sourceId,
-                    ByteBufCodecs.VAR_INT, TechniqueEventPayload::hitStopTicks,
-                    ByteBufCodecs.VAR_INT, TechniqueEventPayload::executionTier,
-                    TechniqueEventPayload::new);
+            // API: read-only minecraft-src/network/codec/StreamCodec.java#of; composite is limited to six fields.
+            StreamCodec.of((buf, p) -> {
+                EVENT_CODEC.encode(buf, p.event());
+                ResourceLocation.STREAM_CODEC.encode(buf, p.techniqueId());
+                ByteBufCodecs.VAR_INT.encode(buf, p.sourceId());
+                ByteBufCodecs.VAR_INT.encode(buf, p.hitStopTicks());
+                ByteBufCodecs.VAR_INT.encode(buf, p.executionTier());
+                ByteBufCodecs.BOOL.encode(buf, p.rightStep());
+                ByteBufCodecs.VAR_INT.encode(buf, p.masteryStars());
+            }, buf -> new TechniqueEventPayload(EVENT_CODEC.decode(buf), ResourceLocation.STREAM_CODEC.decode(buf),
+                    ByteBufCodecs.VAR_INT.decode(buf), ByteBufCodecs.VAR_INT.decode(buf),
+                    ByteBufCodecs.VAR_INT.decode(buf), ByteBufCodecs.BOOL.decode(buf), ByteBufCodecs.VAR_INT.decode(buf)));
 
     @Override
     public Type<? extends CustomPacketPayload> type() {

@@ -37,7 +37,7 @@ public final class LoopVariety {
     static Rest rest(SectPose pose) {
         return switch (pose) {
             // За столом: между глотками — пауза, взгляд на соседа, иногда чашка на коленях.
-            case EAT -> new Rest(0.6D, 0.5D, 2.6D, 0.45D, 0.35D);
+            case EAT, TEA -> new Rest(0.6D, 0.5D, 2.6D, 0.45D, 0.35D);
             case GRIND -> new Rest(0.35D, 0.3D, 1.2D, 0.3D, 0.0D);
             case SWEEP -> new Rest(0.3D, 0.3D, 1.0D, 0.25D, 0.0D);
             case TALK, READ, COUNT, BREW -> new Rest(0.3D, 0.4D, 1.6D, 0.3D, 0.0D);

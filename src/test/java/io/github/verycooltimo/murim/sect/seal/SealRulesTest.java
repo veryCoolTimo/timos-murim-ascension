@@ -28,17 +28,18 @@ class SealRulesTest {
     }
 
     @Test
-    @DisplayName("Лестница двери: шесть форм, Падающий Цветок, все формы Семи Цветков; ошибка — сначала")
+    @DisplayName("Дверь: любая одна форма 24 Движений; шаги и основа не считаются")
     void ladder() {
         List<VaultLadder.Step> l = VaultLadder.LADDER;
-        assertEquals(6 + 1 + Styles.SEVEN_PLUM.forms().size(), l.size());
-        int step = 0;
-        for (VaultLadder.Step s : l) {
-            step = VaultLadder.advance(l, step, s);
+        assertEquals(Styles.TWENTY_FOUR_PLUM.forms().size(), l.size());
+        for (int i = 0; i < l.size(); i++) {
+            assertEquals(Styles.TWENTY_FOUR_PLUM.forms().get(i), l.get(i).technique());
         }
-        assertEquals(l.size(), step);
-        assertEquals(0, VaultLadder.advance(l, 3, VaultLadder.Step.technique(VaultLadder.PETAL)));
-        assertEquals(1, VaultLadder.advance(l, 4, l.get(0)), "the first rung restarts at once");
+        for (VaultLadder.Step form : l) {
+            assertEquals(l.size(), VaultLadder.advance(l, 0, form), "one form must complete the trial");
+            assertEquals(l.size(), VaultLadder.advance(l, 3, form), "old partial progress must not require an order");
+        }
+        assertEquals(0, VaultLadder.advance(l, 0, VaultLadder.Step.technique(Styles.SEVEN_PLUM.forms().get(0))));
         assertFalse(VaultLadder.relevant(l, VaultLadder.Step.technique(Styles.DARK_FRAGRANCE.forms().get(0))), "footwork counts");
         assertFalse(VaultLadder.relevant(l, VaultLadder.Step.technique(Styles.SEVEN_PLUM.basic().orElseThrow())), "basic strikes count");
         assertTrue(VaultLadder.relevant(l, VaultLadder.Step.technique(Styles.TANG_DAGGERS.forms().get(0))));

@@ -1,0 +1,23 @@
+{
+  "display": {
+    "icon": {
+      "id": "murim:ach_body_ready"
+    },
+    "title": {
+      "translate": "advancement.murim.body_ready.title"
+    },
+    "description": {
+      "translate": "advancement.murim.body_ready.desc"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "parent": "murim:body_first",
+  "criteria": {
+    "done": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

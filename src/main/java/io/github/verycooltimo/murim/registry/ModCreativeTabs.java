@@ -42,6 +42,9 @@ public final class ModCreativeTabs {
                     s.set(ModDataComponents.METHOD.get(), m);
                     out.accept(s);
                 }
+                for (var uniform : ModUniforms.ALL) {
+                    for (var piece : uniform.pieces()) out.accept(piece.get());
+                }
                 // Враги этапа M1 (автор 03.10: «яйцо призыва во вкладке Мурим»).
                 out.accept(new ItemStack(ModItems.BANDIT_SWORDSMAN_SPAWN_EGG.get()));
                 out.accept(new ItemStack(ModItems.BANDIT_ARCHER_SPAWN_EGG.get()));
@@ -49,14 +52,39 @@ public final class ModCreativeTabs {
                 out.accept(new ItemStack(ModItems.TANG_DAGGER.get()));
                 out.accept(new ItemStack(ModItems.HUASHAN_SWORD.get()));
                 out.accept(new ItemStack(ModItems.PLUM_GUARD_SWORD.get()));
-                out.accept(new ItemStack(ModItems.BLACK_DRAGON_SWORD.get()));
                 out.accept(new ItemStack(ModItems.WOODEN_SWORD.get()));
+                out.accept(new ItemStack(ModItems.JADE_SECT_TABLET.get()));
+                out.accept(new ItemStack(ModItems.MEAL_BOWL.get()));
+                out.accept(new ItemStack(ModItems.COLD_MEAL_BOWL.get()));
+                // The Mount Hua kitchen (author 18.10).
+                for (io.github.verycooltimo.murim.sect.SectMenu.Dish dish : io.github.verycooltimo.murim.sect.SectMenu.Dish.values()) {
+                    out.accept(new ItemStack(ModItems.dishItem(dish)));
+                }
+                out.accept(new ItemStack(ModItems.HUNDRED_GINSENG.get()));
+                out.accept(new ItemStack(ModItems.PURPLE_GINSENG.get()));
+                out.accept(new ItemStack(ModItems.PURPLE_WOOD_HERB.get()));
+                out.accept(new ItemStack(ModItems.ICE_CRYSTAL.get()));
                 // Пилюли (M5, docs/design/19b).
+                // by tier: common, middle, high
+                out.accept(new ItemStack(ModItems.PILL_VITALITY.get()));
+                out.accept(new ItemStack(ModItems.PILL_FASTING.get()));
+                out.accept(new ItemStack(ModItems.PILL_ANTIDOTE.get()));
                 out.accept(new ItemStack(ModItems.PILL_SNOW_PLUM.get()));
+                out.accept(new ItemStack(ModItems.PILL_PLUM_BLOSSOM.get()));
+                out.accept(new ItemStack(ModItems.PILL_BLOOD_REPLENISHING.get()));
+                out.accept(new ItemStack(ModItems.PILL_QUICK_RECOVERY.get()));
+                out.accept(new ItemStack(ModItems.BLACK_LINGZHI.get()));
+                out.accept(new ItemStack(ModItems.PILL_PURPLE_HEAVEN.get()));
+                out.accept(new ItemStack(ModItems.PILL_SMALL_RESTORATION.get()));
+                out.accept(new ItemStack(ModItems.PILL_HEAVENLY_EARTH.get()));
+                out.accept(new ItemStack(ModItems.PILL_MOONLIGHT.get()));
+                out.accept(new ItemStack(ModItems.PILL_ASCENDING_DRAGON.get()));
+                out.accept(new ItemStack(ModItems.PILL_GREAT_RESTORATION.get()));
                 out.accept(new ItemStack(ModItems.PILL_ORIGIN_ENERGY.get()));
-                out.accept(new ItemStack(ModItems.PILL_THOUSAND_POISON.get()));
                 out.accept(new ItemStack(ModItems.BEAUTY_TEAR.get()));
-                out.accept(new ItemStack(io.github.verycooltimo.murim.world.ModWorld.SPIRIT_VEIN_ITEM.get()));
+                if (io.github.verycooltimo.murim.world.PlaceService.enabled) {
+                    out.accept(new ItemStack(io.github.verycooltimo.murim.world.ModWorld.SPIRIT_VEIN_ITEM.get()));
+                }
                 out.accept(new ItemStack(ModItems.SECT_DISCIPLE_SPAWN_EGG.get()));
                 // Red timber building kit (docs/design/33-building-kit.md).
                 out.accept(new ItemStack(ModBlocks.RED_PILLAR.get()));
@@ -88,9 +116,6 @@ public final class ModCreativeTabs {
             .build());
 
     private static ItemStack manual(ResourceLocation technique) {
-        if (io.github.verycooltimo.murim.technique.DemonicRules.isArt(technique)) {
-            return new ItemStack(ModItems.DEMONIC_MANUALS.get(technique.getPath()).get());
-        }
         ItemStack s = new ItemStack(technique.equals(io.github.verycooltimo.murim.technique.JunkArts.HEAVENLY_DRAGON)
                 ? ModItems.JUNK_HEAVENLY_DRAGON_MANUAL.get()
                 : technique.equals(io.github.verycooltimo.murim.technique.JunkArts.THOUSAND_CRANES)
@@ -107,13 +132,8 @@ public final class ModCreativeTabs {
         // Одна книга на стиль (автор 03.10): формы и основа ЛКМ — внутри неё.
         List<ResourceLocation> inStyles = new ArrayList<>();
         for (Styles.Style style : Styles.ALL) {
-            if (Styles.individualBooks(style)) {
-                style.forms().stream().filter(id -> TechniqueLoader.get(id) != null).forEach(out::add);
-                inStyles.addAll(style.forms());
-                continue;
-            }
             ResourceLocation first = style.forms().get(0);
-            if (TechniqueLoader.get(first) != null) {
+            if (!Styles.starGated(style) && TechniqueLoader.get(first) != null) {
                 out.add(first);
             }
             inStyles.addAll(style.forms());

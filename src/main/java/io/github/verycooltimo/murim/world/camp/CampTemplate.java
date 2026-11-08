@@ -85,11 +85,18 @@ public final class CampTemplate {
         return m.name().startsWith("chief") ? 0 : m.name().startsWith("tower") ? 1 : 2;
     }
 
+    public static CampLayout layout(BanditCampData.Camp camp) {
+        if (camp.proceduralLayout == null) camp.proceduralLayout = CampLayout.plan(camp.seed);
+        return camp.proceduralLayout;
+    }
+
     public static List<CampLayout.Post> posts(BanditCampData.Camp camp) {
-        return camp.templatePosts != null ? camp.templatePosts : CampLayout.plan(camp.seed).posts();
+        return camp.templatePosts != null ? camp.templatePosts : layout(camp).posts();
     }
 
     public static List<CampRoster.Member> roster(BanditCampData.Camp camp) {
-        return camp.templateRoster != null ? camp.templateRoster : CampRoster.plan(CampLayout.plan(camp.seed));
+        if (camp.templateRoster != null) return camp.templateRoster;
+        if (camp.proceduralRoster == null) camp.proceduralRoster = CampRoster.plan(layout(camp));
+        return camp.proceduralRoster;
     }
 }

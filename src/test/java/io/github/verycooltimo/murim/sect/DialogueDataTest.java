@@ -76,8 +76,9 @@ class DialogueDataTest {
                 assertFalse(a.allow().isEmpty(), id + ": пустой allow — не заговорит никто");
             });
             d.nodes().values().forEach(n -> n.options().forEach(o -> o.when().forEach(c -> {
-                c.standing().minStanding().ifPresent(x -> assertTrue(SectStanding.parse(x).isPresent(), id + ": " + x));
-                c.standing().belowStanding().ifPresent(x -> assertTrue(SectStanding.parse(x).isPresent(), id + ": " + x));
+                // The ladder rungs plus the offices (first, elder): the social rank (SectRank).
+                c.standing().minStanding().ifPresent(x -> assertTrue(SectRank.parse(x).isPresent(), id + ": " + x));
+                c.standing().belowStanding().ifPresent(x -> assertTrue(SectRank.parse(x).isPresent(), id + ": " + x));
             })));
             // Автор 04.10: на гору игрок поднимается сам — телепорта в диалогах нет.
             d.nodes().values().forEach(n -> n.options().forEach(o -> o.actions().forEach(a ->
@@ -115,7 +116,8 @@ class DialogueDataTest {
                 keys.add(d.title());
             }
             d.nodes().values().forEach(n -> {
-                if (!n.line().isEmpty()) {
+                // A special token (@journey, @context) is not a lang key: it is resolved by DialogueService#talk.
+                if (!n.line().isEmpty() && !n.line().startsWith("@")) {
                     keys.add(n.line());
                 }
                 // Особые строки (@trait, @personal, @rumour) — не ключи: их реплики проверяются ниже (SectTalk).
@@ -172,6 +174,30 @@ class DialogueDataTest {
         }
         // Старейшина по роли — не заглушка из одной реплики.
         assertTrue(raw("elder").nodes().size() >= 4, "elder.json — заглушка");
+    }
+
+    @Test
+    @DisplayName("Обращение по положению: у каждого человека горы есть вход для старейшины и первого ученика, и он ведёт в узел без наставлений")
+    void everyPersonAddressesAnOfficeHolder() throws IOException {
+        Set<String> ids = new HashSet<>(dialogueIds());
+        for (SectRoster m : SectRoster.ALL) {
+            Dialogue d = load(ids.contains(m.key()) ? m.key() : m.role().dialogue().getPath());
+            for (String rank : List.of("elder", "first")) {
+                // the first start entry that an office holder of this rank (and no one below) can satisfy on the social rank alone
+                Dialogue.Entry hit = d.start().stream().filter(e -> e.when().stream().allMatch(c ->
+                        c.standing().minStanding().map(x -> SectRank.parse(x).orElseThrow().ordinal() <= SectRank.parse(rank).orElseThrow().ordinal()).orElse(true)
+                                && c.standing().belowStanding().isEmpty() && c.flag().isEmpty() && c.notFlag().isEmpty()
+                                && c.period().isEmpty() && c.free().isEmpty() && c.standing().missed().isEmpty() && c.standing().logged().isEmpty()
+                                && c.standing().minStanding().isPresent())).findFirst().orElse(null);
+                assertTrue(hit != null, m.key() + ": nothing for an " + rank);
+                assertTrue(hit.node().startsWith("office"), m.key() + ": the " + rank + " entry is " + hit.node());
+                Dialogue.Node n = d.nodes().get(hit.node());
+                assertTrue(n != null, m.key() + ": no node " + hit.node());
+                // no newcomer options (goal, lesson, formation, join) in the office node
+                n.options().forEach(o -> assertFalse(o.text().contains("opt.join") || o.text().contains("lesson") || o.text().contains("journey"),
+                        m.key() + ": newcomer option " + o.text()));
+            }
+        }
     }
 
     @Test

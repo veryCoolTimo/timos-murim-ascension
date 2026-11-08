@@ -6,15 +6,11 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 
-/**
- * Who a cold iron door lets through: the nearest seal decides. A door by a vault seal opens for the one who passed
- * the trial (flag {@link #VAULT_FLAG}, kept for good); a door by a penance seal opens only by the elders (the
- * sentence and the release open it); a door without a seal nearby opens for nobody in survival.
- */
+/** Cold iron doors near the penance stone admit free members; the main vault has its own door trial. */
 public final class SealAccess {
 
-    /** Passed the vault trial (or let in by the leader): the same pass {@code SectAccess} reads. */
-    public static final String VAULT_FLAG = "vault.permitted";
+    /** Performed the forms before the vault door at least once (author 23.10); the head's Divine Art may be read only with it. */
+    public static final String VAULT_FLAG = "vault.opened";
     /** A seal belongs to a door within this many blocks (horizontally; half as much vertically). */
     public static final int RANGE = 12;
 
@@ -22,23 +18,27 @@ public final class SealAccess {
     }
 
     public static boolean mayOpen(ServerPlayer p, BlockPos door) {
-        BlockPos seal = nearest(p.level(), door, RANGE, SealRegistry.VAULT_SEAL.get(), SealRegistry.PENANCE_SEAL.get());
+        BlockPos seal = nearest(p.level(), door, RANGE, SealRegistry.PENANCE_SEAL.get());
         if (seal == null) {
             return false;
         }
-        if (p.level().getBlockState(seal).is(SealRegistry.VAULT_SEAL.get())) {
-            return p.getData(ModAttachments.SECT).has(VAULT_FLAG);
-        }
-        return false;
+        // Penance cave: the sentenced never open it (the elders do, at the sentence and the release), but a free member
+        // or anyone already inside the cave may, so a released player is never walled in (holes review npc-1).
+        return !PenanceService.sentenced(p) && (p.getData(ModAttachments.SECT).member() || insideCave(p, seal));
+    }
+
+    /** Within the seal's own room: the cave volume around the cell. */
+    static boolean insideCave(ServerPlayer p, BlockPos seal) {
+        return p.blockPosition().distSqr(seal) <= (double) (SealAccess.RANGE * SealAccess.RANGE);
     }
 
     /** Message for a door that did not open. */
     public static String lockedKey(Level level, BlockPos door) {
-        BlockPos seal = nearest(level, door, RANGE, SealRegistry.VAULT_SEAL.get(), SealRegistry.PENANCE_SEAL.get());
+        BlockPos seal = nearest(level, door, RANGE, SealRegistry.PENANCE_SEAL.get());
         if (seal == null) {
             return "murim.seal.door.locked";
         }
-        return level.getBlockState(seal).is(SealRegistry.VAULT_SEAL.get()) ? "murim.seal.door.vault" : "murim.seal.door.penance";
+        return "murim.seal.door.penance";
     }
 
     /** Nearest block of the given kinds within {@code r} (horizontal) and {@code r / 2} (vertical), or null. */

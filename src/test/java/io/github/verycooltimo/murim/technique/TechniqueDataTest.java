@@ -42,7 +42,8 @@ class TechniqueDataTest {
     @Test
     @DisplayName("Все техники датапака читаются схемой без ошибок")
     void allTechniquesParse() {
-        for (String name : List.of("ceremonial_draw", "wedge_fan", "shadow_step")) {
+        for (String name : List.of("ceremonial_draw", "wedge_fan", "shadow_step",
+                "dark_fragrance_rising", "dark_fragrance_floating", "dark_fragrance_rain")) {
             TechniqueDefinition definition = load(name);
             assertEquals("murim:" + name, definition.id().toString(),
                     "Идентификатор внутри файла обязан совпадать с именем файла");
@@ -62,7 +63,8 @@ class TechniqueDataTest {
     @Test
     @DisplayName("У каждой техники кулдаун не короче её собственной длительности")
     void cooldownCoversTechnique() {
-        for (String name : List.of("ceremonial_draw", "wedge_fan", "shadow_step")) {
+        for (String name : List.of("ceremonial_draw", "wedge_fan", "shadow_step",
+                "dark_fragrance_rising", "dark_fragrance_floating", "dark_fragrance_rain")) {
             TechniqueDefinition definition = load(name);
             assertTrue(definition.cooldownTicks() >= definition.totalTicks(),
                     name + ": кулдаун короче техники, второй запуск затрёт первый");

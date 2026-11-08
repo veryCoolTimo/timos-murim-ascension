@@ -38,15 +38,56 @@ public final class SectRequests {
         };
     }
 
+    /** Who gives the favour {@code id} (the person the player goes back to). */
+    static String issuerKey(String id) {
+        return switch (id) {
+            case "vault" -> "tae_rok";
+            case "training" -> SectProgression.MENTOR;
+            case "pills" -> "tae_gyun";
+            default -> "gyeong_tak";
+        };
+    }
+
+    /** The favour the player carries and the person to go to for it now: {id, key}, or null (nothing to carry, or still to do). */
+    public static String[] guide(ServerPlayer p) {
+        SectState s = SectService.state(p);
+        if (!s.member() || SectPositions.disciplined(s)) return null;
+        for (String id : IDS) {
+            if (!s.has(flag(id, "active")) || s.has(flag(id, "done"))) continue;
+            if ("pills".equals(id)) return new String[] {id, "gyeong_cho"};
+            if (s.has(flag(id, "proved"))) return new String[] {id, issuerKey(id)};
+        }
+        return null;
+    }
+
     static boolean receiver(SectDisciple npc, String id) {
         return "pills".equals(id) ? "gyeong_cho".equals(npc.memberKey()) : issuer(npc, id);
+    }
+
+    static final int PILLS_NEEDED = 3;
+
+    /** On Peaceful no bandit and no camp population exists: nothing that needs one may be offered. */
+    public static boolean peaceful(ServerPlayer p) {
+        return p.level().getDifficulty() == net.minecraft.world.Difficulty.PEACEFUL;
+    }
+
+    /** Snow Plum pills the player still lacks for the pill delivery (used, absorbed or lost): 0 when he holds enough. */
+    public static int pillsMissing(ServerPlayer p) {
+        return Math.max(0, PILLS_NEEDED - new SectService.ItemNeed(ModItems.PILL_SNOW_PLUM.get(), PILLS_NEEDED).count(p));
+    }
+
+    /** The pill delivery is taken but the pills are gone: the giver hands the missing ones over again. */
+    static boolean pillsLost(ServerPlayer p, SectState s) {
+        return s.has(flag("pills", "active")) && !s.has(flag("pills", "done")) && pillsMissing(p) > 0;
     }
 
     public static boolean canStart(ServerPlayer p, SectDisciple npc, String id) {
         SectState s = SectService.state(p);
         int rank = p.getData(ModAttachments.PROFILE).rank();
+        if ("bandits".equals(id) && peaceful(p)) return false;
+        boolean reissue = "pills".equals(id) && pillsLost(p, s);
         if (!IDS.contains(id) || !issuer(npc, id) || !s.member() || SectPositions.disciplined(s)
-                || s.has(flag(id, "active")) || s.has(flag(id, "done"))
+                || (s.has(flag(id, "active")) && !reissue) || s.has(flag(id, "done"))
                 || ("vault".equals(id) || "training".equals(id)) && (rank < 2 || !s.has(SectStanding.LESSON_TWO))) return false;
         return true;
     }
@@ -54,8 +95,10 @@ public final class SectRequests {
     public static boolean start(ServerPlayer p, SectDisciple npc, String id) {
         if (!canStart(p, npc, id)) return false;
         SectState s = SectService.state(p);
+        // A repeat start of the pill delivery only replaces what was lost (the favour is already taken).
+        int pills = "pills".equals(id) ? pillsMissing(p) : 0;
         p.setData(ModAttachments.SECT, s.with(flag(id, "active")));
-        if ("pills".equals(id)) give(p, new ItemStack(ModItems.PILL_SNOW_PLUM.get(), 3));
+        if (pills > 0) give(p, new ItemStack(ModItems.PILL_SNOW_PLUM.get(), pills));
         return true;
     }
 
@@ -68,12 +111,12 @@ public final class SectRequests {
     public static void juniorTrained(ServerPlayer p, SectDisciple npc, boolean won) {
         SectState s = SectService.state(p);
         if (!won || !s.has(flag("training", "active")) || s.has(flag("training", "done"))
-                || !npc.role().third() || npc.member().isEmpty() || SectLife.onWatch(npc)) return;
+                || !npc.role().third() || npc.member().isEmpty()) return;
         s = s.with("request.training.student." + npc.memberKey());
         long count = s.flags().stream().filter(f -> f.startsWith("request.training.student.")).count();
         if (count >= 3) s = s.with(flag("training", "proved"));
         p.setData(ModAttachments.SECT, s);
-        p.displayClientMessage(Component.translatable("murim.sect.request.training.progress", Math.min(3L, count)), true);
+        PlayerJournal.record(p, Component.translatable("murim.sect.request.training.progress", Math.min(3L, count)));
     }
 
     static void proof(ServerPlayer p, String id) {
@@ -100,13 +143,14 @@ public final class SectRequests {
         if ("pills".equals(id)) new SectService.ItemNeed(ModItems.PILL_SNOW_PLUM.get(), 3).take(p);
         s = s.with(flag(id, "done")).without(flag(id, "active")).without(flag(id, "proved"))
                 .with("favour." + npc.memberKey());
-        if ("vault".equals(id)) s = s.with("vault.permitted");
+        // The favour called «vault» is the pass to the Scripture Hall (the main vault is the head's alone, author 21.10).
+        if ("vault".equals(id)) s = s.with("pass.scriptures");
         if ("training".equals(id)) s = s.with("pass.scriptures");
         p.setData(ModAttachments.SECT, s);
         SectService.contribute(p, "bandits".equals(id) ? 10 : "vault".equals(id) ? 8 : 6);
         if ("bandits".equals(id)) give(p, new ItemStack(ModItems.PILL_SNOW_PLUM.get()));
         SectSocial.remember(p, "loot");
-        p.displayClientMessage(Component.translatable("murim.sect.request.completed"), false);
+        SectNotice.bar(p, Component.translatable("murim.sect.request.completed"));
         return true;
     }
 
@@ -127,7 +171,7 @@ public final class SectRequests {
                 s = s.with(kill);
                 if (i == 3) s = s.with(flag("bandits", "proved"));
                 p.setData(ModAttachments.SECT, s);
-                p.displayClientMessage(Component.translatable("murim.sect.request.bandits.progress", i), true);
+                PlayerJournal.record(p, Component.translatable("murim.sect.request.bandits.progress", i));
                 return;
             }
         }

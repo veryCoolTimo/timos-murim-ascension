@@ -2,6 +2,7 @@
   "replace": false,
   "values": [
     "murim:hua_granite",
+    "murim:cliff_plaque_penance",
     "murim:studded_band",
     "murim:hua_granite_pale",
     "murim:hua_granite_stained",
@@ -80,6 +81,13 @@
     "murim:hua_edge_stone_slab",
     "murim:hua_white_kerb_layer",
     "murim:hua_white_kerb",
-    "murim:hua_white_kerb_slab"
+    "murim:hua_white_kerb_slab",
+    "murim:int_alchemy_furnace",
+    "murim:int_kitchen_stove",
+    "murim:int_tableware",
+    "murim:int_scales_mortar",
+    "murim:int_herb_jars",
+    "murim:shr_candle_dragon",
+    "murim:shr_incense_ding"
   ]
 }

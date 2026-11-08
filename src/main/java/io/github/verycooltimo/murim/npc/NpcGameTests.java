@@ -54,10 +54,28 @@ public final class NpcGameTests {
             h.assertTrue(actor.profile() == profile && Math.abs(mob.getMaxHealth() - profile.health) < 0.01, "профиль/HP " + profile);
             var dialogue = DialogueLoader.get(profile.dialogue());
             h.assertTrue(dialogue != null && !dialogue.start().isEmpty(), "нет диалога " + profile);
+            if (profile == NpcProfile.TRADER) {
+                // guest_trader.json keeps fragment-source advice live while impostor offers are parked.
+                h.assertTrue(GuestDialogueService.open(p, actor), "торговец не даёт сведения о фрагментах");
+                h.assertTrue("greet".equals(p.getData(ModAttachments.DIALOGUE).node()),
+                        "торговец открыл припаркованный квест вместо приветствия");
+                DialogueService.choose(p, 0);
+                h.assertTrue("fragment_sources".equals(p.getData(ModAttachments.DIALOGUE).node()),
+                        "нет доступных сведений об источниках фрагментов");
+                DialogueService.choose(p, -1);
+                h.assertTrue(actor.talkingTo() == -1, "торговец удерживает разговор после сведений");
+            } else if (profile.questFolk()) {
+                // docs/design/45-quest-format.md: parked offers require a per-player fixture opt-in.
+                h.assertFalse(GuestDialogueService.open(p, actor), "открыт припаркованный диалог " + profile);
+                h.assertFalse(p.getData(ModAttachments.DIALOGUE).active(), "припаркованный диалог создал сессию");
+                h.assertTrue(actor.talkingTo() == -1, "припаркованный диалог удерживает NPC");
+                p.getPersistentData().putBoolean("murim_test_legacy_sites", true);
+            }
             h.assertTrue(GuestDialogueService.open(p, actor), "не открыт диалог " + profile);
             h.assertTrue(p.getData(ModAttachments.DIALOGUE).npc() == mob.getId(), "диалог не привязан к NPC");
             DialogueService.choose(p, -1);
             h.assertTrue(actor.talkingTo() == -1, "NPC продолжает удерживать разговор");
+            p.getPersistentData().remove("murim_test_legacy_sites");
             if (mob instanceof GuestFighter f) h.assertTrue(f.campKey() == Bandit.NO_CAMP, "гость стал членом лагеря");
             mob.discard();
         }

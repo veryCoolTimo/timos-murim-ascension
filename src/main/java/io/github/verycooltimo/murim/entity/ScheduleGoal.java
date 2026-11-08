@@ -1,6 +1,9 @@
 package io.github.verycooltimo.murim.entity;
 
+import io.github.verycooltimo.murim.sect.SectBubbles;
+import io.github.verycooltimo.murim.sect.SectCouncil;
 import io.github.verycooltimo.murim.sect.SectLayout;
+import io.github.verycooltimo.murim.sect.SectLayoutFile;
 import io.github.verycooltimo.murim.sect.SectLife;
 import io.github.verycooltimo.murim.sect.SectReactions;
 import io.github.verycooltimo.murim.sect.SectRole;
@@ -31,6 +34,7 @@ public final class ScheduleGoal extends Goal {
 
     private final SectDisciple npc;
     private SectLife.Resolved current;
+    private final io.github.verycooltimo.murim.sect.SectDining dining;
     private int refresh;
     private int pause;
     private int waypoint;
@@ -39,8 +43,17 @@ public final class ScheduleGoal extends Goal {
     private int bedSearch;
     private int drillStep;
     private int drillClock;
+    private long visualBeat=Long.MIN_VALUE, visualDay=Long.MIN_VALUE;
+    private int visualOffset;
+    private boolean visualWobble;
     /** Последний вызов arrive — на месте дела (поза дела), иначе в пути (шаг). */
     private boolean onSpot;
+    /** Day simulation probe ({@link io.github.verycooltimo.murim.sect.SectTimings}): when and where the current task was handed over. */
+    private long assignedAt;
+    private Vec3 assignedFrom = Vec3.ZERO;
+    private boolean arrivalNoted = true;
+    private long assignedWait;
+    private int assignedRepaths;
     /** Часы реплик и жестов (совет, доклад, урок, поклон предкам). */
     private int talkClock;
     /** Докладчик уже поклонился главе на этом докладе. */
@@ -52,15 +65,33 @@ public final class ScheduleGoal extends Goal {
     private int stoveSearch;
     /** Сколько тиков лекарь идёт к раненому. */
     private int treatWalk;
+    // Cook and servants (author 18.10): the pose the routine below wants right now; null = the default pose of the task kind.
+    private SectPose activity;
+    /** Cook at the stove: 0 stir, 1 taste (one shot), 2 chop, 3 stir again; ticks left in the stage. */
+    private int cookStage;
+    private int cookClock;
+    /** Servant with the tray: 0 loads at the counter, 1 walks to a table, 2 wipes it, 3 walks back; clock in ticks. */
+    private int trayStage;
+    private int trayRuns;
+    private int serveClock;
+    private Vec3 tableSpot;
+    private float tableYaw;
+    // The council of elders (docs/design/38): whose turn it was last, the head opened the meeting, the tea round of the servant.
+    private int councilTurn = -1;
+    private boolean councilOpened;
+    private int teaDesk;
+    private int teaRound = -1;
+    private int teaClock;
 
     public ScheduleGoal(SectDisciple npc) {
         this.npc = npc;
+        this.dining = new io.github.verycooltimo.murim.sect.SectDining(npc);
         setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK, Flag.JUMP));
     }
 
     @Override
     public boolean canUse() {
-        return npc.member().isPresent() && !npc.dormant() && npc.free() && !npc.blocking() && !npc.escorting() && npc.guardTarget() == null && npc.layout() != null;
+        return !npc.headIntroReserved() && npc.member().isPresent() && !npc.dormant() && npc.free() && !npc.blocking() && !npc.escorting() && npc.guardTarget() == null && npc.layout() != null;
     }
 
     @Override
@@ -81,19 +112,34 @@ public final class ScheduleGoal extends Goal {
 
     @Override
     public void stop() {
+        io.github.verycooltimo.murim.sect.SectLessons.of(npc).cancelActor(npc);
         npc.walking().stop();
+        dining.cancel();
         current = null;
         npc.setDoingKind(null);
         npc.setPose(SectPose.NONE);
+        // A cutscene takes over the reception chair when it takes the conversation lock.
+        // Otherwise the routine is over and its seat must be released.
+        if (!npc.headIntroScene() && !npc.headIntroReserved()) npc.sit(SeatStyle.NONE);
+        mounted = false;
     }
 
     @Override
     public void tick() {
+        if (dining.leaving()) {
+            if (dining.tick()) { current = null; refresh = 0; }
+            return;
+        }
         if (current == null || --refresh <= 0) {
             update();
         }
-        if (current == null) {
+        if (current == null || dining.leaving()) {
             return;
+        }
+        // Stuck on the way to the spot: another spot of the same kind next time (docs/design/38 section 5.6).
+        if (npc.walking().takeSpotBan() && current.spotId() != null) {
+            npc.banSpot(current.spotId(), 1200);
+            refresh = 1;
         }
         Kind kind = current.task().kind();
         // Разовая поза (поклон старшему, передача поста, носильщик отдал груз): стоит на месте, пока она идёт.
@@ -129,25 +175,39 @@ public final class ScheduleGoal extends Goal {
             npc.getLookControl().setLookAt(seen, 30.0F, 30.0F);
             return;
         }
+        if (io.github.verycooltimo.murim.sect.SectLessons.of(npc).act(npc, kind)) return;
         if (!onSpot && greetSenior(kind)) {
             return;
         }
         if (greetPlayer(kind)) {
             return;
         }
+        // The post-breakfast break is for walking, then resting at the lesson place; no exercises before it ends.
+        if ((SectSchedule.at(npc.level().getDayTime()) == SectSchedule.Period.BREAKFAST
+                || SectSchedule.lessonBreak(npc.level().getDayTime())) && SectSchedule.lessonKind(kind)) {
+            arrive(current.spot(), 0.6D);
+            npc.setPose(SectPose.NONE);
+            return;
+        }
         tickPose(kind);
         switch (kind) {
             case COUNCIL -> council();
+            case TEA -> tea();
+            case ARGUE -> argue();
             case REPORT -> report();
             case RECEIVE -> {
                 if (arrive(current.spot(), 0.6D)) {
                     npc.faceYaw(current.yaw(), 15.0F);
+                    sitIfSeat();
                     lookAtNearPlayer(6.0D);
                 }
             }
             case COUNT, READ -> {
-                if (arrive(current.spot(), 0.6D)) {
+                // ADR 0023: reach the office around the desk at the ordinary meal walking pace;
+                // the counting animation starts only after he has reached his own chair.
+                if (arrive(current.spot(), kind == Kind.COUNT ? 0.8D : 0.6D)) {
                     npc.faceYaw(current.yaw(), 20.0F);
+                    sitIfSeat();
                     if (kind == Kind.COUNT && npc.getRandom().nextInt(400) == 0) {
                         npc.gesture("nod");
                     }
@@ -156,6 +216,7 @@ public final class ScheduleGoal extends Goal {
             case LECTURE -> {
                 if (arrive(current.spot(), 0.6D)) {
                     npc.faceYaw(current.yaw(), 20.0F);
+                    io.github.verycooltimo.murim.sect.SectLessons.of(npc).lecture(npc);
                     if (--talkClock <= 0) {
                         talkClock = 45 + npc.getRandom().nextInt(40);
                         npc.gesture(npc.getRandom().nextInt(3) == 0 ? "point" : "explain");
@@ -165,14 +226,14 @@ public final class ScheduleGoal extends Goal {
             case GRIND -> {
                 if (arrive(current.spot(), 0.6D)) {
                     npc.faceYaw(current.yaw(), 30.0F);
-                    npc.sit(true);
+                    sitHere();
                 }
             }
             case BREW -> brew();
             case TREAT -> treat();
             case WAIT_TREAT -> {
                 if (arrive(current.spot(), 0.5D)) {
-                    npc.sit(true);
+                    sitHere();
                 }
             }
             case REVERE -> {
@@ -196,16 +257,29 @@ public final class ScheduleGoal extends Goal {
             }
             case POLES -> poles();
             case DRILL -> drill();
-            case CHORE, WORK -> roamAround(kind == Kind.CHORE ? 0.7D : 0.5D, kind == Kind.CHORE ? 6.0D : 3.0D);
+            case CHORE, WORK -> {
+                if (kind == Kind.WORK && SectSchedule.officeHelper(npc.memberKey())
+                        && "treasury".equals(current.task().zone())) {
+                    officeHelper();
+                } else if (kind == Kind.WORK && seatedSpot()) {
+                    // At the desk of his house or counter: sits there while the period lasts.
+                    if (arrive(current.spot(), 0.6D)) {
+                        npc.faceYaw(current.yaw(), 20.0F);
+                        sitHere();
+                    }
+                } else {
+                    roamAround(kind == Kind.CHORE ? 0.7D : 0.5D, kind == Kind.CHORE ? 6.0D : 3.0D);
+                }
+            }
             case CARRY -> carry();
             case SWEEP -> work(0.45D, 7.0D, "sweep", 50, 70);
-            case COOK -> work(0.4D, 1.5D, "cook", 100, 120);
-            case SERVE -> work(0.5D, 5.0D, "serve", 30, 40);
+            case COOK -> cook();
+            case SERVE -> serve();
             case TEND -> work(0.4D, 6.0D, "tend", 80, 100);
             case EAT, MEDITATE, REST -> {
                 if (arrive(current.spot(), 0.8D)) {
                     npc.faceYaw(current.yaw(), 30.0F);
-                    npc.sit(true);
+                    sitHere();
                 }
             }
             case SLEEP -> sleep();
@@ -214,7 +288,7 @@ public final class ScheduleGoal extends Goal {
                 if (kind == Kind.GUARD && handover()) {
                     return;
                 }
-                if (arrive(current.spot(), 0.8D)) {
+                if (arrive(current.spot(), kind == Kind.GUARD ? 0.5D : 0.8D)) {
                     npc.faceYaw(current.yaw(), 15.0F);
                     // Старшие у площадки поединков смотрят и поправляют: показывают рукой, кивают.
                     if (kind == Kind.WATCH && --talkClock <= 0) {
@@ -234,6 +308,17 @@ public final class ScheduleGoal extends Goal {
                     if (p != null) {
                         npc.getLookControl().setLookAt(p, 20.0F, 20.0F);
                     }
+                    // The door of the council hall: whoever is not an elder is asked to wait on the stair (docs/design/38). A request, not
+                    // a wall: members of the sect are never driven off by force.
+                    if (kind == Kind.GUARD && SectSchedule.COUNCIL_DOOR.equals(current.task().partner()) && p instanceof net.minecraft.server.level.ServerPlayer sp
+                            && npc.distanceTo(sp) < 4.5D && !sp.isSpectator()
+                            && !io.github.verycooltimo.murim.sect.SectService.state(sp).has(io.github.verycooltimo.murim.sect.SectPositions.ELDER)
+                            && npc.level().getGameTime() - npc.bubbleAt() > 160L) {
+                        npc.faceEntity(sp, 40.0F);
+                        npc.gesture("shake");
+                        String key = SectBubbles.Group.COUNCIL_DOOR.pick(sp, npc.getRandom());
+                        io.github.verycooltimo.murim.sect.SectChatter.send(npc, key, net.minecraft.network.chat.Component.translatable(key));
+                    }
                 }
             }
         }
@@ -251,8 +336,16 @@ public final class ScheduleGoal extends Goal {
             npc.setPose(SectPose.SLEEP);
             return;
         }
-        npc.setPose(SectPose.forTask(kind, onSpot, SectPose.carrier(npc)));
+        SectPose want = activity;
+        if (want == null && kind == Kind.CARRY && npc.carrying()) {
+            // A loaded porter walks with the sack or the jar, the water carrier with the yoke (props of the pose).
+            want = SectPose.loadPose(npc.role(), npc.memberKey());
+        }
+        npc.setPose(want != null ? want : SectPose.forTask(kind, onSpot, SectPose.carrier(npc)));
     }
+
+    private Vec3 nightWatchPost;
+    private long nightWatchDay = Long.MIN_VALUE;
 
     /** Новое задание (раз в секунду): смена части суток и места дела. */
     private void update() {
@@ -260,14 +353,50 @@ public final class ScheduleGoal extends Goal {
         refresh = current == null ? 1 + Math.floorMod(npc.getId() * 13, 20) : 20;
         SectLife.Resolved next = SectLife.resolve(npc);
         if (next == null) {
+            if (current != null && current.task().kind() == Kind.EAT && dining.begin(current)) return;
             current = null;
+            // No place for this period: nobody stays in a bed or on a seat he has no business at.
+            npc.standUp();
+            mounted = false;
             return;
         }
+        if (npc.memberKey().equals(io.github.verycooltimo.murim.sect.SectNightWatch.member(npc.level().getDayTime()))
+                && SectSchedule.at(npc.level().getDayTime()) == SectSchedule.Period.NIGHT
+                && next.task().kind() == Kind.WATCH) {
+            long night = SectSchedule.day(npc.level().getDayTime());
+            if (nightWatchPost == null || nightWatchDay != night) {
+                nightWatchPost = io.github.verycooltimo.murim.sect.SectNightWatch.post(npc, next.spot());
+                if (nightWatchDay != night) {
+                    io.github.verycooltimo.murim.MurimMod.LOGGER.info("Секта: night watch {} at {}",
+                            npc.memberKey(), BlockPos.containing(nightWatchPost));
+                    nightWatchDay = night;
+                }
+            }
+            next = new SectLife.Resolved(next.task(), nightWatchPost, next.yaw());
+        } else nightWatchPost = null;
         boolean changed = current == null || current.task().kind() != next.task().kind()
                 || !current.task().zone().equals(next.task().zone()) || current.spot().distanceToSqr(next.spot()) > 1.0D;
+        if (changed && current != null && current.task().kind() == Kind.EAT && next.task().kind() != Kind.EAT
+                && dining.begin(current)) return;
+        // Rising from the meal for what comes next (SectLead): a nod to the table on the way out.
+        if (changed && current != null && current.task().kind() == Kind.EAT && npc.sitting() && next.task().kind() != Kind.SLEEP) {
+            npc.gesture("nod");
+        }
+        // Counting and eating at the same desk share a seat. A task change alone must not send him back to its approach.
+        boolean keepSeat = mounted && npc.sitting() && current != null
+                && java.util.Objects.equals(current.spotId(), next.spotId())
+                && current.spot().distanceToSqr(next.spot()) < 0.25D;
         current = next;
         npc.setDoingKind(next.task().kind());
+        npc.setDoingSpot(next.spotId());
         if (changed) {
+            if (io.github.verycooltimo.murim.sect.SectTimings.ON) {
+                assignedAt = npc.level().getDayTime();
+                assignedFrom = npc.position();
+                arrivalNoted = false;
+                assignedWait = npc.walking().probeWait();
+                assignedRepaths = npc.walking().probeRepaths();
+            }
             pause = 0;
             waypoint = 0;
             roam = null;
@@ -275,8 +404,9 @@ public final class ScheduleGoal extends Goal {
             bedSearch = 0;
             onSpot = false;
             Kind k = next.task().kind();
-            if (!k.seated()) {
-                npc.sit(false);
+            mounted = keepSeat;
+            if (!keepSeat && !k.seated()) {
+                npc.sit(SeatStyle.NONE);
             }
             if (k != Kind.SLEEP && npc.isSleeping()) {
                 npc.stopSleeping();
@@ -290,6 +420,17 @@ public final class ScheduleGoal extends Goal {
             reported = false;
             playerTreat = false;
             talkClock = 0;
+            activity = null;
+            cookStage = 0;
+            cookClock = 0;
+            trayStage = 0;
+            serveClock = 0;
+            tableSpot = null;
+            councilTurn = -1;
+            councilOpened = false;
+            teaDesk = 0;
+            teaRound = -1;
+            teaClock = 0;
             stove = null;
             stoveSpot = null;
             stoveSearch = 0;
@@ -318,7 +459,6 @@ public final class ScheduleGoal extends Goal {
                 // Метла: ванильная кисть — ближайший предмет-«щётка» (своей метлы в моде нет).
                 case SWEEP -> Items.BRUSH;
                 case TEND -> Items.WOODEN_HOE;
-                case SERVE -> Items.BOWL;
                 case WORK -> npc.role() == SectRole.STEWARD ? Items.WRITABLE_BOOK : null;
                 case CARRY -> npc.carrying() ? load() : empty();
                 default -> null;
@@ -346,8 +486,8 @@ public final class ScheduleGoal extends Goal {
     /** Груз в руках: носильщик — сноп или бочонок, водонос — ведро воды. */
     private net.minecraft.world.item.Item load() {
         return switch (npc.role()) {
-            case WATER_CARRIER -> Items.WATER_BUCKET;
-            case PORTER -> "porter_oh".equals(npc.memberKey()) ? Items.BARREL : Items.HAY_BLOCK;
+            // The yoke with its buckets, the sack and the jar are props of the carry pose (SectPose#loadPose), not held items.
+            case WATER_CARRIER, PORTER -> null;
             default -> Items.BUNDLE;
         };
     }
@@ -362,9 +502,28 @@ public final class ScheduleGoal extends Goal {
      * снова за грузом.
      */
     private void carry() {
+        // Playtest 1.11: the two porters used to shuttle to the gate indefinitely.
+        // A receipt survives goal interruptions/reloads; only a new period allows another collection.
+        // Server-only receipt, no client sync; carrying/held-item visuals keep the existing entity synchronization.
+        // API: neoforge-src IEntityExtension#getPersistentData; minecraft-src CompoundTag#contains/getLong/putLong.
+        boolean gateJob = npc.role() == SectRole.PORTER && "sect_gate".equals(current.task().toZone());
+        long period = SectSchedule.day(npc.level().getDayTime()) * 8L
+                + SectSchedule.at(npc.level().getDayTime()).ordinal();
+        var receipt = npc.getPersistentData();
+        if (gateJob && receipt.contains("murim_gate_delivery") && receipt.getLong("murim_gate_delivery") == period) {
+            npc.setCarrying(false);
+            npc.hold(empty());
+            npc.workPose(null);
+            arrive(current.spot(), 0.55D);
+            return;
+        }
         if (pause > 0) {
             pause--;
             return;
+        }
+        if (pickup == null && current.pickup() != null) {
+            // Маршрут носильщика из построенной секты: второй конец уже выбран по раскладке.
+            pickup = current.pickup();
         }
         if (pickup == null) {
             SectLayout layout = npc.layout();
@@ -377,6 +536,12 @@ public final class ScheduleGoal extends Goal {
             }
             pickup = npc.level().isLoaded(BlockPos.containing(guess)) ? SectLife.stand(npc.level(), guess) : guess;
         }
+        if (gateJob && receipt.contains("murim_gate_pickup") && receipt.getLong("murim_gate_pickup") == period) {
+            // A conversation or another goal may have cleared the carry pose after collection; resume the return leg.
+            npc.setCarrying(true);
+            npc.hold(load());
+            npc.workPose("carry");
+        }
         boolean loaded = npc.carrying();
         Vec3 target = loaded ? current.spot() : pickup;
         // Между площадками пути может не быть, пока автор не поставил лестницы: застрявший носильщик не стоит
@@ -384,8 +549,13 @@ public final class ScheduleGoal extends Goal {
         boolean giveUp = ++legTicks > 400;
         boolean there = arrive(target, loaded ? 0.55D : 0.7D);
         if (there || giveUp) {
+            if (gateJob && there && !loaded) receipt.putLong("murim_gate_pickup", period);
+            if (gateJob && (loaded || giveUp)) {
+                // Failed paths end the errand too: return inside, never turn around every 400 ticks.
+                receipt.putLong("murim_gate_delivery", period);
+            }
             legTicks = 0;
-            boolean handOver = there && loaded && npc.role() == SectRole.PORTER;
+            boolean handOver = there && loaded && (npc.role() == SectRole.PORTER || npc.role() == SectRole.WATER_CARRIER);
             loaded = !loaded;
             npc.setCarrying(loaded);
             npc.hold(loaded ? load() : empty());
@@ -419,24 +589,74 @@ public final class ScheduleGoal extends Goal {
         }
     }
 
+    /** One speaker holds the floor this long, in ticks. */
+    private static final int COUNCIL_TURN = 140;
+
     /**
-     * Совет старейшин: сидят на своих местах; говорят по очереди (глава, Тэ Гюн, Тэ Рок, Гён Чхо, Гён Так — по 6 с),
-     * говорящий объясняет и показывает, остальные смотрят на него, кивают; Тэ Гюн чаще качает головой (скупой, гл. 64).
+     * Совет старейшин (docs/design/38, «Совет и приглашения»): идут в зал совета, садятся за свои места (глава — на помосте
+     * во главе, старейшины — на подушках за низкими столами двумя рядами), говорят по очереди: говорящий объясняет и показывает
+     * и бросает фразу о делах секты (пузырь), остальные смотрят на него, кивают; Тэ Гюн чаще качает головой (скупой, гл. 64).
+     * Когда слуга обошёл столы, пьют чай. В конце — встают и кланяются главе, он закрывает совет.
      */
     private void council() {
-        if (!arrive(current.spot(), 0.6D)) {
+        // The elders hurry: the hall is far and the council does not wait (a brisk step, not the stroll of the working day).
+        if (!arrive(current.spot(), 0.9D)) {
             return;
         }
         npc.faceYaw(current.yaw(), 30.0F);
-        npc.sit(true);
         long now = npc.level().getGameTime();
-        String speaker = SectSchedule.COUNCIL.get((int) Math.floorMod(now / 120L, (long) SectSchedule.COUNCIL.size()));
+        long dayTime = npc.level().getDayTime();
+        java.util.List<String> members = SectCouncil.config().members();
+        boolean head = SectCouncil.seat(npc.memberKey()) == 0;
+        if (SectCouncil.phase(dayTime) == SectCouncil.Phase.LEAVE) {
+            // The meeting is ending: stand up, bow to the head, the head closes it.
+            if (!reported) {
+                reported = true;
+                npc.sit(SeatStyle.NONE);
+                activity = null;
+                SectDisciple chair = head ? null : find(members.get(0), 14.0D);
+                if (chair != null) {
+                    npc.faceEntity(chair, 90.0F);
+                    npc.attend(chair, 50);
+                }
+                npc.holdPose(SectPose.BOW, 44);
+                if (head) {
+                    councilSay(SectBubbles.Group.COUNCIL_CLOSE);
+                }
+            }
+            return;
+        }
+        sitHere();
+        if (io.github.verycooltimo.murim.sect.SectCouncilIntrusion.paused(now)) {
+            // Somebody has walked in on the meeting: the table falls silent and turns to him.
+            lookAtNearPlayer(12.0D);
+            return;
+        }
+        if (head && !councilOpened && SectCouncil.sinceSat(dayTime) >= 40) {
+            councilOpened = true;
+            councilSay(SectBubbles.Group.COUNCIL_OPEN);
+        }
+        int turn = (int) Math.floorMod(now / COUNCIL_TURN, (long) members.size());
+        String speaker = members.get(turn);
         boolean me = speaker.equals(npc.memberKey());
         SectDisciple s = me ? null : find(speaker, 12.0D);
         if (s != null) {
             npc.getLookControl().setLookAt(s, 30.0F, 30.0F);
         } else if (me) {
             lookAtNearPlayer(8.0D);
+        }
+        if (me && councilTurn != turn) {
+            councilTurn = turn;
+            if (npc.getRandom().nextInt(3) != 0) {
+                councilSay(SectBubbles.Group.COUNCIL);
+            }
+        }
+        // Tea: once the round is on, a sip now and then (the cup itself is set down by #tea).
+        if (SectCouncil.teaServed(dayTime) && !me && !npc.poseHeld()
+                && Math.floorMod(now / 20L + npc.getId() * 7L, 16L) < 3L) {
+            activity = SectPose.TEA;
+        } else {
+            activity = null;
         }
         if (--talkClock <= 0) {
             if (me) {
@@ -449,6 +669,109 @@ public final class ScheduleGoal extends Goal {
                     boolean stingy = "tae_gyun".equals(npc.memberKey());
                     npc.gesture(npc.getRandom().nextInt(stingy ? 2 : 5) == 0 ? "shake" : "nod");
                 }
+            }
+        }
+    }
+
+    /** A line of the group over this person's head, picked for the nearest player so he does not hear the same line twice. */
+    private void councilSay(SectBubbles.Group group) {
+        Player near = npc.level().getNearestPlayer(npc, io.github.verycooltimo.murim.sect.SectChatter.HEAR_RANGE);
+        if (near == null) {
+            return;
+        }
+        String key = null;
+        if (group == SectBubbles.Group.COUNCIL && npc.level() instanceof net.minecraft.server.level.ServerLevel level) {
+            // elders-8: the middle of the sitting follows the one topic fixed at its start (news, review, weather, else the table talk).
+            var seniors = io.github.verycooltimo.murim.sect.SectLessons.of(npc).seniors;
+            key = seniors.councilKey(near instanceof net.minecraft.server.level.ServerPlayer tp ? tp : null, npc, npc.getRandom());
+            if (key != null) seniors.councilAnnounced(level, level.getDayTime());
+        }
+        if (key == null) key = near instanceof net.minecraft.server.level.ServerPlayer sp ? group.pick(sp, npc.getRandom())
+                : group.pick(npc.getRandom().nextInt(64));
+        io.github.verycooltimo.murim.sect.SectChatter.send(npc, key, net.minecraft.network.chat.Component.translatable(key));
+    }
+
+    /** Ticks between two rounds of the tea. */
+    private static final int TEA_ROUND = 900;
+
+    /**
+     * The servant at the council: waits at the south end of the aisle with the tray, and when the tea is due walks the round of
+     * the low desks, sets the cups down at each (the sitter lifts his cup), now and then says a word; a second round after a
+     * while. Without a built council hall he just stands where the plan puts him.
+     */
+    private void tea() {
+        SectLayoutFile file = npc.layout() == null ? null : npc.layout().file();
+        java.util.List<SectLayoutFile.Spot> desks = file == null ? java.util.List.of() : io.github.verycooltimo.murim.sect.SectPlaces.councilDesks(file);
+        long dayTime = npc.level().getDayTime();
+        SectCouncil.Phase phase = SectCouncil.phase(dayTime);
+        int round = phase == SectCouncil.Phase.SESSION && SectCouncil.teaServed(dayTime)
+                ? (SectCouncil.tick(dayTime) - SectCouncil.config().tea()) / TEA_ROUND : -1;
+        if (round > teaRound && !desks.isEmpty()) {
+            teaRound = round;
+            teaDesk = 0;
+            teaClock = 0;
+        }
+        boolean serving = teaRound >= 0 && teaDesk < desks.size() && round == teaRound;
+        if (!serving) {
+            // Waiting (or done): at the south end of the aisle, the tray in his hands (loaded before the round, empty after it).
+            activity = teaRound >= 0 ? SectPose.TRAY_EMPTY : SectPose.TRAY;
+            if (arrive(current.spot(), 0.8D)) {
+                npc.faceYaw(current.yaw(), 30.0F);
+            }
+            return;
+        }
+        SectLayoutFile.Spot desk = desks.get(teaDesk);
+        net.minecraft.core.BlockPos w = desk.walkTo();
+        Vec3 at = new Vec3(w.getX() + 0.5D, w.getY(), w.getZ() + 0.5D);
+        activity = SectPose.TRAY;
+        // 25 s at most to reach a desk; a desk he cannot reach is skipped.
+        if (arrive(at, 0.5D) || ++teaClock > 500) {
+            npc.faceYaw(desk.yaw(), 90.0F);
+            // The sitter of this desk: the member on the cushion beside it.
+            SectDisciple sitter = null;
+            for (SectDisciple d : npc.level().getEntitiesOfClass(SectDisciple.class, new net.minecraft.world.phys.AABB(at, at).inflate(2.6D),
+                    d -> d != npc && d.isAlive() && d.doingKind() == Kind.COUNCIL && d.sitting())) {
+                sitter = d;
+                break;
+            }
+            npc.holdPose(SectPose.TRAY_SET, 50);
+            if (sitter != null) {
+                sitter.attend(npc, 60);
+                sitter.holdPose(SectPose.TEA, 110);
+                if (npc.getRandom().nextInt(2) == 0) {
+                    sitter.gesture("nod");
+                }
+            }
+            if (teaDesk % 2 == 0) {
+                councilSay(SectBubbles.Group.TEA);
+            }
+            teaDesk++;
+            teaClock = 0;
+        }
+    }
+
+    /**
+     * The quarrel in the forecourt: the two juniors stand face to face and talk with their hands, each in his turn says a
+     * word (a bubble); they do not touch each other. {@code SectOffices} lets them calm down and bow when the elder has judged.
+     */
+    private void argue() {
+        if (!arrive(current.spot(), 0.6D)) {
+            return;
+        }
+        npc.faceYaw(current.yaw(), 30.0F);
+        SectDisciple other = find(current.task().partner(), 6.0D);
+        if (other != null) {
+            npc.getLookControl().setLookAt(other, 30.0F, 30.0F);
+        }
+        if (npc.getPersistentData().getLong(io.github.verycooltimo.murim.sect.SectOffices.DISPUTE_DONE) == SectSchedule.day(npc.level().getDayTime())) {
+            // The elder has judged: they stand calm, hands down, until the hour of the quarrel is over.
+            return;
+        }
+        if (--talkClock <= 0) {
+            talkClock = 50 + npc.getRandom().nextInt(50);
+            npc.gesture(npc.getRandom().nextInt(3) == 0 ? "point" : "explain");
+            if (npc.getRandom().nextInt(2) == 0) {
+                councilSay(SectBubbles.Group.DISPUTE);
             }
         }
     }
@@ -489,7 +812,7 @@ public final class ScheduleGoal extends Goal {
 
     /** Лекарь у печи: печь автора на площадке алхимии (если стоит) — встать перед ней и мешать; иначе — на своём месте. */
     private void brew() {
-        if (stove == null && --stoveSearch <= 0) {
+        if (stove == null && current.spotId() == null && --stoveSearch <= 0) {
             stoveSearch = 200;
             stove = SectLife.findStove(npc, current.task().zone());
             if (stove != null) {
@@ -539,7 +862,7 @@ public final class ScheduleGoal extends Goal {
                 npc.level().playSound(null, patient.blockPosition(), SoundEvents.BREWING_STAND_BREW, SoundSource.NEUTRAL, 0.25F, 1.5F);
             }
             if (!patient.wounded()) {
-                patient.sit(false);
+                patient.sit(SeatStyle.NONE);
                 patient.attend(npc, 44);
                 patient.holdPose(SectPose.BOW, 44);
                 npc.gesture("nod");
@@ -569,8 +892,9 @@ public final class ScheduleGoal extends Goal {
         if (!playerTreat) {
             playerTreat = true;
             npc.gesture("explain");
-            io.github.verycooltimo.murim.sect.SectChatter.sayIfQuiet(npc,
-                    io.github.verycooltimo.murim.sect.SectBubbles.Group.HEAL_START.pick(npc.getRandom().nextInt(64)), 60);
+            io.github.verycooltimo.murim.sect.SectChatter.sayIfQuiet(npc, p instanceof net.minecraft.server.level.ServerPlayer sp
+                    ? io.github.verycooltimo.murim.sect.SectBubbles.Group.HEAL_START.pick(sp, npc.getRandom())
+                    : io.github.verycooltimo.murim.sect.SectBubbles.Group.HEAL_START.pick(npc.getRandom().nextInt(64)), 60);
         }
         if ((npc.tickCount + npc.getId()) % 20 == 0) {
             p.heal(2.0F);
@@ -578,8 +902,9 @@ public final class ScheduleGoal extends Goal {
             if (p.getHealth() >= p.getMaxHealth() * SectReactions.HEALED) {
                 npc.setHealingPlayer(-1);
                 npc.gesture("nod");
-                io.github.verycooltimo.murim.sect.SectChatter.sayIfQuiet(npc,
-                        io.github.verycooltimo.murim.sect.SectBubbles.Group.HEAL_DONE.pick(npc.getRandom().nextInt(64)), 20);
+                io.github.verycooltimo.murim.sect.SectChatter.sayIfQuiet(npc, p instanceof net.minecraft.server.level.ServerPlayer sp
+                        ? io.github.verycooltimo.murim.sect.SectBubbles.Group.HEAL_DONE.pick(sp, npc.getRandom())
+                        : io.github.verycooltimo.murim.sect.SectBubbles.Group.HEAL_DONE.pick(npc.getRandom().nextInt(64)), 20);
                 io.github.verycooltimo.murim.MurimMod.LOGGER.info("Секта: Гён Чхо перевязал {}", p.getName().getString());
             }
         }
@@ -645,7 +970,7 @@ public final class ScheduleGoal extends Goal {
         // Поклон игроку — тоже не хором: свой миг у каждого (в среднем через ~1 с после прихода игрока).
         if ((npc.tickCount + npc.getId()) % 10 != 5 || npc.getRandom().nextInt(3) != 0 || kind.seated() || kind == Kind.FORM_ROW || kind == Kind.SPAR
                 || kind == Kind.POLES || kind == Kind.DRILL || kind == Kind.INSPECT || kind == Kind.TREAT || kind == Kind.GUARD
-                || kind == Kind.COUNCIL || kind == Kind.REPORT || npc.sitting()) {
+                || kind == Kind.COUNCIL || kind == Kind.LECTURE || kind == Kind.REPORT || npc.sitting()) {
             return false;
         }
         Player near = npc.level().getNearestPlayer(npc, SectReactions.BOW_RANGE);
@@ -656,8 +981,16 @@ public final class ScheduleGoal extends Goal {
         if (npc.bowedToday(p, day)) {
             return false;
         }
+        // An office holder (elder, first disciple) is greeted by his office: juniors bow and make room, the first
+        // generation and the council nod as to a colleague (SectSocial#office). Servants take the bow below.
+        io.github.verycooltimo.murim.sect.SectRank rank = io.github.verycooltimo.murim.sect.SectRank.of(p);
+        if (rank.office() && !npc.role().lay()) {
+            io.github.verycooltimo.murim.sect.SectSocial.react(p, npc);
+            return npc.bowedToday(p, day);
+        }
+        if (io.github.verycooltimo.murim.sect.SectLessons.greet(npc, p)) return true;
         // Stronger players receive the bow AND room to pass, including previous review winners.
-        if (!npc.role().lay() && npc.rank() <= 2 && io.github.verycooltimo.murim.sect.SectSocial.power(p, npc)
+        if (!rank.office() && !npc.role().lay() && npc.rank() <= 2 && io.github.verycooltimo.murim.sect.SectSocial.power(p, npc)
                 == io.github.verycooltimo.murim.sect.SectSocial.Power.STRONG) {
             io.github.verycooltimo.murim.sect.SectSocial.react(p, npc);
             if (npc.bowedToday(p, day)) return true;
@@ -670,14 +1003,14 @@ public final class ScheduleGoal extends Goal {
         npc.attend(p, 44);
         npc.faceEntity(p, 90.0F);
         npc.holdPose(SectPose.BOW, 44);
-        var sect = p.getData(io.github.verycooltimo.murim.registry.ModAttachments.SECT);
-        if (npc.role().third() && (sect.has(io.github.verycooltimo.murim.sect.SectPositions.FIRST)
-                || sect.has(io.github.verycooltimo.murim.sect.SectPositions.ELDER))) {
-            String key = "murim.bubble.social.title." + (1 + npc.getRandom().nextInt(4));
-            io.github.verycooltimo.murim.sect.SectChatter.send(npc, key, net.minecraft.network.chat.Component.translatable(key,
-                    net.minecraft.network.chat.Component.translatable(io.github.verycooltimo.murim.sect.SectPositions.titleKey(sect))));
+        if (rank.office()) {
+            // A servant bows to the office: the same words as the juniors' (SectSocial#bubbleKeys).
+            String key = io.github.verycooltimo.murim.sect.SectLines.pick(p, "murim.bubble.social."
+                    + io.github.verycooltimo.murim.sect.SectSocial.officeGroup(rank, npc),
+                    io.github.verycooltimo.murim.sect.SectSocial.VARIANTS, npc.getRandom());
+            io.github.verycooltimo.murim.sect.SectChatter.send(npc, key, net.minecraft.network.chat.Component.translatable(key));
         } else if (npc.getRandom().nextInt(2) == 0) {
-            io.github.verycooltimo.murim.sect.SectChatter.sayIfQuiet(npc, SectReactions.bowKey(why, npc.getRandom().nextInt(64)), 100);
+            io.github.verycooltimo.murim.sect.SectChatter.sayIfQuiet(npc, SectReactions.bowKey(why, p, npc.getRandom()), 100);
         }
         return true;
     }
@@ -704,9 +1037,12 @@ public final class ScheduleGoal extends Goal {
         SectRoster outKey = io.github.verycooltimo.murim.sect.SectRota.relieved(duty.get(), time);
         SectSchedule.Task oldPost = SectSchedule.post(new io.github.verycooltimo.murim.sect.SectRota.Duty(
                 duty.get().post(), !duty.get().night()));
-        Vec3 oldSpot = npc.layout().at(oldPost.zone(), oldPost.du(), oldPost.dv());
+        Vec3 oldSpot = SectLife.placeOfTask(npc, oldPost);
+        if (oldSpot == null) {
+            oldSpot = npc.layout().at(oldPost.zone(), oldPost.du(), oldPost.dv());
+            if (oldSpot != null && npc.level().isLoaded(BlockPos.containing(oldSpot))) oldSpot = SectLife.stand(npc.level(), oldSpot);
+        }
         if (oldSpot == null || !npc.level().isLoaded(BlockPos.containing(oldSpot))) return false;
-        oldSpot = SectLife.stand(npc.level(), oldSpot);
         // Post 0 moves from the main hall to the gate at night. Relieve the outgoing
         // guard at HIS post before walking to the new one; he cannot meet us at the gate.
         SectDisciple out = npc.level().getEntitiesOfClass(SectDisciple.class,
@@ -750,7 +1086,7 @@ public final class ScheduleGoal extends Goal {
         if (roam == null) {
             return;
         }
-        if (arrive(roam, speed)) {
+        if (arriveRoam(roam, speed)) {
             pause = pauseMin + npc.getRandom().nextInt(pauseRand);
             roam = null;
             npc.faceYaw(current.yaw(), 30.0F);
@@ -761,16 +1097,291 @@ public final class ScheduleGoal extends Goal {
         }
     }
 
+    // ------------------------------------------------------------------ cook and servants (author 18.10)
+
+    /**
+     * The cook at the stove of the dining hall: stirs the pot (loop), tastes a ladleful (one shot), chops greens (loop), stirs
+     * again, round and round. The clips are blockout poses ({@link SectPose#COOK_STIR} and the others).
+     */
+    private void cook() {
+        if (!arrive(current.spot(), 0.5D)) {
+            activity = null;
+            return;
+        }
+        npc.faceYaw(current.yaw(), 20.0F);
+        if (activity == null) {
+            activity = SectPose.COOK_STIR;
+            cookClock = 60 + npc.getRandom().nextInt(60);
+        }
+        if (activity == SectPose.COOK_STIR && (npc.tickCount + npc.getId()) % 100 == 0) {
+            npc.level().playSound(null, npc.blockPosition(), SoundEvents.BREWING_STAND_BREW, SoundSource.NEUTRAL, 0.2F, 0.7F + npc.getRandom().nextFloat() * 0.2F);
+        }
+        if (--cookClock > 0) {
+            return;
+        }
+        cookStage = (cookStage + 1) % 4;
+        switch (cookStage) {
+            case 0 -> {
+                activity = SectPose.COOK_STIR;
+                cookClock = 200 + npc.getRandom().nextInt(120);
+            }
+            case 1 -> {
+                // The one-shot clip is 3.4 s; the hold ends a little before it so the stir comes back without a flash of the rest pose.
+                activity = SectPose.COOK_STIR;
+                cookClock = 12;
+                npc.holdPose(SectPose.COOK_TASTE, 66);
+            }
+            case 2 -> {
+                activity = SectPose.COOK_CHOP;
+                cookClock = 140 + npc.getRandom().nextInt(100);
+            }
+            default -> {
+                activity = SectPose.COOK_STIR;
+                cookClock = 100 + npc.getRandom().nextInt(60);
+            }
+        }
+    }
+
+    /**
+     * Serving a meal: the cook ladles at the counter, the other servants carry trays of bowls to the tables of the dining hall,
+     * set them down and wipe the table. Without a built dining hall (test layouts) the old round of the counter area.
+     */
+    private void serve() {
+        SectLayoutFile file = npc.layout() == null ? null : npc.layout().file();
+        if (file == null || current.spotId() == null) {
+            work(0.5D, 5.0D, "serve", 30, 40);
+            return;
+        }
+        if (npc.role() == SectRole.COOK) {
+            ladleRound();
+        } else {
+            trayRound(file);
+        }
+    }
+
+    /** The cook behind the counter: stirs the big pot and ladles a bowl every few seconds (one shot). */
+    private void ladleRound() {
+        if (!arrive(current.spot(), 0.5D)) {
+            activity = null;
+            return;
+        }
+        npc.faceYaw(current.yaw(), 20.0F);
+        if (activity == null) {
+            activity = SectPose.COOK_STIR;
+            serveClock = 30 + npc.getRandom().nextInt(40);
+        }
+        if (--serveClock > 0) {
+            return;
+        }
+        serveClock = 110 + npc.getRandom().nextInt(70);
+        npc.holdPose(SectPose.COOK_LADLE, 58);
+    }
+
+    /** The tray round of a servant: loads at the counter, walks to a table, sets the bowls down, wipes the table, walks back. */
+    private void trayRound(SectLayoutFile file) {
+        switch (trayStage) {
+            case 0 -> {
+                activity = SectPose.TRAY_EMPTY;
+                if (!arrive(current.spot(), 0.5D)) {
+                    return;
+                }
+                npc.faceYaw(current.yaw(), 20.0F);
+                if (++serveClock < 36) {
+                    return;
+                }
+                SectLayoutFile.Spot table = nextTable(file);
+                if (table == null) {
+                    serveClock = 0;
+                    return;
+                }
+                BlockPos w = table.walkTo();
+                tableSpot = new Vec3(w.getX() + 0.5D, w.getY(), w.getZ() + 0.5D);
+                tableYaw = table.yaw();
+                trayStage = 1;
+                serveClock = 0;
+                activity = SectPose.TRAY;
+            }
+            case 1 -> {
+                activity = SectPose.TRAY;
+                // 25 s at most: a table the servant cannot reach is skipped, the bowls are "set down" where he stands.
+                if (arrive(tableSpot, 0.45D) || ++serveClock > 500) {
+                    trayStage = 2;
+                    serveClock = 0;
+                    activity = SectPose.WIPE;
+                    npc.faceYaw(tableYaw, 90.0F);
+                    npc.holdPose(SectPose.TRAY_SET, 50);
+                }
+            }
+            case 2 -> {
+                activity = SectPose.WIPE;
+                npc.faceYaw(tableYaw, 30.0F);
+                if (++serveClock > 70 + (npc.getId() & 31)) {
+                    trayStage = 3;
+                    serveClock = 0;
+                    activity = SectPose.TRAY_EMPTY;
+                }
+            }
+            default -> {
+                activity = SectPose.TRAY_EMPTY;
+                if (arrive(current.spot(), 0.5D) || ++serveClock > 500) {
+                    trayStage = 0;
+                    serveClock = 0;
+                    trayRuns++;
+                }
+            }
+        }
+    }
+
+    /** The next table of the dining hall for the tray: reachable standing cells beside the tables, a different one each round. */
+    private SectLayoutFile.Spot nextTable(SectLayoutFile file) {
+        java.util.List<SectLayoutFile.Spot> tables = new java.util.ArrayList<>();
+        java.util.List<SectLayoutFile.Spot> away = new java.util.ArrayList<>();
+        for (SectLayoutFile.Spot s : file.spots()) {
+            if ("table".equals(s.kind()) && "dining_hall".equals(s.building()) && "ok".equals(s.reach())) {
+                tables.add(s);
+                // A table at his own feet is no walk: prefer the ones at least three blocks from the counter he starts from.
+                Vec3 at = Vec3.atBottomCenterOf(s.walkTo());
+                Vec3 home = current.spot();
+                if ((at.x - home.x) * (at.x - home.x) + (at.z - home.z) * (at.z - home.z) >= 9.0D) {
+                    away.add(s);
+                }
+            }
+        }
+        if (!away.isEmpty()) {
+            tables = away;
+        }
+        if (tables.isEmpty()) {
+            return null;
+        }
+        tables.sort(java.util.Comparator.comparing(SectLayoutFile.Spot::id));
+        return tables.get(Math.floorMod(npc.getId() * 7 + trayRuns * 5, tables.size()));
+    }
+
     // ------------------------------------------------------------------ ходьба
 
     /**
      * Идти к точке; true — уже на месте. Скорость — поспешная, если далеко (опаздывает к колоколу).
      */
     private boolean arrive(Vec3 spot, double speed) {
+        return arrive(spot, speed, point -> true);
+    }
+
+    private boolean arrive(Vec3 spot, double speed, java.util.function.Predicate<Vec3> area) {
         if (npc.isSleeping()) npc.stopSleeping();
-        onSpot = npc.walking().walk(spot, speed * pace());
-        if (!onSpot) npc.sit(false);
+        if (mounted) {
+            // Sitting on the seat that belongs to this spot (the spot itself is the cell beside it): nothing to walk. Got up
+            // (pushed, woken, a fight): walk again.
+            if (npc.sitting()) {
+                onSpot = true;
+                return true;
+            }
+            mounted = false;
+        }
+        if (current != null && current.task().kind() == Kind.EAT
+                && "dining".equals(current.task().zone())
+                && io.github.verycooltimo.murim.sect.SectDining.waitForAisle(npc)) {
+            onSpot = false;
+            return false;
+        }
+        double walkingSpeed = current != null && current.task().kind() == Kind.GUARD ? speed
+                : io.github.verycooltimo.murim.sect.SectLead.speed(npc, speed, Math.sqrt(horizontal(spot)));
+        onSpot = npc.walking().walk(spot, walkingSpeed * pace(), area);
+        if (!onSpot) npc.sit(SeatStyle.NONE);
+        else io.github.verycooltimo.murim.sect.SectLead.arrived(npc);
+        if (onSpot && !arrivalNoted && current != null && spot.distanceToSqr(current.spot()) < 0.25D) {
+            arrivalNoted = true;
+            io.github.verycooltimo.murim.sect.SectTimings.arrived(npc, current.task().kind(), assignedAt, assignedFrom, current.spot(),
+                    npc.walking().routeCost(), npc.walking().probeWait() - assignedWait, npc.walking().probeRepaths() - assignedRepaths);
+        }
         return onSpot;
+    }
+
+    /** He sits down the way the furniture of his spot asks (chair sit on a chair, lotus on a cushion, mat or the floor). */
+    private void sitHere() {
+        mounted = SectLife.sitDown(npc, current);
+    }
+
+    /** Existing junior models: a ledger clerk and a runner carrying the office's small boxes. */
+    private void officeHelper() {
+        if (npc.tickCount % 1200 == Math.floorMod(npc.getId(), 1200)) {
+            String key = "murim.bubble.office." + ("yul_san".equals(npc.memberKey()) ? "ledger" : "boxes");
+            io.github.verycooltimo.murim.sect.SectChatter.send(npc, key, net.minecraft.network.chat.Component.translatable(key));
+        }
+        if ("yul_san".equals(npc.memberKey())) {
+            if (arrive(current.spot(), 0.6D)) {
+                sitHere();
+                npc.faceYaw(current.yaw(), 20.0F);
+                activity = SectPose.READ;
+                npc.hold(Items.WRITABLE_BOOK);
+            }
+            return;
+        }
+        // The runner returns to his visitor chair between errands; every endpoint needs a complete grounded path.
+        if (waypoint == 0 && arrive(current.spot(), 0.55D)) {
+            sitHere();
+            activity = SectPose.COUNT;
+            npc.hold(Items.PAPER);
+            if (++pause >= 160) { waypoint = 1; pause = 0; npc.standUp(); mounted = false; }
+        } else if (waypoint == 1 && !npc.isNoGravity() && npc.onGround()) {
+            var file = SectLife.file(npc);
+            var room = file == null ? null : file.room(current.room());
+            if (room == null) { waypoint = 0; return; }
+            if (roam == null) {
+                for (var cell : BlockPos.betweenClosed(new BlockPos(room.bounds().x0(), room.y(), room.bounds().z0()),
+                        new BlockPos(room.bounds().x1(), room.y(), room.bounds().z1()))) {
+                    Vec3 point = Vec3.atBottomCenterOf(cell);
+                    if (point.distanceToSqr(current.spot()) < 4 || !SectLife.standable(npc.level(), cell)) continue;
+                    var path = npc.getNavigation().createPath(cell, 0);
+                    if (path != null && path.canReach()) { roam = point; break; }
+                }
+            }
+            activity = SectPose.TALK;
+            npc.hold(Items.CHEST);
+            if (roam == null || arrive(roam, 0.5D)) { waypoint = 2; pause = 0; }
+        } else if (waypoint == 2) {
+            activity = SectPose.COUNT;
+            if (++pause >= 40) { waypoint = 0; pause = 0; roam = null; activity = null; }
+        }
+    }
+
+    /** Office work is done sitting when the spot is a seat; standing otherwise. */
+    private void sitIfSeat() {
+        if (seatedSpot()) {
+            sitHere();
+        } else {
+            npc.sit(SeatStyle.NONE);
+        }
+    }
+
+    /** True when he sits on a seat he was put on. */
+    private boolean mounted;
+
+    /**
+     * Walk to a random point of a pacing round. A point next to a lantern or a table that the body cannot reach is
+     * dropped at the first stuck step and another one is drawn, instead of waiting for the relocation.
+     */
+    private boolean arriveRoam(Vec3 spot, double speed) {
+        if (arrive(spot, speed, this::insideWorkArea)) {
+            return true;
+        }
+        if (npc.walking().stuckStage() >= 1) {
+            // Dropping the destination must also cancel its path/recovery step before another draw.
+            // API: /tmp/mr-ref-1121/minecraft-src/net/minecraft/world/entity/ai/navigation/PathNavigation.java#stop
+            npc.walking().stop();
+            roam = null;
+        }
+        return false;
+    }
+
+    /** The spot he works at is a seat (chair, armchair, cushion, mat): office work is done sitting. */
+    private boolean seatedSpot() {
+        var layout = npc.layout();
+        var file = layout == null ? null : layout.file();
+        if (file == null || current == null || current.spotId() == null) {
+            return false;
+        }
+        var spot = file.spot(current.spotId());
+        return spot != null && spot.seated();
     }
 
     /** Личный темп шага по ключу человека. */
@@ -792,9 +1403,20 @@ public final class ScheduleGoal extends Goal {
         }
         npc.faceYaw(current.yaw(), 30.0F);
         long now = npc.level().getGameTime();
-        if (SectSchedule.beatStarts(now)) {
-            npc.drillForm(SectSchedule.beatForm(now), SectSchedule.BEAT_STRIKE);
+        long beat = SectSchedule.beat(now);
+        long day = SectSchedule.day(npc.level().getDayTime());
+        if(visualBeat!=beat || visualDay!=day) {
+            visualBeat=beat; visualDay=day;
+            visualOffset=io.github.verycooltimo.murim.sect.SectLessons.visualOffset(npc.memberKey(),day,beat);
+            visualWobble=npc.member().map(m->io.github.verycooltimo.murim.sect.SectLessons.of(npc).wobbles(m,day,beat)).orElse(false);
         }
+        int offset=visualOffset;
+        if (Math.floorMod(now, (long) SectSchedule.BEAT) == offset) {
+            if (visualWobble) npc.gesture("shake");
+            else if (!io.github.verycooltimo.murim.sect.SectLessons.of(npc).skipSwing(npc))
+                npc.drillForm(SectSchedule.beatForm(now), SectSchedule.BEAT_STRIKE - offset);
+        }
+        io.github.verycooltimo.murim.sect.SectLessons.of(npc).conductLook(npc);
         // Один взмах на весь строй — у первого в первом ряду (слышно, а не двадцать свистов).
         if (Math.floorMod(now, (long) SectSchedule.BEAT) == SectSchedule.BEAT_STRIKE
                 && npc.member().map(m -> m.index() == firstInRow()).orElse(false)) {
@@ -808,15 +1430,12 @@ public final class ScheduleGoal extends Goal {
 
     /** Наставник ходит между рядами из конца в конец, останавливается и поправляет (жест). */
     private void inspect() {
+        io.github.verycooltimo.murim.sect.SectLessons.of(npc).inspectPupil(npc);
         SectLayout layout = npc.layout();
         if (pause > 0) {
             pause--;
             if (pause == 30 && npc.getRandom().nextInt(2) == 0) {
                 npc.gesture(npc.getRandom().nextBoolean() ? "point" : "explain");
-            }
-            Player p = npc.level().getNearestPlayer(npc, 6.0D);
-            if (p != null) {
-                npc.getLookControl().setLookAt(p, 20.0F, 20.0F);
             }
             return;
         }
@@ -828,10 +1447,18 @@ public final class ScheduleGoal extends Goal {
         double du = (east ? 1 : -1) * ((SectSchedule.COLUMNS - 1) / 2.0D * SectSchedule.SPACING + 2.5D);
         double dv = SectSchedule.FRONT_ROW + 1.5D - line * SectSchedule.SPACING;
         Vec3 guess = layout.at(current.task().zone(), du, dv);
+        var file = layout.file();
+        if (file != null) {
+            // The rows of the built square: walk the gaps between the formation rows from the west end to the east end.
+            BlockPos cell = io.github.verycooltimo.murim.sect.SectPlaces.inspectPoint(file, line, east ? 1 : 0);
+            if (cell != null) {
+                guess = new Vec3(cell.getX() + 0.5D, cell.getY(), cell.getZ() + 0.5D);
+            }
+        }
         if (guess == null) {
             return;
         }
-        Vec3 spot = SectLife.stand(npc.level(), guess);
+        Vec3 spot = npc.level().isLoaded(BlockPos.containing(guess)) ? SectLife.stand(npc.level(), guess) : guess;
         if (arriveSlow(spot)) {
             waypoint++;
             pause = 40 + npc.getRandom().nextInt(40);
@@ -856,7 +1483,7 @@ public final class ScheduleGoal extends Goal {
         if (roam == null) {
             return;
         }
-        if (arrive(roam, 0.7D)) {
+        if (arriveRoam(roam, 0.7D)) {
             npc.faceYaw(current.yaw(), 40.0F);
             if (npc.getRandom().nextInt(3) == 0) {
                 npc.drillForm(npc.getRandom().nextInt(3), 6);
@@ -877,7 +1504,8 @@ public final class ScheduleGoal extends Goal {
         }
         npc.faceYaw(current.yaw(), 30.0F);
         if (--drillClock <= 0) {
-            drillClock = 26 + npc.getRandom().nextInt(10);
+            drillClock = io.github.verycooltimo.murim.sect.SectStagger.ticks(npc.memberKey(),
+                    "drill:" + SectSchedule.day(npc.level().getDayTime()) + ":" + drillStep, 26, 36);
             npc.drillForm(drillStep++ % 3, 7);
         }
     }
@@ -894,7 +1522,7 @@ public final class ScheduleGoal extends Goal {
         if (roam == null) {
             return;
         }
-        if (arrive(roam, speed)) {
+        if (arriveRoam(roam, speed)) {
             pause = 80 + npc.getRandom().nextInt(120);
             roam = null;
             if (npc.getRandom().nextInt(4) == 0) {
@@ -905,6 +1533,9 @@ public final class ScheduleGoal extends Goal {
 
     /** Случайная точка рядом с местом задания (в пределах площадки). */
     private Vec3 pick(double ru, double rv) {
+        if (current.spotId() != null && npc.layout() != null && npc.layout().file() != null) {
+            return pickNear(Math.min(ru, 3.0D));
+        }
         SectLayout layout = npc.layout();
         double[] h = layout.half(current.task().zone());
         double maxU = h == null ? ru : Math.min(ru, h[0] - 1.0D);
@@ -912,7 +1543,55 @@ public final class ScheduleGoal extends Goal {
         double du = current.task().du() + (npc.getRandom().nextDouble() * 2.0D - 1.0D) * maxU;
         double dv = current.task().dv() + (npc.getRandom().nextDouble() * 2.0D - 1.0D) * maxV;
         Vec3 guess = layout.at(current.task().zone(), du, dv);
-        return guess == null ? null : SectLife.stand(npc.level(), guess);
+        return guess == null || !insideWorkArea(guess) ? null : SectLife.stand(npc.level(), guess);
+    }
+
+    /** Work without an outside destination never randomly crosses the gate plane. */
+    private boolean insideWorkArea(Vec3 point) {
+        SectLayout layout = npc.layout();
+        Vec3 gate = layout.at("sect_gate", 0, 0);
+        Vec3 outside = layout.at("sect_gate", 0, -10);
+        var file = layout.file();
+        if (file != null) {
+            var inside = file.anchor("gate_inside").orElse(null);
+            var trail = file.anchor("trail_approach").orElse(null);
+            if (inside != null && trail != null) {
+                gate = Vec3.atBottomCenterOf(inside.pos());
+                outside = Vec3.atBottomCenterOf(trail.pos());
+            }
+        }
+        if (gate == null || outside == null) return true;
+        double dx = outside.x - gate.x, dz = outside.z - gate.z;
+        // API: /tmp/mr-ref-1121/minecraft-src/net/minecraft/world/level/pathfinder/Path.java#getEntityPosAtNode
+        // Keep one block of clearance: vanilla paths use cell centres and walking accepts a half-block arrival.
+        // Checking only the destination's sign allows a legal target at the plane to finish outside it.
+        return (point.x - gate.x) * dx + (point.z - gate.z) * dz <= -Math.hypot(dx, dz);
+    }
+
+    /**
+     * Roam near the spot of the built sect: a free cell within {@code radius} that lies in the same room (or, outdoors,
+     * on the same level), never through a wall. Null when the spot has no free neighbour: the person stays on it.
+     */
+    private Vec3 pickNear(double radius) {
+        var file = npc.layout().file();
+        Vec3 base = current.spot();
+        for (int i = 0; i < 8; i++) {
+            double dx = (npc.getRandom().nextDouble() * 2.0D - 1.0D) * radius;
+            double dz = (npc.getRandom().nextDouble() * 2.0D - 1.0D) * radius;
+            Vec3 guess = new Vec3(base.x + dx, base.y, base.z + dz);
+            BlockPos cell = BlockPos.containing(guess);
+            if (!insideWorkArea(guess) || !npc.level().isLoaded(cell) || !SectLife.standable(npc.level(), cell)) {
+                continue;
+            }
+            if (current.room() != null) {
+                var around = file.roomAt(cell);
+                if (around == null || !around.id().equals(current.room())) {
+                    continue;
+                }
+            }
+            return SectLife.stand(npc.level(), guess);
+        }
+        return insideWorkArea(base) ? base : null;
     }
 
     /** Ночь: кровать в общежитии, если автор их поставил; иначе — сидя во дворе лагеря. */
@@ -932,18 +1611,21 @@ public final class ScheduleGoal extends Goal {
             Vec3 at = Vec3.atBottomCenterOf(bed);
             if (horizontal(at) < 1.21D && Math.abs(npc.getY() - bed.getY()) < 1.0D) {
                 npc.getNavigation().stop();
-                npc.sit(false);
                 npc.startSleeping(bed);
                 return;
             }
-            Vec3 approach = io.github.verycooltimo.murim.sect.SectBuildings.approach(npc, bed);
-            arrive(approach == null ? current.spot() : approach, 0.7D);
+            Vec3 approach = SectLife.bedApproach(npc, bed);
+            // Standing on the cell beside the bed is enough: the path ends up to half a block short of its middle.
+            if (arrive(approach == null ? current.spot() : approach, 0.7D) && Math.abs(npc.getY() - bed.getY()) < 1.0D) {
+                npc.getNavigation().stop();
+                npc.startSleeping(bed);
+            }
             return;
         }
         // Кроватей нет: сидит на своём месте в общежитии (площадка в лагере).
         if (arrive(current.spot(), 0.6D)) {
             npc.faceYaw(current.yaw(), 30.0F);
-            npc.sit(true);
+            sitHere();
         }
     }
 }

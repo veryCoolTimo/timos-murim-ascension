@@ -610,7 +610,16 @@ public final class MountHuaShape {
         return height(u, v, climb);
     }
 
+    /** The height as the original trail profile cut it, without the per-column step limit ({@link #buildTrailFix}); see {@link HuaTrailMend}. */
+    double heightUnmended(double u, double v) {
+        return height(u, v, climb, false);
+    }
+
     private double height(double u, double v, boolean withClimb) {
+        return height(u, v, withClimb, true);
+    }
+
+    private double height(double u, double v, boolean withClimb, boolean mended) {
         if (!inBounds(u, v)) {
             return 0;
         }
@@ -619,7 +628,7 @@ public final class MountHuaShape {
         if (withClimb) {
             h = climb(u, v, h);
         }
-        h = trail(u, v, h);
+        h = trail(u, v, h, mended);
         h = paths(u, v, h);
         // Inside a terrace the level is exact (neighbouring terraces' walls never spill in).
         for (Zone zone : MountHuaPlan.ZONES) {
@@ -1004,6 +1013,86 @@ public final class MountHuaShape {
             }
         }
         trailY = y;
+        buildTrailFix();
+    }
+
+    /**
+     * Largest height difference (plan units) allowed between two trail blocks that share a side. The world height is the plan height times
+     * the site scale (at most about 1.03 on the lowest foot), rounded to a block: under 1 here keeps every step to one block for any foot.
+     */
+    static final double TRAIL_STEP_LIMIT = 0.96;
+    private final java.util.HashMap<Long, double[]> trailFix = new java.util.HashMap<>();
+
+    private static long cellKey(int u, int v) {
+        return ((long) u << 32) ^ (v & 0xffffffffL);
+    }
+
+    /**
+     * Trail profile per block column. {@link #trailAt} takes the nearest sample, so two columns side by side can take samples two
+     * apart on a diagonal run or round a bend, and the stair of 0.9 per sample becomes a rise of 2 or 3 blocks between them, which a
+     * player cannot walk up (smoke pass 22.10). This relaxes the heights of the columns of the trail (cut only, like the profile) so no
+     * two columns that share a side differ by more than {@link #TRAIL_STEP_LIMIT}. Pads are fixed: their level is exact.
+     * Entry: {original plan height, limited plan height}.
+     */
+    private void buildTrailFix() {
+        java.util.HashMap<Long, Integer> at = new java.util.HashMap<>();
+        java.util.ArrayList<double[]> cells = new java.util.ArrayList<>();
+        java.util.ArrayList<Boolean> fixed = new java.util.ArrayList<>();
+        for (int i = 0; i < trailU.length; i++) {
+            int cu0 = (int) Math.floor(trailU[i]);
+            int cv0 = (int) Math.floor(trailV[i]);
+            for (int cu = cu0 - 3; cu <= cu0 + 3; cu++) {
+                for (int cv = cv0 - 3; cv <= cv0 + 3; cv++) {
+                    long key = cellKey(cu, cv);
+                    if (at.containsKey(key)) {
+                        continue;
+                    }
+                    double[] t = trailAt(cu + 0.5, cv + 0.5);
+                    if (t == null || t[0] > 2.1) {
+                        continue;
+                    }
+                    double y = t[1];
+                    boolean pad = false;
+                    for (Zone zone : MountHuaPlan.ZONES) {
+                        if (!zone.cave() && !zone.id().equals("grove") && MountHuaPlan.insidePad(zone, cu + 0.5, cv + 0.5)) {
+                            y = zone.y();
+                            pad = true;
+                        }
+                    }
+                    at.put(key, cells.size());
+                    cells.add(new double[] {cu, cv, y, y});
+                    fixed.add(pad);
+                }
+            }
+        }
+        int[][] nb = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
+        boolean changed = true;
+        for (int pass = 0; changed && pass < 400; pass++) {
+            changed = false;
+            for (int k = 0; k < cells.size(); k++) {
+                if (fixed.get(k)) {
+                    continue;
+                }
+                double[] c = cells.get(k);
+                for (int[] d : nb) {
+                    Integer o = at.get(cellKey((int) c[0] + d[0], (int) c[1] + d[1]));
+                    if (o != null && c[3] > cells.get(o)[3] + TRAIL_STEP_LIMIT + 1e-9) {
+                        c[3] = cells.get(o)[3] + TRAIL_STEP_LIMIT;
+                        changed = true;
+                    }
+                }
+            }
+        }
+        trailFix.clear();
+        for (double[] c : cells) {
+            trailFix.put(cellKey((int) c[0], (int) c[1]), new double[] {c[2], c[3]});
+        }
+    }
+
+    /** True when the step limit lowered the trail column holding plan point (u, v). */
+    boolean trailCut(double u, double v) {
+        double[] fix = trailFix.get(cellKey((int) Math.floor(u), (int) Math.floor(v)));
+        return fix != null && fix[1] < fix[0] - 1e-9;
     }
 
     /** Nearest trail sample: {distance, nominal y, index}; distance = MAX_VALUE if far. */
@@ -1316,13 +1405,19 @@ public final class MountHuaShape {
     }
 
     /** Trail bed: cut to the trail level within 1.5 blocks; a small fill under it eases to 3. */
-    private double trail(double u, double v, double h) {
+    private double trail(double u, double v, double h, boolean mended) {
         double[] t = trailAt(u, v);
         if (t == null || t[0] > 3.6) {
             return h;
         }
         double y = t[1];
         if (t[0] <= 2.1) {
+            if (mended) {
+                double[] fix = trailFix.get(cellKey((int) Math.floor(u), (int) Math.floor(v)));
+                if (fix != null) {
+                    return fix[1];
+                }
+            }
             return y;
         }
         if (h > y) {

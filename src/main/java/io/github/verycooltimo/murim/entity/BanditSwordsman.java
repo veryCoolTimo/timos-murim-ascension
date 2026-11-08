@@ -27,8 +27,8 @@ import java.util.EnumSet;
 
 /**
  * Бандит-мечник: дао, три простых удара с читаемым замахом ({@link BanditMove}), откат
- * после удара, «оступился» от сильного попадания в замах. Держит дистанцию, пока удар не готов,
- * и сближается, когда готов. Каждый пятый — элитный: знает рывок-разрез ци с голубым следом.
+ * после удара, «оступился» от сильного попадания в замах. Между ударами продолжает сближение
+ * и прикрывается мечом (variant A). Каждый пятый — элитный: знает рывок-разрез ци с голубым следом.
  */
 public class BanditSwordsman extends Bandit {
 
@@ -43,8 +43,57 @@ public class BanditSwordsman extends Bandit {
     /** Тиков уклонения вбок (читает замах техники игрока), сервер. */
     private int dodgeTicks;
     private int dodgeDir = 1;
-    /** Связка: после попадания — второй удар без паузы (раз за цикл). */
-    private boolean comboReady;
+    private int guardRecovery = 4;
+    private long noticedPress = Long.MIN_VALUE;
+    private long observeAt = Long.MAX_VALUE;
+    private long observedOffset = Long.MIN_VALUE;
+    private long nextOffset;
+    private int repeatedRhythm;
+
+    /** Server-only observation, delayed 4–6 ticks: no reading the player's future input. */
+    @Override
+    public void tick() {
+        super.tick();
+        if (level().isClientSide) return;
+        var guard = io.github.verycooltimo.murim.combat.SwordGuard.state(this);
+        LivingEntity target = getTarget();
+        if (target instanceof Player player) {
+            var seen = io.github.verycooltimo.murim.combat.SwordGuard.state(player);
+            if (seen.press >= 0 && seen.press != noticedPress && observeAt == Long.MAX_VALUE) {
+                noticedPress = seen.press;
+                nextOffset = seen.press - seen.swing;
+                observeAt = level().getGameTime() + 4 + random.nextInt(3);
+            }
+            if (level().getGameTime() >= observeAt) {
+                repeatedRhythm = observedOffset != Long.MIN_VALUE && Math.abs(nextOffset - observedOffset) <= 1
+                        ? repeatedRhythm + 1 : 0;
+                observedOffset = nextOffset;
+                observeAt = Long.MAX_VALUE;
+            }
+        } else {
+            repeatedRhythm = 0;
+        }
+        boolean defend = target != null && target.isAlive() && (state() == IDLE || state() == RECOVER)
+                && io.github.verycooltimo.murim.world.camp.CampFight.mayFight(this);
+        if (defend && !guard.held && state() == RECOVER && random.nextFloat() >= 0.35F)
+            guard.spent = true; // Usually ordinary block; sometimes a fresh post-swing deflection.
+        io.github.verycooltimo.murim.combat.SwordGuard.hold(this, defend);
+        io.github.verycooltimo.murim.combat.SwordGuard.sync(this);
+    }
+
+    /** Normal contacts repeat in 10–12 ticks; qi dash keeps its established timing. */
+    public int duelPhaseTicks(int phase) {
+        if (move() == BanditMove.QI_DASH) return switch (phase) {
+            case WINDUP -> move().windup();
+            case STRIKE -> move().strike();
+            default -> move().recover();
+        };
+        return switch (phase) {
+            case WINDUP -> 6;
+            case STRIKE -> 2;
+            default -> guardRecovery;
+        };
+    }
 
     public BanditSwordsman(EntityType<? extends Monster> type, Level level) {
         super(type, level);
@@ -200,12 +249,12 @@ public class BanditSwordsman extends Bandit {
                 case WINDUP -> windup(t);
                 case STRIKE -> strike(t);
                 case RECOVER -> {
-                    getNavigation().stop();
-                    if (stateTick >= move().recover()) {
+                    if (t != null) keepDistance(t, distanceTo(t));
+                    if (stateTick >= duelPhaseTicks(RECOVER)) {
                         setState(IDLE, null);
-                        // Попал — давит связкой (короткая пауза), промахнулся — отходит и кружит.
-                        attackCooldown = comboReady ? 4 : isChief() ? 10 + random.nextInt(12) : 14 + random.nextInt(18);
-                        comboReady = false;
+                        // Adapt only after a repeated observed rhythm; keep pressure after misses too.
+                        attackCooldown = repeatedRhythm >= 2 ? 2 + random.nextInt(2) : 0;
+                        if (repeatedRhythm >= 2) repeatedRhythm = 0;
                     }
                 }
                 case STAGGER -> {
@@ -272,24 +321,30 @@ public class BanditSwordsman extends Bandit {
             getNavigation().moveTo(t, 1.15D);
         }
 
-        /** Пока удар не готов: держит 3–5 блоков и кружит, а не стоит столбом. */
+        /** Continue closing and circling during recovery; never retreat after every hit. */
         private void keepDistance(LivingEntity t, double d) {
+            keepDistance(t, d, 30.0F);
+        }
+
+        private void keepDistance(LivingEntity t, double d, float turn) {
             if (--strafeTicks <= 0) {
                 strafeTicks = 20 + random.nextInt(30);
                 strafeDir = random.nextBoolean() ? 1 : -1;
             }
-            if (d > 5.5D) {
+            if (d > 2.7D) {
                 getNavigation().moveTo(t, 1.0D);
                 return;
             }
             getNavigation().stop();
-            float forward = d < 2.8D ? -0.5F : d > 4.5D ? 0.3F : 0.0F;
+            float forward = d > 2.1D ? 0.3F : 0.0F;
             getMoveControl().strafe(forward, 0.45F * strafeDir);
-            faceTowards(t, 30.0F);
+            faceTowards(t, turn);
         }
 
         private void startWindup(BanditMove m) {
-            getNavigation().stop();
+            io.github.verycooltimo.murim.combat.SwordGuard.hold(BanditSwordsman.this, false);
+            io.github.verycooltimo.murim.combat.SwordGuard.swing(BanditSwordsman.this);
+            guardRecovery = 2 + random.nextInt(3);
             setState(WINDUP, m);
             playSound(m == BanditMove.QI_DASH ? io.github.verycooltimo.murim.registry.ModSounds.QI_CHARGE.get()
                     : io.github.verycooltimo.murim.registry.ModSounds.BANDIT_WINDUP.get(),
@@ -297,12 +352,8 @@ public class BanditSwordsman extends Bandit {
         }
 
         private void windup(LivingEntity t) {
-            getNavigation().stop();
-            if (t != null) {
-                // В замахе поворачивается медленно: шаг в сторону уводит из-под удара.
-                faceTowards(t, move() == BanditMove.QI_DASH ? 20.0F : 9.0F);
-            }
-            if (stateTick >= move().windup()) {
+            if (t != null) keepDistance(t, distanceTo(t), move() == BanditMove.QI_DASH ? 20.0F : 9.0F);
+            if (stateTick >= duelPhaseTicks(WINDUP)) {
                 setState(STRIKE, move());
                 dashHit = false;
                 if (move() == BanditMove.QI_DASH) {
@@ -329,7 +380,7 @@ public class BanditSwordsman extends Bandit {
                 }
             } else {
                 getNavigation().stop();
-                if (stateTick == m.hitTick()) {
+                if (stateTick == 1) {
                     playSound(io.github.verycooltimo.murim.registry.ModSounds.SWORD_SWING_HEAVY.get(), 0.95F, 0.9F + 0.1F * getRandom().nextFloat());
                     if (t != null && m.reaches(t.getX() - getX(), t.getY() - getY(), t.getZ() - getZ(), yBodyRot)
                             && getSensing().hasLineOfSight(t)) {
@@ -341,7 +392,7 @@ public class BanditSwordsman extends Bandit {
                     }
                 }
             }
-            if (stateTick >= m.strike()) {
+            if (stateTick >= duelPhaseTicks(STRIKE)) {
                 setState(RECOVER, m);
                 if (m == BanditMove.QI_DASH) {
                     dashCooldown = isChief() ? BanditMove.DASH_COOLDOWN * 2 / 3 : BanditMove.DASH_COOLDOWN;
@@ -356,7 +407,6 @@ public class BanditSwordsman extends Bandit {
             log("удар {} по {}: {} (урон {})", m.clip().isEmpty() ? "_chop" : m.clip(), t.getName().getString(), done ? "попал" : "погашен", m.damage());
             if (done) {
                 setLastHurtMob(t);
-                comboReady = random.nextFloat() < 0.4F;
                 double kx = t.getX() - getX(), kz = t.getZ() - getZ();
                 t.knockback(m == BanditMove.CHOP ? 0.3D : 0.45D, -kx, -kz);
             }

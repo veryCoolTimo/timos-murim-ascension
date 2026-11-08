@@ -4,9 +4,10 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/** Body tempering numbers: levels, diminishing returns, fatigue, recovery, effects stay modest. */
+/** Body numbers: levels, the initial grant, daily limits, effects stay modest, breakthrough gates. */
 class BodyRulesTest {
 
     @Test
@@ -25,50 +26,34 @@ class BodyRulesTest {
     }
 
     @Test
-    @DisplayName("Убывающая отдача за день: 200 приседаний в один день дают меньше, чем по 50 четыре дня")
-    void dailyDiminishing() {
-        BodyState oneDay = BodyState.NONE;
-        for (int i = 0; i < 200; i++) {
-            oneDay = BodyRules.apply(Exercise.SQUAT, TrainingBalance.QUALITY_GOOD, false, oneDay).withFatigue(0.0D);
-        }
-        BodyState fourDays = BodyState.NONE;
-        for (int d = 1; d <= 4; d++) {
-            fourDays = fourDays.onDay(d);
-            for (int i = 0; i < 50; i++) {
-                fourDays = BodyRules.apply(Exercise.SQUAT, TrainingBalance.QUALITY_GOOD, false, fourDays).withFatigue(0.0D);
+    @DisplayName("Начальный зачёт: половина прежних ставок, потолок — порог ступени 5, ниже нуля не бывает")
+    void initialGrant() {
+        assertEquals(0.0D, BodyRules.initialGrant(0.0D), 1e-9);
+        assertEquals(100.0D * TrainingBalance.INITIAL_SHARE, BodyRules.initialGrant(100.0D), 1e-9);
+        double cap = BodyRules.threshold(TrainingBalance.INITIAL_CAP_LEVEL);
+        assertEquals(cap, BodyRules.initialGrant(1.0E9D), 1e-9);
+        assertEquals(TrainingBalance.INITIAL_CAP_LEVEL, BodyRules.level(BodyRules.initialGrant(1.0E9D)));
+        assertTrue(TrainingBalance.INITIAL_CAP_LEVEL < TrainingBalance.MAX_LEVEL, "the cap is not the top of the ladder");
+        assertTrue(TrainingBalance.INITIAL_CAP_LEVEL >= 3 && TrainingBalance.INITIAL_CAP_LEVEL <= 6, "mid-ladder");
+    }
+
+    @Test
+    @DisplayName("Дневной предел вида работы: полная ставка до «full», дальше затухание, никогда не больше full + extra")
+    void dayLimit() {
+        for (BodySource s : BodySource.values()) {
+            assertEquals(0.0D, s.dayTotal(0.0D), 1e-9, s.id());
+            assertEquals(s.full() / 2.0D, s.dayTotal(s.full() / 2.0D), 1e-9, s.id());
+            assertEquals(s.full(), s.dayTotal(s.full()), 1e-9, s.id());
+            assertTrue(s.dayTotal(s.full() * 2.0D) < s.full() * 2.0D, s.id() + " must fall off");
+            assertTrue(s.dayTotal(1.0E9D) <= s.dayMax() + 1e-9, s.id() + " above its limit");
+            assertTrue(s.dayTotal(1.0E9D) > s.dayMax() - 1e-6, s.id() + " must approach its limit");
+            double prev = 0.0D;
+            for (double raw = 0.0D; raw < s.dayMax() * 5.0D; raw += s.dayMax() / 40.0D) {
+                assertTrue(s.dayTotal(raw) >= prev - 1e-12, s.id() + " must not go down");
+                prev = s.dayTotal(raw);
             }
         }
-        assertTrue(oneDay.points() < fourDays.points() * 0.75D, oneDay.points() + " vs " + fourDays.points());
-        assertTrue(oneDay.points() > 80.0D && oneDay.points() < 160.0D, "a big day ≈ 130: " + oneDay.points());
-        assertEquals(0.5D, BodyRules.dailyFactor(TrainingBalance.DAILY_SOFT), 1e-9);
-    }
-
-    @Test
-    @DisplayName("Усталость: до мягкого порога не мешает, на пределе — пол; секта и такт дают больше")
-    void fatigueAndQuality() {
-        assertEquals(1.0D, BodyRules.fatigueFactor(0.5D), 1e-9);
-        assertEquals(TrainingBalance.FATIGUE_FLOOR, BodyRules.fatigueFactor(1.0D), 1e-9);
-        BodyState fresh = BodyState.NONE;
-        double good = BodyRules.gain(Exercise.PUSHUP, TrainingBalance.QUALITY_GOOD, false, fresh);
-        double off = BodyRules.gain(Exercise.PUSHUP, TrainingBalance.QUALITY_OFF, false, fresh);
-        double sect = BodyRules.gain(Exercise.PUSHUP, TrainingBalance.QUALITY_GOOD, true, fresh);
-        assertTrue(off < good && good < sect);
-        assertEquals(TrainingBalance.SECT_BONUS, sect / good, 1e-9);
-        assertTrue(BodyRules.gain(Exercise.PUSHUP_WEIGHTED, 1.0D, false, fresh) > good, "the slab pays more");
-        BodyState after = BodyRules.apply(Exercise.PUSHUP_WEIGHTED, 1.0D, false, fresh);
-        assertEquals(Exercise.PUSHUP_WEIGHTED.fatigue(), after.fatigue(), 1e-9);
-    }
-
-    @Test
-    @DisplayName("Восстановление: еда и сон в секте быстрее, сон в секте снимает всё")
-    void recovery() {
-        assertTrue(BodyRules.afterMeal(0.6D, 5, true) < BodyRules.afterMeal(0.6D, 5, false));
-        assertEquals(0.0D, BodyRules.afterMeal(0.1D, 8, false), 1e-9);
-        assertEquals(0.0D, BodyRules.afterSleep(0.9D, true), 1e-9);
-        assertEquals(0.9D * TrainingBalance.SLEEP_ELSEWHERE, BodyRules.afterSleep(0.9D, false), 1e-9);
-        assertTrue(BodyRules.recoveryPerTick(true) > BodyRules.recoveryPerTick(false));
-        // A full bar recovers by itself in under an hour of play.
-        assertTrue(1.0D / BodyRules.recoveryPerTick(false) < 20 * 60 * 60);
+        assertTrue(BodySource.JUMP.dayMax() < BodySource.LEGS.dayMax() / 4.0D, "a held jump key is the cheapest trick: tiny limit");
     }
 
     @Test
@@ -83,19 +68,37 @@ class BodyRulesTest {
     }
 
     @Test
-    @DisplayName("Прорыв: пока баланс не задал ступени, тело его не держит")
-    void breakthroughGateOff() {
-        for (int r = 0; r <= 5; r++) {
-            assertTrue(BodyRules.breakthroughReady(r, 0));
+    @DisplayName("Прорыв: тело — жёсткие ворота, ступени 1 / 2 / 4 / 6, подступени Пика 7 / 9")
+    void breakthroughGate() {
+        int[] need = {0, 1, 2, 4, 6};
+        for (int r = 0; r < need.length; r++) {
+            assertEquals(need[r], BodyRules.breakthroughNeed(r), "rank " + r);
+            assertTrue(BodyRules.breakthroughReady(r, need[r]));
+            if (need[r] > 0) {
+                assertFalse(BodyRules.breakthroughReady(r, need[r] - 1), "rank " + r + " below the stage");
+            }
         }
+        assertEquals(7, BodyRules.stageNeed(1));
+        assertEquals(9, BodyRules.stageNeed(2));
+        assertFalse(BodyRules.stageReady(1, 6));
+        assertTrue(BodyRules.stageReady(2, 9));
+        // Fixed expectations for the accepted 40 × L^1.7 curve; doc 43 uses rough estimates.
+        assertEquals(40.000000D, BodyRules.threshold(1), 1e-6D);
+        assertEquals(129.960383D, BodyRules.threshold(2), 1e-6D);
+        assertEquals(422.242531D, BodyRules.threshold(4), 1e-6D);
+        assertEquals(841.234581D, BodyRules.threshold(6), 1e-6D);
+        assertEquals(1093.268058D, BodyRules.threshold(7), 1e-6D);
+        assertEquals(1675.993220D, BodyRules.threshold(9), 1e-6D);
     }
 
     @Test
     @DisplayName("Новый день обнуляет дневные счётчики, но не очки и не рекорды")
     void newDay() {
-        BodyState s = new BodyState(BodyState.VERSION, 50.0D, 3L, 20.0D, 0.4D, 1200, 900, 2).onDay(4L);
+        BodyState s = new BodyState(BodyState.VERSION, 50.0D, 3L, java.util.Map.of("legs", 20.0D), java.util.Map.of("walk", 5L),
+                true, 1200, 900, 2).onDay(4L);
         assertEquals(50.0D, s.points(), 1e-9);
         assertEquals(0.0D, s.today(), 1e-9);
+        assertTrue(s.seeded() && s.seen().containsKey("walk"), "the baseline and the marker survive the new day");
         assertEquals(0, s.climbsToday());
         assertEquals(1200, s.bestClimb());
         assertEquals(1100, s.climbed(1100).bestClimb());

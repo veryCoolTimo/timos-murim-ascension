@@ -175,6 +175,12 @@
         "tent_canvas_linen": "textures/block/tent_canvas_linen.png",
         "tent_canvas_white": "textures/block/tent_canvas_white.png"
       }
+    },
+    "int_pill_box": {
+      "model": "models/block/int_pill_box_item.json",
+      "textures": {
+        "int_pill_box": "textures/block/int_pill_box.png"
+      }
     }
   },
   "block_textures": {
@@ -259,7 +265,14 @@
     "textures/technique_manual.png": "textures/item/technique_manual.png",
     "textures/technique_manual_advanced.png": "textures/item/technique_manual_advanced.png",
     "textures/technique_manual_secret.png": "textures/item/technique_manual_secret.png",
-    "textures/wooden_sword.png": "textures/item/wooden_sword.png"
+    "textures/wooden_sword.png": "textures/item/wooden_sword.png",
+    "textures/pill_blood.png": "textures/item/pill_blood.png",
+    "textures/pill_blue.png": "textures/item/pill_blue.png",
+    "textures/pill_vitality.png": "textures/item/pill_vitality.png",
+    "textures/pill_fasting.png": "textures/item/pill_fasting.png",
+    "textures/pill_antidote.png": "textures/item/pill_antidote.png",
+    "textures/pill_blood_replenishing.png": "textures/item/pill_blood_replenishing.png",
+    "textures/pill_quick_recovery.png": "textures/item/pill_quick_recovery.png"
   },
   "item_models": {
     "models/bandit_archer_spawn_egg.json": "models/item/bandit_archer_spawn_egg.json",
@@ -300,6 +313,13 @@
     "models/technique_manual_advanced.json": "models/item/technique_manual_advanced.json",
     "models/technique_manual_secret.json": "models/item/technique_manual_secret.json",
     "models/tent_canvas.json": "models/item/tent_canvas.json",
-    "models/wooden_sword.json": "models/item/wooden_sword.json"
+    "models/wooden_sword.json": "models/item/wooden_sword.json",
+    "models/pill_blood.json": "models/item/pill_blood.json",
+    "models/pill_blue.json": "models/item/pill_blue.json",
+    "models/pill_vitality.json": "models/item/pill_vitality.json",
+    "models/pill_fasting.json": "models/item/pill_fasting.json",
+    "models/pill_antidote.json": "models/item/pill_antidote.json",
+    "models/pill_blood_replenishing.json": "models/item/pill_blood_replenishing.json",
+    "models/pill_quick_recovery.json": "models/item/pill_quick_recovery.json"
   }
 }

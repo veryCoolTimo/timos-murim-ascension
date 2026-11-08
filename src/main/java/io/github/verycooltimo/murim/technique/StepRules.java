@@ -13,7 +13,7 @@ public final class StepRules {
     public static final int CHAIN_GAP = 5;
 
     public static double distance(int executionTier) {
-        return executionTier <= 0 ? 4.0D : executionTier <= 2 ? 5.0D : 6.0D;
+        return executionTier > 5 ? 6.0D + .5D * Math.min(2, executionTier - 5) : executionTier <= 0 ? 4.0D : executionTier <= 2 ? 5.0D : 6.0D;
     }
 
     /** Неуязвимость в тиках после рывка: проход сквозь чужую ци. */

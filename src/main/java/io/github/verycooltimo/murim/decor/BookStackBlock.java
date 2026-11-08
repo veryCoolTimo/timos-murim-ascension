@@ -61,7 +61,8 @@ public class BookStackBlock extends HorizontalDirectionalBlock {
 
     public BookStackBlock(Properties properties) {
         super(properties);
-        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.SOUTH).setValue(STACKS, 1));
+        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.SOUTH).setValue(STACKS, 1)
+                .setValue(TabletopSupport.SINK, 0));
     }
 
     @Override
@@ -73,9 +74,11 @@ public class BookStackBlock extends HorizontalDirectionalBlock {
     public @Nullable BlockState getStateForPlacement(BlockPlaceContext context) {
         BlockState here = context.getLevel().getBlockState(context.getClickedPos());
         if (here.is(this)) {
-            return here.setValue(STACKS, Math.min(MAX, here.getValue(STACKS) + 1));
+            return TabletopSupport.onSupport(here.setValue(STACKS, Math.min(MAX, here.getValue(STACKS) + 1)),
+                    context.getLevel(), context.getClickedPos());
         }
-        BlockState s = defaultBlockState().setValue(FACING, context.getHorizontalDirection().getOpposite());
+        BlockState s = TabletopSupport.onSupport(defaultBlockState()
+                .setValue(FACING, context.getHorizontalDirection().getOpposite()), context.getLevel(), context.getClickedPos());
         return s.canSurvive(context.getLevel(), context.getClickedPos()) ? s : null;
     }
 
@@ -87,21 +90,23 @@ public class BookStackBlock extends HorizontalDirectionalBlock {
 
     @Override
     protected boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
-        return Block.canSupportCenter(level, pos.below(), Direction.UP);
+        return TabletopSupport.supportsBooks(level, pos);
     }
 
     @Override
     protected BlockState updateShape(BlockState state, Direction dir, BlockState neighbour, LevelAccessor level,
                                      BlockPos pos, BlockPos neighbourPos) {
-        if (dir == Direction.DOWN && !state.canSurvive(level, pos)) {
-            return Blocks.AIR.defaultBlockState();
+        if (dir == Direction.DOWN) {
+            return state.canSurvive(level, pos) ? TabletopSupport.onSupport(state, level, pos)
+                    : Blocks.AIR.defaultBlockState();
         }
         return super.updateShape(state, dir, neighbour, level, pos, neighbourPos);
     }
 
     @Override
     protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        return SHAPES.get(state.getValue(STACKS) * 8 + state.getValue(FACING).get2DDataValue());
+        return TabletopSupport.lower(SHAPES.get(state.getValue(STACKS) * 8
+                + state.getValue(FACING).get2DDataValue()), state);
     }
 
     @Override
@@ -121,6 +126,6 @@ public class BookStackBlock extends HorizontalDirectionalBlock {
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING, STACKS);
+        builder.add(FACING, STACKS, TabletopSupport.SINK);
     }
 }

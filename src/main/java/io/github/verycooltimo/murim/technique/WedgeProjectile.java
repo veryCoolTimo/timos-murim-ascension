@@ -26,6 +26,9 @@ public class WedgeProjectile extends Projectile {
 
     private float damage;
 
+    /** Actual wave strength spent in a clash with a blossom front. */
+    float clashStrength() { return damage; }
+
     /** Какой техникой брошен: попадание идёт в её освоение. Не сохраняется — клин живёт секунды. */
     net.minecraft.resources.ResourceLocation technique;
     private int lifetime;
@@ -58,7 +61,9 @@ public class WedgeProjectile extends Projectile {
         // Столкновение проверяется по вектору перемещения, а не по конечной точке:
         // при скорости выше размера хитбокса снаряд иначе проскакивает цель насквозь.
         HitResult hit = ProjectileUtil.getHitResultOnMoveVector(this, this::canHitEntity);
-        if (hit.getType() != HitResult.Type.MISS) {
+        // API: NeoForge 21.1 EventHooks#onProjectileImpact(Projectile, HitResult).
+        if (hit.getType() != HitResult.Type.MISS
+                && !net.neoforged.neoforge.event.EventHooks.onProjectileImpact(this, hit)) {
             onHit(hit);
         }
         if (isRemoved()) {

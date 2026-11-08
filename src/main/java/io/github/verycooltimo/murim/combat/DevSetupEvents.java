@@ -30,6 +30,14 @@ import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 @EventBusSubscriber(modid = MurimMod.MODID)
 public final class DevSetupEvents {
 
+    private static double captureYaw() {
+        try {
+            return Double.parseDouble(System.getProperty("murim.capture.yaw", "0"));
+        } catch (NumberFormatException ignored) {
+            return 0;
+        }
+    }
+
     private static final String CAPTURE_PROPERTY = "murim.capture";
 
     /** Съёмочная площадка: над кронами, чтобы в кадр не лезли ветки. */
@@ -70,6 +78,8 @@ public final class DevSetupEvents {
         // в руке и перестраивал мир каждому входящему игроку.
         if (net.neoforged.fml.loading.FMLEnvironment.production
                 || !Boolean.getBoolean(CAPTURE_PROPERTY)
+                || io.github.verycooltimo.murim.dev.SmokeWalkRoute.enabled()
+                    && (System.getenv("MURIM_SMOKE_WALK") != null || "1".equals(System.getenv("MURIM_SMOKE_RELOAD")))
                 // Panorama of Mount Hua: no stage, no dummies (DevPanoramaHandler).
                 || "mounthua".equals(System.getProperty("murim.capture.technique"))
                 || "placecheck".equals(System.getProperty("murim.capture.technique"))
@@ -87,13 +97,26 @@ public final class DevSetupEvents {
                 // Boss M4: a fortress built at the player, no stage (client/boss/DevBossHandler).
                 || "boss".equals(System.getProperty("murim.capture.technique"))
                 // Location round trip and biome: a real showcase world, no stage (client/DevLocationHandler).
-                || "location".equals(System.getProperty("murim.capture.technique"))) {
+                || "location".equals(System.getProperty("murim.capture.technique"))
+                // The senior spar stand films in the built sect, no stage (client/SparFilmCapture).
+                || "headintrofilm".equals(System.getProperty("murim.capture.technique"))
+                || "bladeexamfilm".equals(System.getProperty("murim.capture.technique"))
+                || "sparfilm".equals(System.getProperty("murim.capture.technique"))) {
+            if (("bladeexamfilm".equals(System.getProperty("murim.capture.technique"))
+                    || "sparfilm".equals(System.getProperty("murim.capture.technique"))
+                    || "headintrofilm".equals(System.getProperty("murim.capture.technique"))) && Boolean.getBoolean(CAPTURE_PROPERTY)
+                    && !net.neoforged.fml.loading.FMLEnvironment.production) {
+                scheduleCaptureCommands(event.getEntity());
+            }
             return;
         }
         scheduleCaptureCommands(event.getEntity());
+        if (io.github.verycooltimo.murim.dev.SmokeWalkRoute.enabled()
+                && "1".equals(System.getenv("MURIM_SMOKE_PRESERVE"))) return;
         // Меч нужен для съёмки техник, но в церемонии он торчит из сложенных рук и
         // перекрывает то самое тело, ради которого сцена и снимается.
-        boolean ceremony = "meditation".equals(System.getProperty("murim.capture.technique"));
+        boolean bench = System.getProperty("murim.capture.technique", "").startsWith("bench:");
+        boolean ceremony = bench || "meditation".equals(System.getProperty("murim.capture.technique"));
         // Кинжалы Тан — из рукавов, рука пустая (меч им не нужен).
         boolean tang = System.getProperty("murim.capture.technique", "").startsWith("tang_");
         // MURIM_CAPTURE_HAND=empty — пустая рука: съёмка ци-меча (03.10).
@@ -143,6 +166,38 @@ public final class DevSetupEvents {
         // эффект, чем я на своих кадрах.
         boolean night = "night".equalsIgnoreCase(System.getProperty("murim.capture.time", "day"));
         serverLevel.setDayTime(night ? 18000L : 6000L);
+        // Only the throwaway footwork capture world: preserve the floor, remove sight blockers.
+        if (!System.getenv().getOrDefault("MURIM_CAPTURE_FOOTWORK", "").isEmpty()) {
+            // API: minecraft-src/net/minecraft/world/level/Level.java#setBlockAndUpdate
+            for (int dx = -18; dx <= 18; dx++) {
+                for (int dz = -18; dz <= 18; dz++) {
+                    for (int dy = 0; dy < 6; dy++) {
+                        serverLevel.setBlockAndUpdate(new BlockPos(STAGE_X + dx, STAGE_Y + dy,
+                                STAGE_Z + dz), Blocks.AIR.defaultBlockState());
+                    }
+                }
+            }
+            // Same axis as the enemy lineup in setupScene (28 degrees off the player's yaw).
+            double enemyYaw = Math.toRadians(captureYaw()
+                    + ("fp".equalsIgnoreCase(System.getProperty("murim.capture.camera", "back")) ? 0 : 28));
+            double enemyX = -Math.sin(enemyYaw);
+            double enemyZ = Math.cos(enemyYaw);
+            for (int i = 0; i < 8; i++) {
+                double angle = i * Math.PI / 4;
+                BlockPos post = BlockPos.containing(STAGE_X + .5 + 15 * Math.cos(angle), STAGE_Y,
+                        STAGE_Z + .5 + 15 * Math.sin(angle));
+                double dx = post.getX() + .5 - (STAGE_X + .5);
+                double dz = post.getZ() + .5 - (STAGE_Z + .5);
+                // Keep the whole line clear, including beyond the last enemy.
+                if (Math.abs(dx * enemyZ - dz * enemyX) <= 2) continue;
+                // API: minecraft-src/net/minecraft/world/level/block/state/BlockBehaviour.java#isFaceSturdy
+                if (!serverLevel.getBlockState(post.below()).isFaceSturdy(serverLevel, post.below(),
+                        net.minecraft.core.Direction.UP)) continue;
+                serverLevel.setBlockAndUpdate(post, Blocks.OAK_FENCE.defaultBlockState());
+                serverLevel.setBlockAndUpdate(post.above(), Blocks.OAK_FENCE.defaultBlockState());
+                serverLevel.setBlockAndUpdate(post.above(2), Blocks.LANTERN.defaultBlockState());
+            }
+        }
         // Ракурс задаётся поворотом ИГРОКА, а не камеры: камера в Minecraft жёстко привязана
         // к взгляду, а эффект строится в системе тела. Поворот игрока при неподвижной камере
         // показывает тот же эффект с другой стороны и стоит одну строку вместо своей камеры.
@@ -181,7 +236,7 @@ public final class DevSetupEvents {
         // MURIM_CAPTURE_TARGET_Z — ближе для коротких искусств (кулак, песок: 2–3 блока), 05.10.
         double targetZ = System.getenv("MURIM_CAPTURE_TARGET_Z") == null ? 6.0D : Double.parseDouble(System.getenv("MURIM_CAPTURE_TARGET_Z"));
         // MURIM_CAPTURE_NO_DUMMY=1 — без мишеней на сцене (съёмка A/B удержания: ничего, что стоит само).
-        for (double dx : "1".equals(System.getenv("MURIM_CAPTURE_NO_DUMMY")) ? new double[0] : new double[] {-1.6D, 1.6D}) {
+        for (double dx : bench || "1".equals(System.getenv("MURIM_CAPTURE_NO_DUMMY")) ? new double[0] : new double[] {-1.6D, 1.6D}) {
             net.minecraft.world.entity.decoration.ArmorStand target =
                     new net.minecraft.world.entity.decoration.ArmorStand(
                             serverLevel, STAGE_X + 0.5D + dx * Math.min(1.0D, targetZ / 6.0D), STAGE_Y, STAGE_Z + targetZ);
@@ -216,11 +271,43 @@ public final class DevSetupEvents {
                             .withBeats(beats));
             io.github.verycooltimo.murim.profile.ProfileNetwork.sync(meditating);
             // Искажение ци из прошлого прогона не должно попадать в кадры следующего.
+            // MURIM_CAPTURE_SURVIVAL=1 — выживание: видны сердца, еда и шкала ци (в творческом шкалы ци нет), чтобы
+            // проверить подсказки мыши и янтарную нить резерва рядом с ними.
+            if ("1".equals(System.getenv("MURIM_CAPTURE_SURVIVAL"))) {
+                meditating.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+                // Ночью в мире стенда бродят мобы: удар прерывает медитацию, а смерть — съёмку. Неуязвим, но не творческий.
+                meditating.getAbilities().invulnerable = true;
+                meditating.onUpdateAbilities();
+                // Мирная сложность: ночной зомби у самого игрока срывал посадку и съёмку (прогон 19.10). API:
+                // reference/minecraft-src/net/minecraft/server/MinecraftServer.java#setDifficulty
+                if (meditating.getServer() != null) {
+                    meditating.getServer().setDifficulty(net.minecraft.world.Difficulty.PEACEFUL, true);
+                    // Ни ночных мобов, ни бродячего торговца с ламами (лама у самого игрока срывала посадку в прогоне 19.10).
+                    // API: reference/minecraft-src/net/minecraft/world/level/GameRules.java#RULE_DOMOBSPAWNING
+                    meditating.serverLevel().getGameRules().getRule(net.minecraft.world.level.GameRules.RULE_DOMOBSPAWNING)
+                            .set(false, meditating.getServer());
+                    meditating.serverLevel().getGameRules().getRule(net.minecraft.world.level.GameRules.RULE_DO_TRADER_SPAWNING)
+                            .set(false, meditating.getServer());
+                    for (net.minecraft.world.entity.Mob m : meditating.level().getEntitiesOfClass(
+                            net.minecraft.world.entity.Mob.class, meditating.getBoundingBox().inflate(48.0D))) {
+                        if (!m.getTags().contains(TARGET_TAG)) {
+                            m.discard();
+                        }
+                    }
+                }
+            }
             learnAll(meditating);
             // Пережитое для двойника и озарения в медитации: «Лунный взмах» у границы слоя.
             long day = meditating.level().getDayTime() / 24000L;
             primeInsight(meditating, "crescent_sweep", 1, 0.85D, 8.0D, day);
             primeInsight(meditating, "demon_palm", 2, 0.1D, 6.0D, day);
+            // MURIM_CAPTURE_ECHO=<form of an art> — the Echo: a manual of that art in the hand (the stand sits down with it, so
+            // the server chooses the Echo of the art), a reserve waiting and the last fight remembered.
+            // MURIM_CAPTURE_ECHO_MOVES=a,b,c — the moves of that fight (default: the foundation, the first form, the foundation).
+            String echoForm = System.getenv("MURIM_CAPTURE_ECHO");
+            if (echoForm != null && !echoForm.isBlank()) {
+                primeEcho(meditating, echoForm.trim(), System.getenv("MURIM_CAPTURE_ECHO_MOVES"), day);
+            }
             // MURIM_CAPTURE_WALL=1 — запас у стены ранга и циркулирующая полна (иначе медитация
             // переливает запас в неё и стена отодвигается): прорыв начнётся с первого тика
             // медитации (у «Ладони» уже второй слой — условие прорыва в третий ранг).
@@ -228,10 +315,21 @@ public final class DevSetupEvents {
                 io.github.verycooltimo.murim.profile.DantianProfile p =
                         meditating.getData(io.github.verycooltimo.murim.registry.ModAttachments.PROFILE);
                 meditating.setData(io.github.verycooltimo.murim.registry.ModAttachments.PROFILE,
-                        p.withRank(System.getenv("MURIM_CAPTURE_RANK") == null ? 0
-                                : Integer.parseInt(System.getenv("MURIM_CAPTURE_RANK").trim()))
-                                .withPool(io.github.verycooltimo.murim.cultivation.Realm.wall(p))
-                                .withCirculating(p.maxCirculating()));
+                        wallProfile(p, System.getenv("MURIM_CAPTURE_RANK") == null ? 0
+                                : Integer.parseInt(System.getenv("MURIM_CAPTURE_RANK").trim())));
+                // Rank-two capture fixture: the same art thresholds and sect proof as real promotion (author 21.10).
+                if (meditating.getData(io.github.verycooltimo.murim.registry.ModAttachments.PROFILE).rank() == 1) {
+                    meditating.setData(io.github.verycooltimo.murim.registry.ModAttachments.SECT,
+                            meditating.getData(io.github.verycooltimo.murim.registry.ModAttachments.SECT).joined()
+                                    .with(io.github.verycooltimo.murim.sect.SectProgression.SECOND_TEST)
+                                    .with("rank2.win.seo_rang").with("rank2.win.seo_gyu").with("rank2.win.seo_ho"));
+                    meditating.setData(io.github.verycooltimo.murim.registry.ModAttachments.MASTERY,
+                            meditating.getData(io.github.verycooltimo.murim.registry.ModAttachments.MASTERY)
+                                    .with(io.github.verycooltimo.murim.sect.SectService.SIX,
+                                            io.github.verycooltimo.murim.mastery.TechniqueProgress.learned(6, 12))
+                                    .with(io.github.verycooltimo.murim.sect.SectJourney.PETAL,
+                                            io.github.verycooltimo.murim.mastery.TechniqueProgress.learned(3, 12)));
+                }
                 io.github.verycooltimo.murim.profile.ProfileNetwork.sync(meditating);
             }
             io.github.verycooltimo.murim.cultivation.RankEffects.apply(meditating);
@@ -249,13 +347,50 @@ public final class DevSetupEvents {
                     z.discard();
                 }
             }
+            // MURIM_CAPTURE_CLEAR_MOBS=1 — no mobs or dropped items around the seated player (breakthrough films: nothing may stand in the lens).
+            if ("1".equals(System.getenv("MURIM_CAPTURE_CLEAR_MOBS")) && meditating.level() instanceof net.minecraft.server.level.ServerLevel clearLevel) {
+                clearLevel.getGameRules().getRule(net.minecraft.world.level.GameRules.RULE_DOMOBSPAWNING).set(false, clearLevel.getServer());
+                for (net.minecraft.world.entity.Entity e : clearLevel.getEntitiesOfClass(net.minecraft.world.entity.Entity.class,
+                        meditating.getBoundingBox().inflate(48.0D))) {
+                    if (e instanceof net.minecraft.world.entity.Mob || e instanceof net.minecraft.world.entity.item.ItemEntity) {
+                        e.discard();
+                    }
+                }
+            }
             // Камень прошлого прогона остаётся в мире стенда — убрать, чтобы не путал кадры.
             for (net.minecraft.core.BlockPos p : net.minecraft.core.BlockPos.betweenClosed(
                     meditating.blockPosition().offset(-5, 0, -5), meditating.blockPosition().offset(5, 9, 5))) {
                 var old = meditating.level().getBlockState(p);
                 if (old.getBlock() instanceof io.github.verycooltimo.murim.world.SpiritVeinBlock
-                        || old.is(net.minecraft.world.level.block.Blocks.OAK_LOG) || old.is(net.minecraft.world.level.block.Blocks.OAK_LEAVES)) {
+                        || old.is(net.minecraft.world.level.block.Blocks.OAK_LOG) || old.is(net.minecraft.world.level.block.Blocks.OAK_LEAVES)
+                        || old.is(net.minecraft.world.level.block.Blocks.DEEPSLATE_BRICKS)) {
                     meditating.level().setBlockAndUpdate(p, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState());
+                }
+            }
+            // MURIM_CAPTURE_OBSTACLE=back|right|corner|room — deepslate-brick walls 2 blocks from the seated player
+            // (behind, on the right, both, or a full ring with a roof gap) to film the breakthrough camera pulling in
+            // and choosing the free side (client/camera/BreakthroughCamera). Removed again on the next run (above).
+            String obstacle = System.getenv("MURIM_CAPTURE_OBSTACLE");
+            if (obstacle != null && !obstacle.isBlank()) {
+                net.minecraft.core.Direction facing = meditating.getDirection();
+                net.minecraft.core.Direction rightHand = facing.getClockWise();
+                net.minecraft.core.BlockPos feet = meditating.blockPosition();
+                boolean back = obstacle.equals("back") || obstacle.equals("corner") || obstacle.equals("room");
+                boolean right = obstacle.equals("right") || obstacle.equals("corner") || obstacle.equals("room");
+                boolean ring = obstacle.equals("room");
+                for (int along = -5; along <= 5; along++) {
+                    for (int y = 0; y < 5; y++) {
+                        if (back) {
+                            wallBlock(meditating.level(), feet.relative(facing.getOpposite(), 2).relative(rightHand, along).above(y));
+                        }
+                        if (right) {
+                            wallBlock(meditating.level(), feet.relative(rightHand, 2).relative(facing, along).above(y));
+                        }
+                        if (ring) {
+                            wallBlock(meditating.level(), feet.relative(rightHand, -2).relative(facing, along).above(y));
+                            wallBlock(meditating.level(), feet.relative(facing, 3).relative(rightHand, along).above(y));
+                        }
+                    }
                 }
             }
             // MURIM_CAPTURE_PLACE=tree — старое дерево рядом (природное место силы, без камня).
@@ -284,12 +419,44 @@ public final class DevSetupEvents {
                                 io.github.verycooltimo.murim.world.PlaceKind.valueOf(place.trim().toUpperCase(java.util.Locale.ROOT))));
             }
             String pills = System.getenv("MURIM_CAPTURE_PILLS");
+            // MURIM_CAPTURE_CEILING=1 — низкий потолок над сидящим (стук головы при подлёте).
             meditating.setData(io.github.verycooltimo.murim.registry.ModAttachments.PILLS,
                     io.github.verycooltimo.murim.cultivation.PillState.NONE);
+            // MURIM_CAPTURE_PILL_RANK=r — ранг игрока перед пилюлями (capacity grows with it; the pool is a quarter of the wall, so a
+            // pill fits): the rank rule of the pills depends on it (rank - the pill's rank).
+            String pillRank = System.getenv("MURIM_CAPTURE_PILL_RANK");
+            if (pillRank != null && !pillRank.isBlank()) {
+                // the biggest dantian of the rank ladder (capacity 60 at rank 0, x1.8 a rank): the walls of the mockup
+                io.github.verycooltimo.murim.profile.DantianProfile seeded = meditating
+                        .getData(io.github.verycooltimo.murim.registry.ModAttachments.PROFILE);
+                io.github.verycooltimo.murim.profile.DantianProfile ranked = seeded.withAxes(60.0D, seeded.purity(), seeded.meridians())
+                        .withRank(Integer.parseInt(pillRank.trim()));
+                meditating.setData(io.github.verycooltimo.murim.registry.ModAttachments.PROFILE,
+                        ranked.withPool(io.github.verycooltimo.murim.cultivation.Realm.wall(ranked) * 0.25D)
+                                .withCirculating(ranked.maxCirculating()));
+                io.github.verycooltimo.murim.profile.ProfileNetwork.sync(meditating);
+            }
+            for (net.minecraft.core.BlockPos q : net.minecraft.core.BlockPos.betweenClosed(
+                    meditating.blockPosition().offset(-2, 2, -2), meditating.blockPosition().offset(2, 2, 2))) {
+                var above = meditating.level().getBlockState(q);
+                if (above.is(net.minecraft.world.level.block.Blocks.SPRUCE_PLANKS)) {
+                    meditating.level().setBlockAndUpdate(q, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState());
+                }
+            }
+            if ("1".equals(System.getenv("MURIM_CAPTURE_CEILING"))) {
+                for (net.minecraft.core.BlockPos q : net.minecraft.core.BlockPos.betweenClosed(
+                        meditating.blockPosition().offset(-2, 2, -2), meditating.blockPosition().offset(2, 2, 2))) {
+                    meditating.level().setBlockAndUpdate(q, net.minecraft.world.level.block.Blocks.SPRUCE_PLANKS.defaultBlockState());
+                }
+            }
             if (pills != null && !pills.isBlank()) {
                 for (String id : pills.split(",")) {
-                    io.github.verycooltimo.murim.cultivation.PillService.eat(meditating,
-                            io.github.verycooltimo.murim.cultivation.PillKind.valueOf(id.trim().toUpperCase(java.util.Locale.ROOT)));
+                    io.github.verycooltimo.murim.cultivation.PillKind kind =
+                            io.github.verycooltimo.murim.cultivation.PillKind.valueOf(id.trim().toUpperCase(java.util.Locale.ROOT));
+                    // A pill the body will not endure is only warned about at the first try; the second try confirms it.
+                    if (!io.github.verycooltimo.murim.cultivation.PillService.eat(meditating, kind)) {
+                        io.github.verycooltimo.murim.cultivation.PillService.eat(meditating, kind);
+                    }
                 }
             }
             return;
@@ -336,16 +503,39 @@ public final class DevSetupEvents {
                                     System.getenv().getOrDefault("MURIM_CAPTURE_FOUNDATION_ID", "six_harmonies")))));
             io.github.verycooltimo.murim.mastery.LoadoutService.sync(fp);
         }
+        // Combat HUD stand (client/CombatHudCapture): Seven Plum basic on the left click, God Wind form in the first slot.
+        if ("combathud".equals(System.getProperty("murim.capture.technique"))
+                && event.getEntity() instanceof net.minecraft.server.level.ServerPlayer hp) {
+            io.github.verycooltimo.murim.mastery.Loadout loadout = hp.getData(io.github.verycooltimo.murim.registry.ModAttachments.LOADOUT)
+                    .withFoundation(java.util.Optional.of(io.github.verycooltimo.murim.technique.Styles.SEVEN_PLUM.basic().orElseThrow()));
+            String[] slots = {"wind_god_steps", "demon_palm", "crescent_sweep"};
+            for (int i = 0; i < slots.length; i++) {
+                loadout = loadout.with(i, java.util.Optional.of(net.minecraft.resources.ResourceLocation
+                        .fromNamespaceAndPath(io.github.verycooltimo.murim.MurimMod.MODID, slots[i])));
+            }
+            hp.setData(io.github.verycooltimo.murim.registry.ModAttachments.LOADOUT, loadout);
+            io.github.verycooltimo.murim.mastery.LoadoutService.sync(hp);
+            // MURIM_CAPTURE_INSIGHT=1: the basic stands one breath short of its next star, so the first hit is a breakthrough.
+            if ("1".equals(System.getenv("MURIM_CAPTURE_INSIGHT"))) {
+                primeInsight(hp, "seven_plum_basic", 3, 0.999D, 0.0D, hp.level().getDayTime() / 24000L);
+            }
+        }
         // Автоматика шагов (03.10): снимаемый стиль шагов — в первом слоте, иначе автобег и
-        // автотень не видят стиля в раскладке.
-        if (System.getenv().getOrDefault("MURIM_CAPTURE_FOOTWORK", "").startsWith("auto")
+        // автотень не видят стиля в раскладке. Since 31.10 every footwork form needs its slot (selected forms only), so any
+        // footwork capture mode puts the subject there.
+        if (!System.getenv().getOrDefault("MURIM_CAPTURE_FOOTWORK", "").isEmpty()
                 && event.getEntity() instanceof net.minecraft.server.level.ServerPlayer ap) {
             net.minecraft.resources.ResourceLocation subject = net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(
-                    io.github.verycooltimo.murim.MurimMod.MODID, System.getProperty("murim.capture.technique", "wind_god_steps"));
+                    io.github.verycooltimo.murim.MurimMod.MODID, io.github.verycooltimo.murim.dev.FootworkCapturePlan.subject(
+                            System.getProperty("murim.capture.technique", "wind_god_steps"),
+                            System.getenv().getOrDefault("MURIM_CAPTURE_FOOTWORK", "")));
             io.github.verycooltimo.murim.mastery.MasteryService.completeStyles(ap);
-            ap.setData(io.github.verycooltimo.murim.registry.ModAttachments.LOADOUT,
-                    ap.getData(io.github.verycooltimo.murim.registry.ModAttachments.LOADOUT).with(0, java.util.Optional.of(subject)));
-            io.github.verycooltimo.murim.mastery.LoadoutService.sync(ap);
+            // Same art-slot + form-selection path as the player's loadout screen and wheel.
+            var art = io.github.verycooltimo.murim.technique.Styles.of(subject)
+                    .map(style -> style.forms().getFirst()).orElse(subject);
+            io.github.verycooltimo.murim.mastery.LoadoutService.setSlot(ap, 0, java.util.Optional.of(art));
+            boolean selected = io.github.verycooltimo.murim.mastery.LoadoutService.selectForm(ap, 0, subject, true);
+            MurimMod.LOGGER.info("CAPTURE-FOOTWORK setup subject={} selected={}", subject, selected);
             io.github.verycooltimo.murim.mastery.MasteryService.sync(ap);
         }
         // Съёмка книги-манускрипта (03.10): в руке манускрипт техники MURIM_CAPTURE_MANUAL.
@@ -398,7 +588,8 @@ public final class DevSetupEvents {
             io.github.verycooltimo.murim.mastery.MasteryService.sync(uiPlayer);
         }
         // MURIM_CAPTURE_INSIGHT=1 — снимаемая техника у самой границы слоя: первое попадание
-        // даёт озарение в бою.
+        // даёт озарение в бою. Титр озарения — слой интерфейса, поэтому DevCaptureHandler при этой
+        // переменной снимает кадры с интерфейсом (иначе пара murim_/clean_ его не содержит).
         if ("1".equals(System.getenv("MURIM_CAPTURE_INSIGHT"))) {
             primeInsight(event.getEntity(), System.getProperty("murim.capture.technique", "ceremonial_draw"),
                     1, 0.995D, 0.0D, event.getEntity().level().getDayTime() / 24000L);
@@ -431,7 +622,17 @@ public final class DevSetupEvents {
      */
     @SubscribeEvent
     static void onDamageDealt(net.neoforged.neoforge.event.entity.living.LivingDamageEvent.Post event) {
+        if (!net.neoforged.fml.loading.FMLEnvironment.production && Boolean.getBoolean(CAPTURE_PROPERTY)
+                && !System.getenv().getOrDefault("MURIM_CAPTURE_FOOTWORK", "").isEmpty()
+                && event.getEntity() instanceof net.minecraft.world.entity.monster.Zombie) {
+            // Include environmental/mob damage: player-only telemetry hid warmup deaths.
+            MurimMod.LOGGER.info("Footwork actor damage: id={}, tick={}, source={}, damage={}, health={}",
+                    event.getEntity().getId(), event.getEntity().level().getGameTime(),
+                    event.getSource().getMsgId(), event.getNewDamage(), event.getEntity().getHealth());
+        }
         if (net.neoforged.fml.loading.FMLEnvironment.production || !Boolean.getBoolean(CAPTURE_PROPERTY)
+                || io.github.verycooltimo.murim.dev.SmokeWalkRoute.enabled()
+                    && (System.getenv("MURIM_SMOKE_WALK") != null || "1".equals(System.getenv("MURIM_SMOKE_RELOAD")))
                 || !(event.getSource().getEntity() instanceof net.minecraft.server.level.ServerPlayer player)) {
             return;
         }
@@ -500,6 +701,11 @@ public final class DevSetupEvents {
         net.minecraft.world.phys.AABB area = new net.minecraft.world.phys.AABB(
                 STAGE_X - 32.0D, STAGE_Y - 8.0D, STAGE_Z - 32.0D,
                 STAGE_X + 32.0D, STAGE_Y + 24.0D, STAGE_Z + 32.0D);
+        if (!System.getenv().getOrDefault("MURIM_CAPTURE_FOOTWORK", "").isEmpty()) {
+            // The stand world is copied between takes; discard old loot rather than filming it as a new death.
+            for (var loot : level.getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class, area)) loot.discard();
+            for (var clone : level.getEntitiesOfClass(io.github.verycooltimo.murim.entity.ShadowClone.class, area)) clone.discard();
+        }
         int removed = 0;
         for (io.github.verycooltimo.murim.entity.TrainingDummy old
                 : level.getEntitiesOfClass(io.github.verycooltimo.murim.entity.TrainingDummy.class, area)) {
@@ -542,22 +748,19 @@ public final class DevSetupEvents {
         // Строго по оси её не видно вовсе, и брызги по телу оценить нельзя.
         // От первого лица (давление ауры) цель — строго по оси взгляда.
         boolean fpCamera = "fp".equalsIgnoreCase(System.getProperty("murim.capture.camera", "back"));
-        boolean demonic = io.github.verycooltimo.murim.technique.DemonicRules.ARTS.contains(
-                System.getProperty("murim.capture.technique", ""));
-        double aim = fpCamera || demonic ? yaw : yaw + Math.toRadians(28.0D);
+        double aim = fpCamera ? yaw : yaw + Math.toRadians(28.0D);
         double lookX = -Math.sin(aim);
         double lookZ = Math.cos(aim);
         // Сбоку манекен стоит на вытянутую руку: иначе ладонь до него не достаёт, и всплеск
         // «под ладонью» висит в воздухе в метре от кисти (кадры 2026-09-24).
         double dummyDistance = "side".equalsIgnoreCase(
                 System.getProperty("murim.capture.camera", "back")) ? 1.15D : 1.7D;
-        if (demonic) dummyDistance = 1.8D;
         // MURIM_CAPTURE_DUMMY_DIST — поставить цель дальше вытянутой руки: проверка рывка ладони.
         String dist = System.getenv("MURIM_CAPTURE_DUMMY_DIST");
         if (dist != null) {
             dummyDistance = Double.parseDouble(dist.trim());
         }
-        if (fpCamera && !demonic && dist == null) {
+        if (fpCamera && dist == null) {
             dummyDistance = 4.0D;
         }
         // MURIM_CAPTURE_ENEMY=zombie — вместо манекена зомби без ИИ, лицом к игроку:
@@ -567,6 +770,7 @@ public final class DevSetupEvents {
         // (MURIM_CAPTURE_ENEMY_AI=0 — без ИИ). Сложность «Нормально»: на «Лёгкой» урон бандита
         // делится пополам и ни один его удар не дотягивает до порога срыва техник (6).
         String enemyKind = System.getenv().getOrDefault("MURIM_CAPTURE_ENEMY", "");
+        net.minecraft.server.level.ServerPlayer captureSubject = level.players().isEmpty() ? null : level.players().get(0);
         if (enemyKind.startsWith("bandit")) {
             for (io.github.verycooltimo.murim.entity.Bandit old
                     : level.getEntitiesOfClass(io.github.verycooltimo.murim.entity.Bandit.class, area)) {
@@ -639,6 +843,13 @@ public final class DevSetupEvents {
             // MURIM_CAPTURE_ENEMY_AI=1 — живой зомби (идёт и бьёт): проверка оглушения и прохода за спину.
             zombie.setNoAi(!"1".equals(System.getenv("MURIM_CAPTURE_ENEMY_AI")));
             zombie.setPersistenceRequired();
+            if (captureSubject != null && "1".equals(System.getenv("MURIM_CAPTURE_ENEMY_AI"))) {
+                level.getServer().setDifficulty(net.minecraft.world.Difficulty.EASY, true);
+                captureSubject.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+                captureSubject.getAbilities().invulnerable = false;
+                captureSubject.onUpdateAbilities();
+                zombie.setTarget(captureSubject);
+            }
             // MURIM_CAPTURE_ENEMY_HP — запас здоровья цели: долгая техника (Вихрь) убивала зомби
             // раньше финала, и финальный проход было не по кому снять.
             String hp = System.getenv("MURIM_CAPTURE_ENEMY_HP");
@@ -661,9 +872,25 @@ public final class DevSetupEvents {
             // Отрицательная высота — цель НИЖЕ площадки (под ней воздух): проверка «бьёт вниз».
             target.setNoGravity(true);
         }
+        boolean footworkActors = !System.getenv().getOrDefault("MURIM_CAPTURE_FOOTWORK", "").isEmpty()
+                && "zombie".equals(enemyKind) && "1".equals(System.getenv("MURIM_CAPTURE_ENEMY_AI"));
+        // Stage with AI paused; the client releases pursuit exactly one second before R.
+        // Warmup must not consume live targets before the first recorded frame.
+        if (footworkActors && target instanceof net.minecraft.world.entity.Mob mob) mob.setNoAi(true);
         target.setPos(STAGE_X + 0.5D + lookX * dummyDistance, STAGE_Y + lift,
                       STAGE_Z + 0.5D + lookZ * dummyDistance);
         level.addFreshEntity(target);
+        int enemyCount = Math.max(1, Math.min(30, Integer.parseInt(System.getenv().getOrDefault("MURIM_CAPTURE_ENEMIES", "1"))));
+        if ("zombie".equals(enemyKind)) for (int i = 1; i < enemyCount; i++) {
+            var extra = new net.minecraft.world.entity.monster.Zombie(net.minecraft.world.entity.EntityType.ZOMBIE, level);
+            extra.setNoAi(footworkActors || !"1".equals(System.getenv("MURIM_CAPTURE_ENEMY_AI")));
+            if ("1".equals(System.getenv("MURIM_CAPTURE_ENEMY_AI"))) extra.setTarget(captureSubject);
+            extra.setPersistenceRequired();
+            extra.setItemSlot(net.minecraft.world.entity.EquipmentSlot.HEAD, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.LEATHER_HELMET));
+            extra.moveTo(target.getX() + lookX * i * 2, target.getY(), target.getZ() + lookZ * i * 2, target.getYRot(), 0);
+            extra.setYHeadRot(target.getYRot());
+            level.addFreshEntity(extra);
+        }
         // MURIM_CAPTURE_EXTRA_ZOMBIE=1 — живой зомби рядом с целью (за целью, чуть вбок): съёмка оглушения
         // бандита и зомби одной техникой (combat/Stun, 05.10).
         if ("1".equals(System.getenv("MURIM_CAPTURE_EXTRA_ZOMBIE"))) {
@@ -761,7 +988,9 @@ public final class DevSetupEvents {
         // Камера сбоку для съёмки удара: со спины кисть и шлейф закрывает корпус, спереди
         // манекен встаёт перед камерой. Клиент смотрит глазами этой стойки
         // (DevCaptureHandler), сама она невидима и висит без гравитации.
-        if ("side".equalsIgnoreCase(System.getProperty("murim.capture.camera", "back"))) {
+        boolean footworkBack = !System.getenv().getOrDefault("MURIM_CAPTURE_FOOTWORK", "").isEmpty()
+                && "back".equalsIgnoreCase(System.getProperty("murim.capture.camera", "back"));
+        if (footworkBack || "front".equalsIgnoreCase(System.getProperty("murim.capture.camera", "back")) || "side".equalsIgnoreCase(System.getProperty("murim.capture.camera", "back"))) {
             // MURIM_CAPTURE_CAM_FWD — сдвинуть точку съёмки вперёд по взгляду (падающее дерево
             // и след лежат на 3–15 блоков впереди), MURIM_CAPTURE_CAM_Y и _PITCH — поднять камеру
             // и наклонить вниз: след на земле сбоку на уровне глаз не виден.
@@ -769,20 +998,23 @@ public final class DevSetupEvents {
             double midX = STAGE_X + 0.5D + lookX * fwd;
             double midZ = STAGE_Z + 0.5D + lookZ * fwd;
             // Правая сторона игрока: при взгляде (−sin, cos) правая рука смотрит в (−cos, −sin).
-            double rightX = -Math.cos(yaw);
-            double rightZ = -Math.sin(yaw);
+            // rain-09/full-19 film: orbit is relative to the target's attack axis, including
+            // the stand's 28-degree target offset. Keep an orthonormal horizontal basis.
+            double rightX = -lookZ;
+            double rightZ = lookX;
             // MURIM_CAPTURE_CAM_DIST — отвести камеру: аура выше головы не влезала в кадр.
             double camDist = System.getenv("MURIM_CAPTURE_CAM_DIST") == null ? 3.2D
                     : Double.parseDouble(System.getenv("MURIM_CAPTURE_CAM_DIST").trim());
             // MURIM_CAPTURE_CAM_ORBIT — degrees to swing the camera from the right side toward the front
             // (45 = three-quarter view from front-right), still aimed at the same point.
             double orbit = Math.toRadians(envDouble("MURIM_CAPTURE_CAM_ORBIT", 0.0D));
-            double offX = rightX * Math.cos(orbit) + lookX * Math.sin(orbit);
-            double offZ = rightZ * Math.cos(orbit) + lookZ * Math.sin(orbit);
+            double offX = footworkBack ? -lookX : rightX * Math.cos(orbit) + lookX * Math.sin(orbit);
+            double offZ = footworkBack ? -lookZ : rightZ * Math.cos(orbit) + lookZ * Math.sin(orbit);
+            if (footworkBack) camDist = 6.5D;
             double camX = midX + offX * camDist;
             double camZ = midZ + offZ * camDist;
             net.minecraft.world.entity.decoration.ArmorStand stand =
-                    new net.minecraft.world.entity.decoration.ArmorStand(level, camX, STAGE_Y - 0.45D + envDouble("MURIM_CAPTURE_CAM_Y", 0.0D), camZ);
+                    new net.minecraft.world.entity.decoration.ArmorStand(level, camX, STAGE_Y - 0.45D + envDouble("MURIM_CAPTURE_CAM_Y", footworkBack ? .65D : 0.0D), camZ);
             stand.setInvisible(true);
             stand.setNoGravity(true);
             stand.setCustomName(net.minecraft.network.chat.Component.literal(CAMERA_STAND_NAME));
@@ -808,24 +1040,67 @@ public final class DevSetupEvents {
     }
 
     /** Все техники на полном освоении: стенду нужны приёмы, а не прогресс. */
+    /** Stand obstacle block (see MURIM_CAPTURE_OBSTACLE). */
+    private static void wallBlock(net.minecraft.world.level.Level level, net.minecraft.core.BlockPos pos) {
+        level.setBlockAndUpdate(pos, net.minecraft.world.level.block.Blocks.DEEPSLATE_BRICKS.defaultBlockState());
+    }
+
     private static void learnAll(net.minecraft.world.entity.player.Player player) {
-        io.github.verycooltimo.murim.mastery.MasteryState state = io.github.verycooltimo.murim.mastery.MasteryState.EMPTY;
+        var known = new java.util.HashMap<net.minecraft.resources.ResourceLocation,
+                io.github.verycooltimo.murim.mastery.TechniqueProgress>();
         for (io.github.verycooltimo.murim.technique.TechniqueDefinition definition
                 : io.github.verycooltimo.murim.technique.TechniqueLoader.all().values()) {
-            // STAR uses current mastery; the legacy capture variable preserves old table indices.
+            // Default capture is full mastery (including footwork at ★12). STAR uses current mastery; the legacy capture variable preserves old table indices.
             String stars = System.getenv("MURIM_CAPTURE_STAR");
             String legacy = System.getenv("MURIM_CAPTURE_LAYER");
             int start = stars != null && !stars.isBlank() ? Integer.parseInt(stars.trim())
                     : legacy != null && !legacy.isBlank()
                     ? io.github.verycooltimo.murim.mastery.Arts.unlockStar(definition.id(), Integer.parseInt(legacy.trim()))
                     : definition.starCap();
-            state = state.with(definition.id(), io.github.verycooltimo.murim.mastery.TechniqueProgress.learned(
+            known.put(definition.id(), io.github.verycooltimo.murim.mastery.TechniqueProgress.learned(
                     start, definition.starCap()));
         }
+        var state = new io.github.verycooltimo.murim.mastery.MasteryState(known, 0, java.util.Set.of());
         player.setData(io.github.verycooltimo.murim.registry.ModAttachments.MASTERY, state);
         if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
             io.github.verycooltimo.murim.mastery.MasteryService.sync(serverPlayer);
         }
+    }
+
+    /**
+     * Профиль у стены заданного ранга: запас равен стене, циркулирующая полна.
+     *
+     * <p>Стену и потолок циркулирующей считают по профилю УЖЕ с новым рангом: ёмкость растёт с рангом,
+     * и по старому профилю запас оказывался ниже новой стены, а прорыв при {@code MURIM_CAPTURE_RANK >= 1}
+     * не начинался (docs/design/research/meditation-pills-breakthroughs-1810.md §3.3).
+     */
+    static io.github.verycooltimo.murim.profile.DantianProfile wallProfile(
+            io.github.verycooltimo.murim.profile.DantianProfile profile, int rank) {
+        io.github.verycooltimo.murim.profile.DantianProfile ranked = profile.withRank(rank);
+        return ranked.withPool(io.github.verycooltimo.murim.cultivation.Realm.wall(ranked))
+                .withCirculating(ranked.maxCirculating());
+    }
+
+    /**
+     * Echo scene for the stand: the art of {@code form} stands at star 5 with a reserve that carries it to star 6, its manual is in the main
+     * hand and the moves of the last fight are remembered. Fights and their order are what the double repeats.
+     */
+    private static void primeEcho(net.minecraft.world.entity.player.Player player, String form, String movesList, long day) {
+        primeInsight(player, form, 5, 0.4D, 220.0D, day);
+        if (!(player instanceof net.minecraft.server.level.ServerPlayer serverPlayer)) {
+            return;
+        }
+        net.minecraft.resources.ResourceLocation book = net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(
+                io.github.verycooltimo.murim.MurimMod.MODID, form);
+        String[] moves = movesList == null || movesList.isBlank() ? new String[] {form} : movesList.split(",");
+        for (String move : moves) {
+            io.github.verycooltimo.murim.mastery.EchoMoves.record(serverPlayer, net.minecraft.resources.ResourceLocation
+                    .fromNamespaceAndPath(io.github.verycooltimo.murim.MurimMod.MODID, move.trim()));
+        }
+        net.minecraft.world.item.ItemStack manual = new net.minecraft.world.item.ItemStack(
+                io.github.verycooltimo.murim.registry.ModItems.TECHNIQUE_MANUAL.get());
+        manual.set(io.github.verycooltimo.murim.registry.ModDataComponents.TECHNIQUE.get(), book);
+        serverPlayer.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, manual);
     }
 
     /** Техника на слое {@code layer}, прошедшая долю {@code share} пути к следующему. */
@@ -842,7 +1117,7 @@ public final class DevSetupEvents {
                 player.getData(io.github.verycooltimo.murim.registry.ModAttachments.MASTERY);
         player.setData(io.github.verycooltimo.murim.registry.ModAttachments.MASTERY, state.with(id,
                 new io.github.verycooltimo.murim.mastery.TechniqueProgress(layer,
-                        io.github.verycooltimo.murim.mastery.MasteryRules.need(layer) * share,
+                        io.github.verycooltimo.murim.mastery.MasteryRules.need(layer, io.github.verycooltimo.murim.mastery.Arts.cap(id)) * share,
                         unprocessed, day, definition.starCap())));
         if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
             io.github.verycooltimo.murim.mastery.MasteryService.sync(serverPlayer);

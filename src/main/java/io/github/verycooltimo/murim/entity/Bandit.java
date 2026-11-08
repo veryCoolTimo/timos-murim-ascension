@@ -28,6 +28,10 @@ public abstract class Bandit extends Monster implements io.github.verycooltimo.m
     public static final int STAGGER = 4;
     public static final int STUN = 5;
 
+    private static final EntityDataAccessor<Byte> CAMP_POSE = SynchedEntityData.defineId(Bandit.class, EntityDataSerializers.BYTE);
+    public int campPose() { return entityData.get(CAMP_POSE); }
+    public void campPose(int pose) { entityData.set(CAMP_POSE, (byte) pose); }
+
     private static final EntityDataAccessor<Byte> STATE = SynchedEntityData.defineId(Bandit.class, EntityDataSerializers.BYTE);
     private static final EntityDataAccessor<Byte> MOVE = SynchedEntityData.defineId(Bandit.class, EntityDataSerializers.BYTE);
     private static final EntityDataAccessor<Boolean> ELITE = SynchedEntityData.defineId(Bandit.class, EntityDataSerializers.BOOLEAN);
@@ -62,11 +66,19 @@ public abstract class Bandit extends Monster implements io.github.verycooltimo.m
     @Override
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
         super.defineSynchedData(builder);
+        builder.define(CAMP_POSE, (byte) 0);
         builder.define(STATE, (byte) IDLE);
         builder.define(MOVE, (byte) 0);
         builder.define(ELITE, false);
         builder.define(CHIEF, false);
         builder.define(CHARGED, false);
+    }
+
+    @Override
+    public boolean interruptChargingTechnique() {
+        if (state() != WINDUP) return false;
+        setState(RECOVER, move());
+        return true;
     }
 
     public int state() {
@@ -154,6 +166,7 @@ public abstract class Bandit extends Monster implements io.github.verycooltimo.m
     public void setTarget(net.minecraft.world.entity.LivingEntity target) {
         net.minecraft.world.entity.LivingEntity before = getTarget();
         super.setTarget(target);
+        if (target != null) campPose(0);
         if (!level().isClientSide && campKey != NO_CAMP && target instanceof net.minecraft.world.entity.player.Player
                 && before != target && level() instanceof net.minecraft.server.level.ServerLevel server) {
             io.github.verycooltimo.murim.world.camp.BanditCamps.alert(server, this, target);
@@ -237,6 +250,7 @@ public abstract class Bandit extends Monster implements io.github.verycooltimo.m
         if (level().isClientSide) {
             return;
         }
+        if (campKey != NO_CAMP) io.github.verycooltimo.murim.world.camp.CampLife.guardTrip(this);
         stateTick++;
         boolean stunned = isStunned();
         if (stunned && state() != STUN) {

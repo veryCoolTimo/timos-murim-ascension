@@ -41,6 +41,23 @@ public final class SectChatter {
     /** Один человек не говорит чаще. */
     static final int NPC_GAP = 400;
     private static final String NEXT_TAG = "murim_chatter_next";
+    private static final String REPLY_TO = "murim_reply_to";
+
+    /** Ambient pools may never replace instructions, reactions or a farewell (playtest 21.10). */
+    public static boolean idleKey(String key) {
+        for (SectBubbles.Group group : List.of(SectBubbles.Group.MEAL, SectBubbles.Group.EVENING,
+                SectBubbles.Group.REPLY, SectBubbles.Group.GUARD_NIGHT, SectBubbles.Group.GUARD_DAY,
+                SectBubbles.Group.SWEEP, SectBubbles.Group.COOK, SectBubbles.Group.CARRY,
+                SectBubbles.Group.SERVE, SectBubbles.Group.TEND, SectBubbles.Group.STEWARD,
+                SectBubbles.Group.SPAR, SectBubbles.Group.DRILL, SectBubbles.Group.RAIN,
+                SectBubbles.Group.LIFE_ELDERS, SectBubbles.Group.LIFE_TRAIN,
+                SectBubbles.Group.KITCHEN_CYCLE, SectBubbles.Group.CLEANING_CYCLE, SectBubbles.Group.STAFF_DELIVERY,
+                SectBubbles.Group.STAFF_WATER, SectBubbles.Group.HERB_WORK, SectBubbles.Group.NIGHT_AWAKE,
+                SectBubbles.Group.SENIOR_AFFAIRS, SectBubbles.Group.PEER_WHISPER)) {
+            if (key.startsWith(group.stem() + ".")) return true;
+        }
+        return key.startsWith("murim.bubble.trait.") || key.startsWith("murim.bubble.rumour.");
+    }
 
     private SectChatter() {
     }
@@ -71,6 +88,17 @@ public final class SectChatter {
             String key = d.pendingKey();
             Component due = d.takeDueBubble();
             if (due != null) {
+                // peers-2: the answer belongs to the pair it was queued for; a partner who left the table cancels it.
+                if (d.getPersistentData().hasUUID(REPLY_TO)) {
+                    java.util.UUID to = d.getPersistentData().getUUID(REPLY_TO);
+                    d.getPersistentData().remove(REPLY_TO);
+                    SectDisciple partner = near.stream().filter(o -> o.getUUID().equals(to)).findFirst().orElse(null);
+                    if (partner == null || !partner.isAlive() || partner.doingKind() != d.doingKind() || partner.distanceToSqr(d) > 36.0D) {
+                        continue;
+                    }
+                    d.faceEntity(partner, 40.0F);
+                    d.getLookControl().setLookAt(partner, 30.0F, 30.0F);
+                }
                 send(d, key, due);
             }
         }
@@ -104,13 +132,35 @@ public final class SectChatter {
             return;
         }
         SectDisciple who = speakers.get(level.random.nextInt(speakers.size()));
-        if (speak(who, level.random)) {
+        if (speak(who, level.random, p)) {
             tag.putLong(NEXT_TAG, now + GAP + level.random.nextInt(GAP));
         }
     }
 
+    /** Round 4: the staff's own work talk and the awake night replace the plain group now and then. */
+    static SectBubbles.Group flavour(SectDisciple d, SectBubbles.Group g, RandomSource random) {
+        if (g == null) {
+            return null;
+        }
+        SectSchedule.Kind k = d.doingKind();
+        if (k != null && SectSchedule.at(d.level().getDayTime()) == SectSchedule.Period.NIGHT && k != SectSchedule.Kind.GUARD
+                && k != SectSchedule.Kind.SLEEP) {
+            return SectBubbles.Group.NIGHT_AWAKE;
+        }
+        boolean coin = random.nextBoolean();
+        return switch (g) {
+            case COOK, SERVE -> coin ? SectBubbles.Group.KITCHEN_CYCLE : g;
+            case SWEEP -> d.role().lay() && coin ? SectBubbles.Group.CLEANING_CYCLE : g;
+            case CARRY -> d.role() == SectRole.PORTER ? SectBubbles.Group.STAFF_DELIVERY
+                    : d.role() == SectRole.WATER_CARRIER ? SectBubbles.Group.STAFF_WATER : g;
+            case TEND -> coin ? SectBubbles.Group.HERB_WORK : g;
+            default -> g;
+        };
+    }
+
     /** Группа строк по делу человека сейчас; null — молчит. */
     static SectBubbles.Group group(SectDisciple d) {
+        if (d.level() instanceof ServerLevel && SectLessons.of(d).engaged(d)) return null;
         Optional<SectRoster> m = d.member();
         if (m.isEmpty()) {
             return null;
@@ -126,37 +176,58 @@ public final class SectChatter {
                 SectSchedule.at(time) == SectSchedule.Period.NIGHT, SectSchedule.sincePeriodStart(time));
     }
 
-    /** Сказать строку за делом; за столом и в кругу — сосед ответит (стенд зовёт напрямую — первая реплика сцены). */
+    /** Сказать строку за делом, не думая о слушателе (стенд зовёт напрямую — первая реплика сцены). */
     public static boolean speak(SectDisciple d, RandomSource random) {
-        SectBubbles.Group g = group(d);
+        return speak(d, random, null);
+    }
+
+    /** Строка {@code stem.1 .. stem.count}: той, что слушатель не слышал сегодня, а без слушателя — любая. */
+    static String line(ServerPlayer listener, String stem, int count, RandomSource random) {
+        return listener != null ? SectLines.pick(listener, stem, count, random) : stem + "." + (1 + random.nextInt(count));
+    }
+
+    /**
+     * Сказать строку за делом; за столом и в кругу — сосед ответит. Слушатель — игрок, рядом с которым это происходит: ему
+     * не повторяются строки, которые он уже слышал сегодня ({@link SectLines}).
+     */
+    public static boolean speak(SectDisciple d, RandomSource random, ServerPlayer listener) {
+        SectBubbles.Group g = flavour(d, group(d), random);
         if (g == null) {
             return false;
         }
-        String key = g.pick(random.nextInt(64));
+        String key = line(listener, g.stem(), g.count(), random);
         Component text = Component.translatable(key);
+        boolean disciple = d.member().map(SectRoster::disciple).orElse(false);
         if (g == SectBubbles.Group.MEAL || g == SectBubbles.Group.EVENING) {
-            // Своя черта и слухи за столом (черта — та же, что в разговоре, SectTalk).
-            int roll = random.nextInt(10);
+            // Своя черта, сплетни о старейшинах, слухи (черта — та же, что в разговоре, SectTalk): жизнь ученика между делом.
+            int roll = random.nextInt(12);
             String speaker = d.memberKey();
-            if (roll < 3 && d.member().map(SectRoster::disciple).orElse(false)) {
-                key = SectBubbles.traitKey(SectTalk.trait(speaker), 1 + random.nextInt(SectBubbles.TRAIT_LINES));
+            boolean hasRumour = d.getPersistentData().getCompound(SectSocial.RUMOUR).getLong("until") > d.level().getGameTime();
+            if (roll < 3 && disciple) {
+                key = line(listener, "murim.bubble.trait." + SectTalk.trait(speaker).id(), SectBubbles.TRAIT_LINES, random);
                 text = Component.translatable(key);
-            } else if (roll >= 5 && d.getPersistentData().getCompound(SectSocial.RUMOUR).getLong("until") > d.level().getGameTime()) {
-                var rumour = d.getPersistentData().getCompound(SectSocial.RUMOUR);
-                var choices = SectSocial.bubbleKeys("rumour").stream().filter(k -> !k.equals(d.bubbleKey())).toList();
-                key = choices.get(random.nextInt(choices.size()));
-                text = Component.translatable(key, Component.literal(rumour.getString("player")));
             } else if (roll == 3) {
                 long day = SectSchedule.day(d.level().getDayTime());
                 key = SectBubbles.RUMOUR_GUARDS;
                 text = Component.translatable(key, name(SectRota.nightWatch(day, 0).key()), name(SectRota.nightWatch(day, 1).key()));
-            } else if (roll == 4 && d.level() instanceof ServerLevel server) {
+            } else if (roll == 4 && d.level() instanceof ServerLevel server && !SectLife.data(server).lastChampion().isEmpty()) {
                 String champ = SectLife.data(server).lastChampion();
-                if (!champ.isEmpty()) {
-                    key = SectBubbles.RUMOUR_CHAMPION;
-                    text = Component.translatable(key, champ.startsWith("@") ? Component.literal(champ.substring(1)) : name(champ));
-                }
+                key = SectBubbles.RUMOUR_CHAMPION;
+                text = Component.translatable(key, champ.startsWith("@") ? Component.literal(champ.substring(1)) : name(champ));
+            } else if ((roll == 5 || roll == 6) && disciple) {
+                key = line(listener, SectBubbles.Group.LIFE_ELDERS.stem(), SectBubbles.Group.LIFE_ELDERS.count(), random);
+                text = Component.translatable(key);
+            } else if (roll >= 7 && roll <= 9 && hasRumour) {
+                var rumour = d.getPersistentData().getCompound(SectSocial.RUMOUR);
+                var choices = SectSocial.bubbleKeys("rumour").stream().filter(k -> !k.equals(d.bubbleKey())).toList();
+                key = listener != null ? SectLines.pick(listener, choices, random.nextInt(1 << 16)) : choices.get(random.nextInt(choices.size()));
+                text = Component.translatable(key, Component.literal(rumour.getString("player")));
             }
+        } else if ((g == SectBubbles.Group.DRILL || g == SectBubbles.Group.SWEEP) && disciple
+                && SectSchedule.at(d.level().getDayTime()) == SectSchedule.Period.TRAINING && random.nextInt(3) == 0) {
+            // Жалобы на тренировку: ученик за столбами и с метлой ворчит.
+            key = line(listener, SectBubbles.Group.LIFE_TRAIN.stem(), SectBubbles.Group.LIFE_TRAIN.count(), random);
+            text = Component.translatable(key);
         }
         send(d, key, text);
         if (SectBubbles.exchange(d.doingKind())) {
@@ -164,12 +235,34 @@ public final class SectChatter {
             if (mate != null) {
                 var rumour = d.getPersistentData().getCompound(SectSocial.RUMOUR);
                 if (rumour.getLong("until") > d.level().getGameTime()) mate.getPersistentData().put(SectSocial.RUMOUR, rumour.copy());
-                String reply = SectBubbles.Group.REPLY.pick(random.nextInt(64));
+                String reply = replyFor(key);
+                if (reply == null) return true;
                 mate.queueBubble(reply, Component.translatable(reply), 40 + random.nextInt(20));
                 mate.markBubble(reply);
+                // peers-2: he turns to the neighbour who answers; the seated keep their seat (attend only moves the head of a seated kind).
+                mate.getPersistentData().putUUID(REPLY_TO, d.getUUID());
+                d.attend(mate, 40);
+                mate.attend(d, 60);
+                if (!d.sitting()) {
+                    d.gesture("explain");
+                }
             }
         }
         return true;
+    }
+
+    /** Only authored topic pairs answer one another; unrelated chatter has no reply. */
+    static String replyFor(String opening) {
+        String topic = switch (opening) {
+            case "murim.bubble.meal.1", "murim.bubble.meal.2" -> "salt";
+            case "murim.bubble.meal.3", "murim.bubble.meal.4", "murim.bubble.meal.5",
+                    "murim.bubble.meal.6", "murim.bubble.meal.8" -> "meal";
+            case "murim.bubble.evening.1", "murim.bubble.evening.2", "murim.bubble.evening.7" -> "training";
+            case "murim.bubble.evening.3", "murim.bubble.evening.6", "murim.bubble.evening.8" -> "wind";
+            case "murim.bubble.evening.4" -> "sleep";
+            default -> null;
+        };
+        return topic == null ? null : "murim.bubble.reply.topic." + topic;
     }
 
     /** Сосед за тем же делом (стол, круг, укрытие), который давно не говорил. */
@@ -190,7 +283,7 @@ public final class SectChatter {
     }
 
     static Component name(String key) {
-        return Component.translatable("npc.murim." + key);
+        return SectNames.of(key);
     }
 
     /** Реплика по ключу, если человек давно не говорил (реакции: «Ого…»); true — сказал. */
@@ -198,18 +291,50 @@ public final class SectChatter {
         if (d.level().getGameTime() - d.bubbleAt() <= minGap) {
             return false;
         }
-        send(d, key, Component.translatable(key));
-        return true;
+        return send(d, key, Component.translatable(key));
     }
 
     /** Разослать пузырь игрокам рядом (и отметить на человеке — для проверок и паузы между репликами). */
-    public static void send(SectDisciple d, String key, Component text) {
+    public static boolean send(SectDisciple d, String key, Component text) {
+        if (!d.speechGuard().allow(key, d.level().getGameTime())) return false;
         d.markBubble(key);
-        if (d.level() instanceof ServerLevel level) {
-            SectBubblePayload payload = new SectBubblePayload(d.getId(), text, BUBBLE_TICKS);
+        deliverAbove(d, key, text);
+        return true;
+    }
+
+    /** The bubble over any living creature (the escort merchant speaks too), to the players who are near him. */
+    public static void sendAbove(net.minecraft.world.entity.Entity e, String key, Component text) {
+        if (e instanceof SectDisciple disciple) {
+            send(disciple, key, text);
+            return;
+        }
+        SectSpeechGuard guard = e instanceof io.github.verycooltimo.murim.npc.DialogueActor actor ? actor.speechGuard()
+                : e instanceof io.github.verycooltimo.murim.trade.Peddler merchant ? merchant.speechGuard() : null;
+        if (guard != null && !guard.allow(key, e.level().getGameTime())) return;
+        deliverAbove(e, key, text);
+    }
+
+    private static void deliverAbove(net.minecraft.world.entity.Entity e, String key, Component text) {
+        if (!SectSpeechGuard.active(key)) return;
+        if (e.level() instanceof ServerLevel level) {
+            SectBubblePayload payload = new SectBubblePayload(e.getId(), text, BUBBLE_TICKS);
             for (ServerPlayer player : level.players()) {
-                if (player.distanceToSqr(d) <= HEAR_RANGE * HEAR_RANGE && player.connection != null
-                        && player.connection.hasChannel(payload)) PacketDistributor.sendToPlayer(player, payload);
+                // The traveller speaks before approaching, from up to 24 blocks away.
+                double range = e instanceof SectDisciple d && d.wanderer()
+                        ? io.github.verycooltimo.murim.entity.WandererApproachGoal.SEE
+                        : key.startsWith("murim.bubble.blade_exam.") ? 48.0D
+                        : key.startsWith("murim.bubble.alarm_") ? SectAlarm.HEAR : HEAR_RANGE;
+                if (player.distanceToSqr(e) > range * range) continue;
+                // Road invitations are also overheard: filter each listener before quest/memory delivery.
+                if ((key.startsWith("murim.bubble.wander_greet.") || key.startsWith("murim.bubble.wander_recruit.")
+                        || key.startsWith("murim.bubble.wander_tip.")) && !Wanderer.needsDirections(player)) continue;
+                // Quest knowledge requires sight as well as hearing; ambient chatter keeps its existing range.
+                if (key.startsWith("murim.bubble.quest.") && e instanceof SectDisciple speaker
+                        && !speaker.getSensing().hasLineOfSight(player)) continue;
+                // Whoever hears a line remembers it, so the next pick for him differs (SectLines).
+                SectLines.hear(player, key);
+                io.github.verycooltimo.murim.quest.Overheard.onBubble(player, key);
+                if (player.connection != null && player.connection.hasChannel(payload)) PacketDistributor.sendToPlayer(player, payload);
             }
         }
     }

@@ -28,6 +28,14 @@ public final class Fortress {
     private static final DeferredRegister<StructurePieceType> PIECES =
             DeferredRegister.create(Registries.STRUCTURE_PIECE, MurimMod.MODID);
 
+    private static final DeferredRegister<net.minecraft.world.level.storage.loot.functions.LootItemFunctionType<?>> FUNCTIONS =
+            DeferredRegister.create(Registries.LOOT_FUNCTION_TYPE, MurimMod.MODID);
+
+    /** The Green Forest Order: the map to the fortress with its place told in words (lore). */
+    public static final DeferredHolder<net.minecraft.world.level.storage.loot.functions.LootItemFunctionType<?>,
+            net.minecraft.world.level.storage.loot.functions.LootItemFunctionType<FortressOrderFunction>> ORDER_FUNCTION =
+            FUNCTIONS.register("fortress_order", () -> new net.minecraft.world.level.storage.loot.functions.LootItemFunctionType<>(FortressOrderFunction.CODEC));
+
     public static final DeferredHolder<StructureType<?>, StructureType<FortressStructure>> STRUCTURE_TYPE =
             TYPES.register("green_forest_fortress", () -> () -> FortressStructure.CODEC);
 
@@ -45,6 +53,7 @@ public final class Fortress {
             ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "chests/fortress_vault"));
 
     public static void register(IEventBus modBus) {
+        FUNCTIONS.register(modBus);
         TYPES.register(modBus);
         PIECES.register(modBus);
     }

@@ -1,0 +1,35 @@
+{
+  "id": "second_strike",
+  "title": "quest.murim.second_strike.title",
+  "steps": [
+    {
+      "type": "lesson",
+      "id": "second_strike",
+      "npc": "gyeong_pil",
+      "art": {
+        "art": "murim:six_harmonies",
+        "share": 0.1
+      }
+    },
+    {
+      "type": "overheard",
+      "id": "second_strike_advice",
+      "speaker": "gyeong_pil",
+      "gate": {
+        "flags": [
+          "quest.second_strike.lost"
+        ],
+        "not_flags": [
+          "quest.second_strike.asked",
+          "quest.second_strike.paid"
+        ]
+      }
+    },
+    {
+      "type": "talk",
+      "id": "second_strike_ask",
+      "npc": "gyeong_pil",
+      "node": "second_strike_ask"
+    }
+  ]
+}

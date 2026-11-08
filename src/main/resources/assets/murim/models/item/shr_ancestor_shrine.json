@@ -7,25 +7,36 @@
   "shade_quads": true,
   "render_type": "minecraft:cutout",
   "textures": {
-    "tex": "murim:block/shr_set",
-    "particle": "murim:block/shr_set"
+    "wood": "murim:block/shr_house_wood",
+    "recess": "murim:block/shr_house_recess",
+    "gold": "murim:block/shr_house_gold",
+    "wax": "murim:block/shr_house_wax",
+    "ash": "murim:block/shr_house_ash",
+    "stick": "murim:block/shr_house_stick",
+    "panel": "murim:block/shr_house_panel",
+    "dragon": "murim:block/shr_house_dragon",
+    "head": "murim:block/shr_house_head",
+    "portrait": "murim:block/shr_house_portrait",
+    "trim": "murim:block/shr_house_trim",
+    "flame": "murim:block/shr_house_flame",
+    "particle": "murim:block/shr_house_wood"
   },
   "display": {
     "gui": {
       "rotation": [
         30,
-        225,
+        45,
         0
       ],
       "translation": [
         0,
-        -7.5,
+        0,
         0
       ],
       "scale": [
-        0.294,
-        0.294,
-        0.294
+        0.3,
+        0.3,
+        0.3
       ]
     },
     "ground": {
@@ -36,13 +47,13 @@
       ],
       "translation": [
         0,
-        -1,
+        3,
         0
       ],
       "scale": [
-        0.13999999999999999,
-        0.13999999999999999,
-        0.13999999999999999
+        0.12,
+        0.12,
+        0.12
       ]
     },
     "fixed": {
@@ -53,13 +64,13 @@
       ],
       "translation": [
         0,
-        -7,
+        0,
         0
       ],
       "scale": [
-        0.27999999999999997,
-        0.27999999999999997,
-        0.27999999999999997
+        0.24,
+        0.24,
+        0.24
       ]
     },
     "thirdperson_righthand": {
@@ -70,13 +81,13 @@
       ],
       "translation": [
         0,
-        -1.5,
+        2.5,
         0
       ],
       "scale": [
-        0.175,
-        0.175,
-        0.175
+        0.18,
+        0.18,
+        0.18
       ]
     },
     "firstperson_righthand": {
@@ -87,13 +98,13 @@
       ],
       "translation": [
         0,
-        -5,
+        0,
         0
       ],
       "scale": [
-        0.21,
-        0.21,
-        0.21
+        0.192,
+        0.192,
+        0.192
       ]
     },
     "firstperson_lefthand": {
@@ -104,14 +115,15 @@
       ],
       "translation": [
         0,
-        -5,
+        0,
         0
       ],
       "scale": [
-        0.21,
-        0.21,
-        0.21
+        0.192,
+        0.192,
+        0.192
       ]
     }
-  }
+  },
+  "ambientocclusion": false
 }

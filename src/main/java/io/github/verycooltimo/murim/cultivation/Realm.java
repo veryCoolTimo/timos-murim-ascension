@@ -14,7 +14,7 @@ import java.util.Map;
  * 0 — без ранга, 1 — третий, 2 — второй, 3 — первый, 4 — Пик, 5 — Трансцендентный,
  * 6 — Преображение, 7 — Глубокий, 8 — Жизнь и Смерть, 9 — Природа, 10 — Пустота/Воля.
  * Играбельно (прорывом) — до Пика ({@link #MAX}); выше — данные на будущее, их ставит только
- * команда {@code /murim rank} и аура противника. Та же шкала у ауры ({@code AuraState.rank}).
+ * команда {@code /murim dev rank} и аура противника. Та же шкала у ауры ({@code AuraState.rank}).
  *
  * <p>«Стена» — потолок запаса ({@code ёмкость × }{@link MeditationService#POOL_CAP}). Упёрся —
  * расти дальше нельзя, нужен прорыв; прорыв поднимает ёмкость, и до новой стены снова копишь.
@@ -49,8 +49,8 @@ public final class Realm {
     /**
      * Подступени (начальная → утвердившаяся → вершина) — только с Пика (автор 01.10, вики Myst).
      * Хранятся в {@link DantianProfile#stage()} (автор 03.10). Растут без сцены прорыва — «утверждением»:
-     * на Пике запас снова упёрся в стену, и техника освоена до слоя {@link #stageTierNeed}
-     * (6 — утвердившаяся, 7 — вершина). Так в книгах: внутри большой ступени копят ци и оттачивают
+     * на Пике запас снова упёрся в стену, и искусство доведено до звезды из таблицы {@link RankRequirements}
+     * (★9 — утвердившаяся, ★11 — вершина; у шагов ★8 и ★9). Так в книгах: внутри большой ступени копят ци и оттачивают
      * искусство, стены-прорыва нет.
      */
     public static final int STAGES = 3;
@@ -109,22 +109,13 @@ public final class Realm {
     /** Запас считается упёршимся в стену чуть раньше ровного потолка: прирост к концу медитации исчезающе мал. */
     public static final double WALL_FRACTION = 0.99D;
 
-    /**
-     * Прорыв 1 (в третий ранг) — «освоить любую технику» (автор 03.10): хотя бы одна техника
-     * пройдена дальше прочтения, до этого слоя. Индекс 0 — только прочитал; 1 — освоил.
-     */
-    public static final int THIRD_TIER_NEED = 1;
-
     /** Что требует прорыв, кроме стены (план M2–M4, автор 03.10). */
     public enum Condition {
-        /** Прорыв 1: освоить любую технику (слой {@link #THIRD_TIER_NEED}). */
+        /** Прорыв 1: освоить любую технику ({@link RankRequirements.Gate#THIRD}: ★1). */
         MASTER_ANY,
-        /**
-         * Прорыв 2: победить хозяина крепости Зелёного Леса (docs/design/26-boss.md). Флаг —
-         * {@code BossRegistry.BOSS_DEFEATED} у игрока; индекс исполнения техники для этого прорыва не нужен.
-         */
-        DEFEAT_BOSS,
-        /** Прорыв 3 (и Пик до решения автора): форма до слоя {@link #tierNeed}. TODO(M3): N уточнить на игре. */
+        /** Author 21.10: Six Harmonies ★6, Falling Petal ★3, three distinct wins and a mentor skills test. */
+        SECT_SKILLS,
+        /** Прорыв 3 и Пик: искусство до звезды из таблицы {@link RankRequirements} (★6 и ★8). */
         FORM_MASTERY
     }
 
@@ -134,14 +125,33 @@ public final class Realm {
      */
     public static final int WARNING_TICKS = 50;
 
-    /** Длина сцены прорыва: 12 секунд. */
+    /**
+     * Базовая длина сцены прорыва: 12 секунд. В ней записаны таймлайны эффектов ({@code MeditationVfxRenderer});
+     * настоящая длина сцены зависит от ранга — {@link #breakthroughTicks}.
+     */
     public static final int BREAKTHROUGH_TICKS = 240;
+
+    /** Scene ends at the lab blow for every target. */
+    public static int breakthroughTicks(int targetRank) {
+        return switch (targetRank) {
+            case THIRD -> BtTimeline.of(THIRD).sceneTicks();
+            case SECOND -> BtTimeline.of(SECOND).sceneTicks();
+            case FIRST -> BtTimeline.of(FIRST).sceneTicks();
+            case PEAK -> BtTimeline.of(PEAK).sceneTicks();
+            default -> BREAKTHROUGH_TICKS;
+        };
+    }
+
+    /** Lab tail keeps the body and camera held until the scene ends. */
+    public static int releaseTicks(int targetRank) {
+        return targetRank >= THIRD && targetRank <= PEAK ? BtTimeline.of(targetRank).releaseTicks() : 80;
+    }
 
     /** Какая доля запаса теряется, если прорыв прервали: травма меридиан. */
     public static final double INJURY_POOL_LOSS = 1.0D / 3.0D;
 
     /** Что мешает прорыву прямо сейчас. */
-    public enum Blocker { NONE, NO_DANTIAN, NOT_AT_WALL, NO_TECHNIQUE, NO_BOSS, MAX_RANK }
+    public enum Blocker { NONE, NO_DANTIAN, NOT_AT_WALL, NO_TECHNIQUE, NO_SECT_SKILLS, MAX_RANK }
 
     public static double wall(DantianProfile profile) {
         return profile.capacity() * MeditationService.POOL_CAP;
@@ -154,19 +164,25 @@ public final class Realm {
     /**
      * Можно ли начать прорыв в следующий ранг.
      *
-     * @param executionTiers нормализованные индексы исполнения боевых искусств игрока
+     * @param combatStars звёзды выученных боевых форм игрока ({@code MasteryState#combatStars})
      */
-    public static Blocker check(DantianProfile profile, Map<ResourceLocation, Integer> executionTiers) {
-        return check(profile, executionTiers, false);
+    public static Blocker check(DantianProfile profile, Map<ResourceLocation, Integer> combatStars) {
+        return check(profile, combatStars, false);
     }
 
     /**
      * Можно ли начать прорыв в следующий ранг.
      *
-     * @param executionTiers       нормализованные индексы исполнения боевых искусств игрока
-     * @param bossDefeated игрок победил хозяина крепости (условие прорыва 2)
+     * @param combatStars звёзды выученных боевых форм игрока ({@code MasteryState#combatStars})
+     * @param sectSparProof three distinct disciple wins and a completed mentor test
      */
-    public static Blocker check(DantianProfile profile, Map<ResourceLocation, Integer> executionTiers, boolean bossDefeated) {
+    public static Blocker check(DantianProfile profile, Map<ResourceLocation, Integer> combatStars, boolean sectSparProof) {
+        return check(profile, combatStars, sectSparProof, false);
+    }
+
+    /** A great elixir waives only the technique stars, never the wall or the sect's practical examinations. */
+    public static Blocker check(DantianProfile profile, Map<ResourceLocation, Integer> combatStars,
+                                boolean sectSparProof, boolean elixir) {
         if (!profile.isAwakened()) {
             return Blocker.NO_DANTIAN;
         }
@@ -177,33 +193,34 @@ public final class Realm {
             return Blocker.NOT_AT_WALL;
         }
         // TODO(M5): место силы ускоряет медитацию с риском, но условием прорыва не является.
-        if (condition(profile.rank() + 1) == Condition.DEFEAT_BOSS) {
-            return bossDefeated ? Blocker.NONE : Blocker.NO_BOSS;
+        if (condition(profile.rank() + 1) == Condition.SECT_SKILLS) {
+            return sectSparProof && (elixir || secondArtsMet(combatStars)) ? Blocker.NONE : Blocker.NO_SECT_SKILLS;
         }
-        int need = tierNeed(profile.rank() + 1);
-        boolean known = executionTiers.values().stream().anyMatch(executionTier -> executionTier >= need);
-        return known ? Blocker.NONE : Blocker.NO_TECHNIQUE;
+        return elixir || RankRequirements.met(gate(profile.rank() + 1), combatStars) ? Blocker.NONE : Blocker.NO_TECHNIQUE;
+    }
+
+    /** Author 21.10: both named sword arts, never a breathing method or an unrelated high art. */
+    public static boolean secondArtsMet(Map<ResourceLocation, Integer> stars) {
+        return stars.getOrDefault(ResourceLocation.fromNamespaceAndPath("murim", "six_harmonies"), 0) >= 6
+                && stars.getOrDefault(ResourceLocation.fromNamespaceAndPath("murim", "falling_petal_sword"), 0) >= 3;
     }
 
     /** Условие прорыва в данный ранг (кроме стены запаса). */
     public static Condition condition(int targetRank) {
         return switch (targetRank) {
             case THIRD -> Condition.MASTER_ANY;
-            case SECOND -> Condition.DEFEAT_BOSS;
+            case SECOND -> Condition.SECT_SKILLS;
             default -> Condition.FORM_MASTERY;
         };
     }
 
-    /**
-     * Слой техники, которого требует прорыв в данный ранг: третий — 1 («освоить любую»),
-     * второй — 3 (не проверяется: условие — победа над хозяином крепости), первый — 4, Пик — 5.
-     */
-    public static int tierNeed(int targetRank) {
-        return targetRank <= THIRD ? THIRD_TIER_NEED : targetRank + 1;
+    /** Требование таблицы звёзд для прорыва в данный ранг (для прорыва 2 нужны оба искусства и зачёты секты, см. {@link #condition}). */
+    public static RankRequirements.Gate gate(int targetRank) {
+        return RankRequirements.gate(targetRank).orElse(RankRequirements.Gate.THIRD);
     }
 
     /** Что мешает утвердить следующую подступень Пика прямо сейчас ({@code MAX_RANK} — не Пик или уже вершина). */
-    public static Blocker checkStage(DantianProfile profile, Map<ResourceLocation, Integer> executionTiers) {
+    public static Blocker checkStage(DantianProfile profile, Map<ResourceLocation, Integer> combatStars) {
         if (!profile.isAwakened()) {
             return Blocker.NO_DANTIAN;
         }
@@ -213,13 +230,8 @@ public final class Realm {
         if (!atWall(profile)) {
             return Blocker.NOT_AT_WALL;
         }
-        int need = stageTierNeed(profile.stage() + 1);
-        return executionTiers.values().stream().anyMatch(executionTier -> executionTier >= need) ? Blocker.NONE : Blocker.NO_TECHNIQUE;
-    }
-
-    /** Слой техники для подступени Пика: утвердившаяся — 6, вершина — 7 (вход в Пик — 5). */
-    public static int stageTierNeed(int targetStage) {
-        return tierNeed(PEAK) + Math.max(1, targetStage);
+        return RankRequirements.met(RankRequirements.stageGate(profile.stage() + 1), combatStars)
+                ? Blocker.NONE : Blocker.NO_TECHNIQUE;
     }
 
     /** Профиль после утверждения подступени: на ступень выше внутри Пика, центр чуть шире, запас сохранён. */

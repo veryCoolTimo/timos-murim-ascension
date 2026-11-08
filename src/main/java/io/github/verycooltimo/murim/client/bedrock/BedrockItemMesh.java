@@ -49,12 +49,18 @@ public final class BedrockItemMesh {
     private float bladeBaseY = Float.MAX_VALUE;
     private float bladeTipY = -Float.MAX_VALUE;
 
+    private float baseMinZ, baseMaxZ, tipMinZ, tipMaxZ;
+    private float baseMinX, baseMaxX, tipMinX, tipMaxX;
+
+    /** Centers of the lowest/highest blade cross sections in the baked mesh, in blocks.
+     * API: /tmp/mr-ref-1121/minecraft-src/net/minecraft/world/phys/Vec3.java#Vec3(double,double,double)
+     */
     public net.minecraft.world.phys.Vec3[] bladeEndpoints() {
         quads();
         if (bladeBaseY == Float.MAX_VALUE) return null;
         return new net.minecraft.world.phys.Vec3[] {
-                new net.minecraft.world.phys.Vec3(0, bladeBaseY / 16.0D, 0),
-                new net.minecraft.world.phys.Vec3(0, bladeTipY / 16.0D, 0)
+                new net.minecraft.world.phys.Vec3((baseMinX + baseMaxX) / 32.0D, bladeBaseY / 16.0D, (baseMinZ + baseMaxZ) / 32.0D),
+                new net.minecraft.world.phys.Vec3((tipMinX + tipMaxX) / 32.0D, bladeTipY / 16.0D, (tipMinZ + tipMaxZ) / 32.0D)
         };
     }
 
@@ -120,8 +126,29 @@ public final class BedrockItemMesh {
                 if (e.getKey().equals("blade") || e.getKey().equals("tip") || e.getKey().equals("bone2")) {
                     for (int i = firstQuad; i < out.size(); i++) {
                         for (float[] point : out.get(i).pos()) {
-                            bladeBaseY = Math.min(bladeBaseY, point[1]);
-                            bladeTipY = Math.max(bladeTipY, point[1]);
+                            // Average the transverse bounds at each end, rather than inventing an axis at X=Z=0.
+                            if (point[1] < bladeBaseY) {
+                                bladeBaseY = point[1];
+                                baseMinX = baseMaxX = point[0];
+                                baseMinZ = baseMaxZ = point[2];
+                            }
+                            if (point[1] == bladeBaseY) {
+                                baseMinX = Math.min(baseMinX, point[0]);
+                                baseMaxX = Math.max(baseMaxX, point[0]);
+                                baseMinZ = Math.min(baseMinZ, point[2]);
+                                baseMaxZ = Math.max(baseMaxZ, point[2]);
+                            }
+                            if (point[1] > bladeTipY) {
+                                bladeTipY = point[1];
+                                tipMinX = tipMaxX = point[0];
+                                tipMinZ = tipMaxZ = point[2];
+                            }
+                            if (point[1] == bladeTipY) {
+                                tipMinX = Math.min(tipMinX, point[0]);
+                                tipMaxX = Math.max(tipMaxX, point[0]);
+                                tipMinZ = Math.min(tipMinZ, point[2]);
+                                tipMaxZ = Math.max(tipMaxZ, point[2]);
+                            }
                         }
                     }
                 }

@@ -35,6 +35,7 @@ public final class CombatEvents {
 
     /**
      * Полученный урон сбивает технику, если это разрешено её описанием.
+     * API: supplied NeoForge LivingDamageEvent.Post#getNewDamage is final health loss.
      *
      * <p>Решение по правилам прерывания: до фазы удара технику можно сбить, с удара она
      * обязана доиграться, рассеивание не сбивается вовсе — это уже послесвечение, а не
@@ -42,11 +43,11 @@ public final class CombatEvents {
      * ритуал, иначе любая техника становится неприменимой в бою.
      */
     @SubscribeEvent
-    static void onIncomingDamage(net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent event) {
+    static void onDamage(net.neoforged.neoforge.event.entity.living.LivingDamageEvent.Post event) {
         if (!(event.getEntity() instanceof net.minecraft.server.level.ServerPlayer player)) {
             return;
         }
-        TechniqueService.onDamaged(player, event.getAmount());
+        if (event.getNewDamage() > 0.0F) TechniqueService.onDamaged(player, event.getNewDamage());
     }
 
     @SubscribeEvent

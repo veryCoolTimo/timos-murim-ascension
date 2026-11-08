@@ -23,6 +23,15 @@
           "next": "relations"
         },
         {
+          "text": "dialogue.murim.bout.opt.menu",
+          "next": "bouts",
+          "when": [
+            {
+              "social": "progression:bout_menu"
+            }
+          ]
+        },
+        {
           "text": "dialogue.murim.opt.leave"
         }
       ]
@@ -52,6 +61,21 @@
           "when": [
             {
               "social": "progression:lesson"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.progression.opt.purple",
+          "next": "purple_done",
+          "actions": [
+            {
+              "type": "progression",
+              "value": "purple"
+            }
+          ],
+          "when": [
+            {
+              "social": "progression:purple"
             }
           ]
         },
@@ -409,6 +433,19 @@
         }
       ]
     },
+    "purple_done": {
+      "line": "dialogue.murim.progression.purple_done",
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.social.opt.back",
+          "next": "menu"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
     "read_done": {
       "line": "dialogue.murim.progression.read_done",
       "gesture": "explain",
@@ -494,6 +531,308 @@
         {
           "text": "dialogue.murim.social.opt.back",
           "next": "menu"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "bouts": {
+      "random": [
+        "@bouts"
+      ],
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.bout.opt.train",
+          "when": [
+            {
+              "social": "progression:train"
+            }
+          ],
+          "actions": [
+            {
+              "type": "progression",
+              "value": "train"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.bout.opt.trial",
+          "when": [
+            {
+              "social": "progression:trial"
+            }
+          ],
+          "actions": [
+            {
+              "type": "progression",
+              "value": "trial"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.bout.opt.challenge",
+          "when": [
+            {
+              "social": "progression:challenge"
+            }
+          ],
+          "actions": [
+            {
+              "type": "progression",
+              "value": "challenge"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.bout.opt.rules",
+          "when": [
+            {
+              "social": "quest:trial_any"
+            }
+          ],
+          "next": "trials"
+        },
+        {
+          "text": "dialogue.murim.social.opt.back",
+          "next": "menu"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "promo": {
+      "line": "dialogue.murim.bout.promo",
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.bout.opt.promo_begin",
+          "next": "promo_ceremony",
+          "actions": [
+            {
+              "type": "progression",
+              "value": "promo"
+            },
+            {
+              "type": "bow"
+            }
+          ],
+          "when": [
+            {
+              "social": "progression:promo"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.bout.opt.promo_confirm",
+          "next": "promo_done",
+          "actions": [
+            {
+              "type": "progression",
+              "value": "promo_confirm"
+            }
+          ],
+          "when": [
+            {
+              "social": "progression:promo_confirm"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "promo_ceremony": {
+      "line": "dialogue.murim.bout.promo_ceremony",
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.bout.opt.promo_confirm",
+          "next": "promo_done",
+          "actions": [
+            {
+              "type": "progression",
+              "value": "promo_confirm"
+            }
+          ],
+          "when": [
+            {
+              "social": "progression:promo_confirm"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.progression.opt.refresh",
+          "next": "promo_ceremony"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "promo_done": {
+      "line": "dialogue.murim.bout.promo_done",
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "trials": {
+      "line": "dialogue.murim.trial.menu",
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.trial.opt.clean",
+          "when": [
+            {
+              "social": "quest:trial:clean"
+            }
+          ],
+          "next": "trial_clean"
+        },
+        {
+          "text": "dialogue.murim.trial.opt.six_only",
+          "when": [
+            {
+              "social": "quest:trial:six_only"
+            }
+          ],
+          "next": "trial_six_only"
+        },
+        {
+          "text": "dialogue.murim.trial.opt.parry",
+          "when": [
+            {
+              "social": "quest:trial:parry"
+            }
+          ],
+          "next": "trial_parry"
+        },
+        {
+          "text": "dialogue.murim.trial.opt.swift",
+          "when": [
+            {
+              "social": "quest:trial:swift"
+            }
+          ],
+          "next": "trial_swift"
+        },
+        {
+          "text": "dialogue.murim.social.opt.back",
+          "next": "bouts"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "trial_clean": {
+      "line": "dialogue.murim.trial.clean.rule",
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.trial.opt.begin",
+          "when": [
+            {
+              "social": "quest:trial:clean"
+            }
+          ],
+          "actions": [
+            {
+              "type": "quest_trial",
+              "value": "clean"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.trial.opt.back",
+          "next": "trials"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "trial_six_only": {
+      "line": "dialogue.murim.trial.six_only.rule",
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.trial.opt.begin",
+          "when": [
+            {
+              "social": "quest:trial:six_only"
+            }
+          ],
+          "actions": [
+            {
+              "type": "quest_trial",
+              "value": "six_only"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.trial.opt.back",
+          "next": "trials"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "trial_parry": {
+      "line": "dialogue.murim.trial.parry.rule",
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.trial.opt.begin",
+          "when": [
+            {
+              "social": "quest:trial:parry"
+            }
+          ],
+          "actions": [
+            {
+              "type": "quest_trial",
+              "value": "parry"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.trial.opt.back",
+          "next": "trials"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "trial_swift": {
+      "line": "dialogue.murim.trial.swift.rule",
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.trial.opt.begin",
+          "when": [
+            {
+              "social": "quest:trial:swift"
+            }
+          ],
+          "actions": [
+            {
+              "type": "quest_trial",
+              "value": "swift"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.trial.opt.back",
+          "next": "trials"
         },
         {
           "text": "dialogue.murim.opt.leave"

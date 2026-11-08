@@ -50,7 +50,7 @@ public final class SchoolStyle {
             return;
         }
         // Выбрана основа меча — удар ведёт она, старая серия стиля не нужна (автор 01.10).
-        if (FoundationService.onHit(player, target)) {
+        if (FoundationService.active(player).isPresent()) {
             return;
         }
         DantianProfile profile = player.getData(ModAttachments.PROFILE);

@@ -1,0 +1,176 @@
+{
+ "textures": {
+  "sack": "murim:block/vault_prop_sack",
+  "box": "murim:block/vault_prop_box",
+  "paper": "murim:block/vault_prop_paper",
+  "paper_top": "murim:block/vault_prop_paper_top",
+  "arms": "murim:block/vault_arms",
+  "particle": "murim:block/vault_prop_sack"
+ },
+ "elements": [
+  {
+   "from": [
+    3,
+    0,
+    2
+   ],
+   "to": [
+    10,
+    7,
+    9
+   ],
+   "faces": {
+    "north": {
+     "texture": "#sack"
+    },
+    "south": {
+     "texture": "#sack"
+    },
+    "east": {
+     "texture": "#sack"
+    },
+    "west": {
+     "texture": "#sack"
+    },
+    "up": {
+     "texture": "#sack"
+    },
+    "down": {
+     "texture": "#sack"
+    }
+   },
+   "rotation": {
+    "angle": 22.5,
+    "axis": "y",
+    "origin": [
+     6.5,
+     0,
+     5.5
+    ]
+   }
+  },
+  {
+   "from": [
+    4.4,
+    7,
+    3.4
+   ],
+   "to": [
+    8.6,
+    9.2,
+    7.6
+   ],
+   "faces": {
+    "north": {
+     "texture": "#sack"
+    },
+    "south": {
+     "texture": "#sack"
+    },
+    "east": {
+     "texture": "#sack"
+    },
+    "west": {
+     "texture": "#sack"
+    },
+    "up": {
+     "texture": "#sack"
+    },
+    "down": {
+     "texture": "#sack"
+    }
+   },
+   "rotation": {
+    "angle": 22.5,
+    "axis": "y",
+    "origin": [
+     6.5,
+     7,
+     5.5
+    ]
+   }
+  },
+  {
+   "from": [
+    2.2,
+    0,
+    9
+   ],
+   "to": [
+    14,
+    5.4,
+    15
+   ],
+   "faces": {
+    "north": {
+     "texture": "#sack"
+    },
+    "south": {
+     "texture": "#sack"
+    },
+    "east": {
+     "texture": "#sack"
+    },
+    "west": {
+     "texture": "#sack"
+    },
+    "up": {
+     "texture": "#sack"
+    },
+    "down": {
+     "texture": "#sack"
+    }
+   },
+   "rotation": {
+    "angle": -22.5,
+    "axis": "y",
+    "origin": [
+     8.1,
+     0,
+     12.0
+    ]
+   }
+  },
+  {
+   "from": [
+    9,
+    0,
+    3
+   ],
+   "to": [
+    15,
+    4.6,
+    8.4
+   ],
+   "faces": {
+    "north": {
+     "texture": "#sack"
+    },
+    "south": {
+     "texture": "#sack"
+    },
+    "east": {
+     "texture": "#sack"
+    },
+    "west": {
+     "texture": "#sack"
+    },
+    "up": {
+     "texture": "#sack"
+    },
+    "down": {
+     "texture": "#sack"
+    }
+   },
+   "rotation": {
+    "angle": 45,
+    "axis": "y",
+    "origin": [
+     12.0,
+     0,
+     5.7
+    ]
+   }
+  }
+ ]
+}

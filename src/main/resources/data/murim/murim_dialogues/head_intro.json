@@ -1,0 +1,64 @@
+{
+  "name": "npc.murim.leader",
+  "title": "npc.murim.leader.title",
+  "start": [
+    {
+      "node": "greet"
+    }
+  ],
+  "nodes": {
+    "greet": {
+      "line": "dialogue.murim.head_intro.greet",
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.head_intro.opt.bow",
+          "actions": [
+            {
+              "type": "bow"
+            }
+          ],
+          "next": "name"
+        }
+      ]
+    },
+    "name": {
+      "line": "dialogue.murim.head_intro.name",
+      "options": [
+        {
+          "text": "dialogue.murim.head_intro.opt.remember",
+          "next": "advice"
+        }
+      ]
+    },
+    "advice": {
+      "line": "dialogue.murim.head_intro.advice",
+      "gesture": "point",
+      "options": [
+        {
+          "text": "dialogue.murim.head_intro.opt.yes",
+          "actions": [
+            {
+              "type": "bow"
+            }
+          ],
+          "next": "farewell"
+        }
+      ]
+    },
+    "farewell": {
+      "line": "dialogue.murim.head_intro.farewell",
+      "gesture": "nod",
+      "enter": [
+        {
+          "type": "head_intro_done"
+        }
+      ],
+      "options": [
+        {
+          "text": "dialogue.murim.head_intro.opt.leave"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "type": "neoforge:add_features",
+  "biomes": "#murim:has_wild_ginseng",
+  "features": "murim:wild_ginseng",
+  "step": "vegetal_decoration"
+}

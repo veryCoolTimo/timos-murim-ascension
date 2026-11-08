@@ -1,0 +1,436 @@
+{
+  "variants": {
+    "facing=north,variant=0,sink=0": {
+      "model": "murim:block/int_herb_jars_0",
+      "y": 0
+    },
+    "facing=north,variant=0,sink=1": {
+      "model": "murim:block/int_herb_jars_0_sink_1",
+      "y": 0
+    },
+    "facing=north,variant=0,sink=2": {
+      "model": "murim:block/int_herb_jars_0_sink_2",
+      "y": 0
+    },
+    "facing=north,variant=0,sink=3": {
+      "model": "murim:block/int_herb_jars_0_sink_3",
+      "y": 0
+    },
+    "facing=north,variant=0,sink=4": {
+      "model": "murim:block/int_herb_jars_0_sink_4",
+      "y": 0
+    },
+    "facing=north,variant=0,sink=5": {
+      "model": "murim:block/int_herb_jars_0_sink_5",
+      "y": 0
+    },
+    "facing=north,variant=0,sink=6": {
+      "model": "murim:block/int_herb_jars_0_sink_6",
+      "y": 0
+    },
+    "facing=north,variant=0,sink=7": {
+      "model": "murim:block/int_herb_jars_0_sink_7",
+      "y": 0
+    },
+    "facing=north,variant=0,sink=8": {
+      "model": "murim:block/int_herb_jars_0_sink_8",
+      "y": 0
+    },
+    "facing=east,variant=0,sink=0": {
+      "model": "murim:block/int_herb_jars_0",
+      "y": 90
+    },
+    "facing=east,variant=0,sink=1": {
+      "model": "murim:block/int_herb_jars_0_sink_1",
+      "y": 90
+    },
+    "facing=east,variant=0,sink=2": {
+      "model": "murim:block/int_herb_jars_0_sink_2",
+      "y": 90
+    },
+    "facing=east,variant=0,sink=3": {
+      "model": "murim:block/int_herb_jars_0_sink_3",
+      "y": 90
+    },
+    "facing=east,variant=0,sink=4": {
+      "model": "murim:block/int_herb_jars_0_sink_4",
+      "y": 90
+    },
+    "facing=east,variant=0,sink=5": {
+      "model": "murim:block/int_herb_jars_0_sink_5",
+      "y": 90
+    },
+    "facing=east,variant=0,sink=6": {
+      "model": "murim:block/int_herb_jars_0_sink_6",
+      "y": 90
+    },
+    "facing=east,variant=0,sink=7": {
+      "model": "murim:block/int_herb_jars_0_sink_7",
+      "y": 90
+    },
+    "facing=east,variant=0,sink=8": {
+      "model": "murim:block/int_herb_jars_0_sink_8",
+      "y": 90
+    },
+    "facing=south,variant=0,sink=0": {
+      "model": "murim:block/int_herb_jars_0",
+      "y": 180
+    },
+    "facing=south,variant=0,sink=1": {
+      "model": "murim:block/int_herb_jars_0_sink_1",
+      "y": 180
+    },
+    "facing=south,variant=0,sink=2": {
+      "model": "murim:block/int_herb_jars_0_sink_2",
+      "y": 180
+    },
+    "facing=south,variant=0,sink=3": {
+      "model": "murim:block/int_herb_jars_0_sink_3",
+      "y": 180
+    },
+    "facing=south,variant=0,sink=4": {
+      "model": "murim:block/int_herb_jars_0_sink_4",
+      "y": 180
+    },
+    "facing=south,variant=0,sink=5": {
+      "model": "murim:block/int_herb_jars_0_sink_5",
+      "y": 180
+    },
+    "facing=south,variant=0,sink=6": {
+      "model": "murim:block/int_herb_jars_0_sink_6",
+      "y": 180
+    },
+    "facing=south,variant=0,sink=7": {
+      "model": "murim:block/int_herb_jars_0_sink_7",
+      "y": 180
+    },
+    "facing=south,variant=0,sink=8": {
+      "model": "murim:block/int_herb_jars_0_sink_8",
+      "y": 180
+    },
+    "facing=west,variant=0,sink=0": {
+      "model": "murim:block/int_herb_jars_0",
+      "y": 270
+    },
+    "facing=west,variant=0,sink=1": {
+      "model": "murim:block/int_herb_jars_0_sink_1",
+      "y": 270
+    },
+    "facing=west,variant=0,sink=2": {
+      "model": "murim:block/int_herb_jars_0_sink_2",
+      "y": 270
+    },
+    "facing=west,variant=0,sink=3": {
+      "model": "murim:block/int_herb_jars_0_sink_3",
+      "y": 270
+    },
+    "facing=west,variant=0,sink=4": {
+      "model": "murim:block/int_herb_jars_0_sink_4",
+      "y": 270
+    },
+    "facing=west,variant=0,sink=5": {
+      "model": "murim:block/int_herb_jars_0_sink_5",
+      "y": 270
+    },
+    "facing=west,variant=0,sink=6": {
+      "model": "murim:block/int_herb_jars_0_sink_6",
+      "y": 270
+    },
+    "facing=west,variant=0,sink=7": {
+      "model": "murim:block/int_herb_jars_0_sink_7",
+      "y": 270
+    },
+    "facing=west,variant=0,sink=8": {
+      "model": "murim:block/int_herb_jars_0_sink_8",
+      "y": 270
+    },
+    "facing=north,variant=1,sink=0": {
+      "model": "murim:block/int_herb_jars_1",
+      "y": 0
+    },
+    "facing=north,variant=1,sink=1": {
+      "model": "murim:block/int_herb_jars_1_sink_1",
+      "y": 0
+    },
+    "facing=north,variant=1,sink=2": {
+      "model": "murim:block/int_herb_jars_1_sink_2",
+      "y": 0
+    },
+    "facing=north,variant=1,sink=3": {
+      "model": "murim:block/int_herb_jars_1_sink_3",
+      "y": 0
+    },
+    "facing=north,variant=1,sink=4": {
+      "model": "murim:block/int_herb_jars_1_sink_4",
+      "y": 0
+    },
+    "facing=north,variant=1,sink=5": {
+      "model": "murim:block/int_herb_jars_1_sink_5",
+      "y": 0
+    },
+    "facing=north,variant=1,sink=6": {
+      "model": "murim:block/int_herb_jars_1_sink_6",
+      "y": 0
+    },
+    "facing=north,variant=1,sink=7": {
+      "model": "murim:block/int_herb_jars_1_sink_7",
+      "y": 0
+    },
+    "facing=north,variant=1,sink=8": {
+      "model": "murim:block/int_herb_jars_1_sink_8",
+      "y": 0
+    },
+    "facing=east,variant=1,sink=0": {
+      "model": "murim:block/int_herb_jars_1",
+      "y": 90
+    },
+    "facing=east,variant=1,sink=1": {
+      "model": "murim:block/int_herb_jars_1_sink_1",
+      "y": 90
+    },
+    "facing=east,variant=1,sink=2": {
+      "model": "murim:block/int_herb_jars_1_sink_2",
+      "y": 90
+    },
+    "facing=east,variant=1,sink=3": {
+      "model": "murim:block/int_herb_jars_1_sink_3",
+      "y": 90
+    },
+    "facing=east,variant=1,sink=4": {
+      "model": "murim:block/int_herb_jars_1_sink_4",
+      "y": 90
+    },
+    "facing=east,variant=1,sink=5": {
+      "model": "murim:block/int_herb_jars_1_sink_5",
+      "y": 90
+    },
+    "facing=east,variant=1,sink=6": {
+      "model": "murim:block/int_herb_jars_1_sink_6",
+      "y": 90
+    },
+    "facing=east,variant=1,sink=7": {
+      "model": "murim:block/int_herb_jars_1_sink_7",
+      "y": 90
+    },
+    "facing=east,variant=1,sink=8": {
+      "model": "murim:block/int_herb_jars_1_sink_8",
+      "y": 90
+    },
+    "facing=south,variant=1,sink=0": {
+      "model": "murim:block/int_herb_jars_1",
+      "y": 180
+    },
+    "facing=south,variant=1,sink=1": {
+      "model": "murim:block/int_herb_jars_1_sink_1",
+      "y": 180
+    },
+    "facing=south,variant=1,sink=2": {
+      "model": "murim:block/int_herb_jars_1_sink_2",
+      "y": 180
+    },
+    "facing=south,variant=1,sink=3": {
+      "model": "murim:block/int_herb_jars_1_sink_3",
+      "y": 180
+    },
+    "facing=south,variant=1,sink=4": {
+      "model": "murim:block/int_herb_jars_1_sink_4",
+      "y": 180
+    },
+    "facing=south,variant=1,sink=5": {
+      "model": "murim:block/int_herb_jars_1_sink_5",
+      "y": 180
+    },
+    "facing=south,variant=1,sink=6": {
+      "model": "murim:block/int_herb_jars_1_sink_6",
+      "y": 180
+    },
+    "facing=south,variant=1,sink=7": {
+      "model": "murim:block/int_herb_jars_1_sink_7",
+      "y": 180
+    },
+    "facing=south,variant=1,sink=8": {
+      "model": "murim:block/int_herb_jars_1_sink_8",
+      "y": 180
+    },
+    "facing=west,variant=1,sink=0": {
+      "model": "murim:block/int_herb_jars_1",
+      "y": 270
+    },
+    "facing=west,variant=1,sink=1": {
+      "model": "murim:block/int_herb_jars_1_sink_1",
+      "y": 270
+    },
+    "facing=west,variant=1,sink=2": {
+      "model": "murim:block/int_herb_jars_1_sink_2",
+      "y": 270
+    },
+    "facing=west,variant=1,sink=3": {
+      "model": "murim:block/int_herb_jars_1_sink_3",
+      "y": 270
+    },
+    "facing=west,variant=1,sink=4": {
+      "model": "murim:block/int_herb_jars_1_sink_4",
+      "y": 270
+    },
+    "facing=west,variant=1,sink=5": {
+      "model": "murim:block/int_herb_jars_1_sink_5",
+      "y": 270
+    },
+    "facing=west,variant=1,sink=6": {
+      "model": "murim:block/int_herb_jars_1_sink_6",
+      "y": 270
+    },
+    "facing=west,variant=1,sink=7": {
+      "model": "murim:block/int_herb_jars_1_sink_7",
+      "y": 270
+    },
+    "facing=west,variant=1,sink=8": {
+      "model": "murim:block/int_herb_jars_1_sink_8",
+      "y": 270
+    },
+    "facing=north,variant=2,sink=0": {
+      "model": "murim:block/int_herb_jars_2",
+      "y": 0
+    },
+    "facing=north,variant=2,sink=1": {
+      "model": "murim:block/int_herb_jars_2_sink_1",
+      "y": 0
+    },
+    "facing=north,variant=2,sink=2": {
+      "model": "murim:block/int_herb_jars_2_sink_2",
+      "y": 0
+    },
+    "facing=north,variant=2,sink=3": {
+      "model": "murim:block/int_herb_jars_2_sink_3",
+      "y": 0
+    },
+    "facing=north,variant=2,sink=4": {
+      "model": "murim:block/int_herb_jars_2_sink_4",
+      "y": 0
+    },
+    "facing=north,variant=2,sink=5": {
+      "model": "murim:block/int_herb_jars_2_sink_5",
+      "y": 0
+    },
+    "facing=north,variant=2,sink=6": {
+      "model": "murim:block/int_herb_jars_2_sink_6",
+      "y": 0
+    },
+    "facing=north,variant=2,sink=7": {
+      "model": "murim:block/int_herb_jars_2_sink_7",
+      "y": 0
+    },
+    "facing=north,variant=2,sink=8": {
+      "model": "murim:block/int_herb_jars_2_sink_8",
+      "y": 0
+    },
+    "facing=east,variant=2,sink=0": {
+      "model": "murim:block/int_herb_jars_2",
+      "y": 90
+    },
+    "facing=east,variant=2,sink=1": {
+      "model": "murim:block/int_herb_jars_2_sink_1",
+      "y": 90
+    },
+    "facing=east,variant=2,sink=2": {
+      "model": "murim:block/int_herb_jars_2_sink_2",
+      "y": 90
+    },
+    "facing=east,variant=2,sink=3": {
+      "model": "murim:block/int_herb_jars_2_sink_3",
+      "y": 90
+    },
+    "facing=east,variant=2,sink=4": {
+      "model": "murim:block/int_herb_jars_2_sink_4",
+      "y": 90
+    },
+    "facing=east,variant=2,sink=5": {
+      "model": "murim:block/int_herb_jars_2_sink_5",
+      "y": 90
+    },
+    "facing=east,variant=2,sink=6": {
+      "model": "murim:block/int_herb_jars_2_sink_6",
+      "y": 90
+    },
+    "facing=east,variant=2,sink=7": {
+      "model": "murim:block/int_herb_jars_2_sink_7",
+      "y": 90
+    },
+    "facing=east,variant=2,sink=8": {
+      "model": "murim:block/int_herb_jars_2_sink_8",
+      "y": 90
+    },
+    "facing=south,variant=2,sink=0": {
+      "model": "murim:block/int_herb_jars_2",
+      "y": 180
+    },
+    "facing=south,variant=2,sink=1": {
+      "model": "murim:block/int_herb_jars_2_sink_1",
+      "y": 180
+    },
+    "facing=south,variant=2,sink=2": {
+      "model": "murim:block/int_herb_jars_2_sink_2",
+      "y": 180
+    },
+    "facing=south,variant=2,sink=3": {
+      "model": "murim:block/int_herb_jars_2_sink_3",
+      "y": 180
+    },
+    "facing=south,variant=2,sink=4": {
+      "model": "murim:block/int_herb_jars_2_sink_4",
+      "y": 180
+    },
+    "facing=south,variant=2,sink=5": {
+      "model": "murim:block/int_herb_jars_2_sink_5",
+      "y": 180
+    },
+    "facing=south,variant=2,sink=6": {
+      "model": "murim:block/int_herb_jars_2_sink_6",
+      "y": 180
+    },
+    "facing=south,variant=2,sink=7": {
+      "model": "murim:block/int_herb_jars_2_sink_7",
+      "y": 180
+    },
+    "facing=south,variant=2,sink=8": {
+      "model": "murim:block/int_herb_jars_2_sink_8",
+      "y": 180
+    },
+    "facing=west,variant=2,sink=0": {
+      "model": "murim:block/int_herb_jars_2",
+      "y": 270
+    },
+    "facing=west,variant=2,sink=1": {
+      "model": "murim:block/int_herb_jars_2_sink_1",
+      "y": 270
+    },
+    "facing=west,variant=2,sink=2": {
+      "model": "murim:block/int_herb_jars_2_sink_2",
+      "y": 270
+    },
+    "facing=west,variant=2,sink=3": {
+      "model": "murim:block/int_herb_jars_2_sink_3",
+      "y": 270
+    },
+    "facing=west,variant=2,sink=4": {
+      "model": "murim:block/int_herb_jars_2_sink_4",
+      "y": 270
+    },
+    "facing=west,variant=2,sink=5": {
+      "model": "murim:block/int_herb_jars_2_sink_5",
+      "y": 270
+    },
+    "facing=west,variant=2,sink=6": {
+      "model": "murim:block/int_herb_jars_2_sink_6",
+      "y": 270
+    },
+    "facing=west,variant=2,sink=7": {
+      "model": "murim:block/int_herb_jars_2_sink_7",
+      "y": 270
+    },
+    "facing=west,variant=2,sink=8": {
+      "model": "murim:block/int_herb_jars_2_sink_8",
+      "y": 270
+    }
+  }
+}

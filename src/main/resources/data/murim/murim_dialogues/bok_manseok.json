@@ -5,10 +5,93 @@
     {
       "when": [
         {
+          "free": false,
+          "min_standing": "first"
+        }
+      ],
+      "node": "busy_office"
+    },
+    {
+      "when": [
+        {
+          "min_standing": "first"
+        }
+      ],
+      "node": "office"
+    },
+    {
+      "when": [
+        {
           "free": false
         }
       ],
       "node": "busy"
+    },
+    {
+      "when": [
+        {
+          "social": "quest:heard:cache_whisper",
+          "not_flag": "quest.cache.asked"
+        },
+        {
+          "social": "quest:available:cache"
+        }
+      ],
+      "node": "cache_hook"
+    },
+    {
+      "when": [
+        {
+          "flag": "quest.cache.doyun",
+          "not_flag": "clue.cache_scrap"
+        },
+        {
+          "social": "quest:available:cache"
+        }
+      ],
+      "node": "cache_confront"
+    },
+    {
+      "when": [
+        {
+          "flag": "quest.cache.how.search",
+          "not_flag": "quest.cache.caught"
+        },
+        {
+          "social": "quest:available:cache"
+        }
+      ],
+      "node": "cache_caught"
+    },
+    {
+      "when": [
+        {
+          "flag": "quest.cache.done",
+          "not_flag": "quest.cache.recalled"
+        },
+        {
+          "flag": "quest.cache.how.search"
+        },
+        {
+          "social": "quest:available:cache"
+        }
+      ],
+      "node": "cache_recall_search"
+    },
+    {
+      "when": [
+        {
+          "flag": "quest.cache.done",
+          "not_flag": "quest.cache.recalled"
+        },
+        {
+          "flag": "quest.cache.how.talk"
+        },
+        {
+          "social": "quest:available:cache"
+        }
+      ],
+      "node": "cache_recall_talk"
     },
     {
       "when": [
@@ -114,6 +197,19 @@
       ],
       "gesture": "fist",
       "options": [
+        {
+          "text": "dialogue.murim.approach.opt.not_now",
+          "when": [
+            {
+              "social": "approaching"
+            }
+          ],
+          "actions": [
+            {
+              "type": "approach_decline"
+            }
+          ]
+        },
         {
           "text": "dialogue.murim.bok_manseok.opt.talk",
           "next": "topics"
@@ -287,7 +383,8 @@
           "text": "dialogue.murim.bok_manseok.opt.progress",
           "when": [
             {
-              "min_standing": "graduate"
+              "min_standing": "graduate",
+              "below_standing": "first"
             }
           ],
           "next": "p_graduate"
@@ -404,6 +501,227 @@
       "options": [
         {
           "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "office": {
+      "random": [
+        "dialogue.murim.bok_manseok.office.1",
+        "dialogue.murim.bok_manseok.office.2",
+        "dialogue.murim.bok_manseok.office.3"
+      ],
+      "args": [
+        "position"
+      ],
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.approach.opt.not_now",
+          "when": [
+            {
+              "social": "approaching"
+            }
+          ],
+          "actions": [
+            {
+              "type": "approach_decline"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.office.opt.moment",
+          "next": "topics_office"
+        },
+        {
+          "text": "dialogue.murim.office.opt.spar",
+          "when": [
+            {
+              "free": true
+            }
+          ],
+          "next": "office_spar"
+        },
+        {
+          "text": "dialogue.murim.bout.opt.ring",
+          "when": [
+            {
+              "social": "progression:bout_menu"
+            }
+          ],
+          "actions": [
+            {
+              "type": "progression_menu",
+              "value": "bouts"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "topics_office": {
+      "random": [
+        "dialogue.murim.bok_manseok.topics_office.1",
+        "dialogue.murim.bok_manseok.topics_office.2"
+      ],
+      "args": [
+        "position"
+      ],
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.bok_manseok.opt.news",
+          "next": "t_news"
+        },
+        {
+          "text": "dialogue.murim.bok_manseok.opt.seniors",
+          "next": "t_seniors"
+        },
+        {
+          "text": "dialogue.murim.social.opt.news",
+          "next": "sect_news"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "cache_hook": {
+      "line": "dialogue.murim.quest.cache.hook",
+      "options": [
+        {
+          "text": "dialogue.murim.quest.cache.opt.ask",
+          "next": "cache_denial",
+          "when": [
+            {
+              "social": "quest:available:cache"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "cache_denial": {
+      "line": "dialogue.murim.quest.cache.denial",
+      "gesture": "point",
+      "enter": [
+        {
+          "type": "set_flag",
+          "value": "quest.cache.asked"
+        }
+      ],
+      "options": [
+        {
+          "text": "dialogue.murim.quest.cache.opt.hm",
+          "when": [
+            {
+              "social": "quest:available:cache"
+            }
+          ]
+        }
+      ]
+    },
+    "cache_confront": {
+      "line": "dialogue.murim.quest.cache.confront",
+      "options": [
+        {
+          "text": "dialogue.murim.quest.cache.opt.doyun",
+          "next": "cache_gives",
+          "when": [
+            {
+              "social": "quest:available:cache"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "cache_gives": {
+      "line": "dialogue.murim.quest.cache.gives",
+      "enter": [
+        {
+          "type": "give_clue",
+          "value": "cache_scrap"
+        },
+        {
+          "type": "quest_how",
+          "value": "cache:talk"
+        },
+        {
+          "type": "set_flag",
+          "value": "quest.cache.talked"
+        }
+      ],
+      "options": [
+        {
+          "text": "dialogue.murim.quest.cache.opt.hm",
+          "when": [
+            {
+              "social": "quest:available:cache"
+            }
+          ]
+        }
+      ]
+    },
+    "cache_caught": {
+      "line": "dialogue.murim.quest.cache.caught",
+      "enter": [
+        {
+          "type": "set_flag",
+          "value": "quest.cache.caught"
+        }
+      ],
+      "options": [
+        {
+          "text": "dialogue.murim.quest.cache.opt.hm",
+          "when": [
+            {
+              "social": "quest:available:cache"
+            }
+          ]
+        }
+      ]
+    },
+    "cache_recall_search": {
+      "line": "dialogue.murim.quest.cache.recall_search",
+      "enter": [
+        {
+          "type": "set_flag",
+          "value": "quest.cache.recalled"
+        }
+      ],
+      "options": [
+        {
+          "text": "dialogue.murim.quest.cache.opt.hm",
+          "when": [
+            {
+              "social": "quest:available:cache"
+            }
+          ]
+        }
+      ]
+    },
+    "cache_recall_talk": {
+      "line": "dialogue.murim.quest.cache.recall_talk",
+      "enter": [
+        {
+          "type": "set_flag",
+          "value": "quest.cache.recalled"
+        }
+      ],
+      "options": [
+        {
+          "text": "dialogue.murim.quest.cache.opt.hm",
+          "when": [
+            {
+              "social": "quest:available:cache"
+            }
+          ]
         }
       ]
     }

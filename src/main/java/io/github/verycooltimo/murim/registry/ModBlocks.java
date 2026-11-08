@@ -195,6 +195,41 @@ public final class ModBlocks {
                     io.github.verycooltimo.murim.decor.HallJoinery.THICK_RED_PILLAR.get(),
                     io.github.verycooltimo.murim.decor.HallJoinery.THICK_WHITE_PILLAR.get()).build(null));
 
+    public static final DeferredBlock<io.github.verycooltimo.murim.world.herb.HerbPlantBlock> THOUSAND_GINSENG_PLANT =
+            BLOCKS.registerBlock("thousand_ginseng_plant", p -> new io.github.verycooltimo.murim.world.herb.HerbPlantBlock(
+                    io.github.verycooltimo.murim.world.herb.HerbPlantBlock.Kind.GINSENG, p),
+                    BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_GREEN).forceSolidOff().noCollission().noOcclusion()
+                            .instabreak().sound(SoundType.GRASS).pushReaction(PushReaction.DESTROY));
+
+    public static final DeferredBlock<io.github.verycooltimo.murim.world.herb.HerbPlantBlock> THOUSAND_LINGZHI_PLANT =
+            BLOCKS.registerBlock("thousand_lingzhi_plant", p -> new io.github.verycooltimo.murim.world.herb.HerbPlantBlock(
+                    io.github.verycooltimo.murim.world.herb.HerbPlantBlock.Kind.LINGZHI, p),
+                    BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_GREEN).forceSolidOff().noCollission().noOcclusion()
+                            .instabreak().sound(SoundType.GRASS).pushReaction(PushReaction.DESTROY));
+
+    public static final DeferredBlock<io.github.verycooltimo.murim.world.herb.HerbPlantBlock> BLACK_LINGZHI_PLANT =
+            BLOCKS.registerBlock("black_lingzhi_plant", p -> new io.github.verycooltimo.murim.world.herb.HerbPlantBlock(
+                    io.github.verycooltimo.murim.world.herb.HerbPlantBlock.Kind.BLACK, p),
+                    BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_GREEN).forceSolidOff().noCollission().noOcclusion()
+                            .instabreak().sound(SoundType.GRASS).pushReaction(PushReaction.DESTROY));
+
+    // API: NeoForge 21.1 DeferredRegister.Blocks#registerBlock; Minecraft BlockBehaviour.Properties.
+    // Reuse ModQuests medicinal-plant properties and its synchronized cut/regrowth state.
+    public static final DeferredBlock<io.github.verycooltimo.murim.quest.MedicinalPlant> HUNDRED_GINSENG_PLANT =
+            BLOCKS.registerBlock("hundred_ginseng_plant", io.github.verycooltimo.murim.quest.MedicinalPlant::new,
+                    BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_GREEN).forceSolidOff().noCollission().noOcclusion()
+                            .instabreak().sound(SoundType.GRASS).pushReaction(PushReaction.DESTROY));
+
+    public static final DeferredBlock<io.github.verycooltimo.murim.quest.MedicinalPlant> PURPLE_GINSENG_PLANT =
+            BLOCKS.registerBlock("purple_ginseng_plant", io.github.verycooltimo.murim.quest.MedicinalPlant::new,
+                    BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_GREEN).forceSolidOff().noCollission().noOcclusion()
+                            .instabreak().sound(SoundType.GRASS).pushReaction(PushReaction.DESTROY));
+
+    public static final DeferredBlock<io.github.verycooltimo.murim.quest.MedicinalPlant> PURPLE_WOOD_HERB_PLANT =
+            BLOCKS.registerBlock("purple_wood_herb_plant", io.github.verycooltimo.murim.quest.MedicinalPlant::new,
+                    BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_GREEN).forceSolidOff().noCollission().noOcclusion()
+                            .instabreak().sound(SoundType.GRASS).pushReaction(PushReaction.DESTROY));
+
     private ModBlocks() {
     }
 

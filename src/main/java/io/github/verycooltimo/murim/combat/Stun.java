@@ -29,8 +29,8 @@ import net.neoforged.neoforge.event.tick.EntityTickEvent;
  * удерживается до её конца ({@link #hold}). Никакого видимого «оглушения»: без звёзд и клипа.
  *
  * <p><b>Оглушение</b> ({@link #apply}) — только там, где техника задаёт его сама: Взрыв (2 с после
- * отброса), Демоническая ладонь ({@code stun_ticks}), формы кинжалов Тан. Носитель — замедление
- * {@link #AMPLIFIER}; его видят бандиты, ученики и хозяин крепости ({@link #isStunned}).
+ * отброса), Демоническая ладонь ({@code stun_ticks}), формы кинжалов Тан. Носитель — собственный срок STUN_END; замедление
+ * {@link #AMPLIFIER} отвечает только за движение; его видят бандиты, ученики и хозяин крепости ({@link #isStunned}).
  *
  * <p>Механика обоих: у моба выключен ИИ целиком (NoAI — ни целей, ни навигации, ни атак, ни
  * натяжения лука; флаг сохраняется, чтобы моб, сохранённый посреди удержания, получил ИИ назад),
@@ -45,7 +45,7 @@ import net.neoforged.neoforge.event.tick.EntityTickEvent;
 @EventBusSubscriber(modid = MurimMod.MODID)
 public final class Stun {
 
-    /** Уровень замедления оглушения. Порог «оглушён» — {@link #THRESHOLD}. */
+    /** Movement slowness strength; stun detection uses STUN_END only. */
     public static final int AMPLIFIER = 9;
     public static final int THRESHOLD = 3;
 
@@ -76,19 +76,28 @@ public final class Stun {
         long end = caster.level().getGameTime() + holdTicks(technique);
         caster.setData(ModAttachments.HOLD_END, end);
         LivingEntity locked = TargetLock.locked(caster, TargetLock.RANGE);
-        if (locked != null) {
+        if (locked instanceof Mob mob && opponent(caster, mob) && caster.hasLineOfSight(locked)) {
             hold(locked, caster, 0);
             return;
         }
         AABB box = caster.getBoundingBox().inflate(HOLD_RANGE);
         int n = 0;
         for (Mob m : caster.level().getEntitiesOfClass(Mob.class, box,
-                e -> e.isAlive() && e.distanceTo(caster) <= HOLD_RANGE && TargetLock.inCone(caster, e, HOLD_HALF_ANGLE))) {
+                e -> e.isAlive() && opponent(caster, e) && caster.hasLineOfSight(e) && e.distanceTo(caster) <= HOLD_RANGE && TargetLock.inCone(caster, e, HOLD_HALF_ANGLE))) {
             if (++n > HOLD_MAX) {
                 break;
             }
             hold(m, caster, 0);
         }
+    }
+
+    static boolean opponent(ServerPlayer caster, Mob mob) {
+        if (mob instanceof net.minecraft.world.entity.npc.AbstractVillager
+                || mob instanceof net.minecraft.world.entity.animal.Animal) return false;
+        if (mob instanceof io.github.verycooltimo.murim.entity.SectDisciple disciple)
+            return caster.getUUID().equals(disciple.partner())
+                    && disciple.spar() == io.github.verycooltimo.murim.entity.SectDisciple.Spar.FIGHT;
+        return mob.getTarget() == caster || mob instanceof net.minecraft.world.entity.monster.Enemy;
     }
 
     /** Сколько тиков держать: всё, кроме рассеивания. */
@@ -151,6 +160,11 @@ public final class Stun {
      * @return сколько тиков оглушения легло (0 — невосприимчив)
      */
     public static int apply(LivingEntity t, int ticks) {
+        return apply(t, ticks, PLAYER_CAP);
+    }
+
+    /** As {@link #apply(LivingEntity, int)}, with the ceiling for a player given by the caller (a senior's release, 1 s). */
+    public static int apply(LivingEntity t, int ticks, int playerCap) {
         if (t.level().isClientSide() || !t.isAlive() || ticks <= 0) {
             return 0;
         }
@@ -159,12 +173,14 @@ public final class Stun {
         if (boss && now < t.getData(ModAttachments.STUN_IMMUNE)) {
             return 0;
         }
-        int n = t instanceof Player ? Math.min(ticks, PLAYER_CAP) : boss ? Math.min(ticks, BOSS_CAP) : ticks;
+        int n = t instanceof Player ? Math.min(ticks, playerCap) : boss ? Math.min(ticks, BOSS_CAP) : ticks;
         MobEffectInstance slow = new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, n, AMPLIFIER, false, false, false);
         // Хозяин крепости сам отказывает в эффекте на время своей невосприимчивости (canBeAffected).
         if (!t.canBeAffected(slow)) {
             return 0;
         }
+        long previous = t.hasData(ModAttachments.STUN_END) ? t.getData(ModAttachments.STUN_END) : 0L;
+        t.setData(ModAttachments.STUN_END, Math.max(previous, now + n));
         t.addEffect(slow);
         t.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, n, AMPLIFIER, false, false, false));
         if (boss) {
@@ -176,10 +192,10 @@ public final class Stun {
         return n;
     }
 
-    /** Оглушён ли: замедление уровня ≥ IV. Единое правило для бандитов, учеников и босса. */
+    /** Only the mod-owned expiry marks stun; vanilla potions never do. */
     public static boolean isStunned(LivingEntity t) {
-        MobEffectInstance slow = t.getEffect(MobEffects.MOVEMENT_SLOWDOWN);
-        return slow != null && slow.getAmplifier() >= THRESHOLD;
+        return t.hasData(ModAttachments.STUN_END)
+                && t.level().getGameTime() < t.getData(ModAttachments.STUN_END);
     }
 
     /** Ни шагу, ни удара: оглушён или удержан. */
@@ -209,6 +225,7 @@ public final class Stun {
             return;
         }
         boolean frozen = isFrozen(t);
+        if (t.hasData(ModAttachments.STUN_END) && !isStunned(t)) t.removeData(ModAttachments.STUN_END);
         int state = t.hasData(ModAttachments.STUN) ? t.getData(ModAttachments.STUN) : NONE;
         if (frozen && state == NONE) {
             if (t instanceof Mob mob) {
@@ -265,6 +282,16 @@ public final class Stun {
         double drag = wet ? 0.8D : mob.onGround() ? 0.546D : 0.91D;
         double vy = mob.onGround() && v.y < 0.0D ? 0.0D : v.y * (wet ? 0.8D : 0.98D);
         mob.setDeltaMovement(v.x * drag, vy, v.z * drag);
+    }
+
+    /** Stagger also forbids attacks by players and already released mob attacks. */
+    @SubscribeEvent(priority = net.neoforged.bus.api.EventPriority.HIGHEST)
+    static void staggerAttack(net.neoforged.neoforge.event.entity.player.AttackEntityEvent event) {
+        if (isStunned(event.getEntity())) event.setCanceled(true);
+    }
+    @SubscribeEvent(priority = net.neoforged.bus.api.EventPriority.HIGHEST)
+    static void staggerDamage(net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent event) {
+        if (event.getSource().getDirectEntity() instanceof LivingEntity attacker && isStunned(attacker)) event.setCanceled(true);
     }
 
     private Stun() {

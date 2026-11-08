@@ -55,9 +55,6 @@ import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 @EventBusSubscriber(modid = MurimMod.MODID)
 public final class MountHuaSites {
 
-    /** Distance from spawn to the massif centre; foot ≈ centre − 600, far side ≈ centre + 600. */
-    static final int MIN_DISTANCE = 2700;
-    static final int MAX_DISTANCE = 4800;
     private static final int CANDIDATES = 28;
 
     private record Cached(MinecraftServer server, MountHuaSite site, Timing timing) {
@@ -182,15 +179,32 @@ public final class MountHuaSites {
         int bestZ = 0;
         int bestY = 70;
         int bestRot = 0;
+        int bestMedian = 70;
         for (int c = 0; c < CANDIDATES; c++) {
             double angle = random.nextDouble() * Math.PI * 2;
-            double dist = MIN_DISTANCE + random.nextDouble() * (MAX_DISTANCE - MIN_DISTANCE);
+            double dist = candidateDistance(random.nextDouble(), io.github.verycooltimo.murim.Config.HUA_MIN_DISTANCE.get(),
+                    io.github.verycooltimo.murim.Config.HUA_MAX_DISTANCE.get());
             int cx = spawn.getX() + (int) (Math.cos(angle) * dist);
             int cz = spawn.getZ() + (int) (Math.sin(angle) * dist);
+            // Integer projection can fall just outside the configured band (including a zero-width band).
+            double actualDistance = Math.hypot(cx - spawn.getX(), cz - spawn.getZ());
+            int minimum = io.github.verycooltimo.murim.Config.HUA_MIN_DISTANCE.get();
+            int maximum = Math.max(minimum, io.github.verycooltimo.murim.Config.HUA_MAX_DISTANCE.get());
+            if (actualDistance < minimum || actualDistance > maximum) {
+                cx = spawn.getX() + (int) Math.round(dist);
+                cz = spawn.getZ();
+            }
             // Rotation: the trail foot (local north, -v) faces the spawn.
             int rot = rotationTowards(spawn.getX() - cx, spawn.getZ() - cz);
             MountHuaSite probe = new MountHuaSite(cx, cz, 70, rot, level.getSeed());
-            double score = 0;
+            // API: BiomeSource#getNoiseBiome, RandomState#sampler, BiomeTags#IS_DEEP_OCEAN.
+            // Noise lookup only: scoring a route must never generate distant chunks.
+            double score = approachPenalty(spawn.getX(), spawn.getZ(), cx, cz, (x, z) -> {
+                Holder<Biome> b = generator.getBiomeSource().getNoiseBiome(QuartPos.fromBlock(x),
+                        QuartPos.fromBlock(64), QuartPos.fromBlock(z), randomState.sampler());
+                return b.is(BiomeTags.IS_DEEP_OCEAN) ? 48 : b.is(BiomeTags.IS_OCEAN) ? 32
+                        : b.is(BiomeTags.IS_RIVER) ? 1 : 0;
+            });
             int[] heights = new int[25];
             int n = 0;
             for (int ring = 0; ring <= 3; ring++) {
@@ -227,7 +241,9 @@ public final class MountHuaSites {
             int median = sorted[n / 2];
             double mean = Arrays.stream(sorted).average().orElse(median);
             double var = Arrays.stream(sorted).mapToDouble(h -> (h - mean) * (h - mean)).sum() / n;
-            score += Math.sqrt(var) * 2 + Math.abs(median - 72) * 0.6;
+            // The foot never goes above the bake's (HuaBaked.BAKE_BASE_Y): high ground would sink the foot of the mountain into a pit
+            // (the writer caps that cut, MountHuaChunkWriter.MAX_CUT, but a site on low ground is still far better).
+            score += Math.sqrt(var) * 2 + Math.abs(median - 70) * 0.6 + Math.max(0, median - HuaBaked.BAKE_BASE_Y) * 6;
             if (regionsExist(regions, probe)) {
                 score += 1000;
             }
@@ -236,13 +252,14 @@ public final class MountHuaSites {
                 bestScore = score;
                 bestX = cx;
                 bestZ = cz;
-                bestY = Math.max(63, Math.min(100, median));
+                bestMedian = median;
+                bestY = Math.max(HuaBaked.MIN_BASE_Y, Math.min(HuaBaked.BAKE_BASE_Y, median));
                 bestRot = rot;
             }
         }
         data.choose(bestX, bestZ, bestY, bestRot);
-        MurimMod.LOGGER.info("Mount Hua site chosen: x={} z={} y={} rot={} (score {})", bestX, bestZ, bestY,
-                bestRot, String.format("%.1f", bestScore));
+        MurimMod.LOGGER.info("Mount Hua site chosen: x={} z={} y={} rot={} (score {}, vanilla median ground {})", bestX, bestZ,
+                bestY, bestRot, String.format("%.1f", bestScore), bestMedian);
     }
 
     /**
@@ -296,6 +313,41 @@ public final class MountHuaSites {
             }
         }
         return false;
+    }
+
+    static double candidateDistance(double roll, int min, int max) {
+        return min + roll * (Math.max(min, max) - min);
+    }
+
+    @FunctionalInterface
+    interface BiomeCost { double at(int x, int z); }
+
+    /** Straight approach and two doglegs; ocean costs dominate small terrain-fit differences.
+     * Samples are at most 32 blocks apart; river costs stay small. The bend is only a scoring
+     * alternative, not a road or a promise of a path through every cliff.
+     */
+    static double approachPenalty(int sx, int sz, int tx, int tz, BiomeCost biome) {
+        double dx = tx - sx, dz = tz - sz;
+        double best = Double.MAX_VALUE;
+        for (double bend : new double[] {0, -0.25, 0.25}) {
+            double mx = (sx + tx) * 0.5 - dz * bend;
+            double mz = (sz + tz) * 0.5 + dx * bend;
+            double score = segmentCost(sx, sz, mx, mz, biome) + segmentCost(mx, mz, tx, tz, biome);
+            best = Math.min(best, score);
+        }
+        return best;
+    }
+
+    private static double segmentCost(double sx, double sz, double tx, double tz, BiomeCost biome) {
+        double length = Math.hypot(tx - sx, tz - sz);
+        int steps = Math.max(1, (int) Math.ceil(length / 32));
+        double cost = length * 0.002;
+        for (int i = 1; i <= steps; i++) {
+            double t = (i - 0.5) / steps;
+            cost += biome.at((int) Math.round(sx + (tx - sx) * t),
+                    (int) Math.round(sz + (tz - sz) * t)) * length / steps;
+        }
+        return cost;
     }
 
     /** Quarter turns that point local north (−v) along (dx, dz). */

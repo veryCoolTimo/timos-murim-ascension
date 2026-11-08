@@ -19,6 +19,19 @@
       "line": "dialogue.murim.guest_tae_hyeon.greet",
       "options": [
         {
+          "text": "dialogue.murim.approach.opt.not_now",
+          "when": [
+            {
+              "social": "approaching"
+            }
+          ],
+          "actions": [
+            {
+              "type": "approach_decline"
+            }
+          ]
+        },
+        {
           "text": "dialogue.murim.guest_tae_hyeon.report",
           "next": "reported",
           "actions": [

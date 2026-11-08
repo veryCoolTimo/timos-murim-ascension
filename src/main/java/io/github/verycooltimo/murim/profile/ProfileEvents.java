@@ -5,7 +5,7 @@ import io.github.verycooltimo.murim.registry.ModAttachments;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
+import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 
@@ -35,22 +35,26 @@ public final class ProfileEvents {
             }
             return;
         }
+        io.github.verycooltimo.murim.cultivation.MeditationService.idleWallHint(player);
         passiveCirculation(player);
     }
 
     /**
      * Урон срывает медитацию — но только настоящий.
      *
-     * <p>Приоритет низший и проверка отмены обязательны: событие приходит ДО щита, до кадров
-     * неуязвимости и до брони. Без них медитация срывалась бы от полностью заблокированного удара,
-     * от урона в кадрах неуязвимости и даже от снежка с нулевым уроном.
+     * <p>Post сообщает потерю здоровья после щита, брони и сопротивления.
+     * Нулевой итоговый урон медитацию не срывает.
      */
     @SubscribeEvent(priority = net.neoforged.bus.api.EventPriority.LOWEST)
-    static void onIncomingDamage(LivingIncomingDamageEvent event) {
-        if (event.isCanceled() || event.getAmount() <= 0.0F) {
+    static void onDamage(LivingDamageEvent.Post event) {
+        if (event.getNewDamage() <= 0.0F) {
             return;
         }
         if (!(event.getEntity() instanceof ServerPlayer player)) {
+            return;
+        }
+        // Искажение ци — отдача от удара, а не новый удар (docs/design/19b §10).
+        if (event.getSource().is(io.github.verycooltimo.murim.registry.ModDamageTypes.QI_DEVIATION)) {
             return;
         }
         // Волна места силы бьёт по телу, но медитацию не срывает (docs/design/19b §3).
@@ -64,13 +68,45 @@ public final class ProfileEvents {
     }
 
     /**
+     * Выход, остановка сервера или смерть посреди поглощения: сессия (мини-игра, растворение) живёт только в памяти,
+     * поэтому усвоенная доля выплачивается, а остаток уходит в сохраняемый резерв, и пилюля не пропадает.
+     */
+    @SubscribeEvent
+    static void onLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player) {
+            settleAbsorption(player);
+        }
+    }
+
+    @SubscribeEvent
+    static void onServerStopping(net.neoforged.neoforge.event.server.ServerStoppingEvent event) {
+        for (ServerPlayer player : event.getServer().getPlayerList().getPlayers()) {
+            settleAbsorption(player);
+        }
+    }
+
+    @SubscribeEvent
+    static void onDeath(net.neoforged.neoforge.event.entity.living.LivingDeathEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player) {
+            settleAbsorption(player);
+        }
+    }
+
+    /** Закрывает идущее поглощение: усвоенное остаётся, остаток в резерв (idempotent). */
+    public static void settleAbsorption(ServerPlayer player) {
+        if (io.github.verycooltimo.murim.cultivation.PillService.absorbing(player)) {
+            io.github.verycooltimo.murim.cultivation.PillService.onMeditationStop(player, false);
+        }
+    }
+
+    /**
      * Пассивное восстановление циркулирующей ци из запаса.
      *
      * <p>Решение автора 2026-09-28 (docs/design/19 §2): боевая ци восстанавливается сама,
      * как мана, от пустой до полной примерно за 40–60 секунд; медитация и клавиша сбора
      * быстрее. Прежнее правило «только в ритуале» отменено.
      */
-    private static void passiveCirculation(ServerPlayer player) {
+    public static void passiveCirculation(ServerPlayer player) {
         if (player.tickCount % PASSIVE_EVERY_TICKS != 0) {
             return;
         }
@@ -78,7 +114,7 @@ public final class ProfileEvents {
         if (!profile.isAwakened() || profile.circulating() >= profile.maxCirculating()) {
             return;
         }
-        DantianProfile updated = profile.circulateOnce();
+        DantianProfile updated = profile.circulateOnce(io.github.verycooltimo.murim.cultivation.PillEffects.qiRegenFactor(player));
         if (updated != profile) {
             player.setData(ModAttachments.PROFILE, updated);
             if (player.tickCount % SYNC_PASSIVE_TICKS == 0 || updated.circulating() >= updated.maxCirculating()) {
@@ -103,6 +139,10 @@ public final class ProfileEvents {
             ProfileNetwork.sync(player);
             io.github.verycooltimo.murim.cultivation.MeditationService.sync(player,
                     io.github.verycooltimo.murim.network.SyncMeditationPayload.Event.NONE);
+            // The client clears mastery and loadout state with the new player object: send both again (also pills).
+            io.github.verycooltimo.murim.cultivation.PillService.sync(player,
+                    io.github.verycooltimo.murim.network.PillPayloads.Event.NONE);
+            io.github.verycooltimo.murim.mastery.MasteryService.sync(player);
         }
     }
 
@@ -111,7 +151,10 @@ public final class ProfileEvents {
         if (event.getEntity() instanceof ServerPlayer player) {
             migrateRankCapacity(player);
             ProfileNetwork.sync(player);
+            io.github.verycooltimo.murim.cultivation.PillService.sync(player,
+                    io.github.verycooltimo.murim.network.PillPayloads.Event.NONE);
             io.github.verycooltimo.murim.mastery.MasteryService.completeStyles(player);
+            io.github.verycooltimo.murim.mastery.MasteryService.unlockStarForms(player);
             io.github.verycooltimo.murim.mastery.MasteryService.sync(player);
             // Сердца ранга — временный модификатор: ставится заново при каждом входе.
             io.github.verycooltimo.murim.cultivation.RankEffects.apply(player);
@@ -137,6 +180,8 @@ public final class ProfileEvents {
         if (event.getEntity() instanceof ServerPlayer player) {
             // Профиль переживает смерть, но клиент после респавна о нём не знает.
             ProfileNetwork.sync(player);
+            io.github.verycooltimo.murim.cultivation.PillService.sync(player,
+                    io.github.verycooltimo.murim.network.PillPayloads.Event.NONE);
             io.github.verycooltimo.murim.mastery.MasteryService.sync(player);
             io.github.verycooltimo.murim.cultivation.RankEffects.apply(player);
             player.setHealth(player.getMaxHealth());

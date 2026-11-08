@@ -56,7 +56,7 @@ import java.util.Random;
  *       ног, пока длится тень;</li>
  *   <li>Шаг смерти — узкая белая линия прорыва растёт вместе с телом, вспышка в момент
  *       пересечения цели, тёмные обрывки следа;</li>
- *   <li>Шаг молнии — длинный прямой световой коридор за бегущим, вытягивается с разгоном; пыль
+ *   <li>Шаг Звёздного Света — длинный прямой световой коридор за бегущим, вытягивается с разгоном; пыль
  *       от стоп.</li>
  * </ul>
  *
@@ -88,12 +88,29 @@ public final class FootworkVfx {
 
     private static final List<Ribbon> RIBBONS = new ArrayList<>();
     private static final List<Petal> PETALS = new ArrayList<>();
+    private record Skid(Vec3 from, Vec3 to, int born) { }
+    private static final List<Skid> SKIDS = new ArrayList<>();
+    private static final class DipperInk {
+        final Vec3[] points = new Vec3[7];
+        int finalCut;
+        int reached;
+        DipperInk(int firstBeat, int born) { finalCut = born + (6 - firstBeat) * 4 + 1; }
+    }
+    private record DustRing(Vec3 point, int born) {}
+    private static final java.util.Map<Integer, DipperInk> DIPPERS = new java.util.HashMap<>();
+    private static final List<DustRing> ARRIVALS = new ArrayList<>();
     private static final List<Puff> PUFFS = new ArrayList<>();
     private static final List<Shard> SHARDS = new ArrayList<>();
     private static final List<Ghost> GHOSTS = new ArrayList<>();
     private static final List<Flash> FLASHES = new ArrayList<>();
     private static final List<Spark> SPARKS = new ArrayList<>();
     private static final Map<Integer, RunTrail> RUNS = new HashMap<>();
+    private static final Map<Integer, Integer> EXPOSED = new HashMap<>();
+    private static final Map<Integer, List<Vec3>> BREACH_PATHS = new HashMap<>();
+    private static final Map<Integer, List<Ribbon>> BREACH_RIBBONS = new HashMap<>();
+    private static final Map<Integer, Integer> BREACH_AT = new HashMap<>();
+    private static final Map<Integer, Vec3> CLONE_POSITIONS = new HashMap<>();
+    private static final Map<Integer, Vec3> CLONE_FLOWS = new HashMap<>();
     private static final Map<Integer, Shadow> SHADOWS = new HashMap<>();
 
     // ---------------------------------------------------------------- частицы
@@ -117,6 +134,11 @@ public final class FootworkVfx {
         final float bright;
         /** > 0 — широкое полотно: заполнение с этой непрозрачностью и одна прерывистая кромка сбоку. */
         float sheetAlpha;
+        /** Keep constant width along the Exposed seal outline. Independent of Death's renderer. */
+        boolean broad;
+        boolean deathWind;
+        /** Plain alpha-blended smear: no bright edge or glow pass. */
+        boolean airCut;
 
         Ribbon(Vec3[] pts, float born, float draw, float hold, float fade, double width, VfxColour surface, VfxColour edge,
                boolean pink, float bright, Vec3 spread) {
@@ -179,6 +201,7 @@ public final class FootworkVfx {
         final double size;
         final int cell;
         final float gray;
+        int groundColour = -1;
         final float alpha;
         final boolean smoke;
         final float angle;
@@ -402,7 +425,7 @@ public final class FootworkVfx {
         final List<Node> left = new ArrayList<>();
         final List<Node> right = new ArrayList<>();
         final List<Node> corridor = new ArrayList<>();
-        /** Шаг молнии: ленты ветра, привязанные к точкам тела, тянутся за бегущим (реф swift step). */
+        /** Шаг Звёздного Света: ленты ветра, привязанные к точкам тела, тянутся за бегущим (реф swift step). */
         final List<List<Node>> streamers = List.of(new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
         Vec3 last;
         float lastYaw;
@@ -411,6 +434,7 @@ public final class FootworkVfx {
         /** Знак поворота: внешняя на повороте лента раскрывается сильнее внутренней. */
         double turnSign = 1.0D;
         int steps;
+        boolean draining;
 
         RunTrail(int family, int executionTier, Entity e) {
             this.family = family;
@@ -433,6 +457,97 @@ public final class FootworkVfx {
         }
     }
 
+    private static final class AirTrail {
+        final int stars, until, started;
+        Vec3 previous, current;
+        final List<Vec3> history = new ArrayList<>();
+        AirTrail(int stars, int until, Vec3 at) {
+            this.stars = stars; this.until = until; started = clientTicks;
+            previous = current = at;
+            history.add(at);
+        }
+        int stars() { return stars; }
+        int until() { return until; }
+    }
+    private static final Map<Integer, Integer> RAIN_REFRESH = new HashMap<>();
+    private static final Map<Integer, AirTrail> AIR = new HashMap<>();
+
+    /** Existing ribbon/ghost primitives, driven only by authoritative air-form facts. */
+    public static void airEvent(io.github.verycooltimo.murim.network.TechniqueEventPayload p) {
+        var mc = Minecraft.getInstance();
+        if (mc.level == null || !(mc.level.getEntity(p.sourceId()) instanceof AbstractClientPlayer player)) return;
+        var kind = p.event();
+        if (kind == io.github.verycooltimo.murim.network.TechniqueEventPayload.Event.CANCELLED) {
+            AIR.remove(p.sourceId());
+            if (mc.player == player && io.github.verycooltimo.murim.combat.FragranceAirService.RISING.equals(p.techniqueId()))
+                io.github.verycooltimo.murim.client.FootworkMotion.stopAirRoute();
+            io.github.verycooltimo.murim.client.MurimPlayerAnimations.stopOwned(player, p.techniqueId());
+            return;
+        }
+        boolean rain = io.github.verycooltimo.murim.combat.FragranceAirService.RAIN.equals(p.techniqueId());
+        if (kind == io.github.verycooltimo.murim.network.TechniqueEventPayload.Event.STARTED && rain) return;
+        if (rain) {
+            Integer previous = RAIN_REFRESH.put(p.sourceId(), clientTicks);
+            if (previous != null && previous == clientTicks) return;
+        }
+        if (io.github.verycooltimo.murim.combat.FragranceAirService.FLOATING.equals(p.techniqueId()))
+            io.github.verycooltimo.murim.client.MurimPlayerAnimations.playBlended(player, p.techniqueId(), 3);
+        else io.github.verycooltimo.murim.client.MurimPlayerAnimations.play(player, p.techniqueId());
+        airBlur(player, p.executionTier());
+        if (!rain) AIR.put(p.sourceId(), new AirTrail(p.executionTier(), clientTicks +
+                (p.hitStopTicks() > 0 ? p.hitStopTicks() : io.github.verycooltimo.murim.combat.FragranceAirService.FLOATING.equals(p.techniqueId())
+                ? io.github.verycooltimo.murim.combat.FragranceAirService.glideTicks(p.executionTier()) : 20), player.position()));
+    }
+
+    private static void airBlur(AbstractClientPlayer player, int stars) {
+        if (stars <= 0) return;
+        Minecraft mc = Minecraft.getInstance();
+        double distance = player.distanceToSqr(mc.gameRenderer.getMainCamera().getPosition());
+        if (distance > 32 * 32 || !VfxBudget.hasRoom() || RIBBONS.size() >= 96) return;
+        var particles = mc.options.particles().get();
+        Vec3 at = player.position();
+        // A brief translucent smear at layer 1; a separated afterimage appears at star 3.
+        ghost(player, at, 0, 3, .16f, H_SURFACE, true);
+        if (stars >= 3) ghost(player, at.add(airDisplacement(player).scale(-2)), 0, 7, .28f, H_SURFACE, true);
+        int count = stars >= 10 ? 2 : 1;
+        for (int trail = 0; trail < count; trail++) {
+            Vec3[] path = new Vec3[Math.min(20, io.github.verycooltimo.murim.client.ClientConfig.trailSegments())];
+            for (int i = 0; i < path.length; i++) {
+                double u = i / (double) (path.length - 1), a = u * Math.PI * 1.8 + trail * Math.PI;
+                Vec3 travelled = airDisplacement(player);
+                // Trail follows measured displacement; stationary Rain keeps only a local slip curl.
+                double radius = travelled.lengthSqr() > 1e-6 ? .22 : .35;
+                var history = AIR.get(player.getId());
+                Vec3 along = history != null && history.history.size() > 1
+                        ? io.github.verycooltimo.murim.technique.SevenStarsRules.routePoint(history.history, u) : at;
+                path[i] = along.add(Math.cos(a) * radius, .5 + Math.sin(a) * radius, Math.sin(a) * radius);
+            }
+            Ribbon ribbon = new Ribbon(path, clientTicks, 3, 2, 6, .22, H_SURFACE, H_EDGE,
+                    stars >= 5, .55f, new Vec3(0, .008, 0));
+            ribbon.sheetAlpha = .20f;
+            RIBBONS.add(ribbon);
+        }
+        if (stars >= 8 && distance < 16 * 16 && particles != net.minecraft.client.ParticleStatus.MINIMAL
+                && PETALS.size() < 160) for (int i = 0; i < (particles == net.minecraft.client.ParticleStatus.DECREASED ? 2 : 5); i++) {
+            Vec3 travelled = airDisplacement(player);
+            Vec3 side = new Vec3(-travelled.z, 0, travelled.x);
+            if (side.lengthSqr() < 1e-6) {
+                Vec3 facing = player.getLookAngle();
+                side = new Vec3(-facing.z, 0, facing.x);
+            }
+            side = side.normalize();
+            Vec3 offset = travelled.scale(-2 - RNG.nextDouble() * 3).add(side.scale(.35 + RNG.nextDouble() * .4))
+                    .add(0, .4 + RNG.nextDouble(), 0);
+            PETALS.add(new Petal(at.add(offset), offset.scale(.035), clientTicks, 18, .14));
+        }
+    }
+
+    private static Vec3 airDisplacement(AbstractClientPlayer player) {
+        var trail = AIR.get(player.getId());
+        return trail == null ? player.position().subtract(new Vec3(player.xo, player.yo, player.zo))
+                : trail.current.subtract(trail.previous);
+    }
+
     // ---------------------------------------------------------------- входы
 
     /**
@@ -441,6 +556,8 @@ public final class FootworkVfx {
      * удар; бледный двойник на старте. Рывок 5 тиков (разбор codex 03.10: не длинный волнистый разрез).
      */
     public static void petalStep(StepPayload p) {
+        if (Minecraft.getInstance().player != null && p.entityId() == Minecraft.getInstance().player.getId())
+            io.github.verycooltimo.murim.client.FootworkMotion.slippingPetal();
         int executionTier = Math.min(4, p.executionTier());
         Minecraft mc = Minecraft.getInstance();
         Entity entity = mc.level == null ? null : mc.level.getEntity(p.entityId());
@@ -533,7 +650,68 @@ public final class FootworkVfx {
     /** Событие бега/толчка/формы из {@link TraverseVfx}: вид — как в {@code TraversePayloads.Event}. */
     static void onEvent(Entity entity, int kind, int executionTier, Vec3 dir, int entityId) {
         switch (kind) {
-            case 0 -> RUNS.remove(entityId);
+            // Event 17 uses only existing Vec3 operations, verified in MC 1.21.1 world/phys/Vec3.java.
+            case 14, 17, 18 -> {
+                // Traverse events carry X/Z only; use the actor's grounded height for the contact plane.
+                // API: MC Entity#getY. Server X/Z remains authoritative despite interpolation.
+                if ((kind == 14 || kind == 18) && entity != null) dir = new Vec3(dir.x, entity.getY(), dir.z);
+                if (kind == 18 && entity != null && executionTier >= 0 && executionTier < 7) {
+                    if (executionTier == 0) DIPPERS.remove(entityId);
+                    DipperInk ink = DIPPERS.computeIfAbsent(entityId, id -> new DipperInk(executionTier, clientTicks));
+                    ink.points[executionTier] = dir.add(0, .025, 0);
+                    ink.reached = Math.max(ink.reached, executionTier + 1);
+                }
+                if (kind == 14 && entity != null) ARRIVALS.add(new DustRing(dir.add(0, .025, 0), clientTicks));
+                if (entity != null && entity.onGround()) {
+                    Vec3 foot = (kind == 14 || kind == 18 ? dir : entity.position().subtract(dir)
+                            .add(new Vec3(-dir.z, 0, dir.x).normalize().scale(.12))).add(0, .03, 0);
+                    // API: MC 1.21.1 BlockPos#containing/below, BlockBehaviour.BlockStateBase#getMapColor, MapColor#col.
+                    var block = net.minecraft.core.BlockPos.containing(foot).below();
+                    int colour = entity.level().getBlockState(block).getMapColor(entity.level(), block).col;
+                    boolean shift = kind == 17;
+                    Vec3 push = kind == 18 ? Vec3.ZERO : dir.normalize().scale(-1);
+                    for (int i = 0; i < (shift ? 24 : 16) && PUFFS.size() < 256; i++) {
+                        double angle = RNG.nextDouble() * Math.PI * 2;
+                        Vec3 velocity = new Vec3(Math.cos(angle) * .035, .012 + RNG.nextDouble() * .025, Math.sin(angle) * .035);
+                        if (shift) velocity = push.scale(.045 + RNG.nextDouble() * .055).add(velocity.scale(.5)).add(0, -.012, 0);
+                        Puff puff = new Puff(foot, velocity, clientTicks, shift ? 12 : 8,
+                                shift ? .35 + RNG.nextDouble() * .15 : .22 + RNG.nextDouble() * .12,
+                                shift ? .72F : .55F, shift ? .85F : .65F, false);
+                        if (!shift) puff.groundColour = colour;
+                        PUFFS.add(puff);
+                    }
+                    // API: MC 1.21.1 ClientLevel#playLocalSound; SoundEvents#WOOL_STEP.
+                    var level = Minecraft.getInstance().level;
+                    if (level != null) level.playLocalSound(foot.x, foot.y, foot.z, net.minecraft.sounds.SoundEvents.WOOL_STEP,
+                            net.minecraft.sounds.SoundSource.PLAYERS, .8F, 1.3F, false);
+                }
+            }
+            case 19 -> {
+                DipperInk ink = DIPPERS.get(entityId);
+                if (ink != null && executionTier >= 0 && executionTier < 7 && ink.points[executionTier] != null) {
+                    if (executionTier == 6) ink.finalCut = clientTicks;
+                    FoundationVfx.dipperCut(entityId, ink.points[executionTier], dir);
+                }
+            }
+            case 15 -> {
+                if (entity != null && entity.onGround() && dir.lengthSqr() > 1e-8) {
+                    Vec3 end = entity.position().add(0, .012, 0);
+                    if (SKIDS.size() >= 128) SKIDS.remove(0);
+                    SKIDS.add(new Skid(end.subtract(dir.normalize().scale(Math.min(.3, dir.length()))), end, clientTicks));
+                }
+            }
+            case 16 -> {
+                if (entity != null) {
+                    Vec3 centre = entity.position().add(dir).add(0, 1.1, 0);
+                    Vec3 facing = entity.getLookAngle();
+                    Vec3 across = new Vec3(-facing.z, 0, facing.x).normalize().scale(.65);
+                    Ribbon cut = sheet(line(centre.subtract(across.scale(.65)), centre.add(across.scale(.65)), 4, Vec3.ZERO),
+                            clientTicks, 0, 0, 4, .045, hex(0x858585), .45F, Vec3.ZERO);
+                    cut.airCut = true;
+                    RIBBONS.add(cut);
+                }
+            }
+            case 0 -> { var trail = RUNS.get(entityId); if (trail != null) trail.draining = true; }
             case 1 -> {
                 if (entity != null) {
                     RUNS.put(entityId, new RunTrail((int) Math.round(dir.x), executionTier, entity));
@@ -561,6 +739,40 @@ public final class FootworkVfx {
                     death(entity, executionTier, dir);
                 }
             }
+            case 11 -> {
+                CHARGES.put(entityId, (float) clientTicks);
+                BREACH_PATHS.remove(entityId);
+            }
+            case 12 -> {
+                Vec3 at = entity != null ? entity.position() : CLONE_POSITIONS.get(entityId);
+                Vec3 flow = CLONE_FLOWS.getOrDefault(entityId, new Vec3(0, 0, -.2));
+                if (at != null) for (int i = 0; i < 12; i++) {
+                    Vec3 footUp = at.add(0, i * .14, 0);
+                    WISPS.add(new Wisp(footUp, flow, clientTicks + i / 12.0F, 3 - i / 12.0F, .04, hex(0x344354)).ribbon());
+                }
+                CLONE_POSITIONS.remove(entityId); CLONE_FLOWS.remove(entityId);
+            }
+            case 13 -> EXPOSED.put(entityId, clientTicks + (executionTier > 0 ? executionTier : 60));
+            case 10 -> {
+                Entity victim = Minecraft.getInstance().level.getEntity(executionTier);
+                if (victim != null) {
+                    Vec3 at = victim.position().add(0, 1, 0);
+                    for (int i = 0; i < 8; i++) WISPS.add(new Wisp(at,
+                            new Vec3(RNG.nextDouble() - .5, RNG.nextDouble() - .5, RNG.nextDouble() - .5).scale(.5),
+                            clientTicks, 2, .04, hex(i < 2 ? 0xfffdf4 : 0xffd584)).ribbon());
+                    for (int i = 0; i < 8; i++) SPARKS.add(new Spark(at,
+                            new Vec3(RNG.nextDouble() - .5, RNG.nextDouble() - .3, RNG.nextDouble() - .5).scale(.5),
+                            clientTicks, 2, .25, .025, hex(i < 3 ? 0xfffdf4 : 0xffd584)));
+                    for (int i = 0; i < 8; i++) {
+                        Shard fragment = new Shard(at, new Vec3(RNG.nextDouble() - .5, RNG.nextDouble() * .4, RNG.nextDouble() - .5), clientTicks, 2, .08);
+                        fragment.rgb = new float[] {33 / 255F, 29 / 255F, 26 / 255F};
+                        SHARDS.add(fragment);
+                    }
+                    Vec3 right = new Vec3(-victim.getLookAngle().z, 0, victim.getLookAngle().x).normalize();
+                    RIBBONS.add(sheet(new Vec3[] {at.add(right.scale(-.25)).add(0, -.2, 0), at.add(0, .1, 0), at.add(right.scale(.2)).add(0, .3, 0)},
+                            clientTicks, 0, 1, 1, .035, hex(0xffd584), 1, Vec3.ZERO));
+                }
+            }
             case 9 -> {
                 if (entity != null) {
                     behind(entity, executionTier, dir);
@@ -578,7 +790,7 @@ public final class FootworkVfx {
         windDash(entity, executionTier, offset, true);
     }
 
-    /** V0..3 keep the existing air palette and bound copies to 1/2/3, lasting 4/6/8 ticks. */
+    /** V0..5 keep the existing air palette; insight tiers add fourth/fifth copies lasting 10/12 ticks. */
     private static void windDash(Entity entity, int executionTier, Vec3 offset, boolean evade) {
         if (offset.lengthSqr() < 1.0E-4D) {
             return;
@@ -616,9 +828,24 @@ public final class FootworkVfx {
         ghost(player, pos, player.yBodyRot, delay, FootworkFamily.windAfterimageLife(executionTier), 0.3F, colour, false, 0.0F, Vec3.ZERO);
     }
 
-    /** Наступление использует тот же воздушный след, с более широкой полосой. */
+    private static final Map<Integer, Float> CHARGES = new HashMap<>();
+
     private static void death(Entity entity, int executionTier, Vec3 offset) {
-        windDash(entity, executionTier, offset, false);
+        if (offset.lengthSqr() < 1e-8) return;
+        int id = entity.getId();
+        if (clientTicks - BREACH_AT.getOrDefault(id, -100) > 3) BREACH_PATHS.remove(id);
+        List<Vec3> path = BREACH_PATHS.computeIfAbsent(id, ignored -> new ArrayList<>());
+        if (path.isEmpty()) path.add(entity.position().subtract(offset).add(0, .8, 0));
+        path.add(entity.position().add(0, .8, 0));
+        BREACH_AT.put(id, clientTicks);
+        List<Ribbon> previous = BREACH_RIBBONS.get(id);
+        if (previous != null) RIBBONS.removeAll(previous);
+        Vec3[] points = path.toArray(Vec3[]::new);
+        // Reuse the ribbon mesher, with additive blending and vertex feathering (refs 8–9).
+        Ribbon wind = sheet(points, clientTicks, 0, 0, 4, .6, hex(0xe3eaf0), .6F, Vec3.ZERO);
+        wind.deathWind = true;
+        RIBBONS.add(wind);
+        BREACH_RIBBONS.put(id, List.of(wind));
     }
 
     /**
@@ -628,52 +855,46 @@ public final class FootworkVfx {
      * розовая дуга по внешней стороне поворота, лепестки по касательной; 6–9 — за спиной лента
      * загибается вверх до 1,4, веер лепестков; передний участок гаснет первым.
      */
+    public static Vec3[] behindSamples(List<Vec3> route) {
+        return io.github.verycooltimo.murim.technique.FootworkPaths.behindRibbon(route);
+    }
+
+    public static void behindRoute(io.github.verycooltimo.murim.network.TraversePayloads.SevenRoute route) {
+        var mc = Minecraft.getInstance();
+        if (mc.level == null) return;
+        var entity = mc.level.getEntity(route.actor());
+        if (entity == null) return;
+        if (entity instanceof AbstractClientPlayer player) {
+            // Existing wind_god_steps clip is five ticks; present all of it over the six-tick orbit.
+            io.github.verycooltimo.murim.client.MurimPlayerAnimations.playTimed(player,
+                    ResourceLocation.fromNamespaceAndPath("murim", "wind_god_steps"), 5f / route.ticks());
+        }
+        var target = mc.level.getEntity(route.target());
+        renderBehind(entity, route.stars(), route.points(), target instanceof LivingEntity living ? living : null,
+                clientTicks - Math.max(0, mc.level.getGameTime() - route.startTick()));
+        io.github.verycooltimo.murim.client.Sfx.play(entity, route.stars() >= 1
+                ? io.github.verycooltimo.murim.registry.ModSounds.BLINK : io.github.verycooltimo.murim.registry.ModSounds.DASH, .8f, 1.1f);
+    }
+
     private static void behind(Entity entity, int executionTier, Vec3 offset) {
-        if (executionTier < 1 || offset.lengthSqr() < 1.0E-4D) {
-            return;
-        }
-        float now = clientTicks;
-        Vec3 from = entity.position();
-        Vec3 to = from.add(offset);
+        renderBehind(entity, executionTier, List.of(entity.position(), entity.position().add(offset)), null, clientTicks);
+    }
+
+    private static void renderBehind(Entity entity, int executionTier, List<Vec3> approved, LivingEntity target, float now) {
+        if (executionTier < 1 || approved.size() < 2) return;
+        Vec3 from = approved.getFirst(), to = approved.getLast();
+        Vec3 offset = to.subtract(from);
         Vec3 d = offset.normalize();
-        Minecraft mc = Minecraft.getInstance();
-        LivingEntity target = null;
-        double best = 9.0D;
-        for (LivingEntity t : mc.level.getEntitiesOfClass(LivingEntity.class, new net.minecraft.world.phys.AABB(to, to).inflate(3.0D),
-                e -> e != entity && e.isAlive())) {
-            double dd = t.position().distanceToSqr(to);
-            if (dd < best) {
-                best = dd;
-                target = t;
-            }
-        }
-        Vec3 c = target != null ? target.position() : from.lerp(to, 0.6D);
+        Vec3 c = target != null ? target.position() : from.lerp(to, .6);
         Vec3 rel = new Vec3(to.x - c.x, 0.0D, to.z - c.z);
         Vec3 toT = new Vec3(c.x - from.x, 0.0D, c.z - from.z);
         Vec3 td = toT.lengthSqr() < 1.0E-4D ? d : toT.normalize();
         Vec3 s0 = new Vec3(-td.z, 0.0D, td.x);
         Vec3 sd = rel.dot(s0) >= 0.0D ? s0 : s0.scale(-1.0D);
         double half = target != null ? target.getBbWidth() / 2.0D : 0.3D;
-        double rad = 0.9D + half * 0.6D;
-        // Основная лента: заход сбоку-спереди, дуга вокруг цели, за спиной — загиб вверх.
-        int n = 32;
-        Vec3[] path = new Vec3[n];
-        double a0 = Math.toRadians(150.0D);
-        double a1 = Math.toRadians(-5.0D);
-        Vec3 entry = c.add(td.scale(rad * Math.cos(a0))).add(sd.scale(rad * Math.sin(a0)));
-        for (int i = 0; i < n; i++) {
-            double u = i / (double) (n - 1);
-            Vec3 at;
-            if (u < 0.25D) {
-                at = from.lerp(entry, u / 0.25D);
-            } else {
-                double ang = a0 + (a1 - a0) * (u - 0.25D) / 0.75D;
-                at = c.add(td.scale(rad * Math.cos(ang))).add(sd.scale(rad * Math.sin(ang)));
-            }
-            double h = u < 0.85D ? 0.3D + 0.7D * u / 0.85D : 1.0D + 0.4D * (u - 0.85D) / 0.15D;
-            path[i] = new Vec3(at.x, from.y + h, at.z);
-        }
-        RIBBONS.add(sheet(path, now + 2.0F, 3.0F, 3.0F, 5.0F, 0.2D, hex(0xD0F1F6), 0.4F, Vec3.ZERO));
+        int n = approved.size();
+        Vec3[] path = behindSamples(approved);
+        RIBBONS.add(sheet(path, now, 6.0F, 3.0F, 5.0F, 0.2D, hex(0xD0F1F6), 0.4F, Vec3.ZERO));
         dust(from, d.scale(-1.0D), 2 + executionTier / 2, now, 0.8D);
         // Ложный разворот спереди: дуга загибается в сторону, противоположную обходу.
         Vec3 front = c.subtract(td.scale(half + 0.5D));
@@ -707,7 +928,7 @@ public final class FootworkVfx {
                         14.0F + RNG.nextFloat() * 6.0F, 0.1D + 0.03D * RNG.nextDouble()));
             }
             // Веер за спиной: 6 лепестков в секторе 60° дальше по касательной.
-            Vec3 endTan = path[n - 1].subtract(path[n - 3]);
+            Vec3 endTan = path[n - 1].subtract(path[Math.max(0, n - 3)]);
             endTan = new Vec3(endTan.x, 0.0D, endTan.z).normalize();
             for (int i = 0; i < 6; i++) {
                 double ang = Math.toRadians(-30.0D + 60.0D * i / 5.0D);
@@ -988,9 +1209,14 @@ public final class FootworkVfx {
     static void onClientTick(ClientTickEvent.Post event) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null) {
+            AIR.clear();
+            RAIN_REFRESH.clear();
             RIBBONS.clear();
             PETALS.clear();
             PUFFS.clear();
+            SKIDS.clear();
+            DIPPERS.clear();
+            ARRIVALS.clear();
             SHARDS.clear();
             GHOSTS.clear();
             FLASHES.clear();
@@ -998,16 +1224,28 @@ public final class FootworkVfx {
             WISPS.clear();
             MOTES.clear();
             RUNS.clear();
-            SHADOWS.clear();
+            SHADOWS.clear(); EXPOSED.clear(); BREACH_PATHS.clear(); BREACH_RIBBONS.clear(); BREACH_AT.clear(); CLONE_POSITIONS.clear(); CLONE_FLOWS.clear();
+            CHARGES.clear();
             return;
         }
         if (mc.isPaused()) {
             return;
         }
         clientTicks++;
+        RAIN_REFRESH.entrySet().removeIf(e -> e.getValue() < clientTicks - 1);
+        AIR.entrySet().removeIf(entry -> {
+            if (clientTicks >= entry.getValue().until() || !(mc.level.getEntity(entry.getKey()) instanceof AbstractClientPlayer player)) return true;
+            var trail = entry.getValue();
+            trail.previous = trail.current;
+            trail.current = player.position();
+            trail.history.add(trail.current);
+            if (trail.history.size() > 12) trail.history.removeFirst();
+            if ((clientTicks - trail.started) % 5 == 0) airBlur(player, trail.stars());
+            return false;
+        });
         float now = clientTicks;
         for (Ribbon r : RIBBONS) {
-            if (now > r.born + r.draw) {
+            if (r.deathWind && now > r.born + r.draw) {
                 for (int i = 0; i < r.pts.length; i++) {
                     r.pts[i] = r.pts[i].add(r.drift[i]);
                 }
@@ -1094,10 +1332,12 @@ public final class FootworkVfx {
                 double yr = Math.toRadians(g.yaw());
                 Vec3 right = new Vec3(-Math.cos(yr), 0.0D, -Math.sin(yr));
                 for (int k = 0; k < DISSOLVE_AT.length; k++) {
-                    if ((g.gone()[0] & (1 << k)) == 0 && t >= DISSOLVE_AT[k]) {
+                    if ((g.gone()[0] & (1 << k)) == 0 && t >= (g.colour().equals(hex(0x0b0f1a)) ? .7F + .3F * DISSOLVE_AT[k] : DISSOLVE_AT[k])) {
                         g.gone()[0] |= 1 << k;
                         Vec3 at = g.pos().add(right.scale(DISSOLVE_POINT[k][0])).add(0.0D, DISSOLVE_POINT[k][1] - (g.crouch() ? 0.2D : 0.0D), 0.0D);
-                        burstWind(at, g.drift(), 3 + (int) g.vapor(), now, g.colour(), g.pos());
+                        if (g.colour().equals(hex(0x0b0f1a)))
+                            tearRibbons(at, g.drift(), 4, now, .35, hex(0x1b2a44), hex(0x2a3a5a));
+                        else burstWind(at, g.drift(), 3 + (int) g.vapor(), now, g.colour(), g.pos());
                     }
                 }
             }
@@ -1117,9 +1357,12 @@ public final class FootworkVfx {
                 }
                 SHARDS.add(new Shard(at, g.drift().add((RNG.nextDouble() - 0.5D) * 0.02D, 0.01D + 0.015D * RNG.nextDouble(),
                         (RNG.nextDouble() - 0.5D) * 0.02D), now, 9.0F + RNG.nextFloat() * 6.0F, 0.025D + 0.03D * RNG.nextDouble())
-                        .vapor(RNG.nextFloat() < 0.6F ? g.colour() : WHITE));
+                        .vapor(g.colour().equals(hex(0x0b0f1a)) ? hex(0x1b2a44) : RNG.nextFloat() < 0.6F ? g.colour() : WHITE));
             }
         }
+        SKIDS.removeIf(s -> clientTicks - s.born() >= 30);
+        DIPPERS.values().removeIf(s -> clientTicks >= s.finalCut + io.github.verycooltimo.murim.technique.DipperTrace.FADE_TICKS);
+        ARRIVALS.removeIf(s -> clientTicks - s.born() >= 8);
         FLASHES.removeIf(f -> now > f.born + f.life + 1.0F);
         tickRuns(mc);
         tickShadows(mc);
@@ -1155,6 +1398,12 @@ public final class FootworkVfx {
             for (List<Node> st : r.streamers) {
                 age(st);
                 trim(st, 14);
+            }
+            if (r.draining) {
+                trim(r.left, 12); trim(r.right, 12); trim(r.corridor, 12);
+                if (r.left.isEmpty() && r.right.isEmpty() && r.corridor.isEmpty()
+                        && r.streamers.stream().allMatch(List::isEmpty)) it.remove();
+                continue;
             }
             if (r.family == HUASHAN && r.executionTier < 1) {
                 continue;
@@ -1212,11 +1461,11 @@ public final class FootworkVfx {
                 if (tier >= 1 && speed > 0.05D) {
                     r.corridor.add(new Node(pos.add(0.0D, 0.8D, 0.0D), Vec3.ZERO, now, 0.0D));
                     double ramp = Mth.clamp(nowAge / 20.0D, 0.0D, 1.0D);
-                    double maxLen = tier == 1 ? 2.0D : tier == 2 ? 6.0D : (r.executionTier == 8 ? 20.0D : 10.0D);
+                    double maxLen = tier == 1 ? 2.0D : tier == 2 ? 6.0D : (r.executionTier >= 8 ? 20.0D + 5.0D * (r.executionTier - 8) : 10.0D);
                     trimLength(r.corridor, 2.0D + (maxLen - 2.0D) * ramp);
                     trim(r.corridor, 30);
                     if (tier >= 2 && near) {
-                        int count = tier == 3 ? 3 : 2;
+                        int count = tier >= 3 ? 3 : 2;
                         for (int k = 0; k < count; k++) {
                             Vec3 at = pos.add(side.scale((k - (count - 1) / 2.0D) * 0.3D)).add(0.0D, 0.6D + k * 0.3D, 0.0D);
                             r.streamers.get(k).add(new Node(at, side.scale(0.02D * Math.sin(now * 0.4D + k)), now, k));
@@ -1226,7 +1475,7 @@ public final class FootworkVfx {
                             windGhost(player, pos, r.executionTier, 0.0F, RUN_BLUE);
                         }
                     }
-                    if (tier == 3 && nowAge == 20) {
+                    if (tier >= 3 && nowAge == 20) {
                         io.github.verycooltimo.murim.client.Sfx.play(e,
                                 io.github.verycooltimo.murim.registry.ModSounds.BURST_STEP, 0.6F, 1.0F);
                     }
@@ -1253,6 +1502,33 @@ public final class FootworkVfx {
     }
 
     private static void tickShadows(Minecraft mc) {
+        EXPOSED.entrySet().removeIf(e -> clientTicks >= e.getValue() || mc.level.getEntity(e.getKey()) == null);
+        BREACH_AT.entrySet().removeIf(e -> {
+            if (clientTicks - e.getValue() <= 20) return false;
+            BREACH_PATHS.remove(e.getKey()); BREACH_RIBBONS.remove(e.getKey()); return true;
+        });
+        CLONE_POSITIONS.keySet().removeIf(id -> mc.level.getEntity(id) == null);
+        CLONE_FLOWS.keySet().removeIf(id -> !CLONE_POSITIONS.containsKey(id));
+        for (Entity e : mc.level.entitiesForRendering()) if (e instanceof io.github.verycooltimo.murim.entity.ShadowClone) {
+            Vec3 previous = CLONE_POSITIONS.put(e.getId(), e.position());
+            Vec3 flow = previous == null ? e.getLookAngle().scale(-.2) : previous.subtract(e.position()).scale(.6);
+            CLONE_FLOWS.put(e.getId(), flow);
+            WISPS.add(new Wisp(e.position().add(0, .2 + RNG.nextDouble(), 0), flow, clientTicks, 5, .025, hex(0x344354)).ribbon());
+        }
+        if (clientTicks % 2 == 0) for (int id : EXPOSED.keySet()) {
+            Entity e = mc.level.getEntity(id);
+            if (e == null) continue;
+            Vec3 at = e.position().add(0, 1.25, 0);
+            Vec3 toward = mc.gameRenderer.getMainCamera().getPosition().subtract(at).normalize();
+            Vec3 right = new Vec3(-toward.z, 0, toward.x).normalize();
+            at = at.add(toward.scale(e.getBbWidth() * .6));
+            Vec3[] seal = {at.add(right.scale(-.13)), at.add(0, .17, 0), at.add(right.scale(.13)), at.add(0, -.17, 0), at.add(right.scale(-.13))};
+            Ribbon outline = sheet(seal, clientTicks, 0, 1, 1, .018, hex(0xffd584), .85F, Vec3.ZERO);
+            outline.broad = true; RIBBONS.add(outline);
+            RIBBONS.add(sheet(new Vec3[] {at.add(0, .17, 0), at.add(right.scale(-.04)).add(0, .03, 0), at.add(right.scale(.04)).add(0, -.03, 0), at.add(0, -.17, 0)},
+                    clientTicks, 0, 1, 1, .012, hex(0xffd584), .9F, Vec3.ZERO));
+        }
+        CHARGES.entrySet().removeIf(e -> clientTicks - e.getValue() > 10);
         Iterator<Map.Entry<Integer, Shadow>> it = SHADOWS.entrySet().iterator();
         while (it.hasNext()) {
             Map.Entry<Integer, Shadow> entry = it.next();
@@ -1266,33 +1542,61 @@ public final class FootworkVfx {
             Vec3 step = pos.subtract(shadow.last);
             shadow.last = pos;
             shadow.moved += step.horizontalDistance();
-            if (clientTicks % 12 == 0) {
-                dust(pos, Vec3.ZERO, 1, clientTicks, 0.25D);
-            }
-            if (FootworkFamily.windVfxTier(shadow.executionTier) >= 2 && shadow.moved > 1.5D
-                    && clientTicks - shadow.lastGhost >= 12 && entity instanceof AbstractClientPlayer player) {
+            if (shadow.moved >= .8
+                    && entity instanceof AbstractClientPlayer player) {
                 shadow.lastGhost = clientTicks;
-                shadow.moved = 0.0D;
-                windGhost(player, pos, shadow.executionTier, 0.0F, hex(0x91B5C1));
+                shadow.moved %= .8;
+                int cap = 4 + Math.min(2, shadow.executionTier / 5);
+                var copies = GHOSTS.stream().filter(g -> g.entityId() == player.getId()).toList();
+                if (copies.size() >= cap) GHOSTS.remove(copies.get(0));
+                if (mc.getEntityRenderDispatcher().getRenderer(player) instanceof PlayerRenderer renderer) posePlayer(renderer.getModel(), player, 0);
+                ghost(player, pos, player.yBodyRot, 0, 6 + Math.min(2, shadow.executionTier / 5), .3F, hex(0x111925), true, 0, step.scale(-.12));
             }
         }
     }
 
-    /** Вход в Тень: немного пыли, с V1 — одна серая воздушная лента. */
+    /** Reference frames 5–6: silhouette peels away into dark wind. */
     private static void shadowEnter(Entity e, int executionTier) {
-        dust(e.position(), Vec3.ZERO, 2, clientTicks, 0.4D);
-        if (FootworkFamily.windVfxTier(executionTier) >= 1) {
-            Vec3 back = Vec3.directionFromRotation(0.0F, e.getYRot()).scale(-1.0D);
-            RIBBONS.add(sheet(spiral(e.position(), back, 0.45D, 0.2D, 1.2D, Math.PI, Math.toRadians(180), 10),
-                    clientTicks, 1.0F, 1.0F, 4.0F, 0.12D, hex(0x91B5C1), 0.3F, back.scale(0.05D)));
+        Vec3 flow = e.getLookAngle().scale(-.12);
+        tearRibbons(e.position().add(0, 1, 0), flow, 12, clientTicks, .7, hex(0x1b2a44), hex(0x2a3a5a));
+        if (e instanceof AbstractClientPlayer player)
+            silhouette(player, e.position(), player.yBodyRot, clientTicks, flow, hex(0x1b2a44), .6F, 250, 0, 5, 10, false);
+    }
+
+    private static void shadowExit(Entity e, int executionTier) {
+        for (Ghost g : GHOSTS) if (g.entityId() == e.getId())
+            tearRibbons(g.pos().add(0, .8, 0), g.drift(), 4, clientTicks, .6, hex(0x1b2a44), hex(0x2a3a5a));
+        GHOSTS.removeIf(g -> g.entityId() == e.getId());
+        tearRibbons(e.position().add(0, .8, 0), Vec3.ZERO, 8, clientTicks, .8, hex(0x1b2a44), hex(0x2a3a5a));
+    }
+
+    @SubscribeEvent(priority = net.neoforged.bus.api.EventPriority.HIGHEST)
+    static void shadowBody(net.neoforged.neoforge.client.event.RenderPlayerEvent.Pre event) {
+        if (SHADOWS.containsKey(event.getEntity().getId()) && event.getEntity() instanceof AbstractClientPlayer player) {
+            posePlayer(event.getRenderer().getModel(), player, event.getPartialTick());
+            event.setCanceled(true);
         }
     }
 
-    /** Выход из Тени: короткий послеобраз начиная с V2. */
-    private static void shadowExit(Entity e, int executionTier) {
-        if (FootworkFamily.windVfxTier(executionTier) >= 2 && e instanceof AbstractClientPlayer player) {
-            windGhost(player, e.position(), executionTier, 0.0F, hex(0x91B5C1));
-        }
+    @SubscribeEvent(priority = net.neoforged.bus.api.EventPriority.LOWEST)
+    static void chargeLean(net.neoforged.neoforge.client.event.RenderPlayerEvent.Pre event) {
+        Float born = CHARGES.get(event.getEntity().getId());
+        if (event.isCanceled() || born == null || clientTicks - born > 9) return;
+        event.getPoseStack().pushPose();
+        event.getPoseStack().mulPose(Axis.YP.rotationDegrees(-event.getEntity().getYRot()));
+        event.getPoseStack().mulPose(Axis.XP.rotationDegrees(18));
+        event.getPoseStack().mulPose(Axis.YP.rotationDegrees(event.getEntity().getYRot()));
+    }
+    @SubscribeEvent
+    static void chargeLeanEnd(net.neoforged.neoforge.client.event.RenderPlayerEvent.Post event) {
+        Float born = CHARGES.get(event.getEntity().getId());
+        if (born != null && clientTicks - born <= 9) event.getPoseStack().popPose();
+    }
+
+    private static void posePlayer(PlayerModel<AbstractClientPlayer> model, AbstractClientPlayer p, float partial) {
+        model.crouching = p.isCrouching();
+        model.setupAnim(p, p.walkAnimation.position(partial), p.walkAnimation.speed(partial), p.tickCount + partial,
+                Mth.wrapDegrees(p.yHeadRot - p.yBodyRot), p.getXRot());
     }
 
     private static void age(List<Node> nodes) {
@@ -1386,7 +1690,7 @@ public final class FootworkVfx {
             return;
         }
         if (RIBBONS.isEmpty() && PETALS.isEmpty() && PUFFS.isEmpty() && SHARDS.isEmpty() && GHOSTS.isEmpty() && SPARKS.isEmpty() && WISPS.isEmpty() && MOTES.isEmpty()
-                && FLASHES.isEmpty() && RUNS.isEmpty() && SHADOWS.isEmpty()) {
+                && SKIDS.isEmpty() && DIPPERS.isEmpty() && ARRIVALS.isEmpty() && FLASHES.isEmpty() && RUNS.isEmpty() && SHADOWS.isEmpty()) {
             return;
         }
         Minecraft mc = Minecraft.getInstance();
@@ -1403,6 +1707,35 @@ public final class FootworkVfx {
         try {
             poseStack.translate(-camera.x, -camera.y, -camera.z);
             PoseStack.Pose pose = poseStack.last();
+            if (!DIPPERS.isEmpty() || !ARRIVALS.isEmpty()) {
+                RenderType ground = MurimRenderTypes.solid();
+                VertexConsumer ink = buffers.getBuffer(ground);
+                for (DipperInk figure : DIPPERS.values()) {
+                    float alpha = io.github.verycooltimo.murim.technique.DipperTrace.alpha(now, figure.finalCut);
+                    for (var edge : io.github.verycooltimo.murim.technique.DipperTrace.edges(figure.reached)) {
+                        Vec3 from = figure.points[edge.from()], to = figure.points[edge.to()];
+                        if (from != null && to != null) groundLine(ink, pose, from, to, .01, alpha);
+                    }
+                    for (Vec3 point : figure.points) if (point != null) dustRing(ink, pose, point, .19, alpha);
+                }
+                for (DustRing ring : ARRIVALS) dustRing(ink, pose, ring.point(), .24, .7F * (1 - (now - ring.born()) / 8));
+                buffers.endBatch(ground);
+            }
+            if (!SKIDS.isEmpty()) {
+                RenderType ground = MurimRenderTypes.solid();
+                VertexConsumer ink = buffers.getBuffer(ground);
+                Vec3 up = new Vec3(0, 1, 0);
+                for (Skid skid : SKIDS) {
+                    float alpha = 0.32F * Mth.clamp(1 - (now - skid.born()) / 30, 0, 1);
+                    Vec3 along = skid.to().subtract(skid.from()).normalize();
+                    Vec3 width = new Vec3(-along.z, 0, along.x).scale(0.045);
+                    VfxDraw.vertex(ink, pose, skid.from().subtract(width), up, 0, 0, alpha, 0.19F, 0.16F, 0.12F);
+                    VfxDraw.vertex(ink, pose, skid.to().subtract(width), up, 1, 0, alpha, 0.19F, 0.16F, 0.12F);
+                    VfxDraw.vertex(ink, pose, skid.to().add(width), up, 1, 1, alpha, 0.19F, 0.16F, 0.12F);
+                    VfxDraw.vertex(ink, pose, skid.from().add(width), up, 0, 1, alpha, 0.19F, 0.16F, 0.12F);
+                }
+                buffers.endBatch(ground);
+            }
             if (!PUFFS.isEmpty()) {
                 RenderType dt = MurimRenderTypes.dustPuffs();
                 VertexConsumer d = buffers.getBuffer(dt);
@@ -1413,7 +1746,11 @@ public final class FootworkVfx {
                     float pt = (p.age + partial) / p.life;
                     float a = p.alpha * Mth.clamp(pt / 0.08F, 0.0F, 1.0F) * (pt < 0.5F ? 1.0F : Mth.clamp((1.0F - pt) / 0.5F, 0.0F, 1.0F))
                             * nearFade(p.pos, camera);
-                    PlumVfx.puff(d, pose, camera, p.prev.lerp(p.pos, partial), p.size * (0.7D + 0.8D * pt), p.cell, a, p.gray);
+                    if (p.groundColour < 0) PlumVfx.puff(d, pose, camera, p.prev.lerp(p.pos, partial), p.size * (.7 + .8 * pt), p.cell, a, p.gray);
+                    else PlumVfx.puff(d, pose, camera, p.prev.lerp(p.pos, partial), p.size * (.7 + .8 * pt), p.cell, a,
+                            .18F + .6F * ((p.groundColour >> 16) & 255) / 255F,
+                            .16F + .6F * ((p.groundColour >> 8) & 255) / 255F,
+                            .14F + .6F * (p.groundColour & 255) / 255F);
                 }
                 buffers.endBatch(dt);
                 RenderType st = MurimRenderTypes.smokeCel();
@@ -1451,9 +1788,14 @@ public final class FootworkVfx {
                 }
                 buffers.endBatch(mt);
             }
+            VertexConsumer wind = buffers.getBuffer(MurimRenderTypes.ribbon());
+            for (Ribbon r : RIBBONS) {
+                if (r.deathWind) deathRibbon(wind, pose, camera, r, now);
+            }
+            buffers.endBatch(MurimRenderTypes.ribbon());
             VertexConsumer air = buffers.getBuffer(MurimRenderTypes.airBand());
             for (Ribbon r : RIBBONS) {
-                ribbon(air, pose, camera, r, now);
+                if (!r.deathWind) ribbon(air, pose, camera, r, now);
             }
             for (Map.Entry<Integer, RunTrail> en : RUNS.entrySet()) {
                 Entity e = mc.level.getEntity(en.getKey());
@@ -1515,7 +1857,7 @@ public final class FootworkVfx {
                 buffers.endBatch(pt);
             }
             // Силуэты — последними: они пишут глубину и иначе закрыли бы ленты, проходящие сквозь них.
-            if (!GHOSTS.isEmpty() || !SHADOWS.isEmpty() || !RUNS.isEmpty()) {
+            if (!GHOSTS.isEmpty() || !SHADOWS.isEmpty() || !RUNS.isEmpty() || !CLONE_POSITIONS.isEmpty()) {
                 ghosts(mc, poseStack, buffers, now, partial);
             }
         } finally {
@@ -1524,6 +1866,36 @@ public final class FootworkVfx {
     }
 
     /** Лента по готовой кривой: голова у тела острая, самое широкое — в первой трети от головы. */
+    /** Camera-facing soft ribbon: 35% core, feathered edges, four ticks of release. */
+    private static void deathRibbon(VertexConsumer c, PoseStack.Pose pose, Vec3 camera, Ribbon r, float now) {
+        float release = Mth.clamp(1 - (now - r.born) / 4, 0, 1);
+        if (release <= 0) return;
+        int n = r.pts.length;
+        double[] widths = new double[n];
+        float[] alpha = new float[n];
+        for (int i = 0; i < n; i++) {
+            double u = i / (double) (n - 1);
+            widths[i] = r.width * (.75 + .25 * Math.sqrt(u));
+            alpha[i] = release * (float) Math.pow(u, .65);
+        }
+        strip(c, pose, camera, r.pts, widths, alpha, .6F, r.surface, true);
+        // Sixteen tapered strips peel from both camera-facing edges, drifting backward.
+        Vec3 back = r.pts[0].subtract(r.pts[n - 1]).normalize();
+        for (int k = 0; k < 16; k++) {
+            double u = (k + .5) / 16;
+            double sample = u * (n - 1);
+            int i = Math.min(n - 2, (int) sample);
+            Vec3 at = r.pts[i].lerp(r.pts[i + 1], sample - i);
+            Vec3 side = back.cross(camera.subtract(at)).normalize();
+            double age = now - r.born;
+            at = at.add(side.scale((k % 2 == 0 ? -1 : 1) * (.5 + age * .035)))
+                    .add(back.scale(age * .12));
+            Vec3[] torn = {at.add(back.scale(.45 + .3 * u)), at, at.subtract(back.scale(.16))};
+            strip(c, pose, camera, torn, new double[]{0, .035 + .025 * u, 0},
+                    new float[]{0, release * (float) u, 0}, .5F, r.surface, true);
+        }
+    }
+
     private static void ribbon(VertexConsumer c, PoseStack.Pose pose, Vec3 camera, Ribbon r, float now) {
         float tau = now - r.born;
         if (tau < 0.0F || now > r.end()) {
@@ -1537,30 +1909,32 @@ public final class FootworkVfx {
         List<Vec3> pts = new ArrayList<>();
         List<Double> hw = new ArrayList<>();
         List<Float> al = new ArrayList<>();
-        double head = 0.0D;
-        for (int i = 0; i < n; i++) {
-            double u = i / (double) (n - 1);
-            double show = timed ? timeOf(u) : u;
-            if (tau < r.draw * show) {
-                break;
+        double head = r.draw <= 0 ? 1 : Mth.clamp(tau / r.draw, 0, 1);
+        if (timed && r.draw > 0) {
+            double lo = 0, hi = 1;
+            for (int j = 0; j < 24; j++) {
+                double mid = (lo + hi) * .5;
+                if (timeOf(mid) <= tau / r.draw) lo = mid; else hi = mid;
             }
-            head = u;
+            head = lo;
         }
-        for (int i = 0; i < n; i++) {
-            double u = i / (double) (n - 1);
-            if (u > head + 1.0E-6D) {
-                break;
-            }
-            if (u < cut) {
-                continue;
-            }
-            // Профиль: от хвоста (u = cut) к голове — 0 → максимум у 75 % → острый кончик.
-            double span = Math.max(1.0E-3D, head - cut);
-            double v = (u - cut) / span;
-            double prof = v < 0.2D ? Math.sqrt(v / 0.2D) : v > 0.85D ? Math.max(0.0D, 1.0D - (v - 0.85D) / 0.15D * 0.9D) : 1.0D;
-            pts.add(r.pts[i]);
+        if (head <= cut) return;
+        // Fractional endpoints prevent the ribbon growing/shrinking a whole node per frame.
+        for (int j = -1; j <= n; j++) {
+            double u = j < 0 ? cut : j == n ? head : j / (double) (n - 1);
+            if (j >= 0 && j < n && (u <= cut || u >= head)) continue;
+            double sample = u * (n - 1);
+            int i = Math.min(n - 2, (int) sample);
+            double f = sample - i;
+            Vec3 point = r.pts[i].lerp(r.pts[i + 1], f);
+            point = point.add(r.drift[i].lerp(r.drift[i + 1], f)
+                    .scale(Math.max(0, now - r.born - r.draw)));
+            double v = (u - cut) / Math.max(1e-3, head - cut);
+            double prof = v < .2 ? Math.sqrt(v / .2) : v > .85 ? Math.max(0, 1 - (v - .85) / .15 * .9) : 1;
+            if (r.broad) prof = 1;
+            pts.add(point);
             hw.add(r.width * prof * thin);
-            al.add(r.bright * (float) Mth.clamp(1.0D - cut * cut, 0.0D, 1.0D));
+            al.add(r.bright * (float) Mth.clamp(1 - cut * cut, 0, 1));
         }
         if (pts.size() < 2) {
             return;
@@ -1572,12 +1946,18 @@ public final class FootworkVfx {
             w[i] = hw.get(i);
             a[i] = al.get(i);
         }
-        if (r.sheetAlpha > 0.0F) {
-            strip(c, pose, camera, p, w, a, r.sheetAlpha, r.surface);
-            stripEdge(c, pose, camera, p, w, a, 0.7F, r.edge);
-            return;
-        }
+        if (FootworkRibbonLayers.sheet(r.sheetAlpha,
+                () -> strip(c, pose, camera, p, w, a, r.sheetAlpha, r.surface),
+                () -> { if (!r.airCut) stripEdge(c, pose, camera, p, w, a, .7F, r.edge); },
+                () -> pinkAccent(c, pose, camera, r, p, w, a))) return;
         strip(c, pose, camera, p, w, a, 0.6F, r.surface);
+        pinkAccent(c, pose, camera, r, p, w, a);
+        // Светлая острая сердцевина — чёткая кромка манхвы, без ореола.
+        strip(c, pose, camera, p, scale(w, r.edge == WHITE ? 0.42D : 0.28D), a, 0.95F, r.edge);
+    }
+
+    private static void pinkAccent(VertexConsumer c, PoseStack.Pose pose, Vec3 camera, Ribbon r,
+                                   Vec3[] p, double[] w, float[] a) {
         if (r.pink) {
             double[] pw = new double[p.length];
             for (int i = 0; i < p.length; i++) {
@@ -1586,8 +1966,6 @@ public final class FootworkVfx {
             strip(c, pose, camera, p, pw, a, 0.7F, PINK);
             strip(c, pose, camera, p, scale(pw, 0.4D), a, 0.6F, PINK_HOT);
         }
-        // Светлая острая сердцевина — чёткая кромка манхвы, без ореола.
-        strip(c, pose, camera, p, scale(w, r.edge == WHITE ? 0.42D : 0.28D), a, 0.95F, r.edge);
     }
 
     /** Ленты Хуашань от стоп или световой коридор Молнии — из живых узлов следа. */
@@ -1756,6 +2134,7 @@ public final class FootworkVfx {
     }
 
     private static void ghosts(Minecraft mc, PoseStack poseStack, MultiBufferSource.BufferSource buffers, float now, float partial) {
+        drawClones(mc, poseStack, buffers, partial);
         AbstractClientPlayer any = mc.player;
         if (any == null || !(mc.getEntityRenderDispatcher().getRenderer(any) instanceof PlayerRenderer renderer)) {
             return;
@@ -1770,7 +2149,7 @@ public final class FootworkVfx {
             // Шаг тени: живой силуэт бледнеет — поверх тела бледная полупрозрачная оболочка в
             // текущей позе (модель хранит позу только что нарисованного игрока).
             for (Map.Entry<Integer, Shadow> en : SHADOWS.entrySet()) {
-                if (en.getValue().executionTier < 2 || !(mc.level.getEntity(en.getKey()) instanceof AbstractClientPlayer p)) {
+                if (!(mc.level.getEntity(en.getKey()) instanceof AbstractClientPlayer p)) {
                     continue;
                 }
                 if (p == mc.getCameraEntity() && mc.options.getCameraType().isFirstPerson()) {
@@ -1778,10 +2157,10 @@ public final class FootworkVfx {
                 }
                 Vec3 at = new Vec3(Mth.lerp(partial, p.xo, p.getX()), Mth.lerp(partial, p.yo, p.getY()), Mth.lerp(partial, p.zo, p.getZ()));
                 float yaw = Mth.rotLerp(partial, p.yBodyRotO, p.yBodyRot);
-                float pulse = 0.18F + 0.04F * Mth.sin(now * 0.35F) + 0.006F * en.getValue().executionTier;
-                drawModel(model, poseStack, buffers, null, at, yaw, p.isCrouching(), 1.02F, pulse, hex(0xCFE6DD));
+                posePlayer(model, p, partial);
+                drawModel(model, poseStack, buffers, p.getSkin().texture(), at, yaw, p.isCrouching(), 1, .2F, hex(0x18212d));
             }
-            // Шаг молнии: тело светится голубым — плотная оболочка и мягкий второй слой «глоу»
+            // Шаг Звёздного Света: тело светится голубым — плотная оболочка и мягкий второй слой «глоу»
             // (автор 03.10: «добавь свечение самого персонажа и чуть-чуть глоу»).
             for (Map.Entry<Integer, RunTrail> en : RUNS.entrySet()) {
                 RunTrail r = en.getValue();
@@ -1836,6 +2215,28 @@ public final class FootworkVfx {
         }
     }
 
+    private static void drawClones(Minecraft mc, PoseStack poses, MultiBufferSource.BufferSource buffers, float partial) {
+        for (Entity entity : mc.level.entitiesForRendering()) {
+            if (!(entity instanceof io.github.verycooltimo.murim.entity.ShadowClone clone)
+                    || !(mc.level.getEntity(clone.ownerId()) instanceof AbstractClientPlayer owner)
+                    || !(mc.getEntityRenderDispatcher().getRenderer(owner) instanceof PlayerRenderer renderer)) continue;
+            var model = renderer.getModel();
+            ModelPart[] parts = parts(model);
+            PartPose[] saved = new PartPose[parts.length];
+            for (int i = 0; i < parts.length; i++) saved[i] = parts[i].storePose();
+            try {
+                posePlayer(model, owner, partial);
+                float swing = (float) Math.sin((clone.tickCount + partial) * .7) * .85F;
+                model.leftLeg.xRot = swing; model.rightLeg.xRot = -swing;
+                model.leftArm.xRot = -swing; model.rightArm.xRot = swing;
+                Vec3 at = clone.getPosition(partial);
+                drawModel(model, poses, buffers, owner.getSkin().texture(), at, clone.getYRot(), false, 1, .35F, hex(0x111925));
+            } finally {
+                for (int i = 0; i < parts.length; i++) parts[i].loadPose(saved[i]);
+            }
+        }
+    }
+
     private static void drawModel(PlayerModel<AbstractClientPlayer> model, PoseStack poseStack, MultiBufferSource.BufferSource buffers,
                                   ResourceLocation skin, Vec3 pos, float yaw, boolean crouch, float grow, float alpha, VfxColour col) {
         if (alpha <= 0.01F) {
@@ -1876,9 +2277,32 @@ public final class FootworkVfx {
 
     // ---------------------------------------------------------------- примитивы
 
+    /** Ground-plane alpha-over ink, same solid render type as the existing skids.
+     * API verified: MC Vec3#subtract/normalize/scale/add; VfxDraw owns vertex submission. */
+    private static void groundLine(VertexConsumer ink, PoseStack.Pose pose, Vec3 from, Vec3 to, double halfWidth, float alpha) {
+        Vec3 along = to.subtract(from).normalize();
+        Vec3 width = new Vec3(-along.z, 0, along.x).scale(halfWidth), up = new Vec3(0, 1, 0);
+        VfxDraw.vertex(ink, pose, from.subtract(width), up, 0, 0, alpha, .812F, .765F, .631F);
+        VfxDraw.vertex(ink, pose, to.subtract(width), up, 1, 0, alpha, .812F, .765F, .631F);
+        VfxDraw.vertex(ink, pose, to.add(width), up, 1, 1, alpha, .812F, .765F, .631F);
+        VfxDraw.vertex(ink, pose, from.add(width), up, 0, 1, alpha, .812F, .765F, .631F);
+    }
+    private static void dustRing(VertexConsumer ink, PoseStack.Pose pose, Vec3 point, double radius, float alpha) {
+        for (int i = 0; i < 24; i++) {
+            double a = i * Math.PI / 12, b = (i + 1) * Math.PI / 12;
+            groundLine(ink, pose, point.add(Math.cos(a) * radius, 0, Math.sin(a) * radius),
+                    point.add(Math.cos(b) * radius, 0, Math.sin(b) * radius), .01, alpha);
+        }
+    }
+
     /** Полоса вдоль ломаной, развёрнутая к камере; ширина и прозрачность в каждой точке. */
     private static void strip(VertexConsumer c, PoseStack.Pose pose, Vec3 camera, Vec3[] p, double[] hw, float[] a, float k,
                               VfxColour col) {
+        strip(c, pose, camera, p, hw, a, k, col, false);
+    }
+
+    private static void strip(VertexConsumer c, PoseStack.Pose pose, Vec3 camera, Vec3[] p, double[] hw, float[] a, float k,
+                              VfxColour col, boolean feather) {
         Vec3 last = null;
         Vec3[] sd = new Vec3[p.length];
         for (int i = 0; i < p.length; i++) {
@@ -1908,13 +2332,19 @@ public final class FootworkVfx {
             if (sd[i] == null || sd[i + 1] == null || (a[i] <= 0.0F && a[i + 1] <= 0.0F) || (hw[i] <= 0.0D && hw[i + 1] <= 0.0D)) {
                 continue;
             }
-            Vec3 o0 = sd[i].scale(hw[i]);
-            Vec3 o1 = sd[i + 1].scale(hw[i + 1]);
-            Vec3 n = sd[i];
-            VfxDraw.vertex(c, pose, p[i].subtract(o0), n, 0.0F, 0.0F, a[i] * k, col.red(), col.green(), col.blue());
-            VfxDraw.vertex(c, pose, p[i + 1].subtract(o1), n, 1.0F, 0.0F, a[i + 1] * k, col.red(), col.green(), col.blue());
-            VfxDraw.vertex(c, pose, p[i + 1].add(o1), n, 1.0F, 1.0F, a[i + 1] * k, col.red(), col.green(), col.blue());
-            VfxDraw.vertex(c, pose, p[i].add(o0), n, 0.0F, 1.0F, a[i] * k, col.red(), col.green(), col.blue());
+            double[] lanes = feather ? new double[]{-1, -.65, -.35, .35, .65, 1} : new double[]{-1, 1};
+            for (int lane = 0; lane + 1 < lanes.length; lane++) {
+                double lo = lanes[lane], hi = lanes[lane + 1];
+                float alo = feather ? (float) Math.min(1, (1 - Math.abs(lo)) / .65) : 1;
+                float ahi = feather ? (float) Math.min(1, (1 - Math.abs(hi)) / .65) : 1;
+                VfxColour low = feather && Math.abs(lo) <= .35 ? hex(0xfffdf4) : col;
+                VfxColour high = feather && Math.abs(hi) <= .35 ? hex(0xfffdf4) : col;
+                Vec3 n = sd[i];
+                VfxDraw.vertex(c, pose, p[i].add(sd[i].scale(hw[i] * lo)), n, 0, (float) ((lo + 1) / 2), a[i] * k * alo, low.red(), low.green(), low.blue());
+                VfxDraw.vertex(c, pose, p[i + 1].add(sd[i + 1].scale(hw[i + 1] * lo)), n, 1, (float) ((lo + 1) / 2), a[i + 1] * k * alo, low.red(), low.green(), low.blue());
+                VfxDraw.vertex(c, pose, p[i + 1].add(sd[i + 1].scale(hw[i + 1] * hi)), n, 1, (float) ((hi + 1) / 2), a[i + 1] * k * ahi, high.red(), high.green(), high.blue());
+                VfxDraw.vertex(c, pose, p[i].add(sd[i].scale(hw[i] * hi)), n, 0, (float) ((hi + 1) / 2), a[i] * k * ahi, high.red(), high.green(), high.blue());
+            }
         }
     }
 

@@ -1,6 +1,7 @@
 package io.github.verycooltimo.murim.sect;
 
 import io.github.verycooltimo.murim.entity.SectDisciple;
+import io.github.verycooltimo.murim.entity.SectNavigation;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.levelgen.Heightmap;
@@ -64,9 +65,9 @@ public final class SectWeather {
         return level.getHeight(Heightmap.Types.MOTION_BLOCKING, feet.getX(), feet.getZ()) > feet.getY() + 1;
     }
 
-    /** Дела, которые дождь не прерывает: пост, встреча у ворот, лечение, доклад главе. */
+    /** Дела, которые дождь не прерывает: лечение, доклад главе. The guard no longer stays in the rain (watch-2): he shelters near the post. */
     static boolean stays(SectSchedule.Kind k) {
-        return k == SectSchedule.Kind.GUARD || k == SectSchedule.Kind.TREAT
+        return k == SectSchedule.Kind.TREAT
                 || k == SectSchedule.Kind.WAIT_TREAT || k == SectSchedule.Kind.REPORT || k == SectSchedule.Kind.SHELTER;
     }
 
@@ -146,6 +147,9 @@ public final class SectWeather {
         }
         Vec3 wall = null;
         double wallD = Double.MAX_VALUE;
+        // The shelter must be on the side of the walls where the work is: a covered cell the other side of a wall is the nearest by distance
+        // and no way to it (smoke pass 23.10: a first-rank disciple walked along a brick wall for 480 ticks to a cell behind it, twice).
+        var clear = SectWalking.clear(level);
         BlockPos.MutableBlockPos p = new BlockPos.MutableBlockPos();
         for (int r = 0; r <= SEARCH; r++) {
             Vec3 best = null;
@@ -168,8 +172,14 @@ public final class SectWeather {
                         if (!SectLife.standable(level, p)) {
                             continue;
                         }
+                        // a cell with a thin wall or a pillar in it passes for standable (the plate is a few px), and a person put there
+                        // stands inside the wall and cannot start a path (smoke pass 23.10: two people beside a wall of thin plaster)
+                        if (SectNavigation.tallObstacle(level, p, level.getBlockState(p))
+                                || SectNavigation.tallObstacle(level, p.above(), level.getBlockState(p.above()))) {
+                            continue;
+                        }
                         Vec3 spot = new Vec3(x + 0.5D, y, z + 0.5D);
-                        if (occupied(taken, spot)) {
+                        if (occupied(taken, spot) || r > 1 && !clear.test(c, p.immutable())) {
                             continue;
                         }
                         double d = spot.distanceToSqr(from) + dy * dy * 2.0D;

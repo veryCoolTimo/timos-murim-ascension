@@ -1,0 +1,94 @@
+{
+  "name": "npc.murim.trader",
+  "title": "npc.murim.trader.title",
+  "start": [
+    {
+      "when": [
+        {
+          "flag": "quest.impostor.done",
+          "not_flag": "quest.impostor.how.fought"
+        },
+        {
+          "social": "quest:available:impostor"
+        }
+      ],
+      "node": "after_talk"
+    },
+    {
+      "when": [
+        {
+          "flag": "quest.impostor.done"
+        },
+        {
+          "social": "quest:available:impostor"
+        }
+      ],
+      "node": "after_fight"
+    },
+    {
+      "when": [
+        {
+          "flag": "quest.impostor.out"
+        },
+        {
+          "social": "quest:available:impostor"
+        }
+      ],
+      "node": "tr_settle"
+    },
+    {
+      "node": "greet"
+    }
+  ],
+  "nodes": {
+    "greet": {
+      "line": "dialogue.murim.quest.trader.greet",
+      "options": [
+        {
+          "text": "dialogue.murim.fragments.sources.ask",
+          "next": "fragment_sources"
+        }
+      ]
+    },
+    "tr_settle": {
+      "line": "dialogue.murim.quest.trader.settle",
+      "options": [
+        {
+          "text": "dialogue.murim.quest.trader.opt.settle",
+          "actions": [
+            {
+              "type": "quest_hand_in",
+              "value": "impostor_done"
+            }
+          ],
+          "next": "tr_done",
+          "when": [
+            {
+              "social": "quest:available:impostor"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "tr_done": {
+      "line": "dialogue.murim.quest.trader.done"
+    },
+    "after_talk": {
+      "line": "dialogue.murim.quest.trader.after_talk"
+    },
+    "after_fight": {
+      "line": "dialogue.murim.quest.trader.after_fight"
+    },
+    "fragment_sources": {
+      "line": "dialogue.murim.fragments.sources.guest_trader",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    }
+  }
+}

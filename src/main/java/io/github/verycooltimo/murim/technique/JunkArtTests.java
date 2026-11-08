@@ -8,6 +8,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.monster.Zombie;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -54,6 +55,65 @@ public final class JunkArtTests {
                     a.id() + ": не то оружие");
             helper.assertTrue(!d.weaknessKey().isEmpty(), a.id() + ": нет изъяна");
         }
+        helper.succeed();
+    }
+
+    /** Author 03.11: discarded curricula stay separate from the authentic Six Elements art. */
+    @GameTest(template = "small_floor", timeoutTicks = 20)
+    public static void mountHuaJunkIsLearnableAndInferior(GameTestHelper helper) {
+        ServerPlayer player = fakePlayer(helper);
+        // API: neoforge-src/net/neoforged/neoforge/attachment/IAttachmentHolder.java#setData/getData.
+        player.setData(io.github.verycooltimo.murim.registry.ModAttachments.PROFILE,
+                new io.github.verycooltimo.murim.profile.DantianProfile(100, 1, 1, "neutral", "test", 100, 0, 1, 1, 0));
+        player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.IRON_SWORD));
+        // API: minecraft-src/net/minecraft/server/level/ServerPlayer.java#doTick calls Player.tick;
+        // LivingEntity.java#tick detects equipment updates. ServerPlayer.tick alone does not.
+        player.doTick();
+        // API: minecraft-src/net/minecraft/world/entity/LivingEntity.java#getAttributeValue;
+        // Items.java#IRON_SWORD + Tiers.java#IRON: 1 base + 3 sword + 2 material damage.
+        helper.assertTrue(player.getAttributeValue(Attributes.ATTACK_DAMAGE) == 6.0D,
+                "iron sword damage attribute was not applied");
+        var six = io.github.verycooltimo.murim.sect.SectService.SIX;
+        var authentic = TechniqueLoader.get(io.github.verycooltimo.murim.technique.Styles.SIX_HARMONIES.forms().get(0));
+        for (var id : JunkArts.MOUNT_HUA) {
+            var definition = TechniqueLoader.get(id);
+            helper.assertTrue(definition != null && definition.behavior() instanceof TechniqueBehavior.MeleeArc,
+                    "missing sword cut " + id);
+            helper.assertTrue(!definition.foundation() && definition.requires().isEmpty()
+                    && definition.interruption().linksTo().isEmpty() && Styles.of(id).isEmpty(), "junk opened a style " + id);
+            helper.assertTrue(definition.behavior().damage() < TechniqueDamage.base(player, six), "junk damage exceeds Six Elements: " + id);
+            helper.assertTrue(io.github.verycooltimo.murim.mastery.MasteryService.learn(player, id, 0)
+                    == io.github.verycooltimo.murim.mastery.MasteryService.Learn.LEARNED, "cannot learn " + id);
+            helper.assertTrue(!io.github.verycooltimo.murim.mastery.MasteryService.knows(player, six), "junk taught authentic Six Elements");
+            helper.assertTrue(JunkArts.ARCHIVE_BOOKS.contains(id)
+                    && io.github.verycooltimo.murim.library.LibraryPlan.SHELF_GENUINE.stream()
+                    .anyMatch(book -> book.technique().equals(id.toString())), "missing book source " + id);
+        }
+        io.github.verycooltimo.murim.mastery.MasteryService.learn(player, six, 0);
+        // Learn everything first so all three swings have the same breadth bonus and fresh fatigue.
+        for (var id : JunkArts.MOUNT_HUA) {
+            io.github.verycooltimo.murim.mastery.MasteryService.onMiss(player, id);
+        }
+        io.github.verycooltimo.murim.mastery.MasteryService.onMiss(player, six);
+        var state = player.getData(io.github.verycooltimo.murim.registry.ModAttachments.MASTERY);
+        double authenticPractice = state.progress(six).progress() + state.progress(six).unprocessed();
+        for (var id : JunkArts.MOUNT_HUA) {
+            var progress = state.progress(id);
+            helper.assertTrue(progress.progress() + progress.unprocessed() > 0
+                    && progress.progress() + progress.unprocessed() < authenticPractice, "practice penalty not applied " + id);
+            // API: minecraft-src/net/minecraft/gametest/framework/GameTestHelper.java#assertTrue(boolean,String).
+            double expected = authenticPractice * (id.equals(JunkArts.TRUE_SIX_ELEMENTS) ? 0.5D : 0.75D);
+            helper.assertTrue(Math.abs(progress.progress() + progress.unprocessed() - expected) < 1.0E-9D,
+                    "incorrect missed-swing practice penalty " + id);
+        }
+        var quick = TechniqueLoader.get(JunkArts.TRUE_SIX_ELEMENTS);
+        var heavy = TechniqueLoader.get(JunkArts.TAIYI_SWORD);
+        helper.assertTrue(quick.totalTicks() < authentic.totalTicks()
+                && quick.cooldownTicks() < authentic.cooldownTicks(), "simplified sword is not quicker");
+        helper.assertTrue(heavy.ticksOf(io.github.verycooltimo.murim.combat.TechniquePhase.RECOVERY)
+                > authentic.ticksOf(io.github.verycooltimo.murim.combat.TechniquePhase.RECOVERY), "Taiyi has no recovery cost");
+        helper.assertTrue(JunkArts.practiceFactor(JunkArts.TRUE_SIX_ELEMENTS) < JunkArts.practiceFactor(six)
+                && JunkArts.practiceFactor(JunkArts.TAIYI_SWORD) < JunkArts.practiceFactor(six), "junk masters too quickly");
         helper.succeed();
     }
 

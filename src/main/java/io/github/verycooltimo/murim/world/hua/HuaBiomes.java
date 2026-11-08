@@ -22,6 +22,12 @@ import net.neoforged.neoforge.registries.DeferredRegister;
  * (docs/design/reference/mount-hua/DESCRIPTIONS.md: sea of mist {@code #c8d2dc}, deciduous belt {@code #4f5e46}),
  * temperate (no snow even at the summit), wind and distant birds, goats and rabbits on the massif.
  *
+ * <p><b>Two paints.</b> The vanilla features of a chunk look at the stored biome of the column they place on ({@code BiomeFilter}); the Hua biomes
+ * have no features, so a column that is Hua BEFORE the vegetal step gets no vanilla trees, bamboo, vines, flowers or melons. The feature
+ * {@code murim:mount_hua_paint} therefore paints the chunk in the step {@code fluid_springs}, after the ores and the underground decoration
+ * (the massif keeps its ores and caves) and before {@code vegetal_decoration}; the cleanup pass paints again at the end. Before this
+ * the paint came last and the features were planned and placed from the vanilla biomes (jungle bamboo over a reshaped slope).
+ *
  * <p><b>How the biome gets into the world.</b> Not through the biome source: replacing or wrapping the overworld's
  * multi-noise source needs a mixin (ADR-05 ladder) and breaks terrain mods, the same reason the mountain itself
  * is a feature (docs/adr/0001-mount-hua-terrain-feature.md). Instead the cleanup pass of the mountain feature
@@ -44,8 +50,15 @@ public final class HuaBiomes {
 
     /** Massif strength above which the column is the mountain proper (the scarp, peaks, sect shelf, pillars). */
     static final double MASSIF = 0.35;
-    /** Mountain weight above which a column belongs to the foothill belt. */
-    static final double BELT = 0.5;
+    /**
+     * Mountain weight above which a column belongs to the foothill belt: ANY weight. The terrain pass lerps the vanilla ground to the mountain
+     * by {@link MountHuaShape#blend}, so every column with a weight above 0 is reshaped, and the outer 15 % of the belt used to keep the
+     * vanilla biome (a jungle beside the mountain grew jungle on its slopes: bamboo, vines and trees over ground that had been lowered under
+     * them; author 26.10, seed 8345443418991968190).
+     */
+    static final double BELT = 0.0;
+    /** Blocks round the columns of the terrain pass that are Hua as well, so the trees and crowns of the old ground are cleaned with it. */
+    static final int MARGIN = 8;
 
     private static final DeferredRegister<SoundEvent> SOUNDS = DeferredRegister.create(Registries.SOUND_EVENT, MurimMod.MODID);
     /** Wind through pines over the gorges (loop, ElevenLabs; art/sounds-src/hua_wind.txt). */
@@ -64,15 +77,21 @@ public final class HuaBiomes {
 
     /** Which biome a column at local (u, v) gets. */
     public static Zone classify(MountHuaShape shape, double u, double v) {
-        if (!MountHuaShape.inBounds(u, v) || shape.blend(u, v) < BELT) {
+        if (!reaches(shape, u, v)) {
             return Zone.NONE;
         }
         return shape.massif(u, v) > MASSIF ? Zone.MASSIF : Zone.FOOTHILLS;
     }
 
+    /** True where the terrain pass changes the ground (weight above {@link #BELT}) or a block is within {@link #MARGIN} of such a column. */
+    static boolean reaches(MountHuaShape shape, double u, double v) {
+        return shape.blend(u, v) > BELT || shape.blend(u + MARGIN, v) > BELT || shape.blend(u - MARGIN, v) > BELT
+                || shape.blend(u, v + MARGIN) > BELT || shape.blend(u, v - MARGIN) > BELT;
+    }
+
     /** Biome zone of a world column (block centre). */
     public static Zone zoneAt(MountHuaSite site, int x, int z) {
-        return classify(site.shape(), site.localU(x + 0.5, z + 0.5), site.localV(x + 0.5, z + 0.5));
+        return classify(site.shape(), site.centerU(x, z), site.centerV(x, z));
     }
 
     /**

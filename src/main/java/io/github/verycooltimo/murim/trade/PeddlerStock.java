@@ -12,7 +12,7 @@ import static io.github.verycooltimo.murim.trade.Coins.silver;
  * <p>Все суммы — в медных вэнях ({@link Coins}: 9 вэней = лян серебра, 9 лян = лян золота). Баланс правится
  * здесь и только здесь; добыча (таблицы лута) задаётся генераторами tools/loot/*.py с теми же единицами.
  *
- * <p>Опора — замер {@code /murim camp lootsim}: поход в лагерь даёт ~20 лян серебра и горсть меди. Поход
+ * <p>Опора — замер {@code /murim dev camp lootsim}: поход в лагерь даёт ~20 лян серебра и горсть меди. Поход
  * окупает две-три простые пилюли, но не две страницы: купить нужную страницу — заметная трата, а не замена
  * походу. Скупка дешёвая: страница уходит за шестую часть своей цены, хлам из архива — за медяки.
  */
@@ -41,17 +41,28 @@ public final class PeddlerStock {
         }
     }
 
+    public static final Line HUA_MAP = new Line("minecraft:filled_map", 1, silver(2), Integer.MAX_VALUE, 1.0D, "hua_map");
+
+    public static boolean offersHuaMap(boolean member) { return true; }
+
     /** Что торговец продаёт. */
     public static final List<Line> SELLS = List.of(
+            HUA_MAP,
             new Line("minecraft:bread", 4, 5, 12, 1.0D),
             new Line("minecraft:cooked_mutton", 3, 13, 8, 1.0D),
             new Line("murim:wooden_sword", 1, silver(2), 2, 1.0D),
             new Line("murim:tang_dagger", 4, silver(5), 3, 1.0D),
+            // MVP K2: common roots replace guaranteed stacks of ancient treasures.
+            new Line("murim:pill_vitality", 4, silver(4), 16, 1.0D),
+            new Line("murim:hundred_ginseng", 2, silver(5), 6, 1.0D),
+            new Line("murim:thousand_ginseng", 1, silver(28), 1, 0.35D),
+            new Line("murim:ice_crystal", 1, silver(35), 2, 1.0D),
+            new Line("murim:thousand_lingzhi", 4, silver(32), 4, 1.0D),
             new Line("murim:pill_snow_plum", 1, silver(7), 3, 1.0D),
             // Книжка уличного искусства: дешевле страницы — слабая техника с честным изъяном.
             new Line("murim:technique_manual", 1, silver(3), 1, 0.6D, "junk_art"),
             new Line("murim:manual_page", 1, silver(13), 1, 0.5D, "page"),
-            new Line("murim:pill_origin_energy", 1, silver(30), 1, 0.2D));
+            new Line("murim:pill_small_restoration", 1, silver(24), 1, 0.08D));
 
     /** Что торговец скупает. */
     public static final List<Line> BUYS = List.of(
@@ -68,12 +79,12 @@ public final class PeddlerStock {
     public static final int EXCHANGE_USES = 64;
 
     /**
-     * Книги страниц на продажу и их веса — как в сундуках лагеря (data/murim/loot_table/chests/bandit_camp):
-     * торговец скупил их у тех же разбойников.
+     * Page books and weights. Includes Falling Petal so sect pupils can deepen their curriculum through trade.
      */
-    public static final List<String> PAGE_BOOKS = List.of("murim:six_harmonies", "murim:seven_plum_blossoms",
-            "murim:dark_fragrance_step", "murim:wind_god_steps");
-    public static final int[] PAGE_WEIGHTS = {5, 3, 3, 1};
+    public static final List<String> PAGE_BOOKS = List.of("murim:six_harmonies", "murim:falling_petal_sword", "murim:seven_plum_blossoms",
+            "murim:dark_fragrance_step", "murim:wind_god_steps",
+            "murim:crescent_sweep", "murim:wedge_fan", "murim:ceremonial_draw");
+    public static final int[] PAGE_WEIGHTS = {5, 3, 3, 3, 1, 3, 3, 2};
 
     /** Книга страницы по броску {@code roll} в [0, 1). */
     public static String pageBook(double roll) {

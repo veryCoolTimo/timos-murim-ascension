@@ -14,7 +14,7 @@ set -euo pipefail
 
 is_jdk21() {
     [ -x "$1/bin/javac" ] || return 1
-    "$1/bin/java" -version 2>&1 | head -1 | grep -qE '"21[.\"]'
+    "$1/bin/java" -version 2>&1 | grep -qE '"21[.\"]'
 }
 
 find_jdk21() {
@@ -49,4 +49,45 @@ fi
 
 export JAVA_HOME="$JDK"
 export PATH="$JAVA_HOME/bin:$PATH"
+# Не больше двух сборок одновременно на машине. Параллельные агенты и worktree однажды
+# подняли по 7 Gradle-демонов за две минуты (21.10): общий сервер на 25 ГБ упёрся в память,
+# ядро убило процесс, а systemd вместе с ним — всю панель tmux. Блокировка держится,
+# пока жив процесс gradlew; демон её не наследует. На macOS flock нет — там без очереди.
+if command -v flock >/dev/null 2>&1 && [ "${MURIM_GW_NOLOCK:-}" != "1" ]; then
+    lock_dir="/tmp/murim-gw-locks-$(id -u)"
+    mkdir -p "$lock_dir"
+    got_slot=""
+    for slot in 0 1; do
+        exec 9>"$lock_dir/slot$slot"
+        if flock -n 9; then got_slot=1; break; fi
+    done
+    if [ -z "$got_slot" ]; then
+        echo "gw: обе очереди сборки заняты, жду свободную..." >&2
+        # 3.11: раньше все ждали только slot0 — освободившийся slot1 простаивал, и очередь шла по одной сборке.
+        while [ -z "$got_slot" ]; do
+            sleep 5
+            for slot in 0 1; do
+                exec 9>"$lock_dir/slot$slot"
+                if flock -n 9; then got_slot=1; break; fi
+            done
+        done
+    fi
+fi
+
+# GameTestServer reads server.properties even on a fresh checkout. An empty file
+# selects vanilla defaults and avoids the missing-file stack trace. Preserve any
+# tester settings; run/ is the default dev working directory (README.md).
+for arg in "$@"; do
+    case "$arg" in
+        runGameTestServer|:runGameTestServer)
+            gametest_run_dir="$(dirname "$0")/run"
+            mkdir -p "$gametest_run_dir"
+            if [ ! -e "$gametest_run_dir/server.properties" ]; then
+                touch "$gametest_run_dir/server.properties"
+            fi
+            break
+            ;;
+    esac
+done
+
 exec "$(dirname "$0")/gradlew" "$@"

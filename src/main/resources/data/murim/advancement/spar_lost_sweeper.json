@@ -1,0 +1,23 @@
+{
+  "display": {
+    "icon": {
+      "id": "murim:ach_spar_lost_sweeper"
+    },
+    "title": {
+      "translate": "advancement.murim.spar_lost_sweeper.title"
+    },
+    "description": {
+      "translate": "advancement.murim.spar_lost_sweeper.desc"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": true
+  },
+  "parent": "murim:join",
+  "criteria": {
+    "done": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

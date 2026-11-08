@@ -115,12 +115,18 @@ public final class SectSocialGameTests {
     @GameTest(template = "sect_yard", timeoutTicks = 40, batch = "sect_social")
     public static void weakStrongAndStageReactions(GameTestHelper h) {
         ServerPlayer strong = player(h, 3);
+        // Cultivation alone does not promote a new member above third-generation disciples.
+        strong.setData(ModAttachments.SECT, candidate());
         SectDisciple junior = npc(h, "yul_ak");
         h.assertTrue(SectSocial.power(strong, junior) == SectSocial.Power.STRONG, "strong player misclassified");
         SectSocial.react(strong, junior);
         h.assertTrue(junior.pose() == SectPose.BOW, "weaker junior did not bow");
         h.assertTrue(junior.getPersistentData().getCompound("murim_sect_yield").getLong("until") > h.getLevel().getGameTime(),
                 "junior did not prepare to step aside");
+        ServerPlayer novice = player(h, 3);
+        SectDisciple peer = npc(h, "yul_jin");
+        SectSocial.react(novice, peer);
+        h.assertTrue(peer.pose() != SectPose.BOW, "cultivation alone made a novice a senior");
         ServerPlayer weak = player(h, 0);
         weak.setData(ModAttachments.SECT, candidate());
         SectDisciple coach = npc(h, "gyeong_pil");
@@ -148,10 +154,10 @@ public final class SectSocialGameTests {
         h.assertTrue(!DialogueService.applyHeadless(p, npc(h, "yul_ak"), finish), "junior issued vault permission");
         h.assertTrue(DialogueService.applyHeadless(p, elder, finish), "new review proof not accepted");
         SectState s = SectService.state(p);
-        h.assertTrue(s.has("request.vault.done") && s.has("vault.permitted") && s.contribution() == 8, "wrong vault reward");
+        h.assertTrue(s.has("request.vault.done") && s.has("pass.scriptures") && !s.has("vault.permitted") && s.contribution() == 8, "wrong favour reward");
         h.assertTrue(!DialogueService.applyHeadless(p, elder, finish), "reward repeated");
         SectAccess.Rule vault = SectAccess.RULES.stream().filter(r -> "vault".equals(r.id())).findFirst().orElseThrow();
-        h.assertTrue(SectAccess.allowed(vault, SectStanding.GRADUATE, s.flags(), SectSchedule.Period.NIGHT), "guards ignored permission");
+        h.assertTrue(!SectAccess.allowed(vault, SectStanding.GRADUATE, s.flags(), SectSchedule.Period.NIGHT), "the main vault is the head's alone: a pass let a disciple in");
         h.assertTrue(!SectAccess.allowed(vault, SectStanding.TRUSTED, java.util.Set.of(), SectSchedule.Period.TRAINING),
                 "standing bypassed permission");
         h.assertTrue(!SectAccess.allowed(vault, SectStanding.OUTSIDER, s.flags(), SectSchedule.Period.TRAINING), "outsider used permission");

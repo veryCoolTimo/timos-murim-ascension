@@ -1,0 +1,98 @@
+{
+  "name": "npc.murim.supplier",
+  "title": "npc.murim.supplier.title",
+  "start": [
+    {
+      "when": [
+        {
+          "flag": "quest.debt.done"
+        },
+        {
+          "social": "quest:available:debt"
+        }
+      ],
+      "node": "bye"
+    },
+    {
+      "node": "debt_offer",
+      "when": [
+        {
+          "social": "quest:available:debt"
+        }
+      ]
+    }
+  ],
+  "nodes": {
+    "bye": {
+      "line": "dialogue.murim.quest.debt.supplier_bye"
+    },
+    "debt_offer": {
+      "line": "dialogue.murim.quest.debt.offer",
+      "enter": [
+        {
+          "type": "set_flag",
+          "value": "quest.debt.offered"
+        }
+      ],
+      "options": [
+        {
+          "text": "dialogue.murim.quest.debt.opt.pay",
+          "when": [
+            {
+              "has_item": "murim:silver_tael*12"
+            },
+            {
+              "social": "quest:available:debt"
+            }
+          ],
+          "actions": [
+            {
+              "type": "quest_hand_in",
+              "value": "debt_pay"
+            }
+          ],
+          "next": "debt_closed"
+        },
+        {
+          "text": "dialogue.murim.quest.debt.opt.return",
+          "when": [
+            {
+              "flag": "clue.crate_fittings"
+            },
+            {
+              "social": "quest:available:debt"
+            }
+          ],
+          "actions": [
+            {
+              "type": "quest_hand_in",
+              "value": "debt_return"
+            }
+          ],
+          "next": "debt_closed"
+        },
+        {
+          "text": "dialogue.murim.quest.debt.opt.where",
+          "when": [
+            {
+              "not_flag": "clue.crate_fittings"
+            },
+            {
+              "social": "quest:available:debt"
+            }
+          ],
+          "next": "debt_where"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "debt_where": {
+      "line": "dialogue.murim.quest.debt.where"
+    },
+    "debt_closed": {
+      "line": "dialogue.murim.quest.debt.closed"
+    }
+  }
+}

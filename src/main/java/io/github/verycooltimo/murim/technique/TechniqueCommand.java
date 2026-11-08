@@ -3,7 +3,6 @@ package io.github.verycooltimo.murim.technique;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
-import io.github.verycooltimo.murim.MurimMod;
 import io.github.verycooltimo.murim.combat.TechniqueService;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -12,9 +11,6 @@ import net.minecraft.commands.arguments.ResourceLocationArgument;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.event.RegisterCommandsEvent;
 
 /**
  * Команда предпросмотра техник.
@@ -23,10 +19,9 @@ import net.neoforged.neoforge.event.RegisterCommandsEvent;
  * проигрывает технику, не выходя из мира и не перезапуская игру. Без этого цикл правки
  * упирается в перезапуск, и обещание «час, а не день» не выполняется.
  *
- * <p>{@code /murim list} печатает загруженные техники — по нему сразу видно, прочитался
+ * <p>{@code /murim dev art list} печатает загруженные техники — по нему сразу видно, прочитался
  * ли новый файл и не отсеял ли его загрузчик из-за ошибки.
  */
-@EventBusSubscriber(modid = MurimMod.MODID)
 public final class TechniqueCommand {
 
     private static final SuggestionProvider<CommandSourceStack> LOADED =
@@ -40,21 +35,31 @@ public final class TechniqueCommand {
                     io.github.verycooltimo.murim.cultivation.MethodLoader.all().keySet().stream()
                             .map(io.github.verycooltimo.murim.mastery.Arts::methodArt)).distinct(), builder);
 
-    @SubscribeEvent
-    static void onRegisterCommands(RegisterCommandsEvent event) {
-        LiteralArgumentBuilder<CommandSourceStack> root = Commands.literal("murim")
-                // Уровень 2: команда меняет состояние мира и бьёт по существам,
-                // обычному игроку на сервере она не нужна.
-                .requires(source -> source.hasPermission(2));
+    /**
+     * The four groups of {@code /murim dev} owned by this class (docs/design/44-commands.md): {@code rank}
+     * (rank and profile), {@code art} (techniques, stars), {@code fight} (aura, enemy, dummy) and the two
+     * qi literals {@code qi}/{@code wall} that the {@code body} group takes. The caller adds the permission.
+     */
+    public record Groups(LiteralArgumentBuilder<CommandSourceStack> rank, LiteralArgumentBuilder<CommandSourceStack> art,
+                         LiteralArgumentBuilder<CommandSourceStack> fight, LiteralArgumentBuilder<CommandSourceStack> qi,
+                         LiteralArgumentBuilder<CommandSourceStack> wall) {
+    }
 
-        root.then(Commands.literal("list").executes(context -> {
+    public static Groups groups() {
+        LiteralArgumentBuilder<CommandSourceStack> art = Commands.literal("art");
+        LiteralArgumentBuilder<CommandSourceStack> rankRoot = Commands.literal("rank");
+        LiteralArgumentBuilder<CommandSourceStack> fight = Commands.literal("fight");
+        LiteralArgumentBuilder<CommandSourceStack> qi;
+        LiteralArgumentBuilder<CommandSourceStack> wall;
+
+        art.then(Commands.literal("list").executes(context -> {
             var all = TechniqueLoader.all();
             context.getSource().sendSuccess(() ->
-                    Component.literal("Загружено техник: " + all.size() + " — " + all.keySet()), false);
+                    Component.translatable("command.murim.dev.loaded", all.size(), all.keySet().toString()), false);
             return all.size();
         }));
 
-        root.then(Commands.literal("preview")
+        art.then(Commands.literal("preview")
                 .then(Commands.argument("technique", ResourceLocationArgument.id())
                         .suggests(LOADED)
                         .executes(context -> {
@@ -63,13 +68,11 @@ public final class TechniqueCommand {
                             if (TechniqueLoader.get(id) == null) {
                                 // Явная ошибка вместо тихого отказа: чаще всего это опечатка
                                 // в имени или файл, который загрузчик отсеял из-за ошибки.
-                                context.getSource().sendFailure(Component.literal(
-                                        "Техника " + id + " не загружена. Проверь /murim list и лог."));
+                                context.getSource().sendFailure(Component.translatable("command.murim.dev.not_loaded", id.toString()));
                                 return 0;
                             }
                             if (!TechniqueService.tryStart(player, id)) {
-                                context.getSource().sendFailure(Component.literal(
-                                        "Техника " + id + " не запустилась: кулдаун или состояние игрока."));
+                                context.getSource().sendFailure(Component.translatable("command.murim.dev.not_started", id.toString()));
                                 return 0;
                             }
                             return 1;
@@ -77,7 +80,7 @@ public final class TechniqueCommand {
 
         // Мгновенное семя по методу: пробовать техники, каждый раз проходя медитацию,
         // — трата времени автора, а не проверка.
-        root.then(Commands.literal("seed")
+        rankRoot.then(Commands.literal("seed")
                 .then(Commands.argument("method", net.minecraft.commands.arguments.ResourceLocationArgument.id())
                         .suggests((context, builder) -> net.minecraft.commands.SharedSuggestionProvider.suggestResource(
                                 io.github.verycooltimo.murim.cultivation.MethodLoader.all().keySet().stream(), builder))
@@ -88,26 +91,24 @@ public final class TechniqueCommand {
                             io.github.verycooltimo.murim.cultivation.CultivationMethod method =
                                     io.github.verycooltimo.murim.cultivation.MethodLoader.get(id);
                             if (method == null) {
-                                context.getSource().sendFailure(Component.literal("Метод не найден: " + id));
+                                context.getSource().sendFailure(Component.translatable("command.murim.dev.method_missing", id.toString()));
                                 return 0;
                             }
-                            io.github.verycooltimo.murim.profile.DantianProfile profile =
-                                    io.github.verycooltimo.murim.cultivation.SeedLogic.seedProfile(
-                                            io.github.verycooltimo.murim.profile.DantianProfile.INITIAL, method, 1.0D);
+                            player.setData(io.github.verycooltimo.murim.registry.ModAttachments.PROFILE,
+                                    io.github.verycooltimo.murim.profile.DantianProfile.INITIAL);
+                            io.github.verycooltimo.murim.cultivation.MeditationService.createSeed(player, method, 1.0D);
+                            var profile = player.getData(io.github.verycooltimo.murim.registry.ModAttachments.PROFILE);
                             player.setData(io.github.verycooltimo.murim.registry.ModAttachments.PROFILE,
                                     profile.withCirculating(profile.maxCirculating()));
-                            player.setData(io.github.verycooltimo.murim.registry.ModAttachments.CULTIVATION,
-                                    io.github.verycooltimo.murim.cultivation.CultivationState.NONE
-                                            .withMethod(id).withBeats(io.github.verycooltimo.murim.cultivation.CultivationState.SEEDED));
                             io.github.verycooltimo.murim.profile.ProfileNetwork.sync(player);
                             context.getSource().sendSuccess(
-                                    () -> Component.literal("Семя даньтяня: " + id + ", ци полная"), false);
+                                    () -> Component.translatable("command.murim.dev.seed", id.toString()), false);
                             return 1;
                         })));
 
         // Выучить технику без манускрипта, сразу на нужном слое: проверять слои, каждый раз
         // проходя бой и медитацию, — трата времени автора. Порог основ здесь НЕ проверяется.
-        root.then(Commands.literal("learn")
+        art.then(Commands.literal("learn")
                 .then(Commands.argument("technique", net.minecraft.commands.arguments.ResourceLocationArgument.id())
                         .suggests((context, builder) -> net.minecraft.commands.SharedSuggestionProvider.suggestResource(
                                 io.github.verycooltimo.murim.technique.TechniqueLoader.all().keySet().stream(), builder))
@@ -117,7 +118,7 @@ public final class TechniqueCommand {
                                         com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(context, "star"))))));
 
         // Все техники сразу на последнем слое (автор 04.10: «тестировать тяжело»).
-        root.then(Commands.literal("learnall").executes(context -> {
+        art.then(Commands.literal("all").executes(context -> {
             ServerPlayer player = context.getSource().getPlayerOrException();
             io.github.verycooltimo.murim.mastery.MasteryState state =
                     player.getData(io.github.verycooltimo.murim.registry.ModAttachments.MASTERY);
@@ -135,7 +136,7 @@ public final class TechniqueCommand {
         }));
 
         // Освоение техник и мудрость — числами, для отладки (игроку мудрость не показывается).
-        var mastery = Commands.literal("mastery").executes(context -> {
+        var mastery = Commands.literal("stars").executes(context -> {
             ServerPlayer player = context.getSource().getPlayerOrException();
             var m = player.getData(io.github.verycooltimo.murim.registry.ModAttachments.MASTERY);
             var text = Component.translatable("command.murim.mastery.header", String.format(java.util.Locale.ROOT, "%.1f", m.wisdom()));
@@ -143,22 +144,22 @@ public final class TechniqueCommand {
                     "command.murim.mastery.entry", io.github.verycooltimo.murim.mastery.MasteryService.artName(id),
                     io.github.verycooltimo.murim.mastery.StarDisplay.gauge(p.stars(), io.github.verycooltimo.murim.mastery.Arts.cap(id)),
                     p.stars(), io.github.verycooltimo.murim.mastery.Arts.cap(id), p.cap(),
-                    String.format(java.util.Locale.ROOT, "%.1f/%.1f", p.progress(), io.github.verycooltimo.murim.mastery.MasteryRules.need(p.stars())))));
+                    String.format(java.util.Locale.ROOT, "%.1f/%.1f", p.progress(), io.github.verycooltimo.murim.mastery.MasteryRules.need(p.stars(), io.github.verycooltimo.murim.mastery.Arts.cap(id))))));
             context.getSource().sendSuccess(() -> text, false);
             return 1;
         });
-        // The old literal remains an alias; both accept star values.
-        for (String literal : java.util.List.of("star", "layer")) {
+        // The old "layer" alias is gone (docs/design/44-commands.md); "set" takes a form, an art id or method/<id>.
+        for (String literal : java.util.List.of("set")) {
             mastery.then(Commands.literal(literal)
                     .then(Commands.argument("technique", ResourceLocationArgument.id()).suggests(MASTERY_ARTS)
                             .then(Commands.argument("star", com.mojang.brigadier.arguments.IntegerArgumentType.integer(0, 12))
                                     .executes(context -> setStars(context,
                                             com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(context, "star"))))));
         }
-        root.then(mastery);
+        art.then(mastery);
 
         // Долить ци: без этого каждую пробу техники приходится ждать, накапливая запас.
-        root.then(Commands.literal("qi").executes(context -> {
+        qi = (Commands.literal("qi").executes(context -> {
             ServerPlayer player = context.getSource().getPlayerOrException();
             io.github.verycooltimo.murim.profile.DantianProfile profile =
                     player.getData(io.github.verycooltimo.murim.registry.ModAttachments.PROFILE);
@@ -166,60 +167,59 @@ public final class TechniqueCommand {
                     profile.withPool(profile.capacity())
                             .withCirculating(profile.maxCirculating()));
             io.github.verycooltimo.murim.profile.ProfileNetwork.sync(player);
-            context.getSource().sendSuccess(() -> Component.literal("Ци пополнена"), false);
+            context.getSource().sendSuccess(() -> Component.translatable("command.murim.dev.qi_full"), false);
             return 1;
         }));
 
         // Запас до стены ранга: прорыв начнётся при следующей медитации, если есть техника 2-го слоя.
-        root.then(Commands.literal("wall").executes(context -> {
+        wall = (Commands.literal("wall").executes(context -> {
             ServerPlayer player = context.getSource().getPlayerOrException();
             io.github.verycooltimo.murim.profile.DantianProfile profile =
                     player.getData(io.github.verycooltimo.murim.registry.ModAttachments.PROFILE);
             player.setData(io.github.verycooltimo.murim.registry.ModAttachments.PROFILE,
                     profile.withPool(io.github.verycooltimo.murim.cultivation.Realm.wall(profile)));
             io.github.verycooltimo.murim.profile.ProfileNetwork.sync(player);
-            context.getSource().sendSuccess(() -> Component.literal("Запас у стены ранга"), false);
+            context.getSource().sendSuccess(() -> Component.translatable("command.murim.dev.wall"), false);
             return 1;
         }));
 
         // Выставить ранг без прорыва: проверять, что даёт ранг, не проходя сцену. Выше Пика (5–10) — данные на будущее.
-        root.then(Commands.literal("rank")
-                .then(Commands.argument("rank", com.mojang.brigadier.arguments.IntegerArgumentType.integer(
+        rankRoot.then(Commands.argument("rank", com.mojang.brigadier.arguments.IntegerArgumentType.integer(
                         0, io.github.verycooltimo.murim.cultivation.Realm.TOP))
                         .executes(context -> setRank(context, 0))
                         // Подступень Пика: 0 — начальная, 1 — утвердившаяся, 2 — вершина (ниже Пика не действует).
                         .then(Commands.argument("stage", com.mojang.brigadier.arguments.IntegerArgumentType.integer(
                                 0, io.github.verycooltimo.murim.cultivation.Realm.STAGES - 1))
                                 .executes(context -> setRank(context,
-                                        com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(context, "stage"))))));
+                                        com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(context, "stage")))));
 
         // Аура противника для проверки давления (docs/design/19 §3ж): на то, куда смотришь,
         // а без цели — на ближайшее существо. 0 — снять. Ранги 5–6 — выше Пика.
-        root.then(Commands.literal("aura")
+        fight.then(Commands.literal("aura")
                 .then(Commands.argument("rank", com.mojang.brigadier.arguments.IntegerArgumentType.integer(
                         0, io.github.verycooltimo.murim.combat.AuraState.MAX_RANK))
                         .executes(context -> aura(context, false))
                         .then(Commands.literal("demonic").executes(context -> aura(context, true)))));
 
         // Противник для проверки давления: зомби без ИИ в четырёх блоках перед игроком.
-        root.then(Commands.literal("enemy")
+        fight.then(Commands.literal("enemy")
                 .then(Commands.argument("rank", com.mojang.brigadier.arguments.IntegerArgumentType.integer(
                         1, io.github.verycooltimo.murim.combat.AuraState.MAX_RANK))
                         .executes(context -> enemy(context, false))
                         .then(Commands.literal("demonic").executes(context -> enemy(context, true)))));
 
         // Сброс кулдауна: подряд смотреть одну и ту же технику иначе нельзя.
-        root.then(Commands.literal("cooldown").executes(context -> {
+        art.then(Commands.literal("cooldown").executes(context -> {
             ServerPlayer player = context.getSource().getPlayerOrException();
             player.setData(io.github.verycooltimo.murim.registry.ModAttachments.TECHNIQUE_STATE,
                     io.github.verycooltimo.murim.combat.TechniqueState.IDLE);
-            context.getSource().sendSuccess(() -> Component.literal("Кулдаун сброшен"), false);
+            context.getSource().sendSuccess(() -> Component.translatable("command.murim.dev.cooldown"), false);
             return 1;
         }));
 
         // Сброс профиля и пути: даньтянь создаётся ОДИН раз за персонажа, и без этой
         // команды создание нельзя пройти второй раз иначе как новым миром.
-        root.then(Commands.literal("reset").executes(context -> {
+        rankRoot.then(Commands.literal("reset").executes(context -> {
             ServerPlayer player = context.getSource().getPlayerOrException();
             player.setData(io.github.verycooltimo.murim.registry.ModAttachments.PROFILE,
                     io.github.verycooltimo.murim.profile.DantianProfile.INITIAL);
@@ -231,12 +231,14 @@ public final class TechniqueCommand {
                     io.github.verycooltimo.murim.mastery.MasteryState.EMPTY);
             io.github.verycooltimo.murim.mastery.MasteryService.sync(player);
             io.github.verycooltimo.murim.profile.ProfileNetwork.sync(player);
+            io.github.verycooltimo.murim.cultivation.MeditationService.sync(player,
+                    io.github.verycooltimo.murim.network.SyncMeditationPayload.Event.NONE);
             context.getSource().sendSuccess(
-                    () -> Component.literal("Профиль сброшен: даньтянь не создан"), false);
+                    () -> Component.translatable("command.murim.dev.profile_reset"), false);
             return 1;
         }));
 
-        root.then(Commands.literal("dummy").executes(context -> {
+        fight.then(Commands.literal("dummy").executes(context -> {
             ServerPlayer player = context.getSource().getPlayerOrException();
             io.github.verycooltimo.murim.entity.TrainingDummy dummy =
                     new io.github.verycooltimo.murim.entity.TrainingDummy(
@@ -245,26 +247,28 @@ public final class TechniqueCommand {
                     .add(player.getLookAngle().scale(3.0D));
             dummy.setPos(spot.x, player.getY(), spot.z);
             player.level().addFreshEntity(dummy);
-            context.getSource().sendSuccess(() -> Component.literal("Манекен поставлен"), false);
+            context.getSource().sendSuccess(() -> Component.translatable("command.murim.dev.dummy"), false);
             return 1;
         }));
 
-        root.then(Commands.literal("awaken").executes(context -> {
-            // Отладочное пробуждение: без него техники недоступны до первого ритуала,
-            // и проверять боевую часть было бы нечем.
+        rankRoot.then(Commands.literal("awaken").executes(context -> {
             ServerPlayer player = context.getSource().getPlayerOrException();
-            io.github.verycooltimo.murim.profile.DantianProfile profile =
-                    io.github.verycooltimo.murim.profile.DantianProfile.INITIAL
-                            .withTags("clear", "debug")
-                            .withAxes(60.0D, 0.8D, 0.8D);
+            var method = player.getData(io.github.verycooltimo.murim.registry.ModAttachments.CULTIVATION)
+                    .method().map(io.github.verycooltimo.murim.cultivation.MethodLoader::get)
+                    .orElseGet(() -> io.github.verycooltimo.murim.cultivation.MethodLoader.get(
+                            ResourceLocation.fromNamespaceAndPath("murim", "six_harmonies")));
+            if (method == null) {
+                context.getSource().sendFailure(Component.translatable("command.murim.dev.method_missing", "murim:six_harmonies"));
+                return 0;
+            }
             player.setData(io.github.verycooltimo.murim.registry.ModAttachments.PROFILE,
-                    profile.withPool(500.0D).withCirculating(profile.maxCirculating()));
-            io.github.verycooltimo.murim.profile.ProfileNetwork.sync(player);
-            context.getSource().sendSuccess(() -> Component.literal("Даньтянь пробуждён"), false);
+                    io.github.verycooltimo.murim.profile.DantianProfile.INITIAL);
+            io.github.verycooltimo.murim.cultivation.MeditationService.createSeed(player, method, 1.0D);
+            context.getSource().sendSuccess(() -> Component.translatable("command.murim.dev.awakened"), false);
             return 1;
         }));
 
-        root.then(Commands.literal("profile").executes(context -> {
+        rankRoot.then(Commands.literal("profile").executes(context -> {
             ServerPlayer player = context.getSource().getPlayerOrException();
             io.github.verycooltimo.murim.profile.DantianProfile p =
                     player.getData(io.github.verycooltimo.murim.registry.ModAttachments.PROFILE);
@@ -280,7 +284,7 @@ public final class TechniqueCommand {
             return 1;
         }));
 
-        event.getDispatcher().register(root);
+        return new Groups(rankRoot, art, fight, qi, wall);
     }
 
     private static int learnCommand(com.mojang.brigadier.context.CommandContext<net.minecraft.commands.CommandSourceStack> context,
@@ -291,16 +295,16 @@ public final class TechniqueCommand {
         io.github.verycooltimo.murim.technique.TechniqueDefinition definition =
                 io.github.verycooltimo.murim.technique.TechniqueLoader.get(id);
         if (definition == null) {
-            context.getSource().sendFailure(Component.literal("Техника не найдена: " + id));
+            context.getSource().sendFailure(Component.translatable("command.murim.dev.art_missing", id.toString()));
             return 0;
         }
         io.github.verycooltimo.murim.mastery.MasteryState state =
                 player.getData(io.github.verycooltimo.murim.registry.ModAttachments.MASTERY);
         player.setData(io.github.verycooltimo.murim.registry.ModAttachments.MASTERY, state.with(id,
                 io.github.verycooltimo.murim.mastery.TechniqueProgress.learned(stars, definition.starCap())));
+        io.github.verycooltimo.murim.mastery.MasteryService.unlockStarForms(player);
         io.github.verycooltimo.murim.mastery.MasteryService.sync(player);
-        context.getSource().sendSuccess(() -> Component.translatable(definition.starCap() == io.github.verycooltimo.murim.mastery.Arts.FOOTWORK_STARS
-                        ? "command.murim.mastery.set.footwork" : "command.murim.mastery.set",
+        context.getSource().sendSuccess(() -> Component.translatable("command.murim.mastery.set",
                 io.github.verycooltimo.murim.mastery.MasteryService.artName(id), Math.min(stars, definition.starCap()), definition.starCap()), false);
         return 1;
     }
@@ -319,7 +323,7 @@ public final class TechniqueCommand {
                 return 0;
             }
         } else if (TechniqueLoader.get(requested) == null) {
-            var style = Styles.ALL.stream().filter(s -> s.id().equals(requested) && !Styles.individualBooks(s)).findFirst();
+            var style = Styles.ALL.stream().filter(s -> s.id().equals(requested)).findFirst();
             if (style.isEmpty()) {
                 context.getSource().sendFailure(Component.translatable("command.murim.mastery.unknown", requested));
                 return 0;
@@ -329,14 +333,14 @@ public final class TechniqueCommand {
         int cap = io.github.verycooltimo.murim.mastery.Arts.cap(requested);
         player.setData(io.github.verycooltimo.murim.registry.ModAttachments.MASTERY,
                 state.with(form, io.github.verycooltimo.murim.mastery.TechniqueProgress.learned(stars, cap)));
+        io.github.verycooltimo.murim.mastery.MasteryService.unlockStarForms(player);
         io.github.verycooltimo.murim.mastery.MasteryService.sync(player);
-        context.getSource().sendSuccess(() -> Component.translatable(cap == io.github.verycooltimo.murim.mastery.Arts.FOOTWORK_STARS
-                        ? "command.murim.mastery.set.footwork" : "command.murim.mastery.set",
+        context.getSource().sendSuccess(() -> Component.translatable("command.murim.mastery.set",
                 io.github.verycooltimo.murim.mastery.MasteryService.artName(requested), Math.min(stars, cap), cap), false);
         return 1;
     }
 
-    /** {@code /murim rank <ранг> [подступень]}: ранг без прорыва; подступень — только на Пике. */
+    /** {@code /murim dev rank <ранг> [подступень]}: ранг без прорыва; подступень — только на Пике. */
     private static int setRank(com.mojang.brigadier.context.CommandContext<net.minecraft.commands.CommandSourceStack> context,
                                int stage) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
         ServerPlayer player = context.getSource().getPlayerOrException();
@@ -361,7 +365,7 @@ public final class TechniqueCommand {
         int rank = com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(context, "rank");
         net.minecraft.world.entity.LivingEntity target = lookedAt(player);
         if (target == null) {
-            context.getSource().sendFailure(Component.literal("Нет цели рядом"));
+            context.getSource().sendFailure(Component.translatable("command.murim.dev.no_target"));
             return 0;
         }
         io.github.verycooltimo.murim.combat.AuraService.set(target,

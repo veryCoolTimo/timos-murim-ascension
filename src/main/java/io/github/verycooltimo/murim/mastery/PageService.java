@@ -3,6 +3,7 @@ package io.github.verycooltimo.murim.mastery;
 import io.github.verycooltimo.murim.registry.ModAttachments;
 import io.github.verycooltimo.murim.registry.ModDataComponents;
 import io.github.verycooltimo.murim.registry.ModItems;
+import io.github.verycooltimo.murim.sect.PlayerJournal;
 import io.github.verycooltimo.murim.technique.Styles;
 import io.github.verycooltimo.murim.technique.TechniqueDefinition;
 import io.github.verycooltimo.murim.technique.TechniqueLoader;
@@ -27,10 +28,13 @@ import java.util.Optional;
  */
 public final class PageService {
 
+    /** Below this much room the help pool counts as full. */
+    private static final double POOL_EPSILON = 1.0E-6D;
+
     /** Все техники, которым учит книга {@code book}: формы стиля и его основа или сама техника. */
     public static List<ResourceLocation> teaches(ResourceLocation book) {
         Optional<Styles.Style> style = Styles.of(book);
-        if (style.isEmpty() || Styles.individualBooks(style.get())) {
+        if (style.isEmpty() || Styles.starGated(style.get())) {
             return List.of(book);
         }
         List<ResourceLocation> out = new ArrayList<>(style.get().forms());
@@ -44,7 +48,7 @@ public final class PageService {
      */
     public static Optional<ResourceLocation> frontier(MasteryState state, ResourceLocation book) {
         Optional<Styles.Style> style = Styles.of(book);
-        if (style.isEmpty() || Styles.individualBooks(style.get())) {
+        if (style.isEmpty()) {
             return state.knows(book) ? Optional.of(book) : Optional.empty();
         }
         List<ResourceLocation> forms = style.get().forms();
@@ -59,7 +63,7 @@ public final class PageService {
     /** Название книги: стиль — по стилю, иначе по технике (так же называется манускрипт). */
     public static Component bookName(ResourceLocation book) {
         Optional<Styles.Style> style = Styles.of(book);
-        return style.isPresent() && !Styles.individualBooks(style.get()) ? Component.translatable(style.get().nameKey()) : MasteryService.name(book);
+        return style.isPresent() ? Component.translatable(style.get().nameKey()) : MasteryService.name(book);
     }
 
     /** Прочитать страницу из стопки в руке. */
@@ -116,9 +120,16 @@ public final class PageService {
                 bindSound(player, 1.1F);
             }
             case INSIGHT -> {
+                // The page is help: it counts only inside the ONE help pool of the transition. A full pool keeps the page
+                // in the hand for the next star; the rest of the transition is the player's own practice.
+                if (MasteryService.helpRoom(player, front.get()) <= POOL_EPSILON) {
+                    message(player, "murim.page.limit", ChatFormatting.GRAY, name);
+                    return;
+                }
                 stack.shrink(1);
                 message(player, "murim.page.insight", ChatFormatting.AQUA, name);
-                MasteryService.study(player, front.get(), PageRules.insight(fp.stars(), PageRules.PAGE_INSIGHT));
+                MasteryService.help(player, front.get(), MasteryRules.HelpSource.PAGE,
+                        PageRules.insight(fp.stars(), PageRules.PAGE_INSIGHT, Arts.cap(front.get())), false);
                 sound(player, 1.2F);
             }
             case WISDOM -> {
@@ -158,10 +169,17 @@ public final class PageService {
         }
         TechniqueProgress p = state.techniques().get(front.get());
         Component name = bookName(book);
+        boolean insight = PageRules.reread(p.cap(), p.stars()) == PageRules.Outcome.INSIGHT;
+        if (insight && MasteryService.helpRoom(player, front.get()) <= POOL_EPSILON) {
+            // Reading is help too, and the pool of this transition is full: the book stays for the next star.
+            message(player, "murim.page.limit", ChatFormatting.GRAY, name);
+            return;
+        }
         stack.shrink(1);
-        if (PageRules.reread(p.cap(), p.stars()) == PageRules.Outcome.INSIGHT) {
+        if (insight) {
             message(player, "murim.page.reread", ChatFormatting.AQUA, name);
-            MasteryService.study(player, front.get(), PageRules.insight(p.stars(), PageRules.BOOK_INSIGHT));
+            MasteryService.help(player, front.get(), MasteryRules.HelpSource.READING,
+                    PageRules.insight(p.stars(), PageRules.BOOK_INSIGHT, Arts.cap(front.get())), false);
         } else {
             MasteryService.addWisdom(player, PageRules.BOOK_WISDOM);
             message(player, "murim.page.reread_wisdom", ChatFormatting.GRAY, name);
@@ -180,7 +198,7 @@ public final class PageService {
     }
 
     private static void message(ServerPlayer player, String key, ChatFormatting style, Object... args) {
-        player.displayClientMessage(Component.translatable(key, args).withStyle(style), true);
+        PlayerJournal.record(player, Component.translatable(key, args).withStyle(style));
     }
 
     private PageService() {

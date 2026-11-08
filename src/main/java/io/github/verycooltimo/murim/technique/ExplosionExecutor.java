@@ -193,7 +193,8 @@ public final class ExplosionExecutor {
                 continue;
             }
             e.invulnerableTime = 0;
-            if (!e.hurt(player.damageSources().playerAttack(player), (float) (base * ExplosionRules.DMG_BLAST))) {
+            if (!io.github.verycooltimo.murim.combat.SwordGuard.unguarded(e,
+                    () -> e.hurt(player.damageSources().playerAttack(player), (float) (base * ExplosionRules.DMG_BLAST)))) {
                 continue;
             }
             Casters.onHit(player, id, e);

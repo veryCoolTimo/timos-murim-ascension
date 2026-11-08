@@ -1,0 +1,32 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "murim:item/clue_note"
+  },
+  "overrides": [
+    {
+      "predicate": {
+        "custom_model_data": 1
+      },
+      "model": "murim:item/clue_scrap"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 2
+      },
+      "model": "murim:item/clue_note"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 3
+      },
+      "model": "murim:item/clue_rubbing"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 4
+      },
+      "model": "murim:item/clue_fragment"
+    }
+  ]
+}

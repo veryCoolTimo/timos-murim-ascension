@@ -12,6 +12,7 @@ import java.util.Map;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
+import net.minecraft.commands.arguments.blocks.BlockStateArgument;
 import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
@@ -47,7 +48,6 @@ import net.neoforged.neoforge.event.RegisterCommandsEvent;
  * <p>API: reference/minecraft-src/net/minecraft/world/level/levelgen/structure/templatesystem/StructureTemplate.java
  * (#fillFromWorld, #save, #load, #placeInWorld, #calculateRelativePosition).
  */
-@EventBusSubscriber(modid = MurimMod.MODID)
 public final class DevRegionCommand {
 
     /** Footing depth limit under a piece. */
@@ -56,13 +56,40 @@ public final class DevRegionCommand {
     private DevRegionCommand() {
     }
 
-    @SubscribeEvent
-    static void onRegisterCommands(RegisterCommandsEvent event) {
-        if (FMLEnvironment.production) {
-            return;
-        }
-        event.getDispatcher().register(Commands.literal("murim")
-                .then(Commands.literal("dev").requires(s -> s.hasPermission(4))
+    /**
+     * The world-building literals placed directly under {@code /murim dev} (their paths are fixed: build scripts and
+     * the sect interior files use them); the container's children are registered with permission 4 by
+     * {@code MurimCommands}, and only in a non-production build.
+     */
+    public static com.mojang.brigadier.builder.LiteralArgumentBuilder<CommandSourceStack> nodes(
+            net.minecraft.commands.CommandBuildContext buildContext) {
+        return Commands.literal("dev")
+                        // Raw set without neighbour updates (flags UPDATE_CLIENTS | UPDATE_KNOWN_SHAPE): multi-part furniture
+                        // (beds, 2-high shelves, cabinets) placed half by half from build scripts must not break mid-way.
+                        // API: reference/minecraft-src/net/minecraft/server/commands/SetBlockCommand.java, Block#UPDATE_KNOWN_SHAPE
+                        .then(Commands.literal("setraw")
+                                .then(Commands.argument("pos", BlockPosArgument.blockPos())
+                                        .then(Commands.argument("block", BlockStateArgument.block(buildContext))
+                                                .executes(DevRegionCommand::setRaw))))
+                        // Re-seat every tabletop prop in a box onto the table below (worlds built before the sink property).
+                        .then(Commands.literal("resink")
+                                .then(Commands.argument("from", BlockPosArgument.blockPos())
+                                        .then(Commands.argument("to", BlockPosArgument.blockPos())
+                                                .executes(DevRegionCommand::resink))))
+                        // Put the default swords on every sword stand / training rack in a box (Huashan sword / wooden swords).
+                        .then(Commands.literal("fillstands")
+                                .then(Commands.argument("from", BlockPosArgument.blockPos())
+                                        .then(Commands.argument("to", BlockPosArgument.blockPos())
+                                                .executes(DevRegionCommand::fillStands))))
+                        // Right click a block with the held item as the player would (the placement events fire as in play): the
+                        // film of the sect repairs places the player's chest this way, so the repairs see it as the player's.
+                        // API: reference/minecraft-src/net/minecraft/server/level/ServerPlayerGameMode.java#useItemOn
+                        .then(Commands.literal("useon")
+                                .then(Commands.argument("pos", BlockPosArgument.blockPos())
+                                        .then(Commands.argument("face", StringArgumentType.word())
+                                                .suggests((c, b) -> SharedSuggestionProvider.suggest(
+                                                        java.util.List.of("up", "down", "north", "south", "east", "west"), b))
+                                                .executes(DevRegionCommand::useOn))))
                         .then(Commands.literal("region")
                                 .then(Commands.literal("save")
                                         .then(Commands.argument("name", StringArgumentType.word())
@@ -83,7 +110,64 @@ public final class DevRegionCommand {
                                                                 // Rotated exact restore: no stone footing under eaves and openings.
                                                                 .then(Commands.literal("exact")
                                                                         .executes(c -> load(c, rotation(
-                                                                                StringArgumentType.getString(c, "rotation")), false))))))))));
+                                                                                StringArgumentType.getString(c, "rotation")), false))))))));
+    }
+
+    private static int setRaw(CommandContext<CommandSourceStack> c) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+        ServerLevel level = c.getSource().getLevel();
+        BlockPos pos = BlockPosArgument.getLoadedBlockPos(c, "pos");
+        BlockState state = BlockStateArgument.getBlock(c, "block").getState();
+        level.setBlock(pos, state, net.minecraft.world.level.block.Block.UPDATE_CLIENTS | net.minecraft.world.level.block.Block.UPDATE_KNOWN_SHAPE);
+        return 1;
+    }
+
+    private static int useOn(CommandContext<CommandSourceStack> c) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+        net.minecraft.server.level.ServerPlayer player = c.getSource().getPlayerOrException();
+        BlockPos pos = BlockPosArgument.getLoadedBlockPos(c, "pos");
+        net.minecraft.core.Direction face = net.minecraft.core.Direction.byName(StringArgumentType.getString(c, "face"));
+        if (face == null) {
+            c.getSource().sendFailure(Component.literal("Unknown face"));
+            return 0;
+        }
+        net.minecraft.world.phys.Vec3 at = net.minecraft.world.phys.Vec3.atCenterOf(pos).add(face.getStepX() * 0.5D, face.getStepY() * 0.5D, face.getStepZ() * 0.5D);
+        net.minecraft.world.InteractionResult result = player.gameMode.useItemOn(player, player.serverLevel(), player.getMainHandItem(),
+                net.minecraft.world.InteractionHand.MAIN_HAND, new net.minecraft.world.phys.BlockHitResult(at, face, pos, false));
+        c.getSource().sendSuccess(() -> Component.literal("Used the held item on " + pos.toShortString() + ": " + result), false);
+        return result.consumesAction() ? 1 : 0;
+    }
+
+    private static int resink(CommandContext<CommandSourceStack> c) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+        ServerLevel level = c.getSource().getLevel();
+        BoundingBox box = BoundingBox.fromCorners(BlockPosArgument.getLoadedBlockPos(c, "from"), BlockPosArgument.getLoadedBlockPos(c, "to"));
+        int n = 0;
+        for (BlockPos pos : BlockPos.betweenClosed(box.minX(), box.minY(), box.minZ(), box.maxX(), box.maxY(), box.maxZ())) {
+            BlockState state = level.getBlockState(pos);
+            if (state.hasProperty(io.github.verycooltimo.murim.decor.TabletopSupport.SINK)) {
+                BlockState seated = io.github.verycooltimo.murim.decor.TabletopSupport.onSupport(state, level, pos);
+                if (seated != state) {
+                    level.setBlock(pos, seated, net.minecraft.world.level.block.Block.UPDATE_CLIENTS);
+                    n++;
+                }
+            }
+        }
+        final int count = n;
+        c.getSource().sendSuccess(() -> Component.literal("Re-seated " + count + " tabletop props"), true);
+        return n;
+    }
+
+    private static int fillStands(CommandContext<CommandSourceStack> c) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+        ServerLevel level = c.getSource().getLevel();
+        BoundingBox box = BoundingBox.fromCorners(BlockPosArgument.getLoadedBlockPos(c, "from"), BlockPosArgument.getLoadedBlockPos(c, "to"));
+        int n = 0;
+        for (BlockPos pos : BlockPos.betweenClosed(box.minX(), box.minY(), box.minZ(), box.maxX(), box.maxY(), box.maxZ())) {
+            if (level.getBlockEntity(pos) instanceof io.github.verycooltimo.murim.decor.WeaponStandBlockEntity stand) {
+                stand.fillDefault();
+                n++;
+            }
+        }
+        final int count = n;
+        c.getSource().sendSuccess(() -> Component.literal("Filled " + count + " weapon stands"), true);
+        return n;
     }
 
     static Rotation rotation(String deg) {

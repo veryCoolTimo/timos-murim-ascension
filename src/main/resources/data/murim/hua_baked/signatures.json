@@ -1,0 +1,1872 @@
+[
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "main_hall_plaque",
+"state": "murim:hall_plaque_grand[facing=north,part=7]",
+"u": 2,
+"v": 53,
+"y": 238
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "ancestors_shrine",
+"state": "murim:shr_ancestor_shrine[col=1,facing=north,part=0]",
+"u": 5,
+"v": 92,
+"y": 244
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "ancestors_altar",
+"state": "murim:shr_ancestor_altar[facing=north,join=right]",
+"u": -8,
+"v": 92,
+"y": 244
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "ancestors_plaque",
+"state": "murim:anc_plaque_ancestors[facing=north,inset=0,part=3]",
+"u": 4,
+"v": 86,
+"y": 248
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "bell",
+"state": "murim:sect_bell[half=lower,powered=false]",
+"u": -29,
+"v": -5,
+"y": 229
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "grand_door",
+"state": "murim:hall_grand_door[col=3,facing=north,open=false,row=0]",
+"u": 4,
+"v": 55,
+"y": 232
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "sect_plaque",
+"state": "murim:sect_plaque_wide[facing=north,inset=21,part=3]",
+"u": 11,
+"v": -24,
+"y": 232
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "penance_seal",
+"state": "murim:penance_seal",
+"u": -41,
+"v": 114,
+"y": 237
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "penance_cushion",
+"state": "murim:meditation_cushion",
+"u": -41,
+"v": 114,
+"y": 238
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "penance_lamp",
+"state": "murim:square_wood_lantern[attach=ceiling,facing=north]",
+"u": -41,
+"v": 114,
+"y": 241
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "penance_lamp_root",
+"state": "minecraft:stone",
+"u": -41,
+"v": 114,
+"y": 242
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "penance_gate_door",
+"state": "murim:cold_iron_door[facing=west,half=lower,hinge=left,open=false,powered=false]",
+"u": -49,
+"v": 112,
+"y": 238
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "penance_gate_door_top",
+"state": "murim:cold_iron_door[facing=west,half=upper,hinge=left,open=false,powered=false]",
+"u": -49,
+"v": 112,
+"y": 239
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "penance_chamber_air",
+"state": "minecraft:air",
+"u": -40,
+"v": 113,
+"y": 238
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "penance_tunnel_air",
+"state": "minecraft:air",
+"u": -46,
+"v": 112,
+"y": 238
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "penance_plaque",
+"state": "murim:cliff_plaque_penance[facing=west,inset=0,part=1]",
+"u": -53,
+"v": 111,
+"y": 244
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "bed_0_head",
+"state": "murim:sto_bed[facing=south,occupied=false,part=head]",
+"u": -68,
+"v": 29,
+"y": 211
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "bed_0_foot",
+"state": "murim:sto_bed[facing=south,occupied=false,part=foot]",
+"u": -68,
+"v": 28,
+"y": 211
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "bed_1_head",
+"state": "murim:sto_bed[facing=south,occupied=false,part=head]",
+"u": -63,
+"v": 29,
+"y": 215
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "bed_1_foot",
+"state": "murim:sto_bed[facing=south,occupied=false,part=foot]",
+"u": -63,
+"v": 28,
+"y": 215
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "bed_2_head",
+"state": "murim:sto_bed_blue[facing=north,occupied=false,part=head]",
+"u": -74,
+"v": 44,
+"y": 211
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "bed_2_foot",
+"state": "murim:sto_bed_blue[facing=north,occupied=false,part=foot]",
+"u": -74,
+"v": 45,
+"y": 211
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "bed_3_head",
+"state": "murim:sto_bed_blue[facing=south,occupied=false,part=head]",
+"u": -62,
+"v": 48,
+"y": 215
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "bed_3_foot",
+"state": "murim:sto_bed_blue[facing=south,occupied=false,part=foot]",
+"u": -62,
+"v": 47,
+"y": 215
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "bed_4_head",
+"state": "murim:sto_bed_blue[facing=north,occupied=false,part=head]",
+"u": -73,
+"v": 44,
+"y": 219
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "bed_4_foot",
+"state": "murim:sto_bed_blue[facing=north,occupied=false,part=foot]",
+"u": -73,
+"v": 45,
+"y": 219
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "bed_5_head",
+"state": "murim:sto_bed_blue[facing=south,occupied=false,part=head]",
+"u": -76,
+"v": 48,
+"y": 219
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "bed_5_foot",
+"state": "murim:sto_bed_blue[facing=south,occupied=false,part=foot]",
+"u": -76,
+"v": 47,
+"y": 219
+},
+{
+"be": "murim:weapon_stand",
+"group": "sect",
+"item": "murim:huashan_sword",
+"name": "weapon_stand_0",
+"state": "murim:sword_stand[facing=north,sink=0]",
+"u": -72,
+"v": 48,
+"y": 212
+},
+{
+"be": "murim:weapon_stand",
+"group": "sect",
+"item": "murim:huashan_sword",
+"name": "weapon_stand_1",
+"state": "murim:sword_stand[facing=south,sink=7]",
+"u": -65,
+"v": 21,
+"y": 212
+},
+{
+"be": "murim:weapon_stand",
+"group": "sect",
+"item": "murim:huashan_sword",
+"name": "weapon_stand_2",
+"state": "murim:sword_stand[facing=east,sink=7]",
+"u": -33,
+"v": 89,
+"y": 238
+},
+{
+"be": "murim:weapon_stand",
+"group": "sect",
+"item": "murim:huashan_sword",
+"name": "weapon_stand_3",
+"state": "murim:sword_stand[facing=east,sink=7]",
+"u": -15,
+"v": 60,
+"y": 233
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "treasury_stair_0",
+"state": "murim:polished_hua_granite_stairs[facing=west,half=bottom,shape=straight,waterlogged=false]",
+"u": 36,
+"v": 4,
+"y": 216
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "treasury_stair_1",
+"state": "murim:polished_hua_granite_stairs[facing=west,half=bottom,shape=straight,waterlogged=false]",
+"u": 35,
+"v": 4,
+"y": 217
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "treasury_stair_2",
+"state": "murim:polished_hua_granite_stairs[facing=west,half=bottom,shape=straight,waterlogged=false]",
+"u": 34,
+"v": 4,
+"y": 218
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "treasury_stair_3",
+"state": "murim:polished_hua_granite_stairs[facing=west,half=bottom,shape=straight,waterlogged=false]",
+"u": 33,
+"v": 4,
+"y": 219
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "treasury_stair_4",
+"state": "murim:polished_hua_granite_stairs[facing=west,half=bottom,shape=straight,waterlogged=false]",
+"u": 32,
+"v": 4,
+"y": 220
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "minecraft:dirt",
+"u": -175,
+"v": 53,
+"y": 135
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "minecraft:stone",
+"u": -166,
+"v": 42,
+"y": 143
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_air",
+"state": "minecraft:air",
+"u": -162,
+"v": 51,
+"y": 170
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "murim:hua_granite_mossy",
+"u": -168,
+"v": 46,
+"y": 149
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "minecraft:stone",
+"u": -175,
+"v": 45,
+"y": 140
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "murim:hua_granite_mossy",
+"u": -171,
+"v": 43,
+"y": 150
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "minecraft:stone",
+"u": 30,
+"v": 102,
+"y": 263
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_air",
+"state": "minecraft:air",
+"u": 15,
+"v": 97,
+"y": 242
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "minecraft:stone",
+"u": 16,
+"v": 103,
+"y": 235
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "murim:hua_granite_pale",
+"u": 24,
+"v": 101,
+"y": 259
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "murim:polished_hua_granite",
+"u": 27,
+"v": 90,
+"y": 241
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "minecraft:stone",
+"u": 27,
+"v": 103,
+"y": 243
+},
+{
+"be": null,
+"group": "pav_north",
+"item": null,
+"name": "random_air",
+"state": "minecraft:air",
+"u": -49,
+"v": -365,
+"y": 166
+},
+{
+"be": null,
+"group": "pav_north",
+"item": null,
+"name": "random_solid",
+"state": "minecraft:stone",
+"u": -42,
+"v": -369,
+"y": 114
+},
+{
+"be": null,
+"group": "pav_north",
+"item": null,
+"name": "random_air",
+"state": "minecraft:air",
+"u": -46,
+"v": -363,
+"y": 148
+},
+{
+"be": null,
+"group": "pav_north",
+"item": null,
+"name": "random_solid",
+"state": "minecraft:moss_carpet",
+"u": -47,
+"v": -371,
+"y": 124
+},
+{
+"be": null,
+"group": "pav_north",
+"item": null,
+"name": "random_solid",
+"state": "murim:hua_granite_dark",
+"u": -47,
+"v": -367,
+"y": 150
+},
+{
+"be": null,
+"group": "pav_north",
+"item": null,
+"name": "random_solid",
+"state": "minecraft:stone",
+"u": -42,
+"v": -369,
+"y": 116
+},
+{
+"be": null,
+"group": "pav_east",
+"item": null,
+"name": "random_air",
+"state": "minecraft:air",
+"u": 125,
+"v": -5,
+"y": 304
+},
+{
+"be": null,
+"group": "pav_east",
+"item": null,
+"name": "random_solid",
+"state": "minecraft:stone",
+"u": 122,
+"v": 2,
+"y": 282
+},
+{
+"be": null,
+"group": "pav_east",
+"item": null,
+"name": "random_air",
+"state": "minecraft:air",
+"u": 113,
+"v": -7,
+"y": 284
+},
+{
+"be": null,
+"group": "pav_east",
+"item": null,
+"name": "random_solid",
+"state": "murim:hua_granite_pale",
+"u": 124,
+"v": 1,
+"y": 298
+},
+{
+"be": null,
+"group": "pav_east",
+"item": null,
+"name": "random_air",
+"state": "minecraft:air",
+"u": 119,
+"v": 1,
+"y": 295
+},
+{
+"be": null,
+"group": "pav_east",
+"item": null,
+"name": "random_solid",
+"state": "murim:hua_granite_dark",
+"u": 116,
+"v": -1,
+"y": 278
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_air",
+"state": "minecraft:air",
+"u": 11,
+"v": -21,
+"y": 238
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_air",
+"state": "minecraft:air",
+"u": 14,
+"v": -16,
+"y": 229
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "minecraft:stone",
+"u": 14,
+"v": -15,
+"y": 218
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_air",
+"state": "minecraft:air",
+"u": 4,
+"v": -16,
+"y": 230
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_air",
+"state": "minecraft:air",
+"u": 0,
+"v": -11,
+"y": 230
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "minecraft:dirt",
+"u": 0,
+"v": -19,
+"y": 224
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "minecraft:stone",
+"u": -105,
+"v": 82,
+"y": 226
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "minecraft:stone",
+"u": -98,
+"v": 82,
+"y": 225
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_air",
+"state": "minecraft:air",
+"u": -105,
+"v": 85,
+"y": 227
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "murim:hua_granite_pale",
+"u": -111,
+"v": 80,
+"y": 259
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_air",
+"state": "minecraft:air",
+"u": -111,
+"v": 85,
+"y": 251
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "murim:hua_granite_dark",
+"u": -107,
+"v": 82,
+"y": 239
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_air",
+"state": "minecraft:air",
+"u": 57,
+"v": 43,
+"y": 296
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "minecraft:stone",
+"u": 52,
+"v": 45,
+"y": 242
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "murim:hua_granite_dark",
+"u": 53,
+"v": 52,
+"y": 259
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_air",
+"state": "minecraft:air",
+"u": 48,
+"v": 42,
+"y": 278
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_air",
+"state": "minecraft:air",
+"u": 49,
+"v": 46,
+"y": 248
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "minecraft:stone",
+"u": 53,
+"v": 47,
+"y": 276
+},
+{
+"be": null,
+"group": "pav_south",
+"item": null,
+"name": "random_air",
+"state": "minecraft:air",
+"u": 8,
+"v": 122,
+"y": 319
+},
+{
+"be": null,
+"group": "pav_south",
+"item": null,
+"name": "random_solid",
+"state": "murim:hua_flagstone_paving",
+"u": 3,
+"v": 129,
+"y": 310
+},
+{
+"be": null,
+"group": "pav_south",
+"item": null,
+"name": "random_solid",
+"state": "murim:polished_hua_granite",
+"u": 6,
+"v": 126,
+"y": 311
+},
+{
+"be": null,
+"group": "pav_south",
+"item": null,
+"name": "random_solid",
+"state": "minecraft:stone",
+"u": 3,
+"v": 131,
+"y": 304
+},
+{
+"be": null,
+"group": "pav_south",
+"item": null,
+"name": "random_solid",
+"state": "minecraft:stone",
+"u": 13,
+"v": 126,
+"y": 301
+},
+{
+"be": null,
+"group": "pav_south",
+"item": null,
+"name": "random_air",
+"state": "minecraft:air",
+"u": 0,
+"v": 131,
+"y": 311
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_air",
+"state": "minecraft:air",
+"u": 36,
+"v": 17,
+"y": 222
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_air",
+"state": "minecraft:air",
+"u": 40,
+"v": 20,
+"y": 220
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "minecraft:grass_block[snowy=false]",
+"u": 34,
+"v": 13,
+"y": 215
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "minecraft:stone",
+"u": 37,
+"v": 17,
+"y": 206
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "minecraft:iron_ore",
+"u": 34,
+"v": 12,
+"y": 205
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_air",
+"state": "minecraft:air",
+"u": 31,
+"v": 9,
+"y": 228
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "murim:polished_hua_granite",
+"u": 61,
+"v": 67,
+"y": 216
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "murim:climbing_moss[facing=west,waterlogged=false]",
+"u": 50,
+"v": 56,
+"y": 221
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_air",
+"state": "minecraft:air",
+"u": 51,
+"v": 62,
+"y": 210
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "murim:polished_hua_granite",
+"u": 50,
+"v": 63,
+"y": 208
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "murim:hua_granite",
+"u": 51,
+"v": 57,
+"y": 203
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "murim:plum_blossom_pale[distance=7,persistent=true,waterlogged=false]",
+"u": 59,
+"v": 65,
+"y": 226
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_air",
+"state": "minecraft:air",
+"u": -15,
+"v": -55,
+"y": 227
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "minecraft:stone",
+"u": -11,
+"v": -45,
+"y": 210
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "murim:hua_granite_pale",
+"u": -10,
+"v": -48,
+"y": 213
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_air",
+"state": "minecraft:air",
+"u": -3,
+"v": -46,
+"y": 224
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "minecraft:dirt",
+"u": -17,
+"v": -50,
+"y": 211
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "minecraft:spruce_leaves[distance=7,persistent=true,waterlogged=false]",
+"u": -11,
+"v": -53,
+"y": 222
+},
+{
+"be": null,
+"group": "pav_south",
+"item": null,
+"name": "random_solid",
+"state": "murim:hua_granite_dark",
+"u": 27,
+"v": 142,
+"y": 308
+},
+{
+"be": null,
+"group": "pav_south",
+"item": null,
+"name": "random_solid",
+"state": "minecraft:stone",
+"u": 27,
+"v": 147,
+"y": 305
+},
+{
+"be": null,
+"group": "pav_south",
+"item": null,
+"name": "random_air",
+"state": "minecraft:air",
+"u": 19,
+"v": 141,
+"y": 290
+},
+{
+"be": null,
+"group": "pav_south",
+"item": null,
+"name": "random_solid",
+"state": "minecraft:stone",
+"u": 21,
+"v": 141,
+"y": 273
+},
+{
+"be": null,
+"group": "pav_south",
+"item": null,
+"name": "random_air",
+"state": "minecraft:air",
+"u": 17,
+"v": 139,
+"y": 303
+},
+{
+"be": null,
+"group": "pav_south",
+"item": null,
+"name": "random_air",
+"state": "minecraft:air",
+"u": 29,
+"v": 141,
+"y": 315
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "minecraft:stone",
+"u": -15,
+"v": -5,
+"y": 215
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "minecraft:dirt",
+"u": -7,
+"v": -1,
+"y": 223
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_air",
+"state": "minecraft:air",
+"u": -6,
+"v": 7,
+"y": 228
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_air",
+"state": "minecraft:air",
+"u": -14,
+"v": 1,
+"y": 230
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "murim:hua_granite_dark",
+"u": -17,
+"v": 1,
+"y": 221
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_air",
+"state": "minecraft:air",
+"u": -14,
+"v": 5,
+"y": 226
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "minecraft:gravel",
+"u": -13,
+"v": 163,
+"y": 266
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "murim:hua_granite_dark",
+"u": -17,
+"v": 157,
+"y": 280
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "murim:hua_granite_dark",
+"u": -10,
+"v": 155,
+"y": 298
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "murim:hua_granite_dark",
+"u": -2,
+"v": 162,
+"y": 283
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "murim:floor_tiles",
+"u": 52,
+"v": 10,
+"y": 210
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "murim:grey_bricks",
+"u": 50,
+"v": 14,
+"y": 212
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "minecraft:stone",
+"u": 56,
+"v": 23,
+"y": 200
+},
+{
+"be": null,
+"group": "pav_north",
+"item": null,
+"name": "random_solid",
+"state": "minecraft:stone",
+"u": -47,
+"v": -315,
+"y": 159
+},
+{
+"be": null,
+"group": "pav_north",
+"item": null,
+"name": "random_solid",
+"state": "minecraft:grass_block[snowy=false]",
+"u": -41,
+"v": -316,
+"y": 149
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "minecraft:stone",
+"u": -103,
+"v": -8,
+"y": 220
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "minecraft:stone",
+"u": -107,
+"v": -7,
+"y": 232
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "murim:hua_granite_dark",
+"u": -104,
+"v": 5,
+"y": 211
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "murim:hua_granite_dark",
+"u": -103,
+"v": -5,
+"y": 231
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "murim:hua_granite_pale",
+"u": -107,
+"v": 1,
+"y": 233
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "murim:hua_granite",
+"u": -84,
+"v": -6,
+"y": 177
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "minecraft:gravel",
+"u": -36,
+"v": -8,
+"y": 212
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "murim:hua_granite_mossy",
+"u": -35,
+"v": 4,
+"y": 215
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "minecraft:grass_block[snowy=false]",
+"u": -49,
+"v": 4,
+"y": 204
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "minecraft:iron_ore",
+"u": 37,
+"v": 56,
+"y": 216
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "minecraft:stone",
+"u": 33,
+"v": 64,
+"y": 226
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "murim:polished_hua_granite",
+"u": 31,
+"v": 65,
+"y": 230
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "murim:hua_granite_mossy",
+"u": 35,
+"v": 60,
+"y": 228
+},
+{
+"be": null,
+"group": "pav_west",
+"item": null,
+"name": "random_solid",
+"state": "minecraft:stone",
+"u": -106,
+"v": 32,
+"y": 248
+},
+{
+"be": null,
+"group": "pav_west",
+"item": null,
+"name": "random_solid",
+"state": "minecraft:stone",
+"u": -105,
+"v": 30,
+"y": 217
+},
+{
+"be": null,
+"group": "pav_west",
+"item": null,
+"name": "random_solid",
+"state": "minecraft:stone",
+"u": -111,
+"v": 34,
+"y": 288
+},
+{
+"be": null,
+"group": "pav_west",
+"item": null,
+"name": "random_solid",
+"state": "minecraft:stone",
+"u": -101,
+"v": 30,
+"y": 208
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "minecraft:stone",
+"u": 106,
+"v": 16,
+"y": 292
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "murim:hua_granite_pale",
+"u": 108,
+"v": 18,
+"y": 283
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "murim:hua_granite_dark",
+"u": 102,
+"v": 17,
+"y": 280
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "minecraft:stone",
+"u": 101,
+"v": 17,
+"y": 267
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "murim:hua_granite",
+"u": -51,
+"v": -25,
+"y": 184
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "murim:hua_granite",
+"u": -53,
+"v": -36,
+"y": 195
+},
+{
+"be": null,
+"group": "pav_north",
+"item": null,
+"name": "random_solid",
+"state": "murim:hua_granite",
+"u": -9,
+"v": -308,
+"y": 174
+},
+{
+"be": null,
+"group": "pav_north",
+"item": null,
+"name": "random_solid",
+"state": "minecraft:stone",
+"u": -6,
+"v": -300,
+"y": 172
+},
+{
+"be": null,
+"group": "pav_north",
+"item": null,
+"name": "random_solid",
+"state": "murim:hua_granite_dark",
+"u": -7,
+"v": -306,
+"y": 181
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "murim:hua_granite_mossy",
+"u": -50,
+"v": 102,
+"y": 237
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "minecraft:azalea_leaves[distance=7,persistent=true,waterlogged=false]",
+"u": -61,
+"v": -10,
+"y": 191
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "murim:hua_granite_dark",
+"u": -141,
+"v": 68,
+"y": 226
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "murim:hua_granite_dark",
+"u": -141,
+"v": 65,
+"y": 245
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "murim:hua_granite_dark",
+"u": -144,
+"v": 58,
+"y": 286
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "minecraft:grass_block[snowy=false]",
+"u": -4,
+"v": -22,
+"y": 222
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "minecraft:stone",
+"u": -12,
+"v": -21,
+"y": 211
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "minecraft:stone",
+"u": -5,
+"v": -17,
+"y": 219
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "minecraft:stone",
+"u": -6,
+"v": -9,
+"y": 219
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "minecraft:spruce_leaves[distance=7,persistent=true,waterlogged=false]",
+"u": 37,
+"v": 131,
+"y": 319
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "minecraft:azalea_leaves[distance=7,persistent=true,waterlogged=false]",
+"u": 43,
+"v": 121,
+"y": 301
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "murim:hua_granite_dark",
+"u": 37,
+"v": 124,
+"y": 307
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "minecraft:stone",
+"u": -119,
+"v": -36,
+"y": 175
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "minecraft:stone",
+"u": -123,
+"v": -25,
+"y": 220
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "murim:hua_granite_cracked",
+"u": -127,
+"v": -27,
+"y": 225
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "murim:hua_granite_dark",
+"u": -123,
+"v": -26,
+"y": 218
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "murim:hua_granite",
+"u": -26,
+"v": -52,
+"y": 203
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "minecraft:stone",
+"u": -21,
+"v": -41,
+"y": 196
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "minecraft:stone",
+"u": -18,
+"v": -48,
+"y": 208
+},
+{
+"be": null,
+"group": "pav_north",
+"item": null,
+"name": "random_solid",
+"state": "murim:hua_granite_mossy",
+"u": 29,
+"v": -373,
+"y": 147
+},
+{
+"be": null,
+"group": "pav_north",
+"item": null,
+"name": "random_solid",
+"state": "murim:hua_granite_dark",
+"u": -38,
+"v": -353,
+"y": 188
+},
+{
+"be": null,
+"group": "pav_north",
+"item": null,
+"name": "random_solid",
+"state": "murim:hua_granite_cracked",
+"u": -42,
+"v": -354,
+"y": 172
+},
+{
+"be": null,
+"group": "pav_north",
+"item": null,
+"name": "random_solid",
+"state": "murim:hua_granite_cracked",
+"u": -42,
+"v": -352,
+"y": 186
+},
+{
+"be": null,
+"group": "pav_north",
+"item": null,
+"name": "random_solid",
+"state": "murim:hua_granite_dark",
+"u": -38,
+"v": -354,
+"y": 177
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "murim:hua_granite_dark",
+"u": -135,
+"v": -41,
+"y": 159
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "murim:hua_granite_dark",
+"u": -133,
+"v": -55,
+"y": 149
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "minecraft:spruce_leaves[distance=7,persistent=true,waterlogged=false]",
+"u": -130,
+"v": -49,
+"y": 156
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "minecraft:stone",
+"u": 112,
+"v": -48,
+"y": 114
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "murim:hua_granite_dark",
+"u": 114,
+"v": -43,
+"y": 143
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "murim:hua_granite_dark",
+"u": 116,
+"v": -42,
+"y": 170
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "minecraft:stone",
+"u": 119,
+"v": -42,
+"y": 146
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "minecraft:stone",
+"u": 117,
+"v": -50,
+"y": 115
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "minecraft:stone",
+"u": -42,
+"v": 84,
+"y": 231
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "murim:hua_edge_stone[axis=x]",
+"u": -39,
+"v": 77,
+"y": 235
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "minecraft:stone",
+"u": -37,
+"v": 78,
+"y": 231
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "minecraft:stone",
+"u": -35,
+"v": 77,
+"y": 211
+},
+{
+"be": null,
+"group": "sect",
+"item": null,
+"name": "random_solid",
+"state": "minecraft:stone",
+"u": -41,
+"v": 72,
+"y": 219
+}
+]

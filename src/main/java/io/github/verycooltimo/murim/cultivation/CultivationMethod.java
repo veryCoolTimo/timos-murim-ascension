@@ -35,13 +35,53 @@ public record CultivationMethod(
         String route,
         List<ResourceLocation> outerForms,
         boolean nightOnly,
-        int starCap
+        int starCap,
+        List<Double> speed,
+        double capacityMult,
+        String access,
+        int mist
 ) {
+
+    private static final double REFERENCE_EFFICIENCY = io.github.verycooltimo.murim.profile.DantianProfile.INITIAL
+            .withAxes(30.0D, 0.9D, 0.5D).efficiency();
+
+    /** Who may learn the method: anyone with the scroll, an elder's trusted disciple of the first rank, or nobody. */
+    public static final String ACCESS_OPEN = "open";
+    public static final String ACCESS_ELDER = "elder";
+    public static final String ACCESS_HEAD = "head";
 
     public CultivationMethod(ResourceLocation id, String nature, double purity, double capacity,
                              double impurity, String route, List<ResourceLocation> outerForms, boolean nightOnly) {
         this(id, nature, purity, capacity, impurity, route, outerForms, nightOnly,
                 io.github.verycooltimo.murim.mastery.Arts.methodCap(id));
+    }
+
+    public CultivationMethod(ResourceLocation id, String nature, double purity, double capacity,
+                             double impurity, String route, List<ResourceLocation> outerForms, boolean nightOnly,
+                             int starCap) {
+        this(id, nature, purity, capacity, impurity, route, outerForms, nightOnly, starCap, List.of(1.0D, 2.0D), 1.0D, ACCESS_OPEN, 0);
+    }
+
+    /** Share of the method's bonus that is already active at the given stars: 40 % at star 0, all of it at the cap (docs 43 rule 5). */
+    public static double bonusShare(int stars) {
+        return 0.4D + 0.6D * Math.max(0, Math.min(stars, io.github.verycooltimo.murim.mastery.Arts.MAX_STARS))
+                / io.github.verycooltimo.murim.mastery.Arts.MAX_STARS;
+    }
+
+    /** Multiplier of the 20 qi/min reference rate (author 2026-10-31); star zero equals star one. */
+    public double speedMultiplier(int stars) {
+        return speed.get(0) + (speed.get(1) - speed.get(0))
+                * Math.max(0, Math.min(stars, 12) - 1) / 11.0D;
+    }
+
+    /** Convert the reference rate to the existing seated gain pipeline, retaining purity scaling. */
+    public double gainFactor(int stars) {
+        return 20.0D / (1200.0D * MeditationService.gainPerTick() * REFERENCE_EFFICIENCY)
+                * speedMultiplier(stars);
+    }
+
+    public double capacityFactor(int stars) {
+        return 1.0D + (capacityMult - 1.0D) * bonusShare(stars);
     }
 
     /** Природы энергии MVP (решение автора 2026-09-29). */
@@ -57,7 +97,11 @@ public record CultivationMethod(
             ResourceLocation.CODEC.listOf().optionalFieldOf("outer_forms", List.of())
                     .forGetter(CultivationMethod::outerForms),
             Codec.BOOL.optionalFieldOf("night_only", false).forGetter(CultivationMethod::nightOnly),
-            Codec.INT.optionalFieldOf("star_cap", io.github.verycooltimo.murim.mastery.Arts.MAX_STARS).forGetter(CultivationMethod::starCap)
+            Codec.INT.optionalFieldOf("star_cap", io.github.verycooltimo.murim.mastery.Arts.MAX_STARS).forGetter(CultivationMethod::starCap),
+            Codec.DOUBLE.listOf().fieldOf("speed").forGetter(CultivationMethod::speed),
+            Codec.DOUBLE.optionalFieldOf("capacity_mult", 1.0D).forGetter(CultivationMethod::capacityMult),
+            Codec.STRING.optionalFieldOf("access", ACCESS_OPEN).forGetter(CultivationMethod::access),
+            Codec.INT.optionalFieldOf("mist", 0).forGetter(CultivationMethod::mist)
     ).apply(i, CultivationMethod::new));
 
     public CultivationMethod {
@@ -76,6 +120,17 @@ public record CultivationMethod(
         }
         if (!(capacity > 0.0D) || !Double.isFinite(capacity)) {
             throw new IllegalArgumentException("Недопустимая ёмкость: " + capacity);
+        }
+        speed = List.copyOf(speed);
+        if (speed.size() != 2 || !Double.isFinite(speed.get(0)) || !Double.isFinite(speed.get(1))
+                || !(speed.get(0) > 0.0D) || !(speed.get(1) > speed.get(0))) {
+            throw new IllegalArgumentException("Speed must contain positive, strictly growing endpoints: " + id);
+        }
+        if (!(capacityMult > 0.0D)) {
+            throw new IllegalArgumentException("Non-positive method multiplier: " + id);
+        }
+        if (!java.util.Set.of(ACCESS_OPEN, ACCESS_ELDER, ACCESS_HEAD).contains(access)) {
+            throw new IllegalArgumentException("Unknown method access: " + access);
         }
         outerForms = List.copyOf(outerForms);
     }

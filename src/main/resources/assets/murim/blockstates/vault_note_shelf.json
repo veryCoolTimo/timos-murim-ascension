@@ -1,0 +1,126 @@
+{
+  "multipart": [
+    {
+      "when": {
+        "facing": "south",
+        "half": "lower"
+      },
+      "apply": {
+        "model": "murim:block/scroll_shelf_mixed_lower"
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "half": "lower"
+      },
+      "apply": {
+        "model": "murim:block/scroll_shelf_mixed_lower",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "half": "lower"
+      },
+      "apply": {
+        "model": "murim:block/scroll_shelf_mixed_lower",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "half": "lower"
+      },
+      "apply": {
+        "model": "murim:block/scroll_shelf_mixed_lower",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "half": "upper"
+      },
+      "apply": {
+        "model": "murim:block/scroll_shelf_mixed_upper"
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "half": "upper"
+      },
+      "apply": {
+        "model": "murim:block/scroll_shelf_mixed_upper",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "half": "upper"
+      },
+      "apply": {
+        "model": "murim:block/scroll_shelf_mixed_upper",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "half": "upper"
+      },
+      "apply": {
+        "model": "murim:block/scroll_shelf_mixed_upper",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "half": "lower",
+        "taken": "false"
+      },
+      "apply": {
+        "model": "murim:block/vault_note_page",
+        "y": 0
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "half": "lower",
+        "taken": "false"
+      },
+      "apply": {
+        "model": "murim:block/vault_note_page",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "half": "lower",
+        "taken": "false"
+      },
+      "apply": {
+        "model": "murim:block/vault_note_page",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "half": "lower",
+        "taken": "false"
+      },
+      "apply": {
+        "model": "murim:block/vault_note_page",
+        "y": 270
+      }
+    }
+  ]
+}

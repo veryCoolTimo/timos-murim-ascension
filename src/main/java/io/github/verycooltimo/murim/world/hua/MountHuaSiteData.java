@@ -24,6 +24,8 @@ public final class MountHuaSiteData extends SavedData {
     private int centerZ;
     private int baseY;
     private int rotation;
+    /** Canonical mountain shape (fits the baked sect). Absent in data of older worlds = false: they keep their world seed. */
+    private boolean canonical;
 
     public MountHuaSiteData() {
     }
@@ -35,6 +37,7 @@ public final class MountHuaSiteData extends SavedData {
         data.centerZ = tag.getInt("z");
         data.baseY = tag.getInt("base_y");
         data.rotation = tag.getInt("rotation");
+        data.canonical = tag.getBoolean("canonical");
         return data;
     }
 
@@ -45,6 +48,7 @@ public final class MountHuaSiteData extends SavedData {
         tag.putInt("z", centerZ);
         tag.putInt("base_y", baseY);
         tag.putInt("rotation", rotation);
+        tag.putBoolean("canonical", canonical);
         return tag;
     }
 
@@ -58,10 +62,11 @@ public final class MountHuaSiteData extends SavedData {
         this.centerZ = z;
         this.baseY = baseY;
         this.rotation = rotation;
+        this.canonical = true; // every new world gets the canonical mountain and with it the baked sect
         setDirty();
     }
 
     public MountHuaSite toSite(long worldSeed) {
-        return new MountHuaSite(centerX, centerZ, baseY, rotation, worldSeed);
+        return new MountHuaSite(centerX, centerZ, baseY, rotation, worldSeed, canonical);
     }
 }

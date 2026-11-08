@@ -1,0 +1,23 @@
+{
+  "display": {
+    "icon": {
+      "id": "murim:jade_sect_tablet"
+    },
+    "title": {
+      "translate": "advancement.murim.join.title"
+    },
+    "description": {
+      "translate": "advancement.murim.join.desc"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "parent": "murim:root",
+  "criteria": {
+    "done": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

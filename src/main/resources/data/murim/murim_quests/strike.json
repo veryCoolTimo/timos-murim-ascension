@@ -1,0 +1,84 @@
+{
+  "id": "strike",
+  "requires_sites": true,
+  "title": "quest.murim.strike.title",
+  "steps": [
+    {
+      "type": "overheard",
+      "id": "strike_advice",
+      "speaker": "yul_seok",
+      "periods": [
+        "training"
+      ],
+      "gate": {
+        "flags": [],
+        "not_flags": [
+          "quest.strike.done",
+          "quest.strike.asked_mentor",
+          "quest.strike.alone"
+        ]
+      }
+    },
+    {
+      "type": "talk",
+      "id": "strike_hook",
+      "npc": "yul_seok",
+      "node": "strike_hook",
+      "requires": {
+        "flags": [],
+        "not_flags": []
+      }
+    },
+    {
+      "type": "talk",
+      "id": "strike_explain",
+      "npc": "gyeong_pil",
+      "node": "strike_explain",
+      "requires": {
+        "flags": [
+          "lesson.six"
+        ],
+        "not_flags": [
+          "quest.strike.done"
+        ]
+      }
+    },
+    {
+      "type": "clue",
+      "id": "frag_3",
+      "model": "rubbing"
+    },
+    {
+      "type": "inspect",
+      "id": "strike_mark",
+      "kind": "mark",
+      "seen": "quest.strike.seen"
+    },
+    {
+      "type": "inspect",
+      "id": "strike_plate",
+      "kind": "carved",
+      "seen": "quest.strike.read"
+    },
+    {
+      "type": "inspect",
+      "id": "strike_plate_back",
+      "kind": "carved",
+      "grant": "frag_3",
+      "copy_ticks": 100,
+      "seen": "quest.strike.back"
+    },
+    {
+      "type": "inspect",
+      "id": "drill_start",
+      "kind": "mark",
+      "handler": "strike_start"
+    },
+    {
+      "type": "inspect",
+      "id": "drill_target",
+      "kind": "target",
+      "handler": "strike_target"
+    }
+  ]
+}

@@ -20,6 +20,14 @@ import java.util.Map;
  *
  * <p>Методы живут только на сервере: всё, что про метод видит игрок (название и цена
  * на свитке), лежит в файлах локализации, а решения принимает сервер.
+ *
+ * <p>Rate rule (author 2026-10-31): each JSON supplies {@code "speed": [start, end]}.
+ * M(stars) = start + (end - start) * max(0, stars - 1) / 11, from star 1 to star 12;
+ * star 0 has the star 1 speed. Seated qi/min = 20 * M(stars) *
+ * profile.efficiency() / efficiencyAtPurity0.9, before place/tea/penance bonuses.
+ * The base rate is therefore exactly 20 qi/min at purity 0.9. There is no additional
+ * common star speed bonus or gain_mult. Purity scaling and switching purity are unchanged.
+ * Capacity and capacity_mult retain their independent star growth.
  */
 public final class MethodLoader extends SimpleJsonResourceReloadListener {
 

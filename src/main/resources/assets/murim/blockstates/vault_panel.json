@@ -1,0 +1,64 @@
+{
+ "variants": {
+  "facing=south,piece=0": {
+   "model": "murim:block/vault_panel_tl"
+  },
+  "facing=south,piece=1": {
+   "model": "murim:block/vault_panel_tr"
+  },
+  "facing=south,piece=2": {
+   "model": "murim:block/vault_panel_bl"
+  },
+  "facing=south,piece=3": {
+   "model": "murim:block/vault_panel_br"
+  },
+  "facing=west,piece=0": {
+   "model": "murim:block/vault_panel_tl",
+   "y": 90
+  },
+  "facing=west,piece=1": {
+   "model": "murim:block/vault_panel_tr",
+   "y": 90
+  },
+  "facing=west,piece=2": {
+   "model": "murim:block/vault_panel_bl",
+   "y": 90
+  },
+  "facing=west,piece=3": {
+   "model": "murim:block/vault_panel_br",
+   "y": 90
+  },
+  "facing=north,piece=0": {
+   "model": "murim:block/vault_panel_tl",
+   "y": 180
+  },
+  "facing=north,piece=1": {
+   "model": "murim:block/vault_panel_tr",
+   "y": 180
+  },
+  "facing=north,piece=2": {
+   "model": "murim:block/vault_panel_bl",
+   "y": 180
+  },
+  "facing=north,piece=3": {
+   "model": "murim:block/vault_panel_br",
+   "y": 180
+  },
+  "facing=east,piece=0": {
+   "model": "murim:block/vault_panel_tl",
+   "y": 270
+  },
+  "facing=east,piece=1": {
+   "model": "murim:block/vault_panel_tr",
+   "y": 270
+  },
+  "facing=east,piece=2": {
+   "model": "murim:block/vault_panel_bl",
+   "y": 270
+  },
+  "facing=east,piece=3": {
+   "model": "murim:block/vault_panel_br",
+   "y": 270
+  }
+ }
+}

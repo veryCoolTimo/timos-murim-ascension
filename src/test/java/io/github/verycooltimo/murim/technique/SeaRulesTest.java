@@ -19,6 +19,15 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /** «Море Цветущей Сливы»: шкала совпадает с JSON и анимацией, сектор, захват, слои. */
 class SeaRulesTest {
 
+    @Test void masterHasFrontAndSideMeleeProtectionButAnOpenBack() {
+        Vec3 forward = new Vec3(0, 0, 1);
+        assertTrue(SeaRules.protectsMelee(forward, new Vec3(0, 0, 2)));
+        assertTrue(SeaRules.protectsMelee(forward, new Vec3(2, 0, 0)));
+        assertTrue(SeaRules.protectsMelee(forward, new Vec3(-2, 0, 0)));
+        assertFalse(SeaRules.protectsMelee(forward, new Vec3(0, 0, -2)));
+        assertFalse(SeaRules.protectsMelee(forward, new Vec3(0, 0, 10)));
+    }
+
     private static JsonObject json(String path) throws Exception {
         try (InputStream in = SeaRulesTest.class.getResourceAsStream(path)) {
             assertNotNull(in, path);

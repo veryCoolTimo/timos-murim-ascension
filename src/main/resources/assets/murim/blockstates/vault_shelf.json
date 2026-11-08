@@ -1,0 +1,124 @@
+{
+ "variants": {
+  "facing=south,half=lower,variant=0": {
+   "model": "murim:block/vault_shelf_lower_0"
+  },
+  "facing=west,half=lower,variant=0": {
+   "model": "murim:block/vault_shelf_lower_0",
+   "y": 90
+  },
+  "facing=north,half=lower,variant=0": {
+   "model": "murim:block/vault_shelf_lower_0",
+   "y": 180
+  },
+  "facing=east,half=lower,variant=0": {
+   "model": "murim:block/vault_shelf_lower_0",
+   "y": 270
+  },
+  "facing=south,half=upper,variant=0": {
+   "model": "murim:block/vault_shelf_upper_0"
+  },
+  "facing=west,half=upper,variant=0": {
+   "model": "murim:block/vault_shelf_upper_0",
+   "y": 90
+  },
+  "facing=north,half=upper,variant=0": {
+   "model": "murim:block/vault_shelf_upper_0",
+   "y": 180
+  },
+  "facing=east,half=upper,variant=0": {
+   "model": "murim:block/vault_shelf_upper_0",
+   "y": 270
+  },
+  "facing=south,half=lower,variant=1": {
+   "model": "murim:block/vault_shelf_lower_1"
+  },
+  "facing=west,half=lower,variant=1": {
+   "model": "murim:block/vault_shelf_lower_1",
+   "y": 90
+  },
+  "facing=north,half=lower,variant=1": {
+   "model": "murim:block/vault_shelf_lower_1",
+   "y": 180
+  },
+  "facing=east,half=lower,variant=1": {
+   "model": "murim:block/vault_shelf_lower_1",
+   "y": 270
+  },
+  "facing=south,half=upper,variant=1": {
+   "model": "murim:block/vault_shelf_upper_1"
+  },
+  "facing=west,half=upper,variant=1": {
+   "model": "murim:block/vault_shelf_upper_1",
+   "y": 90
+  },
+  "facing=north,half=upper,variant=1": {
+   "model": "murim:block/vault_shelf_upper_1",
+   "y": 180
+  },
+  "facing=east,half=upper,variant=1": {
+   "model": "murim:block/vault_shelf_upper_1",
+   "y": 270
+  },
+  "facing=south,half=lower,variant=2": {
+   "model": "murim:block/vault_shelf_lower_2"
+  },
+  "facing=west,half=lower,variant=2": {
+   "model": "murim:block/vault_shelf_lower_2",
+   "y": 90
+  },
+  "facing=north,half=lower,variant=2": {
+   "model": "murim:block/vault_shelf_lower_2",
+   "y": 180
+  },
+  "facing=east,half=lower,variant=2": {
+   "model": "murim:block/vault_shelf_lower_2",
+   "y": 270
+  },
+  "facing=south,half=upper,variant=2": {
+   "model": "murim:block/vault_shelf_upper_2"
+  },
+  "facing=west,half=upper,variant=2": {
+   "model": "murim:block/vault_shelf_upper_2",
+   "y": 90
+  },
+  "facing=north,half=upper,variant=2": {
+   "model": "murim:block/vault_shelf_upper_2",
+   "y": 180
+  },
+  "facing=east,half=upper,variant=2": {
+   "model": "murim:block/vault_shelf_upper_2",
+   "y": 270
+  },
+  "facing=south,half=lower,variant=3": {
+   "model": "murim:block/vault_shelf_lower_3"
+  },
+  "facing=west,half=lower,variant=3": {
+   "model": "murim:block/vault_shelf_lower_3",
+   "y": 90
+  },
+  "facing=north,half=lower,variant=3": {
+   "model": "murim:block/vault_shelf_lower_3",
+   "y": 180
+  },
+  "facing=east,half=lower,variant=3": {
+   "model": "murim:block/vault_shelf_lower_3",
+   "y": 270
+  },
+  "facing=south,half=upper,variant=3": {
+   "model": "murim:block/vault_shelf_upper_3"
+  },
+  "facing=west,half=upper,variant=3": {
+   "model": "murim:block/vault_shelf_upper_3",
+   "y": 90
+  },
+  "facing=north,half=upper,variant=3": {
+   "model": "murim:block/vault_shelf_upper_3",
+   "y": 180
+  },
+  "facing=east,half=upper,variant=3": {
+   "model": "murim:block/vault_shelf_upper_3",
+   "y": 270
+  }
+ }
+}

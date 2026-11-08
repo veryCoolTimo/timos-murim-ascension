@@ -1,0 +1,223 @@
+{
+  "id": "cache",
+  "requires_sites": true,
+  "title": "quest.murim.cache.title",
+  "steps": [
+    {
+      "type": "overheard",
+      "id": "cache_whisper",
+      "speaker": "bok_manseok",
+      "periods": [
+        "breakfast",
+        "dinner",
+        "evening"
+      ],
+      "gate": {
+        "flags": [],
+        "not_flags": [
+          "quest.cache.asked",
+          "quest.cache.done"
+        ]
+      }
+    },
+    {
+      "type": "talk",
+      "id": "cache_hook",
+      "npc": "bok_manseok",
+      "node": "cache_hook",
+      "requires": {
+        "flags": [],
+        "not_flags": [
+          "quest.cache.asked"
+        ]
+      }
+    },
+    {
+      "type": "talk",
+      "id": "cache_doyun",
+      "npc": "ham_doyun",
+      "node": "cache_doyun",
+      "requires": {
+        "flags": [
+          "quest.cache.asked"
+        ],
+        "not_flags": [
+          "quest.cache.doyun"
+        ]
+      }
+    },
+    {
+      "type": "talk",
+      "id": "cache_doyun_interested",
+      "npc": "ham_doyun",
+      "node": "cache_doyun_interested",
+      "requires": {
+        "flags": [
+          "clue.cache_scrap"
+        ],
+        "not_flags": [
+          "quest.cache.doyun"
+        ]
+      }
+    },
+    {
+      "type": "talk",
+      "id": "cache_confront",
+      "npc": "bok_manseok",
+      "node": "cache_confront",
+      "requires": {
+        "flags": [
+          "quest.cache.doyun"
+        ],
+        "not_flags": [
+          "clue.cache_scrap"
+        ]
+      }
+    },
+    {
+      "type": "talk",
+      "id": "cache_caught",
+      "npc": "bok_manseok",
+      "node": "cache_caught",
+      "requires": {
+        "flags": [
+          "quest.cache.how.search"
+        ],
+        "not_flags": [
+          "quest.cache.caught"
+        ]
+      }
+    },
+    {
+      "type": "talk",
+      "id": "cache_recall_search",
+      "npc": "bok_manseok",
+      "node": "cache_recall_search",
+      "requires": {
+        "flags": [
+          "quest.cache.done",
+          "quest.cache.how.search"
+        ],
+        "not_flags": [
+          "quest.cache.recalled"
+        ]
+      }
+    },
+    {
+      "type": "talk",
+      "id": "cache_recall_talk",
+      "npc": "bok_manseok",
+      "node": "cache_recall_talk",
+      "requires": {
+        "flags": [
+          "quest.cache.done",
+          "quest.cache.how.talk"
+        ],
+        "not_flags": [
+          "quest.cache.recalled"
+        ]
+      }
+    },
+    {
+      "type": "clue",
+      "id": "cache_scrap",
+      "model": "scrap"
+    },
+    {
+      "type": "clue",
+      "id": "belt_note",
+      "model": "note"
+    },
+    {
+      "type": "clue",
+      "id": "box_note",
+      "model": "note"
+    },
+    {
+      "type": "clue",
+      "id": "frag_0",
+      "model": "fragment"
+    },
+    {
+      "type": "clue",
+      "id": "frag_5",
+      "model": "rubbing"
+    },
+    {
+      "type": "inspect",
+      "id": "scrap_room",
+      "kind": "paper",
+      "grant": "cache_scrap",
+      "seen": "quest.cache.room",
+      "on_grant": {
+        "flags": [
+          "quest.cache.searched"
+        ],
+        "how": "cache:search"
+      }
+    },
+    {
+      "type": "inspect",
+      "id": "belt_note",
+      "kind": "paper",
+      "grant": "belt_note",
+      "seen": "quest.cache.belt"
+    },
+    {
+      "type": "inspect",
+      "id": "cave_wall",
+      "kind": "carved",
+      "grant": "frag_5",
+      "copy_ticks": 100,
+      "seen": "quest.cache.wall",
+      "on_grant": {
+        "flags": [
+          "quest.cache.wall_copied"
+        ]
+      }
+    },
+    {
+      "type": "inspect",
+      "id": "cache_box",
+      "kind": "box",
+      "reward": {
+        "items": [
+          "murim:silver_tael*3",
+          "murim:pill_snow_plum"
+        ],
+        "clues": [
+          "box_note",
+          "frag_0"
+        ],
+        "effects": {
+          "flags": [
+            "quest.cache.done"
+          ]
+        }
+      }
+    },
+    {
+      "type": "reach",
+      "id": "cave_found",
+      "marker": "dry_stream_cave",
+      "radius": 10,
+      "effects": {
+        "flags": [
+          "quest.cache.found"
+        ]
+      }
+    },
+    {
+      "type": "reach",
+      "id": "camp_found",
+      "marker": "dry_stream_camp",
+      "radius": 10,
+      "effects": {
+        "flags": [
+          "quest.cache.found",
+          "quest.cache.camp"
+        ]
+      }
+    }
+  ]
+}

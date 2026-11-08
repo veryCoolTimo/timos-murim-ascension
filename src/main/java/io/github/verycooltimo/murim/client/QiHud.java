@@ -1,6 +1,7 @@
 package io.github.verycooltimo.murim.client;
 
 import io.github.verycooltimo.murim.MurimMod;
+import io.github.verycooltimo.murim.cultivation.QiRules;
 import io.github.verycooltimo.murim.cultivation.Realm;
 import io.github.verycooltimo.murim.profile.DantianProfile;
 import net.minecraft.client.DeltaTracker;
@@ -22,6 +23,8 @@ import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
  * сама; накопленная — запас, растёт медитацией. Требование автора 30.09: минималистично
  * и красиво — главное на экране персонаж.
  *
+ * <p>В творческом режиме и в наблюдателе шкалы нет: там ци не тратится ({@link QiRules#free}), автор 18.10.
+ *
  * <p>Из трёх показанных вариантов (линия, шарики, дуга у прицела) автор выбрал линию.
  */
 @EventBusSubscriber(modid = MurimMod.MODID, value = Dist.CLIENT)
@@ -34,6 +37,8 @@ public final class QiHud {
 
     private static final int CYAN = 0x8FE8F4;
     private static final int DEEP = 0x2E6BD8;
+    /** Янтарь резерва: тот же, что у уголька на теле при поглощении. */
+    private static final int AMBER = 0xC9A24B;
 
     /** Сглаженное значение: шкала течёт, а не прыгает раз в секунду по пакету сервера. */
     private static float shownCirc = -1.0F;
@@ -68,13 +73,13 @@ public final class QiHud {
     private static void render(GuiGraphics graphics, DeltaTracker delta) {
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.options.hideGui || minecraft.player == null || minecraft.gameMode == null
-                || minecraft.player.isSpectator() || !ClientProfileState.profile().isAwakened()) {
+                || QiRules.free(minecraft.player) || !ClientProfileState.profile().isAwakened()) {
             return;
         }
         float circ = Mth.clamp(shownCirc, 0.0F, 1.0F);
         float pool = Mth.clamp(shownPool, 0.0F, 1.0F);
         float time = minecraft.player.tickCount + delta.getGameTimeDeltaPartialTick(false);
-        line(graphics, minecraft, circ, pool, time);
+        line(graphics, minecraft, circ, pool, time, wallPulse(ClientProfileState.profile()));
         graphics.flush();
     }
 
@@ -88,7 +93,7 @@ public final class QiHud {
     }
 
     /** Тонкая светящаяся линия без фона: градиент к яркому краю, запас — нить под ней. */
-    private static void line(GuiGraphics graphics, Minecraft minecraft, float circ, float pool, float time) {
+    private static void line(GuiGraphics graphics, Minecraft minecraft, float circ, float pool, float time, boolean wallPulse) {
         int right = graphics.guiWidth() / 2 + 91;
         int left = right - WIDTH;
         int y = rowY(minecraft, graphics) + 5;
@@ -107,6 +112,29 @@ public final class QiHud {
             GuiShapes.ring(graphics, right - filled, y, 0.0F, 1.2F, 0xFFF4FCFF);
         }
         graphics.fill(right - (int) (WIDTH * pool), y + 2, right, y + 3, 0x90000000 | DEEP);
+        if (wallPulse) {
+            // Thirty ticks = 1.5 seconds; a small jade edge, without text or a screen flash.
+            // API: minecraft-src/net/minecraft/util/Mth.java#sin; client/gui/GuiGraphics.java#fill
+            float pulse = 0.5F + 0.5F * Mth.sin(time * (float) (Math.PI * 2.0D / 30.0D));
+            int jade = ((int) (60 + 90 * pulse) << 24) | 0x75C9A3;
+            graphics.fill(left - 1, y - 1, left, y + 4, jade);
+            graphics.fill(left, y + 3, right, y + 4, jade);
+        }
+        // Резерв неусвоенной доли пилюли (19.10): янтарная нить продолжает нить запаса и тает слева направо,
+        // пока ци оседает за десять минут игры; на конце тлеет уголёк.
+        float reserve = Mth.clamp(ClientPillState.reserve(), 0.0F, 1.0F - pool);
+        if (reserve > 0.0F) {
+            int from = right - (int) (WIDTH * pool);
+            int to = right - (int) (WIDTH * Math.min(1.0F, pool + reserve));
+            float flick = 0.7F + 0.3F * Mth.sin(time * 0.2F);
+            graphics.fill(to, y + 2, from, y + 3, ((int) (0xC0 * flick) << 24) | AMBER);
+            GuiShapes.glow(graphics, to, y + 2, 2.5F + flick, AMBER, 120);
+        }
+    }
+
+    /** Derived from the synced reserve, never the smoothed bar or a stale meditation reason. */
+    public static boolean wallPulse(DantianProfile profile) {
+        return Realm.atWall(profile);
     }
 
     private static int lerpRgb(int from, int to, float k) {

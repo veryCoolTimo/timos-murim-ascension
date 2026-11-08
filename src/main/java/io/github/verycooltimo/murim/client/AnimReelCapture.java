@@ -81,7 +81,7 @@ final class AnimReelCapture {
         }
         ResourceLocation id = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, next[0]);
         current = next[0];
-        boolean blendIn = !current.startsWith("zz_") && (current.equals("training_horse") || current.equals("training_carry"));
+        boolean blendIn = !current.startsWith("zz_") && current.equals("training_carry");
         boolean ok = current.contains("six_form_")
                 ? MurimPlayerAnimations.playForm(minecraft.player, id, 1.0F)
                 : blendIn ? MurimPlayerAnimations.playBlended(minecraft.player, id, 5)

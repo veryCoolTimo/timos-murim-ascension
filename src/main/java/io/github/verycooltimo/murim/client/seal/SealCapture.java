@@ -204,8 +204,7 @@ public final class SealCapture {
         BlockState door = SealRegistry.COLD_IRON_DOOR.get().defaultBlockState().setValue(DoorBlock.FACING, Direction.NORTH);
         level.setBlock(base.offset(0, 0, 8), door.setValue(DoorBlock.HALF, DoubleBlockHalf.LOWER), 3);
         level.setBlock(base.offset(0, 1, 8), door.setValue(DoorBlock.HALF, DoubleBlockHalf.UPPER), 3);
-        level.setBlock(base.offset(2, 1, 8), SealRegistry.VAULT_SEAL.get().defaultBlockState()
-                .setValue(io.github.verycooltimo.murim.sect.seal.SealBlocks.VaultSeal.FACING, Direction.NORTH), 3);
+        level.setBlock(base.offset(2, 1, 8), SealRegistry.SEALED_POLISHED_HUA_GRANITE.get().defaultBlockState(), 3);
         level.setBlock(base.offset(0, 0, 11), Blocks.CHEST.defaultBlockState(), 3);
         for (int[] l : new int[][] {{-3, 1}, {3, 1}, {-3, 6}, {3, 6}, {-1, 10}, {1, 10}}) {
             level.setBlock(base.offset(l[0], 0, l[1]), Blocks.LANTERN.defaultBlockState(), 3);

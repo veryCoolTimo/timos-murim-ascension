@@ -41,6 +41,18 @@ public final class RibbonMesher {
     public static void draw(VertexConsumer consumer, PoseStack.Pose pose,
                             Vec3[] points, double[] halfWidths, float[] alphas,
                             Vec3 toCamera, float red, float green, float blue) {
+        draw(consumer,pose,points,halfWidths,alphas,toCamera,red,green,blue,null,null,MIN_HALF_WIDTH);
+    }
+
+    /** Coloured band, continuous along AND across its width. Zero-width tips are permitted for lab tongues. */
+    public static void draw(VertexConsumer consumer,PoseStack.Pose pose,Vec3[] points,double[] halfWidths,
+                            float[] alphas,Vec3 toCamera,int[] leftColours,int[] rightColours) {
+        draw(consumer,pose,points,halfWidths,alphas,toCamera,1,1,1,leftColours,rightColours,0);
+    }
+
+    private static void draw(VertexConsumer consumer,PoseStack.Pose pose,Vec3[] points,double[] halfWidths,
+                             float[] alphas,Vec3 toCamera,float red,float green,float blue,
+                             int[] leftColours,int[] rightColours,double minimumWidth) {
         int count = points.length;
         if (count < 2 || halfWidths.length != count || alphas.length != count) {
             return;
@@ -94,7 +106,7 @@ public final class RibbonMesher {
                 }
             }
 
-            sides[i] = side.scale(Math.max(MIN_HALF_WIDTH, halfWidths[i]) * miter);
+            sides[i] = side.scale(Math.max(minimumWidth, halfWidths[i]) * miter);
             normals[i] = side.cross(tangent).normalize();
             previousSide = side;
         }
@@ -102,12 +114,23 @@ public final class RibbonMesher {
         for (int i = 0; i < count - 1; i++) {
             float u0 = i / (float) (count - 1);
             float u1 = (i + 1) / (float) (count - 1);
+            if(leftColours==null) {
             quad(consumer, pose,
                  points[i].subtract(sides[i]), points[i].add(sides[i]),
                  points[i + 1].add(sides[i + 1]), points[i + 1].subtract(sides[i + 1]),
                  normals[i], normals[i + 1], alphas[i], alphas[i + 1], u0, u1,
                  red, green, blue);
+            } else {
+                colourVertex(consumer,pose,points[i].subtract(sides[i]),normals[i],u0,0,alphas[i],leftColours[i]);
+                colourVertex(consumer,pose,points[i].add(sides[i]),normals[i],u0,1,alphas[i],rightColours[i]);
+                colourVertex(consumer,pose,points[i+1].add(sides[i+1]),normals[i+1],u1,1,alphas[i+1],rightColours[i+1]);
+                colourVertex(consumer,pose,points[i+1].subtract(sides[i+1]),normals[i+1],u1,0,alphas[i+1],leftColours[i+1]);
+            }
         }
+    }
+
+    private static void colourVertex(VertexConsumer c,PoseStack.Pose pose,Vec3 p,Vec3 n,float u,float v,float a,int rgb) {
+        VfxDraw.vertex(c,pose,p,n,u,v,a,(rgb>>16&255)/255F,(rgb>>8&255)/255F,(rgb&255)/255F);
     }
 
     private static void quad(VertexConsumer consumer, PoseStack.Pose pose,

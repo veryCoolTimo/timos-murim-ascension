@@ -36,6 +36,8 @@ import org.joml.Quaternionf;
 public final class BeltSwordLayer extends RenderLayer<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> {
 
     private static final float GUARD_X = 4.55F;
+    /** Student model guard bone pivot x (4.95) minus {@link #GUARD_X}, as a translation back (model px, torso frame). */
+    private static final float GUARD_X_SHIFT = GUARD_X - 4.95F;
     private static final float GUARD_Y = 11.05F;
     private static final float GUARD_Z = -1.75F;
     private static final Quaternionf GUARD_TURN = new Quaternionf().rotationZYX(
@@ -154,6 +156,9 @@ public final class BeltSwordLayer extends RenderLayer<AbstractClientPlayer, Play
             part = part.getChild(bone);
             part.translateAndRotate(pose);
         }
+        // The author's new student model (27.10) carries the robe a little wider: its guard bone sits 0.4 px further out than the
+        // 4.55 px of GUARD_X. The player's hip is not wider, so the sheath is brought back to the same place as before.
+        pose.translate(GUARD_X_SHIFT / 16.0F, 0.0F, 0.0F);
         if (part.hasChild("guard")) {
             net.minecraft.client.model.geom.ModelPart guard = part.getChild("guard");
             if (guard.hasChild("handle")) {

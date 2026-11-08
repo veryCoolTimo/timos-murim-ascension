@@ -54,6 +54,13 @@ public enum SectStanding {
         if (!s.member()) {
             return OUTSIDER;
         }
+        SectStanding base = base(s, rank);
+        // Promotion by five wins over seniors (SectBouts) is stored as the granted step; lessons can still pass it.
+        int granted = (int) s.entry(SectBouts.GRANTED, 0);
+        return granted > base.ordinal() && granted <= TRUSTED.ordinal() ? values()[granted] : base;
+    }
+
+    private static SectStanding base(SectState s, int rank) {
         boolean graduate = s.has(LESSON_TWO);
         if (graduate && s.has(APPROVAL) && s.contribution() >= TRUSTED_CONTRIBUTION) {
             return TRUSTED;

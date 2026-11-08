@@ -1,0 +1,31 @@
+{
+  "note": "The sect's merit exchange (docs/adr/0012). Prices are in merit. 'stock' is a personal stock that refills by the player's own time in the world (one unit per 'minutes' of play, up to 'max'); sleeping or the passing of days do not refill it. 'flag' is a permanent mark bought once (no stock needed); 'book' makes the item a page of that book. 'gate' names a feature below that must be on: the entry stays unlisted while it is off. An entry whose item does not exist in the game is unlisted too (a row waits for its item). There is no furniture for merit (author 19.10).",
+  "features": {
+    "refining": false
+  },
+  "offers": [
+    { "id": "sword", "item": "murim:huashan_sword", "count": 1, "price": 20, "need": "disciple", "seller": "tae_gyun",
+      "stock": { "max": 1, "minutes": 20 } },
+    { "id": "page", "item": "murim:manual_page", "count": 1, "price": 10, "need": "disciple", "seller": "tae_gyun",
+      "book": "murim:seven_plum_blossoms" },
+    { "id": "scriptures", "flag": "pass.scriptures", "price": 12, "need": "disciple", "seller": "tae_gyun" },
+    { "id": "silver", "item": "murim:silver_tael", "count": 3, "price": 2, "need": "novice", "seller": "tae_gyun" },
+    { "id": "plum_blossom", "item": "murim:pill_plum_blossom", "count": 1, "price": 1, "need": "novice", "seller": "gyeong_cho" },
+    { "id": "snow_plum", "item": "murim:pill_snow_plum", "count": 1, "price": 6, "need": "novice", "seller": "gyeong_cho",
+      "stock": { "max": 2, "minutes": 30 } },
+    { "id": "origin_energy", "item": "murim:pill_origin_energy", "count": 1, "price": 24, "need": "graduate", "seller": "gyeong_cho",
+      "stock": { "max": 1, "minutes": 60 } },
+    { "id": "quick_recovery", "item": "murim:pill_quick_recovery", "count": 1, "price": 8, "need": "novice", "seller": "gyeong_cho",
+      "stock": { "max": 3, "minutes": 20 } },
+    { "id": "vitality", "item": "murim:pill_vitality", "count": 1, "price": 2, "need": "novice", "seller": "gyeong_cho",
+      "stock": { "max": 3, "minutes": 15 } },
+    { "id": "fasting", "item": "murim:pill_fasting", "count": 1, "price": 1, "need": "novice", "seller": "gyeong_cho",
+      "stock": { "max": 4, "minutes": 10 } },
+    { "id": "antidote", "item": "murim:pill_antidote", "count": 1, "price": 3, "need": "novice", "seller": "gyeong_cho",
+      "stock": { "max": 2, "minutes": 30 } },
+    { "id": "blood_replenishing", "item": "murim:pill_blood_replenishing", "count": 1, "price": 14, "need": "disciple", "seller": "gyeong_cho",
+      "stock": { "max": 1, "minutes": 60 } },
+    { "id": "formula_snow_plum", "flag": "formula.snow_plum", "price": 30, "need": "disciple", "seller": "gyeong_cho", "gate": "refining" },
+    { "id": "formula_origin_energy", "flag": "formula.origin_energy", "price": 60, "need": "graduate", "seller": "gyeong_cho", "gate": "refining" }
+  ]
+}

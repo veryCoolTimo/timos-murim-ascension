@@ -411,6 +411,14 @@ public final class IntBlocks {
         }
 
         @Override
+        protected VoxelShape getVisualShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+            // The model includes a teapot above the 8 px board (int_seat.py); collision remains the table itself.
+            VoxelShape pot = round ? shape(state.getValue(FACING), b(6, 8, 6, 10, 12.4, 10))
+                    : shape(state.getValue(FACING), b(3.2, 8, 5.6, 7.2, 12.4, 9.6));
+            return Shapes.or(getShape(state, level, pos, context), pot);
+        }
+
+        @Override
         protected boolean isPathfindable(BlockState state, PathComputationType type) {
             return false;
         }

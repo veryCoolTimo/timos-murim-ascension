@@ -270,7 +270,7 @@ public final class SectMembersGameTests {
         SectGameTests.Yard yard = yard(helper, 0.25D);
         long day = SectSchedule.day(helper.getLevel().getDayTime());
         SectRoster drilling = keys.stream().map(k -> SectRoster.of(k).orElseThrow())
-                .filter(m -> SectSchedule.firstTurn(m, day) >= 2).findFirst().orElseThrow();
+                .filter(m -> SectSchedule.firstTurn(m, day) == 2).findFirst().orElseThrow();
         SectDisciple npc = npc(helper, yard, drilling.key(), 12, 8);
         helper.succeedWhen(() -> {
             SectLife.Resolved r = SectLife.resolve(npc);

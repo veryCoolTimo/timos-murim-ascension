@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "cut=false": {
+      "model": "murim:block/purple_wood_herb_plant"
+    },
+    "cut=true": {
+      "model": "murim:block/purple_wood_herb_plant_cut"
+    }
+  }
+}

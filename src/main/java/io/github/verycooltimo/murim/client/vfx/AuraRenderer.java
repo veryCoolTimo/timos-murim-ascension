@@ -44,6 +44,9 @@ import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 @EventBusSubscriber(modid = MurimMod.MODID, value = Dist.CLIENT)
 public final class AuraRenderer {
 
+    private static final VfxColour HEAD_BLUE = hex(0xCDE8FF);
+    private static final VfxColour HEAD_PINK = hex(0xF2DDEB);
+
     private static final VfxColour CORE = hex(0xF4F8FF);
     private static final VfxColour MID = hex(0xC2CFDA);
     private static final VfxColour OUTER = hex(0x65717D);
@@ -131,13 +134,21 @@ public final class AuraRenderer {
 
         /** Масштаб относительно моба в два блока. */
         double scale() {
-            return height / 2.0D;
+            return height / 2.0D * io.github.verycooltimo.murim.client.sect.HeadIntroCamera.auraScale(entity.getId(), partial);
         }
+    }
+
+    private static boolean headIntro(Body b) {
+        return io.github.verycooltimo.murim.client.sect.HeadIntroCamera.active()
+                && b.entity().getId() == io.github.verycooltimo.murim.client.sect.HeadIntroCamera.actor();
     }
 
     private static void draw(Body b, Minecraft minecraft) {
         int rank = b.aura().rank();
         boolean demonic = b.aura().demonic();
+        // The scene's injected white-core base/volume/ribbons covered the face at close range.
+        // Keep the dialogue portrait clear; no additive aura layers during this scene.
+        if (headIntro(b)) return;
         // Аура техники — только живое пламя симуляции своей палитры, без ранговых слоёв.
         if (ClientAuraState.techniquePalette(b.entity().getId()) >= 0) {
             simulated(b, rank, false, minecraft);
@@ -166,7 +177,7 @@ public final class AuraRenderer {
     /** Объём ауры: мягкое свечение вокруг тела. У чёрного пламени слабее — иначе серая муть. */
     private static void volume(Body b, int rank, float inkShare, boolean demonic) {
         VertexConsumer c = b.buffers().getBuffer(MurimRenderTypes.mote());
-        VfxColour col = demonic ? RED_DEEP : OUTER;
+        VfxColour col = headIntro(b) ? HEAD_BLUE : demonic ? RED_DEEP : OUTER;
         float breath = 0.85F + 0.15F * (float) Math.sin(b.time() * 0.12D);
         float alpha = 0.2F * INTENSITY[rank] * (demonic ? 1.0F : 1.0F - 0.8F * inkShare);
         for (int k = 0; k < 4; k++) {
@@ -343,13 +354,15 @@ public final class AuraRenderer {
             mid = TECH_PINK_MID;
             core = TECH_PINK_CORE;
         }
+        boolean lightHead = headIntro(b);
+        if (lightHead) { outer = HEAD_BLUE; mid = CORE; core = CORE; }
         boolean ownEyes = minecraft.getCameraEntity() == minecraft.player && minecraft.options.getCameraType().isFirstPerson();
 
         VertexConsumer glow = b.buffers().getBuffer(MurimRenderTypes.ribbon());
         // Аура техники — чистое пламя: без туши, обломков и тёмных мазков ранга.
         boolean techOnly = palette >= 0;
         for (AuraSim.Particle p : emitter.particles) {
-            if (p.kind != AuraSim.Kind.FLAME && p.kind != AuraSim.Kind.INK || techOnly && p.kind == AuraSim.Kind.INK) {
+            if (p.kind != AuraSim.Kind.FLAME && p.kind != AuraSim.Kind.INK || techOnly && !lightHead && p.kind == AuraSim.Kind.INK) {
                 continue;
             }
             Vec3[] pts = trail(p, partial);
@@ -359,12 +372,13 @@ public final class AuraRenderer {
             float t = p.progress(partial);
             float env = (float) Math.pow(Math.sin(Math.PI * Math.min(1.0F, t * 1.3F + 0.05F)), 0.6D);
             float fade = (float) Math.pow(1.0F - t, 0.6D) * front(b, p, 0.6F);
-            if (p.kind == AuraSim.Kind.INK) {
+            if (p.kind == AuraSim.Kind.INK && !lightHead) {
                 // Ободок чёрного языка: шире туши, тусклый.
                 strip(glow, b, pts, p.size * env * 1.45D + 0.04D, 0.3F * fade, demonic ? RED : RIM, demonic ? RED_HOT : CORE);
             } else {
-                VfxColour from = lerp(mid, outer, t);
-                strip(glow, b, pts, p.size * env * 1.6D, 0.5F * fade, from, outer);
+                VfxColour tint = lightHead && p.seed < 0.15F ? HEAD_PINK : outer;
+                VfxColour from = lerp(mid, tint, t);
+                strip(glow, b, pts, p.size * env * 1.6D, 0.5F * fade, from, tint);
                 strip(glow, b, pts, p.size * env * 0.55D, 0.55F * fade, lerp(core, mid, t), mid);
             }
         }
@@ -381,6 +395,8 @@ public final class AuraRenderer {
             VfxDraw.segment(glow, b.pose(), tail, head, b.camera(), p.size * 0.6D, 0.9F * a, col.red(), col.green(), col.blue());
         }
         b.buffers().endBatch(MurimRenderTypes.ribbon());
+
+        if (lightHead) return; // The head has no black flow, smoke, dust or debris layers.
 
         RenderType inkType = MurimRenderTypes.ink();
         VertexConsumer dark = b.buffers().getBuffer(inkType);
@@ -475,6 +491,12 @@ public final class AuraRenderer {
 
     /** Лента по точкам: ширина сходит на нет к концу, цвет от {@code from} к {@code to}. */
     private static void strip(VertexConsumer c, Body b, Vec3[] pts, double width, float alpha, VfxColour from, VfxColour to) {
+        flowStrip(c,b.pose(),b.camera(),pts,width,alpha,from,to,false,0,null);
+    }
+    /** Shared aura taper and colour interpolation, optionally sampling the eight brush strokes. */
+    public static void flowStrip(VertexConsumer c, com.mojang.blaze3d.vertex.PoseStack.Pose pose,
+            Vec3 camera, Vec3[] pts,double width,float alpha,VfxColour from,VfxColour to,
+            boolean atlas,int cell,java.util.function.Predicate<Vec3> clear) {
         if (alpha <= 0.0F) {
             return;
         }
@@ -482,7 +504,7 @@ public final class AuraRenderer {
         Vec3[] side = new Vec3[n];
         for (int k = 0; k < n; k++) {
             Vec3 tangent = pts[Math.min(n - 1, k + 1)].subtract(pts[Math.max(0, k - 1)]);
-            Vec3 toCam = b.camera().subtract(pts[k]);
+            Vec3 toCam = camera.subtract(pts[k]);
             Vec3 s = tangent.cross(toCam);
             side[k] = s.lengthSqr() < 1.0E-9D ? new Vec3(1.0D, 0.0D, 0.0D) : s.normalize();
         }
@@ -497,11 +519,13 @@ public final class AuraRenderer {
             float a1 = alpha * (1.0F - s1 * s1);
             VfxColour c0 = lerp(from, to, s0);
             VfxColour c1 = lerp(from, to, s1);
-            Vec3 normal = b.camera().subtract(pts[k]).normalize();
-            VfxDraw.vertex(c, b.pose(), pts[k].subtract(side[k].scale(w0)), normal, s0, 0.0F, a0, c0.red(), c0.green(), c0.blue());
-            VfxDraw.vertex(c, b.pose(), pts[k + 1].subtract(side[k + 1].scale(w1)), normal, s1, 0.0F, a1, c1.red(), c1.green(), c1.blue());
-            VfxDraw.vertex(c, b.pose(), pts[k + 1].add(side[k + 1].scale(w1)), normal, s1, 1.0F, a1, c1.red(), c1.green(), c1.blue());
-            VfxDraw.vertex(c, b.pose(), pts[k].add(side[k].scale(w0)), normal, s0, 1.0F, a0, c0.red(), c0.green(), c0.blue());
+            Vec3 normal = camera.subtract(pts[k]).normalize();
+            Vec3 q0=pts[k].subtract(side[k].scale(w0)),q1=pts[k+1].subtract(side[k+1].scale(w1)),q2=pts[k+1].add(side[k+1].scale(w1)),q3=pts[k].add(side[k].scale(w0));
+            if(clear!=null&&(!clear.test(q0)||!clear.test(q1)||!clear.test(q2)||!clear.test(q3)))continue;
+            VfxDraw.vertex(c, pose, q0, normal, atlas?(cell%4+s0*.98F+.01F)/4:s0, atlas?(cell/4+.01F)/2:0.0F, a0, c0.red(), c0.green(), c0.blue());
+            VfxDraw.vertex(c, pose, q1, normal, atlas?(cell%4+s1*.98F+.01F)/4:s1, atlas?(cell/4+.01F)/2:0.0F, a1, c1.red(), c1.green(), c1.blue());
+            VfxDraw.vertex(c, pose, q2, normal, atlas?(cell%4+s1*.98F+.01F)/4:s1, atlas?(cell/4+.99F)/2:1.0F, a1, c1.red(), c1.green(), c1.blue());
+            VfxDraw.vertex(c, pose, q3, normal, atlas?(cell%4+s0*.98F+.01F)/4:s0, atlas?(cell/4+.99F)/2:1.0F, a0, c0.red(), c0.green(), c0.blue());
         }
     }
 

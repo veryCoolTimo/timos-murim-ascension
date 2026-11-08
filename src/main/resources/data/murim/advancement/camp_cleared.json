@@ -1,0 +1,23 @@
+{
+  "display": {
+    "icon": {
+      "id": "murim:ach_camp_cleared"
+    },
+    "title": {
+      "translate": "advancement.murim.camp_cleared.title"
+    },
+    "description": {
+      "translate": "advancement.murim.camp_cleared.desc"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "parent": "murim:six_elements",
+  "criteria": {
+    "done": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

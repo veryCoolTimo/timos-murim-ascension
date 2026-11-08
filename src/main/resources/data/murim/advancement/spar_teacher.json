@@ -1,0 +1,23 @@
+{
+  "display": {
+    "icon": {
+      "id": "murim:huashan_sword"
+    },
+    "title": {
+      "translate": "advancement.murim.spar_teacher.title"
+    },
+    "description": {
+      "translate": "advancement.murim.spar_teacher.desc"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "parent": "murim:spar_win",
+  "criteria": {
+    "done": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

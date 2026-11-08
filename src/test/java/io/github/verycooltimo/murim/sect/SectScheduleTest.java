@@ -157,10 +157,10 @@ class SectScheduleTest {
                 // Лицом друг к другу.
                 assertEquals(-t.faceU(), other.faceU(), 1e-9);
             }
-            assertEquals(10, spar.size(), "день " + day + ": пять пар");
+            assertEquals(day % 3 == 0 ? 8 : 10, spar.size(), "daily rotation keeps four or five symmetric pairs");
             assertTrue(kinds.containsValue(Kind.POLES));
             assertTrue(kinds.containsValue(Kind.CHORE));
-            assertEquals(Kind.SPAR, kinds.get("seo_rang"), "старший всегда участвует в поединках");
+            assertEquals(day % 3 == 0 ? Kind.DRILL : Kind.SPAR, kinds.get("seo_rang"), "senior demonstrates one day in three");
         }
         // Состав групп третьего поколения меняется от дня к дню.
         SectRoster m = SectRoster.of("bok_manseok").orElseThrow();
@@ -196,7 +196,7 @@ class SectScheduleTest {
                     assertFalse(task.zone().equals("camp") || task.zone().startsWith("dorm_"));
                 }
             }
-            assertEquals(4, practitioners);
+            assertEquals(2, practitioners, "two juniors now work in the financier office");
         }
     }
 
@@ -222,6 +222,21 @@ class SectScheduleTest {
             for (int side = 0; side < 2; side++) {
                 assertEquals("training", SectReview.ringSpot(ring, side).zone());
             }
+        }
+    }
+
+    @Test
+    @DisplayName("Помощники работают в казначействе, но приходят на еженедельный смотр")
+    void officeHelpersFollowReviewAndUsePlanZone() {
+        for (String key : List.of("yul_san", "yul_ak")) {
+            SectRoster member = SectRoster.of(key).orElseThrow();
+            Task work = SectSchedule.task(member, 28000L);
+            assertEquals(Kind.WORK, work.kind(), key);
+            assertEquals("treasury", work.zone(), key);
+            assertNotNull(zone(work.zone()), key);
+            Task review = SectSchedule.task(member, 6L * SectSchedule.DAY + SectReview.FROM + 100L);
+            assertEquals(Kind.WATCH, review.kind(), key);
+            assertEquals("training", review.zone(), key);
         }
     }
 

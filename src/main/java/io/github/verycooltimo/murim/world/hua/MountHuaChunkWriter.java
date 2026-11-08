@@ -72,7 +72,7 @@ final class MountHuaChunkWriter {
     private final BlockState[] origTop = new BlockState[256];
 
     MountHuaChunkWriter(WorldGenLevel level, ChunkAccess chunk, MountHuaSite site) {
-        this(level, chunk, site, level.getSeed(), null);
+        this(level, chunk, site, site.terrainSeed(), null);
     }
 
     private MountHuaChunkWriter(net.minecraft.world.level.LevelAccessor level, ChunkAccess chunk,
@@ -125,7 +125,7 @@ final class MountHuaChunkWriter {
     /** Same columns, skin, stair masonry and vegetation as worldgen; no markers or cave carving. */
     static void regrade(net.minecraft.server.level.ServerLevel level, ChunkAccess chunk,
             MountHuaSite site, RegradeAccess access, boolean decorate) {
-        MountHuaChunkWriter w = new MountHuaChunkWriter(level, chunk, site, level.getSeed(), access);
+        MountHuaChunkWriter w = new MountHuaChunkWriter(level, chunk, site, site.terrainSeed(), access);
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
         for (int j = 0; j < N; j++) {
             for (int i = 0; i < N; i++) {
@@ -173,10 +173,141 @@ final class MountHuaChunkWriter {
                 }
             }
         }
+        if (regrade == null) {
+            carveMassifCaves(pos);
+        }
         Heightmap.primeHeightmaps(chunk, EnumSet.allOf(Heightmap.Types.class));
         decorate(pos);
         Heightmap.primeHeightmaps(chunk, EnumSet.allOf(Heightmap.Types.class));
         return true;
+    }
+
+    /**
+     * Share of the eligible soil columns of the cleanup pass that keep the tree, bamboo or plum their hash rolled, per zone (calibrated 26.10 so
+     * the plum wood of each zone equals build 8bd52405 on the author's seed, docs/adr/0025). The massif keeps fewer: it is the bare slope the
+     * author approved, and the cleanup now sees all of its soil. The band (the ground the foothill belt gained, weight below one half) is
+     * the foothill zone and keeps the foothill share.
+     */
+    static final int TREE_KEEP_MASSIF = 55;
+    static final int TREE_KEEP_FOOTHILLS = 65;
+
+    /** Rock kept solid between a cave and the open air (vertically below the lowest nearby surface, blocks). */
+    static final int CAVE_SHELL = 12;
+
+    /**
+     * Vanilla-like caves inside the massif (the fill replaces everything the vanilla carvers made above the old ground,
+     * docs/adr/0001): spaghetti tunnels (two crossing noise sheets) and flat cheese chambers, carved into the solid
+     * rock only. Kept clear of: the sect (every pad, the gate terrace and the trail with a wide margin, so the baked
+     * buildings, stairs and the two designed caves keep their rock), the stream, the climb, the pillar basin, and the
+     * surface: caves stay {@link #CAVE_SHELL} blocks below the lowest surface in a full
+     * 12-block square envelope, so none opens onto a cliff or a ledge. Pure function of (seed, x, y, z) like everything else here.
+     */
+    private void carveMassifCaves(BlockPos.MutableBlockPos pos) {
+        // Cache the complete shell envelope, including adjacent chunks. Sparse probes miss narrow
+        // gullies and can let a chamber open through a cliff between the probes.
+        boolean[] eligible = new boolean[256];
+        boolean any = false;
+        for (int lz = 0; lz < 16; lz++) for (int lx = 0; lx < 16; lx++) {
+            eligible[lz * 16 + lx] = topAt(lx, lz) - orig[lz * 16 + lx] >= 30
+                    && caveColumn(site, site.centerU(x0 + lx, z0 + lz), site.centerV(x0 + lx, z0 + lz));
+            any |= eligible[lz * 16 + lx];
+        }
+        if (!any) return;
+        int radius = CAVE_SHELL;
+        int size = 16 + radius * 2;
+        int[] envelope = new int[size * size];
+        for (int z = 0; z < size; z++) for (int x = 0; x < size; x++) {
+            int wx = x0 + x - radius, wz = z0 + z - radius;
+            double u = site.centerU(wx, wz), v = site.centerV(wx, wz);
+            int planned = (int) Math.floor(site.worldY(shape.height(u, v)));
+            // Outside the full-weight massif the actual blended surface may lie below the plan.
+            // Using the foot there is conservative and independent of neighbouring chunk order.
+            envelope[z * size + x] = shape.blend(u, v) < 1 ? Math.min(planned, site.baseY()) : planned;
+        }
+        for (int lz = 0; lz < 16; lz++) {
+            for (int lx = 0; lx < 16; lx++) {
+                if (!eligible[lz * 16 + lx]) continue;
+                int wx = x0 + lx;
+                int wz = z0 + lz;
+                int t = topAt(lx, lz);
+                int o = orig[lz * 16 + lx];
+                int ceiling = caveCeiling(envelope, size, lx, lz, t);
+                for (int dz = -1; dz <= 1; dz++) {
+                    for (int dx = -1; dx <= 1; dx++) {
+                        ceiling = Math.min(ceiling, topAt(lx + dx, lz + dz) - CAVE_SHELL);
+                    }
+                }
+                int floor = o + 3;
+                for (int y = floor; y <= ceiling; y++) {
+                    if (!caveNoise(noise, wx, y, wz, ceiling - y)) {
+                        continue;
+                    }
+                    pos.set(wx, y, wz);
+                    BlockState there = terrainState(pos);
+                    if (there.is(Blocks.STONE)) {
+                        terrainBlock(pos, AIR, false);
+                    }
+                }
+            }
+        }
+    }
+
+    static int caveCeiling(int[] envelope, int size, int lx, int lz, int top) {
+        int ceiling = top;
+        for (int dz = -CAVE_SHELL; dz <= CAVE_SHELL; dz++) {
+            for (int dx = -CAVE_SHELL; dx <= CAVE_SHELL; dx++) {
+                ceiling = Math.min(ceiling, envelope[(lz + CAVE_SHELL + dz) * size + lx + CAVE_SHELL + dx]);
+            }
+        }
+        return ceiling - CAVE_SHELL;
+    }
+
+    /** Full-height exclusions protect every sect pad, connecting path, stair support and climb. */
+    static boolean caveColumn(MountHuaSite site, double u, double v) {
+        MountHuaShape shape = site.shape();
+        if (shape.blend(u, v) < 1 || shape.massif(u, v) < 0.5 || MountHuaPlan.inPillarBasin(u, v)
+                || shape.streamDistance(u, v) < 16 || shape.climbChanged(u, v)) return false;
+        for (Zone zone : MountHuaPlan.ZONES) {
+            if (Math.abs(u - zone.u()) <= zone.width() / 2.0 + 28
+                    && Math.abs(v - zone.v()) <= zone.depth() / 2.0 + 28) return false;
+        }
+        for (double[] path : MountHuaPlan.PATHS) {
+            if (MountHuaShape.pathAt(path, u, v)[0] <= MountHuaPlan.pathHalfWidth(path) + CAVE_SHELL) return false;
+        }
+        double[] trail = shape.trailAt(u, v);
+        return trail == null || trail[0] >= 24;
+    }
+
+    /** Cave test at one block; {@code below} = blocks under the cave ceiling limit (caves thin out towards it). */
+    static boolean caveNoise(HuaNoise noise, int x, int y, int z, int below) {
+        if (below < 0) return false;
+        // Tunnels: both sheets near zero. Radius shrinks over the last blocks below the ceiling limit.
+        double r = 0.075 * Math.min(1.0, (below + 1) / 6.0);
+        double a = noise.noise(x * 0.03, y * 0.045, z * 0.03);
+        if (Math.abs(a) < r) {
+            double b = noise.noise(x * 0.03 + 211.7, y * 0.045 + 57.3, z * 0.03 + 93.1);
+            if (Math.abs(b) < r) {
+                return true;
+            }
+        }
+        // Chambers: flat (stretched in y) blobs of low-frequency noise, rarer.
+        if (below >= 4) {
+            double c = noise.noise(x * 0.014 + 400.1, y * 0.03, z * 0.014 - 311.9);
+            return c > 0.46 - 0.04 * Math.min(1.0, (below - 4) / 20.0);
+        }
+        return false;
+    }
+
+    /** Deepest the foothill belt may cut below the vanilla ground (blocks). */
+    static final int MAX_CUT = 4;
+
+    /** Columns whose low plan height is part of the design (gate terrace, trail foot, stream bed): never capped. */
+    private boolean keepsLowGround(double u, double v) {
+        if (zoneAt(u, v, 60) != null || shape.streamDistance(u, v) < 14) {
+            return true;
+        }
+        double[] tr = shape.trailAt(u, v);
+        return tr != null && tr[0] < 14;
     }
 
     /** Original ground and planned heights for the chunk + border; false if the mountain misses it. */
@@ -193,8 +324,8 @@ final class MountHuaChunkWriter {
             for (int i = 0; i < N; i++) {
                 int wx = x0 - B + i;
                 int wz = z0 - B + j;
-                double u = site.localU(wx + 0.5, wz + 0.5);
-                double v = site.localV(wx + 0.5, wz + 0.5);
+                double u = site.centerU(wx, wz);
+                double v = site.centerV(wx, wz);
                 double w = shape.blend(u, v);
                 int lx = Math.max(0, Math.min(15, i - B));
                 int lz = Math.max(0, Math.min(15, j - B));
@@ -206,6 +337,12 @@ final class MountHuaChunkWriter {
                 }
                 double mount = site.worldY(shape.height(u, v));
                 int t = (int) Math.round(o + w * (mount - o));
+                if (t < o - MAX_CUT && regrade == null && !keepsLowGround(u, v)) {
+                    // The foot of the plan is at most the bake's foot height; a mountain put on higher vanilla ground (hills,
+                    // plateau) would sink the whole foothill belt into a pit that opens the caves under it (dripstone walls) and
+                    // leaves structures planned on the old ground floating over it. The belt never cuts deeper than this.
+                    t = o - MAX_CUT;
+                }
                 top[idx(i, j)] = Math.min(maxY, t);
                 if (i >= B && i < B + 16 && j >= B && j < B + 16) {
                     any = true;
@@ -232,6 +369,7 @@ final class MountHuaChunkWriter {
         MountHuaChunkWriter w = new MountHuaChunkWriter(level, chunk, site);
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
         if (w.computeGrid(pos)) {
+            w.clearSurfaceDripstone(pos);
             w.cleanupPass(pos);
         }
     }
@@ -263,7 +401,7 @@ final class MountHuaChunkWriter {
                         BlockState state = section.getBlockState(lx, y, lz);
                         BlockState clear = snowFree(state);
                         if (clear != state) {
-                            level.setBlock(pos.set(wx, y0 + y, wz), clear, 2);
+                            HuaStampBlocks.set(level, pos.set(wx, y0 + y, wz), clear, 2);
                         }
                     }
                 }
@@ -283,6 +421,54 @@ final class MountHuaChunkWriter {
             return state.setValue(SnowyDirtBlock.SNOWY, false);
         }
         return state;
+    }
+
+    /**
+     * Vanilla cave features run AFTER our fill and may grow large dripstone into the new surface.
+     * Cuts can also expose vanilla cave palettes. Sanitize only the exterior shell; underground
+     * dripstone caves below it survive. No surface rule or Hua rock palette writes dripstone.
+     */
+    private void clearSurfaceDripstone(BlockPos.MutableBlockPos pos) {
+        boolean any = false;
+        for (LevelChunkSection section : chunk.getSections()) {
+            if (!section.hasOnlyAir() && section.maybeHas(state -> state.is(Blocks.POINTED_DRIPSTONE)
+                    || state.is(Blocks.DRIPSTONE_BLOCK))) {
+                any = true;
+                break;
+            }
+        }
+        if (!any) return;
+        for (int lz = 0; lz < 16; lz++) for (int lx = 0; lx < 16; lx++) {
+            if (weight[idx(lx + B, lz + B)] <= 0) continue;
+            int floor = topAt(lx, lz);
+            for (int dz = -1; dz <= 1; dz++) for (int dx = -1; dx <= 1; dx++) {
+                floor = Math.min(floor, topAt(lx + dx, lz + dz));
+            }
+            int surface = topAt(lx, lz);
+            // A later giant dripstone can itself raise OCEAN_FLOOR_WG. Do not use that spike
+            // as the surface to preserve: descend through it to the supporting terrain.
+            while (surface > chunk.getMinBuildHeight()) {
+                BlockState state = terrainState(pos.set(x0 + lx, surface, z0 + lz));
+                if (!state.isAir() && !state.is(Blocks.POINTED_DRIPSTONE) && !state.is(Blocks.DRIPSTONE_BLOCK)) break;
+                surface--;
+            }
+            floor = Math.max(chunk.getMinBuildHeight(), Math.min(floor, surface) - CAVE_SHELL);
+            for (int y = floor; y < chunk.getMaxBuildHeight(); y++) {
+                int wx = x0 + lx, wz = z0 + lz;
+                BlockState state = terrainState(pos.set(wx, y, wz));
+                if (!state.is(Blocks.POINTED_DRIPSTONE) && !state.is(Blocks.DRIPSTONE_BLOCK)) continue;
+                BlockState clean = surfaceDripstone(state, y > surface, rock(wx, y, wz));
+                if (clean != state) terrainBlock(pos, clean, false);
+            }
+        }
+        Heightmap.primeHeightmaps(chunk, EnumSet.allOf(Heightmap.Types.class));
+    }
+
+    static BlockState surfaceDripstone(BlockState state, boolean aboveSurface, BlockState rock) {
+        if (state.is(Blocks.POINTED_DRIPSTONE)) {
+            return state.getFluidState().isEmpty() ? AIR : Blocks.WATER.defaultBlockState();
+        }
+        return state.is(Blocks.DRIPSTONE_BLOCK) ? (aboveSurface ? AIR : rock) : state;
     }
 
     private void cleanupPass(BlockPos.MutableBlockPos pos) {
@@ -320,7 +506,11 @@ final class MountHuaChunkWriter {
                 }
                 int wx = x0 + lx;
                 int wz = z0 + lz;
-                int surface = chunk.getHeight(Heightmap.Types.WORLD_SURFACE, lx, lz) - 1;
+                // ChunkAccess#getHeight is already the TOP BLOCK (the heightmap's first free y minus one). The extra "- 1" that stood here began the
+                // scan one block under the real top, so a grass or granite skin was never seen as ground and a tree needed a replaceable block (the
+                // short grass or a flower of a vanilla feature) on top of the soil: plums grew only where vanilla vegetation stood. With the Hua
+                // biome painted before the vegetal step that vegetation is gone, and the plums with it (measured 26.10: -60 %).
+                int surface = chunk.getHeight(Heightmap.Types.WORLD_SURFACE, lx, lz);
                 int ground = Integer.MIN_VALUE;
                 for (int y = surface; y > surface - 40; y--) {
                     BlockState state = terrainState(pos.set(wx, y, wz));
@@ -372,8 +562,8 @@ final class MountHuaChunkWriter {
                         && !terrainState(pos).canBeReplaced()) {
                     continue;
                 }
-                double u = site.localU(wx + 0.5, wz + 0.5);
-                double v = site.localV(wx + 0.5, wz + 0.5);
+                double u = site.centerU(wx, wz);
+                double v = site.centerV(wx, wz);
                 if (zoneAt(u, v, 12) != null || MountHuaPlan.inPillarBasin(u, v)) {
                     continue;
                 }
@@ -386,6 +576,12 @@ final class MountHuaChunkWriter {
                 }
                 long h = mix(wx, wz, 23);
                 int roll = (int) Math.floorMod(h, 1000L);
+                // The density the author approved came out of the off-by-one above (only the soil columns with a vanilla plant on top took a tree);
+                // now every soil column with air over it is eligible, which is 1.1 to 1.4 times as many trees, so a share per zone is kept.
+                int keep = shape.massif(u, v) > HuaBiomes.MASSIF ? TREE_KEEP_MASSIF : TREE_KEEP_FOOTHILLS;
+                if (Math.floorMod(mix(wx, wz, 47), 100L) >= keep) {
+                    continue;
+                }
                 // New plums replace the vanilla foothill forest; keep pines only on cliff rims.
                 // Density still fades towards the vanilla forest outside our biomes.
                 double e = shape.beltDistance(u, v);
@@ -493,8 +689,8 @@ final class MountHuaChunkWriter {
             for (int lx = 0; lx < 16; lx++) {
                 int wx = x0 + lx;
                 int wz = z0 + lz;
-                double u = site.localU(wx + 0.5, wz + 0.5);
-                double v = site.localV(wx + 0.5, wz + 0.5);
+                double u = site.centerU(wx, wz);
+                double v = site.centerV(wx, wz);
                 if (!MountHuaShape.inClimbBox(u, v) || !shape.climbChanged(u, v)) {
                     continue;
                 }
@@ -665,8 +861,8 @@ final class MountHuaChunkWriter {
                 int wx = x0 + lx;
                 int wz = z0 + lz;
                 if (regrade != null && !regrade.changes(wx, wz)) continue;
-                double u = site.localU(wx + 0.5, wz + 0.5);
-                double v = site.localV(wx + 0.5, wz + 0.5);
+                double u = site.centerU(wx, wz);
+                double v = site.centerV(wx, wz);
                 if (nearWideFlight(u, v) || MountHuaPlan.clearFootprint(u, v)) continue;
                 Zone z = zoneAt(u, v, 14);
                 if (z == null || z.cave() || !MountHuaPlan.CORE.contains(z.id()) || z.id().equals("gate")
@@ -729,8 +925,8 @@ final class MountHuaChunkWriter {
                 if (t < site.baseY() + 20) {
                     continue;
                 }
-                double u = site.localU(wx + 0.5, wz + 0.5);
-                double v = site.localV(wx + 0.5, wz + 0.5);
+                double u = site.centerU(wx, wz);
+                double v = site.centerV(wx, wz);
                 if (shape.massif(u, v) <= HuaBiomes.MASSIF || zoneAt(u, v, 4) != null || shape.climbChanged(u, v)
                         || MountHuaPlan.inPillarBasin(u, v) || shape.streamDistance(u, v) < 4) {
                     continue;
@@ -786,7 +982,7 @@ final class MountHuaChunkWriter {
         // Include neighbour chunks: their later foliage pass must not overhang a building pad.
         for (int lz = -16; lz < 32; lz++) for (int lx = -16; lx < 32; lx++) {
             int wx = x0 + lx, wz = z0 + lz;
-            double u = site.localU(wx + 0.5, wz + 0.5), v = site.localV(wx + 0.5, wz + 0.5);
+            double u = site.centerU(wx, wz), v = site.centerV(wx, wz);
             if (!MountHuaPlan.clearFootprint(u, v)) continue;
             Zone pad = MountHuaPlan.ZONES.stream().filter(z -> !z.cave() && !z.id().equals("grove")
                     && MountHuaPlan.insidePad(z, u, v)).findFirst().orElseThrow();
@@ -828,10 +1024,10 @@ final class MountHuaChunkWriter {
             terrainBlock(pos, AIR, false);
         }
         // Fill: rock from just below the old surface (buries grass/sand) up to the new top.
-        int from = Math.min(o - 2, t - 4);
+        int from = Math.min(o - 2, t - CAVE_SHELL);
         // The training climb is natural rock, not a terrace buttress.
-        boolean climbFace = shape.climbChanged(site.localU(wx + 0.5, wz + 0.5), site.localV(wx + 0.5, wz + 0.5));
-        double gap = climbFace ? shape.climbGap(site.localU(wx + 0.5, wz + 0.5), site.localV(wx + 0.5, wz + 0.5)) : 0;
+        boolean climbFace = shape.climbChanged(site.centerU(wx, wz), site.centerV(wx, wz));
+        double gap = climbFace ? shape.climbGap(site.centerU(wx, wz), site.centerV(wx, wz)) : 0;
         boolean masonry = (retainingWall(wx, wz, t) || stairSupport(wx, wz, t)) && !climbFace;
         for (int y = from; y <= t; y++) {
             pos.set(wx, y, wz);
@@ -847,8 +1043,8 @@ final class MountHuaChunkWriter {
      * retaining wall (temple platforms on Huashan stand on masonry), not as natural rock.
      */
     private boolean retainingWall(int wx, int wz, int t) {
-        double u = site.localU(wx + 0.5, wz + 0.5);
-        double v = site.localV(wx + 0.5, wz + 0.5);
+        double u = site.centerU(wx, wz);
+        double v = site.centerV(wx, wz);
         for (Zone z : MountHuaPlan.ZONES) {
             if (z.cave() || z.id().equals("grove")) {
                 continue;
@@ -865,8 +1061,8 @@ final class MountHuaChunkWriter {
 
     /** The stair is carried on dressed stone where it runs above the natural rock (author ref 10). */
     private boolean stairSupport(int wx, int wz, int t) {
-        double u = site.localU(wx + 0.5, wz + 0.5);
-        double v = site.localV(wx + 0.5, wz + 0.5);
+        double u = site.centerU(wx, wz);
+        double v = site.centerV(wx, wz);
         double[] tr = shape.trailAt(u, v);
         if (tr != null && tr[0] <= 3.6 && site.worldY(shape.ground(u, v)) < t - 2) return true;
         for (double[] path : MountHuaPlan.PATHS) {
@@ -966,7 +1162,7 @@ final class MountHuaChunkWriter {
     private void skin(int lx, int lz, int t, int drop, double w, BlockPos.MutableBlockPos pos) {
         int wx = x0 + lx;
         int wz = z0 + lz;
-        double localU = site.localU(wx + 0.5, wz + 0.5), localV = site.localV(wx + 0.5, wz + 0.5);
+        double localU = site.centerU(wx, wz), localV = site.centerV(wx, wz);
         for (double[] p : MountHuaPlan.PATHS) {
             if (MountHuaPlan.pathWidth(p) > MountHuaPlan.PATH_WIDTH
                     && (MountHuaShape.pathAt(p, localU, localV)[0] <= MountHuaPlan.pathHalfWidth(p)
@@ -983,15 +1179,15 @@ final class MountHuaChunkWriter {
             long r = mix(wx, wz, 17) & 15;
             double path = noise.noise(wx / 9.0, wz / 9.0, 71.0);
             // The sect's floor is the Hua paving family (author 13.10), see HuaPaving.
-            double u = site.localU(wx + 0.5, wz + 0.5);
-            double v = site.localV(wx + 0.5, wz + 0.5);
+            double u = site.centerU(wx, wz);
+            double v = site.centerV(wx, wz);
             double edge = Math.min(terrace.width() / 2.0 - Math.abs(u - terrace.u()), terrace.depth() / 2.0 - Math.abs(v - terrace.v()));
             terrainBlock(pos.set(wx, t, wz), HuaPaving.surface(terrace.id(), edge, (int) r, path), false);
             terrainBlock(pos.set(wx, t - 1, wz), edge < 2.0
                     ? ModBlocks.POLISHED_HUA_GRANITE.get().defaultBlockState() : DIRT, false);
             return;
         }
-        MountHuaPlan.Ledge ledge = shape.climbLedgeAt(site.localU(wx + 0.5, wz + 0.5), site.localV(wx + 0.5, wz + 0.5));
+        MountHuaPlan.Ledge ledge = shape.climbLedgeAt(site.centerU(wx, wz), site.centerV(wx, wz));
         if (ledge != null && t == ledgeY(ledge)) {
             // Climb ledge top: moss and grass on granite (ref: green cushions on every lobe).
             int r = (int) (mix(wx, wz, 137) & 15);
@@ -1002,7 +1198,7 @@ final class MountHuaChunkWriter {
             terrainBlock(pos.set(wx, t, wz), ground, false);
             return;
         }
-        if (shape.climbChanged(site.localU(wx + 0.5, wz + 0.5), site.localV(wx + 0.5, wz + 0.5))) {
+        if (shape.climbChanged(site.centerU(wx, wz), site.centerV(wx, wz))) {
             // Lips and shoulders between the ledges: moss on anything flat enough, rock elsewhere
             // (no soil skin, whose dirt would show on the faces).
             if (drop <= 2) {
@@ -1030,10 +1226,10 @@ final class MountHuaChunkWriter {
                 + (t > site.worldY(150) ? 0.55 : 0.0)
                 + (drop >= 2 ? 0.25 : 0.0)
                 // Forested saddles between the shelf and the spires keep their soil (author 04.10).
-                + 1.5 * shape.saddleWeight(site.localU(wx + 0.5, wz + 0.5), site.localV(wx + 0.5, wz + 0.5));
-        boolean saddle = soil > 1.2 && shape.saddleWeight(site.localU(wx + 0.5, wz + 0.5), site.localV(wx + 0.5, wz + 0.5)) > 0.4;
+                + 1.5 * shape.saddleWeight(site.centerU(wx, wz), site.centerV(wx, wz));
+        boolean saddle = soil > 1.2 && shape.saddleWeight(site.centerU(wx, wz), site.centerV(wx, wz)) > 0.4;
         // Below the sect shelf the ledges and folds hold soil (author 04.10: more green under the sect).
-        double below = MountHuaShape.belowSect(site.localU(wx + 0.5, wz + 0.5), site.localV(wx + 0.5, wz + 0.5),
+        double below = MountHuaShape.belowSect(site.centerU(wx, wz), site.centerV(wx, wz),
                 site.nominal(t));
         soil += 0.9 * below;
         // Steps of a steep wall are not shelves: within two blocks the rock falls away by 5+,
@@ -1103,8 +1299,8 @@ final class MountHuaChunkWriter {
     private void trailColumn(int lx, int lz, BlockPos.MutableBlockPos pos) {
         int wx = x0 + lx;
         int wz = z0 + lz;
-        double u = site.localU(wx + 0.5, wz + 0.5);
-        double v = site.localV(wx + 0.5, wz + 0.5);
+        double u = site.centerU(wx, wz);
+        double v = site.centerV(wx, wz);
         double[] tr = shape.trailAt(u, v);
         if (tr == null || tr[0] > 2.1) {
             return;
@@ -1117,10 +1313,13 @@ final class MountHuaChunkWriter {
             int behind = (int) Math.round(site.worldY(shape.trailY(index - 1)));
             double[] dir = shape.trailDir(index);
             BlockState block;
-            if (ahead > here) {
+            if (ahead > here && stepUp(lx, lz, t, dir[0], dir[1])) {
                 block = stairs(dir[0], dir[1]);
-            } else if (behind > here) {
+            } else if (behind > here && stepUp(lx, lz, t, -dir[0], -dir[1])) {
                 block = stairs(-dir[0], -dir[1]);
+            } else if (ahead > here || behind > here) {
+                // Author 22.10: no step set into a flat run (a pit with a stair at its bottom): the ground here does not rise.
+                block = ModBlocks.POLISHED_HUA_GRANITE.get().defaultBlockState();
             } else {
                 long h = mix(wx, wz, 3);
                 // The lowest part of the trail is the oldest: worn, cracked, mossy, half cobble.
@@ -1173,6 +1372,20 @@ final class MountHuaChunkWriter {
         return lowest;
     }
 
+    /** True when the column one block up the flight (the stair's facing) really stands one block higher than this one. */
+    private boolean stepUp(int lx, int lz, int t, double du, double dv) {
+        int[] wd = site.rotateDir(Math.abs(du) >= Math.abs(dv) ? (int) Math.signum(du) : 0,
+                Math.abs(du) >= Math.abs(dv) ? 0 : (int) Math.signum(dv));
+        int nx = Math.max(-B, Math.min(15 + B, lx + wd[0]));
+        int nz = Math.max(-B, Math.min(15 + B, lz + wd[1]));
+        return isRealStep(t, topAt(nx, nz));
+    }
+
+    /** A tread belongs only where the next column up the flight is exactly one block higher. */
+    static boolean isRealStep(int top, int nextTop) {
+        return nextTop == top + 1;
+    }
+
     private BlockState stairs(double du, double dv) {
         int[] wd = site.rotateDir(Math.abs(du) >= Math.abs(dv) ? (int) Math.signum(du) : 0,
                 Math.abs(du) >= Math.abs(dv) ? 0 : (int) Math.signum(dv));
@@ -1208,12 +1421,7 @@ final class MountHuaChunkWriter {
             return;
         }
         if (z.id().equals("grove")) {
-            // A wooded outcrop, not a pad: only the sign marks it.
-            int[] c = site.toWorld(z.u(), z.v() - z.depth() / 2.0 + 1);
-            if (inChunk(c[0], c[1])) {
-                int ty = topAt(c[0] - x0, c[1] - z0) + 1;
-                sign(c[0], ty, c[1], z, pos);
-            }
+            // A wooded outcrop, not a pad: left unmarked.
             return;
         }
         for (int x = Math.max(r[0], x0); x <= Math.min(r[2], x0 + 15); x++) {
@@ -1224,21 +1432,7 @@ final class MountHuaChunkWriter {
                 }
             }
         }
-        int[][] corners = {{r[0], r[1]}, {r[2], r[1]}, {r[0], r[3]}, {r[2], r[3]}};
-        for (int c = 0; c < 4; c++) {
-            int cx = corners[c][0];
-            int cz = corners[c][1];
-            if (!inChunk(cx, cz)) {
-                continue;
-            }
-            for (int k = 1; k <= 3; k++) {
-                placeBlock(pos.set(cx, y + k, cz), Blocks.STRIPPED_SPRUCE_LOG.defaultBlockState(), 2);
-            }
-            placeBlock(pos.set(cx, y + 4, cz), Blocks.LANTERN.defaultBlockState(), 2);
-            if (c == 0) {
-                sign(cx + 1, y + 1, cz + 1, z, pos);
-            }
-        }
+        // no corner posts, lanterns or signs on the pads (author 16.10: «убери все таблички и летающие фонари»)
     }
 
     /** Sites shown as ruined foundations. */
@@ -1270,9 +1464,6 @@ final class MountHuaChunkWriter {
                 }
             }
         }
-        if (inChunk(r[0] + 1, r[1] + 1)) {
-            sign(r[0] + 1, y + 1, r[1] + 1, z, pos);
-        }
     }
 
     /**
@@ -1284,8 +1475,8 @@ final class MountHuaChunkWriter {
             for (int lx = 0; lx < 16; lx++) {
                 int wx = x0 + lx;
                 int wz = z0 + lz;
-                double u = site.localU(wx + 0.5, wz + 0.5);
-                double v = site.localV(wx + 0.5, wz + 0.5);
+                double u = site.centerU(wx, wz);
+                double v = site.centerV(wx, wz);
                 for (double[] p : MountHuaPlan.PATHS) {
                     double[] q = MountHuaShape.pathAt(p, u, v);
                     if (MountHuaShape.pathCheek(p, u, v)) {
@@ -1338,30 +1529,11 @@ final class MountHuaChunkWriter {
         }
     }
 
-    private void sign(int x, int y, int z, Zone zone, BlockPos.MutableBlockPos pos) {
-        if (!inChunk(x, z)) {
-            return;
-        }
-        BlockPos at = new BlockPos(x, y, z);
-        placeBlock(at, Blocks.SPRUCE_SIGN.defaultBlockState().setValue(StandingSignBlock.ROTATION, 0), 2);
-        // SignBlockEntity#setText would mark the block for a client update (needs a live Level);
-        // during generation the text goes in as pending block-entity NBT, loaded with the chunk.
-        SignText text = new SignText()
-                .setMessage(0, Component.translatable("sign.murim.hua." + zone.id()))
-                .setMessage(1, Component.literal(zone.width() + " x " + zone.depth()))
-                .setMessage(2, Component.translatable(MountHuaPlan.CORE.contains(zone.id()) || !zone.id().matches(RUINS) ? "sign.murim.hua.placeholder"
-                        : "sign.murim.hua.ruin"));
-        CompoundTag tag = new CompoundTag();
-        tag.putString("id", "minecraft:sign");
-        tag.putInt("x", x);
-        tag.putInt("y", y);
-        tag.putInt("z", z);
-        SignText.DIRECT_CODEC.encodeStart(NbtOps.INSTANCE, text).result().ifPresent(t -> tag.put("front_text", t));
-        chunk.setBlockEntityNbt(tag);
-    }
-
     /** Room carved in the rock at the zone, with a tunnel to (exitU, exitV); 5 blocks high. */
     private void cave(Zone z, BlockPos.MutableBlockPos pos) {
+        if (z.id().equals("vault")) {
+            return; // the main vault is built by sect.vault.HuaVault (blocks, not a carved room)
+        }
         int y = (int) Math.round(site.worldY(z.y()));
         int[] r = zoneRect(z);
         for (int x = Math.max(r[0], x0); x <= Math.min(r[2], x0 + 15); x++) {
@@ -1392,8 +1564,6 @@ final class MountHuaChunkWriter {
         if (z.id().equals("penance") || z.id().equals("vault")) {
             int[] c = site.toWorld(z.u(), z.v());
             if (inChunk(c[0], c[1])) {
-                placeBlock(pos.set(c[0], y + 1, c[1]), Blocks.LANTERN.defaultBlockState(), 2);
-                sign(c[0] + 1, y + 1, c[1], z, pos);
             }
         }
     }
@@ -1422,8 +1592,8 @@ final class MountHuaChunkWriter {
                     continue;
                 }
                 BlockState ground = terrainState(pos.set(wx, t, wz));
-                double u = site.localU(wx + 0.5, wz + 0.5);
-                double v = site.localV(wx + 0.5, wz + 0.5);
+                double u = site.centerU(wx, wz);
+                double v = site.centerV(wx, wz);
                 if (nearWideFlight(u, v)) continue;
                 Zone near = zoneAt(u, v, 7);
                 if (near != null && zoneAt(u, v, 2) == null && !near.cave() && !shape.climbChanged(u, v)
@@ -1507,10 +1677,10 @@ final class MountHuaChunkWriter {
                     shrub(wx, t + 1, wz, h, pos);
                     continue;
                 }
-                double wood = shape.saddleWeight(site.localU(wx + 0.5, wz + 0.5), site.localV(wx + 0.5, wz + 0.5));
-                double below = MountHuaShape.belowSect(site.localU(wx + 0.5, wz + 0.5),
-                        site.localV(wx + 0.5, wz + 0.5), site.nominal(t));
-                if (below > 0.3 && zoneAt(site.localU(wx + 0.5, wz + 0.5), site.localV(wx + 0.5, wz + 0.5), 3) == null) {
+                double wood = shape.saddleWeight(site.centerU(wx, wz), site.centerV(wx, wz));
+                double below = MountHuaShape.belowSect(site.centerU(wx, wz),
+                        site.centerV(wx, wz), site.nominal(t));
+                if (below > 0.3 && zoneAt(site.centerU(wx, wz), site.centerV(wx, wz), 3) == null) {
                     // Under the sect: pines on every ledge, plums clinging, shrubs in the folds.
                     if (drop <= 2 && (soil || deep >= 5) && roll < 45 * below) {
                         pine(wx, t + 1, wz, h, lx, lz, pos);
@@ -1539,7 +1709,7 @@ final class MountHuaChunkWriter {
                 if (roll < chance) {
                     pine(wx, t + 1, wz, h, lx, lz, pos);
                 } else if (soil && drop <= 2 && t < site.worldY(165) && roll > 996
-                        && Math.hypot(site.localU(wx + 0.5, wz + 0.5), site.localV(wx + 0.5, wz + 0.5) - 40) < 170) {
+                        && Math.hypot(site.centerU(wx, wz), site.centerV(wx, wz) - 40) < 170) {
                     // Plums only by the sect (author 04.10); tops and ledges elsewhere stay green.
                     plumTree(wx, t + 1, wz, h, pos, PlumTree.Variant.CLIFF, overDrop(lx, lz));
                 }
@@ -1657,14 +1827,14 @@ final class MountHuaChunkWriter {
     private boolean treeFitsPads(int x, int z, int radius) {
         // Check the whole crown envelope before planting, including persistent/custom trees.
         for (int dz = -radius; dz <= radius; dz++) for (int dx = -radius; dx <= radius; dx++) {
-            if (MountHuaPlan.clearFootprint(site.localU(x + dx + 0.5, z + dz + 0.5),
-                    site.localV(x + dx + 0.5, z + dz + 0.5))) return false;
+            if (MountHuaPlan.clearFootprint(site.centerU(x + dx, z + dz),
+                    site.centerV(x + dx, z + dz))) return false;
         }
         return true;
     }
 
     private void placeLeaf(int x, int y, int z, BlockState leaves, BlockPos.MutableBlockPos pos) {
-        if (MountHuaPlan.clearFootprint(site.localU(x + 0.5, z + 0.5), site.localV(x + 0.5, z + 0.5))) return;
+        if (MountHuaPlan.clearFootprint(site.centerU(x, z), site.centerV(x, z))) return;
         if (blockState(pos.set(x, y, z)).isAir()) {
             placeBlock(pos, leaves, 2);
         }
@@ -1779,7 +1949,7 @@ final class MountHuaChunkWriter {
                 }
                 int wx = x0 + lx;
                 int wz = z0 + lz;
-                double d = shape.streamDistance(site.localU(wx + 0.5, wz + 0.5), site.localV(wx + 0.5, wz + 0.5));
+                double d = shape.streamDistance(site.centerU(wx, wz), site.centerV(wx, wz));
                 if (d > 3.5) {
                     continue;
                 }
@@ -1822,8 +1992,8 @@ final class MountHuaChunkWriter {
                 }
                 int wx = x0 + lx;
                 int wz = z0 + lz;
-                double u = site.localU(wx + 0.5, wz + 0.5);
-                double v = site.localV(wx + 0.5, wz + 0.5);
+                double u = site.centerU(wx, wz);
+                double v = site.centerV(wx, wz);
                 if (zoneAt(u, v, 2) != null) {
                     continue;
                 }

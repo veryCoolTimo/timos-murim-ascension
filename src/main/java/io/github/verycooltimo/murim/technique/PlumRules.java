@@ -77,9 +77,9 @@ public final class PlumRules {
         return length <= 0.0D ? 0.4D : 3.0D;
     }
 
-    /** Розовое цветение начинается с третьего слоя (до этого разрез холодный). */
+    /** The pink blossom shows only near full mastery, from star 10 (author 22.10): tier 7 of 8. */
     public static boolean blossoms(int executionTier) {
-        return executionTier >= 3;
+        return executionTier >= 7;
     }
 
     /** Насколько ниже ног разрез ещё задевает цель (враг в яме, на склоне), блоков. */

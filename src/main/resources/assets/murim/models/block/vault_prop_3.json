@@ -1,0 +1,167 @@
+{
+ "textures": {
+  "sack": "murim:block/vault_prop_sack",
+  "box": "murim:block/vault_prop_box",
+  "paper": "murim:block/vault_prop_paper",
+  "paper_top": "murim:block/vault_prop_paper_top",
+  "arms": "murim:block/vault_arms",
+  "particle": "murim:block/vault_prop_sack"
+ },
+ "elements": [
+  {
+   "from": [
+    1.6,
+    0,
+    2.4
+   ],
+   "to": [
+    11.4,
+    5.4,
+    10.2
+   ],
+   "faces": {
+    "north": {
+     "texture": "#paper"
+    },
+    "south": {
+     "texture": "#paper"
+    },
+    "east": {
+     "texture": "#paper"
+    },
+    "west": {
+     "texture": "#paper"
+    },
+    "up": {
+     "texture": "#paper_top"
+    },
+    "down": {
+     "texture": "#paper_top"
+    }
+   },
+   "rotation": {
+    "angle": 22.5,
+    "axis": "y",
+    "origin": [
+     6.5,
+     0,
+     6.3
+    ]
+   }
+  },
+  {
+   "from": [
+    4.4,
+    5.4,
+    3
+   ],
+   "to": [
+    12.6,
+    9.2,
+    9.6
+   ],
+   "faces": {
+    "north": {
+     "texture": "#paper"
+    },
+    "south": {
+     "texture": "#paper"
+    },
+    "east": {
+     "texture": "#paper"
+    },
+    "west": {
+     "texture": "#paper"
+    },
+    "up": {
+     "texture": "#paper_top"
+    },
+    "down": {
+     "texture": "#paper_top"
+    }
+   },
+   "rotation": {
+    "angle": -22.5,
+    "axis": "y",
+    "origin": [
+     8.5,
+     5.4,
+     6.3
+    ]
+   }
+  },
+  {
+   "from": [
+    7,
+    0,
+    9
+   ],
+   "to": [
+    15,
+    4,
+    14.8
+   ],
+   "faces": {
+    "north": {
+     "texture": "#paper"
+    },
+    "south": {
+     "texture": "#paper"
+    },
+    "east": {
+     "texture": "#paper"
+    },
+    "west": {
+     "texture": "#paper"
+    },
+    "up": {
+     "texture": "#paper_top"
+    },
+    "down": {
+     "texture": "#paper_top"
+    }
+   },
+   "rotation": {
+    "angle": 22.5,
+    "axis": "y",
+    "origin": [
+     11.0,
+     0,
+     11.9
+    ]
+   }
+  },
+  {
+   "from": [
+    0.8,
+    0,
+    10.4
+   ],
+   "to": [
+    6.6,
+    3.2,
+    15.2
+   ],
+   "faces": {
+    "north": {
+     "texture": "#paper"
+    },
+    "south": {
+     "texture": "#paper"
+    },
+    "east": {
+     "texture": "#paper"
+    },
+    "west": {
+     "texture": "#paper"
+    },
+    "up": {
+     "texture": "#paper_top"
+    },
+    "down": {
+     "texture": "#paper_top"
+    }
+   }
+  }
+ ]
+}

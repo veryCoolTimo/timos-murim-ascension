@@ -123,8 +123,8 @@ public final class SectLayoutBoxes {
                     for (int v = (int) Math.floor(Math.min(p[1], p[4])) - pad;
                             v <= Math.ceil(Math.max(p[1], p[4])) + pad; v++) {
                         int[] w = site.toWorld(u, v);
-                        double localU = site.localU(w[0] + 0.5, w[1] + 0.5);
-                        double localV = site.localV(w[0] + 0.5, w[1] + 0.5);
+                        double localU = site.centerU(w[0], w[1]);
+                        double localV = site.centerV(w[0], w[1]);
                         double[] q = MountHuaShape.pathAt(p, localU, localV);
                         if (q[0] > MountHuaPlan.pathHalfWidth(p)) {
                             continue;

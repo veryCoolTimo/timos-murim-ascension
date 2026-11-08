@@ -47,8 +47,9 @@ public final class SectAccess {
     }
 
     public static final List<Rule> RULES = List.of(
-            // Тайник под главным залом (пол ниже на 10): допускает глава — флаг ставит испытание двери (С4).
-            new Rule("vault", "vault", 0.0D, 3.0D, 6.0D, SectStanding.TRUSTED, SectStanding.TRUSTED, "vault.permitted"),
+            // Главное хранилище главы под главным залом (author 21.10): входит только глава; ни старейшины, ни первый ученик, ни
+            // пропуск не допускают. Игрок попадает туда лишь хитростью (тайник в Зале предков и дверь 24 Движений).
+            new Rule("vault", "vault", 0.0D, 9.0D, 7.0D, SectStanding.TRUSTED, SectStanding.TRUSTED, ""),
             new Rule("main_hall", "main_hall", 0.0D, 2.0D, 24.0D, SectStanding.DISCIPLE, SectStanding.TRUSTED, "pass.main_hall"),
             new Rule("ancestors", "ancestors", 0.0D, 4.0D, 24.0D, SectStanding.DISCIPLE, SectStanding.TRUSTED, "pass.ancestors"),
             new Rule("scriptures", "scriptures", 0.0D, 4.0D, 24.0D, SectStanding.GRADUATE, SectStanding.TRUSTED, "pass.scriptures"),
@@ -61,6 +62,9 @@ public final class SectAccess {
             new Rule("penance", "penance", 0.0D, 3.0D, 8.0D, SectStanding.TRUSTED, SectStanding.TRUSTED, "penance.sentenced"),
             // Чужак: дальше ворот секты — ни днём, ни ночью.
             new Rule("grounds", GROUNDS, 0.0D, 6.0D, 30.0D, SectStanding.NOVICE, SectStanding.NOVICE, ""));
+
+    /** Pass flag: set while the mentor leads the newcomer into the Main Hall to be presented to the head ({@link SectHeadIntro}). */
+    public static final String HEAD_ESCORT = "intro.head.escort";
 
     /** Предупреждают, если чужое место ближе стольких блоков. */
     public static final double WARN = 4.0D;
@@ -75,8 +79,15 @@ public final class SectAccess {
                 && !GROUNDS.equals(rule.zone())) {
             return false;
         }
-        // The vault is a permission, never an automatic privilege of a title (also used by its iron door).
-        if ("vault".equals(rule.id())) return standing != SectStanding.OUTSIDER && flags.contains("vault.permitted");
+        // The main vault is the head's alone: no title, no pass and no favour lets a disciple, a first disciple or an elder in.
+        if ("vault".equals(rule.id())) return false;
+        // The Main Hall is shut to everybody below the First Disciple (author 22.10: the head is introduced once, at the start, and
+        // comes out to the court himself when there is need). Offices pass; so does an escorted introduction (hook flag below).
+        if ("main_hall".equals(rule.id())) {
+            return standing != SectStanding.OUTSIDER && (flags.contains(io.github.verycooltimo.murim.sect.SectPositions.FIRST)
+                    || flags.contains(io.github.verycooltimo.murim.sect.SectPositions.ELDER) || flags.contains(HEAD_ESCORT)
+                    || !rule.pass().isEmpty() && flags.contains(rule.pass()));
+        }
         if (standing.atLeast(rule.need(period))) {
             return true;
         }

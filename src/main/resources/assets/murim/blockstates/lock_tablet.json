@@ -1,0 +1,64 @@
+{
+  "variants": {
+    "facing=south,order=1": {
+      "model": "murim:block/shr_ancestor_tablets_0_0"
+    },
+    "facing=west,order=1": {
+      "model": "murim:block/shr_ancestor_tablets_0_0",
+      "y": 90
+    },
+    "facing=north,order=1": {
+      "model": "murim:block/shr_ancestor_tablets_0_0",
+      "y": 180
+    },
+    "facing=east,order=1": {
+      "model": "murim:block/shr_ancestor_tablets_0_0",
+      "y": 270
+    },
+    "facing=south,order=2": {
+      "model": "murim:block/shr_ancestor_tablets_0_0"
+    },
+    "facing=west,order=2": {
+      "model": "murim:block/shr_ancestor_tablets_0_0",
+      "y": 90
+    },
+    "facing=north,order=2": {
+      "model": "murim:block/shr_ancestor_tablets_0_0",
+      "y": 180
+    },
+    "facing=east,order=2": {
+      "model": "murim:block/shr_ancestor_tablets_0_0",
+      "y": 270
+    },
+    "facing=south,order=3": {
+      "model": "murim:block/shr_ancestor_tablets_0_0"
+    },
+    "facing=west,order=3": {
+      "model": "murim:block/shr_ancestor_tablets_0_0",
+      "y": 90
+    },
+    "facing=north,order=3": {
+      "model": "murim:block/shr_ancestor_tablets_0_0",
+      "y": 180
+    },
+    "facing=east,order=3": {
+      "model": "murim:block/shr_ancestor_tablets_0_0",
+      "y": 270
+    },
+    "facing=south,order=4": {
+      "model": "murim:block/shr_ancestor_tablets_0_0"
+    },
+    "facing=west,order=4": {
+      "model": "murim:block/shr_ancestor_tablets_0_0",
+      "y": 90
+    },
+    "facing=north,order=4": {
+      "model": "murim:block/shr_ancestor_tablets_0_0",
+      "y": 180
+    },
+    "facing=east,order=4": {
+      "model": "murim:block/shr_ancestor_tablets_0_0",
+      "y": 270
+    }
+  }
+}

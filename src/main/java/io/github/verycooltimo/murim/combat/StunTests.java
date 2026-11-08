@@ -37,6 +37,25 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 @PrefixGameTestTemplate(false)
 public final class StunTests {
 
+    /** The synchronized state consumed by both client stun clips enters and leaves with stun. */
+    @GameTest(template = "camp_floor", timeoutTicks = 60)
+    public static void banditStunVisualStateRecovers(GameTestHelper helper) {
+        BanditSwordsman sword = helper.spawn(ModEntities.BANDIT_SWORDSMAN.get(), new Vec3(3.5D, 2.0D, 3.5D));
+        BanditArcher bow = helper.spawn(ModEntities.BANDIT_ARCHER.get(), new Vec3(8.5D, 2.0D, 3.5D));
+        Stun.apply(sword, 20);
+        Stun.apply(bow, 20);
+        helper.runAfterDelay(2, () -> {
+            helper.assertTrue(sword.state() == Bandit.STUN, "swordsman did not select stun state");
+            helper.assertTrue(bow.state() == Bandit.STUN, "archer did not select stun state");
+        });
+        helper.runAfterDelay(23, () -> {
+            helper.assertFalse(Stun.isStunned(sword) || Stun.isStunned(bow), "stun did not expire");
+            helper.assertTrue(sword.state() != Bandit.STUN, "swordsman kept stun clip state");
+            helper.assertTrue(bow.state() != Bandit.STUN, "archer kept stun clip state");
+            helper.succeed();
+        });
+    }
+
     private StunTests() {
     }
 

@@ -1,0 +1,135 @@
+{
+  "name": "npc.murim.mok_rin",
+  "title": "npc.murim.mok_rin.title",
+  "start": [
+    {
+      "when": [
+        {
+          "member": true
+        }
+      ],
+      "node": "member"
+    },
+    {
+      "node": "greet"
+    }
+  ],
+  "nodes": {
+    "greet": {
+      "random": [
+        "dialogue.murim.recruiter.greet.1",
+        "dialogue.murim.recruiter.greet.2",
+        "dialogue.murim.recruiter.greet.3",
+        "dialogue.murim.recruiter.greet.4",
+        "dialogue.murim.recruiter.greet.5",
+        "dialogue.murim.recruiter.greet.6"
+      ],
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.recruiter.opt.where",
+          "next": "point",
+          "when": [
+            {
+              "social": "road_guidance"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.recruiter.opt.who",
+          "next": "who"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "who": {
+      "random": [
+        "dialogue.murim.recruiter.who.1",
+        "dialogue.murim.recruiter.who.2",
+        "dialogue.murim.recruiter.who.3",
+        "dialogue.murim.recruiter.who.4",
+        "dialogue.murim.recruiter.who.5",
+        "dialogue.murim.recruiter.who.6"
+      ],
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.recruiter.opt.where",
+          "next": "point",
+          "when": [
+            {
+              "social": "road_guidance"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "point": {
+      "random": [
+        "dialogue.murim.recruiter.point.1",
+        "dialogue.murim.recruiter.point.2",
+        "dialogue.murim.recruiter.point.3",
+        "dialogue.murim.recruiter.point.4",
+        "dialogue.murim.recruiter.point.5",
+        "dialogue.murim.recruiter.point.6"
+      ],
+      "enter": [
+        {
+          "type": "wanderer_point"
+        }
+      ],
+      "options": [
+        {
+          "text": "dialogue.murim.recruiter.opt.again",
+          "next": "point",
+          "when": [
+            {
+              "social": "road_guidance"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.recruiter.opt.thanks",
+          "next": "bye"
+        }
+      ]
+    },
+    "bye": {
+      "random": [
+        "dialogue.murim.recruiter.bye.1",
+        "dialogue.murim.recruiter.bye.2",
+        "dialogue.murim.recruiter.bye.3",
+        "dialogue.murim.recruiter.bye.4",
+        "dialogue.murim.recruiter.bye.5",
+        "dialogue.murim.recruiter.bye.6"
+      ],
+      "gesture": "bow",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "member": {
+      "random": [
+        "dialogue.murim.recruiter.member.1",
+        "dialogue.murim.recruiter.member.2",
+        "dialogue.murim.recruiter.member.3",
+        "dialogue.murim.recruiter.member.4",
+        "dialogue.murim.recruiter.member.5",
+        "dialogue.murim.recruiter.member.6"
+      ],
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    }
+  }
+}

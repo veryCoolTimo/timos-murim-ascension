@@ -1,0 +1,68 @@
+{
+  "id": "trials",
+  "title": "quest.murim.trials.title",
+  "steps": [
+    {
+      "type": "trial",
+      "id": "clean",
+      "npc": "seo_rang",
+      "rule": "no_hits",
+      "gate": {
+        "days_in_sect": 2
+      },
+      "on_win": {
+        "merit": 3
+      },
+      "art": {
+        "art": "murim:six_harmonies",
+        "share": 0.15
+      }
+    },
+    {
+      "type": "trial",
+      "id": "six_only",
+      "npc": "mok_hayeon",
+      "rule": "six_only",
+      "gate": {
+        "days_in_sect": 2
+      },
+      "on_win": {
+        "merit": 2
+      },
+      "art": {
+        "art": "murim:six_harmonies",
+        "share": 0.2
+      }
+    },
+    {
+      "type": "trial",
+      "id": "parry",
+      "npc": "seo_gyu",
+      "rule": "parry",
+      "value": 1,
+      "gate": {
+        "days_in_sect": 3
+      },
+      "on_win": {
+        "merit": 4
+      }
+    },
+    {
+      "type": "trial",
+      "id": "swift",
+      "npc": "seo_ho",
+      "rule": "time",
+      "value": 40,
+      "gate": {
+        "days_in_sect": 3
+      },
+      "on_win": {
+        "merit": 3
+      },
+      "art": {
+        "art": "murim:six_harmonies",
+        "share": 0.1
+      }
+    }
+  ]
+}

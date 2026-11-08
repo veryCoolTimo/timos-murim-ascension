@@ -1,10 +1,12 @@
 package io.github.verycooltimo.murim.technique;
 
 import io.github.verycooltimo.murim.MurimMod;
+import io.github.verycooltimo.murim.cultivation.QiRules;
 import io.github.verycooltimo.murim.combat.TechniqueState;
 import io.github.verycooltimo.murim.network.SeaPayload;
 import io.github.verycooltimo.murim.registry.ModAttachments;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
@@ -24,6 +26,7 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.ProjectileImpactEvent;
 import net.neoforged.neoforge.event.entity.player.AttackEntityEvent;
+import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 
@@ -96,7 +99,7 @@ public final class SeaExecutor {
                 SeaRules.END - SeaRules.RELEASE, 9, false, false, false));
         if (executionTier > 0) {
             PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
-                    new SeaPayload(player.getId(), player.position(), axis(d), 0, executionTier, SeaPayload.BEGIN));
+                    new SeaPayload(player.getId(), player.position(), axis(d), 0, executionTier, SeaPayload.BEGIN, io.github.verycooltimo.murim.mastery.MasteryService.fullMastery(player, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("murim", "twenty_four_plum_sea")), io.github.verycooltimo.murim.mastery.MasteryService.stars(player, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("murim", "twenty_four_plum_sea"))));
         }
         return false;
     }
@@ -161,16 +164,18 @@ public final class SeaExecutor {
     private static boolean pay(ServerPlayer player, double[] d, int executionTier) {
         io.github.verycooltimo.murim.profile.DantianProfile profile = player.getData(ModAttachments.PROFILE);
         double qi = d[COST] * SeaRules.EXTEND_QI;
-        if (player.getHealth() <= SeaRules.EXTEND_FLOOR || profile.circulating() < qi) {
+        if (player.getHealth() <= SeaRules.EXTEND_FLOOR || !QiRules.has(player, profile, qi)) {
             return false;
         }
-        player.setData(ModAttachments.PROFILE, profile.withCirculating(profile.circulating() - qi));
-        io.github.verycooltimo.murim.profile.ProfileNetwork.sync(player);
+        if (!QiRules.free(player)) {
+            player.setData(ModAttachments.PROFILE, profile.withCirculating(profile.circulating() - qi));
+            io.github.verycooltimo.murim.profile.ProfileNetwork.sync(player);
+        }
         // Без события урона (codex): не срывает, не даёт неуязвимости, не тратит поглощение.
         player.setHealth(player.getHealth() - SeaRules.EXTEND_HEALTH);
         d[STEPS] += 1.0D;
         PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
-                new SeaPayload(player.getId(), player.getEyePosition(), axis(d), (int) d[STEPS], executionTier, SeaPayload.BLEED));
+                new SeaPayload(player.getId(), player.getEyePosition(), axis(d), (int) d[STEPS], executionTier, SeaPayload.BLEED, io.github.verycooltimo.murim.mastery.MasteryService.fullMastery(player, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("murim", "twenty_four_plum_sea")), io.github.verycooltimo.murim.mastery.MasteryService.stars(player, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("murim", "twenty_four_plum_sea"))));
         return true;
     }
 
@@ -180,7 +185,7 @@ public final class SeaExecutor {
         release(player, d, true);
         if (executionTier > 0) {
             PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
-                    new SeaPayload(player.getId(), player.position(), axis(d), 0, executionTier, SeaPayload.MELT));
+                    new SeaPayload(player.getId(), player.position(), axis(d), 0, executionTier, SeaPayload.MELT, io.github.verycooltimo.murim.mastery.MasteryService.fullMastery(player, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("murim", "twenty_four_plum_sea")), io.github.verycooltimo.murim.mastery.MasteryService.stars(player, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("murim", "twenty_four_plum_sea"))));
         }
     }
 
@@ -359,7 +364,7 @@ public final class SeaExecutor {
 
     private static void send(ServerPlayer player, int executionTier, int stage, Vec3 a, Vec3 b, int value) {
         if (executionTier > 0) {
-            PacketDistributor.sendToPlayersTrackingEntityAndSelf(player, new SeaPayload(player.getId(), a, b, value, executionTier, stage));
+            PacketDistributor.sendToPlayersTrackingEntityAndSelf(player, new SeaPayload(player.getId(), a, b, value, executionTier, stage, io.github.verycooltimo.murim.mastery.MasteryService.fullMastery(player, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("murim", "twenty_four_plum_sea")), io.github.verycooltimo.murim.mastery.MasteryService.stars(player, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("murim", "twenty_four_plum_sea"))));
         }
     }
 
@@ -395,7 +400,7 @@ public final class SeaExecutor {
         player.setData(ModAttachments.SEA, new double[0]);
         if (d[TIER] > 0.5D) {
             PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
-                    new SeaPayload(player.getId(), player.position(), Vec3.ZERO, 0, (int) d[TIER], SeaPayload.LOST));
+                    new SeaPayload(player.getId(), player.position(), Vec3.ZERO, 0, (int) d[TIER], SeaPayload.LOST, io.github.verycooltimo.murim.mastery.MasteryService.fullMastery(player, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("murim", "twenty_four_plum_sea")), io.github.verycooltimo.murim.mastery.MasteryService.stars(player, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("murim", "twenty_four_plum_sea"))));
         }
     }
 
@@ -412,6 +417,27 @@ public final class SeaExecutor {
             event.setCanceled(true);
             p.discard();
         }
+    }
+
+    /** API: /tmp/mr-ref-1121/neoforge-src/.../LivingIncomingDamageEvent.java;
+     * /tmp/mr-ref-1121/minecraft-src/.../DamageSource.java#getDirectEntity/getEntity.
+     * Front and sides are protected while the sea holds; rear and ranged damage are unchanged.
+     */
+    @SubscribeEvent(priority = EventPriority.HIGH)
+    static void softenMelee(LivingIncomingDamageEvent event) {
+        if (!(event.getEntity() instanceof ServerPlayer player) || !active(player)) return;
+        double[] d = player.getData(ModAttachments.SEA);
+        int tick = player.getData(ModAttachments.TECHNIQUE_STATE).tick();
+        if (d.length < SIZE || d[MELT] >= 0.0D || tick < SeaRules.RELEASE
+                || ((int) d[TIER] <= 0 && tick > SeaRules.TRAINING_TO)) return;
+        var source = event.getSource();
+        if (!(source.is(DamageTypes.MOB_ATTACK) || source.is(DamageTypes.MOB_ATTACK_NO_AGGRO)
+                || source.is(DamageTypes.PLAYER_ATTACK) || source.is(DamageTypes.STING))) return;
+        Entity direct = source.getDirectEntity();
+        if (!(direct instanceof LivingEntity) || direct != event.getSource().getEntity()) return;
+        Vec3 to = direct.position().subtract(player.position());
+        Vec3 facing = axis(d);
+        if (SeaRules.protectsMelee(facing, to)) event.setAmount(event.getAmount() * 0.5F);
     }
 
     /** Меч ведёт поле: пока Море держится, мастер не бьёт. */

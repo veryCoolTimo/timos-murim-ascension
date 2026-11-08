@@ -38,7 +38,15 @@ public class ManualPageItem extends Item {
         if (serverPlayer.getCooldowns().isOnCooldown(this)) {
             return InteractionResultHolder.fail(stack);
         }
+        ResourceLocation book = stack.get(ModDataComponents.TECHNIQUE.get());
+        Component title = getName(stack);
         PageService.readPage(serverPlayer, stack);
+        if (book != null && io.github.verycooltimo.murim.technique.TechniqueLoader.get(book) != null
+                && !io.github.verycooltimo.murim.mastery.RemovedArts.is(book)) {
+            io.github.verycooltimo.murim.library.TextBooks.open(serverPlayer, title, List.of(
+                    Component.translatable("item.murim.manual_page.hint_bind", PageRules.PAGES_TO_BIND),
+                    Component.translatable("item.murim.manual_page.hint_known")));
+        }
         serverPlayer.getCooldowns().addCooldown(this, 10);
         return InteractionResultHolder.consume(stack);
     }

@@ -6,6 +6,8 @@ import io.github.verycooltimo.murim.client.bandit.BanditModel;
 import io.github.verycooltimo.murim.client.bedrock.BedrockGeo;
 import io.github.verycooltimo.murim.client.vfx.BoneAnchorLayer;
 import io.github.verycooltimo.murim.sect.SectRole;
+import io.github.verycooltimo.murim.sect.BladeExamGeometry;
+import io.github.verycooltimo.murim.entity.SeatStyle;
 import io.github.verycooltimo.murim.entity.SectDisciple;
 import io.github.verycooltimo.murim.entity.SectPose;
 import io.github.verycooltimo.murim.registry.ModEntities;
@@ -20,6 +22,8 @@ import net.minecraft.client.renderer.entity.RenderLayerParent;
 import net.minecraft.client.renderer.entity.layers.ItemInHandLayer;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
@@ -164,11 +168,49 @@ public class DiscipleRenderer extends MobRenderer<SectDisciple, DiscipleRenderer
         // Модель на кадр: слои берут её через getParentModel() — та же, что у тела.
         model = bodies.get(body(entity).geo());
         super.render(entity, yaw, partialTick, pose, buffers, light);
+        float mote = SectGuideHud.moteAlpha(entity);
+        if (mote > 0.02F) {
+            mote(entity, partialTick, pose, buffers, mote);
+        }
+    }
+
+    private static final ResourceLocation MOTE = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/gui/sect_guide_mote.png");
+
+    /**
+     * The bold jade diamond over the head of the person of the player's goal, nothing else (the author 20.10). Drawn
+     * twice: solid where the person is in view, and a fainter copy that shows through walls (text-see-through type), so the
+     * way to him can be read from across a courtyard. It grows a little with the distance so that it stays a clear shape.
+     * Stage: inside the entity render, the entity-relative matrix, before the name plate. Pose pushed and popped as a pair.
+     */
+    private void mote(SectDisciple entity, float partialTick, PoseStack pose, MultiBufferSource buffers, float strength) {
+        float t = entity.tickCount + partialTick;
+        Minecraft mc = Minecraft.getInstance();
+        double dist = mc.player == null ? 0.0D : Math.sqrt(mc.player.distanceToSqr(entity));
+        float bob = Mth.sin(t * 0.07F) * 0.05F;
+        float s = (float) Mth.clamp(0.2D + dist * 0.006D, 0.2D, 0.5D);
+        pose.pushPose();
+        pose.translate(0.0D, entity.getBbHeight() + 1.35D + s + bob, 0.0D);
+        pose.mulPose(this.entityRenderDispatcher.cameraOrientation());
+        Matrix4f m = pose.last().pose();
+        int full = net.minecraft.client.renderer.LightTexture.FULL_BRIGHT;
+        quad(buffers.getBuffer(net.minecraft.client.renderer.RenderType.textSeeThrough(MOTE)), m, s, (int) (150.0F * strength), full, SectGuideHud.brokenTrial(entity));
+        quad(buffers.getBuffer(net.minecraft.client.renderer.RenderType.text(MOTE)), m, s, (int) (255.0F * strength), full, SectGuideHud.brokenTrial(entity));
+        pose.popPose();
+    }
+
+    private static void quad(com.mojang.blaze3d.vertex.VertexConsumer vc, Matrix4f m, float s, int alpha, int light, boolean broken) {
+        int a = Mth.clamp(alpha, 0, 255);
+        vc.addVertex(m, -s, -s, 0.0F).setColor(255, broken ? 65 : 255, broken ? 65 : 255, a).setUv(0.0F, 1.0F).setLight(light);
+        vc.addVertex(m, s, -s, 0.0F).setColor(255, broken ? 65 : 255, broken ? 65 : 255, a).setUv(1.0F, 1.0F).setLight(light);
+        vc.addVertex(m, s, s, 0.0F).setColor(255, broken ? 65 : 255, broken ? 65 : 255, a).setUv(1.0F, 0.0F).setLight(light);
+        vc.addVertex(m, -s, s, 0.0F).setColor(255, broken ? 65 : 255, broken ? 65 : 255, a).setUv(0.0F, 0.0F).setLight(light);
     }
 
     @Override
     public ResourceLocation getTextureLocation(SectDisciple entity) {
-        return body(entity).texture();
+        // The face constructor swaps in the skin with the composed face of rank-and-file students; off, or for a skin without a face
+        // rectangle (coaches, elders), this is the plain skin.
+        return io.github.verycooltimo.murim.client.sect.face.FaceConstructor.texture(entity, body(entity).texture());
     }
 
     /** Последние тики замаха формы — короткая белая вспышка, как у бандита: «сейчас ударит». */
@@ -178,7 +220,7 @@ public class DiscipleRenderer extends MobRenderer<SectDisciple, DiscipleRenderer
             float left = entity.animHold() - (entity.animSeconds(partialTick) / 0.04F) * entity.animHold();
             return left <= 3.0F ? 0.25F : 0.0F;
         }
-        return 0.0F;
+        return entity.tell() ? 0.35F : 0.0F;
     }
 
     @SubscribeEvent
@@ -197,6 +239,11 @@ public class DiscipleRenderer extends MobRenderer<SectDisciple, DiscipleRenderer
         private static final Vector3f CACHE = new Vector3f();
         private static final String[] LEGS = {"leg_r", "leg_l", "skirt_front", "skirt_back"};
         private static final ResourceLocation SLEEP_BED = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "sect_sleep_bed");
+        /** The lower body of a sitter, one clip per way of sitting (tools/art/sect_seat_anims.py): played over the pose clip. */
+        private static final ResourceLocation SEAT_CHAIR = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "sect_seat_chair");
+        private static final ResourceLocation SEAT_LOTUS = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "sect_seat_lotus");
+        /** Seconds the body takes to go down onto a seat. */
+        private static final float SEAT_BLEND = 0.6F;
 
         /** Рукоять меча в ножнах (модель ученика): видна, пока меч не обнажён. У моделей одеяния её нет. */
         private final java.util.Optional<ModelPart> handle;
@@ -254,8 +301,19 @@ public class DiscipleRenderer extends MobRenderer<SectDisciple, DiscipleRenderer
             // Миряне (слуги, управляющий) на модели ученика — без ножен: они не бойцы.
             Body body = body(entity);
             boolean unarmedFirst = body == FIRST_COACH || body == FIRST_COACH2 || body == FIRST_ALCHEMIST;
-            guard.ifPresent(g -> g.visible = !entity.role().third() && !entity.role().lay() && !unarmedFirst);
+            // On a chair the scabbard would pass through the back and the legs of the chair: he lays the sword aside while he sits there.
+            guard.ifPresent(g -> g.visible = !entity.role().third() && !entity.role().lay() && !unarmedFirst
+                    && entity.seatStyle() != SeatStyle.CHAIR);
             poseShown = false;
+            // Bandit's synchronized state is available here even though STUN_END is server-only.
+            // Incapacitation must override a seated pose, a gesture, or an in-flight technique clip.
+            if (entity.state() == io.github.verycooltimo.murim.entity.Bandit.STUN) {
+                root().getAllParts().forEach(ModelPart::resetPose);
+                getAnyDescendantWithName("waist").ifPresent(w ->
+                        w.zRot = (float) Math.sin(ageInTicks * Math.PI / 8.0D) * 6.0F * Mth.DEG_TO_RAD);
+                getAnyDescendantWithName("head").ifPresent(h -> h.xRot = 15.0F * Mth.DEG_TO_RAD);
+                return;
+            }
             String anim = entity.anim();
             SectPose pose = entity.pose();
             // Страж (дела WATCH, GUARD, GREET) держит левую руку на рукояти — только у того, у кого меч на поясе.
@@ -268,10 +326,6 @@ public class DiscipleRenderer extends MobRenderer<SectDisciple, DiscipleRenderer
             float partial = ageInTicks - entity.tickCount;
             float sec = entity.animSeconds(partial);
             boolean live = clip != null && (clip.looping() || sec <= clip.lengthInSeconds() + 0.05F);
-            // Сидячая поза (трапеза, сон, медитация) важнее лотоса, который ставит распорядок.
-            if (live && pose.seated() && anim.equals(SectDisciple.LOTUS.toString())) {
-                live = false;
-            }
             if (live) {
                 root().getAllParts().forEach(ModelPart::resetPose);
                 // API: reference/minecraft-src/net/minecraft/client/animation/KeyframeAnimations.java#animate (время в мс)
@@ -282,10 +336,14 @@ public class DiscipleRenderer extends MobRenderer<SectDisciple, DiscipleRenderer
                 // Меч в руке игрока смотрит вперёд из кулака (ванильный предмет в руке), у бандита —
                 // продолжает руку: клинок поворачивается вперёд, как держит игрок.
                 // В поклоне меч лежит обратным хватом вдоль предплечья (приветствие с мечом), не торчит вверх.
-                // Сидя (лотос: трапеза, медитация, ночь) — тоже вдоль руки, а не вперёд.
-                float blade = anim.endsWith("spar_bow") || anim.endsWith(":lotus") ? Mth.PI : -Mth.HALF_PI;
+                float blade = anim.endsWith("spar_bow") ? Mth.PI : -Mth.HALF_PI;
                 getAnyDescendantWithName("weapon").ifPresent(w -> w.xRot = blade);
                 NpcGestures.apply(this, entity, partial);
+                if (entity.inBladeExam()) bladeExamPose(entity.bladeExamBlend(partial), sec);
+                return;
+            }
+            // A person who sits is drawn by the way he sits (chair or lotus), never both (author 19.10).
+            if (entity.seatStyle() != SeatStyle.NONE && playSeated(entity, pose, entity.seatStyle(), partial)) {
                 return;
             }
             if (playPose(entity, pose, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, partial)) {
@@ -293,6 +351,28 @@ public class DiscipleRenderer extends MobRenderer<SectDisciple, DiscipleRenderer
             }
             super.setupAnim(entity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch);
             NpcGestures.apply(this, entity, partial);
+        }
+
+        /** Straight arm and wrist: local +Y runs from shoulder through grip to blade tip.
+         * Dimensions: BladeExamGeometry; API: /tmp/mr-ref-1121/minecraft-src/net/minecraft/
+         * client/model/geom/ModelPart.java#getInitialPose, rotationZYX in translateAndRotate.
+         */
+        private void bladeExamPose(float blend, float seconds) {
+            var arm = getAnyDescendantWithName("arm_r").orElseThrow();
+            // Upright rest chain throughout the exam; Fear supplies timing only.
+            root().getAllParts().forEach(part -> {
+                var rest = part.getInitialPose();
+                part.x = rest.x;
+                part.y = rest.y;
+                part.z = rest.z;
+                part.xRot = rest.xRot;
+                part.yRot = rest.yRot;
+                part.zRot = rest.zRot;
+            });
+            // Cock the blade back above the shoulder, then sweep forward in the existing two ticks.
+            float windup = Mth.lerp(Mth.clamp((seconds - 0.5F) / 0.1F, 0, 1), -3.1F, 2.5F - Mth.TWO_PI);
+            arm.xRot = Mth.lerp(blend, windup, BladeExamGeometry.HOLD_PITCH);
+            arm.yRot = Mth.lerp(blend, -0.25F, BladeExamGeometry.HOLD_YAW);
         }
 
         /** Пауза между циклами: взгляд на соседа, чашка на коленях (поверх клипа, доля — вход в позу). */
@@ -309,12 +389,94 @@ public class DiscipleRenderer extends MobRenderer<SectDisciple, DiscipleRenderer
         }
 
         /**
+         * The clip of a pose at its time, each person in his own rhythm (author 06.10: «like a choir»): phase, tempo and pauses of the
+         * cycle by the entity (LoopVariety). The stance between the blows of the formation (FORM) is not varied: the drill is in step.
+         */
+        private void animatePoseClip(SectDisciple entity, SectPose pose, AnimationDefinition clip, float sec, float blend) {
+            LoopVariety.Frame vary = pose.loop() && clip.looping() && pose != SectPose.FORM
+                    ? LoopVariety.frame(LoopVariety.seed(entity.getUUID()), pose, sec, clip.lengthInSeconds()) : null;
+            float clipSec = vary == null ? sec : vary.clip();
+            // API: reference/minecraft-src/net/minecraft/client/animation/KeyframeAnimations.java#animate (scale = the share of the pose)
+            KeyframeAnimations.animate(this, clip, (long) (clipSec * 1000.0F), blend, CACHE);
+            if (vary != null) {
+                vary(vary, blend);
+            }
+        }
+
+        /** Poses that go with a seat: the upper body they play over the seat base (the full-body ones carry lotus legs of their own, replaced by the base). */
+        private static boolean atSeat(SectPose pose) {
+            return switch (pose) {
+                case EAT, MEDITATE, SIT, GRIND, READ, COUNT, TALK -> true;
+                default -> false;
+            };
+        }
+
+        /**
+         * A sitter: the upper body from the clip of his pose (the evening circle when the pose has nothing to do with a seat) and the
+         * lower body from the base of his way of sitting ({@code sect_seat_chair} or {@code sect_seat_lotus}), so a person on a chair
+         * never has the lotus legs under him. False: not a seated pose (lying on the ground has its own clip).
+         */
+        private boolean playSeated(SectDisciple entity, SectPose pose, SeatStyle seat, float partial) {
+            if (pose == SectPose.SLEEP) {
+                return false;
+            }
+            SectPose shown = atSeat(pose) ? pose : SectPose.SIT;
+            AnimationDefinition clip = PalClips.get(shown.clip());
+            AnimationDefinition base = PalClips.get(seat == SeatStyle.CHAIR ? SEAT_CHAIR : SEAT_LOTUS);
+            if (clip == null || base == null) {
+                return false;
+            }
+            root().getAllParts().forEach(ModelPart::resetPose);
+            float seatSec = entity.seatSeconds(partial);
+            float poseSec = atSeat(pose) ? entity.poseSeconds(partial) : seatSec;
+            animatePoseClip(entity, shown, clip, poseSec, smooth(poseSec / SEAT_BLEND));
+            // The lower body is the seat's, not the clip's: take out what the pose clip says about the waist and the legs.
+            for (String part : LOWER) {
+                getAnyDescendantWithName(part).ifPresent(ModelPart::resetPose);
+            }
+            float seatBlend = smooth(seatSec / SEAT_BLEND);
+            KeyframeAnimations.animate(this, base, 0L, seatBlend, CACHE);
+            if (seat == SeatStyle.CHAIR) {
+                robeOnChair(seatBlend);
+            }
+            NpcGestures.apply(this, entity, partial);
+            getAnyDescendantWithName("weapon").ifPresent(w -> w.visible = false);
+            poseShown = true;
+            return true;
+        }
+
+        /** Parts the seat base owns. */
+        private static final String[] LOWER = {"waist", "leg_r", "leg_l"};
+
+        private static float smooth(float t) {
+            float c = Mth.clamp(t, 0.0F, 1.0F);
+            return c * c * (3.0F - 2.0F * c);
+        }
+
+        /**
+         * The long robe on a chair: the front skirt lies over the thighs, the back one is gathered under him (hanging straight down it
+         * would pass through the seat and show under it).
+         */
+        private void robeOnChair(float blend) {
+            // (the plate is lifted 2.4 px so it lies ON the thighs, whose top is 2 px over the hip joint, not inside them)
+            getAnyDescendantWithName("skirt_front").ifPresent(k -> {
+                k.xRot += blend * -1.35F;
+                k.y -= blend * 2.4F;
+            });
+            getAnyDescendantWithName("skirt_back").ifPresent(k -> k.yScale *= 1.0F - 0.8F * blend);
+        }
+
+        /**
          * Клип позы секты ({@link SectPose}, {@code npc_animations/}); false — у позы нет клипа или разовый клип
          * доигран. Клип пишется на скелет NPC (torso — дочь waist, голова и руки — дочери torso), без пересчёта.
          */
         private boolean playPose(SectDisciple entity, SectPose pose, float limbSwing, float limbSwingAmount, float ageInTicks,
                                  float netHeadYaw, float headPitch, float partial) {
             if (pose.clip() == null) {
+                return false;
+            }
+            // A seated pose with no seat under him (he got up, the pose has not caught up yet) is not drawn: no lotus on the move.
+            if (pose.seated() && entity.seatStyle() == SeatStyle.NONE && !(pose == SectPose.SLEEP && entity.isSleeping())) {
                 return false;
             }
             // В кровати тело кладёт ванильный рендер (поза SLEEPING) — клип только дышит.
@@ -342,19 +504,10 @@ public class DiscipleRenderer extends MobRenderer<SectDisciple, DiscipleRenderer
                 root().getAllParts().forEach(ModelPart::resetPose);
             }
             // Вход в позу — плавно от покоя (сесть и лечь — дольше, чем поднять руки); разовые клипы начинают с покоя сами.
-            float in = pose.seated() ? 0.6F : 0.35F;
+            float in = pose.blendIn();
             float blend = pose.loop() ? Mth.clamp(sec / in, 0.0F, 1.0F) : 1.0F;
             blend = blend * blend * (3.0F - 2.0F * blend);
-            // Каждый в своём ритме (автор 06.10: «как хор»): фаза, темп и паузы цикла — по сущности (LoopVariety).
-            // Стойка строя между ударами (FORM) — нет: строй синхронный намеренно.
-            LoopVariety.Frame vary = pose.loop() && clip.looping() && pose != SectPose.FORM
-                    ? LoopVariety.frame(LoopVariety.seed(entity.getUUID()), pose, sec, clip.lengthInSeconds()) : null;
-            float clipSec = vary == null ? sec : vary.clip();
-            // API: reference/minecraft-src/net/minecraft/client/animation/KeyframeAnimations.java#animate (масштаб — доля позы)
-            KeyframeAnimations.animate(this, clip, (long) (clipSec * 1000.0F), blend, CACHE);
-            if (vary != null) {
-                vary(vary, blend);
-            }
+            animatePoseClip(entity, pose, clip, sec, blend);
             if (pose == SectPose.GUARD || pose == SectPose.TALK || pose == SectPose.CARRY || pose == SectPose.FORM) {
                 // Стоя голова ещё и смотрит на игрока (LookControl), поверх клипа.
                 getAnyDescendantWithName("head").ifPresent(h -> {
@@ -405,9 +558,19 @@ public class DiscipleRenderer extends MobRenderer<SectDisciple, DiscipleRenderer
             net.minecraft.world.item.ItemStack held = entity.role().third() ? wood : sword;
             pose.pushPose();
             getParentModel().translateToHand(net.minecraft.world.entity.HumanoidArm.RIGHT, pose);
-            pose.mulPose(com.mojang.math.Axis.XP.rotationDegrees(-90.0F));
-            pose.mulPose(com.mojang.math.Axis.YP.rotationDegrees(180.0F));
-            pose.translate(1.0F / 16.0F, 0.125F, -0.625F);
+            // ItemTransform applies JSON translation, rotation and normal 1.5 scale;
+            // ItemRenderer then centers the mesh. Correct its mesh axis about the grip during the exam.
+            // API: /tmp/mr-ref-1121/minecraft-src/net/minecraft/client/renderer/block/model/ItemTransform.java#apply
+            // API: /tmp/mr-ref-1121/minecraft-src/net/minecraft/client/renderer/entity/ItemRenderer.java#render
+            if (entity.inBladeExam()) {
+                var correction = BladeExamHold.solve(entity.bladeExamBlend(partialTick));
+                var offset = correction.translation();
+                pose.translate(offset.x, offset.y, offset.z);
+                pose.mulPose(correction.rotation());
+            } else {
+                pose.translate(-0.0625F, 0.625F, -0.125F);
+                pose.mulPose(new org.joml.Quaternionf().rotationX(-Mth.HALF_PI).rotateY(Mth.PI));
+            }
             items.renderItem(entity, held, net.minecraft.world.item.ItemDisplayContext.THIRD_PERSON_RIGHT_HAND, false, pose, buffers, light);
             pose.popPose();
         }

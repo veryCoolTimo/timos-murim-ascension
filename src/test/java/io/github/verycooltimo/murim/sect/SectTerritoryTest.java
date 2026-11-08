@@ -43,9 +43,14 @@ class SectTerritoryTest {
         for (int rot = 0; rot < 4; rot++) {
             MountHuaSite site = MountHuaSite.placement(-500, 800, 66, rot);
             SectLayout layout = SectLayout.hua(site);
-            Vec3 p = layout.at("training", 4.0D, -3.0D);
+            // Точки площадки округляются вниз до сетки блоков (MountHuaSite#toWorld), а центр «тренировочной» площадки
+            // стоит на полблока (v = 11.5, с 15.10): смещение берём так, чтобы zone + offset попала на целую клетку.
+            MountHuaPlan.Zone training = zone("training");
+            double du = 4.0D - (training.u() - Math.floor(training.u()));
+            double dv = -3.0D - (training.v() - Math.floor(training.v()));
+            Vec3 p = layout.at("training", du, dv);
             double[] back = layout.local("training", p);
-            assertArrayEquals(new double[] {4.0D, -3.0D}, back, 1e-6, "rot " + rot);
+            assertArrayEquals(new double[] {du, dv}, back, 1e-6, "rot " + rot);
             assertTrue(layout.inside("training", p, 0.0D));
             // Локальное «на юг» (+v) переводится в мир так же, как сама рамка.
             Vec3 south = layout.at("training", 0.0D, 10.0D).subtract(layout.at("training", 0.0D, 0.0D));

@@ -17,7 +17,7 @@ import net.minecraft.world.level.levelgen.structure.pieces.PiecesContainer;
 /**
  * A structure placed at a chosen spot of an already generated world (showcase world, tests), registered the way
  * world generation registers it: the start in its chunk, a reference in every chunk it covers. Then
- * {@code /locate}-free lookups that walk chunk references — camp life, fortress life, {@code /murim capture} —
+ * {@code /locate}-free lookups that walk chunk references — camp life, fortress life, {@code /murim dev loc capture} —
  * find it like any generated one. Unlike vanilla {@code /place structure} (which only stamps blocks).
  *
  * <p>API: reference/minecraft-src/net/minecraft/server/commands/PlaceCommand.java#placeStructure (per-chunk

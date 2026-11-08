@@ -69,6 +69,8 @@ public class GateDoorBlock extends HorizontalDirectionalBlock implements EntityB
     public static final int SWING_TICKS = 14;
     /** Block event id: the swing starts, param 1 = opening, 0 = closing. */
     public static final int EVENT_SWING = 1;
+    /** Block event id: somebody knocks on the closed gate (the leaves shudder on the clients). */
+    public static final int EVENT_KNOCK = 2;
 
     /** Leaf: 3 px thick in the middle of the block, z 6.5..9.5 in the north-facing model frame. */
     private static final VoxelShape[] SHAPES = {
@@ -190,6 +192,11 @@ public class GateDoorBlock extends HorizontalDirectionalBlock implements EntityB
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
         if (!level.isClientSide) {
+            // A gate that is not yet his: he knocks, the gate stays shut (author 21.10); with a tablet or a right it opens.
+            if (player instanceof net.minecraft.server.level.ServerPlayer sp
+                    && io.github.verycooltimo.murim.sect.SectKnock.knock(sp, pos, origin(pos, state), this, EVENT_KNOCK)) {
+                return InteractionResult.sidedSuccess(false);
+            }
             toggle(level, origin(pos, state), player);
         }
         return InteractionResult.sidedSuccess(level.isClientSide);
@@ -204,6 +211,10 @@ public class GateDoorBlock extends HorizontalDirectionalBlock implements EntityB
         boolean opening = !o.getValue(OPEN);
         if (opening) {
             be.startOpening();
+            // a gate a player opened is shut behind him by the sect (sect/SectGate)
+            if (who instanceof net.minecraft.server.level.ServerPlayer && level instanceof net.minecraft.server.level.ServerLevel sl) {
+                io.github.verycooltimo.murim.sect.SectGate.opened(sl, origin);
+            }
         } else {
             setOpen(level, origin, false);
             be.startClosing();

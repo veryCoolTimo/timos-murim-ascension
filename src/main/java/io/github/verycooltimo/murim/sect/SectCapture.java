@@ -32,7 +32,7 @@ public final class SectCapture {
     }
 
     private static boolean enabled() {
-        return Boolean.getBoolean("murim.capture") && "dialogue".equals(System.getProperty("murim.capture.technique"));
+        return !"1".equals(System.getenv("MURIM_SMOKE_PRESERVE")) && Boolean.getBoolean("murim.capture") && "dialogue".equals(System.getProperty("murim.capture.technique"));
     }
 
     @SubscribeEvent
@@ -82,6 +82,8 @@ public final class SectCapture {
                     SectDisciple npc = SectService.spawn(level, m.role(), p.position().add(fwd.scale(Math.min(dist, 2.5D))).add(right.scale(side)),
                             p.position());
                     npc.setMember(m);
+                    // The mentor needs the sect layout to give a newcomer a bed (arrival tour stand, 18.10).
+                    npc.setLayout(SectLife.layout(level));
                     // На горе этого мира люди ушли бы по распорядку к своим площадкам: на стенде они стоят.
                     npc.setNoAi(true);
                 }

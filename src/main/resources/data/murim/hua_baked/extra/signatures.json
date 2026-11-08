@@ -1,0 +1,3410 @@
+[
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_0",
+  "state": "minecraft:spruce_fence[east=false,north=false,south=false,waterlogged=false,west=false]",
+  "u": -39,
+  "v": 14,
+  "y": 214
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_1",
+  "state": "minecraft:spruce_planks",
+  "u": -37,
+  "v": 13,
+  "y": 214
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_2",
+  "state": "minecraft:spruce_planks",
+  "u": -37,
+  "v": 14,
+  "y": 214
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_3",
+  "state": "minecraft:spruce_planks",
+  "u": -37,
+  "v": 15,
+  "y": 214
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_4",
+  "state": "minecraft:spruce_fence[east=false,north=false,south=false,waterlogged=false,west=false]",
+  "u": -37,
+  "v": 13,
+  "y": 215
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_5",
+  "state": "minecraft:spruce_planks",
+  "u": -36,
+  "v": 14,
+  "y": 214
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_6",
+  "state": "minecraft:spruce_planks",
+  "u": -36,
+  "v": 15,
+  "y": 214
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_7",
+  "state": "minecraft:spruce_planks",
+  "u": -36,
+  "v": 16,
+  "y": 214
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_8",
+  "state": "minecraft:spruce_planks",
+  "u": -36,
+  "v": 13,
+  "y": 215
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_9",
+  "state": "minecraft:spruce_fence[east=false,north=false,south=false,waterlogged=false,west=false]",
+  "u": -36,
+  "v": 13,
+  "y": 216
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_10",
+  "state": "minecraft:spruce_planks",
+  "u": -35,
+  "v": 13,
+  "y": 215
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_11",
+  "state": "minecraft:spruce_planks",
+  "u": -35,
+  "v": 14,
+  "y": 215
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_12",
+  "state": "minecraft:spruce_planks",
+  "u": -35,
+  "v": 15,
+  "y": 215
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_13",
+  "state": "minecraft:spruce_planks",
+  "u": -35,
+  "v": 16,
+  "y": 215
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_14",
+  "state": "minecraft:spruce_fence[east=false,north=false,south=false,waterlogged=false,west=false]",
+  "u": -35,
+  "v": 16,
+  "y": 216
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_15",
+  "state": "minecraft:spruce_planks",
+  "u": -34,
+  "v": 14,
+  "y": 215
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_16",
+  "state": "minecraft:spruce_planks",
+  "u": -34,
+  "v": 15,
+  "y": 215
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_17",
+  "state": "minecraft:spruce_planks",
+  "u": -34,
+  "v": 16,
+  "y": 215
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_18",
+  "state": "minecraft:spruce_planks",
+  "u": -34,
+  "v": 12,
+  "y": 216
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_19",
+  "state": "minecraft:spruce_planks",
+  "u": -34,
+  "v": 13,
+  "y": 216
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_20",
+  "state": "minecraft:spruce_fence[east=false,north=false,south=false,waterlogged=false,west=false]",
+  "u": -34,
+  "v": 16,
+  "y": 216
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_21",
+  "state": "minecraft:spruce_fence[east=false,north=false,south=false,waterlogged=false,west=false]",
+  "u": -34,
+  "v": 12,
+  "y": 217
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_22",
+  "state": "minecraft:spruce_planks",
+  "u": -33,
+  "v": 12,
+  "y": 216
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_23",
+  "state": "minecraft:spruce_planks",
+  "u": -33,
+  "v": 13,
+  "y": 216
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_24",
+  "state": "minecraft:spruce_planks",
+  "u": -33,
+  "v": 14,
+  "y": 216
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_25",
+  "state": "minecraft:spruce_planks",
+  "u": -33,
+  "v": 15,
+  "y": 216
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_26",
+  "state": "minecraft:spruce_fence[east=false,north=false,south=false,waterlogged=false,west=false]",
+  "u": -33,
+  "v": 12,
+  "y": 217
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_27",
+  "state": "minecraft:spruce_planks",
+  "u": -32,
+  "v": 14,
+  "y": 216
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_28",
+  "state": "minecraft:spruce_planks",
+  "u": -32,
+  "v": 15,
+  "y": 216
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_29",
+  "state": "minecraft:spruce_planks",
+  "u": -32,
+  "v": 12,
+  "y": 217
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_30",
+  "state": "minecraft:spruce_planks",
+  "u": -32,
+  "v": 13,
+  "y": 217
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_31",
+  "state": "minecraft:spruce_planks",
+  "u": -31,
+  "v": 12,
+  "y": 217
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_32",
+  "state": "minecraft:spruce_planks",
+  "u": -31,
+  "v": 13,
+  "y": 217
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_33",
+  "state": "minecraft:spruce_planks",
+  "u": -31,
+  "v": 14,
+  "y": 217
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_34",
+  "state": "minecraft:spruce_planks",
+  "u": -31,
+  "v": 15,
+  "y": 217
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_35",
+  "state": "minecraft:spruce_fence[east=false,north=false,south=false,waterlogged=false,west=false]",
+  "u": -31,
+  "v": 15,
+  "y": 218
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_36",
+  "state": "minecraft:spruce_planks",
+  "u": -30,
+  "v": 14,
+  "y": 217
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_37",
+  "state": "minecraft:spruce_planks",
+  "u": -30,
+  "v": 15,
+  "y": 217
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_38",
+  "state": "minecraft:spruce_planks",
+  "u": -30,
+  "v": 11,
+  "y": 218
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_39",
+  "state": "minecraft:spruce_planks",
+  "u": -30,
+  "v": 12,
+  "y": 218
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_40",
+  "state": "minecraft:spruce_planks",
+  "u": -30,
+  "v": 13,
+  "y": 218
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_41",
+  "state": "minecraft:spruce_fence[east=false,north=false,south=false,waterlogged=false,west=false]",
+  "u": -30,
+  "v": 15,
+  "y": 218
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_42",
+  "state": "minecraft:spruce_fence[east=false,north=false,south=false,waterlogged=false,west=false]",
+  "u": -30,
+  "v": 11,
+  "y": 219
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_43",
+  "state": "minecraft:spruce_planks",
+  "u": -29,
+  "v": 11,
+  "y": 218
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_44",
+  "state": "minecraft:spruce_planks",
+  "u": -29,
+  "v": 12,
+  "y": 218
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_45",
+  "state": "minecraft:spruce_planks",
+  "u": -29,
+  "v": 13,
+  "y": 218
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_46",
+  "state": "minecraft:spruce_planks",
+  "u": -29,
+  "v": 14,
+  "y": 218
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_47",
+  "state": "minecraft:spruce_fence[east=false,north=false,south=false,waterlogged=false,west=false]",
+  "u": -29,
+  "v": 11,
+  "y": 219
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_48",
+  "state": "minecraft:spruce_planks",
+  "u": -28,
+  "v": 14,
+  "y": 218
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_49",
+  "state": "minecraft:spruce_planks",
+  "u": -28,
+  "v": 11,
+  "y": 219
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_50",
+  "state": "minecraft:spruce_planks",
+  "u": -28,
+  "v": 12,
+  "y": 219
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_51",
+  "state": "minecraft:spruce_planks",
+  "u": -28,
+  "v": 13,
+  "y": 219
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_52",
+  "state": "minecraft:spruce_fence[east=false,north=false,south=false,waterlogged=false,west=false]",
+  "u": -28,
+  "v": 14,
+  "y": 219
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_53",
+  "state": "minecraft:spruce_planks",
+  "u": -27,
+  "v": 11,
+  "y": 219
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_54",
+  "state": "minecraft:spruce_planks",
+  "u": -27,
+  "v": 12,
+  "y": 219
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_55",
+  "state": "minecraft:spruce_planks",
+  "u": -27,
+  "v": 13,
+  "y": 219
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_56",
+  "state": "minecraft:spruce_planks",
+  "u": -27,
+  "v": 14,
+  "y": 219
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_57",
+  "state": "minecraft:spruce_planks",
+  "u": -27,
+  "v": 10,
+  "y": 220
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_58",
+  "state": "minecraft:spruce_fence[east=false,north=false,south=false,waterlogged=false,west=false]",
+  "u": -27,
+  "v": 14,
+  "y": 220
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_59",
+  "state": "minecraft:spruce_fence[east=false,north=false,south=false,waterlogged=false,west=false]",
+  "u": -27,
+  "v": 10,
+  "y": 221
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_60",
+  "state": "minecraft:spruce_planks",
+  "u": -26,
+  "v": 10,
+  "y": 220
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_61",
+  "state": "minecraft:spruce_planks",
+  "u": -26,
+  "v": 11,
+  "y": 220
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_62",
+  "state": "minecraft:spruce_planks",
+  "u": -26,
+  "v": 12,
+  "y": 220
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_63",
+  "state": "minecraft:spruce_planks",
+  "u": -26,
+  "v": 13,
+  "y": 220
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_64",
+  "state": "minecraft:spruce_fence[east=false,north=false,south=false,waterlogged=false,west=false]",
+  "u": -26,
+  "v": 10,
+  "y": 221
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_65",
+  "state": "minecraft:spruce_planks",
+  "u": -25,
+  "v": 11,
+  "y": 220
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_66",
+  "state": "minecraft:spruce_planks",
+  "u": -25,
+  "v": 12,
+  "y": 220
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_67",
+  "state": "minecraft:spruce_planks",
+  "u": -25,
+  "v": 13,
+  "y": 220
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_68",
+  "state": "minecraft:spruce_planks",
+  "u": -25,
+  "v": 10,
+  "y": 221
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_69",
+  "state": "minecraft:spruce_fence[east=false,north=false,south=false,waterlogged=false,west=false]",
+  "u": -25,
+  "v": 13,
+  "y": 221
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_70",
+  "state": "minecraft:spruce_planks",
+  "u": -24,
+  "v": 9,
+  "y": 221
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_71",
+  "state": "minecraft:spruce_planks",
+  "u": -24,
+  "v": 10,
+  "y": 221
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_72",
+  "state": "minecraft:spruce_planks",
+  "u": -24,
+  "v": 11,
+  "y": 221
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_73",
+  "state": "minecraft:spruce_planks",
+  "u": -24,
+  "v": 12,
+  "y": 221
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_74",
+  "state": "minecraft:spruce_planks",
+  "u": -24,
+  "v": 13,
+  "y": 221
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_75",
+  "state": "minecraft:spruce_fence[east=false,north=false,south=false,waterlogged=false,west=false]",
+  "u": -24,
+  "v": 9,
+  "y": 222
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_76",
+  "state": "minecraft:spruce_fence[east=false,north=false,south=false,waterlogged=false,west=false]",
+  "u": -24,
+  "v": 13,
+  "y": 222
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_77",
+  "state": "minecraft:spruce_planks",
+  "u": -23,
+  "v": 11,
+  "y": 221
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_78",
+  "state": "minecraft:spruce_planks",
+  "u": -23,
+  "v": 12,
+  "y": 221
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_79",
+  "state": "minecraft:spruce_planks",
+  "u": -23,
+  "v": 13,
+  "y": 221
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_80",
+  "state": "minecraft:spruce_planks",
+  "u": -23,
+  "v": 9,
+  "y": 222
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_81",
+  "state": "minecraft:spruce_planks",
+  "u": -23,
+  "v": 10,
+  "y": 222
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_82",
+  "state": "minecraft:spruce_fence[east=false,north=false,south=false,waterlogged=false,west=false]",
+  "u": -23,
+  "v": 13,
+  "y": 222
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_83",
+  "state": "minecraft:spruce_fence[east=false,north=false,south=false,waterlogged=false,west=false]",
+  "u": -23,
+  "v": 9,
+  "y": 223
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_84",
+  "state": "minecraft:spruce_planks",
+  "u": -22,
+  "v": 9,
+  "y": 222
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_85",
+  "state": "minecraft:spruce_planks",
+  "u": -22,
+  "v": 10,
+  "y": 222
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_86",
+  "state": "minecraft:spruce_planks",
+  "u": -22,
+  "v": 11,
+  "y": 222
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_87",
+  "state": "minecraft:spruce_planks",
+  "u": -22,
+  "v": 12,
+  "y": 222
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_88",
+  "state": "minecraft:spruce_planks",
+  "u": -21,
+  "v": 9,
+  "y": 222
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_89",
+  "state": "minecraft:spruce_planks",
+  "u": -21,
+  "v": 10,
+  "y": 222
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_90",
+  "state": "minecraft:spruce_planks",
+  "u": -21,
+  "v": 11,
+  "y": 222
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_91",
+  "state": "minecraft:spruce_planks",
+  "u": -21,
+  "v": 12,
+  "y": 222
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_92",
+  "state": "minecraft:spruce_planks",
+  "u": -21,
+  "v": 8,
+  "y": 223
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_93",
+  "state": "minecraft:spruce_planks",
+  "u": -21,
+  "v": 9,
+  "y": 223
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_94",
+  "state": "minecraft:spruce_planks",
+  "u": -21,
+  "v": 10,
+  "y": 223
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_95",
+  "state": "minecraft:spruce_planks",
+  "u": -20,
+  "v": 8,
+  "y": 223
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_96",
+  "state": "minecraft:spruce_planks",
+  "u": -20,
+  "v": 9,
+  "y": 223
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_97",
+  "state": "minecraft:spruce_planks",
+  "u": -20,
+  "v": 10,
+  "y": 223
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_98",
+  "state": "minecraft:spruce_planks",
+  "u": -20,
+  "v": 11,
+  "y": 223
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_99",
+  "state": "minecraft:spruce_planks",
+  "u": -20,
+  "v": 12,
+  "y": 223
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_100",
+  "state": "minecraft:spruce_planks",
+  "u": -20,
+  "v": 8,
+  "y": 224
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_101",
+  "state": "minecraft:spruce_planks",
+  "u": -20,
+  "v": 9,
+  "y": 224
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_102",
+  "state": "minecraft:spruce_planks",
+  "u": -19,
+  "v": 8,
+  "y": 224
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_103",
+  "state": "minecraft:spruce_planks",
+  "u": -19,
+  "v": 9,
+  "y": 224
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_104",
+  "state": "minecraft:spruce_planks",
+  "u": -19,
+  "v": 10,
+  "y": 224
+ },
+ {
+  "group": "dorm_stair",
+  "name": "dorm_stair_105",
+  "state": "minecraft:spruce_planks",
+  "u": -19,
+  "v": 11,
+  "y": 224
+ },
+ {
+  "group": "trail",
+  "name": "trail_0",
+  "state": "minecraft:dirt",
+  "u": -134,
+  "v": -426,
+  "y": 79
+ },
+ {
+  "group": "trail",
+  "name": "trail_1",
+  "state": "minecraft:dirt",
+  "u": -133,
+  "v": -429,
+  "y": 77
+ },
+ {
+  "group": "trail",
+  "name": "trail_2",
+  "state": "minecraft:dirt",
+  "u": -131,
+  "v": -431,
+  "y": 75
+ },
+ {
+  "group": "trail",
+  "name": "trail_3",
+  "state": "minecraft:dirt",
+  "u": -131,
+  "v": -430,
+  "y": 75
+ },
+ {
+  "group": "trail",
+  "name": "trail_4",
+  "state": "murim:plum_blossom[distance=5,persistent=true,waterlogged=false]",
+  "u": -127,
+  "v": -415,
+  "y": 78
+ },
+ {
+  "group": "trail",
+  "name": "trail_5",
+  "state": "minecraft:vine[east=false,north=false,south=false,up=false,west=true]",
+  "u": -125,
+  "v": -410,
+  "y": 71
+ },
+ {
+  "group": "trail",
+  "name": "trail_6",
+  "state": "murim:plum_wood[axis=y]",
+  "u": -124,
+  "v": -414,
+  "y": 76
+ },
+ {
+  "group": "trail",
+  "name": "trail_7",
+  "state": "murim:plum_log[axis=y]",
+  "u": -123,
+  "v": -411,
+  "y": 70
+ },
+ {
+  "group": "trail",
+  "name": "trail_8",
+  "state": "minecraft:vine[east=false,north=false,south=false,up=false,west=true]",
+  "u": -123,
+  "v": -434,
+  "y": 84
+ },
+ {
+  "group": "trail",
+  "name": "trail_9",
+  "state": "murim:plum_log[axis=y]",
+  "u": -122,
+  "v": -401,
+  "y": 70
+ },
+ {
+  "group": "trail",
+  "name": "trail_10",
+  "state": "murim:plum_blossom[distance=1,persistent=true,waterlogged=false]",
+  "u": -122,
+  "v": -391,
+  "y": 75
+ },
+ {
+  "group": "trail",
+  "name": "trail_11",
+  "state": "minecraft:pink_petals[facing=east,flower_amount=3]",
+  "u": -121,
+  "v": -404,
+  "y": 70
+ },
+ {
+  "group": "trail",
+  "name": "trail_12",
+  "state": "murim:plum_wood[axis=y]",
+  "u": -121,
+  "v": -406,
+  "y": 77
+ },
+ {
+  "group": "trail",
+  "name": "trail_13",
+  "state": "minecraft:dirt",
+  "u": -120,
+  "v": -429,
+  "y": 69
+ },
+ {
+  "group": "trail",
+  "name": "trail_14",
+  "state": "murim:plum_blossom[distance=4,persistent=true,waterlogged=false]",
+  "u": -120,
+  "v": -400,
+  "y": 78
+ },
+ {
+  "group": "trail",
+  "name": "trail_15",
+  "state": "murim:plum_blossom_pale[distance=3,persistent=true,waterlogged=false]",
+  "u": -120,
+  "v": -402,
+  "y": 79
+ },
+ {
+  "group": "trail",
+  "name": "trail_16",
+  "state": "murim:plum_blossom_pale[distance=7,persistent=true,waterlogged=false]",
+  "u": -120,
+  "v": -412,
+  "y": 80
+ },
+ {
+  "group": "trail",
+  "name": "trail_17",
+  "state": "minecraft:pink_petals[facing=east,flower_amount=3]",
+  "u": -119,
+  "v": -392,
+  "y": 70
+ },
+ {
+  "group": "trail",
+  "name": "trail_18",
+  "state": "murim:plum_blossom_pale[distance=5,persistent=true,waterlogged=false]",
+  "u": -119,
+  "v": -414,
+  "y": 79
+ },
+ {
+  "group": "trail",
+  "name": "trail_19",
+  "state": "minecraft:grass_block[snowy=false]",
+  "u": -118,
+  "v": -412,
+  "y": 69
+ },
+ {
+  "group": "trail",
+  "name": "trail_20",
+  "state": "murim:plum_blossom[distance=5,persistent=true,waterlogged=false]",
+  "u": -118,
+  "v": -408,
+  "y": 77
+ },
+ {
+  "group": "trail",
+  "name": "trail_21",
+  "state": "minecraft:grass_block[snowy=false]",
+  "u": -117,
+  "v": -397,
+  "y": 69
+ },
+ {
+  "group": "trail",
+  "name": "trail_22",
+  "state": "minecraft:pink_petals[facing=west,flower_amount=1]",
+  "u": -117,
+  "v": -415,
+  "y": 70
+ },
+ {
+  "group": "trail",
+  "name": "trail_23",
+  "state": "murim:plum_wood[axis=y]",
+  "u": -117,
+  "v": -397,
+  "y": 75
+ },
+ {
+  "group": "trail",
+  "name": "trail_24",
+  "state": "murim:plum_blossom[distance=4,persistent=true,waterlogged=false]",
+  "u": -117,
+  "v": -390,
+  "y": 76
+ },
+ {
+  "group": "trail",
+  "name": "trail_25",
+  "state": "murim:plum_blossom_pale[distance=4,persistent=true,waterlogged=false]",
+  "u": -117,
+  "v": -394,
+  "y": 79
+ },
+ {
+  "group": "trail",
+  "name": "trail_26",
+  "state": "murim:plum_log[axis=y]",
+  "u": -116,
+  "v": -414,
+  "y": 70
+ },
+ {
+  "group": "trail",
+  "name": "trail_27",
+  "state": "murim:plum_wood[axis=y]",
+  "u": -116,
+  "v": -395,
+  "y": 73
+ },
+ {
+  "group": "trail",
+  "name": "trail_28",
+  "state": "murim:plum_blossom_pale[distance=4,persistent=true,waterlogged=false]",
+  "u": -116,
+  "v": -404,
+  "y": 79
+ },
+ {
+  "group": "trail",
+  "name": "trail_29",
+  "state": "murim:plum_sapling[stage=0]",
+  "u": -115,
+  "v": -395,
+  "y": 70
+ },
+ {
+  "group": "trail",
+  "name": "trail_30",
+  "state": "minecraft:tall_grass[half=lower]",
+  "u": -114,
+  "v": -404,
+  "y": 70
+ },
+ {
+  "group": "trail",
+  "name": "trail_31",
+  "state": "minecraft:pink_petals[facing=north,flower_amount=3]",
+  "u": -114,
+  "v": -403,
+  "y": 70
+ },
+ {
+  "group": "trail",
+  "name": "trail_32",
+  "state": "minecraft:air",
+  "u": -114,
+  "v": -401,
+  "y": 70
+ },
+ {
+  "group": "trail",
+  "name": "trail_33",
+  "state": "murim:plum_blossom_pale[distance=6,persistent=true,waterlogged=false]",
+  "u": -114,
+  "v": -392,
+  "y": 76
+ },
+ {
+  "group": "trail",
+  "name": "trail_34",
+  "state": "minecraft:gravel",
+  "u": -112,
+  "v": -414,
+  "y": 69
+ },
+ {
+  "group": "trail",
+  "name": "trail_35",
+  "state": "minecraft:grass_block[snowy=false]",
+  "u": -112,
+  "v": -399,
+  "y": 69
+ },
+ {
+  "group": "trail",
+  "name": "trail_36",
+  "state": "minecraft:air",
+  "u": -112,
+  "v": -414,
+  "y": 70
+ },
+ {
+  "group": "trail",
+  "name": "trail_37",
+  "state": "minecraft:short_grass",
+  "u": -112,
+  "v": -411,
+  "y": 70
+ },
+ {
+  "group": "trail",
+  "name": "trail_38",
+  "state": "minecraft:tall_grass[half=lower]",
+  "u": -112,
+  "v": -410,
+  "y": 70
+ },
+ {
+  "group": "trail",
+  "name": "trail_39",
+  "state": "murim:plum_blossom[distance=1,persistent=true,waterlogged=false]",
+  "u": -112,
+  "v": -396,
+  "y": 75
+ },
+ {
+  "group": "trail",
+  "name": "trail_40",
+  "state": "murim:plum_blossom[distance=1,persistent=true,waterlogged=false]",
+  "u": -112,
+  "v": -397,
+  "y": 78
+ },
+ {
+  "group": "trail",
+  "name": "trail_41",
+  "state": "minecraft:gravel",
+  "u": -111,
+  "v": -412,
+  "y": 69
+ },
+ {
+  "group": "trail",
+  "name": "trail_42",
+  "state": "minecraft:short_grass",
+  "u": -111,
+  "v": -408,
+  "y": 70
+ },
+ {
+  "group": "trail",
+  "name": "trail_43",
+  "state": "murim:plum_sapling[stage=0]",
+  "u": -111,
+  "v": -406,
+  "y": 70
+ },
+ {
+  "group": "trail",
+  "name": "trail_44",
+  "state": "minecraft:bamboo[age=1,leaves=small,stage=0]",
+  "u": -111,
+  "v": -417,
+  "y": 80
+ },
+ {
+  "group": "trail",
+  "name": "trail_45",
+  "state": "minecraft:podzol[snowy=false]",
+  "u": -110,
+  "v": -418,
+  "y": 69
+ },
+ {
+  "group": "trail",
+  "name": "trail_46",
+  "state": "minecraft:coarse_dirt",
+  "u": -110,
+  "v": -407,
+  "y": 69
+ },
+ {
+  "group": "trail",
+  "name": "trail_47",
+  "state": "minecraft:grass_block[snowy=false]",
+  "u": -110,
+  "v": -398,
+  "y": 69
+ },
+ {
+  "group": "trail",
+  "name": "trail_48",
+  "state": "minecraft:podzol[snowy=false]",
+  "u": -109,
+  "v": -419,
+  "y": 69
+ },
+ {
+  "group": "trail",
+  "name": "trail_49",
+  "state": "minecraft:coarse_dirt",
+  "u": -109,
+  "v": -406,
+  "y": 69
+ },
+ {
+  "group": "trail",
+  "name": "trail_50",
+  "state": "minecraft:gravel",
+  "u": -108,
+  "v": -416,
+  "y": 68
+ },
+ {
+  "group": "trail",
+  "name": "trail_51",
+  "state": "minecraft:water[level=8]",
+  "u": -108,
+  "v": -411,
+  "y": 68
+ },
+ {
+  "group": "trail",
+  "name": "trail_52",
+  "state": "minecraft:air",
+  "u": -108,
+  "v": -404,
+  "y": 70
+ },
+ {
+  "group": "trail",
+  "name": "trail_53",
+  "state": "minecraft:gravel",
+  "u": -107,
+  "v": -415,
+  "y": 68
+ },
+ {
+  "group": "trail",
+  "name": "trail_54",
+  "state": "minecraft:gravel",
+  "u": -107,
+  "v": -417,
+  "y": 69
+ },
+ {
+  "group": "trail",
+  "name": "trail_55",
+  "state": "minecraft:water[level=0]",
+  "u": -105,
+  "v": -412,
+  "y": 69
+ },
+ {
+  "group": "trail",
+  "name": "trail_56",
+  "state": "minecraft:water[level=8]",
+  "u": -104,
+  "v": -418,
+  "y": 68
+ },
+ {
+  "group": "trail",
+  "name": "trail_57",
+  "state": "minecraft:mossy_cobblestone",
+  "u": -104,
+  "v": -387,
+  "y": 74
+ },
+ {
+  "group": "trail",
+  "name": "trail_58",
+  "state": "minecraft:vine[east=false,north=false,south=false,up=false,west=true]",
+  "u": -104,
+  "v": -378,
+  "y": 81
+ },
+ {
+  "group": "trail",
+  "name": "trail_59",
+  "state": "minecraft:coarse_dirt",
+  "u": -103,
+  "v": -405,
+  "y": 69
+ },
+ {
+  "group": "trail",
+  "name": "trail_60",
+  "state": "murim:hua_granite_mossy",
+  "u": -103,
+  "v": -370,
+  "y": 86
+ },
+ {
+  "group": "trail",
+  "name": "trail_61",
+  "state": "minecraft:water[level=8]",
+  "u": -102,
+  "v": -416,
+  "y": 68
+ },
+ {
+  "group": "trail",
+  "name": "trail_62",
+  "state": "minecraft:cobblestone",
+  "u": -102,
+  "v": -418,
+  "y": 69
+ },
+ {
+  "group": "trail",
+  "name": "trail_63",
+  "state": "murim:polished_hua_granite",
+  "u": -101,
+  "v": -384,
+  "y": 75
+ },
+ {
+  "group": "trail",
+  "name": "trail_64",
+  "state": "minecraft:podzol[snowy=false]",
+  "u": -100,
+  "v": -419,
+  "y": 69
+ },
+ {
+  "group": "trail",
+  "name": "trail_65",
+  "state": "minecraft:cobblestone",
+  "u": -100,
+  "v": -418,
+  "y": 69
+ },
+ {
+  "group": "trail",
+  "name": "trail_66",
+  "state": "minecraft:short_grass",
+  "u": -100,
+  "v": -395,
+  "y": 70
+ },
+ {
+  "group": "trail",
+  "name": "trail_67",
+  "state": "minecraft:air",
+  "u": -100,
+  "v": -376,
+  "y": 82
+ },
+ {
+  "group": "trail",
+  "name": "trail_68",
+  "state": "minecraft:water[level=8]",
+  "u": -99,
+  "v": -407,
+  "y": 68
+ },
+ {
+  "group": "trail",
+  "name": "trail_69",
+  "state": "minecraft:cobblestone",
+  "u": -99,
+  "v": -418,
+  "y": 69
+ },
+ {
+  "group": "trail",
+  "name": "trail_70",
+  "state": "minecraft:grass_block[snowy=false]",
+  "u": -99,
+  "v": -400,
+  "y": 69
+ },
+ {
+  "group": "trail",
+  "name": "trail_71",
+  "state": "minecraft:air",
+  "u": -99,
+  "v": -406,
+  "y": 70
+ },
+ {
+  "group": "trail",
+  "name": "trail_72",
+  "state": "minecraft:tall_grass[half=lower]",
+  "u": -99,
+  "v": -400,
+  "y": 70
+ },
+ {
+  "group": "trail",
+  "name": "trail_73",
+  "state": "minecraft:tall_grass[half=lower]",
+  "u": -99,
+  "v": -399,
+  "y": 70
+ },
+ {
+  "group": "trail",
+  "name": "trail_74",
+  "state": "minecraft:air",
+  "u": -99,
+  "v": -396,
+  "y": 70
+ },
+ {
+  "group": "trail",
+  "name": "trail_75",
+  "state": "minecraft:air",
+  "u": -99,
+  "v": -394,
+  "y": 71
+ },
+ {
+  "group": "trail",
+  "name": "trail_76",
+  "state": "minecraft:vine[east=false,north=false,south=true,up=false,west=false]",
+  "u": -99,
+  "v": -431,
+  "y": 80
+ },
+ {
+  "group": "trail",
+  "name": "trail_77",
+  "state": "minecraft:air",
+  "u": -99,
+  "v": -422,
+  "y": 82
+ },
+ {
+  "group": "trail",
+  "name": "trail_78",
+  "state": "minecraft:air",
+  "u": -99,
+  "v": -434,
+  "y": 95
+ },
+ {
+  "group": "trail",
+  "name": "trail_79",
+  "state": "minecraft:cobblestone",
+  "u": -98,
+  "v": -414,
+  "y": 67
+ },
+ {
+  "group": "trail",
+  "name": "trail_80",
+  "state": "minecraft:grass_block[snowy=false]",
+  "u": -98,
+  "v": -401,
+  "y": 69
+ },
+ {
+  "group": "trail",
+  "name": "trail_81",
+  "state": "murim:plum_log[axis=y]",
+  "u": -98,
+  "v": -396,
+  "y": 70
+ },
+ {
+  "group": "trail",
+  "name": "trail_82",
+  "state": "minecraft:podzol[snowy=false]",
+  "u": -97,
+  "v": -418,
+  "y": 69
+ },
+ {
+  "group": "trail",
+  "name": "trail_83",
+  "state": "minecraft:short_grass",
+  "u": -97,
+  "v": -398,
+  "y": 70
+ },
+ {
+  "group": "trail",
+  "name": "trail_84",
+  "state": "minecraft:water[level=8]",
+  "u": -96,
+  "v": -409,
+  "y": 68
+ },
+ {
+  "group": "trail",
+  "name": "trail_85",
+  "state": "minecraft:podzol[snowy=false]",
+  "u": -96,
+  "v": -418,
+  "y": 69
+ },
+ {
+  "group": "trail",
+  "name": "trail_86",
+  "state": "minecraft:short_grass",
+  "u": -96,
+  "v": -395,
+  "y": 70
+ },
+ {
+  "group": "trail",
+  "name": "trail_87",
+  "state": "minecraft:cobblestone",
+  "u": -95,
+  "v": -413,
+  "y": 68
+ },
+ {
+  "group": "trail",
+  "name": "trail_88",
+  "state": "murim:plum_sapling[stage=0]",
+  "u": -95,
+  "v": -417,
+  "y": 70
+ },
+ {
+  "group": "trail",
+  "name": "trail_89",
+  "state": "murim:plum_blossom[distance=3,persistent=true,waterlogged=false]",
+  "u": -95,
+  "v": -400,
+  "y": 77
+ },
+ {
+  "group": "trail",
+  "name": "trail_90",
+  "state": "minecraft:water[level=0]",
+  "u": -94,
+  "v": -409,
+  "y": 69
+ },
+ {
+  "group": "trail",
+  "name": "trail_91",
+  "state": "minecraft:water[level=0]",
+  "u": -94,
+  "v": -408,
+  "y": 69
+ },
+ {
+  "group": "trail",
+  "name": "trail_92",
+  "state": "minecraft:water[level=0]",
+  "u": -93,
+  "v": -410,
+  "y": 69
+ },
+ {
+  "group": "trail",
+  "name": "trail_93",
+  "state": "minecraft:grass_block[snowy=false]",
+  "u": -93,
+  "v": -399,
+  "y": 69
+ },
+ {
+  "group": "trail",
+  "name": "trail_94",
+  "state": "minecraft:tall_grass[half=lower]",
+  "u": -93,
+  "v": -404,
+  "y": 70
+ },
+ {
+  "group": "trail",
+  "name": "trail_95",
+  "state": "minecraft:pink_petals[facing=west,flower_amount=1]",
+  "u": -93,
+  "v": -401,
+  "y": 70
+ },
+ {
+  "group": "trail",
+  "name": "trail_96",
+  "state": "minecraft:water[level=8]",
+  "u": -92,
+  "v": -411,
+  "y": 68
+ },
+ {
+  "group": "trail",
+  "name": "trail_97",
+  "state": "minecraft:coarse_dirt",
+  "u": -92,
+  "v": -415,
+  "y": 69
+ },
+ {
+  "group": "trail",
+  "name": "trail_98",
+  "state": "minecraft:water[level=8]",
+  "u": -91,
+  "v": -409,
+  "y": 68
+ },
+ {
+  "group": "trail",
+  "name": "trail_99",
+  "state": "murim:plum_sapling[stage=0]",
+  "u": -91,
+  "v": -403,
+  "y": 70
+ },
+ {
+  "group": "trail",
+  "name": "trail_100",
+  "state": "murim:young_plum_sapling[stage=0]",
+  "u": -91,
+  "v": -400,
+  "y": 70
+ },
+ {
+  "group": "trail",
+  "name": "trail_101",
+  "state": "murim:plum_blossom_pale[distance=2,persistent=true,waterlogged=false]",
+  "u": -91,
+  "v": -415,
+  "y": 76
+ },
+ {
+  "group": "trail",
+  "name": "trail_102",
+  "state": "murim:plum_blossom_pale[distance=2,persistent=true,waterlogged=false]",
+  "u": -91,
+  "v": -398,
+  "y": 78
+ },
+ {
+  "group": "trail",
+  "name": "trail_103",
+  "state": "minecraft:coarse_dirt",
+  "u": -90,
+  "v": -405,
+  "y": 69
+ },
+ {
+  "group": "trail",
+  "name": "trail_104",
+  "state": "minecraft:pink_petals[facing=west,flower_amount=1]",
+  "u": -89,
+  "v": -396,
+  "y": 70
+ },
+ {
+  "group": "trail",
+  "name": "trail_105",
+  "state": "murim:plum_wood[axis=y]",
+  "u": -89,
+  "v": -411,
+  "y": 76
+ },
+ {
+  "group": "trail",
+  "name": "trail_106",
+  "state": "murim:plum_blossom_pale[distance=4,persistent=true,waterlogged=false]",
+  "u": -89,
+  "v": -417,
+  "y": 80
+ },
+ {
+  "group": "trail",
+  "name": "trail_107",
+  "state": "minecraft:grass_block[snowy=false]",
+  "u": -88,
+  "v": -410,
+  "y": 69
+ },
+ {
+  "group": "trail",
+  "name": "trail_108",
+  "state": "murim:plum_sapling[stage=0]",
+  "u": -88,
+  "v": -409,
+  "y": 70
+ },
+ {
+  "group": "trail",
+  "name": "trail_109",
+  "state": "murim:plum_sapling[stage=1]",
+  "u": -88,
+  "v": -398,
+  "y": 70
+ },
+ {
+  "group": "trail",
+  "name": "trail_110",
+  "state": "murim:plum_wood[axis=y]",
+  "u": -88,
+  "v": -416,
+  "y": 71
+ },
+ {
+  "group": "trail",
+  "name": "trail_111",
+  "state": "murim:plum_blossom[distance=6,persistent=true,waterlogged=false]",
+  "u": -88,
+  "v": -402,
+  "y": 76
+ },
+ {
+  "group": "trail",
+  "name": "trail_112",
+  "state": "murim:plum_wood[axis=y]",
+  "u": -88,
+  "v": -412,
+  "y": 77
+ },
+ {
+  "group": "trail",
+  "name": "trail_113",
+  "state": "murim:plum_blossom[distance=3,persistent=true,waterlogged=false]",
+  "u": -88,
+  "v": -414,
+  "y": 78
+ },
+ {
+  "group": "trail",
+  "name": "trail_114",
+  "state": "minecraft:grass_block[snowy=false]",
+  "u": -87,
+  "v": -409,
+  "y": 69
+ },
+ {
+  "group": "trail",
+  "name": "trail_115",
+  "state": "murim:plum_log[axis=y]",
+  "u": -87,
+  "v": -400,
+  "y": 70
+ },
+ {
+  "group": "trail",
+  "name": "trail_116",
+  "state": "murim:plum_blossom[distance=4,persistent=true,waterlogged=false]",
+  "u": -87,
+  "v": -406,
+  "y": 77
+ },
+ {
+  "group": "trail",
+  "name": "trail_117",
+  "state": "murim:plum_blossom[distance=3,persistent=true,waterlogged=false]",
+  "u": -87,
+  "v": -421,
+  "y": 79
+ },
+ {
+  "group": "trail",
+  "name": "trail_118",
+  "state": "minecraft:air",
+  "u": -86,
+  "v": -414,
+  "y": 74
+ },
+ {
+  "group": "trail",
+  "name": "trail_119",
+  "state": "murim:plum_blossom_pale[distance=6,persistent=true,waterlogged=false]",
+  "u": -86,
+  "v": -412,
+  "y": 81
+ },
+ {
+  "group": "trail",
+  "name": "trail_120",
+  "state": "minecraft:mossy_cobblestone",
+  "u": -85,
+  "v": -337,
+  "y": 115
+ },
+ {
+  "group": "trail",
+  "name": "trail_121",
+  "state": "murim:plum_blossom_pale[distance=6,persistent=true,waterlogged=false]",
+  "u": -84,
+  "v": -398,
+  "y": 75
+ },
+ {
+  "group": "trail",
+  "name": "trail_122",
+  "state": "murim:plum_blossom[distance=2,persistent=true,waterlogged=false]",
+  "u": -83,
+  "v": -417,
+  "y": 77
+ },
+ {
+  "group": "trail",
+  "name": "trail_123",
+  "state": "minecraft:air",
+  "u": -78,
+  "v": -316,
+  "y": 135
+ },
+ {
+  "group": "trail",
+  "name": "trail_124",
+  "state": "minecraft:mossy_cobblestone",
+  "u": -76,
+  "v": -317,
+  "y": 134
+ },
+ {
+  "group": "trail",
+  "name": "trail_125",
+  "state": "murim:polished_hua_granite_stairs[facing=east,half=bottom,shape=straight,waterlogged=false]",
+  "u": -76,
+  "v": -315,
+  "y": 137
+ },
+ {
+  "group": "trail",
+  "name": "trail_126",
+  "state": "murim:polished_hua_granite_slab[type=bottom,waterlogged=false]",
+  "u": -73,
+  "v": -313,
+  "y": 142
+ },
+ {
+  "group": "trail",
+  "name": "trail_127",
+  "state": "murim:hua_granite_mossy",
+  "u": -54,
+  "v": -316,
+  "y": 159
+ },
+ {
+  "group": "trail",
+  "name": "trail_128",
+  "state": "murim:polished_hua_granite_slab[type=bottom,waterlogged=false]",
+  "u": -49,
+  "v": -320,
+  "y": 159
+ },
+ {
+  "group": "trail",
+  "name": "trail_129",
+  "state": "minecraft:mossy_cobblestone",
+  "u": -38,
+  "v": -319,
+  "y": 153
+ },
+ {
+  "group": "trail",
+  "name": "trail_130",
+  "state": "murim:hua_granite_dark",
+  "u": -37,
+  "v": -320,
+  "y": 154
+ },
+ {
+  "group": "trail",
+  "name": "trail_131",
+  "state": "murim:hua_granite_dark",
+  "u": -37,
+  "v": -319,
+  "y": 154
+ },
+ {
+  "group": "trail",
+  "name": "trail_132",
+  "state": "murim:hua_granite_dark",
+  "u": -36,
+  "v": -322,
+  "y": 154
+ },
+ {
+  "group": "trail",
+  "name": "trail_133",
+  "state": "murim:hua_granite_dark",
+  "u": -36,
+  "v": -321,
+  "y": 154
+ },
+ {
+  "group": "trail",
+  "name": "trail_134",
+  "state": "murim:hua_granite_mossy",
+  "u": -35,
+  "v": -321,
+  "y": 154
+ },
+ {
+  "group": "trail",
+  "name": "trail_135",
+  "state": "murim:polished_hua_granite_stairs[facing=south,half=bottom,shape=straight,waterlogged=false]",
+  "u": -32,
+  "v": -320,
+  "y": 158
+ },
+ {
+  "group": "trail",
+  "name": "trail_136",
+  "state": "murim:hua_granite_dark",
+  "u": -27,
+  "v": -324,
+  "y": 162
+ },
+ {
+  "group": "trail",
+  "name": "trail_137",
+  "state": "murim:polished_hua_granite_slab[type=bottom,waterlogged=false]",
+  "u": -19,
+  "v": -316,
+  "y": 165
+ },
+ {
+  "group": "trail",
+  "name": "trail_138",
+  "state": "minecraft:air",
+  "u": -17,
+  "v": -312,
+  "y": 169
+ },
+ {
+  "group": "trail",
+  "name": "trail_139",
+  "state": "murim:hua_granite_mossy",
+  "u": -15,
+  "v": -313,
+  "y": 168
+ },
+ {
+  "group": "trail",
+  "name": "trail_140",
+  "state": "murim:hua_granite",
+  "u": -9,
+  "v": -303,
+  "y": 176
+ },
+ {
+  "group": "trail",
+  "name": "trail_141",
+  "state": "murim:hua_granite",
+  "u": -8,
+  "v": -302,
+  "y": 182
+ },
+ {
+  "group": "trail",
+  "name": "trail_142",
+  "state": "murim:hua_granite",
+  "u": -7,
+  "v": -299,
+  "y": 182
+ },
+ {
+  "group": "trail",
+  "name": "trail_143",
+  "state": "murim:hua_granite_mossy",
+  "u": -7,
+  "v": -301,
+  "y": 184
+ },
+ {
+  "group": "trail",
+  "name": "trail_144",
+  "state": "murim:hua_granite",
+  "u": -7,
+  "v": -298,
+  "y": 186
+ },
+ {
+  "group": "trail",
+  "name": "trail_145",
+  "state": "murim:hua_granite",
+  "u": -6,
+  "v": -298,
+  "y": 185
+ },
+ {
+  "group": "trail",
+  "name": "trail_146",
+  "state": "murim:hua_granite_mossy",
+  "u": -1,
+  "v": -288,
+  "y": 198
+ },
+ {
+  "group": "trail",
+  "name": "trail_147",
+  "state": "murim:polished_hua_granite_slab[type=bottom,waterlogged=false]",
+  "u": 1,
+  "v": -279,
+  "y": 206
+ },
+ {
+  "group": "trail",
+  "name": "trail_148",
+  "state": "murim:polished_hua_granite_slab[type=bottom,waterlogged=false]",
+  "u": 2,
+  "v": -240,
+  "y": 217
+ },
+ {
+  "group": "trail",
+  "name": "trail_149",
+  "state": "murim:polished_hua_granite_stairs[facing=south,half=bottom,shape=straight,waterlogged=false]",
+  "u": 3,
+  "v": -197,
+  "y": 224
+ },
+ {
+  "group": "trail",
+  "name": "trail_150",
+  "state": "murim:polished_hua_granite_stairs[facing=south,half=bottom,shape=straight,waterlogged=false]",
+  "u": 5,
+  "v": -271,
+  "y": 210
+ },
+ {
+  "group": "trail",
+  "name": "trail_151",
+  "state": "murim:polished_hua_granite_stairs[facing=south,half=bottom,shape=straight,waterlogged=false]",
+  "u": 7,
+  "v": -186,
+  "y": 226
+ },
+ {
+  "group": "trail",
+  "name": "trail_152",
+  "state": "murim:polished_hua_granite_slab[type=bottom,waterlogged=false]",
+  "u": 8,
+  "v": -137,
+  "y": 232
+ },
+ {
+  "group": "trail",
+  "name": "trail_153",
+  "state": "murim:polished_hua_granite",
+  "u": 9,
+  "v": -119,
+  "y": 232
+ },
+ {
+  "group": "trail",
+  "name": "trail_154",
+  "state": "murim:polished_hua_granite",
+  "u": 9,
+  "v": -118,
+  "y": 232
+ },
+ {
+  "group": "trail",
+  "name": "trail_155",
+  "state": "murim:polished_hua_granite",
+  "u": 13,
+  "v": -165,
+  "y": 229
+ },
+ {
+  "group": "trail",
+  "name": "trail_156",
+  "state": "murim:polished_hua_granite",
+  "u": 18,
+  "v": -87,
+  "y": 234
+ },
+ {
+  "group": "trail",
+  "name": "trail_157",
+  "state": "murim:polished_hua_granite",
+  "u": 19,
+  "v": -84,
+  "y": 233
+ },
+ {
+  "group": "trail",
+  "name": "trail_158",
+  "state": "murim:polished_hua_granite_slab[type=bottom,waterlogged=false]",
+  "u": 21,
+  "v": -75,
+  "y": 233
+ },
+ {
+  "group": "trail",
+  "name": "trail_159",
+  "state": "minecraft:mossy_cobblestone",
+  "u": 24,
+  "v": -63,
+  "y": 223
+ },
+ {
+  "group": "cave",
+  "name": "cave_0",
+  "state": "minecraft:stone",
+  "u": 58,
+  "v": 160,
+  "y": 232
+ },
+ {
+  "group": "cave",
+  "name": "cave_1",
+  "state": "minecraft:stone",
+  "u": 59,
+  "v": 157,
+  "y": 231
+ },
+ {
+  "group": "cave",
+  "name": "cave_2",
+  "state": "minecraft:stone",
+  "u": 59,
+  "v": 158,
+  "y": 231
+ },
+ {
+  "group": "cave",
+  "name": "cave_3",
+  "state": "minecraft:stone",
+  "u": 59,
+  "v": 155,
+  "y": 233
+ },
+ {
+  "group": "cave",
+  "name": "cave_4",
+  "state": "minecraft:stone",
+  "u": 59,
+  "v": 157,
+  "y": 234
+ },
+ {
+  "group": "cave",
+  "name": "cave_5",
+  "state": "murim:hua_granite_dark",
+  "u": 59,
+  "v": 162,
+  "y": 234
+ },
+ {
+  "group": "cave",
+  "name": "cave_6",
+  "state": "minecraft:stone",
+  "u": 59,
+  "v": 156,
+  "y": 236
+ },
+ {
+  "group": "cave",
+  "name": "cave_7",
+  "state": "minecraft:stone",
+  "u": 60,
+  "v": 151,
+  "y": 230
+ },
+ {
+  "group": "cave",
+  "name": "cave_8",
+  "state": "minecraft:stone",
+  "u": 60,
+  "v": 154,
+  "y": 232
+ },
+ {
+  "group": "cave",
+  "name": "cave_9",
+  "state": "murim:hua_granite_dark",
+  "u": 60,
+  "v": 156,
+  "y": 232
+ },
+ {
+  "group": "cave",
+  "name": "cave_10",
+  "state": "minecraft:air",
+  "u": 60,
+  "v": 159,
+  "y": 232
+ },
+ {
+  "group": "cave",
+  "name": "cave_11",
+  "state": "murim:hua_granite_dark",
+  "u": 60,
+  "v": 163,
+  "y": 233
+ },
+ {
+  "group": "cave",
+  "name": "cave_12",
+  "state": "minecraft:stone",
+  "u": 60,
+  "v": 153,
+  "y": 234
+ },
+ {
+  "group": "cave",
+  "name": "cave_13",
+  "state": "murim:hua_granite_dark",
+  "u": 60,
+  "v": 158,
+  "y": 234
+ },
+ {
+  "group": "cave",
+  "name": "cave_14",
+  "state": "minecraft:air",
+  "u": 60,
+  "v": 160,
+  "y": 234
+ },
+ {
+  "group": "cave",
+  "name": "cave_15",
+  "state": "murim:hua_granite_dark",
+  "u": 60,
+  "v": 158,
+  "y": 235
+ },
+ {
+  "group": "cave",
+  "name": "cave_16",
+  "state": "murim:hua_granite_dark",
+  "u": 60,
+  "v": 157,
+  "y": 236
+ },
+ {
+  "group": "cave",
+  "name": "cave_17",
+  "state": "minecraft:stone",
+  "u": 61,
+  "v": 160,
+  "y": 230
+ },
+ {
+  "group": "cave",
+  "name": "cave_18",
+  "state": "murim:hua_granite_dark",
+  "u": 61,
+  "v": 152,
+  "y": 232
+ },
+ {
+  "group": "cave",
+  "name": "cave_19",
+  "state": "murim:hua_granite_dark",
+  "u": 61,
+  "v": 152,
+  "y": 233
+ },
+ {
+  "group": "cave",
+  "name": "cave_20",
+  "state": "minecraft:air",
+  "u": 61,
+  "v": 157,
+  "y": 233
+ },
+ {
+  "group": "cave",
+  "name": "cave_21",
+  "state": "minecraft:air",
+  "u": 61,
+  "v": 163,
+  "y": 233
+ },
+ {
+  "group": "cave",
+  "name": "cave_22",
+  "state": "minecraft:air",
+  "u": 61,
+  "v": 156,
+  "y": 234
+ },
+ {
+  "group": "cave",
+  "name": "cave_23",
+  "state": "minecraft:air",
+  "u": 61,
+  "v": 158,
+  "y": 234
+ },
+ {
+  "group": "cave",
+  "name": "cave_24",
+  "state": "murim:hua_granite_dark",
+  "u": 61,
+  "v": 151,
+  "y": 235
+ },
+ {
+  "group": "cave",
+  "name": "cave_25",
+  "state": "minecraft:air",
+  "u": 61,
+  "v": 158,
+  "y": 235
+ },
+ {
+  "group": "cave",
+  "name": "cave_26",
+  "state": "murim:hua_granite_dark",
+  "u": 61,
+  "v": 156,
+  "y": 236
+ },
+ {
+  "group": "cave",
+  "name": "cave_27",
+  "state": "murim:hua_granite_dark",
+  "u": 61,
+  "v": 162,
+  "y": 236
+ },
+ {
+  "group": "cave",
+  "name": "cave_28",
+  "state": "minecraft:stone",
+  "u": 62,
+  "v": 151,
+  "y": 230
+ },
+ {
+  "group": "cave",
+  "name": "cave_29",
+  "state": "minecraft:stone",
+  "u": 62,
+  "v": 153,
+  "y": 230
+ },
+ {
+  "group": "cave",
+  "name": "cave_30",
+  "state": "minecraft:stone",
+  "u": 62,
+  "v": 156,
+  "y": 230
+ },
+ {
+  "group": "cave",
+  "name": "cave_31",
+  "state": "minecraft:coal_ore",
+  "u": 62,
+  "v": 161,
+  "y": 230
+ },
+ {
+  "group": "cave",
+  "name": "cave_32",
+  "state": "murim:hua_granite_cracked",
+  "u": 62,
+  "v": 162,
+  "y": 231
+ },
+ {
+  "group": "cave",
+  "name": "cave_33",
+  "state": "murim:shr_candle_stand_small[facing=east]",
+  "u": 62,
+  "v": 151,
+  "y": 232
+ },
+ {
+  "group": "cave",
+  "name": "cave_34",
+  "state": "murim:dining_table[east=false,north=false,south=true,west=false]",
+  "u": 62,
+  "v": 152,
+  "y": 232
+ },
+ {
+  "group": "cave",
+  "name": "cave_35",
+  "state": "murim:dining_table[east=false,north=true,south=false,west=false]",
+  "u": 62,
+  "v": 153,
+  "y": 232
+ },
+ {
+  "group": "cave",
+  "name": "cave_36",
+  "state": "murim:sto_screen[facing=south,half=lower]",
+  "u": 62,
+  "v": 154,
+  "y": 232
+ },
+ {
+  "group": "cave",
+  "name": "cave_37",
+  "state": "minecraft:air",
+  "u": 62,
+  "v": 156,
+  "y": 232
+ },
+ {
+  "group": "cave",
+  "name": "cave_38",
+  "state": "minecraft:air",
+  "u": 62,
+  "v": 161,
+  "y": 232
+ },
+ {
+  "group": "cave",
+  "name": "cave_39",
+  "state": "minecraft:air",
+  "u": 62,
+  "v": 162,
+  "y": 232
+ },
+ {
+  "group": "cave",
+  "name": "cave_40",
+  "state": "murim:hua_granite_dark",
+  "u": 62,
+  "v": 164,
+  "y": 232
+ },
+ {
+  "group": "cave",
+  "name": "cave_41",
+  "state": "minecraft:stone",
+  "u": 62,
+  "v": 165,
+  "y": 232
+ },
+ {
+  "group": "cave",
+  "name": "cave_42",
+  "state": "murim:wine_jar[facing=east,full=true,sink=6]",
+  "u": 62,
+  "v": 152,
+  "y": 233
+ },
+ {
+  "group": "cave",
+  "name": "cave_43",
+  "state": "murim:pill_crate[facing=east,open=false,sink=6]",
+  "u": 62,
+  "v": 153,
+  "y": 233
+ },
+ {
+  "group": "cave",
+  "name": "cave_44",
+  "state": "murim:sto_screen[facing=south,half=upper]",
+  "u": 62,
+  "v": 154,
+  "y": 233
+ },
+ {
+  "group": "cave",
+  "name": "cave_45",
+  "state": "minecraft:air",
+  "u": 62,
+  "v": 155,
+  "y": 233
+ },
+ {
+  "group": "cave",
+  "name": "cave_46",
+  "state": "minecraft:air",
+  "u": 62,
+  "v": 156,
+  "y": 233
+ },
+ {
+  "group": "cave",
+  "name": "cave_47",
+  "state": "minecraft:air",
+  "u": 62,
+  "v": 162,
+  "y": 233
+ },
+ {
+  "group": "cave",
+  "name": "cave_48",
+  "state": "murim:hua_granite_dark",
+  "u": 62,
+  "v": 166,
+  "y": 233
+ },
+ {
+  "group": "cave",
+  "name": "cave_49",
+  "state": "minecraft:air",
+  "u": 62,
+  "v": 159,
+  "y": 235
+ },
+ {
+  "group": "cave",
+  "name": "cave_50",
+  "state": "minecraft:air",
+  "u": 62,
+  "v": 160,
+  "y": 235
+ },
+ {
+  "group": "cave",
+  "name": "cave_51",
+  "state": "minecraft:air",
+  "u": 62,
+  "v": 161,
+  "y": 235
+ },
+ {
+  "group": "cave",
+  "name": "cave_52",
+  "state": "murim:hua_granite_dark",
+  "u": 62,
+  "v": 157,
+  "y": 237
+ },
+ {
+  "group": "cave",
+  "name": "cave_53",
+  "state": "murim:hua_granite_cracked",
+  "u": 62,
+  "v": 159,
+  "y": 237
+ },
+ {
+  "group": "cave",
+  "name": "cave_54",
+  "state": "minecraft:stone",
+  "u": 62,
+  "v": 155,
+  "y": 238
+ },
+ {
+  "group": "cave",
+  "name": "cave_55",
+  "state": "minecraft:iron_ore",
+  "u": 63,
+  "v": 153,
+  "y": 230
+ },
+ {
+  "group": "cave",
+  "name": "cave_56",
+  "state": "minecraft:iron_ore",
+  "u": 63,
+  "v": 154,
+  "y": 230
+ },
+ {
+  "group": "cave",
+  "name": "cave_57",
+  "state": "minecraft:stone",
+  "u": 63,
+  "v": 155,
+  "y": 230
+ },
+ {
+  "group": "cave",
+  "name": "cave_58",
+  "state": "minecraft:coal_ore",
+  "u": 63,
+  "v": 160,
+  "y": 230
+ },
+ {
+  "group": "cave",
+  "name": "cave_59",
+  "state": "minecraft:coal_ore",
+  "u": 63,
+  "v": 162,
+  "y": 230
+ },
+ {
+  "group": "cave",
+  "name": "cave_60",
+  "state": "murim:hua_granite_dark",
+  "u": 63,
+  "v": 151,
+  "y": 231
+ },
+ {
+  "group": "cave",
+  "name": "cave_61",
+  "state": "murim:hua_granite_dark",
+  "u": 63,
+  "v": 157,
+  "y": 231
+ },
+ {
+  "group": "cave",
+  "name": "cave_62",
+  "state": "murim:hua_granite_pale",
+  "u": 63,
+  "v": 162,
+  "y": 231
+ },
+ {
+  "group": "cave",
+  "name": "cave_63",
+  "state": "murim:hua_granite_dark",
+  "u": 63,
+  "v": 165,
+  "y": 231
+ },
+ {
+  "group": "cave",
+  "name": "cave_64",
+  "state": "murim:water_vat[facing=south,variant=0]",
+  "u": 63,
+  "v": 151,
+  "y": 232
+ },
+ {
+  "group": "cave",
+  "name": "cave_65",
+  "state": "minecraft:air",
+  "u": 63,
+  "v": 153,
+  "y": 232
+ },
+ {
+  "group": "cave",
+  "name": "cave_66",
+  "state": "murim:sto_screen[facing=south,half=lower]",
+  "u": 63,
+  "v": 154,
+  "y": 232
+ },
+ {
+  "group": "cave",
+  "name": "cave_67",
+  "state": "murim:rough_hua_granite_slab[type=bottom,waterlogged=false]",
+  "u": 63,
+  "v": 164,
+  "y": 232
+ },
+ {
+  "group": "cave",
+  "name": "cave_68",
+  "state": "minecraft:stone",
+  "u": 63,
+  "v": 149,
+  "y": 233
+ },
+ {
+  "group": "cave",
+  "name": "cave_69",
+  "state": "murim:sto_screen[facing=south,half=upper]",
+  "u": 63,
+  "v": 154,
+  "y": 233
+ },
+ {
+  "group": "cave",
+  "name": "cave_70",
+  "state": "minecraft:air",
+  "u": 63,
+  "v": 158,
+  "y": 233
+ },
+ {
+  "group": "cave",
+  "name": "cave_71",
+  "state": "minecraft:air",
+  "u": 63,
+  "v": 159,
+  "y": 233
+ },
+ {
+  "group": "cave",
+  "name": "cave_72",
+  "state": "minecraft:air",
+  "u": 63,
+  "v": 151,
+  "y": 234
+ },
+ {
+  "group": "cave",
+  "name": "cave_73",
+  "state": "minecraft:air",
+  "u": 63,
+  "v": 161,
+  "y": 234
+ },
+ {
+  "group": "cave",
+  "name": "cave_74",
+  "state": "minecraft:air",
+  "u": 63,
+  "v": 155,
+  "y": 235
+ },
+ {
+  "group": "cave",
+  "name": "cave_75",
+  "state": "minecraft:air",
+  "u": 63,
+  "v": 162,
+  "y": 235
+ },
+ {
+  "group": "cave",
+  "name": "cave_76",
+  "state": "minecraft:stone",
+  "u": 63,
+  "v": 150,
+  "y": 236
+ },
+ {
+  "group": "cave",
+  "name": "cave_77",
+  "state": "murim:hua_granite_dark",
+  "u": 63,
+  "v": 165,
+  "y": 236
+ },
+ {
+  "group": "cave",
+  "name": "cave_78",
+  "state": "murim:hua_granite_dark",
+  "u": 63,
+  "v": 163,
+  "y": 237
+ },
+ {
+  "group": "cave",
+  "name": "cave_79",
+  "state": "minecraft:stone",
+  "u": 63,
+  "v": 157,
+  "y": 238
+ },
+ {
+  "group": "cave",
+  "name": "cave_80",
+  "state": "minecraft:stone",
+  "u": 63,
+  "v": 159,
+  "y": 238
+ },
+ {
+  "group": "cave",
+  "name": "cave_81",
+  "state": "minecraft:iron_ore",
+  "u": 64,
+  "v": 153,
+  "y": 230
+ },
+ {
+  "group": "cave",
+  "name": "cave_82",
+  "state": "minecraft:stone",
+  "u": 64,
+  "v": 156,
+  "y": 230
+ },
+ {
+  "group": "cave",
+  "name": "cave_83",
+  "state": "minecraft:coal_ore",
+  "u": 64,
+  "v": 160,
+  "y": 230
+ },
+ {
+  "group": "cave",
+  "name": "cave_84",
+  "state": "minecraft:coal_ore",
+  "u": 64,
+  "v": 161,
+  "y": 230
+ },
+ {
+  "group": "cave",
+  "name": "cave_85",
+  "state": "murim:hua_granite_pale",
+  "u": 64,
+  "v": 160,
+  "y": 231
+ },
+ {
+  "group": "cave",
+  "name": "cave_86",
+  "state": "murim:hua_granite_pale",
+  "u": 64,
+  "v": 163,
+  "y": 231
+ },
+ {
+  "group": "cave",
+  "name": "cave_87",
+  "state": "murim:sto_chest[facing=south,open=false]",
+  "u": 64,
+  "v": 151,
+  "y": 232
+ },
+ {
+  "group": "cave",
+  "name": "cave_88",
+  "state": "murim:sto_rug_straw[east=true,north=false,south=true,west=false]",
+  "u": 64,
+  "v": 152,
+  "y": 232
+ },
+ {
+  "group": "cave",
+  "name": "cave_89",
+  "state": "murim:sto_rug_straw[east=true,north=true,south=false,west=false]",
+  "u": 64,
+  "v": 153,
+  "y": 232
+ },
+ {
+  "group": "cave",
+  "name": "cave_90",
+  "state": "murim:sto_screen[facing=south,half=lower]",
+  "u": 64,
+  "v": 154,
+  "y": 232
+ },
+ {
+  "group": "cave",
+  "name": "cave_91",
+  "state": "minecraft:air",
+  "u": 64,
+  "v": 157,
+  "y": 232
+ },
+ {
+  "group": "cave",
+  "name": "cave_92",
+  "state": "minecraft:air",
+  "u": 64,
+  "v": 160,
+  "y": 232
+ },
+ {
+  "group": "cave",
+  "name": "cave_93",
+  "state": "murim:rough_hua_granite_slab[type=bottom,waterlogged=false]",
+  "u": 64,
+  "v": 164,
+  "y": 232
+ },
+ {
+  "group": "cave",
+  "name": "cave_94",
+  "state": "murim:mossy_hua_granite_slab[type=bottom,waterlogged=false]",
+  "u": 64,
+  "v": 165,
+  "y": 232
+ },
+ {
+  "group": "cave",
+  "name": "cave_95",
+  "state": "minecraft:stone",
+  "u": 64,
+  "v": 149,
+  "y": 233
+ },
+ {
+  "group": "cave",
+  "name": "cave_96",
+  "state": "minecraft:air",
+  "u": 64,
+  "v": 153,
+  "y": 233
+ },
+ {
+  "group": "cave",
+  "name": "cave_97",
+  "state": "murim:sto_screen[facing=south,half=upper]",
+  "u": 64,
+  "v": 154,
+  "y": 233
+ },
+ {
+  "group": "cave",
+  "name": "cave_98",
+  "state": "minecraft:air",
+  "u": 64,
+  "v": 161,
+  "y": 233
+ },
+ {
+  "group": "cave",
+  "name": "cave_99",
+  "state": "minecraft:air",
+  "u": 64,
+  "v": 158,
+  "y": 234
+ },
+ {
+  "group": "cave",
+  "name": "cave_100",
+  "state": "minecraft:stone",
+  "u": 64,
+  "v": 150,
+  "y": 236
+ },
+ {
+  "group": "cave",
+  "name": "cave_101",
+  "state": "minecraft:stone",
+  "u": 64,
+  "v": 152,
+  "y": 237
+ },
+ {
+  "group": "cave",
+  "name": "cave_102",
+  "state": "minecraft:stone",
+  "u": 65,
+  "v": 162,
+  "y": 230
+ },
+ {
+  "group": "cave",
+  "name": "cave_103",
+  "state": "murim:hua_granite_dark",
+  "u": 65,
+  "v": 162,
+  "y": 231
+ },
+ {
+  "group": "cave",
+  "name": "cave_104",
+  "state": "murim:hua_granite_pale",
+  "u": 65,
+  "v": 165,
+  "y": 231
+ },
+ {
+  "group": "cave",
+  "name": "cave_105",
+  "state": "murim:sto_bed_blue[facing=east,occupied=false,part=foot]",
+  "u": 65,
+  "v": 151,
+  "y": 232
+ },
+ {
+  "group": "cave",
+  "name": "cave_106",
+  "state": "murim:sto_rug_straw[east=true,north=false,south=true,west=true]",
+  "u": 65,
+  "v": 152,
+  "y": 232
+ },
+ {
+  "group": "cave",
+  "name": "cave_107",
+  "state": "murim:sto_rug_straw[east=true,north=true,south=false,west=true]",
+  "u": 65,
+  "v": 153,
+  "y": 232
+ },
+ {
+  "group": "cave",
+  "name": "cave_108",
+  "state": "minecraft:stone",
+  "u": 65,
+  "v": 149,
+  "y": 235
+ },
+ {
+  "group": "cave",
+  "name": "cave_109",
+  "state": "minecraft:stone",
+  "u": 65,
+  "v": 150,
+  "y": 236
+ },
+ {
+  "group": "cave",
+  "name": "cave_110",
+  "state": "minecraft:stone",
+  "u": 66,
+  "v": 151,
+  "y": 230
+ },
+ {
+  "group": "cave",
+  "name": "cave_111",
+  "state": "minecraft:stone",
+  "u": 66,
+  "v": 157,
+  "y": 230
+ },
+ {
+  "group": "cave",
+  "name": "cave_112",
+  "state": "murim:hua_granite_dark",
+  "u": 66,
+  "v": 164,
+  "y": 231
+ },
+ {
+  "group": "cave",
+  "name": "cave_113",
+  "state": "murim:sto_bed_blue[facing=east,occupied=false,part=head]",
+  "u": 66,
+  "v": 151,
+  "y": 232
+ },
+ {
+  "group": "cave",
+  "name": "cave_114",
+  "state": "murim:sto_rug_straw[east=false,north=true,south=false,west=true]",
+  "u": 66,
+  "v": 153,
+  "y": 232
+ },
+ {
+  "group": "cave",
+  "name": "cave_115",
+  "state": "minecraft:air",
+  "u": 66,
+  "v": 154,
+  "y": 232
+ },
+ {
+  "group": "cave",
+  "name": "cave_116",
+  "state": "murim:mossy_hua_granite_slab[type=bottom,waterlogged=false]",
+  "u": 66,
+  "v": 164,
+  "y": 232
+ },
+ {
+  "group": "cave",
+  "name": "cave_117",
+  "state": "minecraft:air",
+  "u": 66,
+  "v": 161,
+  "y": 233
+ },
+ {
+  "group": "cave",
+  "name": "cave_118",
+  "state": "murim:hua_granite_cracked",
+  "u": 66,
+  "v": 150,
+  "y": 234
+ },
+ {
+  "group": "cave",
+  "name": "cave_119",
+  "state": "minecraft:air",
+  "u": 66,
+  "v": 153,
+  "y": 234
+ },
+ {
+  "group": "cave",
+  "name": "cave_120",
+  "state": "minecraft:stone",
+  "u": 66,
+  "v": 149,
+  "y": 235
+ },
+ {
+  "group": "cave",
+  "name": "cave_121",
+  "state": "minecraft:air",
+  "u": 66,
+  "v": 156,
+  "y": 236
+ },
+ {
+  "group": "cave",
+  "name": "cave_122",
+  "state": "minecraft:stone",
+  "u": 66,
+  "v": 157,
+  "y": 239
+ },
+ {
+  "group": "cave",
+  "name": "cave_123",
+  "state": "minecraft:iron_ore",
+  "u": 66,
+  "v": 158,
+  "y": 239
+ },
+ {
+  "group": "cave",
+  "name": "cave_124",
+  "state": "murim:hua_granite_pale",
+  "u": 67,
+  "v": 159,
+  "y": 231
+ },
+ {
+  "group": "cave",
+  "name": "cave_125",
+  "state": "murim:hua_granite_cracked",
+  "u": 67,
+  "v": 154,
+  "y": 232
+ },
+ {
+  "group": "cave",
+  "name": "cave_126",
+  "state": "minecraft:air",
+  "u": 67,
+  "v": 161,
+  "y": 232
+ },
+ {
+  "group": "cave",
+  "name": "cave_127",
+  "state": "murim:mossy_hua_granite_slab[type=bottom,waterlogged=false]",
+  "u": 67,
+  "v": 163,
+  "y": 232
+ },
+ {
+  "group": "cave",
+  "name": "cave_128",
+  "state": "murim:hua_granite_dark",
+  "u": 67,
+  "v": 154,
+  "y": 233
+ },
+ {
+  "group": "cave",
+  "name": "cave_129",
+  "state": "minecraft:air",
+  "u": 67,
+  "v": 158,
+  "y": 233
+ },
+ {
+  "group": "cave",
+  "name": "cave_130",
+  "state": "minecraft:air",
+  "u": 67,
+  "v": 159,
+  "y": 233
+ },
+ {
+  "group": "cave",
+  "name": "cave_131",
+  "state": "murim:hua_granite_cracked",
+  "u": 67,
+  "v": 152,
+  "y": 234
+ },
+ {
+  "group": "cave",
+  "name": "cave_132",
+  "state": "murim:hua_granite_cracked",
+  "u": 67,
+  "v": 153,
+  "y": 234
+ },
+ {
+  "group": "cave",
+  "name": "cave_133",
+  "state": "minecraft:air",
+  "u": 67,
+  "v": 162,
+  "y": 235
+ },
+ {
+  "group": "cave",
+  "name": "cave_134",
+  "state": "minecraft:stone",
+  "u": 68,
+  "v": 157,
+  "y": 230
+ },
+ {
+  "group": "cave",
+  "name": "cave_135",
+  "state": "minecraft:stone",
+  "u": 68,
+  "v": 160,
+  "y": 230
+ },
+ {
+  "group": "cave",
+  "name": "cave_136",
+  "state": "murim:climbing_moss[facing=south,waterlogged=false]",
+  "u": 68,
+  "v": 165,
+  "y": 230
+ },
+ {
+  "group": "cave",
+  "name": "cave_137",
+  "state": "murim:hua_granite_dark",
+  "u": 68,
+  "v": 163,
+  "y": 231
+ },
+ {
+  "group": "cave",
+  "name": "cave_138",
+  "state": "murim:hua_granite_mossy",
+  "u": 68,
+  "v": 164,
+  "y": 231
+ },
+ {
+  "group": "cave",
+  "name": "cave_139",
+  "state": "murim:hua_packed_earth_slab[type=bottom,waterlogged=false]",
+  "u": 68,
+  "v": 163,
+  "y": 232
+ },
+ {
+  "group": "cave",
+  "name": "cave_140",
+  "state": "murim:hua_granite_dark",
+  "u": 68,
+  "v": 153,
+  "y": 233
+ },
+ {
+  "group": "cave",
+  "name": "cave_141",
+  "state": "murim:hua_granite_cracked",
+  "u": 68,
+  "v": 156,
+  "y": 233
+ },
+ {
+  "group": "cave",
+  "name": "cave_142",
+  "state": "minecraft:air",
+  "u": 68,
+  "v": 160,
+  "y": 233
+ },
+ {
+  "group": "cave",
+  "name": "cave_143",
+  "state": "minecraft:air",
+  "u": 68,
+  "v": 159,
+  "y": 234
+ },
+ {
+  "group": "cave",
+  "name": "cave_144",
+  "state": "minecraft:stone",
+  "u": 68,
+  "v": 151,
+  "y": 235
+ },
+ {
+  "group": "cave",
+  "name": "cave_145",
+  "state": "murim:hua_granite_dark",
+  "u": 68,
+  "v": 154,
+  "y": 235
+ },
+ {
+  "group": "cave",
+  "name": "cave_146",
+  "state": "minecraft:air",
+  "u": 68,
+  "v": 160,
+  "y": 235
+ },
+ {
+  "group": "cave",
+  "name": "cave_147",
+  "state": "minecraft:stone",
+  "u": 68,
+  "v": 155,
+  "y": 237
+ },
+ {
+  "group": "cave",
+  "name": "cave_148",
+  "state": "murim:hua_granite_dark",
+  "u": 68,
+  "v": 159,
+  "y": 237
+ },
+ {
+  "group": "cave",
+  "name": "cave_149",
+  "state": "minecraft:stone",
+  "u": 68,
+  "v": 156,
+  "y": 238
+ },
+ {
+  "group": "cave",
+  "name": "cave_150",
+  "state": "minecraft:stone",
+  "u": 68,
+  "v": 157,
+  "y": 238
+ },
+ {
+  "group": "cave",
+  "name": "cave_151",
+  "state": "minecraft:iron_ore",
+  "u": 68,
+  "v": 158,
+  "y": 238
+ },
+ {
+  "group": "cave",
+  "name": "cave_152",
+  "state": "minecraft:stone",
+  "u": 69,
+  "v": 160,
+  "y": 231
+ },
+ {
+  "group": "cave",
+  "name": "cave_153",
+  "state": "murim:hua_granite_dark",
+  "u": 69,
+  "v": 162,
+  "y": 231
+ },
+ {
+  "group": "cave",
+  "name": "cave_154",
+  "state": "minecraft:stone",
+  "u": 69,
+  "v": 156,
+  "y": 232
+ },
+ {
+  "group": "cave",
+  "name": "cave_155",
+  "state": "murim:hua_granite_dark",
+  "u": 69,
+  "v": 157,
+  "y": 232
+ },
+ {
+  "group": "cave",
+  "name": "cave_156",
+  "state": "murim:hua_granite_cracked",
+  "u": 69,
+  "v": 163,
+  "y": 233
+ },
+ {
+  "group": "cave",
+  "name": "cave_157",
+  "state": "minecraft:stone",
+  "u": 69,
+  "v": 155,
+  "y": 234
+ },
+ {
+  "group": "cave",
+  "name": "cave_158",
+  "state": "murim:hua_granite_dark",
+  "u": 69,
+  "v": 162,
+  "y": 234
+ },
+ {
+  "group": "cave",
+  "name": "cave_159",
+  "state": "murim:hua_granite_mossy",
+  "u": 69,
+  "v": 163,
+  "y": 236
+ }
+]

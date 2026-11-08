@@ -126,8 +126,9 @@ class MountHuaShapeTest {
             long planned = Math.round(70 + shape.trailY(i) * scale);
             for (double off : new double[] {-1.5, 0, 1.5}) {
                 long ground = Math.round(70 + shape.height(p[0] + nu * off, p[1] + nv * off) * scale);
-                // Centre line exactly on the plan; the edges may differ by one step (inside of a turn).
-                long tolerance = off == 0 ? 0 : 1;
+                // Centre line on the plan within a block (the per-column step limit of the trail cuts or rounds a column by one);
+                // the edges may differ by one step (inside of a turn).
+                long tolerance = 1;
                 if (Math.abs(ground - planned) > tolerance && bad.size() < 20) {
                     bad.add(String.format("i=%d off=%.1f at (%.0f,%.0f): ground %d planned %d", i, off, p[0], p[1], ground, planned));
                 }

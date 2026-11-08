@@ -64,11 +64,17 @@ public class ShrineBlock extends HorizontalDirectionalBlock {
 
     /** Ambient particles for the block whose cell row is {@code row} (the one holding the emission height). */
     static void ambient(ShrineSpec spec, int row, Level level, BlockPos pos, RandomSource random) {
+        ambient(spec, row, level, pos, random, 0);
+    }
+
+    static void ambient(ShrineSpec spec, int row, Level level, BlockPos pos, RandomSource random, double sink) {
         if (spec.fx() == ShrineSpec.Fx.NONE || (int) Math.floor(spec.fxY() / 16.0 - 1e-6) != row) {
             return;
         }
-        double x = pos.getX() + 0.5, z = pos.getZ() + 0.5, y = pos.getY() + (spec.fxY() - 16 * row) / 16.0;
+        double x = pos.getX() + 0.5, z = pos.getZ() + 0.5, y = pos.getY() + (spec.fxY() - 16 * row) / 16.0 - sink;
         switch (spec.fx()) {
+            case CANDLE_SMALL -> smallOfferingParticle(level, random, x, y, z, true);
+            case INCENSE_SMALL -> smallOfferingParticle(level, random, x, y, z, false);
             case CANDLE -> {
                 if (random.nextInt(3) == 0) {
                     level.addParticle(ParticleTypes.SMALL_FLAME, x, y - 0.03, z, 0, 0, 0);
@@ -87,6 +93,17 @@ public class ShrineBlock extends HorizontalDirectionalBlock {
                 }
             }
             default -> { }
+        }
+    }
+
+    /** Rare, faint particles for the tabletop offerings; called only by client animateTick. */
+    static void smallOfferingParticle(Level level, RandomSource random, double x, double y, double z, boolean candle) {
+        if (!level.isClientSide) {
+            return;
+        }
+        if (random.nextInt(candle ? 12 : 24) == 0) {
+            level.addParticle(candle ? ParticleTypes.SMALL_FLAME : ParticleTypes.WHITE_SMOKE,
+                    x, y, z, 0, candle ? 0 : 0.005D, 0);
         }
     }
 

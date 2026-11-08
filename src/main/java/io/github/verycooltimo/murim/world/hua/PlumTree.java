@@ -29,7 +29,7 @@ import net.minecraft.world.level.block.state.BlockState;
  * {@link Variant#CLIFF} (a long trunk curving out over the drop, airy flatter clusters, red) and
  * {@link Variant#YOUNG} (6-7 high). The shape is built in memory first, then written: wood wins over
  * blossom, only air and soft plants are replaced. Deterministic per seed, so worldgen is stable.
- * Used by the Mount Hua generator, the plum saplings and {@code /murim tree}.
+ * Used by the Mount Hua generator, the plum saplings and {@code /murim dev tree}.
  */
 public final class PlumTree {
 

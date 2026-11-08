@@ -72,7 +72,7 @@
   "tier": "advanced",
   "requires": [
     {
-      "technique": "murim:seven_plum_whirlwind",
+      "technique": "murim:seven_plum_basic",
       "star": 5
     }
   ]

@@ -35,6 +35,8 @@ public class HallGrandDoorBlockEntity extends BlockEntity {
     private float prevProgress;
     private float target = -1.0F;
     private int settle;
+    /** Client: ticks of the knock shake left (a block event from the server, {@code HallGrandDoorBlock#EVENT_KNOCK}). */
+    private int knock;
 
     public HallGrandDoorBlockEntity(BlockPos pos, BlockState state) {
         super(HallGrandDoors.ENTITY.get(), pos, state);
@@ -86,6 +88,9 @@ public class HallGrandDoorBlockEntity extends BlockEntity {
             be.target = be.progress = be.prevProgress = stateTarget;
         }
         be.prevProgress = be.progress;
+        if (be.knock > 0) {
+            be.knock--;
+        }
         if (be.progress != be.target) {
             float step = 1.0F / HallGrandDoorBlock.SWING_TICKS;
             be.progress = be.target > be.progress ? Math.min(be.target, be.progress + step) : Math.max(be.target, be.progress - step);
@@ -102,6 +107,12 @@ public class HallGrandDoorBlockEntity extends BlockEntity {
 
     @Override
     public boolean triggerEvent(int id, int param) {
+        if (id == HallGrandDoorBlock.EVENT_KNOCK) {
+            if (level != null && level.isClientSide) {
+                knock = 12;
+            }
+            return true;
+        }
         if (id == HallGrandDoorBlock.EVENT_SWING) {
             if (level != null && level.isClientSide) {
                 if (target < 0.0F) {
@@ -122,7 +133,9 @@ public class HallGrandDoorBlockEntity extends BlockEntity {
         if (target < 0.0F) {
             t = getBlockState().getValue(HallGrandDoorBlock.OPEN) ? 1.0F : 0.0F;
         }
-        return t * t * (3.0F - 2.0F * t);
+        float eased = t * t * (3.0F - 2.0F * t);
+        // A knock on the closed gate: the leaves shudder a couple of degrees and settle.
+        return knock > 0 ? eased + Math.abs(Mth.sin((knock - partialTick) * 1.4F)) * 0.04F * knock / 12.0F : eased;
     }
 
     @Override

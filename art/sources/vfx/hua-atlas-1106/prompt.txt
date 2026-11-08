@@ -1,0 +1,49 @@
+You have the built-in image generation tool. Generate THREE images, one per prompt below, each at size 1536x1024 and quality high. Use each prompt text verbatim. Save the results in the current directory as sheet_a.png, sheet_b.png and sheet_c.png (copy them from wherever the tool stores them). The four attached images (ref1–ref4) are manhwa panels: use them ONLY as a reference for the character of the brush marks (wide tapered strokes, torn dry tails, wind curls at a foot, the look of a petal). Do not copy characters, text or backgrounds from them. When done, print the three file paths and nothing else. Do not edit any other files.
+
+=== PROMPT A (sheet_a.png) ===
+INTENDED USE: sprite sheet of hand-painted sword-slash mask textures for a 3D action game. Each mark will be cut out and used as an opacity mask, so brightness means opacity.
+CANVAS: horizontal 3:2. Pure flat black #000000 background, completely empty, no texture, no vignette, no frame.
+LAYOUT: strict invisible grid, 2 columns by 3 rows, six equal cells. One mark per cell, centred, running left to right, about 85% of the cell width, with a clear black margin on every side. Nothing touches or crosses a cell border. No grid lines.
+MARKS (one per cell, all different):
+1. top-left: a heavy wide crescent slash bowed upward, thickest in the left-middle third, razor-sharp leading tip on the right, torn dry-brush tail on the left that breaks into separate streaks.
+2. top-right: a long shallow arc, slimmer, with a hooked sharp tip and two detached slivers flying off the tail.
+3. middle-left: a nearly straight thrust stroke, a long wedge that swells then narrows to a needle point, streaky dry bristle texture inside.
+4. middle-right: a broad fan-shaped sweep, wide like a wing, with a clean curved leading edge and a ragged feathered trailing edge.
+5. bottom-left: an S-curved double slash, two overlapping crescents of different width.
+6. bottom-right: a short thick chop mark, stubby and powerful, with splintered ends.
+STYLE AND MEDIUM: Korean action manhwa sword-slash effect drawn as flat cel shapes with a dry sumi-e ink brush. Hard crisp edges. Exactly three flat tones and nothing else: pure white #FFFFFF for a core band along the leading inner edge, light grey #B9B9B9 for the body, dark grey #5C5C5C for an underside band along the outer edge and inside the torn tail. The three tones are separate flat shapes with DIFFERENT outlines, not concentric outlines of one ribbon. Width changes at least three times along every mark.
+MOOD: fast, sharp, weighty, hand-made.
+FINISH: flat fills with visible dry-brush bristle gaps where the stroke breaks up; 4k crisp game VFX texture sheet.
+AVOID: glow, bloom, soft airbrush gradients, blur, lens flare, sparkles, smoke, any colour, 3D render look, perfectly smooth vector curves, ribbons of uniform width, outlines drawn around shapes, drop shadows, characters, weapons, text, numbers, labels.
+CONSTRAINTS: original design, no logos, no trademarks, no watermark, no text.
+
+=== PROMPT B (sheet_b.png) ===
+INTENDED USE: sprite sheet of hand-painted wind and motion-trail mask textures for a 3D action game. Each mark will be cut out and used as an opacity mask, so brightness means opacity.
+CANVAS: horizontal 3:2. Pure flat black #000000 background, completely empty, no texture, no vignette, no frame.
+LAYOUT: strict invisible grid, 3 columns by 2 rows, six equal cells. One mark per cell, centred, filling about 80% of the cell, with a clear black margin on every side. Nothing touches or crosses a cell border. No grid lines.
+MARKS (one per cell, all different):
+1. top-left: a foot-stomp wind swirl seen from above: three curled wisps spiralling around an EMPTY black centre, like wind thrown out from under a stepping foot.
+2. top-middle: a single claw-shaped ground wind curl: a thick comma that hooks round and ends in three sharp points.
+3. top-right: an open ring whoosh: a flattened ellipse ring about 300 degrees around with a gap, thick on one side and thin and broken on the other, empty centre.
+4. bottom-left: a dash smear: a long horizontal band made of many parallel dry streaks, dense at the right end and breaking into loose hairs at the left end.
+5. bottom-middle: a wide S-shaped ribbon gust with forked wispy ends, like a scarf of wind.
+6. bottom-right: an impact fan: a spiky wedge burst spreading from one corner point, with long and short pointed rays of uneven length.
+STYLE AND MEDIUM: Korean action manhwa wind effect drawn as flat cel shapes with a half-dry sumi-e ink brush. Hard crisp edges, many dry-brush gaps. Exactly two flat tones: pure white #FFFFFF and light grey #A8A8A8 in separate flat shapes; the grey sits in the thinner trailing parts. Width changes constantly along every mark.
+MOOD: light, quick, airy, hand-made.
+FINISH: flat fills, visible bristle gaps, 4k crisp game VFX texture sheet.
+AVOID: glow, bloom, soft airbrush gradients, blur, fog, realistic smoke, any colour, 3D render look, perfectly smooth vector curves, uniform-width lines, closed perfect circles, outlines drawn around shapes, drop shadows, feet, characters, text, numbers, labels.
+CONSTRAINTS: original design, no logos, no trademarks, no watermark, no text.
+
+=== PROMPT C (sheet_c.png) ===
+INTENDED USE: sprite sheet of hand-painted plum-blossom petal mask textures for a 3D action game. Each element will be cut out and tinted in the engine, so it is painted in greys only.
+CANVAS: horizontal 3:2. Pure flat black #000000 background, completely empty, no texture, no vignette, no frame.
+LAYOUT: strict invisible grid, 4 columns by 3 rows, twelve equal cells. One element per cell, centred, filling about 70% of the cell, with a clear black margin on every side. Nothing touches or crosses a cell border. No grid lines.
+ELEMENTS:
+Cells 1 to 8 (top two rows): eight single plum-blossom petals, each a different pose: flat face-on with a small notch at the tip; three-quarter turned; edge-on and thin; curled like a shallow cup; folded in half; twisted with the back side showing; long and windblown; small and round. Petal shape is a plump teardrop with a notched tip, never a leaf.
+Cells 9 and 10: two simple five-petal plum blossoms, one fully open seen from the front, one half open seen from the side, with a tiny cluster of dots at the centre.
+Cells 11 and 12: two falling rain-lance streaks: long tapered needle strokes standing vertically, heavy pointed head at the bottom, dry broken tail fading upward.
+STYLE AND MEDIUM: Korean action manhwa petals painted as flat cel shapes with an ink brush. Hard crisp edges. Exactly three flat tones: pure white #FFFFFF for a small bright core near the petal base and along one lit edge, light grey #C4C4C4 for the petal body, dark grey #5A5A5A for the underside and one shadow rim. On the back-side poses the dark tone covers most of the petal. Tones are separate flat shapes.
+MOOD: delicate but graphic, hand-made.
+FINISH: flat fills with a few dry-brush gaps; 4k crisp game VFX texture sheet.
+AVOID: glow, bloom, soft airbrush gradients, blur, sparkles, any colour, pink, photorealism, 3D render look, veins drawn as thin lines, outlines drawn around shapes, drop shadows, branches, leaves, text, numbers, labels.
+CONSTRAINTS: original design, no logos, no trademarks, no watermark, no text.

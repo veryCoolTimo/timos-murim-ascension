@@ -39,12 +39,18 @@ class SectMembersTest {
     }
 
     @Test
-    @DisplayName("Совет: глава и четверо старейшин в главном зале в середине дня, места разные, лицом друг к другу")
+    @DisplayName("Совет: глава и трое старейшин (четвёртый на посту) в главном зале в середине дня, места разные, лицом друг к другу")
     void council() {
         long noon = SectSchedule.COUNCIL_FROM + 300;
+        // the council meets on day 0, 2 and 4 of the week (events.json); day 1 is an ordinary day
+        long other = SectSchedule.DAY;
         Set<String> seats = new HashSet<>();
         for (String key : SectSchedule.COUNCIL) {
             Task t = SectSchedule.task(m(key), noon);
+            if (SectCouncil.stays(key)) {
+                assertTrue(t.kind() != Kind.COUNCIL, key + " keeps his post");
+                continue;
+            }
             assertEquals(Kind.COUNCIL, t.kind(), key);
             assertEquals("main_hall", t.zone());
             insideZone(t, key);
@@ -52,21 +58,25 @@ class SectMembersTest {
         }
         // Ряды старейшин смотрят друг на друга, глава — к входу.
         assertEquals(-SectSchedule.task(m("tae_gyun"), noon).faceU(), SectSchedule.task(m("tae_rok"), noon).faceU(), 1e-9);
-        // Вне совета — каждый за своим делом.
-        assertEquals(Kind.RECEIVE, SectSchedule.task(m("tae_hwi"), 4000).kind());
-        assertEquals(Kind.COUNT, SectSchedule.task(m("tae_gyun"), 4000).kind());
-        assertEquals(Kind.READ, SectSchedule.task(m("tae_rok"), 5000).kind());
-        assertEquals(Kind.LECTURE, SectSchedule.task(m("tae_rok"), 3000).kind());
-        assertEquals(Kind.BREW, SectSchedule.task(m("gyeong_cho"), 3000).kind());
-        assertEquals(Kind.GRIND, SectSchedule.task(m("gyeong_cho"), 5000).kind());
-        assertEquals(Kind.HEAL_POST, SectSchedule.task(m("gyeong_cho"), 8000).kind());
-        assertEquals(Kind.REVERE, SectSchedule.task(m("tae_hwi"), 12000).kind());
+        // Вне совета (в обычный день) — каждый за своим делом.
+        assertEquals(Kind.COUNCIL, SectSchedule.task(m("tae_rok"), 5000).kind(), "the scripture elder has set out for the council");
+        assertEquals(Kind.WATCH, SectSchedule.task(m("tae_hwi"), other + 4000).kind(), "the head receives on the steps");
+        assertEquals(Kind.COUNT, SectSchedule.task(m("tae_gyun"), other + 4000).kind());
+        assertEquals(Kind.COUNT, SectSchedule.task(m("tae_gyun"), other + 2600).kind(), "the financier no longer walks to the head every morning");
+        assertEquals(Kind.LECTURE, SectSchedule.task(m("tae_rok"), other + 5199).kind());
+        assertEquals(Kind.READ, SectSchedule.task(m("tae_rok"), other + 5200).kind());
+        assertEquals(Kind.READ, SectSchedule.task(m("tae_rok"), other + 5400).kind());
+        assertEquals(Kind.LECTURE, SectSchedule.task(m("tae_rok"), other + 3000).kind());
+        assertEquals(Kind.BREW, SectSchedule.task(m("gyeong_cho"), other + 3000).kind());
+        assertEquals(Kind.GRIND, SectSchedule.task(m("gyeong_cho"), other + 5000).kind());
+        assertEquals(Kind.HEAL_POST, SectSchedule.task(m("gyeong_cho"), other + 8000).kind());
+        assertEquals(Kind.REVERE, SectSchedule.task(m("tae_hwi"), other + 12000).kind());
     }
 
     @Test
-    @DisplayName("Доклады главе: наставник после строя, Гён Так в завтрак, Тэ Гюн с книгой — в шаге перед главой, лицом к нему")
+    @DisplayName("Доклады главе: наставник после строя, Гён Так в завтрак — в шаге перед главой, лицом к нему (Тэ Гюн больше не ходит каждое утро)")
     void reports() {
-        for (Object[] r : new Object[][] {{"gyeong_pil", 800L}, {"gyeong_tak", 1500L}, {"tae_gyun", 2600L}}) {
+        for (Object[] r : new Object[][] {{"gyeong_pil", 800L}, {"gyeong_tak", 1500L}}) {
             long time = (Long) r[1];
             Task rep = SectSchedule.task(m((String) r[0]), time);
             Task leader = SectSchedule.task(m("tae_hwi"), time);
@@ -98,8 +108,8 @@ class SectMembersTest {
                 served.add(n);
                 long t = day * 24000L;
                 // Днём (занятия) на посту дневной, ночью — ночной, на том же месте.
-                assertEquals(SectSchedule.post(new SectRota.Duty(post, false)), SectSchedule.task(d, t + 4000L));
-                assertEquals(SectSchedule.post(new SectRota.Duty(post, true)), SectSchedule.task(n, t + 15000L));
+                assertEquals(SectSchedule.round(new SectRota.Duty(post, false), t + 4000L), SectSchedule.task(d, t + 4000L));
+                assertEquals(SectSchedule.round(new SectRota.Duty(post, true), t + 15000L), SectSchedule.task(n, t + 15000L));
                 assertEquals(Kind.SLEEP, SectSchedule.task(d, t + 15000L).kind(), "дневной ночью спит");
                 assertEquals(n, SectRota.relief(new SectRota.Duty(post, false), t + 13100L));
                 assertEquals(d, SectRota.relieved(new SectRota.Duty(post, true), t + 13100L));
@@ -178,6 +188,20 @@ class SectMembersTest {
         assertEquals(3, resumed.log().streak());
         assertEquals(SectAttendance.DAY_BONUS + 1, resumed.bonus());
         assertEquals(0, SectAttendance.roll(resumed.log(), 31).bonus());
+    }
+
+    @Test
+    @DisplayName("Полный день: строй и занятие, трапеза не нужна")
+    void fullDayNeedsNoMeal() {
+        assertFalse(SectAttendance.ROLL_CALLED.contains(Activity.MEAL));
+        Log l = mark(Log.NONE, 5, Activity.FORMATION, true);
+        l = mark(l, 5, Activity.LESSON, true);
+        l = mark(l, 5, Activity.FORMATION, false);
+        assertFalse(l.today().full(), "lesson still to do");
+        l = mark(l, 5, Activity.LESSON, false);
+        assertFalse(l.today().did(Activity.MEAL));
+        assertTrue(l.today().full(), "no meal, yet the day is full");
+        assertFalse(SectAttendance.required(l.today(), Activity.MEAL, 6000L));
     }
 
     @Test

@@ -1,0 +1,40 @@
+{
+  "variants": {
+    "kind=paper,open=false": {
+      "model": "murim:block/clue_paper"
+    },
+    "kind=paper,open=true": {
+      "model": "murim:block/clue_paper"
+    },
+    "kind=carved,open=false": {
+      "model": "murim:block/clue_carved"
+    },
+    "kind=carved,open=true": {
+      "model": "murim:block/clue_carved"
+    },
+    "kind=lid,open=false": {
+      "model": "murim:block/clue_lid"
+    },
+    "kind=lid,open=true": {
+      "model": "murim:block/clue_lid"
+    },
+    "kind=box,open=false": {
+      "model": "murim:block/clue_box"
+    },
+    "kind=box,open=true": {
+      "model": "murim:block/clue_box"
+    },
+    "kind=mark,open=false": {
+      "model": "murim:block/clue_mark"
+    },
+    "kind=mark,open=true": {
+      "model": "murim:block/clue_mark"
+    },
+    "kind=target,open=false": {
+      "model": "murim:block/clue_target"
+    },
+    "kind=target,open=true": {
+      "model": "murim:block/clue_target"
+    }
+  }
+}

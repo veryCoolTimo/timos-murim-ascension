@@ -91,17 +91,14 @@ public final class SeedLogic {
         SAME,
         /** До семени — другой метод заменяет прежний, практика начинается заново. */
         REPLACED_BEFORE_SEED,
-        /** После семени, та же природа — часть накопленной ци теряется. */
+        /** После семени, та же природа — ци сохраняется (автор 21.10). */
         SAME_NATURE,
-        /** После семени, другая природа — накопленное обнуляется (Myst гл. 126). */
+        /** После семени, другая природа — ци сохраняется (автор 21.10). */
         OTHER_NATURE
     }
 
     public record LearnResult(Change change, CultivationState state, DantianProfile profile) {
     }
-
-    /** Доля запаса, которая остаётся при смене метода той же природы. */
-    static final double SAME_NATURE_KEEP = 0.7D;
 
     /**
      * Изучение метода со свитка.
@@ -121,14 +118,10 @@ public final class SeedLogic {
                     state.withMethod(method.id()).withBeats(0), profile);
         }
         boolean sameNature = current != null && current.nature().equals(method.nature());
-        if (sameNature) {
-            DantianProfile kept = profile.withPool(profile.pool() * SAME_NATURE_KEEP)
-                    .withTags(profile.nature(), method.id().toString());
-            return new LearnResult(Change.SAME_NATURE, state.withMethod(method.id()), kept);
-        }
-        DantianProfile reset = profile.withPool(0.0D).withCirculating(0.0D)
-                .withTags(method.nature(), method.id().toString());
-        return new LearnResult(Change.OTHER_NATURE, state.withMethod(method.id()), reset);
+        // Author 21.10: selecting another breathing route never spends stored or circulating qi.
+        return new LearnResult(sameNature ? Change.SAME_NATURE : Change.OTHER_NATURE,
+                state.withMethod(method.id()), method.purity() > profile.purity()
+                        ? profile.withAxes(profile.capacity(), method.purity(), profile.meridians()) : profile);
     }
 
     private SeedLogic() {

@@ -27,6 +27,7 @@ public class SeatEntity extends Entity {
 
     /** Hip height of a sitter above the entity's seat surface reference (the cushion calibration). */
     private static final double CUSHION_TOP = 0.225D;
+    private BlockPos support;
 
     public SeatEntity(EntityType<? extends SeatEntity> type, Level level) {
         super(type, level);
@@ -35,21 +36,43 @@ public class SeatEntity extends Entity {
 
     /** Seats {@code player} on the seat block at {@code pos}; false when it is taken, not a seat, or the player rides already. */
     public static boolean sit(Level level, BlockPos pos, Player player) {
+        return !player.isShiftKeyDown() && sit(level, pos, (LivingEntity) player);
+    }
+
+    /** Shared server seat for players and sect NPCs; riding pins the sitter against collision pushes. */
+    public static boolean sit(Level level, BlockPos pos, LivingEntity player) {
+        if (level.isClientSide) return false;
         BlockState state = level.getBlockState(pos);
         if (!(state.getBlock() instanceof SeatBlock seat) || seat.seatTop(state) <= 0.0D) {
             return false;
         }
-        if (player.isPassenger() || player.isShiftKeyDown()) {
+        if (player.isPassenger()) {
             return false;
         }
-        List<SeatEntity> seats = level.getEntitiesOfClass(SeatEntity.class, new AABB(pos).inflate(0.2D));
+        List<SeatEntity> seats = level.getEntitiesOfClass(SeatEntity.class, new AABB(pos).inflate(0.2D, 2.0D, 0.2D), e -> pos.equals(e.support));
         if (!seats.isEmpty()) {
+            return false;
+        }
+        // A sect person already sits there (his routine put him on it): the player never sits on his lap (holes review npc-6).
+        if (!level.getEntitiesOfClass(io.github.verycooltimo.murim.entity.SectDisciple.class, new AABB(pos).inflate(2.5D, 1.5D, 2.5D),
+                d -> d != player && d.seatAnchor() != null && Math.abs(d.seatAnchor().x - (pos.getX() + 0.5D)) < 0.6D
+                        && Math.abs(d.seatAnchor().z - (pos.getZ() + 0.5D)) < 0.6D && Math.abs(d.seatAnchor().y - pos.getY()) < 1.5D).isEmpty()) {
             return false;
         }
         SeatEntity entity = new SeatEntity(HallFurniture.SEAT.get(), level);
         entity.setPos(pos.getX() + 0.5D, pos.getY() + seat.seatTop(state) - CUSHION_TOP, pos.getZ() + 0.5D);
+        entity.support = pos.immutable();
         level.addFreshEntity(entity);
-        return player.startRiding(entity);
+        boolean mounted = player.startRiding(entity);
+        if (!mounted) entity.discard();
+        else if (player instanceof io.github.verycooltimo.murim.entity.SectDisciple) {
+            // NPC chair poses are calibrated with feet at the seat top, unlike the vanilla player riding pose.
+            entity.positionRider(player);
+            double correction = pos.getY() + seat.seatTop(state) - player.getY();
+            entity.setPos(entity.getX(), entity.getY() + correction, entity.getZ());
+            entity.positionRider(player);
+        }
+        return mounted;
     }
 
     @Override
@@ -57,7 +80,7 @@ public class SeatEntity extends Entity {
     }
 
     private BlockState seatState() {
-        return level().getBlockState(BlockPos.containing(getX(), getY() + 0.4D, getZ()));
+        return level().getBlockState(support != null ? support : BlockPos.containing(getX(), getY() + 0.4D, getZ()));
     }
 
     @Override
@@ -74,7 +97,7 @@ public class SeatEntity extends Entity {
 
     @Override
     public Vec3 getDismountLocationForPassenger(LivingEntity passenger) {
-        BlockPos pos = BlockPos.containing(getX(), getY() + 0.4D, getZ());
+        BlockPos pos = support != null ? support : BlockPos.containing(getX(), getY() + 0.4D, getZ());
         BlockState state = level().getBlockState(pos);
         Vec3 centre = new Vec3(pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D);
         if (state.getBlock() instanceof SeatBlock seat && seat.seatTop(state) > 0.3D) {

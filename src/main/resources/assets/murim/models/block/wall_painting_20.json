@@ -1,0 +1,40 @@
+{
+ "textures": {
+  "board": "murim:block/wall_painting_landscape",
+  "particle": "murim:block/wall_painting_landscape"
+ },
+ "elements": [
+  {
+   "from": [
+    0,
+    0,
+    14
+   ],
+   "to": [
+    16,
+    16,
+    16
+   ],
+   "faces": {
+    "north": {
+     "texture": "#board",
+     "uv": [
+      8,
+      8,
+      12,
+      16
+     ]
+    },
+    "down": {
+     "texture": "#board",
+     "uv": [
+      0,
+      0,
+      16,
+      2
+     ]
+    }
+   }
+  }
+ ]
+}

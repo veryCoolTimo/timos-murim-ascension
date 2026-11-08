@@ -524,14 +524,49 @@
     "subtitle": "subtitles.murim.sect_bell",
     "sounds": [
       {
-        "name": "murim:sect_bell_a",
-        "attenuation_distance": 40,
-        "volume": 0.55
-      },
-      {
         "name": "murim:sect_bell_b",
         "attenuation_distance": 40,
         "volume": 0.55
+      }
+    ]
+  },
+  "bt_breath": {
+    "subtitle": "subtitles.murim.bt_breath",
+    "sounds": [
+      {
+        "name": "murim:bt_breath_a",
+        "attenuation_distance": 12
+      }
+    ]
+  },
+  "bt_hum": {
+    "subtitle": "subtitles.murim.bt_hum",
+    "sounds": [
+      {
+        "name": "murim:bt_hum_a",
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "bt_crack": {
+    "subtitle": "subtitles.murim.bt_crack",
+    "sounds": [
+      {
+        "name": "murim:bt_crack_a",
+        "attenuation_distance": 24
+      },
+      {
+        "name": "murim:bt_crack_b",
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "bt_tail": {
+    "subtitle": "subtitles.murim.bt_tail",
+    "sounds": [
+      {
+        "name": "murim:bt_tail_a",
+        "attenuation_distance": 64
       }
     ]
   }

@@ -163,6 +163,24 @@ dependencies {
         exclude group: "io.netty"
     }
 
+    // PAL внутри нашего jar (jar-in-jar), ADR 0005 вариант B, решение автора 19.10.
+    // API: ModDevGradle 2.0.143 — конфигурацию `jarJar` создаёт сам плагин
+    // (net.neoforged.moddevgradle.internal.jarjar.JarJarPlugin), в metadata.json уходит
+    // strictly-диапазон, а во вложенный jar кладётся версия, которую выбрал Gradle.
+    // Транзитивные зависимости не нужны: jar PAL уже содержит классы PlayerAnimationLibCore
+    // и сам вкладывает javassist и mochafloats в META-INF/jars. Dev-classpath выше не тронут.
+    // Версии PAL имеют вид «<semver>+mc.<версия игры>», и один semver выходит для нескольких версий
+    // игры. Gradle считает «1.1.5+mc.1.21.1» МЕНЬШЕ «1.1.5», поэтому диапазон «[1.1.5,2.0)» не
+    // принимает собственный prefer и Gradle берёт наивысшую версию в диапазоне — PAL для другой
+    // версии игры (проверено: 1.2.8+mc.26.3). Нижняя граница — ровно pal_version.
+    jarJar("com.zigythebird.playeranim:PlayerAnimationLibNeo") {
+        version {
+            strictly "[${pal_version},2.0)"
+            prefer pal_version
+        }
+        transitive = false
+    }
+
     // JUnit 5 для unit-тестов чистой логики (см. neoForge.unitTest выше).
     testImplementation platform("org.junit:junit-bom:5.11.4")
     testImplementation "org.junit.jupiter:junit-jupiter"
@@ -203,6 +221,8 @@ var generateModMetadata = tasks.register("generateModMetadata", ProcessResources
             mod_name               : mod_name,
             mod_license            : mod_license,
             mod_version            : mod_version,
+            // PAL (зависимость в neoforge.mods.toml): нижняя граница — semver из pal_version без «+mc.…».
+            pal_version_range      : "[${pal_version.substring(0, pal_version.indexOf('+'))},)".toString(),
     ]
     inputs.properties replaceProperties
     expand replaceProperties
@@ -245,3 +265,12 @@ tasks.named('test', Test).configure {
     useJUnitPlatform()
 }
 
+
+// Only the release archive is filtered; development runs keep the complete class directories.
+tasks.named('jar', Jar).configure {
+    includeEmptyDirs = false
+    def releaseList = layout.projectDirectory.file('tools/ci/release-excludes.txt')
+    inputs.file(releaseList)
+    def patterns = io.github.verycooltimo.release.ReleasePatterns.read(releaseList.asFile.toPath())
+    exclude { details -> io.github.verycooltimo.release.ReleasePatterns.matches(patterns, details.path) }
+}

@@ -39,8 +39,20 @@ public final class ClientTechniqueHandler {
 
     @SubscribeEvent
     static void onClientTick(ClientTickEvent.Post event) {
+        boolean wheelClicked = TechniqueWheel.consumeClicks();
+        boolean pressed = false;
+        // API: /tmp/mr-ref-1121/minecraft-src/net/minecraft/client/KeyMapping.java#consumeClick,isDown
+        while (ModKeyMappings.TECHNIQUE.consumeClick()) {
+            pressed = true;
+        }
+        // Resolve the chord before either release check can consume a sub-tick tap.
+        boolean chord = pressed && (wheelClicked || ModKeyMappings.WHEEL.isDown());
+        if (chord) TechniqueWheel.cancel();
+        TechniqueWheel.tick();
+
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.player == null || minecraft.level == null) {
+            bambooHeld = null;
             return;
         }
 
@@ -49,19 +61,18 @@ public final class ClientTechniqueHandler {
         // из которых сервер всё равно примет первый — остальные упрутся в кулдаун.
         TechniqueWheel.finishSelectionIfReleased();
         tickPending();
+        if (bambooHeld != null && (!ModKeyMappings.TECHNIQUE.isDown() || minecraft.screen != null)) {
+            PacketDistributor.sendToServer(new StartTechniquePayload(bambooHeld, 1, true));
+            bambooHeld = null;
+        }
         tickDodge(minecraft);
 
-        boolean pressed = false;
-        while (ModKeyMappings.TECHNIQUE.consumeClick()) {
-            pressed = true;
-        }
-        if (pressed && ModKeyMappings.WHEEL.isDown()) {
+        if (chord) {
             // V+R — закреплённый боевой шаг (или форма слота шагов), меч остаётся активным.
             java.util.Optional<net.minecraft.resources.ResourceLocation> step = pinnedStep.isPresent() ? pinnedStep
                     : footworkStyle().flatMap(st -> ClientLoadoutState.slots().stream().flatMap(java.util.Optional::stream)
                             .filter(st.forms()::contains).findFirst());
             if (step.isPresent()) {
-                TechniqueWheel.cancel();
                 PacketDistributor.sendToServer(new io.github.verycooltimo.murim.network.TraversePayloads.Request(
                         step.get(), footworkInput(minecraft)));
                 CombatMode.engage();
@@ -70,14 +81,16 @@ public final class ClientTechniqueHandler {
         }
         if (pressed) {
             // Применяется техника выбранного слота (кольцо выбора, автор 01.10). Пустой слот —
-            // подсказка, где разложить техники, а не тишина.
+            // короткий звук отказа; пустой слот виден в раскладке.
             java.util.Optional<net.minecraft.resources.ResourceLocation> active = ClientLoadoutState.activeTechnique();
             io.github.verycooltimo.murim.MurimMod.LOGGER.info("Кольцо (клиент): R применяет {} из слота {}", active.orElse(null),
                     ClientLoadoutState.active());
-            if (active.isPresent() && ClientCooldowns.remaining(active.get()) > 0 && minecraft.player != null) {
-                // Нажал во время перезарядки — сказать сколько ждать, а не молчать.
-                minecraft.player.displayClientMessage(net.minecraft.network.chat.Component.translatable("murim.technique.cooldown",
-                        String.format(java.util.Locale.ROOT, "%.1f", ClientCooldowns.remaining(active.get()) / 20.0F)), true);
+            // A Seven Stars link/opening can override a Hua sword cooldown on the server.
+            // Always send that intent; the client has no authority to predict the timing window.
+            if (active.isPresent() && !io.github.verycooltimo.murim.technique.SevenStarsRules.huaSword(active.get())
+                    && ClientCooldowns.remaining(active.get()) > 0 && minecraft.player != null) {
+                // The wheel shows the cooldown; a short sound acknowledges the refused press.
+                Sfx.ui(() -> net.minecraft.sounds.SoundEvents.UI_BUTTON_CLICK.value(), 0.25F, 0.7F);
             } else if (active.isPresent()) {
                 // Техника шага — семейство подтехник: вместе с R уходит контекст ввода,
                 // подтехнику выбирает сервер (docs/design/21-footwork-families.md).
@@ -86,12 +99,13 @@ public final class ClientTechniqueHandler {
                     PacketDistributor.sendToServer(new io.github.verycooltimo.murim.network.TraversePayloads.Request(
                             active.get(), footworkInput(minecraft)));
                 } else {
-                    PacketDistributor.sendToServer(new StartTechniquePayload(active.get()));
+                    int side = minecraft.options.keyLeft.isDown() ? -1 : 1;
+                    PacketDistributor.sendToServer(new StartTechniquePayload(active.get(), side, false));
+                    if (io.github.verycooltimo.murim.technique.BambooRules.form(active.get()) == 4) bambooHeld = active.get();
                 }
                 CombatMode.engage();
             } else if (Minecraft.getInstance().player != null) {
-                Minecraft.getInstance().player.displayClientMessage(net.minecraft.network.chat.Component.translatable(
-                        "murim.loadout.empty", ModKeyMappings.LOADOUT.getTranslatedKeyMessage()), true);
+                Sfx.ui(() -> net.minecraft.sounds.SoundEvents.UI_BUTTON_CLICK.value(), 0.25F, 0.7F);
             }
         }
     }
@@ -101,13 +115,13 @@ public final class ClientTechniqueHandler {
     private static final long[] TAP_UP = {-100, -100, -100};
     private static final boolean[] TAP_WAS = new boolean[3];
     private static long clientTicks;
+    private static net.minecraft.resources.ResourceLocation bambooHeld;
     /** Окно между нажатиями и предельная длина первого нажатия (codex 03.10: 0,22 с и 0,15 с). */
     private static final int TAP_GAP = 5;
     private static final int TAP_HOLD = 3;
     private static int sprintTicks;
     private static boolean runSent;
-    private static int stillSneakTicks;
-    private static boolean shadowSent;
+    private static java.util.Optional<net.minecraft.resources.ResourceLocation> passiveForm = java.util.Optional.empty();
     /** Закреплённый боевой шаг (выбран на кольце, слот не переключается): V+R. */
     private static java.util.Optional<net.minecraft.resources.ResourceLocation> pinnedStep = java.util.Optional.empty();
 
@@ -121,7 +135,7 @@ public final class ClientTechniqueHandler {
 
     /**
      * Шаги без кольца (автор 03.10: «удобно и используемо», разбор codex):
-     * двойное A/D/S — уклонение; спринт 0,5 с — бег стиля; присед на месте 0,7 с — тень.
+     * двойное A/D/S — выбранное уклонение; спринт 0,5 с — выбранный бег.
      * Всё — стиля шагов из раскладки, даже когда активен меч.
      */
     private static void tickDodge(Minecraft minecraft) {
@@ -130,9 +144,16 @@ public final class ClientTechniqueHandler {
         boolean blocked = minecraft.player == null || minecraft.screen != null || TechniqueWheel.open()
                 || ClientMeditationState.state().active() || minecraft.player.isInWater() || minecraft.player.onClimbable()
                 || minecraft.player.isFallFlying()
-                // Body training: a held crouch is a horse stance, the trail sprint is without qi (05.10).
+                // Sect drills: the trail sprint is without qi (05.10); a carried stone is no run.
                 || io.github.verycooltimo.murim.client.training.ClientTraining.suppressFootwork();
         java.util.Optional<io.github.verycooltimo.murim.technique.Styles.Style> style = footworkStyle();
+        var selected = ClientLoadoutState.slots().stream().flatMap(java.util.Optional::stream)
+                .filter(id -> style.isPresent() && style.get().forms().contains(id)).findFirst();
+        if (!selected.equals(passiveForm)) {
+            passiveForm = selected;
+            sprintTicks = 0;
+            runSent = false;
+        }
         boolean[] now = {o.keyLeft.isDown(), o.keyRight.isDown(), o.keyDown.isDown()};
         for (int i = 0; i < 3; i++) {
             boolean down = now[i] && !TAP_WAS[i];
@@ -149,7 +170,7 @@ public final class ClientTechniqueHandler {
             if (!blocked && !minecraft.player.isShiftKeyDown() && clientTicks - TAP_UP[i] <= TAP_GAP && style.isPresent()) {
                 TAP_UP[i] = -100;
                 net.minecraft.resources.ResourceLocation evade = style.get().forms().get(0);
-                if (TechniqueSlotsHud.mastery(evade) != null) {
+                if (selected.filter(evade::equals).isPresent() && TechniqueSlotsHud.mastery(evade) != null) {
                     PacketDistributor.sendToServer(new io.github.verycooltimo.murim.network.TraversePayloads.Request(
                             evade, footworkInput(minecraft)));
                     CombatMode.engage();
@@ -158,11 +179,11 @@ public final class ClientTechniqueHandler {
         }
         if (blocked || style.isEmpty()) {
             sprintTicks = 0;
-            stillSneakTicks = 0;
             return;
         }
         // Автобег: полсекунды спринта вперёд — бег стиля (Тропа / Молния); спринт кончился — сервер гасит сам.
-        if (minecraft.player.isSprinting() && o.keyUp.isDown()) {
+        if (minecraft.player.isSprinting() && o.keyUp.isDown()
+                && style.flatMap(io.github.verycooltimo.murim.technique.Styles::footworkRun).equals(selected)) {
             if (++sprintTicks >= 10 && !runSent) {
                 runSent = true;
                 io.github.verycooltimo.murim.technique.Styles.footworkRun(style.get())
@@ -175,21 +196,7 @@ public final class ClientTechniqueHandler {
             sprintTicks = 0;
             runSent = false;
         }
-        // Автотень: присед НА МЕСТЕ 0,7 с; повтор — только после выхода из приседа.
-        net.minecraft.world.phys.Vec3 v = minecraft.player.getDeltaMovement();
-        boolean still = v.x * v.x + v.z * v.z < 1.0E-4D && minecraft.player.onGround();
-        if (minecraft.player.isShiftKeyDown()) {
-            if (still && ++stillSneakTicks >= 14 && !shadowSent) {
-                shadowSent = true;
-                io.github.verycooltimo.murim.technique.Styles.footworkShadow(style.get())
-                        .filter(f -> TechniqueSlotsHud.mastery(f) != null)
-                        .ifPresent(f -> PacketDistributor.sendToServer(new io.github.verycooltimo.murim.network.TraversePayloads.Request(
-                                f, io.github.verycooltimo.murim.combat.FootworkService.SNEAK | io.github.verycooltimo.murim.combat.FootworkService.PASSIVE)));
-            }
-        } else {
-            stillSneakTicks = 0;
-            shadowSent = false;
-        }
+
     }
 
     /** Стиль шагов, стоящий в раскладке (первый найденный). */
@@ -235,11 +242,30 @@ public final class ClientTechniqueHandler {
     /**
      * Реакция на серверное событие техники. Вызывается из сетевого моста уже в главном потоке.
      */
+    public static String tracedTechnique = "";
+    public static long tracedStart;
+
     public static void onTechniqueEvent(TechniqueEventPayload payload) {
+        if (isLocalPlayer(payload.sourceId()) && Minecraft.getInstance().level != null) {
+            if (payload.event() == TechniqueEventPayload.Event.STARTED) {
+                tracedTechnique = payload.techniqueId().toString();
+                tracedStart = Minecraft.getInstance().level.getGameTime();
+            } else if ((payload.event() == TechniqueEventPayload.Event.FINISHED
+                    || payload.event() == TechniqueEventPayload.Event.CANCELLED)
+                    && tracedTechnique.equals(payload.techniqueId().toString())) tracedTechnique = "";
+        }
+        if (io.github.verycooltimo.murim.combat.FragranceAirService.isForm(payload.techniqueId())) {
+            io.github.verycooltimo.murim.client.vfx.FootworkVfx.airEvent(payload);
+            return;
+        }
         switch (payload.event()) {
+            case COOLDOWN_RESET -> {
+                if (isLocalPlayer(payload.sourceId())) ClientCooldowns.restartOwn(payload.techniqueId());
+            }
             case STARTED -> {
                 if (Minecraft.getInstance().player != null && payload.sourceId() == Minecraft.getInstance().player.getId()) {
                     ClientCooldowns.started(payload.techniqueId());
+                    if (io.github.verycooltimo.murim.technique.SevenStarsRules.isForm(payload.techniqueId())) FootworkMotion.startSevenStars(io.github.verycooltimo.murim.technique.SevenStarsRules.dipper(payload.techniqueId()) ? 28 : 12);
                 }
                 scheduleAnimation(payload);
                 TechniqueDefinition started = TechniqueLoader.get(payload.techniqueId());
@@ -253,18 +279,20 @@ public final class ClientTechniqueHandler {
                 boolean palm = started != null && started.behavior().type().equals(
                         io.github.verycooltimo.murim.technique.TechniqueBehavior.PALM_BLAST);
                 // Старые уличные искусства без VFX; у трёх танцев — только шуточное свечение и пыль.
-                if (payload.executionTier() <= 0) {
+                if (io.github.verycooltimo.murim.technique.SevenStarsRules.isForm(payload.techniqueId())) {
+                    // Seven Stars uses only grounded dust/skid traverse events.
+                } else if (payload.executionTier() <= 0) {
                     // Learned form at zero mastery: animation only, no qi VFX.
-                } else if (started != null && started.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.DemonicArt) {
-                    io.github.verycooltimo.murim.client.vfx.VfxManager.start(payload.sourceId(), started, payload.executionTier());
                 } else if (io.github.verycooltimo.murim.technique.JunkArts.isJunk(payload.techniqueId())) {
                     io.github.verycooltimo.murim.client.vfx.FunnyJunkVfx.start(payload.sourceId(), started);
                     MurimMod.LOGGER.debug("Искусство третьего сорта {}", payload.techniqueId());
+                } else if (io.github.verycooltimo.murim.technique.BambooRules.is(payload.techniqueId())) {
+                    // Hand qi and contacts use BambooVfx, never a sword trail.
                 } else if (palm) {
                     io.github.verycooltimo.murim.client.vfx.PalmVfxRenderer.start(
                             payload.sourceId(), started);
                 } else {
-                    BladeTrailRenderer.start(payload.sourceId(), started);
+                    BladeTrailRenderer.start(payload.sourceId(), started, payload.hitStopTicks());
                 }
                 // Название объявляет только тот, кто применяет: чужие имена техник поверх
                 // своего экрана — это шум, а не постановка.
@@ -298,27 +326,50 @@ public final class ClientTechniqueHandler {
                 }
             }
             case CANCELLED -> {
-                io.github.verycooltimo.murim.client.vfx.VfxManager.cancel(payload.sourceId());
+                if (isLocalPlayer(payload.sourceId()) && io.github.verycooltimo.murim.technique.SevenStarsRules.isForm(payload.techniqueId())) FootworkMotion.stopSevenStars();
                 // Прерванная техника не должна оставлять после себя ни висящий след,
                 // ни отложенный взмах, который выстрелит уже после отмены.
                 PENDING.remove(payload.sourceId());
-                if (io.github.verycooltimo.murim.technique.DemonicRules.isArt(payload.techniqueId())
-                        && Minecraft.getInstance().level != null
-                        && Minecraft.getInstance().level.getEntity(payload.sourceId()) instanceof AbstractClientPlayer fighter) {
-                    MurimPlayerAnimations.stopBlended(fighter, 6);
-                }
-                if (io.github.verycooltimo.murim.technique.JunkArts.FUNNY.contains(payload.techniqueId())) {
+                if (io.github.verycooltimo.murim.technique.JunkArts.FUNNY.contains(payload.techniqueId())
+                        || io.github.verycooltimo.murim.technique.SevenStarsRules.isForm(payload.techniqueId())
+                        || io.github.verycooltimo.murim.technique.BambooRules.is(payload.techniqueId())) {
                     io.github.verycooltimo.murim.client.vfx.FunnyJunkVfx.cancel(payload.sourceId());
                     if (Minecraft.getInstance().level != null
                             && Minecraft.getInstance().level.getEntity(payload.sourceId()) instanceof AbstractClientPlayer dancer) {
-                        MurimPlayerAnimations.stop(dancer);
+                        var controller = MurimPlayerAnimations.techniqueController(dancer);
+                        TechniqueDefinition cancelled = TechniqueLoader.get(payload.techniqueId());
+                        if (controller != null && cancelled != null
+                                && (MurimPlayerAnimations.owns(controller, cancelled.animation())
+                                || io.github.verycooltimo.murim.technique.SevenStarsRules.isForm(payload.techniqueId())
+                                && MurimPlayerAnimations.owns(controller, net.minecraft.resources.ResourceLocation
+                                        .fromNamespaceAndPath("murim", "seven_stars_shift_right")))) {
+                            MurimPlayerAnimations.stopBlended(dancer, AnimationTransitions.STEP_FADE_OUT_TICKS);
+                        }
                     }
                 }
                 BladeTrailRenderer.cancel(payload.sourceId());
                 io.github.verycooltimo.murim.client.vfx.PalmVfxRenderer.cancel(payload.sourceId());
                 MurimMod.LOGGER.debug("Техника {} прервана", payload.techniqueId());
             }
-            case FINISHED -> MurimMod.LOGGER.debug("Техника {} завершена", payload.techniqueId());
+            case FINISHED -> {
+                if (io.github.verycooltimo.murim.technique.BambooRules.is(payload.techniqueId())
+                        && Minecraft.getInstance().level != null
+                        && Minecraft.getInstance().level.getEntity(payload.sourceId()) instanceof AbstractClientPlayer hand) {
+                    MurimPlayerAnimations.stop(hand);
+                }
+                if (isLocalPlayer(payload.sourceId()) && io.github.verycooltimo.murim.technique.SevenStarsRules.isForm(payload.techniqueId())) FootworkMotion.stopSevenStars();
+                if (io.github.verycooltimo.murim.technique.SevenStarsRules.isForm(payload.techniqueId())
+                        && Minecraft.getInstance().level != null
+                        && Minecraft.getInstance().level.getEntity(payload.sourceId()) instanceof AbstractClientPlayer dancer) {
+                    var controller = MurimPlayerAnimations.techniqueController(dancer);
+                    var definition = TechniqueLoader.get(payload.techniqueId());
+                    if (AnimationTransitions.fadeFootworkOnFinish(
+                            io.github.verycooltimo.murim.technique.SevenStarsRules.dipper(payload.techniqueId()),
+                            controller != null && definition != null && MurimPlayerAnimations.owns(controller, definition.animation())))
+                        MurimPlayerAnimations.stopBlended(dancer, AnimationTransitions.STEP_FADE_OUT_TICKS);
+                }
+                MurimMod.LOGGER.debug("Техника {} завершена", payload.techniqueId());
+            }
         }
     }
 
@@ -343,24 +394,32 @@ public final class ClientTechniqueHandler {
 
     /** Снимает отложенные запуски: смена мира не должна выстрелить анимацией в новом. */
     public static void reset() {
+        tracedTechnique = ""; tracedStart = 0;
         PENDING.clear();
+        FootworkMotion.stopSevenStars();
         io.github.verycooltimo.murim.client.vfx.FunnyJunkVfx.reset();
-        io.github.verycooltimo.murim.client.vfx.VfxManager.reset();
     }
 
     private static void scheduleAnimation(TechniqueEventPayload payload) {
         // Задержка берётся из данных техники, а не зашита числом: правится длина ритуала —
         // анимация едет следом.
         TechniqueDefinition definition = TechniqueLoader.get(payload.techniqueId());
-        if (definition == null) {
+        if (definition == null) return;
+        if (payload.hitStopTicks() > 0) {
+            PENDING.remove(payload.sourceId());
+            playAnimation(payload, definition.animation());
             return;
         }
-        int delay = definition.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.DemonicArt
-                ? 0 : definition.startTickOf(TechniquePhase.WINDUP);
+        if (definition.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.SixForm) {
+            return; // SixFormAnimations owns the star-dependent/trigger-dependent clock.
+        }
+        int delay = definition.startTickOf(TechniquePhase.WINDUP);
         net.minecraft.resources.ResourceLocation animation = definition.animation();
-        if (payload.techniqueId().equals(io.github.verycooltimo.murim.technique.DemonicRules.id("clear_sky_sword"))) {
-            int contacts = io.github.verycooltimo.murim.technique.DemonicRules.contacts("clear_sky_sword", payload.executionTier());
-            if (contacts < 3) animation = io.github.verycooltimo.murim.technique.DemonicRules.id("clear_sky_sword_" + contacts);
+        if (payload.rightStep() && io.github.verycooltimo.murim.technique.SevenStarsRules.isForm(payload.techniqueId())
+                && !io.github.verycooltimo.murim.technique.SevenStarsRules.follows(payload.techniqueId())
+                && !io.github.verycooltimo.murim.technique.SevenStarsRules.dipper(payload.techniqueId())) {
+            // API: MC 1.21.1 ResourceLocation#fromNamespaceAndPath.
+            animation = net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("murim", "seven_stars_shift_right");
         }
         if (delay <= 0) {
             playAnimation(payload, animation);
@@ -402,7 +461,11 @@ public final class ClientTechniqueHandler {
             return;
         }
         if (level.getEntity(payload.sourceId()) instanceof AbstractClientPlayer player) {
-            MurimPlayerAnimations.play(player, animation);
+            TechniqueDefinition definition = TechniqueLoader.get(payload.techniqueId());
+            int skip = definition == null ? 0 : Math.max(0, payload.hitStopTicks() - definition.startTickOf(TechniquePhase.WINDUP));
+            if (io.github.verycooltimo.murim.technique.SevenStarsRules.isForm(payload.techniqueId()) && skip == 0)
+                MurimPlayerAnimations.playBlended(player, animation, AnimationTransitions.CROSSFADE_TICKS);
+            else MurimPlayerAnimations.play(player, animation, skip);
         }
     }
 

@@ -137,4 +137,119 @@ public final class SectRota {
         }
         return out;
     }
+
+    // ------------------------------------------------------------------ the day of a guard (round, meal relief)
+
+    /** One stop of a round lasts this long (ticks); then the guard walks on to the next. */
+    public static final int ROUND_STOP = 1200;
+
+    /**
+     * The places a guard of the day stands at in turn (watch-1, 21.10: every closed place has a keeper). Post 0 is the hall
+     * (and the vault beneath it) with the ancestors' and scriptures' halls; post 1 the treasury with the elders' houses and the
+     * penance cave. At night post 0 stays at the gate (the gatekeeper sleeps and the gate must not stand empty) and post 1 walks
+     * all the places in one round.
+     */
+    static String[] route(Duty duty) {
+        if (duty.night()) {
+            return duty.post() == 0 ? new String[] {"sect_gate"}
+                    : new String[] {"treasury", "main_hall", "ancestors", "scriptures", "elders", "penance"};
+        }
+        // The hall front is the place the author looks at first (sect check 24.10: «в главном зале нет охраны»): its guard is there four stops
+        // of six, not two of four; the round to the ancestors and the scriptures is short (and keeps off the stop of the council hours, 6000-7200, when
+        // this guard stands at the council door anyway). Same for the treasury (post 1: «и там тоже нет охраны»).
+        return duty.post() == 0 ? new String[] {"main_hall", "main_hall", "ancestors", "main_hall", "scriptures", "main_hall"}
+                : new String[] {"treasury", "treasury", "elders", "penance", "treasury", "treasury"};
+    }
+
+    /**
+     * Where the guard of {@code duty} stands now. The first {@link SectSchedule#HANDOVER} ticks of a shift he stays at his own post
+     * (the relief and the bow happen there); then he walks the round, a stop every {@link #ROUND_STOP} ticks.
+     */
+    public static String stopZone(Duty duty, long dayTime) {
+        String[] r = route(duty);
+        SectSchedule.Period p = SectSchedule.at(dayTime);
+        boolean shiftStart = (p == SectSchedule.Period.NIGHT || p == SectSchedule.Period.FORMATION)
+                && SectSchedule.sincePeriodStart(dayTime) < SectSchedule.HANDOVER;
+        if (r.length == 1 || shiftStart) {
+            return r[0];
+        }
+        return r[(int) Math.floorMod(Math.floorDiv(Math.floorMod(dayTime, (long) SectSchedule.DAY), (long) ROUND_STOP), (long) r.length)];
+    }
+
+    /**
+     * The second guard of the main-hall doors by day (author 22.10: «у главного зала вообще нет охраны»): the first-generation
+     * disciple whose turn of the day is 3 ({@link SectSchedule#firstTurn}) stands in the training hours at the other guard post of
+     * the hall front ({@code hall_front} in the layout), beside the guard of post 0 on his hall stops. He turns back the juniors.
+     */
+    public static boolean atHallDoor(SectRoster m, long dayTime) {
+        return m.generation() == 1 && m.role() == SectRole.FIRST && SectSchedule.at(dayTime) == SectSchedule.Period.TRAINING
+                && SectSchedule.firstTurn(m, SectSchedule.day(dayTime)) == 3;
+    }
+
+    /** What a person does in a meal period besides his post. */
+    public enum Break { EAT, COVER }
+
+    /** The guard's meal: who eats in which third of the period, and where the cover stands meanwhile. */
+    public record Meal(Break kind, String zone) {
+    }
+
+    /** Length of a meal period (ticks): breakfast 1000, dinner 2000. */
+    public static int mealLength(SectSchedule.Period p) {
+        return p == SectSchedule.Period.BREAKFAST ? 1000 : 2000;
+    }
+
+    /**
+     * Meal relief (watch-2, 21.10: «no meals»). In a meal period the gatekeeper eats in the first third, the guard of post 0 in
+     * the second, the guard of post 1 in the third. While one eats, the other guard of the day stands in his place: post 0 covers
+     * the gate, post 1 the hall, post 0 the treasury. Empty: this person has no part in it now.
+     */
+    public static Optional<Meal> meal(SectRoster m, long dayTime) {
+        SectSchedule.Period p = SectSchedule.at(dayTime);
+        if (!p.meal()) {
+            return Optional.empty();
+        }
+        int third = Math.min(2, SectSchedule.sincePeriodStart(dayTime) * 3 / mealLength(p));
+        long day = SectSchedule.day(dayTime);
+        if (m.role() == SectRole.GATEKEEPER) {
+            return third == 0 ? Optional.of(new Meal(Break.EAT, "sect_gate")) : Optional.empty();
+        }
+        int post = m.generation() == 2 ? postOf(m, day, false) : -1;
+        if (post < 0 || m.role() == SectRole.SENIOR) {
+            return Optional.empty();
+        }
+        if (third == 0 && post == 0) {
+            return Optional.of(new Meal(Break.COVER, "sect_gate"));
+        }
+        if (third == 1) {
+            return Optional.of(post == 0 ? new Meal(Break.EAT, "main_hall") : new Meal(Break.COVER, "main_hall"));
+        }
+        if (third == 2) {
+            return Optional.of(post == 1 ? new Meal(Break.EAT, "treasury") : new Meal(Break.COVER, "treasury"));
+        }
+        return Optional.empty();
+    }
+
+    /** Eating his break meal now (not on watch while he does). */
+    public static boolean eating(SectRoster m, long dayTime) {
+        return meal(m, dayTime).map(x -> x.kind() == Break.EAT).orElse(false);
+    }
+
+    /** Responsibility lasts throughout the round, including the time spent walking between stops.
+     * During a meal the remaining guard covers all closed places. The vault belongs to the hall post.
+     */
+    public static SectRoster keeper(String zone, long dayTime) {
+        int post = switch (zone) {
+            case "main_hall", "vault", "ancestors", "scriptures" -> 0;
+            case "treasury", "elders", "penance" -> 1;
+            default -> -1;
+        };
+        if (post < 0) return null;
+        long day = SectSchedule.day(dayTime);
+        if (SectSchedule.at(dayTime) == SectSchedule.Period.NIGHT) {
+            // Post 0 must stay at the gate; post 1 keeps the entire inner round.
+            return nightWatch(day, 1);
+        }
+        SectRoster keeper = dayWatch(day, post);
+        return eating(keeper, dayTime) ? dayWatch(day, 1 - post) : keeper;
+    }
 }

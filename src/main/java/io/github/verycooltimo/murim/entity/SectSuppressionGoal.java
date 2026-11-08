@@ -33,7 +33,7 @@ public final class SectSuppressionGoal extends Goal {
         if (active() || !npc.free() || npc.wounded() || npc.escorting() || p.level() != npc.level()) return false;
         npc.clearBlock();
         npc.wake();
-        npc.sit(false);
+        npc.sit(SeatStyle.NONE);
         npc.workPose(null);
         target = p;
         nextLeap = npc.level().getGameTime() + 20;
@@ -78,6 +78,8 @@ public final class SectSuppressionGoal extends Goal {
     @Override public void stop() { npc.walking().stop(); }
 
     @Override public void tick() {
+        // cancel() can run between canContinueToUse() and tick() (the selector checks every other tick).
+        if (target == null) return;
         npc.getLookControl().setLookAt(target, 30, 30);
         npc.faceEntity(target, 25);
         if (PenanceEnforcement.pinned(target)) {

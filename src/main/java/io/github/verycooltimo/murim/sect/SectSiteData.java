@@ -20,6 +20,10 @@ public final class SectSiteData extends SavedData {
 
     public static final SavedData.Factory<SectSiteData> FACTORY = new SavedData.Factory<>(SectSiteData::new, SectSiteData::load);
 
+    // Server-only, transient observations: never shared across worlds or written to the save.
+    final java.util.Map<String, Long> guardGreetings = new java.util.HashMap<>();
+    final java.util.Map<java.util.UUID, Long> reportedMonsters = new java.util.HashMap<>();
+
     private final Set<String> placed = new HashSet<>();
     /** День секты последнего смотра учеников (SectReview): смотр не повторяется в тот же день. */
     private long lastReview = Long.MIN_VALUE;
@@ -117,9 +121,27 @@ public final class SectSiteData extends SavedData {
     /** Последний удар колокола: часть суток × 4 + номер удара, и день — чтобы не звонить дважды. */
     long lastRing = Long.MIN_VALUE;
 
+    /** Game time of the last alarm of the sect (a blast or a fire heard): a string of blasts is one alarm (SectAlarm). */
+    long lastAlarm = Long.MIN_VALUE / 2;
+    /** Game time fire in the grounds was last looked at: a burning block updates its neighbours all the time, once a second is enough. */
+    long lastFireLook = Long.MIN_VALUE / 2;
+
     /** Нарушители закрытых мест: игрок → что было (предупреждения, толчки, поединок). Только этот сеанс. */
     final java.util.Map<java.util.UUID, SectWatch.Trespass> trespass = new java.util.HashMap<>();
 
+    /** What the goal reminder last sent to each player (the client keeps it between sends). Only this session. */
+    final java.util.Map<java.util.UUID, SectJourney.Sent> goalSent = new java.util.HashMap<>();
+
+    /** Whether the person of the player's goal was near at the last check (SectJourney.pulseDue). Only this session. */
+    final java.util.Map<java.util.UUID, Boolean> goalNear = new java.util.HashMap<>();
+
+    /** Bouts, duels and drills of this server session (SectBouts, SectDefeat, SectDuel). */
+    final SectBoutSession session = new SectBoutSession();
+    /** Bounded, transient teaching scenes; no save format or client state. */
+    final SectLessons lessons = new SectLessons();
+
     /** Идущий смотр учеников (SectReview) или null. */
     SectReview.State review;
+    /** Session only: no save field or additional client state. */
+    SectBladeExam.Scene bladeExam;
 }

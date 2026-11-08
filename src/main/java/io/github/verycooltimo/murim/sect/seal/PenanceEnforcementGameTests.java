@@ -2,7 +2,9 @@ package io.github.verycooltimo.murim.sect.seal;
 
 import io.github.verycooltimo.murim.Config;
 import io.github.verycooltimo.murim.MurimMod;
+import io.github.verycooltimo.murim.combat.TargetLock;
 import io.github.verycooltimo.murim.combat.TechniqueService;
+import io.github.verycooltimo.murim.combat.TechniqueState;
 import io.github.verycooltimo.murim.entity.SectDisciple;
 import io.github.verycooltimo.murim.registry.ModAttachments;
 import io.github.verycooltimo.murim.registry.ModEntities;
@@ -282,6 +284,143 @@ public final class PenanceEnforcementGameTests {
         p.setGameMode(GameType.CREATIVE);
         PenanceEnforcement.tick(p);
         h.assertTrue(!PenanceEnforcement.active(p) && p.getForcedPose() == null, "creative switch kept pin");
+        h.succeed();
+    }
+
+    // ------------------------------------------------------------------ the accidental brawl (author 18.10)
+
+    private static final ResourceLocation WHIRL = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "seven_plum_whirlwind");
+
+    private static int counted(ServerPlayer p) {
+        return p.getPersistentData().getCompound(PenanceEnforcement.ASSAULTS).getList("hits", net.minecraft.nbt.Tag.TAG_COMPOUND).size();
+    }
+
+    /** A technique runs: the splash of its area on brothers is no attack, however many times it lands. */
+    @GameTest(template = "sect_yard", timeoutTicks = 40, batch = "penance_splash")
+    public static void areaSplashOnBrothersNeverSentences(GameTestHelper h) {
+        for (boolean member : new boolean[] {true, false}) {
+            ServerPlayer p = player(h, member);
+            SectDisciple a = npc(h, SectRole.STEWARD, 10.5);
+            SectDisciple b = npc(h, SectRole.ELDER, 11.5);
+            SectDisciple c = npc(h, SectRole.GUARD, 12.5);
+            float health = a.getHealth();
+            p.setData(ModAttachments.TECHNIQUE_STATE, TechniqueState.started(WHIRL, p.level().getGameTime()));
+            for (int round = 0; round < Config.SECT_RAMPAGE_HITS.get() + 2; round++)
+                for (SectDisciple d : new SectDisciple[] {a, b, c}) {
+                    d.invulnerableTime = 0;
+                    h.assertTrue(!d.hurt(p.damageSources().playerAttack(p), 9), "splash hurt a brother");
+                }
+            h.assertTrue(!PenanceEnforcement.active(p) && !PenanceService.sentenced(p), "area splash started a rampage (member=" + member + ")");
+            h.assertTrue(counted(p) == 0, "splash was counted as attacks");
+            h.assertTrue(!p.getPersistentData().contains("murim_sect_offences") && !p.getData(ModAttachments.SECT).has(PenanceService.SUMMONED),
+                    "splash was recorded as an offence");
+            h.assertTrue(a.getHealth() == health && a.spar() == SectDisciple.Spar.NONE, "splash hurt or challenged a brother");
+            // The same blows moments after the technique ended, then a flying dagger: still the technique's.
+            p.setData(ModAttachments.TECHNIQUE_STATE, p.getData(ModAttachments.TECHNIQUE_STATE).finished());
+            for (SectDisciple d : new SectDisciple[] {a, b, c}) {
+                d.invulnerableTime = 0;
+                h.assertTrue(!d.hurt(p.damageSources().playerAttack(p), 9), "late splash hurt a brother");
+                d.invulnerableTime = 0;
+                h.assertTrue(!d.hurt(p.damageSources().indirectMagic(p, p), 9), "dagger hurt a brother");
+            }
+            h.assertTrue(!PenanceEnforcement.active(p) && counted(p) == 0, "late splash started a rampage (member=" + member + ")");
+        }
+        h.succeed();
+    }
+
+    /** The real thing: a plum whirlwind among three brothers and a zombie reaches the zombie and sentences nobody. */
+    @GameTest(template = "sect_yard", timeoutTicks = 80, batch = "penance_whirl")
+    public static void realWhirlwindAmongBrothersDoesNotSentence(GameTestHelper h) {
+        ServerPlayer p = player(h, true);
+        SectDisciple a = npc(h, SectRole.STEWARD, 10.5);
+        SectDisciple b = npc(h, SectRole.ELDER, 6.5);
+        SectDisciple c = npc(h, SectRole.GUARD, 8.5);
+        Vec3 south = h.absoluteVec(new Vec3(8.5, 1, 10.5));
+        c.moveTo(south.x, south.y, south.z, 0, 0);
+        var zombie = h.spawn(net.minecraft.world.entity.EntityType.ZOMBIE, new Vec3(8.5D, 1.0D, 6.5D));
+        zombie.setNoAi(true);
+        var profile = io.github.verycooltimo.murim.profile.DantianProfile.INITIAL.withTags("clear", "plum")
+                .withRank(4).withStage(3).withAxes(120, 0.8, 0.8);
+        p.setData(ModAttachments.PROFILE, profile.withCirculating(profile.maxCirculating()));
+        // a fully mastered whirlwind: its walls, pulses and tornadoes sweep the whole circle round the caster
+        int cap = io.github.verycooltimo.murim.mastery.Arts.cap(WHIRL);
+        p.setData(ModAttachments.MASTERY, io.github.verycooltimo.murim.mastery.MasteryState.EMPTY.with(WHIRL,
+                io.github.verycooltimo.murim.mastery.TechniqueProgress.learned(io.github.verycooltimo.murim.mastery.Arts.unlockStar(WHIRL, 8), cap)));
+        p.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.IRON_SWORD));
+        h.assertTrue(TechniqueService.tryStart(p, WHIRL), "whirlwind did not start");
+        int total = io.github.verycooltimo.murim.technique.TechniqueLoader.get(WHIRL).totalTicks();
+        for (int i = 0; i <= total; i++) {
+            TechniqueService.tick(p);
+            PenanceEnforcement.tick(p);
+        }
+        h.assertTrue(zombie.getHealth() < zombie.getMaxHealth() || !zombie.isAlive(), "the whirlwind never reached the zombie");
+        h.assertTrue(!PenanceEnforcement.active(p) && !PenanceService.sentenced(p), "the whirlwind sentenced its caster");
+        h.assertTrue(counted(p) == 0, "the whirlwind was counted as attacks on the brothers");
+        h.assertTrue(a.getHealth() == a.getMaxHealth() && b.getHealth() == b.getMaxHealth() && c.getHealth() == c.getMaxHealth(), "a brother was hurt");
+        h.succeed();
+    }
+
+    /** Deliberate blows still count: a swing at a brother, or a technique on the brother the player locked on to. */
+    @GameTest(template = "sect_yard", timeoutTicks = 40, batch = "penance_deliberate")
+    public static void deliberateBlowsStillCountAfterOneWarning(GameTestHelper h) {
+        // A melee swing: the first blow is the warning, a second one on another brother is the rampage.
+        ServerPlayer p = player(h, false);
+        SectDisciple a = npc(h, SectRole.STEWARD, 12.5);
+        SectDisciple b = npc(h, SectRole.STEWARD, 14.5);
+        PenanceEnforcement.markSwing(p, a);
+        a.hurt(p.damageSources().playerAttack(p), 1);
+        h.assertTrue(!PenanceEnforcement.active(p), "the first deliberate blow was not just a warning");
+        h.assertTrue(counted(p) == 1, "a swing at a brother was not counted");
+        PenanceEnforcement.markSwing(p, b);
+        b.hurt(p.damageSources().playerAttack(p), 1);
+        h.assertTrue(PenanceEnforcement.active(p), "a second swing at another brother did not call an elder");
+        // A sword sweep: the struck zombie is the target, the brother beside him is only swept.
+        ServerPlayer q = player(h, true);
+        SectDisciple swept = npc(h, SectRole.STEWARD, 10.5);
+        var zombie = h.spawn(net.minecraft.world.entity.EntityType.ZOMBIE, new Vec3(9.5D, 1.0D, 8.5D));
+        PenanceEnforcement.markSwing(q, zombie);
+        for (int i = 0; i < Config.SECT_RAMPAGE_HITS.get() + 1; i++) {
+            swept.invulnerableTime = 0;
+            h.assertTrue(!swept.hurt(q.damageSources().playerAttack(q), 4), "a swept brother was hurt");
+        }
+        h.assertTrue(!PenanceEnforcement.active(q) && counted(q) == 0, "a sword sweep sentenced the swinger");
+        // A technique counts only on the brother it is locked on to, never on the ones around him.
+        ServerPlayer r = player(h, true);
+        SectDisciple target = npc(h, SectRole.STEWARD, 11.5);
+        SectDisciple bystander = npc(h, SectRole.STEWARD, 13.5);
+        r.setData(ModAttachments.TECHNIQUE_STATE, TechniqueState.started(WHIRL, r.level().getGameTime()));
+        TargetLock.set(r, target.getId());
+        for (int i = 0; i < Config.SECT_RAMPAGE_HITS.get() - 1; i++) {
+            bystander.invulnerableTime = 0;
+            bystander.hurt(r.damageSources().playerAttack(r), 4);
+            target.invulnerableTime = 0;
+            target.hurt(r.damageSources().playerAttack(r), 4);
+        }
+        h.assertTrue(!PenanceEnforcement.active(r), "too few locked blows already sentenced");
+        target.invulnerableTime = 0;
+        target.hurt(r.damageSources().playerAttack(r), 4);
+        h.assertTrue(PenanceEnforcement.active(r), "repeated technique blows on the locked brother did not call an elder");
+        PenanceEnforcement.clear(r);
+        h.succeed();
+    }
+
+    /** The cell of the sentence is the seal the layout file names, found without a single hard-coded coordinate. */
+    @GameTest(template = "sect_yard", timeoutTicks = 40, batch = "penance_landmark")
+    public static void sentenceCellFollowsTheLayoutLandmark(GameTestHelper h) {
+        io.github.verycooltimo.murim.sect.SectLayoutFile shipped = io.github.verycooltimo.murim.sect.SectLayoutFile.shipped();
+        h.assertTrue(shipped != null && shipped.landmark("penance") != null, "the shipped layout names no penance cave");
+        BlockPos fileCell = shipped.landmark("penance").cell();
+        BlockPos target = h.absolutePos(new BlockPos(6, 0, 6));
+        // a site that puts the landmark exactly on the test cell: same turn, shifted by the difference
+        var frame = shipped.frame();
+        var site = new io.github.verycooltimo.murim.world.hua.MountHuaSite(frame.centerX() + target.getX() - fileCell.getX(),
+                frame.centerZ() + target.getZ() - fileCell.getZ(), frame.baseY() + target.getY() - fileCell.getY(), frame.rotation(), 1L, true);
+        var layout = io.github.verycooltimo.murim.sect.SectLayout.hua(site);
+        h.getLevel().setBlock(target, Blocks.STONE.defaultBlockState(), 3);
+        h.assertTrue(PenanceService.landmarkCell(h.getLevel(), layout) == null, "a landmark cell without a seal was accepted");
+        h.getLevel().setBlock(target, SealRegistry.PENANCE_SEAL.get().defaultBlockState(), 3);
+        h.assertTrue(target.equals(PenanceService.landmarkCell(h.getLevel(), layout)), "the seal at the landmark was not found");
+        h.assertTrue(PenanceService.landmarkCell(h.getLevel(), null) == null, "no layout must mean no landmark");
         h.succeed();
     }
 }

@@ -95,7 +95,8 @@ public final class SectMvpGameTests {
 
     /**
      * Ученик третьего класса с 30 заслугами меняет 20 на Меч Хуашань: меч в инвентаре, остаток 10, сумма за всё время и
-     * положение те же; второй меч — не хватает, пилюля Изначальной Энергии — не по положению; пилюля Снежной Сливы — да.
+     * положение те же; второй меч — запас пуст (один на 20 минут игры), пилюля Изначальной Энергии — не по положению;
+     * пилюля Снежной Сливы (6) — да.
      */
     @GameTest(template = YARD, timeoutTicks = 60, batch = "sect_mvp_merit")
     public static void meritPurchase(GameTestHelper helper) {
@@ -110,11 +111,11 @@ public final class SectMvpGameTests {
         helper.assertTrue(p.getInventory().countItem(ModItems.HUASHAN_SWORD.get()) == 1, "меча нет в инвентаре");
         helper.assertTrue(SectService.standing(p) == before, "положение упало после траты");
 
-        helper.assertTrue(MeritShop.buy(p, "sword") == MeritShop.Result.MERIT, "второй меч без заслуг");
+        helper.assertTrue(MeritShop.buy(p, "sword") == MeritShop.Result.STOCK, "второй меч сразу: запас пуст");
         helper.assertTrue(MeritShop.buy(p, "origin_energy") == MeritShop.Result.STANDING, "редкая пилюля не по положению");
         helper.assertTrue(MeritShop.buy(p, "snow_plum") == MeritShop.Result.OK, "пилюля Снежной Сливы не куплена");
         helper.assertTrue(p.getInventory().countItem(ModItems.PILL_SNOW_PLUM.get()) == 1, "пилюли нет");
-        helper.assertTrue(p.getData(ModAttachments.SECT).merit() == 6, "остаток после пилюли: " + p.getData(ModAttachments.SECT).merit());
+        helper.assertTrue(p.getData(ModAttachments.SECT).merit() == 4, "остаток после пилюли: " + p.getData(ModAttachments.SECT).merit());
         // Покупка из разговора: вариант Тэ Гюна с действием merit_buy, цена — в тексте варианта.
         Dialogue d = DialogueLoader.get(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "tae_gyun"));
         helper.assertTrue(d != null && d.nodes().containsKey("exchange"), "у Тэ Гюна нет обмена");
@@ -122,7 +123,7 @@ public final class SectMvpGameTests {
         SectDisciple treasurer = npc(helper, yard(helper, 0.3D), "tae_gyun", 12, 12);
         helper.assertTrue(DialogueService.applyHeadless(p, treasurer, silver), "вариант серебра не выполнился");
         helper.assertTrue(p.getInventory().countItem(ModItems.SILVER_TAEL.get()) == 3, "серебра нет");
-        helper.assertTrue(p.getData(ModAttachments.SECT).merit() == 4, "серебро не списало заслуги");
+        helper.assertTrue(p.getData(ModAttachments.SECT).merit() == 2, "серебро не списало заслуги");
         helper.succeed();
     }
 
@@ -151,7 +152,7 @@ public final class SectMvpGameTests {
         helper.assertTrue(SectSchedule.task(leader.member().orElseThrow(), helper.getLevel().getDayTime()).kind() == SectSchedule.Kind.WATCH,
                 "глава не смотрит смотр");
         long finalDay = day;
-        SectReview.State s = SectReview.begin(helper.getLevel(), yard, day, null, 48.0D);
+        SectReview.State s = SectReview.begin(helper.getLevel(), yard, day, (net.minecraft.server.level.ServerPlayer) null, 48.0D);
         String[] champion = {""};
         helper.onEachTick(() -> {
             // Время стоит в окне смотра (тест длиннее окна не идёт, но день не должен смениться).

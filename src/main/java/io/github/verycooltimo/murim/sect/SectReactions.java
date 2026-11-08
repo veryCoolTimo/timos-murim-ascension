@@ -73,7 +73,9 @@ public final class SectReactions {
     /** Same, with the territory check given (GameTest yards stand outside the real mountain's territory). */
     static void onTechnique(ServerPlayer p, TechniqueDefinition technique, boolean onSectGround) {
         SectSocial.highArt(p, technique.tier());
-        PlumReaction reaction = plumReaction(technique.id(), technique.tier(), SectService.standing(p));
+        // An office holder is trusted whatever his ladder rung says (an admin-made elder stays «novice» on the ladder).
+        SectRank rank = SectRank.of(p);
+        PlumReaction reaction = plumReaction(technique.id(), technique.tier(), rank.standing());
         if (reaction == PlumReaction.NONE || p.isCreative() || p.isSpectator() || !onSectGround) {
             onTechnique(p);
             return;
@@ -116,11 +118,47 @@ public final class SectReactions {
             PenanceService.offence(p, "secret_art", witness);
         }
         if (elder != null && !SectService.state(p).has(PenanceService.SUMMONED)) {
-            elder.approachDialogue(p, ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "plum_witness"),
-                    reaction == PlumReaction.SUMMONS ? "recognized" : "unauthorized", p.position());
+            String node = reaction == PlumReaction.SUMMONS ? (rank.office() ? "recognized_office" : "recognized") : "unauthorized";
+            // The walk to the player may be given up (he walks off, is busy): the talk is still owed, and kept (playtest 19.10).
+            owe(p, elder, node);
+            elder.approachDialogue(p, WITNESS, node, p.position());
         } else if (!SectService.state(p).member()) {
             // Чужаку приговор секты не назначается, но старейшина требует объяснения.
-            witness.approachDialogue(p, ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "plum_witness"), "unauthorized", p.position());
+            owe(p, witness, "unauthorized");
+            witness.approachDialogue(p, WITNESS, "unauthorized", p.position());
+        }
+    }
+
+    // ------------------------------------------------------------------ the talk a witness owes
+
+    /** The dialogue of the elder who saw a closed art. */
+    public static final ResourceLocation WITNESS = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "plum_witness");
+    /** Journal key {@code plum.owed.<person>}: {@code game time * 4 + node index} of the talk he owes, 0 when none. */
+    static final String OWED = "plum.owed.";
+    /** The nodes of the witness dialogue in the order of the stored index. */
+    private static final List<String> OWED_NODES = List.of("unauthorized", "recognized", "recognized_office");
+    /** A promise to talk older than this many sect days is forgotten (nobody holds a grudge over a week). */
+    static final long OWED_TICKS = 5L * 24000L;
+
+    /** The witness {@code who} said he would talk about the art: kept in the player's journal until he does. */
+    static void owe(ServerPlayer p, SectDisciple who, String node) {
+        int index = Math.max(0, OWED_NODES.indexOf(node));
+        SectService.flagEntry(p, OWED + who.memberKey(), p.level().getGameTime() * 4L + index);
+    }
+
+    /** The node of the talk this person owes the player, or null when he owes none (or the promise is old). */
+    public static String owed(ServerPlayer p, SectDisciple who) {
+        long value = SectService.state(p).entry(OWED + who.memberKey(), 0L);
+        if (value <= 0L || p.level().getGameTime() - value / 4L > OWED_TICKS) {
+            return null;
+        }
+        return OWED_NODES.get((int) (value % 4L) % OWED_NODES.size());
+    }
+
+    /** The talk was had (the dialogue opened): the person owes nothing any more. */
+    static void settle(ServerPlayer p, SectDisciple who) {
+        if (SectService.state(p).entry(OWED + who.memberKey(), 0L) != 0L) {
+            SectService.flagEntry(p, OWED + who.memberKey(), 0L);
         }
     }
 
@@ -132,6 +170,7 @@ public final class SectReactions {
             return;
         }
         List<SectDisciple> watchers = new ArrayList<>();
+        SectLessons.of(level).daily.noise(level, p.position(), p, level.getGameTime());
         for (SectDisciple d : level.getEntitiesOfClass(SectDisciple.class, p.getBoundingBox().inflate(WATCH_RANGE),
                 d -> d.isAlive() && d.member().isPresent() && d.layout() != null)) {
             if (watches(d) && d.distanceToSqr(p) <= WATCH_RANGE * WATCH_RANGE && d.getSensing().hasLineOfSight(p)) {
@@ -154,8 +193,8 @@ public final class SectReactions {
             }
             Optional<SectRoster> m = d.member();
             String key = m.isPresent() && m.get().disciple() && level.random.nextBoolean()
-                    ? SectBubbles.watchKey(SectTalk.trait(d.memberKey()))
-                    : SectBubbles.Group.WATCH.pick(level.random.nextInt(64));
+                    ? SectLines.pick(p, SectBubbles.watchStem(SectTalk.trait(d.memberKey())), SectBubbles.WATCH_TRAIT_LINES, level.random)
+                    : SectBubbles.Group.WATCH.pick(p, level.random);
             if (said == 0) {
                 if (SectChatter.sayIfQuiet(d, key, 100)) {
                     said++;
@@ -183,11 +222,19 @@ public final class SectReactions {
     @net.neoforged.bus.api.SubscribeEvent
     static void onFight(net.neoforged.neoforge.event.entity.living.LivingDamageEvent.Post event) {
         var victim = event.getEntity();
+        // A blow on a training dummy is practice, not a fight: nobody in the sect turns (author 22.10).
+        if (victim instanceof io.github.verycooltimo.murim.entity.TrainingDummy) return;
         var attacker = event.getSource().getEntity();
         if (victim.level().isClientSide || event.getNewDamage() <= 0 || !(attacker instanceof net.minecraft.world.entity.LivingEntity fighter)) return;
+        // A zombie hitting a cow is not a fight of the sect; neither is the bout of two pupils (peers-3).
+        if (!(attacker instanceof ServerPlayer) && !(attacker instanceof SectDisciple) && !(victim instanceof ServerPlayer) && !(victim instanceof SectDisciple)) return;
+        if (attacker instanceof SectDisciple a && victim instanceof SectDisciple v && (a.inBout() || v.inBout())) return;
         long now = victim.level().getGameTime();
         var memory = victim.getPersistentData();
         if (memory.getLong("murim_fight_reaction_until") > now) return;
+        if (victim.level() instanceof ServerLevel noisy && (attacker instanceof ServerPlayer || victim instanceof ServerPlayer)) {
+            SectLessons.of(noisy).daily.noise(noisy, victim.position(), attacker instanceof ServerPlayer sp ? sp : (ServerPlayer) victim, now);
+        }
         memory.putLong("murim_fight_reaction_until", now + 200);
         var witnesses = victim.level().getEntitiesOfClass(SectDisciple.class, victim.getBoundingBox().inflate(WATCH_RANGE),
                 d -> d != victim && d != fighter && d.member().isPresent() && watches(d) && !d.escorting()
@@ -211,9 +258,13 @@ public final class SectReactions {
         if (m.isEmpty() || !SectService.state(p).member()) {
             return null;
         }
-        if (SectSocial.power(p, d) == SectSocial.Power.WEAK) return null;
         boolean lay = m.get().lay();
         int gen = m.get().generation();
+        // An office holder gets the bow of every junior and servant, whatever his realm: the office is what is bowed to.
+        if (SectRank.of(p).office()) {
+            return lay || gen >= 2 ? Bow.SENIOR : null;
+        }
+        if (SectSocial.power(p, d) == SectSocial.Power.WEAK) return null;
         if ((lay || gen >= 2 && m.get().disciple()) && SectService.state(p).has(SectTalk.REVIEW_WON)) {
             return Bow.WINNER;
         }
@@ -230,6 +281,11 @@ public final class SectReactions {
     /** Строка к поклону. */
     public static String bowKey(Bow why, int roll) {
         return (why == Bow.WINNER ? SectBubbles.Group.BOW_WINNER : SectBubbles.Group.BOW_SENIOR).pick(roll);
+    }
+
+    /** Строка к поклону, которой этот игрок не слышал сегодня. */
+    public static String bowKey(Bow why, ServerPlayer listener, net.minecraft.util.RandomSource random) {
+        return (why == Bow.WINNER ? SectBubbles.Group.BOW_WINNER : SectBubbles.Group.BOW_SENIOR).pick(listener, random);
     }
 
     // ------------------------------------------------------------------ лекарь и раненый игрок

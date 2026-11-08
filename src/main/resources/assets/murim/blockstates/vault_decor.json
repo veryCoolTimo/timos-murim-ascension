@@ -1,0 +1,304 @@
+{
+ "variants": {
+  "facing=south,kind=0,taken=false": {
+   "model": "murim:block/vault_relic_rack_0"
+  },
+  "facing=south,kind=0,taken=true": {
+   "model": "murim:block/vault_relic_rack_0_empty"
+  },
+  "facing=south,kind=1,taken=false": {
+   "model": "murim:block/vault_relic_rack_1"
+  },
+  "facing=south,kind=1,taken=true": {
+   "model": "murim:block/vault_relic_rack_1_empty"
+  },
+  "facing=south,kind=2,taken=false": {
+   "model": "murim:block/vault_relic_plaque"
+  },
+  "facing=south,kind=2,taken=true": {
+   "model": "murim:block/vault_relic_plaque"
+  },
+  "facing=south,kind=3,taken=false": {
+   "model": "murim:block/vault_relic_0"
+  },
+  "facing=south,kind=3,taken=true": {
+   "model": "murim:block/vault_empty"
+  },
+  "facing=south,kind=4,taken=false": {
+   "model": "murim:block/vault_relic_1"
+  },
+  "facing=south,kind=4,taken=true": {
+   "model": "murim:block/vault_empty"
+  },
+  "facing=south,kind=5,taken=false": {
+   "model": "murim:block/vault_relic_2"
+  },
+  "facing=south,kind=5,taken=true": {
+   "model": "murim:block/vault_empty"
+  },
+  "facing=south,kind=6,taken=false": {
+   "model": "murim:block/vault_relic_3"
+  },
+  "facing=south,kind=6,taken=true": {
+   "model": "murim:block/vault_empty"
+  },
+  "facing=south,kind=7,taken=false": {
+   "model": "murim:block/vault_banner_0"
+  },
+  "facing=south,kind=7,taken=true": {
+   "model": "murim:block/vault_banner_0"
+  },
+  "facing=south,kind=8,taken=false": {
+   "model": "murim:block/vault_banner_1"
+  },
+  "facing=south,kind=8,taken=true": {
+   "model": "murim:block/vault_banner_1"
+  },
+  "facing=south,kind=9,taken=false": {
+   "model": "murim:block/vault_relic_hero"
+  },
+  "facing=south,kind=9,taken=true": {
+   "model": "murim:block/vault_relic_hero_empty"
+  },
+  "facing=west,kind=0,taken=false": {
+   "model": "murim:block/vault_relic_rack_0",
+   "y": 90
+  },
+  "facing=west,kind=0,taken=true": {
+   "model": "murim:block/vault_relic_rack_0_empty",
+   "y": 90
+  },
+  "facing=west,kind=1,taken=false": {
+   "model": "murim:block/vault_relic_rack_1",
+   "y": 90
+  },
+  "facing=west,kind=1,taken=true": {
+   "model": "murim:block/vault_relic_rack_1_empty",
+   "y": 90
+  },
+  "facing=west,kind=2,taken=false": {
+   "model": "murim:block/vault_relic_plaque",
+   "y": 90
+  },
+  "facing=west,kind=2,taken=true": {
+   "model": "murim:block/vault_relic_plaque",
+   "y": 90
+  },
+  "facing=west,kind=3,taken=false": {
+   "model": "murim:block/vault_relic_0",
+   "y": 90
+  },
+  "facing=west,kind=3,taken=true": {
+   "model": "murim:block/vault_empty",
+   "y": 90
+  },
+  "facing=west,kind=4,taken=false": {
+   "model": "murim:block/vault_relic_1",
+   "y": 90
+  },
+  "facing=west,kind=4,taken=true": {
+   "model": "murim:block/vault_empty",
+   "y": 90
+  },
+  "facing=west,kind=5,taken=false": {
+   "model": "murim:block/vault_relic_2",
+   "y": 90
+  },
+  "facing=west,kind=5,taken=true": {
+   "model": "murim:block/vault_empty",
+   "y": 90
+  },
+  "facing=west,kind=6,taken=false": {
+   "model": "murim:block/vault_relic_3",
+   "y": 90
+  },
+  "facing=west,kind=6,taken=true": {
+   "model": "murim:block/vault_empty",
+   "y": 90
+  },
+  "facing=west,kind=7,taken=false": {
+   "model": "murim:block/vault_banner_0",
+   "y": 90
+  },
+  "facing=west,kind=7,taken=true": {
+   "model": "murim:block/vault_banner_0",
+   "y": 90
+  },
+  "facing=west,kind=8,taken=false": {
+   "model": "murim:block/vault_banner_1",
+   "y": 90
+  },
+  "facing=west,kind=8,taken=true": {
+   "model": "murim:block/vault_banner_1",
+   "y": 90
+  },
+  "facing=west,kind=9,taken=false": {
+   "model": "murim:block/vault_relic_hero",
+   "y": 90
+  },
+  "facing=west,kind=9,taken=true": {
+   "model": "murim:block/vault_relic_hero_empty",
+   "y": 90
+  },
+  "facing=north,kind=0,taken=false": {
+   "model": "murim:block/vault_relic_rack_0",
+   "y": 180
+  },
+  "facing=north,kind=0,taken=true": {
+   "model": "murim:block/vault_relic_rack_0_empty",
+   "y": 180
+  },
+  "facing=north,kind=1,taken=false": {
+   "model": "murim:block/vault_relic_rack_1",
+   "y": 180
+  },
+  "facing=north,kind=1,taken=true": {
+   "model": "murim:block/vault_relic_rack_1_empty",
+   "y": 180
+  },
+  "facing=north,kind=2,taken=false": {
+   "model": "murim:block/vault_relic_plaque",
+   "y": 180
+  },
+  "facing=north,kind=2,taken=true": {
+   "model": "murim:block/vault_relic_plaque",
+   "y": 180
+  },
+  "facing=north,kind=3,taken=false": {
+   "model": "murim:block/vault_relic_0",
+   "y": 180
+  },
+  "facing=north,kind=3,taken=true": {
+   "model": "murim:block/vault_empty",
+   "y": 180
+  },
+  "facing=north,kind=4,taken=false": {
+   "model": "murim:block/vault_relic_1",
+   "y": 180
+  },
+  "facing=north,kind=4,taken=true": {
+   "model": "murim:block/vault_empty",
+   "y": 180
+  },
+  "facing=north,kind=5,taken=false": {
+   "model": "murim:block/vault_relic_2",
+   "y": 180
+  },
+  "facing=north,kind=5,taken=true": {
+   "model": "murim:block/vault_empty",
+   "y": 180
+  },
+  "facing=north,kind=6,taken=false": {
+   "model": "murim:block/vault_relic_3",
+   "y": 180
+  },
+  "facing=north,kind=6,taken=true": {
+   "model": "murim:block/vault_empty",
+   "y": 180
+  },
+  "facing=north,kind=7,taken=false": {
+   "model": "murim:block/vault_banner_0",
+   "y": 180
+  },
+  "facing=north,kind=7,taken=true": {
+   "model": "murim:block/vault_banner_0",
+   "y": 180
+  },
+  "facing=north,kind=8,taken=false": {
+   "model": "murim:block/vault_banner_1",
+   "y": 180
+  },
+  "facing=north,kind=8,taken=true": {
+   "model": "murim:block/vault_banner_1",
+   "y": 180
+  },
+  "facing=north,kind=9,taken=false": {
+   "model": "murim:block/vault_relic_hero",
+   "y": 180
+  },
+  "facing=north,kind=9,taken=true": {
+   "model": "murim:block/vault_relic_hero_empty",
+   "y": 180
+  },
+  "facing=east,kind=0,taken=false": {
+   "model": "murim:block/vault_relic_rack_0",
+   "y": 270
+  },
+  "facing=east,kind=0,taken=true": {
+   "model": "murim:block/vault_relic_rack_0_empty",
+   "y": 270
+  },
+  "facing=east,kind=1,taken=false": {
+   "model": "murim:block/vault_relic_rack_1",
+   "y": 270
+  },
+  "facing=east,kind=1,taken=true": {
+   "model": "murim:block/vault_relic_rack_1_empty",
+   "y": 270
+  },
+  "facing=east,kind=2,taken=false": {
+   "model": "murim:block/vault_relic_plaque",
+   "y": 270
+  },
+  "facing=east,kind=2,taken=true": {
+   "model": "murim:block/vault_relic_plaque",
+   "y": 270
+  },
+  "facing=east,kind=3,taken=false": {
+   "model": "murim:block/vault_relic_0",
+   "y": 270
+  },
+  "facing=east,kind=3,taken=true": {
+   "model": "murim:block/vault_empty",
+   "y": 270
+  },
+  "facing=east,kind=4,taken=false": {
+   "model": "murim:block/vault_relic_1",
+   "y": 270
+  },
+  "facing=east,kind=4,taken=true": {
+   "model": "murim:block/vault_empty",
+   "y": 270
+  },
+  "facing=east,kind=5,taken=false": {
+   "model": "murim:block/vault_relic_2",
+   "y": 270
+  },
+  "facing=east,kind=5,taken=true": {
+   "model": "murim:block/vault_empty",
+   "y": 270
+  },
+  "facing=east,kind=6,taken=false": {
+   "model": "murim:block/vault_relic_3",
+   "y": 270
+  },
+  "facing=east,kind=6,taken=true": {
+   "model": "murim:block/vault_empty",
+   "y": 270
+  },
+  "facing=east,kind=7,taken=false": {
+   "model": "murim:block/vault_banner_0",
+   "y": 270
+  },
+  "facing=east,kind=7,taken=true": {
+   "model": "murim:block/vault_banner_0",
+   "y": 270
+  },
+  "facing=east,kind=8,taken=false": {
+   "model": "murim:block/vault_banner_1",
+   "y": 270
+  },
+  "facing=east,kind=8,taken=true": {
+   "model": "murim:block/vault_banner_1",
+   "y": 270
+  },
+  "facing=east,kind=9,taken=false": {
+   "model": "murim:block/vault_relic_hero",
+   "y": 270
+  },
+  "facing=east,kind=9,taken=true": {
+   "model": "murim:block/vault_relic_hero_empty",
+   "y": 270
+  }
+ }
+}

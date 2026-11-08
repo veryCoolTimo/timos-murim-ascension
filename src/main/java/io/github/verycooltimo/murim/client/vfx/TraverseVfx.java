@@ -95,7 +95,7 @@ public final class TraverseVfx {
             case 5 -> ownLines(minecraft, entity, io.github.verycooltimo.murim.technique.FootworkFamily.windVfxTier(e.executionTier()) >= 1 ? dir : Vec3.ZERO, 0.55F);
             case 8 -> ownLines(minecraft, entity, io.github.verycooltimo.murim.technique.FootworkFamily.windVfxTier(e.executionTier()) >= 1 ? dir : Vec3.ZERO, 0.9F);
             case 9 -> ownLines(minecraft, entity, e.executionTier() >= 1 ? dir : Vec3.ZERO, 0.6F);
-            case 6, 7 -> {
+            case 6, 7, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19 -> {
             }
             default -> {
                 if (entity != null && e.executionTier() >= 1) {
@@ -133,7 +133,7 @@ public final class TraverseVfx {
             case 6 -> io.github.verycooltimo.murim.client.Sfx.play(entity, io.github.verycooltimo.murim.registry.ModSounds.STEP_SOFT, 0.7F, 0.9F);
             case 8 -> io.github.verycooltimo.murim.client.Sfx.play(entity, executionTier >= 1 ? io.github.verycooltimo.murim.registry.ModSounds.BURST_STEP : io.github.verycooltimo.murim.registry.ModSounds.DASH, 1.0F * k, 0.9F);
             case 9 -> io.github.verycooltimo.murim.client.Sfx.play(entity, executionTier >= 1 ? io.github.verycooltimo.murim.registry.ModSounds.BLINK : io.github.verycooltimo.murim.registry.ModSounds.DASH, 0.8F * k, 1.1F);
-            case 0, 7 -> {
+            case 0, 7, 15, 18, 19 -> {
             }
             default -> io.github.verycooltimo.murim.client.Sfx.play(entity, executionTier >= 1 ? io.github.verycooltimo.murim.registry.ModSounds.BURST_STEP : io.github.verycooltimo.murim.registry.ModSounds.STEP_SOFT, 0.8F * k, 1.0F);
         }

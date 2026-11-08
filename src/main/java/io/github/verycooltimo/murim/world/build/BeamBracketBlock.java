@@ -91,6 +91,19 @@ public class BeamBracketBlock extends Block {
             return px < 0 ? px - gap : px + gap;
         }
 
+        /** The same reach seen from the other end of the arms (a turn or a mirror that sends the arm's + end to its - end). */
+        Reach flipped() {
+            return switch (this) {
+                case NEG_NEAR -> POS_NEAR;
+                case NEG_MID -> POS_MID;
+                case NEG_FAR -> POS_FAR;
+                case POS_NEAR -> NEG_NEAR;
+                case POS_MID -> NEG_MID;
+                case POS_FAR -> NEG_FAR;
+                default -> this;
+            };
+        }
+
         static Reach of(int sign, int slot) {
             if (sign < 0) {
                 return slot == 1 ? NEG_NEAR : slot == 0 ? NEG_MID : NEG_FAR;
@@ -292,8 +305,15 @@ public class BeamBracketBlock extends Block {
     @Override
     protected BlockState rotate(BlockState state, Rotation rotation) {
         BlockState s = state.setValue(OFFSET, state.getValue(OFFSET).rotate(rotation));
+        Direction.Axis axis = state.getValue(AXIS);
         if (rotation == Rotation.CLOCKWISE_90 || rotation == Rotation.COUNTERCLOCKWISE_90) {
-            s = s.setValue(AXIS, TimberPlacement.cross(state.getValue(AXIS)));
+            s = s.setValue(AXIS, TimberPlacement.cross(axis));
+        }
+        // REACH counts along the arms from their - end; when the + direction of the arms turns into a - direction (north/west),
+        // the shift has to change sign, or the bracket slides to the wrong side of the pillar it was snapped to (BlockRotationTest)
+        Direction plus = axis == Direction.Axis.X ? Direction.EAST : Direction.SOUTH;
+        if (rotation.rotate(plus).getAxisDirection() == Direction.AxisDirection.NEGATIVE) {
+            s = s.setValue(REACH, state.getValue(REACH).flipped());
         }
         return s;
     }
@@ -301,9 +321,14 @@ public class BeamBracketBlock extends Block {
     @Override
     protected BlockState mirror(BlockState state, Mirror mirror) {
         return switch (mirror) {
-            case FRONT_BACK -> state.setValue(OFFSET, state.getValue(OFFSET).mirrorX());
-            case LEFT_RIGHT -> state.setValue(OFFSET, state.getValue(OFFSET).mirrorZ());
+            case FRONT_BACK -> mirrored(state.setValue(OFFSET, state.getValue(OFFSET).mirrorX()), Direction.Axis.X);
+            case LEFT_RIGHT -> mirrored(state.setValue(OFFSET, state.getValue(OFFSET).mirrorZ()), Direction.Axis.Z);
             default -> state;
         };
+    }
+
+    /** A mirror across an axis reverses arms that run along that axis. */
+    private static BlockState mirrored(BlockState s, Direction.Axis flipped) {
+        return s.getValue(AXIS) == flipped ? s.setValue(REACH, s.getValue(REACH).flipped()) : s;
     }
 }

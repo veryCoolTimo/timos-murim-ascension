@@ -14,6 +14,14 @@
     {
       "when": [
         {
+          "min_standing": "first"
+        }
+      ],
+      "node": "office"
+    },
+    {
+      "when": [
+        {
           "period": "evening|night",
           "member": true
         }
@@ -35,6 +43,9 @@
   "nodes": {
     "where_mentor": {
       "line": "dialogue.murim.leader.where_mentor",
+      "args": [
+        "place:gyeong_pil"
+      ],
       "gesture": "point",
       "options": [
         {
@@ -64,6 +75,20 @@
           "actions": [
             {
               "type": "progression_menu"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.bout.opt.promo",
+          "when": [
+            {
+              "social": "progression:promo_any"
+            }
+          ],
+          "actions": [
+            {
+              "type": "progression_menu",
+              "value": "promo"
             }
           ]
         },
@@ -131,7 +156,7 @@
     },
     "trusted": {
       "line": "dialogue.murim.leader.trusted",
-      "gesture": "bow",
+      "gesture": "nod",
       "options": [
         {
           "text": "dialogue.murim.opt.leave"
@@ -319,6 +344,57 @@
       "line": "dialogue.murim.arrival.head_hall",
       "gesture": "point",
       "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "office": {
+      "random": [
+        "@context"
+      ],
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.social.opt.business",
+          "when": [
+            {
+              "social": "business"
+            }
+          ],
+          "next": "sect_business"
+        },
+        {
+          "text": "dialogue.murim.leader.opt.how_sect",
+          "next": "sect_state"
+        },
+        {
+          "text": "dialogue.murim.bout.opt.promo",
+          "when": [
+            {
+              "social": "progression:promo_any"
+            }
+          ],
+          "actions": [
+            {
+              "type": "progression_menu",
+              "value": "promo"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.progression.opt.menu",
+          "when": [
+            {
+              "social": "progression:menu"
+            }
+          ],
+          "actions": [
+            {
+              "type": "progression_menu"
+            }
+          ]
+        },
         {
           "text": "dialogue.murim.opt.leave"
         }

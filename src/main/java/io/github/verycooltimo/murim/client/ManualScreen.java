@@ -70,6 +70,11 @@ public final class ManualScreen extends Screen {
     private Component styleTitle;
     private ResourceLocation basic;
     private String styleKey;
+    /**
+     * Шаги учатся целиком одной печатью (автор 18.10): печать «Изучить» — один раз, на странице стиля, а не на
+     * странице каждой формы (на ней {@code MasteryService.grant} выдал бы то же самое ещё раз).
+     */
+    private final boolean wholeArt;
 
     /** Имя формы внутри книги стиля («Разрез · Частокол»), иначе имя техники. */
     private static Component formName(ResourceLocation f) {
@@ -100,8 +105,17 @@ public final class ManualScreen extends Screen {
     }
 
     /** Состояние формы: 2 — изучена, 1 — можно изучить, 0 — закрыта (нужна предыдущая), 3 — нет даньтяня, 4 — ниже Пика. */
+    private boolean heldOriginal() {
+        return minecraft != null && minecraft.player != null && io.github.verycooltimo.murim.mastery.Originals.isOriginal(
+                minecraft.player.getItemInHand(open.mainHand() ? net.minecraft.world.InteractionHand.MAIN_HAND
+                        : net.minecraft.world.InteractionHand.OFF_HAND));
+    }
+
     private int state(ResourceLocation f) {
         io.github.verycooltimo.murim.network.SyncMasteryPayload.Entry known = io.github.verycooltimo.murim.client.TechniqueSlotsHud.mastery(f);
+        if (heldOriginal() && ClientMasteryState.entries().stream().anyMatch(entry ->
+                io.github.verycooltimo.murim.mastery.Arts.masteryId(entry.technique())
+                        .equals(io.github.verycooltimo.murim.mastery.Arts.masteryId(open.technique())))) return 1;
         if (known != null) {
             // Выучено по рваной книге, а эта глубже — её можно изучить (предел поднимется).
             // Нечему научить вовсе — печать «Перечитать»: книга уйдёт в озарение (docs/design/24 §3).
@@ -122,6 +136,7 @@ public final class ManualScreen extends Screen {
     }
 
     private io.github.verycooltimo.murim.mastery.TechniqueRequirement missing(ResourceLocation f) {
+        if (io.github.verycooltimo.murim.mastery.MasteryRules.learnsAtZero(f)) return null;
         var definition = io.github.verycooltimo.murim.technique.TechniqueLoader.get(f);
         if (definition == null) return null;
         for (var requirement : definition.requires()) {
@@ -167,12 +182,23 @@ public final class ManualScreen extends Screen {
         net.minecraft.client.Minecraft.getInstance().setScreen(new ManualScreen(open));
     }
 
+    // API: /tmp/mr-ref-1121/minecraft-src/net/minecraft/{client/Minecraft,world/entity/LivingEntity,world/item/ItemStack}.java
+    private static Component manualTitle(ManualPayloads.Open open) {
+        var player = net.minecraft.client.Minecraft.getInstance().player;
+        return player == null ? io.github.verycooltimo.murim.mastery.MasteryService.name(open.technique())
+                : player.getItemInHand(open.mainHand() ? net.minecraft.world.InteractionHand.MAIN_HAND
+                        : net.minecraft.world.InteractionHand.OFF_HAND).getHoverName();
+    }
+
     public ManualScreen(ManualPayloads.Open open) {
-        super(io.github.verycooltimo.murim.mastery.MasteryService.name(open.technique()));
+        super(manualTitle(open));
         this.open = open;
         java.util.Optional<io.github.verycooltimo.murim.technique.Styles.Style> style =
                 io.github.verycooltimo.murim.technique.Styles.of(open.technique());
-        boolean book = style.isPresent() && io.github.verycooltimo.murim.technique.Styles.sequential(style.get());
+        // Книга стиля — и у стилей по очереди, и у шагов (учатся целиком); у одиночной техники — одиночная.
+        boolean book = style.isPresent() && (!io.github.verycooltimo.murim.technique.Styles.starGated(style.get())
+                || style.get() == io.github.verycooltimo.murim.technique.Styles.BAMBOO_HAND);
+        this.wholeArt = book && io.github.verycooltimo.murim.technique.Styles.learnsWhole(style.get());
         this.forms = book ? style.get().forms() : List.of(open.technique());
         // Порядок разворотов — BookLayout (автор 04.10: всегда «картинка, текст» на стиль и на каждую форму).
         List<io.github.verycooltimo.murim.technique.BookLayout.Page> layout;
@@ -187,6 +213,11 @@ public final class ManualScreen extends Screen {
             }
             layout = io.github.verycooltimo.murim.technique.BookLayout.pages(style.get(), path -> exists(tex(path)));
         } else {
+            // Одиночная книга — обложка своей секты (демонические и Теневой Шаг — нейтральная), не красные сливы Хуашань.
+            String coverPath = io.github.verycooltimo.murim.technique.BookLayout.cover(open.technique());
+            if (exists(tex(coverPath))) {
+                cover = tex(coverPath);
+            }
             layout = io.github.verycooltimo.murim.technique.BookLayout.single(open.technique(), path -> exists(tex(path)));
         }
         for (io.github.verycooltimo.murim.technique.BookLayout.Page p : layout) {
@@ -301,12 +332,14 @@ public final class ManualScreen extends Screen {
             g.pose().popPose();
         } else if (stylePage()) {
             styleIntro(g);
-            if (basic != null) {
+            if (sealOnPage()) {
                 seal(g, mouseX, mouseY);
             }
         } else {
             text(g, 214, 24, 144, 176, 0.8F);
-            seal(g, mouseX, mouseY);
+            if (sealOnPage()) {
+                seal(g, mouseX, mouseY);
+            }
         }
     }
 
@@ -323,7 +356,7 @@ public final class ManualScreen extends Screen {
         }
         cy += 4;
         if (styleKey != null && I18n.exists(styleKey)) {
-            for (FormattedCharSequence line : font.split(FormattedText.of(I18n.get(styleKey)), lw)) {
+            for (FormattedCharSequence line : font.split(FormattedText.of(bookText(styleKey)), lw)) {
                 if (cy + font.lineHeight > 176 / 0.8F) {
                     break;
                 }
@@ -404,10 +437,23 @@ public final class ManualScreen extends Screen {
         g.pose().popPose();
     }
 
+    /**
+     * Есть ли на текстовой странице печать: у стиля-книги по очереди — на странице стиля (если есть основа) и на каждой
+     * форме; у целого искусства (шаги) — только на странице стиля, она учит первую форму, а та — все остальные.
+     */
+    private boolean sealOnPage() {
+        if (!textPage()) {
+            return false;
+        }
+        if (io.github.verycooltimo.murim.technique.BambooRules.is(open.technique()))
+            return form().equals(forms.getFirst());
+        return stylePage() ? basic != null || wholeArt : !wholeArt;
+    }
+
     private boolean overSeal(double mouseX, double mouseY) {
         double tx = (mouseX - bx) / k;
         double ty = (mouseY - by) / k;
-        return opened(ticks) && textPage() && (!stylePage() || basic != null) && (state(form()) == 1 || state(form()) == 5)
+        return opened(ticks) && sealOnPage() && (state(form()) == 1 || state(form()) == 5)
                 && tx >= SEAL_X && tx <= SEAL_X + SEAL_W && ty >= SEAL_Y && ty <= SEAL_Y + SEAL_H;
     }
 
@@ -434,6 +480,11 @@ public final class ManualScreen extends Screen {
         return super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
     }
 
+    /** Capture only (HudGalleryCapture films the book page by page): jump to a spread without the page-turn sound. */
+    void showPage(int index) {
+        page = Mth.clamp(index, 0, pages - 1);
+    }
+
     private void turn(int dir) {
         int n = Mth.clamp(page + dir, 0, pages - 1);
         if (n != page) {
@@ -443,6 +494,17 @@ public final class ManualScreen extends Screen {
                         net.minecraft.sounds.SoundEvents.BOOK_PAGE_TURN, 1.0F));
             }
         }
+    }
+
+    // API: /tmp/mr-ref-1121/minecraft-src: KeyMapping#getTranslatedKeyMessage,
+    // Component#getString, Language#getInstance/getOrDefault, I18n#get.
+    private static String bookText(String key) {
+        String template = net.minecraft.locale.Language.getInstance().getOrDefault(key);
+        // Prose without binding arguments may contain ordinary percentage signs.
+        if (!template.contains("%1$s") && !template.contains("%2$s") && !template.contains("%3$s")) return template;
+        return I18n.get(key, ModKeyMappings.TECHNIQUE.getTranslatedKeyMessage().getString(),
+                ModKeyMappings.WHEEL.getTranslatedKeyMessage().getString(),
+                ModKeyMappings.LOADOUT.getTranslatedKeyMessage().getString());
     }
 
     /** Height of the page text at line width {@code lw}, in unscaled font pixels. */
@@ -457,7 +519,8 @@ public final class ManualScreen extends Screen {
         String path = form().getPath();
         // У иллюстрированных форм на странице текста — полный трактат (.full), подпись — на иллюстрации.
         String key = I18n.exists("book.murim." + path + ".full") ? "book.murim." + path + ".full" : "book.murim." + path;
-        String body = I18n.exists(key) ? I18n.get(key)
+        String body = I18n.exists(key) ? bookText(key)
+                : I18n.exists("technique.murim." + path + ".description") ? bookText("technique.murim." + path + ".description")
                 : I18n.exists("technique.murim." + path + ".weakness") ? I18n.get("technique.murim." + path + ".weakness") : "";
         // Put live mastery and effective costs first so they remain visible on a full page.
         List<Component> stats = FootworkText.lines(form());

@@ -1,6 +1,7 @@
 package io.github.verycooltimo.murim.technique;
 
 import io.github.verycooltimo.murim.MurimMod;
+import io.github.verycooltimo.murim.sect.PlayerJournal;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -47,6 +48,10 @@ public final class JunkArts {
         return ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, path);
     }
 
+    public static final ResourceLocation TRUE_SIX_ELEMENTS = id("true_six_elements_sword");
+    public static final ResourceLocation TAIYI_SWORD = id("taiyi_sword");
+    public static final List<ResourceLocation> MOUNT_HUA = List.of(TRUE_SIX_ELEMENTS, TAIYI_SWORD);
+
     public static final ResourceLocation BRAWLER_FIST = id("village_brawler_fist");
     public static final ResourceLocation GREEN_FOREST_AXE = id("green_forest_axe");
     public static final ResourceLocation TEN_THOUSAND_DRAGONS = id("ten_thousand_dragons");
@@ -58,11 +63,13 @@ public final class JunkArts {
     public static final ResourceLocation THOUSAND_CRANES = id("thousand_cranes_dance");
     public static final ResourceLocation BEGGARS_TAP = id("beggars_crushing_tap");
     public static final List<ResourceLocation> FUNNY = List.of(HEAVENLY_DRAGON, THOUSAND_CRANES, BEGGARS_TAP);
-    /** Seeded archive fakes: the old boast plus the three new dance manuals. */
+    /** Seeded archive books: boasts, dances, and the discarded Mount Hua curricula (author 03.11). */
     public static final List<ResourceLocation> ARCHIVE_BOOKS = List.of(TEN_THOUSAND_DRAGONS,
-            HEAVENLY_DRAGON, THOUSAND_CRANES, BEGGARS_TAP);
+            HEAVENLY_DRAGON, THOUSAND_CRANES, BEGGARS_TAP, TRUE_SIX_ELEMENTS, TAIYI_SWORD);
 
     public static final List<Art> ALL = List.of(
+            new Art(TRUE_SIX_ELEMENTS, Weapon.SWORD),
+            new Art(TAIYI_SWORD, Weapon.SWORD),
             new Art(BRAWLER_FIST, Weapon.NONE),
             new Art(GREEN_FOREST_AXE, Weapon.AXE),
             new Art(TEN_THOUSAND_DRAGONS, Weapon.SWORD),
@@ -76,6 +83,11 @@ public final class JunkArts {
     /** Книжки, что носят разбойники (лут, торговец): всё, кроме подделки — та только с полок архива. */
     public static final List<ResourceLocation> STREET_BOOKS = List.of(BRAWLER_FIST, GREEN_FOREST_AXE, BURST_BREATH,
             BANDIT_RUSH, SAND_IN_EYES, HEAVENLY_DRAGON, THOUSAND_CRANES, BEGGARS_TAP);
+
+    /** Author 03.11, canon ch.11/45–46: easy movements build a poorer foundation. */
+    public static double practiceFactor(ResourceLocation id) {
+        return TRUE_SIX_ELEMENTS.equals(id) ? 0.5D : TAIYI_SWORD.equals(id) ? 0.75D : 1.0D;
+    }
 
     /** Топор тянет тело: замедление после удара, тиков. */
     public static final int AXE_STAGGER = 40;
@@ -202,8 +214,8 @@ public final class JunkArts {
             // API: reference/minecraft-src/net/minecraft/world/damagesource/DamageSources.java#magic (сквозь броню).
             player.hurt(player.damageSources().magic(), art.selfDamage());
         }
-        player.displayClientMessage(Component.translatable("murim.junk_art.backlash", Component.translatable(
-                "technique." + d.id().getNamespace() + "." + d.id().getPath())).withStyle(ChatFormatting.DARK_RED), true);
+        PlayerJournal.record(player, Component.translatable("murim.junk_art.backlash", Component.translatable(
+                "technique." + d.id().getNamespace() + "." + d.id().getPath())).withStyle(ChatFormatting.DARK_RED));
     }
 
     private JunkArts() {

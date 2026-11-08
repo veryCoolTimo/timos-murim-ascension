@@ -1,18 +1,138 @@
 {
   "variants": {
-    "facing=south": {
+    "facing=south,sink=0": {
       "model": "murim:block/shr_incense_tripod_small_0_0"
     },
-    "facing=west": {
+    "facing=south,sink=1": {
+      "model": "murim:block/shr_incense_tripod_small_0_0_sink_1"
+    },
+    "facing=south,sink=2": {
+      "model": "murim:block/shr_incense_tripod_small_0_0_sink_2"
+    },
+    "facing=south,sink=3": {
+      "model": "murim:block/shr_incense_tripod_small_0_0_sink_3"
+    },
+    "facing=south,sink=4": {
+      "model": "murim:block/shr_incense_tripod_small_0_0_sink_4"
+    },
+    "facing=south,sink=5": {
+      "model": "murim:block/shr_incense_tripod_small_0_0_sink_5"
+    },
+    "facing=south,sink=6": {
+      "model": "murim:block/shr_incense_tripod_small_0_0_sink_6"
+    },
+    "facing=south,sink=7": {
+      "model": "murim:block/shr_incense_tripod_small_0_0_sink_7"
+    },
+    "facing=south,sink=8": {
+      "model": "murim:block/shr_incense_tripod_small_0_0_sink_8"
+    },
+    "facing=west,sink=0": {
       "model": "murim:block/shr_incense_tripod_small_0_0",
       "y": 90
     },
-    "facing=north": {
+    "facing=west,sink=1": {
+      "model": "murim:block/shr_incense_tripod_small_0_0_sink_1",
+      "y": 90
+    },
+    "facing=west,sink=2": {
+      "model": "murim:block/shr_incense_tripod_small_0_0_sink_2",
+      "y": 90
+    },
+    "facing=west,sink=3": {
+      "model": "murim:block/shr_incense_tripod_small_0_0_sink_3",
+      "y": 90
+    },
+    "facing=west,sink=4": {
+      "model": "murim:block/shr_incense_tripod_small_0_0_sink_4",
+      "y": 90
+    },
+    "facing=west,sink=5": {
+      "model": "murim:block/shr_incense_tripod_small_0_0_sink_5",
+      "y": 90
+    },
+    "facing=west,sink=6": {
+      "model": "murim:block/shr_incense_tripod_small_0_0_sink_6",
+      "y": 90
+    },
+    "facing=west,sink=7": {
+      "model": "murim:block/shr_incense_tripod_small_0_0_sink_7",
+      "y": 90
+    },
+    "facing=west,sink=8": {
+      "model": "murim:block/shr_incense_tripod_small_0_0_sink_8",
+      "y": 90
+    },
+    "facing=north,sink=0": {
       "model": "murim:block/shr_incense_tripod_small_0_0",
       "y": 180
     },
-    "facing=east": {
+    "facing=north,sink=1": {
+      "model": "murim:block/shr_incense_tripod_small_0_0_sink_1",
+      "y": 180
+    },
+    "facing=north,sink=2": {
+      "model": "murim:block/shr_incense_tripod_small_0_0_sink_2",
+      "y": 180
+    },
+    "facing=north,sink=3": {
+      "model": "murim:block/shr_incense_tripod_small_0_0_sink_3",
+      "y": 180
+    },
+    "facing=north,sink=4": {
+      "model": "murim:block/shr_incense_tripod_small_0_0_sink_4",
+      "y": 180
+    },
+    "facing=north,sink=5": {
+      "model": "murim:block/shr_incense_tripod_small_0_0_sink_5",
+      "y": 180
+    },
+    "facing=north,sink=6": {
+      "model": "murim:block/shr_incense_tripod_small_0_0_sink_6",
+      "y": 180
+    },
+    "facing=north,sink=7": {
+      "model": "murim:block/shr_incense_tripod_small_0_0_sink_7",
+      "y": 180
+    },
+    "facing=north,sink=8": {
+      "model": "murim:block/shr_incense_tripod_small_0_0_sink_8",
+      "y": 180
+    },
+    "facing=east,sink=0": {
       "model": "murim:block/shr_incense_tripod_small_0_0",
+      "y": 270
+    },
+    "facing=east,sink=1": {
+      "model": "murim:block/shr_incense_tripod_small_0_0_sink_1",
+      "y": 270
+    },
+    "facing=east,sink=2": {
+      "model": "murim:block/shr_incense_tripod_small_0_0_sink_2",
+      "y": 270
+    },
+    "facing=east,sink=3": {
+      "model": "murim:block/shr_incense_tripod_small_0_0_sink_3",
+      "y": 270
+    },
+    "facing=east,sink=4": {
+      "model": "murim:block/shr_incense_tripod_small_0_0_sink_4",
+      "y": 270
+    },
+    "facing=east,sink=5": {
+      "model": "murim:block/shr_incense_tripod_small_0_0_sink_5",
+      "y": 270
+    },
+    "facing=east,sink=6": {
+      "model": "murim:block/shr_incense_tripod_small_0_0_sink_6",
+      "y": 270
+    },
+    "facing=east,sink=7": {
+      "model": "murim:block/shr_incense_tripod_small_0_0_sink_7",
+      "y": 270
+    },
+    "facing=east,sink=8": {
+      "model": "murim:block/shr_incense_tripod_small_0_0_sink_8",
       "y": 270
     }
   }

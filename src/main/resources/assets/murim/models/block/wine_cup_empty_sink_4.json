@@ -1,0 +1,22 @@
+{
+  "loader": "neoforge:obj",
+  "model": "murim:models/block/obj/cave_wine_cup_empty.obj",
+  "flip_v": false,
+  "emissive_ambient": true,
+  "automatic_culling": true,
+  "shade_quads": true,
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "ceramic": "murim:block/cave_ceramic",
+    "wine": "murim:block/cave_wine",
+    "particle": "murim:block/cave_ceramic"
+  },
+  "ambientocclusion": false,
+  "transform": {
+    "translation": [
+      0,
+      -0.25,
+      0
+    ]
+  }
+}

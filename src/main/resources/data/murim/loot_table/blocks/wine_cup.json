@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "rolls": 1.0,
+      "bonus_rolls": 0.0,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "murim:wine_cup",
+          "functions": [
+            {
+              "function": "minecraft:copy_state",
+              "block": "murim:wine_cup",
+              "properties": [
+                "full"
+              ]
+            }
+          ]
+        }
+      ],
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        }
+      ]
+    }
+  ],
+  "random_sequence": "murim:blocks/wine_cup"
+}

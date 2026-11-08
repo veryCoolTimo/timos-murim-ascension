@@ -46,8 +46,19 @@
           ]
         },
         {
+          "text": "dialogue.murim.arrival.opt.noguide",
+          "actions": [
+            {
+              "type": "arrival_unguide"
+            }
+          ]
+        },
+        {
           "text": "dialogue.murim.opt.leave"
         }
+      ],
+      "args": [
+        "place:gyeong_pil"
       ]
     },
     "waiting": {
@@ -59,6 +70,14 @@
           "actions": [
             {
               "type": "arrival_guide"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.arrival.opt.noguide",
+          "actions": [
+            {
+              "type": "arrival_unguide"
             }
           ]
         },

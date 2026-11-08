@@ -3,6 +3,7 @@ package io.github.verycooltimo.murim.decor;
 import com.mojang.serialization.MapCodec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -24,7 +25,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Shrine canopy, 3 x 3 blocks (int_13). COL counts to the viewer's right (right = FACING.getCounterClockWise()), PART
+ * House-shrine, 2 x 3 cells, 2.5 blocks tall. COL counts right (right = FACING.getCounterClockWise()), PART
  * (= row) counts up; the clicked block becomes the lower LEFT cell and the rest grows right and up. Same stacking rules
  * as {@link ShrineTallBlock}: needs room, a cell turns to air when a neighbour cell is gone, only cell (0, 0) has
  * loot, breaking any cell breaks the cell (0, 0) with its drop (creative: none).
@@ -34,7 +35,7 @@ import org.jetbrains.annotations.Nullable;
 public class ShrineGridBlock extends HorizontalDirectionalBlock {
 
     public static final MapCodec<ShrineGridBlock> CODEC = simpleCodec(p -> new ShrineGridBlock(p, ShrineSpec.DUMMY));
-    public static final IntegerProperty COL = IntegerProperty.create("col", 0, 2);
+    public static final IntegerProperty COL = IntegerProperty.create("col", 0, 1);
     public static final IntegerProperty PART = ShrineTallBlock.PART;
 
     private final ShrineSpec spec;
@@ -125,6 +126,31 @@ public class ShrineGridBlock extends HorizontalDirectionalBlock {
     @Override
     protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         return shapes[state.getValue(COL)][state.getValue(PART)][state.getValue(FACING).get2DDataValue()];
+    }
+
+    @Override
+    public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
+        // Emit once from the base cell. The ledge is at 6.5 px; the candle extends into row 1.
+        // Coordinates are in the south-facing whole-model frame from shrine_rework.py.
+        if (spec.fx() != ShrineSpec.Fx.OFFERINGS || state.getValue(COL) != 0 || state.getValue(PART) != 0) {
+            return;
+        }
+        offeringParticle(state.getValue(FACING), level, pos, random, 9.7, 17.2, 13.7, true);
+        offeringParticle(state.getValue(FACING), level, pos, random, 16, 12.5, 13.7, false);
+    }
+
+    private static void offeringParticle(Direction facing, Level level, BlockPos pos, RandomSource random,
+                                         double x, double y, double z, boolean candle) {
+        double rx = x, rz = z;
+        // Same south-frame rotation as HallFurniture.turn and the OBJ blockstates.
+        switch (facing) {
+            case NORTH -> { rx = 16 - x; rz = 16 - z; }
+            case EAST -> { rx = z; rz = 16 - x; }
+            case WEST -> { rx = 16 - z; rz = x; }
+            default -> { }
+        }
+        ShrineBlock.smallOfferingParticle(level, random, pos.getX() + rx / 16,
+                pos.getY() + y / 16, pos.getZ() + rz / 16, candle);
     }
 
     @Override

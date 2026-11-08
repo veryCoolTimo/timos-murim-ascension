@@ -1,6 +1,7 @@
 package io.github.verycooltimo.murim.world.location;
 
 import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import io.github.verycooltimo.murim.MurimMod;
 import io.github.verycooltimo.murim.library.LibraryPiece;
@@ -34,26 +35,22 @@ import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.levelgen.structure.StructurePiece;
 import net.minecraft.world.level.levelgen.structure.StructureStart;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.event.RegisterCommandsEvent;
 
 /**
  * Dev commands of the location round trip (docs/design/28-location-capture.md), operator only:
  * <ul>
- *   <li>{@code /murim capture <location> [from to]} — take the author's edited location back: without corners the
+ *   <li>{@code /murim dev loc capture <location> [from to]} — take the author's edited location back: without corners the
  *       box is found from the structure the player stands in (camp, archive, fortress) or the sect shelf of
  *       Mount Hua; with corners — exactly that box;</li>
- *   <li>{@code /murim location info <location>} — what is captured and where it comes from;</li>
- *   <li>{@code /murim location place <location> [rotation]} — stamp it at the player (preview in a live world);</li>
- *   <li>{@code /murim location forget <location>} — drop this world's copy (resources and procedural come back).</li>
+ *   <li>{@code /murim dev loc info <location>} — what is captured and where it comes from;</li>
+ *   <li>{@code /murim dev loc place <location> [rotation]} — stamp it at the player (preview in a live world);</li>
+ *   <li>{@code /murim dev loc forget <location>} — drop this world's copy (resources and procedural come back).</li>
  * </ul>
  *
  * <p>API: reference/minecraft-src/net/minecraft/commands/arguments/coordinates/BlockPosArgument.java#getLoadedBlockPos,
  * reference/minecraft-src/net/minecraft/world/level/chunk/ChunkAccess.java#getReferencesForStructure/#getStartForStructure,
  * reference/neoforge-src/net/neoforged/neoforge/event/RegisterCommandsEvent.java.
  */
-@EventBusSubscriber(modid = MurimMod.MODID)
 public final class LocationCommand {
 
     /** How far (chunks) around the player a structure is looked for. */
@@ -62,10 +59,8 @@ public final class LocationCommand {
     private LocationCommand() {
     }
 
-    @SubscribeEvent
-    static void onRegisterCommands(RegisterCommandsEvent event) {
-        event.getDispatcher().register(Commands.literal("murim")
-                .requires(source -> source.hasPermission(2))
+    public static LiteralArgumentBuilder<CommandSourceStack> node() {
+        return Commands.literal("loc")
                 .then(Commands.literal("capture")
                         .then(Commands.argument("location", StringArgumentType.word())
                                 .suggests((c, b) -> SharedSuggestionProvider.suggest(ModLocations.KNOWN, b))
@@ -74,13 +69,12 @@ public final class LocationCommand {
                                         .then(Commands.argument("to", BlockPosArgument.blockPos())
                                                 .executes(c -> capture(c, BlockPosArgument.getLoadedBlockPos(c, "from"),
                                                         BlockPosArgument.getLoadedBlockPos(c, "to")))))))
-                .then(Commands.literal("location")
-                        .then(Commands.literal("info").then(location().executes(LocationCommand::info)))
-                        .then(Commands.literal("forget").then(location().executes(LocationCommand::forget)))
-                        .then(Commands.literal("place").then(location().executes(c -> place(c, Rotation.NONE))
-                                .then(Commands.argument("rotation", StringArgumentType.word())
-                                        .suggests((c, b) -> SharedSuggestionProvider.suggest(List.of("0", "90", "180", "270"), b))
-                                        .executes(c -> place(c, rotation(StringArgumentType.getString(c, "rotation")))))))));
+                .then(Commands.literal("info").then(location().executes(LocationCommand::info)))
+                .then(Commands.literal("forget").then(location().executes(LocationCommand::forget)))
+                .then(Commands.literal("place").then(location().executes(c -> place(c, Rotation.NONE))
+                        .then(Commands.argument("rotation", StringArgumentType.word())
+                                .suggests((c, b) -> SharedSuggestionProvider.suggest(List.of("0", "90", "180", "270"), b))
+                                .executes(c -> place(c, rotation(StringArgumentType.getString(c, "rotation")))))));
     }
 
     private static com.mojang.brigadier.builder.RequiredArgumentBuilder<CommandSourceStack, String> location() {
@@ -172,7 +166,7 @@ public final class LocationCommand {
                 if (s != null) {
                     return fromStart(s, null);
                 }
-                // A fortress built by /murim fortress place has no structure start.
+                // A fortress built by /murim dev boss place has no structure start.
                 FortressData.Entry e = Fortresses.nearest(level, at);
                 if (e == null || e.yard.distSqr(at) > 96 * 96) {
                     return null;

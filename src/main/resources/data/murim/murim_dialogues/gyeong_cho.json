@@ -5,6 +5,44 @@
     {
       "when": [
         {
+          "flag": "quest.missing.arrived",
+          "not_flag": "quest.missing.done"
+        },
+        {
+          "social": "quest:available:missing"
+        }
+      ],
+      "node": "missing_healer"
+    },
+    {
+      "when": [
+        {
+          "member": true,
+          "social": "quest:heard:red_vein_rumour",
+          "not_flag": "quest.red_vein.asked"
+        }
+      ],
+      "node": "red_vein_hook"
+    },
+    {
+      "when": [
+        {
+          "min_standing": "elder"
+        }
+      ],
+      "node": "office_elder"
+    },
+    {
+      "when": [
+        {
+          "min_standing": "first"
+        }
+      ],
+      "node": "office_first"
+    },
+    {
+      "when": [
+        {
           "period": "breakfast|dinner"
         }
       ],
@@ -38,6 +76,16 @@
       "gesture": "nod",
       "options": [
         {
+          "text": "dialogue.murim.red_vein.opt.ask",
+          "next": "red_vein_ask",
+          "when": [
+            {
+              "member": true,
+              "not_flag": "quest.red_vein.done"
+            }
+          ]
+        },
+        {
           "text": "dialogue.murim.gyeong_cho.opt.heal",
           "next": "heal"
         },
@@ -55,6 +103,19 @@
           "next": "answer"
         },
         {
+          "text": "dialogue.murim.pill.assist",
+          "when": [
+            {
+              "member": true
+            }
+          ],
+          "actions": [
+            {
+              "type": "assist_elixir"
+            }
+          ]
+        },
+        {
           "text": "dialogue.murim.opt.leave"
         }
       ]
@@ -65,6 +126,16 @@
       ],
       "gesture": "nod",
       "options": [
+        {
+          "text": "dialogue.murim.red_vein.opt.ask",
+          "next": "red_vein_ask",
+          "when": [
+            {
+              "member": true,
+              "not_flag": "quest.red_vein.done"
+            }
+          ]
+        },
         {
           "text": "dialogue.murim.social.opt.business",
           "when": [
@@ -83,6 +154,19 @@
           "next": "answer"
         },
         {
+          "text": "dialogue.murim.pill.assist",
+          "when": [
+            {
+              "member": true
+            }
+          ],
+          "actions": [
+            {
+              "type": "assist_elixir"
+            }
+          ]
+        },
+        {
           "text": "dialogue.murim.opt.leave"
         }
       ]
@@ -93,6 +177,29 @@
       ],
       "gesture": "nod",
       "options": [
+        {
+          "text": "dialogue.murim.red_vein.opt.ask",
+          "next": "red_vein_ask",
+          "when": [
+            {
+              "member": true,
+              "not_flag": "quest.red_vein.done"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.approach.opt.not_now",
+          "when": [
+            {
+              "social": "approaching"
+            }
+          ],
+          "actions": [
+            {
+              "type": "approach_decline"
+            }
+          ]
+        },
         {
           "text": "dialogue.murim.social.opt.business",
           "when": [
@@ -107,6 +214,19 @@
           "next": "sect_topics"
         },
         {
+          "text": "dialogue.murim.pill.assist",
+          "when": [
+            {
+              "member": true
+            }
+          ],
+          "actions": [
+            {
+              "type": "assist_elixir"
+            }
+          ]
+        },
+        {
           "text": "dialogue.murim.opt.leave"
         }
       ]
@@ -115,6 +235,16 @@
       "line": "dialogue.murim.gyeong_cho.answer",
       "gesture": "explain",
       "options": [
+        {
+          "text": "dialogue.murim.red_vein.opt.ask",
+          "next": "red_vein_ask",
+          "when": [
+            {
+              "member": true,
+              "not_flag": "quest.red_vein.done"
+            }
+          ]
+        },
         {
           "text": "dialogue.murim.opt.leave"
         }
@@ -171,6 +301,94 @@
           "next": "pills"
         },
         {
+          "text": "dialogue.murim.merit.quick_recovery",
+          "when": [
+            {
+              "shop": "quick_recovery"
+            }
+          ],
+          "actions": [
+            {
+              "type": "merit_buy",
+              "value": "quick_recovery"
+            }
+          ],
+          "next": "pills"
+        },
+        {
+          "text": "dialogue.murim.gyeong_cho.opt.more_pills",
+          "next": "pills_more"
+        },
+        {
+          "text": "dialogue.murim.gyeong_cho.opt.formulas",
+          "when": [
+            {
+              "shop": "formula_snow_plum"
+            }
+          ],
+          "next": "formulas"
+        },
+        {
+          "text": "dialogue.murim.pill.assist",
+          "when": [
+            {
+              "member": true
+            }
+          ],
+          "actions": [
+            {
+              "type": "assist_elixir"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "formulas": {
+      "line": "dialogue.murim.gyeong_cho.formulas",
+      "args": [
+        "merit"
+      ],
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.merit.formula_snow_plum",
+          "when": [
+            {
+              "not_flag": "formula.snow_plum"
+            }
+          ],
+          "actions": [
+            {
+              "type": "merit_buy",
+              "value": "formula_snow_plum"
+            }
+          ],
+          "next": "formulas"
+        },
+        {
+          "text": "dialogue.murim.merit.formula_origin_energy",
+          "when": [
+            {
+              "not_flag": "formula.origin_energy",
+              "min_standing": "graduate"
+            }
+          ],
+          "actions": [
+            {
+              "type": "merit_buy",
+              "value": "formula_origin_energy"
+            }
+          ],
+          "next": "formulas"
+        },
+        {
+          "text": "dialogue.murim.gyeong_cho.opt.back",
+          "next": "pills"
+        },
+        {
           "text": "dialogue.murim.opt.leave"
         }
       ]
@@ -183,6 +401,16 @@
       "gesture": "nod",
       "options": [
         {
+          "text": "dialogue.murim.red_vein.opt.ask",
+          "next": "red_vein_ask",
+          "when": [
+            {
+              "member": true,
+              "not_flag": "quest.red_vein.done"
+            }
+          ]
+        },
+        {
           "text": "dialogue.murim.gyeong_cho.opt.heal",
           "next": "heal"
         },
@@ -198,6 +426,19 @@
         {
           "text": "dialogue.murim.gyeong_cho.opt.ask",
           "next": "answer"
+        },
+        {
+          "text": "dialogue.murim.pill.assist",
+          "when": [
+            {
+              "member": true
+            }
+          ],
+          "actions": [
+            {
+              "type": "assist_elixir"
+            }
+          ]
         },
         {
           "text": "dialogue.murim.opt.leave"
@@ -208,6 +449,16 @@
       "line": "dialogue.murim.social.business",
       "options": [
         {
+          "text": "dialogue.murim.red_vein.opt.ask",
+          "next": "red_vein_ask",
+          "when": [
+            {
+              "member": true,
+              "not_flag": "quest.red_vein.done"
+            }
+          ]
+        },
+        {
           "text": "dialogue.murim.gyeong_cho.opt.heal",
           "next": "heal"
         },
@@ -225,6 +476,19 @@
           "next": "answer"
         },
         {
+          "text": "dialogue.murim.pill.assist",
+          "when": [
+            {
+              "member": true
+            }
+          ],
+          "actions": [
+            {
+              "type": "assist_elixir"
+            }
+          ]
+        },
+        {
           "text": "dialogue.murim.opt.leave"
         }
       ]
@@ -233,6 +497,16 @@
       "line": "dialogue.murim.social.business",
       "gesture": "explain",
       "options": [
+        {
+          "text": "dialogue.murim.red_vein.opt.ask",
+          "next": "red_vein_ask",
+          "when": [
+            {
+              "member": true,
+              "not_flag": "quest.red_vein.done"
+            }
+          ]
+        },
         {
           "text": "dialogue.murim.social.opt.first",
           "when": [
@@ -269,6 +543,349 @@
             }
           ]
         },
+        {
+          "text": "dialogue.murim.pill.assist",
+          "when": [
+            {
+              "member": true
+            }
+          ],
+          "actions": [
+            {
+              "type": "assist_elixir"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "office_elder": {
+      "random": [
+        "dialogue.murim.gyeong_cho.office_elder.1",
+        "dialogue.murim.gyeong_cho.office_elder.2"
+      ],
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.red_vein.opt.ask",
+          "next": "red_vein_ask",
+          "when": [
+            {
+              "member": true,
+              "not_flag": "quest.red_vein.done"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.approach.opt.not_now",
+          "when": [
+            {
+              "social": "approaching"
+            }
+          ],
+          "actions": [
+            {
+              "type": "approach_decline"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.social.opt.business",
+          "when": [
+            {
+              "social": "business"
+            }
+          ],
+          "next": "sect_business"
+        },
+        {
+          "text": "dialogue.murim.gyeong_cho.opt.heal",
+          "next": "heal"
+        },
+        {
+          "text": "dialogue.murim.gyeong_cho.opt.pills",
+          "when": [
+            {
+              "member": true
+            }
+          ],
+          "next": "pills"
+        },
+        {
+          "text": "dialogue.murim.pill.assist",
+          "when": [
+            {
+              "member": true
+            }
+          ],
+          "actions": [
+            {
+              "type": "assist_elixir"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "office_first": {
+      "random": [
+        "dialogue.murim.gyeong_cho.office_first.1",
+        "dialogue.murim.gyeong_cho.office_first.2"
+      ],
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.red_vein.opt.ask",
+          "next": "red_vein_ask",
+          "when": [
+            {
+              "member": true,
+              "not_flag": "quest.red_vein.done"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.approach.opt.not_now",
+          "when": [
+            {
+              "social": "approaching"
+            }
+          ],
+          "actions": [
+            {
+              "type": "approach_decline"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.social.opt.business",
+          "when": [
+            {
+              "social": "business"
+            }
+          ],
+          "next": "sect_business"
+        },
+        {
+          "text": "dialogue.murim.gyeong_cho.opt.heal",
+          "next": "heal"
+        },
+        {
+          "text": "dialogue.murim.gyeong_cho.opt.pills",
+          "when": [
+            {
+              "member": true
+            }
+          ],
+          "next": "pills"
+        },
+        {
+          "text": "dialogue.murim.pill.assist",
+          "when": [
+            {
+              "member": true
+            }
+          ],
+          "actions": [
+            {
+              "type": "assist_elixir"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "missing_healer": {
+      "line": "dialogue.murim.quest.missing.healer",
+      "options": [
+        {
+          "text": "dialogue.murim.quest.missing.opt.thanks",
+          "actions": [
+            {
+              "type": "quest_hand_in",
+              "value": "missing_done"
+            }
+          ],
+          "when": [
+            {
+              "social": "quest:available:missing"
+            }
+          ]
+        }
+      ]
+    },
+    "pills_more": {
+      "line": "dialogue.murim.gyeong_cho.pills_more",
+      "args": [
+        "merit"
+      ],
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.merit.vitality",
+          "actions": [
+            {
+              "type": "merit_buy",
+              "value": "vitality"
+            }
+          ],
+          "next": "pills_more"
+        },
+        {
+          "text": "dialogue.murim.merit.fasting",
+          "actions": [
+            {
+              "type": "merit_buy",
+              "value": "fasting"
+            }
+          ],
+          "next": "pills_more"
+        },
+        {
+          "text": "dialogue.murim.merit.antidote",
+          "actions": [
+            {
+              "type": "merit_buy",
+              "value": "antidote"
+            }
+          ],
+          "next": "pills_more"
+        },
+        {
+          "text": "dialogue.murim.merit.blood_replenishing",
+          "actions": [
+            {
+              "type": "merit_buy",
+              "value": "blood_replenishing"
+            }
+          ],
+          "next": "pills_more",
+          "when": [
+            {
+              "min_standing": "disciple"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.gyeong_cho.opt.more_back",
+          "next": "pills"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "red_vein_hook": {
+      "line": "dialogue.murim.red_vein.hook",
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.red_vein.opt.ask",
+          "next": "red_vein_ask",
+          "when": [
+            {
+              "member": true,
+              "not_flag": "quest.red_vein.done"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "red_vein_ask": {
+      "line": "dialogue.murim.red_vein.explain",
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.red_vein.opt.herbarium",
+          "next": "red_vein_herbarium"
+        },
+        {
+          "text": "dialogue.murim.red_vein.opt.hand_in",
+          "next": "red_vein_done",
+          "actions": [
+            {
+              "type": "quest_hand_in",
+              "value": "red_vein_materials"
+            },
+            {
+              "type": "quest_note",
+              "value": "murim.red_vein.done"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.red_vein.opt.alternative",
+          "next": "red_vein_alternative"
+        },
+        {
+          "text": "dialogue.murim.red_vein.opt.later"
+        }
+      ],
+      "enter": [
+        {
+          "type": "set_flag",
+          "value": "quest.red_vein.asked"
+        },
+        {
+          "type": "quest_note",
+          "value": "murim.red_vein.request"
+        }
+      ]
+    },
+    "red_vein_herbarium": {
+      "line": "dialogue.murim.red_vein.herbarium",
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.gyeong_cho.opt.back",
+          "next": "red_vein_ask"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "red_vein_alternative": {
+      "line": "dialogue.murim.red_vein.alternative",
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.red_vein.opt.buy",
+          "next": "red_vein_ask",
+          "actions": [
+            {
+              "type": "quest_hand_in",
+              "value": "red_vein_buy"
+            }
+          ],
+          "when": [
+            {
+              "not_flag": "quest.red_vein.paid.hand_in.red_vein_buy"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.gyeong_cho.opt.back",
+          "next": "red_vein_ask"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "red_vein_done": {
+      "line": "dialogue.murim.red_vein.done",
+      "gesture": "explain",
+      "options": [
         {
           "text": "dialogue.murim.opt.leave"
         }

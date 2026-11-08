@@ -15,6 +15,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
@@ -82,7 +83,7 @@ public class WeaponStandBlock extends HorizontalDirectionalBlock implements Enti
         for (Direction d : Direction.Plane.HORIZONTAL) {
             shapes[d.get2DDataValue()] = turn(kind.north, d);
         }
-        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH));
+        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(TabletopSupport.SINK, 0));
     }
 
     public Kind kind() {
@@ -188,12 +189,22 @@ public class WeaponStandBlock extends HorizontalDirectionalBlock implements Enti
 
     @Override
     public @Nullable BlockState getStateForPlacement(BlockPlaceContext context) {
-        return defaultBlockState().setValue(FACING, context.getHorizontalDirection().getOpposite());
+        BlockState state = defaultBlockState().setValue(FACING, context.getHorizontalDirection().getOpposite());
+        return kind == Kind.STAND ? TabletopSupport.onSupport(state, context.getLevel(), context.getClickedPos()) : state;
+    }
+
+    // Same support update and synchronized blockstate offset as StoBonsaiBlock.
+    @Override
+    protected BlockState updateShape(BlockState state, Direction dir, BlockState neighbour, LevelAccessor level,
+                                     BlockPos pos, BlockPos neighbourPos) {
+        return kind == Kind.STAND && dir == Direction.DOWN ? TabletopSupport.onSupport(state, level, pos)
+                : super.updateShape(state, dir, neighbour, level, pos, neighbourPos);
     }
 
     @Override
     protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        return shapes[state.getValue(FACING).get2DDataValue()];
+        VoxelShape shape = shapes[state.getValue(FACING).get2DDataValue()];
+        return kind == Kind.STAND ? TabletopSupport.lower(shape, state) : shape;
     }
 
     @Override
@@ -213,6 +224,6 @@ public class WeaponStandBlock extends HorizontalDirectionalBlock implements Enti
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING);
+        builder.add(FACING, TabletopSupport.SINK);
     }
 }

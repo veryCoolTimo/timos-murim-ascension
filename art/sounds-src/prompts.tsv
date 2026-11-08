@@ -49,3 +49,7 @@ training_rep	0.5	0.5	-	Single dull wooden knock, short hollow wood block tap, dr
 training_set	1.0	0.5	-	Two quick hollow wooden block knocks followed by a short tired exhale, dry, close, no music
 coin_clink	0.7	0.5	-	A few old bronze coins clinking into a cloth purse, short bright metallic jingle, dry, close, no music
 sect_bell	4.0	0.4	-	single strike of a large bronze Buddhist temple bell struck by a wooden log, deep warm boom with long shimmering decay (b: one hit on a big bronze Korean temple bell, deep resonant gong-like tone, slow fading hum)
+bt_breath	2.6	0.4	-	Slow deep calm human breath, one long inhale then one long exhale, close microphone, meditation, quiet and intimate, no voice, no music
+bt_hum	2.0	0.45	-	Deep resonant low energy hum, smooth steady drone swelling gently, magical qi power gathering, no melody, no music, no voice
+bt_crack	0.6	0.5	-	Single sharp dry crack like thick ice or a bone cracking, short click with a tiny glassy ring, very short tail, no music
+bt_tail	4.5	0.45	-	Huge distant deep boom echoing across mountain valleys, long reverberating tail slowly fading far away, wuxia cinematic shockwave, no music

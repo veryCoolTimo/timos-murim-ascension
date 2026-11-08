@@ -10,7 +10,7 @@ package io.github.verycooltimo.murim.decor;
 public record ShrineSpec(int width, int height, boolean wall, double[][] boxes, Fx fx, double fxY) {
 
     /** Client-side ambient particles. */
-    public enum Fx { NONE, CANDLE, INCENSE }
+    public enum Fx { NONE, CANDLE, INCENSE, CANDLE_SMALL, INCENSE_SMALL, OFFERINGS }
 
     public static final ShrineSpec DUMMY = new ShrineSpec(1, 1, false, new double[][] {{0, 0, 0, 16, 16, 16}}, Fx.NONE, 0);
 

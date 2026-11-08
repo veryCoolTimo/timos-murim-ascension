@@ -155,6 +155,8 @@ public final class LockOn {
     /** Метка захвата: розовый ромб над целью, медленно вращается и пульсирует. */
     @SubscribeEvent
     static void onRender(RenderLevelStageEvent event) {
+        // Film presentation excludes interface diamonds (rain-09, full-19). Targeting stays active.
+        if ("1".equals(System.getenv("MURIM_CAPTURE_HIDE_LOCK"))) return;
         if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_PARTICLES) {
             return;
         }

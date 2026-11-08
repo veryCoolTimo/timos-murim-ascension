@@ -111,18 +111,18 @@ class BossMoveTest {
     }
 
     @Test
-    @DisplayName("Выбор приёма: вблизи связка, издали таран, в фазе 2 раскол и рык, в фазе 3 вихрь")
+    @DisplayName("Выбор приёма (полный набор, отложенный по D-2): вблизи связка, издали таран, в фазе 2 раскол и рык, в фазе 3 вихрь")
     void choose() {
         boolean[] all = {true, true, true, true, true, true};
-        assertEquals(BossMove.CHAIN, BossRules.choose(2.0D, 1, all, 0.9F));
-        assertEquals(BossMove.RAM, BossRules.choose(9.0D, 1, all, 0.9F));
-        assertEquals(BossMove.POUNCE, BossRules.choose(6.0D, 1, all, 0.3F));
-        assertNull(BossRules.choose(6.0D, 1, all, 0.9F), "средняя дистанция без прыжка — сближаться");
-        assertEquals(BossMove.ROAR, BossRules.choose(4.0D, 2, all, 0.9F));
+        assertEquals(BossMove.CHAIN, BossRules.choose(2.0D, 1, all, 0.9F, true));
+        assertEquals(BossMove.RAM, BossRules.choose(9.0D, 1, all, 0.9F, true));
+        assertEquals(BossMove.POUNCE, BossRules.choose(6.0D, 1, all, 0.3F, true));
+        assertNull(BossRules.choose(6.0D, 1, all, 0.9F, true), "средняя дистанция без прыжка — сближаться");
+        assertEquals(BossMove.ROAR, BossRules.choose(4.0D, 2, all, 0.9F, true));
         boolean[] noRoar = {true, true, true, false, true, true};
-        assertEquals(BossMove.SPLIT, BossRules.choose(6.0D, 2, noRoar, 0.5F));
-        assertEquals(BossMove.WHIRL, BossRules.choose(6.0D, 3, all, 0.2F));
+        assertEquals(BossMove.SPLIT, BossRules.choose(6.0D, 2, noRoar, 0.5F, true));
+        assertEquals(BossMove.WHIRL, BossRules.choose(6.0D, 3, all, 0.2F, true));
         boolean[] none = {true, false, false, false, false, false};
-        assertNull(BossRules.choose(9.0D, 3, none, 0.1F));
+        assertNull(BossRules.choose(9.0D, 3, none, 0.1F, true));
     }
 }

@@ -27,6 +27,7 @@ public final class RankEffects {
 
     public static void apply(ServerPlayer player) {
         int rank = player.getData(ModAttachments.PROFILE).rank();
+        io.github.verycooltimo.murim.sect.SectUniforms.issue(player);
         AttributeInstance speed = player.getAttribute(Attributes.MOVEMENT_SPEED);
         if (speed != null) {
             double fast = Realm.bonusSpeed(rank);

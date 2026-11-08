@@ -186,32 +186,58 @@ public final class SectGameplayGameTests {
     public static void guardApproachesAndOpensDialogueNearElder(GameTestHelper h) {
         SectGameTests.setPeriod(h, SectSchedule.Period.TRAINING);
         ServerPlayer p = player(h, 4, 4);
+        // As in SectGuideGameTests.member: the talk watchdog resolves its player through the level.
+        h.getLevel().addNewPlayer(p);
         npc(h, "tae_seong", 6, 4);
         String key = SectRota.dayWatch(SectSchedule.day(h.getLevel().getDayTime()), 0).key();
         SectDisciple guard = npc(h, key, 12, 4);
         DialogueService.interceptNearElder(p);
         h.assertTrue(guard.blocking() && guard.talkingTo() < 0 && !p.getData(ModAttachments.DIALOGUE).active(),
                 "страж открыл разговор до перехвата");
+        long[] openedAt = {-1L};
         h.succeedWhen(() -> {
             var session = p.getData(ModAttachments.DIALOGUE);
             h.assertTrue(session.active() && session.npc() == guard.getId()
                     && "intercept_elder".equals(session.dialogue().getPath()), "страж сам не заговорил");
-            h.assertTrue(guard.talkingTo() == p.getId() && guard.getNavigation().isDone() && !guard.blocking(),
-                    "страж продолжает перехват во время разговора");
+            // A later watch order must not restart the intercept while the dialogue owns this guard.
+            guard.block(p, p.position(), 60);
+            h.assertTrue(guard.talkingTo() == p.getId(), "страж потерял собеседника при активном диалоге");
+            h.assertTrue(guard.getNavigation().isDone(), "страж продолжает идти во время разговора");
+            h.assertTrue(!guard.blocking(), "страж продолжает перехват во время разговора");
+            h.assertTrue(guard.walking().goal() == null, "у говорящего стража остался маршрут перехвата");
+            long now = h.getLevel().getGameTime();
+            if (openedAt[0] < 0L) openedAt[0] = now;
+            // Cross at least two 20-tick stale-talker sweeps, rather than passing on the opening tick.
+            h.assertTrue(now - openedAt[0] >= 45L, "ожидание проверки устойчивости разговора");
+            DialogueService.close(p, guard);
+            h.getLevel().removePlayerImmediately(p, net.minecraft.world.entity.Entity.RemovalReason.DISCARDED);
         });
     }
 
-    @GameTest(template = "sect_yard", timeoutTicks = 40)
+    @GameTest(template = "sect_yard", timeoutTicks = 60, batch = "sect_gameplay_meditation_dialogue")
     public static void dialogueClearsBothMeditationPoseAndLotusClip(GameTestHelper h) {
         ServerPlayer p = player(h, 12, 12);
+        // releaseStaleTalker resolves the talker by entity ID on the next AI tick.
+        h.getLevel().addNewPlayer(p);
         SectDisciple d = npc(h, "tae_seong", 14, 12);
-        d.sit(true);
+        d.sit(io.github.verycooltimo.murim.entity.SeatStyle.LOTUS);
         d.holdPose(SectPose.MEDITATE, 200);
         h.assertTrue(DialogueService.openDialogue(p, d, id("plum_witness"), "recognized"), "нет диалога");
-        h.runAfterDelay(2, () -> {
-            h.assertTrue(!d.sitting() && d.pose() != SectPose.MEDITATE && !d.poseHeld(), "медитация осталась при разговоре");
-            h.assertTrue(d.talkingTo() == p.getId() && d.getNavigation().isDone(), "разговор прерван распорядком");
-            h.succeed();
+        int initialTicks = d.tickCount;
+        // Cross a full tickLife/watchdog cycle regardless of the entity id's modulo-20 phase.
+        h.runAfterDelay(22, () -> {
+            try {
+                h.assertTrue(d.tickCount >= initialTicks + 20, "NPC не прошёл полный цикл распорядка");
+                h.assertTrue(h.getLevel().getEntity(p.getId()) == p, "собеседник отсутствует в мире теста");
+                h.assertTrue(!d.sitting() && d.pose() != SectPose.MEDITATE && !d.poseHeld(), "медитация осталась при разговоре");
+                h.assertTrue(d.talkingTo() == p.getId(), "разговор прерван распорядком");
+                h.assertTrue(d.getNavigation().isDone(), "NPC пошёл во время разговора");
+                h.assertTrue(p.getData(ModAttachments.DIALOGUE).npc() == d.getId(), "сессия разговора потеряна");
+                h.succeed();
+            } finally {
+                DialogueService.close(p, d);
+                h.getLevel().removePlayerImmediately(p, net.minecraft.world.entity.Entity.RemovalReason.DISCARDED);
+            }
         });
     }
 

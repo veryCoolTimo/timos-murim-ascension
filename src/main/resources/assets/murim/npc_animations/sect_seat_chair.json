@@ -1,0 +1,71 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "sect_seat_chair": {
+      "loop": true,
+      "animation_length": 1.0,
+      "bones": {
+        "body": {
+          "position": {
+            "0.0": {
+              "vector": [
+                0,
+                -10,
+                0
+              ],
+              "easing": "linear"
+            },
+            "1": {
+              "vector": [
+                0,
+                -10,
+                0
+              ],
+              "easing": "linear"
+            }
+          }
+        },
+        "right_leg": {
+          "rotation": {
+            "0.0": {
+              "vector": [
+                -74,
+                7,
+                0
+              ],
+              "easing": "linear"
+            },
+            "1": {
+              "vector": [
+                -74,
+                7,
+                0
+              ],
+              "easing": "linear"
+            }
+          }
+        },
+        "left_leg": {
+          "rotation": {
+            "0.0": {
+              "vector": [
+                -74,
+                -7,
+                0
+              ],
+              "easing": "linear"
+            },
+            "1": {
+              "vector": [
+                -74,
+                -7,
+                0
+              ],
+              "easing": "linear"
+            }
+          }
+        }
+      }
+    }
+  }
+}

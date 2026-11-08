@@ -6,15 +6,37 @@
     "allow": [
       {
         "min_standing": "disciple"
-      },
-      {
-        "flag": "summon.tae_seong"
       }
     ],
     "intercept": "murim:intercept_elder",
     "busy": "busy"
   },
   "start": [
+    {
+      "when": [
+        {
+          "flag": "quest.red_vein.done",
+          "not_flag": "quest.red_vein.elder_thanked"
+        }
+      ],
+      "node": "red_vein_elder"
+    },
+    {
+      "when": [
+        {
+          "min_standing": "elder"
+        }
+      ],
+      "node": "office_elder"
+    },
+    {
+      "when": [
+        {
+          "min_standing": "first"
+        }
+      ],
+      "node": "office_first"
+    },
     {
       "when": [
         {
@@ -110,6 +132,19 @@
           "next": "favour_done"
         },
         {
+          "text": "dialogue.murim.pill.assist",
+          "when": [
+            {
+              "member": true
+            }
+          ],
+          "actions": [
+            {
+              "type": "assist_elixir"
+            }
+          ]
+        },
+        {
           "text": "dialogue.murim.opt.leave"
         }
       ]
@@ -153,6 +188,19 @@
             }
           ],
           "next": "favour_done"
+        },
+        {
+          "text": "dialogue.murim.pill.assist",
+          "when": [
+            {
+              "member": true
+            }
+          ],
+          "actions": [
+            {
+              "type": "assist_elixir"
+            }
+          ]
         },
         {
           "text": "dialogue.murim.opt.leave"
@@ -203,6 +251,19 @@
           "next": "favour_done"
         },
         {
+          "text": "dialogue.murim.pill.assist",
+          "when": [
+            {
+              "member": true
+            }
+          ],
+          "actions": [
+            {
+              "type": "assist_elixir"
+            }
+          ]
+        },
+        {
           "text": "dialogue.murim.opt.leave"
         }
       ],
@@ -217,6 +278,19 @@
       "gesture": "nod",
       "options": [
         {
+          "text": "dialogue.murim.approach.opt.not_now",
+          "when": [
+            {
+              "social": "approaching"
+            }
+          ],
+          "actions": [
+            {
+              "type": "approach_decline"
+            }
+          ]
+        },
+        {
           "text": "dialogue.murim.social.opt.business",
           "when": [
             {
@@ -228,6 +302,19 @@
         {
           "text": "dialogue.murim.social.opt.topics",
           "next": "sect_topics"
+        },
+        {
+          "text": "dialogue.murim.pill.assist",
+          "when": [
+            {
+              "member": true
+            }
+          ],
+          "actions": [
+            {
+              "type": "assist_elixir"
+            }
+          ]
         },
         {
           "text": "dialogue.murim.opt.leave"
@@ -275,6 +362,19 @@
           "next": "favour_done"
         },
         {
+          "text": "dialogue.murim.pill.assist",
+          "when": [
+            {
+              "member": true
+            }
+          ],
+          "actions": [
+            {
+              "type": "assist_elixir"
+            }
+          ]
+        },
+        {
           "text": "dialogue.murim.opt.leave"
         }
       ],
@@ -283,7 +383,7 @@
       ]
     },
     "greet_champion": {
-      "gesture": "bow",
+      "gesture": "nod",
       "options": [
         {
           "text": "dialogue.murim.social.opt.business",
@@ -321,6 +421,19 @@
             }
           ],
           "next": "favour_done"
+        },
+        {
+          "text": "dialogue.murim.pill.assist",
+          "when": [
+            {
+              "member": true
+            }
+          ],
+          "actions": [
+            {
+              "type": "assist_elixir"
+            }
+          ]
         },
         {
           "text": "dialogue.murim.opt.leave"
@@ -371,6 +484,19 @@
           "next": "favour_done"
         },
         {
+          "text": "dialogue.murim.pill.assist",
+          "when": [
+            {
+              "member": true
+            }
+          ],
+          "actions": [
+            {
+              "type": "assist_elixir"
+            }
+          ]
+        },
+        {
           "text": "dialogue.murim.opt.leave"
         }
       ],
@@ -394,7 +520,7 @@
           "text": "dialogue.murim.tae_seong.opt.path",
           "when": [
             {
-              "below_standing": "graduate"
+              "below_standing": "first"
             }
           ],
           "next": "t_path_low"
@@ -403,7 +529,8 @@
           "text": "dialogue.murim.tae_seong.opt.path",
           "when": [
             {
-              "min_standing": "graduate"
+              "min_standing": "graduate",
+              "below_standing": "first"
             }
           ],
           "next": "t_path_high"
@@ -464,7 +591,7 @@
     },
     "favour_done": {
       "line": "dialogue.murim.tae_seong.favour_done",
-      "gesture": "bow",
+      "gesture": "nod",
       "options": [
         {
           "text": "dialogue.murim.opt.leave"
@@ -555,6 +682,19 @@
           "next": "favour_done"
         },
         {
+          "text": "dialogue.murim.pill.assist",
+          "when": [
+            {
+              "member": true
+            }
+          ],
+          "actions": [
+            {
+              "type": "assist_elixir"
+            }
+          ]
+        },
+        {
           "text": "dialogue.murim.opt.leave"
         }
       ]
@@ -600,7 +740,149 @@
           ]
         },
         {
+          "text": "dialogue.murim.pill.assist",
+          "when": [
+            {
+              "member": true
+            }
+          ],
+          "actions": [
+            {
+              "type": "assist_elixir"
+            }
+          ]
+        },
+        {
           "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "office_elder": {
+      "random": [
+        "dialogue.murim.tae_seong.office_elder.1",
+        "dialogue.murim.tae_seong.office_elder.2"
+      ],
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.approach.opt.not_now",
+          "when": [
+            {
+              "social": "approaching"
+            }
+          ],
+          "actions": [
+            {
+              "type": "approach_decline"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.social.opt.business",
+          "when": [
+            {
+              "social": "business"
+            }
+          ],
+          "next": "sect_business"
+        },
+        {
+          "text": "dialogue.murim.social.opt.topics",
+          "next": "sect_topics"
+        },
+        {
+          "text": "dialogue.murim.tae_seong.opt.talk",
+          "next": "topics"
+        },
+        {
+          "text": "dialogue.murim.pill.assist",
+          "when": [
+            {
+              "member": true
+            }
+          ],
+          "actions": [
+            {
+              "type": "assist_elixir"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "office_first": {
+      "random": [
+        "dialogue.murim.tae_seong.office_first.1",
+        "dialogue.murim.tae_seong.office_first.2"
+      ],
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.approach.opt.not_now",
+          "when": [
+            {
+              "social": "approaching"
+            }
+          ],
+          "actions": [
+            {
+              "type": "approach_decline"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.social.opt.business",
+          "when": [
+            {
+              "social": "business"
+            }
+          ],
+          "next": "sect_business"
+        },
+        {
+          "text": "dialogue.murim.social.opt.topics",
+          "next": "sect_topics"
+        },
+        {
+          "text": "dialogue.murim.tae_seong.opt.talk",
+          "next": "topics"
+        },
+        {
+          "text": "dialogue.murim.pill.assist",
+          "when": [
+            {
+              "member": true
+            }
+          ],
+          "actions": [
+            {
+              "type": "assist_elixir"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "red_vein_elder": {
+      "line": "dialogue.murim.red_vein.elder",
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ],
+      "enter": [
+        {
+          "type": "set_flag",
+          "value": "quest.red_vein.elder_thanked"
+        },
+        {
+          "type": "quest_note",
+          "value": "murim.red_vein.elder"
         }
       ]
     }

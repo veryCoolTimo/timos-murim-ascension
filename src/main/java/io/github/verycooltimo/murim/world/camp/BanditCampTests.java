@@ -41,10 +41,9 @@ public final class BanditCampTests {
     }
 
     private static BanditCampData.Camp camp(GameTestHelper helper, long seed) {
-        ServerLevel level = helper.getLevel();
         BlockPos c = centre(helper);
         // Ключ лагеря в тесте — позиция центра (у настоящего лагеря — чанк начала структуры).
-        return BanditCamps.data(level).getOrCreate(c.asLong() ^ seed, c, seed);
+        return CampTestFixtures.fresh(helper, c.asLong() ^ seed, c, seed);
     }
 
     private static List<Bandit> members(GameTestHelper helper, BanditCampData.Camp camp) {
@@ -109,6 +108,7 @@ public final class BanditCampTests {
         helper.assertTrue(chief.hasCustomName() && chief.getMaxHealth() >= 60.0F && chief.rank() == 2, "главарь без имени, здоровья или ранга");
         helper.assertTrue(chief.getData(io.github.verycooltimo.murim.registry.ModAttachments.AURA).rank() == 2, "у главаря нет ауры");
         MurimMod.LOGGER.info("GameTest лагерь: {} бандитов, с ци {}, лучников {}", all.size(), qi, archers);
+        CampTestFixtures.remove(helper.getLevel(), camp.key);
         helper.succeed();
     }
 
@@ -123,6 +123,7 @@ public final class BanditCampTests {
         all.get(0).setTarget(intruder);
         long alerted = all.stream().filter(b -> b.getTarget() == intruder).count();
         helper.assertTrue(alerted == all.size(), "тревогу услышали " + alerted + " из " + all.size());
+        CampTestFixtures.remove(helper.getLevel(), camp.key);
         helper.succeed();
     }
 
@@ -160,6 +161,7 @@ public final class BanditCampTests {
                     ranks.forEach(Bandit::kill);
                 })
                 .thenExecuteAfter(2, () -> helper.assertTrue(CampFight.mayFight(chief), "рядовых нет, а главарь не вступил"))
+                .thenExecute(() -> CampTestFixtures.remove(helper.getLevel(), camp.key))
                 .thenSucceed();
     }
 
@@ -192,6 +194,7 @@ public final class BanditCampTests {
                     BanditCamps.tick(level, camp);
                     helper.assertTrue(members(helper, camp).isEmpty(), "разгромленный лагерь заселился снова");
                 })
+                .thenExecute(() -> CampTestFixtures.remove(helper.getLevel(), camp.key))
                 .thenSucceed();
     }
 

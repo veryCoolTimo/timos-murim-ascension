@@ -3,12 +3,12 @@ package io.github.verycooltimo.murim.training;
 import io.github.verycooltimo.murim.MurimMod;
 import io.github.verycooltimo.murim.combat.FootworkService;
 import io.github.verycooltimo.murim.registry.ModAttachments;
+import io.github.verycooltimo.murim.sect.PlayerJournal;
 import io.github.verycooltimo.murim.sect.SectTerritory;
 import io.github.verycooltimo.murim.world.hua.MountHuaShape;
 import io.github.verycooltimo.murim.world.hua.MountHuaSite;
 import io.github.verycooltimo.murim.world.hua.MountHuaSites;
 import net.minecraft.ChatFormatting;
-import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -17,32 +17,27 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.food.FoodProperties;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.event.entity.living.LivingEntityUseItemEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
-import net.neoforged.neoforge.event.entity.player.PlayerWakeUpEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 /**
- * Body training on the server (docs/design/27-body-training.md): reads the vanilla crouch key and the view into
- * {@link SetMachine}, runs the two route runs, the carry tally, gains with diminishing returns and fatigue, recovery
- * by time, meals and sleep (faster at the sect), and the body's effects on the player's attributes.
+ * The body on the server (docs/design/27-body-training.md): every {@link TrainingBalance#SCAN_INTERVAL} ticks it looks at
+ * the player's vanilla statistics ({@link VanillaBody}) and turns the change into body points ({@link BodyActivity}); the
+ * first look at a player also credits what the statistics already hold (the initial grant, once). It also runs the three
+ * explicit sect drills — the training stone carried uphill and the two route runs — and applies the body's effects to the
+ * player's attributes. Nothing here reads the crouch key: Shift never starts anything.
  *
- * <p>Sync: {@link TrainingPayloads.State} to the player and trackers on every event and every half second during a
- * set; {@link TrainingPayloads.Body} to the owner on login, at the end of a set or run, after meals and sleep, and
- * every 30 s (fatigue recovers by time).
+ * <p>Sync: {@link TrainingPayloads.State} to the player and trackers on every drill event;
+ * {@link TrainingPayloads.Body} to the owner on login, after a drill and when the level changes.
  *
  * <p>API: reference/neoforge-src/net/neoforged/neoforge/event/tick/PlayerTickEvent.java#Post,
- * reference/neoforge-src/net/neoforged/neoforge/event/entity/living/LivingEntityUseItemEvent.java#Finish,
- * reference/neoforge-src/net/neoforged/neoforge/event/entity/player/PlayerWakeUpEvent.java (fired before the sleep
- * counter resets — reference/minecraft-src/net/minecraft/world/entity/player/Player.java#stopSleepInBed),
  * reference/minecraft-src/net/minecraft/world/entity/ai/attributes/AttributeInstance.java#addOrUpdateTransientModifier
  */
 @EventBusSubscriber(modid = MurimMod.MODID)
@@ -87,56 +82,18 @@ public final class TrainingService {
         }
     }
 
-    /** A meal takes fatigue away; at the sect (the dining hall, with the others) twice as much. */
-    @SubscribeEvent
-    static void onEat(LivingEntityUseItemEvent.Finish event) {
-        if (!(event.getEntity() instanceof ServerPlayer player)) {
-            return;
-        }
-        FoodProperties food = event.getItem().get(DataComponents.FOOD);
-        if (food == null || food.nutrition() <= 0) {
-            return;
-        }
-        TrainingSession session = player.getData(TrainingRegistry.SESSION);
-        long now = player.level().getGameTime();
-        if (now - session.lastMeal < TrainingBalance.MEAL_COOLDOWN) {
-            return;
-        }
-        session.lastMeal = now;
-        BodyState s = player.getData(TrainingRegistry.BODY);
-        player.setData(TrainingRegistry.BODY, s.withFatigue(BodyRules.afterMeal(s.fatigue(), food.nutrition(), atSect(player))));
-        TrainingNetwork.body(player);
-    }
-
-    /** A night's sleep: at the sect fatigue is gone, elsewhere it drops. */
-    @SubscribeEvent
-    static void onWake(PlayerWakeUpEvent event) {
-        if (!(event.getEntity() instanceof ServerPlayer player) || !player.isSleepingLongEnough()) {
-            return;
-        }
-        BodyState s = player.getData(TrainingRegistry.BODY);
-        player.setData(TrainingRegistry.BODY, s.withFatigue(BodyRules.afterSleep(s.fatigue(), atSect(player))));
-        TrainingNetwork.body(player);
-    }
-
     // ------------------------------------------------------------------ tick
 
-    /** One server tick of a player's training. Public for GameTests (their fake players are not ticked by the level). */
+    /** One server tick of a player's body. Public for GameTests (their fake players are not ticked by the level). */
     public static void tick(ServerPlayer player) {
         if (player.isSpectator() || !player.isAlive()) {
             return;
         }
         long now = player.level().getGameTime();
         TrainingSession s = player.getData(TrainingRegistry.SESSION);
-        BodyState body = player.getData(TrainingRegistry.BODY);
-        long day = Math.floorDiv(player.level().getDayTime(), 24000L);
-        if (body.day() != day) {
-            body = body.onDay(day);
-            player.setData(TrainingRegistry.BODY, body);
-        }
-        if (now % 20 == 0 && body.fatigue() > 0.0D) {
-            body = body.withFatigue(body.fatigue() - 20 * BodyRules.recoveryPerTick(atSect(player)));
-            player.setData(TrainingRegistry.BODY, body);
+        // The first look happens on the first tick (the initial grant); later ones every SCAN_INTERVAL, spread by entity id.
+        if (!player.getData(TrainingRegistry.BODY).seeded() || (now + player.getId()) % TrainingBalance.SCAN_INTERVAL == 0) {
+            look(player);
         }
         double dx = s.hasLast ? player.getX() - s.lastX : 0.0D;
         double dz = s.hasLast ? player.getZ() - s.lastZ : 0.0D;
@@ -147,37 +104,69 @@ public final class TrainingService {
         s.hasLast = true;
 
         carry(player, s);
-        if (!s.carrying) {
-            SetMachine.Hands hands = hands(player.getMainHandItem());
-            boolean blocked = blocked(player);
-            SetMachine.Input in = new SetMachine.Input(now, player.isShiftKeyDown(), player.getXRot(), moved < 0.02D,
-                    player.onGround(), hands, blocked, body.fatigue() >= TrainingBalance.FATIGUE_STOP);
-            for (SetMachine.Event e : s.set.step(in)) {
-                onSetEvent(player, s, e, now);
-            }
-        }
         routes(player, s, now, moved);
-        if (s.current() != null && s.set.active() && now - s.lastSync >= 10) {
-            send(player, s, TrainingPayloads.Beat.NONE, now);
-        }
         if (now % 600 == 0) {
             TrainingNetwork.body(player);
         }
     }
 
-    static SetMachine.Hands hands(ItemStack main) {
-        if (main.isEmpty()) {
-            return SetMachine.Hands.EMPTY;
-        }
-        return main.is(TrainingRegistry.WEIGHT_SLAB.get()) ? SetMachine.Hands.SLAB : SetMachine.Hands.OTHER;
+    /** Minecraft day of the player's level (the daily limits restart with it). */
+    static long dayOf(ServerPlayer player) {
+        return Math.floorDiv(player.level().getDayTime(), 24000L);
     }
 
-    /** Things that make a set impossible: sitting in meditation, a technique, riding, swimming, flying, sleeping. */
-    static boolean blocked(ServerPlayer player) {
-        // A hit ends the set too (codex 05.10: defined cancellation on damage).
-        return player.getData(ModAttachments.MEDITATION).active() || player.getData(ModAttachments.TECHNIQUE_STATE).isActive()
-                || player.isPassenger() || player.isInWater() || player.getAbilities().flying || player.isFallFlying()
-                || player.isSleeping() || player.hurtTime > 0 || FootworkService.isRunning(player) || FootworkService.inShadow(player);
+    /**
+     * One look at the player's statistics: the first one credits the initial grant, a later one credits the change since
+     * the last. Public for GameTests.
+     */
+    public static void look(ServerPlayer player) {
+        BodyState before = player.getData(TrainingRegistry.BODY);
+        Map<BodyProbe, Long> reading = VanillaBody.read(player);
+        boolean first = !before.seeded();
+        BodyState after = first ? BodyActivity.seed(before, dayOf(player), reading)
+                : BodyActivity.advance(before, dayOf(player), reading, !player.isCreative() && !player.isSpectator());
+        player.setData(TrainingRegistry.BODY, after);
+        changed(player, before, after, first);
+    }
+
+    /** Credits raw work of one kind (a spar, a drill) through its daily limit; returns the points it gave. */
+    public static double credit(ServerPlayer player, BodySource source, double raw) {
+        if (player.isCreative() || player.isSpectator()) {
+            return 0.0D;
+        }
+        BodyState before = player.getData(TrainingRegistry.BODY).onDay(dayOf(player));
+        BodyState after = before.credited(source, raw);
+        player.setData(TrainingRegistry.BODY, after);
+        changed(player, before, after, false);
+        return after.points() - before.points();
+    }
+
+    /** A rise of the body level re-applies the effects, tells the player quietly and syncs the HUD. */
+    private static void changed(ServerPlayer player, BodyState before, BodyState after, boolean firstLook) {
+        if (after.level() == before.level()) {
+            return;
+        }
+        applyEffects(player);
+        if (after.level() > before.level()) {
+            // BodyRules is the same source of stages and gates used by the breakthrough checks.
+            if (after.level() >= 1) {
+                io.github.verycooltimo.murim.advancement.MurimAdvancements.grant(player, "body_first");
+            }
+            if (BodyRules.breakthroughReady(io.github.verycooltimo.murim.cultivation.Realm.FIRST, after.level())) {
+                io.github.verycooltimo.murim.advancement.MurimAdvancements.grant(player, "body_ready");
+            }
+            // One journal entry and a soft knock; no title or bar (author 30.10: interfaces, minimal chat).
+            Component line = Component.translatable(firstLook ? "murim.training.seeded" : "murim.training.level_up", after.level())
+                    .withStyle(ChatFormatting.GRAY);
+            PlayerJournal.record(player, line);
+            if (!firstLook) {
+                player.level().playSound(null, player.blockPosition(), io.github.verycooltimo.murim.registry.ModSounds.RANK_UP.get(),
+                        SoundSource.PLAYERS, 0.25F, 1.3F);
+            }
+            MurimMod.LOGGER.info("Body: {} stage {} ({} points{})", player.getName().getString(), after.level(),
+                    String.format(Locale.ROOT, "%.1f", after.points()), firstLook ? ", initial grant" : "");
+        }
+        TrainingNetwork.body(player);
     }
 
     /** At the sect: its land ({@link SectTerritory}) or the South Peak climb face. */
@@ -193,70 +182,13 @@ public final class TrainingService {
                 || MountHuaShape.inClimbBox(site.localU(player.getX(), player.getZ()), site.localV(player.getX(), player.getZ()));
     }
 
-    // ------------------------------------------------------------------ sets
+    // ------------------------------------------------------------------ drills
 
-    private static void onSetEvent(ServerPlayer player, TrainingSession s, SetMachine.Event e, long now) {
-        switch (e.kind()) {
-            case START -> {
-                s.setGain = 0.0D;
-                send(player, s, TrainingPayloads.Beat.START, now);
-            }
-            case REP, HOLD -> {
-                unit(player, s, e.exercise(), e.quality());
-                TrainingPayloads.Beat beat = e.kind() == SetMachine.Kind.HOLD ? TrainingPayloads.Beat.HOLD
-                        : e.quality() >= TrainingBalance.QUALITY_GOOD ? TrainingPayloads.Beat.GOOD
-                        : e.quality() >= TrainingBalance.QUALITY_FAIR ? TrainingPayloads.Beat.FAIR : TrainingPayloads.Beat.OFF;
-                send(player, s, beat, now);
-            }
-            case RUSHED -> send(player, s, TrainingPayloads.Beat.RUSHED, now);
-            case SWITCH -> send(player, s, TrainingPayloads.Beat.SWITCH, now);
-            case EXHAUSTED -> player.displayClientMessage(Component.translatable("murim.training.exhausted")
-                    .withStyle(ChatFormatting.GRAY), true);
-            case END -> {
-                endLine(player, e.exercise(), s.set.reps(), s.set.good(), s.setGain, e.reason());
-                send(player, s, TrainingPayloads.Beat.END, now);
-                if (s.set.reps() > 0 && atSect(player)) {
-                    TrainingAttendance.record(player, e.exercise());
-                }
-                TrainingNetwork.body(player);
-            }
-        }
-    }
-
-    /** One unit of an exercise: points, fatigue, hunger, level-up line. */
+    /** One unit of a drill: points through the drill limit, hunger. */
     static void unit(ServerPlayer player, TrainingSession s, Exercise e, double quality) {
-        BodyState before = player.getData(TrainingRegistry.BODY);
-        BodyState after = BodyRules.apply(e, quality, atSect(player), before);
-        player.setData(TrainingRegistry.BODY, after);
-        s.setGain += after.points() - before.points();
-        player.causeFoodExhaustion(TrainingBalance.EXHAUSTION_PER_UNIT * (float) Math.max(1.0D, e.points()));
-        if (after.level() > before.level()) {
-            levelUp(player, after.level());
-        }
-    }
-
-    private static void levelUp(ServerPlayer player, int level) {
-        applyEffects(player);
-        player.displayClientMessage(Component.translatable("murim.training.level_up", level).withStyle(ChatFormatting.GOLD), false);
-        player.level().playSound(null, player.blockPosition(), io.github.verycooltimo.murim.registry.ModSounds.RANK_UP.get(),
-                SoundSource.PLAYERS, 0.5F, 1.3F);
-        MurimMod.LOGGER.info("Training: {} body level {}", player.getName().getString(), level);
-        TrainingNetwork.body(player);
-    }
-
-    private static void endLine(ServerPlayer player, Exercise e, int reps, int good, double gain, SetMachine.EndReason reason) {
-        if (reps <= 0) {
-            return;
-        }
-        String key = e == Exercise.HORSE_STANCE ? "murim.training.end.stance" : "murim.training.end.set";
-        Component line = Component.translatable(key, Component.translatable(e.nameKey()), reps, good,
-                String.format(Locale.ROOT, "%.1f", gain));
-        if (reason == SetMachine.EndReason.SPENT) {
-            line = Component.translatable("murim.training.end.spent").append(" ").append(line);
-        }
-        player.displayClientMessage(line.copy().withStyle(ChatFormatting.GRAY), false);
-        MurimMod.LOGGER.info("Training: {} {} reps={} good={} gain={} ({})", player.getName().getString(), e.id(), reps, good,
-                String.format(Locale.ROOT, "%.2f", gain), reason);
+        double raw = e.points() * quality * (atSect(player) ? TrainingBalance.SECT_BONUS : 1.0D);
+        s.setGain += credit(player, BodySource.DRILL, raw);
+        player.causeFoodExhaustion(TrainingBalance.EXHAUSTION_PER_POINT * (float) Math.max(1.0D, e.points()));
     }
 
     // ------------------------------------------------------------------ carry
@@ -265,9 +197,6 @@ public final class TrainingService {
         boolean holding = player.getMainHandItem().is(TrainingRegistry.TRAINING_STONE_ITEM.get());
         long now = player.level().getGameTime();
         if (holding && !s.carrying) {
-            for (SetMachine.Event e : s.set.stop(SetMachine.EndReason.MOVED)) {
-                onSetEvent(player, s, e, now);
-            }
             s.carrying = true;
             s.carryTop = player.getBlockY();
             s.carryFrom = player.getBlockY();
@@ -279,8 +208,8 @@ public final class TrainingService {
             s.carrying = false;
             carrySpeed(player, false);
             if (s.carried > 0) {
-                player.displayClientMessage(Component.translatable("murim.training.end.carry", s.carried,
-                        String.format(Locale.ROOT, "%.1f", s.setGain)).withStyle(ChatFormatting.GRAY), false);
+                PlayerJournal.record(player, Component.translatable("murim.training.end.carry", s.carried,
+                        String.format(Locale.ROOT, "%.1f", s.setGain)).withStyle(ChatFormatting.GRAY));
                 if (atSect(player)) {
                     TrainingAttendance.record(player, Exercise.CARRY_STONE);
                 }
@@ -299,9 +228,9 @@ public final class TrainingService {
             s.carryTop = player.getBlockY();
             for (int i = 0; i < gained; i++) {
                 s.carried++;
-                unit(player, s, Exercise.CARRY_STONE, TrainingBalance.QUALITY_GOOD);
+                unit(player, s, Exercise.CARRY_STONE, 1.0D);
             }
-            send(player, s, TrainingPayloads.Beat.GOOD, now);
+            send(player, s, TrainingPayloads.Beat.GAIN, now);
         }
     }
 
@@ -358,12 +287,12 @@ public final class TrainingService {
                 s.setGain = 0.0D;
                 s.trailSprint = 0;
                 s.trailTicks = 0;
-                player.displayClientMessage(Component.translatable("murim.training.route.start." + e.id()).withStyle(ChatFormatting.GOLD), true);
+                PlayerJournal.record(player, Component.translatable("murim.training.route.start." + e.id()).withStyle(ChatFormatting.GOLD));
                 sendRoute(player, s, run, e, TrainingPayloads.Beat.START, now);
             }
             case REACH -> sendRoute(player, s, run, e, TrainingPayloads.Beat.REACH, now);
             case FELL -> {
-                player.displayClientMessage(Component.translatable("murim.training.route.fell", ev.index() + 1).withStyle(ChatFormatting.RED), true);
+                PlayerJournal.record(player, Component.translatable("murim.training.route.fell", ev.index() + 1).withStyle(ChatFormatting.RED));
                 sendRoute(player, s, run, e, TrainingPayloads.Beat.FELL, now);
             }
             case VOID -> {
@@ -371,11 +300,11 @@ public final class TrainingService {
                         player.getName().getString(), e.id(), ev.index(), player.position().distanceTo(new net.minecraft.world.phys.Vec3(s.lastX, s.lastY, s.lastZ)),
                         player.isFallFlying(), player.getAbilities().flying, player.isPassenger(), player.isInWater(),
                         player.getData(ModAttachments.TECHNIQUE_STATE).isActive(), FootworkService.isRunning(player) || FootworkService.inShadow(player));
-                player.displayClientMessage(Component.translatable("murim.training.route.void").withStyle(ChatFormatting.RED), true);
+                PlayerJournal.record(player, Component.translatable("murim.training.route.void").withStyle(ChatFormatting.RED));
                 sendEnd(player, s, e, now);
             }
             case ABANDON -> {
-                player.displayClientMessage(Component.translatable("murim.training.route.abandon").withStyle(ChatFormatting.GRAY), true);
+                PlayerJournal.record(player, Component.translatable("murim.training.route.abandon").withStyle(ChatFormatting.GRAY));
                 sendEnd(player, s, e, now);
             }
             case FINISH -> finish(player, s, e, ev.index(), now);
@@ -400,14 +329,14 @@ public final class TrainingService {
         if (record && best > 0) {
             line = line.copy().append(" ").append(Component.translatable("murim.training.route.record", clock(best)));
         }
-        player.displayClientMessage(line.copy().withStyle(ChatFormatting.GOLD), false);
+        PlayerJournal.record(player, line.copy().withStyle(ChatFormatting.GOLD));
         player.level().playSound(null, player.blockPosition(), SoundEvents.BELL_BLOCK, SoundSource.PLAYERS, 0.6F, 1.2F);
         MurimMod.LOGGER.info("Training: {} {} finished in {} ticks (best {}), gain {}", player.getName().getString(), e.id(), ticks,
                 best, String.format(Locale.ROOT, "%.2f", s.setGain));
         if (atSect(player)) {
             TrainingAttendance.record(player, e);
         }
-        TrainingPayloads.State st = new TrainingPayloads.State(player.getId(), e.ordinal(), TrainingPayloads.Beat.FINISH, ticks, 0, 1.0F,
+        TrainingPayloads.State st = new TrainingPayloads.State(player.getId(), e.ordinal(), TrainingPayloads.Beat.FINISH, ticks, 0,
                 now - ticks, (float) s.setGain);
         TrainingNetwork.state(player, st);
         TrainingNetwork.body(player);
@@ -422,21 +351,20 @@ public final class TrainingService {
 
     private static void send(ServerPlayer player, TrainingSession s, TrainingPayloads.Beat beat, long now) {
         Exercise e = s.current();
-        int reps = e == Exercise.CARRY_STONE ? s.carried : s.set.reps();
-        TrainingNetwork.state(player, new TrainingPayloads.State(player.getId(), e == null ? -1 : e.ordinal(), beat, reps,
-                s.set.good(), (float) s.set.stamina(), s.set.origin(), (float) s.setGain));
+        TrainingNetwork.state(player, new TrainingPayloads.State(player.getId(), e == null ? -1 : e.ordinal(), beat, s.carried, 0,
+                now, (float) s.setGain));
         s.lastSync = now;
     }
 
     private static void sendEnd(ServerPlayer player, TrainingSession s, Exercise e, long now) {
         TrainingNetwork.state(player, new TrainingPayloads.State(player.getId(), e.ordinal(), TrainingPayloads.Beat.END, 0, 0,
-                1.0F, now, (float) s.setGain));
+                now, (float) s.setGain));
         s.lastSync = now;
     }
 
     private static void sendRoute(ServerPlayer player, TrainingSession s, RouteRun run, Exercise e, TrainingPayloads.Beat beat, long now) {
         TrainingNetwork.state(player, new TrainingPayloads.State(player.getId(), e.ordinal(), beat, run.next() - 1, run.size() - 1,
-                1.0F, run.start(), (float) s.setGain));
+                run.start(), (float) s.setGain));
         s.lastSync = now;
     }
 
@@ -480,15 +408,42 @@ public final class TrainingService {
         TrainingNetwork.body(player);
     }
 
-    static List<String> report(ServerPlayer player) {
+    /**
+     * Forgets the body and takes the statistics as they stand now as the new baseline (a dev command): without the
+     * baseline the next tick would credit the whole history again as an initial grant.
+     */
+    public static void reset(ServerPlayer player) {
+        player.setData(TrainingRegistry.BODY, BodyState.NONE.withSeen(keyed(VanillaBody.read(player)), true));
+        applyEffects(player);
+        TrainingNetwork.body(player);
+    }
+
+    private static Map<String, Long> keyed(Map<BodyProbe, Long> reading) {
+        Map<String, Long> out = new java.util.HashMap<>();
+        reading.forEach((p, v) -> out.put(p.key(), v));
+        return out;
+    }
+
+    static List<net.minecraft.network.chat.Component> report(ServerPlayer player) {
         BodyState b = player.getData(TrainingRegistry.BODY);
         TrainingSession s = player.getData(TrainingRegistry.SESSION);
-        return List.of(String.format(Locale.ROOT, "body level %d (%.1f pts, %.0f%% to next), today %.1f (x%.2f), fatigue %.2f",
-                        b.level(), b.points(), BodyRules.progress(b.points()) * 100.0D, b.today(), BodyRules.dailyFactor(b.today()), b.fatigue()),
-                String.format(Locale.ROOT, "best climb %s, best trail %s, climbs today %d, at sect %s",
-                        b.bestClimb() == 0 ? "-" : clock(b.bestClimb()), b.bestTrail() == 0 ? "-" : clock(b.bestTrail()), b.climbsToday(),
-                        atSect(player)),
-                "now: " + (s.current() == null ? "-" : s.current().id() + " reps=" + s.set.reps()
-                        + (s.climb != null && s.climb.active() ? " climb " + s.climb.next() + "/" + s.climb.size() : "")));
+        StringBuilder today = new StringBuilder();
+        for (BodySource source : BodySource.values()) {
+            today.append(String.format(Locale.ROOT, "%s %.1f/%.0f ", source.id(), source.dayTotal(b.rawOf(source)), source.dayMax()));
+        }
+        return List.of(net.minecraft.network.chat.Component.translatable("command.murim.dev.body_summary",
+                        b.level(), String.format(Locale.ROOT, "%.1f", b.points()),
+                        String.format(Locale.ROOT, "%.0f", BodyRules.progress(b.points()) * 100.0D),
+                        b.seeded(), String.format(Locale.ROOT, "%.1f", b.today())),
+                net.minecraft.network.chat.Component.translatable("command.murim.dev.body_sources", today.toString().trim()),
+                net.minecraft.network.chat.Component.translatable("command.murim.dev.body_best",
+                        b.bestClimb() == 0 ? "-" : clock(b.bestClimb()), b.bestTrail() == 0 ? "-" : clock(b.bestTrail()),
+                        b.climbsToday(), atSect(player)),
+                net.minecraft.network.chat.Component.translatable("command.murim.dev.body_now",
+                        s.current() == null ? net.minecraft.network.chat.Component.literal("-")
+                                : net.minecraft.network.chat.Component.literal(s.current().id()).append(
+                                s.climb != null && s.climb.active()
+                                        ? net.minecraft.network.chat.Component.translatable("command.murim.dev.body_climb", s.climb.next(), s.climb.size())
+                                        : net.minecraft.network.chat.Component.empty())));
     }
 }

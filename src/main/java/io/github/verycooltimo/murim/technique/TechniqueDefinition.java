@@ -118,7 +118,7 @@ public record TechniqueDefinition(
         phaseTicks = java.util.Collections.unmodifiableMap(copy);
         if (starCap <= 0) throw new IllegalArgumentException("Неположительный предел звёзд у " + id);
         // Includes standalone step forms (Shadow Step, High Cloud) and datapack footwork.
-        // Footwork always completes at ten; other arts retain their declared cap.
+        // Footwork always completes at twelve; other arts retain their declared cap.
         if ("step".equals(form) || behavior instanceof TechniqueBehavior.Step
                 || behavior instanceof TechniqueBehavior.Footwork
                 || Styles.FOOTWORK.stream().anyMatch(style -> style.forms().contains(id))) {

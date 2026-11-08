@@ -1,0 +1,13 @@
+{
+  "id": "murim:purple_sky_divine",
+  "speed": [5.0, 15.0],
+  "nature": "pure",
+  "purity": 0.98,
+  "capacity": 38.0,
+  "impurity": 0.02,
+  "route": "six_point_loop",
+  "star_cap": 12,
+  "capacity_mult": 1.25,
+  "access": "head",
+  "mist": 12208383
+}

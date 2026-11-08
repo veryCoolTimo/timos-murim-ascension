@@ -64,7 +64,7 @@ public final class ClientAuraState {
     }
 
     public static Int2ObjectMap<AuraState> all() {
-        if (TECH.isEmpty()) {
+        if (TECH.isEmpty() && !io.github.verycooltimo.murim.client.sect.HeadIntroCamera.active()) {
             return AURAS;
         }
         // Аура техники поверх ранговой: горит, пока идёт приём (Семь Цветков Сливы — синяя
@@ -73,6 +73,10 @@ public final class ClientAuraState {
         for (Int2ObjectMap.Entry<int[]> e : TECH.int2ObjectEntrySet()) {
             merged.put(e.getIntKey(), new AuraState(Math.max(2, e.getValue()[0]), false));
         }
+        int head = io.github.verycooltimo.murim.client.sect.HeadIntroCamera.actor();
+        var level = Minecraft.getInstance().level;
+        if (head >= 0 && level != null && level.getEntity(head) instanceof io.github.verycooltimo.murim.entity.SectDisciple actor)
+            merged.put(head, new AuraState(Math.max(2, actor.rank()), false));
         return merged;
     }
 
@@ -163,7 +167,6 @@ public final class ClientAuraState {
         if (minecraft.player.isSpectator() || minecraft.player.isCreative() && !"true".equals(System.getProperty("murim.capture"))) {
             strongest = 0.0F;
         }
-        strongest *= (float)io.github.verycooltimo.murim.client.vfx.VfxManager.pressureFactor(minecraft.player.getId());
         if (ClientPenanceState.pinned()) {
             strongest = 1.0F;
             strongestId = ClientPenanceState.source();
@@ -267,6 +270,7 @@ public final class ClientAuraState {
      */
     @SubscribeEvent
     static void onCameraAngles(ViewportEvent.ComputeCameraAngles event) {
+        if (io.github.verycooltimo.murim.client.sect.HeadIntroCamera.active()) return;
         float partial = (float) event.getPartialTick();
         float p = pressure(partial);
         double setting = ClientConfig.cameraShake();

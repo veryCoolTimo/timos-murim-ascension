@@ -70,6 +70,13 @@ public final class JunkText {
 
     private static Text fake(Gen g, JunkBook book) {
         var art = JunkFactory.fakeArt(book);
+        String canonKey = "technique." + art.getNamespace() + "." + art.getPath();
+        if (io.github.verycooltimo.murim.technique.JunkArts.MOUNT_HUA.contains(art)) {
+            Component title = Component.translatable(canonKey);
+            return new Text(title, List.of(new Para(title, Style.HEADING),
+                    new Para(Component.translatable(canonKey + ".description"), Style.BODY),
+                    new Para(Component.translatable(canonKey + ".weakness"), Style.NOTE)));
+        }
         boolean dance = io.github.verycooltimo.murim.technique.JunkArts.FUNNY.contains(art);
         String key = "technique." + art.getNamespace() + "." + art.getPath();
         Component title = dance ? Component.translatable(key) : g.grandTitle();

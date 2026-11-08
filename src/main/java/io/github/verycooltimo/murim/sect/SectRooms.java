@@ -46,6 +46,48 @@ public final class SectRooms {
         return true;
     }
 
+    /**
+     * The person's own bed from the layout: takes it over from a stale claim of another NPC (the old nearest-free-bed
+     * scan), never from a player. The NPC's previous claim is dropped, so a bed changes owner and never doubles.
+     */
+    public static boolean claimOwn(ServerLevel level, BlockPos pos, String owner) {
+        SectHousingData data = data(level);
+        String held = data.beds.get(pos.asLong());
+        if (held != null && !held.equals(owner)) {
+            if (held.startsWith("player:")) {
+                return false;
+            }
+            data.beds.remove(pos.asLong());
+            data.setDirty();
+        }
+        return claim(level, pos, owner);
+    }
+
+    /** Heads of the beds that belong to players, online or not (the repair crew keeps away from their rooms, doc 39). */
+    public static List<BlockPos> playerBeds(ServerLevel level) {
+        List<BlockPos> out = new java.util.ArrayList<>();
+        for (var e : data(level).beds.entrySet()) {
+            if (e.getValue().startsWith("player:")) out.add(BlockPos.of(e.getKey()));
+        }
+        return out;
+    }
+
+    /** Some player sleeps on a bedroll in a dormitory: he has no room of his own to protect, the dormitory is his. */
+    public static boolean playerMats(ServerLevel level) {
+        for (String owner : data(level).mats.keySet()) {
+            if (owner.startsWith("player:")) return true;
+        }
+        return false;
+    }
+
+    /** Dev command: gives the player's bed and bedroll back to the pool. */
+    static void release(ServerPlayer p) {
+        SectHousingData data = data(p.serverLevel());
+        data.beds.entrySet().removeIf(e -> owner(p).equals(e.getValue()));
+        data.mats.remove(owner(p));
+        data.setDirty();
+    }
+
     public static BlockPos bed(ServerPlayer p) {
         SectState state = SectService.state(p);
         return state.has("room.bed") ? BlockPos.of(state.entry("room.pos", 0)) : null;
@@ -57,25 +99,41 @@ public final class SectRooms {
         int desired = SectService.standing(p).atLeast(SectStanding.GRADUATE) ? 1 : 0;
         int oldZone = (int) state.entry("room.zone", desired);
         BlockPos old = bed(p);
-        if (old != null && (!p.level().isLoaded(old) || bed(p.serverLevel(), old))
-                && available(p.serverLevel(), old, owner(p)) && (oldZone == desired || desired == 0)) {
+        boolean keepOld = old != null && (!p.level().isLoaded(old) || bed(p.serverLevel(), old))
+                && available(p.serverLevel(), old, owner(p));
+        if (keepOld && (oldZone == desired || desired == 0)) {
             claim(p.serverLevel(), old, owner(p));
+            SectNamePlates.sync(p, layout);
             return destination(p, layout);
         }
         for (int zone : desired == 0 ? new int[] {0, 1} : new int[] {1, 0}) {
-            for (BlockPos pos : SectBuildings.beds(p.level(), layout, DORMS.get(zone))) {
-                if (p.level().getBlockState(pos).getValue(BedBlock.OCCUPIED)
-                        || SectBuildings.approach(p.level(), p.position(), pos) == null
+            // An existing assignment is the fallback while promotion waits for a loaded better bed.
+            if (keepOld && zone == oldZone) continue;
+            // The layout file knows the spare beds at once; the block scan below needs many ticks per dormitory, and the
+            // newcomer's bed must exist while the mentor still shows it (arrival tour, 18.10).
+            List<BlockPos> candidates = new java.util.ArrayList<>(spare(p.level(), layout, DORMS.get(zone)));
+            candidates.addAll(SectBuildings.beds(p.level(), layout, DORMS.get(zone)));
+            for (BlockPos pos : candidates) {
+                SectLayoutFile.Bed record = layout.file() == null ? null : layout.file().bedAt(pos);
+                if (record != null && !DORMS.get(zone).equals(record.building())) continue;
+                if (reserved(layout, pos)
+                        || p.level().getBlockState(pos).getValue(BedBlock.OCCUPIED)
+                        || approach(p, layout, pos) == null
                         || !claim(p.serverLevel(), pos, owner(p))) continue;
                 p.setData(ModAttachments.SECT, state.with("room.assigned").with("room.bed")
                         .record("room.pos", pos.asLong()).record("room.zone", zone));
+                if (state.has("room.assigned") && oldZone != zone && zone == 1) {
+                    p.setRespawnPosition(p.level().dimension(), pos, 0.0F, false, false);
+                    p.setData(ModAttachments.SECT, SectService.state(p).without(SectBedMark.SLEPT));
+                }
                 show(p, "murim.sect.room.bed", Vec3.atCenterOf(pos));
+                SectTablet.touch(p);
+                SectNamePlates.sync(p, layout);
                 return destination(p, layout);
             }
         }
         // A promotion waits for a free better bed; it never evicts anybody or loses the old bed.
-        if (old != null && p.level().isLoaded(old) && bed(p.serverLevel(), old)
-                && available(p.serverLevel(), old, owner(p))) return destination(p, layout);
+        if (keepOld) return destination(p, layout);
         SectHousingData data = data(p.serverLevel());
         data.beds.entrySet().removeIf(e -> owner(p).equals(e.getValue()));
         int slot = data.mats.computeIfAbsent(owner(p), key -> data.mats.values().stream().mapToInt(Integer::intValue).max().orElse(-1) + 1);
@@ -83,21 +141,55 @@ public final class SectRooms {
         boolean fresh = !state.has("room.assigned") || state.has("room.bed");
         p.setData(ModAttachments.SECT, state.with("room.assigned").without("room.bed")
                 .record("room.slot", slot).record("room.zone", desired));
+        SectNamePlates.sync(p, layout);
         Vec3 at = destination(p, layout);
         if ((fresh || hint) && at != null) show(p, "murim.sect.room.bedroll", at);
         return at;
     }
 
+    /**
+     * Where to stand beside a bed: the free cell next to the head block, else the cell the layout file recorded for it (many
+     * dormitory beds stand against a wall or a neighbour and only their foot side is open).
+     */
+    static Vec3 approach(ServerPlayer p, SectLayout layout, BlockPos head) {
+        Vec3 at = SectBuildings.approach(p.level(), p.position(), head);
+        if (at != null || layout == null || layout.file() == null) return at;
+        SectLayoutFile.Bed record = layout.file().bedAt(head);
+        if (record == null || !p.level().isLoaded(record.approach()) || !SectLife.standable(p.level(), record.approach())) return null;
+        return Vec3.atBottomCenterOf(record.approach());
+    }
+
+    /**
+     * A bed the layout file keeps for somebody: it has an owner, or any role but "spare". The block scan below sees every
+     * bed in the dormitory, claimed or not; one that belongs to a person who has not slept in it yet is never a newcomer's.
+     * When the spare beds run out the newcomer sleeps on the bedroll.
+     */
+    static boolean reserved(SectLayout layout, BlockPos head) {
+        SectLayoutFile file = layout == null ? null : layout.file();
+        SectLayoutFile.Bed bed = file == null ? null : file.bedAt(head);
+        return bed != null && (!"spare".equals(bed.role()) || bed.ownerKey() != null && !bed.ownerKey().isEmpty());
+    }
+
+    /** Heads of the layout file's spare beds in a building that really are loaded bed blocks (a stale record is skipped). */
+    static List<BlockPos> spare(net.minecraft.world.level.Level level, SectLayout layout, String building) {
+        SectLayoutFile file = layout == null ? null : layout.file();
+        if (file == null) return List.of();
+        return file.beds().stream().filter(b -> building.equals(b.building()) && "spare".equals(b.role())
+                        && level.isLoaded(b.head()) && level.getBlockState(b.head()).getBlock() instanceof BedBlock
+                        && level.getBlockState(b.head()).getValue(BedBlock.PART) == BedPart.HEAD)
+                .map(SectLayoutFile.Bed::head).toList();
+    }
+
     private static void show(ServerPlayer p, String key, Vec3 at) {
         BlockPos pos = BlockPos.containing(at);
-        p.displayClientMessage(Component.translatable(key, pos.getX(), pos.getY(), pos.getZ()), false);
+        SectNotice.chat(p, Component.translatable(key, pos.getX(), pos.getY(), pos.getZ()));
     }
 
     public static Vec3 destination(ServerPlayer p, SectLayout layout) {
         BlockPos bed = bed(p);
         if (bed != null) {
             if (!p.level().isLoaded(bed)) return Vec3.atBottomCenterOf(bed);
-            return SectBuildings.approach(p.level(), p.position(), bed);
+            return approach(p, layout, bed);
         }
         int zone = (int) SectService.state(p).entry("room.zone", 0);
         int slot = (int) SectService.state(p).entry("room.slot", 0);

@@ -3,6 +3,7 @@ package io.github.verycooltimo.murim.library;
 import com.mojang.serialization.MapCodec;
 import io.github.verycooltimo.murim.decor.LibraryBookcaseBlock;
 import io.github.verycooltimo.murim.decor.ScrollShelfBlock;
+import io.github.verycooltimo.murim.sect.PlayerJournal;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -138,7 +139,7 @@ public class ProppedShelfBlock extends ScrollShelfBlock {
             return InteractionResult.SUCCESS;
         }
         pull(server, pos, level.getBlockState(pos));
-        player.displayClientMessage(Component.translatable("junk.murim.msg.propped").withStyle(ChatFormatting.GRAY), true);
+        PlayerJournal.record(player, Component.translatable("junk.murim.msg.propped").withStyle(ChatFormatting.GRAY));
         return InteractionResult.CONSUME;
     }
 

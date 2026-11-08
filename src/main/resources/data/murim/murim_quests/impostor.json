@@ -1,0 +1,105 @@
+{
+  "id": "impostor",
+  "requires_sites": true,
+  "title": "quest.murim.impostor.title",
+  "steps": [
+    {
+      "type": "overheard",
+      "id": "impostor_hook",
+      "speaker": "gyeong_tak",
+      "gate": {
+        "not_flags": [
+          "quest.impostor.hooked",
+          "quest.impostor.out"
+        ],
+        "days_in_sect": 2
+      }
+    },
+    {
+      "type": "clue",
+      "id": "receipts",
+      "model": "note"
+    },
+    {
+      "type": "clue",
+      "id": "chest_badges",
+      "model": "scrap"
+    },
+    {
+      "type": "inspect",
+      "id": "impostor_receipts",
+      "kind": "paper",
+      "grant": "receipts",
+      "seen": "quest.impostor.papers"
+    },
+    {
+      "type": "inspect",
+      "id": "impostor_chest",
+      "kind": "box",
+      "grant": "chest_badges",
+      "handler": "sneak",
+      "seen": "quest.impostor.chest",
+      "on_grant": {
+        "flags": [
+          "quest.impostor.chest_seen"
+        ]
+      }
+    },
+    {
+      "type": "talk",
+      "id": "impostor_talk",
+      "npc": "impostor",
+      "node": "imp_start"
+    },
+    {
+      "type": "fight",
+      "id": "impostor_fight",
+      "foes": [
+        "murim:bandit_swordsman*1"
+      ],
+      "foe_name": "murim.quest.foe.impostor",
+      "replace": "impostor",
+      "limit_ticks": 2400,
+      "gate": {
+        "flags": [
+          "quest.impostor.met"
+        ],
+        "not_flags": [
+          "quest.impostor.out"
+        ]
+      },
+      "on_win": {
+        "flags": [
+          "quest.impostor.out",
+          "quest.impostor.cashbox"
+        ],
+        "how": "impostor:fought"
+      }
+    },
+    {
+      "type": "hand_in",
+      "id": "impostor_done",
+      "npc": "trader",
+      "node": "tr_settle",
+      "requires": {
+        "flags": [
+          "quest.impostor.out"
+        ],
+        "not_flags": [
+          "quest.impostor.done"
+        ]
+      },
+      "reward": {
+        "items": [
+          "murim:silver_tael*3"
+        ],
+        "effects": {
+          "flags": [
+            "quest.impostor.done"
+          ],
+          "merit": 6
+        }
+      }
+    }
+  ]
+}

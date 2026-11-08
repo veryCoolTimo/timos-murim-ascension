@@ -41,12 +41,21 @@ public final class VfxDraw {
     public static void vertex(VertexConsumer consumer, PoseStack.Pose pose, Vec3 position,
                               Vec3 normal, float u, float v, float alpha,
                               float red, float green, float blue) {
+        vertex(consumer, pose, position, normal, u, v, alpha, red, green, blue, FULL_BRIGHT);
+    }
+
+    /** World-lit variant for physical debris. API: VertexConsumer#setLight(int). */
+    public static void vertex(VertexConsumer consumer, PoseStack.Pose pose, Vec3 position,
+                              Vec3 normal, float u, float v, float alpha,
+                              float red, float green, float blue, int light) {
+        PlumLayerCapture.point(position, alpha);
+        io.github.verycooltimo.murim.client.vfx.bt.BtPerf.vertex();
         consumer.addVertex(pose.pose(), (float) position.x, (float) position.y, (float) position.z)
                 .setColor(Mth.clamp(red, 0.0F, 1.0F), Mth.clamp(green, 0.0F, 1.0F),
                           Mth.clamp(blue, 0.0F, 1.0F), Mth.clamp(alpha, 0.0F, 1.0F))
                 .setUv(u, v)
                 .setOverlay(OverlayTexture.NO_OVERLAY)
-                .setLight(FULL_BRIGHT)
+                .setLight(light)
                 .setNormal(pose, (float) normal.x, (float) normal.y, (float) normal.z);
     }
 
@@ -96,6 +105,12 @@ public final class VfxDraw {
     public static void billboard(VertexConsumer consumer, PoseStack.Pose pose, Vec3 centre,
                                  Vec3 cameraLocal, double size, float alpha,
                                  float red, float green, float blue) {
+        billboard(consumer, pose, centre, cameraLocal, size, alpha, red, green, blue, FULL_BRIGHT);
+    }
+
+    public static void billboard(VertexConsumer consumer, PoseStack.Pose pose, Vec3 centre,
+                                 Vec3 cameraLocal, double size, float alpha,
+                                 float red, float green, float blue, int light) {
         if (alpha <= 0.0F || size <= 0.0D) {
             return;
         }
@@ -110,13 +125,21 @@ public final class VfxDraw {
         Vec3 up = right.normalize().cross(forward).normalize().scale(size);
 
         vertex(consumer, pose, centre.subtract(right).subtract(up), forward,
-               0.0F, 0.0F, alpha, red, green, blue);
+               0.0F, 0.0F, alpha, red, green, blue, light);
         vertex(consumer, pose, centre.subtract(right).add(up), forward,
-               0.0F, 1.0F, alpha, red, green, blue);
+               0.0F, 1.0F, alpha, red, green, blue, light);
         vertex(consumer, pose, centre.add(right).add(up), forward,
-               1.0F, 1.0F, alpha, red, green, blue);
+               1.0F, 1.0F, alpha, red, green, blue, light);
         vertex(consumer, pose, centre.add(right).subtract(up), forward,
-               1.0F, 0.0F, alpha, red, green, blue);
+               1.0F, 0.0F, alpha, red, green, blue, light);
+    }
+
+    /** Filled procedural quad; triangles may repeat their final corner. */
+    public static void quad(VertexConsumer v, PoseStack.Pose pose, Vec3 a, Vec3 b, Vec3 c, Vec3 d,
+                            Vec3 normal, float alpha, VfxColour colour) {
+        Vec3[] points = {a, b, c, d};
+        for (int i = 0; i < 4; i++) vertex(v, pose, points[i], normal, 0, 0, alpha,
+                colour.red(), colour.green(), colour.blue());
     }
 
     private VfxDraw() {

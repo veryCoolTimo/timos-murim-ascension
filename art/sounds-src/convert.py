@@ -28,6 +28,8 @@ CAT = {
     'pill_eat': SOFT, 'absorb_pulse': SOFT, 'absorb_success': SOFT, 'absorb_fail': SOFT,
     'breakthrough_fail': SOFT, 'rank_up': SOFT, 'technique_learn': SOFT,
     'meditation_start': SOFT, 'meditation_stop': SOFT,
+    # 19.10 breakthrough scene layers: breath, hum and the far echo are soft, the crack click is crisp.
+    'bt_breath': SOFT, 'bt_hum': SOFT, 'bt_tail': SOFT, 'bt_crack': LOUD,
     'book_open': UI, 'page_bind': UI, 'coin_clink': UI, 'training_rep': UI, 'training_set': UI,
     'run_wind': LOOP, 'aura_charge': LOOP, 'meditation_loop': LOOP, 'qi_sword_hum': LOOP,
 }

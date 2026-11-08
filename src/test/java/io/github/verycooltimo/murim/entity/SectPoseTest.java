@@ -123,11 +123,85 @@ class SectPoseTest {
         assertEquals(SectPose.GUARD, SectPose.forTask(Kind.GUARD, true, false));
         assertEquals(SectPose.TALK, SectPose.forTask(Kind.WORK, true, false));
         assertEquals(SectPose.NONE, SectPose.forTask(Kind.SPAR, true, false));
+        // Cook and servants (18.10): the kitchen poses replace the talk gestures they used to borrow.
+        assertEquals(SectPose.COOK_STIR, SectPose.forTask(Kind.COOK, true, false));
+        assertEquals(SectPose.TRAY_EMPTY, SectPose.forTask(Kind.SERVE, true, false));
+        assertEquals(SectPose.HOE, SectPose.forTask(Kind.TEND, true, false));
+        assertEquals(SectPose.NONE, SectPose.forTask(Kind.TEND, false, false));
         for (Kind k : Kind.values()) {
             assertNotNull(SectPose.forTask(k, true, false), k.name());
+            assertTrue(SectPose.forTask(k, true, false) != SectPose.TALK || k == Kind.WORK || k == Kind.INSPECT || k == Kind.REPORT || k == Kind.LECTURE || k == Kind.ARGUE,
+                    k.name() + " still falls back to the talk pose");
         }
         for (SectPose p : SectPose.values()) {
             assertEquals(p, SectPose.of(p.id()));
         }
+    }
+
+    @Test
+    @DisplayName("Cook and servants: loaded carry poses, the bowls leave the tray inside the set-down clip, one-shots are one-shots")
+    void kitchenPoses() throws IOException {
+        assertEquals(SectPose.SACK, SectPose.loadPose(io.github.verycooltimo.murim.sect.SectRole.PORTER, "porter_jang"));
+        assertEquals(SectPose.JAR, SectPose.loadPose(io.github.verycooltimo.murim.sect.SectRole.PORTER, "porter_oh"));
+        assertEquals(SectPose.CARRY, SectPose.loadPose(io.github.verycooltimo.murim.sect.SectRole.WATER_CARRIER, "water_gu"));
+        assertTrue(SectPose.TRAY_SET.propShown("tray_bowls", 1.0F) && !SectPose.TRAY_SET.propShown("tray_bowls", SectPose.SET_DROP + 0.01F)
+                && SectPose.TRAY_SET.propShown("tray", 2.5F) && SectPose.TRAY.propShown("tray_bowls", 9.0F));
+        assertTrue(clip(SectPose.TRAY_SET).get("animation_length").getAsFloat() > SectPose.SET_DROP + 0.5F, "the bowls would leave after the clip");
+        for (SectPose p : new SectPose[] {SectPose.COOK_TASTE, SectPose.COOK_LADLE, SectPose.TRAY_SET}) {
+            assertTrue(!p.loop() && p.upperBody(), p.id() + " is a one-shot of the upper body");
+        }
+        for (SectPose p : new SectPose[] {SectPose.COOK_STIR, SectPose.COOK_CHOP, SectPose.TRAY, SectPose.WIPE, SectPose.SACK, SectPose.JAR}) {
+            assertTrue(p.loop() && p.upperBody() && !p.props().isEmpty(), p.id() + " is a looping upper-body pose with a prop");
+        }
+        // The tray follows its own one-shot without a dip into the rest pose; the rest blend in as before.
+        assertTrue(SectPose.TRAY.blendIn() < 0.2F && SectPose.TRAY_EMPTY.blendIn() < 0.2F && SectPose.WIPE.blendIn() == 0.35F);
+        // The empty tray carries the same clip as the loaded one: only the props differ.
+        assertEquals(SectPose.TRAY.clip(), SectPose.TRAY_EMPTY.clip());
+        assertTrue(SectPose.TRAY_EMPTY.props().equals(java.util.List.of("tray")));
+        // The herbalist hoes with a vanilla hoe in the hand: legs come from the clip, no sword.
+        assertTrue(!SectPose.HOE.upperBody() && SectPose.HOE.hidesWeapon());
+    }
+
+    private static JsonObject seatBones(String name) throws IOException {
+        JsonObject root = JsonParser.parseString(Files.readString(res("npc_animations/" + name + ".json"))).getAsJsonObject();
+        JsonObject a = root.getAsJsonObject("animations").getAsJsonObject(name);
+        assertNotNull(a, name);
+        return a.getAsJsonObject("bones");
+    }
+
+    private static float first(JsonObject bones, String bone, String channel, int axis) {
+        return bones.getAsJsonObject(bone).getAsJsonObject(channel).getAsJsonObject("0.0").getAsJsonArray("vector").get(axis).getAsFloat();
+    }
+
+    @Test
+    @DisplayName("Seat bases: one clip per way of sitting, lower body only, a hold; the chair keeps the legs forward, the lotus crosses them")
+    void seatBases() throws IOException {
+        for (String name : new String[] {"sect_seat_chair", "sect_seat_lotus"}) {
+            JsonObject bones = seatBones(name);
+            assertEquals(Set.of("body", "right_leg", "left_leg"), bones.keySet(), name + " owns the lower body only");
+            for (String bone : bones.keySet()) {
+                for (Map.Entry<String, JsonElement> ch : bones.getAsJsonObject(bone).entrySet()) {
+                    String value = null;
+                    for (Map.Entry<String, JsonElement> k : ch.getValue().getAsJsonObject().entrySet()) {
+                        String v = k.getValue().getAsJsonObject().get("vector").toString();
+                        value = value == null ? v : value;
+                        assertEquals(value, v, name + " " + bone + " " + ch.getKey() + " is not a hold");
+                    }
+                }
+            }
+        }
+        // chair: the thighs lie on the seat (legs forward about 74 degrees, level), the hips come down a little more than the lotus
+        JsonObject chair = seatBones("sect_seat_chair");
+        float rightX = first(chair, "right_leg", "rotation", 0);
+        assertTrue(rightX < -65.0F && rightX > -90.0F && rightX == first(chair, "left_leg", "rotation", 0), "the legs of a chair sitter are forward and a little down, level: " + rightX);
+        JsonObject lotus = seatBones("sect_seat_lotus");
+        float chairDrop = first(chair, "body", "position", 1);
+        float lotusDrop = first(lotus, "body", "position", 1);
+        assertTrue(chairDrop < lotusDrop && lotusDrop == -9.0F, "hips: chair " + chairDrop + ", lotus " + lotusDrop);
+        assertTrue(first(lotus, "right_leg", "rotation", 2) > 60.0F, "the lotus crosses the legs sideways");
+        // the poses the renderer lays over a base: the full-body seated ones carry lotus legs of their own (replaced by the base),
+        // reading and counting are upper-body clips
+        assertTrue(SectPose.EAT.seated() && SectPose.MEDITATE.seated() && SectPose.SIT.seated() && SectPose.GRIND.seated());
+        assertTrue(SectPose.READ.upperBody() && SectPose.COUNT.upperBody() && SectPose.TALK.upperBody());
     }
 }

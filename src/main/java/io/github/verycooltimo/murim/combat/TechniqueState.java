@@ -32,7 +32,7 @@ public record TechniqueState(
      * последнего запуска и становилась способом мгновенно перезарядить технику.
      */
     public static final com.mojang.serialization.Codec<TechniqueState> CODEC =
-            com.mojang.serialization.codecs.RecordCodecBuilder.create(i -> i.group(
+            com.mojang.serialization.codecs.RecordCodecBuilder.<TechniqueState>create(i -> i.group(
                     net.minecraft.resources.ResourceLocation.CODEC.optionalFieldOf("technique")
                             .forGetter(state -> java.util.Optional.ofNullable(state.techniqueId())),
                     com.mojang.serialization.Codec.INT.fieldOf("tick").forGetter(TechniqueState::tick),
@@ -41,7 +41,12 @@ public record TechniqueState(
                     com.mojang.serialization.Codec.LONG.fieldOf("last_start")
                             .forGetter(TechniqueState::lastStartGameTime)
             ).apply(i, (id, tick, done, last) ->
-                    new TechniqueState(id.orElse(null), tick, done, last)));
+                    new TechniqueState(id.orElse(null), tick, done, last)))
+                    // Removed arts (19.10) and retired Dome (03.11): end the cast, keep last-start time.
+                    .xmap(state -> io.github.verycooltimo.murim.mastery.RemovedArts.is(state.techniqueId())
+                                    || io.github.verycooltimo.murim.mastery.PlumFormMigration.DOME.equals(state.techniqueId())
+                                    ? state.finished() : state,
+                            state -> state);
 
     public static final TechniqueState IDLE = new TechniqueState(null, 0, false, Long.MIN_VALUE);
 

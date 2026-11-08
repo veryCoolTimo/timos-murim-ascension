@@ -1,0 +1,14 @@
+{
+  "loader": "neoforge:obj",
+  "model": "murim:models/block/obj/purple_wood_herb_plant.obj",
+  "flip_v": false,
+  "automatic_culling": false,
+  "shade_quads": true,
+  "emissive_ambient": false,
+  "ambientocclusion": false,
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "tex": "murim:block/purple_wood_herb_plant",
+    "particle": "murim:block/purple_wood_herb_plant"
+  }
+}

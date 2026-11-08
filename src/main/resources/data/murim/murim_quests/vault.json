@@ -1,0 +1,33 @@
+{
+  "id": "vault",
+  "title": "quest.murim.vault.title",
+  "steps": [
+    {
+      "type": "clue",
+      "id": "vault_archive",
+      "model": "note"
+    },
+    {
+      "type": "clue",
+      "id": "vault_verse",
+      "model": "rubbing"
+    },
+    {
+      "type": "clue",
+      "id": "green_forest_page",
+      "model": "scrap"
+    },
+    {
+      "type": "clue",
+      "id": "fortress_page",
+      "model": "note"
+    },
+    {
+      "type": "inspect",
+      "id": "ancestors_verse",
+      "kind": "carved",
+      "grant": "vault_verse",
+      "seen": "quest.vault.verse"
+    }
+  ]
+}

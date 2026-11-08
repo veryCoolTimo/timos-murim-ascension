@@ -18,8 +18,8 @@ import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConf
  *
  * <p>Why a feature and not a chunk generator or density function: those replace the overworld
  * generator or its noise settings, which breaks worlds and modpacks with other terrain mods
- * (Terralith etc.). A feature runs on any overworld. Trade-offs (no vanilla caves inside the new
- * rock, structures planned on the old terrain) are recorded in docs/design/23-mount-hua-sect.md.
+ * (Terralith etc.). A feature runs on any overworld. Interior caves and suppression of vanilla surface structures are handled by the terrain
+ * pass; see docs/adr/0001-mount-hua-terrain-feature.md.
  *
  * <p>API: reference/minecraft-src/net/minecraft/world/level/levelgen/feature/Feature.java#place,
  * reference/minecraft-src/net/minecraft/world/level/chunk/ChunkGenerator.java#applyBiomeDecoration
@@ -27,12 +27,27 @@ import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConf
  */
 public final class MountHuaFeature extends Feature<NoneFeatureConfiguration> {
 
-    /** False: the terrain pass (raw_generation). True: the cleanup pass (top_layer_modification). */
+    /** Which pass of the mountain this feature instance is. */
+    public enum Pass {
+        /** The terrain pass (raw_generation). */
+        TERRAIN,
+        /** Paints the Mount Hua biomes before the vanilla vegetation is placed (fluid_springs, after the ores). */
+        PAINT,
+        /** The cleanup pass (top_layer_modification). */
+        CLEANUP
+    }
+
+    private final Pass pass;
     private final boolean cleanup;
 
     public MountHuaFeature(Codec<NoneFeatureConfiguration> codec, boolean cleanup) {
+        this(codec, cleanup ? Pass.CLEANUP : Pass.TERRAIN);
+    }
+
+    public MountHuaFeature(Codec<NoneFeatureConfiguration> codec, Pass pass) {
         super(codec);
-        this.cleanup = cleanup;
+        this.pass = pass;
+        this.cleanup = pass == Pass.CLEANUP;
     }
 
     @Override
@@ -47,15 +62,39 @@ public final class MountHuaFeature extends Feature<NoneFeatureConfiguration> {
             return false;
         }
         ChunkPos chunkPos = new ChunkPos(context.origin());
+        if (pass == Pass.PAINT) {
+            if (site.touchesChunk(chunkPos.x, chunkPos.z)) {
+                HuaBiomes.paint(level, level.getChunk(chunkPos.x, chunkPos.z), site);
+            }
+            return false;
+        }
+        if (!cleanup) {
+            HuaSurfaceStructures.suppress(level, level.getChunk(chunkPos.x, chunkPos.z), site);
+        }
         if (!site.touchesChunk(chunkPos.x, chunkPos.z)) {
             return false;
         }
         if (cleanup) {
             MountHuaChunkWriter.cleanup(level, level.getChunk(chunkPos.x, chunkPos.z), site);
-            // The author's captured sect over the shelf, then the Mount Hua biomes (docs/design/28-location-capture.md).
-            MountHuaOverlay.apply(level, chunkPos, site);
+            // The author's finished sect over the shelf: the baked pieces on a canonical mountain (docs/adr/0004), else
+            // the older captured location; then the Mount Hua biomes (docs/design/28-location-capture.md).
+            if (!HuaBaked.apply(level, chunkPos, site)) {
+                MountHuaOverlay.apply(level, chunkPos, site);
+            }
+            // The story places of the side quests (quest 1: Dry Stream Cave, quest 6: the ancestors' stele).
+            // The baked trail keeps the old profile; its columns over the step limit are cut down (no rise a player cannot walk).
+            HuaTrailMend.apply(level, chunkPos, site);
+            // The head's main vault under the Main Hall, after the baked sect that it cuts into (same clip, docs/adr/0018).
+            io.github.verycooltimo.murim.sect.vault.HuaVault.apply(level, chunkPos, site);
+            io.github.verycooltimo.murim.quest.world.HuaDryStreamCave.apply(level, chunkPos, site);
+            io.github.verycooltimo.murim.quest.world.HuaStele.apply(level, chunkPos, site);
+            // What the vanilla features left hanging over the reshaped ground (bamboo, vines, trees without a trunk on the ground, snow).
+            HuaFloaters.sweep(level, chunkPos, site);
+            // The author's climb, the foot lake and the dorm staircase (docs/adr/0021): sparse pieces, the last word over their blocks.
+            HuaBakedExtra.apply(level, chunkPos, site);
             HuaBiomes.paint(level, level.getChunk(chunkPos.x, chunkPos.z), site);
             MountHuaChunkWriter.clearSnow(level, level.getChunk(chunkPos.x, chunkPos.z), site);
+            HuaHerbs.apply(level, chunkPos, site);
             return true;
         }
         long start = System.nanoTime();

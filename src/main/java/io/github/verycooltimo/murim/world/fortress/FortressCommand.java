@@ -1,8 +1,8 @@
 package io.github.verycooltimo.murim.world.fortress;
 
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.datafixers.util.Pair;
-import io.github.verycooltimo.murim.MurimMod;
 import io.github.verycooltimo.murim.entity.boss.BossRegistry;
 import io.github.verycooltimo.murim.entity.boss.FortressMaster;
 import net.minecraft.commands.CommandSourceStack;
@@ -17,12 +17,9 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.levelgen.structure.Structure;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.event.RegisterCommandsEvent;
 
 /**
- * Отладка крепостей (оператор, docs/design/26-boss.md): {@code /murim fortress} — ближайшая
+ * Отладка крепостей (оператор, docs/design/26-boss.md): {@code /murim dev boss} — ближайшая
  * крепость и её состояние; {@code tp} — к воротам снаружи; {@code reset} — убрать хозяина и
  * забыть победу (заселится заново); {@code place} — построить крепость под игроком (стенд, тесты);
  * {@code flag on|off} — флаг победы игрока (условие прорыва 2). Обычный поиск —
@@ -31,24 +28,20 @@ import net.neoforged.neoforge.event.RegisterCommandsEvent;
  * <p>API: reference/neoforge-src/net/neoforged/neoforge/event/RegisterCommandsEvent.java,
  * reference/minecraft-src/net/minecraft/world/level/chunk/ChunkGenerator.java#findNearestMapStructure.
  */
-@EventBusSubscriber(modid = MurimMod.MODID)
 public final class FortressCommand {
 
     private FortressCommand() {
     }
 
-    @SubscribeEvent
-    static void onRegisterCommands(RegisterCommandsEvent event) {
-        event.getDispatcher().register(Commands.literal("murim")
-                .requires(source -> source.hasPermission(2))
-                .then(Commands.literal("fortress")
-                        .executes(FortressCommand::info)
-                        .then(Commands.literal("tp").executes(FortressCommand::teleport))
-                        .then(Commands.literal("reset").executes(FortressCommand::reset))
-                        .then(Commands.literal("place").executes(FortressCommand::place))
-                        .then(Commands.literal("flag")
-                                .then(Commands.literal("on").executes(c -> flag(c, true)))
-                                .then(Commands.literal("off").executes(c -> flag(c, false))))));
+    public static LiteralArgumentBuilder<CommandSourceStack> node() {
+        return Commands.literal("boss")
+                .executes(FortressCommand::info)
+                .then(Commands.literal("tp").executes(FortressCommand::teleport))
+                .then(Commands.literal("reset").executes(FortressCommand::reset))
+                .then(Commands.literal("place").executes(FortressCommand::place))
+                .then(Commands.literal("flag")
+                        .then(Commands.literal("on").executes(c -> flag(c, true)))
+                        .then(Commands.literal("off").executes(c -> flag(c, false))));
     }
 
     /** Ближайшая крепость: сначала структура мира, иначе — построенная командой. */

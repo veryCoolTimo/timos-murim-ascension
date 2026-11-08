@@ -1,0 +1,197 @@
+{
+  "name": "npc.murim.seo_han",
+  "title": "npc.murim.seo_han.title",
+  "start": [
+    {
+      "when": [
+        {
+          "member": true
+        }
+      ],
+      "node": "member"
+    },
+    {
+      "node": "greet"
+    }
+  ],
+  "nodes": {
+    "greet": {
+      "random": [
+        "dialogue.murim.seo_han.greet.1",
+        "dialogue.murim.seo_han.greet.2",
+        "dialogue.murim.seo_han.greet.3",
+        "dialogue.murim.seo_han.greet.4",
+        "dialogue.murim.seo_han.greet.5",
+        "dialogue.murim.seo_han.greet.6"
+      ],
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.seo_han.opt.where",
+          "next": "point",
+          "when": [
+            {
+              "social": "road_guidance"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.seo_han.opt.why",
+          "next": "recruit"
+        },
+        {
+          "text": "dialogue.murim.seo_han.opt.who",
+          "next": "who"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "who": {
+      "random": [
+        "dialogue.murim.seo_han.who.1",
+        "dialogue.murim.seo_han.who.2",
+        "dialogue.murim.seo_han.who.3",
+        "dialogue.murim.seo_han.who.4",
+        "dialogue.murim.seo_han.who.5",
+        "dialogue.murim.seo_han.who.6"
+      ],
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.seo_han.opt.where",
+          "next": "point",
+          "when": [
+            {
+              "social": "road_guidance"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.seo_han.opt.why",
+          "next": "recruit"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "point": {
+      "random": [
+        "dialogue.murim.seo_han.point.1",
+        "dialogue.murim.seo_han.point.2",
+        "dialogue.murim.seo_han.point.3",
+        "dialogue.murim.seo_han.point.4",
+        "dialogue.murim.seo_han.point.5",
+        "dialogue.murim.seo_han.point.6"
+      ],
+      "enter": [
+        {
+          "type": "wanderer_point"
+        }
+      ],
+      "options": [
+        {
+          "text": "dialogue.murim.seo_han.opt.again",
+          "next": "point",
+          "when": [
+            {
+              "social": "road_guidance"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.seo_han.opt.thanks",
+          "next": "bye"
+        }
+      ]
+    },
+    "bye": {
+      "random": [
+        "dialogue.murim.seo_han.bye.1",
+        "dialogue.murim.seo_han.bye.2",
+        "dialogue.murim.seo_han.bye.3",
+        "dialogue.murim.seo_han.bye.4",
+        "dialogue.murim.seo_han.bye.5",
+        "dialogue.murim.seo_han.bye.6"
+      ],
+      "gesture": "bow",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "member": {
+      "random": [
+        "dialogue.murim.seo_han.member.1",
+        "dialogue.murim.seo_han.member.2",
+        "dialogue.murim.seo_han.member.3",
+        "dialogue.murim.seo_han.member.4",
+        "dialogue.murim.seo_han.member.5",
+        "dialogue.murim.seo_han.member.6"
+      ],
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "recruit": {
+      "random": [
+        "dialogue.murim.seo_han.recruit.1",
+        "dialogue.murim.seo_han.recruit.2",
+        "dialogue.murim.seo_han.recruit.3",
+        "dialogue.murim.seo_han.recruit.4",
+        "dialogue.murim.seo_han.recruit.5",
+        "dialogue.murim.seo_han.recruit.6"
+      ],
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.seo_han.opt.gain",
+          "next": "gain"
+        },
+        {
+          "text": "dialogue.murim.seo_han.opt.where",
+          "next": "point",
+          "when": [
+            {
+              "social": "road_guidance"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "gain": {
+      "random": [
+        "dialogue.murim.seo_han.gain.1",
+        "dialogue.murim.seo_han.gain.2",
+        "dialogue.murim.seo_han.gain.3",
+        "dialogue.murim.seo_han.gain.4",
+        "dialogue.murim.seo_han.gain.5",
+        "dialogue.murim.seo_han.gain.6"
+      ],
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.seo_han.opt.where",
+          "next": "point",
+          "when": [
+            {
+              "social": "road_guidance"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    }
+  }
+}

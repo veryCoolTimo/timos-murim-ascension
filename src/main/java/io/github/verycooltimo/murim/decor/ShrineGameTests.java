@@ -3,6 +3,7 @@ package io.github.verycooltimo.murim.decor;
 import io.github.verycooltimo.murim.MurimMod;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.Direction.Axis;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.world.InteractionHand;
@@ -18,7 +19,7 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
-/** GameTests of the shrine set: stacked parts, drops, scroll text cycling, light levels (as HallLightsGameTests). */
+/** GameTests of the shrine set: stacked parts, drops, fixed scroll text, light levels (as HallLightsGameTests). */
 @GameTestHolder(MurimMod.MODID)
 @PrefixGameTestTemplate(false)
 public final class ShrineGameTests {
@@ -39,25 +40,53 @@ public final class ShrineGameTests {
     public static void shrineGridDropsOnceFromTopCell(GameTestHelper helper) {
         BlockPos base = new BlockPos(0, 1, 2);
         BlockItem item = ShrineDecor.item(ShrineDecor.ANCESTOR_SHRINE);
-        for (int x = 0; x < 3; x++) {
+        for (int x = 0; x < 2; x++) {
             helper.setBlock(base.east(x), Blocks.STONE_BRICKS);
             for (int y = 2; y <= 4; y++) {
                 helper.setBlock(base.east(x).above(y - 1), Blocks.AIR);
             }
         }
+        // The old third column may be occupied: a two-wide shrine must leave it untouched.
+        helper.setBlock(base.above().east(2), Blocks.STONE_BRICKS);
         helper.assertTrue(click(helper, item, base, Direction.UP).consumesAction(), "placement refused");
         // no player: horizontal direction NORTH, FACING south, viewer's right = east
-        for (int c = 0; c < 3; c++) {
+        for (int c = 0; c < 2; c++) {
             for (int r = 0; r < 3; r++) {
                 BlockState s = helper.getBlockState(base.above().east(c).above(r));
                 helper.assertTrue(s.is(ShrineDecor.ANCESTOR_SHRINE.get()) && s.getValue(ShrineGridBlock.COL) == c
                         && s.getValue(ShrineGridBlock.PART) == r, "cell " + c + "," + r + ": " + s);
             }
         }
-        helper.getLevel().destroyBlock(helper.absolutePos(base.above().east(2).above(2)), true);
+        helper.assertBlockPresent(Blocks.STONE_BRICKS, base.above().east(2));
+        BlockPos lower = base.above();
+        var lowerShape = helper.getBlockState(lower).getShape(helper.getLevel(), helper.absolutePos(lower));
+        helper.assertTrue(lowerShape.toAabbs().stream().anyMatch(b -> b.contains(12.0D / 16, 6.25D / 16, 15.5D / 16)),
+                "offering ledge must be at 6.5 px");
+        helper.assertTrue(lowerShape.toAabbs().stream().noneMatch(b -> b.contains(12.0D / 16, 10.0D / 16, 12.0D / 16)),
+                "niche must be open above the low ledge, without the old tall cabinet");
+        BlockPos topPos = base.above(3).east();
+        BlockState top = helper.getBlockState(topPos);
+        double topY = top.getShape(helper.getLevel(), helper.absolutePos(topPos)).max(Axis.Y);
+        helper.assertTrue(topY == 0.5D, "top cell must end at 8 px, was " + topY);
+        helper.getLevel().destroyBlock(helper.absolutePos(topPos), true);
         helper.assertBlockPresent(Blocks.AIR, base.above());
         helper.assertBlockPresent(Blocks.AIR, base.above().east(1).above(1));
         helper.succeedWhen(() -> helper.assertItemEntityCountIs(item, base.above(), 6.0D, 1));
+    }
+
+    @GameTest(template = FLOOR, batch = "decor")
+    public static void tinyShrineOfferingsHaveNoCollision(GameTestHelper helper) {
+        BlockPos at = new BlockPos(1, 2, 1);
+        for (var block : java.util.List.of(ShrineDecor.CANDLE_DRAGON, ShrineDecor.INCENSE_DING)) {
+            BlockState state = block.get().defaultBlockState();
+            helper.setBlock(at, state);
+            helper.assertTrue(state.getCollisionShape(helper.getLevel(), helper.absolutePos(at)).isEmpty(),
+                    "tabletop offering has collision: " + block.getId());
+            double h = state.getShape(helper.getLevel(), helper.absolutePos(at)).max(Axis.Y);
+            double expected = block == ShrineDecor.CANDLE_DRAGON ? 11.0D / 16 : 6.0D / 16;
+            helper.assertTrue(h == expected, "offering outline must match its new model: " + h);
+        }
+        helper.succeed();
     }
 
     @GameTest(template = FLOOR, batch = "decor")
@@ -89,7 +118,7 @@ public final class ShrineGameTests {
     }
 
     @GameTest(template = FLOOR, batch = "decor")
-    public static void scrollThreeBlocksOnWallCyclesText(GameTestHelper helper) {
+    public static void scrollThreeBlocksOnWallKeepsText(GameTestHelper helper) {
         BlockPos wall = new BlockPos(1, 2, 2);
         helper.setBlock(wall, Blocks.STONE_BRICKS);
         helper.setBlock(wall.above(), Blocks.STONE_BRICKS);
@@ -107,7 +136,7 @@ public final class ShrineGameTests {
                 new BlockHitResult(Vec3.atCenterOf(helper.absolutePos(at.above(2))), Direction.EAST, helper.absolutePos(at.above(2)), false));
         for (int k = 0; k < 3; k++) {
             int v = helper.getBlockState(at.above(k)).getValue(ShrineScrollBlock.VARIANT);
-            helper.assertTrue(v == 1, "variant of part " + k + " is " + v);
+            helper.assertTrue(v == 0, "variant of part " + k + " is " + v);
         }
         helper.assertTrue(top.getValue(ShrineScrollBlock.VARIANT) == 0, "setup");
         helper.succeed();

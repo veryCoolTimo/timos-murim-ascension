@@ -25,7 +25,7 @@ public final class SectTalk {
     public static final String REVIEW_WON = "review.won";
 
     /** Реплик на черту (без реплики о победе игрока на смотре). */
-    public static final int TRAIT_LINES = 5;
+    public static final int TRAIT_LINES = 6;
 
     /** Черта характера ученика. */
     public enum Trait {
@@ -63,8 +63,13 @@ public final class SectTalk {
      * @param playerWon      собеседник выигрывал смотр
      * @param playerSkipped  собеседник пропустил сегодняшний строй
      * @param reviewDays     дней до ближайшего смотра
+     * @param office         собеседник — старейшина или первый ученик: ему не дают наставлений и не задираются (docs/design/39)
      */
-    public record Context(String champion, String playerName, boolean playerWon, boolean playerSkipped, long reviewDays) {
+    public record Context(String champion, String playerName, boolean playerWon, boolean playerSkipped, long reviewDays,
+                          boolean office) {
+        public Context(String champion, String playerName, boolean playerWon, boolean playerSkipped, long reviewDays) {
+            this(champion, playerName, playerWon, playerSkipped, reviewDays, false);
+        }
     }
 
     /** Реплика: lang-ключ и аргументы. */
@@ -123,6 +128,10 @@ public final class SectTalk {
     public static Line line(String token, String speaker, long day, boolean night, int roll, Context ctx) {
         int r = Math.abs(roll);
         boolean known = SectRoster.of(speaker).map(m -> m.disciple() || m.firstRank()).orElse(false);
+        // A rival's taunts are not said to an office holder: he gets the talk about the others instead.
+        if (ctx.office() && TRAIT.equals(token) && trait(speaker) == Trait.RIVAL && known) {
+            token = RUMOUR;
+        }
         if (PERSONAL.equals(token) && known) {
             return new Line(personalKey(speaker), List.of());
         }
@@ -143,14 +152,15 @@ public final class SectTalk {
     static List<Line> rumours(String speaker, long day, boolean night, Context ctx) {
         List<Line> out = new ArrayList<>();
         // Кто на посту: ночью — ночная смена, днём — сегодняшняя ночная (кто заступит вечером).
+        // The watch rumours are warnings («go wandering and they won't let you through»): not for an office holder.
         SectRoster n0 = SectRota.nightWatch(day, 0);
         SectRoster n1 = SectRota.nightWatch(day, 1);
         if (speaker.equals(n0.key()) || speaker.equals(n1.key())) {
-            out.add(new Line("dialogue.murim.rumour.guard_me", List.of(npc(speaker.equals(n0.key()) ? n1 : n0))));
-        } else {
+            if (!ctx.office()) out.add(new Line("dialogue.murim.rumour.guard_me", List.of(npc(speaker.equals(n0.key()) ? n1 : n0))));
+        } else if (!ctx.office()) {
             out.add(new Line("dialogue.murim.rumour.guard_night", List.of(npc(n0), npc(n1))));
         }
-        if (!night) {
+        if (!night && !ctx.office()) {
             SectRoster d0 = SectRota.dayWatch(day, 0);
             SectRoster d1 = SectRota.dayWatch(day, 1);
             if (!speaker.equals(d0.key()) && !speaker.equals(d1.key())) {

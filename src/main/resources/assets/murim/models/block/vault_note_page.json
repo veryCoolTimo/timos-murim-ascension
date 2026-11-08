@@ -1,0 +1,40 @@
+{
+  "textures": {
+    "paper": "murim:block/library_book_pages",
+    "particle": "murim:block/plum_shelf_wood"
+  },
+  "elements": [
+    {
+      "from": [
+        5,
+        8.1,
+        10
+      ],
+      "to": [
+        11,
+        8.25,
+        15.2
+      ],
+      "faces": {
+        "up": {
+          "texture": "#paper"
+        },
+        "down": {
+          "texture": "#paper"
+        },
+        "north": {
+          "texture": "#paper"
+        },
+        "south": {
+          "texture": "#paper"
+        },
+        "east": {
+          "texture": "#paper"
+        },
+        "west": {
+          "texture": "#paper"
+        }
+      }
+    }
+  ]
+}

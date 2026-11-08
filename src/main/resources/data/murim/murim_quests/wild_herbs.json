@@ -1,0 +1,63 @@
+{
+  "id": "wild_herbs",
+  "title": "quest.murim.wild_herbs.title",
+  "steps": [
+    {
+      "type": "herb",
+      "id": "hundred_ginseng",
+      "block": "murim:hundred_ginseng_plant",
+      "item": "murim:hundred_ginseng",
+      "regrow_days": 6,
+      "min_y": -64,
+      "max_y": 320,
+      "min_light": 0,
+      "max_light": 15,
+      "water_range": 0,
+      "min_spawn_distance": 0,
+      "max_spawn_distance": 30000000,
+      "rarity": 1,
+      "habitat": "forest",
+      "origin": "murim.herb.origin.mount_hua",
+      "raw_effect": "murim.herb.raw.hundred_ginseng",
+      "dangerous": false
+    },
+    {
+      "type": "herb",
+      "id": "purple_ginseng",
+      "block": "murim:purple_ginseng_plant",
+      "item": "murim:purple_ginseng",
+      "regrow_days": 6,
+      "min_y": 110,
+      "max_y": 240,
+      "min_light": 0,
+      "max_light": 10,
+      "water_range": 0,
+      "min_spawn_distance": 0,
+      "max_spawn_distance": 30000000,
+      "rarity": 20,
+      "habitat": "slopes",
+      "origin": "murim.herb.origin.mount_hua",
+      "raw_effect": "murim.herb.raw.purple_ginseng",
+      "dangerous": false
+    },
+    {
+      "type": "herb",
+      "id": "purple_wood_herb",
+      "block": "murim:purple_wood_herb_plant",
+      "item": "murim:purple_wood_herb",
+      "regrow_days": 4,
+      "min_y": -32,
+      "max_y": 65,
+      "min_light": 0,
+      "max_light": 8,
+      "water_range": 4,
+      "min_spawn_distance": 900,
+      "max_spawn_distance": 2500,
+      "rarity": 1,
+      "habitat": "valley",
+      "origin": "murim.herb.origin.mount_hua_224",
+      "raw_effect": "murim.herb.raw.purple_wood_herb",
+      "dangerous": false
+    }
+  ]
+}

@@ -102,9 +102,6 @@ public final class QiSword {
         if (d == null) {
             return false;
         }
-        if (d.behavior() instanceof TechniqueBehavior.DemonicArt art) {
-            return io.github.verycooltimo.murim.technique.DemonicRules.sword(art.art());
-        }
         // Искусства третьего сорта сами говорят, чем бьют: кулак и топор меча не требуют.
         java.util.Optional<io.github.verycooltimo.murim.technique.JunkArts.Art> junk = io.github.verycooltimo.murim.technique.JunkArts.art(d.id());
         if (junk.isPresent()) {
@@ -117,7 +114,7 @@ public final class QiSword {
         if (Styles.ofBasic(d.id()).isPresent() || d.foundation()) {
             return true;
         }
-        return d.behavior() instanceof TechniqueBehavior.MeleeArc || d.behavior() instanceof TechniqueBehavior.FallingPetal;
+        return d.behavior() instanceof TechniqueBehavior.SixForm || d.behavior() instanceof TechniqueBehavior.MeleeArc || d.behavior() instanceof TechniqueBehavior.FallingPetal;
     }
 
     public static boolean needsSword(ResourceLocation technique) {
@@ -162,6 +159,12 @@ public final class QiSword {
         draw(player);
         ChannelSafe.nearEntity(player, new QiSwordHitPayload(player.getId()), true);
         return true;
+    }
+
+    /** An accepted empty-hand art sheathes the manifested sword and removes its attack bonuses. */
+    public static void sheathe(Player player) {
+        player.getPersistentData().remove(DRAWN_KEY);
+        apply(player, false);
     }
 
     /** Вынут ли сейчас ци-меч. */

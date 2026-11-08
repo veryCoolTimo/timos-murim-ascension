@@ -2,8 +2,8 @@ package io.github.verycooltimo.murim.world.hua;
 
 import com.mojang.brigadier.arguments.LongArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
-import io.github.verycooltimo.murim.MurimMod;
 import java.util.Arrays;
 import java.util.Locale;
 import net.minecraft.commands.CommandSourceStack;
@@ -19,32 +19,25 @@ import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.event.RegisterCommandsEvent;
 
 /**
- * {@code /murim tree <courtyard|cliff|young> [pink|pale|red] [seed]} — grows a plum tree on the block
- * the player looks at (up to 64 blocks), or at {@code /murim tree <variant> at <pos> [palette] [seed]}.
+ * {@code /murim dev tree <courtyard|cliff|young> [pink|pale|red] [seed]} — grows a plum tree on the block
+ * the player looks at (up to 64 blocks), or at {@code /murim dev tree <variant> at <pos> [palette] [seed]}.
  * The tree leans the way the player faces (cliff variant). For the author to place trees by hand
  * and for the capture stand. Permission 2, like the rest of {@code /murim}.
  *
  * <p>API: reference/neoforge-src/net/neoforged/neoforge/event/RegisterCommandsEvent.java;
- * Brigadier merges this {@code murim} literal with the others.
+ * Registered under {@code /murim dev} by {@link io.github.verycooltimo.murim.command.MurimCommands}.
  */
-@EventBusSubscriber(modid = MurimMod.MODID)
 public final class PlumTreeCommand {
 
     private PlumTreeCommand() {
     }
 
-    @SubscribeEvent
-    static void onRegisterCommands(RegisterCommandsEvent event) {
+    public static LiteralArgumentBuilder<CommandSourceStack> node() {
         String[] variants = Arrays.stream(PlumTree.Variant.values()).map(PlumTree.Variant::getSerializedName).toArray(String[]::new);
         String[] palettes = Arrays.stream(PlumTree.Palette.values()).map(p -> p.name().toLowerCase(Locale.ROOT)).toArray(String[]::new);
-        event.getDispatcher().register(Commands.literal("murim")
-                .requires(source -> source.hasPermission(2))
-                .then(Commands.literal("tree")
+        return Commands.literal("tree")
                         .then(Commands.argument("variant", StringArgumentType.word())
                                 .suggests((c, b) -> SharedSuggestionProvider.suggest(variants, b))
                                 .executes(c -> grow(c, null, null, null))
@@ -64,7 +57,7 @@ public final class PlumTreeCommand {
                                         .executes(c -> grow(c, null, StringArgumentType.getString(c, "palette"), null))
                                         .then(Commands.argument("seed", LongArgumentType.longArg())
                                                 .executes(c -> grow(c, null, StringArgumentType.getString(c, "palette"),
-                                                        LongArgumentType.getLong(c, "seed"))))))));
+                                                        LongArgumentType.getLong(c, "seed"))))));
     }
 
     private static int grow(CommandContext<CommandSourceStack> c, BlockPos at, String paletteName, Long seed) {

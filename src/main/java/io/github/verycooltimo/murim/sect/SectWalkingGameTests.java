@@ -182,7 +182,8 @@ public final class SectWalkingGameTests {
         int[] ticks = {0};
         h.onEachTick(() -> {
             SectWatch.check(p, layout);
-            h.assertTrue(guard.guardTarget() == null && !guard.escortGoal().forPlayer(p) && guard.spar() == SectDisciple.Spar.NONE,
+            // The guard may walk him out of a closed place politely (19.10); he never fights him, and nothing is taken.
+            h.assertTrue(guard.guardTarget() == null && !guard.escortGoal().forcedFor(p) && guard.spar() == SectDisciple.Spar.NONE,
                     "good member was attacked for walking");
             h.assertTrue(p.getData(ModAttachments.SECT).contribution() == 0, "roaming or absence was penalized");
             if (++ticks[0] == 400) h.succeed();
@@ -207,6 +208,27 @@ public final class SectWalkingGameTests {
         h.assertTrue("defeated".equals(SectWatch.of(p).last()) && guard.escortGoal().forPlayer(p), "no defeated expulsion");
         h.assertTrue(p.position().equals(original), "defeat teleported the player");
         h.succeed();
+    }
+
+    /** Crash 23.10: the defeat cleared the target and the goal selector still ticked the guard goal once more. */
+    @GameTest(template = "sect_yard", timeoutTicks = 80, batch = "sect_walking_damage")
+    public static void guardGoalTicksSafelyAfterDefeat(GameTestHelper h) {
+        SectDisciple guard = npc(h, new Rooms(at(h, 12.5, 12.5)), "gyeong_tak", 12.5, 11.5);
+        ServerPlayer p = player(h, false);
+        for (int i = 0; i < 61; i++) p.tick();
+        Vec3 at = at(h, 12.5, 12.5);
+        p.moveTo(at.x, at.y, at.z, 0, 0);
+        p.invulnerableTime = 0;
+        h.assertTrue(guard.guardGoal().begin(p, at(h, 12.5, 2.5)), "guard refused combat");
+        h.assertTrue(p.hurt(guard.damageSources().mobAttack(guard), 10000), "guard hit was rejected");
+        h.assertTrue(guard.guardGoal().target() == null, "defeat kept the target");
+        guard.guardGoal().tick();
+        guard.guardGoal().tick();
+        int[] ticks = {0};
+        h.onEachTick(() -> {
+            guard.guardGoal().tick();
+            if (++ticks[0] == 40) h.succeed();
+        });
     }
 
     @GameTest(template = "sect_yard", timeoutTicks = 200, batch = "sect_building_beds")

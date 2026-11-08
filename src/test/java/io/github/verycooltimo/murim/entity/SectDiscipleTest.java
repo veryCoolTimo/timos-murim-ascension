@@ -66,7 +66,13 @@ class SectDiscipleTest {
         for (String b : new String[] {"root", "waist", "torso", "head", "arm_r", "arm_l", "leg_r", "leg_l", "skirt_front", "skirt_back"}) {
             assertTrue(disciple.containsKey(b), b);
             assertEquals(String.valueOf(bandit.get(b).get("parent")), String.valueOf(disciple.get(b).get("parent")), b + " parent");
-            assertEquals(bandit.get(b).get("pivot"), disciple.get(b).get("pivot"), b + " pivot");
+            // The author's student model of 27.10 has skirt_front at z -2.3 (as his first-generation model), 0.1 px off the bandit's
+            // -2.4: a clip turning the skirt about that pivot moves it by less than a tenth of a pixel, so a tolerance, not equality.
+            var want = bandit.get(b).getAsJsonArray("pivot");
+            var have = disciple.get(b).getAsJsonArray("pivot");
+            for (int i = 0; i < 3; i++) {
+                assertEquals(want.get(i).getAsDouble(), have.get(i).getAsDouble(), 0.15, b + " pivot " + i);
+            }
         }
         assertTrue(disciple.containsKey("handle"), "рукоять меча в ножнах");
         assertTrue(!disciple.containsKey("weapon"), "меч в руке — предмет, не кость");

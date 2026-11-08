@@ -1,0 +1,1251 @@
+{
+ "textures": {
+  "coins": "murim:block/vault_coins",
+  "edge": "murim:block/vault_coin_edge",
+  "bar_top": "murim:block/vault_bar_top",
+  "bar_side": "murim:block/vault_bar_side",
+  "cloth_hot": "murim:block/vault_cloth_hot",
+  "cloth_warm": "murim:block/vault_cloth_warm",
+  "cloth_dim": "murim:block/vault_cloth_dim",
+  "vessel_gold": "murim:block/vault_vessel_gold",
+  "vessel_jade": "murim:block/vault_vessel_jade",
+  "jade_disc": "murim:block/vault_jade_disc",
+  "pearl": "murim:block/vault_pearl",
+  "chest_wood": "murim:block/vault_chest_wood",
+  "particle": "murim:block/vault_cloth_warm",
+  "gem_red": "murim:block/vault_gem_red",
+  "gem_green": "murim:block/vault_gem_green",
+  "gem_blue": "murim:block/vault_gem_blue",
+  "gem_violet": "murim:block/vault_gem_violet",
+  "gem_white": "murim:block/vault_gem_white"
+ },
+ "elements": [
+  {
+   "from": [
+    0,
+    0.0,
+    0
+   ],
+   "to": [
+    16,
+    1.0,
+    16
+   ],
+   "faces": {
+    "north": {
+     "texture": "#cloth_hot",
+     "uv": [
+      0,
+      0,
+      1,
+      1
+     ],
+     "light_emission": 15
+    },
+    "south": {
+     "texture": "#cloth_hot",
+     "uv": [
+      0,
+      0,
+      1,
+      1
+     ],
+     "light_emission": 15
+    },
+    "east": {
+     "texture": "#cloth_hot",
+     "uv": [
+      0,
+      0,
+      1,
+      1
+     ],
+     "light_emission": 15
+    },
+    "west": {
+     "texture": "#cloth_hot",
+     "uv": [
+      0,
+      0,
+      1,
+      1
+     ],
+     "light_emission": 15
+    },
+    "up": {
+     "texture": "#cloth_hot",
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "light_emission": 15
+    },
+    "down": {
+     "texture": "#cloth_hot",
+     "uv": [
+      0,
+      0,
+      1,
+      1
+     ],
+     "light_emission": 15
+    }
+   }
+  },
+  {
+   "from": [
+    8.3,
+    1.0,
+    10.046
+   ],
+   "to": [
+    17.005,
+    2.512,
+    13.32
+   ],
+   "faces": {
+    "north": {
+     "texture": "#edge",
+     "light_emission": 13,
+     "uv": [
+      7,
+      3,
+      15.71,
+      4.51
+     ]
+    },
+    "south": {
+     "texture": "#edge",
+     "light_emission": 13,
+     "uv": [
+      7,
+      3,
+      15.71,
+      4.51
+     ]
+    },
+    "east": {
+     "texture": "#edge",
+     "light_emission": 13,
+     "uv": [
+      8,
+      7,
+      11.27,
+      8.51
+     ]
+    },
+    "west": {
+     "texture": "#edge",
+     "light_emission": 13,
+     "uv": [
+      1,
+      14,
+      4.27,
+      15.51
+     ]
+    },
+    "up": {
+     "texture": "#coins",
+     "light_emission": 13,
+     "uv": [
+      1,
+      6,
+      9.71,
+      9.27
+     ]
+    },
+    "down": {
+     "texture": "#coins",
+     "light_emission": 13,
+     "uv": [
+      1,
+      6,
+      9.71,
+      9.27
+     ]
+    }
+   },
+   "rotation": {
+    "angle": 45,
+    "axis": "y",
+    "origin": [
+     12.652,
+     1.0,
+     11.683
+    ]
+   }
+  },
+  {
+   "from": [
+    3.776,
+    1.0,
+    6.722
+   ],
+   "to": [
+    9.002,
+    3.695,
+    15.26
+   ],
+   "faces": {
+    "north": {
+     "texture": "#edge",
+     "light_emission": 13,
+     "uv": [
+      4,
+      1,
+      9.23,
+      3.69
+     ]
+    },
+    "south": {
+     "texture": "#edge",
+     "light_emission": 13,
+     "uv": [
+      10,
+      9,
+      15.23,
+      11.69
+     ]
+    },
+    "east": {
+     "texture": "#edge",
+     "light_emission": 13,
+     "uv": [
+      1,
+      8,
+      9.54,
+      10.69
+     ]
+    },
+    "west": {
+     "texture": "#edge",
+     "light_emission": 13,
+     "uv": [
+      1,
+      12,
+      9.54,
+      14.69
+     ]
+    },
+    "up": {
+     "texture": "#coins",
+     "light_emission": 13,
+     "uv": [
+      5,
+      6,
+      10.23,
+      14.54
+     ]
+    },
+    "down": {
+     "texture": "#coins",
+     "light_emission": 13,
+     "uv": [
+      5,
+      6,
+      10.23,
+      14.54
+     ]
+    }
+   },
+   "rotation": {
+    "angle": 45,
+    "axis": "y",
+    "origin": [
+     6.389,
+     1.0,
+     10.991
+    ]
+   }
+  },
+  {
+   "from": [
+    11.571,
+    1.0,
+    4.685
+   ],
+   "to": [
+    17.05,
+    8.136,
+    10.175
+   ],
+   "faces": {
+    "north": {
+     "texture": "#edge",
+     "light_emission": 13,
+     "uv": [
+      3,
+      5,
+      8.48,
+      12.14
+     ]
+    },
+    "south": {
+     "texture": "#edge",
+     "light_emission": 13,
+     "uv": [
+      8,
+      3,
+      13.48,
+      10.14
+     ]
+    },
+    "east": {
+     "texture": "#edge",
+     "light_emission": 13,
+     "uv": [
+      3,
+      7,
+      8.49,
+      14.14
+     ]
+    },
+    "west": {
+     "texture": "#edge",
+     "light_emission": 13,
+     "uv": [
+      10,
+      4,
+      15.49,
+      11.14
+     ]
+    },
+    "up": {
+     "texture": "#coins",
+     "light_emission": 13,
+     "uv": [
+      7,
+      8,
+      12.48,
+      13.49
+     ]
+    },
+    "down": {
+     "texture": "#coins",
+     "light_emission": 13,
+     "uv": [
+      7,
+      8,
+      12.48,
+      13.49
+     ]
+    }
+   },
+   "rotation": {
+    "angle": -45,
+    "axis": "y",
+    "origin": [
+     14.311,
+     1.0,
+     7.43
+    ]
+   }
+  },
+  {
+   "from": [
+    5.328,
+    1.0,
+    1.143
+   ],
+   "to": [
+    9.828,
+    9.293,
+    7.385
+   ],
+   "faces": {
+    "north": {
+     "texture": "#edge",
+     "light_emission": 13,
+     "uv": [
+      1,
+      4,
+      5.5,
+      12.29
+     ]
+    },
+    "south": {
+     "texture": "#edge",
+     "light_emission": 13,
+     "uv": [
+      3,
+      3,
+      7.5,
+      11.29
+     ]
+    },
+    "east": {
+     "texture": "#edge",
+     "light_emission": 13,
+     "uv": [
+      1,
+      3,
+      7.24,
+      11.29
+     ]
+    },
+    "west": {
+     "texture": "#edge",
+     "light_emission": 13,
+     "uv": [
+      5,
+      2,
+      11.24,
+      10.29
+     ]
+    },
+    "up": {
+     "texture": "#coins",
+     "light_emission": 13,
+     "uv": [
+      3,
+      9,
+      7.5,
+      15.24
+     ]
+    },
+    "down": {
+     "texture": "#coins",
+     "light_emission": 13,
+     "uv": [
+      3,
+      9,
+      7.5,
+      15.24
+     ]
+    }
+   },
+   "rotation": {
+    "angle": 22.5,
+    "axis": "y",
+    "origin": [
+     7.578,
+     1.0,
+     4.264
+    ]
+   }
+  },
+  {
+   "from": [
+    10.93,
+    1.0,
+    4.165
+   ],
+   "to": [
+    19.529,
+    9.805,
+    7.405
+   ],
+   "faces": {
+    "north": {
+     "texture": "#edge",
+     "light_emission": 13,
+     "uv": [
+      3,
+      7,
+      11.6,
+      15.81
+     ]
+    },
+    "south": {
+     "texture": "#edge",
+     "light_emission": 13,
+     "uv": [
+      0,
+      4,
+      8.6,
+      12.81
+     ]
+    },
+    "east": {
+     "texture": "#edge",
+     "light_emission": 13,
+     "uv": [
+      6,
+      0,
+      9.24,
+      8.81
+     ]
+    },
+    "west": {
+     "texture": "#edge",
+     "light_emission": 13,
+     "uv": [
+      9,
+      2,
+      12.24,
+      10.81
+     ]
+    },
+    "up": {
+     "texture": "#coins",
+     "light_emission": 13,
+     "uv": [
+      1,
+      0,
+      9.6,
+      3.24
+     ]
+    },
+    "down": {
+     "texture": "#coins",
+     "light_emission": 13,
+     "uv": [
+      1,
+      0,
+      9.6,
+      3.24
+     ]
+    }
+   },
+   "rotation": {
+    "angle": -22.5,
+    "axis": "y",
+    "origin": [
+     15.229,
+     1.0,
+     5.785
+    ]
+   }
+  },
+  {
+   "from": [
+    2.779,
+    1.0,
+    2.09
+   ],
+   "to": [
+    10.895,
+    9.976,
+    5.634
+   ],
+   "faces": {
+    "north": {
+     "texture": "#edge",
+     "light_emission": 13,
+     "uv": [
+      3,
+      4,
+      11.12,
+      12.98
+     ]
+    },
+    "south": {
+     "texture": "#edge",
+     "light_emission": 13,
+     "uv": [
+      5,
+      4,
+      13.12,
+      12.98
+     ]
+    },
+    "east": {
+     "texture": "#edge",
+     "light_emission": 13,
+     "uv": [
+      8,
+      4,
+      11.54,
+      12.98
+     ]
+    },
+    "west": {
+     "texture": "#edge",
+     "light_emission": 13,
+     "uv": [
+      11,
+      6,
+      14.54,
+      14.98
+     ]
+    },
+    "up": {
+     "texture": "#coins",
+     "light_emission": 13,
+     "uv": [
+      1,
+      12,
+      9.12,
+      15.54
+     ]
+    },
+    "down": {
+     "texture": "#coins",
+     "light_emission": 13,
+     "uv": [
+      1,
+      12,
+      9.12,
+      15.54
+     ]
+    }
+   },
+   "rotation": {
+    "angle": 45,
+    "axis": "y",
+    "origin": [
+     6.837,
+     1.0,
+     3.862
+    ]
+   }
+  },
+  {
+   "from": [
+    2.646,
+    1.0,
+    1.005
+   ],
+   "to": [
+    8.693,
+    10.763,
+    8.346
+   ],
+   "faces": {
+    "north": {
+     "texture": "#edge",
+     "light_emission": 13,
+     "uv": [
+      7,
+      5,
+      13.05,
+      14.76
+     ]
+    },
+    "south": {
+     "texture": "#edge",
+     "light_emission": 13,
+     "uv": [
+      2,
+      1,
+      8.05,
+      10.76
+     ]
+    },
+    "east": {
+     "texture": "#edge",
+     "light_emission": 13,
+     "uv": [
+      4,
+      6,
+      11.34,
+      15.76
+     ]
+    },
+    "west": {
+     "texture": "#edge",
+     "light_emission": 13,
+     "uv": [
+      0,
+      0,
+      7.34,
+      9.76
+     ]
+    },
+    "up": {
+     "texture": "#coins",
+     "light_emission": 13,
+     "uv": [
+      3,
+      7,
+      9.05,
+      14.34
+     ]
+    },
+    "down": {
+     "texture": "#coins",
+     "light_emission": 13,
+     "uv": [
+      3,
+      7,
+      9.05,
+      14.34
+     ]
+    }
+   },
+   "rotation": {
+    "angle": 45,
+    "axis": "y",
+    "origin": [
+     5.669,
+     1.0,
+     4.675
+    ]
+   }
+  },
+  {
+   "from": [
+    8.739,
+    1.0,
+    1.399
+   ],
+   "to": [
+    15.426,
+    11.325,
+    6.767
+   ],
+   "faces": {
+    "north": {
+     "texture": "#edge",
+     "light_emission": 13,
+     "uv": [
+      3,
+      1,
+      9.69,
+      11.33
+     ]
+    },
+    "south": {
+     "texture": "#edge",
+     "light_emission": 13,
+     "uv": [
+      2,
+      5,
+      8.69,
+      15.33
+     ]
+    },
+    "east": {
+     "texture": "#edge",
+     "light_emission": 13,
+     "uv": [
+      0,
+      3,
+      5.37,
+      13.33
+     ]
+    },
+    "west": {
+     "texture": "#edge",
+     "light_emission": 13,
+     "uv": [
+      4,
+      0,
+      9.37,
+      10.33
+     ]
+    },
+    "up": {
+     "texture": "#coins",
+     "light_emission": 13,
+     "uv": [
+      0,
+      4,
+      6.69,
+      9.37
+     ]
+    },
+    "down": {
+     "texture": "#coins",
+     "light_emission": 13,
+     "uv": [
+      0,
+      4,
+      6.69,
+      9.37
+     ]
+    }
+   }
+  },
+  {
+   "from": [
+    12.753,
+    1.0,
+    -0.553
+   ],
+   "to": [
+    18.81,
+    14.779,
+    8.122
+   ],
+   "faces": {
+    "north": {
+     "texture": "#edge",
+     "light_emission": 13,
+     "uv": [
+      3,
+      2,
+      9.06,
+      15.78
+     ]
+    },
+    "south": {
+     "texture": "#edge",
+     "light_emission": 13,
+     "uv": [
+      8,
+      1,
+      14.06,
+      14.78
+     ]
+    },
+    "east": {
+     "texture": "#edge",
+     "light_emission": 13,
+     "uv": [
+      6,
+      1,
+      14.68,
+      14.78
+     ]
+    },
+    "west": {
+     "texture": "#edge",
+     "light_emission": 13,
+     "uv": [
+      6,
+      1,
+      14.68,
+      14.78
+     ]
+    },
+    "up": {
+     "texture": "#coins",
+     "light_emission": 13,
+     "uv": [
+      4,
+      3,
+      10.06,
+      11.68
+     ]
+    },
+    "down": {
+     "texture": "#coins",
+     "light_emission": 13,
+     "uv": [
+      4,
+      3,
+      10.06,
+      11.68
+     ]
+    }
+   },
+   "rotation": {
+    "angle": 22.5,
+    "axis": "y",
+    "origin": [
+     15.781,
+     1.0,
+     3.784
+    ]
+   }
+  },
+  {
+   "from": [
+    11.32,
+    1.0,
+    -1.619
+   ],
+   "to": [
+    17.776,
+    15.397,
+    7.264
+   ],
+   "faces": {
+    "north": {
+     "texture": "#edge",
+     "light_emission": 13,
+     "uv": [
+      6,
+      1,
+      12.46,
+      15.4
+     ]
+    },
+    "south": {
+     "texture": "#edge",
+     "light_emission": 13,
+     "uv": [
+      5,
+      1,
+      11.46,
+      15.4
+     ]
+    },
+    "east": {
+     "texture": "#edge",
+     "light_emission": 13,
+     "uv": [
+      0,
+      0,
+      8.88,
+      14.4
+     ]
+    },
+    "west": {
+     "texture": "#edge",
+     "light_emission": 13,
+     "uv": [
+      6,
+      0,
+      14.88,
+      14.4
+     ]
+    },
+    "up": {
+     "texture": "#coins",
+     "light_emission": 13,
+     "uv": [
+      8,
+      7,
+      14.46,
+      15.88
+     ]
+    },
+    "down": {
+     "texture": "#coins",
+     "light_emission": 13,
+     "uv": [
+      8,
+      7,
+      14.46,
+      15.88
+     ]
+    }
+   },
+   "rotation": {
+    "angle": -45,
+    "axis": "y",
+    "origin": [
+     14.548,
+     1.0,
+     2.823
+    ]
+   }
+  },
+  {
+   "from": [
+    3.435,
+    12.784,
+    0.758
+   ],
+   "to": [
+    10.435,
+    15.384,
+    3.558
+   ],
+   "faces": {
+    "north": {
+     "texture": "#bar_side",
+     "uv": [
+      1,
+      1,
+      15,
+      15
+     ],
+     "light_emission": 13
+    },
+    "south": {
+     "texture": "#bar_side",
+     "uv": [
+      1,
+      1,
+      15,
+      15
+     ],
+     "light_emission": 13
+    },
+    "east": {
+     "texture": "#bar_side",
+     "uv": [
+      1,
+      1,
+      15,
+      15
+     ],
+     "light_emission": 13
+    },
+    "west": {
+     "texture": "#bar_side",
+     "uv": [
+      1,
+      1,
+      15,
+      15
+     ],
+     "light_emission": 13
+    },
+    "up": {
+     "texture": "#bar_top",
+     "uv": [
+      1,
+      1,
+      15,
+      15
+     ],
+     "light_emission": 13
+    },
+    "down": {
+     "texture": "#bar_top",
+     "uv": [
+      1,
+      1,
+      15,
+      15
+     ],
+     "light_emission": 13
+    }
+   },
+   "rotation": {
+    "angle": 22.5,
+    "axis": "x",
+    "origin": [
+     6.94,
+     13.18,
+     2.16
+    ]
+   }
+  },
+  {
+   "from": [
+    -3.11,
+    8.122,
+    2.715
+   ],
+   "to": [
+    3.89,
+    10.722,
+    5.515
+   ],
+   "faces": {
+    "north": {
+     "texture": "#bar_side",
+     "uv": [
+      1,
+      1,
+      15,
+      15
+     ],
+     "light_emission": 13
+    },
+    "south": {
+     "texture": "#bar_side",
+     "uv": [
+      1,
+      1,
+      15,
+      15
+     ],
+     "light_emission": 13
+    },
+    "east": {
+     "texture": "#bar_side",
+     "uv": [
+      1,
+      1,
+      15,
+      15
+     ],
+     "light_emission": 13
+    },
+    "west": {
+     "texture": "#bar_side",
+     "uv": [
+      1,
+      1,
+      15,
+      15
+     ],
+     "light_emission": 13
+    },
+    "up": {
+     "texture": "#bar_top",
+     "uv": [
+      1,
+      1,
+      15,
+      15
+     ],
+     "light_emission": 13
+    },
+    "down": {
+     "texture": "#bar_top",
+     "uv": [
+      1,
+      1,
+      15,
+      15
+     ],
+     "light_emission": 13
+    }
+   },
+   "rotation": {
+    "angle": -22.5,
+    "axis": "x",
+    "origin": [
+     0.39,
+     8.52,
+     4.12
+    ]
+   }
+  },
+  {
+   "from": [
+    11.837,
+    3.362,
+    10.068
+   ],
+   "to": [
+    18.837,
+    5.962,
+    12.868
+   ],
+   "faces": {
+    "north": {
+     "texture": "#bar_side",
+     "uv": [
+      1,
+      1,
+      15,
+      15
+     ],
+     "light_emission": 13
+    },
+    "south": {
+     "texture": "#bar_side",
+     "uv": [
+      1,
+      1,
+      15,
+      15
+     ],
+     "light_emission": 13
+    },
+    "east": {
+     "texture": "#bar_side",
+     "uv": [
+      1,
+      1,
+      15,
+      15
+     ],
+     "light_emission": 13
+    },
+    "west": {
+     "texture": "#bar_side",
+     "uv": [
+      1,
+      1,
+      15,
+      15
+     ],
+     "light_emission": 13
+    },
+    "up": {
+     "texture": "#bar_top",
+     "uv": [
+      1,
+      1,
+      15,
+      15
+     ],
+     "light_emission": 13
+    },
+    "down": {
+     "texture": "#bar_top",
+     "uv": [
+      1,
+      1,
+      15,
+      15
+     ],
+     "light_emission": 13
+    }
+   },
+   "rotation": {
+    "angle": 22.5,
+    "axis": "z",
+    "origin": [
+     15.34,
+     3.76,
+     11.47
+    ]
+   }
+  },
+  {
+   "from": [
+    0.231,
+    6.893,
+    4.287
+   ],
+   "to": [
+    3.831,
+    10.493,
+    7.887
+   ],
+   "faces": {
+    "north": {
+     "texture": "#gem_blue",
+     "uv": [
+      0,
+      0,
+      8,
+      8
+     ],
+     "light_emission": 13
+    },
+    "south": {
+     "texture": "#gem_blue",
+     "uv": [
+      0,
+      0,
+      8,
+      8
+     ],
+     "light_emission": 13
+    },
+    "east": {
+     "texture": "#gem_blue",
+     "uv": [
+      0,
+      0,
+      8,
+      8
+     ],
+     "light_emission": 13
+    },
+    "west": {
+     "texture": "#gem_blue",
+     "uv": [
+      0,
+      0,
+      8,
+      8
+     ],
+     "light_emission": 13
+    },
+    "up": {
+     "texture": "#gem_blue",
+     "uv": [
+      0,
+      0,
+      8,
+      8
+     ],
+     "light_emission": 13
+    },
+    "down": {
+     "texture": "#gem_blue",
+     "uv": [
+      0,
+      0,
+      8,
+      8
+     ],
+     "light_emission": 13
+    }
+   },
+   "rotation": {
+    "angle": 0,
+    "axis": "y",
+    "origin": [
+     2.031,
+     6.893,
+     6.087
+    ]
+   }
+  }
+ ]
+}

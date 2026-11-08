@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "cut=false": {
+      "model": "murim:block/silver_vein_mugwort"
+    },
+    "cut=true": {
+      "model": "murim:block/silver_vein_mugwort_cut"
+    }
+  }
+}

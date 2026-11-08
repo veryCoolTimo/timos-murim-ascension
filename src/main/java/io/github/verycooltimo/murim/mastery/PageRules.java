@@ -21,11 +21,35 @@ public final class PageRules {
     /** До какого звезды учит сшитый из страниц манускрипт. */
     public static final int BOUND_DEPTH = 2;
 
-    /** Озарение от страницы: доля пережитого, нужного на текущую звезду. */
-    public static final double PAGE_INSIGHT = 0.4D;
+    /**
+     * What a page gives: a tenth of the next star's cost (author 18.10: "10 % of the experience of the transition, two pages
+     * at most"). Two pages fill the help pool of the transition ({@link MasteryRules#HELP_CAP}); lessons, readings and the
+     * Apex Rush draw from the same pool.
+     */
+    public static final double PAGE_INSIGHT = 0.10D;
 
-    /** Озарение от перечитанной знакомой книги: целая звезда пережитого. */
-    public static final double BOOK_INSIGHT = 1.0D;
+    /** What a reread familiar book gives: the whole help pool of one transition. */
+    public static final double BOOK_INSIGHT = MasteryRules.HELP_CAP;
+
+    /** Pages that fit one transition (the pool is two pages). */
+    public static final int MAX_PAGES_PER_TRANSITION = 2;
+
+    /** Price of a shop page in merit: {@code 8 + 2 s}, where {@code s} is the star the page leads to (10 / 20 / 32 at ★1 / ★6 / ★12). */
+    public static int pagePrice(int targetStar) {
+        return 8 + 2 * Math.max(1, Math.min(Arts.MAX_STARS, targetStar));
+    }
+
+    /**
+     * May a page of this art still be sold? Every page the player already carries keeps a tenth of the pool for itself,
+     * so a later lesson never makes a bought page useless and the pack cannot hold more than the transition takes.
+     *
+     * @param room      what is left of the help pool of the next transition, in experience
+     * @param cost      what the next star costs
+     * @param pagesHeld pages of this book the player already carries
+     */
+    public static boolean saleOpen(double room, double cost, int pagesHeld) {
+        return room + 1.0E-9D >= (pagesHeld + 1) * cost * PAGE_INSIGHT;
+    }
 
     /** Мудрость, когда техника освоена до конца: страница и книга. */
     public static final double PAGE_WISDOM = 0.15D;
@@ -75,7 +99,12 @@ public final class PageRules {
 
     /** Сколько освоения даёт озарение на звезде {@code stars}. */
     public static double insight(int stars, double share) {
-        return MasteryRules.need(stars) * share;
+        return insight(stars, share, Arts.MAX_STARS);
+    }
+
+    /** The same for an art with {@code artCap} stars (footwork has ten). */
+    public static double insight(int stars, double share, int artCap) {
+        return MasteryRules.need(stars, artCap) * share;
     }
 
     private PageRules() {

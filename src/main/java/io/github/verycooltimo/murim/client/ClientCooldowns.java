@@ -23,8 +23,8 @@ public final class ClientCooldowns {
         }
     }
 
-    /** Maintained art's own cooldown begins when the server ends it; global gap keeps its cast timestamp. */
-    public static void maintainedEnded(ResourceLocation id) {
+    /** Refresh an interrupted art's own cooldown without changing the last accepted cast. */
+    static void restartOwn(ResourceLocation id) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level != null) LAST.put(id, mc.level.getGameTime());
     }

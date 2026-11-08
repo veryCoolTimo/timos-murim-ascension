@@ -13,7 +13,7 @@ import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.storage.loot.LootTable;
 
 /**
- * Стройка лагеря в живом мире — для GameTest и dev-команды {@code /murim camp place}: те же
+ * Стройка лагеря в живом мире — для GameTest и dev-команды {@code /murim dev camp place}: те же
  * блоки, что при генерации, но с обновлением соседей (заборы сами смыкаются).
  */
 public final class LiveCampSink implements CampBuilder.Sink {

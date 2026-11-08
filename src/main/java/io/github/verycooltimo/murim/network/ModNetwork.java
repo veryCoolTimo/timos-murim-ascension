@@ -19,11 +19,19 @@ import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 public final class ModNetwork {
 
     /** Версия протокола. Поднимать при любом несовместимом изменении пакетов. */
-    private static final String VERSION = "43"; // per-art star caps and version 4 mastery migration
+    private static final String VERSION = "56"; // Mastery stars in TechniqueEvent (Bamboo + 24 Plum looks) and clocked footwork routes (06.11)
 
     @SubscribeEvent
     static void register(RegisterPayloadHandlersEvent event) {
         PayloadRegistrar registrar = event.registrar(VERSION);
+        io.github.verycooltimo.murim.dev.DevHooks.INSTANCE.payloads(registrar);
+        registrar.playToServer(SwordGuardPayloads.Input.TYPE, SwordGuardPayloads.Input.STREAM_CODEC,
+                (payload, context) -> {
+                    if (context.player() instanceof ServerPlayer player)
+                        io.github.verycooltimo.murim.combat.SwordGuard.input(player, payload.action());
+                });
+        registrar.playToClient(SwordGuardPayloads.View.TYPE, SwordGuardPayloads.View.STREAM_CODEC,
+                (payload, context) -> ClientPayloadBridge.handleSwordGuard(payload));
         // Ruined library: «Попробовать» on a heretical junk method (docs/design/25-ruined-library.md).
         io.github.verycooltimo.murim.library.LibraryNetwork.register(registrar);
         // Body training (docs/design/27-body-training.md): server → client state and body.
@@ -34,7 +42,8 @@ public final class ModNetwork {
                 StartTechniquePayload.STREAM_CODEC,
                 (payload, context) -> {
                     if (context.player() instanceof ServerPlayer serverPlayer) {
-                        TechniqueService.tryStart(serverPlayer, payload.techniqueId());
+                        if (payload.release()) io.github.verycooltimo.murim.technique.BambooExecutor.release(serverPlayer);
+                        else TechniqueService.tryStart(serverPlayer, payload.techniqueId(), payload.side());
                     }
                 });
 
@@ -94,6 +103,13 @@ public final class ModNetwork {
                 });
         registrar.playToClient(ManualPayloads.Open.TYPE, ManualPayloads.Open.STREAM_CODEC,
                 (payload, context) -> ClientPayloadBridge.handleManual(payload));
+        registrar.playToClient(HeadIntroPayloads.View.TYPE, HeadIntroPayloads.View.STREAM_CODEC,
+                (payload, context) -> ClientPayloadBridge.handleHeadIntro(payload));
+        registrar.playToServer(HeadIntroPayloads.Skip.TYPE, HeadIntroPayloads.Skip.STREAM_CODEC,
+                (payload, context) -> {
+                    if (context.player() instanceof ServerPlayer p)
+                        io.github.verycooltimo.murim.sect.SectHeadIntro.skip(p, payload.started());
+                });
         // Диалоги NPC секты: сервер выбирает реплику, клиент показывает и шлёт номер варианта.
         registrar.playToClient(DialoguePayloads.Open.TYPE, DialoguePayloads.Open.STREAM_CODEC,
                 (payload, context) -> ClientPayloadBridge.handleDialogue(payload));
@@ -102,6 +118,30 @@ public final class ModNetwork {
         // Реплики над головой людей горы (живая гора, автор 05.10): сервер выбирает строку, клиент рисует пузырь.
         registrar.playToClient(SectGoalPayload.TYPE, SectGoalPayload.STREAM_CODEC,
                 (payload, context) -> ClientPayloadBridge.handleSectGoal(payload));
+        registrar.playToClient(SectGuidePayload.TYPE, SectGuidePayload.STREAM_CODEC,
+                (payload, context) -> ClientPayloadBridge.handleSectGuide(payload));
+        registrar.playToClient(SectTabletPayload.Open.TYPE, SectTabletPayload.Open.STREAM_CODEC,
+                (payload, context) -> ClientPayloadBridge.handleSectTablet(payload));
+        registrar.playToClient(SectMapPayload.TYPE, SectMapPayload.STREAM_CODEC,
+                (payload, context) -> ClientPayloadBridge.handleSectMap(payload));
+        registrar.playToClient(SectTabletPayload.Update.TYPE, SectTabletPayload.Update.STREAM_CODEC,
+                (payload, context) -> ClientPayloadBridge.handleSectTabletUpdate(payload));
+        registrar.playToServer(SectTabletPayload.Act.TYPE, SectTabletPayload.Act.STREAM_CODEC,
+                (payload, context) -> {
+                    if (context.player() instanceof ServerPlayer serverPlayer) {
+                        io.github.verycooltimo.murim.sect.SectTablet.act(serverPlayer, payload.action());
+                    }
+                });
+        registrar.playToClient(SectTabletPayload.OpenBoard.TYPE, SectTabletPayload.OpenBoard.STREAM_CODEC,
+                (payload, context) -> ClientPayloadBridge.handleSectBoard(payload));
+        registrar.playToServer(SectTabletPayload.Contract.TYPE, SectTabletPayload.Contract.STREAM_CODEC,
+                (payload, context) -> {
+                    if (context.player() instanceof ServerPlayer serverPlayer) {
+                        io.github.verycooltimo.murim.sect.SectContracts.act(serverPlayer, payload.op(), payload.slot(), payload.target());
+                    }
+                });
+        registrar.playToClient(SectGoalPulsePayload.TYPE, SectGoalPulsePayload.STREAM_CODEC,
+                (payload, context) -> ClientPayloadBridge.handleSectGoalPulse());
         registrar.playToClient(SectBubblePayload.TYPE, SectBubblePayload.STREAM_CODEC,
                 (payload, context) -> ClientPayloadBridge.handleSectBubble(payload));
         registrar.playToServer(DialoguePayloads.Choose.TYPE, DialoguePayloads.Choose.STREAM_CODEC,
@@ -110,13 +150,18 @@ public final class ModNetwork {
                         io.github.verycooltimo.murim.sect.DialogueService.choose(serverPlayer, payload.index());
                     }
                 });
-        // Пилюли (docs/design/19b): клиент шлёт только сторону выбора, остальное считает сервер.
+        // Пилюли (docs/design/19b; 25.10): the server sends the seed of the stream, the client plays and reports how it ended,
+        // the server works the quality out itself and applies the qi.
         registrar.playToClient(PillPayloads.Sync.TYPE, PillPayloads.Sync.STREAM_CODEC,
                 (payload, context) -> ClientPayloadBridge.handlePill(payload));
-        registrar.playToServer(PillPayloads.Choice.TYPE, PillPayloads.Choice.STREAM_CODEC,
+        registrar.playToClient(PillPayloads.FlowStart.TYPE, PillPayloads.FlowStart.STREAM_CODEC,
+                (payload, context) -> ClientPayloadBridge.handlePillFlow(payload));
+        registrar.playToServer(PillPayloads.FlowReport.TYPE, PillPayloads.FlowReport.STREAM_CODEC,
                 (payload, context) -> {
                     if (context.player() instanceof ServerPlayer serverPlayer) {
-                        io.github.verycooltimo.murim.cultivation.PillService.choose(serverPlayer, payload.side());
+                        PillPayloads.Outcome[] all = PillPayloads.Outcome.values();
+                        io.github.verycooltimo.murim.cultivation.PillService.report(serverPlayer, payload.id(),
+                                all[Math.max(0, Math.min(all.length - 1, payload.outcome()))], payload.progress(), payload.lost());
                     }
                 });
         registrar.playToServer(LockPayload.TYPE, LockPayload.STREAM_CODEC,
@@ -134,9 +179,14 @@ public final class ModNetwork {
         registrar.playToServer(TraversePayloads.Request.TYPE, TraversePayloads.Request.STREAM_CODEC,
                 (payload, context) -> {
                     if (context.player() instanceof ServerPlayer serverPlayer) {
-                        io.github.verycooltimo.murim.combat.FootworkService.request(serverPlayer, payload.technique(), payload.input());
+                        io.github.verycooltimo.murim.dev.DevHooks.INSTANCE.footworkRequest(serverPlayer, payload.technique(), payload.input());
                     }
                 });
+        // API: /tmp/mr-ref-1121/neoforge-src/network/registration/PayloadRegistrar.java#playToClient.
+        registrar.playToClient(TraversePayloads.HeldFacing.TYPE, TraversePayloads.HeldFacing.STREAM_CODEC,
+                (payload, context) -> ClientPayloadBridge.handleHeldFacing(payload));
+        registrar.playToClient(TraversePayloads.SevenRoute.TYPE, TraversePayloads.SevenRoute.STREAM_CODEC,
+                (payload, context) -> ClientPayloadBridge.handleSevenRoute(payload));
         registrar.playToClient(TraversePayloads.Dash.TYPE, TraversePayloads.Dash.STREAM_CODEC,
                 (payload, context) -> ClientPayloadBridge.handleDash(payload));
         registrar.playToClient(TraversePayloads.Event.TYPE, TraversePayloads.Event.STREAM_CODEC,
@@ -157,6 +207,8 @@ public final class ModNetwork {
                 (payload, context) -> ClientPayloadBridge.handleRiver(payload));
         registrar.playToClient(ScatterPayload.TYPE, ScatterPayload.STREAM_CODEC,
                 (payload, context) -> ClientPayloadBridge.handleScatter(payload));
+        registrar.playToClient(BloomPayload.TYPE, BloomPayload.STREAM_CODEC,
+                (payload, context) -> ClientPayloadBridge.handleBloom(payload));
         registrar.playToClient(DomePayload.TYPE, DomePayload.STREAM_CODEC,
                 (payload, context) -> ClientPayloadBridge.handleDome(payload));
         registrar.playToClient(SeaPayload.TYPE, SeaPayload.STREAM_CODEC,
@@ -166,16 +218,19 @@ public final class ModNetwork {
                 (payload, context) -> {
                     if (context.player() instanceof ServerPlayer serverPlayer) {
                         io.github.verycooltimo.murim.technique.SeaExecutor.hold(serverPlayer, payload.held());
+                        io.github.verycooltimo.murim.technique.FullBloomExecutor.hold(serverPlayer, payload.held());
                     }
                 });
         registrar.playToClient(TangPayload.TYPE, TangPayload.STREAM_CODEC,
                 (payload, context) -> ClientPayloadBridge.handleTang(payload));
+        registrar.playToClient(BambooPayload.TYPE, BambooPayload.STREAM_CODEC,
+                (payload, context) -> ClientPayloadBridge.handleBamboo(payload));
+        registrar.playToClient(SixFormPayload.TYPE, SixFormPayload.STREAM_CODEC,
+                (payload, context) -> ClientPayloadBridge.handleSixForm(payload));
         registrar.playToClient(FallingPetalPayload.TYPE, FallingPetalPayload.STREAM_CODEC,
                 (payload, context) -> ClientPayloadBridge.handleFallingPetal(payload));
         registrar.playToClient(ShowerPayload.TYPE, ShowerPayload.STREAM_CODEC,
                 (payload, context) -> ClientPayloadBridge.handleShower(payload));
-        registrar.playToClient(DemonicPayload.TYPE, DemonicPayload.STREAM_CODEC,
-                (payload, context) -> ClientPayloadBridge.handleDemonic(payload));
         registrar.playToClient(StepPayload.TYPE, StepPayload.STREAM_CODEC,
                 (payload, context) -> ClientPayloadBridge.handleStep(payload));
 
@@ -205,9 +260,21 @@ public final class ModNetwork {
                                     .toggle(serverPlayer, payload.filter());
                             case HOLD_ON -> io.github.verycooltimo.murim.cultivation.MeditationService
                                     .setHolding(serverPlayer, true);
+                            case BLOCKED_ACTION -> io.github.verycooltimo.murim.cultivation.MeditationService
+                                    .blockedAction(serverPlayer);
                             case HOLD_OFF -> io.github.verycooltimo.murim.cultivation.MeditationService
                                     .setHolding(serverPlayer, false);
                         }
+                    }
+                });
+
+        // The pill box in an inventory screen: the client names the slot, the server opens the pouch of the real stack.
+        registrar.playToServer(
+                PillBoxOpenPayload.TYPE,
+                PillBoxOpenPayload.STREAM_CODEC,
+                (payload, context) -> {
+                    if (context.player() instanceof ServerPlayer serverPlayer) {
+                        io.github.verycooltimo.murim.decor.PillBoxItem.open(serverPlayer, payload.inventorySlot());
                     }
                 });
 
@@ -248,6 +315,10 @@ public final class ModNetwork {
                 SyncMasteryPayload.TYPE,
                 SyncMasteryPayload.STREAM_CODEC,
                 (payload, context) -> ClientPayloadBridge.handleSyncMastery(payload));
+
+        // Combat HUD: what only the server knows (sect bouts and duels, a mob hunting the player).
+        registrar.playToClient(CombatPulsePayload.TYPE, CombatPulsePayload.STREAM_CODEC,
+                (payload, context) -> ClientPayloadBridge.handleCombatPulse());
 
         registrar.playToClient(
                 InsightPayload.TYPE,

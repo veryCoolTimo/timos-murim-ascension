@@ -1,0 +1,74 @@
+{
+  "id": "murim:bamboo_bending",
+  "form": "hand",
+  "intent": "defend",
+  "breath": "hollow_breath",
+  "phases": {
+    "impact": 1,
+    "recovery": 11
+  },
+  "behavior": {
+    "type": "murim:bamboo_hand"
+  },
+  "animation": "murim:bamboo_bending",
+  "vfx": {
+    "pivot": [
+      0.0,
+      1.0,
+      0.0
+    ],
+    "basis_a": [
+      0.0,
+      0.55,
+      -0.84
+    ],
+    "basis_b": [
+      0.0,
+      0.84,
+      0.55
+    ],
+    "inner_radius": 0.1,
+    "outer_radius": 0.95,
+    "start_angle": 0.0,
+    "end_angle": 120.0,
+    "colour": {
+      "r": 0.4980392156862745,
+      "g": 0.8509803921568627,
+      "b": 0.6039215686274509
+    },
+    "trail": {
+      "enabled": false,
+      "alpha": 0.0,
+      "size": 0.1,
+      "life_ticks": 1.0
+    },
+    "crescent": {
+      "enabled": false,
+      "alpha": 0.0,
+      "size": 0.1,
+      "life_ticks": 1.0
+    },
+    "core": {
+      "enabled": false,
+      "alpha": 0.0,
+      "size": 0.1,
+      "life_ticks": 1.0
+    },
+    "windup_motes": 0,
+    "ritual_motes": 0
+  },
+  "interruption": {
+    "break_on_damage": false
+  },
+  "weakness": "technique.murim.bamboo_bending.weakness",
+  "hit_stop_ticks": 0,
+  "cooldown_ticks": 60,
+  "star_cap": 12,
+  "tier": "basic",
+  "requires": [
+    {
+      "technique": "murim:bamboo_leaf_hand",
+      "star": 5
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "display": {
+    "icon": {
+      "id": "murim:ach_rank_third"
+    },
+    "title": {
+      "translate": "advancement.murim.rank_third.title"
+    },
+    "description": {
+      "translate": "advancement.murim.rank_third.desc"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "parent": "murim:first_feeling",
+  "criteria": {
+    "done": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

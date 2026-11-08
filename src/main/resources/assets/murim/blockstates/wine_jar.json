@@ -1,0 +1,1300 @@
+{
+  "variants": {
+    "facing=north,sink=0,cups=0": {
+      "model": "murim:block/wine_jar_empty",
+      "y": 0
+    },
+    "facing=north,sink=0,cups=1": {
+      "model": "murim:block/wine_jar",
+      "y": 0
+    },
+    "facing=north,sink=0,cups=2": {
+      "model": "murim:block/wine_jar",
+      "y": 0
+    },
+    "facing=north,sink=0,cups=3": {
+      "model": "murim:block/wine_jar",
+      "y": 0
+    },
+    "facing=north,sink=0,cups=4": {
+      "model": "murim:block/wine_jar",
+      "y": 0
+    },
+    "facing=north,sink=0,cups=5": {
+      "model": "murim:block/wine_jar",
+      "y": 0
+    },
+    "facing=north,sink=0,cups=6": {
+      "model": "murim:block/wine_jar",
+      "y": 0
+    },
+    "facing=north,sink=0,cups=7": {
+      "model": "murim:block/wine_jar",
+      "y": 0
+    },
+    "facing=north,sink=0,cups=8": {
+      "model": "murim:block/wine_jar",
+      "y": 0
+    },
+    "facing=east,sink=0,cups=0": {
+      "model": "murim:block/wine_jar_empty",
+      "y": 90
+    },
+    "facing=east,sink=0,cups=1": {
+      "model": "murim:block/wine_jar",
+      "y": 90
+    },
+    "facing=east,sink=0,cups=2": {
+      "model": "murim:block/wine_jar",
+      "y": 90
+    },
+    "facing=east,sink=0,cups=3": {
+      "model": "murim:block/wine_jar",
+      "y": 90
+    },
+    "facing=east,sink=0,cups=4": {
+      "model": "murim:block/wine_jar",
+      "y": 90
+    },
+    "facing=east,sink=0,cups=5": {
+      "model": "murim:block/wine_jar",
+      "y": 90
+    },
+    "facing=east,sink=0,cups=6": {
+      "model": "murim:block/wine_jar",
+      "y": 90
+    },
+    "facing=east,sink=0,cups=7": {
+      "model": "murim:block/wine_jar",
+      "y": 90
+    },
+    "facing=east,sink=0,cups=8": {
+      "model": "murim:block/wine_jar",
+      "y": 90
+    },
+    "facing=south,sink=0,cups=0": {
+      "model": "murim:block/wine_jar_empty",
+      "y": 180
+    },
+    "facing=south,sink=0,cups=1": {
+      "model": "murim:block/wine_jar",
+      "y": 180
+    },
+    "facing=south,sink=0,cups=2": {
+      "model": "murim:block/wine_jar",
+      "y": 180
+    },
+    "facing=south,sink=0,cups=3": {
+      "model": "murim:block/wine_jar",
+      "y": 180
+    },
+    "facing=south,sink=0,cups=4": {
+      "model": "murim:block/wine_jar",
+      "y": 180
+    },
+    "facing=south,sink=0,cups=5": {
+      "model": "murim:block/wine_jar",
+      "y": 180
+    },
+    "facing=south,sink=0,cups=6": {
+      "model": "murim:block/wine_jar",
+      "y": 180
+    },
+    "facing=south,sink=0,cups=7": {
+      "model": "murim:block/wine_jar",
+      "y": 180
+    },
+    "facing=south,sink=0,cups=8": {
+      "model": "murim:block/wine_jar",
+      "y": 180
+    },
+    "facing=west,sink=0,cups=0": {
+      "model": "murim:block/wine_jar_empty",
+      "y": 270
+    },
+    "facing=west,sink=0,cups=1": {
+      "model": "murim:block/wine_jar",
+      "y": 270
+    },
+    "facing=west,sink=0,cups=2": {
+      "model": "murim:block/wine_jar",
+      "y": 270
+    },
+    "facing=west,sink=0,cups=3": {
+      "model": "murim:block/wine_jar",
+      "y": 270
+    },
+    "facing=west,sink=0,cups=4": {
+      "model": "murim:block/wine_jar",
+      "y": 270
+    },
+    "facing=west,sink=0,cups=5": {
+      "model": "murim:block/wine_jar",
+      "y": 270
+    },
+    "facing=west,sink=0,cups=6": {
+      "model": "murim:block/wine_jar",
+      "y": 270
+    },
+    "facing=west,sink=0,cups=7": {
+      "model": "murim:block/wine_jar",
+      "y": 270
+    },
+    "facing=west,sink=0,cups=8": {
+      "model": "murim:block/wine_jar",
+      "y": 270
+    },
+    "facing=north,sink=1,cups=0": {
+      "model": "murim:block/wine_jar_empty_sink_1",
+      "y": 0
+    },
+    "facing=north,sink=1,cups=1": {
+      "model": "murim:block/wine_jar_sink_1",
+      "y": 0
+    },
+    "facing=north,sink=1,cups=2": {
+      "model": "murim:block/wine_jar_sink_1",
+      "y": 0
+    },
+    "facing=north,sink=1,cups=3": {
+      "model": "murim:block/wine_jar_sink_1",
+      "y": 0
+    },
+    "facing=north,sink=1,cups=4": {
+      "model": "murim:block/wine_jar_sink_1",
+      "y": 0
+    },
+    "facing=north,sink=1,cups=5": {
+      "model": "murim:block/wine_jar_sink_1",
+      "y": 0
+    },
+    "facing=north,sink=1,cups=6": {
+      "model": "murim:block/wine_jar_sink_1",
+      "y": 0
+    },
+    "facing=north,sink=1,cups=7": {
+      "model": "murim:block/wine_jar_sink_1",
+      "y": 0
+    },
+    "facing=north,sink=1,cups=8": {
+      "model": "murim:block/wine_jar_sink_1",
+      "y": 0
+    },
+    "facing=east,sink=1,cups=0": {
+      "model": "murim:block/wine_jar_empty_sink_1",
+      "y": 90
+    },
+    "facing=east,sink=1,cups=1": {
+      "model": "murim:block/wine_jar_sink_1",
+      "y": 90
+    },
+    "facing=east,sink=1,cups=2": {
+      "model": "murim:block/wine_jar_sink_1",
+      "y": 90
+    },
+    "facing=east,sink=1,cups=3": {
+      "model": "murim:block/wine_jar_sink_1",
+      "y": 90
+    },
+    "facing=east,sink=1,cups=4": {
+      "model": "murim:block/wine_jar_sink_1",
+      "y": 90
+    },
+    "facing=east,sink=1,cups=5": {
+      "model": "murim:block/wine_jar_sink_1",
+      "y": 90
+    },
+    "facing=east,sink=1,cups=6": {
+      "model": "murim:block/wine_jar_sink_1",
+      "y": 90
+    },
+    "facing=east,sink=1,cups=7": {
+      "model": "murim:block/wine_jar_sink_1",
+      "y": 90
+    },
+    "facing=east,sink=1,cups=8": {
+      "model": "murim:block/wine_jar_sink_1",
+      "y": 90
+    },
+    "facing=south,sink=1,cups=0": {
+      "model": "murim:block/wine_jar_empty_sink_1",
+      "y": 180
+    },
+    "facing=south,sink=1,cups=1": {
+      "model": "murim:block/wine_jar_sink_1",
+      "y": 180
+    },
+    "facing=south,sink=1,cups=2": {
+      "model": "murim:block/wine_jar_sink_1",
+      "y": 180
+    },
+    "facing=south,sink=1,cups=3": {
+      "model": "murim:block/wine_jar_sink_1",
+      "y": 180
+    },
+    "facing=south,sink=1,cups=4": {
+      "model": "murim:block/wine_jar_sink_1",
+      "y": 180
+    },
+    "facing=south,sink=1,cups=5": {
+      "model": "murim:block/wine_jar_sink_1",
+      "y": 180
+    },
+    "facing=south,sink=1,cups=6": {
+      "model": "murim:block/wine_jar_sink_1",
+      "y": 180
+    },
+    "facing=south,sink=1,cups=7": {
+      "model": "murim:block/wine_jar_sink_1",
+      "y": 180
+    },
+    "facing=south,sink=1,cups=8": {
+      "model": "murim:block/wine_jar_sink_1",
+      "y": 180
+    },
+    "facing=west,sink=1,cups=0": {
+      "model": "murim:block/wine_jar_empty_sink_1",
+      "y": 270
+    },
+    "facing=west,sink=1,cups=1": {
+      "model": "murim:block/wine_jar_sink_1",
+      "y": 270
+    },
+    "facing=west,sink=1,cups=2": {
+      "model": "murim:block/wine_jar_sink_1",
+      "y": 270
+    },
+    "facing=west,sink=1,cups=3": {
+      "model": "murim:block/wine_jar_sink_1",
+      "y": 270
+    },
+    "facing=west,sink=1,cups=4": {
+      "model": "murim:block/wine_jar_sink_1",
+      "y": 270
+    },
+    "facing=west,sink=1,cups=5": {
+      "model": "murim:block/wine_jar_sink_1",
+      "y": 270
+    },
+    "facing=west,sink=1,cups=6": {
+      "model": "murim:block/wine_jar_sink_1",
+      "y": 270
+    },
+    "facing=west,sink=1,cups=7": {
+      "model": "murim:block/wine_jar_sink_1",
+      "y": 270
+    },
+    "facing=west,sink=1,cups=8": {
+      "model": "murim:block/wine_jar_sink_1",
+      "y": 270
+    },
+    "facing=north,sink=2,cups=0": {
+      "model": "murim:block/wine_jar_empty_sink_2",
+      "y": 0
+    },
+    "facing=north,sink=2,cups=1": {
+      "model": "murim:block/wine_jar_sink_2",
+      "y": 0
+    },
+    "facing=north,sink=2,cups=2": {
+      "model": "murim:block/wine_jar_sink_2",
+      "y": 0
+    },
+    "facing=north,sink=2,cups=3": {
+      "model": "murim:block/wine_jar_sink_2",
+      "y": 0
+    },
+    "facing=north,sink=2,cups=4": {
+      "model": "murim:block/wine_jar_sink_2",
+      "y": 0
+    },
+    "facing=north,sink=2,cups=5": {
+      "model": "murim:block/wine_jar_sink_2",
+      "y": 0
+    },
+    "facing=north,sink=2,cups=6": {
+      "model": "murim:block/wine_jar_sink_2",
+      "y": 0
+    },
+    "facing=north,sink=2,cups=7": {
+      "model": "murim:block/wine_jar_sink_2",
+      "y": 0
+    },
+    "facing=north,sink=2,cups=8": {
+      "model": "murim:block/wine_jar_sink_2",
+      "y": 0
+    },
+    "facing=east,sink=2,cups=0": {
+      "model": "murim:block/wine_jar_empty_sink_2",
+      "y": 90
+    },
+    "facing=east,sink=2,cups=1": {
+      "model": "murim:block/wine_jar_sink_2",
+      "y": 90
+    },
+    "facing=east,sink=2,cups=2": {
+      "model": "murim:block/wine_jar_sink_2",
+      "y": 90
+    },
+    "facing=east,sink=2,cups=3": {
+      "model": "murim:block/wine_jar_sink_2",
+      "y": 90
+    },
+    "facing=east,sink=2,cups=4": {
+      "model": "murim:block/wine_jar_sink_2",
+      "y": 90
+    },
+    "facing=east,sink=2,cups=5": {
+      "model": "murim:block/wine_jar_sink_2",
+      "y": 90
+    },
+    "facing=east,sink=2,cups=6": {
+      "model": "murim:block/wine_jar_sink_2",
+      "y": 90
+    },
+    "facing=east,sink=2,cups=7": {
+      "model": "murim:block/wine_jar_sink_2",
+      "y": 90
+    },
+    "facing=east,sink=2,cups=8": {
+      "model": "murim:block/wine_jar_sink_2",
+      "y": 90
+    },
+    "facing=south,sink=2,cups=0": {
+      "model": "murim:block/wine_jar_empty_sink_2",
+      "y": 180
+    },
+    "facing=south,sink=2,cups=1": {
+      "model": "murim:block/wine_jar_sink_2",
+      "y": 180
+    },
+    "facing=south,sink=2,cups=2": {
+      "model": "murim:block/wine_jar_sink_2",
+      "y": 180
+    },
+    "facing=south,sink=2,cups=3": {
+      "model": "murim:block/wine_jar_sink_2",
+      "y": 180
+    },
+    "facing=south,sink=2,cups=4": {
+      "model": "murim:block/wine_jar_sink_2",
+      "y": 180
+    },
+    "facing=south,sink=2,cups=5": {
+      "model": "murim:block/wine_jar_sink_2",
+      "y": 180
+    },
+    "facing=south,sink=2,cups=6": {
+      "model": "murim:block/wine_jar_sink_2",
+      "y": 180
+    },
+    "facing=south,sink=2,cups=7": {
+      "model": "murim:block/wine_jar_sink_2",
+      "y": 180
+    },
+    "facing=south,sink=2,cups=8": {
+      "model": "murim:block/wine_jar_sink_2",
+      "y": 180
+    },
+    "facing=west,sink=2,cups=0": {
+      "model": "murim:block/wine_jar_empty_sink_2",
+      "y": 270
+    },
+    "facing=west,sink=2,cups=1": {
+      "model": "murim:block/wine_jar_sink_2",
+      "y": 270
+    },
+    "facing=west,sink=2,cups=2": {
+      "model": "murim:block/wine_jar_sink_2",
+      "y": 270
+    },
+    "facing=west,sink=2,cups=3": {
+      "model": "murim:block/wine_jar_sink_2",
+      "y": 270
+    },
+    "facing=west,sink=2,cups=4": {
+      "model": "murim:block/wine_jar_sink_2",
+      "y": 270
+    },
+    "facing=west,sink=2,cups=5": {
+      "model": "murim:block/wine_jar_sink_2",
+      "y": 270
+    },
+    "facing=west,sink=2,cups=6": {
+      "model": "murim:block/wine_jar_sink_2",
+      "y": 270
+    },
+    "facing=west,sink=2,cups=7": {
+      "model": "murim:block/wine_jar_sink_2",
+      "y": 270
+    },
+    "facing=west,sink=2,cups=8": {
+      "model": "murim:block/wine_jar_sink_2",
+      "y": 270
+    },
+    "facing=north,sink=3,cups=0": {
+      "model": "murim:block/wine_jar_empty_sink_3",
+      "y": 0
+    },
+    "facing=north,sink=3,cups=1": {
+      "model": "murim:block/wine_jar_sink_3",
+      "y": 0
+    },
+    "facing=north,sink=3,cups=2": {
+      "model": "murim:block/wine_jar_sink_3",
+      "y": 0
+    },
+    "facing=north,sink=3,cups=3": {
+      "model": "murim:block/wine_jar_sink_3",
+      "y": 0
+    },
+    "facing=north,sink=3,cups=4": {
+      "model": "murim:block/wine_jar_sink_3",
+      "y": 0
+    },
+    "facing=north,sink=3,cups=5": {
+      "model": "murim:block/wine_jar_sink_3",
+      "y": 0
+    },
+    "facing=north,sink=3,cups=6": {
+      "model": "murim:block/wine_jar_sink_3",
+      "y": 0
+    },
+    "facing=north,sink=3,cups=7": {
+      "model": "murim:block/wine_jar_sink_3",
+      "y": 0
+    },
+    "facing=north,sink=3,cups=8": {
+      "model": "murim:block/wine_jar_sink_3",
+      "y": 0
+    },
+    "facing=east,sink=3,cups=0": {
+      "model": "murim:block/wine_jar_empty_sink_3",
+      "y": 90
+    },
+    "facing=east,sink=3,cups=1": {
+      "model": "murim:block/wine_jar_sink_3",
+      "y": 90
+    },
+    "facing=east,sink=3,cups=2": {
+      "model": "murim:block/wine_jar_sink_3",
+      "y": 90
+    },
+    "facing=east,sink=3,cups=3": {
+      "model": "murim:block/wine_jar_sink_3",
+      "y": 90
+    },
+    "facing=east,sink=3,cups=4": {
+      "model": "murim:block/wine_jar_sink_3",
+      "y": 90
+    },
+    "facing=east,sink=3,cups=5": {
+      "model": "murim:block/wine_jar_sink_3",
+      "y": 90
+    },
+    "facing=east,sink=3,cups=6": {
+      "model": "murim:block/wine_jar_sink_3",
+      "y": 90
+    },
+    "facing=east,sink=3,cups=7": {
+      "model": "murim:block/wine_jar_sink_3",
+      "y": 90
+    },
+    "facing=east,sink=3,cups=8": {
+      "model": "murim:block/wine_jar_sink_3",
+      "y": 90
+    },
+    "facing=south,sink=3,cups=0": {
+      "model": "murim:block/wine_jar_empty_sink_3",
+      "y": 180
+    },
+    "facing=south,sink=3,cups=1": {
+      "model": "murim:block/wine_jar_sink_3",
+      "y": 180
+    },
+    "facing=south,sink=3,cups=2": {
+      "model": "murim:block/wine_jar_sink_3",
+      "y": 180
+    },
+    "facing=south,sink=3,cups=3": {
+      "model": "murim:block/wine_jar_sink_3",
+      "y": 180
+    },
+    "facing=south,sink=3,cups=4": {
+      "model": "murim:block/wine_jar_sink_3",
+      "y": 180
+    },
+    "facing=south,sink=3,cups=5": {
+      "model": "murim:block/wine_jar_sink_3",
+      "y": 180
+    },
+    "facing=south,sink=3,cups=6": {
+      "model": "murim:block/wine_jar_sink_3",
+      "y": 180
+    },
+    "facing=south,sink=3,cups=7": {
+      "model": "murim:block/wine_jar_sink_3",
+      "y": 180
+    },
+    "facing=south,sink=3,cups=8": {
+      "model": "murim:block/wine_jar_sink_3",
+      "y": 180
+    },
+    "facing=west,sink=3,cups=0": {
+      "model": "murim:block/wine_jar_empty_sink_3",
+      "y": 270
+    },
+    "facing=west,sink=3,cups=1": {
+      "model": "murim:block/wine_jar_sink_3",
+      "y": 270
+    },
+    "facing=west,sink=3,cups=2": {
+      "model": "murim:block/wine_jar_sink_3",
+      "y": 270
+    },
+    "facing=west,sink=3,cups=3": {
+      "model": "murim:block/wine_jar_sink_3",
+      "y": 270
+    },
+    "facing=west,sink=3,cups=4": {
+      "model": "murim:block/wine_jar_sink_3",
+      "y": 270
+    },
+    "facing=west,sink=3,cups=5": {
+      "model": "murim:block/wine_jar_sink_3",
+      "y": 270
+    },
+    "facing=west,sink=3,cups=6": {
+      "model": "murim:block/wine_jar_sink_3",
+      "y": 270
+    },
+    "facing=west,sink=3,cups=7": {
+      "model": "murim:block/wine_jar_sink_3",
+      "y": 270
+    },
+    "facing=west,sink=3,cups=8": {
+      "model": "murim:block/wine_jar_sink_3",
+      "y": 270
+    },
+    "facing=north,sink=4,cups=0": {
+      "model": "murim:block/wine_jar_empty_sink_4",
+      "y": 0
+    },
+    "facing=north,sink=4,cups=1": {
+      "model": "murim:block/wine_jar_sink_4",
+      "y": 0
+    },
+    "facing=north,sink=4,cups=2": {
+      "model": "murim:block/wine_jar_sink_4",
+      "y": 0
+    },
+    "facing=north,sink=4,cups=3": {
+      "model": "murim:block/wine_jar_sink_4",
+      "y": 0
+    },
+    "facing=north,sink=4,cups=4": {
+      "model": "murim:block/wine_jar_sink_4",
+      "y": 0
+    },
+    "facing=north,sink=4,cups=5": {
+      "model": "murim:block/wine_jar_sink_4",
+      "y": 0
+    },
+    "facing=north,sink=4,cups=6": {
+      "model": "murim:block/wine_jar_sink_4",
+      "y": 0
+    },
+    "facing=north,sink=4,cups=7": {
+      "model": "murim:block/wine_jar_sink_4",
+      "y": 0
+    },
+    "facing=north,sink=4,cups=8": {
+      "model": "murim:block/wine_jar_sink_4",
+      "y": 0
+    },
+    "facing=east,sink=4,cups=0": {
+      "model": "murim:block/wine_jar_empty_sink_4",
+      "y": 90
+    },
+    "facing=east,sink=4,cups=1": {
+      "model": "murim:block/wine_jar_sink_4",
+      "y": 90
+    },
+    "facing=east,sink=4,cups=2": {
+      "model": "murim:block/wine_jar_sink_4",
+      "y": 90
+    },
+    "facing=east,sink=4,cups=3": {
+      "model": "murim:block/wine_jar_sink_4",
+      "y": 90
+    },
+    "facing=east,sink=4,cups=4": {
+      "model": "murim:block/wine_jar_sink_4",
+      "y": 90
+    },
+    "facing=east,sink=4,cups=5": {
+      "model": "murim:block/wine_jar_sink_4",
+      "y": 90
+    },
+    "facing=east,sink=4,cups=6": {
+      "model": "murim:block/wine_jar_sink_4",
+      "y": 90
+    },
+    "facing=east,sink=4,cups=7": {
+      "model": "murim:block/wine_jar_sink_4",
+      "y": 90
+    },
+    "facing=east,sink=4,cups=8": {
+      "model": "murim:block/wine_jar_sink_4",
+      "y": 90
+    },
+    "facing=south,sink=4,cups=0": {
+      "model": "murim:block/wine_jar_empty_sink_4",
+      "y": 180
+    },
+    "facing=south,sink=4,cups=1": {
+      "model": "murim:block/wine_jar_sink_4",
+      "y": 180
+    },
+    "facing=south,sink=4,cups=2": {
+      "model": "murim:block/wine_jar_sink_4",
+      "y": 180
+    },
+    "facing=south,sink=4,cups=3": {
+      "model": "murim:block/wine_jar_sink_4",
+      "y": 180
+    },
+    "facing=south,sink=4,cups=4": {
+      "model": "murim:block/wine_jar_sink_4",
+      "y": 180
+    },
+    "facing=south,sink=4,cups=5": {
+      "model": "murim:block/wine_jar_sink_4",
+      "y": 180
+    },
+    "facing=south,sink=4,cups=6": {
+      "model": "murim:block/wine_jar_sink_4",
+      "y": 180
+    },
+    "facing=south,sink=4,cups=7": {
+      "model": "murim:block/wine_jar_sink_4",
+      "y": 180
+    },
+    "facing=south,sink=4,cups=8": {
+      "model": "murim:block/wine_jar_sink_4",
+      "y": 180
+    },
+    "facing=west,sink=4,cups=0": {
+      "model": "murim:block/wine_jar_empty_sink_4",
+      "y": 270
+    },
+    "facing=west,sink=4,cups=1": {
+      "model": "murim:block/wine_jar_sink_4",
+      "y": 270
+    },
+    "facing=west,sink=4,cups=2": {
+      "model": "murim:block/wine_jar_sink_4",
+      "y": 270
+    },
+    "facing=west,sink=4,cups=3": {
+      "model": "murim:block/wine_jar_sink_4",
+      "y": 270
+    },
+    "facing=west,sink=4,cups=4": {
+      "model": "murim:block/wine_jar_sink_4",
+      "y": 270
+    },
+    "facing=west,sink=4,cups=5": {
+      "model": "murim:block/wine_jar_sink_4",
+      "y": 270
+    },
+    "facing=west,sink=4,cups=6": {
+      "model": "murim:block/wine_jar_sink_4",
+      "y": 270
+    },
+    "facing=west,sink=4,cups=7": {
+      "model": "murim:block/wine_jar_sink_4",
+      "y": 270
+    },
+    "facing=west,sink=4,cups=8": {
+      "model": "murim:block/wine_jar_sink_4",
+      "y": 270
+    },
+    "facing=north,sink=5,cups=0": {
+      "model": "murim:block/wine_jar_empty_sink_5",
+      "y": 0
+    },
+    "facing=north,sink=5,cups=1": {
+      "model": "murim:block/wine_jar_sink_5",
+      "y": 0
+    },
+    "facing=north,sink=5,cups=2": {
+      "model": "murim:block/wine_jar_sink_5",
+      "y": 0
+    },
+    "facing=north,sink=5,cups=3": {
+      "model": "murim:block/wine_jar_sink_5",
+      "y": 0
+    },
+    "facing=north,sink=5,cups=4": {
+      "model": "murim:block/wine_jar_sink_5",
+      "y": 0
+    },
+    "facing=north,sink=5,cups=5": {
+      "model": "murim:block/wine_jar_sink_5",
+      "y": 0
+    },
+    "facing=north,sink=5,cups=6": {
+      "model": "murim:block/wine_jar_sink_5",
+      "y": 0
+    },
+    "facing=north,sink=5,cups=7": {
+      "model": "murim:block/wine_jar_sink_5",
+      "y": 0
+    },
+    "facing=north,sink=5,cups=8": {
+      "model": "murim:block/wine_jar_sink_5",
+      "y": 0
+    },
+    "facing=east,sink=5,cups=0": {
+      "model": "murim:block/wine_jar_empty_sink_5",
+      "y": 90
+    },
+    "facing=east,sink=5,cups=1": {
+      "model": "murim:block/wine_jar_sink_5",
+      "y": 90
+    },
+    "facing=east,sink=5,cups=2": {
+      "model": "murim:block/wine_jar_sink_5",
+      "y": 90
+    },
+    "facing=east,sink=5,cups=3": {
+      "model": "murim:block/wine_jar_sink_5",
+      "y": 90
+    },
+    "facing=east,sink=5,cups=4": {
+      "model": "murim:block/wine_jar_sink_5",
+      "y": 90
+    },
+    "facing=east,sink=5,cups=5": {
+      "model": "murim:block/wine_jar_sink_5",
+      "y": 90
+    },
+    "facing=east,sink=5,cups=6": {
+      "model": "murim:block/wine_jar_sink_5",
+      "y": 90
+    },
+    "facing=east,sink=5,cups=7": {
+      "model": "murim:block/wine_jar_sink_5",
+      "y": 90
+    },
+    "facing=east,sink=5,cups=8": {
+      "model": "murim:block/wine_jar_sink_5",
+      "y": 90
+    },
+    "facing=south,sink=5,cups=0": {
+      "model": "murim:block/wine_jar_empty_sink_5",
+      "y": 180
+    },
+    "facing=south,sink=5,cups=1": {
+      "model": "murim:block/wine_jar_sink_5",
+      "y": 180
+    },
+    "facing=south,sink=5,cups=2": {
+      "model": "murim:block/wine_jar_sink_5",
+      "y": 180
+    },
+    "facing=south,sink=5,cups=3": {
+      "model": "murim:block/wine_jar_sink_5",
+      "y": 180
+    },
+    "facing=south,sink=5,cups=4": {
+      "model": "murim:block/wine_jar_sink_5",
+      "y": 180
+    },
+    "facing=south,sink=5,cups=5": {
+      "model": "murim:block/wine_jar_sink_5",
+      "y": 180
+    },
+    "facing=south,sink=5,cups=6": {
+      "model": "murim:block/wine_jar_sink_5",
+      "y": 180
+    },
+    "facing=south,sink=5,cups=7": {
+      "model": "murim:block/wine_jar_sink_5",
+      "y": 180
+    },
+    "facing=south,sink=5,cups=8": {
+      "model": "murim:block/wine_jar_sink_5",
+      "y": 180
+    },
+    "facing=west,sink=5,cups=0": {
+      "model": "murim:block/wine_jar_empty_sink_5",
+      "y": 270
+    },
+    "facing=west,sink=5,cups=1": {
+      "model": "murim:block/wine_jar_sink_5",
+      "y": 270
+    },
+    "facing=west,sink=5,cups=2": {
+      "model": "murim:block/wine_jar_sink_5",
+      "y": 270
+    },
+    "facing=west,sink=5,cups=3": {
+      "model": "murim:block/wine_jar_sink_5",
+      "y": 270
+    },
+    "facing=west,sink=5,cups=4": {
+      "model": "murim:block/wine_jar_sink_5",
+      "y": 270
+    },
+    "facing=west,sink=5,cups=5": {
+      "model": "murim:block/wine_jar_sink_5",
+      "y": 270
+    },
+    "facing=west,sink=5,cups=6": {
+      "model": "murim:block/wine_jar_sink_5",
+      "y": 270
+    },
+    "facing=west,sink=5,cups=7": {
+      "model": "murim:block/wine_jar_sink_5",
+      "y": 270
+    },
+    "facing=west,sink=5,cups=8": {
+      "model": "murim:block/wine_jar_sink_5",
+      "y": 270
+    },
+    "facing=north,sink=6,cups=0": {
+      "model": "murim:block/wine_jar_empty_sink_6",
+      "y": 0
+    },
+    "facing=north,sink=6,cups=1": {
+      "model": "murim:block/wine_jar_sink_6",
+      "y": 0
+    },
+    "facing=north,sink=6,cups=2": {
+      "model": "murim:block/wine_jar_sink_6",
+      "y": 0
+    },
+    "facing=north,sink=6,cups=3": {
+      "model": "murim:block/wine_jar_sink_6",
+      "y": 0
+    },
+    "facing=north,sink=6,cups=4": {
+      "model": "murim:block/wine_jar_sink_6",
+      "y": 0
+    },
+    "facing=north,sink=6,cups=5": {
+      "model": "murim:block/wine_jar_sink_6",
+      "y": 0
+    },
+    "facing=north,sink=6,cups=6": {
+      "model": "murim:block/wine_jar_sink_6",
+      "y": 0
+    },
+    "facing=north,sink=6,cups=7": {
+      "model": "murim:block/wine_jar_sink_6",
+      "y": 0
+    },
+    "facing=north,sink=6,cups=8": {
+      "model": "murim:block/wine_jar_sink_6",
+      "y": 0
+    },
+    "facing=east,sink=6,cups=0": {
+      "model": "murim:block/wine_jar_empty_sink_6",
+      "y": 90
+    },
+    "facing=east,sink=6,cups=1": {
+      "model": "murim:block/wine_jar_sink_6",
+      "y": 90
+    },
+    "facing=east,sink=6,cups=2": {
+      "model": "murim:block/wine_jar_sink_6",
+      "y": 90
+    },
+    "facing=east,sink=6,cups=3": {
+      "model": "murim:block/wine_jar_sink_6",
+      "y": 90
+    },
+    "facing=east,sink=6,cups=4": {
+      "model": "murim:block/wine_jar_sink_6",
+      "y": 90
+    },
+    "facing=east,sink=6,cups=5": {
+      "model": "murim:block/wine_jar_sink_6",
+      "y": 90
+    },
+    "facing=east,sink=6,cups=6": {
+      "model": "murim:block/wine_jar_sink_6",
+      "y": 90
+    },
+    "facing=east,sink=6,cups=7": {
+      "model": "murim:block/wine_jar_sink_6",
+      "y": 90
+    },
+    "facing=east,sink=6,cups=8": {
+      "model": "murim:block/wine_jar_sink_6",
+      "y": 90
+    },
+    "facing=south,sink=6,cups=0": {
+      "model": "murim:block/wine_jar_empty_sink_6",
+      "y": 180
+    },
+    "facing=south,sink=6,cups=1": {
+      "model": "murim:block/wine_jar_sink_6",
+      "y": 180
+    },
+    "facing=south,sink=6,cups=2": {
+      "model": "murim:block/wine_jar_sink_6",
+      "y": 180
+    },
+    "facing=south,sink=6,cups=3": {
+      "model": "murim:block/wine_jar_sink_6",
+      "y": 180
+    },
+    "facing=south,sink=6,cups=4": {
+      "model": "murim:block/wine_jar_sink_6",
+      "y": 180
+    },
+    "facing=south,sink=6,cups=5": {
+      "model": "murim:block/wine_jar_sink_6",
+      "y": 180
+    },
+    "facing=south,sink=6,cups=6": {
+      "model": "murim:block/wine_jar_sink_6",
+      "y": 180
+    },
+    "facing=south,sink=6,cups=7": {
+      "model": "murim:block/wine_jar_sink_6",
+      "y": 180
+    },
+    "facing=south,sink=6,cups=8": {
+      "model": "murim:block/wine_jar_sink_6",
+      "y": 180
+    },
+    "facing=west,sink=6,cups=0": {
+      "model": "murim:block/wine_jar_empty_sink_6",
+      "y": 270
+    },
+    "facing=west,sink=6,cups=1": {
+      "model": "murim:block/wine_jar_sink_6",
+      "y": 270
+    },
+    "facing=west,sink=6,cups=2": {
+      "model": "murim:block/wine_jar_sink_6",
+      "y": 270
+    },
+    "facing=west,sink=6,cups=3": {
+      "model": "murim:block/wine_jar_sink_6",
+      "y": 270
+    },
+    "facing=west,sink=6,cups=4": {
+      "model": "murim:block/wine_jar_sink_6",
+      "y": 270
+    },
+    "facing=west,sink=6,cups=5": {
+      "model": "murim:block/wine_jar_sink_6",
+      "y": 270
+    },
+    "facing=west,sink=6,cups=6": {
+      "model": "murim:block/wine_jar_sink_6",
+      "y": 270
+    },
+    "facing=west,sink=6,cups=7": {
+      "model": "murim:block/wine_jar_sink_6",
+      "y": 270
+    },
+    "facing=west,sink=6,cups=8": {
+      "model": "murim:block/wine_jar_sink_6",
+      "y": 270
+    },
+    "facing=north,sink=7,cups=0": {
+      "model": "murim:block/wine_jar_empty_sink_7",
+      "y": 0
+    },
+    "facing=north,sink=7,cups=1": {
+      "model": "murim:block/wine_jar_sink_7",
+      "y": 0
+    },
+    "facing=north,sink=7,cups=2": {
+      "model": "murim:block/wine_jar_sink_7",
+      "y": 0
+    },
+    "facing=north,sink=7,cups=3": {
+      "model": "murim:block/wine_jar_sink_7",
+      "y": 0
+    },
+    "facing=north,sink=7,cups=4": {
+      "model": "murim:block/wine_jar_sink_7",
+      "y": 0
+    },
+    "facing=north,sink=7,cups=5": {
+      "model": "murim:block/wine_jar_sink_7",
+      "y": 0
+    },
+    "facing=north,sink=7,cups=6": {
+      "model": "murim:block/wine_jar_sink_7",
+      "y": 0
+    },
+    "facing=north,sink=7,cups=7": {
+      "model": "murim:block/wine_jar_sink_7",
+      "y": 0
+    },
+    "facing=north,sink=7,cups=8": {
+      "model": "murim:block/wine_jar_sink_7",
+      "y": 0
+    },
+    "facing=east,sink=7,cups=0": {
+      "model": "murim:block/wine_jar_empty_sink_7",
+      "y": 90
+    },
+    "facing=east,sink=7,cups=1": {
+      "model": "murim:block/wine_jar_sink_7",
+      "y": 90
+    },
+    "facing=east,sink=7,cups=2": {
+      "model": "murim:block/wine_jar_sink_7",
+      "y": 90
+    },
+    "facing=east,sink=7,cups=3": {
+      "model": "murim:block/wine_jar_sink_7",
+      "y": 90
+    },
+    "facing=east,sink=7,cups=4": {
+      "model": "murim:block/wine_jar_sink_7",
+      "y": 90
+    },
+    "facing=east,sink=7,cups=5": {
+      "model": "murim:block/wine_jar_sink_7",
+      "y": 90
+    },
+    "facing=east,sink=7,cups=6": {
+      "model": "murim:block/wine_jar_sink_7",
+      "y": 90
+    },
+    "facing=east,sink=7,cups=7": {
+      "model": "murim:block/wine_jar_sink_7",
+      "y": 90
+    },
+    "facing=east,sink=7,cups=8": {
+      "model": "murim:block/wine_jar_sink_7",
+      "y": 90
+    },
+    "facing=south,sink=7,cups=0": {
+      "model": "murim:block/wine_jar_empty_sink_7",
+      "y": 180
+    },
+    "facing=south,sink=7,cups=1": {
+      "model": "murim:block/wine_jar_sink_7",
+      "y": 180
+    },
+    "facing=south,sink=7,cups=2": {
+      "model": "murim:block/wine_jar_sink_7",
+      "y": 180
+    },
+    "facing=south,sink=7,cups=3": {
+      "model": "murim:block/wine_jar_sink_7",
+      "y": 180
+    },
+    "facing=south,sink=7,cups=4": {
+      "model": "murim:block/wine_jar_sink_7",
+      "y": 180
+    },
+    "facing=south,sink=7,cups=5": {
+      "model": "murim:block/wine_jar_sink_7",
+      "y": 180
+    },
+    "facing=south,sink=7,cups=6": {
+      "model": "murim:block/wine_jar_sink_7",
+      "y": 180
+    },
+    "facing=south,sink=7,cups=7": {
+      "model": "murim:block/wine_jar_sink_7",
+      "y": 180
+    },
+    "facing=south,sink=7,cups=8": {
+      "model": "murim:block/wine_jar_sink_7",
+      "y": 180
+    },
+    "facing=west,sink=7,cups=0": {
+      "model": "murim:block/wine_jar_empty_sink_7",
+      "y": 270
+    },
+    "facing=west,sink=7,cups=1": {
+      "model": "murim:block/wine_jar_sink_7",
+      "y": 270
+    },
+    "facing=west,sink=7,cups=2": {
+      "model": "murim:block/wine_jar_sink_7",
+      "y": 270
+    },
+    "facing=west,sink=7,cups=3": {
+      "model": "murim:block/wine_jar_sink_7",
+      "y": 270
+    },
+    "facing=west,sink=7,cups=4": {
+      "model": "murim:block/wine_jar_sink_7",
+      "y": 270
+    },
+    "facing=west,sink=7,cups=5": {
+      "model": "murim:block/wine_jar_sink_7",
+      "y": 270
+    },
+    "facing=west,sink=7,cups=6": {
+      "model": "murim:block/wine_jar_sink_7",
+      "y": 270
+    },
+    "facing=west,sink=7,cups=7": {
+      "model": "murim:block/wine_jar_sink_7",
+      "y": 270
+    },
+    "facing=west,sink=7,cups=8": {
+      "model": "murim:block/wine_jar_sink_7",
+      "y": 270
+    },
+    "facing=north,sink=8,cups=0": {
+      "model": "murim:block/wine_jar_empty_sink_8",
+      "y": 0
+    },
+    "facing=north,sink=8,cups=1": {
+      "model": "murim:block/wine_jar_sink_8",
+      "y": 0
+    },
+    "facing=north,sink=8,cups=2": {
+      "model": "murim:block/wine_jar_sink_8",
+      "y": 0
+    },
+    "facing=north,sink=8,cups=3": {
+      "model": "murim:block/wine_jar_sink_8",
+      "y": 0
+    },
+    "facing=north,sink=8,cups=4": {
+      "model": "murim:block/wine_jar_sink_8",
+      "y": 0
+    },
+    "facing=north,sink=8,cups=5": {
+      "model": "murim:block/wine_jar_sink_8",
+      "y": 0
+    },
+    "facing=north,sink=8,cups=6": {
+      "model": "murim:block/wine_jar_sink_8",
+      "y": 0
+    },
+    "facing=north,sink=8,cups=7": {
+      "model": "murim:block/wine_jar_sink_8",
+      "y": 0
+    },
+    "facing=north,sink=8,cups=8": {
+      "model": "murim:block/wine_jar_sink_8",
+      "y": 0
+    },
+    "facing=east,sink=8,cups=0": {
+      "model": "murim:block/wine_jar_empty_sink_8",
+      "y": 90
+    },
+    "facing=east,sink=8,cups=1": {
+      "model": "murim:block/wine_jar_sink_8",
+      "y": 90
+    },
+    "facing=east,sink=8,cups=2": {
+      "model": "murim:block/wine_jar_sink_8",
+      "y": 90
+    },
+    "facing=east,sink=8,cups=3": {
+      "model": "murim:block/wine_jar_sink_8",
+      "y": 90
+    },
+    "facing=east,sink=8,cups=4": {
+      "model": "murim:block/wine_jar_sink_8",
+      "y": 90
+    },
+    "facing=east,sink=8,cups=5": {
+      "model": "murim:block/wine_jar_sink_8",
+      "y": 90
+    },
+    "facing=east,sink=8,cups=6": {
+      "model": "murim:block/wine_jar_sink_8",
+      "y": 90
+    },
+    "facing=east,sink=8,cups=7": {
+      "model": "murim:block/wine_jar_sink_8",
+      "y": 90
+    },
+    "facing=east,sink=8,cups=8": {
+      "model": "murim:block/wine_jar_sink_8",
+      "y": 90
+    },
+    "facing=south,sink=8,cups=0": {
+      "model": "murim:block/wine_jar_empty_sink_8",
+      "y": 180
+    },
+    "facing=south,sink=8,cups=1": {
+      "model": "murim:block/wine_jar_sink_8",
+      "y": 180
+    },
+    "facing=south,sink=8,cups=2": {
+      "model": "murim:block/wine_jar_sink_8",
+      "y": 180
+    },
+    "facing=south,sink=8,cups=3": {
+      "model": "murim:block/wine_jar_sink_8",
+      "y": 180
+    },
+    "facing=south,sink=8,cups=4": {
+      "model": "murim:block/wine_jar_sink_8",
+      "y": 180
+    },
+    "facing=south,sink=8,cups=5": {
+      "model": "murim:block/wine_jar_sink_8",
+      "y": 180
+    },
+    "facing=south,sink=8,cups=6": {
+      "model": "murim:block/wine_jar_sink_8",
+      "y": 180
+    },
+    "facing=south,sink=8,cups=7": {
+      "model": "murim:block/wine_jar_sink_8",
+      "y": 180
+    },
+    "facing=south,sink=8,cups=8": {
+      "model": "murim:block/wine_jar_sink_8",
+      "y": 180
+    },
+    "facing=west,sink=8,cups=0": {
+      "model": "murim:block/wine_jar_empty_sink_8",
+      "y": 270
+    },
+    "facing=west,sink=8,cups=1": {
+      "model": "murim:block/wine_jar_sink_8",
+      "y": 270
+    },
+    "facing=west,sink=8,cups=2": {
+      "model": "murim:block/wine_jar_sink_8",
+      "y": 270
+    },
+    "facing=west,sink=8,cups=3": {
+      "model": "murim:block/wine_jar_sink_8",
+      "y": 270
+    },
+    "facing=west,sink=8,cups=4": {
+      "model": "murim:block/wine_jar_sink_8",
+      "y": 270
+    },
+    "facing=west,sink=8,cups=5": {
+      "model": "murim:block/wine_jar_sink_8",
+      "y": 270
+    },
+    "facing=west,sink=8,cups=6": {
+      "model": "murim:block/wine_jar_sink_8",
+      "y": 270
+    },
+    "facing=west,sink=8,cups=7": {
+      "model": "murim:block/wine_jar_sink_8",
+      "y": 270
+    },
+    "facing=west,sink=8,cups=8": {
+      "model": "murim:block/wine_jar_sink_8",
+      "y": 270
+    }
+  }
+}

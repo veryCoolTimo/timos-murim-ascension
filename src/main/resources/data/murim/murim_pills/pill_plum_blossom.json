@@ -1,0 +1,17 @@
+{
+  "item": "murim:pill_plum_blossom",
+  "school": "plum",
+  "volume": 1,
+  "tier": "common",
+  "qi": 0,
+  "origin": "item.murim.pill_plum_blossom.origin",
+  "effect": "item.murim.pill_plum_blossom.desc",
+  "source": {
+    "seller": "gyeong_cho",
+    "merit": 1
+  },
+  "canon": {
+    "work": "Return of Mount Hua",
+    "chapters": "39–41"
+  }
+}

@@ -1,0 +1,150 @@
+{
+  "id": "red_vein",
+  "title": "quest.murim.red_vein.title",
+  "steps": [
+    {
+      "type": "overheard",
+      "id": "red_vein_rumour",
+      "speaker": "gyeong_cho",
+      "gate": {
+        "not_flags": [
+          "quest.red_vein.asked",
+          "quest.red_vein.done"
+        ]
+      }
+    },
+    {
+      "type": "herb",
+      "id": "h06",
+      "block": "murim:red_vein_fern",
+      "item": "murim:red_vein_fern_100",
+      "regrow_days": 4,
+      "min_y": 0,
+      "max_y": 60,
+      "min_light": 0,
+      "max_light": 5,
+      "water_range": 3,
+      "origin": "murim.herb.origin.original",
+      "habitat": "dark",
+      "raw_effect": "murim.herb.raw.ingredient",
+      "dangerous": false
+    },
+    {
+      "type": "herb",
+      "id": "h11",
+      "block": "murim:silver_vein_mugwort",
+      "item": "murim:silver_vein_mugwort_100",
+      "regrow_days": 3,
+      "min_y": 70,
+      "max_y": 130,
+      "min_light": 9,
+      "max_light": 15,
+      "origin": "murim.herb.origin.original",
+      "habitat": "forest",
+      "raw_effect": "murim.herb.raw.ingredient",
+      "dangerous": false
+    },
+    {
+      "type": "observe",
+      "id": "red_vein_niche",
+      "marker": "look",
+      "block": "murim:red_vein_fern",
+      "effects": {
+        "flags": [
+          "quest.red_vein.niche"
+        ]
+      }
+    },
+    {
+      "type": "observe",
+      "id": "red_vein_mugwort",
+      "marker": "look",
+      "block": "murim:silver_vein_mugwort",
+      "effects": {
+        "flags": [
+          "quest.red_vein.mugwort"
+        ]
+      }
+    },
+    {
+      "type": "talk",
+      "id": "red_vein_ask",
+      "npc": "gyeong_cho",
+      "node": "red_vein_ask"
+    },
+    {
+      "type": "talk",
+      "id": "red_vein_elder",
+      "npc": "tae_seong",
+      "node": "red_vein_elder",
+      "requires": {
+        "flags": [
+          "quest.red_vein.done"
+        ]
+      }
+    },
+    {
+      "type": "hand_in",
+      "id": "red_vein_materials",
+      "npc": "gyeong_cho",
+      "node": "red_vein_ask",
+      "requires": {
+        "flags": [
+          "quest.red_vein.asked"
+        ],
+        "not_flags": [
+          "quest.red_vein.done"
+        ]
+      },
+      "take_items": [
+        "murim:red_vein_fern_100*1",
+        "murim:silver_vein_mugwort_100*2"
+      ],
+      "reward": {
+        "effects": {
+          "merit": 2,
+          "flags": [
+            "quest.red_vein.done",
+            "quest.red_vein.elder_medicine"
+          ]
+        }
+      }
+    },
+    {
+      "type": "hand_in",
+      "id": "red_vein_buy",
+      "npc": "gyeong_cho",
+      "node": "red_vein_ask",
+      "requires": {
+        "flags": [
+          "quest.red_vein.asked"
+        ],
+        "not_flags": [
+          "quest.red_vein.done"
+        ]
+      },
+      "take_items": [
+        "murim:silver_tael*1"
+      ],
+      "reward": {
+        "items": [
+          "murim:red_vein_fern_100*1",
+          "murim:silver_vein_mugwort_100*2"
+        ]
+      }
+    },
+    {
+      "type": "personal_chest",
+      "id": "red_vein_reward",
+      "marker": "door:door.01:3|zone:alchemy:10:8",
+      "gate": {
+        "flags": [
+          "quest.red_vein.done"
+        ]
+      },
+      "items": [
+        "murim:pill_mending*1"
+      ]
+    }
+  ]
+}

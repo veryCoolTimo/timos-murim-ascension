@@ -1,0 +1,94 @@
+{
+ "variants": {
+  "facing=south,kind=0": {
+   "model": "murim:block/vault_prop_0"
+  },
+  "facing=west,kind=0": {
+   "model": "murim:block/vault_prop_0",
+   "y": 90
+  },
+  "facing=north,kind=0": {
+   "model": "murim:block/vault_prop_0",
+   "y": 180
+  },
+  "facing=east,kind=0": {
+   "model": "murim:block/vault_prop_0",
+   "y": 270
+  },
+  "facing=south,kind=1": {
+   "model": "murim:block/vault_prop_1"
+  },
+  "facing=west,kind=1": {
+   "model": "murim:block/vault_prop_1",
+   "y": 90
+  },
+  "facing=north,kind=1": {
+   "model": "murim:block/vault_prop_1",
+   "y": 180
+  },
+  "facing=east,kind=1": {
+   "model": "murim:block/vault_prop_1",
+   "y": 270
+  },
+  "facing=south,kind=2": {
+   "model": "murim:block/vault_prop_2"
+  },
+  "facing=west,kind=2": {
+   "model": "murim:block/vault_prop_2",
+   "y": 90
+  },
+  "facing=north,kind=2": {
+   "model": "murim:block/vault_prop_2",
+   "y": 180
+  },
+  "facing=east,kind=2": {
+   "model": "murim:block/vault_prop_2",
+   "y": 270
+  },
+  "facing=south,kind=3": {
+   "model": "murim:block/vault_prop_3"
+  },
+  "facing=west,kind=3": {
+   "model": "murim:block/vault_prop_3",
+   "y": 90
+  },
+  "facing=north,kind=3": {
+   "model": "murim:block/vault_prop_3",
+   "y": 180
+  },
+  "facing=east,kind=3": {
+   "model": "murim:block/vault_prop_3",
+   "y": 270
+  },
+  "facing=south,kind=4": {
+   "model": "murim:block/vault_prop_4"
+  },
+  "facing=west,kind=4": {
+   "model": "murim:block/vault_prop_4",
+   "y": 90
+  },
+  "facing=north,kind=4": {
+   "model": "murim:block/vault_prop_4",
+   "y": 180
+  },
+  "facing=east,kind=4": {
+   "model": "murim:block/vault_prop_4",
+   "y": 270
+  },
+  "facing=south,kind=5": {
+   "model": "murim:block/vault_prop_5"
+  },
+  "facing=west,kind=5": {
+   "model": "murim:block/vault_prop_5",
+   "y": 90
+  },
+  "facing=north,kind=5": {
+   "model": "murim:block/vault_prop_5",
+   "y": 180
+  },
+  "facing=east,kind=5": {
+   "model": "murim:block/vault_prop_5",
+   "y": 270
+  }
+ }
+}

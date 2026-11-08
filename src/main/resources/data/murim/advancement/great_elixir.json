@@ -1,0 +1,23 @@
+{
+  "display": {
+    "icon": {
+      "id": "murim:pill_purple_heaven"
+    },
+    "title": {
+      "translate": "advancement.murim.great_elixir.title"
+    },
+    "description": {
+      "translate": "advancement.murim.great_elixir.desc"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "parent": "murim:first_pill",
+  "criteria": {
+    "done": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "murim:block/sect_name_plate"
+    },
+    "facing=east": {
+      "model": "murim:block/sect_name_plate",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "murim:block/sect_name_plate",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "murim:block/sect_name_plate",
+      "y": 270
+    }
+  }
+}

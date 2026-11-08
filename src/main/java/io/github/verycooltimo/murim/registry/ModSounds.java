@@ -80,6 +80,13 @@ public final class ModSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> RANK_UP = sound("rank_up");
     public static final DeferredHolder<SoundEvent, SoundEvent> MEDITATION_START = sound("meditation_start");
     public static final DeferredHolder<SoundEvent, SoundEvent> MEDITATION_STOP = sound("meditation_stop");
+    // Rank breakthrough scene, layered (hua-main-1810 section 4): breath, rising hum, crack clicks, then the far echo.
+    public static final DeferredHolder<SoundEvent, SoundEvent> BT_BREATH = sound("bt_breath");
+    public static final DeferredHolder<SoundEvent, SoundEvent> BT_HUM = sound("bt_hum");
+    public static final DeferredHolder<SoundEvent, SoundEvent> BT_CRACK = sound("bt_crack");
+    /** The echo of the impact: a fixed range of 64 blocks, so it reaches people far down the mountain (variable range stops at 16). */
+    public static final DeferredHolder<SoundEvent, SoundEvent> BT_TAIL = SOUNDS.register("bt_tail",
+            () -> SoundEvent.createFixedRangeEvent(ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "bt_tail"), 64.0F));
 
     // Книги и страницы.
     public static final DeferredHolder<SoundEvent, SoundEvent> BOOK_OPEN = sound("book_open");

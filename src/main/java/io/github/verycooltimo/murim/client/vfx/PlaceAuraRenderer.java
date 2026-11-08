@@ -102,6 +102,9 @@ public final class PlaceAuraRenderer implements BlockEntityRenderer<SpiritVeinBl
     @Override
     public void render(SpiritVeinBlockEntity be, float partial, PoseStack poseStack, MultiBufferSource buffers,
                        int light, int overlay) {
+        if (!io.github.verycooltimo.murim.world.PlaceService.enabled) {
+            return; // places of power are off (author 22.10, 23.10): old vein stones in a world draw nothing
+        }
         lines = buffers.getBuffer(MurimRenderTypes.ribbon());
         dots = null;
         renderPass(be.getBlockPos(), be.kind(), partial, poseStack);

@@ -78,8 +78,9 @@ public record Dialogue(String name, String title, List<Entry> start, Map<String,
      * Условия положения (С3, часть 2) — в том же объекте условия, что и остальные поля:
      * {@code {"min_standing": "disciple", "min_contribution": 15, "has_item": "minecraft:gold_ingot*1"}}.
      *
-     * @param minStanding     положение не ниже ({@link SectStanding#id()})
-     * @param belowStanding   положение ниже
+     * @param minStanding     социальный ранг не ниже ({@link SectRank#id()}: ступени положения, затем {@code first} и
+     *                        {@code elder} — должность, если она есть)
+     * @param belowStanding   социальный ранг ниже
      * @param minContribution заслуг не меньше (−1 — не проверять)
      * @param hasItem         в инвентаре есть предмет (и число через {@code *})
      * @param attended        журнал секты ({@link SectAttendance}): это занятие сегодня сделано
@@ -88,10 +89,12 @@ public record Dialogue(String name, String title, List<Entry> start, Map<String,
      * @param logged          журнал секты: в нём есть сегодняшний или прошлый день при секте
      * @param social          серверный контекст: business, promotion:first|elder,
      *                        request:<id>, request_start:<id>, request_complete:<id>
+     * @param shop            строка обмена заслуг продаётся ({@link MeritShop#listed(String)}): её предмет есть в игре и
+     *                        нужная возможность каталога включена
      */
     public record Standing(Optional<String> minStanding, Optional<String> belowStanding, int minContribution,
                            Optional<String> hasItem, Optional<String> attended, Optional<String> missed,
-                           Optional<Boolean> chores, Optional<Boolean> logged, Optional<String> social) {
+                           Optional<Boolean> chores, Optional<Boolean> logged, Optional<String> social, Optional<String> shop) {
         public static final MapCodec<Standing> MAP_CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
                 Codec.STRING.optionalFieldOf("min_standing").forGetter(Standing::minStanding),
                 Codec.STRING.optionalFieldOf("below_standing").forGetter(Standing::belowStanding),
@@ -101,7 +104,8 @@ public record Dialogue(String name, String title, List<Entry> start, Map<String,
                 Codec.STRING.optionalFieldOf("missed").forGetter(Standing::missed),
                 Codec.BOOL.optionalFieldOf("chores").forGetter(Standing::chores),
                 Codec.BOOL.optionalFieldOf("logged").forGetter(Standing::logged),
-                Codec.STRING.optionalFieldOf("social").forGetter(Standing::social)
+                Codec.STRING.optionalFieldOf("social").forGetter(Standing::social),
+                Codec.STRING.optionalFieldOf("shop").forGetter(Standing::shop)
         ).apply(i, Standing::new));
     }
 
@@ -148,16 +152,18 @@ public record Dialogue(String name, String title, List<Entry> start, Map<String,
      * Узел: реплика NPC (или случайная из {@code random}), жест, аргументы реплики, действия при входе
      * и варианты (видны только те, чьи условия выполнены, не больше четырёх).
      * Аргументы: {@code player}, {@code rank}, {@code star:<техника>}.
+     * {@code shot}: фиксированный план камеры экскурсии новичка ({@link SectTour}); пусто — камера на собеседнике.
      */
     public record Node(String line, List<String> random, List<String> args, Optional<String> gesture,
-                       List<Action> enter, List<Option> options) {
+                       List<Action> enter, List<Option> options, Optional<String> shot) {
         public static final Codec<Node> CODEC = RecordCodecBuilder.create(i -> i.group(
                 Codec.STRING.optionalFieldOf("line", "").forGetter(Node::line),
                 Codec.STRING.listOf().optionalFieldOf("random", List.of()).forGetter(Node::random),
                 Codec.STRING.listOf().optionalFieldOf("args", List.of()).forGetter(Node::args),
                 Codec.STRING.optionalFieldOf("gesture").forGetter(Node::gesture),
                 Action.CODEC.listOf().optionalFieldOf("enter", List.of()).forGetter(Node::enter),
-                Option.CODEC.listOf().optionalFieldOf("options", List.of()).forGetter(Node::options)
+                Option.CODEC.listOf().optionalFieldOf("options", List.of()).forGetter(Node::options),
+                Codec.STRING.optionalFieldOf("shot").forGetter(Node::shot)
         ).apply(i, Node::new));
     }
 
@@ -189,6 +195,6 @@ public record Dialogue(String name, String title, List<Entry> start, Map<String,
                 Map.copyOf(merged), audience.isPresent() ? audience : parent.audience(), Optional.empty());
     }
 
-    /** Максимум вариантов на экране (кнопки и клавиши 1–4). */
-    public static final int MAX_OPTIONS = 4;
+    /** Максимум вариантов на экране (кнопки и клавиши 1–9; длиннее — список листается). */
+    public static final int MAX_OPTIONS = 8;
 }

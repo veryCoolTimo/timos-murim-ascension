@@ -1,0 +1,23 @@
+{
+  "display": {
+    "icon": {
+      "id": "murim:ach_root"
+    },
+    "title": {
+      "translate": "advancement.murim.root.title"
+    },
+    "description": {
+      "translate": "advancement.murim.root.desc"
+    },
+    "frame": "task",
+    "show_toast": false,
+    "announce_to_chat": false,
+    "hidden": false,
+    "background": "murim:textures/block/plum_planks.png"
+  },
+  "criteria": {
+    "arrive": {
+      "trigger": "minecraft:tick"
+    }
+  }
+}

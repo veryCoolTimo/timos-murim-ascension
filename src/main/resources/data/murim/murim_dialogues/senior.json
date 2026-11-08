@@ -5,6 +5,23 @@
     {
       "when": [
         {
+          "free": false,
+          "min_standing": "first"
+        }
+      ],
+      "node": "busy_office"
+    },
+    {
+      "when": [
+        {
+          "min_standing": "first"
+        }
+      ],
+      "node": "office"
+    },
+    {
+      "when": [
+        {
           "free": false
         }
       ],
@@ -65,8 +82,35 @@
       "gesture": "fist",
       "options": [
         {
+          "text": "dialogue.murim.approach.opt.not_now",
+          "when": [
+            {
+              "social": "approaching"
+            }
+          ],
+          "actions": [
+            {
+              "type": "approach_decline"
+            }
+          ]
+        },
+        {
           "text": "dialogue.murim.senior.opt.challenge",
           "next": "accept"
+        },
+        {
+          "text": "dialogue.murim.bout.opt.ring",
+          "when": [
+            {
+              "social": "progression:bout_menu"
+            }
+          ],
+          "actions": [
+            {
+              "type": "progression_menu",
+              "value": "bouts"
+            }
+          ]
         },
         {
           "text": "dialogue.murim.senior.opt.lesson",
@@ -142,7 +186,11 @@
     "refused": {
       "random": [
         "dialogue.murim.senior.refused1",
-        "dialogue.murim.senior.refused2"
+        "dialogue.murim.senior.refused2",
+        "dialogue.murim.senior.refused3",
+        "dialogue.murim.senior.refused4",
+        "dialogue.murim.senior.refused5",
+        "dialogue.murim.senior.refused6"
       ],
       "gesture": "shake",
       "options": []
@@ -154,7 +202,7 @@
     },
     "after_won": {
       "line": "dialogue.murim.senior.after_won",
-      "gesture": "bow",
+      "gesture": "nod",
       "enter": [
         {
           "type": "clear_flag",
@@ -204,7 +252,12 @@
     },
     "busy": {
       "random": [
-        "dialogue.murim.second.busy1"
+        "dialogue.murim.second.busy1",
+        "dialogue.murim.second.busy2",
+        "dialogue.murim.second.busy3",
+        "dialogue.murim.second.busy4",
+        "dialogue.murim.second.busy5",
+        "dialogue.murim.second.busy6"
       ],
       "gesture": "shake",
       "options": []
@@ -212,7 +265,11 @@
     "formation": {
       "random": [
         "dialogue.murim.second.formation1",
-        "dialogue.murim.second.formation2"
+        "dialogue.murim.second.formation2",
+        "dialogue.murim.second.formation3",
+        "dialogue.murim.second.formation4",
+        "dialogue.murim.second.formation5",
+        "dialogue.murim.second.formation6"
       ],
       "gesture": "point",
       "options": [
@@ -248,6 +305,122 @@
       "options": [
         {
           "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "busy_office": {
+      "random": [
+        "dialogue.murim.second.busy_office.1",
+        "dialogue.murim.second.busy_office.2"
+      ],
+      "args": [
+        "position"
+      ],
+      "gesture": "shake",
+      "options": []
+    },
+    "office": {
+      "random": [
+        "@context"
+      ],
+      "gesture": "fist",
+      "enter": [
+        {
+          "type": "clear_flag",
+          "value": "spar.won"
+        },
+        {
+          "type": "clear_flag",
+          "value": "spar.lost"
+        }
+      ],
+      "options": [
+        {
+          "text": "dialogue.murim.approach.opt.not_now",
+          "when": [
+            {
+              "social": "approaching"
+            }
+          ],
+          "actions": [
+            {
+              "type": "approach_decline"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.office.opt.spar",
+          "when": [
+            {
+              "free": true
+            }
+          ],
+          "next": "office_spar"
+        },
+        {
+          "text": "dialogue.murim.senior.opt.review",
+          "when": [
+            {
+              "member": true,
+              "min_standing": "disciple",
+              "not_flag": "review.signed"
+            }
+          ],
+          "actions": [
+            {
+              "type": "review_enter"
+            }
+          ],
+          "next": "review"
+        },
+        {
+          "text": "dialogue.murim.bout.opt.ring",
+          "when": [
+            {
+              "social": "progression:bout_menu"
+            }
+          ],
+          "actions": [
+            {
+              "type": "progression_menu",
+              "value": "bouts"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.social.opt.news",
+          "next": "sect_news"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "office_spar": {
+      "random": [
+        "dialogue.murim.office.spar.1",
+        "dialogue.murim.office.spar.2"
+      ],
+      "args": [
+        "position"
+      ],
+      "gesture": "bow",
+      "options": [
+        {
+          "text": "dialogue.murim.disciple.opt.begin",
+          "when": [
+            {
+              "free": true
+            }
+          ],
+          "actions": [
+            {
+              "type": "start_spar"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.disciple.opt.not_now"
         }
       ]
     }

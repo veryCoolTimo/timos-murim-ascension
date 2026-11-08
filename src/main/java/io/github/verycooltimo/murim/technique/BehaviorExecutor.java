@@ -37,9 +37,7 @@ public final class BehaviorExecutor {
         float power = (float) io.github.verycooltimo.murim.mastery.MasteryRules.powerFactor(
                 Math.max(0, io.github.verycooltimo.murim.mastery.MasteryService.stars(player, definition.id())),
                 definition.starCap());
-        if (behavior instanceof TechniqueBehavior.DemonicArt) {
-            return DemonicExecutor.start(player, definition.id());
-        }
+        if (behavior instanceof TechniqueBehavior.SixForm) return false;
         if (behavior instanceof TechniqueBehavior.JunkDance) {
             return false;
         }
@@ -79,6 +77,7 @@ public final class BehaviorExecutor {
         if (behavior instanceof TechniqueBehavior.PlumScatter) {
             return ScatterExecutor.start(player, definition.id());
         }
+        if (behavior instanceof TechniqueBehavior.PlumFullBloom) return false;
         if (behavior instanceof TechniqueBehavior.PlumDome) {
             return DomeExecutor.raise(player);
         }
@@ -1096,7 +1095,7 @@ public final class BehaviorExecutor {
             // Под мастером и под живыми не ломаем: на стенде мастер проваливался сквозь пол.
             boolean underSomeone = !level.getEntitiesOfClass(LivingEntity.class,
                     new AABB(pos.above()).inflate(0.6D, 0.0D, 0.6D), LivingEntity::isAlive).isEmpty();
-            if (!underSomeone && !state.isAir() && level.getBlockState(pos.above()).isAir() && natural(state) && level.mayInteract(player, pos)) {
+            if (!underSomeone && !state.isAir() && level.getBlockState(pos.above()).isAir() && natural(state) && Casters.mayBreak(player, pos)) {
                 level.destroyBlock(pos, false, player);
                 broken++;
             }

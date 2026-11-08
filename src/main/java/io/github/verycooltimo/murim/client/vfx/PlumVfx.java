@@ -581,8 +581,8 @@ public final class PlumVfx {
         for (int i = 0; i <= n; i++) {
             double u = i / (double) n;
             double th = Math.toRadians(rot + sweep * u + age * 12.0D);
-            p[i] = centre.add(r.scale(radius * Math.cos(th))).add(f.scale(radius * 0.6D * Math.sin(th))).add(0.0D, 0.25D * u, 0.0D);
-            w[i] = width * Math.pow(Math.sin(Math.PI * u), 0.9D);
+            p[i] = centre.add(r.scale((u - .5D) * radius * 2)).add(f.scale((u - .5D) * radius)).add(0.0D, .25D * u, 0.0D);
+            w[i] = .035D * Math.sin(Math.PI * u);
         }
         strip(v, pose, camera, p, w, 0.4F * a, COLD);
         strip(v, pose, camera, p, scale(w, 0.22D), 0.85F * a, EDGE);
@@ -617,6 +617,47 @@ public final class PlumVfx {
      * очереди боковые дуги-удары влево-вправо, на старших слоях — с под-ветвями. Плоскость дерева
      * поперёк взгляда: со спины (как в референсах) видно целиком.
      */
+    record BloomBranch(Vec3 start, Vec3 control, Vec3 end, double width) {}
+
+    /** Normalized sword-local woody crown; retain Seven Plum's existing per-tier branch budget.
+     * API: /tmp/mr-ref-1121/minecraft-src/net/minecraft/world/phys/Vec3.java#lerp/add.
+     */
+    static List<BloomBranch> bloomBranches(int tier) {
+        Cast source = new Cast(0, Math.max(2, tier));
+        source.origin = Vec3.ZERO;
+        source.forward = new Vec3(0, 0, 1);
+        source.right = new Vec3(1, 0, 0);
+        buildTree(source);
+        // Full Bloom keeps the branch budget; forks occupy a rounded three-dimensional crown.
+        // Source: round-11 feedback; docs/03-vfx/11-what-looks-good.md (depth and silhouette).
+        List<BloomBranch> tree = new ArrayList<>();
+        tree.add(new BloomBranch(Vec3.ZERO, new Vec3(.06, .10, .35), new Vec3(-.04, .06, .78), .18));
+        for (int i = 1; i < source.branches.size(); i++) {
+            int parent = i <= 8 ? 0 : 1 + (i - 9) / 3;
+            BloomBranch fork = tree.get(Math.min(parent, tree.size() - 1));
+            double attach = .40 + (i % 4) * .15;
+            Vec3 firstElbow = fork.start().lerp(fork.control(), .68);
+            Vec3 secondElbow = fork.control().lerp(fork.end(), .42);
+            Vec3 start = i > 8 ? fork.end() : attach < 2.0 / 3
+                    ? firstElbow.lerp(secondElbow, attach * 3 - 1)
+                    : secondElbow.lerp(fork.end(), attach * 3 - 2);
+            double angle = i * 2.399963;
+            double radius = i <= 8 ? .29 : .12 / (1 + parent / 24.0);
+            double elevation = Math.sin(i * 1.731) * .9;
+            double horizontal = Math.sqrt(1 - elevation * elevation);
+            Vec3 end = start.add(Math.cos(angle) * radius * horizontal,
+                    elevation * radius * 1.35,
+                    i <= 8 ? .16 + .20 * (.5 + .5 * Math.sin(i * 3.17))
+                            : Math.sin(angle) * radius * horizontal);
+            end = new Vec3(Math.max(-.48, Math.min(.48, end.x)),
+                    Math.max(-.42, Math.min(.48, end.y)), Math.max(.25, Math.min(1.25, end.z)));
+            Vec3 control = start.lerp(end, .45).add(Math.sin(angle * 1.7) * radius * .35,
+                    Math.cos(angle * 1.3) * radius * .4, -.04);
+            tree.add(new BloomBranch(start, control, end, Math.max(.014, fork.width() * .57)));
+        }
+        return tree;
+    }
+
     private static void buildTree(Cast c) {
         Random r = c.random;
         double h = PlumRules.treeHeight(c.executionTier);
@@ -648,9 +689,8 @@ public final class PlumVfx {
             Vec3 dir = c.right.scale(side * Math.cos(el)).add(0.0D, Math.sin(el), 0.0D)
                     .add(c.forward.scale((r.nextDouble() - 0.5D) * 1.4D)).normalize();
             Vec3 end = start.add(dir.scale(len));
-            // Дуга-удар выгибается вверх, как серп взмаха; каждая третья загибается через ствол.
-            Vec3 ctrl = start.add(dir.scale(len * 0.5D)).add(0.0D, len * 0.4D, 0.0D)
-                    .add(c.right.scale(cross ? -side * len * 0.5D : 0.0D));
+            // 6 Nov: sword-fed branches use a straight centreline.
+            Vec3 ctrl = start.lerp(end, .5D);
             // Ветви рождаются на методичных боковых взмахах (пауза после ствола, потом шесть
             // ударов через 0,3 с): каждая — след своего удара, «пером по холсту».
             int swing = (int) Math.floor(i * 6.0D / Math.max(1, count));
@@ -1120,10 +1160,7 @@ public final class PlumVfx {
         }
     }
 
-    /**
-     * Боковые удары: на каждом из шести быстрых взмахов поперёк ствола проносится полумесяц
-     * (≈140°, радиус 1,2–1,8) — видимый удар, пересекающий ствол (ref6); живёт 2 тика.
-     */
+    /** Straight thin side cuts; the former sword crescents were removed on 6 Nov. */
     private static void swings(Cast c, PoseStack.Pose pose, Vec3 camera, VertexConsumer v, float age, boolean pink) {
         Vec3 base = trunkBase(c);
         double h = PlumRules.treeHeight(c.executionTier);
@@ -1142,9 +1179,9 @@ public final class PlumVfx {
             for (int i = 0; i <= n; i++) {
                 double u = i / (double) n * sweep;
                 double ang = Math.toRadians(-70.0D + 140.0D * u) * side;
-                p[i] = fall(c, base.add(c.right.scale(side * -rad * 0.4D + rad * Math.sin(ang)))
-                        .add(0.0D, y + 0.5D * rad * (Math.cos(ang) - 0.6D), 0.0D), age);
-                w[i] = 0.11D * Math.sin(Math.PI * Math.min(1.0D, u / Math.max(0.05D, sweep) * 1.05D + 0.02D));
+                p[i] = fall(c, base.add(c.right.scale((u - .5D) * rad * 2 * side))
+                        .add(0.0D, y + (u - .5D) * rad * .4D, 0.0D), age);
+                w[i] = 0.035D * Math.sin(Math.PI * Math.min(1.0D, u / Math.max(0.05D, sweep) * 1.05D + 0.02D));
             }
             float a = (float) curve(t, 0.0, 0.0, 0.3, 1.0, 3.0, 0.0);
             stripVar(v, pose, camera, p, scale(w, 2.5D), filled(n + 1, 0.2F * a), pink ? PINK : COLD);
@@ -1413,9 +1450,12 @@ public final class PlumVfx {
     }
 
     static void puff(VertexConsumer c, PoseStack.Pose pose, Vec3 camera, Vec3 centre, double size, int cell, float alpha, float gray) {
-        if (alpha <= 0.0F) {
-            return;
-        }
+        puff(c, pose, camera, centre, size, cell, alpha, gray, gray, gray * 1.04F);
+    }
+
+    static void puff(VertexConsumer c, PoseStack.Pose pose, Vec3 camera, Vec3 centre, double size, int cell,
+                     float alpha, float red, float green, float blue) {
+        if (alpha <= 0.0F) return;
         Vec3 forward = camera.subtract(centre);
         if (forward.lengthSqr() < 1.0E-6D) {
             return;
@@ -1427,11 +1467,10 @@ public final class PlumVfx {
         float u0 = (cell % 4) / 4.0F, u1 = u0 + 0.25F;
         float v0 = (cell / 4) / 4.0F, v1 = v0 + 0.25F;
         Vec3 n = new Vec3(0.0D, 1.0D, 0.0D);
-        float b = gray * 1.04F;
-        VfxDraw.vertex(c, pose, centre.subtract(right).subtract(up), n, u0, v1, alpha, gray, gray, b);
-        VfxDraw.vertex(c, pose, centre.add(right).subtract(up), n, u1, v1, alpha, gray, gray, b);
-        VfxDraw.vertex(c, pose, centre.add(right).add(up), n, u1, v0, alpha, gray, gray, b);
-        VfxDraw.vertex(c, pose, centre.subtract(right).add(up), n, u0, v0, alpha, gray, gray, b);
+        VfxDraw.vertex(c, pose, centre.subtract(right).subtract(up), n, u0, v1, alpha, red, green, blue);
+        VfxDraw.vertex(c, pose, centre.add(right).subtract(up), n, u1, v1, alpha, red, green, blue);
+        VfxDraw.vertex(c, pose, centre.add(right).add(up), n, u1, v0, alpha, red, green, blue);
+        VfxDraw.vertex(c, pose, centre.subtract(right).add(up), n, u0, v0, alpha, red, green, blue);
     }
 
     /** Клуб дыма: квадрат, повёрнутый в плоскости экрана на {@code angle}. */
@@ -1546,8 +1585,41 @@ public final class PlumVfx {
         }
     }
 
+    /** Soft coloured body, narrow crest; erosion changes opacity instead of leaving hairlines. */
+    static void materialRibbon(VertexConsumer v, PoseStack.Pose pose, Vec3 camera, Vec3[] path,
+                               double[] width, float alpha, VfxColour body, VfxColour crest) {
+        double[] material = new double[width.length];
+        float[] opacity = new float[width.length];
+        for (int i = 0; i < width.length; i++) {
+            material[i] = Math.max(.4, width[i]);
+            opacity[i] = alpha * (float) Math.min(1, Math.max(0, width[i]) / .4);
+        }
+        stripVar(v, pose, camera, path, material, scaled(opacity, .55F), body);
+        stripVar(v, pose, camera, path, scale(material, .1), opacity, crest);
+    }
+
     static void petal(VertexConsumer c, PoseStack.Pose pose, Vec3 camera, Vec3 centre, double size, int cell,
                               float spin, float alpha, float red, float green, float blue) {
+        petalMaterial(c, pose, camera, centre, size, cell, spin, alpha, red, green, blue, .20);
+    }
+
+    /** Full-mastery painted silhouettes; the legacy helper retains its old size ceiling. */
+    static void paintedPetal(VertexConsumer c, PoseStack.Pose pose, Vec3 camera, Vec3 centre, double size,
+                             int cell, float spin, float alpha, float red, float green, float blue) {
+        // Flat underpaint keeps a crimson edge/back when the lighter face turns.
+        petalMaterial(c, pose, camera, centre, size, cell, spin, alpha, red * .65F, green * .45F, blue * .55F, .35);
+        Vec3 face = centre.add(camera.subtract(centre).normalize().scale(.002));
+        petalMaterial(c, pose, camera, face, size * .86, cell, spin, alpha, red, green, blue, .35);
+    }
+
+    static double depthSize(Vec3 at, Vec3 camera, int seed) {
+        double variation = Math.floorMod(seed, 97) / 96.0;
+        if (Math.floorMod(seed, 20) == 0 && at.distanceToSqr(camera) < 49) return .125 + .225 * variation;
+        return Math.floorMod(seed, 4) == 0 ? .01 + .015 * variation : .03 + .05 * variation;
+    }
+
+    private static void petalMaterial(VertexConsumer c, PoseStack.Pose pose, Vec3 camera, Vec3 centre, double size,
+                                     int cell, float spin, float alpha, float red, float green, float blue, double limit) {
         if (alpha <= 0.0F) {
             return;
         }
@@ -1555,6 +1627,12 @@ public final class PlumVfx {
         if (forward.lengthSqr() < 1.0E-6D) {
             return;
         }
+        // Shared atlas petals: many small depth cues, with no cards inside two blocks.
+        double distance = forward.length();
+        alpha *= (float) PlumBeats.nearFade(distance);
+        if (alpha <= 0) return;
+        // size is half-width: keep the full silhouette below a fighter's half-block head.
+        size = Math.min(size, limit);
         forward = forward.normalize();
         Vec3 reference = Math.abs(forward.y) > 0.95D ? new Vec3(1.0D, 0.0D, 0.0D) : new Vec3(0.0D, 1.0D, 0.0D);
         Vec3 right0 = forward.cross(reference).normalize();

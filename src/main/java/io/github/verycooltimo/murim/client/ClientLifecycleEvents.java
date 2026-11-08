@@ -30,11 +30,17 @@ public final class ClientLifecycleEvents {
     }
 
     @SubscribeEvent
+    static void onClientTick(net.neoforged.neoforge.client.event.ClientTickEvent.Post event) {
+        io.github.verycooltimo.murim.client.vfx.BoneAnchorLayer.tick();
+    }
+
+    @SubscribeEvent
     static void onClone(ClientPlayerNetworkEvent.Clone event) {
         resetAll();
     }
 
     private static void resetAll() {
+        io.github.verycooltimo.murim.client.vfx.BoneAnchorLayer.clear();
         BladeTrailRenderer.clear();
         io.github.verycooltimo.murim.client.vfx.PalmVfxRenderer.clear();
         CameraShakeHandler.reset();
@@ -42,8 +48,9 @@ public final class ClientLifecycleEvents {
         TechniqueNameLayer.reset();
         ClientTechniqueHandler.reset();
         HitStopHandler.reset();
-        DevCaptureHandler.reset();
+        io.github.verycooltimo.murim.dev.DevHooks.INSTANCE.resetCapture();
         ClientProfileState.reset();
+        ClientPillState.reset();
         MeditationEcho.reset();
         ClientMasteryState.reset();
         InsightEffects.reset();

@@ -14,12 +14,13 @@ import net.minecraft.resources.ResourceLocation;
  * <p>Клиент присылает только нажатия. Время, окно удержания и засчитанные тики считает
  * сервер — иначе такт можно было бы пройти пакетом.
  *
- * @param action {@code TOGGLE} — сесть или встать; {@code HOLD_ON} / {@code HOLD_OFF} — клавиша удержания
+ * @param action {@code TOGGLE} — сесть или встать; {@code HOLD_ON} / {@code HOLD_OFF} — клавиша удержания;
+ *               {@code BLOCKED_ACTION} — запрос общей подсказки об отказе (сервер проверяет медитацию)
  * @param filter отсеивать ли примеси (имеет смысл только при {@code TOGGLE})
  */
 public record MeditationInputPayload(Action action, boolean filter) implements CustomPacketPayload {
 
-    public enum Action { TOGGLE, HOLD_ON, HOLD_OFF }
+    public enum Action { TOGGLE, HOLD_ON, HOLD_OFF, BLOCKED_ACTION }
 
     public static final Type<MeditationInputPayload> TYPE = new Type<>(
             ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "meditation_input"));

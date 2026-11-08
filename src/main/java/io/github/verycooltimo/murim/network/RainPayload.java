@@ -13,8 +13,15 @@ import net.minecraft.world.phys.Vec3;
  * 1 — замах ПРОШЁЛ у цели, иллюзия (centre — ступни цели), 2..4 — волна ливня ПОПАЛА (centre — точка
  * удара), 9 — цель потеряна, иллюзия рассыпается.
  */
-public record RainPayload(int entityId, Vec3 origin, Vec3 centre, float yaw, int executionTier, int stage, int targetId)
+public record RainPayload(int entityId, Vec3 origin, Vec3 centre, float yaw, int executionTier, int stage, int targetId, boolean fullMastery, int stars)
         implements CustomPacketPayload {
+    public RainPayload(int entityId, Vec3 origin, Vec3 centre, float yaw, int executionTier, int stage, int targetId) {
+        this(entityId, origin, centre, yaw, executionTier, stage, targetId, false);
+    }
+
+    public RainPayload(int entityId, Vec3 origin, Vec3 centre, float yaw, int executionTier, int stage, int targetId, boolean fullMastery) {
+        this(entityId, origin, centre, yaw, executionTier, stage, targetId, fullMastery, fullMastery ? 12 : 1);
+    }
 
     public static final int RELEASE = 0;
     public static final int MARKED = 1;
@@ -27,7 +34,7 @@ public record RainPayload(int entityId, Vec3 origin, Vec3 centre, float yaw, int
     public static final Type<RainPayload> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "plum_rain"));
 
     // composite в 1.21.1 — не больше шести полей (reference/minecraft-src/net/minecraft/network/codec/StreamCodec.java).
-    public static final StreamCodec<RegistryFriendlyByteBuf, RainPayload> STREAM_CODEC = StreamCodec.of(
+    private static final StreamCodec<RegistryFriendlyByteBuf, RainPayload> BASE_CODEC = StreamCodec.of(
             (buf, p) -> {
                 ByteBufCodecs.VAR_INT.encode(buf, p.entityId());
                 VEC.encode(buf, p.origin());
@@ -39,6 +46,14 @@ public record RainPayload(int entityId, Vec3 origin, Vec3 centre, float yaw, int
             },
             buf -> new RainPayload(ByteBufCodecs.VAR_INT.decode(buf), VEC.decode(buf), VEC.decode(buf), buf.readFloat(),
                     ByteBufCodecs.VAR_INT.decode(buf), ByteBufCodecs.VAR_INT.decode(buf), ByteBufCodecs.VAR_INT.decode(buf)));
+
+    // API: /tmp/mr-ref-1121/minecraft-src/net/minecraft/network/codec/{StreamCodec#of,ByteBufCodecs#VAR_INT,ByteBufCodecs#BOOL}.java.
+    public static final StreamCodec<RegistryFriendlyByteBuf, RainPayload> STREAM_CODEC = StreamCodec.of(
+            (buf, p) -> { BASE_CODEC.encode(buf, p); ByteBufCodecs.BOOL.encode(buf, p.fullMastery()); ByteBufCodecs.VAR_INT.encode(buf, p.stars()); },
+            buf -> {
+                var p = BASE_CODEC.decode(buf);
+                return new RainPayload(p.entityId(), p.origin(), p.centre(), p.yaw(), p.executionTier(), p.stage(), p.targetId(), ByteBufCodecs.BOOL.decode(buf), ByteBufCodecs.VAR_INT.decode(buf));
+            });
 
     @Override
     public Type<? extends CustomPacketPayload> type() {

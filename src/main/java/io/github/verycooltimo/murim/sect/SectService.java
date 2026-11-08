@@ -41,6 +41,8 @@ public final class SectService {
     /** Флаги уроков и спарринга (их же читают диалоги). */
     public static final String LESSON_SPAR = "lesson.spar";
     public static final String SPAR_CLEAN = "spar.clean3";
+    /** Clean touches on the lesson partners, summed over the bouts. */
+    public static final String CLEAN_TOTAL = "spar.clean_total";
     public static final String SPAR_WON = "spar.won";
     public static final String SPAR_LOST = "spar.lost";
 
@@ -56,6 +58,11 @@ public final class SectService {
 
     static void flag(ServerPlayer p, String flag) {
         p.setData(ModAttachments.SECT, state(p).with(flag));
+    }
+
+    /** A fixed journal key of the player's sect state (a person's owed talk, a counter): overwritten, never one key per event. */
+    static void flagEntry(ServerPlayer p, String key, long value) {
+        p.setData(ModAttachments.SECT, state(p).record(key, value));
     }
 
     // ------------------------------------------------------------------ заслуги и положение
@@ -81,17 +88,20 @@ public final class SectService {
         delta += SectPositions.incomeBonus(state(p), delta);
         SectState next = state(p).contribute(delta);
         p.setData(ModAttachments.SECT, next);
-        p.displayClientMessage(Component.translatable(delta > 0 ? "murim.sect.contribution.gain" : "murim.sect.contribution.loss",
-                Math.abs(delta), next.contribution()).withStyle(delta > 0 ? ChatFormatting.GOLD : ChatFormatting.RED), true);
+        SectTablet.touch(p);
+        PlayerJournal.record(p, Component.translatable(delta > 0 ? "murim.sect.contribution.gain" : "murim.sect.contribution.loss",
+                Math.abs(delta), next.contribution()).withStyle(delta > 0 ? ChatFormatting.GOLD : ChatFormatting.RED));
         announceStanding(p, before);
     }
 
     /** Положение выросло после изменения состояния — сказать игроку (в чат, один раз на ступень). */
     public static void announceStanding(ServerPlayer p, SectStanding before) {
+        SectUniforms.issue(p);
         SectStanding now = SectStanding.of(state(p), p.getData(ModAttachments.PROFILE).rank());
         if (now.ordinal() > before.ordinal()) {
-            p.displayClientMessage(Component.translatable("murim.sect.standing.up", Component.translatable(now.nameKey()))
-                    .withStyle(ChatFormatting.LIGHT_PURPLE), false);
+            if (now.atLeast(SectStanding.GRADUATE)) SectRooms.assign(p, SectLife.layout(p.serverLevel()), false);
+            SectNotice.chat(p, Component.translatable("murim.sect.standing.up", Component.translatable(now.nameKey()))
+                    .withStyle(ChatFormatting.LIGHT_PURPLE));
             p.level().playSound(null, p.blockPosition(), SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS, 0.5F, 1.2F);
             MurimMod.LOGGER.info("Секта: {} — положение {}", p.getName().getString(), now.id());
         }
@@ -116,7 +126,7 @@ public final class SectService {
             return false;
         }
         if (need == null || need.count(p) < need.count()) {
-            p.displayClientMessage(Component.translatable("murim.sect.donate.none").withStyle(ChatFormatting.GRAY), true);
+            PlayerJournal.refuse(p, Component.translatable("murim.sect.donate.none").withStyle(ChatFormatting.GRAY));
             return false;
         }
         // Заслуги за пожертвования — не больше DONATE_CAP в день: ферма не заменяет службу (codex 04.10).
@@ -128,7 +138,7 @@ public final class SectService {
         }
         int left = DONATE_CAP - tag.getInt("points");
         if (left <= 0) {
-            p.displayClientMessage(Component.translatable("murim.sect.donate.enough").withStyle(ChatFormatting.GRAY), true);
+            PlayerJournal.refuse(p, Component.translatable("murim.sect.donate.enough").withStyle(ChatFormatting.GRAY));
             return false;
         }
         need.take(p);
@@ -191,16 +201,72 @@ public final class SectService {
 
     // ------------------------------------------------------------------ действия диалогов
 
-    /** Книга техники из рук наставника: тот же манускрипт, что в руинах (план §5.1). */
+    /** Third cultivation rank opens the mentor's basic footwork lesson. */
+    public static boolean canTeachSevenStars(ServerPlayer player, io.github.verycooltimo.murim.entity.SectDisciple mentor) {
+        return mentor != null && mentor.role() == SectRole.MENTOR && state(player).member()
+                && player.getData(ModAttachments.PROFILE).rank() >= io.github.verycooltimo.murim.cultivation.Realm.THIRD
+                && !state(player).has("lesson.seven_stars");
+    }
+
+    public static void teachSevenStars(ServerPlayer player, io.github.verycooltimo.murim.entity.SectDisciple mentor) {
+        if (!canTeachSevenStars(player, mentor)) return;
+        giveBook(player, io.github.verycooltimo.murim.technique.Styles.SEVEN_STARS.forms().get(0));
+        player.setData(ModAttachments.SECT, state(player).with("lesson.seven_stars"));
+    }
+
+    /** First rank: a complete copy of Chung Myung's restored Bamboo manual. */
+    public static boolean canTeachBamboo(ServerPlayer p, io.github.verycooltimo.murim.entity.SectDisciple teacher) {
+        return teacher != null && (teacher.role() == SectRole.MENTOR || teacher.role() == SectRole.ELDER)
+                && state(p).member() && !state(p).has("lesson.bamboo_hand")
+                && p.getData(ModAttachments.PROFILE).rank() >= io.github.verycooltimo.murim.cultivation.Realm.FIRST;
+    }
+    public static void teachBamboo(ServerPlayer p, io.github.verycooltimo.murim.entity.SectDisciple teacher) {
+        if (!canTeachBamboo(p, teacher)) return;
+        giveBook(p, io.github.verycooltimo.murim.technique.Styles.BAMBOO_HAND.forms().getFirst());
+        p.setData(ModAttachments.SECT, state(p).with("lesson.bamboo_hand"));
+    }
+
+    static ResourceLocation lostBook(ServerPlayer p) {
+        SectState s = state(p);
+        long day = SectSchedule.day(p.level().getDayTime());
+        if (!s.member() || s.entry("book.replaced.day", Long.MIN_VALUE) == day) return null;
+        var forms = java.util.List.of(SIX,
+                io.github.verycooltimo.murim.technique.Styles.SEVEN_STARS.forms().getFirst(),
+                io.github.verycooltimo.murim.technique.Styles.BAMBOO_HAND.forms().getFirst());
+        String[] flags = {"lesson.six", "lesson.seven_stars", "lesson.bamboo_hand"};
+        for (int i = 0; i < forms.size(); i++) {
+            ResourceLocation art = forms.get(i);
+            if (i > 0 && !s.has(flags[i]) || MasteryService.knows(p, art)) continue;
+            boolean held = p.getInventory().items.stream().anyMatch(stack -> stack.is(ModItems.TECHNIQUE_MANUAL.get())
+                    && art.equals(stack.get(ModDataComponents.TECHNIQUE.get())));
+            held |= p.getOffhandItem().is(ModItems.TECHNIQUE_MANUAL.get())
+                    && art.equals(p.getOffhandItem().get(ModDataComponents.TECHNIQUE.get()));
+            if (!held) return art;
+        }
+        return null;
+    }
+
+    static boolean replaceBook(ServerPlayer p, io.github.verycooltimo.murim.entity.SectDisciple npc) {
+        if (npc.role() != SectRole.MENTOR) return false;
+        ResourceLocation book = lostBook(p);
+        if (book == null) return false;
+        giveBook(p, book);
+        p.setData(ModAttachments.SECT, state(p).record("book.replaced.day", SectSchedule.day(p.level().getDayTime())));
+        return true;
+    }
+
+    /** The sect teaches the complete curriculum; ruined-library copies may be torn. */
     public static void giveBook(ServerPlayer player, ResourceLocation technique) {
         ItemStack book = new ItemStack(ModItems.TECHNIQUE_MANUAL.get());
         book.set(ModDataComponents.TECHNIQUE.get(), technique);
+        // Sect curriculum is complete, independent of loot manuscript defaults. ManualDepth: zero means full.
+        book.set(ModDataComponents.MANUAL_STARS.get(), 0);
         Component name = book.getHoverName();
         if (!player.getInventory().add(book)) {
             player.drop(book, false);
         }
         player.level().playSound(null, player.blockPosition(), SoundEvents.BOOK_PAGE_TURN, SoundSource.PLAYERS, 1.0F, 0.8F);
-        player.displayClientMessage(Component.translatable("murim.sect.book_given", name).withStyle(ChatFormatting.GOLD), false);
+        SectNotice.bar(player, Component.translatable("murim.sect.book_given", name).withStyle(ChatFormatting.GOLD));
     }
 
     /** Вступление: ученик третьего поколения (Юль) и книга Шести Равновесий, если её ещё нет. */
@@ -210,19 +276,24 @@ public final class SectService {
         }
         player.setData(ModAttachments.SECT, state(player).joined().with(SectArrival.PENDING)
                 .record("arrival.day", SectSchedule.day(player.level().getDayTime()) + 1));
+        player.getPersistentData().putLong("murim_joined_at", player.level().getGameTime());
+        SectBedMark.admissionRespawn(player, SectLife.layout(player.serverLevel()));
         SectArrival.accepted(player);
+        SectUniforms.issue(player);
+        io.github.verycooltimo.murim.advancement.MurimAdvancements.grant(player, "join");
         player.level().playSound(null, player.blockPosition(), SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS, 0.6F, 0.7F);
-        player.displayClientMessage(Component.translatable("murim.sect.joined").withStyle(ChatFormatting.LIGHT_PURPLE), false);
+        SectNotice.chat(player, Component.translatable("murim.sect.joined").withStyle(ChatFormatting.LIGHT_PURPLE));
         if (!MasteryService.knows(player, SIX)) {
             giveBook(player, SIX);
         }
-        player.displayClientMessage(SectJourney.line(player), false);
+        SectJourney.grantAtJoin(player);
+        SectTablet.ensure(player);
         // Учебный деревянный меч новому ученику (автор 04.10): раньше наставник оружия не давал.
         ItemStack sword = new ItemStack(ModItems.WOODEN_SWORD.get());
         if (!player.getInventory().add(sword)) {
             player.drop(sword, false);
         }
-        player.displayClientMessage(Component.translatable("murim.sect.sword_given", sword.getHoverName()).withStyle(ChatFormatting.GOLD), false);
+        SectNotice.bar(player, Component.translatable("murim.sect.sword_given", sword.getHoverName()).withStyle(ChatFormatting.GOLD));
     }
 
     /** Конец спарринга со старшим: исход для его реплики и урок «три чистых удара». */
@@ -232,17 +303,65 @@ public final class SectService {
         if (senior.role() == SectRole.SENIOR) {
             s = s.without(SPAR_WON).without(SPAR_LOST).with(playerWon ? SPAR_WON : SPAR_LOST);
         }
-        if (s.has(LESSON_SPAR) && senior.cleanHits() >= CLEAN_NEEDED && lessonPartner(senior)) {
-            s = s.with(SPAR_CLEAN);
-            player.displayClientMessage(Component.translatable("murim.sect.clean_done").withStyle(ChatFormatting.GOLD), false);
+        boolean cleanNow = false;
+        if (s.has(LESSON_SPAR) && !s.has(SPAR_CLEAN) && lessonPartner(senior)) {
+            // A won lesson bout is always at least one touch (author 22.10: «Вы победили» with 0/3 was a lie), and the touches
+            // add up over the bouts: the lesson no longer dies with one unlucky fight.
+            int total = (int) s.entry(CLEAN_TOTAL, 0) + (playerWon ? 1 : 0);
+            s = s.record(CLEAN_TOTAL, total);
+            if (total >= CLEAN_NEEDED || senior.cleanHits() >= CLEAN_NEEDED) {
+                s = s.with(SPAR_CLEAN);
+                cleanNow = true;
+            }
         }
         player.setData(ModAttachments.SECT, s);
+        if (!playerWon && senior.role() == SectRole.SWEEPER) {
+            io.github.verycooltimo.murim.advancement.MurimAdvancements.grant(player, "spar_lost_sweeper");
+        }
+        // Every bout begun by a dialogue or a blow is a real bout. A guard's fight over a forbidden door runs on the guard's
+        // own goal (guardTarget) and never becomes a spar; a man on watch who agreed to a bout used to be left uncounted
+        // (playtest 19.10: «не засчитываются спарринги»).
+        // A finished spar tempers the body a little (author 22.10); it is fight work for the daily limit (25.10).
+        io.github.verycooltimo.murim.training.TrainingService.credit(player, io.github.verycooltimo.murim.training.BodySource.FIGHT,
+                io.github.verycooltimo.murim.training.TrainingBalance.SPAR);
+        SectEvents.record(player, playerWon ? SectEvents.Event.BOUT_WON : SectEvents.Event.BOUT_LOST);
         SectRequests.juniorTrained(player, senior, playerWon);
         SectProgression.sparEnded(player, senior, playerWon);
-        // Поединок с учеником днём — занятие в журнале секты (вызов охраны за силовой вход — не занятие).
-        if (!SectLife.onWatch(senior) && SectSchedule.at(player.level().getDayTime()) != SectSchedule.Period.NIGHT) {
-            SectAttendance.record(player, SectAttendance.Activity.LESSON);
+        SectBouts.Bout bout = SectBouts.active(player);
+        SectBouts.ended(player, senior, playerWon);
+        // Поединок с учеником днём — занятие в журнале секты.
+        boolean lessonNow = SectSchedule.at(player.level().getDayTime()) != SectSchedule.Period.NIGHT
+                && SectAttendance.record(player, SectAttendance.Activity.LESSON);
+        SectTablet.touch(player);
+        // A challenge or the trial says its own result over the hotbar; every other bout says what it counted for.
+        if (bout == null || bout.mode == SectBouts.Mode.SPAR || bout.mode == SectBouts.Mode.TRAIN) {
+            sparSummary(player, senior, lessonNow, cleanNow);
         }
+    }
+
+    /**
+     * One line over the hotbar once a bout is over: what it counted for (the day's lesson mark, the clean-hit lesson, the
+     * partners of the discipleship). The player used to see nothing and wrote that bouts did not count.
+     */
+    static void sparSummary(ServerPlayer player, SectDisciple partner, boolean lessonNow, boolean cleanNow) {
+        SectState s = state(player);
+        java.util.List<Component> parts = new java.util.ArrayList<>();
+        if (lessonNow || SectAttendance.current(player).today().did(SectAttendance.Activity.LESSON)
+                && SectSchedule.at(player.level().getDayTime()) != SectSchedule.Period.NIGHT) {
+            parts.add(Component.translatable("murim.sect.spar.counted.lesson"));
+        }
+        if (s.has(LESSON_SPAR) && lessonPartner(partner)) {
+            parts.add(Component.translatable(s.has(SPAR_CLEAN) ? "murim.sect.spar.counted.clean_done"
+                    : "murim.sect.spar.counted.clean", Math.min(s.entry(CLEAN_TOTAL, 0), CLEAN_NEEDED), CLEAN_NEEDED));
+        }
+        long partners = SectProgression.partners(s);
+        if (s.has(SectStanding.LESSON_TWO) && !s.has(SectProgression.DIRECT) && partners > 0) {
+            parts.add(Component.translatable("murim.sect.spar.counted.partners", Math.min(partners, 3L)));
+        }
+        if (parts.isEmpty()) return;
+        net.minecraft.network.chat.MutableComponent line = Component.translatable("murim.sect.spar.counted", partner.getDisplayName());
+        for (Component part : parts) line.append(" · ").append(part);
+        SectNotice.bar(player, line.withStyle(ChatFormatting.GOLD));
     }
 
     /** Урок «три чистых удара по старшему»: партнёр — старший или любой ученик второго поколения. */
@@ -250,17 +369,31 @@ public final class SectService {
         return npc.role() == SectRole.SENIOR || npc.role() == SectRole.SECOND;
     }
 
-    /** Чистое попадание по старшему — счёт виден игроку, пока урок не сдан. */
+    /**
+     * Чистое попадание по старшему — счёт виден игроку, пока урок не сдан. Третий чистый удар закрывает урок сразу, а не
+     * только когда бой кончится: игрок, остановивший бой, терял уже заработанное.
+     */
     public static void onCleanHit(ServerPlayer player, SectDisciple senior) {
-        if (state(player).has(LESSON_SPAR) && !state(player).has(SPAR_CLEAN) && lessonPartner(senior)) {
-            player.displayClientMessage(Component.translatable("murim.sect.clean_hit", Math.min(senior.cleanHits(), CLEAN_NEEDED), CLEAN_NEEDED)
-                    .withStyle(ChatFormatting.GOLD), true);
+        if (SectBouts.teacherTest(player, senior) && senior.cleanHits() >= SectBouts.TEACHER_HITS) {
+            SectBouts.Bout b = SectBouts.active(player);
+            SectBouts.supervise(player, b);
+        }
+        SectState s = state(player);
+        if (s.has(LESSON_SPAR) && !s.has(SPAR_CLEAN) && lessonPartner(senior)) {
+            int total = (int) s.entry(CLEAN_TOTAL, 0) + 1;
+            if (total >= CLEAN_NEEDED || senior.cleanHits() >= CLEAN_NEEDED) {
+                player.setData(ModAttachments.SECT, s.record(CLEAN_TOTAL, total).with(SPAR_CLEAN));
+                SectNotice.bar(player, Component.translatable("murim.sect.clean_done").withStyle(ChatFormatting.GOLD));
+                SectTablet.touch(player);
+                return;
+            }
+            player.setData(ModAttachments.SECT, s.record(CLEAN_TOTAL, total));
         }
     }
 
     // ------------------------------------------------------------------ расстановка
 
-    /** {@code /murim sect spawn}: все NPC v1 полукругом перед игроком. */
+    /** {@code /murim dev sched spawn}: все NPC v1 полукругом перед игроком. */
     public static int spawnAround(ServerPlayer player) {
         ServerLevel level = player.serverLevel();
         for (SectDisciple old : level.getEntitiesOfClass(SectDisciple.class, player.getBoundingBox().inflate(24.0D))) {
@@ -308,7 +441,8 @@ public final class SectService {
         return new Vec3(p.getX() + 0.5D, y, p.getZ() + 0.5D);
     }
 
-    static int[] zone(MountHuaSite site, String id) {
+    /** World-space feet coordinates for a plan zone, or null if the zone is unknown. */
+    public static int[] zone(MountHuaSite site, String id) {
         for (MountHuaPlan.Zone z : MountHuaPlan.ZONES) {
             if (z.id().equals(id)) {
                 int[] w = site.toWorld(z.u(), z.v());

@@ -40,6 +40,12 @@ public final class ModWorld {
             BLOCK_ENTITIES.register("spirit_vein_stone",
                     () -> BlockEntityType.Builder.of(SpiritVeinBlockEntity::new, SPIRIT_VEIN.get()).build(null));
 
+    /**
+     * The feature type stays registered so the mechanic can come back, but no configured/placed feature or biome modifier
+     * ships any more (author 22.10/23.10: no power blocks in new worlds). To bring it back, restore
+     * data/murim/worldgen/{configured,placed}_feature/qi_node.json and neoforge/biome_modifier/qi_nodes.json
+     * (see git history) and set {@link PlaceService#enabled}.
+     */
     public static final DeferredHolder<Feature<?>, QiNodeFeature> QI_NODE = FEATURES.register("qi_node",
             () -> new QiNodeFeature(NoneFeatureConfiguration.CODEC));
 

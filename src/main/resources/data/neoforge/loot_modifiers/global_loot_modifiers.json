@@ -2,7 +2,6 @@
   "replace": false,
   "entries": [
     "murim:fortress_order",
-    "murim:demonic_cache",
-    "murim:demonic_succession"
+    "murim:demonic_cache"
   ]
 }

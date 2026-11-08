@@ -56,6 +56,6 @@ public class SpiritVeinBlock extends BaseEntityBlock {
 
     /** Свечение камня: заметен ночью, но не фонарь. */
     public static int light(BlockState state) {
-        return 7;
+        return PlaceService.enabled ? 7 : 0;
     }
 }

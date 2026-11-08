@@ -4,6 +4,7 @@ import io.github.verycooltimo.murim.MurimMod;
 import io.github.verycooltimo.murim.combat.AuraService;
 import io.github.verycooltimo.murim.combat.AuraState;
 import io.github.verycooltimo.murim.cultivation.Realm;
+import io.github.verycooltimo.murim.sect.PlayerJournal;
 import io.github.verycooltimo.murim.technique.Casters;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
@@ -298,6 +299,26 @@ public class FortressMaster extends Monster implements Casters.Caster {
         return false;
     }
 
+    /** Peaceful: the fight must still work (a Monster is discarded there by default). */
+    @Override
+    protected boolean shouldDespawnInPeaceful() {
+        return false;
+    }
+
+    @Override
+    public boolean requiresCustomPersistence() {
+        return true;
+    }
+
+    /** On Peaceful the vanilla mob attack deals 0 to players; the boss uses a non-scaling type there. */
+    public DamageSource strikeSource() {
+        if (level().getDifficulty() == net.minecraft.world.Difficulty.PEACEFUL) {
+            return new DamageSource(level().registryAccess().registryOrThrow(net.minecraft.core.registries.Registries.DAMAGE_TYPE)
+                    .getHolderOrThrow(io.github.verycooltimo.murim.registry.ModDamageTypes.BOSS_STRIKE), this);
+        }
+        return Casters.attack(this);
+    }
+
     @Override
     public boolean isPushable() {
         return state() != SIT && super.isPushable();
@@ -382,7 +403,7 @@ public class FortressMaster extends Monster implements Casters.Caster {
                 p.teleportTo(nx, Math.max(p.getY(), y.y), nz);
                 p.setDeltaMovement(Vec3.ZERO);
                 p.hurtMarked = true;
-                p.displayClientMessage(Component.translatable("murim.fortress.barrier").withStyle(ChatFormatting.RED), true);
+                PlayerJournal.record(p, Component.translatable("murim.fortress.barrier").withStyle(ChatFormatting.RED));
                 anyone = true;
             }
         }
@@ -393,10 +414,29 @@ public class FortressMaster extends Monster implements Casters.Caster {
         if (held != null && !(held instanceof Player) && held.isAlive() && BossRules.inYard(held.getX(), held.getZ(), y.x, y.z, YARD_HALF, 1.0D)) {
             anyone = true;
         }
-        noTarget = anyone ? 0 : noTarget + 1;
+        // Все участники пали или ушли: сброс за 3 с, а не за полминуты (чистая повторная попытка).
+        noTarget = anyone ? 0 : noTarget + (everyoneDown(level) ? BossRules.RESET_TICKS / BossRules.DOWN_RESET_TICKS : 1);
         if (noTarget >= BossRules.RESET_TICKS) {
             resetFight();
         }
+    }
+
+    /** Бой начат, и ни один его участник не жив на плацу (погиб, вышел из игры, ушёл в другое измерение). */
+    private boolean everyoneDown(ServerLevel level) {
+        if (participants.isEmpty()) {
+            return false;
+        }
+        Vector3f y = yard();
+        for (UUID id : participants) {
+            ServerPlayer p = level.getServer().getPlayerList().getPlayer(id);
+            if (p != null && p.isAlive() && !p.isSpectator() && p.level() == level
+                    && BossRules.inYard(p.getX(), p.getZ(), y.x, y.z, YARD_HALF, 1.0D)) {
+                return false;
+            }
+        }
+        // Не игрок на плацу (манекен GameTest, призванный моб) — бой идёт, пока он держится.
+        LivingEntity held = getTarget();
+        return held == null || held instanceof Player || !held.isAlive();
     }
 
     /** Бой проигран игроком или брошен: кресло, полное здоровье, первая фаза. */
@@ -436,7 +476,7 @@ public class FortressMaster extends Monster implements Casters.Caster {
         setTarget(challenger);
         if (challenger instanceof ServerPlayer p) {
             participants.add(p.getUUID());
-            p.sendSystemMessage(Component.translatable("murim.fortress.challenge", getDisplayName()).withStyle(ChatFormatting.DARK_GREEN));
+            PlayerJournal.record(p, Component.translatable("murim.fortress.challenge", getDisplayName()).withStyle(ChatFormatting.DARK_GREEN));
         }
         sound(SoundEvents.RAVAGER_ROAR, 1.4F, 0.65F);
         setState(RISE, null);
@@ -809,6 +849,13 @@ public class FortressMaster extends Monster implements Casters.Caster {
                 BossMove.ROAR.damage(), 1.4D, 0.35D, false);
     }
 
+    @Override
+    public boolean interruptChargingTechnique() {
+        if (state() != WINDUP) return false;
+        endMove();
+        return true;
+    }
+
     private void endMove() {
         BossMove m = move();
         cooldowns[m.id()] = BossRules.cooldown(m);
@@ -851,7 +898,7 @@ public class FortressMaster extends Monster implements Casters.Caster {
         for (LivingEntity p : victims) {
             hit.add(p.getUUID());
             float dmg = damage * (float) damageScale();
-            boolean done = p.hurt(Casters.attack(this), dmg);
+            boolean done = p.hurt(strikeSource(), dmg);
             log("{} по {}: {} (урон {})", move().key(), p.getName().getString(), done ? "попал" : "погашен", String.format("%.1f", dmg));
             if (done) {
                 double dx = p.getX() - getX(), dz = p.getZ() - getZ();
@@ -934,14 +981,14 @@ public class FortressMaster extends Monster implements Casters.Caster {
                 controlImmune = BossMove.CONTROL_IMMUNITY;
                 sound(SoundEvents.ANVIL_LAND, 1.0F, 0.8F);
                 if (attacker instanceof ServerPlayer p) {
-                    p.displayClientMessage(Component.translatable("murim.fortress.downed").withStyle(ChatFormatting.GOLD), true);
+                    PlayerJournal.record(p, Component.translatable("murim.fortress.downed").withStyle(ChatFormatting.GOLD));
                 }
             } else if (before == WINDUP && m.heavy()) {
                 cancelMove();
                 setState(STAGGER, null);
                 controlImmune = BossMove.CONTROL_IMMUNITY;
                 if (attacker instanceof ServerPlayer p) {
-                    p.displayClientMessage(Component.translatable("murim.fortress.staggered").withStyle(ChatFormatting.GOLD), true);
+                    PlayerJournal.record(p, Component.translatable("murim.fortress.staggered").withStyle(ChatFormatting.GOLD));
                 }
             }
         }
@@ -1015,7 +1062,13 @@ public class FortressMaster extends Monster implements Casters.Caster {
         if (hasCustomName()) {
             bossEvent.setName(getDisplayName());
         }
-        // Бой не сохраняется: после перезахода хозяин снова в кресле с полным здоровьем.
+        // Бой не сохраняется: после перезахода хозяин снова в кресле с полным здоровьем и первой фазой
+        // (броня и скорость фазы 3 лежат в сохранённых атрибутах: возвращаем базовые).
+        setPersistenceRequired();
+        java.util.Objects.requireNonNull(getAttribute(Attributes.ARMOR)).setBaseValue(BossRules.ARMOR);
+        java.util.Objects.requireNonNull(getAttribute(Attributes.MOVEMENT_SPEED)).setBaseValue(0.27D);
+        bossEvent.setColor(BossEvent.BossBarColor.GREEN);
+        bossEvent.setVisible(false);
         setHealth(getMaxHealth());
         setState(SIT, null);
     }

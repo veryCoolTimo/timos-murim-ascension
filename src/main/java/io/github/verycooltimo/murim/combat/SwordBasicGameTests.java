@@ -152,12 +152,12 @@ public final class SwordBasicGameTests {
         });
     }
 
-    @GameTest(template = "small_floor", batch = "sword_basic", timeoutTicks = 230)
+    @GameTest(template = "sect_yard", batch = "sword_basic", timeoutTicks = 230)
     public static void damagePerSecondAtLeastVanillaIronSword(GameTestHelper helper) {
         compareDamage(helper, 4.0D, 13, 156);
     }
 
-    @GameTest(template = "small_floor", batch = "sword_basic", timeoutTicks = 230)
+    @GameTest(template = "sect_yard", batch = "sword_basic", timeoutTicks = 230)
     public static void fasterAttackAttributeDoesNotAddComboCooldown(GameTestHelper helper) {
         compareDamage(helper, 5.6D, 7, 182); // Iron sword at 3.2 attack speed, cooldown 6.25 ticks.
     }
@@ -169,14 +169,24 @@ public final class SwordBasicGameTests {
         vanilla.getAttribute(Attributes.ATTACK_SPEED).setBaseValue(baseSpeed);
         Cow styledTarget = target(helper, 2.5D);
         Cow vanillaTarget = target(helper, 5.5D);
-        Vec3 at = helper.absoluteVec(new Vec3(5.5D, 2.0D, 2.5D));
-        vanilla.moveTo(at.x, at.y, at.z, 0.0F, 0.0F);
+        // Source: template floor convention used by oneBasicHitSweepsAnotherEntityButNeverHitsPrimaryTwice.
+        // Both lanes must be inside the arena and above its grass, including the unawakened control.
+        for (ServerPlayer p : new ServerPlayer[] {styled, vanilla}) {
+            double x = p == styled ? 2.5D : 6.5D;
+            Vec3 at = helper.absoluteVec(new Vec3(x, 3.0D, 2.5D));
+            p.moveTo(at.x, at.y, at.z, 0.0F, 0.0F);
+        }
+        Vec3 styleAt = helper.absoluteVec(new Vec3(2.5D, 3.0D, 4.5D));
+        styledTarget.moveTo(styleAt.x, styleAt.y, styleAt.z, 0.0F, 0.0F);
+        Vec3 controlAt = helper.absoluteVec(new Vec3(6.5D, 3.0D, 4.5D));
+        vanillaTarget.moveTo(controlAt.x, controlAt.y, controlAt.z, 0.0F, 0.0F);
         int[] ticks = {0};
         helper.onEachTick(() -> {
             tick(styled);
             tick(vanilla);
             int elapsed = ticks[0]++ - 25;
             if (elapsed >= 0 && elapsed <= lastInput && elapsed % interval == 0) {
+                helper.assertTrue(styled.isAlive() && vanilla.isAlive(), "attacker died in comparison arena");
                 helper.assertTrue(Math.abs(styled.getAttributeValue(Attributes.ATTACK_SPEED)
                         - vanilla.getAttributeValue(Attributes.ATTACK_SPEED)) < 1.0E-6D, "different attack speeds");
                 input(styled, styledTarget, elapsed / interval);
@@ -185,7 +195,7 @@ public final class SwordBasicGameTests {
             if (elapsed == lastInput + SwordBasicCombo.CONTACT_TICK) {
                 float styleDamage = 200.0F - styledTarget.getHealth();
                 float vanillaDamage = 200.0F - vanillaTarget.getHealth();
-                helper.assertTrue(vanillaDamage >= 70.0F, "control sword didn't deal full repeated damage");
+                helper.assertTrue(vanillaDamage >= 70.0F, "control sword didn't deal full repeated damage: " + vanillaDamage);
                 helper.assertTrue(styleDamage + 0.001F >= vanillaDamage,
                         "style DPS below vanilla over identical interval: " + styleDamage + " vs " + vanillaDamage);
                 helper.succeed();

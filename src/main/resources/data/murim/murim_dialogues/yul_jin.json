@@ -1,0 +1,208 @@
+{
+  "name": "npc.murim.yul_jin",
+  "title": "npc.murim.yul_jin.title",
+  "start": [
+    {
+      "when": [
+        {
+          "flag": "quest.missing.found",
+          "not_flag": "quest.missing.safe"
+        },
+        {
+          "social": "quest:available:missing"
+        }
+      ],
+      "node": "missing_hurt"
+    },
+    {
+      "when": [
+        {
+          "flag": "quest.missing.safe",
+          "not_flag": "quest.missing.arrived"
+        },
+        {
+          "social": "quest:available:missing"
+        }
+      ],
+      "node": "missing_lead"
+    },
+    {
+      "when": [
+        {
+          "flag": "quest.missing.how.fought",
+          "not_flag": "quest.missing.thanks"
+        },
+        {
+          "social": "quest:available:missing"
+        }
+      ],
+      "node": "missing_thanks_fought"
+    },
+    {
+      "when": [
+        {
+          "flag": "quest.missing.how.covered",
+          "not_flag": "quest.missing.thanks"
+        },
+        {
+          "social": "quest:available:missing"
+        }
+      ],
+      "node": "missing_thanks_covered"
+    },
+    {
+      "when": [
+        {
+          "free": false,
+          "min_standing": "first"
+        }
+      ],
+      "node": "busy_office"
+    },
+    {
+      "when": [
+        {
+          "min_standing": "first"
+        }
+      ],
+      "node": "office"
+    },
+    {
+      "when": [
+        {
+          "free": false
+        }
+      ],
+      "node": "busy"
+    },
+    {
+      "when": [
+        {
+          "period": "formation"
+        }
+      ],
+      "node": "formation"
+    },
+    {
+      "when": [
+        {
+          "period": "breakfast|dinner"
+        }
+      ],
+      "node": "meal"
+    },
+    {
+      "when": [
+        {
+          "period": "night"
+        }
+      ],
+      "node": "night"
+    },
+    {
+      "when": [
+        {
+          "period": "evening"
+        }
+      ],
+      "node": "evening"
+    },
+    {
+      "node": "chatter"
+    }
+  ],
+  "nodes": {
+    "missing_hurt": {
+      "line": "dialogue.murim.quest.missing.hurt",
+      "options": [
+        {
+          "text": "dialogue.murim.quest.missing.opt.cover",
+          "actions": [
+            {
+              "type": "quest_fight",
+              "value": "missing_attack"
+            }
+          ],
+          "next": "missing_fighting",
+          "when": [
+            {
+              "social": "quest:available:missing"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "missing_fighting": {
+      "line": "dialogue.murim.quest.missing.fighting"
+    },
+    "missing_lead": {
+      "line": "dialogue.murim.quest.missing.lead",
+      "options": [
+        {
+          "text": "dialogue.murim.quest.missing.opt.lead",
+          "actions": [
+            {
+              "type": "quest_escort",
+              "value": "missing_lead"
+            }
+          ],
+          "when": [
+            {
+              "social": "quest:available:missing"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.quest.missing.opt.back",
+          "when": [
+            {
+              "social": "quest:available:missing"
+            }
+          ]
+        }
+      ]
+    },
+    "missing_thanks_fought": {
+      "line": "dialogue.murim.quest.missing.thanks_fought",
+      "enter": [
+        {
+          "type": "set_flag",
+          "value": "quest.missing.thanks"
+        }
+      ],
+      "options": [
+        {
+          "text": "dialogue.murim.quest.missing.opt.ok2",
+          "when": [
+            {
+              "social": "quest:available:missing"
+            }
+          ]
+        }
+      ]
+    },
+    "missing_thanks_covered": {
+      "line": "dialogue.murim.quest.missing.thanks_covered",
+      "enter": [
+        {
+          "type": "set_flag",
+          "value": "quest.missing.thanks"
+        }
+      ],
+      "options": [
+        {
+          "text": "dialogue.murim.quest.missing.opt.ok2",
+          "when": [
+            {
+              "social": "quest:available:missing"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "base": "murim:disciple"
+}

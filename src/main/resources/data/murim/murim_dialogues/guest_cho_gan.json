@@ -11,6 +11,19 @@
       "line": "dialogue.murim.guest_cho_gan.greet",
       "options": [
         {
+          "text": "dialogue.murim.approach.opt.not_now",
+          "when": [
+            {
+              "social": "approaching"
+            }
+          ],
+          "actions": [
+            {
+              "type": "approach_decline"
+            }
+          ]
+        },
+        {
           "text": "dialogue.murim.guest_cho_gan.lesson",
           "next": "lesson"
         },

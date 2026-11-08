@@ -26,6 +26,9 @@ public final class Casters {
         /** Ранг по шкале Realm (0 — без ранга). */
         int rank();
 
+        /** Collapse a charging technique into its normal cooldown, with no general stun. */
+        default boolean interruptChargingTechnique() { return false; }
+
         /** Множитель урона техник этого NPC (спарринг бьёт вполсилы). */
         default double damageScale() {
             return 1.0D;
@@ -103,6 +106,7 @@ public final class Casters {
             io.github.verycooltimo.murim.combat.Stun.hold(t, caster, 0);
         }
         if (caster instanceof ServerPlayer player) {
+            io.github.verycooltimo.murim.combat.TechniqueService.onSwordHit(player, technique);
             MasteryService.onHit(player, technique, target);
         }
     }
@@ -115,7 +119,12 @@ public final class Casters {
 
     /** Может ли применяющий ломать блоки техникой: только игрок с правом на это место. */
     public static boolean mayBreak(LivingEntity caster, net.minecraft.core.BlockPos pos) {
-        return caster instanceof ServerPlayer player && player.serverLevel().mayInteract(player, pos);
+        if (!(caster instanceof ServerPlayer player) || !player.serverLevel().mayInteract(player, pos)) return false;
+        var mode = player.gameMode.getGameModeForPlayer();
+        // Verified: 1.21.1 ServerPlayerGameMode#destroyBlock and CommonHooks#fireBlockBreak.
+        return !player.blockActionRestricted(player.level(), pos, mode)
+                && !net.neoforged.neoforge.common.CommonHooks.fireBlockBreak(player.level(), mode, player,
+                        pos, player.level().getBlockState(pos)).isCanceled();
     }
 
     public static ServerLevel level(LivingEntity caster) {

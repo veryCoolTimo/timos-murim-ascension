@@ -23,7 +23,7 @@ public final class TargetLock {
     public static LivingEntity locked(ServerPlayer player, double range) {
         int id = player.getData(ModAttachments.LOCK)[0];
         if (id < 0 || !(player.level().getEntity(id) instanceof LivingEntity t) || !t.isAlive() || t == player
-                || t.distanceTo(player) > Math.min(range, RANGE)) {
+                || !player.hasLineOfSight(t) || t.distanceTo(player) > Math.min(range, RANGE)) {
             return null;
         }
         return t;

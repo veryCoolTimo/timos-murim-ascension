@@ -1,0 +1,26 @@
+{
+  "display": {
+    "icon": {
+      "id": "murim:technique_manual",
+      "components": {
+        "murim:technique": "murim:six_harmonies"
+      }
+    },
+    "title": {
+      "translate": "advancement.murim.six_elements.title"
+    },
+    "description": {
+      "translate": "advancement.murim.six_elements.desc"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "parent": "murim:join",
+  "criteria": {
+    "done": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

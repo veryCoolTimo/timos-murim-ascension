@@ -39,6 +39,21 @@ class FootworkFamilyTest {
     }
 
     @Test
+    void insightStarsExtendWindTablesWithoutWeakeningTen() {
+        assertEquals(7, FootworkFamily.windEvadeDistance(8));
+        assertEquals(30, TraverseRules.acceleratedSpeed(FootworkFamily.WIND_GOD, 8, 20));
+        assertEquals(3, FootworkFamily.windAfterimages(8));
+        assertEquals(7.5, FootworkFamily.windEvadeDistance(9));
+        assertEquals(8, FootworkFamily.windEvadeDistance(10));
+        assertEquals(36, FootworkFamily.windEvadeCooldown(10));
+        assertEquals(5, FootworkFamily.windAfterimages(10));
+        assertEquals(12, FootworkFamily.windAfterimageLife(10));
+        assertEquals(39.2, TraverseRules.acceleratedSpeed(FootworkFamily.WIND_GOD, 10, 20), 1e-9);
+        assertEquals(.22, TraverseRules.qiPerSecond(FootworkFamily.WIND_GOD, 10), 1e-9);
+        assertTrue(TraverseRules.speed(FootworkFamily.HUASHAN, 7) > TraverseRules.speed(FootworkFamily.HUASHAN, 5));
+    }
+
+    @Test
     void tiersNeverDecrease() {
         for (FootworkFamily f : FootworkFamily.values()) {
             for (int executionTier = 1; executionTier < f.executionSteps(); executionTier++) {

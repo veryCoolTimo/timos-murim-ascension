@@ -191,8 +191,8 @@ public final class HuaRegradeGameTests {
             MountHuaSite site = MountHuaSite.placement(100, 100, 70, rotation);
             for (int u = -20; u < 20; u++) for (int v = 4; v < 12; v++) {
                 int[] w = site.toWorld(u + 0.5, v + 0.5);
-                int ru = (int) Math.floor(site.localU(w[0] + 0.5, w[1] + 0.5));
-                int rv = (int) Math.floor(site.localV(w[0] + 0.5, w[1] + 0.5));
+                int ru = (int) Math.floor(site.centerU(w[0], w[1]));
+                int rv = (int) Math.floor(site.centerV(w[0], w[1]));
                 helper.assertTrue(pattern.at(ru, rv).is(((u + v) & 1) == 0 ? Blocks.STONE_BRICKS : Blocks.BRICKS),
                         "paving phase changed after rotation " + Rotation.values()[rotation]);
             }

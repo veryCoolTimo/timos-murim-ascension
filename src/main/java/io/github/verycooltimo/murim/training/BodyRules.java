@@ -1,8 +1,9 @@
 package io.github.verycooltimo.murim.training;
 
 /**
- * Pure rules of body tempering: levels, gains with daily diminishing returns and fatigue, recovery, effects.
- * No server here, so unit tests check the numbers ({@code BodyRulesTest}). Numbers live in {@link TrainingBalance}.
+ * Pure rules of the tempered body: levels, effects, breakthrough gates and the one-off initial grant. No server here,
+ * so unit tests check the numbers ({@code BodyRulesTest}). Numbers live in {@link TrainingBalance}; how work becomes
+ * points is {@link BodyActivity}.
  */
 public final class BodyRules {
 
@@ -32,52 +33,13 @@ public final class BodyRules {
         return (points - lo) / (threshold(l + 1) - lo);
     }
 
-    /** Daily diminishing returns: 1 for the first point of the day, ½ after {@code DAILY_SOFT}. */
-    public static double dailyFactor(double today) {
-        return 1.0D / (1.0D + Math.max(0.0D, today) / TrainingBalance.DAILY_SOFT);
-    }
-
-    /** Fatigue factor: 1 while fresh, down to {@code FATIGUE_FLOOR} at full fatigue. */
-    public static double fatigueFactor(double fatigue) {
-        if (fatigue <= TrainingBalance.FATIGUE_SOFT) {
-            return 1.0D;
-        }
-        double k = Math.min(1.0D, (fatigue - TrainingBalance.FATIGUE_SOFT) / (1.0D - TrainingBalance.FATIGUE_SOFT));
-        return 1.0D - k * (1.0D - TrainingBalance.FATIGUE_FLOOR);
-    }
-
     /**
-     * Gain of one unit of {@code e}.
-     *
-     * @param quality rep quality ({@code QUALITY_*}) or a run's share
-     * @param atSect  at the sect: {@code SECT_BONUS}
+     * The initial grant for an existing player: what the statistics he already has would have paid at the plain rates
+     * ({@code lifetimeRaw}), at {@link TrainingBalance#INITIAL_SHARE}, never above the threshold of
+     * {@link TrainingBalance#INITIAL_CAP_LEVEL}.
      */
-    public static double gain(Exercise e, double quality, boolean atSect, BodyState s) {
-        double raw = e.points() * quality * (atSect ? TrainingBalance.SECT_BONUS : 1.0D);
-        return raw * dailyFactor(s.today()) * fatigueFactor(s.fatigue());
-    }
-
-    /** Applies one unit: points and fatigue. */
-    public static BodyState apply(Exercise e, double quality, boolean atSect, BodyState s) {
-        double g = gain(e, quality, atSect, s);
-        double weight = e == Exercise.PEAK_CLIMB || e == Exercise.TRAIL_SPRINT ? 1.0D : Math.max(0.35D, quality);
-        return s.gained(g).withFatigue(s.fatigue() + e.fatigue() * weight);
-    }
-
-    // ------------------------------------------------------------------ recovery
-
-    public static double recoveryPerTick(boolean atSect) {
-        return TrainingBalance.RECOVERY_PER_TICK * (atSect ? TrainingBalance.SECT_RECOVERY : 1.0D);
-    }
-
-    public static double afterMeal(double fatigue, int nutrition, boolean atSect) {
-        double cut = Math.min(TrainingBalance.MEAL_CAP,
-                nutrition * TrainingBalance.MEAL_PER_NUTRITION * (atSect ? TrainingBalance.SECT_MEAL : 1.0D));
-        return Math.max(0.0D, fatigue - cut);
-    }
-
-    public static double afterSleep(double fatigue, boolean atSect) {
-        return atSect ? 0.0D : fatigue * TrainingBalance.SLEEP_ELSEWHERE;
+    public static double initialGrant(double lifetimeRaw) {
+        return Math.max(0.0D, Math.min(lifetimeRaw * TrainingBalance.INITIAL_SHARE, threshold(TrainingBalance.INITIAL_CAP_LEVEL)));
     }
 
     // ------------------------------------------------------------------ effects
@@ -104,6 +66,16 @@ public final class BodyRules {
     public static int breakthroughNeed(int targetRank) {
         int[] need = TrainingBalance.BREAKTHROUGH_BODY_LEVEL;
         return targetRank >= 0 && targetRank < need.length ? need[targetRank] : 0;
+    }
+
+    /** Body level the Peak sub-stage {@code targetStage} (1 = II, 2 = III) needs; 0 outside that range. */
+    public static int stageNeed(int targetStage) {
+        int[] need = TrainingBalance.PEAK_STAGE_BODY_LEVEL;
+        return targetStage >= 1 && targetStage <= need.length ? need[targetStage - 1] : 0;
+    }
+
+    public static boolean stageReady(int targetStage, int bodyLevel) {
+        return bodyLevel >= stageNeed(targetStage);
     }
 
     public static boolean breakthroughReady(int targetRank, int bodyLevel) {

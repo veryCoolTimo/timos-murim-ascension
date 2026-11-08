@@ -36,9 +36,32 @@ public final class FoundationService {
         return id;
     }
 
+    /** Authored Dipper contacts use ordinary weapon base damage, armor and damage hooks,
+     * without a technique multiplier or area sweep. Each contact is a separate basic cut.
+     * API: /tmp/mr-ref-1121/minecraft-src LivingEntity#getAttributeValue/hurt/invulnerableTime;
+     * Entity#damageSources; DamageSources#playerAttack. NeoForge LivingDamageEvent.Post owns hit feedback. */
+    static boolean dipperStrike(ServerPlayer player, LivingEntity target, int step) {
+        var basic = active(player);
+        if (basic.isEmpty() || player.distanceTo(target) > 3 || !player.hasLineOfSight(target)) return false;
+        int form = SwordBasicCombo.at(step).ordinal();
+        player.setData(ModAttachments.FOUNDATION_SWING, new int[] {form, player.tickCount});
+        player.setData(ModAttachments.BASIC_COMBO, new SwordBasicCombo.State(basic.get(), (step + 1) % 3, player.level().getGameTime()));
+        // API: /tmp/mr-ref-1121/neoforge-src/net/neoforged/neoforge/common/CommonHooks.java#onPlayerAttackTarget.
+        if (!net.neoforged.neoforge.common.CommonHooks.onPlayerAttackTarget(player, target)) return false;
+        int immunity = target.invulnerableTime;
+        target.invulnerableTime = 0;
+        try {
+            return target.hurt(player.damageSources().playerAttack(player),
+                    (float) player.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE));
+        } finally {
+            target.invulnerableTime = Math.max(immunity, target.invulnerableTime);
+            player.resetAttackStrengthTicker();
+        }
+    }
+
     /** Клиент сообщил о взмахе формой. */
     public static void onSwing(ServerPlayer player, int formIndex) {
-        if (io.github.verycooltimo.murim.sect.seal.PenanceEnforcement.pinned(player)) return;
+        if (DipperService.active(player) || io.github.verycooltimo.murim.sect.seal.PenanceEnforcement.pinned(player)) return;
         Optional<ResourceLocation> id = active(player);
         if (id.isEmpty() || formIndex < 0 || formIndex >= FoundationForms.Form.values().length) {
             return;
@@ -63,34 +86,24 @@ public final class FoundationService {
                 || formIndex >= FoundationForms.unlocked(executionTier)) {
             return;
         }
+        FragranceAirService.attacking(player);
+        SwordGuard.swing(player);
         player.setData(ModAttachments.FOUNDATION_SWING, new int[] {formIndex, player.tickCount});
         // Каждый правильный взмах — тренировка формы; попадание добавит своё.
         MasteryService.onMiss(player, id.get());
         float speed = plum ? 1.0F : FoundationForms.speed(player.getCurrentItemAttackStrengthDelay());
         ChannelSafe.nearEntity(player,
                 new FoundationPayloads.Form(player.getId(), formIndex, executionTier, speed, plum), false);
+        // Бой в круге секты: взмах попадает в протокол боя для поправки мастера.
+        io.github.verycooltimo.murim.sect.SectBouts.onSwing(player, formIndex);
         // Утренний строй секты: форма в такт засчитывается в «Утреннюю тренировку».
-        io.github.verycooltimo.murim.sect.SectLife.onPlayerForm(player);
+        io.github.verycooltimo.murim.sect.SectLife.onPlayerForm(player, formIndex);
     }
 
-    /**
-     * Попадание обычной атакой при выбранной основе. Вызывается из {@link SchoolStyle}.
-     *
-     * @return {@code true}, если удар обработан основой (старая серия стиля школы не нужна)
-     */
-    public static boolean onHit(ServerPlayer player, LivingEntity target) {
-        Optional<ResourceLocation> id = active(player);
-        if (id.isEmpty()) {
-            return false;
-        }
-        // Style feedback/mastery is awarded after successful hurt, not at AttackEntityEvent.
-        if (SwordBasicCombo.isBasic(id.get())) return true;
-        int[] swing = player.getData(ModAttachments.FOUNDATION_SWING);
-        if (swing[1] < 0 || player.tickCount - swing[1] > HIT_LINK_TICKS) {
-            return true;
-        }
-        MasteryService.onHit(player, id.get(), target);
-        switch (FoundationForms.Form.values()[swing[0]]) {
+    /** Six's mastery and effects belong to the consumed, confirmed swing. */
+    private static void sixHit(ServerPlayer player, LivingEntity target, ResourceLocation id, int form) {
+        MasteryService.onHit(player, id, target, io.github.verycooltimo.murim.mastery.YardRules.formKey(form));
+        switch (FoundationForms.Form.values()[form]) {
             case OVERHEAD -> target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 20, 1, false, true, true));
             case RISING -> {
                 target.push(0.0D, 0.25D, 0.0D);
@@ -100,24 +113,37 @@ public final class FoundationService {
             default -> {
             }
         }
-        return true;
     }
 
     /** Only confirmed direct vanilla damage counts; canceled attacks and arrows cannot fake a hit. */
     @net.neoforged.bus.api.SubscribeEvent
     static void onDamage(net.neoforged.neoforge.event.entity.living.LivingDamageEvent.Post event) {
+        onDamage(event, net.neoforged.fml.ModList.get().isLoaded("bettercombat"));
+    }
+
+    /** Explicit flag keeps the compatibility branch testable without a Better Combat dependency. */
+    static void onDamage(net.neoforged.neoforge.event.entity.living.LivingDamageEvent.Post event, boolean betterCombat) {
         if (event.getNewDamage() <= 0.0F
                 || !(event.getSource().getEntity() instanceof ServerPlayer player)
-                || event.getSource().getDirectEntity() != player) return;
+                || event.getSource().getDirectEntity() != player
+                || !event.getSource().is(net.minecraft.world.damagesource.DamageTypes.PLAYER_ATTACK)) return;
         Optional<ResourceLocation> id = active(player);
-        if (id.isEmpty() || !SwordBasicCombo.isBasic(id.get())
-                || player.getData(ModAttachments.TECHNIQUE_STATE).isActive()
-                || !id.get().equals(player.getData(ModAttachments.BASIC_COMBO).basic())) return;
+        if (id.isEmpty() || player.getData(ModAttachments.TECHNIQUE_STATE).isActive()) return;
+        if (betterCombat) {
+            bridgeHit(player, event.getEntity(), id.get());
+            return;
+        }
+        if (SwordBasicCombo.isBasic(id.get())
+                && !id.get().equals(player.getData(ModAttachments.BASIC_COMBO).basic())) return;
         int[] swing = player.getData(ModAttachments.FOUNDATION_SWING);
         if (swing[1] < 0 || player.tickCount - swing[1] > HIT_LINK_TICKS) return;
         // Consume once: sweeping damage must not repeat sound, mastery or contact VFX.
         player.setData(ModAttachments.FOUNDATION_SWING, new int[] {swing[0], -1});
-        MasteryService.onHit(player, id.get(), event.getEntity());
+        if (!SwordBasicCombo.isBasic(id.get())) {
+            sixHit(player, event.getEntity(), id.get(), swing[0]);
+            return;
+        }
+        MasteryService.onHit(player, id.get(), event.getEntity(), io.github.verycooltimo.murim.mastery.YardRules.formKey(swing[0]));
         player.level().playSound(null, event.getEntity().getX(), event.getEntity().getY(), event.getEntity().getZ(),
                 io.github.verycooltimo.murim.registry.ModSounds.SWORD_HIT.get(),
                 net.minecraft.sounds.SoundSource.PLAYERS, 0.45F, 1.2F);
@@ -131,6 +157,16 @@ public final class FoundationService {
         boolean finisher = SwordBasicCombo.isFinisher(FoundationForms.Form.values()[swing[0]]);
         ChannelSafe.nearEntity(player,
                 new FoundationPayloads.Hit(player.getId(), event.getEntity().getId(), finisher, contact), true);
+    }
+
+    private static void bridgeHit(ServerPlayer player, LivingEntity target, ResourceLocation id) {
+        if (!SwordBasicCombo.isBasic(id) && !id.equals(ResourceLocation.fromNamespaceAndPath("murim", "six_harmonies"))) return;
+        int[] swing = player.getData(ModAttachments.FOUNDATION_SWING);
+        // Consume the server melee contact tick once, including its sweep targets.
+        if (swing[1] == player.tickCount || !io.github.verycooltimo.murim.MurimMod.MODID.equals(
+                net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(player.getMainHandItem().getItem()).getNamespace())) return;
+        player.setData(ModAttachments.FOUNDATION_SWING, new int[] {0, player.tickCount});
+        MasteryService.onHit(player, id, target, io.github.verycooltimo.murim.mastery.YardRules.formKey(0));
     }
 
     private FoundationService() {

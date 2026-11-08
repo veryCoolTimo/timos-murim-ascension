@@ -3,6 +3,7 @@ package io.github.verycooltimo.murim.library;
 import io.github.verycooltimo.murim.mastery.MasteryService;
 import io.github.verycooltimo.murim.mastery.MasteryState;
 import io.github.verycooltimo.murim.registry.ModAttachments;
+import io.github.verycooltimo.murim.sect.PlayerJournal;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -54,9 +55,12 @@ public class JunkBookItem extends Item {
             return InteractionResultHolder.pass(stack);
         }
         if (level.isClientSide) {
-            // Only a static call into client/: the screen class is never loaded on a dedicated server.
-            LibraryClientBridge.openJunk(book, hand == InteractionHand.MAIN_HAND);
+            // The server sends the selected book after checking its component.
             return InteractionResultHolder.success(stack);
+        }
+        if (player instanceof ServerPlayer reader) {
+            net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(reader,
+                    new LibraryNetwork.OpenJunk(book, hand == InteractionHand.MAIN_HAND));
         }
         if (player instanceof ServerPlayer serverPlayer && !book.read()) {
             stack.set(ModLibrary.JUNK.get(), book.withRead());
@@ -64,7 +68,7 @@ public class JunkBookItem extends Item {
                 comprehend(serverPlayer);
             }
             if (book.kind() == JunkKind.CLUE && book.hint() >= 0) {
-                serverPlayer.displayClientMessage(Component.translatable("junk.murim.msg.clue").withStyle(ChatFormatting.GRAY), true);
+                PlayerJournal.record(serverPlayer, Component.translatable("junk.murim.msg.clue").withStyle(ChatFormatting.GRAY));
             }
         }
         if (player instanceof ServerPlayer serverPlayer && book.kind() == JunkKind.FAKE_GRAND) {
@@ -74,7 +78,7 @@ public class JunkBookItem extends Item {
     }
 
     /**
-     * A grand fake teaches its seed-selected junk art: the original plain slash or one of the three dances.
+     * An archive junk volume teaches its seed-selected art, including the discarded Hua curricula.
      * Without a dantian nothing is learned or said; the book stays a joke until the reader has qi.
      */
     private static void learnFake(ServerPlayer player, JunkBook book) {
@@ -83,8 +87,10 @@ public class JunkBookItem extends Item {
                 || !io.github.verycooltimo.murim.mastery.MasteryRules.canLearn(player.getData(ModAttachments.PROFILE))) {
             return;
         }
-        player.displayClientMessage(Component.translatable(io.github.verycooltimo.murim.technique.JunkArts.FUNNY.contains(art)
-                ? "murim.junk_art.fake_dance" : "murim.junk_art.fake_grand").withStyle(ChatFormatting.GRAY), false);
+        if (!io.github.verycooltimo.murim.technique.JunkArts.MOUNT_HUA.contains(art)) {
+            PlayerJournal.record(player, Component.translatable(io.github.verycooltimo.murim.technique.JunkArts.FUNNY.contains(art)
+                    ? "murim.junk_art.fake_dance" : "murim.junk_art.fake_grand").withStyle(ChatFormatting.GRAY));
+        }
         MasteryService.learn(player, art, 0);
     }
 
@@ -93,7 +99,6 @@ public class JunkBookItem extends Item {
         MasteryState state = player.getData(ModAttachments.MASTERY);
         player.setData(ModAttachments.MASTERY, state.withWisdom(state.wisdom() + MUSINGS_WISDOM));
         MasteryService.sync(player);
-        player.displayClientMessage(Component.translatable("junk.murim.msg.comprehend").withStyle(ChatFormatting.AQUA), false);
         player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
                 io.github.verycooltimo.murim.registry.ModSounds.QI_CHIME.get(), SoundSource.PLAYERS, 0.6F, 1.2F);
     }
@@ -116,17 +121,20 @@ public class JunkBookItem extends Item {
             // API: reference/minecraft-src/net/minecraft/world/damagesource/DamageSources.java#magic (bypasses armour).
             DamageSource source = player.damageSources().magic();
             player.hurt(source, 6.0F);
-            player.displayClientMessage(Component.translatable("junk.murim.msg.backlash").withStyle(ChatFormatting.DARK_RED), false);
+            PlayerJournal.record(player, Component.translatable("junk.murim.msg.backlash").withStyle(ChatFormatting.DARK_RED));
             player.level().playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.WITHER_HURT, SoundSource.PLAYERS, 0.5F, 0.6F);
         } else {
-            player.displayClientMessage(Component.translatable("junk.murim.msg.backlash_none").withStyle(ChatFormatting.GRAY), false);
+            PlayerJournal.refuse(player, Component.translatable("junk.murim.msg.backlash_none").withStyle(ChatFormatting.GRAY));
         }
     }
 
     @Override
     public Component getName(ItemStack stack) {
         JunkBook book = stack.get(ModLibrary.JUNK.get());
-        return book == null ? super.getName(stack) : JunkText.title(book);
+        Component title = book == null ? super.getName(stack) : JunkText.title(book);
+        // API: minecraft-src/net/minecraft/network/chat/Component.java#translatable(String,Object...).
+        return book != null && book.kind().letters() ? title
+                : io.github.verycooltimo.murim.mastery.Originals.name(stack, "item.murim.manual_copy", "murim.original.name", title);
     }
 
     @Override

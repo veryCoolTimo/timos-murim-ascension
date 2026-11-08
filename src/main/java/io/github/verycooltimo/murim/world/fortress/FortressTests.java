@@ -2,6 +2,7 @@ package io.github.verycooltimo.murim.world.fortress;
 
 import io.github.verycooltimo.murim.MurimMod;
 import io.github.verycooltimo.murim.combat.AuraState;
+import io.github.verycooltimo.murim.combat.Stun;
 import io.github.verycooltimo.murim.cultivation.Realm;
 import io.github.verycooltimo.murim.entity.TrainingDummy;
 import io.github.verycooltimo.murim.entity.boss.BossMove;
@@ -17,8 +18,6 @@ import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.effect.MobEffectInstance;
-import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Blocks;
@@ -105,6 +104,7 @@ public final class FortressTests {
         helper.assertTrue(level.getBlockState(door).is(Blocks.IRON_BARS), "сокровищница не заперта");
         helper.assertTrue(level.getBlockState(c).isAir() && level.getBlockState(c.above(5)).isAir(), "над плацем не расчищено");
         MurimMod.LOGGER.info("GameTest крепость: брёвен {}, жаровен {}, плит {}", logs, fires, stone);
+        Fortresses.data(helper.getLevel()).remove(e.key);
         helper.succeed();
     }
 
@@ -168,13 +168,14 @@ public final class FortressTests {
         TrainingDummy d = dummy(helper, m, 0.0D, 5.0D);
         m.startFight(d);
         helper.runAfterDelay(35, () -> {
-            m.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 200, 4));
+            // MVP R3: ordinary Slowness is not a mod stun.
+            helper.assertTrue(Stun.apply(m, 200) == BossMove.STUN_CAP, "boss stun was not capped");
             helper.assertTrue(m.isStunned(), "оглушение не легло");
         });
         helper.runAfterDelay(35 + BossMove.STUN_CAP + 3, () -> {
             helper.assertFalse(m.isStunned(), "босс оглушён дольше 0,5 с");
             helper.assertTrue(m.controlImmune() > 0, "нет невосприимчивости");
-            m.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 200, 4));
+            helper.assertTrue(Stun.apply(m, 200) == 0, "boss accepted stun during immunity");
             helper.assertFalse(m.isStunned(), "повторное оглушение прошло сквозь невосприимчивость");
             helper.succeed();
         });
@@ -196,24 +197,31 @@ public final class FortressTests {
         helper.assertTrue(level.getBlockState(door).isAir(), "решётка сокровищницы не снята");
         helper.assertTrue(level.getBlockEntity(e.vaultChest()) instanceof ChestBlockEntity, "нет сундука сокровищницы");
         ChestBlockEntity chest = (ChestBlockEntity) level.getBlockEntity(e.vaultChest());
-        boolean book = false, page = false, origin = false;
+        boolean book = false, page = false;
+        int snowPlum = 0;
         for (int i = 0; i < chest.getContainerSize(); i++) {
             ItemStack s = chest.getItem(i);
             if (s.is(ModItems.TECHNIQUE_MANUAL.get()) && s.get(ModDataComponents.TECHNIQUE.get()) != null
                     && s.get(ModDataComponents.MANUAL_DEPTH.get()) == null) {
                 book = true;
             }
-            if (s.is(ModItems.MANUAL_PAGE.get()) && Fortresses.SECRET_BOOK.equals(s.get(ModDataComponents.TECHNIQUE.get()))) {
+            if (io.github.verycooltimo.murim.quest.ClueItem.clueOf(s) != null && Fortresses.SECRET_CLUE.equals(io.github.verycooltimo.murim.quest.ClueItem.clueOf(s))) {
                 page = true;
             }
-            origin |= s.is(ModItems.PILL_ORIGIN_ENERGY.get());
+            helper.assertTrue(!(s.is(ModItems.MANUAL_PAGE.get()) && String.valueOf(s.get(ModDataComponents.TECHNIQUE.get())).contains("twenty_four_plum")),
+                    "the fortress gives a page of the lost Twenty-Four Movements");
+            if (s.is(ModItems.PILL_SNOW_PLUM.get())) snowPlum += s.getCount();
+            helper.assertFalse(s.is(ModItems.PILL_ORIGIN_ENERGY.get()),
+                    "renewable fortress loot contains finite Origin Energy");
         }
         helper.assertTrue(book, "нет полной продвинутой книги");
-        helper.assertTrue(page, "нет страницы 24 Движений");
-        helper.assertTrue(origin, "нет пилюли Изначальной Энергии");
+        helper.assertTrue(page, "нет страницы-улики о 24 Движениях");
+        // Source: 31.10 finite-elixir change, fortress_vault loot pools: one plus 3–5 Snow Plum pills.
+        helper.assertTrue(snowPlum >= 4 && snowPlum <= 6, "Snow Plum reward count: " + snowPlum);
         // Прорыв 2 открыт флагом (стена запаса — отдельное условие).
-        helper.assertTrue(Realm.condition(Realm.SECOND) == Realm.Condition.DEFEAT_BOSS, "условие прорыва 2");
+        helper.assertTrue(Realm.condition(Realm.SECOND) == Realm.Condition.SECT_SKILLS, "условие прорыва 2");
         m.discard();
+        Fortresses.data(helper.getLevel()).remove(e.key);
         helper.succeed();
     }
 
@@ -242,4 +250,35 @@ public final class FortressTests {
         new net.minecraft.server.network.ServerGamePacketListenerImpl(helper.getLevel().getServer(), connection, p, cookie);
         return p;
     }
+
+    @GameTest(template = "fortress_floor", timeoutTicks = 40)
+    public static void uniquePillsSurviveReloadAndNeverRefill(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        FortressData claims = new FortressData(); // Isolate claims from other GameTests/the running world's state.
+        BlockPos yard = fortressCentre(helper);
+        FortressData.Entry first = new FortressData.Entry(1, yard, Rotation.NONE, 11);
+        FortressData.Entry second = new FortressData.Entry(2, yard.offset(-6, 0, 0), Rotation.NONE, 22);
+        Fortresses.placeHiddenTreasure(level, first, claims); // No master or victory: also works on Peaceful.
+        ChestBlockEntity hidden = (ChestBlockEntity) level.getBlockEntity(Fortresses.hiddenTreasure(first));
+        helper.assertTrue(hidden != null && hidden.getItem(0).is(ModItems.PILL_GREAT_RESTORATION.get())
+                && hidden.getItem(0).getCount() == 1, "one hidden Great Restoration");
+        BlockPos reward = yard.offset(0, 1, 0);
+        level.setBlock(reward, Blocks.CHEST.defaultBlockState(), 3);
+        Fortresses.placeDragonTreasure(level, reward, claims);
+        ChestBlockEntity boss = (ChestBlockEntity) level.getBlockEntity(reward);
+        helper.assertTrue(boss.getItem(0).is(ModItems.PILL_ASCENDING_DRAGON.get())
+                && boss.getItem(0).getCount() == 1, "one boss treasure Dragon");
+        FortressData restored = FortressData.load(claims.save(new net.minecraft.nbt.CompoundTag(), level.registryAccess()),
+                level.registryAccess());
+        level.setBlock(Fortresses.hiddenTreasure(first), Blocks.AIR.defaultBlockState(), 3);
+        boss.clearContent();
+        Fortresses.placeHiddenTreasure(level, first, restored);
+        Fortresses.placeHiddenTreasure(level, second, restored);
+        Fortresses.placeDragonTreasure(level, reward, restored);
+        helper.assertTrue(level.getBlockEntity(Fortresses.hiddenTreasure(first)) == null
+                && level.getBlockEntity(Fortresses.hiddenTreasure(second)) == null && boss.isEmpty(),
+                "reload, another fortress or repeat victory duplicated unique pills");
+        helper.succeed();
+    }
+
 }

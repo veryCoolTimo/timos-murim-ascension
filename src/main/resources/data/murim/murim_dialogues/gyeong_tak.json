@@ -5,6 +5,33 @@
     {
       "when": [
         {
+          "social": "quest:heard:impostor_hook"
+        },
+        {
+          "social": "quest:available:impostor"
+        }
+      ],
+      "node": "impostor_hook"
+    },
+    {
+      "when": [
+        {
+          "min_standing": "elder"
+        }
+      ],
+      "node": "office_elder"
+    },
+    {
+      "when": [
+        {
+          "min_standing": "first"
+        }
+      ],
+      "node": "office_first"
+    },
+    {
+      "when": [
+        {
           "period": "night"
         }
       ],
@@ -62,6 +89,19 @@
       ],
       "gesture": "nod",
       "options": [
+        {
+          "text": "dialogue.murim.approach.opt.not_now",
+          "when": [
+            {
+              "social": "approaching"
+            }
+          ],
+          "actions": [
+            {
+              "type": "approach_decline"
+            }
+          ]
+        },
         {
           "text": "dialogue.murim.social.opt.business",
           "when": [
@@ -270,6 +310,104 @@
           "actions": [
             {
               "type": "request_menu"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "office_elder": {
+      "random": [
+        "dialogue.murim.gyeong_tak.office_elder.1",
+        "dialogue.murim.gyeong_tak.office_elder.2"
+      ],
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.approach.opt.not_now",
+          "when": [
+            {
+              "social": "approaching"
+            }
+          ],
+          "actions": [
+            {
+              "type": "approach_decline"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.social.opt.business",
+          "when": [
+            {
+              "social": "business"
+            }
+          ],
+          "next": "sect_business"
+        },
+        {
+          "text": "dialogue.murim.gyeong_tak.opt.ask",
+          "next": "answer"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "office_first": {
+      "random": [
+        "dialogue.murim.gyeong_tak.office_first.1",
+        "dialogue.murim.gyeong_tak.office_first.2"
+      ],
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.approach.opt.not_now",
+          "when": [
+            {
+              "social": "approaching"
+            }
+          ],
+          "actions": [
+            {
+              "type": "approach_decline"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.social.opt.business",
+          "when": [
+            {
+              "social": "business"
+            }
+          ],
+          "next": "sect_business"
+        },
+        {
+          "text": "dialogue.murim.gyeong_tak.opt.ask",
+          "next": "answer"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "impostor_hook": {
+      "line": "dialogue.murim.quest.impostor.hook",
+      "enter": [
+        {
+          "type": "set_flag",
+          "value": "quest.impostor.hooked"
+        }
+      ],
+      "options": [
+        {
+          "text": "dialogue.murim.quest.impostor.opt.hook",
+          "when": [
+            {
+              "social": "quest:available:impostor"
             }
           ]
         },

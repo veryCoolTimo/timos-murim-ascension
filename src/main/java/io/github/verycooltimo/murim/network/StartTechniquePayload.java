@@ -12,7 +12,8 @@ import net.minecraft.resources.ResourceLocation;
  * <p>Это <b>запрос, а не команда</b>. Сервер сам решает, можно ли начать: проверяет, не идёт ли
  * уже другая техника и существует ли такая вообще. Клиент не присылает ни урон, ни цель.
  */
-public record StartTechniquePayload(ResourceLocation techniqueId) implements CustomPacketPayload {
+public record StartTechniquePayload(ResourceLocation techniqueId, int side, boolean release) implements CustomPacketPayload {
+    public StartTechniquePayload(ResourceLocation techniqueId) { this(techniqueId, 1, false); }
 
     public static final Type<StartTechniquePayload> TYPE =
             new Type<>(ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "start_technique"));
@@ -20,6 +21,8 @@ public record StartTechniquePayload(ResourceLocation techniqueId) implements Cus
     public static final StreamCodec<RegistryFriendlyByteBuf, StartTechniquePayload> STREAM_CODEC =
             StreamCodec.composite(
                     ResourceLocation.STREAM_CODEC, StartTechniquePayload::techniqueId,
+                    net.minecraft.network.codec.ByteBufCodecs.VAR_INT, StartTechniquePayload::side,
+                    net.minecraft.network.codec.ByteBufCodecs.BOOL, StartTechniquePayload::release,
                     StartTechniquePayload::new);
 
     @Override

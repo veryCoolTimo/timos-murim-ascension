@@ -43,6 +43,9 @@ public final class MeditationHud {
     @SubscribeEvent
     static void onRegisterLayers(RegisterGuiLayersEvent event) {
         // Под остальными слоями: затемнение не должно гасить сердца и хотбар.
+        event.registerBelow(VanillaGuiLayers.CAMERA_OVERLAYS,
+                ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "bt_impact"),
+                (graphics, delta) -> io.github.verycooltimo.murim.client.vfx.bt.BtImpactFrame.render(graphics, delta.getGameTimeDeltaPartialTick(false)));
         event.registerBelow(VanillaGuiLayers.CAMERA_OVERLAYS, LAYER, MeditationHud::render);
     }
 
@@ -55,13 +58,15 @@ public final class MeditationHud {
         int sceneAge = ClientMeditationState.seedSceneAge();
         if (sceneAge >= 0) {
             float age = sceneAge + partial;
-            vignette(graphics, age);
             seedScene(graphics, minecraft, age);
         }
+        if(io.github.verycooltimo.murim.dev.DevHooks.INSTANCE.benchActive())return;
         // Прорыв: только виньетка — полная заливка спрятала бы светящийся каркас тела.
         int breakAge = ClientMeditationState.breakthroughAge();
         if (breakAge >= 0) {
-            vignette(graphics, breakAge + partial, io.github.verycooltimo.murim.cultivation.Realm.BREAKTHROUGH_TICKS);
+            if (io.github.verycooltimo.murim.client.vfx.bt.BtScenes.handles(ClientMeditationState.breakthroughTarget())) labVignette(graphics, partial);
+            else vignette(graphics, breakAge + partial, io.github.verycooltimo.murim.cultivation.Realm.breakthroughTicks(
+                    ClientMeditationState.breakthroughTarget()));
         }
         int warnAge = ClientMeditationState.warningAge();
         if (warnAge >= 0) {
@@ -69,6 +74,7 @@ public final class MeditationHud {
         }
         int rankAge = ClientMeditationState.rankUpAge();
         if (rankAge >= 0) {
+            if (io.github.verycooltimo.murim.client.vfx.bt.BtScenes.handles(ClientMeditationState.rankUpRank())) labVignette(graphics, partial);
             rankUp(graphics, minecraft, rankAge + partial);
         }
         if (ClientMeditationState.aftermath() == ClientMeditationState.Aftermath.BACKLASH) {
@@ -79,13 +85,23 @@ public final class MeditationHud {
         if (minecraft.options.hideGui && !ClientMeditationState.cinematic()) {
             return;
         }
+        if (warnAge >= 0 || breakAge >= 0) {
+            int left = warnAge >= 0
+                    ? io.github.verycooltimo.murim.cultivation.Realm.WARNING_TICKS - warnAge
+                    : io.github.verycooltimo.murim.cultivation.Realm.breakthroughTicks(
+                            ClientMeditationState.breakthroughTarget()) - breakAge;
+            HudText.centered(graphics, minecraft.font, Component.translatable(warnAge >= 0
+                    ? "murim.rank.breakthrough.warning_exit" : "murim.rank.breakthrough.exit",
+                    Math.max(0, (left + 19) / 20), ModKeyMappings.MEDITATION.getTranslatedKeyMessage()),
+                    graphics.guiWidth() / 2, TOP + 8, 0xFFE8D9AF, 0.75F);
+        }
         SyncMeditationPayload state = ClientMeditationState.state();
         if (!state.active()) {
             return;
         }
         if (state.beats() >= 3) {
             // Во время прорыва виджет ци не нужен: идёт сцена, игроку нечего нажимать.
-            if (breakAge < 0 && rankAge < 0 && warnAge < 0 && !ClientPillState.absorbing()) {
+            if (breakAge < 0 && rankAge < 0 && warnAge < 0 && !ClientPillState.absorbing() && ClientPillState.finaleAge() < 0) {
                 seeded(graphics, minecraft, partial);
                 ResourceLocation method = ResourceLocation.tryParse(ClientProfileState.profile().imprint());
                 if (method != null) {
@@ -112,6 +128,11 @@ public final class MeditationHud {
                 / (float) MeditationService.FIRST_FEELING_TICKS, 0.0F, 1.0F);
         graphics.fill(x, TOP, x + LINE_WIDTH, TOP + 1, 0x60FFFFFF);
         graphics.fill(x, TOP, x + (int) (LINE_WIDTH * progress), TOP + 1, 0xE0A8E4FF);
+        // The control hint for the first five seconds of forming the dantian (playtest 22.10: the action-bar line faded in two).
+        if (ClientMeditationState.sessionTicks() < 100) {
+            HudText.centered(graphics, minecraft.font, Component.translatable("murim.meditation.hint.feel",
+                    minecraft.options.keyShift.getTranslatedKeyMessage()), width / 2, TOP + 8, 0xE0C8DCEC, 0.75F);
+        }
     }
 
     /** Радиус круга мини-игры в пикселях интерфейса: радиус кольца 1 — край круга. */
@@ -173,14 +194,13 @@ public final class MeditationHud {
         annulus(graphics, cx, cy, r - 0.4F + jitter, r + 0.4F + jitter, 0x0, off ? 0xFFFFC8C0 : 0xFFF0FCFF);
         graphics.flush();
 
-        // Устойчивость — тонкая линия под кругом. Текста нет: промах показывают цвет
-        // и дрожь кольца; подсказка клавиши — только в первые четыре секунды игры.
+        // Stability is a thin line below the ring; the control hint stays throughout the game (UX #24).
         int by = cy + GAME_RADIUS + 6;
         int half = GAME_RADIUS + 3;
         graphics.fill(cx - half, by, cx + half, by + 1, 0x60FFFFFF);
         graphics.fill(cx - half, by, cx - half + (int) (2 * half * Mth.clamp(ring.stability(), 0.0F, 1.0F)), by + 1,
                 off ? 0xFFFF7060 : 0xFF9FF0DC);
-        if (ClientMeditationState.sessionTicks() < 80) {
+        { // UX #24: keep the control explanation visible throughout the ring game.
             Font font = minecraft.font;
             Component hint = Component.translatable("murim.meditation.game.key",
                     minecraft.options.keyJump.getTranslatedKeyMessage());
@@ -227,10 +247,10 @@ public final class MeditationHud {
         // запаса до стены: ядро дышит, и яркость дыхания — скорость притока (docs/design/19b §4).
         boolean full = io.github.verycooltimo.murim.cultivation.Realm.atWall(profile);
         boolean stunned = ClientPlaceState.stunned();
-        double base = MeditationService.gainAt((int) ticks);
-        boolean tired = base < MeditationService.gainAt(0) * 0.4D;
+        // The inflow does not fade inside a session any more (hua-main-1810 §1): the core breathes at one steady rate,
+        // brighter only at a place of power.
         double place = ClientPlaceState.place() != null && !stunned ? ClientPlaceState.place().gain() : 1.0D;
-        float rate = full || stunned ? 0.0F : (float) Mth.clamp(base / MeditationService.gainAt(0) * place / 2.0D, 0.0D, 1.0D);
+        float rate = full || stunned ? 0.0F : (float) Mth.clamp(place / 2.0D, 0.0D, 1.0D);
         float breath = 0.5F + 0.5F * Mth.sin(ticks * 0.08F);
 
         annulus(graphics, cx, cy, 0.0F, GAME_RADIUS + 3.0F, 0x0, 0x70060A14);
@@ -267,10 +287,10 @@ public final class MeditationHud {
                 String.format(java.util.Locale.ROOT, "%.1f", profile.maxCirculating())), cx, ty - LINE, 0xF0E8F6FF);
         int line = ty - 2 * LINE;
         // Почему рост стоит — одна причина, короткая подпись.
-        String reason = full ? "murim.meditation.reason.full" : stunned ? "murim.meditation.reason.stunned"
-                : tired ? "murim.meditation.reason.tired" : null;
-        if (reason != null) {
-            small(graphics, font, Component.translatable(reason), cx, line, 0xC0A0A8B8);
+        String reason = full ? "murim.meditation.reason.full" : stunned ? "murim.meditation.reason.stunned" : null;
+        Component wallReason = ClientMeditationState.state().wallReason().orElse(null);
+        if (wallReason != null || reason != null) {
+            small(graphics, font, wallReason != null ? wallReason : Component.translatable(reason), cx, line, 0xC0A0A8B8);
             line -= LINE;
         }
         if (ClientPlaceState.node() != null) {
@@ -281,13 +301,13 @@ public final class MeditationHud {
                     cx, line, warn > 0.0F ? 0xF0FFB070 : 0xE0A8F0D0);
             line -= LINE;
         }
-        // Что осмысливается — то же, что показывает двойник (§3г).
-        java.util.List<net.minecraft.resources.ResourceLocation> pending = ClientMasteryState.pending();
-        if (!pending.isEmpty()) {
-            small(graphics, font, Component.translatable("murim.meditation.seeded.pondering",
-                    io.github.verycooltimo.murim.mastery.MasteryService.name(pending.get(0))), cx, line, 0xE0CFEFFF);
-            line -= LINE;
-        }
+        // Занятие сессии: «Очищение» или «Эхо» выбранного искусства (то же, что показывает двойник). Без чисел и звёзд.
+        net.minecraft.resources.ResourceLocation echo = ClientMeditationState.state().echo().orElse(null);
+        small(graphics, font, echo == null ? Component.translatable("murim.meditation.activity.cleanse")
+                : Component.translatable("murim.meditation.activity.echo",
+                        Component.translatable(io.github.verycooltimo.murim.mastery.Arts.nameKey(echo))),
+                cx, line, echo == null ? 0xC0A8E4FF : 0xE0CFEFFF);
+        line -= LINE;
         if (ClientMeditationState.sessionTicks() < 80) {
             small(graphics, font, Component.translatable("murim.meditation.seeded.leave",
                     minecraft.options.keyShift.getTranslatedKeyMessage()), cx, line, 0xB0C8DCEC);
@@ -366,6 +386,24 @@ public final class MeditationHud {
      * «ноль × источник, (1 − цвет) × приёмник» гасит каналы по цвету текстуры.
      * Синий гасится слабее красного, поэтому края уходят в глубокую синеву, а не в серость.
      */
+    /** Lab hush is subtle edge darkening; the room remains visible. */
+    private static void labVignette(GuiGraphics g, float partial) {
+        int target = ClientMeditationState.rankUpAge()>=0?ClientMeditationState.rankUpRank():ClientMeditationState.breakthroughTarget();
+        double t = io.github.verycooltimo.murim.client.vfx.bt.BtScenes.labSeconds(target, partial);
+        double k = target == 2
+                ? io.github.verycooltimo.murim.client.vfx.bt.BtMath.smooth(14.6,14.75,t) * (1-io.github.verycooltimo.murim.client.vfx.bt.BtMath.smooth(15.2,15.3,t)) * .22
+                : io.github.verycooltimo.murim.client.vfx.bt.BtMath.smooth(10.1,10.75,t) * (1-io.github.verycooltimo.murim.client.vfx.bt.BtMath.smooth(10.8,10.85,t)) * .16;
+        if(target==3)k=io.github.verycooltimo.murim.client.vfx.bt.BtRank1Math.level(t).gather()*.22;
+        if(target==4)k=(.14-.07*io.github.verycooltimo.murim.client.vfx.bt.BtMath.smooth(8,13.6,t))
+                *(1-io.github.verycooltimo.murim.client.vfx.bt.BtMath.smooth(25.5,26,t));
+        int w=g.guiWidth(), h=g.guiHeight(), edge=Math.max(1,Math.min(w,h)/6);
+        for(int i=0;i<edge;i++) {
+            int a=(int)(255*k*(1-i/(double)edge)*(1-i/(double)edge));
+            g.fill(i,0,i+1,h,a<<24);g.fill(w-i-1,0,w-i,h,a<<24);
+            g.fill(edge,i,w-edge,i+1,a<<24);g.fill(edge,h-i-1,w-edge,h-i,a<<24);
+        }
+    }
+
     private static void vignette(GuiGraphics graphics, float age) {
         vignette(graphics, age, ClientMeditationState.SEED_SCENE_TICKS);
     }
@@ -401,75 +439,72 @@ public final class MeditationHud {
     private static final ResourceLocation GLOW =
             ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/vfx/impact_core.png");
 
-    /**
-     * Взрыв рождения семени (замечание автора 29.09: «затемнить всё, нет текста,
-     * вспышку белее, экспозицию сильнее, чуть тряски»).
-     *
-     * <p>Порядок слоёв: затемнение всего экрана → семя поверх темноты (иначе затемнение
-     * гасит и его) → белая вспышка-передержка → титр. Вспышка одна за сцену и
-     * отключается настройкой экранных вспышек (правило 04).
+    /** API verified in /tmp/mr-ref-1121/minecraft-src/net/minecraft/client/gui/GuiGraphics.java:
+     * fill(int,int,int,int,int), pose(), drawString(Font,String,int,int,int,boolean), guiWidth/Height;
+     * Font.java#width(String), Component.java#translatable/getString. Pose transforms follow
+     * GuiGraphics.java#renderItem. The world dimmer is drawn before the creation VFX.
      */
+    private static final ResourceLocation DANTIAN_TITLE = ResourceLocation.fromNamespaceAndPath(
+            MurimMod.MODID,"textures/gui/dantian_title.png");
+
     private static void seedScene(GuiGraphics graphics, Minecraft minecraft, float age) {
-        int w = graphics.guiWidth();
-        int h = graphics.guiHeight();
-        float total = ClientMeditationState.SEED_SCENE_TICKS;
-        float out = Mth.clamp((total - age) / 40.0F, 0.0F, 1.0F);
-
-        // Затемнение: весь мир уходит в тёмную синеву, пока идёт «взгляд внутрь».
-        // Не до черноты: силуэт тела и жилы должны угадываться.
-        float dark = Mth.clamp((age - 2.0F) / 10.0F, 0.0F, 1.0F) * out;
-        if (dark > 0.0F) {
-            int a = (int) (dark * 0xA8);
-            graphics.fill(0, 0, w, h, (a << 24) | 0x03060F);
+        double seconds=age/20.0;
+        int w=graphics.guiWidth(),h=graphics.guiHeight();
+        // GuiGraphics.java#flush: submit pending GUI geometry before the immediate impact graphic.
+        graphics.flush();
+        io.github.verycooltimo.murim.client.vfx.bt.BtImpactFrame.renderCreation(graphics,seconds);
+        double fade=io.github.verycooltimo.murim.client.vfx.preset.DantianFlowMath.title(seconds);
+        double stamp=io.github.verycooltimo.murim.client.vfx.preset.DantianFlowMath.stampAlpha(seconds);
+        if(stamp<=.002)return;
+        Font font=minecraft.font;
+        String name=Component.translatable("murim.meditation.seed_title").getString();
+        String sub=Component.translatable("murim.meditation.seed_subtitle").getString();
+        int textWidth=Math.max(font.width(name)*2,font.width(sub));
+        int hanziHeight=font.lineHeight*5,hanziWidth=Math.round(hanziHeight*110F/192F);
+        int x=(w-hanziWidth-12-textWidth)/2,y=Math.max(2,h/5-hanziHeight/2);
+        double stampScale=io.github.verycooltimo.murim.client.vfx.preset.DantianFlowMath.stampScale(seconds);
+        double inkAge=seconds-io.github.verycooltimo.murim.client.vfx.preset.DantianFlowMath.TITLE_START
+                -io.github.verycooltimo.murim.client.vfx.preset.DantianFlowMath.STAMP_SECONDS;
+        // API: /tmp/mr-ref-1121/minecraft-src/net/minecraft/client/gui/GuiGraphics.java
+        // blit(ResourceLocation,int,int,int,int,float,float,int,int,int,int), setColor, pose, fill.
+        RenderSystem.enableBlend();RenderSystem.defaultBlendFunc();
+        graphics.pose().pushPose();
+        try {
+            graphics.pose().translate(x+hanziWidth/2F,y+hanziHeight/2F,0);
+            graphics.pose().scale((float)stampScale,(float)stampScale,1);
+            graphics.setColor(.025F,.06F,.09F,(float)stamp*.45F);
+            graphics.blit(DANTIAN_TITLE,-hanziWidth/2+1,-hanziHeight/2+1,hanziWidth,hanziHeight,0F,0F,110,192,110,192);
+            graphics.setColor(.87F,.98F,1,(float)stamp);
+            graphics.blit(DANTIAN_TITLE,-hanziWidth/2,-hanziHeight/2,hanziWidth,hanziHeight,0F,0F,110,192,110,192);
+        } finally {
+            graphics.setColor(1,1,1,1);graphics.pose().popPose();RenderSystem.disableBlend();
         }
-
-        // Семя пробивает темноту: дорисовывается по своей экранной точке.
-        float[] seed = io.github.verycooltimo.murim.client.vfx.MeditationVfxRenderer.seedOnScreen();
-        if (seed != null && dark > 0.0F) {
-            float beat = (age % 30.0F) / 30.0F;
-            float pulse = (float) (Math.exp(-beat * 18.0D) + 0.6D * Math.exp(-Math.abs(beat - 0.22D) * 18.0D));
-            int cx = (int) (seed[0] * w);
-            int cy = (int) (seed[1] * h);
-            RenderSystem.enableBlend();
-            RenderSystem.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE);
-            glow(graphics, cx, cy, (int) (h * (0.55F + 0.08F * pulse)), 0.16F, 0.42F, 0.95F, 0.55F * dark);
-            glow(graphics, cx, cy, (int) (h * (0.22F + 0.05F * pulse)), 0.45F, 0.88F, 1.0F, 0.8F * dark);
-            glow(graphics, cx, cy, (int) (h * (0.07F + 0.03F * pulse)), 0.9F, 0.98F, 1.0F, dark);
-            graphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
-            RenderSystem.defaultBlendFunc();
-            RenderSystem.disableBlend();
-        }
-
-        // Вспышка: резкая передержка в белое за два тика и спад за полсекунды.
-        if (ClientConfig.SCREEN_FLASHES.get()) {
-            // Спад кубический: удар белым, без долгой серой дымки после него.
-            float flash = age < 2.0F ? age / 2.0F : Mth.clamp(1.0F - (age - 2.0F) / 9.0F, 0.0F, 1.0F);
-            if (flash > 0.0F) {
-                graphics.fill(0, 0, w, h, ((int) (flash * flash * flash * 0xFA) << 24) | 0xF4FBFF);
+        if(inkAge>=0&&inkAge<.3) {
+            int inkAlpha=(int)(36*(1-inkAge/.3));
+            for(int i=0;i<48;i++) {
+                double angle=i*Math.PI/24,r=hanziHeight*(.45+.25*inkAge/.3)*(1+.08*Math.sin(i*2.7));
+                int px=x+hanziWidth/2+(int)(Math.cos(angle)*r*.7);
+                int py=y+hanziHeight/2+(int)(Math.sin(angle)*r);
+                graphics.fill(px,py,px+1,py+1,(inkAlpha<<24)|0xA8DDE8);
             }
         }
+        if(fade<=.02)return;
+        int alpha=(int)(fade*255)<<24;
+        int textCentre=x+hanziWidth+12+textWidth/2;
+        seedText(graphics,font,name,textCentre-font.width(name),y+7,2,alpha,0xDFF8FF);
+        seedText(graphics,font,sub,textCentre-font.width(sub)/2,y+29,1,alpha,0xA8DDE8);
+    }
 
-        // Титр: появляется, когда вспышка отгорела, и гаснет до конца сцены.
-        float title = Mth.clamp((age - 24.0F) / 16.0F, 0.0F, 1.0F) * Mth.clamp((total - 30.0F - age) / 30.0F, 0.0F, 1.0F);
-        if (title > 0.02F) {
-            int alpha = Math.max(4, (int) (title * 255)) << 24;
-            Font font = minecraft.font;
-            Component name = Component.translatable("murim.meditation.seed_title");
-            graphics.pose().pushPose();
-            graphics.pose().translate(w / 2.0F, h * 0.24F, 0.0F);
-            graphics.pose().scale(2.0F, 2.0F, 1.0F);
-            graphics.drawString(font, name, -font.width(name) / 2, 0, alpha | 0xCFEFFF, true);
-            graphics.pose().popPose();
-            String imprint = ClientProfileState.profile().imprint();
-            if (imprint != null && imprint.contains(":")) {
-                ResourceLocation id = ResourceLocation.tryParse(imprint);
-                if (id != null) {
-                    Component method = Component.translatable("method." + id.getNamespace() + "." + id.getPath());
-                    graphics.drawString(font, method, (w - font.width(method)) / 2, (int) (h * 0.24F) + 24,
-                            alpha | 0x8FB8E8, true);
-                }
-            }
-        }
+    private static void seedText(GuiGraphics graphics,Font font,String text,int x,int y,int scale,int alpha,int rgb) {
+        graphics.pose().pushPose();
+        try {
+            graphics.pose().translate(x,y,0);
+            graphics.pose().scale(scale,scale,1);
+            // Fractional logical offsets become exactly one GUI pixel after scaling.
+            for(int[] d:new int[][]{{-1,0},{1,0},{0,-1},{0,1}})
+                graphics.drawString(font,text,d[0]/(float)scale,d[1]/(float)scale,alpha|0x07121C,false);
+            graphics.drawString(font,text,0,0,alpha|rgb,false);
+        } finally { graphics.pose().popPose(); }
     }
 
     /**
@@ -492,15 +527,17 @@ public final class MeditationHud {
     private static void rankUp(GuiGraphics graphics, Minecraft minecraft, float age) {
         int w = graphics.guiWidth();
         int h = graphics.guiHeight();
-        float total = ClientMeditationState.RANK_UP_TICKS;
-        if (ClientConfig.SCREEN_FLASHES.get()) {
-            float flash = age < 2.0F ? age / 2.0F : Mth.clamp(1.0F - (age - 2.0F) / 8.0F, 0.0F, 1.0F);
+        float total = ClientMeditationState.rankUpLength();
+        if (ClientConfig.SCREEN_FLASHES.get() && ClientMeditationState.rankUpRank() != 2 && ClientMeditationState.rankUpRank() != 3 && ClientMeditationState.rankUpRank() != 4) {
+            float flash = ClientMeditationState.rankUpRank() == 1
+                    ? (age < 7 ? (float)(.32 * Math.exp(-age/20.0*12)) : 0)
+                    : age < 2.0F ? age / 2.0F : Mth.clamp(1.0F - (age - 2.0F) / 8.0F, 0.0F, 1.0F);
             if (flash > 0.0F) {
                 // Вспышка слабее и в цвете ранга: серо-белая заливка на 0xB0 съедала фигуру
                 // на кадре выхода ауры (второе мнение codex 01.10).
                 int tint = switch (ClientMeditationState.rankUpRank()) {
-                    case 2 -> 0xFFE6A8; case 3 -> 0xFFD8EE; case 4 -> 0xF2F0FF; default -> 0xD8F4FF; };
-                graphics.fill(0, 0, w, h, ((int) (flash * flash * 0x58) << 24) | tint);
+                    case 2 -> 0xFFE6A8; case 3 -> 0xFFD8EE; case 4 -> 0xF2F0FF; default -> 0xC8F5FF; };
+                graphics.fill(0, 0, w, h, ((int) (ClientMeditationState.rankUpRank() == 1 ? flash * 255 : flash * flash * 0x58) << 24) | tint);
             }
         }
         // Титр — после пика выброса, не вместе с ним (второе мнение по кадрам 01.10).

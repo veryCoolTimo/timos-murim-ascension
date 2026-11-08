@@ -1,0 +1,40 @@
+{
+  "textures": {
+    "particle": "minecraft:block/green_terracotta",
+    "stem": "minecraft:block/green_terracotta"
+  },
+  "elements": [
+    {
+      "from": [
+        6,
+        0,
+        6
+      ],
+      "to": [
+        10,
+        3,
+        10
+      ],
+      "faces": {
+        "up": {
+          "texture": "#stem"
+        },
+        "down": {
+          "texture": "#stem"
+        },
+        "north": {
+          "texture": "#stem"
+        },
+        "south": {
+          "texture": "#stem"
+        },
+        "east": {
+          "texture": "#stem"
+        },
+        "west": {
+          "texture": "#stem"
+        }
+      }
+    }
+  ]
+}

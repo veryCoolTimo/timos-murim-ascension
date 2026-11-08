@@ -1,0 +1,22 @@
+{
+  "variants": {
+    "facing=down": {
+      "model": "murim:block/thousand_ginseng_plant"
+    },
+    "facing=up": {
+      "model": "murim:block/thousand_ginseng_plant"
+    },
+    "facing=north": {
+      "model": "murim:block/thousand_ginseng_plant"
+    },
+    "facing=east": {
+      "model": "murim:block/thousand_ginseng_plant"
+    },
+    "facing=south": {
+      "model": "murim:block/thousand_ginseng_plant"
+    },
+    "facing=west": {
+      "model": "murim:block/thousand_ginseng_plant"
+    }
+  }
+}

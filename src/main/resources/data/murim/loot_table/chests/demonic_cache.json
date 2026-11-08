@@ -6,29 +6,44 @@
       "conditions": [
         {
           "condition": "minecraft:random_chance",
-          "chance": 0.16
+          "chance": 0.3
         }
       ],
       "entries": [
         {
           "type": "minecraft:item",
-          "name": "murim:mountain_thunder_fist_manual"
+          "name": "murim:silver_tael",
+          "weight": 6,
+          "functions": [
+            {
+              "function": "minecraft:set_count",
+              "count": {
+                "type": "minecraft:uniform",
+                "min": 1,
+                "max": 3
+              }
+            }
+          ]
         },
         {
           "type": "minecraft:item",
-          "name": "murim:rift_palm_manual"
+          "name": "murim:pill_snow_plum",
+          "weight": 3,
+          "functions": [
+            {
+              "function": "minecraft:set_count",
+              "count": {
+                "type": "minecraft:uniform",
+                "min": 1,
+                "max": 2
+              }
+            }
+          ]
         },
         {
           "type": "minecraft:item",
-          "name": "murim:clear_sky_sword_manual"
-        },
-        {
-          "type": "minecraft:item",
-          "name": "murim:high_cloud_steps_manual"
-        },
-        {
-          "type": "minecraft:item",
-          "name": "murim:quiet_heart_guard_manual"
+          "name": "murim:pill_snow_plum",
+          "weight": 1
         }
       ]
     }

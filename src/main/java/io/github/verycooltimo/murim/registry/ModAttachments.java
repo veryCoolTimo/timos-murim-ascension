@@ -16,6 +16,16 @@ public final class ModAttachments {
     public static final DeferredRegister<AttachmentType<?>> ATTACHMENT_TYPES =
             DeferredRegister.create(NeoForgeRegistries.Keys.ATTACHMENT_TYPES, MurimMod.MODID);
 
+    /** Variant A: entity-local server timing; client receives pose/effect notifications only.
+     * No serialization/copyOnDeath: reconnects and respawns start unguarded. */
+    public static final Supplier<AttachmentType<io.github.verycooltimo.murim.combat.SwordGuardState>> SWORD_GUARD =
+            ATTACHMENT_TYPES.register("sword_guard", () -> AttachmentType.builder(
+                    io.github.verycooltimo.murim.combat.SwordGuardState::new).build());
+
+    public static final Supplier<AttachmentType<io.github.verycooltimo.murim.combat.WindGodState>> WIND_GOD =
+            ATTACHMENT_TYPES.register("wind_god", () -> AttachmentType.builder(
+                    io.github.verycooltimo.murim.combat.WindGodState::new).build());
+
     /**
      * Состояние применяемой техники. Без сериализации и без синхронизации: техника короче двух
      * секунд, клиент узнаёт о ней отдельным пакетом, а состояние, пережившее перезаход, вернуло бы
@@ -57,6 +67,11 @@ public final class ModAttachments {
                             .copyOnDeath()
                             .build());
 
+    /** Session-only diagnostic ring; no serialization, client sync or death copy (docs/adr/progress-command.md). */
+    public static final Supplier<AttachmentType<io.github.verycooltimo.murim.mastery.ProgressLog>> PROGRESS_LOG =
+            ATTACHMENT_TYPES.register("progress_log",
+                    () -> AttachmentType.builder(io.github.verycooltimo.murim.mastery.ProgressLog::new).build());
+
     /** Техники по слотам и выбранная (решение автора 01.10). Сохраняется и переживает смерть. */
     public static final Supplier<AttachmentType<io.github.verycooltimo.murim.mastery.Loadout>> LOADOUT =
             ATTACHMENT_TYPES.register("loadout",
@@ -94,6 +109,11 @@ public final class ModAttachments {
             ATTACHMENT_TYPES.register("aura_gust",
                     () -> AttachmentType.<int[]>builder(() -> new int[] {0, -1, -1}).build());
 
+    /** Incomplete observation: server-only, unsaved and not copied on death. */
+    public static final Supplier<AttachmentType<java.util.Map<String, io.github.verycooltimo.murim.quest.Observations.Look>>> OBSERVATIONS =
+            ATTACHMENT_TYPES.register("observations", () -> AttachmentType.<java.util.Map<String, io.github.verycooltimo.murim.quest.Observations.Look>>builder(
+                    () -> new java.util.HashMap<>()).build());
+
     /**
      * Шаги (docs/design/21-footwork-families.md): {бег активен 0/1, слой, тиков бега осталось,
      * отталкиваний потрачено, тик последнего перелёта, поворот в воздухе потрачен 0/1, семейство
@@ -105,9 +125,20 @@ public final class ModAttachments {
     public static final Supplier<AttachmentType<int[]>> LOCK =
             ATTACHMENT_TYPES.register("lock_on", () -> AttachmentType.<int[]>builder(() -> new int[] {-1}).build());
 
+    /** Сохраняется: иначе после выгрузки цель с выключенной нами гравитацией висит вечно (codex 22.10). */
+    public static final com.mojang.serialization.Codec<long[]> FROZEN_CODEC = com.mojang.serialization.Codec.LONG.listOf()
+            .xmap(l -> {
+                long[] a = new long[] {0L, 0L};
+                for (int i = 0; i < Math.min(2, l.size()); i++) {
+                    a[i] = l.get(i);
+                }
+                return a;
+            }, a -> java.util.List.of(a[0], a[1]));
+
     /** Цель, замороженная в воздухе приёмом: {игровое время конца, 1 — гравитацию выключили мы}. */
     public static final Supplier<AttachmentType<long[]>> FROZEN =
-            ATTACHMENT_TYPES.register("frozen", () -> AttachmentType.<long[]>builder(() -> new long[] {0L, 0L}).build());
+            ATTACHMENT_TYPES.register("frozen", () -> AttachmentType.<long[]>builder(() -> new long[] {0L, 0L})
+                    .serialize(FROZEN_CODEC).build());
 
     /**
      * Оглушение (combat/Stun): 1 — оглушён, 2 — оглушён и ИИ моба выключили мы (вернуть после).
@@ -127,8 +158,16 @@ public final class ModAttachments {
             ATTACHMENT_TYPES.register("technique_hold_end", () -> AttachmentType.builder(() -> 0L).build());
 
     /** Конец невосприимчивости босса к оглушению (игровое время); не сохраняется. */
+    /** Stun expiry in game ticks; server only, transient like HOLD_END. */
+    public static final Supplier<AttachmentType<Long>> STUN_END =
+            ATTACHMENT_TYPES.register("stun_end", () -> AttachmentType.builder(() -> 0L).build());
+
     public static final Supplier<AttachmentType<Long>> STUN_IMMUNE =
             ATTACHMENT_TYPES.register("stun_immune", () -> AttachmentType.builder(() -> 0L).build());
+
+    /** Game time until which the focus of a cup of plum-blossom tea lasts ({@code cultivation/TeaFocus}); transient. */
+    public static final Supplier<AttachmentType<Long>> TEA_FOCUS_END =
+            ATTACHMENT_TYPES.register("tea_focus_end", () -> AttachmentType.builder(() -> 0L).build());
 
     /** Earliest restart after a completed run, per family; transient and uses long game time. */
     public static final Supplier<AttachmentType<long[]>> FOOTWORK_RUN_READY =
@@ -204,6 +243,18 @@ public final class ModAttachments {
     public static final Supplier<AttachmentType<double[]>> SCATTER =
             ATTACHMENT_TYPES.register("plum_scatter",
                     () -> AttachmentType.<double[]>builder(() -> new double[] {0, 0, 0, 0, 0, 0, 0, 0, -1, 1, 1, 0, 0, 0, 0}).build());
+    /** Bamboo state is server-only and transient; BambooPayload carries confirmed visual facts. */
+    public static final Supplier<AttachmentType<io.github.verycooltimo.murim.technique.BambooExecutor.Cast>> BAMBOO_HAND =
+            ATTACHMENT_TYPES.register("bamboo_hand", () -> AttachmentType.<io.github.verycooltimo.murim.technique.BambooExecutor.Cast>builder(io.github.verycooltimo.murim.technique.BambooExecutor.Cast::new).build());
+    public static final Supplier<AttachmentType<Long>> BAMBOO_WEAK_END =
+            ATTACHMENT_TYPES.register("bamboo_weak_end", () -> AttachmentType.builder(() -> 0L).build());
+    public static final Supplier<AttachmentType<Long>> BAMBOO_ATTACK_END =
+            ATTACHMENT_TYPES.register("bamboo_attack_end", () -> AttachmentType.builder(() -> 0L).build());
+
+    /** Six Elements R forms: transient facts/timeline; never saved or copied on death. */
+    public static final Supplier<AttachmentType<io.github.verycooltimo.murim.technique.SixExecutor.Cast>> SIX_FORM =
+            ATTACHMENT_TYPES.register("six_form", () -> AttachmentType.<io.github.verycooltimo.murim.technique.SixExecutor.Cast>builder(io.github.verycooltimo.murim.technique.SixExecutor.Cast::new).build());
+
     /** Меч Падающего Цветка: см. FallingPetalExecutor. Не сохраняется — живёт одну технику. */
     public static final Supplier<AttachmentType<double[]>> FALLING_PETAL =
             ATTACHMENT_TYPES.register("falling_petal",
@@ -212,6 +263,9 @@ public final class ModAttachments {
     public static final Supplier<AttachmentType<double[]>> DOME =
             ATTACHMENT_TYPES.register("plum_dome",
                     () -> AttachmentType.<double[]>builder(() -> new double[] {0, 0, 0, 0, 1, 0, 0, 0, 0, 1}).build());
+    /** Full Bloom: transient server state, synchronized through BloomPayload. */
+    public static final Supplier<AttachmentType<io.github.verycooltimo.murim.technique.FullBloomExecutor.Cast>> FULL_BLOOM =
+            ATTACHMENT_TYPES.register("plum_full_bloom", () -> AttachmentType.<io.github.verycooltimo.murim.technique.FullBloomExecutor.Cast>builder(io.github.verycooltimo.murim.technique.FullBloomExecutor.Cast::new).build());
     /** Море Цветущей Сливы: см. SeaExecutor. Не сохраняется — живёт одну технику. */
     public static final Supplier<AttachmentType<double[]>> SEA =
             ATTACHMENT_TYPES.register("plum_sea",
@@ -256,7 +310,9 @@ public final class ModAttachments {
     public static final Supplier<AttachmentType<java.util.Map<net.minecraft.resources.ResourceLocation, Long>>> COOLDOWNS =
             ATTACHMENT_TYPES.register("cooldowns",
                     () -> AttachmentType.<java.util.Map<net.minecraft.resources.ResourceLocation, Long>>builder(() -> java.util.Map.of())
-                            .serialize(com.mojang.serialization.Codec.unboundedMap(net.minecraft.resources.ResourceLocation.CODEC, com.mojang.serialization.Codec.LONG))
+                            // Save migration 19.10: cooldowns of the removed Heavenly Demon arts are dropped on load.
+                            .serialize(com.mojang.serialization.Codec.unboundedMap(net.minecraft.resources.ResourceLocation.CODEC, com.mojang.serialization.Codec.LONG)
+                                    .xmap(map -> io.github.verycooltimo.murim.mastery.RemovedArts.scrub(map), map -> map))
                             .copyOnDeath()
                             .build());
 
@@ -308,6 +364,17 @@ public final class ModAttachments {
                             .copyOnDeath()
                             .build());
 
+    /**
+     * What the people of the sect have said to this player (recent lines per pool, event stamps, who reacted): the
+     * anti-repeat memory of {@code SectLines} and {@code SectEvents}. Saved, kept through death, not synced to the client.
+     */
+    public static final Supplier<AttachmentType<io.github.verycooltimo.murim.sect.SectMemory>> SECT_MEMORY =
+            ATTACHMENT_TYPES.register("sect_memory",
+                    () -> AttachmentType.builder(() -> io.github.verycooltimo.murim.sect.SectMemory.EMPTY)
+                            .serialize(io.github.verycooltimo.murim.sect.SectMemory.CODEC)
+                            .copyOnDeath()
+                            .build());
+
     /** Идущий разговор с NPC. Не сохраняется: разговор живёт, пока открыт экран. */
     public static final Supplier<AttachmentType<io.github.verycooltimo.murim.sect.DialogueService.Session>> DIALOGUE =
             ATTACHMENT_TYPES.register("dialogue",
@@ -317,6 +384,20 @@ public final class ModAttachments {
     public static final Supplier<AttachmentType<io.github.verycooltimo.murim.gear.BeltSword.State>> BELT_SWORD =
             ATTACHMENT_TYPES.register("belt_sword",
                     () -> AttachmentType.builder(io.github.verycooltimo.murim.gear.BeltSword.State::new).build());
+
+    /** Readable feedback history. Additive attachment; existing save codecs are unchanged. Copied on death. */
+    public static final Supplier<AttachmentType<java.util.List<net.minecraft.network.chat.Component>>> PLAYER_JOURNAL =
+            ATTACHMENT_TYPES.register("player_journal",
+                    () -> AttachmentType.<java.util.List<net.minecraft.network.chat.Component>>builder(() -> java.util.List.of())
+                            .serialize(io.github.verycooltimo.murim.sect.PlayerJournal.CODEC)
+                            .copyOnDeath().build());
+
+    /** Server-only, additive save field; missing in old saves means no originals read. */
+    // API: /tmp/mr-ref-1121/neoforge-src/net/neoforged/neoforge/attachment/AttachmentType.java#Builder
+    public static final Supplier<AttachmentType<java.util.List<net.minecraft.resources.ResourceLocation>>> READ_ORIGINALS =
+            ATTACHMENT_TYPES.register("read_originals", () -> AttachmentType
+                    .<java.util.List<net.minecraft.resources.ResourceLocation>>builder(() -> java.util.List.of())
+                    .serialize(net.minecraft.resources.ResourceLocation.CODEC.listOf()).copyOnDeath().build());
 
     private ModAttachments() {
     }

@@ -37,6 +37,6 @@ public final class TrainingNetwork {
         }
         BodyState s = player.getData(TrainingRegistry.BODY);
         PacketDistributor.sendToPlayer(player, new TrainingPayloads.Body(s.level(), (float) BodyRules.progress(s.points()),
-                (float) s.fatigue(), (float) BodyRules.dailyFactor(s.today()), s.bestClimb(), s.bestTrail()));
+                s.bestClimb(), s.bestTrail()));
     }
 }

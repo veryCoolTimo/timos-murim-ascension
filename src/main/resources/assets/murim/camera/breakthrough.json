@@ -1,0 +1,165 @@
+{
+  "_about": [
+    "Breakthrough camera (author 19.10). Edit here, then F3+T in game: no rebuild.",
+    "Each shot is keyframes over the shot's own time t = 0..1. The camera looks at one focus point on the seated body",
+    "and sits on a sphere around it:",
+    "  az    degrees around the player: 0 = in front of the face, +90 = player's right, 180 = behind the back",
+    "  pitch degrees of elevation of the camera: + = above looking down, - = below looking up (ground shot)",
+    "  dist  blocks from the focus point to the camera (a wall pulls it in, never closer than 0.4)",
+    "  focus height of the focus point above the player's feet (seated eyes ~0.95, lap ~0.45)",
+    "  roll  dutch tilt in degrees (zero when the shake slider is 0)",
+    "  fov   multiplier of the player's field of view (below 1 = a longer lens)",
+    "ease: in_out | linear | in | out.  rest: the t where the shot holds when the shake slider is 0.",
+    "mirror: true = the scene may turn the shot to the other side (the side with more room is chosen).",
+    "plans: per target rank (1 third, 2 second, 3 first, 4 Peak) the shots in order; share = part of the scene,",
+    "blend = ticks to glide in from the previous shot (0 = hard cut), flip = take the opposite side,",
+    "reverse = play the shot backwards (orbit ends where the crane starts, so the two join without a cut).",
+    "Scene length per rank is in Realm.breakthroughTicks (10.8 / 15.2 / 15.2 / 25.5 s; last shot holds through Realm.releaseTicks)."
+  ],
+  "return_ticks": 12,
+  "shots": {
+    "bt_wide": {
+      "id": 13, "ease": "linear", "rest": 0.5, "mirror": false,
+      "keys": [
+        { "t": 0.0, "az": 8, "pitch": 12, "dist": 2.4, "focus": 0.62, "fov": 0.7 },
+        { "t": 1.0, "az": 8, "pitch": 12, "dist": 2.4, "focus": 0.62, "fov": 0.7 }
+      ]
+    },
+    "closeup": {
+      "id": 1,
+      "ease": "in_out",
+      "rest": 0.15,
+      "mirror": true,
+      "keys": [
+        { "t": 0.0, "az": 0, "pitch": 8, "dist": 1.7, "focus": 1.0, "fov": 0.8 },
+        { "t": 0.4, "az": 8, "pitch": 48, "dist": 1.0, "focus": 0.42, "fov": 0.75 },
+        { "t": 1.0, "az": 18, "pitch": 14, "dist": 2.3, "focus": 0.8, "fov": 0.95 }
+      ]
+    },
+    "low": {
+      "id": 2,
+      "ease": "in_out",
+      "rest": 0.5,
+      "mirror": true,
+      "keys": [
+        { "t": 0.0, "az": 12, "pitch": -17, "dist": 2.1, "focus": 0.75, "roll": 3, "fov": 0.9 },
+        { "t": 1.0, "az": -12, "pitch": -7, "dist": 3.0, "focus": 0.65 }
+      ]
+    },
+    "shoulder": {
+      "id": 3,
+      "ease": "in_out",
+      "rest": 0.5,
+      "mirror": true,
+      "keys": [
+        { "t": 0.0, "az": 160, "pitch": 9, "dist": 2.3, "focus": 0.95, "fov": 0.92 },
+        { "t": 1.0, "az": 178, "pitch": 10, "dist": 2.6, "focus": 0.9, "fov": 0.95 }
+      ]
+    },
+    "orbit": {
+      "id": 4,
+      "ease": "in_out",
+      "rest": 0.5,
+      "mirror": true,
+      "keys": [
+        { "t": 0.0, "az": 25, "pitch": 6, "dist": 2.7, "focus": 0.7 },
+        { "t": 1.0, "az": 155, "pitch": 14, "dist": 2.7, "focus": 0.7 }
+      ]
+    },
+    "peak_in": {
+      "id": 6,
+      "ease": "in_out",
+      "rest": 0.5,
+      "mirror": true,
+      "keys": [
+        { "t": 0.0, "az": 4, "pitch": 6, "dist": 1.7, "focus": 0.9, "fov": 0.85 },
+        { "t": 1.0, "az": 14, "pitch": 12, "dist": 1.25, "focus": 0.95, "fov": 0.8 }
+      ]
+    },
+    "peak_wide": {
+      "id": 7,
+      "ease": "in_out",
+      "rest": 0.5,
+      "mirror": true,
+      "keys": [
+        { "t": 0.0, "az": 30, "pitch": 30, "dist": 4.4, "focus": 1.0, "fov": 1.0 },
+        { "t": 1.0, "az": -28, "pitch": 24, "dist": 3.9, "focus": 1.0, "fov": 1.0 }
+      ]
+    },
+    "peak_wide_high": {
+      "id": 8,
+      "ease": "in_out",
+      "rest": 0.5,
+      "mirror": true,
+      "keys": [
+        { "t": 0.0, "az": 22, "pitch": 44, "dist": 4.6, "focus": 0.8, "fov": 1.0, "roll": -3 },
+        { "t": 1.0, "az": -22, "pitch": 36, "dist": 4.2, "focus": 0.85, "fov": 1.0, "roll": 3 }
+      ]
+    },
+    "peak_wide_tall": {
+      "id": 10,
+      "ease": "in_out",
+      "rest": 0.5,
+      "mirror": true,
+      "keys": [
+        { "t": 0.0, "az": 25, "pitch": 12, "dist": 4.3, "focus": 1.7, "fov": 1.0 },
+        { "t": 1.0, "az": -25, "pitch": 8, "dist": 3.9, "focus": 1.7, "fov": 1.0 }
+      ]
+    },
+    "peak_wide_near": {
+      "id": 11,
+      "ease": "in_out",
+      "rest": 0.5,
+      "mirror": true,
+      "keys": [
+        { "t": 0.0, "az": 25, "pitch": 12, "dist": 3.1, "focus": 1.35, "fov": 1.0 },
+        { "t": 1.0, "az": -25, "pitch": 8, "dist": 2.8, "focus": 1.35, "fov": 1.0 }
+      ]
+    },
+    "peak_close": {
+      "id": 12,
+      "ease": "in_out",
+      "rest": 0.5,
+      "mirror": true,
+      "keys": [
+        { "t": 0.0, "az": 0, "pitch": 12, "dist": 2.4, "focus": 0.9, "fov": 0.9 },
+        { "t": 1.0, "az": 10, "pitch": 14, "dist": 2.7, "focus": 1.0, "fov": 0.95 }
+      ]
+    },
+    "peak_out": {
+      "id": 9,
+      "ease": "in_out",
+      "rest": 0.5,
+      "mirror": true,
+      "keys": [
+        { "t": 0.0, "az": -16, "pitch": 4, "dist": 2.0, "focus": 1.0, "fov": 0.85 },
+        { "t": 1.0, "az": -6, "pitch": 3, "dist": 1.4, "focus": 1.0, "fov": 0.78 }
+      ]
+    },
+    "crane": {
+      "id": 5,
+      "ease": "in_out",
+      "rest": 0.6,
+      "mirror": true,
+      "keys": [
+        { "t": 0.0, "az": 25, "pitch": 6, "dist": 2.7, "focus": 0.7 },
+        { "t": 0.55, "az": 38, "pitch": 48, "dist": 2.4, "focus": 0.65, "fov": 0.92 },
+        { "t": 1.0, "az": 28, "pitch": 52, "dist": 3.8, "focus": 0.8 }
+      ]
+    }
+  },
+  "plans": {
+    "1": [
+      { "shot": "bt_wide", "share": 1.0 }
+    ],
+    "2": [
+      { "shot": "bt_wide", "share": 1.0 }
+    ],
+    "3": [
+      { "shot": "bt_wide", "share": 1.0 }
+    ],
+    "4": [
+      { "shot": "bt_wide", "share": 1.0 }
+    ]
+  }
+}

@@ -1,0 +1,107 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "sect_seat_lotus": {
+      "loop": true,
+      "animation_length": 1.0,
+      "bones": {
+        "body": {
+          "position": {
+            "0.0": {
+              "vector": [
+                0,
+                -9,
+                0
+              ],
+              "easing": "linear"
+            },
+            "1": {
+              "vector": [
+                0,
+                -9,
+                0
+              ],
+              "easing": "linear"
+            }
+          }
+        },
+        "right_leg": {
+          "rotation": {
+            "0.0": {
+              "vector": [
+                -24.98,
+                -0.85,
+                82.35
+              ],
+              "easing": "linear"
+            },
+            "1": {
+              "vector": [
+                -24.98,
+                -0.85,
+                82.35
+              ],
+              "easing": "linear"
+            }
+          },
+          "position": {
+            "0.0": {
+              "vector": [
+                5,
+                0,
+                -2
+              ],
+              "easing": "linear"
+            },
+            "1": {
+              "vector": [
+                5,
+                0,
+                -2
+              ],
+              "easing": "linear"
+            }
+          }
+        },
+        "left_leg": {
+          "rotation": {
+            "0.0": {
+              "vector": [
+                -12.5,
+                0,
+                -82.5
+              ],
+              "easing": "linear"
+            },
+            "1": {
+              "vector": [
+                -12.5,
+                0,
+                -82.5
+              ],
+              "easing": "linear"
+            }
+          },
+          "position": {
+            "0.0": {
+              "vector": [
+                -5.5,
+                0,
+                -1
+              ],
+              "easing": "linear"
+            },
+            "1": {
+              "vector": [
+                -5.5,
+                0,
+                -1
+              ],
+              "easing": "linear"
+            }
+          }
+        }
+      }
+    }
+  }
+}

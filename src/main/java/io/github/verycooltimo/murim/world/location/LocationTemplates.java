@@ -26,7 +26,7 @@ import net.neoforged.neoforge.server.ServerLifecycleHooks;
  * Where captured locations live and the per-server cache of their manifests.
  *
  * <p>Two sources, like vanilla structure templates: the world's {@code generated/murim/structures/<id>/} (written by
- * {@code /murim capture}, used at once in the same world) and the mod's resources
+ * {@code /murim dev loc capture}, used at once in the same world) and the mod's resources
  * {@code data/murim/structure/<id>/} (committed to git — every world gets them). The world copy wins. In a dev
  * checkout the capture also writes into {@code src/main/resources}, so the author's edit becomes part of the mod
  * after a rebuild.

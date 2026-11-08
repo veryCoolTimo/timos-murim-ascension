@@ -1,0 +1,53 @@
+{
+  "targets": [
+    "dof_horizontal",
+    "dof_vertical"
+  ],
+  "passes": [
+    {
+      "name": "murim:dof",
+      "intarget": "minecraft:main",
+      "outtarget": "dof_horizontal",
+      "auxtargets": [
+        {
+          "name": "DepthSampler",
+          "id": "minecraft:main:depth"
+        }
+      ],
+      "uniforms": [
+        {
+          "name": "Direction",
+          "values": [
+            1,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "name": "murim:dof",
+      "intarget": "dof_horizontal",
+      "outtarget": "dof_vertical",
+      "auxtargets": [
+        {
+          "name": "DepthSampler",
+          "id": "minecraft:main:depth"
+        }
+      ],
+      "uniforms": [
+        {
+          "name": "Direction",
+          "values": [
+            0,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "name": "blit",
+      "intarget": "dof_vertical",
+      "outtarget": "minecraft:main"
+    }
+  ]
+}

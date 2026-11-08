@@ -1,0 +1,292 @@
+{
+  "variants": {
+    "facing=north,open=false,sink=0": {
+      "model": "murim:block/int_pill_box",
+      "y": 0
+    },
+    "facing=north,open=false,sink=1": {
+      "model": "murim:block/int_pill_box_sink_1",
+      "y": 0
+    },
+    "facing=north,open=false,sink=2": {
+      "model": "murim:block/int_pill_box_sink_2",
+      "y": 0
+    },
+    "facing=north,open=false,sink=3": {
+      "model": "murim:block/int_pill_box_sink_3",
+      "y": 0
+    },
+    "facing=north,open=false,sink=4": {
+      "model": "murim:block/int_pill_box_sink_4",
+      "y": 0
+    },
+    "facing=north,open=false,sink=5": {
+      "model": "murim:block/int_pill_box_sink_5",
+      "y": 0
+    },
+    "facing=north,open=false,sink=6": {
+      "model": "murim:block/int_pill_box_sink_6",
+      "y": 0
+    },
+    "facing=north,open=false,sink=7": {
+      "model": "murim:block/int_pill_box_sink_7",
+      "y": 0
+    },
+    "facing=north,open=false,sink=8": {
+      "model": "murim:block/int_pill_box_sink_8",
+      "y": 0
+    },
+    "facing=north,open=true,sink=0": {
+      "model": "murim:block/int_pill_box",
+      "y": 0
+    },
+    "facing=north,open=true,sink=1": {
+      "model": "murim:block/int_pill_box_sink_1",
+      "y": 0
+    },
+    "facing=north,open=true,sink=2": {
+      "model": "murim:block/int_pill_box_sink_2",
+      "y": 0
+    },
+    "facing=north,open=true,sink=3": {
+      "model": "murim:block/int_pill_box_sink_3",
+      "y": 0
+    },
+    "facing=north,open=true,sink=4": {
+      "model": "murim:block/int_pill_box_sink_4",
+      "y": 0
+    },
+    "facing=north,open=true,sink=5": {
+      "model": "murim:block/int_pill_box_sink_5",
+      "y": 0
+    },
+    "facing=north,open=true,sink=6": {
+      "model": "murim:block/int_pill_box_sink_6",
+      "y": 0
+    },
+    "facing=north,open=true,sink=7": {
+      "model": "murim:block/int_pill_box_sink_7",
+      "y": 0
+    },
+    "facing=north,open=true,sink=8": {
+      "model": "murim:block/int_pill_box_sink_8",
+      "y": 0
+    },
+    "facing=east,open=false,sink=0": {
+      "model": "murim:block/int_pill_box",
+      "y": 90
+    },
+    "facing=east,open=false,sink=1": {
+      "model": "murim:block/int_pill_box_sink_1",
+      "y": 90
+    },
+    "facing=east,open=false,sink=2": {
+      "model": "murim:block/int_pill_box_sink_2",
+      "y": 90
+    },
+    "facing=east,open=false,sink=3": {
+      "model": "murim:block/int_pill_box_sink_3",
+      "y": 90
+    },
+    "facing=east,open=false,sink=4": {
+      "model": "murim:block/int_pill_box_sink_4",
+      "y": 90
+    },
+    "facing=east,open=false,sink=5": {
+      "model": "murim:block/int_pill_box_sink_5",
+      "y": 90
+    },
+    "facing=east,open=false,sink=6": {
+      "model": "murim:block/int_pill_box_sink_6",
+      "y": 90
+    },
+    "facing=east,open=false,sink=7": {
+      "model": "murim:block/int_pill_box_sink_7",
+      "y": 90
+    },
+    "facing=east,open=false,sink=8": {
+      "model": "murim:block/int_pill_box_sink_8",
+      "y": 90
+    },
+    "facing=east,open=true,sink=0": {
+      "model": "murim:block/int_pill_box",
+      "y": 90
+    },
+    "facing=east,open=true,sink=1": {
+      "model": "murim:block/int_pill_box_sink_1",
+      "y": 90
+    },
+    "facing=east,open=true,sink=2": {
+      "model": "murim:block/int_pill_box_sink_2",
+      "y": 90
+    },
+    "facing=east,open=true,sink=3": {
+      "model": "murim:block/int_pill_box_sink_3",
+      "y": 90
+    },
+    "facing=east,open=true,sink=4": {
+      "model": "murim:block/int_pill_box_sink_4",
+      "y": 90
+    },
+    "facing=east,open=true,sink=5": {
+      "model": "murim:block/int_pill_box_sink_5",
+      "y": 90
+    },
+    "facing=east,open=true,sink=6": {
+      "model": "murim:block/int_pill_box_sink_6",
+      "y": 90
+    },
+    "facing=east,open=true,sink=7": {
+      "model": "murim:block/int_pill_box_sink_7",
+      "y": 90
+    },
+    "facing=east,open=true,sink=8": {
+      "model": "murim:block/int_pill_box_sink_8",
+      "y": 90
+    },
+    "facing=south,open=false,sink=0": {
+      "model": "murim:block/int_pill_box",
+      "y": 180
+    },
+    "facing=south,open=false,sink=1": {
+      "model": "murim:block/int_pill_box_sink_1",
+      "y": 180
+    },
+    "facing=south,open=false,sink=2": {
+      "model": "murim:block/int_pill_box_sink_2",
+      "y": 180
+    },
+    "facing=south,open=false,sink=3": {
+      "model": "murim:block/int_pill_box_sink_3",
+      "y": 180
+    },
+    "facing=south,open=false,sink=4": {
+      "model": "murim:block/int_pill_box_sink_4",
+      "y": 180
+    },
+    "facing=south,open=false,sink=5": {
+      "model": "murim:block/int_pill_box_sink_5",
+      "y": 180
+    },
+    "facing=south,open=false,sink=6": {
+      "model": "murim:block/int_pill_box_sink_6",
+      "y": 180
+    },
+    "facing=south,open=false,sink=7": {
+      "model": "murim:block/int_pill_box_sink_7",
+      "y": 180
+    },
+    "facing=south,open=false,sink=8": {
+      "model": "murim:block/int_pill_box_sink_8",
+      "y": 180
+    },
+    "facing=south,open=true,sink=0": {
+      "model": "murim:block/int_pill_box",
+      "y": 180
+    },
+    "facing=south,open=true,sink=1": {
+      "model": "murim:block/int_pill_box_sink_1",
+      "y": 180
+    },
+    "facing=south,open=true,sink=2": {
+      "model": "murim:block/int_pill_box_sink_2",
+      "y": 180
+    },
+    "facing=south,open=true,sink=3": {
+      "model": "murim:block/int_pill_box_sink_3",
+      "y": 180
+    },
+    "facing=south,open=true,sink=4": {
+      "model": "murim:block/int_pill_box_sink_4",
+      "y": 180
+    },
+    "facing=south,open=true,sink=5": {
+      "model": "murim:block/int_pill_box_sink_5",
+      "y": 180
+    },
+    "facing=south,open=true,sink=6": {
+      "model": "murim:block/int_pill_box_sink_6",
+      "y": 180
+    },
+    "facing=south,open=true,sink=7": {
+      "model": "murim:block/int_pill_box_sink_7",
+      "y": 180
+    },
+    "facing=south,open=true,sink=8": {
+      "model": "murim:block/int_pill_box_sink_8",
+      "y": 180
+    },
+    "facing=west,open=false,sink=0": {
+      "model": "murim:block/int_pill_box",
+      "y": 270
+    },
+    "facing=west,open=false,sink=1": {
+      "model": "murim:block/int_pill_box_sink_1",
+      "y": 270
+    },
+    "facing=west,open=false,sink=2": {
+      "model": "murim:block/int_pill_box_sink_2",
+      "y": 270
+    },
+    "facing=west,open=false,sink=3": {
+      "model": "murim:block/int_pill_box_sink_3",
+      "y": 270
+    },
+    "facing=west,open=false,sink=4": {
+      "model": "murim:block/int_pill_box_sink_4",
+      "y": 270
+    },
+    "facing=west,open=false,sink=5": {
+      "model": "murim:block/int_pill_box_sink_5",
+      "y": 270
+    },
+    "facing=west,open=false,sink=6": {
+      "model": "murim:block/int_pill_box_sink_6",
+      "y": 270
+    },
+    "facing=west,open=false,sink=7": {
+      "model": "murim:block/int_pill_box_sink_7",
+      "y": 270
+    },
+    "facing=west,open=false,sink=8": {
+      "model": "murim:block/int_pill_box_sink_8",
+      "y": 270
+    },
+    "facing=west,open=true,sink=0": {
+      "model": "murim:block/int_pill_box",
+      "y": 270
+    },
+    "facing=west,open=true,sink=1": {
+      "model": "murim:block/int_pill_box_sink_1",
+      "y": 270
+    },
+    "facing=west,open=true,sink=2": {
+      "model": "murim:block/int_pill_box_sink_2",
+      "y": 270
+    },
+    "facing=west,open=true,sink=3": {
+      "model": "murim:block/int_pill_box_sink_3",
+      "y": 270
+    },
+    "facing=west,open=true,sink=4": {
+      "model": "murim:block/int_pill_box_sink_4",
+      "y": 270
+    },
+    "facing=west,open=true,sink=5": {
+      "model": "murim:block/int_pill_box_sink_5",
+      "y": 270
+    },
+    "facing=west,open=true,sink=6": {
+      "model": "murim:block/int_pill_box_sink_6",
+      "y": 270
+    },
+    "facing=west,open=true,sink=7": {
+      "model": "murim:block/int_pill_box_sink_7",
+      "y": 270
+    },
+    "facing=west,open=true,sink=8": {
+      "model": "murim:block/int_pill_box_sink_8",
+      "y": 270
+    }
+  }
+}

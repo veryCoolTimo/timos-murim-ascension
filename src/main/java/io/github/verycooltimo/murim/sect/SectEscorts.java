@@ -19,6 +19,13 @@ public final class SectEscorts {
                 || guide.layout().at("dorm_2nd", 0, 0) != null;
         return ("room".equals(destination) || "mentor".equals(destination) || "elder".equals(destination)) && target(p, guide, destination) != null;
     }
+    /** Each test yard is a separate sect; live Hua layouts are recreated from the same world site.
+     * Source: SectDisciple#layout and SectLife#layout. Never follow a mentor from a neighbouring yard.
+     */
+    static boolean sameLayout(SectLayout a, SectLayout b) {
+        return a != null && (a == b || a instanceof SectLayout.Hua && b instanceof SectLayout.Hua
+                && java.util.Objects.equals(a.at("sect_gate", 0, 0), b.at("sect_gate", 0, 0)));
+    }
     public static Vec3 target(ServerPlayer p, SectDisciple guide, String destination) {
         SectLayout layout = guide.layout();
         if (layout == null) return null;
@@ -31,7 +38,7 @@ public final class SectEscorts {
         if (zone.isEmpty()) return null;
         {
             SectDisciple person = p.level().getEntitiesOfClass(SectDisciple.class, p.getBoundingBox().inflate(160),
-                    d -> d != guide && d.isAlive() && ("mentor".equals(destination) ? d.role() == SectRole.MENTOR : d.role() == SectRole.ELDER))
+                    d -> d != guide && d.isAlive() && sameLayout(layout, d.layout()) && ("mentor".equals(destination) ? d.role() == SectRole.MENTOR : d.role() == SectRole.ELDER))
                     .stream().min(java.util.Comparator.comparingDouble(d -> d.distanceToSqr(p))).orElse(null);
             if (person != null) return SectLife.stand(p.level(), person.position().add(1.5, 0, 0));
         }

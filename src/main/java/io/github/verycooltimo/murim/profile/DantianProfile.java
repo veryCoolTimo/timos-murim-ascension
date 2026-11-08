@@ -41,6 +41,11 @@ public record DantianProfile(
         int stage
 ) {
 
+    /** Save schema marker. Future fields must be optional with defaults (ADR 0084). */
+    public static final int VERSION = 1;
+
+    public int version() { return VERSION; }
+
     /** Последняя подступень Пика (вершина). Та же граница, что {@code Realm.STAGES - 1}. */
     public static final int MAX_STAGE = 2;
 
@@ -59,8 +64,11 @@ public record DantianProfile(
             Codec.DOUBLE.fieldOf("foundation").forGetter(DantianProfile::foundation),
             Codec.INT.fieldOf("rank").forGetter(DantianProfile::rank),
             // Необязательное: сохранения до подступеней (03.10) его не знают — начальная.
-            Codec.INT.optionalFieldOf("stage", 0).forGetter(DantianProfile::stage)
-    ).apply(i, DantianProfile::new));
+            Codec.INT.optionalFieldOf("stage", 0).forGetter(DantianProfile::stage),
+            // Always write the marker; an omitted legacy marker still defaults to the current schema.
+            Codec.INT.optionalFieldOf("version").xmap(v -> v.orElse(VERSION), java.util.Optional::of).forGetter(DantianProfile::version)
+    ).apply(i, (capacity, purity, meridians, nature, imprint, pool, circulating, foundation, rank, stage, version) ->
+            new DantianProfile(capacity, purity, meridians, nature, imprint, pool, circulating, foundation, rank, stage)));
 
     public DantianProfile {
         // Отрицанием: NaN проходит любое прямое сравнение и разрушил бы всю арифметику ци.
@@ -196,11 +204,16 @@ public record DantianProfile(
      * @return профиль после перелива за один тик
      */
     public DantianProfile circulateOnce() {
+        return circulateOnce(1.0D);
+    }
+
+    /** Same with the channels' speed multiplied (the Quick Recovery pill: 2.5 times faster for a while). */
+    public DantianProfile circulateOnce(double speed) {
         double room = maxCirculating() - circulating;
         if (room <= 0.0D || pool <= 0.0D) {
             return this;
         }
-        double moved = Math.min(Math.min(room, pool), circulationRate());
+        double moved = Math.min(Math.min(room, pool), circulationRate() * speed);
         return withPool(pool - moved).withCirculating(circulating + moved);
     }
 

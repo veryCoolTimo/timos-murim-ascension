@@ -2,5 +2,111 @@
   "parent": "minecraft:item/generated",
   "textures": {
     "layer0": "murim:item/method_scroll"
-  }
+  },
+  "overrides": [
+    {
+      "predicate": {
+        "murim:method_icon": 1
+      },
+      "model": "murim:item/method_scroll_six_harmonies"
+    },
+    {
+      "predicate": {
+        "murim:method_icon": 2
+      },
+      "model": "murim:item/method_scroll_street_strength"
+    },
+    {
+      "predicate": {
+        "murim:method_icon": 3
+      },
+      "model": "murim:item/method_scroll_mountain_root"
+    },
+    {
+      "predicate": {
+        "murim:method_icon": 4
+      },
+      "model": "murim:item/method_scroll_reverse_breathing"
+    },
+    {
+      "predicate": {
+        "murim:method_icon": 5
+      },
+      "model": "murim:item/method_scroll_holy_fire_breath"
+    },
+    {
+      "predicate": {
+        "murim:method_icon": 6
+      },
+      "model": "murim:item/method_scroll_tang_poison_breath"
+    },
+    {
+      "predicate": {
+        "murim:method_icon": 7
+      },
+      "model": "murim:item/method_scroll_purple_sky_qi"
+    },
+    {
+      "predicate": {
+        "murim:method_icon": 8
+      },
+      "model": "murim:item/method_scroll_purple_sky_divine"
+    },
+    {
+      "predicate": {
+        "murim:method_icon": 1.0,
+        "murim:original": 1.0
+      },
+      "model": "murim:item/method_scroll_six_harmonies_original"
+    },
+    {
+      "predicate": {
+        "murim:method_icon": 2.0,
+        "murim:original": 1.0
+      },
+      "model": "murim:item/method_scroll_street_strength_original"
+    },
+    {
+      "predicate": {
+        "murim:method_icon": 3.0,
+        "murim:original": 1.0
+      },
+      "model": "murim:item/method_scroll_mountain_root_original"
+    },
+    {
+      "predicate": {
+        "murim:method_icon": 4.0,
+        "murim:original": 1.0
+      },
+      "model": "murim:item/method_scroll_reverse_breathing_original"
+    },
+    {
+      "predicate": {
+        "murim:method_icon": 5.0,
+        "murim:original": 1.0
+      },
+      "model": "murim:item/method_scroll_holy_fire_breath_original"
+    },
+    {
+      "predicate": {
+        "murim:method_icon": 6.0,
+        "murim:original": 1.0
+      },
+      "model": "murim:item/method_scroll_tang_poison_breath_original"
+    },
+    {
+      "predicate": {
+        "murim:method_icon": 7.0,
+        "murim:original": 1.0
+      },
+      "model": "murim:item/method_scroll_purple_sky_qi_original"
+    },
+    {
+      "predicate": {
+        "murim:method_icon": 8.0,
+        "murim:original": 1.0
+      },
+      "model": "murim:item/method_scroll_purple_sky_divine_original"
+    }
+  ]
 }

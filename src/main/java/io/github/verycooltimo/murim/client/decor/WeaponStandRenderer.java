@@ -4,6 +4,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import io.github.verycooltimo.murim.MurimMod;
 import io.github.verycooltimo.murim.client.bedrock.BedrockItemRenderer;
+import io.github.verycooltimo.murim.decor.TabletopSupport;
 import io.github.verycooltimo.murim.decor.WeaponRacks;
 import io.github.verycooltimo.murim.decor.WeaponStandBlock;
 import io.github.verycooltimo.murim.decor.WeaponStandBlockEntity;
@@ -138,6 +139,9 @@ public final class WeaponStandRenderer implements BlockEntityRenderer<WeaponStan
         }
         boolean rack = block.kind() == WeaponStandBlock.Kind.RACK;
         pose.pushPose();
+        if (!rack) {
+            pose.translate(0, -state.getValue(TabletopSupport.SINK) / 16.0F, 0);
+        }
         // Into the north-facing model frame (same turn as the blockstate y rotation).
         pose.translate(0.5F, 0.0F, 0.5F);
         pose.mulPose(Axis.YP.rotationDegrees(180.0F - state.getValue(WeaponStandBlock.FACING).toYRot()));

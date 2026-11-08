@@ -20,58 +20,82 @@ class MasteryRulesTest {
     }
 
     @Test
-    @DisplayName("Бой качает напрямую, остаток ждёт осмысления")
+    @DisplayName("Бой качает напрямую: 80 % сразу, 20 % уходят в резерв искусства")
     void fightGrowsDirectly() {
-        MasteryRules.Gain gain = MasteryRules.experience(fresh(5), MasteryRules.Source.FIGHT, 4.0D, 0.0D, 0L);
-        assertEquals(2.0D, gain.progress().progress(), 1.0E-9D, "половина — сразу в освоение");
-        assertEquals(2.0D, gain.progress().unprocessed(), 1.0E-9D, "половина — неосмысленное");
+        MasteryRules.Gain gain = MasteryRules.experience(fresh(5), MasteryRules.Source.FIGHT, 4.0D, 0.0D);
+        assertEquals(3.2D, gain.progress().progress(), 1.0E-9D, "80 % — сразу в освоение");
+        assertEquals(0.8D, gain.progress().unprocessed(), 1.0E-9D, "20 % — резерв");
+        assertEquals(0.8D, MasteryRules.DIRECT_SHARE, 1.0E-12D);
     }
 
     @Test
     @DisplayName("Тренировка качает, но меньше боя")
     void trainingIsWeaker() {
-        double fight = MasteryRules.experience(fresh(5), MasteryRules.Source.FIGHT, 4.0D, 0.0D, 0L).progress().progress();
-        double training = MasteryRules.experience(fresh(5), MasteryRules.Source.TRAINING, 4.0D, 0.0D, 0L).progress().progress();
+        double fight = MasteryRules.experience(fresh(5), MasteryRules.Source.FIGHT, 4.0D, 0.0D).progress().progress();
+        double training = MasteryRules.experience(fresh(5), MasteryRules.Source.TRAINING, 4.0D, 0.0D).progress().progress();
         assertTrue(training > 0.0D && training < fight);
     }
 
     @Test
-    @DisplayName("Медитация после боя выгоднее, чем только бой")
-    void meditationPays() {
-        TechniqueProgress afterFight = MasteryRules.experience(fresh(5), MasteryRules.Source.FIGHT, 4.0D, 0.0D, 0L).progress();
-        TechniqueProgress p = afterFight;
-        for (int i = 0; i < 200; i++) {
-            p = MasteryRules.meditate(p, 0.0D, 0L).progress();
-        }
-        assertEquals(0.0D, p.unprocessed(), 1.0E-9D);
-        double total = p.stars() > 0 ? MasteryRules.need(0) + p.progress() : p.progress();
-        assertTrue(total > afterFight.progress() * 2.2D, "осмысленное должно дать заметно больше");
+    @DisplayName("Эхо или сон обрабатывают весь резерв без множителя: сумма опыта та же, что заработана")
+    void reserveIsProcessedWhole() {
+        TechniqueProgress afterFight = MasteryRules.experience(fresh(5), MasteryRules.Source.FIGHT, 40.0D, 0.0D).progress();
+        assertEquals(8.0D, afterFight.unprocessed(), 1.0E-9D);
+        MasteryRules.Gain gain = MasteryRules.process(afterFight, 12);
+        assertEquals(0.0D, gain.progress().unprocessed(), 1.0E-9D, "резерв обработан целиком");
+        // Ничего не прибавлено сверх заработанного: 32 + 8 = 40 из 40 очков первой звезды.
+        assertEquals(1, gain.progress().stars());
+        assertEquals(0.0D, gain.progress().progress(), 1.0E-9D);
+        TechniqueProgress partial = MasteryRules.experience(fresh(5), MasteryRules.Source.FIGHT, 10.0D, 0.0D).progress();
+        TechniqueProgress done = MasteryRules.process(partial, 12).progress();
+        assertEquals(10.0D, done.progress(), 1.0E-9D, "без множителя: что заработано, то и осмыслено");
+        // Повторная обработка пустого резерва ничего не меняет.
+        assertEquals(done, MasteryRules.process(done, 12).progress());
     }
 
     @Test
-    @DisplayName("Неосмысленное остывает к следующему дню")
-    void unprocessedCools() {
-        TechniqueProgress p = MasteryRules.experience(fresh(5), MasteryRules.Source.FIGHT, 4.0D, 0.0D, 3L).progress();
-        assertEquals(0.0D, MasteryRules.cool(p, 4L).unprocessed(), 1.0E-9D);
-        assertEquals(p.unprocessed(), MasteryRules.cool(p, 3L).unprocessed(), 1.0E-9D);
+    @DisplayName("Резерв не сгорает: правила не знают ни дня, ни остывания, он ждёт сколько угодно")
+    void reserveNeverBurns() {
+        TechniqueProgress p = MasteryRules.experience(fresh(5), MasteryRules.Source.FIGHT, 4.0D, 0.0D).progress();
+        for (int i = 0; i < 1000; i++) {
+            p = MasteryRules.experience(p, MasteryRules.Source.TRAINING, 0.0D, 0.0D).progress();
+        }
+        assertEquals(0.8D, p.unprocessed(), 1.0E-9D);
+        // Резерв копится от боя к бою и не теряется при росте звезды.
+        TechniqueProgress big = MasteryRules.experience(fresh(5), MasteryRules.Source.FIGHT, 100.0D, 0.0D).progress();
+        assertEquals(20.0D, big.unprocessed(), 1.0E-9D);
+        assertTrue(big.stars() >= 1);
     }
 
     @Test
     @DisplayName("Слои идут по порядку и упираются в предел манускрипта")
     void layersInOrderUpToCap() {
-        MasteryRules.Gain gain = MasteryRules.experience(fresh(2), MasteryRules.Source.FIGHT, 1000.0D, 0.0D, 0L);
+        MasteryRules.Gain gain = MasteryRules.experience(fresh(2), MasteryRules.Source.FIGHT, 1000.0D, 0.0D);
         assertEquals(List.of(1, 2), gain.starsReached());
         assertEquals(2, gain.progress().stars());
         assertTrue(gain.progress().atCap());
     }
 
     @Test
-    @DisplayName("Мудрый проходит нижние слои простой техники сразу, крутую — нет")
-    void wisdomSkipsBasicLayers() {
-        assertEquals(0, MasteryRules.startStars(TechniqueTier.BASIC, 5, 0.0D));
-        assertEquals(2, MasteryRules.startStars(TechniqueTier.BASIC, 5, 12.0D));
-        assertEquals(4, MasteryRules.startStars(TechniqueTier.BASIC, 5, 100.0D), "последний слой всегда своим трудом");
-        assertEquals(0, MasteryRules.startStars(TechniqueTier.SECRET, 10, 100.0D));
+    @DisplayName("Высота вершины даёт новому искусству звёзды, но не выше стены и не секретному (19.10, вместо мудрости)")
+    void heightGivesStartingStars() {
+        assertEquals(0, MasteryRules.startStars(TechniqueTier.BASIC, 5, 0, 12));
+        assertEquals(2, MasteryRules.startStars(TechniqueTier.BASIC, 5, 2, 12));
+        assertEquals(3, MasteryRules.startStars(TechniqueTier.ADVANCED, 12, 3, 12), "продвинутое тоже стартует с высоты");
+        assertEquals(4, MasteryRules.startStars(TechniqueTier.BASIC, 5, 100, 12), "последний слой всегда своим трудом");
+        assertEquals(0, MasteryRules.startStars(TechniqueTier.SECRET, 10, 100, 12));
+        assertEquals(0, MasteryRules.startStars(TechniqueTier.BASIC, 12, -3, 12));
+    }
+
+    @Test
+    @DisplayName("Мудрость больше не даёт старта: только широта, не больше +0,10")
+    void wisdomIsOnlyBreadth() {
+        assertEquals(1.0D, MasteryRules.wisdomFactor(0.0D), 1.0E-9D);
+        assertEquals(1.05D, MasteryRules.wisdomFactor(1.0D), 1.0E-9D);
+        assertEquals(1.10D, MasteryRules.wisdomFactor(2.0D), 1.0E-9D);
+        assertEquals(1.10D, MasteryRules.wisdomFactor(52.0D), 1.0E-9D, "13 постигнутых искусств были ×3,6");
+        assertEquals(1.10D, MasteryRules.wisdomFactor(1.0E9D), 1.0E-9D);
+        assertEquals(1.0D, MasteryRules.wisdomFactor(-5.0D), 1.0E-9D);
     }
 
     @Test
@@ -94,8 +118,8 @@ class MasteryRulesTest {
     @Test
     @DisplayName("Мудрость ускоряет освоение")
     void wisdomSpeedsUp() {
-        double plain = MasteryRules.experience(fresh(5), MasteryRules.Source.FIGHT, 4.0D, 0.0D, 0L).progress().progress();
-        double wise = MasteryRules.experience(fresh(5), MasteryRules.Source.FIGHT, 4.0D, 10.0D, 0L).progress().progress();
+        double plain = MasteryRules.experience(fresh(5), MasteryRules.Source.FIGHT, 4.0D, 0.0D).progress().progress();
+        double wise = MasteryRules.experience(fresh(5), MasteryRules.Source.FIGHT, 4.0D, 10.0D).progress().progress();
         assertTrue(wise > plain);
     }
 

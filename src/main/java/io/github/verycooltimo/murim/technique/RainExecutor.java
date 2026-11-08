@@ -77,7 +77,7 @@ public final class RainExecutor {
         player.invulnerableTime = Math.max(player.invulnerableTime, RainRules.DASH_TICKS + 4);
         float yaw = (float) Math.toDegrees(Math.atan2(-dir.x, dir.z));
         PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
-                new RainPayload(player.getId(), o, dest, yaw, executionTier, RainPayload.RELEASE, target == null ? -1 : target.getId()));
+                new RainPayload(player.getId(), o, dest, yaw, executionTier, RainPayload.RELEASE, target == null ? -1 : target.getId(), io.github.verycooltimo.murim.mastery.MasteryService.fullMastery(player, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("murim", "twenty_four_plum_rainfall")), io.github.verycooltimo.murim.mastery.MasteryService.stars(player, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("murim", "twenty_four_plum_rainfall"))));
         return false;
     }
 
@@ -111,7 +111,7 @@ public final class RainExecutor {
             r[6] = -1;
             player.setData(ModAttachments.RAIN, r);
             PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
-                    new RainPayload(player.getId(), player.position(), player.position(), 0.0F, executionTier, RainPayload.LOST, -1));
+                    new RainPayload(player.getId(), player.position(), player.position(), 0.0F, executionTier, RainPayload.LOST, -1, io.github.verycooltimo.murim.mastery.MasteryService.fullMastery(player, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("murim", "twenty_four_plum_rainfall")), io.github.verycooltimo.murim.mastery.MasteryService.stars(player, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("murim", "twenty_four_plum_rainfall"))));
             return;
         }
         // Метка: мастер прошёл у цели — замах «провёл» по ней, но урона нет.
@@ -123,7 +123,7 @@ public final class RainExecutor {
                 entrance(target, player);
                 PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
                         new RainPayload(player.getId(), new Vec3(r[0], r[1], r[2]), target.position(), 0.0F, executionTier,
-                                RainPayload.MARKED, target.getId()));
+                                RainPayload.MARKED, target.getId(), io.github.verycooltimo.murim.mastery.MasteryService.fullMastery(player, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("murim", "twenty_four_plum_rainfall")), io.github.verycooltimo.murim.mastery.MasteryService.stars(player, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("murim", "twenty_four_plum_rainfall"))));
             }
         }
         if (r[7] < 0.5D || target == null) {
@@ -155,7 +155,7 @@ public final class RainExecutor {
                 PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
                         new RainPayload(player.getId(), new Vec3(r[0], r[1], r[2]),
                                 target.position().add(0.0D, target.getBbHeight() * 0.5D, 0.0D), 0.0F, executionTier,
-                                RainPayload.HIT + k, target.getId()));
+                                RainPayload.HIT + k, target.getId(), io.github.verycooltimo.murim.mastery.MasteryService.fullMastery(player, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("murim", "twenty_four_plum_rainfall")), io.github.verycooltimo.murim.mastery.MasteryService.stars(player, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("murim", "twenty_four_plum_rainfall"))));
             }
         }
     }

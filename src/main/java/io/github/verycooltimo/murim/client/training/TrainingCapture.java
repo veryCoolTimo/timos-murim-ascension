@@ -5,7 +5,6 @@ import io.github.verycooltimo.murim.entity.SectDisciple;
 import io.github.verycooltimo.murim.entity.SectPose;
 import io.github.verycooltimo.murim.registry.ModEntities;
 import io.github.verycooltimo.murim.sect.SectRole;
-import io.github.verycooltimo.murim.training.Exercise;
 import io.github.verycooltimo.murim.training.Routes;
 import io.github.verycooltimo.murim.training.RouteRun;
 import io.github.verycooltimo.murim.training.TrainingRegistry;
@@ -40,15 +39,13 @@ import java.util.List;
 import java.util.function.IntConsumer;
 
 /**
- * Stand of body training ({@code ./capture.sh … training}, only {@code -Dmurim.capture=true}). Scenes
+ * Stand of the sect drills ({@code ./capture.sh … training}, only {@code -Dmurim.capture=true}). Scenes
  * ({@code MURIM_TRAIN_SCENES}, comma list, default {@code yard,player,climb}):
  *
  * <ul>
- *   <li>{@code yard} — five disciples in the training poses (squat, push-up, weighted push-up, horse stance, stone),
- *       each from 3.4 blocks, the row from 12 blocks by day and by night;</li>
- *   <li>{@code player} — the real player with real input: the crouch key is pressed by the stand
- *       ({@code keyShift.setDown}), the pitch and the items are set on the server; squats in rhythm, horse stance,
- *       weighted push-ups, push-ups, then the stone carried up a stair (player camera, third person front);</li>
+ *   <li>{@code yard} — five disciples in the training poses (squat, push-up, weighted push-up, horse stance, stone: the
+ *       NPCs' scenery, the player no longer does these), each from 3.4 blocks, the row from 12 blocks by day and night;</li>
+ *   <li>{@code player} — the real player carries the training stone up a stair (player camera, third person front);</li>
  *   <li>{@code climb} — the South Peak climb on the generated mountain: the player is moved ledge to ledge in small
  *       steps (no teleports — they void the run), falls off ledge 7 once and goes on from the rest ledge, HUD on.</li>
  * </ul>
@@ -313,19 +310,6 @@ public final class TrainingCapture {
         return server.getPlayerList().getPlayers().get(0);
     }
 
-    private static void pitch(IntegratedServer server, float pitch) {
-        Minecraft.getInstance().player.setXRot(pitch);
-        server.execute(() -> sp(server).setXRot(pitch));
-    }
-
-    private static void hand(IntegratedServer server, ItemStack stack) {
-        server.execute(() -> sp(server).setItemInHand(InteractionHand.MAIN_HAND, stack));
-    }
-
-    private static void crouch(boolean down) {
-        Minecraft.getInstance().options.keyShift.setDown(down);
-    }
-
     private static void player(Minecraft mc, IntegratedServer server) {
         Vec3[] spot = new Vec3[1];
         Runnable place = () -> server.execute(() -> {
@@ -346,42 +330,9 @@ public final class TrainingCapture {
             mc.options.hideGui = false;
             time(server, 6000L);
             place.run();
-            hand(server, ItemStack.EMPTY);
-            pitch(server, 0.0F);
+            server.execute(() -> sp(server).setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY));
             sideCam.run();
-        }, i -> crouch(false), false));
-        // Squats: double tap (ticks 0, 12), then a tap every 24 ticks (the beat), crouch held 4 ticks.
-        steps.add(new Step("p_squat", 180, 3, () -> { }, i -> {
-            int phase = i < 12 ? i : (i - 12) % Exercise.SQUAT.beat();
-            crouch(i < 12 ? i < 4 : phase < 4);
-        }, false));
-        // Horse stance: one more squat, stay down.
-        steps.add(new Step("p_horse", 120, 8, () -> { }, i -> crouch(true), false));
-        steps.add(new Step("p_rest", 100, 0, () -> { }, i -> crouch(false), false));
-        // Weighted push-ups: the slab in hand, look at the ground, tap — plank; a tap per beat; look up — stand.
-        steps.add(new Step("p_pushup_weighted", 230, 4, () -> {
-            // Higher and from behind the shoulder: the slab on the back must be seen.
-            Vec3 look = new Vec3(origin.getX() + 4.5D, origin.getY() + 0.3D, origin.getZ() - 9.5D);
-            stand(server, look, look.add(2.2D, 2.4D, 2.6D));
-            hand(server, new ItemStack(TrainingRegistry.WEIGHT_SLAB.get()));
-            pitch(server, 70.0F);
-        }, i -> {
-            int beat = Exercise.PUSHUP_WEIGHTED.beat();
-            crouch(i % beat < 5 && i < 200);
-            if (i == 205) {
-                pitch(server, 0.0F);
-            }
-        }, false));
-        steps.add(new Step("p_pushup", 160, 6, () -> {
-            sideCam.run();
-            hand(server, ItemStack.EMPTY);
-            pitch(server, 70.0F);
-        }, i -> {
-            crouch(i % Exercise.PUSHUP.beat() < 5 && i < 130);
-            if (i == 135) {
-                pitch(server, 0.0F);
-            }
-        }, false));
+        }, i -> { }, false));
         // The stone up the stair: player camera from the front, walk forward up the steps.
         steps.add(new Step("p_carry", 110, 5, () -> {
             // The player's own camera (third person, front): with a stand as the camera the client does not send its
@@ -402,7 +353,7 @@ public final class TrainingCapture {
         steps.add(new Step("p_carry_end", 20, 0, () -> {
             mc.player.zza = 0.0F;
             mc.options.keyUp.setDown(false);
-            hand(server, ItemStack.EMPTY);
+            server.execute(() -> sp(server).setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY));
         }, i -> { }, false));
     }
 

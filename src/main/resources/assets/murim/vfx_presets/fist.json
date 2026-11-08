@@ -1,0 +1,1284 @@
+{
+  "id": "essence_ribbon",
+  "version": 4,
+  "scene": "fist",
+  "background": "plate",
+  "units": "ленты: доли роста, Y вверх; вспышка: px, Y вниз; эмиттер: доли сцены, Y вниз; ключи: локальные секунды",
+  "layers": [
+    {
+      "path": [
+        [
+          -0.31703,
+          0.72694
+        ],
+        [
+          -0.31703,
+          0.51321
+        ],
+        [
+          -0.22645,
+          0.39663
+        ],
+        [
+          -0.15528,
+          0.26062
+        ],
+        [
+          -0.09705,
+          0.01774
+        ],
+        [
+          -0.03882,
+          -0.05998
+        ],
+        [
+          0.09058,
+          -0.18627
+        ],
+        [
+          0.18763,
+          -0.30285
+        ],
+        [
+          0.35585,
+          -0.41943
+        ]
+      ],
+      "colors": {
+        "core": "#fffbd6",
+        "body": "#ed9b42",
+        "edge": "#ed1606",
+        "col2": "#ffa6c9",
+        "spineCol": "#ffe5ac",
+        "smokeCol": "#ba2838",
+        "veinCol": "#ffe5a0"
+      },
+      "params": {
+        "start": 0.0,
+        "dur": 2.6,
+        "inDur": 0.7,
+        "easeIn": 3.0,
+        "outDur": 0.9,
+        "dir": 0.0,
+        "outMode": 0.0,
+        "delay": 0.12,
+        "width": 0.207,
+        "turns": 0.2,
+        "twistSpeed": 0.08,
+        "twistChaos": 0.1,
+        "twistFreq": 1.8,
+        "twistRand": 0.2,
+        "twistRandFreq": 0.9,
+        "curl": 0,
+        "edgeMin": 0.8,
+        "head": 0.025,
+        "tail": 0.025,
+        "turbAmp": 0.006,
+        "turbFreq": 2.5,
+        "turbSpeed": 0.25,
+        "depth": 0,
+        "density": 0.15,
+        "behind": 1,
+        "foldDetail": 0.5,
+        "pleat": 0.9,
+        "fan": 0.45,
+        "wisps": 3,
+        "hot": 0,
+        "sheets": 1,
+        "sheetSpread": 0.35,
+        "sheetAlpha": 0.35,
+        "sheetDiverge": 0.28,
+        "sheetTint": 0.2,
+        "nU": 9,
+        "nV": 2.8,
+        "oct": 5,
+        "evo": 0.5,
+        "flow": 0.9,
+        "contrast": 1.45,
+        "bright": -0.09,
+        "lumaSoft": 0.12,
+        "lumaCon": 1.5,
+        "accAmt": 0.12,
+        "accScale": 2.5,
+        "accCon": 2.4,
+        "accBri": 0.0,
+        "accEvo": 0.3,
+        "accFlow": 0.25,
+        "veinAmt": 0.15,
+        "veinScale": 3,
+        "veinSharp": 30,
+        "veinWarp": 0.85,
+        "flashAmt": 0,
+        "flashScale": 2.0,
+        "fibers": 26,
+        "fiberSharp": 32,
+        "fiberAmt": 0.12,
+        "fiberWarp": 0.12,
+        "ragged": 0.38,
+        "c2Amt": 0.25,
+        "c2Scale": 2.0,
+        "c2Con": 2.5,
+        "tintStart": 0,
+        "paletteMode": 4,
+        "paletteStart": 0.0,
+        "paletteEnd": 1.0,
+        "c2Along": 0.35,
+        "c2Noise": 0.12,
+        "coreOffset": 0.0,
+        "coreTint": 0,
+        "c2Across": 0.85,
+        "glitAmt": 0,
+        "glitDens": 3,
+        "glitSize": 0.065,
+        "glitTw": 4.0,
+        "glitCol": 0.2,
+        "frayTail": 0.35,
+        "frayHead": 0.45,
+        "frayLen": 0.18,
+        "smokeAmt": 0,
+        "smokeSpread": 3.5,
+        "smokeScale": 4.0,
+        "smokeWarp": 0.8,
+        "smokeThr": 0.45,
+        "smokeRise": 0.5,
+        "smokeEvo": 0.4,
+        "threads": 0,
+        "threadSpread": 0.11,
+        "threadW": 0.4,
+        "spine": 0,
+        "spineOff": -0.6,
+        "spineW": 2.0,
+        "spineExt": 0.0,
+        "spineGlow": 0.0,
+        "coreW": 0.075,
+        "coreAmt": 0.85,
+        "bodyAmt": 0.28,
+        "centerDim": 0.15,
+        "rimAmt": 0.12,
+        "crisp": 0.65,
+        "sideFade": 0.0,
+        "foldGlow": 1,
+        "haloTint": 0,
+        "halo": 2.8,
+        "haloAmt": 0.5,
+        "hazeTex": 0.12,
+        "pCount": 160,
+        "pSize": 1.8,
+        "pSpeed": 0.06,
+        "pLife": 2.5,
+        "pEdge": 0.7,
+        "pOut": 70,
+        "pCluster": 0.55,
+        "pSpread": 2,
+        "pBig": 0.35,
+        "bgBright": 1.0,
+        "shadow": 0,
+        "nearGlow": 0.5,
+        "bloomAmt": 0.12,
+        "lightSpread": 1,
+        "absorb": 0.8,
+        "ambAmt": 0.85,
+        "exposure": 1.75
+      },
+      "widthProfile": [
+        0.18,
+        0.3,
+        0.5,
+        0.88,
+        1.06,
+        0.3,
+        0.55,
+        0.36,
+        0.05
+      ],
+      "folds": [
+        {
+          "path": [
+            [
+              0.42,
+              0.0003130434782608696
+            ],
+            [
+              0.47916,
+              -0.0414608695652174
+            ],
+            [
+              0.5433486,
+              -0.14222608695652175
+            ],
+            [
+              0.6133314,
+              0.00017391304347826088
+            ],
+            [
+              0.6980114,
+              0.03326956521739131
+            ],
+            [
+              0.7892686,
+              0.04765217391304348
+            ],
+            [
+              0.90604,
+              -0.04080869565217392
+            ],
+            [
+              0.9760286,
+              0.014704347826086959
+            ]
+          ],
+          "width": 2.8,
+          "gain": 1.3
+        },
+        {
+          "path": [
+            [
+              0.43507999999999997,
+              0.16391304347826088
+            ],
+            [
+              0.5155086,
+              0.0967913043478261
+            ],
+            [
+              0.5793086,
+              0.22640869565217392
+            ],
+            [
+              0.6268686,
+              0.2832869565217392
+            ],
+            [
+              0.681,
+              0.12782608695652173
+            ],
+            [
+              0.7521486,
+              0.20653913043478264
+            ],
+            [
+              0.8410799999999999,
+              -0.05641739130434782
+            ],
+            [
+              0.9238286,
+              -0.08500869565217392
+            ]
+          ],
+          "width": 1.4,
+          "gain": 0.8
+        },
+        {
+          "path": [
+            [
+              0.48882859999999995,
+              -0.65
+            ],
+            [
+              0.5387086,
+              -0.65
+            ],
+            [
+              0.6001886,
+              -0.24626956521739135
+            ],
+            [
+              0.6547086,
+              -0.023373913043478262
+            ],
+            [
+              0.6516114,
+              -0.3350347826086957
+            ],
+            [
+              0.6028914,
+              -0.65
+            ]
+          ],
+          "width": 2,
+          "gain": 0.8
+        },
+        {
+          "path": [
+            [
+              0.5271086,
+              -0.65
+            ],
+            [
+              0.5909086,
+              -0.65
+            ],
+            [
+              0.6481314,
+              -0.2824782608695653
+            ],
+            [
+              0.7362913999999999,
+              -0.02302608695652174
+            ],
+            [
+              0.7869485999999999,
+              -0.43920000000000003
+            ],
+            [
+              0.8333486,
+              -0.21799130434782613
+            ]
+          ],
+          "width": 4,
+          "gain": 0.45
+        },
+        {
+          "path": [
+            [
+              0.46408,
+              0.17131304347826087
+            ],
+            [
+              0.4961714,
+              -0.17529565217391305
+            ],
+            [
+              0.5549485999999999,
+              -0.25279130434782615
+            ],
+            [
+              0.5994113999999999,
+              0.01891304347826087
+            ],
+            [
+              0.6585713999999999,
+              -0.07641739130434783
+            ],
+            [
+              0.7119314,
+              0.10978260869565218
+            ]
+          ],
+          "width": 0.7,
+          "gain": 1.2
+        },
+        {
+          "path": [
+            [
+              0.42,
+              -0.65
+            ],
+            [
+              0.4772286,
+              0.18114782608695654
+            ],
+            [
+              0.5750514,
+              0.26659130434782613
+            ],
+            [
+              0.6721086,
+              0.4405478260869566
+            ],
+            [
+              0.7208285999999999,
+              0.5052347826086957
+            ]
+          ],
+          "width": 6,
+          "gain": 0.35
+        },
+        {
+          "path": [
+            [
+              0.5317486,
+              -0.03629565217391305
+            ],
+            [
+              0.5711885999999999,
+              -0.18217391304347827
+            ],
+            [
+              0.6113999999999999,
+              -0.11056521739130437
+            ],
+            [
+              0.6260914,
+              -0.29324347826086955
+            ],
+            [
+              0.5994113999999999,
+              -0.6227391304347826
+            ],
+            [
+              0.5816285999999999,
+              -0.65
+            ]
+          ],
+          "width": 0.6,
+          "gain": 0.8
+        },
+        {
+          "path": [
+            [
+              0.32,
+              1.6
+            ],
+            [
+              0.37,
+              1.25
+            ],
+            [
+              0.43,
+              0.8
+            ],
+            [
+              0.5,
+              0
+            ]
+          ],
+          "width": 0.65,
+          "gain": 0.7
+        },
+        {
+          "path": [
+            [
+              0.32,
+              1.73
+            ],
+            [
+              0.37,
+              1.38
+            ],
+            [
+              0.43,
+              0.93
+            ],
+            [
+              0.5,
+              0
+            ]
+          ],
+          "width": 0.65,
+          "gain": 0.7
+        },
+        {
+          "path": [
+            [
+              0.32,
+              1.85
+            ],
+            [
+              0.37,
+              1.5
+            ],
+            [
+              0.43,
+              1.05
+            ],
+            [
+              0.5,
+              0
+            ]
+          ],
+          "width": 0.65,
+          "gain": 0.7
+        }
+      ],
+      "veils": [
+        {
+          "a": [
+            [
+              0.24,
+              0
+            ],
+            [
+              0.34,
+              0
+            ],
+            [
+              0.44,
+              0
+            ],
+            [
+              0.51,
+              0
+            ]
+          ],
+          "b": [
+            [
+              0.24,
+              0.3
+            ],
+            [
+              0.34,
+              1.9
+            ],
+            [
+              0.44,
+              1.7
+            ],
+            [
+              0.51,
+              0
+            ]
+          ],
+          "gain": 0.32
+        }
+      ],
+      "type": "ribbon"
+    },
+    {
+      "path": [
+        [
+          -0.02588,
+          0.89209
+        ],
+        [
+          0.05823,
+          0.85518
+        ],
+        [
+          0.13587,
+          0.78523
+        ],
+        [
+          0.16175,
+          0.70751
+        ],
+        [
+          0.24586,
+          0.61036
+        ],
+        [
+          0.34938,
+          0.47435
+        ]
+      ],
+      "colors": {
+        "core": "#fffbd6",
+        "body": "#ed9b42",
+        "edge": "#ed1606",
+        "col2": "#ffa6c9",
+        "spineCol": "#ffe5ac",
+        "smokeCol": "#ba2838",
+        "veinCol": "#ffe5a0"
+      },
+      "params": {
+        "start": 0.0,
+        "dur": 2.6,
+        "inDur": 0.7,
+        "easeIn": 3.0,
+        "outDur": 0.9,
+        "dir": 0.0,
+        "outMode": 0.0,
+        "delay": 0.12,
+        "width": 0.184,
+        "turns": 0.2,
+        "twistSpeed": 0.08,
+        "twistChaos": 0.1,
+        "twistFreq": 1.8,
+        "twistRand": 0.2,
+        "twistRandFreq": 0.9,
+        "curl": 0,
+        "edgeMin": 0.8,
+        "head": 0.025,
+        "tail": 0.025,
+        "turbAmp": 0.006,
+        "turbFreq": 2.5,
+        "turbSpeed": 0.25,
+        "depth": 0,
+        "density": 0.15,
+        "behind": 1,
+        "foldDetail": 0.5,
+        "pleat": 1.15,
+        "fan": 0.45,
+        "wisps": 10,
+        "hot": 1,
+        "sheets": 1,
+        "sheetSpread": 0.35,
+        "sheetAlpha": 0.35,
+        "sheetDiverge": 0.28,
+        "sheetTint": 0.2,
+        "nU": 9,
+        "nV": 2.8,
+        "oct": 5,
+        "evo": 0.5,
+        "flow": 0.9,
+        "contrast": 1.45,
+        "bright": -0.09,
+        "lumaSoft": 0.12,
+        "lumaCon": 1.5,
+        "accAmt": 0.12,
+        "accScale": 2.5,
+        "accCon": 2.4,
+        "accBri": 0.0,
+        "accEvo": 0.3,
+        "accFlow": 0.25,
+        "veinAmt": 0,
+        "veinScale": 3,
+        "veinSharp": 26,
+        "veinWarp": 0.85,
+        "flashAmt": 0,
+        "flashScale": 2.0,
+        "fibers": 26,
+        "fiberSharp": 32,
+        "fiberAmt": 0.03,
+        "fiberWarp": 0.12,
+        "ragged": 0.38,
+        "c2Amt": 0.25,
+        "c2Scale": 2.0,
+        "c2Con": 2.5,
+        "tintStart": 0,
+        "paletteMode": 0.0,
+        "paletteStart": 0.0,
+        "paletteEnd": 1.0,
+        "c2Along": 0.35,
+        "c2Noise": 0.12,
+        "coreOffset": 0.0,
+        "coreTint": 0,
+        "c2Across": 0.85,
+        "glitAmt": 0,
+        "glitDens": 3,
+        "glitSize": 0.065,
+        "glitTw": 4.0,
+        "glitCol": 0.2,
+        "frayTail": 0.35,
+        "frayHead": 0.45,
+        "frayLen": 0.18,
+        "smokeAmt": 0,
+        "smokeSpread": 3.5,
+        "smokeScale": 4.0,
+        "smokeWarp": 0.8,
+        "smokeThr": 0.45,
+        "smokeRise": 0.5,
+        "smokeEvo": 0.4,
+        "threads": 1,
+        "threadSpread": 0.11,
+        "threadW": 0.4,
+        "spine": 0,
+        "spineOff": -0.6,
+        "spineW": 2.0,
+        "spineExt": 0.0,
+        "spineGlow": 0.0,
+        "coreW": 0.16,
+        "coreAmt": 1.8,
+        "bodyAmt": 0.4,
+        "centerDim": 0.15,
+        "rimAmt": 0.12,
+        "crisp": 0.65,
+        "sideFade": 0.0,
+        "foldGlow": 1,
+        "haloTint": 0,
+        "halo": 3.4,
+        "haloAmt": 1,
+        "hazeTex": 0.12,
+        "pCount": 160,
+        "pSize": 1.8,
+        "pSpeed": 0.06,
+        "pLife": 2.5,
+        "pEdge": 0.7,
+        "pOut": 70,
+        "pCluster": 0.55,
+        "pSpread": 2,
+        "pBig": 0.35,
+        "bgBright": 1.0,
+        "shadow": 0,
+        "nearGlow": 0.5,
+        "bloomAmt": 0.12,
+        "lightSpread": 1,
+        "absorb": 0.8,
+        "ambAmt": 0.85,
+        "exposure": 1.75
+      },
+      "widthProfile": [
+        0.3,
+        0.95,
+        1.3,
+        0.5,
+        0.5,
+        0.08
+      ],
+      "folds": [
+        {
+          "path": [
+            [
+              0.048,
+              0.048973913043478264
+            ],
+            [
+              0.18133,
+              -0.03450434782608696
+            ],
+            [
+              0.28,
+              -0.1910521739130435
+            ],
+            [
+              0.4,
+              0.0005391304347826088
+            ],
+            [
+              0.636,
+              0.06671304347826087
+            ],
+            [
+              0.79467,
+              0.055095652173913046
+            ],
+            [
+              0.96067,
+              -0.014208695652173914
+            ]
+          ],
+          "width": 2.1,
+          "gain": 1
+        },
+        {
+          "path": [
+            [
+              0.15933,
+              -1.384895652173913
+            ],
+            [
+              0.248,
+              -0.5660347826086957
+            ],
+            [
+              0.38467,
+              -0.23842608695652176
+            ],
+            [
+              0.556,
+              -0.024843478260869568
+            ],
+            [
+              0.75667,
+              0.07648695652173913
+            ],
+            [
+              0.9,
+              -0.28183478260869566
+            ]
+          ],
+          "width": 3,
+          "gain": 0.5
+        },
+        {
+          "path": [
+            [
+              0.29333,
+              -1.9304521739130436
+            ],
+            [
+              0.336,
+              -1.1182869565217393
+            ],
+            [
+              0.41267,
+              -0.528904347826087
+            ],
+            [
+              0.46267,
+              -0.17732173913043478
+            ],
+            [
+              0.63667,
+              -0.10907826086956522
+            ]
+          ],
+          "width": 0.8,
+          "gain": 0.7
+        },
+        {
+          "path": [
+            [
+              0.09,
+              0.1979913043478261
+            ],
+            [
+              0.23533,
+              0.1513913043478261
+            ],
+            [
+              0.40533,
+              0.35187826086956525
+            ],
+            [
+              0.544,
+              0.17799130434782612
+            ],
+            [
+              0.76267,
+              0.024200000000000003
+            ]
+          ],
+          "width": 1,
+          "gain": 0.8
+        }
+      ],
+      "veils": [
+        {
+          "a": [
+            [
+              0.062,
+              0.02477
+            ],
+            [
+              0.24667,
+              0.23621
+            ],
+            [
+              0.46,
+              0.32604
+            ],
+            [
+              0.636,
+              0.06672
+            ],
+            [
+              0.828,
+              0.02104
+            ],
+            [
+              0.95067,
+              0.09837
+            ]
+          ],
+          "b": [
+            [
+              0.062,
+              0.02477
+            ],
+            [
+              0.176,
+              -0.37962
+            ],
+            [
+              0.21867,
+              -1.20259
+            ],
+            [
+              0.336,
+              -0.81977
+            ],
+            [
+              0.582,
+              -0.28699
+            ],
+            [
+              0.95067,
+              0.09837
+            ]
+          ],
+          "gain": 1.5
+        }
+      ],
+      "type": "ribbon"
+    },
+    {
+      "path": [
+        [
+          -0.35585,
+          0.97953
+        ],
+        [
+          -0.27821,
+          0.92124
+        ],
+        [
+          -0.25233,
+          0.86295
+        ],
+        [
+          -0.20704,
+          0.78523
+        ],
+        [
+          -0.16175,
+          0.70751
+        ],
+        [
+          -0.10352,
+          0.62979
+        ]
+      ],
+      "colors": {
+        "core": "#fffbd6",
+        "body": "#ed9b42",
+        "edge": "#ed1606",
+        "col2": "#ffa6c9",
+        "spineCol": "#ffe5ac",
+        "smokeCol": "#ba2838",
+        "veinCol": "#ffe5a0"
+      },
+      "params": {
+        "start": 0.0,
+        "dur": 2.6,
+        "inDur": 0.7,
+        "easeIn": 3.0,
+        "outDur": 0.9,
+        "dir": 0.0,
+        "outMode": 0.0,
+        "delay": 0.12,
+        "width": 0.07475,
+        "turns": 0.2,
+        "twistSpeed": 0.08,
+        "twistChaos": 0.1,
+        "twistFreq": 1.8,
+        "twistRand": 0.2,
+        "twistRandFreq": 0.9,
+        "curl": 0,
+        "edgeMin": 0.8,
+        "head": 0.025,
+        "tail": 0.025,
+        "turbAmp": 0.006,
+        "turbFreq": 2.5,
+        "turbSpeed": 0.25,
+        "depth": 0,
+        "density": 0.15,
+        "behind": 0,
+        "foldDetail": 0.4,
+        "pleat": 1.15,
+        "fan": 0.45,
+        "wisps": 10,
+        "hot": 1,
+        "sheets": 3,
+        "sheetSpread": 0.35,
+        "sheetAlpha": 0.35,
+        "sheetDiverge": 0.28,
+        "sheetTint": 0.2,
+        "nU": 9,
+        "nV": 2.8,
+        "oct": 5,
+        "evo": 0.5,
+        "flow": 0.9,
+        "contrast": 1.45,
+        "bright": -0.09,
+        "lumaSoft": 0.12,
+        "lumaCon": 1.5,
+        "accAmt": 0.12,
+        "accScale": 2.5,
+        "accCon": 2.4,
+        "accBri": 0.0,
+        "accEvo": 0.3,
+        "accFlow": 0.25,
+        "veinAmt": 0,
+        "veinScale": 3,
+        "veinSharp": 26,
+        "veinWarp": 0.85,
+        "flashAmt": 0,
+        "flashScale": 2.0,
+        "fibers": 26,
+        "fiberSharp": 32,
+        "fiberAmt": 0.03,
+        "fiberWarp": 0.12,
+        "ragged": 0.38,
+        "c2Amt": 0.25,
+        "c2Scale": 2.0,
+        "c2Con": 2.5,
+        "tintStart": 0,
+        "paletteMode": 0.0,
+        "paletteStart": 0.0,
+        "paletteEnd": 1.0,
+        "c2Along": 0.35,
+        "c2Noise": 0.12,
+        "coreOffset": 0.0,
+        "coreTint": 0,
+        "c2Across": 0.85,
+        "glitAmt": 0,
+        "glitDens": 3,
+        "glitSize": 0.065,
+        "glitTw": 4.0,
+        "glitCol": 0.2,
+        "frayTail": 0.35,
+        "frayHead": 0.45,
+        "frayLen": 0.18,
+        "smokeAmt": 0,
+        "smokeSpread": 3.5,
+        "smokeScale": 4.0,
+        "smokeWarp": 0.8,
+        "smokeThr": 0.45,
+        "smokeRise": 0.5,
+        "smokeEvo": 0.4,
+        "threads": 1,
+        "threadSpread": 0.11,
+        "threadW": 0.4,
+        "spine": 0,
+        "spineOff": -0.6,
+        "spineW": 2.0,
+        "spineExt": 0.0,
+        "spineGlow": 0.0,
+        "coreW": 0.16,
+        "coreAmt": 2,
+        "bodyAmt": 0.4,
+        "centerDim": 0.15,
+        "rimAmt": 0.12,
+        "crisp": 0.65,
+        "sideFade": 0.0,
+        "foldGlow": 1,
+        "haloTint": 0,
+        "halo": 3.4,
+        "haloAmt": 1,
+        "hazeTex": 0.12,
+        "pCount": 160,
+        "pSize": 1.8,
+        "pSpeed": 0.06,
+        "pLife": 2.5,
+        "pEdge": 0.7,
+        "pOut": 70,
+        "pCluster": 0.55,
+        "pSpread": 2,
+        "pBig": 0.35,
+        "bgBright": 1.0,
+        "shadow": 0,
+        "nearGlow": 0.5,
+        "bloomAmt": 0.12,
+        "lightSpread": 1,
+        "absorb": 0.8,
+        "ambAmt": 0.85,
+        "exposure": 1.75
+      },
+      "widthProfile": [
+        0.8,
+        1,
+        0.3,
+        0.4,
+        0.1,
+        0.01
+      ],
+      "folds": [
+        {
+          "path": [
+            [
+              0.08667,
+              -0.05741739130434784
+            ],
+            [
+              0.2,
+              0.0017304347826086958
+            ],
+            [
+              0.37533,
+              -0.1085913043478261
+            ],
+            [
+              0.482,
+              -0.06820000000000001
+            ],
+            [
+              0.67133,
+              0.0823913043478261
+            ],
+            [
+              0.83067,
+              -0.13521739130434784
+            ]
+          ],
+          "width": 1.2,
+          "gain": 1.5
+        },
+        {
+          "path": [
+            [
+              0.03067,
+              -2.070278260869565
+            ],
+            [
+              0.14933,
+              -0.7708695652173914
+            ],
+            [
+              0.18933,
+              0.12763478260869565
+            ],
+            [
+              0.368,
+              0.05239130434782609
+            ],
+            [
+              0.59267,
+              0.15062608695652177
+            ]
+          ],
+          "width": 0.8,
+          "gain": 0.8
+        }
+      ],
+      "type": "ribbon",
+      "veils": []
+    },
+    {
+      "path": [
+        [
+          0.0647,
+          1.44585
+        ],
+        [
+          0.03235,
+          1.23212
+        ],
+        [
+          0.02588,
+          1.07668
+        ],
+        [
+          0.07764,
+          0.97953
+        ],
+        [
+          0.12293,
+          0.88238
+        ],
+        [
+          0.13587,
+          0.7658
+        ]
+      ],
+      "colors": {
+        "core": "#ffe6dc",
+        "body": "#ad79ad",
+        "edge": "#d43534",
+        "col2": "#ff8466",
+        "spineCol": "#ffe5ac",
+        "smokeCol": "#ba2838",
+        "veinCol": "#ffe5a0"
+      },
+      "params": {
+        "start": 0.0,
+        "dur": 2.6,
+        "inDur": 0.7,
+        "easeIn": 3.0,
+        "outDur": 0.9,
+        "dir": 0.0,
+        "outMode": 0.0,
+        "delay": 0.12,
+        "width": 0.095,
+        "turns": 0.2,
+        "twistSpeed": 0.08,
+        "twistChaos": 0.1,
+        "twistFreq": 1.8,
+        "twistRand": 0.4,
+        "twistRandFreq": 0.9,
+        "curl": 0,
+        "edgeMin": 0.8,
+        "head": 0.025,
+        "tail": 0.025,
+        "turbAmp": 0.006,
+        "turbFreq": 2.5,
+        "turbSpeed": 0.25,
+        "depth": 0,
+        "density": 0.15,
+        "behind": 1,
+        "foldDetail": 1,
+        "pleat": 0.2,
+        "fan": 1,
+        "wisps": 2,
+        "hot": 0,
+        "sheets": 1,
+        "sheetSpread": 0.35,
+        "sheetAlpha": 0.35,
+        "sheetDiverge": 0.28,
+        "sheetTint": 0.2,
+        "nU": 9,
+        "nV": 2.8,
+        "oct": 5,
+        "evo": 0.5,
+        "flow": 0.9,
+        "contrast": 1.45,
+        "bright": -0.09,
+        "lumaSoft": 0.12,
+        "lumaCon": 1.5,
+        "accAmt": 0.12,
+        "accScale": 2.5,
+        "accCon": 2.4,
+        "accBri": 0.0,
+        "accEvo": 0.3,
+        "accFlow": 0.25,
+        "veinAmt": 0,
+        "veinScale": 3,
+        "veinSharp": 26,
+        "veinWarp": 0.85,
+        "flashAmt": 0,
+        "flashScale": 2.0,
+        "fibers": 26,
+        "fiberSharp": 32,
+        "fiberAmt": 0.03,
+        "fiberWarp": 0.12,
+        "ragged": 0.3,
+        "c2Amt": 0.85,
+        "c2Scale": 2.0,
+        "c2Con": 2.5,
+        "tintStart": 0,
+        "paletteMode": 0.0,
+        "paletteStart": 0.0,
+        "paletteEnd": 1.0,
+        "c2Along": 0.35,
+        "c2Noise": 0.12,
+        "coreOffset": 0.0,
+        "coreTint": 0.0,
+        "c2Across": 0.55,
+        "glitAmt": 0.6,
+        "glitDens": 3,
+        "glitSize": 0.065,
+        "glitTw": 4.0,
+        "glitCol": 0.2,
+        "frayTail": 0.35,
+        "frayHead": 0.45,
+        "frayLen": 0.18,
+        "smokeAmt": 0,
+        "smokeSpread": 3.5,
+        "smokeScale": 4.0,
+        "smokeWarp": 0.8,
+        "smokeThr": 0.45,
+        "smokeRise": 0.5,
+        "smokeEvo": 0.4,
+        "threads": 1,
+        "threadSpread": 0.11,
+        "threadW": 0.4,
+        "spine": 0,
+        "spineOff": -0.6,
+        "spineW": 2.0,
+        "spineExt": 0.0,
+        "spineGlow": 0.0,
+        "coreW": 0.13,
+        "coreAmt": 0.08,
+        "bodyAmt": 0.25,
+        "centerDim": 0.65,
+        "rimAmt": 0.12,
+        "crisp": 0.65,
+        "sideFade": 0.0,
+        "foldGlow": 2,
+        "haloTint": 0,
+        "halo": 3.4,
+        "haloAmt": 0.2,
+        "hazeTex": 0.12,
+        "pCount": 160,
+        "pSize": 1.8,
+        "pSpeed": 0.06,
+        "pLife": 2.5,
+        "pEdge": 0.7,
+        "pOut": 70,
+        "pCluster": 0.55,
+        "pSpread": 2,
+        "pBig": 0.35,
+        "bgBright": 1.0,
+        "shadow": 0,
+        "nearGlow": 0.3,
+        "bloomAmt": 0.12,
+        "lightSpread": 1,
+        "absorb": 0.8,
+        "ambAmt": 0.85,
+        "exposure": 1.7,
+        "noiseSeed": 4
+      },
+      "widthProfile": [
+        0.1,
+        0.5,
+        0.5,
+        0.35,
+        0.8,
+        0.2
+      ],
+      "type": "ribbon",
+      "folds": [],
+      "veils": []
+    }
+  ]
+}

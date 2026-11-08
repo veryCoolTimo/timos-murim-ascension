@@ -97,6 +97,7 @@ public final class ImpactFrames {
 
     @SubscribeEvent
     static void onRenderGuiPre(RenderGuiEvent.Pre event) {
+        if (io.github.verycooltimo.murim.client.sect.HeadIntroCamera.active()) return;
         int age = ticks - born;
         if (age < 0 || chainFailed || age >= SEQUENCE.length && (shown || age >= 3)) {
             return;

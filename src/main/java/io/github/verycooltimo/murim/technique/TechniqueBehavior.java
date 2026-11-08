@@ -28,11 +28,12 @@ public sealed interface TechniqueBehavior
                 TechniqueBehavior.PlumRiver,
                 TechniqueBehavior.PlumScatter,
                 TechniqueBehavior.PlumDome,
+                TechniqueBehavior.PlumFullBloom,
                 TechniqueBehavior.PlumSea,
                 TechniqueBehavior.PlumShower,
-                TechniqueBehavior.FallingPetal,
+                TechniqueBehavior.FallingPetal, TechniqueBehavior.SixForm,
                 TechniqueBehavior.TangDaggers,
-                TechniqueBehavior.SelfArt, TechniqueBehavior.JunkDance, TechniqueBehavior.DemonicArt {
+                TechniqueBehavior.SelfArt, TechniqueBehavior.BambooHand, TechniqueBehavior.JunkDance {
 
     ResourceLocation MELEE_ARC = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "melee_arc");
     ResourceLocation PROJECTILE_FAN = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "projectile_fan");
@@ -49,11 +50,19 @@ public sealed interface TechniqueBehavior
     ResourceLocation PLUM_RIVER = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "plum_river");
     ResourceLocation PLUM_SCATTER = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "plum_scatter");
     ResourceLocation PLUM_DOME = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "plum_dome");
+    ResourceLocation PLUM_FULL_BLOOM = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "plum_full_bloom");
     ResourceLocation PLUM_SEA = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "plum_sea");
     ResourceLocation FALLING_PETAL = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "falling_petal");
     ResourceLocation PLUM_SHOWER = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "plum_shower");
     ResourceLocation TANG_DAGGERS = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "tang_daggers");
     ResourceLocation SELF_ART = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "self_art");
+
+    ResourceLocation SIX_FORM = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "six_form");
+    record SixForm() implements TechniqueBehavior {
+        public static final MapCodec<SixForm> CODEC = MapCodec.unit(SixForm::new);
+        public float damage() { return 0.0F; }
+        public ResourceLocation type() { return SIX_FORM; }
+    }
 
     ResourceLocation type();
 
@@ -392,7 +401,13 @@ public sealed interface TechniqueBehavior
         }
     }
 
-    /** Меч 24 Движений Цветущей Сливы, «Море»: цветы обвивают летящие снаряды и опускают на землю, см. SeaRules. */
+    /** Chapter 296: rooted forward pressure, finite clash reserve and one release pass. */
+    record PlumFullBloom() implements TechniqueBehavior {
+        public static final MapCodec<PlumFullBloom> CODEC = MapCodec.unit(PlumFullBloom::new);
+        @Override public float damage() { return 0.0F; }
+        @Override public ResourceLocation type() { return PLUM_FULL_BLOOM; }
+    }
+
     record PlumSea() implements TechniqueBehavior {
         public static final MapCodec<PlumSea> CODEC = MapCodec.unit(PlumSea::new);
 
@@ -513,14 +528,10 @@ public sealed interface TechniqueBehavior
         }
     }
 
-    /** Six Heavenly Demon arts; executionTier tables live in DemonicRules, not unknown JSON fields. */
-    record DemonicArt(String art) implements TechniqueBehavior {
-        public static final ResourceLocation TYPE = DemonicRules.id("demonic_art");
-        public static final MapCodec<DemonicArt> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
-                Codec.STRING.fieldOf("art").forGetter(DemonicArt::art)).apply(i, DemonicArt::new));
-        public DemonicArt {
-            if (!DemonicRules.ARTS.contains(art)) throw new IllegalArgumentException("Unknown demonic art: " + art);
-        }
+    /** Mount Hua's empty-hand forms; timing and contacts belong to BambooExecutor. */
+    record BambooHand() implements TechniqueBehavior {
+        public static final ResourceLocation TYPE = ResourceLocation.fromNamespaceAndPath("murim", "bamboo_hand");
+        public static final MapCodec<BambooHand> CODEC = MapCodec.unit(BambooHand::new);
         @Override public float damage() { return 0; }
         @Override public ResourceLocation type() { return TYPE; }
     }
@@ -542,13 +553,15 @@ public sealed interface TechniqueBehavior
             Map.entry(PLUM_RIVER, PlumRiver.CODEC),
             Map.entry(PLUM_SCATTER, PlumScatter.CODEC),
             Map.entry(PLUM_DOME, PlumDome.CODEC),
+            Map.entry(PLUM_FULL_BLOOM, PlumFullBloom.CODEC),
             Map.entry(PLUM_SEA, PlumSea.CODEC),
             Map.entry(PLUM_SHOWER, PlumShower.CODEC),
             Map.entry(FALLING_PETAL, FallingPetal.CODEC),
+            Map.entry(SIX_FORM, SixForm.CODEC),
             Map.entry(TANG_DAGGERS, TangDaggers.CODEC),
             Map.entry(SELF_ART, SelfArt.CODEC),
-            Map.entry(JunkDance.TYPE, JunkDance.CODEC),
-            Map.entry(DemonicArt.TYPE, DemonicArt.CODEC));
+            Map.entry(BambooHand.TYPE, BambooHand.CODEC),
+            Map.entry(JunkDance.TYPE, JunkDance.CODEC));
 
     Codec<TechniqueBehavior> CODEC = ResourceLocation.CODEC
             .dispatch("type", TechniqueBehavior::type, type -> {

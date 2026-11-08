@@ -1,0 +1,14 @@
+{
+ "variants": {
+  "kind=0": {
+   "model": "murim:block/vault_pit_border"
+  },
+  "kind=1": {
+   "model": "murim:block/vault_pit_border",
+   "y": 90
+  },
+  "kind=2": {
+   "model": "murim:block/vault_pit_border_corner"
+  }
+ }
+}

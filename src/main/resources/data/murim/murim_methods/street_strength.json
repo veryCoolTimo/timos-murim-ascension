@@ -1,5 +1,6 @@
 {
   "id": "murim:street_strength",
+  "speed": [0.8, 1.5],
   "nature": "pure",
   "purity": 0.55,
   "capacity": 36.0,

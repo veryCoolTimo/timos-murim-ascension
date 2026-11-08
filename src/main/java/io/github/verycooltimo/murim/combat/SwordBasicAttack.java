@@ -21,6 +21,7 @@ public final class SwordBasicAttack {
     }
 
     public static void input(ServerPlayer player, int form, int targetId) {
+        if (DipperService.active(player)) return;
         tick(player); // A due hit must finish before another intent can replace it.
         if (player.getData(ModAttachments.BASIC_ATTACK).basic() != null) return;
         var id = FoundationService.active(player);
@@ -47,7 +48,9 @@ public final class SwordBasicAttack {
                 || target instanceof net.minecraft.world.entity.ExperienceOrb
                 || target instanceof net.minecraft.world.entity.projectile.AbstractArrow) return false;
         if (target instanceof Player other && !player.canHarmPlayer(other)) return false;
-        return player.canInteractWithEntity(target, 0.0D) && player.hasLineOfSight(target);
+        net.minecraft.world.phys.Vec3 toward = target.position().add(0, target.getBbHeight() * 0.5D, 0).subtract(player.getEyePosition());
+        return player.canInteractWithEntity(target, 0.0D) && player.hasLineOfSight(target)
+                && toward.normalize().dot(player.getLookAngle()) >= 0.5D;
     }
 
     public static void tick(ServerPlayer player) {

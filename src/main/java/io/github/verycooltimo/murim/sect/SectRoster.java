@@ -72,8 +72,8 @@ public record SectRoster(String key, SectRole role, int generation, String home,
             new SectRoster("yul_bin", SectRole.DISCIPLE, 3, "camp", "third_5", 1),
             new SectRoster("yul_san", SectRole.DISCIPLE, 3, "camp", "third_1", 2),
             new SectRoster("yul_ak", SectRole.DISCIPLE, 3, "camp", "third_4", 1),
-            // Привратник у подножия тропы Юль Ын — живёт там всегда.
-            new SectRoster("gatekeeper", SectRole.GATEKEEPER, 3, "gate", "third_7", 0),
+            // Привратник стоит у ворот секты, лицом к тропе (автор 21.10: раньше стоял у подножия тропы и не видел приходящих).
+            new SectRoster("gatekeeper", SectRole.GATEKEEPER, 3, "sect_gate", "third_7", 0),
             // Миряне при секте (поколение −1): управляющий хозяйством и слуги. Имена — простые мирские, не каноничные.
             new SectRoster("steward_mun", SectRole.STEWARD, LAY, "treasury", "lay_steward", 0),
             new SectRoster("cook_kim", SectRole.COOK, LAY, "dining", "lay_cook", 0),
@@ -229,6 +229,15 @@ public record SectRoster(String key, SectRole role, int generation, String home,
             case 2 -> 2;
             case 1 -> 3;
             default -> 4;
+        };
+    }
+
+    /** Сила удара по поколению: Гён бьёт сильнее Со, Тэ — сильнее Гён (спарринг со старшими читается по рангу). */
+    public double attackDamage() {
+        return switch (generation) {
+            case 1 -> 8.0D;
+            case 0 -> 10.0D;
+            default -> 6.0D;
         };
     }
 

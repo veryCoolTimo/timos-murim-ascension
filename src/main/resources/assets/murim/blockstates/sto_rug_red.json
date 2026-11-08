@@ -18,7 +18,7 @@
         "east": "false"
       },
       "apply": {
-        "model": "murim:block/sto_rug_red_edge",
+        "model": "murim:block/sto_rug_red_edge_b",
         "y": 90
       }
     },
@@ -36,7 +36,7 @@
         "west": "false"
       },
       "apply": {
-        "model": "murim:block/sto_rug_red_edge",
+        "model": "murim:block/sto_rug_red_edge_b",
         "y": 270
       }
     }

@@ -3,6 +3,7 @@ package io.github.verycooltimo.murim.item;
 import io.github.verycooltimo.murim.mastery.MasteryService;
 import io.github.verycooltimo.murim.mastery.TechniqueRequirement;
 import io.github.verycooltimo.murim.registry.ModDataComponents;
+import io.github.verycooltimo.murim.sect.PlayerJournal;
 import io.github.verycooltimo.murim.technique.TechniqueDefinition;
 import io.github.verycooltimo.murim.technique.TechniqueLoader;
 import net.minecraft.ChatFormatting;
@@ -42,7 +43,8 @@ public class TechniqueManualItem extends Item {
             return InteractionResultHolder.consume(stack);
         }
         ResourceLocation id = stack.get(ModDataComponents.TECHNIQUE.get());
-        if (id == null) {
+        // A generic manual that still names a removed art (RemovedArts, 19.10) teaches nothing and opens nothing.
+        if (id == null || io.github.verycooltimo.murim.mastery.RemovedArts.is(id)) {
             return InteractionResultHolder.consume(stack);
         }
         // 03.10 автор: книга открывается и читается, учит кнопка «Изучить» (ManualPayloads.Learn).
@@ -61,26 +63,32 @@ public class TechniqueManualItem extends Item {
             return;
         }
         ResourceLocation book = stack.get(ModDataComponents.TECHNIQUE.get());
-        if (book == null) {
+        if (book == null || io.github.verycooltimo.murim.mastery.RemovedArts.is(book)) {
             return;
         }
-        if (io.github.verycooltimo.murim.technique.DemonicRules.isArt(book) && !wanted.equals(book)) return;
         // Книга стиля учит любую свою форму (по очереди — через requires в данных формы).
         boolean styleBasic = io.github.verycooltimo.murim.technique.Styles.ofBasic(wanted)
                 .equals(io.github.verycooltimo.murim.technique.Styles.of(book)) && io.github.verycooltimo.murim.technique.Styles.of(book).isPresent();
         ResourceLocation id = wanted.equals(book) || styleBasic || io.github.verycooltimo.murim.technique.Styles.sameStyle(book, wanted) ? wanted : book;
         int depth = io.github.verycooltimo.murim.mastery.ManualDepth.stars(stack, book);
         MasteryService.Learn result = MasteryService.learn(serverPlayer, id, depth);
+        if (io.github.verycooltimo.murim.mastery.Originals.isOriginal(stack)) {
+            // A known art can receive its star even when the selected later form is still locked.
+            // For an unknown art read() does nothing unless normal learning above succeeded.
+            io.github.verycooltimo.murim.mastery.Originals.read(serverPlayer, stack, book);
+            serverPlayer.getCooldowns().addCooldown(item, 20);
+            return;
+        }
         if (result == MasteryService.Learn.ALREADY && io.github.verycooltimo.murim.mastery.PageService.nothingToTeach(
                 serverPlayer.getData(io.github.verycooltimo.murim.registry.ModAttachments.MASTERY), book, depth)) {
             // Дубликат (docs/design/24-bandit-camp.md §3): знакомая книга перечитывается в озарение.
             io.github.verycooltimo.murim.mastery.PageService.reread(serverPlayer, stack, book);
         } else if (result == MasteryService.Learn.ALREADY) {
-            serverPlayer.displayClientMessage(Component.translatable("murim.mastery.already",
-                    MasteryService.name(id)).withStyle(ChatFormatting.GRAY), true);
+            PlayerJournal.refuse(serverPlayer, Component.translatable("murim.mastery.already",
+                    MasteryService.name(id)).withStyle(ChatFormatting.GRAY));
         } else if (result == MasteryService.Learn.UNKNOWN) {
-            serverPlayer.displayClientMessage(Component.translatable("murim.method.unreadable")
-                    .withStyle(ChatFormatting.GRAY), true);
+            PlayerJournal.refuse(serverPlayer, Component.translatable("murim.method.unreadable")
+                    .withStyle(ChatFormatting.GRAY));
         }
         serverPlayer.getCooldowns().addCooldown(item, 20);
     }
@@ -93,14 +101,16 @@ public class TechniqueManualItem extends Item {
         }
         // Книга стиля называется стилем, а не первой формой.
         java.util.Optional<io.github.verycooltimo.murim.technique.Styles.Style> style = io.github.verycooltimo.murim.technique.Styles.of(id);
-        if (style.isPresent() && io.github.verycooltimo.murim.technique.Styles.sequential(style.get())) {
-            return Component.translatable("item.murim.technique_manual.named", Component.translatable(style.get().nameKey()));
+        if (style.isPresent() && (io.github.verycooltimo.murim.technique.Styles.sequential(style.get())
+                || style.get() == io.github.verycooltimo.murim.technique.Styles.BAMBOO_HAND)) {
+            return io.github.verycooltimo.murim.mastery.Originals.name(stack, "item.murim.technique_manual.named", "item.murim.technique_manual.original", Component.translatable(style.get().nameKey()));
         }
-        return Component.translatable("item.murim.technique_manual.named", MasteryService.name(id));
+        return io.github.verycooltimo.murim.mastery.Originals.name(stack, "item.murim.technique_manual.named", "item.murim.technique_manual.original", MasteryService.name(id));
     }
 
     @Override
     public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> lines, TooltipFlag flag) {
+        io.github.verycooltimo.murim.mastery.Originals.tooltip(stack, lines);
         ResourceLocation id = stack.get(ModDataComponents.TECHNIQUE.get());
         TechniqueDefinition definition = id == null ? null : TechniqueLoader.get(id);
         if (definition == null) {

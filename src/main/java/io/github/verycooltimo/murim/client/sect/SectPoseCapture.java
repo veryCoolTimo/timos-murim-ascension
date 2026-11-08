@@ -1,6 +1,9 @@
 package io.github.verycooltimo.murim.client.sect;
 
 import io.github.verycooltimo.murim.MurimMod;
+import io.github.verycooltimo.murim.decor.IntSeating;
+import io.github.verycooltimo.murim.entity.SeatStyle;
+import io.github.verycooltimo.murim.sect.SectLife;
 import io.github.verycooltimo.murim.entity.SectDisciple;
 import io.github.verycooltimo.murim.entity.SectPose;
 import io.github.verycooltimo.murim.registry.ModEntities;
@@ -45,7 +48,9 @@ import java.util.List;
 public final class SectPoseCapture {
 
     private static final boolean ENABLED = Boolean.getBoolean("murim.capture")
-            && "sectposes".equals(System.getProperty("murim.capture.technique"));
+            && "sectposes".equals(System.getProperty("murim.capture.technique"))
+            // MURIM_STAND=faces is the student model / face constructor stand (client/sect/face/StudentFaceCapture), same technique name.
+            && !"faces".equals(System.getenv("MURIM_STAND"));
 
     private static final String CAMERA = "murim_pose_cam";
     /** Шаг между людьми в ряду, блоков. */
@@ -69,8 +74,29 @@ public final class SectPoseCapture {
             new Spot("bow", SectPose.BOW, SectRole.LEADER),
             new Spot("guard", SectPose.GUARD, SectRole.GATEKEEPER),
             new Spot("talk", SectPose.TALK, SectRole.MENTOR),
-            // Для сравнения: старый лотос (sit без позы) — клип игрока на скелете NPC.
-            new Spot("lotus_legacy", SectPose.NONE, SectRole.DISCIPLE_A),
+            // Cook and servants (author 18.10): blockout clips with their props, a cauldron or a table in front where they work.
+            new Spot("cook_stir", SectPose.COOK_STIR, SectRole.COOK),
+            new Spot("cook_chop", SectPose.COOK_CHOP, SectRole.COOK),
+            new Spot("cook_taste", SectPose.COOK_TASTE, SectRole.COOK),
+            new Spot("cook_ladle", SectPose.COOK_LADLE, SectRole.COOK),
+            new Spot("tray", SectPose.TRAY, SectRole.WATER_CARRIER),
+            new Spot("tray_set", SectPose.TRAY_SET, SectRole.WATER_CARRIER),
+            new Spot("wipe", SectPose.WIPE, SectRole.WATER_CARRIER),
+            new Spot("sack", SectPose.SACK, SectRole.PORTER),
+            new Spot("jar", SectPose.JAR, SectRole.PORTER),
+            new Spot("hoe", SectPose.HOE, SectRole.GARDENER),
+            // The way of sitting follows the furniture (author 19.10): the head on the armchair (the throne), an elder reading on a
+            // chair, a disciple eating at a table on a chair, a disciple meditating on a cushion. Chair sit on the first three, lotus on the last.
+            new Spot("chair_head", SectPose.SIT, SectRole.LEADER),
+            new Spot("chair_read", SectPose.READ, SectRole.ELDER),
+            new Spot("chair_eat", SectPose.EAT, SectRole.DISCIPLE_A),
+            new Spot("cushion_med", SectPose.MEDITATE, SectRole.DISCIPLE_B),
+            // Only by MURIM_POSES=sleepwalk: a disciple asleep in a bed gets a path (nobody woke him): he must get up and walk, not walk lying.
+            new Spot("sleepwalk", SectPose.NONE, SectRole.DISCIPLE_A),
+            // Only by MURIM_POSES=seatwalk: the head sits on the armchair, a path starts: he gets up off the chair and walks.
+            new Spot("seatwalk", SectPose.SIT, SectRole.LEADER),
+            // Only by MURIM_POSES=point: the wandering disciple (docs/adr/0020) shows the way east, arm out, held; front = the player's view.
+            new Spot("point", SectPose.NONE, SectRole.SECOND),
             // Только по MURIM_POSES=draw: ролик «меч в ножнах → в руке → в ножнах».
             new Spot("draw", SectPose.NONE, SectRole.DISCIPLE),
             // Только по MURIM_POSES=model: ученик в покое спереди, сбоку и сзади вблизи (сверка текстуры с Blockbench).
@@ -104,6 +130,9 @@ public final class SectPoseCapture {
             new Mate(SectRole.PORTER, "lay_porter_0", SectPose.NONE), new Mate(SectRole.GARDENER, "lay_herbalist", SectPose.NONE),
             new Mate(SectRole.SWEEPER, "lay_sweeper", SectPose.NONE), new Mate(SectRole.WATER_CARRIER, "lay_water", SectPose.NONE));
 
+    /** The way the stand's wanderer points: east (Minecraft yaw -90). */
+    private static final float POINT_YAW = -90.0F;
+
     /** Ракурс: имя, расстояние, высота камеры, ночь, кадров, тиков между кадрами. */
     private record Shot(String name, double dist, double height, boolean night, int frames, int every) {
     }
@@ -111,7 +140,9 @@ public final class SectPoseCapture {
     private static final List<Shot> SHOTS = List.of(
             new Shot("near", 3.4D, 1.4D, false, 12, 5),
             new Shot("far", 10.0D, 2.0D, false, 6, 10),
-            new Shot("night", 10.0D, 2.0D, true, 4, 10));
+            new Shot("night", 10.0D, 2.0D, true, 4, 10),
+            // From the east, level with the seat: a chair sitter in profile (hips on the seat, legs forward, the robe over the thighs).
+            new Shot("side", 3.4D, 0.1D, false, 4, 5));
 
     /**
      * {@code MURIM_POSES=draw} — один ролик ученика третьего поколения: покой (рукоять в ножнах) → поединок с
@@ -121,6 +152,14 @@ public final class SectPoseCapture {
     /** Кадр ролика draw, на котором начинается поединок и на котором звонит колокол. */
     private static final int DRAW_SPAR_AT = 10;
     private static final int DRAW_STOP_AT = 75;
+
+    /**
+     * {@code MURIM_POSES=sleepwalk} / {@code seatwalk}: a person lies in a bed (sits on the throne), at frame {@link #PATH_AT} a path
+     * starts for him (nobody wakes him), the camera watches from the south-west: he must get up and walk upright.
+     */
+    private static final Shot PATH_SHOT = new Shot("walk", 4.2D, 0.5D, false, 56, 4);
+    private static final int PATH_AT = 16;
+    private static final java.util.Set<Integer> pathStarted = new java.util.HashSet<>();
 
     /** {@code MURIM_POSES=head}: покой с трёх сторон, шаг (туда и обратно мимо камеры), разговор. */
     private static final List<Shot> HEAD_SHOTS = List.of(new Shot("front", 5.8D, 0.2D, false, 2, 5),
@@ -175,7 +214,7 @@ public final class SectPoseCapture {
             String raw = System.getenv("MURIM_POSES");
             spots = new ArrayList<>();
             for (Spot s : ALL) {
-                if (raw == null || raw.isBlank() ? !List.of("draw", "model", "head", "head_watch", "first", "all").contains(s.name()) : List.of(raw.split(",")).contains(s.name())) {
+                if (raw == null || raw.isBlank() ? !List.of("draw", "model", "head", "head_watch", "first", "all", "sleepwalk", "seatwalk", "point").contains(s.name()) : List.of(raw.split(",")).contains(s.name())) {
                     spots.add(s);
                 }
             }
@@ -183,8 +222,15 @@ public final class SectPoseCapture {
                 shots = List.of(new Shot("front", 2.6D, 0.2D, false, 2, 5), new Shot("side", 2.6D, 0.2D, false, 2, 5),
                         new Shot("back", 2.6D, 0.2D, false, 2, 5));
             }
+            if ("point".equals(raw)) {
+                shots = List.of(new Shot("front", 4.2D, 0.5D, false, 4, 7), new Shot("side", 4.2D, 0.5D, false, 4, 7),
+                        new Shot("back", 4.2D, 0.5D, false, 3, 7));
+            }
             if ("draw".equals(raw)) {
                 shots = List.of(DRAW_SHOT);
+            }
+            if (!spots.isEmpty() && spots.stream().allMatch(sp -> "sleepwalk".equals(sp.name()) || "seatwalk".equals(sp.name()))) {
+                shots = List.of(PATH_SHOT);
             }
             if ("head".equals(raw)) {
                 shots = HEAD_SHOTS;
@@ -204,7 +250,7 @@ public final class SectPoseCapture {
         }
         follow(mc);
         // Разовые позы (поклон, прыжок) и формы строя повторяются, чтобы попасть в кадры.
-        if (mc.level.getGameTime() % 50 == 0) {
+        if (mc.level.getGameTime() % 70 == 0) {
             server.execute(() -> replay(server.overworld()));
         }
         wait++;
@@ -236,6 +282,11 @@ public final class SectPoseCapture {
         if (row(spot.name())) {
             int at = frame;
             server.execute(() -> headTimeline(server, shot, at));
+        }
+        if ("sleepwalk".equals(spot.name()) || "seatwalk".equals(spot.name())) {
+            int at = frame;
+            int who = index / shots.size();
+            server.execute(() -> pathTimeline(server, who, at));
         }
         String name = String.format("murim_pose_%s_%s_%02d.png", spot.name(), shot.name(), frame++);
         Screenshot.grab(mc.gameDirectory, name, mc.getMainRenderTarget(), m -> {
@@ -313,6 +364,24 @@ public final class SectPoseCapture {
                     level.setBlock(at.south(), Blocks.SPRUCE_TRAPDOOR.defaultBlockState(), 2);
                     level.setBlock(at.south().west(), Blocks.SPRUCE_TRAPDOOR.defaultBlockState(), 2);
                 }
+                case "cook_stir", "cook_taste" -> {
+                    // A pot at the stove: the cauldron (rim 16 px) in front of the cook.
+                    level.setBlock(at.south(), Blocks.CAULDRON.defaultBlockState(), 2);
+                }
+                case "cook_chop", "cook_ladle", "tray_set", "wipe" -> {
+                    // A table top (a top slab, 16 px; the dining tables are 14) in front.
+                    for (int dx = -1; dx <= 1; dx++) {
+                        level.setBlock(at.south().offset(dx, 0, 0), Blocks.SPRUCE_SLAB.defaultBlockState()
+                                .setValue(net.minecraft.world.level.block.SlabBlock.TYPE, net.minecraft.world.level.block.state.properties.SlabType.TOP), 2);
+                    }
+                }
+                case "hoe" -> {
+                    // A herb bed: farmland with sprouts in front of the herbalist.
+                    for (int dx = -1; dx <= 1; dx++) {
+                        level.setBlock(at.south().offset(dx, -1, 0), Blocks.FARMLAND.defaultBlockState(), 2);
+                        level.setBlock(at.south().offset(dx, 0, 0), Blocks.WHEAT.defaultBlockState(), 2);
+                    }
+                }
                 case "poles", "pole_step" -> {
                     // Столб в два блока и соседние столбы: «стоит на столбе».
                     for (int[] d : new int[][] {{0, 0}, {-2, -1}, {2, -1}, {0, -2}, {-1, 2}, {1, 1}}) {
@@ -323,11 +392,21 @@ public final class SectPoseCapture {
                     }
                     standY = y + 2;
                 }
-                case "sleep_bed" -> {
+                case "sleep_bed", "sleepwalk" -> {
                     BlockState foot = Blocks.WHITE_BED.defaultBlockState().setValue(BedBlock.FACING, Direction.NORTH).setValue(BedBlock.PART, BedPart.FOOT);
                     level.setBlock(at, foot, 3);
                     level.setBlock(at.north(), foot.setValue(BedBlock.PART, BedPart.HEAD), 3);
                 }
+                case "chair_head", "seatwalk" -> level.setBlock(at, IntSeating.ARMCHAIR.get().defaultBlockState(), 3);
+                case "chair_read" -> level.setBlock(at, IntSeating.CHAIR.get().defaultBlockState(), 3);
+                case "chair_eat" -> {
+                    // A chair and a long table in front of it (14 px): the sitter eats at the table.
+                    level.setBlock(at, IntSeating.CHAIR.get().defaultBlockState(), 3);
+                    level.setBlock(at.south(), IntSeating.LONG_TABLE.get().defaultBlockState(), 3);
+                    level.setBlock(at.south().east(), IntSeating.LONG_TABLE.get().defaultBlockState(), 3);
+                    level.setBlock(at.south().west(), IntSeating.LONG_TABLE.get().defaultBlockState(), 3);
+                }
+                case "cushion_med" -> level.setBlock(at, IntSeating.FLOOR_CUSHION.get().defaultBlockState(), 3);
                 default -> {
                 }
             }
@@ -340,11 +419,24 @@ public final class SectPoseCapture {
             npc.setYHeadRot(0.0F);
             npc.setYBodyRot(0.0F);
             level.addFreshEntity(npc);
-            if (s.pose().seated() && s.pose() != SectPose.SLEEP || "sleep".equals(s.name()) || "lotus_legacy".equals(s.name())) {
-                npc.sit(true);
+            boolean onSeat = s.name().startsWith("chair_") || "seatwalk".equals(s.name()) || "cushion_med".equals(s.name());
+            if (!onSeat && (s.pose().seated() && s.pose() != SectPose.SLEEP || "sleep".equals(s.name()))) {
+                npc.sit(io.github.verycooltimo.murim.entity.SeatStyle.LOTUS);
             }
-            if ("sleep_bed".equals(s.name())) {
+            if ("sleep_bed".equals(s.name()) || "sleepwalk".equals(s.name())) {
                 npc.startSleeping(at.north());
+            }
+            if (s.name().startsWith("chair_") || "seatwalk".equals(s.name())) {
+                // Put on the seat the way the routine does it: from the cell in front of the chair, gliding onto the seat top.
+                npc.moveTo(at.getX() + 0.5D, standY, at.getZ() + 1.5D, 0.0F, 0.0F);
+                npc.sit(SeatStyle.CHAIR, SectLife.seatTop(level, at), 0.0F, npc.position());
+            }
+            if ("cushion_med".equals(s.name())) {
+                npc.moveTo(at.getX() + 0.5D, standY + 2.5D / 16.0D, at.getZ() + 0.5D, 0.0F, 0.0F);
+                npc.sit(SeatStyle.LOTUS);
+            }
+            if ("chair_read".equals(s.name())) {
+                npc.hold(net.minecraft.world.item.Items.BOOK);
             }
             if ("draw".equals(s.name())) {
                 // Ролик: двое учеников с ИИ (поединку нужен бой), лицом друг к другу; без ключа — без распорядка.
@@ -371,7 +463,15 @@ public final class SectPoseCapture {
                 npcIds.add(mate.getId());
                 continue;
             }
+            if ("hoe".equals(s.name())) {
+                // The herbalist's tool is a vanilla hoe in the hand (ScheduleGoal#outfit).
+                npc.hold(net.minecraft.world.item.Items.WOODEN_HOE);
+            }
             npc.playPose(s.pose());
+            if ("point".equals(s.name())) {
+                npc.makeWanderer();
+                npc.pointAlong(POINT_YAW);
+            }
             npcIds.add(npc.getId());
             if (row(s.name())) {
                 // head: Тэ Гюн (своя модель по облику), старейшина (elder1) и ученик третьего поколения — масштаб;
@@ -434,6 +534,9 @@ public final class SectPoseCapture {
                 continue;
             }
             SectPose pose = spots.get(i).pose();
+            if ("point".equals(spots.get(i).name())) {
+                npc.pointAlong(POINT_YAW);
+            }
             if (!pose.loop()) {
                 npc.playPose(pose);
             } else if (pose == SectPose.FORM && level.getGameTime() % 100 == 0) {
@@ -552,6 +655,30 @@ public final class SectPoseCapture {
         }
     }
 
+    /** Server: the sleeper (the one on the throne) gets a path at frame {@link #PATH_AT} and nothing else; every few frames the state is logged. */
+    private static void pathTimeline(IntegratedServer server, int who, int at) {
+        ServerLevel level = server.overworld();
+        if (who >= npcIds.size() || !(level.getEntity(npcIds.get(who)) instanceof SectDisciple n)) {
+            return;
+        }
+        // A mob without AI is not on the ground for the pathfinder until it has ticked once with the AI on: switch it on early, then ask
+        // for the path every frame until there is one (the stand's way of «a path starts and nobody calls wake or stand up»).
+        if (at == PATH_AT - 3) {
+            n.setNoAi(false);
+        }
+        if (at >= PATH_AT && !pathStarted.contains(who)) {
+            n.getNavigation().moveTo(origin.getX() + who * SPACING + 6.5D, origin.getY(), origin.getZ() + 2.5D, 0.6D);
+            if (!n.getNavigation().isDone()) {
+                pathStarted.add(who);
+                MurimMod.LOGGER.info("Pose stand path: the path starts at frame {} (sleeping={} seat={})", at, n.isSleeping(), n.seatStyle());
+            }
+        }
+        if (at % 2 == 0) {
+            MurimMod.LOGGER.info("Pose stand path: frame {} sleeping={} seat={} pose={} pos={} nav_done={}", at, n.isSleeping(), n.seatStyle(),
+                    n.pose(), n.position(), n.getNavigation().isDone());
+        }
+    }
+
     /** Стенд «ряд из четырёх» (глава со старейшинами или первое поколение со вторым и третьим). */
     private static boolean row(String spot) {
         return "head".equals(spot) || "first".equals(spot) || "all".equals(spot);
@@ -567,6 +694,12 @@ public final class SectPoseCapture {
             return;
         }
         Vec3 look = target.position().add(0.0D, spots.get(i).pose().seated() ? 0.5D : 1.0D, 0.0D);
+        String sceneName = spots.get(i).name();
+        if ("sleepwalk".equals(sceneName) || "seatwalk".equals(sceneName)) {
+            look = look.add(1.8D, 0.0D, 0.8D);
+        } else if (sceneName.startsWith("chair_") || "cushion_med".equals(sceneName)) {
+            look = target.position().add(0.0D, 0.7D, 0.0D);
+        }
         if (row(spots.get(i).name()) && !shot.name().startsWith("pan")) {
             // Глава и ученик справа от него: камера смотрит в середину пары (на шаге — в середину пути).
             look = look.add(0.5D * headMates.size() * HEAD_GAP + ("walk".equals(shot.name()) ? 2.0D : 0.0D), 0.0D, 0.0D);

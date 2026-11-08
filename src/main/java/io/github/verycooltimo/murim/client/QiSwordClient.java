@@ -61,6 +61,9 @@ public final class QiSwordClient {
         }
     }
 
+    /** Accepted bare-hand cast; the next accepted sword action may manifest it again. */
+    public static void sheathe(int entityId) { MARKS.remove(entityId); }
+
     public static boolean visible(Player player) {
         if (!player.getMainHandItem().isEmpty()) {
             return false;

@@ -1,5 +1,6 @@
 {
   "id": "murim:six_harmonies",
+  "speed": [1.0, 2.0],
   "nature": "pure",
   "purity": 0.9,
   "capacity": 30.0,

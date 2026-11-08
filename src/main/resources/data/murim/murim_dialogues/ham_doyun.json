@@ -5,10 +5,51 @@
     {
       "when": [
         {
+          "free": false,
+          "min_standing": "first"
+        }
+      ],
+      "node": "busy_office"
+    },
+    {
+      "when": [
+        {
+          "min_standing": "first"
+        }
+      ],
+      "node": "office"
+    },
+    {
+      "when": [
+        {
           "free": false
         }
       ],
       "node": "busy"
+    },
+    {
+      "when": [
+        {
+          "flag": "quest.cache.asked",
+          "not_flag": "quest.cache.doyun"
+        },
+        {
+          "social": "quest:available:cache"
+        }
+      ],
+      "node": "cache_doyun"
+    },
+    {
+      "when": [
+        {
+          "flag": "clue.cache_scrap",
+          "not_flag": "quest.cache.doyun"
+        },
+        {
+          "social": "quest:available:cache"
+        }
+      ],
+      "node": "cache_doyun_interested"
     },
     {
       "when": [
@@ -65,6 +106,10 @@
       "gesture": "point",
       "options": [
         {
+          "text": "dialogue.murim.fragments.sources.ask",
+          "next": "fragment_sources"
+        },
+        {
           "text": "dialogue.murim.disciple.opt.join",
           "next": "joined"
         },
@@ -77,6 +122,10 @@
       "line": "dialogue.murim.ham_doyun.missed",
       "gesture": "shake",
       "options": [
+        {
+          "text": "dialogue.murim.fragments.sources.ask",
+          "next": "fragment_sources"
+        },
         {
           "text": "dialogue.murim.ham_doyun.opt.talk",
           "next": "topics"
@@ -126,6 +175,10 @@
       "gesture": "nod",
       "options": [
         {
+          "text": "dialogue.murim.fragments.sources.ask",
+          "next": "fragment_sources"
+        },
+        {
           "text": "dialogue.murim.social.opt.news",
           "next": "sect_news"
         },
@@ -139,7 +192,12 @@
         "@context"
       ],
       "gesture": "shake",
-      "options": []
+      "options": [
+        {
+          "text": "dialogue.murim.fragments.sources.ask",
+          "next": "fragment_sources"
+        }
+      ]
     },
     "greet": {
       "random": [
@@ -152,6 +210,23 @@
       ],
       "gesture": "nod",
       "options": [
+        {
+          "text": "dialogue.murim.fragments.sources.ask",
+          "next": "fragment_sources"
+        },
+        {
+          "text": "dialogue.murim.approach.opt.not_now",
+          "when": [
+            {
+              "social": "approaching"
+            }
+          ],
+          "actions": [
+            {
+              "type": "approach_decline"
+            }
+          ]
+        },
         {
           "text": "dialogue.murim.ham_doyun.opt.talk",
           "next": "topics"
@@ -199,8 +274,12 @@
       "args": [
         "player"
       ],
-      "gesture": "bow",
+      "gesture": "nod",
       "options": [
+        {
+          "text": "dialogue.murim.fragments.sources.ask",
+          "next": "fragment_sources"
+        },
         {
           "text": "dialogue.murim.ham_doyun.opt.talk",
           "next": "topics"
@@ -278,7 +357,8 @@
           "text": "dialogue.murim.ham_doyun.opt.progress",
           "when": [
             {
-              "min_standing": "graduate"
+              "min_standing": "graduate",
+              "below_standing": "first"
             }
           ],
           "next": "p_graduate"
@@ -390,6 +470,137 @@
         "@rumour"
       ],
       "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "office": {
+      "random": [
+        "dialogue.murim.ham_doyun.office.1",
+        "dialogue.murim.ham_doyun.office.2",
+        "dialogue.murim.ham_doyun.office.3"
+      ],
+      "args": [
+        "position"
+      ],
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.fragments.sources.ask",
+          "next": "fragment_sources"
+        },
+        {
+          "text": "dialogue.murim.approach.opt.not_now",
+          "when": [
+            {
+              "social": "approaching"
+            }
+          ],
+          "actions": [
+            {
+              "type": "approach_decline"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.office.opt.moment",
+          "next": "topics_office"
+        },
+        {
+          "text": "dialogue.murim.office.opt.spar",
+          "when": [
+            {
+              "free": true
+            }
+          ],
+          "next": "office_spar"
+        },
+        {
+          "text": "dialogue.murim.bout.opt.ring",
+          "when": [
+            {
+              "social": "progression:bout_menu"
+            }
+          ],
+          "actions": [
+            {
+              "type": "progression_menu",
+              "value": "bouts"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "topics_office": {
+      "random": [
+        "dialogue.murim.ham_doyun.topics_office.1",
+        "dialogue.murim.ham_doyun.topics_office.2"
+      ],
+      "args": [
+        "position"
+      ],
+      "gesture": "explain",
+      "options": [
+        {
+          "text": "dialogue.murim.ham_doyun.opt.sect",
+          "next": "t_sect"
+        },
+        {
+          "text": "dialogue.murim.ham_doyun.opt.bok_manseok",
+          "next": "t_manseok"
+        },
+        {
+          "text": "dialogue.murim.social.opt.news",
+          "next": "sect_news"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "cache_doyun": {
+      "line": "dialogue.murim.quest.cache.doyun",
+      "enter": [
+        {
+          "type": "set_flag",
+          "value": "quest.cache.doyun"
+        }
+      ],
+      "options": [
+        {
+          "text": "dialogue.murim.quest.cache.opt.hm",
+          "when": [
+            {
+              "social": "quest:available:cache"
+            }
+          ]
+        }
+      ]
+    },
+    "cache_doyun_interested": {
+      "line": "dialogue.murim.quest.cache.doyun_interested",
+      "options": [
+        {
+          "text": "dialogue.murim.quest.cache.opt.tell",
+          "next": "cache_doyun",
+          "when": [
+            {
+              "social": "quest:available:cache"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "fragment_sources": {
+      "line": "dialogue.murim.fragments.sources.ham_doyun",
       "options": [
         {
           "text": "dialogue.murim.opt.leave"

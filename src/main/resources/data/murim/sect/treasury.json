@@ -1,0 +1,16 @@
+{
+  "note": "Sect treasury and repair prices. Money is counted in wen (9 wen = 1 silver liang, see trade/Coins). A block is repairable only if a group matches its id ('*' matches any text, the first group wins); furniture, shrines, plaques, ores, plants and leaves are in no group on purpose.",
+  "start_liang": 300,
+  "daily_liang": 18,
+  "peddler_liang": 4,
+  "peddler_max": 2,
+  "contract_liang": { "camp": 6, "escort": 5, "herbs": 3 },
+  "big_repair_blocks": 8,
+  "groups": [
+    { "id": "roof", "wen": 4, "match": ["murim:roof_*", "murim:pailou_*"] },
+    { "id": "fine", "wen": 6, "match": ["murim:lattice_*", "murim:framed_panel*", "murim:round_window", "murim:hall_door", "murim:*lantern*", "murim:hua_balustrade", "minecraft:iron_bars", "minecraft:*_trapdoor"] },
+    { "id": "timber", "wen": 3, "match": ["murim:red_*", "murim:thick_*pillar", "murim:beam_stub", "murim:simple_bracket", "murim:studded_band", "murim:plum_planks", "murim:plum_slab", "murim:plum_stairs", "murim:plum_wood", "murim:plum_log", "murim:stripped_plum_log", "minecraft:*_planks", "minecraft:*_stairs", "minecraft:*_slab", "minecraft:*_fence", "minecraft:*_log", "minecraft:*_wood"] },
+    { "id": "masonry", "wen": 2, "match": ["murim:hua_*", "murim:polished_hua_granite*", "murim:grey_brick*", "murim:plaster*", "murim:thin_wall_*", "murim:cracked_plaster", "murim:floor_tile*", "minecraft:*_brick*", "minecraft:*_wall"] },
+    { "id": "earth", "wen": 1, "match": ["minecraft:stone", "minecraft:dirt", "minecraft:coarse_dirt", "minecraft:grass_block", "minecraft:gravel", "minecraft:granite", "minecraft:andesite", "minecraft:cobblestone", "minecraft:mossy_cobblestone", "minecraft:tuff", "minecraft:deepslate"] }
+  ]
+}

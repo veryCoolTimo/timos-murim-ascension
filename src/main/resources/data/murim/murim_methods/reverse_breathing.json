@@ -1,5 +1,6 @@
 {
   "id": "murim:reverse_breathing",
+  "speed": [1.5, 3.5],
   "nature": "dead",
   "purity": 0.6,
   "capacity": 34.0,

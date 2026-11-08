@@ -90,7 +90,7 @@ public final class HuaRegrade implements MountHuaChunkWriter.RegradeAccess {
 
     public static HuaRegrade plan(ServerLevel world, MountHuaSite site, List<MountHuaPlan.Zone> zones) {
         return plan(world, site, zones, (x, z) -> (int) Math.round(site.worldY(site.shape().height(
-                site.localU(x + 0.5, z + 0.5), site.localV(x + 0.5, z + 0.5)))));
+                site.centerU(x, z), site.centerV(x, z)))));
     }
 
     /** Test seam for a small synthetic pad; every preservation/write code path is shared. */
@@ -146,8 +146,8 @@ public final class HuaRegrade implements MountHuaChunkWriter.RegradeAccess {
         return d;
     }
     private MountHuaPlan.Zone selectedPad(int x, int z) {
-        int u = (int) Math.floor(site.localU(x + 0.5, z + 0.5));
-        int v = (int) Math.floor(site.localV(x + 0.5, z + 0.5));
+        int u = (int) Math.floor(site.centerU(x, z));
+        int v = (int) Math.floor(site.centerV(x, z));
         return zones.stream().filter(p -> inside(u, v, rectangle(p))).findFirst().orElse(null);
     }
     private int ground(int x, int z) {
@@ -173,7 +173,7 @@ public final class HuaRegrade implements MountHuaChunkWriter.RegradeAccess {
         }
         for (int z = bounds.minZ(); z <= bounds.maxZ(); z++) {
             for (int x = bounds.minX(); x <= bounds.maxX(); x++) {
-                double u = site.localU(x + 0.5, z + 0.5), v = site.localV(x + 0.5, z + 0.5);
+                double u = site.centerU(x, z), v = site.centerV(x, z);
                 double d = distance(u, v);
                 if (d >= MARGIN) continue;
                 // Neighbouring terraces keep their own elevation and authored blocks.
@@ -257,8 +257,8 @@ public final class HuaRegrade implements MountHuaChunkWriter.RegradeAccess {
             BlockPos column = BlockPos.of(entry.getKey());
             int x = column.getX(), z = column.getZ();
             var pad = selectedPad(x, z);
-            int u = (int) Math.floor(site.localU(x + 0.5, z + 0.5));
-            int v = (int) Math.floor(site.localV(x + 0.5, z + 0.5));
+            int u = (int) Math.floor(site.centerU(x, z));
+            int v = (int) Math.floor(site.centerV(x, z));
             if (pad == null) continue;
             Floor floor = floors.get(pad.id());
             if (floor == null) continue;
@@ -558,8 +558,8 @@ public final class HuaRegrade implements MountHuaChunkWriter.RegradeAccess {
     }
     @Override public boolean treeFits(int x, int z, int radius) {
         for (int dx = -radius; dx <= radius; dx++) for (int dz = -radius; dz <= radius; dz++) {
-            if (MountHuaPlan.clearFootprint(site.localU(x + dx + 0.5, z + dz + 0.5),
-                    site.localV(x + dx + 0.5, z + dz + 0.5))) return false;
+            if (MountHuaPlan.clearFootprint(site.centerU(x + dx, z + dz),
+                    site.centerV(x + dx, z + dz))) return false;
             long k = key(x + dx, z + dz);
             Column c = columns.get(k);
             if (c == null || protectedColumns.contains(k)

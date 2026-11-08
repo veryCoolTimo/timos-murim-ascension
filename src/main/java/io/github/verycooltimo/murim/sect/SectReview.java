@@ -24,9 +24,11 @@ import java.util.UUID;
 
 /**
  * Смотр учеников (docs/design/23-mount-hua-sect.md §6.1): раз в 7 дней секты на тренировочной площади — сетка из
- * четырёх учеников третьего поколения (полуфиналы в двух рингах одновременно, затем финал). Ученики не на посту и
- * старшие смотрят ({@link #spectator}). Игрок записывается у наставника (флаг {@link #SIGNED}, нужно положение
- * «ученик третьего класса») и встаёт в сетку вместо одного из учеников.
+ * четырёх мест (полуфиналы в двух рингах одновременно, затем финал) или из восьми (если записались двое и больше
+ * игроков: четвертьфиналы в четырёх рингах, полуфиналы, финал; docs/design/39 п. 4). Ученики не на посту и
+ * старшие смотрят ({@link #spectator}). Игроки записываются у старшего (флаг {@link #SIGNED}, нужно положение
+ * «ученик третьего класса») и встают в сетку вместе с учениками; бой двух игроков — дуэль {@link SectDuel} без отдельного
+ * согласия (запись и есть согласие).
  *
  * <p>Бой — обычный спарринг ({@link SectDisciple#startSpar}, {@link SectDisciple#sparWith}): до половины сил, без
  * смерти, ученики между собой — только основа. Не дошёл до ринга за минуту — поражение неявкой; бой дольше минуты —
@@ -62,7 +64,11 @@ public final class SectReview {
     static final double READY = 3.5D;
     /** Ринги смотра (номера в {@link SectSchedule#RINGS}): полуфиналы в 1 и 4, финал в 1. */
     static final int[] SEMI_RINGS = {1, 4};
-    static final String PLAYER = "player";
+    static final String PLAYER_PREFIX = "p:";
+    /** Мест в сетке не больше. */
+    public static final int MAX_PLACES = 8;
+    /** Ринги первого круга восьмёрки (номера в {@link SectSchedule#RINGS}). */
+    static final int[] QUARTER_RINGS = {1, 4, 0, 3};
     /** Бойцов ищут в стольких блоках от тренировочной площади (лагерь, общежития — вся полка секты). */
     static final double SEARCH = 160.0D;
 
@@ -135,18 +141,59 @@ public final class SectReview {
         return out;
     }
 
-    /** Сетка смотра дня {@code day}: четверо учеников третьего поколения по кругу списка (каждую неделю — другие). */
+    /**
+     * Сетка смотра дня {@code day} без игроков: четверо учеников третьего поколения по кругу списка (каждую неделю —
+     * другие). С игроком — {@code "p:"}-ключ первым (старый вызов стенда и тестов).
+     */
     public static List<String> bracket(long day, boolean withPlayer) {
+        return bracket(day, withPlayer ? List.of(PLAYER_PREFIX) : List.of());
+    }
+
+    /** Сколько мест в сетке: восемь, если записались двое и больше игроков, иначе четыре. */
+    public static int places(int players) {
+        return players >= 2 ? MAX_PLACES : 4;
+    }
+
+    /**
+     * Сетка до восьми мест: игроки (по ключам {@link #playerKey}) и ученики третьего поколения вместе. Игроки стоят
+     * первыми в парах первого круга, чтобы встретиться с учениками, а не друг с другом (если игроков больше половины
+     * мест — остальные попадают второй стороной пары). Ученики берутся по кругу списка, каждую неделю другие.
+     */
+    public static List<String> bracket(long day, List<String> playerKeys) {
+        int size = places(playerKeys.size());
+        List<String> players = playerKeys.size() > size ? playerKeys.subList(0, size) : playerKeys;
         List<SectRoster> gen = SectRoster.generation(3);
         int start = (int) Math.floorMod(Math.floorDiv(day, (long) EVERY) * 4L, (long) gen.size());
-        List<String> out = new ArrayList<>();
-        if (withPlayer) {
-            out.add(PLAYER);
+        String[] slots = new String[size];
+        int next = 0;
+        for (int pair = 0; pair < size / 2 && next < players.size(); pair++) {
+            slots[pair * 2] = players.get(next++);
         }
-        for (int i = 0; out.size() < 4; i++) {
-            out.add(gen.get((start + i) % gen.size()).key());
+        for (int i = 1; i < size && next < players.size(); i += 2) {
+            slots[i] = players.get(next++);
         }
-        return out;
+        int npc = 0;
+        for (int i = 0; i < size; i++) {
+            if (slots[i] == null) {
+                slots[i] = gen.get((start + npc++) % gen.size()).key();
+            }
+        }
+        return new ArrayList<>(List.of(slots));
+    }
+
+    /** Ключ игрока в сетке. */
+    public static String playerKey(ServerPlayer p) {
+        return PLAYER_PREFIX + p.getUUID();
+    }
+
+    static boolean isPlayerKey(String key) {
+        return key.startsWith(PLAYER_PREFIX);
+    }
+
+    /** Ринги круга: первый круг восьмерки — четыре ринга, полуфиналы — два, финал — один. */
+    static int ringFor(int size, int round, int index) {
+        int[] rings = round == 0 && size == 8 ? QUARTER_RINGS : SEMI_RINGS;
+        return rings[Math.min(index, rings.length - 1)];
     }
 
     /** Место бойца: ринг и сторона (0 — запад, 1 — восток). */
@@ -158,17 +205,20 @@ public final class SectReview {
 
     /** Бой сетки. */
     public static final class Bout {
-        final String a;
-        final String b;
+        String a;
+        String b;
         final int ring;
+        /** Круг: 0 — первый. */
+        final int round;
         String winner = "";
         long called = -1L;
         long started = -1L;
 
-        Bout(String a, String b, int ring) {
+        Bout(String a, String b, int ring, int round) {
             this.a = a;
             this.b = b;
             this.ring = ring;
+            this.round = round;
         }
 
         public String winner() {
@@ -187,22 +237,34 @@ public final class SectReview {
     /** Идущий смотр. */
     public static final class State {
         final long day;
-        final UUID player;
+        /** Игроки в сетке (ключи {@link #playerKey}). */
+        final List<UUID> players;
+        /** Мест в сетке: 4 или 8. */
+        final int size;
         /** Где искать бойцов: центр тренировочной площади и радиус. */
         final Vec3 center;
         final double radius;
         final List<Bout> bouts = new ArrayList<>();
         String champion = "";
 
-        State(long day, UUID player, Vec3 center, double radius) {
+        State(long day, List<UUID> players, int size, Vec3 center, double radius) {
             this.day = day;
-            this.player = player;
+            this.players = players;
+            this.size = size;
             this.center = center;
             this.radius = radius;
         }
 
         public List<Bout> bouts() {
             return bouts;
+        }
+
+        public int size() {
+            return size;
+        }
+
+        public List<UUID> players() {
+            return players;
         }
 
         public String champion() {
@@ -221,6 +283,11 @@ public final class SectReview {
                 }
             }
             return null;
+        }
+
+        /** Номер круга, который идёт (по числу созданных боёв). */
+        int round() {
+            return bouts.isEmpty() ? 0 : bouts.get(bouts.size() - 1).round;
         }
     }
 
@@ -245,52 +312,93 @@ public final class SectReview {
         SectSiteData data = SectLife.data(level);
         long time = level.getDayTime();
         long day = SectSchedule.day(time);
+        remind(level, data, time, day);
         if (data.review == null && window(time) && data.lastReview() != day) {
             Vec3 c = layout.at("training", 0.0D, 0.0D);
             // Смотр идёт, только если рядом кто-то есть: иначе люди спят (дормант), бои не сыграть — день просто проходит.
             if (c != null && level.getNearestPlayer(c.x, c.y, c.z, 96.0D, false) != null) {
-                begin(level, layout, day, signedPlayer(level, c), SEARCH);
+                begin(level, layout, day, signedPlayers(level, c), SEARCH);
             }
         }
         if (data.review != null) {
             step(level, layout);
             if (data.review != null && !window(time) && !data.review.done()) {
-                abort(level, "murim.sect.review.closed");
+                abort(level, "murim.sect.review.closed", layout);
             }
         }
     }
 
-    /** Записанный игрок рядом с площадкой (первый). */
-    private static ServerPlayer signedPlayer(ServerLevel level, Vec3 c) {
+    /** In the morning of the review day the signed players are reminded once. */
+    static void remind(ServerLevel level, SectSiteData data, long time, long day) {
+        int t = (int) Math.floorMod(time, (long) SectSchedule.DAY);
+        if (!reviewDay(day) || t >= FROM || data.session.remindedDay == day || data.lastReview() == day) {
+            return;
+        }
+        data.session.remindedDay = day;
         for (ServerPlayer p : level.players()) {
-            if (!p.isSpectator() && p.getData(ModAttachments.SECT).has(SIGNED) && p.position().distanceToSqr(c) < 96.0D * 96.0D) {
-                return p;
+            if (p.getData(ModAttachments.SECT).has(SIGNED)) {
+                SectNotice.chat(p, Component.translatable("murim.sect.review.reminder").withStyle(ChatFormatting.GOLD));
             }
         }
-        return null;
     }
 
-    /** Начать смотр: сетка из четырёх (игрок — первым, если записан). Стенд и GameTest зовут напрямую. */
+    /** Записанные игроки рядом с площадкой (до восьми, в порядке списка игроков). */
+    private static List<ServerPlayer> signedPlayers(ServerLevel level, Vec3 c) {
+        List<ServerPlayer> out = new ArrayList<>();
+        for (ServerPlayer p : level.players()) {
+            if (out.size() < MAX_PLACES && !p.isSpectator() && p.getData(ModAttachments.SECT).has(SIGNED)
+                    && p.position().distanceToSqr(c) < 96.0D * 96.0D) {
+                out.add(p);
+            }
+        }
+        return out;
+    }
+
+    /** Начать смотр с одним игроком или без (стенд и прежние GameTest зовут так). */
     public static State begin(ServerLevel level, SectLayout layout, long day, ServerPlayer player, double radius) {
-        List<String> keys = bracket(day, player != null);
+        return begin(level, layout, day, player == null ? List.of() : List.of(player), radius);
+    }
+
+    /**
+     * Начать смотр: сетка из четырёх или восьми мест, игроки и ученики вместе. Запись на смотр — согласие на бой
+     * (в том числе против другого игрока).
+     */
+    public static State begin(ServerLevel level, SectLayout layout, long day, List<ServerPlayer> players, double radius) {
+        List<String> playerKeys = new ArrayList<>();
+        List<UUID> ids = new ArrayList<>();
+        for (ServerPlayer p : players) {
+            if (playerKeys.size() < MAX_PLACES) {
+                playerKeys.add(playerKey(p));
+                ids.add(p.getUUID());
+            }
+        }
+        List<String> keys = bracket(day, playerKeys);
         Vec3 center = layout.at("training", 0.0D, 0.0D);
-        State s = new State(day, player == null ? null : player.getUUID(), center == null ? Vec3.ZERO : center, radius);
-        s.bouts.add(new Bout(keys.get(0), keys.get(1), SEMI_RINGS[0]));
-        s.bouts.add(new Bout(keys.get(2), keys.get(3), SEMI_RINGS[1]));
+        State s = new State(day, ids, keys.size(), center == null ? Vec3.ZERO : center, radius);
+        for (int i = 0; i < keys.size(); i += 2) {
+            s.bouts.add(new Bout(keys.get(i), keys.get(i + 1), ringFor(keys.size(), 0, i / 2), 0));
+        }
         SectLife.data(level).review = s;
         MurimMod.LOGGER.info("Секта: смотр учеников, день {}: {}", day, keys);
-        if (player != null) {
-            player.setData(ModAttachments.SECT, player.getData(ModAttachments.SECT).without(SIGNED));
-            SectService.contribute(player, ENTRY);
-            player.displayClientMessage(Component.translatable("murim.sect.review.your_bout", name(level, s, keys.get(1)))
-                    .withStyle(ChatFormatting.GOLD), false);
+        for (ServerPlayer p : players) {
+            if (!ids.contains(p.getUUID())) {
+                continue;
+            }
+            p.setData(ModAttachments.SECT, p.getData(ModAttachments.SECT).without(SIGNED));
+            SectService.contribute(p, ENTRY);
+            Bout mine = s.current(playerKey(p));
+            SectNotice.chat(p, Component.translatable("murim.sect.review.your_bout", name(level, s, mine.other(playerKey(p))))
+                    .withStyle(ChatFormatting.GOLD));
         }
-        announce(level, layout, Component.translatable("murim.sect.review.begin",
-                name(level, s, keys.get(0)), name(level, s, keys.get(1)), name(level, s, keys.get(2)), name(level, s, keys.get(3))));
+        Component list = Component.empty();
+        for (int i = 0; i < keys.size(); i++) {
+            list = list.copy().append(i == 0 ? Component.empty() : Component.literal(", ")).append(name(level, s, keys.get(i)));
+        }
+        announce(level, layout, Component.translatable("murim.sect.review.begin_list", keys.size(), list));
         return s;
     }
 
-    /** Шаг смотра (раз в 10 тиков): позвать бойцов, начать бой, следить за исходом, собрать финал. */
+    /** Шаг смотра (раз в 10 тиков): позвать бойцов, начать бой, следить за исходом, собрать следующий круг. */
     public static void step(ServerLevel level, SectLayout layout) {
         State s = state(level);
         if (s == null || s.done()) {
@@ -302,13 +410,45 @@ public final class SectReview {
                 stepBout(level, layout, s, b, now);
             }
         }
-        if (s.bouts.size() == 2 && !s.bouts.get(0).winner.isEmpty() && !s.bouts.get(1).winner.isEmpty()) {
-            Bout fin = new Bout(s.bouts.get(0).winner, s.bouts.get(1).winner, SEMI_RINGS[0]);
-            s.bouts.add(fin);
-            announce(level, layout, Component.translatable("murim.sect.review.final", name(level, s, fin.a), name(level, s, fin.b)));
-        } else if (s.bouts.size() == 3 && !s.bouts.get(2).winner.isEmpty()) {
-            finish(level, layout, s);
+        List<Bout> round = new ArrayList<>();
+        for (Bout b : s.bouts) {
+            if (b.round == s.round()) {
+                round.add(b);
+            }
         }
+        if (!round.stream().allMatch(b -> !b.winner.isEmpty())) {
+            return;
+        }
+        if (round.size() == 1) {
+            finish(level, layout, s);
+            return;
+        }
+        int next = s.round() + 1;
+        for (int i = 0; i < round.size(); i += 2) {
+            Bout fin = new Bout(round.get(i).winner, round.get(i + 1).winner, ringFor(s.size, next, i / 2), next);
+            s.bouts.add(fin);
+            announce(level, layout, Component.translatable(round.size() == 2 ? "murim.sect.review.final" : "murim.sect.review.semi",
+                    name(level, s, fin.a), name(level, s, fin.b)));
+        }
+        for (ServerPlayer p : players(level, s)) {
+            Bout mine = s.current(playerKey(p));
+            if (mine != null && mine.round == next) {
+                SectNotice.chat(p, Component.translatable("murim.sect.review.your_bout", name(level, s, mine.other(playerKey(p))))
+                        .withStyle(ChatFormatting.GOLD));
+            }
+        }
+    }
+
+    /** Игроки смотра, которые сейчас на сервере. */
+    private static List<ServerPlayer> players(ServerLevel level, State s) {
+        List<ServerPlayer> out = new ArrayList<>();
+        for (UUID id : s.players) {
+            ServerPlayer p = level.getServer().getPlayerList().getPlayer(id);
+            if (p != null) {
+                out.add(p);
+            }
+        }
+        return out;
     }
 
     private static void stepBout(ServerLevel level, SectLayout layout, State s, Bout b, long now) {
@@ -319,8 +459,8 @@ public final class SectReview {
         }
         if (b.started < 0) {
             if (ea == null || eb == null) {
-                // Ученика ещё нет (чанк не загружен, не встал на гору) — ждём, как опоздавшего; через минуту — победа
-                // другому, нет обоих — первому по сетке.
+                // Бойца ещё нет (ученик: чанк не загружен, не встал на гору; игрок вышел) — ждём, как опоздавшего; через
+                // минуту — победа другому, нет обоих — первому по сетке.
                 if (now - b.called >= SHOW_UP) {
                     decide(level, s, b, ea == null && eb != null ? b.b : b.a, "absent");
                 }
@@ -330,9 +470,17 @@ public final class SectReview {
             boolean readyB = ready(layout, b, 1, eb);
             if (!(readyA && readyB) && now - b.called >= SHOW_UP) {
                 // Опоздавший игрок получает неявку; ученики продолжают идти к рингу.
-                boolean playerLate = PLAYER.equals(b.a) && !readyA || PLAYER.equals(b.b) && !readyB;
-                if (playerLate) {
-                    decide(level, s, b, PLAYER.equals(b.a) ? b.b : b.a, "no_show");
+                boolean lateA = isPlayerKey(b.a) && !readyA;
+                boolean lateB = isPlayerKey(b.b) && !readyB;
+                if (lateA || lateB) {
+                    // Late for his own bout: a disciple takes his place, no penalty.
+                    if (lateA) {
+                        b.a = substitute(level, s, b, b.a);
+                    }
+                    if (lateB) {
+                        b.b = substitute(level, s, b, b.b);
+                    }
+                    b.called = now;
                     return;
                 }
                 place(layout, b, 0, ea);
@@ -340,7 +488,14 @@ public final class SectReview {
                 return;
             }
             if (readyA && readyB && busyFree(ea) && busyFree(eb)) {
-                start(b, ea, eb, now);
+                start(level, layout, s, b, ea, eb, now);
+            }
+            return;
+        }
+        if (ea instanceof ServerPlayer && eb instanceof ServerPlayer) {
+            // Бой двух игроков: исход принесёт SectDuel; затянувшийся и оставленный закончит сама дуэль.
+            if (!ea.isAlive() || !eb.isAlive()) {
+                decide(level, s, b, ea.isAlive() ? b.a : b.b, "absent");
             }
             return;
         }
@@ -363,16 +518,52 @@ public final class SectReview {
         }
     }
 
+    /** A third-generation disciple not yet in the bracket takes the place of a player who is late. */
+    static String substitute(ServerLevel level, State s, Bout b, String lateKey) {
+        java.util.Set<String> used = new java.util.HashSet<>();
+        for (Bout other : s.bouts) {
+            used.add(other.a);
+            used.add(other.b);
+        }
+        String pick = null;
+        for (SectRoster m : SectRoster.generation(3)) {
+            if (!used.contains(m.key())) {
+                pick = m.key();
+                break;
+            }
+        }
+        if (pick == null) {
+            pick = SectRoster.generation(3).get(0).key();
+        }
+        for (ServerPlayer p : players(level, s)) {
+            if (lateKey.equals(playerKey(p))) {
+                SectNotice.chat(p, Component.translatable("murim.sect.review.replaced", name(level, s, pick)).withStyle(ChatFormatting.GRAY));
+            }
+        }
+        MurimMod.LOGGER.info("Секта: смотр — опоздал {}, вместо него {}", lateKey, pick);
+        return pick;
+    }
+
     private static boolean busyFree(LivingEntity e) {
         return !(e instanceof SectDisciple d) || d.spar() == SectDisciple.Spar.NONE && !d.defending();
     }
 
-    private static void start(Bout b, LivingEntity ea, LivingEntity eb, long now) {
+    private static void start(ServerLevel level, SectLayout layout, State s, Bout b, LivingEntity ea, LivingEntity eb, long now) {
         b.started = now;
         if (ea instanceof SectDisciple a && eb instanceof SectDisciple bb) {
             a.setWounded(false);
             bb.setWounded(false);
             a.sparWith(bb, 20);
+        } else if (ea instanceof ServerPlayer pa && eb instanceof ServerPlayer pb) {
+            Vec3 c = layout.at("training", SectSchedule.RINGS[b.ring][0], SectSchedule.RINGS[b.ring][1]);
+            SectDuel.start(pa, pb, c == null ? s.center : c, winner -> {
+                if (winner == null) {
+                    // Дуэль оборвана без победителя: по остатку сил.
+                    decide(level, s, b, frac(pa) >= frac(pb) ? b.a : b.b, "stopped");
+                } else {
+                    decide(level, s, b, winner.equals(pa.getUUID()) ? b.a : b.b, "bout");
+                }
+            });
         } else {
             SectDisciple npc = ea instanceof SectDisciple d ? d : (SectDisciple) eb;
             ServerPlayer p = (ServerPlayer) (ea instanceof ServerPlayer ? ea : eb);
@@ -405,11 +596,16 @@ public final class SectReview {
         }
     }
 
-    /** Боец: игрок смотра или ученик по ключу (в 96 блоках от любого игрока — ближайший экземпляр). */
+    /** Боец: игрок смотра или ученик по ключу (в радиусе поиска от площади — ближайший экземпляр). */
     static LivingEntity fighter(ServerLevel level, State s, String key) {
-        if (PLAYER.equals(key)) {
-            Entity e = s.player == null ? null : level.getEntity(s.player);
-            return e instanceof ServerPlayer p && p.isAlive() ? p : null;
+        if (isPlayerKey(key)) {
+            for (UUID id : s.players) {
+                if (key.equals(PLAYER_PREFIX + id)) {
+                    Entity e = level.getEntity(id);
+                    return e instanceof ServerPlayer p && p.isAlive() ? p : null;
+                }
+            }
+            return null;
         }
         for (SectDisciple d : level.getEntitiesOfClass(SectDisciple.class, new net.minecraft.world.phys.AABB(s.center, s.center).inflate(s.radius),
                 d -> d.isAlive() && key.equals(d.memberKey()))) {
@@ -434,7 +630,7 @@ public final class SectReview {
             return;
         }
         String other = b.other(npc.memberKey());
-        boolean partnerIsOther = PLAYER.equals(other) ? partner instanceof ServerPlayer p && p.getUUID().equals(s.player)
+        boolean partnerIsOther = isPlayerKey(other) ? partner instanceof ServerPlayer p && other.equals(playerKey(p))
                 : partner instanceof SectDisciple d && other.equals(d.memberKey());
         if (!partnerIsOther) {
             return;
@@ -442,26 +638,38 @@ public final class SectReview {
         decide(level, s, b, partnerWon ? other : npc.memberKey(), "bout");
     }
 
-    private static void decide(ServerLevel level, State s, Bout b, String winner, String why) {
+    /** Решить бой (исход, неявка, обрыв); игрокам — строка итога и заслуги за победу. Тесты зовут напрямую. */
+    static void decide(ServerLevel level, State s, Bout b, String winner, String why) {
+        decide(level, s, b, winner, why, players(level, s));
+    }
+
+    /** Explicit audience for isolated server fixtures; production resolves signed-in players above. */
+    static void decide(ServerLevel level, State s, Bout b, String winner, String why, List<ServerPlayer> audience) {
         if (!b.winner.isEmpty()) {
             return;
         }
         b.winner = winner;
         MurimMod.LOGGER.info("Секта: смотр — {} против {}: победил {} ({})", b.a, b.b, winner, why);
-        ServerPlayer p = s.player == null ? null : level.getServer().getPlayerList().getPlayer(s.player);
-        if (p != null && b.has(PLAYER)) {
-            boolean won = PLAYER.equals(winner);
+        for (ServerPlayer p : audience) {
+            String me = playerKey(p);
+            if (!b.has(me)) {
+                continue;
+            }
+            boolean won = me.equals(winner);
             if (won) {
                 SectService.contribute(p, WIN);
+                if (b.started >= 0 && !"absent".equals(why) && !isPlayerKey(b.other(me)) && SectRoster.of(b.other(me)).isPresent()) {
+                    p.setData(ModAttachments.SECT, SectService.state(p).with("mentor.partner." + b.other(me)));
+                }
             }
-            p.displayClientMessage(Component.translatable(won ? "murim.sect.review.won" : "no_show".equals(why)
-                    ? "murim.sect.review.no_show" : "murim.sect.review.lost", name(level, s, b.other(PLAYER)))
-                    .withStyle(won ? ChatFormatting.GOLD : ChatFormatting.GRAY), false);
+            SectNotice.chat(p, Component.translatable(won ? "murim.sect.review.won" : "no_show".equals(why)
+                    ? "murim.sect.review.no_show" : "murim.sect.review.lost", name(level, s, b.other(me)))
+                    .withStyle(won ? ChatFormatting.GOLD : ChatFormatting.GRAY));
         }
     }
 
     private static void finish(ServerLevel level, SectLayout layout, State s) {
-        s.champion = s.bouts.get(2).winner;
+        s.champion = s.bouts.get(s.bouts.size() - 1).winner;
         SectLife.data(level).finishReview(s.day);
         announce(level, layout, Component.translatable("murim.sect.review.champion", name(level, s, s.champion)));
         LivingEntity champ = fighter(level, s, s.champion);
@@ -477,31 +685,47 @@ public final class SectReview {
             SectService.contribute(p, CHAMPION);
             approve(p, "review");
             p.setData(ModAttachments.SECT, p.getData(ModAttachments.SECT).with(SectTalk.REVIEW_WON));
+            SectSpeechWitnesses.record(p, "review");
             SectRequests.reviewWon(p);
         }
         // О победителе говорят ученики (SectTalk): ключ ученика или имя игрока.
         SectLife.data(level).crown(champ instanceof ServerPlayer p ? "@" + p.getName().getString() : s.champion);
         MurimMod.LOGGER.info("Секта: смотр дня {} окончен, победил {}", s.day, s.champion);
         SectLife.data(level).review = null;
+        SectBladeExam.call(level, layout);
     }
 
     /** Смотр прерван (окно кончилось): бои останавливаются без победителя. */
     static void abort(ServerLevel level, String key) {
+        MountHuaSite site = MountHuaSites.get(level.getServer());
+        abort(level, key, site == null ? null : SectLayout.hua(site));
+    }
+
+    static void abort(ServerLevel level, String key, SectLayout layout) {
         State s = state(level);
         if (s == null) {
             return;
         }
         for (Bout b : s.bouts) {
-            if (b.winner.isEmpty() && fighter(level, s, b.a) instanceof SectDisciple d && d.inBout()) {
-                d.stopBout();
+            if (!b.winner.isEmpty()) {
+                continue;
+            }
+            for (String side : new String[] {b.a, b.b}) {
+                LivingEntity e = fighter(level, s, side);
+                if (e instanceof SectDisciple d && d.inBout()) {
+                    d.stopBout();
+                } else if (e instanceof ServerPlayer p) {
+                    SectDuel.cancel(level, p.getUUID());
+                }
             }
         }
         SectLife.data(level).finishReview(s.day);
         SectLife.data(level).review = null;
+        if (layout != null) SectBladeExam.call(level, layout);
         MurimMod.LOGGER.info("Секта: смотр дня {} прерван", s.day);
         for (ServerPlayer p : level.players()) {
             if (SectService.state(p).member()) {
-                p.displayClientMessage(Component.translatable(key).withStyle(ChatFormatting.GRAY), false);
+                SectNotice.chat(p, Component.translatable(key).withStyle(ChatFormatting.GRAY));
             }
         }
     }
@@ -517,7 +741,7 @@ public final class SectReview {
         }
         SectStanding before = SectService.standing(p);
         p.setData(ModAttachments.SECT, st.with(SectStanding.APPROVAL));
-        p.displayClientMessage(Component.translatable("murim.sect.approval." + why).withStyle(ChatFormatting.LIGHT_PURPLE), false);
+        SectNotice.chat(p, Component.translatable("murim.sect.approval." + why).withStyle(ChatFormatting.LIGHT_PURPLE));
         SectService.announceStanding(p, before);
         MurimMod.LOGGER.info("Секта: {} — одобрение главы ({})", p.getName().getString(), why);
     }
@@ -527,30 +751,46 @@ public final class SectReview {
         if (state(level) != null) {
             abort(level, "murim.sect.review.closed");
         }
-        begin(level, layout, SectSchedule.day(level.getDayTime()), null, SEARCH);
+        begin(level, layout, SectSchedule.day(level.getDayTime()), (ServerPlayer) null, SEARCH);
+    }
+
+    /** Sign-up is open: the review is today or tomorrow, or it is already running. The tablet's button follows this. */
+    public static boolean signupOpen(ServerPlayer p) {
+        return daysUntil(p.level().getDayTime()) <= 1 || state(p.serverLevel()) != null;
     }
 
     /** Записаться на смотр (диалог старшего Со Рана): положение «ученик третьего класса» и выше. */
     public static void signUp(ServerPlayer p) {
         SectState st = p.getData(ModAttachments.SECT);
         if (!SectService.standing(p).atLeast(SectStanding.DISCIPLE)) {
-            p.displayClientMessage(Component.translatable("murim.sect.review.too_young").withStyle(ChatFormatting.GRAY), false);
+            PlayerJournal.refuse(p, Component.translatable("murim.sect.review.too_young").withStyle(ChatFormatting.GRAY));
+            return;
+        }
+        if (!signupOpen(p)) {
+            PlayerJournal.refuse(p, Component.translatable("murim.sect.review.too_early", daysUntil(p.level().getDayTime()) - 1)
+                    .withStyle(ChatFormatting.GRAY));
             return;
         }
         p.setData(ModAttachments.SECT, st.with(SIGNED));
+        SectTablet.touch(p);
         long days = daysUntil(p.level().getDayTime());
         boolean running = state(p.serverLevel()) != null;
-        p.displayClientMessage(Component.translatable(days == 0 && !running ? "murim.sect.review.signed_today" : "murim.sect.review.signed",
-                running && days == 0 ? EVERY : days).withStyle(ChatFormatting.GOLD), false);
+        SectNotice.bar(p, Component.translatable(days == 0 && !running ? "murim.sect.review.signed_today" : "murim.sect.review.signed",
+                running && days == 0 ? EVERY : days).withStyle(ChatFormatting.GOLD));
     }
 
     /** Имя бойца для сообщений. */
     static Component name(ServerLevel level, State s, String key) {
-        if (PLAYER.equals(key)) {
-            ServerPlayer p = s.player == null ? null : level.getServer().getPlayerList().getPlayer(s.player);
-            return p == null ? Component.literal("?") : p.getName();
+        if (isPlayerKey(key)) {
+            for (UUID id : s.players) {
+                if (key.equals(PLAYER_PREFIX + id)) {
+                    ServerPlayer p = level.getServer().getPlayerList().getPlayer(id);
+                    return p == null ? Component.literal("?") : p.getName();
+                }
+            }
+            return Component.literal("?");
         }
-        return Component.translatable("npc.murim." + key);
+        return SectNames.of(key);
     }
 
     /** Сообщение всем членам секты у тренировочной площади (в 96 блоках). */
@@ -558,7 +798,7 @@ public final class SectReview {
         Vec3 c = layout.at("training", 0.0D, 0.0D);
         for (ServerPlayer p : level.players()) {
             if (c == null || p.position().distanceToSqr(c) < 96.0D * 96.0D) {
-                p.displayClientMessage(msg.copy().withStyle(ChatFormatting.AQUA), false);
+                SectNotice.chat(p, msg.copy().withStyle(ChatFormatting.AQUA));
             }
         }
     }
@@ -576,7 +816,7 @@ public final class SectReview {
         }
         String key = npc.memberKey();
         Bout b = s.current(key);
-        // Выбыл или ждёт финала — зритель, как все (место по распорядку смотра).
+        // Выбыл или ждёт следующего круга — зритель, как все (место по распорядку смотра).
         return b == null ? null : ringSpot(b.ring, b.a.equals(key) ? 0 : 1);
     }
 }

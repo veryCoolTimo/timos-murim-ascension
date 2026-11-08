@@ -1,0 +1,451 @@
+{
+ "data_version": 3955,
+ "format": 2,
+ "frame": {
+  "base_y": 67,
+  "rotation": 0
+ },
+ "groups": [
+  {
+   "cells": [
+    {
+     "file": "extra/cave/k_-53_203.nbt",
+     "h": 10,
+     "u": 54,
+     "v": 147,
+     "y": 230
+    },
+    {
+     "file": "extra/cave/k_-53_204.nbt",
+     "h": 9,
+     "u": 54,
+     "v": 163,
+     "y": 230
+    },
+    {
+     "file": "extra/cave/k_-52_203.nbt",
+     "h": 5,
+     "u": 70,
+     "v": 147,
+     "y": 232
+    }
+   ],
+   "id": "cave",
+   "mode": "base",
+   "ref": 0
+  },
+  {
+   "cells": [
+    {
+     "file": "extra/crowns_pav_north/c_-49_-360.nbt",
+     "h": 3,
+     "u": -49,
+     "v": -360,
+     "y": 156
+    },
+    {
+     "file": "extra/crowns_pav_north/c_-33_-344.nbt",
+     "h": 1,
+     "u": -33,
+     "v": -344,
+     "y": 237
+    },
+    {
+     "file": "extra/crowns_pav_north/c_-1_-328.nbt",
+     "h": 2,
+     "u": -1,
+     "v": -328,
+     "y": 169
+    },
+    {
+     "file": "extra/crowns_pav_north/c_15_-328.nbt",
+     "h": 5,
+     "u": 15,
+     "v": -328,
+     "y": 168
+    }
+   ],
+   "id": "crowns_pav_north",
+   "mode": "nominal",
+   "ref": 160
+  },
+  {
+   "cells": [
+    {
+     "file": "extra/dorm_stair/s_-70_264.nbt",
+     "h": 4,
+     "u": -49,
+     "v": 8,
+     "y": 214
+    },
+    {
+     "file": "extra/dorm_stair/s_-69_264.nbt",
+     "h": 9,
+     "u": -33,
+     "v": 8,
+     "y": 216
+    }
+   ],
+   "id": "dorm_stair",
+   "mode": "base",
+   "ref": 0
+  },
+  {
+   "cells": [
+    {
+     "file": "extra/trail/t_-65_166.nbt",
+     "h": 14,
+     "u": -138,
+     "v": -445,
+     "y": 71
+    },
+    {
+     "file": "extra/trail/t_-65_167.nbt",
+     "h": 18,
+     "u": -138,
+     "v": -429,
+     "y": 70
+    },
+    {
+     "file": "extra/trail/t_-65_168.nbt",
+     "h": 13,
+     "u": -138,
+     "v": -413,
+     "y": 69
+    },
+    {
+     "file": "extra/trail/t_-65_169.nbt",
+     "h": 9,
+     "u": -138,
+     "v": -397,
+     "y": 72
+    },
+    {
+     "file": "extra/trail/t_-64_166.nbt",
+     "h": 26,
+     "u": -122,
+     "v": -445,
+     "y": 69
+    },
+    {
+     "file": "extra/trail/t_-64_167.nbt",
+     "h": 19,
+     "u": -122,
+     "v": -429,
+     "y": 68
+    },
+    {
+     "file": "extra/trail/t_-64_168.nbt",
+     "h": 14,
+     "u": -122,
+     "v": -413,
+     "y": 68
+    },
+    {
+     "file": "extra/trail/t_-64_169.nbt",
+     "h": 16,
+     "u": -122,
+     "v": -397,
+     "y": 69
+    },
+    {
+     "file": "extra/trail/t_-63_166.nbt",
+     "h": 27,
+     "u": -106,
+     "v": -445,
+     "y": 69
+    },
+    {
+     "file": "extra/trail/t_-63_167.nbt",
+     "h": 28,
+     "u": -106,
+     "v": -429,
+     "y": 67
+    },
+    {
+     "file": "extra/trail/t_-63_168.nbt",
+     "h": 14,
+     "u": -106,
+     "v": -413,
+     "y": 67
+    },
+    {
+     "file": "extra/trail/t_-63_169.nbt",
+     "h": 12,
+     "u": -106,
+     "v": -397,
+     "y": 69
+    },
+    {
+     "file": "extra/trail/t_-63_170.nbt",
+     "h": 15,
+     "u": -106,
+     "v": -381,
+     "y": 78
+    },
+    {
+     "file": "extra/trail/t_-63_171.nbt",
+     "h": 13,
+     "u": -106,
+     "v": -365,
+     "y": 89
+    },
+    {
+     "file": "extra/trail/t_-63_172.nbt",
+     "h": 10,
+     "u": -106,
+     "v": -349,
+     "y": 103
+    },
+    {
+     "file": "extra/trail/t_-62_166.nbt",
+     "h": 8,
+     "u": -90,
+     "v": -445,
+     "y": 78
+    },
+    {
+     "file": "extra/trail/t_-62_167.nbt",
+     "h": 17,
+     "u": -90,
+     "v": -429,
+     "y": 69
+    },
+    {
+     "file": "extra/trail/t_-62_168.nbt",
+     "h": 14,
+     "u": -90,
+     "v": -413,
+     "y": 68
+    },
+    {
+     "file": "extra/trail/t_-62_169.nbt",
+     "h": 12,
+     "u": -90,
+     "v": -397,
+     "y": 69
+    },
+    {
+     "file": "extra/trail/t_-62_172.nbt",
+     "h": 14,
+     "u": -90,
+     "v": -349,
+     "y": 106
+    },
+    {
+     "file": "extra/trail/t_-62_173.nbt",
+     "h": 16,
+     "u": -90,
+     "v": -333,
+     "y": 119
+    },
+    {
+     "file": "extra/trail/t_-62_174.nbt",
+     "h": 7,
+     "u": -90,
+     "v": -317,
+     "y": 134
+    },
+    {
+     "file": "extra/trail/t_-61_174.nbt",
+     "h": 20,
+     "u": -74,
+     "v": -317,
+     "y": 139
+    },
+    {
+     "file": "extra/trail/t_-60_173.nbt",
+     "h": 6,
+     "u": -58,
+     "v": -333,
+     "y": 156
+    },
+    {
+     "file": "extra/trail/t_-60_174.nbt",
+     "h": 7,
+     "u": -58,
+     "v": -317,
+     "y": 156
+    },
+    {
+     "file": "extra/trail/t_-59_173.nbt",
+     "h": 12,
+     "u": -42,
+     "v": -333,
+     "y": 153
+    },
+    {
+     "file": "extra/trail/t_-58_173.nbt",
+     "h": 4,
+     "u": -26,
+     "v": -333,
+     "y": 162
+    },
+    {
+     "file": "extra/trail/t_-58_174.nbt",
+     "h": 15,
+     "u": -26,
+     "v": -317,
+     "y": 162
+    },
+    {
+     "file": "extra/trail/t_-57_174.nbt",
+     "h": 11,
+     "u": -10,
+     "v": -317,
+     "y": 175
+    },
+    {
+     "file": "extra/trail/t_-57_175.nbt",
+     "h": 23,
+     "u": -10,
+     "v": -301,
+     "y": 178
+    },
+    {
+     "file": "extra/trail/t_-57_176.nbt",
+     "h": 11,
+     "u": -10,
+     "v": -285,
+     "y": 200
+    },
+    {
+     "file": "extra/trail/t_-57_177.nbt",
+     "h": 4,
+     "u": -10,
+     "v": -269,
+     "y": 210
+    },
+    {
+     "file": "extra/trail/t_-57_178.nbt",
+     "h": 3,
+     "u": -10,
+     "v": -253,
+     "y": 216
+    },
+    {
+     "file": "extra/trail/t_-57_179.nbt",
+     "h": 3,
+     "u": -10,
+     "v": -237,
+     "y": 214
+    },
+    {
+     "file": "extra/trail/t_-57_180.nbt",
+     "h": 7,
+     "u": -10,
+     "v": -221,
+     "y": 215
+    },
+    {
+     "file": "extra/trail/t_-57_181.nbt",
+     "h": 4,
+     "u": -10,
+     "v": -205,
+     "y": 221
+    },
+    {
+     "file": "extra/trail/t_-57_185.nbt",
+     "h": 1,
+     "u": -10,
+     "v": -141,
+     "y": 232
+    },
+    {
+     "file": "extra/trail/t_-56_177.nbt",
+     "h": 6,
+     "u": 6,
+     "v": -269,
+     "y": 210
+    },
+    {
+     "file": "extra/trail/t_-56_178.nbt",
+     "h": 2,
+     "u": 6,
+     "v": -253,
+     "y": 216
+    },
+    {
+     "file": "extra/trail/t_-56_182.nbt",
+     "h": 6,
+     "u": 6,
+     "v": -189,
+     "y": 224
+    },
+    {
+     "file": "extra/trail/t_-56_183.nbt",
+     "h": 5,
+     "u": 6,
+     "v": -173,
+     "y": 229
+    },
+    {
+     "file": "extra/trail/t_-56_184.nbt",
+     "h": 2,
+     "u": 6,
+     "v": -157,
+     "y": 232
+    },
+    {
+     "file": "extra/trail/t_-56_185.nbt",
+     "h": 3,
+     "u": 6,
+     "v": -141,
+     "y": 230
+    },
+    {
+     "file": "extra/trail/t_-56_186.nbt",
+     "h": 5,
+     "u": 6,
+     "v": -125,
+     "y": 232
+    },
+    {
+     "file": "extra/trail/t_-56_187.nbt",
+     "h": 2,
+     "u": 6,
+     "v": -109,
+     "y": 235
+    },
+    {
+     "file": "extra/trail/t_-56_188.nbt",
+     "h": 4,
+     "u": 6,
+     "v": -93,
+     "y": 232
+    },
+    {
+     "file": "extra/trail/t_-56_189.nbt",
+     "h": 11,
+     "u": 6,
+     "v": -77,
+     "y": 223
+    },
+    {
+     "file": "extra/trail/t_-55_189.nbt",
+     "h": 12,
+     "u": 22,
+     "v": -77,
+     "y": 222
+    },
+    {
+     "file": "extra/trail/t_-55_190.nbt",
+     "h": 2,
+     "u": 22,
+     "v": -61,
+     "y": 220
+    },
+    {
+     "file": "extra/trail/t_-55_191.nbt",
+     "h": 2,
+     "u": 22,
+     "v": -45,
+     "y": 221
+    }
+   ],
+   "id": "trail",
+   "mode": "base",
+   "ref": 0
+  }
+ ]
+}

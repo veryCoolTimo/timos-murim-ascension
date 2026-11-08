@@ -5,6 +5,14 @@
     {
       "when": [
         {
+          "min_standing": "first"
+        }
+      ],
+      "node": "office"
+    },
+    {
+      "when": [
+        {
           "period": "night",
           "member": true
         }
@@ -80,16 +88,31 @@
       "random": [
         "@context"
       ],
-      "gesture": "bow",
+      "gesture": "nod",
       "options": []
     },
     "member_night": {
       "random": [
         "dialogue.murim.gatekeeper.member_night1",
-        "dialogue.murim.gatekeeper.member_night2"
+        "dialogue.murim.gatekeeper.member_night2",
+        "dialogue.murim.gatekeeper.member_night3",
+        "dialogue.murim.gatekeeper.member_night4",
+        "dialogue.murim.gatekeeper.member_night5",
+        "dialogue.murim.gatekeeper.member_night6"
       ],
-      "gesture": "bow",
+      "gesture": "nod",
       "options": []
+    },
+    "office": {
+      "random": [
+        "@context"
+      ],
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
     }
   }
 }

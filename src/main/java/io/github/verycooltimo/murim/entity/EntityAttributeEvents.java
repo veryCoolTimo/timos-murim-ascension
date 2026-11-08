@@ -17,6 +17,7 @@ public final class EntityAttributeEvents {
 
     @SubscribeEvent
     static void onCreateAttributes(EntityAttributeCreationEvent event) {
+        event.put(ModEntities.SHADOW_CLONE.get(), ShadowClone.attributes().build());
         event.put(ModEntities.DUMMY.get(), TrainingDummy.attributes().build());
         event.put(ModEntities.BANDIT_SWORDSMAN.get(), BanditSwordsman.attributes().build());
         event.put(ModEntities.BANDIT_ARCHER.get(), BanditArcher.attributes().build());

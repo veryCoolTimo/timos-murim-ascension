@@ -60,6 +60,20 @@ public final class SectProgressionGameTests {
     }
 
     @GameTest(template = "sect_yard", batch = "sect_progression", timeoutTicks = 40)
+    public static void elderStillRefusesUntrustedFirstRank(GameTestHelper h) {
+        ServerPlayer p = player(h);
+        SectDisciple elder = npc(h, "tae_rok");
+        p.setData(ModAttachments.PROFILE, io.github.verycooltimo.murim.profile.DantianProfile.INITIAL
+                .withRank(io.github.verycooltimo.murim.cultivation.Realm.FIRST));
+        p.setData(ModAttachments.SECT, SectState.NONE.joined());
+        h.assertTrue(!SectProgression.canPurple(p, elder), "elder offered scroll to untrusted disciple");
+        h.assertTrue(!SectProgression.purple(p, elder), "elder handed scroll to untrusted disciple");
+        p.setData(ModAttachments.SECT, graduate().contribute(80));
+        h.assertTrue(SectProgression.canPurple(p, elder), "trusted first-rank control cannot receive offer");
+        h.succeed();
+    }
+
+    @GameTest(template = "sect_yard", batch = "sect_progression", timeoutTicks = 40)
     public static void discipleshipNeedsDistinctPartnersAndServerCeremony(GameTestHelper h) {
         ServerPlayer p = player(h); SectDisciple mentor = npc(h, SectProgression.MENTOR);
         p.setData(ModAttachments.SECT, graduate().with("request.pills.done"));
@@ -219,6 +233,9 @@ public final class SectProgressionGameTests {
 
     @GameTest(template = "sect_yard", batch = "sect_progression", timeoutTicks = 40)
     public static void disciplineCostsAvailableMeritAndRepairCannotPayTwice(GameTestHelper h) {
+        // The victim is a first-generation disciple: in the training hours the fourth of them stands at the doors of the main hall and is
+        // on watch, so he cannot be apologised to (sect check 24.10: the result depended on the clock the earlier tests had left)
+        SectGameTests.setPeriod(h, SectSchedule.Period.EVENING);
         ServerPlayer p = player(h); SectDisciple victim = npc(h, "gyeong_on"), mentor = npc(h, SectProgression.MENTOR);
         SectStanding before = SectService.standing(p);
         int merit = SectService.state(p).merit(), contribution = SectService.state(p).contribution();
@@ -258,7 +275,7 @@ public final class SectProgressionGameTests {
                 "north board shape disagrees with wall-mounted model");
         h.getLevel().setBlockAndUpdate(pos.south(), Blocks.AIR.defaultBlockState());
         h.assertTrue(!north.canSurvive(h.getLevel(), pos), "board can float without support");
-        h.assertTrue(SectMissionBoard.BOARD.get().getStateDefinition().getPossibleStates().size() == 4, "board model state count inflated");
+        h.assertTrue(SectMissionBoard.BOARD.get().getStateDefinition().getPossibleStates().size() == 24, "board state count: 4 facings x 3 columns x 2 rows");
         h.succeed();
     }
 }

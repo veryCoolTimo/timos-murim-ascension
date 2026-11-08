@@ -85,13 +85,16 @@ public final class SectGameTests {
      * ванильные пакеты (сообщения, звук) уходят в никуда.
      * API: reference/minecraft-src/net/minecraft/server/network/ServerGamePacketListenerImpl.java (конструктор ставит player.connection)
      */
-    static ServerPlayer fakePlayer(GameTestHelper helper) {
+    public static ServerPlayer fakePlayer(GameTestHelper helper) {
         var cookie = net.minecraft.server.network.CommonListenerCookie.createInitial(
                 new com.mojang.authlib.GameProfile(java.util.UUID.randomUUID(), "sect-test"), false);
         ServerPlayer p = new ServerPlayer(helper.getLevel().getServer(), helper.getLevel(), cookie.gameProfile(), cookie.clientInformation());
         net.minecraft.network.Connection connection = new net.minecraft.network.Connection(net.minecraft.network.protocol.PacketFlow.SERVERBOUND);
         new io.netty.channel.embedded.EmbeddedChannel(connection);
         new net.minecraft.server.network.ServerGamePacketListenerImpl(helper.getLevel().getServer(), connection, p, cookie);
+        Wanderer.Entry met = new Wanderer.Entry();
+        met.visits = 3;
+        Wanderer.data(helper.getLevel()).byPlayer.put(p.getUUID(), met);
         return p;
     }
 
@@ -106,6 +109,7 @@ public final class SectGameTests {
     /** Рассвет: ученики сами доходят до своих мест в рядах и делают формы в такт (одна и та же форма у всех). */
     @GameTest(template = YARD, timeoutTicks = 500, batch = "sect_dawn")
     public static void formationInStep(GameTestHelper helper) {
+        SectPlaytestRig.clearYard(helper);
         setPeriod(helper, SectSchedule.Period.FORMATION);
         Yard yard = yard(helper, 0.8D);
         // Второе поколение в строю — не дежурный (SectRota): первый по списку после старшего.
@@ -120,11 +124,15 @@ public final class SectGameTests {
                     drilled.add(d.memberKey());
                 }
             }
-            // Через пару тиков после начала такта у всех одна и та же форма — строй синхронен.
-            boolean settled = Math.floorMod(helper.getLevel().getGameTime(), (long) SectSchedule.BEAT) == 3;
+            // SectLessons permits personal windups (0..3 ticks) and deliberate missed swings.
+            // Observe after the common strike, including when this callback runs before entity ticks.
+            long now = helper.getLevel().getGameTime();
+            boolean settled = Math.floorMod(now, (long) SectSchedule.BEAT) == SectSchedule.BEAT_STRIKE + 1
+                    && row.stream().noneMatch(d -> SectLessons.wobble(d.member().orElseThrow(), day, SectSchedule.beat(now)));
             if (settled && row.stream().allMatch(d -> d.anim().contains("six_form_"))) {
                 together.add(row.get(0).anim());
-                if (row.stream().map(SectDisciple::anim).distinct().count() != 1) {
+                String expected = "murim:six_form_" + (SectSchedule.beatForm(now) + 1);
+                if (row.stream().anyMatch(d -> !d.anim().equals(expected))) {
                     helper.fail("строй вразнобой: " + row.stream().map(SectDisciple::anim).toList());
                 }
             }
@@ -230,22 +238,36 @@ public final class SectGameTests {
         Vec3 at = yard.at("training", free[0], free[1]);
         player.moveTo(at.x, at.y, at.z, 0.0F, 0.0F);
         helper.assertTrue(SectLife.inFormation(yard, player.position()), "свободное место строя — не в строю");
+        // Шесть Равновесий в ячейке основы, изучены на первой звезде: строй учит то, что в нём отработано.
+        player.setData(io.github.verycooltimo.murim.registry.ModAttachments.LOADOUT,
+                player.getData(io.github.verycooltimo.murim.registry.ModAttachments.LOADOUT).withFoundation(java.util.Optional.of(SectService.SIX)));
+        player.setData(io.github.verycooltimo.murim.registry.ModAttachments.MASTERY, io.github.verycooltimo.murim.mastery.MasteryState.EMPTY
+                .with(SectService.SIX, io.github.verycooltimo.murim.mastery.TechniqueProgress.learned(1, 6)));
+        double bonusBefore = SectLife.masteryBonus(player);
         int[] calls = new int[2];
         helper.onEachTick(() -> {
             long now = helper.getLevel().getGameTime();
             int phase = (int) Math.floorMod(now, (long) SectSchedule.BEAT);
             if (phase == SectSchedule.BEAT_STRIKE) {
-                SectLife.onPlayerForm(player, yard);
+                // Две формы по очереди: разные формы платят больше одной.
+                SectLife.onPlayerForm(player, yard, calls[0] % 2);
                 calls[0]++;
             } else if (phase == SectSchedule.BEAT - 3) {
-                // Не в такт: не засчитывается.
-                SectLife.onPlayerForm(player, yard);
+                // Не в такт: не засчитывается, и форма не отработана.
+                SectLife.onPlayerForm(player, yard, 5);
                 calls[1]++;
             }
         });
         helper.succeedWhen(() -> {
             helper.assertTrue(calls[0] >= SectLife.MORNING_FORMS, "форм в такт пока " + calls[0]);
-            helper.assertTrue(SectLife.masteryBonus(player) > 1.0D, "утренняя тренировка не засчитана");
+            helper.assertTrue(SectLife.masteryBonus(player) == bonusBefore, "утренняя тренировка снова даёт общий множитель");
+            io.github.verycooltimo.murim.mastery.TechniqueProgress learned = player.getData(io.github.verycooltimo.murim.registry.ModAttachments.MASTERY)
+                    .techniques().get(SectService.SIX);
+            double need = io.github.verycooltimo.murim.mastery.MasteryRules.need(1);
+            double wisdom = io.github.verycooltimo.murim.mastery.MasteryRules.wisdomFactor(0.0D);
+            // Две разные формы: доля искусства и одна добавка за вторую форму; не за форму вне такта.
+            helper.assertTrue(Math.abs(learned.progress() - need * (SectLife.MORNING_SHARE + SectLife.MORNING_PER_FORM) * wisdom) < 1.0E-6,
+                    "строй не научил отработанные формы: " + learned.progress());
             helper.assertTrue(SectAttendance.current(player).today().did(SectAttendance.Activity.FORMATION), "строй не отмечен в журнале секты");
         });
     }
@@ -296,6 +318,9 @@ public final class SectGameTests {
         helper.assertTrue(!DialogueService.applyHeadless(p, mentor, doneSix), "урок 1 сдан без звезды");
         p.setData(ModAttachments.MASTERY, MasteryState.EMPTY.with(six, TechniqueProgress.learned(2, 6)));
         p.setData(ModAttachments.PROFILE, p.getData(ModAttachments.PROFILE).withRank(1));
+        // Quest 7 (side-quests-v3): the form is handed over after the strike practice, either solved alone or with the mentor's word.
+        helper.assertTrue(!DialogueService.applyHeadless(p, mentor, doneSix), "урок 1 сдан без упражнения с ударом");
+        p.setData(ModAttachments.SECT, p.getData(ModAttachments.SECT).with("quest.mentor_strike.done").with("quest.mentor_strike.how.alone"));
         helper.assertTrue(DialogueService.applyHeadless(p, mentor, doneSix), "урок 1 не сдан на 2-й звезде и третьем ранге");
         helper.assertTrue(hasBook(p, petal), "нет книги Падающего Цветка");
 
@@ -310,4 +335,28 @@ public final class SectGameTests {
         helper.assertTrue(hasBook(p, plum), "нет книги Семи Цветков");
         helper.succeed();
     }
+    @GameTest(template = YARD, timeoutTicks = 40)
+    public static void morningProgressReportsOutsideZoneWithoutWriting(GameTestHelper h) {
+        long time = h.getLevel().getDayTime();
+        try {
+            setPeriod(h, SectSchedule.Period.FORMATION);
+            Yard yard = yard(h, 0.8D);
+            ServerPlayer p = fakePlayer(h);
+            Vec3 outside = yard.at("training", 100, 100);
+            p.setPos(outside.x, outside.y, outside.z);
+            var saved = p.getPersistentData().copy();
+            int[] status = SectLife.morningStatus(p, yard);
+            h.assertTrue(status != null && status[0] == 0 && status[1] == 0 && status[2] == 0,
+                    "outside rows must report no morning-form credit");
+            h.assertTrue(saved.equals(p.getPersistentData()), "morning progress query wrote player data");
+            Vec3 inside = yard.at("training", 0, SectSchedule.FRONT_ROW);
+            p.setPos(inside.x, inside.y, inside.z);
+            status = SectLife.morningStatus(p, yard);
+            h.assertTrue(status != null && status[2] == 1, "row position must be inside formation");
+        } finally {
+            h.getLevel().setDayTime(time);
+        }
+        h.succeed();
+    }
+
 }

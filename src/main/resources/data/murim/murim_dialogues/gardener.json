@@ -5,6 +5,14 @@
     {
       "when": [
         {
+          "min_standing": "first"
+        }
+      ],
+      "node": "office"
+    },
+    {
+      "when": [
+        {
           "period": "night"
         }
       ],
@@ -26,10 +34,27 @@
     "greet": {
       "random": [
         "dialogue.murim.gardener.greet1",
-        "dialogue.murim.gardener.greet2"
+        "dialogue.murim.gardener.greet2",
+        "dialogue.murim.gardener.greet3",
+        "dialogue.murim.gardener.greet4",
+        "dialogue.murim.gardener.greet5",
+        "dialogue.murim.gardener.greet6"
       ],
       "gesture": "nod",
       "options": [
+        {
+          "text": "dialogue.murim.approach.opt.not_now",
+          "when": [
+            {
+              "social": "approaching"
+            }
+          ],
+          "actions": [
+            {
+              "type": "approach_decline"
+            }
+          ]
+        },
         {
           "text": "dialogue.murim.gardener.opt.ask",
           "next": "answer"
@@ -60,10 +85,50 @@
     "garden": {
       "random": [
         "dialogue.murim.gardener.garden1",
-        "dialogue.murim.gardener.garden2"
+        "dialogue.murim.gardener.garden2",
+        "dialogue.murim.gardener.garden3",
+        "dialogue.murim.gardener.garden4",
+        "dialogue.murim.gardener.garden5",
+        "dialogue.murim.gardener.garden6"
       ],
       "gesture": "nod",
       "options": [
+        {
+          "text": "dialogue.murim.gardener.opt.ask",
+          "next": "answer"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "office": {
+      "random": [
+        "dialogue.murim.gardener.office.1",
+        "dialogue.murim.gardener.office.2",
+        "dialogue.murim.gardener.office.3",
+        "dialogue.murim.gardener.office.4",
+        "dialogue.murim.gardener.office.5",
+        "dialogue.murim.gardener.office.6"
+      ],
+      "args": [
+        "position"
+      ],
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.approach.opt.not_now",
+          "when": [
+            {
+              "social": "approaching"
+            }
+          ],
+          "actions": [
+            {
+              "type": "approach_decline"
+            }
+          ]
+        },
         {
           "text": "dialogue.murim.gardener.opt.ask",
           "next": "answer"

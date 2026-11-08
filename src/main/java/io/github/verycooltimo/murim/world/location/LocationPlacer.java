@@ -17,7 +17,7 @@ import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemp
  * Stamps a captured location into a level: every part that meets the clip box (one chunk column during
  * generation, the whole box in a live world), then a footing under the bottom layer down to the ground, so a
  * location placed on a slope stands on earth instead of hanging over it. Used by the structure piece, the
- * Mount Hua sect overlay and the live {@code /murim location place}.
+ * Mount Hua sect overlay and the live {@code /murim dev loc place}.
  *
  * <p>API: reference/minecraft-src/net/minecraft/world/level/levelgen/structure/templatesystem/StructureTemplate.java#placeInWorld
  * (rotation about the pivot, clip by settings' bounding box, entities clipped by block position),
@@ -90,9 +90,15 @@ public final class LocationPlacer {
     }
 
     private static BlockState filler(BlockState bottom) {
-        if (bottom.is(BlockTags.DIRT) || !LocationCapture.terrain(bottom)) {
+        if (bottom.is(BlockTags.DIRT) || !terrain(bottom)) {
             return Blocks.DIRT.defaultBlockState();
         }
         return bottom;
     }
+    // API: Minecraft BlockBehaviour.BlockStateBase#is(TagKey/Block); tags/BlockTags.java.
+    static boolean terrain(BlockState s) {
+        return s.is(BlockTags.DIRT) || s.is(BlockTags.BASE_STONE_OVERWORLD) || s.is(BlockTags.SAND) || s.is(Blocks.GRAVEL)
+                || s.is(BlockTags.TERRACOTTA) || s.is(Blocks.SNOW_BLOCK) || s.is(Blocks.CALCITE) || s.is(Blocks.SMOOTH_BASALT);
+    }
+
 }

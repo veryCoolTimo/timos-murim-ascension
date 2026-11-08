@@ -39,7 +39,8 @@ public final class AuraService {
 
     /** Выставить ауру и разослать её всем, кто видит существо. */
     public static void set(LivingEntity entity, AuraState aura) {
-        entity.setData(ModAttachments.AURA, aura);
+        if (aura.present()) entity.setData(ModAttachments.AURA, aura);
+        else entity.removeData(ModAttachments.AURA);
         PacketDistributor.sendToPlayersTrackingEntityAndSelf(entity,
                 new SyncAuraPayload(entity.getId(), aura.rank(), aura.demonic()));
     }
@@ -51,7 +52,8 @@ public final class AuraService {
 
     @SubscribeEvent
     static void onStartTracking(PlayerEvent.StartTracking event) {
-        if (event.getTarget() instanceof LivingEntity living && event.getEntity() instanceof ServerPlayer player) {
+        if (event.getTarget() instanceof LivingEntity living && living.hasData(ModAttachments.AURA)
+                && event.getEntity() instanceof ServerPlayer player) {
             AuraState aura = living.getData(ModAttachments.AURA);
             if (aura.present()) {
                 PacketDistributor.sendToPlayer(player, new SyncAuraPayload(living.getId(), aura.rank(), aura.demonic()));
@@ -93,6 +95,7 @@ public final class AuraService {
         int sourceId = -1;
         for (LivingEntity other : player.level().getEntitiesOfClass(LivingEntity.class,
                 player.getBoundingBox().inflate(SEARCH), e -> e != player && e.isAlive())) {
+            if (!other.hasData(ModAttachments.AURA)) continue;
             AuraState aura = other.getData(ModAttachments.AURA);
             if (!aura.present()) {
                 continue;
@@ -105,7 +108,7 @@ public final class AuraService {
         }
         // Сильнейший источник — от него дует порыв.
         player.getData(ModAttachments.AURA_GUST)[2] = sourceId;
-        return io.github.verycooltimo.murim.technique.DemonicExecutor.reducePressure(player, strongest);
+        return strongest;
     }
 
     /**

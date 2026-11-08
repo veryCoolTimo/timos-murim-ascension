@@ -5,6 +5,14 @@
     {
       "when": [
         {
+          "min_standing": "first"
+        }
+      ],
+      "node": "office"
+    },
+    {
+      "when": [
+        {
           "period": "night"
         }
       ],
@@ -18,13 +26,74 @@
     "greet": {
       "random": [
         "dialogue.murim.guard.greet1",
-        "dialogue.murim.guard.greet2"
+        "dialogue.murim.guard.greet2",
+        "dialogue.murim.guard.greet3",
+        "dialogue.murim.guard.greet4",
+        "dialogue.murim.guard.greet5",
+        "dialogue.murim.guard.greet6"
       ],
       "gesture": "nod",
       "options": [
         {
+          "text": "dialogue.murim.approach.opt.not_now",
+          "when": [
+            {
+              "social": "approaching"
+            }
+          ],
+          "actions": [
+            {
+              "type": "approach_decline"
+            }
+          ]
+        },
+        {
           "text": "dialogue.murim.guard.opt.where",
-          "next": "where"
+          "next": "where_outsider",
+          "when": [
+            {
+              "member": false
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.guard.opt.where",
+          "next": "where_novice",
+          "when": [
+            {
+              "member": true,
+              "below_standing": "disciple"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.guard.opt.where",
+          "next": "where_disciple",
+          "when": [
+            {
+              "min_standing": "disciple",
+              "below_standing": "graduate"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.guard.opt.where",
+          "next": "where_graduate",
+          "when": [
+            {
+              "min_standing": "graduate",
+              "below_standing": "trusted"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.guard.opt.where",
+          "next": "where_trusted",
+          "when": [
+            {
+              "min_standing": "trusted"
+            }
+          ]
         },
         {
           "text": "dialogue.murim.opt.standing",
@@ -42,13 +111,62 @@
     },
     "night": {
       "random": [
-        "dialogue.murim.guard.night1"
+        "dialogue.murim.guard.night1",
+        "dialogue.murim.guard.night2",
+        "dialogue.murim.guard.night3",
+        "dialogue.murim.guard.night4",
+        "dialogue.murim.guard.night5",
+        "dialogue.murim.guard.night6"
       ],
       "gesture": "shake",
       "options": [
         {
           "text": "dialogue.murim.guard.opt.where",
-          "next": "where"
+          "next": "where_outsider",
+          "when": [
+            {
+              "member": false
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.guard.opt.where",
+          "next": "where_novice",
+          "when": [
+            {
+              "member": true,
+              "below_standing": "disciple"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.guard.opt.where",
+          "next": "where_disciple",
+          "when": [
+            {
+              "min_standing": "disciple",
+              "below_standing": "graduate"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.guard.opt.where",
+          "next": "where_graduate",
+          "when": [
+            {
+              "min_standing": "graduate",
+              "below_standing": "trusted"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.guard.opt.where",
+          "next": "where_trusted",
+          "when": [
+            {
+              "min_standing": "trusted"
+            }
+          ]
         },
         {
           "text": "dialogue.murim.opt.leave"
@@ -249,6 +367,78 @@
             }
           ],
           "next": "rise_trusted"
+        }
+      ]
+    },
+    "office": {
+      "random": [
+        "@context"
+      ],
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.approach.opt.not_now",
+          "when": [
+            {
+              "social": "approaching"
+            }
+          ],
+          "actions": [
+            {
+              "type": "approach_decline"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.guard.opt.where",
+          "next": "where_outsider",
+          "when": [
+            {
+              "member": false
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.guard.opt.where",
+          "next": "where_novice",
+          "when": [
+            {
+              "member": true,
+              "below_standing": "disciple"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.guard.opt.where",
+          "next": "where_disciple",
+          "when": [
+            {
+              "min_standing": "disciple",
+              "below_standing": "graduate"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.guard.opt.where",
+          "next": "where_graduate",
+          "when": [
+            {
+              "min_standing": "graduate",
+              "below_standing": "trusted"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.guard.opt.where",
+          "next": "where_trusted",
+          "when": [
+            {
+              "min_standing": "trusted"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
         }
       ]
     }

@@ -5,6 +5,14 @@
     {
       "when": [
         {
+          "min_standing": "first"
+        }
+      ],
+      "node": "office"
+    },
+    {
+      "when": [
+        {
           "period": "night"
         }
       ],
@@ -26,10 +34,27 @@
     "greet": {
       "random": [
         "dialogue.murim.water_carrier.greet1",
-        "dialogue.murim.water_carrier.greet2"
+        "dialogue.murim.water_carrier.greet2",
+        "dialogue.murim.water_carrier.greet3",
+        "dialogue.murim.water_carrier.greet4",
+        "dialogue.murim.water_carrier.greet5",
+        "dialogue.murim.water_carrier.greet6"
       ],
       "gesture": "nod",
       "options": [
+        {
+          "text": "dialogue.murim.approach.opt.not_now",
+          "when": [
+            {
+              "social": "approaching"
+            }
+          ],
+          "actions": [
+            {
+              "type": "approach_decline"
+            }
+          ]
+        },
         {
           "text": "dialogue.murim.water_carrier.opt.ask",
           "next": "answer"
@@ -60,10 +85,50 @@
     "morning": {
       "random": [
         "dialogue.murim.water_carrier.morning1",
-        "dialogue.murim.water_carrier.morning2"
+        "dialogue.murim.water_carrier.morning2",
+        "dialogue.murim.water_carrier.morning3",
+        "dialogue.murim.water_carrier.morning4",
+        "dialogue.murim.water_carrier.morning5",
+        "dialogue.murim.water_carrier.morning6"
       ],
       "gesture": "nod",
       "options": [
+        {
+          "text": "dialogue.murim.water_carrier.opt.ask",
+          "next": "answer"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "office": {
+      "random": [
+        "dialogue.murim.water_carrier.office.1",
+        "dialogue.murim.water_carrier.office.2",
+        "dialogue.murim.water_carrier.office.3",
+        "dialogue.murim.water_carrier.office.5",
+        "dialogue.murim.water_carrier.office.6",
+        "dialogue.murim.water_carrier.office.7"
+      ],
+      "args": [
+        "position"
+      ],
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.approach.opt.not_now",
+          "when": [
+            {
+              "social": "approaching"
+            }
+          ],
+          "actions": [
+            {
+              "type": "approach_decline"
+            }
+          ]
+        },
         {
           "text": "dialogue.murim.water_carrier.opt.ask",
           "next": "answer"

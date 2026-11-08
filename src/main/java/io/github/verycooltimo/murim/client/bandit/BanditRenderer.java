@@ -37,9 +37,33 @@ public class BanditRenderer<T extends Bandit> extends MobRenderer<T, BanditModel
     public BanditRenderer(EntityRendererProvider.Context context, ModelLayerLocation layer, String anims, boolean archer) {
         super(context, new BanditModel<>(context.bakeLayer(layer), anims), 0.5F);
         this.archer = archer;
-        if (archer) {
-            addLayer(new ItemInHandLayer<>(this, context.getItemInHandRenderer()));
-        }
+        addLayer(new ItemInHandLayer<>(this, context.getItemInHandRenderer()));
+        // Capture the embedded dao from its actual animated weapon bone (no standing-height reserve).
+        // API: /tmp/mr-ref-1121/minecraft-src: RenderLayer#render, ModelPart#translateAndRotate,
+        // PoseStack#last, Camera#getPosition. Same world-anchor conversion as DiscipleRenderer.Anchors.
+        addLayer(new net.minecraft.client.renderer.entity.layers.RenderLayer<T, BanditModel<T>>(this) {
+            @Override public void render(com.mojang.blaze3d.vertex.PoseStack pose,
+                    net.minecraft.client.renderer.MultiBufferSource buffers, int light, T entity,
+                    float swing, float amount, float partial, float age, float yaw, float pitch) {
+                if (archer) return;
+                pose.pushPose();
+                try {
+                    getParentModel().translateToHand(net.minecraft.world.entity.HumanoidArm.RIGHT, pose);
+                    var arm = getParentModel().getAnyDescendantWithName("arm_r");
+                    if (arm.isEmpty() || !arm.get().hasChild("weapon")) return;
+                    var camera = net.minecraft.client.Minecraft.getInstance().gameRenderer.getMainCamera().getPosition();
+                    var hand = pose.last().pose().transform(new org.joml.Vector4f(-1 / 16F, 10 / 16F, 0, 1));
+                    io.github.verycooltimo.murim.client.vfx.BoneAnchorLayer.put(entity.getUUID(),
+                            io.github.verycooltimo.murim.client.vfx.BoneAnchorLayer.Bone.RIGHT_HAND,
+                            camera.add(hand.x(), hand.y(), hand.z()));
+                    arm.get().getChild("weapon").translateAndRotate(pose);
+                    var tip = pose.last().pose().transform(new org.joml.Vector4f(0, 14 / 16F, 0, 1));
+                    io.github.verycooltimo.murim.client.vfx.BoneAnchorLayer.put(entity.getUUID(),
+                            io.github.verycooltimo.murim.client.vfx.BoneAnchorLayer.Bone.BLADE_TIP,
+                            camera.add(tip.x(), tip.y(), tip.z()));
+                } finally { pose.popPose(); }
+            }
+        });
     }
 
     @Override

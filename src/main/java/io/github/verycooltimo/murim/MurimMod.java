@@ -31,12 +31,14 @@ public class MurimMod {
         io.github.verycooltimo.murim.registry.ModEntities.register(modEventBus);
         io.github.verycooltimo.murim.registry.ModDataComponents.register(modEventBus);
         io.github.verycooltimo.murim.registry.ModItems.register(modEventBus);
+        io.github.verycooltimo.murim.registry.ModUniforms.register(modEventBus);
         io.github.verycooltimo.murim.world.ModWorld.register(modEventBus);
         io.github.verycooltimo.murim.registry.ModCreativeTabs.register(modEventBus);
         io.github.verycooltimo.murim.registry.ModSounds.register(modEventBus);
         io.github.verycooltimo.murim.registry.ModBlocks.register(modEventBus);
         io.github.verycooltimo.murim.registry.ModFeatures.register(modEventBus);
         io.github.verycooltimo.murim.library.ModLibrary.register(modEventBus);
+        io.github.verycooltimo.murim.quest.ModQuests.register(modEventBus);
         io.github.verycooltimo.murim.world.camp.BanditCamp.register(modEventBus);
         io.github.verycooltimo.murim.trade.ModTrade.register(modEventBus);
         io.github.verycooltimo.murim.npc.ModNpcs.register(modEventBus);
@@ -44,6 +46,7 @@ public class MurimMod {
         io.github.verycooltimo.murim.world.fortress.Fortress.register(modEventBus);
         io.github.verycooltimo.murim.training.TrainingRegistry.register(modEventBus);
         io.github.verycooltimo.murim.sect.seal.SealRegistry.register(modEventBus);
+        io.github.verycooltimo.murim.sect.vault.VaultRegistry.register(modEventBus);
         io.github.verycooltimo.murim.decor.SectPlaques.register(modEventBus);
         io.github.verycooltimo.murim.decor.AncPlaques.register(modEventBus);
         io.github.verycooltimo.murim.decor.EldPlaques.register(modEventBus);
@@ -52,6 +55,8 @@ public class MurimMod {
         io.github.verycooltimo.murim.decor.WeaponRacks.register(modEventBus);
         io.github.verycooltimo.murim.decor.HallDecor.register(modEventBus);
         io.github.verycooltimo.murim.decor.SectMissionBoard.register(modEventBus);
+        io.github.verycooltimo.murim.decor.WallPaintingBlock.register(modEventBus);
+        io.github.verycooltimo.murim.decor.SectNamePlate.register(modEventBus);
         io.github.verycooltimo.murim.decor.RoofTiles.register(modEventBus);
         io.github.verycooltimo.murim.decor.Pailou.register(modEventBus);
         io.github.verycooltimo.murim.decor.HallLights.register(modEventBus);
@@ -64,6 +69,7 @@ public class MurimMod {
         io.github.verycooltimo.murim.decor.HallFurniture.register(modEventBus);
         io.github.verycooltimo.murim.decor.IntSeating.register(modEventBus);
         io.github.verycooltimo.murim.decor.IntStore.register(modEventBus);
+        io.github.verycooltimo.murim.decor.IntWorkshop.register(modEventBus);
         io.github.verycooltimo.murim.world.location.ModLocations.register(modEventBus);
         io.github.verycooltimo.murim.world.hua.HuaBiomes.register(modEventBus);
         io.github.verycooltimo.murim.world.hua.HuaGround.register(modEventBus);

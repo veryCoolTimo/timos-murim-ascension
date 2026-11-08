@@ -29,6 +29,15 @@ public final class ModFeatures {
     public static final DeferredHolder<Feature<?>, MountHuaFeature> MOUNT_HUA_CLEANUP =
             FEATURES.register("mount_hua_cleanup", () -> new MountHuaFeature(NoneFeatureConfiguration.CODEC, true));
 
+    /** Paints the Mount Hua biomes before the vegetal decoration, so the vanilla features of the neighbouring biome stay off the mountain. */
+    public static final DeferredHolder<Feature<?>, MountHuaFeature> MOUNT_HUA_PAINT =
+            FEATURES.register("mount_hua_paint", () -> new MountHuaFeature(NoneFeatureConfiguration.CODEC, MountHuaFeature.Pass.PAINT));
+
+    public static final DeferredHolder<Feature<?>, io.github.verycooltimo.murim.world.herb.WildHerbFeature> WILD_GINSENG =
+            FEATURES.register("wild_ginseng", () -> new io.github.verycooltimo.murim.world.herb.WildHerbFeature(false));
+    public static final DeferredHolder<Feature<?>, io.github.verycooltimo.murim.world.herb.WildHerbFeature> WILD_LINGZHI =
+            FEATURES.register("wild_lingzhi", () -> new io.github.verycooltimo.murim.world.herb.WildHerbFeature(true));
+
     private ModFeatures() {
     }
 

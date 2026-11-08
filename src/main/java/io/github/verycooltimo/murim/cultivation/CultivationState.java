@@ -19,6 +19,11 @@ import java.util.Optional;
  */
 public record CultivationState(Optional<ResourceLocation> method, int beats) {
 
+    /** Save schema marker. Future fields must be optional with defaults (ADR 0084). */
+    public static final int VERSION = 1;
+
+    public int version() { return VERSION; }
+
     /** Такт, после которого родилось семя. */
     public static final int SEEDED = 3;
 
@@ -26,8 +31,10 @@ public record CultivationState(Optional<ResourceLocation> method, int beats) {
 
     public static final Codec<CultivationState> CODEC = RecordCodecBuilder.create(i -> i.group(
             ResourceLocation.CODEC.optionalFieldOf("method").forGetter(CultivationState::method),
-            Codec.INT.optionalFieldOf("beats", 0).forGetter(CultivationState::beats)
-    ).apply(i, CultivationState::new));
+            Codec.INT.optionalFieldOf("beats", 0).forGetter(CultivationState::beats),
+            // Always write the marker; an omitted legacy marker still defaults to the current schema.
+            Codec.INT.optionalFieldOf("version").xmap(v -> v.orElse(VERSION), java.util.Optional::of).forGetter(CultivationState::version)
+    ).apply(i, (method, beats, version) -> new CultivationState(method, beats)));
 
     public CultivationState {
         java.util.Objects.requireNonNull(method, "method");

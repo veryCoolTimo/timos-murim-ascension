@@ -1,0 +1,148 @@
+{
+  "variants": {
+    "facing=north,sink=0": {
+      "model": "murim:block/int_scales_mortar",
+      "y": 0
+    },
+    "facing=north,sink=1": {
+      "model": "murim:block/int_scales_mortar_sink_1",
+      "y": 0
+    },
+    "facing=north,sink=2": {
+      "model": "murim:block/int_scales_mortar_sink_2",
+      "y": 0
+    },
+    "facing=north,sink=3": {
+      "model": "murim:block/int_scales_mortar_sink_3",
+      "y": 0
+    },
+    "facing=north,sink=4": {
+      "model": "murim:block/int_scales_mortar_sink_4",
+      "y": 0
+    },
+    "facing=north,sink=5": {
+      "model": "murim:block/int_scales_mortar_sink_5",
+      "y": 0
+    },
+    "facing=north,sink=6": {
+      "model": "murim:block/int_scales_mortar_sink_6",
+      "y": 0
+    },
+    "facing=north,sink=7": {
+      "model": "murim:block/int_scales_mortar_sink_7",
+      "y": 0
+    },
+    "facing=north,sink=8": {
+      "model": "murim:block/int_scales_mortar_sink_8",
+      "y": 0
+    },
+    "facing=east,sink=0": {
+      "model": "murim:block/int_scales_mortar",
+      "y": 90
+    },
+    "facing=east,sink=1": {
+      "model": "murim:block/int_scales_mortar_sink_1",
+      "y": 90
+    },
+    "facing=east,sink=2": {
+      "model": "murim:block/int_scales_mortar_sink_2",
+      "y": 90
+    },
+    "facing=east,sink=3": {
+      "model": "murim:block/int_scales_mortar_sink_3",
+      "y": 90
+    },
+    "facing=east,sink=4": {
+      "model": "murim:block/int_scales_mortar_sink_4",
+      "y": 90
+    },
+    "facing=east,sink=5": {
+      "model": "murim:block/int_scales_mortar_sink_5",
+      "y": 90
+    },
+    "facing=east,sink=6": {
+      "model": "murim:block/int_scales_mortar_sink_6",
+      "y": 90
+    },
+    "facing=east,sink=7": {
+      "model": "murim:block/int_scales_mortar_sink_7",
+      "y": 90
+    },
+    "facing=east,sink=8": {
+      "model": "murim:block/int_scales_mortar_sink_8",
+      "y": 90
+    },
+    "facing=south,sink=0": {
+      "model": "murim:block/int_scales_mortar",
+      "y": 180
+    },
+    "facing=south,sink=1": {
+      "model": "murim:block/int_scales_mortar_sink_1",
+      "y": 180
+    },
+    "facing=south,sink=2": {
+      "model": "murim:block/int_scales_mortar_sink_2",
+      "y": 180
+    },
+    "facing=south,sink=3": {
+      "model": "murim:block/int_scales_mortar_sink_3",
+      "y": 180
+    },
+    "facing=south,sink=4": {
+      "model": "murim:block/int_scales_mortar_sink_4",
+      "y": 180
+    },
+    "facing=south,sink=5": {
+      "model": "murim:block/int_scales_mortar_sink_5",
+      "y": 180
+    },
+    "facing=south,sink=6": {
+      "model": "murim:block/int_scales_mortar_sink_6",
+      "y": 180
+    },
+    "facing=south,sink=7": {
+      "model": "murim:block/int_scales_mortar_sink_7",
+      "y": 180
+    },
+    "facing=south,sink=8": {
+      "model": "murim:block/int_scales_mortar_sink_8",
+      "y": 180
+    },
+    "facing=west,sink=0": {
+      "model": "murim:block/int_scales_mortar",
+      "y": 270
+    },
+    "facing=west,sink=1": {
+      "model": "murim:block/int_scales_mortar_sink_1",
+      "y": 270
+    },
+    "facing=west,sink=2": {
+      "model": "murim:block/int_scales_mortar_sink_2",
+      "y": 270
+    },
+    "facing=west,sink=3": {
+      "model": "murim:block/int_scales_mortar_sink_3",
+      "y": 270
+    },
+    "facing=west,sink=4": {
+      "model": "murim:block/int_scales_mortar_sink_4",
+      "y": 270
+    },
+    "facing=west,sink=5": {
+      "model": "murim:block/int_scales_mortar_sink_5",
+      "y": 270
+    },
+    "facing=west,sink=6": {
+      "model": "murim:block/int_scales_mortar_sink_6",
+      "y": 270
+    },
+    "facing=west,sink=7": {
+      "model": "murim:block/int_scales_mortar_sink_7",
+      "y": 270
+    },
+    "facing=west,sink=8": {
+      "model": "murim:block/int_scales_mortar_sink_8",
+      "y": 270
+    }
+  }
+}

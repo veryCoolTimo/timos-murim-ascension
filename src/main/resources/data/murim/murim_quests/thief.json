@@ -1,0 +1,191 @@
+{
+  "id": "thief",
+  "requires_sites": true,
+  "title": "quest.murim.thief.title",
+  "steps": [
+    {
+      "type": "overheard",
+      "id": "thief_hook",
+      "speaker": "steward_mun",
+      "gate": {
+        "not_flags": [
+          "quest.thief.asked",
+          "quest.thief.done"
+        ]
+      }
+    },
+    {
+      "type": "clue",
+      "id": "torn_cloth",
+      "model": "scrap"
+    },
+    {
+      "type": "clue",
+      "id": "family_letter",
+      "model": "note"
+    },
+    {
+      "type": "talk",
+      "id": "thief_ask",
+      "npc": "steward_mun",
+      "node": "thief_ask"
+    },
+    {
+      "type": "inspect",
+      "id": "shelf_nail",
+      "kind": "mark",
+      "grant": "torn_cloth",
+      "seen": "quest.thief.shelf",
+      "on_grant": {
+        "flags": [
+          "quest.thief.nail"
+        ]
+      }
+    },
+    {
+      "type": "timer",
+      "id": "thief_watch",
+      "start_flag": "quest.thief.watching",
+      "ticks": 600,
+      "gate": {
+        "not_flags": [
+          "quest.thief.confessed"
+        ]
+      },
+      "effects": {
+        "flags": [
+          "quest.thief.sok_out"
+        ]
+      }
+    },
+    {
+      "type": "inspect",
+      "id": "sok_parcel",
+      "kind": "box",
+      "grant": "family_letter",
+      "seen": "quest.thief.parcel",
+      "on_grant": {
+        "flags": [
+          "quest.thief.letter"
+        ]
+      }
+    },
+    {
+      "type": "talk",
+      "id": "thief_sok",
+      "npc": "yul_seok",
+      "node": "thief_sok",
+      "requires": {
+        "flags": [
+          "quest.thief.asked"
+        ],
+        "not_flags": [
+          "quest.thief.confessed"
+        ]
+      }
+    },
+    {
+      "type": "talk",
+      "id": "thief_half",
+      "npc": "steward_mun",
+      "node": "thief_half",
+      "requires": {
+        "flags": [
+          "quest.thief.confessed"
+        ],
+        "not_flags": [
+          "quest.thief.done"
+        ]
+      }
+    },
+    {
+      "type": "hand_in",
+      "id": "thief_self",
+      "npc": "steward_mun",
+      "node": "thief_resolve",
+      "requires": {
+        "flags": [
+          "quest.thief.confessed",
+          "clue.torn_cloth"
+        ],
+        "not_flags": [
+          "quest.thief.done"
+        ]
+      },
+      "reward": {
+        "effects": {
+          "flags": [
+            "quest.thief.done"
+          ],
+          "how": "thief:self",
+          "merit": 6
+        }
+      }
+    },
+    {
+      "type": "hand_in",
+      "id": "thief_report",
+      "npc": "steward_mun",
+      "node": "thief_resolve",
+      "requires": {
+        "flags": [
+          "quest.thief.confessed",
+          "clue.torn_cloth"
+        ],
+        "not_flags": [
+          "quest.thief.done"
+        ]
+      },
+      "reward": {
+        "effects": {
+          "flags": [
+            "quest.thief.done"
+          ],
+          "how": "thief:report",
+          "merit": 6
+        }
+      }
+    },
+    {
+      "type": "hand_in",
+      "id": "thief_quiet",
+      "npc": "steward_mun",
+      "node": "thief_resolve",
+      "take_items": [
+        "murim:silver_tael*3"
+      ],
+      "requires": {
+        "flags": [
+          "quest.thief.confessed",
+          "clue.torn_cloth"
+        ],
+        "not_flags": [
+          "quest.thief.done"
+        ]
+      },
+      "reward": {
+        "effects": {
+          "flags": [
+            "quest.thief.done"
+          ],
+          "how": "thief:quiet",
+          "merit": 6
+        }
+      }
+    },
+    {
+      "type": "talk",
+      "id": "thief_recall",
+      "npc": "yul_seok",
+      "node": "thief_recall_self",
+      "requires": {
+        "flags": [
+          "quest.thief.done"
+        ],
+        "not_flags": [
+          "quest.thief.recalled"
+        ]
+      }
+    }
+  ]
+}

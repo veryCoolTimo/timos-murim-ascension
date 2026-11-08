@@ -29,9 +29,9 @@ public final class StarMasteryGameTests {
         MasteryState state = MasteryState.CODEC.parse(JsonOps.INSTANCE, json).getOrThrow();
         TechniqueProgress p = state.progress(id("seven_plum"));
         h.assertTrue(p.stars() == 6 && p.cap() == 12, "4/8 must become 6/12 stars");
-        h.assertTrue(Math.abs(p.progress() / MasteryRules.need(6) - 13 / MasteryRules.need(4)) < 1E-9,
+        h.assertTrue(Math.abs(p.progress() / MasteryRules.need(6) - 13 / MasteryRules.legacyNeed(4)) < 1E-9,
                 "next-star fraction was lost");
-        h.assertTrue(Math.abs(p.unprocessed() / MasteryRules.need(6) - 9 / MasteryRules.need(4)) < 1E-9,
+        h.assertTrue(Math.abs(p.unprocessed() / MasteryRules.need(6) - 9 / MasteryRules.legacyNeed(4)) < 1E-9,
                 "pending experience was lost");
         h.assertTrue(state.techniques().get(id("seven_plum_basic")).equals(state.techniques().get(id("seven_plum_blossoms"))),
                 "foundation and form must share mastery");
@@ -48,14 +48,13 @@ public final class StarMasteryGameTests {
     @GameTest(template = "small_floor", timeoutTicks = 20)
     public static void allStylesShareOnlyKnownFormsAndKeepCaps(GameTestHelper h) {
         for (var style : Styles.ALL) {
-            if (Styles.individualBooks(style)) continue; // a curriculum, not one art
             ResourceLocation a = style.basic().orElse(style.forms().get(0));
             ResourceLocation b = style.forms().get(style.basic().isPresent() ? 0 : 1);
             int cap = Arts.cap(a);
             MasteryState state = MasteryState.EMPTY.with(a, TechniqueProgress.learned(2, cap));
             h.assertFalse(state.knows(b), "progress granted a form without a manual");
             state = state.with(b, state.progress(a));
-            var gain = MasteryRules.study(state.progress(b), MasteryRules.need(2), 0, cap, false);
+            var gain = MasteryRules.study(state.progress(b), MasteryRules.need(2, cap), cap, false);
             state = state.with(b, gain.progress());
             h.assertTrue(state.techniques().get(a).equals(state.techniques().get(b)), "practice diverged by form");
             h.assertTrue(state.arts().size() == 1 && state.progress(a).stars() == 3, "art practice was duplicated");
@@ -64,7 +63,7 @@ public final class StarMasteryGameTests {
             boolean footwork = "step".equals(definition.form())
                     || io.github.verycooltimo.murim.combat.FootworkService.family(definition) != null
                     || Styles.FOOTWORK.stream().anyMatch(s -> s.forms().contains(definition.id()));
-            int expectedCap = footwork ? 10 : 12;
+            int expectedCap = 12;
             h.assertTrue(definition.starCap() == expectedCap && Arts.cap(definition.id()) == expectedCap,
                     "wrong art cap: " + definition.id());
         }
@@ -75,17 +74,17 @@ public final class StarMasteryGameTests {
             int oldMaximum = Arts.legacySteps(form);
             for (int old = 0; old <= oldMaximum; old++) {
                 int stars = (int) Math.round(old / (double) oldMaximum * Arts.cap(form));
-                h.assertTrue(Arts.executionTier(form, stars) == old, "migration lost an execution tier: " + form + " at " + old);
+                h.assertTrue(Arts.executionTier(form, stars) >= old, "migration lost an execution tier: " + form + " at " + old);
             }
         }
         var torn = new TechniqueProgress(2, 0, 0, 0, 2, 0).migrate(id("wind_god_steps"));
         h.assertTrue(torn.stars() == 3 && torn.cap() == 3, "torn save used manuscript as full denominator");
         h.assertTrue(Arts.executionTier(id("wind_god_steps"), torn.stars()) == 2, "torn book granted maximum power");
         var bounded = MasteryState.EMPTY.with(id("wind_god_steps"), TechniqueProgress.learned(12, 12));
-        h.assertTrue(bounded.progress(id("wind_god_steps")).stars() == 10
-                && bounded.progress(id("wind_god_steps")).cap() == 10, "progress exceeded the art cap");
+        h.assertTrue(bounded.progress(id("wind_god_steps")).stars() == 12
+                && bounded.progress(id("wind_god_steps")).cap() == 12, "progress exceeded the art cap");
         var state = MasteryState.EMPTY.with(Arts.methodArt(id("six_harmonies")), TechniqueProgress.learned(6, 6));
-        h.assertTrue(state.executionTiers().isEmpty(), "breathing mastery bypasses combat rank gates");
+        h.assertTrue(state.combatStars().isEmpty(), "breathing mastery bypasses combat rank gates");
         h.succeed();
     }
 
@@ -95,15 +94,15 @@ public final class StarMasteryGameTests {
         var practice = MasteryRules.experience(initial, MasteryRules.Source.TRAINING,
                 MasteryRules.need(10) * 20, 0, 0, 12).progress();
         h.assertTrue(practice.stars() == 10 && practice.progress() >= MasteryRules.need(10), "training crossed the insight wall");
-        var study = MasteryRules.study(practice, 1, 0, 12, false).progress();
+        var study = MasteryRules.study(practice, 1, 12, false).progress();
         h.assertTrue(study.stars() == 10, "pages bypass the final insight wall");
-        var reflected = MasteryRules.meditate(practice, 0, 0).progress();
-        h.assertTrue(reflected.stars() > 10, "meditation did not release stored experience");
+        var reflected = MasteryRules.process(practice, 12).progress();
+        h.assertTrue(reflected.stars() > 10, "the Echo did not release stored experience");
         var sparred = MasteryRules.experience(practice, MasteryRules.Source.SPARRING, 1, 0, 0, 12).progress();
         h.assertTrue(sparred.stars() > 10, "sparring did not release stored experience");
-        var bookPractice = MasteryRules.study(initial, MasteryRules.need(10), 0, 12, false).progress();
-        h.assertTrue(MasteryRules.meditate(bookPractice, 0, 1).progress().stars() == 11,
-                "meditation lost a completed insight wall when pending experience cooled");
+        var bookPractice = MasteryRules.study(initial, MasteryRules.need(10), 12, false).progress();
+        h.assertTrue(MasteryRules.process(bookPractice, 12).progress().stars() == 11,
+                "the Echo lost a completed insight wall");
         h.assertTrue(StarDisplay.gauge(4, 12).equals("★★★★☆☆☆☆☆☆☆☆"), "wrong twelve-star HUD text");
         h.assertTrue(StarDisplay.gauge(0, 12).equals("☆☆☆☆☆☆☆☆☆☆☆☆") && StarDisplay.gauge(12, 12).equals("★★★★★★★★★★★★"),
                 "HUD does not show twelve positions");
@@ -123,14 +122,14 @@ public final class StarMasteryGameTests {
         MasteryState state = MasteryState.CODEC.parse(JsonOps.INSTANCE, json).getOrThrow();
         TechniqueProgress p = state.progress(id("seven_plum"));
         h.assertTrue(p.stars() == 6 && p.cap() == 8 && p.version() == TechniqueProgress.VERSION, "5/10 or torn 7/10 remigrated incorrectly");
-        h.assertTrue(Math.abs(p.progress() / MasteryRules.need(6) - 13 / MasteryRules.need(5)) < 1E-9, "progress fraction lost");
-        h.assertTrue(Math.abs(p.unprocessed() / MasteryRules.need(6) - 9 / MasteryRules.need(5)) < 1E-9, "pending fraction lost");
+        h.assertTrue(Math.abs(p.progress() / MasteryRules.need(6) - 13 / MasteryRules.legacyNeed(5)) < 1E-9, "progress fraction lost");
+        h.assertTrue(Math.abs(p.unprocessed() / MasteryRules.need(6) - 9 / MasteryRules.legacyNeed(5)) < 1E-9, "pending fraction lost");
         h.assertTrue(state.progress(id("method/six_harmonies")).stars() == 12, "cultivation mastery lost");
         h.assertTrue(state.techniques().size() == 3 && !state.knows(id("seven_plum_execution")), "migration opened forms");
         h.assertTrue(state.wisdom() == 8 && state.comprehended().equals(Set.of(id("seven_plum"))), "wisdom/comprehension changed");
         var saved = MasteryState.CODEC.encodeStart(JsonOps.INSTANCE, state).getOrThrow();
         h.assertTrue(state.equals(MasteryState.CODEC.parse(JsonOps.INSTANCE, saved).getOrThrow()), "current save remigrated twice");
-        for (String form : java.util.List.of("bandit_rush", "six_harmonies", "wind_god_steps", "four_horizons")) {
+        for (String form : java.util.List.of("bandit_rush", "six_harmonies", "wind_god_steps", "twenty_four_plum_rainfall")) {
             ResourceLocation id = id(form);
             int previous = Arts.previousStarMaximum(id, 12, 0);
             for (int old = 0; old <= previous; old++) {

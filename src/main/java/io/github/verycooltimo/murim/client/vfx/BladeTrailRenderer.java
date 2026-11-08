@@ -155,12 +155,17 @@ public final class BladeTrailRenderer {
 
     /** Запускает ленту у игрока. Вызывается по серверному событию начала техники. */
     public static void start(int entityId, TechniqueDefinition definition) {
+        start(entityId, definition, 0);
+    }
+
+    /** {@code skippedTicks} — замах, который кастер пропустил (урезанный замах старшего): лента идёт с того же тика, что и анимация. */
+    public static void start(int entityId, TechniqueDefinition definition, int skippedTicks) {
         if (definition == null) {
             // Описание не доехало синхронизацией — рисовать нечего, но и падать незачем.
             MurimMod.LOGGER.warn("Техника без описания на клиенте: эффекты пропущены");
             return;
         }
-        ACTIVE.put(entityId, new Trail(clientTicks, Timing.of(definition)));
+        ACTIVE.put(entityId, new Trail(clientTicks - Math.max(0, skippedTicks), Timing.of(definition)));
     }
 
     /** Снимает ленту досрочно — например, когда технику прервали. */

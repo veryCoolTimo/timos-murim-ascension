@@ -49,6 +49,26 @@ class JunkTextTest {
     }
 
     @Test
+    @DisplayName("The head's diary title and both sides resolve in the reader's language")
+    void headNoteLangCoverage() throws IOException {
+        assertEquals(2, HeadNoteItem.PAGES.size());
+        Set<String> used = new HashSet<>();
+        keys(Component.translatable(HeadNoteItem.TITLE), used);
+        HeadNoteItem.PAGES.forEach(key -> keys(Component.translatable(key), used));
+        assertEquals(Set.of("murim.vault.head_note.title", "murim.vault.head_note.page_1",
+                "murim.vault.head_note.page_2"), used);
+        for (String locale : new String[]{"en_us", "ru_ru"}) {
+            JsonObject translations = lang(locale);
+            for (String key : used) {
+                assertTrue(translations.has(key), locale + " lacks " + key);
+                String resolved = translations.get(key).getAsString();
+                assertTrue(!resolved.isBlank(), locale + " has empty " + key);
+                assertNotEquals(key, resolved, locale + " has unresolved " + key);
+            }
+        }
+    }
+
+    @Test
     @DisplayName("Один и тот же сид даёт одну и ту же книгу; разные сиды — разные названия")
     void deterministic() {
         for (JunkKind kind : JunkKind.values()) {

@@ -25,6 +25,25 @@ class SeedLogicTest {
     private static final CultivationMethod CULT = method("holy_fire_breath", "demonic", 0.6D, 0.5D);
 
     @Test
+    void repeatedFinishDoesNotCreateAnotherSeedOrRefillQi() {
+        CultivationState state = CultivationState.NONE.withMethod(SECT.id()).withBeats(2);
+        DantianProfile profile = DantianProfile.INITIAL;
+        int seeds = 0;
+        for (int i = 0; i < 5; i++) {
+            SeedLogic.SessionResult result = SeedLogic.finishSession(state, true);
+            state = result.state();
+            if (result.outcome() == SeedLogic.Outcome.SEED) {
+                seeds++;
+                profile = SeedLogic.seedProfile(profile, SECT, 1).withPool(7);
+            } else {
+                assertEquals(SeedLogic.Outcome.ALREADY_SEEDED, result.outcome());
+            }
+        }
+        assertEquals(1, seeds);
+        assertEquals(7, profile.pool());
+    }
+
+    @Test
     @DisplayName("Без метода практиковать нечего")
     void noMethod() {
         assertEquals(SeedLogic.Outcome.NO_METHOD,
@@ -86,27 +105,40 @@ class SeedLogicTest {
     }
 
     @Test
-    @DisplayName("После семени та же природа — часть запаса уходит")
-    void sameNatureKeepsPart() {
+    @DisplayName("После семени та же природа — ци сохраняется")
+    void sameNatureKeepsQi() {
         DantianProfile profile = SeedLogic.seedProfile(DantianProfile.INITIAL, SECT, 1.0D).withPool(100.0D);
         CultivationState seeded = CultivationState.NONE.withMethod(SECT.id()).withBeats(CultivationState.SEEDED);
         SeedLogic.LearnResult result = SeedLogic.learn(seeded, profile, STREET, SECT);
         assertEquals(SeedLogic.Change.SAME_NATURE, result.change());
-        assertEquals(100.0D * SeedLogic.SAME_NATURE_KEEP, result.profile().pool(), 1.0E-9D);
+        assertEquals(profile, result.profile());
         assertEquals("pure", result.profile().nature());
     }
 
     @Test
-    @DisplayName("После семени другая природа — накопленное обнуляется")
-    void otherNatureResets() {
+    @DisplayName("После семени другая природа — ци сохраняется")
+    void otherNatureKeepsQi() {
         DantianProfile profile = SeedLogic.seedProfile(DantianProfile.INITIAL, SECT, 1.0D)
                 .withPool(100.0D).withCirculating(10.0D);
         CultivationState seeded = CultivationState.NONE.withMethod(SECT.id()).withBeats(CultivationState.SEEDED);
         SeedLogic.LearnResult result = SeedLogic.learn(seeded, profile, CULT, SECT);
         assertEquals(SeedLogic.Change.OTHER_NATURE, result.change());
-        assertEquals(0.0D, result.profile().pool(), 1.0E-9D);
-        assertEquals(0.0D, result.profile().circulating(), 1.0E-9D);
-        assertEquals("demonic", result.profile().nature());
+        assertEquals(profile, result.profile());
+    }
+
+    @Test
+    void purerMethodPreservesQiAndRankCapacity() {
+        var purple = method("purple_sky_qi", "pure", 0.95D, 0.05D);
+        var profile = SeedLogic.seedProfile(DantianProfile.INITIAL, SECT, 1)
+                .withRank(2).withPool(100).withCirculating(10);
+        var state = CultivationState.NONE.withMethod(SECT.id()).withBeats(CultivationState.SEEDED);
+        var result = SeedLogic.learn(state, profile, purple, SECT);
+        assertEquals(0.95D, result.profile().purity());
+        assertEquals(profile.pool(), result.profile().pool());
+        assertEquals(profile.circulating(), result.profile().circulating());
+        assertEquals(profile.capacity(), result.profile().capacity());
+        assertEquals(profile.rank(), result.profile().rank());
+        assertEquals(purple.id(), result.state().method().orElseThrow());
     }
 
     @Test

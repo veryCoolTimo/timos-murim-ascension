@@ -57,10 +57,9 @@ public final class ModEntities {
             ENTITIES.register("training_dummy", () -> EntityType.Builder
                     .<io.github.verycooltimo.murim.entity.TrainingDummy>of(
                             io.github.verycooltimo.murim.entity.TrainingDummy::new, MobCategory.MISC)
-                    .sized(0.7F, 1.95F)
+                    .sized(0.8F, 2.2F)
                     .clientTrackingRange(10)
-                    // Фаза читается глазами, поэтому обновление каждый тик: при значении
-                    // по умолчанию телеграф доезжал бы до клиента с задержкой до 150 мс.
+                    // Удар и качание читаются глазами, поэтому обновление каждый тик.
                     .updateInterval(1)
                     .fireImmune()
                     // Не сохраняется. Манекен — отладочная мишень, и его сохранение давало
@@ -97,12 +96,18 @@ public final class ModEntities {
             ENTITIES.register("sect_disciple", () -> EntityType.Builder
                     .<io.github.verycooltimo.murim.entity.SectDisciple>of(
                             io.github.verycooltimo.murim.entity.SectDisciple::new, MobCategory.MISC)
-                    .sized(0.6F, 1.95F)
+                    // 1.9, not 1.95: a rug (0.075) under a two-block lintel must stay passable (sect stuck analysis 17.10).
+                    .sized(0.6F, 1.9F)
                     .eyeHeight(1.62F)
                     .clientTrackingRange(10)
                     // Рывок Натиска идёт сервером: позиция каждый тик, иначе на клиенте он скачет.
                     .updateInterval(1)
                     .build("sect_disciple"));
+
+    public static final DeferredHolder<EntityType<?>, EntityType<io.github.verycooltimo.murim.entity.ShadowClone>> SHADOW_CLONE =
+            ENTITIES.register("shadow_clone", () -> EntityType.Builder
+                    .<io.github.verycooltimo.murim.entity.ShadowClone>of(io.github.verycooltimo.murim.entity.ShadowClone::new, MobCategory.MISC)
+                    .sized(.6F, 1.9F).clientTrackingRange(10).updateInterval(1).fireImmune().noSave().noSummon().build("shadow_clone"));
 
     public static void register(IEventBus modBus) {
         ENTITIES.register(modBus);

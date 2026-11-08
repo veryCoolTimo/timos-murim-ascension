@@ -55,6 +55,11 @@ public final class FortressData extends SavedData {
         }
     }
 
+    // World-wide treasure claims live in the overworld copy. Additive keys default to false on old saves.
+    // Server-only: clients see the resulting chest/items, no custom synchronization needed.
+    boolean greatRestorationPlaced;
+    boolean ascendingDragonPlaced;
+
     private final Map<Long, Entry> entries = new HashMap<>();
 
     public Entry get(long key) {
@@ -77,6 +82,13 @@ public final class FortressData extends SavedData {
         setDirty();
     }
 
+    /** Forget a fortress (a test must not leave a live record that later spawns a master near other tests). */
+    public void remove(long key) {
+        if (entries.remove(key) != null) {
+            setDirty();
+        }
+    }
+
     public Collection<Entry> all() {
         return entries.values();
     }
@@ -85,8 +97,10 @@ public final class FortressData extends SavedData {
         setDirty();
     }
 
-    private static FortressData load(CompoundTag tag, HolderLookup.Provider registries) {
+    static FortressData load(CompoundTag tag, HolderLookup.Provider registries) {
         FortressData data = new FortressData();
+        data.greatRestorationPlaced = tag.getBoolean("GreatRestorationPlaced");
+        data.ascendingDragonPlaced = tag.getBoolean("AscendingDragonPlaced");
         for (Tag t : tag.getList("Fortresses", Tag.TAG_COMPOUND)) {
             CompoundTag c = (CompoundTag) t;
             int[] y = c.getIntArray("Yard");
@@ -107,6 +121,8 @@ public final class FortressData extends SavedData {
 
     @Override
     public CompoundTag save(CompoundTag tag, HolderLookup.Provider registries) {
+        tag.putBoolean("GreatRestorationPlaced", greatRestorationPlaced);
+        tag.putBoolean("AscendingDragonPlaced", ascendingDragonPlaced);
         ListTag list = new ListTag();
         for (Entry e : entries.values()) {
             CompoundTag c = new CompoundTag();

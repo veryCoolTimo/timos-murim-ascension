@@ -1,0 +1,23 @@
+{
+  "display": {
+    "icon": {
+      "id": "murim:clue"
+    },
+    "title": {
+      "translate": "advancement.murim.all_quests.title"
+    },
+    "description": {
+      "translate": "advancement.murim.all_quests.desc"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": true
+  },
+  "parent": "murim:join",
+  "criteria": {
+    "fragments": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

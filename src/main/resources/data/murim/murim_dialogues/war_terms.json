@@ -1,0 +1,34 @@
+{
+  "name": "npc.murim.messenger",
+  "start": [
+    {
+      "node": "terms"
+    }
+  ],
+  "nodes": {
+    "terms": {
+      "line": "@war_terms",
+      "options": [
+        {
+          "text": "dialogue.murim.war.pay",
+          "actions": [
+            {
+              "type": "war_pay"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.war.labour",
+          "actions": [
+            {
+              "type": "war_labour"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    }
+  }
+}

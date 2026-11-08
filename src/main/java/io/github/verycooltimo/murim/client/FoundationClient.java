@@ -117,11 +117,8 @@ public final class FoundationClient {
         step++;
         lastSwing = ticks;
         lastFoundation = foundation.get();
-        if (plum && SwordBasicCombo.isFinisher(form)) {
-            io.github.verycooltimo.murim.client.vfx.TechniqueNameLayer.show(
-                    net.minecraft.network.chat.Component.translatable("technique.murim.sword_finisher.name"), 0);
-            CombatMode.engage();
-        }
+        SwordGuardClient.swing();
+        // No form-name caption for a basic cut, finisher included: names are announced by a cast technique only (author 18.10).
         play(player, form, executionTier, plum ? 1.0F : FoundationForms.speed(cooldown),
                 plum ? SwordBasicCombo.SWING_TICKS : cooldown,
                 !plum && minecraft.hitResult instanceof EntityHitResult hit

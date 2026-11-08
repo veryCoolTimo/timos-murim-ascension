@@ -124,6 +124,7 @@ public final class FoundationVfx {
         }
 
         boolean plum;
+        boolean shortCut;
         boolean finisher() {
             return plum && io.github.verycooltimo.murim.combat.SwordBasicCombo.isFinisher(form);
         }
@@ -134,7 +135,7 @@ public final class FoundationVfx {
         }
 
         boolean done() {
-            return age(0) > (unity() ? 80.0F : duration + 8.0F) && puffs.isEmpty();
+            return shortCut ? age(0) >= 4 : age(0) > (unity() ? 80.0F : duration + 8.0F) && puffs.isEmpty();
         }
     }
 
@@ -153,6 +154,23 @@ public final class FoundationVfx {
         s.plum = plum;
         s.hitEffectAge = s.hitAge();
         ACTIVE.add(s);
+    }
+
+    /** One fixed white basic-cut crescent at the confirmed Dipper contact, gone within four ticks.
+     * Reuses crescent() and its three-tick sample fade; no swing dust or finisher layers.
+     * API: MC Vec3#subtract/normalize/scale/add, verified in the supplied 1.21.1 sources. */
+    public static void dipperCut(int entityId, Vec3 feet, Vec3 target) {
+        checkLevel(Minecraft.getInstance());
+        Swing cut = new Swing(entityId, FoundationForms.Form.SIDE, 1, 4, null);
+        cut.shortCut = true; cut.fired = true;
+        Vec3 forward = target.subtract(feet).multiply(1, 0, 1).normalize();
+        Vec3 side = new Vec3(-forward.z, 0, forward.x);
+        Vec3 hand = feet.add(0, 1.05, 0);
+        for (int i = 0; i <= 12; i++) {
+            double angle = Math.toRadians(-55 + i * 110.0 / 12);
+            cut.samples.add(new Sample(0, hand, forward.scale(Math.cos(angle)).add(side.scale(Math.sin(angle)))));
+        }
+        ACTIVE.add(cut);
     }
 
     public static void confirmHit(io.github.verycooltimo.murim.network.FoundationPayloads.Hit payload) {
@@ -292,7 +310,7 @@ public final class FoundationVfx {
             RenderType solid = MurimRenderTypes.solid();
             for (Swing s : ACTIVE) {
                 float age = s.age(partial);
-                if (minecraft.level.getEntity(s.entityId) instanceof net.minecraft.world.entity.LivingEntity caster) {
+                if (!s.shortCut && minecraft.level.getEntity(s.entityId) instanceof net.minecraft.world.entity.LivingEntity caster) {
                     sample(s, caster, age);
                 }
                 if (s.grooveFrom != null) {

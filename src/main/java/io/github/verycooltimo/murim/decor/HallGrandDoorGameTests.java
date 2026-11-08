@@ -163,16 +163,33 @@ public final class HallGrandDoorGameTests {
         });
     }
 
-    /** A redstone block next to any part opens the gate; taking it away closes it. */
+    /** A stranger cannot bypass permission with a redstone block on any leaf. */
     @GameTest(template = YARD, batch = "hall_grand_door", timeoutTicks = 120)
-    public static void gateRedstoneOpensAndCloses(GameTestHelper helper) {
+    public static void gateRedstoneNeverGrantsEntry(GameTestHelper helper) {
         place(helper);
         helper.setBlock(part(0, 0).west(), Blocks.REDSTONE_BLOCK);
         helper.runAfterDelay(HallGrandDoorBlock.SWING_TICKS + 3, () -> {
-            assertGate(helper, true);
+            assertGate(helper, false);
+            helper.assertTrue(!((HallGrandDoorBlockEntity) helper.getLevel().getBlockEntity(helper.absolutePos(ORIGIN))).opening(),
+                    "redstone began opening the hall");
             helper.setBlock(part(0, 0).west(), Blocks.AIR);
             assertGate(helper, false);
             helper.succeed();
         });
     }
+    @GameTest(template = YARD, batch = "hall_grand_door", timeoutTicks = 80)
+    public static void interruptedReceptionClosesAnOpeningDoor(GameTestHelper helper) {
+        helper.assertTrue(place(helper).consumesAction(), "placement refused");
+        var level = helper.getLevel();
+        var origin = helper.absolutePos(ORIGIN);
+        var door = (HallGrandDoorBlock) level.getBlockState(origin).getBlock();
+        helper.assertTrue(door.toggle(level, origin, null), "door did not start opening");
+        helper.runAfterDelay(4, () -> door.close(level, origin, null));
+        helper.runAfterDelay(2 * HallGrandDoorBlock.SWING_TICKS + 4, () -> {
+            assertGate(helper, false);
+            helper.assertTrue(!((HallGrandDoorBlockEntity) level.getBlockEntity(origin)).busy(), "door still swinging");
+            helper.succeed();
+        });
+    }
+
 }

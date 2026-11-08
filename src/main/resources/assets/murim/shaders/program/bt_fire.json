@@ -1,0 +1,31 @@
+{
+    "blend": {
+        "func": "add",
+        "srcrgb": "srcalpha",
+        "dstrgb": "1-srcalpha"
+    },
+    "vertex": "sobel",
+    "fragment": "murim:bt_fire",
+    "attributes": [
+        "Position"
+    ],
+    "samplers": [
+        {
+            "name": "DiffuseSampler"
+        }
+    ],
+    "uniforms": [
+        { "name": "ProjMat", "type": "matrix4x4", "count": 16, "values": [ 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1 ] },
+        { "name": "InSize", "type": "float", "count": 2, "values": [ 1, 1 ] },
+        { "name": "OutSize", "type": "float", "count": 2, "values": [ 1, 1 ] },
+        { "name": "Clock", "type": "float", "count": 1, "values": [ 0 ] },
+        { "name": "PlateScale", "type": "float", "count": 1, "values": [ 1 ] },
+        { "name": "Anchor", "type": "float", "count": 2, "values": [ 0, 0 ] },
+        { "name": "SumScale", "type": "float", "count": 1, "values": [ 4 ] },
+        { "name": "AlphaK", "type": "float", "count": 1, "values": [ 0.95 ] },
+        { "name": "Core", "type": "float", "count": 3, "values": [ 0.91, 0.99, 1.0 ] },
+        { "name": "Body", "type": "float", "count": 3, "values": [ 0.13, 0.46, 1.0 ] },
+        { "name": "Edge", "type": "float", "count": 3, "values": [ 0.04, 0.11, 0.43 ] },
+        { "name": "Mid", "type": "float", "count": 3, "values": [ 0.47, 0.85, 1.0 ] }
+    ]
+}

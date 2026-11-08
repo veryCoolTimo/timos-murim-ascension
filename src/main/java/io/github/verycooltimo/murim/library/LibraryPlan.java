@@ -83,6 +83,8 @@ public final class LibraryPlan {
 
     /** Genuine torn manuals that can sit on the shelves: technique, depth (layers it teaches), weight. */
     public static final List<Genuine> SHELF_GENUINE = List.of(
+            new Genuine("murim:true_six_elements_sword", 0, 25),
+            new Genuine("murim:taiyi_sword", 0, 25),
             new Genuine("murim:six_harmonies", 1, 50),
             new Genuine("murim:falling_petal_sword", 1, 30),
             new Genuine("murim:seven_plum_execution", 1, 20));

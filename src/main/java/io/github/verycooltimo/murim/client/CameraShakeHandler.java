@@ -78,6 +78,11 @@ public final class CameraShakeHandler {
      * по тангажу — камера «подпрыгивает» вместе с землёй; затухает квадратично за {@code ticks}.
      * Ползунок тряски в настройках действует и здесь.
      */
+    /** Accessible, pitch-biased scene impulse with an authored duration. */
+    public static void request(float intensity,int ticks) {
+        quake(intensity,ticks);
+    }
+
     public static void quake(float intensity, int ticks) {
         if ("true".equals(System.getProperty("murim.capture")) && !"1".equals(System.getenv("MURIM_CAPTURE_SHAKE"))) {
             return;
@@ -139,6 +144,7 @@ public final class CameraShakeHandler {
 
     @SubscribeEvent
     static void onComputeCameraAngles(ViewportEvent.ComputeCameraAngles event) {
+        if (io.github.verycooltimo.murim.client.sect.HeadIntroCamera.active()) return;
         double setting = ClientConfig.cameraShake();
         if (setting <= 0.0D) {
             return;

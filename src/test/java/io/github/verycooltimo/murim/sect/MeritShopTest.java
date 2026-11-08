@@ -37,6 +37,32 @@ class MeritShopTest {
     }
 
     @Test
+    @DisplayName("Страница стоит 8 + 2 s заслуг, где s — звезда, к которой она ведёт: 10 / 20 / 32 на ★1 / ★6 / ★12")
+    void pagePriceFollowsTheStar() {
+        MeritShop.Offer page = MeritShop.offer("page").orElseThrow();
+        var book = net.minecraft.resources.ResourceLocation.parse(page.extra());
+        var art = io.github.verycooltimo.murim.mastery.Arts.masteryId(book);
+        // Искусство ещё не выучено: страница ведёт к первой звезде.
+        assertEquals(10, MeritShop.price(page, io.github.verycooltimo.murim.mastery.MasteryState.EMPTY));
+        for (int stars : new int[] {0, 5, 11}) {
+            var state = io.github.verycooltimo.murim.mastery.MasteryState.EMPTY.with(book,
+                    io.github.verycooltimo.murim.mastery.TechniqueProgress.learned(stars, 12));
+            assertEquals(8 + 2 * (stars + 1), MeritShop.price(page, state), "цена на ★" + (stars + 1));
+        }
+        var full = io.github.verycooltimo.murim.mastery.MasteryState.EMPTY.with(book,
+                io.github.verycooltimo.murim.mastery.TechniqueProgress.learned(12, 12));
+        assertEquals(32, MeritShop.price(page, full), "у законченного искусства цена последней звезды");
+        assertEquals(10, page.price(), "в таблице — цена первой звезды");
+        assertTrue(art.getPath().length() > 0);
+        // Остальное не зависит от звёзд.
+        for (MeritShop.Offer o : MeritShop.OFFERS) {
+            if (!"page".equals(o.id())) {
+                assertEquals(o.price(), MeritShop.price(o, full), o.id());
+            }
+        }
+    }
+
+    @Test
     @DisplayName("Трата не роняет положение; без заслуг, без положения и повторный пропуск — отказ")
     void check() {
         SectState s = SectState.NONE.joined().with(SectStanding.LESSON_ONE).contribute(30);
@@ -70,7 +96,7 @@ class MeritShopTest {
             assertEquals(4, b.size());
             assertEquals(4, new HashSet<>(b).size(), "дубль в сетке");
             if (day % 2 == 0) {
-                assertEquals(SectReview.PLAYER, b.get(0));
+                assertEquals(SectReview.PLAYER_PREFIX, b.get(0));
             }
         }
         assertEquals(4, days);

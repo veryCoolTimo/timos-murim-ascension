@@ -1,6 +1,7 @@
 package io.github.verycooltimo.murim.client;
 
 import io.github.verycooltimo.murim.MurimMod;
+import io.github.verycooltimo.murim.dev.CaptureView;
 
 import io.github.verycooltimo.murim.network.StartTechniquePayload;
 import net.minecraft.client.CameraType;
@@ -53,7 +54,7 @@ public final class DevCaptureHandler {
     private static int dashRunTicks;
 
     /** Какую технику снимать: {@code -Pmurim.technique=wedge_fan}. По умолчанию первая. */
-    private static final String TECHNIQUE_PROPERTY = "murim.capture.technique";
+    public static final String TECHNIQUE_PROPERTY = "murim.capture.technique";
 
     /**
      * За сколько тиков до запуска техники снимается ОПОРНЫЙ кадр.
@@ -79,8 +80,427 @@ public final class DevCaptureHandler {
 
     /** Сколько кадров снять. 100 кадров по тику перекрывают технику в 92 тика. */
     private static final int FRAME_COUNT = envInt("MURIM_CAPTURE_FRAMES", 100);
+    private static int footworkWaitTicks;
+    private static int footworkAge = -1;
+    private static net.minecraft.resources.ResourceLocation footworkSubject;
     private static int secondPressTicks;
     private static net.minecraft.resources.ResourceLocation secondPressId;
+
+    private static net.minecraft.world.phys.Vec3 trackForward;
+    private static net.minecraft.world.phys.Vec3 trackEye;
+    private static net.minecraft.world.phys.Vec3 trackAim;
+    private static double trackDistance = Double.NaN;
+    private static int trackTicks;
+
+    private static boolean plumRejected;
+    private static int plumStillTicks;
+    private static int plumAimTicks;
+    private static int plumReaims;
+    private static boolean plumCameraReady;
+    private static double plumClearOrbit = Double.NaN;
+    private static net.minecraft.world.entity.LivingEntity plumStagedTarget;
+    private static net.minecraft.world.phys.Vec3 plumCasterMark;
+    private static net.minecraft.world.phys.Vec3 plumTargetMark;
+
+    /** Client-only staging gate; no technique or film clock advances until the rendered view passes.
+     * API: supplied MC 1.21.1 Entity#position, Vec3#distanceToSqr, Minecraft#getCameraEntity.
+     */
+    private static boolean preparePlumCamera(Minecraft mc) {
+        var target = plumTarget(mc);
+        if (target == null || !(mc.getCameraEntity() instanceof net.minecraft.world.entity.decoration.ArmorStand)) {
+            plumStillTicks = 0;
+            plumAimTicks = 0;
+            plumCameraReady = false;
+            return false;
+        }
+        var casterPos = mc.player.position();
+        var targetPos = target.position();
+        if (target != plumStagedTarget || plumCasterMark == null
+                || casterPos.distanceToSqr(plumCasterMark) > .0001
+                || targetPos.distanceToSqr(plumTargetMark) > .0001) {
+            plumStagedTarget = target;
+            plumCasterMark = casterPos;
+            plumTargetMark = targetPos;
+            plumStillTicks = 0;
+            plumAimTicks = 0;
+            plumCameraReady = false;
+        }
+        if (++plumStillTicks < 5) return false;
+        if (plumAimTicks == 0) {
+            trackForward = null;
+            plumClearOrbit = Double.NaN;
+            trackPlum(mc);
+            plumAimTicks = 1;
+            MurimMod.LOGGER.info("CAPTURE-PLUM-CAMERA staged still_ticks={} reaims={}", plumStillTicks, plumReaims);
+        } else if (plumAimTicks < 3) {
+            plumAimTicks++;
+        }
+        return !plumRejected && plumCameraReady;
+    }
+
+    private static void rejectPlum() {
+        plumRejected = true;
+        framesLeft = 0;
+        framePending = false;
+        MurimMod.LOGGER.info("CAPTURE-PLUM-CAMERA rejected reason=subjects_out_of_view");
+    }
+
+    private static String viewMode() {
+        return System.getProperty(CAMERA_PROPERTY, "back").toLowerCase(java.util.Locale.ROOT);
+    }
+
+    private static boolean playerView() {
+        return switch (viewMode()) {
+            case "eye", "third", "victim", "victim_up" -> true;
+            default -> false;
+        };
+    }
+
+    private static net.minecraft.world.entity.LivingEntity viewTarget;
+    private static boolean viewLogged;
+
+    private static CaptureView.Point point(net.minecraft.world.phys.Vec3 v) {
+        return new CaptureView.Point(v.x, v.y, v.z);
+    }
+
+    /** API: supplied MC Entity#getEyePosition(float), Minecraft#setCameraEntity,
+     * Camera#setup/getMaxZoom (interpolation and eight wall probes), LevelRenderer#renderLevel
+     * (first-person camera entity is excluded). No observer stand is needed. */
+    private static void trackPlayerView(Minecraft mc) {
+        if (!Boolean.getBoolean(ENABLE_PROPERTY) || !playerView()) return;
+        if (viewTarget == null || !viewTarget.isAlive()) {
+            viewTarget = null;
+            double nearest = Double.POSITIVE_INFINITY;
+            for (var actor : mc.level.entitiesForRendering()) {
+                if (!(actor instanceof net.minecraft.world.entity.LivingEntity living)
+                        || actor == mc.player || !actor.isAlive()
+                        || actor instanceof net.minecraft.world.entity.decoration.ArmorStand) continue;
+                double distance = actor.position().distanceToSqr(mc.player.position());
+                if (distance < nearest) { viewTarget = living; nearest = distance; }
+            }
+        }
+        boolean victim = viewMode().startsWith("victim");
+        var subject = victim && viewTarget != null ? viewTarget : mc.player;
+        if (mc.getCameraEntity() != subject) mc.setCameraEntity(subject);
+        mc.options.setCameraType("third".equals(viewMode()) ? CameraType.THIRD_PERSON_BACK : CameraType.FIRST_PERSON);
+        mc.options.hideGui = !"eye".equals(viewMode());
+        if ("third".equals(viewMode()) && viewTarget != null) {
+            var pose = CaptureView.third(
+                    point(mc.player.getEyePosition()), point(viewTarget.getEyePosition()), 4);
+            mc.player.setYRot(pose.yaw());
+            mc.player.setXRot(0);
+        }
+    }
+
+    /** API: supplied NeoForge ViewportEvent.ComputeCameraAngles#setYaw/setPitch/setRoll,
+     * ViewportEvent#getPartialTick. Camera#setup applies these before vanilla positioning. */
+    @SubscribeEvent(priority = net.neoforged.bus.api.EventPriority.LOWEST)
+    static void onViewAngles(net.neoforged.neoforge.client.event.ViewportEvent.ComputeCameraAngles event) {
+        if (!Boolean.getBoolean(ENABLE_PROPERTY) || !playerView()) return;
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null || viewTarget == null || "eye".equals(viewMode())) return;
+        float partial = (float) event.getPartialTick();
+        var caster = point(mc.player.getEyePosition(partial));
+        var target = point(viewTarget.getEyePosition(partial));
+        var pose = "third".equals(viewMode())
+                ? CaptureView.third(caster, target, 4)
+                : CaptureView.victim(target, caster,
+                        "victim_up".equals(viewMode())
+                                ? Double.valueOf(System.getenv().getOrDefault("MURIM_CAPTURE_VICTIM_PITCH", "55")) : null);
+        event.setYaw(pose.yaw());
+        event.setPitch(pose.pitch());
+        event.setRoll(0);
+    }
+
+    private static boolean plumFilm() { return !playerView() && "1".equals(System.getenv("MURIM_CAPTURE_PLUM_CAMERA")); }
+
+    private static net.minecraft.world.entity.LivingEntity plumTarget(Minecraft mc) {
+        net.minecraft.world.entity.LivingEntity target = null;
+        double nearest = 400;
+        for (var actor : mc.level.entitiesForRendering()) {
+            if (!(actor instanceof net.minecraft.world.entity.Mob mob) || !mob.isAlive()
+                    || actor instanceof net.minecraft.world.entity.decoration.ArmorStand) continue;
+            double distance = actor.position().distanceToSqr(mc.player.position());
+            if (distance < nearest) { target = mob; nearest = distance; }
+        }
+        return target;
+    }
+    /** Plum film uses the observer's eyes in BOTH shots; THIRD_PERSON_FRONT reverses the view.
+     * API: read-only MC 1.21.1 Entity#position/moveTo/getEyeHeight/setYHeadRot,
+     * LivingEntity#yHeadRotO, Options#setCameraType, ClientLevel#entitiesForRendering.
+     */
+    private static void trackPlum(Minecraft mc) {
+        if (!plumFilm() || !(mc.getCameraEntity() instanceof net.minecraft.world.entity.decoration.ArmorStand stand)) return;
+        var target = plumTarget(mc);
+        if (target == null) return;
+        var aim = mc.player.position().lerp(target.position(), .5).add(0, 1.1, 0);
+        if (trackForward == null) {
+            var delta = target.position().subtract(mc.player.position());
+            trackForward = new net.minecraft.world.phys.Vec3(delta.x, 0, delta.z).normalize();
+        }
+        double orbit = Math.toRadians(Double.parseDouble(System.getenv().getOrDefault("MURIM_CAPTURE_CAM_ORBIT", "30")));
+        double distance = Double.parseDouble(System.getenv().getOrDefault("MURIM_CAPTURE_CAM_DIST", "7"));
+        double height = Double.parseDouble(System.getenv().getOrDefault("MURIM_CAPTURE_PLUM_HEIGHT", "1.4"));
+        var right = new net.minecraft.world.phys.Vec3(-trackForward.z, 0, trackForward.x);
+        // Front takes keep their distance and lens; find an unobstructed azimuth before staging.
+        boolean front = "front".equalsIgnoreCase(System.getProperty(CAMERA_PROPERTY, "back"));
+        if (front && Double.isNaN(plumClearOrbit)) {
+            for (double turn : new double[]{0, -20, 20, -40, 40, -60, 60, -90, 90}) {
+                double candidate = orbit + Math.toRadians(turn);
+                var test = aim.add(right.scale(Math.cos(candidate) * distance))
+                        .add(trackForward.scale(Math.sin(candidate) * distance)).add(0, height - 1.1, 0);
+                if (plumClear(mc, test, mc.player) && plumClear(mc, test, target)) {
+                    plumClearOrbit = candidate;
+                    break;
+                }
+            }
+        }
+        if (front && !Double.isNaN(plumClearOrbit)) orbit = plumClearOrbit;
+        double flower = io.github.verycooltimo.murim.client.vfx.RainVfx.filmFlowerFrame(mc.player.getId());
+        // Every flower tier needs room for the centre fifteen blocks above the target.
+        distance += flower * 22;
+        aim = aim.add(0, flower * 7.5, 0);
+        var eye = aim.add(right.scale(Math.cos(orbit) * distance)).add(trackForward.scale(Math.sin(orbit) * distance))
+                .add(0, height - 1.1, 0);
+        // Stage occlusion before frame zero; passing posts must not discard an active take.
+        // Tick-only raycasts: never access block shapes in a render callback.
+        if (frameIndex == 0 && (!plumClear(mc, eye, mc.player) || !plumClear(mc, eye, target))) {
+            rejectPlum();
+            MurimMod.LOGGER.info("CAPTURE-PLUM-CAMERA rejected reason=block_occlusion frame={}", frameIndex);
+            return;
+        }
+        var delta = aim.subtract(eye);
+        float yaw = (float) Math.toDegrees(Math.atan2(-delta.x, delta.z));
+        float pitch = (float) -Math.toDegrees(Math.atan2(delta.y, Math.hypot(delta.x, delta.z)));
+        stand.moveTo(eye.x, eye.y - stand.getEyeHeight(), eye.z, yaw, pitch);
+        stand.setYHeadRot(yaw);
+        stand.yHeadRotO = yaw;
+        mc.options.setCameraType(CameraType.FIRST_PERSON);
+        mc.options.hideGui = true;
+    }
+    /** API verified in supplied MC 1.21.1 BlockGetter#clip, ClipContext constructor,
+     * Block.OUTLINE, Fluid.NONE and HitResult#getType. Check head, torso and lower body.
+     * OUTLINE catches visible posts and fences even when their collider is narrower.
+     */
+    private static boolean plumClear(Minecraft mc, net.minecraft.world.phys.Vec3 eye,
+                                     net.minecraft.world.entity.Entity actor) {
+        var box = actor.getBoundingBox();
+        for (double fraction : new double[]{.2, .5, .85}) {
+            var point = new net.minecraft.world.phys.Vec3((box.minX + box.maxX) * .5,
+                    box.minY + (box.maxY - box.minY) * fraction, (box.minZ + box.maxZ) * .5);
+            var hit = mc.level.clip(new net.minecraft.world.level.ClipContext(eye, point,
+                    net.minecraft.world.level.ClipContext.Block.OUTLINE,
+                    net.minecraft.world.level.ClipContext.Fluid.NONE, mc.player));
+            if (hit.getType() != net.minecraft.world.phys.HitResult.Type.MISS) return false;
+        }
+        return true;
+    }
+    /** Check all eight body corners against the actual rendered camera and projection.
+     * API: MC Camera#getPosition/getXRot/getYRot; Entity#getBoundingBox; AABB fields;
+     * NeoForge RenderLevelStageEvent#getCamera/getProjectionMatrix (supplied 1.21.1 sources).
+     * Projection m00/m11 are the vanilla horizontal/vertical cotangents (GameRenderer).
+     */
+    private static boolean plumInView(RenderLevelStageEvent event, net.minecraft.world.entity.Entity actor) {
+        if (actor == null) return false;
+        var camera = event.getCamera();
+        double yaw = Math.toRadians(camera.getYRot()), pitch = Math.toRadians(camera.getXRot());
+        var forward = new net.minecraft.world.phys.Vec3(-Math.sin(yaw) * Math.cos(pitch), -Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch));
+        var right = new net.minecraft.world.phys.Vec3(Math.cos(yaw), 0, Math.sin(yaw));
+        var up = forward.cross(right);
+        var box = actor.getBoundingBox();
+        for (double x : new double[]{box.minX, box.maxX})
+            for (double y : new double[]{box.minY, box.maxY})
+                for (double z : new double[]{box.minZ, box.maxZ}) {
+                    var delta = new net.minecraft.world.phys.Vec3(x, y, z).subtract(camera.getPosition());
+                    double depth = delta.dot(forward);
+                    if (depth <= 0 || Math.abs(delta.dot(right) * event.getProjectionMatrix().m00()) > depth * .95
+                            || Math.abs(delta.dot(up) * event.getProjectionMatrix().m11()) > depth * .95) return false;
+                }
+        return true;
+    }
+
+    private static void trackFootwork(Minecraft mc) {
+        boolean airScene = System.getenv().getOrDefault("MURIM_CAPTURE_SCENE", "").startsWith("dark_fragrance_")
+                && !System.getenv().getOrDefault("MURIM_CAPTURE_SCENE", "").contains("rain");
+        if ((!airScene && !"1".equals(System.getenv("MURIM_CAPTURE_TRACK")))
+                || System.getenv().getOrDefault("MURIM_CAPTURE_FOOTWORK", "").isEmpty()
+                || !(mc.getCameraEntity() instanceof net.minecraft.world.entity.decoration.ArmorStand stand)
+                || mc.player == null || mc.level == null) return;
+        if (trackForward == null) {
+            double yaw = Math.toRadians(mc.player.getYRot());
+            trackForward = new net.minecraft.world.phys.Vec3(-Math.sin(yaw), 0, Math.cos(yaw));
+        }
+        var subject = mc.player.position();
+        if (airScene) {
+            // Exact follow keeps the full ascent/descent in frame without smoothing lag.
+            var aim = subject.add(0, 1, 0);
+            var offset = footworkBack() ? trackForward.scale(-6).add(0, 1.5, 0)
+                    : new net.minecraft.world.phys.Vec3(-trackForward.z * 6, 1.5, trackForward.x * 6);
+            var eye = clearCameraEye(mc, aim, subject.add(offset));
+            var direction = aim.subtract(eye);
+            stand.setPos(eye.x, eye.y - stand.getEyeHeight(), eye.z);
+            float yaw = (float) Math.toDegrees(Math.atan2(-direction.x, direction.z));
+            stand.setYRot(yaw); stand.setYHeadRot(yaw);
+            stand.setXRot((float) -Math.toDegrees(Math.atan2(direction.y, Math.hypot(direction.x, direction.z))));
+            return;
+        }
+        var offset = "front".equalsIgnoreCase(System.getProperty(CAMERA_PROPERTY, "back")) ? trackForward.scale(6).add(0, 2.2, 0) : footworkBack() ? trackForward.scale(-6).add(0, 2.8, 0)
+                : new net.minecraft.world.phys.Vec3(-trackForward.z * 6, 2.2, trackForward.x * 6);
+        net.minecraft.world.entity.Mob nearest = null;
+        for (var enemy : mc.level.getEntitiesOfClass(net.minecraft.world.entity.Mob.class,
+                mc.player.getBoundingBox().inflate(32), e -> e.isAlive())) {
+            if (nearest == null || enemy.position().distanceToSqr(subject) < nearest.position().distanceToSqr(subject)) nearest = enemy;
+        }
+        var aim = nearest == null ? subject.add(0, 1, 0) : subject.lerp(nearest.position(), .5).add(0, 1, 0);
+        boolean pairCamera = "1".equals(System.getenv("MURIM_CAPTURE_PAIR_CAMERA"));
+        var wanted = subject.add(offset);
+        if (pairCamera) {
+            // API: /tmp/mr-ref-1121/minecraft-src: Entity#getBoundingBox, AABB fields,
+            // ClientLevel#entitiesForRendering, LivingEntity#getMainHandItem, Vec3 operations.
+            var points = new java.util.ArrayList<net.minecraft.world.phys.Vec3>();
+            var actors = new java.util.ArrayList<net.minecraft.world.entity.Entity>();
+            actors.add(mc.player);
+            for (var actor : mc.level.entitiesForRendering()) {
+                var name = actor.getCustomName();
+                if (actor.isAlive() && name != null && "murim_airhand_film".equals(name.getString())) actors.add(actor);
+            }
+            for (var actor : actors) {
+                var box = actor.getBoundingBox();
+                boolean lying = actor instanceof net.minecraft.world.entity.LivingEntity living
+                        && io.github.verycooltimo.murim.client.vfx.BambooVfx.lying(living);
+                for (double x : new double[]{box.minX, box.maxX})
+                    for (double y : new double[]{box.minY, box.maxY})
+                        for (double z : new double[]{box.minZ, box.maxZ}) {
+                            // Same world Z rotation and lift as BambooVfx's grounded presentation.
+                            points.add(lying ? new net.minecraft.world.phys.Vec3(actor.getX() - (y - actor.getY()),
+                                    actor.getY() + .15 + x - actor.getX(), z)
+                                    : new net.minecraft.world.phys.Vec3(x, y, z));
+                        }
+                if (actor instanceof net.minecraft.world.entity.LivingEntity living
+                        && io.github.verycooltimo.murim.combat.QiSword.holdsSword(living.getMainHandItem())) {
+                    var tip = io.github.verycooltimo.murim.client.vfx.BoneAnchorLayer.position(actor,
+                            io.github.verycooltimo.murim.client.vfx.BoneAnchorLayer.Bone.BLADE_TIP);
+                    var hand = io.github.verycooltimo.murim.client.vfx.BoneAnchorLayer.position(actor,
+                            io.github.verycooltimo.murim.client.vfx.BoneAnchorLayer.Bone.RIGHT_FINGERS);
+                    if (hand == null) hand = io.github.verycooltimo.murim.client.vfx.BoneAnchorLayer.position(actor,
+                            io.github.verycooltimo.murim.client.vfx.BoneAnchorLayer.Bone.RIGHT_HAND);
+                    if (tip != null && hand != null && tip.y > hand.y + .15) points.add(tip);
+                }
+            }
+            // Round 3: preserve the readability pair shot. Only material stalk tops
+            // enlarge the vertical fit; no speculative storm/radius bounding cube.
+            String bambooScene = System.getenv("MURIM_CAPTURE_SCENE");
+            boolean bambooGrove = "bamboo_rustling_grove".equals(bambooScene);
+            boolean bambooWall = "bamboo_iron_wall".equals(bambooScene);
+            if (bambooGrove || bambooWall) {
+                double tier = Math.clamp((Integer.parseInt(System.getenv().getOrDefault("MURIM_CAPTURE_STAR", "12")) - 1) / 11.0, 0, 1);
+                if (bambooGrove) {
+                    var centre = nearest == null ? subject : nearest.position();
+                    int count = 12 + (int) (tier * 4);
+                    for (int i = 0; i < count; i++) {
+                        double angle = (i + .5) * Math.PI * 2 / count;
+                        double noise = Math.sin((i + 7) * 127.1 + 311.7) * 43758.5453;
+                        double height = (2.6 + noise - Math.floor(noise)) * (1 + tier * 3);
+                        double radius = 1.2 + tier * 2.3;
+                        points.add(centre.add(Math.cos(angle) * radius, height, Math.sin(angle) * radius));
+                    }
+                } else {
+                    points.add(subject.add(0, 6.2 * (.24 + .76 * tier), 0));
+                }
+            }
+            double minX = Double.POSITIVE_INFINITY, minY = minX, minZ = minX;
+            double maxX = Double.NEGATIVE_INFINITY, maxY = maxX, maxZ = maxX;
+            for (var point : points) {
+                minX = Math.min(minX, point.x); maxX = Math.max(maxX, point.x);
+                minY = Math.min(minY, point.y); maxY = Math.max(maxY, point.y);
+                minZ = Math.min(minZ, point.z); maxZ = Math.max(maxZ, point.z);
+            }
+            aim = new net.minecraft.world.phys.Vec3((minX + maxX) / 2, (minY + maxY) / 2, (minZ + maxZ) / 2);
+            trackAim = trackAim == null ? aim : trackAim.lerp(aim, .65);
+            var side = footworkBack() ? trackForward.scale(-1)
+                    : new net.minecraft.world.phys.Vec3(-trackForward.z, 0, trackForward.x);
+            var screenRight = new net.minecraft.world.phys.Vec3(-side.z, 0, side.x);
+            // API: MC Options#fov/OptionInstance#get; Window#getWidth/getHeight.
+            double tanV = Math.tan(Math.toRadians(mc.options.fov().get()) / 2);
+            double tanH = tanV * mc.getWindow().getWidth() / Math.max(1.0, mc.getWindow().getHeight());
+            double fit = 2.6;
+            for (var point : points) {
+                var relative = point.subtract(trackAim);
+                double depth = relative.dot(side) + .4;
+                fit = Math.max(fit, depth + (Math.abs(relative.dot(screenRight)) + .4) / tanH);
+                fit = Math.max(fit, depth + (Math.abs(relative.y) + .4) / tanV);
+            }
+            // Expand immediately to prevent clipping; gently close in after separation shrinks.
+            trackDistance = Double.isNaN(trackDistance) ? fit : Math.max(fit, trackDistance + (fit - trackDistance) * .35);
+            var eye = clearCameraEye(mc, trackAim, trackAim.add(side.scale(trackDistance)));
+            var direction = trackAim.subtract(eye);
+            stand.setPos(eye.x, eye.y - stand.getEyeHeight(), eye.z);
+            float yaw = (float) Math.toDegrees(Math.atan2(-direction.x, direction.z));
+            stand.setYRot(yaw); stand.setYHeadRot(yaw);
+            stand.setXRot((float) -Math.toDegrees(Math.atan2(direction.y, Math.hypot(direction.x, direction.z))));
+            return;
+        }
+        if ("high".equalsIgnoreCase(System.getenv("MURIM_CAPTURE_FOOTWORK_CAM"))) {
+            // Duel setup replaces the warmup mobs. Re-anchor to the tagged actor rather than
+            // retaining the warmup focus. Ten blocks gives the 40-degree lens room for every point.
+            net.minecraft.world.entity.Mob duel = null;
+            for (var enemy : mc.level.getEntitiesOfClass(net.minecraft.world.entity.Mob.class,
+                    mc.player.getBoundingBox().inflate(32), e -> e.getTags().contains("murim_capture_duel"))) duel = enemy;
+            if (duel != null || trackEye == null) {
+                var centre = duel != null ? duel.position() : nearest == null ? subject.add(trackForward.scale(2)) : nearest.position();
+                trackAim = centre.add(0, .6, 0);
+                // MURIM_CAPTURE_HIGH_SCALE < 1 brings the eye closer along the same line (animation reviews).
+                double k = Double.parseDouble(System.getenv().getOrDefault("MURIM_CAPTURE_HIGH_SCALE", "1"));
+                trackEye = trackAim.add(trackForward.scale(-4.53 * k)).add(-trackForward.z * 4.53 * k, 7.68 * k, trackForward.x * 4.53 * k);
+            }
+            var direction = trackAim.subtract(trackEye);
+            stand.setPos(trackEye.x, trackEye.y - stand.getEyeHeight(), trackEye.z);
+            float yaw = (float) Math.toDegrees(Math.atan2(-direction.x, direction.z));
+            stand.setYRot(yaw); stand.setYHeadRot(yaw);
+            stand.setXRot((float) -Math.toDegrees(Math.atan2(direction.y, Math.hypot(direction.x, direction.z))));
+            return;
+        }
+        var desired = clearCameraEye(mc, aim, wanted);
+        boolean occluded = desired.distanceToSqr(wanted) > 1.0E-8;
+        double distance = aim.distanceTo(desired);
+        boolean snap = trackEye == null || Math.abs(distance - trackDistance) > 2;
+        // Exponential follow: 1-exp(-.05/.2). Large obstruction changes snap immediately.
+        trackEye = snap ? desired : trackEye.lerp(desired, .2211992169);
+        // Smoothing can leave the eye behind a collider even when the wanted ray is clear.
+        var safeEye = clearCameraEye(mc, aim, trackEye);
+        occluded |= safeEye.distanceToSqr(trackEye) > 1.0E-8;
+        trackEye = safeEye;
+        trackDistance = distance;
+        trackAim = snap || trackAim == null ? aim : trackAim.lerp(aim, .2211992169);
+        if (trackTicks++ % 10 == 0) {
+            MurimMod.LOGGER.info("CAPTURE-CAM {} {} {} {} occluded={}", trackTicks - 1,
+                    trackEye.x, trackEye.y, trackEye.z, occluded ? 1 : 0);
+        }
+        var direction = trackAim.subtract(trackEye);
+        stand.setPos(trackEye.x, trackEye.y - stand.getEyeHeight(), trackEye.z);
+        float yaw = (float) Math.toDegrees(Math.atan2(-direction.x, direction.z));
+        stand.setYRot(yaw);
+        stand.setYHeadRot(yaw);
+        stand.setXRot((float) -Math.toDegrees(Math.atan2(direction.y, Math.hypot(direction.x, direction.z))));
+    }
+
+    public static net.minecraft.world.phys.Vec3 clearCameraEye(Minecraft mc,
+            net.minecraft.world.phys.Vec3 target, net.minecraft.world.phys.Vec3 eye) {
+        // API: /tmp/mr-ref-1121/minecraft-src/net/minecraft/world/level/BlockGetter.java#clip
+        // ClipContext COLLIDER/NONE checks block collision shapes only, never entities or fluids.
+        var hit = mc.level.clip(new net.minecraft.world.level.ClipContext(target, eye,
+                net.minecraft.world.level.ClipContext.Block.COLLIDER,
+                net.minecraft.world.level.ClipContext.Fluid.NONE, mc.player));
+        // API: minecraft-src/net/minecraft/world/phys/HitResult.java#getLocation; Vec3.java#lerp
+        if (hit.getType() != net.minecraft.world.phys.HitResult.Type.BLOCK) return eye;
+        double distance = target.distanceTo(hit.getLocation());
+        return distance <= .4 ? target : hit.getLocation().lerp(target, .4 / distance);
+    }
+
+    private static boolean footworkBack() {
+        return !System.getenv().getOrDefault("MURIM_CAPTURE_FOOTWORK", "").isEmpty()
+                && "back".equalsIgnoreCase(System.getProperty(CAMERA_PROPERTY, "back"));
+    }
 
     private static int envInt(String name, int fallback) {
         String raw = System.getenv(name);
@@ -108,6 +528,9 @@ public final class DevCaptureHandler {
      */
     private static boolean framePending;
 
+    /** Строка «прорыв начался» пишется один раз за съёмку. */
+    private static boolean breakthroughLogged;
+
     /**
      * Начинает съёмку немедленно. Вызывается автозапуском и может быть вызвана вручную,
      * если понадобится снять что-то другое.
@@ -122,13 +545,33 @@ public final class DevCaptureHandler {
             telemetry.close();
             telemetry = null;
         }
+        viewTarget = null;
+        viewLogged = false;
         armed = Boolean.getBoolean(ENABLE_PROPERTY);
+        plumRejected = false;
+        plumStillTicks = 0;
+        plumAimTicks = 0;
+        plumReaims = 0;
+        plumCameraReady = false;
+        plumStagedTarget = null;
+        plumCasterMark = null;
+        plumTargetMark = null;
+        trackForward = null;
+        trackEye = null;
+        trackAim = null;
+        trackDistance = Double.NaN;
+        trackTicks = 0;
         warmup = 0;
+        footworkWaitTicks = 0;
+        footworkAge = -1;
+        footworkSubject = null;
         framesLeft = 0;
         // Иначе запрошенный, но не снятый кадр «выстрелит» при следующем входе в мир
         // и запишет пару снимков с телеметрией, когда съёмка не запущена.
         framePending = false;
+        breakthroughLogged = false;
         meditationTicks = 0;
+        benchCapture=false;benchCaptureTicks=0;
         meditationIdle = 0;
         uiTicks = 0;
         tickCounter = 0;
@@ -143,6 +586,7 @@ public final class DevCaptureHandler {
 
     @SubscribeEvent
     static void onClientTick(ClientTickEvent.Post event) {
+        if (io.github.verycooltimo.murim.client.sect.SmokeJourneyCapture.ownsWorld()) return;
         Minecraft minecraft = Minecraft.getInstance();
         // Panorama of Mount Hua has its own driver (DevPanoramaHandler).
         if ("mounthua".equals(System.getProperty(TECHNIQUE_PROPERTY))
@@ -159,7 +603,13 @@ public final class DevCaptureHandler {
                 // Location round trip and biome: client/DevLocationHandler.
                 || "location".equals(System.getProperty(TECHNIQUE_PROPERTY))
                 // HUD and screen gallery: client/HudGalleryCapture.
-                || HudGalleryCapture.SUBJECT.equals(System.getProperty(TECHNIQUE_PROPERTY))) {
+                || HudGalleryCapture.SUBJECT.equals(System.getProperty(TECHNIQUE_PROPERTY))
+                // Combat HUD rules (air swing, hits, silence): client/CombatHudCapture.
+                || CombatHudCapture.SUBJECT.equals(System.getProperty(TECHNIQUE_PROPERTY))
+                // The senior spar stand (scripted player, own frames): client/SparFilmCapture.
+                || HeadIntroFilmCapture.SUBJECT.equals(System.getProperty(TECHNIQUE_PROPERTY))
+                || "bladeexamfilm".equals(System.getProperty(TECHNIQUE_PROPERTY))
+                || SparFilmCapture.SUBJECT.equals(System.getProperty(TECHNIQUE_PROPERTY))) {
             return;
         }
         if (minecraft.player == null || minecraft.level == null) {
@@ -172,7 +622,8 @@ public final class DevCaptureHandler {
             // Анимация тела видна только от третьего лица: в первом лице снимать нечего.
             boolean front = "front".equalsIgnoreCase(System.getProperty(CAMERA_PROPERTY, "back"));
             boolean side = "side".equalsIgnoreCase(System.getProperty(CAMERA_PROPERTY, "back"))
-                    || "fp".equalsIgnoreCase(System.getProperty(CAMERA_PROPERTY, "back"));
+                    || "fp".equalsIgnoreCase(System.getProperty(CAMERA_PROPERTY, "back"))
+                    || footworkBack();
             minecraft.options.setCameraType(side ? CameraType.FIRST_PERSON
                     : front ? CameraType.THIRD_PERSON_FRONT : CameraType.THIRD_PERSON_BACK);
             // Сбоку снимаем глазами чужой сущности в первом лице: без скрытого интерфейса
@@ -198,10 +649,19 @@ public final class DevCaptureHandler {
             if (size.length == 2) {
                 minecraft.getWindow().setWindowed(Integer.parseInt(size[0].trim()), Integer.parseInt(size[1].trim()));
             }
+            if (playerView()) minecraft.options.fov().set(70);
             String fov = System.getenv("MURIM_CAPTURE_FOV");
             if (fov != null) {
                 minecraft.options.fov().set(Mth.clamp(Integer.parseInt(fov.trim()), 30, 110));
             }
+            // Breakthrough camera director (client/camera): MURIM_CAMERA_SHOTS="1,3" or "orbit:2,crane:1" plays exactly
+            // those shots; MURIM_CAMERA_MOTION=0 films the reduced-shake look (rest poses); MURIM_CAMERA_OFF=1 the
+            // player's own camera.
+            io.github.verycooltimo.murim.client.camera.BreakthroughCamera.debugShots(System.getenv("MURIM_CAMERA_SHOTS"));
+            String cameraMotion = System.getenv("MURIM_CAMERA_MOTION");
+            io.github.verycooltimo.murim.client.camera.BreakthroughCamera.debugMotion(
+                    cameraMotion == null ? null : Float.valueOf(cameraMotion.trim()));
+            io.github.verycooltimo.murim.client.camera.BreakthroughCamera.debugOff("1".equals(System.getenv("MURIM_CAMERA_OFF")));
             MurimMod.LOGGER.info("Автосъёмка: техника через {} тиков, FOV {}, стиль дуг {}",
                     WARMUP_TICKS, System.getenv("MURIM_CAPTURE_FOV"), System.getenv("MURIM_ARC_STYLE"));
         }
@@ -210,7 +670,7 @@ public final class DevCaptureHandler {
         // прогрева. В сохранённом мире может остаться стойка прошлой съёмки (клиент гасят без
         // сохранения, и её удаление не записывается) — берём самую новую (наибольший id) и
         // переключаемся на неё, пока идёт прогрев. Опорный кадр снимается уже с неё.
-        if (warmup > 0 && "side".equalsIgnoreCase(System.getProperty(CAMERA_PROPERTY, "back"))) {
+        if (warmup > 0 && (footworkBack() || "front".equalsIgnoreCase(System.getProperty(CAMERA_PROPERTY, "back")) || "side".equalsIgnoreCase(System.getProperty(CAMERA_PROPERTY, "back")))) {
             net.minecraft.world.entity.Entity newest = null;
             for (net.minecraft.world.entity.Entity entity : minecraft.level.entitiesForRendering()) {
                 if (entity instanceof net.minecraft.world.entity.decoration.ArmorStand
@@ -233,6 +693,11 @@ public final class DevCaptureHandler {
             }
         }
 
+        trackPlayerView(minecraft);
+        trackFootwork(minecraft);
+        if ("light_test".equals(System.getenv("MURIM_CAPTURE_SCENE"))) LightTestCapture.camera(minecraft);
+        if (plumCameraReady) trackPlum(minecraft);
+
         // Камера на стойке: LocalPlayer шлёт позицию серверу только когда сам — камера
         // (LocalPlayer#sendPosition → isControlledCamera), и сервер видел игрока на старте
         // весь рывок: удары по дистанции не проходили. Шлём позицию сами.
@@ -244,16 +709,75 @@ public final class DevCaptureHandler {
         }
 
         // Опорный кадр: сцена в той же позе и с той же камерой, но БЕЗ эффекта.
+        if (warmup == 20 && "quickswap".equals(System.getProperty(TECHNIQUE_PROPERTY))) {
+            TechniqueWheel.prepareCaptureTap();
+        }
         if (warmup == BASELINE_BEFORE_TICKS) {
             Screenshot.grab(minecraft.gameDirectory, "baseline_" + anglePrefix() + ".png",
                     minecraft.getMainRenderTarget(), message -> {
                     });
         }
 
+        // Release the staged zombies and record one second of pursuit before R.
+        if (warmup == 20 && "1".equals(System.getenv("MURIM_CAPTURE_ENEMY_AI"))
+                && !System.getenv().getOrDefault("MURIM_CAPTURE_FOOTWORK", "").isEmpty()) {
+            var server = minecraft.getSingleplayerServer();
+            var local = minecraft.player;
+            if (server != null && local != null) {
+                var uuid = local.getUUID();
+                server.execute(() -> {
+                    var subject = server.getPlayerList().getPlayer(uuid);
+                    if (subject == null) return;
+                    subject.setHealth(subject.getMaxHealth());
+                    var enemies = subject.level().getEntitiesOfClass(net.minecraft.world.entity.Mob.class,
+                            subject.getBoundingBox().inflate(32));
+                    enemies.sort(java.util.Comparator.comparingInt(net.minecraft.world.entity.Entity::getId));
+                    double yaw = Math.toRadians(subject.getYRot() + 20);
+                    for (int i = 0; i < enemies.size(); i++) {
+                        var enemy = enemies.get(i);
+                        double distance = 6 + 2 * i;
+                        enemy.moveTo(subject.getX() - Math.sin(yaw) * distance, subject.getY(),
+                                subject.getZ() + Math.cos(yaw) * distance, subject.getYRot() + 180, 0);
+                        enemy.setNoAi(false);
+                        enemy.setTarget(subject);
+                    }
+                });
+            }
+            startCapture();
+        }
+
+        // API: /tmp/mr-ref-1121/minecraft-src/net/minecraft/resources/ResourceLocation.java#fromNamespaceAndPath
+        // Wait for the server's real slot/form selection to arrive before starting the film clock.
+        // The stand setup and client login ticks do not share a clock.
+        if (warmup == 1 && !System.getenv().getOrDefault("MURIM_CAPTURE_FOOTWORK", "").isEmpty()) {
+            String mode = System.getenv("MURIM_CAPTURE_FOOTWORK");
+            var expected = net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(MurimMod.MODID,
+                    io.github.verycooltimo.murim.dev.FootworkCapturePlan.subject(
+                            System.getProperty(TECHNIQUE_PROPERTY, "wind_god_steps"), mode));
+            boolean selected = ClientLoadoutState.activeTechnique().filter(expected::equals).isPresent();
+            // API: /tmp/mr-ref-1121/minecraft-src/net/minecraft/world/entity/Entity.java#onGround
+            if (!selected || !minecraft.player.onGround()) {
+                if (footworkWaitTicks++ % 40 == 0) {
+                    MurimMod.LOGGER.info("CAPTURE-FOOTWORK waiting subject={} selected={} grounded={}",
+                            expected, selected, minecraft.player.onGround());
+                }
+                return;
+            }
+        }
+
+        if (plumRejected) return;
+        if (warmup == 1 && plumFilm() && !preparePlumCamera(minecraft)) return;
+
         if (warmup > 0 && --warmup == 0) {
             // Снимать можно не только технику, но и сцену создания даньтяня: у неё те же
             // требования к проверке — привязка к телу, фазы, отсутствие пересвета.
             String subject = System.getProperty(TECHNIQUE_PROPERTY, "ceremonial_draw");
+            if ("quickswap".equals(subject)) {
+                // Requires two learned selectable forms; MURIM_CAPTURE_GUI=1 records the HUD.
+                TechniqueWheel.captureTap();
+                startCapture();
+                return;
+            }
             if (FOUNDATION.equals(subject)) {
                 foundationTicks = FOUNDATION_CAPTURE_TICKS;
                 return;
@@ -289,6 +813,15 @@ public final class DevCaptureHandler {
                 startCapture();
                 return;
             }
+            if(subject.startsWith("bench:")) {
+                minecraft.options.hideGui=true;
+                String element=subject.substring(6);
+                benchCapture=io.github.verycooltimo.murim.client.vfx.preset.BenchRuntime.start(element,
+                        Double.parseDouble(System.getenv().getOrDefault("MURIM_BENCH_FROM","-1")),
+                        Double.parseDouble(System.getenv().getOrDefault("MURIM_BENCH_TO","-1")),false)==1;
+                benchCaptureTicks=0;
+                return;
+            }
             if (MEDITATION.equals(subject)) {
                 sitDown();
                 meditationTicks = MEDITATION_CAPTURE_TICKS;
@@ -308,19 +841,14 @@ public final class DevCaptureHandler {
                 } else {
                     stillSneakTicks = TRAVEL_CAPTURE_TICKS;
                 }
-            } else if (!mode.isEmpty()) {
+            } else if (!mode.isEmpty() || !System.getenv().getOrDefault("MURIM_CAPTURE_SCENE", "").isEmpty()) {
                 // Шаги: стенд жмёт R с контекстом — run (спринт+вперёд, бежит и дважды прыгает),
                 // left/back (уклонение в сторону), plain (простой R).
-                int input = switch (mode) {
-                    case "run" -> io.github.verycooltimo.murim.combat.FootworkService.SPRINT
-                            | io.github.verycooltimo.murim.combat.FootworkService.FORWARD;
-                    case "left" -> io.github.verycooltimo.murim.combat.FootworkService.LEFT;
-                    case "back" -> io.github.verycooltimo.murim.combat.FootworkService.BACK;
-                    case "shadow" -> io.github.verycooltimo.murim.combat.FootworkService.SNEAK;
-                    case "pass" -> io.github.verycooltimo.murim.combat.FootworkService.FORWARD;
-                    default -> 0;
-                };
-                PacketDistributor.sendToServer(new io.github.verycooltimo.murim.network.TraversePayloads.Request(subjectId, input));
+                // A scripted technique scene has no footwork mode; it still needs the scene clock.
+                String resolved = mode.isEmpty() ? subject
+                        : io.github.verycooltimo.murim.dev.FootworkCapturePlan.subject(subject, mode);
+                footworkSubject = net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, resolved);
+                footworkAge = 0;
                 if ("run".equals(mode)) {
                     travelTicks = TRAVEL_CAPTURE_TICKS;
                 }
@@ -328,8 +856,8 @@ public final class DevCaptureHandler {
                     dashRunTicks = TRAVEL_CAPTURE_TICKS;
                 }
                 if ("shadow".equals(mode)) {
-                    // Тень держится приседом: стенд крадётся вперёд мимо зомби.
-                    sneakTicks = TRAVEL_CAPTURE_TICKS;
+                    // Walk normally after R.
+                    dashRunTicks = TRAVEL_CAPTURE_TICKS;
                 }
             } else {
                 PacketDistributor.sendToServer(new StartTechniquePayload(subjectId));
@@ -337,7 +865,62 @@ public final class DevCaptureHandler {
                 secondPressTicks = envInt("MURIM_CAPTURE_SECOND", 0);
                 secondPressId = subjectId;
             }
-            startCapture();
+            if (framesLeft == 0) startCapture();
+        }
+
+        if (footworkAge >= 0 && framesLeft > 0 && footworkSubject != null) {
+            String mode = System.getenv().getOrDefault("MURIM_CAPTURE_FOOTWORK", "");
+            String sequence = System.getenv().getOrDefault("MURIM_CAPTURE_SEQUENCE", "");
+            String scene = System.getenv().getOrDefault("MURIM_CAPTURE_SCENE", "");
+            if (scene.equals("light_test")) {
+                LightTestCapture.tick(minecraft, footworkAge);
+            } else if (!scene.isEmpty()) {
+                int age = footworkAge;
+                boolean floating = scene.contains("floating");
+                boolean rising = scene.contains("rising");
+                // API: minecraft-src/net/minecraft/client/KeyMapping.java#setDown;
+                // Drive vanilla walking/steering; server teleport is only the initial ledge fixture.
+                minecraft.options.keyUp.setDown(floating ? age >= 12 && age < 70 : rising && age >= 27 && age < 65);
+                minecraft.options.keyLeft.setDown(floating && age >= 50 && age < 65);
+                // Same cue grammar as the server driver: custom early/long releases keep input in sync.
+                int bloomRelease = 115;
+                if (scene.startsWith("full_bloom")) {
+                    for (var cue : io.github.verycooltimo.murim.dev.AirhandCapturePlan.parse(
+                            System.getenv().getOrDefault("MURIM_CAPTURE_SCENE_CUES", "stage@0,cast@10"))) {
+                        if (cue.action().equals("release")) bloomRelease = cue.tick();
+                    }
+                }
+                ModKeyMappings.TECHNIQUE.setDown(scene.startsWith("full_bloom") && age >= 5 && age < bloomRelease
+                        || scene.equals("bamboo_wind_leaf") && age >= 10 && age < 55);
+                if (minecraft.getSingleplayerServer() != null && minecraft.player != null) {
+                    var server = minecraft.getSingleplayerServer();
+                    var uuid = minecraft.player.getUUID();
+                    var form = footworkSubject;
+                    String cues = System.getenv().getOrDefault("MURIM_CAPTURE_SCENE_CUES", "stage@0,cast@10");
+                    server.execute(() -> {
+                        var player = server.getPlayerList().getPlayer(uuid);
+                        if (player != null) io.github.verycooltimo.murim.dev.AirhandFilmCapture.tick(player, scene, form, cues, age);
+                    });
+                }
+            }
+
+            if (!sequence.isBlank() && minecraft.getSingleplayerServer() != null && minecraft.player != null) {
+                int age = footworkAge;
+                var server = minecraft.getSingleplayerServer();
+                var uuid = minecraft.player.getUUID();
+                server.execute(() -> {
+                    var player = server.getPlayerList().getPlayer(uuid);
+                    if (player != null) io.github.verycooltimo.murim.dev.FootworkDuelCapture.tick(player, sequence, age);
+                });
+            }
+            if (scene.isEmpty() && sequence.isBlank() && io.github.verycooltimo.murim.dev.FootworkCapturePlan.due(mode, footworkAge,
+                    envInt("MURIM_CAPTURE_REPEAT", 40))) {
+                int input = io.github.verycooltimo.murim.dev.FootworkCapturePlan.input(mode);
+                // API: /tmp/mr-ref-1121/neoforge-src/net/neoforged/neoforge/network/PacketDistributor.java#sendToServer
+                PacketDistributor.sendToServer(new io.github.verycooltimo.murim.network.TraversePayloads.Request(footworkSubject, input));
+                MurimMod.LOGGER.info("CAPTURE-FOOTWORK sent subject={} input={} tick={}", footworkSubject, input, footworkAge);
+            }
+            footworkAge++;
         }
 
         if (secondPressTicks > 0 && --secondPressTicks == 0 && secondPressId != null) {
@@ -399,7 +982,7 @@ public final class DevCaptureHandler {
             dashRunTicks--;
             boolean on = dashRunTicks > 0;
             minecraft.options.keyUp.setDown(on);
-            minecraft.options.keySprint.setDown(on);
+            minecraft.options.keySprint.setDown(on && !"shadow".equals(System.getenv("MURIM_CAPTURE_FOOTWORK")));
         }
         if ((sneakTicks > 0 || travelTicks > 0 || dashRunTicks > 0) && minecraft.player != null && minecraft.getCameraEntity() != minecraft.player) {
             minecraft.player.zza = minecraft.player.input.forwardImpulse;
@@ -420,6 +1003,16 @@ public final class DevCaptureHandler {
             minecraft.options.keyJump.setDown(run && (t == 16 || t == 17 || t == 46 || t == 47));
         }
 
+        if(benchCapture) {
+            var time=io.github.verycooltimo.murim.client.vfx.preset.BenchRuntime.renderedSeconds();
+            if(!io.github.verycooltimo.murim.client.vfx.preset.BenchRuntime.active())benchCapture=false;
+            else if(benchCaptureTicks++ % Math.max(1,envInt("MURIM_CAPTURE_STEP",2))==0 && Double.isFinite(time)) {
+                grab(minecraft,String.format("murim_%s_%03d.png",anglePrefix(),frameIndex));
+                MurimMod.LOGGER.info("Camera frame {} bench {} t {}",frameIndex,
+                        io.github.verycooltimo.murim.client.vfx.preset.BenchRuntime.element(),time);
+                frameIndex++;
+            }
+        }
         if (meditationTicks > 0) {
             tickMeditation(minecraft);
         }
@@ -469,7 +1062,9 @@ public final class DevCaptureHandler {
             // когда кадр действительно снят: под Xvfb с программным OpenGL частота
             // кадров ниже двадцати в секунду, и списание по тику молча теряло бы
             // половину серии, оставляя в отчёте разрежённую и неравномерную выборку.
-            if ("1".equals(System.getenv("MURIM_CAPTURE_GUI"))) {
+            if ("eye".equals(viewMode())) {
+                framePending = true;
+            } else if (guiFrames()) {
                 // Полный кадр с интерфейсом: титры и экранные вспышки видны только так.
                 grab(minecraft, String.format("murim_%s_%03d.png", anglePrefix(), frameIndex));
                 grab(minecraft, String.format("clean_%s_%03d.png", anglePrefix(), frameIndex));
@@ -603,7 +1198,7 @@ public final class DevCaptureHandler {
     private static int foundationTicks;
 
     /** Давление ауры: игрок стоит перед противником, кадр каждые три тика. */
-    /** MURIM_CAPTURE_CLIENT_CMDS="wait 10;murim vfx backend aaa;murim vfx shockwave": client commands, run during the aura subject. */
+    /** MURIM_CAPTURE_CLIENT_CMDS="wait 10;murim dev vfx backend aaa;murim dev vfx shockwave": client commands, run during the aura subject. */
     private static final java.util.ArrayDeque<String> CLIENT_CMDS = new java.util.ArrayDeque<>();
     private static boolean clientCmdsRead;
     private static int clientCmdWait;
@@ -689,6 +1284,8 @@ public final class DevCaptureHandler {
     /** Медитация медленная: полный кадр раз в полсекунды, вместе с интерфейсом. */
     private static final int MEDITATION_FRAME_TICKS = 10;
 
+    private static boolean benchCapture;
+    private static int benchCaptureTicks;
     private static int meditationTicks;
     private static int meditationIdle;
 
@@ -736,13 +1333,27 @@ public final class DevCaptureHandler {
         // по десять тиков пропадала целиком.
         // Прорыв — чаще, выход ауры — как вспышка семени: иначе короткие фазы между кадрами пропадают.
         int step = ClientMeditationState.seedSceneAge() >= 0 || ClientMeditationState.rankUpAge() >= 0
-                || ClientPillState.finaleAge() >= 0 || ClientPillState.absorbing() ? 2
-                : ClientMeditationState.breakthroughAge() >= 0 ? 5 : MEDITATION_FRAME_TICKS;
+                || ClientPillState.finaleAge() >= 0 || ClientPillState.absorbing() || ClientPillState.deviationAge() >= 0 ? 2
+                : ClientMeditationState.breakthroughAge() >= 0 ? envInt("MURIM_CAPTURE_STEP", 5) : envInt("MURIM_CAPTURE_STEP", MEDITATION_FRAME_TICKS);
+        // Видно в журнале стенда, началась ли сцена прорыва (иначе её отсутствие замечают только по кадрам).
+        if (!breakthroughLogged && ClientMeditationState.breakthroughAge() >= 0) {
+            breakthroughLogged = true;
+            int target = ClientMeditationState.breakthroughTarget();
+            MurimMod.LOGGER.info("Breakthrough target {}: scene {} ticks, tail {} ticks; lab clock starts at scene age 0",
+                    target, io.github.verycooltimo.murim.cultivation.Realm.breakthroughTicks(target),
+                    io.github.verycooltimo.murim.cultivation.Realm.releaseTicks(target));
+            MurimMod.LOGGER.info("Автосъёмка: прорыв начался на тике медитации {}", meditationTicks);
+        }
         if (meditationTicks % step == 0) {
             // Снимок в тике берёт последний отрисованный кадр целиком, с интерфейсом:
             // HUD медитации — часть того, что проверяется.
             grab(minecraft, String.format("murim_%s_%03d.png", anglePrefix(), frameIndex));
             grab(minecraft, String.format("clean_%s_%03d.png", anglePrefix(), frameIndex));
+            // One line per frame: tools/capture/camera_sheet.py reads these to label contact sheets and cut GIFs.
+            MurimMod.LOGGER.info("Camera frame {} warn {} scene {} rankup {} director {} | {}", frameIndex,
+                    ClientMeditationState.warningAge(), ClientMeditationState.breakthroughAge(),
+                    ClientMeditationState.rankUpAge(), io.github.verycooltimo.murim.client.camera.BreakthroughCamera.active(),
+                    io.github.verycooltimo.murim.client.camera.BreakthroughCamera.debugLine());
             frameIndex++;
         }
         if (meditationTicks == 0) {
@@ -751,30 +1362,43 @@ public final class DevCaptureHandler {
     }
 
     /**
-     * Бот поглощения пилюль: на чтении норова двигает мышь (через настоящий поворот игрока,
-     * тот же путь ввода, что у человека): спокойный — коротко, бурный — в обход.
-     * MURIM_CAPTURE_GREEDY=1 — всегда коротко (снять удары и искажение ци).
+     * The stand's hands for the pill game «Провести поток»: {@code MURIM_CAPTURE_FLOW=auto} plays it with the autopilot of the game
+     * itself (restrains before closed spots and in a surge, breaks poison, picks the light branch; see {@code FlowClient#start}),
+     * anything else leaves the hands off the keys. {@code MURIM_CAPTURE_HIT=1} strikes the player on the {@code MURIM_CAPTURE_HIT_AT}-th
+     * tick of the absorption: the qi deviation (the recoil, the red edge).
      */
-    private static int botFork = -1;
-
     private static void absorbBot(Minecraft minecraft) {
+        if (minecraft.player != null && "1".equals(System.getenv("MURIM_CAPTURE_HIT")) && ClientPillState.deviationAge() == 6) {
+            var server = minecraft.getSingleplayerServer();
+            if (server != null) {
+                java.util.UUID id = minecraft.player.getUUID();
+                server.execute(() -> {
+                    var sp = server.getPlayerList().getPlayer(id);
+                    if (sp != null) {
+                        sp.getAbilities().invulnerable = true;
+                        sp.onUpdateAbilities();
+                    }
+                });
+            }
+        }
         if (!ClientPillState.absorbing() || minecraft.player == null) {
             return;
         }
-        var s = ClientPillState.state();
-        int key = s.clot() * 16 + s.fork();
-        boolean reading = ClientPillState.phase() == io.github.verycooltimo.murim.cultivation.AbsorbGame.Phase.APPROACH
-                && ClientPillState.phaseTicks() >= io.github.verycooltimo.murim.cultivation.AbsorbGame.APPROACH_TICKS
-                        - io.github.verycooltimo.murim.cultivation.AbsorbGame.READ_TICKS + 4;
-        if (!reading || botFork == key) {
-            return;
+        if ("1".equals(System.getenv("MURIM_CAPTURE_HIT"))
+                && ClientPillState.activeTicks() == envInt("MURIM_CAPTURE_HIT_AT", 100)) {
+            var server = minecraft.getSingleplayerServer();
+            if (server != null) {
+                java.util.UUID id = minecraft.player.getUUID();
+                server.execute(() -> {
+                    var sp = server.getPlayerList().getPlayer(id);
+                    if (sp != null) {
+                        sp.getAbilities().invulnerable = false;
+                        sp.onUpdateAbilities();
+                        sp.hurt(sp.damageSources().magic(), 2.0F);
+                    }
+                });
+            }
         }
-        botFork = key;
-        String mode = System.getenv().getOrDefault("MURIM_CAPTURE_GREEDY", "0");
-        // 1 — всегда коротко; 2 — расчётливый риск: бурный коротко, пока напряжение ниже 40 %.
-        boolean greedy = "1".equals(mode) || "2".equals(mode) && s.strain() < 0.4F;
-        int side = s.temper() == 2 && !greedy ? -s.shortSide() : s.shortSide();
-        minecraft.player.turn(side * 60.0D, 0.0D);
     }
 
     /** Метка ракурса в именах файлов: back, front или угол поворота игрока. */
@@ -791,6 +1415,7 @@ public final class DevCaptureHandler {
      * на которой рисуются наши эффекты. Снимок здесь содержит сцену и позу игрока, но не
      * эффект. Второй снимок берётся на {@code AFTER_PARTICLES} с НАИНИЗШИМ приоритетом,
      * то есть после всех обработчиков этой стадии, включая наши рендереры.
+     * Glow-кадры ждут AFTER_LEVEL: только там заканчивается общий проход свечения.
      *
      * <p>Раньше второй снимок делался на {@code AFTER_LEVEL}, а между стадиями рисуются
      * ещё облака, погода, граница мира и отладочный слой. Всё это попадало в разницу и
@@ -798,13 +1423,40 @@ public final class DevCaptureHandler {
      */
     @SubscribeEvent(priority = net.neoforged.bus.api.EventPriority.LOWEST)
     static void onRenderStage(RenderLevelStageEvent event) {
-        if (!framePending) {
+        if (plumRejected) return;
+        Minecraft minecraft = Minecraft.getInstance();
+        if (plumFilm() && warmup == 1 && plumAimTicks >= 3 && !plumCameraReady
+                && event.getStage() == RenderLevelStageEvent.Stage.AFTER_TRIPWIRE_BLOCKS) {
+            boolean caster = plumInView(event, minecraft.player);
+            boolean target = plumInView(event, plumTarget(minecraft));
+            MurimMod.LOGGER.info("CAPTURE-PLUM-CAMERA preflight caster_in_view={} target_in_view={}", caster, target);
+            if (caster && target) {
+                plumCameraReady = true;
+            } else if (plumReaims++ == 0) {
+                // Re-aim on the next client tick, then allow the render camera to settle again.
+                plumAimTicks = 0;
+                trackForward = null;
+            } else {
+                rejectPlum();
+            }
             return;
         }
-        Minecraft minecraft = Minecraft.getInstance();
+        if (!framePending || "eye".equals(viewMode())) return;
+        if (plumFilm() && frameIndex == 0 && event.getStage() == RenderLevelStageEvent.Stage.AFTER_TRIPWIRE_BLOCKS) {
+            boolean caster = plumInView(event, minecraft.player);
+            boolean target = plumInView(event, plumTarget(minecraft));
+            MurimMod.LOGGER.info("CAPTURE-PLUM-CAMERA frame=0 caster_in_view={} target_in_view={}", caster, target);
+            if (!caster || !target) {
+                rejectPlum();
+                return;
+            }
+        }
         if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_TRIPWIRE_BLOCKS) {
             grab(minecraft, String.format("clean_%s_%03d.png", anglePrefix(), frameIndex));
-        } else if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_PARTICLES) {
+        } else if ((event.getStage() == RenderLevelStageEvent.Stage.AFTER_PARTICLES
+                && !io.github.verycooltimo.murim.client.vfx.bt.BtGlow.active())
+                || event.getStage() == RenderLevelStageEvent.Stage.AFTER_LEVEL) {
+            // Glow frames wait for the shared AFTER_LEVEL composite (NORMAL priority), before this LOWEST capture.
             // Телеметрия пишется здесь же: возраст техники должен относиться именно к тому
             // кадру, который снят, а не к моменту тика.
             writeTelemetry(minecraft, frameIndex);
@@ -815,8 +1467,40 @@ public final class DevCaptureHandler {
         }
     }
 
+    /**
+     * Нужен ли кадр с интерфейсом. Обычная пара {@code clean_}/{@code murim_} снимается внутри прохода рендера
+     * мира (стадии {@code AFTER_TRIPWIRE_BLOCKS} и {@code AFTER_PARTICLES}), ДО того как нарисованы слои интерфейса,
+     * поэтому ни один экранный слой в такой кадр попасть не может. Титр озарения, вспышки и полосы — слои
+     * интерфейса: {@code MURIM_CAPTURE_GUI=1} включает съёмку по тику (в буфере уже готовый кадр с интерфейсом),
+     * а {@code MURIM_CAPTURE_INSIGHT=1} (титр озарения виден только в интерфейсе) включает её сам.
+     */
+    private static boolean guiFrames() {
+        return "1".equals(System.getenv("MURIM_CAPTURE_GUI")) || "1".equals(System.getenv("MURIM_CAPTURE_INSIGHT"));
+    }
+
+    /** API: supplied NeoForge RenderFrameEvent.Post runs after GameRenderer#render,
+     * including the hand pass (which follows RenderLevelStageEvent.AFTER_LEVEL). */
+    @SubscribeEvent
+    static void onViewFrame(net.neoforged.neoforge.client.event.RenderFrameEvent.Post event) {
+        if (!Boolean.getBoolean(ENABLE_PROPERTY) || !"eye".equals(viewMode()) || !framePending) return;
+        Minecraft mc = Minecraft.getInstance();
+        writeTelemetry(mc, frameIndex);
+        grab(mc, String.format("murim_%s_%03d.png", anglePrefix(), frameIndex));
+        frameIndex++;
+        framesLeft--;
+        framePending = false;
+    }
+
     /** Номер кадра — с ведущими нулями: иначе сортировка ставит 10 перед 2. */
     private static void grab(Minecraft minecraft, String name) {
+        if (playerView() && !viewLogged && name.startsWith("murim_")) {
+            var camera = minecraft.gameRenderer.getMainCamera();
+            var position = camera.getPosition();
+            MurimMod.LOGGER.info("CAPTURE-VIEW mode={} pos=<{},{},{}> yaw={} pitch={} fov={}",
+                    viewMode(), position.x, position.y, position.z,
+                    camera.getYRot(), camera.getXRot(), minecraft.options.fov().get());
+            viewLogged = true;
+        }
         Screenshot.grab(minecraft.gameDirectory, name, minecraft.getMainRenderTarget(), message -> {
         });
     }

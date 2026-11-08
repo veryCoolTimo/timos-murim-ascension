@@ -1,6 +1,7 @@
 package io.github.verycooltimo.murim.entity;
 
 import io.github.verycooltimo.murim.MurimMod;
+import io.github.verycooltimo.murim.sect.SectRole;
 import io.github.verycooltimo.murim.sect.SectSchedule.Kind;
 import net.minecraft.resources.ResourceLocation;
 
@@ -24,6 +25,11 @@ public enum SectPose {
     NONE("none", null, true, false, List.of()),
     /** Трапеза: сидит у низкого стола, чашка в левой руке, палочки — ко рту. */
     EAT("eat", "sect_eat", true, false, List.of("bowl", "chopsticks")),
+    /**
+     * Чай на совете: тот же клип, что у трапезы (чашка в левой руке к губам, пауза, взгляд на соседа), но без палочек.
+     * Ставит распорядок совета, когда слуга обошёл столы (docs/design/38, «Совет и приглашения»).
+     */
+    TEA("tea", "sect_eat", true, false, List.of("bowl")),
     /** Сон: лёжа на земле (без кровати); в кровати — только дыхание ({@code sect_sleep_bed}). */
     SLEEP("sleep", "sect_sleep", true, false, List.of()),
     /** Медитация: лотос автора (meditation_breath) на скелете NPC. */
@@ -68,7 +74,33 @@ public enum SectPose {
     /** Варит у печи: мешает в котле черпаком, левая рука на поясе (Гён Чхо). */
     BREW("brew", "sect_brew", true, true, List.of()),
     /** Лечит: на правом колене над сидящим раненым, руки вперёд — давит, щупает пульс (Гён Чхо). */
-    TREAT("treat", "sect_treat", true, false, List.of());
+    TREAT("treat", "sect_treat", true, false, List.of()),
+    // Cook and servants (author 18.10); blockout clips from tools/art/sect_kitchen_anims.py, props from tools/art/sect_props.py.
+    /** The cook stirs the pot with a ladle, left hand on the hip; now and then he wipes his brow. */
+    COOK_STIR("cook_stir", "sect_cook_stir", true, true, List.of("ladle")),
+    /** The cook chops greens with a cleaver, three quick strokes and a scrape. */
+    COOK_CHOP("cook_chop", "sect_cook_chop", true, true, List.of("cleaver")),
+    /** The cook lifts a ladleful, blows, sips, nods and pinches salt (one shot). */
+    COOK_TASTE("cook_taste", "sect_cook_taste", false, true, List.of("ladle")),
+    /** At the serving counter: a bowl in the left hand, the ladle dips, lifts over the bowl and pours (one shot). */
+    COOK_LADLE("cook_ladle", "sect_cook_ladle", false, true, List.of("ladle", "bowl")),
+    /** A servant carries a tray of bowls at chest height (upper body; legs walk). */
+    TRAY("tray", "sect_serve_tray", true, true, List.of("tray", "tray_bowls")),
+    /** The same carry with the bowls gone: going back to the counter, standing at it. */
+    TRAY_EMPTY("tray_empty", "sect_serve_tray", true, true, List.of("tray")),
+    /** Leans over the table and sets the bowls down; they leave the tray at {@link #SET_DROP} (one shot). */
+    TRAY_SET("tray_set", "sect_serve_set", false, true, List.of("tray", "tray_bowls")),
+    /** Wipes a table with a cloth, left hand on it. */
+    WIPE("wipe", "sect_wipe", true, true, List.of("cloth")),
+    /** A grain sack on the right shoulder (upper body; legs walk). */
+    SACK("sack", "sect_carry_sack", true, true, List.of("sack")),
+    /** A clay jar hugged at the chest (upper body; legs walk). */
+    JAR("jar", "sect_carry_jar", true, true, List.of("jar")),
+    /** The herbalist hoes the bed (vanilla wooden hoe in the hand), pulls back, straightens to wipe his brow. */
+    HOE("hoe", "sect_tend_hoe", true, false, List.of());
+
+    /** Seconds into {@link #TRAY_SET} when the bowls are on the table and leave the tray. */
+    public static final float SET_DROP = 1.15F;
 
     private final String id;
     private final ResourceLocation clip;
@@ -107,13 +139,31 @@ public enum SectPose {
 
     /** Сидячая поза: важнее лотоса ({@code sit}), который ставит распорядок. */
     public boolean seated() {
-        return this == EAT || this == SLEEP || this == MEDITATE || this == SIT || this == GRIND;
+        return this == EAT || this == TEA || this == SLEEP || this == MEDITATE || this == SIT || this == GRIND;
     }
 
     /** Меч в руке спрятан: руки заняты (чашка, метла, вёдра, книга, ступка), меч в ножнах или на столбах руки для равновесия. */
     public boolean hidesWeapon() {
         return !props.isEmpty() || this == BOW || this == TALK || this == POLES || this == POLE_STEP || seated() || training()
-                || this == READ || this == COUNT || this == BREW || this == TREAT;
+                || this == READ || this == COUNT || this == BREW || this == TREAT || this == HOE;
+    }
+
+    /** Seconds the blend from rest into the pose takes: seated poses slowly, the tray at once (it follows a one-shot of its own). */
+    public float blendIn() {
+        return seated() ? 0.6F : this == TRAY || this == TRAY_EMPTY ? 0.08F : 0.35F;
+    }
+
+    /** Is this prop drawn {@code seconds} into the pose: the bowls leave the tray when they are set on the table. */
+    public boolean propShown(String prop, float seconds) {
+        return !(this == TRAY_SET && "tray_bowls".equals(prop) && seconds >= SET_DROP);
+    }
+
+    /** Which carry pose a loaded servant uses (author 18.10): the water carrier his yoke, the porters a sack or a jar. */
+    public static SectPose loadPose(SectRole role, String key) {
+        return switch (role) {
+            case PORTER -> "porter_oh".equals(key) ? JAR : SACK;
+            default -> CARRY;
+        };
     }
 
     /** A body-training pose: hands are busy, no sword. */
@@ -159,13 +209,17 @@ public enum SectPose {
             case REST -> SIT;
             case SLEEP -> SLEEP;
             case SPAR -> NONE;
-            // Слуги (иерархия секты): своих клипов у повара, раздатчика и травника пока нет — ближайшие позы.
-            case CARRY, SERVE -> CARRY;
+            // Servants (sect hierarchy): the routine (ScheduleGoal) refines these: stir/chop/taste, the tray round, a loaded carry.
+            case CARRY -> CARRY;
+            case SERVE -> TRAY_EMPTY;
             case SWEEP -> SWEEP;
-            case COOK, TEND -> TALK;
+            case COOK -> COOK_STIR;
+            case TEND -> HOE;
             // Члены секты за делом (автор 05.10).
             case COUNCIL, WAIT_TREAT -> SIT;
-            case REPORT, LECTURE -> TALK;
+            // The tea servant refines this (tray, tray set down); the quarrelling juniors talk with their hands.
+            case TEA -> TRAY_EMPTY;
+            case REPORT, LECTURE, ARGUE -> TALK;
             case RECEIVE, HEAL_POST, REVERE, SHELTER -> NONE;
             case COUNT -> COUNT;
             case READ -> READ;

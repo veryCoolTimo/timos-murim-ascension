@@ -1,0 +1,6 @@
+{
+  "type": "neoforge:add_features",
+  "biomes": "#murim:has_wild_lingzhi",
+  "features": "murim:wild_lingzhi",
+  "step": "vegetal_decoration"
+}

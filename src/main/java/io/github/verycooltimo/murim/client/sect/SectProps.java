@@ -19,7 +19,8 @@ import net.minecraft.util.Mth;
 import java.util.Map;
 
 /**
- * Реквизит поз секты: чашка и палочки (трапеза), метла, коромысло с вёдрами, меч в ножнах у бедра (страж).
+ * Реквизит поз секты: чашка и палочки (трапеза), метла, коромысло с вёдрами, меч в ножнах у бедра (страж); повар и слуги: черпак,
+ * тесак, тряпка, поднос с мисками, мешок и кувшин.
  * Модель — {@code bedrock/sect_props.geo.json} (блокинг агента, генератор {@code tools/art/sect_props.py};
  * автор правит в Blockbench). Координаты реквизита — в пространстве модели NPC в покое, поэтому предмет
  * рисуется после цепочки костей до своей кости и сдвига обратно на её точку вращения: в покое он стоит там,
@@ -32,14 +33,22 @@ final class SectProps extends RenderLayer<SectDisciple, DiscipleRenderer.Model> 
     private static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/entity/sect_props.png");
 
     /** Предмет → цепочка костей NPC (bandit.geo.json), к последней он прикреплён. */
-    private static final Map<String, String[]> ATTACH = Map.of(
-            "bowl", new String[] {"root", "waist", "torso", "arm_l"},
-            "chopsticks", new String[] {"root", "waist", "torso", "arm_r"},
-            "broom", new String[] {"root", "waist", "torso", "arm_r"},
-            "yoke", new String[] {"root", "waist", "torso"},
+    private static final Map<String, String[]> ATTACH = Map.ofEntries(
+            Map.entry("bowl", new String[] {"root", "waist", "torso", "arm_l"}),
+            Map.entry("chopsticks", new String[] {"root", "waist", "torso", "arm_r"}),
+            Map.entry("broom", new String[] {"root", "waist", "torso", "arm_r"}),
+            Map.entry("yoke", new String[] {"root", "waist", "torso"}),
             // Body training (tools/art/sect_props.py): stone at the chest, slab on the back.
-            "rock", new String[] {"root", "waist", "torso"},
-            "slab", new String[] {"root", "waist", "torso"});
+            Map.entry("rock", new String[] {"root", "waist", "torso"}),
+            Map.entry("slab", new String[] {"root", "waist", "torso"}),
+            // Kitchen and servants (18.10): ladle, cleaver and cloth in the right hand; tray, sack and jar on the torso.
+            Map.entry("ladle", new String[] {"root", "waist", "torso", "arm_r"}),
+            Map.entry("cleaver", new String[] {"root", "waist", "torso", "arm_r"}),
+            Map.entry("cloth", new String[] {"root", "waist", "torso", "arm_r"}),
+            Map.entry("tray", new String[] {"root", "waist", "torso"}),
+            Map.entry("tray_bowls", new String[] {"root", "waist", "torso"}),
+            Map.entry("sack", new String[] {"root", "waist", "torso"}),
+            Map.entry("jar", new String[] {"root", "waist", "torso"}));
 
     private final ModelPart props;
 
@@ -60,9 +69,10 @@ final class SectProps extends RenderLayer<SectDisciple, DiscipleRenderer.Model> 
         // API: reference/minecraft-src/net/minecraft/client/renderer/entity/LivingEntityRenderer.java#getOverlayCoords
         int overlay = LivingEntityRenderer.getOverlayCoords(entity, 0.0F);
         ModelPart root = getParentModel().root();
+        float seconds = entity.poseSeconds(partialTick);
         for (String name : p.props()) {
             String[] chain = ATTACH.get(name);
-            if (chain == null || !props.hasChild(name)) {
+            if (chain == null || !props.hasChild(name) || !p.propShown(name, seconds)) {
                 continue;
             }
             ModelPart prop = props.getChild(name);

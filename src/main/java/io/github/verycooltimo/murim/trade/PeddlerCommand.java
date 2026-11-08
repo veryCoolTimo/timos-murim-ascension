@@ -1,36 +1,29 @@
 package io.github.verycooltimo.murim.trade;
 
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
-import io.github.verycooltimo.murim.MurimMod;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.levelgen.structure.StructureStart;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.event.RegisterCommandsEvent;
 
 /**
- * Отладка торговца (оператор): {@code /murim peddler} — в деревне ли точка и когда следующий заход,
- * {@code /murim peddler spawn} — поставить деревенского торговца здесь.
+ * Отладка торговца (оператор): {@code /murim dev peddler} — в деревне ли точка и когда следующий заход,
+ * {@code /murim dev peddler spawn} — поставить деревенского торговца здесь.
  *
  * <p>API: reference/neoforge-src/net/neoforged/neoforge/event/RegisterCommandsEvent.java.
  */
-@EventBusSubscriber(modid = MurimMod.MODID)
 public final class PeddlerCommand {
 
     private PeddlerCommand() {
     }
 
-    @SubscribeEvent
-    static void onRegisterCommands(RegisterCommandsEvent event) {
-        event.getDispatcher().register(Commands.literal("murim")
-                .requires(source -> source.hasPermission(2))
-                .then(Commands.literal("peddler")
-                        .executes(PeddlerCommand::info)
-                        .then(Commands.literal("spawn").executes(PeddlerCommand::spawn))));
+    public static LiteralArgumentBuilder<CommandSourceStack> node() {
+        return Commands.literal("peddler")
+                .executes(PeddlerCommand::info)
+                .then(Commands.literal("spawn").executes(PeddlerCommand::spawn));
     }
 
     private static int info(CommandContext<CommandSourceStack> c) {

@@ -25,7 +25,7 @@ public final class SectGuardGoal extends Goal {
         npc.escortGoal().cancel();
         npc.clearBlock();
         npc.wake();
-        npc.sit(false);
+        npc.sit(SeatStyle.NONE);
         this.target = player;
         this.exit = exit;
         nextHit = npc.level().getGameTime() + 20;
@@ -54,6 +54,8 @@ public final class SectGuardGoal extends Goal {
     @Override public void start() { npc.workPose(null); npc.setPose(SectPose.GUARD); }
     @Override public void stop() { npc.walking().stop(); }
     @Override public void tick() {
+        ServerPlayer target = this.target;
+        if (target == null) return;
         npc.getLookControl().setLookAt(target, 30, 30);
         npc.faceEntity(target, 15);
         if (target.getHealth() <= SectWatch.guardFloor(target) + 0.01F) { defeated(); return; }

@@ -17,6 +17,11 @@ import net.minecraft.world.phys.Vec3;
  */
 public final class SeaRules {
 
+    /** Frontal hemisphere including the sides; no protection from the rear or distant sources. */
+    public static boolean protectsMelee(Vec3 facing, Vec3 to) {
+        return to.lengthSqr() <= 16.0D && facing.x * to.x + facing.z * to.z >= -1.0E-6D;
+    }
+
     /** Стойка: вход в позу 0–8. */
     public static final int STANCE = 8;
     /** Бутон на острие раскрывается за 4 тика. */

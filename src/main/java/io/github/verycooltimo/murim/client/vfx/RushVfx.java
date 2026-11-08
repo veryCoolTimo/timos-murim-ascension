@@ -140,9 +140,14 @@ public final class RushVfx {
         final double phase;
 
         Cast(int entityId, int executionTier) {
+            this(entityId, executionTier, 0);
+        }
+
+        /** {@code skipped} — тики замаха, пропущенные кастером: возраст каста считается с того же места, что и анимация. */
+        Cast(int entityId, int executionTier, int skipped) {
             this.entityId = entityId;
             this.executionTier = executionTier;
-            this.start = clientTicks;
+            this.start = clientTicks - Math.max(0, skipped);
             this.random = new Random(entityId * 6151L + clientTicks);
             this.phase = random.nextDouble() * Math.PI * 2.0D;
         }
@@ -179,11 +184,11 @@ public final class RushVfx {
                 || payload.executionTier() <= 0) {
             return;
         }
-        Cast c = new Cast(payload.sourceId(), payload.executionTier());
+        Cast c = new Cast(payload.sourceId(), payload.executionTier(), payload.hitStopTicks());
         CASTS.add(c);
         if (c.executionTier >= 3) {
             // Только розовая аура: синее на рефах — техника противника.
-            ClientAuraState.techniqueAura(c.entityId, 2 + Math.min(2, c.executionTier / 3), 1, WINDUP + 4);
+            ClientAuraState.techniqueAura(c.entityId, 2 + Math.min(2, c.executionTier / 3), 1, Math.max(4, WINDUP - Math.max(0, payload.hitStopTicks())) + 4);
         }
     }
 

@@ -58,7 +58,9 @@ public final class TechniqueSlotsHud {
             return;
         }
         float presence = CombatMode.presence(delta.getGameTimeDeltaPartialTick(false));
-        if (presence <= 0.01F) {
+        // The numbers of the selected form (qi, reach, cooldown) belong to the menus: wheel and loadout (author 18.10).
+        boolean menu = TechniqueWheel.open() || minecraft.screen instanceof LoadoutScreen;
+        if (presence <= 0.01F && !menu) {
             return;
         }
         List<Optional<ResourceLocation>> slots = ClientLoadoutState.slots();
@@ -73,29 +75,32 @@ public final class TechniqueSlotsHud {
         }
         int w = graphics.guiWidth();
         int h = graphics.guiHeight();
-        for (int i = 0; i < count; i++) {
-            int x;
-            int y;
-            if ("row".equals(STYLE)) {
-                // Второй ряд над хотбаром, над сердцами и голодом.
-                int total = count * SIZE + (count - 1) * GAP;
-                x = w / 2 - total / 2 + i * (SIZE + GAP);
-                y = h - 49 - SIZE - 4;
-            } else {
-                // Слева от хотбара: столбцы по два снизу вверх, от хотбара влево.
-                int col = i / 2;
-                int row = i % 2;
-                x = w / 2 - 91 - 6 - SIZE - col * (SIZE + GAP);
-                y = h - SIZE - 1 - row * (SIZE + GAP);
-            }
-            if (blade && i == techniques) {
-                slot(graphics, x, y, Optional.of(FINISHER), false, 0, presence);
-            } else {
-                slot(graphics, x, y, i < slots.size() ? slots.get(i) : Optional.empty(),
-                        i == ClientLoadoutState.active(), i + 1, presence);
+        if (presence > 0.01F) {
+            for (int i = 0; i < count; i++) {
+                int x;
+                int y;
+                if ("row".equals(STYLE)) {
+                    // Второй ряд над хотбаром, над сердцами и голодом.
+                    int total = count * SIZE + (count - 1) * GAP;
+                    x = w / 2 - total / 2 + i * (SIZE + GAP);
+                    y = h - 49 - SIZE - 4;
+                } else {
+                    // Слева от хотбара: столбцы по два снизу вверх, от хотбара влево.
+                    int col = i / 2;
+                    int row = i % 2;
+                    x = w / 2 - 91 - 6 - SIZE - col * (SIZE + GAP);
+                    y = h - SIZE - 1 - row * (SIZE + GAP);
+                }
+                if (blade && i == techniques) {
+                    slot(graphics, x, y, Optional.of(FINISHER), false, 0, presence);
+                } else {
+                    slot(graphics, x, y, i < slots.size() ? slots.get(i) : Optional.empty(),
+                            i == ClientLoadoutState.active(), i + 1, presence);
+                }
             }
         }
-        ClientLoadoutState.activeTechnique().ifPresent(id -> {
+        // The stats line is mostly qi cost: creative and spectator cast free, so they see no line (author 18.10).
+        if (menu && !io.github.verycooltimo.murim.cultivation.QiRules.free(minecraft.player)) ClientLoadoutState.activeTechnique().ifPresent(id -> {
             List<net.minecraft.network.chat.Component> details = FootworkText.combatLines(id);
             List<net.minecraft.util.FormattedCharSequence> wrapped = new java.util.ArrayList<>();
             for (net.minecraft.network.chat.Component line : details) {
@@ -104,7 +109,7 @@ public final class TechniqueSlotsHud {
             int y = h - 99 - wrapped.size() * minecraft.font.lineHeight;
             for (net.minecraft.util.FormattedCharSequence line : wrapped) {
                 graphics.drawString(minecraft.font, line, w / 2 - minecraft.font.width(line) / 2, y,
-                        ((int) (presence * 255) << 24) | 0xC9E7F4, true);
+                        0xFF000000 | 0xC9E7F4, true);
                 y += minecraft.font.lineHeight;
             }
         });
@@ -130,7 +135,8 @@ public final class TechniqueSlotsHud {
             boolean basic = number == 0 && technique.get().equals(FINISHER);
             graphics.setColor(1.0F, 1.0F, 1.0F, presence);
             com.mojang.blaze3d.systems.RenderSystem.enableBlend();
-            graphics.blit(TechniqueIcons.of(technique.get()), x + 2, y + 2, SIZE - 4, SIZE - 4,
+            int pulse = active ? (int) Math.round(2 * Math.sin(Math.PI * ClientLoadoutState.pulseTicks() / 6.0)) : 0;
+            graphics.blit(TechniqueIcons.of(technique.get()), x + 2 - pulse, y + 2 - pulse, SIZE - 4 + pulse * 2, SIZE - 4 + pulse * 2,
                     0.0F, 0.0F, basic ? 16 : 48, basic ? 16 : 48, basic ? 16 : 48, basic ? 16 : 48);
             graphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
             // Перезарядка: затемнение снизу вверх и секунды поверх иконки.
@@ -145,13 +151,6 @@ public final class TechniqueSlotsHud {
                 String sec = left >= 200 ? String.valueOf((left + 19) / 20) : String.format(java.util.Locale.ROOT, "%.1f", left / 20.0F);
                 net.minecraft.client.gui.Font font = Minecraft.getInstance().font;
                 graphics.drawString(font, sec, x + SIZE / 2 - font.width(sec) / 2, y + SIZE / 2 - 4, (a << 24) | 0xFFFFFF, true);
-            }
-            // Освоение текущего слоя — тонкая полоса по низу слота.
-            SyncMasteryPayload.Entry entry = basic ? ClientLoadoutState.foundation().map(TechniqueSlotsHud::mastery).orElse(null)
-                    : mastery(technique.get());
-            if (entry != null && entry.stars() < entry.cap()) {
-                int filled = (int) ((SIZE - 4) * Mth.clamp(entry.progress(), 0.0F, 1.0F));
-                graphics.fill(x + 2, y + SIZE - 3, x + 2 + filled, y + SIZE - 2, (a << 24) | 0x7FE0C8);
             }
         }
         graphics.pose().pushPose();

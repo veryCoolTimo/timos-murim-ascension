@@ -5,6 +5,32 @@
     {
       "when": [
         {
+          "period": "breakfast|dinner",
+          "min_standing": "first"
+        }
+      ],
+      "node": "office_serving"
+    },
+    {
+      "when": [
+        {
+          "period": "training|evening",
+          "min_standing": "first"
+        }
+      ],
+      "node": "office_late"
+    },
+    {
+      "when": [
+        {
+          "min_standing": "first"
+        }
+      ],
+      "node": "office"
+    },
+    {
+      "when": [
+        {
           "period": "night"
         }
       ],
@@ -19,6 +45,14 @@
       "node": "serving"
     },
     {
+      "when": [
+        {
+          "period": "training|evening"
+        }
+      ],
+      "node": "late"
+    },
+    {
       "node": "greet"
     }
   ],
@@ -26,10 +60,27 @@
     "greet": {
       "random": [
         "dialogue.murim.cook.greet1",
-        "dialogue.murim.cook.greet2"
+        "dialogue.murim.cook.greet2",
+        "dialogue.murim.cook.greet3",
+        "dialogue.murim.cook.greet4",
+        "dialogue.murim.cook.greet5",
+        "dialogue.murim.cook.greet6"
       ],
       "gesture": "nod",
       "options": [
+        {
+          "text": "dialogue.murim.approach.opt.not_now",
+          "when": [
+            {
+              "social": "approaching"
+            }
+          ],
+          "actions": [
+            {
+              "type": "approach_decline"
+            }
+          ]
+        },
         {
           "text": "dialogue.murim.cook.opt.help",
           "when": [
@@ -100,9 +151,18 @@
       ]
     },
     "serving": {
+      "enter": [
+        {
+          "type": "serve_bowl"
+        }
+      ],
       "random": [
         "dialogue.murim.cook.serving1",
-        "dialogue.murim.cook.serving2"
+        "dialogue.murim.cook.serving2",
+        "dialogue.murim.cook.serving3",
+        "dialogue.murim.cook.serving4",
+        "dialogue.murim.cook.serving5",
+        "dialogue.murim.cook.serving6"
       ],
       "gesture": "nod",
       "options": [
@@ -121,6 +181,191 @@
         },
         {
           "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "office_serving": {
+      "random": [
+        "dialogue.murim.cook.office.1",
+        "dialogue.murim.cook.office.2",
+        "dialogue.murim.cook.office.3",
+        "dialogue.murim.cook.office.4",
+        "dialogue.murim.cook.office.5",
+        "dialogue.murim.cook.office.6"
+      ],
+      "args": [
+        "position"
+      ],
+      "gesture": "nod",
+      "enter": [
+        {
+          "type": "serve_bowl"
+        }
+      ],
+      "options": [
+        {
+          "text": "dialogue.murim.approach.opt.not_now",
+          "when": [
+            {
+              "social": "approaching"
+            }
+          ],
+          "actions": [
+            {
+              "type": "approach_decline"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.cook.opt.help",
+          "when": [
+            {
+              "member": true
+            }
+          ],
+          "next": "chores"
+        },
+        {
+          "text": "dialogue.murim.cook.opt.ask",
+          "next": "answer"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "office": {
+      "random": [
+        "dialogue.murim.cook.office.1",
+        "dialogue.murim.cook.office.2",
+        "dialogue.murim.cook.office.3",
+        "dialogue.murim.cook.office.4",
+        "dialogue.murim.cook.office.5",
+        "dialogue.murim.cook.office.6"
+      ],
+      "args": [
+        "position"
+      ],
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.approach.opt.not_now",
+          "when": [
+            {
+              "social": "approaching"
+            }
+          ],
+          "actions": [
+            {
+              "type": "approach_decline"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.cook.opt.help",
+          "when": [
+            {
+              "member": true
+            }
+          ],
+          "next": "chores"
+        },
+        {
+          "text": "dialogue.murim.cook.opt.ask",
+          "next": "answer"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "late": {
+      "enter": [
+        {
+          "type": "serve_bowl"
+        }
+      ],
+      "line": "dialogue.murim.cook.late",
+      "gesture": "point",
+      "options": [
+        {
+          "text": "dialogue.murim.approach.opt.not_now",
+          "when": [
+            {
+              "social": "approaching"
+            }
+          ],
+          "actions": [
+            {
+              "type": "approach_decline"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.cook.opt.help",
+          "when": [
+            {
+              "member": true
+            }
+          ],
+          "next": "chores"
+        },
+        {
+          "text": "dialogue.murim.cook.opt.ask",
+          "next": "answer"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "office_late": {
+      "random": [
+        "dialogue.murim.cook.office.1",
+        "dialogue.murim.cook.office.2",
+        "dialogue.murim.cook.office.3",
+        "dialogue.murim.cook.office.4",
+        "dialogue.murim.cook.office.5",
+        "dialogue.murim.cook.office.6"
+      ],
+      "args": [
+        "position"
+      ],
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.approach.opt.not_now",
+          "when": [
+            {
+              "social": "approaching"
+            }
+          ],
+          "actions": [
+            {
+              "type": "approach_decline"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.cook.opt.help",
+          "when": [
+            {
+              "member": true
+            }
+          ],
+          "next": "chores"
+        },
+        {
+          "text": "dialogue.murim.cook.opt.ask",
+          "next": "answer"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ],
+      "enter": [
+        {
+          "type": "serve_bowl"
         }
       ]
     }

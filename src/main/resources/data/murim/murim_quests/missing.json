@@ -1,0 +1,149 @@
+{
+  "id": "missing",
+  "requires_sites": true,
+  "title": "quest.murim.missing.title",
+  "steps": [
+    {
+      "type": "overheard",
+      "id": "missing_hook",
+      "speaker": "gyeong_pil",
+      "gate": {
+        "not_flags": [
+          "quest.missing.asked",
+          "quest.missing.done"
+        ]
+      }
+    },
+    {
+      "type": "talk",
+      "id": "missing_ask",
+      "npc": "gyeong_pil",
+      "node": "missing_ask"
+    },
+    {
+      "type": "inspect",
+      "id": "missing_basket",
+      "kind": "box",
+      "seen": "quest.missing.basket"
+    },
+    {
+      "type": "reach",
+      "id": "missing_found",
+      "marker": "east_scene",
+      "radius": 9,
+      "effects": {
+        "flags": [
+          "quest.missing.found"
+        ]
+      }
+    },
+    {
+      "type": "inspect",
+      "id": "rain_wall",
+      "kind": "carved",
+      "grant": "frag_1",
+      "copy_ticks": 100,
+      "seen": "quest.missing.rain",
+      "on_grant": {
+        "flags": [
+          "quest.missing.rain_copied"
+        ]
+      }
+    },
+    {
+      "type": "talk",
+      "id": "missing_hurt",
+      "npc": "yul_jin",
+      "node": "missing_hurt",
+      "requires": {
+        "flags": [
+          "quest.missing.found"
+        ],
+        "not_flags": [
+          "quest.missing.safe"
+        ]
+      }
+    },
+    {
+      "type": "fight",
+      "id": "missing_attack",
+      "foes": [
+        "murim:bandit_swordsman*2"
+      ],
+      "foe_name": "murim.quest.foe.pursuer",
+      "protect": "yul_jin",
+      "shelter": "east_shelter",
+      "shelter_radius": 4,
+      "limit_ticks": 4800,
+      "gate": {
+        "flags": [
+          "quest.missing.found"
+        ],
+        "not_flags": [
+          "quest.missing.safe"
+        ]
+      },
+      "on_win": {
+        "flags": [
+          "quest.missing.safe",
+          "quest.missing.fought"
+        ],
+        "how": "missing:fought"
+      },
+      "on_escape": {
+        "flags": [
+          "quest.missing.safe",
+          "quest.missing.covered"
+        ],
+        "how": "missing:covered"
+      }
+    },
+    {
+      "type": "escort",
+      "id": "missing_lead",
+      "npc": "yul_jin",
+      "to_npc": "gyeong_cho",
+      "gate": {
+        "flags": [
+          "quest.missing.safe"
+        ],
+        "not_flags": [
+          "quest.missing.arrived"
+        ]
+      },
+      "effects": {
+        "flags": [
+          "quest.missing.arrived"
+        ]
+      }
+    },
+    {
+      "type": "hand_in",
+      "id": "missing_done",
+      "npc": "gyeong_cho",
+      "node": "missing_healer",
+      "requires": {
+        "flags": [
+          "quest.missing.arrived"
+        ],
+        "not_flags": [
+          "quest.missing.done"
+        ]
+      },
+      "reward": {
+        "items": [
+          "murim:pill_snow_plum*1"
+        ],
+        "clues": [
+          "frag_1"
+        ],
+        "effects": {
+          "flags": [
+            "quest.missing.done"
+          ],
+          "merit": 6
+        }
+      }
+    }
+  ]
+}

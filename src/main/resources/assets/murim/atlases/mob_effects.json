@@ -1,0 +1,9 @@
+{
+  "sources": [
+    {
+      "type": "minecraft:single",
+      "resource": "minecraft:item/glass_bottle",
+      "sprite": "murim:mob_effect/tipsy"
+    }
+  ]
+}

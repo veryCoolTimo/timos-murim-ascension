@@ -15,7 +15,7 @@
     "family": "huashan",
     "mode": "behind"
   },
-  "animation": "murim:wind_god_steps",
+  "animation": "murim:dark_fragrance_behind",
   "vfx": {
     "pivot": [
       0.0,
@@ -69,6 +69,6 @@
   "weakness": "technique.murim.dark_fragrance_behind.weakness",
   "hit_stop_ticks": 0,
   "cooldown_ticks": 100,
-  "star_cap": 10,
+  "star_cap": 12,
   "tier": "basic"
 }

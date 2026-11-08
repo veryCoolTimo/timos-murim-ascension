@@ -23,7 +23,7 @@ import java.util.List;
  */
 public final class ScatterExecutor {
 
-    /** Начало IMPACT: цель (захват — первой), прыжок в сторону, клоны выходят. */
+    /** Начало IMPACT: цель (захват — первой), мастер неподвижен, клоны выходят. */
     public static boolean start(ServerPlayer player, ResourceLocation id) {
         int executionTier = Math.max(0, io.github.verycooltimo.murim.mastery.MasteryService.executionTier(player, id));
         double base = TechniqueDamage.base(player, id);
@@ -77,25 +77,14 @@ public final class ScatterExecutor {
             grounded = true;
         }
         double baseAngle = Math.atan2(o.z - centre.z, o.x - centre.x);
-        // Прыжок в ту сторону, где свободнее (луч на уровне пояса), по умолчанию — вправо.
+        // The master holds position while the clones leave; retain the combat clock.
         int side = 1;
-        Vec3 jump = ScatterRules.jump(o, centre, side);
-        Vec3 clipped = clipWall(player, o, o.add(jump));
-        if (clipped.distanceTo(o) < jump.length() * 0.6D) {
-            side = -1;
-            jump = ScatterRules.jump(o, centre, side);
-            clipped = clipWall(player, o, o.add(jump));
-        }
-        Vec3 path = clipped.subtract(o);
-        if (path.lengthSqr() > 1.0E-4D) {
-            io.github.verycooltimo.murim.combat.FootworkService.sendDash(player, path.normalize(), path.length(), ScatterRules.JUMP_TICKS);
-        }
         player.invulnerableTime = Math.max(player.invulnerableTime, ScatterRules.JUMP_TICKS + 4);
         player.setData(ModAttachments.SCATTER, new double[] {o.x, o.y, o.z, centre.x, centre.y, centre.z, baseAngle, executionTier,
                 target == null ? -1 : target.getId(), side, grounded ? 1 : 0, 0, 0, 0, 0});
         int facing = Math.floorMod(Math.round(player.getYRot()), 360);
         PacketDistributor.sendToPlayersTrackingEntityAndSelf(player, new ScatterPayload(player.getId(), o, centre, (float) baseAngle,
-                executionTier, ScatterPayload.RELEASE, (side > 0 ? 1 : 0) | (grounded ? 2 : 0) | facing << 2, target == null ? -1 : target.getId()));
+                executionTier, ScatterPayload.RELEASE, (side > 0 ? 1 : 0) | (grounded ? 2 : 0) | facing << 2, target == null ? -1 : target.getId(), io.github.verycooltimo.murim.mastery.MasteryService.fullMastery(player, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("murim", "twenty_four_plum_scatter")), io.github.verycooltimo.murim.mastery.MasteryService.stars(player, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("murim", "twenty_four_plum_scatter"))));
         return false;
     }
 
@@ -128,7 +117,7 @@ public final class ScatterExecutor {
                 io.github.verycooltimo.murim.MurimMod.LOGGER.debug("Рассеяние: тик {}, клон {}, удар {} — {}", t, i, j, at != null ? "попал" : "мимо");
                 if (at != null) {
                     PacketDistributor.sendToPlayersTrackingEntityAndSelf(player, new ScatterPayload(player.getId(), at, centre,
-                            (float) base, executionTier, ScatterPayload.HIT, i * 8 + j, (int) s[8]));
+                            (float) base, executionTier, ScatterPayload.HIT, i * 8 + j, (int) s[8], io.github.verycooltimo.murim.mastery.MasteryService.fullMastery(player, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("murim", "twenty_four_plum_scatter")), io.github.verycooltimo.murim.mastery.MasteryService.stars(player, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("murim", "twenty_four_plum_scatter"))));
                 }
             }
         }
@@ -162,7 +151,7 @@ public final class ScatterExecutor {
             }
             if (at != null) {
                 PacketDistributor.sendToPlayersTrackingEntityAndSelf(player, new ScatterPayload(player.getId(), at, centre,
-                        (float) base, executionTier, ScatterPayload.FINAL_HIT, 0, (int) s[8]));
+                        (float) base, executionTier, ScatterPayload.FINAL_HIT, 0, (int) s[8], io.github.verycooltimo.murim.mastery.MasteryService.fullMastery(player, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("murim", "twenty_four_plum_scatter")), io.github.verycooltimo.murim.mastery.MasteryService.stars(player, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("murim", "twenty_four_plum_scatter"))));
             }
         }
         // Рассеяние (full-19): один импульс по области вокруг цели.
@@ -178,7 +167,7 @@ public final class ScatterExecutor {
             }
             if (any) {
                 PacketDistributor.sendToPlayersTrackingEntityAndSelf(player, new ScatterPayload(player.getId(), centre, centre,
-                        (float) base, executionTier, ScatterPayload.SCATTER_HIT, 0, (int) s[8]));
+                        (float) base, executionTier, ScatterPayload.SCATTER_HIT, 0, (int) s[8], io.github.verycooltimo.murim.mastery.MasteryService.fullMastery(player, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("murim", "twenty_four_plum_scatter")), io.github.verycooltimo.murim.mastery.MasteryService.stars(player, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("murim", "twenty_four_plum_scatter"))));
             }
         }
     }

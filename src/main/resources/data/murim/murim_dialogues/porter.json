@@ -5,6 +5,14 @@
     {
       "when": [
         {
+          "min_standing": "first"
+        }
+      ],
+      "node": "office"
+    },
+    {
+      "when": [
+        {
           "period": "night"
         }
       ],
@@ -26,10 +34,27 @@
     "greet": {
       "random": [
         "dialogue.murim.porter.greet1",
-        "dialogue.murim.porter.greet2"
+        "dialogue.murim.porter.greet2",
+        "dialogue.murim.porter.greet3",
+        "dialogue.murim.porter.greet4",
+        "dialogue.murim.porter.greet5",
+        "dialogue.murim.porter.greet6"
       ],
       "gesture": "nod",
       "options": [
+        {
+          "text": "dialogue.murim.approach.opt.not_now",
+          "when": [
+            {
+              "social": "approaching"
+            }
+          ],
+          "actions": [
+            {
+              "type": "approach_decline"
+            }
+          ]
+        },
         {
           "text": "dialogue.murim.porter.opt.ask",
           "next": "answer"
@@ -60,10 +85,50 @@
     "hauling": {
       "random": [
         "dialogue.murim.porter.hauling1",
-        "dialogue.murim.porter.hauling2"
+        "dialogue.murim.porter.hauling2",
+        "dialogue.murim.porter.hauling3",
+        "dialogue.murim.porter.hauling4",
+        "dialogue.murim.porter.hauling5",
+        "dialogue.murim.porter.hauling6"
       ],
       "gesture": "nod",
       "options": [
+        {
+          "text": "dialogue.murim.porter.opt.ask",
+          "next": "answer"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "office": {
+      "random": [
+        "dialogue.murim.porter.office.1",
+        "dialogue.murim.porter.office.2",
+        "dialogue.murim.porter.office.4",
+        "dialogue.murim.porter.office.5",
+        "dialogue.murim.porter.office.6",
+        "dialogue.murim.porter.office.7"
+      ],
+      "args": [
+        "position"
+      ],
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.approach.opt.not_now",
+          "when": [
+            {
+              "social": "approaching"
+            }
+          ],
+          "actions": [
+            {
+              "type": "approach_decline"
+            }
+          ]
+        },
         {
           "text": "dialogue.murim.porter.opt.ask",
           "next": "answer"

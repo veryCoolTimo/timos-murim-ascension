@@ -1,10 +1,13 @@
 package io.github.verycooltimo.murim.combat;
 
 import io.github.verycooltimo.murim.MurimMod;
+import io.github.verycooltimo.murim.sect.PlayerJournal;
 import io.github.verycooltimo.murim.technique.BehaviorExecutor;
+import io.github.verycooltimo.murim.technique.SevenStarsRules;
 import io.github.verycooltimo.murim.technique.TechniqueDefinition;
 import io.github.verycooltimo.murim.technique.TechniqueLoader;
 import io.github.verycooltimo.murim.network.TechniqueEventPayload;
+import io.github.verycooltimo.murim.network.ChannelSafe;
 import io.github.verycooltimo.murim.registry.ModAttachments;
 import net.minecraft.ReportedException;
 import net.minecraft.resources.ResourceLocation;
@@ -17,6 +20,7 @@ import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.util.List;
 
+
 /**
  * Серверная логика применения техник: старт, потиковое продвижение, поражение целей.
  *
@@ -25,60 +29,86 @@ import java.util.List;
  */
 public final class TechniqueService {
 
+    private static boolean captureRefusal(java.util.function.Consumer<String> refusal, ResourceLocation id, String reason) {
+        refusal.accept(reason);
+        if (Boolean.getBoolean("murim.capture")) MurimMod.LOGGER.info("CAPTURE-DUEL refused sword={} reason={}", id, reason);
+        return false;
+    }
+
     /** Пытается начать технику. Возвращает {@code false}, если запуск отклонён. */
     public static boolean tryStart(ServerPlayer player, ResourceLocation techniqueId) {
+        return tryStart(player, techniqueId, 1);
+    }
+
+    /** Side is an input intent, clamped by the executor. */
+    public static boolean tryStart(ServerPlayer player, ResourceLocation techniqueId, int bambooSide) {
+        return tryStart(player, techniqueId, bambooSide, reason -> { });
+    }
+
+    /** Reports the same refusal used by the combat service to the dev stand. */
+    public static boolean tryStart(ServerPlayer player, ResourceLocation techniqueId, int bambooSide,
+                                   java.util.function.Consumer<String> refusal) {
         if (!canAct(player)) {
-            return false;
+            return captureRefusal(refusal, techniqueId, "cannot_act");
         }
         TechniqueDefinition technique = resolve(techniqueId);
         if (technique == null || SwordBasicCombo.isBasic(technique.id())) {
             // Style basics are vanilla attacks, never zero-damage casts with tier/global cooldowns.
-            return false;
+            return captureRefusal(refusal, techniqueId, "missing_or_basic");
         }
+        if (technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.BambooHand
+                && (!io.github.verycooltimo.murim.technique.BambooExecutor.empty(player)
+                || !io.github.verycooltimo.murim.technique.BambooRules.canPractice(technique.id(),
+                io.github.verycooltimo.murim.mastery.MasteryService.stars(player, technique.id())))) return captureRefusal(refusal, techniqueId, "bamboo_hand_or_unlock");
         // Кинжалы Тан: повторное R, пока живы кинжалы формы, — команда (удар звёзд, отзыв), не запуск.
         if (io.github.verycooltimo.murim.technique.TangExecutor.command(player, technique.id())) {
-            return false;
+            return captureRefusal(refusal, techniqueId, "tang_command");
         }
 
-        if (io.github.verycooltimo.murim.technique.DemonicExecutor.active(player, technique.id())) return false;
         TechniqueState state = player.getData(ModAttachments.TECHNIQUE_STATE);
+        boolean linked = SevenStarsRules.huaSword(technique.id()) && SevenStarsRules.within(
+                player.serverLevel().getGameTime(), player.getData(ModAttachments.WIND_GOD).sevenStart, 10);
+        boolean opening = io.github.verycooltimo.murim.technique.Styles.SIX_HARMONIES.forms().contains(technique.id())
+                && SevenStarsRules.within(player.serverLevel().getGameTime(), player.getData(ModAttachments.WIND_GOD).opening, 10);
+        if (FootworkService.sevenStarsActive(player) && !linked && !opening) return captureRefusal(refusal, techniqueId, "unlinked_footwork");
         if (state.isActive()) {
-            return false;
+            return captureRefusal(refusal, techniqueId, "active_technique");
         }
 
         // Применять можно только выученное (docs/design/19 §3г): техника приходит из манускрипта.
         if (!io.github.verycooltimo.murim.mastery.MasteryService.knows(player, technique.id())) {
-            player.displayClientMessage(net.minecraft.network.chat.Component.translatable(
-                    "murim.technique.unknown", io.github.verycooltimo.murim.mastery.MasteryService.name(technique.id())), true);
-            return false;
+            PlayerJournal.refuse(player, net.minecraft.network.chat.Component.translatable(
+                    "murim.technique.unknown", io.github.verycooltimo.murim.mastery.MasteryService.name(technique.id())));
+            return captureRefusal(refusal, techniqueId, "not_learned");
         }
 
         // Под давлением сильного ци не слушается (docs/design/19 §3ж): ходить и отступать
         // можно, а приём не складывается.
         if (AuraService.pressure(player) >= AuraPressure.TECHNIQUE_LOCK) {
-            player.displayClientMessage(
-                    net.minecraft.network.chat.Component.translatable("murim.technique.pressure"), true);
-            return false;
+            PlayerJournal.refuse(player,
+                    net.minecraft.network.chat.Component.translatable("murim.technique.pressure"));
+            return captureRefusal(refusal, techniqueId, "pressure");
         }
 
         if (technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.Footwork form) {
-            int executionTier = io.github.verycooltimo.murim.mastery.MasteryService.executionTier(player, technique.id());
-            if ("wind_god".equals(form.family()) && "death".equals(form.mode()) && executionTier < 3) {
-                return false;
-            }
-            if ("run".equals(form.mode()) || "shadow".equals(form.mode())) {
+            if (!FootworkService.selected(player, technique.id())) return captureRefusal(refusal, techniqueId, "unselected_footwork");
+            if (io.github.verycooltimo.murim.technique.SevenStarsRules.isForm(technique.id())) {
                 FootworkService.request(player, technique.id(), 0);
-                return FootworkService.isRunning(player) || FootworkService.inShadow(player);
+                return FootworkService.active(player);
+            }
+            if ("death".equals(form.mode()) || "run".equals(form.mode()) || "shadow".equals(form.mode())) {
+                FootworkService.request(player, technique.id(), 0);
+                return FootworkService.active(player);
             }
         }
 
         long now = player.serverLevel().getGameTime();
-        // Своя перезарядка у каждой техники + короткая общая пауза между приёмами.
+        // Seven Stars links/openings skip only the shared pause; each form keeps its own cooldown.
         Long own = player.getData(ModAttachments.COOLDOWNS).get(technique.id());
         if (!offCooldown(now, own == null ? Long.MIN_VALUE : own, effectiveCooldown(technique,
                 io.github.verycooltimo.murim.mastery.MasteryService.executionTier(player, technique.id())))
-                || !offCooldown(now, state.lastStartGameTime(), gapAfter(player.getData(ModAttachments.COOLDOWNS), state.lastStartGameTime()))) {
-            return false;
+                || !linked && !opening && !offCooldown(now, state.lastStartGameTime(), gapAfter(player.getData(ModAttachments.COOLDOWNS), state.lastStartGameTime()))) {
+            return captureRefusal(refusal, techniqueId, "cooldown");
         }
 
         // Техника стоит ци и требует сформированного центра. Проверка здесь, а не в команде:
@@ -86,9 +116,9 @@ public final class TechniqueService {
         io.github.verycooltimo.murim.profile.DantianProfile profile =
                 player.getData(ModAttachments.PROFILE);
         if (!profile.isAwakened()) {
-            player.displayClientMessage(
-                    net.minecraft.network.chat.Component.translatable("murim.technique.not_awakened"), true);
-            return false;
+            PlayerJournal.refuse(player,
+                    net.minecraft.network.chat.Component.translatable("murim.technique.not_awakened"));
+            return captureRefusal(refusal, techniqueId, "not_awakened");
         }
         // Слой освоения меняет цену: корявая техника дороже, обжитая — дешевле (§3г).
         double cost = techniqueCost(technique) * io.github.verycooltimo.murim.mastery.MasteryRules.costFactor(
@@ -98,25 +128,44 @@ public final class TechniqueService {
         // Мечевая форма — только с мечом в руке или ци-мечом (пустая рука пробуждённого), 03.10.
         if (QiSword.needsSword(technique) && !QiSword.hasBlade(player)) {
             // Ниже устоявшегося Пика ци-меча нет — не звать «освободить руку» (автор 03.10).
-            player.displayClientMessage(net.minecraft.network.chat.Component.translatable(
-                    QiSword.available(profile) ? "murim.technique.need_sword" : "murim.qi_sword.need_peak"), true);
-            return false;
+            PlayerJournal.refuse(player, net.minecraft.network.chat.Component.translatable(
+                    QiSword.available(profile) ? "murim.technique.need_sword" : "murim.qi_sword.need_peak"));
+            return captureRefusal(refusal, techniqueId, "missing_sword");
         }
         // Искусство третьего сорта со своим оружием (топор) — docs/design/techniques/junk-arts.md.
         java.util.Optional<String> weapon = io.github.verycooltimo.murim.technique.JunkArts.weaponProblem(player, technique.id());
         if (weapon.isPresent()) {
-            player.displayClientMessage(net.minecraft.network.chat.Component.translatable(weapon.get()), true);
-            return false;
+            PlayerJournal.refuse(player, net.minecraft.network.chat.Component.translatable(weapon.get()));
+            return captureRefusal(refusal, techniqueId, "wrong_weapon");
         }
-        if (profile.circulating() < cost) {
-            player.displayClientMessage(
-                    net.minecraft.network.chat.Component.translatable("murim.technique.no_qi"), true);
-            return false;
+        if (!io.github.verycooltimo.murim.cultivation.QiRules.has(player, profile, cost)) {
+            PlayerJournal.refuse(player,
+                    net.minecraft.network.chat.Component.translatable("murim.technique.no_qi"));
+            return captureRefusal(refusal, techniqueId, "no_qi");
         }
-        player.setData(ModAttachments.PROFILE, profile.withCirculating(profile.circulating() - cost));
-        io.github.verycooltimo.murim.profile.ProfileNetwork.sync(player);
+        // Revalidate the buffered form at arrival; pay its qi only when it really starts.
+        if (linked && FootworkService.bufferChasingSword(player, technique.id())) return true;
+        // Creative and spectator cast free (QiRules.free): the pool is left untouched.
+        if (!io.github.verycooltimo.murim.cultivation.QiRules.free(player)) {
+            player.setData(ModAttachments.PROFILE, profile.withCirculating(profile.circulating() - cost));
+            io.github.verycooltimo.murim.profile.ProfileNetwork.sync(player);
+        }
 
-        player.setData(ModAttachments.TECHNIQUE_STATE, TechniqueState.started(technique.id(), now));
+        FragranceAirService.attacking(player);
+        if (FootworkService.inShadow(player)) FootworkService.stop(player);
+        if ((linked || opening) && FootworkService.sevenStarsActive(player)) FootworkService.endSevenForSword(player);
+        var seven = player.getData(ModAttachments.WIND_GOD);
+        int preparation = technique.startTickOf(TechniquePhase.IMPACT);
+        int opener = opening ? preparation : linked ? (seven.chasingLink ? preparation : SevenStarsRules.linkedOpener(technique.ticksOf(TechniquePhase.WINDUP)))
+                : FootworkService.consumeCombo(player, technique);
+        seven.openingCast = opening;
+        if (opening) seven.opening = Long.MIN_VALUE;
+        if (linked) seven.sevenStart = Long.MIN_VALUE;
+        player.setData(ModAttachments.TECHNIQUE_STATE, new TechniqueState(technique.id(), opener, false, now));
+        if (player.level().dimension() == net.minecraft.world.level.Level.OVERWORLD
+                && (io.github.verycooltimo.murim.sect.seal.VaultTrial.active(player)
+                    || io.github.verycooltimo.murim.sect.vault.HuaVault.near(player, 8)))
+            io.github.verycooltimo.murim.sect.seal.VaultTrial.onTechnique(player, technique.id());
         if (QiSword.needsSword(technique)) {
             QiSword.onCast(player, technique.id());
         }
@@ -124,14 +173,21 @@ public final class TechniqueService {
         cds.put(technique.id(), now);
         player.setData(ModAttachments.COOLDOWNS, cds);
         io.github.verycooltimo.murim.mastery.LoadoutService.returnToStance(player, technique.id());
-        PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
-                new TechniqueEventPayload(TechniqueEventPayload.Event.STARTED, technique.id(), player.getId(), 0,
-                        Math.max(0, io.github.verycooltimo.murim.mastery.MasteryService.executionTier(player, technique.id()))));
+        broadcastEvent(player,
+                new TechniqueEventPayload(TechniqueEventPayload.Event.STARTED, technique.id(), player.getId(), opener,
+                        Math.max(0, io.github.verycooltimo.murim.mastery.MasteryService.executionTier(player, technique.id())), false,
+                        Math.max(0, io.github.verycooltimo.murim.mastery.MasteryService.stars(player, technique.id()))));
+        if (technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.BambooHand) {
+            io.github.verycooltimo.murim.technique.BambooExecutor.begin(player, technique.id(), bambooSide);
+        }
         // Цель не уходит пешком из долгой техники (автор 05.10): удержание с начала каста.
-        if (!(technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.DemonicArt)) {
+        if (!(technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.SixForm)
+                && !(technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.BambooHand)
+                && !(technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.PlumFullBloom)) {
             Stun.holdStart(player, technique);
-        } else {
-            io.github.verycooltimo.murim.technique.DemonicExecutor.begin(player, technique.id());
+        }
+        if (technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.SixForm) {
+            io.github.verycooltimo.murim.technique.SixExecutor.begin(player, technique.id());
         }
         // Ладонь в начале захватывает цель и делает рывок к ней (автор 01.10).
         if (technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.PalmBlast palm
@@ -142,7 +198,10 @@ public final class TechniqueService {
         if (technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.PlumExplosion) {
             io.github.verycooltimo.murim.technique.ExplosionExecutor.begin(player, technique.id());
         }
-        // Купол сажает барьер в мир в начале каста: стволы растут ещё в замахе.
+        // Full Bloom grows immediately and applies pressure without freezing the opponent.
+        if (technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.PlumFullBloom) {
+            io.github.verycooltimo.murim.technique.FullBloomExecutor.begin(player, technique.id());
+        }
         if (technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.PlumDome) {
             io.github.verycooltimo.murim.technique.DomeExecutor.begin(player, technique.id());
         }
@@ -155,20 +214,22 @@ public final class TechniqueService {
         // так его слышат все вокруг и позиционно, без отдельного пакета на каждого.
         // Низкий тон и половинная громкость: замах по раскадровке тихий, весь контраст
         // строится на том, что удар придёт громче.
-        player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
+        if (!(technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.BambooHand)) player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
                 io.github.verycooltimo.murim.registry.ModSounds.SWORD_DRAW.get(),
                 net.minecraft.sounds.SoundSource.PLAYERS, 0.6F, 0.95F + 0.1F * player.getRandom().nextFloat());
 
         // Замедление, а не обездвиживание — прямое пожелание автора по боевой системе.
         // Три секунды концентрации со свободной беготнёй читались бы как отсутствие цены.
         int slowTicks = technique.ticksOf(TechniquePhase.RITUAL) + technique.ticksOf(TechniquePhase.WINDUP);
-        if (slowTicks > 0) {
+        if (slowTicks > 0 && opener == 0) {
             player.addEffect(new net.minecraft.world.effect.MobEffectInstance(
                     net.minecraft.world.effect.MobEffects.MOVEMENT_SLOWDOWN,
                     slowTicks, 2, false, false, false));
         }
         // Люди горы рядом останавливаются и смотрят (живая гора, автор 05.10).
         io.github.verycooltimo.murim.sect.SectReactions.onTechnique(player, technique);
+        // A bout with a condition ("only the Six Harmonies") counts every technique begun.
+        io.github.verycooltimo.murim.sect.SectBouts.onCast(player);
         return true;
     }
 
@@ -250,6 +311,14 @@ public final class TechniqueService {
             return;
         }
 
+        if (FootworkService.family(technique) != null && !FootworkService.selected(player, technique.id())) {
+            forceIdle(player, TechniqueEventPayload.Event.CANCELLED);
+            return;
+        }
+        if (technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.BambooHand
+                && !io.github.verycooltimo.murim.technique.BambooExecutor.empty(player)) {
+            cancel(player); return;
+        }
         TechniquePhase phase = technique.phaseAt(state.tick());
         if (phase == null) {
             forceIdle(player, TechniqueEventPayload.Event.FINISHED);
@@ -260,13 +329,6 @@ public final class TechniqueService {
             QiSword.onCast(player, technique.id());
         }
 
-        if (technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.DemonicArt) {
-            io.github.verycooltimo.murim.technique.DemonicExecutor.prepare(player, technique, state.tick());
-            int since = state.tick() - technique.startTickOf(TechniquePhase.IMPACT);
-            if (since > 0) io.github.verycooltimo.murim.technique.DemonicExecutor.tick(player, technique.id(), since);
-            state = player.getData(ModAttachments.TECHNIQUE_STATE);
-            if (!state.isActive() || !technique.id().equals(state.techniqueId())) return;
-        }
         if (phase == TechniquePhase.IMPACT && !state.impactDone()) {
             // Отметка ставится ДО поражения: если внутри вылетит исключение, повторного
             // удара на следующем тике не будет.
@@ -280,6 +342,12 @@ public final class TechniqueService {
             if (!state.isActive() || !technique.id().equals(state.techniqueId())) {
                 return;
             }
+        }
+
+        if (technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.SixForm) {
+            io.github.verycooltimo.murim.technique.SixExecutor.tick(player, technique.id(), state.tick(),
+                    state.tick() - technique.startTickOf(TechniquePhase.IMPACT));
+            if (!player.getData(ModAttachments.TECHNIQUE_STATE).isActive()) return;
         }
 
         // Семь Цветков Сливы: рука вперёд — выросшее дерево разрезов падает на цель.
@@ -343,6 +411,9 @@ public final class TechniqueService {
                 io.github.verycooltimo.murim.technique.ShowerExecutor.tick(player, technique.id(), since);
             }
         }
+        if (technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.PlumFullBloom) {
+            if (io.github.verycooltimo.murim.technique.FullBloomExecutor.tick(player, technique.id(), state.tick())) return;
+        }
         if (technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.PlumDome) {
             io.github.verycooltimo.murim.technique.DomeExecutor.tick(player, technique.id(), state.tick());
         }
@@ -363,6 +434,10 @@ public final class TechniqueService {
             }
         }
 
+        if (technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.BambooHand) {
+            io.github.verycooltimo.murim.technique.BambooExecutor.tick(player, state.tick());
+            if (!player.getData(ModAttachments.TECHNIQUE_STATE).isActive()) return;
+        }
         io.github.verycooltimo.murim.technique.FunnyJunkArts.tick(player, technique,
                 state.tick() - technique.startTickOf(TechniquePhase.WINDUP));
         player.setData(ModAttachments.TECHNIQUE_STATE, state.advanced());
@@ -382,16 +457,48 @@ public final class TechniqueService {
         }
     }
 
+    /** Confirmed contact reported by sword executors, with the technique that caused it. */
+    public static void onSwordHit(ServerPlayer player, ResourceLocation id) {
+        if (SevenStarsRules.huaSword(id) && id.equals(player.getData(ModAttachments.TECHNIQUE_STATE).techniqueId()))
+            player.getData(ModAttachments.WIND_GOD).huaHit = player.serverLevel().getGameTime();
+    }
+
+    public static boolean canLinkStep(ServerPlayer player) {
+        var state = player.getData(ModAttachments.TECHNIQUE_STATE);
+        var seven = player.getData(ModAttachments.WIND_GOD);
+        long now = player.serverLevel().getGameTime();
+        return (!state.isActive() || SevenStarsRules.huaSword(state.techniqueId()))
+                && (SevenStarsRules.within(now, seven.huaHit, 8) || SevenStarsRules.within(now, seven.huaEnd, 8));
+    }
+    public static void linkStep(ServerPlayer player) {
+        if (canLinkStep(player) && player.getData(ModAttachments.TECHNIQUE_STATE).isActive())
+            forceIdle(player, TechniqueEventPayload.Event.FINISHED);
+    }
+
     private static void forceIdle(ServerPlayer player, TechniqueEventPayload.Event event) {
         TechniqueState state = player.getData(ModAttachments.TECHNIQUE_STATE);
         ResourceLocation id = state.techniqueId();
+        io.github.verycooltimo.murim.sect.seal.VaultTrial.ended(player, event == TechniqueEventPayload.Event.FINISHED);
+        if (event == TechniqueEventPayload.Event.FINISHED && SevenStarsRules.huaSword(id))
+            player.getData(ModAttachments.WIND_GOD).huaEnd = player.serverLevel().getGameTime();
+        player.getData(ModAttachments.WIND_GOD).openingCast = false;
         player.setData(ModAttachments.TECHNIQUE_STATE, state.finished());
+        io.github.verycooltimo.murim.technique.SixExecutor.end(player, event == TechniqueEventPayload.Event.CANCELLED);
+        io.github.verycooltimo.murim.technique.BambooExecutor.end(player);
+        io.github.verycooltimo.murim.technique.FullBloomExecutor.end(player);
         Stun.releaseHolds(player);
-        io.github.verycooltimo.murim.technique.DemonicExecutor.clearCast(player);
         if (id != null) {
-            PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
-                    new TechniqueEventPayload(event, id, player.getId(), 0, 0));
+            // API: NeoForge ICommonPacketListener#hasChannel via ChannelSafe, including the owner.
+            io.github.verycooltimo.murim.network.ChannelSafe.nearEntity(player,
+                    new TechniqueEventPayload(event, id, player.getId(), 0, 0), true);
         }
+    }
+
+    private static void broadcastEvent(ServerPlayer player, TechniqueEventPayload payload) {
+        // API: NeoForge network/PacketDistributor#sendToPlayersTrackingEntity excludes self.
+        // ChannelSafe checks ICommonPacketListener#hasChannel before sending to mock clients.
+        PacketDistributor.sendToPlayersTrackingEntity(player, payload);
+        ChannelSafe.send(player, payload);
     }
 
     /**
@@ -405,12 +512,7 @@ public final class TechniqueService {
      * веер снарядов или рывок. Сервис знает только когда, но не что.
      */
     private static void resolveImpact(ServerPlayer player, TechniqueDefinition technique) {
-        if (technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.DemonicArt) {
-            boolean hit = BehaviorExecutor.execute(player, technique);
-            if (!hit && !io.github.verycooltimo.murim.technique.DemonicRules.sustained(technique.id().getPath()))
-                io.github.verycooltimo.murim.mastery.MasteryService.onMiss(player, technique.id());
-            return; // specialised executor owns contact sound and one hit-stop for the complete cast.
-        }
+        if (technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.BambooHand) return;
         // Свист клинка звучит на ударе независимо от попадания: промах тоже должен быть
         // слышен, иначе игрок не понимает, сработала ли техника.
         if (!io.github.verycooltimo.murim.technique.JunkArts.FUNNY.contains(technique.id())) {
@@ -419,7 +521,11 @@ public final class TechniqueService {
                     net.minecraft.sounds.SoundSource.PLAYERS, 1.0F, 0.95F + 0.1F * player.getRandom().nextFloat());
         }
 
+        // Six forms own their complete multi-tick hit/miss accounting.
+        if (technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.SixForm
+                || technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.PlumFullBloom) return;
         boolean anyHit = BehaviorExecutor.execute(player, technique);
+        if (anyHit) onSwordHit(player, technique.id());
         io.github.verycooltimo.murim.technique.JunkArts.afterImpact(player, technique.id());
         // Промах — тоже тренировка формы, слабее попадания. У снарядов попадание придёт позже.
         if (!anyHit && !(technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.ProjectileFan)) {
@@ -434,7 +540,7 @@ public final class TechniqueService {
                     net.minecraft.sounds.SoundSource.PLAYERS, 0.9F, 0.95F + 0.1F * player.getRandom().nextFloat());
             // Hit stop адресно применяющему: заморозка экрана у соседей, попавших в радиус
             // трекинга, была бы гриферством с обычного клиента.
-            PacketDistributor.sendToPlayer(player,
+            ChannelSafe.send(player,
                     new TechniqueEventPayload(TechniqueEventPayload.Event.HIT, technique.id(),
                             player.getId(), technique.hitStopTicks(), 0));
         }
@@ -457,6 +563,14 @@ public final class TechniqueService {
             return;
         }
         TechniqueDefinition.Interruption rules = technique.interruption();
+        if (FootworkService.family(technique) != null && !FootworkService.selected(player, technique.id())) {
+            forceIdle(player, TechniqueEventPayload.Event.CANCELLED);
+            return;
+        }
+        if (technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.BambooHand
+                && !io.github.verycooltimo.murim.technique.BambooExecutor.empty(player)) {
+            cancel(player); return;
+        }
         TechniquePhase phase = technique.phaseAt(state.tick());
         boolean breaks = rules.breakOnDamage() && amount >= rules.damageThreshold()
                 && phase != null && phase.ordinal() < TechniquePhase.IMPACT.ordinal();
@@ -494,13 +608,14 @@ public final class TechniqueService {
      * дать возможность их рассогласовать.
      */
     public static double techniqueCost(TechniqueDefinition technique) {
-        if (technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.DemonicArt art)
-            return io.github.verycooltimo.murim.technique.DemonicRules.cost(art.art());
+        if (io.github.verycooltimo.murim.technique.BambooRules.is(technique.id())) {
+            return io.github.verycooltimo.murim.technique.BambooRules.form(technique.id()) == 1 ? 4.0D : 2.0D;
+        }
         return 1.0D + technique.totalTicks() * 0.05D;
     }
 
     private static boolean canAct(ServerPlayer player) {
-        return player.isAlive() && !player.isRemoved() && !player.isSpectator()
+        return player.isAlive() && !player.isRemoved() && !player.isSpectator() && !Stun.isStunned(player)
                 && !io.github.verycooltimo.murim.sect.seal.PenanceEnforcement.pinned(player);
     }
 

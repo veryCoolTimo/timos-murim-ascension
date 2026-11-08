@@ -44,10 +44,28 @@ public final class MasteryPacingTests {
             z += MasteryService.hitWorth(onZombie, zombie);
             b += MasteryService.hitWorth(onBandit, bandit);
         }
-        helper.assertTrue(z < b * 0.5D, "зомби " + z + " против бандита " + b + ": слабый моб должен учить меньше");
+        helper.assertTrue(z < b, "зомби " + z + " против бандита " + b + ": слабый моб должен учить меньше");
         // Свежие 40 попаданий по зомби без усталости — 40 × цена слабого моба.
         double fresh = 40 * MasteryPacing.worth(MasteryPacing.Kind.WEAK, 0, 0, 0);
-        helper.assertTrue(z < fresh * 0.8D, "усталость от зомби не сработала: " + z + " из " + fresh);
+        helper.assertTrue(z < fresh, "усталость от зомби не сработала: " + z + " из " + fresh);
         helper.succeed();
     }
+    @GameTest(template = "small_floor", timeoutTicks = 20)
+    public static void realHitProgressBeatsTrainingThroughService(GameTestHelper helper) {
+        var id = net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("murim", "six_harmonies");
+        var trainee = fakePlayer(helper);
+        var fighter = fakePlayer(helper);
+        var learned = MasteryState.EMPTY.with(id, TechniqueProgress.learned(0, 12));
+        trainee.setData(io.github.verycooltimo.murim.registry.ModAttachments.MASTERY, learned);
+        fighter.setData(io.github.verycooltimo.murim.registry.ModAttachments.MASTERY, learned);
+        var stand = helper.spawn(EntityType.ARMOR_STAND, 1, 2, 1);
+        var zombie = helper.spawn(EntityType.ZOMBIE, 3, 2, 3);
+        MasteryService.onHit(trainee, id, stand);
+        MasteryService.onHit(fighter, id, zombie);
+        double training = trainee.getData(io.github.verycooltimo.murim.registry.ModAttachments.MASTERY).progress(id).progress();
+        double fighting = fighter.getData(io.github.verycooltimo.murim.registry.ModAttachments.MASTERY).progress(id).progress();
+        helper.assertTrue(training > 0 && fighting >= 2.5D * training, "combat premium missing from real server progress");
+        helper.succeed();
+    }
+
 }

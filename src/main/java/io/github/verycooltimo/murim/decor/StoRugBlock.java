@@ -9,6 +9,8 @@ import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.Mirror;
+import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
@@ -72,6 +74,24 @@ public class StoRugBlock extends Block {
     @Override
     protected VoxelShape getShape(BlockState s, BlockGetter l, BlockPos p, CollisionContext c) {
         return SHAPE;
+    }
+
+    @Override
+    protected BlockState rotate(BlockState s, Rotation rotation) {
+        // the trim flags are per side: a stamped rug of the baked sect turned with its site must keep its open sides on the same walls
+        return s.setValue(prop(rotation.rotate(Direction.NORTH)), s.getValue(NORTH))
+                .setValue(prop(rotation.rotate(Direction.EAST)), s.getValue(EAST))
+                .setValue(prop(rotation.rotate(Direction.SOUTH)), s.getValue(SOUTH))
+                .setValue(prop(rotation.rotate(Direction.WEST)), s.getValue(WEST));
+    }
+
+    @Override
+    protected BlockState mirror(BlockState s, Mirror mirror) {
+        return switch (mirror) {
+            case LEFT_RIGHT -> s.setValue(NORTH, s.getValue(SOUTH)).setValue(SOUTH, s.getValue(NORTH));
+            case FRONT_BACK -> s.setValue(EAST, s.getValue(WEST)).setValue(WEST, s.getValue(EAST));
+            default -> s;
+        };
     }
 
     @Override

@@ -1,6 +1,7 @@
 package io.github.verycooltimo.murim.client.sect;
 
 import io.github.verycooltimo.murim.MurimMod;
+import io.github.verycooltimo.murim.network.DialoguePayloads;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
@@ -50,6 +51,25 @@ public final class DialogueCamera {
     private static DialogueShot.Shot shot;
     private static Vec3 shotNpc = Vec3.ZERO;
 
+    /**
+     * Newcomer tour (docs/design/39-player-path-v2.md): the current fixed shot of a building, or null (camera on the speaker).
+     * A change of shot, or the return to the speaker, glides from the pose the camera has at that moment; {@code blendT} runs
+     * 0..1 over {@code blendTicks}. Esc ends the whole thing at once ({@link #stop}).
+     */
+    private static DialoguePayloads.Shot tourShot;
+    /** Share of the lens angle the view is tilted down in a tour shot (the dialogue scroll covers the lower ~45 % of the frame). */
+    private static final float TOUR_TILT = 0.22F;
+    private static boolean blending;
+    private static float blendT;
+    private static float blendTicks = 40.0F;
+    private static Vec3 blendPos = Vec3.ZERO;
+    private static float blendYaw;
+    private static float blendPitch;
+    private static float blendFov;
+    private static int tourAge;
+    /** Lens now, vertical degrees; follows the tour blend (the speaker frame uses {@link DialogueShot#FOV}). */
+    private static float tourFov = (float) DialogueShot.FOV;
+
     private DialogueCamera() {
     }
 
@@ -66,7 +86,16 @@ public final class DialogueCamera {
         return ease(Mth.clamp(p, 0.0F, 1.0F));
     }
 
-    public static void start(int npcId) {
+    /** The camera is gliding between two shots: the new line waits for it before it prints. */
+    public static boolean settled() {
+        return !blending || blendT > 0.55F;
+    }
+
+    public static boolean touring() {
+        return cam != null && tourShot != null;
+    }
+
+    public static void start(int npcId, DialoguePayloads.Shot tour) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) {
             return;
@@ -75,6 +104,7 @@ public final class DialogueCamera {
         shot = null;
         leaving = false;
         if (cam != null) {
+            changeShot(tour);
             return;
         }
         cam = new ArmorStand(EntityType.ARMOR_STAND, mc.level);
@@ -94,6 +124,10 @@ public final class DialogueCamera {
         startYaw = now.isInitialized() ? now.getYRot() : mc.player.getYRot();
         startPitch = now.isInitialized() ? now.getXRot() : mc.player.getXRot();
         place(startPos, startYaw, startPitch, true);
+        tourShot = null;
+        blending = false;
+        tourFov = (float) DialogueShot.FOV;
+        changeShot(tour);
         savedHideGui = mc.options.hideGui;
         mc.options.hideGui = true;
         // Своя камера — «глаза» стойки: от третьего лица движок отодвинул бы её ещё на 4 блока.
@@ -102,10 +136,42 @@ public final class DialogueCamera {
         mc.setCameraEntity(cam);
     }
 
-    public static void stop() {
-        if (cam != null) {
-            leaving = true;
+    /** A new line: same shot keeps the camera, another (or none) glides from where it is now. */
+    private static void changeShot(DialoguePayloads.Shot next) {
+        if (java.util.Objects.equals(next, tourShot)) {
+            return;
         }
+        boolean wasTour = tourShot != null;
+        if (next == null && !wasTour) {
+            return;
+        }
+        Vec3 eyeNow = cam.getEyePosition();
+        blendPos = eyeNow;
+        blendYaw = cam.getYRot();
+        blendPitch = cam.getXRot();
+        blendFov = wasTour ? tourFov : (float) (shot == null ? DialogueShot.FOV : shot.fov());
+        Vec3 to = next != null ? next.camera() : shotNpc;
+        blendTicks = Mth.clamp(20.0F + (float) eyeNow.distanceTo(to) * 0.8F, 30.0F, 56.0F);
+        if (next == null) {
+            // Back to the speaker (end of the tour or «skip»): a short glide, not the full flight between buildings.
+            blendTicks = Math.min(blendTicks, 24.0F);
+        }
+        blendT = 0.0F;
+        blending = true;
+        tourShot = next;
+        tourAge = 0;
+    }
+
+    public static void stop() {
+        if (cam == null) {
+            return;
+        }
+        // Esc or the end during the tour: back to the eyes at once, no glide across the sect.
+        if (tourShot != null || blending) {
+            reset();
+            return;
+        }
+        leaving = true;
     }
 
     /** Сразу в глаза (выход из мира, смерть). */
@@ -123,6 +189,8 @@ public final class DialogueCamera {
         cam = null;
         npc = -1;
         shot = null;
+        tourShot = null;
+        blending = false;
     }
 
     /** Кадр по миру: стены режут луч от груди NPC к камере. */
@@ -142,7 +210,7 @@ public final class DialogueCamera {
      */
     @SubscribeEvent
     static void onRenderLiving(net.neoforged.neoforge.client.event.RenderLivingEvent.Pre<?, ?> event) {
-        if (cam == null || shot == null || amount(0.0F) < 0.5F) {
+        if (cam == null || shot == null || amount(0.0F) < 0.5F || tourShot != null) {
             return;
         }
         LivingEntity e = event.getEntity();
@@ -222,6 +290,48 @@ public final class DialogueCamera {
         }
         float yaw = baseYaw + Mth.wrapDegrees(shotYaw - baseYaw) * e;
         float pitch = Mth.lerp(e, basePitch, shotPitch);
+        if (!leaving && (tourShot != null || blending)) {
+            // Tour: the fixed shot (with a slow push-in) or the glide back to the speaker frame.
+            Vec3 goalPos = shotPos;
+            float goalYaw = shotYaw;
+            float goalPitch = shotPitch;
+            float goalFov = shot == null ? (float) TALK_FOV : (float) shot.fov();
+            if (tourShot != null) {
+                tourAge++;
+                Vec3 camAt = tourShot.camera();
+                Vec3 toAim = tourShot.aim().subtract(camAt);
+                double dist = toAim.length();
+                // Slow push-in along the view, up to 8 % of the distance, so the shot is not a dead still.
+                goalPos = camAt.add(toAim.scale(Math.min(0.08D, tourAge * 0.0016D)));
+                double flat = Math.sqrt(toAim.x * toAim.x + toAim.z * toAim.z);
+                goalYaw = (float) (Mth.atan2(toAim.z, toAim.x) * Mth.RAD_TO_DEG) - 90.0F;
+                goalPitch = (float) -(Mth.atan2(toAim.y, flat) * Mth.RAD_TO_DEG);
+                goalFov = tourShot.fov();
+                // The scroll covers the lower part of the frame: look a little lower so the building sits in the open part.
+                goalPitch += TOUR_TILT * goalFov;
+                if (dist < 1.0E-3D) {
+                    goalPos = camAt;
+                }
+            }
+            if (blending) {
+                blendT = Math.min(1.0F, blendT + 1.0F / blendTicks);
+                float b = ease(blendT);
+                pos = blendPos.lerp(goalPos, b);
+                // The glide arcs up over the roofs: a straight line between two buildings would run through the walls.
+                pos = pos.add(0.0D, Math.sin(b * Mth.PI) * Math.min(7.0D, blendPos.distanceTo(goalPos) * 0.22D), 0.0D);
+                yaw = blendYaw + Mth.wrapDegrees(goalYaw - blendYaw) * b;
+                pitch = Mth.lerp(b, blendPitch, goalPitch);
+                tourFov = Mth.lerp(b, blendFov, goalFov);
+                if (blendT >= 1.0F) {
+                    blending = false;
+                }
+            } else {
+                pos = goalPos;
+                yaw = goalYaw;
+                pitch = goalPitch;
+                tourFov = goalFov;
+            }
+        }
         place(pos, yaw, pitch, false);
     }
 
@@ -265,7 +375,8 @@ public final class DialogueCamera {
     static void onFov(net.neoforged.neoforge.client.event.ViewportEvent.ComputeFov event) {
         if (cam != null && event.getCamera().getEntity() == cam) {
             float a = amount((float) event.getPartialTick());
-            event.setFOV(Mth.lerp(a, event.getFOV(), shot == null ? TALK_FOV : shot.fov()));
+            double talk = tourShot != null || blending ? tourFov : shot == null ? TALK_FOV : shot.fov();
+            event.setFOV(Mth.lerp(a, event.getFOV(), talk));
         }
     }
 

@@ -82,6 +82,8 @@ public final class SectAttendance {
     /** Заслуги за полный учебный день; прибавка после трёх таких дней, с любыми перерывами. */
     public static final int DAY_BONUS = 1;
     public static final int STREAK_DAYS = 3;
+    /** The activities the sect calls the roll for each day ({@code tick}); a day is full when all that were called are done. A meal is never called: food is not required (author 21.10). */
+    public static final List<Activity> ROLL_CALLED = List.of(Activity.FORMATION, Activity.LESSON);
     /** Заслуги за занятие и за подъём (раз в день). */
     public static final int LESSON_CONTRIBUTION = 1;
     public static final int CLIMB_CONTRIBUTION = 1;
@@ -106,7 +108,10 @@ public final class SectAttendance {
         ).apply(i, Day::new));
 
         public Day {
-            expected = Set.copyOf(expected);
+            // Old saves may still have a meal roll call; food is optional, including on that saved day.
+            Set<String> required = new HashSet<>(expected);
+            required.remove(Activity.MEAL.id());
+            expected = Set.copyOf(required);
             done = Set.copyOf(done);
         }
 
@@ -130,7 +135,9 @@ public final class SectAttendance {
 
         /** Всё, чего ждали, сделано (и ждали хоть что-то). */
         public boolean full() {
-            return !expected.isEmpty() && done.containsAll(expected);
+            // A day with no roll call (the player was not on the shelf at the call) still counts when he did two things of the
+            // sect: «after day 1 the counter said 0/7 while every task showed done» (author 22.10).
+            return expected.isEmpty() ? done.size() >= 2 : done.containsAll(expected);
         }
 
         Day with(Activity a, boolean expect) {
@@ -171,6 +178,34 @@ public final class SectAttendance {
         }
     }
 
+    /** Merit for a full day that brings the count of full days to {@code fullDays}: one, one more from the third day on. */
+    public static int dayBonus(int fullDays) {
+        return DAY_BONUS + (fullDays >= STREAK_DAYS ? 1 : 0);
+    }
+
+    /**
+     * Does the sect count {@code a} towards today's full day? Yes when the roll call already named it; and while its roll
+     * call is still to come (the line-up until its window ends, the lesson until the lessons' window ends) when it is one
+     * of {@link #ROLL_CALLED}. Pure function of the day's log and the time, so the tablet can show the rule that
+     * {@link #roll} really applies.
+     */
+    public static boolean required(Day today, Activity a, long time) {
+        if (today.expects(a)) {
+            return true;
+        }
+        if (!ROLL_CALLED.contains(a)) {
+            return false;
+        }
+        SectSchedule.Period period = SectSchedule.at(time);
+        int since = SectSchedule.sincePeriodStart(time);
+        return switch (a) {
+            case FORMATION -> period == SectSchedule.Period.FORMATION && since <= ROLL_FORMATION;
+            case LESSON -> period.ordinal() < SectSchedule.Period.TRAINING.ordinal()
+                    || period == SectSchedule.Period.TRAINING && since <= ROLL_LESSON;
+            default -> false;
+        };
+    }
+
     /**
      * Итог прошлого дня при смене дня.
      *
@@ -192,13 +227,13 @@ public final class SectAttendance {
         }
         Day closed = log.today();
         Day fresh = new Day(day, Set.of(), Set.of());
-        if (closed.day() == Long.MIN_VALUE || closed.expected().isEmpty()) {
+        if (closed.day() == Long.MIN_VALUE || !closed.present()) {
             Day last = closed.present() ? closed : log.last();
             return new Settled(new Log(fresh, last, log.streak(), log.missedRow(), log.chores(), log.scolded()), 0, false, false);
         }
         if (closed.full()) {
             int streak = log.streak() + 1;
-            int bonus = DAY_BONUS + (streak >= STREAK_DAYS ? 1 : 0);
+            int bonus = dayBonus(streak);
             return new Settled(new Log(fresh, closed, streak, 0, false, log.scolded()), bonus, true, false);
         }
         // An invitation can be ignored, including while doing other Minecraft activities on the mountain.
@@ -244,20 +279,19 @@ public final class SectAttendance {
         }
         long day = today(p);
         p.setData(ModAttachments.SECT_ATTENDANCE, mark(log, day, a, false));
-        p.displayClientMessage(Component.translatable("murim.sect.log.recorded", Component.translatable(a.nameKey()))
-                .withStyle(ChatFormatting.GREEN), true);
+        SectTablet.touch(p);
+        PlayerJournal.record(p, Component.translatable("murim.sect.log.recorded", Component.translatable(a.nameKey()))
+                .withStyle(ChatFormatting.GREEN));
         MurimMod.LOGGER.info("Журнал секты: {} — {} (день {})", p.getName().getString(), a.id(), day);
         switch (a) {
             case LESSON -> SectService.contribute(p, LESSON_CONTRIBUTION);
             case CLIMB -> SectService.contribute(p, CLIMB_CONTRIBUTION);
             case MEAL -> {
-                // Злаки и орехи — «самая дешёвая диета» (гл. 76): сытно не бывает, но силы есть.
-                p.getFoodData().eat(5, 0.6F);
-                p.displayClientMessage(Component.translatable("murim.sect.meal.fed").withStyle(ChatFormatting.GRAY), false);
+                // Food comes from the cook's bowl now (SectMeals); the mark alone is the fallback for sitting with the others.
             }
             case CHORE -> {
                 p.setData(ModAttachments.SECT_ATTENDANCE, log(p).choresDone());
-                p.displayClientMessage(Component.translatable("murim.sect.log.chores_done").withStyle(ChatFormatting.GOLD), false);
+                SectNotice.bar(p, Component.translatable("murim.sect.log.chores_done").withStyle(ChatFormatting.GOLD));
             }
             default -> {
             }
@@ -283,11 +317,11 @@ public final class SectAttendance {
         p.setData(ModAttachments.SECT_ATTENDANCE, s.log());
         if (previous.today().day() != Long.MIN_VALUE && today(p) - previous.today().day() >= 2
                 && p.getData(ModAttachments.SECT).member()) {
-            p.displayClientMessage(Component.translatable("murim.sect.journey.welcome"), false);
+            SectNotice.bar(p, Component.translatable("murim.sect.journey.welcome"));
         }
         if (s.full() && s.bonus() > 0) {
-            p.displayClientMessage(Component.translatable("murim.sect.log.day_bonus", s.bonus(), s.log().streak())
-                    .withStyle(ChatFormatting.GOLD), false);
+            SectNotice.bar(p, Component.translatable("murim.sect.log.day_bonus", s.bonus(), s.log().streak())
+                    .withStyle(ChatFormatting.GOLD));
             SectService.contribute(p, s.bonus());
         }
         // Семь полных дней, с любыми перерывами — одобрение главы (SectReview.APPROVAL_STREAK; второй путь — победа на смотре).
@@ -341,11 +375,12 @@ public final class SectAttendance {
         }
         if (called) {
             explainOnce(p);
+            SectTablet.touch(p);
         }
-        if (period.meal() && (layout.inside("dining", pos, 2.0D) || nearTable(layout, pos))) {
+        if (period.meal() && atTable(layout, pos)) {
             tag.putInt("meal", tag.getInt("meal") + dt);
-            if (tag.getInt("meal") >= MEAL_TICKS) {
-                record(p, Activity.MEAL);
+            if (tag.getInt("meal") >= MEAL_TICKS && record(p, Activity.MEAL)) {
+                SectNotice.bar(p, Component.translatable("murim.sect.meal.sat").withStyle(ChatFormatting.GRAY));
             }
         }
         if (period == SectSchedule.Period.TRAINING) {
@@ -355,11 +390,14 @@ public final class SectAttendance {
                     && pad != null && pos.y >= pad.y + 1.0D && p.onGround()) {
                 tag.putInt("poles", tag.getInt("poles") + dt);
             }
-            if (nearLecture(p)) {
+            if (layout.lessons(p.serverLevel()).nearLecture(p)) {
                 tag.putInt("lecture", tag.getInt("lecture") + dt);
             }
             if (tag.getInt("poles") >= PRACTICE_TICKS || tag.getInt("lecture") >= PRACTICE_TICKS) {
+                boolean firstLesson=!log(p).today().did(Activity.LESSON);
                 record(p, Activity.LESSON);
+                if(firstLesson && tag.getInt("lecture")>=PRACTICE_TICKS)
+                    SectLessons.of(p.serverLevel()).lectureCredit(p);
             }
         }
         p.getPersistentData().put(PRESENCE_TAG, tag);
@@ -376,24 +414,15 @@ public final class SectAttendance {
         return false;
     }
 
+    /** In the dining hall or at the yard table: where a bowl is eaten. */
+    static boolean atTable(SectLayout layout, Vec3 pos) {
+        return layout.inside("dining", pos, 2.0D) || nearTable(layout, pos);
+    }
+
     /** Стол во дворе лагеря (трапеза второй очереди, {@code SectSchedule.eat}). */
     static boolean nearTable(SectLayout layout, Vec3 pos) {
         double[] l = layout.local("camp", pos);
         return l != null && l[0] > 1.0D && l[0] < 9.0D && l[1] > -4.0D && l[1] < 9.0D;
-    }
-
-    /** Рядом с Тэ Роком, пока он учит. */
-    static boolean nearLecture(ServerPlayer p) {
-        for (SectDisciple d : p.level().getEntitiesOfClass(SectDisciple.class, p.getBoundingBox().inflate(7.0D),
-                d -> "tae_rok".equals(d.memberKey()))) {
-            // Урок идёт: старейшина на месте и говорит (поза разговора), а не спит вдали и не идёт.
-            SectSchedule.Task t = d.member().map(m -> SectSchedule.task(m, p.level().getDayTime())).orElse(null);
-            if (t != null && t.kind() == SectSchedule.Kind.LECTURE && !d.dormant()
-                    && d.pose() == io.github.verycooltimo.murim.entity.SectPose.TALK) {
-                return true;
-            }
-        }
-        return false;
     }
 
     /**
@@ -442,7 +471,7 @@ public final class SectAttendance {
             return;
         }
         p.setData(ModAttachments.SECT, s.with(EXPLAINED));
-        p.displayClientMessage(Component.translatable("murim.sect.log.rules").withStyle(ChatFormatting.GOLD), false);
+        SectNotice.chat(p, Component.translatable("murim.sect.log.rules").withStyle(ChatFormatting.GOLD));
     }
 
     /** Флаг секты: распорядок объяснён. */

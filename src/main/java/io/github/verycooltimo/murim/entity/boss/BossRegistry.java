@@ -46,7 +46,7 @@ public final class BossRegistry {
                     .build("fortress_master"));
 
     /**
-     * Игрок победил хозяина крепости: условие прорыва во второй ранг (Realm.Condition.DEFEAT_BOSS).
+     * Игрок победил хозяина крепости: отдельная необязательная награда, не условие ранга.
      * Сохраняется и переживает смерть; на клиент не синхронизируется — проверяет только сервер.
      */
     public static final Supplier<AttachmentType<Boolean>> BOSS_DEFEATED =

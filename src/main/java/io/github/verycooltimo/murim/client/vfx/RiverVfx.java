@@ -5,7 +5,6 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import io.github.verycooltimo.murim.MurimMod;
 import io.github.verycooltimo.murim.client.CameraShakeHandler;
-import io.github.verycooltimo.murim.client.ClientAuraState;
 import io.github.verycooltimo.murim.network.RiverPayload;
 import io.github.verycooltimo.murim.network.TechniqueEventPayload;
 import io.github.verycooltimo.murim.technique.RiverRules;
@@ -57,21 +56,31 @@ public final class RiverVfx {
     private static final VfxColour BLUE_TEAL = hex(0x9BFFF4);
     private static final VfxColour BLUE_WHITE = hex(0xF4FFFF);
     /** Красная оболочка и нить (r02–r07): #F83249 / #EC244A, розовый #FF86C6 / #FF5B99. */
-    private static final VfxColour RED = hex(0xF83249);
-    private static final VfxColour RED_SPIRAL = hex(0xEC244A);
-    private static final VfxColour PINK = hex(0xFF86C6);
-    private static final VfxColour PINK_HOT = hex(0xFF5B99);
-    private static final VfxColour PINK_LIGHT = hex(0xFFC2DB);
+    private static final VfxColour RED = hex(0xE3264E);
+    private static final VfxColour RED_SPIRAL = hex(0x4A0D22);
+    private static final VfxColour PINK = hex(0xE3264E);
+    private static final VfxColour PINK_HOT = hex(0xE3264E);
+    private static final VfxColour PINK_LIGHT = hex(0xFFEFF3);
     /** Лепестки и свет (r08–r16): белый, светло-розовый, малиновый. */
     private static final VfxColour WHITE = hex(0xFFFFFF);
-    private static final VfxColour PETAL_PINK = hex(0xFFC7DC);
-    private static final VfxColour CRIMSON = hex(0xE92C65);
-    private static final VfxColour BURST_PINK = hex(0xFFC4DF);
-    private static final VfxColour BURST_RIM = hex(0xFF397A);
+    private static final VfxColour PETAL_PINK = hex(0xFFEFF3);
+    private static final VfxColour CRIMSON = hex(0xE3264E);
+    private static final VfxColour BURST_PINK = hex(0xE3264E);
+    private static final VfxColour BURST_RIM = hex(0x4A0D22);
     private static final VfxColour WIND = hex(0xE8EDF1);
 
+    private static net.minecraft.client.multiplayer.ClientLevel presentationLevel;
+    private static void syncLevel() {
+        var current = Minecraft.getInstance().level;
+        if (presentationLevel != current) {
+            CASTS.clear();
+            presentationLevel = current;
+        }
+    }
     private static final List<Cast> CASTS = new ArrayList<>();
     private static int clientTicks;
+    /** Render-thread submission budget, reset for each cast. */
+    private static int quadRoom;
 
     private static VfxColour hex(int rgb) {
         return new VfxColour(((rgb >> 16) & 0xFF) / 255.0F, ((rgb >> 8) & 0xFF) / 255.0F, (rgb & 0xFF) / 255.0F);
@@ -91,7 +100,20 @@ public final class RiverVfx {
         for (int i = 0; i < p.length; i++) {
             a[i] = alpha * near(p[i], camera);
         }
-        PlumVfx.stripVar(v, pose, camera, p, w, a, col);
+        double[] bounded = w.clone();
+        for (int i = 0; i < bounded.length; i++) bounded[i] = RiverPresentation.halfWidth(bounded[i]);
+        if (quadRoom < p.length - 1) return;
+        quadRoom -= p.length - 1;
+        PlumVfx.stripVar(v, pose, camera, p, bounded, a, col);
+    }
+
+    /** Short impact cores bypass the material-width floor; tips must remain actual points. */
+    private static void sharp(VertexConsumer v, PoseStack.Pose pose, Vec3 camera, Vec3[] p, double[] w, float alpha, VfxColour col) {
+        if (alpha <= 0 || quadRoom < p.length - 1) return;
+        quadRoom -= p.length - 1;
+        float[] opacity = new float[p.length];
+        for (int i = 0; i < p.length; i++) opacity[i] = alpha * near(p[i], camera);
+        PlumVfx.stripVar(v, pose, camera, p, w, opacity, col);
     }
 
     private static double smooth(double k) {
@@ -165,6 +187,8 @@ public final class RiverVfx {
         double gravity;
         double drag = 0.9D;
         boolean dead;
+        int landedAt = -1;
+        double floor = Double.NaN;
         final Vec3[] tail = new Vec3[5];
         int tails;
 
@@ -239,6 +263,8 @@ public final class RiverVfx {
     private static final class Cast {
         final int entityId;
         final int executionTier;
+        int masteryStars = 1;
+        boolean has(PlumLayers.Kind kind) { return PlumLayers.has(PlumLayers.Form.RIVER, masteryStars, kind); }
         int start;
         final Random random;
         final double scale;
@@ -254,6 +280,7 @@ public final class RiverVfx {
         Vec3 missAt;
         int burstTick = -1;
         Vec3 burstAt;
+        Vec3 burstGround;
         Vec3 axis = new Vec3(0.0D, 0.0D, 1.0D);
         boolean caption;
         /** Клинок: кисть, середина, остриё в этом и прошлом тике. */
@@ -296,16 +323,24 @@ public final class RiverVfx {
             this.executionTier = executionTier;
             this.start = clientTicks;
             this.random = new Random(entityId * 7919L + clientTicks);
-            this.scale = RiverRules.scale(executionTier);
-            this.petalsMax = RiverRules.petals(executionTier);
+            this.scale = RiverRules.scale(8); // Keep the existing apex geometry; stars gate individual layers.
+            int count = RiverPresentation.petalCount(executionTier);
+            count = switch (io.github.verycooltimo.murim.client.ClientConfig.VFX_QUALITY.get()) {
+                case HIGH -> count; case MEDIUM -> count * 2 / 3; case LOW -> count / 3;
+            };
+            // API: supplied minecraft-src/net/minecraft/client/Options.java#particles.
+            this.petalsMax = switch (Minecraft.getInstance().options.particles().get()) {
+                case ALL -> count; case DECREASED -> count / 2; case MINIMAL -> count / 8;
+            };
         }
 
         int t() {
             return clientTicks - start;
         }
 
-        int n(double full) {
-            return (int) Math.ceil(full * scale * Math.max(0.25D, executionTier / 7.0D));
+        int n(double full) { return n(full, PlumLayers.Kind.DUST); }
+        int n(double full, PlumLayers.Kind kind) {
+            return (int) Math.ceil(full * RiverRules.scale(8) * (8 / 7.0D) * PlumLayers.density(masteryStars, kind));
         }
 
         boolean own() {
@@ -327,27 +362,46 @@ public final class RiverVfx {
     // ------------------------------------------------------------------ события
 
     public static void onTechniqueEvent(TechniqueEventPayload payload) {
+        syncLevel();
+        if (TECHNIQUE.equals(payload.techniqueId()) && (payload.event() == TechniqueEventPayload.Event.CANCELLED
+                || payload.event() == TechniqueEventPayload.Event.FINISHED)) {
+            for (Cast c : CASTS) if (c.entityId == payload.sourceId() && c.burstTick < 0) scatter(c, c.hand);
+        }
         if (payload.event() != TechniqueEventPayload.Event.STARTED || !TECHNIQUE.equals(payload.techniqueId())
                 || payload.executionTier() <= 0) {
             return;
         }
+
         CASTS.removeIf(c -> c.entityId == payload.sourceId());
-        CASTS.add(new Cast(payload.sourceId(), payload.executionTier()));
-        // Голубой предвыброс (r01) — холодная аура до 14-го тика, дальше красно-розовая.
-        ClientAuraState.techniqueAura(payload.sourceId(), 2 + Math.min(2, payload.executionTier() / 3), 0, RiverRules.BLUE_END + 2);
+        Cast c = new Cast(payload.sourceId(), payload.executionTier());
+        c.masteryStars = payload.masteryStars();
+        CASTS.add(c);
     }
 
     public static void onRiver(RiverPayload p) {
+        if (p.executionTier() <= 0) return;
+        syncLevel();
+        if (Boolean.getBoolean("murim.capture") && "1".equals(System.getenv("MURIM_CAPTURE_PLUM_CAMERA"))) {
+            String stage = switch (p.stage()) {
+                case RiverPayload.AIM -> "AIM";
+                case RiverPayload.CONTACT -> "CONTACT";
+                case RiverPayload.BURST -> "BURST";
+                default -> "MISS";
+            };
+            MurimMod.LOGGER.info("CAPTURE-PLUM-RIVER stage={} tier={} target={} clientTick={}", stage, p.executionTier(), p.targetId(), clientTicks);
+        }
         Cast c = null;
         for (Cast x : CASTS) {
             if (x.entityId == p.entityId()) {
                 c = x;
             }
         }
+        if (c != null) c.masteryStars = p.stars();
         Minecraft mc = Minecraft.getInstance();
         if (p.stage() == RiverPayload.AIM) {
             if (c == null) {
                 c = new Cast(p.entityId(), p.executionTier());
+                c.masteryStars = p.stars();
                 CASTS.add(c);
             }
             // Сверка шкалы: пакет прицела приходит ровно на тике AIM.
@@ -381,6 +435,7 @@ public final class RiverVfx {
 
     @SubscribeEvent
     static void onClientTick(ClientTickEvent.Post event) {
+        syncLevel();
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null) {
             CASTS.clear();
@@ -404,7 +459,7 @@ public final class RiverVfx {
             }
             tickPetals(c, t);
             tickMotes(c);
-            if (t > RiverRules.END + 50) {
+            if (t > RiverRules.END + 320) {
                 it.remove();
             }
         }
@@ -469,7 +524,7 @@ public final class RiverVfx {
         }
         // Центр вихря: перед кистью; на натяжении тянется за ней с запаздыванием 2 тика.
         Vec3 lagged = c.handHist[Math.min(2, c.handHist.length - 1)] != null ? c.handHist[2] : hand;
-        Vec3 g = (t >= RiverRules.AIM ? lagged : hand).add(c.fwd.scale(c.eyes() ? 1.8D : 0.9D))
+        Vec3 g = (t >= RiverRules.AIM ? lagged : hand).add(c.fwd.scale(c.eyes() ? 1.8D : 0.18D))
                 .add(c.eyes() ? c.e1.scale(0.5D).add(0.0D, -0.3D, 0.0D) : Vec3.ZERO);
         c.gatherPrev = c.gather == null ? g : c.gather;
         c.gather = g;
@@ -501,6 +556,8 @@ public final class RiverVfx {
 
     /** Тело мастера: голубой выброс, красная оболочка, нить, резонанс, рождение лепестков. */
     private static void body(Cast c, Entity e, int t, Minecraft mc) {
+        if (c.masteryStars >= 8 && t % 6 == 0)
+            TechniqueLight.add(e.position().add(0, 1, 0), 0xE3264E, c.masteryStars < 10 ? 1.2F : 3, .18F * PlumLayers.light(c.masteryStars), 3, 3, 8);
         Vec3 feet = e.position();
         float yaw = e instanceof LivingEntity le ? le.yBodyRot : e.getYRot();
         Vec3 f = Vec3.directionFromRotation(0.0F, yaw);
@@ -509,8 +566,8 @@ public final class RiverVfx {
         if (t == 1) {
             dust(c, feet, c.n(10) + 3, 0.16D);
             groundSplash(c, feet);
-            if (c.own()) {
-                SpeedLines.radial(0.5F, 0.55F, 0.4F, 6, SpeedLines.WHITE);
+            if (c.own() && c.masteryStars >= 10) {
+                if (c.masteryStars >= 10) SpeedLines.radial(0.5F, 0.55F, 0.4F, 6, SpeedLines.WHITE);
             }
         }
         if (t >= 1 && t < RiverRules.BLUE_END - 3) {
@@ -529,10 +586,9 @@ public final class RiverVfx {
         }
         // r02–r06: красно-розовая оболочка — живая аура и рваные языки по силуэту.
         if (t == RiverRules.CONCENTRATE) {
-            ClientAuraState.techniqueAura(c.entityId, 2 + Math.min(2, c.executionTier / 3), 1, RiverRules.BURST + 10 - RiverRules.CONCENTRATE);
             dust(c, feet, c.n(6) + 1, 0.1D);
-            if (c.own()) {
-                SpeedLines.radial(0.5F, 0.5F, 0.35F, 5, SpeedLines.WHITE);
+            if (c.own() && c.masteryStars >= 10) {
+                if (c.masteryStars >= 10) SpeedLines.radial(0.5F, 0.5F, 0.35F, 5, SpeedLines.WHITE);
             }
         }
         if (t >= RiverRules.CONCENTRATE && t < RiverRules.RELEASE && (t < RiverRules.STROKES[0][0] - 2 || t >= RiverRules.STROKES[1][0] + 2)) {
@@ -551,24 +607,13 @@ public final class RiverVfx {
                 c.motes.add(m);
             }
         }
-        // Аура: тише на рождении (лепесток читается сам), вспышка на выпуске, гаснет к паузе узла.
-        if (t == RiverRules.STROKES[0][0] - 2) {
-            // Одиночный лепесток (r08–r09) читается в тишине: аура гаснет до второй проводки.
-            ClientAuraState.techniqueAura(c.entityId, 2, 1, 1);
-        }
-        if (t == RiverRules.STROKES[1][0] + 2) {
-            ClientAuraState.techniqueAura(c.entityId, 2, 1, RiverRules.RELEASE - RiverRules.STROKES[1][0] - 2);
-        }
-        if (t == RiverRules.RELEASE) {
-            ClientAuraState.techniqueAura(c.entityId, 2 + Math.min(2, c.executionTier / 3), 1, 6);
-        }
         // Шаг в стойку и в жест — пыль от движения.
         if (t == 6 || t == 18 || t == 36) {
             dust(c, feet, c.n(5) + 1, 0.1D);
         }
         // r07: резонанс — копии руки с малым смещением и поперечные штрихи вдоль клинка.
         if (t >= RiverRules.RESONANCE && t < RiverRules.AIM && c.hand != null) {
-            if (RiverRules.afterimages(c.executionTier)) {
+            if (c.has(PlumLayers.Kind.GHOST)) {
                 int every = t < RiverRules.STROKES[0][0] ? 2 : 4;
                 if (t % every == 0) {
                     ghostArm(c, e, mc);
@@ -595,7 +640,7 @@ public final class RiverVfx {
             }
         }
         // r08–r09: в каждом месте, где прошла вибрация, рождается лепесток.
-        if (c.petalsMax > 0 && t >= RiverRules.STROKES[0][0] && t < RiverRules.GATHER && c.hand != null) {
+        if (c.petalsMax > 0 && t >= RiverRules.STROKES[0][0] && t <= RiverRules.GATHER && c.hand != null) {
             birth(c, t, mc);
         }
         // Проводки — тоже движения: ветер из кисти и пыль.
@@ -643,11 +688,12 @@ public final class RiverVfx {
         }
         c.ghosts.removeIf(g -> clientTicks - g.born() > g.life());
         c.strokes.removeIf(s -> clientTicks - s.born() > 3);
-        c.stars.removeIf(s -> clientTicks - s.born() > 4);
+        c.stars.removeIf(s -> clientTicks - s.born() > 8);
     }
 
     /** Рождение лепестков вдоль пройденного клинком (по нескольким точкам клинка, а не только острию). */
     private static void birth(Cast c, int t, Minecraft mc) {
+        if (!c.has(PlumLayers.Kind.PETALS)) return;
         Vec3 h0 = c.handPrev == null ? c.hand : c.handPrev;
         Vec3 t0 = c.tipPrev == null ? c.tip : c.tipPrev;
         int want;
@@ -662,7 +708,7 @@ public final class RiverVfx {
                 Vec3 away = c.fwd.scale(0.06D).add(c.e1.scale((c.lone % 2 == 0 ? 1 : -1) * 0.03D)).add(0.0D, 0.015D, 0.0D);
                 Petal p = spawnPetal(c, at, away, c.lone == 1 ? 0.26D : 0.15D, 0);
                 p.drag = 0.88D;
-                if (c.lone == 1) {
+                {
                     c.stars.add(new Star(at, clientTicks, 0.42D, c.random.nextDouble()));
                 }
                 if (mc.player != null) {
@@ -679,16 +725,16 @@ public final class RiverVfx {
             double k = c.random.nextDouble();
             Vec3 cur = c.hand.lerp(c.tip, u);
             Vec3 old = h0.lerp(t0, u);
-            Vec3 at = old.lerp(cur, k).add(c.random.nextGaussian() * 0.06D, c.random.nextGaussian() * 0.06D, c.random.nextGaussian() * 0.06D);
+            Vec3 at = old.lerp(cur, k);
             // Лепесток едва сносит по ходу клинка и чуть наружу: поле дышит и растёт в объёме.
             Vec3 sweep = cur.subtract(old).scale(0.12D);
             // Поле занимает объём перед мастером (≈4 × 3 × 2,5): лепесток отходит вперёд и вбок от клинка.
             Vec3 out = c.fwd.scale(0.08D + 0.22D * c.random.nextDouble()).add(c.e1.scale(c.random.nextGaussian() * 0.2D))
                     .add(c.e2.scale(c.random.nextGaussian() * 0.12D - 0.02D));
-            int tone = c.random.nextDouble() < 0.72D ? 0 : c.random.nextDouble() < 0.75D ? 1 : 2;
+            int tone = c.random.nextDouble() < .10 ? 0 : c.random.nextDouble() < .65 ? 2 : 3;
             Petal p = spawnPetal(c, at, sweep.add(out).add(0.0D, 0.01D * c.random.nextGaussian(), 0.0D),
-                    0.12D + 0.1D * c.random.nextDouble(), tone);
-            if (c.born % 12 == 0) {
+                    (.2D + .14D * c.random.nextDouble()) * c.scale, tone);
+            if (c.stars.size() < 180) {
                 c.stars.add(new Star(at, clientTicks, 0.26D, c.random.nextDouble()));
             }
             if (p == null) {
@@ -698,7 +744,7 @@ public final class RiverVfx {
     }
 
     private static Petal spawnPetal(Cast c, Vec3 at, Vec3 vel, double size, int tone) {
-        Petal p = new Petal(at, clientTicks, c.random.nextInt(4), (float) ((c.random.nextDouble() - 0.5D) * 0.5D), size, tone,
+        Petal p = new Petal(at, clientTicks, c.random.nextInt(8), (float) ((c.random.nextDouble() - 0.5D) * 0.12D), size, tone,
                 c.random.nextDouble(), c.random.nextDouble(), c.random.nextDouble());
         p.vel = vel;
         p.drag = 0.9D;
@@ -760,6 +806,7 @@ public final class RiverVfx {
         Vec3 from = c.gather != null ? c.gather : c.hand;
         Vec3 to = c.aim != null ? c.aim : from.add(c.fwd.scale(12.0D));
         c.streamFrom = from;
+        if (c.aim == null) c.aim = to;
         Vec3 d = to.subtract(from);
         double dist = Math.max(1.0D, d.length());
         Vec3 dir = d.normalize();
@@ -768,11 +815,10 @@ public final class RiverVfx {
         Vec3 side = dir.cross(ref).normalize();
         Vec3 up = side.cross(dir).normalize();
         // Изгиб жгута по ходу взмаха: вверх и вправо, не больше 3 блоков.
-        double bow = Math.min(3.0D, 0.9D + dist * 0.18D) * (0.7D + 0.3D * c.scale);
+        double bow = .15 * c.scale;
         c.streamBend = from.lerp(to, 0.45D).add(up.scale(bow)).add(side.scale(bow * 0.55D));
         int strands = Math.max(1, RiverRules.strands(c.executionTier));
-        int window = c.flight + 6;
-        int i = 0;
+                int i = 0;
         for (Petal p : c.petals) {
             if (p.dead || p.state == Petal.FREE) {
                 continue;
@@ -781,7 +827,7 @@ public final class RiverVfx {
             // Толстая струя — 0-я: ей треть лепестков.
             p.strand = p.s1 < 0.3D ? 0 : 1 + (int) (p.s2 * (strands - 1));
             p.strand = Math.min(strands - 1, p.strand);
-            p.leave = RiverRules.RELEASE + Math.pow(p.s3, 1.3D) * window * 0.85D;
+            p.leave = RiverRules.RELEASE + p.s3 * Math.min(2, c.flight * .4);
             i++;
         }
         buildArc(c, e, side, up, dir);
@@ -791,7 +837,7 @@ public final class RiverVfx {
                 double u = c.random.nextDouble();
                 Vec3 at = c.arc[(int) (u * (c.arc.length - 1))].add(c.random.nextGaussian() * 0.15D, c.random.nextGaussian() * 0.15D,
                         c.random.nextGaussian() * 0.15D);
-                Petal q = new Petal(at, clientTicks + (int) (u * 4.0D), c.random.nextInt(4), (float) ((c.random.nextDouble() - 0.5D) * 0.5D),
+                Petal q = new Petal(at, clientTicks + (int) (u * 4.0D), c.random.nextInt(8), (float) ((c.random.nextDouble() - 0.5D) * 0.12D),
                         0.12D + 0.08D * c.random.nextDouble(), c.random.nextDouble() < 0.7D ? 0 : 1, c.random.nextDouble(),
                         c.random.nextDouble(), c.random.nextDouble());
                 q.state = Petal.FREE;
@@ -812,8 +858,8 @@ public final class RiverVfx {
                         clientTicks + 2 + c.random.nextInt(4), 0.25D + 0.2D * c.random.nextDouble(), c.random.nextDouble() * 6.28D));
             }
         }
-        if (c.own()) {
-            SpeedLines.directional(0.0F, 0.35F, 5, SpeedLines.WHITE);
+        if (c.own() && c.masteryStars >= 10) {
+            if (c.masteryStars >= 10) SpeedLines.directional(0.0F, 0.35F, 5, SpeedLines.WHITE);
         }
         if (mc.player != null) {
             Vec3 o = e.position();
@@ -826,7 +872,7 @@ public final class RiverVfx {
     }
 
     /**
-     * Дуга взмаха (r14): высокая изогнутая лента 5–6 блоков у мастера, восходящая по ходу выпуска:
+     * Прямой след выпуска: тонкая линия у мастера, восходящая по ходу выпуска:
      * снизу-слева-спереди вверх-вправо, плоскость повёрнута к цели.
      */
     private static void buildArc(Cast c, Entity e, Vec3 side, Vec3 up, Vec3 dir) {
@@ -838,14 +884,15 @@ public final class RiverVfx {
             double u = i / (double) n;
             double ang = Math.toRadians(-130.0D + 210.0D * u);
             // Плоскость дуги: «вправо» и «вверх», с наклоном вперёд к цели по ходу.
-            c.arc[i] = centre.add(side.scale(Math.cos(ang) * r * 0.8D)).add(up.scale(Math.sin(ang) * r + 0.4D * r))
-                    .add(dir.scale(0.9D * Math.sin(Math.PI * u) + 0.6D * u));
+            c.arc[i] = centre.add(side.scale((u - .5D) * r * 1.6D)).add(up.scale((.5D - u) * r))
+                    .add(dir.scale(0.6D * u));
         }
     }
 
     /** Контакт (r11–r12): поток упирается в цель — веер лепестков, резкие штрихи, узел. */
     private static void onContact(Cast c, Minecraft mc) {
         Vec3 at = c.contact;
+        TechniqueLight.add(at, 0xE3264E, 5, .65F * PlumLayers.light(c.masteryStars), 3, 4, 10);
         int n = c.n(18);
         for (int i = 0; i < n; i++) {
             Vec3 v = c.axis.scale(-0.2D).add(new Vec3(c.random.nextGaussian(), c.random.nextGaussian(), c.random.nextGaussian()).scale(0.18D));
@@ -856,12 +903,12 @@ public final class RiverVfx {
         c.rings.add(new Ring(at, c.axis, clientTicks, 1.4D * c.scale, 8, 0.08D));
         if (c.own() && RiverRules.caption(c.executionTier)) {
             c.caption = true;
-            TechniqueCaption.showSecret(Component.translatable("technique.murim.twenty_four_plum.school"),
+            if (c.masteryStars >= 10) TechniqueCaption.showSecret(Component.translatable("technique.murim.twenty_four_plum.school"),
                     Component.translatable("technique.murim.twenty_four_plum.river"), RiverRules.BURST + 36 - (c.t()));
         }
         float distance = mc.player == null ? 99.0F : (float) mc.player.position().distanceTo(at);
         if (mc.player != null && distance < 20.0F) {
-            CameraShakeHandler.quake(0.2F, 5);
+            if (c.masteryStars >= 10) CameraShakeHandler.quake(0.2F, 5);
             io.github.verycooltimo.murim.client.Sfx.play(at.x, at.y, at.z, io.github.verycooltimo.murim.registry.ModSounds.SWORD_HIT.get(),
                     net.minecraft.sounds.SoundSource.PLAYERS, 1.0F, 0.9F, false);
             io.github.verycooltimo.murim.client.Sfx.play(at.x, at.y, at.z, io.github.verycooltimo.murim.registry.ModSounds.QI_CHIME.get(),
@@ -883,25 +930,30 @@ public final class RiverVfx {
     }
 
     /**
-     * Звёздный взрыв (r16 + роман): белое ядро до 2,2 блока за 2 тика, восемь неравных лучей (два
+     * Звёздный взрыв (r16 + роман): белая точка 0,4–0,8 блока за 2 тика, восемь неравных лучей (два
      * вдоль оси длиннее), направленный выброс 70 % по оси и 30 % вбок, редкие цветки, импакт-кадр,
      * тряска, дым — всё по факту попадания.
      */
     private static void burst(Cast c, Vec3 at, Minecraft mc) {
+        if (c.masteryStars < 10) return;
+        TechniqueLight.add(at, 0xE3264E, 7, .9F * PlumLayers.light(c.masteryStars), 1, 0, 20);
+        TechniqueLight.add(at, 0xFFEFF3, 3, .55F * PlumLayers.light(c.masteryStars), 1, 0, 6);
+        if (c.hand != null) TechniqueLight.add(c.hand, 0xE3264E, 3, .6F * PlumLayers.light(c.masteryStars), 1, 0, 12);
         Vec3 axis = c.axis;
         Vec3 ref = Math.abs(axis.y) > 0.9D ? new Vec3(1.0D, 0.0D, 0.0D) : new Vec3(0.0D, 1.0D, 0.0D);
         Vec3 side = axis.cross(ref).normalize();
         Vec3 up = side.cross(axis).normalize();
         int rays = RiverRules.rays(c.executionTier);
+        if (rays > 0) rays = Math.min(13, rays + 3);
         double s = c.scale;
         if (rays > 0) {
-            c.rays.add(new Ray(axis, 9.0D * s, 0.22D * s, clientTicks, 9));
-            c.rays.add(new Ray(axis.scale(-1.0D), 4.0D * s, 0.16D * s, clientTicks, 8));
+            c.rays.add(new Ray(axis, RiverShapes.rayLength(0, s, 0), .15 * Math.min(1, s), clientTicks, 4));
+            c.rays.add(new Ray(axis.scale(-1.0D), RiverShapes.rayLength(1, s, 0), .115 * Math.min(1, s), clientTicks, 4));
             for (int i = 2; i < rays; i++) {
                 double a = (i - 2) * Math.PI * 2.0D / Math.max(1, rays - 2) + 0.4D * c.random.nextDouble();
                 Vec3 d = side.scale(Math.cos(a)).add(up.scale(Math.sin(a))).add(axis.scale(0.35D * c.random.nextGaussian())).normalize();
-                c.rays.add(new Ray(d, (1.8D + 2.2D * c.random.nextDouble()) * s, (0.08D + 0.06D * c.random.nextDouble()) * s, clientTicks,
-                        6 + c.random.nextInt(3)));
+                c.rays.add(new Ray(d, RiverShapes.rayLength(i, s, c.random.nextDouble()), (.075 + .10 * c.random.nextDouble()) * Math.min(1, s), clientTicks,
+                        3 + c.random.nextInt(2)));
             }
         }
         // Узловые и долетающие лепестки разлетаются: 70 % вдоль атаки, 30 % вбок.
@@ -917,22 +969,22 @@ public final class RiverVfx {
             p.prev = p.pos;
             p.state = Petal.FREE;
             p.vel = dir.scale((along ? 0.7D + 0.7D * c.random.nextDouble() : 0.35D + 0.4D * c.random.nextDouble()) * (0.7D + 0.3D * s));
-            p.drag = 0.84D + 0.06D * c.random.nextDouble();
+            p.drag = Math.pow(.5, 1 / (6 + 4 * p.s1));
             p.gravity = 0.0035D;
             p.freeAge = 0;
             p.tails = 0;
         }
-        int shards = c.n(70);
+        int shards = c.n(28, PlumLayers.Kind.RAYS);
         for (int i = 0; i < shards; i++) {
             boolean along = i % 10 < 7;
             Vec3 jitter = new Vec3(c.random.nextGaussian(), c.random.nextGaussian(), c.random.nextGaussian()).scale(along ? 0.18D : 0.6D);
             Vec3 dir = along ? axis.add(jitter).normalize() : side.scale(c.random.nextGaussian()).add(up.scale(c.random.nextGaussian())).add(jitter).normalize();
             Mote m = new Mote(at, dir.scale((along ? 1.3D : 0.7D) * (0.6D + 0.6D * c.random.nextDouble()) * (0.7D + 0.3D * s)),
-                    7 + c.random.nextInt(6), Mote.SHARD, 0.04D + 0.05D * c.random.nextDouble(), 6, 0);
+                    7 + c.random.nextInt(6), Mote.SHARD, 0.04D + 0.05D * c.random.nextDouble(), 6, i % 8);
             m.drag = 0.82D;
             c.motes.add(m);
         }
-        for (int i = 0; i < Math.max(2, c.n(8)); i++) {
+        for (int i = 0; i < Math.max(2, c.n(8, PlumLayers.Kind.RAYS)); i++) {
             Vec3 d = axis.scale(0.3D + 0.6D * c.random.nextDouble()).add(side.scale(c.random.nextGaussian() * 0.5D))
                     .add(up.scale(c.random.nextGaussian() * 0.5D));
             c.flowers.add(new Flower(at.add(d.scale(1.6D * s)), d.normalize().scale(0.12D).add(0.0D, -0.004D, 0.0D), clientTicks + 1,
@@ -942,10 +994,11 @@ public final class RiverVfx {
         c.rings.add(new Ring(at, axis, clientTicks + 2, 5.0D * s, 10, 0.08D));
         // Отпечаток: короткий веер по ходу выброса, только если узел у самой земли.
         Vec3 ground = groundBelow(at, 2.2D);
+        c.burstGround = ground;
         if (ground != null) {
             Vec3 flat = new Vec3(axis.x, 0.0D, axis.z);
             flat = flat.lengthSqr() < 1.0E-4D ? new Vec3(1.0D, 0.0D, 0.0D) : flat.normalize();
-            for (int i = 0; i < Math.max(4, c.n(11)); i++) {
+            for (int i = 0; i < Math.max(4, c.n(11, PlumLayers.Kind.RAYS)); i++) {
                 double a = Math.atan2(flat.z, flat.x) + (c.random.nextDouble() - 0.5D) * 1.4D;
                 double len = (2.0D + 3.0D * c.random.nextDouble()) * s;
                 Vec3 d = new Vec3(Math.cos(a), 0.0D, Math.sin(a));
@@ -955,16 +1008,16 @@ public final class RiverVfx {
         }
         smoke(c, at, ground);
         float distance = mc.player == null ? 99.0F : (float) mc.player.position().distanceTo(at);
-        if (c.own()) {
-            ImpactFrames.trigger(at);
+        if (c.own() && c.masteryStars >= 10) {
+            // River impact is the compact world-space core, never a screen post flash.
             SpeedLines.radial(0.5F, 0.5F, 0.65F, 7, SpeedLines.WHITE);
             if (c.caption) {
-                TechniqueCaption.impact(1.0F);
+                if (c.masteryStars >= 10) TechniqueCaption.impact(1.0F);
             }
         }
         if (mc.player != null && distance < 24.0F) {
             float q = distance < 8.0F ? 1.0F : 1.0F - (distance - 8.0F) / 16.0F;
-            CameraShakeHandler.quake(Math.max(q, c.own() ? 0.9F : 0.0F), 16);
+            if (c.masteryStars >= 10) CameraShakeHandler.quake(Math.max(q, c.own() ? 0.9F : 0.0F), 16);
             io.github.verycooltimo.murim.client.Sfx.play(at.x, at.y, at.z, io.github.verycooltimo.murim.registry.ModSounds.IMPACT_HEAVY.get(),
                     net.minecraft.sounds.SoundSource.PLAYERS, 0.8F, 1.0F, false);
             io.github.verycooltimo.murim.client.Sfx.play(at.x, at.y, at.z, io.github.verycooltimo.murim.registry.ModSounds.PETAL_BURST.get(),
@@ -977,11 +1030,18 @@ public final class RiverVfx {
         if (mc.level == null) {
             return null;
         }
-        for (double dy = 0.0D; dy <= max + 1.0D; dy += 0.25D) {
-            BlockPos pos = BlockPos.containing(at.x, at.y - dy, at.z);
-            if (!mc.level.getBlockState(pos).isAir()) {
-                return new Vec3(at.x, pos.getY() + 1.0D, at.z);
+        // API: supplied LevelReader#hasChunkAt, BlockStateBase#getCollisionShape,
+        // VoxelShape#toAabbs and AABB public bounds (1.21.1); simulation only.
+        for (int y = (int) Math.floor(at.y); y >= Math.floor(at.y - max); y--) {
+            BlockPos pos = BlockPos.containing(at.x, y, at.z);
+            if (!mc.level.hasChunkAt(pos)) continue;
+            double top = Double.NEGATIVE_INFINITY;
+            for (var box : mc.level.getBlockState(pos).getCollisionShape(mc.level, pos).toAabbs()) {
+                double x = at.x - pos.getX(), z = at.z - pos.getZ();
+                if (x >= box.minX && x <= box.maxX && z >= box.minZ && z <= box.maxZ
+                        && y + box.maxY <= at.y + .03) top = Math.max(top, y + box.maxY);
             }
+            if (Double.isFinite(top)) return new Vec3(at.x, top, at.z);
         }
         return null;
     }
@@ -1023,6 +1083,7 @@ public final class RiverVfx {
     }
 
     private static void groundSplash(Cast c, Vec3 feet) {
+        if (!c.has(PlumLayers.Kind.DUST)) return;
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null || mc.level.getBlockState(BlockPos.containing(feet.add(0.0D, -0.2D, 0.0D))).isAir()) {
             return;
@@ -1039,6 +1100,7 @@ public final class RiverVfx {
     }
 
     private static void dust(Cast c, Vec3 feet, int n, double speed) {
+        if (!c.has(PlumLayers.Kind.DUST)) return;
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null || mc.level.getBlockState(BlockPos.containing(feet.add(0.0D, -0.2D, 0.0D))).isAir()) {
             return;
@@ -1052,6 +1114,7 @@ public final class RiverVfx {
     }
 
     private static void wind(Cast c, Vec3 at, Vec3 vel, int life, double size) {
+        if (!c.has(PlumLayers.Kind.WIND)) return;
         Mote m = new Mote(at, vel, life, Mote.WIND, size, 10, 0);
         m.drag = 0.9D;
         m.turbulence = 0.03D;
@@ -1086,13 +1149,14 @@ public final class RiverVfx {
                     if (c.gather == null) {
                         break;
                     }
-                    double dt = t - RiverRules.GATHER;
+                    double dt = Math.max(0, t - RiverRules.GATHER - p.s2 * 6);
                     // 70 % массы сходится, периферия (30 %) отстаёт вдвое и остаётся различимой.
-                    double kk = p.s3 < 0.3D ? kGather * 0.5D : kGather;
+                    double individual = smooth(dt / Math.max(8, 20 - p.s2 * 6));
+                    double kk = p.s3 < 0.3D ? individual * 0.65D : individual;
                     double r = p.r0 + (radius * (0.12D + 0.88D * Math.pow(p.s1, 0.7D)) * (p.s3 < 0.3D ? 2.2D : 1.0D) - p.r0) * kk;
                     double a = p.a0 * (1.0D - kk) + (p.s2 - 0.5D) * 0.5D * c.scale * kk;
-                    double th = p.th0 + (0.05D + 0.03D * p.s3) * dt + 0.022D * dt * dt;
-                    p.pos = c.gather.add(c.fwd.scale(a)).add(c.e1.scale(Math.cos(th) * r)).add(c.e2.scale(Math.sin(th) * r));
+                    double th = p.th0 + (0.035D + 0.025D * p.s3) * dt + 0.003D * dt * dt;
+                    p.pos = c.gather.add(c.fwd.scale(a)).add(c.e1.scale(Math.cos(th) * r)).add(c.e2.scale(Math.min(.18, Math.sin(th) * r * .55)));
                 }
                 case Petal.STREAM -> {
                     if (t < p.leave || c.streamFrom == null) {
@@ -1100,11 +1164,11 @@ public final class RiverVfx {
                         if (c.gather != null) {
                             double th = p.th0 + 0.6D * t;
                             double r = 0.65D * c.scale * (0.35D + 0.65D * p.s1);
-                            p.pos = c.gather.add(c.e1.scale(Math.cos(th) * r)).add(c.e2.scale(Math.sin(th) * r));
+                            p.pos = c.gather.add(c.e1.scale(Math.cos(th) * r)).add(c.e2.scale(Math.min(.18, Math.sin(th) * r * .55)));
                         }
                         break;
                     }
-                    double u = (t - p.leave) / Math.max(2.0D, c.flight);
+                    double u = RiverPresentation.progress(t - RiverRules.RELEASE, c.flight, p.s1, p.s3);
                     if (u >= 1.0D) {
                         if (c.missTick >= 0) {
                             p.state = Petal.FREE;
@@ -1124,7 +1188,7 @@ public final class RiverVfx {
                         break;
                     }
                     // Оболочка различимых лепестков вокруг узла: радиус 0,65 → 0,12, вращение ускоряется.
-                    double r = (0.65D + (0.12D - 0.65D) * nodeK) * c.scale * (0.5D + 0.9D * p.s1);
+                    double r = (0.65D + (0.12D - 0.65D) * nodeK) * Math.min(1, c.scale) * (0.5D + 0.5D * p.s1);
                     double th = p.s2 * 6.28D + (0.25D + 0.5D * nodeK) * (clientTicks - c.contactTick);
                     double tilt = p.s3 * Math.PI;
                     Vec3 ref = Math.abs(c.axis.y) > 0.9D ? new Vec3(1.0D, 0.0D, 0.0D) : new Vec3(0.0D, 1.0D, 0.0D);
@@ -1137,6 +1201,14 @@ public final class RiverVfx {
                 }
                 case Petal.FREE -> {
                     p.freeAge++;
+                    if (p.landedAt >= 0) {
+                        if (clientTicks - p.landedAt > RiverPresentation.groundLife(p.s3)) p.dead = true;
+                        break;
+                    }
+                    if (p.freeAge % 4 == 1) {
+                        Vec3 floor = groundBelow(p.pos, 1.5);
+                        p.floor = floor == null ? Double.NaN : floor.y + .025;
+                    }
                     double ph = p.freeAge * 0.2D + p.s1 * 6.28D;
                     // Опадание: сопротивление гасит разлёт, лепесток порхает вниз.
                     double flutter = p.freeAge > 8 ? 0.008D : 0.0D;
@@ -1147,7 +1219,12 @@ public final class RiverVfx {
                     }
                     pushTail(p);
                     p.pos = p.pos.add(p.vel);
-                    if (p.freeAge > 70 + (int) (p.s3 * 40)) {
+                    if (Double.isFinite(p.floor) && p.pos.y <= p.floor && p.prev.y >= p.floor) {
+                        p.pos = new Vec3(p.pos.x, p.floor, p.pos.z);
+                        p.vel = Vec3.ZERO;
+                        p.landedAt = clientTicks;
+                    }
+                    if (p.freeAge > 180 && p.landedAt < 0) {
                         p.dead = true;
                     }
                 }
@@ -1184,25 +1261,7 @@ public final class RiverVfx {
      * касательной растёт по ходу), ширина 1,8 у мастера → 0,6 у контакта.
      */
     private static Vec3 streamPoint(Cast c, Petal p, double u, double t) {
-        Vec3 end = c.node();
-        Vec3 a = c.streamFrom;
-        Vec3 b = c.streamBend;
-        double e = 1.0D - (1.0D - u) * (1.0D - u);
-        Vec3 centre = bezier(a, b, end, e);
-        Vec3 tangent = bezier(a, b, end, Math.min(1.0D, e + 0.02D)).subtract(bezier(a, b, end, Math.max(0.0D, e - 0.02D)));
-        tangent = tangent.lengthSqr() < 1.0E-8D ? c.axis : tangent.normalize();
-        Vec3 ref = Math.abs(tangent.y) > 0.9D ? new Vec3(1.0D, 0.0D, 0.0D) : new Vec3(0.0D, 1.0D, 0.0D);
-        Vec3 n1 = tangent.cross(ref).normalize();
-        Vec3 n2 = n1.cross(tangent).normalize();
-        int strands = Math.max(1, RiverRules.strands(c.executionTier));
-        double phi = p.strand * Math.PI * 2.0D / strands + e * 4.0D * Math.PI * (p.strand % 2 == 0 ? 1.0D : -1.0D) + t * 0.05D;
-        double half = (0.9D + (0.3D - 0.9D) * e) * c.scale;
-        double strandR = p.strand == 0 ? 0.0D : half;
-        // Струи разделены просветами: разброс внутри струи мал, толстая 0-я — шире.
-        double spread = (p.strand == 0 ? 0.28D : 0.05D) * half;
-        Vec3 off = n1.scale(Math.cos(phi) * strandR).add(n2.scale(Math.sin(phi) * strandR))
-                .add(n1.scale((p.s2 - 0.5D) * spread)).add(n2.scale((p.s3 - 0.5D) * spread));
-        return centre.add(off);
+        return currentPoint(c, p.strand, u, p.s3, p.s2, t);
     }
 
     private static Vec3 bezier(Vec3 a, Vec3 b, Vec3 c, double u) {
@@ -1240,7 +1299,7 @@ public final class RiverVfx {
             p.pos = p.pos.add(p.vel);
         }
         c.puffs.removeIf(p -> p.age >= p.life);
-        c.rays.removeIf(r -> clientTicks - r.born() > r.life() + 2);
+        c.rays.removeIf(r -> clientTicks - r.born() > r.life() + 26);
         c.rings.removeIf(r -> clientTicks - r.born() > r.life());
         c.flowers.removeIf(f -> clientTicks - f.born() > 46);
         c.scars.removeIf(s -> clientTicks - s.born() > 70);
@@ -1248,50 +1307,170 @@ public final class RiverVfx {
 
     // ------------------------------------------------------------------ рендер
 
+    // API verified in supplied 1.21.1 sources: RenderLevelStageEvent accessors,
+    // DeltaTracker#getGameTimeDeltaPartialTick, Minecraft#renderBuffers, BufferSource#getBuffer/endBatch.
     @SubscribeEvent
     static void onRender(RenderLevelStageEvent event) {
-        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_PARTICLES || CASTS.isEmpty()) {
-            return;
-        }
+        syncLevel();
+        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_PARTICLES || CASTS.isEmpty()) return;
         Minecraft mc = Minecraft.getInstance();
-        if (mc.level == null) {
-            return;
-        }
+        if (mc.level == null) return;
         float partial = event.getPartialTick().getGameTimeDeltaPartialTick(false);
         Vec3 camera = event.getCamera().getPosition();
         PoseStack ps = event.getPoseStack();
-        MultiBufferSource.BufferSource buffers = mc.renderBuffers().bufferSource();
+        var buffers = mc.renderBuffers().bufferSource();
         ps.pushPose();
         try {
             ps.translate(-camera.x, -camera.y, -camera.z);
             for (Cast c : CASTS) {
+                quadRoom = RiverPresentation.quadCeiling(c.executionTier);
                 float t = c.t() + partial;
-                nearFrom = c.eyes() ? 1.4D : 0.9D;
-                nearSpan = c.eyes() ? 1.8D : 1.3D;
+                // Petals first: budget pressure removes accents before the main substance.
+                currentPetals(c, ps.last(), camera, buffers, t);
+                petals(c, ps.last(), camera, buffers, partial, t);
                 models(mc, c, ps, buffers, partial);
-                PoseStack.Pose pose = ps.last();
-                VertexConsumer air = buffers.getBuffer(MurimRenderTypes.airBand());
-                ribbons(c, pose, camera, air, partial);
-                thread(c, mc, pose, camera, air, t);
-                vibration(c, pose, camera, air, partial);
-                spirals(c, pose, camera, air, t);
-                arc(c, pose, camera, air, t);
-                link(c, pose, camera, air, t);
-                streamTails(c, pose, camera, air, partial);
-                nodeRays(c, pose, camera, air, t);
-                burstRays(c, pose, camera, air, partial);
-                rings(c, pose, camera, air, partial);
+                puffs(c, ps.last(), camera, buffers, partial);
+                var impact = buffers.getBuffer(MurimRenderTypes.rainAir());
+                burstRays(c, ps.last(), camera, impact, partial);
+                currentStreaks(c, ps.last(), camera, impact, t);
+                buffers.endBatch(MurimRenderTypes.rainAir());
+                var bands = buffers.getBuffer(MurimRenderTypes.airBand());
+                thread(c, mc, ps.last(), camera, bands, t);
+                vibration(c, ps.last(), camera, bands, partial);
+                spirals(c, ps.last(), camera, bands, t);
+                river(c, ps.last(), camera, bands, t);
+                nodeRays(c, ps.last(), camera, bands, t);
+                birthGlints(c, ps.last(), camera, bands, partial);
+                ribbons(c, ps.last(), camera, bands, partial);
                 buffers.endBatch(MurimRenderTypes.airBand());
-                puffs(c, pose, camera, buffers, partial);
-                petals(c, pose, camera, buffers, partial, t);
             }
-        } finally {
-            ps.popPose();
+        } finally { ps.popPose(); }
+    }
+
+    private static void birthGlints(Cast c, PoseStack.Pose pose, Vec3 camera, VertexConsumer v, float partial) {
+        if (!c.has(PlumLayers.Kind.PETALS)) return;
+        for (Star star : c.stars) {
+            double age = clientTicks - star.born() + partial;
+            float a = (float) (smooth(age / 3) * (1 - smooth((age - 5) / 3)));
+            for (int j = 0; j < 2; j++) {
+                Vec3 d = (j == 0 ? c.e1 : c.e2).scale(j == 0 ? .12 : .08);
+                Vec3[] q = {star.pos().subtract(d), star.pos(), star.pos().add(d)};
+                fstrip(v, pose, camera, q, new double[] {0, .04, 0}, a, WHITE);
+            }
         }
+    }
+
+    /** Faint broken guides only; the moving substance is painted in currentPetals. */
+    private static void river(Cast c, PoseStack.Pose pose, Vec3 camera, VertexConsumer v, float t) {
+        if (!c.has(PlumLayers.Kind.STREAM)) return;
+        if (c.streamFrom == null || t < RiverRules.RELEASE || t > 112 || c.missTick >= 0) return;
+        double head = RiverPresentation.progress(t - RiverRules.RELEASE, c.flight, 1, 0);
+        float alpha = (float) (smooth((t - 100) / 3) * (1 - smooth((t - 108) / 4)));
+        int streams = RiverRules.strands(c.executionTier);
+        for (int j = 0; j < streams; j++) for (int segment = 0; segment < 6; segment++) {
+            double lo = segment / 6.0 * head, hi = (segment + .58) / 6 * head;
+            Vec3[] q = {currentPoint(c, j, lo, .5, .5, t), currentPoint(c, j, hi, .5, .5, t)};
+            fstrip(v, pose, camera, q, new double[] {.04, .04}, .12F * alpha, CRIMSON);
+        }
+    }
+
+    /** One short crest stroke per channel, bounded to four through eight at petal tiers. */
+    private static void currentStreaks(Cast c, PoseStack.Pose pose, Vec3 camera, VertexConsumer v, float t) {
+        if (c.streamFrom == null || c.petalsMax == 0 || c.missTick >= 0) return;
+        double age = t - RiverRules.RELEASE;
+        int count = RiverShapes.crestStreaks(RiverRules.strands(c.executionTier));
+        for (int i = 0; i < count; i++) {
+            double born = 1 + RiverShapes.seed(i * 17) * Math.max(1, c.flight - 3);
+            double local = age - born;
+            if (local < 0 || local >= 2) continue;
+            double u = RiverPresentation.progress(age, c.flight, 1, 0);
+            Vec3 front = currentPoint(c, i % RiverRules.strands(c.executionTier), u, .85, i / (double) count, t);
+            float alpha = (float) (smooth(local / .5) * (1 - smooth((local - 1) / 2)));
+            crossedNeedle(v, pose, camera, front.subtract(c.axis.scale(.65)), c.axis,
+                    1 + RiverShapes.seed(i), .045, .65F * alpha, PETAL_PINK);
+        }
+    }
+
+    /** Three depth planes, persistent identities and independent speeds: no wrapped conveyor. */
+    private static void currentPetals(Cast c, PoseStack.Pose pose, Vec3 camera,
+                                      MultiBufferSource.BufferSource buffers, float t) {
+        if (!c.has(PlumLayers.Kind.PETALS)) return;
+        if (c.gather != null && c.petalsMax > 0 && t >= 94 && t < 104) {
+            var gatherMaterial = MurimRenderTypes.rainPetals();
+            var gatherVertices = buffers.getBuffer(gatherMaterial);
+            for (int parcel = 0; parcel < 100; parcel++) {
+                double seed = RiverShapes.seed(parcel);
+                double age = t - 94 - seed * 2;
+                if (age < 0) continue;
+                double progress = smooth(age / 6);
+                double angle = parcel * 2.399963 + age * (.08 + seed * .12);
+                double radius = 2.5 * (1 - progress);
+                Vec3 at = c.gather.add(c.e1.scale(Math.cos(angle) * radius)).add(c.e2.scale(Math.sin(angle) * radius));
+                float alpha = (float) (smooth(age / 3) * (1 - smooth((t - 100) / 4)));
+                if (quadRoom < 2) break;
+                painted(gatherVertices, pose, at, c.e1, c.e2, c.fwd, .06 + seed * .05, parcel % 8,
+                        alpha * near(at, camera), 1, .1);
+                quadRoom -= 2;
+            }
+            buffers.endBatch(gatherMaterial);
+        }
+        if (c.streamFrom == null || c.petalsMax == 0 || c.missTick >= 0 || t < 100 || t >= 116) return;
+        var material = MurimRenderTypes.rainPetals();
+        var v = buffers.getBuffer(material);
+        Vec3 ref = Math.abs(c.axis.y) > .9 ? new Vec3(1, 0, 0) : new Vec3(0, 1, 0);
+        Vec3 side = c.axis.cross(ref).normalize(), up = side.cross(c.axis).normalize();
+        int count = RiverShapes.parcelsPerPlane(c.petalsMax);
+        for (int stream = 0; stream < RiverRules.strands(c.executionTier); stream++) {
+            for (int plane = 0; plane < 3; plane++) for (int i = 0; i < count; i++) {
+                double seed = RiverShapes.seed(i + stream * 97 + plane * 41);
+                double delay = RiverShapes.seed(i * 13 + plane * 71 + stream * 11);
+                double age = t - 100;
+                double progress = RiverPresentation.progress(age, c.flight, seed, delay);
+                // Different travel distances stretch the gathered mass into a river; no resets at the target.
+                double u = progress * (.10 + .90 * (i + .5) / count);
+                float alpha = (float) (smooth(age / 3) * (1 - smooth((age - c.flight) / 8)));
+                Vec3 at = currentPoint(c, stream, u, (plane + .5) / 3, seed, t);
+                double angle = seed * 6.28 + age * (.08 + .15 * delay);
+                Vec3 normal = c.axis.scale(.55).add(side.scale(plane == 0 ? -.83 : .83))
+                        .add(up.scale(plane == 1 ? .4 : 0)).normalize();
+                Vec3 across = up.cross(normal).normalize(), verticalBase = normal.cross(across).normalize();
+                Vec3 right = across.scale(Math.cos(angle)).add(verticalBase.scale(Math.sin(angle)));
+                Vec3 vertical = verticalBase.scale(Math.cos(angle)).subtract(across.scale(Math.sin(angle)));
+                double size = RiverShapes.petalSize(seed, plane, i == count - 1);
+                if (quadRoom < 2) continue;
+                painted(v, pose, at, right, vertical, normal, size, (i + stream + plane * 3) % 8,
+                        alpha * near(at, camera), plane == 0 ? .35F : plane == 1 ? .65F : 1F,
+                        .13 * Math.sin(age * .12 + seed * 6.28));
+                quadRoom -= 2;
+                if (i == count - 1 && plane == 2 && quadRoom >= 2) {
+                    painted(v, pose, at.add(c.axis.scale(.012)), right, vertical, normal, size * .32,
+                            0, alpha * near(at, camera), 1, .08);
+                    quadRoom -= 2;
+                }
+            }
+        }
+        buffers.endBatch(material);
+    }
+
+    // API: /tmp/mr-ref-1121/minecraft-src/net/minecraft/world/phys/Vec3.java
+    // constructor, add/subtract/scale/cross/normalize/lerp verified read-only for this pass.
+    private static Vec3 currentPoint(Cast c, int stream, double u, double depth, double seed, double t) {
+        Vec3 ref = Math.abs(c.axis.y) > .9 ? new Vec3(1, 0, 0) : new Vec3(0, 1, 0);
+        Vec3 side = c.axis.cross(ref).normalize(), up = side.cross(c.axis).normalize();
+        double phase = stream * Math.PI * 2 / Math.max(1, RiverRules.strands(c.executionTier))
+                + .28 * Math.sin(u * 4 + stream * 1.7);
+        // Bulge begins at the advancing front, before CONTACT can arrive from the server.
+        double radius = RiverPresentation.currentRadius(u, true) * Math.min(1, c.scale);
+        double radial = .45 + .55 * depth;
+        double sway = .07 * Math.sin((t - 100) * .17 + seed * 6.28);
+        return bezier(c.streamFrom, c.streamBend, c.node(), u)
+                .add(side.scale(Math.cos(phase) * radius * radial + (seed - .5) * .22 + sway))
+                .add(up.scale(Math.sin(phase) * radius * radial + (depth - .5) * .24));
     }
 
     /** Копии руки резонанса (r07). */
     private static void models(Minecraft mc, Cast c, PoseStack ps, MultiBufferSource.BufferSource buffers, float partial) {
+        if (!c.has(PlumLayers.Kind.GHOST)) return;
         if (c.ghosts.isEmpty() || !(mc.level.getEntity(c.entityId) instanceof AbstractClientPlayer player)) {
             return;
         }
@@ -1319,6 +1498,9 @@ public final class RiverVfx {
                     parts[i].loadPose(g.pose()[i]);
                     parts[i].visible = i == 4 || i == 5;
                 }
+                // Right arm + sleeve: two six-faced cuboids, charged before submission.
+                if (quadRoom < 12) continue;
+                quadRoom -= 12;
                 draw(model, ps, buffers.getBuffer(type), g.pos(), g.yaw(), g.alpha() * (1.0F - k), g.rgb());
             }
             buffers.endBatch(type);
@@ -1352,6 +1534,7 @@ public final class RiverVfx {
 
     /** Ленты с хвостами: ветер, голубой поток, красные языки оболочки, искры и осколки. */
     private static void ribbons(Cast c, PoseStack.Pose pose, Vec3 camera, VertexConsumer v, float partial) {
+        if (!c.has(PlumLayers.Kind.TRAIL)) return;
         for (Mote m : c.motes) {
             if (m.count < 2) {
                 continue;
@@ -1382,7 +1565,7 @@ public final class RiverVfx {
                 }
                 case Mote.SPARK, Mote.SHARD -> {
                     fstrip(v, pose, camera, p, PlumVfx.scale(w, 2.4D), 0.22F * a, m.kind == Mote.SHARD ? BURST_RIM : PINK_HOT);
-                    fstrip(v, pose, camera, p, PlumVfx.scale(w, 0.5D), 0.95F * a, WHITE);
+                    fstrip(v, pose, camera, p, PlumVfx.scale(w, 0.5D), 0.85F * a, m.kind == Mote.SHARD && m.cell != 0 ? CRIMSON : WHITE);
                 }
                 default -> {
                     fstrip(v, pose, camera, p, PlumVfx.scale(w, 2.0D), 0.1F * a, COLD);
@@ -1395,35 +1578,40 @@ public final class RiverVfx {
 
     /** Красная нить вдоль левой руки к пальцам (r04–r05) и компактные красные глаза (r03). */
     private static void thread(Cast c, Minecraft mc, PoseStack.Pose pose, Vec3 camera, VertexConsumer v, float t) {
+        if (!c.has(PlumLayers.Kind.RESONANCE)) return;
         if (t < RiverRules.CONCENTRATE || t > RiverRules.STROKES[0][0] + 6 || c.eyes()
                 || !(mc.level.getEntity(c.entityId) instanceof AbstractClientPlayer player)) {
             return;
         }
-        Vec3 sh = BoneAnchorLayer.position(player, BoneAnchorLayer.Bone.LEFT_SHOULDER);
-        Vec3 hand = BoneAnchorLayer.position(player, BoneAnchorLayer.Bone.LEFT_HAND);
+        Vec3 sh = BoneAnchorLayer.position(player, BoneAnchorLayer.Bone.RIGHT_SHOULDER);
+        Vec3 hand = BoneAnchorLayer.position(player, BoneAnchorLayer.Bone.RIGHT_HAND);
         if (sh == null || hand == null || hand.distanceTo(player.position()) > 3.0D) {
             return;
         }
         float a = (float) PlumVfx.curve(t, RiverRules.CONCENTRATE, 0.0, RiverRules.CONCENTRATE + 6, 1.0, RiverRules.STROKES[0][0], 1.0,
                 RiverRules.STROKES[0][0] + 6, 0.0);
         Vec3 d = hand.subtract(sh);
-        Vec3 finger = hand.add(d.normalize().scale(0.32D));
-        Vec3 side = d.cross(camera.subtract(hand));
-        side = side.lengthSqr() < 1.0E-6D ? new Vec3(0.0D, 1.0D, 0.0D) : side.normalize();
-        int n = 14;
-        for (int s = 0; s < 2; s++) {
-            Vec3[] p = new Vec3[n + 1];
-            double[] w = new double[n + 1];
-            for (int i = 0; i <= n; i++) {
-                double u = i / (double) n;
-                // Нить течёт: волна бежит от плеча к пальцам.
-                double wave = 0.035D * Math.sin(u * 9.0D - t * 0.9D + s * 2.0D);
-                p[i] = sh.lerp(finger, u).add(side.scale(wave + (s == 0 ? 0.0D : 0.03D)));
-                w[i] = (s == 0 ? 0.03D : 0.015D) * (0.6D + 0.4D * Math.sin(Math.PI * u));
+        Vec3 along = d.normalize();
+        Vec3 side = along.cross(c.fwd);
+        if (side.lengthSqr() < 1E-6) side = c.e1;
+        side = side.normalize();
+        Vec3 front = side.cross(along).normalize();
+        int lines = RiverPresentation.veins(c.executionTier);
+        double grow = smooth((t - 12) / 12);
+        for (int branch = 0; branch < lines; branch++) {
+            Vec3[] q = new Vec3[13];
+            double[] w = new double[13];
+            double angle = branch * Math.PI * 2 / lines;
+            Vec3 surface = side.scale(Math.cos(angle)).add(front.scale(Math.sin(angle)));
+            for (int i = 0; i < q.length; i++) {
+                double u = i / 12.0 * grow;
+                double fork = branch == 0 ? 0 : Math.max(0, u - .45) * .12 * (branch % 2 == 0 ? 1 : -1);
+                q[i] = sh.lerp(hand, u).add(surface.scale(.13 - .055 * u))
+                        .add(side.scale(.025 * Math.sin(u * 12 + branch) + fork));
+                w[i] = .04;
             }
-            fstrip(v, pose, camera, p, PlumVfx.scale(w, 2.2D), 0.3F * a, RED);
-            fstrip(v, pose, camera, p, w, 0.85F * a, RED);
-            fstrip(v, pose, camera, p, PlumVfx.scale(w, 0.3D), 0.7F * a, PINK_LIGHT);
+            float pulse = (float) (.65 + .35 * Math.pow(Math.sin(t * .16 - branch * .3), 2));
+            fstrip(v, pose, camera, q, w, a * pulse, CRIMSON);
         }
         // r03: глаза — два компактных красных акцента с белым центром (с 4-го слоя).
         if (c.executionTier >= 4 && t < RiverRules.RESONANCE + 6) {
@@ -1444,19 +1632,21 @@ public final class RiverVfx {
 
     /** Резонанс (r07): поперечные штрихи вдоль клинка и две смещённые копии линии клинка. */
     private static void vibration(Cast c, PoseStack.Pose pose, Vec3 camera, VertexConsumer v, float partial) {
+        if (!c.has(PlumLayers.Kind.RESONANCE)) return;
         float t = c.t() + partial;
-        if (!RiverRules.afterimages(c.executionTier) || t < RiverRules.RESONANCE || t > RiverRules.RELEASE || c.hand == null) {
+        if (!c.has(PlumLayers.Kind.GHOST) || t < RiverRules.RESONANCE || t > 54 || c.hand == null) {
             return;
         }
-        float a = (float) PlumVfx.curve(t, RiverRules.RESONANCE, 0.0, RiverRules.RESONANCE + 3, 1.0, RiverRules.GATHER, 1.0,
-                RiverRules.AIM, 0.5, RiverRules.RELEASE, 0.0);
-        for (Stroke s : c.strokes) {
-            float age = clientTicks - s.born() + partial;
-            float k = (float) PlumVfx.curve(age, 0.0, 1.0, 1.0, 0.9, 3.0, 0.0);
-            Vec3[] p = {s.at(), s.at().add(s.across().scale(s.len() * 0.5D)), s.at().add(s.across().scale(s.len()))};
-            double[] w = {0.02D, 0.016D, 0.0D};
-            fstrip(v, pose, camera, p, PlumVfx.scale(w, 2.4D), 0.3F * k * a, RED);
-            fstrip(v, pose, camera, p, w, 0.9F * k * a, PINK_LIGHT);
+        float a = (float) PlumVfx.curve(t, RiverRules.RESONANCE, 0.0, RiverRules.RESONANCE + 3, 1.0, 46, 1.0,
+                50, 0.5, 54, 0.0);
+        Vec3 blade = c.tip.subtract(c.hand).normalize();
+        for (int i = 0; i < 6; i++) {
+            Vec3 at = c.hand.lerp(c.tip, .18 + i * .13);
+            for (int sign = -1; sign <= 1; sign += 2) {
+                Vec3 across = c.e1.scale(.07).add(blade.scale(.035 * sign));
+                Vec3[] q = {at.subtract(across), at, at.add(across)};
+                fstrip(v, pose, camera, q, new double[] {0, .04, 0}, a * .7F, PETAL_PINK);
+            }
         }
         // Дискретные смещённые контуры клинка: колебание поперёк оси, высокая частота, малая амплитуда.
         Vec3 h = c.handPrev == null ? c.hand : c.handPrev.lerp(c.hand, partial);
@@ -1482,6 +1672,7 @@ public final class RiverVfx {
 
     /** Сбор (r10): неравные красные спиральные ленты вокруг кисти, сходятся к центру. */
     private static void spirals(Cast c, PoseStack.Pose pose, Vec3 camera, VertexConsumer v, float t) {
+        if (!c.has(PlumLayers.Kind.SPIRAL)) return;
         int sp = RiverRules.spirals(c.executionTier);
         if (sp == 0 || t < RiverRules.GATHER || t > RiverRules.RELEASE + 3 || c.gather == null) {
             return;
@@ -1494,7 +1685,7 @@ public final class RiverVfx {
         for (int s = 0; s < sp; s++) {
             double rs = new double[] {1.0D, 0.7D, 1.2D}[s];
             double turns = new double[] {0.85D, 0.6D, 0.7D}[s];
-            double phase = s * 2.1D + t * (0.35D + 0.15D * s);
+            double phase = s * 2.1D + (t - 80) * (0.055D + 0.025D * s);
             int n = 36;
             Vec3[] p = new Vec3[n + 1];
             double[] w = new double[n + 1];
@@ -1503,47 +1694,16 @@ public final class RiverVfx {
                 double r = outer * rs * Math.pow(1.0D - u, 1.6D) + 0.04D;
                 double th = phase + u * Math.PI * 2.0D * turns;
                 double along = (0.5D - u) * 0.6D * c.scale * (1.0D - k);
-                p[i] = g.add(c.e1.scale(Math.cos(th) * r)).add(c.e2.scale(Math.sin(th) * r)).add(c.fwd.scale(along));
+                p[i] = g.add(c.e1.scale(Math.cos(th) * r)).add(c.e2.scale(Math.min(.18, Math.sin(th) * r * .55))).add(c.fwd.scale(along));
                 w[i] = (0.05D + 0.08D * Math.sin(Math.PI * u)) * c.scale * (s == 0 ? 1.0D : 0.7D);
             }
             fstrip(v, pose, camera, p, PlumVfx.scale(w, 2.0D), 0.16F * a, RED_SPIRAL);
-            fstrip(v, pose, camera, p, w, 0.7F * a, RED_SPIRAL);
-            fstrip(v, pose, camera, p, PlumVfx.scale(w, 0.45D), 0.55F * a, PINK_HOT);
-            fstrip(v, pose, camera, p, PlumVfx.scale(w, 0.15D), 0.8F * a, WHITE);
+            fstrip(v, pose, camera, p, w, 0.8F * a, CRIMSON);
+            fstrip(v, pose, camera, p, PlumVfx.scale(w, 0.4D), 0.22F * a, PETAL_PINK);
         }
     }
 
-    /** Дуга взмаха (r14): прорисовывается с рывком руки 100–104, висит, гаснет к 118. */
-    private static void arc(Cast c, PoseStack.Pose pose, Vec3 camera, VertexConsumer v, float t) {
-        if (c.arc == null || t < RiverRules.RELEASE || t > RiverRules.RELEASE + 20) {
-            return;
-        }
-        float s = t - RiverRules.RELEASE;
-        double x = Mth.clamp(s / 4.0D, 0.0D, 1.0D);
-        double drawn = 1.0D - Math.pow(1.0D - x, 3.0D);
-        float fade = (float) PlumVfx.curve(t, RiverRules.RELEASE + 8, 1.0, RiverRules.RELEASE + 20, 0.0);
-        int n = c.arc.length - 1;
-        int m = Math.max(2, (int) Math.ceil(n * drawn));
-        Vec3[] p = new Vec3[m + 1];
-        double[] w = new double[m + 1];
-        float[] a = new float[m + 1];
-        for (int i = 0; i <= m; i++) {
-            double u = i / (double) n;
-            p[i] = c.arc[Math.min(n, i)];
-            // Серп: узко у концов, широко в середине; голова ярче, пока рисуется.
-            double taper = Math.pow(Math.sin(Math.PI * Math.min(1.0D, u * 1.02D + 0.01D)), 0.7D);
-            w[i] = 0.13D * c.scale * taper;
-            double headGlow = x < 1.0D ? Math.max(0.0D, 1.0D - (drawn - u) * 4.0D) : 0.0D;
-            // Непрерывная кромка — только на 2/3 дуги, дальше её добирают лепестки.
-            double edge = u < 0.66D ? 1.0D : Math.max(0.0D, 1.0D - (u - 0.66D) / 0.12D);
-            // Белые участки с переменными разрывами: след взмаха, а не обруч.
-            edge *= Math.sin(u * 37.0D + 1.3D) + 0.6D * Math.sin(u * 13.0D) > -0.55D ? 1.0D : 0.15D;
-            a[i] = (float) Mth.clamp((0.8D + 0.2D * headGlow) * fade * edge, 0.0D, 1.0D) * near(p[i], camera);
-        }
-        PlumVfx.stripVar(v, pose, camera, p, PlumVfx.scale(w, 1.6D), PlumVfx.scaled(a, 0.16F), CRIMSON);
-        PlumVfx.stripVar(v, pose, camera, p, w, PlumVfx.scaled(a, 0.5F), RED);
-        PlumVfx.stripVar(v, pose, camera, p, PlumVfx.scale(w, 0.6D), a, WHITE);
-    }
+    // 6 Nov: obsolete curved sword swing renderer removed.
 
     /** Тонкий красно-розовый след меч → узел (r12), живёт до взрыва. */
     private static void link(Cast c, PoseStack.Pose pose, Vec3 camera, VertexConsumer v, float t) {
@@ -1599,6 +1759,7 @@ public final class RiverVfx {
 
     /** Узел (r12): перекрёстные лучи-блики вытягиваются, белый центр сжимается и плотнеет. */
     private static void nodeRays(Cast c, PoseStack.Pose pose, Vec3 camera, VertexConsumer v, float t) {
+        if (!c.has(PlumLayers.Kind.RAYS)) return;
         if (c.contactTick < 0 || c.contact == null || c.burstTick >= 0 && clientTicks - c.burstTick > 1) {
             return;
         }
@@ -1622,50 +1783,83 @@ public final class RiverVfx {
             Vec3 d = r1.scale(Math.cos(ang)).add(r2.scale(Math.sin(ang)));
             Vec3[] p = {n.subtract(d.scale(len)), n, n.add(d.scale(len))};
             double[] w = {0.0D, (major ? 0.06D : 0.035D) * c.scale, 0.0D};
-            float a = (float) (0.5D + 0.5D * k);
+            float a = (float) ((0.5D + 0.5D * k) * (1 - .75 * smooth((t - 117) / 3)));
             fstrip(v, pose, camera, p, PlumVfx.scale(w, 2.5D), 0.25F * a, PINK_HOT);
             fstrip(v, pose, camera, p, w, 0.95F * a, WHITE);
         }
     }
 
-    /** Лучи звёздного взрыва: вспыхивают за тик, гаснут за 4–6. */
+    /** Two-tick growth, two-tick hold and eight to ten ticks of cooling. */
     private static void burstRays(Cast c, PoseStack.Pose pose, Vec3 camera, VertexConsumer v, float partial) {
-        if (c.burstAt == null) {
-            return;
-        }
+        if (!c.has(PlumLayers.Kind.RAYS)) return;
+        if (c.burstAt == null) return;
         for (Ray r : c.rays) {
-            float age = clientTicks - r.born() + partial;
-            if (age < 0.0F) {
-                continue;
-            }
-            double grow = Mth.clamp(age / 1.5D, 0.0D, 1.0D);
-            float a = (float) PlumVfx.curve(age, 0.0, 1.0, 1.5, 1.0, r.life(), 0.0);
-            Vec3 o = c.burstAt;
-            Vec3 end = o.add(r.dir().scale(r.len() * grow));
-            Vec3[] p = {o, o.lerp(end, 0.3D), end};
-            double[] w = {r.width(), r.width() * 0.6D, 0.0D};
-            fstrip(v, pose, camera, p, PlumVfx.scale(w, 2.4D), 0.3F * a, BURST_RIM);
-            fstrip(v, pose, camera, p, PlumVfx.scale(w, 1.3D), 0.6F * a, BURST_PINK);
-            fstrip(v, pose, camera, p, PlumVfx.scale(w, 0.5D), 0.95F * a, WHITE);
+            double age = clientTicks - r.born() + partial;
+            float alpha = (float) RiverShapes.rayAlpha(age, r.life());
+            if (alpha <= 0) continue;
+            double length = r.len() * smooth(age / 2);
+            crossedNeedle(v, pose, camera, c.burstAt, r.dir(), length, r.width(), alpha * .72F, CRIMSON);
+            // A white line remains inside the crimson needle throughout its cooling tail.
+            crossedNeedle(v, pose, camera, c.burstAt, r.dir(), length, RiverShapes.coreHalfWidth(age, r.width()),
+                    alpha * (float) (.9 - .4 * smooth((age - 3) / 3)), PETAL_PINK);
         }
-        // Направленный белый выброс: широкий клин по оси атаки 8–10 блоков (r16).
-        float age = clientTicks - c.burstTick + partial;
-        if (age < 10.0F && RiverRules.rays(c.executionTier) >= 6) {
-            double len = (2.0D + 7.0D * (1.0D - Math.pow(1.0D - Mth.clamp(age / 3.0D, 0.0D, 1.0D), 3.0D))) * c.scale;
-            float a = (float) PlumVfx.curve(age, 0.0, 1.0, 3.0, 1.0, 10.0, 0.0);
-            Vec3 o = c.burstAt;
-            int n = 12;
-            Vec3[] p = new Vec3[n + 1];
-            double[] w = new double[n + 1];
-            for (int i = 0; i <= n; i++) {
-                double u = i / (double) n;
-                p[i] = o.add(c.axis.scale(len * u));
-                w[i] = 1.75D * c.scale * Math.sin(Math.PI * Math.min(1.0D, 0.15D + u * 0.85D)) * (1.0D - 0.6D * u);
-            }
-            fstrip(v, pose, camera, p, PlumVfx.scale(w, 1.15D), 0.14F * a, BURST_RIM);
-            fstrip(v, pose, camera, p, w, 0.28F * a, BURST_PINK);
-            fstrip(v, pose, camera, p, PlumVfx.scale(w, 0.45D), 0.65F * a, WHITE);
+        double age = clientTicks - c.burstTick + partial;
+        // Keep the existing high-tier axial accent gate, now a compact crossed wedge.
+        if (c.has(PlumLayers.Kind.WEDGE) && age >= 0 && age < 4 && RiverRules.rays(c.executionTier) >= 6) {
+            crossedNeedle(v, pose, camera, c.burstAt, c.axis, 8.5 * smooth(age / 2), .08,
+                    (float) (.35 * (1 - smooth((age - 2) / 2))), PETAL_PINK);
         }
+        if (c.burstGround != null && age >= 0 && age < 14) {
+            Vec3 centre = c.burstGround.add(0, .045, 0);
+            double radius = RiverShapes.shockRadius(age, c.scale);
+            float alpha = (float) (smooth(age / 3) * (1 - smooth((age - 8) / 6)));
+            for (int i = 0; i < 64; i++) {
+                if (i % 10 >= 6) continue; // Six torn arcs, with open gaps.
+                double a = i * Math.PI / 32, b = (i + 1) * Math.PI / 32;
+                Vec3 p = centre.add(Math.cos(a) * radius, 0, Math.sin(a) * radius);
+                Vec3 q = centre.add(Math.cos(b) * radius, 0, Math.sin(b) * radius);
+                airQuad(v, pose, camera, p, q, centre, .04, alpha * .7F, PETAL_PINK);
+            }
+        }
+    }
+
+    /** Fixed crossed planes keep axial rays visible from both front and side cameras. */
+    private static void crossedNeedle(VertexConsumer v, PoseStack.Pose pose, Vec3 camera, Vec3 origin,
+                                      Vec3 direction, double length, double width, float alpha, VfxColour colour) {
+        Vec3 ref = Math.abs(direction.y) > .9 ? new Vec3(1, 0, 0) : new Vec3(0, 1, 0);
+        Vec3 side = direction.cross(ref).normalize(), up = side.cross(direction).normalize();
+        Vec3 end = origin.add(direction.scale(length));
+        for (Vec3 plane : new Vec3[] {side, up}) {
+            if (quadRoom < 1) return;
+            quadRoom--;
+            Vec3 normal = direction.cross(plane).normalize();
+            Vec3 offset = plane.scale(width);
+            airVertex(v, pose, origin.subtract(offset), normal, alpha * near(origin, camera), colour);
+            airVertex(v, pose, end, normal, alpha * near(end, camera), colour);
+            airVertex(v, pose, end, normal, alpha * near(end, camera), colour);
+            airVertex(v, pose, origin.add(offset), normal, alpha * near(origin, camera), colour);
+        }
+    }
+
+    /** Ground strip with radial width, not a vertical billboard or filled disc. */
+    private static void airQuad(VertexConsumer v, PoseStack.Pose pose, Vec3 camera, Vec3 a, Vec3 b,
+                                Vec3 centre, double width, float alpha, VfxColour colour) {
+        if (quadRoom < 1) return;
+        quadRoom--;
+        Vec3 oa = a.subtract(centre).normalize().scale(width), ob = b.subtract(centre).normalize().scale(width);
+        Vec3 normal = new Vec3(0, 1, 0);
+        airVertex(v, pose, a.subtract(oa), normal, alpha * near(a, camera), colour);
+        airVertex(v, pose, b.subtract(ob), normal, alpha * near(b, camera), colour);
+        airVertex(v, pose, b.add(ob), normal, alpha * near(b, camera), colour);
+        airVertex(v, pose, a.add(oa), normal, alpha * near(a, camera), colour);
+    }
+
+    private static void airVertex(VertexConsumer v, PoseStack.Pose pose, Vec3 at, Vec3 normal,
+                                   float alpha, VfxColour colour) {
+        // Same opaque texel of rainAir as RainVfx.rainSky; compensate its authored pale violet tint.
+        VfxDraw.vertex(v, pose, at, normal, .2203776F, .1918945F, alpha,
+                Math.min(1, colour.red() * 255 / 242), Math.min(1, colour.green() * 255 / 231),
+                Math.min(1, colour.blue() * 255 / 253));
     }
 
     /** Кольца (всплеск у ног, контакт, взрыв) и веер-отпечаток на земле. */
@@ -1700,8 +1894,8 @@ public final class RiverVfx {
             Vec3[] p = {s.a(), s.a().lerp(s.b(), grow), s.a().lerp(s.c(), grow)};
             float a = (float) PlumVfx.curve(age, 0.0, 1.0, 3.0, 1.0, 20.0, 0.5, 70.0, 0.0);
             VfxColour col = age < 4.0F ? WHITE : age < 30.0F ? PINK_HOT : CRIMSON;
-            PlumVfx.flatStrip(v, pose, p, new double[] {0.16D, 0.1D, 0.0D}, 0.3F * a, CRIMSON);
-            PlumVfx.flatStrip(v, pose, p, new double[] {0.05D, 0.03D, 0.0D}, 0.95F * a, col);
+            PlumVfx.flatStrip(v, pose, p, new double[] {0.16D, 0.1D, 0.04D}, 0.3F * a, CRIMSON);
+            PlumVfx.flatStrip(v, pose, p, new double[] {0.08D, 0.04D, 0.04D}, 0.95F * a, col);
         }
         // Звёздочки рождения (r08): четыре луча, длинный вертикальный.
         for (Star s : c.stars) {
@@ -1722,132 +1916,119 @@ public final class RiverVfx {
                 Vec3 d = k == 0 ? r2 : r1;
                 double len = s.size() * (k == 0 ? 1.0D : 0.6D) * (0.7D + 0.3D * age / 3.5D);
                 Vec3[] p = {s.pos().subtract(d.scale(len)), s.pos(), s.pos().add(d.scale(len))};
-                fstrip(v, pose, camera, p, new double[] {0.0D, 0.04D, 0.0D}, 0.35F * a, PINK);
-                fstrip(v, pose, camera, p, new double[] {0.0D, 0.016D, 0.0D}, 0.95F * a, WHITE);
+                fstrip(v, pose, camera, p, new double[] {0.0D, 0.08D, 0.04D}, 0.35F * a, PINK);
+                fstrip(v, pose, camera, p, new double[] {0.0D, 0.04D, 0.04D}, 0.95F * a, WHITE);
             }
         }
     }
 
     private static void puffs(Cast c, PoseStack.Pose pose, Vec3 camera, MultiBufferSource.BufferSource buffers, float partial) {
+        if (!c.has(PlumLayers.Kind.DUST)) return;
         if (c.puffs.isEmpty()) {
             return;
         }
         RenderType dust = MurimRenderTypes.dustPuffs();
         VertexConsumer d = buffers.getBuffer(dust);
         for (Puff p : c.puffs) {
-            if (p.smoke || p.delay > 0) {
+            if (p.smoke || p.delay > 0 || quadRoom < 1) {
                 continue;
             }
             float pt = (p.age + partial) / p.life;
             float alpha = pt < 0.5F ? 1.0F : Mth.clamp(1.0F - (pt - 0.5F) / 0.5F, 0.0F, 1.0F);
+            quadRoom--;
             PlumVfx.puff(d, pose, camera, p.prev.lerp(p.pos, partial), p.size * (0.7D + 0.8D * pt), p.cell, alpha, p.gray);
         }
         buffers.endBatch(dust);
-        RenderType smokeType = MurimRenderTypes.smokeCel();
-        VertexConsumer sm = buffers.getBuffer(smokeType);
-        for (Puff p : c.puffs) {
-            if (!p.smoke || p.delay > 0) {
-                continue;
-            }
-            float pt = (p.age + partial) / p.life;
-            float alpha = Mth.clamp(pt / 0.06F, 0.0F, 1.0F) * (pt < 0.75F ? 1.0F : Mth.clamp(1.0F - (pt - 0.75F) / 0.25F, 0.0F, 1.0F));
-            double grow = 0.55D + 0.8D * Math.sqrt(pt) + (pt > 0.75F ? 1.2D * (pt - 0.75D) : 0.0D);
-            Vec3 at = p.prev.lerp(p.pos, partial);
-            float cam = (float) Mth.clamp((at.distanceTo(camera) - p.size * grow - 0.6D) / 1.5D, 0.0D, 1.0D);
-            PlumVfx.smokePuff(sm, pose, camera, at, p.size * grow, p.cell, alpha * cam, p.gray, p.spin);
-        }
-        buffers.endBatch(smokeType);
+
     }
 
-    /** Лепестки (атлас) и их свечение; узел и ядро взрыва — ступени глоу без размытия кадра. */
+    /** Two hinged quads from the Rain 4x3 painted atlas, in three independent depth planes. */
     private static void petals(Cast c, PoseStack.Pose pose, Vec3 camera, MultiBufferSource.BufferSource buffers, float partial, float t) {
-        RenderType pt = MurimRenderTypes.plumPetals();
-        VertexConsumer pc = buffers.getBuffer(pt);
+        if (!c.has(PlumLayers.Kind.PETALS)) return;
+        var material = MurimRenderTypes.rainPetals();
+        var v = buffers.getBuffer(material);
         for (Petal p : c.petals) {
-            if (p.dead) {
-                continue;
-            }
+            if (p.dead || quadRoom < 2 || p.s1 >= PlumLayers.density(c.masteryStars, PlumLayers.Kind.PETALS)) continue;
             Vec3 at = p.prev.lerp(p.pos, partial);
-            float a = petalAlpha(c, p, partial) * near(at, camera);
-            if (a <= 0.01F) {
-                continue;
-            }
-            float[] tint = tint(p.tone);
-            PlumVfx.petal(pc, pose, camera, at, p.size * 1.15D, p.cell, (clientTicks - p.born + partial) * p.spin, a, tint[0], tint[1], tint[2]);
-        }
-        for (Flower f : c.flowers) {
-            float age = clientTicks - f.born() + partial;
-            if (age < 0.0F) {
-                continue;
-            }
-            float a = (float) PlumVfx.curve(age, 0.0, 0.0, 2.0, 1.0, 30.0, 0.9, 46.0, 0.0);
-            Vec3 at = f.pos().add(f.vel().scale(age * 0.9D));
-            Vec3 view = camera.subtract(at);
-            if (view.lengthSqr() < 1.0E-6D) {
-                continue;
-            }
-            view = view.normalize();
-            Vec3 ref = Math.abs(view.y) > 0.9D ? new Vec3(1.0D, 0.0D, 0.0D) : new Vec3(0.0D, 1.0D, 0.0D);
-            Vec3 r1 = view.cross(ref).normalize();
-            Vec3 r2 = r1.cross(view).normalize();
-            for (int k = 0; k < 5; k++) {
-                double ang = f.angle() + k * Math.PI * 2.0D / 5.0D + age * 0.03D;
-                Vec3 off = r1.scale(Math.cos(ang)).add(r2.scale(Math.sin(ang))).scale(f.size() * 0.5D);
-                // Кадр 2 атласа — продолговатый лепесток с выемкой вправо: длинной осью по радиусу, выемкой наружу.
-                PlumVfx.petal(pc, pose, camera, at.add(off), f.size() * 0.55D, 2, (float) ang, a * near(at, camera), 1.0F, 0.94F, 0.97F);
+            float alpha = petalAlpha(c, p, partial) * near(at, camera);
+            if (alpha <= .001) continue;
+            double age = clientTicks - p.born + partial;
+            double angle = (p.landedAt >= 0 ? p.landedAt - p.born : age) * p.spin + p.s2 * 6.28;
+            // Independent planes remain volumetric when viewed along or across the strike.
+            Vec3 normal = p.landedAt >= 0 ? new Vec3(0, 1, 0)
+                    : c.fwd.scale(Math.cos(p.s1 * 6.28)).add(c.e1.scale(Math.sin(p.s1 * 6.28))).normalize();
+            Vec3 x = p.landedAt >= 0 ? new Vec3(1, 0, 0) : c.e2.cross(normal).normalize();
+            Vec3 y = normal.cross(x).normalize();
+            Vec3 right = x.scale(Math.cos(angle)).add(y.scale(Math.sin(angle)));
+            Vec3 up = y.scale(Math.cos(angle)).subtract(x.scale(Math.sin(angle)));
+            double size = p.size * (p.s3 < .33 ? 1.2 : p.s3 < .66 ? 1 : .72);
+            if (p.state == Petal.STREAM) size = RiverShapes.petalSize(p.s1, p.s3 < .33 ? 2 : p.s3 < .66 ? 1 : 0, false);
+            if (p.state == Petal.NODE) size *= 1 - .65 * nodeK(c, partial);
+            painted(v, pose, at, right, up, normal, size, p.cell, alpha, p.tone == 3 ? .35F : p.tone == 2 ? .65F : 1F,
+                    p.landedAt >= 0 ? .02 : .14 * Math.sin(age * .09 + p.s1 * 6.28));
+            quadRoom -= 2;
+            if (c.masteryStars >= 10 && p.state == Petal.STREAM && p.s1 > .88 && quadRoom >= 2) {
+                painted(v, pose, at, right, up, normal, size * .38, 0, alpha * .9F, 1, .1);
+                quadRoom -= 2;
             }
         }
-        buffers.endBatch(pt);
-        RenderType gt = MurimRenderTypes.mote();
-        VertexConsumer g = buffers.getBuffer(gt);
-        for (Petal p : c.petals) {
-            if (p.dead) {
-                continue;
-            }
-            Vec3 at = p.prev.lerp(p.pos, partial);
-            float a = petalAlpha(c, p, partial) * near(at, camera);
-            if (a <= 0.01F) {
-                continue;
-            }
-            // Светятся как искры ауры: белая точка в сердце, розовый ореол.
-            PlumVfx.glow(g, pose, camera, at, p.size * 1.3D, 0.12F * a, p.tone >= 2 ? PINK_HOT : PETAL_PINK);
-            PlumVfx.glow(g, pose, camera, at, p.size * 0.45D, 0.35F * a, WHITE);
+        buffers.endBatch(material);
+        var glowType = MurimRenderTypes.mote();
+        var glow = buffers.getBuffer(glowType);
+        if (c.gather != null && t >= 80 && t < 103) {
+            float a = (float) (smooth((t - 80) / 4) * (1 - smooth((t - 100) / 3)));
+            point(glow, pose, camera, c.gather, .25, a);
         }
-        // Белый центр вихря (r10): небольшой, 0,18–0,3.
-        if (c.gather != null && t >= RiverRules.GATHER && t < RiverRules.RELEASE + 3 && c.petalsMax > 0) {
-            Vec3 gc = c.gatherPrev == null ? c.gather : c.gatherPrev.lerp(c.gather, partial);
-            double k = smooth((t - RiverRules.GATHER) / 14.0D);
-            float a = (float) PlumVfx.curve(t, RiverRules.GATHER, 0.0, RiverRules.GATHER + 6, 1.0, RiverRules.RELEASE, 1.0,
-                    RiverRules.RELEASE + 3, 0.0) * near(gc, camera);
-            PlumVfx.glow(g, pose, camera, gc, (0.18D + 0.12D * k) * c.scale, 0.95F * a, WHITE);
-            PlumVfx.glow(g, pose, camera, gc, (0.5D + 0.3D * k) * c.scale, 0.35F * a, PINK_HOT);
-        }
-        // Узел (r12): белый центр сжимается 0,65 → 0,12 и становится ярче.
-        if (c.contactTick >= 0 && c.contact != null && (c.burstTick < 0 || clientTicks - c.burstTick < 1)) {
+        if (c.contactTick >= 0 && c.burstTick < 0) {
             double k = nodeK(c, partial);
-            double r = (0.65D + (0.14D - 0.65D) * k) * c.scale;
-            PlumVfx.glow(g, pose, camera, c.contact, r, 0.95F, WHITE);
-            PlumVfx.glow(g, pose, camera, c.contact, r * 0.55D, 1.0F, WHITE);
-            PlumVfx.glow(g, pose, camera, c.contact, r * 2.0D + 0.15D, 0.25F + 0.25F * (float) k, PINK_HOT);
+            float silence = (float) (1 - .65 * smooth((t - 117) / 3));
+            point(glow, pose, camera, c.contact, .24 * (1 - k) + .06 * k, silence);
         }
-        // Ядро взрыва: до 2,2 блока за 2 тика, гаснет в розовое.
-        if (c.burstTick >= 0 && c.burstAt != null) {
-            float age = clientTicks - c.burstTick + partial;
-            float a = (float) PlumVfx.curve(age, 0.0, 1.0, 3.0, 1.0, 7.0, 0.5, 14.0, 0.0);
-            if (a > 0.0F) {
-                double r = 2.2D * c.scale * Mth.clamp(age / 2.0D, 0.25D, 1.0D);
-                PlumVfx.glow(g, pose, camera, c.burstAt, r, 1.0F * a, WHITE);
-                PlumVfx.glow(g, pose, camera, c.burstAt, r * 0.6D, 1.0F * a, WHITE);
-                PlumVfx.glow(g, pose, camera, c.burstAt, r * 1.6D, 0.4F * a, BURST_PINK);
-                PlumVfx.glow(g, pose, camera, c.burstAt, r * 2.6D, 0.15F * a, BURST_RIM);
+        if (c.burstTick >= 0) {
+            double age = clientTicks - c.burstTick + partial;
+            point(glow, pose, camera, c.burstAt, RiverShapes.coreDiameter(age) / 2,
+                    (float) RiverShapes.rayAlpha(age, 12));
+            if (age >= 0 && age < 2 && quadRoom > 0) {
+                quadRoom--;
+                PlumVfx.glow(glow, pose, camera, c.burstAt, .30 + .15 * smooth(age),
+                        (float) (smooth(age / .3) * (1 - smooth((age - 1) / 1))) * near(c.burstAt, camera), WHITE);
             }
         }
-        buffers.endBatch(gt);
+        buffers.endBatch(glowType);
     }
 
-    /** Лепесток проявляется за 2 тика, в узле тает в свет у центра, в опадании гаснет к концу. */
+    private static void point(VertexConsumer v, PoseStack.Pose pose, Vec3 camera, Vec3 at, double radius, float alpha) {
+        if (quadRoom < 2 || alpha <= 0) return;
+        quadRoom -= 2;
+        PlumVfx.glow(v, pose, camera, at, radius * 1.5, alpha * .25F * near(at, camera), CRIMSON);
+        PlumVfx.glow(v, pose, camera, at, radius, alpha * near(at, camera), WHITE);
+    }
+
+    // RainVfx's painted-atlas convention; face/back cells remain authored colours.
+    // API: supplied minecraft-src/net/minecraft/world/phys/Vec3.java (arithmetic/cross/normalize).
+    private static void painted(VertexConsumer v, PoseStack.Pose pose, Vec3 at, Vec3 right, Vec3 up,
+                                Vec3 normal, double size, int cell, float alpha, float tone, double fold) {
+        Vec3 r = right.scale(size / 2), u = up.scale(size / 2), ridge = normal.scale(size * fold);
+        float u0 = cell % 4 / 4F, u1 = u0 + .25F, mid = (u0 + u1) / 2;
+        float v0 = cell / 4 / 3F, v1 = v0 + 1 / 3F;
+        petalQuad(v, pose, at.subtract(r).subtract(u), at.subtract(r).add(u), at.add(u).add(ridge), at.subtract(u).add(ridge),
+                u0, mid, v0, v1, alpha, tone);
+        petalQuad(v, pose, at.subtract(u).add(ridge), at.add(u).add(ridge), at.add(r).add(u), at.add(r).subtract(u),
+                mid, u1, v0, v1, alpha, tone * .85F);
+    }
+
+    private static void petalQuad(VertexConsumer v, PoseStack.Pose pose, Vec3 a, Vec3 b, Vec3 c, Vec3 d,
+                                  float u0, float u1, float v0, float v1, float alpha, float tone) {
+        Vec3 n = b.subtract(a).cross(d.subtract(a)).normalize();
+        VfxDraw.vertex(v, pose, a, n, u0, v1, alpha, tone, tone, tone);
+        VfxDraw.vertex(v, pose, b, n, u0, v0, alpha, tone, tone, tone);
+        VfxDraw.vertex(v, pose, c, n, u1, v0, alpha, tone, tone, tone);
+        VfxDraw.vertex(v, pose, d, n, u1, v1, alpha, tone, tone, tone);
+    }
+
+    /** Лепесток проявляется за 3 тика, в узле тает в свет у центра, в опадании гаснет к концу. */
     private static float petalAlpha(Cast c, Petal p, float partial) {
-        float a = Mth.clamp((clientTicks - p.born + partial) / 2.0F, 0.0F, 1.0F);
+        float a = Mth.clamp((clientTicks - p.born + partial) / 3.0F, 0.0F, 1.0F);
         if (p.state == Petal.NODE) {
             // Масса исчезает в точке: к концу сжатия от оболочки остаётся 15 %.
             a *= (float) (1.0D - 0.85D * nodeK(c, partial));
@@ -1857,8 +2038,9 @@ public final class RiverVfx {
             a *= 0.55F;
         }
         if (p.state == Petal.FREE) {
-            float life = 70.0F + (float) (p.s3 * 40.0D);
-            a *= Mth.clamp((life - p.freeAge - partial) / 16.0F, 0.0F, 1.0F);
+            double remaining = p.landedAt >= 0 ? RiverPresentation.groundLife(p.s3) - (clientTicks - p.landedAt + partial)
+                    : 180 - p.freeAge - partial;
+            a *= (float) smooth(remaining / 12);
         }
         return a;
     }

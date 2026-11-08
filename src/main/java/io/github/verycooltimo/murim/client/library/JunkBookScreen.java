@@ -57,6 +57,7 @@ public final class JunkBookScreen extends Screen {
     }
 
     private final JunkBook book;
+    private final List<Component> text;
     private final boolean mainHand;
     private final ResourceLocation sheet;
     private final List<List<Line>> pages = new ArrayList<>();
@@ -71,9 +72,22 @@ public final class JunkBookScreen extends Screen {
         Minecraft.getInstance().setScreen(new JunkBookScreen(book, mainHand));
     }
 
+    public static void openText(Component title, List<Component> paragraphs) {
+        Minecraft.getInstance().setScreen(new JunkBookScreen(title, paragraphs));
+    }
+
+    private JunkBookScreen(Component title, List<Component> paragraphs) {
+        super(title);
+        this.book = null;
+        this.text = List.copyOf(paragraphs);
+        this.mainHand = false;
+        this.sheet = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/gui/book/junk_text.png");
+    }
+
     private JunkBookScreen(JunkBook book, boolean mainHand) {
         super(JunkText.title(book));
         this.book = book;
+        this.text = List.of();
         this.mainHand = mainHand;
         boolean stained = book.kind() == JunkKind.WATER || book.kind() == JunkKind.HERETICAL;
         this.sheet = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID,
@@ -103,7 +117,11 @@ public final class JunkBookScreen extends Screen {
         // The heretical method keeps room at the bottom of its last page for the seal.
         List<Line> page = new ArrayList<>();
         int h = 0;
-        List<JunkText.Para> paras = JunkText.paras(book);
+        List<JunkText.Para> paras = book == null
+                ? java.util.stream.Stream.concat(java.util.stream.Stream.of(
+                        new JunkText.Para(getTitle(), JunkText.Style.HEADING)),
+                        text.stream().map(t -> new JunkText.Para(t, JunkText.Style.BODY))).toList()
+                : JunkText.paras(book);
         for (int i = 0; i < paras.size(); i++) {
             JunkText.Para p = paras.get(i);
             int colour = switch (p.style()) {
@@ -144,7 +162,7 @@ public final class JunkBookScreen extends Screen {
     }
 
     private boolean practicable() {
-        return book.kind() == JunkKind.HERETICAL;
+        return book != null && book.kind() == JunkKind.HERETICAL;
     }
 
     private int spreads() {

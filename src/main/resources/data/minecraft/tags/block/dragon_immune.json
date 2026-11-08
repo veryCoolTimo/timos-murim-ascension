@@ -18,7 +18,10 @@
     "murim:cold_iron_block",
     "murim:cold_iron_bars",
     "murim:cold_iron_door",
-    "murim:vault_seal",
-    "murim:penance_seal"
+    "murim:penance_seal",
+    "murim:vault_brick",
+    "murim:vault_brick_stairs",
+    "murim:vault_brick_slab",
+    "murim:vault_brick_trim"
   ]
 }

@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "cut=false": {
+      "model": "murim:block/red_vein_fern"
+    },
+    "cut=true": {
+      "model": "murim:block/red_vein_fern_cut"
+    }
+  }
+}

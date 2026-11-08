@@ -85,7 +85,9 @@ class SectHierarchyTest {
         // Дома старейшин — по приглашению.
         assertFalse(SectAccess.allowed(rule("elders"), SectStanding.GRADUATE, Set.of(), Period.TRAINING));
         assertTrue(SectAccess.allowed(rule("elders"), SectStanding.GRADUATE, Set.of("pass.elders"), Period.TRAINING));
-        assertTrue(SectAccess.allowed(rule("main_hall"), SectStanding.DISCIPLE, Set.of(), Period.TRAINING));
+        // the Main Hall is shut below the First Disciple (author 22.10)
+        assertFalse(SectAccess.allowed(rule("main_hall"), SectStanding.DISCIPLE, Set.of(), Period.TRAINING));
+        assertTrue(SectAccess.allowed(rule("main_hall"), SectStanding.GRADUATE, Set.of(io.github.verycooltimo.murim.sect.SectPositions.FIRST), Period.TRAINING));
         assertTrue(SectAccess.allowed(treasury, SectStanding.TRUSTED, Set.of(), Period.NIGHT));
         // Пропуск (зов, разрешение) открывает место своему, но не чужаку.
         assertTrue(SectAccess.allowed(rule("scriptures"), SectStanding.NOVICE, Set.of("pass.scriptures"), Period.TRAINING));

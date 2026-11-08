@@ -1,0 +1,258 @@
+{
+ "textures": {
+  "coins": "murim:block/vault_coins",
+  "edge": "murim:block/vault_coin_edge",
+  "bar_top": "murim:block/vault_bar_top",
+  "bar_side": "murim:block/vault_bar_side",
+  "cloth_hot": "murim:block/vault_cloth_hot",
+  "cloth_warm": "murim:block/vault_cloth_warm",
+  "cloth_dim": "murim:block/vault_cloth_dim",
+  "vessel_gold": "murim:block/vault_vessel_gold",
+  "vessel_jade": "murim:block/vault_vessel_jade",
+  "jade_disc": "murim:block/vault_jade_disc",
+  "pearl": "murim:block/vault_pearl",
+  "chest_wood": "murim:block/vault_chest_wood",
+  "particle": "murim:block/vault_cloth_warm",
+  "gem_red": "murim:block/vault_gem_red",
+  "gem_green": "murim:block/vault_gem_green",
+  "gem_blue": "murim:block/vault_gem_blue",
+  "gem_violet": "murim:block/vault_gem_violet",
+  "gem_white": "murim:block/vault_gem_white"
+ },
+ "elements": [
+  {
+   "from": [
+    0,
+    0.0,
+    0
+   ],
+   "to": [
+    2,
+    1.0,
+    2
+   ],
+   "faces": {
+    "north": {
+     "texture": "#cloth_dim",
+     "uv": [
+      0,
+      0,
+      1,
+      1
+     ]
+    },
+    "south": {
+     "texture": "#cloth_dim",
+     "uv": [
+      0,
+      0,
+      1,
+      1
+     ]
+    },
+    "east": {
+     "texture": "#cloth_dim",
+     "uv": [
+      0,
+      0,
+      1,
+      1
+     ]
+    },
+    "west": {
+     "texture": "#cloth_dim",
+     "uv": [
+      0,
+      0,
+      1,
+      1
+     ]
+    },
+    "up": {
+     "texture": "#cloth_dim",
+     "uv": [
+      0,
+      0,
+      2,
+      2
+     ]
+    },
+    "down": {
+     "texture": "#cloth_dim",
+     "uv": [
+      0,
+      0,
+      1,
+      1
+     ]
+    }
+   }
+  },
+  {
+   "from": [
+    12.998,
+    0.0,
+    10.321
+   ],
+   "to": [
+    15.998,
+    0.9,
+    13.321
+   ],
+   "faces": {
+    "north": {
+     "texture": "#edge",
+     "uv": [
+      0,
+      0,
+      3.0,
+      0.9
+     ],
+     "light_emission": 13
+    },
+    "south": {
+     "texture": "#edge",
+     "uv": [
+      0,
+      0,
+      3.0,
+      0.9
+     ],
+     "light_emission": 13
+    },
+    "east": {
+     "texture": "#edge",
+     "uv": [
+      0,
+      0,
+      3.0,
+      0.9
+     ],
+     "light_emission": 13
+    },
+    "west": {
+     "texture": "#edge",
+     "uv": [
+      0,
+      0,
+      3.0,
+      0.9
+     ],
+     "light_emission": 13
+    },
+    "up": {
+     "texture": "#coins",
+     "light_emission": 13,
+     "uv": [
+      2,
+      2,
+      5.0,
+      5.0
+     ]
+    },
+    "down": {
+     "texture": "#coins",
+     "light_emission": 13,
+     "uv": [
+      2,
+      2,
+      5.0,
+      5.0
+     ]
+    }
+   },
+   "rotation": {
+    "angle": 0,
+    "axis": "y",
+    "origin": [
+     14.498,
+     0.0,
+     11.821
+    ]
+   }
+  },
+  {
+   "from": [
+    10.878,
+    0.0,
+    1.265
+   ],
+   "to": [
+    13.378,
+    0.9,
+    3.765
+   ],
+   "faces": {
+    "north": {
+     "texture": "#edge",
+     "uv": [
+      0,
+      0,
+      2.5,
+      0.9
+     ],
+     "light_emission": 13
+    },
+    "south": {
+     "texture": "#edge",
+     "uv": [
+      0,
+      0,
+      2.5,
+      0.9
+     ],
+     "light_emission": 13
+    },
+    "east": {
+     "texture": "#edge",
+     "uv": [
+      0,
+      0,
+      2.5,
+      0.9
+     ],
+     "light_emission": 13
+    },
+    "west": {
+     "texture": "#edge",
+     "uv": [
+      0,
+      0,
+      2.5,
+      0.9
+     ],
+     "light_emission": 13
+    },
+    "up": {
+     "texture": "#coins",
+     "light_emission": 13,
+     "uv": [
+      2,
+      2,
+      4.5,
+      4.5
+     ]
+    },
+    "down": {
+     "texture": "#coins",
+     "light_emission": 13,
+     "uv": [
+      2,
+      2,
+      4.5,
+      4.5
+     ]
+    }
+   },
+   "rotation": {
+    "angle": 0,
+    "axis": "y",
+    "origin": [
+     12.128,
+     0.0,
+     2.515
+    ]
+   }
+  }
+ ]
+}

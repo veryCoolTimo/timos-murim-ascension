@@ -88,6 +88,69 @@
               }
             }
           ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "murim:manual_page",
+          "weight": 3,
+          "functions": [
+            {
+              "function": "minecraft:set_components",
+              "components": {
+                "murim:technique": "murim:crescent_sweep"
+              }
+            },
+            {
+              "function": "minecraft:set_count",
+              "count": {
+                "type": "minecraft:uniform",
+                "min": 1,
+                "max": 2
+              }
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "murim:manual_page",
+          "weight": 3,
+          "functions": [
+            {
+              "function": "minecraft:set_components",
+              "components": {
+                "murim:technique": "murim:wedge_fan"
+              }
+            },
+            {
+              "function": "minecraft:set_count",
+              "count": {
+                "type": "minecraft:uniform",
+                "min": 1,
+                "max": 2
+              }
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "murim:manual_page",
+          "weight": 2,
+          "functions": [
+            {
+              "function": "minecraft:set_components",
+              "components": {
+                "murim:technique": "murim:ceremonial_draw"
+              }
+            },
+            {
+              "function": "minecraft:set_count",
+              "count": {
+                "type": "minecraft:uniform",
+                "min": 1,
+                "max": 2
+              }
+            }
+          ]
         }
       ]
     },
@@ -278,7 +341,7 @@
       "entries": [
         {
           "type": "minecraft:item",
-          "name": "murim:pill_origin_energy",
+          "name": "murim:pill_snow_plum",
           "weight": 1
         }
       ],
@@ -389,6 +452,50 @@
         {
           "condition": "minecraft:random_chance",
           "chance": 0.1
+        }
+      ]
+    },
+    {
+      "rolls": 1,
+      "bonus_rolls": 0,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "murim:pill_snow_plum",
+          "weight": 3
+        },
+        {
+          "type": "minecraft:item",
+          "name": "murim:pill_snow_plum",
+          "weight": 2
+        }
+      ],
+      "conditions": [
+        {
+          "condition": "minecraft:random_chance",
+          "chance": 0.25
+        }
+      ]
+    },
+    {
+      "rolls": 1,
+      "bonus_rolls": 0,
+      "conditions": [
+        {
+          "condition": "minecraft:random_chance",
+          "chance": 0.04
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "murim:pill_heavenly_earth",
+          "weight": 1
+        },
+        {
+          "type": "minecraft:item",
+          "name": "murim:pill_moonlight",
+          "weight": 1
         }
       ]
     }

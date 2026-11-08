@@ -14,10 +14,25 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
  */
 final class ClientPayloadBridge {
 
+    static void handleHeadIntro(HeadIntroPayloads.View payload) {
+        if (FMLEnvironment.dist == Dist.CLIENT)
+            io.github.verycooltimo.murim.client.sect.HeadIntroCamera.accept(payload);
+    }
+
+    static void handleSwordGuard(SwordGuardPayloads.View payload) {
+        if (FMLEnvironment.dist == Dist.CLIENT)
+            io.github.verycooltimo.murim.client.SwordGuardClient.accept(payload);
+    }
+
     static void handleTechniqueEvent(TechniqueEventPayload payload, IPayloadContext context) {
         if (FMLEnvironment.dist != Dist.CLIENT) {
             return;
         }
+        if (payload.event() == TechniqueEventPayload.Event.COOLDOWN_RESET) {
+            io.github.verycooltimo.murim.client.ClientTechniqueHandler.onTechniqueEvent(payload); return;
+        }
+        io.github.verycooltimo.murim.client.vfx.BambooVfx.technique(payload);
+        io.github.verycooltimo.murim.client.SwordGuardClient.technique(payload);
         io.github.verycooltimo.murim.client.ClientTechniqueHandler.onTechniqueEvent(payload);
         io.github.verycooltimo.murim.client.vfx.PlumVfx.onTechniqueEvent(payload);
         io.github.verycooltimo.murim.client.vfx.WhirlVfx.onTechniqueEvent(payload);
@@ -28,6 +43,7 @@ final class ClientPayloadBridge {
         io.github.verycooltimo.murim.client.vfx.ScatterVfx.onTechniqueEvent(payload);
         io.github.verycooltimo.murim.client.vfx.DomeVfx.onTechniqueEvent(payload);
         io.github.verycooltimo.murim.client.vfx.SeaVfx.onTechniqueEvent(payload);
+        io.github.verycooltimo.murim.client.vfx.FullBloomVfx.onTechniqueEvent(payload);
         io.github.verycooltimo.murim.client.vfx.FallingPetalVfx.onTechniqueEvent(payload);
         io.github.verycooltimo.murim.client.vfx.TangVfx.onTechniqueEvent(payload);
         io.github.verycooltimo.murim.client.vfx.ShowerVfx.onTechniqueEvent(payload);
@@ -48,6 +64,30 @@ final class ClientPayloadBridge {
 
     public static void handleSectGoal(SectGoalPayload payload) {
         io.github.verycooltimo.murim.client.sect.SectJourneyHud.accept(payload);
+    }
+
+    public static void handleSectGuide(SectGuidePayload payload) {
+        io.github.verycooltimo.murim.client.sect.SectGuideHud.accept(payload);
+    }
+
+    public static void handleSectTablet(SectTabletPayload.Open payload) {
+        io.github.verycooltimo.murim.client.sect.SectTabletScreen.open(payload.data());
+    }
+
+    public static void handleSectBoard(SectTabletPayload.OpenBoard payload) {
+        io.github.verycooltimo.murim.client.sect.SectTabletScreen.openBoard(payload.data());
+    }
+
+    public static void handleSectGoalPulse() {
+        io.github.verycooltimo.murim.client.sect.SectJourneyHud.pulse();
+    }
+
+    public static void handleSectMap(SectMapPayload payload) {
+        io.github.verycooltimo.murim.client.sect.SectMapClient.accept(payload);
+    }
+
+    public static void handleSectTabletUpdate(SectTabletPayload.Update payload) {
+        io.github.verycooltimo.murim.client.sect.SectTabletScreen.update(payload.data());
     }
 
     public static void handleSectBubble(SectBubblePayload payload) {
@@ -79,6 +119,10 @@ final class ClientPayloadBridge {
         io.github.verycooltimo.murim.client.vfx.ScatterVfx.onScatter(payload);
     }
 
+    public static void handleBloom(BloomPayload payload) {
+        io.github.verycooltimo.murim.client.vfx.FullBloomVfx.accept(payload);
+    }
+
     public static void handleDome(DomePayload payload) {
         io.github.verycooltimo.murim.client.vfx.DomeVfx.onDome(payload);
     }
@@ -96,7 +140,6 @@ final class ClientPayloadBridge {
         io.github.verycooltimo.murim.technique.TechniqueLoader.replaceAll(payload.definitions());
     }
 
-    /** Профиль владельца — для интерфейса. */
     public static void handleSyncProfile(SyncProfilePayload payload) {
         io.github.verycooltimo.murim.client.ClientProfileState.setProfile(payload.profile());
     }
@@ -113,6 +156,14 @@ final class ClientPayloadBridge {
         io.github.verycooltimo.murim.client.vfx.TangVfx.onTang(payload);
     }
 
+    public static void handleBamboo(BambooPayload payload) {
+        if (FMLEnvironment.dist == Dist.CLIENT) io.github.verycooltimo.murim.client.vfx.BambooVfx.accept(payload);
+    }
+
+    public static void handleSixForm(SixFormPayload payload) {
+        if (FMLEnvironment.dist == Dist.CLIENT) io.github.verycooltimo.murim.client.vfx.SixFormVfx.accept(payload);
+    }
+
     public static void handleFallingPetal(FallingPetalPayload payload) {
         io.github.verycooltimo.murim.client.vfx.FallingPetalVfx.onPayload(payload);
     }
@@ -125,11 +176,21 @@ final class ClientPayloadBridge {
         io.github.verycooltimo.murim.client.vfx.WhirlVfx.onWhirl(payload);
     }
 
+    public static void handleHeldFacing(TraversePayloads.HeldFacing payload) {
+        io.github.verycooltimo.murim.client.FootworkMotion.holdFacing(payload);
+    }
+
+    public static void handleSevenRoute(TraversePayloads.SevenRoute payload) {
+        io.github.verycooltimo.murim.client.FootworkMotion.acceptRoute(payload);
+        if (payload.actor() >= 0) io.github.verycooltimo.murim.client.vfx.FootworkVfx.behindRoute(payload);
+    }
+
     public static void handleDash(TraversePayloads.Dash payload) {
         io.github.verycooltimo.murim.client.FootworkMotion.start(payload);
     }
 
     public static void handleTraverse(TraversePayloads.Event payload) {
+        io.github.verycooltimo.murim.client.FootworkMotion.runAnimation(payload);
         io.github.verycooltimo.murim.client.vfx.TraverseVfx.onEvent(payload);
     }
 
@@ -169,11 +230,6 @@ final class ClientPayloadBridge {
         io.github.verycooltimo.murim.client.ClientAuraState.set(payload.entityId(), payload.aura());
     }
 
-    /** Попадание техники: брызги возникают в точке контакта, а не из воздуха. */
-    public static void handleDemonic(DemonicPayload payload) {
-        io.github.verycooltimo.murim.client.vfx.VfxManager.accept(payload);
-    }
-
     public static void handleTechniqueHit(TechniqueHitPayload payload) {
         io.github.verycooltimo.murim.client.vfx.PalmVfxRenderer.recordHit(
                 payload.sourceId(), payload.x(), payload.y(), payload.z(), payload.height());
@@ -189,6 +245,11 @@ final class ClientPayloadBridge {
         io.github.verycooltimo.murim.client.ClientMasteryState.accept(payload);
     }
 
+    /** The server sees a fight the client cannot (sect bout or duel, a mob hunting the player). */
+    public static void handleCombatPulse() {
+        io.github.verycooltimo.murim.client.CombatMode.pulse();
+    }
+
     /** Озарение: вспышка в бою или чистый приём двойника в медитации. */
     public static void handleInsight(InsightPayload payload) {
         io.github.verycooltimo.murim.client.InsightEffects.onInsight(payload);
@@ -197,6 +258,11 @@ final class ClientPayloadBridge {
     /** Медитация: поза, подсказка удержания, момент рождения семени. */
     public static void handlePill(PillPayloads.Sync payload) {
         io.github.verycooltimo.murim.client.ClientPillState.accept(payload);
+    }
+
+    /** The game «Провести поток» begins: the stream's seed and pills. */
+    public static void handlePillFlow(PillPayloads.FlowStart payload) {
+        io.github.verycooltimo.murim.client.flow.FlowClient.start(payload);
     }
 
     public static void handleSyncMeditation(SyncMeditationPayload payload) {

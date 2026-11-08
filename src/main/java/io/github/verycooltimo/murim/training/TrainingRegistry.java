@@ -33,11 +33,11 @@ public final class TrainingRegistry {
     private static final DeferredRegister<AttachmentType<?>> ATTACHMENTS =
             DeferredRegister.create(NeoForgeRegistries.Keys.ATTACHMENT_TYPES, MurimMod.MODID);
 
-    /** Tempered body: saved, kept on death (the result of play, like cultivation). */
+    /** Tempered body: saved, kept on death (the result of play, like cultivation). Grown from the vanilla statistics. */
     public static final Supplier<AttachmentType<BodyState>> BODY = ATTACHMENTS.register("body",
             () -> AttachmentType.builder(() -> BodyState.NONE).serialize(BodyState.CODEC).copyOnDeath().build());
 
-    /** Training in progress: not saved — a set or a run lives here and now. */
+    /** Drill in progress (stone carry, a route run): not saved — it lives here and now. */
     public static final Supplier<AttachmentType<TrainingSession>> SESSION = ATTACHMENTS.register("training_session",
             () -> AttachmentType.builder(TrainingSession::new).build());
 
@@ -48,16 +48,12 @@ public final class TrainingRegistry {
     public static final DeferredItem<BlockItem> TRAINING_STONE_ITEM = ITEMS.register("training_stone",
             () -> new BlockItem(TRAINING_STONE.get(), new Item.Properties().stacksTo(1)));
 
-    /** Weight slab with straps: in hand when the push-ups start, it goes on the back (weighted push-ups). */
-    public static final DeferredItem<Item> WEIGHT_SLAB = ITEMS.registerSimpleItem("weight_slab", new Item.Properties().stacksTo(1));
-
     private TrainingRegistry() {
     }
 
     private static void tabs(BuildCreativeModeTabContentsEvent event) {
         if (event.getTabKey().equals(io.github.verycooltimo.murim.registry.ModCreativeTabs.MURIM.getKey())) {
             event.accept(new ItemStack(TRAINING_STONE_ITEM.get()));
-            event.accept(new ItemStack(WEIGHT_SLAB.get()));
         }
     }
 

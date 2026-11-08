@@ -81,6 +81,13 @@ public final class ModLibrary {
     public static final DeferredHolder<Item, JunkBookItem> JUNK_MANUAL_RED = junk("junk_manual_red", 2, 300);
     public static final DeferredHolder<Item, JunkBookItem> JUNK_LETTERS = junk("junk_letters", 1, 100);
 
+    public static final DeferredHolder<Item, HeadNoteItem> CHEONGMUN_LETTER = ITEMS.register("cheongmun_letter",
+            () -> new HeadNoteItem(new Item.Properties().stacksTo(1), "murim.vault.cheongmun.title",
+                    java.util.List.of("murim.vault.cheongmun.text")));
+
+    public static final DeferredHolder<Item, HeadNoteItem> HEAD_NOTE = ITEMS.register("head_note",
+            () -> new HeadNoteItem(new Item.Properties().stacksTo(1)));
+
     /** Two-half bookcase; its lower foot stands on the archive's genuine manual (hda-04: the 19th bookshelf). */
     public static final DeferredHolder<net.minecraft.world.level.block.Block, ProppedShelfBlock> PROPPED_SHELF = BLOCKS.register("propped_shelf",
             () -> new ProppedShelfBlock(net.minecraft.world.level.block.state.BlockBehaviour.Properties

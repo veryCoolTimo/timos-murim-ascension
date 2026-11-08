@@ -1,5 +1,6 @@
 {
   "id": "murim:holy_fire_breath",
+  "speed": [2.0, 4.5],
   "nature": "demonic",
   "purity": 0.6,
   "capacity": 38.0,

@@ -7,6 +7,7 @@ import io.github.verycooltimo.murim.entity.BanditMove;
 import io.github.verycooltimo.murim.registry.ModDataComponents;
 import io.github.verycooltimo.murim.registry.ModItems;
 import io.github.verycooltimo.murim.sect.GuestDialogueService;
+import io.github.verycooltimo.murim.sect.PlayerJournal;
 import io.github.verycooltimo.murim.sect.SectLayout;
 import io.github.verycooltimo.murim.sect.SectLife;
 import io.github.verycooltimo.murim.world.hua.MountHuaSites;
@@ -53,6 +54,12 @@ public class GuestFighter extends Bandit implements DialogueActor {
     private static final EntityDataAccessor<Integer> FIGURES = SynchedEntityData.defineId(GuestFighter.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> TALKER = SynchedEntityData.defineId(GuestFighter.class, EntityDataSerializers.INT);
     private final NpcProfile profile;
+    private final io.github.verycooltimo.murim.sect.SectSpeechGuard speechGuard = new io.github.verycooltimo.murim.sect.SectSpeechGuard();
+
+    public io.github.verycooltimo.murim.sect.SectSpeechGuard speechGuard() {
+        return speechGuard;
+    }
+
     private UUID sparring;
     private boolean lessonClaimed;
     private int cooldown = 20;
@@ -205,7 +212,7 @@ public class GuestFighter extends Bandit implements DialogueActor {
         }
         boolean hit = super.hurt(source, amount);
         if (hit && !level().isClientSide && isAlive()) {
-            if (source.getEntity() instanceof Player && sparring == null && profile != NpcProfile.CHO_GAN
+            if (source.getEntity() instanceof Player && sparring == null && !profile.questFolk() && profile != NpcProfile.CHO_GAN
                     && profile != NpcProfile.TAE_HYEON) entityData.set(HOSTILE, true);
             if (state() == WINDUP && amount >= BanditMove.POISE) {
                 pulsing = false;
@@ -229,7 +236,7 @@ public class GuestFighter extends Bandit implements DialogueActor {
             getNavigation().stop();
             setState(WINDUP, BanditMove.THRUST);
             playSound(io.github.verycooltimo.murim.registry.ModSounds.QI_CHARGE.get(), 0.8F, 0.7F);
-            if (getTarget() instanceof ServerPlayer p) p.displayClientMessage(Component.translatable("murim.guest.kwon_phase"), false);
+            if (getTarget() instanceof ServerPlayer p) PlayerJournal.record(p, Component.translatable("murim.guest.kwon_phase"));
         }
     }
 
@@ -266,7 +273,7 @@ public class GuestFighter extends Bandit implements DialogueActor {
         getNavigation().stop();
         setHealth(getMaxHealth());
         if (p != null) {
-            p.displayClientMessage(Component.translatable(won ? "murim.guest.spar_won" : "murim.guest.spar_end"), false);
+            PlayerJournal.record(p, Component.translatable(won ? "murim.guest.spar_won" : "murim.guest.spar_end"));
             if (won && !lessonClaimed) {
                 lessonClaimed = true;
                 ItemStack page = new ItemStack(ModItems.MANUAL_PAGE.get());

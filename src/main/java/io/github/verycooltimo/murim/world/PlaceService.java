@@ -42,7 +42,16 @@ public final class PlaceService {
      * вода (текущая вода рядом — водопад, стремнина), старое дерево (ствол 2×2 рядом).
      * Автор 03.10: «также должно работать около деревьев, гор и т. д.».
      */
+    /**
+     * Places of power are switched off for now (author 22.10: on the mountain every block counts as a place and the
+     * «power» effect jumps between blocks in front of your eyes while meditating). Tests that cover the mechanic turn it on.
+     */
+    public static boolean enabled = false;
+
     public static Optional<Place> findPlace(Level level, BlockPos around) {
+        if (!enabled) {
+            return Optional.empty();
+        }
         Optional<BlockPos> stone = findNode(level, around);
         if (stone.isPresent()) {
             BlockState s = level.getBlockState(stone.get());
@@ -142,6 +151,9 @@ public final class PlaceService {
 
     /** Ближайший камень жилы в радиусе (сканирует куб 13×7×13). */
     public static Optional<BlockPos> findNode(Level level, BlockPos around) {
+        if (!enabled) {
+            return Optional.empty();
+        }
         int r = (int) Math.ceil(PlaceRules.RADIUS);
         BlockPos best = null;
         double bestD = Double.MAX_VALUE;
@@ -168,6 +180,9 @@ public final class PlaceService {
 
     /** Множитель прироста медитации: ×2 у камня, ×1,5 у природного места, 0 — сразу после волны. */
     public static double gainFactor(ServerPlayer player) {
+        if (!enabled) {
+            return 1.0D;
+        }
         Place place = place(player);
         if (place == null) {
             return 1.0D;
@@ -180,7 +195,7 @@ public final class PlaceService {
 
     @SubscribeEvent
     static void onPlayerTick(PlayerTickEvent.Post event) {
-        if (!(event.getEntity() instanceof ServerPlayer player)) {
+        if (!enabled || !(event.getEntity() instanceof ServerPlayer player)) {
             return;
         }
         boolean meditating = player.getData(ModAttachments.MEDITATION).active()

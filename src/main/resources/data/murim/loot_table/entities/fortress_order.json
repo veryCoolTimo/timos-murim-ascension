@@ -10,19 +10,7 @@
           "name": "minecraft:map",
           "functions": [
             {
-              "function": "minecraft:exploration_map",
-              "destination": "murim:on_fortress_maps",
-              "decoration": "minecraft:red_x",
-              "zoom": 2,
-              "search_radius": 100,
-              "skip_existing_chunks": false
-            },
-            {
-              "function": "minecraft:set_name",
-              "target": "item_name",
-              "name": {
-                "translate": "item.murim.fortress_order"
-              }
+              "function": "murim:fortress_order"
             }
           ]
         }

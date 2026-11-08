@@ -1,6 +1,0 @@
-{
-  "parent": "minecraft:item/generated",
-  "textures": {
-    "layer0": "murim:item/high_cloud_steps_manual"
-  }
-}

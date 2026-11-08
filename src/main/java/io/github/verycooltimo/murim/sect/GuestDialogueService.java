@@ -55,6 +55,10 @@ public final class GuestDialogueService {
             return;
         }
         int shown = s.shown().get(index);
+        if (shown == SectGeneralTalk.CLOSE) {
+            farewell(p, n);
+            return;
+        }
         if (shown < 0 || shown >= node.options().size()) { close(p, n); return; }
         var o = node.options().get(shown);
         if (!conditions(p, n, o.when())) { show(p, n, d, s.node()); return; }
@@ -63,19 +67,35 @@ public final class GuestDialogueService {
             if (!p.getData(ModAttachments.DIALOGUE).active()) return;
         }
         if (o.next().isPresent()) show(p, n, d, o.next().get());
-        else close(p, n);
+        else farewell(p, n);
     }
 
     private static boolean action(ServerPlayer p, DialogueActor n, Dialogue.Action a) {
         String v = a.value().orElse("");
         switch (a.type()) {
             case "set_flag" -> {
-                if (!v.startsWith("guest.")) return false;
+                if (!v.startsWith("guest.") && !v.startsWith("quest.")) return false;
                 p.setData(ModAttachments.SECT, p.getData(ModAttachments.SECT).with(v));
                 return true;
             }
             case "guest_spar", "guest_challenge", "guest_trade", "guest_buy_tip", "guest_report" -> {
                 return n.dialogueAction(p, a.type());
+            }
+            case "quest_fight", "quest_escort", "quest_hand_in" -> {
+                return io.github.verycooltimo.murim.quest.QuestScenes.action(p, n.actor(), a.type(), v);
+            }
+            case "give_clue" -> {
+                io.github.verycooltimo.murim.quest.Clues.give(p, v);
+                return true;
+            }
+            case "clear_flag" -> {
+                p.setData(ModAttachments.SECT, p.getData(ModAttachments.SECT).without(v));
+                return true;
+            }
+            case "quest_how" -> {
+                String[] qw = v.split(":", 2);
+                if (qw.length == 2) io.github.verycooltimo.murim.quest.Quests.remember(p, qw[0], qw[1]);
+                return true;
             }
             default -> { return false; }
         }
@@ -89,12 +109,21 @@ public final class GuestDialogueService {
         List<Component> labels = new ArrayList<>();
         for (int i = 0; i < node.options().size() && shown.size() < Dialogue.MAX_OPTIONS; i++) {
             var o = node.options().get(i);
-            if (conditions(p, n, o.when())) { shown.add(i); labels.add(DialogueService.optionText(o)); }
+            if (SectGeneralTalk.standardCloser(o)) continue;
+            if (conditions(p, n, o.when())) { shown.add(i); labels.add(DialogueService.optionText(p, o)); }
         }
+        shown.add(SectGeneralTalk.CLOSE);
+        labels.add(Component.translatable(SectGeneralTalk.pick(SectGeneralTalk.CLOSE_STEM + "plain", p.getRandom())));
         String line = node.random().isEmpty() ? node.line() : node.random().get(n.actor().getRandom().nextInt(node.random().size()));
         p.setData(ModAttachments.DIALOGUE, new DialogueService.Session(n.actor().getId(), n.profile().dialogue(), id, List.copyOf(shown)));
         send(p, new DialoguePayloads.Open(n.actor().getId(), n.actor().getName(), Component.translatable(d.title()),
-                Component.translatable(line), labels, ""));
+                Component.translatable(line), labels, "", java.util.Optional.empty(), true));
+    }
+
+    private static void farewell(ServerPlayer p, DialogueActor n) {
+        String key = SectGeneralTalk.pick(SectGeneralTalk.BUBBLE_STEM + "plain", p.getRandom());
+        SectChatter.sendAbove(n.actor(), key, Component.translatable(key));
+        close(p, n);
     }
 
     public static void close(ServerPlayer p, DialogueActor n) {

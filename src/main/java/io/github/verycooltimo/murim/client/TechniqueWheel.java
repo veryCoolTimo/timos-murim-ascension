@@ -14,7 +14,6 @@ import net.minecraft.util.Mth;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
 import net.neoforged.neoforge.client.event.ViewportEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
@@ -59,12 +58,13 @@ public final class TechniqueWheel {
     private static float cursorX;
     private static float cursorY;
     private static int selected = -1;
-    private static int holdTicks;
+    private static final WheelPress PRESS = new WheelPress();
     /** V+R уже применил шаг — это удержание V кольцо не открывает и ничего не выбирает. */
     private static boolean cancelled;
 
     public static void cancel() {
         cancelled = true;
+        PRESS.cancel();
         if (open) {
             open = false;
             selected = -1;
@@ -137,18 +137,30 @@ public final class TechniqueWheel {
         pick();
     }
 
-    @SubscribeEvent
-    static void onClientTick(ClientTickEvent.Post event) {
+    /** Drain before sampling V/R so a press released between ticks still participates in the chord. */
+    static boolean consumeClicks() {
+        boolean clicked = false;
+        // API: /tmp/mr-ref-1121/minecraft-src/net/minecraft/client/KeyMapping.java#consumeClick
+        while (ModKeyMappings.WHEEL.consumeClick()) {
+            PRESS.click();
+            clicked = true;
+        }
+        return clicked;
+    }
+
+    /** Called by ClientTechniqueHandler after chord cancellation, before ordinary R selection. */
+    static void tick() {
         Minecraft minecraft = Minecraft.getInstance();
         LocalPlayer player = minecraft.player;
         finishSelectionIfReleased();
         // Кольцо — после 0,2 с удержания V: быстрое V+R (закреплённый шаг) его не открывает.
-        holdTicks = ModKeyMappings.WHEEL.isDown() ? holdTicks + 1 : 0;
-        if (holdTicks == 0) {
-            cancelled = false;
-        }
-        boolean wanted = player != null && minecraft.screen == null && holdTicks >= 4 && !cancelled
+        ClientLoadoutState.tickPulse();
+        boolean down = ModKeyMappings.WHEEL.isDown();
+        boolean held = down && PRESS.hold();
+        if (!down) cancelled = false;
+        boolean wanted = player != null && minecraft.screen == null && held && !cancelled
                 && ClientLoadoutState.open() > 0 && !ClientMeditationState.state().active();
+        if (down && (player == null || minecraft.screen != null || ClientMeditationState.state().active())) cancel();
         if (wanted && !open) {
             open = true;
             age = 0;
@@ -169,13 +181,15 @@ public final class TechniqueWheel {
         }
     }
 
-    /** Вызывается также перед чтением R: порядок подписчиков тика не влияет на выбранную форму. */
+    /** Release consumes the gesture once, including when called twice in the same tick. */
     public static void finishSelectionIfReleased() {
-        if (!open || ModKeyMappings.WHEEL.isDown()) {
-            return;
-        }
-        open = false;
+        if (ModKeyMappings.WHEEL.isDown()) return;
+        boolean tap = PRESS.release();
         Minecraft mc = Minecraft.getInstance();
+        if (tap && mc.player != null && mc.level != null && mc.screen == null
+                && !ClientMeditationState.state().active()) tapPrevious();
+        if (!open) return;
+        open = false;
         if (mc.player == null || mc.level == null || mc.screen != null) {
             return;
         }
@@ -191,6 +205,33 @@ public final class TechniqueWheel {
             }
             choose(page, form, true);
         }
+    }
+
+    /** Seed a second learned selection before filming, using the normal wheel path. */
+    public static void prepareCaptureTap() {
+        for (int slot = 0; slot < ClientLoadoutState.open(); slot++) {
+            for (ResourceLocation form : entriesOf(slot)) {
+                if ((slot != ClientLoadoutState.active() || !ClientLoadoutState.activeTechnique().filter(form::equals).isPresent())
+                        && TechniqueSlotsHud.mastery(form) != null) {
+                    choose(slot, form, true);
+                    CombatMode.engage();
+                    return;
+                }
+            }
+        }
+    }
+
+    /** Film stand cue: one short V press, with the normal HUD and sound feedback. */
+    public static void captureTap() {
+        PRESS.reset();
+        PRESS.hold();
+        finishSelectionIfReleased();
+    }
+
+    private static void tapPrevious() {
+        boolean switched = ClientLoadoutState.previous();
+        // API: minecraft-src/net/minecraft/sounds/SoundEvents.java#UI_BUTTON_CLICK
+        Sfx.ui(() -> net.minecraft.sounds.SoundEvents.UI_BUTTON_CLICK.value(), 0.25F, switched ? 1.2F : 0.7F);
     }
 
     private static void choose(int slot, ResourceLocation form, boolean activate) {
@@ -425,6 +466,8 @@ public final class TechniqueWheel {
     }
 
     public static void reset() {
+        PRESS.reset();
+        cancelled = false;
         open = false;
         selected = -1;
         slotHover = -1;

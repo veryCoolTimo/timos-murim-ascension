@@ -1,0 +1,354 @@
+{
+  "name": "npc.murim.yul_seok",
+  "base": "murim:disciple",
+  "start": [
+    {
+      "when": [
+        {
+          "flag": "quest.thief.how.self",
+          "not_flag": "quest.thief.recalled"
+        },
+        {
+          "social": "quest:available:thief"
+        }
+      ],
+      "node": "thief_recall_self"
+    },
+    {
+      "when": [
+        {
+          "flag": "quest.thief.how.report",
+          "not_flag": "quest.thief.recalled"
+        },
+        {
+          "social": "quest:available:thief"
+        }
+      ],
+      "node": "thief_recall_report"
+    },
+    {
+      "when": [
+        {
+          "flag": "quest.thief.how.quiet",
+          "not_flag": "quest.thief.recalled"
+        },
+        {
+          "social": "quest:available:thief"
+        }
+      ],
+      "node": "thief_recall_quiet"
+    },
+    {
+      "when": [
+        {
+          "flag": "quest.thief.sok_out",
+          "not_flag": "quest.thief.confessed"
+        },
+        {
+          "social": "quest:available:thief"
+        }
+      ],
+      "node": "thief_sok_out"
+    },
+    {
+      "when": [
+        {
+          "flag": "quest.thief.asked",
+          "not_flag": "quest.thief.confessed"
+        },
+        {
+          "social": "quest:available:thief"
+        }
+      ],
+      "node": "thief_sok_pre"
+    },
+    {
+      "when": [
+        {
+          "social": "quest:heard:strike_advice"
+        },
+        {
+          "social": "quest:available:strike"
+        }
+      ],
+      "node": "strike_hook"
+    },
+    {
+      "when": [
+        {
+          "free": false,
+          "min_standing": "first"
+        }
+      ],
+      "node": "busy_office"
+    },
+    {
+      "when": [
+        {
+          "min_standing": "first"
+        }
+      ],
+      "node": "office"
+    },
+    {
+      "when": [
+        {
+          "free": false
+        }
+      ],
+      "node": "busy"
+    },
+    {
+      "when": [
+        {
+          "period": "formation"
+        }
+      ],
+      "node": "formation"
+    },
+    {
+      "when": [
+        {
+          "period": "breakfast|dinner"
+        }
+      ],
+      "node": "meal"
+    },
+    {
+      "when": [
+        {
+          "period": "night"
+        }
+      ],
+      "node": "night"
+    },
+    {
+      "when": [
+        {
+          "period": "evening"
+        }
+      ],
+      "node": "evening"
+    },
+    {
+      "node": "chatter"
+    }
+  ],
+  "nodes": {
+    "strike_hook": {
+      "line": "dialogue.murim.quest.strike.hook",
+      "options": [
+        {
+          "text": "dialogue.murim.quest.strike.opt.ask",
+          "actions": [
+            {
+              "type": "set_flag",
+              "value": "quest.strike.asked_mentor"
+            }
+          ],
+          "when": [
+            {
+              "social": "quest:available:strike"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.quest.strike.opt.alone",
+          "actions": [
+            {
+              "type": "set_flag",
+              "value": "quest.strike.alone"
+            }
+          ],
+          "when": [
+            {
+              "social": "quest:available:strike"
+            }
+          ]
+        }
+      ]
+    },
+    "thief_sok_pre": {
+      "line": "dialogue.murim.quest.thief.sok_pre",
+      "random": [],
+      "options": [
+        {
+          "text": "dialogue.murim.quest.thief.opt.sleeve",
+          "next": "thief_sok",
+          "when": [
+            {
+              "social": "quest:available:thief"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "thief_sok": {
+      "line": "dialogue.murim.quest.thief.sok",
+      "enter": [
+        {
+          "type": "set_flag",
+          "value": "quest.thief.confessed"
+        }
+      ],
+      "options": [
+        {
+          "text": "dialogue.murim.quest.thief.opt.letter",
+          "next": "thief_letter",
+          "when": [
+            {
+              "social": "quest:available:thief"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.quest.thief.opt.two",
+          "next": "thief_no_two",
+          "when": [
+            {
+              "social": "quest:available:thief"
+            }
+          ]
+        }
+      ]
+    },
+    "thief_sok_out": {
+      "line": "dialogue.murim.quest.thief.sok_out",
+      "enter": [
+        {
+          "type": "set_flag",
+          "value": "quest.thief.confessed"
+        }
+      ],
+      "options": [
+        {
+          "text": "dialogue.murim.quest.thief.opt.letter",
+          "next": "thief_letter",
+          "when": [
+            {
+              "social": "quest:available:thief"
+            }
+          ]
+        }
+      ]
+    },
+    "thief_no_two": {
+      "line": "dialogue.murim.quest.thief.no_two",
+      "options": [
+        {
+          "text": "dialogue.murim.quest.thief.opt.letter",
+          "next": "thief_letter",
+          "when": [
+            {
+              "social": "quest:available:thief"
+            }
+          ]
+        }
+      ]
+    },
+    "thief_letter": {
+      "line": "dialogue.murim.quest.thief.letter_line",
+      "enter": [
+        {
+          "type": "give_clue",
+          "value": "family_letter"
+        }
+      ]
+    },
+    "thief_recall_self": {
+      "line": "dialogue.murim.quest.thief.recall_self",
+      "enter": [
+        {
+          "type": "set_flag",
+          "value": "quest.thief.recalled"
+        }
+      ]
+    },
+    "thief_recall_report": {
+      "line": "dialogue.murim.quest.thief.recall_report",
+      "enter": [
+        {
+          "type": "set_flag",
+          "value": "quest.thief.recalled"
+        }
+      ]
+    },
+    "thief_recall_quiet": {
+      "line": "dialogue.murim.quest.thief.recall_quiet",
+      "enter": [
+        {
+          "type": "set_flag",
+          "value": "quest.thief.recalled"
+        }
+      ]
+    },
+    "chatter": {
+      "random": [
+        "@context"
+      ],
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.fragments.sources.ask",
+          "next": "fragment_sources"
+        },
+        {
+          "text": "dialogue.murim.escort.opt.menu",
+          "when": [
+            {
+              "member": true
+            }
+          ],
+          "next": "escort_menu"
+        },
+        {
+          "text": "dialogue.murim.disciple.opt.challenge",
+          "when": [
+            {
+              "free": true
+            }
+          ],
+          "next": "challenge"
+        },
+        {
+          "text": "dialogue.murim.bout.opt.ring",
+          "when": [
+            {
+              "social": "progression:bout_menu"
+            }
+          ],
+          "actions": [
+            {
+              "type": "progression_menu",
+              "value": "bouts"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.disciple.opt.doing",
+          "when": [
+            {
+              "period": "training"
+            }
+          ],
+          "next": "doing"
+        },
+        {
+          "text": "dialogue.murim.social.opt.news",
+          "next": "sect_news"
+        }
+      ]
+    },
+    "fragment_sources": {
+      "line": "dialogue.murim.fragments.sources.yul_seok",
+      "options": [
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    }
+  }
+}

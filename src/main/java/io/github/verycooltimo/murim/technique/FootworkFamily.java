@@ -13,15 +13,14 @@ package io.github.verycooltimo.murim.technique;
  * </ul>
  */
 public enum FootworkFamily {
-    HUASHAN("huashan", 5, new int[] {0, 0, 1, 2, 2}, 1, 2, -1, 3),
-    WIND_GOD("wind_god", 8, new int[] {0, 0, 1, 1, 2, 3, 3, 4, 4}, 0, 2, 4, 7),
-    HEAVENLY_DEMON("heavenly_demon", 8, new int[] {0, 0, 1, 1, 2, 2, 2, 3, 3}, 0, 2, -1, -1);
+    HUASHAN("huashan", 5, new int[] {0, 0, 1, 2, 2, 2, 3, 4}, 1, 2, -1, 3),
+    WIND_GOD("wind_god", 8, new int[] {0, 0, 1, 1, 2, 3, 3, 4, 4, 5, 6}, 0, 2, 4, 7);
 
-    private static final double[] WIND_EVADE_DISTANCE = {3, 3.5, 4, 4, 5, 5.5, 6, 6, 7};
-    private static final int[] WIND_EVADE_WINDOW = {0, 0, 2, 2, 3, 3, 4, 4, 4};
-    private static final int[] WIND_EVADE_COOLDOWN = {60, 60, 58, 56, 54, 50, 48, 44, 40};
-    private static final int[] WIND_VFX = {0, 0, 1, 1, 2, 2, 2, 3, 3};
-    private static final int[] WIND_GHOST_LIFE = {0, 4, 6, 8};
+    private static final double[] WIND_EVADE_DISTANCE = {3, 3.5, 4, 4, 5, 5.5, 6, 6, 7, 7.5, 8};
+    private static final int[] WIND_EVADE_WINDOW = {0, 0, 2, 2, 3, 3, 4, 4, 4, 5, 6};
+    private static final int[] WIND_EVADE_COOLDOWN = {60, 60, 58, 56, 54, 50, 48, 44, 40, 38, 36};
+    private static final int[] WIND_VFX = {0, 0, 1, 1, 2, 2, 2, 3, 3, 4, 5};
+    private static final int[] WIND_GHOST_LIFE = {0, 4, 6, 8, 10, 12};
 
     private final String id;
     private final int executionSteps;
@@ -50,6 +49,7 @@ public enum FootworkFamily {
     }
 
     public static FootworkFamily byId(String id) {
+        if ("seven_stars".equals(id)) return HUASHAN;
         for (FootworkFamily f : values()) {
             if (f.id.equals(id)) {
                 return f;
@@ -83,9 +83,9 @@ public enum FootworkFamily {
         return airTurnUnlock >= 0 && executionTier >= airTurnUnlock;
     }
 
-    /** God Wind uses all nine mastery indices, independently of Huashan travel tiers. */
+    /** God Wind uses all eleven execution indices, independently of Huashan travel tiers. */
     public static int windTier(int executionTier) {
-        return Math.max(0, Math.min(8, executionTier));
+        return Math.max(0, Math.min(10, executionTier));
     }
 
     public static double windEvadeDistance(int executionTier) {

@@ -5,6 +5,96 @@
     {
       "when": [
         {
+          "flag": "quest.thief.confessed",
+          "not_flag": "clue.torn_cloth"
+        },
+        {
+          "social": "quest:available:thief"
+        }
+      ],
+      "node": "thief_half"
+    },
+    {
+      "when": [
+        {
+          "flag": "quest.thief.confessed",
+          "not_flag": "quest.thief.done"
+        },
+        {
+          "social": "quest:available:thief"
+        }
+      ],
+      "node": "thief_resolve"
+    },
+    {
+      "when": [
+        {
+          "social": "quest:heard:thief_hook"
+        },
+        {
+          "social": "quest:available:thief"
+        }
+      ],
+      "node": "thief_hook"
+    },
+    {
+      "when": [
+        {
+          "social": "quest:heard:debt_hook"
+        },
+        {
+          "social": "quest:available:debt"
+        }
+      ],
+      "node": "debt_hook"
+    },
+    {
+      "when": [
+        {
+          "flag": "quest.debt.how.paid",
+          "not_flag": "quest.debt.recalled"
+        },
+        {
+          "social": "quest:available:debt"
+        }
+      ],
+      "node": "debt_recall_paid"
+    },
+    {
+      "when": [
+        {
+          "flag": "quest.debt.how.returned",
+          "not_flag": "quest.debt.recalled"
+        },
+        {
+          "social": "quest:available:debt"
+        }
+      ],
+      "node": "debt_recall_returned"
+    },
+    {
+      "when": [
+        {
+          "flag": "quest.debt.offered",
+          "not_flag": "quest.debt.munasked"
+        },
+        {
+          "social": "quest:available:debt"
+        }
+      ],
+      "node": "debt_confirm"
+    },
+    {
+      "when": [
+        {
+          "min_standing": "first"
+        }
+      ],
+      "node": "office"
+    },
+    {
+      "when": [
+        {
           "period": "night"
         }
       ],
@@ -26,10 +116,31 @@
     "greet": {
       "random": [
         "dialogue.murim.steward.greet1",
-        "dialogue.murim.steward.greet2"
+        "dialogue.murim.steward.greet2",
+        "dialogue.murim.steward.greet3",
+        "dialogue.murim.steward.greet4",
+        "dialogue.murim.steward.greet5",
+        "dialogue.murim.steward.greet6"
       ],
       "gesture": "explain",
       "options": [
+        {
+          "text": "dialogue.murim.fragments.sources.ask",
+          "next": "fragment_sources"
+        },
+        {
+          "text": "dialogue.murim.approach.opt.not_now",
+          "when": [
+            {
+              "social": "approaching"
+            }
+          ],
+          "actions": [
+            {
+              "type": "approach_decline"
+            }
+          ]
+        },
         {
           "text": "dialogue.murim.progression.opt.menu",
           "when": [
@@ -65,6 +176,10 @@
       "line": "dialogue.murim.steward.night",
       "gesture": "shake",
       "options": [
+        {
+          "text": "dialogue.murim.fragments.sources.ask",
+          "next": "fragment_sources"
+        },
         {
           "text": "dialogue.murim.opt.leave"
         }
@@ -170,10 +285,18 @@
     "accounts": {
       "random": [
         "dialogue.murim.steward.accounts1",
-        "dialogue.murim.steward.accounts2"
+        "dialogue.murim.steward.accounts2",
+        "dialogue.murim.steward.accounts3",
+        "dialogue.murim.steward.accounts4",
+        "dialogue.murim.steward.accounts5",
+        "dialogue.murim.steward.accounts6"
       ],
       "gesture": "explain",
       "options": [
+        {
+          "text": "dialogue.murim.fragments.sources.ask",
+          "next": "fragment_sources"
+        },
         {
           "text": "dialogue.murim.progression.opt.menu",
           "when": [
@@ -251,6 +374,280 @@
             }
           ]
         },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "office": {
+      "random": [
+        "dialogue.murim.steward.office.1",
+        "dialogue.murim.steward.office.2",
+        "dialogue.murim.steward.office.3",
+        "dialogue.murim.steward.office.4",
+        "dialogue.murim.steward.office.5",
+        "dialogue.murim.steward.office.6"
+      ],
+      "args": [
+        "position"
+      ],
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.fragments.sources.ask",
+          "next": "fragment_sources"
+        },
+        {
+          "text": "dialogue.murim.approach.opt.not_now",
+          "when": [
+            {
+              "social": "approaching"
+            }
+          ],
+          "actions": [
+            {
+              "type": "approach_decline"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.progression.opt.menu",
+          "when": [
+            {
+              "social": "progression:menu"
+            }
+          ],
+          "actions": [
+            {
+              "type": "progression_menu"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.steward.opt.estate",
+          "next": "estate"
+        },
+        {
+          "text": "dialogue.murim.steward.opt.help",
+          "when": [
+            {
+              "member": true
+            }
+          ],
+          "next": "help"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "debt_confirm": {
+      "line": "dialogue.murim.quest.debt.confirm",
+      "enter": [
+        {
+          "type": "set_flag",
+          "value": "quest.debt.munasked"
+        }
+      ],
+      "options": [
+        {
+          "text": "dialogue.murim.quest.debt.opt.ok",
+          "when": [
+            {
+              "social": "quest:available:debt"
+            }
+          ]
+        }
+      ]
+    },
+    "debt_recall_paid": {
+      "line": "dialogue.murim.quest.debt.recall_paid",
+      "enter": [
+        {
+          "type": "set_flag",
+          "value": "quest.debt.recalled"
+        }
+      ],
+      "options": [
+        {
+          "text": "dialogue.murim.quest.debt.opt.ok",
+          "when": [
+            {
+              "social": "quest:available:debt"
+            }
+          ]
+        }
+      ]
+    },
+    "debt_recall_returned": {
+      "line": "dialogue.murim.quest.debt.recall_returned",
+      "enter": [
+        {
+          "type": "set_flag",
+          "value": "quest.debt.recalled"
+        }
+      ],
+      "options": [
+        {
+          "text": "dialogue.murim.quest.debt.opt.ok",
+          "when": [
+            {
+              "social": "quest:available:debt"
+            }
+          ]
+        }
+      ]
+    },
+    "thief_hook": {
+      "line": "dialogue.murim.quest.thief.hook",
+      "options": [
+        {
+          "text": "dialogue.murim.quest.thief.opt.ask",
+          "next": "thief_ask",
+          "when": [
+            {
+              "social": "quest:available:thief"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "thief_ask": {
+      "line": "dialogue.murim.quest.thief.ask",
+      "enter": [
+        {
+          "type": "set_flag",
+          "value": "quest.thief.asked"
+        }
+      ],
+      "options": [
+        {
+          "text": "dialogue.murim.quest.thief.opt.ask",
+          "when": [
+            {
+              "social": "quest:available:thief"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.quest.thief.opt.watch",
+          "when": [
+            {
+              "not_flag": "quest.thief.watching"
+            },
+            {
+              "social": "quest:available:thief"
+            }
+          ],
+          "actions": [
+            {
+              "type": "set_flag",
+              "value": "quest.thief.watching"
+            }
+          ],
+          "next": "thief_watching"
+        }
+      ]
+    },
+    "thief_watching": {
+      "line": "dialogue.murim.quest.thief.watching"
+    },
+    "thief_half": {
+      "line": "dialogue.murim.quest.thief.half"
+    },
+    "thief_resolve": {
+      "line": "dialogue.murim.quest.thief.resolve",
+      "options": [
+        {
+          "text": "dialogue.murim.quest.thief.opt.self",
+          "actions": [
+            {
+              "type": "quest_hand_in",
+              "value": "thief_self"
+            }
+          ],
+          "next": "thief_closed_self",
+          "when": [
+            {
+              "social": "quest:available:thief"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.quest.thief.opt.report",
+          "actions": [
+            {
+              "type": "quest_hand_in",
+              "value": "thief_report"
+            }
+          ],
+          "next": "thief_closed_report",
+          "when": [
+            {
+              "social": "quest:available:thief"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.quest.thief.opt.quiet",
+          "when": [
+            {
+              "has_item": "murim:silver_tael*3"
+            },
+            {
+              "social": "quest:available:thief"
+            }
+          ],
+          "actions": [
+            {
+              "type": "quest_hand_in",
+              "value": "thief_quiet"
+            }
+          ],
+          "next": "thief_closed_quiet"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "thief_closed_self": {
+      "line": "dialogue.murim.quest.thief.closed_self"
+    },
+    "thief_closed_report": {
+      "line": "dialogue.murim.quest.thief.closed_report"
+    },
+    "thief_closed_quiet": {
+      "line": "dialogue.murim.quest.thief.closed_quiet"
+    },
+    "debt_hook": {
+      "line": "dialogue.murim.quest.debt.hook",
+      "enter": [
+        {
+          "type": "set_flag",
+          "value": "quest.debt.hooked"
+        }
+      ],
+      "options": [
+        {
+          "text": "dialogue.murim.quest.debt.opt.hook",
+          "when": [
+            {
+              "social": "quest:available:debt"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "fragment_sources": {
+      "line": "dialogue.murim.fragments.sources.steward",
+      "options": [
         {
           "text": "dialogue.murim.opt.leave"
         }

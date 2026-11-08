@@ -610,6 +610,13 @@ public class TangDagger extends Projectile {
         return true;
     }
 
+    /** Bamboo catch turns any guided dagger into a straight return; no old target/thread survives. */
+    public void bambooReturn(Vec3 velocity) {
+        setMode(STRAIGHT); speed = velocity.length(); setDeltaMovement(velocity);
+        entityData.set(TARGET, -1); struck.clear(); life = tickCount + 60;
+        redirected = true;
+    }
+
     /** Отозвать к мастеру (второе R). */
     void recall() {
         setMode(RECALL);

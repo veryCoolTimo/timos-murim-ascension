@@ -1,0 +1,23 @@
+{
+  "display": {
+    "icon": {
+      "id": "murim:vault_chest"
+    },
+    "title": {
+      "translate": "advancement.murim.sticky_fingers.title"
+    },
+    "description": {
+      "translate": "advancement.murim.sticky_fingers.desc"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": true
+  },
+  "parent": "murim:join",
+  "criteria": {
+    "done": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

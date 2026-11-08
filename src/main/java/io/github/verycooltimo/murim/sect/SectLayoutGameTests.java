@@ -13,6 +13,7 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
@@ -323,6 +324,44 @@ public final class SectLayoutGameTests {
         SectLayoutBoxes.place(level, site, List.of(box), data, corner.getY() + 6);
         helper.assertTrue(level.getBlockState(corner.above(3)).is(Blocks.LIME_CONCRETE), "highest solid centre not used");
         SectLayoutBoxes.clear(level, data);
+        helper.succeed();
+    }
+
+    /**
+     * The penance cave is read from the layout file, not from the plan (author 18.10: the plan put it outside the mountain,
+     * unbuilt): the zone and the landmark follow the site in every rotation, the cell is inside the zone, the mouth outside it.
+     */
+    @GameTest(template = "sect_yard", batch = "sect_layout")
+    public static void penanceCaveComesFromTheLayoutFileInEveryRotation(GameTestHelper helper) {
+        SectAccess.Rule rule = SectAccess.RULES.stream().filter(r -> "penance".equals(r.id())).findFirst().orElseThrow();
+        for (int rotation = 0; rotation < 4; rotation++) {
+            // the file is given to the canonical (baked) mountain only
+            MountHuaSite site = new MountHuaSite(3000 + 101 * rotation, 7000 - 57 * rotation, 70 + rotation, rotation, 1L, true);
+            SectLayout layout = SectLayout.hua(site);
+            SectLayoutFile file = layout.file();
+            helper.assertTrue(file != null, "the shipped layout is missing");
+            SectLayoutFile.Landmark cave = file.landmark("penance");
+            SectLayoutFile.Zone zone = file.zone("penance");
+            helper.assertTrue(cave != null && zone != null, "the layout has no penance cave (rotation " + rotation + ")");
+            helper.assertTrue(zone.rect().contains(cave.cell().getX(), cave.cell().getZ()) && zone.y() == cave.cell().getY() + 1,
+                    "the cell is outside the zone (rotation " + rotation + ")");
+            Vec3 feet = new Vec3(cave.cell().getX() + 0.5D, cave.cell().getY() + 1.0D, cave.cell().getZ() + 0.5D);
+            helper.assertTrue(layout.inside("penance", feet, 0.0D), "the cell is not inside the penance place (rotation " + rotation + ")");
+            helper.assertTrue(SectAccess.inside(layout, rule, feet, 0.0D), "the access rule does not see the cell (rotation " + rotation + ")");
+            Vec3 centre = layout.at("penance", 0.0D, 0.0D);
+            helper.assertTrue(centre != null && zone.rect().x0() <= centre.x && centre.x <= zone.rect().x1() + 1
+                    && zone.rect().z0() <= centre.z && centre.z <= zone.rect().z1() + 1 && Math.abs(centre.y - zone.y()) < 1.0E-6,
+                    "the centre of the place is not the centre of the carved volume (rotation " + rotation + ")");
+            double[] local = layout.local("penance", centre);
+            helper.assertTrue(local != null && Math.abs(local[0]) < 1.0E-6 && Math.abs(local[1]) < 1.0E-6,
+                    "local() does not invert at() (rotation " + rotation + ")");
+            helper.assertTrue(cave.gate() != null && cave.mouth() != null, "the landmark has no gate or mouth");
+            Vec3 mouth = new Vec3(cave.mouth().getX() + 0.5D, cave.mouth().getY(), cave.mouth().getZ() + 0.5D);
+            helper.assertTrue(!layout.inside("penance", mouth, 0.0D) && !SectAccess.inside(layout, rule, mouth, 0.0D),
+                    "the mouth outside the gate is inside the penance place (rotation " + rotation + ")");
+            helper.assertTrue(Math.abs(cave.gate().getX() - cave.cell().getX()) <= 12 && Math.abs(cave.gate().getZ() - cave.cell().getZ()) <= 12
+                    && Math.abs(cave.gate().getY() - cave.cell().getY()) <= 6, "the gate is out of the seal's range of the door");
+        }
         helper.succeed();
     }
 }

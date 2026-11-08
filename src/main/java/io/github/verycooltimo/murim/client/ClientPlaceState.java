@@ -55,7 +55,7 @@ public final class ClientPlaceState {
     @SubscribeEvent
     static void onTick(ClientTickEvent.Post event) {
         Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || mc.level == null) {
+        if (mc.player == null || mc.level == null || (!PlaceService.enabled && forced == null)) {
             place = null;
             return;
         }

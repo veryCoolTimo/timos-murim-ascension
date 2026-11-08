@@ -5,6 +5,7 @@ import io.github.verycooltimo.murim.entity.Bandit;
 import io.github.verycooltimo.murim.entity.BanditArcher;
 import io.github.verycooltimo.murim.entity.BanditSwordsman;
 import io.github.verycooltimo.murim.registry.ModEntities;
+import io.github.verycooltimo.murim.sect.PlayerJournal;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
 import net.minecraft.ChatFormatting;
@@ -38,8 +39,8 @@ import java.util.UUID;
 
 /**
  * Жизнь лагерей бандитов (docs/design/24-bandit-camp.md §2): банда появляется, когда игрок
- * подходит к лагерю; погибшие возвращаются через игровые сутки, пока лагерь не разгромлен;
- * разгромленный (убит весь состав, главарь тоже) больше не заселяется.
+ * подходит к лагерю; потери пополняются на рассвете без игрока рядом. Разгромленный лагерь
+ * становится руинами, а через 5–7 игровых дней банда строит новый в другом месте (CampLife).
  *
  * <p>Почему не спавн при генерации (как ведьма в хижине): состав нужно помнить — кто жив, кто
  * убит, разгромлен ли лагерь, — а сущность, созданная на потоке генерации, не попадает в
@@ -57,10 +58,7 @@ public final class BanditCamps {
     public static final double POPULATE_RANGE = 64.0D;
 
     /** Ближе этого банда не возвращается: никто не появляется у игрока на глазах. */
-    public static final double REFILL_MIN_RANGE = 28.0D;
-
-    /** Через сколько тиков после последней потери банда пополняется: игровые сутки. */
-    public static final long RESPAWN_TICKS = 24000L;
+    public static final double REFILL_MIN_RANGE = 48.0D;
 
     /** Тревога (колокол) не чаще раза в 30 с. */
     static final long ALARM_COOLDOWN = 600L;
@@ -82,6 +80,10 @@ public final class BanditCamps {
         if (level.players().isEmpty()) {
             return;
         }
+        // Snapshot: replacement may register a new camp while visiting an old ruin.
+        List<BanditCampData.Camp> known = new java.util.ArrayList<>();
+        data(level).all().forEach(known::add);
+        for (BanditCampData.Camp camp : known) tick(level, camp);
         Structure structure = level.registryAccess().registryOrThrow(Registries.STRUCTURE).get(BanditCamp.KEY);
         if (structure == null) {
             return;
@@ -136,26 +138,42 @@ public final class BanditCamps {
     }
 
     /**
-     * Шаг жизни лагеря: заселить, если игрок близко и лагерь пуст; пополнить через сутки после
-     * потерь, если игрок не вплотную. Общий для поиска у игроков, команды и GameTest.
+     * Шаг жизни лагеря: расписание, руины и новый лагерь, заселение при подходе, тихое
+     * пополнение на рассвете. Общий для поиска у игроков, команды и GameTest.
      */
     public static void tick(ServerLevel level, BanditCampData.Camp camp) {
-        if (camp.cleared || level.getDifficulty() == Difficulty.PEACEFUL) {
-            return;
-        }
+        if (level.getDifficulty() == Difficulty.PEACEFUL) return;
+        CampLife.tick(level, camp);
+        if (camp.cleared || !ready(level, camp)) return;
         double nearest = nearestPlayer(level, camp.centre);
-        if (nearest > POPULATE_RANGE || !ready(level, camp)) {
-            return;
-        }
         if (!camp.populated) {
-            populate(level, camp);
+            if (nearest <= POPULATE_RANGE) populate(level, camp);
             return;
         }
-        List<CampRoster.Member> roster = CampTemplate.roster(camp);
-        if (camp.alive.size() < roster.size() && nearest > REFILL_MIN_RANGE
-                && level.getGameTime() - camp.lastLoss >= RESPAWN_TICKS) {
-            refill(level, camp);
+        // An unloaded expedition slot is restored quietly, independently of ordinary losses.
+        if (!camp.returning.isEmpty() && nearest > REFILL_MIN_RANGE) {
+            restoreTravellers(level, camp);
         }
+        long day = Math.floorDiv(level.getDayTime(), CampLife.DAY);
+        long time = Math.floorMod(level.getDayTime(), CampLife.DAY);
+        if (time < 1000L && camp.refillDay != day && nearest > REFILL_MIN_RANGE) {
+            camp.refillDay = day;
+            refill(level, camp);
+            data(level).setDirty();
+        }
+    }
+
+    public static void restoreTravellers(ServerLevel level, BanditCampData.Camp camp) {
+        if (!ready(level, camp) || camp.cleared) return;
+        for (CampRoster.Member member : CampTemplate.roster(camp)) {
+            if (!camp.returning.contains(member.slot()) || camp.alive.containsKey(member.slot())) continue;
+            Bandit b = spawn(level, camp, CampTemplate.posts(camp), member);
+            if (b != null) {
+                camp.alive.put(member.slot(), b.getUUID());
+                camp.returning.remove(member.slot());
+            }
+        }
+        data(level).setDirty();
     }
 
     private static double nearestPlayer(ServerLevel level, BlockPos centre) {
@@ -180,8 +198,9 @@ public final class BanditCamps {
 
     /** Первое заселение: весь состав. */
     public static void populate(ServerLevel level, BanditCampData.Camp camp) {
+        if (camp.populated || camp.cleared) return;
         camp.populated = true;
-        camp.alive.clear();
+        camp.refillDay = Math.floorDiv(level.getDayTime(), CampLife.DAY);
         refill(level, camp);
         MurimMod.LOGGER.info("Лагерь бандитов {} заселён: {} бандитов", camp.centre.toShortString(), camp.alive.size());
     }
@@ -191,7 +210,7 @@ public final class BanditCamps {
         List<CampRoster.Member> roster = CampTemplate.roster(camp);
         List<CampLayout.Post> posts = CampTemplate.posts(camp);
         for (CampRoster.Member m : roster) {
-            if (camp.alive.containsKey(m.slot())) {
+            if (camp.cleared || camp.alive.containsKey(m.slot()) || camp.returning.contains(m.slot())) {
                 continue;
             }
             Bandit b = spawn(level, camp, posts, m);
@@ -226,7 +245,12 @@ public final class BanditCamps {
         } else if (m.qi() && b instanceof BanditArcher a) {
             a.makeElite();
         }
-        level.addFreshEntity(b);
+        // Register before EntityJoinLevelEvent validates roster ownership.
+        camp.alive.put(m.slot(), b.getUUID());
+        if (!level.addFreshEntity(b)) {
+            camp.alive.remove(m.slot(), b.getUUID());
+            return null;
+        }
         return b;
     }
 
@@ -246,16 +270,18 @@ public final class BanditCamps {
         if (camp == null) {
             return;
         }
-        AABB area = new AABB(camp.centre).inflate(40.0D);
+        boolean away = camp.travellers.contains(source.campSlot());
+        AABB area = new AABB(away ? source.blockPosition() : camp.centre).inflate(40.0D);
         for (Bandit other : level.getEntitiesOfClass(Bandit.class, area,
-                b -> b != source && b.campKey() == source.campKey() && b.isAlive() && b.getTarget() == null)) {
+                b -> b != source && b.campKey() == source.campKey() && b.isAlive() && b.getTarget() == null
+                        && camp.travellers.contains(b.campSlot()) == away)) {
             other.setTarget(target);
         }
-        if (level.getGameTime() - camp.lastAlarm >= ALARM_COOLDOWN) {
+        if (!away && level.getGameTime() - camp.lastAlarm >= ALARM_COOLDOWN) {
             camp.lastAlarm = level.getGameTime();
             level.playSound(null, camp.centre.above(3), SoundEvents.BELL_BLOCK, SoundSource.HOSTILE, 2.5F, 0.7F);
             if (target instanceof ServerPlayer player) {
-                player.displayClientMessage(Component.translatable("murim.camp.alarm").withStyle(ChatFormatting.RED), true);
+                PlayerJournal.record(player, Component.translatable("murim.camp.alarm").withStyle(ChatFormatting.RED));
             }
         }
     }
@@ -267,9 +293,6 @@ public final class BanditCamps {
             return;
         }
         Entity.RemovalReason reason = b.getRemovalReason();
-        if (reason != Entity.RemovalReason.KILLED && reason != Entity.RemovalReason.DISCARDED) {
-            return;
-        }
         BanditCampData data = data(level);
         BanditCampData.Camp camp = data.get(b.campKey());
         if (camp == null) {
@@ -279,24 +302,57 @@ public final class BanditCamps {
         if (id == null || !id.equals(b.getUUID())) {
             return;
         }
+        boolean unloaded = reason != Entity.RemovalReason.KILLED && reason != Entity.RemovalReason.DISCARDED;
+        if (unloaded && !camp.travellers.contains(b.campSlot())) return;
+        if (unloaded) {
+            returnUnloaded(level, b);
+            return;
+        }
         camp.alive.remove(b.campSlot());
+        camp.travellers.remove(b.campSlot());
         data.setDirty();
         if (reason == Entity.RemovalReason.KILLED) {
             camp.lastLoss = level.getGameTime();
-            if (camp.alive.isEmpty()) {
+            camp.refillDay = Math.floorDiv(level.getDayTime(), CampLife.DAY);
+            if (camp.alive.isEmpty() && camp.returning.isEmpty()) {
                 clear(level, camp);
             }
         }
     }
 
+    /** Transfer ownership before a replacement is spawned; late chunk loads fail onJoin's UUID check. */
+    public static void returnUnloaded(ServerLevel level, Bandit b) {
+        var c = data(level).get(b.campKey());
+        if (c == null || !c.travellers.contains(b.campSlot()) || !b.getUUID().equals(c.alive.get(b.campSlot()))) return;
+        c.alive.remove(b.campSlot());
+        c.returning.add(b.campSlot());
+        c.travellers.remove(b.campSlot());
+        c.tripTarget = c.centre;
+        data(level).setDirty();
+    }
+
+    /** Reject an expedition entity saved in an unloaded chunk after its slot was restored. */
+    @SubscribeEvent
+    static void onJoin(net.neoforged.neoforge.event.entity.EntityJoinLevelEvent event) {
+        if (!(event.getEntity() instanceof Bandit b) || !(event.getLevel() instanceof ServerLevel level)
+                || b.campKey() == Bandit.NO_CAMP) return;
+        BanditCampData.Camp camp = data(level).get(b.campKey());
+        if (camp == null || camp.cleared || !b.getUUID().equals(camp.alive.get(b.campSlot()))) event.setCanceled(true);
+    }
+
     /** Лагерь разгромлен: больше не заселяется. */
     public static void clear(ServerLevel level, BanditCampData.Camp camp) {
+        if (camp.cleared) return;
         camp.cleared = true;
+        camp.nextCamp = level.getDayTime() + (5L + Math.floorMod(camp.seed, 3L)) * CampLife.DAY;
+        CampLife.ruin(level, camp);
         data(level).setDirty();
         MurimMod.LOGGER.info("Лагерь бандитов {} разгромлен", camp.centre.toShortString());
+        io.github.verycooltimo.murim.sect.SectContracts.campCleared(level, camp);
         for (ServerPlayer p : level.players()) {
             if (p.distanceToSqr(camp.centre.getX(), p.getY(), camp.centre.getZ()) < 96.0D * 96.0D) {
-                p.displayClientMessage(Component.translatable("murim.camp.cleared").withStyle(ChatFormatting.GOLD), false);
+                io.github.verycooltimo.murim.advancement.MurimAdvancements.grant(p, "camp_cleared");
+                PlayerJournal.record(p, Component.translatable("murim.camp.cleared").withStyle(ChatFormatting.GOLD));
                 level.playSound(null, p.blockPosition(), SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, SoundSource.PLAYERS, 0.8F, 1.0F);
             }
         }

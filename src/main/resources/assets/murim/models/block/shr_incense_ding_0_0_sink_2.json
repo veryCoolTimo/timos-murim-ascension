@@ -1,0 +1,32 @@
+{
+  "loader": "neoforge:obj",
+  "model": "murim:models/block/obj/shr_incense_ding_0_0.obj",
+  "flip_v": false,
+  "emissive_ambient": true,
+  "automatic_culling": true,
+  "shade_quads": true,
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "wood": "murim:block/shr_house_wood",
+    "recess": "murim:block/shr_house_recess",
+    "gold": "murim:block/shr_house_gold",
+    "wax": "murim:block/shr_house_wax",
+    "ash": "murim:block/shr_house_ash",
+    "stick": "murim:block/shr_house_stick",
+    "panel": "murim:block/shr_house_panel",
+    "dragon": "murim:block/shr_house_dragon",
+    "head": "murim:block/shr_house_head",
+    "portrait": "murim:block/shr_house_portrait",
+    "trim": "murim:block/shr_house_trim",
+    "flame": "murim:block/shr_house_flame",
+    "particle": "murim:block/shr_house_wood"
+  },
+  "ambientocclusion": false,
+  "transform": {
+    "translation": [
+      0,
+      -0.125,
+      0
+    ]
+  }
+}

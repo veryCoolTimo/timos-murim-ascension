@@ -1,0 +1,117 @@
+{
+  "id": "debt",
+  "requires_sites": true,
+  "title": "quest.murim.debt.title",
+  "steps": [
+    {
+      "type": "overheard",
+      "id": "debt_hook",
+      "speaker": "steward_mun",
+      "gate": {
+        "not_flags": [
+          "quest.debt.hooked",
+          "quest.debt.done"
+        ],
+        "days_in_sect": 1
+      }
+    },
+    {
+      "type": "clue",
+      "id": "crate_fittings",
+      "model": "scrap"
+    },
+    {
+      "type": "inspect",
+      "id": "debt_bill",
+      "kind": "paper",
+      "seen": "quest.debt.bill"
+    },
+    {
+      "type": "inspect",
+      "id": "debt_crate",
+      "kind": "box",
+      "grant": "crate_fittings",
+      "seen": "quest.debt.crate"
+    },
+    {
+      "type": "talk",
+      "id": "debt_offer",
+      "npc": "supplier",
+      "node": "debt_offer"
+    },
+    {
+      "type": "talk",
+      "id": "debt_mun",
+      "npc": "steward_mun",
+      "node": "debt_confirm",
+      "requires": {
+        "flags": [
+          "quest.debt.offered"
+        ],
+        "not_flags": [
+          "quest.debt.munasked"
+        ]
+      }
+    },
+    {
+      "type": "hand_in",
+      "id": "debt_pay",
+      "npc": "supplier",
+      "node": "debt_offer",
+      "take_items": [
+        "murim:silver_tael*12"
+      ],
+      "requires": {
+        "not_flags": [
+          "quest.debt.done"
+        ]
+      },
+      "reward": {
+        "effects": {
+          "flags": [
+            "quest.debt.done"
+          ],
+          "how": "debt:paid",
+          "merit": 6
+        }
+      }
+    },
+    {
+      "type": "hand_in",
+      "id": "debt_return",
+      "npc": "supplier",
+      "node": "debt_offer",
+      "take_clues": [
+        "crate_fittings"
+      ],
+      "requires": {
+        "not_flags": [
+          "quest.debt.done"
+        ]
+      },
+      "reward": {
+        "effects": {
+          "flags": [
+            "quest.debt.done"
+          ],
+          "how": "debt:returned",
+          "merit": 6
+        }
+      }
+    },
+    {
+      "type": "talk",
+      "id": "debt_recall",
+      "npc": "steward_mun",
+      "node": "debt_recall_paid",
+      "requires": {
+        "flags": [
+          "quest.debt.done"
+        ],
+        "not_flags": [
+          "quest.debt.recalled"
+        ]
+      }
+    }
+  ]
+}

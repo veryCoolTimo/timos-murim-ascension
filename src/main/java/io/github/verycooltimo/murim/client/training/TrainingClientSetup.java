@@ -15,7 +15,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 
 /**
- * Hooks the training props layer onto both player skins (wide and slim arms), like {@code MurimModClient#onAddLayers}.
+ * Hooks the training stone layer onto both player skins (wide and slim arms), like {@code MurimModClient#onAddLayers}.
  * Same subscriber style as the HUD layers ({@code QiHud}).
  *
  * <p>API: reference/neoforge-src/net/neoforged/neoforge/client/event/EntityRenderersEvent.java#AddLayers
@@ -27,16 +27,13 @@ public final class TrainingClientSetup {
     }
 
     /**
-     * How to train, on the two props (no new keys: the hint is the only place that tells the input).
+     * How to use the training stone (no new keys: the hint is the only place that tells the input).
      * API: reference/neoforge-src/net/neoforged/neoforge/event/entity/player/ItemTooltipEvent.java
      */
     @SubscribeEvent
     static void onTooltip(ItemTooltipEvent event) {
         if (event.getItemStack().is(TrainingRegistry.TRAINING_STONE_ITEM.get())) {
             event.getToolTip().add(Component.translatable("murim.training.tooltip.stone").withStyle(ChatFormatting.GRAY));
-        } else if (event.getItemStack().is(TrainingRegistry.WEIGHT_SLAB.get())) {
-            event.getToolTip().add(Component.translatable("murim.training.tooltip.slab").withStyle(ChatFormatting.GRAY));
-            event.getToolTip().add(Component.translatable("murim.training.tooltip.hint").withStyle(ChatFormatting.DARK_GRAY));
         }
     }
 

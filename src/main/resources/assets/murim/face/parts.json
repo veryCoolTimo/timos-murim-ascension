@@ -1,0 +1,108 @@
+{
+  "cell": 16,
+  "base": "murim:face/face_base.png",
+  "atlas": "murim:face/parts.png",
+  "faces": [
+    {
+      "texture": "murim:textures/entity/sect/third_rate_disciple.png",
+      "x": 0,
+      "y": 24
+    },
+    {
+      "texture": "murim:textures/entity/sect/second_rate_disciple.png",
+      "x": 0,
+      "y": 24
+    },
+    {
+      "texture": "murim:textures/entity/sect/first_rate_disciple.png",
+      "x": 16,
+      "y": 82
+    }
+  ],
+  "rows": {
+    "eyes": {
+      "row": 0,
+      "names": [
+        "stern",
+        "wide",
+        "narrow",
+        "droop"
+      ]
+    },
+    "brows": {
+      "row": 1,
+      "names": [
+        "heavy",
+        "arched",
+        "slant"
+      ]
+    },
+    "nose": {
+      "row": 2,
+      "names": [
+        "line",
+        "short",
+        "broad"
+      ]
+    },
+    "mouth": {
+      "row": 3,
+      "names": [
+        "line",
+        "small",
+        "wide",
+        "smirk"
+      ]
+    },
+    "eyes_x": {
+      "row": 4,
+      "names": [
+        "closed",
+        "pain",
+        "angry",
+        "happy"
+      ]
+    },
+    "brows_x": {
+      "row": 5,
+      "names": [
+        "pain",
+        "angry",
+        "raised"
+      ]
+    },
+    "mouth_x": {
+      "row": 6,
+      "names": [
+        "open",
+        "pain",
+        "angry",
+        "smile"
+      ]
+    }
+  },
+  "moods": {
+    "neutral": {},
+    "talk": {
+      "mouth": "open"
+    },
+    "pain": {
+      "eyes": "pain",
+      "brows": "pain",
+      "mouth": "pain"
+    },
+    "angry": {
+      "eyes": "angry",
+      "brows": "angry",
+      "mouth": "angry"
+    },
+    "happy": {
+      "eyes": "happy",
+      "brows": "raised",
+      "mouth": "smile"
+    },
+    "asleep": {
+      "eyes": "closed"
+    }
+  }
+}

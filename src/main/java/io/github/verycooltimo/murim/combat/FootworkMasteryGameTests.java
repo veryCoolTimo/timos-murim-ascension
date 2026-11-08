@@ -2,6 +2,7 @@ package io.github.verycooltimo.murim.combat;
 
 import com.mojang.serialization.JsonOps;
 import io.github.verycooltimo.murim.MurimMod;
+import io.github.verycooltimo.murim.mastery.Arts;
 import io.github.verycooltimo.murim.mastery.MasteryRules;
 import io.github.verycooltimo.murim.mastery.MasteryService;
 import io.github.verycooltimo.murim.mastery.MasteryState;
@@ -27,6 +28,10 @@ import java.util.Set;
 @GameTestHolder(MurimMod.MODID)
 @PrefixGameTestTemplate(false)
 public final class FootworkMasteryGameTests {
+    // Test-only packet-listener hook counts every teleport, including accidental direct calls.
+    private static final java.util.Map<ServerPlayer, Integer> TELEPORTS = new java.util.WeakHashMap<>();
+    static int teleports(ServerPlayer player) { return TELEPORTS.getOrDefault(player, 0); }
+
     private static final FootworkFamily WIND = FootworkFamily.WIND_GOD;
 
     private static MasteryState family(int stars, int cap) {
@@ -35,21 +40,48 @@ public final class FootworkMasteryGameTests {
         return state;
     }
 
-    private static ServerPlayer player(GameTestHelper helper, int layer) {
+    static ServerPlayer player(GameTestHelper helper, int layer) {
         var cookie = net.minecraft.server.network.CommonListenerCookie.createInitial(
                 new com.mojang.authlib.GameProfile(java.util.UUID.randomUUID(), "footstars-test"), false);
         ServerPlayer player = new ServerPlayer(helper.getLevel().getServer(), helper.getLevel(),
                 cookie.gameProfile(), cookie.clientInformation());
         net.minecraft.network.Connection connection = new net.minecraft.network.Connection(net.minecraft.network.protocol.PacketFlow.SERVERBOUND);
         new io.netty.channel.embedded.EmbeddedChannel(connection);
-        new net.minecraft.server.network.ServerGamePacketListenerImpl(helper.getLevel().getServer(), connection, player, cookie);
+        new net.minecraft.server.network.ServerGamePacketListenerImpl(helper.getLevel().getServer(), connection, player, cookie) {
+            // API: MC 1.21.1 ServerGamePacketListenerImpl#teleport six-argument overload;
+            // the five-argument overload delegates here, so no direct routine call escapes the hook.
+            @Override public void teleport(double x, double y, double z, float yaw, float pitch,
+                    java.util.Set<net.minecraft.world.entity.RelativeMovement> relative) {
+                TELEPORTS.merge(player, 1, Integer::sum);
+                super.teleport(x, y, z, yaw, pitch, relative);
+            }
+        };
         player.setData(ModAttachments.PROFILE, DantianProfile.INITIAL.withTags("clear", "plum").withCirculating(5.0D));
         player.setData(ModAttachments.MASTERY, family(layer, 12));
         var at = helper.absoluteVec(new net.minecraft.world.phys.Vec3(1.5D, 2.0D, 1.5D));
         player.moveTo(at.x, at.y, at.z, 0.0F, 0.0F);
         player.setOnGround(true);
         player.setSprinting(true);
+        player.setData(ModAttachments.LOADOUT, io.github.verycooltimo.murim.mastery.Loadout.EMPTY.with(0,
+                java.util.Optional.of(Styles.footworkRun(Styles.WIND_GOD).orElseThrow())));
         return player;
+    }
+
+    /** Channel-less test actors must neither throw nor be teleported by a dash notification. */
+    @GameTest(template = "small_floor", timeoutTicks = 20)
+    public static void dashWithoutClientChannel(GameTestHelper helper) {
+        for (int layer : new int[] {0, 1, 3}) {
+            ServerPlayer player = player(helper, layer);
+            var dash = new io.github.verycooltimo.murim.network.TraversePayloads.Dash(1, 0, 0, 3, 5);
+            helper.assertTrue(!player.connection.hasChannel(dash), "test actor unexpectedly has a dash channel");
+            var before = player.position();
+            FootworkService.sendDash(player, new net.minecraft.world.phys.Vec3(1, 0, 0), 3, 5);
+            helper.assertTrue(player.position().equals(before), "dash packet fallback teleported the server player");
+            player.connection = null;
+            FootworkService.sendDash(player, new net.minecraft.world.phys.Vec3(1, 0, 0), 3, 5);
+            helper.assertTrue(player.position().equals(before), "null connection dash teleported the server player");
+        }
+        helper.succeed();
     }
 
     @GameTest(template = "small_floor", timeoutTicks = 20)
@@ -92,7 +124,6 @@ public final class FootworkMasteryGameTests {
     @GameTest(template = "small_floor", timeoutTicks = 20)
     public static void masteryIsSharedAndMeditatedOnce(GameTestHelper helper) {
         ServerPlayer player = player(helper, 2);
-        long day = player.level().getDayTime() / 24000L;
         for (ResourceLocation form : Styles.WIND_GOD.forms()) {
             double before = player.getData(ModAttachments.MASTERY).techniques().get(form).progress();
             MasteryService.onMiss(player, form);
@@ -104,12 +135,12 @@ public final class FootworkMasteryGameTests {
         }
         MasteryState before = player.getData(ModAttachments.MASTERY);
         ResourceLocation first = Styles.WIND_GOD.forms().get(0);
-        TechniqueProgress expected = MasteryRules.meditate(before.techniques().get(first), before.wisdom(), day).progress();
-        helper.assertTrue(MasteryService.meditate(player), "nothing to meditate");
+        TechniqueProgress expected = MasteryRules.process(before.techniques().get(first), Arts.cap(first)).progress();
+        helper.assertTrue(MasteryService.comprehend(player, first), "nothing to comprehend");
         for (ResourceLocation form : Styles.WIND_GOD.forms()) {
             helper.assertTrue(expected.equals(player.getData(ModAttachments.MASTERY).techniques().get(form)), "family meditated more than once");
         }
-        MasteryService.study(player, Styles.WIND_GOD.forms().get(2), MasteryRules.need(2));
+        MasteryService.study(player, Styles.WIND_GOD.forms().get(2), MasteryRules.need(2, 12));
         for (ResourceLocation form : Styles.WIND_GOD.forms()) {
             helper.assertTrue(MasteryService.stars(player, form) == 3, "study must improve all four forms");
         }
@@ -151,12 +182,12 @@ public final class FootworkMasteryGameTests {
         player.setData(ModAttachments.MASTERY, family(0, 2));
         MasteryService.study(player, forms.get(2), 1000);
         helper.assertTrue(MasteryService.stars(player, forms.get(0)) == 2, "torn cap was ignored");
-        MasteryService.deepen(player, forms.get(3), 10);
+        MasteryService.deepen(player, forms.get(3), 12);
         for (ResourceLocation form : forms) {
-            helper.assertTrue(player.getData(ModAttachments.MASTERY).techniques().get(form).cap() == 10, "cap not shared");
+            helper.assertTrue(player.getData(ModAttachments.MASTERY).techniques().get(form).cap() == 12, "cap not shared");
         }
         player.setData(ModAttachments.MASTERY, family(7, 12));
-        MasteryService.study(player, forms.get(1), MasteryRules.need(7));
+        MasteryService.study(player, forms.get(1), MasteryRules.need(7, 12));
         double wisdom = player.getData(ModAttachments.MASTERY).wisdom();
         helper.assertTrue(wisdom > 0, "no comprehension reward");
         for (ResourceLocation form : forms) {
@@ -202,11 +233,8 @@ public final class FootworkMasteryGameTests {
             double cost = TechniqueService.techniqueCost(TechniqueLoader.get(Styles.WIND_GOD.forms().get(0))) * MasteryRules.costFactor(layer, 8);
             helper.assertTrue(cost < previousDash, "blink qi does not decrease");
             previousDash = cost;
-            if (layer >= 2) {
-                helper.assertTrue(ShadowRules.qiPerSecond(layer) < ShadowRules.qiPerSecond(layer - 1), "shadow qi does not decrease");
-            }
         }
-        helper.assertTrue(ShadowRules.observers(8) == 12 && ShadowRules.deathDistance(8) == 8, "L8 shadow/death still clamp to L7");
+        helper.assertTrue(ShadowRules.observers(10) == 30 && ShadowRules.deathDistance(10) == 8, "ten-star shadow/death table");
         helper.assertTrue(TraverseRules.speed(FootworkFamily.HUASHAN, 4) == 10, "Huashan travel table changed");
         helper.succeed();
     }

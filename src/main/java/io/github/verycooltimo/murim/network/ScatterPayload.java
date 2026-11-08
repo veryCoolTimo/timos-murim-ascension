@@ -9,12 +9,19 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * Рассеяние Цветущей Сливы (см. ScatterRules). Стадии: 0 — прыжок, клоны выходят (a — ступни мастера,
- * b — центр цели, arg — бит 0: сторона прыжка вправо, бит 1: цель на земле); 1 — удар клона ПОПАЛ
+ * Рассеяние Цветущей Сливы (см. ScatterRules). Стадии: 0 — мастер остаётся, клоны выходят (a — ступни мастера,
+ * b — центр цели, arg — бит 0: сторона выхода клонов вправо, бит 1: цель на земле); 1 — удар клона ПОПАЛ
  * (a — точка, arg — клон × 8 + удар); 2 — взмах мастера попал; 3 — рассеяние попало (a — центр).
  */
-public record ScatterPayload(int entityId, Vec3 a, Vec3 b, float base, int executionTier, int stage, int arg, int targetId)
+public record ScatterPayload(int entityId, Vec3 a, Vec3 b, float base, int executionTier, int stage, int arg, int targetId, boolean fullMastery, int stars)
         implements CustomPacketPayload {
+    public ScatterPayload(int entityId, Vec3 a, Vec3 b, float base, int executionTier, int stage, int arg, int targetId) {
+        this(entityId, a, b, base, executionTier, stage, arg, targetId, false);
+    }
+
+    public ScatterPayload(int entityId, Vec3 a, Vec3 b, float base, int executionTier, int stage, int arg, int targetId, boolean fullMastery) {
+        this(entityId, a, b, base, executionTier, stage, arg, targetId, fullMastery, fullMastery ? 12 : 1);
+    }
 
     public static final int RELEASE = 0;
     public static final int HIT = 1;
@@ -27,7 +34,7 @@ public record ScatterPayload(int entityId, Vec3 a, Vec3 b, float base, int execu
     public static final Type<ScatterPayload> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "plum_scatter"));
 
     // composite в 1.21.1 — не больше шести полей (reference/minecraft-src/net/minecraft/network/codec/StreamCodec.java).
-    public static final StreamCodec<RegistryFriendlyByteBuf, ScatterPayload> STREAM_CODEC = StreamCodec.of(
+    private static final StreamCodec<RegistryFriendlyByteBuf, ScatterPayload> BASE_CODEC = StreamCodec.of(
             (buf, p) -> {
                 ByteBufCodecs.VAR_INT.encode(buf, p.entityId());
                 VEC.encode(buf, p.a());
@@ -41,6 +48,14 @@ public record ScatterPayload(int entityId, Vec3 a, Vec3 b, float base, int execu
             buf -> new ScatterPayload(ByteBufCodecs.VAR_INT.decode(buf), VEC.decode(buf), VEC.decode(buf), buf.readFloat(),
                     ByteBufCodecs.VAR_INT.decode(buf), ByteBufCodecs.VAR_INT.decode(buf), ByteBufCodecs.VAR_INT.decode(buf),
                     ByteBufCodecs.VAR_INT.decode(buf)));
+
+    // API: /tmp/mr-ref-1121/minecraft-src/net/minecraft/network/codec/{StreamCodec#of,ByteBufCodecs#VAR_INT,ByteBufCodecs#BOOL}.java.
+    public static final StreamCodec<RegistryFriendlyByteBuf, ScatterPayload> STREAM_CODEC = StreamCodec.of(
+            (buf, p) -> { BASE_CODEC.encode(buf, p); ByteBufCodecs.BOOL.encode(buf, p.fullMastery()); ByteBufCodecs.VAR_INT.encode(buf, p.stars()); },
+            buf -> {
+                var p = BASE_CODEC.decode(buf);
+                return new ScatterPayload(p.entityId(), p.a(), p.b(), p.base(), p.executionTier(), p.stage(), p.arg(), p.targetId(), ByteBufCodecs.BOOL.decode(buf), ByteBufCodecs.VAR_INT.decode(buf));
+            });
 
     @Override
     public Type<? extends CustomPacketPayload> type() {

@@ -27,7 +27,7 @@ import net.neoforged.neoforge.client.event.ClientTickEvent;
  * flies to the nearest bandit camp (the captured template in a world generated after the capture) and to Mount Hua
  * (F3 open: the biome line reads murim:mount_hua / murim:mount_hua_foothills), a frame per view by day and the
  * aerial ones again at night. Frames: {@code screenshots/murim_loc_<stage>_<n>.png}. Stages: env
- * {@code MURIM_LOC_STAGES} (default {@code camp,biome}). Polling is done from this client tick, never with
+ * {@code MURIM_LOC_STAGES} (default {@code camp,biome}; the old showcase and edit stages are gone, see docs/design/44-commands.md). Polling is done from this client tick, never with
  * self-rescheduling TickTasks (CLAUDE.md §2a).
  */
 @EventBusSubscriber(modid = MurimMod.MODID, value = Dist.CLIENT)
@@ -137,58 +137,6 @@ public final class DevLocationHandler {
         List<View> out = new ArrayList<>();
         for (String stage : STAGES) {
             switch (stage.trim()) {
-                case "showcase" -> {
-                    // The showcase world as the author finds it: each location from above its sign, the spawn row.
-                    var data = io.github.verycooltimo.murim.world.location.ShowcaseWorld.showcase(server);
-                    for (String id : new String[] {"spawn", "camp", "archive", "fortress"}) {
-                        BlockPos s = data.pos(id);
-                        Float yaw = data.yaw(id);
-                        if (s == null || yaw == null) {
-                            continue;
-                        }
-                        double fx = -Math.sin(Math.toRadians(yaw));
-                        double fz = Math.cos(Math.toRadians(yaw));
-                        double lx = s.getX() + fx * 26;
-                        double lz = s.getZ() + fz * 26;
-                        out.add(view("showcase", s.getX() - fx * 14 + 0.5, s.getY() + 26, s.getZ() - fz * 14 + 0.5, lx, s.getY(), lz, false, false));
-                        if (!id.equals("spawn")) {
-                            out.add(view("showcase", s.getX() + 0.5 - fx * 3, s.getY() + 1.2, s.getZ() + 0.5 - fz * 3, lx, s.getY() + 2, lz, false, false));
-                        }
-                    }
-                }
-                case "edit" -> {
-                    // Round trip, part 1 (showcase world): change the camp the way the author would, mark it, capture it.
-                    BlockPos at = io.github.verycooltimo.murim.world.location.ShowcaseWorld.showcase(server).pos("camp");
-                    if (at == null) {
-                        MurimMod.LOGGER.warn("Location stand: no showcase camp");
-                        continue;
-                    }
-                    for (int dx = -6; dx <= 6; dx++) {
-                        for (int dz = -6; dz <= 6; dz++) {
-                            level.getChunk((at.getX() >> 4) + dx, (at.getZ() >> 4) + dz);
-                        }
-                    }
-                    var region = io.github.verycooltimo.murim.world.location.LocationCommand.auto(level, "camp", at);
-                    if (region == null || region.anchor() == null) {
-                        MurimMod.LOGGER.warn("Location stand: showcase camp structure not found near {}", at);
-                        continue;
-                    }
-                    BlockPos c = region.anchor().world();
-                    editCamp(level, c);
-                    double cx = c.getX() + 0.5;
-                    double cz = c.getZ() + 0.5;
-                    double cy = c.getY();
-                    try {
-                        var r = io.github.verycooltimo.murim.world.location.LocationCapture.capture(level, "camp", region.box(),
-                                region.anchor(), null, true);
-                        MurimMod.LOGGER.info("Location stand: captured camp {} markers {} into {}", r.location().size(),
-                                r.location().markers(), r.sourceDir());
-                    } catch (Exception e) {
-                        MurimMod.LOGGER.error("Location stand: capture failed", e);
-                    }
-                    out.add(view("edit", cx, cy + 34, cz - 30, cx, cy, cz, false, false));
-                    out.add(view("edit", cx + 18, cy + 8, cz - 14, cx, cy + 4, cz, false, false));
-                }
                 case "camp" -> {
                     BanditCampCommand.Found f = BanditCampCommand.nearest(level, p.blockPosition());
                     if (f == null) {
@@ -232,41 +180,6 @@ public final class DevLocationHandler {
         }
         views = List.copyOf(out);
         MurimMod.LOGGER.info("Location stand: {} views", out.size());
-    }
-
-    /**
-     * What the author might do to a camp: a red-and-gold banner tower in the middle of the yard, a chief's chest with
-     * a loot sign on it, the chief's spot marked by a sign, a lantern ring.
-     */
-    private static void editCamp(ServerLevel level, BlockPos c) {
-        var red = net.minecraft.world.level.block.Blocks.RED_WOOL.defaultBlockState();
-        var gold = net.minecraft.world.level.block.Blocks.GOLD_BLOCK.defaultBlockState();
-        BlockPos base = c.offset(3, 1, 3);
-        for (int y = 0; y < 10; y++) {
-            for (int dx = 0; dx < 2; dx++) {
-                for (int dz = 0; dz < 2; dz++) {
-                    level.setBlock(base.offset(dx, y, dz), y == 9 ? gold : red, 3);
-                }
-            }
-        }
-        for (int i = 0; i < 8; i++) {
-            double a = i * Math.PI / 4;
-            BlockPos p = c.offset((int) Math.round(Math.cos(a) * 6), 0, (int) Math.round(Math.sin(a) * 6));
-            int top = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, p.getX(), p.getZ());
-            level.setBlock(new BlockPos(p.getX(), top, p.getZ()), net.minecraft.world.level.block.Blocks.LANTERN.defaultBlockState(), 3);
-        }
-        BlockPos chest = c.offset(-3, 1, 3);
-        level.setBlock(chest, net.minecraft.world.level.block.Blocks.CHEST.defaultBlockState(), 3);
-        sign(level, chest.above(), "loot:chief");
-        sign(level, c.offset(-1, 1, 0), "spawn:chief");
-        sign(level, c.offset(1, 1, -4), "spawn:bandit_qi");
-    }
-
-    private static void sign(ServerLevel level, BlockPos at, String text) {
-        level.setBlock(at, net.minecraft.world.level.block.Blocks.OAK_SIGN.defaultBlockState(), 3);
-        if (level.getBlockEntity(at) instanceof net.minecraft.world.level.block.entity.SignBlockEntity s) {
-            s.setText(new net.minecraft.world.level.block.entity.SignText().setMessage(0, net.minecraft.network.chat.Component.literal(text)), true);
-        }
     }
 
     private static View view(String stage, double x, double y, double z, double lx, double ly, double lz, boolean debug, boolean night) {

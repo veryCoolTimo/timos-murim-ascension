@@ -64,6 +64,8 @@
     "murim:ceremonial_drum",
     "murim:roof_v7_support",
     "murim:sect_mission_board",
+    "murim:wall_painting",
+    "murim:sect_name_plate",
     "murim:library_bookcase_tall",
     "murim:propped_shelf",
     "murim:books_shelf",
@@ -93,6 +95,12 @@
     "murim:sto_bed",
     "murim:sto_bed_blue",
     "murim:sto_bonsai_pine",
-    "murim:sto_bonsai_plum"
+    "murim:sto_bonsai_plum",
+    "murim:int_pill_cabinet",
+    "murim:int_tea_tray",
+    "murim:int_abacus_ledger",
+    "murim:shr_ancestor_shrine",
+    "murim:int_pill_box",
+    "murim:vault_shelf"
   ]
 }

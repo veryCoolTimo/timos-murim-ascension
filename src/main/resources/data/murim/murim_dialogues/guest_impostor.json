@@ -1,0 +1,151 @@
+{
+  "name": "npc.murim.impostor",
+  "title": "npc.murim.impostor.title",
+  "start": [
+    {
+      "node": "imp_start",
+      "when": [
+        {
+          "social": "quest:available:impostor"
+        }
+      ]
+    }
+  ],
+  "nodes": {
+    "imp_start": {
+      "line": "dialogue.murim.quest.impostor.start",
+      "enter": [
+        {
+          "type": "set_flag",
+          "value": "quest.impostor.met"
+        }
+      ],
+      "options": [
+        {
+          "text": "dialogue.murim.quest.impostor.opt.receipts",
+          "when": [
+            {
+              "flag": "clue.receipts"
+            },
+            {
+              "social": "quest:available:impostor"
+            }
+          ],
+          "actions": [
+            {
+              "type": "set_flag",
+              "value": "quest.impostor.exposed"
+            }
+          ],
+          "next": "imp_half_receipts"
+        },
+        {
+          "text": "dialogue.murim.quest.impostor.opt.chest",
+          "when": [
+            {
+              "flag": "clue.chest_badges"
+            },
+            {
+              "social": "quest:available:impostor"
+            }
+          ],
+          "actions": [
+            {
+              "type": "set_flag",
+              "value": "quest.impostor.exposed"
+            }
+          ],
+          "next": "imp_half_chest"
+        },
+        {
+          "text": "dialogue.murim.quest.impostor.opt.demand",
+          "actions": [
+            {
+              "type": "quest_fight",
+              "value": "impostor_fight"
+            }
+          ],
+          "next": "imp_fight",
+          "when": [
+            {
+              "social": "quest:available:impostor"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "imp_half_receipts": {
+      "line": "dialogue.murim.quest.impostor.half",
+      "options": [
+        {
+          "text": "dialogue.murim.quest.impostor.opt.refuse",
+          "actions": [
+            {
+              "type": "set_flag",
+              "value": "quest.impostor.out"
+            },
+            {
+              "type": "quest_how",
+              "value": "impostor:talked"
+            }
+          ],
+          "next": "imp_gone",
+          "when": [
+            {
+              "social": "quest:available:impostor"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.quest.impostor.opt.think",
+          "when": [
+            {
+              "social": "quest:available:impostor"
+            }
+          ]
+        }
+      ]
+    },
+    "imp_half_chest": {
+      "line": "dialogue.murim.quest.impostor.half",
+      "options": [
+        {
+          "text": "dialogue.murim.quest.impostor.opt.refuse",
+          "actions": [
+            {
+              "type": "set_flag",
+              "value": "quest.impostor.out"
+            },
+            {
+              "type": "quest_how",
+              "value": "impostor:sneaked"
+            }
+          ],
+          "next": "imp_gone",
+          "when": [
+            {
+              "social": "quest:available:impostor"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.quest.impostor.opt.think",
+          "when": [
+            {
+              "social": "quest:available:impostor"
+            }
+          ]
+        }
+      ]
+    },
+    "imp_gone": {
+      "line": "dialogue.murim.quest.impostor.gone"
+    },
+    "imp_fight": {
+      "line": "dialogue.murim.quest.impostor.fight"
+    }
+  }
+}

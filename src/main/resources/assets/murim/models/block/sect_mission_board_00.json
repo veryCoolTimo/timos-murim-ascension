@@ -1,0 +1,49 @@
+{
+ "textures": {
+  "board": "murim:block/sect_mission_board_wide",
+  "particle": "murim:block/red_lacquer"
+ },
+ "elements": [
+  {
+   "from": [
+    0,
+    0,
+    14
+   ],
+   "to": [
+    16,
+    16,
+    16
+   ],
+   "faces": {
+    "north": {
+     "texture": "#board",
+     "uv": [
+      0.0,
+      8,
+      5.333,
+      16
+     ]
+    },
+    "east": {
+     "texture": "#board",
+     "uv": [
+      0,
+      0,
+      2,
+      16
+     ]
+    },
+    "down": {
+     "texture": "#board",
+     "uv": [
+      0,
+      0,
+      16,
+      2
+     ]
+    }
+   }
+  }
+ ]
+}

@@ -106,8 +106,12 @@ public final class SectArrivalGameTests {
             long next = SectService.state(first).entry("arrival.day", 0);
             h.getLevel().setDayTime((next - 1) * 24000L + SectSchedule.Period.FORMATION.start() + 40);
             h.assertTrue(SectArrival.ceremony(h.getLevel(), layout, head, List.of(first, second)) == 2, "not one joint ceremony");
+            h.assertTrue(head.pose() != io.github.verycooltimo.murim.entity.SectPose.BOW && !"bow".equals(head.gesture()),
+                    "head bowed to newly registered juniors");
             h.assertTrue(SectArrival.ceremony(h.getLevel(), layout, head, List.of(first, second)) == 0, "ceremony repeated");
-            h.assertTrue(!SectService.state(first).has(SectArrival.PENDING) && !SectService.state(second).has(SectArrival.PENDING), "queue did not clear");
+            h.assertTrue(housing.newcomers.isEmpty(), "assembly queue did not clear");
+            h.assertTrue(SectService.state(first).has(SectArrival.PENDING) && SectService.state(second).has(SectArrival.PENDING),
+                    "assembly consumed the invitation to meet the head later");
             h.assertTrue(SectRooms.bed(first).equals(a) && SectRooms.bed(second).equals(b), "ceremony changed beds");
         });
     }

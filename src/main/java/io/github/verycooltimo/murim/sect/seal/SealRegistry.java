@@ -35,7 +35,7 @@ import java.util.function.Function;
  *       bedrock, resistance 3 600 000, push reaction BLOCK, no loot). Creative breaks them at once, so the author
  *       builds with them freely.</li>
  *   <li><b>Cold iron</b> block, bars, door: hardness by {@link ColdIron} — only a qi strike above Peak.</li>
- *   <li><b>Seals</b>: the vault seal (trial) and the penance stone ({@link SealBlocks}).</li>
+ *   <li><b>Seal</b>: the penance stone ({@link SealBlocks}); the vault trial belongs to its door.</li>
  * </ul>
  * API: reference/neoforge-src/net/neoforged/neoforge/registries/DeferredRegister.java (#createBlocks, #registerBlock),
  * reference/minecraft-src/net/minecraft/world/level/block/Blocks.java#BEDROCK/IRON_DOOR/IRON_BARS (properties),
@@ -76,14 +76,13 @@ public final class SealRegistry {
     public static final DeferredItem<DoubleHighBlockItem> COLD_IRON_DOOR_ITEM = tab(ITEMS.register("cold_iron_door",
             () -> new DoubleHighBlockItem(COLD_IRON_DOOR.get(), new Item.Properties())));
 
-    public static final DeferredBlock<SealBlocks.VaultSeal> VAULT_SEAL = block("vault_seal", SealBlocks.VaultSeal::new, sealed(MapColor.TERRACOTTA_WHITE, SoundType.STONE).lightLevel(s -> 3));
     public static final DeferredBlock<SealBlocks.PenanceSeal> PENANCE_SEAL = block("penance_seal", SealBlocks.PenanceSeal::new, sealed(MapColor.STONE, SoundType.STONE));
 
     private SealRegistry() {
     }
 
     /** Survival-proof: like bedrock (hardness −1), blast-proof, not pushed, no loot; creative breaks at once. */
-    static BlockBehaviour.Properties sealed(MapColor colour, SoundType sound) {
+    public static BlockBehaviour.Properties sealed(MapColor colour, SoundType sound) {
         return BlockBehaviour.Properties.of().mapColor(colour).sound(sound)
                 .instrument(sound == SoundType.WOOD ? NoteBlockInstrument.BASS : NoteBlockInstrument.BASEDRUM)
                 .strength(-1.0F, 3_600_000.0F).noLootTable().pushReaction(PushReaction.BLOCK)
@@ -131,5 +130,15 @@ public final class SealRegistry {
         BLOCKS.register(modBus);
         ITEMS.register(modBus);
         modBus.addListener(SealRegistry::tabs);
+        // NeoForge IRegistryExtension#addAlias: old chunk palettes resolve directly to wall,
+        // before deserialization. No obsolete block/item is registered or exposed.
+        modBus.addListener((net.neoforged.neoforge.registries.RegisterEvent event) -> {
+            var old = net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "vault_seal");
+            var wall = net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "sealed_polished_hua_granite");
+            if (event.getRegistryKey().equals(net.minecraft.core.registries.Registries.BLOCK))
+                net.minecraft.core.registries.BuiltInRegistries.BLOCK.addAlias(old, wall);
+            if (event.getRegistryKey().equals(net.minecraft.core.registries.Registries.ITEM))
+                net.minecraft.core.registries.BuiltInRegistries.ITEM.addAlias(old, wall);
+        });
     }
 }

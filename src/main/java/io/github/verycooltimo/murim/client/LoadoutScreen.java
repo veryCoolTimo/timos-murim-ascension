@@ -2,6 +2,8 @@ package io.github.verycooltimo.murim.client;
 
 import io.github.verycooltimo.murim.MurimMod;
 import io.github.verycooltimo.murim.mastery.Loadout;
+import io.github.verycooltimo.murim.mastery.ArtSlots;
+import io.github.verycooltimo.murim.mastery.Arts;
 import io.github.verycooltimo.murim.mastery.MasteryService;
 import io.github.verycooltimo.murim.network.LoadoutPayloads;
 import io.github.verycooltimo.murim.network.SyncMasteryPayload;
@@ -38,13 +40,13 @@ public final class LoadoutScreen extends Screen {
 
     /** Спокойная середина свитка: по краям нарисованы горы, сосна и бамбук. */
     // Список правее монастыря на скале, слоты — левее сосны: пейзаж по краям остаётся открытым.
-    private static final int LIST_X = 74;
+    private static final int LIST_X = 58;
     private static final int LIST_W = 120;
-    private static final int TOP = 36;
+    private static final int TOP = 58;
     private static final int ROW = 22;
-    private static final int VISIBLE = 5;
+    private static final int VISIBLE = 4;
     private static final int SLOT_SIZE = 24;
-    private static final int SLOTS_X = 202;
+    private static final int SLOTS_X = 186;
     private static final int SLOT_COLUMNS = 2;
     private static final int SLOT_STEP = 25;
 
@@ -60,6 +62,56 @@ public final class LoadoutScreen extends Screen {
 
     private ResourceLocation picked;
     private int scroll;
+    private ArtSlots.Kind filter = ArtSlots.Kind.ALL;
+    private boolean sortBySchool;
+    private static final ArtSlots.Kind[] FILTERS = {
+            ArtSlots.Kind.ALL, ArtSlots.Kind.SWORD, ArtSlots.Kind.STEPS, ArtSlots.Kind.FIST_PALM,
+            ArtSlots.Kind.HIDDEN_WEAPON, ArtSlots.Kind.BREATHING, ArtSlots.Kind.BODY_PROTECTION
+    };
+
+    /** Whether the player knows (or has set) an art of this kind: only then its own cell and filter exist (author 22.10). */
+    private boolean owns(ArtSlots.Kind kind) {
+        for (SyncMasteryPayload.Entry e : ClientMasteryState.entries()) {
+            if ((Arts.isMethod(e.technique())
+                    || io.github.verycooltimo.murim.technique.TechniqueLoader.get(e.technique()) != null)
+                    && ArtSlots.kind(e.technique()) == kind) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Row of a special cell on the screen: 0 foundation (always), 1 breathing, 2 body protection; -1 hidden until such an art is known. */
+    private int visualRow(int logical) {
+        boolean breathing = owns(ArtSlots.Kind.BREATHING) || ClientLoadoutState.breathing().isPresent();
+        boolean protection = owns(ArtSlots.Kind.BODY_PROTECTION) || ClientLoadoutState.bodyProtection().isPresent();
+        return switch (logical) {
+            case 0 -> 0;
+            case 1 -> breathing ? 1 : -1;
+            default -> protection ? (breathing ? 2 : 1) : -1;
+        };
+    }
+
+    /** Filter buttons only for the kinds of art the player has learned (playtest 22.10: no «fist» tab without a fist art). */
+    private List<ArtSlots.Kind> filters() {
+        java.util.Set<ArtSlots.Kind> have = new java.util.HashSet<>();
+        for (SyncMasteryPayload.Entry e : ClientMasteryState.entries()) {
+            if (Arts.isMethod(e.technique())
+                    || io.github.verycooltimo.murim.technique.TechniqueLoader.get(e.technique()) != null) {
+                have.add(ArtSlots.kind(e.technique()));
+            }
+        }
+        List<ArtSlots.Kind> out = new java.util.ArrayList<>();
+        for (ArtSlots.Kind k : FILTERS) {
+            if (k == ArtSlots.Kind.ALL || have.contains(k)) out.add(k);
+        }
+        if (!out.contains(filter)) filter = ArtSlots.Kind.ALL;
+        return out;
+    }
+
+    private static String filterKey(ArtSlots.Kind kind) {
+        return "murim.loadout.filter." + kind.name().toLowerCase(java.util.Locale.ROOT);
+    }
 
     /** Раскрытие свитка (автор 03.10: «короткую анимацию для свитка»): тики с открытия. */
     private int openTicks;
@@ -99,9 +151,14 @@ public final class LoadoutScreen extends Screen {
         List<SyncMasteryPayload.Entry> out = new java.util.ArrayList<>();
         for (SyncMasteryPayload.Entry e : ClientMasteryState.entries().stream()
                 .sorted(java.util.Comparator.comparing(e -> e.technique().toString())).toList()) {
-            if (io.github.verycooltimo.murim.technique.TechniqueLoader.get(e.technique()) == null) continue;
+            if (!Arts.isMethod(e.technique())
+                    && io.github.verycooltimo.murim.technique.TechniqueLoader.get(e.technique()) == null) continue;
+            if (filter != ArtSlots.Kind.ALL && ArtSlots.kind(e.technique()) != filter) continue;
+            // One art: the sub-techniques of volume 2 are the same Six Elements Sword, set by dragging it on a technique slot.
+            if (ArtSlots.SIX_VOLUME_TWO.equals(e.technique())
+                    && ClientMasteryState.entries().stream().anyMatch(o -> ArtSlots.SIX.equals(o.technique()))) continue;
             Optional<io.github.verycooltimo.murim.technique.Styles.Style> style = io.github.verycooltimo.murim.technique.Styles.of(e.technique());
-            if (style.isPresent() && !io.github.verycooltimo.murim.technique.Styles.individualBooks(style.get())) {
+            if (style.isPresent()) {
                 if (!seenStyles.add(style.get().id())) {
                     continue;
                 }
@@ -113,6 +170,11 @@ public final class LoadoutScreen extends Screen {
             }
             out.add(e);
         }
+        java.util.Comparator<SyncMasteryPayload.Entry> byName = java.util.Comparator
+                .comparing(e -> MasteryService.artName(e.technique()).getString());
+        out.sort((sortBySchool ? java.util.Comparator.<SyncMasteryPayload.Entry, String>comparing(
+                e -> Arts.school(e.technique())).thenComparing(byName) : byName)
+                .thenComparing(e -> e.technique().toString()));
         return out;
     }
 
@@ -160,6 +222,21 @@ public final class LoadoutScreen extends Screen {
         graphics.drawString(font, title, 0, 0, INK, false);
         graphics.pose().popPose();
         rankLine(graphics, x0 + LIST_X, y0 + 14);
+
+        // Ink-only mouse tabs retain the approved scroll and existing slot textures.
+        List<ArtSlots.Kind> filters = filters();
+        for (int i = 0; i <= filters.size(); i++) {
+            int bx = x0 + LIST_X + (i % 4) * 54;
+            int by = y0 + 36 + (i / 4) * 10;
+            boolean selected = i < filters.size() && filter == filters.get(i);
+            if (selected || inside(mouseX, mouseY, bx, by, 52, 10)) {
+                graphics.fill(bx - 1, by - 1, bx + 51, by + 8, selected ? 0x60BFD6C2 : 0x30A79D8C);
+            }
+            Component text = Component.translatable(i < filters.size() ? filterKey(filters.get(i))
+                    : sortBySchool ? "murim.loadout.sort.school" : "murim.loadout.sort.name");
+            small(graphics, text, bx, by, INK,
+                    Math.min(0.65F, 51.0F / Math.max(1, font.width(text))));
+        }
 
         // Слева — выученные техники.
         List<SyncMasteryPayload.Entry> list = techniques();
@@ -211,7 +288,6 @@ public final class LoadoutScreen extends Screen {
         // Справа — слоты.
         int open = ClientLoadoutState.open();
         List<Optional<ResourceLocation>> slots = ClientLoadoutState.slots();
-        small(graphics, Component.translatable("murim.loadout.slots", open), x0 + SLOTS_X, y0 + TOP - 10, INK_GREY);
         for (int i = 0; i < Loadout.MAX_SLOTS; i++) {
             int sx = slotX(i);
             int sy = slotY(i);
@@ -219,6 +295,9 @@ public final class LoadoutScreen extends Screen {
             ResourceLocation frame = !unlocked ? SLOT_LOCKED
                     : (i == ClientLoadoutState.active() ? SLOT_ACTIVE : SLOT);
             graphics.blit(frame, sx, sy, 0, 0.0F, 0.0F, SLOT_SIZE, SLOT_SIZE, SLOT_SIZE, SLOT_SIZE);
+            if (unlocked && picked != null && ArtSlots.accepts(i, picked)) {
+                graphics.fill(sx, sy, sx + SLOT_SIZE, sy + 2, 0xFF8BC9A2);
+            }
             if (!unlocked) {
                 continue;
             }
@@ -227,34 +306,54 @@ public final class LoadoutScreen extends Screen {
             }
             Optional<ResourceLocation> technique = i < slots.size() ? slots.get(i) : Optional.empty();
             technique.ifPresent(id -> icon(graphics, id, sx + 2, sy + 2, 20, 1.0F));
+            if (technique.isPresent() && ArtSlots.SIX_VOLUME_TWO.equals(technique.get())) {
+                small(graphics, Component.literal("II"), sx + SLOT_SIZE - 10, sy + SLOT_SIZE - 9, INK);
+            }
         }
 
-        // Основа меча — отдельная ячейка.
-        int fx = x0 + FOUNDATION_X;
-        int fy = y0 + TOP;
-        // Under the slot, wrapped to the free width: above it the English label ran past the scroll's edge and,
-        // wrapped, sat under the seal stamp (gallery 05.10).
-        List<net.minecraft.util.FormattedCharSequence> label = font.split(Component.translatable("murim.loadout.foundation"),
-                (int) ((W - ROD - 4 - FOUNDATION_X) / 0.75F));
-        for (int i = 0; i < label.size(); i++) {
-            graphics.pose().pushPose();
-            graphics.pose().translate(fx, fy + SLOT_SIZE + 3 + 7 * i, 0.0F);
-            graphics.pose().scale(0.75F, 0.75F, 1.0F);
-            graphics.drawString(font, label.get(i), 0, 0, INK, false);
-            graphics.pose().popPose();
-        }
-        graphics.blit(SLOT, fx, fy, 0, 0.0F, 0.0F, SLOT_SIZE, SLOT_SIZE, SLOT_SIZE, SLOT_SIZE);
-        if (inside(mouseX, mouseY, fx, fy, SLOT_SIZE, SLOT_SIZE)) {
-            graphics.fill(fx + 2, fy + 2, fx + SLOT_SIZE - 2, fy + SLOT_SIZE - 2, 0x28A79D8C);
-        }
-        ClientLoadoutState.foundation().ifPresent(id -> icon(graphics, id, fx + 2, fy + 2, 20, 1.0F));
+        specialSlot(graphics, mouseX, mouseY, 0, "murim.loadout.foundation", ClientLoadoutState.foundation());
+        if (visualRow(1) >= 0) specialSlot(graphics, mouseX, mouseY, 1, "murim.loadout.breathing", ClientLoadoutState.breathing());
+        if (visualRow(2) >= 0) specialSlot(graphics, mouseX, mouseY, 2, "murim.loadout.body_protection", ClientLoadoutState.bodyProtection());
 
         // Подсказка внизу — бледной тушью.
-        Component hint = Component.translatable("murim.loadout.hint");
+        Component hint = slotError != null ? slotError : Component.translatable("murim.loadout.hint");
+        for (int row = 0; row < 3; row++) {
+            if (visualRow(row) >= 0 && inside(mouseX, mouseY, x0 + FOUNDATION_X, y0 + TOP + visualRow(row) * 34, SLOT_SIZE, SLOT_SIZE)) {
+                Optional<ResourceLocation> art = row == 0 ? ClientLoadoutState.foundation()
+                        : row == 1 ? ClientLoadoutState.breathing() : ClientLoadoutState.bodyProtection();
+                if (slotError == null && art.isPresent()) hint = MasteryService.artName(art.get());
+            }
+        }
         small(graphics, hint, x0 + (W - (int) (font.width(hint) * 0.75F)) / 2, y0 + H - 20, INK_GREY);
         if (picked != null) {
             icon(graphics, picked, mouseX - 10, mouseY - 10, 20, 0.85F);
         }
+    }
+
+    private void specialSlot(GuiGraphics g, int mouseX, int mouseY, int row, String key,
+                             Optional<ResourceLocation> art) {
+        int x = left() + FOUNDATION_X;
+        int y = top() + TOP + visualRow(row) * 34;
+        g.blit(SLOT, x, y, 0, 0.0F, 0.0F, SLOT_SIZE, SLOT_SIZE, SLOT_SIZE, SLOT_SIZE);
+        int slot = row == 0 ? ArtSlots.FOUNDATION : row == 1 ? ArtSlots.BREATHING : ArtSlots.BODY_PROTECTION;
+        if (picked != null && ArtSlots.accepts(slot, picked)) {
+            g.fill(x, y, x + SLOT_SIZE, y + 2, 0xFF8BC9A2);
+        }
+        if (inside(mouseX, mouseY, x, y, SLOT_SIZE, SLOT_SIZE)) {
+            g.fill(x + 2, y + 2, x + SLOT_SIZE - 2, y + SLOT_SIZE - 2, 0x28A79D8C);
+        }
+        art.ifPresent(id -> icon(g, id, x + 2, y + 2, 20, 1.0F));
+        // The same art on the basic-sword slot is volume I: a jade tint and a numeral so the change is plain.
+        if (row == 0 && art.isPresent() && ArtSlots.SIX.equals(art.get())) {
+            g.fill(x + 2, y + 2, x + SLOT_SIZE - 2, y + SLOT_SIZE - 2, 0x2268C79A);
+            small(g, Component.literal("I"), x + SLOT_SIZE - 7, y + SLOT_SIZE - 9, INK);
+        }
+        Component label = Component.translatable(key);
+        float scale = Math.min(0.65F, (W - ROD - FOUNDATION_X - 4) / (float) Math.max(1, font.width(label)));
+        // A parchment backing: the label sat on the painted pine and blended into it (playtest 22.10).
+        int lw = (int) Math.ceil(font.width(label) * scale);
+        g.fill(x - 3, y + SLOT_SIZE, x - 1 + lw + 2, y + SLOT_SIZE + 9, 0xD8EADFC4);
+        small(g, label, x - 2, y + SLOT_SIZE + 1, 0xFF1E1A16, scale);
     }
 
     /**
@@ -302,17 +401,50 @@ public final class LoadoutScreen extends Screen {
         return top() + TOP + (i / SLOT_COLUMNS) * SLOT_STEP;
     }
 
+    /** UX #28: a wrong destination explains the rule and leaves the technique picked up. */
+    private Component slotError;
+
+    private boolean compatible(int slot) {
+        if (ArtSlots.accepts(slot, picked)) return true;
+        String key = switch (ArtSlots.kind(picked)) {
+            case BREATHING -> "murim.loadout.need_breathing_slot";
+            case BODY_PROTECTION -> "murim.loadout.need_body_protection_slot";
+            default -> io.github.verycooltimo.murim.mastery.LoadoutService.isFoundation(picked)
+                    ? "murim.loadout.need_foundation_slot" : "murim.loadout.need_technique_slot";
+        };
+        slotError = Component.translatable(key);
+        return false;
+    }
+
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (inside(mouseX, mouseY, left() + FOUNDATION_X, top() + TOP, SLOT_SIZE, SLOT_SIZE)) {
-            // Сервер сам проверит, что это основа и она выучена.
-            if (button == 1) {
-                PacketDistributor.sendToServer(new LoadoutPayloads.SetSlot(-1, Optional.empty()));
-            } else if (picked != null) {
-                PacketDistributor.sendToServer(new LoadoutPayloads.SetSlot(-1, Optional.of(picked)));
-                picked = null;
+        slotError = null;
+        if (button != 0 && button != 1) return super.mouseClicked(mouseX, mouseY, button);
+        List<ArtSlots.Kind> filters = filters();
+        for (int i = 0; i <= filters.size(); i++) {
+            if (inside(mouseX, mouseY, left() + LIST_X + (i % 4) * 54,
+                    top() + 36 + (i / 4) * 10, 52, 10)) {
+                if (i < filters.size()) filter = filters.get(i);
+                else sortBySchool = !sortBySchool;
+                scroll = 0;
+                return true;
             }
-            return true;
+        }
+        int[] special = {ArtSlots.FOUNDATION, ArtSlots.BREATHING, ArtSlots.BODY_PROTECTION};
+        for (int row = 0; row < special.length; row++) {
+            if (visualRow(row) >= 0 && inside(mouseX, mouseY, left() + FOUNDATION_X, top() + TOP + visualRow(row) * 34, SLOT_SIZE, SLOT_SIZE)) {
+                if (button == 1) {
+                    PacketDistributor.sendToServer(new LoadoutPayloads.SetSlot(special[row], Optional.empty()));
+                } else if (picked != null) {
+                    if (!compatible(special[row])) return true;
+                    PacketDistributor.sendToServer(new LoadoutPayloads.SetSlot(special[row], Optional.of(picked)));
+                    picked = null;
+                } else if (picked == null) {
+                    picked = (row == 0 ? ClientLoadoutState.foundation() : row == 1
+                            ? ClientLoadoutState.breathing() : ClientLoadoutState.bodyProtection()).orElse(null);
+                }
+                return true;
+            }
         }
         int open = ClientLoadoutState.open();
         for (int i = 0; i < open; i++) {
@@ -320,9 +452,10 @@ public final class LoadoutScreen extends Screen {
                 if (button == 1) {
                     PacketDistributor.sendToServer(new LoadoutPayloads.SetSlot(i, Optional.empty()));
                 } else if (picked != null) {
+                    if (!compatible(i)) return true;
                     PacketDistributor.sendToServer(new LoadoutPayloads.SetSlot(i, Optional.of(picked)));
                     picked = null;
-                } else {
+                } else if (picked == null) {
                     List<Optional<ResourceLocation>> slots = ClientLoadoutState.slots();
                     if (i < slots.size() && slots.get(i).isPresent()) {
                         picked = slots.get(i).get();
@@ -345,7 +478,7 @@ public final class LoadoutScreen extends Screen {
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
-        scroll -= (int) Math.signum(scrollY);
+        scroll = Mth.clamp(scroll - (int) Math.signum(scrollY), 0, Math.max(0, techniques().size() - VISIBLE));
         return true;
     }
 

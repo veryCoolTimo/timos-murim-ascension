@@ -26,6 +26,15 @@ public final class SectPositions {
 
     /** Lifetime merit is used, just as for standing: spending cannot cost an earned office. */
     public static boolean eligible(SectState s, int rank, String office) {
+        return eligible(s, rank, office, false);
+    }
+
+    /** Same, for a living player: on Peaceful no bandit exists, so the bandit favour is not asked of the elder. */
+    public static boolean eligible(ServerPlayer p, String office) {
+        return eligible(SectService.state(p), p.getData(ModAttachments.PROFILE).rank(), office, SectRequests.peaceful(p));
+    }
+
+    static boolean eligible(SectState s, int rank, String office, boolean peaceful) {
         if (!s.member() || disciplined(s) || !s.has(SectStanding.APPROVAL) || !s.has(SectTalk.REVIEW_WON)) {
             return false;
         }
@@ -34,7 +43,7 @@ public final class SectPositions {
                     && s.has(SectStanding.LESSON_TWO) && SectRequests.completedAny(s);
         }
         return "elder".equals(office) && s.has(FIRST) && !s.has(ELDER) && rank >= 4 && s.contribution() >= 150
-                && s.has("request.training.done") && s.has("request.bandits.done") && s.has("request.vault.done");
+                && s.has("request.training.done") && (peaceful || s.has("request.bandits.done")) && s.has("request.vault.done");
     }
 
     public static String titleKey(SectState s) {
@@ -48,7 +57,7 @@ public final class SectPositions {
 
     public static boolean offer(ServerPlayer p, String office, boolean reconsider) {
         SectState s = SectService.state(p);
-        if (!eligible(s, p.getData(ModAttachments.PROFILE).rank(), office)
+        if (!eligible(p, office)
                 || !reconsider && s.has("position.declined." + office)) return false;
         p.setData(ModAttachments.SECT, s.with("position.offer." + office).without("position.declined." + office)
                 .with("pass.main_hall"));
@@ -58,13 +67,15 @@ public final class SectPositions {
     public static boolean accept(ServerPlayer p, SectDisciple npc, String office) {
         SectState s = SectService.state(p);
         if (npc.role() != SectRole.LEADER || !s.has("position.offer." + office)
-                || !eligible(s, p.getData(ModAttachments.PROFILE).rank(), office)) return false;
+                || !eligible(p, office)) return false;
         s = s.with("position." + office).without("position.offer." + office).without("position.declined." + office)
                 .with("pass.main_hall").with("pass.scriptures");
         if ("elder".equals(office)) s = s.with("pass.elders").with("pass.treasury");
         p.setData(ModAttachments.SECT, s);
-        npc.gesture("bow");
-        p.displayClientMessage(Component.translatable("murim.sect.position.accepted", Component.translatable(titleKey(s))), false);
+        SectSocial.gesture(npc, p, "bow");
+        SectTablet.touch(p);
+        SectSeniors.officeAccepted(p, npc);
+        SectNotice.chat(p, Component.translatable("murim.sect.position.accepted", Component.translatable(titleKey(s))));
         return true;
     }
 
@@ -81,9 +92,9 @@ public final class SectPositions {
         for (String office : java.util.List.of("elder", "first")) {
             String flag = "position.offer." + office;
             if (!SectService.state(p).has(flag) && offer(p, office, false)) {
-                p.displayClientMessage(Component.translatable("murim.sect.position.summons"), false);
+                SectNotice.chat(p, Component.translatable("murim.sect.position.summons"));
             }
-            if (!SectService.state(p).has(flag) || !eligible(SectService.state(p), p.getData(ModAttachments.PROFILE).rank(), office)
+            if (!SectService.state(p).has(flag) || !eligible(p, office)
                     || p.getData(ModAttachments.DIALOGUE).active() || SectSchedule.at(p.level().getDayTime()) == SectSchedule.Period.NIGHT) continue;
             SectDisciple head = p.level().getEntitiesOfClass(SectDisciple.class, p.getBoundingBox().inflate(12),
                     d -> d.role() == SectRole.LEADER && SectReactions.watches(d) && !d.blocking()

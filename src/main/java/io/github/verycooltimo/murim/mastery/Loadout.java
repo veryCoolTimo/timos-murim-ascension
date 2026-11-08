@@ -14,24 +14,69 @@ import java.util.Optional;
  *
  * @param slots  техники по слотам; пустой слот — {@code Optional.empty()}
  * @param active выбранный слот — его техника применяется клавишей техники
+ * @param bodyProtection отдельное искусство защиты тела; не занимает боевой слот
  * @param foundation основа меча — стиль обычной атаки (Меч Шести Равновесий); пусто — ЛКМ ванильная
  */
-public record Loadout(List<Optional<ResourceLocation>> slots, int active, Optional<ResourceLocation> foundation) {
+public record Loadout(List<Optional<ResourceLocation>> slots, int active, Optional<ResourceLocation> foundation,
+                      Optional<ResourceLocation> bodyProtection) {
+
+    /** Save schema marker. Future fields must be optional with defaults (ADR 0084). */
+    public static final int VERSION = 1;
+
+    public int version() { return VERSION; }
+
+    public Loadout(List<Optional<ResourceLocation>> slots, int active, Optional<ResourceLocation> foundation) {
+        this(slots, active, foundation, Optional.empty());
+    }
 
     /** Слотов не бывает больше этого — кольцо с восемью секторами ещё читается. */
     public static final int MAX_SLOTS = 8;
 
     public static final Loadout EMPTY = new Loadout(List.of(), 0, Optional.empty());
 
-    public static final Codec<Loadout> CODEC = RecordCodecBuilder.create(i -> i.group(
+    public static final Codec<Loadout> CODEC = RecordCodecBuilder.<Loadout>create(i -> i.group(
             ResourceLocation.CODEC.optionalFieldOf("technique").codec().listOf()
                     .optionalFieldOf("slots", List.of()).forGetter(Loadout::slots),
             Codec.INT.optionalFieldOf("active", 0).forGetter(Loadout::active),
-            ResourceLocation.CODEC.optionalFieldOf("foundation").forGetter(Loadout::foundation)
-    ).apply(i, Loadout::new));
+            ResourceLocation.CODEC.optionalFieldOf("foundation").forGetter(Loadout::foundation),
+            ResourceLocation.CODEC.optionalFieldOf("body_protection").forGetter(Loadout::bodyProtection),
+            // Always write the marker; an omitted legacy marker still defaults to the current schema.
+            Codec.INT.optionalFieldOf("version").xmap(v -> v.orElse(VERSION), java.util.Optional::of).forGetter(Loadout::version)
+    ).apply(i, (slots, active, foundation, bodyProtection, version) -> new Loadout(slots, active, foundation, bodyProtection))).xmap(Loadout::withoutRemovedArts, loadout -> loadout);
 
     public Loadout {
-        slots = List.copyOf(slots);
+        slots = slots.stream().map(slot -> slot.map(PlumFormMigration::replace)).toList();
+        foundation = foundation.map(PlumFormMigration::replace);
+        bodyProtection = bodyProtection.map(PlumFormMigration::replace);
+    }
+
+    /**
+     * Save migration 19.10: a slot or the foundation that held a removed art (RemovedArts) becomes empty, trailing empty
+     * slots are cut, and an active slot left empty moves to the first slot that still holds a technique. The wheel never
+     * meets an id it cannot resolve. Idempotent; returns this when the loadout holds no removed art.
+     */
+    public Loadout withoutRemovedArts() {
+        if (slots.stream().noneMatch(slot -> slot.isPresent() && RemovedArts.is(slot.get())) && !(foundation.isPresent()
+                && RemovedArts.is(foundation.get())) && !(bodyProtection.isPresent() && RemovedArts.is(bodyProtection.get()))) {
+            return this;
+        }
+        List<Optional<ResourceLocation>> next = new ArrayList<>(slots.stream().map(RemovedArts::scrub).toList());
+        boolean activeLost = active >= 0 && active < slots.size() && slots.get(active).isPresent()
+                && RemovedArts.is(slots.get(active).get());
+        while (!next.isEmpty() && next.get(next.size() - 1).isEmpty()) {
+            next.remove(next.size() - 1);
+        }
+        int nextActive = active;
+        if (activeLost) {
+            nextActive = 0;
+            for (int i = 0; i < next.size(); i++) {
+                if (next.get(i).isPresent()) {
+                    nextActive = i;
+                    break;
+                }
+            }
+        }
+        return new Loadout(next, nextActive, RemovedArts.scrub(foundation), RemovedArts.scrub(bodyProtection));
     }
 
     /** Сколько слотов открыто при такой мудрости: два с самого начала, дальше растёт. */
@@ -64,7 +109,7 @@ public record Loadout(List<Optional<ResourceLocation>> slots, int active, Option
             }
         });
         next.set(slot, technique);
-        return new Loadout(next, active, foundation);
+        return new Loadout(next, active, foundation, bodyProtection);
     }
 
     /**
@@ -94,14 +139,18 @@ public record Loadout(List<Optional<ResourceLocation>> slots, int active, Option
                 }
             }
         }
-        return changed ? new Loadout(next, active, foundation) : this;
+        return changed ? new Loadout(next, active, foundation, bodyProtection) : this;
+    }
+
+    public Loadout withBodyProtection(Optional<ResourceLocation> art) {
+        return new Loadout(slots, active, foundation, art);
     }
 
     public Loadout select(int slot) {
-        return new Loadout(slots, slot, foundation);
+        return new Loadout(slots, slot, foundation, bodyProtection);
     }
 
     public Loadout withFoundation(Optional<ResourceLocation> technique) {
-        return new Loadout(slots, active, technique);
+        return new Loadout(slots, active, technique, bodyProtection);
     }
 }

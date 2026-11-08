@@ -23,6 +23,21 @@
           "text": "dialogue.murim.plum_witness.opt.answer"
         }
       ]
+    },
+    "recognized_office": {
+      "random": [
+        "dialogue.murim.plum_witness.recognized_office.1",
+        "dialogue.murim.plum_witness.recognized_office.2"
+      ],
+      "args": [
+        "position"
+      ],
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.plum_witness.opt.answer"
+        }
+      ]
     }
   }
 }

@@ -14,11 +14,22 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class RealmTest {
 
     private static final ResourceLocation SWEEP = ResourceLocation.fromNamespaceAndPath("murim", "crescent_sweep");
+    /** The main art from the first rank on (art ladder, 24.10). */
+    private static final ResourceLocation PLUM = ResourceLocation.fromNamespaceAndPath("murim", "seven_plum_basic");
 
     /** Пробуждённый даньтянь ёмкостью 30 с запасом {@code pool}. */
     private static DantianProfile awakened(double pool, int rank) {
         // Fixed total capacity fixture, not a simulated rank-up.
         return new DantianProfile(30.0D, 0.8D, 0.5D, "pure", "six_harmonies", pool, 0, 1, rank, 0);
+    }
+
+    @Test
+    @DisplayName("Lab blow for Third/Second; legacy scene timing for First/Peak")
+    void breakthroughSceneLength() {
+        assertEquals(216, Realm.breakthroughTicks(Realm.THIRD));
+        assertEquals(304, Realm.breakthroughTicks(Realm.SECOND));
+        assertEquals(304, Realm.breakthroughTicks(Realm.FIRST));
+        assertEquals(510, Realm.breakthroughTicks(Realm.PEAK));
     }
 
     @Test
@@ -30,30 +41,59 @@ class RealmTest {
     }
 
     @Test
-    @DisplayName("Прорыв 1 — освоить любую технику: прочитанная (слой 0) не считается, освоенная (слой 1) — да")
+    @DisplayName("Прорыв 1 — любая техника на ★1: прочитанная (★0) не считается, освоенная (★1) — да")
     void needsTechnique() {
         assertEquals(Realm.Blocker.NO_TECHNIQUE, Realm.check(awakened(120.0D, 0), Map.of()));
         assertEquals(Realm.Blocker.NO_TECHNIQUE, Realm.check(awakened(120.0D, 0), Map.of(SWEEP, 0)));
         assertEquals(Realm.Blocker.NONE, Realm.check(awakened(120.0D, 0), Map.of(SWEEP, 1)));
-        // Во второй ранг — победа над хозяином крепости (docs/design/26), слой техники не важен.
-        assertEquals(Realm.Blocker.NO_BOSS, Realm.check(awakened(120.0D, 1), Map.of(SWEEP, 9)));
-        assertEquals(Realm.Blocker.NONE, Realm.check(awakened(120.0D, 1), Map.of(SWEEP, 1), true));
+        // Во второй ранг — оба искусства и подтверждения спаррингов (автор 21.10).
+        assertEquals(Realm.Blocker.NO_SECT_SKILLS, Realm.check(awakened(120.0D, 1), Map.of(SWEEP, 9)));
+        assertEquals(Realm.Blocker.NONE, Realm.check(awakened(120.0D, 1), Map.of(ResourceLocation.fromNamespaceAndPath("murim", "six_harmonies"), 6, ResourceLocation.fromNamespaceAndPath("murim", "falling_petal_sword"), 3), true));
         assertEquals(Realm.Blocker.NOT_AT_WALL, Realm.check(awakened(100.0D, 1), Map.of(SWEEP, 1), true));
-        // В первый ранг босс уже не нужен — снова слой формы.
-        assertEquals(Realm.Blocker.NO_TECHNIQUE, Realm.check(awakened(400.0D, 2), Map.of(SWEEP, 3), true));
+        // В первый ранг босс уже не нужен — снова звёзды: ★6.
+        assertEquals(Realm.Blocker.NO_TECHNIQUE, Realm.check(awakened(400.0D, 2), Map.of(PLUM, 5), true));
+        assertEquals(Realm.Blocker.NONE, Realm.check(awakened(400.0D, 2), Map.of(PLUM, 6), true));
+        assertEquals(Realm.Blocker.NO_TECHNIQUE, Realm.check(awakened(400.0D, 2), Map.of(SWEEP, 12), true), "only Seven Plum counts");
     }
 
     @Test
-    @DisplayName("Условия прорывов: 1 — освоить любую, 2 — босс (M4), 3 и Пик — слой формы")
+    @DisplayName("Условия прорывов: 1 — любая техника, 2 — искусства и спарринги, 3 и Пик — звёзды из таблицы")
     void conditions() {
         assertEquals(Realm.Condition.MASTER_ANY, Realm.condition(Realm.THIRD));
-        assertEquals(Realm.Condition.DEFEAT_BOSS, Realm.condition(Realm.SECOND));
+        assertEquals(Realm.Condition.SECT_SKILLS, Realm.condition(Realm.SECOND));
         assertEquals(Realm.Condition.FORM_MASTERY, Realm.condition(Realm.FIRST));
         assertEquals(Realm.Condition.FORM_MASTERY, Realm.condition(Realm.PEAK));
-        assertEquals(1, Realm.tierNeed(Realm.THIRD));
-        assertEquals(3, Realm.tierNeed(Realm.SECOND));
-        assertEquals(4, Realm.tierNeed(Realm.FIRST));
-        assertEquals(5, Realm.tierNeed(Realm.PEAK));
+    }
+
+    @Test
+    @DisplayName("D-4: требования рангов — таблица звёзд (прорыв 1 ★1, прорыв 3 ★6, Пик ★8; у шагов ★5 и ★7), не legacySteps")
+    void requirementsAreATableOfStars() {
+        assertEquals(1, RankRequirements.stars(RankRequirements.Gate.THIRD, 12));
+        assertEquals(6, RankRequirements.stars(RankRequirements.Gate.FIRST, 12));
+        assertEquals(8, RankRequirements.stars(RankRequirements.Gate.PEAK, 12));
+        assertEquals(9, RankRequirements.stars(RankRequirements.Gate.SETTLED, 12));
+        assertEquals(11, RankRequirements.stars(RankRequirements.Gate.SUMMIT, 12));
+        // Шаги (десять звёзд): та же доля звёзд искусства.
+        assertEquals(1, RankRequirements.stars(RankRequirements.Gate.THIRD, 10));
+        assertEquals(5, RankRequirements.stars(RankRequirements.Gate.FIRST, 10));
+        assertEquals(7, RankRequirements.stars(RankRequirements.Gate.PEAK, 10));
+        assertEquals(8, RankRequirements.stars(RankRequirements.Gate.SETTLED, 10));
+        assertEquals(9, RankRequirements.stars(RankRequirements.Gate.SUMMIT, 10));
+        assertEquals(RankRequirements.Gate.THIRD, Realm.gate(Realm.THIRD));
+        assertEquals(RankRequirements.Gate.FIRST, Realm.gate(Realm.FIRST));
+        assertEquals(RankRequirements.Gate.PEAK, Realm.gate(Realm.PEAK));
+        assertTrue(RankRequirements.gate(Realm.SECOND).isEmpty(), "прорыв 2 — босс, а не звёзды");
+        // Шесть Равновесий требовали ★10 (старый legacySteps), Цветок ★6: теперь одно правило для всех искусств.
+        ResourceLocation six = ResourceLocation.fromNamespaceAndPath("murim", "six_harmonies");
+        ResourceLocation wind = ResourceLocation.fromNamespaceAndPath("murim", "wind_god_steps");
+        assertEquals(Realm.Blocker.NO_TECHNIQUE, Realm.check(awakened(400.0D, 2), Map.of(six, 12), true), "Six Harmonies is the third-rank art");
+        assertEquals(Realm.Blocker.NO_TECHNIQUE, Realm.check(awakened(400.0D, 2), Map.of(wind, 10), true), "footwork does not open the First Rate");
+        assertEquals(Realm.Blocker.NO_TECHNIQUE, Realm.check(awakened(1000.0D, 3), Map.of(PLUM, 7), true));
+        assertEquals(Realm.Blocker.NONE, Realm.check(awakened(1000.0D, 3), Map.of(PLUM, 8), true), "Peak: Seven Plum 8");
+        // Слова, а не числа: у каждой ступени есть ключ с описанием.
+        for (RankRequirements.Gate gate : RankRequirements.Gate.values()) {
+            assertTrue(gate.wordKey().startsWith("murim.mastery.requirement."), gate.name());
+        }
     }
 
     @Test
@@ -91,8 +131,8 @@ class RealmTest {
     @Test
     @DisplayName("Без даньтяня и на последнем ранге прорыва нет")
     void blocked() {
-        assertEquals(Realm.Blocker.NO_DANTIAN, Realm.check(DantianProfile.INITIAL, Map.of(SWEEP, 8)));
-        assertEquals(Realm.Blocker.MAX_RANK, Realm.check(awakened(120.0D, Realm.MAX), Map.of(SWEEP, 8)));
+        assertEquals(Realm.Blocker.NO_DANTIAN, Realm.check(DantianProfile.INITIAL, Map.of(SWEEP, 12)));
+        assertEquals(Realm.Blocker.MAX_RANK, Realm.check(awakened(120.0D, Realm.MAX), Map.of(SWEEP, 12)));
     }
 
     @Test
@@ -124,22 +164,23 @@ class RealmTest {
     }
 
     @Test
-    @DisplayName("Подступени Пика: стена и техника до слоя 6 / 7, центр ×1,25, сила +0,1")
+    @DisplayName("Подступени Пика: стена и техника на ★9 / ★11, центр ×1,25, сила +0,1")
     void peakStages() {
         DantianProfile peak = awakened(120.0D, Realm.PEAK);
-        assertEquals(Realm.Blocker.NOT_AT_WALL, Realm.checkStage(awakened(60.0D, Realm.PEAK), Map.of(SWEEP, 8)));
-        assertEquals(Realm.Blocker.NO_TECHNIQUE, Realm.checkStage(peak, Map.of(SWEEP, 5)));
-        assertEquals(Realm.Blocker.NONE, Realm.checkStage(peak, Map.of(SWEEP, 6)));
+        assertEquals(Realm.Blocker.NOT_AT_WALL, Realm.checkStage(awakened(60.0D, Realm.PEAK), Map.of(SWEEP, 12)));
+        assertEquals(Realm.Blocker.NO_TECHNIQUE, Realm.checkStage(peak, Map.of(PLUM, 8)));
+        assertEquals(Realm.Blocker.NONE, Realm.checkStage(peak, Map.of(PLUM, 9)));
         DantianProfile settled = Realm.settle(peak);
         assertEquals(Realm.STAGE_SETTLED, settled.stage());
         assertEquals(37.5D, settled.capacity(), 1.0E-9);
-        assertEquals(Realm.Blocker.NOT_AT_WALL, Realm.checkStage(settled, Map.of(SWEEP, 8)), "новая стена дальше");
+        assertEquals(Realm.Blocker.NOT_AT_WALL, Realm.checkStage(settled, Map.of(SWEEP, 12)), "новая стена дальше");
         DantianProfile full = settled.withPool(Realm.wall(settled));
-        assertEquals(Realm.Blocker.NO_TECHNIQUE, Realm.checkStage(full, Map.of(SWEEP, 6)));
+        assertEquals(Realm.Blocker.NO_TECHNIQUE, Realm.checkStage(full, Map.of(PLUM, 10)));
+        assertEquals(Realm.Blocker.NONE, Realm.checkStage(full, Map.of(PLUM, 11)));
         DantianProfile summit = Realm.settle(full);
         assertEquals(Realm.STAGE_SUMMIT, summit.stage());
-        assertEquals(Realm.Blocker.MAX_RANK, Realm.checkStage(summit.withPool(Realm.wall(summit)), Map.of(SWEEP, 8)));
-        assertEquals(Realm.Blocker.MAX_RANK, Realm.checkStage(awakened(120.0D, Realm.FIRST), Map.of(SWEEP, 8)),
+        assertEquals(Realm.Blocker.MAX_RANK, Realm.checkStage(summit.withPool(Realm.wall(summit)), Map.of(SWEEP, 12)));
+        assertEquals(Realm.Blocker.MAX_RANK, Realm.checkStage(awakened(120.0D, Realm.FIRST), Map.of(SWEEP, 12)),
                 "ниже Пика — прорыв, не подступень");
         assertEquals(1.75D, Realm.power(peak), 1.0E-9);
         assertEquals(1.85D, Realm.power(settled), 1.0E-9);

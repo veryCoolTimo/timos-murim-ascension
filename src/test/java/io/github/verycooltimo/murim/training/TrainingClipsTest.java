@@ -10,12 +10,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /** Contract with the clip files (client/training/ClientTraining plays them) and the NPC hook. */
@@ -35,40 +33,39 @@ class TrainingClipsTest {
     }
 
     @Test
-    @DisplayName("Клипы игрока есть; планка и отжимание держат последний кадр; повтор короче такта сервера")
+    @DisplayName("Клип игрока: остался один, камень в руках (петля, только верх тела); клипов приседаний и отжиманий нет")
     void playerClips() throws IOException {
-        Map<String, String> loops = Map.of("training_squat", "false", "training_horse", "true",
-                "training_plank", "\"hold_on_last_frame\"", "training_pushup", "\"hold_on_last_frame\"",
-                "training_pushup_weighted", "\"hold_on_last_frame\"", "training_plank_up", "false", "training_carry", "true");
-        for (Map.Entry<String, String> e : loops.entrySet()) {
-            JsonObject a = clip(e.getKey());
-            assertEquals(e.getValue(), a.get("loop").toString(), e.getKey());
-            for (String bone : a.getAsJsonObject("bones").keySet()) {
-                assertTrue(PLAYER_BONES.contains(bone), e.getKey() + ": bone " + bone);
-            }
+        JsonObject carry = clip("training_carry");
+        assertEquals("true", carry.get("loop").toString());
+        for (String bone : carry.getAsJsonObject("bones").keySet()) {
+            assertTrue(PLAYER_BONES.contains(bone), "training_carry: bone " + bone);
+            assertTrue(!bone.endsWith("_leg") && !bone.equals("body"), "carry is upper body, legs walk: " + bone);
         }
-        assertTrue(clip("training_squat").get("animation_length").getAsFloat() * 20.0F <= Exercise.SQUAT.beat());
-        assertTrue(clip("training_pushup").get("animation_length").getAsFloat() * 20.0F <= Exercise.PUSHUP.beat());
-        assertTrue(clip("training_pushup_weighted").get("animation_length").getAsFloat() * 20.0F <= Exercise.PUSHUP_WEIGHTED.beat());
-        for (String b : clip("training_carry").getAsJsonObject("bones").keySet()) {
-            assertTrue(!b.endsWith("_leg") && !b.equals("body"), "carry is upper body, legs walk: " + b);
+        for (String gone : new String[] {"squat", "horse", "plank", "plank_up", "pushup", "pushup_weighted"}) {
+            assertTrue(!Files.exists(res("player_animations/training_" + gone + ".json")),
+                    "the Shift-started sets are gone (25.10): training_" + gone);
         }
     }
 
     @Test
-    @DisplayName("Ученики: у каждого упражнения на месте своя поза; соседи по списку делают разное")
+    @DisplayName("Ученики: у каждой позы утренней разминки своя поза; соседи по списку делают разное")
     void discipleHook() {
         Set<SectPose> poses = new HashSet<>();
-        for (Exercise e : DiscipleTraining.MORNING) {
-            SectPose p = DiscipleTraining.pose(e);
+        for (SectPose p : DiscipleTraining.MORNING) {
             assertNotEquals(SectPose.NONE, p);
-            assertTrue(p.training() && p.hidesWeapon(), e.id());
+            assertTrue(p.training() && p.hidesWeapon(), p.name());
             poses.add(p);
         }
         assertEquals(DiscipleTraining.MORNING.size(), poses.size());
-        assertNull(DiscipleTraining.pose(Exercise.PEAK_CLIMB));
         assertNotEquals(DiscipleTraining.morning(0, 7), DiscipleTraining.morning(1, 7));
         assertNotEquals(DiscipleTraining.morning(3, 7), DiscipleTraining.morning(3, 8));
         assertTrue(SectPose.CARRY_STONE.upperBody(), "the stone is carried while walking up the stair");
+    }
+
+    @Test
+    @DisplayName("Остались три явных урока секты: камень в гору, подъём на пик, бег по тропе")
+    void onlyTheSectDrillsRemain() {
+        assertEquals(3, Exercise.values().length);
+        assertTrue(Exercise.PEAK_CLIMB.route() && Exercise.TRAIL_SPRINT.route() && !Exercise.CARRY_STONE.route());
     }
 }

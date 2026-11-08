@@ -2,12 +2,10 @@ package io.github.verycooltimo.murim.trade;
 
 import io.github.verycooltimo.murim.entity.Bandit;
 import io.github.verycooltimo.murim.registry.ModDataComponents;
-import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
-import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
@@ -54,6 +52,12 @@ import org.jetbrains.annotations.Nullable;
  * reference/minecraft-src/net/minecraft/world/item/trading/MerchantOffer.java, ItemCost.java.
  */
 public class Peddler extends AbstractVillager {
+    private final io.github.verycooltimo.murim.sect.SectSpeechGuard speechGuard = new io.github.verycooltimo.murim.sect.SectSpeechGuard();
+
+    public io.github.verycooltimo.murim.sect.SectSpeechGuard speechGuard() {
+        return speechGuard;
+    }
+
 
     /** Сколько живёт в деревне: двое суток. */
     public static final int VILLAGE_STAY = 48000;
@@ -69,6 +73,12 @@ public class Peddler extends AbstractVillager {
     /** Тиков до ухода; ≤ 0 — не уходит (лавка у Хуашань). */
     private int stayTicks;
     private long lastRestock = Long.MIN_VALUE / 2;
+    /** Sect contract escort: the merchant walks after this player (re-picked by the contract service), never alone. */
+    @Nullable
+    private java.util.UUID escortLeader;
+    private boolean escorted;
+    /** The last line he said over his head (the escort contract), for tests and the stand; not saved. */
+    private String bubbleKey = "";
 
     public Peddler(EntityType<? extends Peddler> type, Level level) {
         super(type, level);
@@ -91,6 +101,23 @@ public class Peddler extends AbstractVillager {
                         && (!(b instanceof io.github.verycooltimo.murim.npc.GuestFighter guest) || guest.hostile())));
         goalSelector.addGoal(1, new PanicGoal(this, 0.5D));
         goalSelector.addGoal(1, new LookAtTradingPlayerGoal(this));
+        goalSelector.addGoal(3, new net.minecraft.world.entity.ai.goal.Goal() {
+            { setFlags(java.util.EnumSet.of(Flag.MOVE)); }
+            private Player leader() { return escortLeader == null ? null : level().getPlayerByUUID(escortLeader); }
+            @Override public boolean canUse() {
+                Player l = leader();
+                // Waits where it stands until the leader is near, follows on foot, waits again when left behind.
+                return escorted && l != null && l.level() == level() && distanceToSqr(l) > 16.0D && distanceToSqr(l) < 24.0D * 24.0D;
+            }
+            @Override public boolean canContinueToUse() {
+                Player l = leader();
+                return escorted && l != null && distanceToSqr(l) > 6.0D && distanceToSqr(l) < 30.0D * 30.0D && !getNavigation().isDone();
+            }
+            @Override public void start() {
+                Player l = leader();
+                if (l != null) { clearRestriction(); getNavigation().moveTo(l, 0.55D); }
+            }
+        });
         goalSelector.addGoal(4, new MoveTowardsRestrictionGoal(this, 0.35D));
         goalSelector.addGoal(8, new WaterAvoidingRandomStrollGoal(this, 0.35D));
         goalSelector.addGoal(9, new InteractGoal(this, Player.class, 3.0F, 1.0F));
@@ -106,6 +133,27 @@ public class Peddler extends AbstractVillager {
         setPersistenceRequired();
     }
 
+    /** Turn this merchant into a contract escort: free of the home leash, follows the leader. */
+    public void escort() {
+        escorted = true;
+    }
+
+    public boolean escorted() {
+        return escorted;
+    }
+
+    public void markBubble(String key) {
+        bubbleKey = key;
+    }
+
+    public String bubbleKey() {
+        return bubbleKey;
+    }
+
+    public void setEscortLeader(@Nullable java.util.UUID leader) {
+        escortLeader = leader;
+    }
+
     public boolean isStall() {
         return stayTicks <= 0;
     }
@@ -119,16 +167,31 @@ public class Peddler extends AbstractVillager {
             player.awardStat(Stats.TALKED_TO_VILLAGER);
         }
         if (!level().isClientSide) {
+            if (player instanceof net.minecraft.server.level.ServerPlayer customer) {
+                updateMapOffer(customer);
+            }
             if (getOffers().isEmpty()) {
                 return InteractionResult.CONSUME;
             }
-            // Реплика в чат от его имени: «Серебро вперёд, товар потом».
-            player.sendSystemMessage(Component.translatable("murim.peddler.says", getDisplayName(),
-                    Component.translatable("murim.peddler.greet." + random.nextInt(GREETINGS)).withStyle(ChatFormatting.GRAY)));
             setTradingPlayer(player);
             openTradingScreen(player, getDisplayName(), 1);
         }
         return InteractionResult.sidedSuccess(level().isClientSide);
+    }
+
+    /** Rebuild only the personal map row on each opening; ordinary stock keeps its uses. */
+    public void updateMapOffer(net.minecraft.server.level.ServerPlayer customer) {
+        MerchantOffers current = getOffers();
+        // API: MerchantOffer#getResult; ItemStack#get(DataComponents.CUSTOM_NAME).
+        current.removeIf(o -> net.minecraft.network.chat.Component.translatable("murim.wanderer.map")
+                .equals(o.getResult().get(net.minecraft.core.component.DataComponents.CUSTOM_NAME)));
+        if (!PeddlerStock.offersHuaMap(io.github.verycooltimo.murim.sect.SectService.state(customer).member())) return;
+        ItemStack map = io.github.verycooltimo.murim.sect.Wanderer.createMap(customer);
+        if (!map.isEmpty()) {
+            PeddlerStock.Line line = PeddlerStock.HUA_MAP;
+            current.add(new MerchantOffer(new ItemCost(coin(Coins.Coin.SILVER), line.wen() / Coins.WEN_PER_SILVER),
+                    map, line.uses(), 0, 0.0F));
+        }
     }
 
     @Override
@@ -140,6 +203,7 @@ public class Peddler extends AbstractVillager {
     void stock(MerchantOffers offers) {
         offers.clear();
         for (PeddlerStock.Line l : PeddlerStock.SELLS) {
+            if ("hua_map".equals(l.book())) continue; // Prepared per customer when opening trade.
             if (l.chance() < 1.0D && random.nextDouble() >= l.chance()) {
                 continue;
             }
@@ -256,6 +320,7 @@ public class Peddler extends AbstractVillager {
         super.addAdditionalSaveData(tag);
         tag.putInt("Stay", stayTicks);
         tag.putLong("Restock", lastRestock);
+        tag.putBoolean("Escorted", escorted);
         if (home != null) {
             tag.put("Home", NbtUtils.writeBlockPos(home));
         }
@@ -270,5 +335,6 @@ public class Peddler extends AbstractVillager {
             home = p;
             restrictTo(p, stayTicks > 0 ? 10 : 5);
         });
+        escorted = tag.getBoolean("Escorted");
     }
 }

@@ -34,6 +34,19 @@ public interface SectLayout {
         return l != null && h != null && Math.abs(l[0]) <= h[0] + margin && Math.abs(l[1]) <= h[1] + margin;
     }
 
+    /**
+     * The built sect as data (docs/design/38-sect-ai-locations.md): rooms, beds, spots and the waypoint graph.
+     * Null: this layout has none (test yards, foreign worlds); the plan zones above stay the fallback.
+     */
+    default SectLayoutFile file() {
+        return null;
+    }
+
+    /** Teaching context for this layout; isolated yards can supply their own transient session. */
+    default SectLessons lessons(net.minecraft.server.level.ServerLevel level) {
+        return SectLessons.of(level);
+    }
+
     /** Раскладка горы Хуа. */
     static SectLayout hua(MountHuaSite site) {
         return new Hua(site);
@@ -61,8 +74,42 @@ public interface SectLayout {
             return site;
         }
 
+        /** The built sect exists only on the canonical mountain it was baked on; an old world without the bake has none. */
+        @Override
+        public SectLayoutFile file() {
+            return site.canonical() ? SectLayoutFile.anchored(site) : null;
+        }
+
+        /**
+         * Places the author built himself are read from the layout file when it has them, not from the plan: the penance cave
+         * stands where the extractor found its seal (author 18.10: the plan put it outside the mountain, unbuilt).
+         */
+        private static final java.util.Set<String> BUILT_ZONES = java.util.Set.of("penance");
+
+        private SectLayoutFile.Zone built(String zone) {
+            if (!BUILT_ZONES.contains(zone)) {
+                return null;
+            }
+            SectLayoutFile f = file();
+            return f == null ? null : f.zone(zone);
+        }
+
+        private double builtCentreX(SectLayoutFile.Zone d) {
+            return (d.rect().x0() + d.rect().x1() + 1) / 2.0D;
+        }
+
+        private double builtCentreZ(SectLayoutFile.Zone d) {
+            return (d.rect().z0() + d.rect().z1() + 1) / 2.0D;
+        }
+
         @Override
         public Vec3 at(String zone, double du, double dv) {
+            SectLayoutFile.Zone d = built(zone);
+            if (d != null) {
+                // The local offset turns with the site like a direction does (see yaw); y is the feet level of the floor.
+                double[] w = worldDelta(du, dv);
+                return new Vec3(builtCentreX(d) + w[0], d.y(), builtCentreZ(d) + w[1]);
+            }
             MountHuaPlan.Zone z = zones.get(zone);
             if (z == null) {
                 return null;
@@ -97,14 +144,41 @@ public interface SectLayout {
             return yawOf(dx, dz);
         }
 
+        /** A local direction (du, dv) as a world (dx, dz) vector for this site's rotation. */
+        private double[] worldDelta(double du, double dv) {
+            return switch (site.rotation()) {
+                case 1 -> new double[] {-dv, du};
+                case 2 -> new double[] {-du, -dv};
+                case 3 -> new double[] {dv, -du};
+                default -> new double[] {du, dv};
+            };
+        }
+
         @Override
         public double[] half(String zone) {
+            SectLayoutFile.Zone d = built(zone);
+            if (d != null) {
+                double w = d.rect().x1() - d.rect().x0() + 1;
+                double dp = d.rect().z1() - d.rect().z0() + 1;
+                return (site.rotation() & 1) == 0 ? new double[] {w / 2.0D, dp / 2.0D} : new double[] {dp / 2.0D, w / 2.0D};
+            }
             MountHuaPlan.Zone z = zones.get(zone);
             return z == null ? null : new double[] {z.width() / 2.0D, z.depth() / 2.0D};
         }
 
         @Override
         public double[] local(String zone, Vec3 pos) {
+            SectLayoutFile.Zone d = built(zone);
+            if (d != null) {
+                double dx = pos.x - builtCentreX(d);
+                double dz = pos.z - builtCentreZ(d);
+                return switch (site.rotation()) {
+                    case 1 -> new double[] {dz, -dx};
+                    case 2 -> new double[] {-dx, -dz};
+                    case 3 -> new double[] {-dz, dx};
+                    default -> new double[] {dx, dz};
+                };
+            }
             MountHuaPlan.Zone z = zones.get(zone);
             if (z == null) {
                 return null;

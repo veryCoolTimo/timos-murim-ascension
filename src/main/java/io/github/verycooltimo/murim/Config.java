@@ -3,8 +3,7 @@ package io.github.verycooltimo.murim;
 import net.neoforged.neoforge.common.ModConfigSpec;
 
 /**
- * Конфигурация мода. Пока содержит только отладочный переключатель — реальные параметры
- * добавляются вместе с механиками, которые они настраивают.
+ * Конфигурация мода: отладка, правила секты и размещение горы Хуа.
  *
  * <p>Тип конфига выбирается по тому, кто владеет значением: COMMON — общие настройки,
  * SERVER — то, что определяет поведение мира и уезжает в сейв, CLIENT — визуал и ввод.
@@ -14,9 +13,10 @@ import net.neoforged.neoforge.common.ModConfigSpec;
 public final class Config {
     private static final ModConfigSpec.Builder BUILDER = new ModConfigSpec.Builder();
 
-    public static final ModConfigSpec.BooleanValue DEBUG_LOGGING = BUILDER
-            .comment("Подробное логирование этапов загрузки мода. По умолчанию выключено.")
-            .define("debugLogging", false);
+    public static final ModConfigSpec.BooleanValue DEV_COMMANDS = BUILDER
+            .comment("Operator test tree /murim dev ... (docs/design/44-commands.md). Dev runs (runClient, runServer, GameTest) always have it;",
+                    "in a release build it is hidden unless this is true. /murim help is never affected.")
+            .define("devCommands", false);
 
     /**
      * Техники ломают землю (падение дерева Семи Цветков Сливы и т. п.): только природные блоки
@@ -51,6 +51,15 @@ public final class Config {
     public static final ModConfigSpec.IntValue SECT_RAMPAGE_TARGETS = BUILDER
             .comment("Different sect NPCs attacked within the rampage window.")
             .defineInRange("sectRampageTargets", 2, 2, 64);
+    public static final ModConfigSpec.BooleanValue SECT_WAR_ENABLED = BUILDER
+            .comment("Hitting the sect can start a sect war. When false, blows only warn (damage stays at the warning cap).")
+            .define("sectWarEnabled", true);
+    public static final ModConfigSpec.BooleanValue PVP_ONLY_IN_DUEL = BUILDER
+            .comment("Default false: vanilla PvP. When true, damage is denied outside consented duels only when both players are inside Mount Hua.")
+            .define("pvpOnlyInDuel", false);
+    public static final ModConfigSpec.BooleanValue SWORD_GUARD_VANILLA_SWORDS = BUILDER
+            .comment("Allow vanilla swords to guard (default false). Usable off-hand items always keep vanilla use priority.")
+            .define("swordGuardVanillaSwords", false);
     public static final ModConfigSpec.IntValue SECT_RAMPAGE_HITS = BUILDER
             .comment("Attack attempts within the rampage window, including hits stopped by an NPC.")
             .defineInRange("sectRampageHits", 3, 2, 100);
@@ -63,6 +72,30 @@ public final class Config {
     public static final ModConfigSpec.IntValue SECT_ELDER_RANGE = BUILDER
             .comment("Search radius for an available loaded elder, then the sect leader.")
             .defineInRange("sectElderSearchRange", 192, 32, 512);
+
+    public static final ModConfigSpec.BooleanValue SECT_RELOCATE_WHEN_UNSEEN = BUILDER
+            .comment("Last recovery step for a sect NPC stuck for 480 ticks after re-path, step back and another spot:",
+                    "move him to the nearest waypoint of the sect layout, only when no player can see him. Author allowed it 17.10.")
+            .define("relocateWhenUnseen", true);
+
+    public static final ModConfigSpec.BooleanValue SECT_REPAIRS = BUILDER
+            .comment("The sect's servants mend visible damage in the baked sect (explosions, fire, mobs, a broken wall) and the sect treasury pays.",
+                    "They only fill holes; they never touch a player's room, anything a player built or placed, containers, beds or workstations.",
+                    "Set false to switch repairs off completely.")
+            .define("sectRepairs", true);
+    public static final ModConfigSpec.IntValue SECT_REPAIR_GRACE = BUILDER
+            .comment("Ticks a hole stays before the servants take it up (6000 = a quarter of an in-game day; the work itself is in daylight only).",
+                    "The key is new (it was sectRepairGraceTicks = 24000): a config file keeps the default it was first written with,",
+                    "so a changed default needs a new key or the old value stays for everybody who ran the game before.")
+            .defineInRange("sectRepairGrace", 6000, 0, 720000);
+
+    // API: reference/neoforge-src/net/neoforged/neoforge/common/ModConfigSpec.java#Builder.defineInRange.
+    public static final ModConfigSpec.IntValue HUA_MIN_DISTANCE = BUILDER
+            .comment("Minimum Mount Hua centre distance from spawn, blocks; new worlds only.")
+            .defineInRange("huaMinDistance", 2700, 1000, 100000);
+    public static final ModConfigSpec.IntValue HUA_MAX_DISTANCE = BUILDER
+            .comment("Maximum Mount Hua centre distance; values below the minimum use the minimum. New worlds only.")
+            .defineInRange("huaMaxDistance", 4800, 1000, 100000);
 
     public static final ModConfigSpec SPEC = BUILDER.build();
 

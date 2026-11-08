@@ -1,0 +1,25 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "sword_guard": {
+      "loop": true,
+      "animation_length": 1.0,
+      "bones": {
+        "right_arm": {
+          "rotation": [
+            -110,
+            45,
+            40
+          ]
+        },
+        "left_arm": {
+          "rotation": [
+            -60,
+            0,
+            -10
+          ]
+        }
+      }
+    }
+  }
+}

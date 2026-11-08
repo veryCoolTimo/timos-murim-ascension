@@ -5,6 +5,23 @@
     {
       "when": [
         {
+          "free": false,
+          "min_standing": "first"
+        }
+      ],
+      "node": "busy_office"
+    },
+    {
+      "when": [
+        {
+          "min_standing": "first"
+        }
+      ],
+      "node": "office"
+    },
+    {
+      "when": [
+        {
           "free": false
         }
       ],
@@ -50,7 +67,11 @@
     "busy": {
       "random": [
         "dialogue.murim.disciple.busy1",
-        "dialogue.murim.disciple.busy2"
+        "dialogue.murim.disciple.busy2",
+        "dialogue.murim.disciple.busy3",
+        "dialogue.murim.disciple.busy4",
+        "dialogue.murim.disciple.busy5",
+        "dialogue.murim.disciple.busy6"
       ],
       "gesture": "shake",
       "options": []
@@ -59,7 +80,10 @@
       "random": [
         "dialogue.murim.disciple.formation1",
         "dialogue.murim.disciple.formation2",
-        "dialogue.murim.disciple.formation3"
+        "dialogue.murim.disciple.formation3",
+        "dialogue.murim.disciple.formation4",
+        "dialogue.murim.disciple.formation5",
+        "dialogue.murim.disciple.formation6"
       ],
       "gesture": "shake",
       "options": [
@@ -106,7 +130,7 @@
       "gesture": "explain",
       "options": [
         {
-          "text": "dialogue.murim.escort.opt.menu",
+          "text": "dialogue.murim.disciple.opt.guide",
           "when": [
             {
               "member": true
@@ -139,7 +163,7 @@
       "gesture": "nod",
       "options": [
         {
-          "text": "dialogue.murim.escort.opt.menu",
+          "text": "dialogue.murim.disciple.opt.guide",
           "when": [
             {
               "member": true
@@ -155,6 +179,20 @@
             }
           ],
           "next": "challenge"
+        },
+        {
+          "text": "dialogue.murim.bout.opt.ring",
+          "when": [
+            {
+              "social": "progression:bout_menu"
+            }
+          ],
+          "actions": [
+            {
+              "type": "progression_menu",
+              "value": "bouts"
+            }
+          ]
         },
         {
           "text": "dialogue.murim.disciple.opt.doing",
@@ -174,7 +212,11 @@
     "doing": {
       "random": [
         "dialogue.murim.disciple.doing_training1",
-        "dialogue.murim.disciple.doing_training2"
+        "dialogue.murim.disciple.doing_training2",
+        "dialogue.murim.disciple.doing_training3",
+        "dialogue.murim.disciple.doing_training4",
+        "dialogue.murim.disciple.doing_training5",
+        "dialogue.murim.disciple.doing_training6"
       ],
       "gesture": "explain",
       "options": [
@@ -186,6 +228,20 @@
             }
           ],
           "next": "challenge"
+        },
+        {
+          "text": "dialogue.murim.bout.opt.ring",
+          "when": [
+            {
+              "social": "progression:bout_menu"
+            }
+          ],
+          "actions": [
+            {
+              "type": "progression_menu",
+              "value": "bouts"
+            }
+          ]
         },
         {
           "text": "dialogue.murim.opt.leave"
@@ -275,6 +331,96 @@
         },
         {
           "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "busy_office": {
+      "random": [
+        "dialogue.murim.disciple.busy_office.1",
+        "dialogue.murim.disciple.busy_office.2"
+      ],
+      "args": [
+        "position"
+      ],
+      "gesture": "shake",
+      "options": []
+    },
+    "office": {
+      "random": [
+        "@context"
+      ],
+      "gesture": "nod",
+      "options": [
+        {
+          "text": "dialogue.murim.approach.opt.not_now",
+          "when": [
+            {
+              "social": "approaching"
+            }
+          ],
+          "actions": [
+            {
+              "type": "approach_decline"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.office.opt.spar",
+          "when": [
+            {
+              "free": true
+            }
+          ],
+          "next": "office_spar"
+        },
+        {
+          "text": "dialogue.murim.bout.opt.ring",
+          "when": [
+            {
+              "social": "progression:bout_menu"
+            }
+          ],
+          "actions": [
+            {
+              "type": "progression_menu",
+              "value": "bouts"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.social.opt.news",
+          "next": "sect_news"
+        },
+        {
+          "text": "dialogue.murim.opt.leave"
+        }
+      ]
+    },
+    "office_spar": {
+      "random": [
+        "dialogue.murim.office.spar.1",
+        "dialogue.murim.office.spar.2"
+      ],
+      "args": [
+        "position"
+      ],
+      "gesture": "bow",
+      "options": [
+        {
+          "text": "dialogue.murim.disciple.opt.begin",
+          "when": [
+            {
+              "free": true
+            }
+          ],
+          "actions": [
+            {
+              "type": "start_spar"
+            }
+          ]
+        },
+        {
+          "text": "dialogue.murim.disciple.opt.not_now"
         }
       ]
     }

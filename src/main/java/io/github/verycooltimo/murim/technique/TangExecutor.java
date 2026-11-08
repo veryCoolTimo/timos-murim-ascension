@@ -509,6 +509,18 @@ public final class TangExecutor {
 
     /** Касание сущности по факту. @return true — кинжал останавливается. */
     static boolean onHit(TangDagger d, Entity e, Vec3 point) {
+        if (d.isRemoved()) return true;
+        if (e instanceof ServerPlayer defender
+                && io.github.verycooltimo.murim.combat.FragranceAirService.dodgeProjectile(defender, d)) return false;
+        // API: neoforge-src/.../event/EventHooks.java#onProjectileImpact(Projectile, HitResult).
+        if (net.neoforged.neoforge.event.EventHooks.onProjectileImpact(d, new net.minecraft.world.phys.EntityHitResult(e, point))) {
+            // A sword parry discards the dagger; Bamboo catches leave it alive with a new owner.
+            // API: Minecraft Entity#isRemoved; cancellation alone does not distinguish the two.
+            return d.isRemoved();
+        }
+        // Resolve defense before poison, burst, target freeze or any other contact side effect.
+        if (e instanceof LivingEntity defender
+                && io.github.verycooltimo.murim.combat.SwordGuard.parryProjectile(defender, d)) return true;
         if (!(d.getOwner() instanceof ServerPlayer player) || !(e instanceof LivingEntity t)) {
             d.giveBack(null, point);
             return true;
@@ -816,6 +828,25 @@ public final class TangExecutor {
                 net.minecraft.sounds.SoundSource.PLAYERS, 0.6F, 1.6F);
     }
 
+    /**
+     * Dev stand (parry film, {@code /murim dev spar dagger}): one dagger of the hand throw flies from {@code from} to {@code to} for
+     * the owner {@code owner}; it hurts nobody (the owner is no player) but is parried like any other.
+     */
+    public static void probeThrow(LivingEntity owner, Vec3 from, Vec3 to) {
+        TangDagger d = new TangDagger(owner.level(), owner, TangRules.FIVE, 0, 0);
+        d.thrownItem = true;
+        d.freeThrow = true;
+        d.setPos(from);
+        d.setMode(TangDagger.STRAIGHT);
+        d.speed = TangRules.HAND_SPEED;
+        Vec3 dir = to.subtract(from).normalize();
+        d.setDeltaMovement(dir.scale(TangRules.HAND_SPEED));
+        d.damage = TangRules.HAND_DMG;
+        d.life = 60;
+        face(d, dir);
+        owner.level().addFreshEntity(d);
+    }
+
     static void knockedDown(TangDagger d) {
         if (d.getOwner() instanceof ServerPlayer player) {
             send(player, d.form(), TangPayload.DOWN, d.executionTier(), d.position(), Vec3.ZERO, d.getId(), 0);
@@ -956,7 +987,8 @@ public final class TangExecutor {
                 continue;
             }
             double f = TangRules.SPLASH_DMG + (TangRules.SPLASH_EDGE - TangRules.SPLASH_DMG) * (r / TangRules.SPLASH_RADIUS);
-            hurt(player, d, e, d.damage * f * k);
+            io.github.verycooltimo.murim.combat.SwordGuard.unguarded(e,
+                    () -> hurt(player, d, e, d.damage * f * k));
             push(e, at, c.subtract(at), 0.6D);
         }
         send(player, TangRules.BURST, TangPayload.EXPLODE, d.executionTier(), at, dir, main == null ? -1 : main.getId(),
@@ -1091,6 +1123,8 @@ public final class TangExecutor {
     }
 
     private static void send(ServerPlayer player, int form, int stage, int executionTier, Vec3 pos, Vec3 dir, int a, int b) {
-        PacketDistributor.sendToPlayersTrackingEntityAndSelf(player, new TangPayload(player.getId(), form, stage, executionTier, pos, dir, a, b));
+        // API: NeoForge ICommonPacketListener#hasChannel via ChannelSafe; thread interruption also reaches fake owners.
+        io.github.verycooltimo.murim.network.ChannelSafe.nearEntity(player,
+                new TangPayload(player.getId(), form, stage, executionTier, pos, dir, a, b), true);
     }
 }

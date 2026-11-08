@@ -75,7 +75,7 @@ public final class RiverExecutor {
         player.setData(ModAttachments.RIVER, new double[] {hand.x, hand.y, hand.z, aim.x, aim.y, aim.z, executionTier,
                 target == null ? -1 : target.getId(), -1, -1, base, 0, dist});
         PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
-                new RiverPayload(player.getId(), hand, aim, executionTier, RiverPayload.AIM, target == null ? -1 : target.getId()));
+                new RiverPayload(player.getId(), hand, aim, executionTier, RiverPayload.AIM, target == null ? -1 : target.getId(), io.github.verycooltimo.murim.mastery.MasteryService.fullMastery(player, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("murim", "twenty_four_plum_river")), io.github.verycooltimo.murim.mastery.MasteryService.stars(player, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("murim", "twenty_four_plum_river"))));
         return false;
     }
 
@@ -136,7 +136,7 @@ public final class RiverExecutor {
         if (hit == null) {
             player.setData(ModAttachments.RIVER, r);
             PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
-                    new RiverPayload(player.getId(), hand, end, executionTier, RiverPayload.MISS, -1));
+                    new RiverPayload(player.getId(), hand, end, executionTier, RiverPayload.MISS, -1, io.github.verycooltimo.murim.mastery.MasteryService.fullMastery(player, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("murim", "twenty_four_plum_river")), io.github.verycooltimo.murim.mastery.MasteryService.stars(player, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("murim", "twenty_four_plum_river"))));
             return;
         }
         r[9] = hit.getId();
@@ -150,17 +150,19 @@ public final class RiverExecutor {
             mob.getNavigation().stop();
         }
         PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
-                new RiverPayload(player.getId(), hand, TargetLock.centre(hit), executionTier, RiverPayload.CONTACT, hit.getId()));
+                new RiverPayload(player.getId(), hand, TargetLock.centre(hit), executionTier, RiverPayload.CONTACT, hit.getId(), io.github.verycooltimo.murim.mastery.MasteryService.fullMastery(player, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("murim", "twenty_four_plum_river")), io.github.verycooltimo.murim.mastery.MasteryService.stars(player, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("murim", "twenty_four_plum_river"))));
     }
 
     /** Звёздный взрыв: основная цель 8H, остальные в радиусе 3 при видимости от узла. */
     private static void burst(ServerPlayer player, ResourceLocation id, double[] r, Vec3 hand, int executionTier) {
         if (!(player.level().getEntity((int) r[9]) instanceof LivingEntity primary) || !primary.isAlive()) {
+            captureBurst("missing_or_dead_primary", (int) r[9], false);
             return;
         }
         Vec3 node = TargetLock.centre(primary);
         // Цель могли утащить далеко (телепорт) — поток не тянется за ней.
         if (node.distanceTo(hand) > RiverRules.RANGE + 6.0D) {
+            captureBurst("primary_out_of_range", primary.getId(), false);
             return;
         }
         double base = r[10] * RiverRules.power(executionTier);
@@ -188,9 +190,18 @@ public final class RiverExecutor {
                 io.github.verycooltimo.murim.combat.Stun.hold(e, player, 0);
             }
         }
+        captureBurst(any ? "confirmed_hit" : "damage_rejected", primary.getId(), any);
         if (any) {
             PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
-                    new RiverPayload(player.getId(), hand, node, executionTier, RiverPayload.BURST, primary.getId()));
+                    new RiverPayload(player.getId(), hand, node, executionTier, RiverPayload.BURST, primary.getId(), io.github.verycooltimo.murim.mastery.MasteryService.fullMastery(player, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("murim", "twenty_four_plum_river")), io.github.verycooltimo.murim.mastery.MasteryService.stars(player, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("murim", "twenty_four_plum_river"))));
+        }
+    }
+
+    // Capture telemetry only: never synthesize a BURST or bypass the confirmed-hit gate.
+    private static void captureBurst(String result, int target, boolean any) {
+        if (Boolean.getBoolean("murim.capture") && "1".equals(System.getenv("MURIM_CAPTURE_PLUM_CAMERA"))) {
+            io.github.verycooltimo.murim.MurimMod.LOGGER.info(
+                    "CAPTURE-PLUM-RIVER server_burst={} target={} any={}", result, target, any);
         }
     }
 

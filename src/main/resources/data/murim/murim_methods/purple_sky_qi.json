@@ -1,0 +1,13 @@
+{
+  "id": "murim:purple_sky_qi",
+  "speed": [2.5, 4.5],
+  "nature": "pure",
+  "purity": 0.95,
+  "capacity": 34.0,
+  "impurity": 0.05,
+  "route": "six_point_loop",
+  "star_cap": 12,
+  "capacity_mult": 1.1,
+  "access": "elder",
+  "mist": 10118104
+}

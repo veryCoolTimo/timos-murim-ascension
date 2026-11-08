@@ -3,6 +3,7 @@ package io.github.verycooltimo.murim.sect.seal;
 import io.github.verycooltimo.murim.profile.DantianProfile;
 import io.github.verycooltimo.murim.profile.ProfileNetwork;
 import io.github.verycooltimo.murim.registry.ModAttachments;
+import io.github.verycooltimo.murim.sect.PlayerJournal;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -88,6 +89,6 @@ public final class ColdIron {
     private static void refuse(ServerPlayer p, ServerLevel level, BlockPos pos, DantianProfile profile) {
         level.playSound(null, pos, SoundEvents.ANVIL_LAND, SoundSource.BLOCKS, 0.4F, 0.6F);
         String key = ColdIronRules.rankAllows(profile.rank()) ? "murim.cold_iron.no_qi" : "murim.cold_iron.refuse";
-        p.displayClientMessage(Component.translatable(key).withStyle(ChatFormatting.GRAY), true);
+        PlayerJournal.record(p, Component.translatable(key).withStyle(ChatFormatting.GRAY));
     }
 }

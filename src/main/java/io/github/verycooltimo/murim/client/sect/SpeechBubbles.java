@@ -38,7 +38,8 @@ public final class SpeechBubbles {
     /** Видно не дальше. */
     public static final double RANGE = 12.0D;
     /** Пузырей сразу. */
-    public static final int MAX_VISIBLE = 3;
+    // docs/adr/0020-sect-blast-reaction.md: an alarm must remain visible over the whole crowd.
+    public static final int MAX_VISIBLE = io.github.verycooltimo.murim.sect.SectRoster.ALL.size();
     /** Появление и угасание, тиков. */
     static final float FADE_IN = 5.0F;
     static final float FADE_OUT = 12.0F;
@@ -46,7 +47,7 @@ public final class SpeechBubbles {
     static final int TEXT = 0xF4ECDA;
     static final float SCALE = 0.025F;
 
-    private record Bubble(Component text, long start, int ticks) {
+    private record Bubble(Component text, long start, int ticks, boolean important) {
     }
 
     private static final Map<Integer, Bubble> BUBBLES = new HashMap<>();
@@ -61,18 +62,44 @@ public final class SpeechBubbles {
         }
         long now = mc.level.getGameTime();
         BUBBLES.entrySet().removeIf(e -> now > e.getValue().start() + e.getValue().ticks());
-        BUBBLES.put(payload.entity(), new Bubble(payload.text(), now, payload.ticks()));
+        boolean important = !(payload.text().getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents t)
+                || !io.github.verycooltimo.murim.sect.SectChatter.idleKey(t.getKey());
+        Bubble previous = BUBBLES.get(payload.entity());
+        if (!important && (previous != null && previous.important()
+                || BUBBLES.size() >= MAX_VISIBLE && BUBBLES.values().stream().allMatch(Bubble::important))) return;
+        BUBBLES.put(payload.entity(), new Bubble(payload.text(), now, payload.ticks(), important));
         while (BUBBLES.size() > MAX_VISIBLE) {
-            Integer oldest = null;
-            long at = Long.MAX_VALUE;
+            // Out of sight goes first (invisible chatter must not push out a line the player can read, UX review 21.10), then the
+            // oldest; the person under the name plate is kept while anybody else can go.
+            Integer victim = null;
+            double score = Double.NEGATIVE_INFINITY;
             for (Map.Entry<Integer, Bubble> e : BUBBLES.entrySet()) {
-                if (e.getValue().start() < at) {
-                    at = e.getValue().start();
-                    oldest = e.getKey();
+                if (e.getKey() == payload.entity()) {
+                    continue;
+                }
+                net.minecraft.world.entity.Entity who = mc.level.getEntity(e.getKey());
+                double far = who == null ? 1.0E6D : mc.player == null ? 0.0D : who.distanceTo(mc.player);
+                double s = (e.getValue().important() ? -1.0E9D : 0.0D) + (far > RANGE ? 1.0E4D + far : 0.0D) - e.getValue().start() / 1.0E3D
+                        - (SectNamePlate.alphaOf(e.getKey()) > 0.0F ? 1.0E3D : 0.0D);
+                if (s > score) {
+                    score = s;
+                    victim = e.getKey();
                 }
             }
-            BUBBLES.remove(oldest);
+            BUBBLES.remove(victim);
         }
+    }
+
+    /** Capture stands: drop every bubble, so frames of models and faces carry no alarm text. */
+    public static void clear() {
+        BUBBLES.clear();
+    }
+
+    /** Keep the plate hidden for the complete lifetime, including the bubble's fade. */
+    public static boolean activeFor(int entity) {
+        Minecraft mc = Minecraft.getInstance();
+        Bubble b = BUBBLES.get(entity);
+        return mc.level != null && b != null && mc.level.getGameTime() <= b.start() + b.ticks();
     }
 
     /** Стенд и проверка: сколько пузырей сейчас висит. */
@@ -98,7 +125,7 @@ public final class SpeechBubbles {
      */
     @SubscribeEvent
     static void onRenderStage(RenderLevelStageEvent event) {
-        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_PARTICLES || BUBBLES.isEmpty()) {
+        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_PARTICLES || BUBBLES.isEmpty() || HeadIntroCamera.active()) {
             return;
         }
         Minecraft mc = Minecraft.getInstance();
@@ -115,24 +142,33 @@ public final class SpeechBubbles {
             Map.Entry<Integer, Bubble> e = it.next();
             Bubble b = e.getValue();
             float age = now - b.start() + partial;
-            if (age > b.ticks() || !(mc.level.getEntity(e.getKey()) instanceof SectDisciple d) || !d.isAlive()) {
+            if (age > b.ticks() || !(mc.level.getEntity(e.getKey()) instanceof net.minecraft.world.entity.LivingEntity d) || !d.isAlive()) {
                 it.remove();
                 continue;
             }
-            Vec3 at = d.getPosition(partial).add(0.0D, d.getBbHeight() + 0.6D, 0.0D);
-            draw(b, age, at.subtract(cam), rot, pose, buffers, mc.font);
+            // A speaker with the sword drawn holds the blade up past his head (the mentor of the correction): the line goes above its tip.
+            double lift = d instanceof SectDisciple s && s.drawn() ? 0.5D : 0.0D;
+            double height = d.getBbHeight() + 0.6D + lift;
+            // SectNamePlate hides the plate until this bubble has fully faded.
+            Vec3 at = d.getPosition(partial).add(0.0D, height, 0.0D);
+            // Leave room for the head height and fade at the 24-block greeting distance.
+            boolean alarm = b.text().getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents t
+                    && t.getKey().startsWith("murim.bubble.alarm_");
+            double range = alarm ? io.github.verycooltimo.murim.sect.SectAlarm.HEAR
+                    : d instanceof SectDisciple s && s.wanderer() ? 28.0D : RANGE;
+            draw(b, age, at.subtract(cam), rot, pose, buffers, mc.font, range);
         }
         buffers.endBatch();
     }
 
-    private static void draw(Bubble b, float age, Vec3 rel, Quaternionf camera, PoseStack pose, MultiBufferSource buffers, Font font) {
+    private static void draw(Bubble b, float age, Vec3 rel, Quaternionf camera, PoseStack pose, MultiBufferSource buffers, Font font, double range) {
         double dist = rel.length();
-        if (dist > RANGE) {
+        if (dist > range) {
             return;
         }
         float a = Math.min(1.0F, age / FADE_IN) * Math.min(1.0F, (b.ticks() - age) / FADE_OUT);
         // Дальний край — тише: не обрывается на границе.
-        a *= (float) Mth.clamp((RANGE - dist) / 2.0D, 0.0D, 1.0D);
+        a *= (float) Mth.clamp((range - dist) / 2.0D, 0.0D, 1.0D);
         // Вплотную к камере строка во весь экран — у самого лица пузырь гаснет.
         a *= (float) Mth.clamp((dist - 1.5D) / 1.0D, 0.0D, 1.0D);
         int alpha = Math.round(a * 255.0F);

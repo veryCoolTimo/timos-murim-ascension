@@ -1,5 +1,6 @@
 {
   "id": "murim:mountain_root",
+  "speed": [1.0, 2.0],
   "nature": "pure",
   "purity": 0.7,
   "capacity": 48.0,

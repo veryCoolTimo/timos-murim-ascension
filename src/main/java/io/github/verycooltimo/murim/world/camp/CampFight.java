@@ -50,6 +50,8 @@ public final class CampFight {
         if (camp == null) {
             return true;
         }
+        // Away parties use the same target acquisition, without waiting for fighters at the home camp.
+        if (camp.travellers.contains(b.campSlot())) return true;
         update(level, camp);
         if (provoked(b)) {
             return true;
@@ -93,7 +95,7 @@ public final class CampFight {
         if (fighters.isEmpty()) {
             return;
         }
-        double radius = CampLayout.plan(camp.seed).radius();
+        double radius = CampTemplate.layout(camp).radius();
         LivingEntity target = fighters.get(0).getTarget();
         // Кто потерял цель вдали (дальность слежения 24), пока бой идёт, — снова на игрока: кольцо не рассыпается.
         for (Bandit x : all) {

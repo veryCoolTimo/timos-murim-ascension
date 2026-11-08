@@ -1,8 +1,11 @@
 package io.github.verycooltimo.murim.sect.seal;
 
+import io.github.verycooltimo.murim.sect.PlayerJournal;
+import io.github.verycooltimo.murim.sect.SectNotice;
 import io.github.verycooltimo.murim.Config;
 import io.github.verycooltimo.murim.MurimMod;
 import io.github.verycooltimo.murim.combat.FootworkService;
+import io.github.verycooltimo.murim.combat.TargetLock;
 import io.github.verycooltimo.murim.combat.TechniqueService;
 import io.github.verycooltimo.murim.entity.SectDisciple;
 import io.github.verycooltimo.murim.network.AuraGustPayload;
@@ -22,6 +25,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Pose;
@@ -54,6 +59,10 @@ public final class PenanceEnforcement {
     static final String TAG = "murim_penance_enforcement";
     static final String ASSAULTS = "murim_penance_assaults";
     static final String EXIT = "murim_penance_exit";
+    /** The vanilla swing of this very tick: who was struck. The sword sweep around him is not an attack on his neighbours. */
+    static final String SWING = "murim_penance_swing";
+    /** A technique started this recently (ticks) still owns the player's hits: sustained arts, late projectiles. */
+    static final int TECHNIQUE_TAIL = 400;
     private static final ResourceLocation SPEED = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "penance_pin");
     private static final Set<UUID> TRANSFERRING = new HashSet<>();
 
@@ -74,7 +83,49 @@ public final class PenanceEnforcement {
         try { move.run(); } finally { TRANSFERRING.remove(p.getUUID()); }
     }
 
-    /** Count attack attempts before the disciple's invulnerability/nonlethal clamp, but never consensual spar hits. */
+    /**
+     * Is a hit on a sect brother a deliberate attack (author 18.10: «убрать» the accidental brawl penalty)? Only these count
+     * towards the rampage and the light offence; the splash of an area technique, a sword sweep or a stray projectile
+     * does not, so a technique used near sect people never starts a sentence.
+     *
+     * <ol>
+     *   <li>The fight with an enforcing guard is the player's own: always deliberate.</li>
+     *   <li>A vanilla swing resolving this tick: deliberate only for the one struck ({@link #swing}).</li>
+     *   <li>Anything a technique did (a technique runs or ran moments ago, a projectile, a non-melee damage type):
+     *       deliberate only for the target the player locked on to ({@link TargetLock}).</li>
+     *   <li>Otherwise a plain direct melee blow (scripted hits, foreign attack mods): deliberate.</li>
+     * </ol>
+     */
+    public static boolean deliberate(ServerPlayer p, SectDisciple victim, DamageSource source) {
+        if (victim.guardTarget() == p) return true;
+        long now = p.level().getGameTime();
+        CompoundTag swing = p.getPersistentData().getCompound(SWING);
+        if (swing.hasUUID("victim") && swing.getLong("time") == now) return swing.getUUID("victim").equals(victim.getUUID());
+        var state = p.getData(ModAttachments.TECHNIQUE_STATE);
+        boolean melee = source.is(DamageTypes.PLAYER_ATTACK) && source.getDirectEntity() == p;
+        boolean technique = state.isActive() || !melee
+                || state.lastStartGameTime() > Long.MIN_VALUE / 2 && now - state.lastStartGameTime() <= TECHNIQUE_TAIL;
+        return !technique || TargetLock.locked(p, TargetLock.RANGE) == victim;
+    }
+
+    /** Did a technique (or a projectile, a non-melee blow) do this? Then the blow is an attack with the art, not a scuffle. */
+    public static boolean techniqueHit(ServerPlayer p, DamageSource source) {
+        long now = p.level().getGameTime();
+        var state = p.getData(ModAttachments.TECHNIQUE_STATE);
+        boolean melee = source.is(DamageTypes.PLAYER_ATTACK) && source.getDirectEntity() == p;
+        return state.isActive() || !melee
+                || state.lastStartGameTime() > Long.MIN_VALUE / 2 && now - state.lastStartGameTime() <= TECHNIQUE_TAIL;
+    }
+
+    /** Records the vanilla swing: {@code Player#attack} posts this event and then hurts the target within the same tick. */
+    static void markSwing(ServerPlayer p, net.minecraft.world.entity.Entity target) {
+        CompoundTag swing = new CompoundTag();
+        swing.putUUID("victim", target.getUUID());
+        swing.putLong("time", p.level().getGameTime());
+        p.getPersistentData().put(SWING, swing);
+    }
+
+    /** Count deliberate attack attempts before the disciple's invulnerability/nonlethal clamp, but never consensual spar hits. */
     public static void assault(ServerPlayer p, SectDisciple victim, float damage) {
         if (exempt(p) || active(p) || PenanceService.sentenced(p)) return;
         long now = p.level().getGameTime();
@@ -93,6 +144,10 @@ public final class PenanceEnforcement {
         targets.add(victim.getUUID());
         history.put("hits", hits);
         p.getPersistentData().put(ASSAULTS, history);
+        // The first deliberate blow of a flurry is the warning: the counters below need a second one. A member hears it
+        // from the offence record ({@code PenanceService#offence}); everybody else is told here.
+        if (hits.size() == 1 && !p.getData(ModAttachments.SECT).member())
+            io.github.verycooltimo.murim.sect.SectNotice.bar(p, Component.translatable("murim.penance.hand_warning", victim.getName()).withStyle(ChatFormatting.GOLD));
         boolean enforcing = victim.guardTarget() == p;
         boolean escorted = p.level().getEntitiesOfClass(SectDisciple.class, p.getBoundingBox().inflate(64),
                 d -> d.escortGoal().forPlayer(p) && (d.escortGoal().forcedFor(p) || !p.getData(ModAttachments.SECT).member())).size() > 0;
@@ -122,7 +177,7 @@ public final class PenanceEnforcement {
             if (d.escortGoal().forPlayer(p)) d.escortGoal().cancel();
             if (d.approachingDialogue(p, PenanceService.DIALOGUE)) d.clearBlock();
         }
-        p.displayClientMessage(Component.translatable("murim.penance.rampage").withStyle(ChatFormatting.DARK_RED), false);
+        SectNotice.chat(p, Component.translatable("murim.penance.rampage").withStyle(ChatFormatting.DARK_RED));
         approach(p);
     }
 
@@ -159,11 +214,10 @@ public final class PenanceEnforcement {
         elder.suppressionGoal().fullAura();
         TechniqueService.cancel(p);
         FootworkService.stop(p);
-        io.github.verycooltimo.murim.technique.DemonicExecutor.clear(p);
         hold(p);
         sync(p, elder.getId());
         p.level().playSound(null, p.blockPosition(), SoundEvents.WARDEN_SONIC_CHARGE, SoundSource.HOSTILE, 1, 0.65F);
-        p.displayClientMessage(Component.translatable("murim.penance.suppressed", elder.getName()).withStyle(ChatFormatting.DARK_RED), false);
+        SectNotice.chat(p, Component.translatable("murim.penance.suppressed", elder.getName()).withStyle(ChatFormatting.DARK_RED));
     }
 
     private static void sync(ServerPlayer p, int source) { ChannelSafe.send(p, new PenancePayload(pinned(p), source)); }
@@ -212,7 +266,9 @@ public final class PenanceEnforcement {
         }
         if (!active(p)) return;
         if (!pinned(p)) {
-            if (p.tickCount % 10 == 0) approach(p);
+            // Retry immediately while no elder is assigned; a newly available head must take over.
+            // API: Minecraft 1.21.1 CompoundTag#hasUUID (read-only /tmp/mr-ref-1121/minecraft-src).
+            if (!p.getPersistentData().getCompound(TAG).hasUUID("elder") || p.tickCount % 10 == 0) approach(p);
             return;
         }
         hold(p);
@@ -235,7 +291,7 @@ public final class PenanceEnforcement {
         p.getPersistentData().put(TAG, tag);
         if (remaining == 0 && p.tickCount % 10 == 0) {
             if (!PenanceService.sentence(p) && p.tickCount % 100 == 0)
-                p.displayClientMessage(Component.translatable("murim.penance.cell_unavailable").withStyle(ChatFormatting.RED), true);
+                PlayerJournal.refuse(p, Component.translatable("murim.penance.cell_unavailable").withStyle(ChatFormatting.RED));
             // No cave: stay pinned and retry; closing the screen or disconnecting never releases the warrant.
         }
     }
@@ -277,13 +333,19 @@ public final class PenanceEnforcement {
     static void attack(AttackEntityEvent event) {
         if (event.getEntity() instanceof ServerPlayer p && pinned(p)) event.setCanceled(true);
     }
+    /** The swing is recorded for every target, so a sweep that reaches a brother beside a zombie is not his attack. */
+    @SubscribeEvent(priority = EventPriority.LOWEST)
+    static void swing(AttackEntityEvent event) {
+        if (!event.isCanceled() && event.getEntity() instanceof ServerPlayer p) markSwing(p, event.getTarget());
+    }
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     static void damage(LivingIncomingDamageEvent event) {
         if (event.getSource().getEntity() instanceof ServerPlayer p && pinned(p)) event.setCanceled(true);
     }
     @SubscribeEvent
     static void killed(LivingDeathEvent event) {
-        if (event.getEntity() instanceof SectDisciple && event.getSource().getEntity() instanceof ServerPlayer p) rampage(p);
+        // A person of the roster killed is war with the whole sect (SectWar), not a rampage for the elders to pin.
+        if (event.getEntity() instanceof SectDisciple d && d.memberKey().isEmpty() && event.getSource().getEntity() instanceof ServerPlayer p) rampage(p);
     }
     // PlayerInteractEvent is abstract: the bus only accepts its concrete subclasses.
     @SubscribeEvent(priority = EventPriority.HIGHEST)
@@ -328,13 +390,23 @@ public final class PenanceEnforcement {
     @SubscribeEvent
     static void clone(PlayerEvent.Clone event) {
         if (event.getEntity() instanceof ServerPlayer p) {
-            copyPersistent(event.getOriginal().getPersistentData(), p.getPersistentData());
+            if (event.isWasDeath() && event.getOriginal() instanceof ServerPlayer old) {
+                io.github.verycooltimo.murim.quest.QuestScenes.abandon(old);
+            }
+            copyPersistent(event.getOriginal().getPersistentData(), p.getPersistentData(), event.isWasDeath());
         }
     }
-    static void copyPersistent(CompoundTag from, CompoundTag to) {
-        for (String key : new String[] {TAG, ASSAULTS, EXIT, "murim_penance", "murim_penance_history", "murim_sect_offences",
-                "murim_sect_defeated_until", "murim_sect_warning_until"})
-            if (from.contains(key)) to.put(key, from.get(key).copy());
+    /**
+     * Death does not carry the persistent data over by itself. Everything the mod keeps there is progress or world state (penance,
+     * quest scenes and timers, offices, social memory, goal talk, the vault trial, the strike drill, one-time hints) and survives
+     * the respawn; only a running fight scene (its foes are gone) and a junk-art backlash end with the body.
+     */
+    static void copyPersistent(CompoundTag from, CompoundTag to) { copyPersistent(from, to, false); }
+    static void copyPersistent(CompoundTag from, CompoundTag to, boolean death) {
+        for (String key : from.getAllKeys()) {
+            if (death && (io.github.verycooltimo.murim.quest.QuestScenes.diesWithBody(key) || "murim_junk_backlash".equals(key))) continue;
+            to.put(key, from.get(key).copy());
+        }
     }
     private static void restore(ServerPlayer p) {
         if (TRANSFERRING.contains(p.getUUID())) return;

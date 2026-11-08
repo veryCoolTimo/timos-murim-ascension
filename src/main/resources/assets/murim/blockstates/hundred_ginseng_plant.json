@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "cut=false": {
+      "model": "murim:block/hundred_ginseng_plant"
+    },
+    "cut=true": {
+      "model": "murim:block/hundred_ginseng_plant_cut"
+    }
+  }
+}

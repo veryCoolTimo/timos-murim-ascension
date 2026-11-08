@@ -10,8 +10,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class FallingPetalRulesTest {
 
     @Test
-    @DisplayName("Пять ударов в порядке, сумма урона 3,0, удары внутри шкалы")
+    @DisplayName("Три удара в порядке, сумма урона 3,0, удары внутри шкалы")
     void strikesOrdered() {
+        assertEquals(3, FallingPetalRules.STRIKES.length);
+        assertEquals(FallingPetalRules.STRIKES.length, FallingPetalRules.DAMAGE.length);
+        assertEquals(FallingPetalRules.STRIKES.length, FallingPetalRules.VANISH.length);
+        assertEquals(FallingPetalRules.STRIKES.length, FallingPetalRules.SIDES.length);
+        assertEquals(FallingPetalRules.STRIKES.length, FallingPetalRules.ARCS.length);
         double sum = 0.0D;
         for (int i = 0; i < FallingPetalRules.STRIKES.length; i++) {
             sum += FallingPetalRules.DAMAGE[i];
@@ -19,33 +24,47 @@ class FallingPetalRulesTest {
                 assertTrue(FallingPetalRules.STRIKES[i] > FallingPetalRules.STRIKES[i - 1]);
             }
             assertTrue(FallingPetalRules.STRIKES[i] + 2 < FallingPetalRules.END);
+            assertEquals(i, FallingPetalRules.strikeAt(FallingPetalRules.STRIKES[i]));
         }
+        assertEquals(-1, FallingPetalRules.strikeAt(FallingPetalRules.STRIKES[0] + 1));
         assertEquals(3.0D, sum, 1.0E-9D);
-        assertEquals(84, FallingPetalRules.STANCE + FallingPetalRules.END + 1, "Шкала совпадает с анимацией 4,2 с");
+        assertEquals(80, FallingPetalRules.STANCE + FallingPetalRules.END + 1, "Шкала совпадает с анимацией 4,0 с (80 тиков)");
     }
 
     @Test
-    @DisplayName("Возврат вдвое быстрее реза: «меч возвращается быстрее, чем бьёт»")
-    void returnFasterThanCut() {
-        assertTrue(FallingPetalRules.RETURN * 2 <= FallingPetalRules.CUT);
-    }
-
-    @Test
-    @DisplayName("Рывки не перекрываются, финал — сразу за спиной цели")
-    void dashesAndFinish() {
-        for (int i = 1; i < FallingPetalRules.DASHES.length; i++) {
-            int[] a = FallingPetalRules.DASHES[i - 1];
-            assertTrue(a[0] + a[1] <= FallingPetalRules.DASHES[i][0], "рывок " + i + " начинается раньше конца прошлого");
+    @DisplayName("Исчезновение, появление за спиной и бросок в удар идут по порядку, мишень успевает развернуться")
+    void blinkTimeline() {
+        for (int k = 0; k < FallingPetalRules.STRIKES.length; k++) {
+            int appear = FallingPetalRules.VANISH[k] + FallingPetalRules.APPEAR_DELAY;
+            int lunge = FallingPetalRules.STRIKES[k] - FallingPetalRules.LUNGE_STEP_TICKS;
+            assertTrue(appear <= lunge, "удар " + k + ": появление позже броска в удар");
+            assertTrue(lunge < FallingPetalRules.STRIKES[k]);
+            if (k > 0) {
+                int prevTurnEnd = FallingPetalRules.STRIKES[k - 1] + 2 + FallingPetalRules.TURN_TICKS;
+                assertTrue(FallingPetalRules.VANISH[k] >= prevTurnEnd,
+                        "удар " + k + ": исчезновение раньше, чем мишень закончила разворот к мастеру");
+            }
         }
+        assertTrue(FallingPetalRules.CUT >= 1 && FallingPetalRules.HOLD >= 1);
+    }
+
+    @Test
+    @DisplayName("Появление за спиной цели: сзади, сзади-слева, сзади-справа; финал — позади, не вплотную")
+    void behindPoints() {
         Vec3 t = new Vec3(10.0D, 64.0D, 10.0D);
         Vec3 f = new Vec3(0.0D, 0.0D, 1.0D);
-        Vec3 end = FallingPetalRules.point(FallingPetalRules.DASHES.length - 1, t, f, 0.3D);
-        double along = end.subtract(t).dot(f);
-        assertTrue(along > 0.8D && along < 2.0D, "финал сразу за спиной: 0,8–2 блока, а не " + along);
-        Vec3 entry = FallingPetalRules.point(0, t, f, 0.3D);
-        assertTrue(entry.subtract(t).dot(f) < 0.0D, "вход — перед целью");
-        assertTrue(FallingPetalRules.point(FallingPetalRules.PIVOT, t, f, 0.3D).subtract(t).dot(FallingPetalRules.left(f)) > 1.0D,
-                "разворот — слева от цели");
+        double half = 0.3D;
+        Vec3 left = FallingPetalRules.left(f);
+        for (int k = 0; k < FallingPetalRules.SIDES.length; k++) {
+            Vec3 p = FallingPetalRules.behind(k, t, f, half);
+            Vec3 rel = p.subtract(t);
+            assertTrue(rel.dot(f) < 0.0D, "точка " + k + " должна быть за спиной цели");
+            assertEquals(half + FallingPetalRules.BEHIND, rel.length(), 1.0E-9D, "расстояние до цели");
+            assertEquals(0.0D, rel.y, 1.0E-9D);
+        }
+        assertEquals(0.0D, FallingPetalRules.behind(0, t, f, half).subtract(t).dot(left), 1.0E-9D, "первая точка строго сзади");
+        assertTrue(FallingPetalRules.behind(1, t, f, half).subtract(t).dot(left) > 1.0D, "вторая — сзади-слева");
+        assertTrue(FallingPetalRules.behind(2, t, f, half).subtract(t).dot(left) < -1.0D, "третья — сзади-справа");
     }
 
     @Test
