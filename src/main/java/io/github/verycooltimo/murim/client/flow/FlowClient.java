@@ -44,6 +44,7 @@ public final class FlowClient {
     private static FlowGame game;
     private static boolean bodyPresentation;
     private static boolean automatic;
+    private static boolean sceneRan;
     private static int id;
     private static boolean reportedEnd;
     private static long lastNanos;
@@ -71,6 +72,8 @@ public final class FlowClient {
         tickAge = 0;
         lastNanos = System.nanoTime();
         game.setAuto(automatic || "auto".equals(System.getenv("MURIM_CAPTURE_FLOW")));
+        // The cinematic scene: ordinary and middle pills only (never a manual game, a torn body or a guided high pill).
+        sceneRan = PillScene.begin(payload, c.colour());
     }
 
     /** Owns the body through the server's lift/recoil tail, so legacy pill effects do not reappear after our fade. */
@@ -120,6 +123,8 @@ public final class FlowClient {
     }
 
     public static void reset() {
+        sceneRan = false;
+        PillScene.reset();
         bodyPresentation = false;
         game = null;
         kinds = List.of();
@@ -159,7 +164,11 @@ public final class FlowClient {
             report(game.state == FlowGame.State.DONE ? PillPayloads.Outcome.DONE
                     : game.state == FlowGame.State.BURST ? PillPayloads.Outcome.BURST : PillPayloads.Outcome.TIMEOUT);
         }
-        if (game.state != FlowGame.State.RUN && game.end > tail()) {
+        // The scene is clocked in ticks, the game in frame time: when the scene is over the plain picture must not come back.
+        if (sceneRan && !PillScene.active()) {
+            sceneRan = false;
+            game = null;
+        } else if (game.state != FlowGame.State.RUN && game.end > tail() && !PillScene.active()) {
             game = null;
         }
     }
@@ -205,6 +214,7 @@ public final class FlowClient {
         if (game != null && game.state == FlowGame.State.RUN) {
             reportedEnd = true;
             game.abort();
+            PillScene.interrupted();
         }
     }
 }

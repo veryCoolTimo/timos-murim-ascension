@@ -282,6 +282,39 @@ public abstract class Bandit extends Monster implements io.github.verycooltimo.m
         return hurt;
     }
 
+    /**
+     * Смерть длиннее ванильной секунды: клип {@code death} 0,8 с (16 тиков) и ещё ~1 с тело лежит,
+     * потом дымок исчезновения. Ванильный наклон на бок отключён в BanditRenderer.
+     * API: reference/minecraft-src/net/minecraft/world/entity/LivingEntity.java#tickDeath
+     */
+    public static final int DEATH_TICKS = 36;
+
+    /** Тиков с момента смерти (клиент и сервер): клип death и тело на земле; vanilla deathTime рендер обнуляет. */
+    public int deathAge;
+
+    /** How long the body stays after death; sect people keep the vanilla second (their renderer has no death clip). */
+    protected int deathTicks() { return DEATH_TICKS; }
+
+    @Override
+    protected void tickDeath() {
+        deathTime++;
+        deathAge++;
+        if (deathTime >= deathTicks() && !level().isClientSide() && !isRemoved()) {
+            level().broadcastEntityEvent(this, (byte) 60);
+            remove(RemovalReason.KILLED);
+        }
+    }
+
+    @Override
+    protected net.minecraft.sounds.SoundEvent getHurtSound(net.minecraft.world.damagesource.DamageSource source) {
+        return io.github.verycooltimo.murim.registry.ModSounds.BANDIT_HURT.get();
+    }
+
+    @Override
+    protected net.minecraft.sounds.SoundEvent getDeathSound() {
+        return io.github.verycooltimo.murim.registry.ModSounds.BANDIT_DEATH.get();
+    }
+
     @Override
     public void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);

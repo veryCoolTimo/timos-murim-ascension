@@ -125,6 +125,11 @@ public class BossRenderer extends MobRenderer<FortressMaster, BossModel> {
             float a = state == FortressMaster.WINDUP ? 0.35F + 0.5F * Mth.clamp(age / move.windup(), 0.0F, 1.0F) : 0.5F;
             lane(vc, m, mk.x - ex, floor, mk.y - ez, mk.z, len, half, a * pulse);
         }
+        if (state == FortressMaster.WINDUP && move == BossMove.CHAIN) {
+            // Связка: сектор первого удара (дальность 3,2, дуга 90°) на весь замах: видно, куда уйти шагом вбок.
+            float k = Mth.clamp(age / move.windup(), 0.0F, 1.0F);
+            fan(vc, m, floor, Mth.rotLerp(partialTick, entity.yRotO, entity.getYRot()), (float) BossMove.CHAIN_REACH, (float) BossMove.CHAIN_ARC[0], (0.4F + 0.5F * k) * pulse);
+        }
         if (state == FortressMaster.WINDUP && move == BossMove.ROAR) {
             float k = Mth.clamp(age / move.windup(), 0.0F, 1.0F);
             ring(vc, m, 0.0F, floor, 0.0F, (float) BossMove.ROAR_RADIUS, 0.3F, (0.4F + 0.5F * k) * pulse);
@@ -176,6 +181,22 @@ public class BossRenderer extends MobRenderer<FortressMaster, BossModel> {
             float ri = radius - width, ro = radius;
             quad(vc, m, new float[] {x + c0 * ri, y, z + s0 * ri}, new float[] {x + c0 * ro, y, z + s0 * ro},
                     new float[] {x + c1 * ro, y, z + s1 * ro}, new float[] {x + c1 * ri, y, z + s1 * ri}, MR, MG, MB, alpha);
+        }
+    }
+
+    /** Сектор перед сущностью: две кромки, дуга по краю и бледная заливка. */
+    private static void fan(VertexConsumer vc, Matrix4f m, float y, float yaw, float radius, float arc, float alpha) {
+        int n = 12;
+        for (int i = 0; i < n; i++) {
+            double[] f0 = BossRules.forward(yaw - arc / 2 + arc * i / n), f1 = BossRules.forward(yaw - arc / 2 + arc * (i + 1) / n);
+            quad(vc, m, p(f0[0] * (radius - 0.25F), y, f0[1] * (radius - 0.25F)), p(f0[0] * radius, y, f0[1] * radius),
+                    p(f1[0] * radius, y, f1[1] * radius), p(f1[0] * (radius - 0.25F), y, f1[1] * (radius - 0.25F)), MR, MG, MB, alpha);
+            quad(vc, m, p(0.0D, y - 0.005F, 0.0D), p(f0[0] * radius, y - 0.005F, f0[1] * radius), p(f1[0] * radius, y - 0.005F, f1[1] * radius), p(0.0D, y - 0.005F, 0.0D), MR, MG, MB, alpha * 0.3F);
+        }
+        for (float side : new float[] {-0.5F, 0.5F}) {
+            double[] f = BossRules.forward(yaw + arc * side);
+            double sx = f[1] * 0.1D, sz = -f[0] * 0.1D;
+            quad(vc, m, p(-sx, y, -sz), p(f[0] * radius - sx, y, f[1] * radius - sz), p(f[0] * radius + sx, y, f[1] * radius + sz), p(sx, y, sz), MR, MG, MB, alpha);
         }
     }
 

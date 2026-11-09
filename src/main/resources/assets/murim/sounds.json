@@ -569,5 +569,41 @@
         "attenuation_distance": 64
       }
     ]
+  },
+  "bandit_hurt": {
+    "subtitle": "subtitles.murim.bandit_hurt",
+    "sounds": [
+      {
+        "name": "murim:bandit_hurt_a"
+      },
+      {
+        "name": "murim:bandit_hurt_b"
+      },
+      {
+        "name": "murim:bandit_hurt_c"
+      }
+    ]
+  },
+  "bandit_death": {
+    "subtitle": "subtitles.murim.bandit_death",
+    "sounds": [
+      {
+        "name": "murim:bandit_death_a"
+      },
+      {
+        "name": "murim:bandit_death_b"
+      }
+    ]
+  },
+  "bow_draw": {
+    "subtitle": "subtitles.murim.bow_draw",
+    "sounds": [
+      {
+        "name": "murim:bow_draw_a"
+      },
+      {
+        "name": "murim:bow_draw_b"
+      }
+    ]
   }
 }

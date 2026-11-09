@@ -339,6 +339,11 @@ public final class ModAttachments {
                             .copyOnDeath()
                             .build());
 
+    /** How many pill absorption scenes the player has seen (the scene is shortened from the fourth). Saved, survives death. */
+    public static final Supplier<AttachmentType<Integer>> PILL_SCENES =
+            ATTACHMENT_TYPES.register("pill_scenes", () -> AttachmentType.builder(() -> 0)
+                    .serialize(com.mojang.serialization.Codec.INT).copyOnDeath().build());
+
     /** Идущая мини-игра поглощения пилюль. Не сохраняется: живёт только в сессии медитации. */
     public static final Supplier<AttachmentType<io.github.verycooltimo.murim.cultivation.PillService.Slot>> ABSORB =
             ATTACHMENT_TYPES.register("absorb",

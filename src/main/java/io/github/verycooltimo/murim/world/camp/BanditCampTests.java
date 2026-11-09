@@ -169,7 +169,7 @@ public final class BanditCampTests {
      * Потери и возвращение: убитые уходят из состава, лагерь не разгромлен, пока жив хоть один;
      * через сутки банда пополняется; когда убит весь состав — лагерь разгромлен и больше не заселяется.
      */
-    @GameTest(template = "camp_floor", timeoutTicks = 200)
+    @GameTest(template = "camp_floor", timeoutTicks = 260)
     public static void campRefillsUntilCleared(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BanditCampData.Camp camp = camp(helper, SEED + 3);
@@ -180,7 +180,7 @@ public final class BanditCampTests {
         Bandit survivor = first.stream().filter(b -> !b.isChief()).findFirst().orElseThrow();
         first.stream().filter(b -> b != survivor).forEach(b -> b.kill());
         helper.startSequence()
-                .thenExecuteAfter(30, () -> {
+                .thenExecuteAfter(Bandit.DEATH_TICKS + 4, () -> { // the roster drops on removal; a corpse lies Bandit.DEATH_TICKS
                     helper.assertTrue(camp.alive.size() == 1, "после потерь в составе " + camp.alive.size());
                     helper.assertTrue(!camp.cleared, "лагерь разгромлен при живом бандите");
                     // Прошли сутки: банда возвращается (главарь тоже).
@@ -189,7 +189,7 @@ public final class BanditCampTests {
                     helper.assertTrue(members(helper, camp).stream().anyMatch(Bandit::isChief), "главарь не вернулся");
                     members(helper, camp).forEach(b -> b.kill());
                 })
-                .thenExecuteAfter(30, () -> {
+                .thenExecuteAfter(Bandit.DEATH_TICKS + 4, () -> {
                     helper.assertTrue(camp.cleared, "весь состав убит, а лагерь не разгромлен");
                     BanditCamps.tick(level, camp);
                     helper.assertTrue(members(helper, camp).isEmpty(), "разгромленный лагерь заселился снова");

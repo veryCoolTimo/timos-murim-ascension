@@ -65,6 +65,29 @@ public final class SectLayoutAiGameTests {
         }
     }
 
+    /** A mini layout whose every plan zone is one fixed point (the routine spot of anybody). */
+    private record Fixed(Vec3 origin, SectLayoutFile file, Vec3 point) implements SectLayout {
+        @Override
+        public Vec3 at(String zone, double u, double v) {
+            return point;
+        }
+
+        @Override
+        public float yaw(double u, double v) {
+            return SectLayout.yawOf(u, v);
+        }
+
+        @Override
+        public double[] half(String zone) {
+            return null;
+        }
+
+        @Override
+        public double[] local(String zone, Vec3 pos) {
+            return null;
+        }
+    }
+
     /** Collects the pieces of a mini file in absolute coordinates. */
     private static final class Build {
         final GameTestHelper h;
@@ -471,13 +494,22 @@ public final class SectLayoutAiGameTests {
         Vec3 outside = h.absoluteVec(new Vec3(22.5, 2, 20.5));
         leader.moveTo(outside.x, outside.y, outside.z, 0, 0);
         h.assertTrue(whereKey(h, "tae_hwi").equals("murim.sect.place.unknown"), "outside every room: " + whereKey(h, "tae_hwi"));
-        // The search is a box round the asker, not the world: somebody asking from far away (and a world-sized box would
-        // be a scan of 3.75 million columns) is told nothing.
+        // The member is found wherever he stands (loaded entities, no column scan), so an asker far away is still told
+        // the place; a member who is nowhere (unloaded, no layout) is the only "unknown" left.
         leader.moveTo(shrine.x, shrine.y, shrine.z, 0, 0);
         h.assertTrue(whereKey(h, "tae_hwi").equals("murim.sect.place.shrine"), "back at the shrine: " + whereKey(h, "tae_hwi"));
         BlockPos far = h.absolutePos(BlockPos.ZERO).offset((int) SectLife.WHERE_RANGE + 200, 0, 0);
         h.assertTrue(((net.minecraft.network.chat.contents.TranslatableContents) SectLife.whereIs(h.getLevel(), "tae_hwi", far).getContents())
-                .getKey().equals("murim.sect.place.unknown"), "a member beyond the search range was named");
+                .getKey().equals("murim.sect.place.shrine"), "a member beyond the search range inside a room was not named: "
+                + ((net.minecraft.network.chat.contents.TranslatableContents) SectLife.whereIs(h.getLevel(), "tae_hwi", far).getContents()).getKey());
+        // Not loaded at all: the place of his routine task now. His plan spot is the shrine, so that is where he is named.
+        for (var e : java.util.stream.StreamSupport.stream(h.getLevel().getAllEntities().spliterator(), false).toList()) {
+            if (e instanceof SectDisciple d && "tae_hwi".equals(d.memberKey())) d.discard();
+        }
+        dayTime(h, 5400);
+        var routine = new Fixed(h.absoluteVec(new Vec3(12.5, 2, 12.5)), b.file(), shrine);
+        h.assertTrue(((net.minecraft.network.chat.contents.TranslatableContents) SectLife.whereIs(h.getLevel(), "tae_hwi", far, routine).getContents())
+                .getKey().equals("murim.sect.place.shrine"), "an unloaded member was not placed at his routine spot");
         h.succeed();
     }
 

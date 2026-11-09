@@ -50,6 +50,11 @@ public final class FlowOverlay {
         FlowGame game = FlowClient.game();
         Minecraft mc = Minecraft.getInstance();
         if (game == null || mc.player == null || mc.options.hideGui) return;
+        if (PillScene.active()) {
+            // The scene keeps the screen clean: only its own vignette (25 %), no hint, no dissolve ring.
+            FlowFocusMask.render(g, PillScene.vignette(delta.getGameTimeDeltaPartialTick(false)));
+            return;
+        }
         float visibility = FlowClient.visibility();
         FlowFocusMask.render(g, visibility);
         int alpha = Math.round(255 * visibility);

@@ -685,6 +685,16 @@ public final class ClientMeditationState {
         } else if (!exitKeys) {
             exitArmed = true;
         } else if (exitArmed && !standSent) {
+            // The pill scene takes the first stand key as a skip to its core beat; the stand follows its end.
+            if (io.github.verycooltimo.murim.client.flow.PillScene.deferStand()) {
+                exitArmed = false;
+            } else {
+                standSent = true;
+                PacketDistributor.sendToServer(new MeditationInputPayload(
+                        MeditationInputPayload.Action.TOGGLE, true));
+            }
+        }
+        if (io.github.verycooltimo.murim.client.flow.PillScene.consumeStandAfter() && state.active() && !standSent) {
             standSent = true;
             PacketDistributor.sendToServer(new MeditationInputPayload(
                     MeditationInputPayload.Action.TOGGLE, true));

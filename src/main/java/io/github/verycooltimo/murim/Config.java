@@ -26,6 +26,10 @@ public final class Config {
             .comment("Техники разрушают природные блоки (земля, песок, гравий, камень). Сундуки, руды и механизмы не трогаются.")
             .define("techniqueTerrainDamage", true);
 
+    public static final ModConfigSpec.BooleanValue SPAWN_BOOK = BUILDER
+            .comment("Give every new player the short book about murim at first join (once per player).")
+            .define("spawnBook", true);
+
     public static final ModConfigSpec.IntValue SECT_GUARD_STRIKES = BUILDER
             .comment("Warnings before walking an outsider out of a restricted zone.")
             .defineInRange("sectGuardStrikes", 3, 1, 20);

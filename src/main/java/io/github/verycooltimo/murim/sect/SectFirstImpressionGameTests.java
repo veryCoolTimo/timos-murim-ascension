@@ -158,6 +158,13 @@ public final class SectFirstImpressionGameTests {
         @Override public double[] local(String zone, Vec3 p) { return new double[] {p.x - origin.x, p.z - origin.z}; }
     }
 
+    /** The journal line murim.sect.room.bed names this bed's coordinates. */
+    private static boolean told(ServerPlayer p, BlockPos bed) {
+        return PlayerJournal.entries(p).stream().anyMatch(c -> c.getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents t
+                && "murim.sect.room.bed".equals(t.getKey()) && t.getArgs().length == 3
+                && t.getArgs()[0].equals(bed.getX()) && t.getArgs()[1].equals(bed.getY()) && t.getArgs()[2].equals(bed.getZ()));
+    }
+
     @GameTest(template = "sect_yard", batch = "first_impression_rooms", timeoutTicks = 40)
     public static void promotionClaimsSecondGenerationSpareAndRespawn(GameTestHelper h) {
         clearYard(h);
@@ -171,9 +178,11 @@ public final class SectFirstImpressionGameTests {
         ServerPlayer p = player(h, 7, 9, SectState.NONE.joined());
         SectRooms.assign(p, layout, false);
         h.assertTrue(old.equals(SectRooms.bed(p)), "newcomer did not get third-generation bed");
+        h.assertTrue(told(p, old), "journal did not tell the newcomer where his bed is");
         p.setData(ModAttachments.SECT, SectService.state(p).with(SectStanding.LESSON_TWO));
         SectRooms.assign(p, layout, false);
         h.assertTrue(better.equals(SectRooms.bed(p)) && better.equals(p.getRespawnPosition()), "promotion did not move bed and respawn");
+        h.assertTrue(told(p, better), "journal did not tell the promoted disciple where his better bed is");
         h.assertTrue(SectRooms.available(h.getLevel(), old, "other"), "old bed not released");
         h.succeed();
     }

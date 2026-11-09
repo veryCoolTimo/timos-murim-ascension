@@ -164,6 +164,12 @@ public final class ModNetwork {
                                 all[Math.max(0, Math.min(all.length - 1, payload.outcome()))], payload.progress(), payload.lost());
                     }
                 });
+        registrar.playToServer(PillPayloads.SceneFull.TYPE, PillPayloads.SceneFull.STREAM_CODEC,
+                (payload, context) -> {
+                    if (context.player() instanceof ServerPlayer serverPlayer) {
+                        io.github.verycooltimo.murim.cultivation.PillService.setSceneFull(serverPlayer, payload.full());
+                    }
+                });
         registrar.playToServer(LockPayload.TYPE, LockPayload.STREAM_CODEC,
                 (payload, context) -> {
                     if (context.player() instanceof ServerPlayer serverPlayer) {

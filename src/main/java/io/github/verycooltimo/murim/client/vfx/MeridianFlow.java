@@ -179,6 +179,57 @@ public final class MeridianFlow {
         }
     }
 
+    /**
+     * New mode, a FIXED ROUTE (the pill absorption scene): one bold band along a prepared polyline, from its start up to
+     * {@code reach} (0..1 of its length), not a grown network. A wide coloured band carries a narrow hot core; the band's far end
+     * dims over its last tenth so the head of the stream reads as a head, not a cut.
+     *
+     * @param path       world points of the route (already on the body surface, clear of the robe)
+     * @param halfWidth  half width of the band in blocks (a block pixel is 1/16)
+     */
+    public static void drawRoute(VertexConsumer consumer, PoseStack.Pose pose, Vec3 cameraLocal, Vec3[] path,
+                                 double halfWidth, float reach, float alpha, VfxColour line, VfxColour hot) {
+        if (path.length < 2 || reach <= 0.0F || alpha <= 0.0F) {
+            return;
+        }
+        double total = routeLength(path);
+        double limit = total * Mth.clamp(reach, 0.0F, 1.0F);
+        double walked = 0.0D;
+        for (int i = 0; i + 1 < path.length && walked < limit; i++) {
+            double step = path[i].distanceTo(path[i + 1]);
+            double take = Math.min(step, limit - walked);
+            Vec3 a = path[i];
+            Vec3 b = take >= step ? path[i + 1] : a.add(path[i + 1].subtract(a).scale(take / step));
+            float head = (float) Mth.clamp((limit - (walked + take * 0.5D)) / Math.max(0.05D, total * 0.1D), 0.35D, 1.0D);
+            VfxDraw.segment(consumer, pose, a, b, cameraLocal, halfWidth, alpha * 0.8F * head,
+                            line.red(), line.green(), line.blue());
+            VfxDraw.segment(consumer, pose, a, b, cameraLocal, halfWidth * 0.55D, alpha * head,
+                            hot.red(), hot.green(), hot.blue());
+            walked += step;
+        }
+    }
+
+    public static double routeLength(Vec3[] path) {
+        double total = 0.0D;
+        for (int i = 0; i + 1 < path.length; i++) {
+            total += path[i].distanceTo(path[i + 1]);
+        }
+        return total;
+    }
+
+    /** Point at {@code fraction} (0..1) of the route's length. */
+    public static Vec3 alongRoute(Vec3[] path, float fraction) {
+        double target = routeLength(path) * Mth.clamp(fraction, 0.0F, 1.0F);
+        for (int i = 0; i + 1 < path.length; i++) {
+            double step = path[i].distanceTo(path[i + 1]);
+            if (target <= step || i + 2 == path.length) {
+                return path[i].add(path[i + 1].subtract(path[i]).scale(step < 1.0E-9D ? 0.0D : Math.min(1.0D, target / step)));
+            }
+            target -= step;
+        }
+        return path[path.length - 1];
+    }
+
     private MeridianFlow() {
     }
 }

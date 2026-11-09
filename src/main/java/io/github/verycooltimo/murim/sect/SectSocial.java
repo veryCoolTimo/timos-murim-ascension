@@ -202,6 +202,7 @@ public final class SectSocial {
             case "first_exam_asked" -> io.github.verycooltimo.murim.quest.MentorStrikeDrill.asked(p);
             case "first_exam_alone" -> !io.github.verycooltimo.murim.quest.MentorStrikeDrill.asked(p);
             case "journey_help" -> SectJourney.canHelp(p, npc);
+            case "mentor_demo" -> MentorDemo.canAsk(p, npc);
             case "quest" -> io.github.verycooltimo.murim.quest.Quests.matches(p, npc, value);
             case "lost_tablet" -> npc.role() == SectRole.MENTOR && SectTablet.lost(p);
             case "bowl" -> SectMeals.canServe(p);

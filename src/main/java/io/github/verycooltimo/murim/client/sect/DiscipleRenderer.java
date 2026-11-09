@@ -60,6 +60,11 @@ public class DiscipleRenderer extends MobRenderer<SectDisciple, DiscipleRenderer
     private static final String COACH = "textures/entity/sect/first_coach.png";
     private static final String COACH2 = "textures/entity/sect/first_coach2.png";
     private static final String ALCHEMIST = "textures/entity/sect/first_alchemist.png";
+    /** Lay people (tools/art/skins/sect_servants.py): hemp work clothes, no sect emblem; the cook in an apron; women with a headscarf. */
+    static final String SERVANT = "textures/entity/sect/servant.png";
+    static final String SERVANT_SCARF = "textures/entity/sect/servant_scarf.png";
+    static final String STEWARD = "textures/entity/sect/steward.png";
+    static final String COOK = "textures/entity/sect/cook.png";
     /**
      * Первое поколение (Гён, first_rate_disciple.bbmodel — firsdtgrade_student автора, 06.10): длинное одеяние на
      * скелете старейшин, но молодые — набор first (руки свободно, шаг шире, полы за ногами, tools/art/elder_walk.py).
@@ -75,6 +80,10 @@ public class DiscipleRenderer extends MobRenderer<SectDisciple, DiscipleRenderer
     /** Ученики (sect_disciple.bbmodel): ножны с мечом на поясе, меч в руке — предмет (DrawnSword). */
     private static final Body SECOND_GEN = Body.of("sect_disciple", SECOND);
     private static final Body THIRD_GEN = Body.of("sect_disciple", THIRD);
+    private static final Body LAY_MAN = Body.of("sect_disciple", SERVANT);
+    private static final Body LAY_WOMAN = Body.of("sect_disciple", SERVANT_SCARF);
+    private static final Body LAY_STEWARD = Body.of("sect_disciple", STEWARD);
+    private static final Body LAY_COOK = Body.of("sect_disciple", COOK);
     private static final Map<SectRole, Body> BODIES = Map.ofEntries(
             // Третье поколение (и привратник Юль Ын) — светлое ханьфу, учебный деревянный меч на поясе.
             Map.entry(SectRole.DISCIPLE, THIRD_GEN),
@@ -92,14 +101,23 @@ public class DiscipleRenderer extends MobRenderer<SectDisciple, DiscipleRenderer
             Map.entry(SectRole.ELDER, Body.of("elder1", ELDER, "elder")),
             // Наставник без ключа человека (старые сохранения) — тоже первый тренер.
             Map.entry(SectRole.MENTOR, FIRST_COACH),
-            // Слуги и управляющий: своей модели слуг у автора пока нет (06.10: «оставь только мои») — модель ученика
-            // в светлом ханьфу третьего поколения без ножен и без меча (setupAnim прячет guard у мирян).
-            Map.entry(SectRole.STEWARD, THIRD_GEN),
-            Map.entry(SectRole.COOK, THIRD_GEN),
-            Map.entry(SectRole.PORTER, THIRD_GEN),
-            Map.entry(SectRole.GARDENER, THIRD_GEN),
-            Map.entry(SectRole.SWEEPER, THIRD_GEN),
-            Map.entry(SectRole.WATER_CARRIER, THIRD_GEN));
+            // Слуги и управляющий: модель ученика без ножен и меча (setupAnim прячет guard у мирян), но своя одежда —
+            // конопляная, без эмблемы секты; повар в фартуке, садовница и уборщица в платках.
+            Map.entry(SectRole.STEWARD, LAY_STEWARD),
+            Map.entry(SectRole.COOK, LAY_COOK),
+            Map.entry(SectRole.PORTER, LAY_MAN),
+            Map.entry(SectRole.GARDENER, LAY_WOMAN),
+            Map.entry(SectRole.SWEEPER, LAY_WOMAN),
+            Map.entry(SectRole.WATER_CARRIER, LAY_MAN));
+
+    /** Every role's body, for the texture-resolution test. */
+    static Map<SectRole, Body> roleBodies() {
+        return BODIES;
+    }
+
+    static Body defaultBody() {
+        return THIRD_GEN;
+    }
 
     /**
      * Своя модель одного человека, а не всей роли (старейшин несколько, модели у них разные): облик из

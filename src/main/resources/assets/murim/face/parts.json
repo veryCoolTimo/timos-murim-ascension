@@ -17,6 +17,16 @@
       "texture": "murim:textures/entity/sect/first_rate_disciple.png",
       "x": 16,
       "y": 82
+    },
+    {
+      "texture": "murim:textures/entity/sect/servant.png",
+      "x": 0,
+      "y": 24
+    },
+    {
+      "texture": "murim:textures/entity/sect/steward.png",
+      "x": 0,
+      "y": 24
     }
   ],
   "rows": {

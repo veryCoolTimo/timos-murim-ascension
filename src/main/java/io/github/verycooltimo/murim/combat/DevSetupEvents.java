@@ -30,6 +30,11 @@ import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 @EventBusSubscriber(modid = MurimMod.MODID)
 public final class DevSetupEvents {
 
+    /** MURIM_CAPTURE_POOL_SHARE - stored qi as a share of the wall before the pills (default a quarter): the pill scene's core grows with it. */
+    private static double poolShare() {
+        try { return Double.parseDouble(System.getenv().getOrDefault("MURIM_CAPTURE_POOL_SHARE", "0.25")); } catch (NumberFormatException e) { return 0.25D; }
+    }
+
     private static double captureYaw() {
         try {
             return Double.parseDouble(System.getProperty("murim.capture.yaw", "0"));
@@ -419,6 +424,11 @@ public final class DevSetupEvents {
                                 io.github.verycooltimo.murim.world.PlaceKind.valueOf(place.trim().toUpperCase(java.util.Locale.ROOT))));
             }
             String pills = System.getenv("MURIM_CAPTURE_PILLS");
+            // MURIM_CAPTURE_PILL_SCENES=n - how many pill scenes the player has already seen (3 or more: the short form).
+            String scenesSeen = System.getenv("MURIM_CAPTURE_PILL_SCENES");
+            if (scenesSeen != null && !scenesSeen.isBlank()) {
+                meditating.setData(io.github.verycooltimo.murim.registry.ModAttachments.PILL_SCENES, Integer.parseInt(scenesSeen.trim()));
+            }
             // MURIM_CAPTURE_CEILING=1 — низкий потолок над сидящим (стук головы при подлёте).
             meditating.setData(io.github.verycooltimo.murim.registry.ModAttachments.PILLS,
                     io.github.verycooltimo.murim.cultivation.PillState.NONE);
@@ -432,7 +442,7 @@ public final class DevSetupEvents {
                 io.github.verycooltimo.murim.profile.DantianProfile ranked = seeded.withAxes(60.0D, seeded.purity(), seeded.meridians())
                         .withRank(Integer.parseInt(pillRank.trim()));
                 meditating.setData(io.github.verycooltimo.murim.registry.ModAttachments.PROFILE,
-                        ranked.withPool(io.github.verycooltimo.murim.cultivation.Realm.wall(ranked) * 0.25D)
+                        ranked.withPool(io.github.verycooltimo.murim.cultivation.Realm.wall(ranked) * poolShare())
                                 .withCirculating(ranked.maxCirculating()));
                 io.github.verycooltimo.murim.profile.ProfileNetwork.sync(meditating);
             }
@@ -785,11 +795,14 @@ public final class DevSetupEvents {
                     m.discard();
                 }
             }
-            io.github.verycooltimo.murim.entity.Bandit bandit = "bandit_archer".equals(enemyKind)
+            io.github.verycooltimo.murim.entity.Bandit bandit = enemyKind.startsWith("bandit_archer")
                     ? new io.github.verycooltimo.murim.entity.BanditArcher(io.github.verycooltimo.murim.registry.ModEntities.BANDIT_ARCHER.get(), level)
                     : new io.github.verycooltimo.murim.entity.BanditSwordsman(io.github.verycooltimo.murim.registry.ModEntities.BANDIT_SWORDSMAN.get(), level);
             if ("bandit_elite".equals(enemyKind) && bandit instanceof io.github.verycooltimo.murim.entity.BanditSwordsman sw) {
                 sw.makeElite();
+            }
+            if ("bandit_archer_elite".equals(enemyKind) && bandit instanceof io.github.verycooltimo.murim.entity.BanditArcher ar) {
+                ar.makeElite();
             }
             bandit.setNoAi("0".equals(System.getenv("MURIM_CAPTURE_ENEMY_AI")));
             // MURIM_CAPTURE_BANDIT_DELAY — тиков до первого удара: подогнать удар под замах техники.

@@ -32,6 +32,8 @@ public class BanditRenderer<T extends Bandit> extends MobRenderer<T, BanditModel
     private static final ResourceLocation CHIEF_TEX = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/entity/bandit_chief.png");
     private static final ResourceLocation ARCHER_TEX = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/entity/bandit_archer.png");
 
+    private static final ResourceLocation ARCHER_ELITE_TEX = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/entity/bandit_archer_elite.png");
+
     private final boolean archer;
 
     public BanditRenderer(EntityRendererProvider.Context context, ModelLayerLocation layer, String anims, boolean archer) {
@@ -69,7 +71,7 @@ public class BanditRenderer<T extends Bandit> extends MobRenderer<T, BanditModel
     @Override
     public ResourceLocation getTextureLocation(T entity) {
         if (archer) {
-            return ARCHER_TEX;
+            return entity.isElite() ? ARCHER_ELITE_TEX : ARCHER_TEX;
         }
         // Главарь — в багровом с золотой повязкой (docs/design/24-bandit-camp.md §2).
         if (entity.isChief()) {
@@ -77,6 +79,34 @@ public class BanditRenderer<T extends Bandit> extends MobRenderer<T, BanditModel
         }
         // Элитный (знает технику ци) — с синей повязкой вместо красной: «этот сильнее» видно заранее.
         return entity.isElite() ? ELITE_TEX : SWORDSMAN_TEX;
+    }
+
+    /**
+     * Красная ванильная заливка смерти держится все 20 тиков и красит лежащее тело целиком: после первых
+     * тиков удара рендерим с deathTime 0 (клип и тело читают {@code deathAge}).
+     */
+    @Override
+    public void render(T entity, float yaw, float partialTick, com.mojang.blaze3d.vertex.PoseStack pose,
+                       net.minecraft.client.renderer.MultiBufferSource buffers, int light) {
+        int saved = entity.deathTime;
+        if (entity.deathAge > 4) {
+            entity.deathTime = 0;
+        }
+        try {
+            super.render(entity, yaw, partialTick, pose, buffers, light);
+        } finally {
+            entity.deathTime = saved;
+        }
+    }
+
+    /** Без ванильного заваливания на бок при смерти: падение играет клип {@code death}. */
+    @Override
+    protected void setupRotations(T entity, com.mojang.blaze3d.vertex.PoseStack pose, float bob, float yBodyRot, float partialTick, float scale) {
+        if (entity.deathAge > 0) {
+            pose.mulPose(com.mojang.math.Axis.YP.rotationDegrees(180.0F - yBodyRot));
+        } else {
+            super.setupRotations(entity, pose, bob, yBodyRot, partialTick, scale);
+        }
     }
 
     /** Главарь на голову крупнее: силуэт выделяется в толпе издалека. */

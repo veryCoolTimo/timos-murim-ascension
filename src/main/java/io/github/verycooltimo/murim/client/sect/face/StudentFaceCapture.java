@@ -169,10 +169,14 @@ public final class StudentFaceCapture {
         }
     }
 
+    /** The sect's lay people, left to right: cook, steward, porter, water carrier, gardener and sweeper (the two with headscarves). */
+    private static final List<SectRole> LAY_ROLES = List.of(SectRole.COOK, SectRole.STEWARD, SectRole.PORTER,
+            SectRole.WATER_CARRIER, SectRole.GARDENER, SectRole.SWEEPER);
+
     private static List<Shot> shotsFor(String mode, int n) {
         List<Shot> out = new ArrayList<>();
         switch (mode) {
-            case "ranks" -> {
+            case "ranks", "lay" -> {
                 out.add(new Shot("front", 0.0D, 1.0D, 6.0D, 0.3D, 1.0D, false, -1));
                 out.add(new Shot("three_quarter", 0.7D, 0.7D, 6.0D, 0.3D, 1.0D, false, -1));
                 out.add(new Shot("back", 0.0D, -1.0D, 6.0D, 0.3D, 1.0D, false, -1));
@@ -261,6 +265,7 @@ public final class StudentFaceCapture {
                         npc.readAdditionalSaveData(look);
                     }
                 }
+                case "lay" -> npc.setRole(LAY_ROLES.get(i));
                 case "faces" -> SectRoster.of(FACE_KEYS.get(i)).ifPresent(npc::setMember);
                 default -> {
                     // The same person six times: a member key may stand only once (the sect removes the duplicates), so the pick is

@@ -49,6 +49,8 @@ public final class PillService {
         /** The earliest tick a run can honestly end: a clean one takes about half of the dissolve time. */
         final long earliest;
         boolean automatic;
+        /** Ticks of the absorption scene the client plays (0 - none); the sitting lasts for them. */
+        int sceneTicks;
         int progress;
         int lost;
 
@@ -261,10 +263,26 @@ public final class PillService {
         FlowCharacter stream = character(kinds);
         slot.flow = new Session(id, kinds, plan, now, (int) Math.round(stream.time() * 20.0D));
         slot.flow.automatic = plan.assisted() || shortAbsorption(kinds);
-        sendStart(player, new PillPayloads.FlowStart(id, ordinals, seed, plan.hard(), false, false, natureIsPoison(player), slot.flow.automatic));
+        // The cinematic scene belongs to MIDDLE pills only; common pills and guided high pills keep the plain automatic picture.
+        if (slot.flow.automatic && PillScenePlanner.eligible(kinds)) {
+            int seen = player.getData(ModAttachments.PILL_SCENES);
+            slot.flow.sceneTicks = PillScenePlanner.ticks(seen, SCENE_FULL.contains(player.getUUID()));
+            player.setData(ModAttachments.PILL_SCENES, seen + 1);
+            MurimMod.LOGGER.info("Pill scene {}: seen {} -> {} ticks", player.getGameProfile().getName(), seen, slot.flow.sceneTicks);
+        }
+        sendStart(player, new PillPayloads.FlowStart(id, ordinals, seed, plan.hard(), false, false, natureIsPoison(player), slot.flow.automatic,
+                slot.flow.sceneTicks));
         // UX #32: the explanation is repeated for every game by the hint lines of the game screen (no chat spam over the picture).
         sound(player, "absorb_start");
         sync(player, PillPayloads.Event.NONE);
+    }
+
+    /** Players whose client asked for the full scene every time (setting «full pill scene always»). */
+    private static final java.util.Set<java.util.UUID> SCENE_FULL = java.util.concurrent.ConcurrentHashMap.newKeySet();
+
+    public static void setSceneFull(ServerPlayer player, boolean full) {
+        if (full) SCENE_FULL.add(player.getUUID());
+        else SCENE_FULL.remove(player.getUUID());
     }
 
     /** Ordinary qi pills use the complete scene in 2.5 seconds, without steering. */
@@ -387,7 +405,8 @@ public final class PillService {
             slot.liftHeight = lifting.height();
             slot.liftBump = lifting.bump();
         }
-        sound(player, lift ? "absorb_perfect" : burst ? "absorb_overflow" : "absorb_finish");
+        // The scene plays the finish sound itself at its core beat.
+        if (flow.sceneTicks <= 0 || lift || burst) sound(player, lift ? "absorb_perfect" : burst ? "absorb_overflow" : "absorb_finish");
         String key = burst ? "murim.pill.result.burst" : outcome == PillPayloads.Outcome.DONE ? "murim.pill.result"
                 : "murim.pill.result.timeout";
         PlayerJournal.record(player, resultText(key, q, award).copy().withStyle(burst ? ChatFormatting.RED
@@ -397,6 +416,10 @@ public final class PillService {
             backlash(player, flow.kinds, "murim.pill.burst");
         }
         scheduleStand(player, slot);
+        if (flow.sceneTicks > 0) {
+            // The scene is longer than the payout: keep the sitting until it has ended (plus a breath).
+            slot.standAt = flow.startTick + flow.sceneTicks + PillScenePlanner.STAND_MARGIN;
+        }
         // Медитация продолжается: если запас упёрся в стену и условия ранга выполнены,
         // MeditationService сам переведёт сидение в принятую сцену прорыва.
     }

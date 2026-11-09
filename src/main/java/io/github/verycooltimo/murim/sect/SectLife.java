@@ -388,15 +388,44 @@ public final class SectLife {
      * under him in the built sect. Unknown (not loaded, no layout): "somewhere on the mountain".
      */
     public static net.minecraft.network.chat.Component whereIs(ServerLevel level, String memberKey, BlockPos around) {
+        return whereIs(level, memberKey, around, layout(level));
+    }
+
+    /**
+     * The member is looked up by key among all loaded entities, wherever he stands (the asker may be at the gate while
+     * he is on the dais). Not loaded: the place of his routine task now, from the layout. Only when neither exists
+     * is the answer "somewhere on the mountain".
+     */
+    static net.minecraft.network.chat.Component whereIs(ServerLevel level, String memberKey, BlockPos around, SectLayout layout) {
+        // Nearest to the asker first, then anywhere loaded; the first one standing in a named place answers.
+        boolean found = false;
+        String fn = "";
         for (SectDisciple d : level.getEntitiesOfClass(SectDisciple.class, columnBox(level, around, WHERE_RANGE),
                 d -> d.isAlive() && memberKey.equals(d.memberKey()))) {
-            String fn = placeFunction(d);
-            if (!fn.isEmpty()) {
-                return net.minecraft.network.chat.Component.translatable("murim.sect.place." + fn);
-            }
-            break;
+            found = true;
+            fn = placeFunction(d);
+            if (!fn.isEmpty()) break;
         }
-        return net.minecraft.network.chat.Component.translatable("murim.sect.place.unknown");
+        if (fn.isEmpty()) {
+            for (net.minecraft.world.entity.Entity e : level.getAllEntities()) {
+                if (e instanceof SectDisciple d && d.isAlive() && memberKey.equals(d.memberKey())) {
+                    found = true;
+                    fn = placeFunction(d);
+                    if (!fn.isEmpty()) break;
+                }
+            }
+        }
+        if (!found && layout != null && layout.file() != null) {
+            Optional<SectRoster> m = SectRoster.of(memberKey);
+            if (m.isPresent()) {
+                long time = level.getDayTime();
+                Vec3 guess = spawnGuess(layout, m.get(), SectSchedule.task(m.get(), time), time);
+                if (guess != null) {
+                    fn = layout.file().placeFunction(BlockPos.containing(guess));
+                }
+            }
+        }
+        return net.minecraft.network.chat.Component.translatable("murim.sect.place." + (fn.isEmpty() ? "unknown" : fn));
     }
 
     /** How far from the asker a dialogue line looks for a member ("where is he?"): the whole shelf, not the world. */

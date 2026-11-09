@@ -26,6 +26,6 @@ class CinematicDofTest {
             previous = radius;
         }
         assertEquals(6, previous);
-        assertEquals(8, CinematicDof.circleOfConfusion(100, 10, 1, 100));
+        assertEquals(16, CinematicDof.circleOfConfusion(100, 10, 1, 100));
     }
 }

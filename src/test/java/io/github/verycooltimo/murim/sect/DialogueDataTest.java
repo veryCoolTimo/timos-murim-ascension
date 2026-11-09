@@ -234,7 +234,9 @@ class DialogueDataTest {
     void onlyAuthorSectArt() throws java.io.IOException {
         java.util.Set<String> author = java.util.Set.of("third_rate_disciple.png", "second_rate_disciple.png", "sect_head.png",
                 "sect_econom.png", "elder1.png", "first_rate_disciple.png", "first_coach.png", "first_coach2.png",
-                "first_alchemist.png");
+                "first_alchemist.png",
+                // Lay people (9.11): repainted in the author's palette by tools/art/skins/sect_servants.py from his third-rate skin.
+                "servant.png", "servant_scarf.png", "steward.png", "cook.png");
         try (var files = Files.list(res("assets/murim/textures/entity/sect"))) {
             assertEquals(author, files.map(f -> f.getFileName().toString()).collect(java.util.stream.Collectors.toSet()));
         }

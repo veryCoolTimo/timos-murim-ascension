@@ -28,6 +28,11 @@ public final class DialogueShot {
     /** Центр кадра по высоте NPC (доля роста) и высота камеры: над свитком видно от макушки до пояса. */
     public static final double AIM = 0.55D;
     static final double EYE = 0.8D;
+    /** The camera is never closer than this to the aim point (blocks): a pull below it lands in somebody's head. */
+    static final double MIN_FOCUS = 1.2D;
+    /** Camera height offsets of the fallback pitch variants (higher, lower), blocks. */
+    static final double HIGH = 0.9D;
+    static final double LOW = -0.5D;
 
     /** Сколько блоков свободно по лучу от точки прицела к камере (стены). */
     @FunctionalInterface
@@ -65,6 +70,79 @@ public final class DialogueShot {
      * @param fallback   направление взгляда игрока (если стоят в одной точке)
      */
     public static Shot plan(Vec3 npcFeet, double npcHeight, Vec3 playerFeet, Vec3 fallback, Clear clear) {
+        return plan(npcFeet, npcHeight, playerFeet, fallback, clear, 0);
+    }
+
+    /**
+     * Same, with hysteresis: {@code preferSide} (the side of the shot held until now, 0 = none) is tried first, so a
+     * re-plan after the NPC shifts does not flip the camera to the other shoulder when both sides are equally good.
+     * When the wall pull would bring the camera closer than {@link #MIN_FOCUS} to the aim (a low lintel, a door), the
+     * shot is not accepted: pitch variants and then a wide two-shot from behind the player are tried instead (9.11).
+     */
+    public static Shot plan(Vec3 npcFeet, double npcHeight, Vec3 playerFeet, Vec3 fallback, Clear clear, int preferSide) {
+        Shot first = planAt(npcFeet, npcHeight, playerFeet, fallback, clear, preferSide, 0.0D);
+        if (first != null && first.camera().distanceTo(first.aim()) >= MIN_FOCUS) {
+            return first;
+        }
+        Shot best = first;
+        double bestDist = first == null ? -1.0D : first.camera().distanceTo(first.aim());
+        for (double dy : new double[] {HIGH, LOW}) {
+            Shot s = planAt(npcFeet, npcHeight, playerFeet, fallback, clear, preferSide, dy);
+            if (s == null) {
+                continue;
+            }
+            double dist = s.camera().distanceTo(s.aim());
+            if (dist >= MIN_FOCUS) {
+                return s;
+            }
+            if (dist > bestDist) {
+                best = s;
+                bestDist = dist;
+            }
+        }
+        Shot behind = behindPlayer(npcFeet, npcHeight, playerFeet, fallback, clear);
+        if (behind != null && behind.camera().distanceTo(behind.aim()) >= MIN_FOCUS) {
+            return behind;
+        }
+        return best != null ? best : behind;
+    }
+
+    /** Wide two-shot from behind the player: camera on the line NPC to player, past the player, a little above the eyes. */
+    private static Shot behindPlayer(Vec3 npcFeet, double npcHeight, Vec3 playerFeet, Vec3 fallback, Clear clear) {
+        double d = distance(npcHeight);
+        Vec3 f = new Vec3(npcFeet.x - playerFeet.x, 0.0D, npcFeet.z - playerFeet.z);
+        if (f.lengthSqr() < 1.0E-6D) {
+            f = new Vec3(fallback.x, 0.0D, fallback.z);
+            if (f.lengthSqr() < 1.0E-6D) {
+                f = new Vec3(0.0D, 0.0D, 1.0D);
+            }
+        }
+        f = f.normalize();
+        Vec3 r = new Vec3(-f.z, 0.0D, f.x);
+        Vec3 aim = npcFeet.add(0.0D, npcHeight * AIM, 0.0D);
+        double camY = npcFeet.y + npcHeight * EYE + HIGH * 0.6D;
+        Shot best = null;
+        double bestFree = -1.0D;
+        // Straight behind, then slightly off to either shoulder, at the full plan and a longer one.
+        for (double len : new double[] {d * 1.25D, d}) {
+            for (double sideShift : new double[] {0.0D, 0.7D, -0.7D}) {
+                Vec3 base = npcFeet.subtract(f.scale(len)).add(r.scale(sideShift));
+                Vec3 cam = new Vec3(base.x, camY, base.z);
+                double free = Math.min(cam.distanceTo(aim), clear.free(aim, cam));
+                if (free >= cam.distanceTo(aim) - 1.0E-3D) {
+                    return shot(cam, aim, d, d, sideShift >= 0.0D ? 1 : -1, npcFeet, playerFeet);
+                }
+                if (free > bestFree) {
+                    bestFree = free;
+                    double keep = Math.max(0.5D, free - 0.3D);
+                    best = shot(aim.add(cam.subtract(aim).normalize().scale(keep)), aim, keep, d, sideShift >= 0.0D ? 1 : -1, npcFeet, playerFeet);
+                }
+            }
+        }
+        return best;
+    }
+
+    private static Shot planAt(Vec3 npcFeet, double npcHeight, Vec3 playerFeet, Vec3 fallback, Clear clear, int preferSide, double dy) {
         double d = distance(npcHeight);
         // f — от игрока к NPC по горизонтали, r — правая рука игрока, смотрящего на NPC.
         Vec3 f = new Vec3(npcFeet.x - playerFeet.x, 0.0D, npcFeet.z - playerFeet.z);
@@ -78,11 +156,11 @@ public final class DialogueShot {
         f = f.normalize();
         Vec3 r = new Vec3(-f.z, 0.0D, f.x);
         Vec3 aim = npcFeet.add(0.0D, npcHeight * AIM, 0.0D);
-        double camY = npcFeet.y + npcHeight * EYE;
+        double camY = npcFeet.y + npcHeight * EYE + dy;
 
         Shot best = null;
         double bestFree = -1.0D;
-        for (int side : new int[] {1, -1}) {
+        for (int side : preferSide < 0 ? new int[] {-1, 1} : new int[] {1, -1}) {
             double phi = bestPhi(npcFeet, playerFeet, f, r, side, d, gap);
             // Предпочтительный угол, потом соседние, потом боковой план.
             for (double p : new double[] {phi, phi + 15.0D, phi - 15.0D, phi + 30.0D, 90.0D}) {

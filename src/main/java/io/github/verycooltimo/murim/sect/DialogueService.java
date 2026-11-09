@@ -181,7 +181,9 @@ public final class DialogueService {
         }
         if (d.audience().isPresent() && !any(player, npc, d.audience().get().allow())) {
             Dialogue.Audience a = d.audience().get();
-            SectDisciple by = a.intercept().isPresent() ? interceptor(player, npc) : null;
+            // The head has received him (scene, escort, grace after it, or presented for good): the guard does not stop him.
+            boolean received = npc.role() == SectRole.LEADER && SectHeadIntro.receivedByHead(player);
+            SectDisciple by = a.intercept().isPresent() && !received ? interceptor(player, npc) : null;
             Dialogue cut = a.intercept().map(DialogueLoader::get).orElse(null);
             if (by != null && cut != null) {
                 String node = entry(player, by, cut);
@@ -883,6 +885,7 @@ public final class DialogueService {
             }
             case "wanderer_point" -> Wanderer.point(player, npc);
             case "journey_help" -> { if (!SectJourney.help(player, npc)) return "retry"; }
+            case "mentor_demo" -> { if (!MentorDemo.start(player, npc)) return "retry"; }
             case "book_replace" -> { if (!SectService.replaceBook(player, npc)) return "retry"; }
             case "tablet_replace" -> { if (!SectTablet.replace(player)) return "retry"; }
             case "journey_hud" -> SectJourney.toggleHud(player);

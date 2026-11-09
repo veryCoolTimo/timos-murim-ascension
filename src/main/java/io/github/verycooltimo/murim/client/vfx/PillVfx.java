@@ -119,6 +119,14 @@ public final class PillVfx {
         }
     }
 
+    /** Ring of dust puffs on the floor for the absorption scene (same puffs as the lift finale); {@code age} in ticks. */
+    public static void floorDust(MultiBufferSource.BufferSource buffers, PoseStack.Pose pose, Vec3 camera, Vec3 axis,
+                                 double ground, float age, float life, double from, double to, float strength) {
+        Body b = new Body(null, null, null, null, null, null, null, null, null, null, null, camera, pose, buffers, ground);
+        dustRing(buffers.getBuffer(MurimRenderTypes.dustPuffs()), b, axis, ground, age, life, from, to, strength);
+        buffers.endBatch(MurimRenderTypes.dustPuffs());
+    }
+
     private static Vec3 skin(Vec3 bone, Vec3 cam) {
         Vec3 to = cam.subtract(bone);
         return to.lengthSqr() < 1.0E-6D ? bone : bone.add(to.normalize().scale(0.2D));

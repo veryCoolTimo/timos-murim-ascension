@@ -59,6 +59,12 @@ public class BanditModel<T extends Bandit> extends HierarchicalModel<T> implemen
         root.getAllParts().forEach(ModelPart::resetPose);
         Map<String, AnimationDefinition> clips = BanditAnimations.get(name);
         float partial = ageInTicks - entity.tickCount;
+        AnimationDefinition dying = entity.deathAge > 0 ? clips.get("death") : null;
+        if (dying != null) {
+            // Смерть: только клип death по тикам смерти (ванильный наклон отключён в рендере).
+            play(dying, entity.deathAge + partial, 1.0F);
+            return;
+        }
         boolean airborneThrow = io.github.verycooltimo.murim.client.vfx.BambooVfx.airborneThrow(entity.getId());
         int state = airborneThrow ? Bandit.IDLE : entity.state();
         float age = entity.stateAge(partial);
@@ -71,7 +77,7 @@ public class BanditModel<T extends Bandit> extends HierarchicalModel<T> implemen
                 default -> entity.move().recover();
             };
             if (state == Bandit.WINDUP || state == Bandit.STRIKE || state == Bandit.RECOVER)
-                age *= (float) original / swordsman.duelPhaseTicks(state);
+                age = ClipPhases.clipTime(age, original, swordsman.duelPhaseTicks(state));
         }
         String suffix = entity.move().clip();
         String clip = combatClip(state, suffix, clips.containsKey("stagger"));
@@ -123,8 +129,8 @@ public class BanditModel<T extends Bandit> extends HierarchicalModel<T> implemen
             armR.ifPresent(a -> { a.xRot = -1.6F; a.yRot = 0.55F; a.zRot = 0.55F; });
             armL.ifPresent(a -> { a.xRot = -0.9F; a.zRot = -0.2F; });
         }
-        if (entity instanceof BanditArcher && entity.isAggressive() && state != Bandit.STUN) {
-            bowPose(netHeadYaw, headPitch);
+        if (entity instanceof BanditArcher archer) {
+            bowOverlay(archer, clips, state == Bandit.STUN, partial, netHeadYaw, headPitch);
         }
         blendStun(entity, ageInTicks, state == Bandit.STUN);
         // API: MC ModelPart rotation/position fields; presentation from confirmed Bamboo facts only.
@@ -176,20 +182,54 @@ public class BanditModel<T extends Bandit> extends HierarchicalModel<T> implemen
         return name;
     }
 
-    /** Натянутый лук: как у ванильного скелета (HumanoidModel.ArmPose.BOW_AND_ARROW). */
-    private void bowPose(float yaw, float pitch) {
+    /** Кости, которые клипы лука задают целиком (поза, не добавка к покою). */
+    private static final String[] BOW_BONES = {"waist", "torso", "head", "arm_r", "arm_l"};
+
+    /**
+     * Лук лучника по клипам draw / hold / shoot / lower ({@link ClipPhases#pick}): поза клипа
+     * абсолютная, плюс прицел по голове (как у ванильного скелета), и смешивается с покоем
+     * по весу фазы — лук поднимается и опускается плавно, а не щелчком.
+     */
+    private void bowOverlay(BanditArcher archer, Map<String, AnimationDefinition> clips, boolean stunned,
+                            float partial, float yaw, float pitch) {
+        ClipPhases.Pose pose = ClipPhases.pick(stunned, archer.isUsingItem(),
+                archer.getTicksUsingItem() + partial, archer.sinceShot(partial), archer.sinceDrawEnd(partial));
+        String clipName = pose.clip();
+        AnimationDefinition clip = clipName == null ? null : clips.get(clipName);
+        float w = pose.weight();
+        if (clip == null || w <= 0.0F) {
+            return;
+        }
+        List<ModelPart> bones = new java.util.ArrayList<>();
+        float[][] base = new float[BOW_BONES.length][];
+        for (int i = 0; i < BOW_BONES.length; i++) {
+            ModelPart bone = getAnyDescendantWithName(BOW_BONES[i]).orElse(null);
+            bones.add(bone);
+            if (bone != null) {
+                base[i] = new float[] {bone.xRot, bone.yRot, bone.zRot, bone.x, bone.y, bone.z};
+                bone.resetPose();
+            }
+        }
+        play(clip, pose.ticks() * 1.0F, 1.0F);
         float hy = yaw * Mth.DEG_TO_RAD;
         float hx = pitch * Mth.DEG_TO_RAD;
-        armR.ifPresent(a -> {
-            a.yRot = -0.1F + hy;
-            a.xRot = -Mth.HALF_PI + hx;
-            a.zRot = 0.0F;
-        });
-        armL.ifPresent(a -> {
-            a.yRot = 0.1F + hy + 0.4F;
-            a.xRot = -Mth.HALF_PI + hx;
-            a.zRot = 0.0F;
-        });
+        for (int i = 0; i < BOW_BONES.length; i++) {
+            ModelPart bone = bones.get(i);
+            if (bone == null) {
+                continue;
+            }
+            if (i >= 2) {
+                bone.yRot += hy;
+                bone.xRot += hx;
+            }
+            float[] b = base[i];
+            bone.xRot = Mth.lerp(w, b[0], bone.xRot);
+            bone.yRot = Mth.lerp(w, b[1], bone.yRot);
+            bone.zRot = Mth.lerp(w, b[2], bone.zRot);
+            bone.x = Mth.lerp(w, b[3], bone.x);
+            bone.y = Mth.lerp(w, b[4], bone.y);
+            bone.z = Mth.lerp(w, b[5], bone.z);
+        }
     }
 
     private void play(AnimationDefinition def, float ticks, float scale) {

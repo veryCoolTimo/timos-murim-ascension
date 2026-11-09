@@ -119,11 +119,16 @@ public final class PillPayloads {
      * @param overload     with {@code torn}: because of the total load, not a single pill
      * @param poisonNature the player's method has the poison nature (poison pills are easier)
      */
-    public record FlowStart(int id, int[] kinds, long seed, boolean hard, boolean torn, boolean overload, boolean poisonNature, boolean automatic)
+    public record FlowStart(int id, int[] kinds, long seed, boolean hard, boolean torn, boolean overload, boolean poisonNature, boolean automatic, int scene)
             implements CustomPacketPayload {
 
         public FlowStart(int id, int[] kinds, long seed, boolean hard, boolean torn, boolean overload, boolean poisonNature) {
             this(id, kinds, seed, hard, torn, overload, poisonNature, false);
+        }
+
+        /** {@code scene}: ticks of the absorption scene (0 - none; see PillScenePlanner). */
+        public FlowStart(int id, int[] kinds, long seed, boolean hard, boolean torn, boolean overload, boolean poisonNature, boolean automatic) {
+            this(id, kinds, seed, hard, torn, overload, poisonNature, automatic, 0);
         }
 
         public static final Type<FlowStart> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "pill_flow_start"));
@@ -137,9 +142,10 @@ public final class PillPayloads {
             ByteBufCodecs.BOOL.encode(buf, p.overload());
             ByteBufCodecs.BOOL.encode(buf, p.poisonNature());
             ByteBufCodecs.BOOL.encode(buf, p.automatic());
+            ByteBufCodecs.VAR_INT.encode(buf, p.scene());
         }, buf -> new FlowStart(ByteBufCodecs.VAR_INT.decode(buf), Sync.INTS.decode(buf), ByteBufCodecs.VAR_LONG.decode(buf),
                 ByteBufCodecs.BOOL.decode(buf), ByteBufCodecs.BOOL.decode(buf), ByteBufCodecs.BOOL.decode(buf),
-                ByteBufCodecs.BOOL.decode(buf), ByteBufCodecs.BOOL.decode(buf)));
+                ByteBufCodecs.BOOL.decode(buf), ByteBufCodecs.BOOL.decode(buf), ByteBufCodecs.VAR_INT.decode(buf)));
 
         @Override
         public Type<? extends CustomPacketPayload> type() {
@@ -166,6 +172,20 @@ public final class PillPayloads {
         public static final StreamCodec<RegistryFriendlyByteBuf, FlowReport> STREAM_CODEC = StreamCodec.composite(
                 ByteBufCodecs.VAR_INT, FlowReport::id, ByteBufCodecs.VAR_INT, FlowReport::outcome,
                 ByteBufCodecs.VAR_INT, FlowReport::progress, ByteBufCodecs.VAR_INT, FlowReport::lost, FlowReport::new);
+
+        @Override
+        public Type<? extends CustomPacketPayload> type() {
+            return TYPE;
+        }
+    }
+
+    /** The client's setting «full pill scene always»: the server then keeps the sitting for the whole scene. */
+    public record SceneFull(boolean full) implements CustomPacketPayload {
+
+        public static final Type<SceneFull> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "pill_scene_full"));
+
+        public static final StreamCodec<RegistryFriendlyByteBuf, SceneFull> STREAM_CODEC =
+                StreamCodec.composite(ByteBufCodecs.BOOL, SceneFull::full, SceneFull::new);
 
         @Override
         public Type<? extends CustomPacketPayload> type() {

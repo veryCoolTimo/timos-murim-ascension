@@ -117,15 +117,20 @@ public final class ScheduleGoal extends Goal {
         dining.cancel();
         current = null;
         npc.setDoingKind(null);
-        npc.setPose(SectPose.NONE);
-        // A cutscene takes over the reception chair when it takes the conversation lock.
-        // Otherwise the routine is over and its seat must be released.
-        if (!npc.headIntroScene() && !npc.headIntroReserved()) npc.sit(SeatStyle.NONE);
+        // A cutscene takes over the reception chair when it takes the conversation lock, and its seated pose with it:
+        // this goal stops on the first tick after the reservation, i.e. after the staging set the pose (root cause of the
+        // standing head: seat kept, pose cleared). Otherwise the routine is over and its pose and seat must be released.
+        if (!npc.headIntroScene() && !npc.headIntroReserved()) {
+            npc.setPose(SectPose.NONE);
+            npc.sit(SeatStyle.NONE);
+        }
         mounted = false;
     }
 
     @Override
     public void tick() {
+        // The mentor's «show me» demonstration owns pose, hands and legs until it ends (sect/MentorDemo).
+        if (io.github.verycooltimo.murim.sect.MentorDemo.active(npc)) return;
         if (dining.leaving()) {
             if (dining.tick()) { current = null; refresh = 0; }
             return;

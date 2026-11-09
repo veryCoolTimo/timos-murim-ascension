@@ -63,4 +63,33 @@ public final class SectHeadInterceptGameTests {
         h.assertTrue(elder != null && !elder.intercepted() && elder.speaker() == leader, "an elder was stopped at the head");
         h.succeed();
     }
+
+    /** Film 9.11: the scene releases the player in the hall and the guard scolds the man the head just received. */
+    @GameTest(template = YARD, timeoutTicks = 60, batch = "flow1109_head_grace")
+    public static void aGuardDoesNotStopTheNewcomerTheHeadJustReceived(GameTestHelper h) {
+        SectGameTests.setPeriod(h, SectSchedule.Period.TRAINING);
+        SectHierarchyGameTests.Only layout = SectPlaytestRig.only(h, "main_hall");
+        ServerPlayer p = player(h, 4, 4, SectState.NONE.joined().with(SectAccess.HEAD_ESCORT));
+        SectDisciple leader = npc(h, layout, "tae_hwi", 6, 4, false);
+        String key = SectRota.dayWatch(SectSchedule.day(h.getLevel().getDayTime()), 0).key();
+        SectDisciple guard = npc(h, layout, key, 12, 4, false);
+        // the unpresented newcomer is still stopped (main hall closed below the first rank)
+        p.setData(ModAttachments.SECT, SectState.NONE.joined());
+        DialogueService.Route stopped = DialogueService.route(p, leader);
+        h.assertTrue(stopped != null && stopped.intercepted() && stopped.speaker() == guard, "an unpresented newcomer was not stopped");
+        // presented through the real completion: the scene is over, the grace and the persistent mark hold
+        p.setData(ModAttachments.SECT, SectState.NONE.joined().with(SectAccess.HEAD_ESCORT).with(SectArrival.PENDING));
+        h.assertTrue(SectHeadIntro.complete(p, leader), "the introduction did not complete");
+        h.assertTrue(SectHeadIntro.receivedByHead(p), "no grace after the release");
+        DialogueService.Route after = DialogueService.route(p, leader);
+        h.assertTrue(after != null && !after.intercepted(), "the guard stopped the player the head just received");
+        DialogueService.interceptNearElder(p);
+        h.assertTrue(!guard.blocking() && !guard.approachingDialogue(p, DialogueService.route(p, leader).id())
+                && !p.getData(ModAttachments.DIALOGUE).active(), "the guard walked up to the received player");
+        // later, outside the grace and without the pass, the persistent presented mark still holds
+        p.getPersistentData().remove("murim_head_done");
+        p.setData(ModAttachments.SECT, SectService.state(p).without(SectAccess.HEAD_ESCORT));
+        h.assertTrue(SectHeadIntro.receivedByHead(p), "the presented mark was lost");
+        h.succeed();
+    }
 }

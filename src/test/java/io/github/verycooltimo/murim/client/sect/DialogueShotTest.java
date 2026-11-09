@@ -67,4 +67,54 @@ class DialogueShotTest {
         assertEquals(DialogueShot.distance(3.6D), npcDistance(s), 1.0E-6D);
         assertTrue(DialogueShot.distance(3.6D) > DialogueShot.distance(1.8D));
     }
+
+    /** A low lintel: every ray from the aim point is cut to 0.9 blocks above/level with the aim, only a raised or rear ray is free. */
+    private static DialogueShot.Clear lintel(double ceilingY) {
+        return (from, to) -> {
+            if (to.y <= ceilingY) {
+                return from.distanceTo(to);
+            }
+            // Ray rises through the ceiling: free length up to the plane.
+            double k = Math.max(0.0D, (ceilingY - from.y) / (to.y - from.y));
+            return from.distanceTo(to) * k;
+        };
+    }
+
+    @Test
+    @DisplayName("Проём: луч режет камеру ближе 1,2 блока к цели - берётся другой кадр, не голова")
+    void blockedRayFallsBack() {
+        Vec3 player = new Vec3(0.0D, 64.0D, 2.4D);
+        Vec3 aim = NPC.add(0.0D, 1.8D * DialogueShot.AIM, 0.0D);
+        // Everything but a ray that stays level or dips is blocked at 0.5 blocks from the aim.
+        DialogueShot.Clear blocked = (from, to) -> to.y <= from.y - 0.04D ? from.distanceTo(to) : 0.5D;
+        DialogueShot.Shot s = DialogueShot.plan(NPC, 1.8D, player, Vec3.ZERO, blocked);
+        assertTrue(s.camera().distanceTo(aim) >= DialogueShot.MIN_FOCUS, "камера не в голове: " + s.camera().distanceTo(aim));
+        assertTrue(s.camera().y < aim.y - 0.04D + 1.0E-6D, "выбран кадр сверху вниз по свободному лучу: " + s.camera());
+    }
+
+    @Test
+    @DisplayName("Проём закрыт со всех сторон кроме спины игрока - двойной кадр сзади")
+    void behindPlayerTwoShot() {
+        Vec3 player = new Vec3(0.0D, 64.0D, 2.4D);
+        Vec3 aim = NPC.add(0.0D, 1.8D * DialogueShot.AIM, 0.0D);
+        // Open only behind the player (z beyond the player) and above the aim.
+        DialogueShot.Clear onlyBehind = (from, to) -> to.z >= 3.0D && to.y > aim.y ? from.distanceTo(to) : 0.4D;
+        DialogueShot.Shot s = DialogueShot.plan(NPC, 1.8D, player, Vec3.ZERO, onlyBehind);
+        assertTrue(s.camera().z > player.z, "камера за спиной игрока: " + s.camera());
+        assertTrue(s.camera().distanceTo(aim) >= DialogueShot.MIN_FOCUS);
+        assertTrue(s.camera().y > aim.y, "чуть выше глаз");
+    }
+
+    @Test
+    @DisplayName("Чистый путь не меняется при запасных кадрах; сторона держится (гистерезис)")
+    void hysteresis() {
+        Vec3 player = new Vec3(0.0D, 64.0D, 2.4D);
+        DialogueShot.Shot plain = DialogueShot.plan(NPC, 1.8D, player, Vec3.ZERO, OPEN);
+        assertEquals(DialogueShot.distance(1.8D), npcDistance(plain), 1.0E-6D);
+        // Both shoulders are equally free: the held side is kept, in both directions.
+        DialogueShot.Shot left = DialogueShot.plan(NPC, 1.8D, player, Vec3.ZERO, OPEN, -1);
+        DialogueShot.Shot right = DialogueShot.plan(NPC, 1.8D, player, Vec3.ZERO, OPEN, 1);
+        assertEquals(-1, left.side());
+        assertEquals(1, right.side());
+    }
 }

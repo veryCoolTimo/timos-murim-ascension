@@ -72,6 +72,10 @@ import java.util.UUID;
  * смерти (урон через порог обрезается, {@link SparEvents}), в конце — поклон.
  */
 public class SectDisciple extends Bandit implements Casters.Caster {
+    /** Sect people are not bandits: the voice and death timing they had before (DiscipleRenderer has no death clip, Wanderer tests expect removal within 20 ticks). */
+    @Override protected int deathTicks() { return 20; }
+    @Override protected net.minecraft.sounds.SoundEvent getHurtSound(net.minecraft.world.damagesource.DamageSource source) { return net.minecraft.sounds.SoundEvents.HOSTILE_HURT; }
+    @Override protected net.minecraft.sounds.SoundEvent getDeathSound() { return net.minecraft.sounds.SoundEvents.HOSTILE_DEATH; }
 
     public static final ResourceLocation SIX = id("six_harmonies");
     public static final ResourceLocation SLASH = id("seven_plum_blossoms");
@@ -888,6 +892,7 @@ public class SectDisciple extends Bandit implements Casters.Caster {
         if (!alarmGoal.holdingAura()) suppressionGoal.restoreAura();
         walking.tick();
         tickLife();
+        io.github.verycooltimo.murim.sect.MentorDemo.tick(this);
         tickPosture();
         // Меч, попавший в руку мимо реквизита (команда, чужой код), — не держится дольше секунды.
         if (tickCount % 20 == 0) {
@@ -1879,6 +1884,17 @@ public class SectDisciple extends Bandit implements Casters.Caster {
             heal(1.0F);
         }
         io.github.verycooltimo.murim.sect.SectLife.tickNpc(this);
+    }
+
+    private io.github.verycooltimo.murim.sect.MentorDemo.State demo;
+
+    /** The running «show me» demonstration of the mentor, or null (not saved). */
+    public io.github.verycooltimo.murim.sect.MentorDemo.State demo() {
+        return demo;
+    }
+
+    public void setDemo(io.github.verycooltimo.murim.sect.MentorDemo.State demo) {
+        this.demo = demo;
     }
 
     /** Steps of the glide between the cell beside a chair and its seat (a chair is too high to walk onto). */

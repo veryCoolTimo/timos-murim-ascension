@@ -23,6 +23,7 @@ CAT = {
     # Ци/прорыв/давление — тише (автор 03.10: «чтобы уши не взрывать»).
     'qi_charge': SOFT, 'breakthrough': SOFT, 'aura_gust': SOFT,
     'step_soft': SOFT, 'qi_chime': SOFT, 'meditation_cycle': SOFT, 'blossom_open': SOFT, 'sword_draw': SOFT,
+    'bow_draw': SOFT, 'bandit_hurt': SOFT,
     'lock_on': UI, 'wheel_open': UI, 'wheel_select': UI,
     # 05.10 polish pass: progression and interface sounds — never louder than technique hits.
     'pill_eat': SOFT, 'absorb_pulse': SOFT, 'absorb_success': SOFT, 'absorb_fail': SOFT,

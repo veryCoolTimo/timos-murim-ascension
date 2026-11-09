@@ -311,13 +311,17 @@ public final class MeditationService {
      * и потеря всех сердец до половинки»). Пройденные такты не отнимаются: наказание —
      * тело, а не прогресс.
      */
-    private static void backlash(ServerPlayer player) {
+    static void backlash(ServerPlayer player) {
+        CultivationState cultivation = player.getData(ModAttachments.CULTIVATION);
         // UX #23: the first ring is practice until it is mastered. No health or hunger penalty while learning.
-        if (player.getData(ModAttachments.CULTIVATION).beats() == 1) {
-            MeditationState state = player.getData(ModAttachments.MEDITATION);
-            player.setData(ModAttachments.MEDITATION, MeditationState.started(state.filter(), 1));
-            PlayerJournal.record(player, Component.translatable("murim.meditation.practice"));
-            sync(player, SyncMeditationPayload.Event.SCATTER);
+        if (cultivation.beats() == 1) {
+            forgive(player, 1, "murim.meditation.practice", 0.8F, false);
+            return;
+        }
+        // Persona row 6: the FIRST compression failure per player is forgiven too, once, ever.
+        if (cultivation.beats() == 2 && !cultivation.compressionGraceUsed()) {
+            player.setData(ModAttachments.CULTIVATION, cultivation.withCompressionGraceUsed());
+            forgive(player, 2, "murim.meditation.compression_grace", 0.6F, true);
             return;
         }
         player.setData(ModAttachments.MEDITATION, MeditationState.IDLE);
@@ -342,6 +346,18 @@ public final class MeditationService {
         PlayerJournal.record(player, Component.translatable("murim.meditation.backlash")
                 .withStyle(ChatFormatting.DARK_RED));
         sync(player, SyncMeditationPayload.Event.BACKLASH);
+    }
+
+    /** Forgiven failure: the ring restarts on the same beat, no health, food or effect cost. */
+    private static void forgive(ServerPlayer player, int beat, String journalKey, float pitch, boolean sound) {
+        MeditationState state = player.getData(ModAttachments.MEDITATION);
+        player.setData(ModAttachments.MEDITATION, MeditationState.started(state.filter(), beat));
+        if (sound) {
+            player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
+                    io.github.verycooltimo.murim.registry.ModSounds.ABSORB_FAIL.get(), SoundSource.PLAYERS, 1.0F, pitch);
+        }
+        PlayerJournal.record(player, Component.translatable(journalKey));
+        sync(player, SyncMeditationPayload.Event.SCATTER);
     }
 
     /** The method's wall bonus (Purple Sky: a larger reserve before the wall), growing with the method's stars. */

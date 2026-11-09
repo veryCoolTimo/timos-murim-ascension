@@ -19,16 +19,17 @@ public final class CinematicDof {
     private static int width, height;
     private static boolean failed, owned;
     private static float distance, range = 1, blur;
+    private static final float MAX = 16;
     private CinematicDof() { }
     public static float circleOfConfusion(float depth, float focus, float range, float max) {
         return Math.max(0, Math.min(1, (Math.abs(depth - focus) - range) / Math.max(range, .25F)))
-                * Math.max(0, Math.min(8, max));
+                * Math.max(0, Math.min(MAX, max));
     }
     public static void focus(Vec3 point, Vec3 camera, float maxBlur, float focusRange, float envelope) {
         owned = true;
         distance = (float) point.distanceTo(camera);
         range = focusRange;
-        blur = Math.max(0, Math.min(8, maxBlur)) * Math.max(0, Math.min(1, envelope));
+        blur = Math.max(0, Math.min(MAX, maxBlur)) * Math.max(0, Math.min(1, envelope));
     }
     public static void off() { owned = false; blur = 0; close(); }
     public static void close() {
@@ -57,7 +58,7 @@ public final class CinematicDof {
                 width = -1;
             }
             if (width != w || height != h) { chain.resize(w, h); width = w; height = h; }
-            chain.setUniform("MaxBlur", blur * mc.options.screenEffectScale().get().floatValue());
+            chain.setUniform("MaxBlur", blur * h / 1080F * mc.options.screenEffectScale().get().floatValue());
             chain.setUniform("FocusDistance", distance);
             chain.setUniform("FocusRange", range);
             chain.setUniform("Near", 0.05F);

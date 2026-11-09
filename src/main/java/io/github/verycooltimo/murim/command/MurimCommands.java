@@ -42,7 +42,7 @@ public final class MurimCommands {
     /** Groups of {@code /murim dev}: the name after {@code dev}, and whether the tree lives on the client or needs permission 4. */
     public static final List<String> DEV_GROUPS = List.of("rank", "art", "fight", "body", "sect", "sched", "map", "repairs",
             "yard", "head", "spar", "boss", "hua", "vault", "camp", "peddler", "tree", "loc", "vfx", "light", "glow", "face", "build",
-            "useblock", "useitem", "closescreen", "cave", "blade_exam");
+            "useblock", "useitem", "closescreen", "cave", "blade_exam", "book");
 
     private MurimCommands() {
     }
@@ -95,6 +95,10 @@ public final class MurimCommands {
                         .then(Commands.argument("group", StringArgumentType.word())
                                 .suggests((c, b) -> SharedSuggestionProvider.suggest(DEV_GROUPS, b))
                                 .executes(c -> devHelp(c.getSource(), StringArgumentType.getString(c, "group")))))
+                .then(Commands.literal("book").executes(c -> {
+                    io.github.verycooltimo.murim.library.SpawnBook.give(c.getSource().getPlayerOrException());
+                    return 1;
+                }))
                 .then(art.rank()).then(art.art()).then(art.fight())
                 .then(TrainingCommand.node().then(art.qi()).then(art.wall()))
                 .then(SectCommand.member()).then(SectCommand.schedule()).then(SectCommand.mapNode())

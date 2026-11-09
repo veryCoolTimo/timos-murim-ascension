@@ -211,6 +211,31 @@ public final class SectHeadIntroGameTests {
         });
     }
 
+    private static boolean offersHead(ServerPlayer p, SectDisciple mentor, String node) {
+        Dialogue d = DialogueLoader.get(SectRole.MENTOR.dialogue());
+        return d.nodes().get(node).options().stream()
+                .filter(o -> "dialogue.murim.head_intro.opt.go".equals(o.text()))
+                .anyMatch(o -> o.when().stream().allMatch(c -> DialogueService.test(p, mentor, c)));
+    }
+
+    /** 9.11: the presentation stays an invitation: declined at the tour end, it is still on the mentor's normal talk until he is presented. */
+    @GameTest(template = YARD, timeoutTicks = 100, batch = "headintro1109_offer")
+    public static void headOfferStaysOnTheMentorsTalkUntilPresented(GameTestHelper h) {
+        SectGameTests.setPeriod(h, SectSchedule.Period.TRAINING);
+        clearYard(h);
+        var layout = only(h, "main_hall");
+        SectDisciple head = npc(h, layout, "tae_hwi", 12, 16, false);
+        SectDisciple mentor = npc(h, layout, "gyeong_pil", 12, 9, false);
+        ServerPlayer p = newcomer(h);
+        for (String node : new String[] {"again", "journey"})
+            h.assertTrue(offersHead(p, mentor, node), "member not yet presented has no head offer in " + node);
+        h.assertTrue(SectHeadIntro.start(p, mentor), "the escort did not start");
+        h.assertTrue(SectHeadIntro.complete(p, head), "the head's word was refused");
+        for (String node : new String[] {"again", "journey"})
+            h.assertTrue(!offersHead(p, mentor, node), "presented member is still offered the head in " + node);
+        h.succeed();
+    }
+
     @GameTest(template = YARD, timeoutTicks = 100, batch = "headintro1022_done")
     public static void theCeremonyGrantsTheSameMarksAndTheHallIsShutAgain(GameTestHelper h) {
         SectGameTests.setPeriod(h, SectSchedule.Period.TRAINING);
@@ -408,6 +433,29 @@ public final class SectHeadIntroGameTests {
         otherMentor.discard();
         otherHead.discard();
         h.succeed();
+    }
+
+    @GameTest(template = YARD, timeoutTicks = 100, batch = "headintro_dev_pose")
+    public static void devStagedHeadKeepsTheSeatedPoseAfterHisRoutineStops(GameTestHelper h) {
+        SectGameTests.setPeriod(h, SectSchedule.Period.TRAINING);
+        clearYard(h);
+        var layout = only(h, "main_hall");
+        var mentor = npc(h, layout, "gyeong_pil", 12, 9, false);
+        var head = npc(h, layout, "tae_hwi", 12, 14, false);
+        var p = player(h, 12, 10, SectState.NONE.joined());
+        // Let the routine goal start on the head first: its stop() ran after the staging and cleared the pose.
+        h.runAfterDelay(30, () -> {
+            h.getLevel().getServer().getCommands().performPrefixedCommand(
+                    p.createCommandSourceStack().withPermission(2), "murim dev head intro");
+            h.runAfterDelay(10, () -> {
+                h.assertTrue(SectHeadIntro.involves(p, head) && head.sitting()
+                        && head.pose() == io.github.verycooltimo.murim.entity.SectPose.SIT,
+                        "the staged head is not in the seated pose after his routine stopped: " + head.pose());
+                SectHeadIntro.finish(p, layout);
+                mentor.escortGoal().cancel();
+                h.succeed();
+            });
+        });
     }
 
     /** Pick the actual row sent by the server, preserving condition filtering and synthetic exit rows. */

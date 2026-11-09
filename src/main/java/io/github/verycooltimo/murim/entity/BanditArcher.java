@@ -91,9 +91,39 @@ public class BanditArcher extends Bandit implements RangedAttackMob {
         refreshAura();
     }
 
+    /** Событие сущности «выстрел»: клиент запускает клип shoot (отдача). */
+    public static final byte EVENT_SHOT = 80;
+
+    /** Клиент: тик последнего выстрела и последнего конца натяжения (для клипов shoot и lower). */
+    private int shotTick = Integer.MIN_VALUE / 2;
+    private int drawEndTick = Integer.MIN_VALUE / 2;
+    private boolean wasDrawing;
+
+    /** Клиент: тиков с выстрела (с долей кадра). */
+    public float sinceShot(float partial) {
+        return Math.min(io.github.verycooltimo.murim.client.bandit.ClipPhases.NEVER, tickCount - shotTick + partial);
+    }
+
+    /** Клиент: тиков с конца натяжения (с долей кадра). */
+    public float sinceDrawEnd(float partial) {
+        return Math.min(io.github.verycooltimo.murim.client.bandit.ClipPhases.NEVER, tickCount - drawEndTick + partial);
+    }
+
+    @Override
+    public void handleEntityEvent(byte id) {
+        if (id == EVENT_SHOT) {
+            shotTick = tickCount;
+        } else {
+            super.handleEntityEvent(id);
+        }
+    }
+
     @Override
     public void startUsingItem(net.minecraft.world.InteractionHand hand) {
         super.startUsingItem(hand);
+        if (!level().isClientSide) {
+            playSound(io.github.verycooltimo.murim.registry.ModSounds.BOW_DRAW.get(), 0.6F, 0.95F + 0.1F * getRandom().nextFloat());
+        }
         if (!level().isClientSide && isElite() && qiShotCooldown <= 0) {
             // Телеграф выстрела ци: звук сбора ци и свечение лука на всё натяжение.
             setCharged(true);
@@ -104,6 +134,13 @@ public class BanditArcher extends Bandit implements RangedAttackMob {
     @Override
     public void tick() {
         super.tick();
+        if (level().isClientSide) {
+            boolean drawing = isUsingItem();
+            if (wasDrawing && !drawing) {
+                drawEndTick = tickCount;
+            }
+            wasDrawing = drawing;
+        }
         if (!level().isClientSide && qiShotCooldown > 0) {
             qiShotCooldown--;
         }
@@ -145,6 +182,7 @@ public class BanditArcher extends Bandit implements RangedAttackMob {
         arrow.shoot(dx, dy + flat * 0.2D, dz, qi ? 2.1F : 1.6F, (float) ((qi ? 6 : 14) - level().getDifficulty().getId() * (qi ? 2 : 4)));
         playSound(io.github.verycooltimo.murim.registry.ModSounds.BOW_SHOT.get(), 1.0F, 0.93F + 0.14F * getRandom().nextFloat());
         level().addFreshEntity(arrow);
+        level().broadcastEntityEvent(this, EVENT_SHOT);
         log("выстрел по {}", target.getName().getString());
     }
 

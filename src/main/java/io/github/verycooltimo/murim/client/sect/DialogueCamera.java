@@ -194,13 +194,13 @@ public final class DialogueCamera {
     }
 
     /** Кадр по миру: стены режут луч от груди NPC к камере. */
-    private static DialogueShot.Shot plan(Minecraft mc, Entity target) {
+    private static DialogueShot.Shot plan(Minecraft mc, Entity target, int preferSide) {
         Vec3 look = mc.player.getLookAngle();
         // API: reference/minecraft-src/net/minecraft/world/level/BlockGetter.java#clip
         return DialogueShot.plan(target.position(), target.getBbHeight(), mc.player.position(), look, (from, to) -> {
             var hit = mc.level.clip(new ClipContext(from, to, ClipContext.Block.VISUAL, ClipContext.Fluid.NONE, target));
             return hit.getType() == HitResult.Type.MISS ? from.distanceTo(to) : from.distanceTo(hit.getLocation());
-        });
+        }, preferSide);
     }
 
     /**
@@ -269,7 +269,7 @@ public final class DialogueCamera {
             // Кадр от собеседника, а не от игрока (автор 06.10: вплотную NPC был на весь экран). План считается
             // раз и держится, пока NPC стоит; глаза NPC — на ~28 % высоты, сбоку от центра (codex 03.10).
             if (shot == null || target.position().distanceToSqr(shotNpc) > 1.0D) {
-                shot = plan(mc, target);
+                shot = plan(mc, target, shot == null ? 0 : shot.side());
                 shotNpc = target.position();
             }
             shotPos = shot.camera();

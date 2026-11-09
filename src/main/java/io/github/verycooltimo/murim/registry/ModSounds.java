@@ -65,6 +65,9 @@ public final class ModSounds {
     // Бандиты и ци-меч.
     public static final DeferredHolder<SoundEvent, SoundEvent> BANDIT_WINDUP = sound("bandit_windup");
     public static final DeferredHolder<SoundEvent, SoundEvent> BOW_SHOT = sound("bow_shot");
+    public static final DeferredHolder<SoundEvent, SoundEvent> BOW_DRAW = sound("bow_draw");
+    public static final DeferredHolder<SoundEvent, SoundEvent> BANDIT_HURT = sound("bandit_hurt");
+    public static final DeferredHolder<SoundEvent, SoundEvent> BANDIT_DEATH = sound("bandit_death");
     public static final DeferredHolder<SoundEvent, SoundEvent> QI_SWORD_SUMMON = sound("qi_sword_summon");
     public static final DeferredHolder<SoundEvent, SoundEvent> QI_SWORD_HUM = sound("qi_sword_hum");
 

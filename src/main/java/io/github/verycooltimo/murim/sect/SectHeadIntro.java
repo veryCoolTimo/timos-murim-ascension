@@ -44,6 +44,8 @@ public final class SectHeadIntro {
     static final String SCENE = "murim_head_scene";
     private static final String VIEW_SENT = "murim_head_scene_view";
     private static final String HEAD = "murim_head_scene_actor";
+    /** Hall axis (the reception facing) sent to the client: the head's own yaw is still settling when the view starts. */
+    private static final String FACING = "murim_head_scene_facing";
     private static final String X = "murim_head_scene_x", Y = "murim_head_scene_y", Z = "murim_head_scene_z";
 
     private SectHeadIntro() { }
@@ -65,6 +67,22 @@ public final class SectHeadIntro {
 
     private static Vec3 outside(SectLayout layout) {
         return layout == null ? null : layout.at("main_hall", 0.0D, -14.0D);
+    }
+
+    /** Grace after the scene releases the player: the hall guard does not stop him (1 min of game time is 1200; 20 s). */
+    public static final long GRACE = 400L;
+
+    /**
+     * The head's guard does not stop this player: he is in the scene, walks to the head with the escort pass, was just
+     * released (grace), or has been formally presented to the head (persistent {@link #PRESENTED}). Outsiders and
+     * newcomers not yet presented are still stopped.
+     */
+    public static boolean receivedByHead(ServerPlayer p) {
+        if (active(p)) return true;
+        SectState s = SectService.state(p);
+        if (s.has(SectAccess.HEAD_ESCORT) || s.has(PRESENTED)) return true;
+        var data = p.getPersistentData();
+        return data.contains(DONE_AT) && p.level().getGameTime() - data.getLong(DONE_AT) <= GRACE;
     }
 
     /** The mentor can take this player to the head now. */
@@ -169,6 +187,7 @@ public final class SectHeadIntro {
         data.remove(VIEW_SENT);
         data.putLong(SCENE, p.level().getGameTime());
         data.putInt(HEAD, head.getId());
+        data.putFloat(FACING, facing);
         data.putDouble(X, p.getX()); data.putDouble(Y, p.getY()); data.putDouble(Z, p.getZ());
         doors(p, layout, true);
         // Publish from advance after entity tracking has sent the staged position and seated pose.
@@ -299,7 +318,7 @@ public final class SectHeadIntro {
         data.remove(VIEW_SENT); data.remove(HEAD); data.remove(X); data.remove(Y); data.remove(Z);
         doors(p, layout, false, sceneLevel);
         io.github.verycooltimo.murim.network.ChannelSafe.send(p,
-                new io.github.verycooltimo.murim.network.HeadIntroPayloads.View(-1, 0));
+                new io.github.verycooltimo.murim.network.HeadIntroPayloads.View(-1, 0, 0));
         completeAt(p, layout);
     }
 
@@ -321,12 +340,29 @@ public final class SectHeadIntro {
             data.putBoolean(VIEW_SENT, true);
             // ChannelSafe also supports GameTest players with no negotiated client channel.
             io.github.verycooltimo.murim.network.ChannelSafe.send(p,
-                    new io.github.verycooltimo.murim.network.HeadIntroPayloads.View(head.getId(), data.getLong(SCENE)));
+                    new io.github.verycooltimo.murim.network.HeadIntroPayloads.View(head.getId(), data.getLong(SCENE), data.getFloat(FACING)));
         }
         p.setDeltaMovement(Vec3.ZERO);
         Vec3 anchor = new Vec3(data.getDouble(X), data.getDouble(Y), data.getDouble(Z));
         if (p.position().distanceToSqr(anchor) > 0.01D) p.teleportTo(p.serverLevel(), anchor.x, anchor.y, anchor.z, p.getYRot(), p.getXRot());
         if (age >= 40) doors(p, layout, false);
+        // Reaction beat (HeadIntroPlan shot 230-290): the cut hides the move. Film 9.11 measured the escort 3.5 blocks right and 2.5 forward of
+        // the newcomer, drifted from the 1.5-block stand, so he is put back beside him and turned to him instead of standing in profile.
+        if (age >= 230 && age < 290) p.level().getEntitiesOfClass(SectDisciple.class, p.getBoundingBox().inflate(8),
+                d -> d.role() == SectRole.MENTOR && d.isAlive()).forEach(d -> {
+                    if (age == 230) {
+                        Vec3 side = SectLife.stand(p.level(), p.position().add(Math.cos(Math.toRadians(p.getYRot())) * -1.5, 0,
+                                Math.sin(Math.toRadians(p.getYRot())) * -1.5));
+                        if (side != null) { d.walking().stop(); d.moveTo(side.x, side.y, side.z, d.getYRot(), 0); }
+                    }
+                    // Staged film: with no escort hold he walked 4.4 blocks right/2.5 forward during the beat and left the frame.
+                    d.walking().stop(); d.getNavigation().stop();
+                    d.faceEntity(p, 360);
+                    if (age != 230 && age != 280) return;
+                    double yaw = Math.toRadians(p.getYRot()), dx = d.getX() - p.getX(), dz = d.getZ() - p.getZ();
+                    MurimMod.LOGGER.info("Head intro reaction age {}: mentor {} blocks right, {} forward of the newcomer", age,
+                            String.format("%.2f", -dx * Math.cos(yaw) - dz * Math.sin(yaw)), String.format("%.2f", -dx * Math.sin(yaw) + dz * Math.cos(yaw)));
+                });
     }
 
     @net.neoforged.bus.api.SubscribeEvent

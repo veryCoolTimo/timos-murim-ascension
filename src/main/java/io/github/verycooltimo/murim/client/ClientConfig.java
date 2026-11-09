@@ -49,6 +49,11 @@ public final class ClientConfig {
             .comment("Directed camera during rank breakthroughs. Off keeps your own camera.")
             .define("accessibility.breakthroughCamera", true);
 
+    /** The pill absorption scene is shortened from the fourth pill; on = always the full 7-second scene. */
+    public static final ModConfigSpec.BooleanValue PILL_SCENE_ALWAYS_FULL = BUILDER
+            .comment("Play the full pill absorption scene every time (otherwise it is shortened from the fourth pill).")
+            .define("hud.pillSceneAlwaysFull", false);
+
     public static final ModConfigSpec.BooleanValue SCREEN_FLASHES = BUILDER
             .comment("Экранные вспышки при ударах техник.")
             .define("accessibility.screenFlashes", true);

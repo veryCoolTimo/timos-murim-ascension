@@ -77,11 +77,15 @@ public final class FlowBodyRenderer {
             var buffers = mc.renderBuffers().bufferSource();
             FlowBodyRenderer renderer = new FlowBodyRenderer(surface, stack.last(),
                     buffers.getBuffer(MurimRenderTypes.flowLine()), FlowClient.visibility());
-            renderer.draw(FlowClient.game());
-            buffers.endBatch(MurimRenderTypes.flowLine());
-            renderer.consumer = buffers.getBuffer(MurimRenderTypes.flowMote());
-            renderer.drawClot(FlowClient.game());
-            buffers.endBatch(MurimRenderTypes.flowMote());
+            if (PillScene.active()) {
+                PillSceneRenderer.draw(mc, surface, stack.last(), camera, buffers, event.getPartialTick().getGameTimeDeltaPartialTick(false));
+            } else {
+                renderer.draw(FlowClient.game());
+                buffers.endBatch(MurimRenderTypes.flowLine());
+                renderer.consumer = buffers.getBuffer(MurimRenderTypes.flowMote());
+                renderer.drawClot(FlowClient.game());
+                buffers.endBatch(MurimRenderTypes.flowMote());
+            }
         } finally {
             main.copyDepthFrom(sceneDepth);
             main.bindWrite(false);

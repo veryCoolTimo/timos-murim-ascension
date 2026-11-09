@@ -10,10 +10,11 @@ import net.minecraft.resources.ResourceLocation;
 /** Transient scene ownership: server begins/ends; client can only request an eligible skip. */
 public final class HeadIntroPayloads {
     private HeadIntroPayloads() { }
-    public record View(int head, long started) implements CustomPacketPayload {
+    /** {@code facing}: the head's server-side yaw, so every client frames the hall along the same axis (the client entity's yaw is still interpolating when this arrives). */
+    public record View(int head, long started, float facing) implements CustomPacketPayload {
         public static final Type<View> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "head_intro_view"));
         public static final StreamCodec<RegistryFriendlyByteBuf, View> STREAM_CODEC = StreamCodec.composite(
-                ByteBufCodecs.VAR_INT, View::head, ByteBufCodecs.VAR_LONG, View::started, View::new);
+                ByteBufCodecs.VAR_INT, View::head, ByteBufCodecs.VAR_LONG, View::started, ByteBufCodecs.FLOAT, View::facing, View::new);
         @Override public Type<? extends CustomPacketPayload> type() { return TYPE; }
     }
     public record Skip(long started) implements CustomPacketPayload {

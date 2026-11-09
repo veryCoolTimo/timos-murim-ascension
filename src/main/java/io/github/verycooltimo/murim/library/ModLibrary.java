@@ -85,6 +85,9 @@ public final class ModLibrary {
             () -> new HeadNoteItem(new Item.Properties().stacksTo(1), "murim.vault.cheongmun.title",
                     java.util.List.of("murim.vault.cheongmun.text")));
 
+    public static final DeferredHolder<Item, SpawnBookItem> SPAWN_BOOK = ITEMS.register("spawn_book",
+            () -> new SpawnBookItem(new Item.Properties().stacksTo(1)));
+
     public static final DeferredHolder<Item, HeadNoteItem> HEAD_NOTE = ITEMS.register("head_note",
             () -> new HeadNoteItem(new Item.Properties().stacksTo(1)));
 

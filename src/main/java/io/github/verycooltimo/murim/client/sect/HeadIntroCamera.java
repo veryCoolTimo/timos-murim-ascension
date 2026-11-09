@@ -64,7 +64,7 @@ public final class HeadIntroCamera {
         savedType = mc.options.getCameraType(); savedHud = mc.options.hideGui;
         playerAt = mc.player.position();
         var actor = mc.level.getEntity(head);
-        axis = actor == null ? mc.player.getYRot() + 180 : actor.getYRot();
+        axis = actor == null ? mc.player.getYRot() + 180 : view.facing();
         mc.player.setYRot(axis + 180); mc.player.setYHeadRot(axis + 180); mc.player.setYBodyRot(axis + 180);
         camera = new ArmorStand(EntityType.ARMOR_STAND, mc.level);
         camera.setPos(mc.player.getX(), mc.player.getY(), mc.player.getZ());
@@ -144,6 +144,9 @@ public final class HeadIntroCamera {
             for (var entity : mc.level.getEntitiesOfClass(net.minecraft.world.entity.Entity.class,
                     subject.getBoundingBox().inflate(pose.distance() + 1))) {
                 if (entity == subject || entity == camera || entity == subject.getVehicle()) continue;
+                // The newcomer stands on the camera axis 5 blocks in front of the head and is hidden during the scene: his box on the
+                // establishing ray (0.52 off-axis, margin 0.6) pulled the lens to 4.5 blocks in some runs and not in others (film 7.11 round8a/8b).
+                if (!shot.player() && entity == mc.player) continue;
                 var box = entity.getBoundingBox().inflate(CameraRig.MARGIN);
                 if (box.contains(from)) return 0;
                 var point = box.clip(from, to);
@@ -159,17 +162,8 @@ public final class HeadIntroCamera {
             return; // Hold the last clear frame; keep subtitles, aura and skip alive.
         }
         Vec3 pos = focus.add(CameraRig.direction(yaw, safe).scale(distance));
-        // Shoulder framing uses the actual locked player anchor, not an assumed hall spacing.
-        if (shot.from() == 70) {
-            float progress = HeadIntroPlan.smooth((t - 70) / 60);
-            Vec3 forward = CameraRig.direction(axis, new ShotPose(0, 0, 1, 0, 0, 1));
-            Vec3 side = CameraRig.direction(axis, new ShotPose(-90, 0, 1, 0, 0, 1));
-            Vec3 wanted = playerAt.add(0, mc.player.getEyeHeight(), 0)
-                    .add(forward.scale(1.6 - progress)).add(side.scale(.7));
-            Vec3 ray = wanted.subtract(focus);
-            float reach = CameraRig.allowed(focus, ray.normalize(), (float) ray.length(), clear);
-            if (reach >= minimum) pos = focus.add(ray.normalize().scale(reach));
-        }
+        // No special shoulder placement: the old 'over the newcomer's shoulder' override put the lens behind the mentor,
+        // who stands 1.5 blocks beside the newcomer, and filled the frame with his head (film 7.11 round6, age 70-130).
         Vec3 previousPosition = framedPosition;
         framedPosition = pos;
         framedYaw = CameraRig.lookYaw(yaw, safe);
@@ -177,7 +171,7 @@ public final class HeadIntroCamera {
         if (!shot.player()) {
             Vec3 view = focus.subtract(pos);
             framedYaw = (float) Math.toDegrees(Math.atan2(-view.x, view.z)) - 6;
-            framedPitch = (float) -Math.toDegrees(Math.atan2(view.y, Math.sqrt(view.x*view.x + view.z*view.z))) - 3;
+            framedPitch = (float) -Math.toDegrees(Math.atan2(view.y, Math.sqrt(view.x*view.x + view.z*view.z))) + HeadIntroPlan.framingPitch(t);
         }
         if (skipAt >= 0 && skipPosition != null) {
             float blend = HeadIntroPlan.smooth((t - 305) / 15);
@@ -199,7 +193,7 @@ public final class HeadIntroCamera {
         Vec3 focal = t >= 230 && t < 290 ? playerAt.add(0, mc.player.getEyeHeight(), 0)
                 : actor.position().add(0, actor.getEyeHeight(), 0);
         io.github.verycooltimo.murim.client.camera.CinematicDof.focus(focal, framedPosition,
-                HeadIntroPlan.blur(t), t < 130 ? 1.5F : .75F, HeadIntroPlan.envelope(t));
+                HeadIntroPlan.blur(t), HeadIntroPlan.focusRange(t), HeadIntroPlan.envelope(t));
         fov = skipAt < 0 ? pose.fov() : skipFov + (pose.fov() - skipFov) * HeadIntroPlan.smooth((t - 305) / 15);
         place(event);
     }

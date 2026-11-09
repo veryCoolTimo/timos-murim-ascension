@@ -28,6 +28,7 @@ public final class FlowCamera {
         return io.github.verycooltimo.murim.dev.DevHooks.INSTANCE.benchActive() ? BENCH_SHOT : SHOT;
     }
     private static ArmorStand camera;
+    private static float sceneFov = -1;
 
     private FlowCamera() { }
 
@@ -48,6 +49,8 @@ public final class FlowCamera {
     }
 
     public static void reset() {
+        io.github.verycooltimo.murim.client.flow.PillScene.reset();
+        sceneFov = -1;
         Minecraft mc = Minecraft.getInstance();
         if (camera != null && mc.getCameraEntity() == camera) mc.setCameraEntity(mc.player);
         camera = null;
@@ -64,6 +67,15 @@ public final class FlowCamera {
         ShotPose base = shot();
         ShotPose shot = base == BENCH_SHOT || chest == null ? base : new ShotPose(0, SHOT.pitch(), SHOT.distance(),
                 (float) (chest.y - mc.player.getY() - .26D), 0, SHOT.fov());
+        // The pill absorption scene steers this same camera (one director): its focus is an offset above the chest.
+        ShotPose scene = chest == null ? null : io.github.verycooltimo.murim.client.flow.PillScene.pose(partial);
+        if (scene != null) {
+            shot = new ShotPose(scene.azimuth(), scene.pitch(), scene.distance(),
+                    (float) (chest.y - mc.player.getY()) + scene.focus(), 0, scene.fov());
+            sceneFov = scene.fov();
+        } else {
+            sceneFov = -1;
+        }
         float yaw = mc.player.yBodyRot;
         Vec3 feet = mc.player.getPosition(partial);
         Vec3 focus = CameraRig.focusPoint(feet, shot), direction = CameraRig.direction(yaw, shot);
@@ -71,7 +83,8 @@ public final class FlowCamera {
             HitResult hit = mc.level.clip(new ClipContext(from, to, ClipContext.Block.VISUAL, ClipContext.Fluid.NONE, mc.player));
             return hit.getType() == HitResult.Type.MISS ? from.distanceTo(to) : from.distanceTo(hit.getLocation());
         });
-        Vec3 at = focus.add(direction.scale(Math.max(CameraRig.MIN_DISTANCE, distance)));
+        Vec3 at = focus.add(direction.scale(Math.max(scene != null ? .3F : CameraRig.MIN_DISTANCE, distance)));
+        if (scene != null) io.github.verycooltimo.murim.client.flow.PillScene.dof(focus, at, partial);
         camera.setPos(at.x, at.y - camera.getEyeHeight(), at.z);
         camera.xo = camera.getX();
         camera.yo = camera.getY();
@@ -88,6 +101,6 @@ public final class FlowCamera {
 
     @SubscribeEvent
     static void onFov(ViewportEvent.ComputeFov event) {
-        if (camera != null && event.getCamera().getEntity() == camera) event.setFOV(event.getFOV() * shot().fov());
+        if (camera != null && event.getCamera().getEntity() == camera) event.setFOV(event.getFOV() * (sceneFov > 0 ? sceneFov : shot().fov()));
     }
 }

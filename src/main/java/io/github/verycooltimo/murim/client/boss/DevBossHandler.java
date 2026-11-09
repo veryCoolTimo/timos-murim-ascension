@@ -52,6 +52,13 @@ public final class DevBossHandler {
             && "boss".equals(System.getProperty("murim.capture.technique"));
     private static final boolean WIDE = "wide".equalsIgnoreCase(System.getProperty("murim.capture.camera", "back"));
 
+    /** Ракурсы {@code close} (почти анфас, 20°) и {@code three_quarter} (60°), оба 5 блоков: хозяин бьёт манекен, камера следует за ним, день. */
+    private static final String CAM = System.getProperty("murim.capture.camera", "back").toLowerCase(java.util.Locale.ROOT);
+    private static final boolean CLOSE = CAM.equals("close") || CAM.equals("three_quarter");
+    private static final boolean STAND = WIDE || CLOSE;
+    private static final double CAM_DIST = 5.0D;
+    private static final double CAM_OFF = CAM.equals("close") ? 20.0D : Double.parseDouble(System.getProperty("murim.capture.camoff", "60"));
+
     private static final String[] STAGES = {"approach", "overview", "fight", "vault"};
 
     private static boolean setup;
@@ -83,10 +90,13 @@ public final class DevBossHandler {
         if (!setup) {
             setup = true;
             // Ракурс wide — от первого лица: камера сама и есть зритель на краю плаца.
-            mc.options.setCameraType(WIDE ? CameraType.FIRST_PERSON : CameraType.THIRD_PERSON_BACK);
+            mc.options.setCameraType(STAND ? CameraType.FIRST_PERSON : CameraType.THIRD_PERSON_BACK);
             mc.options.renderDistance().set(8);
             // wide: без руки и HUD — чистый кадр; полоса здоровья видна на ракурсе back.
-            mc.options.hideGui = WIDE;
+            mc.options.hideGui = STAND;
+            if (CLOSE) {
+                mc.options.fov().set(45);
+            }
             mc.options.cloudStatus().set(net.minecraft.client.CloudStatus.OFF);
             server.execute(() -> build(server));
             return;
@@ -108,24 +118,24 @@ public final class DevBossHandler {
         switch (name) {
             case "approach" -> {
                 mc.options.keyUp.setDown(act <= 45);
-                if (act % 6 == 0) {
+                if (act % 6 == 0 && !CLOSE) {
                     grab(mc, name);
                 }
-                if (act >= 110) {
+                if (act >= (CLOSE ? 2 : 110)) {
                     mc.options.keyUp.setDown(false);
                     next(server);
                 }
             }
             case "overview" -> {
-                if (act == 2 || act == 20) {
+                if ((act == 2 || act == 20) && !CLOSE) {
                     grab(mc, name);
                 }
-                if (act >= 21) {
+                if (act >= (CLOSE ? 2 : 21)) {
                     next(server);
                 }
             }
             case "fight" -> {
-                if (!WIDE && boss != null && boss.isAlive()) {
+                if (!STAND && boss != null && boss.isAlive()) {
                     fighter(mc, (FortressMaster) boss);
                 } else if (WIDE && boss != null) {
                     Entity d = mc.level.getEntity(dummyId);
@@ -133,7 +143,16 @@ public final class DevBossHandler {
                     double lz = d == null ? boss.getZ() : (boss.getZ() + d.getZ()) * 0.5D;
                     lookAt(mc, lx, boss.getY() + 0.6D, lz, 4.0F);
                 }
-                if (act % 3 == 0) {
+                if (CLOSE && boss instanceof FortressMaster fm && fm.isAlive()) {
+                    double bx = boss.getX(), by = boss.getY(), bz = boss.getZ();
+                    float byaw = fm.yBodyRot;
+                    server.execute(() -> follow(server, bx, by, bz, byaw));
+                }
+                if (act % (CLOSE ? 2 : 3) == 0) {
+                    if (CLOSE && boss instanceof FortressMaster fm) {
+                        // Таблица кадр → состояние: по ней собираются листы «замах каждого приёма».
+                        MurimMod.LOGGER.info("BOSSFRAME {} state={} move={} age={} phase={}", frame, fm.state(), fm.move().key(), (int) fm.stateAge(0.0F), fm.phase());
+                    }
                     grab(mc, name);
                 }
                 if (act % 10 == 0) {
@@ -146,6 +165,12 @@ public final class DevBossHandler {
             }
             case "vault" -> {
                 release(mc);
+                if (CLOSE) {
+                    MurimMod.LOGGER.info("Boss capture: done");
+                    stage++;
+                    mc.stop();
+                    return;
+                }
                 if (act == 15 || act == 30) {
                     grab(mc, name);
                 }
@@ -273,8 +298,8 @@ public final class DevBossHandler {
             FortressData.Entry e = entry;
             switch (name) {
                 case "approach" -> {
-                    p.setGameMode(WIDE ? GameType.CREATIVE : GameType.SURVIVAL);
-                    if (!WIDE) {
+                    p.setGameMode(STAND ? GameType.CREATIVE : GameType.SURVIVAL);
+                    if (!STAND) {
                         gear(p);
                     } else {
                         p.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
@@ -295,7 +320,18 @@ public final class DevBossHandler {
                         break;
                     }
                     segment = 0;
-                    if (WIDE) {
+                    if (CLOSE) {
+                        // Съёмка крупно: столбы, жаровни и стойки на плацу не должны перекрывать камеру.
+                        BlockPos.MutableBlockPos q = new BlockPos.MutableBlockPos();
+                        for (int dx = -12; dx <= 12; dx++) {
+                            for (int dz = -12; dz <= 12; dz++) {
+                                for (int dy = 0; dy <= 8; dy++) {
+                                    level.setBlock(q.set(e.yard.getX() + dx, e.yard.getY() + dy, e.yard.getZ() + dz), net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 2);
+                                }
+                            }
+                        }
+                    }
+                    if (STAND) {
                         // Манекен и хозяин — на одной линии поперёк взгляда камеры: оба видны, никто никого не закрывает.
                         TrainingDummy d = ModEntities.DUMMY.get().create(level);
                         BlockPos dp = FortressBuilder.world(e.yard.getX(), e.yard.getY(), e.yard.getZ(), e.rotation, -4, 4);
@@ -307,6 +343,9 @@ public final class DevBossHandler {
                         m.startFight(d);
                         // Камера на краю плаца, невысоко: хозяин крупно, метки на земле целиком.
                         BlockPos corner = FortressBuilder.world(e.yard.getX(), e.yard.getY(), e.yard.getZ(), e.rotation, 0, -4);
+                        if (CLOSE) {
+                            corner = mp;
+                        }
                         float yaw = BossRules.yawTo(e.yard.getX() - corner.getX(), e.yard.getZ() - corner.getZ());
                         p.teleportTo(level, corner.getX() + 0.5D, e.yard.getY() + 3.0D, corner.getZ() + 0.5D, yaw, 25.0F);
                         p.getAbilities().flying = true;
@@ -335,6 +374,25 @@ public final class DevBossHandler {
             }
             ready = true;
         });
+    }
+
+    /** Камера {@code close}/{@code three_quarter}: на CAM_DIST от хозяина, под CAM_OFF к его взгляду, глаза чуть ниже его головы. */
+    private static void follow(IntegratedServer server, double bx, double by, double bz, float bossYaw) {
+        ServerPlayer p = server.getPlayerList().getPlayers().get(0);
+        double a = Math.toRadians(bossYaw + CAM_OFF);
+        double cx = bx - Math.sin(a) * CAM_DIST, cz = bz + Math.cos(a) * CAM_DIST;
+        double cy = by + 0.2D;
+        // Камера не выходит из расчищенного квадрата плаца (11 блоков от центра): ни стен, ни колонн зала.
+        FortressData.Entry e = entry;
+        if (e != null) {
+            cx = Math.max(e.yard.getX() - 10.5D, Math.min(e.yard.getX() + 10.5D, cx));
+            cz = Math.max(e.yard.getZ() - 10.5D, Math.min(e.yard.getZ() + 10.5D, cz));
+        }
+        float yaw = BossRules.yawTo(bx - cx, bz - cz);
+        float pitch = (float) -Math.toDegrees(Math.atan2(by + 1.4D - (cy + p.getEyeHeight()), CAM_DIST));
+        p.getAbilities().flying = true;
+        p.setNoGravity(true);
+        p.teleportTo(server.overworld(), cx, cy, cz, yaw, pitch);
     }
 
     /** Сценарий боя по сегментам: фаза 1 → 60 % (рык) → фаза 2 → 25 % (кровь кипит) → вихрь → смерть. */

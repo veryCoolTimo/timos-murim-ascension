@@ -282,6 +282,19 @@
           "next": "next_art"
         },
         {
+          "text": "dialogue.murim.head_intro.opt.go",
+          "when": [
+            {
+              "social": "head_intro"
+            }
+          ],
+          "actions": [
+            {
+              "type": "head_intro"
+            }
+          ]
+        },
+        {
           "text": "dialogue.murim.basics.ask",
           "next": "basics"
         },
@@ -822,6 +835,19 @@
           "next": "journey"
         },
         {
+          "text": "dialogue.murim.mentor.opt.demo",
+          "when": [
+            {
+              "social": "mentor_demo"
+            }
+          ],
+          "actions": [
+            {
+              "type": "mentor_demo"
+            }
+          ]
+        },
+        {
           "text": "dialogue.murim.mentor.opt.understood"
         }
       ]
@@ -1065,6 +1091,19 @@
           "next": "book_replaced"
         },
         {
+          "text": "dialogue.murim.head_intro.opt.go",
+          "when": [
+            {
+              "social": "head_intro"
+            }
+          ],
+          "actions": [
+            {
+              "type": "head_intro"
+            }
+          ]
+        },
+        {
           "text": "dialogue.murim.basics.ask",
           "next": "basics"
         },
@@ -1090,6 +1129,19 @@
             }
           ],
           "next": "journey"
+        },
+        {
+          "text": "dialogue.murim.mentor.opt.demo",
+          "when": [
+            {
+              "social": "mentor_demo"
+            }
+          ],
+          "actions": [
+            {
+              "type": "mentor_demo"
+            }
+          ]
         },
         {
           "text": "dialogue.murim.mentor.opt.hud",
@@ -1499,6 +1551,19 @@
           "next": "journey"
         },
         {
+          "text": "dialogue.murim.mentor.opt.demo",
+          "when": [
+            {
+              "social": "mentor_demo"
+            }
+          ],
+          "actions": [
+            {
+              "type": "mentor_demo"
+            }
+          ]
+        },
+        {
           "text": "dialogue.murim.bamboo_hand.ask",
           "when": [
             {
@@ -1611,6 +1676,19 @@
             }
           ],
           "next": "journey"
+        },
+        {
+          "text": "dialogue.murim.mentor.opt.demo",
+          "when": [
+            {
+              "social": "mentor_demo"
+            }
+          ],
+          "actions": [
+            {
+              "type": "mentor_demo"
+            }
+          ]
         },
         {
           "text": "dialogue.murim.bamboo_hand.ask",
