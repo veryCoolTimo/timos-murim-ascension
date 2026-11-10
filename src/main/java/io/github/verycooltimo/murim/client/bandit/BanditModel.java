@@ -35,6 +35,7 @@ public class BanditModel<T extends Bandit> extends HierarchicalModel<T> implemen
     private final List<ModelPart> parts;
 
     private final ModelPart root;
+    private String shown;
     private final String name;
     private final Optional<ModelPart> head;
     private final Optional<ModelPart> armR;
@@ -54,9 +55,35 @@ public class BanditModel<T extends Bandit> extends HierarchicalModel<T> implemen
         return root;
     }
 
+    private static final String[] VARIANTS = {"sw", "el", "ch", "ar", "ae", "pd"};
+
+    /**
+     * Silhouette cubes (tools/art/bandit_models_1110.py) are child bones named {@code <variant>_<n>}; only the entity's variant is shown.
+     * Guest rigs on the old geometry have no such bones and are unaffected.
+     */
+    public static void showVariant(net.minecraft.client.model.HierarchicalModel<?> model, String variant) {
+        for (String v : VARIANTS) {
+            for (int i = 0; ; i++) {
+                var part = model.getAnyDescendantWithName(v + "_" + i);
+                if (part.isEmpty()) break;
+                part.get().visible = v.equals(variant);
+            }
+        }
+    }
+
+    private static String variantOf(Bandit e) {
+        if (e instanceof io.github.verycooltimo.murim.entity.BanditArcher) return e.isElite() ? "ae" : "ar";
+        return e.isChief() ? "ch" : e.isElite() ? "el" : "sw";
+    }
+
     @Override
     public void setupAnim(T entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
         root.getAllParts().forEach(ModelPart::resetPose);
+        String variant = variantOf(entity);
+        if (!variant.equals(shown)) {
+            shown = variant;
+            showVariant(this, variant);
+        }
         Map<String, AnimationDefinition> clips = BanditAnimations.get(name);
         float partial = ageInTicks - entity.tickCount;
         AnimationDefinition dying = entity.deathAge > 0 ? clips.get("death") : null;

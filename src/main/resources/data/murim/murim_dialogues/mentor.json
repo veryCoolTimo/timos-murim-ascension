@@ -282,6 +282,19 @@
           "next": "next_art"
         },
         {
+          "text": "dialogue.murim.mentor.opt.demo",
+          "when": [
+            {
+              "social": "mentor_demo"
+            }
+          ],
+          "actions": [
+            {
+              "type": "mentor_demo"
+            }
+          ]
+        },
+        {
           "text": "dialogue.murim.head_intro.opt.go",
           "when": [
             {
@@ -2059,6 +2072,19 @@
         {
           "text": "dialogue.murim.basics.ask",
           "next": "basics"
+        },
+        {
+          "text": "dialogue.murim.mentor.opt.demo",
+          "when": [
+            {
+              "social": "mentor_demo"
+            }
+          ],
+          "actions": [
+            {
+              "type": "mentor_demo"
+            }
+          ]
         },
         {
           "text": "dialogue.murim.intro.opt.skip",

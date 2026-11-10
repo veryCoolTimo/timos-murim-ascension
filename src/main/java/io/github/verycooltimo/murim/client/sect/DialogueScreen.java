@@ -30,7 +30,12 @@ import java.util.List;
 public final class DialogueScreen extends Screen {
 
     private static final ResourceLocation PANEL = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/gui/dialogue_panel.png");
+    /** Base width of the approved scroll art; on wide screens the paper band between the rollers is tiled to {@link #MAX_PW}. */
     private static final int PW = 380;
+    private static final int MAX_PW = 460;
+    /** 10.11 author: the talk never hides the interlocutor, so the scroll keeps to the lower part of the screen. */
+    static final float MAX_SHARE = 0.38F;
+    private int pw = PW;
     /** Height follows the wrapped reply rows and the available GUI space (playtest 21.10). */
     private int panelHeight = 114;
     /** Rows of the texture that stay as they are at the top and the bottom; the paper between them stretches. */
@@ -40,13 +45,18 @@ public final class DialogueScreen extends Screen {
     private static final int IN_X = 22;
     private static final int IN_Y = 13;
     /** Колонка ответов справа (codex 03.10: ~40 % ширины, ряды фиксированной высоты). */
-    private static final int OPT_X = 222;
-    private static final int OPT_RIGHT = PW - 26;
+    private int optX = 222;
+    private int optRight = PW - 26;
+    /** Answer columns: one for up to four answers, two (left 40 % is the line, right 60 % the answers) for more. */
+    private int cols = 1;
+    private int perCol = 5;
+    private int colW = 132;
+    private static final int GAP = 4;
     /** Reply rows grow to fit every wrapped line and keep four pixels of space between them. */
     private int rowHeight = 13;
     private int rowStep = 18;
     private int maxRows = 5;
-    private static final int OPT_TOP = IN_Y + 3;
+    private static final int OPT_TOP = DialogueLayout.TOP + 1;
     /** Масштаб реплики и ответов (codex: текст крупнее, иерархия имя > реплика > титул). */
     private static final float SPEECH = 1.0F;
     private static final float OPTION = 0.9F;
@@ -156,7 +166,7 @@ public final class DialogueScreen extends Screen {
         if (pages != null || font == null) {
             return;
         }
-        int w = line.options().isEmpty() ? PW - 2 * IN_X : OPT_X - IN_X - 10;
+        int w = line.options().isEmpty() ? pw - 2 * IN_X : optX - IN_X - 10;
         int room = panelHeight - IN_Y - 20 - 9;
         int perPage = Math.max(1, (int) (room / (font.lineHeight * MIN_SCALE)));
         List<FormattedCharSequence> all = font.split(FormattedText.of(whole), (int) (w / MIN_SCALE));
@@ -196,24 +206,50 @@ public final class DialogueScreen extends Screen {
     @Override
     protected void init() {
         // Source: author playtest 26.10. Grow the paper before hiding any answer.
-        k = Math.min(1.0F, (width - 16) / (float) PW);
-        px = (int) ((width - PW * k) / 2);
-        int textWidth = OPT_RIGHT - OPT_X - 22;
-        int[] textHeights = new int[count()];
-        for (int i = 0; i < count(); i++) {
-            textHeights[i] = (int) Math.ceil(font.split(line.options().get(i), (int) (textWidth / OPTION)).size()
-                    * font.lineHeight * OPTION);
+        pw = Mth.clamp(width - 16, PW, MAX_PW);
+        k = Math.min(1.0F, (width - 16) / (float) pw);
+        px = (int) ((width - pw * k) / 2);
+        optRight = pw - 26;
+        cols = count() > 4 ? 2 : 1;
+        optX = cols == 2 ? (int) (pw * 0.40F) : pw > PW ? pw / 2 : 222;
+        colW = cols == 2 ? (optRight - optX - GAP) / 2 : optRight - optX;
+        int available = (int) (Math.min(height - 2 * bar(1.0F) - 16, height * MAX_SHARE) / k);
+        if (cols == 2) {
+            // 10.11 coordinator: the whole menu on one screen, up to four rows in each of two columns; numbers run down the left column, then the right
+            DialogueLayout layout = DialogueLayout.fitColumns(available, count(), 2, 4);
+            rowHeight = layout.rowHeight();
+            rowStep = rowHeight + 2;
+            perCol = layout.rows();
+            maxRows = perCol * 2;
+            panelHeight = layout.panelHeight();
+        } else {
+            int textWidth = colW - 22;
+            int[] textHeights = new int[count()];
+            for (int i = 0; i < count(); i++) {
+                float sc = optionScale(i, textWidth);
+                textHeights[i] = (int) Math.ceil(font.split(line.options().get(i), (int) (textWidth / sc)).size() * 8 * sc);
+            }
+            DialogueLayout layout = DialogueLayout.fit(available, textHeights);
+            rowHeight = layout.rowHeight();
+            rowStep = rowHeight + 2;
+            maxRows = layout.rows();
+            perCol = maxRows;
+            panelHeight = layout.panelHeight();
         }
-        int available = (int) ((height - 2 * bar(1.0F) - 16) / k);
-        DialogueLayout layout = DialogueLayout.fit(available, textHeights);
-        rowHeight = layout.rowHeight();
-        rowStep = rowHeight + 2;
-        maxRows = layout.rows();
-        panelHeight = layout.panelHeight();
         pages = null;
         page = 0;
         // Свиток целиком над нижней кинополосой.
         py = (int) (height - panelHeight * k - bar(1.0F) - 8);
+    }
+
+    /** An answer keeps one line by shrinking the ink a little; the longest ones go to two small lines that still fit a normal row. */
+    private float optionScale(int i, int width) {
+        for (float sc : cols == 2 ? new float[] {0.8F} : new float[] {OPTION, 0.8F}) {
+            if (font.split(line.options().get(i), (int) (width / sc)).size() <= 1) {
+                return sc;
+            }
+        }
+        return 0.7F;
     }
 
     /** While the talk is open the movement input is ignored, whatever the cutscene camera does. */
@@ -294,9 +330,9 @@ public final class DialogueScreen extends Screen {
         RenderSystem.enableBlend();
         g.setColor(1.0F, 1.0F, 1.0F, 0.88F * appear);
         // top and bottom of the scroll as drawn, the plain paper between them stretched to the height
-        g.blit(PANEL, 0, 0, PW, KEEP, 0.0F, 0.0F, PW, KEEP, PW, TEX_H);
-        g.blit(PANEL, 0, KEEP, PW, panelHeight - 2 * KEEP, 0.0F, KEEP, PW, TEX_H - 2 * KEEP, PW, TEX_H);
-        g.blit(PANEL, 0, panelHeight - KEEP, PW, KEEP, 0.0F, TEX_H - KEEP, PW, KEEP, PW, TEX_H);
+        band(g, 0, KEEP, 0, KEEP);
+        band(g, KEEP, panelHeight - 2 * KEEP, KEEP, TEX_H - 2 * KEEP);
+        band(g, panelHeight - KEEP, KEEP, TEX_H - KEEP, KEEP);
         g.setColor(1.0F, 1.0F, 1.0F, 1.0F);
         int alpha = Math.max(4, (int) (appear * 255)) << 24;
         speaker(g, alpha);
@@ -304,6 +340,18 @@ public final class DialogueScreen extends Screen {
         options(g, mouseX, mouseY, alpha);
         g.pose().popPose();
         RenderSystem.disableBlend();
+    }
+
+    /** One horizontal band of the scroll: both rollers as drawn, the paper and brocade between them tiled to the width. */
+    private void band(GuiGraphics g, int y, int h, int v, int vh) {
+        final int edge = 24;
+        g.blit(PANEL, 0, y, edge, h, 0.0F, v, edge, vh, PW, TEX_H);
+        g.blit(PANEL, pw - edge, y, edge, h, PW - edge, v, edge, vh, PW, TEX_H);
+        int tile = PW - 2 * edge;
+        for (int x = edge; x < pw - edge; x += tile) {
+            int w = Math.min(tile, pw - edge - x);
+            g.blit(PANEL, x, y, w, h, edge, v, w, vh, PW, TEX_H);
+        }
     }
 
     /** Имя тушью и титул бледнее; у имени — маленькая красная печать. */
@@ -316,16 +364,22 @@ public final class DialogueScreen extends Screen {
             g.pose().pushPose();
             g.pose().translate(x + 6, y + 10, 0.0F);
             g.pose().scale(0.7F, 0.7F, 1.0F);
-            g.drawString(font, line.title(), 0, 0, FADED & 0x00FFFFFF | alpha, false);
+            // one line: the name is always whole, the rank line gives way with an ellipsis
+            int room = (int) (((line.options().isEmpty() ? pw - IN_X : optX - 12) - (x + 6)) / 0.7F);
+            FormattedText title = line.title();
+            if (font.width(title) > room) {
+                title = FormattedText.composite(font.substrByWidth(title, room - font.width("\u2026")), FormattedText.of("\u2026"));
+            }
+            g.drawString(font, net.minecraft.locale.Language.getInstance().getVisualOrder(title), 0, 0, FADED & 0x00FFFFFF | alpha, false);
             g.pose().popPose();
         }
         // Тонкий мазок туши под именем.
-        g.fill(x, y + 17, OPT_X - 12, y + 18, 0x401B1612);
+        g.fill(x, y + 17, optX - 12, y + 18, 0x401B1612);
     }
 
     /** Реплика: печатается посимвольно, перенос по ширине левой колонки. */
     private void speech(GuiGraphics g, int alpha, float partial) {
-        int w = (line.options().isEmpty() ? PW - 2 * IN_X : OPT_X - IN_X - 10);
+        int w = (line.options().isEmpty() ? pw - 2 * IN_X : optX - IN_X - 10);
         if (pages != null && pages.size() > 1) {
             // a page counter, so the player knows there is more
             g.drawString(font, (page + 1) + "/" + pages.size(), IN_X + w - font.width((page + 1) + "/" + pages.size()), IN_Y + 9, FADED & 0x00FFFFFF | alpha, false);
@@ -353,7 +407,7 @@ public final class DialogueScreen extends Screen {
         }
         g.pose().popPose();
         if (!typing() && (line.options().isEmpty() || morePages()) && (ticks / 10) % 2 == 0) {
-            g.drawString(font, "▾", PW - IN_X - 6, panelHeight - 20, FADED & 0x00FFFFFF | alpha, false);
+            g.drawString(font, "▾", pw - IN_X - 6, panelHeight - 20, FADED & 0x00FFFFFF | alpha, false);
         }
     }
 
@@ -435,7 +489,7 @@ public final class DialogueScreen extends Screen {
             return;
         }
         // A vertical brush stroke between the line and the answers.
-        g.fill(OPT_X - 8, IN_Y + 2, OPT_X - 7, panelHeight - 14, 0x30000000);
+        g.fill(optX - 8, IN_Y + 2, optX - 7, panelHeight - 14, 0x30000000);
         float fade = morePages() ? 0.0F : typing() ? 1.0F : Mth.clamp((lineTicks - typedDoneTick) / 5.0F, 0.0F, 1.0F);
         if (fade <= 0.0F) {
             return;
@@ -459,21 +513,23 @@ public final class DialogueScreen extends Screen {
             if (i < 0) {
                 continue;
             }
-            int y = OPT_TOP + slot * rowStep;
+            int y = slotY(slot);
+            int ox = slotX(slot);
+            int oright = ox + colW;
             boolean hot = i == focus;
             boolean closer = hasCloser() && i == count() - 1;
-            if (closer && slot > 0) {
+            if (closer && slot % perCol > 0) {
                 // the hairline above the way out
-                g.fill(OPT_X, y - 2, OPT_RIGHT, y - 1, 0x601B1612 & 0x00FFFFFF | (int) (0x60 * fade) << 24);
+                g.fill(ox, y - 2, oright, y - 1, 0x601B1612 & 0x00FFFFFF | (int) (0x60 * fade) << 24);
             }
             // the button: paper a shade darker than the scroll, so two rows never run together; the focused one darker still
-            g.fill(OPT_X, y, OPT_RIGHT, y + rowHeight, (int) ((hot ? 0x3A : closer ? 0x10 : 0x1E) * fade) << 24 | 0x1B1612);
-            g.fill(OPT_X, y + rowHeight - 1, OPT_RIGHT, y + rowHeight, (int) (0x2A * fade) << 24 | 0x1B1612);
+            g.fill(ox, y, oright, y + rowHeight, (int) ((hot ? 0x3A : closer ? 0x10 : 0x1E) * fade) << 24 | 0x1B1612);
+            g.fill(ox, y + rowHeight - 1, oright, y + rowHeight, (int) (0x2A * fade) << 24 | 0x1B1612);
             if (hot) {
-                g.fill(OPT_X, y, OPT_X + 2, y + rowHeight, SEAL & 0x00FFFFFF | oa);
+                g.fill(ox, y, ox + 2, y + rowHeight, SEAL & 0x00FFFFFF | oa);
             }
             String num = badge(i);
-            int tx = OPT_X + 5;
+            int tx = ox + 5;
             if (!num.isEmpty()) {
                 g.fill(tx, y + 3, tx + 10, y + 13, (hot ? 0x7E1A1F : closer ? 0x5A4E42 : SEAL & 0x00FFFFFF) | oa);
                 g.pose().pushPose();
@@ -483,16 +539,19 @@ public final class DialogueScreen extends Screen {
                 g.pose().popPose();
             }
             tx += 14;
-            int w = OPT_RIGHT - tx - 3;
-            float sc = OPTION;
+            int w = oright - tx - 3;
+            float sc = optionScale(i, w);
             List<FormattedCharSequence> wrapped = font.split(line.options().get(i), (int) (w / sc));
-            float textH = wrapped.size() * font.lineHeight * sc;
+            if (cols == 2 && wrapped.size() > 2) {
+                wrapped = wrapped.subList(0, 2);
+            }
+            float textH = wrapped.size() * 8 * sc;
             g.pose().pushPose();
             g.pose().translate(tx, y + (rowHeight - textH) / 2.0F, 0.0F);
             g.pose().scale(sc, sc, 1.0F);
             int col = closer ? FADED : INK;
             for (int j = 0; j < wrapped.size(); j++) {
-                g.drawString(font, wrapped.get(j), 0, j * font.lineHeight, col & 0x00FFFFFF | oa, false);
+                g.drawString(font, wrapped.get(j), 0, j * 8, col & 0x00FFFFFF | oa, false);
             }
             g.pose().popPose();
         }
@@ -503,9 +562,9 @@ public final class DialogueScreen extends Screen {
 
     /** A thin track with a thumb and an arrow at each end that still has more to show. */
     private void scrollbar(GuiGraphics g, int oa, float fade) {
-        int x = OPT_RIGHT + 3;
+        int x = optRight + 3;
         int top = OPT_TOP;
-        int h = (windowSize()) * rowStep - 2;
+        int h = (cols == 1 ? windowSize() : perCol) * rowStep - 2;
         g.fill(x, top, x + 5, top + h, (int) (0x28 * fade) << 24 | 0x1B1612);
         int total = scrolling();
         int thumb = Math.max(8, h * windowSize() / total);
@@ -516,7 +575,7 @@ public final class DialogueScreen extends Screen {
         }
         if (scroll < maxScroll()) {
             g.pose().pushPose();
-            g.pose().translate(OPT_RIGHT, panelHeight - 16, 0.0F);
+            g.pose().translate(optRight, panelHeight - 16, 0.0F);
             Component more = Component.translatable("dialogue.murim.general.more_down", maxScroll() - scroll);
             g.drawString(font, more, -font.width(more), 0, FADED & 0x00FFFFFF | oa, false);
             g.pose().popPose();
@@ -525,15 +584,23 @@ public final class DialogueScreen extends Screen {
 
     private int typedDoneTick;
 
+    private int slotX(int slot) {
+        return optX + (slot / perCol) * (colW + GAP);
+    }
+
+    private int slotY(int slot) {
+        return OPT_TOP + (slot % perCol) * rowStep;
+    }
+
     private int optionAt(double mouseX, double mouseY) {
         double tx = (mouseX - px) / k;
         double ty = (mouseY - py) / k;
-        if (morePages() || count() == 0 || tx < OPT_X || tx > OPT_RIGHT) {
+        if (morePages() || count() == 0 || tx < optX || tx > optRight) {
             return -1;
         }
         for (int slot = 0; slot < rows(); slot++) {
-            int y = OPT_TOP + slot * rowStep;
-            if (ty >= y && ty < y + rowHeight) {
+            int y = slotY(slot);
+            if (ty >= y && ty < y + rowHeight && tx >= slotX(slot) && tx < slotX(slot) + colW) {
                 return optionInSlot(slot);
             }
         }

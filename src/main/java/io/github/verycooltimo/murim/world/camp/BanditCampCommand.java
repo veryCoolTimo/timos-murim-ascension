@@ -91,7 +91,12 @@ public final class BanditCampCommand {
         if (f == null || c.getSource().getPlayer() == null) {
             return 0;
         }
-        ServerLevel level = c.getSource().getLevel();
+        gate(c.getSource().getLevel(), c.getSource().getPlayer(), f);
+        return 1;
+    }
+
+    /** Ворота снаружи, лицом в лагерь (общее для команды и зонда ночного прогона). */
+    public static void gate(ServerLevel level, net.minecraft.server.level.ServerPlayer player, Found f) {
         CampLayout plan = CampLayout.plan(f.piece().seed());
         double[] g = plan.gateDirection();
         double dist = plan.radius() + 9.0D;
@@ -101,8 +106,7 @@ public final class BanditCampCommand {
         int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
         Vec3 look = new Vec3(f.piece().centreX() - x, 0.0D, f.piece().centreZ() - z);
         float yaw = (float) Math.toDegrees(Math.atan2(-look.x, look.z));
-        c.getSource().getPlayer().teleportTo(level, x + 0.5D, y, z + 0.5D, yaw, 10.0F);
-        return 1;
+        player.teleportTo(level, x + 0.5D, y, z + 0.5D, yaw, 10.0F);
     }
 
     private static int reset(CommandContext<CommandSourceStack> c) {

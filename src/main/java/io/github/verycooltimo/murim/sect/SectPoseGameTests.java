@@ -211,6 +211,39 @@ public final class SectPoseGameTests {
         seatStandsUp(h, SeatStyle.LOTUS, Blocks.AIR, 0.0D);
     }
 
+    /**
+     * A mat is 1 px high: its seat entity stands below the block boundary. Standing up from it must leave the sitter on the
+     * mat's top, not in the block under it (the head of the sect dropped 12 px into his dais at the end of the scene, 10.11),
+     * and a person who stood up a moment ago sits down again at once (vanilla's 60-tick boarding cooldown is not for furniture).
+     */
+    @GameTest(template = YARD, timeoutTicks = 120, batch = "sect_pose_mat_dismount")
+    public static void standingUpFromAMatLeavesHimOnTheMatAndHeCanSitAgainAtOnce(GameTestHelper h) {
+        BlockPos mat = p(h, 12, 2, 14);
+        h.setBlock(new BlockPos(12, 2, 14), IntSeating.MAT.get());
+        SectDisciple d = bare(h, 12.5, 15.5);
+        d.setNoAi(false);
+        Vec3 exit = d.position();
+        Vec3 top = SectLife.seatTop(h.getLevel(), mat);
+        h.assertTrue(top != null && Math.abs(top.y - (mat.getY() + 1.0D / 16.0D)) < 1.0E-6D, "mat top: " + top);
+        d.sit(SeatStyle.LOTUS, top, 180.0F, exit);
+        d.setPose(SectPose.SIT);
+        h.runAfterDelay(20, () -> {
+            h.assertTrue(d.getVehicle() instanceof io.github.verycooltimo.murim.decor.SeatEntity, "the mat does not hold its sitter: " + d.position());
+            h.assertTrue(Math.abs(d.getY() - top.y) < 1.0E-3D, "seated height: " + d.getY() + " want " + top.y);
+            d.sit(SeatStyle.NONE);
+            h.assertTrue(d.getY() >= mat.getY() - 1.0E-6D, "stood up INTO the block under the mat: y=" + d.getY() + " mat=" + mat.getY());
+            // Sit down again in the same tick: no boarding cooldown for furniture.
+            d.sit(SeatStyle.LOTUS, top, 180.0F, exit);
+            d.setPose(SectPose.SIT);
+        });
+        h.runAfterDelay(40, () -> {
+            h.assertTrue(d.sitting() && d.getVehicle() instanceof io.github.verycooltimo.murim.decor.SeatEntity,
+                    "could not sit down again after standing up: style=" + d.seatStyle() + " vehicle=" + d.getVehicle() + " y=" + d.getY());
+            h.assertTrue(Math.abs(d.getY() - top.y) < 1.0E-3D, "re-seated height: " + d.getY() + " want " + top.y);
+        });
+        h.succeedWhen(() -> h.assertTrue(h.getTick() > 45, "waiting"));
+    }
+
     // ------------------------------------------------------------------ the furniture decides how he sits
 
     /**

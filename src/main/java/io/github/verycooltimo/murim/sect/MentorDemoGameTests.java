@@ -106,4 +106,104 @@ public final class MentorDemoGameTests {
         h.assertTrue(SectSocial.matches(a, m, "mentor_demo"), "not offered after 20 s");
         h.succeed();
     }
+
+    private static boolean listed(ServerPlayer p) {
+        DialogueService.Session session = p.getData(ModAttachments.DIALOGUE);
+        Dialogue d = DialogueLoader.get(session.dialogue());
+        String id = session.node().startsWith("@matters:") ? session.node().substring("@matters:".length()) : session.node();
+        Dialogue.Node node = d.nodes().get(id);
+        if (node == null) return false;
+        for (int raw : session.shown()) {
+            if (raw < node.options().size() && node.options().get(raw).text().equals("dialogue.murim.mentor.opt.demo")) return true;
+        }
+        return false;
+    }
+
+    /** The mentor's own greetings fold their native rows under «Matters»: look there too. */
+    private static boolean offered(ServerPlayer p) {
+        if (listed(p)) return true;
+        DialogueService.Session session = p.getData(ModAttachments.DIALOGUE);
+        int at = session.shown().indexOf(SectGeneralTalk.MATTERS);
+        if (at < 0) return false;
+        DialogueService.choose(p, at);
+        return listed(p);
+    }
+
+    /** Close any talk, open the one the routing gives, report the node and whether the show is offered. */
+    private static String talk(ServerPlayer p, SectDisciple m, boolean[] offer) {
+        DialogueService.close(p, m);
+        var route = DialogueService.route(p, m);
+        DialogueService.show(p, m, route.id(), route.dialogue(), route.node(), "");
+        offer[0] = offered(p);
+        String node = route.node();
+        DialogueService.close(p, m);
+        return node;
+    }
+
+    /**
+     * The real sequence (author's stand 9.11: «Покажи ещё раз» never appeared): join, take the first lesson, learn the scroll,
+     * talk to the mentor. A newcomer with no dantian is offered the show on every routed talk (introduction, journey, and the
+     * later «again»), also when he passed the journey without taking it; once the seed forms or the profile is awakened it is gone.
+     */
+    @GameTest(template = "sect_yard", batch = "mentor_demo_path", timeoutTicks = 40)
+    public static void realPathOffersTheShowToANewcomer(GameTestHelper h) {
+        SectGameTests.setPeriod(h, SectSchedule.Period.TRAINING);   // at night the talks are not hubs
+        ServerPlayer p = newcomer(h, 12.5, false);
+        SectDisciple m = mentor(h, p);
+        p.setData(ModAttachments.SECT, p.getData(ModAttachments.SECT).with("met_mentor"));
+        Dialogue d = DialogueLoader.get(m.dialogue());
+        h.assertTrue(DialogueService.applyHeadless(p, m, SectGameTests.option(d, "lessons", "dialogue.murim.mentor.opt.take_six", 0)), "take_six refused");
+        if (p.getInventory().items.stream().noneMatch(s -> s.is(ModItems.METHOD_SCROLL.get()))) {
+            p.getInventory().add(new ItemStack(ModItems.METHOD_SCROLL.get()));
+        }
+        var cultivation = p.getData(ModAttachments.CULTIVATION);
+        var profile = p.getData(ModAttachments.PROFILE);
+        MurimMod.LOGGER.info("MENTOR-DEMO state: member={} method={} seeded={} awakened={} cooled={} near={}",
+                SectService.state(p).member(), cultivation.method().isPresent(), cultivation.seeded(), profile.isAwakened(),
+                MentorDemo.cooledDown(-1L, h.getLevel().getGameTime()), m.distanceToSqr(p) <= 64);
+        h.assertTrue(SectService.state(p).member(), "not a member");
+        h.assertTrue(!profile.isAwakened() && !cultivation.seeded(), "a new member starts awakened or seeded");
+        h.assertTrue(MentorDemo.canAsk(p, m), "canAsk false after join + take_six + scroll in the bag");
+        p.setData(ModAttachments.CULTIVATION, cultivation.withMethod(SectService.SIX));   // the scroll is used
+        h.assertTrue(MentorDemo.canAsk(p, m), "canAsk false after the scroll was used");
+        boolean[] offer = new boolean[1];
+        String log = "";
+        // 1. the one-time basics offer keeps its story rows
+        String node = talk(p, m, offer);
+        log += node + ">";
+        h.assertTrue(node.equals("basics_offer"), "first talk after the lesson was " + node);
+        p.setData(ModAttachments.SECT, p.getData(ModAttachments.SECT).with("basics.offered"));
+        // 2. the introduction
+        node = talk(p, m, offer);
+        log += node + (offer[0] ? "+" : "-") + ">";
+        h.assertTrue(node.equals("intro_1") && offer[0], "introduction does not offer the show: " + log);
+        // 3. he skips the introduction and passes the journey without choosing the show
+        p.setData(ModAttachments.SECT, p.getData(ModAttachments.SECT).with("intro.done"));
+        node = talk(p, m, offer);
+        log += node + (offer[0] ? "+" : "-") + ">";
+        h.assertTrue(node.equals("journey") && offer[0], "journey does not offer the show: " + log);
+        // 4. a later talk: still offered; the «again» node too
+        node = talk(p, m, offer);
+        log += node + (offer[0] ? "+" : "-") + ">";
+        h.assertTrue(offer[0], "a later talk does not offer the show: " + log);
+        DialogueService.show(p, m, m.dialogue(), d, "again", "");
+        h.assertTrue(offered(p), "the again node does not offer the show; method=" + p.getData(ModAttachments.CULTIVATION).method().isPresent()
+                + " canAsk=" + MentorDemo.canAsk(p, m) + " node=" + p.getData(ModAttachments.DIALOGUE).node() + " shown=" + p.getData(ModAttachments.DIALOGUE).shown());
+        DialogueService.close(p, m);
+        MurimMod.LOGGER.info("MENTOR-DEMO path: {}", log);
+        // 5. the seed forms: gone from every node
+        p.setData(ModAttachments.CULTIVATION, p.getData(ModAttachments.CULTIVATION).withBeats(3));
+        h.assertTrue(p.getData(ModAttachments.CULTIVATION).seeded(), "setup: the seed did not form");
+        node = talk(p, m, offer);
+        h.assertTrue(!offer[0], "offered after the seed formed (node " + node + ")");
+        DialogueService.show(p, m, m.dialogue(), d, "again", "");
+        h.assertTrue(!offered(p), "the again node offers the show after the seed formed");
+        DialogueService.close(p, m);
+        // an awakened profile (the film stand) is not offered the show either
+        p.setData(ModAttachments.CULTIVATION, p.getData(ModAttachments.CULTIVATION).withBeats(0));
+        p.setData(ModAttachments.PROFILE, new DantianProfile(profile.capacity(), profile.purity(), profile.meridians(), "fire", profile.imprint(), profile.pool(), profile.circulating(), profile.foundation(), profile.rank(), profile.stage()));
+        h.assertTrue(!MentorDemo.canAsk(p, m), "an awakened profile was offered the show");
+        m.discard();
+        h.succeed();
+    }
 }

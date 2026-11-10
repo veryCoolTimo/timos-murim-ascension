@@ -30,7 +30,10 @@ public final class HeadIntroDevCommand {
             if (SectHeadIntro.active(p)) SectHeadIntro.finish(p, layout);
             SectArrival.cancelGuides(p);
             DialogueService.dropSession(p);
-            Vec3 at = SectLife.stand(p.level(), layout.at("main_hall", 0, 0.5));
+            // The newcomer stands where the escort leaves him (hall floor before the dais), not on the dais: a player on
+            // the dais is met by the hall etiquette talk, which keeps the head busy and the scene never starts.
+            Vec3 before = SectLife.stand(p.level(), SectHeadIntro.before(layout));
+            Vec3 at = before != null ? before : SectLife.stand(p.level(), layout.at("main_hall", 0, 0.5));
             p.teleportTo(p.serverLevel(), at.x, at.y, at.z, layout.yaw(0, 1), 0);
             SectDisciple mentor = person(p, layout, "gyeong_pil", -1.5, 0.5);
             SectDisciple head = person(p, layout, "tae_hwi", 0, 4);

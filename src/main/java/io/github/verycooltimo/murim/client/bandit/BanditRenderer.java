@@ -27,12 +27,18 @@ public class BanditRenderer<T extends Bandit> extends MobRenderer<T, BanditModel
     public static final ModelLayerLocation ARCHER_LAYER =
             new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "bandit_archer"), "main");
 
-    private static final ResourceLocation SWORDSMAN_TEX = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/entity/bandit.png");
-    private static final ResourceLocation ELITE_TEX = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/entity/bandit_elite.png");
-    private static final ResourceLocation CHIEF_TEX = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/entity/bandit_chief.png");
-    private static final ResourceLocation ARCHER_TEX = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/entity/bandit_archer.png");
+    /** Silhouette rig 10.11 (tools/art/bandit_models_1110.py): same bones and clips plus per-variant cube bones. */
+    public static final ModelLayerLocation SWORDSMAN_V2_LAYER =
+            new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "bandit_swordsman_v2"), "main");
+    public static final ModelLayerLocation ARCHER_V2_LAYER =
+            new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "bandit_archer_v2"), "main");
 
-    private static final ResourceLocation ARCHER_ELITE_TEX = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/entity/bandit_archer_elite.png");
+    private static final ResourceLocation SWORDSMAN_TEX = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/entity/bandit_v2.png");
+    private static final ResourceLocation ELITE_TEX = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/entity/bandit_elite_v2.png");
+    private static final ResourceLocation CHIEF_TEX = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/entity/bandit_chief_v2.png");
+    private static final ResourceLocation ARCHER_TEX = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/entity/bandit_archer_v2.png");
+
+    private static final ResourceLocation ARCHER_ELITE_TEX = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/entity/bandit_archer_elite_v2.png");
 
     private final boolean archer;
 
@@ -136,11 +142,13 @@ public class BanditRenderer<T extends Bandit> extends MobRenderer<T, BanditModel
     static void onLayers(EntityRenderersEvent.RegisterLayerDefinitions event) {
         event.registerLayerDefinition(SWORDSMAN_LAYER, () -> BedrockGeo.load("/assets/murim/bedrock/bandit.geo.json"));
         event.registerLayerDefinition(ARCHER_LAYER, () -> BedrockGeo.load("/assets/murim/bedrock/bandit_archer.geo.json"));
+        event.registerLayerDefinition(SWORDSMAN_V2_LAYER, () -> BedrockGeo.load("/assets/murim/bedrock/bandit_v2.geo.json"));
+        event.registerLayerDefinition(ARCHER_V2_LAYER, () -> BedrockGeo.load("/assets/murim/bedrock/bandit_archer_v2.geo.json"));
     }
 
     @SubscribeEvent
     static void onRenderers(EntityRenderersEvent.RegisterRenderers event) {
-        event.registerEntityRenderer(ModEntities.BANDIT_SWORDSMAN.get(), c -> new BanditRenderer<>(c, SWORDSMAN_LAYER, "bandit", false));
-        event.registerEntityRenderer(ModEntities.BANDIT_ARCHER.get(), c -> new BanditRenderer<>(c, ARCHER_LAYER, "bandit_archer", true));
+        event.registerEntityRenderer(ModEntities.BANDIT_SWORDSMAN.get(), c -> new BanditRenderer<>(c, SWORDSMAN_V2_LAYER, "bandit", false));
+        event.registerEntityRenderer(ModEntities.BANDIT_ARCHER.get(), c -> new BanditRenderer<>(c, ARCHER_V2_LAYER, "bandit_archer", true));
     }
 }

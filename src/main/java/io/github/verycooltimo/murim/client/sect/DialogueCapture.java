@@ -43,6 +43,21 @@ public final class DialogueCapture {
     private static int frames;
     private static int frame;
     private static int every = 2;
+    // path film 09.11: meditation hands. 0 = off, 1 = play the ring (hold while wider than the band centre), 2 = play ring 1, overshoot from beat 2 (hold all the time)
+    private static int medBot;
+    private static int medIdle;
+    // path film 10.11: the bed named by the journal line «Твоя кровать: x, y, z» (chat), and a position log every second
+    private static final java.util.regex.Pattern BED = java.util.regex.Pattern.compile("кровать: (-?\\d+), (-?\\d+), (-?\\d+)");
+    private static int[] bed;
+
+    @SubscribeEvent
+    static void onChat(net.neoforged.neoforge.client.event.ClientChatReceivedEvent event) {
+        var m = BED.matcher(event.getMessage().getString());
+        if (m.find()) {
+            bed = new int[] {Integer.parseInt(m.group(1)), Integer.parseInt(m.group(2)), Integer.parseInt(m.group(3))};
+            MurimMod.LOGGER.info("SMOKE-BED {} {} {}", bed[0], bed[1], bed[2]);
+        }
+    }
 
     private DialogueCapture() {
     }
@@ -64,6 +79,7 @@ public final class DialogueCapture {
         answerGate = null;
         frame = 0;
         frames = Integer.parseInt(System.getenv().getOrDefault("MURIM_CAPTURE_FRAMES", "120").trim());
+        medBot = 0;
         every = Math.max(1, Integer.parseInt(System.getenv().getOrDefault("MURIM_CAPTURE_EVERY", "2").trim()));
         MurimMod.LOGGER.info("Стенд разговора: {} шагов, {} кадров", steps.size(), frames);
     }
@@ -78,6 +94,33 @@ public final class DialogueCapture {
             return;
         }
         elapsed++;
+        if (elapsed % 20 == 0) {
+            MurimMod.LOGGER.info("SMOKE-POS t={} {} {} {} yaw={} pitch={}", elapsed, String.format("%.2f", mc.player.getX()),
+                    String.format("%.2f", mc.player.getY()), String.format("%.2f", mc.player.getZ()),
+                    String.format("%.0f", mc.player.getYRot()), String.format("%.0f", mc.player.getXRot()));
+        }
+        if (medBot > 0) {
+            boolean hold = false;
+            if (io.github.verycooltimo.murim.client.ClientMeditationState.minigame()) {
+                var ring = io.github.verycooltimo.murim.client.ClientMeditationState.ring(1.0F);
+                hold = (medBot == 2 && io.github.verycooltimo.murim.client.ClientMeditationState.state().beats() >= 2) || ring.radius() > ring.centre();
+            }
+            mc.options.keyJump.setDown(hold);
+            // a session that ended (passed ring, forgiven restart is not an end) and no seed yet: sit down again after a second
+            var ms = io.github.verycooltimo.murim.client.ClientMeditationState.state();
+            if (!ms.active() && ms.beats() < 3) {
+                if (++medIdle == 20) {
+                    PacketDistributor.sendToServer(new io.github.verycooltimo.murim.network.MeditationInputPayload(
+                            io.github.verycooltimo.murim.network.MeditationInputPayload.Action.TOGGLE, true));
+                    MurimMod.LOGGER.info("SMOKE-MED sit again beats={}", ms.beats());
+                }
+            } else {
+                medIdle = 0;
+            }
+            if (ms.active() && elapsed % 20 == 0) {
+                MurimMod.LOGGER.info("SMOKE-MED active beats={} ticks={} ring={}", ms.beats(), ms.ticks(), ms.ring().active());
+            }
+        }
         boolean waiting = false;
         while (nextStep < steps.size() && steps.get(nextStep).tick() <= tick) {
             Step s = steps.get(nextStep);
@@ -132,7 +175,8 @@ public final class DialogueCapture {
             }
             nextStep++;
         }
-        if (!waiting && tick % every == 0 && frame < frames) {
+        // path film 09.11: frames also while a step waits for the screen (elapsed clock), so typewriter pauses are filmed
+        if (elapsed % every == 0 && frame < frames) {
             Screenshot.grab(mc.gameDirectory, String.format("murim_dialogue_%03d.png", frame), mc.getMainRenderTarget(), m -> {
             });
             Screenshot.grab(mc.gameDirectory, String.format("clean_dialogue_%03d.png", frame), mc.getMainRenderTarget(), m -> {
@@ -176,6 +220,14 @@ public final class DialogueCapture {
         MurimMod.LOGGER.info("Стенд разговора: тик {} — {}", elapsed, action);
         // use@ключ / look@ключ — конкретный человек горы (MURIM_CAPTURE_PEOPLE, SectCapture).
         int at = action.indexOf('@');
+        if (action.startsWith("rawkey@")) {
+            // rawkey@key: press the option with this key without waiting for a next node (checked before the person@ branch below)
+            if (mc.screen instanceof DialogueScreen ks) {
+                int o = ks.captureAnswer(action.substring(7));
+                if (o >= 0) ks.press(o);
+            }
+            return;
+        }
         if (at > 0) {
             Entity who = person(mc, action.substring(at + 1));
             if (who != null && action.startsWith("bubble")) {
@@ -239,6 +291,50 @@ public final class DialogueCapture {
                 }
                 mc.player.getInventory().selected = slot;
             }
+            case "scroll" -> {
+                // hold the method scroll and use it, as the player does (learns the method)
+                for (int i = 0; i < 9; i++) {
+                    var item = mc.player.getInventory().getItem(i);
+                    if (net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(item.getItem()).getPath().equals("method_scroll")) {
+                        mc.player.getInventory().selected = i;
+                        if (mc.gameMode != null) mc.gameMode.useItem(mc.player, InteractionHand.MAIN_HAND);
+                        MurimMod.LOGGER.info("SMOKE-SCROLL used slot {}", i);
+                        break;
+                    }
+                }
+            }
+            case "learn" -> {
+                // the click on the seal of the open method scroll: the same packet, then close the screen
+                PacketDistributor.sendToServer(new io.github.verycooltimo.murim.library.LibraryNetwork.LearnMethod(
+                        net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("murim", "six_harmonies")));
+                MurimMod.LOGGER.info("SMOKE-LEARN sent");
+            }
+            case "tpbed" -> {
+                // stand beside the player's own bed (SectRooms.bed, the same bed the journal line «Твоя кровать: x, y, z» names)
+                var server = mc.getSingleplayerServer();
+                var id = mc.player.getUUID();
+                if (server == null) return;
+                server.execute(() -> {
+                    var sp = server.getPlayerList().getPlayer(id);
+                    if (sp == null) return;
+                    var b = io.github.verycooltimo.murim.sect.SectRooms.bed(sp);
+                    if (b == null) {
+                        MurimMod.LOGGER.info("SMOKE-BED missing");
+                        return;
+                    }
+                    MurimMod.LOGGER.info("SMOKE-BED {} {} {}", b.getX(), b.getY(), b.getZ());
+                    server.getCommands().performPrefixedCommand(sp.createCommandSourceStack().withPermission(4).withSuppressedOutput(),
+                            "tp @s " + (b.getX() + 0.5) + " " + (b.getY() + 0.8) + " " + (b.getZ() + 0.5) + " 0 20");
+                });
+            }
+            case "medsit" -> PacketDistributor.sendToServer(new io.github.verycooltimo.murim.network.MeditationInputPayload(
+                    io.github.verycooltimo.murim.network.MeditationInputPayload.Action.TOGGLE, true));
+            case "medplay" -> medBot = 1;
+            case "medover" -> medBot = 2;
+            case "medoff" -> {
+                medBot = 0;
+                mc.options.keyJump.setDown(false);
+            }
             case "hold" -> mc.options.keyUse.setDown(true);
             case "free" -> mc.options.keyUse.setDown(false);
             case "down", "up" -> {
@@ -249,6 +345,13 @@ public final class DialogueCapture {
             case "wheel" -> {
                 if (mc.screen instanceof DialogueScreen ds) {
                     ds.wheel(2);
+                }
+            }
+            case "skip" -> {
+                // 10.11 rooms film: the Space press that skips the typing (DialogueScreen.keyPressed)
+                if (mc.screen instanceof DialogueScreen ds) {
+                    ds.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_SPACE, 0, 0);
+                    ds.keyReleased(org.lwjgl.glfw.GLFW.GLFW_KEY_SPACE, 0, 0);
                 }
             }
             case "close" -> {
@@ -263,6 +366,17 @@ public final class DialogueCapture {
                 }
             }
             default -> {
+                // rawN: press option N without waiting for a next node (an answer that closes the screen, e.g. an escort starts)
+                if (action.startsWith("rawkey@") && mc.screen instanceof DialogueScreen ks) {
+                    int o = ks.captureAnswer(action.substring(7));
+                    if (o >= 0) ks.press(o);
+                    return;
+                }
+                if (action.length() == 4 && action.startsWith("raw") && Character.isDigit(action.charAt(3))
+                        && mc.screen instanceof DialogueScreen rs) {
+                    rs.press(action.charAt(3) - '1');
+                    return;
+                }
                 if (mc.screen instanceof DialogueScreen ds && action.length() == 1 && Character.isDigit(action.charAt(0))) {
                     ds.press(action.charAt(0) - '1');
                 }

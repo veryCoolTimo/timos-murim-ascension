@@ -115,8 +115,11 @@ public class SeatEntity extends Entity {
             }
             return centre.add(0.0D, 1.0D, 0.0D);
         }
-        // Stand up on the cushion (its top is 3.6 px).
-        return new Vec3(getX(), Math.floor(getY()) + 0.25D, getZ());
+        // Stand up on the seat block's top. Not Math.floor(getY()): the entity sits seatTop - 0.225 above the block floor, so for
+        // a 1 px mat it is below the block boundary and floor() picked the block UNDER the mat: the head of the sect dropped 12 px
+        // into the dais at the end of his scene (author 10.11: «в конце катсцены глава проваливался под блок»).
+        double top = state.getBlock() instanceof SeatBlock seat ? Math.max(seat.seatTop(state), 0.0D) : 0.25D;
+        return new Vec3(getX(), pos.getY() + top, getZ());
     }
 
     @Override

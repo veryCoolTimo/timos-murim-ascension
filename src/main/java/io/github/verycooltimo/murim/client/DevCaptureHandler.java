@@ -517,6 +517,9 @@ public final class DevCaptureHandler {
     private static int tickCounter;
     private static int frameIndex;
 
+    /** Index of the next frame to record (0 before the take starts): the turntable stand reads it. */
+    public static int frameIndexNow() { return frameIndex; }
+
     /**
      * Кадр запрошен тиком и будет снят ДВАЖДЫ за один проход рендера.
      *

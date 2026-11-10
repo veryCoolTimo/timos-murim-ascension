@@ -61,7 +61,7 @@ public final class SectHeadIntro {
         return layout == null ? null : layout.at("main_hall", 0.0D, 4.0D);
     }
 
-    private static Vec3 before(SectLayout layout) {
+    static Vec3 before(SectLayout layout) {
         return EscortRoutes.headIntroduction(layout);
     }
 

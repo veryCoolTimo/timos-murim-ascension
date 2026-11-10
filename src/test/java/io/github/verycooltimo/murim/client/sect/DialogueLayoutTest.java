@@ -38,4 +38,35 @@ class DialogueLayoutTest {
         assertEquals(39, layout.rowHeight());
         assertTrue(layout.panelHeight() <= 300);
     }
+
+    @Test
+    void lowPanelKeepsToTheShareAtSmallGuiHeights() {
+        for (int guiHeight : new int[] {240, 360}) {
+            int cap = (int) (guiHeight * DialogueScreen.MAX_SHARE);
+            int[] heights = new int[9];
+            Arrays.fill(heights, 17);
+            DialogueLayout layout = DialogueLayout.fit(cap, heights);
+            assertTrue(layout.panelHeight() <= cap, "height=" + guiHeight);
+            assertTrue(layout.rows() >= 2 && layout.rows() < 9, "height=" + guiHeight);
+        }
+    }
+
+    @Test
+    void oneLineAnswersGetFourRowsUnderTheCapAt480p() {
+        int[] heights = new int[8];
+        Arrays.fill(heights, 9);
+        DialogueLayout layout = DialogueLayout.fit((int) (240 * DialogueScreen.MAX_SHARE), heights);
+        assertTrue(layout.rows() >= 4, "rows=" + layout.rows());
+        assertTrue(layout.panelHeight() <= (int) (240 * DialogueScreen.MAX_SHARE));
+    }
+
+    @Test
+    void sevenAnswersAndExitFitTwoColumnsWithoutScrollingAt480p() {
+        int cap = (int) (240 * DialogueScreen.MAX_SHARE);
+        DialogueLayout layout = DialogueLayout.fitColumns(cap, 8, 2, 4);
+        assertEquals(4, layout.rows());
+        assertTrue(layout.rows() * 2 >= 8);
+        assertTrue(layout.panelHeight() <= cap, "panel=" + layout.panelHeight());
+        assertEquals(3, DialogueLayout.fitColumns(cap, 5, 2, 4).rows());
+    }
 }

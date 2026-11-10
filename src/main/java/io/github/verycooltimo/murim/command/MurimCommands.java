@@ -42,7 +42,7 @@ public final class MurimCommands {
     /** Groups of {@code /murim dev}: the name after {@code dev}, and whether the tree lives on the client or needs permission 4. */
     public static final List<String> DEV_GROUPS = List.of("rank", "art", "fight", "body", "sect", "sched", "map", "repairs",
             "yard", "head", "spar", "boss", "hua", "vault", "camp", "peddler", "tree", "loc", "vfx", "light", "glow", "face", "build",
-            "useblock", "useitem", "closescreen", "cave", "blade_exam", "book");
+            "useblock", "useitem", "closescreen", "cave", "blade_exam", "book", "probe");
 
     private MurimCommands() {
     }
@@ -107,7 +107,8 @@ public final class MurimCommands {
                 .then(FortressCommand.node())
                 .then(hua).then(io.github.verycooltimo.murim.sect.vault.VaultCommand.node())
                 .then(BanditCampCommand.node()).then(PeddlerCommand.node()).then(PlumTreeCommand.node())
-                .then(io.github.verycooltimo.murim.decor.ChungMyungCave.node());
+                .then(io.github.verycooltimo.murim.decor.ChungMyungCave.node())
+                .then(io.github.verycooltimo.murim.dev.SmokeProbe.node());
         io.github.verycooltimo.murim.dev.DevHooks.INSTANCE.commands(dev, buildContext);
         return dev;
     }

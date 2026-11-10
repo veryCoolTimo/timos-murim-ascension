@@ -801,6 +801,10 @@ public final class DevSetupEvents {
             if ("bandit_elite".equals(enemyKind) && bandit instanceof io.github.verycooltimo.murim.entity.BanditSwordsman sw) {
                 sw.makeElite();
             }
+            if ("bandit_chief".equals(enemyKind) && bandit instanceof io.github.verycooltimo.murim.entity.BanditSwordsman sc) {
+                sc.makeChief(net.minecraft.network.chat.Component.literal("Chief"));
+                sc.setCustomNameVisible(false);
+            }
             if ("bandit_archer_elite".equals(enemyKind) && bandit instanceof io.github.verycooltimo.murim.entity.BanditArcher ar) {
                 ar.makeElite();
             }
@@ -822,6 +826,38 @@ public final class DevSetupEvents {
             bandit.setYHeadRot(face);
             bandit.setYBodyRot(face);
             target = bandit;
+        }
+        if ("fortress_master".equals(enemyKind)) {
+            io.github.verycooltimo.murim.entity.boss.FortressMaster boss = new io.github.verycooltimo.murim.entity.boss.FortressMaster(
+                    io.github.verycooltimo.murim.entity.boss.BossRegistry.FORTRESS_MASTER.get(), level);
+            boss.setNoAi(true);
+            boss.setPersistenceRequired();
+            boss.standForFilm();
+            // Clean turntable stand: peaceful, nothing else alive near (stand fixtures burn in daylight), warm light around him for the night take.
+            if (level.getServer() != null) {
+                level.getServer().setDifficulty(net.minecraft.world.Difficulty.PEACEFUL, true);
+            }
+            for (net.minecraft.world.entity.Entity other : level.getEntitiesOfClass(net.minecraft.world.entity.Entity.class, area.inflate(64.0D))) {
+                if (!(other instanceof net.minecraft.world.entity.player.Player) && !(other instanceof net.minecraft.world.entity.decoration.ArmorStand)) {
+                    other.discard();
+                }
+            }
+            float face = (float) Math.toDegrees(aim) + 180.0F;
+            boss.setYRot(face);
+            boss.setYHeadRot(face);
+            boss.setYBodyRot(face);
+            target = boss;
+        }
+        if ("peddler".equals(enemyKind)) {
+            io.github.verycooltimo.murim.trade.Peddler peddler = new io.github.verycooltimo.murim.trade.Peddler(
+                    io.github.verycooltimo.murim.trade.ModTrade.PEDDLER.get(), level);
+            peddler.setNoAi(true);
+            peddler.setPersistenceRequired();
+            float face = (float) Math.toDegrees(aim) + 180.0F;
+            peddler.setYRot(face);
+            peddler.setYHeadRot(face);
+            peddler.setYBodyRot(face);
+            target = peddler;
         }
         // MURIM_CAPTURE_ENEMY=disciple — старший ученик Хуашань вызывает игрока на спарринг (секта С0):
         // MURIM_CAPTURE_SPAR=six,slash,rush — очередь приёмов, MURIM_CAPTURE_SPAR_DELAY — тиков до поклона.
@@ -893,6 +929,12 @@ public final class DevSetupEvents {
         target.setPos(STAGE_X + 0.5D + lookX * dummyDistance, STAGE_Y + lift,
                       STAGE_Z + 0.5D + lookZ * dummyDistance);
         level.addFreshEntity(target);
+        if ("fortress_master".equals(enemyKind)) {
+            for (double[] off : new double[][] {{3.5, 0}, {-3.5, 0}, {0, 3.5}, {0, -3.5}, {2.5, 2.5}, {-2.5, -2.5}}) {
+                level.setBlock(net.minecraft.core.BlockPos.containing(target.getX() + off[0], target.getY() + 3.2D, target.getZ() + off[1]),
+                        net.minecraft.world.level.block.Blocks.LIGHT.defaultBlockState(), 3);
+            }
+        }
         int enemyCount = Math.max(1, Math.min(30, Integer.parseInt(System.getenv().getOrDefault("MURIM_CAPTURE_ENEMIES", "1"))));
         if ("zombie".equals(enemyKind)) for (int i = 1; i < enemyCount; i++) {
             var extra = new net.minecraft.world.entity.monster.Zombie(net.minecraft.world.entity.EntityType.ZOMBIE, level);

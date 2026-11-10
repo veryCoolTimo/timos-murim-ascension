@@ -154,6 +154,11 @@ public class FortressMaster extends Monster implements Casters.Caster {
         return entityData.get(STATE);
     }
 
+    /** Film stands only: stand him in idle without the fight script (turntable film). */
+    public void standForFilm() {
+        setState(IDLE, null);
+    }
+
     public BossMove move() {
         return BossMove.byId(entityData.get(MOVE));
     }

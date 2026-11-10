@@ -28,6 +28,8 @@ io/github/verycooltimo/murim/client/DevPanoramaHandler$*.class
 io/github/verycooltimo/murim/client/DevPanoramaHandler.class
 io/github/verycooltimo/murim/client/DevPlaceCheckHandler$*.class
 io/github/verycooltimo/murim/client/DevPlaceCheckHandler.class
+io/github/verycooltimo/murim/client/DevTurntable$*.class
+io/github/verycooltimo/murim/client/DevTurntable.class
 io/github/verycooltimo/murim/client/FilmAdvancements$*.class
 io/github/verycooltimo/murim/client/FilmAdvancements.class
 io/github/verycooltimo/murim/client/FilmPillTooltips$*.class

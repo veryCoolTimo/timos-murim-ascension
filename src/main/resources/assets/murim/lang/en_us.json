@@ -7035,5 +7035,7 @@
   "murim.spawn_book.dir.nw": "north-west",
   "subtitles.murim.bandit_hurt": "Bandit grunts",
   "subtitles.murim.bandit_death": "Bandit dies",
-  "subtitles.murim.bow_draw": "Bow creaks"
+  "subtitles.murim.bow_draw": "Bow creaks",
+  "command.murim.dev.group.probe": "probe - nightly smoke probes: camp, library, cave, fortress",
+  "command.murim.dev.help.probe": "/murim dev probe <camp|library|cave|fortress> go|prep|check - locate the place, build it if the world did not, teleport, then check it is alive; one PROBE line per probe.\n/murim dev probe diag - structure starts around the player.\n/murim dev probe refs <cx> <cz> - structure references of a chunk."
 }

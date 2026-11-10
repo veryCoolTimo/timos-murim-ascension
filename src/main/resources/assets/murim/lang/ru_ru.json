@@ -7035,5 +7035,7 @@
   "murim.spawn_book.dir.nw": "северо-западе",
   "subtitles.murim.bandit_hurt": "Бандит стонет",
   "subtitles.murim.bandit_death": "Бандит падает замертво",
-  "subtitles.murim.bow_draw": "Скрип лука"
+  "subtitles.murim.bow_draw": "Скрип лука",
+  "command.murim.dev.group.probe": "probe - зонды ночного прогона: лагерь, библиотека, пещера, крепость",
+  "command.murim.dev.help.probe": "/murim dev probe <camp|library|cave|fortress> go|prep|check - найти место, достроить, если мир не построил сам, перенести игрока и проверить, что оно живое; одна строка PROBE на зонд.\n/murim dev probe diag - старты структур вокруг игрока.\n/murim dev probe refs <cx> <cz> - ссылки на структуры в чанке."
 }

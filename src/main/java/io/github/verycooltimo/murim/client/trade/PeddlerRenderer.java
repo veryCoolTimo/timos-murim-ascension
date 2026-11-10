@@ -2,6 +2,7 @@ package io.github.verycooltimo.murim.client.trade;
 
 import io.github.verycooltimo.murim.MurimMod;
 import io.github.verycooltimo.murim.client.bandit.BanditAnimations;
+import io.github.verycooltimo.murim.client.bandit.BanditModel;
 import io.github.verycooltimo.murim.client.bandit.BanditRenderer;
 import io.github.verycooltimo.murim.trade.ModTrade;
 import io.github.verycooltimo.murim.trade.Peddler;
@@ -28,10 +29,10 @@ import java.util.Map;
 @EventBusSubscriber(modid = MurimMod.MODID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.MOD)
 public class PeddlerRenderer extends MobRenderer<Peddler, PeddlerRenderer.Model> {
 
-    private static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/entity/peddler.png");
+    private static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/entity/peddler_v2.png");
 
     public PeddlerRenderer(EntityRendererProvider.Context context) {
-        super(context, new Model(context.bakeLayer(BanditRenderer.ARCHER_LAYER)), 0.5F);
+        super(context, new Model(context.bakeLayer(BanditRenderer.ARCHER_V2_LAYER)), 0.5F);
     }
 
     @Override
@@ -53,6 +54,7 @@ public class PeddlerRenderer extends MobRenderer<Peddler, PeddlerRenderer.Model>
 
         public Model(ModelPart root) {
             this.root = root;
+            BanditModel.showVariant(this, "pd");
         }
 
         @Override

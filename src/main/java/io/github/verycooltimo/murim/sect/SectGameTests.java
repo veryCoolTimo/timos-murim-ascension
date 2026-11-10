@@ -274,7 +274,7 @@ public final class SectGameTests {
 
     // ------------------------------------------------------------------ уроки наставника
 
-    private static Dialogue.Option option(Dialogue d, String node, String text, int nth) {
+    static Dialogue.Option option(Dialogue d, String node, String text, int nth) {
         int seen = 0;
         for (Dialogue.Option o : d.nodes().get(node).options()) {
             if (o.text().equals(text) && seen++ == nth) {

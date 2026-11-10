@@ -1966,6 +1966,11 @@ public class SectDisciple extends Bandit implements Casters.Caster {
         if (!sitting() || postureAnchor == null || isPassenger()) return;
         BlockPos cell = BlockPos.containing(postureAnchor.add(0.0D, -0.01D, 0.0D));
         if (level().getBlockState(cell).getBlock() instanceof io.github.verycooltimo.murim.decor.SeatBlock) {
+            // Vanilla refuses to ride for 60 ticks after a dismount (Entity.canRide: boardingCooldown, set by removePassenger).
+            // A person of the sect who stood up a moment ago must be able to sit down again at once; otherwise every re-seat
+            // failed, releaseSeat() stood him up and the routine walked him to the seat again, two seconds a cycle.
+            // API: reference/minecraft-src/net/minecraft/world/entity/Entity.java#canRide, #removePassenger
+            boardingCooldown = 0;
             if (io.github.verycooltimo.murim.decor.SeatEntity.sit(level(), cell, this)) {
                 getVehicle().positionRider(this);
                 furniturePassenger = true;
@@ -2028,8 +2033,11 @@ public class SectDisciple extends Bandit implements Casters.Caster {
         if (seatStyle() == SeatStyle.NONE) {
             return;   // nothing to release; the routine asks every tick and must not cancel the glide down off the seat
         }
-        if (getVehicle() instanceof io.github.verycooltimo.murim.decor.SeatEntity) {
+        if (getVehicle() instanceof io.github.verycooltimo.murim.decor.SeatEntity seat) {
             stopRiding();
+            // The empty seat is gone at once: SeatEntity.sit refuses a cell whose old seat still waits for its own tick to
+            // discard itself, so a same-tick re-seat (sitImmediately) failed and the routine re-walked him for seconds.
+            if (!seat.isVehicle()) seat.discard();
         }
         furniturePassenger = false;
         entityData.set(SEAT, SeatStyle.NONE.ordinal());
