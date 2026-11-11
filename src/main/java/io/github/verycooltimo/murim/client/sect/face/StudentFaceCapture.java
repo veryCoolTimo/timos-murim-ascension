@@ -186,6 +186,14 @@ public final class StudentFaceCapture {
                 for (int i = 0; i < n; i++) {
                     out.add(new Shot("head" + i, 0.0D, 1.0D, 1.7D, 0.0D, 1.5D, false, i));
                 }
+                if ("1".equals(System.getenv("MURIM_TURN"))) {
+                    // Turntable on the last person, close on the shoulders: eight angles around, then from above.
+                    for (int k = 0; k < 8; k++) {
+                        double a = Math.toRadians(k * 45.0D);
+                        out.add(new Shot("turn" + k, Math.sin(a), Math.cos(a), 2.4D, 0.4D, 1.4D, false, n - 1));
+                    }
+                    out.add(new Shot("turn_top", 0.0D, 1.0D, 0.9D, 1.9D, 1.35D, false, n - 1));
+                }
             }
             default -> {
                 out.add(new Shot("row", 0.0D, 1.0D, 7.5D, 0.2D, 1.3D, false, -1));

@@ -68,6 +68,8 @@ public final class SectPoseCapture {
             new Spot("sit", SectPose.SIT, SectRole.DISCIPLE_B),
             new Spot("poles", SectPose.POLES, SectRole.SENIOR),
             new Spot("pole_step", SectPose.POLE_STEP, SectRole.SECOND),
+            new Spot("pushup", SectPose.PUSHUP, SectRole.DISCIPLE_A),
+            new Spot("pushup_weighted", SectPose.PUSHUP_WEIGHTED, SectRole.DISCIPLE_B),
             new Spot("form", SectPose.FORM, SectRole.SENIOR),
             new Spot("sweep", SectPose.SWEEP, SectRole.DISCIPLE_A),
             new Spot("carry", SectPose.CARRY, SectRole.DISCIPLE_B),
@@ -182,6 +184,37 @@ public final class SectPoseCapture {
 
     private static List<Shot> shots = SHOTS;
 
+    /** Walking speed of the {@code head} row (navigation speed modifier): 0.6 walk, about 1.6 and more is the run clip. */
+    private static final double WALK_SPEED = envDouble("MURIM_POSE_SPEED", 0.6D);
+
+    private static double envDouble(String name, double fallback) {
+        String v = System.getenv(name);
+        return v == null || v.isBlank() ? fallback : Double.parseDouble(v);
+    }
+
+    /**
+     * Dev film override: {@code MURIM_POSE_SHOTS=near,walk} keeps only those shots, {@code MURIM_POSE_EVERY=2} (ticks per frame, 2 = real speed at
+     * 10 fps), {@code MURIM_POSE_FRAMES=60}, {@code MURIM_POSE_NIGHT=1|0} sets the time of day of every shot.
+     */
+    private static List<Shot> filmShots(List<Shot> in) {
+        String names = System.getenv("MURIM_POSE_SHOTS");
+        String every = System.getenv("MURIM_POSE_EVERY");
+        String frames = System.getenv("MURIM_POSE_FRAMES");
+        String night = System.getenv("MURIM_POSE_NIGHT");
+        if (names == null && every == null && frames == null && night == null) {
+            return in;
+        }
+        List<Shot> out = new ArrayList<>();
+        for (Shot s : in) {
+            if (names != null && !List.of(names.split(",")).contains(s.name())) {
+                continue;
+            }
+            out.add(new Shot(s.name(), s.dist(), s.height(), night != null ? "1".equals(night) : s.night(),
+                    frames != null ? Integer.parseInt(frames) : s.frames(), every != null ? Integer.parseInt(every) : s.every()));
+        }
+        return out.isEmpty() ? in : out;
+    }
+
     private static boolean setup;
     private static List<Spot> spots;
     private static BlockPos origin;
@@ -241,6 +274,7 @@ public final class SectPoseCapture {
             if ("all".equals(raw)) {
                 shots = ALL_SHOTS;
             }
+            shots = filmShots(shots);
             server.execute(() -> build(server));
             wait = -60;
             return;
@@ -607,7 +641,7 @@ public final class SectPoseCapture {
             for (int k = 0; k < row.size(); k++) {
                 SectDisciple n = row.get(k);
                 n.setNoAi(false);
-                n.getNavigation().moveTo(x0 + HEAD_GAP * k + (back ? -2.0D : 6.0D), origin.getY(), n.getZ(), 0.6D);
+                n.getNavigation().moveTo(x0 + HEAD_GAP * k + (back ? -2.0D : 6.0D), origin.getY(), n.getZ(), WALK_SPEED);
             }
             // Камера едет за серединой ряда с юга: все трое в профиль и крупно. Ряд всей секты длинный — камера
             // идёт вдоль него, от главы к последнему слуге.

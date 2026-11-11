@@ -587,8 +587,8 @@ public final class ClientMeditationState {
         }
     }
 
-    /** Лотос садится за 0,3 с; после этого включается цикл дыхания. */
-    private static final int BREATH_AFTER_TICKS = 8;
+    /** Лотос садится за 1,0 с (анимация, 11.11); после этого включается цикл дыхания. Только клиентская анимация, на геймплей не влияет. */
+    private static final int BREATH_AFTER_TICKS = 20;
     private static int breathDelay;
 
     @SubscribeEvent
