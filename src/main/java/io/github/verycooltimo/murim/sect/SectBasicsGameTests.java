@@ -51,7 +51,10 @@ public final class SectBasicsGameTests {
         var player = helper.makeMockPlayer(net.minecraft.world.level.GameType.SURVIVAL);
         player.setSprinting(true);
         player.setDeltaMovement(0.3D, -0.2D, 0.25D);
+        player.zza = 1.0F;
+        player.xxa = -1.0F;
         DialogueStop.stop(player);
+        helper.assertTrue(player.zza == 0.0F && player.xxa == 0.0F, "the held walk input survived the stop");
         helper.assertTrue(!player.isSprinting(), "still sprinting");
         helper.assertTrue(player.getDeltaMovement().x == 0.0D && player.getDeltaMovement().z == 0.0D, "still moving sideways");
         helper.assertTrue(player.getDeltaMovement().y == -0.2D, "the fall was cancelled");

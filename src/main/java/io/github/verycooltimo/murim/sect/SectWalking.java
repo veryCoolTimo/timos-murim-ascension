@@ -276,7 +276,7 @@ public final class SectWalking {
         if (planGoal == null || planGoal.distanceToSqr(target) > 9.0D) {
             newGoal(file, target, now);
         }
-        double remaining = plan == null ? Math.hypot(target.x - npc.getX(), target.z - npc.getZ())
+        double remaining = plan == null ? plainRemaining(target)
                 : plan.remaining(npc.getX(), npc.getZ(), Math.min(leg, plan.legs().size()), target.x, target.z);
         monitor(file, target, remaining, now);
         if (SectTimings.ON) {
@@ -497,6 +497,38 @@ public final class SectWalking {
             }
         }
         return false;
+    }
+
+    /**
+     * Distance left on a walk without a route plan. Straight-line distance lies when the only way round is a detour (the cave mouth
+     * behind the elder houses, 11.11: the way goes north, round the houses and down the alley, so the straight distance grows for
+     * half the walk, the stuck watch saw no headway for 480 ticks and put the guard back at a door, again and again). When the
+     * pathfinder has a path to this very target, the length left along it is the measure.
+     */
+    private double plainRemaining(Vec3 target) {
+        double straight = Math.hypot(target.x - npc.getX(), target.z - npc.getZ());
+        var path = npc.getNavigation().getPath();
+        if (path == null || !path.canReach() || !sameTarget(path.getTarget(), target)) {
+            return straight;
+        }
+        java.util.List<Vec3> nodes = new java.util.ArrayList<>();
+        for (int i = path.getNextNodeIndex(); i < path.getNodeCount(); i++) {
+            nodes.add(path.getNode(i).asVec3());
+        }
+        return Math.max(straight, alongPath(npc.position(), nodes, target));
+    }
+
+    /** Horizontal length from {@code from} through the nodes to {@code target}. */
+    static double alongPath(Vec3 from, java.util.List<Vec3> nodes, Vec3 target) {
+        double sum = 0.0D;
+        double px = from.x;
+        double pz = from.z;
+        for (Vec3 n : nodes) {
+            sum += Math.hypot(n.x + 0.5D - px, n.z + 0.5D - pz);
+            px = n.x + 0.5D;
+            pz = n.z + 0.5D;
+        }
+        return sum + Math.hypot(target.x - px, target.z - pz);
     }
 
     /** Cells of the planned route that are still to walk, -1 when he walks plain (no plan). */

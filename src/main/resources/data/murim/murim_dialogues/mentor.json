@@ -682,8 +682,7 @@
           "next": "basics_offer"
         },
         {
-          "text": "dialogue.murim.opt.leave",
-          "next": "basics_offer"
+          "text": "dialogue.murim.opt.leave"
         }
       ]
     },

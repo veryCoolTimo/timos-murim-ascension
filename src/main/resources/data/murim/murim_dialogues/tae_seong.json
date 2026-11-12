@@ -520,7 +520,7 @@
           "text": "dialogue.murim.tae_seong.opt.path",
           "when": [
             {
-              "below_standing": "first"
+              "below_standing": "graduate"
             }
           ],
           "next": "t_path_low"

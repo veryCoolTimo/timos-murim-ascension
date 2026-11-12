@@ -684,7 +684,8 @@ public final class DialogueScreen extends Screen {
         if (digit >= 0) {
             if (typing()) skipKey = key;
             if (digit == 0) {
-                if (hasCloser()) {
+                // a lone closing answer is drawn as «1», but «0» closes everywhere else: it closes here too
+                if (hasCloser() || line.closer() && count() == 1) {
                     choose(count() - 1);
                 }
             } else {

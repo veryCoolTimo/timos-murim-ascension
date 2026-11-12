@@ -337,6 +337,8 @@ public final class DialogueCapture {
             }
             case "hold" -> mc.options.keyUse.setDown(true);
             case "free" -> mc.options.keyUse.setDown(false);
+            case "fwd" -> mc.options.keyUp.setDown(true);
+            case "fwdoff" -> mc.options.keyUp.setDown(false);
             case "down", "up" -> {
                 if (mc.screen instanceof DialogueScreen ds) {
                     ds.nudge("down".equals(action) ? 1 : -1);
