@@ -31,6 +31,7 @@ class SealRulesTest {
     @DisplayName("Дверь: любая одна форма 24 Движений; шаги и основа не считаются")
     void ladder() {
         List<VaultLadder.Step> l = VaultLadder.LADDER;
+        assertEquals(5, l.size());
         assertEquals(Styles.TWENTY_FOUR_PLUM.forms().size(), l.size());
         for (int i = 0; i < l.size(); i++) {
             assertEquals(Styles.TWENTY_FOUR_PLUM.forms().get(i), l.get(i).technique());

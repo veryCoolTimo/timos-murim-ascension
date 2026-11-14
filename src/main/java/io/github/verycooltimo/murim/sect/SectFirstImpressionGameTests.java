@@ -75,6 +75,49 @@ public final class SectFirstImpressionGameTests {
         h.succeed();
     }
 
+    /** Author playtest 14.11: «I want to become a disciple» refused by the server looked like a click that did nothing. */
+    @GameTest(template = "sect_yard", batch = "first_impression_refusal", timeoutTicks = 40)
+    public static void refusedAnswerSaysSoInsteadOfReshowingSilently(GameTestHelper h) {
+        var layout = only(h, "sect_gate", "mentor");
+        ServerPlayer p = player(h, 12, 12, SectState.NONE);
+        SectDisciple guard = npc(h, layout, "gatekeeper", 13, 12, false);
+        h.assertTrue(DialogueService.openDialogue(p, guard, SectArrival.DIALOGUE, "question"), "gate talk unavailable");
+        String answer = DialogueLoader.get(SectArrival.DIALOGUE).nodes().get("question").options().stream()
+                .filter(o -> o.actions().stream().anyMatch(a -> "arrival_invite".equals(a.type()))).findFirst().orElseThrow().text();
+        // the guard is not at the gate any more (or the player is already a disciple): invite() refuses
+        p.setData(ModAttachments.SECT, SectState.NONE.joined());
+        List<io.github.verycooltimo.murim.network.DialoguePayloads.Open> sent = new java.util.ArrayList<>();
+        DialogueService.tap = pl -> { if (pl instanceof io.github.verycooltimo.murim.network.DialoguePayloads.Open o) sent.add(o); };
+        try {
+            choose(h, p, answer);
+        } finally {
+            DialogueService.tap = null;
+        }
+        h.assertTrue(sent.size() == 1, "one click must produce exactly one reply, got " + sent.size());
+        h.assertTrue(sent.get(0).line().getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents t
+                && DialogueService.REFUSED.equals(t.getKey()), "refusal was silent: " + sent.get(0).line());
+        h.assertTrue(p.getData(ModAttachments.DIALOGUE).active() && "question".equals(p.getData(ModAttachments.DIALOGUE).node()),
+                "the talk did not stay on the node");
+        h.succeed();
+    }
+
+    @GameTest(template = "sect_yard", batch = "first_impression_offwatch", timeoutTicks = 40)
+    public static void guardWhoOpenedTheTalkStillInvitesWhenHisWatchLapses(GameTestHelper h) {
+        var layout = only(h, "sect_gate", "mentor");
+        ServerPlayer p = player(h, 12, 12, SectState.NONE);
+        SectDisciple guard = npc(h, layout, "gatekeeper", 13, 12, false);
+        h.assertTrue(DialogueService.openDialogue(p, guard, SectArrival.DIALOGUE, "question"), "gate talk unavailable");
+        String answer = DialogueLoader.get(SectArrival.DIALOGUE).nodes().get("question").options().stream()
+                .filter(o -> o.actions().stream().anyMatch(a -> "arrival_invite".equals(a.type()))).findFirst().orElseThrow().text();
+        // guard and newcomer end up 40 blocks from the gate: he is no greeter any more, but the talk is his
+        p.moveTo(p.getX() + 40, p.getY(), p.getZ(), 0, 0);
+        guard.moveTo(guard.getX() + 40, guard.getY(), guard.getZ(), 0, 0);
+        h.assertFalse(SectArrival.greeter(guard), "test setup: still a greeter");
+        choose(h, p, answer);
+        h.assertTrue(SectService.state(p).has(SectArrival.INVITED), "invitation refused to the one he talks to");
+        h.succeed();
+    }
+
     @GameTest(template = "sect_yard", batch = "first_impression_bows", timeoutTicks = 40)
     public static void approachBowsOnlyUpTheSectHierarchy(GameTestHelper h) {
         var layout = only(h, "training");

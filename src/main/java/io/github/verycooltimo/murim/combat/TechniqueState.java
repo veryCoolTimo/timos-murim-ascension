@@ -42,9 +42,8 @@ public record TechniqueState(
                             .forGetter(TechniqueState::lastStartGameTime)
             ).apply(i, (id, tick, done, last) ->
                     new TechniqueState(id.orElse(null), tick, done, last)))
-                    // Removed arts (19.10) and retired Dome (03.11): end the cast, keep last-start time.
+                    // Removed arts (19.10) and retired Dome and Full Bloom (03.11, 10.11): end the cast, keep last-start time.
                     .xmap(state -> io.github.verycooltimo.murim.mastery.RemovedArts.is(state.techniqueId())
-                                    || io.github.verycooltimo.murim.mastery.PlumFormMigration.DOME.equals(state.techniqueId())
                                     ? state.finished() : state,
                             state -> state);
 

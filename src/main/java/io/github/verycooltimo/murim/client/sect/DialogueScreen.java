@@ -85,6 +85,9 @@ public final class DialogueScreen extends Screen {
     private int ticks;
     private int lineTicks;
     private boolean sent;
+    /** Line tick at which an answer was sent and is awaited; the click lock ends {@link #ANSWER_WAIT} ticks later if no reply came. */
+    private int sentAt = -1;
+    static final int ANSWER_WAIT = 30;
     private int hover = -1;
     private int lastMouseX = Integer.MIN_VALUE;
     private int lastMouseY = Integer.MIN_VALUE;
@@ -143,6 +146,7 @@ public final class DialogueScreen extends Screen {
         this.guardUntil = 0;
         this.lineTicks = 0;
         this.sent = false;
+        this.sentAt = -1;
         this.hover = -1;
         this.focus = -1;
         this.scroll = 0;
@@ -275,6 +279,11 @@ public final class DialogueScreen extends Screen {
         ensurePages();
         ticks++;
         lineTicks++;
+        // An answer the server never replied to must not lock the screen for good (author 14.11: twenty clicks, nothing).
+        if (sent && sentAt >= 0 && DialogueClick.answerLost(sentAt, lineTicks, ANSWER_WAIT)) {
+            sent = false;
+            sentAt = -1;
+        }
         // Первая реплика пишется, когда камера доехала: наезд не перебивает текст (codex 03.10).
         if (typing() && DialogueCamera.amount(0.0F) > 0.9F && DialogueCamera.settled()) {
             int before = (int) typed;
@@ -641,6 +650,7 @@ public final class DialogueScreen extends Screen {
             }
             // A line without answers: a click ends the talk.
             sent = true;
+            sentAt = lineTicks;
             PacketDistributor.sendToServer(new DialoguePayloads.Choose(-1));
             return;
         }
@@ -651,6 +661,7 @@ public final class DialogueScreen extends Screen {
             return;
         }
         sent = true;
+        sentAt = lineTicks;
         if (minecraft != null) {
             minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK.value(), 1.4F, 0.25F));
         }
@@ -785,6 +796,22 @@ public final class DialogueScreen extends Screen {
                     && text.getKey().equals(key)) return i;
         }
         return -1;
+    }
+
+    /** For the stand: the middle of the drawn button of option {@code i} in gui coordinates, or null when it is not on screen. */
+    double[] captureButton(int i) {
+        for (int slot = 0; slot < rows(); slot++) {
+            if (optionInSlot(slot) == i) {
+                return new double[] {px + (slotX(slot) + colW / 2.0D) * k, py + (slotY(slot) + rowHeight / 2.0D) * k};
+            }
+        }
+        return null;
+    }
+
+    /** For the stand: what a click would meet right now, for the per-click log. */
+    String captureState(double mouseX, double mouseY) {
+        return "typing=" + typing() + " sent=" + sent + " lineTicks=" + lineTicks + " guardUntil=" + guardUntil + " count=" + count()
+                + " pages=" + morePages() + " optionAt=" + optionAt(mouseX, mouseY) + " cols=" + cols + " k=" + k;
     }
 
     /** Для стенда: выбрать ответ как клавишей. */

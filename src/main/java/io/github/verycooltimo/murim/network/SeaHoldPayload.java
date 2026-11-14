@@ -8,8 +8,8 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 
 /**
- * Клиент → сервер: R удержан или отпущен для Моря либо Полного Цветения.
- * Это только намерение: продлевать ли и чем платить, решает сервер (SeaExecutor / FullBloomExecutor).
+ * Клиент → сервер: R удержан или отпущен для Моря.
+ * Это только намерение: продлевать ли и чем платить, решает сервер (SeaExecutor).
  */
 public record SeaHoldPayload(boolean held) implements CustomPacketPayload {
 

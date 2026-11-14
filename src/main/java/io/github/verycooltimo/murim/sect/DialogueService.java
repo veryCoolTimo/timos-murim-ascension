@@ -269,6 +269,8 @@ public final class DialogueService {
     public static void choose(ServerPlayer player, int index) {
         Session s = player.getData(ModAttachments.DIALOGUE);
         if (!s.active()) {
+            // The client still shows a talk the server no longer has: tell it, or its clicks go nowhere for good.
+            send(player, new DialoguePayloads.Close());
             return;
         }
         if (player.level().getEntity(s.npc()) instanceof io.github.verycooltimo.murim.npc.DialogueActor guest) {
@@ -314,7 +316,7 @@ public final class DialogueService {
         if (shownAt >= SectGeneralTalk.BASE) {
             int question = shownAt - SectGeneralTalk.BASE;
             if (question >= SectGeneralTalk.QUESTIONS.size() || !SectGeneralTalk.MENU.equals(s.node())) {
-                show(player, npc, s.dialogue(), d, s.node(), "");
+                refuse(player, npc, s, d);
                 return;
             }
             SectGeneralTalk.ask(player, question);
@@ -324,7 +326,7 @@ public final class DialogueService {
         Dialogue.Option option;
         if (shownAt == SectBouts.SHARED) {
             if (!SectBouts.sharedRow(player, npc, d, s.node())) {
-                show(player, npc, s.dialogue(), d, s.node(), "");
+                refuse(player, npc, s, d);
                 return;
             }
             option = SectBouts.sharedOption();
@@ -333,7 +335,7 @@ public final class DialogueService {
             SectGoalTalk.Hook hook = slot < SectGoalTalk.SLOTS && s.dialogue().equals(npc.dialogue()) && SectGoalTalk.hub(player, npc, d, s.node())
                     ? SectGoalTalk.hooks(player, npc, d)[slot] : null;
             if (hook == null) {
-                show(player, npc, s.dialogue(), d, s.node(), "");
+                refuse(player, npc, s, d);
                 return;
             }
             option = hook.option();
@@ -342,7 +344,7 @@ public final class DialogueService {
         }
         // Сервер проверяет вариант заново: условие могло перестать выполняться, пока экран был открыт.
         if (!all(player, npc, option.when())) {
-            show(player, npc, s.dialogue(), d, s.node(), "");
+            refuse(player, npc, s, d);
             return;
         }
         String anim = "";
@@ -351,7 +353,7 @@ public final class DialogueService {
             String r = act(player, npc, a);
             if ("switch".equals(r)) return;
             if ("retry".equals(r)) {
-                show(player, npc, s.dialogue(), d, s.node(), "");
+                refuse(player, npc, s, d);
                 return;
             }
             if ("close".equals(r)) {
@@ -409,8 +411,25 @@ public final class DialogueService {
         }
     }
 
-    /** Показать узел: действия входа, реплика, видимые варианты (не больше четырёх). */
+    /** Key of the line shown when the server refuses an answer (author 14.11: a refused click looked like a click that did nothing). */
+    public static final String REFUSED = "dialogue.murim.general.refused";
+
+    /** The answer was refused (a condition or an action failed): the same node is shown again, but with a line that says so. */
+    static void refuse(ServerPlayer player, SectDisciple npc, Session s, Dialogue d) {
+        Dialogue.Node node = nodeOf(d, s.node());
+        if (node == null) {
+            close(player, npc);
+            return;
+        }
+        show(player, npc, s.dialogue(), d, s.node(), "", Component.translatable(REFUSED, npc.getName()));
+    }
+
     static void show(ServerPlayer player, SectDisciple npc, ResourceLocation id, Dialogue d, String nodeId, String anim) {
+        show(player, npc, id, d, nodeId, anim, null);
+    }
+
+    /** Показать узел: действия входа, реплика, видимые варианты (не больше четырёх); {@code lineOverride} replaces the line. */
+    static void show(ServerPlayer player, SectDisciple npc, ResourceLocation id, Dialogue d, String nodeId, String anim, Component lineOverride) {
         Dialogue.Node node = nodeOf(d, nodeId);
         if (node == null) {
             close(player, npc);
@@ -521,6 +540,7 @@ public final class DialogueService {
         Component title = titleKey.isEmpty() ? Component.empty() : Component.translatable(titleKey);
         // Newcomer tour: the node names a fixed camera shot of a building; the client camera glides there and back.
         Optional<DialoguePayloads.Shot> shot = node.shot().flatMap(sid -> SectTour.shot(player, SectLife.layout(player.serverLevel()), sid));
+        if (lineOverride != null) line = lineOverride;
         DialoguePayloads.Open open = new DialoguePayloads.Open(npc.getId(), npc.getName(), title, line, options, anim, shot, closer);
         // GameTest mock players have no mod channel: an NPC-initiated dialogue (guard, elder) must not crash the tick.
         // API: reference/neoforge-src/net/neoforged/neoforge/common/extensions/ICommonPacketListener.java#hasChannel
@@ -1068,7 +1088,11 @@ public final class DialogueService {
 
     /** GameTest mock players have no mod channel: NPC-initiated dialogues must not crash the server tick. */
     // API: reference/neoforge-src/net/neoforged/neoforge/common/extensions/ICommonPacketListener.java#hasChannel
+    /** Tests only: sees every payload this class sends, whether or not the player has the mod channel. */
+    static java.util.function.Consumer<net.minecraft.network.protocol.common.custom.CustomPacketPayload> tap;
+
     private static void send(ServerPlayer player, net.minecraft.network.protocol.common.custom.CustomPacketPayload payload) {
+        if (tap != null) tap.accept(payload);
         if (player.connection != null && player.connection.hasChannel(payload)) {
             PacketDistributor.sendToPlayer(player, payload);
         }

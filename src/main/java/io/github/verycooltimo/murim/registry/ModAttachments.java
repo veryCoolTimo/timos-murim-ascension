@@ -223,6 +223,12 @@ public final class ModAttachments {
     public static final Supplier<AttachmentType<double[]>> RAIN =
             ATTACHMENT_TYPES.register("plum_rain",
                     () -> AttachmentType.<double[]>builder(() -> new double[] {0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0}).build());
+    // API: /tmp/mr-ref-1121/neoforge-src/net/neoforged/neoforge/attachment/AttachmentType.java#builder(Supplier)
+    /** Crush cast-local state; not serialized. Events send exact stars and frozen geometry to clients. */
+    public static final Supplier<AttachmentType<double[]>> CRUSH =
+            ATTACHMENT_TYPES.register("plum_crush",
+                    () -> AttachmentType.<double[]>builder(() -> new double[0]).build());
+
     /**
      * Опадающие Лепестки, Перекрывающие Реку: {кисть x, y, z, прицел x, y, z, слой, id цели или −1,
      * тик контакта или −1, id цели контакта или −1, урон в руке, взрыв 0/1, дальность}. Не сохраняется.
@@ -263,9 +269,6 @@ public final class ModAttachments {
     public static final Supplier<AttachmentType<double[]>> DOME =
             ATTACHMENT_TYPES.register("plum_dome",
                     () -> AttachmentType.<double[]>builder(() -> new double[] {0, 0, 0, 0, 1, 0, 0, 0, 0, 1}).build());
-    /** Full Bloom: transient server state, synchronized through BloomPayload. */
-    public static final Supplier<AttachmentType<io.github.verycooltimo.murim.technique.FullBloomExecutor.Cast>> FULL_BLOOM =
-            ATTACHMENT_TYPES.register("plum_full_bloom", () -> AttachmentType.<io.github.verycooltimo.murim.technique.FullBloomExecutor.Cast>builder(io.github.verycooltimo.murim.technique.FullBloomExecutor.Cast::new).build());
     /** Море Цветущей Сливы: см. SeaExecutor. Не сохраняется — живёт одну технику. */
     public static final Supplier<AttachmentType<double[]>> SEA =
             ATTACHMENT_TYPES.register("plum_sea",

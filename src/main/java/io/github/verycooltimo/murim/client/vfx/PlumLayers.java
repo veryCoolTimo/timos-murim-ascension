@@ -4,15 +4,15 @@ import io.github.verycooltimo.murim.technique.*;
 import java.util.EnumSet;
 import java.util.Set;
 
-/** Presentation ladder, from the four specs' «Слои» and the author's 6 Nov Bloom ladder.
+/** Presentation ladder: accepted four-form policy plus the 10 Nov Crush spec «Слои».
  * Every entry names a material/shape family, not a phase or a server mechanic.
  */
 final class PlumLayers {
-    enum Form { RAIN, RIVER, SCATTER, SEA, BLOOM }
+    enum Form { RAIN, RIVER, SCATTER, SEA, CRUSH }
     enum Kind { DUST, WIND, GHOST, PETALS, AURA, FLOWER, THREADS, COLUMN, ILLUSION,
         STREAM, RESONANCE, RAYS, SPIRAL, EYES, WEDGE, CLONES, LOOPS, FIRE, MASTER_CUT,
         SCATTER, BLADE_STROKE, WRAP, TRAIL, CAPTION, BOW_WAVE, SLOT_BUDS, LIFT,
-        HEART, ROOTS, BRANCH, CROWN, FULL }
+        HEART, ROOTS, BRANCH, CROWN, VORTEX, CRACK, BURST, SMOKE, FULL }
     /** Exact mastery stars, never execution tiers. Earlier rows remain present. */
     static Set<Kind> kinds(Form form, int stars) {
         var set = EnumSet.noneOf(Kind.class);
@@ -21,7 +21,7 @@ final class PlumLayers {
             case RIVER -> Set.of(Kind.DUST, Kind.WIND, Kind.STREAM, Kind.GHOST, Kind.RESONANCE, Kind.RAYS, Kind.PETALS, Kind.SPIRAL, Kind.CAPTION, Kind.EYES, Kind.WEDGE, Kind.TRAIL);
             case SCATTER -> Set.of(Kind.DUST, Kind.WIND, Kind.CLONES, Kind.GHOST, Kind.LOOPS, Kind.PETALS, Kind.FIRE, Kind.MASTER_CUT, Kind.SCATTER, Kind.TRAIL, Kind.CAPTION);
             case SEA -> Set.of(Kind.BLADE_STROKE, Kind.DUST, Kind.GHOST, Kind.PETALS, Kind.FLOWER, Kind.WRAP, Kind.TRAIL, Kind.CAPTION, Kind.AURA, Kind.BOW_WAVE, Kind.SLOT_BUDS, Kind.LIFT, Kind.HEART);
-            case BLOOM -> Set.of(Kind.DUST, Kind.WIND, Kind.ROOTS, Kind.BRANCH, Kind.FLOWER, Kind.CROWN, Kind.FULL, Kind.TRAIL, Kind.GHOST, Kind.PETALS, Kind.AURA, Kind.CAPTION);
+            case CRUSH -> Set.of(Kind.DUST, Kind.WIND, Kind.TRAIL, Kind.GHOST, Kind.AURA, Kind.RESONANCE, Kind.PETALS, Kind.VORTEX, Kind.CRACK, Kind.BURST, Kind.CAPTION, Kind.SMOKE, Kind.FULL);
         };
         for (Kind kind : available) if (ArStarLadder.has(stars, ArStarLadder.stage(firstStar(kind)))) set.add(kind);
         return set;
@@ -34,13 +34,20 @@ final class PlumLayers {
             case AURA, RESONANCE, EYES, FIRE -> 8; // FIRE is source qi, not detached flame.
             case PETALS -> 9;
             case FLOWER, ILLUSION, SPIRAL, STREAM, RAYS, BRANCH, ROOTS, WRAP,
-                 BOW_WAVE, CLONES, SCATTER, MASTER_CUT, SLOT_BUDS, LIFT, CAPTION -> 10;
+                 BOW_WAVE, CLONES, SCATTER, MASTER_CUT, SLOT_BUDS, LIFT, CAPTION, VORTEX, CRACK, BURST -> 10;
                  // CAPTION accompanies the first full technique volume/impact frame.
-            case THREADS, COLUMN, LOOPS, CROWN, HEART -> 11;
+            case THREADS, COLUMN, LOOPS, CROWN, HEART, SMOKE -> 11;
             case FULL, WEDGE -> 12;
         };
     }
     static boolean has(Form form, int stars, Kind kind) { return kinds(form, stars).contains(kind); }
+    /** Crush draw ledger; see CrushVfx's component sums. Pure so policy tests need no client bootstrap. */
+    static int crushQuadCeiling(int stars) {
+        // v6 (14.11): the mote cap went from 80 to 120 (+80 quads from ★5); from ★10 the torn burst and its needles, drawn
+        // twice (crisp, then faint into the glow target): 2 x (8 rays x 24 x 2 + 9 x 2 x 2) = 840.
+        return stars < 5 ? 0 : stars == 5 ? 248 : stars == 6 ? 250 : stars == 7 ? 394
+                : stars == 8 ? 421 : stars == 9 ? 601 : 1703;
+    }
     static float light(int stars) {
         return stars < 8 ? 0 : stars == 8 ? .12F : stars == 9 ? .2F : stars == 10 ? .5F : stars == 11 ? .7F : 1;
     }
@@ -53,7 +60,7 @@ final class PlumLayers {
         int first = firstStar(kind);
         return stars < first ? 0 : first == 12 ? 1 : .5 + .5 * (Math.min(12, stars) - first) / (12. - first);
     }
-    static double density(Form form, int stars) { return density(stars, form == Form.BLOOM ? Kind.FLOWER : Kind.PETALS); }
+    static double density(Form form, int stars) { return density(stars, Kind.PETALS); }
     static boolean petalSlot(Form form, int stars, int slot, int count) {
         return has(form, stars, Kind.PETALS);
     }

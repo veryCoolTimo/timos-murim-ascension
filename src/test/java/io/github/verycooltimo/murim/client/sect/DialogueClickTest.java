@@ -29,4 +29,12 @@ class DialogueClickTest {
     void freshLine() {
         assertTrue(DialogueClick.live(false, 0, 0));
     }
+
+    @Test
+    @DisplayName("A sent answer that the server never answered unlocks the clicks again")
+    void lostAnswerUnlocks() {
+        assertFalse(DialogueClick.answerLost(10, 39, DialogueScreen.ANSWER_WAIT));
+        assertTrue(DialogueClick.answerLost(10, 40, DialogueScreen.ANSWER_WAIT));
+        assertFalse(DialogueClick.answerLost(-1, 500, DialogueScreen.ANSWER_WAIT));
+    }
 }

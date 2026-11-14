@@ -34,9 +34,28 @@ class PlumLadderTest {
             }
         }
         assertTrue(has(Form.RAIN, 11, Kind.THREADS));
-        assertTrue(has(Form.BLOOM, 12, Kind.FULL));
+        assertTrue(has(Form.CRUSH, 12, Kind.FULL));
         assertFalse(has(Form.RAIN, 10, Kind.COLUMN));
         assertFalse(has(Form.RIVER, 11, Kind.WEDGE));
+    }
+    @Test void crushRowsMatchTheSpecAndStayInsidePlumRoom() {
+        var expected = EnumSet.noneOf(Kind.class);
+        for (int star = 0; star <= 12; star++) {
+            switch (star) {
+                case 5 -> expected.addAll(EnumSet.of(Kind.DUST, Kind.WIND));
+                case 6 -> expected.add(Kind.TRAIL);
+                case 7 -> expected.add(Kind.GHOST);
+                case 8 -> expected.addAll(EnumSet.of(Kind.AURA, Kind.RESONANCE));
+                case 9 -> expected.add(Kind.PETALS);
+                case 10 -> expected.addAll(EnumSet.of(Kind.VORTEX, Kind.CRACK, Kind.BURST, Kind.CAPTION));
+                case 11 -> expected.add(Kind.SMOKE);
+                case 12 -> expected.add(Kind.FULL);
+            }
+            assertEquals(expected, kinds(Form.CRUSH, star), "Crush star " + star);
+            assertTrue(crushQuadCeiling(star) < 2400);
+            assertEquals(star < 5, crushQuadCeiling(star) == 0);
+        }
+        assertEquals(.12F, light(8));
     }
     @Test void eachLayerStartsAtHalfDensityAndFillsAtTwelve() {
         for (Kind kind : Kind.values()) {
@@ -70,9 +89,8 @@ class PlumLadderTest {
         String bridge = source("network/ClientPayloadBridge.java");
         assertFalse(bridge.contains("fullMastery()"));
         for (int stars = 1; stars <= 12; stars++) {
-            for (String form : new String[]{"Rain", "River", "Scatter", "Sea", "FullBloom"}) {
-                String method = form.equals("FullBloom") ? "accept" : "on" + form;
-                assertTrue(bridge.contains("vfx." + form + "Vfx." + method + "(payload);"), "star " + stars);
+            for (String form : new String[]{"Rain", "River", "Scatter", "Sea"}) {
+                assertTrue(bridge.contains("vfx." + form + "Vfx.on" + form + "(payload);"), "star " + stars);
                 assertFalse(Files.exists(root().resolve("src/main/java/io/github/verycooltimo/murim/client/vfx/Classic" + form + "Vfx.java")));
             }
         }

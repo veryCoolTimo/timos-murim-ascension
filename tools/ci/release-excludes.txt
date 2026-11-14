@@ -32,6 +32,8 @@ io/github/verycooltimo/murim/client/DevTurntable$*.class
 io/github/verycooltimo/murim/client/DevTurntable.class
 io/github/verycooltimo/murim/client/FilmAdvancements$*.class
 io/github/verycooltimo/murim/client/FilmAdvancements.class
+io/github/verycooltimo/murim/client/FilmItems1114$*.class
+io/github/verycooltimo/murim/client/FilmItems1114.class
 io/github/verycooltimo/murim/client/FilmPillTooltips$*.class
 io/github/verycooltimo/murim/client/FilmPillTooltips.class
 io/github/verycooltimo/murim/client/FilmScreens$*.class
@@ -154,3 +156,6 @@ io/github/verycooltimo/murim/client/vfx/TechniqueLightCommand.class
 io/github/verycooltimo/murim/client/vfx/TechniqueLightCommand$*.class
 io/github/verycooltimo/murim/client/MotionTrace.class
 io/github/verycooltimo/murim/client/MotionTrace$*.class
+
+# Per-frame development capture telemetry (including nested records and callbacks).
+io/github/verycooltimo/murim/client/dev/**

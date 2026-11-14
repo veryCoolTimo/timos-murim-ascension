@@ -45,9 +45,6 @@ public record Loadout(List<Optional<ResourceLocation>> slots, int active, Option
     ).apply(i, (slots, active, foundation, bodyProtection, version) -> new Loadout(slots, active, foundation, bodyProtection))).xmap(Loadout::withoutRemovedArts, loadout -> loadout);
 
     public Loadout {
-        slots = slots.stream().map(slot -> slot.map(PlumFormMigration::replace)).toList();
-        foundation = foundation.map(PlumFormMigration::replace);
-        bodyProtection = bodyProtection.map(PlumFormMigration::replace);
     }
 
     /**

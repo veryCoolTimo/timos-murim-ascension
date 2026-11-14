@@ -79,11 +79,23 @@ public final class BenchRuntime {
             var body=BtBody.of(player,camera);if(body==null)return;
             var context=new BtCtx(mc,body,camera,buffers,ps,t,partial);
             if(element().equals("alpha_test"))BenchAlphaTest.render(context);
+            else if(element().equals("stroke"))io.github.verycooltimo.murim.client.vfx.fx.FxStrokeBench.render(context);
             else if(fire!=null)fire.renderBench(context);
             else if(essences!=null)essences.render(context);
             else if(line!=null)PeakLineRenderer.render(context,line);
 
         }finally{buffers.endBatch();BtFireField.composite(mc);io.github.verycooltimo.murim.client.vfx.bt.BtGlow.composite(mc);ps.popPose();}
+    }
+    /**
+     * Bench camera distance in blocks (system property murim.bench.camDist or env MURIM_BENCH_CAM_DIST). The default third-person
+     * camera stands so close that a fight stroke fills the frame; the author's panels show the figure at about a quarter of the frame.
+     * API: reference/neoforge-src/net/neoforged/neoforge/client/event/CalculateDetachedCameraDistanceEvent.java#setDistance.
+     */
+    @SubscribeEvent static void distance(net.neoforged.neoforge.client.event.CalculateDetachedCameraDistanceEvent e) {
+        if(!active())return;
+        String wanted=System.getProperty("murim.bench.camDist",System.getenv().getOrDefault("MURIM_BENCH_CAM_DIST",""));
+        if(wanted.isBlank())return;
+        try{e.setDistance((float)Math.clamp(Double.parseDouble(wanted.trim()),1,24));}catch(NumberFormatException ignored){}
     }
     private BenchRuntime(){}
 }

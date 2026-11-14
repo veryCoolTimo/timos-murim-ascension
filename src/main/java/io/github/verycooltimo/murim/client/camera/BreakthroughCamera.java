@@ -113,7 +113,8 @@ public final class BreakthroughCamera {
 
     /** The director may take the camera: the player allows it and no conversation holds it. */
     public static boolean enabled() {
-        return !debugOff && ClientConfig.BREAKTHROUGH_CAMERA.get() && !DialogueCamera.active() && !io.github.verycooltimo.murim.client.sect.HeadIntroCamera.active();
+        return !debugOff && ClientConfig.BREAKTHROUGH_CAMERA.get() && !DialogueCamera.active() && !io.github.verycooltimo.murim.client.sect.HeadIntroCamera.active()
+                && !io.github.verycooltimo.murim.client.showcase.ShowcaseClient.holdsCamera();
     }
 
     /** The director owns the camera: playing a scene or gliding back. */

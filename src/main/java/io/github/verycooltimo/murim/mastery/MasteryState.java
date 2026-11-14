@@ -44,7 +44,7 @@ public record MasteryState(Map<ResourceLocation, TechniqueProgress> techniques, 
             // Save migration 19.10: the removed Heavenly Demon arts leave every part of an old save (RemovedArts).
             Map<ResourceLocation, TechniqueProgress> forms = new HashMap<>(RemovedArts.scrub(techniques));
             for (ResourceLocation form : RemovedArts.scrub(known)) {
-                TechniqueProgress p = arts.get(masteryId(PlumFormMigration.replace(form)));
+                TechniqueProgress p = arts.get(masteryId(form));
                 if (p != null) forms.put(form, p);
             }
             return new MasteryState(forms, wisdom, Set.copyOf(RemovedArts.scrub(comprehended)),
@@ -58,12 +58,6 @@ public record MasteryState(Map<ResourceLocation, TechniqueProgress> techniques, 
                     s.wisdom(), List.copyOf(s.comprehended()), s.fired().stream().sorted().toList()));
 
     public MasteryState {
-        Map<ResourceLocation, TechniqueProgress> migrated = new HashMap<>();
-        techniques.forEach((form, progress) -> {
-            ResourceLocation replacement = PlumFormMigration.replace(form);
-            migrated.merge(replacement, progress.migrate(replacement), MasteryState::better);
-        });
-        techniques = migrated;
         Map<ResourceLocation, TechniqueProgress> best = new HashMap<>();
         Map<ResourceLocation, Integer> limits = new HashMap<>();
         // Never add a form while migrating. Select the best achievement, without summing aliases.
@@ -83,7 +77,7 @@ public record MasteryState(Map<ResourceLocation, TechniqueProgress> techniques, 
             normalized.put(form, p.withCap(limits.get(art)));
         });
         techniques = Map.copyOf(normalized);
-        comprehended = comprehended.stream().map(PlumFormMigration::replace).map(MasteryState::masteryId).collect(java.util.stream.Collectors.toUnmodifiableSet());
+        comprehended = comprehended.stream().map(MasteryState::masteryId).collect(java.util.stream.Collectors.toUnmodifiableSet());
         fired = Set.copyOf(fired);
     }
 

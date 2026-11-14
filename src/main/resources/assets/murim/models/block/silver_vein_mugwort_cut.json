@@ -1,7 +1,7 @@
 {
   "textures": {
-    "particle": "minecraft:block/green_terracotta",
-    "stem": "minecraft:block/green_terracotta"
+    "particle": "murim:block/silver_vein_mugwort_stem",
+    "stem": "murim:block/silver_vein_mugwort_stem"
   },
   "elements": [
     {

@@ -25,7 +25,7 @@ import java.util.Random;
  * NORMAL alpha blending (the translucent solid layer), so they cannot add up to white; only the tiny highlights use the additive
  * layer. Sizes are in block pixels (1/16 block), as the body is.
  */
-final class PillSceneRenderer {
+public final class PillSceneRenderer {
     private static final int GRIT = 0x74747C;
     private static final int WARM = 0xD08A4E;
     /** Half width of a band: 1.7 block pixels in all (an outer shade and a narrower inner one). */
@@ -51,6 +51,9 @@ final class PillSceneRenderer {
     private static final List<P> PARTICLES = new ArrayList<>();
     private static final Random RNG = new Random(1109);
     private static float lastAge = -1;
+
+    /** Read-only live simulation count; no rendering or timeline advancement. */
+    public static int liveParticles() { return PARTICLES.size(); }
 
     private PillSceneRenderer() { }
 

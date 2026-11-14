@@ -288,6 +288,8 @@ public final class ClientTechniqueHandler {
                     MurimMod.LOGGER.debug("Искусство третьего сорта {}", payload.techniqueId());
                 } else if (io.github.verycooltimo.murim.technique.BambooRules.is(payload.techniqueId())) {
                     // Hand qi and contacts use BambooVfx, never a sword trail.
+                } else if (io.github.verycooltimo.murim.technique.CrushExecutor.ID.equals(payload.techniqueId())) {
+                    // Crush owns its event-driven cut trail and exact-star gates.
                 } else if (palm) {
                     io.github.verycooltimo.murim.client.vfx.PalmVfxRenderer.start(
                             payload.sourceId(), started);
@@ -297,7 +299,8 @@ public final class ClientTechniqueHandler {
                 // Название объявляет только тот, кто применяет: чужие имена техник поверх
                 // своего экрана — это шум, а не постановка.
                 // Семь Цветков Сливы объявляют себя надписью манхвы (TechniqueCaption) в момент удара.
-                if (isLocalPlayer(payload.sourceId()) && !payload.techniqueId().getPath().startsWith("seven_plum_")) {
+                if (isLocalPlayer(payload.sourceId()) && !payload.techniqueId().getPath().startsWith("seven_plum_")
+                        && !io.github.verycooltimo.murim.technique.CrushExecutor.ID.equals(payload.techniqueId())) {
                     // Имя вспыхивает к концу ритуала, а не в его начале: на пике, как
                     // в раскадровке. Задержка берётся из данных техники, а не зашита числом.
                     TechniqueDefinition definition = TechniqueLoader.get(payload.techniqueId());

@@ -19,6 +19,11 @@ final class ClientPayloadBridge {
             io.github.verycooltimo.murim.client.sect.HeadIntroCamera.accept(payload);
     }
 
+    static void handleShowcase(ShowcasePayloads.Cue payload) {
+        if (FMLEnvironment.dist == Dist.CLIENT)
+            io.github.verycooltimo.murim.client.showcase.ShowcaseClient.accept(payload);
+    }
+
     static void handleSwordGuard(SwordGuardPayloads.View payload) {
         if (FMLEnvironment.dist == Dist.CLIENT)
             io.github.verycooltimo.murim.client.SwordGuardClient.accept(payload);
@@ -31,6 +36,7 @@ final class ClientPayloadBridge {
         if (payload.event() == TechniqueEventPayload.Event.COOLDOWN_RESET) {
             io.github.verycooltimo.murim.client.ClientTechniqueHandler.onTechniqueEvent(payload); return;
         }
+        io.github.verycooltimo.murim.client.vfx.CrushVfx.technique(payload);
         io.github.verycooltimo.murim.client.vfx.BambooVfx.technique(payload);
         io.github.verycooltimo.murim.client.SwordGuardClient.technique(payload);
         io.github.verycooltimo.murim.client.ClientTechniqueHandler.onTechniqueEvent(payload);
@@ -43,7 +49,6 @@ final class ClientPayloadBridge {
         io.github.verycooltimo.murim.client.vfx.ScatterVfx.onTechniqueEvent(payload);
         io.github.verycooltimo.murim.client.vfx.DomeVfx.onTechniqueEvent(payload);
         io.github.verycooltimo.murim.client.vfx.SeaVfx.onTechniqueEvent(payload);
-        io.github.verycooltimo.murim.client.vfx.FullBloomVfx.onTechniqueEvent(payload);
         io.github.verycooltimo.murim.client.vfx.FallingPetalVfx.onTechniqueEvent(payload);
         io.github.verycooltimo.murim.client.vfx.TangVfx.onTechniqueEvent(payload);
         io.github.verycooltimo.murim.client.vfx.ShowerVfx.onTechniqueEvent(payload);
@@ -117,10 +122,6 @@ final class ClientPayloadBridge {
 
     public static void handleScatter(ScatterPayload payload) {
         io.github.verycooltimo.murim.client.vfx.ScatterVfx.onScatter(payload);
-    }
-
-    public static void handleBloom(BloomPayload payload) {
-        io.github.verycooltimo.murim.client.vfx.FullBloomVfx.accept(payload);
     }
 
     public static void handleDome(DomePayload payload) {
@@ -226,6 +227,10 @@ final class ClientPayloadBridge {
         io.github.verycooltimo.murim.client.gear.ClientBeltSwords.set(payload.entityId(), payload.stack());
     }
 
+    public static void handleHitImpact(HitImpactPayload payload) {
+        io.github.verycooltimo.murim.client.vfx.HitImpactVfx.spawn(payload);
+    }
+
     public static void handleSyncAura(SyncAuraPayload payload) {
         io.github.verycooltimo.murim.client.ClientAuraState.set(payload.entityId(), payload.aura());
     }
@@ -267,6 +272,10 @@ final class ClientPayloadBridge {
 
     public static void handleSyncMeditation(SyncMeditationPayload payload) {
         io.github.verycooltimo.murim.client.ClientMeditationState.accept(payload);
+    }
+
+    public static void handleCrush(CrushPayload payload) {
+        io.github.verycooltimo.murim.client.vfx.CrushVfx.accept(payload);
     }
 
     private ClientPayloadBridge() {

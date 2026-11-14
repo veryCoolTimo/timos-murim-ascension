@@ -51,6 +51,18 @@ public final class MethodScrollScreen extends Screen {
         Minecraft.getInstance().setScreen(screen);
     }
 
+    private int series = -1;
+    private String seriesName = "";
+
+    /**
+     * Gallery video: one screenshot per RENDERED frame with the animation clock at 50 ms per frame (20 fps = real speed).
+     * Ticks cannot drive it: a software-GL client renders far less often than it ticks, so tick-driven frames repeat and jump.
+     */
+    public void captureSeries(String name) {
+        series = 0;
+        seriesName = name;
+    }
+
     public boolean unrolled() {
         return renderedUnrolled;
     }
@@ -72,7 +84,7 @@ public final class MethodScrollScreen extends Screen {
         lines.clear();
         int y = paragraph(getTitle(), 0, true);
         for (String key : scroll.textKeys()) y = paragraph(Component.translatable(key), y, false);
-        textHeight = Math.max(0, y - 4); // No trailing paragraph gap needs to be visible.
+        textHeight = Math.max(0, y - 3); // No trailing paragraph gap needs to be visible.
         layout = MethodScrollLayout.of(width, height, art.width, art.height, textHeight);
         offset = Math.min(offset, maxOffset());
         if (opened == 0) {
@@ -96,27 +108,34 @@ public final class MethodScrollScreen extends Screen {
     }
 
     private int paragraph(Component text, int y, boolean heading) {
-        float scale = heading ? 1.25F : 1;
+        float scale = heading ? MethodScrollLayout.TITLE_SCALE : MethodScrollLayout.BODY_SCALE;
         for (var line : font.split(text, (int) (layout.text().width() / scale))) {
             lines.add(new Line(line, y, heading));
-            // Compact leading, with the original 1.25x title and 1x body glyph sizes.
             y += (int) Math.ceil(font.lineHeight * scale);
         }
-        return y + 4;
+        return y + 3;
     }
 
     private double reveal(long now) {
         if (closing != 0) return closeFrom * (1 - ease((now - closing) / 350_000_000.0));
-        return ease((now - opened) / 600_000_000.0);
+        return ease((now - opened) / UNROLL_NANOS);
     }
 
+    /** The scroll opens from its middle outward: both rollers leave the centre line together (author 11.14). */
+    private static final double UNROLL_NANOS = 500_000_000.0;
+    /** The picture and text fade in once the rollers are nearly at their places. */
+    private static final long FADE_FROM_NANOS = 430_000_000L;
+    private static final long FADE_NANOS = 200_000_000L;
+
+    /** Smooth in-out (cubic): slow start, fast middle, soft landing. */
     private static double ease(double t) {
         t = Math.max(0, Math.min(1, t));
-        return 1 - Math.pow(1 - t, 3);
+        return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
     }
 
     @Override
     public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+        if (series >= 0 && series <= 40) captureElapsed = series * 50_000_000L;
         long now = captureElapsed >= 0 && closing == 0 ? opened + captureElapsed : System.nanoTime();
         if (closing != 0 && now - closing >= 350_000_000L) {
             super.onClose();
@@ -124,16 +143,20 @@ public final class MethodScrollScreen extends Screen {
         }
         renderBackground(g, mouseX, mouseY, partialTick);
         double reveal = reveal(now);
-        int end = layout.paper().y() + (int) Math.round(layout.paper().height() * reveal);
         var p = layout.paper();
-        g.enableScissor(p.x(), p.y(), p.right(), end);
+        // Middle-out unroll: the visible paper is a band around the vertical centre, the rollers ride its two edges.
+        int centre = p.y() + p.height() / 2;
+        int half = (int) Math.round(p.height() * reveal / 2.0);
+        int visTop = centre - half;
+        int visBottom = centre + half;
+        g.enableScissor(p.x(), visTop, p.right(), visBottom);
         try {
             // Tile vertically at native height scaled to the paper width; never stretch one strip down the page.
             int tileHeight = Math.max(1, (int) Math.round(paper.height * p.width() / (double) paper.width));
             for (int y = p.y(); y < p.bottom(); y += tileHeight) {
                 draw(g, paper, new MethodScrollLayout.Rect(p.x(), y, p.width(), tileHeight), 0xFFE7D7AF);
             }
-            float alpha = (float) Math.max(0, Math.min(1, (now - opened - 600_000_000L) / 200_000_000.0));
+            float alpha = (float) Math.max(0, Math.min(1, (now - opened - FADE_FROM_NANOS) / (double) FADE_NANOS));
             if (closing != 0) alpha *= (float) (reveal / Math.max(0.0001, closeFrom));
             if (alpha > 0.02F) {
                 g.setColor(1, 1, 1, alpha);
@@ -148,10 +171,17 @@ public final class MethodScrollScreen extends Screen {
         } finally {
             g.disableScissor();
         }
-        draw(g, top, layout.top(), 0xFF655037);
+        var t = layout.top();
+        draw(g, top, new MethodScrollLayout.Rect(t.x(), visTop - t.height(), t.width(), t.height()), 0xFF655037);
         var b = layout.bottom();
-        draw(g, bottom, new MethodScrollLayout.Rect(b.x(), end, b.width(), b.height()), 0xFF655037);
-        renderedUnrolled = closing == 0 && now - opened >= 600_000_000L;
+        draw(g, bottom, new MethodScrollLayout.Rect(b.x(), visBottom, b.width(), b.height()), 0xFF655037);
+        renderedUnrolled = closing == 0 && now - opened >= FADE_FROM_NANOS + FADE_NANOS;
+        if (series >= 0 && series <= 40) {
+            net.minecraft.client.Screenshot.grab(minecraft.gameDirectory,
+                    String.format("gallery_%d_%s_%02d.png", minecraft.options.guiScale().get(), seriesName, series),
+                    minecraft.getMainRenderTarget(), message -> { });
+            series++;
+        }
     }
 
     public static void updateState(LibraryNetwork.MethodState state) {
@@ -186,6 +216,8 @@ public final class MethodScrollScreen extends Screen {
     }
 
     private void footerLine(GuiGraphics g, Component text, int y, int alpha) {
+        // Paper-coloured backing: the line may sit over the bottom of the scrolling text.
+        g.fill(layout.paper().x() + 3, y - 1, layout.paper().right() - 3, y + 7, alpha | 0xE7D7AF);
         float scale = Math.min(0.65F, (layout.paper().width() - 12F) / Math.max(1, font.width(text)));
         g.pose().pushPose();
         g.pose().translate(layout.paper().x() + layout.paper().width() / 2F, y, 0);
@@ -200,10 +232,14 @@ public final class MethodScrollScreen extends Screen {
         try {
             int ink = ((int) (alpha * 255) << 24) | 0x30271C;
             for (Line line : lines) {
+                // Whole lines only: a half-clipped line at the edge of the viewport looks like a bug.
+                float lineScale = line.heading ? MethodScrollLayout.TITLE_SCALE : MethodScrollLayout.BODY_SCALE;
+                int top = line.y - (int) offset;
+                if (top < 0 || top + Math.ceil(font.lineHeight * lineScale) > area.height()) continue;
                 g.pose().pushPose();
                 try {
                     g.pose().translate(area.x(), area.y() + line.y - (int) offset, 0);
-                    float scale = line.heading ? 1.25F : 1;
+                    float scale = line.heading ? MethodScrollLayout.TITLE_SCALE : MethodScrollLayout.BODY_SCALE;
                     g.pose().scale(scale, scale, 1);
                     g.drawString(font, line.text, 0, 0, ink, false);
                 } finally {

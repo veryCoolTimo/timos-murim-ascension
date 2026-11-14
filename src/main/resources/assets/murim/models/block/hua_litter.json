@@ -3,6 +3,6 @@
   "textures": {
     "top": "murim:block/hua_litter_top",
     "side": "murim:block/hua_litter_side",
-    "bottom": "minecraft:block/dirt"
+    "bottom": "murim:block/hua_litter_bottom"
   }
 }

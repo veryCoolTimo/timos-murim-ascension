@@ -97,6 +97,12 @@ public class FortressMaster extends Monster implements Casters.Caster {
     private int stunTicks;
     private int controlImmune;
     private int roarPressure;
+    /** Realm of the boss's aura (see {@link BossAdaptation}); a test may raise it. */
+    private int realm = Realm.SECOND;
+    /** Adaptation clock tick when a participant first came under the aura in this fight. */
+    private long adaptClock;
+    private final java.util.Map<UUID, Long> pressedSince = new java.util.HashMap<>();
+    private final Set<UUID> adapted = new HashSet<>();
     private int noTarget;
     private boolean pendingRoar;
     private boolean pendingBoil;
@@ -237,7 +243,76 @@ public class FortressMaster extends Monster implements Casters.Caster {
     /** Второсортный на вершине (docs/design/26 §3). */
     @Override
     public int rank() {
-        return Realm.SECOND;
+        return realm;
+    }
+
+    public int realm() {
+        return realm;
+    }
+
+    /** GameTest: a boss of another realm (only the pressure rule reads it). */
+    public void setRealm(int realm) {
+        this.realm = realm;
+        refreshAura();
+    }
+
+    /** The player has adapted to the pressure in this fight: it no longer acts on him. */
+    public boolean isAdapted(UUID id) {
+        return adapted.contains(id);
+    }
+
+    /** Adaptation: 20 s after the first pressure in the fight, unless the boss is more than 2 realms above. */
+    private void adaptTick() {
+        java.util.List<ServerPlayer> online = new ArrayList<>();
+        for (UUID id : participants) {
+            ServerPlayer p = ((ServerLevel) level()).getServer().getPlayerList().getPlayer(id);
+            if (p != null) {
+                online.add(p);
+            }
+        }
+        adaptTick(online);
+    }
+
+    /** One tick of the adaptation clock for the given players (GameTest passes players that are not in the player list). */
+    public void adaptTick(java.util.Collection<ServerPlayer> players) {
+        adaptClock++;
+        for (ServerPlayer p : players) {
+            UUID id = p.getUUID();
+            if (adapted.contains(id) || !participants.contains(id)) {
+                continue;
+            }
+            if (p.level() != level() || !p.isAlive() || p.isSpectator() || p.isCreative()) {
+                continue;
+            }
+            int rank = p.getData(io.github.verycooltimo.murim.registry.ModAttachments.PROFILE).rank();
+            if (!pressedSince.containsKey(id)
+                    && io.github.verycooltimo.murim.combat.AuraPressure.of(realm, rank, p.distanceTo(this)) > 0.0F) {
+                pressedSince.put(id, adaptClock);
+            }
+            if (BossAdaptation.adapted(realm, rank, pressedSince.getOrDefault(id, -1L), adaptClock)) {
+                adapted.add(id);
+                // The client forgets the aura of this boss: no screen pressure, no disc, no flames of the pressure.
+                io.github.verycooltimo.murim.network.ChannelSafe.send(p, new io.github.verycooltimo.murim.network.SyncAuraPayload(getId(), 0, false));
+                PlayerJournal.record(p, Component.translatable("murim.fortress.adapted").withStyle(ChatFormatting.GRAY));
+                log("{} привык к давлению", p.getName().getString());
+            }
+        }
+    }
+
+    private void forgetAdaptation() {
+        if (!level().isClientSide && !adapted.isEmpty()) {
+            AuraState aura = getData(io.github.verycooltimo.murim.registry.ModAttachments.AURA);
+            for (UUID id : adapted) {
+                ServerPlayer p = ((ServerLevel) level()).getServer().getPlayerList().getPlayer(id);
+                if (p != null && aura.present()) {
+                    io.github.verycooltimo.murim.network.ChannelSafe.send(p,
+                            new io.github.verycooltimo.murim.network.SyncAuraPayload(getId(), aura.rank(), aura.demonic()));
+                }
+            }
+        }
+        adapted.clear();
+        pressedSince.clear();
+        adaptClock = 0L;
     }
 
     @Override
@@ -276,7 +351,7 @@ public class FortressMaster extends Monster implements Casters.Caster {
 
     private void refreshAura() {
         if (!level().isClientSide) {
-            int rank = roarPressure > 0 ? Realm.FIRST : Realm.SECOND;
+            int rank = roarPressure > 0 ? Math.min(Realm.TOP, realm + 1) : realm;
             // Ци хозяина — не демоническая: красная аура фазы 3 — его частицы (BossFx), а не природа ци.
             AuraState want = new AuraState(rank, false);
             AuraState have = getData(io.github.verycooltimo.murim.registry.ModAttachments.AURA);
@@ -364,6 +439,7 @@ public class FortressMaster extends Monster implements Casters.Caster {
         updatePhase();
         if (arena()) {
             arenaTick();
+            adaptTick();
         }
         bossEvent.setProgress(getHealth() / getMaxHealth());
     }
@@ -450,6 +526,7 @@ public class FortressMaster extends Monster implements Casters.Caster {
         cancelMove();
         entityData.set(ARENA, false);
         entityData.set(PHASE, (byte) 1);
+        forgetAdaptation();
         participants.clear();
         pendingRoar = false;
         pendingBoil = false;
@@ -1007,6 +1084,8 @@ public class FortressMaster extends Monster implements Casters.Caster {
             cancelMove();
             bossEvent.setVisible(false);
             entityData.set(ARENA, false);
+            adapted.clear();
+            pressedSince.clear();
             sound(SoundEvents.RAVAGER_ROAR, 1.2F, 0.4F);
             io.github.verycooltimo.murim.world.fortress.Fortresses.onMasterDefeated((ServerLevel) level(), this);
         }

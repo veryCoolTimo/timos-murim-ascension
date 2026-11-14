@@ -770,7 +770,9 @@ public final class DevSetupEvents {
         if (dist != null) {
             dummyDistance = Double.parseDouble(dist.trim());
         }
-        if (fpCamera && dist == null) {
+        boolean crushFilm = "twenty_four_plum_crush".equals(System.getProperty("murim.capture.technique"));
+        if (crushFilm && dist == null) dummyDistance = 3.5D;
+        if (fpCamera && dist == null && !crushFilm) {
             dummyDistance = 4.0D;
         }
         // MURIM_CAPTURE_ENEMY=zombie — вместо манекена зомби без ИИ, лицом к игроку:
@@ -779,7 +781,7 @@ public final class DevSetupEvents {
         // MURIM_CAPTURE_ENEMY=bandit | bandit_elite | bandit_archer — живой бандит этапа M1
         // (MURIM_CAPTURE_ENEMY_AI=0 — без ИИ). Сложность «Нормально»: на «Лёгкой» урон бандита
         // делится пополам и ни один его удар не дотягивает до порога срыва техник (6).
-        String enemyKind = System.getenv().getOrDefault("MURIM_CAPTURE_ENEMY", "");
+        String enemyKind = System.getenv().getOrDefault("MURIM_CAPTURE_ENEMY", crushFilm ? "bandit" : "");
         net.minecraft.server.level.ServerPlayer captureSubject = level.players().isEmpty() ? null : level.players().get(0);
         if (enemyKind.startsWith("bandit")) {
             for (io.github.verycooltimo.murim.entity.Bandit old
@@ -808,14 +810,14 @@ public final class DevSetupEvents {
             if ("bandit_archer_elite".equals(enemyKind) && bandit instanceof io.github.verycooltimo.murim.entity.BanditArcher ar) {
                 ar.makeElite();
             }
-            bandit.setNoAi("0".equals(System.getenv("MURIM_CAPTURE_ENEMY_AI")));
+            bandit.setNoAi("0".equals(System.getenv().getOrDefault("MURIM_CAPTURE_ENEMY_AI", crushFilm ? "0" : "1")));
             // MURIM_CAPTURE_BANDIT_DELAY — тиков до первого удара: подогнать удар под замах техники.
             String delay = System.getenv("MURIM_CAPTURE_BANDIT_DELAY");
             if (delay != null && !delay.isBlank() && bandit instanceof io.github.verycooltimo.murim.entity.BanditSwordsman sd) {
                 sd.delayFirstAttack(Integer.parseInt(delay.trim()));
             }
             bandit.setPersistenceRequired();
-            String hp = System.getenv("MURIM_CAPTURE_ENEMY_HP");
+            String hp = System.getenv().getOrDefault("MURIM_CAPTURE_ENEMY_HP", crushFilm ? "2000" : "");
             if (hp != null && !hp.isBlank()) {
                 java.util.Objects.requireNonNull(bandit.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH))
                         .setBaseValue(Double.parseDouble(hp.trim()));
@@ -901,7 +903,7 @@ public final class DevSetupEvents {
             }
             // MURIM_CAPTURE_ENEMY_HP — запас здоровья цели: долгая техника (Вихрь) убивала зомби
             // раньше финала, и финальный проход было не по кому снять.
-            String hp = System.getenv("MURIM_CAPTURE_ENEMY_HP");
+            String hp = System.getenv().getOrDefault("MURIM_CAPTURE_ENEMY_HP", crushFilm ? "2000" : "");
             if (hp != null && !hp.isBlank()) {
                 java.util.Objects.requireNonNull(zombie.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH))
                         .setBaseValue(Double.parseDouble(hp.trim()));

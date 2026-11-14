@@ -74,6 +74,11 @@ public final class ModNetwork {
                 (payload, context) -> ClientPayloadBridge.handleBeltSword(payload));
 
         registrar.playToClient(
+                HitImpactPayload.TYPE,
+                HitImpactPayload.STREAM_CODEC,
+                (payload, context) -> ClientPayloadBridge.handleHitImpact(payload));
+
+        registrar.playToClient(
                 SyncAuraPayload.TYPE,
                 SyncAuraPayload.STREAM_CODEC,
                 (payload, context) -> ClientPayloadBridge.handleSyncAura(payload));
@@ -105,6 +110,8 @@ public final class ModNetwork {
                 (payload, context) -> ClientPayloadBridge.handleManual(payload));
         registrar.playToClient(HeadIntroPayloads.View.TYPE, HeadIntroPayloads.View.STREAM_CODEC,
                 (payload, context) -> ClientPayloadBridge.handleHeadIntro(payload));
+        registrar.playToClient(ShowcasePayloads.Cue.TYPE, ShowcasePayloads.Cue.STREAM_CODEC,
+                (payload, context) -> ClientPayloadBridge.handleShowcase(payload));
         registrar.playToServer(HeadIntroPayloads.Skip.TYPE, HeadIntroPayloads.Skip.STREAM_CODEC,
                 (payload, context) -> {
                     if (context.player() instanceof ServerPlayer p)
@@ -209,12 +216,13 @@ public final class ModNetwork {
                 (payload, context) -> ClientPayloadBridge.handleRain(payload));
         registrar.playToClient(ExplosionPayload.TYPE, ExplosionPayload.STREAM_CODEC,
                 (payload, context) -> ClientPayloadBridge.handleExplosion(payload));
+        // API: /tmp/mr-ref-1121/neoforge-src/net/neoforged/neoforge/network/registration/PayloadRegistrar.java#playToClient
+        registrar.playToClient(CrushPayload.TYPE, CrushPayload.STREAM_CODEC,
+                (payload, context) -> ClientPayloadBridge.handleCrush(payload));
         registrar.playToClient(RiverPayload.TYPE, RiverPayload.STREAM_CODEC,
                 (payload, context) -> ClientPayloadBridge.handleRiver(payload));
         registrar.playToClient(ScatterPayload.TYPE, ScatterPayload.STREAM_CODEC,
                 (payload, context) -> ClientPayloadBridge.handleScatter(payload));
-        registrar.playToClient(BloomPayload.TYPE, BloomPayload.STREAM_CODEC,
-                (payload, context) -> ClientPayloadBridge.handleBloom(payload));
         registrar.playToClient(DomePayload.TYPE, DomePayload.STREAM_CODEC,
                 (payload, context) -> ClientPayloadBridge.handleDome(payload));
         registrar.playToClient(SeaPayload.TYPE, SeaPayload.STREAM_CODEC,
@@ -224,7 +232,6 @@ public final class ModNetwork {
                 (payload, context) -> {
                     if (context.player() instanceof ServerPlayer serverPlayer) {
                         io.github.verycooltimo.murim.technique.SeaExecutor.hold(serverPlayer, payload.held());
-                        io.github.verycooltimo.murim.technique.FullBloomExecutor.hold(serverPlayer, payload.held());
                     }
                 });
         registrar.playToClient(TangPayload.TYPE, TangPayload.STREAM_CODEC,

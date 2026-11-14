@@ -104,6 +104,10 @@ public final class BtFireField {
 
     private record Tongue(Vec3 tail, Vec3 mid, Vec3 head, double width, double fade) { }
 
+    private static java.util.function.IntConsumer countObserver;
+    /** Optional render-thread observer; release code has no dependency on capture classes. */
+    public static void observeCounts(java.util.function.IntConsumer observer) { countObserver = observer; }
+
     private BtFireField() {
     }
 
@@ -155,6 +159,7 @@ public final class BtFireField {
         if (prepared != frame && !prepare(c.mc())) {
             return;
         }
+        int submitted = 0;
         for (int field = 0; field < 2; field++) {
             List<Tongue> list = live.get(field);
             if (list.isEmpty()) {
@@ -166,8 +171,10 @@ public final class BtFireField {
             for (int i = 0; i < count; i++) {
                 strip(c, vc, list.get(i));
             }
+            submitted += count;
             pending[field] = true;
         }
+        if (countObserver != null) countObserver.accept(submitted);
         clock = c.labSeconds() * 1.5;
         colours = cols;
         anchor = c.body().axis();

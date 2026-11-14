@@ -61,9 +61,9 @@ public final class GuestDialogueService {
         }
         if (shown < 0 || shown >= node.options().size()) { close(p, n); return; }
         var o = node.options().get(shown);
-        if (!conditions(p, n, o.when())) { show(p, n, d, s.node()); return; }
+        if (!conditions(p, n, o.when())) { refuse(p, n, d, s.node()); return; }
         for (var a : o.actions()) {
-            if (!action(p, n, a)) { show(p, n, d, s.node()); return; }
+            if (!action(p, n, a)) { refuse(p, n, d, s.node()); return; }
             if (!p.getData(ModAttachments.DIALOGUE).active()) return;
         }
         if (o.next().isPresent()) show(p, n, d, o.next().get());
@@ -101,7 +101,16 @@ public final class GuestDialogueService {
         }
     }
 
+    /** The answer was refused: the same node again, with a line that says so instead of a silent re-show. */
+    private static void refuse(ServerPlayer p, DialogueActor n, Dialogue d, String id) {
+        show(p, n, d, id, Component.translatable(DialogueService.REFUSED, n.actor().getName()));
+    }
+
     private static void show(ServerPlayer p, DialogueActor n, Dialogue d, String id) {
+        show(p, n, d, id, null);
+    }
+
+    private static void show(ServerPlayer p, DialogueActor n, Dialogue d, String id, Component override) {
         var node = d.nodes().get(id);
         if (node == null || !valid(p, n)) { close(p, n); return; }
         for (var a : node.enter()) if (!action(p, n, a)) { close(p, n); return; }
@@ -115,9 +124,10 @@ public final class GuestDialogueService {
         shown.add(SectGeneralTalk.CLOSE);
         labels.add(Component.translatable(SectGeneralTalk.pick(SectGeneralTalk.CLOSE_STEM + "plain", p.getRandom())));
         String line = node.random().isEmpty() ? node.line() : node.random().get(n.actor().getRandom().nextInt(node.random().size()));
+        Component text = override != null ? override : Component.translatable(line);
         p.setData(ModAttachments.DIALOGUE, new DialogueService.Session(n.actor().getId(), n.profile().dialogue(), id, List.copyOf(shown)));
         send(p, new DialoguePayloads.Open(n.actor().getId(), n.actor().getName(), Component.translatable(d.title()),
-                Component.translatable(line), labels, "", java.util.Optional.empty(), true));
+                text, labels, "", java.util.Optional.empty(), true));
     }
 
     private static void farewell(ServerPlayer p, DialogueActor n) {

@@ -16,4 +16,9 @@ final class DialogueClick {
     static boolean live(boolean skippedNow, int lineTicks, int guardUntil) {
         return lineTicks >= (skippedNow ? Math.min(guardUntil, SKIP_GUARD) : guardUntil);
     }
+
+    /** Did the server leave an answer without any reply for {@code wait} ticks? Then the click lock must open again. */
+    static boolean answerLost(int sentAt, int lineTicks, int wait) {
+        return sentAt >= 0 && lineTicks - sentAt >= wait;
+    }
 }

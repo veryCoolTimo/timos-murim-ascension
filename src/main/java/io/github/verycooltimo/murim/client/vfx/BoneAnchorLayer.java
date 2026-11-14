@@ -107,7 +107,22 @@ public class BoneAnchorLayer extends RenderLayer<AbstractClientPlayer, PlayerMod
         POSITIONS.computeIfAbsent(entity, key -> new HashMap<>()).put(bone, at);
     }
 
+    private record Held(Vec3 base, Vec3 tip, int tick) {}
+    private static final Map<UUID, Held> HELD = new HashMap<>();
+
+    /** World endpoints of the sword mesh as the held-item renderer drew it this frame (BedrockItemRenderer). */
+    public static void putHeldBlade(UUID entity, Vec3 base, Vec3 tip) {
+        HELD.put(entity, new Held(base, tip, now));
+    }
+
+    /** The drawn blade {base, tip}, or {@code null} when no custom sword mesh was drawn in the last two ticks. */
+    public static Vec3[] heldBlade(net.minecraft.world.entity.Entity entity) {
+        Held h = HELD.get(entity.getUUID());
+        return h == null || now - h.tick > 2 ? null : new Vec3[]{h.base, h.tip};
+    }
+
     public static void clear() {
+        HELD.clear();
         POSITIONS.clear();
         TOUCHED.clear();
     }
@@ -130,6 +145,7 @@ public class BoneAnchorLayer extends RenderLayer<AbstractClientPlayer, PlayerMod
         TOUCHED.entrySet().removeIf(e -> {
             boolean stale = now - e.getValue() > MAX_AGE;
             if (stale) {
+                HELD.remove(e.getKey());
                 POSITIONS.remove(e.getKey());
             }
             return stale;

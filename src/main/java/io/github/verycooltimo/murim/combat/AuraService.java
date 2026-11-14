@@ -55,7 +55,7 @@ public final class AuraService {
         if (event.getTarget() instanceof LivingEntity living && living.hasData(ModAttachments.AURA)
                 && event.getEntity() instanceof ServerPlayer player) {
             AuraState aura = living.getData(ModAttachments.AURA);
-            if (aura.present()) {
+            if (aura.present() && !(living instanceof io.github.verycooltimo.murim.entity.boss.FortressMaster boss && boss.isAdapted(player.getUUID()))) {
                 PacketDistributor.sendToPlayer(player, new SyncAuraPayload(living.getId(), aura.rank(), aura.demonic()));
             }
         }
@@ -85,7 +85,7 @@ public final class AuraService {
         }
     }
 
-    static float measure(ServerPlayer player) {
+    public static float measure(ServerPlayer player) {
         if (io.github.verycooltimo.murim.sect.seal.PenanceEnforcement.pinned(player)) {
             player.getData(ModAttachments.AURA_GUST)[2] = -1;
             return 1.0F;
@@ -98,6 +98,10 @@ public final class AuraService {
             if (!other.hasData(ModAttachments.AURA)) continue;
             AuraState aura = other.getData(ModAttachments.AURA);
             if (!aura.present()) {
+                continue;
+            }
+            // The fortress boss: after ~20 s of the fight the player has adapted and his aura stops pressing.
+            if (other instanceof io.github.verycooltimo.murim.entity.boss.FortressMaster boss && boss.isAdapted(player.getUUID())) {
                 continue;
             }
             float p = AuraPressure.of(aura.rank(), rank, player.distanceTo(other));

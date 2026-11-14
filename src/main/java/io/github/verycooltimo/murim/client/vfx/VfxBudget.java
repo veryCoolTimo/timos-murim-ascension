@@ -8,6 +8,7 @@ public final class VfxBudget {
     /** Live particles over all owners. */
     public static final int TOTAL = 2400;
 
+    private static int crush;
     private static int rain;
     private static int aura;
     private static int breakthrough;
@@ -28,10 +29,13 @@ public final class VfxBudget {
     }
 
     static void setRain(int live) { rain = live; }
-    static int rainRoom() { return Math.max(0, TOTAL - aura - breakthrough); }
+    static int rainRoom() { return Math.max(0, TOTAL - aura - breakthrough - crush); }
+
+    static void setCrush(int live) { crush = live; }
+    static void addCrush(int delta) { crush += delta; }
 
     public static int live() {
-        return aura + breakthrough + rain;
+        return aura + breakthrough + rain + crush;
     }
 
     public static boolean hasRoom() {
@@ -39,6 +43,7 @@ public final class VfxBudget {
     }
 
     static void reset() {
+        crush = 0;
         rain = 0;
         aura = 0;
         breakthrough = 0;

@@ -319,6 +319,7 @@ public final class SectChatter {
         if (e.level() instanceof ServerLevel level) {
             SectBubblePayload payload = new SectBubblePayload(e.getId(), text, BUBBLE_TICKS);
             for (ServerPlayer player : level.players()) {
+                if (io.github.verycooltimo.murim.showcase.ShowcaseReel.running(player)) continue;   // no bubbles in the screenshot reel
                 // The traveller speaks before approaching, from up to 24 blocks away.
                 double range = e instanceof SectDisciple d && d.wanderer()
                         ? io.github.verycooltimo.murim.entity.WandererApproachGoal.SEE

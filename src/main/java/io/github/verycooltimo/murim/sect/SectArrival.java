@@ -90,7 +90,10 @@ public final class SectArrival {
     }
 
     public static boolean invite(ServerPlayer p, SectDisciple guard) {
-        if (SectService.state(p).member() || !greeter(guard) || guard.distanceToSqr(p) > 64) return false;
+        // Whoever opened this very talk keeps it: the guard's watch may end, or he may step off the gate, while the newcomer reads
+        // (14.11 playtest: «I want to become a disciple» was refused silently for ten clicks until the guard was a greeter again).
+        boolean inTalk = guard.talkingTo() == p.getId();
+        if (SectService.state(p).member() || !(inTalk || greeter(guard)) || guard.distanceToSqr(p) > 64) return false;
         p.setData(ModAttachments.SECT, SectService.state(p).with(INVITED));
         SectNotice.bar(p, Component.translatable("murim.sect.arrival.mentor"));
         return true;

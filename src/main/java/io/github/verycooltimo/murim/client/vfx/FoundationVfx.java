@@ -452,6 +452,12 @@ public final class FoundationVfx {
         if (context != (first
                 ? (right ? net.minecraft.world.item.ItemDisplayContext.FIRST_PERSON_RIGHT_HAND : net.minecraft.world.item.ItemDisplayContext.FIRST_PERSON_LEFT_HAND)
                 : (right ? net.minecraft.world.item.ItemDisplayContext.THIRD_PERSON_RIGHT_HAND : net.minecraft.world.item.ItemDisplayContext.THIRD_PERSON_LEFT_HAND))) return;
+        if (!first) {
+            // The drawn blade for blade-bound VFX and capture telemetry (from feat/p24-crush-1110 2999b88a1:
+            // the guessed arm offset sat beside the sword). World position = camera-relative item pose + camera.
+            Vec3 camera = mc.gameRenderer.getMainCamera().getPosition();
+            BoneAnchorLayer.putHeldBlade(player.getUUID(), handPoint(itemPose, endpoints[0]).add(camera), handPoint(itemPose, endpoints[1]).add(camera));
+        }
         for (int i = ACTIVE.size() - 1; i >= 0; i--) {
             Swing s = ACTIVE.get(i);
             if (s.entityId != player.getId() || !s.finisher()) continue;

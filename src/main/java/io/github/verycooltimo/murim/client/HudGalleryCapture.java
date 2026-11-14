@@ -45,7 +45,7 @@ public final class HudGalleryCapture {
             "guide", "guide_plate", "tablet_today_drill", "tooltip_pills", "note_head", "note_clue", "note_junk", "tablet_journal",
             "scroll_six_harmonies", "scroll_mountain_root", "scroll_reverse_breathing",
             "scroll_holy_fire_breath", "scroll_tang_poison_breath", "scroll_street_strength",
-            "scroll_six_harmonies_opening",
+            "scroll_six_harmonies_opening", "items_1114", "items_world_1114", "unroll_1114", "herbs_1114",
             // Every Murim achievement on one sheet (FilmAdvancements): the vanilla tab shows only a few without scrolling.
             "advancements");
     /** {@code MURIM_GALLERY_ONLY=tablet} keeps only the scenes whose name starts with it (a quick tablet pass). */
@@ -366,6 +366,16 @@ public final class HudGalleryCapture {
     }
 
     private static void setUp(Minecraft mc, String scene) {
+        if (scene.equals("unroll_1114")) {
+            // Video frames of the middle-out unroll: the screen steps its clock 50 ms per rendered frame (20 fps = real speed).
+            var m = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "six_harmonies");
+            io.github.verycooltimo.murim.client.library.MethodScrollScreen.openForCapture(
+                    new io.github.verycooltimo.murim.library.LibraryNetwork.OpenMethodScroll(m, "method.murim.six_harmonies",
+                            List.of("method.murim.six_harmonies.cost"),
+                            new io.github.verycooltimo.murim.library.LibraryNetwork.MethodState(m, "can", "", "")), 0L);
+            if (mc.screen instanceof io.github.verycooltimo.murim.client.library.MethodScrollScreen unroll) unroll.captureSeries("unroll");
+            return;
+        }
         if (scene.startsWith("scroll_")) {
             boolean opening = scene.endsWith("_opening");
             String method = scene.substring("scroll_".length());
@@ -387,6 +397,17 @@ public final class HudGalleryCapture {
         switch (scene) {
             case "contract_tracker" -> io.github.verycooltimo.murim.client.sect.ContractTracker.accept(io.github.verycooltimo.murim.client.sect.SectTabletDemo.demo());
             case "tooltip_pills" -> mc.setScreen(new FilmPillTooltips());
+            case "items_1114" -> mc.setScreen(new FilmItems1114());
+            case "herbs_1114" -> mc.setScreen(new FilmItems1114(true));
+            case "items_world_1114" -> {
+                // The new plant and litter textures placed in the stand: both herbs, hua_litter and a cut plant, seen from the front.
+                mc.options.setCameraType(CameraType.FIRST_PERSON);
+                command(mc, "tp @s ~ ~ ~ 0 35");
+                command(mc, "execute at @s run setblock ~-2 ~ ~3 murim:red_vein_fern");
+                command(mc, "execute at @s run setblock ~2 ~ ~3 murim:silver_vein_mugwort");
+                command(mc, "execute at @s run setblock ~ ~-1 ~3 murim:hua_litter");
+                command(mc, "execute at @s run setblock ~ ~ ~3 murim:red_vein_fern");
+            }
             case "advancements" -> mc.setScreen(new FilmAdvancements());
             case "note_head" -> io.github.verycooltimo.murim.library.LibraryClientBridge.openText(
                     new io.github.verycooltimo.murim.library.LibraryNetwork.OpenText(
@@ -559,7 +580,8 @@ public final class HudGalleryCapture {
                 ClientLoadoutState.reset();
                 ClientMasteryState.reset();
             }
-            case "advancements" -> mc.setScreen(null);
+            case "advancements", "items_1114", "herbs_1114", "unroll_1114" -> mc.setScreen(null);
+            case "items_world_1114" -> mc.options.setCameraType(CameraType.THIRD_PERSON_BACK);
             case "training" -> ClientTraining.onState(new TrainingPayloads.State(mc.player.getId(), -1,
                     TrainingPayloads.Beat.VOID, 0, 0, 0L, 0.0F));
             case "guide", "guide_plate" -> {

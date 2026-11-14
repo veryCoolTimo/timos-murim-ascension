@@ -138,6 +138,10 @@ public final class SectAlarm {
      * to him, pins him with his aura and speaks sharply; the third strike of one sect day is a warrant (the penance flow).
      */
     public static int raise(ServerLevel level, Vec3 at, Kind kind, ServerPlayer culprit) {
+        // The screenshot reel (/murim dev showcase) casts techniques in the yard: the sect must not react to it.
+        if (io.github.verycooltimo.murim.showcase.ShowcaseReel.activeIn(level)) {
+            return 0;
+        }
         double range = kind == Kind.FIRE ? HEAR_FIRE : kind == Kind.MONSTER ? HEAR_MONSTER : HEAR;
         List<SectDisciple> heard = new ArrayList<>(level.getEntitiesOfClass(SectDisciple.class,
                 new AABB(at, at).inflate(range, 24.0D, range),

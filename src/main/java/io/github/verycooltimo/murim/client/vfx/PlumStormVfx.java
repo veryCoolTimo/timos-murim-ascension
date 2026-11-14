@@ -32,13 +32,15 @@ import java.util.List;
  */
 @EventBusSubscriber(modid = MurimMod.MODID, value = Dist.CLIENT)
 public final class PlumStormVfx {
-    enum Flow { RAIN, VORTEX, RIVER, BURST, BLOOM }
+    enum Flow { RAIN, VORTEX, RIVER, BURST, BLOOM, CRUSH }
     private static final VfxColour WHITE = colour(0xFFF6FA), EDGE = colour(0xC92353);
     private static final VfxColour BLUE = colour(0xDBF7FF), BLUE_EDGE = colour(0x76CFFF);
     private static final int[][] PALETTES = {
             {0xF78BAE, 0xE64A80, 0xFFD5E3}, {0xF78BB3, 0xE85591, 0xBD295D},
             {0xF56F9F, 0xD93670, 0xFFE0EC}, {0xF777A4, 0xF777A4, 0xFFD3E4},
-            {0xFFB3D0, 0xDA3D76, 0xFFF8FC}};
+            {0xFFB3D0, 0xDA3D76, 0xFFF8FC},
+            // CRUSH (10.11): River's accepted white-pink / pink / crimson petals.
+            {0xFFD1E1, 0xFF8FB5, 0xE8305F}};
     private static final List<Storm> STORMS = new ArrayList<>();
     private static final List<Contact> CONTACTS = new ArrayList<>();
     private static final List<Preparation> PREPARATIONS = new ArrayList<>();
@@ -66,6 +68,11 @@ public final class PlumStormVfx {
         final java.util.Map<Integer, PetalContact> petalContacts = new java.util.HashMap<>();
         final List<net.minecraft.world.entity.LivingEntity> neighbours = new ArrayList<>();
         int age, ending = -1, release = -1;
+        int observedElements;
+        /** Crush v6: the slash the petals leave from (CrushVfx#buildSlash), its wipe-in ticks and its knot (0..1). */
+        List<Vec3> crushSlash;
+        int crushSlashIn;
+        double crushKnot = .5;
         Storm(int owner, int tier, int stars, Flow flow, Vec3 centre, Vec3 forward) {
             this.owner = owner;
             this.tier = tier;
@@ -73,7 +80,7 @@ public final class PlumStormVfx {
             this.form = switch (flow) {
                 case RAIN -> PlumLayers.Form.RAIN; case RIVER -> PlumLayers.Form.RIVER;
                 case BURST -> PlumLayers.Form.SCATTER; case VORTEX -> PlumLayers.Form.SEA;
-                case BLOOM -> PlumLayers.Form.BLOOM;
+                case BLOOM, CRUSH -> PlumLayers.Form.CRUSH; // Full Bloom retired 10.11: its old slot is Crush
             };
             this.flow = flow;
             this.centre = centre;
@@ -102,6 +109,8 @@ public final class PlumStormVfx {
                 case RIVER -> RiverStormTimeline.APEX_SLOTS;
                 case BURST -> 480;
                 case BLOOM -> 700;
+                // Crush (author 10.11 «почти листьев нет»): thousands at ★12, like River.
+                case CRUSH -> 2400;
             };
             // Exact mastery controls presentation density; execution tier remains the gameplay index.
             count = quality((int) (maximum * PlumLayers.density(form, stars)));
@@ -115,6 +124,7 @@ public final class PlumStormVfx {
         final PlumLayerCapture capture = new PlumLayerCapture();
         int age;
         boolean defensive;
+        int observedElements;
         Contact(Storm storm, Vec3 at) {
             this.storm = storm; this.owner = storm.owner; this.at = at;
             this.forward = storm.forward; this.scale = storm.scale;
@@ -127,6 +137,41 @@ public final class PlumStormVfx {
         int age;
         Preparation(int owner) { this.owner = owner; }
     }
+    private static boolean observeElements;
+    /** Enabled only by the development capture subscriber. */
+    public static void observeElements(boolean enabled) { observeElements = enabled; }
+
+    /** Read-only capture query. Counts live procedural elements (flowers are one element),
+     * not visible pixels or draw calls. Never invoked by normal rendering. */
+    public static void observe(java.util.Map<String, Integer> systems, java.util.Set<String> layers,
+                               java.util.Map<String, Object> technique, float partial, int owner) {
+        for (Flow flow : Flow.values()) systems.put("PlumStormVfx." + flow.name(), 0);
+        for (Storm s : STORMS) {
+            systems.merge("PlumStormVfx." + s.flow.name(), s.observedElements, Integer::sum);
+            if (s.owner != owner) continue;
+            for (var kind : PlumLayers.kinds(s.form, s.stars)) layers.add(kind.name());
+            // Crush has no PlumBeats row: its phases come from its own release tick (charge before, strike after).
+            PlumBeats.Beat beat = switch (s.flow) {
+                case RAIN -> PlumBeats.RAIN; case VORTEX -> PlumBeats.SEA;
+                case RIVER -> PlumBeats.RIVER; case BURST -> PlumBeats.SCATTER; case BLOOM -> PlumBeats.BLOOM;
+                case CRUSH -> null;
+            };
+            double t = s.age + partial;
+            technique.put("t", t / 20.0);
+            technique.put("star", s.stars);
+            technique.put("id", "murim:" + switch (s.flow) {
+                case RAIN -> "twenty_four_plum_rainfall"; case VORTEX -> "twenty_four_plum_sea";
+                case RIVER -> "twenty_four_plum_river"; case BURST -> "twenty_four_plum_scatter";
+                case BLOOM -> "twenty_four_plum_full_bloom"; case CRUSH -> "twenty_four_plum_crush";
+            });
+            technique.put("phase", s.burst >= 0 ? "burst" : s.ending >= 0 ? "ending"
+                    : beat == null ? (s.release < 0 ? "charge" : "strike")
+                    : t < beat.formed() ? "forming" : t < beat.strike() ? "holding" : "strike");
+        }
+        for (Contact c : CONTACTS)
+            systems.merge("PlumStormVfx." + c.storm.flow.name(), c.observedElements, Integer::sum);
+    }
+
     private static VfxColour colour(int rgb) {
         return new VfxColour((rgb >> 16 & 255) / 255F, (rgb >> 8 & 255) / 255F, (rgb & 255) / 255F);
     }
@@ -327,6 +372,7 @@ public final class PlumStormVfx {
                 case RIVER -> 110; // T60 + 110 = spec T170; retain the complete falling tail.
                 case BURST -> PlumBeats.SCATTER.end();
                 case BLOOM -> s.release < 0 ? 150 : s.release + 36;
+                case CRUSH -> s.release < 0 ? 140 : s.release + 80; // v6: the petals hold longer (author: «слишком быстро»)
             };
             if (s.age >= end && s.ending < 0) {
                 s.ending = s.age;
@@ -352,7 +398,8 @@ public final class PlumStormVfx {
     }
     /** Tick-only collision for loose petals, including River after the confirmed burst. */
     private static void collideLoosePetals(Storm s) {
-        if (s.flow != Flow.BLOOM && s.flow != Flow.RIVER) return; // Keep Sea's build population circulating.
+        if (s.flow != Flow.BLOOM && s.flow != Flow.RIVER && s.flow != Flow.CRUSH) return; // Keep Sea's build population circulating.
+        if (s.flow == Flow.CRUSH && (s.release < 0 || s.age <= s.release + 2)) return; // burst petals hit the enemy and floor
         if (s.flow == Flow.RIVER && s.burst < 0) return;
         if (s.flow == Flow.BLOOM && (bloomEnd(s) < 0 || s.age <= bloomEnd(s))) return;
         for (int i = 0; i < s.count; i++) {
@@ -367,6 +414,8 @@ public final class PlumStormVfx {
                     net.minecraft.world.phys.shapes.CollisionContext.empty()));
             if (block.getType() != net.minecraft.world.phys.HitResult.Type.MISS) contact = block.getLocation();
             for (var actor : s.neighbours) {
+                // Crush v6: the petals fly on through the enemy; only one in five breaks on the body (the contact reads).
+                if (s.flow == Flow.CRUSH && i % 5 != 0) continue;
                 var body = actor.getBoundingBox();
                 var hit = body.clip(from, to);
                 Vec3 at = body.contains(from) ? from : hit.orElse(null);
@@ -479,6 +528,9 @@ public final class PlumStormVfx {
                 // The enclosing shape holds first; sword strokes then tear petals from its lobes.
                 return storm.lerp(cut, i % 3 == 0 ? smooth(age / 5) : 0);
             }
+            case CRUSH -> {
+                return crushPosition(s, i, t);
+            }
             case BLOOM -> {
                 // Half the unchanged population opens directly on the live blade; the rest
                 // forms an irregular crown around the swordsman, independent of server reach.
@@ -501,11 +553,148 @@ public final class PlumStormVfx {
     }
     /** Read after entity rendering, every frame; never interpolate a tick-old blade path. */
     private static void followBloomBlade(Storm s) {
+        if (s.flow == Flow.CRUSH) {
+            // The packed petals ride the live blade until the strike, then the blade is frozen.
+            if (s.release >= 0) return;
+            var caster = level.getEntity(s.owner);
+            if (caster == null) return;
+            // The sword mesh as drawn (11.11: the guessed arm offset put the petals beside the blade).
+            Vec3[] held = BoneAnchorLayer.heldBlade(caster);
+            if (held != null && held[0].distanceTo(s.casterFeet) < 4) {
+                s.bloomBase = held[0];
+                s.bloomTip = held[1];
+                return;
+            }
+            Vec3 base = BoneAnchorLayer.position(caster, BoneAnchorLayer.Bone.BLADE_BASE);
+            Vec3 tip = BoneAnchorLayer.position(caster, BoneAnchorLayer.Bone.BLADE_TIP);
+            if (base == null || tip == null || base.distanceTo(s.casterFeet) > 3) return;
+            s.bloomBase = base;
+            s.bloomTip = base.add(tip.subtract(base).scale(2.0));
+            return;
+        }
         if (s.flow != Flow.BLOOM || bloomEnd(s) >= 0) return;
         var caster = level.getEntity(s.owner);
         if (caster == null) { s.bloomBase = null; s.bloomTip = null; return; }
         s.bloomBase = BoneAnchorLayer.position(caster, BoneAnchorLayer.Bone.BLADE_BASE);
         s.bloomTip = BoneAnchorLayer.position(caster, BoneAnchorLayer.Bone.BLADE_TIP);
+    }
+    /**
+     * Crush v6: the petals leave from the slash line as its wipe passes them (author 11.11: «лепестки сливы летят дальше от этой
+     * полосы, сквозь врага»). {@code wipeIn} is the slash's wipe-in time in ticks; {@code knot} where the cut crosses the body.
+     */
+    static void crushSlash(int owner, List<Vec3> path, int wipeIn, double knot) {
+        for (Storm s : STORMS) if (s.owner == owner && s.flow == Flow.CRUSH && s.crushSlash == null) {
+            s.crushSlash = List.copyOf(path);
+            s.crushSlashIn = wipeIn;
+            s.crushKnot = knot;
+        }
+    }
+    /** Where along the slash petal {@code i} leaves from: most round the knot, some along its whole length. */
+    private static double crushU(Storm s, int i) {
+        // Film r1: spread over the whole slash the petals stood up as a wall; most leave from round the knot.
+        return Math.max(.02, Math.min(.98, s.crushKnot + (seed(i, 27) + seed(i, 28) - 1) * (i % 4 == 0 ? .6 : .3)));
+    }
+    /** Ticks after the strike at which the slash's wipe head (smoothstep x 1.08 over wipeIn) reaches petal {@code i}. */
+    private static double crushLeave(Storm s, int i) {
+        double y = Math.min(1, crushU(s, i) / 1.08);
+        return s.crushSlashIn * (.5 - Math.sin(Math.asin(1 - 2 * y) / 3));
+    }
+    private static Vec3 crushSlashAt(Storm s, double u) {
+        int n = s.crushSlash.size() - 1;
+        double x = u * n;
+        int k = Math.min(n - 1, (int) x);
+        return s.crushSlash.get(k).lerp(s.crushSlash.get(k + 1), x - k);
+    }
+    /** Crush strike: the packed petals leave the blade where it is now, along the strike axis. */
+    static void releaseCrush(int owner, Vec3 forward) {
+        for (Storm s : STORMS) if (s.owner == owner && s.flow == Flow.CRUSH && s.release < 0) {
+            s.release = s.age;
+            s.forward = direction(forward);
+        }
+    }
+    /** Crush petal birth tick: the vortex fills between 8 and 26 (ch. 196 «закрутил её вокруг своего тела»). */
+    private static double crushBirth(int i) { return i % 3 == 0 ? 8 + 18 * seed(i, 4) : 30 + 10 * seed(i, 4); }
+    /**
+     * Ch. 196, Plum Blossom Crush (spec twenty-four-plum-crush-spec.md): petals swirl round the body (8–30),
+     * pour into the sword and pack along the blade with a rosette on the tip (30–44), tremble while the tip
+     * cracks (44–54), then burst forward-up from the blade, 70 % in the strike cone and 30 % to the sides,
+     * and settle slowly. Radii keep every petal at least .75 block from the head axis.
+     */
+    private static Vec3 crushPosition(Storm s, int i, double t) {
+        Vec3 feet = s.casterFeet;
+        Vec3 up = new Vec3(0, 1, 0);
+        Vec3 side = direction(s.forward.cross(up));
+        double born = crushBirth(i);
+        double life = Math.max(0, t - born);
+        // Three rising spiral arms (a filled cylinder read as a pink cube on film 10.11 v2).
+        int arm = i % 3;
+        double h = .15 + (seed(i, 1) * 2.2 + life * (.05 + .03 * seed(i, 3))) % 2.3;
+        // Outside the aura flames (their particles write depth and hid the front of the vortex, film 10.11 v4).
+        double r = (1.15 + .3 * h / 2.3 + (seed(i, 2) - .5) * .16) * s.scale;
+        double a = arm * Math.PI * 2 / 3 + h * 2.6 + life * .19 + (seed(i, 16) - .5) * .2;
+        Vec3 swirl = feet.add(Math.cos(a) * r, h * s.scale, Math.sin(a) * r);
+        // Only a third of the petals form the vortex (a full population read as a cage, film 10.11 v6);
+        // the rest condense out of the air round the blade during the charge.
+        Vec3 base = s.bloomBase != null ? s.bloomBase : feet.add(0, 1.2, 0).add(s.forward.scale(.4));
+        Vec3 tip = s.bloomTip != null ? s.bloomTip : base.add(s.forward.scale(1.6));
+        Vec3 blade = direction(tip.subtract(base));
+        Vec3 across = direction(blade.cross(up).lengthSqr() < 1e-4 ? side : blade.cross(up));
+        Vec3 lift = direction(across.cross(blade));
+        // A tight sheath on the drawn blade: the petals crawl from the guard to the tip in a helix that
+        // narrows toward the tip (11.11: no tip rosette; in ch. 196 the sword tip itself cracks).
+        double along = Math.min(1, seed(i, 6) * .8 + Math.max(0, t - 30) * (.005 + .005 * seed(i, 7)));
+        double spin = seed(i, 1) * Math.PI * 2 + t * .45 + along * 9;
+        // One in eight stays loose in a wider orbit, so the sheath reads as moving petals and not as a solid cob.
+        double ring = (.04 + .1 * seed(i, 7)) * (i % 8 == 1 ? 2.8 : 1) * (1 - .55 * along) * s.scale;
+        Vec3 slot = base.lerp(tip, .04 + .98 * along).add(across.scale(Math.cos(spin) * ring)).add(lift.scale(Math.sin(spin) * ring));
+        Vec3 at;
+        if (i % 3 == 0) at = swirl.lerp(slot, smooth((t - 30 - 8 * seed(i, 5)) / 6));
+        else {
+            double ca = seed(i, 17) * Math.PI * 2, cr = (.6 + .8 * seed(i, 18)) * s.scale;
+            Vec3 cloud = base.lerp(tip, seed(i, 6)).add(across.scale(Math.cos(ca) * cr)).add(lift.scale(Math.sin(ca) * cr));
+            at = cloud.lerp(slot, smooth((t - born) / 7));
+        }
+        if (t >= 44) {
+            // «Меч кричал»: the packed petals tremble; the tip rosette splits along its cracks.
+            double q = (t >= 47 ? .035 : .02) * s.scale;
+            at = at.add(across.scale(Math.sin(t * 2.3 + i) * q)).add(lift.scale(Math.cos(t * 1.9 + i * .7) * q));
+        }
+        if (s.release < 0 || t < s.release) return at;
+        double bt = t - s.release;
+        if (s.crushSlash != null) {
+            // v6: born on the slash line as its wipe passes, then on through the enemy along the strike, slower than v3/v5
+            // (author 11.11 on v5: «слишком быстро, ничего не успеваю понять»), and carried on by the wind of the cut.
+            double u = crushU(s, i), b = bt - crushLeave(s, i);
+            int n = s.crushSlash.size() - 1;
+            Vec3 tangent = direction(crushSlashAt(s, Math.min(1, u + 1.0 / n)).subtract(crushSlashAt(s, Math.max(0, u - 1.0 / n))));
+            Vec3 origin = crushSlashAt(s, u).add(side.scale((seed(i, 29) - .5) * .3)).add(0, (seed(i, 30) - .5) * .2, 0);
+            if (b <= 0) return origin;
+            boolean cone = seed(i, 10) < .78;
+            double yaw = cone ? (seed(i, 11) - .5) * 1.1 : (seed(i, 11) < .5 ? -1 : 1) * (.6 + .5 * seed(i, 12));
+            double pitch = cone ? -.12 + .36 * seed(i, 13) : -.05 + .3 * seed(i, 13);
+            Vec3 dir = direction(s.forward.scale(Math.cos(yaw) * Math.cos(pitch)).add(side.scale(Math.sin(yaw) * Math.cos(pitch)))
+                    .add(0, Math.sin(pitch), 0).add(tangent.scale(.22)));
+            // A stream with depth, not a hanging wall (film r1): unequal speeds, and the wind of the cut keeps carrying them.
+            double speed = (cone ? 8 : 3.5) * (.2 + .8 * seed(i, 14) * seed(i, 31)) * s.scale + .6;
+            // Film r2: the cloud hung behind the enemy like a wall; the wind keeps carrying them on and they settle.
+            double travel = speed * (1 - Math.exp(-b / (5 + 8 * seed(i, 21)))) + b * (.03 + .05 * seed(i, 32)) * s.scale;
+            double sink = Math.max(0, b - 8) * (.016 + .018 * seed(i, 15));
+            double flutter = Math.sin(b * .3 + i) * .15 * smooth(b / 10);
+            Vec3 out = origin.add(dir.scale(travel)).add(side.scale(flutter)).add(0, -sink, 0);
+            return new Vec3(out.x, Math.max(feet.y + .05, out.y), out.z);
+        }
+        // Burst from where the petal sat on the blade at the strike.
+        boolean cone = seed(i, 10) < .8;
+        double yaw = cone ? (seed(i, 11) - .5) * 1.3 : (seed(i, 11) < .5 ? -1 : 1) * (.65 + .55 * seed(i, 12));
+        double pitch = cone ? -.05 + .75 * seed(i, 13) : -.05 + .35 * seed(i, 13);
+        Vec3 dir = s.forward.scale(Math.cos(yaw) * Math.cos(pitch)).add(side.scale(Math.sin(yaw) * Math.cos(pitch)))
+                .add(0, Math.sin(pitch), 0);
+        double speed = (cone ? 7 : 3.5) * (.2 + .8 * seed(i, 14)) * s.scale;
+        double travel = speed * (1 - Math.exp(-bt / (4 + 4 * seed(i, 21))));
+        double sink = Math.max(0, bt - 6) * (.02 + .015 * seed(i, 15));
+        double flutter = Math.sin(bt * .3 + i) * .12 * smooth(bt / 12);
+        Vec3 out = at.add(dir.scale(travel)).add(side.scale(flutter)).add(0, -sink, 0);
+        return new Vec3(out.x, Math.max(feet.y + .05, out.y), out.z);
     }
 
     private record Emission(Vec3 at, double size, int cell, float spin, float alpha, VfxColour tint) {}
@@ -562,6 +751,7 @@ public final class PlumStormVfx {
             var petals = buffers.getBuffer(MurimRenderTypes.plumPetals());
             for (Storm s : STORMS) {
                 petals = buffers.getBuffer(MurimRenderTypes.plumPetals());
+                if (observeElements) s.observedElements = 0;
                 capture(s, "petals");
                 PlumLayerCapture.layer("PlumStormVfx#render.stormPetals(position/blossom)");
                 double t = s.age + partial;
@@ -574,6 +764,7 @@ public final class PlumStormVfx {
                 if (s.flow == Flow.RIVER && s.has(PlumLayers.Kind.PETALS) && s.ending < 0 && s.burst < 0) {
                     Vec3 heart = s.node >= 0 ? s.destination : s.centre;
                     double radius = s.node >= 0 ? .055 : .10 * smooth(t / 8);
+                    if (observeElements) s.observedElements++;
                     PlumVfx.petal(petals, stack.last(), camera, heart, radius, 0, 0, .95F, 1, 1, 1);
                 }
                 boolean debugBurst = riverCapture() && s.flow == Flow.RIVER && s.burst >= 0 && s.age - s.burst <= 20;
@@ -665,9 +856,18 @@ public final class PlumStormVfx {
                                 (float) (tint.blue() + (1 - tint.blue()) * pulse * .85));
                     }
                     // The blade births every shape; a staggered peel follows the leading band.
-                    if (!growing && s.flow != Flow.RIVER && s.ending < 0) at = s.bud.lerp(at, smooth((t - 2 - seed(i, 8) * 8) / 10));
+                    if (!growing && s.flow != Flow.RIVER && s.flow != Flow.CRUSH && s.ending < 0) at = s.bud.lerp(at, smooth((t - 2 - seed(i, 8) * 8) / 10));
+                    if (s.flow == Flow.CRUSH) {
+                        fade *= clamp((t - crushBirth(i)) / 3);
+                        if (s.release >= 0) {
+                            // v6: hidden until the slash's wipe reaches its point (the slash is built a moment after the strike).
+                            if (s.crushSlash == null) fade *= t - s.release < 2 ? 0 : 1;
+                            else fade *= clamp((t - s.release - crushLeave(s, i)) / 1.5);
+                            fade *= 1 - smooth((t - s.release - 40 - seed(i, 20) * 26) / 14);
+                        }
+                    }
                     // Keep both fighter pockets through the hit, with a feathered, irregular shore.
-                    if (s.flow != Flow.BLOOM && s.flow != Flow.RIVER) {
+                    if (s.flow != Flow.BLOOM && s.flow != Flow.RIVER && s.flow != Flow.CRUSH) {
                         at = bodyPocket(at, s.casterFeet, i);
                         for (var actor : s.neighbours) at = bodyPocket(at, actor.position(), i);
                     }
@@ -684,11 +884,16 @@ public final class PlumStormVfx {
                         fade *= fighterWindow(at, camera, s.casterFeet);
                         for (var actor : s.neighbours) fade *= fighterWindow(at, camera, actor.position(), s.flow == Flow.VORTEX ? 1.5 : 1.25);
                     }
+                    // Only the burst may screen the caster; the window ate the whole vortex on film 10.11 v3.
+                    if (s.flow == Flow.CRUSH && s.release >= 0) fade *= fighterWindow(at, camera, s.casterFeet);
+                    else if (s.flow == Flow.CRUSH) fade *= .3 + .7 * fighterWindow(at, camera, s.casterFeet, .7);
+                    // Not for Crush: any living neighbour (a training stand behind the caster on film 10.11 v5)
+                    // opened a window that ate the front half of the vortex.
                     if (s.flow == Flow.BLOOM || s.flow == Flow.VORTEX) {
                         for (var actor : s.neighbours) fade *= fighterWindow(at, camera, actor.position(), s.flow == Flow.VORTEX ? 1.5 : 1.25);
 
                     }
-                    if (s.flow != Flow.RIVER && s.flow != Flow.BLOOM) at = avoidStrikes(s, at, i, t);
+                    if (s.flow != Flow.RIVER && s.flow != Flow.BLOOM && s.flow != Flow.CRUSH) at = avoidStrikes(s, at, i, t);
                     if (s.flow == Flow.RAIN && s.scale > .251) {
                         double fallAt = PlumBeats.RAIN.strike() + seed(i, 4) * 28;
                         fade *= 1 - smooth((local - fallAt - 34 - seed(i, 16) * 4) / 6);
@@ -706,6 +911,7 @@ public final class PlumStormVfx {
                         double age = t - collision.tick();
                         float erosion = (float) (smooth(age / .7) * (1 - smooth(age / 3.6)));
                         for (int bit = 0; bit < 3 && erosion > 0; bit++) {
+                            if (observeElements) s.observedElements++;
                             Vec3 fragment = collision.at().add((bit - 1) * age * .045,
                                     age * (.025 + bit * .012), Math.sin(i + bit) * age * .035);
                             PlumVfx.paintedPetal(petals, stack.last(), camera, fragment, .025,
@@ -734,6 +940,7 @@ public final class PlumStormVfx {
                         for (var actor : s.neighbours)
                             if (!PlumPolish.headClear(at.distanceToSqr(actor.position().add(0, 1.62, 0)), extent)) clearHeads = false;
                         if (!clearHeads) continue;
+                        if (observeElements) s.observedElements++;
                         if (s.flow == Flow.BURST && i % 32 != 0) {
                             boolean foreground = i % 20 == 0 && distance < 7;
                             size = foreground ? .125 + .225 * seed(i, 7) : i % 4 == 0 ? .01 + .015 * seed(i, 7) : .03 + .05 * seed(i, 7);
@@ -763,9 +970,10 @@ public final class PlumStormVfx {
                         continue;
                     }
                     // Four sizes, buds/cups/open five-petal flowers among loose petals.
-                    if (i % 32 == 0 || s.flow == Flow.BLOOM && i % 5 == 0) {
+                    if (i % 32 == 0 && s.flow != Flow.CRUSH || s.flow == Flow.BLOOM && i % 5 == 0) {
                         // Flowers open repeatedly, then separate into five independently drifting petals.
                         if (s.flow == Flow.BLOOM && i % 2 == 0 && (s.bloomBase == null || s.bloomTip == null)) continue;
+                        if (observeElements) s.observedElements++;
                         double scatter = s.flow == Flow.BLOOM
                                 ? bloomEnd(s) < 0 ? 0 : smooth((t - bloomEnd(s) - seed(i, 14) * 6) / 10)
                                 : growing ? smooth((local - birth - 14 - seed(i, 14) * 12) / 10) : 0;
@@ -778,23 +986,55 @@ public final class PlumStormVfx {
                     }
                     if (s.flow == Flow.BLOOM) {
                         if (i % 2 == 0 && (s.bloomBase == null || s.bloomTip == null)) continue;
+                        if (observeElements) s.observedElements++;
                         size = (i % 12 == 0 ? .19 : i % 3 == 0 ? .11 : .065) * s.scale;
                         float spin = (float) (i * 2.399963 + t * .06);
                         PlumVfx.paintedPetal(petals, stack.last(), camera, at, size, i % 4, spin,
                                 (float) fade, tint.red(), tint.green(), tint.blue());
                         if (i % 7 == 0) emit(emission, s, new Emission(at, size, i % 4, spin, (float) fade * .4F, tint));
-                    } else if (s.flow == Flow.RIVER) {
+                    } else if (s.flow == Flow.RIVER || s.flow == Flow.CRUSH) {
+                        if (observeElements) s.observedElements++;
                         size = (i % 12 == 0 ? .24 : i % 3 == 0 ? .11 : .055) * s.scale;
+                        // Crush: big petals read as round discs at fighting distance (film 10.11 v2).
+                        if (s.flow == Flow.CRUSH) size = (i % 24 == 0 ? .15 : i % 3 == 0 ? .095 : .055) * s.scale;
                         tint = colour(i % 12 == 0 ? 0xE8305F : i % 3 == 0 ? 0xFF8FB5 : 0xFFD1E1);
                         float spin = (float) (i * 2.399963 + t * .06);
+                        if (s.flow == Flow.CRUSH && i % 3 != 0) {
+                            // Packed on the blade the petals are small, so the sword stays readable inside the sheath;
+                            // they grow back as the strike throws them.
+                            double packed = s.release < 0 ? smooth((t - crushBirth(i)) / 7) : 1 - smooth((t - s.release) / 4);
+                            size *= 1 - .5 * packed;
+                            // Half of the packed petals sink into the blade (film 11.11: a full sheath hid the sword),
+                            // the rest pale toward white-pink; the strike brings them all back.
+                            if (i % 8 != 0 && i % 8 != 1) fade *= 1 - .95 * packed;
+                            tint = new VfxColour((float) (tint.red() + (1 - tint.red()) * .5 * packed),
+                                    (float) (tint.green() + (.9 - tint.green()) * .5 * packed), (float) (tint.blue() + (.93 - tint.blue()) * .5 * packed));
+                            if (i % 5 == 0 && s.release < 0 && t >= 40) tint = colour(0xFFF4F8); // white-hot flecks before the strike
+                        } else if (s.flow == Flow.CRUSH && s.release < 0) {
+                            size *= 1 - .5 * smooth((t - 30 - 8 * seed(i, 5)) / 6);
+                        }
+                        if (s.flow == Flow.CRUSH && s.release >= 0 && i % 4 == 0) {
+                            // The burst leaves white-hot and cools to pink (River's contact cooling).
+                            double cool = smooth((t - s.release - 3) / 12);
+                            tint = new VfxColour(1, (float) (1 - cool * .42), (float) (1 - cool * .22));
+                        }
+                        if (s.flow == Flow.CRUSH && s.release >= 0 && s.crushSlash != null) {
+                            // v6: every petal is born out of the slash light pale, and takes its own colour as it flies.
+                            double b = t - s.release - crushLeave(s, i), pale = .7 * (1 - smooth((b - 1) / 7));
+                            tint = new VfxColour((float) (tint.red() + (1 - tint.red()) * pale),
+                                    (float) (tint.green() + (.96 - tint.green()) * pale), (float) (tint.blue() + (.97 - tint.blue()) * pale));
+                        }
                         PlumVfx.paintedPetal(petals, stack.last(), camera, at, size, i % 4, spin, (float) fade, tint.red(), tint.green(), tint.blue());
-                        emit(emission, s, new Emission(at, size, i % 4, spin, (float) fade * .4F, tint));
+                        if (s.flow != Flow.CRUSH || i % 7 == 0)
+                            emit(emission, s, new Emission(at, size, i % 4, spin, (float) fade * .4F, tint));
                     } else if (s.flow == Flow.VORTEX) {
+                        if (observeElements) s.observedElements++;
                         float spin = (float) SeaPetalMotion.spin(i, t);
                         PlumVfx.petal(petals, stack.last(), camera, at, size, i % 4, spin,
                                 (float) fade, tint.red(), tint.green(), tint.blue());
                         if (i % 7 == 0) emit(emission, s, new Emission(at, size, i % 4, spin, (float) fade * .45F, tint));
                     } else {
+                        if (observeElements) s.observedElements++;
                         // Three depth groups; only a few foreground petals carry saturated crimson.
                         boolean near = i % 20 == 0 && at.distanceTo(camera) < 7;
                         size = near ? .125 + .225 * seed(i, 7) : i % 4 == 0 ? .01 + .015 * seed(i, 7) : .03 + .05 * seed(i, 7);
@@ -816,6 +1056,7 @@ public final class PlumStormVfx {
                 s.capture.end();
             }
             for (Contact c : CONTACTS) {
+                if (observeElements) c.observedElements = 0;
                 if (!c.storm.has(PlumLayers.Kind.PETALS) && !c.storm.has(PlumLayers.Kind.FLOWER)) continue;
                 petals = buffers.getBuffer(MurimRenderTypes.plumPetals());
                 capture(c, "contactPetals");
@@ -841,10 +1082,12 @@ public final class PlumStormVfx {
                         for (var actor : c.storm.neighbours) clear *= fighterWindow(at, camera, actor.position());
                     }
                     if (c.storm.crimsonFinish()) {
+                        if (observeElements && clear * SeaScatterFinish.envelope(t, 20 + seed(i, 24) * 20) > 0) c.observedElements++;
                         SeaScatterPetals.draw(buffers.getBuffer(MurimRenderTypes.rainPetals()), stack.last(), camera, at, .05 + q * .05, i, (float) a,
                                 (float) (clear * SeaScatterFinish.envelope(t, 20 + seed(i, 24) * 20)), 1, 1, 1);
                         continue;
                     }
+                    if (observeElements && clear * clamp(t / 2) * (1 - smooth((t - 12 - seed(i, 24) * 20) / 8)) > 0) c.observedElements++;
                     VfxColour tint = colour(i % 3 == 0 ? 0xFFD3E4 : 0xF777A4);
                     PlumVfx.petal(petals, stack.last(), camera, at, .05 + q * .05, i % 4, (float) a,
                             (float) (clear * clamp(t / 2) * (1 - smooth((t - 12 - seed(i, 24) * 20) / 8))), tint.red(), tint.green(), tint.blue());
@@ -985,7 +1228,7 @@ public final class PlumStormVfx {
     }
     /** The gather's leading ribbon is sampled from the actual animated blade, in world space. */
     private static void bladeLead(VertexConsumer v, PoseStack.Pose pose, Vec3 camera, Storm s, double t) {
-        if (!s.has(PlumLayers.Kind.TRAIL) || s.flow == Flow.BLOOM || s.flow == Flow.RIVER || t >= 22 || s.bladePath.size() < 2) return;
+        if (!s.has(PlumLayers.Kind.TRAIL) || s.flow == Flow.BLOOM || s.flow == Flow.RIVER || s.flow == Flow.CRUSH || t >= 22 || s.bladePath.size() < 2) return;
         Vec3[] path = new Vec3[s.bladePath.size()];
         double[] widths = new double[path.length];
         double fade = clamp((22 - t) / 6);
@@ -1271,6 +1514,7 @@ public final class PlumStormVfx {
         return switch (s.flow) {
             case BURST -> j == 7 ? 92 : PlumBeats.SCATTER.strike() + j * 3;
             case BLOOM -> s.release >= 0 ? s.release : j * 4;
+            case CRUSH -> 1e6; // no cut channels: the burst itself is the shape
             case RAIN -> s.scale <= .251 ? 6 : PlumBeats.RAIN.strike() + j;
             case RIVER -> j == 0 ? 0 : PlumBeats.RIVER.strike();
             case VORTEX -> j == 0 ? 0 : PlumBeats.SEA.strike() + (j - 1) * 4;

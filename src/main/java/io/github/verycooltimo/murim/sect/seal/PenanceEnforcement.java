@@ -68,7 +68,10 @@ public final class PenanceEnforcement {
 
     private PenanceEnforcement() { }
 
-    private static boolean exempt(ServerPlayer p) { return p.isCreative() || p.isSpectator(); }
+    /** Creative and spectator players, and the screenshot reel (/murim dev showcase), whose casts must not count as an assault on the sect. */
+    private static boolean exempt(ServerPlayer p) {
+        return p.isCreative() || p.isSpectator() || io.github.verycooltimo.murim.showcase.ShowcaseReel.running(p);
+    }
     public static boolean active(ServerPlayer p) { return !exempt(p) && p.getPersistentData().contains(TAG); }
     public static boolean pinned(ServerPlayer p) { return active(p) && p.getPersistentData().getCompound(TAG).getBoolean("pinned"); }
     public static boolean confined(ServerPlayer p) { return !exempt(p) && PenanceService.sentenced(p); }

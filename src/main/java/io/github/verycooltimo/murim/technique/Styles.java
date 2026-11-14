@@ -34,7 +34,7 @@ public final class Styles {
      * стиля добавятся формами сюда же, своей основы ЛКМ у стиля пока нет.
      */
     public static final Style TWENTY_FOUR_PLUM = new Style(id("twenty_four_plum"), List.of(
-            id("twenty_four_plum_rainfall"), id("twenty_four_plum_full_bloom"), id("twenty_four_plum_scatter"), id("twenty_four_plum_river"), id("twenty_four_plum_sea")), Optional.empty());
+            id("twenty_four_plum_rainfall"), id("twenty_four_plum_scatter"), id("twenty_four_plum_river"), id("twenty_four_plum_sea"), id("twenty_four_plum_crush")), Optional.empty());
 
     /**
      * Шаги — тоже стили форм (автор 03.10: «техника шагов — то же, что 7 цветков: как ты

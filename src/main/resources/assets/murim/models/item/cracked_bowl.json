@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "minecraft:item/bowl"
+    "layer0": "murim:item/cracked_bowl"
   }
 }

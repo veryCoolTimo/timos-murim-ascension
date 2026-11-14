@@ -4,7 +4,6 @@ import io.github.verycooltimo.murim.MurimMod;
 import io.github.verycooltimo.murim.combat.*;
 import io.github.verycooltimo.murim.mastery.*;
 import io.github.verycooltimo.murim.registry.ModAttachments;
-import io.github.verycooltimo.murim.technique.FullBloomExecutor;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -47,22 +46,6 @@ public final class CombatContactReviewGameTests {
             server.setPvpAllowed(false);
             h.assertTrue(DipperService.start(a) != null && b.getData(ModAttachments.WIND_GOD).rootOwner == null,
                     "PvP-off Dipper rooted a player");
-            FullBloomExecutor.begin(a, FullBloomExecutor.ID);
-            var c = a.getData(ModAttachments.FULL_BLOOM);
-            h.assertTrue(c.target != b.getId(), "PvP-off Bloom selected player");
-            c.target = b.getId(); c.reached = 4;
-            c.direction = TargetLock.centre(b).subtract(c.origin).normalize();
-            var at = c.origin.add(c.direction);
-            var arrow = new net.minecraft.world.entity.projectile.Arrow(h.getLevel(), at.x, at.y, at.z,
-                    new ItemStack(Items.ARROW), null);
-            arrow.setOwner(b);
-            h.getLevel().addFreshEntity(arrow);
-            double reserve = c.reserve;
-            FullBloomExecutor.tick(a, FullBloomExecutor.ID, 10);
-            h.assertTrue(b.getDeltaMovement().lengthSqr() == 0, "PvP-off Bloom pushed player");
-            h.assertTrue(arrow.isAlive() && c.reserve == reserve, "PvP-off Bloom removed player's projectile");
-            arrow.discard();
-            FullBloomExecutor.end(a);
         } finally { server.setPvpAllowed(pvp); }
         var duel = SectDuel.start(a, b, a.position(), null);
         h.runAfterDelay(81, () -> {
@@ -80,15 +63,9 @@ public final class CombatContactReviewGameTests {
                 FootworkService.cancel(a);
                 server.setPvpAllowed(true);
                 b.setDeltaMovement(Vec3.ZERO);
-                FullBloomExecutor.begin(a, FullBloomExecutor.ID);
-                var c = a.getData(ModAttachments.FULL_BLOOM);
-                c.target = b.getId(); c.reached = 4;
-                c.direction = TargetLock.centre(b).subtract(c.origin).normalize();
-                FullBloomExecutor.tick(a, FullBloomExecutor.ID, 10);
-                h.assertTrue(b.getDeltaMovement().dot(c.direction) > .1, "duel Bloom failed to push");
                 h.succeed();
             } finally {
-                FullBloomExecutor.end(a); FootworkService.cancel(a);
+                FootworkService.cancel(a);
                 SectDuel.end(h.getLevel(), duel, null, "gone");
                 server.setPvpAllowed(previous);
                 a.discard(); b.discard();

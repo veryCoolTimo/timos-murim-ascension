@@ -114,7 +114,7 @@ public class BossRenderer extends MobRenderer<FortressMaster, BossModel> {
         if (state == FortressMaster.STRIKE && move == BossMove.POUNCE) {
             // Кольцо приземления: зафиксировано до отрыва, растёт яркость к моменту удара.
             float k = Mth.clamp(age / move.strike(), 0.0F, 1.0F);
-            ring(vc, m, (float) (mk.x - ex), floor, (float) (mk.y - ez), (float) BossMove.POUNCE_RADIUS, 0.28F, (0.45F + 0.5F * k) * pulse);
+            ring(vc, m, (float) (mk.x - ex), floor, (float) (mk.y - ez), (float) BossMove.POUNCE_RADIUS, 0.8F, (0.45F + 0.5F * k) * pulse);
             disc(vc, m, (float) (mk.x - ex), floor - 0.01F, (float) (mk.y - ez), (float) BossMove.POUNCE_RADIUS * k, 0.18F * pulse);
             hatch(vc, m, (float) (mk.x - ex), floor + 0.005F, (float) (mk.y - ez), (float) BossMove.POUNCE_RADIUS, 0.4F * pulse);
         }
@@ -132,7 +132,7 @@ public class BossRenderer extends MobRenderer<FortressMaster, BossModel> {
         }
         if (state == FortressMaster.WINDUP && move == BossMove.ROAR) {
             float k = Mth.clamp(age / move.windup(), 0.0F, 1.0F);
-            ring(vc, m, 0.0F, floor, 0.0F, (float) BossMove.ROAR_RADIUS, 0.3F, (0.4F + 0.5F * k) * pulse);
+            ring(vc, m, 0.0F, floor, 0.0F, (float) BossMove.ROAR_RADIUS, 0.9F, (0.4F + 0.5F * k) * pulse);
             disc(vc, m, 0.0F, floor - 0.01F, 0.0F, (float) BossMove.ROAR_RADIUS * k, 0.12F * pulse);
             hatch(vc, m, 0.0F, floor + 0.005F, 0.0F, (float) BossMove.ROAR_RADIUS, 0.3F * pulse);
         }

@@ -347,7 +347,7 @@ public final class SectJourney {
                 Component.translatable("murim.sect.journey.goal." + before)));
     }
 
-    static void syncHud(ServerPlayer p) {
+    public static void syncHud(ServerPlayer p) {
         Component text = hudLine(p);
         Sent snapshot = new Sent(text, p.level().dimension().location());
         SectSiteData session = SectLife.data(p.serverLevel());

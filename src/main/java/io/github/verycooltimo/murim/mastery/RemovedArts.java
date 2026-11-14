@@ -35,7 +35,7 @@ public final class RemovedArts {
 
     /** Is this id one of the removed arts (or their style / animation variants)? */
     public static boolean is(ResourceLocation id) {
-        return id != null && id.getNamespace().equals("murim") && PATHS.contains(id.getPath());
+        return id != null && ((id.getNamespace().equals("murim") && PATHS.contains(id.getPath())) || PlumFormMigration.retired(id));
     }
 
     /** Is this an Apex Echo milestone key ({@code murim:quiet_heart_guard#1}) of a removed art? */

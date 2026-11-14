@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "minecraft:item/wooden_sword"
+    "layer0": "murim:item/worn_practice_sword"
   }
 }

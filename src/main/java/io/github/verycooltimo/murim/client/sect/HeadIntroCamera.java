@@ -221,7 +221,7 @@ public final class HeadIntroCamera {
             int y = h - 54;
             for (var text : lines) { g.drawString(mc.font, text, (w - mc.font.width(text)) / 2, y, 0xFFF2E8CE); y += 10; }
         }
-        if (t >= SectHeadIntro.SKIP_AFTER && t < 305)
+        if (t >= SectHeadIntro.SKIP_AFTER && t < 305 && !io.github.verycooltimo.murim.client.showcase.ShowcaseClient.running())
             g.drawCenteredString(mc.font, Component.translatable("murim.sect.head_scene.skip", mc.options.keyJump.getTranslatedKeyMessage()), w / 2, h - 13, 0xFFAAAAAA);
     }
 }

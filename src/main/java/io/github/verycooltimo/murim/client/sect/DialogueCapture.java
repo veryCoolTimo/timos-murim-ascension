@@ -121,6 +121,7 @@ public final class DialogueCapture {
                 MurimMod.LOGGER.info("SMOKE-MED active beats={} ticks={} ring={}", ms.beats(), ms.ticks(), ms.ring().active());
             }
         }
+        watch(mc);
         boolean waiting = false;
         while (nextStep < steps.size() && steps.get(nextStep).tick() <= tick) {
             Step s = steps.get(nextStep);
@@ -144,6 +145,13 @@ public final class DialogueCapture {
                 }
                 MurimMod.LOGGER.info("SMOKE-DIALOGUE-OPEN tick={} scheduled={}", elapsed, tick);
                 gate = null;
+            } else if (s.action().equals("waitdlg")) {
+                // dev: the clock waits until a talk screen is open (a talk that opens by itself, e.g. the gate guard's)
+                if (!(mc.screen instanceof DialogueScreen)) {
+                    waiting = true;
+                    break;
+                }
+                MurimMod.LOGGER.info("SMOKE-DIALOGUE-OPEN tick={} scheduled={} (waitdlg)", elapsed, tick);
             } else if (s.action().equals("close") || s.action().startsWith("answer@")
                     || s.action().matches("[1-9]")) {
                 boolean closing = s.action().equals("close");
@@ -226,6 +234,25 @@ public final class DialogueCapture {
                 int o = ks.captureAnswer(action.substring(7));
                 if (o >= 0) ks.press(o);
             }
+            return;
+        }
+        if (action.startsWith("srv@")) {
+            // dev: server commands run mid-talk (several separated by '|'), permission 4, as the player
+            var server = mc.getSingleplayerServer();
+            var id = mc.player.getUUID();
+            String list = action.substring(4);
+            if (server != null) server.execute(() -> {
+                var sp = server.getPlayerList().getPlayer(id);
+                if (sp == null) return;
+                for (String c : list.split("\\|")) {
+                    MurimMod.LOGGER.info("SMOKE-SRV {}", c);
+                    server.getCommands().performPrefixedCommand(sp.createCommandSourceStack().withPermission(4).withSuppressedOutput(), c.trim());
+                }
+            });
+            return;
+        }
+        if (action.startsWith("click@") || action.startsWith("clickd@")) {
+            click(mc, action.substring(action.indexOf('@') + 1), action.startsWith("clickd@"));
             return;
         }
         if (at > 0) {
@@ -383,6 +410,59 @@ public final class DialogueCapture {
                     ds.press(action.charAt(0) - '1');
                 }
             }
+        }
+    }
+
+    private static int clicks;
+    private static Object watchedLine;
+    private static String watchedState = "";
+
+    /**
+     * Dev: a REAL click on the drawn button of the option with this translation key. {@code click@key} moves the X11 pointer and
+     * presses the left button with XTEST (tools/capture/xclick.py), so GLFW, MouseHandler and Screen#mouseClicked all run;
+     * {@code clickd@key} calls Screen#mouseClicked at the same point. The state before the click goes to the log, the effect
+     * is logged by {@link #watch}.
+     */
+    private static void click(Minecraft mc, String key, boolean direct) {
+        if (!(mc.screen instanceof DialogueScreen ds)) {
+            MurimMod.LOGGER.info("SMOKE-CLICK n={} key={} no dialogue screen", ++clicks, key);
+            return;
+        }
+        int o = ds.captureAnswer(key);
+        double[] gui = o < 0 ? null : ds.captureButton(o);
+        if (gui == null) {
+            MurimMod.LOGGER.info("SMOKE-CLICK n={} key={} option not drawn (option={})", ++clicks, key, o);
+            return;
+        }
+        double scale = mc.getWindow().getGuiScale();
+        int[] wx = new int[1];
+        int[] wy = new int[1];
+        org.lwjgl.glfw.GLFW.glfwGetWindowPos(mc.getWindow().getWindow(), wx, wy);
+        int rx = (int) Math.round(wx[0] + gui[0] * scale);
+        int ry = (int) Math.round(wy[0] + gui[1] * scale);
+        MurimMod.LOGGER.info("SMOKE-CLICK n={} t={} key={} option={} gui={},{} root={},{} {} {}", ++clicks, elapsed, key, o,
+                gui[0], gui[1], rx, ry, direct ? "direct" : "xtest", ds.captureState(gui[0], gui[1]));
+        if (direct) {
+            ds.mouseClicked(gui[0], gui[1], 0);
+            ds.mouseReleased(gui[0], gui[1], 0);
+            return;
+        }
+        try {
+            new ProcessBuilder("python3", System.getenv().getOrDefault("MURIM_XCLICK", "../tools/capture/xclick.py"), System.getenv().getOrDefault("DISPLAY", ":0"),
+                    Integer.toString(rx), Integer.toString(ry)).inheritIO().start();
+        } catch (java.io.IOException e) {
+            MurimMod.LOGGER.info("SMOKE-CLICK xclick failed {}", e.toString());
+        }
+    }
+
+    /** Dev: logs every change of the talk screen (a new line arrived, closed), with the tick, so a click can be matched to its effect. */
+    private static void watch(Minecraft mc) {
+        Object line = mc.screen instanceof DialogueScreen ds ? ds.captureLine() : null;
+        String state = mc.screen instanceof DialogueScreen ds ? ds.captureState(-1, -1) : "none";
+        if (line != watchedLine) {
+            MurimMod.LOGGER.info("SMOKE-DLG t={} line {} -> {} {}", elapsed, watchedLine == null ? "none" : Integer.toHexString(watchedLine.hashCode()),
+                    line == null ? "none" : Integer.toHexString(line.hashCode()), state);
+            watchedLine = line;
         }
     }
 

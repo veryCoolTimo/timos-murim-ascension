@@ -42,17 +42,15 @@ public final class AirhandFilmCapture {
             try {
                 switch (cue.action()) {
                     case "stage" -> {
-                        if (scene.equals("full_bloom") && "1".equals(System.getenv("MURIM_CAPTURE_PLUM_CAMERA"))) {
-                            // The round-4 camera gate already checked this exact swordsman and mark.
-                            // Replacing him after frame zero invalidates that gate and loses the stand's HP.
-                            // API: MC EntityGetter#getEntitiesOfClass(Class,AABB), Entity#addTag/setCustomName,
-                            // Component#literal; supplied read-only 1.21.1 sources.
+                        if (scene.equals("plum_crush") && "1".equals(System.getenv("MURIM_CAPTURE_PLUM_CAMERA"))) {
+                            // Preserve the exact target and mark already admitted by the Plum camera gate.
+                            // API: supplied MC EntityGetter#getEntitiesOfClass; Entity#addTag/setCustomName;
+                            // Component#literal. Stage stays read-only with respect to combat outcomes.
                             var staged = level.getEntitiesOfClass(BanditSwordsman.class, p.getBoundingBox().inflate(12));
-                            accepted = staged.size() == 1;
-                            reason[0] = "expected_one_staged_swordsman";
+                            accepted = staged.size() == 1 && staged.getFirst().distanceTo(p) <= 4;
+                            reason[0] = "expected_one_staged_crush_target_within_four_blocks";
                             if (accepted) {
-                                var actor = staged.getFirst();
-                                actor.addTag(TAG);
+                                var actor = staged.getFirst(); actor.addTag(TAG);
                                 actor.setCustomName(net.minecraft.network.chat.Component.literal(TAG));
                             }
                             break;
@@ -77,22 +75,13 @@ public final class AirhandFilmCapture {
                             for (int i = 0; i < count; i++) {
                                 boolean archer = scene.contains("rain") || leaf;
                                 Mob actor = archer ? new FilmSkeleton(level)
-                                        : scene.equals("full_bloom") ? new BanditSwordsman(
-                                                io.github.verycooltimo.murim.registry.ModEntities.BANDIT_SWORDSMAN.get(), level)
                                         : new Actor(level);
                                 actor.setNoAi(true); actor.setPersistenceRequired(); actor.addTag(TAG);
                                 // API: MC Entity#setCustomName uses SynchedEntityData; tags themselves do not sync.
                                 actor.setCustomName(net.minecraft.network.chat.Component.literal(TAG));
                                 actor.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(archer ? Items.BOW : Items.IRON_SWORD));
-                                double distance = archer ? 5 : scene.equals("full_bloom") ? 4 : scene.equals("bamboo_bending") ? 5 : 2;
+                                double distance = archer ? 5 : scene.equals("plum_crush") ? 3.5 : scene.equals("bamboo_bending") ? 5 : 2;
                                 actor.moveTo(p.getX() + (leaf ? 2 : (i - (count - 1) / 2.0) * .7), p.getY(), p.getZ() + distance, 180, 0);
-                                if (scene.equals("full_bloom")) {
-                                    // full-19 film: one swordsman on the same 28-degree axis as DevSetupEvents,
-                                    // no overlapping zombie or foreground dummy hiding the destination.
-                                    double axis = Math.toRadians(28);
-                                    actor.moveTo(p.getX() - Math.sin(axis) * distance, p.getY(),
-                                            p.getZ() + Math.cos(axis) * distance, 208, 0);
-                                }
                                 if (!level.addFreshEntity(actor)) { accepted = false; reason[0] = "spawn_rejected"; }
                             }
                         }
@@ -115,8 +104,6 @@ public final class AirhandFilmCapture {
                             reason[0] = FragranceAirService.releaseResult(p);
                             accepted = reason[0] == null;
                         }
-                        else if (form.equals(io.github.verycooltimo.murim.technique.FullBloomExecutor.ID))
-                            io.github.verycooltimo.murim.technique.FullBloomExecutor.hold(p, false);
                         else io.github.verycooltimo.murim.technique.BambooExecutor.release(p);
                     }
                     case "shoot" -> {
@@ -141,10 +128,8 @@ public final class AirhandFilmCapture {
                             if (cue.action().equals("hit")) {
                                 var bamboo = p.hasData(ModAttachments.BAMBOO_HAND) ? p.getData(ModAttachments.BAMBOO_HAND) : null;
                                 boolean spent = bamboo != null && bamboo.spent;
-                                var bloom = p.getData(ModAttachments.FULL_BLOOM);
-                                double reserve = bloom.reserve;
                                 boolean damaged = enemy.doHurtTarget(p);
-                                boolean defended = (bamboo != null && !spent && bamboo.spent) || bloom.reserve < reserve;
+                                boolean defended = (bamboo != null && !spent && bamboo.spent);
                                 if (!damaged && !defended) { accepted = false; reason[0] = "damage_rejected_no_defense"; }
                             }
                         }

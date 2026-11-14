@@ -212,6 +212,12 @@ public final class DevCaptureHandler {
         event.setRoll(0);
     }
 
+    /** Crush uses the same gated Plum camera and cue driver, without a hold/release key. */
+    private static String captureScene() {
+        return System.getenv().getOrDefault("MURIM_CAPTURE_SCENE",
+                "twenty_four_plum_crush".equals(System.getProperty(TECHNIQUE_PROPERTY)) && plumFilm() ? "plum_crush" : "");
+    }
+
     private static boolean plumFilm() { return !playerView() && "1".equals(System.getenv("MURIM_CAPTURE_PLUM_CAMERA")); }
 
     private static net.minecraft.world.entity.LivingEntity plumTarget(Minecraft mc) {
@@ -845,7 +851,7 @@ public final class DevCaptureHandler {
                 } else {
                     stillSneakTicks = TRAVEL_CAPTURE_TICKS;
                 }
-            } else if (!mode.isEmpty() || !System.getenv().getOrDefault("MURIM_CAPTURE_SCENE", "").isEmpty()) {
+            } else if (!mode.isEmpty() || !captureScene().isEmpty()) {
                 // Шаги: стенд жмёт R с контекстом — run (спринт+вперёд, бежит и дважды прыгает),
                 // left/back (уклонение в сторону), plain (простой R).
                 // A scripted technique scene has no footwork mode; it still needs the scene clock.
@@ -875,7 +881,7 @@ public final class DevCaptureHandler {
         if (footworkAge >= 0 && framesLeft > 0 && footworkSubject != null) {
             String mode = System.getenv().getOrDefault("MURIM_CAPTURE_FOOTWORK", "");
             String sequence = System.getenv().getOrDefault("MURIM_CAPTURE_SEQUENCE", "");
-            String scene = System.getenv().getOrDefault("MURIM_CAPTURE_SCENE", "");
+            String scene = captureScene();
             if (scene.equals("light_test")) {
                 LightTestCapture.tick(minecraft, footworkAge);
             } else if (!scene.isEmpty()) {
@@ -886,16 +892,7 @@ public final class DevCaptureHandler {
                 // Drive vanilla walking/steering; server teleport is only the initial ledge fixture.
                 minecraft.options.keyUp.setDown(floating ? age >= 12 && age < 70 : rising && age >= 27 && age < 65);
                 minecraft.options.keyLeft.setDown(floating && age >= 50 && age < 65);
-                // Same cue grammar as the server driver: custom early/long releases keep input in sync.
-                int bloomRelease = 115;
-                if (scene.startsWith("full_bloom")) {
-                    for (var cue : io.github.verycooltimo.murim.dev.AirhandCapturePlan.parse(
-                            System.getenv().getOrDefault("MURIM_CAPTURE_SCENE_CUES", "stage@0,cast@10"))) {
-                        if (cue.action().equals("release")) bloomRelease = cue.tick();
-                    }
-                }
-                ModKeyMappings.TECHNIQUE.setDown(scene.startsWith("full_bloom") && age >= 5 && age < bloomRelease
-                        || scene.equals("bamboo_wind_leaf") && age >= 10 && age < 55);
+                ModKeyMappings.TECHNIQUE.setDown(scene.equals("bamboo_wind_leaf") && age >= 10 && age < 55);
                 if (minecraft.getSingleplayerServer() != null && minecraft.player != null) {
                     var server = minecraft.getSingleplayerServer();
                     var uuid = minecraft.player.getUUID();
@@ -1507,6 +1504,8 @@ public final class DevCaptureHandler {
         }
         Screenshot.grab(minecraft.gameDirectory, name, minecraft.getMainRenderTarget(), message -> {
         });
+        if (io.github.verycooltimo.murim.client.dev.VfxTelemetry.ENABLED)
+            io.github.verycooltimo.murim.client.dev.CaptureTelemetry.grabbed(minecraft, name, frameIndex, anglePrefix());
     }
 
     private DevCaptureHandler() {

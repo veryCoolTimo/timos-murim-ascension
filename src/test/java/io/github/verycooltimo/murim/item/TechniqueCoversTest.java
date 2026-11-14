@@ -38,11 +38,11 @@ class TechniqueCoversTest {
         assertEquals(TechniqueCovers.index(id("seven_plum_blossoms")), TechniqueCovers.index(id("seven_plum")));
         assertEquals(TechniqueCovers.index(id("tang_five_thunders")), TechniqueCovers.index(id("tang_twelve_daggers")));
         assertEquals(TechniqueCovers.index(id("wind_god_steps")), TechniqueCovers.index(id("wind_god_lightning")));
-        assertEquals(TechniqueCovers.index(id("twenty_four_plum_sea")), TechniqueCovers.index(id("twenty_four_plum_full_bloom")));
         assertEquals(TechniqueCovers.index(id("dark_fragrance_step")), TechniqueCovers.index(id("dark_fragrance_behind")));
         assertNotEquals(TechniqueCovers.index(id("wind_god_steps")), TechniqueCovers.index(id("six_harmonies")));
         assertNotEquals(TechniqueCovers.index(id("seven_plum_basic")), TechniqueCovers.index(id("twenty_four_plum_rainfall")));
         assertNotEquals(TechniqueCovers.index(id("wind_god_steps")), TechniqueCovers.index(id("dark_fragrance_step")));
+        assertEquals(TechniqueCovers.index(id("twenty_four_plum_sea")), TechniqueCovers.index(id("twenty_four_plum_crush")));
         assertEquals(0, TechniqueCovers.index(id("no_such_technique")));
         assertEquals(0, TechniqueCovers.index(null));
         assertEquals(0, TechniqueCovers.index(ResourceLocation.fromNamespaceAndPath("other", "wind_god_steps")));

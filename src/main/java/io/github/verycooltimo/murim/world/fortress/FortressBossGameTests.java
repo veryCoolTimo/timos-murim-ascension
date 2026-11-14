@@ -185,4 +185,62 @@ public final class FortressBossGameTests {
         }
         helper.succeed();
     }
+
+    // ------------------------------------------------------------------ pressure adaptation (author 14.11)
+
+    private static FortressMaster pressureFight(GameTestHelper helper, ServerLevel level, FortressData.Entry e, ServerPlayer p, int bossRealm) {
+        FortressMaster m = Fortresses.spawnMaster(level, e);
+        helper.assertTrue(m != null, "no master");
+        m.setRealm(bossRealm);
+        p.setData(io.github.verycooltimo.murim.registry.ModAttachments.PROFILE, io.github.verycooltimo.murim.profile.DantianProfile.INITIAL.withRank(0));
+        p.moveTo(m.getX(), m.getY(), m.getZ() + 3.0D);
+        m.startFight(p);
+        return m;
+    }
+
+    private static void run(FortressMaster m, ServerPlayer p, int ticks) {
+        for (int i = 0; i < ticks; i++) {
+            m.adaptTick(List.of(p));
+        }
+    }
+
+    /** Boss two realms above (second vs none): the pressure acts at first and stops after 20 s; a reset brings it back. */
+    @GameTest(template = "fortress_floor", timeoutTicks = 60)
+    public static void pressureStopsAfterTwentySecondsWithinTwoRealms(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        FortressData.Entry e = place(helper);
+        ServerPlayer p = fakePlayer(helper);
+        FortressMaster m = pressureFight(helper, level, e, p, io.github.verycooltimo.murim.cultivation.Realm.SECOND);
+        helper.assertTrue(io.github.verycooltimo.murim.combat.AuraService.measure(p) > 0.0F, "no pressure at the start of the fight");
+        run(m, p, 390);
+        helper.assertTrue(!m.isAdapted(p.getUUID()) && io.github.verycooltimo.murim.combat.AuraService.measure(p) > 0.0F, "adapted before 20 s");
+        run(m, p, 20);
+        helper.assertTrue(m.isAdapted(p.getUUID()), "not adapted after 20 s");
+        helper.assertTrue(io.github.verycooltimo.murim.combat.AuraService.measure(p) == 0.0F, "pressure still acts after adaptation");
+        m.resetFight();
+        helper.assertTrue(!m.isAdapted(p.getUUID()), "adaptation survived the reset");
+        helper.assertTrue(io.github.verycooltimo.murim.combat.AuraService.measure(p) > 0.0F, "no pressure after the reset");
+        m.discard();
+        Fortresses.data(level).remove(e.key);
+        helper.succeed();
+    }
+
+    /** Boss four realms above a rank-0 player (peak vs none): no adaptation, the pressure stays as it was. */
+    @GameTest(template = "fortress_floor", timeoutTicks = 60)
+    public static void pressureStaysBeyondTwoRealms(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        FortressData.Entry e = place(helper);
+        ServerPlayer p = fakePlayer(helper);
+        FortressMaster m = pressureFight(helper, level, e, p, io.github.verycooltimo.murim.cultivation.Realm.PEAK);
+        run(m, p, 800);
+        helper.assertTrue(!m.isAdapted(p.getUUID()), "adapted to a boss 4 realms above");
+        helper.assertTrue(io.github.verycooltimo.murim.combat.AuraService.measure(p) > 0.0F, "pressure stopped for a boss 4 realms above");
+        // three realms above (first vs none, a raised boss) is still beyond the limit
+        m.setRealm(io.github.verycooltimo.murim.cultivation.Realm.FIRST);
+        run(m, p, 800);
+        helper.assertTrue(!m.isAdapted(p.getUUID()), "adapted to a boss 3 realms above");
+        m.discard();
+        Fortresses.data(level).remove(e.key);
+        helper.succeed();
+    }
 }

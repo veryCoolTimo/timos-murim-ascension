@@ -491,7 +491,8 @@ public final class ClientMeditationState {
         FlowCamera.tick(minecraft, (FlowClient.active() || io.github.verycooltimo.murim.dev.DevHooks.INSTANCE.benchActive()) && !BreakthroughCamera.active());
         wanted = cinematic();
         if (wanted) {
-            CameraType shot = BreakthroughCamera.active() || FlowCamera.active() ? CameraType.THIRD_PERSON_BACK : CameraType.THIRD_PERSON_FRONT;
+            CameraType shot = BreakthroughCamera.active() || FlowCamera.active() || io.github.verycooltimo.murim.client.showcase.ShowcaseClient.holdsCamera()
+                    ? CameraType.THIRD_PERSON_BACK : CameraType.THIRD_PERSON_FRONT;
             if (minecraft.options.getCameraType() != shot) {
                 minecraft.options.setCameraType(shot);
             }

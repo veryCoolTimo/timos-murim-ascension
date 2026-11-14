@@ -147,6 +147,7 @@ public final class SwordGuard {
         }
         e.level().playSound(null, e.getX(), e.getY(), e.getZ(), net.minecraft.sounds.SoundEvents.ANVIL_LAND, SoundSource.PLAYERS, 0.25F, 1.9F);
         ChannelSafe.nearEntity(e, new SwordGuardPayloads.View(e.getId(), 3), true);
+        HitImpacts.block(e, incoming, salvo);
         sync(e);
     }
     @SubscribeEvent(priority = EventPriority.HIGHEST)
@@ -183,6 +184,7 @@ public final class SwordGuard {
             s.knockbackX = incoming.getX() - e.getX();
             s.knockbackZ = incoming.getZ() - e.getZ();
             e.level().playSound(null, e.getX(), e.getY(), e.getZ(), net.minecraft.sounds.SoundEvents.SHIELD_BLOCK, SoundSource.PLAYERS, 0.45F, 0.75F);
+            HitImpacts.block(e, incoming, false);
         }
     }
     // API: /tmp/NeoForge-1.21.1/.../event/entity/ProjectileImpactEvent.java.

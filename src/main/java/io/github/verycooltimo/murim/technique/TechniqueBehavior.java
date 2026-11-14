@@ -28,8 +28,7 @@ public sealed interface TechniqueBehavior
                 TechniqueBehavior.PlumRiver,
                 TechniqueBehavior.PlumScatter,
                 TechniqueBehavior.PlumDome,
-                TechniqueBehavior.PlumFullBloom,
-                TechniqueBehavior.PlumSea,
+                TechniqueBehavior.PlumSea, TechniqueBehavior.PlumCrush,
                 TechniqueBehavior.PlumShower,
                 TechniqueBehavior.FallingPetal, TechniqueBehavior.SixForm,
                 TechniqueBehavior.TangDaggers,
@@ -50,7 +49,6 @@ public sealed interface TechniqueBehavior
     ResourceLocation PLUM_RIVER = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "plum_river");
     ResourceLocation PLUM_SCATTER = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "plum_scatter");
     ResourceLocation PLUM_DOME = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "plum_dome");
-    ResourceLocation PLUM_FULL_BLOOM = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "plum_full_bloom");
     ResourceLocation PLUM_SEA = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "plum_sea");
     ResourceLocation FALLING_PETAL = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "falling_petal");
     ResourceLocation PLUM_SHOWER = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "plum_shower");
@@ -62,6 +60,14 @@ public sealed interface TechniqueBehavior
         public static final MapCodec<SixForm> CODEC = MapCodec.unit(SixForm::new);
         public float damage() { return 0.0F; }
         public ResourceLocation type() { return SIX_FORM; }
+    }
+
+    // API: /tmp/mr-ref-1121/minecraft-src/net/minecraft/resources/ResourceLocation.java#fromNamespaceAndPath
+    record PlumCrush() implements TechniqueBehavior {
+        public static final ResourceLocation TYPE = ResourceLocation.fromNamespaceAndPath("murim", "plum_crush");
+        public static final MapCodec<PlumCrush> CODEC = MapCodec.unit(PlumCrush::new);
+        public float damage() { return 0; }
+        public ResourceLocation type() { return TYPE; }
     }
 
     ResourceLocation type();
@@ -401,13 +407,6 @@ public sealed interface TechniqueBehavior
         }
     }
 
-    /** Chapter 296: rooted forward pressure, finite clash reserve and one release pass. */
-    record PlumFullBloom() implements TechniqueBehavior {
-        public static final MapCodec<PlumFullBloom> CODEC = MapCodec.unit(PlumFullBloom::new);
-        @Override public float damage() { return 0.0F; }
-        @Override public ResourceLocation type() { return PLUM_FULL_BLOOM; }
-    }
-
     record PlumSea() implements TechniqueBehavior {
         public static final MapCodec<PlumSea> CODEC = MapCodec.unit(PlumSea::new);
 
@@ -553,8 +552,8 @@ public sealed interface TechniqueBehavior
             Map.entry(PLUM_RIVER, PlumRiver.CODEC),
             Map.entry(PLUM_SCATTER, PlumScatter.CODEC),
             Map.entry(PLUM_DOME, PlumDome.CODEC),
-            Map.entry(PLUM_FULL_BLOOM, PlumFullBloom.CODEC),
             Map.entry(PLUM_SEA, PlumSea.CODEC),
+            Map.entry(PlumCrush.TYPE, PlumCrush.CODEC),
             Map.entry(PLUM_SHOWER, PlumShower.CODEC),
             Map.entry(FALLING_PETAL, FallingPetal.CODEC),
             Map.entry(SIX_FORM, SixForm.CODEC),

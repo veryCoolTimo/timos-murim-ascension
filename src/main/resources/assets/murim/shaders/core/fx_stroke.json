@@ -1,0 +1,160 @@
+{
+  "vertex": "murim:fx_stroke",
+  "fragment": "murim:fx_stroke",
+  "samplers": [],
+  "uniforms": [
+    {
+      "name": "ModelViewMat",
+      "type": "matrix4x4",
+      "count": 16,
+      "values": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "name": "ProjMat",
+      "type": "matrix4x4",
+      "count": 16,
+      "values": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "name": "FxTime",
+      "type": "float",
+      "count": 1,
+      "values": [
+        0
+      ]
+    },
+    {
+      "name": "FxCore",
+      "type": "float",
+      "count": 4,
+      "values": [
+        1,
+        1,
+        1,
+        0.3
+      ]
+    },
+    {
+      "name": "FxBody",
+      "type": "float",
+      "count": 4,
+      "values": [
+        1,
+        1,
+        1,
+        0.7
+      ]
+    },
+    {
+      "name": "FxRim",
+      "type": "float",
+      "count": 4,
+      "values": [
+        1,
+        1,
+        1,
+        0.9
+      ]
+    },
+    {
+      "name": "FxInk",
+      "type": "float",
+      "count": 4,
+      "values": [
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "name": "FxShape",
+      "type": "float",
+      "count": 4,
+      "values": [
+        0.2,
+        0.8,
+        0,
+        0.4
+      ]
+    },
+    {
+      "name": "FxFlow",
+      "type": "float",
+      "count": 4,
+      "values": [
+        0,
+        0.3,
+        0.1,
+        0.6
+      ]
+    },
+    {
+      "name": "FxExtra",
+      "type": "float",
+      "count": 4,
+      "values": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "FxMove",
+      "type": "float",
+      "count": 4,
+      "values": [
+        0,
+        0,
+        4,
+        0
+      ]
+    },
+    {
+      "name": "FxSoft",
+      "type": "float",
+      "count": 4,
+      "values": [
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  ]
+}

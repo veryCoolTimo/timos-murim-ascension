@@ -939,8 +939,8 @@ public final class VaultGameTests {
             BlockPos middle = w(site, 15, 148, 64);
             ServerPlayer p = player(h, w(site, 15, 147, 67));
             p.setData(ModAttachments.SECT, SectState.NONE);
-            h.assertTrue(VaultLadder.LADDER.size() == 5 && VaultLadder.LADDER.stream().allMatch(s -> Styles.TWENTY_FOUR_PLUM.forms().contains(s.technique())),
-                    "the ladder is not the five forms");
+            h.assertTrue(VaultLadder.LADDER.size() == 5 && VaultLadder.LADDER.size() == Styles.TWENTY_FOUR_PLUM.forms().size() && VaultLadder.LADDER.stream().allMatch(s -> Styles.TWENTY_FOUR_PLUM.forms().contains(s.technique())),
+                    "the ladder is not the forms of 24 Plum");
             // the old ladder does not open it: six forms of Six Harmonies, Falling Petal, all of Seven Plum
             VaultTrial.begin(p, seal);
             for (int i = 0; i < 6; i++) {
@@ -1059,7 +1059,7 @@ public final class VaultGameTests {
     // ------------------------------------------------------------------ the lost art
 
     @GameTest(template = YARD, batch = "vault_art", timeoutTicks = 100)
-    public static void completeVaultManualTeachesAllFiveFormsToTwelveStarsInOrder(GameTestHelper h) {
+    public static void completeVaultManualTeachesAllFormsToTwelveStarsInOrder(GameTestHelper h) {
         ServerPlayer p = player(h, h.absolutePos(new BlockPos(3, 1, 3)));
         p.setData(ModAttachments.PROFILE, peak());
         for (int i = 0; i < PlumRestoration.FRAGMENTS; i++) Clues.learn(p, PlumRestoration.clue(i));
@@ -1080,7 +1080,7 @@ public final class VaultGameTests {
             p.setData(ModAttachments.MASTERY, st.with(forms.get(i), new TechniqueProgress(5, 0, 0, 0L, now.cap())));
         }
         PlumRestoration.sync(p);
-        h.assertTrue(p.getData(ModAttachments.MASTERY).techniques().size() >= 5, "forms lost after fragment sync");
+        h.assertTrue(p.getData(ModAttachments.MASTERY).techniques().size() >= forms.size(), "forms lost after fragment sync");
         for (var form : forms) h.assertTrue(p.getData(ModAttachments.MASTERY).techniques().get(form).cap() == 12, "fragments lowered vault cap");
         h.succeed();
     }

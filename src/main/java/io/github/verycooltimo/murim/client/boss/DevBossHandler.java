@@ -59,7 +59,15 @@ public final class DevBossHandler {
     private static final double CAM_DIST = 5.0D;
     private static final double CAM_OFF = CAM.equals("close") ? 20.0D : Double.parseDouble(System.getProperty("murim.capture.camoff", "60"));
 
-    private static final String[] STAGES = {"approach", "overview", "fight", "vault"};
+    /** Camera {@code disc} (14.11): a free camera 10 blocks from the fight, so the boss and the whole pressure disc are in frame; then a bandit hit and a block. */
+    private static final boolean DISC = CAM.equals("disc");
+    private static final String[] STAGES = DISC ? new String[] {"approach", "fight", "bandit", "end"}
+            : new String[] {"approach", "overview", "fight", "vault"};
+    private static final int DISC_FIGHT_TICKS = Integer.getInteger("murim.capture.discfight", 700);
+    private static final int DISC_BANDIT_TICKS = 260;
+    private static final String CAM_NAME = "bosshit_cam";
+    private static volatile int camId = -1;
+    private static volatile int focusId = -1;
 
     private static boolean setup;
     private static int stage = -1;
@@ -90,10 +98,13 @@ public final class DevBossHandler {
         if (!setup) {
             setup = true;
             // Ракурс wide — от первого лица: камера сама и есть зритель на краю плаца.
-            mc.options.setCameraType(STAND ? CameraType.FIRST_PERSON : CameraType.THIRD_PERSON_BACK);
+            mc.options.setCameraType(STAND || DISC ? CameraType.FIRST_PERSON : CameraType.THIRD_PERSON_BACK);
             mc.options.renderDistance().set(8);
             // wide: без руки и HUD — чистый кадр; полоса здоровья видна на ракурсе back.
-            mc.options.hideGui = STAND;
+            mc.options.hideGui = STAND || DISC;
+            if (DISC) {
+                mc.options.fov().set(90);
+            }
             if (CLOSE) {
                 mc.options.fov().set(45);
             }
@@ -118,10 +129,10 @@ public final class DevBossHandler {
         switch (name) {
             case "approach" -> {
                 mc.options.keyUp.setDown(act <= 45);
-                if (act % 6 == 0 && !CLOSE) {
+                if (act % 6 == 0 && !CLOSE && !DISC) {
                     grab(mc, name);
                 }
-                if (act >= (CLOSE ? 2 : 110)) {
+                if (act >= (CLOSE || DISC ? 2 : 110)) {
                     mc.options.keyUp.setDown(false);
                     next(server);
                 }
@@ -134,7 +145,54 @@ public final class DevBossHandler {
                     next(server);
                 }
             }
+            case "end" -> {
+                release(mc);
+                MurimMod.LOGGER.info("Boss capture: done");
+                stage++;
+                mc.stop();
+            }
+            case "bandit" -> {
+                Entity focus = mc.level.getEntity(focusId);
+                mc.options.fov().set(70);
+                useCamera(mc);
+                if (focus != null) {
+                    lookAt(mc, focus.getX(), focus.getY() + 1.2D, focus.getZ(), 0.0F);
+                }
+                release(mc);
+                grab(mc, name);
+                server.execute(() -> discCam(server, focusId));
+                if (act >= 130) {
+                    // From here the guard is up: the next swing is a block.
+                    server.execute(() -> io.github.verycooltimo.murim.combat.SwordGuard.hold(server.getPlayerList().getPlayers().get(0), true));
+                }
+                if (act >= DISC_BANDIT_TICKS) {
+                    server.execute(() -> io.github.verycooltimo.murim.combat.SwordGuard.hold(server.getPlayerList().getPlayers().get(0), false));
+                    next(server);
+                }
+            }
             case "fight" -> {
+                if (DISC) {
+                    if (act == 1) {
+                        // The fight starts with the first filmed frame: the pressure phase must be on the film.
+                        server.execute(() -> {
+                            if (server.overworld().getEntity(bossId) instanceof FortressMaster fm0) {
+                                fm0.setNoAi(false);
+                                fm0.startFight(server.getPlayerList().getPlayers().get(0));
+                            }
+                        });
+                    }
+                    useCamera(mc);
+                    server.execute(() -> discCam(server, bossId));
+                    if (boss instanceof FortressMaster fm && fm.isAlive()) {
+                        fighter(mc, fm);
+                    }
+                    grab(mc, name);
+                    if (act >= DISC_FIGHT_TICKS) {
+                        release(mc);
+                        next(server);
+                    }
+                    break;
+                }
                 if (!STAND && boss != null && boss.isAlive()) {
                     fighter(mc, (FortressMaster) boss);
                 } else if (WIDE && boss != null) {
@@ -226,6 +284,64 @@ public final class DevBossHandler {
         }
     }
 
+    private static void useCamera(Minecraft mc) {
+        Entity cam = mc.level.getEntity(camId);
+        if (cam != null && mc.getCameraEntity() != cam) {
+            mc.setCameraEntity(cam);
+        }
+    }
+
+    /** The free camera: to the side of the line fighter-focus, 10 blocks away and 6 up, looking at the middle of the two. */
+    private static void discCam(IntegratedServer server, int focus) {
+        ServerLevel level = server.overworld();
+        ServerPlayer p = server.getPlayerList().getPlayers().get(0);
+        Entity f = level.getEntity(focus);
+        FortressData.Entry e = entry;
+        if (f == null || e == null) {
+            return;
+        }
+        if (focus != bossId) {
+            // The fortress puts a new master on the yard at once: no boss in the bandit scene.
+            for (FortressMaster other : level.getEntitiesOfClass(FortressMaster.class, new AABB(f.blockPosition()).inflate(60.0D))) {
+                other.discard();
+            }
+        }
+        double dist = focus == bossId ? 10.0D : 4.2D, high = focus == bossId ? 6.0D : 2.2D;
+        Entity cam = level.getEntity(camId);
+        if (cam == null) {
+            net.minecraft.world.entity.decoration.ArmorStand st = new net.minecraft.world.entity.decoration.ArmorStand(level, f.getX(), f.getY() + 6.0D, f.getZ());
+            st.setInvisible(true);
+            st.setNoGravity(true);
+            st.setCustomName(net.minecraft.network.chat.Component.literal(CAM_NAME));
+            level.addFreshEntity(st);
+            camId = st.getId();
+            cam = st;
+        }
+        double w = focus == bossId ? 2.0D : 1.0D;
+        double mx = (f.getX() * w + p.getX()) / (w + 1.0D), mz = (f.getZ() * w + p.getZ()) / (w + 1.0D);
+        double dx = p.getX() - f.getX(), dz = p.getZ() - f.getZ();
+        double len = Math.max(0.5D, Math.sqrt(dx * dx + dz * dz));
+        double px = -dz / len, pz = dx / len;
+        double tx = mx + px * dist, tz = mz + pz * dist;
+        double ty = f.getY() + high;
+        // Inside the cleared yard: no walls or columns in the picture; both sides are tried, the nearer to the yard centre wins.
+        double ax = mx - px * dist, az = mz - pz * dist;
+        if (Math.hypot(ax - e.yard.getX(), az - e.yard.getZ()) < Math.hypot(tx - e.yard.getX(), tz - e.yard.getZ())) {
+            tx = ax;
+            tz = az;
+        }
+        tx = Math.max(e.yard.getX() - 11.5D, Math.min(e.yard.getX() + 11.5D, tx));
+        tz = Math.max(e.yard.getZ() - 11.5D, Math.min(e.yard.getZ() + 11.5D, tz));
+        double nx = cam.getX() + (tx - cam.getX()) * 0.12D, ny = cam.getY() + (ty - 1.73D - cam.getY()) * 0.12D, nz = cam.getZ() + (tz - cam.getZ()) * 0.12D;
+        double lx = mx - nx, ly = f.getY() + 1.1D - (ny + 1.73D), lz = mz - nz;
+        float yaw = BossRules.yawTo(lx, lz);
+        float pitch = (float) -Math.toDegrees(Math.atan2(ly, Math.sqrt(lx * lx + lz * lz)));
+        cam.teleportTo(nx, ny, nz);
+        cam.setYRot(yaw);
+        cam.setXRot(pitch);
+        cam.setYHeadRot(yaw);
+    }
+
     private static void release(Minecraft mc) {
         mc.options.keyUp.setDown(false);
         mc.options.keyDown.setDown(false);
@@ -245,6 +361,9 @@ public final class DevBossHandler {
     }
 
     private static void grab(Minecraft mc, String name) {
+        if (frame % 5 == 0) {
+            MurimMod.LOGGER.info("FRAMEMARK {} {}", frame, name);
+        }
         Screenshot.grab(mc.gameDirectory, String.format("murim_boss_%s_%03d.png", name, frame++), mc.getMainRenderTarget(), m -> {
         });
     }
@@ -277,6 +396,9 @@ public final class DevBossHandler {
         entry = e;
         FortressMaster m = Fortresses.spawnMaster(level, e);
         bossId = m == null ? -1 : m.getId();
+        if (DISC && m != null) {
+            m.setNoAi(true);
+        }
         MurimMod.LOGGER.info("Boss capture: fortress at {} {} {}, master {}", x, y, z, m == null ? "-" : m.getName().getString());
         next(server);
     }
@@ -356,9 +478,31 @@ public final class DevBossHandler {
                         BlockPos in = FortressBuilder.world(e.yard.getX(), e.yard.getY(), e.yard.getZ(), e.rotation, 0, -5);
                         p.teleportTo(level, in.getX() + 0.5D, e.yard.getY(), in.getZ() + 0.5D, 0.0F, 0.0F);
                         m.teleportTo(e.yard.getX() + 0.5D, e.yard.getY(), e.yard.getZ() + 0.5D);
-                        m.startFight(p);
+                        if (!DISC) {
+                            m.startFight(p);
+                        } else {
+                            // Asleep in the chair until the first filmed frame (his own AI would start the fight when the world is still loading).
+                            m.setNoAi(true);
+                        }
                     }
                     m.script(BossMove.CHAIN, BossMove.POUNCE, BossMove.RAM);
+                }
+                case "bandit" -> {
+                    FortressMaster old = (FortressMaster) level.getEntity(bossId);
+                    BlockPos in = FortressBuilder.world(e.yard.getX(), e.yard.getY(), e.yard.getZ(), e.rotation, 0, -5);
+                    if (old != null) {
+                        old.discard();
+                    }
+                    level.getServer().setDifficulty(net.minecraft.world.Difficulty.NORMAL, true);
+                    p.teleportTo(level, in.getX() + 0.5D, e.yard.getY(), in.getZ() + 0.5D, 0.0F, 0.0F);
+                    io.github.verycooltimo.murim.entity.BanditSwordsman b = new io.github.verycooltimo.murim.entity.BanditSwordsman(
+                            io.github.verycooltimo.murim.registry.ModEntities.BANDIT_SWORDSMAN.get(), level);
+                    b.setPersistenceRequired();
+                    b.moveTo(in.getX() + 0.5D, e.yard.getY(), in.getZ() + 2.4D, 180.0F, 0.0F);
+                    p.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(io.github.verycooltimo.murim.registry.ModItems.HUASHAN_SWORD.get()));
+                    level.addFreshEntity(b);
+                    b.setTarget(p);
+                    focusId = b.getId();
                 }
                 case "vault" -> {
                     p.setGameMode(GameType.CREATIVE);
@@ -431,7 +575,7 @@ public final class DevBossHandler {
         p.setHealth(p.getMaxHealth());
         // Ранг игрока «по замыслу» — третьесортный: давление и чтение ранга как в игре.
         p.setData(io.github.verycooltimo.murim.registry.ModAttachments.PROFILE,
-                p.getData(io.github.verycooltimo.murim.registry.ModAttachments.PROFILE).withRank(io.github.verycooltimo.murim.cultivation.Realm.THIRD));
+                p.getData(io.github.verycooltimo.murim.registry.ModAttachments.PROFILE).withRank(DISC ? io.github.verycooltimo.murim.cultivation.Realm.NONE : io.github.verycooltimo.murim.cultivation.Realm.THIRD));
         io.github.verycooltimo.murim.profile.ProfileNetwork.sync(p);
     }
 

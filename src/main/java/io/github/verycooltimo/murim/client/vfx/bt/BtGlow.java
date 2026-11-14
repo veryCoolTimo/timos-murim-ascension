@@ -90,6 +90,22 @@ public final class BtGlow {
 
     private static final java.util.Map<ResourceLocation, RenderType> TEXTURED = new java.util.HashMap<>();
 
+    /**
+     * The glow twin of a type drawn with a mod core shader (the effect engine's strokes): same NEW_ENTITY vertices, added into the
+     * glow target.
+     */
+    public static RenderType shaderTwin(String name, java.util.function.Supplier<net.minecraft.client.renderer.ShaderInstance> shader) {
+        return RenderType.create(MurimMod.MODID + ":bt_glow_" + name, DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.QUADS, 4096,
+                RenderType.CompositeState.builder()
+                        .setShaderState(new RenderStateShard.ShaderStateShard(shader))
+                        .setTransparencyState(ADD)
+                        .setOutputState(TARGET)
+                        .setCullState(RenderStateShard.NO_CULL)
+                        .setDepthTestState(RenderStateShard.LEQUAL_DEPTH_TEST)
+                        .setWriteMaskState(RenderStateShard.COLOR_WRITE)
+                        .createCompositeState(false));
+    }
+
     private BtGlow() {
     }
 

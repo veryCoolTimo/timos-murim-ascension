@@ -37,6 +37,7 @@ public final class BehaviorExecutor {
         float power = (float) io.github.verycooltimo.murim.mastery.MasteryRules.powerFactor(
                 Math.max(0, io.github.verycooltimo.murim.mastery.MasteryService.stars(player, definition.id())),
                 definition.starCap());
+        if (behavior instanceof TechniqueBehavior.PlumCrush) return CrushExecutor.strike(player, definition.id());
         if (behavior instanceof TechniqueBehavior.SixForm) return false;
         if (behavior instanceof TechniqueBehavior.JunkDance) {
             return false;
@@ -77,7 +78,6 @@ public final class BehaviorExecutor {
         if (behavior instanceof TechniqueBehavior.PlumScatter) {
             return ScatterExecutor.start(player, definition.id());
         }
-        if (behavior instanceof TechniqueBehavior.PlumFullBloom) return false;
         if (behavior instanceof TechniqueBehavior.PlumDome) {
             return DomeExecutor.raise(player);
         }

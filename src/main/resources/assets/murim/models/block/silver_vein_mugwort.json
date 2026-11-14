@@ -1,9 +1,9 @@
 {
   "textures": {
-    "particle": "minecraft:block/moss_block",
-    "stem": "minecraft:block/green_terracotta",
-    "leaf": "minecraft:block/moss_block",
-    "vein": "minecraft:block/calcite"
+    "particle": "murim:block/silver_vein_mugwort_leaf",
+    "stem": "murim:block/silver_vein_mugwort_stem",
+    "leaf": "murim:block/silver_vein_mugwort_leaf",
+    "vein": "murim:block/silver_vein_mugwort_vein"
   },
   "elements": [
     {

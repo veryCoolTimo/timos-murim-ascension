@@ -158,6 +158,8 @@ public final class TechniqueService {
         int preparation = technique.startTickOf(TechniquePhase.IMPACT);
         int opener = opening ? preparation : linked ? (seven.chasingLink ? preparation : SevenStarsRules.linkedOpener(technique.ticksOf(TechniquePhase.WINDUP)))
                 : FootworkService.consumeCombo(player, technique);
+        // Crush's charge/payment/contact contract cannot skip T50 via a generic footwork opener.
+        if (technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.PlumCrush) opener = 0;
         seven.openingCast = opening;
         if (opening) seven.opening = Long.MIN_VALUE;
         if (linked) seven.sevenStart = Long.MIN_VALUE;
@@ -183,7 +185,7 @@ public final class TechniqueService {
         // Цель не уходит пешком из долгой техники (автор 05.10): удержание с начала каста.
         if (!(technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.SixForm)
                 && !(technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.BambooHand)
-                && !(technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.PlumFullBloom)) {
+                && !(technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.PlumCrush)) {
             Stun.holdStart(player, technique);
         }
         if (technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.SixForm) {
@@ -198,12 +200,11 @@ public final class TechniqueService {
         if (technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.PlumExplosion) {
             io.github.verycooltimo.murim.technique.ExplosionExecutor.begin(player, technique.id());
         }
-        // Full Bloom grows immediately and applies pressure without freezing the opponent.
-        if (technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.PlumFullBloom) {
-            io.github.verycooltimo.murim.technique.FullBloomExecutor.begin(player, technique.id());
-        }
         if (technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.PlumDome) {
             io.github.verycooltimo.murim.technique.DomeExecutor.begin(player, technique.id());
+        }
+        if (technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.PlumCrush) {
+            io.github.verycooltimo.murim.technique.CrushExecutor.begin(player, technique.id());
         }
         // Море ставит ось сектора на захваченную цель (или взгляд) в начале каста.
         if (technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.PlumSea) {
@@ -329,6 +330,10 @@ public final class TechniqueService {
             QiSword.onCast(player, technique.id());
         }
 
+        if (technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.PlumCrush) {
+            io.github.verycooltimo.murim.technique.CrushExecutor.tick(player, technique.id(), state.tick());
+        }
+
         if (phase == TechniquePhase.IMPACT && !state.impactDone()) {
             // Отметка ставится ДО поражения: если внутри вылетит исключение, повторного
             // удара на следующем тике не будет.
@@ -411,9 +416,6 @@ public final class TechniqueService {
                 io.github.verycooltimo.murim.technique.ShowerExecutor.tick(player, technique.id(), since);
             }
         }
-        if (technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.PlumFullBloom) {
-            if (io.github.verycooltimo.murim.technique.FullBloomExecutor.tick(player, technique.id(), state.tick())) return;
-        }
         if (technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.PlumDome) {
             io.github.verycooltimo.murim.technique.DomeExecutor.tick(player, technique.id(), state.tick());
         }
@@ -485,7 +487,7 @@ public final class TechniqueService {
         player.setData(ModAttachments.TECHNIQUE_STATE, state.finished());
         io.github.verycooltimo.murim.technique.SixExecutor.end(player, event == TechniqueEventPayload.Event.CANCELLED);
         io.github.verycooltimo.murim.technique.BambooExecutor.end(player);
-        io.github.verycooltimo.murim.technique.FullBloomExecutor.end(player);
+        io.github.verycooltimo.murim.technique.CrushExecutor.end(player);
         Stun.releaseHolds(player);
         if (id != null) {
             // API: NeoForge ICommonPacketListener#hasChannel via ChannelSafe, including the owner.
@@ -522,8 +524,7 @@ public final class TechniqueService {
         }
 
         // Six forms own their complete multi-tick hit/miss accounting.
-        if (technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.SixForm
-                || technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.PlumFullBloom) return;
+        if (technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.SixForm) return;
         boolean anyHit = BehaviorExecutor.execute(player, technique);
         if (anyHit) onSwordHit(player, technique.id());
         io.github.verycooltimo.murim.technique.JunkArts.afterImpact(player, technique.id());
@@ -572,7 +573,9 @@ public final class TechniqueService {
             cancel(player); return;
         }
         TechniquePhase phase = technique.phaseAt(state.tick());
-        boolean breaks = rules.breakOnDamage() && amount >= rules.damageThreshold()
+        boolean breaks = technique.behavior() instanceof io.github.verycooltimo.murim.technique.TechniqueBehavior.PlumCrush
+                ? io.github.verycooltimo.murim.technique.CrushRules.interrupts(state.tick(), amount)
+                : rules.breakOnDamage() && amount >= rules.damageThreshold()
                 && phase != null && phase.ordinal() < TechniquePhase.IMPACT.ordinal();
         // Стенд: журнал срыва — по нему проверяется регрессия «удар бандита срывает только по порогу».
         if (Boolean.getBoolean("murim.capture")) {

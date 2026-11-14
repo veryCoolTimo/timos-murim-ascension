@@ -25,9 +25,9 @@ class MethodScrollLayoutTest {
                 assertEquals(200, l.bottom().width());
                 assertEquals(40, l.bottom().height());
             }
-            assertEquals(Math.min(Math.round(size[1] * 0.92F), size[1] - 60), l.bounds().height());
+            assertEquals(Math.max(1, Math.round(size[1] * MethodScrollLayout.HEIGHT_SHARE)), l.bounds().height());
             assertTrue(Math.abs(l.bounds().x() * 2 + l.bounds().width() - size[0]) <= 1);
-            assertEquals(6, l.bounds().y());
+            assertEquals(4, l.bounds().y());
             assertEquals(l.top().bottom(), l.paper().y());
             assertEquals(l.paper().bottom(), l.bottom().y());
             assertEquals(l.bounds().bottom(), l.bottom().bottom());
@@ -42,16 +42,16 @@ class MethodScrollLayoutTest {
                 int guiWidth = (int) Math.ceil(size[0] / (double) scale);
                 int guiHeight = (int) Math.ceil(size[1] / (double) scale);
                 var l = MethodScrollLayout.of(guiWidth, guiHeight, 128, 192);
-                // bottom() spans all 40 texture pixels, including the tassel below the roller.
-                assertTrue(l.bottom().bottom() <= guiHeight - 50,
+                // bottom() spans all 40 texture pixels, including the tassel; the scroll takes ~90% of the window height.
+                assertTrue(l.bottom().bottom() <= guiHeight - 8,
                         size[0] + "x" + size[1] + " at GUI scale " + scale);
-                assertEquals(6, l.top().y());
+                assertEquals(4, l.top().y());
                 assertTrue(l.seal().x() >= l.paper().x());
                 assertTrue(l.seal().right() <= l.paper().right());
                 assertTrue(l.seal().y() >= l.paper().y());
                 assertTrue(l.seal().bottom() < l.bottom().y());
                 assertEquals(l.paper().x() + l.paper().width() / 2, l.seal().x() + l.seal().width() / 2, 1);
-                assertTrue(l.text().bottom() <= l.seal().y() - 13);
+                assertTrue(l.text().bottom() <= l.seal().y() - 4);
             }
         }
     }
@@ -65,19 +65,18 @@ class MethodScrollLayoutTest {
             assertTrue(l.illustration().bottom() <= l.text().y());
             assertTrue(l.text().y() >= l.paper().y());
             assertTrue(l.text().height() >= 0);
-            assertTrue(l.text().bottom() <= l.seal().y() - 13);
+            assertTrue(l.text().bottom() <= l.seal().y() - 4);
             if (textHeight > 0) assertTrue(l.text().height() > 0);
         }
     }
 
     @Test
-    void shortPaperShrinksArtBeforeTextAndReservesSeal() {
+    void shortPaperKeepsATitleLineAndReservesSeal() {
         var l = MethodScrollLayout.of(320, 240, 128, 192, 40);
-        int artAreaHeight = l.illustration().height();
-        assertTrue(artAreaHeight < Math.round(l.paper().height() * 0.52F));
-        assertTrue(artAreaHeight > 0);
-        assertTrue(l.illustration().bottom() <= l.paper().y() + artAreaHeight);
-        assertTrue(l.text().height() > 0);
+        assertTrue(l.illustration().height() > 0);
+        assertTrue(l.illustration().height() <= Math.round(l.paper().height() * MethodScrollLayout.ART_SHARE));
+        assertTrue(l.illustration().bottom() <= l.paper().y() + l.paper().height());
+        assertTrue(l.text().height() >= 14);
     }
 
     @Test
@@ -98,13 +97,14 @@ class MethodScrollLayoutTest {
                         var initial = MethodScrollLayout.of(w, h, 128, 192);
                         String key = "method.murim." + method;
                         int titleLines = splitter.splitLines(strings.get(key).getAsString(),
-                                (int) (initial.text().width() / 1.25F), Style.EMPTY).size();
+                                (int) (initial.text().width() / MethodScrollLayout.TITLE_SCALE), Style.EMPTY).size();
                         int bodyLines = splitter.splitLines(strings.get(key + ".cost").getAsString(),
-                                initial.text().width(), Style.EMPTY).size();
-                        int textHeight = titleLines * 12 + 4 + bodyLines * 9;
+                                (int) (initial.text().width() / MethodScrollLayout.BODY_SCALE), Style.EMPTY).size();
+                        int textHeight = titleLines * (int) Math.ceil(9 * MethodScrollLayout.TITLE_SCALE) + 3
+                                + bodyLines * (int) Math.ceil(9 * MethodScrollLayout.BODY_SCALE);
                         var fitted = MethodScrollLayout.of(w, h, 128, 192, textHeight);
-                        assertTrue(textHeight <= fitted.text().height(), language + ": " + method);
-                        assertTrue(fitted.text().bottom() <= fitted.seal().y() - 13);
+                        assertTrue(fitted.text().height() > 0, language + ": " + method);
+                        assertTrue(fitted.text().bottom() <= fitted.seal().y() - 4);
                     }
                 }
             }
@@ -112,16 +112,17 @@ class MethodScrollLayoutTest {
     }
 
     @Test
-    void illustrationShrinksBeforeTitleGapAndOverflowRemainsScrollable() {
-        var preferred = MethodScrollLayout.of(640, 360, 128, 192);
-        var fitted = MethodScrollLayout.of(640, 360, 128, 192, 100);
-        int minimumArt = Math.round(fitted.paper().height() * 0.36F);
-        assertEquals(minimumArt, fitted.illustration().height(), 1);
-        assertEquals(100, fitted.text().height());
-        assertTrue(fitted.illustration().height() < preferred.illustration().height());
-        var overflow = MethodScrollLayout.of(640, 360, 128, 192, 200);
-        assertEquals(fitted.text(), overflow.text());
-        assertTrue(200 > overflow.text().height());
+    void pictureTakesItsShareAtEveryScaleAndTextScrolls() {
+        for (int[] gui : new int[][] {{640, 360}, {427, 240}, {480, 270}}) {
+            var short1 = MethodScrollLayout.of(gui[0], gui[1], 253, 252, 0);
+            var long1 = MethodScrollLayout.of(gui[0], gui[1], 253, 252, 300);
+            // The paper height does not depend on the text, nor does the picture: long text scrolls instead.
+            assertEquals(short1.illustration(), long1.illustration());
+            assertEquals(short1.text(), long1.text());
+            assertTrue(short1.illustration().height() >= short1.paper().height() * 0.60,
+                    gui[0] + "x" + gui[1] + " picture " + short1.illustration().height() + " of " + short1.paper().height());
+            assertTrue(short1.text().height() >= 14);
+        }
     }
 
     private static void assertBand(MethodScrollLayout.Rect frame, int from, int to, int textureWidth,
@@ -138,9 +139,9 @@ class MethodScrollLayoutTest {
         for (int[] image : new int[][] {{128, 192}, {1024, 256}, {32, 32}, {256, 2048}}) {
             var l = MethodScrollLayout.of(640, 360, image[0], image[1]);
             var a = l.illustration();
-            assertTrue(a.x() >= l.paper().x() + 8 && a.right() <= l.paper().right() - 8);
-            int artAreaHeight = Math.round(l.paper().height() * 0.52F);
-            assertEquals(l.paper().y() + artAreaHeight + 6, l.text().y());
+            assertTrue(a.x() >= l.paper().x() + 1 && a.right() <= l.paper().right() - 1);
+            int artAreaHeight = Math.round(l.paper().height() * MethodScrollLayout.ART_SHARE);
+            assertEquals(l.paper().y() + artAreaHeight + MethodScrollLayout.GAP, l.text().y());
             assertTrue(a.bottom() <= l.paper().y() + artAreaHeight);
             assertTrue(a.y() >= l.paper().y() && a.bottom() <= l.text().y());
             assertTrue(l.text().x() > l.paper().x() && l.text().right() < l.paper().right());
@@ -157,11 +158,11 @@ class MethodScrollLayoutTest {
     @Test
     void wideArtCanFillPaperWithEightPixelMargins() {
         var l = MethodScrollLayout.of(640, 360, 1024, 256);
-        assertEquals(l.paper().x() + 8, l.illustration().x());
-        assertEquals(l.paper().width() - 16, l.illustration().width());
-        // 1024x256 fits as 154x38.5, so the height rounds up to 39 GUI pixels.
-        assertEquals(154, l.illustration().width());
-        assertEquals(39, l.illustration().height());
+        assertEquals(l.paper().x() + 1, l.illustration().x());
+        assertEquals(l.paper().width() - 2, l.illustration().width());
+        // 1024x256 fits 168 px wide: 42 GUI pixels high.
+        assertEquals(168, l.illustration().width());
+        assertEquals(42, l.illustration().height());
     }
 
     @Test

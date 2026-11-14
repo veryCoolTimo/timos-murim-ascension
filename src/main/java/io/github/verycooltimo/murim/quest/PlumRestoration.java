@@ -24,7 +24,7 @@ import java.util.function.IntPredicate;
 /**
  * Author 31.10: fragments restore only Rainfall. The first fragment permits two stars; subsequent fragments add one,
  * up to five. Chung Myung's order is a clue to the complete art below the Main Hall, never a deduction of other forms.
- * The vault's complete style manual permits all five forms up to twelve stars, studied in order from the Peak with
+ * The vault's complete style manual permits every form up to twelve stars, studied in order from the Peak with
  * the previous form at five stars. Fragment restoration is checked on reading and every five seconds.
  */
 @EventBusSubscriber(modid = MurimMod.MODID)

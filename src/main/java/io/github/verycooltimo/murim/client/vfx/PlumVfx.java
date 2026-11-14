@@ -628,7 +628,7 @@ public final class PlumVfx {
         source.forward = new Vec3(0, 0, 1);
         source.right = new Vec3(1, 0, 0);
         buildTree(source);
-        // Full Bloom keeps the branch budget; forks occupy a rounded three-dimensional crown.
+        // Forks occupy a rounded three-dimensional crown.
         // Source: round-11 feedback; docs/03-vfx/11-what-looks-good.md (depth and silhouette).
         List<BloomBranch> tree = new ArrayList<>();
         tree.add(new BloomBranch(Vec3.ZERO, new Vec3(.06, .10, .35), new Vec3(-.04, .06, .78), .18));

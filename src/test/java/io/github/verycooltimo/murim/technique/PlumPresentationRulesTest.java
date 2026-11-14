@@ -53,22 +53,6 @@ class PlumPresentationRulesTest {
         assertFalse(collision.contains("Flow.VORTEX"), "Sea petals must retain build circulation");
     }
 
-    @Test
-    void fullBloomKeepsItsMassAndUsesTheLiveSwordInsteadOfRemoteBranches() throws Exception {
-        String storm = vfxSource("PlumStormVfx");
-        assertTrue(storm.contains("case BLOOM -> 700;"));
-        assertFalse(storm.contains("treePoint("));
-        assertFalse(storm.contains("bloomBranches("));
-        String frame = storm.substring(storm.indexOf("private static void followBloomBlade("),
-                storm.indexOf("private record Emission"));
-        assertTrue(frame.contains("BoneAnchorLayer.Bone.BLADE_BASE"));
-        assertTrue(frame.contains("BoneAnchorLayer.Bone.BLADE_TIP"));
-        assertTrue(storm.contains("followBloomBlade(s);"));
-        assertTrue(storm.contains("i % 32 == 0 || s.flow == Flow.BLOOM && i % 5 == 0"));
-        assertTrue(storm.contains("if (s.flow != Flow.RIVER && s.flow != Flow.BLOOM) at = avoidStrikes"),
-                "attached blossoms must not be pushed away from their bone anchors");
-    }
-
     private static String vfxSource(String name) throws Exception {
         Path relative = Path.of("src/main/java/io/github/verycooltimo/murim/client/vfx/" + name + ".java");
         Path root = Path.of("").toAbsolutePath();

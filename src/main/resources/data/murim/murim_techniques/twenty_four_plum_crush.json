@@ -1,19 +1,19 @@
 {
-  "id": "murim:twenty_four_plum_full_bloom",
-  "form": "guard",
-  "intent": "defend",
+  "id": "murim:twenty_four_plum_crush",
+  "form": "slash",
+  "intent": "strike",
   "breath": "hollow_breath",
   "phases": {
     "ritual": 0,
-    "windup": 1,
-    "impact": 1,
-    "recovery": 118,
-    "dissipation": 10
+    "windup": 54,
+    "impact": 2,
+    "recovery": 30,
+    "dissipation": 14
   },
   "behavior": {
-    "type": "murim:plum_full_bloom"
+    "type": "murim:plum_crush"
   },
-  "animation": "murim:twenty_four_plum_full_bloom",
+  "animation": "murim:twenty_four_plum_crush",
   "vfx": {
     "pivot": [
       0.0,
@@ -62,16 +62,17 @@
   },
   "interruption": {
     "cancellable_until": "windup",
-    "break_on_damage": false
+    "break_on_damage": true,
+    "damage_threshold": 8.0
   },
-  "weakness": "technique.murim.twenty_four_plum_full_bloom.weakness",
-  "hit_stop_ticks": 0,
-  "cooldown_ticks": 800,
+  "weakness": "technique.murim.twenty_four_plum_crush.weakness",
+  "hit_stop_ticks": 4,
+  "cooldown_ticks": 900,
   "star_cap": 12,
   "tier": "secret",
   "requires": [
     {
-      "technique": "murim:twenty_four_plum_rainfall",
+      "technique": "murim:twenty_four_plum_sea",
       "star": 5
     }
   ]

@@ -82,6 +82,29 @@ public final class RiverVfx {
     /** Render-thread submission budget, reset for each cast. */
     private static int quadRoom;
 
+    /** Read-only live element counts, queried only by development captures. */
+    public static void observe(java.util.Map<String, Integer> systems, java.util.Set<String> layers,
+                               java.util.Map<String, Object> technique, float partial, int owner) {
+        int motes = 0, petals = 0, puffs = 0, rays = 0, flowers = 0, rings = 0, strokes = 0, stars = 0, ghosts = 0, scars = 0;
+        for (Cast c : CASTS) {
+            motes += c.motes.size(); petals += c.petals.size(); puffs += c.puffs.size();
+            stars += c.stars.size(); ghosts += c.ghosts.size(); scars += c.scars.size();
+            rays += c.rays.size(); flowers += c.flowers.size(); rings += c.rings.size(); strokes += c.strokes.size();
+            if (c.entityId != owner) continue;
+            for (var kind : PlumLayers.kinds(PlumLayers.Form.RIVER, c.masteryStars)) layers.add(kind.name());
+            double t = c.t() + partial;
+            technique.put("id", TECHNIQUE.toString()); technique.put("t", t / 20.0);
+            technique.put("star", c.masteryStars);
+            technique.put("phase", c.burstTick >= 0 ? "burst" : c.contactTick >= 0 ? "contact"
+                    : t >= RiverRules.RELEASE ? "stream" : t >= RiverRules.GATHER ? "gather"
+                    : t >= RiverRules.RESONANCE ? "resonance" : t >= RiverRules.CONCENTRATE ? "concentrate" : "blue");
+        }
+        systems.put("RiverVfx.motes", motes); systems.put("RiverVfx.petals", petals);
+        systems.put("RiverVfx.puffs", puffs); systems.put("RiverVfx.rays", rays);
+        systems.put("RiverVfx.stars", stars); systems.put("RiverVfx.ghosts", ghosts); systems.put("RiverVfx.scars", scars);
+        systems.put("RiverVfx.flowers", flowers); systems.put("RiverVfx.rings", rings); systems.put("RiverVfx.strokes", strokes);
+    }
+
     private static VfxColour hex(int rgb) {
         return new VfxColour(((rgb >> 16) & 0xFF) / 255.0F, ((rgb >> 8) & 0xFF) / 255.0F, (rgb & 0xFF) / 255.0F);
     }

@@ -1,9 +1,9 @@
 {
   "textures": {
-    "particle": "minecraft:block/moss_block",
-    "stem": "minecraft:block/green_terracotta",
-    "leaf": "minecraft:block/moss_block",
-    "vein": "minecraft:block/red_terracotta"
+    "particle": "murim:block/red_vein_fern_leaf",
+    "stem": "murim:block/red_vein_fern_stem",
+    "leaf": "murim:block/red_vein_fern_leaf",
+    "vein": "murim:block/red_vein_fern_vein"
   },
   "elements": [
     {

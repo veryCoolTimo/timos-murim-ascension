@@ -300,7 +300,7 @@ public final class SectHeadIntro {
     }
 
     /** One idempotent exit for timeout, skip, damage and a missing actor. */
-    static void finish(ServerPlayer p, SectLayout layout) {
+    public static void finish(ServerPlayer p, SectLayout layout) {
         finish(p, layout, p.serverLevel());
     }
 

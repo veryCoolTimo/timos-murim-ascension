@@ -44,7 +44,7 @@ class TechniqueNamesTest {
             var text = lang(locale);
             for (String key : List.of("book.murim.style.seven_stars", "book.murim.seven_stars_shift",
                     "book.murim.seven_stars_follow", "book.murim.seven_stars_dipper",
-                    "book.murim.twenty_four_plum_full_bloom.full", "technique.murim.bamboo_leaf_hand.description")) {
+                    "technique.murim.bamboo_leaf_hand.description")) {
                 String template = text.get(key).getAsString();
                 String bound = String.format(template, "Mouse 4", "Mouse 5", "L");
                 assertTrue(bound.contains("Mouse 4"), locale + " " + key);
