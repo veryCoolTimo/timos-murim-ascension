@@ -213,6 +213,7 @@ public final class PeddlerSpawns {
             return;
         }
         Data data = data(level);
+        reconcileStall(level, data);
         if (data.stall != null || level.getGameTime() < data.stallRespawn) {
             return;
         }
@@ -227,6 +228,18 @@ public final class PeddlerSpawns {
             MurimMod.LOGGER.info("Лавка у подножия Хуашань: {}", p.blockPosition().toShortString());
         }
         data.setDirty();
+    }
+
+    /**
+     * The keeper may vanish without a KILLED removal (discard by another mod, a command, a dimension change). The stored UUID
+     * then points at nobody; call this where the stall's chunk is ticking, so the stall is restocked after the usual wait.
+     */
+    static void reconcileStall(ServerLevel level, Data data) {
+        if (data.stall != null && !(level.getEntity(data.stall) instanceof Peddler p && p.isAlive())) {
+            data.stall = null;
+            data.stallRespawn = level.getGameTime() + STALL_RESPAWN;
+            data.setDirty();
+        }
     }
 
     /**

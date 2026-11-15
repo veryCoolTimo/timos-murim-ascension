@@ -73,6 +73,8 @@ public final class NotesBooksGameTests {
             }
             @Override public void send(Packet<?> packet) { packets.add(packet); }
         };
+        // A member holds the tablet that carries the journal; without it a refusal also shows one action-bar line.
+        p.getInventory().add(new ItemStack(io.github.verycooltimo.murim.registry.ModItems.JADE_SECT_TABLET.get()));
         return new Reader(p, packets, chat);
     }
 

@@ -17,6 +17,8 @@ public record MethodScrollLayout(Rect bounds, Rect top, Rect paper, Rect bottom,
     /** Paper reserved under the text for the Learn seal (18 px seal, 12 px below it). */
     public static final int SEAL_RESERVE = 34;
     public static final int GAP = 3;
+    /** The text viewport never gets smaller than a title line and two body lines, so the description is always readable (it scrolls). */
+    public static final int MIN_TEXT = 26;
     /** Text sizes: the body is smaller than the font's own size so the picture can grow. */
     public static final float TITLE_SCALE = 1.0F;
     public static final float BODY_SCALE = 0.75F;
@@ -44,8 +46,8 @@ public record MethodScrollLayout(Rect bounds, Rect top, Rect paper, Rect bottom,
         int paperX = x + (int) Math.round(15 * scale);
         Rect paper = new Rect(paperX, y + topH, paperW, h - topH - bottomH);
         // The picture takes ART_SHARE of the paper whatever the text says; the text block sits right under it and scrolls.
-        // Only a very short paper keeps 14 px for the text (a title line and the arrow).
-        int maxArt = Math.max(1, paper.height - SEAL_RESERVE - GAP - 14);
+        // The picture yields only as much as the text needs to show its title and two lines (MIN_TEXT).
+        int maxArt = Math.max(1, paper.height - SEAL_RESERVE - GAP - MIN_TEXT);
         int artAreaHeight = Math.min(Math.round(paper.height * ART_SHARE), maxArt);
         Rect artBox = new Rect(paper.x + 1, paper.y, paper.width - 2, artAreaHeight);
         Rect art = fit(artBox, artWidth, artHeight);

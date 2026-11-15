@@ -93,6 +93,14 @@
         "elder1": "textures/entity/sect/elder1.png"
       }
     },
+    "elder2": {
+      "geo": "bedrock/elder2.geo.json",
+      "geometry_from": "bedrock/elder2.geo.json",
+      "animation": null,
+      "textures": {
+        "elder2": "textures/entity/sect/elder2.png"
+      }
+    },
     "first_rate_disciple": {
       "geo": "bedrock/first_rate_disciple.geo.json",
       "geometry_from": "bedrock/first_rate_disciple.geo.json",

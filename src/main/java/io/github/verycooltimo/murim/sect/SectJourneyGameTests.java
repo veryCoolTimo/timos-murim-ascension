@@ -338,7 +338,8 @@ public final class SectJourneyGameTests {
         p.getInventory().items.set(0, ItemStack.EMPTY);
         p.setItemInHand(InteractionHand.OFF_HAND, scroll);
         p.setData(ModAttachments.SECT, SectService.state(p).without(SectJourney.SCROLL_GIVEN));
-        h.assertTrue(SectJourney.help(p, mentor) && new SectService.ItemNeed(ModItems.METHOD_SCROLL.get(), 1).count(p) == 0
+        // ItemNeed counts the off hand too (15.11): exactly one scroll in all, the one in the off hand; a duplicate would make two.
+        h.assertTrue(SectJourney.help(p, mentor) && new SectService.ItemNeed(ModItems.METHOD_SCROLL.get(), 1).count(p) == 1
                 && p.getOffhandItem().getCount() == 1, "offhand scroll was duplicated");
         h.succeed();
     }
@@ -422,10 +423,10 @@ public final class SectJourneyGameTests {
         goal(h, p, "standing");
         p.setData(ModAttachments.SECT, SectService.state(p).contribute(30)); goal(h, p, "approval");
         p.setData(ModAttachments.SECT, SectService.state(p).with(SectStanding.APPROVAL));
-        // The chain goes on after the second lesson: rank three, then the Peak, then the mentor's lessons.
+        // The chain goes on through rank three and office advice, then the Peak and mentor lessons.
         goal(h, p, "rank_three");
         p.setData(ModAttachments.PROFILE, p.getData(ModAttachments.PROFILE).withRank(3));
-        goal(h, p, "peak");
+        goal(h, p, "first_path");
         p.setData(ModAttachments.PROFILE, p.getData(ModAttachments.PROFILE).withRank(4).withStage(2));
         goal(h, p, "personal_lesson");
         // Learning Seven Plum can fill an empty foundation slot; cap the art this mentor lesson actually uses.

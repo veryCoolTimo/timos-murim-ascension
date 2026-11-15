@@ -421,4 +421,119 @@ public final class SectPoseGameTests {
                         && now[0].position().distanceTo(Vec3.atBottomCenterOf(chair).add(0.0D, 9.0D / 16.0D, 0.0D)) < 0.05D,
                 "the routine did not sit the loaded person down: " + now[0].seatStyle() + " " + now[0].position()));
     }
+
+    // ------------------------------------------------------------------ 14.11: chairs
+
+    /**
+     * Standing up from a chair whose front and sides are walled in (the desk in front, a shelf beside): vanilla's stand-up search
+     * found no free side and put him ON the seat block, a block above the floor, and he came down from there (author 14.11:
+     * «they stand ON the chair»). He steps from the seat to the cell he came from and is never above the seat on the way.
+     */
+    @GameTest(template = YARD, timeoutTicks = 120, batch = "sect_pose_chair_dismount")
+    public static void standingUpFromAChairWithItsSidesTakenPutsHimOnTheFloorNotOnTheSeat(GameTestHelper h) {
+        BlockPos chair = p(h, 12, 2, 14);
+        h.setBlock(new BlockPos(12, 2, 14), IntSeating.CHAIR.get().defaultBlockState().setValue(HorizontalDirectionalBlock.FACING, Direction.NORTH));
+        for (int y = 2; y <= 3; y++) {
+            h.setBlock(new BlockPos(11, y, 14), Blocks.STONE);
+            h.setBlock(new BlockPos(13, y, 14), Blocks.STONE);
+            h.setBlock(new BlockPos(12, y, 13), Blocks.STONE);
+        }
+        SectDisciple d = bare(h, 12.5, 15.5);
+        d.setNoAi(false);
+        Vec3 exit = d.position();
+        Vec3 top = SectLife.seatTop(h.getLevel(), chair);
+        h.assertTrue(top != null, "no seat top");
+        d.sit(SeatStyle.CHAIR, top, 180.0F, exit);
+        d.setPose(SectPose.SIT);
+        double[] highest = {Double.NEGATIVE_INFINITY};
+        boolean[] up = {false};
+        h.runAfterDelay(20, () -> {
+            h.assertTrue(d.getVehicle() instanceof io.github.verycooltimo.murim.decor.SeatEntity, "the chair does not hold its sitter: " + d.position());
+            h.assertTrue(Math.abs(d.getY() - top.y) < 1.0E-3D, "seated height: " + d.getY() + " want " + top.y);
+            d.sit(SeatStyle.NONE);
+            up[0] = true;
+            h.assertTrue(!d.isPassenger(), "still riding the chair");
+            h.assertTrue(d.getY() <= top.y + 1.0E-3D, "stood up ABOVE the seat: y=" + d.getY() + " seat=" + top.y);
+        });
+        h.onEachTick(() -> {
+            if (up[0]) {
+                highest[0] = Math.max(highest[0], d.getY());
+                h.assertTrue(highest[0] <= top.y + 0.16D, "on the way down he was above the seat: " + highest[0] + " seat=" + top.y);
+            }
+        });
+        h.succeedWhen(() -> {
+            h.assertTrue(h.getTick() > 40 && up[0], "waiting");
+            h.assertTrue(Math.abs(d.getY() - exit.y) < 0.05D && Math.hypot(d.getX() - exit.x, d.getZ() - exit.z) < 0.25D,
+                    "not on the floor where he came from: " + d.position() + " exit=" + exit);
+            h.assertTrue(d.seatStyle() == SeatStyle.NONE && !d.isPassenger() && !d.isNoGravity(), "still seated: " + d.seatStyle());
+        });
+    }
+
+    /**
+     * Two people, one chair: a lapsed lease handed the chair of a diner to a late comer. The seat refused him, he stood up, walked to
+     * it again and sat, every half second (author 14.11: «they sit down on the chair and jump out, again and again»). The seat is now
+     * given up at once and the next free one taken; the first diner is not disturbed.
+     */
+    @GameTest(template = YARD, timeoutTicks = 500, batch = "sect_pose_two_on_a_chair")
+    public static void aLateDinerWhoseSeatIsTakenPicksAnotherAndDoesNotBounce(GameTestHelper h) {
+        lateDiner(h, 0);
+    }
+
+    /** The same meal with the sitters' 20-tick routine phase shifted (the phase is the entity id, so it differs from run to run). */
+    @GameTest(template = YARD, timeoutTicks = 500, batch = "sect_pose_two_on_a_chair_8")
+    public static void aLateDinerWhoseSeatIsTakenDoesNotBounceInAnotherRoutinePhaseA(GameTestHelper h) {
+        lateDiner(h, 8);
+    }
+
+    @GameTest(template = YARD, timeoutTicks = 500, batch = "sect_pose_two_on_a_chair_16")
+    public static void aLateDinerWhoseSeatIsTakenDoesNotBounceInAnotherRoutinePhaseB(GameTestHelper h) {
+        lateDiner(h, 16);
+    }
+
+    private static void lateDiner(GameTestHelper h, int idShift) {
+        for (int i = 0; i < idShift; i++) new net.minecraft.world.entity.decoration.ArmorStand(h.getLevel(), 0, 0, 0);
+        dayTime(h, 10000);
+        for (int x : new int[] {10, 14}) {
+            h.setBlock(new BlockPos(x, 2, 14), IntSeating.CHAIR.get().defaultBlockState().setValue(HorizontalDirectionalBlock.FACING, Direction.NORTH));
+        }
+        BlockPos one = p(h, 10, 2, 14);
+        BlockPos two = p(h, 14, 2, 14);
+        List<SectLayoutFile.Room> rooms = List.of(new SectLayoutFile.Room("meal", "dining_hall", 0, one.getY(),
+                new SectLayoutFile.Rect(p(h, 6, 2, 6).getX(), p(h, 6, 2, 6).getZ(), p(h, 20, 2, 20).getX(), p(h, 20, 2, 20).getZ()),
+                "room", "ok", List.of(), List.of(), 100));
+        List<SectLayoutFile.Spot> spots = new ArrayList<>();
+        spots.add(new SectLayoutFile.Spot("spot.one", "seat_chair", "sit", one, one.south(), null, 180.0F, "meal", "dining_hall",
+                null, null, List.of("all"), "ok", -1, -1));
+        spots.add(new SectLayoutFile.Spot("spot.two", "seat_chair", "sit", two, two.south(), null, 180.0F, "meal", "dining_hall",
+                null, null, List.of("all"), "ok", -1, -1));
+        var layout = new Mini(h.absoluteVec(new Vec3(12.5, 2, 12.5)), file(rooms, List.of(), spots, Map.of()));
+        // The first diner sits on spot one; his lease is gone, the late one still holds the spot on paper.
+        SectDisciple first = bare(h, 10.5, 15.5);
+        first.setNoAi(false);
+        first.sit(SeatStyle.CHAIR, SectLife.seatTop(h.getLevel(), one), 180.0F, first.position());
+        first.setPose(SectPose.EAT);
+        SectSpots.of(h.getLevel()).claim("spot.one", "yul_seok", h.getLevel().getGameTime());
+        SectDisciple late = member(h, layout, "yul_seok", 10.5, 16.5);
+        int[] stoodUp = {0};
+        boolean[] was = {false};
+        h.onEachTick(() -> {
+            // Tick 400 is the end: the callback below ends the test and the harness takes the people away in that same tick,
+            // a dead first diner there is the cleanup, not a disturbance (seen twice in the full suite: tick=400 alive=false).
+            if (h.getTick() >= 400) return;
+            dayTime(h, 10000);   // the whole test is one meal
+            boolean now = late.sitting();
+            if (was[0] && !now) stoodUp[0]++;
+            was[0] = now;
+            h.assertTrue(first.sitting() && first.getVehicle() != null || h.getTick() < 10, "the first diner was disturbed: " + first.seatStyle() + " veh=" + first.getVehicle() + " nav=" + first.getNavigation().isDone()
+                    + " defending=" + first.defending() + " spar=" + first.spar() + " alarm=" + first.alarmGoal().mode(h.getLevel().getGameTime()) + " guard=" + first.guardTarget()
+                    + " pos=" + first.position() + " tick=" + h.getTick() + " noAi=" + first.isNoAi() + " alive=" + first.isAlive());
+        });
+        Vec3 want = Vec3.atBottomCenterOf(two).add(0.0D, 9.0D / 16.0D, 0.0D);
+        h.runAfterDelay(400, () -> {
+            h.assertTrue(stoodUp[0] <= 1, "the late diner bounced on the seat: stood up " + stoodUp[0] + " times");
+            h.assertTrue(late.sitting() && late.position().distanceTo(want) < 0.1D, "the late diner is not on the free chair: " + late.seatStyle() + " " + late.position()
+                    + " doing=" + late.doingSpot() + " kind=" + late.doingKind() + " resolved=" + SectLife.resolve(late));
+            h.succeed();
+        });
+    }
 }

@@ -773,6 +773,21 @@
           ]
         },
         {
+          "text": "dialogue.murim.merit.plum_blossom",
+          "when": [
+            {
+              "shop": "plum_blossom"
+            }
+          ],
+          "actions": [
+            {
+              "type": "merit_buy",
+              "value": "plum_blossom"
+            }
+          ],
+          "next": "pills_more"
+        },
+        {
           "text": "dialogue.murim.gyeong_cho.opt.more_back",
           "next": "pills"
         },

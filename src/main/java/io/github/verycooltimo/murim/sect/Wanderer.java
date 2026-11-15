@@ -209,9 +209,31 @@ public final class Wanderer {
 
     /** Shared explorer-map factory for gifts and per-customer merchant offers. No gift receipt or cooldown. */
     public static ItemStack createMap(ServerPlayer player, MountHuaSite site) {
+        return createMap(player, site, false);
+    }
+
+    private static final String MERCHANT_MAP_KEY = "murim_merchant_map";
+
+    /**
+     * With {@code reuse} the player keeps ONE merchant map: its id is remembered and the same saved map data is shown again
+     * while the gate has not moved, so opening the trade screen does not create a map_N.dat each time.
+     */
+    public static ItemStack createMap(ServerPlayer player, MountHuaSite site, boolean reuse) {
         int[] gate = SectService.zone(site, "sect_gate");
         if (gate == null) return ItemStack.EMPTY;
         ServerLevel overworld = player.getServer().overworld();
+        if (reuse) {
+            var tag = player.getPersistentData();
+            if (tag.contains(MERCHANT_MAP_KEY, 3)) {
+                var id = new net.minecraft.world.level.saveddata.maps.MapId(tag.getInt(MERCHANT_MAP_KEY));
+                MapItemSavedData known = overworld.getMapData(id);
+                if (known != null && known.centerX == gate[0] && known.centerZ == gate[2]) {
+                    ItemStack again = new ItemStack(net.minecraft.world.item.Items.FILLED_MAP);
+                    again.set(DataComponents.MAP_ID, id);
+                    return decorate(again, player, gate);
+                }
+            }
+        }
         // API: reference/minecraft-src/net/minecraft/world/item/MapItem.java#create/renderBiomePreviewMap.
         // Only player markers clamp to the edge; an off-map TARGET_X would disappear.
         ItemStack map = MapItem.create(overworld, gate[0], gate[2], (byte) 2, true, true);
@@ -226,6 +248,11 @@ public final class Wanderer {
         centred.putInt("zCenter", gate[2]);
         overworld.setMapData(map.get(DataComponents.MAP_ID), MapItemSavedData.load(centred, overworld.registryAccess()));
         MapItem.renderBiomePreviewMap(overworld, map);
+        if (reuse) player.getPersistentData().putInt(MERCHANT_MAP_KEY, map.get(DataComponents.MAP_ID).id());
+        return decorate(map, player, gate);
+    }
+
+    private static ItemStack decorate(ItemStack map, ServerPlayer player, int[] gate) {
         MapItemSavedData.addTargetDecoration(map, new BlockPos(gate[0], gate[1], gate[2]), "+", MapDecorationTypes.TARGET_X);
         map.set(DataComponents.CUSTOM_NAME, Component.translatable("murim.wanderer.map"));
         // API: reference/minecraft-src/net/minecraft/world/item/component/ItemLore.java#ItemLore(List<Component>).
@@ -237,7 +264,7 @@ public final class Wanderer {
 
     public static ItemStack createMap(ServerPlayer player) {
         MountHuaSite site = siteOverride != null ? siteOverride : MountHuaSites.get(player.getServer());
-        return site == null ? ItemStack.EMPTY : createMap(player, site);
+        return site == null ? ItemStack.EMPTY : createMap(player, site, true);
     }
 
     static long distanceBlocks(double x, double z, double tx, double tz) {

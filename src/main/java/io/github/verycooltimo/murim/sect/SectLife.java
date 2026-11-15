@@ -252,11 +252,15 @@ public final class SectLife {
         }
         SectPlaces.Pick p = SectPlaces.pick(file, m, t, time, SectSpots.of(level), level.getGameTime(), npc.spotBans());
         // A seat a player sits on is not his (holes review npc-6): give it up for a while and take the next free one, else stand on the plan.
-        for (int tries = 0; p != null && p.seat() != null && playerSits(level, p.seat()) && tries < 4; tries++) {
+        // The same for a seat another person of the sect already holds (a lapsed lease handed one chair to two diners: the late one sat
+        // down, was refused by the seat, stood up and walked to it again, every half second).
+        for (int tries = 0; p != null && p.seat() != null && (playerSits(level, p.seat()) || heldByOther(level, p.seat(), npc)) && tries < 4; tries++) {
+            // His meal reservation and lease on it go too: a reserved meal seat is returned before any ban is looked at.
+            SectSpots.of(level).release(npc.memberKey());
             npc.banSpot(p.spotId(), SEAT_TAKEN_BAN);
             p = SectPlaces.pick(file, m, t, time, SectSpots.of(level), level.getGameTime(), npc.spotBans());
         }
-        if (p == null || p.seat() != null && playerSits(level, p.seat())) {
+        if (p == null || p.seat() != null && (playerSits(level, p.seat()) || heldByOther(level, p.seat(), npc))) {
             return null;
         }
         Vec3 pickup = p.pickup() == null ? null : world(level, npc, new SectPlaces.Pick(null, p.pickup().getX() + 0.5D, p.pickup().getY(),
@@ -306,6 +310,24 @@ public final class SectLife {
     public static boolean playerSits(Level level, BlockPos seat) {
         return level.isLoaded(seat) && !level.getEntitiesOfClass(io.github.verycooltimo.murim.decor.SeatEntity.class, new net.minecraft.world.phys.AABB(seat).inflate(0.2D),
                 e -> e.getPassengers().stream().anyMatch(x -> x instanceof net.minecraft.world.entity.player.Player)).isEmpty();
+    }
+
+    /**
+     * Another person of the sect sits on the seat block {@code seat} or is on his way down onto it (the seat entity carries him, or his
+     * seat anchor is that seat). {@link io.github.verycooltimo.murim.decor.SeatEntity#sit} refuses a second one.
+     */
+    public static boolean heldByOther(Level level, BlockPos seat, SectDisciple self) {
+        if (!level.isLoaded(seat)) {
+            return false;
+        }
+        net.minecraft.world.phys.AABB box = new net.minecraft.world.phys.AABB(seat);
+        if (!level.getEntitiesOfClass(io.github.verycooltimo.murim.decor.SeatEntity.class, box.inflate(0.2D),
+                e -> e.getPassengers().stream().anyMatch(x -> x != self)).isEmpty()) {
+            return true;
+        }
+        return !level.getEntitiesOfClass(SectDisciple.class, box.inflate(2.5D, 1.5D, 2.5D), d -> d != self && d.seatAnchor() != null
+                && Math.abs(d.seatAnchor().x - (seat.getX() + 0.5D)) < 0.6D && Math.abs(d.seatAnchor().z - (seat.getZ() + 0.5D)) < 0.6D
+                && Math.abs(d.seatAnchor().y - seat.getY()) < 1.5D).isEmpty();
     }
 
     /** The layout spot a resolved task stands on, or null (plan zones, test yards). */
@@ -617,7 +639,9 @@ public final class SectLife {
         Resolved r = resolve(npc);
         if (r == null || !npc.atPlace(r.spot())) return;
         if (npc.wounded() && !npc.questHeld()) npc.setWounded(false);
-        if (r.task().kind().seated()) {
+        SectLayoutFile.Spot spot = spotOf(npc, r);
+        if (r.task().kind().seated() || spot != null && spot.seated()) {
+            // A desk job on a chair (reading, counting) is done sitting: a person who goes dormant keeps his seat.
             sitDown(npc, r);
         } else {
             npc.sit(SeatStyle.NONE);

@@ -42,7 +42,7 @@ public final class VaultArchiveShelfBlock extends PlumShelfBlock implements Enti
         return InteractionResult.sidedSuccess(level.isClientSide);
     }
     @Override protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState next, boolean moving) {
-        net.minecraft.world.Containers.dropContentsOnDestroy(state, next, level, pos);
+        if (!state.is(next.getBlock()) && level.getBlockEntity(pos) instanceof VaultChestBlockEntity be) be.dropContentsKeepingOriginals();
         super.onRemove(state, level, pos, next, moving);
     }
 }

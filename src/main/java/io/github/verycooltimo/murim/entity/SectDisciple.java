@@ -543,6 +543,7 @@ public class SectDisciple extends Bandit implements Casters.Caster {
                 return InteractionResult.sidedSuccess(false);
             }
             if (!memberKey().isEmpty() && io.github.verycooltimo.murim.sect.SectWar.atWar(warSp)) {
+                io.github.verycooltimo.murim.sect.SectWar.shun(this);
                 return InteractionResult.sidedSuccess(false);
             }
         }
@@ -1977,6 +1978,8 @@ public class SectDisciple extends Bandit implements Casters.Caster {
                 postureAnchor = position();
                 setOnGround(true);
             } else {
+                // The seat refused him (taken, or its entity is not gone yet): give this spot up for a while, the routine picks another.
+                banSpot(doingSpot(), 400);
                 releaseSeat();
             }
         }
@@ -2034,7 +2037,14 @@ public class SectDisciple extends Bandit implements Casters.Caster {
             return;   // nothing to release; the routine asks every tick and must not cancel the glide down off the seat
         }
         if (getVehicle() instanceof io.github.verycooltimo.murim.decor.SeatEntity seat) {
-            stopRiding();
+            // He steps down from where he sat to the cell he came from, by the glide below: the seat entity must not put him anywhere
+            // (on a chair with its sides taken it put him ON the seat block, a block up in the air).
+            steppingDown = seatExit != null;
+            try {
+                stopRiding();
+            } finally {
+                steppingDown = false;
+            }
             // The empty seat is gone at once: SeatEntity.sit refuses a cell whose old seat still waits for its own tick to
             // discard itself, so a same-tick re-seat (sitImmediately) failed and the routine re-walked him for seconds.
             if (!seat.isVehicle()) seat.discard();
@@ -2120,6 +2130,12 @@ public class SectDisciple extends Bandit implements Casters.Caster {
     // Posture state (server): see tickPosture.
     private Vec3 postureAnchor;
     private Vec3 seatExit;
+    private boolean steppingDown;
+
+    /** True while he leaves his seat by the glide to {@link #seatExit}: the seat entity then leaves him where he sits. */
+    public boolean steppingDownFromSeat() {
+        return steppingDown;
+    }
     private boolean furniturePassenger;
     private Vec3 glideFrom = Vec3.ZERO;
     private Vec3 glideTo = Vec3.ZERO;

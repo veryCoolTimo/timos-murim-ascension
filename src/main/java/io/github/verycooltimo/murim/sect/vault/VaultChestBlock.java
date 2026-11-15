@@ -67,7 +67,7 @@ public class VaultChestBlock extends HorizontalDirectionalBlock implements Entit
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
         if (!level.isClientSide && level.getBlockEntity(pos) instanceof VaultChestBlockEntity be) {
-            be.giveOriginals(player);
+            be.prepareOriginals();
             player.openMenu(be);
         }
         return InteractionResult.sidedSuccess(level.isClientSide);
@@ -75,7 +75,7 @@ public class VaultChestBlock extends HorizontalDirectionalBlock implements Entit
 
     @Override
     protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean moving) {
-        Containers.dropContentsOnDestroy(state, newState, level, pos);
+        if (!state.is(newState.getBlock()) && level.getBlockEntity(pos) instanceof VaultChestBlockEntity be) be.dropContentsKeepingOriginals();
         super.onRemove(state, level, pos, newState, moving);
     }
 

@@ -144,6 +144,7 @@ public final class SectJourney {
                     : !s.has(SectStanding.LESSON_ONE) ? "rank_one" : !s.has(SectStanding.LESSON_TWO) ? "rank_two"
                     : rank < Realm.FIRST ? "rank_three" : "peak";
             case "deliver_pills" -> "request";
+            case "first_path" -> "first";
             default -> g.id();
         };
     }
@@ -258,6 +259,8 @@ public final class SectJourney {
         if (profile.rank() < Realm.FIRST) return rankGoal(p);
         if (SectPositions.eligible(p, "first") && !s.has("position.declined.first"))
             return goal("first", "tae_hwi", "ready");
+        if (!office && profile.rank() < Realm.PEAK && !s.has("position.declined.first"))
+            return new Goal("first_path", "tae_hwi", SectProgression.firstChecklist(p));
         if (profile.rank() < Realm.PEAK) return rankGoal(p);
         if (SectPositions.eligible(p, "elder") && !s.has("position.declined.elder"))
             return goal("elder", "tae_hwi", "ready");

@@ -62,13 +62,15 @@ class SectSkinsTest {
         }
     }
 
-    @Test void everyGuestProfileResolvesToA128x64Texture() throws Exception {
+    @Test void everyGuestProfileResolvesToItsTexture() throws Exception {
         for (NpcProfile p : NpcProfile.values()) {
             Path f = assets().resolve("textures/entity/" + p.texture + ".png");
             assertTrue(Files.isRegularFile(f), p.id + " -> " + p.texture);
             var img = ImageIO.read(f.toFile());
-            assertEquals(128, img.getWidth(), p.id);
-            assertEquals(64, img.getHeight(), p.id);
+            // Guest skins (11.14, tools/art/guests_1114.py): 256x512 = the 128x256 UV atlas at 2 px per unit; the peddler skin stays 128x64.
+            boolean guest = p.texture.startsWith("guest_");
+            assertEquals(guest ? 256 : 128, img.getWidth(), p.id);
+            assertEquals(guest ? 512 : 64, img.getHeight(), p.id);
         }
         for (NpcProfile p : List.of(NpcProfile.SUPPLIER, NpcProfile.IMPOSTOR, NpcProfile.TRADER)) {
             assertEquals("guest_" + p.id, p.texture, "quest folk have their own skin");

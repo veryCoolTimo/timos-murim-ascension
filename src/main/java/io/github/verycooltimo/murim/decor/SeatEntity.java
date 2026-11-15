@@ -97,6 +97,10 @@ public class SeatEntity extends Entity {
 
     @Override
     public Vec3 getDismountLocationForPassenger(LivingEntity passenger) {
+        if (passenger instanceof io.github.verycooltimo.murim.entity.SectDisciple d && d.steppingDownFromSeat()) {
+            // A person of the sect steps from the seat to the cell he came from by his own glide (SectDisciple#releaseSeat).
+            return passenger.position();
+        }
         BlockPos pos = support != null ? support : BlockPos.containing(getX(), getY() + 0.4D, getZ());
         BlockState state = level().getBlockState(pos);
         Vec3 centre = new Vec3(pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D);

@@ -181,7 +181,7 @@ public final class SectGoalTalk {
 
     /** The hooks that have wording of their own; any other goal of the person is asked about as "my task: ...". */
     static final java.util.Set<String> WORDED = java.util.Set.of("method", "take_six", "submit_six", "take_spar", "submit_spar",
-            "approval", "first", "elder", "request", "deliver_pills", "direct", "ceremony", "personal_lesson", "apology", "repair",
+            "approval", "first", "first_path", "elder", "request", "deliver_pills", "direct", "ceremony", "personal_lesson", "apology", "repair",
             "clean_hits", "drill", "drill_done", "contract", "contract_handin", "favour", "lessons");
 
     /** Runs a hook that has no option of its own behind it; "retry" when it cannot be done now. */
@@ -256,6 +256,7 @@ public final class SectGoalTalk {
                         : "murim.sect.exam.missing." + missing);
             }
             case "rank_two" -> { return SectProgression.secondChecklist(p); }
+            case "first_path" -> { return SectProgression.firstChecklist(p); }
             case "drill" -> {
                 SectDefeat.Open drill = SectDefeat.open(p);
                 if (drill != null) {

@@ -400,7 +400,7 @@ public final class SideQuestGameTests {
         p.setData(ModAttachments.PROFILE, p.getData(ModAttachments.PROFILE).withRank(1));
         Dialogue.Option alone = null;
         for (Dialogue.Option o : d.nodes().get("lessons").options()) {
-            if ("strike_given_alone".equals(o.next().orElse("")) && DialogueService.applyHeadless(p, mentor, o)) alone = o;
+            if ("six_given_alone".equals(o.next().orElse("")) && DialogueService.applyHeadless(p, mentor, o)) alone = o;
         }
         helper.assertTrue(alone != null, "the mentor gives no form to one who worked it out alone");
         helper.assertTrue(p.getData(ModAttachments.SECT).has("lesson.six.done"), "the lesson is not closed");

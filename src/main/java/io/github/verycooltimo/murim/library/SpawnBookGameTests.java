@@ -53,4 +53,21 @@ public final class SpawnBookGameTests {
         }
         h.succeed();
     }
+
+    /** The mountain's centre is an Overworld coordinate: elsewhere the book must not name a direction. */
+    @GameTest(template = "sect_yard", batch = "spawnbook1109", timeoutTicks = 40)
+    public static void directionIsNotGivenOutsideTheOverworld(GameTestHelper h) {
+        var p = SectGameTests.fakePlayer(h);
+        var nether = h.getLevel().getServer().getLevel(net.minecraft.world.level.Level.NETHER);
+        var home = p.serverLevel();
+        h.assertTrue(nether != null, "no Nether level in the test server");
+        h.assertTrue(io.github.verycooltimo.murim.world.hua.MountHuaSites.get(h.getLevel().getServer()) != null, "no mountain placed");
+        try {
+            p.setServerLevel(nether);
+            h.assertTrue(SpawnBook.direction(p) == null, "the book named a direction to the mountain from the Nether");
+        } finally {
+            p.setServerLevel(home);
+        }
+        h.succeed();
+    }
 }

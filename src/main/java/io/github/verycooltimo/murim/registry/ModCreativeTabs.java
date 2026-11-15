@@ -81,6 +81,10 @@ public final class ModCreativeTabs {
                 out.accept(new ItemStack(ModItems.PILL_ASCENDING_DRAGON.get()));
                 out.accept(new ItemStack(ModItems.PILL_GREAT_RESTORATION.get()));
                 out.accept(new ItemStack(ModItems.PILL_ORIGIN_ENERGY.get()));
+                // No world source: creative only, like the four sourceless breathing methods (author 15.11).
+                out.accept(new ItemStack(ModItems.PILL_THOUSAND_POISON.get()));
+                out.accept(new ItemStack(ModItems.PILL_BLUE.get()));
+                out.accept(new ItemStack(ModItems.PILL_BLOOD.get()));
                 out.accept(new ItemStack(ModItems.BEAUTY_TEAR.get()));
                 if (io.github.verycooltimo.murim.world.PlaceService.enabled) {
                     out.accept(new ItemStack(io.github.verycooltimo.murim.world.ModWorld.SPIRIT_VEIN_ITEM.get()));

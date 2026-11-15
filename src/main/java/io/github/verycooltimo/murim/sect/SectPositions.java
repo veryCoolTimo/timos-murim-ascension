@@ -14,6 +14,7 @@ import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 /** Offices are saved as sect flags; the player's generation never changes. */
 @EventBusSubscriber(modid = MurimMod.MODID)
 public final class SectPositions {
+    public static final int FIRST_CONTRIBUTION = 60;
     public static final String FIRST = "position.first";
     public static final String ELDER = "position.elder";
     public static final ResourceLocation DIALOGUE = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "sect_positions");
@@ -39,7 +40,7 @@ public final class SectPositions {
             return false;
         }
         if ("first".equals(office)) {
-            return !s.has(FIRST) && !s.has(ELDER) && rank >= 3 && s.contribution() >= 60
+            return !s.has(FIRST) && !s.has(ELDER) && rank >= 3 && s.contribution() >= FIRST_CONTRIBUTION
                     && s.has(SectStanding.LESSON_TWO) && SectRequests.completedAny(s);
         }
         return "elder".equals(office) && s.has(FIRST) && !s.has(ELDER) && rank >= 4 && s.contribution() >= 150

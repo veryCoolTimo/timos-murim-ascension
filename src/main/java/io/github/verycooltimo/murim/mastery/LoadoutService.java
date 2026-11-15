@@ -85,8 +85,14 @@ public final class LoadoutService {
             return;
         }
         var old = player.getData(ModAttachments.CULTIVATION);
+        if (art.isEmpty() && old.method().isPresent()) {
+            // Clearing the breathing slot would leave the player with no way to sit; the slot only switches between known methods.
+            sync(player);
+            return;
+        }
+        // Keep beats and the spent compression grace: switching methods must not hand the grace out again.
         player.setData(ModAttachments.CULTIVATION, new io.github.verycooltimo.murim.cultivation.CultivationState(
-                art.map(Arts::methodId), old.beats()));
+                art.map(Arts::methodId), old.beats(), old.compressionGraceUsed()));
         io.github.verycooltimo.murim.cultivation.MeditationService.sync(player,
                 io.github.verycooltimo.murim.network.SyncMeditationPayload.Event.NONE);
         sync(player);

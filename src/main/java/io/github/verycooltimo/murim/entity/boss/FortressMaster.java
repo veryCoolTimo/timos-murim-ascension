@@ -454,10 +454,10 @@ public class FortressMaster extends Monster implements Casters.Caster {
         if (want >= 2 && have < 2) {
             pendingRoar = true;
         }
+        java.util.Objects.requireNonNull(getAttribute(Attributes.MOVEMENT_SPEED)).setBaseValue(0.27D * BossRules.speedScale(want));
         if (want >= 3) {
             pendingBoil = true;
             java.util.Objects.requireNonNull(getAttribute(Attributes.ARMOR)).setBaseValue(BossRules.ARMOR_PHASE3);
-            java.util.Objects.requireNonNull(getAttribute(Attributes.MOVEMENT_SPEED)).setBaseValue(0.27D * BossRules.PHASE3_SPEED);
             bossEvent.setColor(BossEvent.BossBarColor.RED);
         }
         refreshAura();
@@ -728,6 +728,9 @@ public class FortressMaster extends Monster implements Casters.Caster {
         if (raw == null || !Boolean.getBoolean("murim.capture")) {
             return null;
         }
+        if (phase() >= 2 && System.getenv("MURIM_CAPTURE_FREE_P2") != null) {
+            return null; // film: after the phase change he picks moves by the rules, so the pace of phase 2 is visible
+        }
         for (BossMove m : BossMove.ALL) {
             if (m.key().equals(raw.trim())) {
                 return m;
@@ -940,9 +943,9 @@ public class FortressMaster extends Monster implements Casters.Caster {
 
     private void endMove() {
         BossMove m = move();
-        cooldowns[m.id()] = BossRules.cooldown(m);
+        cooldowns[m.id()] = (int) (BossRules.cooldown(m) * BossRules.cadence(phase()));
         setState(IDLE, null);
-        idleCooldown = (int) ((20 + random.nextInt(12)) * (phase() >= 3 ? 0.85F : 1.0F));
+        idleCooldown = (int) ((20 + random.nextInt(12)) * BossRules.cadence(phase()));
     }
 
     private void cancelMove() {
@@ -1036,6 +1039,11 @@ public class FortressMaster extends Monster implements Casters.Caster {
         }
         Entity attacker = source.getEntity();
         Vector3f y = yard();
+        if (state() == SIT && !(attacker instanceof ServerPlayer)
+                && !source.is(net.minecraft.tags.DamageTypeTags.BYPASSES_INVULNERABILITY)) {
+            // Seated and out of a fight: lava, TNT, falls and pets must not kill him, or the vault opens without a winner.
+            return false;
+        }
         if (attacker instanceof ServerPlayer p && !p.isCreative()) {
             boolean inside = BossRules.inYard(p.getX(), p.getZ(), y.x, y.z, YARD_HALF, 1.0D);
             if (!inside && (yard().lengthSquared() > 0.0F)) {

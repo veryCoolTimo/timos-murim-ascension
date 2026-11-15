@@ -47,6 +47,8 @@ public final class SectContractGameTests {
         Vec3 at = h.absoluteVec(new Vec3(x, 2, 10.5));
         p.moveTo(at.x, at.y, at.z, 0, 0);
         p.setData(ModAttachments.SECT, graduate());
+        // A member holds the tablet that carries the journal; without it a refusal also shows one action-bar line.
+        p.getInventory().add(new net.minecraft.world.item.ItemStack(io.github.verycooltimo.murim.registry.ModItems.JADE_SECT_TABLET.get()));
         return p;
     }
 
@@ -255,6 +257,56 @@ public final class SectContractGameTests {
         int before = SectService.state(p).contribution();
         h.assertTrue(SectContracts.handIn(p, gate), "gate elder refused the found token");
         h.assertTrue(SectService.state(p).contribution() > before, "merit not paid");
+        h.succeed();
+    }
+
+    /** The escort has no stay timer: after the village merchant's time would be up he is still walking with the group. */
+    @GameTest(template = "sect_yard", batch = "sect_contracts", timeoutTicks = 60)
+    public static void escortMerchantDoesNotLeaveWhenTheStayTimeRunsOut(GameTestHelper h) {
+        ServerPlayer p = player(h, 10.5);
+        SectContracts.Data d = board(h, p);
+        h.assertTrue(SectContracts.take(p, 1), "escort contract not taken");
+        SectContracts.Run run = SectContracts.active(d, p.getUUID());
+        Peddler merchant = (Peddler) h.getLevel().getEntity(run.escort);
+        merchant.settle(merchant.blockPosition(), 2);
+        for (int i = 0; i < 5; i++) merchant.aiStep();
+        h.assertTrue(!merchant.isRemoved(), "the escort merchant walked off on his stay timer");
+        merchant.discard();
+        h.succeed();
+    }
+
+    /** A token found on the second day carries that day's stamp and is still the proof of a contract taken the day before. */
+    @GameTest(template = "sect_yard", batch = "sect_contracts", timeoutTicks = 60)
+    public static void tokenSearchedOnALaterDayIsAccepted(GameTestHelper h) {
+        ServerPlayer p = player(h, 10.5);
+        long key = System.nanoTime();
+        BlockPos site = p.blockPosition();
+        SectContracts.Data d = board(h, List.of(new SectContracts.CampRef(key, site)), p);
+        SectDisciple gate = npc(h, "gyeong_tak");
+        h.assertTrue(SectContracts.take(p, 0), "camp contract not taken");
+        BanditCamps.data(h.getLevel()).getOrCreate(key, site, 1L).cleared = true;
+        d.day += 1;
+        SectContracts.campSearchStep(h.getLevel());
+        h.assertTrue(count(p) == 1, "no token on the second day: " + count(p));
+        // A token already stamped with the later day (an old build) is accepted too.
+        p.getInventory().items.replaceAll(s -> ItemStack.EMPTY);
+        p.getInventory().add(SectContracts.token(key, d.day));
+        h.assertTrue(SectContracts.handIn(p, gate), "gate elder refused a token of the second day");
+        h.succeed();
+    }
+
+    /** What is held in the left hand counts for clues and for dialogue item needs, and is the thing taken. */
+    @GameTest(template = "sect_yard", batch = "sect_contracts", timeoutTicks = 40)
+    public static void offhandItemsCountForCluesAndItemNeeds(GameTestHelper h) {
+        ServerPlayer p = player(h, 10.5);
+        p.getInventory().offhand.set(0, io.github.verycooltimo.murim.quest.Clues.stack("test_clue"));
+        h.assertTrue(io.github.verycooltimo.murim.quest.Clues.carries(p, "test_clue"), "clue in the off hand not seen");
+        var need = SectService.ItemNeed.parse("minecraft:bread*2");
+        h.assertTrue(need != null, "need not parsed");
+        p.getInventory().offhand.set(0, new ItemStack(net.minecraft.world.item.Items.BREAD, 3));
+        h.assertTrue(need.count(p) == 3, "bread in the off hand not counted: " + need.count(p));
+        need.take(p);
+        h.assertTrue(p.getInventory().offhand.get(0).getCount() == 1, "bread not taken from the off hand");
         h.succeed();
     }
 
@@ -891,7 +943,8 @@ public final class SectContractGameTests {
             if (name.endsWith("Tests.java") || name.endsWith("Command.java")) continue;
             String relative = root.relativize(f).toString().replace(java.io.File.separatorChar, '/');
             if (java.util.Set.of("client/HudGalleryCapture.java", "client/seal/SealCapture.java",
-                    "client/vfx/VfxBackends.java", "client/vfx/preset/PresetRuntime.java").contains(relative)) continue;
+                    "client/vfx/VfxBackends.java", "client/vfx/preset/PresetRuntime.java",
+                    "client/boss/DevBossHandler.java").contains(relative)) continue;
             try {
                 String source = java.nio.file.Files.readString(f);
                 var m = raw.matcher(source);
@@ -900,6 +953,9 @@ public final class SectContractGameTests {
                     if (relative.equals("cultivation/MeditationService.java")
                             && source.substring(m.start())
                             .startsWith("displayClientMessage(line, true);")) continue;
+                    // A refusal for a player without the tablet (no journal to read) is one action-bar line, never chat.
+                    if (relative.equals("sect/PlayerJournal.java")
+                            && source.substring(m.start()).startsWith("displayClientMessage(reason, true);")) continue;
                     found.add(name + ": " + m.group().replaceAll("\\s+", " "));
                 }
             } catch (java.io.IOException e) {

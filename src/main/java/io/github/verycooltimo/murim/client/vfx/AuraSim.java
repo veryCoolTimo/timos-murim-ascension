@@ -45,7 +45,7 @@ import java.util.Random;
 @EventBusSubscriber(modid = MurimMod.MODID, value = Dist.CLIENT)
 public final class AuraSim {
 
-    public enum Kind { FLAME, INK, SPARK, FLOW, DEBRIS, DUST, DISC }
+    public enum Kind { FLAME, INK, SPARK, FLOW, DEBRIS, DUST }
 
     public static final int TRAIL = 8;
 
@@ -110,7 +110,6 @@ public final class AuraSim {
         float sparkDebt;
         float flowDebt;
         float debrisDebt;
-        float discDebt;
         int lastSeen;
         final Random random;
         /**
@@ -252,23 +251,6 @@ public final class AuraSim {
             }
         }
 
-        // Диск давления босса крепости: широкая зона у земли, видна, пока давление на этом игроке действует.
-        if (minecraft.player != null && entity instanceof io.github.verycooltimo.murim.entity.boss.FortressMaster boss && boss.arena()) {
-            int gap = rank - ClientProfileState.profile().rank();
-            if (gap > 0) {
-                double reach = Math.min(AuraPressure.range(gap) * 0.8D, io.github.verycooltimo.murim.entity.boss.FortressMaster.YARD_HALF);
-                e.discDebt += 5.0F + (float) reach * 0.9F;
-                while (e.discDebt >= 1.0F) {
-                    e.discDebt -= 1.0F;
-                    double angle = r.nextDouble() * Math.PI * 2.0D;
-                    // A quarter of the bands on the rim: the edge of the zone reads as a wide band, the rest fills the disc.
-                    double rr = r.nextFloat() < 0.25F ? reach * (0.86D + 0.14D * r.nextDouble()) : reach * (0.12D + 0.88D * Math.sqrt(r.nextDouble()));
-                    e.particles.add(new Particle(Kind.DISC, feet.x + Math.cos(angle) * rr, feet.y + 0.07D, feet.z + Math.sin(angle) * rr,
-                            0.0D, 0.0D, 0.0D, 22 + r.nextInt(14), 0.42F + 0.4F * r.nextFloat(), r.nextFloat()));
-                }
-            }
-        }
-
         // Поток давления к своему игроку, если давит именно эта аура.
         if (minecraft.player != null && ClientAuraState.sourceId() == entity.getId()) {
             float p = AuraPressure.of(rank, ClientProfileState.profile().rank(), minecraft.player.distanceTo(entity));
@@ -350,19 +332,6 @@ public final class AuraSim {
                     p.vy = p.vy * 0.85D - 0.002D;
                     if (!Double.isNaN(cx) && p.y < entity.getY() + 0.05D) {
                         p.y = entity.getY() + 0.05D;
-                        p.vy = 0.0D;
-                    }
-                }
-                case DISC -> {
-                    // Орбита вокруг босса против часовой: линейная скорость почти одна на любом радиусе, чуть внутрь.
-                    if (!Double.isNaN(cx)) {
-                        double ax = p.x - cx, az = p.z - cz;
-                        double rad = Math.sqrt(ax * ax + az * az);
-                        double w = 0.3D / Math.max(rad, 2.5D) * (0.8D + 0.4D * p.seed);
-                        double c = Math.cos(w), sn = Math.sin(w);
-                        double k = 0.997D;
-                        p.vx = cx + (ax * c - az * sn) * k - p.x;
-                        p.vz = cz + (ax * sn + az * c) * k - p.z;
                         p.vy = 0.0D;
                     }
                 }

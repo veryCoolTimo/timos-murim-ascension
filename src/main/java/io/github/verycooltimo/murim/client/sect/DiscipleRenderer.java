@@ -56,6 +56,7 @@ public class DiscipleRenderer extends MobRenderer<SectDisciple, DiscipleRenderer
     private static final String HEAD = "textures/entity/sect/sect_head.png";
     private static final String ECONOM = "textures/entity/sect/sect_econom.png";
     private static final String ELDER = "textures/entity/sect/elder1.png";
+    private static final String ELDER_COUNCIL = "textures/entity/sect/elder2.png";
     private static final String FIRST = "textures/entity/sect/first_rate_disciple.png";
     private static final String COACH = "textures/entity/sect/first_coach.png";
     private static final String COACH2 = "textures/entity/sect/first_coach2.png";
@@ -126,6 +127,8 @@ public class DiscipleRenderer extends MobRenderer<SectDisciple, DiscipleRenderer
     private static final Map<String, Body> LOOK_BODIES = Map.of(
             // Старейшина Тэ Гюн, глава Зала финансов (economic.bbmodel, автор 06.10): одеяние главы, очки и борода.
             "elder_treasury", Body.of("economic", ECONOM, "elder"),
+            // Старейшина Тэ Сон (совет): тот же скелет, что elder1, но своя текстура и длинная борода (tools/art/elder_council_1114.py).
+            "elder_council", Body.of("elder2", ELDER_COUNCIL, "elder"),
             // Первое поколение (Гён, текстуры автора 06.10): Гён Пхиль — 1st coach, Гён Так — 2st coach,
             // Гён Чхо — alchimic; облик first_rate_disciple — базовая текстура (рядовой первого поколения, стенд).
             "mentor", FIRST_COACH,

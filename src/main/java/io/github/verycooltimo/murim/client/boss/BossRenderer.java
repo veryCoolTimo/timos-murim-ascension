@@ -49,8 +49,11 @@ public class BossRenderer extends MobRenderer<FortressMaster, BossModel> {
     /** Масштаб модели: в 1,35 раза больше игрока. */
     public static final float SCALE = 1.35F;
 
-    /** Цвет меток: красно-оранжевая тушь. */
-    private static final float MR = 0xE0 / 255.0F, MG = 0x48 / 255.0F, MB = 0x2B / 255.0F;
+    /**
+     * Цвет меток: приглушённая ржавая охра (автор 15.11: круг перед прыжком оставить, но тише по цвету). Было #E0482B —
+     * на светлом камне плаца аддитивный слой давал яркое красное поле. Тон тот же тёплый, яркость и насыщенность ниже.
+     */
+    private static final float MR = 0xA8 / 255.0F, MG = 0x5A / 255.0F, MB = 0x3E / 255.0F;
     /** Барьер ци — красный. */
     private static final float BR = 0xC8 / 255.0F, BG = 0x32 / 255.0F, BB = 0x2A / 255.0F;
 
@@ -118,6 +121,12 @@ public class BossRenderer extends MobRenderer<FortressMaster, BossModel> {
             disc(vc, m, (float) (mk.x - ex), floor - 0.01F, (float) (mk.y - ez), (float) BossMove.POUNCE_RADIUS * k, 0.18F * pulse);
             hatch(vc, m, (float) (mk.x - ex), floor + 0.005F, (float) (mk.y - ez), (float) BossMove.POUNCE_RADIUS, 0.4F * pulse);
         }
+        if (state == FortressMaster.RECOVER && move == BossMove.POUNCE && age < LAND_FADE_TICKS) {
+            // Трещины от приземления: тёмные широкие полосы из точки удара, растут за 4 тика, затухают за LAND_FADE_TICKS.
+            float grow = Mth.clamp((age + 1.0F) / 4.0F, 0.0F, 1.0F);
+            float fade = 1.0F - Mth.clamp(age / LAND_FADE_TICKS, 0.0F, 1.0F);
+            cracks(vc, m, floor + 0.012F, entity.getId() * 7919L, grow, 0.9F * fade * fade * (2.0F - fade));
+        }
         if ((state == FortressMaster.WINDUP || state == FortressMaster.STRIKE) && (move == BossMove.RAM || move == BossMove.WHIRL)) {
             double half = move == BossMove.RAM ? BossMove.RAM_HALF_WIDTH : BossMove.WHIRL_HALF_WIDTH;
             double len = BossRules.laneLength(mk.x, mk.y, mk.z, yard.x, yard.z, FortressMaster.YARD_HALF, 1.0D,
@@ -156,6 +165,46 @@ public class BossRenderer extends MobRenderer<FortressMaster, BossModel> {
     }
 
     // ------------------------------------------------------------------ геометрия меток
+
+    /** Сколько тиков держатся трещины приземления (откат прыжка — 40). */
+    private static final int LAND_FADE_TICKS = 36;
+
+    /** Трещины пола: 11 ломаных лучей с ветками, ширина 0,3 → 0,08; крупные, без тонких линий. Только рисунок, блоки целы. */
+    private static void cracks(VertexConsumer vc, Matrix4f m, float y, long seed, float grow, float alpha) {
+        if (alpha <= 0.02F) {
+            return;
+        }
+        java.util.Random r = new java.util.Random(seed);
+        int rays = 11;
+        for (int i = 0; i < rays; i++) {
+            double a = Math.PI * 2 * i / rays + (r.nextDouble() - 0.5D) * 0.35D;
+            double len = (2.4D + r.nextDouble() * 2.3D) * grow;
+            crackLine(vc, m, y, 0.0D, 0.0D, a, len, 0.30F, r, alpha, 2);
+        }
+    }
+
+    private static void crackLine(VertexConsumer vc, Matrix4f m, float y, double x0, double z0, double angle, double length, float width,
+                                  java.util.Random r, float alpha, int branches) {
+        int seg = 7;
+        double x = x0, z = z0, a = angle;
+        for (int k = 0; k < seg; k++) {
+            double step = length / seg;
+            double na = a + (r.nextDouble() - 0.5D) * 0.7D;
+            double x1 = x + Math.cos(na) * step, z1 = z + Math.sin(na) * step;
+            float w0 = width * (1.0F - k / (float) seg * 0.7F), w1 = width * (1.0F - (k + 1) / (float) seg * 0.7F);
+            double nx = -Math.sin(na), nz = Math.cos(na);
+            quad(vc, m, new float[] {(float) (x + nx * w0 * 0.5D), y, (float) (z + nz * w0 * 0.5D)}, new float[] {(float) (x1 + nx * w1 * 0.5D), y, (float) (z1 + nz * w1 * 0.5D)},
+                    new float[] {(float) (x1 - nx * w1 * 0.5D), y, (float) (z1 - nz * w1 * 0.5D)}, new float[] {(float) (x - nx * w0 * 0.5D), y, (float) (z - nz * w0 * 0.5D)},
+                    0.05F, 0.045F, 0.04F, alpha);
+            if (branches > 0 && k == 2 + r.nextInt(2) && length > 1.2D) {
+                crackLine(vc, m, y, x1, z1, na + (r.nextBoolean() ? 0.8D : -0.8D), length * 0.35D, width * 0.5F, r, alpha, 0);
+                branches--;
+            }
+            x = x1;
+            z = z1;
+            a = na;
+        }
+    }
 
     private static void quad(VertexConsumer vc, Matrix4f m, float[] a, float[] b, float[] c, float[] d, float r, float g, float bl, float alpha) {
         if (alpha <= 0.0F) {

@@ -156,12 +156,30 @@ public final class SpeechBubbles {
                     && t.getKey().startsWith("murim.bubble.alarm_");
             double range = alarm ? io.github.verycooltimo.murim.sect.SectAlarm.HEAR
                     : d instanceof SectDisciple s && s.wanderer() ? 28.0D : RANGE;
-            draw(b, age, at.subtract(cam), rot, pose, buffers, mc.font, range);
+            // A speaker whose head the camera sees keeps the whole line: a door leaf or a post nearer than the bubble no longer
+            // cuts its words (gate guard behind the half-open leaf, player-path review 15.11, №35). Hidden heads stay depth-tested.
+            boolean through = at.distanceTo(cam) <= range && headVisible(mc, cam, d.getEyePosition(partial));
+            draw(b, age, at.subtract(cam), rot, pose, buffers, mc.font, range, through);
         }
         buffers.endBatch();
     }
 
-    private static void draw(Bubble b, float age, Vec3 rel, Quaternionf camera, PoseStack pose, MultiBufferSource buffers, Font font, double range) {
+    /**
+     * Whether nothing solid stands between the camera and the speaker's eyes (glass and leaves-style see-through shapes count as
+     * open: the visual shape is used). API: reference/minecraft-src/net/minecraft/world/level/ClipContext.java#ClipContext(Vec3,
+     * Vec3, Block, Fluid, CollisionContext), BlockGetter#clip.
+     */
+    static boolean headVisible(Minecraft mc, Vec3 cam, Vec3 eye) {
+        if (mc.level == null) {
+            return false;
+        }
+        var hit = mc.level.clip(new net.minecraft.world.level.ClipContext(cam, eye, net.minecraft.world.level.ClipContext.Block.VISUAL,
+                net.minecraft.world.level.ClipContext.Fluid.NONE, net.minecraft.world.phys.shapes.CollisionContext.empty()));
+        return hit.getType() == net.minecraft.world.phys.HitResult.Type.MISS;
+    }
+
+    private static void draw(Bubble b, float age, Vec3 rel, Quaternionf camera, PoseStack pose, MultiBufferSource.BufferSource buffers, Font font, double range,
+                             boolean through) {
         double dist = rel.length();
         if (dist > range) {
             return;
@@ -176,6 +194,9 @@ public final class SpeechBubbles {
             return;
         }
         Component line = Component.literal(" ").append(b.text()).append(" ");
+        // SEE_THROUGH draws without the depth test, in submission order (Font#finish adds the backdrop after the glyphs, the
+        // second pass below puts the letters back on top). API: reference/minecraft-src/net/minecraft/client/renderer/RenderType.java#TEXT_SEE_THROUGH
+        Font.DisplayMode mode = through ? Font.DisplayMode.SEE_THROUGH : Font.DisplayMode.NORMAL;
         pose.pushPose();
         try {
             pose.translate(rel.x, rel.y, rel.z);
@@ -188,16 +209,27 @@ public final class SpeechBubbles {
             float x = -font.width(line) / 2.0F;
             // Подложка Font ложится на 0,01 ближе букв и с проверкой глубины съедала часть букв (кадр стенда 05.10: «После
             // строя» без «всё вкусно.»). Два прохода: подложка, затем буквы чуть ближе к камере.
-            font.drawInBatch(line, x, 0.0F, alpha << 24 | TEXT, false, m, buffers, Font.DisplayMode.NORMAL, bg, LightTexture.FULL_BRIGHT);
-            pose.translate(0.0D, 0.0D, 0.03D);
-            font.drawInBatch(line, x, 0.0F, alpha << 24 | TEXT, false, pose.last().pose(), buffers, Font.DisplayMode.NORMAL, 0,
-                    LightTexture.FULL_BRIGHT);
+            if (through) {
+                // Without the depth test a sorted text buffer draws its quads back to front by their centres: on a line seen at a
+                // slant the wide backdrop covered the letters of its far half (gate film 15.11). Backdrop, letters and tail go in
+                // separate batches, in that order. Font#adjustColor makes alpha below 4 opaque; 4/255 ink is invisible.
+                font.drawInBatch(line, x, 0.0F, 0x04000000 | TEXT, false, m, buffers, mode, bg, LightTexture.FULL_BRIGHT);
+                buffers.endBatch();
+                font.drawInBatch(line, x, 0.0F, alpha << 24 | TEXT, false, m, buffers, mode, 0, LightTexture.FULL_BRIGHT);
+                buffers.endBatch();
+                pose.translate(0.0D, 0.0D, 0.03D);
+            } else {
+                font.drawInBatch(line, x, 0.0F, alpha << 24 | TEXT, false, m, buffers, mode, bg, LightTexture.FULL_BRIGHT);
+                pose.translate(0.0D, 0.0D, 0.03D);
+                font.drawInBatch(line, x, 0.0F, alpha << 24 | TEXT, false, pose.last().pose(), buffers, mode, 0,
+                        LightTexture.FULL_BRIGHT);
+            }
             // Хвостик вниз — к говорящему (codex 05.10: в толпе неясно, кто говорит).
             Component tail = Component.literal("\u25BC");
             pose.translate(-font.width(tail) * 0.3F, 9.5F, 0.0F);
             pose.scale(0.6F, 0.6F, 0.6F);
             font.drawInBatch(tail, 0.0F, 0.0F, Mth.clamp(Math.round(alpha * HudText.BACKDROP_K), 0, 255) << 24 | HudText.BACKDROP, false,
-                    pose.last().pose(), buffers, Font.DisplayMode.NORMAL, 0, LightTexture.FULL_BRIGHT);
+                    pose.last().pose(), buffers, mode, 0, LightTexture.FULL_BRIGHT);
         } finally {
             pose.popPose();
         }

@@ -71,21 +71,81 @@ public final class SectRequests {
         return p.level().getDifficulty() == net.minecraft.world.Difficulty.PEACEFUL;
     }
 
-    /** Snow Plum pills the player still lacks for the pill delivery (used, absorbed or lost): 0 when he holds enough. */
-    public static int pillsMissing(ServerPlayer p) {
-        return Math.max(0, PILLS_NEEDED - new SectService.ItemNeed(ModItems.PILL_SNOW_PLUM.get(), PILLS_NEEDED).count(p));
+    /** Snow Plum pills the player holds: main inventory, off hand and inside pill boxes carried in either. */
+    public static int pillsHeld(ServerPlayer p) {
+        int n = 0;
+        var inv = p.getInventory();
+        for (var list : java.util.List.of(inv.items, inv.offhand)) {
+            for (ItemStack s : list) {
+                if (s.is(ModItems.PILL_SNOW_PLUM.get())) n += s.getCount();
+                else if (s.getItem() instanceof io.github.verycooltimo.murim.decor.PillBoxItem) {
+                    n += s.getOrDefault(net.minecraft.core.component.DataComponents.CONTAINER,
+                            net.minecraft.world.item.component.ItemContainerContents.EMPTY).nonEmptyStream()
+                            .filter(in -> in.is(ModItems.PILL_SNOW_PLUM.get())).mapToInt(ItemStack::getCount).sum();
+                }
+            }
+        }
+        return n;
     }
 
-    /** The pill delivery is taken but the pills are gone: the giver hands the missing ones over again. */
+    /** Takes {@code count} Snow Plum pills from the places {@link #pillsHeld} looks in; loose ones first. */
+    static void takePills(ServerPlayer p, int count) {
+        int left = count;
+        var inv = p.getInventory();
+        for (var list : java.util.List.of(inv.items, inv.offhand)) {
+            for (ItemStack s : list) {
+                if (left > 0 && s.is(ModItems.PILL_SNOW_PLUM.get())) {
+                    int n = Math.min(left, s.getCount());
+                    s.shrink(n);
+                    left -= n;
+                }
+            }
+        }
+        for (var list : java.util.List.of(inv.items, inv.offhand)) {
+            for (ItemStack box : list) {
+                if (left <= 0 || !(box.getItem() instanceof io.github.verycooltimo.murim.decor.PillBoxItem)) continue;
+                var contents = box.getOrDefault(net.minecraft.core.component.DataComponents.CONTAINER,
+                        net.minecraft.world.item.component.ItemContainerContents.EMPTY);
+                java.util.List<ItemStack> slots = new java.util.ArrayList<>(contents.stream().map(ItemStack::copy).toList());
+                for (ItemStack in : slots) {
+                    if (left > 0 && in.is(ModItems.PILL_SNOW_PLUM.get())) {
+                        int n = Math.min(left, in.getCount());
+                        in.shrink(n);
+                        left -= n;
+                    }
+                }
+                box.set(net.minecraft.core.component.DataComponents.CONTAINER,
+                        net.minecraft.world.item.component.ItemContainerContents.fromItems(slots));
+            }
+        }
+    }
+
+    /** Snow Plum pills the player still lacks for the pill delivery (used, absorbed or lost): 0 when he holds enough. */
+    public static int pillsMissing(ServerPlayer p) {
+        return Math.max(0, PILLS_NEEDED - pillsHeld(p));
+    }
+
+    /** The pill delivery is taken but the pills are gone: the giver may hand the missing ones over again. */
     static boolean pillsLost(ServerPlayer p, SectState s) {
         return s.has(flag("pills", "active")) && !s.has(flag("pills", "done")) && pillsMissing(p) > 0;
+    }
+
+    private static final String REISSUE = "request.pills.reissue.";
+
+    private static long sectDay(ServerPlayer p) {
+        return SectSchedule.day(p.getServer().overworld().getDayTime());
+    }
+
+    /** Lost pills are made up at most once per sect day. */
+    static boolean canReissue(ServerPlayer p, SectState s) {
+        return pillsLost(p, s) && !s.has(REISSUE + sectDay(p));
     }
 
     public static boolean canStart(ServerPlayer p, SectDisciple npc, String id) {
         SectState s = SectService.state(p);
         int rank = p.getData(ModAttachments.PROFILE).rank();
         if ("bandits".equals(id) && peaceful(p)) return false;
-        boolean reissue = "pills".equals(id) && pillsLost(p, s);
+        boolean reissue = "pills".equals(id) && canReissue(p, s);
         if (!IDS.contains(id) || !issuer(npc, id) || !s.member() || SectPositions.disciplined(s)
                 || (s.has(flag(id, "active")) && !reissue) || s.has(flag(id, "done"))
                 || ("vault".equals(id) || "training".equals(id)) && (rank < 2 || !s.has(SectStanding.LESSON_TWO))) return false;
@@ -97,7 +157,14 @@ public final class SectRequests {
         SectState s = SectService.state(p);
         // A repeat start of the pill delivery only replaces what was lost (the favour is already taken).
         int pills = "pills".equals(id) ? pillsMissing(p) : 0;
-        p.setData(ModAttachments.SECT, s.with(flag(id, "active")));
+        boolean already = s.has(flag(id, "active"));
+        s = s.with(flag(id, "active"));
+        if (pills > 0 && already) {
+            // A reissue (not the first hand-over): count it for today and forget older days.
+            for (String f : java.util.List.copyOf(s.flags())) if (f.startsWith(REISSUE)) s = s.without(f);
+            s = s.with(REISSUE + sectDay(p));
+        }
+        p.setData(ModAttachments.SECT, s);
         if (pills > 0) give(p, new ItemStack(ModItems.PILL_SNOW_PLUM.get(), pills));
         return true;
     }
@@ -131,8 +198,7 @@ public final class SectRequests {
         if (!IDS.contains(id) || !receiver(npc, id) || !s.member() || SectPositions.disciplined(s)
                 || !s.has(flag(id, "active")) || s.has(flag(id, "done"))) return false;
         if ("pills".equals(id)) {
-            SectService.ItemNeed need = new SectService.ItemNeed(ModItems.PILL_SNOW_PLUM.get(), 3);
-            if (need.count(p) < 3) return false;
+            if (pillsHeld(p) < PILLS_NEEDED) return false;
         } else if (!s.has(flag(id, "proved"))) return false;
         return true;
     }
@@ -140,7 +206,7 @@ public final class SectRequests {
     public static boolean complete(ServerPlayer p, SectDisciple npc, String id) {
         if (!canComplete(p, npc, id)) return false;
         SectState s = SectService.state(p);
-        if ("pills".equals(id)) new SectService.ItemNeed(ModItems.PILL_SNOW_PLUM.get(), 3).take(p);
+        if ("pills".equals(id)) takePills(p, PILLS_NEEDED);
         s = s.with(flag(id, "done")).without(flag(id, "active")).without(flag(id, "proved"))
                 .with("favour." + npc.memberKey());
         // The favour called «vault» is the pass to the Scripture Hall (the main vault is the head's alone, author 21.10).

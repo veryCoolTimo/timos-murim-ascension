@@ -23,6 +23,13 @@ public final class DialogueShot {
     static final double MIN_SHARE = 0.6D;
     /** Ближе этого угла игрок закрывал бы NPC — его не рисуем. */
     static final double HIDE_ANGLE = 14.0D;
+    /**
+     * The camera keeps at least this far from the player (blocks). Nearer, his head fills a quarter of the frame edge: at 2.3–2.9
+     * blocks from the NPC the 36° angle was met right behind the player's head (gate talk, player-path review 15.11, №36).
+     */
+    static final double PLAYER_CLEAR = 1.8D;
+    /** An over-the-shoulder angle further than this from {@link #PLAYER_ANGLE} is not used: the player is hidden instead. */
+    static final double ANGLE_SLACK = 6.0D;
     /** Вертикальный угол объектива на полном плане, градусов. */
     static final double FOV = 50.0D;
     /** Центр кадра по высоте NPC (доля роста) и высота камеры: над свитком видно от макушки до пояса. */
@@ -202,14 +209,19 @@ public final class DialogueShot {
             Vec3 cam = new Vec3(npc.x + dir.x * d, 0.0D, npc.z + dir.z * d);
             double a = angle(cam, npc, player);
             widest = Math.max(widest, a);
+            // An angle met at the back of the player's head is not a shot: the head would fill the frame edge.
+            if (Math.hypot(player.x - cam.x, player.z - cam.z) < PLAYER_CLEAR) {
+                continue;
+            }
             double e = Math.abs(a - PLAYER_ANGLE);
             if (e < err) {
                 err = e;
                 best = p;
             }
         }
-        // Игрок вплотную к NPC: развести их в кадре нельзя — он скрыт, NPC вполоборота.
-        return widest < HIDE_ANGLE ? 25.0D : best;
+        // Игрок вплотную к NPC: развести их в кадре нельзя — он скрыт, NPC вполоборота. The same when no angle keeps the camera
+        // clear of the player: the half-turned NPC shot, the player hidden ({@link #shot} hides him within PLAYER_CLEAR).
+        return widest < HIDE_ANGLE || err > ANGLE_SLACK ? 25.0D : best;
     }
 
     /** Направление от NPC к камере: за спиной игрока ({@code -f}), повёрнутое к стороне на {@code phi}. */
@@ -241,7 +253,7 @@ public final class DialogueShot {
         Vec3 n = new Vec3(npc.x, 0.0D, npc.z);
         Vec3 p = new Vec3(player.x, 0.0D, player.z);
         boolean front = p.subtract(camFlat).dot(n.subtract(camFlat)) > 0.0D && toPlayer < camFlat.distanceTo(n);
-        boolean hide = toPlayer < 1.0D || front && angle(camFlat, n, p) < HIDE_ANGLE;
+        boolean hide = toPlayer < PLAYER_CLEAR || front && angle(camFlat, n, p) < HIDE_ANGLE;
         return new Shot(cam, aim, fov, side, hide);
     }
 

@@ -72,8 +72,26 @@ public final class SectAlarm {
     @SubscribeEvent
     static void onDetonate(ExplosionEvent.Detonate event) {
         if (event.getLevel() instanceof ServerLevel level && level.dimension() == Level.OVERWORLD) {
-            Vec3 at = event.getExplosion().center();
-            raise(level, at, Kind.BLAST, culprit(level, at, event.getExplosion().getIndirectSourceEntity(), 14.0D, false));
+            net.minecraft.world.level.Explosion explosion = event.getExplosion();
+            // a wind charge (it only triggers blocks and shoves) is no blast against the sect
+            if (explosion.getBlockInteraction() == net.minecraft.world.level.Explosion.BlockInteraction.TRIGGER_BLOCK) {
+                return;
+            }
+            Vec3 at = explosion.center();
+            raise(level, at, Kind.BLAST, blastCulprit(level, at, explosion.getIndirectSourceEntity()));
+        }
+    }
+
+    /**
+     * The sect's people are monsters under the skin (for their attributes), so a golem, which hunts monsters, would pick them as
+     * prey and the whole mountain would then turn on the golem. A golem leaves the sect alone unless a person of it struck him first.
+     */
+    @SubscribeEvent
+    static void onGolemTarget(net.neoforged.neoforge.event.entity.living.LivingChangeTargetEvent event) {
+        if (event.getNewAboutToBeSetTarget() instanceof SectDisciple target
+                && (event.getEntity() instanceof net.minecraft.world.entity.animal.IronGolem || event.getEntity() instanceof net.minecraft.world.entity.animal.SnowGolem)
+                && event.getEntity().getLastHurtByMob() != target) {
+            event.setCanceled(true);
         }
     }
 
@@ -99,6 +117,17 @@ public final class SectAlarm {
                 data.lastFireLook = level.getGameTime();
             }
         }
+    }
+
+    /**
+     * Who is blamed for a blast: the player who set it off; nobody when a mob (a creeper that wandered in) or another non-player
+     * source did; the nearest player only when the source is unknown (TNT from a dispenser).
+     */
+    static ServerPlayer blastCulprit(ServerLevel level, Vec3 at, net.minecraft.world.entity.LivingEntity source) {
+        if (source != null && !(source instanceof ServerPlayer)) {
+            return null;
+        }
+        return culprit(level, at, source, 14.0D, false);
     }
 
     /**

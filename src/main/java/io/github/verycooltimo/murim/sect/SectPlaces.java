@@ -461,7 +461,7 @@ public final class SectPlaces {
                         return null;
                     }
                 }
-                Pick meal = first(diningSeats(f, owner, spots, now), owner, salt, spots, now, java.util.Map.of());
+                Pick meal = first(diningSeats(f, owner, spots, now), owner, salt, spots, now, bans == null ? java.util.Map.of() : bans);
                 if (meal != null && spots != null) {
                     int left = SectSchedule.at(dayTime).meal()
                             ? mealLength(SectSchedule.at(dayTime)) - SectSchedule.sincePeriodStart(dayTime) : 2000;

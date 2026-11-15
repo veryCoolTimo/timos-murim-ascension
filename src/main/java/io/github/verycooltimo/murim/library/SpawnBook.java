@@ -47,6 +47,8 @@ public final class SpawnBook {
 
     /** Compass key of the massif as seen from the player; null when the mountain is not placed yet. */
     static String direction(ServerPlayer p) {
+        // The mountain's centre is in Overworld coordinates: in the Nether or the End the compass would lie.
+        if (p.level().dimension() != net.minecraft.world.level.Level.OVERWORLD) return null;
         MountHuaSite site = MountHuaSites.get(p.getServer());
         if (site == null) return null;
         double dx = site.centerX() - p.getX(), dz = site.centerZ() - p.getZ();

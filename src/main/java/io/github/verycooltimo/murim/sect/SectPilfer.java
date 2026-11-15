@@ -9,6 +9,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Container;
 import net.minecraft.world.inventory.ChestMenu;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -37,12 +38,14 @@ public final class SectPilfer {
     static final long NOTICE_AFTER = 1200L;
     private static final String FLAG = "pilfered.";
     private static final String TIME = "pilfer.";
-    private static final Map<UUID, Integer> OPENED = new HashMap<>();
+    private static final Map<UUID, Map<Item, Integer>> OPENED = new HashMap<>();
+    /** What each player has put into a container himself (kept while the server runs): taking it back is no theft. */
+    private static final Map<UUID, Map<BlockPos, Map<Item, Integer>>> DEPOSITED = new HashMap<>();
 
     /** Server stopped: forget cross-world state. */
-    public static void forget(UUID id) { OPENED.remove(id); }
+    public static void forget(UUID id) { OPENED.remove(id); DEPOSITED.remove(id); }
 
-    public static void clearOpened() { OPENED.clear(); }
+    public static void clearOpened() { OPENED.clear(); DEPOSITED.clear(); }
 
     private SectPilfer() { }
 
@@ -61,7 +64,10 @@ public final class SectPilfer {
     /** The sect kind of the container at {@code pos}, or null when it is not in the sect. */
     static String kindAt(ServerLevel level, BlockPos pos) {
         SectLayout layout = SectLife.layout(level);
-        SectLayoutFile file = layout == null ? null : layout.file();
+        return kindIn(layout == null ? null : layout.file(), pos);
+    }
+
+    static String kindIn(SectLayoutFile file, BlockPos pos) {
         if (file == null) return null;
         SectLayoutFile.Room room = file.roomAt(pos);
         if (room == null) room = file.roomAt(pos.above());
@@ -77,6 +83,46 @@ public final class SectPilfer {
         return n;
     }
 
+    static Map<Item, Integer> contents(Container c) {
+        Map<Item, Integer> m = new HashMap<>();
+        for (int i = 0; i < c.getContainerSize(); i++) {
+            ItemStack s = c.getItem(i);
+            if (!s.isEmpty()) m.merge(s.getItem(), s.getCount(), Integer::sum);
+        }
+        return m;
+    }
+
+    /**
+     * How many items were taken out between {@code before} and {@code after} that the player did not put in himself. The
+     * deposit tally of this container is updated: what he adds is credited, what he takes back is paid out of it first.
+     */
+    static int taken(Map<Item, Integer> before, Map<Item, Integer> after, Map<Item, Integer> deposited) {
+        int stolen = 0;
+        java.util.Set<Item> all = new java.util.HashSet<>(before.keySet());
+        all.addAll(after.keySet());
+        for (Item item : all) {
+            int delta = after.getOrDefault(item, 0) - before.getOrDefault(item, 0);
+            if (delta > 0) {
+                deposited.merge(item, delta, Integer::sum);
+            } else if (delta < 0) {
+                int own = Math.min(-delta, deposited.getOrDefault(item, 0));
+                if (own > 0) deposited.merge(item, -own, Integer::sum);
+                stolen += -delta - own;
+            }
+        }
+        return stolen;
+    }
+
+    /** True when {@code chest} lies in the very room the sect gave this player (his bed is in it). */
+    static boolean ownRoom(SectLayoutFile file, BlockPos bed, BlockPos chest) {
+        if (file == null || bed == null) return false;
+        SectLayoutFile.Room mine = file.roomAt(bed);
+        if (mine == null) mine = file.roomAt(bed.above());
+        SectLayoutFile.Room there = file.roomAt(chest);
+        if (there == null) there = file.roomAt(chest.above());
+        return mine != null && there != null && mine.id().equals(there.id());
+    }
+
     private static BlockPos posOf(ChestMenu menu) {
         return menu.getContainer() instanceof BlockEntity be ? be.getBlockPos() : null;
     }
@@ -84,17 +130,35 @@ public final class SectPilfer {
     @SubscribeEvent
     static void open(PlayerContainerEvent.Open event) {
         if (!(event.getEntity() instanceof ServerPlayer p) || !(event.getContainer() instanceof ChestMenu menu)) return;
-        if (posOf(menu) != null) OPENED.put(p.getUUID(), count(menu.getContainer()));
+        if (posOf(menu) != null) opened(p, menu.getContainer());
+    }
+
+    static void opened(ServerPlayer p, Container container) {
+        OPENED.put(p.getUUID(), contents(container));
     }
 
     @SubscribeEvent
     static void close(PlayerContainerEvent.Close event) {
         if (!(event.getEntity() instanceof ServerPlayer p) || !(event.getContainer() instanceof ChestMenu menu)) return;
-        Integer before = OPENED.remove(p.getUUID());
         BlockPos pos = posOf(menu);
-        if (before == null || pos == null || count(menu.getContainer()) >= before) return;
-        String kind = kindAt(p.serverLevel(), pos);
-        if (kind != null) took(p, kind);
+        if (pos != null) closed(p, pos, menu.getContainer());
+    }
+
+    static void closed(ServerPlayer p, BlockPos pos, Container container) {
+        SectLayout layout = SectLife.layout(p.serverLevel());
+        closed(p, pos, container, layout == null ? null : layout.file());
+    }
+
+    static void closed(ServerPlayer p, BlockPos pos, Container container, SectLayoutFile file) {
+        Map<Item, Integer> before = OPENED.remove(p.getUUID());
+        if (before == null) return;
+        Map<Item, Integer> deposited = DEPOSITED.computeIfAbsent(p.getUUID(), k -> new HashMap<>()).computeIfAbsent(pos.immutable(), k -> new HashMap<>());
+        if (taken(before, contents(container), deposited) <= 0) return;
+        String kind = kindIn(file, pos);
+        if (kind == null) return;
+        // the chest of the room the sect gave him is his: what he takes from it is not the sect's
+        if ("room".equals(kind) && ownRoom(file, SectRooms.bed(p), pos)) return;
+        took(p, kind);
     }
 
     /** Records that the player took something from a container of this kind. */

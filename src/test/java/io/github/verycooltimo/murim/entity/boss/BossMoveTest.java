@@ -71,11 +71,11 @@ class BossMoveTest {
     }
 
     @Test
-    @DisplayName("Фазы по здоровью: 60 % и 25 %")
+    @DisplayName("Фазы по здоровью: 50 % и 25 %")
     void phases() {
         assertEquals(1, BossRules.phase(1.0F));
-        assertEquals(1, BossRules.phase(0.61F));
-        assertEquals(2, BossRules.phase(0.60F));
+        assertEquals(1, BossRules.phase(0.51F));
+        assertEquals(2, BossRules.phase(0.50F));
         assertEquals(2, BossRules.phase(0.26F));
         assertEquals(3, BossRules.phase(0.25F));
         assertEquals(3, BossRules.phase(0.01F));

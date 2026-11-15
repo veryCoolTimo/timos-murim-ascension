@@ -202,6 +202,36 @@ public class BanditSwordsman extends Bandit {
 
     // ------------------------------------------------------------------ бой
 
+    /** Strike tick (counted from the start of the strike) on which the blade connects; the clip is compressed, see duelPhaseTicks. */
+    public static final int CONTACT_TICK = 1;
+
+    /**
+     * The contact frame of an ordinary swing: damage lands only now, and only if the target is inside this swing's reach
+     * and arc at this moment (the body has been turned to him before the swing and does not turn during it). Otherwise a miss.
+     */
+    public boolean contact(LivingEntity t, BanditMove m) {
+        if (t != null && m.reaches(t.getX() - getX(), t.getY() - getY(), t.getZ() - getZ(), yBodyRot) && getSensing().hasLineOfSight(t)) {
+            hit(t, m);
+            return true;
+        }
+        log("промах {}: цель {} блоков, dy {}", m.clip(),
+                t == null ? "-" : String.format("%.2f", Math.sqrt(distanceToSqr(t.getX(), getY(), t.getZ()))),
+                t == null ? "-" : String.format("%.2f", t.getY() - getY()));
+        return false;
+    }
+
+    private void hit(LivingEntity t, BanditMove m) {
+        // Урон через Casters (docs/design/23 С0): источник — удар моба, сила — от ци бандита.
+        float dmg = m.damage() * (float) damageScale();
+        boolean done = t.hurt(io.github.verycooltimo.murim.technique.Casters.attack(BanditSwordsman.this), dmg);
+        log("удар {} по {}: {} (урон {})", m.clip().isEmpty() ? "_chop" : m.clip(), t.getName().getString(), done ? "попал" : "погашен", m.damage());
+        if (done) {
+            setLastHurtMob(t);
+            double kx = t.getX() - getX(), kz = t.getZ() - getZ();
+            t.knockback(m == BanditMove.CHOP ? 0.3D : 0.45D, -kx, -kz);
+        }
+    }
+
     /**
      * Поединок: держать дистанцию, пока удар не готов; готов — сблизиться и ударить с замахом.
      * Весь цикл (замах → удар → откат) идёт отсюда, поэтому оглушение (ИИ выключен) его
@@ -333,6 +363,7 @@ public class BanditSwordsman extends Bandit {
             }
             if (d > 2.7D) {
                 getNavigation().moveTo(t, 1.0D);
+                if (state() == WINDUP) faceTowards(t, turn);
                 return;
             }
             getNavigation().stop();
@@ -352,8 +383,10 @@ public class BanditSwordsman extends Bandit {
         }
 
         private void windup(LivingEntity t) {
-            if (t != null) keepDistance(t, distanceTo(t), move() == BanditMove.QI_DASH ? 20.0F : 9.0F);
+            if (t != null) keepDistance(t, distanceTo(t), move() == BanditMove.QI_DASH ? 20.0F : 40.0F);
             if (stateTick >= duelPhaseTicks(WINDUP)) {
+                // He turns to the target before the swing; during the swing the body does not turn (the contact check reads this yaw).
+                if (t != null && move() != BanditMove.QI_DASH) faceTowards(t, 90.0F);
                 setState(STRIKE, move());
                 dashHit = false;
                 if (move() == BanditMove.QI_DASH) {
@@ -380,16 +413,9 @@ public class BanditSwordsman extends Bandit {
                 }
             } else {
                 getNavigation().stop();
-                if (stateTick == 1) {
+                if (stateTick == CONTACT_TICK) {
                     playSound(io.github.verycooltimo.murim.registry.ModSounds.SWORD_SWING_HEAVY.get(), 0.95F, 0.9F + 0.1F * getRandom().nextFloat());
-                    if (t != null && m.reaches(t.getX() - getX(), t.getY() - getY(), t.getZ() - getZ(), yBodyRot)
-                            && getSensing().hasLineOfSight(t)) {
-                        hit(t, m);
-                    } else {
-                        log("промах {}: цель {} блоков, dy {}", m.clip(),
-                                t == null ? "-" : String.format("%.2f", Math.sqrt(distanceToSqr(t.getX(), getY(), t.getZ()))),
-                                t == null ? "-" : String.format("%.2f", t.getY() - getY()));
-                    }
+                    contact(t, m);
                 }
             }
             if (stateTick >= duelPhaseTicks(STRIKE)) {
@@ -397,18 +423,6 @@ public class BanditSwordsman extends Bandit {
                 if (m == BanditMove.QI_DASH) {
                     dashCooldown = isChief() ? BanditMove.DASH_COOLDOWN * 2 / 3 : BanditMove.DASH_COOLDOWN;
                 }
-            }
-        }
-
-        private void hit(LivingEntity t, BanditMove m) {
-            // Урон через Casters (docs/design/23 С0): источник — удар моба, сила — от ци бандита.
-            float dmg = m.damage() * (float) damageScale();
-            boolean done = t.hurt(io.github.verycooltimo.murim.technique.Casters.attack(BanditSwordsman.this), dmg);
-            log("удар {} по {}: {} (урон {})", m.clip().isEmpty() ? "_chop" : m.clip(), t.getName().getString(), done ? "попал" : "погашен", m.damage());
-            if (done) {
-                setLastHurtMob(t);
-                double kx = t.getX() - getX(), kz = t.getZ() - getZ();
-                t.knockback(m == BanditMove.CHOP ? 0.3D : 0.45D, -kx, -kz);
             }
         }
 

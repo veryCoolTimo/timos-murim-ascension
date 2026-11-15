@@ -29,11 +29,13 @@ class BanditSkinTexturesTest {
         for (NpcProfile p : NpcProfile.values()) names.add(p.texture);
         for (String n : names) {
             BufferedImage im = load(n);
-            assertEquals(128, im.getWidth(), n);
-            assertEquals(64, im.getHeight(), n);
+            // Guests (11.14) are painted at the sect's density, 2 px per model unit, on the 128x256 UV atlas of guest.geo.json.
+            int k = n.startsWith("guest_") ? 2 : 1;
+            assertEquals(128 * k, im.getWidth(), n);
+            assertEquals(k == 2 ? 512 : 64, im.getHeight(), n);
             int opaque = 0;
-            for (int y = 0; y < 64; y++) for (int x = 0; x < 128; x++) if ((im.getRGB(x, y) >>> 24) != 0) opaque++;
-            assertTrue(opaque > 1500, n + " looks empty: " + opaque);
+            for (int y = 0; y < 64 * k; y++) for (int x = 0; x < 128 * k; x++) if ((im.getRGB(x, y) >>> 24) != 0) opaque++;
+            assertTrue(opaque > 1500 * k * k, n + " looks empty: " + opaque);
         }
     }
 
@@ -44,7 +46,8 @@ class BanditSkinTexturesTest {
         for (String n : heads) {
             BufferedImage im = load(n);
             StringBuilder sb = new StringBuilder();
-            for (int y = 8; y < 16; y++) for (int x = 8; x < 16; x++) sb.append(Integer.toHexString(im.getRGB(x, y)));
+            int k = n.startsWith("guest_") ? 2 : 1;
+            for (int y = 8 * k; y < 16 * k; y++) for (int x = 8 * k; x < 16 * k; x++) sb.append(Integer.toHexString(im.getRGB(x, y)));
             assertTrue(seen.add(sb.toString()), n + " repeats another face");
         }
     }

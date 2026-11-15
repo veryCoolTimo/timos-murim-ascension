@@ -17,11 +17,22 @@ import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 /** Existing author rig, UVs, textures and clips. The two false figures are render passes, never entities. */
 public final class GuestRenderer extends BanditRenderer<GuestFighter> {
     public GuestRenderer(EntityRendererProvider.Context context) {
-        super(context, SWORDSMAN_LAYER, "bandit", false);
+        super(context, GUEST_LAYER, "bandit", false);
     }
 
     @Override public ResourceLocation getTextureLocation(GuestFighter entity) {
         return ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/entity/" + entity.profile().texture + ".png");
+    }
+
+    /** Build (tools/art/guests_1114.py BUILD): the merchant is short and round, the false master and the killer are taller. */
+    @Override protected void scale(GuestFighter entity, PoseStack pose, float partialTick) {
+        float k = switch (entity.profile()) {
+            case TRADER -> 0.95F;
+            case HA_YUN -> 0.98F;
+            case IMPOSTOR, KWON_YEON -> 1.04F;
+            default -> 1.0F;
+        };
+        pose.scale(k, k, k);
     }
 
     @Override protected float getWhiteOverlayProgress(GuestFighter entity, float partial) {

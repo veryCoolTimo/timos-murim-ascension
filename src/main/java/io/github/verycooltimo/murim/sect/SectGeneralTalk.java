@@ -43,6 +43,7 @@ public final class SectGeneralTalk {
     public static final String SELF_STEM = "dialogue.murim.general.self.";
     public static final String RUMOUR_STEM = "dialogue.murim.general.rumour";
     /** The two tones. */
+    public static final String OUTSIDER_TONE = "outsider";
     public static final List<String> TONES = List.of("formal", "plain");
     /** The standard way out that dialogue files already carry: replaced by the one closing option at the bottom. */
     private static final java.util.Set<String> STANDARD_CLOSERS = java.util.Set.of("dialogue.murim.opt.leave", "dialogue.murim.hook.ok");
@@ -84,7 +85,8 @@ public final class SectGeneralTalk {
     static void farewell(ServerPlayer p, SectDisciple npc) {
         if (npc != null && npc.isAlive()) {
             npc.gesture("nod");
-            String key = pick(BUBBLE_STEM + tone(npc), p.getRandom());
+            // Someone not yet accepted is not sent back to his duties or told to train (playtest 15.11, gate): a neutral road-farewell.
+            String key = pick(BUBBLE_STEM + (SectService.state(p).member() ? tone(npc) : OUTSIDER_TONE), p.getRandom());
             SectChatter.send(npc, key, Component.translatable(key));
         }
         DialogueService.close(p, npc);

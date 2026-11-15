@@ -65,7 +65,8 @@ public final class DialogueCapture {
     public static void begin() {
         List<Step> out = new ArrayList<>();
         for (String part : System.getenv().getOrDefault("MURIM_CAPTURE_DIALOGUE", "10:use").split(",")) {
-            String[] kv = part.trim().split(":");
+            // Only the first colon splits tick from action: a srv@ command may name murim:six_harmonies (path run 15.11).
+            String[] kv = part.trim().split(":", 2);
             if (kv.length == 2) {
                 out.add(new Step(Integer.parseInt(kv[0].trim()), kv[1].trim()));
             }
@@ -119,6 +120,9 @@ public final class DialogueCapture {
             }
             if (ms.active() && elapsed % 20 == 0) {
                 MurimMod.LOGGER.info("SMOKE-MED active beats={} ticks={} ring={}", ms.beats(), ms.ticks(), ms.ring().active());
+            }
+            if (!ms.active() && ms.beats() >= 3 && elapsed % 100 == 0) {
+                MurimMod.LOGGER.info("SMOKE-MED seed beats={}", ms.beats());
             }
         }
         watch(mc);
@@ -251,6 +255,11 @@ public final class DialogueCapture {
             });
             return;
         }
+        if (action.equals("chestuse") || action.equals("closescr") || action.equals("invlog")
+                || action.startsWith("mclick@") || action.startsWith("qmove@")) {
+            vaultStep(mc, action);
+            return;
+        }
         if (action.startsWith("click@") || action.startsWith("clickd@")) {
             click(mc, action.substring(action.indexOf('@') + 1), action.startsWith("clickd@"));
             return;
@@ -329,6 +338,47 @@ public final class DialogueCapture {
                         break;
                     }
                 }
+            }
+            case "book" -> {
+                // path run 15.11: the spawn book a newcomer gets at first join, used from the hotbar as the player does
+                boolean found = false;
+                for (int i = 0; i < 9 && !found; i++) {
+                    var item = mc.player.getInventory().getItem(i);
+                    if (net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(item.getItem()).getPath().equals("spawn_book")) {
+                        mc.player.getInventory().selected = i;
+                        if (mc.gameMode != null) mc.gameMode.useItem(mc.player, InteractionHand.MAIN_HAND);
+                        MurimMod.LOGGER.info("SMOKE-BOOK used slot {}", i);
+                        found = true;
+                    }
+                }
+                if (!found) {
+                    // log where it is (or that it never came), so a missing grant is told apart from a full hotbar
+                    StringBuilder inv = new StringBuilder();
+                    for (int i = 0; i < mc.player.getInventory().items.size(); i++) {
+                        var item = mc.player.getInventory().getItem(i);
+                        if (!item.isEmpty()) inv.append(i).append('=').append(net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(item.getItem()).getPath()).append(' ');
+                    }
+                    MurimMod.LOGGER.info("SMOKE-BOOK missing from the hotbar; inventory: {}", inv);
+                }
+            }
+            case "wlog" -> {
+                // path run 15.11: what the sect watch thinks of the player right now (the fp camera does not see a guard behind him)
+                var server = mc.getSingleplayerServer();
+                var id = mc.player.getUUID();
+                if (server != null) server.execute(() -> {
+                    var sp = server.getPlayerList().getPlayer(id);
+                    if (sp == null) return;
+                    var t = io.github.verycooltimo.murim.sect.SectWatch.of(sp);
+                    var g = io.github.verycooltimo.murim.sect.SectWatch.watcher(sp, false);
+                    MurimMod.LOGGER.info("SMOKE-WATCH standing={} last={} strikes={} watcher={} dist={} pos={}",
+                            io.github.verycooltimo.murim.sect.SectWatch.standing(sp), t.last(), t.strikes(),
+                            g == null ? "none" : g.getName().getString(), g == null ? -1 : Math.round(g.distanceTo(sp)),
+                            sp.blockPosition().toShortString());
+                });
+            }
+            case "pgnext" -> {
+                // next spread of an open text book (JunkBookScreen turns on the wheel)
+                if (mc.screen != null) mc.screen.mouseScrolled(mc.screen.width / 2.0D, mc.screen.height / 2.0D, 0.0D, -1.0D);
             }
             case "learn" -> {
                 // the click on the seal of the open method scroll: the same packet, then close the screen
@@ -423,6 +473,84 @@ public final class DialogueCapture {
      * {@code clickd@key} calls Screen#mouseClicked at the same point. The state before the click goes to the log, the effect
      * is logged by {@link #watch}.
      */
+    /** Dev (vault take film 14.11): open the nearest vault chest as a hand would, click a slot by item name (real XTEST pointer), log counts. */
+    private static void vaultStep(Minecraft mc, String action) {
+        switch (action.contains("@") ? action.substring(0, action.indexOf('@')) : action) {
+            case "chestuse" -> {
+                net.minecraft.core.BlockPos best = null;
+                var base = mc.player.blockPosition();
+                for (net.minecraft.core.BlockPos q : net.minecraft.core.BlockPos.betweenClosed(base.offset(-6, -4, -6), base.offset(6, 4, 6))) {
+                    if (mc.level.getBlockState(q).getBlock() instanceof io.github.verycooltimo.murim.sect.vault.VaultChestBlock
+                            && (best == null || q.distSqr(base) < best.distSqr(base))) best = q.immutable();
+                }
+                if (best == null || mc.gameMode == null) { MurimMod.LOGGER.info("SMOKE-VAULT no chest near"); return; }
+                var centre = net.minecraft.world.phys.Vec3.atCenterOf(best);
+                var eye = mc.player.getEyePosition();
+                double dx = centre.x - eye.x, dy = centre.y - eye.y, dz = centre.z - eye.z;
+                mc.player.setYRot((float) (Math.toDegrees(Math.atan2(-dx, dz))));
+                mc.player.setXRot((float) -Math.toDegrees(Math.atan2(dy, Math.sqrt(dx * dx + dz * dz))));
+                mc.player.yRotO = mc.player.getYRot(); mc.player.xRotO = mc.player.getXRot();
+                var hit = new net.minecraft.world.phys.BlockHitResult(centre, net.minecraft.core.Direction.UP, best, false);
+                var r = mc.gameMode.useItemOn(mc.player, InteractionHand.MAIN_HAND, hit);
+                MurimMod.LOGGER.info("SMOKE-VAULT chest {} use -> {}", best, r);
+            }
+            case "closescr" -> { mc.player.closeContainer(); MurimMod.LOGGER.info("SMOKE-VAULT closed"); }
+            case "invlog" -> {
+                var inv = mc.player.getInventory();
+                int manual = 0, scroll = 0;
+                for (int i = 0; i < inv.getContainerSize(); i++) {
+                    String id = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(inv.getItem(i).getItem()).getPath();
+                    if (id.equals("technique_manual")) manual += inv.getItem(i).getCount();
+                    if (id.equals("method_scroll")) scroll += inv.getItem(i).getCount();
+                }
+                var menu = mc.player.containerMenu;
+                String shown = "";
+                int cm = 0, cs = 0;
+                var carried = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(menu.getCarried().getItem()).getPath();
+                for (int i = 0; i < Math.min(27, menu.slots.size()); i++) {
+                    var st = menu.slots.get(i).getItem();
+                    if (!st.isEmpty()) shown += i + ":" + net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(st.getItem()).getPath() + " ";
+                }
+                MurimMod.LOGGER.info("SMOKE-VAULT inv manual={} scroll={} carried={} chestSlotsShown=[{}] menu={}", manual, scroll, carried, shown.trim(),
+                        menu.getClass().getSimpleName());
+            }
+            default -> {
+                if (!(mc.screen instanceof net.minecraft.client.gui.screens.inventory.AbstractContainerScreen<?> screen)) {
+                    MurimMod.LOGGER.info("SMOKE-VAULT {} no container screen", action);
+                    return;
+                }
+                String want = action.substring(action.indexOf('@') + 1);
+                var menu = screen.getMenu();
+                int idx = -1;
+                for (int i = 0; i < menu.slots.size() && idx < 0; i++) {
+                    var st = menu.slots.get(i).getItem();
+                    if (want.equals("inv")) { if (i >= 27 && st.isEmpty()) idx = i; }
+                    else if (!st.isEmpty() && net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(st.getItem()).getPath().equals(want)
+                            && menu.slots.get(i).container != mc.player.getInventory()) idx = i;
+                }
+                if (idx < 0) { MurimMod.LOGGER.info("SMOKE-VAULT {} slot not found", action); return; }
+                if (action.startsWith("qmove@")) {
+                    mc.gameMode.handleInventoryMouseClick(menu.containerId, idx, 0, net.minecraft.world.inventory.ClickType.QUICK_MOVE, mc.player);
+                    MurimMod.LOGGER.info("SMOKE-VAULT qmove slot {}", idx);
+                    return;
+                }
+                var slot = menu.slots.get(idx);
+                double gx = screen.getGuiLeft() + slot.x + 8, gy = screen.getGuiTop() + slot.y + 8;
+                double scale = mc.getWindow().getGuiScale();
+                int[] wx = new int[1], wy = new int[1];
+                org.lwjgl.glfw.GLFW.glfwGetWindowPos(mc.getWindow().getWindow(), wx, wy);
+                int rx = (int) Math.round(wx[0] + gx * scale), ry = (int) Math.round(wy[0] + gy * scale);
+                MurimMod.LOGGER.info("SMOKE-VAULT mclick slot {} gui={},{} root={},{}", idx, gx, gy, rx, ry);
+                try {
+                    new ProcessBuilder("python3", System.getenv().getOrDefault("MURIM_XCLICK", "../tools/capture/xclick.py"),
+                            System.getenv().getOrDefault("DISPLAY", ":0"), Integer.toString(rx), Integer.toString(ry)).inheritIO().start();
+                } catch (java.io.IOException e) {
+                    MurimMod.LOGGER.info("SMOKE-VAULT xclick failed {}", e.toString());
+                }
+            }
+        }
+    }
+
     private static void click(Minecraft mc, String key, boolean direct) {
         if (!(mc.screen instanceof DialogueScreen ds)) {
             MurimMod.LOGGER.info("SMOKE-CLICK n={} key={} no dialogue screen", ++clicks, key);

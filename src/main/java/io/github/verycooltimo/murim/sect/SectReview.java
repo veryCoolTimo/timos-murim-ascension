@@ -93,6 +93,12 @@ public final class SectReview {
         return Math.floorMod(EVERY - 1 - SectSchedule.day(dayTime), (long) EVERY);
     }
 
+    /** Days until the next review a player can still attend: today's counts only until its window closes. */
+    public static long daysUntilOpen(long dayTime) {
+        long days = daysUntil(dayTime);
+        return days == 0 && Math.floorMod(dayTime, (long) SectSchedule.DAY) >= TO ? EVERY : days;
+    }
+
     /**
      * Место зрителя на смотре: глава и наставник — на помосте, Тэ Рок и Тэ Сон — у края площадки, лекарь — на дежурстве у
      * края; ученики (второе и третье поколение) — двумя рядами вдоль северного и южного края лицом к рингам. Остальные
@@ -760,16 +766,16 @@ public final class SectReview {
     }
 
     /** Записаться на смотр (диалог старшего Со Рана): положение «ученик третьего класса» и выше. */
-    public static void signUp(ServerPlayer p) {
+    public static SignUp signUp(ServerPlayer p) {
         SectState st = p.getData(ModAttachments.SECT);
         if (!SectService.standing(p).atLeast(SectStanding.DISCIPLE)) {
             PlayerJournal.refuse(p, Component.translatable("murim.sect.review.too_young").withStyle(ChatFormatting.GRAY));
-            return;
+            return SignUp.TOO_YOUNG;
         }
         if (!signupOpen(p)) {
             PlayerJournal.refuse(p, Component.translatable("murim.sect.review.too_early", daysUntil(p.level().getDayTime()) - 1)
                     .withStyle(ChatFormatting.GRAY));
-            return;
+            return SignUp.TOO_EARLY;
         }
         p.setData(ModAttachments.SECT, st.with(SIGNED));
         SectTablet.touch(p);
@@ -777,7 +783,16 @@ public final class SectReview {
         boolean running = state(p.serverLevel()) != null;
         SectNotice.bar(p, Component.translatable(days == 0 && !running ? "murim.sect.review.signed_today" : "murim.sect.review.signed",
                 running && days == 0 ? EVERY : days).withStyle(ChatFormatting.GOLD));
+        return SignUp.OK;
     }
+
+    /** Days until the sign-up opens (the day before the review). */
+    public static long daysToSignup(ServerPlayer p) {
+        return Math.max(1L, daysUntil(p.level().getDayTime()) - 1);
+    }
+
+    /** Исход записи на смотр: диалог Со Рана отвечает по нему, а не «ты записан» на любой отказ. */
+    public enum SignUp { OK, TOO_YOUNG, TOO_EARLY }
 
     /** Имя бойца для сообщений. */
     static Component name(ServerLevel level, State s, String key) {

@@ -214,10 +214,19 @@ public final class DialogueService {
         if (player.getPersistentData().contains(stamp) && now - player.getPersistentData().getLong(stamp) < 200) {
             return;
         }
+        // Path run 15.11: the newcomer closed the talk with his mentor in the yard, an elder watched the training a few blocks off,
+        // and Gyeong Tak walked up at once with «The elder does not receive juniors uncalled. First, the mentor». He had come to
+        // the man beside him, not to the elder: no stop right after a talk, nor while somebody else stands nearer to him.
+        if (now - player.getPersistentData().getLong(TALK_CLOSED_AT) < TALK_GRACE && player.getPersistentData().contains(TALK_CLOSED_AT)) {
+            return;
+        }
         SectDisciple target = player.level().getEntitiesOfClass(SectDisciple.class, player.getBoundingBox().inflate(6.0D),
                         d -> d.isAlive() && d.free() && !d.blocking() && (d.role() == SectRole.ELDER || d.role() == SectRole.LEADER)
                                 && d.distanceToSqr(player) <= 36.0D && d.getSensing().hasLineOfSight(player))
                 .stream().min(java.util.Comparator.comparingDouble(d -> d.distanceToSqr(player))).orElse(null);
+        if (target != null && withSomebodyElse(player, target)) {
+            return;
+        }
         if (target != null) {
             Route r = route(player, target);
             if (r != null && r.intercepted() && !r.speaker().approachingDialogue(player, r.id())) {
@@ -225,6 +234,22 @@ public final class DialogueService {
                 engage(player, target, r);
             }
         }
+    }
+
+    /** When the player last closed a talk with a sect member (game time, persistent data). */
+    static final String TALK_CLOSED_AT = "murim_talk_closed_at";
+    /** After a talk the guard does not stop him at an elder for this long (ticks). */
+    static final long TALK_GRACE = 200L;
+
+    /**
+     * A member who is neither an elder, the head nor a guard stands nearer to the player than {@code elder}: the player is with
+     * that person (his mentor, a sparring partner), not walking up to the elder.
+     */
+    static boolean withSomebodyElse(ServerPlayer player, SectDisciple elder) {
+        double to = elder.distanceToSqr(player);
+        return !player.level().getEntitiesOfClass(SectDisciple.class, player.getBoundingBox().inflate(Math.sqrt(to)),
+                d -> d != elder && d.isAlive() && d.role() != SectRole.ELDER && d.role() != SectRole.LEADER && !SectWatch.guards(d)
+                        && d.distanceToSqr(player) < to).isEmpty();
     }
 
     private static String entry(ServerPlayer player, SectDisciple npc, Dialogue d) {
@@ -349,6 +374,7 @@ public final class DialogueService {
         }
         String anim = "";
         boolean closing = false;
+        reason = null;
         for (Dialogue.Action a : option.actions()) {
             String r = act(player, npc, a);
             if ("switch".equals(r)) return;
@@ -414,14 +440,34 @@ public final class DialogueService {
     /** Key of the line shown when the server refuses an answer (author 14.11: a refused click looked like a click that did nothing). */
     public static final String REFUSED = "dialogue.murim.general.refused";
 
+    /**
+     * The reason an action has just failed, in the person's own words (set by {@link #retry}, taken by the next refusal on
+     * the server thread). Author 15.11: «нажимаю 20 раз — ничего не происходит»: a refusal names what is wrong, and only an
+     * action that gave no reason falls back on {@link #REFUSED}.
+     */
+    private static Component reason;
+
+    /** A failed action: the node is shown again and the person says why. */
+    static String retry(String key, Object... args) {
+        reason = Component.translatable(key, args);
+        return "retry";
+    }
+
+    private static Component takeReason() {
+        Component r = reason;
+        reason = null;
+        return r;
+    }
+
     /** The answer was refused (a condition or an action failed): the same node is shown again, but with a line that says so. */
     static void refuse(ServerPlayer player, SectDisciple npc, Session s, Dialogue d) {
+        Component why = takeReason();
         Dialogue.Node node = nodeOf(d, s.node());
         if (node == null) {
             close(player, npc);
             return;
         }
-        show(player, npc, s.dialogue(), d, s.node(), "", Component.translatable(REFUSED, npc.getName()));
+        show(player, npc, s.dialogue(), d, s.node(), "", why != null ? why : Component.translatable(REFUSED, npc.getName()));
     }
 
     static void show(ServerPlayer player, SectDisciple npc, ResourceLocation id, Dialogue d, String nodeId, String anim) {
@@ -439,9 +485,14 @@ public final class DialogueService {
             close(player, npc);
             return;
         }
+        reason = null;
         for (Dialogue.Action a : node.enter()) {
             String r = act(player, npc, a);
-            if (r != null && !"close".equals(r)) {
+            if ("retry".equals(r)) {
+                // an entry action that failed (a full pack at the counter): the person says so instead of the node's line
+                Component why = takeReason();
+                if (lineOverride == null) lineOverride = why;
+            } else if (r != null && !"close".equals(r)) {
                 anim = r;
             }
         }
@@ -583,6 +634,7 @@ public final class DialogueService {
                 && !SectService.state(player).member() && !SectService.state(player).has(SectArrival.INVITED)) {
             SectGateWatch.leave(player);
         }
+        if (session.active()) player.getPersistentData().putLong(TALK_CLOSED_AT, player.level().getGameTime());
         player.setData(ModAttachments.DIALOGUE, Session.NONE);
         if (npc != null && npc.talkingTo() == player.getId() && !npc.awaitingGuide(player)) {
             npc.setTalkingTo(null);
@@ -878,8 +930,11 @@ public final class DialogueService {
             }
             case "arrival_guide" -> {
                 npc.awaitGuide(player);
-                SectArrival.order(player, npc.layout());
-                openDialogue(player, npc, SectArrival.DIALOGUE, "invited");
+                boolean sent = SectArrival.order(player, npc.layout());
+                Dialogue arrival = DialogueLoader.get(SectArrival.DIALOGUE);
+                // the same node, but the person says what came of the request: a guide is on the way, or nobody is free
+                show(player, npc, SectArrival.DIALOGUE, arrival, "invited", "", Component.translatable(sent
+                        ? "dialogue.murim.arrival.guide_coming" : "dialogue.murim.arrival.guide_none"));
                 return "switch";
             }
             case "arrival_unguide" -> SectArrival.decline(player);
@@ -910,7 +965,13 @@ public final class DialogueService {
             case "tablet_replace" -> { if (!SectTablet.replace(player)) return "retry"; }
             case "journey_hud" -> SectJourney.toggleHud(player);
             case "goal_talk" -> { return SectGoalTalk.act(player, npc, v); }
-            case "serve_bowl" -> SectMeals.serve(player);
+            case "serve_bowl" -> {
+                SectMeals.Result got = SectMeals.serve(player);
+                if (got == SectMeals.Result.FULL || got == SectMeals.Result.ALREADY || got == SectMeals.Result.NOT_MEAL
+                        || got == SectMeals.Result.NOT_MEMBER) {
+                    return retry("dialogue.murim.no.meal." + got.name().toLowerCase(java.util.Locale.ROOT));
+                }
+            }
             case "approach_decline" -> SectApproach.decline(player, npc);
             case "progression_menu" -> {
                 if (!SectProgression.matches(player, npc, "menu")) return "retry";
@@ -946,7 +1007,10 @@ public final class DialogueService {
                     MurimMod.LOGGER.warn("Диалог: заслуги не числом: {}", v);
                 }
             }
-            case "donate" -> { if (!SectService.donate(player, v)) return "retry"; }
+            case "donate" -> {
+                SectService.Donation got = SectService.donateResult(player, v);
+                if (got != SectService.Donation.OK) return retry("dialogue.murim.no.donate." + got.name().toLowerCase(java.util.Locale.ROOT));
+            }
             case "chore" -> {
                 // Добровольная помощь кухне раз в день; возвращаем пустое ведро.
                 SectService.ItemNeed need = SectService.ItemNeed.parse(v.isEmpty() ? SectAttendance.CHORE_ITEM : v);
@@ -960,11 +1024,23 @@ public final class DialogueService {
                         }
                     }
                     SectAttendance.record(player, SectAttendance.Activity.CHORE);
-                } else return "retry";
+                } else if (!SectService.state(player).member()) {
+                    return retry("dialogue.murim.no.chore.outsider");
+                } else if (SectAttendance.current(player).today().did(SectAttendance.Activity.CHORE)) {
+                    return retry("dialogue.murim.no.chore.done");
+                } else {
+                    return retry("dialogue.murim.no.chore.item");
+                }
             }
             case "assist_elixir" -> {
-                if ("gyeong_cho".equals(npc.memberKey()) || "tae_seong".equals(npc.memberKey())) {
-                    io.github.verycooltimo.murim.cultivation.GreatElixirs.assist(player);
+                if (!"gyeong_cho".equals(npc.memberKey()) && !"tae_seong".equals(npc.memberKey())) {
+                    return retry("dialogue.murim.no.assist.not_mine");
+                }
+                if (!io.github.verycooltimo.murim.cultivation.GreatElixirs.assist(player)) {
+                    return player.getData(ModAttachments.SECT).merit() < io.github.verycooltimo.murim.cultivation.GreatElixirs.ASSIST_MERIT
+                            && SectService.state(player).member()
+                            ? retry("dialogue.murim.no.assist.merit", io.github.verycooltimo.murim.cultivation.GreatElixirs.ASSIST_MERIT)
+                            : retry("dialogue.murim.no.assist.elixir", io.github.verycooltimo.murim.cultivation.GreatElixirs.ASSIST_MERIT);
                 }
             }
             case "heal" -> {
@@ -977,8 +1053,15 @@ public final class DialogueService {
                 npc.holdPose(io.github.verycooltimo.murim.entity.SectPose.TREAT, 60);
             }
             case "record" -> SectAttendance.record(player, v);
-            case "merit_buy" -> MeritShop.buy(player, v);
-            case "review_enter" -> SectReview.signUp(player);
+            case "merit_buy" -> {
+                MeritShop.Result got = MeritShop.buy(player, v);
+                if (got != MeritShop.Result.OK) return meritRefusal(player, v, got);
+            }
+            case "review_enter" -> {
+                SectReview.SignUp got = SectReview.signUp(player);
+                if (got == SectReview.SignUp.TOO_YOUNG) return retry("dialogue.murim.no.review.too_young");
+                if (got == SectReview.SignUp.TOO_EARLY) return retry("dialogue.murim.no.review.too_early", SectReview.daysToSignup(player));
+            }
             case "penance_accept" -> {
                 close(player, npc);
                 io.github.verycooltimo.murim.sect.seal.PenanceService.accept(player);
@@ -1044,6 +1127,16 @@ public final class DialogueService {
             default -> MurimMod.LOGGER.warn("Неизвестное действие диалога: {}", a.type());
         }
         return null;
+    }
+
+    /** What the seller says when the exchange did not happen: one line per reason, with the numbers that matter. */
+    private static String meritRefusal(ServerPlayer player, String id, MeritShop.Result got) {
+        java.util.Optional<MeritShop.Offer> offer = MeritShop.offer(id);
+        if (offer.isEmpty() || got == MeritShop.Result.UNKNOWN) return retry("dialogue.murim.no.merit.unknown");
+        MeritShop.Offer o = offer.get();
+        if (got == MeritShop.Result.STOCK && MeritShop.minutesToNext(player, o) == 0) return retry("dialogue.murim.no.merit.stock_out");
+        return retry("dialogue.murim.no.merit." + got.name().toLowerCase(java.util.Locale.ROOT), MeritShop.price(player, o),
+                player.getData(ModAttachments.SECT).merit(), Component.translatable(o.need().nameKey()), MeritShop.minutesToNext(player, o));
     }
 
     /**

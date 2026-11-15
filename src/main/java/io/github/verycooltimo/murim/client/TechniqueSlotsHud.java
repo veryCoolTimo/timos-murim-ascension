@@ -85,11 +85,9 @@ public final class TechniqueSlotsHud {
                     x = w / 2 - total / 2 + i * (SIZE + GAP);
                     y = h - 49 - SIZE - 4;
                 } else {
-                    // Слева от хотбара: столбцы по два снизу вверх, от хотбара влево.
-                    int col = i / 2;
-                    int row = i % 2;
-                    x = w / 2 - 91 - 6 - SIZE - col * (SIZE + GAP);
-                    y = h - SIZE - 1 - row * (SIZE + GAP);
+                    int[] at = leftPosition(i, count, w, h);
+                    x = at[0];
+                    y = at[1];
                 }
                 if (blade && i == techniques) {
                     slot(graphics, x, y, Optional.of(FINISHER), false, 0, presence);
@@ -114,6 +112,29 @@ public final class TechniqueSlotsHud {
             }
         });
         graphics.flush();
+    }
+
+    /**
+     * Left of the hotbar: columns of two, bottom to top, from the hotbar outward. When the next column would leave the
+     * screen, the slots continue as a new band of columns above the first one; on a very narrow screen they become one row.
+     */
+    static int[] leftPosition(int i, int count, int guiWidth, int guiHeight) {
+        int room = guiWidth / 2 - 91 - 6 - 2;
+        int columns = Math.max(1, (room + GAP) / (SIZE + GAP));
+        int perBand = columns * 2;
+        int bands = (count + perBand - 1) / perBand;
+        if (bands * 2 * (SIZE + GAP) > guiHeight / 2) {
+            // Too narrow for any column stack: one centred row above the hotbar, like the row style.
+            int total = count * SIZE + (count - 1) * GAP;
+            return new int[] {Math.max(0, guiWidth / 2 - total / 2) + i * (SIZE + GAP), guiHeight - 49 - SIZE - 4};
+        }
+        int band = i / perBand;
+        int inBand = i % perBand;
+        int col = inBand / 2;
+        int row = inBand % 2;
+        int x = guiWidth / 2 - 91 - 6 - SIZE - col * (SIZE + GAP);
+        int y = guiHeight - SIZE - 1 - (band * 2 + row) * (SIZE + GAP);
+        return new int[] {x, y};
     }
 
     /** Один слот: тёмный квадрат, иконка, тонкая полоса освоения слоя; выбранный светится. */

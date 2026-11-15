@@ -482,7 +482,7 @@
               "value": "summon.leader"
             }
           ],
-          "next": "strike_given_alone"
+          "next": "six_given_alone"
         },
         {
           "text": "dialogue.murim.mentor.opt.done_six",
@@ -512,7 +512,7 @@
               "value": "summon.leader"
             }
           ],
-          "next": "strike_given_asked"
+          "next": "six_given_asked"
         },
         {
           "text": "dialogue.murim.mentor.opt.strike_why",
@@ -2024,7 +2024,7 @@
         }
       ]
     },
-    "strike_given_alone": {
+    "six_given_alone": {
       "line": "dialogue.murim.quest.strike.given_alone",
       "gesture": "nod",
       "options": [
@@ -2042,7 +2042,7 @@
         }
       ]
     },
-    "strike_given_asked": {
+    "six_given_asked": {
       "line": "dialogue.murim.quest.strike.given_asked",
       "gesture": "nod",
       "options": [

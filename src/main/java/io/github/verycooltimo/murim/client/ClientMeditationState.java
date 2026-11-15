@@ -692,13 +692,13 @@ public final class ClientMeditationState {
             } else {
                 standSent = true;
                 PacketDistributor.sendToServer(new MeditationInputPayload(
-                        MeditationInputPayload.Action.TOGGLE, true));
+                        MeditationInputPayload.Action.STAND, true));
             }
         }
         if (io.github.verycooltimo.murim.client.flow.PillScene.consumeStandAfter() && state.active() && !standSent) {
             standSent = true;
             PacketDistributor.sendToServer(new MeditationInputPayload(
-                    MeditationInputPayload.Action.TOGGLE, true));
+                    MeditationInputPayload.Action.STAND, true));
         }
         // Кольцо держится клавишей прыжка: во время медитации она всё равно заблокирована.
         boolean holding = state.active() && minecraft.options.keyJump.isDown();

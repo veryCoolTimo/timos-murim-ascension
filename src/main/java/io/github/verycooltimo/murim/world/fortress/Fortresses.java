@@ -330,16 +330,22 @@ public final class Fortresses {
         items.add(0, book);
         items.add(1, io.github.verycooltimo.murim.quest.Clues.stack(SECRET_CLUE));
         if (level.getBlockEntity(at) instanceof ChestBlockEntity chest) {
-            chest.clearContent();
-            int slot = 0;
-            for (ItemStack s : items) {
-                if (slot < chest.getContainerSize()) {
-                    chest.setItem(slot, s);
-                    slot += 2;
-                    if (slot >= chest.getContainerSize()) {
-                        slot = 1;
+            // A repeat victory must not wipe what an earlier winner left behind: fill free slots only
+            // (even slots first, then odd ones, as before).
+            int size = chest.getContainerSize();
+            int next = 0;
+            for (ItemStack stack : items) {
+                int slot = -1;
+                for (; next < 2 * size; next++) {
+                    int candidate = next < (size + 1) / 2 ? next * 2 : (next - (size + 1) / 2) * 2 + 1;
+                    if (candidate < size && chest.getItem(candidate).isEmpty()) {
+                        slot = candidate;
+                        next++;
+                        break;
                     }
                 }
+                if (slot < 0) break;
+                chest.setItem(slot, stack);
             }
         }
         return items;

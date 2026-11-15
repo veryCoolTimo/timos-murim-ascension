@@ -258,12 +258,17 @@ public final class SectWar {
     /** The big gate stays shut while the mountain is at war. */
     static void closeGate(ServerLevel level) {
         SectLayout layout = SectLife.layout(level);
-        Vec3 c = layout == null ? null : layout.at("sect_gate", 0.0D, 0.0D);
+        closeGate(level, layout == null ? null : layout.at("sect_gate", 0.0D, 0.0D));
+    }
+
+    static void closeGate(ServerLevel level, Vec3 c) {
         if (c == null || !level.isLoaded(BlockPos.containing(c))) return;
         for (BlockPos pos : BlockPos.betweenClosed(BlockPos.containing(c.x - 8, c.y - 3, c.z - 8), BlockPos.containing(c.x + 8, c.y + 8, c.z + 8))) {
             var state = level.getBlockState(pos);
             if (state.getBlock() instanceof GateDoorBlock gate && state.getValue(GateDoorBlock.OPEN)
-                    && level.getBlockEntity(pos) instanceof GateDoorBlockEntity be && !be.busy()) {
+                    && level.getBlockEntity(pos) instanceof GateDoorBlockEntity be && !be.busy()
+                    // never on somebody in the passage or about to walk through it: the war shuts the gate to the enemy, not on a bystander
+                    && !SectDoors.occupied(level, GateDoorBlock.origin(pos, state), state, 2.0D)) {
                 gate.toggle(level, pos.immutable(), null);
             }
         }
@@ -579,6 +584,12 @@ public final class SectWar {
     // ------------------------------------------------------------------ voices
 
     /** A line over his head, one of {@code n} under {@code base.<i>}. */
+    /** The sect does not talk to one it is at war with: a short hostile word over the person's head, not more often than every 5 s. */
+    public static void shun(SectDisciple d) {
+        String key = "murim.sect.war.shun." + d.getRandom().nextInt(3);
+        SectChatter.sayIfQuiet(d, key, 100);
+    }
+
     static void say(SectDisciple d, String base, int n) {
         String key = base + "." + d.getRandom().nextInt(n);
         SectChatter.send(d, key, Component.translatable(key));

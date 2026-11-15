@@ -33,6 +33,10 @@ public class BanditRenderer<T extends Bandit> extends MobRenderer<T, BanditModel
     public static final ModelLayerLocation ARCHER_V2_LAYER =
             new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "bandit_archer_v2"), "main");
 
+    /** Guests 11.14 (tools/art/guests_1114.py): the same rig and clips, plus per-guest silhouette bones "<guest id>_<n>". */
+    public static final ModelLayerLocation GUEST_LAYER =
+            new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "guest"), "main");
+
     private static final ResourceLocation SWORDSMAN_TEX = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/entity/bandit_v2.png");
     private static final ResourceLocation ELITE_TEX = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/entity/bandit_elite_v2.png");
     private static final ResourceLocation CHIEF_TEX = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/entity/bandit_chief_v2.png");
@@ -144,6 +148,7 @@ public class BanditRenderer<T extends Bandit> extends MobRenderer<T, BanditModel
         event.registerLayerDefinition(ARCHER_LAYER, () -> BedrockGeo.load("/assets/murim/bedrock/bandit_archer.geo.json"));
         event.registerLayerDefinition(SWORDSMAN_V2_LAYER, () -> BedrockGeo.load("/assets/murim/bedrock/bandit_v2.geo.json"));
         event.registerLayerDefinition(ARCHER_V2_LAYER, () -> BedrockGeo.load("/assets/murim/bedrock/bandit_archer_v2.geo.json"));
+        event.registerLayerDefinition(GUEST_LAYER, () -> BedrockGeo.load("/assets/murim/bedrock/guest.geo.json"));
     }
 
     @SubscribeEvent

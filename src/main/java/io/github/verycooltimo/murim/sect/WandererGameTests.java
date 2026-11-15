@@ -189,6 +189,32 @@ public final class WandererGameTests {
         h.succeed();
     }
 
+    /** Opening the trade screen again must reuse the player's map, not create a new map_N.dat each time. */
+    @GameTest(template = "small_floor", batch = BATCH + "merchant_map_reuse")
+    public static void merchantMapIsReusedOnEveryOpening(GameTestHelper h) {
+        ServerPlayer p = player(h);
+        ServerLevel level = h.getLevel();
+        reset(level);
+        Wanderer.siteOverride = mountain(p, 0, 3000);
+        try {
+            var merchant = new io.github.verycooltimo.murim.trade.Peddler(
+                    io.github.verycooltimo.murim.trade.ModTrade.PEDDLER.get(), level);
+            merchant.updateMapOffer(p);
+            var first = merchant.getOffers().stream().filter(o -> o.getResult().is(net.minecraft.world.item.Items.FILLED_MAP))
+                    .findFirst().orElseThrow().getResult().get(net.minecraft.core.component.DataComponents.MAP_ID);
+            for (int i = 0; i < 5; i++) merchant.updateMapOffer(p);
+            var maps = merchant.getOffers().stream().filter(o -> o.getResult().is(net.minecraft.world.item.Items.FILLED_MAP)).toList();
+            h.assertTrue(maps.size() == 1, "exactly one map offer expected");
+            h.assertTrue(first.equals(maps.getFirst().getResult().get(net.minecraft.core.component.DataComponents.MAP_ID)),
+                    "every opening created a new map id");
+            h.assertTrue(maps.getFirst().getResult().get(net.minecraft.core.component.DataComponents.MAP_DECORATIONS) != null,
+                    "reused map lost the gate marker");
+        } finally {
+            reset(level);
+        }
+        h.succeed();
+    }
+
     /** The first wanderer waits for 5 to 7 minutes of play in the world (author 24.10), not the first seconds at the spawn. */
     @GameTest(template = "small_floor", batch = BATCH + "0")
     public static void firstWandererWaitsFiveToSevenMinutes(GameTestHelper h) {

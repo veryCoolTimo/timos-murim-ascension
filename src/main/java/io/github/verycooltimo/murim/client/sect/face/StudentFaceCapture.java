@@ -52,6 +52,13 @@ public final class StudentFaceCapture {
 
     /** Six sect people chosen so that their picks differ in all four slots (tools/art/face_parts.py pick). */
     static final List<String> FACE_KEYS = List.of("disciple_a", "yul_jin", "yul_rim", "yul_bin", "yul_san", "yul_ak");
+    /** Models round 11.14: the two elders that used to share one body, and the treasury elder beside them. */
+    private static final List<String> ELDERS = List.of("tae_rok", "tae_seong", "tae_gyun");
+    private static final List<io.github.verycooltimo.murim.npc.NpcProfile> GUESTS = List.of(io.github.verycooltimo.murim.npc.NpcProfile.HA_YUN,
+            io.github.verycooltimo.murim.npc.NpcProfile.CHO_GAN, io.github.verycooltimo.murim.npc.NpcProfile.TAE_HYEON,
+            io.github.verycooltimo.murim.npc.NpcProfile.HAN_DOK, io.github.verycooltimo.murim.npc.NpcProfile.KWON_YEON,
+            io.github.verycooltimo.murim.npc.NpcProfile.SUPPLIER, io.github.verycooltimo.murim.npc.NpcProfile.IMPOSTOR,
+            io.github.verycooltimo.murim.npc.NpcProfile.TRADER);
     private static final List<FaceMood> MOODS = List.of(FaceMood.NEUTRAL, FaceMood.TALK, FaceMood.PAIN, FaceMood.ANGRY, FaceMood.HAPPY,
             FaceMood.ASLEEP);
 
@@ -59,6 +66,10 @@ public final class StudentFaceCapture {
     private static final String MOODS_LOOK = "third_0";
     private static final String CAMERA = "murim_faces_cam";
     private static final double SPACING_PEOPLE = 1.7D;
+
+    private static double spacing() {
+        return "jars".equals(mode) ? 2.0D : SPACING_PEOPLE;
+    }
 
     /** One frame: name, camera direction from the target (x, z), distance, height over the target, look height, night, target person or -1 = the row. */
     private record Shot(String name, double dx, double dz, double dist, double height, double lookY, boolean night, int person) {
@@ -97,7 +108,7 @@ public final class StudentFaceCapture {
             mc.options.setCameraType(CameraType.FIRST_PERSON);
             mc.options.cloudStatus().set(net.minecraft.client.CloudStatus.OFF);
             mc.options.fov().set(50);
-            people = "ranks".equals(mode) ? 3 : 6;
+            people = switch (mode) { case "ranks", "elders" -> 3; case "guests" -> 8; case "jars" -> 4; default -> 6; };
             shots = shotsFor(mode, people);
             server.execute(() -> build(server));
             wait = -80;
@@ -130,9 +141,19 @@ public final class StudentFaceCapture {
             return;
         }
         Shot shot = shots.get(index);
+        if (shot.name().startsWith("walk")) {
+            for (Entity e : mc.level.entitiesForRendering()) {
+                if (e instanceof net.minecraft.world.entity.LivingEntity le && MINE.contains(e.getId())) {
+                    le.walkAnimation.update(0.9F, 1.0F);
+                }
+            }
+            if (wait < 5) {
+                return;
+            }
+        }
         // The client learns the time of day from the server only every second: a night shot waits for it (the frame of a night shot
         // taken right after a day shot was still day).
-        if (wait < (shot.night() ? 60 : 14)) {
+        if (wait < (shot.night() ? 60 : 14) && !shot.name().startsWith("walk")) {
             return;
         }
         // Alarm and greeting bubbles of the sect (SpeechBubbles) must not hang over the faces.
@@ -145,11 +166,11 @@ public final class StudentFaceCapture {
     private static boolean enough(Minecraft mc) {
         int n = 0;
         for (Entity e : mc.level.entitiesForRendering()) {
-            if (e instanceof SectDisciple) {
+            if (e instanceof net.minecraft.world.entity.Mob) {
                 n++;
             }
         }
-        return n >= people;
+        return "jars".equals(mode) || n >= people;
     }
 
     /** Client: the moods row, one person each from left to right (the dev override of FaceConstructor). */
@@ -193,6 +214,34 @@ public final class StudentFaceCapture {
                         out.add(new Shot("turn" + k, Math.sin(a), Math.cos(a), 2.4D, 0.4D, 1.4D, false, n - 1));
                     }
                     out.add(new Shot("turn_top", 0.0D, 1.0D, 0.9D, 1.9D, 1.35D, false, n - 1));
+                }
+            }
+            case "elders", "guests", "jars" -> {
+                // Models round 11.14: the whole row at 12 blocks (front, back, three quarters), each figure at 3 blocks, then a walk
+                // (client-side limb swing, three quarters, one frame every 4 ticks). Jars are tiny: 3 blocks and 1.2 blocks.
+                boolean jars = "jars".equals(mode);
+                double far = jars ? 6.0D : 12.0D, near = jars ? 1.3D : 3.0D, ly = jars ? 0.3D : 1.0D;
+                out.add(new Shot("row_front", 0.0D, 1.0D, far, jars ? 0.3D : 1.0D, ly, false, -1));
+                out.add(new Shot("row_back", 0.0D, -1.0D, far, jars ? 0.3D : 1.0D, ly, false, -1));
+                out.add(new Shot("row_34", 0.7D, 0.7D, far, jars ? 0.3D : 1.0D, ly, false, -1));
+                for (int i = 0; i < n; i++) {
+                    out.add(new Shot("near" + i, 0.0D, 1.0D, near, jars ? 0.2D : 0.3D, ly, false, i));
+                }
+                for (int i = 0; i < n && "elders".equals(mode); i++) {
+                    // Faces at 1.5 blocks, front and three quarters (the elder redo asks for the faces).
+                    out.add(new Shot("face" + i, 0.0D, 1.0D, 1.5D, 0.0D, 1.55D, false, i));
+                    out.add(new Shot("face34_" + i, 0.7D, 0.7D, 1.5D, 0.0D, 1.55D, false, i));
+                }
+                for (int i = 0; i < n; i++) {
+                    out.add(new Shot("near_back" + i, 0.0D, -1.0D, near, jars ? 0.2D : 0.3D, ly, false, i));
+                }
+                for (int i = 0; i < n && !jars; i++) {
+                    out.add(new Shot("near_side" + i, -1.0D, 0.0D, near, 0.3D, ly, false, i));
+                }
+                if (!jars) {
+                    for (int k = 0; k < 6; k++) {
+                        out.add(new Shot("walk" + k, 0.7D, 0.7D, mode.equals("guests") ? 10.0D : 7.0D, 0.6D, 1.0D, false, -1));
+                    }
                 }
             }
             default -> {
@@ -261,7 +310,31 @@ public final class StudentFaceCapture {
             e.discard();
         }
         origin = base;
-        for (int i = 0; i < people; i++) {
+        if ("jars".equals(mode)) {
+            // full jar, empty jar, and the two again turned (the model is the same, the stand shows the block state)
+            for (int i = 0; i < people; i++) {
+                var jar = io.github.verycooltimo.murim.decor.IntWorkshop.WINE_JAR.get().defaultBlockState()
+                        .setValue(io.github.verycooltimo.murim.decor.WineBlock.CUPS, i % 2 == 0 ? 1 : 0);
+                level.setBlock(new BlockPos(base.getX() + Math.round((float) ((i - (people - 1) / 2.0D) * spacing())), y, base.getZ()), jar, 3);
+            }
+            p.setGameMode(GameType.CREATIVE);
+            p.addEffect(new MobEffectInstance(MobEffects.INVISIBILITY, 20 * 1200, 0, false, false, false));
+            p.getAbilities().flying = true;
+            p.onUpdateAbilities();
+            return;
+        }
+        for (int i = 0; "guests".equals(mode) && i < people; i++) {
+            var profile = GUESTS.get(i);
+            var guest = new io.github.verycooltimo.murim.npc.GuestFighter(
+                    io.github.verycooltimo.murim.npc.ModNpcs.FIGHTERS.get(profile).get(), level, profile);
+            guest.setNoAi(true);
+            guest.moveTo(base.getX() + 0.5D + (i - (people - 1) / 2.0D) * spacing(), y, base.getZ() + 0.5D, 0.0F, 0.0F);
+            guest.setYHeadRot(0.0F);
+            guest.setYBodyRot(0.0F);
+            level.addFreshEntity(guest);
+            MINE.add(guest.getId());
+        }
+        for (int i = 0; !"guests".equals(mode) && i < people; i++) {
             SectDisciple npc = new SectDisciple(ModEntities.SECT_DISCIPLE.get(), level);
             switch (mode) {
                 case "ranks" -> {
@@ -274,6 +347,7 @@ public final class StudentFaceCapture {
                     }
                 }
                 case "lay" -> npc.setRole(LAY_ROLES.get(i));
+                case "elders" -> SectRoster.of(ELDERS.get(i)).ifPresent(npc::setMember);
                 case "faces" -> SectRoster.of(FACE_KEYS.get(i)).ifPresent(npc::setMember);
                 default -> {
                     // The same person six times: a member key may stand only once (the sect removes the duplicates), so the pick is
@@ -286,7 +360,7 @@ public final class StudentFaceCapture {
             }
             npc.setKeepAwake(true);
             npc.setNoAi(true);
-            double x = base.getX() + 0.5D + (i - (people - 1) / 2.0D) * SPACING_PEOPLE;
+            double x = base.getX() + 0.5D + (i - (people - 1) / 2.0D) * spacing();
             npc.moveTo(x, y, base.getZ() + 0.5D, 0.0F, 0.0F);
             npc.setYHeadRot(0.0F);
             npc.setYBodyRot(0.0F);
@@ -315,7 +389,7 @@ public final class StudentFaceCapture {
         level.setDayTime(shot.night() ? 18000L : 6000L);
         sweep(level);
         double cx = origin.getX() + 0.5D;
-        double tx = shot.person() < 0 ? cx : cx + (shot.person() - (people - 1) / 2.0D) * SPACING_PEOPLE;
+        double tx = shot.person() < 0 ? cx : cx + (shot.person() - (people - 1) / 2.0D) * spacing();
         Vec3 look = new Vec3(tx, origin.getY() + shot.lookY(), origin.getZ() + 0.5D);
         Vec3 dir = new Vec3(shot.dx(), 0.0D, shot.dz()).normalize();
         Vec3 cam = look.add(dir.scale(shot.dist())).add(0.0D, shot.height(), 0.0D);

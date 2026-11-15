@@ -66,10 +66,26 @@ public final class SectKnock {
         SectSchedule.Period period = SectSchedule.at(p.level().getDayTime());
         for (SectAccess.Rule r : SectAccess.RULES) {
             if (SectAccess.GROUNDS.equals(r.zone()) || "penance".equals(r.id()) || "vault".equals(r.id())) continue;
-            if ("main_hall".equals(r.id()) && SectAccess.inside(layout, r, p.position(), 0.0D)) continue;
+            if ("main_hall".equals(r.id()) && SectAccess.inside(layout, r, p.position(), 0.0D)
+                    && deeperThanDoor(layout, r.zone(), p.position(), at)) continue;
             if (SectAccess.inside(layout, r, at, 1.5D) && !SectAccess.allowed(r, standing, s.flags(), period)) return r.id();
         }
         return null;
+    }
+
+    /**
+     * The exit exception holds only when he stands deeper in the zone than the door he clicks, so the door leads out. Path run
+     * 15.11: the cell in front of the grand door belongs to the main hall zone, and a novice pressed against the door from the
+     * porch counted as "inside the hall" and the door opened for him.
+     */
+    static boolean deeperThanDoor(SectLayout layout, String zone, Vec3 player, Vec3 door) {
+        double[] lp = layout.local(zone, player);
+        double[] ld = layout.local(zone, door);
+        double[] h = layout.half(zone);
+        if (lp == null || ld == null || h == null || h[0] <= 0.0D || h[1] <= 0.0D) return true;
+        double dp = Math.max(Math.abs(lp[0]) / h[0], Math.abs(lp[1]) / h[1]);
+        double dd = Math.max(Math.abs(ld[0]) / h[0], Math.abs(ld[1]) / h[1]);
+        return dp < dd;
     }
 
     /**

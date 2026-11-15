@@ -58,7 +58,7 @@ class BanditMoveTest {
         assertFalse(BanditMove.CHOP.reaches(0.0D, 2.5D, 1.5D, 0.0F), "высоко");
         assertTrue(BanditMove.SWEEP.reaches(2.0D, 0.0D, 0.6D, 0.0F), "широкий захватывает бок");
         assertFalse(BanditMove.THRUST.reaches(2.0D, 0.0D, 0.6D, 0.0F), "укол узкий");
-        assertTrue(BanditMove.THRUST.reaches(0.0D, 0.0D, 3.2D, 0.0F), "укол дальний");
+        assertTrue(BanditMove.THRUST.reaches(0.0D, 0.0D, 2.9D, 0.0F), "укол дальний");
     }
 
     @Test

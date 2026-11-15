@@ -10,13 +10,25 @@ package io.github.verycooltimo.murim.entity.boss;
 public final class BossRules {
 
     /** Фаза 2 — с этой доли здоровья (рык перехода). */
-    public static final float PHASE2_AT = 0.60F;
+    public static final float PHASE2_AT = 0.50F;
     /** Фаза 3 — «кровь кипит». */
     public static final float PHASE3_AT = 0.25F;
 
     /** Фаза 3: быстрее ходит и бьёт сильнее; телеграфы и окна те же. */
     public static final float PHASE3_DAMAGE = 1.15F;
-    public static final double PHASE3_SPEED = 1.15D;
+    public static final double PHASE3_SPEED = 1.45D;
+    /** Фаза 2 (≤50 % здоровья, после рыка): ходит быстрее на 30 %, паузы между приёмами короче (автор 14.11). */
+    public static final double PHASE2_SPEED = 1.30D;
+
+    /** Множитель скорости движения по фазе. */
+    public static double speedScale(int phase) {
+        return phase >= 3 ? PHASE3_SPEED : phase == 2 ? PHASE2_SPEED : 1.0D;
+    }
+
+    /** Множитель пауз между приёмами по фазе (меньше — чаще бьёт): 1,0 / 0,75 / 0,6. */
+    public static float cadence(int phase) {
+        return phase >= 3 ? 0.6F : phase == 2 ? 0.75F : 1.0F;
+    }
 
     /** Броня по фазам: в фазе 3 внешнее тело раскрыто — броня падает. */
     public static final double ARMOR = 6.0D;

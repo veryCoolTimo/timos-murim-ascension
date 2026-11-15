@@ -681,6 +681,13 @@ public final class SectContracts {
         return t.getLong("camp") == campKey && t.getLong("day") == day;
     }
 
+    /** The proof of this run: stamped with a day inside the contract window (a search on day two stamps that day). */
+    static boolean isTokenOf(ItemStack s, long campKey, Run run) {
+        if (!s.is(ModItems.CONTRACT_TOKEN.get())) return false;
+        CompoundTag t = s.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
+        return t.getLong("camp") == campKey && valid(run, t.getLong("day"));
+    }
+
     /** Called when a camp is cleared: every run member near it gets the proof token. */
     public static void campCleared(ServerLevel level, BanditCampData.Camp camp) {
         MinecraftServer server = level.getServer();
@@ -707,29 +714,20 @@ public final class SectContracts {
 
     private static int count(List<ServerPlayer> who, java.util.function.Predicate<ItemStack> match) {
         int n = 0;
-        for (ServerPlayer p : who) {
-            for (ItemStack s : p.getInventory().items) if (match.test(s)) n += s.getCount();
-            for (ItemStack s : p.getInventory().offhand) if (match.test(s)) n += s.getCount();
-        }
+        for (ServerPlayer p : who) n += io.github.verycooltimo.murim.item.PlayerItems.count(p, match);
         return n;
     }
 
     private static void take(List<ServerPlayer> who, java.util.function.Predicate<ItemStack> match, int amount) {
         for (ServerPlayer p : who) {
-            for (var list : List.of(p.getInventory().items, p.getInventory().offhand)) {
-                for (ItemStack s : list) {
-                    if (amount <= 0 || !match.test(s)) continue;
-                    int n = Math.min(amount, s.getCount());
-                    s.shrink(n);
-                    amount -= n;
-                }
-            }
+            if (amount <= 0) break;
+            amount -= io.github.verycooltimo.murim.item.PlayerItems.take(p, match, amount);
         }
     }
 
     static boolean ready(Run run, Offer o, long day, List<ServerPlayer> group) {
         return switch (o.kind()) {
-            case CAMP -> count(group, s -> isToken(s, o.campKey(), run.day)) >= 1;
+            case CAMP -> count(group, s -> isTokenOf(s, o.campKey(), run)) >= 1;
             case ESCORT -> run.arrived;
             case HERBS -> count(group, s -> s.is(herb(o.itemA()))) >= o.countA() && count(group, s -> s.is(herb(o.itemB()))) >= o.countB();
         };
@@ -833,7 +831,7 @@ public final class SectContracts {
 
     private static void complete(MinecraftServer server, Data d, Run run, Offer o, List<ServerPlayer> group, SectDisciple npc) {
         switch (o.kind()) {
-            case CAMP -> take(group, s -> isToken(s, o.campKey(), run.day), 99);
+            case CAMP -> take(group, s -> isTokenOf(s, o.campKey(), run), 99);
             case HERBS -> {
                 take(group, s -> s.is(herb(o.itemA())), o.countA());
                 take(group, s -> s.is(herb(o.itemB())), o.countB());
@@ -967,7 +965,7 @@ public final class SectContracts {
             case HERBS -> Component.translatable("murim.contract.progress.herbs",
                     Math.min(o.countA(), count(group, s -> s.is(herb(o.itemA())))), o.countA(),
                     Math.min(o.countB(), count(group, s -> s.is(herb(o.itemB())))), o.countB());
-            case CAMP -> Component.translatable("murim.contract.progress.camp", Math.min(1, count(group, s -> isToken(s, o.campKey(), run.day))));
+            case CAMP -> Component.translatable("murim.contract.progress.camp", Math.min(1, count(group, s -> isTokenOf(s, o.campKey(), run))));
             case ESCORT -> Component.empty();
         };
     }
@@ -1184,7 +1182,7 @@ public final class SectContracts {
                 if (m.level() != level || dx * dx + dz * dz > SEARCH_RANGE * SEARCH_RANGE) continue;
                 run.searched = true;
                 d.setDirty();
-                ItemStack t = token(o.campKey(), d.day);
+                ItemStack t = token(o.campKey(), run.day);
                 if (!m.getInventory().add(t)) m.drop(t, false);
                 SectNotice.bar(m, Component.translatable("murim.contract.token_searched").withStyle(ChatFormatting.GOLD));
                 SectTablet.touch(m);

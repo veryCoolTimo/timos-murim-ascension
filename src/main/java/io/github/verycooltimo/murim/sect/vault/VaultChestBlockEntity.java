@@ -70,13 +70,27 @@ public class VaultChestBlockEntity extends RandomizableContainerBlockEntity {
         }
     }
 
-    public void giveOriginals(Player player) {
-        if (level == null || level.isClientSide || player.isSpectator()) return;
+    /** Fill the chest with its authored originals when missing (old saves, lost slots). Server only. */
+    public void prepareOriginals() {
         if (level instanceof net.minecraft.server.level.ServerLevel server) {
             var site = io.github.verycooltimo.murim.world.hua.MountHuaSites.get(server.getServer());
             if (HuaVault.applies(site)) restoreOriginals(HuaVault.local(site, worldPosition));
             else if (crown) restoreOriginals(VaultPlan.CHEST);
         }
+    }
+
+    /** True when this player has already taken the original in this slot: the chest then shows the slot empty to them. */
+    public boolean claimedBy(java.util.UUID player, int slot) {
+        ItemStack book = items.get(slot);
+        if (!io.github.verycooltimo.murim.mastery.Originals.isOriginal(book)) return false;
+        String key = originalKey(book);
+        return !key.isEmpty() && originalClaims.getCompound(player.toString()).getBoolean(key);
+    }
+
+    /** Shelf path (no menu): hand over every original this player has not taken yet. */
+    public void giveOriginals(Player player) {
+        if (level == null || level.isClientSide || player.isSpectator()) return;
+        prepareOriginals();
         for (int i = 0; i < getContainerSize(); i++) {
             ItemStack copy = claimOriginal(player.getUUID(), i);
             if (!copy.isEmpty() && !player.getInventory().add(copy)) player.drop(copy, false);
@@ -92,6 +106,16 @@ public class VaultChestBlockEntity extends RandomizableContainerBlockEntity {
     }
     @Override public ItemStack removeItemNoUpdate(int slot) {
         return io.github.verycooltimo.murim.mastery.Originals.isOriginal(getItem(slot)) ? ItemStack.EMPTY : super.removeItemNoUpdate(slot);
+    }
+
+    /** Breaking the block: drop everything except the shared originals (they would duplicate the claimed copies). */
+    public void dropContentsKeepingOriginals() {
+        if (level == null || level.isClientSide) return;
+        for (ItemStack stack : items) {
+            if (!stack.isEmpty() && !io.github.verycooltimo.murim.mastery.Originals.isOriginal(stack))
+                net.minecraft.world.Containers.dropItemStack(level, worldPosition.getX(), worldPosition.getY(), worldPosition.getZ(), stack);
+        }
+        items.clear();
     }
 
     public boolean crown() { return crown; }
@@ -184,9 +208,24 @@ public class VaultChestBlockEntity extends RandomizableContainerBlockEntity {
 
     @Override
     protected AbstractContainerMenu createMenu(int id, Inventory inv) {
+        final java.util.UUID viewer = inv.player.getUUID();
         ChestMenu menu = new ChestMenu(MenuType.GENERIC_9x3, id, inv, this, 3) {
             @Override public void clicked(int slot, int button, net.minecraft.world.inventory.ClickType type, Player player) {
-                if (slot >= 0 && slot < 27 && io.github.verycooltimo.murim.mastery.Originals.isOriginal(VaultChestBlockEntity.this.getItem(slot))) return;
+                var chest = VaultChestBlockEntity.this;
+                if (slot >= 0 && slot < 27 && io.github.verycooltimo.murim.mastery.Originals.isOriginal(chest.getItem(slot))) {
+                    // The shared original never leaves the chest: a take moves one claimed copy to the player, and the slot
+                    // is shown empty to that player from then on (per-viewer slot, see below).
+                    if (player.level().isClientSide || chest.claimedBy(player.getUUID(), slot)) return;
+                    boolean pickup = type == net.minecraft.world.inventory.ClickType.PICKUP && getCarried().isEmpty();
+                    boolean quick = type == net.minecraft.world.inventory.ClickType.QUICK_MOVE;
+                    if (!pickup && !quick) return;
+                    ItemStack copy = chest.claimOriginal(player.getUUID(), slot);
+                    if (copy.isEmpty()) return;
+                    if (pickup) setCarried(copy);
+                    else if (!player.getInventory().add(copy)) player.drop(copy, false);
+                    broadcastChanges();
+                    return;
+                }
                 super.clicked(slot, button, type, player);
             }
             private ItemStack menuItem(int slot) { return slots.get(slot).getItem(); }
@@ -198,12 +237,19 @@ public class VaultChestBlockEntity extends RandomizableContainerBlockEntity {
         };
         for (int i = 0; i < 27; i++) {
             var previous = menu.slots.get(i);
+            final int index = i;
             var slot = new net.minecraft.world.inventory.Slot(this, i, previous.x, previous.y) {
+                /** Per-viewer: an original this player already took looks empty to them (and in the packets sent to them). */
+                @Override public ItemStack getItem() {
+                    return VaultChestBlockEntity.this.claimedBy(viewer, index) ? ItemStack.EMPTY : super.getItem();
+                }
                 @Override public boolean mayPickup(Player player) {
-                    return !io.github.verycooltimo.murim.mastery.Originals.isOriginal(getItem());
+                    return !io.github.verycooltimo.murim.mastery.Originals.isOriginal(super.getItem());
                 }
                 @Override public boolean mayPlace(ItemStack stack) {
-                    return !io.github.verycooltimo.murim.mastery.Originals.isOriginal(getItem()) && super.mayPlace(stack);
+                    // A taken original must not be put back anywhere in the chest (it would become claimable by others).
+                    return !io.github.verycooltimo.murim.mastery.Originals.isOriginal(super.getItem())
+                            && !io.github.verycooltimo.murim.mastery.Originals.isOriginal(stack) && super.mayPlace(stack);
                 }
             };
             slot.index = i;

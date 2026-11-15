@@ -52,7 +52,12 @@ public final class SectDoors {
         boolean adopted;
         /** Since when somebody has stood in front of the door without going through it (0: nobody does). */
         long frontSince;
+        /** Since when the opener is gone (unloaded, dead, replaced) with the door still open (0: he is here). */
+        long orphanSince;
     }
+
+    /** An opener lost this long ago, with nobody near, no longer holds a layout door open (30 s). */
+    public static final long ORPHAN_TICKS = 600L;
 
     private static final Map<Level, Map<BlockPos, Entry>> PER_LEVEL = new WeakHashMap<>();
 
@@ -214,6 +219,11 @@ public final class SectDoors {
         return e.isAlive() && !e.isSpectator() && (e instanceof net.minecraft.world.entity.player.Player || e instanceof net.minecraft.world.entity.Mob);
     }
 
+    /** True when somebody stands in the passage of this big door or within {@code margin} blocks in front of it (it must not shut on him). */
+    static boolean occupied(Level level, BlockPos base, BlockState state, double margin) {
+        return !level.getEntitiesOfClass(LivingEntity.class, doorway(level, base, state, margin), SectDoors::person).isEmpty();
+    }
+
     /** The passage of the door: the cells a person stands in to use it, plus a margin. */
     private static AABB doorway(Level level, BlockPos base, BlockState s, double margin) {
         if (s.getBlock() instanceof HallGrandDoorBlock) {
@@ -242,6 +252,33 @@ public final class SectDoors {
 
     /** Close every registered door that has been empty long enough. Call a few times a second. */
     public static void sweep(Level level) {
+        sweep(level, layoutDoorHook != null ? layoutDoorHook : base -> layoutDoor(level, base));
+    }
+
+    /** Tests only: which doors count as the layout's (the world server's own sweep uses it too). Null in play. */
+    static volatile java.util.function.Predicate<BlockPos> layoutDoorHook;
+
+    /** True when the wooden door at {@code base} is one of the doors the sect's layout built (never a player's own door). */
+    static boolean layoutDoor(Level level, BlockPos base) {
+        if (!(level instanceof net.minecraft.server.level.ServerLevel sl)) {
+            return false;
+        }
+        SectLayout layout = SectLife.layout(sl);
+        SectLayoutFile file = layout == null ? null : layout.file();
+        if (file == null) {
+            return false;
+        }
+        for (var d : file.doors()) {
+            if (base.getX() >= Math.min(d.min().getX(), d.max().getX()) && base.getX() <= Math.max(d.min().getX(), d.max().getX())
+                    && base.getY() >= Math.min(d.min().getY(), d.max().getY()) && base.getY() <= Math.max(d.min().getY(), d.max().getY())
+                    && base.getZ() >= Math.min(d.min().getZ(), d.max().getZ()) && base.getZ() <= Math.max(d.min().getZ(), d.max().getZ())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    static void sweep(Level level, java.util.function.Predicate<BlockPos> layoutDoor) {
         if (level.isClientSide) {
             return;
         }
@@ -282,7 +319,20 @@ public final class SectDoors {
             Entry en = me.getValue();
             if (s.getBlock() instanceof DoorBlock) {
                 SectDisciple owner = en.opener == null ? null : en.opener.get();
-                if (owner == null || !owner.isAlive()) { it.remove(); continue; }
+                if (owner == null || !owner.isAlive()) {
+                    // The opener unloaded or died before he crossed. A layout door is shut once nobody has been near for a while;
+                    // a door of anybody else is not ours to close.
+                    if (!layoutDoor.test(base)) { it.remove(); continue; }
+                    if (en.orphanSince == 0L) en.orphanSince = now;
+                    boolean attended = !level.getEntitiesOfClass(LivingEntity.class, doorway(level, base, s, UNATTENDED_RADIUS), SectDoors::person).isEmpty();
+                    if (attended) {
+                        en.orphanSince = now;
+                    } else if (now - en.orphanSince >= ORPHAN_TICKS && !s.getValue(DoorBlock.POWERED) && !level.hasNeighborSignal(base)) {
+                        ((DoorBlock) s.getBlock()).setOpen(null, level, s, base, false);
+                        it.remove();
+                    }
+                    continue;
+                }
                 if (side(owner, base, s) * en.openedSide < -0.16D) en.passed = true;
                 if (!en.passed) continue;
             }

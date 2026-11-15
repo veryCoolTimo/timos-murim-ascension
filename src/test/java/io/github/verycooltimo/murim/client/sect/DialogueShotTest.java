@@ -45,6 +45,20 @@ class DialogueShotTest {
     }
 
     @Test
+    @DisplayName("2,3–2,9 блока от NPC: камера не встаёт у затылка игрока; рядом с камерой игрок скрыт (ворота, 15.11)")
+    void cameraNeverAtThePlayersHead() {
+        for (double gap = 2.0D; gap <= 3.2D; gap += 0.1D) {
+            Vec3 player = new Vec3(0.0D, 64.0D, gap);
+            for (int prefer : new int[] {0, -1, 1}) {
+                DialogueShot.Shot s = DialogueShot.plan(NPC, 1.8D, player, Vec3.ZERO, OPEN, prefer);
+                double toPlayer = Math.hypot(s.camera().x - player.x, s.camera().z - player.z);
+                assertTrue(s.hidePlayer() || toPlayer >= DialogueShot.PLAYER_CLEAR,
+                        "голова игрока у камеры: " + String.format("%.2f", toPlayer) + " блока при " + String.format("%.1f", gap));
+            }
+        }
+    }
+
+    @Test
     @DisplayName("Стена за спиной: камера уходит на другой угол или подтягивается, объектив шире")
     void wallBehind() {
         // Стена по z = 2.2 за игроком: всё, что дальше, закрыто.

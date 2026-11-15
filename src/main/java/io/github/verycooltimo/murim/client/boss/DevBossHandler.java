@@ -64,7 +64,62 @@ public final class DevBossHandler {
     private static final String[] STAGES = DISC ? new String[] {"approach", "fight", "bandit", "end"}
             : new String[] {"approach", "overview", "fight", "vault"};
     private static final int DISC_FIGHT_TICKS = Integer.getInteger("murim.capture.discfight", 700);
-    private static final int DISC_BANDIT_TICKS = 260;
+    private static final int DISC_BANDIT_TICKS = Integer.getInteger("murim.capture.discbandit", 360);
+    /** Film (14.11): the filmed tick on which the master drops to 49 % (phase 2: roar, speed-up); -1 = never. Env MURIM_CAPTURE_DISC_PHASE. */
+    private static final int DISC_PHASE_TICK = envInt("MURIM_CAPTURE_DISC_PHASE", -1);
+
+    private static int filmSwings;
+    private static int filmLastState = -1;
+    private static boolean filmStepped;
+    private static double filmHomeX, filmHomeZ;
+    private static float filmLastHp = -1.0F;
+    private static String filmLabel = "";
+    private static int filmLabelTicks;
+
+    /** Film only (14.11): swing 1, 3, 5 hit the player; on swing 2, 4 the player steps 3 blocks aside as the strike starts (a miss). HP shown on the action bar. */
+    private static void honestSwingFilm(IntegratedServer server) {
+        ServerPlayer p = server.getPlayerList().getPlayers().get(0);
+        if (!(server.overworld().getEntity(focusId) instanceof io.github.verycooltimo.murim.entity.BanditSwordsman b)) {
+            return;
+        }
+        int st = b.state();
+        if (st != filmLastState) {
+            if (st == io.github.verycooltimo.murim.entity.Bandit.WINDUP) {
+                filmSwings++;
+                filmHomeX = p.getX();
+                filmHomeZ = p.getZ();
+            }
+            if (st == io.github.verycooltimo.murim.entity.Bandit.STRIKE && filmSwings % 2 == 0) {
+                filmStepped = true;
+                p.teleportTo(filmHomeX + 3.0D, p.getY(), filmHomeZ);
+                filmLabel = "MISS: stepped aside, swing hits air";
+                filmLabelTicks = 30;
+            }
+            if (st == io.github.verycooltimo.murim.entity.Bandit.RECOVER && filmStepped) {
+                filmStepped = false;
+                p.teleportTo(filmHomeX, p.getY(), filmHomeZ);
+            }
+            filmLastState = st;
+        }
+        if (filmLastHp >= 0.0F && p.getHealth() < filmLastHp - 0.01F) {
+            filmLabel = String.format("HIT: -%.1f", filmLastHp - p.getHealth());
+            filmLabelTicks = 30;
+        }
+        filmLastHp = p.getHealth();
+        if (p.getHealth() < 8.0F) {
+            p.setHealth(p.getMaxHealth());
+            filmLastHp = p.getHealth();
+        }
+        p.displayClientMessage(net.minecraft.network.chat.Component.literal(String.format("HP %.1f / %.0f   %s", p.getHealth(), p.getMaxHealth(), filmLabelTicks-- > 0 ? filmLabel : "")), true);
+    }
+
+    private static int envInt(String key, int def) {
+        try {
+            return Integer.parseInt(System.getenv(key));
+        } catch (RuntimeException e) {
+            return def;
+        }
+    }
     private static final String CAM_NAME = "bosshit_cam";
     private static volatile int camId = -1;
     private static volatile int focusId = -1;
@@ -159,6 +214,8 @@ public final class DevBossHandler {
                     lookAt(mc, focus.getX(), focus.getY() + 1.2D, focus.getZ(), 0.0F);
                 }
                 release(mc);
+                // Honest swings (14.11): the player steps out of the arc on every second swing; a swing at the air must not hurt.
+                server.execute(() -> honestSwingFilm(server));
                 grab(mc, name);
                 server.execute(() -> discCam(server, focusId));
                 if (act >= 130) {
@@ -183,6 +240,13 @@ public final class DevBossHandler {
                     }
                     useCamera(mc);
                     server.execute(() -> discCam(server, bossId));
+                    if (DISC_PHASE_TICK > 0 && act == DISC_PHASE_TICK) {
+                        server.execute(() -> {
+                            if (server.overworld().getEntity(bossId) instanceof FortressMaster fm1) {
+                                fm1.setHealth(fm1.getMaxHealth() * 0.49F);
+                            }
+                        });
+                    }
                     if (boss instanceof FortressMaster fm && fm.isAlive()) {
                         fighter(mc, fm);
                     }

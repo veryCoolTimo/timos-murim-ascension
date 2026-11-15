@@ -55,7 +55,8 @@ public class BanditModel<T extends Bandit> extends HierarchicalModel<T> implemen
         return root;
     }
 
-    private static final String[] VARIANTS = {"sw", "el", "ch", "ar", "ae", "pd"};
+    private static final String[] VARIANTS = {"sw", "el", "ch", "ar", "ae", "pd",
+            "ha_yun", "cho_gan", "tae_hyeon", "han_dok", "kwon_yeon", "supplier", "impostor", "trader"};
 
     /**
      * Silhouette cubes (tools/art/bandit_models_1110.py) are child bones named {@code <variant>_<n>}; only the entity's variant is shown.
@@ -72,6 +73,7 @@ public class BanditModel<T extends Bandit> extends HierarchicalModel<T> implemen
     }
 
     private static String variantOf(Bandit e) {
+        if (e instanceof io.github.verycooltimo.murim.npc.GuestFighter guest) return guest.profile().id;
         if (e instanceof io.github.verycooltimo.murim.entity.BanditArcher) return e.isElite() ? "ae" : "ar";
         return e.isChief() ? "ch" : e.isElite() ? "el" : "sw";
     }

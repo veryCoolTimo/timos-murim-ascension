@@ -437,46 +437,6 @@ public final class AuraRenderer {
         }
         b.buffers().endBatch(dustType);
 
-        // Диск давления: ширококрылые полосы тьмы по земле и красный отсвет по ободу (без тонких линий).
-        boolean disc = false;
-        for (AuraSim.Particle p : emitter.particles) {
-            if (p.kind == AuraSim.Kind.DISC) {
-                disc = true;
-                break;
-            }
-        }
-        if (disc) {
-            VertexConsumer bands = b.buffers().getBuffer(inkType);
-            for (AuraSim.Particle p : emitter.particles) {
-                if (p.kind != AuraSim.Kind.DISC) {
-                    continue;
-                }
-                Vec3[] pts = trail(p, partial);
-                if (pts == null) {
-                    continue;
-                }
-                float t = p.progress(partial);
-                float env = (float) Math.pow(Math.sin(Math.PI * Math.min(1.0F, t * 1.25F + 0.05F)), 0.5D);
-                strip(bands, b, pts, p.size * env, 0.62F * (1.0F - t * 0.5F) * env, BLOOD_INK, BLOOD_INK);
-            }
-            b.buffers().endBatch(inkType);
-            RenderType glowType = MurimRenderTypes.ribbon();
-            VertexConsumer red = b.buffers().getBuffer(glowType);
-            for (AuraSim.Particle p : emitter.particles) {
-                if (p.kind != AuraSim.Kind.DISC || p.seed > 0.5F) {
-                    continue;
-                }
-                Vec3[] pts = trail(p, partial);
-                if (pts == null) {
-                    continue;
-                }
-                float t = p.progress(partial);
-                float env = (float) Math.pow(Math.sin(Math.PI * Math.min(1.0F, t * 1.25F + 0.05F)), 0.5D);
-                strip(red, b, pts, p.size * 0.7D * env, 0.42F * env, RED_DEEP, RED);
-            }
-            b.buffers().endBatch(glowType);
-        }
-
         RenderType solid = MurimRenderTypes.solid();
         VertexConsumer rock = b.buffers().getBuffer(solid);
         for (AuraSim.Particle p : emitter.particles) {

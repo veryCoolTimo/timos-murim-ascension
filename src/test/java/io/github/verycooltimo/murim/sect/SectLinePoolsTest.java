@@ -147,6 +147,7 @@ class SectLinePoolsTest {
             add(out, SectGeneralTalk.BUBBLE_STEM + tone, SectGeneralTalk.VARIANTS, MIN, true);
             add(out, SectGeneralTalk.SELF_STEM + tone, SectGeneralTalk.VARIANTS, MIN, false);
         }
+        add(out, SectGeneralTalk.BUBBLE_STEM + SectGeneralTalk.OUTSIDER_TONE, SectGeneralTalk.VARIANTS, MIN, true);
         add(out, SectGeneralTalk.RUMOUR_STEM, SectGeneralTalk.VARIANTS, MIN, false);
         // absence (once per return from a day or more away) is not a pool the player hears daily: four lines are enough
         for (int tier : new int[] {1, 3, 7}) {

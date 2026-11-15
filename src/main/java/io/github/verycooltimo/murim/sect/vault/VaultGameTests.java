@@ -87,6 +87,25 @@ public final class VaultGameTests {
         return p;
     }
 
+    @GameTest(template = YARD, batch = "vault_loot", timeoutTicks = 60)
+    public static void foundersSwordWithBusyHandSaysWhy(GameTestHelper h) {
+        var level = h.getLevel();
+        var at = h.absolutePos(new BlockPos(6, 1, 6));
+        var sink = new java.util.ArrayList<net.minecraft.network.protocol.Packet<?>>();
+        var p = io.github.verycooltimo.murim.cultivation.CultivationFeedbackGameTests.player(h, sink);
+        p.moveTo(at.getX() + 0.5D, at.getY(), at.south(2).getZ() + 0.5D, 0.0F, 0.0F);
+        p.setGameMode(GameType.SURVIVAL);
+        level.setBlock(at, VaultDecorBlock.of(VaultRegistry.VAULT_DECOR.get(), VaultDecorBlock.HERO, Direction.SOUTH), 3);
+        p.setItemInHand(net.minecraft.world.InteractionHand.OFF_HAND, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.TORCH));
+        h.assertTrue(!VaultHarvest.take(level, at, p), "sword lifted with a busy hand");
+        h.assertTrue(io.github.verycooltimo.murim.cultivation.CultivationFeedbackGameTests.actionBars(p, "murim.vault.hero.hands_busy") == 1,
+                "no line says both hands must be free");
+        h.assertTrue(io.github.verycooltimo.murim.sect.PlayerJournal.entries(p).stream().anyMatch(c -> c.getString().contains("hands_busy")
+                || c.getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents t && t.getKey().equals("murim.vault.hero.hands_busy")),
+                "journal has no line");
+        h.succeed();
+    }
+
     private static DantianProfile peak() {
         DantianProfile p = DantianProfile.INITIAL.withTags("clear", "plum").withRank(Realm.PEAK);
         return p.withCirculating(p.maxCirculating());
@@ -411,6 +430,63 @@ public final class VaultGameTests {
         h.succeed();
     }
 
+    /** Author playtest 14.11: the originals teleported into the inventory and stayed in the chest. Take = one click, slot gone. */
+    @GameTest(template = "small_floor", batch = "vault_archive", timeoutTicks = 20)
+    public static void vaultTakeMovesOriginalOutOfView(GameTestHelper h) {
+        BlockPos at = h.absolutePos(new BlockPos(2, 2, 2));
+        h.getLevel().setBlock(at, VaultRegistry.VAULT_CHEST.get().defaultBlockState(), 3);
+        var chest = (VaultChestBlockEntity) h.getLevel().getBlockEntity(at);
+        chest.setItem(0, original("twenty_four_plum_rainfall", false));
+        chest.setItem(1, original("purple_sky_divine", true));
+        chest.markCrown();
+        var alice = player(h, at);
+        var bob = player(h, at);
+        var manual = io.github.verycooltimo.murim.registry.ModItems.TECHNIQUE_MANUAL.get();
+        var scroll = io.github.verycooltimo.murim.registry.ModItems.METHOD_SCROLL.get();
+        var menu = chest.createMenu(1, alice.getInventory());
+        // Opening alone gives nothing.
+        h.assertTrue(alice.getInventory().countItem(manual) == 0 && alice.getInventory().countItem(scroll) == 0, "open handed items");
+        h.assertTrue(!menu.slots.get(0).getItem().isEmpty() && !menu.slots.get(1).getItem().isEmpty(), "originals not shown before take");
+        // Left click: manual to the cursor, slot empty for alice at once.
+        menu.clicked(0, 0, net.minecraft.world.inventory.ClickType.PICKUP, alice);
+        h.assertTrue(menu.getCarried().getItem() == manual && menu.getCarried().getCount() == 1, "manual not on cursor");
+        h.assertTrue(menu.slots.get(0).getItem().isEmpty(), "manual still shown after take");
+        // Cursor busy: the scroll must not move, nothing is placed over the shared original.
+        menu.clicked(1, 0, net.minecraft.world.inventory.ClickType.PICKUP, alice);
+        h.assertTrue(menu.getCarried().getItem() == manual && alice.getInventory().countItem(scroll) == 0, "busy cursor took the scroll");
+        // Shift-click the scroll: one in the inventory.
+        alice.getInventory().add(menu.getCarried());
+        menu.setCarried(net.minecraft.world.item.ItemStack.EMPTY);
+        menu.clicked(1, 0, net.minecraft.world.inventory.ClickType.QUICK_MOVE, alice);
+        h.assertTrue(alice.getInventory().countItem(scroll) == 1, "shift-click did not give exactly one scroll");
+        // Repeat everything: no duplicates.
+        for (var type : net.minecraft.world.inventory.ClickType.values()) {
+            menu.clicked(0, 0, type, alice);
+            menu.clicked(1, 0, type, alice);
+        }
+        menu.clicked(0, 0, net.minecraft.world.inventory.ClickType.QUICK_MOVE, alice);
+        int total = alice.getInventory().countItem(manual) + alice.getInventory().countItem(scroll)
+                + (menu.getCarried().isEmpty() ? 0 : menu.getCarried().getCount());
+        h.assertTrue(total == 2, "repeated clicks duplicated originals: " + total);
+        // Reopen and reload: still empty for alice, shared original intact for bob.
+        var reopened = chest.createMenu(2, alice.getInventory());
+        h.assertTrue(reopened.slots.get(0).getItem().isEmpty() && reopened.slots.get(1).getItem().isEmpty(), "reopen shows taken originals");
+        var saved = chest.saveWithFullMetadata(h.getLevel().registryAccess());
+        var loaded = new VaultChestBlockEntity(chest.getBlockPos(), chest.getBlockState());
+        loaded.loadWithComponents(saved, h.getLevel().registryAccess());
+        loaded.setLevel(h.getLevel());
+        h.assertTrue(loaded.createMenu(3, alice.getInventory()).slots.get(0).getItem().isEmpty(), "relog shows taken manual");
+        var bobMenu = chest.createMenu(4, bob.getInventory());
+        h.assertTrue(!bobMenu.slots.get(0).getItem().isEmpty(), "bob cannot see the shared original");
+        bobMenu.clicked(0, 0, net.minecraft.world.inventory.ClickType.QUICK_MOVE, bob);
+        h.assertTrue(bob.getInventory().countItem(manual) == 1, "bob did not receive his own copy");
+        h.assertTrue(!chest.getItem(0).isEmpty(), "shared original removed from the container");
+        // Nothing can be placed over a (to alice) empty-looking original slot.
+        h.assertTrue(!reopened.slots.get(0).mayPlace(new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.STONE)), "slot over original accepts items");
+        h.assertTrue(!reopened.slots.get(5).mayPlace(original("twenty_four_plum_rainfall", false)), "a taken original can be put back into the chest");
+        h.succeed();
+    }
+
     @GameTest(template = "small_floor", batch = "vault_archive", timeoutTicks = 20)
     public static void twoPlayersReceiveOriginalsOnceThroughServerInteraction(GameTestHelper h) {
         BlockPos at = h.absolutePos(new BlockPos(2, 2, 2));
@@ -431,7 +507,8 @@ public final class VaultGameTests {
         }
         var menu = chest.createMenu(1, alice.getInventory());
         menu.clicked(0, 0, net.minecraft.world.inventory.ClickType.PICKUP, alice);
-        h.assertTrue(menu.getCarried().isEmpty(), "menu pickup copied the shared original");
+        h.assertTrue(menu.getCarried().isEmpty(), "menu pickup copied an original alice already took");
+        h.assertTrue(menu.slots.get(0).getItem().isEmpty() && menu.slots.get(1).getItem().isEmpty(), "taken originals still shown to alice");
         h.assertTrue(menu.quickMoveStack(alice, 0).isEmpty(), "shift-click copied the shared original");
         h.assertTrue(chest.removeItem(0, 1).isEmpty() && chest.removeItemNoUpdate(0).isEmpty(), "automation removed an original");
         h.assertTrue(!chest.getItem(0).isEmpty() && !chest.getItem(1).isEmpty(), "shared books disappeared");

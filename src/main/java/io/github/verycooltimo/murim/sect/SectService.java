@@ -114,20 +114,31 @@ public final class SectService {
      * @return отдано ли
      */
     public static boolean donate(ServerPlayer p, String spec) {
+        return donateResult(p, spec) == Donation.OK;
+    }
+
+    /** Исход пожертвования: у управляющего каждый отказ говорит своими словами (DialogueService). */
+    public enum Donation { OK, BAD, NONE, ENOUGH, PARTIAL }
+
+    /**
+     * Как {@link #donate}, но с причиной отказа. Предмет забирается только когда заслуги за него помещаются в дневной предел
+     * целиком: раньше слиток исчезал, а заслуг приходило меньше (разбор 15.11).
+     */
+    public static Donation donateResult(ServerPlayer p, String spec) {
         int eq = spec.lastIndexOf('=');
         if (eq < 0) {
-            return false;
+            return Donation.BAD;
         }
         ItemNeed need = ItemNeed.parse(spec.substring(0, eq));
         int points;
         try {
             points = Integer.parseInt(spec.substring(eq + 1).trim());
         } catch (NumberFormatException e) {
-            return false;
+            return Donation.BAD;
         }
         if (need == null || need.count(p) < need.count()) {
             PlayerJournal.refuse(p, Component.translatable("murim.sect.donate.none").withStyle(ChatFormatting.GRAY));
-            return false;
+            return Donation.NONE;
         }
         // Заслуги за пожертвования — не больше DONATE_CAP в день: ферма не заменяет службу (codex 04.10).
         long day = SectSchedule.day(p.level().getDayTime());
@@ -139,15 +150,17 @@ public final class SectService {
         int left = DONATE_CAP - tag.getInt("points");
         if (left <= 0) {
             PlayerJournal.refuse(p, Component.translatable("murim.sect.donate.enough").withStyle(ChatFormatting.GRAY));
-            return false;
+            return Donation.ENOUGH;
+        }
+        if (left < points) {
+            return Donation.PARTIAL;
         }
         need.take(p);
-        int got = Math.min(points, left);
-        tag.putInt("points", tag.getInt("points") + got);
+        tag.putInt("points", tag.getInt("points") + points);
         p.getPersistentData().put(DONATE_TAG, tag);
-        contribute(p, got);
+        contribute(p, points);
         SectSocial.remember(p, "loot");
-        return true;
+        return Donation.OK;
     }
 
     /** Заслуг за пожертвования в день — не больше. */
@@ -178,24 +191,11 @@ public final class SectService {
 
         /** Сколько таких у игрока. */
         public int count(ServerPlayer p) {
-            int c = 0;
-            for (ItemStack s : p.getInventory().items) {
-                if (s.is(item)) {
-                    c += s.getCount();
-                }
-            }
-            return c;
+            return io.github.verycooltimo.murim.item.PlayerItems.count(p, s -> s.is(item));
         }
 
         void take(ServerPlayer p) {
-            int left = count;
-            for (ItemStack s : p.getInventory().items) {
-                if (left > 0 && s.is(item)) {
-                    int n = Math.min(left, s.getCount());
-                    s.shrink(n);
-                    left -= n;
-                }
-            }
+            io.github.verycooltimo.murim.item.PlayerItems.take(p, s -> s.is(item), count);
         }
     }
 

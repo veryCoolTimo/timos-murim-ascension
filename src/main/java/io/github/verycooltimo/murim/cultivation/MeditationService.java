@@ -78,6 +78,13 @@ public final class MeditationService {
         }
     }
 
+    /** Stand up and never sit: a stand packet that arrives after the server already ended the session does nothing. */
+    public static void stand(ServerPlayer player) {
+        if (player.getData(ModAttachments.MEDITATION).active()) {
+            stop(player, "murim.meditation.stopped");
+        }
+    }
+
     public static boolean start(ServerPlayer player, boolean filter) {
         if (!player.isAlive() || player.isRemoved() || player.isSpectator()) {
             return false;

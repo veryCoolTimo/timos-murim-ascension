@@ -61,10 +61,7 @@ public final class Clues {
 
     /** The player carries this clue now. */
     public static boolean carries(ServerPlayer p, String id) {
-        for (ItemStack s : p.getInventory().items) {
-            if (s.getItem() instanceof ClueItem && id.equals(ClueItem.clueOf(s))) return true;
-        }
-        return false;
+        return io.github.verycooltimo.murim.item.PlayerItems.has(p, s -> s.getItem() instanceof ClueItem && id.equals(ClueItem.clueOf(s)));
     }
 
     /** The player has ever held or read this clue (the flag): what dialogues ask. */

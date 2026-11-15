@@ -270,6 +270,75 @@ public final class SectTrialGameTests {
     // SectLife#duplicate removes repeated roster keys within 256 blocks every 200 ticks.
     // Give every ticking mentor bout its own batch, including the short ones: duplicate
     // checks are staggered by entity id and can run during the countdown or bow.
+    @GameTest(template = YARD, batch = BATCH, timeoutTicks = 40)
+    public static void firstOfficeChecklistAndInvitationStaySeparate(GameTestHelper h) {
+        ServerPlayer p = prepared(h);
+        p.setData(ModAttachments.PROFILE, p.getData(ModAttachments.PROFILE).withRank(Realm.FIRST));
+        p.setData(ModAttachments.MASTERY, p.getData(ModAttachments.MASTERY)
+                .with(SectJourney.SEVEN, TechniqueProgress.learned(0, 12)));
+        SectState pending = SectState.NONE.joined().with(SectStanding.LESSON_ONE)
+                .with(SectStanding.LESSON_TWO).with(SectProgression.DIRECT)
+                .with("request.pills.done").with(SectStanding.APPROVAL).contribute(40);
+        p.setData(ModAttachments.SECT, pending);
+        var goal = SectJourney.next(p);
+        h.assertTrue(goal.id().equals("first_path") && SectJourney.slot(p, goal).equals("first"),
+                "office checklist is not the First Disciple chain step");
+        var expected = SectProgression.firstChecklist(p);
+        h.assertTrue(SectTablet.collect(p).goalHint().equals(expected), "tablet omitted office checklist");
+        SectDisciple leader = npc(h, flat(h), "tae_hwi", ring(flat(h)));
+        var hook = SectGoalTalk.goalHook(p, leader, DialogueLoader.get(leader.dialogue()));
+        h.assertTrue(hook != null && hook.option().text().equals("dialogue.murim.hook.first_path"),
+                "leader omitted office advice option");
+        SectGoalTalk.act(p, leader, "first_path");
+        h.assertTrue(SectGoalTalk.reply(p, leader).equals(expected), "leader checklist differs");
+        Object[] args = ((net.minecraft.network.chat.contents.TranslatableContents) expected.getContents()).getArgs();
+        h.assertTrue("✘".equals(args[0]) && Integer.valueOf(40).equals(args[1])
+                && Integer.valueOf(SectPositions.FIRST_CONTRIBUTION).equals(args[2])
+                && "✘".equals(args[3]) && "✔".equals(args[5]), "wrong office checkmarks or merit");
+        long days = SectReview.daysUntilOpen(p.level().getDayTime());
+        var suffix = (net.minecraft.network.chat.contents.TranslatableContents)
+                ((net.minecraft.network.chat.Component) args[4]).getContents();
+        var date = (net.minecraft.network.chat.contents.TranslatableContents)
+                ((net.minecraft.network.chat.Component) suffix.getArgs()[0]).getContents();
+        h.assertTrue(date.getKey().equals(days == 0 ? "murim.sect.first.today" : "murim.sect.first.in_days"),
+                "review date is not a nested today/days component");
+        p.setData(ModAttachments.SECT, pending.contribute(20).with(SectTalk.REVIEW_WON));
+        h.assertTrue(SectJourney.next(p).id().equals("first"), "ready member lost real invitation");
+        p.setData(ModAttachments.SECT, SectService.state(p).contribute(10));
+        args = ((net.minecraft.network.chat.contents.TranslatableContents)
+                SectProgression.firstChecklist(p).getContents()).getArgs();
+        h.assertTrue("✔".equals(args[0]) && Integer.valueOf(SectPositions.FIRST_CONTRIBUTION).equals(args[1])
+                && "✔".equals(args[3]) && args[4].equals(net.minecraft.network.chat.Component.empty()),
+                "won review retained its date or merit was not capped");
+        for (String flag : java.util.List.of("position.declined.first", SectPositions.FIRST, SectPositions.ELDER)) {
+            p.setData(ModAttachments.SECT, pending.with(flag));
+            h.assertTrue(!SectJourney.next(p).id().equals("first_path"), "office advice survived " + flag);
+        }
+        p.setData(ModAttachments.SECT, pending);
+        p.setData(ModAttachments.PROFILE, p.getData(ModAttachments.PROFILE).withRank(Realm.PEAK));
+        h.assertTrue(!SectJourney.next(p).id().equals("first_path"), "Peak player received office checklist");
+        h.succeed();
+    }
+
+    @GameTest(template = YARD, batch = BATCH, timeoutTicks = 40)
+    public static void firstOfficeTranslationsExistInBothLanguages(GameTestHelper h) throws java.io.IOException {
+        for (String lang : java.util.List.of("en_us", "ru_ru")) {
+            try (var in = SectTrialGameTests.class.getResourceAsStream("/assets/murim/lang/" + lang + ".json")) {
+                h.assertTrue(in != null, "missing language " + lang);
+                var words = com.google.gson.JsonParser.parseReader(new java.io.InputStreamReader(
+                        in, java.nio.charset.StandardCharsets.UTF_8)).getAsJsonObject();
+                for (String key : java.util.List.of("murim.sect.journey.goal.first_path",
+                        "dialogue.murim.hook.first_path", "murim.sect.first.checklist",
+                        "murim.sect.first.review_pending", "murim.sect.first.today", "murim.sect.first.in_days",
+                        "murim.tablet.step.first", "murim.sect.journey.next", "murim.sect.journey.hud",
+                        "murim.sect.journey.done")) {
+                    h.assertTrue(words.has(key), lang + " missing " + key);
+                }
+            }
+        }
+        h.succeed();
+    }
+
     @GameTest(template = YARD, batch = BATCH + "_survival", timeoutTicks = 900)
     public static void thirtySecondsPassesButMentorStillWins(GameTestHelper h) {
         long[] fightStart = {-1L};

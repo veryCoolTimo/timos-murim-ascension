@@ -150,6 +150,50 @@ public final class SectFirstImpressionGameTests {
         h.succeed();
     }
 
+    /** Path run 15.11: the porch cell in front of the real grand door is inside the hall zone; a novice there still knocks. */
+    @GameTest(template = "sect_yard", batch = "first_impression_hall_porch", timeoutTicks = 40)
+    public static void noviceAgainstTheHallDoorFromOutsideKnocks(GameTestHelper h) {
+        var layout = only(h, "main_hall");
+        SectAccess.Rule hall = SectAccess.RULES.stream().filter(r -> "main_hall".equals(r.id())).findFirst().orElseThrow();
+        BlockPos door = BlockPos.containing(layout.at("main_hall", 0, -4));
+        ServerPlayer p = player(h, 12, 12, SectState.NONE.joined());
+        Vec3 porch = layout.at("main_hall", 0, -5.2);
+        p.moveTo(porch.x, porch.y, porch.z, 0, 0);
+        h.assertTrue(SectAccess.inside(layout, hall, p.position(), 0.0D), "setup: the porch is not inside the hall zone");
+        h.assertTrue("main_hall".equals(SectKnock.shutFor(p, door, layout, true)), "the door opened for a novice standing outside it");
+        Vec3 in = layout.at("main_hall", 0, -2);
+        p.moveTo(in.x, in.y, in.z, 0, 0);
+        h.assertTrue(SectKnock.shutFor(p, door, layout, true) == null, "a novice inside the hall cannot leave");
+        h.succeed();
+    }
+
+    /**
+     * Path run 15.11: the newcomer closed the talk with Gyeong Pil, an elder stood a few blocks off, and the guard walked up at once
+     * with «First, the mentor». Beside the mentor, or right after a talk, nobody stops him; walking up to the elder alone, he is.
+     */
+    @GameTest(template = "sect_yard", batch = "path1115_elder_after_mentor", timeoutTicks = 60)
+    public static void aNewcomerBesideHisMentorIsNotStoppedAtAnElder(GameTestHelper h) {
+        SectGameTests.setPeriod(h, SectSchedule.Period.TRAINING);
+        SectHierarchyGameTests.Only layout = empty(h);
+        ServerPlayer p = player(h, 4, 4, SectState.NONE.joined());
+        SectDisciple mentor = npc(h, layout, "gyeong_pil", 5, 4, false);
+        npc(h, layout, "tae_seong", 8, 4, true);
+        String key = SectRota.dayWatch(SectSchedule.day(h.getLevel().getDayTime()), 0).key();
+        SectDisciple guard = npc(h, layout, key, 14, 4, true);
+        h.assertTrue(!SectWatch.guards(mentor), "setup: the mentor counts as a guard");
+        DialogueService.interceptNearElder(p);
+        h.assertTrue(!guard.blocking() && !p.getData(ModAttachments.DIALOGUE).active(), "the guard stopped the newcomer standing beside his mentor");
+        mentor.discard();
+        long now = h.getLevel().getGameTime();
+        p.getPersistentData().putLong(DialogueService.TALK_CLOSED_AT, now);
+        DialogueService.interceptNearElder(p);
+        h.assertTrue(!guard.blocking(), "the guard stopped the newcomer the moment his talk ended");
+        p.getPersistentData().putLong(DialogueService.TALK_CLOSED_AT, now - DialogueService.TALK_GRACE - 1L);
+        DialogueService.interceptNearElder(p);
+        h.assertTrue(guard.blocking() && guard.blockTarget() == p.getId(), "the newcomer walking up to the elder alone was not stopped");
+        h.succeed();
+    }
+
     @GameTest(template = "sect_yard", batch = "first_impression_hall_escort", timeoutTicks = 380)
     public static void hallIntruderIsCarriedOutWithoutDamage(GameTestHelper h) {
         clearYard(h);

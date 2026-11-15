@@ -20,13 +20,13 @@ public record BanditMove(int windup, int strike, int hitTick, int recover, float
                          double arcDeg, String clip) {
 
     /** Рубящий сверху: долгий высокий замах, сильный удар — срывает технику с порогом 6. */
-    public static final BanditMove CHOP = new BanditMove(10, 6, 3, 12, 6.0F, 2.9D, 70.0D, "");
+    public static final BanditMove CHOP = new BanditMove(10, 6, 3, 12, 6.0F, 2.6D, 60.0D, "");
 
     /** Горизонтальный с правого плеча: быстрее, широкий, слабее порога срыва техник. */
-    public static final BanditMove SWEEP = new BanditMove(8, 6, 3, 12, 4.0F, 2.7D, 150.0D, "_sweep");
+    public static final BanditMove SWEEP = new BanditMove(8, 6, 3, 12, 4.0F, 2.5D, 150.0D, "_sweep");
 
     /** Укол: самый длинный замах и дальний узкий удар — наказывает отход по прямой. */
-    public static final BanditMove THRUST = new BanditMove(12, 5, 2, 14, 5.0F, 3.4D, 40.0D, "_thrust");
+    public static final BanditMove THRUST = new BanditMove(12, 5, 2, 14, 5.0F, 3.0D, 40.0D, "_thrust");
 
     /**
      * Слабая техника ци (у каждого пятого): рывок-разрез с голубым следом. Удар — это сам рывок

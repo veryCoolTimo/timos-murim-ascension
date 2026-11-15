@@ -405,23 +405,10 @@ public final class QuestScenes {
     }
 
     private static void take(ServerPlayer p, SectService.ItemNeed need) {
-        int left = need.count();
-        for (ItemStack s : p.getInventory().items) {
-            if (left <= 0) break;
-            if (s.is(need.item())) {
-                int n = Math.min(left, s.getCount());
-                s.shrink(n);
-                left -= n;
-            }
-        }
+        io.github.verycooltimo.murim.item.PlayerItems.take(p, s -> s.is(need.item()), need.count());
     }
 
     private static void takeClue(ServerPlayer p, String clue) {
-        for (ItemStack s : p.getInventory().items) {
-            if (s.getItem() instanceof ClueItem && clue.equals(ClueItem.clueOf(s))) {
-                s.shrink(1);
-                return;
-            }
-        }
+        io.github.verycooltimo.murim.item.PlayerItems.take(p, s -> s.getItem() instanceof ClueItem && clue.equals(ClueItem.clueOf(s)), 1);
     }
 }

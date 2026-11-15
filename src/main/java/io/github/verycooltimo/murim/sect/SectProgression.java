@@ -72,6 +72,22 @@ public final class SectProgression {
                 state(p).has(SECOND_TEST) ? "✔" : "✘");
     }
 
+    /** Office advice only: the existing tablet/dialogue payloads carry this derived checklist to the client. */
+    public static Component firstChecklist(ServerPlayer p) {
+        SectState s = state(p);
+        boolean won = s.has(SectTalk.REVIEW_WON);
+        // API: /tmp/mr-ref-1121/minecraft-src/net/minecraft/world/{entity/Entity,level/Level}.java#level/getDayTime
+        long days = SectReview.daysUntilOpen(p.level().getDayTime());
+        // API: /tmp/mr-ref-1121/minecraft-src/net/minecraft/network/chat/Component.java#translatable/empty
+        Component date = days == 0 ? Component.translatable("murim.sect.first.today")
+                : Component.translatable("murim.sect.first.in_days", days);
+        Component review = won ? Component.empty() : Component.translatable("murim.sect.first.review_pending", date);
+        return Component.translatable("murim.sect.first.checklist",
+                s.contribution() >= SectPositions.FIRST_CONTRIBUTION ? "✔" : "✘",
+                Math.min(SectPositions.FIRST_CONTRIBUTION, s.contribution()), SectPositions.FIRST_CONTRIBUTION,
+                won ? "✔" : "✘", review, s.has(SectStanding.APPROVAL) ? "✔" : "✘");
+    }
+
     /** First exam: the journey, dialogue visibility and submission share this rule (design 37). */
     public static String firstExamMissing(ServerPlayer p) {
         SectState s = state(p);

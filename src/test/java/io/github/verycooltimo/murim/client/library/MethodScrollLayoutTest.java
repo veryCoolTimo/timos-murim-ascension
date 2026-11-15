@@ -119,9 +119,24 @@ class MethodScrollLayoutTest {
             // The paper height does not depend on the text, nor does the picture: long text scrolls instead.
             assertEquals(short1.illustration(), long1.illustration());
             assertEquals(short1.text(), long1.text());
-            assertTrue(short1.illustration().height() >= short1.paper().height() * 0.60,
+            assertTrue(short1.illustration().height() >= short1.paper().height() * 0.55,
                     gui[0] + "x" + gui[1] + " picture " + short1.illustration().height() + " of " + short1.paper().height());
             assertTrue(short1.text().height() >= 14);
+        }
+    }
+
+    @Test
+    void textAlwaysShowsTitleAndTwoBodyLinesAtGuiScales2To4() {
+        // Bug (pathreview 14.11): GUI scale 3 at 1280x720 left a 15 px viewport, so only the title fitted and the description was hidden.
+        int titleAndTwoLines = 9 + 3 + 2 * (int) Math.ceil(9 * MethodScrollLayout.BODY_SCALE);
+        for (int[] size : new int[][] {{1280, 720}, {1920, 1080}, {1024, 768}}) {
+            for (int scale = 2; scale <= 4; scale++) {
+                var l = MethodScrollLayout.of((int) Math.ceil(size[0] / (double) scale),
+                        (int) Math.ceil(size[1] / (double) scale), 128, 192, 120);
+                assertTrue(l.text().height() >= titleAndTwoLines,
+                        size[0] + "x" + size[1] + " scale " + scale + " text " + l.text().height());
+                assertTrue(l.illustration().height() >= l.paper().height() * 0.30);
+            }
         }
     }
 

@@ -262,7 +262,7 @@ public class Peddler extends AbstractVillager {
         if (!isTrading() && level().getGameTime() - lastRestock >= RESTOCK_TICKS && offers != null) {
             stock(offers);
         }
-        if (stayTicks > 0 && !isTrading() && --stayTicks <= 0) {
+        if (!escorted && stayTicks > 0 && !isTrading() && --stayTicks <= 0) {
             // Ушёл дальше по дороге.
             discard();
         }

@@ -291,4 +291,18 @@ public final class PillEverydayGameTests {
                 && p.getInventory().countItem(ModItems.PILL_PLUM_BLOSSOM.get()) == 1, "duplicate gift after tear/reload");
         h.succeed();
     }
+
+    /** Thousand Poisons, Heavenly (blue) and Blood Divine pills have no world source; the author keeps them creative only (15.11). */
+    @GameTest(template = FLOOR, timeoutTicks = 20)
+    public static void sourcelessPillsAreInTheCreativeTab(GameTestHelper h) {
+        var tab = io.github.verycooltimo.murim.registry.ModCreativeTabs.MURIM.get();
+        // API: reference/minecraft-src/net/minecraft/world/item/CreativeModeTab.java#buildContents(ItemDisplayParameters)
+        tab.buildContents(new net.minecraft.world.item.CreativeModeTab.ItemDisplayParameters(
+                h.getLevel().enabledFeatures(), true, h.getLevel().registryAccess()));
+        for (Item pill : java.util.List.of(ModItems.PILL_THOUSAND_POISON.get(), ModItems.PILL_BLUE.get(), ModItems.PILL_BLOOD.get())) {
+            h.assertTrue(tab.getDisplayItems().stream().anyMatch(s -> s.is(pill)),
+                    BuiltInRegistries.ITEM.getKey(pill) + " is missing from the creative tab");
+        }
+        h.succeed();
+    }
 }

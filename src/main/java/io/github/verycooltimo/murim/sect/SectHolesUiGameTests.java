@@ -135,6 +135,40 @@ public final class SectHolesUiGameTests {
         h.succeed();
     }
 
+    /** Pills moved into a pill box are not lost; lost ones are made up once per sect day, not without limit. */
+    @GameTest(template = YARD, timeoutTicks = 60, batch = "sect_holes_pills")
+    public static void pillReissueIsLimitedAndSeesPillBoxes(GameTestHelper h) {
+        ServerPlayer p = member(h);
+        SectDisciple gyun = npc(h, "tae_gyun");
+        SectDisciple cho = npc(h, "gyeong_cho");
+        h.assertTrue(SectRequests.start(p, gyun, "pills") && pills(p) == 3, "first hand-over");
+        // Variant B: the three pills sit in a pill box: they are not lost and nothing more is handed out.
+        ItemStack box = new ItemStack(io.github.verycooltimo.murim.decor.IntWorkshop.PILL_BOX.get());
+        box.set(net.minecraft.core.component.DataComponents.CONTAINER, net.minecraft.world.item.component.ItemContainerContents
+                .fromItems(java.util.List.of(new ItemStack(ModItems.PILL_SNOW_PLUM.get(), 3))));
+        p.getInventory().clearContent();
+        p.getInventory().add(box);
+        h.assertTrue(!SectRequests.canStart(p, gyun, "pills"), "pills in a pill box were counted as lost");
+        h.assertTrue(SectRequests.canComplete(p, cho, "pills") && SectRequests.complete(p, cho, "pills"),
+                "pills in a pill box cannot be delivered");
+        h.assertTrue(box.getOrDefault(net.minecraft.core.component.DataComponents.CONTAINER,
+                net.minecraft.world.item.component.ItemContainerContents.EMPTY).nonEmptyStream().count() == 0, "box still holds pills");
+        h.succeed();
+    }
+
+    @GameTest(template = YARD, timeoutTicks = 60, batch = "sect_holes_pills")
+    public static void pillReissueOnlyOncePerSectDay(GameTestHelper h) {
+        ServerPlayer p = member(h);
+        SectDisciple gyun = npc(h, "tae_gyun");
+        h.assertTrue(SectRequests.start(p, gyun, "pills"), "first hand-over");
+        p.getInventory().clearContent();
+        h.assertTrue(SectRequests.start(p, gyun, "pills") && pills(p) == 3, "first reissue of the day");
+        p.getInventory().clearContent();
+        h.assertTrue(!SectRequests.canStart(p, gyun, "pills"), "a second reissue in one sect day was offered");
+        h.assertTrue(!SectRequests.start(p, gyun, "pills") && pills(p) == 0, "unlimited pills");
+        h.succeed();
+    }
+
     // ------------------------------------------------------------------ path-4 + progress-3
 
     @GameTest(template = YARD, timeoutTicks = 60, batch = "sect_holes_peaceful")

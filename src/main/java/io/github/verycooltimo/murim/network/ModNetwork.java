@@ -271,6 +271,8 @@ public final class ModNetwork {
                         switch (payload.action()) {
                             case TOGGLE -> io.github.verycooltimo.murim.cultivation.MeditationService
                                     .toggle(serverPlayer, payload.filter());
+                            case STAND -> io.github.verycooltimo.murim.cultivation.MeditationService
+                                    .stand(serverPlayer);
                             case HOLD_ON -> io.github.verycooltimo.murim.cultivation.MeditationService
                                     .setHolding(serverPlayer, true);
                             case BLOCKED_ACTION -> io.github.verycooltimo.murim.cultivation.MeditationService

@@ -4,6 +4,7 @@ import io.github.verycooltimo.murim.MurimMod;
 import io.github.verycooltimo.murim.registry.ModItems;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
+import io.github.verycooltimo.murim.sect.PlayerJournal;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -54,7 +55,10 @@ public final class VaultHarvest {
             if (state.getValue(VaultDecorBlock.TAKEN) || kind == VaultDecorBlock.PLAQUE
                     || kind == VaultDecorBlock.BANNER_RED || kind == VaultDecorBlock.BANNER_MAROON) return false;
             // The founders' sword is seated in its socket: both hands must be free to lift it.
-            if (kind == VaultDecorBlock.HERO && (!player.getMainHandItem().isEmpty() || !player.getOffhandItem().isEmpty())) return false;
+            if (kind == VaultDecorBlock.HERO && (!player.getMainHandItem().isEmpty() || !player.getOffhandItem().isEmpty())) {
+                PlayerJournal.refuse(player, Component.translatable("murim.vault.hero.hands_busy"));
+                return false;
+            }
             if (kind >= VaultDecorBlock.LEAN_0 && kind < VaultDecorBlock.BANNER_RED) level.removeBlock(pos, false);
             else level.setBlock(pos, state.setValue(VaultDecorBlock.TAKEN, true), 3);
             int count = kind <= VaultDecorBlock.RACK_B ? 3 : 1;

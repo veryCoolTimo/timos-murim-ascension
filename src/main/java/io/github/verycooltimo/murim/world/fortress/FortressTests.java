@@ -128,14 +128,14 @@ public final class FortressTests {
         });
     }
 
-    /** Фазы: на 60 % — рык с давлением первоклассного; на 25 % — «кровь кипит», броня падает (аура остаётся второсортной, не демонической). */
+    /** Фазы: на 50 % — рык с давлением первоклассного; на 25 % — «кровь кипит», броня падает (аура остаётся второсортной, не демонической). */
     @GameTest(template = "camp_floor", timeoutTicks = 260)
     public static void phasesAndRoar(GameTestHelper helper) {
         FortressMaster m = master(helper);
         TrainingDummy d = dummy(helper, m, 0.0D, 3.0D);
         m.teleportTo(d.getX(), d.getY(), d.getZ() + 3.0D);
         m.startFight(d);
-        m.setHealth(m.getMaxHealth() * 0.55F);
+        m.setHealth(m.getMaxHealth() * 0.45F);
         boolean[] roared = {false};
         boolean[] pressure = {false};
         helper.onEachTick(() -> {
@@ -149,11 +149,16 @@ public final class FortressTests {
         helper.runAfterDelay(120, () -> {
             helper.assertTrue(m.phase() == 2, "фаза " + m.phase());
             helper.assertTrue(roared[0], "рыка перехода не было");
+            // Speed-up at <= 50 % HP: walking +30 %, pauses between moves 25 % shorter.
+            helper.assertTrue(Math.abs(m.getAttributeValue(Attributes.MOVEMENT_SPEED) - 0.27D * 1.30D) < 0.005D,
+                    "phase 2 speed " + m.getAttributeValue(Attributes.MOVEMENT_SPEED));
+            helper.assertTrue(BossRules.cadence(2) <= 0.75F && BossRules.cadence(1) == 1.0F, "cadence");
             helper.assertTrue(pressure[0], "рык не дал давления первоклассного");
             m.setHealth(m.getMaxHealth() * 0.2F);
         });
         helper.runAfterDelay(160, () -> {
             helper.assertTrue(m.phase() == 3, "фаза " + m.phase());
+            helper.assertTrue(m.getAttributeValue(Attributes.MOVEMENT_SPEED) > 0.27D * 1.4D, "phase 3 speed");
             helper.assertTrue(m.getAttributeValue(Attributes.ARMOR) <= BossRules.ARMOR_PHASE3 + 0.01D, "броня не упала");
             AuraState aura = m.getData(ModAttachments.AURA);
             helper.assertTrue(!aura.demonic() && aura.rank() == Realm.SECOND, "аура фазы 3: " + aura);
@@ -222,6 +227,46 @@ public final class FortressTests {
         helper.assertTrue(Realm.condition(Realm.SECOND) == Realm.Condition.SECT_SKILLS, "условие прорыва 2");
         m.discard();
         Fortresses.data(helper.getLevel()).remove(e.key);
+        helper.succeed();
+    }
+
+    /** A repeat victory must keep what the earlier winner left in the treasury chest. */
+    @GameTest(template = "fortress_floor", timeoutTicks = 40)
+    public static void repeatVictoryKeepsTreasuryLeftovers(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        FortressData.Entry e = place(helper);
+        FortressMaster m = Fortresses.spawnMaster(level, e);
+        ServerPlayer p = fakePlayer(helper);
+        Fortresses.defeat(level, m, List.of(p));
+        ChestBlockEntity chest = (ChestBlockEntity) level.getBlockEntity(e.vaultChest());
+        int free = -1;
+        for (int i = chest.getContainerSize() - 1; i >= 0 && free < 0; i--) if (chest.getItem(i).isEmpty()) free = i;
+        helper.assertTrue(free >= 0, "no free slot in the vault chest");
+        chest.setItem(free, new ItemStack(net.minecraft.world.item.Items.DIAMOND, 7));
+        FortressMaster again = Fortresses.spawnMaster(level, e);
+        Fortresses.defeat(level, again, List.of(p));
+        ChestBlockEntity after = (ChestBlockEntity) level.getBlockEntity(e.vaultChest());
+        boolean kept = false;
+        for (int i = 0; i < after.getContainerSize(); i++) {
+            if (after.getItem(i).is(net.minecraft.world.item.Items.DIAMOND) && after.getItem(i).getCount() == 7) kept = true;
+        }
+        m.discard();
+        again.discard();
+        Fortresses.data(level).remove(e.key);
+        helper.assertTrue(kept, "a repeat victory wiped the leftovers of the treasury chest");
+        helper.succeed();
+    }
+
+    /** Outside a fight the seated master takes no damage from lava, TNT or pets: his death would open the vault for nobody. */
+    @GameTest(template = "camp_floor", timeoutTicks = 40)
+    public static void seatedMasterIgnoresNonPlayerDamage(GameTestHelper helper) {
+        FortressMaster m = master(helper);
+        helper.assertTrue(m.state() == FortressMaster.SIT, "master is not seated");
+        float before = m.getHealth();
+        boolean hurt = m.hurt(helper.getLevel().damageSources().lava(), 1000.0F);
+        helper.assertFalse(hurt, "seated master took non-player damage");
+        helper.assertTrue(m.isAlive() && m.getHealth() == before, "seated master lost health to lava");
+        m.discard();
         helper.succeed();
     }
 

@@ -106,6 +106,26 @@ public final class PeddlerTests {
         });
     }
 
+    /** A stall keeper removed without a kill (discard, command) must not keep the stall closed forever. */
+    @GameTest(template = "small_floor", timeoutTicks = 40)
+    public static void stallReopensWhenKeeperVanishesWithoutKill(GameTestHelper helper) {
+        var level = helper.getLevel();
+        PeddlerSpawns.Data data = PeddlerSpawns.data(level);
+        java.util.UUID savedStall = data.stall;
+        long savedRespawn = data.stallRespawn;
+        try {
+            data.stall = java.util.UUID.randomUUID();
+            data.stallRespawn = 0L;
+            PeddlerSpawns.reconcileStall(level, data);
+            helper.assertTrue(data.stall == null, "the stall still points at a keeper who does not exist");
+            helper.assertTrue(data.stallRespawn > level.getGameTime(), "no respawn wait was set");
+        } finally {
+            data.stall = savedStall;
+            data.stallRespawn = savedRespawn;
+        }
+        helper.succeed();
+    }
+
     private static MerchantOffer find(MerchantOffers offers, ItemStack result) {
         for (MerchantOffer o : offers) {
             if (ItemStack.isSameItem(o.getResult(), result)) {

@@ -159,3 +159,15 @@ io/github/verycooltimo/murim/client/MotionTrace$*.class
 
 # Per-frame development capture telemetry (including nested records and callbacks).
 io/github/verycooltimo/murim/client/dev/**
+
+# Dev-only filming and capture helpers: event subscribers that must not run in a player's game.
+io/github/verycooltimo/murim/combat/DevWalker.class
+io/github/verycooltimo/murim/combat/DevWalker$*.class
+io/github/verycooltimo/murim/client/AnimFilmCapture.class
+io/github/verycooltimo/murim/client/AnimFilmCapture$*.class
+io/github/verycooltimo/murim/dev/AirhandFilmCapture.class
+io/github/verycooltimo/murim/dev/AirhandFilmCapture$*.class
+io/github/verycooltimo/murim/dev/AirhandCapturePlan.class
+io/github/verycooltimo/murim/dev/AirhandCapturePlan$*.class
+io/github/verycooltimo/murim/dev/CaptureView.class
+io/github/verycooltimo/murim/dev/CaptureView$*.class

@@ -46,6 +46,8 @@ public final class PlayerJournal {
     public static void refuse(Player player, Component reason) {
         record(player, reason);
         if (!(player instanceof ServerPlayer p)) return;
+        // Without the sect tablet there is no way to read the journal: one action-bar line says why (nothing in chat).
+        if (!SectTablet.has(p)) p.displayClientMessage(reason, true);
         long now = p.level().getGameTime();
         if (p.getPersistentData().contains(LAST_SOUND) && now - p.getPersistentData().getLong(LAST_SOUND) < 10) return;
         p.getPersistentData().putLong(LAST_SOUND, now);
