@@ -55,7 +55,7 @@ public final class VfxCommand {
         var from=Commands.argument("from_s",DoubleArgumentType.doubleArg(0,300))
                 .executes(ctx->bench(ctx,DoubleArgumentType.getDouble(ctx,"from_s"),-1,false)).then(to);
         return Commands.literal("bench").then(Commands.argument("element",StringArgumentType.word())
-                .suggests((ctx,b)->{java.util.List.of("line","line_thin","essences","fire1","alpha_test","stroke","preset:fist").forEach(b::suggest);return b.buildFuture();})
+                .suggests((ctx,b)->{java.util.List.of("line","line_thin","essences","fire1","alpha_test","stroke","inktree","essence","cultivation","cult1","preset:fist").forEach(b::suggest);return b.buildFuture();})
                 .executes(ctx->bench(ctx,-1,-1,false)).then(from));
     }
 

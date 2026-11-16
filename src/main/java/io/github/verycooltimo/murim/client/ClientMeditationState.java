@@ -362,7 +362,9 @@ public final class ClientMeditationState {
                 aftermathTicks = AFTERMATH_TICKS;
                 // Встал сам, сдвинулся или получил удар — ци рассеивается.
                 if (player != null) {
-                    MurimPlayerAnimations.stopBlended(player, 6);
+                    // the high pill picture is still on (its finale): the figure stays seated until the picture has faded
+                    if (FlowClient.active() || FlowClient.lingering()) poseHeld = true;
+                    else MurimPlayerAnimations.stopBlended(player, 6);
                 }
             }
         }
@@ -372,6 +374,9 @@ public final class ClientMeditationState {
         seedSceneTicks = SEED_SCENE_TICKS;
         CameraShakeHandler.request(0.10F, 5);
     }
+
+    /** The seated pose is kept after the server's end of the session while the high pill finale plays (a client delay of the stand-up). */
+    private static boolean poseHeld;
 
     private static void endSeedScene(Minecraft minecraft) {
         seedSceneTicks = 0;
@@ -389,7 +394,7 @@ public final class ClientMeditationState {
         return io.github.verycooltimo.murim.dev.DevHooks.INSTANCE.benchActive()
                 || (state.active() && state.beats() < 3) || seedSceneTicks > 0 || orbit() && BreakthroughCamera.enabled()
                 || BreakthroughCamera.active()
-                || FlowClient.active() || ClientPillState.absorbing() || ClientPillState.finaleAge() >= 0
+                || FlowClient.active() || FlowClient.lingering() || FlowCamera.active() || ClientPillState.absorbing() || ClientPillState.finaleAge() >= 0
                 // Отдача удара: крупный план держится, пока красный выброс и кровь читаются.
                 || ClientPillState.deviationAge() >= 0;
     }
@@ -488,7 +493,7 @@ public final class ClientMeditationState {
         // Breakthrough: the camera director (client/camera) owns the camera, including the glide back to the player's
         // own view; the stand-in third-person-front shot below is for the other scenes.
         BreakthroughCamera.tick(minecraft, orbit() || seedSceneTicks > 0, restoreCamera);
-        FlowCamera.tick(minecraft, (FlowClient.active() || io.github.verycooltimo.murim.dev.DevHooks.INSTANCE.benchActive()) && !BreakthroughCamera.active());
+        FlowCamera.tick(minecraft, (FlowClient.active() || FlowClient.lingering() || io.github.verycooltimo.murim.dev.DevHooks.INSTANCE.benchActive()) && !BreakthroughCamera.active(), restoreCamera, !BreakthroughCamera.active());
         wanted = cinematic();
         if (wanted) {
             CameraType shot = BreakthroughCamera.active() || FlowCamera.active() || io.github.verycooltimo.murim.client.showcase.ShowcaseClient.holdsCamera()
@@ -639,6 +644,10 @@ public final class ClientMeditationState {
                 // Сам прорыв: ци рвётся наружу (сервер добавит «прорыв» при подъёме ранга).
                 io.github.verycooltimo.murim.client.Sfx.play(minecraft.player, io.github.verycooltimo.murim.registry.ModSounds.QI_CHARGE, 0.8F, 0.85F);
             }
+        }
+        if (poseHeld && !FlowClient.active() && !FlowClient.lingering()) {
+            poseHeld = false;
+            MurimPlayerAnimations.stopBlended(minecraft.player, 6);
         }
         if (stainTicks > 0) {
             stainTicks--;

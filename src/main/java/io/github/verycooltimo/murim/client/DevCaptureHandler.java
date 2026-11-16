@@ -828,7 +828,7 @@ public final class DevCaptureHandler {
                 String element=subject.substring(6);
                 benchCapture=io.github.verycooltimo.murim.client.vfx.preset.BenchRuntime.start(element,
                         Double.parseDouble(System.getenv().getOrDefault("MURIM_BENCH_FROM","-1")),
-                        Double.parseDouble(System.getenv().getOrDefault("MURIM_BENCH_TO","-1")),false)==1;
+                        Double.parseDouble(System.getenv().getOrDefault("MURIM_BENCH_TO","-1")),io.github.verycooltimo.murim.client.vfx.fx.FxTune.ON)==1;   // live tuning loops the bench
                 benchCaptureTicks=0;
                 return;
             }
@@ -1007,7 +1007,7 @@ public final class DevCaptureHandler {
         if(benchCapture) {
             var time=io.github.verycooltimo.murim.client.vfx.preset.BenchRuntime.renderedSeconds();
             if(!io.github.verycooltimo.murim.client.vfx.preset.BenchRuntime.active())benchCapture=false;
-            else if(benchCaptureTicks++ % Math.max(1,envInt("MURIM_CAPTURE_STEP",2))==0 && Double.isFinite(time)) {
+            else if(benchCaptureTicks++ % Math.max(1,envInt("MURIM_CAPTURE_STEP",2))==0 && Double.isFinite(time) && !"1".equals(System.getenv("MURIM_CAPTURE_NOGRAB"))) {   // NOGRAB=1: measuring (tools/capture/bench_perf_mac.sh), no screenshots
                 grab(minecraft,String.format("murim_%s_%03d.png",anglePrefix(),frameIndex));
                 MurimMod.LOGGER.info("Camera frame {} bench {} t {}",frameIndex,
                         io.github.verycooltimo.murim.client.vfx.preset.BenchRuntime.element(),time);
@@ -1300,7 +1300,7 @@ public final class DevCaptureHandler {
      * чтобы съёмка проверяла настоящий путь ввода, а не обходной пакет.
      */
     private static void tickMeditation(Minecraft minecraft) {
-        meditationTicks--;
+        if (!io.github.verycooltimo.murim.client.vfx.fx.FxTune.ON) meditationTicks--;   // live tuning: the stand's hands never time out
         var state = ClientMeditationState.state();
         // Бот мини-игры: держит, когда кольцо шире центра полосы. С 4-й по 6-ю секунду
         // каждой игры он нарочно перетягивает — в кадры должно попасть красное состояние.
@@ -1345,7 +1345,7 @@ public final class DevCaptureHandler {
                     io.github.verycooltimo.murim.cultivation.Realm.releaseTicks(target));
             MurimMod.LOGGER.info("Автосъёмка: прорыв начался на тике медитации {}", meditationTicks);
         }
-        if (meditationTicks % step == 0) {
+        if (meditationTicks % step == 0 && !io.github.verycooltimo.murim.client.vfx.fx.FxTune.ON) {   // live tuning takes its own shots
             // Снимок в тике берёт последний отрисованный кадр целиком, с интерфейсом:
             // HUD медитации — часть того, что проверяется.
             grab(minecraft, String.format("murim_%s_%03d.png", anglePrefix(), frameIndex));

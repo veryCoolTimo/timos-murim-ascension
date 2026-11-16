@@ -18,6 +18,11 @@ public final class DantianFlow {
     private RecordedMesh mesh = new RecordedMesh(), previous = new RecordedMesh();
     private RecordedMesh dull = new RecordedMesh(), previousDull = new RecordedMesh();
     private boolean loadAttempted, wasActive, burstShook, stampShook;
+    private static boolean lightAdded;
+    /** Dev A/B for the perf measurement (MURIM_DANTIAN_PLAIN=1): the accepted r12 look without the 14.11 additions (dust, floor light, wash). */
+    private static final boolean PLAIN = "1".equals(System.getenv("MURIM_DANTIAN_PLAIN"));
+    private static final io.github.verycooltimo.murim.client.vfx.fx.FxQuality QUALITY = new io.github.verycooltimo.murim.client.vfx.fx.FxQuality();
+    private static long lastNs;
     private double redness;
     private long tick = Long.MIN_VALUE;
     private double radius=.45, angle, cadence, time, fade;
@@ -39,7 +44,7 @@ public final class DantianFlow {
         radius = .45;
         lastSession = lastBeat = -1;
         roundSeconds = 0;
-        wasActive = loadAttempted = burstShook = stampShook = false;
+        wasActive = loadAttempted = burstShook = stampShook = lightAdded = false;
     }
 
     public void render(BtCtx c) {
@@ -131,6 +136,12 @@ public final class DantianFlow {
         c.buffers().endBatch(inner);
         if(BtGlow.active()) {var glow=BtGlow.preset();RecordedMesh.replay(previous,mesh,c.partial(),c.buffers().getBuffer(glow),c.pose(),c.body(),false);c.buffers().endBatch(glow);}
         if(active&&state.beats()==0&&session<120) startMotes(c,session/20.0);
+        {
+            long ns=System.nanoTime();
+            if(lastNs!=0) QUALITY.update((ns-lastNs)/1e6,(ns-lastNs)/1e9);
+            lastNs=ns;
+        }
+        if(!PLAIN&&active&&seed<0&&fade>0) qiMotes(c,c.body().bone(BoneAnchorLayer.Bone.DANTIAN),time,.55*fade*clamp(session/120.0),.22,28);
         Vec3 ember=c.body().bone(BoneAnchorLayer.Bone.DANTIAN).add(c.body().near().scale(.18));
         double seedTime=seed+c.partial();
         double warm=fade*(state.beats()>0?1:clamp(session/280.0))*(seed>=0?1-clamp(seedTime/38.0):1);
@@ -261,6 +272,19 @@ public final class DantianFlow {
             innerLight(c,centre,.30*scale,(float)flash(seconds),0xFFFFFF);
         if(seconds<CORE_START)return;
         double coreRadius=DantianVeins.coreRadius(seconds,scale), shrink=sharedFade(seconds);
+        // Lifted light (14.11): drifting qi dust round the body, a pool of light on the floor and a wide soft wash round the core; all additive.
+        if(!PLAIN) {
+        qiMotes(c,centre,seconds,1.1*shrink,.3,90);
+        floorLight(c,centre,c.body().ground()+.012,(.85+.6*clamp((seconds-CORE_START)/1.5))*scale,(float)(.2*shrink),0x6FBFFF);
+        // Light on the body itself: a wide soft wash over the chest and shoulders, so sleeves and face are lit by the core, not only the floor.
+        innerLight(c,centre.add(0,.28*scale,0),.62*scale,(float)(.16*shrink),0x4F9BFF);
+        innerLight(c,centre.add(0,.62*scale,0),.38*scale,(float)(.10*shrink),0x7FC8FF);
+        innerLight(c,centre,coreRadius*7,(float)(.10*shrink),0x2A7BFF);
+        }
+        if(!PLAIN&&!lightAdded) {
+            lightAdded=true;
+            io.github.verycooltimo.murim.client.vfx.TechniqueLight.add(centre,0x4FA8FF,4.5F,.55F,10,70,24);
+        }
         innerLight(c,centre,coreRadius*2.8,(float)(.35*shrink),0x2A7BFF);
         innerLight(c,centre,coreRadius*1.55,(float)(.8*shrink),0x7FE6FF);
         innerLight(c,centre,coreRadius,(float)DantianVeins.coreAlpha(seconds),0xF4FDFF);
@@ -284,16 +308,16 @@ public final class DantianFlow {
         if(status==net.minecraft.client.ParticleStatus.MINIMAL)return;
         if(status==net.minecraft.client.ParticleStatus.DECREASED)density*=.5;
         var type=MurimRenderTypes.mote();var out=c.buffers().getBuffer(type);
-        int count=(int)(160*density);
+        int count=(int)(120*density);
         for(int i=0;i<count;i++) {
-            double angle=i*2.399963, speed=(1.3+(i%7)*.23)*c.body().scale();
+            double angle=i*2.399963+(hash(i,11)-.5)*.5, speed=(.6+2.0*hash(i,12)*hash(i,12))*c.body().scale();
             Vec3 origin=core;
             Vec3 velocity=c.body().right().scale(cos(angle)*speed)
                     .add(0,sin(angle)*speed,0).add(c.body().near().scale(.3*speed));
             Vec3 at=origin.add(velocity.scale((1-exp(-3*age))/3));
-            Vec3 tail=origin.add(velocity.scale((1-exp(-3*max(0,age-.12)))/3));
+            Vec3 tail=origin.add(velocity.scale((1-exp(-3*max(0,age-.05-.22*hash(i,13))))/3));
             float alpha=(float)pow(1-age/BURST_SECONDS,1.5);
-            VfxDraw.segment(out,c.pose(),tail,at,c.camera(),.008*c.body().scale(),alpha,.6F,.95F,1);
+            VfxDraw.segment(out,c.pose(),tail,at,c.camera(),(.003+.009*hash(i,14))*c.body().scale(),alpha*(float)(.5+.5*hash(i,15)),.6F,.95F,1);
         }
         c.buffers().endBatch(type);
     }
@@ -379,6 +403,43 @@ public final class DantianFlow {
             VfxDraw.segment(out,c.pose(),a,b,c.camera(),w,(float)gain,(rgb>>16&255)/255F,(rgb>>8&255)/255F,(rgb&255)/255F);
             roundLight(c,out,a,w,gain,rgb);roundLight(c,out,b,w,gain,rgb);
         }
+    }
+    /** Qi dust: motes that rise and turn round the body, positions are a pure function of time (no state, no jitter), count follows the quality governor. */
+    private static void qiMotes(BtCtx c,Vec3 centre,double time,double strength,double rise,int count) {
+        if(strength<=.01)return;
+        int n=(int)Math.round(count*QUALITY.particleScale());
+        var type=MurimRenderTypes.mote();var out=c.buffers().getBuffer(type);
+        double scale=c.body().scale();
+        for(int i=0;i<n;i++) {
+            double h1=hash(i,1),h2=hash(i,2),h3=hash(i,3),h4=hash(i,4),h5=hash(i,5),h6=hash(i,6),h7=hash(i,7),h8=hash(i,8);
+            double life=2.4+1.8*h2, u=(time/life+h3)%1;
+            double a=h4*2*PI+(h5<.75?1:-1)*(.5+.7*h6)*u*life, r=(.10+.28*h7)*scale*(1+.4*u);
+            Vec3 at=centre.add(c.body().right().scale(cos(a)*r)).add(c.body().near().scale(sin(a)*r*.6)).add(0,(-.04+rise*u*life*(.6+.6*h1))*scale,0);
+            float alpha=(float)(strength*pow(sin(PI*u),1.3)*(.35+.65*h8));
+            double size=(.007+.012*hash(i,9))*scale;
+            VfxDraw.billboard(out,c.pose(),at,c.camera(),size*3.2,alpha*.3F,.16F,.48F,1F);
+            VfxDraw.billboard(out,c.pose(),at,c.camera(),size,alpha,.75F,.95F,1F);
+        }
+        c.buffers().endBatch(type);
+    }
+    private static double hash(int i,int k) {
+        double v=sin(i*12.9898+k*78.233)*43758.5453;
+        return v-floor(v);
+    }
+    /** A pool of light on the floor under the body: flat radial falloff, additive, no dark rim. */
+    private static void floorLight(BtCtx c,Vec3 over,double y,double radius,float alpha,int rgb) {
+        var type=MurimRenderTypes.dantianCore();var out=c.buffers().getBuffer(type);
+        Vec3 at=new Vec3(over.x,y,over.z),normal=new Vec3(0,1,0),right=new Vec3(1,0,0),fwd=new Vec3(0,0,1);
+        int bands=4,sectors=24;
+        for(int band=0;band<bands;band++)for(int sector=0;sector<sectors;sector++) {
+            double r0=band/(double)bands,r1=(band+1)/(double)bands,a=sector*2*PI/sectors,b=(sector+1)*2*PI/sectors;
+            for(double[] p:new double[][]{{r0,a},{r1,a},{r1,b},{r0,b}}) {
+                Vec3 pos=at.add(right.scale(cos(p[1])*p[0]*radius)).add(fwd.scale(sin(p[1])*p[0]*radius));
+                float gain=(float)(alpha*pow(1-p[0]*p[0],2));
+                VfxDraw.vertex(out,c.pose(),pos,normal,0,0,gain,(rgb>>16&255)/255F,(rgb>>8&255)/255F,(rgb&255)/255F);
+            }
+        }
+        c.buffers().endBatch(type);
     }
     /** Procedural radial falloff: up to 24 sectors/four bands, zero alpha at the perimeter.
      * API: /tmp/mr-ref-1121/minecraft-src/net/minecraft/world/phys/Vec3.java

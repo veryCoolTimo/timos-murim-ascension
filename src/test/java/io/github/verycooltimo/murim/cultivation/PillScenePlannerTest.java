@@ -6,19 +6,19 @@ import org.junit.jupiter.api.Test;
 
 class PillScenePlannerTest {
     @Test void firstThreeFullThenShort() {
-        for (int seen = 0; seen < 3; seen++) assertEquals(144, PillScenePlanner.ticks(seen, false));
-        assertEquals(70, PillScenePlanner.ticks(3, false));
-        assertEquals(70, PillScenePlanner.ticks(40, false));
+        for (int seen = 0; seen < 3; seen++) assertEquals(216, PillScenePlanner.ticks(seen, false));
+        assertEquals(105, PillScenePlanner.ticks(3, false));
+        assertEquals(105, PillScenePlanner.ticks(40, false));
     }
 
     @Test void settingForcesTheFullScene() {
-        assertEquals(144, PillScenePlanner.ticks(3, true));
-        assertEquals(144, PillScenePlanner.ticks(99, true));
+        assertEquals(216, PillScenePlanner.ticks(3, true));
+        assertEquals(216, PillScenePlanner.ticks(99, true));
     }
 
     @Test void sceneIsSevenSecondsAndShortIsThreeAndAHalf() {
-        assertEquals(7.2, PillScenePlanner.FULL_TICKS / 20.0, 1e-9);
-        assertEquals(3.5, PillScenePlanner.SHORT_TICKS / 20.0, 1e-9);
+        assertEquals(10.8, PillScenePlanner.FULL_TICKS / 20.0, 1e-9);
+        assertEquals(5.25, PillScenePlanner.SHORT_TICKS / 20.0, 1e-9);
     }
 
     @Test void onlyMiddlePillsGetTheScene() {

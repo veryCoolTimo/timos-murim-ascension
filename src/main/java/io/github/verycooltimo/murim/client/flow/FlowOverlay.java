@@ -1,7 +1,6 @@
 package io.github.verycooltimo.murim.client.flow;
 
 import io.github.verycooltimo.murim.MurimMod;
-import io.github.verycooltimo.murim.client.ClientConfig;
 import io.github.verycooltimo.murim.client.HudText;
 import io.github.verycooltimo.murim.cultivation.flow.FlowGame;
 import net.minecraft.client.DeltaTracker;
@@ -16,7 +15,7 @@ import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
 import net.neoforged.neoforge.client.event.RenderGuiLayerEvent;
 import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
 
-/** Only the hands, pressure and dissolve clock remain on screen; the route is FlowBodyRenderer.
+/** Only the hints and the dissolve clock remain on screen; the picture (route, clot, pressure) is FlowMeridianFx on the body.
  * API: PillHud, MeditationBareHands and the former FlowOverlay GUI layer.
  */
 @EventBusSubscriber(modid = MurimMod.MODID, value = Dist.CLIENT)
@@ -32,7 +31,9 @@ public final class FlowOverlay {
 
     @SubscribeEvent
     static void onVanillaLayer(RenderGuiLayerEvent.Pre event) {
-        if (!FlowClient.active()) return;
+        boolean glide = io.github.verycooltimo.murim.client.camera.FlowCamera.returning();
+        boolean after = FlowMeridianFx.ending() >= 0 || glide || (FlowScrollBoard.scrollMode() && FlowClient.gameForFxOrLingering());
+        if (!FlowClient.active() && !FlowClient.lingering() && !glide) return;
         // Vanilla identifiers already used by the project's GUI layers; survival layers share this namespace.
         String path = event.getName().getPath();
         if (event.getName().getNamespace().equals(MurimMod.MODID)
@@ -42,6 +43,8 @@ public final class FlowOverlay {
         }
         if (event.getName().getNamespace().equals("minecraft") && switch (path) {
             case "hotbar", "crosshair" -> true;
+            // after the game: no interface at all (the hint lines, the action-bar words, hearts and food)
+            case "overlay_message", "player_health", "food_level", "armor_level", "air_level", "experience_bar", "experience_level", "selected_item_name", "vehicle_health" -> after;
             default -> false;
         }) event.setCanceled(true);
     }
@@ -49,24 +52,26 @@ public final class FlowOverlay {
     private static void render(GuiGraphics g, DeltaTracker delta) {
         FlowGame game = FlowClient.game();
         Minecraft mc = Minecraft.getInstance();
-        if (game == null || mc.player == null || mc.options.hideGui) return;
+        if (game == null || mc.player == null || mc.options.hideGui || PillCalmFx.running()) return;
         if (PillScene.active()) {
             // The scene keeps the screen clean: only its own vignette (25 %), no hint, no dissolve ring.
-            FlowFocusMask.render(g, PillScene.vignette(delta.getGameTimeDeltaPartialTick(false)));
+            float part = delta.getGameTimeDeltaPartialTick(false);
+            FlowFocusMask.render(g, PillScene.vignette(part), 1F);
+            FlowFxScreen.renderScene(g, PillScene.ticks(), PillScene.age(part), PillScene.strength(part), PillScene.colour());
             return;
         }
+        if (FlowScrollBoard.scrollMode() && FlowClient.gameForFx() != null && game.state != FlowGame.State.TORN) {
+            // the scroll is the whole interface of the game (it unrolls at the start and rolls up before the finale)
+            return; // the scroll is a quad in the world (FlowScrollBoard#drawWorld)
+        }
+        if (game.state == FlowGame.State.DONE && !FlowClient.commonQuick()) return; // a clean finish: no interface after the game
         float visibility = FlowClient.visibility();
-        FlowFocusMask.render(g, visibility);
+        if (FlowClient.commonQuick()) {
+            FlowFxScreen.renderCommon(g, PillCommonFx.haze(FlowClient.shown()), FlowClient.pillColour(), visibility);
+            return;
+        }
         int alpha = Math.round(255 * visibility);
         int w = g.guiWidth(), h = g.guiHeight(), cx = w / 2;
-        if (game.state == FlowGame.State.TORN || game.state == FlowGame.State.BURST) {
-            // One soft red tint; the flash accessibility switch also limits the torn feedback.
-            int a = (int) ((ClientConfig.SCREEN_FLASHES.get() ? 40 : 14) * visibility * Math.max(0, 1 - game.end / 1.4D));
-            g.fill(0, 0, w, h, (a << 24) | 0xA51D31);
-        }
-        int y = h - 24;
-        g.fill(cx - 40, y, cx + 40, y + 2, (alpha / 4 << 24) | 0x594958);
-        g.fill(cx - 40, y, cx - 40 + (int) Math.round(80 * game.pressure / 100), y + 2, (alpha << 24) | 0xE2485A);
         double remaining = Math.max(0, 1 - game.t / (FlowClient.automatic() ? 2.5D : game.time));
         for (int i = 0; i < 48; i++) {
             double angle = i * Math.PI / 24 - Math.PI / 2;

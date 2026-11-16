@@ -49,6 +49,11 @@ public class BoneAnchorLayer extends RenderLayer<AbstractClientPlayer, PlayerMod
         FLOW_BOTTOM,
         FLOW_TOP,
         FLOW_FRONT,
+        // The high pill meridian lies on the model's surface (FlowMeridian): the torso frame (origin = bottom centre of the front face, +4 px across,
+        // the top edge, one block-pixel out) and per arm the front-face centre line from the shoulder cap to the hand plus one pixel across.
+        MERIDIAN_O, MERIDIAN_X, MERIDIAN_Y, MERIDIAN_N,
+        MERIDIAN_RIGHT_TOP, MERIDIAN_RIGHT_BOT, MERIDIAN_RIGHT_LAT,
+        MERIDIAN_LEFT_TOP, MERIDIAN_LEFT_BOT, MERIDIAN_LEFT_LAT,
         // Концы конечностей и голова нужны сцене создания даньтяня: жилы растут ОТ них
         // к средоточию, и без них поток некуда было бы вести.
         RIGHT_FOOT,
@@ -189,6 +194,17 @@ public class BoneAnchorLayer extends RenderLayer<AbstractClientPlayer, PlayerMod
         bones.put(Bone.FLOW_BOTTOM, pointOf(poseStack, model.body, 0.0F, 12.0F, 0.0F));
         bones.put(Bone.FLOW_TOP, pointOf(poseStack, model.body, 0.0F, 0.0F, 0.0F));
         bones.put(Bone.FLOW_FRONT, pointOf(poseStack, model.body, 0.0F, 12.0F, -2.0F));
+        bones.put(Bone.MERIDIAN_O, pointOf(poseStack, model.body, 0.0F, 12.0F, -2.16F));
+        bones.put(Bone.MERIDIAN_X, pointOf(poseStack, model.body, 4.0F, 12.0F, -2.16F));
+        bones.put(Bone.MERIDIAN_Y, pointOf(poseStack, model.body, 0.0F, 0.0F, -2.16F));
+        bones.put(Bone.MERIDIAN_N, pointOf(poseStack, model.body, 0.0F, 12.0F, -3.16F));
+        // Arm boxes span x -3..1 (right) and -1..3 (left) of the pivot, y -2..10, front z -2: the centre line of the front face.
+        bones.put(Bone.MERIDIAN_RIGHT_TOP, pointOf(poseStack, model.rightArm, -1.0F, -1.6F, -2.16F));
+        bones.put(Bone.MERIDIAN_RIGHT_BOT, pointOf(poseStack, model.rightArm, -1.0F, 9.6F, -2.16F));
+        bones.put(Bone.MERIDIAN_RIGHT_LAT, pointOf(poseStack, model.rightArm, 0.0F, -1.6F, -2.16F));
+        bones.put(Bone.MERIDIAN_LEFT_TOP, pointOf(poseStack, model.leftArm, 1.0F, -1.6F, -2.16F));
+        bones.put(Bone.MERIDIAN_LEFT_BOT, pointOf(poseStack, model.leftArm, 1.0F, 9.6F, -2.16F));
+        bones.put(Bone.MERIDIAN_LEFT_LAT, pointOf(poseStack, model.leftArm, 2.0F, -1.6F, -2.16F));
         // Ступни — нижний конец ноги длиной 12 единиц; голова — её центр.
         bones.put(Bone.RIGHT_FOOT, pointOf(poseStack, model.rightLeg, 0.0F, 11.0F, 0.0F));
         bones.put(Bone.LEFT_FOOT, pointOf(poseStack, model.leftLeg, 0.0F, 11.0F, 0.0F));

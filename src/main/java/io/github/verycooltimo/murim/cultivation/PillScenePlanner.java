@@ -7,10 +7,12 @@ package io.github.verycooltimo.murim.cultivation;
 public final class PillScenePlanner {
     /** Scenes played in full before the short form begins. */
     public static final int FULL_SCENES = 3;
-    public static final int FULL_TICKS = 144;
-    public static final int SHORT_TICKS = 70;
+    /** The plan (client {@code PillScenePlan}) is written in 144 tick units; the scene plays this many times slower (author 15.11: «слишком быстро»). */
+    public static final float SLOWDOWN = 1.5F;
+    public static final int FULL_TICKS = 216;
+    public static final int SHORT_TICKS = 105;
     /** Ticks the sitting lasts after the plan's end (the camera eases out over the last 10). */
-    public static final int STAND_MARGIN = 16;
+    public static final int STAND_MARGIN = 24;
 
     private PillScenePlanner() { }
 

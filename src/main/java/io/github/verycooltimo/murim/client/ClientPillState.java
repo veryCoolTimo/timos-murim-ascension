@@ -65,6 +65,16 @@ public final class ClientPillState {
         return finale > 0 ? finaleTotal - finale : -1;
     }
 
+    /** Height of the body's lift in blocks (0: the finale does not lift the body: a ceiling too low, or no perfect finish). */
+    public static float finaleLiftHeight() {
+        return finale > 0 ? finaleLift : 0.0F;
+    }
+
+    /** Ticks left of the lift scene (its wait included); 0 when none. */
+    public static int finaleTicksLeft() {
+        return Math.max(0, finale);
+    }
+
     /** Подлёт: безупречное усвоение высшей пилюли. */
     public static boolean finaleLift() {
         return finale > 0;
@@ -157,6 +167,7 @@ public final class ClientPillState {
                 CameraShakeHandler.quake(0.5F, 12);
             }
             case INTERRUPTED -> {
+                io.github.verycooltimo.murim.MurimMod.LOGGER.info("Pill lift: INTERRUPTED event, finale ticks left {}", finale);
                 FlowClient.interrupted();
                 if (finale > CUT_TICKS) {
                     finale = CUT_TICKS;
@@ -164,7 +175,10 @@ public final class ClientPillState {
                 }
             }
             case LANDED -> {
-                if (finale > CUT_TICKS) {
+                io.github.verycooltimo.murim.MurimMod.LOGGER.info("Pill lift: LANDED event, finale ticks left {}, kept by the finale {}", finale, FlowClient.holdsFinaleLift());
+                // The server stands the player up 50 ticks after the finish (PillService.STAND_DELAY) and so ends its own 110-tick lift: the picture of the high
+                // pill's finale is the client's own, it plays the lift to the end and lands by itself.
+                if (finale > CUT_TICKS && !FlowClient.holdsFinaleLift()) {
                     finale = CUT_TICKS;
                     finaleCut = true;
                 }
@@ -181,8 +195,10 @@ public final class ClientPillState {
         finaleBump = payload.bump();
         finaleLift = payload.liftHeight();
         finaleCut = false;
+        io.github.verycooltimo.murim.MurimMod.LOGGER.info("Pill lift scene: height {} bump {} total {} ticks", finaleLift, finaleBump, LIFT_TICKS);
         finaleTotal = LIFT_TICKS;
-        finale = finaleTotal;
+        // the lift of the body waits for the high pill finale to fade (the figure stays seated until then)
+        finale = finaleTotal + FlowClient.finaleDelayTicks();
         CameraShakeHandler.request(finaleFull ? 0.5F : 0.35F);
     }
 

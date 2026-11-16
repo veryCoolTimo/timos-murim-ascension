@@ -45,6 +45,8 @@ public class MurimModClient {
                 renderer.addLayer(new io.github.verycooltimo.murim.client.vfx.BoneAnchorLayer(renderer));
                 // The breakthrough fire's blue on the body (31.10).
                 renderer.addLayer(new io.github.verycooltimo.murim.client.vfx.bt.BtFireLight(renderer));
+                // The high pill game lights the player's own model (rim and inner glow).
+                renderer.addLayer(new io.github.verycooltimo.murim.client.flow.FlowBodyRim(renderer));
                 // Ци-меч в пустой руке (03.10).
                 renderer.addLayer(new QiSwordClient.Layer(renderer));
                 // Sword on the left hip while carried, not held (06.10).

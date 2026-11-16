@@ -142,8 +142,21 @@ public final class CameraShakeHandler {
         }
     }
 
+    /** What this handler added to the camera's angles in the last event (degrees): a camera that sets its own angles (FlowCamera) adds it back. */
+    private static float addYaw, addPitch, addRoll;
+
+    public static float addedYaw() { return addYaw; }
+    public static float addedPitch() { return addPitch; }
+    public static float addedRoll() { return addRoll; }
+
     @SubscribeEvent
     static void onComputeCameraAngles(ViewportEvent.ComputeCameraAngles event) {
+        float y0 = event.getYaw(), p0 = event.getPitch(), r0 = event.getRoll();
+        addAngles(event);
+        addYaw = event.getYaw() - y0; addPitch = event.getPitch() - p0; addRoll = event.getRoll() - r0;
+    }
+
+    private static void addAngles(ViewportEvent.ComputeCameraAngles event) {
         if (io.github.verycooltimo.murim.client.sect.HeadIntroCamera.active()) return;
         double setting = ClientConfig.cameraShake();
         if (setting <= 0.0D) {

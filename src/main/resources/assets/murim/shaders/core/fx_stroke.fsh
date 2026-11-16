@@ -14,7 +14,10 @@ uniform vec4 FxShape;  // x ragged edge, y dry ends, z companion strands, w thic
 uniform vec4 FxExtra;  // x contour breaks (0 whole .. 1 mostly missing), y belly: extra width in the middle, z soft bands (0 crisp steps .. 1 one gradient),
                        // w boil: the thickness pattern jumps with FxTime (drawn animation redraws the line each step)
 uniform vec4 FxMove;   // x clots: thick drops that travel along the stroke, y their speed, z their spacing (in half-widths), w shimmer of the centre line
-uniform vec4 FxSoft;   // x halo: the stroke fades from its centre line to nothing at its edge (a wide soft light under a crisp stroke)
+uniform vec4 FxSoft;   // x halo: the stroke fades from its centre line to nothing at its edge (a wide soft light under a crisp stroke),
+                       // y strand gap: 1 = companion strands stand off the stroke, 0 = they hug its edge and read as its torn fringe,
+                       // z slide: extra tail taper (share of the stroke) once the stroke slides off along itself (tail > 0); 0 = none,
+                       // w thorn: sharp triangular spikes pulled out of the edge (0 = none)
 uniform vec4 FxFlow;   // x noise flow along the stroke per second, y tail length, z head length, w main width share of the mesh
 
 in vec2 texCoord0;
@@ -37,7 +40,8 @@ void main() {
     float seed = fxParams.x * 61.0, head = min(fxParams.y, 1.0), erode = fxParams.z, s = u * fxParams.w;
     if (u > head || u < fxTail) discard;
     float span = max(head - fxTail, 0.02);
-    float tailFade = smoothstep(0.0, FxFlow.y * span, u - fxTail), headFade = smoothstep(0.0, FxFlow.z * span, head - u);
+    float tailLen = (FxFlow.y + FxSoft.z * smoothstep(0.0, 0.03, fxTail)) * span;
+    float tailFade = smoothstep(0.0, tailLen, u - fxTail), headFade = smoothstep(0.0, FxFlow.z * span, head - u);
     float prof = pow(tailFade, 0.8) * pow(headFade, 0.55);
     // uneven thickness: slow swell along the stroke, never a constant-width band
     float taper = prof;
@@ -51,7 +55,8 @@ void main() {
         float drop = smoothstep(0.0, 0.3, along) * (1.0 - smoothstep(0.5, 1.0, along)) * step(0.3, size) * size;
         prof *= 1.0 + FxMove.x * drop * headFade;
     }
-    float main = FxFlow.w * prof;
+    // never wider than the ribbon: a stroke that reaches the mesh edge is cut off in a straight line (the halo showed as a box)
+    float main = min(FxFlow.w * prof, 0.97);
     float centre = (noise(vec2(s * 0.13 + seed + 7.0, 1.7)) - 0.5) * 0.16 * FxShape.w * FxFlow.w;
     // shimmer: the line never stands still, a slow wave runs along it
     centre += (noise(vec2(s * 0.19 - FxTime * FxMove.y * 0.45 + seed * 2.0, FxTime * 0.35 + seed)) - 0.5) * FxMove.w * min(FxFlow.w, 1.0 - FxFlow.w);
@@ -65,8 +70,15 @@ void main() {
     float fibre = fbm(vec2(s * 0.55 - flow, off * 9.0 / max(FxFlow.w, 0.05) + seed));
     float fine = noise(vec2(s * 2.3 - flow * 1.7, off * 26.0 / max(FxFlow.w, 0.05) + seed * 1.3));
     d += ((fibre - 0.5) * 1.1 + (fine - 0.5) * 0.35) * FxShape.x * (0.35 + 0.65 * min(d, 1.0));
+    // thorns: sharp triangular spikes pulled out of the edge, each on one side only, each with its own length
+    if (FxSoft.w > 0.0) {
+        float ts = s * 0.35 + seed * 17.0, cell = floor(ts), f = fract(ts);
+        float h = hash(vec2(cell, seed)), side = hash(vec2(cell + 0.5, seed * 1.7)) > 0.5 ? 1.0 : -1.0;
+        float spike = max(0.0, 1.0 - abs(f - 0.3) * 9.0);
+        d -= FxSoft.w * spike * h * step(0.0, side * off) * step(0.4, h) * 3.0;
+    }
     // dry ends: towards both tips the stroke splits into separate hairs
-    float endness = 1.0 - min(smoothstep(0.0, FxFlow.y * 1.6 * span, u - fxTail), smoothstep(0.0, FxFlow.z * 1.9 * span, head - u));
+    float endness = 1.0 - min(smoothstep(0.0, tailLen * 1.6, u - fxTail), smoothstep(0.0, FxFlow.z * 1.9 * span, head - u));
     float hair = noise(vec2(off * 34.0 / max(FxFlow.w, 0.05) + seed * 2.1, s * 0.35 - flow));
     float dry = smoothstep(endness * FxShape.y - 0.12, endness * FxShape.y + 0.04, hair + (1.0 - endness) * 0.6);
     // dissolve in fractal noise: big slow shapes break the stroke into long pieces, a middle octave tears their edges and the brush
@@ -100,7 +112,9 @@ void main() {
     if (FxShape.z > 0.0) {
         for (int k = 0; k < 4; k++) {
             float side = (k < 2) ? 1.0 : -1.0, fk = float(k);
-            float gap = main * (1.25 + 0.55 * mod(fk, 2.0)) + FxFlow.w * (0.1 + 0.22 * hash(vec2(seed, fk)));
+            // at gap 0 the strands start just inside the ragged edge, so no clear air shows between stroke and fringe
+            float gap = main * (0.9 + 0.1 * mod(fk, 2.0) + FxSoft.y * (0.35 + 0.45 * mod(fk, 2.0)))
+                    + FxFlow.w * (0.03 * hash(vec2(seed, fk)) + FxSoft.y * (0.1 + 0.19 * hash(vec2(seed, fk))));
             float lane = centre + side * gap + (noise(vec2(s * 0.3 + fk * 9.0, seed)) - 0.5) * 0.05;
             float run = noise(vec2(s * 0.09 + seed + fk * 13.0, 3.3));
             float on = smoothstep(0.52, 0.62, run) * prof;
@@ -113,7 +127,7 @@ void main() {
             alpha = max(alpha, strand);
         }
     }
-    alpha *= mix(1.0, pow(max(1.0 - d, 0.0), 2.6), FxSoft.x);
+    alpha *= mix(1.0, pow(max(1.0 - d, 0.0), 2.0), FxSoft.x);
     // soft looks thin out towards their tips instead of ending in a solid bar
     alpha *= mix(1.0, smoothstep(0.0, 0.85, taper), FxExtra.z);
     alpha *= vertexColor.a;

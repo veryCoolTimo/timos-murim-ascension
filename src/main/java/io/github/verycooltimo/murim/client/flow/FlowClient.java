@@ -2,7 +2,10 @@ package io.github.verycooltimo.murim.client.flow;
 
 import io.github.verycooltimo.murim.MurimMod;
 import io.github.verycooltimo.murim.client.ClientPillState;
+import io.github.verycooltimo.murim.client.vfx.fx.FxTune;
+import io.github.verycooltimo.murim.client.vfx.fx.FxTuneScene;
 import io.github.verycooltimo.murim.cultivation.PillKind;
+import io.github.verycooltimo.murim.cultivation.PillTier;
 import io.github.verycooltimo.murim.cultivation.PillService;
 import io.github.verycooltimo.murim.cultivation.flow.FlowCharacter;
 import io.github.verycooltimo.murim.cultivation.flow.FlowGame;
@@ -35,12 +38,17 @@ public final class FlowClient {
     /** Seconds the picture stays after the end of the stream (the finale of a clean run is about two seconds). */
     private static final double TAIL_DONE = 2.5D;
     private static final double TAIL_OTHER = 1.4D;
+    private static final double TAIL_BURST = 2.8D;
     private static final double TAIL_LIFT = 1.9D;
     /** The longest step of the stream: the mockup's feel is tuned at 60 frames a second and a frame of 50 ms at most. */
     private static final double STEP = 1.0D / 30.0D;
     private static final double FADE_IN = 0.5D;
     private static final double FADE_OUT = 0.5D;
 
+    /** Dev switch: false = the old hard release of the game camera (for the film that shows the difference). */
+    public static final boolean CAM_GLIDE = !"0".equals(System.getenv("MURIM_FLOW_GLIDE"));
+
+    private static long tuneLast;
     private static FlowGame game;
     private static boolean bodyPresentation;
     private static boolean automatic;
@@ -51,12 +59,18 @@ public final class FlowClient {
     private static double shown;
     private static int tickAge;
     private static List<PillKind> kinds = List.of();
+    private static int pillColour = 0xE8F4EC;
+    /** Live tuning (dev): the last start, replayed when the tune loop ends; the clock of the tune loop. */
+    private static PillPayloads.FlowStart lastStart;
+    private static double tuneClock;
 
     private FlowClient() {
     }
 
     /** The server sat the player with pills in the window: start the stream (or the torn picture). */
     public static void start(PillPayloads.FlowStart payload) {
+        lastStart = payload;
+        tuneClock = 0;
         List<PillKind> list = new ArrayList<>();
         for (int o : payload.kinds()) {
             list.add(PillKind.byId(o));
@@ -65,6 +79,7 @@ public final class FlowClient {
         automatic = payload.automatic();
         bodyPresentation = true;
         FlowCharacter c = PillService.character(list);
+        pillColour = PillScene.hue(c.colour());
         game = new FlowGame(c, payload.seed(), payload.hard(), payload.torn(), payload.poisonNature());
         id = payload.id();
         reportedEnd = false;
@@ -73,7 +88,12 @@ public final class FlowClient {
         lastNanos = System.nanoTime();
         game.setAuto(automatic || "auto".equals(System.getenv("MURIM_CAPTURE_FLOW")));
         // The cinematic scene: ordinary and middle pills only (never a manual game, a torn body or a guided high pill).
-        sceneRan = PillScene.begin(payload, c.colour());
+        boolean calm = automatic && !payload.torn() && list.stream().noneMatch(k -> k.tier() == PillTier.HIGH);
+        PillCalmFx.reset();
+        sceneRan = !calm && PillScene.begin(payload, c.colour());
+        // common and middle pills: the calm absorption (belly light, floor vortex, curtains, flakes, body lamp), no mini-game, no board
+        if (calm) PillCalmFx.begin(list.stream().anyMatch(k -> k.tier() == PillTier.MIDDLE) ? 1 : 0, PillScene.hue(c.colour()));
+        PillScene.setPlum(list.stream().anyMatch(k -> k.name().contains("PLUM")));
     }
 
     /** Owns the body through the server's lift/recoil tail, so legacy pill effects do not reappear after our fade. */
@@ -82,6 +102,13 @@ public final class FlowClient {
     }
 
     public static boolean automatic() { return automatic; }
+
+    public static int pillColour() { return pillColour; }
+
+    /** True for the ordinary (common) pill: no cinematic scene and no game, a short warm flash on the chest, a push of dust and a couple of seconds of haze. */
+    public static boolean commonQuick() {
+        return game != null && automatic && !sceneRan && !PillCalmFx.running() && !kinds.isEmpty() && kinds.stream().noneMatch(k -> k.tier() == PillTier.HIGH);
+    }
 
     public static FlowGame game() {
         return game;
@@ -94,6 +121,54 @@ public final class FlowClient {
     /** True from the start of the stream until its picture has faded out. */
     public static boolean active() {
         return game != null;
+    }
+
+    /** The high pill game proper: not a cinematic scene and not the ordinary pill's quick flash (those keep their own pictures and are not touched). */
+    static FlowGame gameForFx() {
+        return game != null && !sceneRan && !commonQuick() && !PillCalmFx.running() ? game : null;
+    }
+
+    /** True while the meridian's effect still eases out after the game object is gone (the camera and the depth stage stay with it). */
+    public static boolean lingering() { return FlowMeridianFx.lingering() || PillCalmFx.running(); }
+
+    /** True for the high pill game proper, also while its effect lingers after the game object is gone. */
+    static boolean gameForFxOrLingering() { return gameForFx() != null || (game == null && FlowMeridianFx.lingering()); }
+
+    /** The track of the game's camera in blocks (the keys are FlowSpaceMath#cameraDistance: push-in, pull-back in the finale); -1 when the game camera has no say (scenes). */
+    public static float cameraDistance() {
+        if (PillCalmFx.running()) return PillCalmFx.cameraDistance();
+        if (game == null && !FlowMeridianFx.lingering()) return -1;
+        if (sceneRan || PillScene.active() || commonQuick()) return -1;
+        return FlowMeridianFx.cameraDistance();
+    }
+
+    /** Pitch of the game's camera in degrees. */
+    public static float cameraPitch() { return PillCalmFx.running() ? PillCalmFx.cameraPitch() : FlowMeridianFx.cameraPitch(); }
+
+    /** Blocks the shot's focus is lifted above the chest-follow height (the head stays in the frame). */
+    public static float cameraFocusLift() { return (float) FlowLook.CAM_FOCUS_LIFT + cameraScrollK() * io.github.verycooltimo.murim.client.vfx.fx.FxTune.f("flow.scroll.camFocus", .5F); }
+
+    /** Scroll framing (high pill game): 0..1 how far the camera is in it, and the share of the frame's half width the figure is shifted to the left of the centre. */
+    public static float cameraScrollK() { return gameForFxOrLingering() ? (float) FlowScrollBoard.camK() : 0F; }
+
+    /** Half-width shares to shift the figure left: 0 centred, 1 at the left edge ((1 - 2 * figure x) at full framing). */
+    public static float cameraShiftShare() { return cameraScrollK() * (1F - 2F * FlowScrollBoard.figX()); }
+
+    /** The one damped nudge of the camera's focus at the burst, blocks. */
+    public static float cameraNudge() { return FlowMeridianFx.cameraNudge(); }
+
+    /** True while the high pill finale (clean end) plays: a server «landed» must not cut its lift. */
+    public static boolean holdsFinaleLift() {
+        return gameForFxOrLingering() && FlowMeridianFx.ending() == 0;
+    }
+
+    /** Ticks the server's own lift of the body waits: the flash, the black core and the burst of the finale come first (the lift starts just after the burst's peak). */
+    public static int finaleDelayTicks() {
+        if (!gameForFxOrLingering()) return 0;
+        int e = FlowMeridianFx.ending();
+        if (e > 0) return 0;
+        double at = FlowSpaceMath.liftAt();
+        return (int) Math.ceil(Math.max(0, at - Math.max(0, FlowMeridianFx.sinceEnd())) * 20);
     }
 
     /** Seconds the picture has been up (for the fade). */
@@ -119,10 +194,11 @@ public final class FlowClient {
         if (game.state == FlowGame.State.DONE && ClientPillState.finaleAge() >= 0) {
             return TAIL_LIFT; // the body rises behind the picture: let it fade as the «bam» dies
         }
-        return game.state == FlowGame.State.DONE || game.state == FlowGame.State.TORN ? TAIL_DONE : TAIL_OTHER;
+        return game.state == FlowGame.State.DONE || game.state == FlowGame.State.TORN ? TAIL_DONE : (game.state == FlowGame.State.BURST ? TAIL_BURST : TAIL_OTHER);
     }
 
     public static void reset() {
+        PillCalmFx.reset();
         sceneRan = false;
         PillScene.reset();
         bodyPresentation = false;
@@ -133,6 +209,20 @@ public final class FlowClient {
     /** One frame: the hands, then the stream. */
     @SubscribeEvent
     static void onFrame(RenderFrameEvent.Pre event) {
+        if (FxTune.ON) {
+            FlowLook.refresh();
+            long n0 = System.nanoTime();
+            double raw = tuneLast == 0 ? 0 : Math.min(.25D, (n0 - tuneLast) / 1.0E9D);
+            tuneLast = n0;
+            if (lastStart != null) {
+                tuneClock += FxTuneScene.simDt(raw);
+                if (FxTuneScene.simLoopDue(tuneClock)) {
+                    PillPayloads.FlowStart again = lastStart;
+                    FlowMeridianFx.clear();
+                    start(again);
+                }
+            }
+        }
         if (game == null) {
             return;
         }
@@ -142,6 +232,7 @@ public final class FlowClient {
         // but never more than a quarter of a second at once (a hang must not eat the game).
         double dt = Math.min(0.25D, (now - lastNanos) / 1.0E9D);
         lastNanos = now;
+        dt = FxTuneScene.simDt(dt);
         if (mc.isPaused() || mc.player == null) {
             return;
         }
@@ -155,7 +246,10 @@ public final class FlowClient {
                 game.side = 1;
             }
         }
-        for (double left = dt; left > 1.0E-9D && game != null; left -= STEP) {
+        // the intro (the pill dissolves, the flame rises) plays first: the game's own clock waits for it (a client delay, FlowGame is not changed)
+        boolean intro = !PillCalmFx.running() && shown < FlowLook.INTRO_LEAD + FlowLook.INTRO_DISSOLVE + FlowLook.INTRO_FLAME; // the calm absorption has its own clock: its pill's automatic game runs from the start
+        if (game.state == FlowGame.State.RUN && FlowBot.drives() && !intro) FlowBot.drive(game, FlowBot.mode());
+        for (double left = intro ? 0 : dt; left > 1.0E-9D && game != null; left -= STEP) {
             if (automatic) game.updateAutomatic(Math.min(STEP, left));
             else game.update(Math.min(STEP, left));
         }
@@ -189,6 +283,7 @@ public final class FlowClient {
     }
 
     private static void report(PillPayloads.Outcome outcome) {
+        if (FxTune.ON) return; // live tuning replays the run on the client: the server hears nothing
         PacketDistributor.sendToServer(new PillPayloads.FlowReport(id, outcome.ordinal(),
                 (int) Math.round(Math.max(0.0D, Math.min(1.0D, game.s)) * 1000.0D),
                 (int) Math.round(Math.max(0.0D, Math.min(100.0D, game.lost)) * 10.0D)));

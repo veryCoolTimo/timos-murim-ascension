@@ -53,6 +53,7 @@ public final class BtScenes {
     }
     public static void render(Minecraft mc,PoseStack stack,Vec3 camera,float partial) {
         int target=ClientMeditationState.rankUpAge()>=0?ClientMeditationState.rankUpRank():ClientMeditationState.breakthroughTarget();
+        if(io.github.verycooltimo.murim.client.vfx.fx.FxTune.ON)target=io.github.verycooltimo.murim.client.vfx.fx.FxTuneScene.btTarget(target);
         double t=handles(target)?labSeconds(target,partial):-1;
         if(t<0) {peak=null;rank1=null;rank2=null;rank3=null;lastTime=-1;owner=null;return;}
         if(owner!=mc.player||t+1<lastTime||lastTarget!=target||target==2&&rank2==null||target==1&&rank3==null||target==3&&rank1==null||target==4&&peak==null) {

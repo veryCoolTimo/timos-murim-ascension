@@ -46,6 +46,21 @@ public final class FlowBodySurface {
         return bottom.add(screenRight.scale(across)).add(up.scale(along));
     }
 
+    /** Torso pixel size in blocks (a 12 px torso). */
+    public double unit() { return height / 12; }
+    public Vec3 upVec() { return up; }
+    public Vec3 rightVec() { return screenRight; }
+
+    /** A point on the front plane in torso pixels, NOT clamped: {@code a} across (screen right +), {@code v} up from the plane's base (the route's belly is v=2). Used by the effect, which reaches into the arms. */
+    public Vec3 pt(double a, double v) {
+        double u = unit();
+        return bottom.add(screenRight.scale(a * u)).add(up.scale(v * u));
+    }
+
+    /** The route's normalised x/y as torso pixels (same mapping as {@link #at}, without the clamp). */
+    public double aOf(double x) { return (x - .5D) * xScale() / unit(); }
+    public double vOf(double y) { return 2 + (.80D - y) * yScale() / unit(); }
+
     private static double clamp(double n, double min, double max) {
         return Math.max(min, Math.min(max, n));
     }

@@ -41,7 +41,14 @@ public final class FlowFocusMask {
         ready = true;
     }
 
-    static void render(GuiGraphics g, float visibility) {
+    static boolean ready() { return ready; }
+    static float centreX() { return centreX; }
+    static float centreY() { return centreY; }
+
+    static void render(GuiGraphics g, float visibility) { render(g, visibility, 0F); }
+
+    /** {@code base} is an even dim over the whole frame (0..1 of the vignette strength), so the scene reads as its own event. */
+    static void render(GuiGraphics g, float visibility, float base) {
         if (!ready || visibility <= 0) return;
         float w = g.guiWidth(), h = g.guiHeight();
         float cx = Math.max(0, Math.min(w, centreX * w));
@@ -64,7 +71,7 @@ public final class FlowFocusMask {
                             dx == 0 ? Double.POSITIVE_INFINITY : (dx > 0 ? w - cx : cx) / Math.abs(dx),
                             dy == 0 ? Double.POSITIVE_INFINITY : (dy > 0 ? h - cy : cy) / Math.abs(dy));
                     double t = Math.max(0, Math.min(1, (radius - clearRadius) / Math.max(1, edge - clearRadius)));
-                    int alpha = (int) Math.round(255 * .45D * visibility * t * t * (3 - 2 * t));
+                    int alpha = (int) Math.round(255 * Math.min(.78D, visibility * (.45D * t * t * (3 - 2 * t) + .24D * base)));
                     consumer.addVertex(matrix, px, py, 0).setColor(alpha << 24);
                 }
             }

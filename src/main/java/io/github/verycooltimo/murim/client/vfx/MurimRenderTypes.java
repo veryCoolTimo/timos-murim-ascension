@@ -291,6 +291,23 @@ public final class MurimRenderTypes {
                         .createCompositeState(false));
     }
 
+    /** Painted petals without entity lighting, for overlay passes that draw after the level (the pill scene's burst:
+     * the entity-translucent petals did not show there, film 11.11). Crisp texels, colour write only. */
+    private static final RenderType PETALS_FLAT = RenderType.create(
+            MurimMod.MODID + ":petals_flat", DefaultVertexFormat.POSITION_TEX_COLOR, VertexFormat.Mode.QUADS, 4096,
+            RenderType.CompositeState.builder()
+                    .setShaderState(new RenderStateShard.ShaderStateShard(GameRenderer::getPositionTexColorShader))
+                    .setTextureState(new RenderStateShard.TextureStateShard(
+                            ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/vfx/plum_petals.png"), false, false))
+                    .setTransparencyState(RenderStateShard.TRANSLUCENT_TRANSPARENCY)
+                    .setCullState(RenderStateShard.NO_CULL)
+                    .setLightmapState(RenderStateShard.NO_LIGHTMAP)
+                    .setOverlayState(RenderStateShard.NO_OVERLAY)
+                    .setWriteMaskState(RenderStateShard.COLOR_WRITE)
+                    .createCompositeState(false));
+
+    public static RenderType petalsFlat() { return PETALS_FLAT; }
+
     public static RenderType splashLight() {
         return SPLASH_LIGHT;
     }
@@ -503,6 +520,11 @@ public final class MurimRenderTypes {
     private static final RenderType BAMBOO_DEBRIS = auraLayer("bamboo_debris", "textures/vfx/air_band.png");
     public static RenderType bambooDebris() { return BAMBOO_DEBRIS; }
     public static RenderType bambooLeaves() { return BAMBOO_LEAVES; }
+    // The high pill meridian: vertex-colour only, additive glow and alpha-blended flat body (depth-tested against the world only).
+    private static final RenderType FLOW_GLOW = procedural("flow_glow", true, false);
+    private static final RenderType FLOW_SOLID = procedural("flow_solid", false, false);
+    public static RenderType flowGlow() { return FLOW_GLOW; }
+    public static RenderType flowSolid() { return FLOW_SOLID; }
     private static final RenderType PRESET_BODY = procedural("preset_body", false, false);
     private static final RenderType PRESET_LIGHT = procedural("preset_light", true, false);
     private static final RenderType ALPHA_CONTROL = procedural("alpha_control", false, true);

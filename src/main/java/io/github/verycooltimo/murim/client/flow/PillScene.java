@@ -8,6 +8,7 @@ import io.github.verycooltimo.murim.client.camera.BreakthroughCamera;
 import io.github.verycooltimo.murim.client.camera.CinematicDof;
 import io.github.verycooltimo.murim.client.camera.ShotPose;
 import io.github.verycooltimo.murim.client.sect.HeadIntroCamera;
+import io.github.verycooltimo.murim.cultivation.PillScenePlanner;
 import io.github.verycooltimo.murim.cultivation.Realm;
 import io.github.verycooltimo.murim.network.PillPayloads;
 import io.github.verycooltimo.murim.registry.ModSounds;
@@ -47,6 +48,7 @@ public final class PillScene {
     private static boolean soundPlayed, standAfter;
     private static int sentFull = -1;
     private static int colour = 0xE8F4EC;
+    private static boolean plum;
 
     private PillScene() { }
 
@@ -55,6 +57,11 @@ public final class PillScene {
     public static int ticks() { return ticks; }
 
     public static int colour() { return colour; }
+
+    /** True for plum pills: only they throw plum petals in the burst. */
+    public static boolean plum() { return plum; }
+
+    static void setPlum(boolean value) { plum = value; }
 
     /** The scene's hue: the pill's colour; a near-white pill (Snow Plum) gets pale plum pink so nothing can wash out to white. */
     static int hue(int rgb) {
@@ -99,7 +106,7 @@ public final class PillScene {
 
     /** Plan time in ticks (a skip shifts it). */
     public static float age(float partial) {
-        float raw = raw(partial);
+        float raw = raw(partial) / PillScenePlanner.SLOWDOWN;
         return skipRaw < 0 ? raw : raw + skipWarp;
     }
 
@@ -129,12 +136,16 @@ public final class PillScene {
         if (!active) return;
         float age = age(partial);
         float env = PillScenePlan.envelope(ticks, age) * strength(partial);
-        CinematicDof.focus(focus, camera, PillScenePlan.blur(ticks, age), PillScenePlan.range(ticks, age), env);
+        // The depth-of-field pass is a full-screen blur that cost about 2 ms per frame at 1080p on the Mac (14.11 measurement), and with the whole body
+        // in the sharp range it only softened the far background. It is off by default; MURIM_PILL_DOF=1 turns it on (dev), and even then the
+        // quality governor of the scene's renderer drops it when frames get slow.
+        boolean cheap = PillSceneRenderer.qualityTier() >= 2 || !"1".equals(System.getenv("MURIM_PILL_DOF"));
+        CinematicDof.focus(focus, camera, cheap ? 0 : PillScenePlan.blur(ticks, age), PillScenePlan.range(ticks, age), env);
     }
 
     /** Overlay strength of the 25 % vignette. */
     public static float vignette(float partial) {
-        return active ? PillScenePlan.vignette(ticks, age(partial)) * strength(partial) * (.25F / .45F) : 0;
+        return active ? PillScenePlan.vignette(ticks, age(partial)) * strength(partial) * (.7F / .45F) : 0;
     }
 
     /** Share of the stored qi in the wall (the ratio QiHud draws), 0..1. */
@@ -154,7 +165,7 @@ public final class PillScene {
         float r = raw(0);
         skipFrom = last;
         skipRaw = r;
-        skipWarp = PillScenePlan.skipTarget(ticks) - r;
+        skipWarp = PillScenePlan.skipTarget(ticks) - r / PillScenePlanner.SLOWDOWN;
         PillSceneRenderer.clear();
     }
 

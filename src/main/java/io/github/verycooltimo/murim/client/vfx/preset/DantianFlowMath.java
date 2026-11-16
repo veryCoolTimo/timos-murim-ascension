@@ -82,7 +82,7 @@ public final class DantianFlowMath {
     public static double titleRise(double seconds) { return 0; }
     /** Uniform screen field: no world-plane clipping or silhouette boundary. */
     public static double shadeAlpha(double seconds,double x,double y) { double u=clamp(seconds/.2);
-        return .75*u*u*(3-2*u)*sharedFade(seconds); }
+        return .56*u*u*(3-2*u)*sharedFade(seconds); }
     /** Torso, head, both arms, both legs; 0.35 seconds per measured bone segment. */
     private static int segmentOrder(int channel,int segment) {
         return (channel == 0 ? 0 : channel < 3 ? 4 : 7) + segment;

@@ -124,12 +124,12 @@ class DantianFlowMathTest {
     @Test void cinematicShadeRisesAtFlashAndHoldsUntilSharedFade() {
         assertEquals(0,shadeAlpha(-.1,0,0));
         assertEquals(0,shadeAlpha(0,0,0));
-        assertEquals(.375,shadeAlpha(.1,0,0),1e-12);
+        assertEquals(.28,shadeAlpha(.1,0,0),1e-12);
         for(double t=.2;t<=RETRACT_START;t+=.01) {
-            assertEquals(.75,shadeAlpha(t,0,0),1e-12);
+            assertEquals(.56,shadeAlpha(t,0,0),1e-12);
             assertEquals(shadeAlpha(t,0,0),shadeAlpha(t,1,1),1e-12);
         }
-        assertEquals(.375,shadeAlpha(RETRACT_START+.5,0,0),1e-12);
+        assertEquals(.28,shadeAlpha(RETRACT_START+.5,0,0),1e-12);
         assertEquals(0,shadeAlpha(RETRACT_START+RETRACT_SECONDS,0,0));
     }
 
@@ -139,7 +139,7 @@ class DantianFlowMathTest {
             double seconds = step / 80.0;
             double rise = Math.max(0, Math.min(1, seconds / .2));
             double fade = 1 - Math.max(0, Math.min(1, (seconds - 7.22) / 1.0));
-            double expected = .75 * rise * rise * (3 - 2 * rise) * fade;
+            double expected = .56 * rise * rise * (3 - 2 * rise) * fade;
             assertEquals(expected, shadeAlpha(seconds, 0, 0), 1e-12, "seconds=" + seconds);
         }
     }

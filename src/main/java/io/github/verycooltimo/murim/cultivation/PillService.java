@@ -400,6 +400,7 @@ public final class PillService {
         boolean flawless = outcome == PillPayloads.Outcome.DONE && q >= PillRules.FLAWLESS_QUALITY;
         boolean lift = PillRules.lifts(flow.kinds, flawless);
         PerfectLift.Plan lifting = lift ? PerfectLift.plan(headroom(player)) : PerfectLift.Plan.NONE;
+        MurimMod.LOGGER.info("Pill lift decision: lifts={} flawless={} q={} height={} bump={}", lift, flawless, q, lifting.height(), lifting.bump());
         if (lift) {
             slot.liftAge = 0;
             slot.liftHeight = lifting.height();
@@ -592,6 +593,7 @@ public final class PillService {
     public static void onMeditationStop(ServerPlayer player, boolean hurt) {
         Slot slot = player.getData(ModAttachments.ABSORB);
         boolean wasLifting = slot.liftAge >= 0;
+        if (wasLifting) MurimMod.LOGGER.info("Pill lift cancelled by the end of meditation at age {} (hurt {})", slot.liftAge, hurt);
         slot.liftAge = -1;
         Session flow = slot.flow;
         if (flow == null) {
@@ -686,6 +688,7 @@ public final class PillService {
         float limit = PerfectLift.MAX_HEIGHT + 0.1F;
         for (float h = 0.0F; h <= limit; h += 0.05F) {
             if (!player.level().noCollision(player, head.move(0.0D, h, 0.0D))) {
+                MurimMod.LOGGER.info("Pill lift headroom {} blocks: the head box meets a solid at +{} above the seated head (player y {}, ceiling probe {})", Math.max(0.0F, h - 0.05F), h, player.getY(), head);
                 return Math.max(0.0F, h - 0.05F);
             }
         }
@@ -696,6 +699,7 @@ public final class PillService {
     static void tickLift(ServerPlayer player, Slot slot) {
         MeditationState med = player.getData(ModAttachments.MEDITATION);
         if (!med.active() || med.breakingThrough() || player.hurtTime > 0) {
+            MurimMod.LOGGER.info("Pill lift cancelled at age {}: meditating {} breaking {} hurtTime {}", slot.liftAge, med.active(), med.breakingThrough(), player.hurtTime);
             slot.liftAge = -1;
             sync(player, PillPayloads.Event.LANDED);
             return;

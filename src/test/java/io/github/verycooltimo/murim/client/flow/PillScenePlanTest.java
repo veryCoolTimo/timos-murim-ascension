@@ -56,20 +56,16 @@ class PillScenePlanTest {
             }
             assertEquals(PillScenePlan.REST, PillScenePlan.pose(T, PillScenePlan.total(T)));
         }
-        assertEquals(.9F, PillScenePlan.pose(144, 0).distance(), 1e-4);
-        assertEquals(.55F, PillScenePlan.pose(144, 52).distance(), 1e-4);
-        assertEquals(.75F, PillScenePlan.pose(144, 62).distance(), 1e-4);
-        assertEquals(1.4F, PillScenePlan.pose(144, 104).distance(), 1e-4);
+        // v3: one framing for the whole sitting, the camera never closes in on a detail.
+        assertEquals(1.65F, PillScenePlan.pose(216, 0).distance(), 1e-4);
+        assertEquals(1.75F, PillScenePlan.pose(216, 92).distance(), 1e-4);
     }
 
-    @Test void pushInAndPullBackNeverOvershoot() {
-        // Monotone easing: between two keys the distance stays within them (the camera never dips closer than the inside shot).
+    @Test void cameraStaysAtBodyDistanceAndNeverPops() {
         float min = 99;
-        for (int t = 0; t <= 144; t++) min = Math.min(min, PillScenePlan.pose(144, t).distance());
-        assertEquals(.55F, min, 1e-3);
-        for (int t = 63; t < 92; t++) assertTrue(PillScenePlan.pose(144, t).distance() >= .55F - 1e-3);
-        for (int t = 93; t < 104; t++) assertTrue(PillScenePlan.pose(144, t + 1).distance() >= PillScenePlan.pose(144, t).distance() - 1e-4F);
-        for (int t = 128; t < 144; t++) assertTrue(PillScenePlan.pose(144, t + 1).distance() >= PillScenePlan.pose(144, t).distance() - 1e-4F);
+        for (int t = 0; t <= 144; t++) min = Math.min(min, PillScenePlan.pose(216, t).distance());
+        assertTrue(min >= 1.65F - 1e-3, "the whole body stays in frame");
+        for (int t = 0; t < 92; t++) assertEquals(0, PillScenePlan.pose(216, t).azimuth(), 1e-4);
     }
 
     @Test void easeCurveIsMonotoneAndBounded() {
@@ -84,7 +80,7 @@ class PillScenePlanTest {
     }
 
     @Test void blurVignetteAndEnvelope() {
-        int T = 144;
+        int T = 216;
         assertEquals(0, PillScenePlan.envelope(T, 0));
         assertEquals(1, PillScenePlan.envelope(T, 60), 1e-5);
         assertEquals(0, PillScenePlan.envelope(T, 144), 1e-5);
@@ -98,7 +94,7 @@ class PillScenePlanTest {
     }
 
     @Test void orbsRunThenGatherAndTheCoreBreathes() {
-        int T = 144;
+        int T = 216;
         assertEquals(0, PillScenePlan.orbRoute(0, 60));
         assertEquals(1, PillScenePlan.orbRoute(PillScenePlan.ORBS - 1, 60 + 6 * (PillScenePlan.ORBS - 1) + PillScenePlan.ORB_TRAVEL), 1e-5);
         for (int i = 0; i < PillScenePlan.ORBS; i++) {
@@ -113,7 +109,7 @@ class PillScenePlanTest {
     }
 
     @Test void cameraEasesOutToTheOrdinaryViewWithoutAJump() {
-        for (int T : new int[] {144, 70}) {
+        for (int T : new int[] {216, 105}) {
             int end = PillScenePlan.total(T);
             assertEquals(end + PillScenePlan.SETTLE, PillScenePlan.end(T));
             assertEquals(PillScenePlan.REST, PillScenePlan.pose(T, end));
@@ -129,14 +125,14 @@ class PillScenePlanTest {
 
     @Test void orbsStaySmallInNumber() {
         assertTrue(PillScenePlan.ORBS >= 3 && PillScenePlan.ORBS <= 4);
-        assertTrue(PillScenePlan.blur(144, 75) <= 4F, "the subject stays crisp in the inside beat");
-        assertEquals(.75F, PillScenePlan.pose(144, 75).distance(), .02F);
+        assertTrue(PillScenePlan.blur(216, 75) <= 4F, "the subject stays crisp in the inside beat");
+        assertEquals(1.75F, PillScenePlan.pose(216, 75).distance(), .05F);
     }
 
     @Test void skipJumpsPastTheInsideBeat() {
-        assertTrue(PillScenePlan.skipTarget(144) > PillScenePlan.core(144));
-        assertTrue(PillScenePlan.skipTarget(144) < PillScenePlan.total(144) - 20);
-        assertTrue(PillScenePlan.skipTarget(70) > PillScenePlan.core(70));
-        assertTrue(PillScenePlan.skipTarget(70) < PillScenePlan.total(70) - 20);
+        assertTrue(PillScenePlan.skipTarget(216) > PillScenePlan.core(216));
+        assertTrue(PillScenePlan.skipTarget(216) < PillScenePlan.total(216) - 20);
+        assertTrue(PillScenePlan.skipTarget(105) > PillScenePlan.core(105));
+        assertTrue(PillScenePlan.skipTarget(105) < PillScenePlan.total(105) - 20);
     }
 }

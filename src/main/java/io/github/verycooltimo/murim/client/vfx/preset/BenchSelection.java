@@ -11,6 +11,10 @@ public record BenchSelection(String element,double from,double to) {
             case "fire1" -> {start=0;end=12;}
             case "alpha_test" -> {start=0;end=12;}
             case "stroke" -> {start=0;end=io.github.verycooltimo.murim.client.vfx.fx.FxStrokeMath.BENCH_SECONDS;}
+            case "inktree" -> {start=0;end=io.github.verycooltimo.murim.client.vfx.fx.FxInkTraceScene.BENCH_SECONDS;}
+            case "cultivation" -> {start=0;end=io.github.verycooltimo.murim.client.vfx.fx.FxCultivationScene.SECONDS;}
+            case "cult1" -> {start=0;end=io.github.verycooltimo.murim.client.vfx.fx.FxCult1Scene.SECONDS;}
+            case "essence" -> {start=0;end=io.github.verycooltimo.murim.client.vfx.fx.FxEssenceBench.SECONDS;}
             default -> {if(!name.startsWith("preset:")||name.length()==7||presetDuration<=0)throw new IllegalArgumentException("Unknown bench element: "+name);start=0;end=presetDuration;}
         }
         double a=from<0?start:from,b=to<0?end:to;
@@ -20,7 +24,7 @@ public record BenchSelection(String element,double from,double to) {
     /** Production routing is also usable without Minecraft in isolation tests. */
     public void draw(Runnable line,Runnable fire,Runnable preset) {
         switch(element) {
-            case "essences", "line", "line_thin", "alpha_test", "stroke" -> line.run();
+            case "essences", "line", "line_thin", "alpha_test", "stroke", "inktree", "essence", "cultivation", "cult1" -> line.run();
             case "fire1" -> fire.run();
             default -> preset.run();
         }

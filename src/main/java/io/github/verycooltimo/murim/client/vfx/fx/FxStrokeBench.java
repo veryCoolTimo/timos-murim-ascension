@@ -34,11 +34,28 @@ public final class FxStrokeBench {
      * same way, tail first, while the noise tears what is left (the author, 14.11: in like a wipe, out faster).
      */
     private static void gold(BtCtx c, Frame f, double t) {
-        var arc = FxStrokeMath.bezier(List.of(f.at(-3.4, .35, .9), f.at(-1.2, .55, 1.0), f.at(1.0, 1.5, .9), f.at(3.2, 3.3, .6)), 56);
+        // live tuning (dev only, MURIM_TUNE): the defaults below are the approved picture; keys are stroke.gold.<arc|medium|small>.<what>
+        double reach = FxTune.d("stroke.gold.arc.reach", 3.3);
+        var arc = FxStrokeMath.bezier(List.of(f.at(-3.4, .35, .9), f.at(-1.2, .55, 1.0), f.at(1.0, 1.5, .9), f.at(3.2, reach, .6)), 56);
         var medium = FxStrokeMath.bezier(List.of(f.at(-2.6, .15, 1.1), f.at(-.6, .3, 1.2), f.at(1.4, .95, 1.1)), 30);
         var small = FxStrokeMath.bezier(List.of(f.at(.6, 1.2, 1.0), f.at(.9, .7, 1.0), f.at(1.5, .1, 1.0)), 20);
-        FxStroke.draw(FxLook.GOLD, List.of(wipe(arc, .17, .31, t, .3, .5, 1.6, .7), wipe(medium, .085, .12, t, .42, .4, 1.5, .6),
-                wipe(small, .05, .77, t, .6, .3, 1.4, .5)), c.camera(), c.pose(), c.buffers(), t);
+        FxStroke.draw(goldLook(), List.of(
+                wipe(arc, FxTune.d("stroke.gold.arc.half", .17), .31, t, FxTune.d("stroke.gold.arc.start", .3), FxTune.d("stroke.gold.arc.in", .5), FxTune.d("stroke.gold.arc.out", 1.6), .7),
+                wipe(medium, FxTune.d("stroke.gold.medium.half", .085), .12, t, FxTune.d("stroke.gold.medium.start", .42), .4, FxTune.d("stroke.gold.medium.out", 1.5), .6),
+                wipe(small, FxTune.d("stroke.gold.small.half", .05), .77, t, FxTune.d("stroke.gold.small.start", .6), .3, FxTune.d("stroke.gold.small.out", 1.4), .5)),
+                c.camera(), c.pose(), c.buffers(), t);
+    }
+
+    /** The gold look with its colours, glow and brush numbers tunable live; the shared constant itself when tuning is off. */
+    private static FxLook goldLook() {
+        if (!FxTune.ON) return FxLook.GOLD;
+        FxLook g = FxLook.GOLD;
+        return new FxLook(FxTune.rgb("stroke.gold.look.core", g.core()), FxTune.rgb("stroke.gold.look.body", g.body()),
+                FxTune.rgb("stroke.gold.look.rim", g.rim()), FxTune.rgb("stroke.gold.look.ink", g.ink()), g.inkAlpha(),
+                g.coreStop(), g.bodyStop(), g.rimStop(), FxTune.f("stroke.gold.look.ragged", g.ragged()), FxTune.f("stroke.gold.look.dry", g.dry()),
+                g.strands(), g.wobble(), g.flow(), g.tail(), g.head(), g.mainShare(), FxTune.f("stroke.gold.look.glow", g.glow()), g.contourBreak(),
+                g.belly(), g.softBands(), g.boil(), g.stepFps(), g.clots(), g.clotSpeed(), g.clotSpacing(), g.shimmer(), g.halo(), g.strandGap(),
+                g.slide(), g.thorn());
     }
 
     /**
@@ -49,32 +66,55 @@ public final class FxStrokeBench {
         var cut = FxStrokeMath.bezier(List.of(f.at(-4.2, .98, .7), f.at(0, 1.08, 1.0), f.at(4.2, 1.0, .7)), 60);
         // numbers from the reference plate (tools/vfx-lab/scenes/a4-slash-on-plate.json): 111 px of that panel are one block
         var halo = wipe(cut, .62, .2, t, .2, .14, 1.1, .6); // wide and faint: the light of the slash is soft in the reference
+        // Two lights: a wide faint one and a tighter strong one. On the grey reference plate a faint halo was enough; on a night
+        // scene the dark streaks need real light under them, or they read as black lines from nowhere (the author, 14.11).
+        var inner = wipe(cut, .3, .6, t, .2, .14, 1.1, .6);
         FxStroke.draw(FxLook.SLASH_HALO, List.of(new FxStroke.Stroke(halo.path(), halo.half(), halo.seed(), halo.from(), halo.drawn(),
-                halo.erode(), .34F)), c.camera(), c.pose(), c.buffers(), t);
-        FxStroke.draw(FxLook.STEEL, List.of(wipe(cut, .095, .52, t, .2, .14, 1.1, .6)), c.camera(), c.pose(), c.buffers(), t);
-        // Round the knot the slash is a spindle of fine lines, dark and white, that leave it along the cut and spread a little
-        // (the text-free reference close up; the author, 14.11: some thicker, some thinner, some longer, some shorter).
+                halo.erode(), .4F), new FxStroke.Stroke(inner.path(), inner.half(), inner.seed(), inner.from(), inner.drawn(),
+                inner.erode(), .45F)), c.camera(), c.pose(), c.buffers(), t);
+        FxStroke.draw(FxLook.STEEL, List.of(wipe(cut, .12, .52, t, .2, .14, 1.1, .6)), c.camera(), c.pose(), c.buffers(), t);
+        // The dark marks are part of the slash, not things beside it (the author, 14.11: «белый цвет и чёрные элементы выглядят как
+        // два разных элемента… должно быть одним целым»). Every mark is a piece of the cut's own path, shifted across it by a share
+        // of the band's width at that place: on the band's edge, or inside the white. So they follow the band's taper and bend.
         Random random = new Random(33);
         List<FxStroke.Stroke> dark = new ArrayList<>(), white = new ArrayList<>();
-        fan(dark, f, t, random, 16, .009, .015, .54, 2.25, .23, 1.35);
-        fan(dark, f, t, random, 5, .018, .027, .36, 1.17, .2, .8);
-        fan(dark, f, t, random, 2, .029, .038, .32, .72, .15, .55);
-        fan(white, f, t, random, 9, .009, .018, .63, 2.5, .27, 1.25);
-        FxStroke.draw(FxLook.SLASH_INK, dark, c.camera(), c.pose(), c.buffers(), t);
-        // small slivers along both edges of the band, most of them close to the figure (the author, 14.11: «не хватает маленьких
-        // ещё по середине»); in the reference they lie on the edges of the light, the middle of the band stays clean white
-        List<FxStroke.Stroke> slivers = new ArrayList<>();
-        for (int i = 0; i < 30; i++) {
+        for (int i = 0; i < 26; i++) {
+            boolean inside = i >= 14;            // 14 on the two edges, 12 inside the white
             double side = random.nextBoolean() ? 1 : -1, edge = random.nextBoolean() ? 1 : -1;
-            double offset = edge * (.072 + random.nextDouble() * .081), x0 = side * random.nextDouble() * (i < 20 ? 1.08 : 2.07);
-            double reach = .16 + random.nextDouble() * (i < 20 ? .5 : .72), bow = edge * (.009 + random.nextDouble() * .027);
-            var line = FxStrokeMath.bezier(List.of(f.at(x0, 1.07 + offset, 1.02), f.at(x0 + side * reach * .5, 1.07 + offset + bow, 1.0),
-                    f.at(x0 + side * reach, 1.07 + offset + edge * random.nextDouble() * .045, .97)), 10);
-            slivers.add(wipe(line, .008 + random.nextDouble() * .008, random.nextDouble(), t, .22 + random.nextDouble() * .14,
-                    .08 + random.nextDouble() * .08, 1.0 + random.nextDouble() * .12, .5));
+            double start = .5 + side * random.nextDouble() * (inside ? .16 : .3), length = (inside ? .07 : .08) + random.nextDouble() * (inside ? .16 : .24);
+            double share = edge * (inside ? .15 + random.nextDouble() * .5 : .8 + random.nextDouble() * .3);
+            // hairlines: in the reference the dark marks are long and thin, they converge on the knot; short fat ones read as blots
+            double half = inside ? .004 + random.nextDouble() * .004 : .006 + random.nextDouble() * (i < 3 ? .012 : .006);
+            dark.add(onBand(cut, .12, start, start + side * length, share, half, random.nextDouble(), t,
+                    .22 + random.nextDouble() * .12, .1 + random.nextDouble() * .08, 1.0 + random.nextDouble() * .1, .5));
         }
-        FxStroke.draw(FxLook.SLASH_SLIVER, slivers, c.camera(), c.pose(), c.buffers(), t);
+        for (int i = 0; i < 8; i++) {
+            // fine white lines just outside the band, the light that leaves it along the cut
+            double side = random.nextBoolean() ? 1 : -1, edge = random.nextBoolean() ? 1 : -1;
+            double start = .5 + side * random.nextDouble() * .25, length = .1 + random.nextDouble() * .25;
+            white.add(onBand(cut, .12, start, start + side * length, edge * (1.15 + random.nextDouble() * .5), .008 + random.nextDouble() * .008,
+                    random.nextDouble(), t, .22 + random.nextDouble() * .12, .1 + random.nextDouble() * .08, 1.0 + random.nextDouble() * .1, .5));
+        }
+        FxStroke.draw(FxLook.SLASH_INK, dark, c.camera(), c.pose(), c.buffers(), t);
         FxStroke.draw(FxLook.STEEL_LINE, white, c.camera(), c.pose(), c.buffers(), t);
+    }
+
+    /**
+     * A mark that lies on a band: the piece of {@code path} between {@code u0} and {@code u1} (0..1 along it), shifted up or down by
+     * {@code share} of the band's half-width there. The band is widest in its middle and thins to both tips, as fx_stroke draws it.
+     */
+    private static FxStroke.Stroke onBand(List<Vec3> path, double bandHalf, double u0, double u1, double share, double half, double seed,
+                                          double t, double start, double in, double out, double gone) {
+        List<Vec3> piece = new ArrayList<>();
+        int n = path.size() - 1, steps = 12;
+        for (int k = 0; k <= steps; k++) {
+            double u = Math.clamp(u0 + (u1 - u0) * k / steps, 0, 1), at = u * n;
+            int i = (int) Math.min(n - 1, Math.floor(at));
+            Vec3 p = path.get(i).lerp(path.get(i + 1), at - i);
+            double width = bandHalf * .5 * Math.pow(Math.sin(Math.PI * u), .7) * (1 + .55 * Math.exp(-Math.pow((u - .5) / .09, 2)));
+            piece.add(p.add(0, share * width, 0));
+        }
+        return wipe(piece, half, seed, t, start, in, out, gone);
     }
 
     /** Lines that leave the knot of the slash along the cut: {@code n} of them, half-width and length in the given ranges (blocks). */
@@ -83,7 +123,7 @@ public final class FxStrokeBench {
         for (int i = 0; i < n; i++) {
             double side = random.nextBoolean() ? 1 : -1, offset = (random.nextDouble() - .5) * spread;
             double x0 = side * (.04 + random.nextDouble() * near), reach = lengthMin + random.nextDouble() * (lengthMax - lengthMin);
-            double end = offset * (1 + random.nextDouble() * 1.3) + (random.nextDouble() - .5) * .054;
+            double end = offset * (1 + random.nextDouble() * .5) + (random.nextDouble() - .5) * .03;
             var line = FxStrokeMath.bezier(List.of(f.at(x0, 1.07 + offset * .6, 1.02), f.at(x0 + side * reach * .5, 1.07 + (offset * .6 + end) / 2, .97),
                     f.at(x0 + side * reach, 1.07 + end, .9)), 14);
             out.add(wipe(line, halfMin + random.nextDouble() * (halfMax - halfMin), random.nextDouble(), t,
@@ -98,90 +138,48 @@ public final class FxStrokeBench {
     }
 
     /**
-     * Reference 13: cultivation. Energy flows out of the seated body the whole time. Far behind stand big blue shapes; behind the
-     * body and also in front of it rise violet-blue licks with a pink middle; a black clot sits at the root, and ink comes out of
-     * it and out of the floor round it: thin angular lines, lines that swell from thin to thick, some that curl at the tip. Clots
-     * run out along everything and a slow turbulence bends it; a violet light lies on the ground under it. Every root holds two
-     * lines half a life apart, so the stream renews itself and nothing vanishes at once.
+     * A6: cultivation, the version of film r12 that the author called the best so far (14.11: «3 уже гораздо лучше… лучший
+     * результат»). Thin angular ink lines rise from the body, each on its own slow clock; clots run out along them and a slow
+     * turbulence bends them; thin violet licks behind. Restored after the layered version (blue shapes, swelling lines, clot mass)
+     * read as fat smeared strokes: «какой-то слоп». Add to it one thing at a time, and film each addition.
      */
     private static void ink(BtCtx c, Frame f, double t) {
-        // the light first: a soft violet band on the ground and one standing behind the body
-        double lit = BtMath.smooth(0, 1.2, t);
-        var ground = FxStrokeMath.bezier(List.of(f.at(-2.6, .06, .2), f.at(0, .06, .5), f.at(2.6, .06, .2)), 12);
-        var rise = FxStrokeMath.bezier(List.of(f.at(0, .1, -.7), f.at(.1, 1.4, -.7), f.at(-.1, 2.9, -.7)), 12);
-        FxStroke.draw(FxLook.ESSENCE_HALO, List.of(new FxStroke.Stroke(ground, .7, .4, 1, 0, (float) (.3 * lit)),
-                new FxStroke.Stroke(rise, 1.1, .7, 1, 0, (float) (.22 * lit))), c.camera(), c.pose(), c.buffers(), t);
-        List<FxStroke.Stroke> blue = new ArrayList<>(), back = new ArrayList<>(), mass = new ArrayList<>(), thin = new ArrayList<>(),
-                swell = new ArrayList<>(), front = new ArrayList<>();
-        stream(blue, f, t, 101, 4, 5.5, 2.2, 3.6, .3, .45, -1.7, -1.5, 1.3, 2, .9, 0, false);
-        stream(back, f, t, 202, 5, 4.6, 1.2, 2.3, .14, .24, -.6, -.4, .6, 2, .8, 0, false);
-        stream(mass, f, t, 303, 6, 5.0, .45, .95, .24, .4, -.25, .1, .5, 2, .5, 0, false);
-        stream(thin, f, t, 404, 12, 4.6, 1.8, 4.2, .045, .1, -.45, .45, .5, 4, .6, .3, false);
-        stream(thin, f, t, 505, 7, 5.2, 1.2, 3.0, .04, .08, -.6, .6, 2.6, 3, .6, .3, true);
-        stream(swell, f, t, 606, 7, 5.0, 1.6, 3.4, .12, .2, -.4, .4, .5, 3, .55, .35, false);
-        stream(swell, f, t, 707, 4, 5.4, 1.2, 2.4, .1, .17, -.5, .5, 2.4, 3, .55, .35, true);
-        stream(front, f, t, 808, 3, 4.8, .6, 1.2, .07, .12, .5, .7, 1.4, 2, .8, 0, true);
-        FxStroke.draw(FxLook.FLAME_BLUE, blue, c.camera(), c.pose(), c.buffers(), t);
-        FxStroke.draw(FxLook.FLAME, back, c.camera(), c.pose(), c.buffers(), t);
-        FxStroke.draw(FxLook.INK_MASS, mass, c.camera(), c.pose(), c.buffers(), t);
-        FxStroke.draw(FxLook.INK, thin, c.camera(), c.pose(), c.buffers(), t);
-        FxStroke.draw(FxLook.INK_SWELL, swell, c.camera(), c.pose(), c.buffers(), t);
-        FxStroke.draw(FxLook.FLAME, front, c.camera(), c.pose(), c.buffers(), t);
+        List<FxStroke.Stroke> violet = new ArrayList<>(), ink = new ArrayList<>();
+        Random random = new Random(23);
+        for (int i = 0; i < 26; i++) {
+            boolean back = i < 9;
+            double period = 3.6 + random.nextDouble() * 2.2, age = (t + random.nextDouble() * period) % period;
+            // the first seconds of the beat: everything is still growing out of the body
+            age = Math.min(age, t + .0001);
+            double angle = Math.PI * (.1 + .8 * random.nextDouble()), length = back ? 1.3 + random.nextDouble() * 1.5 : 1.8 + random.nextDouble() * 2.6;
+            double depth = back ? -.5 : (random.nextDouble() - .5) * .9, x0 = (random.nextDouble() - .5) * .9;
+            double half = back ? .1 + random.nextDouble() * .07 : i < 13 ? .1 + random.nextDouble() * .05 : .05 + random.nextDouble() * .035;
+            double seed = random.nextDouble();
+            int runs = back ? 2 : 3 + random.nextInt(2);
+            List<Vec3> corners = new ArrayList<>();
+            double x = x0, y = .1, direction = angle, done = 0;
+            corners.add(f.at(x, y, depth * .2));
+            for (int k = 0; k < runs; k++) {
+                double part = length * (k == runs - 1 ? 1 - done : (.22 + random.nextDouble() * .2));
+                done += part / length;
+                x += Math.cos(direction) * part;
+                y += Math.sin(direction) * part;
+                // slow turbulence: a wave that runs outward, stronger towards the tip
+                double far = Math.min(1, done), wave = t * .55 - far * 2.2 + seed * 6.3;
+                double dx = (Math.sin(wave) + .5 * Math.sin(wave * 2.3 + 1.7)) * .22 * far, dy = (Math.cos(wave * 1.3 + .6)) * .14 * far;
+                corners.add(f.at(x + dx, Math.max(.05, y + dy), depth * (.2 + .8 * far)));
+                // the corner: a sharp turn, alternating sides, never a gentle bend
+                direction += (k % 2 == 0 ? 1 : -1) * (random.nextBoolean() ? 1 : -1) * (.45 + random.nextDouble() * .7);
+                direction = Math.clamp(direction, .12, Math.PI - .12);
+            }
+            double grow = BtMath.smooth(0, .9, age) * 1.05, wither = linear(period - 1.1, period, age);
+            (back ? violet : ink).add(new FxStroke.Stroke(FxStrokeMath.angular(corners, 10, .07, f.near), half, seed,
+                    wither * wither * .7, grow, wither * .9, 1F));
+        }
+        FxStroke.draw(FxLook.VIOLET, violet, c.camera(), c.pose(), c.buffers(), t);
+        FxStroke.draw(FxLook.INK, ink, c.camera(), c.pose(), c.buffers(), t);
     }
 
-    /**
-     * One family of flowing angular lines. {@code spreadX} is how far from the body the roots stand ({@code floor}: they stand on
-     * the floor round it, not under it), {@code kink} the size of the corners, {@code curl} the share of lines whose tip hooks back.
-     */
-    private static void stream(List<FxStroke.Stroke> out, Frame f, double t, long family, int count, double life, double lengthMin,
-                               double lengthMax, double halfMin, double halfMax, double depthMin, double depthMax, double spreadX,
-                               int runs, double kink, double curl, boolean floor) {
-        for (int i = 0; i < count; i++) {
-            Random base = new Random(family * 131 + 23L * i + 7);
-            double period = life + base.nextDouble() * 2.2, offset = base.nextDouble() * period;
-            double rootAngle = Math.PI * (.1 + .8 * base.nextDouble()), sign = base.nextBoolean() ? 1 : -1;
-            double x0 = floor ? sign * (.7 + base.nextDouble() * (spreadX - .7)) : (base.nextDouble() - .5) * 2 * spreadX;
-            double depth = depthMin + base.nextDouble() * (depthMax - depthMin);
-            // roots on the floor away from the body lean outwards and up, not across it
-            if (floor) rootAngle = sign > 0 ? Math.PI * (.12 + .33 * base.nextDouble()) : Math.PI * (.55 + .33 * base.nextDouble());
-            for (int twin = 0; twin < 2; twin++) {
-                double age = (t + offset + twin * period * .5) % period;
-                if (age > t) continue; // the beat has only just begun: nothing is older than the beat
-                Random random = new Random(family * 977 + 53L * i + 31 * twin + 5);
-                double angle = rootAngle + (random.nextDouble() - .5) * .35, length = lengthMin + random.nextDouble() * (lengthMax - lengthMin);
-                double half = halfMin + random.nextDouble() * (halfMax - halfMin), seed = random.nextDouble();
-                int parts = runs + (runs > 2 ? random.nextInt(2) : 0);
-                List<Vec3> corners = new ArrayList<>();
-                double x = x0, y = floor ? .03 : .1, direction = angle, done = 0;
-                corners.add(f.at(x, y, depth));
-                for (int k = 0; k < parts; k++) {
-                    double part = length * (k == parts - 1 ? 1 - done : (.22 + random.nextDouble() * .2));
-                    done += part / length;
-                    x += Math.cos(direction) * part;
-                    y += Math.sin(direction) * part;
-                    // slow turbulence: a wave that runs outward, stronger towards the tip
-                    double far = Math.min(1, done), wave = t * .55 - far * 2.2 + seed * 6.3;
-                    double dx = (Math.sin(wave) + .5 * Math.sin(wave * 2.3 + 1.7)) * .22 * far, dy = Math.cos(wave * 1.3 + .6) * .14 * far;
-                    corners.add(f.at(x + dx, Math.max(.05, y + dy), depth));
-                    // the corner: a sharp turn, alternating sides, never a gentle bend
-                    direction += (k % 2 == 0 ? 1 : -1) * (random.nextBoolean() ? 1 : -1) * (kink * (.7 + random.nextDouble()));
-                    direction = Math.clamp(direction, .12, Math.PI - .12);
-                }
-                if (random.nextDouble() < curl) {
-                    // the tip hooks round on itself
-                    Vec3 tip = corners.get(corners.size() - 1), run = tip.subtract(corners.get(corners.size() - 2));
-                    double hook = (random.nextBoolean() ? 1 : -1) * (1.6 + random.nextDouble() * .8), reach = length * (.1 + .1 * random.nextDouble());
-                    Vec3 across = run.cross(f.near).normalize().scale(Math.sin(hook)), along = run.normalize().scale(Math.cos(hook));
-                    corners.add(tip.add(across.add(along).scale(reach)));
-                }
-                // grows for a third of its life; over the last half its root lets go and it slides out along itself, thinning to nothing
-                double grow = BtMath.smooth(0, period * .35, age) * 1.05, leave = BtMath.smooth(period * .5, period, age);
-                float alpha = (float) (1 - BtMath.smooth(period * .82, period, age));
-                out.add(new FxStroke.Stroke(FxStrokeMath.angular(corners, 10, runs <= 2 ? .04 : .07, f.near), half, seed,
-                        Math.pow(leave, 1.3) * .97, grow, 0, alpha));
-            }
-        }
-    }
 
     private static double linear(double a, double b, double t) { return Math.clamp((t - a) / (b - a), 0, 1); }
 

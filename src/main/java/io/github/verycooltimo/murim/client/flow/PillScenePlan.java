@@ -67,21 +67,17 @@ public final class PillScenePlan {
         return new ShotTrack.Key(tick / (float) total(ticks), pose);
     }
 
-    /** The camera track of the whole scene, over 0..1 of {@link #total}. */
+    /** The camera track of the whole scene, over 0..1 of {@link #total}. One framing for the whole sitting (author 11.11: the camera does not jump,
+     *  nothing leaves the frame): the seated body fills the picture from the head to the lap, and a slow push-out hands over to the flow camera. */
     public static ShotTrack track(int ticks) {
         List<ShotTrack.Key> keys = isFull(ticks) ? List.of(
-                key(ticks, 0, new ShotPose(15, -5, .90F, .20F, 0, 1.0F)),
-                key(ticks, 24, new ShotPose(12, -6, .84F, .19F, 0, 1.0F)),
-                key(ticks, 52, new ShotPose(6, -12, .55F, -.07F, 0, .95F)),
-                key(ticks, 62, new ShotPose(0, -15, .75F, -.02F, 0, .85F)),
-                key(ticks, 92, new ShotPose(0, -15, .72F, -.02F, 0, .85F)),
-                key(ticks, 104, new ShotPose(0, -8, 1.4F, -.20F, 0, .85F)),
-                key(ticks, 128, new ShotPose(0, -8, 1.45F, -.20F, 0, .82F)),
+                key(ticks, 0, new ShotPose(0, -3, 1.65F, .02F, 0, 1.0F)),
+                key(ticks, 92, new ShotPose(0, -4, 1.75F, -.02F, 0, 1.0F)),
+                key(ticks, 128, new ShotPose(0, -2, 2.2F, -.08F, 0, .95F)),
                 key(ticks, 144, REST)) : List.of(
-                key(ticks, 0, new ShotPose(10, -8, .70F, .10F, 0, 1.0F)),
-                key(ticks, 28, new ShotPose(4, -14, .60F, -.07F, 0, .95F)),
-                key(ticks, 38, new ShotPose(0, -8, 1.3F, -.20F, 0, .88F)),
-                key(ticks, 56, new ShotPose(0, -8, 1.4F, -.20F, 0, .82F)),
+                key(ticks, 0, new ShotPose(0, -3, 1.65F, .02F, 0, 1.0F)),
+                key(ticks, 38, new ShotPose(0, -4, 1.75F, -.02F, 0, 1.0F)),
+                key(ticks, 56, new ShotPose(0, -2, 2.2F, -.08F, 0, .95F)),
                 key(ticks, 70, REST));
         return new ShotTrack("pill_scene", 0, ShotTrack.Ease.LINEAR, 0, false, keys);
     }
@@ -109,8 +105,8 @@ public final class PillScenePlan {
 
     /** Depth in blocks around the focus point that stays sharp. */
     public static float range(int ticks, float age) {
-        return isFull(ticks) ? table(age, new float[] {0, 24, 52, 62, 92, 104}, new float[] {.4F, .4F, .35F, .4F, .4F, .5F})
-                : table(age, new float[] {0, 28, 38}, new float[] {.22F, .22F, .5F});
+        return isFull(ticks) ? table(age, new float[] {0, 24, 52, 62, 92, 104}, new float[] {1.2F, 1.2F, 1.2F, 1.2F, 1.2F, 1.2F})
+                : table(age, new float[] {0, 28, 38}, new float[] {1.2F, 1.2F, 1.2F});
     }
 
     /** 0..1: DoF fades in over 6 ticks and out over the exhale. */
@@ -123,6 +119,38 @@ public final class PillScenePlan {
     public static float vignette(int ticks, float age) {
         if (!isFull(ticks)) return 0;
         return smooth((age - 52) / 6) * (1 - smooth((age - 92) / 6));
+    }
+
+
+    // ---- the whole frame takes the pill's colour (refs: haze and light everywhere, a big peak flash with rays)
+    /** Ticks after the core appears when it bursts (the renderer's BURST_AFTER). */
+    public static final int BURST_AFTER = 10;
+
+    public static int burstTick(int ticks) { return core(ticks) + BURST_AFTER; }
+
+    /** 0..1 haze over the whole frame: it thickens from the melting to the core, gains at the peak and thins over the exhale. */
+    public static float haze(int ticks, float age) {
+        int from = melt(ticks) + 6, core = core(ticks), end = total(ticks);
+        float rise = .55F * smooth((age - from) / Math.max(1, core - from)) + .4F * smooth((age - burstTick(ticks)) / 5);
+        return rise * (1 - smooth((age - (end - 32)) / 32F));
+    }
+
+    /** 0..1 white flash of the peak: a one tick rise and a ten tick fall. */
+    public static float flash(int ticks, float age) {
+        float b = age - burstTick(ticks);
+        return b < -1.5F ? 0 : smooth((b + 1.5F) / 1.5F) * (1 - smooth(b / 11F));
+    }
+
+    /** 0..1 amount of the rays that fill the frame: out with the flash, they last through the first part of the exhale. */
+    public static float rays(int ticks, float age) {
+        float b = age - burstTick(ticks);
+        return b < 0 ? 0 : smooth(b / 3F) * (1 - smooth((b - 8) / 30F));
+    }
+
+    /** 0..1 strength of the wind bands: from the inside beat to the end. */
+    public static float wind(int ticks, float age) {
+        int from = melt(ticks) + 10, end = total(ticks);
+        return smooth((age - from) / 20F) * (1 - smooth((age - (end - 20)) / 20F));
     }
 
     // ---- the inside beat (full scene only)

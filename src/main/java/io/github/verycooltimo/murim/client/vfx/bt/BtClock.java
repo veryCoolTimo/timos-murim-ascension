@@ -4,6 +4,11 @@ package io.github.verycooltimo.murim.client.vfx.bt;
 public final class BtClock {
     private BtClock() {}
     public static double labSeconds(int target, float partialTick) {
+        double natural = naturalSeconds(target, partialTick);
+        // live tuning (dev only, MURIM_TUNE): hold / loop / speed of the scene clock; a static false in normal play
+        return io.github.verycooltimo.murim.client.vfx.fx.FxTune.ON ? io.github.verycooltimo.murim.client.vfx.fx.FxTuneScene.time(natural) : natural;
+    }
+    private static double naturalSeconds(int target, float partialTick) {
         int peakAge=io.github.verycooltimo.murim.client.ClientMeditationState.peakSceneAge();
         if(target==4&&peakAge>=0)return peakSeconds(peakAge,partialTick);
         return labSeconds(io.github.verycooltimo.murim.cultivation.Realm.breakthroughTicks(target),
