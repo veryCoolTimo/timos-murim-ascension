@@ -67,7 +67,9 @@ final class FlowScore {
         progress = progressDrawn;
         pressure = pressure01;
         dipAge += dt;
-        FlowMeridian.follow(ST, done / (double) total, FxTune.f("flow.scroll.fireOmega", 9F), dt);
+        // the fire level: part of it is the steps (every node and right fork), part is the way travelled, so the last third of the run stands at 0.85-1.0 even when a closed spot was missed
+        double target = FxTune.f("flow.scroll.fireSteps", .55F) * done / (double) total + (1 - FxTune.f("flow.scroll.fireSteps", .55F)) * Math.max(0, Math.min(1, progressDrawn / FxTune.f("flow.scroll.fireFull", .8F)));
+        FlowMeridian.follow(ST, target, FxTune.f("flow.scroll.fireOmega", 9F), dt);
         ST[0] = Math.max(0, Math.min(1, ST[0]));
     }
 

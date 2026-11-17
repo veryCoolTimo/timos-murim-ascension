@@ -18,11 +18,21 @@ final class FlowBot {
         return m == null ? "" : m;
     }
 
-    static boolean drives() { return mode().equals("sloppy") || mode().equals("burst"); }
+    static boolean drives() { return mode().equals("sloppy") || mode().equals("burst") || mode().equals("slip"); }
 
     static void drive(FlowGame g, String mode) {
         if (g.state != FlowGame.State.RUN) return;
         boolean burst = mode.equals("burst");
+        if (mode.equals("slip")) {
+            // a clean end that is not flawless: the game's own autopilot with one wrong first fork (28 lost, quality about 72: no lift, no backlash)
+            g.autopilot();
+            for (FlowGame.Fork f : g.forks) {
+                if (f.done) continue;
+                if (g.s > f.s - FlowGame.FORK_ZONE) g.side = -f.goodKey;
+                break;
+            }
+            return;
+        }
         FlowGame.Narrow ahead = null, in = null;
         int idx = 0, aheadIdx = -1, inIdx = -1;
         for (FlowGame.Narrow n : g.narrows) {
@@ -35,8 +45,8 @@ final class FlowBot {
         boolean want = ahead != null || (in != null && !in.open) || g.surgeT > .25D || (inPoison && g.flowT > .4D);
         boolean sloppy = !burst;
         // the messy run lets the first two closed spots and the poison burn (high pressure, red frame) but brakes when the backlash is near
-        boolean skip = sloppy ? aheadIdx == 1 || inIdx == 1 : false;
-        g.hold = !burst && ((want && !skip) || g.pressure > SAFE);
+        boolean skip = sloppy && !mode.equals("slip") ? aheadIdx == 1 || inIdx == 1 : false;   // slip: one wrong first fork, everything else restrained: a clean end that is not flawless (no lift)
+        g.hold = !burst && ((want && !skip) || g.pressure > (mode.equals("slip") ? 50 : SAFE));
         int k = 0;
         for (FlowGame.Fork f : g.forks) {
             if (!f.done) {

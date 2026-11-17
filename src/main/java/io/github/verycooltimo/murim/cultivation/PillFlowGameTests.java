@@ -759,6 +759,40 @@ public final class PillFlowGameTests {
         h.succeed();
     }
 
+    // ------------------------------------------------------------------ the stand-up and the lift
+
+    /** The lift is a scene of the sitting: a flawless HIGH pill keeps the player sitting until the lift is over and 20 ticks more; the old 50 ticks cut it at tick 50, before the burst at 52. */
+    @GameTest(template = FLOOR, timeoutTicks = 100)
+    public static void aFlawlessHighPillKeepsTheSittingUntilTheLiftIsOverPlusTwentyTicks(GameTestHelper h) {
+        ServerPlayer p = player(h, Realm.PEAK);
+        long now = p.level().getGameTime();
+        clean(p, PillKind.ORIGIN_ENERGY);
+        h.assertTrue(PillService.lifting(p), "the fixture is not a lift");
+        long wait = slot(p).standAt - now;
+        h.assertTrue(wait >= PillService.LIFT_WAIT_TICKS + PerfectLift.TICKS + 20, "the player stands up after only " + wait + " ticks, before the lift (" + PerfectLift.TICKS + " ticks) and 20 more are over");
+        h.assertTrue(wait > PerfectLift.BURST + 20, "the stand-up still comes before the lift's burst (tick " + PerfectLift.BURST + ")");
+        h.assertFalse(PillService.standUpDue(p), "the stand-up is already due right after the finish of a lift");
+        h.assertTrue(p.getData(ModAttachments.MEDITATION).active(), "the meditation ended with the finish of a lift");
+        h.succeed();
+    }
+
+    /** A pill that does not lift stands up at the old tick: the lift's wait must not leak into the others. */
+    @GameTest(template = FLOOR, timeoutTicks = 100)
+    public static void aNonLiftingPillStandsUpAtTheOldTick(GameTestHelper h) {
+        ServerPlayer c = player(h, Realm.THIRD);
+        long now = c.level().getGameTime();
+        clean(c, PillKind.VITALITY);
+        h.assertFalse(PillService.lifting(c), "a common pill lifted");
+        h.assertTrue(slot(c).standAt - now == PillService.STAND_DELAY, "a common pill stands up after " + (slot(c).standAt - now) + " ticks, not " + PillService.STAND_DELAY);
+        ServerPlayer q = player(h, Realm.PEAK);
+        long now2 = q.level().getGameTime();
+        sit(q, PillKind.ORIGIN_ENERGY);
+        finish(q, PillPayloads.Outcome.DONE, 1000, 200);      // clean enough for a bonus, not flawless: no lift
+        h.assertFalse(PillService.lifting(q), "a muddy absorption lifted");
+        h.assertTrue(slot(q).standAt - now2 == PillService.STAND_DELAY, "a non-flawless high pill stands up after " + (slot(q).standAt - now2) + " ticks, not " + PillService.STAND_DELAY);
+        h.succeed();
+    }
+
     // ------------------------------------------------------------------ side effects
 
     @GameTest(template = FLOOR, timeoutTicks = 100)

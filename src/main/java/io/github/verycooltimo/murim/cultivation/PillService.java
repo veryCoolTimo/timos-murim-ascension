@@ -417,9 +417,13 @@ public final class PillService {
             backlash(player, flow.kinds, "murim.pill.burst");
         }
         scheduleStand(player, slot);
+        // The lift is a scene of the sitting (110 ticks, and the client starts it after the finale's core has formed, about 2 s later): the player stands up only after it,
+        // not 50 ticks after the finish, which ended the meditation and so the lift in the middle (the figure stood up at tick 50, before the burst at 52).
+        if (lift) slot.standAt = Math.max(slot.standAt, player.level().getGameTime() + LIFT_WAIT_TICKS + PerfectLift.TICKS + 20);
         if (flow.sceneTicks > 0) {
-            // The scene is longer than the payout: keep the sitting until it has ended (plus a breath).
-            slot.standAt = flow.startTick + flow.sceneTicks + PillScenePlanner.STAND_MARGIN;
+            // The scene is longer than the payout: keep the sitting until it has ended (plus a breath); a lift keeps the later of the two.
+            long sceneEnd = flow.startTick + flow.sceneTicks + PillScenePlanner.STAND_MARGIN;
+            slot.standAt = lift ? Math.max(slot.standAt, sceneEnd) : sceneEnd;
         }
         // Медитация продолжается: если запас упёрся в стену и условия ранга выполнены,
         // MeditationService сам переведёт сидение в принятую сцену прорыва.
@@ -436,6 +440,8 @@ public final class PillService {
     }
 
     static final int STAND_DELAY = 50;
+    /** Ticks the client's finale takes before the lift's first tick (core and contraction), counted into the stand-up of a lift. */
+    static final int LIFT_WAIT_TICKS = 60;
 
     /** The line the stand-up says (the pill is absorbed, or the torn body pulls itself up). */
     public static String standUpKey(ServerPlayer player) {
@@ -698,6 +704,12 @@ public final class PillService {
     /** Тик сцены подлёта: стук о потолок, выброс ци, посадка. */
     static void tickLift(ServerPlayer player, Slot slot) {
         MeditationState med = player.getData(ModAttachments.MEDITATION);
+        // film stand only (MURIM_FLOW_TICKCLOCK): the stand's own meditation bookkeeping ends the sitting before the lift; the lift is a scene of the sitting, so it is kept
+        if (!med.active() && System.getenv("MURIM_FLOW_TICKCLOCK") != null) {
+            MurimMod.LOGGER.info("FILM lift: the stand's meditation had ended, restored for the lift");
+            player.setData(ModAttachments.MEDITATION, MeditationState.started(true, CultivationState.SEEDED));
+            med = player.getData(ModAttachments.MEDITATION);
+        }
         if (!med.active() || med.breakingThrough() || player.hurtTime > 0) {
             MurimMod.LOGGER.info("Pill lift cancelled at age {}: meditating {} breaking {} hurtTime {}", slot.liftAge, med.active(), med.breakingThrough(), player.hurtTime);
             slot.liftAge = -1;

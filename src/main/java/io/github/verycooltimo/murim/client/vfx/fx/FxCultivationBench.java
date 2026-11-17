@@ -90,7 +90,7 @@ public final class FxCultivationBench {
      * The particles: soft round lights (centre pale, edge the colour, alpha falling to nothing) and short streaks for the sparks, all additive
      * vertex-colour quads facing the camera, one batch.
      */
-    static void motes(BtCtx c, FxCultivationMotes motes, Vec3 feet, Vec3 right, Vec3 near) {
+    public static void motes(BtCtx c, FxCultivationMotes motes, Vec3 feet, Vec3 right, Vec3 near) {
         var camera = c.mc().gameRenderer.getMainCamera();
         var left = camera.getLeftVector();
         Vec3 cr = new Vec3(-left.x(), -left.y(), -left.z()), cu = new Vec3(camera.getUpVector());

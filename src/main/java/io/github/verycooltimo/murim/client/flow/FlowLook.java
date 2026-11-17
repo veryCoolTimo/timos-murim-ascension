@@ -184,7 +184,7 @@ public final class FlowLook {
     static double BURST_THROW = 2.5D, BURST_ASH = 1.5D, BURST_RADIUS_GAIN = 2.2D;
     static int BURST_CHIPS = 90, ASH_FLAKES = 70;
     /** Where the effect ends after the game's end: clean finale, burst, other ends (seconds). */
-    static double END_DONE = 5.6D, END_BURST = 4.4D, END_OTHER = 1.8D;
+    static double END_DONE = 7.8D, END_BURST = 4.8D, END_OTHER = 1.8D;
 
     // ====================================================================== finale (clean)
     /** Contraction (arms wind in), the black ball, the burst moment, the settle after it (seconds). */

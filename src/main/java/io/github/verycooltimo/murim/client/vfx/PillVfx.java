@@ -597,7 +597,10 @@ public final class PillVfx {
         }
         event.getPoseStack().pushPose();
         if (lift != 0.0F) {
-            event.getPoseStack().translate(0.0D, Math.max(0.0F, lift), 0.0D);
+            // the curve goes a little below zero (the gather and the landing dip): the body is not clamped to the floor
+            event.getPoseStack().translate(0.0D, lift, 0.0D);
+            float sq = ClientPillState.liftSquash(event.getPartialTick());
+            if (sq != 1.0F) event.getPoseStack().scale(1.0F, sq, 1.0F);
         }
     }
 

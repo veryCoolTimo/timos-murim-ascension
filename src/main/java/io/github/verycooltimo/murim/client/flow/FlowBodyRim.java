@@ -97,6 +97,13 @@ public final class FlowBodyRim extends RenderLayer<AbstractClientPlayer, PlayerM
         Wrap body = new Wrap(out, st, fx, fz, false);
         for (ModelPart part : new ModelPart[] {model.body, model.rightArm, model.leftArm}) part.render(pose, body, light, OverlayTexture.NO_OVERLAY);
         // 2b. the body as a lamp (end of the game): light spreads out of the dantian over the whole model, edges brightest, face and legs too
+        if (dimK > .002F) {
+            // the aura stand: the model is dimmed toward a near-black crimson so the pill's light on it (the lamp below) is what lights it
+            VertexConsumer dim = buffers.getBuffer(RenderType.entityTranslucent(tex));
+            int da = Math.round(dimK * 255) << 24 | 0x12040A;
+            for (ModelPart part : new ModelPart[] {model.head, model.hat, model.body, model.jacket, model.rightArm, model.leftArm, model.rightSleeve, model.leftSleeve,
+                    model.rightLeg, model.leftLeg, model.rightPants, model.leftPants}) part.render(pose, dim, light, OverlayTexture.NO_OVERLAY, da);
+        }
         if (lampK > .002F && lampAt != null) {
             Vec3 cam = Minecraft.getInstance().gameRenderer.getMainCamera().getPosition();
             // a flat pale glow over the whole silhouette first (the model's dark cloth would not light through its own texture), then the textured lamp
@@ -106,7 +113,7 @@ public final class FlowBodyRim extends RenderLayer<AbstractClientPlayer, PlayerM
             LampWrap lw = new LampWrap(buffers.getBuffer(RenderType.eyes(tex)), (float) (lampAt.x - cam.x), (float) (lampAt.y - cam.y), (float) (lampAt.z - cam.z), lampR, lampK, lampTone);
             for (ModelPart part : new ModelPart[] {model.head, model.hat, model.body, model.jacket, model.rightArm, model.leftArm, model.rightSleeve, model.leftSleeve,
                     model.rightLeg, model.leftLeg, model.rightPants, model.leftPants}) {
-                if (!lampFace && (part == model.head || part == model.hat)) continue;
+                if ((!lampFace || lampNoHead) && (part == model.head || part == model.hat)) continue;
                 part.render(pose, lw, light, OverlayTexture.NO_OVERLAY);
             }
         }
@@ -275,6 +282,12 @@ public final class FlowBodyRim extends RenderLayer<AbstractClientPlayer, PlayerM
     /** The lamp also lights the head (the finale of the high pill); the calm absorption keeps the face untouched. */
     static volatile boolean lampFace = true;
     private static final net.minecraft.resources.ResourceLocation WHITE = net.minecraft.resources.ResourceLocation.withDefaultNamespace("textures/misc/white.png");
+    /** The melt stand and the aura: the lamp light never reaches the head (nothing on the face). */
+    static volatile boolean lampNoHead;
+    /** How much of the lamp tone is lifted toward white (the old lamp .55: pale; the aura keeps the pill colour deep). */
+    static volatile float lampPale = .55F;
+    /** Dims the whole model by this share (0 = off) before the lamp; and the width in blocks of the lamp's soft edge (the finale's .45). */
+    static volatile float dimK, lampBand = .45F;
     static volatile Vec3 lampAt;
     static volatile float[] lampTone = {1F, 1F, 1F};
 
@@ -291,10 +304,10 @@ public final class FlowBodyRim extends RenderLayer<AbstractClientPlayer, PlayerM
         @Override
         public void addVertex(float x, float y, float z, int color, float u, float v, int overlay, int light, float nx, float ny, float nz) {
             float d = (float) Math.sqrt((x - cx) * (x - cx) + (y - cy) * (y - cy) + (z - cz) * (z - cz));
-            float spread = 1 - Mth.clamp((d - (reach - .45F)) / .45F, 0, 1);
+            float sb = Mth.clamp((d - (reach - lampBand)) / lampBand, 0, 1), spread = 1 - (lampBand > .5F ? sb * sb * (3 - 2 * sb) : sb);
             float e = edge(x, y, z, nx, ny, nz);
             float w = k * spread * (.4F + .6F * e);
-            float pr = tone[0] * .45F + .55F, pg = tone[1] * .45F + .55F, pb = tone[2] * .45F + .55F;
+            float lp = lampPale, pr = tone[0] * (1 - lp) + lp, pg = tone[1] * (1 - lp) + lp, pb = tone[2] * (1 - lp) + lp;
             int lit = 0xFF000000 | to255(pr * w) << 16 | to255(pg * w) << 8 | to255(pb * w);
             out.addVertex(x, y, z, lit, u, v, overlay, light, nx, ny, nz);
         }

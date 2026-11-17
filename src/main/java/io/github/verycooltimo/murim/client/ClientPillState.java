@@ -115,13 +115,19 @@ public final class ClientPillState {
         return age >= 0 && age < 24 ? age : -1;
     }
 
-    /** Тело приподнимается в сцене подлёта: та же формула, что считает сервер. */
+    /** Vertical scale of the lifted body about its feet (gather before the launch, knees on the landing); 1 when there is no lift. */
+    public static float liftSquash(float partial) {
+        if (finale <= 0) return 1.0F;
+        return (float) io.github.verycooltimo.murim.client.flow.LiftCurve.squash(finaleTotal - finale + partial);
+    }
+
+    /** Тело приподнимается в сцене подлёта: высота и тайминг от сервера (PerfectLift), кривая скорости клиентская (LiftCurve, 16.11). */
     public static float lift(float partial) {
         if (finale <= 0) {
             return 0.0F;
         }
         float age = finaleTotal - finale + partial;
-        float h = PerfectLift.height(age, finaleLift);
+        float h = (float) io.github.verycooltimo.murim.client.flow.LiftCurve.height(age, finaleLift);
         if (finaleCut) {
             float k = Mth.clamp((finale - partial) / CUT_TICKS, 0.0F, 1.0F);
             h *= k * k * (3.0F - 2.0F * k);
@@ -227,7 +233,7 @@ public final class ClientPillState {
                     float grow = (age - 4) / (float) (PerfectLift.BURST - 4);
                     CameraShakeHandler.quake(0.10F + 0.18F * grow, 14);
                 }
-                if (age == PerfectLift.BURST) {
+                if (age == PerfectLift.BURST && !io.github.verycooltimo.murim.client.flow.FlowClient.sceneFinale()) {
                     CameraShakeHandler.request(0.5F);
                     CameraShakeHandler.quake(0.5F, 22);
                 }

@@ -15,6 +15,8 @@ public record BenchSelection(String element,double from,double to) {
             case "cultivation" -> {start=0;end=io.github.verycooltimo.murim.client.vfx.fx.FxCultivationScene.SECONDS;}
             case "cult1" -> {start=0;end=io.github.verycooltimo.murim.client.vfx.fx.FxCult1Scene.SECONDS;}
             case "essence" -> {start=0;end=io.github.verycooltimo.murim.client.vfx.fx.FxEssenceBench.SECONDS;}
+            case "burstlift" -> {start=0;end=io.github.verycooltimo.murim.client.flow.FlowBurstLift.SECONDS;}
+            case "burstseat" -> {start=0;end=io.github.verycooltimo.murim.client.flow.FlowBurstLift.SECONDS_SEAT;}
             default -> {if(!name.startsWith("preset:")||name.length()==7||presetDuration<=0)throw new IllegalArgumentException("Unknown bench element: "+name);start=0;end=presetDuration;}
         }
         double a=from<0?start:from,b=to<0?end:to;
@@ -24,7 +26,7 @@ public record BenchSelection(String element,double from,double to) {
     /** Production routing is also usable without Minecraft in isolation tests. */
     public void draw(Runnable line,Runnable fire,Runnable preset) {
         switch(element) {
-            case "essences", "line", "line_thin", "alpha_test", "stroke", "inktree", "essence", "cultivation", "cult1" -> line.run();
+            case "essences", "line", "line_thin", "alpha_test", "stroke", "inktree", "essence", "cultivation", "cult1", "burstlift", "burstseat" -> line.run();
             case "fire1" -> fire.run();
             default -> preset.run();
         }

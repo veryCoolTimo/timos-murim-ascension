@@ -6,10 +6,16 @@ package io.github.verycooltimo.murim.client.vfx.fx;
  * bottom and the top (higher = thinner webs); {@code soft} softens the bites, {@code bite} (0..1) is how much the fine layer bites;
  * {@code dark}, {@code light} the shares of the dark and light tones, {@code pink} the pink accents, {@code blue} the blue areas;
  * {@code fan} the silhouette's half widths (blocks) at 0, 1/3, 2/3 and the top; colours 0xRRGGBB with an alpha each: shadow, blue, violet,
- * light violet, pink. Tuned in tools/vfx-lab next to the expensive fx_essence look it replaces.
+ * light violet, pink. {@code cloth} (x = 1 turns the cloth mode on, y feather, z fade start, w pale core low down) makes broad soft sheets. Tuned in tools/vfx-lab next to the expensive fx_essence look it replaces.
  */
 public record FxFlameLook(float tiles, float rise, float warp, float squash, float low, float high, float soft, float bite,
-                          float dark, float light, float pink, float blue, int[] colors, float[] alphas, float[] fan) {
+                          float dark, float light, float pink, float blue, int[] colors, float[] alphas, float[] fan, float[] cloth) {
+    /** The accepted flat looks: no cloth mode. */
+    public FxFlameLook(float tiles, float rise, float warp, float squash, float low, float high, float soft, float bite,
+                       float dark, float light, float pink, float blue, int[] colors, float[] alphas, float[] fan) {
+        this(tiles, rise, warp, squash, low, high, soft, bite, dark, light, pink, blue, colors, alphas, fan, new float[4]);
+    }
+
     /** The violet flame low behind the tree: the colours of FxEssenceLook.CULT_VIOLET. */
     public static final FxFlameLook VIOLET = new FxFlameLook(.3F, .75F, .45F, .55F, -.07F, .02F, 1F, 1F,
             .24F, .22F, .15F, .12F,
@@ -22,6 +28,6 @@ public record FxFlameLook(float tiles, float rise, float warp, float squash, flo
     /** The look with a silhouette fitted to a sheet that is {@code halfWidth} blocks wide on each side. */
     public FxFlameLook fitted(double halfWidth) {
         return new FxFlameLook(tiles, rise, warp, squash, low, high, soft, bite, dark, light, pink, blue, colors, alphas,
-                new float[]{(float) halfWidth * fan[0], (float) halfWidth * fan[1], (float) halfWidth * fan[2], (float) halfWidth * fan[3]});
+                new float[]{(float) halfWidth * fan[0], (float) halfWidth * fan[1], (float) halfWidth * fan[2], (float) halfWidth * fan[3]}, cloth);
     }
 }

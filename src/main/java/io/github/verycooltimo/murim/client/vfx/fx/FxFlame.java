@@ -28,7 +28,7 @@ import net.neoforged.neoforge.client.event.RegisterShadersEvent;
 @EventBusSubscriber(modid = MurimMod.MODID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.MOD)
 public final class FxFlame {
     private static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "dynamic/flame_field");
-    private static final String[] UNIFORMS = {"FlTime", "FlSize", "FlMap", "FlShape", "FlTone", "FlFan", "FlC0", "FlC1", "FlC2", "FlC3", "FlC4"};
+    private static final String[] UNIFORMS = {"FlTime", "FlSize", "FlMap", "FlShape", "FlTone", "FlFan", "FlCloth", "FlC0", "FlC1", "FlC2", "FlC3", "FlC4"};
     private static ShaderInstance program;
     private static boolean failed, uploaded;
 
@@ -93,6 +93,8 @@ public final class FxFlame {
         program.getUniform("FlShape").set(l.low(), l.high(), l.soft(), l.bite());
         program.getUniform("FlTone").set(l.dark(), l.light(), l.pink(), l.blue());
         program.getUniform("FlFan").set(l.fan()[0], l.fan()[1], l.fan()[2], l.fan()[3]);
+        float[] cl = l.cloth();
+        program.getUniform("FlCloth").set(cl[0], cl[1], cl[2], cl[3]);
         for (int i = 0; i < 5; i++) {
             int rgb = l.colors()[i];
             program.getUniform("FlC" + i).set(((rgb >> 16) & 255) / 255F, ((rgb >> 8) & 255) / 255F, (rgb & 255) / 255F, l.alphas()[i]);

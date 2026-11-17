@@ -154,6 +154,7 @@ final class FlowSpaceFx {
     /** A mistake: the vortex stalls and shudders once; a strong one (a wrong branch) also tears one cloth sheet into deep-red chips. */
     static void mistake(boolean strong) {
         stallT = 0;
+        if (FlowAura.game()) return;   // the aura drops with the score; no flakes
         if (FlowScore.active()) { shedFlakes(strong ? 26 : 16); return; }
         if (!strong || P == null) return;
         int n = Math.max(1, FlowSpaceMath.sheetCount(fireLevel()));
@@ -951,19 +952,37 @@ final class FlowSpaceFx {
     /** Draws the space in the scene's pass (the scene's depth): far to near. */
     static void draw(PoseStack.Pose pose, Vec3 cam, MultiBufferSource.BufferSource buffers, int tier) {
         if (P == null || P.fade() <= .003 && P.intro() <= .003 && P.clock() > FlowLook.INTRO_LEAD + FlowLook.INTRO_DISSOLVE + FlowLook.INTRO_TRAVEL + .4 && P.te() < 0) return;
-        if (grade >= 0 && FlowFireSheets.available()) FlowFireSheets.draw(P, pose, cam, buffers, tier); else drawSheets(pose, cam, buffers, tier);
-        drawHalo(pose, cam, buffers);
-        drawDustAndChips(pose, buffers);
+        if (FlowFireStand.ON) {
+            // the aura stand: only the aura and the floor vortex
+            FlowAura.draw(pose, cam, buffers, tier);
+            drawArms(pose, cam, buffers, tier);
+            return;
+        }
+        boolean aura = FlowAura.game();
+        if (!aura) {
+            if (grade >= 0 && FlowFireSheets.available()) FlowFireSheets.draw(P, pose, cam, buffers, tier); else drawSheets(pose, cam, buffers, tier);
+        }
+        boolean finale = aura && P.ending() >= 0 && P.ending() <= 1;
+        if (!aura) drawHalo(pose, cam, buffers);
+        if (!finale) drawDustAndChips(pose, buffers);
         drawArms(pose, cam, buffers, tier);
-        drawEmbers(pose, buffers, env());
-        drawIntro(pose, cam, buffers);
-        drawMotes(pose, buffers);
-        drawBands(pose, buffers);
-        drawPulse(pose, cam, buffers);
-        drawBurstLight(pose, cam, buffers);
-        drawFlakes(pose, cam, buffers, tier);
-        drawRays(pose, cam, buffers, tier);
-        drawBrightening(pose, cam, buffers);
+        if (aura) {
+            FlowAura.draw(pose, cam, buffers, tier);   // the engine's aura, after the floor vortex; the old fire, halo, embers and intro are not drawn
+            // the finale on the burst / lift layers: the old thin rays, the confetti motes, the dust ring and the bloom are not drawn then
+            if (P.ending() < 0) FlowBurstLift.warmGame(pose, cam, buffers, P.clock(), Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(false));
+            if (finale) FlowBurstLift.drawGame(pose, cam, buffers, P.ending(), P.te(), rgb(P.pill()), Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(false));
+        } else { drawEmbers(pose, buffers, env()); drawIntro(pose, cam, buffers); }
+        if (!finale) {
+            drawMotes(pose, buffers);
+            drawBands(pose, buffers);
+            drawPulse(pose, cam, buffers);
+            drawBurstLight(pose, cam, buffers);
+        }
+        if (!aura) drawFlakes(pose, cam, buffers, tier);
+        if (!finale) {
+            drawRays(pose, cam, buffers, tier);
+            drawBrightening(pose, cam, buffers);
+        }
     }
 
     /** The share (0..1) of the effect still alive, for the camera and the lingering (seconds after the end are the director's). */

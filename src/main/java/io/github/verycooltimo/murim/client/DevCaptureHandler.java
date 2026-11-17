@@ -1323,7 +1323,8 @@ public final class DevCaptureHandler {
             minecraft.options.keyShift.setDown(state.active() && ClientMeditationState.sessionTicks() >= 200);
         }
         // Сессия прервалась, а семени ещё нет — садимся снова через секунду.
-        if (!state.active() && state.beats() < 3 && !fail) {
+        // (the flow film: the stand sits the player on the server; a TOGGLE from here would end that meditation, which cancelled the lift and stood the figure up now and then)
+        if (!state.active() && state.beats() < 3 && !fail && !"1".equals(System.getenv("MURIM_FLOW_TICKCLOCK"))) {
             if (++meditationIdle == 20) {
                 sitDown();
             }
@@ -1336,6 +1337,8 @@ public final class DevCaptureHandler {
         int step = ClientMeditationState.seedSceneAge() >= 0 || ClientMeditationState.rankUpAge() >= 0
                 || ClientPillState.finaleAge() >= 0 || ClientPillState.absorbing() || ClientPillState.deviationAge() >= 0 ? 2
                 : ClientMeditationState.breakthroughAge() >= 0 ? envInt("MURIM_CAPTURE_STEP", 5) : envInt("MURIM_CAPTURE_STEP", MEDITATION_FRAME_TICKS);
+        if ("aurastand".equals(System.getenv("MURIM_CAPTURE_FLOW"))) step = envInt("MURIM_CAPTURE_STEP", 1);   // aura stand: every tick
+        if ("1".equals(System.getenv("MURIM_FLOW_TICKCLOCK"))) step = 1;   // the flow film on the tick clock: one frame per tick all the way, so 20 fps is real time
         // Видно в журнале стенда, началась ли сцена прорыва (иначе её отсутствие замечают только по кадрам).
         if (!breakthroughLogged && ClientMeditationState.breakthroughAge() >= 0) {
             breakthroughLogged = true;

@@ -29,6 +29,8 @@ public final class BenchRuntime {
     public static String element(){return active()?selection.element():"";}
     /** Time of the framebuffer, not the following client tick. */
     public static double renderedSeconds(){return renderedSeconds;}
+    /** Stand clock at a partial tick of the NEXT frame (NaN when no bench): lets a player-render hook follow the same clock as the effect. */
+    public static double secondsAt(float partial){return clock==null?Double.NaN:clock.seconds(partial);}
     public static int start(String name,double from,double to,boolean loop) {
         Minecraft mc=Minecraft.getInstance();if(mc.player==null||mc.level==null)return 0;
         try {

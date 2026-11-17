@@ -28,6 +28,7 @@ public final class FlowCamera {
     // Same static front pose as breakthrough.json bt_wide (the bt_film default for all ranks).
     private static final ShotPose BENCH_SHOT = new ShotPose(8, 12, 2.4F, .62F, 0, .7F);
     private static ShotPose shot() {
+        if (io.github.verycooltimo.murim.client.flow.FlowBurstLift.active()) return io.github.verycooltimo.murim.client.flow.FlowBurstLift.shot();
         return io.github.verycooltimo.murim.dev.DevHooks.INSTANCE.benchActive() ? BENCH_SHOT : SHOT;
     }
     private static ArmorStand camera;
@@ -35,6 +36,7 @@ public final class FlowCamera {
     /** The vertical field of view (degrees) the last frame used, for the sideways shift of the scroll framing. */
     private static float curFovDeg = 70;
     /** The pose of the shot before any impulse (shake): the scroll hangs in the world from it, so a shake of the camera shakes the view of the scroll too. */
+    private static long logTick;
     private static Vec3 restPos;
     private static float restYaw, restPitch;
 
@@ -111,10 +113,10 @@ public final class FlowCamera {
         Vec3 chest = io.github.verycooltimo.murim.client.vfx.BoneAnchorLayer.position(mc.player,
                 io.github.verycooltimo.murim.client.vfx.BoneAnchorLayer.Bone.CHEST);
         ShotPose base = shot();
-        ShotPose shot = base == BENCH_SHOT || chest == null ? base : new ShotPose(0, SHOT.pitch(), SHOT.distance(),
+        ShotPose shot = base != SHOT || chest == null ? base : new ShotPose(0, SHOT.pitch(), SHOT.distance(),
                 (float) (chest.y - mc.player.getY() - .26D), 0, SHOT.fov());
         float track = io.github.verycooltimo.murim.client.flow.FlowClient.cameraDistance();
-        if (track > 0 && base != BENCH_SHOT) {
+        if (track > 0 && base == SHOT) {
             shot = new ShotPose(DEV_AZIMUTH, io.github.verycooltimo.murim.client.flow.FlowClient.cameraPitch(), track,
                     shot.focus() + FlowClient.cameraFocusLift() + FlowClient.cameraNudge() - FlowLook.CAM_LIFT_SHARE * io.github.verycooltimo.murim.client.ClientPillState.lift(partial), 0, FlowLook.CAM_FOV);
             trackFov = FlowLook.CAM_FOV;
@@ -163,13 +165,14 @@ public final class FlowCamera {
             }
             // the glide goes straight from the last shot to the normal view (never round the player): where the straight line would pass through the
             // figure, it rises over the head on the way
+            // the glide goes AROUND the player (polar: angle, radius and height eased together), never through the figure: no close-up jump
             Vec3 r0 = lastPos, r1 = toPos;
-            double hDist = Math.hypot(eye.x - lastPos.x, eye.z - lastPos.z);
-            double ex = r1.x - r0.x, ez = r1.z - r0.z, el2 = ex * ex + ez * ez;
-            double along = el2 < 1e-6 ? 0 : Mth.clamp(((eye.x - r0.x) * ex + (eye.z - r0.z) * ez) / el2, 0, 1);
-            double miss = Math.hypot(eye.x - (r0.x + ex * along), eye.z - (r0.z + ez * along));
-            double bump = miss < 1.3 ? (1.3 - miss) / 1.3 * 2.2 : 0;
-            at = r0.lerp(r1, k).add(0, bump * Math.sin(Math.PI * k), 0);
+            double a0 = Math.atan2(r0.x - eye.x, r0.z - eye.z), a1 = Math.atan2(r1.x - eye.x, r1.z - eye.z), da = a1 - a0;
+            while (da > Math.PI) da -= 2 * Math.PI;
+            while (da < -Math.PI) da += 2 * Math.PI;
+            double rad0 = Math.max(2.8, Math.hypot(r0.x - eye.x, r0.z - eye.z)), rad1 = Math.max(2.8, Math.hypot(r1.x - eye.x, r1.z - eye.z));
+            double ang = a0 + da * k, rad = rad0 + (rad1 - rad0) * k;
+            at = new Vec3(eye.x + Math.sin(ang) * rad, r0.y + (r1.y - r0.y) * k + .35 * Math.sin(Math.PI * k), eye.z + Math.cos(ang) * rad);
             // it looks at the figure first and at the player's own view direction at the end
             Vec3 t0 = eye.add(0, -.25, 0), dir1 = front ? viewDir.scale(-1) : viewDir, t1 = at.add(dir1.scale(8));
             float kk = k * k;
@@ -192,6 +195,9 @@ public final class FlowCamera {
             lastPos = at; lastYaw = lookYaw; lastPitch = lookPitch; lastFov = fovMult;
         }
         restPos = at; restYaw = lookYaw; restPitch = lookPitch;
+        if (System.getenv("MURIM_FLOW_TICKCLOCK") != null && io.github.verycooltimo.murim.client.flow.FlowClient.active() && mc.level.getGameTime() != logTick && (logTick = mc.level.getGameTime()) % 2 == 0)
+            MurimMod.LOGGER.info("FlowCamera tick {} pitch {} yaw {} dist {} focus {} lift {} at ({}, {}, {}) chest {}", mc.level.getGameTime(), String.format("%.1f", lookPitch), String.format("%.1f", lookYaw), String.format("%.2f", track),
+                    String.format("%.2f", shot.focus()), String.format("%.2f", io.github.verycooltimo.murim.client.ClientPillState.lift(partial)), String.format("%.2f", at.x), String.format("%.2f", at.y), String.format("%.2f", at.z), chest == null ? "null" : String.format("%.2f", chest.y));
         camera.setPos(at.x, at.y - camera.getEyeHeight(), at.z);
         camera.xo = camera.getX();
         camera.yo = camera.getY();

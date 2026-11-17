@@ -86,7 +86,7 @@ public final class FlowClient {
         shown = 0.0D;
         tickAge = 0;
         lastNanos = System.nanoTime();
-        game.setAuto(automatic || "auto".equals(System.getenv("MURIM_CAPTURE_FLOW")));
+        game.setAuto(automatic || "auto".equals(System.getenv("MURIM_CAPTURE_FLOW")) || FlowFireStand.ON);
         // The cinematic scene: ordinary and middle pills only (never a manual game, a torn body or a guided high pill).
         boolean calm = automatic && !payload.torn() && list.stream().noneMatch(k -> k.tier() == PillTier.HIGH);
         PillCalmFx.reset();
@@ -146,13 +146,16 @@ public final class FlowClient {
     public static float cameraPitch() { return PillCalmFx.running() ? PillCalmFx.cameraPitch() : FlowMeridianFx.cameraPitch(); }
 
     /** Blocks the shot's focus is lifted above the chest-follow height (the head stays in the frame). */
-    public static float cameraFocusLift() { return (float) FlowLook.CAM_FOCUS_LIFT + cameraScrollK() * io.github.verycooltimo.murim.client.vfx.fx.FxTune.f("flow.scroll.camFocus", .5F); }
+    public static float cameraFocusLift() { return (float) FlowLook.CAM_FOCUS_LIFT + cameraScrollK() * io.github.verycooltimo.murim.client.vfx.fx.FxTune.f("flow.scroll.camFocus", .5F) + FlowMeridianFx.finaleFocus(); }
 
     /** Scroll framing (high pill game): 0..1 how far the camera is in it, and the share of the frame's half width the figure is shifted to the left of the centre. */
     public static float cameraScrollK() { return gameForFxOrLingering() ? (float) FlowScrollBoard.camK() : 0F; }
 
     /** Half-width shares to shift the figure left: 0 centred, 1 at the left edge ((1 - 2 * figure x) at full framing). */
     public static float cameraShiftShare() { return cameraScrollK() * (1F - 2F * FlowScrollBoard.figX()); }
+
+    /** True while the scroll game's finale shakes the camera itself (the burst's damped shake, FlowMeridianFx), so the old burst quake stays quiet. */
+    public static boolean sceneFinale() { return FlowAura.game(); }
 
     /** The one damped nudge of the camera's focus at the burst, blocks. */
     public static float cameraNudge() { return FlowMeridianFx.cameraNudge(); }
@@ -232,7 +235,7 @@ public final class FlowClient {
         // but never more than a quarter of a second at once (a hang must not eat the game).
         double dt = Math.min(0.25D, (now - lastNanos) / 1.0E9D);
         lastNanos = now;
-        dt = FxTuneScene.simDt(dt);
+        dt = FxTuneScene.simDt(FlowTick.dt(0, dt));
         if (mc.isPaused() || mc.player == null) {
             return;
         }

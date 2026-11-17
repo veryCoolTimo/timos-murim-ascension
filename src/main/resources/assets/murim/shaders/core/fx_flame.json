@@ -117,6 +117,17 @@
       ]
     },
     {
+      "name": "FlCloth",
+      "type": "float",
+      "count": 4,
+      "values": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
       "name": "FlC0",
       "type": "float",
       "count": 4,

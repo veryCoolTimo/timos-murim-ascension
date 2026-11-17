@@ -38,6 +38,8 @@ final class FlowScrollBoard {
 
     private static final ResourceLocation FONT = ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "caption");
     private static final ResourceLocation TOP = tex("scroll/top.png"), BOTTOM = tex("scroll/bottom.png"), PAPER = tex("scroll/paper.png"), BODY = tex("flow/scroll_body.png"), SEAL_A = tex("flow/scroll_seal_a.png"), SEAL_D = tex("flow/scroll_seal_d.png"), FRAME = tex("flow/scroll_frame.png");
+    /** The figure's outline ink (the art's own #1E2326): the gauge and the caption use it, so they belong to the picture. */
+    private static final float[] FIG_INK = {.118F, .137F, .149F};
     private static final float[] INK = {.12F, .09F, .07F}, GREY = {.50F, .46F, .42F}, AMBER = {.96F, .62F, .10F}, SEAL = {.70F, .20F, .16F};
 
     private static ResourceLocation tex(String p) { return ResourceLocation.fromNamespaceAndPath(MurimMod.MODID, "textures/gui/" + p); }
@@ -61,22 +63,26 @@ final class FlowScrollBoard {
     /** Ease-out with a small settle (a gentle overshoot of about 4 %). */
     private static double easeOutSettle(double k) { k = Math.max(0, Math.min(1, k)); double c = 1.2, x = k - 1; return 1 + (c + 1) * x * x * x + c * x * x; }
 
-    /** 0..1 how far the paper is unrolled: 0.9 s of ease-out in, the reverse over the exit. */
+    private static double smoother(double k) { k = Math.max(0, Math.min(1, k)); return k * k * k * (k * (6 * k - 15) + 10); }
+
+    /** 0..1 how far the paper is unrolled: from the top roller downward over the whole entrance (ease in and out), the reverse over the exit. */
     static double open() {
         if (!scrollMode()) return 0;
-        return easeOutCubic(enterT() / .9) * (1 - ease(exitT()));
+        return smoother(enterT() / .95) * (1 - ease(exitT()));
     }
 
-    /** 0..1 the pose: 1 at rest in front of the camera, 0 at the start of the entrance (turned away, lower, back) and at the end of the exit. Settles slightly over 1. */
+    /** 0..1 the pose: 1 at rest in front of the camera, 0 at the start of the entrance (turned away, lower, back) and at the end of the exit. The turn is spread over the full
+     *  entrance (ease in and out) with a small settle at the end. */
     private static double pose() {
         if (!scrollMode()) return 0;
-        return easeOutSettle(enterT()) * (1 - ease(exitT()));
+        double k = enterT();
+        return (smoother(k) + .03 * Math.sin(Math.PI * Math.max(0, Math.min(1, (k - .75) / .25)))) * (1 - ease(exitT()));
     }
 
-    /** Whole-scroll alpha: in over the first 0.3 s, out over the last part of the exit. */
+    /** Whole-scroll alpha: in over the first 0.25 s (the paper is still a thin strip then), out over the last part of the exit. */
     private static double alphaAll() {
         if (!scrollMode()) return 0;
-        return ease((FlowClient.shown() - intro()) / .3) * (1 - ease((exitT() - .35) / .65));
+        return ease((FlowClient.shown() - intro()) / .25) * (1 - ease((exitT() - .35) / .65));
     }
 
     /** 0..1 the camera's share of the scroll framing: eases in just before the game starts, eases out in the first 0.6 s of the end (so the finale is centred before the core forms). */
@@ -123,6 +129,8 @@ final class FlowScrollBoard {
 
     @net.neoforged.bus.api.SubscribeEvent
     static void onTick(net.neoforged.neoforge.client.event.ClientTickEvent.Post event) {
+        // no pop-up in the corner while the director runs (like the name plate): a toast already on screen is dropped, a new one is held until the run and its glide are over
+        if (scrollMode() && FlowClient.gameForFxOrLingering()) Minecraft.getInstance().getToasts().clear();
         if (!heldToasts.isEmpty() && !FlowClient.active() && !FlowClient.lingering() && !io.github.verycooltimo.murim.client.camera.FlowCamera.returning()) {
             for (var t : heldToasts) Minecraft.getInstance().getToasts().addToast(t);
             heldToasts.clear();
@@ -143,7 +151,7 @@ final class FlowScrollBoard {
         if (alphaAll() <= .003 || mc.isPaused()) return;
         bind(game);
         long now = System.nanoTime();
-        double dt = lastNanos == 0 ? 0 : Math.min(.1, (now - lastNanos) / 1e9);
+        double dt = FlowTick.dt(2, lastNanos == 0 ? 0 : Math.min(.1, (now - lastNanos) / 1e9));
         lastNanos = now;
         clock += dt;
         if (target == null) {
@@ -200,7 +208,9 @@ final class FlowScrollBoard {
     private static void drawBoard(GuiGraphics g, Minecraft mc, FlowGame game) {
         double paperW = VW, paperHmax = VH, u1080 = 1.0;
         float alpha = 1F;
-        float ca = (float) ease((open() - .72) / .28);   // the picture comes in when the paper is nearly open
+        // the ink comes in after the paper is open: the figure over 0.35 s with a wipe from the top down, then the route, the marks and the line
+        double ti = FlowClient.shown() - intro();
+        float figK = (float) ease((ti - .85) / .35), ca = (float) ease((ti - 1.05) / .3);
         FlowScrollTable.Fig fig = FlowScrollTable.fig();
         double figW = paperW * fig.w(), figH = figW / fig.aspect(), figX = paperW * fig.x(), figY = paperW * fig.y();
         double sd = Math.max(0, Math.min(1, FlowScore.progress())), p01 = FlowScore.pressure();
@@ -214,24 +224,24 @@ final class FlowScrollBoard {
         for (int i = 0; i <= N; i++) { X[i] = (float) (figX + route.u[i] * figW); Y[i] = (float) (figY + route.v[i] * figH); }
         Matrix4f m = new Matrix4f();
         quad(m, PAPER, 0, 0, paperW, paperHmax, 1, 1, 1, 1F);
+        if (figK > .004F) quadV(m, BODY, figX, figY, figW, figH * figK, 0F, figK, 1, 1, 1, figK);
         if (ca > .004F) {
-            quad(m, BODY, figX, figY, figW, figH, 1, 1, 1, ca);
             drawRoute(m, game, route, X, Y, sd, p01, base, u1080, ca, figW, figH, dt);
             drawPressure(m, figX + figW * 0.98, figY + figH * .08, p01, game.pill.colour() == 0 ? 0xE8F4EC : PillScene.hue(game.pill.colour()), ca);
             float ta = ca;
             Font font = mc.font;
             drawSeals(g, font, game, route, sd, X, Y, u1080, ta);
             Component hint = hint(game, mc);
-            double px = FxTune.f("flow.scroll.promptPx", 25F), s = px / 9.0, maxW = paperW * .92;
+            double px = FxTune.f("flow.scroll.promptPx", 13F), s = px / 9.0, maxW = paperW * .80;
             double longest = Math.max(font.width(hintFor(game, mc, true)), font.width(hintFor(game, mc, false)));
             if (longest * s > maxW) s *= maxW / (longest * s);
             double w = font.width(hint) * s;
             int a = Math.round(255 * ta);
             var pose = g.pose();
             pose.pushPose();
-            pose.translate((float) (paperW / 2 - w / 2), (float) (paperHmax - px * 2.1), 0F);
+            pose.translate((float) (paperW / 2 - w / 2), (float) ((figY + figH + paperHmax) / 2 - px / 2), 0F);   // centred in the margin under the figure
             pose.scale((float) s, (float) s, 1F);
-            g.drawString(font, hint, 0, 0, (a << 24) | 0x2A1C12, false);
+            g.drawString(font, hint, 0, 0, (a << 24) | 0x1E2326, false);   // the figure's outline ink
             pose.popPose();
         }
         lastSd = sd;
@@ -285,33 +295,32 @@ final class FlowScrollBoard {
         Vec3 cam = camera;
         RenderSystem.enableBlend(); RenderSystem.defaultBlendFunc(); RenderSystem.disableCull(); RenderSystem.enableDepthTest(); RenderSystem.depthMask(false);
         // roller at the top
-        worldQuad(mv, TOP, c, cam, tr, tu, -sw / 2, yTop, sw / 2, yPaper0, 0, 0, 1, 1, 1F, al, 0, 0);
+        float[] pc0 = pillColour(bound);
+        float bright = FxTune.f("flow.scroll.bright", .70F), vig = FxTune.f("flow.scroll.vignette", .80F);
+        // brightness tied to the scene: about 70 % at most, warmed by the pill's colour on the side facing the character, a slight vignette on the far edge, never white
+        float[] cl = {bright * (.88F + .28F * pc0[0]), bright * (.88F + .28F * pc0[1]), bright * (.88F + .28F * pc0[2])}, cr2 = {bright * vig, bright * vig, bright * vig * .97F};
+        worldQuad(mv, TOP, c, cam, tr, tu, -sw / 2, yTop, sw / 2, yPaper0, 0, 0, 1, 1, cl, cr2, al, 0F, 1F);
         // the paper: the picture of the board, cropped to what is unrolled
         if (ph > .004) {
             float v1 = (float) (ph / phMax);
-            worldQuad(mv, null, c, cam, tr, tu, -pw / 2, yPaper0, pw / 2, yPaper1, 0, 1F, 1, 1F - v1, 1F, al, 0, 0);   // the texture's rows run bottom to top
+            worldQuad(mv, null, c, cam, tr, tu, -pw / 2, yPaper0, pw / 2, yPaper1, 0, 1F, 1, 1F - v1, cl, cr2, al, 0F, 1F);   // the texture's rows run bottom to top
             // the pill's light on the side facing the character: a soft additive strip
             float[] pc = pillColour(bound);
             RenderSystem.blendFunc(com.mojang.blaze3d.platform.GlStateManager.SourceFactor.SRC_ALPHA, com.mojang.blaze3d.platform.GlStateManager.DestFactor.ONE);
-            worldGlow(mv, c, cam, tr, tu, -pw / 2, yPaper0, pw / 2, yPaper1, pc, (float) (FxTune.f("flow.scroll.light", .20F) * al * Math.min(1, open * 2)));
+            worldGlow(mv, c, cam, tr, tu, -pw / 2, yPaper0, pw / 2, yPaper1, pc, (float) (FxTune.f("flow.scroll.light", .10F) * al * Math.min(1, open * 2)));
             RenderSystem.defaultBlendFunc();
         }
         // roller at the bottom with the pendant: the lower part of the picture swings with the lag
         double lag = (lagA - swayDeg()) * FxTune.f("flow.scroll.lag", .006F) * rb * 40;
-        worldQuad(mv, BOTTOM, c, cam, tr, tu, -sw / 2, yPaper1, sw / 2, yBot1, 0, 0, 1, 1, 1F, al, 0, 0, (float) lag, .55F);
+        worldQuad(mv, BOTTOM, c, cam, tr, tu, -sw / 2, yPaper1, sw / 2, yBot1, 0, 0, 1, 1, cl, cr2, al, (float) lag, .55F);
         RenderSystem.depthMask(true);
         RenderSystem.disableBlend();
         RenderSystem.enableCull();
     }
 
+    /** A textured quad in the scroll's plane; the colour runs from {@code c0} (left edge) to {@code c1} (right edge); {@code lagX}: the bottom edge's sideways shift beyond {@code lagFrom} (0..1 of the height) for the pendant. */
     private static void worldQuad(Matrix4f mv, ResourceLocation tex, Vec3 c, Vec3 cam, Vec3 tr, Vec3 tu, double x0, double y0, double x1, double y1,
-                                  float u0, float v0, float u1, float v1, float shade, float alpha, int unused1, int unused2) {
-        worldQuad(mv, tex, c, cam, tr, tu, x0, y0, x1, y1, u0, v0, u1, v1, shade, alpha, unused1, unused2, 0F, 1F);
-    }
-
-    /** A textured quad in the scroll's plane; {@code lagX}: the bottom edge's sideways shift beyond {@code lagFrom} (0..1 of the height) for the pendant. */
-    private static void worldQuad(Matrix4f mv, ResourceLocation tex, Vec3 c, Vec3 cam, Vec3 tr, Vec3 tu, double x0, double y0, double x1, double y1,
-                                  float u0, float v0, float u1, float v1, float shade, float alpha, int unused1, int unused2, float lagX, float lagFrom) {
+                                  float u0, float v0, float u1, float v1, float[] c0, float[] c1, float alpha, float lagX, float lagFrom) {
         if (tex == null) RenderSystem.setShaderTexture(0, target.getColorTextureId()); else RenderSystem.setShaderTexture(0, tex);
         RenderSystem.setShader(GameRenderer::getPositionTexColorShader);
         var b = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
@@ -321,18 +330,18 @@ final class FlowScrollBoard {
             double ya = y0 + (y1 - y0) * ta, yb = y0 + (y1 - y0) * tb;
             float va = v0 + (v1 - v0) * (float) ta, vb = v0 + (v1 - v0) * (float) tb;
             double sa = lagX == 0F ? 0 : lagX * Math.max(0, (ta - lagFrom) / (1 - lagFrom)), sb = lagX == 0F ? 0 : lagX * Math.max(0, (tb - lagFrom) / (1 - lagFrom));
-            wv(b, mv, c, cam, tr, tu, x0 + sa, ya, u0, va, shade, alpha);
-            wv(b, mv, c, cam, tr, tu, x0 + sb, yb, u0, vb, shade, alpha);
-            wv(b, mv, c, cam, tr, tu, x1 + sb, yb, u1, vb, shade, alpha);
-            wv(b, mv, c, cam, tr, tu, x1 + sa, ya, u1, va, shade, alpha);
+            wv(b, mv, c, cam, tr, tu, x0 + sa, ya, u0, va, c0, alpha);
+            wv(b, mv, c, cam, tr, tu, x0 + sb, yb, u0, vb, c0, alpha);
+            wv(b, mv, c, cam, tr, tu, x1 + sb, yb, u1, vb, c1, alpha);
+            wv(b, mv, c, cam, tr, tu, x1 + sa, ya, u1, va, c1, alpha);
         }
         MeshData mesh = b.build();
         if (mesh != null) BufferUploader.drawWithShader(mesh);
     }
 
-    private static void wv(com.mojang.blaze3d.vertex.BufferBuilder b, Matrix4f mv, Vec3 c, Vec3 cam, Vec3 tr, Vec3 tu, double x, double y, float u, float v, float shade, float alpha) {
+    private static void wv(com.mojang.blaze3d.vertex.BufferBuilder b, Matrix4f mv, Vec3 c, Vec3 cam, Vec3 tr, Vec3 tu, double x, double y, float u, float v, float[] col, float alpha) {
         Vec3 p = c.add(tr.scale(x)).add(tu.scale(y)).subtract(cam);
-        b.addVertex(mv, (float) p.x, (float) p.y, (float) p.z).setUv(u, v).setColor(shade, shade, shade, alpha);
+        b.addVertex(mv, (float) p.x, (float) p.y, (float) p.z).setUv(u, v).setColor(Math.min(1F, col[0]), Math.min(1F, col[1]), Math.min(1F, col[2]), alpha);
     }
 
     /** The pill's light along the left edge of the paper, soft to the middle. */
@@ -377,7 +386,8 @@ final class FlowScrollBoard {
     private static void drawRoute(Matrix4f m, FlowGame g, FlowScrollTable.Route route, float[] X, float[] Y, double sd, double p01, float[] base, double u, float alpha,
                                   double figW, double figH, double dt) {
         int N = FlowScrollTable.N;
-        float line = (float) (FxTune.f("flow.scroll.line", 8F) * u);
+        FlowScrollTable.Fig fg = FlowScrollTable.fig();
+        float chan = (float) (FxTune.f("flow.scroll.channel", FlowScrollTable.CHANNEL_ART) * figW / fg.artW());   // a channel: 5 art pixels wide
         // fork windows
         int nf = g.forks.size();
         int[] fi0 = new int[nf], fi1 = new int[nf], fmid = new int[nf];
@@ -415,33 +425,44 @@ final class FlowScrollBoard {
         if (cursor < N) pieces.add(new Piece(X, Y, cursor, N, 0));
         int lim = (int) Math.round(sd * N);
 
-        // 1. not yet passed: dark ink (the blocked branch greyed and thinner)
+        // a channel, not a line: not yet passed a pale wash with a thin dark ink edge; passed filled with the pill's colour, a bright centre and a soft glow
+        float[] vivid = vivid(base);
+        float[] edgeCol = {vivid[0] * .32F, vivid[1] * .28F, vivid[2] * .22F}, wash = {.97F, .95F, .87F}, greyEdge = {.42F, .40F, .38F}, greyWash = {.80F, .78F, .73F};
+        float[] hot = {Math.min(1, vivid[0] * .35F + .65F), Math.min(1, vivid[1] * .35F + .65F), Math.min(1, vivid[2] * .35F + .65F)};
+        FEATHER = .10F;
         for (Piece p : pieces) {
-            if (p.kind() == 2) ribbon(m, p.x(), p.y(), p.i0(), p.i1(), line * .78F, 1F, GREY, .78F * alpha, u, false);
-            else ribbon(m, p.x(), p.y(), p.i0(), p.i1(), line, 1F, INK, .94F * alpha, u, true);
+            if (p.kind() == 2) {
+                ribbon(m, p.x(), p.y(), p.i0(), p.i1(), chan + 3F, 1F, greyEdge, .82F * alpha, u, false);
+                ribbon(m, p.x(), p.y(), p.i0(), p.i1(), chan * .82F, 1F, greyWash, .95F * alpha, u, false);
+            } else {
+                ribbon(m, p.x(), p.y(), p.i0(), p.i1(), chan + 3F, 1F, INK, .94F * alpha, u, false);
+                ribbon(m, p.x(), p.y(), p.i0(), p.i1(), chan, 1F, wash, alpha, u, false);
+            }
         }
-        // 2. passed: pill-colour ink with a soft glow, hottest at the head, a warm steady glow behind it
-        // deeper pill tone with a dark ink core, a soft glow around it (the glow is the only light)
-        float[] dark = {base[0] * .30F, base[1] * .26F, base[2] * .22F}, deep = {base[0] * .78F, base[1] * .70F, base[2] * .55F};
         for (Piece p : pieces) {
             if (p.kind() == 2 || p.i0() > lim) continue;
             int e = Math.min(p.i1(), lim);
             if (e <= p.i0()) continue;
             float[] heat = new float[N + 1];
             for (int i = p.i0(); i <= e; i++) heat[i] = (float) (FlowMeridian.STEADY + (1 - FlowMeridian.STEADY) * Math.exp(-(sd - i / (double) N) / .07));
-            ribbonA(m, p.x(), p.y(), p.i0(), e, line * 2.6F, base, .20F * alpha, heat, 0F);
-            ribbonA(m, p.x(), p.y(), p.i0(), e, line * 1.25F, deep, 1F * alpha, null, 0F);
-            ribbonA(m, p.x(), p.y(), p.i0(), e, line * .50F, dark, .92F * alpha, null, 0F);
+            FEATHER = .43F;
+            ribbonA(m, p.x(), p.y(), p.i0(), e, chan * 2.4F, vivid, .20F * alpha, heat, 0F);          // the soft glow on the paper (never a blown-out white)
+            FEATHER = .10F;
+            ribbonA(m, p.x(), p.y(), p.i0(), e, chan + 3F, edgeCol, .95F * alpha, null, 0F);
+            ribbonA(m, p.x(), p.y(), p.i0(), e, chan, vivid, alpha, null, 0F);
+            ribbonA(m, p.x(), p.y(), p.i0(), e, chan * .38F, hot, .92F * alpha, heat, .4F);
         }
+        FEATHER = .43F;
+        float[] dark = edgeCol;
         // 3. the seed of the dantian: swells and beats with the pressure
         double beat = 1 + .07 * Math.sin(clock * 2 * Math.PI * (.8 + p01));
-        float sr = (float) ((11 + 14 * p01) * u * beat);
-        disc(m, X[0], Y[0], sr * 1.8F, base, .22F * alpha, true);
-        disc(m, X[0], Y[0], sr, dark, .92F * alpha, false);
-        disc(m, X[0], Y[0], sr * .72F, base, alpha, false);
-        disc(m, X[0], Y[0], sr * .3F, new float[] {1, 1, 1}, .9F * alpha, true);
+        float sr = (float) (chan * (.95 + .9 * p01) * beat);
+        disc(m, X[0], Y[0], sr * 1.9F, vivid, .22F * alpha, true);
+        disc(m, X[0], Y[0], sr * 1.12F, INK, .95F * alpha, false);
+        disc(m, X[0], Y[0], sr, vivid, alpha, false);
+        disc(m, X[0], Y[0], sr * .4F, hot, .95F * alpha, true);
 
-        // 4. the nodes: ink rings, the opening follows the game's aperture
+        // 4. the nodes: ink rings with a bead; the opening follows the game's aperture
         for (int i = 0; i < g.narrows.size(); i++) {
             FlowGame.Narrow nd = g.narrows.get(i);
             int k = (int) Math.round(nd.s * N);
@@ -453,19 +474,19 @@ final class FlowScrollBoard {
                 if (ripple[i] > .9) ripple[i] = -1;
                 if (lastSd < nd.s && sd >= nd.s && nd.open && g.state == FlowGame.State.RUN) ripple[i] = 0;
             }
-            float r = (float) (FxTune.f("flow.scroll.node", 17F) * u * (.82 + .3 * FlowMeridian.nodeRadius(ap) / .06));
+            float r = (float) (chan * 1.3F * (.85 + .3 * FlowMeridian.nodeRadius(ap) / .06));
             float px = X[k], py = Y[k];
-            float[] ringCol = passed && open > .3 ? dark : INK;
-            float da = passed && g.state == FlowGame.State.RUN ? .8F : 1F;
-            disc(m, px, py, r * 1.04F, new float[] {.93F, .86F, .70F}, .85F * alpha, false);          // paper-coloured eye so the ring reads on the route
-            arcRing(m, px, py, r, line * .62F, 0, (float) (Math.PI * 2), ringCol, .95F * alpha * da);
-            // the knot closes continuously with the aperture: a dark ink drop that fills the ring when shut
-            float kr = (float) (r * (.14 + .80 * knot));
-            disc(m, px, py, kr, KNOT_INK, (.55F + .4F * (float) knot) * alpha * da, true);
+            float da = passed && g.state == FlowGame.State.RUN ? .85F : 1F;
+            disc(m, px, py, r * 1.02F, new float[] {.93F, .86F, .70F}, .9F * alpha, false);          // paper-coloured eye so the ring reads over the channel
+            arcRing(m, px, py, r, 3F, 0, (float) (Math.PI * 2), passed && open > .3 ? edgeCol : INK, .96F * alpha * da);
+            // the bead: a pill-coloured bead when open (lit once passed), the knot closes continuously with the aperture into a dark ink drop
+            float kr = (float) (r * (.34 + .56 * knot));
+            if (open > .35) disc(m, px, py, r * .36F, passed ? vivid : new float[] {.62F, .58F, .50F}, (float) open * alpha * da, false);
+            disc(m, px, py, kr, KNOT_INK, (float) Math.min(1, knot * 1.3) * .95F * alpha * da, true);
             if (knot > .5) disc(m, px, py, kr * .42F, new float[] {.80F, .22F, .12F}, .9F * (float) (knot - .5) * 2F * alpha * da, true);
             if (i < ripple.length && ripple[i] >= 0) {
                 double kk = ripple[i] / .9;
-                arcRing(m, px, py, (float) (r * (1 + .9 * (1 - Math.pow(1 - kk, 2)))), line * .45F, 0, (float) (Math.PI * 2), base, (float) (.9 * Math.pow(1 - kk, 1.5)) * alpha);
+                arcRing(m, px, py, (float) (r * (1 + .9 * (1 - Math.pow(1 - kk, 2)))), 2.5F, 0, (float) (Math.PI * 2), vivid, (float) (.9 * Math.pow(1 - kk, 1.5)) * alpha);
             }
         }
 
@@ -489,7 +510,7 @@ final class FlowScrollBoard {
         float cxp = (float) (figX0(X, Y, N, sd)[0] + lat[0]), cyp = (float) (figX0(X, Y, N, sd)[1] + lat[1]);
         lat[0] = lat[1] = 0;
         if (g.state == FlowGame.State.RUN || FlowMeridianFx.sinceEnd() < .35) {
-            float rc = (float) (FxTune.f("flow.scroll.clot", 9F) * u * (1 + .05 * Math.sin(clock * 2 * Math.PI * .6)));
+            float rc = (float) (chan * FxTune.f("flow.scroll.clotK", 1F) * (1 + .05 * Math.sin(clock * 2 * Math.PI * .6)));   // the bead is twice the channel in diameter
             float bounce = g.bounceT >= 0 ? .65F : 1F;
             // the tail: the last part of the way, tapering
             int t1 = (int) Math.round(sd * N), t0 = Math.max(0, t1 - (int) Math.round(FxTune.f("flow.scroll.tail", .05F) * N));
@@ -503,11 +524,11 @@ final class FlowScrollBoard {
                 }
                 // the tail follows the branch the clot is on: shift the last samples by the lateral offset of the head
                 for (int i = t0; i <= t1; i++) { double k = (i - t0) / (double) (t1 - t0); tx[i] += (float) ((cxp - X[t1]) * k); ty[i] += (float) ((cyp - Y[t1]) * k); }
-                ribbonW(m, tx, ty, t0, t1, hw, al, new float[] {base[0] * .6F + .4F, base[1] * .6F + .4F, base[2] * .6F + .4F}, .85F * alpha * bounce);
+                ribbonW(m, tx, ty, t0, t1, hw, al, vivid, .85F * alpha * bounce);
             }
             disc(m, cxp, cyp, rc * 2.5F, base, .26F * alpha * bounce, true);
-            disc(m, cxp, cyp, rc * 1.22F, dark, .95F * alpha, false);
-            disc(m, cxp, cyp, rc, new float[] {Math.min(1, base[0] * .55F + .45F), Math.min(1, base[1] * .5F + .35F), Math.min(1, base[2] * .5F + .3F)}, alpha * bounce, false);
+            disc(m, cxp, cyp, rc * 1.2F, INK, .95F * alpha, false);
+            disc(m, cxp, cyp, rc, new float[] {Math.min(1, vivid[0] * .6F + .4F), Math.min(1, vivid[1] * .6F + .4F), Math.min(1, vivid[2] * .6F + .4F)}, alpha * bounce, false);
             disc(m, cxp - rc * .3F, cyp - rc * .32F, rc * .38F, new float[] {1, 1, 1}, .95F * alpha, true);
             if (holdK > .01) brushRing(m, cxp, cyp, rc * (3.3F - 1.3F * (float) holdK), (float) (.55 + .45 * holdK), (float) (FxTune.f("flow.scroll.ring", 4.2F) * u), INK, (float) holdK * .92F * alpha);
             if (g.surging()) {
@@ -518,7 +539,17 @@ final class FlowScrollBoard {
         }
     }
 
+    /** Softness of a ribbon's edge (a share of its half width): .43 the soft ink skirt, a small number a crisp channel. */
+    private static float FEATHER = .43F;
+
     private static final double[] lat = new double[2];
+    /** The pill's colour made saturated and bright: the lit route must be the strongest colour on the scroll. */
+    private static float[] vivid(float[] c) {
+        float[] hsv = java.awt.Color.RGBtoHSB(Math.round(c[0] * 255), Math.round(c[1] * 255), Math.round(c[2] * 255), null);
+        int rgb = java.awt.Color.HSBtoRGB(hsv[0], Math.min(1F, hsv[1] * 1.2F + .18F), Math.max(.82F, Math.min(1F, hsv[2] * 1.05F)));
+        return new float[] {(rgb >> 16 & 255) / 255F, (rgb >> 8 & 255) / 255F, (rgb & 255) / 255F};
+    }
+
     private static final float[] KNOT_INK = {.10F, .06F, .05F};
 
     private static double[] figX0(float[] X, float[] Y, int N, double s) {
@@ -530,21 +561,39 @@ final class FlowScrollBoard {
 
     // ------------------------------------------------------------------ pressure column (ink wash on the right edge)
 
+    /** The pressure gauge, part of the scroll art: an outline in the figure's ink, 2.5 art pixels thick (5 board px at the 2x scale) and slightly uneven, a pale wash inside and a cinnabar fill
+     *  that is visible from the start (a low base level) and rises with the pressure; marks at 30 and 60 per cent. */
     private static void drawPressure(Matrix4f m, double xRight, double y, double p01, int pill, float alpha) {
-        // the generated frame (20 x 64 art pixels: the body 14 wide, the marks at 30 and 60 per cent stick out on the right); the wash fills its inside
-        double sc = FlowScrollTable.fig().w() * VW / 128.0;
-        double fw = 20 * sc, fh = 64 * sc, x = xRight - fw - 14, in0x = 2 * sc, in1x = 12 * sc, in0y = 2 * sc, in1y = 62 * sc;
-        x = VW - 16 - fw;
-        quad(m, FRAME, x, y, fw, fh, 1, 1, 1, alpha);
-        double lvl = Math.max(0, Math.min(1, p01)), h = in1y - in0y;
-        int segs = 24;
-        for (int i = 0; i < segs; i++) {
-            double a = i / (double) segs, b = (i + 1) / (double) segs;
-            if (a >= lvl) break;
-            double top = Math.min(b, lvl);
-            float[] ca = wash(FlowMeridian.pressureColour(pill, a * 100)), cb = wash(FlowMeridian.pressureColour(pill, top * 100));
-            quadGrad(m, (float) (x + in0x), (float) (y + in0y + h * (1 - top)), (float) (in1x - in0x), (float) (h * (top - a)), cb, ca, .92F * alpha);
+        float w = 26F, h = 300F, x = (float) (VW - 36 - w), top = (float) y + 60F;
+        float[] trackCol = {.86F, .79F, .62F}, cinnabar = {.72F, .20F, .14F}, cinnabarHi = {.86F, .33F, .20F};
+        float ink = 5F;
+        solid(m, x, top, w, h, trackCol, .92F * alpha);
+        double lvl = Math.max(0, Math.min(1, .08 + .92 * p01));
+        float fh = (float) (h * lvl);
+        quadGrad(m, x + 4, top + h - fh, w - 8, fh, cinnabarHi, cinnabar, .96F * alpha);
+        FEATHER = .10F;
+        // the outline: points every 8 px, each pushed a little off the straight line (deterministic), so it reads as brush-drawn
+        java.util.List<float[]> pts = new java.util.ArrayList<>();
+        float[][] corners = {{x, top}, {x + w, top}, {x + w, top + h}, {x, top + h}, {x, top}};
+        for (int i = 0; i < 4; i++) {
+            float dx = corners[i + 1][0] - corners[i][0], dy = corners[i + 1][1] - corners[i][1], len = (float) Math.hypot(dx, dy);
+            int n = Math.max(2, Math.round(len / 8F));
+            for (int k = 0; k < n; k++) {
+                float t = k / (float) n, nx = -dy / len, ny = dx / len;
+                float j = (float) (Math.sin((i * 7 + k) * 12.9898) * 43758.5453) % 1F;
+                j = (j - (float) Math.floor(j)) * 2.4F - 1.2F;
+                pts.add(new float[] {corners[i][0] + dx * t + nx * j, corners[i][1] + dy * t + ny * j});
+            }
         }
+        pts.add(pts.get(0));
+        float[] ox = new float[pts.size()], oy = new float[pts.size()];
+        for (int i = 0; i < ox.length; i++) { ox[i] = pts.get(i)[0]; oy[i] = pts.get(i)[1]; }
+        ribbon(m, ox, oy, 0, ox.length - 1, ink, 1F, FIG_INK, .96F * alpha, 1, false);
+        for (double mk : new double[] {.30, .60}) {
+            float my = (float) (top + h * (1 - mk));
+            ribbon(m, new float[] {x - 12F, x}, new float[] {my, my}, 0, 1, 4F, 1F, FIG_INK, .92F * alpha, 1, false);
+        }
+        FEATHER = .43F;
     }
 
     private static float[] wash(float[] c) { return new float[] {c[0] * .82F, c[1] * .74F, c[2] * .66F}; }
@@ -563,20 +612,23 @@ final class FlowScrollBoard {
             int leftSign = Math.abs(nx) > .2 ? (nx < 0 ? 1 : -1) : (ny < 0 ? 1 : -1);
             double[] mid = route.at(f.s);
             double spread = forkSpread(mid, u);
-            int k = (int) Math.round(f.s * N);
             for (int key : new int[] {-1, 1}) {
                 int sg = key < 0 ? leftSign : -leftSign;
-                double off = spread + 24 * u;
-                double sx = X[k] + -d[1] * sg * off, sy = Y[k] + d[0] * sg * off, size = 38 * u;
+                // each seal sits on its own branch, one before and one after the middle of the fork (so two seals never overlap, however narrow the limb is)
+                int k = (int) Math.max(0, Math.min(N, Math.round((f.s + (key < 0 ? -.034 : .034)) * N)));
+                double[] dk = route.dir(k / (double) N);
+                double bump = FlowMeridian.bump(k / (double) N, f.s, FlowMeridian.FORK_HALF);
+                double sx = X[k] + -dk[1] * sg * spread * bump, sy = Y[k] + dk[0] * sg * spread * bump, size = 30 * u;
                 quad(m, key < 0 ? SEAL_A : SEAL_D, sx - size / 2, sy - size / 2, size, size, 1, 1, 1, (float) (fade * ta));
             }
         }
     }
 
-    /** Half the distance between the two branches of a fork (units): at least 22 on the torso (44 apart) and 20 on an arm (40 apart) at 1080p. */
+    /** Half the distance between the two branches of a fork (board px): 23 on the torso (46 apart), less where the limb is narrow so a branch never leaves the figure. */
     static double forkSpread(double[] mid, double u) {
-        boolean arm = (mid[0] < .33 || mid[0] > .67) && mid[1] > .40;
-        return FxTune.f(arm ? "flow.scroll.forkArm" : "flow.scroll.fork", arm ? 20F : 23F) * u;
+        FlowScrollTable.Fig fg = FlowScrollTable.fig();
+        double artPx = VW * fg.w() / fg.artW(), room = FlowScrollTable.clearance(mid[0], mid[1]) * artPx - FlowScrollTable.CHANNEL_ART * artPx / 2 - 3;
+        return Math.max(8, Math.min(FxTune.f("flow.scroll.fork", 23F) * u, room));
     }
 
     // ------------------------------------------------------------------ drawing primitives (real pixels, one batch per call)
@@ -599,6 +651,18 @@ final class FlowScrollBoard {
         b.addVertex(m, (float) x, (float) (y + h), 0).setUv(0, 1).setColor(r, g, bl, a);
         b.addVertex(m, (float) (x + w), (float) (y + h), 0).setUv(1, 1).setColor(r, g, bl, a);
         b.addVertex(m, (float) (x + w), (float) y, 0).setUv(1, 0).setColor(r, g, bl, a);
+        flush(b);
+    }
+
+    /** A textured quad of the top part of a picture: rows {@code v0..v1} (the wipe of the figure). */
+    private static void quadV(Matrix4f m, ResourceLocation t, double x, double y, double w, double h, float v0, float v1, float r, float g, float bl, float a) {
+        if (h <= .5 || a <= .004F) return;
+        RenderSystem.setShaderTexture(0, t);
+        var b = begin(true);
+        b.addVertex(m, (float) x, (float) y, 0).setUv(0, v0).setColor(r, g, bl, a);
+        b.addVertex(m, (float) x, (float) (y + h), 0).setUv(0, v1).setColor(r, g, bl, a);
+        b.addVertex(m, (float) (x + w), (float) (y + h), 0).setUv(1, v1).setColor(r, g, bl, a);
+        b.addVertex(m, (float) (x + w), (float) y, 0).setUv(1, v0).setColor(r, g, bl, a);
         flush(b);
     }
 
@@ -670,7 +734,8 @@ final class FlowScrollBoard {
     private static void ribbonW(Matrix4f m, float[] x, float[] y, int i0, int i1, float[] hw, float[] al, float[] c, float a) {
         if (a <= .004F || i1 <= i0) return;
         var b = begin(false);
-        float[] off = {-1.28F, -.85F, .85F, 1.28F}, pa = {0, 1, 1, 0};
+        float fe = FEATHER;
+        float[] off = {-(1F + fe), -(1F - fe * .35F), 1F - fe * .35F, 1F + fe}, pa = {0, 1, 1, 0};
         float[] nx = new float[i1 - i0 + 1], ny = new float[i1 - i0 + 1];
         for (int i = i0; i <= i1; i++) {
             int p = Math.max(i0, i - 1), q = Math.min(i1, i + 1);

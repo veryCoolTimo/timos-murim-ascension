@@ -20,10 +20,11 @@ final class FlowScrollTable {
     static final int N = 480;
     private static double[][] pts;
     private static double figX = .04, figY = .02, figW = .92, aspect = .9;
+    private static int artW = 224, artH = 256;
     private static Route route;
 
     /** Placement of the figure on the paper (shares of the paper's width, height from the aspect). */
-    record Fig(double x, double y, double w, double aspect) { }
+    record Fig(double x, double y, double w, double aspect, int artW, int artH) { }
 
     static final class Route {
         final double[] u = new double[N + 1], v = new double[N + 1];
@@ -78,6 +79,7 @@ final class FlowScrollTable {
             JsonObject o = JsonParser.parseReader(new InputStreamReader(in, StandardCharsets.UTF_8)).getAsJsonObject();
             JsonObject f = o.getAsJsonObject("figure");
             figX = f.get("x").getAsDouble(); figY = f.get("y").getAsDouble(); figW = f.get("w").getAsDouble(); aspect = f.get("aspect").getAsDouble();
+            if (f.has("art")) { artW = f.getAsJsonObject("art").get("w").getAsInt(); artH = f.getAsJsonObject("art").get("h").getAsInt(); }
             JsonArray r = o.getAsJsonArray("route");
             pts = new double[r.size()][];
             for (int i = 0; i < pts.length; i++) pts[i] = new double[] {r.get(i).getAsJsonArray().get(0).getAsDouble(), r.get(i).getAsJsonArray().get(1).getAsDouble()};
@@ -104,6 +106,54 @@ final class FlowScrollTable {
     static Fig fig() {
         if (pts == null) load();
         return new Fig(FxTune.f("flow.scroll.fig.x", (float) figX), FxTune.f("flow.scroll.fig.y", (float) figY), FxTune.f("flow.scroll.fig.w", (float) figW),
-                FxTune.f("flow.scroll.fig.aspect", (float) aspect));
+                FxTune.f("flow.scroll.fig.aspect", (float) aspect), artW, artH);
+    }
+
+    // ------------------------------------------------------------------ the picture's mask: where a channel may run
+
+    /** Width of a channel in art pixels of the figure (one art pixel is figW / artW board pixels). */
+    static final float CHANNEL_ART = 5F;
+
+    private static float[] dist;
+    private static int maskW, maskH;
+
+    /** Loads the figure and builds the clearance field: for every pixel the distance (art pixels) to the nearest outline stroke, mark or the outside. */
+    private static synchronized void loadMask() {
+        if (dist != null) return;
+        try (var in = FlowScrollTable.class.getResourceAsStream("/assets/murim/textures/gui/flow/scroll_body.png")) {
+            java.awt.image.BufferedImage im = javax.imageio.ImageIO.read(in);
+            maskW = im.getWidth(); maskH = im.getHeight();
+            dist = new float[maskW * maskH];
+            for (int y = 0; y < maskH; y++) for (int x = 0; x < maskW; x++) {
+                int argb = im.getRGB(x, y);
+                int a = argb >>> 24, r = argb >> 16 & 255, g = argb >> 8 & 255, b = argb & 255;
+                boolean obstacle = a < 128 || (r + g + b) < 3 * 75;      // outside, or an ink stroke / mark inside the figure
+                dist[y * maskW + x] = obstacle ? 0F : 1e6F;
+            }
+            // two-pass chamfer (1, sqrt 2): the distance to the nearest obstacle pixel
+            float d1 = 1F, d2 = 1.4142F;
+            for (int y = 0; y < maskH; y++) for (int x = 0; x < maskW; x++) {
+                float v = dist[y * maskW + x];
+                if (x > 0) v = Math.min(v, dist[y * maskW + x - 1] + d1);
+                if (y > 0) { v = Math.min(v, dist[(y - 1) * maskW + x] + d1); if (x > 0) v = Math.min(v, dist[(y - 1) * maskW + x - 1] + d2); if (x < maskW - 1) v = Math.min(v, dist[(y - 1) * maskW + x + 1] + d2); }
+                dist[y * maskW + x] = v;
+            }
+            for (int y = maskH - 1; y >= 0; y--) for (int x = maskW - 1; x >= 0; x--) {
+                float v = dist[y * maskW + x];
+                if (x < maskW - 1) v = Math.min(v, dist[y * maskW + x + 1] + d1);
+                if (y < maskH - 1) { v = Math.min(v, dist[(y + 1) * maskW + x] + d1); if (x < maskW - 1) v = Math.min(v, dist[(y + 1) * maskW + x + 1] + d2); if (x > 0) v = Math.min(v, dist[(y + 1) * maskW + x - 1] + d2); }
+                dist[y * maskW + x] = v;
+            }
+        } catch (Exception e) {
+            io.github.verycooltimo.murim.MurimMod.LOGGER.warn("scroll_body.png mask: {}", e.toString());
+            maskW = maskH = 1; dist = new float[] {1e6F};
+        }
+    }
+
+    /** Distance in art pixels from the figure point (u, v) to the nearest edge (outline, mark or outside); 0 outside the figure. */
+    static double clearance(double u, double v) {
+        loadMask();
+        int x = (int) Math.max(0, Math.min(maskW - 1, Math.floor(u * maskW))), y = (int) Math.max(0, Math.min(maskH - 1, Math.floor(v * maskH)));
+        return dist[y * maskW + x];
     }
 }

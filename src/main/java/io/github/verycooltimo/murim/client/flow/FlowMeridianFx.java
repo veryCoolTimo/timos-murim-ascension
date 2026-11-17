@@ -85,23 +85,38 @@ final class FlowMeridianFx {
     static double sinceEnd() { return endClock; }
 
     /** The game camera's keys (blocks, degrees, focus nudge); the distance is -1 when this effect has no say. */
+    /** The finale shot of the scroll game: the figure 38-45 % of the frame (seated burst, backlash) or about 30 % so the lift's hover top sits near the top quarter. */
+    private static double finDist() { return ClientPillState.finaleLift() ? FxTune.f("flow.fin.distLift", 4.3F) : FxTune.f("flow.fin.dist", 3.2F); }
+
     static float cameraDistance() {
+        if (FlowFireStand.ON && bound != null) return FlowFireStand.camDist();
         if (bound == null) return -1;
         double k = FlowScrollBoard.camK();
-        if (k <= 0) return (float) FlowSpaceMath.cameraDistance(progress(), ending(), endClock);
-        // the scroll framing: the figure in the left two thirds, 40-50 % of the frame; it eases in and out with k (the finale takes the whole frame)
+        if (k <= 0 && !FlowScrollBoard.scrollMode()) return (float) FlowSpaceMath.cameraDistance(progress(), ending(), endClock);
+        // the scroll framing: the figure in the left two thirds, 40-50 % of the frame; it eases in and out with k
         double run = FlowSpaceMath.lerp(FlowSpaceMath.lerp(FlowLook.CAM_START, FlowLook.CAM_END, smooth(0, 1, progress())), FxTune.f("flow.scroll.camDist", 3.5F), k);
+        // the finale: as the scroll leaves, the camera eases (0.6 s) to the finale's distance and stays there through the core and the burst
+        if (ending() >= 0 && endClock > 0 && FlowScrollBoard.scrollMode()) return (float) FlowSpaceMath.lerp(run, finDist(), smooth(0, FxTune.f("flow.fin.ease", .6F), endClock));
         if (ending() == 0 && endClock > 0) return (float) FlowSpaceMath.lerp(run, FlowLook.CAM_PULL, smooth(.4, .4 + FlowLook.CAM_PULL_TIME, endClock));
         return (float) run;
     }
     static float cameraPitch() {
+        if (FlowFireStand.ON) return FlowFireStand.camPitch();
         double k = FlowScrollBoard.camK();
-        if (k <= 0) return (float) FlowSpaceMath.cameraPitch(ending(), endClock);
+        if (k <= 0 && !FlowScrollBoard.scrollMode()) return (float) FlowSpaceMath.cameraPitch(ending(), endClock);
         double run = FlowSpaceMath.lerp(FlowLook.CAM_PITCH_RUN, FxTune.f("flow.scroll.camPitch", 18F), k);
+        if (ending() >= 0 && endClock > 0 && FlowScrollBoard.scrollMode())
+            return (float) FlowSpaceMath.lerp(run, ClientPillState.finaleLift() ? FxTune.f("flow.fin.pitchLift", 12F) : FxTune.f("flow.fin.pitch", 14F), smooth(0, FxTune.f("flow.fin.ease", .6F), endClock));
         if (ending() == 0 && endClock > 0) return (float) FlowSpaceMath.lerp(run, FlowLook.CAM_PITCH_PULL, smooth(.4, .4 + FlowLook.CAM_PULL_TIME, endClock));
         return (float) run;
     }
+    /** Extra focus height of the finale shot (blocks, eased in with the finale distance). */
+    static float finaleFocus() {
+        if (!FlowScrollBoard.scrollMode() || ending() < 0 || endClock <= 0) return 0;
+        return (float) (smooth(0, FxTune.f("flow.fin.ease", .6F), endClock) * (ClientPillState.finaleLift() ? FxTune.f("flow.fin.focusLift", .35F) : FxTune.f("flow.fin.focus", .25F)));
+    }
     static float cameraNudge() {
+        if (FlowFireStand.ON) return FlowFireStand.camFocus();
         int e = ending();
         if (e < 0 || e == 2) return 0;
         return (float) FlowSpaceMath.cameraNudge(endClock - (e == 0 ? FlowSpaceMath.burstAt() : FlowLook.BURST_BALL));
@@ -122,6 +137,7 @@ final class FlowMeridianFx {
         dipT = 99; handF = 0; pendingNodes.clear();
         FlowSpaceFx.reset();
         FlowScore.end();
+        meltStarted = false; prevAge = -999;
         lamp = FlowBodyRim.State.NONE;
         FlowBodyRim.lampK = 0; FlowBodyRim.lampR = 0;
         cpuSum = cpuMax = 0; cpuFrames = 0;
@@ -156,11 +172,11 @@ final class FlowMeridianFx {
         g = bound;
         long now = System.nanoTime();
         double dt = lastNanos == 0 ? 0 : Math.min(.25, (now - lastNanos) / 1e9);
-        dt = io.github.verycooltimo.murim.client.vfx.fx.FxTuneScene.simDt(dt);
+        dt = io.github.verycooltimo.murim.client.vfx.fx.FxTuneScene.simDt(FlowTick.dt(1, dt));
         if (lastNanos != 0) QUALITY.update((now - lastNanos) / 1e6, dt);
         lastNanos = now;
         if (Minecraft.getInstance().isPaused()) dt = 0;
-        clock += dt;
+        if (FlowFireStand.ON) { clock = FlowFireStand.clock(); dt = FlowFireStand.dt(); } else clock += dt;
         dtNow = dt;
         boolean ended = g.state != FlowGame.State.RUN || FlowClient.game() == null;
         double prevEnd = endClock;
@@ -182,6 +198,7 @@ final class FlowMeridianFx {
         double fLen = ending() == 0 ? (lifted ? 1.5 : 1.4) : (ending() == 1 ? 2.0 : 1.2);
         handF = endClock < 0 ? 0 : FlowSpaceMath.clamp01((endClock - fStart) / fLen);
         dipT += dt;
+        if (FlowFireStand.ON) { fade = 1; introSpace = 1; endClock = -1; handF = 0; }
 
         double target = FlowClient.game() == null ? SD[0] : g.s;
         FlowMeridian.follow(SD, target, 12.5, dt);
@@ -220,6 +237,21 @@ final class FlowMeridianFx {
         holdK += ((holding ? 1 : 0) - holdK) * Math.min(1, dt * 9);
         double p = pd / 100;
         seedPhase += dt * (.8 + 1.0 * p);
+        if (FlowFireStand.ON) {
+            pd = FlowFireStand.pressure(clock) * 100;
+            SD[0] = SD[1] = FlowFireStand.progress();
+            sd = SD[0];
+            lamp = FlowBodyRim.State.NONE;
+            Minecraft.getInstance().options.hideGui = true;   // no hint line, bar or corner marker in the film
+            FlowMeridian.Anchors standAn = anchors(Minecraft.getInstance());
+            if (standAn != null) FlowAura.tick(clock, dt, g.pill.colour() == 0 ? PillScene.hue(0xE8F4EC) : PillScene.hue(g.pill.colour()), standAn.body().o(), standAn.body().out(), floorY, pd / 100);
+            if ((standFrames++ % 20) == 0) {
+                String[] shots = new java.io.File("run/screenshots").list();
+                MurimMod.LOGGER.info("FIRESTAND clock={} pressure={} shots={}", String.format("%.2f", clock), String.format("%.2f", pd / 100), shots == null ? -1 : shots.length);
+            }
+            updateSpace(Minecraft.getInstance(), g, dt, sd, pd / 100);
+            return;
+        }
         float[] c = FlowMeridian.pressureColour(g.pill.colour() == 0 ? 0xE8F4EC : PillScene.hue(g.pill.colour()), pd);
         float prog = (float) sd;
         float f = (float) fade;
@@ -233,11 +265,18 @@ final class FlowMeridianFx {
         float[] lc = FlowSpaceFx.lampColour(g.pill.colour() == 0 ? PillScene.hue(0xE8F4EC) : PillScene.hue(g.pill.colour()), p);
         lamp = new FlowBodyRim.State(lk * lerp(FlowLook.TINT_START, FlowLook.TINT_END, prog), lk * (float) rimOut * lerp(FlowLook.RIM_GAIN_START, FlowLook.RIM_GAIN_END, prog),
                 lk * lerp(FlowLook.INNER_START, FlowLook.INNER_END, prog), lc[0], lc[1], lc[2]);
+        // the aura game: the body is dimmed and lit by the aura's lamp (FlowAura), not tinted by the old model tint (a blue-white shirt turned green-yellow under it)
+        // (also in the finale: the old tint pulled the model toward the pale-gold deep tone as the lamp faded, which read olive green on a blue-white shirt)
+        // The crisp rim of the silhouette comes back as a pulse at the burst, with the model tint OFF (tint 0, no inner wash): the rim is light on the edges only, in the warm tone.
+        if (FlowAura.game()) {
+            float rk = (float) (rimPulse() * FxTune.f("flow.rim.burst", 1F));
+            lamp = rk > .002F ? new FlowBodyRim.State(0F, rk, 0F, lc[0], lc[1] * FxTune.f("flow.aura.lamp.g", .72F), lc[2] * FxTune.f("flow.aura.lamp.b", .45F)) : FlowBodyRim.State.NONE;
+        }
         // the whole body as a lamp from the finish: light spreads out of the dantian over LAMP_SPREAD s, holds, goes out limbs first during the descent
         double lk2 = ending() == 0 ? smooth(0, FlowLook.LAMP_SPREAD, endClock) * (1 - handF) : 0;
         FlowBodyRim.lampK = (float) lk2;
         FlowBodyRim.lampR = (float) (lk2 * FlowLook.LAMP_REACH);
-        FlowBodyRim.lampTone = lc;
+        FlowBodyRim.lampTone = FlowAura.game() ? new float[] {lc[0], lc[1] * FxTune.f("flow.aura.lamp.g", .72F), lc[2] * FxTune.f("flow.aura.lamp.b", .45F)} : lc;   // the finale's lamp warm too: a pale gold light on a blue-white shirt reads yellow-green
         updateSpace(Minecraft.getInstance(), g, dt, sd, p);
     }
 
@@ -251,9 +290,31 @@ final class FlowMeridianFx {
         double burstAt = e == 0 ? FlowSpaceMath.burstAt() : FlowLook.BURST_BALL;
         if (e == 0 && from < FlowLook.FIN_CONTRACT && to >= FlowLook.FIN_CONTRACT)
             io.github.verycooltimo.murim.client.CameraShakeHandler.quake(FxTune.f("flow.scroll.coreShake", .45F), 8);
-        if (e <= 1 && from < burstAt && to >= burstAt)
+        // the burst: on the real lift it is the lift's tick 52 (ClientPillState), otherwise the game's own burst moment
+        boolean lift = e == 0 && io.github.verycooltimo.murim.client.ClientPillState.finaleLift();
+        if (lift) {
+            int age = io.github.verycooltimo.murim.client.ClientPillState.finaleAge();
+            if (age >= io.github.verycooltimo.murim.cultivation.PerfectLift.BURST && prevAge < io.github.verycooltimo.murim.cultivation.PerfectLift.BURST)
+                io.github.verycooltimo.murim.client.CameraShakeHandler.quake(FxTune.f("flow.scroll.burstShake", 1F), 7);
+            prevAge = age;
+        } else if (e <= 1 && from < burstAt && to >= burstAt) {
             io.github.verycooltimo.murim.client.CameraShakeHandler.quake(FxTune.f("flow.scroll.burstShake", 1F), 7);
+        }
     }
+
+    /** 0..1 pulse of the silhouette rim around the burst (the lift's tick 52, the seated burst, the backlash's black ball): in 0.3 s, out over about 1.5 s. */
+    private static double rimPulse() {
+        int e = ending();
+        if (e < 0) return 0;
+        if (e == 0 && ClientPillState.finaleLift()) {
+            double age = ClientPillState.finaleAge();      // ticks, negative while the lift waits
+            return smooth(PerfectLift_BURST - 6, PerfectLift_BURST, age) * (1 - smooth(PerfectLift_BURST + 8, PerfectLift_BURST + 40, age));
+        }
+        double b = e == 0 ? FlowSpaceMath.burstAt() : FlowLook.BURST_BALL;
+        return smooth(b - .3, b, endClock) * (1 - smooth(b + .4, b + 1.9, endClock));
+    }
+
+    private static final int PerfectLift_BURST = io.github.verycooltimo.murim.cultivation.PerfectLift.BURST;
 
     private static float lerp(float a, float b, float k) { return a + (b - a) * k; }
 
@@ -274,6 +335,50 @@ final class FlowMeridianFx {
         Vec3 core = o.add(an.body().out().scale(.05));
         Vec3 hand = BoneAnchorLayer.position(mc.player, Bone.RIGHT_FINGERS);
         FlowSpaceFx.update(new FlowSpaceFx.Params(dt, clock, sd, p01, pill, e, endClock, fade, o, floorY, core, introSpace, hand == null ? o : hand), QUALITY);
+        if (FlowAura.game()) driveAura(g, dt, sd, p01, o, an.body().out(), e);
+    }
+
+    private static boolean meltStarted;
+    private static int lastLogHalf = -1;
+    private static int prevAge = -999;
+
+    /**
+     * The engine's aura ({@link FlowAura}) driven from the game: the melt starts when the pill is swallowed (the old intro's belly light is not drawn), the fire
+     * level follows the stepped score ({@link FlowScore#fire}: a mistake dips it, so no extra drop call), the aura fades out with the end of the stream and the
+     * body lamp goes back to the finale's.
+     */
+    private static void driveAura(FlowGame g, double dt, double sd, double p01, Vec3 o, Vec3 out, int e) {
+        if (!meltStarted && clock >= FlowLook.INTRO_LEAD) { FlowAura.startMelt(); meltStarted = true; }
+        if (!meltStarted) return;
+        // hand-over to the finale layers without a gap: the aura stays at its level, is pulled into the dantian 0.4 s before the burst / the lift, and is gone 0.3 s after it
+        // (the burst layers start their own cloth at that moment)
+        double pull = 0, gate = 1;
+        if (e == 0) {
+            if (io.github.verycooltimo.murim.client.ClientPillState.finaleLift()) {
+                double age = io.github.verycooltimo.murim.client.ClientPillState.finaleAge();     // ticks; negative while the lift waits
+                pull = smooth(-8, 0, age); gate = 1 - smooth(0, 6, age);
+            } else {
+                double ba = FlowSpaceMath.burstAt();
+                pull = smooth(ba - .4, ba, endClock); gate = 1 - smooth(ba, ba + .3, endClock);
+            }
+        } else if (e == 1) {
+            gate = 1 - smooth(FlowLook.BURST_BALL, FlowLook.BURST_BALL + .3, endClock);
+        } else if (e == 2) {
+            gate = 1 - smooth(0, FxTune.f("flow.aura.fadeOut", .9F), endClock);
+        }
+        FlowAura.setGate(gate);
+        FlowAura.setPull(pull);
+        double fire = FlowScore.fire(sd);
+        FlowAura.setLevel(FxTune.f("flow.aura.base", .12F) + (1 - FxTune.f("flow.aura.base", .12F)) * fire);
+        if ((int) (clock * 2) != lastLogHalf) { lastLogHalf = (int) (clock * 2); if (lastLogHalf % 2 == 0) MurimMod.LOGGER.info("Flow aura level {} (fire {}, progress {}, steps {}/{}, pressure {})", String.format("%.2f", FlowAura.level()), String.format("%.2f", fire), String.format("%.2f", sd), FlowScore.stepsDone(), FlowScore.stepsTotal(), String.format("%.2f", p01)); }
+        float k = FlowBodyRim.lampK, r = FlowBodyRim.lampR; Vec3 at = FlowBodyRim.lampAt; float[] tone = FlowBodyRim.lampTone;
+        int rgb = g.pill.colour() == 0 ? PillScene.hue(0xE8F4EC) : PillScene.hue(g.pill.colour());
+        FlowAura.tick(clock, dt, rgb, o, out, floorY, p01);
+        if (e >= 0) {
+            // the finale's lamp (the director's) wins over the aura's from the end on
+            FlowBodyRim.lampK = k; FlowBodyRim.lampR = r; FlowBodyRim.lampAt = at; FlowBodyRim.lampTone = tone;
+            if (gate < .01) FlowAura.releaseLamp();
+        }
     }
 
     private static float[] lampPill(FlowGame g) {
@@ -409,6 +514,7 @@ final class FlowMeridianFx {
 
     // ------------------------------------------------------------------ the floor light
 
+    private static int standFrames;
     private static double nextLight;
     private static Vec3 clotWorld;
 
@@ -429,7 +535,7 @@ final class FlowMeridianFx {
         float gain = 1F;
         if (ending() == 0) {
             double te = endClock, b = FlowSpaceMath.burstAt();
-            gain += (float) (FlowLook.FIN_LIGHT_GAIN * smooth(0, FlowLook.FIN_CONTRACT, te)) * (te > b ? (float) (1 - smooth(b, b + 1.5, te)) : 1F);
+            gain += (float) (FlowLook.FIN_LIGHT_GAIN * (FlowAura.game() ? .4 : 1) * smooth(0, FlowLook.FIN_CONTRACT, te)) * (te > b ? (float) (1 - smooth(b, b + 1.5, te)) : 1F);
             radius += (float) (2.5 * smooth(b - .2, b + .2, te) * (1 - smooth(b + .4, b + 1.6, te)));
         }
         TechniqueLight.add(new Vec3(o.x, mc.player.getY() + FlowLook.FLOOR_LIGHT_LIFT, o.z), rgb, radius, (float) Math.min(1, FlowLook.FLOOR_STRENGTH * Math.max(fade, introSpace * (ending() < 0 ? 1 : fade)) * gain), 3, 2, 4);
@@ -464,7 +570,7 @@ final class FlowMeridianFx {
     static void drawSpace(Minecraft mc, PoseStack.Pose pose, Vec3 cam, MultiBufferSource.BufferSource buffers) {
         if (OFF || bound == null || mc.player == null) return;
         long t0 = System.nanoTime();
-        if (!MODE.equals("norim") && !MODE.equals("nohull")) FlowBodyRim.drawHull(pose, cam, buffers);
+        if (!FlowFireStand.ON && !MODE.equals("norim") && !MODE.equals("nohull")) FlowBodyRim.drawHull(pose, cam, buffers);
         if (!MODE.equals("nospace")) FlowSpaceFx.draw(pose, cam, buffers, QUALITY.tier());
         spaceSum += (System.nanoTime() - t0) / 1e6;
         if (++spaceFrames == 240) {
@@ -478,6 +584,7 @@ final class FlowMeridianFx {
     private static int spaceFrames;
 
     static void drawBody(Minecraft mc, PoseStack.Pose pose, Vec3 cam, MultiBufferSource.BufferSource buffers) {
+        if (FlowFireStand.ON) return;
         if (OFF || MODE.equals("nobody") || bound == null || fade <= .004 || mc.player == null) return;
         FlowMeridian.Anchors an = anchors(mc);
         if (an == null) return;
