@@ -39,6 +39,7 @@ public final class BenchRuntime {
             BenchSelection next=BenchSelection.of(name,from,to,chosen==null?0:chosen.duration());
             stop();PresetRuntime.stop();BtImpactFrame.reset();
             selection=next;clock=new BenchClock(next.from(),next.to(),loop);preset=chosen;
+            final BenchClock staged=clock;io.github.verycooltimo.murim.client.flow.FlowStageClock.start(next.element(),partial->staged.seconds((float)partial));
             if(name.equals("line")||name.equals("line_thin"))line=new PeakLineElement(PresetLibrary.get("fist").layers().getFirst(),name.equals("line_thin"));
             if(name.equals("essences"))essences=new PeakEssences(PresetLibrary.get("fist").layers().getFirst(),PresetLibrary.get("main").layers().getFirst());
             if(name.equals("fire1"))fire=new BtFireElement();
@@ -54,7 +55,7 @@ public final class BenchRuntime {
     public static void stop(){
         restoreFrameLimit();
         if(player!=null)MurimPlayerAnimations.stop(player);
-        selection=null;clock=null;line=null;essences=null;fire=null;preset=null;player=null;level=null;renderedSeconds=Double.NaN;
+        io.github.verycooltimo.murim.client.flow.FlowStageClock.stop();selection=null;clock=null;line=null;essences=null;fire=null;preset=null;player=null;level=null;renderedSeconds=Double.NaN;
     }
     /**
      * MURIM_BENCH_PERF=1: measure instead of film. The frame limit and vsync are switched off for the run (and restored in stop()), and the
@@ -95,6 +96,7 @@ public final class BenchRuntime {
         if(io.github.verycooltimo.murim.client.vfx.fx.FxTune.ON)io.github.verycooltimo.murim.client.vfx.fx.FxTuneScene.window(selection.from(),selection.to());
         final double t=io.github.verycooltimo.murim.client.vfx.fx.FxTune.ON?io.github.verycooltimo.murim.client.vfx.fx.FxTuneScene.time(natural):natural;
         renderedSeconds=t;
+        io.github.verycooltimo.murim.client.flow.FlowStageClock.rendered(t);
         Vec3 camera=e.getCamera().getPosition();
         BtFireField.camera(e.getModelViewMatrix(),e.getProjectionMatrix(),camera);
         selection.draw(()->renderWorld(mc,e,t,partial,camera),

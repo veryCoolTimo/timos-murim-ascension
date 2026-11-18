@@ -16,7 +16,6 @@ import io.github.verycooltimo.murim.client.vfx.fx.FxCultivationScene;
 import io.github.verycooltimo.murim.client.vfx.fx.FxPerf;
 import io.github.verycooltimo.murim.client.vfx.fx.FxQuality;
 import io.github.verycooltimo.murim.client.vfx.fx.FxTune;
-import io.github.verycooltimo.murim.client.vfx.preset.BenchRuntime;
 import io.github.verycooltimo.murim.cultivation.PillKind;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.phys.Vec3;
@@ -52,11 +51,11 @@ public final class FlowBurstLift {
 
     private FlowBurstLift() { }
 
-    public static boolean active() { return BenchRuntime.active() && (ELEMENT.equals(BenchRuntime.element()) || SEAT.equals(BenchRuntime.element())); }
+    public static boolean active() { return FlowStageClock.active() && (ELEMENT.equals(FlowStageClock.element()) || SEAT.equals(FlowStageClock.element())); }
 
-    static boolean lifting() { return ELEMENT.equals(BenchRuntime.element()); }
+    static boolean lifting() { return ELEMENT.equals(FlowStageClock.element()); }
 
-    static double now(float partial) { return BenchRuntime.secondsAt(partial); }
+    static double now(float partial) { return FlowStageClock.secondsAt(partial); }
 
     private static double k(String key, double def) { return FxTune.f("flow.burst." + key, (float) def); }
 
@@ -146,7 +145,7 @@ public final class FlowBurstLift {
     static void onLevel(RenderLevelStageEvent event) {
         if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_LEVEL || !active()) return;
         Minecraft mc = Minecraft.getInstance();
-        double t = BenchRuntime.renderedSeconds();
+        double t = FlowStageClock.renderedSeconds();
         double end = lifting() ? SECONDS : SECONDS_SEAT;
         if (mc.player == null || !Double.isFinite(t) || t < 0 || t > end) return;
         Vec3 camera = event.getCamera().getPosition();
